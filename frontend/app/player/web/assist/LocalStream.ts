@@ -19,13 +19,15 @@ function dummyTrack(): MediaStreamTrack {
 }
 
 export function RequestLocalStream(): Promise<LocalStream> {
-  return navigator.mediaDevices.getUserMedia({ audio: true }).then((aStream) => {
-    const aTrack = aStream.getAudioTracks()[0];
-    if (!aTrack) {
-      throw new Error('No audio tracks provided');
-    }
-    return new _LocalStream(aTrack);
-  });
+  return navigator.mediaDevices
+    .getUserMedia({ audio: true })
+    .then((aStream) => {
+      const aTrack = aStream.getAudioTracks()[0];
+      if (!aTrack) {
+        throw new Error('No audio tracks provided');
+      }
+      return new _LocalStream(aTrack);
+    });
 }
 
 class _LocalStream {

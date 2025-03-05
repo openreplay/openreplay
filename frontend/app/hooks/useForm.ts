@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 interface ValidationRule {
-  custom?: (
-    value: string | boolean | number
-  ) => string | undefined;
+  custom?: (value: string | boolean | number) => string | undefined;
   length?: [min: number, max: number];
   format?: [regexPattern: string, errorMsg: string];
   required?: boolean;
@@ -27,7 +25,10 @@ function useForm<T extends { [K in keyof T]: FormValue }>(
   }, [errors]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target as unknown as { name: keyof T; value: FormValue };
+    const { name, value } = e.target as unknown as {
+      name: keyof T;
+      value: FormValue;
+    };
 
     setValues((prevValues) => ({
       ...prevValues,

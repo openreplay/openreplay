@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import React from 'react';
 import { Input, Icon } from 'UI';
 import { Button } from 'antd';
@@ -5,6 +6,7 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import cn from 'classnames';
 import { Rollout, Payload } from './Helpers';
+import { useTranslation } from 'react-i18next';
 
 const alphabet = [
   'A',
@@ -36,23 +38,25 @@ const alphabet = [
 ];
 
 function Multivariant({ readonly }: { readonly?: boolean }) {
+  const { t } = useTranslation();
   const { featureFlagsStore } = useStore();
 
-  const avg = React.useMemo(() => Math.floor(100 / featureFlagsStore.currentFflag!.variants.length), [featureFlagsStore.currentFflag!.variants.length]);
+  const avg = React.useMemo(
+    () => Math.floor(100 / featureFlagsStore.currentFflag!.variants.length),
+    [featureFlagsStore.currentFflag!.variants.length],
+  );
 
   return (
     <div>
       <div className="text-sm text-disabled-text mt-1 flex items-center gap-1">
-        Users who meet release conditions will be server variant's
-        <code className="p-1 text-red rounded bg-gray-lightest">key</code>
-        {' '}
-        based on specific
-        distribution.
+        {t("Users who meet release conditions will be server variant's")}
+        <code className="p-1 text-red rounded bg-gray-lightest">key</code>&nbsp;
+        {t('based on specific distribution.')}
       </div>
       <div className="flex items-center gap-2 font-semibold mt-4">
-        <div style={{ flex: 1 }}>Variant</div>
-        <div style={{ flex: 4 }}>Key</div>
-        <div style={{ flex: 4 }}>Description</div>
+        <div style={{ flex: 1 }}>{t('Variant')}</div>
+        <div style={{ flex: 4 }}>{t('Key')}</div>
+        <div style={{ flex: 4 }}>{t('Description')}</div>
         <div style={{ flex: 4 }}>
           <Payload />
         </div>
@@ -63,7 +67,7 @@ function Multivariant({ readonly }: { readonly?: boolean }) {
               className="ml-auto text-main font-normal cursor-pointer mr-10 hover:underline"
               onClick={featureFlagsStore.currentFflag!.redistributeVariants}
             >
-              Distribute Equally
+              {t('Distribute Equally')}
             </div>
           )}
         </div>
@@ -97,9 +101,11 @@ function Multivariant({ readonly }: { readonly?: boolean }) {
                 <div>{variant.description}</div>
               ) : (
                 <Input
-                  placeholder="Enter here..."
+                  placeholder={t('Enter here...')}
                   value={variant.description}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => variant.setDescription(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    variant.setDescription(e.target.value)
+                  }
                 />
               )}
             </div>
@@ -110,9 +116,11 @@ function Multivariant({ readonly }: { readonly?: boolean }) {
                 </code>
               ) : (
                 <Input
-                  placeholder="E.g. red button, {'buttonColor': 'red'}"
+                  placeholder={t("E.g. red button, {'buttonColor': 'red'}")}
                   value={variant.payload}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => variant.setPayload(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    variant.setPayload(e.target.value)
+                  }
                 />
               )}
             </div>
@@ -129,23 +137,33 @@ function Multivariant({ readonly }: { readonly?: boolean }) {
                     value={variant.rolloutPercentage}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       if (e.target.value === '') variant.setRollout(0);
-                      variant.setRollout(parseInt(e.target.value.replace(/\D/g, ''), 10));
+                      variant.setRollout(
+                        parseInt(e.target.value.replace(/\D/g, ''), 10),
+                      );
                     }}
                   />
                   <div
                     className={cn(
                       'p-2 cursor-pointer rounded',
-                        featureFlagsStore.currentFflag!.variants.length === 1
-                          ? 'cursor-not-allowed'
-                          : 'hover:bg-teal-light',
+                      featureFlagsStore.currentFflag!.variants.length === 1
+                        ? 'cursor-not-allowed'
+                        : 'hover:bg-teal-light',
                     )}
-                    onClick={() => (featureFlagsStore.currentFflag!.variants.length === 1
-                      ? null
-                      : featureFlagsStore.currentFflag!.removeVariant(variant.index))}
+                    onClick={() =>
+                      featureFlagsStore.currentFflag!.variants.length === 1
+                        ? null
+                        : featureFlagsStore.currentFflag!.removeVariant(
+                            variant.index,
+                          )
+                    }
                   >
                     <Icon
                       name="trash"
-                      color={featureFlagsStore.currentFflag!.variants.length === 1 ? '' : 'main'}
+                      color={
+                        featureFlagsStore.currentFflag!.variants.length === 1
+                          ? ''
+                          : 'main'
+                      }
                     />
                   </div>
                 </>
@@ -157,12 +175,17 @@ function Multivariant({ readonly }: { readonly?: boolean }) {
       {readonly ? null : (
         <div className="mt-2 flex justify-between w-full">
           {featureFlagsStore.currentFflag!.variants.length < 10 ? (
-            <Button type="text" onClick={featureFlagsStore.currentFflag!.addVariant}>
-              + Add Variant
+            <Button
+              type="text"
+              onClick={featureFlagsStore.currentFflag!.addVariant}
+            >
+              +&nbsp;{t('Add Variant')}
             </Button>
           ) : null}
           {featureFlagsStore.currentFflag!.isRedDistribution ? (
-            <div className="text-red mr-10">Total distribution is less than 100%.</div>
+            <div className="text-red mr-10">
+              {t('Total distribution is less than 100%.')}
+            </div>
           ) : null}
         </div>
       )}

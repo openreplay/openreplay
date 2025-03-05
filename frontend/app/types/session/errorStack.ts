@@ -1,11 +1,11 @@
 export interface IErrorStack {
-  absPath?: string,
-  filename?: string,
-  function?: string,
-  lineNo?: number,
-  colNo?: number,
-  offset?: number,
-  context?: string
+  absPath?: string;
+  filename?: string;
+  function?: string;
+  lineNo?: number;
+  colNo?: number;
+  offset?: number;
+  context?: string;
 }
 
 export default class ErrorStack {

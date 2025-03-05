@@ -1,26 +1,35 @@
 import React from 'react';
 import styles from './CohortCard.module.css';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
-    data: any
+  data: any;
 }
 function CohortCard(props: Props) {
+  const { t } = useTranslation();
   // const { data } = props;
   const data = [
     {
       cohort: '2022-01-01',
       users: 100,
-      data: [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 5],
+      data: [
+        100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15,
+        10, 5,
+      ],
     },
     {
       cohort: '2022-01-08',
       users: 100,
-      data: [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15],
+      data: [
+        100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15,
+      ],
     },
     {
       cohort: '2022-01-08',
       users: 100,
-      data: [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15],
+      data: [
+        100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15,
+      ],
     },
     {
       cohort: '2022-01-08',
@@ -103,8 +112,8 @@ function CohortCard(props: Props) {
         <table className={styles.cohortTable}>
           <thead>
             <tr>
-              <th className={`${styles.cell} text-left`}>Date</th>
-              <th className={`${styles.cell} text-left`}>Users</th>
+              <th className={`${styles.cell} text-left`}>{t('Date')}</th>
+              <th className={`${styles.cell} text-left`}>{t('Users')}</th>
             </tr>
             <tr>
               <th className={`${styles.cell} ${styles.header}`} />
@@ -125,11 +134,20 @@ function CohortCard(props: Props) {
         <table className={styles.cohortTable}>
           <thead>
             <tr>
-              <th className={`${styles.cell}`} style={{ textAlign: 'left' }} colSpan={10}>Weeks later users retained</th>
+              <th
+                className={`${styles.cell}`}
+                style={{ textAlign: 'left' }}
+                colSpan={10}
+              >
+                {t('Weeks later users retained')}
+              </th>
             </tr>
             <tr>
               {data[0].data.map((_, index) => (
-                <th key={`header-${index}`} className={`${styles.cell} ${styles.header}`}>{`${index + 1}`}</th>
+                <th
+                  key={`header-${index}`}
+                  className={`${styles.cell} ${styles.header}`}
+                >{`${index + 1}`}</th>
               ))}
             </tr>
           </thead>
@@ -137,9 +155,12 @@ function CohortCard(props: Props) {
             {data.map((row, rowIndex) => (
               <tr key={`row-scrollable-${rowIndex}`}>
                 {row.data.map((cell, cellIndex) => (
-                  <td key={`cell-${rowIndex}-${cellIndex} text-center`} className={styles.cell} style={{ backgroundColor: getCellColor(cell) }}>
-                    {cell}
-                    %
+                  <td
+                    key={`cell-${rowIndex}-${cellIndex} text-center`}
+                    className={styles.cell}
+                    style={{ backgroundColor: getCellColor(cell) }}
+                  >
+                    {cell}%
                   </td>
                 ))}
               </tr>

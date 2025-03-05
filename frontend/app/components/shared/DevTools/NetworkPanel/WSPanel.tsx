@@ -4,6 +4,7 @@ import React from 'react';
 import { durationFromMs } from 'App/date';
 import { filterList } from 'App/utils';
 import { CopyButton, Icon, Input } from 'UI';
+import { useTranslation } from 'react-i18next';
 
 type SocketMsg = Timed & {
   channelName: string;
@@ -21,9 +22,13 @@ interface Props {
 const lineLength = 40;
 
 function WSPanel({ socketMsgList, onClose }: Props) {
+  const { t } = useTranslation();
   const [query, setQuery] = React.useState('');
   const [list, setList] = React.useState(socketMsgList);
-  const [selectedRow, setSelectedRow] = React.useState<{ msg: SocketMsg, id: number } | null>(null);
+  const [selectedRow, setSelectedRow] = React.useState<{
+    msg: SocketMsg;
+    id: number;
+  } | null>(null);
 
   const onQueryChange = (e: any) => {
     setQuery(e.target.value);
@@ -46,7 +51,7 @@ function WSPanel({ socketMsgList, onClose }: Props) {
         <div className="ml-auto">
           <Input
             className="input-small"
-            placeholder="Filter by name, type, method or value"
+            placeholder={t('Filter by name, type, method or value')}
             icon="search"
             name="filter"
             onChange={onQueryChange}
@@ -57,9 +62,9 @@ function WSPanel({ socketMsgList, onClose }: Props) {
         </div>
       </div>
       <div className="grid grid-cols-12 font-semibold border-b px-4 py-2">
-        <div className="col-span-9 flex items-center gap-2">Data</div>
-        <div className="col-span-1">Length</div>
-        <div className="col-span-2 text-right">Time</div>
+        <div className="col-span-9 flex items-center gap-2">{t('Data')}</div>
+        <div className="col-span-1">{t('Length')}</div>
+        <div className="col-span-2 text-right">{t('Time')}</div>
       </div>
       <div
         style={{
@@ -78,7 +83,10 @@ function WSPanel({ socketMsgList, onClose }: Props) {
           />
         ))}
         {selectedRow ? (
-          <SelectedRow msg={selectedRow.msg} onClose={() => setSelectedRow(null)} />
+          <SelectedRow
+            msg={selectedRow.msg}
+            onClose={() => setSelectedRow(null)}
+          />
         ) : null}
       </div>
     </div>
@@ -94,9 +102,7 @@ function SelectedRow({
 }) {
   const content = React.useMemo(() => JSON.stringify(msg, null, 2), []);
   return (
-    <div
-      className="absolute bottom-0 left-0 h-3/4 w-full flex flex-col bg-white border-t border-gray-lighter"
-    >
+    <div className="absolute bottom-0 left-0 h-3/4 w-full flex flex-col bg-white border-t border-gray-lighter">
       <div className="flex gap-2 items-center p-2">
         <Icon
           name="close"
@@ -109,7 +115,9 @@ function SelectedRow({
           <CopyButton content={content} />
         </div>
       </div>
-      <div className="border-t border-gray-lighter bg-gray-lightest p-4">{msg.data}</div>
+      <div className="border-t border-gray-lighter bg-gray-lightest p-4">
+        {msg.data}
+      </div>
     </div>
   );
 }
@@ -124,7 +132,15 @@ function MsgDirection({ dir }: { dir: 'up' | 'down' }) {
   );
 }
 
-function Row({ msg, onSelect, isSelected }: { msg: SocketMsg; isSelected: boolean; onSelect: () => void }) {
+function Row({
+  msg,
+  onSelect,
+  isSelected,
+}: {
+  msg: SocketMsg;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
   return (
     <div
       className="border-b grid grid-cols-12 hover:bg-active-blue cursor-pointer"
@@ -140,9 +156,7 @@ function Row({ msg, onSelect, isSelected }: { msg: SocketMsg; isSelected: boolea
           {msg.data}
         </span>
         {msg.data.length > lineLength ? (
-          <div
-            className="rounded-full font-bold text-xl p-2 bg-white w-6 h-6 flex items-center justify-center"
-          >
+          <div className="rounded-full font-bold text-xl p-2 bg-white w-6 h-6 flex items-center justify-center">
             <span>{isSelected ? '-' : '+'}</span>
           </div>
         ) : null}

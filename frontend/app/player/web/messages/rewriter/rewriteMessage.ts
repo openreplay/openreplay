@@ -40,14 +40,16 @@ function rewriteCSS(baseURL: string, cssText: string): string {
 
 // TODO: common logic for URL fields in all the ...URLBased messages
 const REWRITERS = {
-  [MType.SetNodeAttributeURLBased]: (msg: RawSetNodeAttributeURLBased): RawSetNodeAttribute => ({
+  [MType.SetNodeAttributeURLBased]: (
+    msg: RawSetNodeAttributeURLBased,
+  ): RawSetNodeAttribute => ({
     ...msg,
-    value: msg.name === 'src' || msg.name === 'href'
-      ? resolveURL(msg.baseURL, msg.value)
-      : (msg.name === 'style'
-        ? rewriteCSS(msg.baseURL, msg.value)
-        : msg.value
-      ),
+    value:
+      msg.name === 'src' || msg.name === 'href'
+        ? resolveURL(msg.baseURL, msg.value)
+        : msg.name === 'style'
+          ? rewriteCSS(msg.baseURL, msg.value)
+          : msg.value,
     tp: MType.SetNodeAttribute,
   }),
   [MType.SetCssDataURLBased]: (msg: RawSetCssDataURLBased): RawSetCssData => ({
@@ -55,17 +57,23 @@ const REWRITERS = {
     data: rewriteCSS(msg.baseURL, msg.data),
     tp: MType.SetCssData,
   }),
-  [MType.CssInsertRuleURLBased]: (msg: RawCssInsertRuleURLBased): RawCssInsertRule => ({
+  [MType.CssInsertRuleURLBased]: (
+    msg: RawCssInsertRuleURLBased,
+  ): RawCssInsertRule => ({
     ...msg,
     rule: rewriteCSS(msg.baseURL, msg.rule),
     tp: MType.CssInsertRule,
   }),
-  [MType.AdoptedSsInsertRuleURLBased]: (msg: RawAdoptedSsInsertRuleURLBased): RawAdoptedSsInsertRule => ({
+  [MType.AdoptedSsInsertRuleURLBased]: (
+    msg: RawAdoptedSsInsertRuleURLBased,
+  ): RawAdoptedSsInsertRule => ({
     ...msg,
     rule: rewriteCSS(msg.baseURL, msg.rule),
     tp: MType.AdoptedSsInsertRule,
   }),
-  [MType.AdoptedSsReplaceURLBased]: (msg: RawAdoptedSsReplaceURLBased): RawAdoptedSsReplace => ({
+  [MType.AdoptedSsReplaceURLBased]: (
+    msg: RawAdoptedSsReplaceURLBased,
+  ): RawAdoptedSsReplace => ({
     ...msg,
     text: rewriteCSS(msg.baseURL, msg.text),
     tp: MType.AdoptedSsReplace,

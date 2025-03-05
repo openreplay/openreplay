@@ -51,7 +51,8 @@ function WebPlayer(props: any) {
   const [visuallyAdjusted, setAdjusted] = useState(false);
   const [windowActive, setWindowActive] = useState(!document.hidden);
   // @ts-ignore
-  const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
+  const [contextValue, setContextValue] =
+    useState<IPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
   const [fullView, setFullView] = useState(false);
 
@@ -120,17 +121,18 @@ function WebPlayer(props: any) {
     tabStates,
     ready,
   } = contextValue.store?.get() || {};
-  const cssLoading = ready && tabStates
-    ? Object.values(tabStates).some(({ cssLoading }) => cssLoading)
-    : true;
+  const cssLoading =
+    ready && tabStates
+      ? Object.values(tabStates).some(({ cssLoading }) => cssLoading)
+      : true;
 
   React.useEffect(() => {
     if (
-      messagesProcessed
-      && (session.events.length > 0
-        || session.errors.length > 0
-        || session.stackEvents.length > 0
-        || session.addedEvents)
+      messagesProcessed &&
+      (session.events.length > 0 ||
+        session.errors.length > 0 ||
+        session.stackEvents.length > 0 ||
+        session.addedEvents)
     ) {
       contextValue.player?.updateLists?.(session);
     }
@@ -150,7 +152,8 @@ function WebPlayer(props: any) {
 
         if (jumpToTime || shouldAdjustOffset) {
           if (jumpToTime && jumpToTime > visualOffset) {
-            const diff = startedAt < jumpToTime ? jumpToTime - startedAt : jumpToTime;
+            const diff =
+              startedAt < jumpToTime ? jumpToTime - startedAt : jumpToTime;
             contextValue.player.jump(Math.max(diff, 0));
             setAdjusted(true);
           } else {

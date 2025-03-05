@@ -1,29 +1,23 @@
-import {
-  CaretDownOutlined,
-  FolderAddOutlined,
-} from '@ant-design/icons';
-import {
-  Button, Dropdown, MenuProps, Space, Typography,
-} from 'antd';
+import { CaretDownOutlined, FolderAddOutlined } from '@ant-design/icons';
+import { Button, Dropdown, MenuProps, Space, Typography } from 'antd';
 import cn from 'classnames';
 import React from 'react';
 import { withRouter } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
-import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { Icon } from 'UI';
 import { useModal } from 'Components/ModalContext';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import Project from '@/mstore/types/project';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
 function ProjectDropdown(props: { location: any }) {
   const mstore = useStore();
-  const {
-    projectsStore, searchStore, searchStoreLive, userStore,
-  } = mstore;
+  const { t } = useTranslation();
+  const { projectsStore, searchStore, searchStoreLive, userStore } = mstore;
   const { account } = userStore;
   const sites = projectsStore.list;
   const { siteId } = projectsStore;
@@ -32,7 +26,8 @@ function ProjectDropdown(props: { location: any }) {
   const { location } = props;
   const isAdmin = account.admin || account.superAdmin;
   const activeSite = sites.find((s) => s.id === siteId);
-  const showCurrent = hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
+  const showCurrent =
+    hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
   const { openModal, closeModal } = useModal();
 
   const handleSiteChange = async (newSiteId: string) => {
@@ -62,10 +57,7 @@ function ProjectDropdown(props: { location: any }) {
   const menuItems: MenuProps['items'] = sites.map((site) => ({
     key: site.id,
     label: (
-      <div
-        key={site.id}
-        className="!py-1 flex items-center gap-2"
-      >
+      <div key={site.id} className="!py-1 flex items-center gap-2">
         <Icon
           name={site.platform === 'web' ? 'browser/browser' : 'mobile'}
           color={activeSite?.host === site.host ? 'main' : undefined}
@@ -82,19 +74,20 @@ function ProjectDropdown(props: { location: any }) {
     ),
   }));
   if (isAdmin) {
-    menuItems?.unshift({
-      key: 'add-proj',
-      label: (
-        <div
-          className="flex items-center gap-2 whitespace-nowrap"
-        >
-          <FolderAddOutlined rev={undefined} />
-          <Text>Add Project</Text>
-        </div>
-      ),
-    }, {
-      type: 'divider',
-    });
+    menuItems?.unshift(
+      {
+        key: 'add-proj',
+        label: (
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            <FolderAddOutlined rev={undefined} />
+            <Text>{t('Add Project')}</Text>
+          </div>
+        ),
+      },
+      {
+        type: 'divider',
+      },
+    );
   }
 
   return (
@@ -132,7 +125,7 @@ function ProjectDropdown(props: { location: any }) {
                 {activeSite.host}
               </div>
             ) : (
-              'All Projects'
+              t('All Projects')
             )}
           </Text>
           <CaretDownOutlined rev={undefined} />
@@ -142,6 +135,4 @@ function ProjectDropdown(props: { location: any }) {
   );
 }
 
-export default withRouter(
-  observer(ProjectDropdown),
-);
+export default withRouter(observer(ProjectDropdown));

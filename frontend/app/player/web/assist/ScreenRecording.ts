@@ -4,11 +4,11 @@ import type { Store } from '../../common/types';
 export enum SessionRecordingStatus {
   Off,
   Requesting,
-  Recording
+  Recording,
 }
 
 export interface State {
-	recordingState: SessionRecordingStatus;
+  recordingState: SessionRecordingStatus;
   currentTab?: string;
 }
 
@@ -22,11 +22,13 @@ export default class ScreenRecording {
   };
 
   constructor(
-		private store: Store<State>,
-		private socket: Socket,
-		private agentInfo: Object,
-		private onToggle: (active: boolean) => void,
-    public readonly uiErrorHandler: { error: (msg: string) => void } | undefined,
+    private store: Store<State>,
+    private socket: Socket,
+    private agentInfo: object,
+    private onToggle: (active: boolean) => void,
+    public readonly uiErrorHandler:
+      | { error: (msg: string) => void }
+      | undefined,
     private getAssistVersion: () => number,
   ) {
     socket.on('recording_accepted', () => {
@@ -44,7 +46,9 @@ export default class ScreenRecording {
   }
 
   private onRecordingBusy = () => {
-    this.uiErrorHandler?.error('This session is already being recorded by another agent');
+    this.uiErrorHandler?.error(
+      'This session is already being recorded by another agent',
+    );
   };
 
   requestRecording = ({ onDeny }: { onDeny: () => void }) => {
@@ -53,17 +57,23 @@ export default class ScreenRecording {
     if (recordingState === SessionRecordingStatus.Requesting) return;
 
     this.store.update({ recordingState: SessionRecordingStatus.Requesting });
-    this.emitData('request_recording', JSON.stringify({
-      ...this.agentInfo,
-      query: document.location.search,
-    }));
+    this.emitData(
+      'request_recording',
+      JSON.stringify({
+        ...this.agentInfo,
+        query: document.location.search,
+      }),
+    );
   };
 
   private emitData = (event: string, data?: any) => {
     if (this.getAssistVersion() === 1) {
       this.socket.emit(event, data);
     } else {
-      this.socket.emit(event, { meta: { tabId: this.store.get().currentTab }, data });
+      this.socket.emit(event, {
+        meta: { tabId: this.store.get().currentTab },
+        data,
+      });
     }
   };
 
@@ -74,9 +84,9 @@ export default class ScreenRecording {
 
   private toggleRecording = (isAccepted: boolean) => {
     this.store.update({
-    	recordingState: isAccepted
-    		? SessionRecordingStatus.Recording
-    		: SessionRecordingStatus.Off,
+      recordingState: isAccepted
+        ? SessionRecordingStatus.Recording
+        : SessionRecordingStatus.Off,
     });
 
     this.onToggle(isAccepted);

@@ -3,12 +3,10 @@ import SelectDateRange from 'Shared/SelectDateRange';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Space } from 'antd';
-import {
-  CUSTOM_RANGE,
-  DATE_RANGE_COMPARISON_OPTIONS,
-} from 'App/dateRange';
+import { CUSTOM_RANGE, DATE_RANGE_COMPARISON_OPTIONS } from 'App/dateRange';
 import Period from 'Types/app/period';
 import RangeGranularity from './RangeGranularity';
+import { useTranslation } from 'react-i18next';
 
 function WidgetDateRange({
   label = 'Time Range',
@@ -17,13 +15,15 @@ function WidgetDateRange({
   hasComparison = false,
   presetComparison = null,
 }: any) {
+  const { t } = useTranslation();
   const { dashboardStore, metricStore } = useStore();
   const density = dashboardStore.selectedDensity;
   const onDensityChange = (density: number) => {
     dashboardStore.setDensity(density);
   };
   const period = dashboardStore.drillDownPeriod;
-  const compPeriod = dashboardStore.comparisonPeriods[metricStore.instance.metricId];
+  const compPeriod =
+    dashboardStore.comparisonPeriods[metricStore.instance.metricId];
   const { drillDownFilter } = dashboardStore;
 
   const onChangePeriod = (period: any) => {
@@ -46,7 +46,9 @@ function WidgetDateRange({
 
   React.useEffect(() => {
     if (presetComparison) {
-      const option = DATE_RANGE_COMPARISON_OPTIONS.find((option: any) => option.value === presetComparison[0]);
+      const option = DATE_RANGE_COMPARISON_OPTIONS(t).find(
+        (option: any) => option.value === presetComparison[0],
+      );
       if (option) {
         // @ts-ignore
         const newPeriod = new Period({
@@ -74,7 +76,9 @@ function WidgetDateRange({
     }
   }, [presetComparison]);
 
-  const updateInstComparison = (range: [start: string, end?: string] | null) => {
+  const updateInstComparison = (
+    range: [start: string, end?: string] | null,
+  ) => {
     metricStore.instance.setComparisonRange(range);
     metricStore.instance.updateKey('hasChanged', true);
   };
@@ -97,21 +101,19 @@ function WidgetDateRange({
               onDensityChange={onDensityChange}
             />
           ) : null}
-          {hasComparison
-            ? (
-              <SelectDateRange
-                period={period}
-                compPeriod={compPeriod}
-                onChange={onChangePeriod}
-                onChangeComparison={onChangeComparison}
-                right={false}
-                isAnt
-                useButtonStyle
-                comparison
-                updateInstComparison={updateInstComparison}
-              />
-            )
-            : null}
+          {hasComparison ? (
+            <SelectDateRange
+              period={period}
+              compPeriod={compPeriod}
+              onChange={onChangePeriod}
+              onChangeComparison={onChangeComparison}
+              right={false}
+              isAnt
+              useButtonStyle
+              comparison
+              updateInstComparison={updateInstComparison}
+            />
+          ) : null}
         </>
       ) : null}
     </Space>

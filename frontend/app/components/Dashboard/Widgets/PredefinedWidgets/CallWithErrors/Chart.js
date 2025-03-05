@@ -7,7 +7,13 @@ function Chart({ data, compare }) {
 
   return (
     <AreaChart width={90} height={30} data={data.chart}>
-      <Area type="monotone" dataKey="count" stroke={colors[0]} fill={colors[3]} fillOpacity={0.5} />
+      <Area
+        type="monotone"
+        dataKey="count"
+        stroke={colors[0]}
+        fill={colors[3]}
+        fillOpacity={0.5}
+      />
     </AreaChart>
   );
 }

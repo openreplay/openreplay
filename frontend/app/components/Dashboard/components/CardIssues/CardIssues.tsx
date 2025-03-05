@@ -11,8 +11,10 @@ import Issue from 'App/mstore/types/issue';
 import { List, Button } from 'antd';
 import SessionsModal from '../SessionsModal';
 import CardIssueItem from './CardIssueItem';
+import { useTranslation } from 'react-i18next';
 
 function CardIssues() {
+  const { t } = useTranslation();
   const { metricStore, dashboardStore } = useStore();
   const [data, setData] = useState<{
     issues: Issue[];
@@ -24,14 +26,16 @@ function CardIssues() {
   const pageSize = 5;
   const { showModal } = useModal();
   const filter = useObserver(() => dashboardStore.drillDownFilter);
-  const hasFilters = filter.filters.length > 0 || (filter.startTimestamp !== dashboardStore.drillDownPeriod.start || filter.endTimestamp !== dashboardStore.drillDownPeriod.end);
+  const hasFilters =
+    filter.filters.length > 0 ||
+    filter.startTimestamp !== dashboardStore.drillDownPeriod.start ||
+    filter.endTimestamp !== dashboardStore.drillDownPeriod.end;
   const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
   const depsString = JSON.stringify(widget.series);
 
   function getFilters(filter: any) {
     const mapSeries = (item: any) => {
-      const filters = item.filter.filters
-        .map((f: any) => f.toJson());
+      const filters = item.filter.filters.map((f: any) => f.toJson());
 
       return {
         ...item,
@@ -67,7 +71,10 @@ function CardIssues() {
     }
   };
 
-  const debounceRequest: any = React.useCallback(debounce(fetchIssues, 1000), []);
+  const debounceRequest: any = React.useCallback(
+    debounce(fetchIssues, 1000),
+    [],
+  );
 
   const handleClick = (issue?: any) => {
     // const filters = getFilters(widget.filter);
@@ -82,7 +89,13 @@ function CardIssues() {
       filters: filter.filters,
     };
     debounceRequest(newPayload);
-  }, [drillDownPeriod, filter.filters, depsString, metricStore.sessionsPage, filter.page]);
+  }, [
+    drillDownPeriod,
+    filter.filters,
+    depsString,
+    metricStore.sessionsPage,
+    filter.page,
+  ]);
 
   const clearFilters = () => {
     metricStore.updateKey('page', 1);
@@ -93,37 +106,40 @@ function CardIssues() {
     <div className="bg-white rounded-lg shadow-sm p-4 border">
       <div className="flex justify-between">
         <div className="flex items-center">
-          <h2 className="font-normal text-xl">Issues</h2>
+          <h2 className="font-normal text-xl">{t('Issues')}</h2>
           {!!filter.filters[1] && (
             <div className="ml-3 pt-1">
-              Showing issues of
-              {' '}
+              {t('Showing issues of')}{' '}
               <span className="font-medium">{filter.filters[0].value}</span>
-              <span className="mx-1">to</span>
+              <span className="mx-1">{t('to')}</span>
               <span className="font-medium">{filter.filters[1].value}</span>
             </div>
           )}
         </div>
         <div className="flex items-center gap-4">
-          {hasFilters && <Button type="text" onClick={clearFilters}>Clear Filters</Button>}
-          <Button type="text" onClick={() => handleClick()}>All Sessions</Button>
+          {hasFilters && (
+            <Button type="text" onClick={clearFilters}>
+              {t('Clear Filters')}
+            </Button>
+          )}
+          <Button type="text" onClick={() => handleClick()}>
+            {t('All Sessions')}
+          </Button>
         </div>
       </div>
 
       <Loader loading={loading}>
         <NoContent
           show={data.issues.length == 0}
-          title={(
+          title={
             <div className="flex flex-col items-center justify-center">
               <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
               <div className="text-center my-4 text-base">
                 <InfoCircleOutlined />
-                {' '}
-                No data available.
+                &nbsp;{t('No data available.')}
               </div>
             </div>
-        )}
-
+          }
         >
           {/* {data.issues.map((item: any, index: any) => ( */}
           {/*  <div onClick={() => handleClick(item)} key={index}> */}
@@ -146,19 +162,16 @@ function CardIssues() {
         <div className="text-disabled-text">
           {data.total && (
             <>
-              Showing
-              {' '}
-              <span className="font-medium">{(filter.page - 1) * pageSize + 1}</span>
-              {' '}
-              to
-              {' '}
-              <span className="font-medium">{(filter.page - 1) * pageSize + pageSize}</span>
-              {' '}
-              of
-              {' '}
-              <span className="font-medium">{data.total}</span>
-              {' '}
-              issues.
+              {t('Showing')}{' '}
+              <span className="font-medium">
+                {(filter.page - 1) * pageSize + 1}
+              </span>{' '}
+              {t('to')}{' '}
+              <span className="font-medium">
+                {(filter.page - 1) * pageSize + pageSize}
+              </span>{' '}
+              {t('of')}&nbsp;<span className="font-medium">{data.total}</span>
+              &nbsp;{t('issues')}.
             </>
           )}
         </div>

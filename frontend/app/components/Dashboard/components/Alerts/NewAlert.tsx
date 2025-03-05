@@ -34,16 +34,16 @@ interface ISection {
   content: React.ReactNode;
 }
 
-function Section({
-  index, title, description, content,
-}: ISection) {
+function Section({ index, title, description, content }: ISection) {
   return (
     <div className="w-full border-l-2 last:border-l-borderColor-transparent">
       <div className="flex items-start relative">
         <Circle text={index} />
         <div className="ml-6">
           <span className="font-medium">{title}</span>
-          {description && <div className="text-sm color-gray-medium">{description}</div>}
+          {description && (
+            <div className="text-sm color-gray-medium">{description}</div>
+          )}
         </div>
       </div>
 
@@ -54,7 +54,7 @@ function Section({
 
 interface Select {
   label: string;
-  value: string | number
+  value: string | number;
 }
 
 interface IProps extends RouteComponentProps {
@@ -85,9 +85,7 @@ function NewAlert(props: IProps) {
   const deleting = loading;
   const { webhooks } = settingsStore;
   const { fetchWebhooks } = settingsStore;
-  const {
-    siteId,
-  } = props;
+  const { siteId } = props;
 
   useEffect(() => {
     init({});
@@ -99,21 +97,27 @@ function NewAlert(props: IProps) {
   useEffect(() => {
     if (list.length > 0) {
       const alertId = location.pathname.split('/').pop();
-      const currentAlert = list.find((alert: Alert) => alert.alertId === String(alertId));
+      const currentAlert = list.find(
+        (alert: Alert) => alert.alertId === String(alertId),
+      );
       if (currentAlert) {
         init(currentAlert);
       }
     }
   }, [list]);
 
-  const write = ({ target: { value, name } }: React.ChangeEvent<HTMLInputElement>) => edit({ [name]: value });
+  const write = ({
+    target: { value, name },
+  }: React.ChangeEvent<HTMLInputElement>) => edit({ [name]: value });
 
   const writeOption = (
     _: React.ChangeEvent,
     { name, value }: { name: string; value: Record<string, any> },
   ) => edit({ [name]: value.value });
 
-  const onChangeCheck = ({ target: { checked, name } }: React.ChangeEvent<HTMLInputElement>) => edit({ [name]: checked });
+  const onChangeCheck = ({
+    target: { checked, name },
+  }: React.ChangeEvent<HTMLInputElement>) => edit({ [name]: checked });
 
   const onDelete = async (instance: Alert) => {
     if (
@@ -123,27 +127,31 @@ function NewAlert(props: IProps) {
         confirmation: 'Are you sure you want to permanently delete this alert?',
       })
     ) {
-      remove(instance.alertId).then(() => {
-        props.history.push(withSiteId(alerts(), siteId));
-        toast.success('Alert deleted');
-      }).catch(() => {
-        toast.error('Failed to delete an alert');
-      });
+      remove(instance.alertId)
+        .then(() => {
+          props.history.push(withSiteId(alerts(), siteId));
+          toast.success('Alert deleted');
+        })
+        .catch(() => {
+          toast.error('Failed to delete an alert');
+        });
     }
   };
 
   const onSave = (instance: Alert) => {
     const wasUpdating = instance.exists();
-    save(instance).then(() => {
-      if (!wasUpdating) {
-        toast.success('New alert saved');
-        props.history.push(withSiteId(alerts(), siteId));
-      } else {
-        toast.success('Alert updated');
-      }
-    }).catch(() => {
-      toast.error('Failed to create an alert');
-    });
+    save(instance)
+      .then(() => {
+        if (!wasUpdating) {
+          toast.success('New alert saved');
+          props.history.push(withSiteId(alerts(), siteId));
+        } else {
+          toast.success('Alert updated');
+        }
+      })
+      .catch(() => {
+        toast.error('Failed to create an alert');
+      });
   };
 
   const slackChannels: Select[] = [];
@@ -175,14 +183,17 @@ function NewAlert(props: IProps) {
     alertsStore.changeUnit(value);
   };
 
-  const writeQuery = ({ target: { value, name } }: React.ChangeEvent<HTMLInputElement>) => {
+  const writeQuery = ({
+    target: { value, name },
+  }: React.ChangeEvent<HTMLInputElement>) => {
     const { query } = instance;
     edit({ query: { ...query, [name]: value } });
   };
 
-  const metric = instance && instance.query.left
-    ? triggerOptions.find((i) => i.value === instance.query.left)
-    : null;
+  const metric =
+    instance && instance.query.left
+      ? triggerOptions.find((i) => i.value === instance.query.left)
+      : null;
   const unit = metric ? metric.unit : '';
   const isThreshold = instance.detectionMethod === 'threshold';
 
@@ -206,7 +217,9 @@ function NewAlert(props: IProps) {
           <h1 className="mb-0 text-2xl mr-4 min-w-fit">
             <WidgetName
               name={instance.name}
-              onUpdate={(name) => write({ target: { value: name, name: 'name' } } as any)}
+              onUpdate={(name) =>
+                write({ target: { value: name, name: 'name' } } as any)
+              }
               canEdit
             />
           </h1>
@@ -217,13 +230,15 @@ function NewAlert(props: IProps) {
           <Section
             index="1"
             title="Alert based on"
-            content={(
+            content={
               <div className="">
                 <SegmentSelection
                   outline
                   name="detectionMethod"
                   className="my-3 w-1/4"
-                  onSelect={(e: any, { name, value }: any) => edit({ [name]: value })}
+                  onSelect={(e: any, { name, value }: any) =>
+                    edit({ [name]: value })
+                  }
                   value={{ value: instance.detectionMethod }}
                   list={[
                     { name: 'Threshold', value: 'threshold' },
@@ -231,19 +246,19 @@ function NewAlert(props: IProps) {
                   ]}
                 />
                 <div className="text-sm color-gray-medium">
-                  {isThreshold
-                    && 'Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.'}
-                  {!isThreshold
-                    && 'Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.'}
+                  {isThreshold &&
+                    'Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.'}
+                  {!isThreshold &&
+                    'Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.'}
                 </div>
                 <div className="my-4" />
               </div>
-            )}
+            }
           />
           <Section
             index="2"
             title="Condition"
-            content={(
+            content={
               <Condition
                 isThreshold={isThreshold}
                 writeOption={writeOption}
@@ -254,13 +269,13 @@ function NewAlert(props: IProps) {
                 writeQuery={writeQuery}
                 unit={unit}
               />
-            )}
+            }
           />
           <Section
             index="3"
             title="Notify Through"
             description="You'll be noticed in app notifications. Additionally opt in to receive alerts on:"
-            content={(
+            content={
               <NotifyHooks
                 instance={instance}
                 onChangeCheck={onChangeCheck}
@@ -270,7 +285,7 @@ function NewAlert(props: IProps) {
                 hooks={hooks}
                 edit={edit}
               />
-            )}
+            }
           />
         </div>
 

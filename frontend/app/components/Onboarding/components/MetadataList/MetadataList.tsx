@@ -6,8 +6,10 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Button } from 'antd';
 import CustomFieldForm from '../../../Client/CustomFields/CustomFieldForm';
+import { useTranslation } from 'react-i18next';
 
 function MetadataList() {
+  const { t } = useTranslation();
   const { customFieldStore, projectsStore } = useStore();
   const site = projectsStore.instance;
   const fields = customFieldStore.list;
@@ -23,7 +25,7 @@ function MetadataList() {
     customFieldStore.save(site.id!, field).then((response) => {
       if (!response || !response.errors || response.errors.size === 0) {
         hideModal();
-        toast.success('Metadata added successfully!');
+        toast.success(t('Metadata added successfully!'));
       } else {
         toast.error(response.errors[0]);
       }
@@ -31,14 +33,17 @@ function MetadataList() {
   };
 
   const openModal = () => {
-    showModal(<CustomFieldForm siteId={site.id} onClose={hideModal} onSave={save} />, { right: true });
+    showModal(
+      <CustomFieldForm siteId={site.id} onClose={hideModal} onSave={save} />,
+      { right: true },
+    );
   };
 
   const removeMetadata = async (field: { index: number }) => {
     if (
       await confirm({
         header: 'Metadata',
-        confirmation: 'Are you sure you want to remove?',
+        confirmation: t('Are you sure you want to remove?'),
       })
     ) {
       customFieldStore.remove(site.id, `${field.index}`);
@@ -48,11 +53,16 @@ function MetadataList() {
   return (
     <div className="py-2 flex">
       <Button type="default" onClick={() => openModal()}>
-        Add Metadata
+        {t('Add Metadata')}
       </Button>
       <div className="flex ml-2">
         {fields.map((f, index) => (
-          <TagBadge key={index} text={f.key} onRemove={() => removeMetadata(f)} outline />
+          <TagBadge
+            key={index}
+            text={f.key}
+            onRemove={() => removeMetadata(f)}
+            outline
+          />
         ))}
       </div>
     </div>

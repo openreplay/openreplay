@@ -23,13 +23,11 @@ function ErrorsPerDomain(props: Props) {
       size="small"
       show={data.chart.length === 0}
       style={{ height: '240px' }}
-      title={(
+      title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} />
-          {' '}
-          { NO_METRIC_DATA }
+          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
         </div>
-      )}
+      }
     >
       <div className="w-full" style={{ height: '240px' }}>
         <ListWithIcons list={list} />

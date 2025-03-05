@@ -13,15 +13,14 @@ import {
   sessions as sessionsRoute,
 } from 'App/routes';
 import { capitalize } from 'App/utils';
-import {
-  Avatar, CountryFlag, Icon, Label, TextEllipsis, Tooltip,
-} from 'UI';
+import { Avatar, CountryFlag, Icon, Label, TextEllipsis, Tooltip } from 'UI';
 
 import Counter from './Counter';
 import ErrorBars from './ErrorBars';
 import PlayLink from './PlayLink';
 import SessionMetaList from './SessionMetaList';
 import stl from './sessionItem.module.css';
+import { useTranslation } from 'react-i18next';
 
 const ASSIST_ROUTE = assistRoute();
 const ASSIST_LIVE_SESSION = liveSession();
@@ -84,6 +83,7 @@ function SessionItem(props: RouteComponentProps & Props) {
   const { settingsStore, sessionStore } = useStore();
   const { timezone, shownTimezone } = settingsStore.sessionSettings;
   const [prefetchState, setPrefetched] = React.useState(PREFETCH_STATE.none);
+  const { t } = useTranslation();
 
   const {
     session,
@@ -129,11 +129,12 @@ function SessionItem(props: RouteComponentProps & Props) {
   const formattedDuration = durationFormatted(duration);
   const hasUserId = userId || userAnonymousId;
   const isSessions = isRoute(SESSIONS_ROUTE, location.pathname);
-  const isAssist = (!ignoreAssist
-      && (isRoute(ASSIST_ROUTE, location.pathname)
-        || isRoute(ASSIST_LIVE_SESSION, location.pathname)
-        || location.pathname.includes('multiview')))
-    || props.live;
+  const isAssist =
+    (!ignoreAssist &&
+      (isRoute(ASSIST_ROUTE, location.pathname) ||
+        isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
+        location.pathname.includes('multiview'))) ||
+    props.live;
 
   const isLastPlayed = lastPlayedSessionId === sessionId;
 
@@ -144,11 +145,12 @@ function SessionItem(props: RouteComponentProps & Props) {
 
   const handleHover = async () => {
     if (
-      prefetchState !== PREFETCH_STATE.none
-      || props.live
-      || isAssist
-      || isMobile
-    ) return;
+      prefetchState !== PREFETCH_STATE.none ||
+      props.live ||
+      isAssist ||
+      isMobile
+    )
+      return;
 
     setPrefetched(PREFETCH_STATE.loading);
     try {
@@ -160,10 +162,10 @@ function SessionItem(props: RouteComponentProps & Props) {
   };
   const populateData = () => {
     if (
-      props.live
-      || isAssist
-      || prefetchState === PREFETCH_STATE.none
-      || isMobile
+      props.live ||
+      isAssist ||
+      prefetchState === PREFETCH_STATE.none ||
+      isMobile
     ) {
       return;
     }
@@ -209,9 +211,11 @@ function SessionItem(props: RouteComponentProps & Props) {
                           !disableUser && hasUserId && !props.isDisabled,
                         'color-gray-medium': disableUser || !hasUserId,
                       })}
-                      onClick={() => (!disableUser && !hasUserFilter && hasUserId
-                        ? onUserClick(userId, userAnonymousId)
-                        : null)}
+                      onClick={() =>
+                        !disableUser && !hasUserFilter && hasUserId
+                          ? onUserClick(userId, userAnonymousId)
+                          : null
+                      }
                     >
                       <TextEllipsis
                         text={userDisplayName}
@@ -234,19 +238,16 @@ function SessionItem(props: RouteComponentProps & Props) {
                 <Tooltip
                   delay={0}
                   disabled={props.isDisabled}
-                  title={(
+                  title={
                     <div className="flex flex-col gap-1">
                       <span>
-                        Local Time:
-                        {' '}
-                        {formatTimeOrDate(startedAt, timezone, true)}
-                        {' '}
+                        {t('Local Time:')}&nbsp;
+                        {formatTimeOrDate(startedAt, timezone, true)}{' '}
                         {timezone.label}
                       </span>
                       {userTimezone ? (
                         <span>
-                          User's Time:
-                          {' '}
+                          {t("User's Time")}:&nbsp;
                           {formatTimeOrDate(
                             startedAt,
                             {
@@ -254,13 +255,12 @@ function SessionItem(props: RouteComponentProps & Props) {
                               value: userTimezone.split(':')[0],
                             },
                             true,
-                          )}
-                          {' '}
+                          )}{' '}
                           {userTimezone}
                         </span>
                       ) : null}
                     </div>
-                  )}
+                  }
                   className="w-fit !block"
                 >
                   <TextEllipsis
@@ -268,9 +268,9 @@ function SessionItem(props: RouteComponentProps & Props) {
                       startedAt,
                       shownTimezone === 'user' && userTimezone
                         ? {
-                          label: userTimezone.split('+').join(' +'),
-                          value: userTimezone.split(':')[0],
-                        }
+                            label: userTimezone.split('+').join(' +'),
+                            value: userTimezone.split(':')[0],
+                          }
                         : timezone,
                     )}
                     popupProps={{ inverted: true, size: 'tiny' }}
@@ -284,8 +284,8 @@ function SessionItem(props: RouteComponentProps & Props) {
                       <span className="mr-1">{eventsCount}</span>
                       <span>
                         {eventsCount === 0 || eventsCount > 1
-                          ? 'Events'
-                          : 'Event'}
+                          ? t('Events')
+                          : t('Event')}
                       </span>
                     </div>
                     <Icon name="circle-fill" size={3} className="mx-4" />
@@ -368,7 +368,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                       className="color-gray-medium text-xs"
                       style={{ whiteSpace: 'nowrap' }}
                     >
-                      CALL IN PROGRESS
+                      {t('CALL IN PROGRESS')}
                     </span>
                   </Label>
                 </div>
@@ -381,7 +381,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                         className="color-gray-medium text-xs"
                         style={{ whiteSpace: 'nowrap' }}
                       >
-                        LAST PLAYED
+                        {t('LAST PLAYED')}
                       </span>
                     </Label>
                   )}

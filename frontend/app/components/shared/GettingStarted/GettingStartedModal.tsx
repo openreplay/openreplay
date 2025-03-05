@@ -2,14 +2,14 @@ import React from 'react';
 import Modal from 'App/components/Modal/Modal';
 import { observer } from 'mobx-react-lite';
 import StepList, { Step } from './StepList';
-import CircleProgress from './CircleProgress';
-import GettingStartedProgress from './GettingStartedProgress';
+import { useTranslation } from 'react-i18next';
 
 export interface Props {
   list: Step[];
 }
 
 function GettingStartedModal(props: Props) {
+  const { t } = useTranslation();
   const { list } = props;
   const pendingSteps = list.filter((step) => step.status === 'pending');
   const completedSteps = list.filter(
@@ -20,8 +20,12 @@ function GettingStartedModal(props: Props) {
     <>
       <Modal.Header title="Setup Openreplay">
         <div className="px-4 pt-4">
-          <div className="text-2xl">Setup Openreplay</div>
-          <p>Find all the ways in which OpenReplay can benefit you and your product.</p>
+          <div className="text-2xl">{t('Setup Openreplay')}</div>
+          <p>
+            {t(
+              'Find all the ways in which OpenReplay can benefit you and your product.',
+            )}
+          </p>
         </div>
       </Modal.Header>
 

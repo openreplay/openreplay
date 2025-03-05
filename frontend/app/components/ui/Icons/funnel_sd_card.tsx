@@ -2,16 +2,14 @@
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Funnel_sd_card(props: Props) {
-  const {
-    size = 14, width = size, height = size, fill = '',
-  } = props;
+  const { size = 14, width = size, height = size, fill = '' } = props;
   return (
     <svg viewBox="0 0 16 16" width={`${width}px`} height={`${height}px`}>
       <path d="M6.25 3.5a.75.75 0 0 0-1.5 0v2a.75.75 0 0 0 1.5 0v-2zm2 0a.75.75 0 0 0-1.5 0v2a.75.75 0 0 0 1.5 0v-2zm2 0a.75.75 0 0 0-1.5 0v2a.75.75 0 0 0 1.5 0v-2zm2 0a.75.75 0 0 0-1.5 0v2a.75.75 0 0 0 1.5 0v-2z" />

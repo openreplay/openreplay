@@ -61,14 +61,12 @@ function CustomAreaChart(props: Props) {
             iconType="wye"
             className="font-normal"
             wrapperStyle={{ top: inGrid ? undefined : -18 }}
-            payload={
-              data.namesMap.map((key, index) => ({
-                value: key,
-                type: 'line',
-                color: colors[index],
-                id: key,
-              }))
-            }
+            payload={data.namesMap.map((key, index) => ({
+              value: key,
+              type: 'line',
+              color: colors[index],
+              id: key,
+            }))}
           />
         )}
         <CartesianGrid
@@ -76,7 +74,11 @@ function CustomAreaChart(props: Props) {
           vertical={false}
           stroke="rgba(0,0,0,.15)"
         />
-        <XAxis {...Styles.xaxis} dataKey="time" interval="equidistantPreserveStart" />
+        <XAxis
+          {...Styles.xaxis}
+          dataKey="time"
+          interval="equidistantPreserveStart"
+        />
         <YAxis
           {...yaxis}
           allowDecimals={false}
@@ -90,8 +92,8 @@ function CustomAreaChart(props: Props) {
           {...Styles.tooltip}
           content={<CustomTooltip hoveredSeries={hoveredSeries} />} // Pass hoveredSeries to tooltip
         />
-        {Array.isArray(reorderedNamesMap)
-          && reorderedNamesMap.map((key, index) => (
+        {Array.isArray(reorderedNamesMap) &&
+          reorderedNamesMap.map((key, index) => (
             <Area
               key={key}
               name={key}
@@ -99,23 +101,19 @@ function CustomAreaChart(props: Props) {
               dataKey={key}
               stroke={colors[data.namesMap.indexOf(key)]} // Match original color
               fill={colors[data.namesMap.indexOf(key)]}
-              fillOpacity={
-                hoveredSeries && hoveredSeries !== key ? 0.2 : 0.1
-              } // Adjust opacity for non-hovered lines
-              strokeOpacity={
-                hoveredSeries && hoveredSeries !== key ? 0.2 : 1
-              } // Adjust stroke opacity
+              fillOpacity={hoveredSeries && hoveredSeries !== key ? 0.2 : 0.1} // Adjust opacity for non-hovered lines
+              strokeOpacity={hoveredSeries && hoveredSeries !== key ? 0.2 : 1} // Adjust stroke opacity
               legendType={key === 'Total' ? 'none' : 'line'}
               dot={false}
               activeDot={
                 hoveredSeries === key
                   ? {
-                    r: 8,
-                    stroke: '#fff',
-                    strokeWidth: 2,
-                    fill: colors[data.namesMap.indexOf(key)],
-                    filter: 'drop-shadow(0px 0px 1px rgba(0, 0, 0, 0.2))',
-                  }
+                      r: 8,
+                      stroke: '#fff',
+                      strokeWidth: 2,
+                      fill: colors[data.namesMap.indexOf(key)],
+                      filter: 'drop-shadow(0px 0px 1px rgba(0, 0, 0, 0.2))',
+                    }
                   : false
               } // Show active dot only for the hovered line
               onMouseOver={handleMouseOver(key)} // Set hover state on mouse over

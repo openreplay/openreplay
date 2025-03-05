@@ -12,11 +12,8 @@ function CopyButton({ content, className }) {
     }, 1000);
   };
   return (
-    <button
-      className={className}
-      onClick={copyHandler}
-    >
-      { copied ? 'Copied' : 'Copy' }
+    <button className={className} onClick={copyHandler}>
+      {copied ? 'Copied' : 'Copy'}
     </button>
   );
 }

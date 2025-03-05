@@ -5,6 +5,7 @@ import { NoContent, Icon } from 'UI';
 import { tableColumnName } from 'App/constants/filterOptions';
 import { numberWithCommas } from 'App/utils';
 import { Table } from '../../common';
+import { useTranslation } from 'react-i18next';
 
 const getColumns = (metric) => [
   {
@@ -23,16 +24,20 @@ const getColumns = (metric) => [
 ];
 
 interface Props {
-    metric?: any,
-    data: any;
-    onClick?: (filters: any) => void;
-    isTemplate?: boolean;
+  metric?: any;
+  data: any;
+  onClick?: (filters: any) => void;
+  isTemplate?: boolean;
 }
 
 function CustomMetricTable(props: Props) {
   const {
-    metric = {}, data = { values: [] }, onClick = () => null, isTemplate,
+    metric = {},
+    data = { values: [] },
+    onClick = () => null,
+    isTemplate,
   } = props;
+  const { t } = useTranslation();
   const rows = List(data.values);
 
   const onClickHandler = (event: any, data: any) => {
@@ -56,12 +61,12 @@ function CustomMetricTable(props: Props) {
         style={{ minHeight: 220 }}
         show={data.values && data.values.length === 0}
         size="small"
-        title={(
+        title={
           <div className="flex items-center">
             <Icon name="info-circle" className="mr-2" size="14" />
-            No data available for the selected period.
+            {t('No data available for the selected period.')}
           </div>
-                  )}
+        }
       >
         <Table
           small

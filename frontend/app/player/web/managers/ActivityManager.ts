@@ -1,10 +1,13 @@
 import ListWalker from '../../common/ListWalker';
 
 class SkipIntervalCls {
-  constructor(readonly start = 0, readonly end = 0) {}
+  constructor(
+    readonly start = 0,
+    readonly end = 0,
+  ) {}
 
   get time(): number {
-  	return this.start;
+    return this.start;
   }
 
   contains(ts: number) {

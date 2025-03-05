@@ -41,7 +41,9 @@ function createFileRecorder(
 
   let recordedChunks: BlobPart[] = [];
   const SAVE_INTERVAL_MS = 200;
-  const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8,opus' });
+  const mediaRecorder = new MediaRecorder(stream, {
+    mimeType: 'video/webm; codecs=vp8,opus',
+  });
 
   mediaRecorder.ondataavailable = function (e) {
     if (e.data.size > 0) {
@@ -79,7 +81,11 @@ function saveFile(
   sessionId: string,
   saveCb: (saveObj: { name: string; duration: number }, blob: Blob) => void,
 ) {
-  const saveObject = { name: recName, duration: new Date().getTime() - startDate, sessionId };
+  const saveObject = {
+    name: recName,
+    duration: new Date().getTime() - startDate,
+    sessionId,
+  };
 
   const blob = new Blob(recordedChunks, {
     type: mimeType,
@@ -138,13 +144,20 @@ export async function screenRecorder(
       name: string;
       duration: number;
     },
-    blob: Blob
+    blob: Blob,
   ) => void,
   onStop: () => void,
 ) {
   try {
     const stream = await recordScreen();
-    const mediaRecorder = createFileRecorder(stream, FILE_TYPE, recName, sessionId, saveCb, onStop);
+    const mediaRecorder = createFileRecorder(
+      stream,
+      FILE_TYPE,
+      recName,
+      sessionId,
+      saveCb,
+      onStop,
+    );
 
     return () => {
       if (mediaRecorder.state !== 'inactive') {

@@ -55,7 +55,10 @@ export default class MessageLoader {
   createSpriteMap = () => {
     if (!this.spriteMapSvg) {
       this.domParser = new DOMParser();
-      this.spriteMapSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      this.spriteMapSvg = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'svg',
+      );
       this.spriteMapSvg.setAttribute('style', 'display: none;');
       this.spriteMapSvg.setAttribute('id', 'reconstructed-sprite');
     }
@@ -66,9 +69,10 @@ export default class MessageLoader {
     onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
     file?: string,
   ) {
-    const decrypt = shouldDecrypt && this.session.fileKey
-      ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
-      : (b: Uint8Array) => Promise.resolve(b);
+    const decrypt =
+      shouldDecrypt && this.session.fileKey
+        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
+        : (b: Uint8Array) => Promise.resolve(b);
     const fileReader = new MFileReader(
       new Uint8Array(),
       this.session.startedAt,
@@ -123,9 +127,9 @@ export default class MessageLoader {
             }
           }
           if (
-            msg.tp === MType.CreateDocument
-            && msg.time !== undefined
-            && msg.time < artificialStartTime
+            msg.tp === MType.CreateDocument &&
+            msg.time !== undefined &&
+            msg.time < artificialStartTime
           ) {
             artificialStartTime = msg.time;
             startTimeSet = true;
@@ -151,7 +155,11 @@ export default class MessageLoader {
           .sort(sortIframes);
 
         if (brokenMessages > 0) {
-          console.warn('Broken timestamp messages', brokenMessages, originalCopy);
+          console.warn(
+            'Broken timestamp messages',
+            brokenMessages,
+            originalCopy,
+          );
         }
 
         onMessagesDone(sortedMsgs, `${file} ${fileNum}`);
@@ -284,15 +292,18 @@ export default class MessageLoader {
   mobParser: (b: Uint8Array) => Promise<void>;
 
   loadMobs = async () => {
-    const loadMethod = this.session.domURL && this.session.domURL.length > 0
-      ? {
-        mobUrls: this.session.domURL,
-        parser: () => this.createNewParser(true, this.processMessages, 'd:dom'),
-      }
-      : {
-        mobUrls: this.session.mobsUrl,
-        parser: () => this.createNewParser(false, this.processMessages, 'm:dom'),
-      };
+    const loadMethod =
+      this.session.domURL && this.session.domURL.length > 0
+        ? {
+            mobUrls: this.session.domURL,
+            parser: () =>
+              this.createNewParser(true, this.processMessages, 'd:dom'),
+          }
+        : {
+            mobUrls: this.session.mobsUrl,
+            parser: () =>
+              this.createNewParser(false, this.processMessages, 'm:dom'),
+          };
 
     if (!this.mobParser) {
       this.mobParser = loadMethod.parser();
@@ -346,12 +357,14 @@ export default class MessageLoader {
       this.processMessages,
       'devtoolsEFS',
     );
-    const parseDomPromise: Promise<any> = domData.status === 'fulfilled'
-      ? domParser(domData.value)
-      : Promise.reject('No dom file in EFS');
-    const parseDevtoolsPromise: Promise<any> = devtoolsData.status === 'fulfilled'
-      ? devtoolsParser(devtoolsData.value)
-      : Promise.reject('No devtools file in EFS');
+    const parseDomPromise: Promise<any> =
+      domData.status === 'fulfilled'
+        ? domParser(domData.value)
+        : Promise.reject('No dom file in EFS');
+    const parseDevtoolsPromise: Promise<any> =
+      devtoolsData.status === 'fulfilled'
+        ? devtoolsParser(devtoolsData.value)
+        : Promise.reject('No devtools file in EFS');
 
     await Promise.all([parseDomPromise, parseDevtoolsPromise]);
     this.messageManager.onFileReadFinally();
@@ -374,8 +387,10 @@ const DOMMessages = [
 function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
   if (m1.time !== m2.time) return m1.time - m2.time;
 
-  if (m1.tp === MType.CreateDocument && m2.tp !== MType.CreateDocument) return -1;
-  if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument) return 1;
+  if (m1.tp === MType.CreateDocument && m2.tp !== MType.CreateDocument)
+    return -1;
+  if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument)
+    return 1;
 
   const m1IsDOM = DOMMessages.includes(m1.tp);
   const m2IsDOM = DOMMessages.includes(m2.tp);
@@ -391,9 +406,10 @@ function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
 }
 
 function sortIframes(m1, m2) {
-  if (m1.time === m2.time
-      && [MType.CreateIFrameDocument, MType.CreateElementNode].includes(m1.tp)
-      && [MType.CreateIFrameDocument, MType.CreateElementNode].includes(m2.tp)
+  if (
+    m1.time === m2.time &&
+    [MType.CreateIFrameDocument, MType.CreateElementNode].includes(m1.tp) &&
+    [MType.CreateIFrameDocument, MType.CreateElementNode].includes(m2.tp)
   ) {
     if (m1.frameID === m2.id) return 1;
     if (m1.id === m2.frameID) return -1;
@@ -448,7 +464,13 @@ function findBrokenNodes(nodes: any[]) {
   return result;
 }
 
-function handleSprites(potentialSpriteMap: Record<string, any>, parser: DOMParser, msg: Record<string, any>, spriteMapSvg: SVGElement, i: number) {
+function handleSprites(
+  potentialSpriteMap: Record<string, any>,
+  parser: DOMParser,
+  msg: Record<string, any>,
+  spriteMapSvg: SVGElement,
+  i: number,
+) {
   const [_, svgData] = msg.value.split('_$OPENREPLAY_SPRITE$_');
   const potentialSprite = potentialSpriteMap[svgData];
   if (potentialSprite) {
@@ -457,10 +479,16 @@ function handleSprites(potentialSpriteMap: Record<string, any>, parser: DOMParse
     const svgDoc = parser.parseFromString(svgData, 'image/svg+xml');
     const originalSvg = svgDoc.querySelector('svg');
     if (originalSvg) {
-      const symbol = document.createElementNS('http://www.w3.org/2000/svg', 'symbol');
+      const symbol = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'symbol',
+      );
       const symbolId = `symbol-${msg.id || `ind-${i}`}`; // Generate an ID if missing
       symbol.setAttribute('id', symbolId);
-      symbol.setAttribute('viewBox', originalSvg.getAttribute('viewBox') || '0 0 24 24');
+      symbol.setAttribute(
+        'viewBox',
+        originalSvg.getAttribute('viewBox') || '0 0 24 24',
+      );
       symbol.innerHTML = originalSvg.innerHTML;
 
       spriteMapSvg.appendChild(symbol);
@@ -471,4 +499,5 @@ function handleSprites(potentialSpriteMap: Record<string, any>, parser: DOMParse
 }
 
 // @ts-ignore
-window.searchOrphans = (msgs) => findBrokenNodes(msgs.filter((m) => [8, 9, 10, 70].includes(m.tp)));
+window.searchOrphans = (msgs) =>
+  findBrokenNodes(msgs.filter((m) => [8, 9, 10, 70].includes(m.tp)));

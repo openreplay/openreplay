@@ -1,28 +1,28 @@
 import { DownOutlined, TableOutlined } from '@ant-design/icons';
-import {
-  Button, Dropdown, Space, Typography, Tooltip,
-} from 'antd';
+import { Button, Dropdown, Space, Typography, Tooltip } from 'antd';
 import { durationFromMsFormatted } from 'App/date';
 import { Member } from 'App/services/AssistStatsService';
 import { getInitials, exportCSVFile } from 'App/utils';
+import { TFunction } from 'i18next';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Loader, NoContent } from 'UI';
 
-const items = [
+const items = (t: TFunction) => [
   {
-    label: 'Sessions Assisted',
+    label: t('Sessions Assisted'),
     key: 'sessionsAssisted',
   },
   {
-    label: 'Live Duration',
+    label: t('Live Duration'),
     key: 'assistDuration',
   },
   {
-    label: 'Call Duration',
+    label: t('Call Duration'),
     key: 'callDuration',
   },
   {
-    label: 'Remote Duration',
+    label: t('Remote Duration'),
     key: 'controlDuration',
   },
 ];
@@ -38,20 +38,21 @@ function TeamMembers({
   onMembersSort: (v: string) => void;
   membersSort: string;
 }) {
-  const [dateRange, setDateRange] = React.useState(items[0].label);
+  const { t } = useTranslation();
+  const [dateRange, setDateRange] = React.useState(items(t)[0].label);
   const updateRange = ({ key }: { key: string }) => {
-    const item = items.find((item) => item.key === key);
-    setDateRange(item?.label || items[0].label);
-    onMembersSort(item?.key || items[0].key);
+    const item = items(t).find((item) => item.key === key);
+    setDateRange(item?.label || items(t)[0].label);
+    onMembersSort(item?.key || items(t)[0].key);
   };
 
   const onExport = () => {
     const headers = [
-      { label: 'Team Member', key: 'name' },
-      { label: 'Sessions Assisted', key: 'sessionsAssisted' },
-      { label: 'Live Duration', key: 'assistDuration' },
-      { label: 'Call Duration', key: 'callDuration' },
-      { label: 'Remote Duration', key: 'controlDuration' },
+      { label: t('Team Member'), key: 'name' },
+      { label: t('Sessions Assisted'), key: 'sessionsAssisted' },
+      { label: t('Live Duration'), key: 'assistDuration' },
+      { label: t('Call Duration'), key: 'callDuration' },
+      { label: t('Remote Duration'), key: 'controlDuration' },
     ];
 
     const data = topMembers.list.map((member) => ({
@@ -62,14 +63,18 @@ function TeamMembers({
       controlDuration: `"${durationFromMsFormatted(member.controlDuration)}"`,
     }));
 
-    exportCSVFile(headers, data, `Team_Members_${new Date().toLocaleDateString()}`);
+    exportCSVFile(
+      headers,
+      data,
+      `Team_Members_${new Date().toLocaleDateString()}`,
+    );
   };
 
   return (
     <div className="rounded bg-white border p-2 h-full w-full flex flex-col">
       <div className="flex items-center">
         <Typography.Title style={{ marginBottom: 0 }} level={5}>
-          Team Members
+          {t('Team Members')}
         </Typography.Title>
         <div className="ml-auto flex items-center gap-2">
           <Dropdown menu={{ items, onClick: updateRange }}>
@@ -80,7 +85,13 @@ function TeamMembers({
               </Space>
             </Button>
           </Dropdown>
-          <Tooltip title={topMembers.list.length === 0 ? 'No data at the moment to export.' : 'Export CSV'}>
+          <Tooltip
+            title={
+              topMembers.list.length === 0
+                ? t('No data at the moment to export.')
+                : t('Export CSV')
+            }
+          >
             <Button
               onClick={onExport}
               shape="default"
@@ -91,18 +102,31 @@ function TeamMembers({
           </Tooltip>
         </div>
       </div>
-      <Loader loading={isLoading} style={{ minHeight: 150, height: 300 }} size={48}>
+      <Loader
+        loading={isLoading}
+        style={{ minHeight: 150, height: 300 }}
+        size={48}
+      >
         <NoContent
           size="small"
-          title={<div className="text-base font-normal">No data available</div>}
+          title={
+            <div className="text-base font-normal">
+              {t('No data available')}
+            </div>
+          }
           show={topMembers.list && topMembers.list.length === 0}
           style={{ height: '100px' }}
         >
           {topMembers.list.map((member) => (
-            <div key={member.name} className="w-full flex items-center gap-2 border-b pt-2 pb-1">
+            <div
+              key={member.name}
+              className="w-full flex items-center gap-2 border-b pt-2 pb-1"
+            >
               <div className="relative flex items-center justify-center w-10 h-10">
                 <div className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx" />
-                <div className="text-lg uppercase color-tealx">{getInitials(member.name)}</div>
+                <div className="text-lg uppercase color-tealx">
+                  {getInitials(member.name)}
+                </div>
               </div>
               <div>{member.name}</div>
               <div className="ml-auto">
@@ -117,7 +141,7 @@ function TeamMembers({
       <div className="flex items-center justify-center text-disabled-text p-2 mt-auto">
         {isLoading || topMembers.list.length === 0
           ? ''
-          : `Showing 1 to ${topMembers.total} of the total`}
+          : `${t('Showing 1 to')} ${topMembers.total} ${t('of the total')}`}
       </div>
     </div>
   );

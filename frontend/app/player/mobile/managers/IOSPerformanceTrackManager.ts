@@ -8,18 +8,21 @@ const performanceEvTypes = {
 };
 
 export type PerformanceChartPoint = {
-  time: number,
-  cpu: number | null,
-  memory: number | null,
-  isBackground: boolean,
-}
+  time: number;
+  cpu: number | null;
+  memory: number | null;
+  isBackground: boolean;
+};
 
 export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanceEvent> {
   private chart: Array<PerformanceChartPoint> = [];
 
   private isInBg = false;
 
-  lastData: { cpu: number | null, memory: number | null } = { cpu: null, memory: null };
+  lastData: { cpu: number | null; memory: number | null } = {
+    cpu: null,
+    memory: null,
+  };
 
   append(msg: IosPerformanceEvent): void {
     if (!Object.values(performanceEvTypes).includes(msg.name)) {

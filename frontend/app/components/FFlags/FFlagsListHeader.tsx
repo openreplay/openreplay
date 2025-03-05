@@ -4,8 +4,10 @@ import { Button } from 'antd';
 import FFlagsSearch from 'Components/FFlags/FFlagsSearch';
 import { useHistory } from 'react-router';
 import { newFFlag, withSiteId } from 'App/routes';
+import { useTranslation } from 'react-i18next';
 
 function FFlagsListHeader({ siteId }: { siteId: string }) {
+  const { t } = useTranslation();
   const history = useHistory();
 
   return (
@@ -14,8 +16,11 @@ function FFlagsListHeader({ siteId }: { siteId: string }) {
         <PageTitle title="Feature Flags" />
       </div>
       <div className="ml-auto flex items-center">
-        <Button type="primary" onClick={() => history.push(withSiteId(newFFlag(), siteId))}>
-          Create Feature Flag
+        <Button
+          type="primary"
+          onClick={() => history.push(withSiteId(newFFlag(), siteId))}
+        >
+          {t('Create Feature Flag')}
         </Button>
         <div className="mx-2" />
         <div className="w-1/4" style={{ minWidth: 300 }}>

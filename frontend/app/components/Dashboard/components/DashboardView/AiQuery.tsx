@@ -11,6 +11,7 @@ import { useStore } from 'App/mstore';
 import { Icon, Input } from 'UI';
 
 import CreateCard from '../DashboardList/NewDashModal/CreateCard';
+import { useTranslation } from 'react-i18next';
 
 function AiQuery() {
   const grad = {
@@ -27,6 +28,7 @@ function AiQuery() {
 }
 
 const InputBox = observer(({ inModal }: { inModal?: boolean }) => {
+  const { t } = useTranslation();
   const { aiFiltersStore, metricStore } = useStore();
   const metric = metricStore.instance;
   const fetchResults = () => {
@@ -42,7 +44,9 @@ const InputBox = observer(({ inModal }: { inModal?: boolean }) => {
       {!inModal ? (
         <div className="flex items-center mb-2 gap-2">
           <Icon name="sparkles" size={16} />
-          <div className="font-medium">What would you like to visualize?</div>
+          <div className="font-medium">
+            {t('What would you like to visualize?')}
+          </div>
         </div>
       ) : null}
       <div style={gradientBox}>
@@ -60,7 +64,7 @@ const InputBox = observer(({ inModal }: { inModal?: boolean }) => {
               fetchResults();
             }
           }}
-          placeholder="E.g., Track all the errors in checkout flow."
+          placeholder={t('E.g., Track all the errors in checkout flow.')}
           className="ml-2 px-2 pe-9 text-lg placeholder-lg !border-0 rounded-e-full nofocus"
           leadingButton={
             aiFiltersStore.query !== '' ? (
@@ -113,14 +117,13 @@ const QueryModal = observer(() => {
 });
 
 function Loader() {
+  const { t } = useTranslation();
   return (
-    <div
-      className="flex items-center justify-center flex-col font-medium text-xl min-h-80"
-    >
+    <div className="flex items-center justify-center flex-col font-medium text-xl min-h-80">
       <div style={{ width: 150, height: 150 }}>
         <Lottie animationData={aiSpinner} loop />
       </div>
-      <div>AI is brewing your card, wait a few seconds...</div>
+      <div>{t('AI is brewing your card, wait a few seconds...')}</div>
     </div>
   );
 }

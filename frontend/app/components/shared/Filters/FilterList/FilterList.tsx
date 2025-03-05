@@ -6,6 +6,7 @@ import cn from 'classnames';
 import EventsOrder from 'Shared/Filters/FilterList/EventsOrder';
 import FilterItem from '../FilterItem';
 import FilterSelection from '../FilterSelection/FilterSelection';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   filter?: any;
@@ -30,9 +31,9 @@ interface Props {
 }
 
 export const FilterList = observer((props: Props) => {
+  const { t } = useTranslation();
   const {
-    observeChanges = () => {
-    },
+    observeChanges = () => {},
     filter,
     excludeFilterKeys = [],
     isConditional,
@@ -62,7 +63,7 @@ export const FilterList = observer((props: Props) => {
       }}
     >
       <div className="flex items-center py-2" style={{ gap: '0.65rem' }}>
-        <div className="font-medium">Filters</div>
+        <div className="font-medium">{t('Filters')}</div>
         <FilterSelection
           mode="filters"
           filter={undefined}
@@ -77,40 +78,42 @@ export const FilterList = observer((props: Props) => {
             size="small"
             className="btn-add-filter"
           >
-            Add
+            {t('Add')}
           </Button>
         </FilterSelection>
       </div>
-      {filters.map((filter: any, filterIndex: any) => (!filter.isEvent ? (
-        <div
-          key={`${filter.key}-${filterIndex}`}
-          className="hover:bg-active-blue px-5 "
-          style={{
-            marginLeft: '-1rem',
-            width: 'calc(100% + 2rem)',
-          }}
-        >
-          <FilterItem
-            key={filterIndex}
-            readonly={props.readonly}
-            isFilter
-            filterIndex={filterIndex}
-            filter={filter}
-            onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
-            onRemoveFilter={() => onRemoveFilter(filterIndex)}
-            excludeFilterKeys={excludeFilterKeys}
-            isConditional={isConditional}
-          />
-        </div>
-      ) : null))}
+      {filters.map((filter: any, filterIndex: any) =>
+        !filter.isEvent ? (
+          <div
+            key={`${filter.key}-${filterIndex}`}
+            className="hover:bg-active-blue px-5 "
+            style={{
+              marginLeft: '-1rem',
+              width: 'calc(100% + 2rem)',
+            }}
+          >
+            <FilterItem
+              key={filterIndex}
+              readonly={props.readonly}
+              isFilter
+              filterIndex={filterIndex}
+              filter={filter}
+              onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
+              onRemoveFilter={() => onRemoveFilter(filterIndex)}
+              excludeFilterKeys={excludeFilterKeys}
+              isConditional={isConditional}
+            />
+          </div>
+        ) : null,
+      )}
     </div>
   );
 });
 
 export const EventsList = observer((props: Props) => {
+  const { t } = useTranslation();
   const {
-    observeChanges = () => {
-    },
+    observeChanges = () => {},
     filter,
     hideEventsOrder = false,
     saveRequestPayloads,
@@ -192,7 +195,16 @@ export const EventsList = observer((props: Props) => {
       setHoveredItem({ i: null, position: null });
       setDraggedItem(null);
     },
-    [draggedInd, filters, calculateNewPosition, hoveredItem.i, hoveredItem.position, props, setHoveredItem, setDraggedItem],
+    [
+      draggedInd,
+      filters,
+      calculateNewPosition,
+      hoveredItem.i,
+      hoveredItem.position,
+      props,
+      setHoveredItem,
+      setDraggedItem,
+    ],
   );
 
   const eventsNum = filters.filter((i: any) => i.isEvent).length;
@@ -211,7 +223,7 @@ export const EventsList = observer((props: Props) => {
       }}
     >
       <div className="flex items-center mb-2 gap-2">
-        <div className="font-medium">Events</div>
+        <div className="font-medium">{t('Events')}</div>
         {cannotAdd ? null : (
           <FilterSelection
             mode="events"
@@ -226,7 +238,7 @@ export const EventsList = observer((props: Props) => {
               size="small"
               className="btn-add-event"
             >
-              Add
+              {t('Add')}
             </Button>
           </FilterSelection>
         )}
@@ -235,77 +247,88 @@ export const EventsList = observer((props: Props) => {
           {!hideEventsOrder && (
             <EventsOrder filter={filter} onChange={props.onChangeEventsOrder} />
           )}
-          {actions
-            && actions.map((action, index) => <div key={index}>{action}</div>)}
+          {actions &&
+            actions.map((action, index) => <div key={index}>{action}</div>)}
         </div>
       </div>
       <div className="flex flex-col ">
-        {filters.map((filter: any, filterIndex: number) => (filter.isEvent ? (
-          <div
-            className={cn(
-              'hover:bg-active-blue px-5 pe-3 gap-2 items-center flex',
-              {
-                'bg-[#f6f6f6]': hoveredItem.i === filterIndex,
-              },
-            )}
-            style={{
-              pointerEvents: 'unset',
-              paddingTop:
-                  hoveredItem.i === filterIndex && hoveredItem.position === 'top'
+        {filters.map((filter: any, filterIndex: number) =>
+          filter.isEvent ? (
+            <div
+              className={cn(
+                'hover:bg-active-blue px-5 pe-3 gap-2 items-center flex',
+                {
+                  'bg-[#f6f6f6]': hoveredItem.i === filterIndex,
+                },
+              )}
+              style={{
+                pointerEvents: 'unset',
+                paddingTop:
+                  hoveredItem.i === filterIndex &&
+                  hoveredItem.position === 'top'
                     ? ''
                     : '',
-              paddingBottom:
-                  hoveredItem.i === filterIndex && hoveredItem.position === 'bottom'
+                paddingBottom:
+                  hoveredItem.i === filterIndex &&
+                  hoveredItem.position === 'bottom'
                     ? ''
                     : '',
-              marginLeft: '-1rem',
-              width: 'calc(100% + 2rem)',
-              alignItems: 'start',
-              borderTop:
-                  hoveredItem.i === filterIndex && hoveredItem.position === 'top'
+                marginLeft: '-1rem',
+                width: 'calc(100% + 2rem)',
+                alignItems: 'start',
+                borderTop:
+                  hoveredItem.i === filterIndex &&
+                  hoveredItem.position === 'top'
                     ? '1px dashed #888'
                     : undefined,
-              borderBottom:
-                  hoveredItem.i === filterIndex && hoveredItem.position === 'bottom'
+                borderBottom:
+                  hoveredItem.i === filterIndex &&
+                  hoveredItem.position === 'bottom'
                     ? '1px dashed #888'
                     : undefined,
-            }}
-
-            id={`${filter.key}-${filterIndex}`}
-            onDragOver={(e) => handleDragOverEv(e, filterIndex)}
-            onDrop={(e) => handleDrop(e)}
-            key={`${filter.key}-${filterIndex}`}
-          >
-            {!!props.onFilterMove && eventsNum > 1 ? (
-              <div
-                className="cursor-grab text-neutral-500/90 hover:bg-white px-1 mt-2.5 rounded-lg"
-                draggable={!!props.onFilterMove}
-                onDragStart={(e) => handleDragStart(e, filterIndex, `${filter.key}-${filterIndex}`)}
-                onDragEnd={() => {
-                  setHoveredItem({ i: null, position: null });
-                  setDraggedItem(null);
-                }}
-                style={{
-                  cursor: draggedInd !== null ? 'grabbing' : 'grab',
-                }}
-              >
-                <GripVertical size={16} />
-              </div>
-            ) : null}
-            <FilterItem
-              filterIndex={rowIndex++}
-              filter={filter}
-              onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
-              onRemoveFilter={() => onRemoveFilter(filterIndex)}
-              saveRequestPayloads={saveRequestPayloads}
-              disableDelete={cannotDeleteFilter}
-              excludeFilterKeys={excludeFilterKeys}
-              readonly={props.readonly}
-              isConditional={isConditional}
-              excludeCategory={excludeCategory}
-            />
-          </div>
-        ) : null))}
+              }}
+              id={`${filter.key}-${filterIndex}`}
+              onDragOver={(e) => handleDragOverEv(e, filterIndex)}
+              onDrop={(e) => handleDrop(e)}
+              key={`${filter.key}-${filterIndex}`}
+            >
+              {!!props.onFilterMove && eventsNum > 1 ? (
+                <div
+                  className="cursor-grab text-neutral-500/90 hover:bg-white px-1 mt-2.5 rounded-lg"
+                  draggable={!!props.onFilterMove}
+                  onDragStart={(e) =>
+                    handleDragStart(
+                      e,
+                      filterIndex,
+                      `${filter.key}-${filterIndex}`,
+                    )
+                  }
+                  onDragEnd={() => {
+                    setHoveredItem({ i: null, position: null });
+                    setDraggedItem(null);
+                  }}
+                  style={{
+                    cursor: draggedInd !== null ? 'grabbing' : 'grab',
+                  }}
+                >
+                  <GripVertical size={16} />
+                </div>
+              ) : null}
+              <FilterItem
+                filterIndex={rowIndex++}
+                filter={filter}
+                onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
+                onRemoveFilter={() => onRemoveFilter(filterIndex)}
+                saveRequestPayloads={saveRequestPayloads}
+                disableDelete={cannotDeleteFilter}
+                excludeFilterKeys={excludeFilterKeys}
+                readonly={props.readonly}
+                isConditional={isConditional}
+                excludeCategory={excludeCategory}
+              />
+            </div>
+          ) : null,
+        )}
       </div>
     </div>
   );

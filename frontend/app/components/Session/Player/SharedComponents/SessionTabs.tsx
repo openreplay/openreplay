@@ -4,6 +4,7 @@ import cn from 'classnames';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { useModal } from 'Components/Modal';
 import Tab from './Tab';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   tabs: { tab: string; idx: number }[];
@@ -14,15 +15,12 @@ interface Props {
 
 const DISPLAY_LIMIT = 5;
 
-function Modal({
-  tabs, currentTab, changeTab, hideModal,
-}: Props) {
+function Modal({ tabs, currentTab, changeTab, hideModal }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="h-screen overflow-y-scroll">
       <div className="text-2xl font-semibold p-4">
-        {tabs.length}
-        {' '}
-        Tabs
+        {tabs.length} {t('Tabs')}
       </div>
       {tabs.map((tab, i) => (
         <div
@@ -36,9 +34,7 @@ function Modal({
             'cursor-pointer border-b p-4 hover:bg-active-blue',
           )}
         >
-          Tab
-          {' '}
-          {i + 1}
+          {t('Tab')}&nbsp;{i + 1}
         </div>
       ))}
     </div>
@@ -46,10 +42,14 @@ function Modal({
 }
 
 function SessionTabs({ isLive }: { isLive?: boolean }) {
+  const { t } = useTranslation();
   const { showModal, hideModal } = useModal();
   const { player, store } = React.useContext(PlayerContext);
   const {
-    tabs = new Set('back-compat'), currentTab, closedTabs, tabNames,
+    tabs = new Set('back-compat'),
+    currentTab,
+    closedTabs,
+    tabNames,
   } = store.get();
 
   const tabsArr = Array.from(tabs).map((tab, idx) => ({
@@ -60,13 +60,14 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
   const shouldTruncate = tabsArr.length > DISPLAY_LIMIT;
   const actualTabs = shouldTruncate ? tabsArr.slice(0, DISPLAY_LIMIT) : tabsArr;
 
-  const shownTabs = actualTabs.findIndex((el) => el.tab === currentTab) !== -1
-    ? actualTabs
-    : actualTabs.concat({
-      tab: currentTab,
-      isClosed: false,
-      idx: tabsArr.findIndex((tEl) => tEl.tab === currentTab),
-    });
+  const shownTabs =
+    actualTabs.findIndex((el) => el.tab === currentTab) !== -1
+      ? actualTabs
+      : actualTabs.concat({
+          tab: currentTab,
+          isClosed: false,
+          idx: tabsArr.findIndex((tEl) => tEl.tab === currentTab),
+        });
   const changeTab = (tab: string) => {
     if (isLive) return;
     player.changeTab(tab);
@@ -74,7 +75,12 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
 
   const openModal = () => {
     showModal(
-      <Modal hideModal={hideModal} currentTab={currentTab} changeTab={changeTab} tabs={tabsArr} />,
+      <Modal
+        hideModal={hideModal}
+        currentTab={currentTab}
+        changeTab={changeTab}
+        tabs={tabsArr}
+      />,
       {
         right: true,
       },
@@ -104,10 +110,7 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
             '!border-t-transparent !border-l-transparent !border-r-transparent',
           )}
         >
-          +
-          {tabsArr.length - DISPLAY_LIMIT}
-          {' '}
-          More
+          +{tabsArr.length - DISPLAY_LIMIT}&nbsp;{t('More')}
         </div>
       ) : null}
     </>

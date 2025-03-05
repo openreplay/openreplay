@@ -6,11 +6,11 @@ import { Loader, Pagination, NoContent } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import AuditDetailModal from '../AuditDetailModal';
 import AuditListItem from '../AuditListItem';
+import { useTranslation } from 'react-i18next';
 
-interface Props {
-
-}
+interface Props {}
 function AuditList(props: Props) {
+  const { t } = useTranslation();
   const { auditStore } = useStore();
   const loading = useObserver(() => auditStore.isLoading);
   const list = useObserver(() => auditStore.list);
@@ -35,26 +35,31 @@ function AuditList(props: Props) {
   return useObserver(() => (
     <Loader loading={loading}>
       <NoContent
-        title={(
+        title={
           <div className="flex flex-col items-center justify-center">
             <AnimatedSVG name={ICONS.NO_AUDIT_TRAIL} size={60} />
-            <div className="text-center my-4">No data available</div>
+            <div className="text-center my-4">{t('No data available')}</div>
           </div>
-                  )}
+        }
         size="small"
         show={list.length === 0}
       >
         <div className="grid grid-cols-12 py-3 px-5 font-medium">
-          <div className="col-span-5">Name</div>
-          <div className="col-span-4">Action</div>
-          <div className="col-span-3">Time</div>
+          <div className="col-span-5">{t('Name')}</div>
+          <div className="col-span-4">{t('Action')}</div>
+          <div className="col-span-3">{t('Time')}</div>
         </div>
 
         {list.map((item, index) => (
           <AuditListItem
             key={index}
             audit={item}
-            onShowDetails={() => showModal(<AuditDetailModal audit={item} />, { right: true, width: 500 })}
+            onShowDetails={() =>
+              showModal(<AuditDetailModal audit={item} />, {
+                right: true,
+                width: 500,
+              })
+            }
           />
         ))}
 

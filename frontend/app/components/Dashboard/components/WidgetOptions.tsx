@@ -6,9 +6,7 @@ import {
   TIMESERIES,
   USER_PATH,
 } from 'App/constants/card';
-import {
-  Select, Space, Switch, Dropdown, Button,
-} from 'antd';
+import { Select, Space, Switch, Dropdown, Button } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore';
 import ClickMapRagePicker from 'Components/Dashboard/components/ClickMapRagePicker/ClickMapRagePicker';
@@ -27,8 +25,10 @@ import {
   ChartColumnBig,
   ChartBarBig,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 function WidgetOptions() {
+  const { t } = useTranslation();
   const { metricStore } = useStore();
   const metric: any = metricStore.instance;
 
@@ -52,35 +52,38 @@ function WidgetOptions() {
         >
           <Space>
             <Switch checked={metric.hideExcess} size="small" />
-            <span className="mr-4 color-gray-medium">Group Minor Paths</span>
+            <span className="mr-4 color-gray-medium">
+              {t('Group Minor Paths')}
+            </span>
           </Space>
         </a>
       )}
 
-      {metric.metricType === TIMESERIES && <SeriesTypeOptions metric={metric} />}
-      {(metric.metricType === FUNNEL || metric.metricType === TABLE)
-        && metric.metricOf !== FilterKey.USERID
-        && metric.metricOf !== FilterKey.ERRORS && (
+      {metric.metricType === TIMESERIES && (
+        <SeriesTypeOptions metric={metric} />
+      )}
+      {(metric.metricType === FUNNEL || metric.metricType === TABLE) &&
+        metric.metricOf !== FilterKey.USERID &&
+        metric.metricOf !== FilterKey.ERRORS && (
           <Dropdown
             trigger={['click']}
             menu={{
               selectable: true,
               items: [
-                { key: 'sessionCount', label: 'All Sessions' },
-                { key: 'userCount', label: 'Unique Users' },
+                { key: 'sessionCount', label: t('All Sessions') },
+                { key: 'userCount', label: t('Unique Users') },
               ],
               onClick: (info: { key: string }) => handleChange(info.key),
             }}
-
           >
             <Button type="text" variant="text" size="small">
               {metric.metricFormat === 'sessionCount'
-                ? 'All Sessions'
-                : 'Unique Users'}
+                ? t('All Sessions')
+                : t('Unique Users')}
               <DownOutlined className="text-sm" />
             </Button>
           </Dropdown>
-      )}
+        )}
       {hasViewTypes && <WidgetViewTypeOptions metric={metric} />}
       {metric.metricType === HEATMAP && <ClickMapRagePicker />}
     </div>
@@ -88,8 +91,9 @@ function WidgetOptions() {
 }
 
 const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
+  const { t } = useTranslation();
   const items = {
-    sessionCount: 'Total Sessions',
+    sessionCount: t('Total Sessions'),
     userCount: 'Unique Users',
   };
   const chartIcons = {
@@ -125,7 +129,7 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
       >
         <Space>
           {chartIcons[metric.metricOf]}
-          <div>{items[metric.metricOf] || 'Total Sessions'}</div>
+          <div>{items[metric.metricOf] || t('Total Sessions')}</div>
           <DownOutlined className="text-sm" />
         </Space>
       </Button>
@@ -150,7 +154,8 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
     metric: 'Metric',
     table: 'Table',
   };
-  const usedChartTypes = metric.metricType === FUNNEL ? funnelChartTypes : chartTypes;
+  const usedChartTypes =
+    metric.metricType === FUNNEL ? funnelChartTypes : chartTypes;
   const chartIcons = {
     lineChart: <ChartLine size={16} strokeWidth={1} />,
     barChart: <ChartColumn size={16} strokeWidth={1} />,

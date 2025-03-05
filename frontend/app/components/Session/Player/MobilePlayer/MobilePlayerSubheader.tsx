@@ -43,7 +43,11 @@ function SubHeader(props: Props) {
       });
     }
     openModal(
-      <IssueForm sessionId={currentSession.sessionId} closeHandler={closeModal} errors={[]} />,
+      <IssueForm
+        sessionId={currentSession.sessionId}
+        closeHandler={closeModal}
+        errors={[]}
+      />,
       {
         title: 'Create Issue',
       },
@@ -53,9 +57,7 @@ function SubHeader(props: Props) {
   return (
     <div className="w-full px-4 flex items-center border-b relative">
       <Tag color="green" bordered={false} className="rounded-full">
-        {isIOS ? 'iOS' : 'Android'}
-        {' '}
-        BETA
+        {isIOS ? 'iOS' : 'Android'} BETA
       </Tag>
       <div
         className="ml-auto text-sm flex items-center color-gray-medium gap-2"
@@ -68,14 +70,16 @@ function SubHeader(props: Props) {
           <AntButton
             size="small"
             className="flex items-center justify-center"
-            onClick={() => openModal(
-              <ShareModal
-                showCopyLink
-                hideModal={closeModal}
-                time={store?.get().time}
-              />,
-              { title: 'Share Session' },
-            )}
+            onClick={() =>
+              openModal(
+                <ShareModal
+                  showCopyLink
+                  hideModal={closeModal}
+                  time={store?.get().time}
+                />,
+                { title: 'Share Session' },
+              )
+            }
           >
             <ShareAltOutlined />
           </AntButton>

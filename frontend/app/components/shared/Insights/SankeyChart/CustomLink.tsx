@@ -64,7 +64,13 @@ const CustomLink: React.FC<CustomLinkProps> = (props) => {
             ${sourceX},${sourceY - linkWidth / 2}
           Z
         `}
-        fill={isActive ? 'rgba(57, 78, 255, 1)' : (isHover ? 'rgba(57, 78, 255, 0.5)' : fill)}
+        fill={
+          isActive
+            ? 'rgba(57, 78, 255, 1)'
+            : isHover
+              ? 'rgba(57, 78, 255, 0.5)'
+              : fill
+        }
         strokeWidth="1"
         strokeOpacity={props.strokeOpacity}
         onMouseEnter={() => {

@@ -19,6 +19,7 @@ import BottomBlock from '../BottomBlock/index';
 import DiffRow from './DiffRow';
 import stl from './storage.module.css';
 import ReduxViewer from './ReduxViewer';
+import { useTranslation } from 'react-i18next';
 
 function getActionsName(type: string) {
   switch (type) {
@@ -40,6 +41,7 @@ const storageDecodeKeys = {
 };
 
 function Storage() {
+  const { t } = useTranslation();
   const { uiPlayerStore } = useStore();
   const hintIsHidden = uiPlayerStore.hiddenHints.storage;
   const { hideHint } = uiPlayerStore;
@@ -85,7 +87,10 @@ function Storage() {
     return { ...pureMSG, ...decoded };
   };
 
-  const decodedList = React.useMemo(() => listNow.map((msg) => decodeMessage(msg)), [listNow.length]);
+  const decodedList = React.useMemo(
+    () => listNow.map((msg) => decodeMessage(msg)),
+    [listNow.length],
+  );
 
   const focusNextButton = () => {
     if (lastBtnRef.current) {
@@ -121,14 +126,16 @@ function Storage() {
           style={{ flex: 3 }}
           className="flex flex-col p-2 pr-0 font-mono text-disabled-text"
         >
-          No diff
+          {t('No diff')}
         </div>
       );
     }
 
     return (
       <div style={{ flex: 3 }} className="flex flex-col p-1 font-mono">
-        {stateDiff.map((d: Record<string, any>, i: number) => renderDiffs(d, i))}
+        {stateDiff.map((d: Record<string, any>, i: number) =>
+          renderDiffs(d, i),
+        )}
       </div>
     );
   };
@@ -229,12 +236,12 @@ function Storage() {
                 className={stl.button}
                 onClick={() => player.jump(item.time)}
               >
-                JUMP
+                {t('JUMP')}
               </button>
             )}
             {i + 1 === listNow.length && i + 1 < list.length && (
               <button className={stl.button} ref={lastBtnRef} onClick={goNext}>
-                NEXT
+                {t('NEXT')}
               </button>
             )}
           </div>
@@ -256,11 +263,11 @@ function Storage() {
               style={{ width: '25%', marginRight: 20 }}
               className="font-semibold flex items-center gap-2"
             >
-              <h3>STATE</h3>
+              <h3>{t('STATE')}</h3>
             </div>
             {showDiffs ? (
               <h3 style={{ width: '39%' }} className="font-semibold">
-                DIFFS
+                {t('DIFFS')}
               </h3>
             ) : null}
             <h3 style={{ width: '30%' }} className="font-semibold">
@@ -270,7 +277,7 @@ function Storage() {
               style={{ paddingRight: 30, marginLeft: 'auto' }}
               className="font-semibold"
             >
-              <Tooltip title="Time to execute">TTE</Tooltip>
+              <Tooltip title="Time to execute">{t('TTE')}</Tooltip>
             </h3>
             <Segmented options={[{ label: 'Current Tab', value: 'all' }]} />
           </div>
@@ -290,7 +297,7 @@ function Storage() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Redux
+                    {t('Redux')}
                   </a>
                   {', '}
                   <a
@@ -299,7 +306,7 @@ function Storage() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    VueX
+                    {t('VueX')}
                   </a>
                   {', '}
                   <a
@@ -308,7 +315,7 @@ function Storage() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Pinia
+                    {t('Pinia')}
                   </a>
                   {', '}
                   <a
@@ -317,7 +324,7 @@ function Storage() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Zustand
+                    {t('Zustand')}
                   </a>
                   {', '}
                   <a
@@ -326,7 +333,7 @@ function Storage() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    MobX
+                    {t('MobX')}
                   </a>
                   {' and '}
                   <a
@@ -335,7 +342,7 @@ function Storage() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    NgRx
+                    {t('NgRx')}
                   </a>
                   .
                   <br />
@@ -344,7 +351,7 @@ function Storage() {
                     className="color-teal"
                     onClick={() => hideHint('storage')}
                   >
-                    Got It!
+                    {t('Got It!')}
                   </button>
                 </>
               ) : null
@@ -355,7 +362,7 @@ function Storage() {
             <div className="ph-10 scroll-y" style={{ width: '25%' }}>
               {list.length === 0 ? (
                 <div className="color-gray-light font-size-16 mt-20 text-center">
-                  Empty state.
+                  {t('Empty state.')}
                 </div>
               ) : (
                 <JSONTree collapsed={2} src={stateObject} />
@@ -363,7 +370,9 @@ function Storage() {
             </div>
             <div className="flex" style={{ width: '75%' }}>
               <Autoscroll className="ph-10">
-                {decodedList.map((item: Record<string, any>, i: number) => renderItem(item, i, i > 0 ? decodedList[i - 1] : undefined))}
+                {decodedList.map((item: Record<string, any>, i: number) =>
+                  renderItem(item, i, i > 0 ? decodedList[i - 1] : undefined),
+                )}
               </Autoscroll>
             </div>
           </NoContent>

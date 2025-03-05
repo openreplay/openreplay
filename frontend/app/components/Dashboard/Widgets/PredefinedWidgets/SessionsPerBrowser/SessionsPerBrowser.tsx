@@ -13,19 +13,21 @@ function SessionsPerBrowser(props: Props) {
   const { data } = props;
   const firstAvg = data.chart[0] && data.chart[0].count;
 
-  const getVersions = (item) => Object.keys(item)
-    .filter((i) => i !== 'browser' && i !== 'count' && i !== 'time' && i !== 'timestamp')
-    .map((i) => ({ key: `v${i}`, value: item[i] }));
+  const getVersions = (item) =>
+    Object.keys(item)
+      .filter(
+        (i) =>
+          i !== 'browser' && i !== 'count' && i !== 'time' && i !== 'timestamp',
+      )
+      .map((i) => ({ key: `v${i}`, value: item[i] }));
   return (
     <NoContent
       size="small"
-      title={(
+      title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} />
-          {' '}
-          { NO_METRIC_DATA }
+          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
         </div>
-      )}
+      }
       show={data.chart.length === 0}
       style={{ minHeight: 220 }}
     >

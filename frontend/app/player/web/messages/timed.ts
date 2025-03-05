@@ -1,1 +1,3 @@
-export interface Timed { time: number }
+export interface Timed {
+  time: number;
+}

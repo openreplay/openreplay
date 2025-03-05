@@ -3,16 +3,19 @@ import cn from 'classnames';
 import stl from './autoscroll.module.css';
 
 interface Props {
-  autoScrollTo?: number
-  children: ReactNode[]
-  className?: string
-  navigation?: boolean
+  autoScrollTo?: number;
+  children: ReactNode[];
+  className?: string;
+  navigation?: boolean;
 }
 
-export default class Autoscroll extends React.PureComponent<Props, {
-  autoScroll: boolean
-  currentIndex?: number
-}> {
+export default class Autoscroll extends React.PureComponent<
+  Props,
+  {
+    autoScroll: boolean;
+    currentIndex?: number;
+  }
+> {
   state = {
     autoScroll: true,
     currentIndex: 0,
@@ -21,12 +24,17 @@ export default class Autoscroll extends React.PureComponent<Props, {
   scrollableElement = React.createRef<HTMLDivElement>();
 
   autoScroll(hard = false) {
-    if (this.props.autoScrollTo !== undefined && this.props.autoScrollTo !== null && this.props.autoScrollTo >= 0) {
+    if (
+      this.props.autoScrollTo !== undefined &&
+      this.props.autoScrollTo !== null &&
+      this.props.autoScrollTo >= 0
+    ) {
       // we have an element to scroll to
       this.scrollToElement(this.props.autoScrollTo, hard);
     } else if (this.scrollableElement.current) {
       // no element to scroll to, scroll to bottom
-      this.scrollableElement.current.scrollTop = this.scrollableElement.current.scrollHeight;
+      this.scrollableElement.current.scrollTop =
+        this.scrollableElement.current.scrollHeight;
     }
   }
 
@@ -35,11 +43,16 @@ export default class Autoscroll extends React.PureComponent<Props, {
       return;
     }
 
-    if (this.scrollableElement.current.children.length < elementIndex || elementIndex < 0) {
+    if (
+      this.scrollableElement.current.children.length < elementIndex ||
+      elementIndex < 0
+    ) {
       return;
     }
 
-    const element = this.scrollableElement.current.children[elementIndex] as (HTMLElement | undefined);
+    const element = this.scrollableElement.current.children[elementIndex] as
+      | HTMLElement
+      | undefined;
 
     if (element) {
       if (this.scrollableElement.current.scrollTo && !hard) {
@@ -57,7 +70,10 @@ export default class Autoscroll extends React.PureComponent<Props, {
   componentDidMount() {
     if (!this.scrollableElement.current) return; // is necessary ?
 
-    this.scrollableElement.current.addEventListener('scroll', this.scrollHandler);
+    this.scrollableElement.current.addEventListener(
+      'scroll',
+      this.scrollHandler,
+    );
     if (this.state.autoScroll) {
       this.setState({
         currentIndex: this.props.autoScrollTo,
@@ -96,7 +112,10 @@ export default class Autoscroll extends React.PureComponent<Props, {
   onNextClick = () => {
     if (!this.scrollableElement) return;
 
-    const newIndex = Math.min(this.state.currentIndex + 1, this.props.children.length - 1);
+    const newIndex = Math.min(
+      this.state.currentIndex + 1,
+      this.props.children.length - 1,
+    );
     this.setState({
       autoScroll: false,
       currentIndex: newIndex,
@@ -105,12 +124,14 @@ export default class Autoscroll extends React.PureComponent<Props, {
   };
 
   render() {
-    const {
-      className, navigation = false, children, ...props
-    } = this.props;
+    const { className, navigation = false, children, ...props } = this.props;
     return (
       <div className={cn('relative w-full h-full', stl.wrapper)}>
-        <div {...props} className={cn('relative scroll-y h-full', className)} ref={this.scrollableElement}>
+        <div
+          {...props}
+          className={cn('relative scroll-y h-full', className)}
+          ref={this.scrollableElement}
+        >
           {children}
         </div>
 
@@ -123,7 +144,6 @@ export default class Autoscroll extends React.PureComponent<Props, {
             </>
           )}
         </div> */}
-
       </div>
     );
   }

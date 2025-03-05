@@ -33,8 +33,8 @@ export interface UxTest {
 }
 
 export interface UxTListEntry {
- createdAt: string;
- status: 'preview' | 'in-progress' | 'paused' | 'closed';
+  createdAt: string;
+  status: 'preview' | 'in-progress' | 'paused' | 'closed';
   createdBy: {
     userId: number;
     name: string;
@@ -80,14 +80,29 @@ export default class UxtestingService extends BaseService {
     return j.data || [];
   }
 
-  async fetchTestSessions(id: string, page: number, limit: number, isLive?: boolean, userId?: string) {
+  async fetchTestSessions(
+    id: string,
+    page: number,
+    limit: number,
+    isLive?: boolean,
+    userId?: string,
+  ) {
     const r = await this.client.get(`${this.prefix}/${id}/sessions`, {
-      page, limit, live: isLive, userId,
+      page,
+      limit,
+      live: isLive,
+      userId,
     });
     return await r.json();
   }
 
-  async fetchTaskResponses(id: number, task: number, page: number, limit: number, query?: string) {
+  async fetchTaskResponses(
+    id: number,
+    task: number,
+    page: number,
+    limit: number,
+    query?: string,
+  ) {
     const r = await this.client.get(`${this.prefix}/${id}/responses/${task}`, {
       page,
       limit,

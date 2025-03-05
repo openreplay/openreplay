@@ -9,7 +9,11 @@ export class Conditions {
 
   name = 'Condition Set';
 
-  constructor(data?: Record<string, any>, isConditional?: boolean, isMobile?: boolean) {
+  constructor(
+    data?: Record<string, any>,
+    isConditional?: boolean,
+    isMobile?: boolean,
+  ) {
     makeAutoObservable(this);
     console.log('data', data);
     this.name = data?.name;
@@ -134,17 +138,18 @@ export default class FeatureFlag {
   };
 
   constructor(data?: SingleFFlag) {
-    Object.assign(
-      this,
-      initData,
-      {
-        ...data,
-        payload: data?.payload === null ? '' : data?.payload,
-        isSingleOption: data ? data.flagType === 'single' : true,
-        conditions: data?.conditions?.map((c) => new Conditions(c)) || [new Conditions()],
-        variants: data?.flagType === 'multi' ? data?.variants?.map((v, i) => new Variant(i, v)) : [],
-      },
-    );
+    Object.assign(this, initData, {
+      ...data,
+      payload: data?.payload === null ? '' : data?.payload,
+      isSingleOption: data ? data.flagType === 'single' : true,
+      conditions: data?.conditions?.map((c) => new Conditions(c)) || [
+        new Conditions(),
+      ],
+      variants:
+        data?.flagType === 'multi'
+          ? data?.variants?.map((v, i) => new Variant(i, v))
+          : [],
+    });
 
     if (this.variants?.length === 0) {
       this.addVariant();
@@ -170,11 +175,15 @@ export default class FeatureFlag {
   };
 
   get isRedDistribution() {
-    const totalRollout = this.variants.reduce((acc, v) => acc + v.rolloutPercentage, 0);
+    const totalRollout = this.variants.reduce(
+      (acc, v) => acc + v.rolloutPercentage,
+      0,
+    );
 
-    return Math.floor(
-      totalRollout / this.variants.length,
-    ) !== Math.floor(100 / this.variants.length);
+    return (
+      Math.floor(totalRollout / this.variants.length) !==
+      Math.floor(100 / this.variants.length)
+    );
   }
 
   redistributeVariants = () => {
@@ -194,11 +203,16 @@ export default class FeatureFlag {
       description: this.description,
       payload: this.payload,
       isPersist: this.isPersist,
-      flagType: this.isSingleOption ? 'single' as const : 'multi' as const,
+      flagType: this.isSingleOption ? ('single' as const) : ('multi' as const),
       featureFlagId: this.featureFlagId,
-      variants: this.isSingleOption ? undefined : this.variants?.map((v) => ({
-        value: v.value, description: v.description, payload: v.payload, rolloutPercentage: v.rolloutPercentage,
-      })),
+      variants: this.isSingleOption
+        ? undefined
+        : this.variants?.map((v) => ({
+            value: v.value,
+            description: v.description,
+            payload: v.payload,
+            rolloutPercentage: v.rolloutPercentage,
+          })),
     };
   }
 

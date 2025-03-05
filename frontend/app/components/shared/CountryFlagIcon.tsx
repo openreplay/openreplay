@@ -7,7 +7,10 @@ interface CountryFlagProps {
   style?: React.CSSProperties;
 }
 
-const CountryFlagIcon: React.FC<CountryFlagProps> = ({ countryCode, style }) => {
+const CountryFlagIcon: React.FC<CountryFlagProps> = ({
+  countryCode,
+  style,
+}) => {
   const FlagComponent = Flags[countryCode as keyof typeof Flags];
 
   return hasFlag(countryCode) && FlagComponent ? (

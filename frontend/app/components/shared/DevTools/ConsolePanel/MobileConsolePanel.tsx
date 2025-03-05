@@ -16,6 +16,7 @@ import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 import ConsoleRow from '../ConsoleRow';
 import BottomBlock from '../BottomBlock';
+import { useTranslation } from 'react-i18next';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -73,6 +74,7 @@ function MobileConsolePanel() {
     sessionStore: { devTools },
   } = useStore();
 
+  const { t } = useTranslation();
   const { filter } = devTools[INDEX_KEY];
   const { activeTab } = devTools[INDEX_KEY];
   // Why do we need to keep index in the store? if we could get read of it it would simplify the code
@@ -80,7 +82,8 @@ function MobileConsolePanel() {
   const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
   const { showModal } = useModal();
 
-  const { player, store } = React.useContext<IOSPlayerContext>(MobilePlayerContext);
+  const { player, store } =
+    React.useContext<IOSPlayerContext>(MobilePlayerContext);
   const jump = (t: number) => player.jump(t);
 
   const { logList, logListNow, exceptionsListNow } = store.get();
@@ -94,8 +97,10 @@ function MobileConsolePanel() {
     activeTab,
   );
 
-  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
-  const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value });
+  const onTabClick = (activeTab: any) =>
+    devTools.update(INDEX_KEY, { activeTab });
+  const onFilterChange = ({ target: { value } }: any) =>
+    devTools.update(INDEX_KEY, { filter: value });
 
   // AutoScroll
   const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
@@ -142,7 +147,9 @@ function MobileConsolePanel() {
     >
       <BottomBlock.Header>
         <div className="flex items-center">
-          <span className="font-semibold color-gray-medium mr-4">Console</span>
+          <span className="font-semibold color-gray-medium mr-4">
+            {t('Console')}
+          </span>
           <Tabs
             tabs={TABS}
             active={activeTab}
@@ -162,12 +169,12 @@ function MobileConsolePanel() {
       </BottomBlock.Header>
       <BottomBlock.Content className="overflow-y-auto">
         <NoContent
-          title={(
+          title={
             <div className="capitalize flex items-center mt-16 gap-2">
               <InfoCircleOutlined size={18} />
-              No Data
+              {t('No Data')}
             </div>
-          )}
+          }
           size="small"
           show={filteredList.length === 0}
         >

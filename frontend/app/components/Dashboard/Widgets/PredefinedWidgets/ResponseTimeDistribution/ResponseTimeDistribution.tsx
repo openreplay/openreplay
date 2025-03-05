@@ -1,8 +1,15 @@
 import React from 'react';
 import { NoContent } from 'UI';
 import {
-  ComposedChart, Bar, BarChart, CartesianGrid, ResponsiveContainer,
-  XAxis, YAxis, ReferenceLine, Tooltip,
+  ComposedChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  ReferenceLine,
+  Tooltip,
 } from 'recharts';
 import { NO_METRIC_DATA } from 'App/constants/messages';
 import { InfoCircleOutlined } from '@ant-design/icons';
@@ -40,7 +47,7 @@ function PercentileLine(props) {
 }
 
 interface Props {
-    data: any
+  data: any;
 }
 function ResponseTimeDistribution(props: Props) {
   const { data } = props;
@@ -49,13 +56,11 @@ function ResponseTimeDistribution(props: Props) {
   return (
     <NoContent
       size="small"
-      title={(
+      title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} />
-          {' '}
-          { NO_METRIC_DATA }
+          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
         </div>
-          )}
+      }
       show={data.chart.length === 0}
       style={{ height: '240px' }}
     >
@@ -69,7 +74,11 @@ function ResponseTimeDistribution(props: Props) {
             margin={Styles.chartMargins}
             barSize={50}
           >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EEEEEE" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={false}
+              stroke="#EEEEEE"
+            />
             <XAxis
               {...Styles.xaxis}
               dataKey="responseTime"
@@ -90,28 +99,39 @@ function ResponseTimeDistribution(props: Props) {
                 value: 'Number of Calls',
               }}
             />
-            <Bar minPointSize={1} name="Calls" dataKey="count" stackId="a" fill={colors[2]} label="Backend" />
-            <Tooltip {...Styles.tooltip} labelFormatter={(val) => `Page Response Time: ${val}`} />
-            { data.percentiles && data.percentiles.map((item: any, i: number) => (
-              <ReferenceLine
-                key={i}
-                label={(
-                  <PercentileLine
-                    xoffset={0}
-                          // y={130}
-                    height={i * 20}
-                    stroke="#000"
-                    strokeWidth={0.5}
-                    strokeOpacity={1}
-                    label={`${item.percentile}th Percentile (${item.responseTime}ms)`}
-                  />
-                      )}
-                      // allowDecimals={false}
-                x={item.responseTime}
-                strokeWidth={0}
-                strokeOpacity={1}
-              />
-            ))}
+            <Bar
+              minPointSize={1}
+              name="Calls"
+              dataKey="count"
+              stackId="a"
+              fill={colors[2]}
+              label="Backend"
+            />
+            <Tooltip
+              {...Styles.tooltip}
+              labelFormatter={(val) => `Page Response Time: ${val}`}
+            />
+            {data.percentiles &&
+              data.percentiles.map((item: any, i: number) => (
+                <ReferenceLine
+                  key={i}
+                  label={
+                    <PercentileLine
+                      xoffset={0}
+                      // y={130}
+                      height={i * 20}
+                      stroke="#000"
+                      strokeWidth={0.5}
+                      strokeOpacity={1}
+                      label={`${item.percentile}th Percentile (${item.responseTime}ms)`}
+                    />
+                  }
+                  // allowDecimals={false}
+                  x={item.responseTime}
+                  strokeWidth={0}
+                  strokeOpacity={1}
+                />
+              ))}
           </ComposedChart>
         </ResponsiveContainer>
         <ResponsiveContainer height={240} width="10%">
@@ -120,11 +140,27 @@ function ResponseTimeDistribution(props: Props) {
             margin={Styles.chartMargins}
             barSize={40}
           >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EEEEEE" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={false}
+              stroke="#EEEEEE"
+            />
             <XAxis {...Styles.xaxis} dataKey="time" />
-            <YAxis hide type="number" domain={[0, data.total]} {...Styles.yaxis} allowDecimals={false} />
+            <YAxis
+              hide
+              type="number"
+              domain={[0, data.total]}
+              {...Styles.yaxis}
+              allowDecimals={false}
+            />
             <Tooltip {...Styles.tooltip} />
-            <Bar minPointSize={1} name="Extreme Values" dataKey="count" stackId="a" fill={colors[0]} />
+            <Bar
+              minPointSize={1}
+              name="Extreme Values"
+              dataKey="count"
+              stackId="a"
+              fill={colors[0]}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>

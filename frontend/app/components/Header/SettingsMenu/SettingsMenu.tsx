@@ -38,18 +38,50 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
   };
   return (
     <div>
-      <MenuItem onClick={() => navigateTo('sessions-listing')} label="Sessions Listing" icon="folder2" />
-      <MenuItem onClick={() => navigateTo('integrations')} label="Integrations" icon="puzzle" />
-      <MenuItem onClick={() => navigateTo('metadata')} label="Metadata" icon="tags" />
-      <MenuItem onClick={() => navigateTo('webhooks')} label="Webhooks" icon="link-45deg" />
-      <MenuItem onClick={() => navigateTo('projects')} label="Projects" icon="folder2" />
+      <MenuItem
+        onClick={() => navigateTo('sessions-listing')}
+        label="Sessions Listing"
+        icon="folder2"
+      />
+      <MenuItem
+        onClick={() => navigateTo('integrations')}
+        label="Integrations"
+        icon="puzzle"
+      />
+      <MenuItem
+        onClick={() => navigateTo('metadata')}
+        label="Metadata"
+        icon="tags"
+      />
+      <MenuItem
+        onClick={() => navigateTo('webhooks')}
+        label="Webhooks"
+        icon="link-45deg"
+      />
+      <MenuItem
+        onClick={() => navigateTo('projects')}
+        label="Projects"
+        icon="folder2"
+      />
       {isAdmin && (
-        <MenuItem onClick={() => navigateTo('team')} label="Team" icon="users" />
+        <MenuItem
+          onClick={() => navigateTo('team')}
+          label="Team"
+          icon="users"
+        />
       )}
       {isEnterprise && isAdmin && (
         <>
-          <MenuItem onClick={() => navigateTo('roles')} label="Roles & Access" icon="diagram-3" />
-          <MenuItem onClick={() => navigateTo('audit')} label="Audit" icon="list-ul" />
+          <MenuItem
+            onClick={() => navigateTo('roles')}
+            label="Roles & Access"
+            icon="diagram-3"
+          />
+          <MenuItem
+            onClick={() => navigateTo('audit')}
+            label="Audit"
+            icon="list-ul"
+          />
         </>
       )}
       <MenuItem

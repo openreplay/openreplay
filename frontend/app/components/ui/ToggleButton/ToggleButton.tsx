@@ -11,9 +11,7 @@ function UncheckedIcon() {
 
 function ToggleButton(props) {
   const [toggle, setToggle] = useState(false);
-  const {
-    defaultChecked, onChange, disabled, className,
-  } = props;
+  const { defaultChecked, onChange, disabled, className } = props;
 
   useEffect(() => {
     if (defaultChecked) {
@@ -44,23 +42,31 @@ function ToggleButton(props) {
       : icons[type];
   };
 
-  const toggleClasses = classNames('wrg-toggle', {
-    'wrg-toggle--checked': toggle,
-    'wrg-toggle--disabled': disabled,
-  }, className);
+  const toggleClasses = classNames(
+    'wrg-toggle',
+    {
+      'wrg-toggle--checked': toggle,
+      'wrg-toggle--disabled': disabled,
+    },
+    className,
+  );
 
   return (
     <div onClick={triggerToggle} className={toggleClasses}>
       <div className="wrg-toggle-container">
         <div className="wrg-toggle-check">
-          <span>{ getIcon('checked') }</span>
+          <span>{getIcon('checked')}</span>
         </div>
         <div className="wrg-toggle-uncheck">
-          <span>{ getIcon('unchecked') }</span>
+          <span>{getIcon('unchecked')}</span>
         </div>
       </div>
       <div className="wrg-toggle-circle" />
-      <input type="checkbox" aria-label="Toggle Button" className="wrg-toggle-input" />
+      <input
+        type="checkbox"
+        aria-label="Toggle Button"
+        className="wrg-toggle-input"
+      />
     </div>
   );
 }

@@ -25,7 +25,10 @@ const OverviewPanelContainer = React.memo((props: Props) => {
   };
 
   return (
-    <div className="overflow-x-auto overflow-y-hidden bg-gray-lightest" onClick={onClickTrack}>
+    <div
+      className="overflow-x-auto overflow-y-hidden bg-gray-lightest"
+      onClick={onClickTrack}
+    >
       {mouseIn && <VerticalLine left={mouseX} className="border-gray-medium" />}
       <div className="">{props.children}</div>
     </div>

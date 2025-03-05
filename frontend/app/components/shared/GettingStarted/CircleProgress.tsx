@@ -29,7 +29,7 @@ function CircleProgress({
   const _radius = radius * 0.8;
 
   const circumference = 2 * Math.PI * _radius;
-  const dashOffset = circumference * (1 - (percentage / 100));
+  const dashOffset = circumference * (1 - percentage / 100);
   const circleStyle = {
     transition: 'stroke-dashoffset 1s ease-in-out',
   };

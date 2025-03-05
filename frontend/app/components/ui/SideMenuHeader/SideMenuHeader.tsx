@@ -6,9 +6,7 @@ function SideMenuHeader(props) {
   const { text, className, button } = props;
   return (
     <div className={cn(className, 'flex items-center')}>
-      <div className={cn(stl.label, 'uppercase color-gray')}>
-        { text }
-      </div>
+      <div className={cn(stl.label, 'uppercase color-gray')}>{text}</div>
       <div>{button}</div>
     </div>
   );

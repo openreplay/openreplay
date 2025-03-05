@@ -17,10 +17,26 @@ function Header({
   const { closeBottomBlock } = uiPlayerStore;
 
   return (
-    <div className={cn('relative border-r border-l py-1', stl.header)} style={customStyle}>
-      <div className={cn('w-full h-full flex justify-between items-center', className)}>
-        <div className="w-full flex items-center justify-between">{children}</div>
-        {showClose && <CloseButton onClick={customClose || closeBottomBlock} size="18" className="ml-2" />}
+    <div
+      className={cn('relative border-r border-l py-1', stl.header)}
+      style={customStyle}
+    >
+      <div
+        className={cn(
+          'w-full h-full flex justify-between items-center',
+          className,
+        )}
+      >
+        <div className="w-full flex items-center justify-between">
+          {children}
+        </div>
+        {showClose && (
+          <CloseButton
+            onClick={customClose || closeBottomBlock}
+            size="18"
+            className="ml-2"
+          />
+        )}
       </div>
     </div>
   );

@@ -10,7 +10,10 @@ function RecordingsSearch() {
   const { recordingsStore } = useStore();
   const [query, setQuery] = useState(recordingsStore.search);
   useEffect(() => {
-    debounceUpdate = debounce((value: any) => recordingsStore.updateSearch(value), 500);
+    debounceUpdate = debounce(
+      (value: any) => recordingsStore.updateSearch(value),
+      500,
+    );
   }, []);
 
   // @ts-ignore
@@ -21,7 +24,11 @@ function RecordingsSearch() {
 
   return (
     <div className="relative">
-      <Icon name="search" className="absolute top-0 bottom-0 ml-2 m-auto" size="16" />
+      <Icon
+        name="search"
+        className="absolute top-0 bottom-0 ml-2 m-auto"
+        size="16"
+      />
       <input
         value={query}
         name="recordsSearch"

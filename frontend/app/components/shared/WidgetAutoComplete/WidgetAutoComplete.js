@@ -7,7 +7,10 @@ import stl from './widgetAutoComplete.module.css';
 
 function WidgetAutoComplete(props) {
   const {
-    className, placeholder = 'Search for Resource', itemStyle = {}, filterParams = {},
+    className,
+    placeholder = 'Search for Resource',
+    itemStyle = {},
+    filterParams = {},
   } = props;
   const [selected, setSelected] = useState(null);
   const [focused, setFocused] = useState(props.autoFocus);
@@ -39,16 +42,22 @@ function WidgetAutoComplete(props) {
   return (
     <div className={cn('flex items-center relative', className)}>
       <div
-        className={cn(stl.searchWrapper, 'flex items-center relative', { 'bg-gray-light': focused })}
+        className={cn(stl.searchWrapper, 'flex items-center relative', {
+          'bg-gray-light': focused,
+        })}
         onClick={() => !focused && setFocused(true)}
       >
-        { !focused && selected && (
-          <div className={cn(stl.selected, 'flex items-center justify-between')}>
+        {!focused && selected && (
+          <div
+            className={cn(stl.selected, 'flex items-center justify-between')}
+          >
             <span>{selected.value}</span>
-            <Button type="text" onClick={onClearHandle}><Icon name="close" size="14" /></Button>
+            <Button type="text" onClick={onClearHandle}>
+              <Icon name="close" size="14" />
+            </Button>
           </div>
         )}
-        { (focused || !selected) && (
+        {(focused || !selected) && (
           <input
             autoFocus={focused}
             type="text"
@@ -64,13 +73,17 @@ function WidgetAutoComplete(props) {
           />
         )}
         <div className="absolute right-0 mr-2">
-          { props.loading && <CircularLoader loading /> }
+          {props.loading && <CircularLoader loading />}
         </div>
       </div>
-      { focused && props.options.length > 0 && (
-        <div className={cn(stl.menuWrapper, 'absolute top-10 left-0 rounded bg-white')}>
-          {
-          props.options.map((opt) => (
+      {focused && props.options.length > 0 && (
+        <div
+          className={cn(
+            stl.menuWrapper,
+            'absolute top-10 left-0 rounded bg-white',
+          )}
+        >
+          {props.options.map((opt) => (
             <div
               className={cn(stl.optionItem)}
               onMouseDown={() => onSelected(opt)}
@@ -78,8 +91,7 @@ function WidgetAutoComplete(props) {
             >
               {opt.text || opt.value}
             </div>
-          ))
-        }
+          ))}
         </div>
       )}
     </div>

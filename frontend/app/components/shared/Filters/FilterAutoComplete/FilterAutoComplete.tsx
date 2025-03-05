@@ -1,9 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { debounce } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -16,9 +11,9 @@ function processKey(input: FilterParam): FilterParam {
   const result: FilterParam = {};
   for (const key in input) {
     if (
-      input.type === 'metadata'
-      && typeof input[key] === 'string'
-      && input[key].startsWith('_')
+      input.type === 'metadata' &&
+      typeof input[key] === 'string' &&
+      input[key].startsWith('_')
     ) {
       result[key] = input[key].substring(1);
     } else {
@@ -43,7 +38,7 @@ interface Props {
   icon?: string;
   hideOrText?: boolean;
   onApplyValues: (values: string[]) => void;
-  modalProps?: Record<string, any>
+  modalProps?: Record<string, any>;
   isAutoOpen?: boolean;
 }
 
@@ -54,7 +49,13 @@ const FilterAutoComplete = observer(
     onApply,
     values,
     placeholder,
-  }: { params: any, values: string[], onClose: () => void, onApply: (values: string[]) => void, placeholder?: string }) => {
+  }: {
+    params: any;
+    values: string[];
+    onClose: () => void;
+    onApply: (values: string[]) => void;
+    placeholder?: string;
+  }) => {
     const [options, setOptions] = useState<{ value: string; label: string }[]>(
       [],
     );
@@ -90,9 +91,7 @@ const FilterAutoComplete = observer(
       void loadTopValues();
     }, [_params.type]);
 
-    const loadOptions = async (
-      inputValue: string,
-    ) => {
+    const loadOptions = async (inputValue: string) => {
       if (!inputValue.length) {
         const mappedValues = topValues.map((i) => ({
           value: i.value,
@@ -107,7 +106,8 @@ const FilterAutoComplete = observer(
           ..._params,
           q: inputValue,
         });
-        const _options = data.map((i: any) => ({ value: i.value, label: i.value })) || [];
+        const _options =
+          data.map((i: any) => ({ value: i.value, label: i.value })) || [];
         setOptions(_options);
       } catch (e) {
         throw new Error(e);
@@ -147,7 +147,9 @@ const FilterAutoComplete = observer(
 );
 
 function AutoCompleteController(props: Props) {
-  return <AutoCompleteContainer {...props} modalRenderer={FilterAutoComplete} />;
+  return (
+    <AutoCompleteContainer {...props} modalRenderer={FilterAutoComplete} />
+  );
 }
 
 export default AutoCompleteController;

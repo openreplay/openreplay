@@ -1,6 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 function NotFoundPage() {
+  const { t } = useTranslation();
+
   return (
     <div
       className="inset-0 flex items-center justify-center absolute"
@@ -10,11 +13,9 @@ function NotFoundPage() {
       }}
     >
       <div className="flex flex-col items-center">
-        <div className="text-2xl -mt-8">
-          Session not found.
-        </div>
+        <div className="text-2xl -mt-8">{t('Session not found.')}</div>
         <div className="text-sm">
-          Please check your data retention policy.
+          {t('Please check your data retention policy.')}
         </div>
       </div>
     </div>

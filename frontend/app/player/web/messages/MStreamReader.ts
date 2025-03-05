@@ -3,11 +3,14 @@ import type { RawMessage } from './raw.gen';
 import { MType } from './raw.gen';
 
 interface RawMessageReaderI {
-  readMessage(): RawMessage | null
+  readMessage(): RawMessage | null;
 }
 
 export default class MStreamReader {
-  constructor(private readonly r: RawMessageReaderI, private startTs: number = 0) {}
+  constructor(
+    private readonly r: RawMessageReaderI,
+    private startTs: number = 0,
+  ) {}
 
   private t: number = 0;
 
@@ -15,9 +18,11 @@ export default class MStreamReader {
 
   currentTab = 'back-compatability';
 
-  readNext(): Message & { _index: number, tabId: string } | null {
+  readNext(): (Message & { _index: number; tabId: string }) | null {
     const msg = this.r.readMessage();
-    if (msg === null) { return null; }
+    if (msg === null) {
+      return null;
+    }
     if (msg.tp === MType.Timestamp) {
       this.startTs = this.startTs || msg.timestamp;
       const newT = msg.timestamp - this.startTs;

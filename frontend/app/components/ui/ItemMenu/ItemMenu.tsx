@@ -58,9 +58,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
   };
 
   render() {
-    const {
-      items, label, bold, sm,
-    } = this.props;
+    const { items, label, bold, sm } = this.props;
     const { displayed } = this.state;
     const parentStyles = label ? 'hover:bg-gray-light' : '';
 
@@ -94,9 +92,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
                       className={`${disabled ? 'cursor-not-allowed' : ''}`}
                       role="menuitem"
                     >
-                      <div
-                        className={cn(styles.menuItem, { disabled })}
-                      >
+                      <div className={cn(styles.menuItem, { disabled })}>
                         {icon && (
                           <div className={styles.iconWrapper}>
                             <Icon name={icon} size="13" color="gray-dark" />
@@ -116,27 +112,21 @@ export default class ItemMenu extends React.PureComponent<Props> {
         ) : (
           <Button
             type="text"
-            className={cn(
-              'select-none',
-              !this.props.flat ? parentStyles : '',
-              {
-                '': !this.props.flat && displayed && label,
-              },
-            )}
+            className={cn('select-none', !this.props.flat ? parentStyles : '', {
+              '': !this.props.flat && displayed && label,
+            })}
           >
             {label && <span className={cn('font-medium')}>{label}</span>}
             {!this.props.flat && (
-            <div
-              ref={(ref) => {
-                this.menuBtnRef = ref;
-              }}
-              className={cn(
-                'rounded-full flex items-center justify-center',
-              )}
-              role="button"
-            >
-              <EllipsisVertical size={16} />
-            </div>
+              <div
+                ref={(ref) => {
+                  this.menuBtnRef = ref;
+                }}
+                className={cn('rounded-full flex items-center justify-center')}
+                role="button"
+              >
+                <EllipsisVertical size={16} />
+              </div>
             )}
           </Button>
         )}

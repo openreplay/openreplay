@@ -5,7 +5,7 @@ import SessionsByIssues from '../SessionsByIssues';
 import SessionsByErrors from '../SessionsByErrors';
 
 interface ExampleProps {
-    onCard: (card: string) => void;
+  onCard: (card: string) => void;
 }
 
 const CoreWebVitals: React.FC<ExampleProps> = ({ onCard }) => (

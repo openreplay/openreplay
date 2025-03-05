@@ -65,7 +65,8 @@ function SpotPlayer() {
     const handleMouseMove = (e: MouseEvent) => {
       const deltaY = e.clientY - startY;
       const diff = startHeight - deltaY;
-      const max = diff > window.innerHeight / 1.5 ? window.innerHeight / 1.5 : diff;
+      const max =
+        diff > window.innerHeight / 1.5 ? window.innerHeight / 1.5 : diff;
       const newHeight = Math.max(50, max);
       setPanelHeight(newHeight);
       debounceUpdate(newHeight);
@@ -106,8 +107,8 @@ function SpotPlayer() {
 
     const ev = (e: KeyboardEvent) => {
       if (
-        e.target instanceof HTMLInputElement
-        || e.target instanceof HTMLTextAreaElement
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
       ) {
         return false;
       }
@@ -153,9 +154,7 @@ function SpotPlayer() {
   }, []);
   if (!spotStore.currentSpot) {
     return (
-      <div
-        className="w-screen h-screen flex items-center justify-center flex-col gap-2"
-      >
+      <div className="w-screen h-screen flex items-center justify-center flex-col gap-2">
         {spotStore.accessError ? <AccessError /> : <Loader />}
       </div>
     );
@@ -297,6 +296,4 @@ const SpotOverviewConnector = observer(() => {
   );
 });
 
-export default withPermissions(['SPOT'])(
-  observer(SpotPlayer),
-);
+export default withPermissions(['SPOT'])(observer(SpotPlayer));

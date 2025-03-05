@@ -1,8 +1,6 @@
 import React, { MouseEvent, useState } from 'react';
 import cn from 'classnames';
-import {
-  Icon, Input, confirm, Tooltip,
-} from 'UI';
+import { Icon, Input, confirm, Tooltip } from 'UI';
 import { useModal } from 'App/components/Modal';
 import { SavedSearch } from 'Types/ts/search';
 import SaveSearchModal from 'Shared/SaveSearchModal';
@@ -10,6 +8,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { ISavedSearch } from 'App/mstore/types/savedSearch';
 import stl from './savedSearchModal.module.css';
+import { useTranslation } from 'react-i18next';
 
 interface ITooltipIcon {
   title: string;
@@ -33,6 +32,7 @@ function SavedSearchModal() {
   const [showModal, setshowModal] = useState(false);
   const [filterQuery, setFilterQuery] = useState('');
   const { searchStore } = useStore();
+  const { t } = useTranslation();
 
   const onClick = (item: ISavedSearch, e: any) => {
     e.stopPropagation();
@@ -42,9 +42,11 @@ function SavedSearchModal() {
   const onDelete = async (item: SavedSearch, e: MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     const confirmation = await confirm({
-      header: 'Confirm',
-      confirmButton: 'Yes, delete',
-      confirmation: 'Are you sure you want to permanently delete this search?',
+      header: t('Confirm'),
+      confirmButton: t('Yes, delete'),
+      confirmation: t(
+        'Are you sure you want to permanently delete this search?',
+      ),
     });
     if (confirmation) {
       searchStore.removeSavedSearch(`${item.searchId}`);
@@ -56,14 +58,15 @@ function SavedSearchModal() {
     setTimeout(() => setshowModal(true), 0);
   };
 
-  const shownItems = searchStore.list.filter((item) => item.name.toLocaleLowerCase().includes(filterQuery.toLocaleLowerCase()));
+  const shownItems = searchStore.list.filter((item) =>
+    item.name.toLocaleLowerCase().includes(filterQuery.toLocaleLowerCase()),
+  );
 
   return (
     <div className="bg-white box-shadow h-screen">
       <div className="p-6">
         <h1 className="text-2xl">
-          Saved Search
-          {' '}
+          {t('Saved Search')}{' '}
           <span className="color-gray-medium">{searchStore.list.length}</span>
         </h1>
       </div>
@@ -72,7 +75,7 @@ function SavedSearchModal() {
           <Input
             icon="search"
             onChange={({ target: { value } }: any) => setFilterQuery(value)}
-            placeholder="Filter by name"
+            placeholder={t('Filter by name')}
           />
         </div>
       )}
@@ -80,34 +83,59 @@ function SavedSearchModal() {
         {shownItems.map((item) => (
           <div
             key={item.searchId}
-            className={cn('p-4 cursor-pointer border-b flex items-center group hover:bg-active-blue')}
+            className={cn(
+              'p-4 cursor-pointer border-b flex items-center group hover:bg-active-blue',
+            )}
             onClick={(e) => onClick(item, e)}
           >
             <Icon name="search" color="gray-medium" size="16" />
             <div className="ml-4">
-              <div className="text-lg">
-                {item.name}
-                {' '}
-              </div>
+              <div className="text-lg">{item.name} </div>
               {item.isPublic && (
-                <div className={cn(stl.iconContainer, 'color-gray-medium flex items-center px-2 mt-2')}>
+                <div
+                  className={cn(
+                    stl.iconContainer,
+                    'color-gray-medium flex items-center px-2 mt-2',
+                  )}
+                >
                   <Icon name="user-friends" size="11" />
-                  <div className="ml-1 text-sm"> Team</div>
+                  <div className="ml-1 text-sm">{t('Team')}</div>
                 </div>
               )}
             </div>
             <div className="flex items-center ml-auto self-center">
-              <div className={cn(stl.iconCircle, 'mr-2 invisible group-hover:visible')}>
-                <TooltipIcon name="pencil" onClick={(e) => onEdit(item, e)} title="Rename" />
+              <div
+                className={cn(
+                  stl.iconCircle,
+                  'mr-2 invisible group-hover:visible',
+                )}
+              >
+                <TooltipIcon
+                  name="pencil"
+                  onClick={(e) => onEdit(item, e)}
+                  title={t('Rename')}
+                />
               </div>
-              <div className={cn(stl.iconCircle, 'invisible group-hover:visible')}>
-                <TooltipIcon name="trash" onClick={(e) => onDelete(item, e)} title="Delete" />
+              <div
+                className={cn(stl.iconCircle, 'invisible group-hover:visible')}
+              >
+                <TooltipIcon
+                  name="trash"
+                  onClick={(e) => onDelete(item, e)}
+                  title={t('Delete')}
+                />
               </div>
             </div>
           </div>
         ))}
       </div>
-      {showModal && <SaveSearchModal show closeHandler={() => setshowModal(false)} rename={false} />}
+      {showModal && (
+        <SaveSearchModal
+          show
+          closeHandler={() => setshowModal(false)}
+          rename={false}
+        />
+      )}
     </div>
   );
 }

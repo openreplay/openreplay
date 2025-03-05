@@ -3,8 +3,10 @@ import { Button, Tooltip } from 'antd';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import { useTranslation } from 'react-i18next';
 
 function TimelineZoomButton() {
+  const { t } = useTranslation();
   const { uiPlayerStore } = useStore();
   const { toggleZoom } = uiPlayerStore;
   const { enabled } = uiPlayerStore.timelineZoom;
@@ -22,15 +24,25 @@ function TimelineZoomButton() {
     });
   };
 
-  React.useEffect(() => () => {
-    toggleZoom({ enabled: false, range: [0, 0] });
-  }, []);
+  React.useEffect(
+    () => () => {
+      toggleZoom({ enabled: false, range: [0, 0] });
+    },
+    [],
+  );
   return (
-    <Tooltip title="Select a portion of the timeline to view the x-ray and activity for that specific selection." placement="top">
-      <Button onClick={onClickHandler} size="small" className="flex items-center font-medium">
-        Focus Mode:
-        {' '}
-        {enabled ? 'On' : 'Off'}
+    <Tooltip
+      title={t(
+        'Select a portion of the timeline to view the x-ray and activity for that specific selection.',
+      )}
+      placement="top"
+    >
+      <Button
+        onClick={onClickHandler}
+        size="small"
+        className="flex items-center font-medium"
+      >
+        {t('Focus Mode:')}&nbsp;{enabled ? 'On' : 'Off'}
       </Button>
     </Tooltip>
   );

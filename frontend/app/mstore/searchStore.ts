@@ -125,7 +125,9 @@ class SearchStore {
     this.savedSearch = savedSearch;
     this.edit({
       filters: savedSearch.filter
-        ? savedSearch.filter.filters.map((i: FilterItem) => new FilterItem().fromJson(i))
+        ? savedSearch.filter.filters.map((i: FilterItem) =>
+            new FilterItem().fromJson(i),
+          )
         : [],
     });
     this.currentPage = 1;
@@ -276,15 +278,15 @@ class SearchStore {
     const index = filter.isEvent
       ? -1
       : this.instance.filters.findIndex(
-        (i: FilterItem) => i.key === filter.key,
-      );
+          (i: FilterItem) => i.key === filter.key,
+        );
 
     filter.value = checkFilterValue(filter.value);
     filter.filters = filter.filters
       ? filter.filters.map((subFilter: any) => ({
-        ...subFilter,
-        value: checkFilterValue(subFilter.value),
-      }))
+          ...subFilter,
+          value: checkFilterValue(subFilter.value),
+        }))
       : null;
 
     if (index > -1) {
@@ -353,7 +355,9 @@ class SearchStore {
   };
 
   removeFilter = (index: number) => {
-    const newFilters = this.instance.filters.filter((_filter: any, i: any) => i !== index);
+    const newFilters = this.instance.filters.filter(
+      (_filter: any, i: any) => i !== index,
+    );
 
     this.instance = new Search({
       ...this.instance.toData(),
@@ -394,7 +398,8 @@ class SearchStore {
       if (durationFilter?.count > 0) {
         const multiplier = durationFilter.countType === 'sec' ? 1000 : 60000;
         const amount = durationFilter.count * multiplier;
-        const value = durationFilter.operator === '<' ? [amount, 0] : [0, amount];
+        const value =
+          durationFilter.operator === '<' ? [amount, 0] : [0, amount];
 
         filter.filters.push({
           type: FilterKey.DURATION,

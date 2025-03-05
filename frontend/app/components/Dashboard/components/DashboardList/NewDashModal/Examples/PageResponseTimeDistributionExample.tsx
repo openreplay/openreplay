@@ -14,9 +14,7 @@ function PageResponseTimeDistributionExample(props: Props) {
     chart: [],
   };
   return (
-    <ExCard
-      {...props}
-    >
+    <ExCard {...props}>
       <ResponseTimeDistribution data={data} />
     </ExCard>
   );

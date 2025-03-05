@@ -2,7 +2,7 @@ import React from 'react';
 import { millisToMinutesAndSeconds } from 'App/utils';
 
 interface Props {
-    endTime: number;
+  endTime: number;
 }
 function TimelineScale(props: Props) {
   const { endTime } = props;
@@ -35,9 +35,7 @@ function TimelineScale(props: Props) {
 
     drawScale(scaleRef.current);
   }, [scaleRef]);
-  return (
-    <div className="h-6 bg-gray-darkest w-full" ref={scaleRef} />
-  );
+  return <div className="h-6 bg-gray-darkest w-full" ref={scaleRef} />;
 }
 
 export default TimelineScale;

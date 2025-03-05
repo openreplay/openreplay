@@ -54,22 +54,26 @@ export default class SlideModal extends React.PureComponent {
           role="button"
         />
 
-        <div className={cn(styles.contentWrapper, `bg-${bgColor}`)} data-size={size}>
+        <div
+          className={cn(styles.contentWrapper, `bg-${bgColor}`)}
+          data-size={size}
+        >
           <div className={cn(styles.mainPanel)}>
-            { title
-              && (
+            {title && (
               <div className={cn(styles.header, 'text-2xl')}>
-                { title }
-                { subtitle && <div className="text-sm mt-2">{ subtitle }</div>}
+                {title}
+                {subtitle && <div className="text-sm mt-2">{subtitle}</div>}
               </div>
-              )}
-            { content }
+            )}
+            {content}
           </div>
-          <div className={styles.detailContent} data-displayed={!!detailContent}>
-            { detailContent }
+          <div
+            className={styles.detailContent}
+            data-displayed={!!detailContent}
+          >
+            {detailContent}
           </div>
         </div>
-
       </div>
     );
   }

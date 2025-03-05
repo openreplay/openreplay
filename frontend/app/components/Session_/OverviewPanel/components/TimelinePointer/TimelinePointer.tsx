@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import React from 'react';
 import { useModal } from 'App/components/Modal';
 import { Icon } from 'UI';
@@ -26,7 +27,7 @@ interface Props {
     | 'NETWORK'
     | 'FRUSTRATIONS'
     | 'EVENTS'
-    | 'PERFORMANCE'
+    | 'PERFORMANCE';
   noClick?: boolean;
   fetchPresented?: boolean;
   isGrouped?: boolean;
@@ -79,7 +80,14 @@ const TimelinePointer = React.memo((props: Props) => {
 
   if (isGrouped) {
     const onClick = createEventClickHandler(item[0], type);
-    return <GroupedIssue type={type} items={item} onClick={onClick} createEventClickHandler={createEventClickHandler} />;
+    return (
+      <GroupedIssue
+        type={type}
+        items={item}
+        onClick={onClick}
+        createEventClickHandler={createEventClickHandler}
+      />
+    );
   }
 
   if (type === 'NETWORK') {
@@ -150,7 +158,7 @@ function GroupedIssue({
     <Popover
       placement="right"
       title={title}
-      content={(
+      content={
         <div style={{ maxHeight: 160, overflowY: 'auto' }}>
           {items.map((pointer) => (
             <div
@@ -159,14 +167,13 @@ function GroupedIssue({
               className="flex items-center gap-2 mb-1 cursor-pointer border-b border-transparent hover:border-gray-lightest"
             >
               <div className="text-secondary">
-                @
-                {shortDurationFromMs(pointer.time)}
+                @{shortDurationFromMs(pointer.time)}
               </div>
               <RenderLineData type={type} item={pointer} />
             </div>
           ))}
         </div>
-      )}
+      }
     >
       <div
         onClick={onClick}
@@ -183,7 +190,9 @@ function RenderLineData({ item, type }: any) {
     const elData = getFrustration(item);
     return (
       <>
-        <div><Icon name={elData.icon} color="black" size="16" /></div>
+        <div>
+          <Icon name={elData.icon} color="black" size="16" />
+        </div>
         <div>{elData.name}</div>
       </>
     );

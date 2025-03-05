@@ -11,7 +11,11 @@ function SessionHeader() {
   const { searchStore } = useStore();
   const { startDate, endDate, rangeValue } = searchStore.instance;
 
-  const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
+  const period = Period({
+    start: startDate,
+    end: endDate,
+    rangeName: rangeValue,
+  });
 
   const onDateChange = (e: any) => {
     const dateValues = e.toJSON();
@@ -25,7 +29,12 @@ function SessionHeader() {
         <SessionTags />
         <div className="mr-auto" />
         <Space>
-          <SelectDateRange isAnt period={period} onChange={onDateChange} right />
+          <SelectDateRange
+            isAnt
+            period={period}
+            onChange={onDateChange}
+            right
+          />
           <SessionSort />
         </Space>
       </div>

@@ -9,17 +9,23 @@ import Issue, { IIssue, types as issueTypes } from './issue';
 const HASH_MOD = 1610612741;
 const HASH_P = 53;
 
-export function mergeEventLists<T extends Record<string, any>, Y extends Record<string, any>>(arr1: T[], arr2: Y[]): Array<T | Y> {
+export function mergeEventLists<
+  T extends Record<string, any>,
+  Y extends Record<string, any>,
+>(arr1: T[], arr2: Y[]): Array<T | Y> {
   const merged = [];
   let index1 = 0;
   let index2 = 0;
   let current = 0;
 
-  while (current < (arr1.length + arr2.length)) {
+  while (current < arr1.length + arr2.length) {
     const isArr1Depleted = index1 >= arr1.length;
     const isArr2Depleted = index2 >= arr2.length;
 
-    if (!isArr1Depleted && (isArr2Depleted || (arr1[index1].timestamp < arr2[index2].timestamp))) {
+    if (
+      !isArr1Depleted &&
+      (isArr2Depleted || arr1[index1].timestamp < arr2[index2].timestamp)
+    ) {
       merged[current] = arr1[index1];
       index1++;
     } else {
@@ -50,15 +56,15 @@ export function hashString(s: string): number {
 }
 
 interface IosCrash {
-  crashId: string
-  name: string
-  projectId: number
-  reason: string
-  seqIndex: number
-  sessionId: string
-  stacktrace: string
-  time: number
-  timestamp: number
+  crashId: string;
+  name: string;
+  projectId: number;
+  reason: string;
+  seqIndex: number;
+  sessionId: string;
+  stacktrace: string;
+  time: number;
+  timestamp: number;
 }
 
 export interface ISession {
@@ -73,7 +79,7 @@ export interface ISession {
   duration: number;
   durationMs: number;
   events: InjectedEvent[];
-  crashes: IosCrash[]
+  crashes: IosCrash[];
   stackEvents: StackEvent[];
   metadata: [];
   favorite: boolean;
@@ -132,8 +138,8 @@ export interface ISession {
   userUUID: string;
   userEvents: any[];
   timezone?: string;
-  videoURL?: string[]
-  isMobileNative?: boolean
+  videoURL?: string[];
+  isMobileNative?: boolean;
   audio?: string;
   assistOnly?: boolean;
 }
@@ -322,7 +328,9 @@ export default class Session {
       videoURL = [],
       ...session
     } = sessionData;
-    const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
+    const duration = Duration.fromMillis(
+      session.duration < 1000 ? 1000 : session.duration,
+    );
     const durationSeconds = duration.valueOf();
     const startedAt = +startTs || +timestamp;
 
@@ -352,11 +360,13 @@ export default class Session {
       stackEventsList.push(...mergedArrays);
     }
 
-    const exceptions = (errors as IError[])?.map((e) => new SessionError(e)) || [];
+    const exceptions =
+      (errors as IError[])?.map((e) => new SessionError(e)) || [];
 
-    const issuesList = (issues as IIssue[]).map(
-      (i, k) => new Issue({ ...i, time: i.timestamp - startedAt, key: k }),
-    ) || [];
+    const issuesList =
+      (issues as IIssue[]).map(
+        (i, k) => new Issue({ ...i, time: i.timestamp - startedAt, key: k }),
+      ) || [];
 
     const rawNotes = notes;
 
@@ -367,9 +377,12 @@ export default class Session {
       }
       return ev.type === TYPES.CLICKRAGE;
     });
-    const frustrationIssues = issuesList.filter((i) => i.type === issueTypes.MOUSE_THRASHING);
+    const frustrationIssues = issuesList.filter(
+      (i) => i.type === issueTypes.MOUSE_THRASHING,
+    );
 
-    const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
+    const frustrationList =
+      [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
       mergeEventLists(events, rawNotes),
@@ -391,15 +404,18 @@ export default class Session {
       crashes,
       durationSeconds,
       userNumericHash: hashString(
-        session.userId
-          || session.userAnonymousId
-          || session.userUuid
-          || session.userID
-          || session.userUUID
-          || '',
+        session.userId ||
+          session.userAnonymousId ||
+          session.userUuid ||
+          session.userID ||
+          session.userUUID ||
+          '',
       ),
       userDisplayName:
-        session.userId || session.userAnonymousId || session.userID || 'Anonymous User',
+        session.userId ||
+        session.userAnonymousId ||
+        session.userID ||
+        'Anonymous User',
       issues: issuesList,
       sessionId: sessionId || sessionID,
       userId: session.userId || session.userID,
@@ -428,20 +444,28 @@ export default class Session {
     stackEvents: any[] = [],
     userTestingEvents: any[] = [],
   ) {
-    const exceptions = (errors as IError[])?.map((e) => new SessionError(e)) || [];
-    const issuesList = (issues as IIssue[]).map(
-      (i, k) => new Issue({ ...i, time: i.timestamp - this.startedAt, key: k }),
-    ) || [];
+    const exceptions =
+      (errors as IError[])?.map((e) => new SessionError(e)) || [];
+    const issuesList =
+      (issues as IIssue[]).map(
+        (i, k) =>
+          new Issue({ ...i, time: i.timestamp - this.startedAt, key: k }),
+      ) || [];
     const stackEventsList: StackEvent[] = [];
     if (stackEvents?.length || userEvents?.length) {
       const mergedArrays = [...stackEvents, ...userEvents]
         .sort((a, b) => a.timestamp - b.timestamp)
-        .map((se) => new StackEvent({ ...se, time: se.timestamp - this.startedAt }));
+        .map(
+          (se) =>
+            new StackEvent({ ...se, time: se.timestamp - this.startedAt }),
+        );
       stackEventsList.push(...mergedArrays);
     }
 
     const events: InjectedEvent[] = [];
-    const uxtDoneEvents = userTestingEvents.filter((e) => e.status === 'done' && e.title).map((e) => ({ ...e, type: 'UXT_EVENT', key: e.signal_id }));
+    const uxtDoneEvents = userTestingEvents
+      .filter((e) => e.status === 'done' && e.title)
+      .map((e) => ({ ...e, type: 'UXT_EVENT', key: e.signal_id }));
 
     let uxtIndexNum = 0;
     if (sessionEvents.length) {
@@ -470,8 +494,14 @@ export default class Session {
       return ev.type === TYPES.CLICKRAGE || ev.type === TYPES.TAPRAGE;
     });
 
-    const frustrationIssues = issuesList.filter((i) => i.type === issueTypes.MOUSE_THRASHING || i.type === issueTypes.TAP_RAGE || i.type === issueTypes.DEAD_CLICK);
-    const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
+    const frustrationIssues = issuesList.filter(
+      (i) =>
+        i.type === issueTypes.MOUSE_THRASHING ||
+        i.type === issueTypes.TAP_RAGE ||
+        i.type === issueTypes.DEAD_CLICK,
+    );
+    const frustrationList =
+      [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
       events,
@@ -480,7 +510,10 @@ export default class Session {
 
     this.events = events;
     // @ts-ignore
-    this.notesWithEvents = [...this.notesWithEvents, ...mixedEventsWithIssues].sort(sortEvents);
+    this.notesWithEvents = [
+      ...this.notesWithEvents,
+      ...mixedEventsWithIssues,
+    ].sort(sortEvents);
     this.errors = exceptions;
     this.issues = issuesList;
     this.stackEvents = stackEventsList;
@@ -497,7 +530,8 @@ export default class Session {
       note.time = note.timestamp;
     });
     // @ts-ignore
-    this.notesWithEvents = [...this.notesWithEvents, ...sessionNotes].sort(sortEvents) || [];
+    this.notesWithEvents =
+      [...this.notesWithEvents, ...sessionNotes].sort(sortEvents) || [];
     this.notes = sessionNotes;
 
     return this;

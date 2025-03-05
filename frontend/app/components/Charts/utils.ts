@@ -52,10 +52,7 @@ function buildCategoryColorMap(categories: string[]): Record<number, string> {
  * For each series, transform its data array to an array of objects
  * with `value` and `itemStyle.color` based on the category index.
  */
-export function assignColorsByCategory(
-  series: any[],
-  categories: string[],
-) {
+export function assignColorsByCategory(series: any[], categories: string[]) {
   const categoryColorMap = buildCategoryColorMap(categories);
 
   series.forEach((s, si) => {
@@ -94,7 +91,9 @@ export function customTooltipFormatter(uuid: string) {
       const isPrevious = /Previous/.test(seriesName);
       const categoryName = (window as any).__yAxisData?.[uuid]?.[dataIndex];
       const fullname = isPrevious ? `Previous ${categoryName}` : categoryName;
-      const partnerName = isPrevious ? categoryName : `Previous ${categoryName}`;
+      const partnerName = isPrevious
+        ? categoryName
+        : `Previous ${categoryName}`;
       const partnerValue = (window as any).__seriesValueMap?.[uuid]?.[
         partnerName
       ];
@@ -112,8 +111,8 @@ export function customTooltipFormatter(uuid: string) {
           </div>
     
           <div style="border-left: 2px solid ${
-  params.color
-};" class="flex flex-col px-2 ml-2">
+            params.color
+          };" class="flex flex-col px-2 ml-2">
             <div class="text-neutral-600 text-sm"> 
               Total:
             </div>
@@ -124,7 +123,8 @@ export function customTooltipFormatter(uuid: string) {
           </div>
       `;
       if (partnerValue !== undefined) {
-        const partnerColor = (window as any).__seriesColorMap?.[uuid]?.[partnerName] || '#999';
+        const partnerColor =
+          (window as any).__seriesColorMap?.[uuid]?.[partnerName] || '#999';
         str += `
       <div style="border-left: 2px dashed ${partnerColor};" class="flex flex-col px-2 ml-2">
         <div class="text-neutral-600 text-sm"> 
@@ -177,8 +177,8 @@ export function customTooltipFormatter(uuid: string) {
       </div>
 
       <div style="border-left: 2px solid ${
-  params.color
-};" class="flex flex-col px-2 ml-2">
+        params.color
+      };" class="flex flex-col px-2 ml-2">
         <div class="text-neutral-600 text-sm"> 
           ${firstTs ? formatTimeOrDate(firstTs) : categoryLabel}
         </div>
@@ -190,7 +190,8 @@ export function customTooltipFormatter(uuid: string) {
   `;
 
     if (partnerVal !== undefined) {
-      const partnerColor = (window as any).__seriesColorMap?.[uuid]?.[partnerName] || '#999';
+      const partnerColor =
+        (window as any).__seriesColorMap?.[uuid]?.[partnerName] || '#999';
       tooltipContent += `
       <div style="border-left: 2px dashed ${partnerColor};" class="flex flex-col px-2 ml-2">
         <div class="text-neutral-600 text-sm"> 
@@ -260,7 +261,8 @@ export function createDataset(id: string, data: DataProps['data']) {
   const source = data.chart.map((item, idx) => {
     const row: (number | undefined)[] = [idx];
     data.namesMap.forEach((name) => {
-      const val = typeof item[name] === 'number' ? (item[name] as number) : undefined;
+      const val =
+        typeof item[name] === 'number' ? (item[name] as number) : undefined;
       row.push(val);
     });
     return row;

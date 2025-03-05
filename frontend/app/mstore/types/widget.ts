@@ -3,13 +3,21 @@ import { DateTime } from 'luxon';
 import Session from 'App/mstore/types/session';
 import Funnelissue from 'App/mstore/types/funnelIssue';
 import {
-  issueOptions, issueCategories, issueCategoriesMap, pathAnalysisEvents,
+  issueOptions,
+  issueCategories,
+  issueCategoriesMap,
+  pathAnalysisEvents,
 } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import { metricService } from 'App/services';
 import {
-  FUNNEL, HEATMAP, INSIGHTS, TABLE, TIMESERIES, USER_PATH,
+  FUNNEL,
+  HEATMAP,
+  INSIGHTS,
+  TABLE,
+  TIMESERIES,
+  USER_PATH,
 } from 'App/constants/card';
 import { getChartFormatter } from 'Types/dashboard/helper';
 import { filtersMap } from 'Types/filter/newFilter';
@@ -42,12 +50,12 @@ export class InsightIssue {
 
   constructor(
     category: string,
-        public name: string,
-        public ratio: number,
-        oldValue = 0,
-        value = 0,
-        change = 0,
-        isNew = false,
+    public name: string,
+    public ratio: number,
+    oldValue = 0,
+    value = 0,
+    change = 0,
+    isNew = false,
   ) {
     this.category = category;
     this.value = Math.round(value);
@@ -183,7 +191,11 @@ export default class Widget {
   }
 
   createSeries(filters: Record<string, any>) {
-    const series = new FilterSeries().fromData({ filter: { filters }, name: 'AI Query', seriesId: 1 });
+    const series = new FilterSeries().fromData({
+      filter: { filters },
+      name: 'AI Query',
+      seriesId: 1,
+    });
     this.setSeries([series]);
   }
 
@@ -192,21 +204,28 @@ export default class Widget {
     runInAction(() => {
       this.metricId = json.metricId;
       this.widgetId = json.widgetId;
-      this.metricValue = this.metricValueFromArray(json.metricValue, json.metricType);
+      this.metricValue = this.metricValueFromArray(
+        json.metricValue,
+        json.metricType,
+      );
       this.metricOf = json.metricOf;
       this.metricType = json.metricType;
       this.metricFormat = json.metricFormat;
       this.viewType = json.viewType;
       this.name = json.name;
       this.compareTo = json.compareTo || null;
-      this.series = json.series && json.series.length > 0
-        ? json.series.map((series: any) => new FilterSeries().fromJson(series, this.metricType === HEATMAP))
-        : [new FilterSeries()];
+      this.series =
+        json.series && json.series.length > 0
+          ? json.series.map((series: any) =>
+              new FilterSeries().fromJson(series, this.metricType === HEATMAP),
+            )
+          : [new FilterSeries()];
       this.dashboards = json.dashboards || [];
       this.owner = json.ownerName;
-      this.lastModified = json.editedAt || json.createdAt
-        ? DateTime.fromMillis(json.editedAt || json.createdAt)
-        : null;
+      this.lastModified =
+        json.editedAt || json.createdAt
+          ? DateTime.fromMillis(json.editedAt || json.createdAt)
+          : null;
       this.config = json.config;
       this.position = json.config.position;
       this.predefinedKey = json.predefinedKey;
@@ -223,7 +242,10 @@ export default class Widget {
       if (this.metricType === USER_PATH) {
         this.hideExcess = json.hideExcess;
         this.startType = json.startType;
-        this.metricValue = json.metricValue && json.metricValue.length > 0 ? json.metricValue : ['location'];
+        this.metricValue =
+          json.metricValue && json.metricValue.length > 0
+            ? json.metricValue
+            : ['location'];
         if (json.startPoint) {
           if (Array.isArray(json.startPoint) && json.startPoint.length > 0) {
             this.startPoint = new FilterItem().fromJson(json.startPoint[0]);
@@ -236,7 +258,9 @@ export default class Widget {
 
         // TODO change this to excludes after the api change
         if (json.exclude) {
-          this.series[0].filter.excludes = json.exclude.map((i: any) => new FilterItem().fromJson(i));
+          this.series[0].filter.excludes = json.exclude.map((i: any) =>
+            new FilterItem().fromJson(i),
+          );
         }
       }
 
@@ -276,15 +300,15 @@ export default class Widget {
       config: {
         ...this.config,
         col:
-                    this.metricType === FUNNEL
-                    || this.metricOf === FilterKey.ERRORS
-                    || this.metricOf === FilterKey.SESSIONS
-                    || this.metricOf === FilterKey.SLOWEST_RESOURCES
-                    || this.metricOf === FilterKey.MISSING_RESOURCES
-                    || this.metricOf === FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION
-                    || this.metricType === USER_PATH
-                      ? 4
-                      : 2,
+          this.metricType === FUNNEL ||
+          this.metricOf === FilterKey.ERRORS ||
+          this.metricOf === FilterKey.SESSIONS ||
+          this.metricOf === FilterKey.SLOWEST_RESOURCES ||
+          this.metricOf === FilterKey.MISSING_RESOURCES ||
+          this.metricOf === FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION ||
+          this.metricType === USER_PATH
+            ? 4
+            : 2,
       },
     };
 
@@ -292,7 +316,9 @@ export default class Widget {
       data.hideExcess = this.hideExcess;
       data.startType = this.startType;
       data.startPoint = [this.startPoint.toJson()];
-      data.excludes = this.series[0].filter.excludes.map((i: any) => i.toJson());
+      data.excludes = this.series[0].filter.excludes.map((i: any) =>
+        i.toJson(),
+      );
       data.metricOf = 'sessionCount';
     }
     return data;
@@ -329,18 +355,26 @@ export default class Widget {
     return this.metricId !== undefined;
   }
 
-  calculateTotalSeries = (data: any): any => (Array.isArray(data) ? data.map((entry) => {
-    const total = Object.keys(entry)
-      .filter((key) => key !== 'timestamp' && key !== 'time')
-      .reduce((sum, key) => sum + entry[key], 0);
-    return { ...entry, Total: total };
-  }) : []);
+  calculateTotalSeries = (data: any): any =>
+    Array.isArray(data)
+      ? data.map((entry) => {
+          const total = Object.keys(entry)
+            .filter((key) => key !== 'timestamp' && key !== 'time')
+            .reduce((sum, key) => sum + entry[key], 0);
+          return { ...entry, Total: total };
+        })
+      : [];
 
   setPage(page: number) {
     this.page = page;
   }
 
-  setData(data: { timestamp: number, [seriesName: string]: number}[], period: any, isComparison: boolean = false, density?: number) {
+  setData(
+    data: { timestamp: number; [seriesName: string]: number }[],
+    period: any,
+    isComparison: boolean = false,
+    density?: number,
+  ) {
     if (!data) return;
     const _data: any = {};
     if (isComparison && this.metricType === TIMESERIES) {
@@ -383,13 +417,24 @@ export default class Widget {
       _data.issues = data
         .filter((i: any) => i.change > 0 || i.change < 0)
         .map(
-          (i: any) => new InsightIssue(i.category, i.name, i.ratio, i.oldValue, i.value, i.change, i.isNew),
+          (i: any) =>
+            new InsightIssue(
+              i.category,
+              i.name,
+              i.ratio,
+              i.oldValue,
+              i.value,
+              i.change,
+              i.isNew,
+            ),
         );
     } else if (this.metricType === FUNNEL) {
       _data.funnel = new Funnel().fromJSON(data);
     } else if (this.metricType === TABLE) {
       const { count } = data[0];
-      _data.values = data[0].values.map((s: any) => new SessionsByRow().fromJson(s, count, this.metricOf));
+      _data.values = data[0].values.map((s: any) =>
+        new SessionsByRow().fromJson(s, count, this.metricOf),
+      );
       _data.total = data[0].total;
     } else if (data.hasOwnProperty('chart')) {
       _data.value = data.value;
@@ -409,15 +454,15 @@ export default class Widget {
       _data.chart = getChartFormatter(period, density)(data);
       _data.namesMap = Array.isArray(data)
         ? data
-          .map((i) => Object.keys(i))
-          .flat()
-          .filter((i) => i !== 'time' && i !== 'timestamp')
-          .reduce((unique: string[], item: string) => {
-            if (!unique.includes(item)) {
-              unique.push(item);
-            }
-            return unique;
-          }, [])
+            .map((i) => Object.keys(i))
+            .flat()
+            .filter((i) => i !== 'time' && i !== 'timestamp')
+            .reduce((unique: string[], item: string) => {
+              if (!unique.includes(item)) {
+                unique.push(item);
+              }
+              return unique;
+            }, [])
         : [];
     }
 
@@ -449,15 +494,22 @@ export default class Widget {
       if (card.metricType === USER_PATH) {
         return {
           total: response.count,
-          issues: response.values.map((issue: any) => new Issue().fromJSON(issue)),
+          issues: response.values.map((issue: any) =>
+            new Issue().fromJSON(issue),
+          ),
         };
       }
       const mapIssue = (issue: any) => new Funnelissue().fromJSON(issue);
-      const significantIssues = response.issues.significant?.map(mapIssue) || [];
-      const insignificantIssues = response.issues.insignificant?.map(mapIssue) || [];
+      const significantIssues =
+        response.issues.significant?.map(mapIssue) || [];
+      const insignificantIssues =
+        response.issues.insignificant?.map(mapIssue) || [];
 
       return {
-        issues: significantIssues.length > 0 ? significantIssues : insignificantIssues,
+        issues:
+          significantIssues.length > 0
+            ? significantIssues
+            : insignificantIssues,
       };
     } catch (error) {
       console.error('Error fetching issues:', error);
@@ -478,7 +530,9 @@ export default class Widget {
         .then((response: any) => {
           resolve({
             issue: new Funnelissue().fromJSON(response.issue),
-            sessions: response.sessions.sessions.map((s: any) => new Session().fromJson(s)),
+            sessions: response.sessions.sessions.map((s: any) =>
+              new Session().fromJson(s),
+            ),
           });
         })
         .catch((error: any) => {
@@ -491,10 +545,14 @@ export default class Widget {
     if (!Array.isArray(metricValue)) return metricValue;
     if (metricType === TABLE) {
       return issueOptions.filter((i: any) => metricValue.includes(i.value));
-    } if (metricType === INSIGHTS) {
+    }
+    if (metricType === INSIGHTS) {
       return issueCategories.filter((i: any) => metricValue.includes(i.value));
-    } if (metricType === USER_PATH) {
-      return pathAnalysisEvents.filter((i: any) => metricValue.includes(i.value));
+    }
+    if (metricType === USER_PATH) {
+      return pathAnalysisEvents.filter((i: any) =>
+        metricValue.includes(i.value),
+      );
     }
   }
 
@@ -505,35 +563,40 @@ export default class Widget {
 }
 
 interface Node {
-    name: string;
-    eventType: string;
-    avgTimeFromPrevious: number | null;
-    idd?: string; // Making idd optional since it might not be present in raw data
+  name: string;
+  eventType: string;
+  avgTimeFromPrevious: number | null;
+  idd?: string; // Making idd optional since it might not be present in raw data
 }
 
 interface Link {
-    eventType: string;
-    value: number;
-    source: number;
-    target: number;
-    id?: string; // Making id optional since it might not be present in raw data
+  eventType: string;
+  value: number;
+  source: number;
+  target: number;
+  id?: string; // Making id optional since it might not be present in raw data
 }
 
 interface Data {
-    nodes: Node[];
-    links: Link[];
+  nodes: Node[];
+  links: Link[];
 }
 
-const generateUniqueId = (): string => Math.random().toString(36).substring(2, 15);
+const generateUniqueId = (): string =>
+  Math.random().toString(36).substring(2, 15);
 
-const processData = (data: Data): {
-    nodes: Node[],
-    links: { source: number, target: number, value: number, id: string }[]
+const processData = (
+  data: Data,
+): {
+  nodes: Node[];
+  links: { source: number; target: number; value: number; id: string }[];
 } => {
   // Ensure nodes have unique IDs
   const nodes = data.nodes.map((node) => ({
     ...node,
-    avgTimeFromPrevious: node.avgTimeFromPrevious ? durationFormatted(node.avgTimeFromPrevious) : null,
+    avgTimeFromPrevious: node.avgTimeFromPrevious
+      ? durationFormatted(node.avgTimeFromPrevious)
+      : null,
     idd: node.idd || generateUniqueId(),
   }));
 
@@ -553,8 +616,14 @@ const processData = (data: Data): {
 
   // Sort nodes based on their first appearance in the sorted links to maintain visual consistency
   const sortedNodes = nodes.slice().sort((a, b) => {
-    const aIndex = links.findIndex((link) => link.source === nodes.indexOf(a) || link.target === nodes.indexOf(a));
-    const bIndex = links.findIndex((link) => link.source === nodes.indexOf(b) || link.target === nodes.indexOf(b));
+    const aIndex = links.findIndex(
+      (link) =>
+        link.source === nodes.indexOf(a) || link.target === nodes.indexOf(a),
+    );
+    const bIndex = links.findIndex(
+      (link) =>
+        link.source === nodes.indexOf(b) || link.target === nodes.indexOf(b),
+    );
     return aIndex - bIndex;
   });
 

@@ -6,6 +6,7 @@ import { useStore } from 'App/mstore';
 import { onboarding as onboardingRoute, withSiteId } from 'App/routes';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { useModal } from 'App/components/Modal';
+import { useTranslation } from 'react-i18next';
 
 interface StepListProps extends RouteComponentProps {
   title: string;
@@ -24,9 +25,8 @@ const StepItem = React.memo(
     onIgnore: (e: React.MouseEvent<HTMLAnchorElement>, step: any) => void;
     onClick: () => void;
   }) => {
-    const {
-      title, description, status, docsLink,
-    } = step;
+    const { t } = useTranslation();
+    const { title, description, status, docsLink } = step;
     const isCompleted = status === 'completed';
 
     return (
@@ -44,15 +44,25 @@ const StepItem = React.memo(
           />
         </div>
         <div>
-          <div className={cn('font-medium', { link: !isCompleted })} onClick={!isCompleted ? onClick : () => {}}>{title}</div>
+          <div
+            className={cn('font-medium', { link: !isCompleted })}
+            onClick={!isCompleted ? onClick : () => {}}
+          >
+            {title}
+          </div>
           <div className="text-sm">{description}</div>
           <div className="flex gap-6 mt-3">
-            <a className="link" href={docsLink} target="_blank" rel="noreferrer">
-              Docs
+            <a
+              className="link"
+              href={docsLink}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t('Docs')}
             </a>
             {!isCompleted && (
               <a className="link" onClick={(e) => onIgnore(e, step)}>
-                Ignore
+                {t('Ignore')}
               </a>
             )}
           </div>
@@ -90,12 +100,15 @@ const StepList = React.memo((props: StepListProps) => {
   return (
     <div className="my-3">
       <div className="text-lg font-medium mb-2">
-        {title}
-        {' '}
-        {steps.length}
+        {title} {steps.length}
       </div>
       {steps.map((step) => (
-        <StepItem key={step.title} onIgnore={onIgnore} step={step} onClick={() => onClick(step)} />
+        <StepItem
+          key={step.title}
+          onIgnore={onIgnore}
+          step={step}
+          onClick={() => onClick(step)}
+        />
       ))}
     </div>
   );

@@ -1,17 +1,15 @@
-import React, {
-  createContext, useContext, useState, ReactNode,
-} from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Drawer } from 'antd';
 
 interface ModalConfig {
-    title?: string;
-    placement?: 'top' | 'right' | 'bottom' | 'left';
-    width?: number;
+  title?: string;
+  placement?: 'top' | 'right' | 'bottom' | 'left';
+  width?: number;
 }
 
 interface ModalContextType {
-    openModal: (content: ReactNode, config?: ModalConfig) => void;
-    closeModal: () => void;
+  openModal: (content: ReactNode, config?: ModalConfig) => void;
+  closeModal: () => void;
 }
 
 const defaultConfig: ModalConfig = {
@@ -21,10 +19,8 @@ const defaultConfig: ModalConfig = {
 };
 
 const ModalContext = createContext<ModalContextType>({
-  openModal: () => {
-  },
-  closeModal: () => {
-  },
+  openModal: () => {},
+  closeModal: () => {},
 });
 
 export const useModal = () => useContext(ModalContext);
@@ -34,7 +30,10 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const [modalContent, setModalContent] = useState<ReactNode>(null);
   const [modalConfig, setModalConfig] = useState<ModalConfig>(defaultConfig);
 
-  const openModal = (content: ReactNode, config: ModalConfig = defaultConfig) => {
+  const openModal = (
+    content: ReactNode,
+    config: ModalConfig = defaultConfig,
+  ) => {
     setModalContent(content);
     setModalConfig(config);
     setShowModal(true);

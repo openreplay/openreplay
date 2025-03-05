@@ -3,8 +3,8 @@ import { Icon } from 'UI';
 import stl from './LiveTag.module.css';
 
 interface Props {
-  onClick: () => void,
-  isLive: Boolean
+  onClick: () => void;
+  isLive: boolean;
 }
 
 function LiveTag({ isLive, onClick }: Props) {

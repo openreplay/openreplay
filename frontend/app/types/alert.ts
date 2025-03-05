@@ -1,13 +1,20 @@
 import { notEmptyString, validateNumber } from 'App/validate';
-import { alertMetrics as metrics, alertConditions as conditions } from 'App/constants';
+import {
+  alertMetrics as metrics,
+  alertConditions as conditions,
+} from 'App/constants';
 import { makeAutoObservable } from 'mobx';
 
 const metricsMap = {};
 const conditionsMap = {};
 // @ts-ignore
-metrics.forEach((m) => { metricsMap[m.value] = m; });
+metrics.forEach((m) => {
+  metricsMap[m.value] = m;
+});
 // @ts-ignore
-conditions.forEach((c) => { conditionsMap[c.value] = c; });
+conditions.forEach((c) => {
+  conditionsMap[c.value] = c;
+});
 
 export interface IAlert {
   alertId: string;
@@ -21,8 +28,12 @@ export interface IAlert {
   detection_method?: string;
   change: string;
   seriesName: string;
-  query: { left: string, operator: string, right: string };
-  options: { currentPeriod: number, previousPeriod: number, message: {type: string, value: string}[] };
+  query: { left: string; operator: string; right: string };
+  options: {
+    currentPeriod: number;
+    previousPeriod: number;
+    message: { type: string; value: string }[];
+  };
   createdAt?: number;
   slack: boolean;
   slackInput: string[];
@@ -37,32 +48,33 @@ export interface IAlert {
   condition: string;
 }
 
-const getDefaults = () => ({
-  alertId: '',
-  projectId: undefined,
-  name: 'Untitled Alert',
-  description: '',
-  active: true,
-  currentPeriod: 15,
-  previousPeriod: 15,
-  detectionMethod: 'threshold',
-  change: 'change',
-  query: { left: '', operator: '', right: '' },
-  options: { currentPeriod: 15, previousPeriod: 15 },
-  createdAt: undefined,
+const getDefaults = () =>
+  ({
+    alertId: '',
+    projectId: undefined,
+    name: 'Untitled Alert',
+    description: '',
+    active: true,
+    currentPeriod: 15,
+    previousPeriod: 15,
+    detectionMethod: 'threshold',
+    change: 'change',
+    query: { left: '', operator: '', right: '' },
+    options: { currentPeriod: 15, previousPeriod: 15 },
+    createdAt: undefined,
 
-  slack: false,
-  slackInput: [],
-  webhook: false,
-  webhookInput: [],
-  email: false,
-  emailInput: [],
-  msteams: false,
-  msteamsInput: [],
-  hasNotification: false,
-  metric: '',
-  condition: '',
-}) as unknown as IAlert;
+    slack: false,
+    slackInput: [],
+    webhook: false,
+    webhookInput: [],
+    email: false,
+    emailInput: [],
+    msteams: false,
+    msteamsInput: [],
+    hasNotification: false,
+    metric: '',
+    condition: '',
+  }) as unknown as IAlert;
 
 export default class Alert {
   alertId: IAlert['alertId'];
@@ -121,7 +133,11 @@ export default class Alert {
     const defaults = getDefaults();
     Object.assign(defaults, item);
 
-    const options = defaults.options || { currentPeriod: 15, previousPeriod: 15, message: [] };
+    const options = defaults.options || {
+      currentPeriod: 15,
+      previousPeriod: 15,
+      message: [],
+    };
     const query = defaults.query || { left: '', operator: '', right: '' };
 
     const slack = options.message?.filter((i) => i.type === 'slack') || [];
@@ -162,30 +178,48 @@ export default class Alert {
   }
 
   validate() {
-    return notEmptyString(this.name)
-      && this.query.left && this.query.right && validateNumber(this.query.right) && parseInt(this.query.right, 10) > 0 && this.query.operator
-      && (this.slack ? this.slackInput.length > 0 : true)
-      && (this.email ? this.emailInput.length > 0 : true)
-      && (this.msteams ? this.msteamsInput.length > 0 : true)
-      && (this.webhook ? this.webhookInput.length > 0 : true);
+    return (
+      notEmptyString(this.name) &&
+      this.query.left &&
+      this.query.right &&
+      validateNumber(this.query.right) &&
+      parseInt(this.query.right, 10) > 0 &&
+      this.query.operator &&
+      (this.slack ? this.slackInput.length > 0 : true) &&
+      (this.email ? this.emailInput.length > 0 : true) &&
+      (this.msteams ? this.msteamsInput.length > 0 : true) &&
+      (this.webhook ? this.webhookInput.length > 0 : true)
+    );
   }
 
   toData() {
     const js = { ...this };
 
     const options = { message: [], previousPeriod: 0, currentPeriod: 0 };
-    if (js.slack && js.slackInput)
-    // @ts-ignore
-    { options.message = options.message.concat(js.slackInput.map((i) => ({ type: 'slack', value: i }))); }
-    if (js.email && js.emailInput)
-    // @ts-ignore
-    { options.message = options.message.concat(js.emailInput.map((i) => ({ type: 'email', value: i }))); }
-    if (js.webhook && js.webhookInput)
-    // @ts-ignore
-    { options.message = options.message.concat(js.webhookInput.map((i) => ({ type: 'webhook', value: i }))); }
-    if (js.msteams && js.msteamsInput)
-    // @ts-ignore
-    { options.message = options.message.concat(js.msteamsInput.map((i) => ({ type: 'msteams', value: i }))); }
+    if (js.slack && js.slackInput) {
+      // @ts-ignore
+      options.message = options.message.concat(
+        js.slackInput.map((i) => ({ type: 'slack', value: i })),
+      );
+    }
+    if (js.email && js.emailInput) {
+      // @ts-ignore
+      options.message = options.message.concat(
+        js.emailInput.map((i) => ({ type: 'email', value: i })),
+      );
+    }
+    if (js.webhook && js.webhookInput) {
+      // @ts-ignore
+      options.message = options.message.concat(
+        js.webhookInput.map((i) => ({ type: 'webhook', value: i })),
+      );
+    }
+    if (js.msteams && js.msteamsInput) {
+      // @ts-ignore
+      options.message = options.message.concat(
+        js.msteamsInput.map((i) => ({ type: 'msteams', value: i })),
+      );
+    }
 
     options.previousPeriod = js.previousPeriod;
     options.currentPeriod = js.currentPeriod;

@@ -4,7 +4,7 @@ import JsonViewer from './components/JsonViewer';
 import Sentry from './components/Sentry';
 
 interface Props {
-    event: any;
+  event: any;
 }
 function StackEventModal(props: Props) {
   const renderPopupContent = () => {
@@ -15,11 +15,25 @@ function StackEventModal(props: Props) {
       case SENTRY:
         return <Sentry event={payload} />;
       case DATADOG:
-        return <JsonViewer title={name} data={payload} icon="integrations/datadog" />;
+        return (
+          <JsonViewer title={name} data={payload} icon="integrations/datadog" />
+        );
       case STACKDRIVER:
-        return <JsonViewer title={name} data={payload} icon="integrations/stackdriver" />;
+        return (
+          <JsonViewer
+            title={name}
+            data={payload}
+            icon="integrations/stackdriver"
+          />
+        );
       default:
-        return <JsonViewer title={name} data={payload} icon={`integrations/${source}`} />;
+        return (
+          <JsonViewer
+            title={name}
+            data={payload}
+            icon={`integrations/${source}`}
+          />
+        );
     }
   };
   return (

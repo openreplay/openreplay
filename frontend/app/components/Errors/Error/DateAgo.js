@@ -4,10 +4,8 @@ import { resentOrDate } from 'App/date';
 function DateAgo({ className, title, timestamp }) {
   return (
     <div className={className}>
-      <h4 className="font-medium">{ title }</h4>
-      <span className="text-sm">
-        { `${resentOrDate(timestamp)}` }
-      </span>
+      <h4 className="font-medium">{title}</h4>
+      <span className="text-sm">{`${resentOrDate(timestamp)}`}</span>
     </div>
   );
 }

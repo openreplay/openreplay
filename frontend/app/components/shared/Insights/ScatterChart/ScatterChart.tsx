@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ScatterChart,
   Scatter,
@@ -17,16 +18,22 @@ interface Props {
 }
 function ScatterChartComponent(props: Props) {
   const { dataFirst, dataSecond } = props;
+  const { t } = useTranslation();
   return (
     <div className="rounded border shadow">
-      <div className="text-lg p-3 border-b bg-gray-lightest">Scatter Chart</div>
+      <div className="text-lg p-3 border-b bg-gray-lightest">
+        {t('Scatter Chart')}
+      </div>
       <div className="">
         <ResponsiveContainer height={500} width="100%">
           <ScatterChart
             width={730}
             height={250}
             margin={{
-              top: 20, right: 20, bottom: 10, left: 10,
+              top: 20,
+              right: 20,
+              bottom: 10,
+              left: 10,
             }}
           >
             <CartesianGrid strokeDasharray="3 3" />

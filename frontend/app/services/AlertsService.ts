@@ -13,35 +13,43 @@ export default class AlertsService {
   }
 
   save(instance: Alert): Promise<IAlert> {
-    return this.client.post(instance.alertId ? `/alerts/${instance.alertId}` : '/alerts', instance.toData())
+    return this.client
+      .post(
+        instance.alertId ? `/alerts/${instance.alertId}` : '/alerts',
+        instance.toData(),
+      )
       .then((response) => response.json())
       .then((response) => response.data || {})
       .catch(Promise.reject);
   }
 
-  fetchTriggerOptions(): Promise<{ name: string, value: string | number }[]> {
-    return this.client.get('/alerts/triggers')
+  fetchTriggerOptions(): Promise<{ name: string; value: string | number }[]> {
+    return this.client
+      .get('/alerts/triggers')
       .then((r) => r.json())
       .then((j) => j.data || [])
       .catch(Promise.reject);
   }
 
   fetchList(): Promise<IAlert[]> {
-    return this.client.get('/alerts')
+    return this.client
+      .get('/alerts')
       .then((r) => r.json())
       .then((j) => j.data || [])
       .catch(Promise.reject);
   }
 
   fetch(id: string): Promise<IAlert> {
-    return this.client.get(`/alerts/${id}`)
+    return this.client
+      .get(`/alerts/${id}`)
       .then((r) => r.json())
       .then((j) => j.data || {})
       .catch(Promise.reject);
   }
 
   remove(id: string): Promise<IAlert> {
-    return this.client.delete(`/alerts/${id}`)
+    return this.client
+      .delete(`/alerts/${id}`)
       .then((r) => r.json())
       .then((j) => j.data || {})
       .catch(Promise.reject);

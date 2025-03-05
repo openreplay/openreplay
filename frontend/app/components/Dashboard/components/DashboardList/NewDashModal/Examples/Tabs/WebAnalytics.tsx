@@ -5,7 +5,7 @@ import ByCountry from '../SessionsBy/ByCountry';
 import ByUrl from '../SessionsBy/ByUrl';
 
 interface ExampleProps {
-    onCard: (card: string) => void;
+  onCard: (card: string) => void;
 }
 
 const WebAnalytics: React.FC<ExampleProps> = ({ onCard }) => (

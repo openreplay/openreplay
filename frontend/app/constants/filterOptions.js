@@ -85,15 +85,30 @@ const rangeFilterKeys = [
 ];
 const pageUrlFilter = ['contains', 'startsWith', 'endsWith'];
 
-const getOperatorsByKeys = (keys) => options.filter((option) => keys.includes(option.key));
+const getOperatorsByKeys = (keys) =>
+  options.filter((option) => keys.includes(option.key));
 
-export const baseOperators = options.filter(({ key }) => filterKeys.includes(key));
-export const stringOperatorsLimited = options.filter(({ key }) => stringFilterKeysLimited.includes(key));
-export const stringOperators = options.filter(({ key }) => stringFilterKeys.includes(key));
-export const stringOperatorsPerformance = options.filter(({ key }) => stringFilterKeysPerformance.includes(key));
-export const targetOperators = options.filter(({ key }) => targetFilterKeys.includes(key));
-export const targetConditional = options.filter(({ key }) => ['on', 'notOn', 'startsWith', 'endsWith', 'contains'].includes(key));
-export const stringConditional = options.filter(({ key }) => ['isAny', 'is', 'isNot', 'startsWith', 'endsWith', 'contains'].includes(key));
+export const baseOperators = options.filter(({ key }) =>
+  filterKeys.includes(key),
+);
+export const stringOperatorsLimited = options.filter(({ key }) =>
+  stringFilterKeysLimited.includes(key),
+);
+export const stringOperators = options.filter(({ key }) =>
+  stringFilterKeys.includes(key),
+);
+export const stringOperatorsPerformance = options.filter(({ key }) =>
+  stringFilterKeysPerformance.includes(key),
+);
+export const targetOperators = options.filter(({ key }) =>
+  targetFilterKeys.includes(key),
+);
+export const targetConditional = options.filter(({ key }) =>
+  ['on', 'notOn', 'startsWith', 'endsWith', 'contains'].includes(key),
+);
+export const stringConditional = options.filter(({ key }) =>
+  ['isAny', 'is', 'isNot', 'startsWith', 'endsWith', 'contains'].includes(key),
+);
 export const clickSelectorOperators = [
   { key: 'selectorIs', label: 'selector is', value: 'selectorIs' },
   { key: 'selectorIsAny', label: 'selector is any', value: 'selectorIsAny' },
@@ -124,7 +139,9 @@ export const booleanOperators = [
   { key: 'true', label: 'true', value: 'true' },
   { key: 'false', label: 'false', value: 'false' },
 ];
-export const pageUrlOperators = options.filter(({ key }) => pageUrlFilter.includes(key));
+export const pageUrlOperators = options.filter(({ key }) =>
+  pageUrlFilter.includes(key),
+);
 
 export const customOperators = [
   { key: '=', label: '=', value: '=' },

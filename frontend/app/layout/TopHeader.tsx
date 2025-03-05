@@ -7,16 +7,17 @@ import Logo from 'App/layout/Logo';
 import TopRight from 'App/layout/TopRight';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
+import { useTranslation } from 'react-i18next';
 
 const { Header } = Layout;
 
 function TopHeader() {
-  const {
-    userStore, notificationStore, projectsStore, settingsStore,
-  } = useStore();
+  const { userStore, notificationStore, projectsStore, settingsStore } =
+    useStore();
   const { account } = userStore;
   const { siteId } = projectsStore;
   const { initialDataFetched } = userStore;
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!account.id || initialDataFetched) return;
@@ -50,7 +51,9 @@ function TopHeader() {
           className="cursor-pointer"
         >
           <Tooltip
-            title={settingsStore.menuCollapsed ? 'Show Menu' : 'Hide Menu'}
+            title={
+              settingsStore.menuCollapsed ? t('Show Menu') : t('Hide Menu')
+            }
             mouseEnterDelay={1}
           >
             <Icon

@@ -38,7 +38,16 @@ function DropdownChips({
   const renderBadge = (item) => {
     const val = typeof item === 'string' ? item : item.value;
     const text = typeof item === 'string' ? item : item.label;
-    return <TagBadge className={badgeClassName} key={text} text={text} hashed={false} onRemove={() => onRemove(val)} outline />;
+    return (
+      <TagBadge
+        className={badgeClassName}
+        key={text}
+        text={text}
+        hashed={false}
+        onRemove={() => onRemove(val)}
+        outline
+      />
+    );
   };
 
   return (
@@ -57,7 +66,9 @@ function DropdownChips({
         />
       )}
       <div className="flex flex-wrap mt-3">
-        {textFiled ? selected.map(renderBadge) : options.filter((i) => selected.includes(i.value)).map(renderBadge)}
+        {textFiled
+          ? selected.map(renderBadge)
+          : options.filter((i) => selected.includes(i.value)).map(renderBadge)}
       </div>
     </div>
   );

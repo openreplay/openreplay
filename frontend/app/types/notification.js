@@ -20,7 +20,10 @@ class Notification extends Record({
   type: '',
   filterKey: '',
   options: Map({
-    source: '', sourceId: '', projectId: '', sourceMeta: '',
+    source: '',
+    sourceId: '',
+    projectId: '',
+    sourceMeta: '',
   }),
 }) {
   idKey = 'notificationId';
@@ -43,12 +46,16 @@ function fromJS(notification = {}) {
   const options = notification.options
     ? notification.options
     : Map({
-      source: '', sourceId: '', projectId: '', sourceMeta: '',
-    });
+        source: '',
+        sourceId: '',
+        projectId: '',
+        sourceMeta: '',
+      });
 
-  if (options.sourceMeta === 'scheduler')
-  // TODO should be fixed in API
-  { options.sourceMeta = 'scheduled'; }
+  if (options.sourceMeta === 'scheduler') {
+    // TODO should be fixed in API
+    options.sourceMeta = 'scheduled';
+  }
 
   return new Notification({
     ...notification,

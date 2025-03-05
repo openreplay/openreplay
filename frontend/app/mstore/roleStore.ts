@@ -83,7 +83,11 @@ export default class UserStore {
     this.toggleLoading(true);
     try {
       const { data } = await userService.modifyRole(role);
-      this.setRoles(this.list.map((r) => (r.roleId === data.roleId ? new Role().fromJson(data) : r)));
+      this.setRoles(
+        this.list.map((r) =>
+          r.roleId === data.roleId ? new Role().fromJson(data) : r,
+        ),
+      );
     } catch (e) {
       console.error(e);
     } finally {

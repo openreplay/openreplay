@@ -6,7 +6,11 @@ const LINE_DURATION = 3.5;
 const LINE_DURATION_MOBILE = 5;
 const LINE_WIDTH_START = 5;
 
-export type SwipeEvent = { x: number; y: number; direction: 'up' | 'down' | 'left' | 'right' }
+export type SwipeEvent = {
+  x: number;
+  y: number;
+  direction: 'up' | 'down' | 'left' | 'right';
+};
 
 export default class MouseTrail {
   public isActive = true;
@@ -19,18 +23,22 @@ export default class MouseTrail {
 
   private points: Point[] = [];
 
-  constructor(private readonly canvas: HTMLCanvasElement, isNativeMobile: boolean = false) {
+  constructor(
+    private readonly canvas: HTMLCanvasElement,
+    isNativeMobile: boolean = false,
+  ) {
     // @ts-ignore patching window
-    window.requestAnimFrame = window.requestAnimationFrame
+    window.requestAnimFrame =
+      window.requestAnimationFrame ||
       // @ts-ignore
-      || window.webkitRequestAnimationFrame
+      window.webkitRequestAnimationFrame ||
       // @ts-ignore
-      || window.mozRequestAnimationFrame
+      window.mozRequestAnimationFrame ||
       // @ts-ignore
-      || window.oRequestAnimationFrame
+      window.oRequestAnimationFrame ||
       // @ts-ignore
-      || window.msRequestAnimationFrame
-      || function (callback: any) {
+      window.msRequestAnimationFrame ||
+      function (callback: any) {
         window.setTimeout(callback, 1000 / 60);
       };
 
@@ -71,12 +79,17 @@ export default class MouseTrail {
   };
 
   animatePoints = () => {
-    this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
+    this.context.clearRect(
+      0,
+      0,
+      this.context.canvas.width,
+      this.context.canvas.height,
+    );
 
     const duration = (this.lineDuration * 1000) / 60;
     const { points } = this;
-    let point; let
-      lastPoint;
+    let point;
+    let lastPoint;
 
     for (let i = 0; i < points.length; i++) {
       point = points[i];
@@ -120,7 +133,11 @@ export default class MouseTrail {
 type Coords = { x: number; y: number };
 
 class Point {
-  constructor(public x: number, public y: number, public lifetime?: number) {}
+  constructor(
+    public x: number,
+    public y: number,
+    public lifetime?: number,
+  ) {}
 
   static distance(a: Coords, b: Coords) {
     const dx = a.x - b.x;

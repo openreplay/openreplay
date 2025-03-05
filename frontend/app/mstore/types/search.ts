@@ -1,4 +1,8 @@
-import { CUSTOM_RANGE, DATE_RANGE_VALUES, getDateRangeFromValue } from 'App/dateRange';
+import {
+  CUSTOM_RANGE,
+  DATE_RANGE_VALUES,
+  getDateRangeFromValue,
+} from 'App/dateRange';
 import Filter, { IFilter } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
 import { makeAutoObservable, observable } from 'mobx';
@@ -165,9 +169,15 @@ export default class Search {
 
   toSearch() {
     const js: any = { ...this };
-    js.filters = this.filters.map((filter: any) => new FilterItem(filter).toJson());
+    js.filters = this.filters.map((filter: any) =>
+      new FilterItem(filter).toJson(),
+    );
 
-    const { startDate, endDate } = this.getDateRange(js.rangeValue, js.startDate, js.endDate);
+    const { startDate, endDate } = this.getDateRange(
+      js.rangeValue,
+      js.startDate,
+      js.endDate,
+    );
     js.startDate = startDate;
     js.endDate = endDate;
 
@@ -176,9 +186,13 @@ export default class Search {
     return js;
   }
 
-  private getDateRange(rangeName: string, customStartDate: number, customEndDate: number): {
+  private getDateRange(
+    rangeName: string,
+    customStartDate: number,
+    customEndDate: number,
+  ): {
     startDate: number;
-    endDate: number
+    endDate: number;
   } {
     let endDate = new Date().getTime();
     let startDate: number;
@@ -192,7 +206,9 @@ export default class Search {
         break;
       case CUSTOM_RANGE:
         if (!customStartDate || !customEndDate) {
-          throw new Error('Start date and end date must be provided for CUSTOM_RANGE.');
+          throw new Error(
+            'Start date and end date must be provided for CUSTOM_RANGE.',
+          );
         }
         startDate = customStartDate;
         endDate = customEndDate;
@@ -208,11 +224,9 @@ export default class Search {
     };
   }
 
-  fromJS({
-    eventsOrder, filters, events, custom, ...filterData
-  }: any) {
-    let startDate; let
-      endDate;
+  fromJS({ eventsOrder, filters, events, custom, ...filterData }: any) {
+    let startDate;
+    let endDate;
     const rValue = filterData.rangeValue || rangeValue;
 
     if (rValue !== CUSTOM_RANGE) {
@@ -233,7 +247,9 @@ export default class Search {
       filters: filters.map((i: any) => {
         const filter = new Filter(i).toData();
         if (Array.isArray(i.filters)) {
-          filter.filters = i.filters.map((f: any) => new Filter({ ...f, subFilter: i.type }).toData());
+          filter.filters = i.filters.map((f: any) =>
+            new Filter({ ...f, subFilter: i.type }).toData(),
+          );
         }
         return filter;
       }),

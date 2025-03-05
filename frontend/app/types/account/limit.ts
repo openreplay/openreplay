@@ -1,13 +1,13 @@
 import { makeAutoObservable } from 'mobx';
 
 interface ILimitValue {
-  limit: number
-  remaining: number
+  limit: number;
+  remaining: number;
 }
 
 export interface ILimits {
-  teamMember: ILimitValue
-  sites: ILimitValue
+  teamMember: ILimitValue;
+  sites: ILimitValue;
 }
 
 const defaultValues = { limit: 0, remaining: 0 };

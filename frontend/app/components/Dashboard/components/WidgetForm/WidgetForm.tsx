@@ -22,15 +22,17 @@ import Widget from 'App/mstore/types/widget';
 import FilterItem from 'Shared/Filters/FilterItem';
 import { renderClickmapThumbnail } from './renderMap';
 import FilterSeries from '../FilterSeries';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
-    history: any;
-    match: any;
-    onDelete: () => void;
-    expanded?: boolean;
+  history: any;
+  match: any;
+  onDelete: () => void;
+  expanded?: boolean;
 }
 
 function WidgetForm(props: Props) {
+  const { t } = useTranslation();
   const {
     history,
     match: {
@@ -53,7 +55,9 @@ function WidgetForm(props: Props) {
   const isPathAnalysis = metric.metricType === USER_PATH;
   const isRetention = metric.metricType === RETENTION;
   const canAddSeries = metric.series.length < 3;
-  const eventsLength = metric.series[0].filter.filters.filter((i: any) => i && i.isEvent).length;
+  const eventsLength = metric.series[0].filter.filters.filter(
+    (i: any) => i && i.isEvent,
+  ).length;
   const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
 
   const isPredefined = metric.metricType === ERRORS;
@@ -98,14 +102,19 @@ function WidgetForm(props: Props) {
     if (wasCreating) {
       if (parseInt(dashboardId, 10) > 0) {
         history.replace(
-          withSiteId(dashboardMetricDetails(dashboardId, savedMetric.metricId), siteId),
+          withSiteId(
+            dashboardMetricDetails(dashboardId, savedMetric.metricId),
+            siteId,
+          ),
         );
         void dashboardStore.addWidgetToDashboard(
-                    dashboardStore.getDashboard(parseInt(dashboardId, 10))!,
-                    [savedMetric.metricId],
+          dashboardStore.getDashboard(parseInt(dashboardId, 10))!,
+          [savedMetric.metricId],
         );
       } else {
-        history.replace(withSiteId(metricDetails(savedMetric.metricId), siteId));
+        history.replace(
+          withSiteId(metricDetails(savedMetric.metricId), siteId),
+        );
       }
     }
   };
@@ -113,9 +122,11 @@ function WidgetForm(props: Props) {
   const onDelete = async () => {
     if (
       await confirm({
-        header: 'Confirm',
-        confirmButton: 'Yes, delete',
-        confirmation: 'Are you sure you want to permanently delete this card?',
+        header: t('Confirm'),
+        confirmButton: t('Yes, delete'),
+        confirmation: t(
+          'Are you sure you want to permanently delete this card?',
+        ),
       })
     ) {
       metricStore.delete(metric).then(props.onDelete);
@@ -128,10 +139,9 @@ function WidgetForm(props: Props) {
   };
 
   const fetchResults = () => {
-    aiFiltersStore.getCardFilters(aiQuery, metric.metricType)
-      .then((f) => {
-        metric.createSeries(f.filters);
-      });
+    aiFiltersStore.getCardFilters(aiQuery, metric.metricType).then((f) => {
+      metric.createSeries(f.filters);
+    });
   };
 
   const fetchChartData = () => {
@@ -149,7 +159,8 @@ function WidgetForm(props: Props) {
     }
   };
 
-  const testingKey = localStorage.getItem('__mauricio_testing_access') === 'true';
+  const testingKey =
+    localStorage.getItem('__mauricio_testing_access') === 'true';
   return (
     <div className="p-6">
       {/*
@@ -244,22 +255,34 @@ function WidgetForm(props: Props) {
           <FilterItem
             hideDelete
             filter={metric.startPoint}
-            allowedFilterKeys={[FilterKey.LOCATION, FilterKey.CLICK, FilterKey.INPUT, FilterKey.CUSTOM]}
+            allowedFilterKeys={[
+              FilterKey.LOCATION,
+              FilterKey.CLICK,
+              FilterKey.INPUT,
+              FilterKey.CUSTOM,
+            ]}
             onUpdate={(val) => {
               metric.updateStartPoint(val);
             }}
-            onRemoveFilter={() => {
-            }}
+            onRemoveFilter={() => {}}
           />
         </div>
       )}
 
       {isPredefined && (
-        <Alert message="Drilldown or filtering isn't supported on this legacy card." type="warning" showIcon closable className="border-transparent rounded-lg" />
+        <Alert
+          message={t(
+            "Drilldown or filtering isn't supported on this legacy card.",
+          )}
+          type="warning"
+          showIcon
+          closable
+          className="border-transparent rounded-lg"
+        />
       )}
       {testingKey ? (
         <Input
-          placeholder="AI Query"
+          placeholder={t('AI Query')}
           value={aiQuery}
           onChange={(e: any) => setAiQuery(e.target.value)}
           className="w-full mb-2"
@@ -268,7 +291,7 @@ function WidgetForm(props: Props) {
       ) : null}
       {testingKey ? (
         <Input
-          placeholder="AI Ask Chart"
+          placeholder={t('AI Ask Chart')}
           value={aiAskChart}
           onChange={(e: any) => setAiAskChart(e.target.value)}
           className="w-full mb-2"
@@ -278,76 +301,110 @@ function WidgetForm(props: Props) {
       {aiFiltersStore.isLoading ? (
         <div>
           <div className="flex items-center font-medium py-2">
-            Loading
+            {t('Loading')}
           </div>
         </div>
       ) : null}
       {!isPredefined && (
         <div>
           <div className="flex items-center font-medium py-2">
-            {`${isTable || isFunnel || isClickmap || isInsights || isPathAnalysis || isRetention ? 'Filter by' : 'Chart Series'}`}
-            {!isTable && !isFunnel && !isClickmap && !isInsights && !isPathAnalysis && !isRetention && (
-            <Button
-              className="ml-2 text-main"
-              type="text"
-              onClick={() => metric.addSeries()}
-              disabled={!canAddSeries}
-            >
-              ADD
-            </Button>
-            )}
+            {`${isTable || isFunnel || isClickmap || isInsights || isPathAnalysis || isRetention ? t('Filter by') : t('Chart Series')}`}
+            {!isTable &&
+              !isFunnel &&
+              !isClickmap &&
+              !isInsights &&
+              !isPathAnalysis &&
+              !isRetention && (
+                <Button
+                  className="ml-2 text-main"
+                  type="text"
+                  onClick={() => metric.addSeries()}
+                  disabled={!canAddSeries}
+                >
+                  {t('ADD')}
+                </Button>
+              )}
           </div>
 
-          {metric.series.length > 0
-                        && metric.series
-                          .slice(0, isTable || isFunnel || isClickmap || isInsights || isRetention ? 1 : metric.series.length)
-                          .map((series: any, index: number) => (
-                            <div className="mb-2" key={series.name}>
-                              <FilterSeries
-                                canExclude={isPathAnalysis}
-                                supportsEmpty={!isClickmap && !isPathAnalysis}
-                                excludeFilterKeys={excludeFilterKeys}
-                                observeChanges={() => metric.updateKey('hasChanged', true)}
-                                hideHeader={isTable || isClickmap || isInsights || isPathAnalysis || isFunnel}
-                                seriesIndex={index}
-                                series={series}
-                                onRemoveSeries={() => metric.removeSeries(index)}
-                                canDelete={metric.series.length > 1}
-                                emptyMessage={
-                                            isTable
-                                              ? 'Filter data using any event or attribute. Use Add Step button below to do so.'
-                                              : 'Add an event or filter step to define the series.'
-                                        }
-                              />
-                            </div>
-                          ))}
+          {metric.series.length > 0 &&
+            metric.series
+              .slice(
+                0,
+                isTable || isFunnel || isClickmap || isInsights || isRetention
+                  ? 1
+                  : metric.series.length,
+              )
+              .map((series: any, index: number) => (
+                <div className="mb-2" key={series.name}>
+                  <FilterSeries
+                    canExclude={isPathAnalysis}
+                    supportsEmpty={!isClickmap && !isPathAnalysis}
+                    excludeFilterKeys={excludeFilterKeys}
+                    observeChanges={() => metric.updateKey('hasChanged', true)}
+                    hideHeader={
+                      isTable ||
+                      isClickmap ||
+                      isInsights ||
+                      isPathAnalysis ||
+                      isFunnel
+                    }
+                    seriesIndex={index}
+                    series={series}
+                    onRemoveSeries={() => metric.removeSeries(index)}
+                    canDelete={metric.series.length > 1}
+                    emptyMessage={
+                      isTable
+                        ? t(
+                            'Filter data using any event or attribute. Use Add Step button below to do so.',
+                          )
+                        : t('Add an event or filter step to define the series.')
+                    }
+                  />
+                </div>
+              ))}
         </div>
       )}
 
       <div className="form-groups flex items-center justify-between">
         <Tooltip
-          title="Cannot save funnel metric without at least 2 events"
+          title={t('Cannot save funnel metric without at least 2 events')}
           disabled={!cannotSaveFunnel}
         >
           <div className="flex items-center">
-            <Button type="primary" onClick={onSave} disabled={isSaving || cannotSaveFunnel}>
+            <Button
+              type="primary"
+              onClick={onSave}
+              disabled={isSaving || cannotSaveFunnel}
+            >
               {metric.exists()
-                ? 'Update'
+                ? t('Update')
                 : parseInt(dashboardId) > 0
-                  ? 'Create & Add to Dashboard'
-                  : 'Create'}
+                  ? t('Create & Add to Dashboard')
+                  : t('Create')}
             </Button>
             {metric.exists() && metric.hasChanged && (
-            <Button onClick={undoChanges} type="text" icon={<Icon name="arrow-counterclockwise" />} className="ml-2">
-              Undo
-            </Button>
+              <Button
+                onClick={undoChanges}
+                type="text"
+                icon={<Icon name="arrow-counterclockwise" />}
+                className="ml-2"
+              >
+                {t('Undo')}
+              </Button>
             )}
           </div>
         </Tooltip>
         <div className="flex items-center">
           {metric.exists() && (
-            <Button type="text" className="text-main" icon={<Icon name="trash" size="14" className="mr-2" color="teal" />} onClick={onDelete}>
-              Delete
+            <Button
+              type="text"
+              className="text-main"
+              icon={
+                <Icon name="trash" size="14" className="mr-2" color="teal" />
+              }
+              onClick={onDelete}
+            >
+              {t('Delete')}
             </Button>
           )}
         </div>

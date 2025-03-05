@@ -52,9 +52,7 @@ function DashboardWidgetGrid(props: Props) {
   );
 }
 
-function GridItem({
-  item, index, dashboard, dashboardId, siteId,
-}: any) {
+function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
   const [popoverOpen, setPopoverOpen] = React.useState(false);
   const handleOpenChange = (open: boolean) => {
     setPopoverOpen(open);
@@ -63,12 +61,17 @@ function GridItem({
   return (
     <div
       key={item.widgetId}
-      className={cn(`col-span-${item.config.col}`, 'group relative p-2 hover:bg-active-blue w-full rounded-xl')}
+      className={cn(
+        `col-span-${item.config.col}`,
+        'group relative p-2 hover:bg-active-blue w-full rounded-xl',
+      )}
     >
       <WidgetWrapperNew
         index={index}
         widget={item}
-        moveListItem={(dragIndex: any, hoverIndex: any) => dashboard?.swapWidgetPosition(dragIndex, hoverIndex)}
+        moveListItem={(dragIndex: any, hoverIndex: any) =>
+          dashboard?.swapWidgetPosition(dragIndex, hoverIndex)
+        }
         dashboardId={dashboardId}
         siteId={siteId}
         grid="other"
@@ -90,7 +93,11 @@ function GridItem({
           trigger="click"
         >
           <Tooltip title="Add Card">
-            <Button icon={<PlusOutlined size={14} />} shape="circle" size="small" />
+            <Button
+              icon={<PlusOutlined size={14} />}
+              shape="circle"
+              size="small"
+            />
           </Tooltip>
         </Popover>
       </div>

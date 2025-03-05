@@ -6,9 +6,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 function EventSearch(props) {
   const { player } = React.useContext(PlayerContext);
 
-  const {
-    onChange, value, header, setActiveTab, eventsText,
-  } = props;
+  const { onChange, value, header, setActiveTab, eventsText } = props;
 
   const toggleEvents = () => player.toggleEvents();
 

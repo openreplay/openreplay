@@ -2,7 +2,7 @@ import React from 'react';
 import FunnelIssueDetails from '../FunnelIssueDetails';
 
 interface Props {
-    issueId: string;
+  issueId: string;
 }
 function FunnelIssueModal(props: Props) {
   const { issueId } = props;

@@ -10,16 +10,13 @@ import { addOptionsToFilter } from 'App/types/filter/newFilter';
 
 let debounceFetch: any = () => {};
 function SessionFilters() {
-  const {
-    searchStore,
-    projectsStore,
-    customFieldStore,
-    tagWatchStore,
-  } = useStore();
+  const { searchStore, projectsStore, customFieldStore, tagWatchStore } =
+    useStore();
 
   const appliedFilter = searchStore.instance;
   const metaLoading = customFieldStore.isLoading;
-  const saveRequestPayloads = projectsStore.instance?.saveRequestPayloads ?? false;
+  const saveRequestPayloads =
+    projectsStore.instance?.saveRequestPayloads ?? false;
   const activeProject = projectsStore.active;
 
   const reloadTags = async () => {
@@ -39,7 +36,13 @@ function SessionFilters() {
   useEffect(() => {
     // Add default location/screen filter if no filters are present
     if (searchStore.instance.filters.length === 0) {
-      searchStore.addFilterByKeyAndValue(activeProject?.platform === 'web' ? FilterKey.LOCATION : FilterKey.VIEW_MOBILE, '', 'isAny');
+      searchStore.addFilterByKeyAndValue(
+        activeProject?.platform === 'web'
+          ? FilterKey.LOCATION
+          : FilterKey.VIEW_MOBILE,
+        '',
+        'isAny',
+      );
     }
     void reloadTags();
   }, [projectsStore.activeSiteId, activeProject]);

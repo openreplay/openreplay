@@ -1,6 +1,4 @@
-import {
-  action, makeAutoObservable, observable, runInAction,
-} from 'mobx';
+import { action, makeAutoObservable, observable, runInAction } from 'mobx';
 import { sessionService } from 'App/services';
 import { Note } from 'App/services/NotesService';
 import Session from 'Types/session';
@@ -92,7 +90,10 @@ class DevTools {
 
   constructor() {
     this.network = {
-      index: 0, filter: '', activeTab: 'ALL', isError: false,
+      index: 0,
+      filter: '',
+      activeTab: 'ALL',
+      isError: false,
     };
     this.stackEvent = {
       index: 0,
@@ -101,7 +102,10 @@ class DevTools {
       isError: false,
     };
     this.console = {
-      index: 0, filter: '', activeTab: 'ALL', isError: false,
+      index: 0,
+      filter: '',
+      activeTab: 'ALL',
+      isError: false,
     };
     makeAutoObservable(this, {
       update: action,
@@ -130,7 +134,11 @@ export default class SessionStore {
   list: Session[] = [];
 
   bookmarks: Bookmarks = {
-    list: [], page: 1, total: 0, pageSize: 10, loading: false,
+    list: [],
+    page: 1,
+    total: 0,
+    pageSize: 10,
+    loading: false,
   };
 
   sessionIds: string[] = [];
@@ -180,7 +188,10 @@ export default class SessionStore {
   };
 
   createNoteTooltip = {
-    time: 0, isVisible: false, isEdit: false, note: null,
+    time: 0,
+    isVisible: false,
+    isEdit: false,
+    note: null,
   };
 
   previousId = '';
@@ -189,7 +200,8 @@ export default class SessionStore {
 
   userTimezone = '';
 
-  prefetchedMobUrls: Record<string, { data: Uint8Array; entryNum: number }> = {};
+  prefetchedMobUrls: Record<string, { data: Uint8Array; entryNum: number }> =
+    {};
 
   prefetched: boolean = false;
 
@@ -219,7 +231,9 @@ export default class SessionStore {
 
   getFirstMob = async (sessionId: string) => {
     const { domURL } = await sessionService.getFirstMobUrl(sessionId);
-    await loadFile(domURL[0], (data) => this.setPrefetchedMobUrl(sessionId, data));
+    await loadFile(domURL[0], (data) =>
+      this.setPrefetchedMobUrl(sessionId, data),
+    );
   };
 
   setPrefetchedMobUrl = (sessionId: string, fileData: Uint8Array) => {
@@ -227,44 +241,55 @@ export default class SessionStore {
     const toLimit = 10 - keys.length;
     if (toLimit < 0) {
       const oldest = keys.sort(
-        (a, b) => this.prefetchedMobUrls[a].entryNum - this.prefetchedMobUrls[b].entryNum,
+        (a, b) =>
+          this.prefetchedMobUrls[a].entryNum -
+          this.prefetchedMobUrls[b].entryNum,
       )[0];
       delete this.prefetchedMobUrls[oldest];
     }
-    const nextEntryNum = keys.length > 0
-      ? Math.max(...keys.map((key) => this.prefetchedMobUrls[key]?.entryNum || 0)) + 1
-      : 0;
+    const nextEntryNum =
+      keys.length > 0
+        ? Math.max(
+            ...keys.map((key) => this.prefetchedMobUrls[key]?.entryNum || 0),
+          ) + 1
+        : 0;
     this.prefetchedMobUrls[sessionId] = {
       data: fileData,
       entryNum: nextEntryNum,
     };
   };
 
-  getSessions = (filter: any): Promise<any> => new Promise((resolve, reject) => {
-    sessionService
-      .getSessions(filter.toJson?.() || filter)
-      .then((response: any) => {
-        resolve({
-          sessions: response.sessions.map((session: any) => new Session(session)),
-          total: response.total,
+  getSessions = (filter: any): Promise<any> =>
+    new Promise((resolve, reject) => {
+      sessionService
+        .getSessions(filter.toJson?.() || filter)
+        .then((response: any) => {
+          resolve({
+            sessions: response.sessions.map(
+              (session: any) => new Session(session),
+            ),
+            total: response.total,
+          });
+        })
+        .catch((error: any) => {
+          reject(error);
         });
-      })
-      .catch((error: any) => {
-        reject(error);
-      });
-  });
+    });
 
   fetchLiveSessions = async (params: any = {}) => {
     runInAction(() => {
       this.loadingLiveSessions = true;
     });
     try {
-      if (params.sort === 'duration') { // TODO ui hack to sort by duration, should be removed once the api addressed this issue
+      if (params.sort === 'duration') {
+        // TODO ui hack to sort by duration, should be removed once the api addressed this issue
         params.sort = 'timestamp';
         params.order = params.order === 'asc' ? 'desc' : 'asc';
       }
       const data: any = await sessionService.getLiveSessions(params);
-      this.liveSessions = data.sessions.map((session: any) => new Session({ ...session, live: true }));
+      this.liveSessions = data.sessions.map(
+        (session: any) => new Session({ ...session, live: true }),
+      );
       this.totalLiveSessions = data.total;
     } catch (e) {
       console.error(e);
@@ -427,12 +452,13 @@ export default class SessionStore {
 
     const filteredEvents = query
       ? events.filter(
-        (e) => searchRe.test(e.url)
-          || searchRe.test(e.value)
-          || searchRe.test(e.label)
-          || searchRe.test(e.type)
-          || (e.type === 'LOCATION' && searchRe.test('visited')),
-      )
+          (e) =>
+            searchRe.test(e.url) ||
+            searchRe.test(e.value) ||
+            searchRe.test(e.label) ||
+            searchRe.test(e.type) ||
+            (e.type === 'LOCATION' && searchRe.test('visited')),
+        )
       : null;
 
     this.filteredEvents = filteredEvents;
@@ -447,7 +473,8 @@ export default class SessionStore {
         const { current } = this;
         const sessionIdx = list.findIndex(({ sessionId }) => sessionId === id);
         const session = list[sessionIdx];
-        const wasInFavorite = this.favoriteList.findIndex(({ sessionId }) => sessionId === id) > -1;
+        const wasInFavorite =
+          this.favoriteList.findIndex(({ sessionId }) => sessionId === id) > -1;
 
         runInAction(() => {
           if (session) {
@@ -486,10 +513,11 @@ export default class SessionStore {
     this.favoriteList = this.favoriteList.slice().sort(comparator);
   };
 
-  setActiveTab = (tab: { type: string, name: string }) => {
-    const list = tab.type === 'all'
-      ? this.list
-      : this.list.filter((s) => s.issueTypes.includes(tab.type));
+  setActiveTab = (tab: { type: string; name: string }) => {
+    const list =
+      tab.type === 'all'
+        ? this.list
+        : this.list.filter((s) => s.issueTypes.includes(tab.type));
 
     this.activeTab = tab;
     this.sessionIds = list.map((s) => s.sessionId);
@@ -527,12 +555,14 @@ export default class SessionStore {
   };
 
   filterOutNote = (noteId: string) => {
-    this.current.notesWithEvents = this.current.notesWithEvents.filter((item) => {
-      if ('noteId' in item) {
-        return item.noteId !== noteId;
-      }
-      return true;
-    });
+    this.current.notesWithEvents = this.current.notesWithEvents.filter(
+      (item) => {
+        if ('noteId' in item) {
+          return item.noteId !== noteId;
+        }
+        return true;
+      },
+    );
   };
 
   updateNote = (note: Note) => {
@@ -581,7 +611,9 @@ export default class SessionStore {
       const filter = searchStore.instance.toSearch();
       setSessionFilter(cleanSessionFilters(filter));
       const data = await sessionService.getAutoplayList({ ...filter, page });
-      const ids = data.map((i: any) => `${i.sessionId}`).filter((i, index) => !this.sessionIds.includes(i));
+      const ids = data
+        .map((i: any) => `${i.sessionId}`)
+        .filter((i, index) => !this.sessionIds.includes(i));
       this.sessionIds = this.sessionIds.concat(ids);
     } catch (e) {
       console.error(e);
@@ -593,7 +625,11 @@ export default class SessionStore {
     this.total = 0;
     this.sessionIds = [];
     this.bookmarks = {
-      list: [], page: 1, total: 0, pageSize: 10, loading: false,
+      list: [],
+      page: 1,
+      total: 0,
+      pageSize: 10,
+      loading: false,
     };
   };
 

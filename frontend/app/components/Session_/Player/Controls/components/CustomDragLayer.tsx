@@ -40,12 +40,12 @@ function getItemStyles(
   };
 }
 
-export type OnDragCallback = (offset: XYCoord) => void
+export type OnDragCallback = (offset: XYCoord) => void;
 
 interface Props {
-  onDrag: OnDragCallback
-  maxX: number
-  minX: number
+  onDrag: OnDragCallback;
+  maxX: number;
+  minX: number;
 }
 
 const CustomDragLayer: FC<Props> = memo(({ maxX, minX, onDrag }) => {
@@ -72,9 +72,7 @@ const CustomDragLayer: FC<Props> = memo(({ maxX, minX, onDrag }) => {
 
   return (
     <div id="drag-layer" style={layerStyles}>
-      <div
-        style={getItemStyles(initialOffset, currentOffset, maxX, minX)}
-      >
+      <div style={getItemStyles(initialOffset, currentOffset, maxX, minX)}>
         <Circle />
       </div>
     </div>

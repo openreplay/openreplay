@@ -3,12 +3,13 @@ import { Checkbox } from 'UI';
 import cn from 'classnames';
 import stl from './featureItem.module.css';
 
-function FeatureItem({
-  label, completed = false, subText, onClick,
-}) {
+function FeatureItem({ label, completed = false, subText, onClick }) {
   return (
     <div
-      className={cn(stl.wrapper, { [stl.activeLink]: onClick, [stl.completed]: completed })}
+      className={cn(stl.wrapper, {
+        [stl.activeLink]: onClick,
+        [stl.completed]: completed,
+      })}
       onClick={onClick && onClick}
     >
       <Checkbox
@@ -18,8 +19,7 @@ function FeatureItem({
         checked={completed}
         readOnly
       />
-      { subText
-        && <div className={stl.subText}>{ subText }</div>}
+      {subText && <div className={stl.subText}>{subText}</div>}
     </div>
   );
 }

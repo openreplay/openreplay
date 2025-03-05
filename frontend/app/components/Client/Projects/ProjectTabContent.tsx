@@ -30,11 +30,7 @@ const ProjectTabContent: React.FC = () => {
     [project],
   );
 
-  return (
-    <div>
-      {tabContent[tab] || <Empty description="Tab not found" />}
-    </div>
-  );
+  return <div>{tabContent[tab] || <Empty description="Tab not found" />}</div>;
 };
 
 export default observer(ProjectTabContent);

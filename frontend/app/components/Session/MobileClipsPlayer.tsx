@@ -29,9 +29,7 @@ interface Props {
 }
 
 function MobileClipsPlayer(props: Props) {
-  const {
-    clip, currentIndex, isCurrent, onClose, isHighlight,
-  } = props;
+  const { clip, currentIndex, isCurrent, onClose, isHighlight } = props;
   const { sessionStore } = useStore();
   const [windowActive, setWindowActive] = useState(!document.hidden);
   const [contextValue, setContextValue] =
@@ -74,7 +72,8 @@ function MobileClipsPlayer(props: Props) {
 
   useEffect(() => {
     playerInst = undefined;
-    if (!clip.sessionId || contextValue.player !== undefined || !session) return;
+    if (!clip.sessionId || contextValue.player !== undefined || !session)
+      return;
 
     // @ts-ignore
     sessionStore.setUserTimezone(session?.timezone);
@@ -91,9 +90,7 @@ function MobileClipsPlayer(props: Props) {
     // playerInst.pause();
   }, [session]);
 
-  const {
-    ready,
-  } = contextValue.store?.get() || {};
+  const { ready } = contextValue.store?.get() || {};
 
   useEffect(() => {
     if (ready) {
@@ -129,8 +126,19 @@ function MobileClipsPlayer(props: Props) {
     <MobilePlayerContext.Provider value={contextValue}>
       {contextValue.player ? (
         <>
-          <ClipPlayerHeader isHighlight={isHighlight} onClose={onClose} range={clip.range} session={session!} />
-          <MobileClipPlayerContent message={clip.message} isHighlight={isHighlight} autoplay={props.autoplay} range={clip.range} session={session!} />
+          <ClipPlayerHeader
+            isHighlight={isHighlight}
+            onClose={onClose}
+            range={clip.range}
+            session={session!}
+          />
+          <MobileClipPlayerContent
+            message={clip.message}
+            isHighlight={isHighlight}
+            autoplay={props.autoplay}
+            range={clip.range}
+            session={session!}
+          />
         </>
       ) : (
         <Loader />

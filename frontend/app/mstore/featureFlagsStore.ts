@@ -2,10 +2,10 @@ import { makeAutoObservable } from 'mobx';
 import { fflagsService } from 'App/services';
 import FeatureFlag from './types/FeatureFlag';
 
-type All = '0'
-type Active = '1'
-type Inactive = '2'
-export type Activity = All | Active | Inactive
+type All = '0';
+type Active = '1';
+type Inactive = '2';
+export type Activity = All | Active | Inactive;
 
 export default class FeatureFlagsStore {
   currentFflag: FeatureFlag | null = null;
@@ -63,7 +63,8 @@ export default class FeatureFlagsStore {
     this.flags.push(flag);
   };
 
-  getFlagById = (id: string) => this.flags.find((f) => f.featureFlagId === parseInt(id, 10));
+  getFlagById = (id: string) =>
+    this.flags.find((f) => f.featureFlagId === parseInt(id, 10));
 
   setCurrentFlag = (flag: FeatureFlag | null) => {
     this.currentFflag = flag;
@@ -81,7 +82,7 @@ export default class FeatureFlagsStore {
     this.activity = activity;
   };
 
-  setSort = (sort: { order: string, query: string }) => {
+  setSort = (sort: { order: string; query: string }) => {
     this.sort = sort;
   };
 
@@ -116,10 +117,16 @@ export default class FeatureFlagsStore {
     if (this.currentFflag.flagKey === '') {
       return 'Feature flag must have a key';
     }
-    if (!this.currentFflag.isSingleOption && this.currentFflag?.variants.findIndex((v) => v.value === '') !== -1) {
+    if (
+      !this.currentFflag.isSingleOption &&
+      this.currentFflag?.variants.findIndex((v) => v.value === '') !== -1
+    ) {
       return 'All variants must include unique key';
     }
-    if (!this.currentFflag?.isSingleOption && this.currentFflag?.isRedDistribution) {
+    if (
+      !this.currentFflag?.isSingleOption &&
+      this.currentFflag?.isRedDistribution
+    ) {
       return 'Variants rollout percentage must add up to 100%';
     }
     return null;

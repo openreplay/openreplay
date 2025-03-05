@@ -10,6 +10,7 @@ import { withSiteId } from '@/routes';
 import * as routes from '@/routes';
 import { useStore } from '@/mstore';
 import Session from 'Types/session';
+import { useTranslation } from 'react-i18next';
 
 function ClipPlayerControls({
   session,
@@ -18,6 +19,7 @@ function ClipPlayerControls({
   session: Session;
   range: [number, number];
 }) {
+  const { t } = useTranslation();
   const { projectsStore } = useStore();
   const { player, store } = React.useContext(PlayerContext);
   const history = useHistory();
@@ -45,7 +47,7 @@ function ClipPlayerControls({
       <PlayButton state={state} togglePlay={togglePlay} iconSize={30} />
       <Timeline range={range} />
       <Button size="small" type="primary" onClick={showFullSession}>
-        Play Full Session
+        {t('Play Full Session')}
         <CirclePlay size={16} />
       </Button>
     </div>

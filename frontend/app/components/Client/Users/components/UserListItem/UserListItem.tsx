@@ -4,18 +4,26 @@ import { Tooltip, Icon } from 'UI';
 import { Button } from 'antd';
 import { checkForRecent } from 'App/date';
 import cn from 'classnames';
+import { useTranslation } from 'react-i18next';
 
 function AdminPrivilegeLabel({ user }) {
+  const { t } = useTranslation();
   return (
     <>
       {user.isAdmin && (
-        <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">Admin</span>
+        <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">
+          {t('Admin')}
+        </span>
       )}
       {user.isSuperAdmin && (
-        <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">Owner</span>
+        <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">
+          {t('Owner')}
+        </span>
       )}
       {!user.isAdmin && !user.isSuperAdmin && (
-        <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">Member</span>
+        <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">
+          {t('Member')}
+        </span>
       )}
     </>
   );
@@ -37,6 +45,8 @@ function UserListItem(props: Props) {
     isEnterprise = false,
     isOnboarding = false,
   } = props;
+  const { t } = useTranslation();
+
   return (
     <div
       className="grid grid-cols-12 py-4 px-5 items-center select-none hover:bg-active-blue group cursor-pointer"
@@ -53,8 +63,8 @@ function UserListItem(props: Props) {
             <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">
               {user.roleName}
             </span>
-            {user.isSuperAdmin
-              || (user.isAdmin && (
+            {user.isSuperAdmin ||
+              (user.isAdmin && (
                 <>
                   <span className="ml-2" />
                   <AdminPrivilegeLabel user={user} />
@@ -65,7 +75,10 @@ function UserListItem(props: Props) {
       </div>
       {!isOnboarding && (
         <div className="col-span-2">
-          <span>{user.createdAt && checkForRecent(user.createdAt, 'LLL dd, yyyy, hh:mm a')}</span>
+          <span>
+            {user.createdAt &&
+              checkForRecent(user.createdAt, 'LLL dd, yyyy, hh:mm a')}
+          </span>
         </div>
       )}
 
@@ -78,7 +91,7 @@ function UserListItem(props: Props) {
         <div className="grid grid-cols-2 gap-3 items-center justify-end">
           <div>
             {!user.isJoined && user.invitationLink && !user.isExpiredInvite && (
-              <Tooltip title="Copy Invite Code" hideOnClick>
+              <Tooltip title={t('Copy Invite Code')} hideOnClick>
                 <Button
                   type="text"
                   icon={<Icon name="link-45deg" />}
@@ -88,7 +101,7 @@ function UserListItem(props: Props) {
             )}
 
             {!user.isJoined && user.isExpiredInvite && (
-              <Tooltip title="Generate Invite" hideOnClick>
+              <Tooltip title={t('Generate Invite')} hideOnClick>
                 <Button
                   icon={<Icon name="link-45deg" />}
                   variant="text"

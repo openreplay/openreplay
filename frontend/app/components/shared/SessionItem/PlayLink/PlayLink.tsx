@@ -14,7 +14,8 @@ const PLAY_ICON_NAMES = {
   played: 'play-circle-light',
 } as const;
 
-const getIconName = (isViewed: any) => (!isViewed ? PLAY_ICON_NAMES.notPlayed : PLAY_ICON_NAMES.played);
+const getIconName = (isViewed: any) =>
+  !isViewed ? PLAY_ICON_NAMES.notPlayed : PLAY_ICON_NAMES.played;
 
 interface Props {
   isAssist?: boolean;
@@ -29,13 +30,14 @@ interface Props {
 }
 function PlayLink(props: Props) {
   const { projectsStore } = useStore();
-  const {
-    isAssist, viewed, sessionId, onClick = null, queryParams,
-  } = props;
+  const { isAssist, viewed, sessionId, onClick = null, queryParams } = props;
   const history = useHistory();
   const defaultIconName = getIconName(viewed);
 
-  const [iconName, setIconName] = useState<typeof PLAY_ICON_NAMES[keyof typeof PLAY_ICON_NAMES]>(defaultIconName);
+  const [iconName, setIconName] =
+    useState<(typeof PLAY_ICON_NAMES)[keyof typeof PLAY_ICON_NAMES]>(
+      defaultIconName,
+    );
 
   useEffect(() => {
     setIconName(getIconName(viewed));

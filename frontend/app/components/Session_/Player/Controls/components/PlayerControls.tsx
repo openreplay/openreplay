@@ -3,8 +3,12 @@ import { Icon } from 'UI';
 import { Button } from 'antd';
 import PlayingTime from './PlayingTime';
 import {
-  JumpBack, IntervalSelector, JumpForward, SpeedOptions,
+  JumpBack,
+  IntervalSelector,
+  JumpForward,
+  SpeedOptions,
 } from './ControlsComponents';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   skip: boolean;
@@ -45,6 +49,7 @@ function PlayerControls(props: Props) {
     startedAt,
     sessionTz,
   } = props;
+  const { t } = useTranslation();
   const [timeMode, setTimeMode] = React.useState<ITimeMode>(
     localStorage.getItem('__or_player_time_mode') as ITimeMode,
   );
@@ -66,14 +71,23 @@ function PlayerControls(props: Props) {
         sessionTz={sessionTz}
       />
 
-      <div className="rounded ml-1 bg-white border-gray-lighter flex items-center" style={{ gap: 1 }}>
-        <JumpBack backTenSeconds={backTenSeconds} currentInterval={currentInterval} />
+      <div
+        className="rounded ml-1 bg-white border-gray-lighter flex items-center"
+        style={{ gap: 1 }}
+      >
+        <JumpBack
+          backTenSeconds={backTenSeconds}
+          currentInterval={currentInterval}
+        />
         <IntervalSelector
           skipIntervals={skipIntervals}
           setSkipInterval={setSkipInterval}
           currentInterval={currentInterval}
         />
-        <JumpForward forthTenSeconds={forthTenSeconds} currentInterval={currentInterval} />
+        <JumpForward
+          forthTenSeconds={forthTenSeconds}
+          currentInterval={currentInterval}
+        />
       </div>
 
       <div className="flex items-center gap-2 ml-2">
@@ -90,7 +104,7 @@ function PlayerControls(props: Props) {
             className="flex items-center font-semibold"
           >
             {skip && <Icon name="check" size="24" />}
-            <span>Skip Inactivity</span>
+            <span>{t('Skip Inactivity')}</span>
           </Button>
         )}
       </div>

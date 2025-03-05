@@ -14,13 +14,17 @@ function LogsButton({
   return (
     <ControlButton
       label="Traces"
-      customTags={(
+      customTags={
         <Avatar.Group>
           {integrated.map((name) => (
-            <Avatar key={name} size={16} src={<Icon name={`integrations/${name}`} size={14} />} />
+            <Avatar
+              key={name}
+              size={16}
+              src={<Icon name={`integrations/${name}`} size={14} />}
+            />
           ))}
         </Avatar.Group>
-      )}
+      }
       onClick={onClick}
     />
   );

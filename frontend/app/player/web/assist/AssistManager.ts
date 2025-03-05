@@ -69,6 +69,7 @@ export default class AssistManager {
     ...RemoteControl.INITIAL_STATE,
     ...ScreenRecording.INITIAL_STATE,
   };
+
   private agentIds: string[] = [];
 
   // TODO: Session type
@@ -91,7 +92,8 @@ export default class AssistManager {
   private get borderStyle() {
     const { recordingState, remoteControl } = this.store.get();
 
-    const isRecordingActive = recordingState === SessionRecordingStatus.Recording;
+    const isRecordingActive =
+      recordingState === SessionRecordingStatus.Recording;
     const isControlActive = remoteControl === RemoteControlStatus.Enabled;
     // recording gets priority here
     if (isRecordingActive) return { outline: '2px dashed red' };
@@ -101,8 +103,8 @@ export default class AssistManager {
 
   private setStatus(status: ConnectionStatus) {
     if (
-      this.store.get().peerConnectionStatus === ConnectionStatus.Disconnected
-      && status !== ConnectionStatus.Connected
+      this.store.get().peerConnectionStatus === ConnectionStatus.Disconnected &&
+      status !== ConnectionStatus.Connected
     ) {
       return;
     }
@@ -132,10 +134,10 @@ export default class AssistManager {
       this.socketCloseTimeout = setTimeout(() => {
         const state = this.store.get();
         if (
-          document.hidden
+          document.hidden &&
           // TODO: should it be RemoteControlStatus.Disabled? (check)
-          && state.calling === CallingState.NoCall
-          && state.remoteControl === RemoteControlStatus.Enabled
+          state.calling === CallingState.NoCall &&
+          state.remoteControl === RemoteControlStatus.Enabled
         ) {
           this.socket?.close();
         }
@@ -204,7 +206,6 @@ export default class AssistManager {
       // socket.onAny((event, ...args) => {
       //   logger.log(`📩 Socket: ${event}`, args);
       // });
-      
 
       socket.on('connect', () => {
         waitingForMessages = true;
@@ -212,7 +213,10 @@ export default class AssistManager {
         this.setStatus(ConnectionStatus.WaitingMessages);
       });
 
-      const processMessages = (messages: { meta: { version: number, tabId: string }, data: Message[] }) => {
+      const processMessages = (messages: {
+        meta: { version: number; tabId: string };
+        data: Message[];
+      }) => {
         const isOldVersion = messages.meta.version === 1;
         this.assistVersion = isOldVersion ? 1 : 2;
 
@@ -230,7 +234,11 @@ export default class AssistManager {
           }
         }
 
-        for (let msg = reader.readNext(); msg !== null; msg = reader.readNext()) {
+        for (
+          let msg = reader.readNext();
+          msg !== null;
+          msg = reader.readNext()
+        ) {
           this.handleMessage(msg, msg._index);
         }
       };
@@ -283,7 +291,9 @@ export default class AssistManager {
           }
         }
         if (data.agentIds) {
-          const filteredAgentIds = this.agentIds.filter((id: string) => id.split('-')[3] !== agentId.toString());
+          const filteredAgentIds = this.agentIds.filter(
+            (id: string) => id.split('-')[3] !== agentId.toString(),
+          );
           this.agentIds = filteredAgentIds;
         }
       });
@@ -329,10 +339,16 @@ export default class AssistManager {
         this.uiErrorHandler,
         this.getAssistVersion,
       );
-      this.canvasReceiver = new CanvasReceiver(this.peerID, this.config, this.getNode, {
-        ...this.session.agentInfo,
-        id: agentId,
-      }, socket);
+      this.canvasReceiver = new CanvasReceiver(
+        this.peerID,
+        this.config,
+        this.getNode,
+        {
+          ...this.session.agentInfo,
+          id: agentId,
+        },
+        socket,
+      );
 
       document.addEventListener('visibilitychange', this.onVisChange);
     });
@@ -348,9 +364,12 @@ export default class AssistManager {
   /* ==== ScreenRecording ==== */
   private screenRecording: ScreenRecording | null = null;
 
-  requestRecording = (...args: Parameters<ScreenRecording['requestRecording']>) => this.screenRecording?.requestRecording(...args);
+  requestRecording = (
+    ...args: Parameters<ScreenRecording['requestRecording']>
+  ) => this.screenRecording?.requestRecording(...args);
 
-  stopRecording = (...args: Parameters<ScreenRecording['stopRecording']>) => this.screenRecording?.stopRecording(...args);
+  stopRecording = (...args: Parameters<ScreenRecording['stopRecording']>) =>
+    this.screenRecording?.stopRecording(...args);
 
   /* ==== RemoteControl ==== */
   private remoteControl: RemoteControl | null = null;
@@ -359,24 +378,34 @@ export default class AssistManager {
     ...args: Parameters<RemoteControl['requestReleaseRemoteControl']>
   ) => this.remoteControl?.requestReleaseRemoteControl(...args);
 
-  setRemoteControlCallbacks = (...args: Parameters<RemoteControl['setCallbacks']>) => this.remoteControl?.setCallbacks(...args);
+  setRemoteControlCallbacks = (
+    ...args: Parameters<RemoteControl['setCallbacks']>
+  ) => this.remoteControl?.setCallbacks(...args);
 
-  releaseRemoteControl = (...args: Parameters<RemoteControl['releaseRemoteControl']>) => this.remoteControl?.releaseRemoteControl(...args);
+  releaseRemoteControl = (
+    ...args: Parameters<RemoteControl['releaseRemoteControl']>
+  ) => this.remoteControl?.releaseRemoteControl(...args);
 
-  toggleAnnotation = (...args: Parameters<RemoteControl['toggleAnnotation']>) => this.remoteControl?.toggleAnnotation(...args);
+  toggleAnnotation = (...args: Parameters<RemoteControl['toggleAnnotation']>) =>
+    this.remoteControl?.toggleAnnotation(...args);
 
   /* ==== Call  ==== */
   private callManager: Call | null = null;
 
-  initiateCallEnd = async (...args: Parameters<Call['initiateCallEnd']>) => this.callManager?.initiateCallEnd(...args);
+  initiateCallEnd = async (...args: Parameters<Call['initiateCallEnd']>) =>
+    this.callManager?.initiateCallEnd(...args);
 
-  setCallArgs = (...args: Parameters<Call['setCallArgs']>) => this.callManager?.setCallArgs(...args);
+  setCallArgs = (...args: Parameters<Call['setCallArgs']>) =>
+    this.callManager?.setCallArgs(...args);
 
   call = (...args: Parameters<Call['call']>) => this.callManager?.call(...args);
 
-  toggleVideoLocalStream = (...args: Parameters<Call['toggleVideoLocalStream']>) => this.callManager?.toggleVideoLocalStream(...args);
+  toggleVideoLocalStream = (
+    ...args: Parameters<Call['toggleVideoLocalStream']>
+  ) => this.callManager?.toggleVideoLocalStream(...args);
 
-  addPeerCall = (...args: Parameters<Call['addPeerCall']>) => this.callManager?.addPeerCall(...args);
+  addPeerCall = (...args: Parameters<Call['addPeerCall']>) =>
+    this.callManager?.addPeerCall(...args);
 
   /* ==== Cleaning ==== */
   private cleaned = false;

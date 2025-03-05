@@ -17,11 +17,7 @@ interface IProps {
 }
 
 function PlayerBlock(props: IProps) {
-  const {
-    activeTab,
-    fullView = false,
-    setActiveTab,
-  } = props;
+  const { activeTab, fullView = false, setActiveTab } = props;
   const { uiPlayerStore, sessionStore, integrationsStore } = useStore();
   const jiraConfig = integrationsStore.issues.list[0];
   const { sessionId } = sessionStore.current;
@@ -32,7 +28,11 @@ function PlayerBlock(props: IProps) {
       className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')}
     >
       {shouldShowSubHeader ? (
-        <SubHeader setActiveTab={setActiveTab} sessionId={sessionId} jiraConfig={jiraConfig} />
+        <SubHeader
+          setActiveTab={setActiveTab}
+          sessionId={sessionId}
+          jiraConfig={jiraConfig}
+        />
       ) : null}
       <Player
         setActiveTab={setActiveTab}

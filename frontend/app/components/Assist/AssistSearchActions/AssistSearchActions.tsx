@@ -7,13 +7,17 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import AssistStats from '../../AssistStats';
 import Recordings from '../RecordingsList/Recordings';
+import { useTranslation } from 'react-i18next';
 
 function AssistSearchActions() {
+  const { t } = useTranslation();
   const { searchStoreLive, userStore } = useStore();
   const modules = userStore.account.settings?.modules ?? [];
   const { isEnterprise } = userStore;
-  const hasEvents = searchStoreLive.instance.filters.filter((i: any) => i.isEvent).length > 0;
-  const hasFilters = searchStoreLive.instance.filters.filter((i: any) => !i.isEvent).length > 0;
+  const hasEvents =
+    searchStoreLive.instance.filters.filter((i: any) => i.isEvent).length > 0;
+  const hasFilters =
+    searchStoreLive.instance.filters.filter((i: any) => !i.isEvent).length > 0;
   const { showModal } = useModal();
 
   const showStats = () => {
@@ -24,25 +28,31 @@ function AssistSearchActions() {
   };
   return (
     <div className="flex items-center w-full gap-2">
-      {isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS)
-        ? <Button type="text" onClick={showRecords}>Training Videos</Button> : null}
+      {isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS) ? (
+        <Button type="text" onClick={showRecords}>
+          {t('Training Videos')}
+        </Button>
+      ) : null}
       {isEnterprise && userStore.account?.admin && (
         <Button
           type="text"
           onClick={showStats}
-          disabled={modules.includes(MODULES.ASSIST_STATS) || modules.includes(MODULES.ASSIST)}
+          disabled={
+            modules.includes(MODULES.ASSIST_STATS) ||
+            modules.includes(MODULES.ASSIST)
+          }
         >
-          Co-Browsing Reports
+          {t('Co-Browsing Reports')}
         </Button>
       )}
-      <Tooltip title="Clear Search Filters">
+      <Tooltip title={t('Clear Search Filters')}>
         <Button
           type="text"
           disabled={!hasFilters && !hasEvents}
           onClick={() => searchStoreLive.clearSearch()}
           className="px-2 ml-auto"
         >
-          Clear
+          {t('Clear')}
         </Button>
       </Tooltip>
     </div>

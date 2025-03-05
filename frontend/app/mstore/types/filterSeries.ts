@@ -3,7 +3,9 @@ import { makeAutoObservable, observable, action } from 'mobx';
 import Filter from './filter';
 
 export default class FilterSeries {
-  public static get ID_KEY():string { return 'seriesId'; }
+  public static get ID_KEY(): string {
+    return 'seriesId';
+  }
 
   seriesId?: any = undefined;
 
@@ -27,7 +29,10 @@ export default class FilterSeries {
   fromJson(json, isHeatmap = false) {
     this.seriesId = json.seriesId;
     this.name = json.name;
-    this.filter = new Filter().fromJson(json.filter || { filters: [] }, isHeatmap);
+    this.filter = new Filter().fromJson(
+      json.filter || { filters: [] },
+      isHeatmap,
+    );
     return this;
   }
 

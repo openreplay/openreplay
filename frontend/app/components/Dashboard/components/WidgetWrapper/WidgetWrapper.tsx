@@ -94,11 +94,12 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
   const ref: any = useRef(null);
   const dragDropRef: any = isPreview ? null : dragRef(dropRef(ref));
 
-  const addOverlay = isTemplate
-    || (!isPredefined
-      && isSaved
-      && widget.metricOf !== FilterKey.ERRORS
-      && widget.metricOf !== FilterKey.SESSIONS);
+  const addOverlay =
+    isTemplate ||
+    (!isPredefined &&
+      isSaved &&
+      widget.metricOf !== FilterKey.ERRORS &&
+      widget.metricOf !== FilterKey.SESSIONS);
 
   return (
     <div

@@ -3,13 +3,13 @@ import type { PerformanceTrack, SetPageVisibility } from '../messages';
 import ListWalker from '../../common/ListWalker';
 
 export type PerformanceChartPoint = {
-	time: number,
-	usedHeap: number,
-	totalHeap: number,
-	fps: number | null,
-	cpu: number | null,
-	nodesCount: number,
-}
+  time: number;
+  usedHeap: number;
+  totalHeap: number;
+  fps: number | null;
+  cpu: number | null;
+  nodesCount: number;
+};
 
 export default class PerformanceTrackManager extends ListWalker<PerformanceTrack> {
   private chart: Array<PerformanceChartPoint> = [];
@@ -28,15 +28,17 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
 
   private prevNodesCount: number = 0;
 
-  append(msg: PerformanceTrack):void {
+  append(msg: PerformanceTrack): void {
     let fps: number | null = null;
     let cpu: number | null = null;
     if (!this.isHidden && this.prevTime != null) {
       const timePassed = msg.time - this.prevTime + this.timeCorrection;
 
       if (timePassed > 0 && msg.frames >= 0) {
-        if (msg.frames > 0) { this.fpsAvailable = true; }
-        fps = msg.frames * 1e3 / timePassed; // Multiply by 1e3 as time in ms;
+        if (msg.frames > 0) {
+          this.fpsAvailable = true;
+        }
+        fps = (msg.frames * 1e3) / timePassed; // Multiply by 1e3 as time in ms;
         fps = Math.min(fps, 60); // What if 120?  TODO: alert if more than 60
         if (this.chart.length === 1) {
           this.chart[0].fps = fps;
@@ -45,7 +47,7 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
 
       if (timePassed > 0 && msg.ticks >= 0) {
         this.cpuAvailable = true;
-        let tickRate = msg.ticks * 30 / timePassed;
+        let tickRate = (msg.ticks * 30) / timePassed;
         if (tickRate > 1) {
           tickRate = 1;
         }
@@ -75,7 +77,10 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
   private prevNCTime = 0;
 
   addNodeCountPointIfNeed(time: number) {
-    if ((this.prevTime && time - this.prevTime < 200) || (time - this.prevNCTime < 200)) {
+    if (
+      (this.prevTime && time - this.prevTime < 200) ||
+      time - this.prevNCTime < 200
+    ) {
       return;
     }
     const lastPoint = this.chart[this.chart.length - 1];
@@ -102,7 +107,7 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
     // }
   }
 
-  handleVisibility(msg: SetPageVisibility):void {
+  handleVisibility(msg: SetPageVisibility): void {
     if (!this.isHidden && msg.hidden && this.prevTime != null) {
       this.timeCorrection = msg.time - this.prevTime;
     }
@@ -116,7 +121,12 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
     return this.chart;
   }
 
-  get availability(): { cpu: boolean, fps: boolean, heap: boolean, nodes: boolean } {
+  get availability(): {
+    cpu: boolean;
+    fps: boolean;
+    heap: boolean;
+    nodes: boolean;
+  } {
     return {
       cpu: this.cpuAvailable,
       fps: this.fpsAvailable,

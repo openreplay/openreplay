@@ -2,16 +2,14 @@
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Collection_play(props: Props) {
-  const {
-    size = 14, width = size, height = size, fill = '',
-  } = props;
+  const { size = 14, width = size, height = size, fill = '' } = props;
   return (
     <svg viewBox="0 0 16 16" width={`${width}px`} height={`${height}px`}>
       <path d="M2 3a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 0-1h-11A.5.5 0 0 0 2 3zm2-2a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7A.5.5 0 0 0 4 1zm2.765 5.576A.5.5 0 0 0 6 7v5a.5.5 0 0 0 .765.424l4-2.5a.5.5 0 0 0 0-.848l-4-2.5z" />

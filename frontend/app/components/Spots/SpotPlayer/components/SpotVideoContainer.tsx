@@ -5,6 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 
 import spotPlayerStore from '../spotPlayerStore';
+import { useTranslation } from 'react-i18next';
 
 const base64toblob = (str: string) => {
   const byteCharacters = atob(str);
@@ -33,6 +34,7 @@ function SpotVideoContainer({
   thumbnail?: string;
   checkReady: () => Promise<boolean>;
 }) {
+  const { t } = useTranslation();
   const [prevIsProcessing, setPrevIsProcessing] = React.useState(false);
   const [processingState, setProcessingState] = React.useState<ProcessingState>(
     ProcessingState.Unchecked,
@@ -125,9 +127,9 @@ function SpotVideoContainer({
             check();
           }
         } else if (
-          streamFile
-          && videoRef.current
-          && videoRef.current.canPlayType('application/vnd.apple.mpegurl')
+          streamFile &&
+          videoRef.current &&
+          videoRef.current.canPlayType('application/vnd.apple.mpegurl')
         ) {
           setLoaded(true);
           videoRef.current.src = URL.createObjectURL(base64toblob(streamFile));
@@ -211,7 +213,7 @@ function SpotVideoContainer({
             message="Your processed Spot is ready!"
             showIcon
             type="success"
-            action={(
+            action={
               <Button
                 size="small"
                 type="default"
@@ -219,9 +221,9 @@ function SpotVideoContainer({
                 onClick={reloadPage}
                 className="ml-2"
               >
-                Play Now
+                {t('Play Now')}
               </Button>
-            )}
+            }
           />
         ) : null}
       </div>

@@ -61,9 +61,21 @@ function SideMenuItem({
         <div className={cn('flex items-center w-full', stl.iconLabel)}>
           {iconName && (
             <div className="flex items-center justify-center w-8 h-8 mr-2">
-              {iconBg
-                && <div className={cn('w-8 h-8 rounded-full relative opacity-20', iconBg)} style={{ opacity: 0.2 }} />}
-              <Icon name={iconName} size={iconSize} color={active ? 'teal' : iconColor} className="absolute" />
+              {iconBg && (
+                <div
+                  className={cn(
+                    'w-8 h-8 rounded-full relative opacity-20',
+                    iconBg,
+                  )}
+                  style={{ opacity: 0.2 }}
+                />
+              )}
+              <Icon
+                name={iconName}
+                size={iconSize}
+                color={active ? 'teal' : iconColor}
+                className="absolute"
+              />
             </div>
           )}
           <span className={cn(stl.title, 'capitalize-first')}>{title}</span>

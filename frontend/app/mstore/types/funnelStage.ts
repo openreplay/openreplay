@@ -47,11 +47,19 @@ export default class FunnelStage {
     this.value = json.value;
     this.type = json.type;
     this.label = filterLabelMap[json.type] || json.type;
-    this.completedPercentage = previousSessionCount ? Math.round((this.count / previousSessionCount) * 100) : 0;
-    this.completedPercentageTotal = total ? Math.round((this.count / total) * 100) : 0;
-    this.dropDueToIssuesPercentage = total ? Math.round((this.dropDueToIssues / total) * 100) : 0;
+    this.completedPercentage = previousSessionCount
+      ? Math.round((this.count / previousSessionCount) * 100)
+      : 0;
+    this.completedPercentageTotal = total
+      ? Math.round((this.count / total) * 100)
+      : 0;
+    this.dropDueToIssuesPercentage = total
+      ? Math.round((this.dropDueToIssues / total) * 100)
+      : 0;
     this.droppedCount = previousSessionCount - this.count;
-    this.droppedPercentage = this.droppedCount ? Math.round((this.droppedCount / previousSessionCount) * 100) : 0;
+    this.droppedPercentage = this.droppedCount
+      ? Math.round((this.droppedCount / previousSessionCount) * 100)
+      : 0;
     return this;
   }
 

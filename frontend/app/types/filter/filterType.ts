@@ -177,7 +177,7 @@ export enum IssueCategory {
   RESOURCES = 'resources',
   NETWORK = 'network',
   RAGE = 'rage',
-  ERRORS = 'errors'
+  ERRORS = 'errors',
 }
 
 export enum FilterType {

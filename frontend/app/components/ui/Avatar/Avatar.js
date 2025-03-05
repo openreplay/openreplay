@@ -14,7 +14,11 @@ function Avatar({
 }) {
   const iconName = avatarIconName(seed);
   return (
-    <Tooltip title={!isAssist ? '' : isActive ? 'Active user' : 'User might be inactive'}>
+    <Tooltip
+      title={
+        !isAssist ? '' : isActive ? 'Active user' : 'User might be inactive'
+      }
+    >
       <div
         className={cn(
           // stl.wrapper,
@@ -32,7 +36,13 @@ function Avatar({
             })}
             style={{ marginRight: '3px', marginBottom: '3px' }}
           >
-            {isActive ? null : <Icon name="sleep" size={9} style={{ position: 'absolute', right: -6, top: -3 }} />}
+            {isActive ? null : (
+              <Icon
+                name="sleep"
+                size={9}
+                style={{ position: 'absolute', right: -6, top: -3 }}
+              />
+            )}
           </div>
         )}
       </div>

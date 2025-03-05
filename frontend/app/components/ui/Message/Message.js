@@ -15,7 +15,10 @@ function Message({
   text = undefined,
 }) {
   return visible || !hidden ? (
-    <div className={cn(styles.message, 'flex items-center')} data-inline={inline}>
+    <div
+      className={cn(styles.message, 'flex items-center')}
+      data-inline={inline}
+    >
       <Icon
         name={success ? 'check' : 'close'}
         color={success ? 'green' : 'red'}

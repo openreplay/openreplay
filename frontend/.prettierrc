@@ -5,5 +5,9 @@
   "singleQuote": true,
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,
-  "importOrder": ["^Components|^App|^UI|^Duck", "^Shared", "^[./]"]
+  "importOrder": ["^Components|^App|^UI|^Duck", "^Shared", "^[./]"],
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "semi": true,
+  "trailingComma": "all"
 }

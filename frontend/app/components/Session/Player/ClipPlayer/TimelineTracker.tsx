@@ -4,7 +4,13 @@ import DraggableCircle from 'Components/Session_/Player/Controls/components/Drag
 import { PlayerContext } from 'Components/Session/playerContext';
 import TimeTracker from 'Components/Session/Player/ClipPlayer/TimeTracker';
 
-function TimelineTracker({ scale, onDragEnd }: { scale: number, onDragEnd: () => void }) {
+function TimelineTracker({
+  scale,
+  onDragEnd,
+}: {
+  scale: number;
+  onDragEnd: () => void;
+}) {
   const { store } = useContext(PlayerContext);
   const { time, range } = store.get();
   const adjustedTime = time - range[0];

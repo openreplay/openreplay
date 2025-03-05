@@ -12,15 +12,16 @@ import { Icon } from 'UI';
 import EventGroupWrapper from './EventGroupWrapper';
 import EventSearch from './EventSearch/EventSearch';
 import styles from './eventsBlock.module.css';
+import { useTranslation } from 'react-i18next';
 
 interface IProps {
   setActiveTab: (tab?: string) => void;
 }
 
 function EventsBlock(props: IProps) {
-  const {
-    notesStore, uxtestingStore, uiPlayerStore, sessionStore,
-  } = useStore();
+  const { t } = useTranslation();
+  const { notesStore, uxtestingStore, uiPlayerStore, sessionStore } =
+    useStore();
   const session = sessionStore.current;
   const { notesWithEvents } = session;
   const { uxtVideo } = session;
@@ -44,9 +45,7 @@ function EventsBlock(props: IProps) {
     tabChangeEvents = [],
   } = store.get();
 
-  const {
-    setActiveTab,
-  } = props;
+  const { setActiveTab } = props;
   const notes = notesStore.sessionNotes;
 
   const filteredLength = filteredEvents?.length || 0;
@@ -79,11 +78,13 @@ function EventsBlock(props: IProps) {
     return mergeEventLists(
       filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
       tabChangeEvents,
-    ).filter((e) => (zoomEnabled
-      ? 'time' in e
-        ? e.time >= zoomStartTs && e.time <= zoomEndTs
-        : false
-      : true));
+    ).filter((e) =>
+      zoomEnabled
+        ? 'time' in e
+          ? e.time >= zoomStartTs && e.time <= zoomEndTs
+          : false
+        : true,
+    );
   }, [
     filteredLength,
     notesWithEvtsLength,
@@ -138,13 +139,18 @@ function EventsBlock(props: IProps) {
     }, 100);
   };
 
-  React.useEffect(() => () => {
-    clearSearch();
-  }, []);
+  React.useEffect(
+    () => () => {
+      clearSearch();
+    },
+    [],
+  );
   React.useEffect(() => {
     if (scroller.current) {
       if (!mouseOver) {
-        scroller.current.scrollToIndex(currentTimeEventIndex, { align: 'center' });
+        scroller.current.scrollToIndex(currentTimeEventIndex, {
+          align: 'center',
+        });
       }
     }
   }, [currentTimeEventIndex]);
@@ -156,13 +162,10 @@ function EventsBlock(props: IProps) {
   const onMouseOver = () => setMouseOver(true);
   const onMouseLeave = () => setMouseOver(false);
 
-  const renderGroup = ({
-    index,
-  }: {
-    index: number;
-  }) => {
+  const renderGroup = ({ index }: { index: number }) => {
     const isLastEvent = index === usedEvents.length - 1;
-    const isLastInGroup = isLastEvent || usedEvents[index + 1]?.type === TYPES.LOCATION;
+    const isLastInGroup =
+      isLastEvent || usedEvents[index + 1]?.type === TYPES.LOCATION;
     const event = usedEvents[index];
     const isNote = 'noteId' in event;
     const isTabChange = 'type' in event && event.type === 'TABCHANGE';
@@ -189,11 +192,16 @@ function EventsBlock(props: IProps) {
   };
 
   const isEmptySearch = query && (usedEvents.length === 0 || !usedEvents);
-  const eventsText = `${query ? 'Filtered' : ''} ${usedEvents.length} Events`;
+  const eventsText = `${query ? t('Filtered') : ''} ${usedEvents.length} Events`;
 
   return (
     <>
-      <div className={cn(styles.header, 'py-4 px-2 bg-gradient-to-t from-transparent to-neutral-50 h-[57px]')}>
+      <div
+        className={cn(
+          styles.header,
+          'py-4 px-2 bg-gradient-to-t from-transparent to-neutral-50 h-[57px]',
+        )}
+      >
         {uxtestingStore.isUxt() ? (
           <div style={{ width: 240, height: 130 }} className="relative">
             <video
@@ -212,7 +220,7 @@ function EventsBlock(props: IProps) {
               }}
               className="absolute z-10"
             >
-              No video
+              {t('No video')}
             </div>
           </div>
         ) : null}
@@ -221,7 +229,11 @@ function EventsBlock(props: IProps) {
             onChange={write}
             setActiveTab={setActiveTab}
             value={query}
-            eventsText={usedEvents.length ? `${usedEvents.length} Events` : '0 Events'}
+            eventsText={
+              usedEvents.length
+                ? `${usedEvents.length} ${t('Events')}`
+                : `0 ${t('Events')}`
+            }
           />
         </div>
       </div>
@@ -235,7 +247,7 @@ function EventsBlock(props: IProps) {
         {isEmptySearch && (
           <div className="flex items-center p-4">
             <Icon name="binoculars" size={18} />
-            <span className="ml-2">No Matching Results</span>
+            <span className="ml-2">{t('No Matching Results')}</span>
           </div>
         )}
         <VList

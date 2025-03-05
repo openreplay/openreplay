@@ -4,9 +4,11 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import GettingStartedModal from './GettingStartedModal';
 import CircleProgress from './CircleProgress';
+import { useTranslation } from 'react-i18next';
 
 function GettingStartedProgress() {
   const { showModal } = useModal();
+  const { t } = useTranslation();
 
   const {
     settingsStore: { gettingStarted },
@@ -21,7 +23,10 @@ function GettingStartedProgress() {
   }, [isLoggedIn]);
 
   const clickHandler = () => {
-    showModal(<GettingStartedModal list={gettingStarted.steps} />, { right: true, width: 450 });
+    showModal(<GettingStartedModal list={gettingStarted.steps} />, {
+      right: true,
+      width: 450,
+    });
   };
   return gettingStarted.status === 'completed' ? null : (
     <div className="mr-4 flex items-cetner cursor-pointer hover:bg-active-blue px-4">
@@ -32,12 +37,10 @@ function GettingStartedProgress() {
         />
         <div className="ml-2">
           <div className="text-lg color-teal" style={{ lineHeight: '15px' }}>
-            Setup
+            {t('Setup')}
           </div>
           <div className="color-gray-meidum text-sm">
-            {gettingStarted.numPending}
-            {' '}
-            Pending
+            {gettingStarted.numPending}&nbsp;{t('Pending')}
           </div>
         </div>
       </div>

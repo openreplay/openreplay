@@ -2,21 +2,28 @@ import { Message } from 'Player/web/messages';
 import type { Store, Interval } from 'Player';
 
 const fps = 60;
-const performance: { now: () => number } = window.performance || { now: Date.now.bind(Date) };
-const requestAnimationFrame: typeof window.requestAnimationFrame = window.requestAnimationFrame
+const performance: { now: () => number } = window.performance || {
+  now: Date.now.bind(Date),
+};
+const requestAnimationFrame: typeof window.requestAnimationFrame =
+  window.requestAnimationFrame ||
   // @ts-ignore
-  || window.webkitRequestAnimationFrame
+  window.webkitRequestAnimationFrame ||
   // @ts-ignore
-  || window.mozRequestAnimationFrame
+  window.mozRequestAnimationFrame ||
   // @ts-ignore
-  || window.oRequestAnimationFrame
+  window.oRequestAnimationFrame ||
   // @ts-ignore
-  || window.msRequestAnimationFrame
-  || ((callback) => window.setTimeout(() => { callback(performance.now()); }, 1000 / fps));
-const cancelAnimationFrame = window.cancelAnimationFrame
+  window.msRequestAnimationFrame ||
+  ((callback) =>
+    window.setTimeout(() => {
+      callback(performance.now());
+    }, 1000 / fps));
+const cancelAnimationFrame =
+  window.cancelAnimationFrame ||
   // @ts-ignore
-  || window.mozCancelAnimationFrame
-  || window.clearTimeout;
+  window.mozCancelAnimationFrame ||
+  window.clearTimeout;
 
 export interface IMessageManager {
   onFileReadSuccess(): void;
@@ -24,7 +31,7 @@ export interface IMessageManager {
   onFileReadFinally(): void;
   startLoading(): void;
   resetMessageManagers(): void;
-  getListsFullState(): Record<string, unknown>
+  getListsFullState(): Record<string, unknown>;
   move(t: number): any;
   distributeMessage(msg: Message): void;
   setMessagesLoading(messagesLoading: boolean): void;
@@ -33,23 +40,23 @@ export interface IMessageManager {
 }
 
 export interface SetState {
-  time: number
-  playing: boolean
-  completed: boolean
-  live: boolean
-  livePlay: boolean
-  freeze: boolean
+  time: number;
+  playing: boolean;
+  completed: boolean;
+  live: boolean;
+  livePlay: boolean;
+  freeze: boolean;
 
-  endTime: number
+  endTime: number;
 }
 
 export interface GetState extends SetState {
-  skip: boolean
-  speed: number
-  skipIntervals: Interval[]
-  ready: boolean
+  skip: boolean;
+  speed: number;
+  skipIntervals: Interval[];
+  ready: boolean;
 
-  lastMessageTime: number
+  lastMessageTime: number;
 }
 
 export default class Animator {
@@ -66,7 +73,10 @@ export default class Animator {
 
   private animationFrameRequestId: number = 0;
 
-  constructor(private store: Store<GetState>, private mm: IMessageManager) {
+  constructor(
+    private store: Store<GetState>,
+    private mm: IMessageManager,
+  ) {
     // @ts-ignore
     window.playerJump = this.jump.bind(this);
   }
@@ -98,20 +108,26 @@ export default class Animator {
 
       const diffTime = !ready
         ? 0
-        : Math.max(animationCurrentTime - animationPrevTime, 0) * (live ? 1 : speed);
+        : Math.max(animationCurrentTime - animationPrevTime, 0) *
+          (live ? 1 : speed);
 
       let time = prevTime + diffTime;
 
-      const skipInterval = skip && skipIntervals.find((si) => si.contains(time));
+      const skipInterval =
+        skip && skipIntervals.find((si) => si.contains(time));
       if (skipInterval) time = skipInterval.end;
 
-      if (time < 0) { time = 0; } // ?
+      if (time < 0) {
+        time = 0;
+      } // ?
       // const fmt = getFirstMessageTime();
       // if (time < fmt) time = fmt; // ?
 
       // if (livePlay && time < endTime) { time = endTime }
       // === live only
-      if (livePlay && time < lastMessageTime) { time = lastMessageTime; }
+      if (livePlay && time < lastMessageTime) {
+        time = lastMessageTime;
+      }
       if (endTime < lastMessageTime) {
         this.store.update({
           endTime: lastMessageTime,
@@ -209,18 +225,8 @@ export default class Animator {
     const { endTime, time } = this.store.get();
 
     if (interval > 0) {
-      return this.jump(
-        Math.min(
-          endTime,
-          time + interval,
-        ),
-      );
+      return this.jump(Math.min(endTime, time + interval));
     }
-    return this.jump(
-      Math.max(
-        0,
-        time + interval,
-      ),
-    );
+    return this.jump(Math.max(0, time + interval));
   }
 }

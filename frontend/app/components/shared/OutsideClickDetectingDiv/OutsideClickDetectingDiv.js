@@ -42,7 +42,11 @@ function OutsideClickDetectingDiv({ onClickOutside, children, ...props }) {
     return () => removeOutsideClickListener(ref);
   }, [ref]);
 
-  return <div ref={ref} {...props}>{children}</div>;
+  return (
+    <div ref={ref} {...props}>
+      {children}
+    </div>
+  );
 }
 
 export default React.memo(OutsideClickDetectingDiv);

@@ -1,9 +1,7 @@
 import React from 'react';
 import { SideMenuitem } from 'UI';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import {
-  withSiteId, metrics, dashboard, alerts,
-} from 'App/routes';
+import { withSiteId, metrics, dashboard, alerts } from 'App/routes';
 
 interface Props extends RouteComponentProps {
   siteId: string;

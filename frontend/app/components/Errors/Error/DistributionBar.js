@@ -20,7 +20,10 @@ function DistributionBar({ className, title, partitions }) {
       <div className="flex justify-between text-sm mb-1">
         <div className="capitalize">{title}</div>
         <div className="flex items-center">
-          <div className="font-thin capitalize" style={{ maxWidth: '80px', height: '19px' }}>
+          <div
+            className="font-thin capitalize"
+            style={{ maxWidth: '80px', height: '19px' }}
+          >
             <TextEllipsis text={partitions[0].label} />
           </div>
           <div className="ml-2">{`${Math.round(partitions[0].prc)}% `}</div>
@@ -30,13 +33,13 @@ function DistributionBar({ className, title, partitions }) {
         {partitions.map((p, index) => (
           <Tooltip
             key={p.label}
-            title={(
+            title={
               <div className="text-center">
                 <span className="capitalize">{p.label}</span>
                 <br />
                 {`${Math.round(p.prc)}%`}
               </div>
-            )}
+            }
             style={{
               marginLeft: '1px',
               width: `${p.prc}%`,

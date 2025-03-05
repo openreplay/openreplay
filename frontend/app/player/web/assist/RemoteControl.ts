@@ -35,7 +35,7 @@ export default class RemoteControl {
     private store: Store<State>,
     private socket: Socket,
     private screen: Screen,
-    private agentInfo: Object,
+    private agentInfo: object,
     private onToggle: (active: boolean) => void,
     private getAssistVersion: () => number,
   ) {
@@ -47,18 +47,23 @@ export default class RemoteControl {
     });
     socket.on('control_rejected', ({ meta, data }) => {
       if (data === socket.id) {
-        if (this.store.get().remoteControl === RemoteControlStatus.Enabled) this.onEnd();
+        if (this.store.get().remoteControl === RemoteControlStatus.Enabled)
+          this.onEnd();
         this.toggleRemoteControl(false);
       }
       if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
         this.onReject();
-        return this.store.update({ remoteControl: RemoteControlStatus.Disabled });
+        return this.store.update({
+          remoteControl: RemoteControlStatus.Disabled,
+        });
       }
     });
     socket.on('control_busy', ({ meta, data }) => {
       this.onBusy();
       if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
-        return this.store.update({ remoteControl: RemoteControlStatus.Disabled });
+        return this.store.update({
+          remoteControl: RemoteControlStatus.Disabled,
+        });
       }
     });
     socket.on('SESSION_DISCONNECTED', () => {
@@ -84,7 +89,10 @@ export default class RemoteControl {
     if (this.getAssistVersion() === 1) {
       this.socket.emit(event, data);
     } else {
-      this.socket.emit(event, { meta: { tabId: this.store.get().currentTab }, data });
+      this.socket.emit(event, {
+        meta: { tabId: this.store.get().currentTab },
+        data,
+      });
     }
   };
 
@@ -123,7 +131,10 @@ export default class RemoteControl {
     if (el instanceof HTMLElement) {
       el.focus();
       el.oninput = (e) => {
-        if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
+        if (
+          el instanceof HTMLTextAreaElement ||
+          el instanceof HTMLInputElement
+        ) {
           this.socket && this.emitData('input', el.value);
         } else if (el.isContentEditable) {
           this.socket && this.emitData('input', el.innerText);

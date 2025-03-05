@@ -2,16 +2,14 @@
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Color_os_microsoft(props: Props) {
-  const {
-    size = 14, width = size, height = size, fill = '',
-  } = props;
+  const { size = 14, width = size, height = size, fill = '' } = props;
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="5 5 22 22">
       <rect x="17" y="17" width="10" height="10" fill="#FEBA08" />

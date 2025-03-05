@@ -14,6 +14,7 @@ import { Calendar } from 'lucide-react';
 import DateRangePopup from 'Shared/DateRangeDropdown/DateRangePopup';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import Select from 'Shared/Select';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   period: any | null;
@@ -33,6 +34,7 @@ interface Props {
 }
 
 function SelectDateRange(props: Props) {
+  const { t } = useTranslation();
   const [isCustom, setIsCustom] = React.useState(false);
   const {
     right = false,
@@ -46,9 +48,13 @@ function SelectDateRange(props: Props) {
     ? DATE_RANGE_COMPARISON_OPTIONS
     : DATE_RANGE_OPTIONS;
   const selectedValue = usedPeriod?.rangeName
-    ? dateRangeOptions.find((obj: any) => obj.value === usedPeriod?.rangeName)
+    ? dateRangeOptions(t).find(
+        (obj: any) => obj.value === usedPeriod?.rangeName,
+      )
     : null;
-  const options = dateRangeOptions.filter((obj: any) => (disableCustom ? obj.value !== CUSTOM_RANGE : true));
+  const options = dateRangeOptions(t).filter((obj: any) =>
+    disableCustom ? obj.value !== CUSTOM_RANGE : true,
+  );
 
   const onChange = (value: any) => {
     if (value === CUSTOM_RANGE) {
@@ -104,11 +110,12 @@ function SelectDateRange(props: Props) {
   const isCustomRange = usedPeriod
     ? usedPeriod.rangeName === CUSTOM_RANGE
     : false;
-  const isUSLocale = navigator.language === 'en-US' || navigator.language.startsWith('en-US');
+  const isUSLocale =
+    navigator.language === 'en-US' || navigator.language.startsWith('en-US');
   const customRange = isCustomRange
     ? usedPeriod.rangeFormatted(
-      isUSLocale ? 'MMM dd yyyy, hh:mm a' : 'MMM dd yyyy, HH:mm',
-    )
+        isUSLocale ? 'MMM dd yyyy, hh:mm a' : 'MMM dd yyyy, HH:mm',
+      )
     : '';
 
   const isTileDisabled = ({ date, view }) => {
@@ -160,8 +167,8 @@ function SelectDateRange(props: Props) {
             if (
               e.target.parentElement.parentElement.classList.contains(
                 'rc-time-picker-panel-select',
-              )
-              || e.target.parentElement.parentElement.classList[0]?.includes(
+              ) ||
+              e.target.parentElement.parentElement.classList[0]?.includes(
                 '-menu',
               )
             ) {
@@ -219,7 +226,8 @@ function AndDateRange({
     },
   };
 
-  const comparisonValue = isCustomRange && selectedValue ? customRange : selectedValue?.label;
+  const comparisonValue =
+    isCustomRange && selectedValue ? customRange : selectedValue?.label;
   return (
     <div className="relative">
       {comparison ? (
@@ -268,14 +276,14 @@ function AndDateRange({
         <OutsideClickDetectingDiv
           onClickOutside={(e: any) => {
             if (
-              e.target.className.includes('react-calendar')
-              || e.target.parentElement.parentElement.classList.contains(
+              e.target.className.includes('react-calendar') ||
+              e.target.parentElement.parentElement.classList.contains(
                 'rc-time-picker-panel-select',
-              )
-              || e.target.parentElement.parentElement.classList[0]?.includes(
+              ) ||
+              e.target.parentElement.parentElement.classList[0]?.includes(
                 '-menu',
-              )
-              || e.target.className.includes('ant-picker')
+              ) ||
+              e.target.className.includes('ant-picker')
             ) {
               return false;
             }
@@ -283,7 +291,10 @@ function AndDateRange({
           }}
         >
           <div
-            className={cn('absolute top-0 mt-10 z-40', right ? 'right-0' : 'left-0')}
+            className={cn(
+              'absolute top-0 mt-10 z-40',
+              right ? 'right-0' : 'left-0',
+            )}
             style={{
               width: isUSLocale ? '542px' : '500px',
               fontSize: '14px',

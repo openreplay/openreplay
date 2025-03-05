@@ -2,7 +2,13 @@ import React, { useState } from 'react';
 import { Tag, Button } from 'antd';
 import cn from 'classnames';
 import {
-  Loader, TextLink, NoContent, Pagination, PageTitle, Divider, Icon,
+  Loader,
+  TextLink,
+  NoContent,
+  Pagination,
+  PageTitle,
+  Divider,
+  Icon,
 } from 'UI';
 import withPageTitle from 'HOCs/withPageTitle';
 import { sliceListPerPage } from 'App/utils';
@@ -18,6 +24,7 @@ import AddProjectButton from './AddProjectButton';
 import SiteSearch from './SiteSearch';
 import NewSiteForm from './NewSiteForm';
 import stl from './sites.module.css';
+import { useTranslation } from 'react-i18next';
 
 type Project = {
   id: string;
@@ -30,6 +37,7 @@ type Project = {
 };
 
 function Sites() {
+  const { t } = useTranslation();
   const { projectsStore, userStore } = useStore();
   const user = userStore.account;
   const sites = projectsStore.list;
@@ -42,17 +50,32 @@ function Sites() {
   const pageSize: number = 10;
 
   const isAdmin = user.admin || user.superAdmin;
-  const filteredSites = sites.filter((site: { name: string }) => site.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredSites = sites.filter((site: { name: string }) =>
+    site.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   const { showModal, hideModal } = useModal();
 
-  function EditButton({ isAdmin, onClick }: { isAdmin: boolean; onClick: () => void }) {
+  function EditButton({
+    isAdmin,
+    onClick,
+  }: {
+    isAdmin: boolean;
+    onClick: () => void;
+  }) {
     const _onClick = () => {
       onClick();
       showModal(<NewSiteForm onClose={hideModal} />, { right: true });
     };
 
-    return <Button icon={<Icon name="edit" />} type="text" disabled={!isAdmin} onClick={_onClick} />;
+    return (
+      <Button
+        icon={<Icon name="edit" />}
+        type="text"
+        disabled={!isAdmin}
+        onClick={_onClick}
+      />
+    );
   }
 
   const captureRateClickHandler = (project: Project) => {
@@ -81,17 +104,23 @@ function Sites() {
             </div>
             <span className="ml-2">{project.host}</span>
             <div className="ml-4 flex items-center gap-2">
-              {project.platform === 'web' ? null : <Tag bordered={false} color="green">MOBILE BETA</Tag>}
+              {project.platform === 'web' ? null : (
+                <Tag bordered={false} color="green">
+                  {t('MOBILE BETA')}
+                </Tag>
+              )}
             </div>
           </div>
         </div>
         <div className="col-span-3">
-          <ProjectKey value={project.projectKey} tooltip="Project key copied to clipboard" />
+          <ProjectKey
+            value={project.projectKey}
+            tooltip={t('Project key copied to clipboard')}
+          />
         </div>
         <div className="col-span-3 flex items-center">
           <Button type="text" onClick={() => captureRateClickHandler(project)}>
-            {project.sampleRate}
-            %
+            {project.sampleRate}%
           </Button>
           {project.conditionsCount > 0 ? (
             <Button
@@ -99,11 +128,8 @@ function Sites() {
               onClick={() => captureRateClickHandler(project)}
               className="ml-2"
             >
-              <BranchesOutlined rotate={90} />
-              {' '}
-              {project.conditionsCount}
-              {' '}
-              Conditions
+              <BranchesOutlined rotate={90} /> {project.conditionsCount}{' '}
+              {t('Conditions')}
             </Button>
           ) : null}
         </div>
@@ -124,14 +150,14 @@ function Sites() {
       <div className="bg-white rounded-lg shadow-sm border">
         <div className={cn(stl.tabHeader, 'px-5 pt-5')}>
           <PageTitle
-            title={<div className="mr-4">Projects</div>}
-            actionButton={(
+            title={<div className="mr-4">{t('Projects')}</div>}
+            actionButton={
               <TextLink
                 icon="book"
                 href="https://docs.openreplay.com/installation"
                 label="Installation Docs"
               />
-            )}
+            }
           />
 
           <div className="flex ml-auto items-center">
@@ -143,29 +169,33 @@ function Sites() {
 
         <div className={stl.list}>
           <NoContent
-            title={(
+            title={
               <div className="flex flex-col items-center justify-center">
                 <AnimatedSVG name={ICONS.NO_PROJECTS} size={60} />
-                <div className="text-center text-gray-600 my-4">No matching results</div>
+                <div className="text-center text-gray-600 my-4">
+                  {t('No matching results')}
+                </div>
               </div>
-            )}
+            }
             size="small"
             show={!loading && filteredSites.length === 0}
           >
             <div className="grid grid-cols-12 gap-2 w-full items-center px-5 py-3 font-medium">
-              <div className="col-span-4">Project Name</div>
-              <div className="col-span-3">Key</div>
-              <div className="col-span-2">Capture Rate</div>
+              <div className="col-span-4">{t('Project Name')}</div>
+              <div className="col-span-3">{t('Key')}</div>
+              <div className="col-span-2">{t('Capture Rate')}</div>
               <div className="col-span-3" />
             </div>
             <Divider className="m-0" />
 
-            {sliceListPerPage(filteredSites, page - 1, pageSize).map((project: Project) => (
-              <React.Fragment key={project.id}>
-                <ProjectItem project={project} />
-                <Divider className="m-0" />
-              </React.Fragment>
-            ))}
+            {sliceListPerPage(filteredSites, page - 1, pageSize).map(
+              (project: Project) => (
+                <React.Fragment key={project.id}>
+                  <ProjectItem project={project} />
+                  <Divider className="m-0" />
+                </React.Fragment>
+              ),
+            )}
 
             <div className="w-full flex items-center justify-center py-10">
               <Pagination
@@ -190,4 +220,6 @@ function Sites() {
   );
 }
 
-export default withPageTitle('Projects - OpenReplay Preferences')(observer(Sites));
+export default withPageTitle('Projects - OpenReplay Preferences')(
+  observer(Sites),
+);

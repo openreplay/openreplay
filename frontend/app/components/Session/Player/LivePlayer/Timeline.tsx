@@ -1,14 +1,17 @@
-import React, {
-  useMemo, useContext, useState, useRef,
-} from 'react';
+import React, { useMemo, useContext, useState, useRef } from 'react';
 import { useStore } from 'App/mstore';
 import TimeTracker from 'Components/Session_/Player/Controls/TimeTracker';
 import stl from 'Components/Session_/Player/Controls/timeline.module.css';
 import DraggableCircle from 'Components/Session_/Player/Controls/components/DraggableCircle';
-import CustomDragLayer, { OnDragCallback } from 'Components/Session_/Player/Controls/components/CustomDragLayer';
+import CustomDragLayer, {
+  OnDragCallback,
+} from 'Components/Session_/Player/Controls/components/CustomDragLayer';
 import { debounce } from 'App/utils';
 import TooltipContainer from 'Components/Session_/Player/Controls/components/TooltipContainer';
-import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
+import {
+  PlayerContext,
+  ILivePlayerContext,
+} from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { Duration } from 'luxon';
 
@@ -20,13 +23,7 @@ function Timeline() {
   // @ts-ignore
   const { player, store } = useContext<ILivePlayerContext>(PlayerContext);
   const [wasPlaying, setWasPlaying] = useState(false);
-  const {
-    playing,
-    time,
-    ready,
-    endTime,
-    liveTimeTravel,
-  } = store.get();
+  const { playing, time, ready, endTime, liveTimeTravel } = store.get();
 
   const timelineRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -34,7 +31,10 @@ function Timeline() {
   const scale = 100 / endTime;
 
   const debouncedJump = useMemo(() => debounce(player.jump, 500), []);
-  const debouncedTooltipChange = useMemo(() => debounce(setTimelineHoverTime, 50), []);
+  const debouncedTooltipChange = useMemo(
+    () => debounce(setTimelineHoverTime, 50),
+    [],
+  );
 
   const onDragEnd = () => {
     if (!liveTimeTravel) return;
@@ -45,9 +45,9 @@ function Timeline() {
   };
 
   const onDrag: OnDragCallback = (offset: { x: number }) => {
-    if ((!liveTimeTravel) || !progressRef.current) return;
+    if (!liveTimeTravel || !progressRef.current) return;
 
-    const p = (offset.x) / progressRef.current.offsetWidth;
+    const p = offset.x / progressRef.current.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
     debouncedJump(time);
     hideTimeTooltip();
@@ -108,7 +108,10 @@ function Timeline() {
     }
   };
 
-  const getTime = (e: React.MouseEvent<HTMLDivElement>, customEndTime?: number) => {
+  const getTime = (
+    e: React.MouseEvent<HTMLDivElement>,
+    customEndTime?: number,
+  ) => {
     // @ts-ignore type mismatch from react?
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
     const targetTime = customEndTime || endTime;
@@ -136,11 +139,7 @@ function Timeline() {
         onMouseLeave={hideTimeTooltip}
       >
         <TooltipContainer />
-        <DraggableCircle
-          left={time * scale}
-          onDrop={onDragEnd}
-          live
-        />
+        <DraggableCircle left={time * scale} onDrop={onDragEnd} live />
         <CustomDragLayer
           onDrag={onDrag}
           minX={0}

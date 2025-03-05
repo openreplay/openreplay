@@ -18,6 +18,7 @@ import StackEventModal from '../StackEventModal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import BottomBlock from '../BottomBlock';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
+import { useTranslation } from 'react-i18next';
 
 const mapNames = (type: string) => {
   if (type === 'openreplay') return 'OpenReplay';
@@ -42,7 +43,8 @@ const WebStackEventPanelComp = observer(() => {
   const jump = (t: number) => player.jump(t);
   const { currentTab, tabStates } = store.get();
 
-  const { stackList: list = [], stackListNow: listNow = [] } = tabStates[currentTab];
+  const { stackList: list = [], stackListNow: listNow = [] } =
+    tabStates[currentTab];
 
   return (
     <EventsPanel
@@ -100,6 +102,7 @@ const EventsPanel = observer(
     zoomEndTs: number;
     isMobile?: boolean;
   }) => {
+    const { t } = useTranslation();
     const {
       sessionStore: { devTools },
     } = useStore();
@@ -109,8 +112,12 @@ const EventsPanel = observer(
     const { activeTab } = devTools[INDEX_KEY];
     const activeIndex = devTools[INDEX_KEY].index;
 
-    const inZoomRangeList = list.filter(({ time }) => (zoomEnabled ? zoomStartTs <= time && time <= zoomEndTs : true));
-    const inZoomRangeListNow = listNow.filter(({ time }) => (zoomEnabled ? zoomStartTs <= time && time <= zoomEndTs : true));
+    const inZoomRangeList = list.filter(({ time }) =>
+      zoomEnabled ? zoomStartTs <= time && time <= zoomEndTs : true,
+    );
+    const inZoomRangeListNow = listNow.filter(({ time }) =>
+      zoomEnabled ? zoomStartTs <= time && time <= zoomEndTs : true,
+    );
 
     let filteredList = useRegExListFilterMemo(
       inZoomRangeList,
@@ -133,14 +140,18 @@ const EventsPanel = observer(
       activeTab,
     );
 
-    const onTabClick = (activeTab: (typeof TAB_KEYS)[number]) => devTools.update(INDEX_KEY, { activeTab });
+    const onTabClick = (activeTab: (typeof TAB_KEYS)[number]) =>
+      devTools.update(INDEX_KEY, { activeTab });
     const onFilterChange = ({
       target: { value },
-    }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value });
+    }: React.ChangeEvent<HTMLInputElement>) =>
+      devTools.update(INDEX_KEY, { filter: value });
     const tabs = useMemo(
-      () => TABS.filter(
-        ({ key }) => key === ALL || inZoomRangeList.some(({ source }) => key === source),
-      ),
+      () =>
+        TABS.filter(
+          ({ key }) =>
+            key === ALL || inZoomRangeList.some(({ source }) => key === source),
+        ),
       [inZoomRangeList.length],
     );
 
@@ -188,7 +199,7 @@ const EventsPanel = observer(
         <BottomBlock.Header>
           <div className="flex items-center">
             <span className="font-semibold color-gray-medium mr-4">
-              Stack Events
+              {t('Stack Events')}
             </span>
             <Tabs
               renameTab={mapNames}
@@ -206,7 +217,7 @@ const EventsPanel = observer(
                   {
                     label: (
                       <Tooltip title="Stack Events overview is available only for all tabs combined.">
-                        <span>Current Tab</span>
+                        <span>{t('Current Tab')}</span>
                       </Tooltip>
                     ),
                     value: 'current',
@@ -232,12 +243,12 @@ const EventsPanel = observer(
         </BottomBlock.Header>
         <BottomBlock.Content className="overflow-y-auto">
           <NoContent
-            title={(
+            title={
               <div className="capitalize flex items-center mt-16 gap-2">
                 <InfoCircleOutlined size={18} />
-                No Data
+                {t('No Data')}
               </div>
-            )}
+            }
             size="small"
             show={filteredList.length === 0}
           >

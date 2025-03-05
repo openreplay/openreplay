@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Button, Space, Switch, Tooltip, Input, Typography,
-} from 'antd';
+import { Button, Space, Switch, Tooltip, Input, Typography } from 'antd';
 import { Icon, Loader } from 'UI';
 import cn from 'classnames';
 import ConditionalRecordingSettings from 'Shared/SessionSettings/components/ConditionalRecordingSettings';
@@ -9,12 +7,14 @@ import { Conditions } from '@/mstore/types/FeatureFlag';
 import { useStore } from '@/mstore';
 import Project from '@/mstore/types/project';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   project: Project;
 }
 
 function ProjectCaptureRate(props: Props) {
+  const { t } = useTranslation();
   const [conditions, setConditions] = React.useState<Conditions[]>([]);
   const { projectId, platform } = props.project;
   const isMobile = platform !== 'web';
@@ -40,7 +40,7 @@ function ProjectCaptureRate(props: Props) {
       setChanged(false);
       const fetchData = async () => {
         if (isEnterprise) {
-          await customFieldStore.fetchListActive(projectId + '');
+          await customFieldStore.fetchListActive(`${projectId}`);
         }
         void fetchCaptureConditions(projectId);
       };
@@ -49,7 +49,11 @@ function ProjectCaptureRate(props: Props) {
   }, [projectId]);
 
   useEffect(() => {
-    setConditions(captureConditions.map((condition: any) => new Conditions(condition, true, isMobile)));
+    setConditions(
+      captureConditions.map(
+        (condition: any) => new Conditions(condition, true, isMobile),
+      ),
+    );
   }, [captureConditions]);
 
   const onCaptureRateChange = (input: string) => {
@@ -70,23 +74,32 @@ function ProjectCaptureRate(props: Props) {
     updateCaptureConditions(projectId!, {
       rate: parseInt(captureRate, 10),
       conditionalCapture,
-      conditions: isEnterprise ? conditions.map((c) => c.toCaptureCondition()) : [],
+      conditions: isEnterprise
+        ? conditions.map((c) => c.toCaptureCondition())
+        : [],
     });
     setChanged(false);
   };
 
-  const updateDisabled = !changed || !isAdmin || (isEnterprise && (conditionalCapture && conditions.length === 0));
+  const updateDisabled =
+    !changed ||
+    !isAdmin ||
+    (isEnterprise && conditionalCapture && conditions.length === 0);
 
   return (
     <Loader loading={loadingCaptureRate || !projectId}>
-      <Tooltip title={isAdmin ? '' : 'You don\'t have permission to change.'}>
+      <Tooltip title={isAdmin ? '' : t("You don't have permission to change.")}>
         <div className="flex flex-col gap-4 border-b pb-4">
           <Space>
-            <Typography.Text>Define percentage of sessions you want to capture</Typography.Text>
+            <Typography.Text>
+              {t('Define percentage of sessions you want to capture')}
+            </Typography.Text>
             <Tooltip
               title={
-                'Define the percentage of user sessions to be recorded for detailed replay and analysis.'
-                + '\nSessions exceeding this specified limit will not be captured or stored.'
+                t(
+                  'Define the percentage of user sessions to be recorded for detailed replay and analysis.',
+                ) +
+                `\n${t('Sessions exceeding this specified limit will not be captured or stored.')}`
               }
             >
               <Icon size={16} color="black" name="info-circle" />
@@ -97,9 +110,11 @@ function ProjectCaptureRate(props: Props) {
             <Switch
               checked={conditionalCapture}
               onChange={toggleRate}
-              checkedChildren={!isEnterprise ? '100%' : 'Conditional'}
+              checkedChildren={!isEnterprise ? '100%' : t('Conditional')}
               disabled={!isAdmin}
-              unCheckedChildren={!isEnterprise ? 'Custom' : 'Capture Rate'}
+              unCheckedChildren={
+                !isEnterprise ? t('Custom') : t('Capture Rate')
+              }
             />
 
             {!conditionalCapture ? (
@@ -131,7 +146,7 @@ function ProjectCaptureRate(props: Props) {
               onClick={onUpdate}
               disabled={updateDisabled}
             >
-              Update
+              {t('Update')}
             </Button>
           </Space>
         </div>

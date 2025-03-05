@@ -28,17 +28,72 @@ export default class Client extends React.PureComponent {
 
   renderActiveTab = () => (
     <Switch>
-      <Route exact strict path={clientRoute(CLIENT_TABS.PROFILE)} component={ProfileSettings} />
-      <Route exact strict path={clientRoute(CLIENT_TABS.SESSIONS_LISTING)} component={SessionsListingSettings} />
-      <Route exact strict path={clientRoute(CLIENT_TABS.INTEGRATIONS)} component={Integrations} />
-      <Route exact strict path={clientRoute(CLIENT_TABS.MANAGE_USERS)} component={UserView} />
-      <Route exact strict path={clientRoute(CLIENT_TABS.SITES)} component={Projects} />
-      <Route exact strict path={clientRoute(CLIENT_TABS.CUSTOM_FIELDS)} component={CustomFields} />
-      <Route exact strict path={clientRoute(CLIENT_TABS.WEBHOOKS)} component={Webhooks} />
-      <Route exact strict path={clientRoute(CLIENT_TABS.NOTIFICATIONS)} component={Notifications} />
-      <Route exact strict path={clientRoute(CLIENT_TABS.MANAGE_ROLES)} component={Roles} />
-      <Route exact strict path={clientRoute(CLIENT_TABS.AUDIT)} component={AuditView} />
-      <Route exact strict path={clientRoute(CLIENT_TABS.MODULES)} component={Modules} />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.PROFILE)}
+        component={ProfileSettings}
+      />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.SESSIONS_LISTING)}
+        component={SessionsListingSettings}
+      />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.INTEGRATIONS)}
+        component={Integrations}
+      />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.MANAGE_USERS)}
+        component={UserView}
+      />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.SITES)}
+        component={Projects}
+      />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.CUSTOM_FIELDS)}
+        component={CustomFields}
+      />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.WEBHOOKS)}
+        component={Webhooks}
+      />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.NOTIFICATIONS)}
+        component={Notifications}
+      />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.MANAGE_ROLES)}
+        component={Roles}
+      />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.AUDIT)}
+        component={AuditView}
+      />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.MODULES)}
+        component={Modules}
+      />
       <Redirect to={clientRoute(CLIENT_TABS.PROFILE)} />
     </Switch>
   );

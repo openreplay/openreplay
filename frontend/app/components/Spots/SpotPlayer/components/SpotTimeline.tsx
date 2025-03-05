@@ -22,7 +22,8 @@ function SpotTimeline() {
       setMaxWidth(progressRef.current.clientWidth);
     }
   }, []);
-  const getOffset = (offsX: number) => offsX / (progressRef.current?.clientWidth || 1);
+  const getOffset = (offsX: number) =>
+    offsX / (progressRef.current?.clientWidth || 1);
 
   const onDrag = (offset: { x: number }) => {
     if (spotPlayerStore.isPlaying) {

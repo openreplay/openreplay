@@ -2,11 +2,11 @@ import { validateName, validateURL } from 'App/validate';
 import { makeAutoObservable } from 'mobx';
 
 export interface IWebhook {
-  webhookId: string
-  type: string
-  name: string
-  endpoint: string
-  authHeader: string
+  webhookId: string;
+  type: string;
+  name: string;
+  endpoint: string;
+  authHeader: string;
 }
 
 export default class Webhook {
@@ -31,7 +31,12 @@ export default class Webhook {
   }
 
   validate() {
-    return !!this.name && validateName(this.name) && !!this.endpoint && validateURL(this.endpoint);
+    return (
+      !!this.name &&
+      validateName(this.name) &&
+      !!this.endpoint &&
+      validateURL(this.endpoint)
+    );
   }
 
   exists() {

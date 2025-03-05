@@ -14,7 +14,11 @@ import { sessionService } from 'App/services';
 import styles from '../Session_/session.module.css';
 import PlayerBlock from './Player/LivePlayer/LivePlayerBlock';
 import PlayerBlockHeader from './Player/LivePlayer/LivePlayerBlockHeader';
-import { PlayerContext, defaultContextValue, ILivePlayerContext } from './playerContext';
+import {
+  PlayerContext,
+  defaultContextValue,
+  ILivePlayerContext,
+} from './playerContext';
 
 interface Props {
   customSession?: Session;
@@ -24,11 +28,7 @@ interface Props {
 
 let playerInst: ILivePlayerContext['player'] | undefined;
 
-function LivePlayer({
-  isMultiview,
-  customSession,
-  query,
-}: Props) {
+function LivePlayer({ isMultiview, customSession, query }: Props) {
   const { projectsStore, sessionStore, userStore } = useStore();
   const { isEnterprise } = userStore;
   const userEmail = userStore.account.email;
@@ -36,7 +36,8 @@ function LivePlayer({
   const userId = userStore.account.id;
   const session = sessionStore.current;
   // @ts-ignore
-  const [contextValue, setContextValue] = useState<ILivePlayerContext>(defaultContextValue);
+  const [contextValue, setContextValue] =
+    useState<ILivePlayerContext>(defaultContextValue);
   const [fullView, setFullView] = useState(false);
   const openedFromMultiview = query?.get('multi') === 'true';
   const usedSession = isMultiview ? customSession! : session;
@@ -76,8 +77,8 @@ function LivePlayer({
 
     return () => {
       if (
-        !location.pathname.includes('multiview')
-        || !location.pathname.includes(usedSession.sessionId)
+        !location.pathname.includes('multiview') ||
+        !location.pathname.includes(usedSession.sessionId)
       ) {
         console.debug('cleaning live player for', usedSession.sessionId);
         audioContextManager.clear();
@@ -92,8 +93,10 @@ function LivePlayer({
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     if (
-      (queryParams.has('fullScreen') && queryParams.get('fullScreen') === 'true') || (queryParams.has('fullView') && queryParams.get('fullView') === 'true')
-      || location.pathname.includes('multiview')
+      (queryParams.has('fullScreen') &&
+        queryParams.get('fullScreen') === 'true') ||
+      (queryParams.has('fullView') && queryParams.get('fullView') === 'true') ||
+      location.pathname.includes('multiview')
     ) {
       setFullView(true);
     }
@@ -122,6 +125,9 @@ function LivePlayer({
   );
 }
 
-export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', true, false)(
-  withLocationHandlers()(observer(LivePlayer)),
-);
+export default withPermissions(
+  ['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'],
+  '',
+  true,
+  false,
+)(withLocationHandlers()(observer(LivePlayer)));

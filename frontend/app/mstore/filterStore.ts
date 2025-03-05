@@ -20,7 +20,9 @@ export default class FilterStore {
 
   setTopValues = (key: string, values: Record<string, any> | TopValue[]) => {
     const vals = Array.isArray(values) ? values : values.data;
-    this.topValues[key] = vals?.filter((value) => value !== null && value.value !== '');
+    this.topValues[key] = vals?.filter(
+      (value) => value !== null && value.value !== '',
+    );
   };
 
   resetValues = () => {

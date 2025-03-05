@@ -16,7 +16,10 @@ export default class InspectorController {
 
   marker: Marker | null = null;
 
-  constructor(private screen: Screen, private readonly store: Store<{ tagSelector: string }>) {
+  constructor(
+    private screen: Screen,
+    private readonly store: Store<{ tagSelector: string }>,
+  ) {
     screen.overlay.addEventListener('contextmenu', () => {
       screen.overlay.style.display = 'none';
       const doc = screen.document;

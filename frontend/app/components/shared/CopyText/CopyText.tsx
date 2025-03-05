@@ -10,7 +10,10 @@ interface Props {
 }
 function CopyText(props: Props) {
   const {
-    children, label = 'Click to copy', afterLabel = 'Copied', content = '',
+    children,
+    label = 'Click to copy',
+    afterLabel = 'Copied',
+    content = '',
   } = props;
   const [isCopied, setIsCopied] = useState(false);
   const onClick = () => {

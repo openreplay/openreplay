@@ -9,13 +9,18 @@ import { useModal } from 'App/components/Modal';
 import { toast } from 'react-toastify';
 import { FilterKey } from 'App/types/filter/filterType';
 import { addOptionsToFilter } from 'App/types/filter/newFilter';
+import { useTranslation } from 'react-i18next';
 
 interface CopyableTextAreaProps {
   selector: string;
   setSelector: (value: string) => void;
 }
 
-const CopyableTextArea: React.FC<CopyableTextAreaProps> = ({ selector, setSelector }) => {
+const CopyableTextArea: React.FC<CopyableTextAreaProps> = ({
+  selector,
+  setSelector,
+}) => {
+  const { t } = useTranslation();
   const handleCopy = () => {
     navigator.clipboard.writeText(selector);
   };
@@ -28,7 +33,7 @@ const CopyableTextArea: React.FC<CopyableTextAreaProps> = ({ selector, setSelect
         className="rounded-lg font-mono text-sm  placeholder:font-sans placeholder:text-base placeholder:text-gray-400"
         rows={4}
         style={{ paddingRight: '40px' }}
-        placeholder="Enter selector to tag elements. E.g. .btn-primary"
+        placeholder={t('Enter selector to tag elements. E.g. .btn-primary')}
       />
       <Tooltip title="Copy">
         <Button
@@ -48,6 +53,7 @@ const CopyableTextArea: React.FC<CopyableTextAreaProps> = ({ selector, setSelect
 };
 
 function TagWatch() {
+  const { t } = useTranslation();
   const { tagWatchStore, searchStore } = useStore();
   const [selector, setSelector] = React.useState('');
   const { store, player } = React.useContext(PlayerContext);
@@ -78,7 +84,11 @@ function TagWatch() {
     }
   }, [selector]);
 
-  const onSave = async (name: string, ignoreClRage: boolean, ignoreDeadCl: boolean) => {
+  const onSave = async (
+    name: string,
+    ignoreClRage: boolean,
+    ignoreDeadCl: boolean,
+  ) => {
     try {
       const tag = await tagWatchStore.createTag({
         name,
@@ -106,14 +116,20 @@ function TagWatch() {
     if (selector === '') {
       return;
     }
-    showModal(<SaveModal onSave={onSave} hideModal={hideModal} />, { right: true, width: 400 });
+    showModal(<SaveModal onSave={onSave} hideModal={hideModal} />, {
+      right: true,
+      width: 400,
+    });
   };
 
   return (
     <div className="w-full h-full p-4 flex flex-col gap-2">
       <div className="flex flex-col items-center justify-between">
-        <p>Select elements in the session play area to tag by class selector and filter sessions to verify their rendering.</p>
-
+        <p>
+          {t(
+            'Select elements in the session play area to tag by class selector and filter sessions to verify their rendering.',
+          )}
+        </p>
       </div>
 
       <CopyableTextArea selector={selector} setSelector={setSelector} />
@@ -125,7 +141,7 @@ function TagWatch() {
         icon={<ZoomInOutlined />}
         disabled={selector === ''}
       >
-        Tag Element
+        {t('Tag Element')}
       </Button>
     </div>
   );

@@ -4,14 +4,14 @@ import React from 'react';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
-import {
-  confirm, CopyButton, Form, Icon, Input,
-} from 'UI';
+import { confirm, CopyButton, Form, Icon, Input } from 'UI';
 import { Button } from 'antd';
 
 import Select from 'Shared/Select';
+import { useTranslation } from 'react-i18next';
 
 function UserForm() {
+  const { t } = useTranslation();
   const { hideModal } = useModal();
   const { userStore, roleStore } = useStore();
   const { isEnterprise } = userStore;
@@ -40,9 +40,11 @@ function UserForm() {
   const deleteHandler = async () => {
     if (
       await confirm({
-        header: 'Confirm',
-        confirmButton: 'Yes, delete',
-        confirmation: 'Are you sure you want to permanently delete this user?',
+        header: t('Confirm'),
+        confirmButton: t('Yes, delete'),
+        confirmation: t(
+          'Are you sure you want to permanently delete this user?',
+        ),
       })
     ) {
       userStore.deleteUser(user.userId).then(() => {
@@ -56,14 +58,12 @@ function UserForm() {
     <div className="bg-white h-screen p-6">
       <div className="">
         <h1 className="text-2xl mb-4">
-          {`${
-            user.exists() ? 'Update' : 'Invite'
-          } User`}
+          {`${user.exists() ? 'Update' : 'Invite'} User`}
         </h1>
       </div>
       <Form onSubmit={onSave}>
         <Form.Field>
-          <label>Full Name</label>
+          <label>{t('Full Name')}</label>
           <Input
             name="name"
             autoFocus
@@ -76,7 +76,7 @@ function UserForm() {
         </Form.Field>
 
         <div className="form-group">
-          <label>Email Address</label>
+          <label>{t('Email Address')}</label>
           <Input
             disabled={user.exists()}
             name="email"
@@ -88,19 +88,18 @@ function UserForm() {
         </div>
         {!isSmtp && (
           <div className={cn('mb-4 p-2 bg-yellow rounded')}>
-            SMTP is not configured (see
-            {' '}
+            {t('SMTP is not configured (see')}&nbsp;
             <a
               className="link"
               href="https://docs.openreplay.com/configuration/configure-smtp"
               target="_blank"
               rel="noreferrer"
             >
-              here
-            </a>
-            {' '}
-            how to set it up). You can still add new users, but you’d have to
-            manually copy then send them the invitation link.
+              {t('here')}
+            </a>{' '}
+            {t(
+              'how to set it up). You can still add new users, but you’d have to manually copy then send them the invitation link.',
+            )}
           </div>
         )}
         <Form.Field>
@@ -114,9 +113,9 @@ function UserForm() {
               className="mt-1"
             />
             <div className="ml-2 select-none">
-              <span>Admin Privileges</span>
+              <span>{t('Admin Privileges')}</span>
               <div className="text-sm color-gray-medium -mt-1">
-                Can manage Projects and team members.
+                {t('Can manage Projects and team members.')}
               </div>
             </div>
           </label>
@@ -124,9 +123,9 @@ function UserForm() {
 
         {isEnterprise && (
           <Form.Field>
-            <label htmlFor="role">Role</label>
+            <label htmlFor="role">{t('Role')}</label>
             <Select
-              placeholder="Select Role"
+              placeholder={t('Select Role')}
               selection
               options={roles}
               name="roleId"
@@ -148,18 +147,17 @@ function UserForm() {
             type="primary"
             className="float-left mr-2"
           >
-            {user.exists() ? 'Update' : 'Invite'}
+            {user.exists() ? t('Update') : t('Invite')}
           </Button>
-          {user.exists() && <Button onClick={hideModal}>Cancel</Button>}
+          {user.exists() && <Button onClick={hideModal}>{t('Cancel')}</Button>}
         </div>
-        {!user.exists() ? null
-          : (
-            <div>
-              <Button disabled={user.isSuperAdmin} onClick={deleteHandler}>
-                <Icon name="trash" size="16" />
-              </Button>
-            </div>
-          )}
+        {!user.exists() ? null : (
+          <div>
+            <Button disabled={user.isSuperAdmin} onClick={deleteHandler}>
+              <Icon name="trash" size="16" />
+            </Button>
+          </div>
+        )}
       </div>
 
       {!user.isJoined && user.invitationLink && (

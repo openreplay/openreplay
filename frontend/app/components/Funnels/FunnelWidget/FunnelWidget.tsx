@@ -10,36 +10,46 @@ import { useStore } from '@/mstore';
 import Filter from '@/mstore/types/filter';
 import stl from './FunnelWidget.module.css';
 import Funnelbar, { UxTFunnelBar } from './FunnelBar';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
-    metric?: Widget;
-    isWidget?: boolean;
-    data: { funnel: Funnel };
-    compData: { funnel: Funnel };
+  metric?: Widget;
+  isWidget?: boolean;
+  data: { funnel: Funnel };
+  compData: { funnel: Funnel };
 }
 
 function FunnelWidget(props: Props) {
+  const { t } = useTranslation();
   const { dashboardStore, searchStore } = useStore();
   const [focusedFilter, setFocusedFilter] = React.useState<number | null>(null);
-  const {
-    isWidget = false, data, metric, compData,
-  } = props;
+  const { isWidget = false, data, metric, compData } = props;
   const funnel = data.funnel || { stages: [] };
   const totalSteps = funnel.stages.length;
-  const stages = isWidget ? [...funnel.stages.slice(0, 1), funnel.stages[funnel.stages.length - 1]] : funnel.stages;
+  const stages = isWidget
+    ? [...funnel.stages.slice(0, 1), funnel.stages[funnel.stages.length - 1]]
+    : funnel.stages;
   const hasMoreSteps = funnel.stages.length > 2;
   const lastStage = funnel.stages[funnel.stages.length - 1];
   const remainingSteps = totalSteps - 2;
   const { hideModal } = useModal();
-  const metricLabel = metric?.metricFormat == 'userCount' ? 'Users' : 'Sessions';
+  const metricLabel =
+    metric?.metricFormat == 'userCount' ? t('Users') : t('Sessions');
   const { drillDownFilter } = dashboardStore;
   const { drillDownPeriod } = dashboardStore;
-  const comparisonPeriod = metric ? dashboardStore.comparisonPeriods[metric.metricId] : undefined;
+  const comparisonPeriod = metric
+    ? dashboardStore.comparisonPeriods[metric.metricId]
+    : undefined;
   const metricFilters = metric?.series[0]?.filter.filters || [];
 
   const applyDrillDown = (index: number, isComp?: boolean) => {
-    const filter = new Filter().fromData({ filters: metricFilters.slice(0, index + 1) });
-    const periodTimestamps = isComp && index > -1 ? comparisonPeriod.toTimestamps() : drillDownPeriod.toTimestamps();
+    const filter = new Filter().fromData({
+      filters: metricFilters.slice(0, index + 1),
+    });
+    const periodTimestamps =
+      isComp && index > -1
+        ? comparisonPeriod.toTimestamps()
+        : drillDownPeriod.toTimestamps();
     drillDownFilter.merge({
       filters: filter.toJson().filters,
       startTimestamp: periodTimestamps.startTimestamp,
@@ -47,10 +57,13 @@ function FunnelWidget(props: Props) {
     });
   };
 
-  useEffect(() => () => {
-    if (isWidget) return;
-    hideModal();
-  }, []);
+  useEffect(
+    () => () => {
+      if (isWidget) return;
+      hideModal();
+    },
+    [],
+  );
 
   const focusStage = (index: number, isComp?: boolean) => {
     funnel.stages.forEach((s, i) => {
@@ -72,7 +85,10 @@ function FunnelWidget(props: Props) {
   };
 
   const shownStages = React.useMemo(() => {
-    const stages: { data: Funnel['stages'][0], compData?: Funnel['stages'][0] }[] = [];
+    const stages: {
+      data: Funnel['stages'][0];
+      compData?: Funnel['stages'][0];
+    }[] = [];
     for (let i = 0; i < funnel.stages.length; i++) {
       const stage: any = { data: funnel.stages[i], compData: undefined };
       const compStage = compData?.funnel.stages[i];
@@ -92,14 +108,14 @@ function FunnelWidget(props: Props) {
   return (
     <NoContent
       style={{ minHeight: 220 }}
-      title={(
+      title={
         <div className="flex items-center text-lg">
           <Icon name="info-circle" className="mr-2" size="18" />
           {noEvents
-            ? 'Select an event to start seeing the funnel'
-            : 'No data available for the selected period.'}
+            ? t('Select an event to start seeing the funnel')
+            : t('No data available for the selected period.')}
         </div>
-      )}
+      }
       show={!stages || stages.length === 0}
     >
       <div
@@ -110,8 +126,8 @@ function FunnelWidget(props: Props) {
             : '',
         )}
       >
-        {!isWidget
-          && shownStages.map((stage: any, index: any) => (
+        {!isWidget &&
+          shownStages.map((stage: any, index: any) => (
             <Stage
               key={index}
               isHorizontal={isHorizontal}
@@ -129,9 +145,7 @@ function FunnelWidget(props: Props) {
           <>
             <Stage index={1} isWidget={isWidget} stage={stages[0]} />
 
-            {hasMoreSteps && (
-              <EmptyStage total={remainingSteps} />
-            )}
+            {hasMoreSteps && <EmptyStage total={remainingSteps} />}
 
             {funnel.stages.length > 1 && (
               <Stage index={totalSteps} isWidget={isWidget} stage={lastStage} />
@@ -141,9 +155,11 @@ function FunnelWidget(props: Props) {
       </div>
       <div className="flex items-center py-2 gap-2">
         <div className="flex items-center">
-          <span className="text-base font-medium mr-2">Total conversion</span>
+          <span className="text-base font-medium mr-2">
+            {t('Total conversion')}
+          </span>
           <Tooltip
-            title={`${funnel.totalConversions} ${isUsers ? 'Users' : 'Sessions'} ${funnel.totalConversionsPercentage}%`}
+            title={`${funnel.totalConversions} ${isUsers ? t('Users') : t('Sessions')} ${funnel.totalConversionsPercentage}%`}
           >
             <Tag
               bordered={false}
@@ -155,7 +171,9 @@ function FunnelWidget(props: Props) {
           </Tooltip>
         </div>
         <div className="flex items-center">
-          <span className="text-base font-medium mr-2">Lost conversion</span>
+          <span className="text-base font-medium mr-2">
+            {t('Lost conversion')}
+          </span>
           <Tooltip
             title={`${funnel.lostConversions} Sessions ${funnel.lostConversionsPercentage}%`}
           >
@@ -171,12 +189,10 @@ function FunnelWidget(props: Props) {
       </div>
       {funnel.totalDropDueToIssues > 0 && (
         <div className="flex items-center mb-2">
-          <Icon name="magic" />
-          {' '}
+          <Icon name="magic" />{' '}
           <span className="ml-2">
-            {funnel.totalDropDueToIssues}
-            {' '}
-            sessions dropped due to issues.
+            {funnel.totalDropDueToIssues}&nbsp;
+            {t('sessions dropped due to issues.')}
           </span>
         </div>
       )}
@@ -185,7 +201,11 @@ function FunnelWidget(props: Props) {
 }
 
 export const EmptyStage = observer(({ total }: any) => (
-  <div className={cn('flex items-center mb-4 pb-3 relative border-b -mx-4 px-4 pt-2')}>
+  <div
+    className={cn(
+      'flex items-center mb-4 pb-3 relative border-b -mx-4 px-4 pt-2',
+    )}
+  >
     <IndexNumber index={0} />
     <div
       className="w-fit px-2 border border-teal py-1 text-center justify-center bg-teal-lightest flex items-center rounded-full color-teal"
@@ -197,26 +217,40 @@ export const EmptyStage = observer(({ total }: any) => (
   </div>
 ));
 
-export const Stage = observer(({
-  metricLabel,
-  stage,
-  index,
-  uxt,
-  focusStage,
-  focusedFilter,
-  compData,
-  isHorizontal,
-}: any) => (stage ? (
-  <div
-    className={cn(
-      'flex items-start relative pt-2',
-      { [stl['step-disabled']]: !stage.isActive },
-    )}
-  >
-    <IndexNumber index={index} />
-    {!uxt ? <Funnelbar isHorizontal={isHorizontal} compData={compData} metricLabel={metricLabel} index={index} filter={stage} focusStage={focusStage} focusedFilter={focusedFilter} /> : <UxTFunnelBar filter={stage} />}
-  </div>
-) : null));
+export const Stage = observer(
+  ({
+    metricLabel,
+    stage,
+    index,
+    uxt,
+    focusStage,
+    focusedFilter,
+    compData,
+    isHorizontal,
+  }: any) =>
+    stage ? (
+      <div
+        className={cn('flex items-start relative pt-2', {
+          [stl['step-disabled']]: !stage.isActive,
+        })}
+      >
+        <IndexNumber index={index} />
+        {!uxt ? (
+          <Funnelbar
+            isHorizontal={isHorizontal}
+            compData={compData}
+            metricLabel={metricLabel}
+            index={index}
+            filter={stage}
+            focusStage={focusStage}
+            focusedFilter={focusedFilter}
+          />
+        ) : (
+          <UxTFunnelBar filter={stage} />
+        )}
+      </div>
+    ) : null,
+);
 
 export const IndexNumber = observer(({ index }: any) => (
   <div className="z-10 w-6 h-6 border shrink-0 mr-4 text-sm rounded-full bg-gray-lightest flex items-center justify-center leading-3">

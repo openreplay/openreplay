@@ -4,8 +4,10 @@ import { NoContent, Pagination, Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import RecordsListItem from './RecordsListItem';
+import { useTranslation } from 'react-i18next';
 
 function RecordingsList() {
+  const { t } = useTranslation();
   const { recordingsStore } = useStore();
   // const [shownRecordings, setRecordings] = React.useState<any[]>([]);
   const { recordings } = recordingsStore;
@@ -23,29 +25,31 @@ function RecordingsList() {
   return (
     <NoContent
       show={length === 0}
-      title={(
+      title={
         <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.NO_RECORDINGS} size={60} />
           <div className="text-center mt-4">
             {recordsSearch !== ''
-              ? 'No matching results'
-              : 'No videos have been recorded in your co-browsing sessions.'}
+              ? t('No matching results')
+              : t('No videos have been recorded in your co-browsing sessions.')}
           </div>
         </div>
-      )}
-      subtext={(
+      }
+      subtext={
         <div className="text-center flex justify-center items-center flex-col">
           <span>
-            Capture and share video recordings of co-browsing sessions with your team for product feedback and training.
+            {t(
+              'Capture and share video recordings of co-browsing sessions with your team for product feedback and training.',
+            )}
           </span>
         </div>
-      )}
+      }
     >
       <div className="mt-3 border-b">
         <Loader loading={recordingsStore.loading}>
           <div className="grid grid-cols-12 py-2 font-medium px-6">
-            <div className="col-span-8">Name</div>
-            <div className="col-span-4">Recorded by</div>
+            <div className="col-span-8">{t('Name')}</div>
+            <div className="col-span-4">{t('Recorded by')}</div>
           </div>
 
           {recordings.map((record: any) => (
@@ -58,15 +62,10 @@ function RecordingsList() {
 
       <div className="w-full flex items-center justify-between pt-4 px-6">
         <div className="text-disabled-text">
-          Showing
-          {' '}
-          <span className="font-semibold">{Math.min(length, pageSize)}</span>
-          {' '}
-          out of
-          {' '}
-          <span className="font-semibold">{total}</span>
-          {' '}
-          Recording
+          {t('Showing')}{' '}
+          <span className="font-semibold">{Math.min(length, pageSize)}</span>{' '}
+          {t('out of')}&nbsp;<span className="font-semibold">{total}</span>
+          &nbsp;{t('Recording')}
         </div>
         <Pagination
           page={page}

@@ -111,7 +111,10 @@ class SearchStoreLive {
       const response: any[] = await searchService.fetchFilterSearch(params);
 
       this.filterSearchList = response.reduce(
-        (acc: Record<string, { projectId: number; value: string }[]>, item: any) => {
+        (
+          acc: Record<string, { projectId: number; value: string }[]>,
+          item: any,
+        ) => {
           const { projectId, type, value } = item;
           if (!acc[type]) acc[type] = [];
           acc[type].push({ projectId, value });
@@ -148,23 +151,27 @@ class SearchStoreLive {
 
   clearSearch() {
     const { instance } = this;
-    this.edit(new Search({
-      rangeValue: instance.rangeValue,
-      startDate: instance.startDate,
-      endDate: instance.endDate,
-      filters: [],
-    }));
+    this.edit(
+      new Search({
+        rangeValue: instance.rangeValue,
+        startDate: instance.startDate,
+        endDate: instance.endDate,
+        filters: [],
+      }),
+    );
   }
 
   addFilter(filter: any) {
-    const index = this.instance.filters.findIndex((i: FilterItem) => i.key === filter.key);
+    const index = this.instance.filters.findIndex(
+      (i: FilterItem) => i.key === filter.key,
+    );
 
     filter.value = checkFilterValue(filter.value);
     filter.filters = filter.filters
       ? filter.filters.map((subFilter: any) => ({
-        ...subFilter,
-        value: checkFilterValue(subFilter.value),
-      }))
+          ...subFilter,
+          value: checkFilterValue(subFilter.value),
+        }))
       : null;
 
     if (index > -1) {
@@ -189,7 +196,13 @@ class SearchStoreLive {
     // }
   }
 
-  addFilterByKeyAndValue(key: any, value: any, operator?: string, sourceOperator?: string, source?: string) {
+  addFilterByKeyAndValue(
+    key: any,
+    value: any,
+    operator?: string,
+    sourceOperator?: string,
+    source?: string,
+  ) {
     const defaultFilter = { ...filtersMap[key] };
     defaultFilter.value = value;
 
@@ -219,7 +232,9 @@ class SearchStoreLive {
   };
 
   removeFilter = (index: number) => {
-    const newFilters = this.instance.filters.filter((_filter: any, i: any) => i !== index);
+    const newFilters = this.instance.filters.filter(
+      (_filter: any, i: any) => i !== index,
+    );
 
     this.instance = new Search({
       ...this.instance.toData(),
@@ -228,7 +243,10 @@ class SearchStoreLive {
   };
 
   async fetchSessions() {
-    await sessionStore.fetchLiveSessions({ ...this.instance.toSearch(), page: this.currentPage });
+    await sessionStore.fetchLiveSessions({
+      ...this.instance.toSearch(),
+      page: this.currentPage,
+    });
   }
 }
 

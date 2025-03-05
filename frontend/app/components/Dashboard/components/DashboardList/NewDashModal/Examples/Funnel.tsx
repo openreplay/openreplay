@@ -8,7 +8,7 @@ interface Props {
   title: string;
   type: string;
   onCard: (card: string) => void;
-  data?: any,
+  data?: any;
 }
 
 function ExampleFunnel(props: Props) {
@@ -16,9 +16,7 @@ function ExampleFunnel(props: Props) {
     funnel: new Funnel().fromJSON(props.data),
   };
   return (
-    <ExCard
-      {...props}
-    >
+    <ExCard {...props}>
       <FunnelWidget data={_data} isWidget />
     </ExCard>
   );

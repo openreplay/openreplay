@@ -15,7 +15,13 @@ function TabSelector() {
     uiPlayerStore.changeDataSource(value);
   };
   return (
-    <Segmented options={options} value={currentValue} onChange={onChange} className="font-medium rounded-lg" size="small" />
+    <Segmented
+      options={options}
+      value={currentValue}
+      onChange={onChange}
+      className="font-medium rounded-lg"
+      size="small"
+    />
   );
 }
 

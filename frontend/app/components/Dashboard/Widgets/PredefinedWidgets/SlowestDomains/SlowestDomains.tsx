@@ -24,13 +24,11 @@ function SlowestDomains(props: Props) {
       size="small"
       show={list.length === 0}
       style={{ minHeight: 220 }}
-      title={(
+      title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} />
-          {' '}
-          { NO_METRIC_DATA }
+          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
         </div>
-      )}
+      }
     >
       <div className="w-full" style={{ height: '240px' }}>
         <ListWithIcons list={list} />

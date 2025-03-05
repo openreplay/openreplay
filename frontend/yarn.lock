@@ -8701,6 +8701,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"globals@npm:^16.0.0":
+  version: 16.0.0
+  resolution: "globals@npm:16.0.0"
+  checksum: 10c1/bbbd1433ee24da883455a3b5d91b1d8eb8a21102c133cfdca1e1f1fbec37155654853dfd735dc9dcfa7e1520c684b968840335a5909bdd6939453e39870270bb
+  languageName: node
+  linkType: hard
+
 "globalthis@npm:^1.0.4":
   version: 1.0.4
   resolution: "globalthis@npm:1.0.4"
@@ -9260,6 +9267,17 @@ __metadata:
   bin:
     import-local-fixture: fixtures/cli.js
   checksum: 10c1/2b9dc0572fb53a24b62555783b98ae419254bea7633f30049066fa6e66ed172defa8675b9f4c4364751c59912d68b3437fe8607627e60ecd0fb533fd41af3087
+  languageName: node
+  linkType: hard
+
+"import@npm:^0.0.6":
+  version: 0.0.6
+  resolution: "import@npm:0.0.6"
+  dependencies:
+    optimist: "npm:0.3.x"
+  bin:
+    import: import
+  checksum: 10c1/8398837b4b8c62dff0c8398927ea5a2328fcbf378bf8235d8bcf689d94a5d482091a7232b52297a9b50b18ac956186dfc5682716a60bef1bb708023cb498fb05
   languageName: node
   linkType: hard
 
@@ -12024,12 +12042,14 @@ __metadata:
     fflate: "npm:^0.8.2"
     file-loader: "npm:^6.2.0"
     fzstd: "npm:^0.1.1"
+    globals: "npm:^16.0.0"
     hls.js: "npm:^1.5.13"
     html-to-image: "npm:^1.11.11"
     html-webpack-plugin: "npm:^5.5.0"
     i18next: "npm:^24.2.2"
     i18next-browser-languagedetector: "npm:^8.0.4"
     immutable: "npm:^4.3.7"
+    import: "npm:^0.0.6"
     jest: "npm:^29.5.0"
     jest-environment-jsdom: "npm:^29.5.0"
     js-untar: "npm:^2.0.0"
@@ -12091,6 +12111,15 @@ __metadata:
     yarn: "npm:^1.22.22"
   languageName: unknown
   linkType: soft
+
+"optimist@npm:0.3.x":
+  version: 0.3.7
+  resolution: "optimist@npm:0.3.7"
+  dependencies:
+    wordwrap: "npm:~0.0.2"
+  checksum: 10c1/1fe2982217f5ba3936a354c6fdcfe265bcb696b31442e61861b15538f414a36506cdcd1dcf1adb636d65fcfc7621e418edf3f6ecb6726ee29b3641e3b8ae1318
+  languageName: node
+  linkType: hard
 
 "optionator@npm:^0.9.3":
   version: 0.9.4
@@ -17201,6 +17230,13 @@ __metadata:
   version: 1.2.5
   resolution: "word-wrap@npm:1.2.5"
   checksum: 10c1/5cca5e226302b12a60182335bcb0405e1eddf9b99b97220c5dde56b2ddbb6de5e8025f243ad93bed21b588f3905ce06b063d9f467439e624bcd7ce1370f1caf9
+  languageName: node
+  linkType: hard
+
+"wordwrap@npm:~0.0.2":
+  version: 0.0.3
+  resolution: "wordwrap@npm:0.0.3"
+  checksum: 10c1/50d0a1578e1a638f3faf4491bf629b29707b82ae69311e4da8bee69e9b4489a386bb5bbde8e7e56dd6ccd9a98662d2b84921433f307dea8a1f374ff81cb12954
   languageName: node
   linkType: hard
 

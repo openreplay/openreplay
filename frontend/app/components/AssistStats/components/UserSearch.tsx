@@ -5,7 +5,9 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
 function UserSearch({ onUserSelect }: { onUserSelect: (id: any) => void }) {
-  const [selectedValue, setSelectedValue] = useState<string | undefined>(undefined);
+  const [selectedValue, setSelectedValue] = useState<string | undefined>(
+    undefined,
+  );
   const { userStore } = useStore();
   const allUsers = userStore.list.map((user) => ({
     value: user.userId,
@@ -28,7 +30,11 @@ function UserSearch({ onUserSelect }: { onUserSelect: (id: any) => void }) {
 
   const handleSearch = (value: string) => {
     setOptions(
-      value ? allUsers.filter((u) => u.label.toLowerCase().includes(value.toLocaleLowerCase())) : [],
+      value
+        ? allUsers.filter((u) =>
+            u.label.toLowerCase().includes(value.toLocaleLowerCase()),
+          )
+        : [],
     );
   };
 

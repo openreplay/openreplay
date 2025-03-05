@@ -74,7 +74,9 @@ function Player(props: IProps) {
   React.useEffect(() => {
     updateLastPlayedSession(sessionId);
     if (isReady && !isAttached.current) {
-      const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; // TODO: good architecture
+      const parentElement = findDOMNode(
+        screenWrapper.current,
+      ) as HTMLDivElement | null; // TODO: good architecture
       if (parentElement) {
         playerContext.player.attach(parentElement);
         isAttached.current = true;
@@ -129,7 +131,12 @@ function Player(props: IProps) {
         className={cn('relative flex-1', 'overflow-hidden')}
         id="player-container"
       >
-        {activeTab === 'HIGHLIGHT' ? <div style={{ background: 'rgba(0,0,0, 0.3)' }} className="w-full h-full z-50 absolute top-0 left-0" /> : undefined}
+        {activeTab === 'HIGHLIGHT' ? (
+          <div
+            style={{ background: 'rgba(0,0,0, 0.3)' }}
+            className="w-full h-full z-50 absolute top-0 left-0"
+          />
+        ) : undefined}
         <Overlay nextId={nextId} />
         <div
           className={cn(
@@ -171,7 +178,9 @@ function Player(props: IProps) {
       )}
       {!fullView ? (
         <Controls
-          setActiveTab={(tab: string) => (activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab))}
+          setActiveTab={(tab: string) =>
+            activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)
+          }
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}

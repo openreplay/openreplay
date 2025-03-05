@@ -1,12 +1,12 @@
-import React, {
-  useEffect, useMemo, useContext, useState, useRef,
-} from 'react';
+import React, { useEffect, useMemo, useContext, useState, useRef } from 'react';
 import { debounce } from 'App/utils';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { DateTime, Duration } from 'luxon';
-import CustomDragLayer, { OnDragCallback } from 'Components/Session_/Player/Controls/components/CustomDragLayer';
+import CustomDragLayer, {
+  OnDragCallback,
+} from 'Components/Session_/Player/Controls/components/CustomDragLayer';
 import TooltipContainer from 'Components/Session_/Player/Controls/components/TooltipContainer';
 import TimelineTracker from 'Components/Session/Player/ClipPlayer/TimelineTracker';
 import stl from '../../../Session_/Player/Controls/timeline.module.css';
@@ -21,9 +21,8 @@ function Timeline({ range }: any) {
   const setTimelineHoverTime = sessionStore.setTimelineTooltip;
   const { timezone } = sessionStore.current;
   const issues = sessionStore.current.issues ?? [];
-  const {
-    playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading,
-  } = store.get();
+  const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } =
+    store.get();
 
   const progressRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -44,7 +43,10 @@ function Timeline({ range }: any) {
   }, []);
 
   const debouncedJump = useMemo(() => debounce(player.jump, 500), []);
-  const debouncedTooltipChange = useMemo(() => debounce(setTimelineHoverTime, 50), []);
+  const debouncedTooltipChange = useMemo(
+    () => debounce(setTimelineHoverTime, 50),
+    [],
+  );
 
   const onDragEnd = () => {
     if (wasPlaying) {
@@ -66,10 +68,10 @@ function Timeline({ range }: any) {
 
   const showTimeTooltip = (e: React.MouseEvent<HTMLDivElement>) => {
     if (
-      e.target !== progressRef.current
-            && e.target !== timelineRef.current
-            // @ts-ignore black magic
-            && !progressRef.current.contains(e.target)
+      e.target !== progressRef.current &&
+      e.target !== timelineRef.current &&
+      // @ts-ignore black magic
+      !progressRef.current.contains(e.target)
     ) {
       return tooltipVisible && hideTimeTooltip();
     }
@@ -82,8 +84,8 @@ function Timeline({ range }: any) {
       .toFormat('hh:mm:ss a');
     const userTimeStr = timezone
       ? DateTime.fromMillis(startedAt + time)
-        .setZone(timezone)
-        .toFormat('hh:mm:ss a')
+          .setZone(timezone)
+          .toFormat('hh:mm:ss a')
       : undefined;
 
     const timeLineTooltip = {
@@ -132,12 +134,14 @@ function Timeline({ range }: any) {
   return (
     <div
       className="flex items-center w-full"
-      style={{
-        // top: '-4px',
-        // zIndex: 100,
-        // maxWidth: 'calc(100% - 5rem)',
-        // left: '3.5rem',
-      }}
+      style={
+        {
+          // top: '-4px',
+          // zIndex: 100,
+          // maxWidth: 'calc(100% - 5rem)',
+          // left: '3.5rem',
+        }
+      }
     >
       <div
         className={stl.progress}
@@ -150,14 +154,12 @@ function Timeline({ range }: any) {
       >
         <TooltipContainer />
         <TimelineTracker scale={scale} onDragEnd={onDragEnd} />
-        <CustomDragLayer
-          onDrag={onDrag}
-          minX={0}
-          maxX={maxWidth}
-        />
+        <CustomDragLayer onDrag={onDrag} minX={0} maxX={maxWidth} />
 
         <div className={stl.timeline} ref={timelineRef}>
-          {devtoolsLoading || domLoading || !ready ? <div className={stl.stripes} /> : null}
+          {devtoolsLoading || domLoading || !ready ? (
+            <div className={stl.stripes} />
+          ) : null}
         </div>
       </div>
     </div>

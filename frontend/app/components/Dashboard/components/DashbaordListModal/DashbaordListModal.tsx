@@ -4,12 +4,14 @@ import { SideMenuitem, Icon } from 'UI';
 import { withSiteId, dashboardSelected } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 import { useModal } from 'App/components/Modal';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
-    siteId: string
-    history: any
+  siteId: string;
+  history: any;
 }
 function DashbaordListModal(props: Props) {
+  const { t } = useTranslation();
   const { dashboardStore } = useStore();
   const { hideModal } = useModal();
   const { dashboards } = dashboardStore;
@@ -17,13 +19,18 @@ function DashbaordListModal(props: Props) {
 
   const onItemClick = (dashboard) => {
     dashboardStore.selectDashboardById(dashboard.dashboardId);
-    const path = withSiteId(dashboardSelected(dashboard.dashboardId), parseInt(props.siteId));
+    const path = withSiteId(
+      dashboardSelected(dashboard.dashboardId),
+      parseInt(props.siteId),
+    );
     props.history.push(path);
     hideModal();
   };
   return (
     <div className="bg-white h-screen" style={{ width: '300px' }}>
-      <div className="color-gray-medium uppercase p-4 text-lg">Dashboards</div>
+      <div className="color-gray-medium uppercase p-4 text-lg">
+        {t('Dashboards')}
+      </div>
       <div>
         {dashboards.map((item: any) => (
           <div key={item.dashboardId} className="px-4">
@@ -33,11 +40,15 @@ function DashbaordListModal(props: Props) {
               title={item.name}
               iconName={item.icon}
               onClick={() => onItemClick(item)} // TODO add click handler
-              leading={(
+              leading={
                 <div className="ml-2 flex items-center">
-                  {item.isPublic && <div className="p-1"><Icon name="user-friends" color="gray-light" size="16" /></div>}
+                  {item.isPublic && (
+                    <div className="p-1">
+                      <Icon name="user-friends" color="gray-light" size="16" />
+                    </div>
+                  )}
                 </div>
-                            )}
+              }
             />
           </div>
         ))}

@@ -1,6 +1,9 @@
 import { PlayerMode } from 'Player';
 import React from 'react';
-import { MobilePlayerContext, IOSPlayerContext } from 'App/components/Session/playerContext';
+import {
+  MobilePlayerContext,
+  IOSPlayerContext,
+} from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { mapIphoneModel, mapAndroidModel } from 'Player/mobile/utils';
 
@@ -27,7 +30,12 @@ const androidIcon = `<svg fill="#78C257" xmlns="http://www.w3.org/2000/svg" widt
 `;
 
 function ReplayWindow({
-  videoURL, userDevice, screenHeight, screenWidth, isAndroid, isClips,
+  videoURL,
+  userDevice,
+  screenHeight,
+  screenWidth,
+  isAndroid,
+  isClips,
 }: Props) {
   const playerContext = React.useContext<IOSPlayerContext>(MobilePlayerContext);
   const videoRef = React.useRef<HTMLVideoElement>();
@@ -39,11 +47,15 @@ function ReplayWindow({
   let phoneShell: string;
   let styles: Record<string, any>;
   if (!isAndroid) {
-    const { svg: iphoneShellSvg, styles: iphoneStyles } = mapIphoneModel(userDevice);
+    const { svg: iphoneShellSvg, styles: iphoneStyles } =
+      mapIphoneModel(userDevice);
     phoneShell = iphoneShellSvg;
     styles = iphoneStyles;
   } else {
-    const { svg: androidShell, styles: androidStyles } = mapAndroidModel(screenWidth, screenHeight);
+    const { svg: androidShell, styles: androidStyles } = mapAndroidModel(
+      screenWidth,
+      screenHeight,
+    );
     phoneShell = androidShell;
     styles = androidStyles;
   }
@@ -130,8 +142,13 @@ function ReplayWindow({
   React.useEffect(() => {
     if (mode) {
       const host = containerRef.current;
-      const videoContainer = playerContext.player.screen.document?.getElementById('___or_replay-video');
-      const icon = playerContext.player.screen.document?.getElementById('___or_mobile-loader-icon');
+      const videoContainer =
+        playerContext.player.screen.document?.getElementById(
+          '___or_replay-video',
+        );
+      const icon = playerContext.player.screen.document?.getElementById(
+        '___or_mobile-loader-icon',
+      );
       if (host && videoContainer && icon) {
         if (mode === PlayerMode.SNAPS) {
           const imagePlayer = document.createElement('img');
@@ -180,7 +197,13 @@ function ReplayWindow({
   return <div />;
 }
 
-const getAndroidShell = ({ width, height }: { width: number; height: number }): string => `<div style="width: ${width}px; height: ${height}px" class="bg-black rounded-xl relative flex flex-col p-1">
+const getAndroidShell = ({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}): string => `<div style="width: ${width}px; height: ${height}px" class="bg-black rounded-xl relative flex flex-col p-1">
       <div class="w-4 h-4 bg-black rounded-full absolute top-2.5 left-1/2 transform -translate-x-1/2 camera-gradient z-10"></div>
       <div class="flex items-center justify-center relative w-full h-full bg-gray-900 rounded-lg text-white overflow-hidden"></div>
     </div>`;

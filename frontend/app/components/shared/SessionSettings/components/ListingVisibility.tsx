@@ -5,21 +5,25 @@ import { Button } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
-
-const numberOptions = [
-  { label: 'Less than', value: '<' },
-  { label: 'Greater than', value: '>' },
-];
-const periodOptions = [
-  { label: 'Mins', value: 'min' },
-  { label: 'Secs', value: 'sec' },
-];
+import { useTranslation } from 'react-i18next';
 
 function ListingVisibility() {
+  const { t } = useTranslation();
   const [changed, setChanged] = React.useState(false);
   const { settingsStore } = useStore();
   const { sessionSettings } = settingsStore;
-  const [durationSettings, setDurationSettings] = React.useState(sessionSettings.durationFilter);
+  const [durationSettings, setDurationSettings] = React.useState(
+    sessionSettings.durationFilter,
+  );
+
+  const numberOptions = [
+    { label: t('Less than'), value: '<' },
+    { label: t('Greater than'), value: '>' },
+  ];
+  const periodOptions = [
+    { label: t('Mins'), value: 'min' },
+    { label: t('Secs'), value: 'sec' },
+  ];
 
   const changeSettings = (changes: any) => {
     setDurationSettings({ ...durationSettings, ...changes });
@@ -28,13 +32,13 @@ function ListingVisibility() {
   const saveSettings = () => {
     sessionSettings.updateKey('durationFilter', durationSettings);
     setChanged(false);
-    toast.success('Listing visibility settings saved successfully');
+    toast.success(t('Listing visibility settings saved successfully'));
   };
 
   return (
     <>
-      <h3 className="text-lg">Listing Visibility</h3>
-      <div className="my-1">Do not show sessions with duration:</div>
+      <h3 className="text-lg">{t('Listing Visibility')}</h3>
+      <div className="my-1">{t('Do not show sessions with duration:')}</div>
       <div className="grid grid-cols-12 gap-2 mt-2">
         <div className="col-span-4">
           <Select
@@ -67,7 +71,9 @@ function ListingVisibility() {
           />
         </div>
         <div className="col-span-3">
-          <Button type="default" disabled={!changed} onClick={saveSettings}>Update</Button>
+          <Button type="default" disabled={!changed} onClick={saveSettings}>
+            {t('Update')}
+          </Button>
         </div>
       </div>
     </>

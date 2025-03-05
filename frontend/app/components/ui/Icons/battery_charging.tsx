@@ -2,16 +2,14 @@
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Battery_charging(props: Props) {
-  const {
-    size = 14, width = size, height = size, fill = '',
-  } = props;
+  const { size = 14, width = size, height = size, fill = '' } = props;
   return (
     <svg viewBox="0 0 16 16" width={`${width}px`} height={`${height}px`}>
       <path d="M9.585 2.568a.5.5 0 0 1 .226.58L8.677 6.832h1.99a.5.5 0 0 1 .364.843l-5.334 5.667a.5.5 0 0 1-.842-.49L5.99 9.167H4a.5.5 0 0 1-.364-.843l5.333-5.667a.5.5 0 0 1 .616-.09z" />

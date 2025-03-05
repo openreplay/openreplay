@@ -6,8 +6,10 @@ import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { modules as list } from '.';
+import { useTranslation } from 'react-i18next';
 
 function Modules() {
+  const { t, i18n } = useTranslation();
   const { userStore } = useStore();
   const { updateModule } = userStore;
   const modules = userStore.account.settings?.modules ?? [];
@@ -24,29 +26,45 @@ function Modules() {
         status: isEnabled,
       });
       updateModule(module.key);
-      toast.success(`Module ${module.label} ${!isEnabled ? 'enabled' : 'disabled'}`);
+      toast.success(
+        `${t('Module')} ${module.label} ${!isEnabled ? t('enabled') : t('disabled')}`,
+      );
     } catch (err) {
       console.error(err);
-      toast.error(`Failed to ${module.isEnabled ? 'disable' : 'enable'} module ${module.label}`);
+      toast.error(
+        `${t('Failed to')} ${module.isEnabled ? t('disable') : t('enable')} module ${module.label}`,
+      );
       module.isEnabled = !module.isEnabled;
       setModulesState((prevState) => [...prevState]);
     }
   };
 
   useEffect(() => {
-    list.forEach((module) => {
+    list(t).forEach((module) => {
       module.isEnabled = modules.includes(module.key);
     });
-    setModulesState(list.filter((module) => !module.hidden && (!module.enterprise || isEnterprise)));
-  }, [modules]);
+    setModulesState(
+      list(t).filter(
+        (module) => !module.hidden && (!module.enterprise || isEnterprise),
+      ),
+    );
+  }, [modules, i18n.language]);
 
   return (
     <div>
       <div className="bg-white rounded-lg border shadow-sm p-4">
-        <h3 className="text-2xl">Modules</h3>
+        <h3 className="text-2xl">{t('Modules')}</h3>
         <ul className="mt-3 ml-4 list-disc">
-          <li>OpenReplay's modules are a collection of advanced features that provide enhanced functionality.</li>
-          <li>Easily enable any desired module within the user interface to access its capabilities</li>
+          <li>
+            {t(
+              "OpenReplay's modules are a collection of advanced features that provide enhanced functionality.",
+            )}
+          </li>
+          <li>
+            {t(
+              'Easily enable any desired module within the user interface to access its capabilities',
+            )}
+          </li>
         </ul>
       </div>
 
@@ -61,4 +79,6 @@ function Modules() {
   );
 }
 
-export default withPageTitle('Modules - OpenReplay Preferences')(observer(Modules));
+export default withPageTitle('Modules - OpenReplay Preferences')(
+  observer(Modules),
+);

@@ -6,8 +6,10 @@ import ToggleContent from 'Components/shared/ToggleContent';
 import { CodeBlock } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
+import { useTranslation } from 'react-i18next';
 
 function PiniaDoc() {
+  const { t } = useTranslation();
   const { integrationsStore, projectsStore } = useStore();
   const sites = projectsStore.list;
   const { siteId } = integrationsStore.integrations;
@@ -67,37 +69,37 @@ piniaStorePlugin(examplePiniaStore)
       className="bg-white h-screen overflow-y-auto"
       style={{ width: '500px' }}
     >
-      <h3 className="p-5 text-2xl">VueX</h3>
+      <h3 className="p-5 text-2xl">{t('Pinia')}</h3>
       <div className="p-5">
         <div>
-          This plugin allows you to capture Pinia mutations + state and inspect
-          them later on while replaying session recordings. This is very useful
-          for understanding and fixing issues.
+          {t(
+            'This plugin allows you to capture Pinia mutations + state and inspect them later on while replaying session recordings. This is very useful for understanding and fixing issues.',
+          )}
         </div>
 
-        <div className="font-bold my-2 text-lg">Installation</div>
+        <div className="font-bold my-2 text-lg">{t('Installation')}</div>
         <CodeBlock
           code="npm i @openreplay/tracker-vuex --save"
           language="bash"
         />
 
-        <div className="font-bold my-2 text-lg">Usage</div>
+        <div className="font-bold my-2 text-lg">{t('Usage')}</div>
         <p>
-          Initialize the @openreplay/tracker package as usual and load the
-          plugin into it. Then put the generated plugin into your plugins field
-          of your store.
+          {t(
+            'Initialize the @openreplay/tracker package as usual and load the plugin into it. Then put the generated plugin into your plugins field of your store.',
+          )}
         </p>
         <div className="py-3" />
 
         <ToggleContent
-          label="Server-Side-Rendered (SSR)?"
+          label={t('Server-Side-Rendered (SSR)?')}
           first={<CodeBlock code={usage} language="js" />}
           second={<CodeBlock code={usageCjs} language="js" />}
         />
 
         <DocLink
           className="mt-4"
-          label="Integrate Pinia"
+          label={t('Integrate Pinia')}
           url="https://docs.openreplay.com/plugins/pinia"
         />
       </div>

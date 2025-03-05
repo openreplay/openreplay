@@ -11,9 +11,7 @@ export default function CodeBlock({ code, language = 'javascript' }) {
 
   return (
     <pre className="rounded-lg">
-      <code className={`language-${language}`}>
-        {code}
-      </code>
+      <code className={`language-${language}`}>{code}</code>
     </pre>
   );
 }

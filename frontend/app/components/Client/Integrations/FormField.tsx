@@ -10,7 +10,7 @@ export function FormField({
   errors,
 }: {
   label: string;
-  name: string
+  name: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   autoFocus?: boolean;

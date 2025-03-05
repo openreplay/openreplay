@@ -48,7 +48,10 @@ function Bookmark({ sessionId }: Props) {
 
   return (
     <div onClick={toggleFavorite} className="w-full">
-      <Tooltip title={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD} placement="bottom">
+      <Tooltip
+        title={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}
+        placement="bottom"
+      >
         <Button
           type={isFavorite ? 'primary' : undefined}
           ghost={isFavorite}

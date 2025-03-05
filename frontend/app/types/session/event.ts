@@ -12,7 +12,18 @@ const TOUCH = 'TAP';
 const SWIPE = 'SWIPE';
 
 export const TYPES = {
-  CONSOLE, CLICK, INPUT, LOCATION, CUSTOM, CLICKRAGE, DEAD_LICK, IOS_VIEW, TOUCH, SWIPE, TAPRAGE, UXT_EVENT,
+  CONSOLE,
+  CLICK,
+  INPUT,
+  LOCATION,
+  CUSTOM,
+  CLICKRAGE,
+  DEAD_LICK,
+  IOS_VIEW,
+  TOUCH,
+  SWIPE,
+  TAPRAGE,
+  UXT_EVENT,
 };
 
 export type EventType =
@@ -29,7 +40,7 @@ export type EventType =
 interface IEvent {
   time: number;
   timestamp: number;
-  type: EventType
+  type: EventType;
   name: string;
   key: number;
   label: string;
@@ -61,7 +72,7 @@ interface TouchEvent extends IEvent {
 
 interface SwipeEvent extends IEvent {
   direction: 'left' | 'right' | 'up' | 'down';
-  label: string
+  label: string;
 }
 
 interface InputEvent extends IEvent {
@@ -87,7 +98,12 @@ export interface LocationEvent extends IEvent {
   webVitals: string | null;
 }
 
-export type EventData = ConsoleEvent | ClickEvent | InputEvent | LocationEvent | IEvent;
+export type EventData =
+  | ConsoleEvent
+  | ClickEvent
+  | InputEvent
+  | LocationEvent
+  | IEvent;
 
 class Event {
   key: IEvent['key'];
@@ -253,7 +269,14 @@ export class Location extends Event {
   }
 }
 
-export type InjectedEvent = Console | Click | Input | Location | Touch | Swipe | UxtEvent;
+export type InjectedEvent =
+  | Console
+  | Click
+  | Input
+  | Location
+  | Touch
+  | Swipe
+  | UxtEvent;
 
 export default function (event: EventData) {
   if ('allow_typing' in event) {

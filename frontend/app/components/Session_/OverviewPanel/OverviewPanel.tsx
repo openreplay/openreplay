@@ -23,7 +23,10 @@ import FeatureSelection, {
 import OverviewPanelContainer from './components/OverviewPanelContainer';
 import TimelinePointer from './components/TimelinePointer';
 import TimelineScale from './components/TimelineScale';
-import VerticalPointerLine, { VerticalPointerLineComp } from './components/VerticalPointerLine';
+import VerticalPointerLine, {
+  VerticalPointerLineComp,
+} from './components/VerticalPointerLine';
+import { useTranslation } from 'react-i18next';
 
 function MobileOverviewPanelCont() {
   const { aiSummaryStore, uiPlayerStore, sessionStore } = useStore();
@@ -55,7 +58,10 @@ function MobileOverviewPanelCont() {
 
   const fetchPresented = fetchList.length > 0;
 
-  const checkInZoomRange = (list: any[]) => list.filter((i) => (zoomEnabled ? i.time >= zoomStartTs && i.time <= zoomEndTs : true));
+  const checkInZoomRange = (list: any[]) =>
+    list.filter((i) =>
+      zoomEnabled ? i.time >= zoomStartTs && i.time <= zoomEndTs : true,
+    );
 
   const resources = {
     NETWORK: checkInZoomRange(
@@ -73,11 +79,11 @@ function MobileOverviewPanelCont() {
     }
 
     if (
-      exceptionsList.length > 0
-      || eventsList.length > 0
-      || issuesList.length > 0
-      || performanceChartData.length > 0
-      || frustrationsList.length > 0
+      exceptionsList.length > 0 ||
+      eventsList.length > 0 ||
+      issuesList.length > 0 ||
+      performanceChartData.length > 0 ||
+      frustrationsList.length > 0
     ) {
       setDataLoaded(true);
     }
@@ -106,7 +112,9 @@ function MobileOverviewPanelCont() {
       performanceList={performanceList}
       sessionId={sessionId}
       showSummary={isSaas}
-      toggleSummary={() => aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary)}
+      toggleSummary={() =>
+        aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary)
+      }
       summaryChecked={aiSummaryStore.toggleSummary}
       setZoomTab={setZoomTab}
       zoomTab={zoomTab}
@@ -194,26 +202,32 @@ function WebOverviewPanelCont() {
     .concat(graphqlList.filter((i: any) => parseInt(i.status) >= 400))
     .filter((i: any) => i.type === 'fetch');
 
-  const checkInZoomRange = (list: any[]) => list.filter((i) => (zoomEnabled ? i.time >= zoomStartTs && i.time <= zoomEndTs : true));
+  const checkInZoomRange = (list: any[]) =>
+    list.filter((i) =>
+      zoomEnabled ? i.time >= zoomStartTs && i.time <= zoomEndTs : true,
+    );
 
-  const resources: any = React.useMemo(() => ({
-    NETWORK: checkInZoomRange(resourceList),
-    ERRORS: checkInZoomRange(exceptionsList),
-    EVENTS: checkInZoomRange(stackEventList),
-    PERFORMANCE: checkInZoomRange(performanceChartData),
-    FRUSTRATIONS: checkInZoomRange(frustrationsList),
-  }), [
-    tabStates,
-    currentTab,
-    zoomEnabled,
-    zoomStartTs,
-    zoomEndTs,
-    resourceList.length,
-    exceptionsList.length,
-    stackEventList.length,
-    performanceChartData.length,
-    frustrationsList.length,
-  ]);
+  const resources: any = React.useMemo(
+    () => ({
+      NETWORK: checkInZoomRange(resourceList),
+      ERRORS: checkInZoomRange(exceptionsList),
+      EVENTS: checkInZoomRange(stackEventList),
+      PERFORMANCE: checkInZoomRange(performanceChartData),
+      FRUSTRATIONS: checkInZoomRange(frustrationsList),
+    }),
+    [
+      tabStates,
+      currentTab,
+      zoomEnabled,
+      zoomStartTs,
+      zoomEndTs,
+      resourceList.length,
+      exceptionsList.length,
+      stackEventList.length,
+      performanceChartData.length,
+      frustrationsList.length,
+    ],
+  );
 
   const originStr = window.env.ORIGIN || window.location.origin;
   const isSaas = /app\.openreplay\.com/.test(originStr);
@@ -225,7 +239,9 @@ function WebOverviewPanelCont() {
       fetchPresented={fetchPresented}
       setSelectedFeatures={setSelectedFeatures}
       showSummary={isSaas}
-      toggleSummary={() => aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary)}
+      toggleSummary={() =>
+        aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary)
+      }
       summaryChecked={aiSummaryStore.toggleSummary}
       sessionId={sessionId}
       setZoomTab={setZoomTab}
@@ -284,11 +300,12 @@ function PanelComponent({
   onClose,
   showSingleTab,
 }: any) {
+  const { t } = useTranslation();
   return (
     <BottomBlock style={{ height: '100%' }}>
       <BottomBlock.Header customClose={onClose}>
         <div className="mr-4 flex items-center gap-2">
-          <span className="font-semibold text-black">X-Ray</span>
+          <span className="font-semibold text-black">{t('X-Ray')}</span>
           {showSummary ? (
             <>
               <SummaryButton
@@ -303,19 +320,19 @@ function PanelComponent({
                   onChange={(val) => setZoomTab(val)}
                   options={[
                     {
-                      label: 'Overview',
+                      label: t('Overview'),
                       value: 'overview',
                     },
                     {
-                      label: 'User journey',
+                      label: t('User journey'),
                       value: 'journey',
                     },
                     {
-                      label: 'Issues',
+                      label: t('Issues'),
                       value: 'issues',
                     },
                     {
-                      label: 'Suggestions',
+                      label: t('Suggestions'),
                       value: 'errors',
                     },
                   ]}
@@ -346,12 +363,12 @@ function PanelComponent({
             <NoContent
               show={selectedFeatures.length === 0}
               style={{ height: '60px', minHeight: 'unset', padding: 0 }}
-              title={(
+              title={
                 <div className="flex items-center">
                   <InfoCircleOutlined size={18} />
-                  Select a debug option to visualize on timeline.
+                  {t('Select a debug option to visualize on timeline.')}
                 </div>
-                )}
+              }
             >
               {isSpot ? (
                 <VerticalPointerLineComp
@@ -382,12 +399,10 @@ function PanelComponent({
                       />
                     )}
                     endTime={isSpot ? spotEndTime : endTime}
-                    message={HELP_MESSAGE[feature]}
+                    message={HELP_MESSAGE(t)[feature]}
                   />
                   {isMobile && feature === 'PERFORMANCE' ? (
-                    <div
-                      className="absolute top-0 left-0 flex items-center py-4 w-full"
-                    >
+                    <div className="absolute top-0 left-0 flex items-center py-4 w-full">
                       <EventRow
                         isGraph={false}
                         title=""

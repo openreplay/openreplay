@@ -5,7 +5,13 @@ import { useModal } from 'Components/Modal';
 import LiveTestsModal from 'Components/UsabilityTesting/LiveTestsModal';
 import React from 'react';
 import {
-  Button, Typography, Select, Space, Popover, Dropdown, Tooltip,
+  Button,
+  Typography,
+  Select,
+  Space,
+  Popover,
+  Dropdown,
+  Tooltip,
 } from 'antd';
 import {
   InfoCircleOutlined,
@@ -27,17 +33,22 @@ import Breadcrumb from 'Shared/Breadcrumb';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import SessionItem from 'Shared/SessionItem';
+import { CopyButton, Icon, Loader, NoContent, Pagination, confirm } from 'UI';
 import {
-  CopyButton, Icon, Loader, NoContent, Pagination,
-  confirm,
-} from 'UI';
-import { Stage, EmptyStage } from 'Components/Funnels/FunnelWidget/FunnelWidget';
+  Stage,
+  EmptyStage,
+} from 'Components/Funnels/FunnelWidget/FunnelWidget';
 import ParticipantOverviewItem from 'Components/UsabilityTesting/ParticipantOverview';
 import { toast } from 'react-toastify';
 import ResponsesOverview from './ResponsesOverview';
+import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
 
 function StatusItem({
-  iconName, color, text, size = '16',
+  iconName,
+  color,
+  text,
+  size = '16',
 }: {
   iconName: string;
   color: string;
@@ -47,25 +58,41 @@ function StatusItem({
   return (
     <div className="flex items-center">
       <Icon name={iconName} color={color} size={size} />
-      <Typography.Text className="ml-2">
-        {text}
-      </Typography.Text>
+      <Typography.Text className="ml-2">{text}</Typography.Text>
     </div>
   );
 }
 
-const statusItems = [
+const statusItems = (t: TFunction) => [
   {
     value: 'in-progress',
-    label: <StatusItem iconName="record-circle-fill" color="green" text="On Going" />,
+    label: (
+      <StatusItem
+        iconName="record-circle-fill"
+        color="green"
+        text={t('On Going')}
+      />
+    ),
   },
   {
     value: 'paused',
-    label: <StatusItem iconName="pause-circle-fill" color="orange-dark" text="Hold" />,
+    label: (
+      <StatusItem
+        iconName="pause-circle-fill"
+        color="orange-dark"
+        text={t('Hold')}
+      />
+    ),
   },
   {
     value: 'closed',
-    label: <StatusItem iconName="check-circle-fill" color="gray-medium" text="Close" />,
+    label: (
+      <StatusItem
+        iconName="check-circle-fill"
+        color="gray-medium"
+        text={t('Close')}
+      />
+    ),
   },
 ];
 
@@ -96,6 +123,7 @@ const menuItems = [
 
 function TestOverview() {
   // @ts-ignore
+  const { t } = useTranslation();
   const { siteId, testId } = useParams();
   const { showModal, hideModal } = useModal();
   const history = useHistory();
@@ -114,7 +142,9 @@ function TestOverview() {
   }, [testId, siteId]);
 
   if (!uxtestingStore.instance) {
-    return <Loader loading={uxtestingStore.isLoading}>Loading Data...</Loader>;
+    return (
+      <Loader loading={uxtestingStore.isLoading}>{t('Loading Data...')}</Loader>
+    );
   }
   document.title = `Usability Tests | ${uxtestingStore.instance.title}`;
 
@@ -123,11 +153,15 @@ function TestOverview() {
   };
 
   return (
-    <div className="w-full mx-auto" style={{ maxWidth: '1360px' }} id="pdf-anchor">
+    <div
+      className="w-full mx-auto"
+      style={{ maxWidth: '1360px' }}
+      id="pdf-anchor"
+    >
       <Breadcrumb
         items={[
           {
-            label: 'Usability Testing',
+            label: t('Usability Testing'),
             to: withSiteId(usabilityTesting(), siteId),
           },
           {
@@ -136,7 +170,6 @@ function TestOverview() {
         ]}
       />
       <div className="rounded-lg shadow-sm bg-white">
-
         <Title testId={testId} siteId={siteId} />
 
         {uxtestingStore.instance.liveCount ? (
@@ -146,23 +179,26 @@ function TestOverview() {
               <div className="absolute w-4 h-4 bg-green rounded-full" />
             </div>
             <Typography.Text>
-              {uxtestingStore.instance.liveCount}
-              {' '}
-              participants are engaged in this usability test at
-              the moment.
+              {uxtestingStore.instance.liveCount}{' '}
+              {t(
+                'participants are engaged in this usability test at the moment.',
+              )}
             </Typography.Text>
             <Button
               type="primary"
               ghost
               onClick={() => {
-                showModal(<LiveTestsModal closeModal={hideModal} testId={testId} />, {
-                  right: true,
-                  width: 900,
-                });
+                showModal(
+                  <LiveTestsModal closeModal={hideModal} testId={testId} />,
+                  {
+                    right: true,
+                    width: 900,
+                  },
+                );
               }}
             >
               <Space align="center">
-                Moderate Real-Time
+                {t('Moderate Real-Time')}
                 <ArrowRightOutlined rev={undefined} />
               </Space>
             </Button>
@@ -176,36 +212,34 @@ function TestOverview() {
 
       <div className="mt-2 rounded-lg shadow-sm p-4 bg-white flex flex-col gap-2">
         <Typography.Title style={{ marginBottom: 0 }} level={5}>
-          Open-ended task responses
+          {t('Open-ended task responses')}
         </Typography.Title>
         {uxtestingStore.instance.responsesCount ? (
           <Button
             type="primary"
             ghost
             disabled={uxtestingStore.instance.responsesCount === 0}
-            onClick={() => showModal(<ResponsesOverview />, { right: true, width: 900 })}
+            onClick={() =>
+              showModal(<ResponsesOverview />, { right: true, width: 900 })
+            }
           >
             <Space align="center">
-              Review All
-              {' '}
-              {uxtestingStore.instance.responsesCount}
-              {' '}
-              Responses
+              {t('Review All')}&nbsp;{uxtestingStore.instance.responsesCount}
+              &nbsp;{t('Responses')}
               <ArrowRightOutlined rev={undefined} />
             </Space>
           </Button>
         ) : (
           <div className="text-base flex gap-2 mx-auto py-5">
             <InfoCircleOutlined />
-            {' '}
-            No Data
+            &nbsp;{t('No Data')}
           </div>
         )}
       </div>
 
       <div className="mt-2 rounded-lg shadow-sm p-4 bg-white flex gap-1 items-start flex-col">
         <Typography.Title style={{ marginBottom: 0 }} level={5}>
-          Sessions
+          {t('Sessions')}
         </Typography.Title>
         {/* <Typography.Text>in your selection</Typography.Text> */}
         {/* <div className={'flex gap-1 link'}>clear selection</div> */}
@@ -213,13 +247,12 @@ function TestOverview() {
           <Loader loading={uxtestingStore.isLoading}>
             <NoContent
               show={uxtestingStore.testSessions.list.length == 0}
-              title={(
+              title={
                 <div className="text-base flex gap-2">
                   <InfoCircleOutlined />
-                  {' '}
-                  No Data
+                  &nbsp;{t('No Data')}
                 </div>
-          )}
+              }
             >
               {uxtestingStore.testSessions.list.map((session) => (
                 // @ts-ignore
@@ -227,25 +260,20 @@ function TestOverview() {
               ))}
               <div className="flex items-center justify-between">
                 <div>
-                  Showing
-                  {' '}
+                  {t('Showing')}{' '}
                   <span className="font-medium">
                     {(uxtestingStore.testSessions.page - 1) * 10 + 1}
-                  </span>
-                  {' '}
-                  to
-                  {' '}
+                  </span>{' '}
+                  {t('to')}{' '}
                   <span className="font-medium">
-                    {(uxtestingStore.page - 1) * 10 + uxtestingStore.testSessions.list.length}
-                  </span>
-                  {' '}
-                  of
-                  {' '}
+                    {(uxtestingStore.page - 1) * 10 +
+                      uxtestingStore.testSessions.list.length}
+                  </span>{' '}
+                  {t('of')}{' '}
                   <span className="font-medium">
                     {numberWithCommas(uxtestingStore.testSessions.total)}
-                  </span>
-                  {' '}
-                  tests.
+                  </span>{' '}
+                  {t('tests.')}
                 </div>
                 <Pagination
                   page={uxtestingStore.testSessions.page}
@@ -264,72 +292,93 @@ function TestOverview() {
 }
 
 const ParticipantOverview = observer(() => {
+  const { t } = useTranslation();
   const { uxtestingStore } = useStore();
 
   return (
     <div className="p-4 rounded-lg shadow-sm bg-white mt-2">
-      <Typography.Title level={5}>Participant Overview</Typography.Title>
+      <Typography.Title level={5}>{t('Participant Overview')}</Typography.Title>
       {uxtestingStore.testStats ? (
         <div className="flex gap-4">
           <ParticipantOverviewItem
-            titleRow={(
+            titleRow={
               <>
-                <UserOutlined style={{ fontSize: 18, color: '#394EFF' }} rev={undefined} />
-                <Typography.Text className="font-medium">Total Participants</Typography.Text>
+                <UserOutlined
+                  style={{ fontSize: 18, color: '#394EFF' }}
+                  rev={undefined}
+                />
+                <Typography.Text className="font-medium">
+                  {t('Total Participants')}
+                </Typography.Text>
               </>
-            )}
+            }
             firstNum={uxtestingStore.testStats.tests_attempts?.toString()}
           />
           <ParticipantOverviewItem
-            titleRow={(
+            titleRow={
               <>
-                <CheckCircleOutlined style={{ fontSize: 18, color: '#389E0D' }} rev={undefined} />
-                <Typography.Text className="font-medium">Completed all tasks</Typography.Text>
+                <CheckCircleOutlined
+                  style={{ fontSize: 18, color: '#389E0D' }}
+                  rev={undefined}
+                />
+                <Typography.Text className="font-medium">
+                  {t('Completed all tasks')}
+                </Typography.Text>
               </>
-            )}
+            }
             firstNum={
               uxtestingStore.testStats.tests_attempts > 0
                 ? `${Math.round(
-                  (uxtestingStore.testStats.completed_all_tasks
-                    / uxtestingStore.testStats.tests_attempts)
-                  * 100,
-                )}%`
+                    (uxtestingStore.testStats.completed_all_tasks /
+                      uxtestingStore.testStats.tests_attempts) *
+                      100,
+                  )}%`
                 : undefined
             }
             addedNum={uxtestingStore.testStats.completed_all_tasks.toString()}
           />
           <ParticipantOverviewItem
-            titleRow={(
+            titleRow={
               <>
-                <FastForwardOutlined style={{ fontSize: 18, color: '#874D00' }} rev={undefined} />
-                <Typography.Text className="font-medium">Skipped tasks</Typography.Text>
+                <FastForwardOutlined
+                  style={{ fontSize: 18, color: '#874D00' }}
+                  rev={undefined}
+                />
+                <Typography.Text className="font-medium">
+                  {t('Skipped tasks')}
+                </Typography.Text>
               </>
-            )}
+            }
             firstNum={
               uxtestingStore.testStats.tests_attempts > 0
                 ? `${Math.round(
-                  (uxtestingStore.testStats.tasks_skipped
-                    / uxtestingStore.testStats.tests_attempts)
-                  * 100,
-                )}%`
+                    (uxtestingStore.testStats.tasks_skipped /
+                      uxtestingStore.testStats.tests_attempts) *
+                      100,
+                  )}%`
                 : undefined
             }
             addedNum={uxtestingStore.testStats.tasks_skipped.toString()}
           />
           <ParticipantOverviewItem
-            titleRow={(
+            titleRow={
               <>
-                <UserDeleteOutlined style={{ fontSize: 18, color: '#CC0000' }} rev={undefined} />
-                <Typography.Text className="font-medium">Aborted the test</Typography.Text>
+                <UserDeleteOutlined
+                  style={{ fontSize: 18, color: '#CC0000' }}
+                  rev={undefined}
+                />
+                <Typography.Text className="font-medium">
+                  {t('Aborted the test')}
+                </Typography.Text>
               </>
-            )}
+            }
             firstNum={
               uxtestingStore.testStats.tests_attempts > 0
                 ? `${Math.round(
-                  (uxtestingStore.testStats.tests_skipped
-                    / uxtestingStore.testStats.tests_attempts)
-                  * 100,
-                )}%`
+                    (uxtestingStore.testStats.tests_skipped /
+                      uxtestingStore.testStats.tests_attempts) *
+                      100,
+                  )}%`
                 : undefined
             }
             addedNum={uxtestingStore.testStats.tests_skipped.toString()}
@@ -341,6 +390,7 @@ const ParticipantOverview = observer(() => {
 });
 
 const TaskSummary = observer(() => {
+  const { t } = useTranslation();
   const { uxtestingStore } = useStore();
   const [showAll, setShowAll] = React.useState(false);
   const totalAttempts = uxtestingStore.testStats?.tests_attempts ?? 0;
@@ -354,41 +404,45 @@ const TaskSummary = observer(() => {
   return (
     <div className="mt-2 rounded-lg shadow-sm p-4 bg-white">
       <div className="flex justify-between items-center mb-2">
-        <Typography.Title level={5}>Task Summary</Typography.Title>
+        <Typography.Title level={5}>{t('Task Summary')}</Typography.Title>
 
         {uxtestingStore.taskStats.length ? (
           <div className="p-2 rounded-lg bg-indigo-50  flex items-center gap-1 px-4">
             <ClockCircleOutlined rev={undefined} />
-            <Typography.Text>Average completion time of all tasks:</Typography.Text>
+            <Typography.Text>
+              {t('Average completion time of all tasks:')}
+            </Typography.Text>
             <Typography.Text strong>
               {uxtestingStore.taskStats
                 ? durationFormatted(
-                  uxtestingStore.taskStats.reduce(
-                    (stats, task) => stats + task.avgCompletionTime,
-                    0,
-                  ) / uxtestingStore.taskStats.length,
-                )
+                    uxtestingStore.taskStats.reduce(
+                      (stats, task) => stats + task.avgCompletionTime,
+                      0,
+                    ) / uxtestingStore.taskStats.length,
+                  )
                 : null}
             </Typography.Text>
-
           </div>
         ) : null}
       </div>
       {!uxtestingStore.taskStats.length ? (
         <NoContent
           show
-          title={(
+          title={
             <div className="text-base flex gap-2">
               <InfoCircleOutlined />
-              {' '}
-              No Data
+              &nbsp;{t('No Data')}
             </div>
-      )}
+          }
         />
       ) : null}
       {shownTasks.map((tst, index) => (
         <Stage
-          stage={{ ...tst, isActive: true, skipped: tst.skipped || totalAttempts - tst.completed }}
+          stage={{
+            ...tst,
+            isActive: true,
+            skipped: tst.skipped || totalAttempts - tst.completed,
+          }}
           uxt
           index={index + 1}
         />
@@ -403,6 +457,7 @@ const TaskSummary = observer(() => {
 });
 
 const Title = observer(({ testId, siteId }: any) => {
+  const { t } = useTranslation();
   const [truncate, setTruncate] = React.useState(true);
   const { uxtestingStore } = useStore();
   const history = useHistory();
@@ -411,17 +466,21 @@ const Title = observer(({ testId, siteId }: any) => {
     uxtestingStore.updateTestStatus(value);
     switch (value) {
       case 'in-progress':
-        toast.success('The test is now live. Use the distribution link to share it with participants.');
+        toast.success(
+          t(
+            'The test is now live. Use the distribution link to share it with participants.',
+          ),
+        );
         break;
       case 'paused':
         toast.success(
-          'The test is on \'Hold\'—participant activity paused. Toggle back to “ongoing” to resume activity.',
+          t(
+            "The test is on 'Hold'—participant activity paused. Toggle back to “ongoing” to resume activity.",
+          ),
         );
         break;
       case 'closed':
-        toast.success(
-          'The test is complete and closed.',
-        );
+        toast.success(t('The test is complete and closed.'));
         break;
     }
   };
@@ -436,8 +495,9 @@ const Title = observer(({ testId, siteId }: any) => {
     if (key === '3') {
       if (
         await confirm({
-          confirmation:
+          confirmation: t(
             'Are you sure you want to delete this usability test? This action cannot be undone.',
+          ),
         })
       ) {
         uxtestingStore.deleteTest(testId).then(() => {
@@ -451,22 +511,30 @@ const Title = observer(({ testId, siteId }: any) => {
     return null;
   }
 
-  const truncatedDescr = uxtestingStore.instance?.description
-    && uxtestingStore.instance.description.length > 250 && truncate
-    ? `${uxtestingStore.instance?.description.substring(0, 250)}...`
-    : uxtestingStore.instance?.description;
+  const truncatedDescr =
+    uxtestingStore.instance?.description &&
+    uxtestingStore.instance.description.length > 250 &&
+    truncate
+      ? `${uxtestingStore.instance?.description.substring(0, 250)}...`
+      : uxtestingStore.instance?.description;
   const redirectToEdit = async () => {
-    const confirmationTitle = uxtestingStore.instance!.status === 'in-progress'
-      ? 'Editing Active Usability Test'
-      : 'Editing Test on Hold';
-    const confirmationStr = uxtestingStore.instance!.status === 'in-progress'
-      ? 'You\'re editing a test that\'s currently active. Please be aware that you can only modify the test title and objective. Editing test steps is not permitted to avoid confusion with existing responses. Proceed with caution! 🚧'
-      : 'This usability test is on hold. You can only update the title and descriptions. Task editing is not allowed to avoid confusion with existing responses.';
+    const confirmationTitle =
+      uxtestingStore.instance!.status === 'in-progress'
+        ? t('Editing Active Usability Test')
+        : t('Editing Test on Hold');
+    const confirmationStr =
+      uxtestingStore.instance!.status === 'in-progress'
+        ? t(
+            "You're editing a test that's currently active. Please be aware that you can only modify the test title and objective. Editing test steps is not permitted to avoid confusion with existing responses. Proceed with caution! 🚧",
+          )
+        : t(
+            'This usability test is on hold. You can only update the title and descriptions. Task editing is not allowed to avoid confusion with existing responses.',
+          );
     if (
       await confirm({
         header: confirmationTitle,
         confirmation: confirmationStr,
-        confirmButton: 'Edit',
+        confirmButton: t('Edit'),
       })
     ) {
       history.push(withSiteId(usabilityTestingEdit(testId), siteId));
@@ -476,23 +544,23 @@ const Title = observer(({ testId, siteId }: any) => {
   // @ts-ignore
   const getColor = (status) => colors[status];
 
-  const isActive = ['in-progress', 'preview'].includes(uxtestingStore.instance!.status);
+  const isActive = ['in-progress', 'preview'].includes(
+    uxtestingStore.instance!.status,
+  );
   return (
     <div className="p-4 border-b">
       <div className="flex items-center gap-2">
-        <Typography.Title level={4} className="cap-first">{uxtestingStore.instance!.title}</Typography.Title>
+        <Typography.Title level={4} className="cap-first">
+          {uxtestingStore.instance!.title}
+        </Typography.Title>
         <div className="ml-auto" />
         <Select
           className="utStatusToggler"
           value={uxtestingStore.instance!.status}
           style={{ width: 150 }}
           onChange={handleChange}
-          options={statusItems}
-          optionRender={(item) => (
-            <Space align="center">
-              {item.label}
-            </Space>
-          )}
+          options={statusItems(t)}
+          optionRender={(item) => <Space align="center">{item.label}</Space>}
         />
         {/* <Button
           disabled={uxtestingStore.instance!.status === 'closed'}
@@ -504,45 +572,43 @@ const Title = observer(({ testId, siteId }: any) => {
             {uxtestingStore.instance!.tasks.length} Tasks <EditOutlined rev={undefined} />{' '}
           </Space>
         </Button> */}
-        {isActive
-          ? (
-            <Popover
-              trigger="hover"
-              placement="bottomRight"
-              className="rounded-lg"
-              content={(
-                <div style={{ width: '300px' }}>
-                  <div className="text-base font-medium">
-                    Distribute the following link with test participants via email or other methods.
-                  </div>
-                  <div
-                    style={{ background: '#E4F6F6' }}
-                    className="p-2 rounded-lg break-all my-2 text-lg"
-                  >
-                    {`${uxtestingStore.instance!.startingPath}?oruxt=${
-                    uxtestingStore.instance!.testId
-                    }`}
-                  </div>
-                  <CopyButton
-                    variant="text-primary"
-                    content={`${uxtestingStore.instance!.startingPath}?oruxt=${
-                    uxtestingStore.instance!.testId
-                    }`}
-                  />
+        {isActive ? (
+          <Popover
+            trigger="hover"
+            placement="bottomRight"
+            className="rounded-lg"
+            content={
+              <div style={{ width: '300px' }}>
+                <div className="text-base font-medium">
+                  {t(
+                    'Distribute the following link with test participants via email or other methods.',
+                  )}
                 </div>
-            )}
-            >
-
-              <Button type="primary">
-                <Space align="center">
-                  Distribute Test
-                  <ShareAltOutlined rev={undefined} />
-                </Space>
-              </Button>
-
-            </Popover>
-          )
-          : null}
+                <div
+                  style={{ background: '#E4F6F6' }}
+                  className="p-2 rounded-lg break-all my-2 text-lg"
+                >
+                  {`${uxtestingStore.instance!.startingPath}?oruxt=${
+                    uxtestingStore.instance!.testId
+                  }`}
+                </div>
+                <CopyButton
+                  variant="text-primary"
+                  content={`${uxtestingStore.instance!.startingPath}?oruxt=${
+                    uxtestingStore.instance!.testId
+                  }`}
+                />
+              </div>
+            }
+          >
+            <Button type="primary">
+              <Space align="center">
+                {t('Distribute Test')}
+                <ShareAltOutlined rev={undefined} />
+              </Space>
+            </Button>
+          </Popover>
+        ) : null}
         <Dropdown
           menu={{
             items:
@@ -556,7 +622,8 @@ const Title = observer(({ testId, siteId }: any) => {
         </Dropdown>
       </div>
       <div className="whitespace-pre-wrap mt-2 cap-first">{truncatedDescr}</div>
-      {uxtestingStore.instance?.description && uxtestingStore.instance.description.length > 250 ? (
+      {uxtestingStore.instance?.description &&
+      uxtestingStore.instance.description.length > 250 ? (
         <div className="link" onClick={() => setTruncate(!truncate)}>
           {truncate ? 'Show more' : 'Show less'}
         </div>

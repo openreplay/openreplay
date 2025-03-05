@@ -72,7 +72,9 @@ export default class Session {
 
       this.sessionId = session.sessionId;
       this.viewed = session.viewed;
-      this.duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
+      this.duration = Duration.fromMillis(
+        session.duration < 1000 ? 1000 : session.duration,
+      );
       this.durationMs = session.duration;
       this.metadata = session.metadata;
       this.startedAt = startedAt;
@@ -84,8 +86,19 @@ export default class Session {
       this.userCountry = session.userCountry;
       this.userCity = session.userCity;
       this.userState = session.userState;
-      this.userNumericHash = hashString(session.userId || session.userAnonymousId || session.userUuid || session.userID || session.userUUID || '');
-      this.userDisplayName = session.userId || session.userAnonymousId || session.userID || 'Anonymous User';
+      this.userNumericHash = hashString(
+        session.userId ||
+          session.userAnonymousId ||
+          session.userUuid ||
+          session.userID ||
+          session.userUUID ||
+          '',
+      );
+      this.userDisplayName =
+        session.userId ||
+        session.userAnonymousId ||
+        session.userID ||
+        'Anonymous User';
     });
     return this;
   }

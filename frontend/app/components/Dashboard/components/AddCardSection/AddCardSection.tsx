@@ -30,6 +30,8 @@ import { dashboardMetricCreate, withSiteId, metricCreate } from 'App/routes';
 import { FilterKey } from 'Types/filter/filterType';
 import { observer } from 'mobx-react-lite';
 import MetricsLibraryModal from '../MetricsLibraryModal/MetricsLibraryModal';
+import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
 
 interface TabItem {
   icon: React.ReactNode;
@@ -38,104 +40,102 @@ interface TabItem {
   type: string;
 }
 
-export const tabItems: Record<string, TabItem[]> = {
+export const tabItems: (t: TFunction) => Record<string, TabItem[]> = (t) => ({
   [CATEGORIES.product_analytics]: [
     {
       icon: <LineChart width={16} />,
-      title: 'Trends',
+      title: t('Trends'),
       type: TIMESERIES,
-      description: 'Track session and user trends over time.',
+      description: t('Track session and user trends over time.'),
     },
     {
       icon: <Filter width={16} />,
-      title: 'Funnels',
+      title: t('Funnels'),
       type: FUNNEL,
-      description: 'Visualize user progression through critical steps.',
+      description: t('Visualize user progression through critical steps.'),
     },
     {
-      icon: (
-        <Icon name="dashboards/user-journey" color="inherit" size={16} />
-      ),
-      title: 'Journeys',
+      icon: <Icon name="dashboards/user-journey" color="inherit" size={16} />,
+      title: t('Journeys'),
       type: USER_PATH,
-      description: 'Understand the paths users take through your product.',
+      description: t('Understand the paths users take through your product.'),
     },
     {
       icon: <Icon name="dashboards/heatmap-2" color="inherit" size={16} />,
-      title: 'Heatmaps',
+      title: t('Heatmaps'),
       type: HEATMAP,
-      description: 'Visualize user interaction patterns on your pages.',
+      description: t('Visualize user interaction patterns on your pages.'),
     },
   ],
   [CATEGORIES.monitors]: [
     {
-      icon: (
-        <Icon name="dashboards/circle-alert" color="inherit" size={16} />
-      ),
-      title: 'JS Errors',
+      icon: <Icon name="dashboards/circle-alert" color="inherit" size={16} />,
+      title: t('JS Errors'),
       type: FilterKey.ERRORS,
-      description: 'Monitor JS errors affecting user experience.',
+      description: t('Monitor JS errors affecting user experience.'),
     },
     {
       icon: <ArrowUpDown width={16} />,
-      title: 'Top Network Requests',
+      title: t('Top Network Requests'),
       type: FilterKey.FETCH,
-      description: 'Identify the most frequent network requests.',
+      description: t('Identify the most frequent network requests.'),
     },
     {
       icon: <WifiOff width={16} />,
-      title: '4xx/5xx Requests',
+      title: t('4xx/5xx Requests'),
       type: `${TIMESERIES}_4xx_requests`,
-      description: 'Track client and server errors for performance issues.',
+      description: t('Track client and server errors for performance issues.'),
     },
     {
       icon: <Turtle width={16} />,
-      title: 'Slow Network Requests',
+      title: t('Slow Network Requests'),
       type: `${TIMESERIES}_slow_network_requests`,
-      description: 'Pinpoint the slowest network requests causing delays.',
+      description: t('Pinpoint the slowest network requests causing delays.'),
     },
   ],
   [CATEGORIES.web_analytics]: [
     {
       icon: <FileStack width={16} />,
-      title: 'Top Pages',
+      title: t('Top Pages'),
       type: FilterKey.LOCATION,
-      description: 'Discover the most visited pages on your site.',
+      description: t('Discover the most visited pages on your site.'),
     },
     {
       icon: <AppWindow width={16} />,
-      title: 'Top Browsers',
+      title: t('Top Browsers'),
       type: FilterKey.USER_BROWSER,
-      description: 'Analyze the browsers your visitors are using the most.',
+      description: t('Analyze the browsers your visitors are using the most.'),
     },
     {
       icon: <Combine width={16} />,
-      title: 'Top Referrer',
+      title: t('Top Referrer'),
       type: FilterKey.REFERRER,
-      description: 'See where your traffic is coming from.',
+      description: t('See where your traffic is coming from.'),
     },
     {
       icon: <Users width={16} />,
-      title: 'Top Users',
+      title: t('Top Users'),
       type: FilterKey.USERID,
-      description: 'Identify the users with the most interactions.',
+      description: t('Identify the users with the most interactions.'),
     },
     {
       icon: <Globe width={16} />,
-      title: 'Top Countries',
+      title: t('Top Countries'),
       type: FilterKey.USER_COUNTRY,
-      description: 'Track the geographical distribution of your audience.',
+      description: t('Track the geographical distribution of your audience.'),
     },
     {
       icon: <MonitorSmartphone width={16} />,
-      title: 'Top Devices',
+      title: t('Top Devices'),
       type: FilterKey.USER_DEVICE,
-      description: 'Explore the devices used by your users.',
+      description: t('Explore the devices used by your users.'),
     },
   ],
-};
+});
 
-export const mobileTabItems: Record<string, TabItem[]> = {
+export const mobileTabItems: (t: TFunction) => Record<string, TabItem[]> = (
+  t,
+) => ({
   // [CATEGORIES.product_analytics]: [
   //   {
   //     icon: <LineChart width={16} />,
@@ -153,24 +153,24 @@ export const mobileTabItems: Record<string, TabItem[]> = {
   [CATEGORIES.web_analytics]: [
     {
       icon: <Users width={16} />,
-      title: 'Top Users',
+      title: t('Top Users'),
       type: FilterKey.USERID,
-      description: 'Identify the users with the most interactions.',
+      description: t('Identify the users with the most interactions.'),
     },
     {
       icon: <Globe width={16} />,
-      title: 'Top Countries',
+      title: t('Top Countries'),
       type: FilterKey.USER_COUNTRY,
-      description: 'Track the geographical distribution of your audience.',
+      description: t('Track the geographical distribution of your audience.'),
     },
     {
       icon: <MonitorSmartphone width={16} />,
-      title: 'Top Devices',
+      title: t('Top Devices'),
       type: FilterKey.USER_DEVICE,
-      description: 'Explore the devices used by your users.',
+      description: t('Explore the devices used by your users.'),
     },
   ],
-};
+});
 
 function CategoryTab({
   tab,
@@ -181,7 +181,8 @@ function CategoryTab({
   isMobile?: boolean;
   inCards?: boolean;
 }) {
-  const items = isMobile ? mobileTabItems[tab] : tabItems[tab];
+  const { t } = useTranslation();
+  const items = isMobile ? mobileTabItems(t)[tab] : tabItems(t)[tab];
   const { projectsStore, dashboardStore } = useStore();
   const history = useHistory();
 
@@ -212,9 +213,7 @@ function CategoryTab({
           {item.icon}
           <div className="leading-none">
             <div>{item.title}</div>
-            <div
-              className="text-disabled-text group-hover:text-teal/60 text-sm"
-            >
+            <div className="text-disabled-text group-hover:text-teal/60 text-sm">
               {item.description}
             </div>
           </div>
@@ -232,6 +231,7 @@ const AddCardSection = observer(
     inCards?: boolean;
     handleOpenChange?: (isOpen: boolean) => void;
   }) => {
+    const { t } = useTranslation();
     const { showModal } = useModal();
     const { metricStore, dashboardStore, projectsStore } = useStore();
     const { isMobile } = projectsStore;
@@ -241,14 +241,14 @@ const AddCardSection = observer(
 
     const options = isMobile
       ? [
-        // { label: 'Product Analytics', value: 'product_analytics' },
-        { label: 'Mobile Analytics', value: 'web_analytics' },
-      ]
+          // { label: 'Product Analytics', value: 'product_analytics' },
+          { label: t('Mobile Analytics'), value: 'web_analytics' },
+        ]
       : [
-        { label: 'Product Analytics', value: 'product_analytics' },
-        { label: 'Monitors', value: 'monitors' },
-        { label: 'Web Analytics', value: 'web_analytics' },
-      ];
+          { label: t('Product Analytics'), value: 'product_analytics' },
+          { label: t('Monitors'), value: 'monitors' },
+          { label: t('Web Analytics'), value: 'web_analytics' },
+        ];
 
     const originStr = window.env.ORIGIN || window.location.origin;
     const isSaas = /api\.openreplay\.com/.test(originStr);
@@ -268,19 +268,15 @@ const AddCardSection = observer(
       handleOpenChange?.(false);
     };
     return (
-      <div
-        className="pt-4 pb-6 px-6 rounded-xl bg-white border border-gray-lighter flex flex-col gap-2 shadow-sm"
-      >
+      <div className="pt-4 pb-6 px-6 rounded-xl bg-white border border-gray-lighter flex flex-col gap-2 shadow-sm">
         <div className="flex justify-between p-2">
           <div className="text-xl font-medium mb-1">
-            What do you want to visualize?
+            {t('What do you want to visualize?')}
           </div>
           {isSaas ? (
-            <div
-              className="font-medium flex items-center gap-2 cursor-pointer"
-            >
+            <div className="font-medium flex items-center gap-2 cursor-pointer">
               <Sparkles color="#3C00FFD8" size={16} />
-              <div className="ai-gradient">Ask AI</div>
+              <div className="ai-gradient">{t('Ask AI')}</div>
             </div>
           ) : null}
         </div>
@@ -298,9 +294,7 @@ const AddCardSection = observer(
           <CategoryTab isMobile={isMobile} tab={tab} inCards={inCards} />
         </div>
         {inCards ? null : (
-          <div
-            className="w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer"
-          >
+          <div className="w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer">
             <Button
               className="w-full mt-4 hover:bg-active-blue hover:text-teal"
               type="text"
@@ -308,8 +302,7 @@ const AddCardSection = observer(
               onClick={onExistingClick}
             >
               <FolderOutlined />
-              {' '}
-              Add existing card
+              &nbsp;{t('Add existing card')}
             </Button>
           </div>
         )}

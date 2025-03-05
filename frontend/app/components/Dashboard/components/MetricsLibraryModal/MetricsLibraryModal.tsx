@@ -6,12 +6,14 @@ import { observer } from 'mobx-react-lite';
 import { Input } from 'antd';
 import FooterContent from './FooterContent';
 import MetricsList from '../MetricsList';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   dashboardId?: number;
   siteId: string;
 }
 function MetricsLibraryModal(props: Props) {
+  const { t } = useTranslation();
   const { metricStore } = useStore();
   const { siteId, dashboardId } = props;
   const [selectedList, setSelectedList] = useState([]);
@@ -35,10 +37,10 @@ function MetricsLibraryModal(props: Props) {
 
   return (
     <>
-      <Modal.Header title="Cards Library">
+      <Modal.Header title={t('Cards Library')}>
         <div className="flex items-center justify-between px-4 pt-4">
           <div className="text-lg flex items-center font-medium">
-            <div>Cards Library</div>
+            <div>{t('Cards Library')}</div>
           </div>
           <div>
             <MetricSearch onChange={onChange} />
@@ -47,7 +49,11 @@ function MetricsLibraryModal(props: Props) {
       </Modal.Header>
       <Modal.Content className="p-4 pb-20">
         <div className="border">
-          <MetricsList siteId={siteId} onSelectionChange={onSelectionChange} inLibrary />
+          <MetricsList
+            siteId={siteId}
+            onSelectionChange={onSelectionChange}
+            inLibrary
+          />
         </div>
       </Modal.Content>
       <Modal.Footer>
@@ -60,11 +66,12 @@ function MetricsLibraryModal(props: Props) {
 export default observer(MetricsLibraryModal);
 
 function MetricSearch({ onChange }: any) {
+  const { t } = useTranslation();
   return (
     <div className="relative">
       <Input.Search
         name="dashboardsSearch"
-        placeholder="Filter by title or owner"
+        placeholder={t('Filter by title or owner')}
         onChange={onChange}
         className="rounded-lg"
       />

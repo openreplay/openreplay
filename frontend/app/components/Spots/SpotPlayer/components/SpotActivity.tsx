@@ -7,8 +7,10 @@ import React from 'react';
 import Event from 'Components/Session_/EventsBlock/Event';
 
 import spotPlayerStore from '../spotPlayerStore';
+import { useTranslation } from 'react-i18next';
 
 function SpotActivity({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const mixedEvents = React.useMemo(() => {
     const result = [...spotPlayerStore.locations, ...spotPlayerStore.clicks];
     return result.sort((a, b) => a.time - b.time);
@@ -33,7 +35,7 @@ function SpotActivity({ onClose }: { onClose: () => void }) {
       style={{ minWidth: 320, width: 320 }}
     >
       <div className="flex items-center justify-between p-4">
-        <div className="font-medium text-lg">Activity</div>
+        <div className="font-medium text-lg">{t('Activity')}</div>
         <Button type="text" size="small" onClick={onClose}>
           <CloseOutlined />
         </Button>

@@ -27,7 +27,8 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
     this.screen.overlay.appendChild(canvas);
     this.mouseTrail?.createContext();
 
-    const updateSize = (w: number, h: number) => this.mouseTrail?.resizeCanvas(w, h);
+    const updateSize = (w: number, h: number) =>
+      this.mouseTrail?.resizeCanvas(w, h);
 
     this.screen.setOnUpdate(updateSize);
   }
@@ -38,8 +39,12 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
 
   private updateHover(): void {
     const curHoverElements = this.getCursorTargets();
-    const diffAdd = curHoverElements.filter((elem) => !this.hoverElements.includes(elem));
-    const diffRemove = this.hoverElements.filter((elem) => !curHoverElements.includes(elem));
+    const diffAdd = curHoverElements.filter(
+      (elem) => !this.hoverElements.includes(elem),
+    );
+    const diffRemove = this.hoverElements.filter(
+      (elem) => !curHoverElements.includes(elem),
+    );
     this.hoverElements = curHoverElements;
     diffAdd.forEach((elem) => {
       elem.classList.add(HOVER_CLASSNAME);
@@ -50,7 +55,7 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
   }
 
   reset(): void {
-  	this.hoverElements.length = 0;
+    this.hoverElements.length = 0;
   }
 
   move(t: number) {

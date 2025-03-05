@@ -6,11 +6,13 @@ import React from 'react';
 import Select from 'Shared/Select';
 import { components } from 'react-select';
 import CustomDropdownOption from 'Shared/CustomDropdownOption';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onSelect: any;
 }
 function MetricSubtypeDropdown(props: Props) {
+  const { t } = useTranslation();
   const { metricStore } = useStore();
   const metric: any = metricStore.instance;
 
@@ -31,13 +33,20 @@ function MetricSubtypeDropdown(props: Props) {
   React.useEffect(() => {
     // @ts-ignore
     if (options && !options.map((i) => i.value).includes(metric.metricOf)) {
-      setTimeout(() => props.onSelect({ name: 'metricOf', value: { value: options[0].value } }), 0);
+      setTimeout(
+        () =>
+          props.onSelect({
+            name: 'metricOf',
+            value: { value: options[0].value },
+          }),
+        0,
+      );
     }
   }, [metric.metricType]);
 
   return options ? (
     <>
-      <div className="mx-3">of</div>
+      <div className="mx-3">{t('of')}</div>
       <Select
         name="metricOf"
         placeholder="Select Card Type"
@@ -53,7 +62,9 @@ function MetricSubtypeDropdown(props: Props) {
           ),
           Option: ({ children, ...props }: any) => {
             const { data } = props;
-            return <CustomDropdownOption children={children} {...props} {...data} />;
+            return (
+              <CustomDropdownOption children={children} {...props} {...data} />
+            );
           },
         }}
       />

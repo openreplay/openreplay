@@ -21,9 +21,21 @@ export const getTimeString = (ts, period, density) => {
   return `${date.getDate()}/${startWithZero(date.getMonth() + 1)} `;
 };
 
-export const getChartFormatter = (period, density) => (data = []) => data.map(({ timestamp, ...rest }) => ({ time: getTimeString(timestamp, period, density), ...rest, timestamp }));
+export const getChartFormatter =
+  (period, density) =>
+  (data = []) =>
+    data.map(({ timestamp, ...rest }) => ({
+      time: getTimeString(timestamp, period, density),
+      ...rest,
+      timestamp,
+    }));
 
-export const getStartAndEndTimestampsByDensity = (current: number, start: number, end: number, density: number) => {
+export const getStartAndEndTimestampsByDensity = (
+  current: number,
+  start: number,
+  end: number,
+  density: number,
+) => {
   const diff = end - start;
   const step = Math.floor(diff / density);
   const currentIndex = Math.floor((current - start) / step);

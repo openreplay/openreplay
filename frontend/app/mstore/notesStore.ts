@@ -1,9 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 
 import { notesService } from 'App/services';
-import {
-  Note, NotesFilter, WriteNote, iTag,
-} from 'App/services/NotesService';
+import { Note, NotesFilter, WriteNote, iTag } from 'App/services/NotesService';
 
 export const noNoteMsg = 'No Comment';
 
@@ -110,7 +108,7 @@ export default class NotesStore {
     this.setLoading(true);
     try {
       const notes = await notesService.getNotesBySessionId(sessionId);
-      notes.forEach((note) => note.time = note.timestamp);
+      notes.forEach((note) => (note.time = note.timestamp));
       this.setSessionNotes(notes);
       return notes;
     } catch (e) {

@@ -1,14 +1,16 @@
 import { DownOutlined, CopyOutlined, StopOutlined } from '@ant-design/icons';
-import {
-  Button, Dropdown, Menu, Segmented, Modal,
-} from 'antd';
+import { Button, Dropdown, Menu, Segmented, Modal } from 'antd';
 import copy from 'copy-to-clipboard';
 import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import {
-  formatExpirationTime, HOUR_SECS, DAY_SECS, WEEK_SECS,
+  formatExpirationTime,
+  HOUR_SECS,
+  DAY_SECS,
+  WEEK_SECS,
 } from 'App/utils/index';
+import { useTranslation } from 'react-i18next';
 
 enum Intervals {
   hour,
@@ -18,11 +20,14 @@ enum Intervals {
 }
 
 function AccessModal() {
+  const { t } = useTranslation();
   const { spotStore } = useStore();
   const [isCopied, setIsCopied] = useState(false);
   const [isPublic, setIsPublic] = useState(!!spotStore.pubKey);
   const [generated, setGenerated] = useState(!!spotStore.pubKey);
-  const [selectedInterval, setSelectedInterval] = useState<Intervals>(Intervals.hour);
+  const [selectedInterval, setSelectedInterval] = useState<Intervals>(
+    Intervals.hour,
+  );
   const [loadingKey, setLoadingKey] = useState(false);
 
   const expirationValues = {
@@ -39,19 +44,19 @@ function AccessModal() {
   const menuItems = [
     {
       key: Intervals.hour.toString(),
-      label: <div>1 Hour</div>,
+      label: <div>{t('1 Hour')}</div>,
     },
     {
       key: Intervals.threeHours.toString(),
-      label: <div>3 Hours</div>,
+      label: <div>{t('3 Hours')}</div>,
     },
     {
       key: Intervals.day.toString(),
-      label: <div>1 Day</div>,
+      label: <div>{t('1 Day')}</div>,
     },
     {
       key: Intervals.week.toString(),
-      label: <div>1 Week</div>,
+      label: <div>{t('1 Week')}</div>,
     },
   ];
 
@@ -114,7 +119,7 @@ function AccessModal() {
         <>
           <div>
             <div className="text-black/50">
-              Link for internal team members
+              {t('Link for internal team members')}
             </div>
             <div className="px-2 py-1 rounded-lg bg-indigo-50 whitespace-nowrap overflow-ellipsis overflow-hidden">
               {spotLink}
@@ -127,7 +132,7 @@ function AccessModal() {
               type="default"
               icon={<CopyOutlined />}
             >
-              {isCopied ? 'Copied!' : 'Copy Link'}
+              {isCopied ? t('Copied!') : t('Copy Link')}
             </Button>
           </div>
         </>
@@ -141,23 +146,29 @@ function AccessModal() {
             size="small"
             className="mt-1"
           >
-            Enable Public Sharing
+            {t('Enable Public Sharing')}
           </Button>
         </div>
       ) : (
         <div className="flex flex-col gap-4 px-1">
           <div>
-            <div className="text-black/50">Anyone with the following link can access this Spot</div>
+            <div className="text-black/50">
+              {t('Anyone with the following link can access this Spot')}
+            </div>
             <div className="px-2 py-1 rounded-lg bg-indigo-50 whitespace-nowrap overflow-ellipsis overflow-hidden">
               {spotLink}
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div>Link expires in</div>
-            <Dropdown overlay={<Menu items={menuItems} onClick={onMenuClick} />}>
+            <div>{t('Link expires in')}</div>
+            <Dropdown
+              overlay={<Menu items={menuItems} onClick={onMenuClick} />}
+            >
               <div className="flex items-center cursor-pointer">
-                {loadingKey ? 'Loading' : formatExpirationTime(expirationValues[selectedInterval])}
+                {loadingKey
+                  ? t('Loading')
+                  : formatExpirationTime(expirationValues[selectedInterval])}
                 <DownOutlined />
               </div>
             </Dropdown>
@@ -173,8 +184,13 @@ function AccessModal() {
                 {isCopied ? 'Copied!' : 'Copy Link'}
               </Button>
             </div>
-            <Button type="text" size="small" icon={<StopOutlined />} onClick={revokeKey}>
-              Disable Public Sharing
+            <Button
+              type="text"
+              size="small"
+              icon={<StopOutlined />}
+              onClick={revokeKey}
+            >
+              {t('Disable Public Sharing')}
             </Button>
           </div>
         </div>

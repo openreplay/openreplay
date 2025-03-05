@@ -2,8 +2,10 @@ import { GitCommitHorizontal } from 'lucide-react';
 import React from 'react';
 
 import ExCard from './ExCard';
+import { useTranslation } from 'react-i18next';
 
 function PerfBreakdown(props: any) {
+  const { t } = useTranslation();
   const rows = [
     ['5K', '1K'],
     ['4K', '750'],
@@ -11,7 +13,7 @@ function PerfBreakdown(props: any) {
     ['2K', '250'],
     ['1K', '0'],
   ];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May'];
+  const months = [t('Jan'), t('Feb'), t('Mar'), t('Apr'), t('May')];
   const values = [
     [3, 1, 9],
     [2, 4, 10],
@@ -21,9 +23,7 @@ function PerfBreakdown(props: any) {
   ];
   const bgs = ['#E2E4F6', '#A7BFFF', '#394EFF'];
   return (
-    <ExCard
-      {...props}
-    >
+    <ExCard {...props}>
       <div className="relative">
         <div className="flex flex-col gap-4">
           {rows.map((r) => (
@@ -86,15 +86,15 @@ function PerfBreakdown(props: any) {
       <div className="flex gap-4 justify-center">
         <div className="flex gap-2 items-center">
           <div className="w-4 h-4 rounded-full bg-[#E2E4F6]" />
-          <div className="text-disabled-text">XHR</div>
+          <div className="text-disabled-text">{t('XHR')}</div>
         </div>
         <div className="flex gap-2 items-center">
           <div className="w-4 h-4 rounded-full bg-[#A7BFFF]" />
-          <div className="text-disabled-text">Other</div>
+          <div className="text-disabled-text">{t('Other')}</div>
         </div>
         <div className="flex gap-2 items-center">
           <GitCommitHorizontal size={14} strokeWidth={1} color="#6A8CFF" />
-          <div className="text-disabled-text">Response End</div>
+          <div className="text-disabled-text">{t('Response End')}</div>
         </div>
       </div>
     </ExCard>

@@ -12,9 +12,7 @@ interface Props {
   style?: any;
 }
 function ConsoleRow(props: Props) {
-  const {
-    log, iconProps, jump, renderWithNL, style,
-  } = props;
+  const { log, iconProps, jump, renderWithNL, style } = props;
   const [expanded, setExpanded] = useState(false);
   const lines = log.value.split('\n').filter((l: any) => !!l);
   const canExpand = lines.length > 1;
@@ -39,7 +37,10 @@ function ConsoleRow(props: Props) {
       <div key={log.key} className={cn('')} data-scroll-item={log.isRed}>
         <div className={cn(stl.message, 'flex items-center')}>
           {canExpand && (
-            <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} className="mr-2" />
+            <Icon
+              name={expanded ? 'caret-down-fill' : 'caret-right-fill'}
+              className="mr-2"
+            />
           )}
           <span>{renderWithNL(lines.pop())}</span>
         </div>

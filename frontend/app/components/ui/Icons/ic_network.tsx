@@ -2,16 +2,14 @@
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Ic_network(props: Props) {
-  const {
-    size = 14, width = size, height = size, fill = '',
-  } = props;
+  const { size = 14, width = size, height = size, fill = '' } = props;
   return (
     <svg viewBox="0 0 16 16" width={`${width}px`} height={`${height}px`}>
       <path d="M7.646 10.854a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 9.293V5.5a.5.5 0 0 0-1 0v3.793L6.354 8.146a.5.5 0 1 0-.708.708l2 2z" />

@@ -8,23 +8,28 @@ import stl from './errorItem.module.css';
 interface Props {
   error: any;
   onJump: any;
-  inactive?: Boolean;
-  selected?: Boolean;
+  inactive?: boolean;
+  selected?: boolean;
 }
-function ErrorItem({
-  error = {}, onJump, inactive, selected,
-}: Props) {
+function ErrorItem({ error = {}, onJump, inactive, selected }: Props) {
   const { showModal } = useModal();
 
   const onErrorClick = () => {
-    showModal(<ErrorDetailsModal errorId={error.errorId} />, { right: true, width: 1200 });
+    showModal(<ErrorDetailsModal errorId={error.errorId} />, {
+      right: true,
+      width: 1200,
+    });
   };
   return (
     <div
-      className={cn(stl.wrapper, 'py-2 px-4 flex cursor-pointer hover:bg-active-blue relative group', {
-        // [stl.inactive]: inactive,
-        // [stl.selected]: selected,
-      })}
+      className={cn(
+        stl.wrapper,
+        'py-2 px-4 flex cursor-pointer hover:bg-active-blue relative group',
+        {
+          // [stl.inactive]: inactive,
+          // [stl.selected]: selected,
+        },
+      )}
       onClick={onErrorClick}
       // onClick={onJump}
     >
@@ -34,7 +39,9 @@ function ErrorItem({
       <div className="overflow-hidden">
         <div className="color-red mb-1 cursor-pointer code-font">
           {error.name}
-          <span className="color-gray-darkest ml-2">{error.stack0InfoString}</span>
+          <span className="color-gray-darkest ml-2">
+            {error.stack0InfoString}
+          </span>
         </div>
         <div className="text-xs code-font">{error.message}</div>
       </div>

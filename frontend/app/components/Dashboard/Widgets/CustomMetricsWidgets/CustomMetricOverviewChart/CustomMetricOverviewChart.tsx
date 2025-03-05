@@ -1,13 +1,18 @@
 import React from 'react';
 import {
-  AreaChart, ResponsiveContainer, XAxis, YAxis, Area, Tooltip,
+  AreaChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Area,
+  Tooltip,
 } from 'recharts';
 import { numberWithCommas } from 'App/utils';
 import { Styles } from '../../common';
 import CountBadge from '../../common/CountBadge';
 
 interface Props {
-    data: any;
+  data: any;
 }
 
 function CustomMetricOverviewChart(props: Props) {
@@ -20,18 +25,25 @@ function CustomMetricOverviewChart(props: Props) {
         <div className="mb-2 flex items-center" />
         <div className="flex items-center">
           <CountBadge
-                        // title={subtext}
+            // title={subtext}
             count={countView(Math.round(data.value), data.unit)}
             change={data.progress || 0}
             unit={data.unit}
           />
         </div>
       </div>
-      <ResponsiveContainer height={240} width="100%" className="rounded-lg overflow-hidden">
+      <ResponsiveContainer
+        height={240}
+        width="100%"
+        className="rounded-lg overflow-hidden"
+      >
         <AreaChart
           data={data.chart}
           margin={{
-            top: 50, right: 0, left: 0, bottom: 0,
+            top: 50,
+            right: 0,
+            left: 0,
+            bottom: 0,
           }}
         >
           {gradientDef}
@@ -40,7 +52,7 @@ function CustomMetricOverviewChart(props: Props) {
           <YAxis hide interval={0} />
           <Area
             name=""
-                        // unit={unit && ' ' + unit}
+            // unit={unit && ' ' + unit}
             type="monotone"
             dataKey="value"
             stroke={Styles.strokeColor}

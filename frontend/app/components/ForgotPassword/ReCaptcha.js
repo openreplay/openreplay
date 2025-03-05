@@ -1,3 +1,5 @@
+import React, { Component } from 'react';
+
 class ReCaptcha extends Component {
   constructor(props) {
     super(props);
@@ -24,11 +26,15 @@ class ReCaptcha extends Component {
   loadRecaptcha() {
     const { id, apiKey, theme } = this.props;
 
-    this.recatchaElt = window.grecaptcha.render(id, {
-      sitekey: apiKey,
-      size: 'invisible',
-      callback: this.handleChange,
-    }, true);
+    this.recatchaElt = window.grecaptcha.render(
+      id,
+      {
+        sitekey: apiKey,
+        size: 'invisible',
+        callback: this.handleChange,
+      },
+      true,
+    );
   }
 
   handleChange() {
@@ -40,9 +46,7 @@ class ReCaptcha extends Component {
   render() {
     const { id } = this.props;
 
-    return (
-      <div id={id} />
-    );
+    return <div id={id} />;
   }
 }
 

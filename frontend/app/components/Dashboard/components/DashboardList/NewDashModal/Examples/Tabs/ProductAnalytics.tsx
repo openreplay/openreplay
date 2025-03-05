@@ -5,7 +5,7 @@ import ExampleTrend from '../Trend';
 import ExampleCount from '../Count';
 
 interface ExampleProps {
-    onCard: (card: string) => void;
+  onCard: (card: string) => void;
 }
 
 const ProductAnalytics: React.FC<ExampleProps> = ({ onCard }) => (

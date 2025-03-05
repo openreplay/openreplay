@@ -74,7 +74,6 @@ export function PlaybackSpeedShortcut() {
 
 export function ShortcutGrid() {
   return (
-
     <div className=" grid grid-cols-1 grid-flow-row-dense auto-cols-max gap-4 justify-items-start">
       <Cell shortcut="⇧ + U" text="Copy Session URL with time" />
       <Cell shortcut="⇧ + C" text="Launch Console" />

@@ -48,8 +48,8 @@ function useShortcuts({
   useEffect(() => {
     const handleShortcuts = (e: KeyboardEvent) => {
       if (
-        e.target instanceof HTMLInputElement
-        || e.target instanceof HTMLTextAreaElement
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
       ) {
         return false;
       }
@@ -60,9 +60,7 @@ function useShortcuts({
           case 'F':
             return fullScreenOn();
           case 'X':
-            return disableDevtools
-              ? null
-              : toggleBottomBlock(blocks.overview);
+            return disableDevtools ? null : toggleBottomBlock(blocks.overview);
           case 'P':
             return disableDevtools
               ? null

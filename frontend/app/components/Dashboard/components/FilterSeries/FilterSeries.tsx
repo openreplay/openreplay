@@ -58,10 +58,13 @@ const FilterSeriesHeader = observer(
     };
     return (
       <div
-        className={cn('px-4 ps-2  h-12 flex items-center relative bg-white border-gray-lighter border-t border-l border-r rounded-t-xl', {
-          hidden: props.hidden,
-          'rounded-b-xl': !props.expanded,
-        })}
+        className={cn(
+          'px-4 ps-2  h-12 flex items-center relative bg-white border-gray-lighter border-t border-l border-r rounded-t-xl',
+          {
+            hidden: props.hidden,
+            'rounded-b-xl': !props.expanded,
+          },
+        )}
       >
         <Space className="mr-auto" size={30}>
           <SeriesName
@@ -74,10 +77,10 @@ const FilterSeriesHeader = observer(
 
         <Space>
           {!props.expanded && (
-          <FilterCountLabels
-            filters={props.series.filter.filters}
-            toggleExpand={props.toggleExpand}
-          />
+            <FilterCountLabels
+              filters={props.series.filter.filters}
+              toggleExpand={props.toggleExpand}
+            />
           )}
           <Button
             onClick={props.onRemove}
@@ -116,7 +119,7 @@ interface Props {
   emptyMessage?: any;
   observeChanges?: () => void;
   excludeFilterKeys?: Array<string>;
-  excludeCategory?: string[]
+  excludeCategory?: string[];
   canExclude?: boolean;
   expandable?: boolean;
   isHeatmap?: boolean;
@@ -212,23 +215,22 @@ function FilterSeries(props: Props) {
 
       {expanded ? (
         <>
-          {removeEvents ? null
-            : (
-              <EventsList
-                filter={series.filter}
-                onUpdateFilter={onUpdateFilter}
-                onRemoveFilter={onRemoveFilter}
-                onChangeEventsOrder={onChangeEventsOrder}
-                supportsEmpty={supportsEmpty}
-                onFilterMove={onFilterMove}
-                excludeFilterKeys={excludeFilterKeys}
-                onAddFilter={onAddFilter}
-                mergeUp={!hideHeader}
-                mergeDown
-                cannotAdd={isHeatmap}
-                excludeCategory={excludeCategory}
-              />
-            )}
+          {removeEvents ? null : (
+            <EventsList
+              filter={series.filter}
+              onUpdateFilter={onUpdateFilter}
+              onRemoveFilter={onRemoveFilter}
+              onChangeEventsOrder={onChangeEventsOrder}
+              supportsEmpty={supportsEmpty}
+              onFilterMove={onFilterMove}
+              excludeFilterKeys={excludeFilterKeys}
+              onAddFilter={onAddFilter}
+              mergeUp={!hideHeader}
+              mergeDown
+              cannotAdd={isHeatmap}
+              excludeCategory={excludeCategory}
+            />
+          )}
           <FilterList
             filter={series.filter}
             onUpdateFilter={onUpdateFilter}

@@ -1,8 +1,7 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
-import {
-  Button, Drawer, Space, Typography,
-} from 'antd';
+import { Button, Drawer, Space, Typography } from 'antd';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Icon } from 'UI';
 
@@ -16,9 +15,12 @@ interface Props {
 function SupportModal(props: Props) {
   const { onClose, open } = props;
   const WEBSITE_ID = window.env.CRISP_KEY;
+
+  const { t } = useTranslation();
+
   return (
     <Drawer
-      title="OpenReplay Support"
+      title={t('OpenReplay Support')}
       placement="right"
       open={open}
       width={400}
@@ -33,10 +35,11 @@ function SupportModal(props: Props) {
           </div>
 
           <div className="flex flex-col">
-            <Text className="font-medium">Documentation</Text>
+            <Text className="font-medium">{t('Documentation')}</Text>
             <Text type="secondary" className="text-sm">
-              Deploy, manage and customize OpenReplay through quick starts,
-              tutorials, samples, and guides.
+              {t(
+                'Deploy, manage and customize OpenReplay through quick starts, tutorials, samples, and guides.',
+              )}
             </Text>
             <div className="my-1" />
             <Button
@@ -51,7 +54,7 @@ function SupportModal(props: Props) {
               }}
             >
               <Space>
-                <div>Browse Docs</div>
+                <div>{t('Browse Docs')}</div>
                 <ArrowRightOutlined />
               </Space>
             </Button>
@@ -63,10 +66,11 @@ function SupportModal(props: Props) {
             <Icon name="slack" size={18} />
           </div>
           <div className="flex flex-col">
-            <Text className="font-medium">Slack Community</Text>
+            <Text className="font-medium">{t('Slack Community')}</Text>
             <Text type="secondary" className="text-sm">
-              Ask OpenReplay community and get quick resolution to your
-              questions from 1000+ members.
+              {t(
+                'Ask OpenReplay community and get quick resolution to your questions from 1000+ members.',
+              )}
             </Text>
             <div className="my-1" />
             <Button
@@ -81,7 +85,7 @@ function SupportModal(props: Props) {
               }}
             >
               <Space>
-                <div>Ask Community</div>
+                <div>{t('Ask Community')}</div>
                 <ArrowRightOutlined />
               </Space>
             </Button>
@@ -93,10 +97,11 @@ function SupportModal(props: Props) {
             <Icon name="github" size={18} />
           </div>
           <div className="flex flex-col">
-            <Text className="font-medium">Github Repository</Text>
+            <Text className="font-medium">{t('Github Repository')}</Text>
             <Text type="secondary" className="text-sm">
-              Report issues or request features and get quick updates from our
-              dev team.
+              {t(
+                'Report issues or request features and get quick updates from our dev team.',
+              )}
             </Text>
             <div className="my-1" />
             <Button
@@ -114,7 +119,7 @@ function SupportModal(props: Props) {
               }}
             >
               <Space>
-                <div>Open GitHub</div>
+                <div>{t('Open GitHub')}</div>
                 <ArrowRightOutlined />
               </Space>
             </Button>

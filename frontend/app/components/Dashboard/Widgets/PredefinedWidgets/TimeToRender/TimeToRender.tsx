@@ -2,10 +2,13 @@ import React from 'react';
 import { NoContent } from 'UI';
 import { withRequest } from 'HOCs';
 import {
-  AreaChart, Area,
-  CartesianGrid, Tooltip,
+  AreaChart,
+  Area,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
-  XAxis, YAxis,
+  XAxis,
+  YAxis,
 } from 'recharts';
 import { toUnderscore } from 'App/utils';
 import { NO_METRIC_DATA } from 'App/constants/messages';
@@ -15,11 +18,11 @@ import { Styles, AvgLabel } from '../../common';
 const WIDGET_KEY = 'timeToRender';
 
 interface Props {
-    data: any
-    optionsLoading: any
-    fetchOptions: any
-    options: any
-    metric?: any
+  data: any;
+  optionsLoading: any;
+  fetchOptions: any;
+  options: any;
+  metric?: any;
 }
 function TimeToRender(props: Props) {
   const { data, optionsLoading, metric } = props;
@@ -35,13 +38,11 @@ function TimeToRender(props: Props) {
     <NoContent
       size="small"
       show={metric.data.chart.length === 0}
-      title={(
+      title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} />
-          {' '}
-          { NO_METRIC_DATA }
+          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
         </div>
-          )}
+      }
     >
       <>
         <div className="flex items-center mb-3">
@@ -52,19 +53,29 @@ function TimeToRender(props: Props) {
                 onSelect={onSelect}
                 placeholder="Search for Page"
               /> */}
-          <AvgLabel className="ml-auto" text="Avg" count={Math.round(data.value)} unit="ms" />
+          <AvgLabel
+            className="ml-auto"
+            text="Avg"
+            count={Math.round(data.value)}
+            unit="ms"
+          />
         </div>
         <ResponsiveContainer height={200} width="100%">
-          <AreaChart
-            data={metric.data.chart}
-            margin={Styles.chartMargins}
-          >
+          <AreaChart data={metric.data.chart} margin={Styles.chartMargins}>
             {gradientDef}
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EEEEEE" />
-            <XAxis {...Styles.xaxis} dataKey="time" interval={(metric.params.density / 7)} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={false}
+              stroke="#EEEEEE"
+            />
+            <XAxis
+              {...Styles.xaxis}
+              dataKey="time"
+              interval={metric.params.density / 7}
+            />
             <YAxis
               {...Styles.yaxis}
-                    // allowDecimals={false}
+              // allowDecimals={false}
               tickFormatter={(val) => Styles.tickFormatter(val)}
               label={{ ...Styles.axisLabelLeft, value: 'Time to Render (ms)' }}
             />

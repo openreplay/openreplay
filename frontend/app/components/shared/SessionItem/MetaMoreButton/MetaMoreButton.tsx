@@ -2,6 +2,7 @@ import React from 'react';
 import { Popover } from 'UI';
 import { Button } from 'antd';
 import MetaItem from '../MetaItem';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   list: any[];
@@ -9,6 +10,7 @@ interface Props {
 }
 export default function MetaMoreButton(props: Props) {
   const { list, maxLength } = props;
+  const { t } = useTranslation();
   return (
     <Popover
       render={() => (
@@ -25,10 +27,8 @@ export default function MetaMoreButton(props: Props) {
     >
       <div className="flex items-center">
         <Button variant="text">
-          +
-          {list.length - maxLength}
-          {' '}
-          More
+          +{list.length - maxLength}
+          {t('More')}
         </Button>
       </div>
     </Popover>

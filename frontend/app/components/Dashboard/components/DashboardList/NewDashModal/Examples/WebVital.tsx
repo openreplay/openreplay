@@ -3,10 +3,10 @@ import CustomMetricOverviewChart from 'Components/Dashboard/Widgets/CustomMetric
 import ExCard from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/ExCard';
 
 interface Props {
-    title: string;
-    type: string;
-    onCard: (card: string) => void;
-    data?: any,
+  title: string;
+  type: string;
+  onCard: (card: string) => void;
+  data?: any;
 }
 
 function WebVital(props: Props) {
@@ -45,9 +45,7 @@ function WebVital(props: Props) {
     unit: '%',
   };
   return (
-    <ExCard
-      {...props}
-    >
+    <ExCard {...props}>
       <CustomMetricOverviewChart data={data} />
     </ExCard>
   );

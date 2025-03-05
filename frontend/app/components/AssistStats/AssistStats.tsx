@@ -21,26 +21,34 @@ import { getPdf2 } from 'Components/AssistStats/pdfGenerator';
 import UserSearch from './components/UserSearch';
 import Chart from './components/Charts';
 import StatsTable from './components/Table';
+import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
 
-const chartNames = {
-  assistTotal: 'Total Live Duration',
-  assistAvg: 'Avg Live Duration',
-  callTotal: 'Total Call Duration',
-  callAvg: 'Avg Call Duration',
-  controlTotal: 'Total Remote Duration',
-  controlAvg: 'Avg Remote Duration',
-};
+const chartNames = (t: TFunction) => ({
+  assistTotal: t('Total Live Duration'),
+  assistAvg: t('Avg Live Duration'),
+  callTotal: t('Total Call Duration'),
+  callAvg: t('Avg Call Duration'),
+  controlTotal: t('Total Remote Duration'),
+  controlAvg: t('Avg Remote Duration'),
+});
 
 function calculatePercentageDelta(currP: number, prevP: number) {
   return ((currP - prevP) / prevP) * 100;
 }
 
 function AssistStats() {
+  const { t } = useTranslation();
   const [selectedUser, setSelectedUser] = React.useState<any>(null);
-  const [period, setPeriod] = React.useState<any>(Period({ rangeName: LAST_24_HOURS }));
+  const [period, setPeriod] = React.useState<any>(
+    Period({ rangeName: LAST_24_HOURS }),
+  );
   const [membersSort, setMembersSort] = React.useState('sessionsAssisted');
   const [tableSort, setTableSort] = React.useState('timestamp');
-  const [topMembers, setTopMembers] = React.useState<{ list: Member[]; total: number }>({
+  const [topMembers, setTopMembers] = React.useState<{
+    list: Member[];
+    total: number;
+  }>({
     list: [],
     total: 0,
   });
@@ -148,7 +156,8 @@ function AssistStats() {
         order: 'desc',
         page: 1,
         limit: 10000,
-      }).then((sessions) => {
+      })
+      .then((sessions) => {
         const data = sessions.list.map((s) => ({
           ...s,
           members: `"${s.teamMembers.map((m) => m.name).join(', ')}"`,
@@ -158,15 +167,19 @@ function AssistStats() {
           controlDuration: `"${durationFromMsFormatted(s.controlDuration)}"`,
         }));
         const headers = [
-          { label: 'Date', key: 'dateStr' },
-          { label: 'Team Members', key: 'members' },
-          { label: 'Live Duration', key: 'assistDuration' },
-          { label: 'Call Duration', key: 'callDuration' },
-          { label: 'Remote Duration', key: 'controlDuration' },
-          { label: 'Session ID', key: 'sessionId' },
+          { label: t('Date'), key: 'dateStr' },
+          { label: t('Team Members'), key: 'members' },
+          { label: t('Live Duration'), key: 'assistDuration' },
+          { label: t('Call Duration'), key: 'callDuration' },
+          { label: t('Remote Duration'), key: 'controlDuration' },
+          { label: t('Session ID'), key: 'sessionId' },
         ];
 
-        exportCSVFile(headers, data, `Assist_Stats_${new Date().toLocaleDateString()}`);
+        exportCSVFile(
+          headers,
+          data,
+          `Assist_Stats_${new Date().toLocaleDateString()}`,
+        );
       });
   };
 
@@ -204,16 +217,32 @@ function AssistStats() {
 
   return (
     <div className="w-full h-screen overflow-y-auto">
-      <div className="mx-auto p-4 bg-white rounded border" style={{ maxWidth: 1360 }} id="pdf-anchor">
+      <div
+        className="mx-auto p-4 bg-white rounded border"
+        style={{ maxWidth: 1360 }}
+        id="pdf-anchor"
+      >
         <div id="pdf-ignore" className="w-full flex items-center mb-2">
           <Typography.Title style={{ marginBottom: 0 }} level={4}>
-            Co-browsing Reports
+            {t('Co-browsing Reports')}
           </Typography.Title>
           <div className="ml-auto flex items-center gap-2">
             <UserSearch onUserSelect={onUserSelect} />
 
-            <SelectDateRange period={period} onChange={onChangePeriod} right isAnt small />
-            <Tooltip title={!sessions || sessions.total === 0 ? 'No data at the moment to export.' : 'Export PDF'}>
+            <SelectDateRange
+              period={period}
+              onChange={onChangePeriod}
+              right
+              isAnt
+              small
+            />
+            <Tooltip
+              title={
+                !sessions || sessions.total === 0
+                  ? t('No data at the moment to export.')
+                  : t('Export PDF')
+              }
+            >
               <Button
                 onClick={getPdf2}
                 shape="default"
@@ -229,7 +258,7 @@ function AssistStats() {
             <div className="bg-white rounded border">
               <div className="pt-2 px-2">
                 <Typography.Text strong style={{ marginBottom: 0 }}>
-                  {chartNames[i]}
+                  {chartNames(t)[i]}
                 </Typography.Text>
                 <div className="flex gap-1 items-center">
                   <Typography.Title style={{ marginBottom: 0 }} level={5}>
@@ -240,14 +269,18 @@ function AssistStats() {
                   {graphs.previousPeriod[i] ? (
                     <div
                       className={
-                          graphs.currentPeriod[i] > graphs.previousPeriod[i]
-                            ? 'flex items-center gap-1 text-green'
-                            : 'flex items-center gap-2 text-red'
-                        }
+                        graphs.currentPeriod[i] > graphs.previousPeriod[i]
+                          ? 'flex items-center gap-1 text-green'
+                          : 'flex items-center gap-2 text-red'
+                      }
                     >
                       <ArrowUpOutlined
                         rev={undefined}
-                        rotate={graphs.currentPeriod[i] > graphs.previousPeriod[i] ? 0 : 180}
+                        rotate={
+                          graphs.currentPeriod[i] > graphs.previousPeriod[i]
+                            ? 0
+                            : 180
+                        }
                       />
                       {`${Math.round(
                         calculatePercentageDelta(
@@ -259,8 +292,15 @@ function AssistStats() {
                   ) : null}
                 </div>
               </div>
-              <Loader loading={isLoading} style={{ minHeight: 90, height: 90 }} size={36}>
-                <Chart data={generateListData(graphs.list, i)} label={chartNames[i]} />
+              <Loader
+                loading={isLoading}
+                style={{ minHeight: 90, height: 90 }}
+                size={36}
+              >
+                <Chart
+                  data={generateListData(graphs.list, i)}
+                  label={chartNames(t)[i]}
+                />
               </Loader>
             </div>
           ))}

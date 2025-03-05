@@ -100,11 +100,12 @@ class CustomFieldStore {
     try {
       const response = await customFieldService.get('/integration/sources');
       this.sources = response.map(
-        ({ value, ...item }: any) => new CustomField({
-          label: value,
-          key: value,
-          ...item,
-        }),
+        ({ value, ...item }: any) =>
+          new CustomField({
+            label: value,
+            key: value,
+            ...item,
+          }),
       );
     } finally {
       this.isLoading = false;

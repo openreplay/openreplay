@@ -3,15 +3,17 @@ import React from 'react';
 import { Input } from 'UI';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
+import { useTranslation } from 'react-i18next';
 
-interface Props {
-}
+interface Props {}
 
 function DashboardForm(props: Props) {
+  const { t } = useTranslation();
   const { dashboardStore } = useStore();
   const dashboard = dashboardStore.dashboardInstance;
 
-  const write = ({ target: { value, name } }) => dashboard.update({ [name]: value });
+  const write = ({ target: { value, name } }) =>
+    dashboard.update({ [name]: value });
   const writeRadio = ({ target: { value, name } }) => {
     dashboard.update({ [name]: value === 'team' });
   };
@@ -19,12 +21,23 @@ function DashboardForm(props: Props) {
   return useObserver(() => (
     <div className="mb-8 grid grid-cols-2 gap-8">
       <div className="form-field flex flex-col">
-        <label htmlFor="name" className="font-medium mb-2">Title</label>
-        <Input type="text" autoFocus name="name" onChange={write} value={dashboard.name} maxLength={100} />
+        <label htmlFor="name" className="font-medium mb-2">
+          {t('Title')}
+        </label>
+        <Input
+          type="text"
+          autoFocus
+          name="name"
+          onChange={write}
+          value={dashboard.name}
+          maxLength={100}
+        />
       </div>
 
       <div className="form-field flex flex-col">
-        <label htmlFor="name" className="font-medium mb-2">Visibility and Editing</label>
+        <label htmlFor="name" className="font-medium mb-2">
+          {t('Visibility and Editing')}
+        </label>
 
         <div className="flex items-center py-2">
           <label className="inline-flex items-center mr-6">
@@ -36,7 +49,9 @@ function DashboardForm(props: Props) {
               checked={dashboard.isPublic}
               onChange={writeRadio}
             />
-            <span className={cn('ml-2', { 'color-teal': dashboard.isPublic })}>Team</span>
+            <span className={cn('ml-2', { 'color-teal': dashboard.isPublic })}>
+              {t('Team')}
+            </span>
           </label>
 
           <label className="inline-flex items-center">
@@ -48,7 +63,9 @@ function DashboardForm(props: Props) {
               checked={!dashboard.isPublic}
               onChange={writeRadio}
             />
-            <span className={cn('ml-2', { 'color-teal': !dashboard.isPublic })}>Personal</span>
+            <span className={cn('ml-2', { 'color-teal': !dashboard.isPublic })}>
+              {t('Personal')}
+            </span>
           </label>
         </div>
       </div>

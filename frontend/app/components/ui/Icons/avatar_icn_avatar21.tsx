@@ -2,18 +2,21 @@
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Avatar_icn_avatar21(props: Props) {
-  const {
-    size = 14, width = size, height = size, fill = '',
-  } = props;
+  const { size = 14, width = size, height = size, fill = '' } = props;
   return (
-    <svg viewBox="0 0 24 24" fill="#27A2A8" width={`${width}px`} height={`${height}px`}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="#27A2A8"
+      width={`${width}px`}
+      height={`${height}px`}
+    >
       <path d="M11 3a8 8 0 1 0 0 16 8 8 0 1 0 0-16Z" opacity=".3" />
       <path d="M18.3 20.8 16 18.5c-1 .8-2.4 1.4-5 1.5-2.3.1-4.6-.8-6.3-2.5C3 15.8 2 13.4 2 11c0-5 4-9 9-9 4.3 0 8.1 3.1 8.9 7.2l-2 .4C17.3 6.4 14.3 4 11 4c-3.9 0-7 3.1-7 7 0 1.9.8 3.7 2.1 5.1 1.3 1.3 3 2 4.8 1.9 2.7-.1 3.6-.8 4.3-1.6l.7-.8 3.8 3.7-1.4 1.5z" />
       <path d="m18.303 13.717 1.414-1.414 1.98 1.98-1.414 1.414zM18.16 4.485a3.1 1.9-74.342 1 0 3.659 1.025 3.1 1.9-74.342 1 0-3.66-1.025Z" />

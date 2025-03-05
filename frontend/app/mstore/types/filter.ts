@@ -1,11 +1,10 @@
-import {
-  makeAutoObservable, runInAction, observable, action,
-} from 'mobx';
+import { makeAutoObservable, runInAction, observable, action } from 'mobx';
 import { filtersMap, conditionalFiltersMap } from 'Types/filter/newFilter';
 import { FilterKey } from 'Types/filter/filterType';
 import FilterItem from './filterItem';
 
-export const checkFilterValue = (value: any) => (Array.isArray(value) ? (value.length === 0 ? [''] : value) : [value]);
+export const checkFilterValue = (value: any) =>
+  Array.isArray(value) ? (value.length === 0 ? [''] : value) : [value];
 
 export interface IFilter {
   filterId: string;
@@ -143,14 +142,22 @@ export default class Filter implements IFilter {
 
   fromJson(json: any, isHeatmap?: boolean) {
     this.name = json.name;
-    this.filters = json.filters.map((i: Record<string, any>) => new FilterItem(undefined, this.isConditional, this.isMobile).fromJson(i, undefined, isHeatmap));
+    this.filters = json.filters.map((i: Record<string, any>) =>
+      new FilterItem(undefined, this.isConditional, this.isMobile).fromJson(
+        i,
+        undefined,
+        isHeatmap,
+      ),
+    );
     this.eventsOrder = json.eventsOrder;
     return this;
   }
 
   fromData(data: any) {
     this.name = data.name;
-    this.filters = data.filters.map((i: Record<string, any>) => new FilterItem(undefined, this.isConditional, this.isMobile).fromData(i));
+    this.filters = data.filters.map((i: Record<string, any>) =>
+      new FilterItem(undefined, this.isConditional, this.isMobile).fromData(i),
+    );
     this.eventsOrder = data.eventsOrder;
     return this;
   }
@@ -194,8 +201,16 @@ export default class Filter implements IFilter {
 
   addFunnelDefaultFilters() {
     this.filters = [];
-    this.addFilter({ ...filtersMap[FilterKey.LOCATION], value: [''], operator: 'isAny' });
-    this.addFilter({ ...filtersMap[FilterKey.CLICK], value: [''], operator: 'onAny' });
+    this.addFilter({
+      ...filtersMap[FilterKey.LOCATION],
+      value: [''],
+      operator: 'isAny',
+    });
+    this.addFilter({
+      ...filtersMap[FilterKey.CLICK],
+      value: [''],
+      operator: 'onAny',
+    });
   }
 
   toData() {
@@ -217,7 +232,13 @@ export default class Filter implements IFilter {
     }
   }
 
-  addFilterByKeyAndValue(key: any, value: any, operator: undefined, sourceOperator: undefined, source: undefined) {
+  addFilterByKeyAndValue(
+    key: any,
+    value: any,
+    operator: undefined,
+    sourceOperator: undefined,
+    source: undefined,
+  ) {
     let defaultFilter = { ...filtersMap[key] };
     if (defaultFilter) {
       defaultFilter = { ...defaultFilter, value: checkFilterValue(value) };

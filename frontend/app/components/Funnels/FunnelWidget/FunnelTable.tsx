@@ -6,6 +6,7 @@ import Funnel from 'App/mstore/types/funnel';
 import { ItemMenu } from 'UI';
 import { EllipsisVertical } from 'lucide-react';
 import { exportAntCsv } from '../../../utils';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   metric?: Widget;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 function FunnelTable(props: Props) {
+  const { t } = useTranslation();
   const defaultTableProps: TableProps['columns'] = [
     {
       title: 'Conversion %',
@@ -24,13 +26,10 @@ function FunnelTable(props: Props) {
       render: (text: string, _, index) => (
         <div className="w-full justify-between flex">
           <div>
-            Overall
-            {index > 0 ? '(previous)' : ''}
+            {t('Overall')}
+            {index > 0 ? `(${t('previous')})` : ''}
           </div>
-          <div>
-            {text}
-            %
-          </div>
+          <div>{text}%</div>
         </div>
       ),
     },
@@ -49,7 +48,8 @@ function FunnelTable(props: Props) {
     const tableDataCopy = defaultData;
     funnel.stages.forEach((st, ind) => {
       const title = `${st.label} ${st.operator} ${st.value.join(' or ')}`;
-      const wrappedTitle = title.length > 40 ? `${title.slice(0, 40)}...` : title;
+      const wrappedTitle =
+        title.length > 40 ? `${title.slice(0, 40)}...` : title;
       tablePropsCopy.push({
         title: wrappedTitle,
         dataIndex: `st_${ind}`,
@@ -82,9 +82,7 @@ function FunnelTable(props: Props) {
           pagination={false}
           size="middle"
           scroll={{ x: 'max-content' }}
-          rowClassName={(_, index) => (
-            index > 0 ? 'opacity-70' : ''
-          )}
+          rowClassName={(_, index) => (index > 0 ? 'opacity-70' : '')}
         />
         <TableExporter
           tableColumns={tableProps}
@@ -110,24 +108,19 @@ export function TableExporter({
   top?: string;
   right?: string;
 }) {
+  const { t } = useTranslation();
   const onClick = () => exportAntCsv(tableColumns, tableData, filename);
   return (
-    <Tooltip title="Export Data to CSV">
-      <div
-        className={`absolute ${top || 'top-0'} ${
-          right || '-right-1'
-        }`}
-      >
+    <Tooltip title={t('Export Data to CSV')}>
+      <div className={`absolute ${top || 'top-0'} ${right || '-right-1'}`}>
         <ItemMenu
           items={[{ icon: 'download', text: 'Export to CSV', onClick }]}
           bold
-          customTrigger={(
-            <div
-              className="flex items-center justify-center bg-gradient-to-r from-[#fafafa] to-neutral-200 cursor-pointer rounded-lg h-[38px]	w-[38px] btn-export-table-data"
-            >
+          customTrigger={
+            <div className="flex items-center justify-center bg-gradient-to-r from-[#fafafa] to-neutral-200 cursor-pointer rounded-lg h-[38px]	w-[38px] btn-export-table-data">
               <EllipsisVertical size={16} />
             </div>
-            )}
+          }
         />
       </div>
     </Tooltip>

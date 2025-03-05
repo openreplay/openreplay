@@ -1,6 +1,4 @@
-import {
-  Divider, Menu, Tag, Typography, Popover, Button,
-} from 'antd';
+import { Divider, Menu, Tag, Typography, Popover, Button } from 'antd';
 import cn from 'classnames';
 import React from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -29,6 +27,7 @@ import {
   preferences,
   spotOnlyCats,
 } from './data';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
@@ -38,10 +37,7 @@ interface Props extends RouteComponentProps {
 }
 
 function SideMenu(props: Props) {
-  const {
-    location,
-    isCollapsed,
-  } = props;
+  const { location, isCollapsed } = props;
 
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
@@ -53,9 +49,10 @@ function SideMenu(props: Props) {
   const { isEnterprise } = userStore;
   const { siteId } = projectsStore;
   const { isMobile } = projectsStore;
+  const { t } = useTranslation();
 
   const menu: any[] = React.useMemo(() => {
-    const sourceMenu = isPreferencesActive ? preferences : main_menu;
+    const sourceMenu = isPreferencesActive ? preferences(t) : main_menu(t);
 
     return sourceMenu
       .filter((cat) => {
@@ -93,14 +90,17 @@ function SideMenu(props: Props) {
             if (item.hidden) return item;
 
             const isHidden = [
-              item.key === MENU.RECOMMENDATIONS
-              && modules.includes(MODULES.RECOMMENDATIONS),
-              item.key === MENU.FEATURE_FLAGS
-              && modules.includes(MODULES.FEATURE_FLAGS),
-              item.key === MENU.HIGHLIGHTS && modules.includes(MODULES.HIGHLIGHTS),
-              item.key === MENU.LIVE_SESSIONS && (modules.includes(MODULES.ASSIST) || isMobile),
+              item.key === MENU.RECOMMENDATIONS &&
+                modules.includes(MODULES.RECOMMENDATIONS),
+              item.key === MENU.FEATURE_FLAGS &&
+                modules.includes(MODULES.FEATURE_FLAGS),
+              item.key === MENU.HIGHLIGHTS &&
+                modules.includes(MODULES.HIGHLIGHTS),
+              item.key === MENU.LIVE_SESSIONS &&
+                (modules.includes(MODULES.ASSIST) || isMobile),
               item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
-              item.key === MENU.USABILITY_TESTS && modules.includes(MODULES.USABILITY_TESTS),
+              item.key === MENU.USABILITY_TESTS &&
+                modules.includes(MODULES.USABILITY_TESTS),
               item.isAdmin && !isAdmin,
               item.isEnterprise && !isEnterprise,
             ].some((cond) => cond);
@@ -119,7 +119,8 @@ function SideMenu(props: Props) {
   }, [isAdmin, isEnterprise, isPreferencesActive, modules, spotOnly, siteId]);
 
   const menuRoutes: any = {
-    [MENU.EXIT]: () => props.history.push(withSiteId(routes.sessions(), siteId)),
+    [MENU.EXIT]: () =>
+      props.history.push(withSiteId(routes.sessions(), siteId)),
     [MENU.SESSIONS]: () => withSiteId(routes.sessions(), siteId),
     [MENU.BOOKMARKS]: () => withSiteId(routes.bookmarks(), siteId),
     [MENU.VAULT]: () => withSiteId(routes.bookmarks(), siteId),
@@ -132,7 +133,8 @@ function SideMenu(props: Props) {
     [MENU.USABILITY_TESTS]: () => withSiteId(routes.usabilityTesting(), siteId),
     [MENU.SPOTS]: () => withSiteId(routes.spotsList(), siteId),
     [PREFERENCES_MENU.ACCOUNT]: () => client(CLIENT_TABS.PROFILE),
-    [PREFERENCES_MENU.SESSION_LISTING]: () => client(CLIENT_TABS.SESSIONS_LISTING),
+    [PREFERENCES_MENU.SESSION_LISTING]: () =>
+      client(CLIENT_TABS.SESSIONS_LISTING),
     [PREFERENCES_MENU.INTEGRATIONS]: () => client(CLIENT_TABS.INTEGRATIONS),
     [PREFERENCES_MENU.WEBHOOKS]: () => client(CLIENT_TABS.WEBHOOKS),
     [PREFERENCES_MENU.PROJECTS]: () => client(CLIENT_TABS.SITES),
@@ -182,9 +184,11 @@ function SideMenu(props: Props) {
         mode="inline"
         onClick={handleClick}
         style={{ marginTop: '8px', border: 'none' }}
-        selectedKeys={menu.flatMap((category) => category.items
-          .filter((item: any) => isMenuItemActive(item.key))
-          .map((item) => item.key))}
+        selectedKeys={menu.flatMap((category) =>
+          category.items
+            .filter((item: any) => isMenuItemActive(item.key))
+            .map((item) => item.key),
+        )}
       >
         {menu.map((category, index) => (
           <React.Fragment key={category.key}>
@@ -202,13 +206,13 @@ function SideMenu(props: Props) {
                         <Menu.Item
                           key={item.key}
                           style={{ paddingLeft: '20px' }}
-                          icon={(
+                          icon={
                             <Icon
                               name={item.icon}
                               size={16}
                               color={isActive ? 'teal' : ''}
                             />
-                          )}
+                          }
                           className={cn('!rounded-lg hover-fill-teal')}
                         >
                           {item.label}
@@ -220,13 +224,13 @@ function SideMenu(props: Props) {
                       return (
                         <Menu.Item
                           key={item.key}
-                          icon={(
+                          icon={
                             <Icon
                               name={item.icon}
                               size={16}
                               color={isActive ? 'teal' : ''}
                             />
-                          )}
+                          }
                           style={{ paddingLeft: '20px' }}
                           className={cn('!rounded-lg !pe-0')}
                           itemIcon={
@@ -253,7 +257,7 @@ function SideMenu(props: Props) {
                               bordered={false}
                               className="text-xs"
                             >
-                              Beta
+                              {t('Beta')}
                             </Tag>
                           </div>
                         </Menu.Item>
@@ -263,11 +267,11 @@ function SideMenu(props: Props) {
                     return item.children ? (
                       <Menu.SubMenu
                         key={item.key}
-                        title={(
+                        title={
                           <Text className={cn('ml-5 !rounded')}>
                             {item.label}
                           </Text>
-                        )}
+                        }
                         icon={<SVG name={item.icon} size={16} />}
                       >
                         {item.children.map((child: any) => (
@@ -285,14 +289,14 @@ function SideMenu(props: Props) {
                     ) : (
                       <Menu.Item
                         key={item.key}
-                        icon={(
+                        icon={
                           <Icon
                             name={item.icon}
                             size={16}
                             color={isActive ? 'teal' : ''}
                             className="hover-fill-teal"
                           />
-                        )}
+                        }
                         style={{ paddingLeft: '20px' }}
                         className={cn('!rounded-lg hover-fill-teal')}
                         itemIcon={

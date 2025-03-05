@@ -8,9 +8,11 @@ import NoteTags from 'Shared/SessionsTabOverview/components/Notes/NoteTags';
 import withPermissions from 'HOCs/withPermissions';
 import usePageTitle from '@/hooks/usePageTitle';
 import NoteItem from './NoteItem';
+import { useTranslation } from 'react-i18next';
 
 function NotesList() {
-  usePageTitle('Notes - OpenReplay');
+  const { t } = useTranslation();
+  usePageTitle(t('Notes - OpenReplay'));
   const { notesStore } = useStore();
 
   React.useEffect(() => {
@@ -22,7 +24,7 @@ function NotesList() {
   return (
     <div className="widget-wrapper">
       <div className="flex items-center px-4 py-1 justify-between w-full">
-        <h2 className="text-2xl capitalize mr-4">Notes</h2>
+        <h2 className="text-2xl capitalize mr-4">{t('Notes')}</h2>
 
         <div className="flex items-center justify-end w-full">
           <NoteTags />
@@ -32,18 +34,22 @@ function NotesList() {
       <Loader loading={notesStore.loading}>
         <NoContent
           show={list.length === 0}
-          title={(
+          title={
             <div className="flex flex-col items-center justify-center">
               {/* <Icon name="no-dashboard" size={80} color="figmaColors-accent-secondary" /> */}
               <AnimatedSVG name={ICONS.NO_NOTES} size={60} />
-              <div className="text-center mt-4 text-lg font-medium">No notes yet</div>
+              <div className="text-center mt-4 text-lg font-medium">
+                {t('No notes yet')}
+              </div>
             </div>
-            )}
-          subtext={(
+          }
+          subtext={
             <div className="text-center flex justify-center items-center flex-col">
-              Note observations during session replays and share them with your team.
+              {t(
+                'Note observations during session replays and share them with your team.',
+              )}
             </div>
-            )}
+          }
         >
           <div className="border-b rounded bg-white">
             {list.map((note) => (
@@ -55,15 +61,13 @@ function NotesList() {
 
           <div className="w-full flex items-center justify-between py-4 px-6">
             <div className="text-disabled-text">
-              Showing
-              {' '}
-              <span className="font-semibold">{Math.min(list.length, notesStore.pageSize)}</span>
-              {' '}
-              out
-              of
-              <span className="font-semibold">{notesStore.total}</span>
-              {' '}
-              notes
+              {t('Showing')}{' '}
+              <span className="font-semibold">
+                {Math.min(list.length, notesStore.pageSize)}
+              </span>{' '}
+              {t('out of')}
+              <span className="font-semibold">{notesStore.total}</span>&nbsp;
+              {t('notes')}
             </div>
             <Pagination
               page={notesStore.page}
@@ -79,4 +83,9 @@ function NotesList() {
   );
 }
 
-export default withPermissions(['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', false, false)(observer(NotesList));
+export default withPermissions(
+  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'],
+  '',
+  false,
+  false,
+)(observer(NotesList));

@@ -3,15 +3,17 @@ import { Input } from 'UI';
 import LiveFilterModal from 'Shared/Filters/LiveFilterModal';
 import { debounce } from 'App/utils';
 import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite'; import stl from './LiveSessionSearchField.module.css';
+import { observer } from 'mobx-react-lite';
+import stl from './LiveSessionSearchField.module.css';
 
-interface Props {
-
-}
+interface Props {}
 
 function LiveSessionSearchField(props: Props) {
   const { searchStoreLive } = useStore();
-  const debounceFetchFilterSearch = debounce(searchStoreLive.fetchFilterSearch, 1000);
+  const debounceFetchFilterSearch = debounce(
+    searchStoreLive.fetchFilterSearch,
+    1000,
+  );
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 

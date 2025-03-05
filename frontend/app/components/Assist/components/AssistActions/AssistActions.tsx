@@ -2,10 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Button } from 'antd';
 import cn from 'classnames';
 import {
-  CallingState, ConnectionStatus, RemoteControlStatus, RequestLocalStream,
+  CallingState,
+  ConnectionStatus,
+  RemoteControlStatus,
+  RequestLocalStream,
 } from 'Player';
 import type { LocalStream } from 'Player';
-import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
+import {
+  PlayerContext,
+  ILivePlayerContext,
+} from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 import { confirm, Icon, Tooltip } from 'UI';
@@ -14,17 +20,7 @@ import { audioContextManager } from 'App/utils/screenRecorder';
 import { useStore } from 'App/mstore';
 import stl from './AassistActions.module.css';
 import ChatWindow from '../../ChatWindow';
-
-function onReject() {
-  toast.info('Call was rejected.');
-}
-
-function onControlReject() {
-  toast.info('Remote control request was rejected by user');
-}
-function onControlBusy() {
-  toast.info('Remote control busy');
-}
+import { useTranslation } from 'react-i18next';
 
 function onError(e: any) {
   console.log(e);
@@ -49,16 +45,15 @@ const AssistActionsPing = {
   },
 } as const;
 
-function AssistActions({
-  userId,
-  isCallActive,
-  agentIds,
-}: Props) {
+function AssistActions({ userId, isCallActive, agentIds }: Props) {
   // @ts-ignore ???
+  const { t } = useTranslation();
   const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext);
   const { sessionStore, userStore } = useStore();
   const permissions = userStore.account.permissions || [];
-  const hasPermission = permissions.includes('ASSIST_CALL') || permissions.includes('SERVICE_ASSIST_CALL');
+  const hasPermission =
+    permissions.includes('ASSIST_CALL') ||
+    permissions.includes('SERVICE_ASSIST_CALL');
   const { isEnterprise } = userStore;
   const agentId = userStore.account.id;
   const { userDisplayName } = sessionStore.current;
@@ -82,15 +77,23 @@ function AssistActions({
   } = store.get();
 
   const [isPrestart, setPrestart] = useState(false);
-  const [incomeStream, setIncomeStream] = useState<{ stream: MediaStream; isAgent: boolean }[] | null>([]);
+  const [incomeStream, setIncomeStream] = useState<
+    { stream: MediaStream; isAgent: boolean }[] | null
+  >([]);
   const [localStream, setLocalStream] = useState<LocalStream | null>(null);
-  const [callObject, setCallObject] = useState<{ end:() => void } | null>(null);
+  const [callObject, setCallObject] = useState<{ end: () => void } | null>(
+    null,
+  );
 
-  const onCall = calling === CallingState.OnCall || calling === CallingState.Reconnecting;
+  const onCall =
+    calling === CallingState.OnCall || calling === CallingState.Reconnecting;
   const callRequesting = calling === CallingState.Connecting;
-  const cannotCall = peerConnectionStatus !== ConnectionStatus.Connected || (isEnterprise && !hasPermission);
+  const cannotCall =
+    peerConnectionStatus !== ConnectionStatus.Connected ||
+    (isEnterprise && !hasPermission);
 
-  const remoteRequesting = remoteControlStatus === RemoteControlStatus.Requesting;
+  const remoteRequesting =
+    remoteControlStatus === RemoteControlStatus.Requesting;
   const remoteActive = remoteControlStatus === RemoteControlStatus.Enabled;
 
   useEffect(() => {
@@ -126,14 +129,18 @@ function AssistActions({
 
   useEffect(() => {
     if (peerConnectionStatus == ConnectionStatus.Disconnected) {
-      toast.info('Live session was closed.');
+      toast.info(t('Live session was closed.'));
     }
   }, [peerConnectionStatus]);
 
   const addIncomeStream = (stream: MediaStream, isAgent: boolean) => {
     setIncomeStream((oldState) => {
       if (oldState === null) return [{ stream, isAgent }];
-      if (!oldState.find((existingStream) => existingStream.stream.id === stream.id)) {
+      if (
+        !oldState.find(
+          (existingStream) => existingStream.stream.id === stream.id,
+        )
+      ) {
         audioContextManager.mergeAudioStreams(stream);
         return [...oldState, { stream, isAgent }];
       }
@@ -144,9 +151,23 @@ function AssistActions({
   const removeIncomeStream = (stream: MediaStream) => {
     setIncomeStream((prevState) => {
       if (!prevState) return [];
-      return prevState.filter((existingStream) => existingStream.stream.id !== stream.id);
+      return prevState.filter(
+        (existingStream) => existingStream.stream.id !== stream.id,
+      );
     });
   };
+
+  function onReject() {
+    toast.info(t('Call was rejected.'));
+  }
+
+  function onControlReject() {
+    toast.info(t('Remote control request was rejected by user'));
+  }
+
+  function onControlBusy() {
+    toast.info(t('Remote control busy'));
+  }
 
   function call() {
     RequestLocalStream()
@@ -157,7 +178,7 @@ function AssistActions({
           lStream,
           addIncomeStream,
           () => {
-            player.assistManager.ping(AssistActionsPing.call.end, agentId)
+            player.assistManager.ping(AssistActionsPing.call.end, agentId);
             lStream.stop.apply(lStream);
             removeIncomeStream(lStream.stream);
           },
@@ -177,9 +198,9 @@ function AssistActions({
 
     if (
       await confirm({
-        header: 'Start Call',
-        confirmButton: 'Call',
-        confirmation: `Are you sure you want to call ${userId || 'User'}?`,
+        header: t('Start Call'),
+        confirmButton: t('Call'),
+        confirmation: `${t('Are you sure you want to call')} ${userId || t('User')}?`,
       })
     ) {
       call(agentIds);
@@ -220,12 +241,14 @@ function AssistActions({
             role="button"
           >
             <Button
-              icon={<Icon name={annotating ? 'pencil-stop' : 'pencil'} size={16} />}
+              icon={
+                <Icon name={annotating ? 'pencil-stop' : 'pencil'} size={16} />
+              }
               type="text"
               style={{ height: '28px' }}
               className={annotating ? 'text-red' : 'text-main'}
             >
-              Annotate
+              {t('Annotate')}
             </Button>
           </div>
           <div className={stl.divider} />
@@ -240,18 +263,24 @@ function AssistActions({
       <Tooltip title="Go live to initiate remote control" disabled={livePlay}>
         <div
           className={cn('cursor-pointer p-2 flex items-center', {
-            [stl.disabled]: cannotCall || !livePlay || callRequesting || remoteRequesting,
+            [stl.disabled]:
+              cannotCall || !livePlay || callRequesting || remoteRequesting,
           })}
           onClick={requestControl}
           role="button"
         >
           <Button
-            icon={<Icon name={remoteActive ? 'window-x' : 'remote-control'} size={16} />}
+            icon={
+              <Icon
+                name={remoteActive ? 'window-x' : 'remote-control'}
+                size={16}
+              />
+            }
             type="text"
             className={remoteActive ? 'text-red' : 'text-main'}
             style={{ height: '28px' }}
           >
-            Remote Control
+            {t('Remote Control')}
           </Button>
         </div>
       </Tooltip>
@@ -260,8 +289,8 @@ function AssistActions({
       <Tooltip
         title={
           cannotCall
-            ? 'You don\'t have the permissions to perform this action.'
-            : `Call ${userId || 'User'}`
+            ? t("You don't have the permissions to perform this action.")
+            : `${t('Call')} ${userId || t('User')}`
         }
         disabled={onCall}
       >
@@ -275,10 +304,12 @@ function AssistActions({
           <Button
             icon={<Icon name="headset" size={16} />}
             type="text"
-            className={onCall ? 'text-red' : isPrestart ? 'text-green' : 'text-main'}
+            className={
+              onCall ? 'text-red' : isPrestart ? 'text-green' : 'text-main'
+            }
             style={{ height: '28px' }}
           >
-            {onCall ? 'End' : isPrestart ? 'Join Call' : 'Call'}
+            {onCall ? t('End') : isPrestart ? t('Join Call') : t('Call')}
           </Button>
         </div>
       </Tooltip>

@@ -12,7 +12,12 @@ export default class TagBadge extends React.PureComponent {
 
   render() {
     const {
-      className, text, onRemove, onClick, hashed = true, outline = false,
+      className,
+      text,
+      onRemove,
+      onClick,
+      hashed = true,
+      outline = false,
     } = this.props;
     return (
       <div
@@ -23,9 +28,9 @@ export default class TagBadge extends React.PureComponent {
       >
         <span>{text}</span>
         {onRemove && (
-        <button type="button" onClick={onRemove}>
-          <Icon name="close" size="12" />
-        </button>
+          <button type="button" onClick={onRemove}>
+            <Icon name="close" size="12" />
+          </button>
         )}
       </div>
     );

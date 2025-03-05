@@ -3,15 +3,19 @@ import FilterOperator from '../FilterOperator';
 import FilterValue from '../FilterValue';
 
 interface Props {
-    filterIndex: number;
-    filter: any; // event/filter
-    onUpdate: (filter: any) => void;
-    onRemoveFilter: () => void;
-    isFilter?: boolean;
+  filterIndex: number;
+  filter: any; // event/filter
+  onUpdate: (filter: any) => void;
+  onRemoveFilter: () => void;
+  isFilter?: boolean;
 }
 export default function SubFilterItem(props: Props) {
   const { isFilter = false, filterIndex, filter } = props;
-  const canShowValues = !(filter.operator === 'isAny' || filter.operator === 'onAny' || filter.operator === 'isUndefined');
+  const canShowValues = !(
+    filter.operator === 'isAny' ||
+    filter.operator === 'onAny' ||
+    filter.operator === 'isUndefined'
+  );
 
   const onOperatorChange = (e, { name, value }) => {
     props.onUpdate({ ...filter, operator: value });
@@ -27,7 +31,9 @@ export default function SubFilterItem(props: Props) {
         value={filter.operator}
       />
 
-      { canShowValues && (<FilterValue filter={filter} onUpdate={props.onUpdate} />) }
+      {canShowValues && (
+        <FilterValue filter={filter} onUpdate={props.onUpdate} />
+      )}
     </div>
   );
 }

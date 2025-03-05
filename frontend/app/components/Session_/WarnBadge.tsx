@@ -1,6 +1,7 @@
 import React from 'react';
 import { Alert } from 'antd';
 import { Icon } from 'UI';
+import { useTranslation } from 'react-i18next';
 
 const localhostWarn = (project: string) => `${project}_localhost_warn`;
 
@@ -38,16 +39,20 @@ const WarnBadge = React.memo(
     version: string;
     siteId: string;
   }) => {
+    const { t } = useTranslation();
     const localhostWarnSiteKey = localhostWarn(siteId);
-    const defaultLocalhostWarn = localStorage.getItem(localhostWarnSiteKey) !== '1';
-    const localhostWarnActive = currentLocation
-      && defaultLocalhostWarn
-      && /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation);
+    const defaultLocalhostWarn =
+      localStorage.getItem(localhostWarnSiteKey) !== '1';
+    const localhostWarnActive =
+      currentLocation &&
+      defaultLocalhostWarn &&
+      /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation);
     const trackerVersion = window.env.TRACKER_VERSION ?? undefined;
     const trackerVerDiff = compareVersions(version, trackerVersion);
     const trackerWarnActive = trackerVerDiff !== VersionComparison.Same;
 
-    const [showLocalhostWarn, setLocalhostWarn] = React.useState(localhostWarnActive);
+    const [showLocalhostWarn, setLocalhostWarn] =
+      React.useState(localhostWarnActive);
     const [showTrackerWarn, setTrackerWarn] = React.useState(trackerWarnActive);
 
     const closeWarning = (type: 1 | 2) => {
@@ -75,57 +80,55 @@ const WarnBadge = React.memo(
         }}
       >
         {showLocalhostWarn ? (
-          <div
-            className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between"
-          >
+          <div className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between">
             <div>
-              <span>Some assets may load incorrectly on localhost.</span>
+              <span>{t('Some assets may load incorrectly on localhost.')}</span>
               <a
                 href="https://docs.openreplay.com/en/troubleshooting/session-recordings/#testing-in-localhost"
                 target="_blank"
                 rel="noreferrer"
                 className="link ml-1"
               >
-                Learn More
+                {t('Learn More')}
               </a>
             </div>
 
-            <div className="py-1 ml-3 cursor-pointer" onClick={() => closeWarning(1)}>
+            <div
+              className="py-1 ml-3 cursor-pointer"
+              onClick={() => closeWarning(1)}
+            >
               <Icon name="close" size={16} color="black" />
             </div>
           </div>
         ) : null}
         {showTrackerWarn ? (
-          <div
-            className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between"
-          >
+          <div className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between">
             <div>
               <div>
-                Tracker version (
-                {version}
-                ) for this recording is
-                {' '}
+                {t('Tracker version')}&nbsp;({version})&nbsp;
+                {t('for this recording is')}{' '}
                 {trackerVerDiff === VersionComparison.Lower
                   ? 'lower '
                   : 'ahead of '}
-                the current (
-                {trackerVersion}
-                ) version.
+                {t('the current')}&nbsp;({trackerVersion})&nbsp;{t('version')}.
               </div>
               <div>
-                <span>Some recording might display incorrectly.</span>
+                <span>{t('Some recording might display incorrectly.')}</span>
                 <a
                   href="https://docs.openreplay.com/en/deployment/upgrade/#tracker-compatibility"
                   target="_blank"
                   rel="noreferrer"
                   className="link ml-1"
                 >
-                  Learn More
+                  {t('Learn More')}
                 </a>
               </div>
             </div>
 
-            <div className="py-1 ml-3 cursor-pointer" onClick={() => closeWarning(2)}>
+            <div
+              className="py-1 ml-3 cursor-pointer"
+              onClick={() => closeWarning(2)}
+            >
               <Icon name="close" size={16} color="black" />
             </div>
           </div>
@@ -136,6 +139,7 @@ const WarnBadge = React.memo(
 );
 
 export function PartialSessionBadge() {
+  const { t } = useTranslation();
   return (
     <div
       className="flex flex-col gap-2"
@@ -146,8 +150,12 @@ export function PartialSessionBadge() {
         bottom: '1.3rem',
       }}
     >
-      <Alert message="You are viewing a portion of full session" type="info" className="border-0 rounded-lg py-0.5" showIcon />
-
+      <Alert
+        message={t('You are viewing a portion of full session')}
+        type="info"
+        className="border-0 rounded-lg py-0.5"
+        showIcon
+      />
     </div>
   );
 }

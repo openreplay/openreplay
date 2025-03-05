@@ -2,11 +2,13 @@ import React from 'react';
 import { useHistory } from 'react-router';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
+import { Button, Dropdown, MenuProps, message, Modal } from 'antd';
 import {
-  Button, Dropdown, MenuProps, message, Modal,
-} from 'antd';
-import {
-  BellIcon, EllipsisVertical, EyeOffIcon, PencilIcon, TrashIcon,
+  BellIcon,
+  EllipsisVertical,
+  EyeOffIcon,
+  PencilIcon,
+  TrashIcon,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { dashboardMetricDetails, withSiteId } from 'App/routes';
@@ -36,7 +38,9 @@ function CardMenu({ card }: any) {
         withSiteId(dashboardMetricDetails(dashboardId, card.metricId), siteId),
       );
     } else if (key === 'hide') {
-      dashboardStore.deleteDashboardWidget(dashboardId!, card.widgetId).then((r) => null);
+      dashboardStore
+        .deleteDashboardWidget(dashboardId!, card.widgetId)
+        .then((r) => null);
     }
   };
 

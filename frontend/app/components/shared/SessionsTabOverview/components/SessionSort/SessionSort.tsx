@@ -3,27 +3,34 @@ import { Dropdown } from 'antd';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
 
-const sortOptionsMap = {
-  'startTs-desc': 'Newest',
-  'startTs-asc': 'Oldest',
-  'eventsCount-asc': 'Events Ascending',
-  'eventsCount-desc': 'Events Descending',
-};
+const sortOptionsMap = (t: TFunction) => ({
+  'startTs-desc': t('Newest'),
+  'startTs-asc': t('Oldest'),
+  'eventsCount-asc': t('Events Ascending'),
+  'eventsCount-desc': t('Events Descending'),
+});
 
-const sortOptions = Object.entries(sortOptionsMap).map(([value, label]) => ({
-  label,
-  key: value,
-}));
+const sortOptions = (t: TFunction) =>
+  Object.entries(sortOptionsMap(t)).map(([value, label]) => ({
+    label,
+    key: value,
+  }));
 
 export function SortDropdown<T>({
-  defaultOption, onSort, sortOptions, current,
+  defaultOption,
+  onSort,
+  sortOptions,
+  current,
 }: {
-  defaultOption?: string,
-  onSort: ({ key, item }: { key: string, item: T }) => void,
-  sortOptions: any,
-  current: string
+  defaultOption?: string;
+  onSort: ({ key, item }: { key: string; item: T }) => void;
+  sortOptions: any;
+  current: string;
 }) {
+  const { t } = useTranslation();
   return (
     <Dropdown
       menu={{
@@ -41,6 +48,7 @@ export function SortDropdown<T>({
 }
 
 function SessionSort() {
+  const { t } = useTranslation();
   const { searchStore, sessionStore } = useStore();
   const onSessionSort = sessionStore.sortSessions;
   const { sort, order } = searchStore.instance;
@@ -59,7 +67,7 @@ function SessionSort() {
       defaultOption={defaultOption}
       onSort={onSort}
       sortOptions={sortOptions}
-      current={sortOptionsMap[defaultOption]}
+      current={sortOptionsMap(t)[defaultOption]}
     />
   );
 }

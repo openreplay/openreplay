@@ -8,18 +8,21 @@ import {
 } from 'Player';
 
 import Loader from 'Components/Session_/Player/Overlay/Loader';
-import RequestingWindow, { WindowType } from 'App/components/Assist/RequestingWindow';
-import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
+import RequestingWindow, {
+  WindowType,
+} from 'App/components/Assist/RequestingWindow';
+import {
+  PlayerContext,
+  ILivePlayerContext,
+} from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import LiveStatusText from './LiveStatusText';
 
 interface Props {
-  closedLive?: boolean,
+  closedLive?: boolean;
 }
 
-function Overlay({
-  closedLive,
-}: Props) {
+function Overlay({ closedLive }: Props) {
   // @ts-ignore ?? TODO
   const { store } = React.useContext<ILivePlayerContext>(PlayerContext);
 
@@ -41,9 +44,10 @@ function Overlay({
 
   const showLiveStatusText = livePlay && liveStatusText && !loading;
 
-  const showRequestWindow = (calling === CallingState.Connecting
-      || remoteControl === RemoteControlStatus.Requesting
-      || recordingState === SessionRecordingStatus.Requesting);
+  const showRequestWindow =
+    calling === CallingState.Connecting ||
+    remoteControl === RemoteControlStatus.Requesting ||
+    recordingState === SessionRecordingStatus.Requesting;
 
   const getRequestWindowType = () => {
     if (calling === CallingState.Connecting) {
@@ -62,10 +66,14 @@ function Overlay({
   return (
     <>
       {/* @ts-ignore wtf */}
-      {showRequestWindow ? <RequestingWindow getWindowType={getRequestWindowType} /> : null}
+      {showRequestWindow ? (
+        <RequestingWindow getWindowType={getRequestWindowType} />
+      ) : null}
       {showLiveStatusText && (
         <LiveStatusText
-          connectionStatus={closedLive ? ConnectionStatus.Closed : connectionStatus}
+          connectionStatus={
+            closedLive ? ConnectionStatus.Closed : connectionStatus
+          }
         />
       )}
       {loading ? <Loader /> : null}

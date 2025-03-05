@@ -3,20 +3,18 @@ import { Layer, Rectangle } from 'recharts';
 import NodeButton from './NodeButton';
 
 interface CustomNodeProps {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    index: number;
-    payload: any;
-    containerWidth: number;
-    activeNodes: any[];
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  index: number;
+  payload: any;
+  containerWidth: number;
+  activeNodes: any[];
 }
 
 const CustomNode: React.FC<CustomNodeProps> = (props) => {
-  const {
-    x, y, width, height, index, payload, containerWidth,
-  } = props;
+  const { x, y, width, height, index, payload, containerWidth } = props;
   const isOut = x + width + 6 > containerWidth;
   const { isDemo } = payload;
   const isDropoff = payload.name === 'Dropoff';
@@ -37,7 +35,10 @@ const CustomNode: React.FC<CustomNodeProps> = (props) => {
           y={y + 5}
           height="25"
           style={{
-            width: '180px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            width: '180px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           }}
         >
           <NodeButton payload={payload} />

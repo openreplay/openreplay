@@ -70,7 +70,8 @@ export default class RecordingsStore {
 
     this.loading = true;
     try {
-      const response: { records: [], total: number } = await recordingsService.fetchRecordings(filter);
+      const response: { records: []; total: number } =
+        await recordingsService.fetchRecordings(filter);
       this.setRecordings(response.records, response.total);
       return response.records;
     } catch (e) {

@@ -1,7 +1,5 @@
 import React from 'react';
-import {
-  TYPES, Input, Click, Location,
-} from 'App/types/session/event';
+import { TYPES, Input, Click, Location } from 'App/types/session/event';
 import { CodeBlock, CopyButton } from 'UI';
 import { Segmented } from 'antd';
 
@@ -19,27 +17,35 @@ function UnitStepsModal({ events, width, height }: Props) {
     const userEventTypes = [TYPES.LOCATION, TYPES.CLICK, TYPES.INPUT];
     const puppeteerEvents = {
       [TYPES.LOCATION]: (event: Location) => `await page.goto('${event.url}')`,
-      [TYPES.CLICK]: (event: Click) => `await page.locator('${
-        event.selector.length ? event.selector : event.label
-      }').click()`,
-      [TYPES.INPUT]: (event: Input) => `await page.locator('${event.label}').type('Test Input')`,
-      screen: () => `await page.setViewport({width: ${width}, height: ${height})`,
+      [TYPES.CLICK]: (event: Click) =>
+        `await page.locator('${
+          event.selector.length ? event.selector : event.label
+        }').click()`,
+      [TYPES.INPUT]: (event: Input) =>
+        `await page.locator('${event.label}').type('Test Input')`,
+      screen: () =>
+        `await page.setViewport({width: ${width}, height: ${height})`,
     };
     const cypressEvents = {
       [TYPES.LOCATION]: (event: Location) => `cy.visit('${event.url}')`,
-      [TYPES.CLICK]: (event: Click) => `cy.get('${
-        event.selector.length ? event.selector : event.label
-      }').click()`,
-      [TYPES.INPUT]: (event: Input) => `cy.get('${event.label}').type('Test Input')`,
+      [TYPES.CLICK]: (event: Click) =>
+        `cy.get('${
+          event.selector.length ? event.selector : event.label
+        }').click()`,
+      [TYPES.INPUT]: (event: Input) =>
+        `cy.get('${event.label}').type('Test Input')`,
       screen: () => `cy.viewport(${width}, ${height})`,
     };
     const playWrightEvents = {
       [TYPES.LOCATION]: (event: Location) => `await page.goto('${event.url}')`,
-      [TYPES.CLICK]: (event: Click) => (event.selector.length
-        ? `await page.locator('${event.selector}').click()`
-        : `await page.getByText('${event.label}').click()`),
-      [TYPES.INPUT]: (event: Input) => `await page.getByLabel('${event.label}').fill('Test Input')`,
-      screen: () => `await page.setViewport({width: ${width}, height: ${height})`,
+      [TYPES.CLICK]: (event: Click) =>
+        event.selector.length
+          ? `await page.locator('${event.selector}').click()`
+          : `await page.getByText('${event.label}').click()`,
+      [TYPES.INPUT]: (event: Input) =>
+        `await page.getByLabel('${event.label}').fill('Test Input')`,
+      screen: () =>
+        `await page.setViewport({width: ${width}, height: ${height})`,
     };
 
     const collections = {

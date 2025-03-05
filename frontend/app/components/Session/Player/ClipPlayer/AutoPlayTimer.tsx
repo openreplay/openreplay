@@ -6,8 +6,10 @@ import AutoplayToggle from 'Shared/AutoplayToggle';
 import { useStore } from 'App/mstore';
 import stl from './AutoplayTimer.module.css';
 import clsOv from './overlay.module.css';
+import { useTranslation } from 'react-i18next';
 
 function AutoplayTimer({ history }: any) {
+  const { t } = useTranslation();
   let timer: NodeJS.Timer;
   const [cancelled, setCancelled] = useState(false);
   const [counter, setCounter] = useState(5);
@@ -38,11 +40,8 @@ function AutoplayTimer({ history }: any) {
     <div className={cn(clsOv.overlay, stl.overlayBg, 'z-10')}>
       <div className="border p-5 shadow-lg bg-white rounded">
         <div className="mb-5">
-          Autoplaying next clip in
-          {' '}
-          <span className="font-medium">{counter}</span>
-          {' '}
-          seconds
+          {t('Autoplaying next clip in')}&nbsp;
+          <span className="font-medium">{counter}</span>&nbsp;{t('seconds')}
         </div>
 
         <div className="flex items-center justify-between">
@@ -51,10 +50,12 @@ function AutoplayTimer({ history }: any) {
           </div>
           <div className="flex items-center">
             <Button type="text" onClick={cancel}>
-              Cancel
+              {t('Cancel')}
             </Button>
             <div className="px-2" />
-            <Button type="default" onClick={() => clipStore.next()}>Play Now</Button>
+            <Button type="default" onClick={() => clipStore.next()}>
+              {t('Play Now')}
+            </Button>
           </div>
         </div>
       </div>

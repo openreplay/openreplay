@@ -46,24 +46,27 @@ const elements = {
 function PerfWarnings({ userDevice }: { userDevice: string }) {
   const { store } = React.useContext(MobilePlayerContext);
   const { uiPlayerStore, sessionStore } = useStore();
-  const {
-    scale, performanceListNow, performanceList, inBackground,
-  } = store.get();
+  const { scale, performanceListNow, performanceList, inBackground } =
+    store.get();
   const { bottomBlock } = uiPlayerStore;
   const allElements = Object.keys(elements) as warningsType[];
   const list = React.useMemo(
-    () => allElements.filter(
-      (el) => performanceList.findIndex(
-        (pw: MobilePerformanceEvent & { techName: warningsType }) => pw.techName === el,
-      ) !== -1,
-    ),
+    () =>
+      allElements.filter(
+        (el) =>
+          performanceList.findIndex(
+            (pw: MobilePerformanceEvent & { techName: warningsType }) =>
+              pw.techName === el,
+          ) !== -1,
+      ),
     [performanceList.length],
   );
   const width = sessionStore.current.screenWidth ?? 0;
 
-  const leftMargin = width > 0
-    ? (width / 2) * scale + 20
-    : (mapIphoneModel(userDevice).styles.shell.width / 2 + 10) * scale;
+  const leftMargin =
+    width > 0
+      ? (width / 2) * scale + 20
+      : (mapIphoneModel(userDevice).styles.shell.width / 2 + 10) * scale;
   const contStyles = {
     left: '50%',
     display: 'flex',

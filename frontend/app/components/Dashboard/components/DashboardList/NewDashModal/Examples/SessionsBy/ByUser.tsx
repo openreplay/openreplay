@@ -41,13 +41,7 @@ function ByUser(props: any) {
   ];
 
   const lineWidth = 200;
-  return (
-    <ByComponent
-      {...props}
-      rows={rows}
-      lineWidth={lineWidth}
-    />
-  );
+  return <ByComponent {...props} rows={rows} lineWidth={lineWidth} />;
 }
 
 export default ByUser;

@@ -65,7 +65,8 @@ function getLabelText(type, source) {
   if (type === TYPES.REVID) return 'Rev ID';
 
   if (type === TYPES.DOM_COMPLETE) return 'DOM Complete';
-  if (type === TYPES.LARGEST_CONTENTFUL_PAINT_TIME) return 'Largest Contentful Paint Time';
+  if (type === TYPES.LARGEST_CONTENTFUL_PAINT_TIME)
+    return 'Largest Contentful Paint Time';
   if (type === TYPES.TIME_BETWEEN_EVENTS) return 'Time Between Events';
   if (type === TYPES.TTFB) return 'TTFB';
   if (type === TYPES.AVG_CPU_LOAD) return 'Avg CPU Load';
@@ -107,7 +108,6 @@ export default Record(
         operator: event.operator || defaultOperator(event),
         // value: target ? target.label : event.value,
         icon: event.icon || getEventIcon({ ...event, type }),
-      })
-    ,
+      }),
   },
 );

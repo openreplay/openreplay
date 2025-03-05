@@ -44,7 +44,9 @@ type MsgTypeMap = {
   exceptionsList: exceptionsMsg;
   frustrationsList: Issue | InjectedEvent;
 };
-type ListMessageType<K> = K extends keyof MsgTypeMap ? Array<MsgTypeMap[K]> : Array<Timed>;
+type ListMessageType<K> = K extends keyof MsgTypeMap
+  ? Array<MsgTypeMap[K]>
+  : Array<Timed>;
 
 const SIMPLE_LIST_NAMES = [
   'event',
@@ -58,7 +60,13 @@ const SIMPLE_LIST_NAMES = [
   'profiles',
   'frustrations',
 ] as const;
-const MARKED_LIST_NAMES = ['log', 'resource', 'fetch', 'stack', 'websocket'] as const;
+const MARKED_LIST_NAMES = [
+  'log',
+  'resource',
+  'fetch',
+  'stack',
+  'websocket',
+] as const;
 
 const LIST_NAMES = [...SIMPLE_LIST_NAMES, ...MARKED_LIST_NAMES] as const;
 
@@ -112,7 +120,10 @@ export default class Lists {
     }
     for (const name of MARKED_LIST_NAMES) {
       // TODO: provide types
-      lists[name] = new ListWalkerWithMarks((el) => el.isRed, initialLists[name]);
+      lists[name] = new ListWalkerWithMarks(
+        (el) => el.isRed,
+        initialLists[name],
+      );
     }
     this.lists = lists as ListsObject;
   }

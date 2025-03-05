@@ -1,6 +1,7 @@
 import { durationFromMs } from 'App/date';
 import { Timed } from 'Player';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Icon } from 'UI';
 
 type SocketMsg = Timed & {
@@ -18,14 +19,21 @@ interface Props {
 const lineLength = 40;
 
 function WSModal({ socketMsgList }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="h-screen w-full bg-white shadow">
       <div className="grid grid-cols-12 font-semibold border-b px-4 py-2">
-        <div className="col-span-9 flex items-center gap-2">Data</div>
-        <div className="col-span-1">Length</div>
-        <div className="col-span-2 text-right">Time</div>
+        <div className="col-span-9 flex items-center gap-2">{t('Data')}</div>
+        <div className="col-span-1">{t('Length')}</div>
+        <div className="col-span-2 text-right">{t('Time')}</div>
       </div>
-      <div style={{ height: 'calc(100% - 36px)', maxWidth: 700, overflowY: 'auto' }}>
+      <div
+        style={{
+          height: 'calc(100% - 36px)',
+          maxWidth: 700,
+          overflowY: 'auto',
+        }}
+      >
         {socketMsgList.map((msg) => (
           <Row msg={msg} key={msg.timestamp} />
         ))}
@@ -51,9 +59,13 @@ function Row({ msg }) {
     <>
       <div
         className={`border-b grid grid-cols-12 ${
-          msg.data.length > lineLength ? 'hover:bg-active-blue cursor-pointer' : ''
+          msg.data.length > lineLength
+            ? 'hover:bg-active-blue cursor-pointer'
+            : ''
         }`}
-        onClick={() => (msg.data.length > lineLength ? setIsOpen(!isOpen) : null)}
+        onClick={() =>
+          msg.data.length > lineLength ? setIsOpen(!isOpen) : null
+        }
         style={{ width: 700 }}
       >
         <div className="col-span-9 flex items-center gap-2 p-2">
@@ -66,15 +78,15 @@ function Row({ msg }) {
             {msg.data}
           </span>
           {msg.data.length > lineLength ? (
-            <div
-              className="rounded-full font-bold text-xl p-2 bg-white w-6 h-6 flex items-center justify-center"
-            >
+            <div className="rounded-full font-bold text-xl p-2 bg-white w-6 h-6 flex items-center justify-center">
               <span>{isOpen ? '-' : '+'}</span>
             </div>
           ) : null}
         </div>
         <div className="col-span-1 p-2">{msg.data.length}</div>
-        <div className="col-span-2 p-2 text-right">{durationFromMs(msg.time, true)}</div>
+        <div className="col-span-2 p-2 text-right">
+          {durationFromMs(msg.time, true)}
+        </div>
       </div>
       {isOpen ? (
         <div className="w-full h-fit bg-active-blue pl-6 pb-4 pr-2">

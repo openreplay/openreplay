@@ -10,12 +10,7 @@ function TimeTracker({ scale, live = false, left }) {
   const adjustedTime = time - range[0];
 
   return (
-    <ProgressBar
-      scale={scale}
-      live={live}
-      left={left}
-      time={adjustedTime}
-    />
+    <ProgressBar scale={scale} live={live} left={left} time={adjustedTime} />
   );
 }
 

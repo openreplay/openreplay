@@ -16,6 +16,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import { processLog, UnifiedLog } from './utils';
 import { FailedFetch, LoadingFetch } from './StatusMessages';
 import { TableHeader, LogRow } from './Table';
+import { useTranslation } from 'react-i18next';
 
 async function fetchLogs(
   tab: string,
@@ -41,15 +42,15 @@ async function fetchLogs(
 }
 
 function BackendLogsPanel() {
+  const { t } = useTranslation();
   const { projectsStore, sessionStore, integrationsStore } = useStore();
-  const integratedServices = integrationsStore.integrations.backendLogIntegrations;
+  const integratedServices =
+    integrationsStore.integrations.backendLogIntegrations;
   const defaultTab = integratedServices[0]!.name;
   const sessionId = sessionStore.currentId;
   const projectId = projectsStore.siteId!;
   const [tab, setTab] = React.useState<ServiceName>(defaultTab as ServiceName);
-  const {
-    data, isError, isPending, isSuccess, refetch,
-  } = useQuery<
+  const { data, isError, isPending, isSuccess, refetch } = useQuery<
     UnifiedLog[]
   >({
     queryKey: ['integrationLogs', tab, sessionId],
@@ -71,9 +72,7 @@ function BackendLogsPanel() {
     .map(([slug, name]) => ({
       label: (
         <div className="flex items-center gap-2">
-          <Icon size={14} name={`integrations/${slug}`} />
-          {' '}
-          <div>{name}</div>
+          <Icon size={14} name={`integrations/${slug}`} /> <div>{name}</div>
         </div>
       ),
       value: slug,
@@ -84,7 +83,7 @@ function BackendLogsPanel() {
       <BottomBlock.Header>
         <div className="flex items-center justify-between w-full">
           <div className="flex gap-2 items-center">
-            <div className="font-semibold">Traces</div>
+            <div className="font-semibold">{t('Traces')}</div>
             {tabs.length && tab ? (
               <div>
                 <Segmented
@@ -100,11 +99,15 @@ function BackendLogsPanel() {
           <div className="flex items-center gap-2">
             <Segmented
               options={[
-                { label: 'All Tabs', value: 'all' },
+                { label: t('All Tabs'), value: 'all' },
                 {
                   label: (
-                    <Tooltip title="Backend logs are fetched for all tabs combined.">
-                      <span>Current Tab</span>
+                    <Tooltip
+                      title={t(
+                        'Backend logs are fetched for all tabs combined.',
+                      )}
+                    >
+                      <span>{t('Current Tab')}</span>
                     </Tooltip>
                   ),
                   value: 'current',
@@ -118,7 +121,7 @@ function BackendLogsPanel() {
 
             <Input
               className="rounded-lg"
-              placeholder="Filter by keyword"
+              placeholder={t('Filter by keyword')}
               name="filter"
               onChange={onFilterChange}
               value={filter}
@@ -147,9 +150,11 @@ const LogsTable = observer(({ data }: { data: UnifiedLog[] }) => {
   const _list = React.useRef<VListHandle>(null);
   const activeIndex = React.useMemo(() => {
     const currTs = time + sessionStart;
-    const index = data.findIndex((log) => (log.timestamp !== 'N/A'
-      ? new Date(log.timestamp).getTime() >= currTs
-      : false));
+    const index = data.findIndex((log) =>
+      log.timestamp !== 'N/A'
+        ? new Date(log.timestamp).getTime() >= currTs
+        : false,
+    );
     return index === -1 ? data.length - 1 : index;
   }, [time, data.length]);
   React.useEffect(() => {

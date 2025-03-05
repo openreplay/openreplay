@@ -5,16 +5,16 @@ import React, { useEffect } from 'react';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
-import {
-  Loader, NoContent, Tooltip, confirm,
-} from 'UI';
+import { Loader, NoContent, Tooltip, confirm } from 'UI';
 import { Button } from 'antd';
 
 import RoleForm from './components/RoleForm';
 import RoleItem from './components/RoleItem';
 import stl from './roles.module.css';
+import { useTranslation } from 'react-i18next';
 
 function Roles() {
+  const { t } = useTranslation();
   const { roleStore, projectsStore, userStore } = useStore();
   const { account } = userStore;
   const projectsMap = projectsStore.list.reduce((acc: any, p: any) => {
@@ -51,8 +51,8 @@ function Roles() {
   const deleteHandler = async (role: any) => {
     if (
       await confirm({
-        header: 'Roles',
-        confirmation: 'Are you sure you want to remove this role?',
+        header: t('Roles'),
+        confirmation: t('Are you sure you want to remove this role?'),
       })
     ) {
       deleteRole(role.roleId).then(hideModal);
@@ -64,19 +64,27 @@ function Roles() {
       <div className="bg-white rounded-lg shadow-sm border">
         <div className={cn(stl.tabHeader, 'flex items-center')}>
           <div className="flex items-center mr-auto px-5 pt-5">
-            <h3 className={cn(stl.tabTitle, 'text-2xl')}>Roles and Access</h3>
+            <h3 className={cn(stl.tabTitle, 'text-2xl')}>
+              {t('Roles and Access')}
+            </h3>
             <Tooltip
-              title="You don’t have the permissions to perform this action."
+              title={t(
+                'You don’t have the permissions to perform this action.',
+              )}
               disabled={isAdmin}
             >
               <Button type="primary" onClick={() => editHandler({})}>
-                Add
+                {t('Add')}
               </Button>
             </Tooltip>
           </div>
         </div>
 
-        <NoContent title="No roles are available" size="small" show={false}>
+        <NoContent
+          title={t('No roles are available')}
+          size="small"
+          show={false}
+        >
           <div className="">
             <div
               className={cn(
@@ -84,13 +92,13 @@ function Roles() {
               )}
             >
               <div className="" style={{ width: '20%' }}>
-                Title
+                {t('Title')}
               </div>
               <div className="" style={{ width: '30%' }}>
-                Project Access
+                {t('Project Access')}
               </div>
               <div className="" style={{ width: '50%' }}>
-                Feature Access
+                {t('Feature Access')}
               </div>
               <div />
             </div>

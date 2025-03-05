@@ -5,7 +5,7 @@ import SessionsByErrors from '../SessionsByErrors';
 import SessionsByIssues from '../SessionsByIssues';
 
 interface ExampleProps {
-    onCard: (card: string) => void;
+  onCard: (card: string) => void;
 }
 
 const PerformanceMonitoring: React.FC<ExampleProps> = ({ onCard }) => (

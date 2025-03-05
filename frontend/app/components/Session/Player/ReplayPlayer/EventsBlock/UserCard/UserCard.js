@@ -4,9 +4,7 @@ import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
-import {
-  Avatar, TextEllipsis, CountryFlag, Icon, Tooltip,
-} from 'UI';
+import { Avatar, TextEllipsis, CountryFlag, Icon, Tooltip } from 'UI';
 import cn from 'classnames';
 import { withRequest } from 'HOCs';
 import SessionInfoItem from 'Components/Session_/SessionInfoItem';
@@ -16,8 +14,10 @@ import { IFRAME } from 'App/constants/storageKeys';
 import { capitalize } from 'App/utils';
 import { Popover } from 'antd';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 
 function UserCard({ className, width, height }) {
+  const { t } = useTranslation();
   const { settingsStore, sessionStore } = useStore();
   const session = sessionStore.current;
   const { timezone } = settingsStore.sessionSettings;
@@ -45,17 +45,15 @@ function UserCard({ className, width, height }) {
 
   const hasUserDetails = !!userId || !!userAnonymousId;
 
-  const getDimension = (width, height) => (width && height ? (
-    <div className="flex items-center">
-      {width || 'x'}
-      {' '}
-      <Icon name="close" size="12" className="mx-1" />
-      {' '}
-      {height || 'x'}
-    </div>
-  ) : (
-    <span className="">Resolution N/A</span>
-  ));
+  const getDimension = (width, height) =>
+    width && height ? (
+      <div className="flex items-center">
+        {width || 'x'} <Icon name="close" size="12" className="mx-1" />{' '}
+        {height || 'x'}
+      </div>
+    ) : (
+      <span className="">{t('Resolution N/A')}</span>
+    );
 
   const avatarbgSize = '38px';
 
@@ -65,8 +63,8 @@ function UserCard({ className, width, height }) {
     const handler = (e) => {
       if (e.shiftKey) {
         if (
-          e.target instanceof HTMLInputElement
-            || e.target instanceof HTMLTextAreaElement
+          e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement
         ) {
           return false;
         }
@@ -86,13 +84,24 @@ function UserCard({ className, width, height }) {
   return (
     <div className={cn('bg-white flex items-center w-full', className)}>
       <div className="flex items-center">
-        <Avatar iconSize="23" width={avatarbgSize} height={avatarbgSize} seed={userNumericHash} />
+        <Avatar
+          iconSize="23"
+          width={avatarbgSize}
+          height={avatarbgSize}
+          seed={userNumericHash}
+        />
         <div className="ml-3 overflow-hidden leading-tight">
           <TextEllipsis
             noHint
-            className={cn('font-medium', { 'color-teal cursor-pointer': hasUserDetails })}
+            className={cn('font-medium', {
+              'color-teal cursor-pointer': hasUserDetails,
+            })}
           >
-            <UserName name={userDisplayName} userId={userId} hash={userNumericHash} />
+            <UserName
+              name={userDisplayName}
+              userId={userId}
+              hash={userNumericHash}
+            />
           </TextEllipsis>
 
           <div className="text-sm color-gray-medium flex items-center">
@@ -105,12 +114,7 @@ function UserCard({ className, width, height }) {
               </Tooltip>
             </span>
             <span className="mx-1 font-bold text-xl">&#183;</span>
-            {userCity && (
-              <span className="mr-1">
-                {userCity}
-                ,
-              </span>
-            )}
+            {userCity && <span className="mr-1">{userCity},</span>}
             <span>{countries[userCountry]}</span>
             <span className="mx-1 font-bold text-xl">&#183;</span>
             <span>
@@ -126,38 +130,46 @@ function UserCard({ className, width, height }) {
                   <SessionInfoItem
                     comp={<CountryFlag country={userCountry} height={11} />}
                     label={countries[userCountry]}
-                    value={(
+                    value={
                       <span style={{ whiteSpace: 'nowrap' }}>
-                        {userCity && (
-                          <span className="mr-1">
-                            {userCity}
-                            ,
-                          </span>
-                        )}
+                        {userCity && <span className="mr-1">{userCity},</span>}
                         {userState && <span className="mr-1">{userState}</span>}
                       </span>
-                      )}
+                    }
                   />
-                  {userBrowser
-                      && (
-                      <SessionInfoItem
-                        icon={browserIcon(userBrowser)}
-                        label={userBrowser}
-                        value={`v${userBrowserVersion}`}
-                      />
-                      )}
-                  <SessionInfoItem icon={osIcon(userOs)} label={safeOs} value={userOsVersion} />
+                  {userBrowser && (
+                    <SessionInfoItem
+                      icon={browserIcon(userBrowser)}
+                      label={userBrowser}
+                      value={`v${userBrowserVersion}`}
+                    />
+                  )}
+                  <SessionInfoItem
+                    icon={osIcon(userOs)}
+                    label={safeOs}
+                    value={userOsVersion}
+                  />
                   <SessionInfoItem
                     icon={deviceTypeIcon(userDeviceType)}
                     label={userDeviceType}
-                    value={getDimension(width || screenWidth, height || screenHeight)}
+                    value={getDimension(
+                      width || screenWidth,
+                      height || screenHeight,
+                    )}
                     isLast={!revId}
                   />
-                  {revId && <SessionInfoItem icon="info" label="Rev ID:" value={revId} isLast />}
+                  {revId && (
+                    <SessionInfoItem
+                      icon="info"
+                      label="Rev ID:"
+                      value={revId}
+                      isLast
+                    />
+                  )}
                 </div>
               )}
             >
-              <span className="link">More</span>
+              <span className="link">{t('More')}</span>
             </Popover>
           </div>
         </div>
@@ -180,7 +192,10 @@ function UserName({ name, userId, hash }) {
   const hasIframe = localStorage.getItem(IFRAME) === 'true';
   const { showModal } = useModal();
   const onClick = () => {
-    showModal(<UserSessionsModal userId={userId} hash={hash} name={name} />, { right: true, width: 700 });
+    showModal(<UserSessionsModal userId={userId} hash={hash} name={name} />, {
+      right: true,
+      width: 700,
+    });
   };
   return <div onClick={userId && !hasIframe ? onClick : () => {}}>{name}</div>;
 }

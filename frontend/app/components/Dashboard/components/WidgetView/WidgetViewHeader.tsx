@@ -20,7 +20,10 @@ interface Props {
 const defaultText = 'Copy link to clipboard';
 
 function WidgetViewHeader({
-  onClick, onSave, layoutControl, isPreview,
+  onClick,
+  onSave,
+  layoutControl,
+  isPreview,
 }: Props) {
   const [tooltipText, setTooltipText] = React.useState(defaultText);
   const { metricStore } = useStore();
@@ -58,11 +61,15 @@ function WidgetViewHeader({
       <Space>
         <Button
           type={
-                metricStore.isSaving || (widget.exists() && !widget.hasChanged) ? 'text' : 'primary'
-              }
+            metricStore.isSaving || (widget.exists() && !widget.hasChanged)
+              ? 'text'
+              : 'primary'
+          }
           onClick={handleSave}
           loading={metricStore.isSaving}
-          disabled={metricStore.isSaving || (widget.exists() && !widget.hasChanged)}
+          disabled={
+            metricStore.isSaving || (widget.exists() && !widget.hasChanged)
+          }
           className="font-medium btn-update-card"
           size="small"
         >
@@ -72,7 +79,13 @@ function WidgetViewHeader({
         {/* <MetricTypeSelector /> */}
 
         <Tooltip title={tooltipText}>
-          <Button type="text" className="btn-copy-card-url" disabled={!widget.exists()} onClick={copyUrl} icon={<Link2 size={16} strokeWidth={1} />} />
+          <Button
+            type="text"
+            className="btn-copy-card-url"
+            disabled={!widget.exists()}
+            onClick={copyUrl}
+            icon={<Link2 size={16} strokeWidth={1} />}
+          />
         </Tooltip>
         {layoutControl}
         <CardViewMenu />

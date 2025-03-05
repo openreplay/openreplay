@@ -7,18 +7,14 @@ import ClipFeedback from 'Components/Session/Player/ClipPlayer/ClipFeedback';
 import AutoplayTimer from 'Components/Session/Player/ClipPlayer/AutoPlayTimer';
 
 interface Props {
-    autoplay: boolean;
+  autoplay: boolean;
 }
 
 function Overlay({ autoplay }: Props) {
   const { player, store } = React.useContext(PlayerContext);
   const togglePlay = () => player.togglePlay();
 
-  const {
-    messagesLoading,
-    playing,
-    completed,
-  } = store.get();
+  const { messagesLoading, playing, completed } = store.get();
 
   return (
     <>

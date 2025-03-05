@@ -3,7 +3,10 @@ import { ToastContainer, Flip } from 'react-toastify';
 import styles from './notification.module.css';
 
 export default function ({
-  transition = Flip, position = 'bottom-right', autoClose = 3000, ...props
+  transition = Flip,
+  position = 'bottom-right',
+  autoClose = 3000,
+  ...props
 }) {
   return (
     <ToastContainer

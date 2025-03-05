@@ -1,6 +1,9 @@
 import React from 'react';
 import {
-  DROPDOWN_OPTIONS, INSIGHTS, Option, USER_PATH,
+  DROPDOWN_OPTIONS,
+  INSIGHTS,
+  Option,
+  USER_PATH,
 } from 'App/constants/card';
 import Select from 'Shared/Select';
 import { components } from 'react-select';
@@ -19,10 +22,14 @@ function MetricTypeDropdown(props: Props) {
   const metric: any = metricStore.instance;
   const { isEnterprise } = userStore;
 
-  const options = React.useMemo(() => DROPDOWN_OPTIONS.map((option: any) => ({
-    ...option,
-    disabled: !isEnterprise && option.value === INSIGHTS,
-  })), []);
+  const options = React.useMemo(
+    () =>
+      DROPDOWN_OPTIONS.map((option: any) => ({
+        ...option,
+        disabled: !isEnterprise && option.value === INSIGHTS,
+      })),
+    [],
+  );
 
   const onChange = (type: string) => {
     metricStore.changeType(type);
@@ -35,7 +42,8 @@ function MetricTypeDropdown(props: Props) {
       options={options}
       isOptionDisabled={(option: Option) => option.disabled}
       value={
-        DROPDOWN_OPTIONS.find((i: any) => i.value === metric.metricType) || DROPDOWN_OPTIONS[0]
+        DROPDOWN_OPTIONS.find((i: any) => i.value === metric.metricType) ||
+        DROPDOWN_OPTIONS[0]
       }
       onChange={({ value }) => onChange(value.value)}
       components={{
@@ -59,7 +67,9 @@ function MetricTypeDropdown(props: Props) {
         ),
         Option: ({ children, ...props }: any) => {
           const { data } = props;
-          return <CustomDropdownOption children={children} {...props} {...data} />;
+          return (
+            <CustomDropdownOption children={children} {...props} {...data} />
+          );
         },
       }}
     />

@@ -1,10 +1,13 @@
 import { ShareAltOutlined, MoreOutlined } from '@ant-design/icons';
-import {
-  Button as AntButton, Switch, Tooltip, Dropdown,
-} from 'antd';
+import { Button as AntButton, Switch, Tooltip, Dropdown } from 'antd';
 import cn from 'classnames';
 import {
-  Link2, Keyboard, Bot, Bookmark as BookmarkIcn, BookmarkCheck, Vault,
+  Link2,
+  Keyboard,
+  Bot,
+  Bookmark as BookmarkIcn,
+  BookmarkCheck,
+  Vault,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
@@ -24,6 +27,7 @@ import QueueControls from './QueueControls';
 import HighlightButton from './Highlight/HighlightButton';
 import ShareModal from '../shared/SharePopup/SharePopup';
 import UnitStepsModal from './UnitStepsModal';
+import { useTranslation } from 'react-i18next';
 
 const disableDevtools = 'or_devtools_uxt_toggle';
 
@@ -36,6 +40,7 @@ function SubHeader(props) {
     userStore,
     issueReportingStore,
   } = useStore();
+  const { t } = useTranslation();
   const { favorite } = sessionStore.current;
   const { isEnterprise } = userStore;
   const currentSession = sessionStore.current;
@@ -74,9 +79,13 @@ function SubHeader(props) {
       });
     }
     openModal(
-      <IssueForm sessionId={currentSession.sessionId} closeHandler={closeModal} errors={[]} />,
+      <IssueForm
+        sessionId={currentSession.sessionId}
+        closeHandler={closeModal}
+        errors={[]}
+      />,
       {
-        title: 'Create Issue',
+        title: t('Create Issue'),
       },
     );
   };
@@ -94,7 +103,7 @@ function SubHeader(props) {
   };
 
   const showKbHelp = () => {
-    openModal(<ShortcutGrid />, { width: 320, title: 'Keyboard Shortcuts' });
+    openModal(<ShortcutGrid />, { width: 320, title: t('Keyboard Shortcuts') });
   };
 
   const vaultIcon = isEnterprise ? (
@@ -107,11 +116,11 @@ function SubHeader(props) {
   const toggleFavorite = () => {
     const onToggleFavorite = sessionStore.toggleFavorite;
     const ADDED_MESSAGE = isEnterprise
-      ? 'Session added to vault'
-      : 'Session added to your bookmarks';
+      ? t('Session added to vault')
+      : t('Session added to your bookmarks');
     const REMOVED_MESSAGE = isEnterprise
-      ? 'Session removed from vault'
-      : 'Session removed from your bookmarks';
+      ? t('Session removed from vault')
+      : t('Session removed from your bookmarks');
 
     onToggleFavorite(currentSession.sessionId).then(() => {
       toast.success(isFavorite ? REMOVED_MESSAGE : ADDED_MESSAGE);
@@ -123,7 +132,10 @@ function SubHeader(props) {
     const allEvents = sessionStore.current.events;
     const { width } = store.get();
     const { height } = store.get();
-    openModal(<UnitStepsModal width={width} height={height} events={allEvents} />, { title: 'Export Events', width: 640 });
+    openModal(
+      <UnitStepsModal width={width} height={height} events={allEvents} />,
+      { title: t('Export Events'), width: 640 },
+    );
   };
 
   return (
@@ -154,18 +166,20 @@ function SubHeader(props) {
             )}
             style={{ width: 'max-content' }}
           >
-            <Tooltip title="Share Session" placement="bottom">
+            <Tooltip title={t('Share Session')} placement="bottom">
               <AntButton
                 size="small"
                 className="flex items-center justify-center"
-                onClick={() => openModal(
-                  <ShareModal
-                    showCopyLink
-                    hideModal={closeModal}
-                    time={store?.get().time}
-                  />,
-                  { title: 'Share Session' },
-                )}
+                onClick={() =>
+                  openModal(
+                    <ShareModal
+                      showCopyLink
+                      hideModal={closeModal}
+                      time={store?.get().time}
+                    />,
+                    { title: t('Share Session') },
+                  )
+                }
               >
                 <ShareAltOutlined />
               </AntButton>
@@ -174,38 +188,47 @@ function SubHeader(props) {
             <Dropdown
               menu={{
                 items: [
-
                   {
                     key: '2',
-                    label: <div className="flex items-center gap-2">
-                      {vaultIcon}
-                      <span>{isEnterprise ? 'Vault' : 'Bookmark'}</span>
-                    </div>,
+                    label: (
+                      <div className="flex items-center gap-2">
+                        {vaultIcon}
+                        <span>{isEnterprise ? t('Vault') : t('Bookmark')}</span>
+                      </div>
+                    ),
                     onClick: toggleFavorite,
                   },
                   {
                     key: '4',
-                    label: <div className="flex items-center gap-2">
-                      <Icon name={`integrations/${reportingProvider || 'github'}`} />
-                      <span>Issues</span>
-                    </div>,
+                    label: (
+                      <div className="flex items-center gap-2">
+                        <Icon
+                          name={`integrations/${reportingProvider || 'github'}`}
+                        />
+                        <span>{t('Issues')}</span>
+                      </div>
+                    ),
                     disabled: !enabledIntegration,
                     onClick: handleOpenIssueModal,
                   },
                   {
                     key: '1',
-                    label: <div className="flex items-center gap-2">
-                      <Keyboard size={16} strokeWidth={1} />
-                      <span>Keyboard Shortcuts</span>
-                    </div>,
+                    label: (
+                      <div className="flex items-center gap-2">
+                        <Keyboard size={16} strokeWidth={1} />
+                        <span>{t('Keyboard Shortcuts')}</span>
+                      </div>
+                    ),
                     onClick: showKbHelp,
                   },
                   {
                     key: '5',
-                    label: <div className="flex items-center gap-2">
-                      <Bot size={16} strokeWidth={1} />
-                      <span>Export Events</span>
-                    </div>,
+                    label: (
+                      <div className="flex items-center gap-2">
+                        <Bot size={16} strokeWidth={1} />
+                        <span>{t('Export Events')}</span>
+                      </div>
+                    ),
                     onClick: exportEvents,
                   },
                 ],
@@ -237,7 +260,12 @@ function SubHeader(props) {
           <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
             <Link2 className="mx-2" size={16} />
             <Tooltip title="Open in new tab" delay={0} placement="bottom">
-              <a href={currentLocation} target="_blank" className="truncate" rel="noreferrer">
+              <a
+                href={currentLocation}
+                target="_blank"
+                className="truncate"
+                rel="noreferrer"
+              >
                 {locationTruncated}
               </a>
             </Tooltip>

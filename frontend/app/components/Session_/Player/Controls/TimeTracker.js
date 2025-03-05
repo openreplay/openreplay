@@ -7,14 +7,7 @@ function TimeTracker({ scale, live = false, left }) {
   const { store } = React.useContext(PlayerContext);
   const { time } = store.get();
 
-  return (
-    <ProgressBar
-      scale={scale}
-      live={live}
-      left={left}
-      time={time}
-    />
-  );
+  return <ProgressBar scale={scale} live={live} left={left} time={time} />;
 }
 
 TimeTracker.displayName = 'TimeTracker';

@@ -14,7 +14,10 @@ const countryOptions = Object.keys(countries).map((i) => ({
 }));
 const containsFilters = [
   {
-    key: 'contains', label: 'contains', text: 'contains', value: 'contains',
+    key: 'contains',
+    label: 'contains',
+    text: 'contains',
+    value: 'contains',
   },
 ];
 
@@ -909,10 +912,11 @@ export const nonFlagFilters = filters
   .filter((i) => flagConditionFilters.findIndex((f) => f.key === i.key) === -1)
   .map((i) => i.key);
 export const nonConditionalFlagFilters = filters
-  .filter((i) => (
-    conditionalFilters.findIndex((f) => f.key === i.key) === -1
-      && mobileConditionalFilters.findIndex((f) => f.key === i.key) === -1
-  ))
+  .filter(
+    (i) =>
+      conditionalFilters.findIndex((f) => f.key === i.key) === -1 &&
+      mobileConditionalFilters.findIndex((f) => f.key === i.key) === -1,
+  )
   .map((i) => i.key);
 
 export const clickmapFilter = {
@@ -928,15 +932,16 @@ export const clickmapFilter = {
   isEvent: true,
 };
 
-const mapFilters = (list) => list.reduce((acc, filter) => {
-  filter.value = filter.value
-    ? Array.isArray(filter.value)
-      ? filter.value
-      : [filter.value]
-    : [''];
-  acc[filter.key] = filter;
-  return acc;
-}, {});
+const mapFilters = (list) =>
+  list.reduce((acc, filter) => {
+    filter.value = filter.value
+      ? Array.isArray(filter.value)
+        ? filter.value
+        : [filter.value]
+      : [''];
+    acc[filter.key] = filter;
+    return acc;
+  }, {});
 
 const liveFilterSupportedOperators = ['is', 'contains'];
 const liveFilterKeys = [
@@ -958,9 +963,9 @@ const mapLiveFilters = (list) => {
   const obj = {};
   list.forEach((filter) => {
     if (
-      filter.category !== FilterCategory.EVENTS
-      && filter.category !== FilterCategory.DEVTOOLS
-      && liveFilterKeys.includes(filter.key)
+      filter.category !== FilterCategory.EVENTS &&
+      filter.category !== FilterCategory.DEVTOOLS &&
+      liveFilterKeys.includes(filter.key)
     ) {
       obj[filter.key] = { ...filter };
       obj[filter.key].operatorOptions = filter.operatorOptions.filter(
@@ -1160,9 +1165,7 @@ export default Record(
   },
   {
     keyKey: '_key',
-    fromJS: ({
-      value, type, subFilter = false, ...filter
-    }) => {
+    fromJS: ({ value, type, subFilter = false, ...filter }) => {
       let _filter = {};
       if (subFilter) {
         const mainFilter = filtersMap[subFilter];
@@ -1286,29 +1289,31 @@ export const generateLiveFilterOptions = (map) => {
 };
 
 export const getFilterFromJson = (json) => {
-  const mapFilters = (filters) => filters.map((f) => {
-    const filter = { ...filtersMap[f.key], ...f };
+  const mapFilters = (filters) =>
+    filters.map((f) => {
+      const filter = { ...filtersMap[f.key], ...f };
 
-    if (f.filters) {
-      const mainFilterOptions = filtersMap[f.key]?.filters || [];
-      const subFilterMap = Object.fromEntries(
-        mainFilterOptions.map((option) => [option.key, option]),
-      );
+      if (f.filters) {
+        const mainFilterOptions = filtersMap[f.key]?.filters || [];
+        const subFilterMap = Object.fromEntries(
+          mainFilterOptions.map((option) => [option.key, option]),
+        );
 
-      filter.filters = f.filters.map((subFilter) => {
-        const baseFilter = subFilterMap[subFilter.key] || filtersMap[subFilter.type] || {};
-        return {
-          ...baseFilter,
-          ...subFilter,
-          key: baseFilter.key || subFilter.key,
-          type: baseFilter.type || subFilter.type,
-          value: subFilter.value?.length ? subFilter.value : [''],
-        };
-      });
-    }
+        filter.filters = f.filters.map((subFilter) => {
+          const baseFilter =
+            subFilterMap[subFilter.key] || filtersMap[subFilter.type] || {};
+          return {
+            ...baseFilter,
+            ...subFilter,
+            key: baseFilter.key || subFilter.key,
+            type: baseFilter.type || subFilter.type,
+            value: subFilter.value?.length ? subFilter.value : [''],
+          };
+        });
+      }
 
-    return filter;
-  });
+      return filter;
+    });
 
   return new Search({
     ...json,

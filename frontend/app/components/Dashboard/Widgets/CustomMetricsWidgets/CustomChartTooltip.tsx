@@ -2,6 +2,7 @@ import React from 'react';
 import { formatTimeOrDate } from 'App/date';
 import cn from 'classnames';
 import { ArrowUp, ArrowDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface PayloadItem {
   hide?: boolean;
@@ -20,9 +21,8 @@ interface Props {
 }
 
 function CustomTooltip(props: Props) {
-  const {
-    active, payload, label, hoveredSeries = null,
-  } = props;
+  const { t } = useTranslation();
+  const { active, payload, label, hoveredSeries = null } = props;
 
   // Return null if tooltip is not active or there is no valid payload
   if (!active || !payload?.length || !hoveredSeries) return null;
@@ -30,8 +30,9 @@ function CustomTooltip(props: Props) {
   // Find the current and comparison payloads
   const currentPayload = payload.find((p) => p.name === hoveredSeries);
   const comparisonPayload = payload.find(
-    (p) => p.name === `${hoveredSeries.replace(' (Comparison)', '')} (Comparison)`
-      || p.name === `${hoveredSeries} (Comparison)`,
+    (p) =>
+      p.name === `${hoveredSeries.replace(' (Comparison)', '')} (Comparison)` ||
+      p.name === `${hoveredSeries} (Comparison)`,
   );
 
   if (!currentPayload) return null;
@@ -44,9 +45,11 @@ function CustomTooltip(props: Props) {
     },
   ];
 
-  const isHigher = (item: { value: number; prevValue: number }) => item.prevValue !== null && item.prevValue < item.value;
+  const isHigher = (item: { value: number; prevValue: number }) =>
+    item.prevValue !== null && item.prevValue < item.value;
 
-  const getPercentDelta = (val: number, prevVal: number) => (((val - prevVal) / prevVal) * 100).toFixed(2);
+  const getPercentDelta = (val: number, prevVal: number) =>
+    (((val - prevVal) / prevVal) * 100).toFixed(2);
 
   return (
     <div className="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
@@ -66,12 +69,14 @@ function CustomTooltip(props: Props) {
             className="flex flex-col px-2 ml-2"
           >
             <div className="text-neutral-600 text-sm">
-              {label}
-              ,
-              {' '}
-              {p.payload?.timestamp
-                ? formatTimeOrDate(p.payload.timestamp)
-                : <div className="hidden">'Timestamp is not Applicable'</div>}
+              {label},{' '}
+              {p.payload?.timestamp ? (
+                formatTimeOrDate(p.payload.timestamp)
+              ) : (
+                <div className="hidden">
+                  &apos;{t('Timestamp is not Applicable')}&apos;
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-1">
               <div className="font-medium">{p.value}</div>
@@ -98,6 +103,7 @@ export function CompareTag({
   absDelta?: number | string | null;
   delta?: string | null;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -110,14 +116,13 @@ export function CompareTag({
       )}
     >
       {isHigher === null ? (
-        <div>No Comparison</div>
+        <div>{t('No Comparison')}</div>
       ) : (
         <>
           {!isHigher ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
           <div>{absDelta}</div>
           <div>
-            (
-            {delta}
+            ({delta}
             %)
           </div>
         </>

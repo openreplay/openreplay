@@ -281,10 +281,10 @@ export class Cloudwatch implements Integration {
 
   validate() {
     return Boolean(
-      this.awsAccessKeyId !== ''
-        && this.awsSecretAccessKey !== ''
-        && this.logGroupName !== ''
-        && this.region !== '',
+      this.awsAccessKeyId !== '' &&
+        this.awsSecretAccessKey !== '' &&
+        this.logGroupName !== '' &&
+        this.region !== '',
     );
   }
 
@@ -332,20 +332,20 @@ export class ElasticSearchInt implements Integration {
 
   private validateKeys() {
     return Boolean(
-      this.apiKeyId.length > API_KEY_ID_LENGTH
-        && this.apiKey.length > API_KEY_LENGTH
-        && validateURL(this.host),
+      this.apiKeyId.length > API_KEY_ID_LENGTH &&
+        this.apiKey.length > API_KEY_LENGTH &&
+        validateURL(this.host),
     );
   }
 
   validate() {
     return (
-      this.host !== ''
-      && this.apiKeyId !== ''
-      && this.apiKey !== ''
-      && this.indexes !== ''
-      && !!this.port
-      && this.validateKeys()
+      this.host !== '' &&
+      this.apiKeyId !== '' &&
+      this.apiKey !== '' &&
+      this.indexes !== '' &&
+      !!this.port &&
+      this.validateKeys()
     );
   }
 

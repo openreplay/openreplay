@@ -1,11 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
-import {
-  Button, Checkbox, Input, Tooltip,
-} from 'antd';
+import { Button, Checkbox, Input, Tooltip } from 'antd';
 import { RedoOutlined, CloseCircleFilled } from '@ant-design/icons';
 import cn from 'classnames';
 import { Loader } from 'UI';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
+import { useTranslation } from 'react-i18next';
 
 function TruncatedText({
   text,
@@ -64,6 +63,7 @@ export function AutocompleteModal({
   commaQuery?: boolean;
   isOpen?: boolean;
 }) {
+  const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = React.useState('');
   const [selectedValues, setSelectedValues] = React.useState<string[]>(
@@ -82,7 +82,8 @@ export function AutocompleteModal({
       setSelectedValues(selectedValues.filter((i) => i !== item.value));
     }
   };
-  const isSelected = (item: { value: string; label: string }) => selectedValues.includes(item.value);
+  const isSelected = (item: { value: string; label: string }) =>
+    selectedValues.includes(item.value);
 
   const applyValues = () => {
     onApply(selectedValues);
@@ -107,7 +108,9 @@ export function AutocompleteModal({
       }
     });
     if (values[0] && values[0].length) {
-      const sorted = withSelected.sort((a, b) => (values.includes(a.value) ? -1 : 1));
+      const sorted = withSelected.sort((a, b) =>
+        values.includes(a.value) ? -1 : 1,
+      );
       return sorted;
     }
     return withSelected;
@@ -175,9 +178,7 @@ export function AutocompleteModal({
                   onClick={() => onSelectOption(item)}
                   className="cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2"
                 >
-                  <Checkbox checked={isSelected(item)} />
-                  {' '}
-                  {item.label}
+                  <Checkbox checked={isSelected(item)} /> {item.label}
                 </div>
               ))}
             </div>
@@ -187,9 +188,7 @@ export function AutocompleteModal({
                   className="whitespace-normal rounded cursor-pointer text-teal hover:bg-active-blue px-2 py-1"
                   onClick={applyQuery}
                 >
-                  Apply
-                  {' '}
-                  {queryStr}
+                  {t('Apply')}&nbsp;{queryStr}
                 </div>
               </div>
             ) : null}
@@ -202,7 +201,7 @@ export function AutocompleteModal({
               onClick={applyValues}
               className="btn-apply-event-value"
             >
-              Apply
+              {t('Apply')}
             </Button>
           </div>
 
@@ -234,6 +233,7 @@ interface Props {
 }
 
 export function AutoCompleteContainer(props: Props) {
+  const { t } = useTranslation();
   const filterValueContainer = useRef<HTMLDivElement>(null);
   const [showValueModal, setShowValueModal] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -263,8 +263,8 @@ export function AutoCompleteContainer(props: Props) {
 
   const handleContainerClick = (event: React.MouseEvent) => {
     if (
-      event.target === event.currentTarget
-      || event.currentTarget.contains(event.target as Node)
+      event.target === event.currentTarget ||
+      event.currentTarget.contains(event.target as Node)
     ) {
       setTimeout(() => {
         setShowValueModal(true);
@@ -297,7 +297,7 @@ export function AutoCompleteContainer(props: Props) {
             />
             {props.value.length > 1 && (
               <>
-                <span className="text-neutral-500/90">or</span>
+                <span className="text-neutral-500/90">{t('or')}</span>
                 <TruncatedText
                   text={
                     props.mapValues

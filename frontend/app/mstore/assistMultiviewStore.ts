@@ -8,7 +8,7 @@ type MultiSessions = [
   LiveSessionListItem?,
   LiveSessionListItem?,
   LiveSessionListItem?,
-  LiveSessionListItem?
+  LiveSessionListItem?,
 ];
 export interface LiveSessionListItem extends Record<string, any> {
   key: number | string;
@@ -44,8 +44,9 @@ export default class AssistMultiviewStore {
 
   addSession(session: Record<string, any>) {
     if (
-      this.sessions.length < 4
-      && this.sessions.findIndex((s) => s && s.sessionId === session.sessionId) === -1
+      this.sessions.length < 4 &&
+      this.sessions.findIndex((s) => s && s.sessionId === session.sessionId) ===
+        -1
     ) {
       const plainSession = session.toJS ? session.toJS() : session;
       this.sessions.push({ ...plainSession, key: this.sessions.length });
@@ -54,7 +55,9 @@ export default class AssistMultiviewStore {
   }
 
   replaceSession(targetId: string, session: Record<string, any>) {
-    const targetIndex = this.sessions.findIndex((s) => s && s.sessionId === targetId);
+    const targetIndex = this.sessions.findIndex(
+      (s) => s && s.sessionId === targetId,
+    );
     if (targetIndex !== -1) {
       const plainSession = session.toJS ? session.toJS() : session;
       this.sessions[targetIndex] = { ...plainSession, key: targetIndex };
@@ -70,7 +73,9 @@ export default class AssistMultiviewStore {
   }
 
   setActiveSession(sessionId: string) {
-    this.activeSession = this.sessions.find((session) => session && session.sessionId === sessionId);
+    this.activeSession = this.sessions.find(
+      (session) => session && session.sessionId === sessionId,
+    );
   }
 
   setDefault(session: Record<string, any>) {
@@ -95,9 +100,12 @@ export default class AssistMultiviewStore {
     const data = await sessionService.getLiveSessions(filter);
 
     const matchingSessions = data.sessions.filter(
-      (s: Record<string, any>) => ids.includes(s.sessionID) || ids.includes(s.sessionId),
+      (s: Record<string, any>) =>
+        ids.includes(s.sessionID) || ids.includes(s.sessionId),
     );
-    const immutMatchingSessions = List(matchingSessions).map((s) => new Session(s));
+    const immutMatchingSessions = List(matchingSessions).map(
+      (s) => new Session(s),
+    );
     immutMatchingSessions.forEach((session: Record<string, any>) => {
       this.addSession(session);
       this.fetchAgentTokenInfo(session.sessionId);
@@ -108,7 +116,9 @@ export default class AssistMultiviewStore {
 
   setToken(sessionId: string, token: string) {
     const { sessions } = this;
-    const targetIndex = sessions.findIndex((s) => s && s.sessionId === sessionId);
+    const targetIndex = sessions.findIndex(
+      (s) => s && s.sessionId === sessionId,
+    );
     if (sessions[targetIndex] !== undefined) {
       sessions[targetIndex]!.agentToken = token;
     }

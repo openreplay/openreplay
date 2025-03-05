@@ -1,19 +1,19 @@
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
-import {
-  Modal, Form, Icon, Checkbox, Input,
-} from 'UI';
+import { Modal, Form, Icon, Checkbox, Input } from 'UI';
 import { Button } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
-    show: boolean;
-    // dashboard: any;
-    closeHandler?: () => void;
-    focusTitle?: boolean;
+  show: boolean;
+  // dashboard: any;
+  closeHandler?: () => void;
+  focusTitle?: boolean;
 }
 function DashboardEditModal(props: Props) {
+  const { t } = useTranslation();
   const { show, closeHandler, focusTitle } = props;
   const { dashboardStore } = useStore();
   const dashboard = useObserver(() => dashboardStore.dashboardInstance);
@@ -30,25 +30,25 @@ function DashboardEditModal(props: Props) {
     };
   }, []);
 
-  const write = ({ target: { value, name } }) => dashboard.update({ [name]: value });
+  const write = ({ target: { value, name } }) =>
+    dashboard.update({ [name]: value });
 
   return useObserver(() => (
     <Modal open={show} onClose={closeHandler}>
       <Modal.Header className="flex items-center justify-between">
-        <div>Edit Dashboard</div>
+        <div>{t('Edit Dashboard')}</div>
         <Button
           type="text"
           name="close"
           onClick={closeHandler}
           icon={<CloseOutlined />}
         />
-
       </Modal.Header>
 
       <Modal.Content>
         <Form onSubmit={onSave}>
           <Form.Field>
-            <label>Title:</label>
+            <label>{t('Title:')}</label>
             <Input
               className=""
               name="name"
@@ -81,11 +81,21 @@ function DashboardEditModal(props: Props) {
                 className="font-medium mr-3"
                 type="checkbox"
                 checked={dashboard.isPublic}
-                onClick={() => dashboard.update({ isPublic: !dashboard.isPublic })}
+                onClick={() =>
+                  dashboard.update({ isPublic: !dashboard.isPublic })
+                }
               />
-              <div className="flex items-center cursor-pointer" onClick={() => dashboard.update({ isPublic: !dashboard.isPublic })}>
+              <div
+                className="flex items-center cursor-pointer"
+                onClick={() =>
+                  dashboard.update({ isPublic: !dashboard.isPublic })
+                }
+              >
                 <Icon name="user-friends" size="16" />
-                <span className="ml-2"> Team can see and edit the dashboard.</span>
+                <span className="ml-2">
+                  {' '}
+                  {t('Team can see and edit the dashboard.')}
+                </span>
               </div>
             </div>
           </Form.Field>
@@ -93,14 +103,12 @@ function DashboardEditModal(props: Props) {
       </Modal.Content>
       <Modal.Footer>
         <div className="-mx-2 px-2">
-          <Button
-            type="primary"
-            onClick={onSave}
-            className="float-left mr-2"
-          >
-            Save
+          <Button type="primary" onClick={onSave} className="float-left mr-2">
+            {t('Save')}
           </Button>
-          <Button type="default" onClick={closeHandler}>Cancel</Button>
+          <Button type="default" onClick={closeHandler}>
+            {t('Cancel')}
+          </Button>
         </div>
       </Modal.Footer>
     </Modal>

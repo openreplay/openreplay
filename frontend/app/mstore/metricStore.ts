@@ -121,24 +121,39 @@ export default class MetricStore {
   }
 
   get sortedWidgets() {
-    return [...this.metrics].sort((a, b) => (this.sort.by === 'desc' ? b.lastModified - a.lastModified : a.lastModified - b.lastModified));
+    return [...this.metrics].sort((a, b) =>
+      this.sort.by === 'desc'
+        ? b.lastModified - a.lastModified
+        : a.lastModified - b.lastModified,
+    );
   }
 
   get filteredCards() {
     const filterRE = this.filter.query ? getRE(this.filter.query, 'i') : null;
-    const dbIds = this.filter.dashboard ? this.filter.dashboard.map((i: any) => i.value) : [];
+    const dbIds = this.filter.dashboard
+      ? this.filter.dashboard.map((i: any) => i.value)
+      : [];
     return this.metrics
       .filter(
-        (card) => (this.filter.showMine
-          ? card.owner === JSON.parse(localStorage.getItem('user')!).account.email
-          : true)
-          && handleFilter(card, this.filter.type)
-          && (!dbIds.length
-            || card.dashboards.map((i) => i.dashboardId).some((id) => dbIds.includes(id)))
+        (card) =>
+          (this.filter.showMine
+            ? card.owner ===
+              JSON.parse(localStorage.getItem('user')!).account.email
+            : true) &&
+          handleFilter(card, this.filter.type) &&
+          (!dbIds.length ||
+            card.dashboards
+              .map((i) => i.dashboardId)
+              .some((id) => dbIds.includes(id))) &&
           // @ts-ignore
-          && (!filterRE || ['name', 'owner'].some((key) => filterRE.test(card[key]))),
+          (!filterRE ||
+            ['name', 'owner'].some((key) => filterRE.test(card[key]))),
       )
-      .sort((a, b) => (this.sort.by === 'desc' ? b.lastModified - a.lastModified : a.lastModified - b.lastModified));
+      .sort((a, b) =>
+        this.sort.by === 'desc'
+          ? b.lastModified - a.lastModified
+          : a.lastModified - b.lastModified,
+      );
   }
 
   // State Actions
@@ -189,7 +204,11 @@ export default class MetricStore {
 
     if (obj.hasOwnProperty('metricType') && type !== this.instance.metricType) {
       this.instance.series.forEach((s: any, i: number) => {
-        this.instance.series[i].filter.eventsOrderSupport = ['then', 'or', 'and'];
+        this.instance.series[i].filter.eventsOrderSupport = [
+          'then',
+          'or',
+          'and',
+        ];
       });
       if (type === HEATMAP && 'series' in obj) {
         delete obj.series;
@@ -197,18 +216,25 @@ export default class MetricStore {
       this.changeType(type);
     }
 
-    if (obj.hasOwnProperty('metricOf') && obj.metricOf !== this.instance.metricOf) {
+    if (
+      obj.hasOwnProperty('metricOf') &&
+      obj.metricOf !== this.instance.metricOf
+    ) {
       if (obj.metricOf === 'sessions' || obj.metricOf === 'jsErrors') {
         obj.viewType = 'table';
       }
 
       if (this.instance.metricType === USER_PATH) {
-        this.instance.series[0].filter.eventsHeader = obj.metricOf === 'start-point' ? 'START POINT' : 'END POINT';
+        this.instance.series[0].filter.eventsHeader =
+          obj.metricOf === 'start-point' ? 'START POINT' : 'END POINT';
       }
     }
 
     // handle metricValue change
-    if (obj.hasOwnProperty('metricValue') && obj.metricValue !== this.instance.metricValue) {
+    if (
+      obj.hasOwnProperty('metricValue') &&
+      obj.metricValue !== this.instance.metricValue
+    ) {
       if (Array.isArray(obj.metricValue) && obj.metricValue.length > 0) {
         obj.metricValue = obj.metricValue.filter((i: any) => i.value !== 'all');
       }
@@ -251,10 +277,7 @@ export default class MetricStore {
     if (value === RETENTION) {
       obj.viewType = 'cohort';
     }
-    if (
-      value === ERRORS
-      || value === HEATMAP
-    ) {
+    if (value === ERRORS || value === HEATMAP) {
       obj.viewType = 'chart';
     }
 
@@ -317,7 +340,9 @@ export default class MetricStore {
 
   updateInList(metric: Widget) {
     // @ts-ignore
-    const index = this.metrics.findIndex((m: Widget) => m[Widget.ID_KEY] === metric[Widget.ID_KEY]);
+    const index = this.metrics.findIndex(
+      (m: Widget) => m[Widget.ID_KEY] === metric[Widget.ID_KEY],
+    );
     if (index >= 0) {
       this.metrics[index] = metric;
     }
@@ -391,7 +416,8 @@ export default class MetricStore {
         const inst = new Widget().fromJson(metric, period);
         runInAction(() => {
           this.instance = inst;
-          const type = inst.metricType === 'table' ? inst.metricOf : inst.metricType;
+          const type =
+            inst.metricType === 'table' ? inst.metricOf : inst.metricType;
           this.cardCategory = cardToCategory(type);
         });
         return inst;

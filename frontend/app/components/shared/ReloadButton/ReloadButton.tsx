@@ -9,9 +9,7 @@ interface Props {
   buttonSize: 'small' | 'middle' | 'large' | undefined;
 }
 export default function ReloadButton(props: Props) {
-  const {
-    loading, onClick, iconSize = 18, buttonSize,
-  } = props;
+  const { loading, onClick, iconSize = 18, buttonSize } = props;
   return (
     <Tooltip title="Refresh" placement="right">
       <Button

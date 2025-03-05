@@ -8,12 +8,14 @@ function PlayerContent() {
   return (
     <div className="relative">
       <div className="flex">
-        <div
-          className="w-full"
-        >
+        <div className="w-full">
           <div className={cn(styles.session, 'relative')}>
             <div
-              className={cn(styles.playerBlock, 'flex flex-col', 'overflow-visible')}
+              className={cn(
+                styles.playerBlock,
+                'flex flex-col',
+                'overflow-visible',
+              )}
               style={{ zIndex: 1, minWidth: '100%' }}
             >
               <Renderer />

@@ -8,11 +8,13 @@ import { addOptionsToFilter } from 'Types/filter/newFilter';
 import { Icon, confirm } from 'UI';
 import { Button, Typography } from 'antd';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 function TagList() {
   const { searchStore } = useStore();
   const { tagWatchStore } = useStore();
   const { showModal, hideModal } = useModal();
+  const { t } = useTranslation();
 
   React.useEffect(() => {
     if (!tagWatchStore.isLoading) {
@@ -20,7 +22,10 @@ function TagList() {
         if (tags) {
           addOptionsToFilter(
             FilterKey.TAGGED_ELEMENT,
-            tags.map((tag) => ({ label: tag.name, value: tag.tagId.toString() })),
+            tags.map((tag) => ({
+              label: tag.name,
+              value: tag.tagId.toString(),
+            })),
           );
           searchStore.refreshFilterOptions();
         }
@@ -29,7 +34,10 @@ function TagList() {
   }, []);
 
   const addTag = (tagId: number) => {
-    searchStore.addFilterByKeyAndValue(FilterKey.TAGGED_ELEMENT, tagId.toString());
+    searchStore.addFilterByKeyAndValue(
+      FilterKey.TAGGED_ELEMENT,
+      tagId.toString(),
+    );
     hideModal();
   };
   const openModal = () => {
@@ -47,48 +55,51 @@ function TagList() {
       disabled={!tagWatchStore.tags.length}
       onClick={openModal}
     >
-      <span>Tags</span>
+      <span>{t('Tags')}</span>
       <span className="font-medium ml-1">{tagWatchStore.tags.length}</span>
     </Button>
   );
 }
 
-const TagListModal = observer(({ onTagClick }: { onTagClick: (tagId: number) => void }) => {
-  const { tagWatchStore } = useStore();
+const TagListModal = observer(
+  ({ onTagClick }: { onTagClick: (tagId: number) => void }) => {
+    const { tagWatchStore } = useStore();
+    const { t } = useTranslation();
 
-  const updateTagName = (id: number, name: string) => {
-    void tagWatchStore.updateTagName(id, name);
-    // very annoying
-    // @ts-ignore
-    toast.success('Tag name updated');
-  };
-  const onRemove = async (id: number) => {
-    if (
-      await confirm({
-        header: 'Remove Tag',
-        confirmButton: 'Remove',
-        confirmation: 'Are you sure you want to remove this tag?',
-      })
-    ) {
-      void tagWatchStore.deleteTag(id);
-    }
-  };
+    const updateTagName = (id: number, name: string) => {
+      void tagWatchStore.updateTagName(id, name);
+      // very annoying
+      // @ts-ignore
+      toast.success('Tag name updated');
+    };
+    const onRemove = async (id: number) => {
+      if (
+        await confirm({
+          header: t('Remove Tag'),
+          confirmButton: t('Remove'),
+          confirmation: t('Are you sure you want to remove this tag?'),
+        })
+      ) {
+        void tagWatchStore.deleteTag(id);
+      }
+    };
 
-  return (
-    <div className="h-screen flex flex-col gap-2 p-4">
-      <div className="text-2xl font-semibold">Tagged Elements</div>
-      {tagWatchStore.tags.map((tag) => (
-        <TagRow
-          key={tag.tagId}
-          tag={tag}
-          onEdit={updateTagName}
-          onDelete={onRemove}
-          onTagClick={onTagClick}
-        />
-      ))}
-    </div>
-  );
-});
+    return (
+      <div className="h-screen flex flex-col gap-2 p-4">
+        <div className="text-2xl font-semibold">{t('Tagged Elements')}</div>
+        {tagWatchStore.tags.map((tag) => (
+          <TagRow
+            key={tag.tagId}
+            tag={tag}
+            onEdit={updateTagName}
+            onDelete={onRemove}
+            onTagClick={onTagClick}
+          />
+        ))}
+      </div>
+    );
+  },
+);
 
 function TagRow(props: {
   tag: Tag;
@@ -96,9 +107,7 @@ function TagRow(props: {
   onDelete: (id: number) => void;
   onTagClick: (tagId: number) => void;
 }) {
-  const {
-    tag, onEdit, onDelete, onTagClick,
-  } = props;
+  const { tag, onEdit, onDelete, onTagClick } = props;
   const [isEditing, setIsEditing] = React.useState(false);
   const [name, setName] = React.useState(tag.name);
 

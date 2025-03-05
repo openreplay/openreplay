@@ -3,7 +3,8 @@ import React from 'react';
 import styles from './barRow.module.css';
 import tableStyles from './timeTable.module.css';
 
-const formatTime = (time) => (time < 1000 ? `${time.toFixed(2)}ms` : `${time / 1000}s`);
+const formatTime = (time) =>
+  time < 1000 ? `${time.toFixed(2)}ms` : `${time / 1000}s`;
 
 interface Props {
   resource: {
@@ -19,9 +20,7 @@ interface Props {
 
 // TODO: If request has no duration, set duration to 0.2s. Enforce existence of duration in the future.
 function BarRow({
-  resource: {
-    time, ttfb = 0, duration = 200, key,
-  },
+  resource: { time, ttfb = 0, duration = 200, key },
   popup = false,
   timestart = 0,
   timewidth,
@@ -57,8 +56,7 @@ function BarRow({
     return (
       <div key={key} className={tableStyles.row}>
         {' '}
-        {trigger}
-        {' '}
+        {trigger}{' '}
       </div>
     );
   }

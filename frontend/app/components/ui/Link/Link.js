@@ -6,9 +6,7 @@ import cn from 'classnames';
 import { withSiteId } from 'App/routes';
 import styles from './link.module.css';
 
-function OpenReplayLink({
-  siteId, to, className = '', dispatch, ...other
-}) {
+function OpenReplayLink({ siteId, to, className = '', dispatch, ...other }) {
   const { projectsStore } = useStore();
   const projectId = projectsStore.siteId;
   return (

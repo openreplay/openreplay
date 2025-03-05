@@ -54,7 +54,9 @@ export default Record(
       toSaveData() {
         const js = this.toJS();
 
-        js.metricValue = js.metricValue.map((value) => (value === 'all' ? '' : value));
+        js.metricValue = js.metricValue.map((value) =>
+          value === 'all' ? '' : value,
+        );
 
         js.series = js.series.map((series) => {
           series.filter.filters = series.filter.filters.map(filterMap);
@@ -73,9 +75,7 @@ export default Record(
         return js;
       },
     },
-    fromJS: ({
-      metricOf, metricValue, series, ...rest
-    }) => ({
+    fromJS: ({ metricOf, metricValue, series, ...rest }) => ({
       ...rest,
       series: List(series).map(FilterSeries),
       metricOf,

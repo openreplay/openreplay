@@ -43,7 +43,7 @@ export default class WebLivePlayer extends WebPlayer {
       wpState,
       (id) => this.messageManager.getNode(id),
       agentId,
-      uiErrorHandler
+      uiErrorHandler,
     );
     this.assistManager.connect(session.agentToken!, agentId, projectId);
   }
@@ -54,7 +54,9 @@ export default class WebLivePlayer extends WebPlayer {
    * to be able to replay it like usual
    * */
   toggleTimetravel = async () => {
-    if ((this.wpState.get() as typeof WebLivePlayer.INITIAL_STATE).liveTimeTravel) {
+    if (
+      (this.wpState.get() as typeof WebLivePlayer.INITIAL_STATE).liveTimeTravel
+    ) {
       return;
     }
     let result = false;

@@ -12,6 +12,7 @@ import stl from './timeTable.module.css';
 
 import autoscrollStl from '../autoscroll.module.css';
 import JumpButton from '../JumpButton';
+import { useTranslation } from 'react-i18next';
 
 type Timed = {
   time: number;
@@ -96,11 +97,13 @@ function computeTimeLine(
     firstVisibleRowIndex,
     firstVisibleRowIndex + visibleCount + _additionalHeight,
   );
-  let timestart = visibleRows.length > 0 ? Math.min(...visibleRows.map((r) => r.time)) : 0;
+  let timestart =
+    visibleRows.length > 0 ? Math.min(...visibleRows.map((r) => r.time)) : 0;
   // TODO: GraphQL requests do not have a duration, so their timeline is borked. Assume a duration of 0.2s for every GraphQL request
-  const timeend = visibleRows.length > 0
-    ? Math.max(...visibleRows.map((r) => r.time + (r.duration ?? 200)))
-    : 0;
+  const timeend =
+    visibleRows.length > 0
+      ? Math.max(...visibleRows.map((r) => r.time + (r.duration ?? 200)))
+      : 0;
   let timewidth = timeend - timestart;
   const offset = timewidth / 70;
   if (timestart >= offset) {
@@ -226,9 +229,7 @@ function TimeTable(props: Props) {
       )}
       <div className={stl.headers}>
         <div className={stl.infoHeaders}>
-          {columns.map(({
-            label, width, dataKey, onClick = null,
-          }) => (
+          {columns.map(({ label, width, dataKey, onClick = null }) => (
             <div
               key={parseInt(label.replace(' ', ''), 36)}
               className={cn(stl.headerCell, 'flex items-center select-none', {
@@ -353,23 +354,22 @@ function RowRenderer({
   );
 }
 
-const RowColumns = React.memo(({ columns, row }: any) => columns.map(({
-  dataKey, render, width, label,
-}: any) => (
-  <div
-    key={label.replace(' ', '') + dataKey}
-    className={cn(
-      stl.cell,
-      'overflow-ellipsis overflow-hidden !py-0.5',
-    )}
-    style={{ width: `${width}px` }}
-  >
-    {render
-      ? render(row)
-      : row[dataKey || ''] || (
-        <i className="color-gray-light">empty</i>
-      )}
-  </div>
-)));
+const RowColumns = React.memo(({ columns, row }: any) => {
+  const { t } = useTranslation();
+
+  return columns.map(({ dataKey, render, width, label }: any) => (
+    <div
+      key={label.replace(' ', '') + dataKey}
+      className={cn(stl.cell, 'overflow-ellipsis overflow-hidden !py-0.5')}
+      style={{ width: `${width}px` }}
+    >
+      {render
+        ? render(row)
+        : row[dataKey || ''] || (
+            <i className="color-gray-light">{t('empty')}</i>
+          )}
+    </div>
+  ));
+});
 
 export default observer(TimeTable);

@@ -33,7 +33,6 @@ export async function loadFile(
     .then((data) => onData(data))
     .catch((e) => {
       if (e === ALLOWED_404) {
-
       } else {
         throw e;
       }
@@ -78,14 +77,15 @@ async function requestEFSMobFile(filename: string) {
   return await processAPIStreamResponse(res, false);
 }
 
-const processAPIStreamResponse = (response: Response, skippable: boolean) => new Promise<ArrayBuffer>((res, rej) => {
-  if (response.status === 404 && skippable) {
-    return rej(ALLOWED_404);
-  }
-  if (response.status >= 400) {
-    return rej(
-      `Bad file status code ${response.status}. Url: ${response.url}`,
-    );
-  }
-  res(response.arrayBuffer());
-}).then(async (buf) => new Uint8Array(buf));
+const processAPIStreamResponse = (response: Response, skippable: boolean) =>
+  new Promise<ArrayBuffer>((res, rej) => {
+    if (response.status === 404 && skippable) {
+      return rej(ALLOWED_404);
+    }
+    if (response.status >= 400) {
+      return rej(
+        `Bad file status code ${response.status}. Url: ${response.url}`,
+      );
+    }
+    res(response.arrayBuffer());
+  }).then(async (buf) => new Uint8Array(buf));

@@ -3,7 +3,14 @@ import DateRangeDropdown from 'Shared/DateRangeDropdown';
 
 function DateRange(props) {
   const {
-    direction = 'left', startDate, endDate, rangeValue, className, onDateChange, customRangeRight = false, customHidden = false,
+    direction = 'left',
+    startDate,
+    endDate,
+    rangeValue,
+    className,
+    onDateChange,
+    customRangeRight = false,
+    customHidden = false,
   } = props;
 
   return (

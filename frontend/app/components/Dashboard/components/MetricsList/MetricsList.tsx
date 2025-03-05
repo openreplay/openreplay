@@ -9,6 +9,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import GridView from './GridView';
 import ListView from './ListView';
 import AddCardSection from '../AddCardSection/AddCardSection';
+import { useTranslation } from 'react-i18next';
 
 function MetricsList({
   siteId,
@@ -19,6 +20,7 @@ function MetricsList({
   onSelectionChange?: (selected: any[]) => void;
   inLibrary?: boolean;
 }) {
+  const { t } = useTranslation();
   const { metricStore, dashboardStore } = useStore();
   const metricsSearch = metricStore.filter.query;
   const listView = inLibrary ? true : metricStore.listView;
@@ -30,11 +32,12 @@ function MetricsList({
     [dashboard],
   );
   const cards = useMemo(
-    () => (onSelectionChange
-      ? metricStore.filteredCards.filter(
-        (i) => !existingCardIds?.includes(parseInt(i.metricId)),
-      )
-      : metricStore.filteredCards),
+    () =>
+      onSelectionChange
+        ? metricStore.filteredCards.filter(
+            (i) => !existingCardIds?.includes(parseInt(i.metricId)),
+          )
+        : metricStore.filteredCards,
     [metricStore.filteredCards, existingCardIds, onSelectionChange],
   );
   const loading = metricStore.isLoading;
@@ -71,48 +74,56 @@ function MetricsList({
     metricStore.updateKey('showMine', !showOwn);
   };
 
-  const isFiltered = metricsSearch !== '' || (metricStore.filter.type && metricStore.filter.type !== 'all');
+  const isFiltered =
+    metricsSearch !== '' ||
+    (metricStore.filter.type && metricStore.filter.type !== 'all');
 
   const searchImageDimensions = { width: 60, height: 'auto' };
   const defaultImageDimensions = { width: 600, height: 'auto' };
   const emptyImage = isFiltered ? ICONS.NO_RESULTS : ICONS.NO_CARDS;
-  const imageDimensions = isFiltered ? searchImageDimensions : defaultImageDimensions;
+  const imageDimensions = isFiltered
+    ? searchImageDimensions
+    : defaultImageDimensions;
 
   return (
     <Loader loading={loading}>
       <NoContent
         show={length === 0}
-        title={(
+        title={
           <div className="flex flex-col items-center justify-center">
             <AnimatedSVG name={emptyImage} size={imageDimensions.width} />
             <div className="text-center mt-3 text-lg font-medium">
               {isFiltered
-                ? 'No matching results'
-                : 'Unlock insights with data cards'}
+                ? t('No matching results')
+                : t('Unlock insights with data cards')}
             </div>
           </div>
-  )}
+        }
         subtext={
-        isFiltered ? (
-          ''
-        ) : (
-          <div className="flex flex-col items-center">
-            <div>
-              Create and customize cards to analyze trends and user behavior effectively.
+          isFiltered ? (
+            ''
+          ) : (
+            <div className="flex flex-col items-center">
+              <div>
+                {t('Create and customize cards to analyze trends and user behavior effectively.')}
+              </div>
+              <Popover
+                arrow={false}
+                overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
+                content={<AddCardSection fit inCards />}
+                trigger="click"
+              >
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  className="btn-create-card mt-3"
+                >
+                  {t('vCreate Card')}
+                </Button>
+              </Popover>
             </div>
-            <Popover
-              arrow={false}
-              overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
-              content={<AddCardSection fit inCards />}
-              trigger="click"
-            >
-              <Button type="primary" icon={<PlusOutlined />} className="btn-create-card mt-3">
-                Create Card
-              </Button>
-            </Popover>
-          </div>
-        )
-      }
+          )
+        }
       >
         {listView ? (
           <ListView
@@ -126,33 +137,37 @@ function MetricsList({
             allSelected={cards.length === selectedMetrics.length}
             showOwn={showOwn}
             toggleOwn={toggleOwn}
-            toggleAll={({ target: { checked } }) => setSelectedMetrics(
-              checked
-                ? cards.map((i: any) => i.metricId).slice(0, 30 - (existingCardIds?.length || 0))
-                : [],
-            )}
+            toggleAll={({ target: { checked } }) =>
+              setSelectedMetrics(
+                checked
+                  ? cards
+                      .map((i: any) => i.metricId)
+                      .slice(0, 30 - (existingCardIds?.length || 0))
+                  : [],
+              )
+            }
           />
         ) : (
           <>
             <GridView
               siteId={siteId}
-              list={sliceListPerPage(cards, metricStore.page - 1, metricStore.pageSize)}
+              list={sliceListPerPage(
+                cards,
+                metricStore.page - 1,
+                metricStore.pageSize,
+              )}
               selectedList={selectedMetrics}
               toggleSelection={toggleMetricSelection}
             />
             <div className="w-full flex items-center justify-between py-4 px-6 border-t">
               <div>
-                Showing
-                {' '}
+                {t('Showing')}{' '}
                 <span className="font-medium">
                   {Math.min(cards.length, metricStore.pageSize)}
-                </span>
-                {' '}
-                out of
-                {' '}
-                <span className="font-medium">{cards.length}</span>
-                {' '}
-                cards
+                </span>{' '}
+                {t('out of')}&nbsp;
+                <span className="font-medium">{cards.length}</span>&nbsp;
+                {t('cards')}
               </div>
               <Pagination
                 page={metricStore.page}

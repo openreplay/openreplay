@@ -1,7 +1,5 @@
 import React from 'react';
-import {
-  Loader, Pagination, Tooltip, Icon,
-} from 'UI';
+import { Loader, Pagination, Tooltip, Icon } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import Select from 'Shared/Select';
 import SortOrderButton from 'Shared/SortOrderButton';
@@ -14,6 +12,7 @@ import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import cn from 'classnames';
 import Session from 'App/mstore/types/session';
 import { Button } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const PER_PAGE = 10;
 
@@ -24,8 +23,12 @@ interface ConnectProps {
 
 function AssistSessionsModal(props: ConnectProps) {
   const {
-    assistMultiviewStore, customFieldStore, searchStoreLive, sessionStore,
+    assistMultiviewStore,
+    customFieldStore,
+    searchStoreLive,
+    sessionStore,
   } = useStore();
+  const { t } = useTranslation();
   const loading = sessionStore.loadingLiveSessions;
   const list = sessionStore.liveSessions;
   const filter = searchStoreLive.instance;
@@ -36,11 +39,10 @@ function AssistSessionsModal(props: ConnectProps) {
   const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
   const metaList = customFieldStore.list;
 
-  const sortOptions = metaList
-    .map((i: any) => ({
-      label: capitalize(i.key),
-      value: i.key,
-    }));
+  const sortOptions = metaList.map((i: any) => ({
+    label: capitalize(i.key),
+    value: i.key,
+  }));
 
   React.useEffect(() => {
     if (total === 0) {
@@ -59,7 +61,9 @@ function AssistSessionsModal(props: ConnectProps) {
     } else {
       assistMultiviewStore.addSession(session);
     }
-    assistMultiviewStore.fetchAgentTokenInfo(session.sessionId).then(() => props.onAdd());
+    assistMultiviewStore
+      .fetchAgentTokenInfo(session.sessionId)
+      .then(() => props.onAdd());
   };
 
   return (
@@ -78,18 +82,30 @@ function AssistSessionsModal(props: ConnectProps) {
           <AssistSearchActions />
         </div>
         <div className="flex self-end items-center gap-2" w-full>
-          <span className="color-gray-medium">Sort By</span>
-          <Tooltip title="No metadata available to sort" disabled={sortOptions.length > 0}>
-            <div className={cn('flex items-center', { disabled: sortOptions.length === 0 })}>
+          <span className="color-gray-medium">{t('Sort By')}</span>
+          <Tooltip
+            title={t('No metadata available to sort')}
+            disabled={sortOptions.length > 0}
+          >
+            <div
+              className={cn('flex items-center', {
+                disabled: sortOptions.length === 0,
+              })}
+            >
               <Select
                 plain
                 right
                 options={sortOptions}
                 onChange={onSortChange}
-                value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
+                value={
+                  sortOptions.find((i: any) => i.value === filter.sort) ||
+                  sortOptions[0]
+                }
               />
               <SortOrderButton
-                onChange={(state: any) => searchStoreLive.edit({ order: state })}
+                onChange={(state: any) =>
+                  searchStoreLive.edit({ order: state })
+                }
                 sortOrder={filter.order}
               />
             </div>
@@ -106,7 +122,8 @@ function AssistSessionsModal(props: ConnectProps) {
                 className={cn(
                   'rounded bg-white mb-2 overflow-hidden border',
                   assistMultiviewStore.sessions.findIndex(
-                    (s: Record<string, any>) => s.sessionId === session.sessionId,
+                    (s: Record<string, any>) =>
+                      s.sessionId === session.sessionId,
                   ) !== -1
                     ? 'cursor-not-allowed opacity-60'
                     : '',
@@ -121,7 +138,8 @@ function AssistSessionsModal(props: ConnectProps) {
                   metaList={metaList}
                   isDisabled={
                     assistMultiviewStore.sessions.findIndex(
-                      (s: Record<string, any>) => s.sessionId === session.sessionId,
+                      (s: Record<string, any>) =>
+                        s.sessionId === session.sessionId,
                     ) !== -1
                   }
                   isAdd
@@ -138,7 +156,9 @@ function AssistSessionsModal(props: ConnectProps) {
           <Pagination
             page={currentPage}
             total={total}
-            onPageChange={(page: any) => searchStoreLive.updateCurrentPage(page)}
+            onPageChange={(page: any) =>
+              searchStoreLive.updateCurrentPage(page)
+            }
             limit={PER_PAGE}
           />
         </div>

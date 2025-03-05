@@ -5,6 +5,7 @@ import { FilterList, EventsList } from 'Shared/Filters/FilterList';
 import { observer } from 'mobx-react-lite';
 import { Typography } from 'antd';
 import { BranchesOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   set: number;
@@ -43,6 +44,7 @@ function ConditionSetComponent({
   isMobile,
   changeName,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="border bg-white rounded">
       <div className="flex items-center border-b px-4 py-2 gap-2">
@@ -62,16 +64,19 @@ function ConditionSetComponent({
           </div>
         ) : (
           <>
-            <div>Condition</div>
+            <div>{t('Condition')}</div>
             <div className="p-2 rounded bg-gray-lightest">
-              Set
+              {t('Set')}
               {set}
             </div>
           </>
         )}
         {readonly ? null : (
           <div
-            className={cn('p-2 px-4 cursor-pointer rounded ml-auto', 'hover:bg-teal-light')}
+            className={cn(
+              'p-2 px-4 cursor-pointer rounded ml-auto',
+              'hover:bg-teal-light',
+            )}
             onClick={() => removeCondition(index)}
           >
             <Icon name="trash" color="main" />
@@ -105,17 +110,14 @@ function ConditionSetComponent({
             borderless
           />
           {readonly && !conditions.filter?.filters?.length ? (
-            <div className="p-2">No conditions</div>
+            <div className="p-2">{t('No conditions')}</div>
           ) : null}
         </div>
       </div>
       <div className="px-4 py-2 flex items-center gap-2 border-t">
         <span>{bottomLine1}</span>
         {readonly ? (
-          <div className="font-semibold">
-            {conditions.rolloutPercentage}
-            %
-          </div>
+          <div className="font-semibold">{conditions.rolloutPercentage}%</div>
         ) : (
           <Input
             type="text"

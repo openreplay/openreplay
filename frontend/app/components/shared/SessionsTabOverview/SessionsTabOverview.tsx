@@ -27,7 +27,8 @@ function SessionsTabOverview() {
     void aiFiltersStore.omniSearch(query, appliedFilter.toData());
   };
 
-  const testingKey = localStorage.getItem('__mauricio_testing_access') === 'true';
+  const testingKey =
+    localStorage.getItem('__mauricio_testing_access') === 'true';
   return (
     <>
       <NoSessionsMessage />
@@ -53,4 +54,9 @@ function SessionsTabOverview() {
   );
 }
 
-export default withPermissions(['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', false, false)(observer(SessionsTabOverview));
+export default withPermissions(
+  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'],
+  '',
+  false,
+  false,
+)(observer(SessionsTabOverview));

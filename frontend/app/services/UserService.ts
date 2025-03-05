@@ -132,7 +132,9 @@ export default class UserService {
     return this.client
       .post('/signup', data)
       .then((response: { json: () => any }) => response.json())
-      .then((response: { data: any }) => response as Record<string, any> || {});
+      .then(
+        (response: { data: any }) => (response as Record<string, any>) || {},
+      );
   }
 
   async resetPassword(data: any) {
@@ -140,14 +142,18 @@ export default class UserService {
       const response = await this.client.post('/password/reset', data);
       const responseData = await response.json();
       if (responseData.errors) {
-        throw new Error(responseData.errors[0] || 'An unexpected error occurred.');
+        throw new Error(
+          responseData.errors[0] || 'An unexpected error occurred.',
+        );
       }
 
       return responseData || {};
     } catch (error: any) {
       if (error.response) {
         const errorData = await error.response.json();
-        const errorMessage = errorData.errors ? errorData.errors[0] : 'An unexpected error occurred.';
+        const errorMessage = errorData.errors
+          ? errorData.errors[0]
+          : 'An unexpected error occurred.';
         throw new Error(errorMessage);
       }
       throw new Error('An unexpected error occurred.');
@@ -165,14 +171,18 @@ export default class UserService {
       const response = await this.client.post('/account/password', data);
       const responseData = await response.json();
       if (responseData.errors) {
-        throw new Error(responseData.errors[0] || 'An unexpected error occurred.');
+        throw new Error(
+          responseData.errors[0] || 'An unexpected error occurred.',
+        );
       }
 
       return responseData || {};
     } catch (error: any) {
       if (error.response) {
         const errorData = await error.response.json();
-        const errorMessage = errorData.errors ? errorData.errors[0] : 'An unexpected error occurred.';
+        const errorMessage = errorData.errors
+          ? errorData.errors[0]
+          : 'An unexpected error occurred.';
         throw new Error(errorMessage);
       }
       throw new Error('An unexpected error occurred.');

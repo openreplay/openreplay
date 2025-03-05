@@ -9,8 +9,10 @@ import { withSiteId, fflag, fflags } from 'App/routes';
 import Multivariant from 'Components/FFlags/NewFFlag/Multivariant';
 import { toast } from 'react-toastify';
 import RolloutCondition from 'Shared/ConditionSet';
+import { useTranslation } from 'react-i18next';
 
 function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
+  const { t } = useTranslation();
   const { featureFlagsStore } = useStore();
   const history = useHistory();
 
@@ -22,16 +24,18 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
 
   const current = featureFlagsStore.currentFflag;
   if (featureFlagsStore.isLoading) return <Loader loading />;
-  if (!current) return <NoContent title="No flag found" />;
+  if (!current) return <NoContent title={t('No flag found')} />;
 
   const deleteHandler = () => {
     featureFlagsStore.deleteFlag(current.featureFlagId).then(() => {
-      toast.success('Feature flag deleted.');
+      toast.success(t('Feature flag deleted.'));
       history.push(withSiteId(fflags(), siteId));
     });
   };
 
-  const menuItems = [{ icon: 'trash', text: 'Delete', onClick: deleteHandler }];
+  const menuItems = [
+    { icon: 'trash', text: t('Delete'), onClick: deleteHandler },
+  ];
 
   const toggleActivity = () => {
     const newValue = !current.isActive;
@@ -39,11 +43,11 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
     featureFlagsStore
       .updateFlagStatus(current.featureFlagId, newValue)
       .then(() => {
-        toast.success('Feature flag status has been updated.');
+        toast.success(t('Feature flag status has been updated.'));
       })
       .catch(() => {
         current.setIsEnabled(!newValue);
-        toast.error('Something went wrong, please try again.');
+        toast.error(t('Something went wrong, please try again.'));
       });
   };
 
@@ -51,7 +55,7 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
     <div className="w-full mx-auto mb-4" style={{ maxWidth: '1360px' }}>
       <Breadcrumb
         items={[
-          { label: 'Feature Flags', to: withSiteId(fflags(), siteId) },
+          { label: t('Feature Flags'), to: withSiteId(fflags(), siteId) },
           { label: current.flagKey },
         ]}
       />
@@ -62,43 +66,47 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
           <Button
             className="ml-auto text-main"
             type="text"
-            onClick={() => history.push(
-              withSiteId(
-                fflag(
-                  featureFlagsStore.currentFflag?.featureFlagId.toString(),
+            onClick={() =>
+              history.push(
+                withSiteId(
+                  fflag(
+                    featureFlagsStore.currentFflag?.featureFlagId.toString(),
+                  ),
+                  siteId,
                 ),
-                siteId,
-              ),
-            )}
+              )
+            }
           >
-            Edit
+            {t('Edit')}
           </Button>
           <ItemMenu bold items={menuItems} />
         </div>
         <div className="border-b" style={{ color: 'rgba(0,0,0, 0.6)' }}>
-          {current.description
-            || 'There is no description for this feature flag.'}
+          {current.description ||
+            'There is no description for this feature flag.'}
         </div>
 
         <div className="mt-4">
-          <label className="font-semibold">Status</label>
+          <label className="font-semibold">{t('Status')}</label>
           <div className="flex items-center gap-2">
             <Switch checked={current.isActive} onChange={toggleActivity} />
-            <div>{current.isActive ? 'Enabled' : 'Disabled'}</div>
+            <div>{current.isActive ? t('Enabled') : t('Disabled')}</div>
           </div>
         </div>
         <div className="mt-4">
-          <label className="font-semibold">Persistence</label>
+          <label className="font-semibold">{t('Persistence')}</label>
           <div>
             {current.isPersist
-              ? 'This flag maintains its state through successive authentication events.'
-              : 'This flag is not persistent across authentication events.'}
+              ? t(
+                  'This flag maintains its state through successive authentication events.',
+                )
+              : t('This flag is not persistent across authentication events.')}
           </div>
         </div>
         {!current.isSingleOption ? <Multivariant readonly /> : null}
         {current.conditions.length > 0 ? (
           <div className="mt-6 p-4 rounded bg-gray-lightest">
-            <label className="font-semibold">Rollout Conditions</label>
+            <label className="font-semibold">{t('Rollout Conditions')}</label>
             {current.conditions.map((condition, index) => (
               <React.Fragment key={index}>
                 <RolloutCondition

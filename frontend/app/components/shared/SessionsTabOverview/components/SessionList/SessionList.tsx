@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
-import {
-  NoContent, Loader, Pagination, Icon,
-} from 'UI';
+import { NoContent, Loader, Pagination, Icon } from 'UI';
 import { Button } from 'antd';
 import { useLocation, withRouter } from 'react-router-dom';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -13,11 +11,12 @@ import { sessionService } from 'App/services';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import SessionDateRange from './SessionDateRange';
+import { useTranslation } from 'react-i18next';
 
 type SessionStatus = {
   status: number;
   count: number;
-}
+};
 
 const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000;
 let sessionTimeOut: any = null;
@@ -29,9 +28,14 @@ function SessionList() {
   const location = useLocation(); // Get the current URL location
   const isSessionsRoute = location.pathname.includes('/sessions');
   const isBookmark = location.pathname.includes('/bookmarks');
+  const { t } = useTranslation();
 
   const {
-    projectsStore, sessionStore, customFieldStore, userStore, searchStore,
+    projectsStore,
+    sessionStore,
+    customFieldStore,
+    userStore,
+    searchStore,
   } = useStore();
   const { isEnterprise } = userStore;
   const { isLoggedIn } = userStore;
@@ -45,7 +49,9 @@ function SessionList() {
   const { currentPage, activeTab, pageSize } = searchStore;
   const { filters } = searchStore.instance;
   const _filterKeys = filters.map((i: any) => i.key);
-  const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
+  const hasUserFilter =
+    _filterKeys.includes(FilterKey.USERID) ||
+    _filterKeys.includes(FilterKey.USERANONYMOUSID);
   // const isBookmark = activeTab.type === 'bookmark';
   const isVault = isBookmark && isEnterprise;
   const activeSite = projectsStore.active;
@@ -61,12 +67,13 @@ function SessionList() {
     if (isBookmark && !isEnterprise) {
       return {
         icon: ICONS.NO_BOOKMARKS,
-        message: 'No sessions bookmarked',
+        message: t('No sessions bookmarked'),
       };
-    } if (isVault) {
+    }
+    if (isVault) {
       return {
         icon: ICONS.NO_SESSIONS_IN_VAULT,
-        message: 'No sessions found in vault',
+        message: t('No sessions found in vault'),
       };
     }
     return {
@@ -74,7 +81,10 @@ function SessionList() {
       message: <SessionDateRange />,
     };
   }, [isBookmark, isVault, activeTab, location.pathname]);
-  const [statusData, setStatusData] = React.useState<SessionStatus>({ status: 0, count: 0 });
+  const [statusData, setStatusData] = React.useState<SessionStatus>({
+    status: 0,
+    count: 0,
+  });
 
   const fetchStatus = async () => {
     const response = await sessionService.getRecordingStatus();
@@ -165,10 +175,12 @@ function SessionList() {
 
   return (
     <Loader loading={loading}>
-      {hasNoRecordings && statusData.status == 1 ? <RecordingStatus data={statusData} /> : (
+      {hasNoRecordings && statusData.status == 1 ? (
+        <RecordingStatus data={statusData} />
+      ) : (
         <>
           <NoContent
-            title={(
+            title={
               <div className="flex items-center justify-center flex-col">
                 <span className="py-5">
                   <AnimatedSVG name={NO_CONTENT.icon} size={60} />
@@ -178,14 +190,18 @@ function SessionList() {
                   {NO_CONTENT.message}
                 </div>
               </div>
-            )}
-            subtext={(
+            }
+            subtext={
               <div className="flex flex-col items-center">
                 {(isVault || isBookmark) && (
                   <div>
                     {isVault
-                      ? 'Extend the retention period of any session by adding it to your vault directly from the player screen.'
-                      : 'Effortlessly find important sessions by bookmarking them directly from the player screen.'}
+                      ? t(
+                          'Extend the retention period of any session by adding it to your vault directly from the player screen.',
+                        )
+                      : t(
+                          'Effortlessly find important sessions by bookmarking them directly from the player screen.',
+                        )}
                   </div>
                 )}
                 <Button
@@ -196,10 +212,10 @@ function SessionList() {
                     void searchStore.fetchSessions(true, isBookmark);
                   }}
                 >
-                  Refresh
+                  {t('Refresh')}
                 </Button>
               </div>
-            )}
+            }
             show={!loading && list.length === 0}
           >
             {list.map((session: any) => (
@@ -220,19 +236,17 @@ function SessionList() {
           {total > 0 && (
             <div className="flex items-center justify-between p-5">
               <div>
-                Showing
-                {' '}
-                <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span>
-                {' '}
-                to
-                {' '}
-                <span className="font-medium">{(currentPage - 1) * pageSize + list.length}</span>
-                {' '}
-                of
-                {' '}
-                <span className="font-medium">{numberWithCommas(total)}</span>
-                {' '}
-                sessions.
+                {t('Showing')}{' '}
+                <span className="font-medium">
+                  {(currentPage - 1) * pageSize + 1}
+                </span>{' '}
+                {t('to')}{' '}
+                <span className="font-medium">
+                  {(currentPage - 1) * pageSize + list.length}
+                </span>{' '}
+                {t('of')}{' '}
+                <span className="font-medium">{numberWithCommas(total)}</span>{' '}
+                {t('sessions.')}
               </div>
               <Pagination
                 page={currentPage}
@@ -244,7 +258,6 @@ function SessionList() {
             </div>
           )}
         </>
-
       )}
     </Loader>
   );

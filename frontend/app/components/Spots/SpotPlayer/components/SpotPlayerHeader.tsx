@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import {
   ArrowLeftOutlined,
   CommentOutlined,
@@ -30,6 +31,7 @@ import { Avatar, Icon } from 'UI';
 
 import { TABS, Tab } from '../consts';
 import AccessModal from './AccessModal';
+import { useTranslation } from 'react-i18next';
 
 const spotLink = spotsList();
 
@@ -52,9 +54,12 @@ function SpotPlayerHeader({
   resolution: string | null;
   platform: string | null;
 }) {
+  const { t } = useTranslation();
   const { spotStore, userStore } = useStore();
   const isLoggedIn = !!userStore.jwt;
-  const hasShareAccess = userStore.isEnterprise ? userStore.account.permissions.includes('SPOT_PUBLIC') : true;
+  const hasShareAccess = userStore.isEnterprise
+    ? userStore.account.permissions.includes('SPOT_PUBLIC')
+    : true;
   const comments = spotStore.currentSpot?.comments ?? [];
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -62,7 +67,7 @@ function SpotPlayerHeader({
 
   const onCopy = () => {
     copy(window.location.href);
-    message.success('Internal sharing link copied to clipboard');
+    message.success(t('Internal sharing link copied to clipboard'));
   };
 
   const navigateToSpotsList = () => {
@@ -73,12 +78,12 @@ function SpotPlayerHeader({
     {
       key: '1',
       icon: <DownloadOutlined />,
-      label: 'Download Video',
+      label: t('Download Video'),
     },
     {
       key: '2',
       icon: <DeleteOutlined />,
-      label: 'Delete',
+      label: t('Delete'),
     },
   ];
 
@@ -89,15 +94,13 @@ function SpotPlayerHeader({
     } else if (key === '2') {
       spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
         history.push(spotsList());
-        message.success('Spot successfully deleted');
+        message.success(t('Spot successfully deleted'));
       });
     }
   };
 
   return (
-    <div
-      className="flex items-center gap-1 p-2 py-1 w-full bg-white border-b"
-    >
+    <div className="flex items-center gap-1 p-2 py-1 w-full bg-white border-b">
       <div>
         {isLoggedIn ? (
           <Button
@@ -106,19 +109,23 @@ function SpotPlayerHeader({
             icon={<ArrowLeftOutlined />}
             className="px-2"
           >
-            All Spots
+            {t('All Spots')}
           </Button>
         ) : (
-          <a href="https://openreplay.com/spot" target="_blank" rel="noreferrer">
+          <a
+            href="https://openreplay.com/spot"
+            target="_blank"
+            rel="noreferrer"
+          >
             <Button
               type="text"
               className="orSpotBranding flex gap-1 items-center py-2"
             >
               <Icon name="orSpot" size={28} />
               <div className="flex flex-col justify-start text-start">
-                <div className="text-lg font-semibold">Spot</div>
+                <div className="text-lg font-semibold">{t('Spot')}</div>
                 <div className="text-disabled-text text-xs -mt-1">
-                  by OpenReplay
+                  {t('by OpenReplay')}
                 </div>
               </div>
             </Button>
@@ -141,10 +148,7 @@ function SpotPlayerHeader({
             {browserVersion && (
               <>
                 <div>·</div>
-                <div>
-                  Chromium v
-                  {browserVersion}
-                </div>
+                <div>Chromium v{browserVersion}</div>
               </>
             )}
             {resolution && (
@@ -171,7 +175,7 @@ function SpotPlayerHeader({
             type="default"
             icon={<CopyOutlined />}
           >
-            Copy
+            {t('Copy')}
           </Button>
           {hasShareAccess ? (
             <Popover trigger="click" content={<AccessModal />}>
@@ -180,7 +184,7 @@ function SpotPlayerHeader({
                 icon={<SettingOutlined />}
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
-                Manage Access
+                {t('Manage Access')}
               </Button>
             </Popover>
           ) : null}
@@ -201,16 +205,23 @@ function SpotPlayerHeader({
         tabs={[
           {
             key: TABS.ACTIVITY,
-            text: 'Activity',
-            iconComp: <div className="mr-1"><UserSwitchOutlined /></div>,
+            text: t('Activity'),
+            iconComp: (
+              <div className="mr-1">
+                <UserSwitchOutlined />
+              </div>
+            ),
           },
           {
             key: TABS.COMMENTS,
-            iconComp: <div className="mr-1"><CommentOutlined /></div>,
+            iconComp: (
+              <div className="mr-1">
+                <CommentOutlined />
+              </div>
+            ),
             text: (
               <div>
-                Comments
-                {' '}
+                {t('Comments')}{' '}
                 {comments.length > 0 && (
                   <Badge
                     count={comments.length}
@@ -225,18 +236,21 @@ function SpotPlayerHeader({
           },
         ]}
         active={activeTab}
-        onClick={(k) => (k === activeTab ? setActiveTab(null) : setActiveTab(k))}
+        onClick={(k) =>
+          k === activeTab ? setActiveTab(null) : setActiveTab(k)
+        }
       />
     </div>
   );
 }
 
 async function downloadFile(url: string, fileName: string) {
+  const { t } = useTranslation();
   try {
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error('Network response was not ok');
+      throw new Error(t('Network response was not ok'));
     }
 
     const blob = await response.blob();

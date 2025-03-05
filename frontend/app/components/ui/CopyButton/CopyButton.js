@@ -3,7 +3,11 @@ import copy from 'copy-to-clipboard';
 import { Button } from 'antd';
 
 function CopyButton({
-  content, variant = 'text', className = 'capitalize mt-2 font-medium text-neutral-400', btnText = 'copy', size = 'small',
+  content,
+  variant = 'text',
+  className = 'capitalize mt-2 font-medium text-neutral-400',
+  btnText = 'copy',
+  size = 'small',
 }) {
   const [copied, setCopied] = useState(false);
 

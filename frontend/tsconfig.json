@@ -30,5 +30,12 @@
       "HOCs/*": ["./app/components/hocs/*"],
     }
   },
-  "include": ["app"]
+  "include": [
+    "app",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "app/**/*.js",
+    "app/**/*.jsx",
+    "window.d.ts"
+  ]
 }

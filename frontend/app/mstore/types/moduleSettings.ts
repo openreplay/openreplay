@@ -11,13 +11,15 @@ const enum MODULE {
 export const modules = [
   {
     label: 'Assist',
-    description: 'Record and replay user sessions to see a video of what users did on your website.',
+    description:
+      'Record and replay user sessions to see a video of what users did on your website.',
     key: MODULE.ASSIST,
     icon: 'broadcast',
   },
   {
     label: 'Notes',
-    description: 'Add notes to sessions and recordings to share with your team.',
+    description:
+      'Add notes to sessions and recordings to share with your team.',
     key: MODULE.NOTES,
     icon: 'stickies',
     isEnabled: true,

@@ -12,9 +12,7 @@ interface Props {
   name?: string;
 }
 
-function Tab({
-  i, tab, currentTab, changeTab, isLive, isClosed, name,
-}: Props) {
+function Tab({ i, tab, currentTab, changeTab, isLive, isClosed, name }: Props) {
   return (
     <div
       key={tab}
@@ -32,9 +30,7 @@ function Tab({
     >
       <Tooltip title={name && name.length > 20 ? name : ''}>
         <div className="flex items-center gap-2">
-          <div
-            className="bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs"
-          >
+          <div className="bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs">
             <div>{i + 1}</div>
           </div>
           <div

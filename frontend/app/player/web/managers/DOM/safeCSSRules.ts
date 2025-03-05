@@ -8,7 +8,7 @@ const isChromeLike = navigator.userAgentData?.brands?.some(isChromium);
 
 export function insertRule(
   sheet: { insertRule: (rule: string, index?: number) => void },
-  msg: { rule: string, index: number },
+  msg: { rule: string; index: number },
 ) {
   /**
    * inserting -moz- styles in chrome-like browsers causes issues and warnings

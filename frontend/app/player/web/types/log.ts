@@ -9,12 +9,12 @@ export const enum LogLevel {
 }
 
 export interface ILog {
-  level: LogLevel
-  value: string
-  time: number
-  index?: number
-  errorId?: string
-  tabId?: string
+  level: LogLevel;
+  value: string;
+  time: number;
+  index?: number;
+  errorId?: string;
+  tabId?: string;
 }
 
 export const Log = (log: ILog) => ({

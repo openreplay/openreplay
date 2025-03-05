@@ -22,7 +22,9 @@ function WidgetName(props: Props) {
   const onBlur = (nameInput?: string) => {
     setEditing(false);
     const toUpdate = nameInput || name;
-    props.onUpdate(toUpdate && toUpdate.trim() === '' ? 'New Widget' : toUpdate);
+    props.onUpdate(
+      toUpdate && toUpdate.trim() === '' ? 'New Widget' : toUpdate,
+    );
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {

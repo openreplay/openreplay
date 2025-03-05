@@ -3,7 +3,8 @@ const zoomStartTime = 100;
 const fetchList: any[] = [];
 for (let i = 0; i < 100; i++) {
   const statusOptions = [200, 200, 200, 404, 500]; // Higher chance of 200
-  const status = statusOptions[Math.floor(Math.random() * statusOptions.length)];
+  const status =
+    statusOptions[Math.floor(Math.random() * statusOptions.length)];
   const isRed = status >= 500;
   const isYellow = status >= 400 && status < 500;
   const resource = {
@@ -59,11 +60,19 @@ for (let i = 0; i < 30; i++) {
 }
 // Generate fake frustrationsList data for FRUSTRATIONS
 const frustrationsList: any[] = [];
-const frustrationEventTypes = ['CLICK', 'INPUT', 'CLICKRAGE', 'DEAD_CLICK', 'MOUSE_THRASHING'];
+const frustrationEventTypes = [
+  'CLICK',
+  'INPUT',
+  'CLICKRAGE',
+  'DEAD_CLICK',
+  'MOUSE_THRASHING',
+];
 for (let i = 0; i < 70; i++) {
   const frustrationEvent = {
     time: zoomStartTime + i * 1200 + Math.floor(Math.random() * 600),
-    type: frustrationEventTypes[Math.floor(Math.random() * frustrationEventTypes.length)],
+    type: frustrationEventTypes[
+      Math.floor(Math.random() * frustrationEventTypes.length)
+    ],
     hesitation: Math.floor(Math.random() * 5000) + 1000, // 1s to 6s
     // Additional properties if needed
     details: `Frustration event ${i}`,
@@ -72,7 +81,9 @@ for (let i = 0; i < 70; i++) {
 }
 
 export const resources = {
-  NETWORK: fetchList.filter((r: any) => r.status >= 400 || r.isRed || r.isYellow),
+  NETWORK: fetchList.filter(
+    (r: any) => r.status >= 400 || r.isRed || r.isYellow,
+  ),
   ERRORS: exceptionsList,
   EVENTS: eventsList,
   PERFORMANCE: performanceChartData,

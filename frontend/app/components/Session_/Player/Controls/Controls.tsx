@@ -34,10 +34,10 @@ import { Icon } from 'UI';
 import LogsButton from 'App/components/Session/Player/SharedComponents/BackendLogs/LogsButton';
 
 import ControlButton from './ControlButton';
-import { WebEventsList } from './EventsList';
 import Timeline from './Timeline';
 import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
+import { useTranslation } from 'react-i18next';
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -78,10 +78,11 @@ function Controls({ setActiveTab }: any) {
     userStore,
   } = useStore();
   const permissions = userStore.account.permissions || [];
-  const disableDevtools = userStore.isEnterprise
-    && !(
-      permissions.includes('DEV_TOOLS')
-      || permissions.includes('SERVICE_DEV_TOOLS')
+  const disableDevtools =
+    userStore.isEnterprise &&
+    !(
+      permissions.includes('DEV_TOOLS') ||
+      permissions.includes('SERVICE_DEV_TOOLS')
     );
   const { fullscreen } = uiPlayerStore;
   const { bottomBlock } = uiPlayerStore;
@@ -107,7 +108,8 @@ function Controls({ setActiveTab }: any) {
   const previousSessionId = sessionStore.previousId;
   const nextSessionId = sessionStore.nextId;
 
-  const disabled = disableDevtools || messagesLoading || inspectorMode || markedTargets;
+  const disabled =
+    disableDevtools || messagesLoading || inspectorMode || markedTargets;
   const sessionTz = session?.timezone;
 
   const nextHandler = () => {
@@ -166,13 +168,13 @@ function Controls({ setActiveTab }: any) {
               forthTenSeconds={forthTenSeconds}
               toggleSpeed={(speedIndex) => player.toggleSpeed(speedIndex)}
               toggleSkip={() => player.toggleSkip()}
-              playButton={(
+              playButton={
                 <PlayButton
                   state={state}
                   togglePlay={player.togglePlay}
                   iconSize={36}
                 />
-              )}
+              }
               skipIntervals={SKIP_INTERVALS}
               setSkipInterval={changeSkipInterval}
               currentInterval={skipInterval}
@@ -220,6 +222,7 @@ const DevtoolsButtons = observer(
     disabled,
     events,
   }: IDevtoolsButtons) => {
+    const { t } = useTranslation();
     const { aiSummaryStore, integrationsStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
 
@@ -257,57 +260,60 @@ const DevtoolsButtons = observer(
     };
 
     const possibleAudio = events.filter((e) => e.name.includes('media/audio'));
-    const integratedServices = integrationsStore.integrations.backendLogIntegrations;
+    const integratedServices =
+      integrationsStore.integrations.backendLogIntegrations;
     return (
       <>
         {isSaas ? <SummaryButton onClick={showSummary} /> : null}
         <ControlButton
-          popover={(
+          popover={
             <div className="flex items-center gap-2">
               <LaunchXRaShortcut />
-              <div>Get a quick overview on the issues in this session.</div>
+              <div>
+                {t('Get a quick overview on the issues in this session.')}
+              </div>
             </div>
-          )}
+          }
           label="X-Ray"
           onClick={() => toggleBottomTools(OVERVIEW)}
           active={bottomBlock === OVERVIEW && !inspectorMode}
         />
 
         <ControlButton
-          popover={(
+          popover={
             <div className="flex gap-2 items-center">
               <LaunchConsoleShortcut />
-              <div>Launch Console</div>
+              <div>{t('Launch Console')}</div>
             </div>
-          )}
+          }
           disabled={disableButtons}
           onClick={() => toggleBottomTools(CONSOLE)}
           active={bottomBlock === CONSOLE && !inspectorMode}
-          label="Console"
+          label={t('Console')}
           hasErrors={logRedCount > 0 || showExceptions}
         />
 
         <ControlButton
-          popover={(
+          popover={
             <div className="flex gap-2 items-center">
               <LaunchNetworkShortcut />
-              <div>Launch Network</div>
+              <div>{t('Launch Network')}</div>
             </div>
-          )}
+          }
           disabled={disableButtons}
           onClick={() => toggleBottomTools(NETWORK)}
           active={bottomBlock === NETWORK && !inspectorMode}
-          label="Network"
+          label={t('Network')}
           hasErrors={resourceRedCount > 0}
         />
 
         <ControlButton
-          popover={(
+          popover={
             <div className="flex gap-2 items-center">
               <LaunchPerformanceShortcut />
-              <div>Launch Performance</div>
+              <div>{t('Launch Performance')}</div>
             </div>
-          )}
+          }
           disabled={disableButtons}
           onClick={() => toggleBottomTools(PERFORMANCE)}
           active={bottomBlock === PERFORMANCE && !inspectorMode}
@@ -325,12 +331,12 @@ const DevtoolsButtons = observer(
 
         {showStorage && (
           <ControlButton
-            popover={(
+            popover={
               <div className="flex gap-2 items-center">
                 <LaunchStateShortcut />
-                <div>Launch State</div>
+                <div>{t('Launch State')}</div>
               </div>
-            )}
+            }
             disabled={disableButtons}
             onClick={() => toggleBottomTools(STORAGE)}
             active={bottomBlock === STORAGE && !inspectorMode}
@@ -338,16 +344,16 @@ const DevtoolsButtons = observer(
           />
         )}
         <ControlButton
-          popover={(
+          popover={
             <div className="flex gap-2 items-center">
               <LaunchEventsShortcut />
-              <div>Launch Events</div>
+              <div>{t('Launch Events')}</div>
             </div>
-          )}
+          }
           disabled={disableButtons}
           onClick={() => toggleBottomTools(STACKEVENTS)}
           active={bottomBlock === STACKEVENTS && !inspectorMode}
-          label="Events"
+          label={t('Events')}
           hasErrors={stackRedCount > 0}
         />
         {showProfiler && (
@@ -355,7 +361,7 @@ const DevtoolsButtons = observer(
             disabled={disableButtons}
             onClick={() => toggleBottomTools(PROFILER)}
             active={bottomBlock === PROFILER && !inspectorMode}
-            label="Profiler"
+            label={t('Profiler')}
           />
         )}
         {integratedServices.length ? (
@@ -383,6 +389,7 @@ export function SummaryButton({
   onToggle?: () => void;
   toggleValue?: boolean;
 }) {
+  const { t } = useTranslation();
   const [isHovered, setHovered] = React.useState(false);
 
   return (
@@ -396,7 +403,7 @@ export function SummaryButton({
           <Switch size="small" checked={toggleValue} onChange={onToggle} />
         ) : null}
         <Icon name="sparkles" size={16} />
-        <div className="font-semibold text-main">Summary AI</div>
+        <div className="font-semibold text-main">{t('Summary AI')}</div>
       </div>
     </div>
   );

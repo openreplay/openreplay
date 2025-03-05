@@ -36,9 +36,9 @@ export default class Role {
 
   get validate() {
     return (
-      notEmptyString(this.name)
-      && validateName(this.name, { diacritics: true })
-      && (this.allProjects || this.projects.length > 0)
+      notEmptyString(this.name) &&
+      validateName(this.name, { diacritics: true }) &&
+      (this.allProjects || this.projects.length > 0)
     );
   }
 

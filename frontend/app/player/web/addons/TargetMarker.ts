@@ -68,12 +68,13 @@ export default class TargetMarker {
     const parentEl = this.screen.getParentElement();
     if (!parentEl) {
       return {
-        top: 0, left: 0, width: 0, height: 0,
+        top: 0,
+        left: 0,
+        width: 0,
+        height: 0,
       };
     } // TODO: can be initialized(?) on mounted screen only
-    const {
-      top, left, width, height,
-    } = el.getBoundingClientRect();
+    const { top, left, width, height } = el.getBoundingClientRect();
     const s = this.screen.getScale();
     const screenRect = this.screen.overlay.getBoundingClientRect(); // this.screen.getBoundingClientRect() (now private)
     const parentRect = parentEl.getBoundingClientRect();
@@ -102,12 +103,14 @@ export default class TargetMarker {
             return;
           }
           this.store.update({
-            markedTargets: markedTargets.map((t) => (t === target
-              ? {
-                ...target,
-                boundingRect: this.calculateRelativeBoundingRect(target.el),
-              }
-              : t)),
+            markedTargets: markedTargets.map((t) =>
+              t === target
+                ? {
+                    ...target,
+                    boundingRect: this.calculateRelativeBoundingRect(target.el),
+                  }
+                : t,
+            ),
           });
         }, 0);
       }
@@ -150,8 +153,10 @@ export default class TargetMarker {
     if (clicks && this.screen.document) {
       this.clickMapOverlay?.remove();
       const overlay = document.createElement('canvas');
-      const scrollHeight = this.screen.document?.documentElement.scrollHeight || 0;
-      const scrollWidth = this.screen.document?.documentElement.scrollWidth || 0;
+      const scrollHeight =
+        this.screen.document?.documentElement.scrollHeight || 0;
+      const scrollWidth =
+        this.screen.document?.documentElement.scrollWidth || 0;
 
       Object.assign(
         overlay.style,
@@ -164,7 +169,10 @@ export default class TargetMarker {
       this.clickMapOverlay = overlay;
       this.screen.document.body.appendChild(overlay);
 
-      const pointMap: Record<string, { times: number; data: number[], original: any }> = {};
+      const pointMap: Record<
+        string,
+        { times: number; data: number[]; original: any }
+      > = {};
       overlay.width = scrollWidth;
       overlay.height = scrollHeight;
       let maxIntensity = 0;
@@ -178,10 +186,7 @@ export default class TargetMarker {
           maxIntensity = Math.max(maxIntensity, times);
           pointMap[key].times = times;
         } else {
-          const clickData = [
-            (x / 100) * scrollWidth,
-            (y / 100) * scrollHeight,
-          ];
+          const clickData = [(x / 100) * scrollWidth, (y / 100) * scrollHeight];
           pointMap[key] = { times: 1, data: clickData, original: point };
         }
       });

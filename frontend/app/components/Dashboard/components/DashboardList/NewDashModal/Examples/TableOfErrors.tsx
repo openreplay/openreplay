@@ -170,7 +170,7 @@ function TableOfErrors(props: any) {
       {
         errorId: '91514ac2304acfca5d82cd518fb36e5fc22',
         name: 'TypeError',
-        message: 'Cannot read properties of undefined (reading \'status\')',
+        message: "Cannot read properties of undefined (reading 'status')",
         users: 1,
         sessions: 1,
         lastOccurrence: 1725013072800,
@@ -210,9 +210,7 @@ function TableOfErrors(props: any) {
     ],
   };
   return (
-    <ExCard
-      {...props}
-    >
+    <ExCard {...props}>
       <CustomMetricTableErrors data={data} metric={{}} />
     </ExCard>
   );

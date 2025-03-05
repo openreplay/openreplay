@@ -17,13 +17,15 @@ export interface IServiceStats {
     details?: {
       errors?: string[];
       version?: string;
-    }
+    };
   }[];
 }
 
 function HealthStatus() {
   const healthResponseSaved = localStorage.getItem(healthResponseKey) || '{}';
-  const [healthResponse, setHealthResponse] = React.useState(JSON.parse(healthResponseSaved));
+  const [healthResponse, setHealthResponse] = React.useState(
+    JSON.parse(healthResponseSaved),
+  );
   const [isError, setIsError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const lastAskedSaved = localStorage.getItem(lastAskedKey);
@@ -50,16 +52,23 @@ function HealthStatus() {
     const lastAskedDate = lastAsked ? new Date(parseInt(lastAsked, 10)) : null;
     const diff = lastAskedDate ? now.getTime() - lastAskedDate.getTime() : 0;
     const diffInMinutes = Math.round(diff / 1000 / 60);
-    if (Object.keys(healthResponse).length === 0 || !lastAskedDate || diffInMinutes > 10) {
+    if (
+      Object.keys(healthResponse).length === 0 ||
+      !lastAskedDate ||
+      diffInMinutes > 10
+    ) {
       void getHealth();
     }
   }, []);
 
-  const icon = !isError && healthResponse?.overallHealth ? 'pulse' : ('exclamation-circle-fill' as const);
+  const icon =
+    !isError && healthResponse?.overallHealth
+      ? 'pulse'
+      : ('exclamation-circle-fill' as const);
   return (
     <>
       <Popover
-        content={(
+        content={
           <HealthWidget
             healthResponse={healthResponse}
             getHealth={getHealth}
@@ -68,7 +77,7 @@ function HealthStatus() {
             setShowModal={setShowModal}
             isError={isError}
           />
-        )}
+        }
         placement="topRight"
       >
         <Button icon={<ExclamationCircleOutlined />} />

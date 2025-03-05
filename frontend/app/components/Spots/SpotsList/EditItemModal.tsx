@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, Form, Input } from 'UI';
 import { Button } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onSave: (newName: string) => void;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 function EditItemModal(props: Props) {
+  const { t } = useTranslation();
   const [name, setName] = React.useState(props.itemName);
   const saveResult = () => {
     props.onSave(name);
@@ -17,7 +19,7 @@ function EditItemModal(props: Props) {
   return (
     <Modal open onClose={props.onClose}>
       <Modal.Header className="flex items-center justify-between">
-        <div>Edit Spot</div>
+        <div>{t('Edit Spot')}</div>
         <Button
           type="text"
           name="close"
@@ -27,13 +29,13 @@ function EditItemModal(props: Props) {
       </Modal.Header>
       <Modal.Content>
         <Form onSubmit={saveResult}>
-          <label>Title</label>
+          <label>{t('Title')}</label>
           <Input
             className=""
             name="title"
             value={name}
             onChange={({ target: { value } }) => setName(value)}
-            placeholder="Title"
+            placeholder={t('Title')}
             maxLength={100}
             autoFocus
           />
@@ -46,9 +48,11 @@ function EditItemModal(props: Props) {
             onClick={saveResult}
             className="float-left mr-2"
           >
-            Save
+            {t('Save')}
           </Button>
-          <Button type="default" onClick={props.onClose}>Cancel</Button>
+          <Button type="default" onClick={props.onClose}>
+            {t('Cancel')}
+          </Button>
         </div>
       </Modal.Footer>
     </Modal>

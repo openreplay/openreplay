@@ -38,8 +38,17 @@ function ControlButton({
         disabled={disabled}
       >
         {customTags}
-        {hasErrors && <div className={stl.labels}><div className={stl.errorSymbol} /></div>}
-        <span className={cn('font-semibold hover:text-main', active ? 'color-main' : 'color-gray-darkest')}>
+        {hasErrors && (
+          <div className={stl.labels}>
+            <div className={stl.errorSymbol} />
+          </div>
+        )}
+        <span
+          className={cn(
+            'font-semibold hover:text-main',
+            active ? 'color-main' : 'color-gray-darkest',
+          )}
+        >
           {label}
         </span>
       </Button>

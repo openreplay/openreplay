@@ -3,19 +3,19 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import {
-  List, Space, Typography, Button, Tooltip, Empty,
-} from 'antd';
+import { List, Space, Typography, Button, Tooltip, Empty } from 'antd';
 import { PlusIcon, Tags } from 'lucide-react';
 import { EditOutlined } from '@ant-design/icons';
 import usePageTitle from '@/hooks/usePageTitle';
 import CustomFieldForm from './CustomFieldForm';
+import { useTranslation } from 'react-i18next';
 
 function CustomFields() {
   usePageTitle('Metadata - OpenReplay Preferences');
+  const { t } = useTranslation();
   const { customFieldStore: store, projectsStore } = useStore();
   const currentSite = projectsStore.config.project;
-  const { showModal, hideModal } = useModal();
+  const { showModal } = useModal();
   const fields = store.list;
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +29,8 @@ function CustomFields() {
   const handleInit = (field?: any) => {
     store.init(field);
     showModal(<CustomFieldForm siteId={`${currentSite?.projectId}`} />, {
-      title: field ? 'Edit Metadata' : 'Add Metadata', right: true,
+      title: field ? t('Edit Metadata') : t('Add Metadata'),
+      right: true,
     });
   };
 
@@ -38,16 +39,24 @@ function CustomFields() {
   return (
     <div className="flex flex-col gap-6">
       <Typography.Text>
-        Attach key-value pairs to session replays for enhanced filtering, searching, and identifying relevant user
-        sessions.
-        <a href="https://docs.openreplay.com/installation/metadata" className="link ml-1" target="_blank" rel="noreferrer">
-          Learn more
+        {t(
+          'Attach key-value pairs to session replays for enhanced filtering, searching, and identifying relevant user sessions.',
+        )}
+        <a
+          href="https://docs.openreplay.com/installation/metadata"
+          className="link ml-1"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {t('Learn more')}
         </a>
       </Typography.Text>
 
       <Space>
         <Tooltip
-          title={remaining > 0 ? '' : 'You\'ve reached the limit of 10 metadata.'}
+          title={
+            remaining > 0 ? '' : t("You've reached the limit of 10 metadata.")
+          }
         >
           <Button
             icon={<PlusIcon size={18} />}
@@ -56,18 +65,25 @@ function CustomFields() {
             disabled={remaining === 0}
             onClick={() => handleInit()}
           >
-            Add Metadata
+            {t('Add Metadata')}
           </Button>
         </Tooltip>
         {/* {remaining === 0 && <Icon name="info-circle" size={16} color="black" />} */}
         <Typography.Text type="secondary">
-          {remaining === 0 ? 'You have reached the limit of 10 metadata.' : `${remaining}/10 Remaining for this project`}
+          {remaining === 0
+            ? t('You have reached the limit of 10 metadata.')
+            : `${remaining}${t('/10 Remaining for this project')}`}
         </Typography.Text>
       </Space>
 
       <List
         locale={{
-          emptyText: <Empty description="None added yet" image={<AnimatedSVG name={ICONS.NO_METADATA} size={60} />} />,
+          emptyText: (
+            <Empty
+              description={t('None added yet')}
+              image={<AnimatedSVG name={ICONS.NO_METADATA} size={60} />}
+            />
+          ),
         }}
         loading={loading}
         dataSource={fields}
@@ -76,13 +92,14 @@ function CustomFields() {
             onClick={() => handleInit(field)}
             className="cursor-pointer group hover:bg-active-blue !px-4"
             actions={[
-              <Button type="link" className="opacity-0 group-hover:!opacity-100" icon={<EditOutlined size={14} />} />,
+              <Button
+                type="link"
+                className="opacity-0 group-hover:!opacity-100"
+                icon={<EditOutlined size={14} />}
+              />,
             ]}
           >
-            <List.Item.Meta
-              title={field.key}
-              avatar={<Tags size={20} />}
-            />
+            <List.Item.Meta title={field.key} avatar={<Tags size={20} />} />
           </List.Item>
         )}
       />

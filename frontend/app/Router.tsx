@@ -28,13 +28,14 @@ interface RouterProps extends RouteComponentProps {
 }
 
 const Router: React.FC<RouterProps> = (props) => {
-  const {
-    location,
-    history,
-  } = props;
+  const { location, history } = props;
   const mstore = useStore();
   const {
-    customFieldStore, projectsStore, sessionStore, searchStore, userStore,
+    customFieldStore,
+    projectsStore,
+    sessionStore,
+    searchStore,
+    userStore,
   } = mstore;
   const { jwt } = userStore;
   const { changePassword } = userStore.account;
@@ -50,7 +51,9 @@ const Router: React.FC<RouterProps> = (props) => {
   const { siteId } = projectsStore;
   const { sitesLoading } = projectsStore;
   const sites = projectsStore.list;
-  const loading = Boolean(userInfoLoading || (!scopeSetup && !siteId) || sitesLoading);
+  const loading = Boolean(
+    userInfoLoading || (!scopeSetup && !siteId) || sitesLoading,
+  );
   const initSite = projectsStore.initProject;
   const fetchSiteList = projectsStore.fetchList;
 
@@ -108,10 +111,10 @@ const Router: React.FC<RouterProps> = (props) => {
 
     const destinationPath = localStorage.getItem(GLOBAL_DESTINATION_PATH);
     if (
-      destinationPath
-      && !destinationPath.includes(routes.login())
-      && !destinationPath.includes(routes.signup())
-      && destinationPath !== '/'
+      destinationPath &&
+      !destinationPath.includes(routes.login()) &&
+      !destinationPath.includes(routes.signup()) &&
+      destinationPath !== '/'
     ) {
       const url = new URL(destinationPath, window.location.origin);
       checkParams(url.search);
@@ -192,12 +195,13 @@ const Router: React.FC<RouterProps> = (props) => {
   const prevIsLoggedIn = usePrevious(isLoggedIn);
   const previousLocation = usePrevious(location);
 
-  const hideHeader = (location.pathname && location.pathname.includes('/session/'))
-    || location.pathname.includes('/assist/')
-    || location.pathname.includes('multiview')
-    || location.pathname.includes('/view-spot/')
-    || location.pathname.includes('/spots/')
-    || location.pathname.includes('/scope-setup');
+  const hideHeader =
+    (location.pathname && location.pathname.includes('/session/')) ||
+    location.pathname.includes('/assist/') ||
+    location.pathname.includes('multiview') ||
+    location.pathname.includes('/view-spot/') ||
+    location.pathname.includes('/spots/') ||
+    location.pathname.includes('/scope-setup');
 
   if (isIframe) {
     return (

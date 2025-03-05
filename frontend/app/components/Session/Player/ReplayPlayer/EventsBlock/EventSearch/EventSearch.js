@@ -5,9 +5,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 function EventSearch(props) {
   const { player } = React.useContext(PlayerContext);
 
-  const {
-    onChange, value, header, setActiveTab,
-  } = props;
+  const { onChange, value, header, setActiveTab } = props;
 
   const toggleEvents = () => player.toggleEvents();
 
@@ -17,7 +15,10 @@ function EventSearch(props) {
         <div className="flex flex-center justify-between">
           <span>{header}</span>
           <div
-            onClick={() => { setActiveTab(''); toggleEvents(); }}
+            onClick={() => {
+              setActiveTab('');
+              toggleEvents();
+            }}
             className=" flex items-center justify-center bg-white cursor-pointer"
           >
             <Icon name="close" size="18" />

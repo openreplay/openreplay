@@ -1,12 +1,17 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import {
-  SKIP_TO_ISSUE, TIMEZONE, TIMEZONE_LOCAL, SHOWN_TIMEZONE, DURATION_FILTER, MOUSE_TRAIL,
+  SKIP_TO_ISSUE,
+  TIMEZONE,
+  TIMEZONE_LOCAL,
+  SHOWN_TIMEZONE,
+  DURATION_FILTER,
+  MOUSE_TRAIL,
 } from 'App/constants/storageKeys';
 import { DateTime, Settings } from 'luxon';
 
 export type Timezone = {
-    label: string;
-    value: string;
+  label: string;
+  value: string;
 };
 
 const defaultDurationFilter = {
@@ -18,7 +23,6 @@ const defaultDurationFilter = {
 const negativeExceptions = {
   4: ['-04:30'],
   3: ['-03:30'],
-
 };
 const exceptions = {
   3: ['+03:30'],
@@ -49,8 +53,8 @@ export const generateGMTZones = (): Timezone[] => {
     timezones.push({ label: tz, value: isUTC ? 'UTC' : dropdownValue });
 
     // @ts-ignore
-    const negativeMatch = negativeExceptions[item]; const
-      positiveMatch = exceptions[item];
+    const negativeMatch = negativeExceptions[item];
+    const positiveMatch = exceptions[item];
     if (i < 11 && negativeMatch) {
       negativeMatch.forEach((str: string) => {
         timezones.push({ label: `UTC ${str}`, value: `UTC${str}` });
@@ -73,14 +77,16 @@ export default class SessionSettings {
   timezone: Timezone;
 
   durationFilter: any = JSON.parse(
-    localStorage.getItem(DURATION_FILTER) || JSON.stringify(defaultDurationFilter),
+    localStorage.getItem(DURATION_FILTER) ||
+      JSON.stringify(defaultDurationFilter),
   );
 
   captureRate: string = '0';
 
   conditionalCapture: boolean = false;
 
-  captureConditions: { name: string; captureRate: number; filters: any[] }[] = [];
+  captureConditions: { name: string; captureRate: number; filters: any[] }[] =
+    [];
 
   mouseTrail: boolean = localStorage.getItem(MOUSE_TRAIL) !== 'false';
 
@@ -90,7 +96,9 @@ export default class SessionSettings {
 
   constructor() {
     const userTimezoneOffset = DateTime.local().toFormat('ZZ');
-    const defaultTimezone = this.defaultTimezones.find((tz) => tz.value === `UTC${userTimezoneOffset.slice(0, 3)}`) || { label: 'Local', value: `UTC${userTimezoneOffset}` };
+    const defaultTimezone = this.defaultTimezones.find(
+      (tz) => tz.value === `UTC${userTimezoneOffset.slice(0, 3)}`,
+    ) || { label: 'Local', value: `UTC${userTimezoneOffset}` };
 
     const savedTz = localStorage.getItem(TIMEZONE);
     let isLocal = localStorage.getItem(TIMEZONE_LOCAL) === 'true';
@@ -110,7 +118,8 @@ export default class SessionSettings {
       localStorage.setItem(MOUSE_TRAIL, 'true');
     }
 
-    this.shownTimezone = localStorage.getItem(SHOWN_TIMEZONE) === 'user' ? 'user' : 'local';
+    this.shownTimezone =
+      localStorage.getItem(SHOWN_TIMEZONE) === 'user' ? 'user' : 'local';
     makeAutoObservable(this);
   }
 

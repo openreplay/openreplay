@@ -8,6 +8,7 @@ import cn from 'classnames';
 import { countries } from 'App/constants';
 import { regionLabels } from 'Types/integrations/cloudwatchConfig';
 import stl from './filterDropdown.module.css';
+import { useTranslation } from 'react-i18next';
 
 const PLATFORM = 'platform';
 const COUNTRY = 'country';
@@ -21,40 +22,76 @@ const platformOptions = [
   { key: PLATFORM, label: 'Mobile Landscape', value: 5 },
 ];
 
-const countryOptions = Object.keys(countries).map((c) => ({ key: COUNTRY, label: countries[c], value: c }));
-const locationOptions = Object.keys(regionLabels).map((k) => ({ key: LOCATION, label: regionLabels[k], value: k }));
+const countryOptions = Object.keys(countries).map((c) => ({
+  key: COUNTRY,
+  label: countries[c],
+  value: c,
+}));
+const locationOptions = Object.keys(regionLabels).map((k) => ({
+  key: LOCATION,
+  label: regionLabels[k],
+  value: k,
+}));
 
 const _filterKeys = [
   {
-    key: 'userId', name: 'User ID', icon: 'user-alt', placeholder: 'Search for User ID',
+    key: 'userId',
+    name: 'User ID',
+    icon: 'user-alt',
+    placeholder: 'Search for User ID',
   },
   {
-    key: 'userAnonymousId', name: 'User Anonymous ID', icon: 'filters/userid', placeholder: 'Search for User Anonymous ID',
+    key: 'userAnonymousId',
+    name: 'User Anonymous ID',
+    icon: 'filters/userid',
+    placeholder: 'Search for User Anonymous ID',
   },
   {
-    key: 'revId', name: 'Rev ID', icon: 'filters/rev-id', placeholder: 'Search for Rev ID',
+    key: 'revId',
+    name: 'Rev ID',
+    icon: 'filters/rev-id',
+    placeholder: 'Search for Rev ID',
   },
   {
-    key: COUNTRY, name: 'Country', icon: 'map-marker-alt', placeholder: 'Search for Country',
+    key: COUNTRY,
+    name: 'Country',
+    icon: 'map-marker-alt',
+    placeholder: 'Search for Country',
   },
   {
-    key: 'device', name: 'Device', icon: 'device', placeholder: 'Search for Device',
+    key: 'device',
+    name: 'Device',
+    icon: 'device',
+    placeholder: 'Search for Device',
   },
   {
-    key: 'os', name: 'OS', icon: 'os', placeholder: 'Search for OS',
+    key: 'os',
+    name: 'OS',
+    icon: 'os',
+    placeholder: 'Search for OS',
   },
   {
-    key: 'browser', name: 'Browser', icon: 'window', placeholder: 'Search for Browser',
+    key: 'browser',
+    name: 'Browser',
+    icon: 'window',
+    placeholder: 'Search for Browser',
   },
   {
-    key: 'location', name: 'Location', icon: 'window', placeholder: 'Search for Location',
+    key: 'location',
+    name: 'Location',
+    icon: 'window',
+    placeholder: 'Search for Location',
   },
   {
-    key: PLATFORM, name: 'Platform', icon: 'desktop', placeholder: 'Search for Platform',
+    key: PLATFORM,
+    name: 'Platform',
+    icon: 'desktop',
+    placeholder: 'Search for Platform',
   },
 ];
 
 function FilterDropdown(props) {
+  const { t } = useTranslation();
   const { filterKeyMaps = [], metaOptions, allowedFilters } = props;
   let filterKeys = metaOptions.concat(_filterKeys);
   if (allowedFilters && allowedFilters.length > 0) {
@@ -64,7 +101,11 @@ function FilterDropdown(props) {
   const [filterKey, setFilterKey] = useState(false);
   const [localOptions, setLocalOptions] = useState([]);
   const activeFilter = filterKeys.find((f) => f.key === filterKey);
-  const shouldFetchOptions = filterKey && filterKey !== PLATFORM && filterKey !== COUNTRY && filterKey !== LOCATION;
+  const shouldFetchOptions =
+    filterKey &&
+    filterKey !== PLATFORM &&
+    filterKey !== COUNTRY &&
+    filterKey !== LOCATION;
 
   const onSelect = (params) => {
     props.onSelect(params);
@@ -86,9 +127,15 @@ function FilterDropdown(props) {
   };
 
   const getLocalOptions = (filterKey) => {
-    if (filterKey === PLATFORM) { return platformOptions; }
-    if (filterKey === COUNTRY) { return countryOptions; }
-    if (filterKey === LOCATION) { return locationOptions; }
+    if (filterKey === PLATFORM) {
+      return platformOptions;
+    }
+    if (filterKey === COUNTRY) {
+      return countryOptions;
+    }
+    if (filterKey === LOCATION) {
+      return locationOptions;
+    }
     return [];
   };
 
@@ -103,34 +150,51 @@ function FilterDropdown(props) {
   };
 
   return (
-    <OutsideClickDetectingDiv
-      onClickOutside={onClickOutside}
-    >
+    <OutsideClickDetectingDiv onClickOutside={onClickOutside}>
       <div className="relative">
         {!filterKey && (
           <div
-            className={cn(stl.btn, 'rounded flex items-center p-2 color-teal cursor-pointer hover:bg-teal')}
+            className={cn(
+              stl.btn,
+              'rounded flex items-center p-2 color-teal cursor-pointer hover:bg-teal',
+            )}
             onClick={() => setShowDropdown(true)}
             id="filter-options"
           >
             <Icon name="plus" size={10} color="teal" />
-            <span className="ml-1 text-sm tracking-wider font-medium">FILTER</span>
+            <span className="ml-1 text-sm tracking-wider font-medium">
+              {t('FILTER')}
+            </span>
           </div>
         )}
         {showDropdown && (
-          <div className="absolute mt-2 bg-white rounded border z-20" id="filter-dropdown" style={{ width: '200px' }}>
-            <div className="font-medium mb-2 tracking-widest color-gray-dark p-3">SELECT FILTER</div>
-            <div className="px-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-              {filterKeys.filter((f) => !filterKeyMaps.includes(f.key)).map((f) => (
-                <div
-                  key={f.key}
-                  onClick={() => onFilterKeySelect(f.key)}
-                  className={cn(stl.filterItem, 'py-3 -mx-3 px-3 flex items-center cursor-pointer')}
-                >
-                  <Icon name={f.icon} size="16" />
-                  <span className="ml-3 capitalize">{f.name}</span>
-                </div>
-              ))}
+          <div
+            className="absolute mt-2 bg-white rounded border z-20"
+            id="filter-dropdown"
+            style={{ width: '200px' }}
+          >
+            <div className="font-medium mb-2 tracking-widest color-gray-dark p-3">
+              {t('SELECT FILTER')}
+            </div>
+            <div
+              className="px-3"
+              style={{ maxHeight: '200px', overflowY: 'auto' }}
+            >
+              {filterKeys
+                .filter((f) => !filterKeyMaps.includes(f.key))
+                .map((f) => (
+                  <div
+                    key={f.key}
+                    onClick={() => onFilterKeySelect(f.key)}
+                    className={cn(
+                      stl.filterItem,
+                      'py-3 -mx-3 px-3 flex items-center cursor-pointer',
+                    )}
+                  >
+                    <Icon name={f.icon} size="16" />
+                    <span className="ml-3 capitalize">{f.name}</span>
+                  </div>
+                ))}
             </div>
           </div>
         )}
@@ -139,8 +203,14 @@ function FilterDropdown(props) {
             className="ml-2"
             autoFocus
             loading={props.optionsLoading}
-            fetchOptions={(options) => fetchOptions({ ...options, key: filterKey })}
-            options={shouldFetchOptions ? props.options.filter((f) => f.key === filterKey) : localOptions}
+            fetchOptions={(options) =>
+              fetchOptions({ ...options, key: filterKey })
+            }
+            options={
+              shouldFetchOptions
+                ? props.options.filter((f) => f.key === filterKey)
+                : localOptions
+            }
             onSelect={onSelect}
             placeholder={activeFilter && activeFilter.placeholder}
             itemStyle={{ minWidth: '200px' }}

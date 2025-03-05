@@ -25,14 +25,16 @@ export class MessengerConfig {
   };
 
   validate(): boolean {
-    return this.endpoint !== '' && this.name != '' && validateURL(this.endpoint);
+    return (
+      this.endpoint !== '' && this.name != '' && validateURL(this.endpoint)
+    );
   }
 
   exists(): boolean {
     return !!this.webhookId;
   }
 
-  toData(): { endpoint: string, url: string, name: string, webhookId: string } {
+  toData(): { endpoint: string; url: string; name: string; webhookId: string } {
     return {
       endpoint: this.endpoint,
       url: this.endpoint,

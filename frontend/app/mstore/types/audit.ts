@@ -22,21 +22,24 @@ export default class Audit {
 
   payload: any = {};
 
-  constructor() {
-  }
+  constructor() {}
 
   static fromJson(json: any): Audit {
     const audit = new Audit();
     audit.id = json.rn;
     audit.username = json.username;
     audit.action = unserscoreToSpaceAndCapitalize(json.action);
-    audit.createdAt = json.createdAt && DateTime.fromMillis(json.createdAt || 0);
+    audit.createdAt =
+      json.createdAt && DateTime.fromMillis(json.createdAt || 0);
     audit.endPoint = json.endpoint;
     audit.parameters = json.parameters;
     audit.method = json.method;
     audit.status = json.status;
     audit.email = json.email;
-    audit.payload = typeof json.payload === 'string' ? JSON.parse(json.payload) : json.payload;
+    audit.payload =
+      typeof json.payload === 'string'
+        ? JSON.parse(json.payload)
+        : json.payload;
     return audit;
   }
 

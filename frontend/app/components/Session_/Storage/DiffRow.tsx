@@ -54,18 +54,26 @@ function DiffRow({ diff, path }: Props) {
   const { length } = path;
   const diffLengths = [oldValue?.length || 0, newValue?.length || 0];
 
-  const pathStr = length > 20 && shorten ? `${path.slice(0, 5)}...${path.slice(length - 10, length)}` : path;
+  const pathStr =
+    length > 20 && shorten
+      ? `${path.slice(0, 5)}...${path.slice(length - 10, length)}`
+      : path;
 
-  const oldValueSafe = diffLengths[0] > 50 && shortenOldVal
-    ? `${oldValue.slice(0, 10)} ... ${oldValue.slice(diffLengths[0] - 25, diffLengths[0])}`
-    : oldValue;
-  const newValueSafe = diffLengths[1] > 50 && shortenNewVal
-    ? `${newValue.slice(0, 10)} ... ${newValue.slice(diffLengths[1] - 25, diffLengths[1])}`
-    : newValue;
+  const oldValueSafe =
+    diffLengths[0] > 50 && shortenOldVal
+      ? `${oldValue.slice(0, 10)} ... ${oldValue.slice(diffLengths[0] - 25, diffLengths[0])}`
+      : oldValue;
+  const newValueSafe =
+    diffLengths[1] > 50 && shortenNewVal
+      ? `${newValue.slice(0, 10)} ... ${newValue.slice(diffLengths[1] - 25, diffLengths[1])}`
+      : newValue;
 
   return (
     <div className="p-1 rounded flex flex-wrap gap-2">
-      <span className={length > 20 ? 'cursor-pointer' : ''} onClick={() => setShorten(!shorten)}>
+      <span
+        className={length > 20 ? 'cursor-pointer' : ''}
+        onClick={() => setShorten(!shorten)}
+      >
         {pathStr}
         {': '}
       </span>
@@ -77,27 +85,28 @@ function DiffRow({ diff, path }: Props) {
         )}
       >
         <span className="line-through">{oldValueSafe || 'undefined'}</span>
-        {diffLengths[0] > 50
-          ? (
-            <div onClick={() => setShortenOldVal(!shortenOldVal)} className="cursor-pointer px-1 text-white bg-gray-light rounded text-sm w-fit">
-              {!shortenOldVal ? 'collapse' : 'expand'}
-            </div>
-          ) : null}
+        {diffLengths[0] > 50 ? (
+          <div
+            onClick={() => setShortenOldVal(!shortenOldVal)}
+            className="cursor-pointer px-1 text-white bg-gray-light rounded text-sm w-fit"
+          >
+            {!shortenOldVal ? 'collapse' : 'expand'}
+          </div>
+        ) : null}
       </div>
       {' -> '}
       <div
-        className={cn(
-          'whitespace-pre',
-          newValue ? 'text-red' : 'text-green',
-        )}
+        className={cn('whitespace-pre', newValue ? 'text-red' : 'text-green')}
       >
         {newValueSafe || 'undefined'}
-        {diffLengths[1] > 50
-          ? (
-            <div onClick={() => setShortenNewVal(!shortenNewVal)} className="cursor-pointer px-1 text-white bg-gray-light rounded text-sm w-fit">
-              {!shortenNewVal ? 'collapse' : 'expand'}
-            </div>
-          ) : null}
+        {diffLengths[1] > 50 ? (
+          <div
+            onClick={() => setShortenNewVal(!shortenNewVal)}
+            className="cursor-pointer px-1 text-white bg-gray-light rounded text-sm w-fit"
+          >
+            {!shortenNewVal ? 'collapse' : 'expand'}
+          </div>
+        ) : null}
       </div>
     </div>
   );

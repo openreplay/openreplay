@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import React, { ErrorInfo } from 'react';
 import { Button } from 'antd';
 import { Icon } from 'UI';

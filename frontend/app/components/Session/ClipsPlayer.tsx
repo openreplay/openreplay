@@ -29,9 +29,7 @@ interface Props {
 }
 
 function ClipsPlayer(props: Props) {
-  const {
-    clip, currentIndex, isCurrent, onClose, isHighlight,
-  } = props;
+  const { clip, currentIndex, isCurrent, onClose, isHighlight } = props;
   const { sessionStore } = useStore();
   const { prefetched } = sessionStore;
   const [windowActive, setWindowActive] = useState(!document.hidden);
@@ -76,7 +74,8 @@ function ClipsPlayer(props: Props) {
 
   useEffect(() => {
     playerInst = undefined;
-    if (!clip.sessionId || contextValue.player !== undefined || !session) return;
+    if (!clip.sessionId || contextValue.player !== undefined || !session)
+      return;
 
     // @ts-ignore
     sessionStore.setUserTimezone(session?.timezone);
@@ -101,14 +100,12 @@ function ClipsPlayer(props: Props) {
     }
   }, [session, domFiles, prefetched]);
 
-  const {
-    tabStates,
-    ready,
-  } = contextValue.store?.get() || {};
+  const { tabStates, ready } = contextValue.store?.get() || {};
 
-  const cssLoading = ready && tabStates
-    ? Object.values(tabStates).some(({ cssLoading }) => cssLoading)
-    : true;
+  const cssLoading =
+    ready && tabStates
+      ? Object.values(tabStates).some(({ cssLoading }) => cssLoading)
+      : true;
 
   useEffect(() => {
     if (ready) {
@@ -144,8 +141,19 @@ function ClipsPlayer(props: Props) {
     <PlayerContext.Provider value={contextValue}>
       {contextValue.player ? (
         <>
-          <ClipPlayerHeader isHighlight={isHighlight} onClose={onClose} range={clip.range} session={session!} />
-          <ClipPlayerContent message={clip.message} isHighlight={isHighlight} autoplay={props.autoplay} range={clip.range} session={session!} />
+          <ClipPlayerHeader
+            isHighlight={isHighlight}
+            onClose={onClose}
+            range={clip.range}
+            session={session!}
+          />
+          <ClipPlayerContent
+            message={clip.message}
+            isHighlight={isHighlight}
+            autoplay={props.autoplay}
+            range={clip.range}
+            session={session!}
+          />
         </>
       ) : (
         <Loader />

@@ -56,6 +56,9 @@ function LiveSession({
   );
 }
 
-export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', true, false)(
-  observer(LiveSession),
-);
+export default withPermissions(
+  ['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'],
+  '',
+  true,
+  false,
+)(observer(LiveSession));

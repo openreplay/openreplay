@@ -2,18 +2,21 @@
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Dashboards_circle_alert(props: Props) {
-  const {
-    size = 14, width = size, height = size, fill = '',
-  } = props;
+  const { size = 14, width = size, height = size, fill = '' } = props;
   return (
-    <svg viewBox="0 0 16 16" fill="none" width={`${width}px`} height={`${height}px`}>
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      width={`${width}px`}
+      height={`${height}px`}
+    >
       <g>
         <path fill="#fff" fillOpacity=".01" d="M0 0h16v16H0z" />
         <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -22,8 +25,12 @@ function Dashboards_circle_alert(props: Props) {
         </g>
       </g>
       <defs>
-        <clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z" /></clipPath>
-        <clipPath id="b"><path fill="#fff" d="M0 0h16v16H0z" /></clipPath>
+        <clipPath id="a">
+          <path fill="#fff" d="M0 0h16v16H0z" />
+        </clipPath>
+        <clipPath id="b">
+          <path fill="#fff" d="M0 0h16v16H0z" />
+        </clipPath>
       </defs>
     </svg>
   );

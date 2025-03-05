@@ -25,24 +25,26 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
   if (webhooks.size === 0) {
     return 'OpenReplay';
   }
-  const getSlackChannels = () => (
-    ` (${
-      alert.slackInput
-        .map((channelId: number) => (
+  const getSlackChannels = () =>
+    ` (${alert.slackInput
+      .map(
+        (channelId: number) =>
           `#${
-            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'slack')?.name}`
-        ))
-        .join(', ')
-    })`
-  );
-  const getMsTeamsChannels = () => (
-    ` (${
-      alert.msteamsInput
-        .map((channelId: number) => webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'msteams')
-          ?.name)
-        .join(', ')
-    })`
-  );
+            webhooks.find(
+              (hook) => hook.webhookId === channelId && hook.type === 'slack',
+            )?.name
+          }`,
+      )
+      .join(', ')})`;
+  const getMsTeamsChannels = () =>
+    ` (${alert.msteamsInput
+      .map(
+        (channelId: number) =>
+          webhooks.find(
+            (hook) => hook.webhookId === channelId && hook.type === 'msteams',
+          )?.name,
+      )
+      .join(', ')})`;
   let str = '';
   if (alert.slack) {
     str = 'Slack';
@@ -57,8 +59,11 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
     }
   }
   if (alert.email) {
-    str += (str === '' ? '' : ' and ') + (alert.emailInput.length > 1 ? 'Emails' : 'Email');
-    str += alert.emailInput.length > 0 ? ` (${alert.emailInput.join(', ')})` : '';
+    str +=
+      (str === '' ? '' : ' and ') +
+      (alert.emailInput.length > 1 ? 'Emails' : 'Email');
+    str +=
+      alert.emailInput.length > 0 ? ` (${alert.emailInput.join(', ')})` : '';
   }
   if (alert.webhook) str += `${str === '' ? '' : ' and '}Webhook`;
   if (str === '') return 'OpenReplay';
@@ -76,9 +81,8 @@ interface Props extends RouteComponentProps {
 }
 
 function AlertListItem(props: Props) {
-  const {
-    alert, siteId, history, init, demo, webhooks, triggerOptions,
-  } = props;
+  const { alert, siteId, history, init, demo, webhooks, triggerOptions } =
+    props;
 
   if (!alert) {
     return null;
@@ -91,13 +95,20 @@ function AlertListItem(props: Props) {
     history.push(path);
   };
 
-  const formTriggerName = () => (Number.isInteger(alert.query.left) && triggerOptions
-    ? triggerOptions.find((opt: { value: any, label: string }) => opt.value === alert.query.left)?.label
-    : alert.query.left);
+  const formTriggerName = () =>
+    Number.isInteger(alert.query.left) && triggerOptions
+      ? triggerOptions.find(
+          (opt: { value: any; label: string }) =>
+            opt.value === alert.query.left,
+        )?.label
+      : alert.query.left;
 
   return (
     <div
-      className={cn('px-6', !demo ? 'hover:bg-active-blue cursor-pointer border-t' : '')}
+      className={cn(
+        'px-6',
+        !demo ? 'hover:bg-active-blue cursor-pointer border-t' : '',
+      )}
       onClick={onItemClick}
     >
       <div className="grid grid-cols-12 py-4 select-none items-center">
@@ -111,7 +122,10 @@ function AlertListItem(props: Props) {
         </div>
         <div className="col-span-2">
           <div className="flex items-center">
-            <Tag className="rounded-full bg-indigo-50 cap-first text-base" bordered={false}>
+            <Tag
+              className="rounded-full bg-indigo-50 cap-first text-base"
+              bordered={false}
+            >
               {alert.detectionMethod}
             </Tag>
           </div>
@@ -120,16 +134,14 @@ function AlertListItem(props: Props) {
           {demo
             ? DateTime.fromMillis(+new Date()).toFormat('LLL dd, yyyy, hh:mm a')
             : checkForRecent(
-              DateTime.fromMillis(alert.createdAt || +new Date()),
-              'LLL dd, yyyy, hh:mm a',
-            )}
+                DateTime.fromMillis(alert.createdAt || +new Date()),
+                'LLL dd, yyyy, hh:mm a',
+              )}
         </div>
       </div>
       <div className="text-sm w-2/3 px-2 pb-2 ">
         {'When the '}
-        <span className="font-medium font-mono">
-          {alert.detectionMethod}
-        </span>
+        <span className="font-medium font-mono">{alert.detectionMethod}</span>
         {' of '}
         <span className="font-medium font-mono">
           {triggerOptions ? formTriggerName() : alert.seriesName}
@@ -153,8 +165,7 @@ function AlertListItem(props: Props) {
           </>
         ) : null}
         {', notify via '}
-        <span>{getNotifyChannel(alert, webhooks)}</span>
-        .
+        <span>{getNotifyChannel(alert, webhooks)}</span>.
       </div>
       {alert.description ? (
         <div className="px-2 pb-2">{alert.description}</div>

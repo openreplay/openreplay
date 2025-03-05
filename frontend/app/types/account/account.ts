@@ -4,24 +4,24 @@ import { makeAutoObservable } from 'mobx';
 import Limit, { ILimits } from './limit';
 
 export interface IAccount extends IMember {
-  changePassword?: any
-  limits: ILimits
-  banner: string
-  email: string
-  verifiedEmail: string
-  id: string
-  smtp: boolean
-  license: string
-  expirationDate?: number
-  permissions: string[]
-  settings: any
-  iceServers: string
-  hasPassword: boolean
-  apiKey: string
-  tenantKey: string
-  edition: string
-  optOut: string
-  versionNumber: string
+  changePassword?: any;
+  limits: ILimits;
+  banner: string;
+  email: string;
+  verifiedEmail: string;
+  id: string;
+  smtp: boolean;
+  license: string;
+  expirationDate?: number;
+  permissions: string[];
+  settings: any;
+  iceServers: string;
+  hasPassword: boolean;
+  apiKey: string;
+  tenantKey: string;
+  edition: string;
+  optOut: string;
+  versionNumber: string;
 }
 
 export default class Account {

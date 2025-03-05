@@ -13,10 +13,10 @@ interface Props {
 }
 
 function StackEventRow(props: Props) {
-  const {
-    event, onJump, style, isActive,
-  } = props;
-  let message: any = Array.isArray(event.payload) ? event.payload[0] : event.payload;
+  const { event, onJump, style, isActive } = props;
+  let message: any = Array.isArray(event.payload)
+    ? event.payload[0]
+    : event.payload;
   message = typeof message === 'string' ? message : JSON.stringify(message);
 
   const iconProps: any = React.useMemo(() => {

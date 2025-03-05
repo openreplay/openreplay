@@ -8,7 +8,15 @@ export default class ListWalker<T extends Timed> {
 
   append(m: T): void {
     if (this.length > 0 && this.last && m.time < this.last.time) {
-      console.error('Trying to append message with the less time then the list tail:', m.time, 'vs', this.last.time, m, this.last, this);
+      console.error(
+        'Trying to append message with the less time then the list tail:',
+        m.time,
+        'vs',
+        this.last.time,
+        m,
+        this.last,
+        this,
+      );
       return;
     }
     this.list.push(m);
@@ -33,10 +41,10 @@ export default class ListWalker<T extends Timed> {
 
   sort(comparator: (a: T, b: T) => number): void {
     // @ts-ignore
-    this.list.sort((m1, m2) => comparator(m1, m2) || (m1._index - m2._index)); // indexes for sort stability (TODO: fix types???)
+    this.list.sort((m1, m2) => comparator(m1, m2) || m1._index - m2._index); // indexes for sort stability (TODO: fix types???)
   }
 
-  forEach(f: (item: T) => void):void {
+  forEach(f: (item: T) => void): void {
     this.list.forEach(f);
   }
 
@@ -104,22 +112,18 @@ export default class ListWalker<T extends Timed> {
   }
 
   protected moveNext(): T | null {
-    return this.hasNext()
-      ? this.list[this.p++]
-      : null;
+    return this.hasNext() ? this.list[this.p++] : null;
   }
 
   protected movePrev(): T | null {
-    return this.hasPrev()
-      ? this.list[--this.p]
-      : null;
+    return this.hasPrev() ? this.list[--this.p] : null;
   }
 
   /**
-	 * @returns last message with the time <= t.
-	 * Assumed that the current message is already handled so
-	 * if pointer doesn't change <null> is returned.
-	 */
+   * @returns last message with the time <= t.
+   * Assumed that the current message is already handled so
+   * if pointer doesn't change <null> is returned.
+   */
   moveGetLast(t: number, index?: number): T | null {
     let key: string = 'time'; // TODO
     let val = t;
@@ -184,11 +188,11 @@ export default class ListWalker<T extends Timed> {
   }
 
   /**
-	 * Moves over the messages starting from the current+1 to the last one with the time <= t
-	 * applying callback on each of them
-	 * @param t - max message time to move to; will move & apply callback while msg.time <= t
-	 * @param callback - a callback to apply on each message passing by while moving
-	 */
+   * Moves over the messages starting from the current+1 to the last one with the time <= t
+   * applying callback on each of them
+   * @param t - max message time to move to; will move & apply callback while msg.time <= t
+   * @param callback - a callback to apply on each message passing by while moving
+   */
   moveApply(t: number, callback: (msg: T) => void): void {
     // Applying only in increment order for now
     if (t < this.timeNow) {

@@ -9,24 +9,25 @@ import SavedSearch from '../SavedSearch/SavedSearch';
 
 function SearchActions() {
   const { t, i18n } = useTranslation();
-  const {
-    aiFiltersStore, searchStore, customFieldStore, userStore,
-  } = useStore();
+  const { aiFiltersStore, searchStore, customFieldStore, userStore } =
+    useStore();
   const appliedFilter = searchStore.instance;
   const { activeTab } = searchStore;
   const { isEnterprise } = userStore;
   const metaLoading = customFieldStore.isLoading;
-  const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).length > 0;
-  const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).length > 0;
+  const hasEvents =
+    appliedFilter.filters.filter((i: any) => i.isEvent).length > 0;
+  const hasFilters =
+    appliedFilter.filters.filter((i: any) => !i.isEvent).length > 0;
   const { savedSearch } = searchStore;
   const hasSavedSearch = savedSearch && savedSearch.exists();
   const hasSearch = hasEvents || hasFilters || hasSavedSearch;
 
   const title = useMemo(() => {
     if (activeTab && activeTab.type === 'bookmarks') {
-      return isEnterprise ? 'Vault' : 'Bookmarks';
+      return isEnterprise ? t('Vault') : t('Bookmarks');
     }
-    return t('welcome bob');
+    return t('Sessions');
   }, [activeTab?.type, isEnterprise, i18n.language]);
 
   // @ts-ignore
@@ -41,14 +42,14 @@ function SearchActions() {
         {isSaas && showAiField ? <AiSessionSearchField /> : null}
         <div className="ml-auto" />
         <SavedSearch />
-        <Tooltip title="Clear Search Filters">
+        <Tooltip title={t('Clear Search Filters')}>
           <Button
             type="text"
             disabled={!hasSearch}
             onClick={() => searchStore.clearSearch()}
             className="px-2"
           >
-            Clear
+            {t('Clear')}
           </Button>
         </Tooltip>
       </div>
@@ -57,7 +58,7 @@ function SearchActions() {
           {aiFiltersStore.isLoading ? (
             <div className="font-semibold flex items-center gap-2 p-4">
               <AnimatedSVG name={ICONS.LOADER} size={18} />
-              <span>Translating your query into search steps...</span>
+              <span>{t('Translating your query into search steps...')}</span>
             </div>
           ) : null}
         </>

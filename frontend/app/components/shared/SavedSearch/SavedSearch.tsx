@@ -6,11 +6,12 @@ import { observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
 import SaveSearchModal from '../SaveSearchModal/SaveSearchModal';
 import SavedSearchModal from './components/SavedSearchModal';
+import { useTranslation } from 'react-i18next';
 
 function SavedSearch() {
   const [showModal, setShowModal] = useState(false);
   const { searchStore } = useStore();
-  const { savedSearch } = searchStore;
+  const { t } = useTranslation();
 
   const { showModal: showListModal } = useModal();
 
@@ -27,14 +28,36 @@ function SavedSearch() {
   return (
     <>
       <div className="flex gap-2">
-        <Tooltip title={searchStore.list.length === 0 ? 'You have not saved any searches' : ''}>
-          <Button disabled={searchStore.list.length === 0} onClick={toggleList} className="px-2" type="text">
-            Saved Searches
+        <Tooltip
+          title={
+            searchStore.list.length === 0
+              ? t('You have not saved any searches')
+              : ''
+          }
+        >
+          <Button
+            disabled={searchStore.list.length === 0}
+            onClick={toggleList}
+            className="px-2"
+            type="text"
+          >
+            {t('Saved Searches')}
           </Button>
         </Tooltip>
 
-        <Tooltip title={isDisabled ? 'Add an event or filter to save search' : 'Save search filters'}>
-          <Button onClick={toggleModal} disabled={isDisabled} className="px-2" type="text">
+        <Tooltip
+          title={
+            isDisabled
+              ? t('Add an event or filter to save search')
+              : t('Save search filters')
+          }
+        >
+          <Button
+            onClick={toggleModal}
+            disabled={isDisabled}
+            className="px-2"
+            type="text"
+          >
             {/* {savedSearch.exists() ? 'Update' : 'Save'} Search */}
             <SaveOutlined />
           </Button>

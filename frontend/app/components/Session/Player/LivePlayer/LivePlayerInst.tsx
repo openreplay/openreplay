@@ -28,7 +28,8 @@ interface IProps {
 function Player({ fullView, isMultiview }: IProps) {
   const { uiPlayerStore, sessionStore } = useStore();
   const isAssist = window.location.pathname.includes('/assist/');
-  const closedLive = sessionStore.fetchFailed || (isAssist && !sessionStore.current.live);
+  const closedLive =
+    sessionStore.fetchFailed || (isAssist && !sessionStore.current.live);
   const defaultHeight = getDefaultPanelHeight();
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
   // @ts-ignore TODO

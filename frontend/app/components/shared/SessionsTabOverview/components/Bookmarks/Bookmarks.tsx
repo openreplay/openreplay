@@ -10,10 +10,16 @@ import { observer } from 'mobx-react-lite';
 import SessionItem from 'Shared/SessionItem/SessionItem';
 import usePageTitle from '@/hooks/usePageTitle';
 import withPermissions from 'HOCs/withPermissions';
+import { useTranslation } from 'react-i18next';
 
 function Bookmarks() {
+  const { t } = useTranslation();
   const {
-    projectsStore, sessionStore, customFieldStore, userStore, searchStore,
+    projectsStore,
+    sessionStore,
+    customFieldStore,
+    userStore,
+    searchStore,
   } = useStore();
   const { isEnterprise } = userStore;
   const { isLoggedIn } = userStore;
@@ -28,19 +34,21 @@ function Bookmarks() {
   return (
     <div className="widget-wrapper">
       <div className="flex items-center px-4 py-1 justify-between w-full">
-        <h2 className="text-2xl capitalize mr-4">Bookmarks</h2>
+        <h2 className="text-2xl capitalize mr-4">{t('Bookmarks')}</h2>
       </div>
       <div className="border-b" />
       <Loader loading={bookmarks.loading}>
         <NoContent
           show={bookmarks.list.length === 0}
-          title={(
+          title={
             <div className="flex flex-col items-center justify-center">
               {/* <Icon name="no-dashboard" size={80} color="figmaColors-accent-secondary" /> */}
               <AnimatedSVG name={ICONS.NO_BOOKMARKS} size={60} />
-              <div className="text-center mt-4 text-lg font-medium">No sessions bookmarked</div>
+              <div className="text-center mt-4 text-lg font-medium">
+                {t('No sessions bookmarked')}
+              </div>
             </div>
-          )}
+          }
         >
           <div className="border-b rounded bg-white">
             {bookmarks.list.map((session: any) => (
@@ -60,15 +68,13 @@ function Bookmarks() {
 
           <div className="w-full flex items-center justify-between py-4 px-6">
             <div className="text-disabled-text">
-              Showing
-              {' '}
-              <span className="font-semibold">{Math.min(bookmarks.list.length, bookmarks.pageSize)}</span>
-              {' '}
-              out
-              of
-              <span className="font-semibold">{bookmarks.total}</span>
-              {' '}
-              sessions.
+              {t('Showing')}{' '}
+              <span className="font-semibold">
+                {Math.min(bookmarks.list.length, bookmarks.pageSize)}
+              </span>{' '}
+              {t('out of')}
+              <span className="font-semibold">{bookmarks.total}</span>&nbsp;
+              {t('sessions')}.
             </div>
             <Pagination
               page={bookmarks.page}
@@ -84,4 +90,9 @@ function Bookmarks() {
   );
 }
 
-export default withPermissions(['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', false, false)(observer(Bookmarks));
+export default withPermissions(
+  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'],
+  '',
+  false,
+  false,
+)(observer(Bookmarks));

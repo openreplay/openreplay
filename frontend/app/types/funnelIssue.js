@@ -62,7 +62,8 @@ export default Record(
       },
     },
     fromJS: ({ contextString, type, ...rest }) => {
-      const total = rest.lostConversions + rest.affectedSessions + rest.unaffectedSessions;
+      const total =
+        rest.lostConversions + rest.affectedSessions + rest.unaffectedSessions;
       const lostConversionsPer = parseInt((rest.lostConversions * 100) / total);
       const affectedSessionsPer = parseInt(
         (rest.affectedSessions * 100) / total,

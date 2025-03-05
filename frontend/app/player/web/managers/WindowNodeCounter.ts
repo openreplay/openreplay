@@ -82,7 +82,9 @@ export default class WindowNodeCounter {
       return;
     }
     if (!this.nodes[parentId]) {
-      console.warn(`Node Counter: Node with id ${parentId} (parentId) not found.`);
+      console.warn(
+        `Node Counter: Node with id ${parentId} (parentId) not found.`,
+      );
       return;
     }
     this.nodes[id].moveNode(this.nodes[parentId]);

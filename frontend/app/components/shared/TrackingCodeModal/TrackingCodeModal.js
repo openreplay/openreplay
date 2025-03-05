@@ -42,8 +42,7 @@ class TrackingCodeModal extends React.PureComponent {
         style={{ width: '700px' }}
       >
         <h3 className="p-5 text-2xl">
-          {title}
-          {' '}
+          {title}{' '}
           {subTitle && (
             <span className="text-sm color-gray-dark">{subTitle}</span>
           )}

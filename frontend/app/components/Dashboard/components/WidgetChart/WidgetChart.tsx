@@ -37,6 +37,7 @@ import WidgetDatatable from '../WidgetDatatable/WidgetDatatable';
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import FunnelTable from '../../../Funnels/FunnelWidget/FunnelTable';
 import LongLoader from './LongLoader';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   metric: any;
@@ -46,6 +47,7 @@ interface Props {
 }
 
 function WidgetChart(props: Props) {
+  const { t } = useTranslation();
   const { ref, inView } = useInView({
     triggerOnce: true,
     rootMargin: '200px 0px',
@@ -65,14 +67,21 @@ function WidgetChart(props: Props) {
   const prevMetricRef = useRef<any>();
   const isMounted = useIsMounted();
   const [compData, setCompData] = useState<any>(null);
-  const [enabledRows, setEnabledRows] = useState<string[]>(_metric.series.map((s) => s.name));
-  const isTableWidget = _metric.metricType === 'table' && _metric.viewType === 'table';
-  const isPieChart = _metric.metricType === 'table' && _metric.viewType === 'pieChart';
+  const [enabledRows, setEnabledRows] = useState<string[]>(
+    _metric.series.map((s) => s.name),
+  );
+  const isTableWidget =
+    _metric.metricType === 'table' && _metric.viewType === 'table';
+  const isPieChart =
+    _metric.metricType === 'table' && _metric.viewType === 'pieChart';
 
-  useEffect(() => () => {
-    dashboardStore.setComparisonPeriod(null, _metric.metricId);
-    dashboardStore.resetDrillDownFilter();
-  }, []);
+  useEffect(
+    () => () => {
+      dashboardStore.setComparisonPeriod(null, _metric.metricId);
+      dashboardStore.resetDrillDownFilter();
+    },
+    [],
+  );
 
   useEffect(() => {
     if (enabledRows.length !== _metric.series.length) {
@@ -89,8 +98,8 @@ function WidgetChart(props: Props) {
     if (!data.chart) return;
     const series = data.chart[0]
       ? Object.keys(data.chart[0]).filter(
-        (key) => key !== 'time' && key !== 'timestamp',
-      )
+          (key) => key !== 'time' && key !== 'timestamp',
+        )
       : [];
     if (series.length) {
       setEnabledRows(series);
@@ -184,7 +193,8 @@ function WidgetChart(props: Props) {
   };
 
   const loadComparisonData = () => {
-    if (!dashboardStore.comparisonPeriods[_metric.metricId]) return setCompData(null);
+    if (!dashboardStore.comparisonPeriods[_metric.metricId])
+      return setCompData(null);
 
     // TODO: remove after backend adds support for more view types
     const payload = {
@@ -246,9 +256,7 @@ function WidgetChart(props: Props) {
 
     if (metricType === FUNNEL) {
       if (viewType === 'table') {
-        return (
-          <FunnelTable data={data} compData={compData} />
-        );
+        return <FunnelTable data={data} compData={compData} />;
       }
       if (viewType === 'metric') {
         const values: {
@@ -274,7 +282,7 @@ function WidgetChart(props: Props) {
             colors={colors}
             hideLegend
             onClick={onChartClick}
-            label="Conversion"
+            label={t('Conversion')}
           />
         );
       }
@@ -290,9 +298,10 @@ function WidgetChart(props: Props) {
     }
 
     if (metricType === 'predefined' || metricType === ERRORS) {
-      const defaultMetric = _metric.data.chart && _metric.data.chart.length === 0
-        ? metricWithData
-        : metric;
+      const defaultMetric =
+        _metric.data.chart && _metric.data.chart.length === 0
+          ? metricWithData
+          : metric;
       return (
         <WidgetPredefinedChart
           isTemplate={isTemplate}
@@ -324,8 +333,8 @@ function WidgetChart(props: Props) {
             onClick={onChartClick}
             label={
               _metric.metricOf === 'sessionCount'
-                ? 'Number of Sessions'
-                : 'Number of Users'
+                ? t('Number of Sessions')
+                : t('Number of Users')
             }
           />
         );
@@ -341,8 +350,8 @@ function WidgetChart(props: Props) {
             onSeriesFocus={onFocus}
             label={
               _metric.metricOf === 'sessionCount'
-                ? 'Number of Sessions'
-                : 'Number of Users'
+                ? t('Number of Sessions')
+                : t('Number of Users')
             }
           />
         );
@@ -359,8 +368,8 @@ function WidgetChart(props: Props) {
             onClick={onChartClick}
             label={
               _metric.metricOf === 'sessionCount'
-                ? 'Number of Sessions'
-                : 'Number of Users'
+                ? t('Number of Sessions')
+                : t('Number of Users')
             }
           />
         );
@@ -378,8 +387,8 @@ function WidgetChart(props: Props) {
             onSeriesFocus={onFocus}
             label={
               _metric.metricOf === 'sessionCount'
-                ? 'Number of Sessions'
-                : 'Number of Users'
+                ? t('Number of Sessions')
+                : t('Number of Users')
             }
           />
         );
@@ -392,8 +401,8 @@ function WidgetChart(props: Props) {
             onSeriesFocus={onFocus}
             label={
               _metric.metricOf === 'sessionCount'
-                ? 'Number of Sessions'
-                : 'Number of Users'
+                ? t('Number of Sessions')
+                : t('Number of Users')
             }
           />
         );
@@ -407,8 +416,8 @@ function WidgetChart(props: Props) {
             params={params}
             label={
               _metric.metricOf === 'sessionCount'
-                ? 'Number of Sessions'
-                : 'Number of Users'
+                ? t('Number of Sessions')
+                : t('Number of Users')
             }
           />
         );
@@ -417,15 +426,24 @@ function WidgetChart(props: Props) {
         return null;
       }
       if (viewType === 'metric') {
-        const values: { value: number, compData?: number, series: string }[] = [];
+        const values: { value: number; compData?: number; series: string }[] =
+          [];
         for (let i = 0; i < data.namesMap.length; i++) {
           if (!data.namesMap[i]) {
             continue;
           }
 
           values.push({
-            value: data.chart.reduce((acc, curr) => acc + curr[data.namesMap[i]], 0),
-            compData: compData ? compData.chart.reduce((acc, curr) => acc + curr[compData.namesMap[i]], 0) : undefined,
+            value: data.chart.reduce(
+              (acc, curr) => acc + curr[data.namesMap[i]],
+              0,
+            ),
+            compData: compData
+              ? compData.chart.reduce(
+                  (acc, curr) => acc + curr[compData.namesMap[i]],
+                  0,
+                )
+              : undefined,
             series: data.namesMap[i],
           });
         }
@@ -438,8 +456,8 @@ function WidgetChart(props: Props) {
             onSeriesFocus={onFocus}
             label={
               _metric.metricOf === 'sessionCount'
-                ? 'Number of Sessions'
-                : 'Number of Users'
+                ? t('Number of Sessions')
+                : t('Number of Users')
             }
           />
         );
@@ -496,7 +514,7 @@ function WidgetChart(props: Props) {
             style={{ height: '229px' }}
           >
             <Icon name="info-circle" className="mr-2" size="14" />
-            No data available for the selected period.
+            {t('No data available for the selected period.')}
           </div>
         );
       }
@@ -508,7 +526,9 @@ function WidgetChart(props: Props) {
     }
 
     if (metricType === USER_PATH && data && data.links) {
-      const isUngrouped = props.isPreview ? (!(_metric.hideExcess ?? true)) : false;
+      const isUngrouped = props.isPreview
+        ? !(_metric.hideExcess ?? true)
+        : false;
       const height = props.isPreview ? 550 : 240;
       return (
         <SankeyChart
@@ -533,19 +553,29 @@ function WidgetChart(props: Props) {
             onClick={onChartClick}
           />
         );
-      } if (viewType === 'cohort') {
+      }
+      if (viewType === 'cohort') {
         return <CohortCard data={data[0]} />;
       }
     }
     console.log('Unknown metric type', metricType);
-    return <div>Unknown metric type</div>;
+    return <div>{t('Unknown metric type')}</div>;
   }, [data, compData, enabledRows, _metric]);
 
-  const showTable = _metric.metricType === TIMESERIES && (props.isPreview || _metric.viewType === TABLE);
-  const tableMode = _metric.viewType === 'table' && _metric.metricType === TIMESERIES;
+  const showTable =
+    _metric.metricType === TIMESERIES &&
+    (props.isPreview || _metric.viewType === TABLE);
+  const tableMode =
+    _metric.viewType === 'table' && _metric.metricType === TIMESERIES;
   return (
     <div ref={ref}>
-      {loading ? stale ? <LongLoader onClick={loadSample} /> : <Loader loading={loading} style={{ height: '240px' }} /> : (
+      {loading ? (
+        stale ? (
+          <LongLoader onClick={loadSample} />
+        ) : (
+          <Loader loading={loading} style={{ height: '240px' }} />
+        )
+      ) : (
         <div style={{ minHeight: props.isPreview ? undefined : 240 }}>
           {renderChart()}
           {showTable ? (

@@ -12,7 +12,7 @@ const sortOptions = [
 ];
 
 interface Props {
-    // onChange?: (value: string) => void;
+  // onChange?: (value: string) => void;
 }
 function FunnelIssuesSort(props: Props) {
   const { funnelStore } = useStore();

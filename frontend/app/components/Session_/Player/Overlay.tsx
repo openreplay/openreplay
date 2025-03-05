@@ -106,11 +106,12 @@ function Overlay({ nextId, isClickmap }: Props) {
   const loading = messagesLoading || cssLoading;
 
   const showAutoplayTimer = completed && autoplay && nextId;
-  const showPlayIconLayer = !isClickmap
-    && !markedTargets
-    && !inspectorMode
-    && !loading
-    && !showAutoplayTimer;
+  const showPlayIconLayer =
+    !isClickmap &&
+    !markedTargets &&
+    !inspectorMode &&
+    !loading &&
+    !showAutoplayTimer;
 
   const onClick = ({ key }: { key: string }) => {
     switch (key) {
@@ -144,10 +145,11 @@ function Overlay({ nextId, isClickmap }: Props) {
         toast.success('Session URL copied to clipboard');
         break;
       case ItemKey.CopySessionUrlTs:
-        copy(`${window.location.origin
-             + window.location.pathname
-        }?jumpto=${
-          String(Math.round(store.get().time))}`);
+        copy(
+          `${window.location.origin + window.location.pathname}?jumpto=${String(
+            Math.round(store.get().time),
+          )}`,
+        );
         toast.success('Session URL at current time copied to clipboard');
         break;
       default:

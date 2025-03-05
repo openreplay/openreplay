@@ -12,6 +12,7 @@ import { observer } from 'mobx-react-lite';
 import DashboardOptions from '../DashboardOptions';
 import DashboardEditModal from '../DashboardEditModal';
 import AddCardSection from '../AddCardSection/AddCardSection';
+import { useTranslation } from 'react-i18next';
 
 interface IProps {
   siteId: string;
@@ -21,6 +22,7 @@ interface IProps {
 type Props = IProps & RouteComponentProps;
 
 function DashboardHeader(props: Props) {
+  const { t } = useTranslation();
   const { siteId } = props;
   const [popoverOpen, setPopoverOpen] = React.useState(false);
   const handleOpenChange = (open: boolean) => {
@@ -29,7 +31,7 @@ function DashboardHeader(props: Props) {
   const { dashboardStore } = useStore();
   const [focusTitle, setFocusedInput] = React.useState(true);
   const [showEditModal, setShowEditModal] = React.useState(false);
-  const {period} = dashboardStore;
+  const { period } = dashboardStore;
 
   const dashboard: any = dashboardStore.selectedDashboard;
 
@@ -42,9 +44,11 @@ function DashboardHeader(props: Props) {
   const onDelete = async () => {
     if (
       await confirm({
-        header: 'Delete Dashboard',
-        confirmButton: 'Yes, delete',
-        confirmation: 'Are you sure you want to permanently delete this Dashboard?',
+        header: t('Delete Dashboard'),
+        confirmButton: t('Yes, delete'),
+        confirmation: t(
+          'Are you sure you want to permanently delete this Dashboard?',
+        ),
       })
     ) {
       dashboardStore.deleteDashboard(dashboard).then(() => {
@@ -66,14 +70,13 @@ function DashboardHeader(props: Props) {
 
           <PageTitle
             title={
-              @ts-ignore (
-              <Tooltip
-                title="Click to edit"
-                placement="bottom"
-              >
-               <div className='text-2xl h-8 flex items-center p-2 rounded-lg cursor-pointer select-none ps-2 hover:bg-teal/10'> {dashboard?.name}</div>
+              <Tooltip title={t('Click to edit')} placement="bottom">
+                <div className="text-2xl h-8 flex items-center p-2 rounded-lg cursor-pointer select-none ps-2 hover:bg-teal/10">
+                  {' '}
+                  {dashboard?.name}
+                </div>
               </Tooltip>
-            )}
+            }
             onClick={() => onEdit(true)}
             className="mr-3 select-none border-b border-b-borderColor-transparent hover:border-dashed hover:border-gray-medium cursor-pointer"
           />
@@ -82,18 +85,17 @@ function DashboardHeader(props: Props) {
           className="flex items-center gap-2"
           style={{ flex: 1, justifyContent: 'end' }}
         >
-
           <Popover
-          trigger="click"
-          open={popoverOpen}
-          onOpenChange={handleOpenChange}
-          content={<AddCardSection handleOpenChange={handleOpenChange} />}
-          overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
-        >
-          <Button type="primary" icon={<PlusOutlined />} size="middle">
-              Add Card
+            trigger="click"
+            open={popoverOpen}
+            onOpenChange={handleOpenChange}
+            content={<AddCardSection handleOpenChange={handleOpenChange} />}
+            overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
+          >
+            <Button type="primary" icon={<PlusOutlined />} size="middle">
+              {t('Add Card')}
             </Button>
-        </Popover>
+          </Popover>
 
           <SelectDateRange
             style={{ width: '300px' }}

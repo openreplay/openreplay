@@ -14,7 +14,10 @@ const withCopy = (WrappedComponent: React.ComponentType) => {
       }, 1000);
     };
     return (
-      <div onClick={() => copyToClipboard(value)} className="w-fit cursor-pointer">
+      <div
+        onClick={() => copyToClipboard(value)}
+        className="w-fit cursor-pointer"
+      >
         <Tooltip title={copied ? tooltip : 'Click to copy'} delay={0}>
           <WrappedComponent {...props} copyToClipboard={copyToClipboard} />
         </Tooltip>

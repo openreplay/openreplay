@@ -28,13 +28,18 @@ export default class NotificationStore {
   fetchNotifications(): Promise<any> {
     this.loading = true;
     return new Promise((resolve, reject) => {
-      userService.getNotifications()
+      userService
+        .getNotifications()
         .then((response: any) => {
-          this.notifications = response.map((notification: any) => new Notification().fromJson(notification));
+          this.notifications = response.map((notification: any) =>
+            new Notification().fromJson(notification),
+          );
           resolve(response);
-        }).catch((error: any) => {
+        })
+        .catch((error: any) => {
           reject(error);
-        }).finally(() => {
+        })
+        .finally(() => {
           this.loading = false;
         });
     });
@@ -42,7 +47,8 @@ export default class NotificationStore {
 
   ignoreAllNotifications(params: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      userService.ignoreAllNotifications(params)
+      userService
+        .ignoreAllNotifications(params)
         .then((response: any) => {
           this.notifications = this.notifications.map((notification: any) => {
             notification.viewed = true;
@@ -50,7 +56,8 @@ export default class NotificationStore {
           });
           this.fetchNotificationsCount();
           resolve(response);
-        }).catch((error: any) => {
+        })
+        .catch((error: any) => {
           reject(error);
         });
     });
@@ -59,7 +66,8 @@ export default class NotificationStore {
   ignoreNotification(notificationId: number): Promise<any> {
     this.markingAsRead = true;
     return new Promise((resolve, reject) => {
-      userService.ignoreNotification(notificationId)
+      userService
+        .ignoreNotification(notificationId)
         .then((response: any) => {
           // updates notifications item
           this.notifications = this.notifications.map((notification: any) => {
@@ -70,9 +78,11 @@ export default class NotificationStore {
           });
           this.fetchNotificationsCount();
           resolve(response);
-        }).catch((error: any) => {
+        })
+        .catch((error: any) => {
           reject(error);
-        }).finally(() => {
+        })
+        .finally(() => {
           this.markingAsRead = false;
         });
     });
@@ -84,11 +94,13 @@ export default class NotificationStore {
 
   fetchNotificationsCount(): Promise<any> {
     return new Promise((resolve, reject) => {
-      userService.getNotificationsCount()
+      userService
+        .getNotificationsCount()
         .then((response: any) => {
           this.setNotificationsCount(response.count);
           resolve(response);
-        }).catch((error: any) => {
+        })
+        .catch((error: any) => {
           reject(error);
         });
     });

@@ -7,6 +7,7 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Popover } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 
 const PER_PAGE = 10;
 
@@ -18,6 +19,7 @@ interface Props extends RouteComponentProps {
 }
 
 function QueueControls(props: Props) {
+  const { t } = useTranslation();
   const { projectsStore, sessionStore, searchStore } = useStore();
   const { previousId } = sessionStore;
   const { nextId } = sessionStore;
@@ -39,9 +41,7 @@ function QueueControls(props: Props) {
     const index = sessionIds.indexOf(sessionId);
 
     if (currentPage !== totalPages && index === sessionIds.length - 1) {
-      sessionStore
-        .fetchAutoplayList(currentPage + 1)
-        .then(setAutoplayValues);
+      sessionStore.fetchAutoplayList(currentPage + 1).then(setAutoplayValues);
     }
   }, []);
 
@@ -67,7 +67,9 @@ function QueueControls(props: Props) {
         <Popover
           placement="bottom"
           content={
-            <div className="whitespace-nowrap">Play Previous Session</div>
+            <div className="whitespace-nowrap">
+              {t('Play Previous Session')}
+            </div>
           }
           open={previousId ? undefined : false}
         >
@@ -91,7 +93,9 @@ function QueueControls(props: Props) {
       >
         <Popover
           placement="bottom"
-          content={<div className="whitespace-nowrap">Play Next Session</div>}
+          content={
+            <div className="whitespace-nowrap">{t('Play Next Session')}</div>
+          }
           open={nextId ? undefined : false}
         >
           <Button

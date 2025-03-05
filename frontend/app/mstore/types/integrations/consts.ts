@@ -13,7 +13,8 @@ export const API_KEY_ID_LENGTH = 5;
 export const API_KEY_LENGTH = 5;
 export const SECRET_ACCESS_KEY_LENGTH = 40;
 export const ACCESS_KEY_ID_LENGTH = 20;
-export const tokenRE = /^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/i;
+export const tokenRE =
+  /^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/i;
 export const awsRegionLabels = {
   'us-east-1': 'US East (N. Virginia)',
   'us-east-2': 'US East (Ohio)',

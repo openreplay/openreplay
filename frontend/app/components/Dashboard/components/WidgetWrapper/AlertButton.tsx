@@ -7,8 +7,8 @@ import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
 import WidgetIcon from './WidgetIcon';
 
 interface Props {
-    seriesId: string;
-    initAlert?: Function;
+  seriesId: string;
+  initAlert?: Function;
 }
 
 function AlertButton(props: Props) {
@@ -18,16 +18,12 @@ function AlertButton(props: Props) {
   const onClick = () => {
     initAlert?.();
     alertsStore.init({ query: { left: seriesId } });
-    openModal(<AlertFormModal
-      onClose={closeModal}
-    />, {
+    openModal(<AlertFormModal onClose={closeModal} />, {
       placement: 'right',
       width: 620,
     });
   };
-  return (
-    <Button onClick={onClick} type="text" icon={<BellIcon size={16} />} />
-  );
+  return <Button onClick={onClick} type="text" icon={<BellIcon size={16} />} />;
 }
 
 export default AlertButton;

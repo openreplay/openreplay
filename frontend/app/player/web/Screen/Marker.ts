@@ -14,9 +14,12 @@ const metaCharsMap = {
 };
 
 function escapeHtml(str: string) {
-  return String(str).replace(/[&<>"'`=\/]/g, (s) =>
-    // @ts-ignore
-    metaCharsMap[s]);
+  return String(str).replace(
+    /[&<>"'`=\/]/g,
+    (s) =>
+      // @ts-ignore
+      metaCharsMap[s],
+  );
 }
 
 function escapeRegExp(string: string) {
@@ -40,7 +43,10 @@ export default class Marker {
 
   private marker: HTMLDivElement;
 
-  constructor(private readonly overlay: HTMLElement, private readonly screen: Screen) {
+  constructor(
+    private readonly overlay: HTMLElement,
+    private readonly screen: Screen,
+  ) {
     this.tooltip = document.createElement('div');
     this.tooltip.className = styles.tooltip;
     this.tooltipSelector = document.createElement('div');

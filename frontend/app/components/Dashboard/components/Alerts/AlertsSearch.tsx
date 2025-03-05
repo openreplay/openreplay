@@ -12,17 +12,26 @@ function AlertsSearch() {
   const [inputValue, setInputValue] = useState(alertsStore.alertsSearch);
 
   useEffect(() => {
-    debounceUpdate = debounce((value: string) => alertsStore.changeSearch(value), 500);
+    debounceUpdate = debounce(
+      (value: string) => alertsStore.changeSearch(value),
+      500,
+    );
   }, []);
 
-  const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
+  const write = ({
+    target: { value },
+  }: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(value);
     debounceUpdate(value);
   };
 
   return (
     <div className="relative">
-      <Icon name="search" className="absolute top-0 bottom-0 ml-2 m-auto" size="16" />
+      <Icon
+        name="search"
+        className="absolute top-0 bottom-0 ml-2 m-auto"
+        size="16"
+      />
       <Input.Search
         value={inputValue}
         allowClear

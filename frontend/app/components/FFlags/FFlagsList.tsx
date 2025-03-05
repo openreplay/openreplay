@@ -9,8 +9,10 @@ import { observer } from 'mobx-react-lite';
 import Select from 'Shared/Select';
 import usePageTitle from '@/hooks/usePageTitle';
 import FFlagItem from './FFlagItem';
+import { useTranslation } from 'react-i18next';
 
 function FFlagsList({ siteId }: { siteId: string }) {
+  const { t } = useTranslation();
   usePageTitle('Feature Flags - OpenReplay');
   const { featureFlagsStore, userStore } = useStore();
 
@@ -27,12 +29,12 @@ function FFlagsList({ siteId }: { siteId: string }) {
       <FFlagsListHeader siteId={siteId} />
       <div className="border-y px-3 py-2 mt-2 flex items-center w-full justify-end gap-4">
         <div className="flex items-center gap-2">
-          Status:
+          {t('Status:')}
           <Select
             options={[
-              { label: 'All', value: '0' as const },
-              { label: 'Enabled', value: '1' as const },
-              { label: 'Disabled', value: '2' as const },
+              { label: t('All'), value: '0' as const },
+              { label: t('Enabled'), value: '1' as const },
+              { label: t('Disabled'), value: '2' as const },
             ]}
             defaultValue={featureFlagsStore.activity}
             plain
@@ -61,30 +63,34 @@ function FFlagsList({ siteId }: { siteId: string }) {
         <div className="w-full h-full">
           <NoContent
             show={featureFlagsStore.flags.length === 0}
-            title={(
+            title={
               <div className="flex flex-col items-center justify-center">
                 <AnimatedSVG name={ICONS.NO_FFLAGS} size={60} />
                 <div className="text-center  mt-4  text-lg font-medium">
                   {featureFlagsStore.sort.query === ''
-                    ? 'You haven\'t created any feature flags yet'
-                    : 'No matching results'}
+                    ? t("You haven't created any feature flags yet")
+                    : t('No matching results')}
                 </div>
               </div>
-            )}
+            }
             subtext={
               featureFlagsStore.sort.query === '' ? (
                 <div className="text-center flex justify-center items-center flex-col">
-                  Use feature flags to deploy and rollback new functionality with ease.
+                  {t(
+                    'Use feature flags to deploy and rollback new functionality with ease.',
+                  )}
                 </div>
               ) : null
             }
           >
             <div>
               <div className="flex items-center font-semibold border-b py-2 px-6">
-                <div style={{ flex: 1 }}>Key</div>
-                <div style={{ flex: 1 }}>Last modified</div>
-                <div style={{ flex: 1 }}>By</div>
-                <div style={{ marginLeft: 'auto', width: 115 }}>Status</div>
+                <div style={{ flex: 1 }}>{t('Key')}</div>
+                <div style={{ flex: 1 }}>{t('Last modified')}</div>
+                <div style={{ flex: 1 }}>{t('By')}</div>
+                <div style={{ marginLeft: 'auto', width: 115 }}>
+                  {t('Status')}
+                </div>
               </div>
 
               {featureFlagsStore.flags.map((flag) => (
@@ -95,24 +101,21 @@ function FFlagsList({ siteId }: { siteId: string }) {
             </div>
             <div className="w-full flex items-center justify-between pt-4 px-6">
               <div>
-                Showing
-                {' '}
+                {t('Showing')}{' '}
                 <span className="font-medium">
-                  {(featureFlagsStore.page - 1) * featureFlagsStore.pageSize + 1}
-                </span>
-                {' '}
-                to
-                {' '}
+                  {(featureFlagsStore.page - 1) * featureFlagsStore.pageSize +
+                    1}
+                </span>{' '}
+                {t('to')}{' '}
                 <span className="font-medium">
-                  {(featureFlagsStore.page - 1) * featureFlagsStore.pageSize
-                    + featureFlagsStore.flags.length}
-                </span>
-                {' '}
-                of
-                {' '}
-                <span className="font-medium">{numberWithCommas(featureFlagsStore.total)}</span>
-                {' '}
-                Feature Flags.
+                  {(featureFlagsStore.page - 1) * featureFlagsStore.pageSize +
+                    featureFlagsStore.flags.length}
+                </span>{' '}
+                {t('of')}{' '}
+                <span className="font-medium">
+                  {numberWithCommas(featureFlagsStore.total)}
+                </span>{' '}
+                {t('Feature Flags.')}
               </div>
               <Pagination
                 page={featureFlagsStore.page}

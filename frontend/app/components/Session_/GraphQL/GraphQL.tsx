@@ -5,12 +5,11 @@ import React, { useEffect } from 'react';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { getRE } from 'App/utils';
 import TimeTable from 'Components/shared/DevTools/TimeTable';
-import {
-  CloseButton, Input, NoContent, SlideModal,
-} from 'UI';
+import { CloseButton, Input, NoContent, SlideModal } from 'UI';
 
 import BottomBlock from '../BottomBlock';
 import GQLDetails from './GQLDetails';
+import { useTranslation } from 'react-i18next';
 
 export function renderStart(r) {
   return (
@@ -36,10 +35,9 @@ function renderDefaultStatus() {
 
 function GraphQL({ panelHeight }: { panelHeight: number }) {
   const { player, store } = React.useContext(PlayerContext);
-  const {
-    time, livePlay, tabStates, currentTab,
-  } = store.get();
-  const { graphqlList: list = [], graphqlListNow: listNow = [] } = tabStates[currentTab];
+  const { time, livePlay, tabStates, currentTab } = store.get();
+  const { graphqlList: list = [], graphqlListNow: listNow = [] } =
+    tabStates[currentTab];
 
   const defaultState = {
     filter: '',
@@ -55,6 +53,7 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
   };
 
   const [state, setState] = React.useState(defaultState);
+  const { t } = useTranslation();
 
   function renderName(r: Record<string, any>) {
     return (
@@ -66,13 +65,15 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
 
   const filterList = (list: any, value: string) => {
     const filterRE = getRE(value, 'i');
+    const { t } = useTranslation();
 
     return value
       ? list.filter(
-        (r: any) => filterRE.test(r.operationKind)
-            || filterRE.test(r.operationName)
-            || filterRE.test(r.variables),
-      )
+          (r: any) =>
+            filterRE.test(r.operationKind) ||
+            filterRE.test(r.operationName) ||
+            filterRE.test(r.variables),
+        )
       : list;
   };
 
@@ -103,11 +104,12 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
     }
   };
 
-  const closeModal = () => setState((prevState) => ({
-    ...prevState,
-    current: null,
-    showFetchDetails: false,
-  }));
+  const closeModal = () =>
+    setState((prevState) => ({
+      ...prevState,
+      current: null,
+      showFetchDetails: false,
+    }));
 
   useEffect(() => {
     const filtered = filterList(listNow, state.filter);
@@ -119,23 +121,21 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
     }
   }, [time]);
 
-  const {
-    current, currentIndex, filteredList, lastActiveItem,
-  } = state;
+  const { current, currentIndex, filteredList, lastActiveItem } = state;
 
   return (
     <>
       <SlideModal
         size="middle"
         right
-        title={(
+        title={
           <div className="flex justify-between">
-            <h1>GraphQL</h1>
+            <h1>{t('GraphQL')}</h1>
             <div className="flex items-center">
               <CloseButton onClick={closeModal} size="18" className="ml-2" />
             </div>
           </div>
-        )}
+        }
         isDisplayed={current != null}
         content={
           current && (
@@ -150,11 +150,13 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
       />
       <BottomBlock>
         <BottomBlock.Header>
-          <span className="font-semibold color-gray-medium mr-4">GraphQL</span>
+          <span className="font-semibold color-gray-medium mr-4">
+            {t('GraphQL')}
+          </span>
           <div className="flex items-center">
             <Input
               // className="input-small"
-              placeholder="Filter by name or type"
+              placeholder={t('Filter by name or type')}
               icon="search"
               name="filter"
               onChange={onFilterChange}
@@ -164,7 +166,7 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
         <BottomBlock.Content>
           <NoContent
             size="small"
-            title="No recordings found"
+            title={t('No recordings found')}
             show={filteredList.length === 0}
           >
             <TimeTable
@@ -177,17 +179,17 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
             >
               {[
                 {
-                  label: 'Start',
+                  label: t('Start'),
                   width: 90,
                   render: renderStart,
                 },
                 {
-                  label: 'Type',
+                  label: t('Type'),
                   dataKey: 'operationKind',
                   width: 80,
                 },
                 {
-                  label: 'Name',
+                  label: t('Name'),
                   width: 300,
                   render: renderName,
                 },

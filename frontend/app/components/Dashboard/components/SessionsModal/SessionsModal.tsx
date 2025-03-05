@@ -2,18 +2,18 @@ import React, { useEffect } from 'react';
 import { useStore } from 'App/mstore';
 
 import { dashboardService, metricService } from 'App/services';
-import {
-  Loader, Modal, NoContent, Pagination,
-} from 'UI';
+import { Loader, Modal, NoContent, Pagination } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import Session from 'App/mstore/types/session';
 import { useModal } from 'Components/Modal';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
-  issue: any,
+  issue: any;
 }
 
 function SessionsModal(props: Props) {
+  const { t } = useTranslation();
   const { issue } = props;
   const { metricStore, dashboardStore } = useStore();
   const [loading, setLoading] = React.useState(false);
@@ -48,17 +48,20 @@ function SessionsModal(props: Props) {
 
   useEffect(() => {
     fetchSessions({
-      ...dashboardStore.drillDownFilter, ...metricStore.instance.toJson(), limit: 10, page,
+      ...dashboardStore.drillDownFilter,
+      ...metricStore.instance.toJson(),
+      limit: 10,
+      page,
     });
   }, [page]);
 
   return (
     <div className="bg-white h-screen">
-      <Modal.Header title="Sessions">
-        {issue ? 'Sessions with selected issue' : 'All sessions'}
+      <Modal.Header title={t('Sessions')}>
+        {issue ? t('Sessions with selected issue') : t('All sessions')}
       </Modal.Header>
       <Loader loading={loading}>
-        <NoContent show={length == 0} title="No data!">
+        <NoContent show={length == 0} title={t('No data!')}>
           {list.map((item: any) => (
             <SessionItem session={item} onClick={hideModal} />
           ))}
@@ -67,19 +70,10 @@ function SessionsModal(props: Props) {
 
       <div className="w-full flex items-center justify-between p-4 absolute bottom-0 bg-white">
         <div className="text-disabled-text">
-          Showing
-          {' '}
-          <span
-            className="font-medium"
-          >
-            {Math.min(length, 10)}
-          </span>
-          {' '}
-          out of
-          {' '}
-          <span className="font-medium">{total}</span>
-          {' '}
-          Issues
+          {t('Showing')}&nbsp;
+          <span className="font-medium">{Math.min(length, 10)}</span>{' '}
+          {t('out of')}&nbsp;<span className="font-medium">{total}</span>&nbsp;
+          {t('Issues')}
         </div>
         <Pagination
           page={page}

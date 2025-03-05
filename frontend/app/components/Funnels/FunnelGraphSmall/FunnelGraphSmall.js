@@ -13,11 +13,9 @@ function FunnelGraphSmall({ data }) {
           maxBarSize={6}
           background={{ fill: '#DDDDDD' }}
         >
-          {
-            data.map((entry, index) => (
-              <Cell cursor="pointer" fill="#3EAAAF" key={`cell-${index}`} />
-            ))
-          }
+          {data.map((entry, index) => (
+            <Cell cursor="pointer" fill="#3EAAAF" key={`cell-${index}`} />
+          ))}
         </Bar>
       </BarChart>
     </div>

@@ -9,7 +9,10 @@ function FunnelSearch(props) {
   const { funnelStore } = useStore();
   const [query, setQuery] = useState(funnelStore.search);
   useEffect(() => {
-    debounceUpdate = debounce((key, value) => funnelStore.updateKey(key, value), 500);
+    debounceUpdate = debounce(
+      (key, value) => funnelStore.updateKey(key, value),
+      500,
+    );
   }, []);
 
   const write = ({ target: { name, value } }) => {
@@ -19,7 +22,11 @@ function FunnelSearch(props) {
 
   return useObserver(() => (
     <div className="relative">
-      <Icon name="search" className="absolute top-0 bottom-0 ml-2 m-auto" size="16" />
+      <Icon
+        name="search"
+        className="absolute top-0 bottom-0 ml-2 m-auto"
+        size="16"
+      />
       <input
         value={query}
         name="metricsSearch"

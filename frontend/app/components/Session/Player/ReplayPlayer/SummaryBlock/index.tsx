@@ -16,11 +16,7 @@ function isTitleLine(line: string): boolean {
   return boldLine.test(line);
 }
 
-function SummaryBlock({
-  sessionId,
-}: {
-  sessionId: string;
-}) {
+function SummaryBlock({ sessionId }: { sessionId: string }) {
   const { store } = React.useContext(PlayerContext);
   const { tabStates } = store.get();
   const { aiSummaryStore, uiPlayerStore, sessionStore } = useStore();
@@ -38,7 +34,14 @@ function SummaryBlock({
         feat: 'journey' | 'issues' | 'errors',
         startTs: number,
         endTs: number,
-      ) => aiSummaryStore.getDetailedSummary(sessionId, events, feat, startTs, endTs),
+      ) =>
+        aiSummaryStore.getDetailedSummary(
+          sessionId,
+          events,
+          feat,
+          startTs,
+          endTs,
+        ),
       500,
     );
   }, []);
@@ -50,28 +53,34 @@ function SummaryBlock({
       const totalFetchList: IResourceRequest[] = [];
       const totalResourceList: IResourceTiming[] = [];
       const totalWebsocketList: WsChannel[] = [];
-      Object.values(tabStates).forEach(({
-        fetchList,
-        resourceList,
-        websocketList,
-      }) => {
-        totalFetchList.push(...fetchList);
-        totalResourceList.push(...resourceList);
-        totalWebsocketList.push(...websocketList);
-      });
+      Object.values(tabStates).forEach(
+        ({ fetchList, resourceList, websocketList }) => {
+          totalFetchList.push(...fetchList);
+          totalResourceList.push(...resourceList);
+          totalWebsocketList.push(...websocketList);
+        },
+      );
       const resultingEvents = [
         ...totalFetchList,
         ...totalResourceList,
         ...totalWebsocketList,
       ];
       const range = !zoomEnabled ? [0, duration] : [zoomStartTs, zoomEndTs];
-      void debounceUpdate(sessionId, resultingEvents, zoomTab, range[0], range[1]);
+      void debounceUpdate(
+        sessionId,
+        resultingEvents,
+        zoomTab,
+        range[0],
+        range[1],
+      );
     }
   }, [zoomTab]);
 
   const formattedText = aiSummaryStore.text.split('\n').map((line) => {
     if (isTitleLine(line)) {
-      return <div className="font-semibold mt-2">{line.replace(/\*/g, '')}</div>;
+      return (
+        <div className="font-semibold mt-2">{line.replace(/\*/g, '')}</div>
+      );
     }
     if (line.startsWith('*')) {
       return (
@@ -124,19 +133,25 @@ function TextPlaceholder() {
 }
 
 function CodeStringFormatter({ text }: { text: string }) {
-  const parts = text.split(/(`[^`]*`)/).map((part, index) => (part.startsWith('`') && part.endsWith('`') ? (
-    <div key={index} className="whitespace-nowrap bg-gray-lightest font-mono mx-1 px-1 border">
-      {part.substring(1, part.length - 1)}
-    </div>
-  ) : (
-    <span key={index}>{part}</span>
-  )));
+  const parts = text.split(/(`[^`]*`)/).map((part, index) =>
+    part.startsWith('`') && part.endsWith('`') ? (
+      <div
+        key={index}
+        className="whitespace-nowrap bg-gray-lightest font-mono mx-1 px-1 border"
+      >
+        {part.substring(1, part.length - 1)}
+      </div>
+    ) : (
+      <span key={index}>{part}</span>
+    ),
+  );
 
   return <>{parts}</>;
 }
 
 const summaryBlockStyle: React.CSSProperties = {
-  background: 'linear-gradient(180deg, #E8EBFF -24.14%, rgba(236, 254, 255, 0.00) 100%)',
+  background:
+    'linear-gradient(180deg, #E8EBFF -24.14%, rgba(236, 254, 255, 0.00) 100%)',
   width: '100%',
   maxHeight: '25vh',
   overflow: 'auto',

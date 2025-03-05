@@ -55,17 +55,22 @@ export default class SettingsService {
 
   getSessionInfo(sessionId: string, isLive?: boolean): Promise<ISession> {
     return this.client
-      .get(isLive ? `/assist/sessions/${sessionId}` : `/sessions/${sessionId}/replay`)
+      .get(
+        isLive
+          ? `/assist/sessions/${sessionId}`
+          : `/sessions/${sessionId}/replay`,
+      )
       .then((r) => r.json())
       .then((j) => j.data || {})
       .catch(console.error);
   }
 
-  getSessionEvents = async (sessionId: string) => this.client
-    .get(`/sessions/${sessionId}/events`)
-    .then((r) => r.json())
-    .then((j) => j.data || [])
-    .catch(console.error);
+  getSessionEvents = async (sessionId: string) =>
+    this.client
+      .get(`/sessions/${sessionId}/events`)
+      .then((r) => r.json())
+      .then((j) => j.data || [])
+      .catch(console.error);
 
   getLiveSessions(filter: any): Promise<{ sessions: ISession[] }> {
     return this.client
@@ -75,7 +80,10 @@ export default class SettingsService {
       .catch((e) => Promise.reject(e));
   }
 
-  getErrorStack(sessionId: string, errorId: string): Promise<{ trace: IErrorStack[] }> {
+  getErrorStack(
+    sessionId: string,
+    errorId: string,
+  ): Promise<{ trace: IErrorStack[] }> {
     return this.client
       .get(`/sessions/${sessionId}/errors/${errorId}/sourcemaps`)
       .then((r) => r.json())
@@ -92,7 +100,9 @@ export default class SettingsService {
   }
 
   toggleFavorite(sessionId: string): Promise<any> {
-    return this.client.get(`/sessions/${sessionId}/favorite`).catch(Promise.reject);
+    return this.client
+      .get(`/sessions/${sessionId}/favorite`)
+      .catch(Promise.reject);
   }
 
   getClickMap(params = {}): Promise<any[]> {
@@ -121,8 +131,7 @@ export default class SettingsService {
 
   async getAssistCredentials(): Promise<any> {
     try {
-      const r = await this.client
-        .get('/config/assist/credentials');
+      const r = await this.client.get('/config/assist/credentials');
       const j = await r.json();
       return j.data || null;
     } catch (reason) {

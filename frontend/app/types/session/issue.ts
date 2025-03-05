@@ -11,34 +11,68 @@ export const types = {
   DEAD_CLICK: 'dead_click',
 } as const;
 
-type TypeKeys = keyof typeof types
-type TypeValues = typeof types[TypeKeys]
+type TypeKeys = keyof typeof types;
+type TypeValues = (typeof types)[TypeKeys];
 
 type IssueType = {
-  [issueTypeKey in TypeValues]: { type: issueTypeKey; visible: boolean; order: number; name: string; icon: string };
+  [issueTypeKey in TypeValues]: {
+    type: issueTypeKey;
+    visible: boolean;
+    order: number;
+    name: string;
+    icon: string;
+  };
 };
 
 export const issues_types = [
   {
-    type: types.ALL, visible: true, order: 0, name: 'All', icon: '',
+    type: types.ALL,
+    visible: true,
+    order: 0,
+    name: 'All',
+    icon: '',
   },
   {
-    type: types.JS_EXCEPTION, visible: true, order: 1, name: 'Errors', icon: 'funnel/exclamation-circle',
+    type: types.JS_EXCEPTION,
+    visible: true,
+    order: 1,
+    name: 'Errors',
+    icon: 'funnel/exclamation-circle',
   },
   {
-    type: types.BAD_REQUEST, visible: true, order: 2, name: 'Bad Requests', icon: 'funnel/file-medical-alt',
+    type: types.BAD_REQUEST,
+    visible: true,
+    order: 2,
+    name: 'Bad Requests',
+    icon: 'funnel/file-medical-alt',
   },
   {
-    type: types.CLICK_RAGE, visible: true, order: 3, name: 'Click Rage', icon: 'funnel/emoji-angry',
+    type: types.CLICK_RAGE,
+    visible: true,
+    order: 3,
+    name: 'Click Rage',
+    icon: 'funnel/emoji-angry',
   },
   {
-    type: types.TAP_RAGE, visible: true, order: 4, name: 'Tap Rage', icon: 'funnel/emoji-angry',
+    type: types.TAP_RAGE,
+    visible: true,
+    order: 4,
+    name: 'Tap Rage',
+    icon: 'funnel/emoji-angry',
   },
   {
-    type: types.CRASH, visible: true, order: 5, name: 'Crashes', icon: 'funnel/file-earmark-break',
+    type: types.CRASH,
+    visible: true,
+    order: 5,
+    name: 'Crashes',
+    icon: 'funnel/file-earmark-break',
   },
   {
-    type: types.MOUSE_THRASHING, visible: true, order: 6, name: 'Mouse Thrashing', icon: 'cursor-trash',
+    type: types.MOUSE_THRASHING,
+    visible: true,
+    order: 6,
+    name: 'Mouse Thrashing',
+    icon: 'cursor-trash',
   },
   // { 'type': 'memory', 'visible': true, 'order': 4, 'name': 'High Memory', 'icon': 'funnel/sd-card' },
   // { 'type': 'vault', 'visible': true, 'order': 5, 'name': 'Vault', 'icon': 'safe' },
@@ -64,20 +98,20 @@ issues_types.forEach((i) => {
 });
 
 export interface IIssue {
-  issueId: string
-  name: string
-  visible: boolean
-  sessionId: string
-  time: number
-  payload: Record<string, any>
-  projectId: string
-  type: TypeValues
-  contextString: string
-  context: string
-  icon: string
-  timestamp: number
-  startedAt: number
-  messageId: number
+  issueId: string;
+  name: string;
+  visible: boolean;
+  sessionId: string;
+  time: number;
+  payload: Record<string, any>;
+  projectId: string;
+  type: TypeValues;
+  contextString: string;
+  context: string;
+  icon: string;
+  timestamp: number;
+  startedAt: number;
+  messageId: number;
 }
 
 export default class Issue {

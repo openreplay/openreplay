@@ -6,14 +6,14 @@ import { SLACK, TEAMS, WEBHOOK } from 'App/constants/schedule';
 import AlertForm from '../AlertForm';
 
 interface Select {
-    label: string;
-    value: string | number
+  label: string;
+  value: string | number;
 }
 
 interface Props {
-    showModal?: boolean;
-    metricId?: number;
-    onClose?: () => void;
+  showModal?: boolean;
+  metricId?: number;
+  onClose?: () => void;
 }
 
 function AlertFormModal(props: Props) {

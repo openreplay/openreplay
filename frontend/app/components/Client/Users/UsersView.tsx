@@ -8,11 +8,13 @@ import UserSearch from './components/UserSearch';
 import UserForm from './components/UserForm';
 import AddUserButton from './components/AddUserButton';
 import UserList from './components/UserList';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   isOnboarding?: boolean;
 }
 function UsersView({ isOnboarding = false }: Props) {
+  const { t } = useTranslation();
   const { userStore, roleStore } = useStore();
   const { account } = userStore;
   const { isEnterprise } = userStore;
@@ -37,13 +39,12 @@ function UsersView({ isOnboarding = false }: Props) {
     <div className="bg-white rounded-lg shadow-sm border">
       <div className="flex items-center justify-between px-5 pt-5">
         <PageTitle
-          title={(
+          title={
             <div>
-              Team
-              {' '}
+              {t('Team')}&nbsp;
               <span className="color-gray-medium">{userCount}</span>
             </div>
-          )}
+          }
         />
         <div className="flex items-center">
           <AddUserButton
@@ -60,4 +61,6 @@ function UsersView({ isOnboarding = false }: Props) {
   );
 }
 
-export default withPageTitle('Team - OpenReplay Preferences')(observer(UsersView));
+export default withPageTitle('Team - OpenReplay Preferences')(
+  observer(UsersView),
+);

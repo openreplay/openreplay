@@ -2,10 +2,12 @@ import React from 'react';
 import { numberWithCommas } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 
 function LatestSessionsMessage() {
   const { searchStore } = useStore();
   const count = searchStore.latestList.size;
+  const { t } = useTranslation();
 
   const onShowNewSessions = () => {
     void searchStore.updateCurrentPage(1, true);
@@ -17,13 +19,8 @@ function LatestSessionsMessage() {
       style={{ backgroundColor: 'rgb(255 251 235)' }}
       onClick={onShowNewSessions}
     >
-      Show
-      {' '}
-      {numberWithCommas(count)}
-      {' '}
-      New
-      {' '}
-      {count > 1 ? 'Sessions' : 'Session'}
+      {t('Show')} {numberWithCommas(count)} {t('New')}{' '}
+      {count > 1 ? t('Sessions') : t('Session')}
     </div>
   ) : (
     <></>

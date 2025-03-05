@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from 'UI';
 import { Input } from 'antd';
-import { AutocompleteModal, AutoCompleteContainer } from 'Shared/Filters/FilterAutoComplete/AutocompleteModal';
+import {
+  AutocompleteModal,
+  AutoCompleteContainer,
+} from 'Shared/Filters/FilterAutoComplete/AutocompleteModal';
 import stl from './FilterAutoCompleteLocal.module.css';
 
 interface Props {
@@ -21,7 +24,13 @@ interface Props {
   isAutoOpen?: boolean;
 }
 
-function FilterAutoCompleteLocal(props: { params: any, values: string[], onClose: () => void, onApply: (values: string[]) => void, placeholder?: string }) {
+function FilterAutoCompleteLocal(props: {
+  params: any;
+  values: string[];
+  onClose: () => void;
+  onApply: (values: string[]) => void;
+  placeholder?: string;
+}) {
   const {
     params = {},
     onClose,
@@ -30,7 +39,9 @@ function FilterAutoCompleteLocal(props: { params: any, values: string[], onClose
     values,
   } = props;
   const [options, setOptions] = useState<{ value: string; label: string }[]>(
-    values.filter((val) => val.length).map((value) => ({ value, label: value })),
+    values
+      .filter((val) => val.length)
+      .map((value) => ({ value, label: value })),
   );
 
   const onApplyValues = (values: string[]) => {
@@ -58,7 +69,9 @@ function FilterAutoCompleteLocal(props: { params: any, values: string[], onClose
 }
 
 function FilterLocalController(props: Props) {
-  return <AutoCompleteContainer {...props} modalRenderer={FilterAutoCompleteLocal} />;
+  return (
+    <AutoCompleteContainer {...props} modalRenderer={FilterAutoCompleteLocal} />
+  );
 }
 
 export default FilterLocalController;

@@ -1,14 +1,17 @@
 import React from 'react';
 import { Icon } from 'UI';
 import cn from 'classnames';
+import { useTranslation } from 'react-i18next';
 
 function Footer({ isSetup }: { isSetup?: boolean }) {
+  const { t } = useTranslation();
   return (
-    <div className={cn(
-      'flex w-full p-4 items-center justify-center',
-      'bg-gray-lightest gap-8',
-      !isSetup ? 'border-t border-figmaColors-divider' : '',
-    )}
+    <div
+      className={cn(
+        'flex w-full p-4 items-center justify-center',
+        'bg-gray-lightest gap-8',
+        !isSetup ? 'border-t border-figmaColors-divider' : '',
+      )}
     >
       <a
         href="https://docs.openreplay.com/en/troubleshooting/"
@@ -17,7 +20,7 @@ function Footer({ isSetup }: { isSetup?: boolean }) {
         className="flex items-center gap-2 hover:underline"
       >
         <Icon name="tools" size={16} />
-        Troubleshooting guide
+        {t('Troubleshooting guide')}
       </a>
       <a
         href="https://slack.openreplay.com/"
@@ -26,7 +29,7 @@ function Footer({ isSetup }: { isSetup?: boolean }) {
         className="flex items-center gap-2 hover:underline"
       >
         <Icon name="slack" size={16} />
-        Ask slack community
+        {t('Ask slack community')}
       </a>
       <a
         href="https://github.com/openreplay/openreplay/issues/new/choose"
@@ -35,7 +38,7 @@ function Footer({ isSetup }: { isSetup?: boolean }) {
         className="flex items-center gap-2 hover:underline"
       >
         <Icon name="github" size={16} />
-        Raise an issue
+        {t('Raise an issue')}
       </a>
     </div>
   );

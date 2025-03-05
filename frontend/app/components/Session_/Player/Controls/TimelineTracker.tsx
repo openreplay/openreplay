@@ -4,7 +4,13 @@ import DraggableCircle from 'Components/Session_/Player/Controls/components/Drag
 import TimeTracker from 'Components/Session_/Player/Controls/TimeTracker';
 import { PlayerContext } from 'Components/Session/playerContext';
 
-function TimelineTracker({ scale, onDragEnd }: { scale: number, onDragEnd: () => void }) {
+function TimelineTracker({
+  scale,
+  onDragEnd,
+}: {
+  scale: number;
+  onDragEnd: () => void;
+}) {
   const { store } = useContext(PlayerContext);
 
   const { time } = store.get();

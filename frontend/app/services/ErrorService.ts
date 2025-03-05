@@ -14,7 +14,9 @@ export default class ErrorService extends BaseService {
     return await r.json();
   };
 
-  fetchErrorTrace = async (id: string): Promise<{ trace: IErrorStack[], sourcemapUploaded: boolean }> => {
+  fetchErrorTrace = async (
+    id: string,
+  ): Promise<{ trace: IErrorStack[]; sourcemapUploaded: boolean }> => {
     const r = await this.client.get(`/errors/${id}/sourcemaps`);
     const { data } = await r.json();
 

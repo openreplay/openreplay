@@ -2,6 +2,7 @@ import React from 'react';
 import { formatBytes } from 'App/utils';
 import { Tag } from 'antd';
 import cn from 'classnames';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   resource: any;
@@ -10,11 +11,12 @@ interface Props {
 
 function FetchBasicDetails({ resource, timestamp }: Props) {
   const _duration = parseInt(resource.duration);
+  const { t } = useTranslation();
 
   return (
     <div>
       <div className="flex items-start py-1">
-        <div className="font-medium w-36">Name</div>
+        <div className="font-medium w-36">{t('Name')}</div>
         <Tag
           className="text-base rounded-lg bg-indigo-50 whitespace-normal break-words"
           bordered={false}
@@ -26,7 +28,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
 
       {resource.method && (
         <div className="flex items-center py-1">
-          <div className="font-medium w-36">Request Method</div>
+          <div className="font-medium w-36">{t('Request Method')}</div>
           <Tag
             className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis"
             bordered={false}
@@ -38,7 +40,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
 
       {resource.status && (
         <div className="flex items-center py-1">
-          <div className="text-base font-medium w-36">Status Code</div>
+          <div className="text-base font-medium w-36">{t('Status Code')}</div>
           <Tag
             bordered={false}
             className={cn(
@@ -52,7 +54,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
       )}
 
       <div className="flex items-center py-1">
-        <div className="font-medium w-36">Type</div>
+        <div className="font-medium w-36">{t('Type')}</div>
         <Tag
           className="text-base capitalize rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis"
           bordered={false}
@@ -63,7 +65,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
 
       {!!resource.decodedBodySize && (
         <div className="flex items-center py-1">
-          <div className="font-medium w-36">Size</div>
+          <div className="font-medium w-36">{t('Size')}</div>
           <Tag
             className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis"
             bordered={false}
@@ -75,21 +77,19 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
 
       {!!_duration && (
         <div className="flex items-center py-1">
-          <div className="font-medium w-36">Duration</div>
+          <div className="font-medium w-36">{t('Duration')}</div>
           <Tag
             className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis"
             bordered={false}
           >
-            {_duration}
-            {' '}
-            ms
+            {_duration}&nbsp;{t('ms')}
           </Tag>
         </div>
       )}
 
       {timestamp && (
         <div className="flex items-center py-1">
-          <div className="font-medium w-36">Time</div>
+          <div className="font-medium w-36">{t('Time')}</div>
           <Tag
             className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis"
             bordered={false}

@@ -34,9 +34,11 @@ class GenericIntegrationsStore {
     return this.list.filter((int) => int.integrated);
   }
 
-  get backendLogIntegrations(): { name: string, integrated: boolean }[] {
+  get backendLogIntegrations(): { name: string; integrated: boolean }[] {
     const backendServices = Object.keys(serviceNames);
-    return this.list.filter((int) => int.integrated && backendServices.includes(int.name));
+    return this.list.filter(
+      (int) => int.integrated && backendServices.includes(int.name),
+    );
   }
 
   setList(list: any[]) {
@@ -105,7 +107,9 @@ class NamedIntegrationStore<T extends Integration> {
       const { data } = await integrationsService.fetchList(this.name);
       if (Array.isArray(data)) {
         this.setList(
-          data.map((config: Record<string, any>) => this.namedTypeCreator(config)),
+          data.map((config: Record<string, any>) =>
+            this.namedTypeCreator(config),
+          ),
         );
       } else {
         this.setList([this.namedTypeCreator(data)]);
@@ -204,13 +208,16 @@ class MessengerIntegrationStore {
         undefined,
       );
       if (response.errors) {
-        toast.error(response.errors[0] || 'Couldn\'t process the request: check your data.');
+        toast.error(
+          response.errors[0] ||
+            "Couldn't process the request: check your data.",
+        );
         return response;
       }
       this.instance.edit({ webhookId: response.data.webhookId });
       this.setList([...this.list, this.instance]);
     } catch (e) {
-      toast.error('Couldn\'t process the request: check your data.');
+      toast.error("Couldn't process the request: check your data.");
     } finally {
       this.setLoading(false);
     }
@@ -236,13 +243,14 @@ class MessengerIntegrationStore {
     entity: string;
     entityId: string;
     data: any;
-  }) => integrationsService.sendMsg(
-    integrationId,
-    entity,
-    entityId,
-    this.mName,
-    data,
-  );
+  }) =>
+    integrationsService.sendMsg(
+      integrationId,
+      entity,
+      entityId,
+      this.mName,
+      data,
+    );
 
   init = (config: Record<string, any>): void => {
     this.instance = new MessengerConfig(config);
@@ -270,21 +278,27 @@ class MessengerIntegrationStore {
       );
 
       if (response.errors) {
-        toast.error(response.errors[0] || 'Couldn\'t process the request: check your data.');
+        toast.error(
+          response.errors[0] ||
+            "Couldn't process the request: check your data.",
+        );
         return response;
       }
       this.setList(
-        this.list.map((int) => (int.webhookId === this.instance?.webhookId ? this.instance : int)),
+        this.list.map((int) =>
+          int.webhookId === this.instance?.webhookId ? this.instance : int,
+        ),
       );
     } catch (e) {
-      toast.error('Couldn\'t process the request: check your data.');
+      toast.error("Couldn't process the request: check your data.");
     } finally {
       this.setLoading(false);
     }
   };
 }
 
-export type namedStore = 'sentry'
+export type namedStore =
+  | 'sentry'
   | 'datadog'
   | 'stackdriver'
   | 'rollbar'
@@ -295,14 +309,17 @@ export type namedStore = 'sentry'
   | 'sumologic'
   | 'jira'
   | 'github'
-  | 'issues'
+  | 'issues';
 
 export class IntegrationsStore {
   sentry = new NamedIntegrationStore('sentry', (d) => new SentryInt(d));
 
   datadog = new NamedIntegrationStore('datadog', (d) => new DatadogInt(d));
 
-  elasticsearch = new NamedIntegrationStore('elasticsearch', (d) => new ElasticSearchInt(d));
+  elasticsearch = new NamedIntegrationStore(
+    'elasticsearch',
+    (d) => new ElasticSearchInt(d),
+  );
 
   jira = new NamedIntegrationStore('jira', (d) => new JiraInt(d));
 

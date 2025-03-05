@@ -29,7 +29,6 @@ export function debounce(callback, wait, context = this) {
   };
 }
 
-/* eslint-disable no-mixed-operators */
 export function randomInt(a, b) {
   const min = (b ? a : 0) - 0.5;
   const max = b || a || Number.MAX_SAFE_INTEGER;
@@ -42,16 +41,21 @@ export const fileNameFormat = (str = '', ext = '') => {
   return `${name}${ext}`;
 };
 
-export const toUnderscore = (s) => s
-  .split(/(?=[A-Z])/)
-  .join('_')
-  .toLowerCase();
+export const toUnderscore = (s) =>
+  s
+    .split(/(?=[A-Z])/)
+    .join('_')
+    .toLowerCase();
 
-export const getUniqueFilter = (keys) => (item, i, list) => !list.some(
-  (item2, j) => j < i && keys.every((key) => item[key] === item2[key] && item[key] !== undefined),
-);
+export const getUniqueFilter = (keys) => (item, i, list) =>
+  !list.some(
+    (item2, j) =>
+      j < i &&
+      keys.every((key) => item[key] === item2[key] && item[key] !== undefined),
+  );
 
-export const numberWithCommas = (x) => (x ? x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0);
+export const numberWithCommas = (x) =>
+  x ? x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0;
 
 export const numberCompact = (x) => {
   if (x < 1000) {
@@ -63,9 +67,11 @@ export const numberCompact = (x) => {
   return `${Math.floor(x / 1000000)}M`;
 };
 
-export const cutURL = (url, prefix = '.../') => `${prefix + url.split('/').slice(3).join('/')}`;
+export const cutURL = (url, prefix = '.../') =>
+  `${prefix + url.split('/').slice(3).join('/')}`;
 
-export const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export const escapeRegExp = (string) =>
+  string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export function getRE(string: string, options: string) {
   let re;
@@ -85,7 +91,11 @@ export const filterList = <T extends Record<string, any>>(
 ): T[] => {
   if (searchQuery === '') return list;
   const filterRE = getRE(searchQuery, 'i');
-  return list.filter((listItem: T) => testKeys.some((key) => filterRE.test(listItem[key])) || searchCb?.(listItem, filterRE));
+  return list.filter(
+    (listItem: T) =>
+      testKeys.some((key) => filterRE.test(listItem[key])) ||
+      searchCb?.(listItem, filterRE),
+  );
 };
 
 export const getStateColor = (state) => {
@@ -99,7 +109,13 @@ export const getStateColor = (state) => {
   }
 };
 
-export const convertNumberRange = (oldMax, oldMin, newMin, newMax, currentValue) => {
+export const convertNumberRange = (
+  oldMax,
+  oldMin,
+  newMin,
+  newMax,
+  currentValue,
+) => {
   let newValue;
   let newRange;
   const oldRange = oldMax - oldMin;
@@ -113,13 +129,15 @@ export const convertNumberRange = (oldMax, oldMin, newMin, newMax, currentValue)
   return newValue;
 };
 
-export const prorata = ({
-  parts, elements, startDivisorFn, divisorFn,
-}) => {
+export const prorata = ({ parts, elements, startDivisorFn, divisorFn }) => {
   const byElement = Object.entries(elements).reduce(
     (ack, [element, numElements]) => ({
       ...ack,
-      [element]: { parts: 0, elements: numElements, divisor: startDivisorFn(numElements) },
+      [element]: {
+        parts: 0,
+        elements: numElements,
+        divisor: startDivisorFn(numElements),
+      },
     }),
     {},
   );
@@ -129,13 +147,16 @@ export const prorata = ({
       (a, [k, v]) => (a.divisor > v.divisor ? a : v),
       { divisor: 0 },
     );
-    // eslint-disable-next-line no-plusplus
+
     element.parts++;
     element.divisor = divisorFn(element.elements, element.parts);
-    // eslint-disable-next-line no-plusplus
+
     parts--;
   }
-  return Object.entries(byElement).reduce((a, [k, v]) => ({ ...a, [k]: v.parts }), {});
+  return Object.entries(byElement).reduce(
+    (a, [k, v]) => ({ ...a, [k]: v.parts }),
+    {},
+  );
 };
 
 export const titleCase = (str) => {
@@ -192,7 +213,8 @@ export function fileName(url: string) {
   return '';
 }
 
-export const camelCased = (val) => val.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+export const camelCased = (val) =>
+  val.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
 
 export function capitalize(s: string) {
   if (!s || !s.length) return s;
@@ -223,7 +245,8 @@ export const titleize = (str) => {
 
 export const colorScale = (values, colors) => chroma.scale(colors);
 
-export const truncate = (input, max = 10) => (input.length > max ? `${input.substring(0, max)}...` : input);
+export const truncate = (input, max = 10) =>
+  input.length > max ? `${input.substring(0, max)}...` : input;
 
 export const iceServerConfigFromString = (str) => {
   if (!str || typeof str !== 'string' || str.length === 0) {
@@ -252,13 +275,17 @@ export const isGreaterOrEqualVersion = (version, compareTo) => {
   const [major, minor, patch] = version.split('-')[0].split('.');
   const [majorC, minorC, patchC] = compareTo.split('-')[0].split('.');
   return (
-    major > majorC
-    || (major === majorC && minor > minorC)
-    || (major === majorC && minor === minorC && patch >= patchC)
+    major > majorC ||
+    (major === majorC && minor > minorC) ||
+    (major === majorC && minor === minorC && patch >= patchC)
   );
 };
 
-export const sliceListPerPage = <T extends Array<any>>(list: T, page: number, perPage = 10): T => {
+export const sliceListPerPage = <T extends Array<any>>(
+  list: T,
+  page: number,
+  perPage = 10,
+): T => {
   const start = page * perPage;
   const end = start + perPage;
   return list.slice(start, end) as T;
@@ -282,7 +309,13 @@ export const convertElementToImage = async (el: HTMLElement) => {
   return image;
 };
 
-export const unserscoreToSpaceAndCapitalize = (str) => str.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+export const unserscoreToSpaceAndCapitalize = (str) =>
+  str
+    .replace(/_/g, ' ')
+    .replace(
+      /\w\S*/g,
+      (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(),
+    );
 
 export const convertToCSV = (headers, objArray) => {
   const array = typeof objArray !== 'object' ? JSON.parse(objArray) : objArray;
@@ -344,13 +377,15 @@ export const cleanSessionFilters = (data: any) => {
   return { ...rest, filters: _fitlers };
 };
 
-export const getSessionFilter = () => JSON.parse(localStorage.getItem(SESSION_FILTER));
+export const getSessionFilter = () =>
+  JSON.parse(localStorage.getItem(SESSION_FILTER));
 
 export const setSessionFilter = (filter: any) => {
   localStorage.setItem(SESSION_FILTER, JSON.stringify(filter));
 };
 
-export const compareJsonObjects = (obj1: any, obj2: any) => JSON.stringify(obj1) === JSON.stringify(obj2);
+export const compareJsonObjects = (obj1: any, obj2: any) =>
+  JSON.stringify(obj1) === JSON.stringify(obj2);
 
 export const getInitials = (name = '') => {
   const names = name.split(' ');
@@ -372,7 +407,10 @@ export function millisToMinutesAndSeconds(millis: any) {
   return `${minutes}m${seconds < 10 ? '0' : ''}${seconds}s`;
 }
 
-export function simpleThrottle(func: (...args: any[]) => void, limit: number): (...args: any[]) => void {
+export function simpleThrottle(
+  func: (...args: any[]) => void,
+  limit: number,
+): (...args: any[]) => void {
   let inThrottle;
   return function () {
     const args = arguments;
@@ -422,10 +460,8 @@ export const throttle = <R, A extends any[]>(
 };
 
 export function deleteCookie(name: string, path: string, domain: string) {
-  document.cookie = `${name
-  }=${
-    path ? `;path=${path}` : ''
-  }${domain ? `;domain=${domain}` : ''
+  document.cookie = `${name}=${path ? `;path=${path}` : ''}${
+    domain ? `;domain=${domain}` : ''
   };expires=Thu, 01 Jan 1970 00:00:01 GMT`;
 }
 
@@ -451,11 +487,16 @@ export function deleteCookie(name: string, path: string, domain: string) {
  * does not exist, and a storageKey is provided, any existing localStorage entry with the storageKey
  * is removed.
  */
-export const checkParam = (paramName: string, storageKey?: string, search?: string): boolean => {
+export const checkParam = (
+  paramName: string,
+  storageKey?: string,
+  search?: string,
+): boolean => {
   const urlParams = new URLSearchParams(search || window.location.search);
   const paramValue = urlParams.get(paramName);
 
-  const existsAndTrue = paramValue && paramValue === 'true' || paramValue?.length > 0;
+  const existsAndTrue =
+    (paramValue && paramValue === 'true') || paramValue?.length > 0;
 
   if (storageKey) {
     if (existsAndTrue) {
@@ -468,9 +509,16 @@ export const checkParam = (paramName: string, storageKey?: string, search?: stri
   return existsAndTrue;
 };
 
-export const isValidUrl = (url) => /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/.test(url);
+export const isValidUrl = (url) =>
+  /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/.test(
+    url,
+  );
 
-export function truncateStringToFit(string: string, screenWidth: number, charWidth: number = 5): string {
+export function truncateStringToFit(
+  string: string,
+  screenWidth: number,
+  charWidth: number = 5,
+): string {
   if (string.length * charWidth <= screenWidth) {
     return string;
   }
@@ -551,12 +599,16 @@ function saveAsFile(blob: Blob, filename: string) {
 export function exportAntCsv(tableColumns, tableData, filename = 'table.csv') {
   console.log(tableColumns, tableData);
   const headers = tableColumns.map((col) => col.title).join(',');
-  const rows = tableData.map((row) => tableColumns
-    .map((col) => {
-      const value = col.dataIndex ? row[col.dataIndex] : '';
-      return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
-    })
-    .join(','));
+  const rows = tableData.map((row) =>
+    tableColumns
+      .map((col) => {
+        const value = col.dataIndex ? row[col.dataIndex] : '';
+        return typeof value === 'string'
+          ? `"${value.replace(/"/g, '""')}"`
+          : value;
+      })
+      .join(','),
+  );
 
   const csvContent = [headers, ...rows].join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

@@ -11,24 +11,30 @@ function FFlagsSearch() {
   const [query, setQuery] = useState(featureFlagsStore.sort.query);
 
   useEffect(() => {
-    debounceUpdate = debounce(
-      (value: string) => {
-        featureFlagsStore.setSort({ order: featureFlagsStore.sort.order, query: value });
-        featureFlagsStore.setPage(1);
-        void featureFlagsStore.fetchFlags();
-      },
-      250,
-    );
+    debounceUpdate = debounce((value: string) => {
+      featureFlagsStore.setSort({
+        order: featureFlagsStore.sort.order,
+        query: value,
+      });
+      featureFlagsStore.setPage(1);
+      void featureFlagsStore.fetchFlags();
+    }, 250);
   }, []);
 
-  const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
+  const write = ({
+    target: { value },
+  }: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(value.replace(/\s/g, '-'));
     debounceUpdate(value.replace(/\s/g, '-'));
   };
 
   return (
     <div className="relative">
-      <Icon name="search" className="absolute top-0 bottom-0 ml-2 m-auto" size="16" />
+      <Icon
+        name="search"
+        className="absolute top-0 bottom-0 ml-2 m-auto"
+        size="16"
+      />
       <input
         value={query}
         name="flagsSearch"

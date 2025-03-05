@@ -1,17 +1,22 @@
 import React from 'react';
 import { Icon } from 'UI';
 import { Button } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 interface IBottomButtons {
-  loading: boolean
-  deleting: boolean
-  instance: Alert
-  onDelete: (instance: Alert) => void
+  loading: boolean;
+  deleting: boolean;
+  instance: Alert;
+  onDelete: (instance: Alert) => void;
 }
 
 function BottomButtons({
-  loading, instance, deleting, onDelete,
+  loading,
+  instance,
+  deleting,
+  onDelete,
 }: IBottomButtons) {
+  const { t } = useTranslation();
   return (
     <>
       <div className="flex items-center">
@@ -21,22 +26,21 @@ function BottomButtons({
           disabled={loading || !instance.validate()}
           id="submit-button"
         >
-          {instance.exists() ? 'Update' : 'Create'}
+          {instance.exists() ? t('Update') : t('Create')}
         </Button>
       </div>
       <div>
         {instance.exists() && (
-        <Button
-          type="text"
-          loading={deleting}
-          onClick={() => onDelete(instance)}
-          id="trash-button"
-          className="!text-teal !fill-teal"
-        >
-          <Icon name="trash" color="inherit" className="mr-2" size="18" />
-          {' '}
-          Delete
-        </Button>
+          <Button
+            type="text"
+            loading={deleting}
+            onClick={() => onDelete(instance)}
+            id="trash-button"
+            className="!text-teal !fill-teal"
+          >
+            <Icon name="trash" color="inherit" className="mr-2" size="18" />{' '}
+            {t('Delete')}
+          </Button>
         )}
       </div>
     </>

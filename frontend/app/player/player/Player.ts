@@ -21,7 +21,7 @@ const initialSkipToIssue = typedLocalStorage.boolean(SKIP_TO_ISSUE_STORAGE_KEY);
 const initialAutoplay = typedLocalStorage.boolean(AUTOPLAY_STORAGE_KEY);
 const initialShowEvents = typedLocalStorage.boolean(SHOW_EVENTS_STORAGE_KEY);
 
-export type State = typeof Player.INITIAL_STATE
+export type State = typeof Player.INITIAL_STATE;
 /* == */
 
 export default class Player extends Animator {
@@ -36,7 +36,10 @@ export default class Player extends Animator {
     range: [0, 0] as [number, number],
   } as const;
 
-  constructor(private pState: Store<State & AnimatorGetState>, private manager: IMessageManager) {
+  constructor(
+    private pState: Store<State & AnimatorGetState>,
+    private manager: IMessageManager,
+  ) {
     super(pState, manager);
 
     // Autoplay
@@ -95,8 +98,13 @@ export default class Player extends Animator {
 
   toggleSpeed(index: number | null) {
     const { speed } = this.pState.get();
-    const newSpeedIndex = index === null ? null : Math.max(0, Math.min(SPEED_OPTIONS.length - 1, index));
-    this.updateSpeed(newSpeedIndex === null ? speed * 2 : SPEED_OPTIONS[newSpeedIndex]);
+    const newSpeedIndex =
+      index === null
+        ? null
+        : Math.max(0, Math.min(SPEED_OPTIONS.length - 1, index));
+    this.updateSpeed(
+      newSpeedIndex === null ? speed * 2 : SPEED_OPTIONS[newSpeedIndex],
+    );
   }
 
   speedUp() {

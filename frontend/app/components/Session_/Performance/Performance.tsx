@@ -1,7 +1,10 @@
 import { Timed } from 'Player';
 import { PerformanceChartPoint } from 'Player/mobile/managers/IOSPerformanceTrackManager';
-import React from 'react';
-import { MobilePlayerContext, PlayerContext } from 'App/components/Session/playerContext';
+import React, { useTransition } from 'react';
+import {
+  MobilePlayerContext,
+  PlayerContext,
+} from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import {
   AreaChart,
@@ -24,6 +27,8 @@ import stl from './performance.module.css';
 
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
+import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
 
 const CPU_VISUAL_OFFSET = 10;
 
@@ -51,21 +56,25 @@ function Gradient({ color, id }) {
   );
 }
 
-const TOTAL_HEAP = 'Allocated Heap';
-const USED_HEAP = 'JS Heap';
-const FPS = 'Framerate';
-const CPU = 'CPU Load';
-const NODES_COUNT = 'Nodes Сount';
+const TOTAL_HEAP = (t: TFunction) => t('Allocated Heap');
+const USED_HEAP = (t: TFunction) => t('JS Heap');
+const FPS = (t: TFunction) => t('Framerate');
+const CPU = (t: TFunction) => t('CPU Load');
+const NODES_COUNT = (t: TFunction) => t('Nodes Сount');
 
 function FPSTooltip({ active, payload }) {
+  const { t } = useTranslation();
   if (!payload) return null;
   if (!active || !payload || payload.length < 3) {
     return null;
   }
   if (payload[0].value === null) {
     return (
-      <div className={stl.tooltipWrapper} style={{ color: HIDDEN_SCREEN_COLOR }}>
-        Page is not active. User switched the tab or hid the window.
+      <div
+        className={stl.tooltipWrapper}
+        style={{ color: HIDDEN_SCREEN_COLOR }}
+      >
+        {t('Page is not active. User switched the tab or hid the window.')}
       </div>
     );
   }
@@ -80,58 +89,63 @@ function FPSTooltip({ active, payload }) {
 
   return (
     <div className={stl.tooltipWrapper} style={style}>
-      <span className="font-medium">{`${FPS}: `}</span>
+      <span className="font-medium">{`${FPS(t)}: `}</span>
       {Math.trunc(payload[0].value)}
     </div>
   );
 }
 
 function CPUTooltip({ active, payload }) {
+  const { t } = useTranslation();
   if (!payload) return null;
   if (!active || payload.length < 1 || payload[0].value === null) {
     return null;
   }
   return (
     <div className={stl.tooltipWrapper}>
-      <span className="font-medium">{`${CPU}: `}</span>
-      {payload[0].value - CPU_VISUAL_OFFSET}
-      %
+      <span className="font-medium">{`${CPU(t)}: `}</span>
+      {payload[0].value - CPU_VISUAL_OFFSET}%
     </div>
   );
 }
 
 function MobileCpuTooltip({ active, payload }) {
+  const { t } = useTranslation();
+
   if (!payload) return null;
   if (!active || payload.length < 1) {
     return null;
   }
   if (payload[0].value === null) {
     return (
-      <div className={stl.tooltipWrapper} style={{ color: HIDDEN_SCREEN_COLOR }}>
-        App is in the background.
+      <div
+        className={stl.tooltipWrapper}
+        style={{ color: HIDDEN_SCREEN_COLOR }}
+      >
+        {t('App is in the background.')}
       </div>
     );
   }
   return (
     <div className={stl.tooltipWrapper}>
-      <span className="font-medium">{`${CPU}: `}</span>
-      {payload[0].value}
-      %
+      <span className="font-medium">{`${CPU(t)}: `}</span>
+      {payload[0].value}%
     </div>
   );
 }
 
 function HeapTooltip({ active, payload }) {
+  const { t } = useTranslation();
   if (!payload) return null;
   if (!active || payload.length < 2) return null;
   return (
     <div className={stl.tooltipWrapper}>
       <p>
-        <span className="font-medium">{`${TOTAL_HEAP}: `}</span>
+        <span className="font-medium">{`${TOTAL_HEAP(t)}: `}</span>
         {formatBytes(payload[0].value)}
       </p>
       <p>
-        <span className="font-medium">{`${USED_HEAP}: `}</span>
+        <span className="font-medium">{`${USED_HEAP(t)}: `}</span>
         {formatBytes(payload[1].value)}
       </p>
     </div>
@@ -139,12 +153,13 @@ function HeapTooltip({ active, payload }) {
 }
 
 function MobileMemoryTooltip({ active, payload }) {
+  const { t } = useTranslation();
   if (!payload) return null;
   if (!active || payload.length < 1 || payload[1].value === null) return null;
   return (
     <div className={stl.tooltipWrapper}>
       <p>
-        <span className="font-medium">Used Memory: </span>
+        <span className="font-medium">{t('Used Memory: ')}</span>
         {formatBytes(payload[1].value)}
       </p>
     </div>
@@ -152,12 +167,13 @@ function MobileMemoryTooltip({ active, payload }) {
 }
 
 function NodesCountTooltip({ active, payload }) {
+  const { t } = useTranslation();
   if (!payload) return null;
   if (!active || !payload || payload.length === 0) return null;
   return (
     <div className={stl.tooltipWrapper}>
       <p>
-        <span className="font-medium">{`${NODES_COUNT}: `}</span>
+        <span className="font-medium">{`${NODES_COUNT(t)}: `}</span>
         {payload[0].value}
       </p>
     </div>
@@ -198,8 +214,8 @@ function addFpsMetadata(data) {
       }
     }
     if (
-      point.fps == null
-      || (i > 0 && data[i - 1].fps == null) // ||
+      point.fps == null ||
+      (i > 0 && data[i - 1].fps == null) // ||
       // (i < data.length-1 && data[i + 1].fps == null)
     ) {
       hiddenScreenMarker = HIDDEN_SCREEN_MARKER_VALUE;
@@ -216,7 +232,10 @@ function addFpsMetadata(data) {
   });
 }
 
-function generateMobileChart(data: PerformanceChartPoint[], biggestMemSpike: number) {
+function generateMobileChart(
+  data: PerformanceChartPoint[],
+  biggestMemSpike: number,
+) {
   return data.map((p) => ({
     ...p,
     isBackground: p.isBackground ? 50 : 0,
@@ -225,15 +244,13 @@ function generateMobileChart(data: PerformanceChartPoint[], biggestMemSpike: num
 }
 
 export const MobilePerformance = observer(() => {
+  const { t } = useTranslation();
   const { player, store } = React.useContext(MobilePlayerContext);
   const [_timeTicks, setTicks] = React.useState<number[]>([]);
   const [_data, setData] = React.useState<any[]>([]);
   const { sessionStore } = useStore();
 
-  const {
-    performanceChartTime = 0,
-    performanceChartData = [],
-  } = store.get();
+  const { performanceChartTime = 0, performanceChartData = [] } = store.get();
 
   React.useEffect(() => {
     // setTicks(generateTicks(performanceChartData));
@@ -268,18 +285,21 @@ export const MobilePerformance = observer(() => {
     <BottomBlock>
       <BottomBlock.Header>
         <div className="flex items-center w-full">
-          <div className="font-semibold color-gray-medium mr-auto">Performance</div>
+          <div className="font-semibold color-gray-medium mr-auto">
+            {t('Performance')}
+          </div>
           <InfoLine>
             <InfoLine.Point
-              label="Device Memory Size"
-              value={formatBytes(sessionStore.current.userDeviceMemorySize * 1024)}
+              label={t('Device Memory Size')}
+              value={formatBytes(
+                sessionStore.current.userDeviceMemorySize * 1024,
+              )}
               display
             />
           </InfoLine>
         </div>
       </BottomBlock.Header>
       <BottomBlock.Content>
-
         <ResponsiveContainer height={height}>
           <AreaChart
             onClick={onChartClick}
@@ -306,9 +326,19 @@ export const MobilePerformance = observer(() => {
               domain={[0, 'dataMax']}
               ticks={_timeTicks}
             >
-              <Label value="CPU" position="insideTopRight" className="fill-gray-darkest" />
+              <Label
+                value="CPU"
+                position="insideTopRight"
+                className="fill-gray-darkest"
+              />
             </XAxis>
-            <YAxis axisLine={false} tick={false} mirror domain={[0, 120]} orientation="right" />
+            <YAxis
+              axisLine={false}
+              tick={false}
+              mirror
+              domain={[0, 120]}
+              orientation="right"
+            />
             <Area
               dataKey="cpu"
               type="monotone"
@@ -358,13 +388,17 @@ export const MobilePerformance = observer(() => {
               domain={[0, 'dataMax']}
               ticks={_timeTicks}
             >
-              <Label value="Memory" position="insideTopRight" className="fill-gray-darkest" />
+              <Label
+                value="Memory"
+                position="insideTopRight"
+                className="fill-gray-darkest"
+              />
             </XAxis>
             <YAxis
               axisLine={false}
               tickFormatter={formatBytes}
               mirror
-                      // Hack to keep only end tick
+              // Hack to keep only end tick
               minTickGap={Number.MAX_SAFE_INTEGER}
               domain={[0, (max: number) => max * 1.2]}
             />
@@ -409,6 +443,7 @@ export const MobilePerformance = observer(() => {
 });
 
 function Performance() {
+  const { t } = useTranslation();
   const { sessionStore } = useStore();
   const userDeviceHeapSize = sessionStore.current.userDeviceHeapSize || 0;
   const { player, store } = React.useContext(PlayerContext);
@@ -449,10 +484,11 @@ function Performance() {
     }
   };
 
-  const {
-    fps, cpu, heap, nodes,
-  } = availability;
-  const availableCount = [fps, cpu, heap, nodes].reduce((c, av) => (av ? c + 1 : c), 0);
+  const { fps, cpu, heap, nodes } = availability;
+  const availableCount = [fps, cpu, heap, nodes].reduce(
+    (c, av) => (av ? c + 1 : c),
+    0,
+  );
   const height = availableCount === 0 ? '0' : `${100 / availableCount}%`;
 
   return (
@@ -460,7 +496,9 @@ function Performance() {
       <BottomBlock.Header>
         <div className="flex items-center justify-between w-full">
           <div className="flex gap-3 items-center">
-            <div className="font-semibold color-gray-medium mr-auto">Performance</div>
+            <div className="font-semibold color-gray-medium mr-auto">
+              {t('Performance')}
+            </div>
             <InfoLine>
               <InfoLine.Point
                 label="Device Heap Size"
@@ -476,13 +514,13 @@ function Performance() {
                 {
                   label: (
                     <TooltipANT title="Performance overview isn't supported across tabs.">
-                      <span>All Tabs</span>
+                      <span>{t('All Tabs')}</span>
                     </TooltipANT>
                   ),
                   value: 'all',
                   disabled: true,
                 },
-                { label: 'Current Tab', value: 'current' },
+                { label: t('Current Tab'), value: 'current' },
               ]}
               defaultValue="current"
               size="small"
@@ -519,7 +557,11 @@ function Performance() {
                 domain={[0, 'dataMax']}
                 ticks={_timeTicks}
               >
-                <Label value="FPS" position="insideTopRight" className="fill-gray-darkest" />
+                <Label
+                  value="FPS"
+                  position="insideTopRight"
+                  className="fill-gray-darkest"
+                />
               </XAxis>
               <YAxis axisLine={false} tick={false} mirror domain={[0, 85]} />
               <Area
@@ -590,9 +632,19 @@ function Performance() {
                 domain={[0, 'dataMax']}
                 ticks={_timeTicks}
               >
-                <Label value="CPU" position="insideTopRight" className="fill-gray-darkest" />
+                <Label
+                  value="CPU"
+                  position="insideTopRight"
+                  className="fill-gray-darkest"
+                />
               </XAxis>
-              <YAxis axisLine={false} tick={false} mirror domain={[0, 120]} orientation="right" />
+              <YAxis
+                axisLine={false}
+                tick={false}
+                mirror
+                domain={[0, 120]}
+                orientation="right"
+              />
               <Area
                 dataKey="cpu"
                 type="monotone"
@@ -645,7 +697,11 @@ function Performance() {
                 domain={[0, 'dataMax']}
                 ticks={_timeTicks}
               >
-                <Label value="HEAP" position="insideTopRight" className="fill-gray-darkest" />
+                <Label
+                  value="HEAP"
+                  position="insideTopRight"
+                  className="fill-gray-darkest"
+                />
               </XAxis>
               <YAxis
                 axisLine={false}
@@ -709,7 +765,11 @@ function Performance() {
                 domain={[0, 'dataMax']}
                 ticks={_timeTicks}
               >
-                <Label value="NODES" position="insideTopRight" className="fill-gray-darkest" />
+                <Label
+                  value="NODES"
+                  position="insideTopRight"
+                  className="fill-gray-darkest"
+                />
               </XAxis>
               <YAxis
                 axisLine={false}

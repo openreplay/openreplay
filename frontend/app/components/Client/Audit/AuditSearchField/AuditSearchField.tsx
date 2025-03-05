@@ -4,7 +4,7 @@ import { debounce } from 'App/utils';
 
 let debounceUpdate: any = () => {};
 interface Props {
-    onChange: (value: string) => void;
+  onChange: (value: string) => void;
 }
 function AuditSearchField(props: Props) {
   const { onChange } = props;
@@ -19,10 +19,14 @@ function AuditSearchField(props: Props) {
 
   return (
     <div className="relative" style={{ width: '220px' }}>
-      <Icon name="search" className="absolute top-0 bottom-0 ml-3 m-auto" size="16" />
+      <Icon
+        name="search"
+        className="absolute top-0 bottom-0 ml-3 m-auto"
+        size="16"
+      />
       <Input
         name="searchQuery"
-                // className="bg-white p-2 border border-gray-light rounded w-full pl-10"
+        // className="bg-white p-2 border border-gray-light rounded w-full pl-10"
         placeholder="Filter by name"
         onChange={write}
         icon="search"

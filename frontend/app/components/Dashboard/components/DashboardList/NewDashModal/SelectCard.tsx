@@ -1,7 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import {
-  Button, Input, Segmented, Space,
-} from 'antd';
+import { Button, Input, Segmented, Space } from 'antd';
 import { RightOutlined } from '@ant-design/icons';
 import { ArrowRight, Info } from 'lucide-react';
 import { useStore } from 'App/mstore';
@@ -12,6 +10,7 @@ import { FilterKey } from 'Types/filter/filterType';
 import FilterSeries from '@/mstore/types/filterSeries';
 import Option from './Option';
 import { CARD_LIST, CARD_CATEGORIES, CardType } from './ExampleCards';
+import { useTranslation } from 'react-i18next';
 
 interface SelectCardProps {
   onClose: (refresh?: boolean) => void;
@@ -25,24 +24,31 @@ interface SelectCardProps {
 
 const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
   const {
-    onCard, isLibrary = false, selected, setSelectedCategory, isEnterprise, isMobile,
+    onCard,
+    isLibrary = false,
+    selected,
+    setSelectedCategory,
+    isEnterprise,
+    isMobile,
   } = props;
+  const { t } = useTranslation();
   const [selectedCards, setSelectedCards] = React.useState<number[]>([]);
   const { metricStore, dashboardStore } = useStore();
   const siteId: string = location.pathname.split('/')[1];
   const dashboardId = location.pathname.split('/')[3];
   const [libraryQuery, setLibraryQuery] = React.useState<string>('');
   const [headerText, setHeaderText] = useState<string>('');
-  const isCreatingDashboard = !dashboardId && location.pathname.includes('dashboard');
+  const isCreatingDashboard =
+    !dashboardId && location.pathname.includes('dashboard');
   const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
   const [dashboardUpdating, setDashboardUpdating] = useState<boolean>(false);
   const history = useHistory();
 
   useEffect(() => {
     if (dashboardId) {
-      setHeaderText(isLibrary ? 'Your Library' : 'Create Card');
+      setHeaderText(isLibrary ? t('Your Library') : t('Create Card'));
     } else {
-      setHeaderText('Select a card template to start your dashboard');
+      setHeaderText(t('Select a card template to start your dashboard'));
     }
   }, [dashboardId, isLibrary]);
 
@@ -55,14 +61,15 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
         dashboardStore.selectDashboardById(syncedDashboard.dashboardId);
         history.push(`/${siteId}/dashboard/${syncedDashboard.dashboardId}`);
         // return syncedDashboard.dashboardId;
-      }).finally(() => {
+      })
+      .finally(() => {
         setDashboardCreating(false);
       });
   };
 
   const handleCardSelection = (card: string) => {
     metricStore.init();
-    const selectedCard = CARD_LIST.find((c) => c.key === card) as CardType;
+    const selectedCard = CARD_LIST(t).find((c) => c.key === card) as CardType;
 
     const cardData: any = {
       metricType: selectedCard.cardType,
@@ -91,20 +98,33 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
     onCard();
   };
 
-  const cardItems = useMemo(() => CARD_LIST.filter((card) => card.category === selected
-      && (!card.isEnterprise || (card.isEnterprise && isEnterprise))
-      && (!isMobile || (isMobile && ![FilterKey.USER_BROWSER].includes(card.key)))).map((card) => (
-        <div key={card.key} className={card.width ? `col-span-${card.width}` : 'col-span-2'}>
-          <card.example
-            onCard={handleCardSelection}
-            type={card.key}
-            title={card.title}
-            data={card.data}
-            height={card.height}
-            hideLegend={card.data?.hideLegend}
-          />
-        </div>
-  )), [selected, isEnterprise, isMobile]);
+  const cardItems = useMemo(
+    () =>
+      CARD_LIST(t)
+        .filter(
+          (card) =>
+            card.category === selected &&
+            (!card.isEnterprise || (card.isEnterprise && isEnterprise)) &&
+            (!isMobile ||
+              (isMobile && ![FilterKey.USER_BROWSER].includes(card.key))),
+        )
+        .map((card) => (
+          <div
+            key={card.key}
+            className={card.width ? `col-span-${card.width}` : 'col-span-2'}
+          >
+            <card.example
+              onCard={handleCardSelection}
+              type={card.key}
+              title={card.title}
+              data={card.data}
+              height={card.height}
+              hideLegend={card.data?.hideLegend}
+            />
+          </div>
+        )),
+    [selected, isEnterprise, isMobile],
+  );
 
   const onCardClick = (cardId: number) => {
     if (selectedCards.includes(cardId)) {
@@ -117,11 +137,13 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
   const onAddSelected = () => {
     setDashboardUpdating(true);
     const dashboard = dashboardStore.getDashboard(dashboardId);
-    dashboardStore.addWidgetToDashboard(dashboard!, selectedCards).finally(() => {
-      setDashboardUpdating(false);
-      dashboardStore.fetch(dashboardId);
-      props.onClose(true);
-    });
+    dashboardStore
+      .addWidgetToDashboard(dashboard!, selectedCards)
+      .finally(() => {
+        setDashboardUpdating(false);
+        dashboardStore.fetch(dashboardId);
+        props.onClose(true);
+      });
   };
 
   return (
@@ -131,16 +153,22 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
           {headerText}
           {headerText === 'Select a card template to start your dashboard' && (
             <div className="text-sm font-normal mt-3 text-gray-500 flex gap-2 items-center">
-              <Info size={14} />
-              {' '}
-              Following card previews are based on mock data for illustrative purposes only.
+              <Info size={14} />{' '}
+              {t(
+                'Following card previews are based on mock data for illustrative purposes only.',
+              )}
             </div>
           )}
         </div>
         {isCreatingDashboard && (
-          <Button type="link" onClick={createNewDashboard} loading={dashboardCreating} className="gap-2">
+          <Button
+            type="link"
+            onClick={createNewDashboard}
+            loading={dashboardCreating}
+            className="gap-2"
+          >
             <Space>
-              Create Blank
+              {t('Create Blank')}
               <RightOutlined />
             </Space>
           </Button>
@@ -148,12 +176,12 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
         {isLibrary && (
           <Space>
             {selectedCards.length > 0 && (
-              <Button type="primary" onClick={onAddSelected} loading={dashboardUpdating}>
-                Add
-                {' '}
-                {selectedCards.length}
-                {' '}
-                Selected
+              <Button
+                type="primary"
+                onClick={onAddSelected}
+                loading={dashboardUpdating}
+              >
+                {t('Add')}&nbsp;{selectedCards.length}&nbsp;{t('Selected')}
               </Button>
             )}
             <Input.Search
@@ -164,7 +192,12 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
           </Space>
         )}
       </Space>
-      {!isLibrary && <CategorySelector setSelected={setSelectedCategory} selected={selected} />}
+      {!isLibrary && (
+        <CategorySelector
+          setSelected={setSelectedCategory}
+          selected={selected}
+        />
+      )}
       {isLibrary ? (
         <CardsLibrary
           query={libraryQuery}
@@ -184,7 +217,10 @@ interface CategorySelectorProps {
   selected?: string;
 }
 
-const CategorySelector: React.FC<CategorySelectorProps> = ({ setSelected, selected }) => (
+const CategorySelector: React.FC<CategorySelectorProps> = ({
+  setSelected,
+  selected,
+}) => (
   <Segmented
     options={CARD_CATEGORIES.map(({ key, label, icon }) => ({
       label: <Option key={key} label={label} Icon={icon} />,

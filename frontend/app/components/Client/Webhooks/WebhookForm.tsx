@@ -5,6 +5,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 import { TrashIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onClose: () => void;
@@ -12,9 +13,13 @@ interface Props {
 }
 
 function WebhookForm({ onClose, onDelete }: Props) {
+  const { t } = useTranslation();
   const { settingsStore } = useStore();
   const {
-    webhookInst: webhook, saveWebhook, editWebhook, saving,
+    webhookInst: webhook,
+    saveWebhook,
+    editWebhook,
+    saving,
   } = settingsStore;
   const write = ({ target: { value, name } }) => editWebhook({ [name]: value });
 
@@ -24,35 +29,40 @@ function WebhookForm({ onClose, onDelete }: Props) {
         onClose();
       })
       .catch((e) => {
-        toast.error(e.message || 'Failed to save webhook');
+        toast.error(e.message || t('Failed to save webhook'));
       });
   };
 
   return (
     <Form onFinish={save} layout="vertical">
       <Form.Item>
-        <label>Name</label>
+        <label>{t('Name')}</label>
         <Input
           name="name"
           defaultValue={webhook.name}
           onChange={write}
-          placeholder="Name"
+          placeholder={t('Name')}
           maxLength={50}
         />
       </Form.Item>
 
       <Form.Item>
-        <label>Endpoint</label>
-        <Input name="endpoint" defaultValue={webhook.endpoint} onChange={write} placeholder="Endpoint" />
+        <label>{t('Endpoint')}</label>
+        <Input
+          name="endpoint"
+          defaultValue={webhook.endpoint}
+          onChange={write}
+          placeholder={t('Endpoint')}
+        />
       </Form.Item>
 
       <Form.Item>
-        <label>Auth Header (optional)</label>
+        <label>{t('Auth Header (optional)')}</label>
         <Input
           name="authHeader"
           defaultValue={webhook.authHeader}
           onChange={write}
-          placeholder="Auth Header"
+          placeholder={t('Auth Header')}
         />
       </Form.Item>
 
@@ -66,9 +76,9 @@ function WebhookForm({ onClose, onDelete }: Props) {
             htmlType="submit"
             className="float-left mr-2"
           >
-            {webhook.exists() ? 'Update' : 'Add'}
+            {webhook.exists() ? t('Update') : t('Add')}
           </Button>
-          {webhook.exists() && <Button onClick={onClose}>Cancel</Button>}
+          {webhook.exists() && <Button onClick={onClose}>{t('Cancel')}</Button>}
         </div>
         {webhook.exists() && (
           <Button

@@ -21,7 +21,10 @@ import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { MobileStackEventPanel } from 'Shared/DevTools/StackEventPanel';
 import ReplayWindow from 'Components/Session/Player/MobilePlayer/ReplayWindow';
 import PerfWarnings from 'Components/Session/Player/MobilePlayer/PerfWarnings';
-import { debounceUpdate, getDefaultPanelHeight } from 'Components/Session/Player/ReplayPlayer/PlayerInst';
+import {
+  debounceUpdate,
+  getDefaultPanelHeight,
+} from 'Components/Session/Player/ReplayPlayer/PlayerInst';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import Overlay from './MobileOverlay';
@@ -39,10 +42,7 @@ interface IProps {
 function Player(props: IProps) {
   const defaultHeight = getDefaultPanelHeight();
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
-  const {
-    activeTab,
-    fullView,
-  } = props;
+  const { activeTab, fullView } = props;
   const { uiPlayerStore, sessionStore } = useStore();
   const { nextId } = sessionStore;
   const { sessionId } = sessionStore.current;
@@ -73,7 +73,13 @@ function Player(props: IProps) {
 
   React.useEffect(() => {
     playerContext.player.scale();
-  }, [bottomBlock, props.fullscreen, playerContext.player, activeTab, fullView]);
+  }, [
+    bottomBlock,
+    props.fullscreen,
+    playerContext.player,
+    activeTab,
+    fullView,
+  ]);
 
   React.useEffect(() => {
     playerContext.player.addFullscreenBoundary(props.fullscreen || fullView);
@@ -108,7 +114,11 @@ function Player(props: IProps) {
 
   return (
     <div
-      className={cn(stl.playerBody, 'flex-1 flex flex-col relative', fullscreen && 'pb-2')}
+      className={cn(
+        stl.playerBody,
+        'flex-1 flex flex-col relative',
+        fullscreen && 'pb-2',
+      )}
       data-bottom-block={bottomBlockIsActive}
     >
       {fullscreen && <EscapeButton onClose={fullscreenOff} />}
@@ -143,14 +153,18 @@ function Player(props: IProps) {
           {bottomBlock === OVERVIEW && <MobileOverviewPanel />}
           {bottomBlock === CONSOLE && <MobileConsolePanel />}
           {bottomBlock === STACKEVENTS && <MobileStackEventPanel />}
-          {bottomBlock === NETWORK && <MobileNetworkPanel panelHeight={panelHeight} />}
+          {bottomBlock === NETWORK && (
+            <MobileNetworkPanel panelHeight={panelHeight} />
+          )}
           {bottomBlock === PERFORMANCE && <MobilePerformance />}
           {bottomBlock === EXCEPTIONS && <MobileExceptions />}
         </div>
       )}
       {!fullView ? (
         <MobileControls
-          setActiveTab={(tab: string) => (activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab))}
+          setActiveTab={(tab: string) =>
+            activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)
+          }
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}

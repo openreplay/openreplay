@@ -6,7 +6,8 @@ import rewriteMessage from './rewriter/rewriteMessage';
 
 function legacyTranslate(msg: any): RawMessage | null {
   const type = TP_MAP[msg._id as keyof typeof TP_MAP];
-  if (!type) { // msg._id can be other than keyof TP_MAP, in fact
+  if (!type) {
+    // msg._id can be other than keyof TP_MAP, in fact
     return null;
   }
   msg.tp = type;
@@ -23,10 +24,10 @@ export default class JSONRawMessageReader {
 
   readMessage(): RawMessage | null {
     const msg = this.messages.shift();
-    if (!msg) { return null; }
-    const rawMsg = Array.isArray(msg)
-      ? translate(msg)
-      : legacyTranslate(msg);
+    if (!msg) {
+      return null;
+    }
+    const rawMsg = Array.isArray(msg) ? translate(msg) : legacyTranslate(msg);
     if (!rawMsg) {
       return this.readMessage();
     }

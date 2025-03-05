@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  Avatar, List, Progress, Typography, Pagination,
-} from 'antd';
+import { Avatar, List, Progress, Typography, Pagination } from 'antd';
 import cn from 'classnames';
 import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
@@ -17,7 +15,12 @@ interface Props {
 }
 
 function CardSessionsByList({
-  list, selected, paginated, onClickHandler = () => null, metric, total,
+  list,
+  selected,
+  paginated,
+  onClickHandler = () => null,
+  metric,
+  total,
 }: Props) {
   const { dashboardStore, metricStore, sessionStore } = useStore();
   const { drillDownPeriod } = dashboardStore;
@@ -29,9 +32,17 @@ function CardSessionsByList({
   const loadData = async (page: number) => {
     const timestamps = drillDownPeriod.toTimestamps();
     const payload = { ...metricParams, ...timestamps, ...metric?.toJson() };
-    const params = { ...drillDownPeriod, ...payload, key: metric.predefinedKey };
+    const params = {
+      ...drillDownPeriod,
+      ...payload,
+      key: metric.predefinedKey,
+    };
     setLoading(true);
-    const data = await metricService.getMetricChartData(metric, { ...params, page, limit: 20 }, false);
+    const data = await metricService.getMetricChartData(
+      metric,
+      { ...params, page, limit: 20 },
+      false,
+    );
     metric.setData(data, drillDownPeriod);
     setLoading(false);
   };
@@ -52,15 +63,20 @@ function CardSessionsByList({
                 padding: '4px 10px',
                 lineHeight: '1px',
               }}
-              className={cn('rounded-lg border-b-0 hover:bg-active-blue cursor-pointer', selected === row.name ? 'bg-active-blue' : '')}
+              className={cn(
+                'rounded-lg border-b-0 hover:bg-active-blue cursor-pointer',
+                selected === row.name ? 'bg-active-blue' : '',
+              )}
             >
               <List.Item.Meta
                 className="m-0"
                 avatar={<Avatar src={row.icon} />}
-                title={(
+                title={
                   <div className="m-0">
                     <div className="flex justify-between m-0 p-0">
-                      <Typography.Text ellipsis className="w-[90%]">{row.displayName}</Typography.Text>
+                      <Typography.Text ellipsis className="w-[90%]">
+                        {row.displayName}
+                      </Typography.Text>
                       <Typography.Text type="secondary">
                         {' '}
                         {row.sessionCount}
@@ -82,7 +98,7 @@ function CardSessionsByList({
                       }}
                     />
                   </div>
-                )}
+                }
               />
             </List.Item>
           )}
@@ -104,7 +120,6 @@ function CardSessionsByList({
           />
         </div>
       )}
-
     </div>
   );
 }

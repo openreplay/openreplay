@@ -21,9 +21,7 @@ export default class extends React.PureComponent {
 
   switchOpen = () => {
     const {
-      item: {
-        key, value,
-      },
+      item: { key, value },
       request,
       switchOpen,
     } = this.props;
@@ -37,36 +35,41 @@ export default class extends React.PureComponent {
   };
 
   render() {
-    const {
-      item,
-      similarSessions,
-      open,
-      loading,
-    } = this.props;
+    const { item, similarSessions, open, loading } = this.props;
 
     return (
       <div>
         <SlideModal
-          title={(
+          title={
             <div className={stl.searchResultsHeader}>
-              { 'All Sessions Matching - ' }
-              {' '}
-              <span>{ `${item.key} - ${item.value}` }</span>
-              {' '}
+              {'All Sessions Matching - '}{' '}
+              <span>{`${item.key} - ${item.value}`}</span>{' '}
             </div>
-)}
+          }
           isDisplayed={open}
-          content={open && <SessionList similarSessions={similarSessions} loading={loading} />}
+          content={
+            open && (
+              <SessionList
+                similarSessions={similarSessions}
+                loading={loading}
+              />
+            )
+          }
           onClose={open ? this.switchOpen : () => null}
         />
-        <div className={cn('flex justify-between items-center p-3 capitalize', stl.field)}>
+        <div
+          className={cn(
+            'flex justify-between items-center p-3 capitalize',
+            stl.field,
+          )}
+        >
           <div>
-            <div className={stl.key}>{ item.key }</div>
+            <div className={stl.key}>{item.key}</div>
             <TextEllipsis
               maxWidth="210px"
               popupProps={{ disabled: item.value && item.value.length < 30 }}
             >
-              { item.value }
+              {item.value}
             </TextEllipsis>
           </div>
           <Button

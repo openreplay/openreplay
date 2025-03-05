@@ -33,7 +33,9 @@ const CountryFlag: FC<CountryFlagProps> = ({
   const displayGeoInfo = userCity || userState || countryName;
 
   // display full geo info, check each part if not null, display as string
-  const fullGeoInfo = [userCity, userState, countryName].filter(Boolean).join(', ');
+  const fullGeoInfo = [userCity, userState, countryName]
+    .filter(Boolean)
+    .join(', ');
 
   const renderGeoInfo = displayGeoInfo && (
     <span className="mx-1">

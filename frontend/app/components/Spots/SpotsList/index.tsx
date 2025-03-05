@@ -14,8 +14,10 @@ import EmptyPage from './EmptyPage';
 import InstallCTA from './InstallCTA';
 import SpotListItem from './SpotListItem';
 import SpotsListHeader from './SpotsListHeader';
+import { useTranslation } from 'react-i18next';
 
 function SpotsList() {
+  const { t } = useTranslation();
   const [selectedSpots, setSelectedSpots] = React.useState<string[]>([]);
   const { spotStore } = useStore();
 
@@ -47,11 +49,12 @@ function SpotsList() {
     }
 
     message.success(
-      `${deletedCount} Spot${deletedCount > 1 ? 's' : ''} deleted successfully.`,
+      `${deletedCount} Spot${deletedCount > 1 ? 's' : ''} ${t('deleted successfully.')}`,
     );
   };
 
-  const onRename = (id: string, newName: string) => spotStore.updateSpot(id, { name: newName });
+  const onRename = (id: string, newName: string) =>
+    spotStore.updateSpot(id, { name: newName });
 
   const onVideo = (id: string) => spotStore.getVideo(id);
 
@@ -74,9 +77,7 @@ function SpotsList() {
   return (
     <div className="relative w-full mx-auto" style={{ maxWidth: 1360 }}>
       <InstallCTA />
-      <div
-        className="flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm w-full z-50 border-b"
-      >
+      <div className="flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm w-full z-50 border-b">
         <SpotsListHeader
           onDelete={batchDelete}
           onRefresh={spotStore.fetchSpots}
@@ -99,18 +100,16 @@ function SpotsList() {
             <NoContent
               className="w-full bg-white rounded-lg shadow-sm"
               show={spotStore.spots.length === 0}
-              title={(
+              title={
                 <div>
                   <AnimatedSVG name={ICONS.NO_RECORDINGS} size={60} />
                   <div className="font-medium text-center mt-4">
-                    No Matching Results.
+                    {t('No Matching Results.')}
                   </div>
                 </div>
-              )}
+              }
             >
-              <div
-                className="py-2 border-gray-lighter grid grid-cols-3 gap-6"
-              >
+              <div className="py-2 border-gray-lighter grid grid-cols-3 gap-6">
                 {spotStore.spots.map((spot) => (
                   <SpotListItem
                     key={spot.spotId}
@@ -118,7 +117,9 @@ function SpotsList() {
                     onDelete={() => onDelete(spot.spotId)}
                     onRename={onRename}
                     onVideo={onVideo}
-                    onSelect={(checked: boolean) => handleSelectSpot(spot.spotId, checked)}
+                    onSelect={(checked: boolean) =>
+                      handleSelectSpot(spot.spotId, checked)
+                    }
                     isSelected={isSpotSelected(spot.spotId)}
                   />
                 ))}
@@ -126,26 +127,20 @@ function SpotsList() {
             </NoContent>
             <div className="flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2">
               <div>
-                Showing
-                {' '}
+                {t('Showing')}{' '}
                 <span className="font-medium">
                   {(spotStore.page - 1) * spotStore.limit + 1}
-                </span>
-                {' '}
-                to
-                {' '}
+                </span>{' '}
+                {t('to')}{' '}
                 <span className="font-medium">
-                  {(spotStore.page - 1) * spotStore.limit
-                    + spotStore.spots.length}
-                </span>
-                {' '}
-                of
-                {' '}
+                  {(spotStore.page - 1) * spotStore.limit +
+                    spotStore.spots.length}
+                </span>{' '}
+                {t('of')}{' '}
                 <span className="font-medium">
                   {numberWithCommas(spotStore.total)}
-                </span>
-                {' '}
-                spots.
+                </span>{' '}
+                {t('spots.')}
               </div>
               <Pagination
                 page={spotStore.page}

@@ -1,7 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { CodeBlock } from 'UI';
 
 function AssistScript(props) {
+  const { t } = useTranslation();
   const scriptCode = `<!-- OpenReplay Tracking Code -->
 <script>
 (function(A,s,a,y,e,r){
@@ -21,7 +23,11 @@ function AssistScript(props) {
 </script>`;
   return (
     <div>
-      <p>If your OpenReplay tracker is set up using the JS snippet, then simply replace the .../openreplay.js occurrence with .../openreplay-assist.js. Below is an example of how the script should like after the change:</p>
+      <p>
+        {t(
+          'If your OpenReplay tracker is set up using the JS snippet, then simply replace the .../openreplay.js occurrence with .../openreplay-assist.js. Below is an example of how the script should like after the change:',
+        )}
+      </p>
       <div className="py-3" />
 
       <CodeBlock code={scriptCode} language="js" />

@@ -27,9 +27,7 @@ function SessionsPerBrowserExample(props: Props) {
     ],
   };
   return (
-    <ExCard
-      {...props}
-    >
+    <ExCard {...props}>
       <SessionsPerBrowser data={data} />
     </ExCard>
   );

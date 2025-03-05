@@ -2,9 +2,7 @@ import React from 'react';
 import Session from 'Types/session';
 import UserCard from 'Components/Session/Player/ClipPlayer/UserCard';
 import QueueControls from 'Components/Session/Player/ClipPlayer/QueueControls';
-import {
-  App, Space, Button, Tooltip,
-} from 'antd';
+import { App, Space, Button, Tooltip } from 'antd';
 import copy from 'copy-to-clipboard';
 import { withSiteId } from '@/routes';
 import * as routes from '@/routes';
@@ -21,9 +19,7 @@ interface Props {
 
 function ClipPlayerHeader(props: Props) {
   const { projectsStore } = useStore();
-  const {
-    session, range, onClose, isHighlight,
-  } = props;
+  const { session, range, onClose, isHighlight } = props;
   const { siteId } = projectsStore;
   const { message } = App.useApp();
 
@@ -50,8 +46,14 @@ function ClipPlayerHeader(props: Props) {
         </Tooltip>
 
         {isHighlight ? (
-          <Button icon={<X size={14} strokeWidth={1} />} size="small" onClick={onClose} />
-        ) : <QueueControls />}
+          <Button
+            icon={<X size={14} strokeWidth={1} />}
+            size="small"
+            onClick={onClose}
+          />
+        ) : (
+          <QueueControls />
+        )}
       </Space>
     </div>
   );

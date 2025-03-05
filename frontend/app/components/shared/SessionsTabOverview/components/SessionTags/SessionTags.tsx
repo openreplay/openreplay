@@ -1,8 +1,6 @@
 import { issues_types, types } from 'Types/session/issue';
 import { Segmented } from 'antd';
-import {
-  Angry, CircleAlert, Skull, WifiOff,
-} from 'lucide-react';
+import { Angry, CircleAlert, Skull, WifiOff } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useStore } from 'App/mstore';
@@ -22,13 +20,15 @@ function SessionTags() {
   const platform = projectsStore.active?.platform || '';
   const activeTab = searchStore.activeTags;
 
-  return total === 0 && (activeTab.length === 0 || activeTab[0] === 'all') ? null : (
+  return total === 0 &&
+    (activeTab.length === 0 || activeTab[0] === 'all') ? null : (
     <div className="flex items-center">
       <Segmented
         options={issues_types
           .filter(
-            (tag) => tag.type !== 'mouse_thrashing'
-              && (platform === 'web'
+            (tag) =>
+              tag.type !== 'mouse_thrashing' &&
+              (platform === 'web'
                 ? tag.type !== types.TAP_RAGE
                 : tag.type !== types.CLICK_RAGE),
           )

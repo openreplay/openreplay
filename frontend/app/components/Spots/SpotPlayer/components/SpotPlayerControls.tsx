@@ -43,24 +43,22 @@ function SpotPlayerControls() {
   };
 
   const back = () => {
-    spotPlayerStore.setTime(spotPlayerStore.time - spotPlayerStore.skipInterval);
+    spotPlayerStore.setTime(
+      spotPlayerStore.time - spotPlayerStore.skipInterval,
+    );
   };
   const forth = () => {
-    spotPlayerStore.setTime(spotPlayerStore.time + spotPlayerStore.skipInterval);
+    spotPlayerStore.setTime(
+      spotPlayerStore.time + spotPlayerStore.skipInterval,
+    );
   };
 
   return (
     <div className="w-full p-4 flex items-center gap-4 bg-white">
       <PlayButton togglePlay={togglePlay} state={playState} iconSize={36} />
 
-      <div
-        className="px-2 py-1 bg-white rounded font-semibold text-black flex items-center gap-2"
-      >
-        <PlayTime
-          isCustom
-          time={spotPlayerStore.time * 1000}
-          format="mm:ss"
-        />
+      <div className="px-2 py-1 bg-white rounded font-semibold text-black flex items-center gap-2">
+        <PlayTime isCustom time={spotPlayerStore.time * 1000} format="mm:ss" />
         <span>/</span>
         <div>{spotPlayerStore.durationString}</div>
       </div>

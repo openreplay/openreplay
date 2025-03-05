@@ -6,6 +6,7 @@ import * as routes from 'App/routes';
 import { SPOT_ONBOARDING } from 'App/constants/storageKeys';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 
 const Scope = {
   FULL: 'full',
@@ -22,6 +23,7 @@ function getDefaultSetup() {
 }
 
 function ScopeForm() {
+  const { t } = useTranslation();
   const { userStore } = useStore();
   const { upgradeScope } = userStore;
   const { downgradeScope } = userStore;
@@ -51,23 +53,25 @@ function ScopeForm() {
     <div className="flex items-center justify-center w-screen h-screen">
       <Card
         style={{ width: 540 }}
-        title="👋 Welcome to OpenReplay"
+        title={t('👋 Welcome to OpenReplay')}
         classNames={{
           header: 'text-2xl font-semibold text-center',
           body: 'flex flex-col gap-2',
         }}
       >
         <div className="font-semibold">
-          How will you primarily use OpenReplay?
-          {' '}
+          {t('How will you primarily use OpenReplay?')}{' '}
         </div>
         <div className="text-disabled-text">
           <div>
-            You will have access to all OpenReplay features regardless of your
-            choice.
+            {t(
+              'You will have access to all OpenReplay features regardless of your choice.',
+            )}
           </div>
           <div>
-            Your preference will simply help us tailor your onboarding experience.
+            {t(
+              'Your preference will simply help us tailor your onboarding experience.',
+            )}
           </div>
         </div>
         <Radio.Group
@@ -76,9 +80,11 @@ function ScopeForm() {
           className="flex flex-col gap-2 mt-4 "
         >
           <Radio value="full">
-            Session Replay with DevTools, Co-browsing and Product Analytics
+            {t(
+              'Session Replay with DevTools, Co-browsing and Product Analytics',
+            )}
           </Radio>
-          <Radio value="spot">Bug reporting via Spot</Radio>
+          <Radio value="spot">{t('Bug reporting via Spot')}</Radio>
         </Radio.Group>
 
         <div className="self-end">
@@ -88,7 +94,7 @@ function ScopeForm() {
             icon={<ArrowRightOutlined />}
             iconPosition="end"
           >
-            Continue
+            {t('Continue')}
           </Button>
         </div>
       </Card>

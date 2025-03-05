@@ -2,7 +2,10 @@ import React from 'react';
 import Project from '@/mstore/types/project';
 import { Tabs } from 'UI';
 import {
-  AppleOutlined, AndroidOutlined, CodeOutlined, JavaScriptOutlined,
+  AppleOutlined,
+  AndroidOutlined,
+  CodeOutlined,
+  JavaScriptOutlined,
 } from '@ant-design/icons';
 import usePageTitle from '@/hooks/usePageTitle';
 import InstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs';
@@ -10,13 +13,7 @@ import ProjectCodeSnippet from 'Components/Client/Projects/ProjectCodeSnippet';
 import MobileInstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs/MobileInstallDocs';
 import { Segmented } from 'antd';
 import AndroidInstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs/AndroidInstallDocs';
-
-const JAVASCRIPT = 'Using Script';
-const NPM = 'Using NPM';
-const TABS = [
-  { key: NPM, text: NPM },
-  { key: JAVASCRIPT, text: JAVASCRIPT },
-];
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   project: Project;
@@ -40,6 +37,7 @@ function ProjectTabTracking(props: Props) {
 export default ProjectTabTracking;
 
 function WebSnippet({ project }: { project: Project }) {
+  const { t } = useTranslation();
   const [isNpm, setIsNpm] = React.useState(true);
 
   return (
@@ -50,7 +48,7 @@ function WebSnippet({ project }: { project: Project }) {
             label: (
               <div className="flex items-center gap-2">
                 <CodeOutlined />
-                <span>NPM</span>
+                <span>{t('NPM')}</span>
               </div>
             ),
             value: true,
@@ -59,7 +57,7 @@ function WebSnippet({ project }: { project: Project }) {
             label: (
               <div className="flex items-center gap-2">
                 <JavaScriptOutlined />
-                <span>Script</span>
+                <span>{t('Script')}</span>
               </div>
             ),
             value: false,
@@ -80,6 +78,7 @@ function WebSnippet({ project }: { project: Project }) {
 }
 
 function MobileSnippet({ project }: { project: Project }) {
+  const { t } = useTranslation();
   const [isIos, setIsIos] = React.useState(true);
   const ingestPoint = `https://${window.location.hostname}/ingest`;
 
@@ -91,7 +90,7 @@ function MobileSnippet({ project }: { project: Project }) {
             label: (
               <div className="flex items-center gap-2">
                 <AppleOutlined />
-                <span>iOS</span>
+                <span>{t('iOS')}</span>
               </div>
             ),
             value: true,
@@ -100,7 +99,7 @@ function MobileSnippet({ project }: { project: Project }) {
             label: (
               <div className="flex items-center gap-2">
                 <AndroidOutlined />
-                <span>Android</span>
+                <span>{t('Android')}</span>
               </div>
             ),
             value: false,
@@ -116,7 +115,6 @@ function MobileSnippet({ project }: { project: Project }) {
       ) : (
         <AndroidInstallDocs site={project} ingestPoint={ingestPoint} />
       )}
-
     </div>
   );
 }

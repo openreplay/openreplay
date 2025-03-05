@@ -69,19 +69,19 @@ export default Record(
       },
       toData() {
         const js = this.toJS();
-        js.filters = js.filters.map((filter) =>
-          // delete filter.operatorOptions
-          // delete filter._key
-          filter);
+        js.filters = js.filters.map(
+          (filter) =>
+            // delete filter.operatorOptions
+            // delete filter._key
+            filter,
+        );
 
         delete js.createdAt;
         delete js.key;
         return js;
       },
     },
-    fromJS({
-      eventsOrder, filters, events, custom, ...filter
-    }) {
+    fromJS({ eventsOrder, filters, events, custom, ...filter }) {
       let startDate;
       let endDate;
       const rValue = filter.rangeValue || rangeValue;
@@ -102,7 +102,9 @@ export default Record(
         filters: List(filters).map((i) => {
           const filter = NewFilter(i).toData();
           if (Array.isArray(i.filters)) {
-            filter.filters = i.filters.map((f) => NewFilter({ ...f, subFilter: i.type }).toData());
+            filter.filters = i.filters.map((f) =>
+              NewFilter({ ...f, subFilter: i.type }).toData(),
+            );
           }
           return filter;
         }),

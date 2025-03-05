@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import { Button, Table, Divider } from 'antd';
 import type { TableProps } from 'antd';
 
@@ -5,6 +6,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import cn from 'classnames';
 import React, { useState } from 'react';
 import { TableExporter } from 'Components/Funnels/FunnelWidget/FunnelTable';
+import { useTranslation } from 'react-i18next';
 
 const initTableProps = [
   {
@@ -35,7 +37,9 @@ interface Props {
 }
 
 function WidgetDatatable(props: Props) {
-  const [tableProps, setTableProps] = useState<TableProps['columns']>(initTableProps);
+  const { t } = useTranslation();
+  const [tableProps, setTableProps] =
+    useState<TableProps['columns']>(initTableProps);
   const data = React.useMemo(() => {
     const dataObj = { ...props.data };
     if (props.compData) {
@@ -51,9 +55,11 @@ function WidgetDatatable(props: Props) {
         return newItem;
       });
       const blank = new Array(dataObj.namesMap.length * 2).fill('');
-      dataObj.namesMap = blank.map((_, i) => (i % 2 !== 0
-        ? `Previous ${dataObj.namesMap[i / 2]}`
-        : dataObj.namesMap[i / 2]));
+      dataObj.namesMap = blank.map((_, i) =>
+        i % 2 !== 0
+          ? `Previous ${dataObj.namesMap[i / 2]}`
+          : dataObj.namesMap[i / 2],
+      );
     }
     return dataObj;
   }, [props.data, props.compData]);
@@ -62,9 +68,7 @@ function WidgetDatatable(props: Props) {
   const [tableData, setTableData] = useState([]);
 
   const columnNames = [];
-  const series = !data.chart[0]
-    ? []
-    : data.namesMap;
+  const series = !data.chart[0] ? [] : data.namesMap;
 
   React.useEffect(() => {
     if (!data.chart) return;
@@ -103,7 +107,9 @@ function WidgetDatatable(props: Props) {
     // calculating averages for each row
     items.forEach((item) => {
       const itemsLen = columnNames.length;
-      const keys = Object.keys(item).filter((k) => !['seriesName', 'key', 'average'].includes(k));
+      const keys = Object.keys(item).filter(
+        (k) => !['seriesName', 'key', 'average'].includes(k),
+      );
       let sum = 0;
       const values = keys.map((k) => item[k]);
       values.forEach((v) => {
@@ -148,7 +154,7 @@ function WidgetDatatable(props: Props) {
               onClick={() => setShowTable(!showTable)}
               className="btn-show-hide-table"
             >
-              {showTable ? 'Hide Table' : 'Show Table'}
+              {showTable ? t('Hide Table') : t('Show Table')}
             </Button>
           </Divider>
         </div>

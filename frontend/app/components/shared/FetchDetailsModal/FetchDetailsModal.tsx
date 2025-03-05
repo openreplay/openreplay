@@ -6,6 +6,7 @@ import { useStore } from 'App/mstore';
 import { DateTime } from 'luxon';
 import FetchTabs from './components/FetchTabs/FetchTabs';
 import FetchBasicDetails from './components/FetchBasicDetails';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   resource: any;
@@ -15,19 +16,23 @@ interface Props {
   isSpot?: boolean;
 }
 function FetchDetailsModal(props: Props) {
+  const { t } = useTranslation();
   const { rows = [], fetchPresented = false, isSpot } = props;
   const [resource, setResource] = useState(props.resource);
   const [first, setFirst] = useState(false);
   const [last, setLast] = useState(false);
 
-  const isXHR = resource.type === ResourceType.XHR
-      || resource.type === ResourceType.FETCH
-      || resource.type === ResourceType.IOS
-      || resource.type === ResourceType.GRAPHQL;
+  const isXHR =
+    resource.type === ResourceType.XHR ||
+    resource.type === ResourceType.FETCH ||
+    resource.type === ResourceType.IOS ||
+    resource.type === ResourceType.GRAPHQL;
 
   const {
     sessionStore: { devTools },
-    settingsStore: { sessionSettings: { timezone } },
+    settingsStore: {
+      sessionSettings: { timezone },
+    },
   } = useStore();
 
   useEffect(() => {
@@ -54,19 +59,41 @@ function FetchDetailsModal(props: Props) {
   };
 
   return (
-    <div className="bg-white p-5 h-screen overflow-y-auto" style={{ width: '500px' }}>
-      <h5 className="mb-4 text-2xl ">Network Request</h5>
-      <FetchBasicDetails resource={resource} timestamp={resource.timestamp ? DateTime.fromMillis(resource.timestamp).setZone(timezone.value).toFormat('LLL dd, yyyy, hh:mm:ss a') : undefined} />
+    <div
+      className="bg-white p-5 h-screen overflow-y-auto"
+      style={{ width: '500px' }}
+    >
+      <h5 className="mb-4 text-2xl ">{t('Network Request')}</h5>
+      <FetchBasicDetails
+        resource={resource}
+        timestamp={
+          resource.timestamp
+            ? DateTime.fromMillis(resource.timestamp)
+                .setZone(timezone.value)
+                .toFormat('LLL dd, yyyy, hh:mm:ss a')
+            : undefined
+        }
+      />
 
       {isXHR && <FetchTabs isSpot={isSpot} resource={resource} />}
 
       {rows && rows.length > 0 && (
         <div className="flex justify-between absolute bottom-0 left-0 right-0 p-3 border-t bg-white">
-          <Button type="text" onClick={prevClick} disabled={first} icon={<ArrowLeftOutlined />}>
-            Prev
+          <Button
+            type="text"
+            onClick={prevClick}
+            disabled={first}
+            icon={<ArrowLeftOutlined />}
+          >
+            {t('Prev')}
           </Button>
-          <Button type="text" onClick={nextClick} disabled={last} icon={<ArrowRightOutlined />}>
-            Next
+          <Button
+            type="text"
+            onClick={nextClick}
+            disabled={last}
+            icon={<ArrowRightOutlined />}
+          >
+            {t('Next')}
           </Button>
         </div>
       )}

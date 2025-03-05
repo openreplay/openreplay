@@ -60,11 +60,11 @@ class IssueFormatter extends BaseFormatter {
 class UserNameFormatter extends BaseFormatter {
   format(name: string): string {
     if (
-      name === null
-      || name === undefined
-      || name === ''
-      || name === 'null'
-      || name === 'undefined'
+      name === null ||
+      name === undefined ||
+      name === '' ||
+      name === 'null' ||
+      name === 'undefined'
     ) {
       return 'Anonymous';
     }
@@ -130,9 +130,15 @@ export class SessionsByRow {
           iconProvider: new OsIconProvider(),
         };
       case 'userId':
-        return { nameFormatter: new UserNameFormatter(), iconProvider: new UserIconProvider() };
+        return {
+          nameFormatter: new UserNameFormatter(),
+          iconProvider: new UserIconProvider(),
+        };
       case FilterKey.REFERRER:
-        return { nameFormatter: new DefaultFormatter(), iconProvider: new ReferrerIconProvider() };
+        return {
+          nameFormatter: new DefaultFormatter(),
+          iconProvider: new ReferrerIconProvider(),
+        };
       case FilterKey.FETCH:
         return {
           nameFormatter: new DefaultFormatter(),

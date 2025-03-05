@@ -23,20 +23,20 @@ export default Record(
     methods: {
       validateKeys() {
         return (
-          this.apiKeyId.length > API_KEY_ID_LENGTH
-          && this.apiKey.length > API_KEY_LENGTH
-          && validateURL(this.host)
+          this.apiKeyId.length > API_KEY_ID_LENGTH &&
+          this.apiKey.length > API_KEY_LENGTH &&
+          validateURL(this.host)
         );
       },
       validate() {
         return (
-          this.host !== ''
-          && this.apiKeyId !== ''
-          && this.apiKey !== ''
-          && this.indexes !== ''
-          && !!this.port
-          && this.isValid
-          && this.validateKeys()
+          this.host !== '' &&
+          this.apiKeyId !== '' &&
+          this.apiKey !== '' &&
+          this.indexes !== '' &&
+          !!this.port &&
+          this.isValid &&
+          this.validateKeys()
         );
       },
       exists() {

@@ -16,7 +16,7 @@ function BottomBlock({
 }: Props) {
   return (
     <div className={cn(stl.wrapper, 'flex flex-col mb-2')} {...props}>
-      { children }
+      {children}
     </div>
   );
 }

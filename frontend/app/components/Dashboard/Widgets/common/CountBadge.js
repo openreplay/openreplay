@@ -28,22 +28,24 @@ function CountBadge({
   return (
     <div className={cn(className, 'flex items-baseline')}>
       <div className={cn(styles.countWrapper, 'flex items-baseline')}>
-        { icon && <Icon name={icon} size="18" marginRight="5" className={styles.icon} /> }
-        <span className={styles.count}>
-          {' '}
-          { component || count }
-          {' '}
-        </span>
-        <span className={styles.unit}>{ unit }</span>
+        {icon && (
+          <Icon name={icon} size="18" marginRight="5" className={styles.icon} />
+        )}
+        <span className={styles.count}> {component || count} </span>
+        <span className={styles.unit}>{unit}</span>
       </div>
       <div className={cn(styles.change, 'ml-2')} data-colorgreen={colorGreen}>
-        { viewChange
-          && (
+        {viewChange && (
           <div>
-            <Icon size="10" name={changeIncrease ? 'arrow-up' : 'arrow-down'} color={colorGreen ? 'green' : 'red'} marginRight="5" />
-            { `${getFixedValue(change)}%` }
+            <Icon
+              size="10"
+              name={changeIncrease ? 'arrow-up' : 'arrow-down'}
+              color={colorGreen ? 'green' : 'red'}
+              marginRight="5"
+            />
+            {`${getFixedValue(change)}%`}
           </div>
-          )}
+        )}
       </div>
     </div>
   );

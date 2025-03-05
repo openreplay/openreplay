@@ -10,6 +10,7 @@ import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModa
 import { Loader } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
+import { useTranslation } from 'react-i18next';
 
 interface DynatraceConfig {
   environment: string;
@@ -31,6 +32,7 @@ function DynatraceFormModal({
   onClose: () => void;
   integrated: boolean;
 }) {
+  const { t } = useTranslation();
   const { integrationsStore } = useStore();
   const { siteId } = integrationsStore.integrations;
   const {
@@ -39,22 +41,23 @@ function DynatraceFormModal({
     saveMutation,
     removeMutation,
   } = useIntegration<DynatraceConfig>('dynatrace', siteId, initialValues);
-  const {
-    values, errors, handleChange, hasErrors, checkErrors,
-  } = useForm(data, {
-    environment: {
-      required: true,
+  const { values, errors, handleChange, hasErrors, checkErrors } = useForm(
+    data,
+    {
+      environment: {
+        required: true,
+      },
+      client_id: {
+        required: true,
+      },
+      client_secret: {
+        required: true,
+      },
+      resource: {
+        required: true,
+      },
     },
-    client_id: {
-      required: true,
-    },
-    client_secret: {
-      required: true,
-    },
-    resource: {
-      required: true,
-    },
-  });
+  );
   const exists = Boolean(data.client_id);
 
   const save = async () => {
@@ -83,33 +86,40 @@ function DynatraceFormModal({
       style={{ width: '350px' }}
     >
       <IntegrationModalCard
-        title="Dynatrace"
+        title={t('Dynatrace')}
         icon="integrations/dynatrace"
         useIcon
-        description="Integrate Dynatrace with session replays to link backend logs with user sessions for faster issue resolution."
+        description={t(
+          'Integrate Dynatrace with session replays to link backend logs with user sessions for faster issue resolution.',
+        )}
       />
       <div className="p-5 border-b mb-4">
-        <div className="font-medium mb-1">How it works?</div>
+        <div className="font-medium mb-1">{t('How it works?')}</div>
         <ol className="list-decimal list-inside">
           <li>
-            Enter your Environment ID, Client ID, Client Secret, and Account URN
-            in the form below.
+            {t(
+              'Enter your Environment ID, Client ID, Client Secret, and Account URN in the form below.',
+            )}
           </li>
           <li>
-            Create a custom Log attribute openReplaySessionToken in Dynatrace.
+            {t(
+              'Create a custom Log attribute openReplaySessionToken in Dynatrace.',
+            )}
           </li>
           <li>
-            Propagate openReplaySessionToken in your application's backend logs.
+            {t(
+              "Propagate openReplaySessionToken in your application's backend logs.",
+            )}
           </li>
         </ol>
         <DocLink
           className="mt-4"
-          label="See detailed steps"
+          label={t('See detailed steps')}
           url="https://docs.openreplay.com/integrations/dynatrace"
         />
         <Loader loading={isPending}>
           <FormField
-            label="Environment ID"
+            label={t('Environment ID')}
             name="environment"
             value={values.environment}
             onChange={handleChange}
@@ -117,21 +127,21 @@ function DynatraceFormModal({
             autoFocus
           />
           <FormField
-            label="Client ID"
+            label={t('Client ID')}
             name="client_id"
             value={values.client_id}
             onChange={handleChange}
             errors={errors.client_id}
           />
           <FormField
-            label="Client Secret"
+            label={t('Client Secret')}
             name="client_secret"
             value={values.client_secret}
             onChange={handleChange}
             errors={errors.client_secret}
           />
           <FormField
-            label="Dynatrace Account URN"
+            label={t('Dynatrace Account URN')}
             name="resource"
             value={values.resource}
             onChange={handleChange}
@@ -145,12 +155,12 @@ function DynatraceFormModal({
               loading={saveMutation.isPending}
               type="primary"
             >
-              {exists ? 'Update' : 'Add'}
+              {exists ? t('Update') : t('Add')}
             </Button>
 
             {integrated && (
               <Button loading={removeMutation.isPending} onClick={remove}>
-                Delete
+                {t('Delete')}
               </Button>
             )}
           </div>

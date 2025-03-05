@@ -9,15 +9,13 @@ import { observer } from 'mobx-react-lite';
 import Session from 'Types/session';
 
 interface Props {
-    session: Session;
-    className?: string;
-    width?: number;
-    height?: number;
+  session: Session;
+  className?: string;
+  width?: number;
+  height?: number;
 }
 
-const UserCard: React.FC<Props> = ({
-  session, className, width, height,
-}) => {
+const UserCard: React.FC<Props> = ({ session, className, width, height }) => {
   const { settingsStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
 
@@ -35,7 +33,10 @@ const UserCard: React.FC<Props> = ({
   const avatarBgSize = '38px';
 
   return (
-    <div className={cn('bg-white flex items-center w-full', className)} style={{ width, height }}>
+    <div
+      className={cn('bg-white flex items-center w-full', className)}
+      style={{ width, height }}
+    >
       <div className="flex items-center">
         <Avatar
           iconSize="23"
@@ -57,12 +58,7 @@ const UserCard: React.FC<Props> = ({
               </Tooltip>
             </span>
             <span className="mx-1 font-bold text-xl">&#183;</span>
-            {userCity && (
-            <span className="mr-1">
-              {userCity}
-              ,
-            </span>
-            )}
+            {userCity && <span className="mr-1">{userCity},</span>}
             <span>{countries[userCountry]}</span>
             <span className="mx-1 font-bold text-xl">&#183;</span>
             <span>

@@ -1,5 +1,5 @@
 export const clickmapStyles = {
-  overlayStyle: ({ height, width }: { height: string, width: string }) => ({
+  overlayStyle: ({ height, width }: { height: string; width: string }) => ({
     position: 'absolute',
     top: '0px',
     left: 0,
@@ -12,7 +12,15 @@ export const clickmapStyles = {
     fontSize: '16px',
     fontWeight: '600',
   },
-  bubbleContainer: ({ top, left, height }: { top: number; left: number, height: number }) => ({
+  bubbleContainer: ({
+    top,
+    left,
+    height,
+  }: {
+    top: number;
+    left: number;
+    height: number;
+  }) => ({
     position: 'absolute',
     top: top > 75 ? `${top}px` : `${height + 75}px`,
     width: '250px',
@@ -50,8 +58,16 @@ export const clickmapStyles = {
     zIndex,
   }),
   clicks: ({
-    top, height, isRage, left,
-  }: { top: number; height: number, isRage?: boolean, left: number }) => ({
+    top,
+    height,
+    isRage,
+    left,
+  }: {
+    top: number;
+    height: number;
+    isRage?: boolean;
+    left: number;
+  }) => ({
     top: top > 20 ? 0 : `${height}px`,
     left: left < 5 ? '100%' : 0,
     position: 'absolute',

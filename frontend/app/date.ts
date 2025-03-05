@@ -5,7 +5,10 @@ import { Timezone } from 'App/mstore/types/sessionSettings';
 import { LAST_24_HOURS, LAST_30_DAYS, LAST_7_DAYS } from 'Types/app/period';
 import { CUSTOM_RANGE } from '@/dateRange';
 
-export function getDateFromString(date: string, format = 'yyyy-MM-dd HH:mm:ss:SSS'): string {
+export function getDateFromString(
+  date: string,
+  format = 'yyyy-MM-dd HH:mm:ss:SSS',
+): string {
   return DateTime.fromISO(date).toFormat(format);
 }
 
@@ -34,16 +37,23 @@ export const durationFormatted = (inputDuration: Duration | number): string => {
     duration = Duration.fromMillis(inputDuration);
   }
 
-  if (duration.as('minutes') < 1) { // show in seconds
-    return duration.toFormat('s\'s\'');
-  } if (duration.as('hours') < 1) { // show in minutes
-    return duration.toFormat('m\'m\'s\'s\'');
-  } if (duration.as('days') < 1) { // show in hours and minutes
-    return duration.toFormat('h\'h\'m\'m\'');
-  } if (duration.as('months') < 1) { // show in days and hours
-    return duration.toFormat('d\'d\'h\'h\'');
+  if (duration.as('minutes') < 1) {
+    // show in seconds
+    return duration.toFormat("s's'");
   }
-  return duration.toFormat('m\'m\'s\'s\'');
+  if (duration.as('hours') < 1) {
+    // show in minutes
+    return duration.toFormat("m'm's's'");
+  }
+  if (duration.as('days') < 1) {
+    // show in hours and minutes
+    return duration.toFormat("h'h'm'm'");
+  }
+  if (duration.as('months') < 1) {
+    // show in days and hours
+    return duration.toFormat("d'd'h'h'");
+  }
+  return duration.toFormat("m'm's's'");
 };
 
 export function durationFromMsFormatted(ms: number): string {
@@ -63,16 +73,20 @@ export function durationFromMs(ms: number, isFull?: boolean): string {
 }
 
 export const durationFormattedFull = (duration: Duration): string => {
-  if (duration.as('minutes') < 1) { // show in seconds
+  if (duration.as('minutes') < 1) {
+    // show in seconds
     const d = duration.toFormat('s');
     duration = d + (d > 1 ? ' seconds' : ' second');
-  } else if (duration.as('hours') < 1) { // show in minutes
+  } else if (duration.as('hours') < 1) {
+    // show in minutes
     const d = duration.toFormat('m');
     duration = d + (d > 1 ? ' minutes' : ' minute');
-  } else if (duration.as('days') < 1) { // show in hours and minutes
+  } else if (duration.as('days') < 1) {
+    // show in hours and minutes
     const d = duration.toFormat('h');
     duration = d + (d > 1 ? ' hours' : ' hour');
-  } else if (duration.as('months') < 1) { // show in days and hours
+  } else if (duration.as('months') < 1) {
+    // show in days and hours
     const d = duration.toFormat('d');
     duration = d + (d > 1 ? ' days' : ' day');
   } else {
@@ -83,14 +97,21 @@ export const durationFormattedFull = (duration: Duration): string => {
   return duration;
 };
 
-export const msToMin = (ms:number): number => Math.round(ms / 60000);
-export const msToSec = (ms:number): number => Math.round(ms / 1000);
+export const msToMin = (ms: number): number => Math.round(ms / 60000);
+export const msToSec = (ms: number): number => Math.round(ms / 1000);
 
-export const diffFromNowString = (ts:number): string => durationFormattedFull(DateTime.fromMillis(Date.now()).diff(DateTime.fromMillis(ts)));
+export const diffFromNowString = (ts: number): string =>
+  durationFormattedFull(
+    DateTime.fromMillis(Date.now()).diff(DateTime.fromMillis(ts)),
+  );
 
-export const diffFromNowShortString = (ts: number): string => durationFormatted(DateTime.fromMillis(Date.now()).diff(DateTime.fromMillis(ts)));
+export const diffFromNowShortString = (ts: number): string =>
+  durationFormatted(
+    DateTime.fromMillis(Date.now()).diff(DateTime.fromMillis(ts)),
+  );
 
-export const getDateFromMill = (date) => (typeof date === 'number' ? DateTime.fromMillis(date) : undefined);
+export const getDateFromMill = (date) =>
+  typeof date === 'number' ? DateTime.fromMillis(date) : undefined;
 
 export const getTimeFromMill = (dateTime: number, tz: string) => {
   const date = DateTime.fromMillis(dateTime);
@@ -102,12 +123,16 @@ export const getTimeFromMill = (dateTime: number, tz: string) => {
  * @param {Date} Date to be checked.
  * @return {Boolean}
  */
-export const isToday = (date: DateTime):boolean => date.hasSame(new Date(), 'day');
-export const isSameYear = (date: DateTime):boolean => date.hasSame(new Date(), 'year');
+export const isToday = (date: DateTime): boolean =>
+  date.hasSame(new Date(), 'day');
+export const isSameYear = (date: DateTime): boolean =>
+  date.hasSame(new Date(), 'year');
 
 export function formatDateTimeDefault(timestamp: number): string {
   const date = DateTime.fromMillis(timestamp);
-  return isToday(date) ? 'Today' : `${date.toFormat('LLL dd, yyyy')}, ${date.toFormat('hh:mm a')}`;
+  return isToday(date)
+    ? 'Today'
+    : `${date.toFormat('LLL dd, yyyy')}, ${date.toFormat('hh:mm a')}`;
 }
 
 /**
@@ -116,7 +141,11 @@ export function formatDateTimeDefault(timestamp: number): string {
  * @param {Object} timezone fixed offset like UTC+6
  * @returns {String} formatted date (or time if its today)
  */
-export function formatTimeOrDate(timestamp: number, timezone?: Timezone, isFull = false): string {
+export function formatTimeOrDate(
+  timestamp: number,
+  timezone?: Timezone,
+  isFull = false,
+): string {
   let date = DateTime.fromMillis(timestamp);
   if (timezone) {
     if (timezone.value === 'UTC') date = date.toUTC();
@@ -166,27 +195,37 @@ export const resentOrDate = (ts, short?: boolean) => {
   if (date.hasSame(d, 'day')) return `Today at ${date.toFormat('hh:mm a')}`;
 
   // Yesterday
-  if (date.hasSame(d.setDate(d.getDate() - 1), 'day')) return `Yesterday at ${date.toFormat('hh:mm a')}`;
+  if (date.hasSame(d.setDate(d.getDate() - 1), 'day'))
+    return `Yesterday at ${date.toFormat('hh:mm a')}`;
   return date.toFormat(`LLL dd, yyyy${short ? '' : ', hh:mm a'}`);
 };
 
 export const checkRecentTime = (date, format) => date.toRelative();
 
-export const formatMs = (ms: number): string => (ms < 1000 ? `${Math.trunc(ms)}ms` : `${Math.trunc(ms / 100) / 10}s`);
+export const formatMs = (ms: number): string =>
+  ms < 1000 ? `${Math.trunc(ms)}ms` : `${Math.trunc(ms / 100) / 10}s`;
 
-export const convertTimestampToUtcTimestamp = (timestamp: number): number => DateTime.fromMillis(timestamp).toUTC().toMillis();
+export const convertTimestampToUtcTimestamp = (timestamp: number): number =>
+  DateTime.fromMillis(timestamp).toUTC().toMillis();
 
-export const nowFormatted = (format?: string): string => DateTime.local().toFormat(format || 'LLL dd, yyyy, hh:mm a');
+export const nowFormatted = (format?: string): string =>
+  DateTime.local().toFormat(format || 'LLL dd, yyyy, hh:mm a');
 
 export const countDaysFrom = (timestamp: number): number => {
   const date = DateTime.fromMillis(timestamp);
   const d = new Date();
-  return Math.round(Math.abs(d.getTime() - date.toJSDate().getTime()) / (1000 * 3600 * 24));
+  return Math.round(
+    Math.abs(d.getTime() - date.toJSDate().getTime()) / (1000 * 3600 * 24),
+  );
 };
 
-export const getDateRangeUTC = (rangeName: string, customStartDate?: number, customEndDate?: number): {
+export const getDateRangeUTC = (
+  rangeName: string,
+  customStartDate?: number,
+  customEndDate?: number,
+): {
   startDate: number;
-  endDate: number
+  endDate: number;
 } => {
   let endDate = new Date().getTime();
   let startDate: number;
@@ -200,7 +239,9 @@ export const getDateRangeUTC = (rangeName: string, customStartDate?: number, cus
       break;
     case CUSTOM_RANGE:
       if (!customStartDate || !customEndDate) {
-        throw new Error('Start date and end date must be provided for CUSTOM_RANGE.');
+        throw new Error(
+          'Start date and end date must be provided for CUSTOM_RANGE.',
+        );
       }
       startDate = customStartDate;
       endDate = customEndDate;

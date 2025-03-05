@@ -2,6 +2,7 @@ import React from 'react';
 import { Checkbox } from 'UI';
 import { observer } from 'mobx-react-lite';
 import DropdownChips from '../DropdownChips';
+import { useTranslation } from 'react-i18next';
 
 interface INotifyHooks {
   instance: Alert;
@@ -22,6 +23,7 @@ function NotifyHooks({
   hooks,
   edit,
 }: INotifyHooks) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col">
       <div className="flex items-center my-4">
@@ -32,7 +34,7 @@ function NotifyHooks({
             type="checkbox"
             checked={instance.slack}
             onClick={onChangeCheck}
-            label="Slack"
+            label={t('Slack')}
           />
         )}
         {msTeamsChannels.length > 0 && (
@@ -51,26 +53,28 @@ function NotifyHooks({
           checked={instance.email}
           onClick={onChangeCheck}
           className="mr-8"
-          label="Email"
+          label={t('Email')}
         />
         <Checkbox
           name="webhook"
           type="checkbox"
           checked={instance.webhook}
           onClick={onChangeCheck}
-          label="Webhook"
+          label={t('Webhook')}
         />
       </div>
 
       {instance.slack && (
         <div className="flex items-start my-4">
-          <label className="w-1/6 flex-shrink-0 font-normal pt-2">Slack</label>
+          <label className="w-1/6 flex-shrink-0 font-normal pt-2">
+            {t('Slack')}
+          </label>
           <div className="w-2/6">
             <DropdownChips
               fluid
               selected={instance.slackInput}
               options={slackChannels}
-              placeholder="Select Channel"
+              placeholder={t('Select Channel')}
               // @ts-ignore
               onChange={(selected) => edit({ slackInput: selected })}
             />
@@ -80,13 +84,15 @@ function NotifyHooks({
 
       {instance.msteams && (
         <div className="flex items-start my-4">
-          <label className="w-1/6 flex-shrink-0 font-normal pt-2">MS Teams</label>
+          <label className="w-1/6 flex-shrink-0 font-normal pt-2">
+            {t('MS Teams')}
+          </label>
           <div className="w-2/6">
             <DropdownChips
               fluid
               selected={instance.msteamsInput}
               options={msTeamsChannels}
-              placeholder="Select Channel"
+              placeholder={t('Select Channel')}
               // @ts-ignore
               onChange={(selected) => edit({ msteamsInput: selected })}
             />
@@ -96,13 +102,15 @@ function NotifyHooks({
 
       {instance.email && (
         <div className="flex items-start my-4">
-          <label className="w-1/6 flex-shrink-0 font-normal pt-2">Email</label>
+          <label className="w-1/6 flex-shrink-0 font-normal pt-2">
+            {t('Email')}
+          </label>
           <div className="w-2/6">
             <DropdownChips
               textFiled
               validate={validateEmail}
               selected={instance.emailInput}
-              placeholder="Type and press Enter key"
+              placeholder={t('Type and press Enter key')}
               // @ts-ignore
               onChange={(selected) => edit({ emailInput: selected })}
             />
@@ -112,13 +120,15 @@ function NotifyHooks({
 
       {instance.webhook && (
         <div className="flex items-start my-4">
-          <label className="w-1/6 flex-shrink-0 font-normal pt-2">Webhook</label>
+          <label className="w-1/6 flex-shrink-0 font-normal pt-2">
+            {t('Webhook')}
+          </label>
           <div className="w-2/6">
             <DropdownChips
               fluid
               selected={instance.webhookInput}
               options={hooks}
-              placeholder="Select Webhook"
+              placeholder={t('Select Webhook')}
               // @ts-ignore
               onChange={(selected) => edit({ webhookInput: selected })}
             />

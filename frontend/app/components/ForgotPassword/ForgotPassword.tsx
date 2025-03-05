@@ -5,10 +5,12 @@ import { Button } from 'antd';
 import { login as loginRoute } from 'App/routes';
 import ResetPassword from './ResetPasswordRequest';
 import CreatePassword from './CreatePassword';
+import { useTranslation } from 'react-i18next';
 
 const LOGIN = loginRoute();
 
 function ForgotPassword(props) {
+  const { t } = useTranslation();
   const params = new URLSearchParams(props.location.search);
   const pass = params.get('pass');
   const invitation = params.get('invitation');
@@ -20,25 +22,32 @@ function ForgotPassword(props) {
         <div className="m-10 ">
           <img src="/assets/logo.svg" width={200} />
         </div>
-        <div className="border rounded-lg bg-white shadow-sm" style={{ width: '350px' }}>
+        <div
+          className="border rounded-lg bg-white shadow-sm"
+          style={{ width: '350px' }}
+        >
           {creatingNewPassword ? (
             <h2 className="text-center text-lg font-medium mb-6 border-b p-5 w-full">
-              Welcome, join your organization by creating a new password
+              {t('Welcome, join your organization by creating a new password')}
             </h2>
           ) : (
             <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
-              Reset Password
+              {t('Reset Password')}
             </h2>
           )}
 
           <div className="w-full px-8">
-            {creatingNewPassword ? <CreatePassword params={params} /> : <ResetPassword />}
+            {creatingNewPassword ? (
+              <CreatePassword params={params} />
+            ) : (
+              <ResetPassword />
+            )}
           </div>
 
           <div className="flex flex-col items-center justify-center">
             <div className="my-8">
               <Link to={LOGIN}>
-                <Button type="link">Back to Login</Button>
+                <Button type="link">{t('Back to Login')}</Button>
               </Link>
             </div>
           </div>

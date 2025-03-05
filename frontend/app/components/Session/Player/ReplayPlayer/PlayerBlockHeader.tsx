@@ -15,19 +15,24 @@ import { observer } from 'mobx-react-lite';
 import { IFRAME } from 'App/constants/storageKeys';
 import stl from './playerBlockHeader.module.css';
 import UserCard from './EventsBlock/UserCard';
+import { useTranslation } from 'react-i18next';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
 function PlayerBlockHeader(props: any) {
+  const { t } = useTranslation();
   const [hideBack, setHideBack] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
-  const {
-    uxtestingStore, customFieldStore, projectsStore, sessionStore,
-  } = useStore();
+  const { uxtestingStore, customFieldStore, projectsStore, sessionStore } =
+    useStore();
   const session = sessionStore.current;
   const { sessionPath } = sessionStore;
   const siteId = projectsStore.siteId!;
-  const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false };
+  const playerState = store?.get?.() || {
+    width: 0,
+    height: 0,
+    showEvents: false,
+  };
   const { width = 0, height = 0, showEvents = false } = playerState;
   const metaList = customFieldStore.list.map((i: any) => i.key);
 
@@ -48,13 +53,16 @@ function PlayerBlockHeader(props: any) {
 
   const backHandler = () => {
     if (
-      sessionPath.pathname === history.location.pathname
-      || sessionPath.pathname.includes('/session/') || sessionPath.pathname.includes('/assist/')
+      sessionPath.pathname === history.location.pathname ||
+      sessionPath.pathname.includes('/session/') ||
+      sessionPath.pathname.includes('/assist/')
     ) {
       history.push(withSiteId(SESSIONS_ROUTE, siteId));
     } else {
       history.push(
-        sessionPath ? sessionPath.pathname + sessionPath.search : withSiteId(SESSIONS_ROUTE, siteId),
+        sessionPath
+          ? sessionPath.pathname + sessionPath.search
+          : withSiteId(SESSIONS_ROUTE, siteId),
       );
     }
   };
@@ -73,7 +81,9 @@ function PlayerBlockHeader(props: any) {
   }));
 
   return (
-    <div className={cn(stl.header, 'flex justify-between', { hidden: fullscreen })}>
+    <div
+      className={cn(stl.header, 'flex justify-between', { hidden: fullscreen })}
+    >
       <div className="flex w-full items-center">
         {!hideBack && (
           <div
@@ -81,18 +91,22 @@ function PlayerBlockHeader(props: any) {
             onClick={backHandler}
           >
             {/* @ts-ignore TODO */}
-            <BackLink label="Back" className="h-full ml-2" />
+            <BackLink label={t('Back')} className="h-full ml-2" />
             <div className={stl.divider} />
           </div>
         )}
         <UserCard width={width} height={height} />
 
-        <div className={cn('ml-auto flex items-center h-full', { hidden: closedLive })}>
+        <div
+          className={cn('ml-auto flex items-center h-full', {
+            hidden: closedLive,
+          })}
+        >
           {live && !hideBack && !uxtestingStore.isUxt() && (
             <>
               <div className={cn(stl.liveSwitchButton, 'pr-4')}>
                 <Link to={withSiteId(liveSessionRoute(sessionId), siteId)}>
-                  This Session is Now Continuing Live
+                  {t('This Session is Now Continuing Live')}
                 </Link>
               </div>
               {_metaList.length > 0 && <div className={stl.divider} />}
@@ -101,12 +115,19 @@ function PlayerBlockHeader(props: any) {
 
           {_metaList.length > 0 && (
             <div className="border-l border-l-gray-lighter h-full flex items-center px-2">
-              <SessionMetaList className="" metaList={_metaList} maxLength={2} />
+              <SessionMetaList
+                className=""
+                metaList={_metaList}
+                maxLength={2}
+              />
             </div>
           )}
         </div>
       </div>
-      <div className="px-2 relative border-l border-l-gray-lighter" style={{ minWidth: '270px' }}>
+      <div
+        className="px-2 relative border-l border-l-gray-lighter"
+        style={{ minWidth: '270px' }}
+      >
         <Tabs
           tabs={TABS}
           active={activeTab}

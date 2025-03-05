@@ -2,25 +2,47 @@
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Avatar_icn_avatar7(props: Props) {
-  const {
-    size = 14, width = size, height = size, fill = '',
-  } = props;
+  const { size = 14, width = size, height = size, fill = '' } = props;
   return (
-    <svg viewBox="0 0 24 24" fill="#27A2A8" width={`${width}px`} height={`${height}px`}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="#27A2A8"
+      width={`${width}px`}
+      height={`${height}px`}
+    >
       <circle cx="5" cy="8" r="2" opacity=".35" />
       <circle cx="19" cy="8" r="2" opacity=".35" />
       <path opacity=".35" d="M10 3h4v4h-4z" />
-      <path d="M17.986 12.27c.004-.09.014-.179.014-.27 0-2.612-1.67-5.176-4-6h-4c-2.33.824-4 3.388-4 6 0 .091.01.18.014.27A1.99 1.99 0 0 0 5 14c0 2 2 2.71 2 2.71v1.79c0 1.381 2.239 2.5 5 2.5s5-1.119 5-2.5v-1.793S19 16 19 14a1.99 1.99 0 0 0-1.014-1.73z" opacity=".35" />
+      <path
+        d="M17.986 12.27c.004-.09.014-.179.014-.27 0-2.612-1.67-5.176-4-6h-4c-2.33.824-4 3.388-4 6 0 .091.01.18.014.27A1.99 1.99 0 0 0 5 14c0 2 2 2.71 2 2.71v1.79c0 1.381 2.239 2.5 5 2.5s5-1.119 5-2.5v-1.793S19 16 19 14a1.99 1.99 0 0 0-1.014-1.73z"
+        opacity=".35"
+      />
       <path d="M12 22c-3.421 0-6-1.505-6-3.5v-1.173C5.209 16.858 4 15.84 4 14c0-.855.373-1.665 1.004-2.229.094-2.983 2.026-5.782 4.663-6.714L9.828 5h4.344l.161.057c2.637.933 4.569 3.731 4.663 6.715A2.994 2.994 0 0 1 20 14c0 1.84-1.209 2.857-2 3.325V18.5c0 1.995-2.579 3.5-6 3.5zM10.182 7C8.357 7.73 7 9.848 7 12l.039.835-.528.303A.985.985 0 0 0 6 14c0 1.253 1.288 1.75 1.343 1.771l.648.243L8 18.5c0 .529 1.519 1.5 4 1.5s4-.971 4-1.5V16l.667-.235C16.714 15.747 18 15.252 18 14c0-.357-.19-.68-.511-.862l-.528-.303L17 12c0-2.152-1.357-4.27-3.182-5h-3.636z" />
-      <circle cx="5" cy="8" r="2" fill="none" stroke="#27A2A8" strokeMiterlimit="10" strokeWidth="2" />
-      <circle cx="19" cy="8" r="2" fill="none" stroke="#27A2A8" strokeMiterlimit="10" strokeWidth="2" />
+      <circle
+        cx="5"
+        cy="8"
+        r="2"
+        fill="none"
+        stroke="#27A2A8"
+        strokeMiterlimit="10"
+        strokeWidth="2"
+      />
+      <circle
+        cx="19"
+        cy="8"
+        r="2"
+        fill="none"
+        stroke="#27A2A8"
+        strokeMiterlimit="10"
+        strokeWidth="2"
+      />
       <path d="M8 5h8v2H8z" />
       <path d="M15 7h-2V4h-2v3H9V2h6z" />
       <ellipse cx="12" cy="13" rx="2" ry="1" />

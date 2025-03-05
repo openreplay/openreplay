@@ -1,8 +1,6 @@
 import React from 'react';
 
-interface Props {
-
-}
+interface Props {}
 function EventSearchInput(props) {
   return (
     <div>

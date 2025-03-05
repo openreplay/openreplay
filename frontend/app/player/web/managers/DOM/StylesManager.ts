@@ -4,9 +4,14 @@ import logger from 'App/logger';
 
 // Doesn't work with css files (hasOwnProperty returns false)
 // TODO: recheck and remove if true
-function rewriteNodeStyleSheet(doc: Document, node: HTMLLinkElement | HTMLStyleElement) {
+function rewriteNodeStyleSheet(
+  doc: Document,
+  node: HTMLLinkElement | HTMLStyleElement,
+) {
   const ss = Object.values(doc.styleSheets).find((s) => s.ownerNode === node);
-  if (!ss || !ss.hasOwnProperty('rules')) { return; }
+  if (!ss || !ss.hasOwnProperty('rules')) {
+    return;
+  }
   for (let i = 0; i < ss.cssRules.length; i++) {
     const r = ss.cssRules[i];
     if (r instanceof CSSStyleRule) {
@@ -22,9 +27,12 @@ export default class StylesManager {
 
   private skipCSSLinks: Array<string> = [];
 
-  constructor(private readonly screen: Screen, private readonly setLoading: (flag: boolean) => void) {}
+  constructor(
+    private readonly screen: Screen,
+    private readonly setLoading: (flag: boolean) => void,
+  ) {}
 
-  reset():void {
+  reset(): void {
     this.linkLoadingCount = 0;
     this.linkLoadPromises = [];
   }

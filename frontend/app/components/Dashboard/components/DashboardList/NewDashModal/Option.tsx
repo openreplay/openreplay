@@ -2,8 +2,8 @@ import React from 'react';
 import { LucideIcon } from 'lucide-react';
 
 interface OptionProps {
-    label: string;
-    Icon: LucideIcon;
+  label: string;
+  Icon: LucideIcon;
 }
 
 const Option: React.FC<OptionProps> = ({ label, Icon }) => (

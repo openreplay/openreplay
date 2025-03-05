@@ -6,10 +6,13 @@ function Content({
   children,
   className,
   ...props
-}: { children?: React.ReactNode; className?: string }) {
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}) {
   return (
     <div className={cn(className, stl.content)} {...props}>
-      { children }
+      {children}
     </div>
   );
 }

@@ -10,17 +10,24 @@ function CustomLegend({ payload }: CustomLegendProps) {
     <div
       className="custom-legend"
       style={{
-        display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap',
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '1rem',
+        flexWrap: 'wrap',
       }}
     >
       {payload?.map((entry) => (
-        <div key={entry.value} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div
+          key={entry.value}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
           {entry.value.includes('(Comparison)') ? (
             <div
               style={{
                 width: 20,
                 height: 2,
-                backgroundImage: 'linear-gradient(to right, black 50%, transparent 50%)',
+                backgroundImage:
+                  'linear-gradient(to right, black 50%, transparent 50%)',
                 backgroundSize: '4px 2px',
                 backgroundRepeat: 'repeat-x',
               }}

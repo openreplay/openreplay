@@ -1,5 +1,8 @@
 import type {
-  ResourceTiming, NetworkRequest, Fetch, MobileNetworkCall,
+  ResourceTiming,
+  NetworkRequest,
+  Fetch,
+  MobileNetworkCall,
 } from '../messages';
 
 export const enum ResourceType {
@@ -67,44 +70,44 @@ export function getResourceName(url: string) {
 
 interface IResource {
   // index: number,
-  time: number,
-  type: ResourceType,
-  url: string,
-  status: string | number,
-  method: string,
-  duration: number,
-  success: boolean,
-  ttfb?: number,
-  request?: string,
-  response?: string,
-  headerSize?: number,
-  encodedBodySize?: number,
-  decodedBodySize?: number,
-  responseBodySize?: number,
-  error?: string,
+  time: number;
+  type: ResourceType;
+  url: string;
+  status: string | number;
+  method: string;
+  duration: number;
+  success: boolean;
+  ttfb?: number;
+  request?: string;
+  response?: string;
+  headerSize?: number;
+  encodedBodySize?: number;
+  decodedBodySize?: number;
+  responseBodySize?: number;
+  error?: string;
 }
 
 export interface IResourceTiming extends IResource {
-  name: string,
-  isRed: boolean,
-  isYellow: boolean,
-  type: ResourceType,
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | '..',
-  success: boolean,
-  status: '2xx-3xx' | '4xx-5xx',
-  time: number,
+  name: string;
+  isRed: boolean;
+  isYellow: boolean;
+  type: ResourceType;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | '..';
+  success: boolean;
+  status: '2xx-3xx' | '4xx-5xx';
+  time: number;
 }
 
 export interface IResourceRequest extends IResource {
-  name: string,
-  isRed: boolean,
-  isYellow: boolean,
-  type: ResourceType.XHR | ResourceType.FETCH | ResourceType.IOS,
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | '..',
-  success: boolean,
-  status: number,
-  time: number,
-  decodedBodySize?: number,
+  name: string;
+  isRed: boolean;
+  isYellow: boolean;
+  type: ResourceType.XHR | ResourceType.FETCH | ResourceType.IOS;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | '..';
+  success: boolean;
+  status: number;
+  time: number;
+  decodedBodySize?: number;
 }
 
 const getGraphqlReqName = (resource: IResource) => {
@@ -119,7 +122,10 @@ const getGraphqlReqName = (resource: IResource) => {
 };
 
 export const Resource = (resource: IResource) => {
-  const name = resource.type === 'graphql' ? getGraphqlReqName(resource) : getResourceName(resource.url);
+  const name =
+    resource.type === 'graphql'
+      ? getGraphqlReqName(resource)
+      : getResourceName(resource.url);
   return {
     ...resource,
     name,
@@ -128,9 +134,17 @@ export const Resource = (resource: IResource) => {
   };
 };
 
-export function getResourceFromResourceTiming(msg: ResourceTiming, sessStart: number) {
+export function getResourceFromResourceTiming(
+  msg: ResourceTiming,
+  sessStart: number,
+) {
   // duration might be duration=0 when cached
-  const failed = msg.duration === 0 && msg.ttfb === 0 && msg.headerSize === 0 && msg.encodedBodySize === 0 && msg.transferredSize === 0;
+  const failed =
+    msg.duration === 0 &&
+    msg.ttfb === 0 &&
+    msg.headerSize === 0 &&
+    msg.encodedBodySize === 0 &&
+    msg.transferredSize === 0;
   const type = getResourceType(msg.initiator, msg.url);
   return Resource({
     ...msg,
@@ -142,7 +156,10 @@ export function getResourceFromResourceTiming(msg: ResourceTiming, sessStart: nu
   });
 }
 
-export function getResourceFromNetworkRequest(msg: NetworkRequest | Fetch | MobileNetworkCall, sessStart: number) {
+export function getResourceFromNetworkRequest(
+  msg: NetworkRequest | Fetch | MobileNetworkCall,
+  sessStart: number,
+) {
   return Resource({
     ...msg,
     // @ts-ignore
@@ -150,6 +167,7 @@ export function getResourceFromNetworkRequest(msg: NetworkRequest | Fetch | Mobi
     success: msg.status < 400,
     status: String(msg.status),
     time: Math.max(0, msg.timestamp - sessStart),
-    decodedBodySize: 'transferredBodySize' in msg ? msg.transferredBodySize : undefined,
+    decodedBodySize:
+      'transferredBodySize' in msg ? msg.transferredBodySize : undefined,
   });
 }

@@ -54,9 +54,7 @@ export default Record(
         return js;
       },
     },
-    fromJS: ({
-      stages = [], filter, activeStages = null, ...rest
-    }) => {
+    fromJS: ({ stages = [], filter, activeStages = null, ...rest }) => {
       const _stages = stages.map((stage, index) => {
         stage.headerText = getRedableName(stage.type, stage.value);
         stage.label = `Step ${index + 1}`;
@@ -84,11 +82,11 @@ export default Record(
         stages:
           _stages.length > 0
             ? _stages.map((stage, index) => {
-              if (!stage) return;
-              stage.headerText = getRedableName(stage);
-              stage.label = `Step ${index + 1}`;
-              return stage;
-            })
+                if (!stage) return;
+                stage.headerText = getRedableName(stage);
+                stage.label = `Step ${index + 1}`;
+                return stage;
+              })
             : [],
         affectedUsers,
         lostConversions,

@@ -5,12 +5,13 @@ import { useModal } from 'App/components/Modal';
 import UserForm from 'App/components/Client/Users/components/UserForm/UserForm';
 import AndroidInstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs/AndroidInstallDocs';
 import MobileInstallDocs from './InstallDocs/MobileInstallDocs';
+import { useTranslation } from 'react-i18next';
 
 const iOS = 'iOS';
 const ANDROID = 'Android';
 const TABS = [
   { key: iOS, text: iOS },
-  { key: ANDROID, text: 'Android' },
+  { key: ANDROID, text: ANDROID },
 ];
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
 }
 
 function MobileTrackingCodeModal(props: Props) {
+  const { t } = useTranslation();
   const { site } = props;
   const [activeTab, setActiveTab] = useState(iOS);
   const { showModal } = useModal();
@@ -37,13 +39,13 @@ function MobileTrackingCodeModal(props: Props) {
             </div>
 
             <div className="col-span-2">
-              <DocCard title="Need help from team member?">
+              <DocCard title={t('Need help from team member?')}>
                 <a className="link" onClick={showUserModal}>
-                  Invite and Collaborate
+                  {t('Invite and Collaborate')}
                 </a>
               </DocCard>
 
-              <DocCard title="Project Key">
+              <DocCard title={t('Project Key')}>
                 <div className="p-2 rounded bg-white flex justify-between items-center">
                   {site.projectKey}
                   <CopyButton content={site.projectKey} />
@@ -60,13 +62,13 @@ function MobileTrackingCodeModal(props: Props) {
             </div>
 
             <div className="col-span-2">
-              <DocCard title="Need help from team member?">
+              <DocCard title={t('Need help from team member?')}>
                 <a className="link" onClick={showUserModal}>
-                  Invite and Collaborate
+                  {t('Invite and Collaborate')}
                 </a>
               </DocCard>
 
-              <DocCard title="Project Key">
+              <DocCard title={t('Project Key')}>
                 <div className="p-2 rounded bg-white flex justify-between items-center">
                   {site.projectKey}
                   <CopyButton content={site.projectKey} />

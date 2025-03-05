@@ -7,7 +7,12 @@ interface Props {
   yaxis?: any;
   label?: string;
   hideLegend?: boolean;
-  values: { value: number, compData?: number, series: string, valueLabel?: string }[];
+  values: {
+    value: number;
+    compData?: number;
+    series: string;
+    valueLabel?: string;
+  }[];
   onSeriesFocus?: (name: string) => void;
 }
 function BigNumChart(props: Props) {
@@ -40,16 +45,23 @@ function BigNumChart(props: Props) {
 }
 
 function BigNum({
-  color, series, value, label, compData, valueLabel, onSeriesFocus, hideLegend,
+  color,
+  series,
+  value,
+  label,
+  compData,
+  valueLabel,
+  onSeriesFocus,
+  hideLegend,
 }: {
-  color: string,
-  series: string,
-  value: number,
-  label: string,
-  compData?: number,
-  valueLabel?: string,
-  onSeriesFocus?: (name: string) => void
-  hideLegend?: boolean
+  color: string;
+  series: string;
+  value: number;
+  label: string;
+  compData?: number;
+  valueLabel?: string;
+  onSeriesFocus?: (name: string) => void;
+  hideLegend?: boolean;
 }) {
   const formattedNumber = (num: number) => Intl.NumberFormat().format(num);
 
@@ -69,15 +81,12 @@ function BigNum({
         'hover:transition-all ease-in-out hover:ease-in-out hover:bg-teal/5 hover:cursor-pointer',
       )}
     >
-      {hideLegend ? null
-        : (
-          <div
-            className="flex items-center gap-2 font-medium text-gray-darkest"
-          >
-            <div className="rounded w-4 h-4" style={{ background: color }} />
-            <div>{series}</div>
-          </div>
-        )}
+      {hideLegend ? null : (
+        <div className="flex items-center gap-2 font-medium text-gray-darkest">
+          <div className="rounded w-4 h-4" style={{ background: color }} />
+          <div>{series}</div>
+        </div>
+      )}
       <div className="font-bold leading-none" style={{ fontSize: 56 }}>
         {formattedNumber(value)}
         {valueLabel ? `${valueLabel}` : null}

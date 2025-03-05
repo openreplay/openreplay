@@ -1,6 +1,13 @@
 import React from 'react';
 import {
-  Avatar, Button, Input, Menu, MenuProps, Progress, Typography, Tooltip,
+  Avatar,
+  Button,
+  Input,
+  Menu,
+  MenuProps,
+  Progress,
+  Typography,
+  Tooltip,
 } from 'antd';
 import { useStore } from '@/mstore';
 import Project from '@/mstore/types/project';
@@ -17,7 +24,9 @@ const ProjectList: React.FC = () => {
   const [search, setSearch] = React.useState('');
   const { openModal, closeModal } = useModal();
 
-  const filteredProjects = projectsStore.list.filter((project: Project) => project.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredProjects = projectsStore.list.filter((project: Project) =>
+    project.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   const handleSearch = (value: string) => setSearch(value);
 
@@ -38,14 +47,20 @@ const ProjectList: React.FC = () => {
 
   const menuItems: MenuItem[] = filteredProjects.map((project) => ({
     key: `${project.id}`,
-    label: <Typography.Text style={{ color: 'inherit' }} ellipsis>{project.name}</Typography.Text>,
-    extra: <Button
-      onClick={(e) => projectEditHandler(e, project)}
-      className="flex opacity-0 group-hover:!opacity-100"
-      size="small"
-      type="link"
-      icon={<EditOutlined size={14} />}
-    />,
+    label: (
+      <Typography.Text style={{ color: 'inherit' }} ellipsis>
+        {project.name}
+      </Typography.Text>
+    ),
+    extra: (
+      <Button
+        onClick={(e) => projectEditHandler(e, project)}
+        className="flex opacity-0 group-hover:!opacity-100"
+        size="small"
+        type="link"
+        icon={<EditOutlined size={14} />}
+      />
+    ),
     className: 'group',
     icon: (
       <ProjectIconWithProgress
@@ -105,12 +120,12 @@ const ProjectIconWithProgress: React.FC<{
           className="bg-tealx-light"
           size={26}
           icon={
-          platform === 'web' ? (
-            <Globe size={16} color="teal" />
-          ) : (
-            <Smartphone size={16} color="teal" />
-          )
-        }
+            platform === 'web' ? (
+              <Globe size={16} color="teal" />
+            ) : (
+              <Smartphone size={16} color="teal" />
+            )
+          }
         />
       </div>
     </div>

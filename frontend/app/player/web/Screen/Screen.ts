@@ -16,7 +16,10 @@ export enum ScaleMode {
   AdjustParentHeight,
 }
 
-function getElementsFromInternalPoint(doc: Document, { x, y }: Point): Element[] {
+function getElementsFromInternalPoint(
+  doc: Document,
+  { x, y }: Point,
+): Element[] {
   // @ts-ignore (IE, Edge)
   if (typeof doc.msElementsFromRect === 'function') {
     // @ts-ignore
@@ -30,7 +33,10 @@ function getElementsFromInternalPoint(doc: Document, { x, y }: Point): Element[]
   return el ? [el] : [];
 }
 
-function getElementsFromInternalPointDeep(doc: Document, point: Point): Element[] {
+function getElementsFromInternalPointDeep(
+  doc: Document,
+  point: Point,
+): Element[] {
   const elements = getElementsFromInternalPoint(doc, point);
   // is it performant though??
   for (let i = 0; i < elements.length; i++) {
@@ -71,7 +77,10 @@ export default class Screen {
 
   private onUpdateHook: (w: number, h: number) => void;
 
-  constructor(isMobile: boolean, private scaleMode: ScaleMode = ScaleMode.Embed) {
+  constructor(
+    isMobile: boolean,
+    private scaleMode: ScaleMode = ScaleMode.Embed,
+  ) {
     const iframe = document.createElement('iframe');
     iframe.className = styles.iframe;
     this.iframe = iframe;
@@ -97,7 +106,10 @@ export default class Screen {
       this.screen.style.marginTop = '0px';
     }
     if (this.document) {
-      Object.assign(this.document?.body.style, { margin: 0, overflow: 'hidden' });
+      Object.assign(this.document?.body.style, {
+        margin: 0,
+        overflow: 'hidden',
+      });
     }
   }
 
@@ -113,7 +125,9 @@ export default class Screen {
 
   attach(parentElement: HTMLElement) {
     if (this.parentElement) {
-      console.error('!!! web/Screen.ts#108: Tried to reattach the parent element.');
+      console.error(
+        '!!! web/Screen.ts#108: Tried to reattach the parent element.',
+      );
       return;
     }
 
@@ -202,7 +216,9 @@ export default class Screen {
   }
 
   getElementFromPoint(point: Point): Element | null {
-    return this.getElementFromInternalPoint(this.getInternalViewportCoordinates(point));
+    return this.getElementFromInternalPoint(
+      this.getInternalViewportCoordinates(point),
+    );
   }
 
   getElementBySelector(selector: string) {

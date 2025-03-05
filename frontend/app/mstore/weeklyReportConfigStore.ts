@@ -23,7 +23,9 @@ export default class weeklyReportConfigStore {
 
   async fetchEditReport(value: boolean) {
     try {
-      const { weeklyReport } = await configService.editWeeklyReport({ weeklyReport: value });
+      const { weeklyReport } = await configService.editWeeklyReport({
+        weeklyReport: value,
+      });
       return this.setReport(weeklyReport);
     } catch (e) {
       console.error(e);

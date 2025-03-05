@@ -2,18 +2,21 @@
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Integrations_assist(props: Props) {
-  const {
-    size = 14, width = size, height = size, fill = '',
-  } = props;
+  const { size = 14, width = size, height = size, fill = '' } = props;
   return (
-    <svg viewBox="0 0 120 120" width={`${width}px`} height={`${height}px`} fill={`${fill}`}>
+    <svg
+      viewBox="0 0 120 120"
+      width={`${width}px`}
+      height={`${height}px`}
+      fill={`${fill}`}
+    >
       <g>
         <g>
           <path d="M114 0H6a6 6 0 0 0-6 6v108a6 6 0 0 0 6 6h108a6 6 0 0 0 6-6V6a6 6 0 0 0-6-6Z" />

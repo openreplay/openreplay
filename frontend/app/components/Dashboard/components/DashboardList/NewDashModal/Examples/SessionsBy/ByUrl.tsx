@@ -48,13 +48,7 @@ function ByUrl(props: any) {
   ];
 
   const lineWidth = 240;
-  return (
-    <ByComponent
-      {...props}
-      rows={rows}
-      lineWidth={lineWidth}
-    />
-  );
+  return <ByComponent {...props} rows={rows} lineWidth={lineWidth} />;
 }
 
 export default ByUrl;

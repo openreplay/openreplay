@@ -32,10 +32,12 @@ function ListWithIcons({ list = [] }: Props) {
           <List.Item.Meta
             className="m-0"
             avatar={row.icon ? row.icon : null}
-            title={(
+            title={
               <div className="m-0">
                 <div className="flex justify-between m-0 p-0">
-                  <Typography.Text className="w-[95%]">{row.name}</Typography.Text>
+                  <Typography.Text className="w-[95%]">
+                    {row.name}
+                  </Typography.Text>
                   <Typography.Text type="secondary">
                     {' '}
                     {row.value}
@@ -57,7 +59,7 @@ function ListWithIcons({ list = [] }: Props) {
                   }}
                 />
               </div>
-            )}
+            }
           />
         </List.Item>
       )}

@@ -72,8 +72,8 @@ function FilterValue(props: Props) {
       const { maxDuration, minDuration } = filter;
       if (maxDuration || minDuration) return;
       if (
-        maxDuration !== durationValues.maxDuration
-        || minDuration !== durationValues.minDuration
+        maxDuration !== durationValues.maxDuration ||
+        minDuration !== durationValues.minDuration
       ) {
         props.onUpdate({
           ...filter,
@@ -123,14 +123,18 @@ function FilterValue(props: Props) {
           placeholder={filter.placeholder}
           options={filter.options}
           onApplyValues={onApplyValues}
-
           {...props}
         />
       );
     }
     switch (filter.type) {
       case FilterType.NUMBER_MULTIPLE:
-        return <BaseFilterLocalAutoComplete type="number" placeholder={filter.placeholder} />;
+        return (
+          <BaseFilterLocalAutoComplete
+            type="number"
+            placeholder={filter.placeholder}
+          />
+        );
       case FilterType.NUMBER:
         return (
           <BaseFilterLocalAutoComplete
@@ -143,9 +147,7 @@ function FilterValue(props: Props) {
       case FilterType.STRING:
         return <BaseFilterLocalAutoComplete placeholder={filter.placeholder} />;
       case FilterType.DROPDOWN:
-        return (
-          <BaseDropDown />
-        );
+        return <BaseDropDown />;
       case FilterType.ISSUE:
       case FilterType.MULTIPLE_DROPDOWN:
         return (
@@ -195,7 +197,6 @@ function FilterValue(props: Props) {
       id="ignore-outside"
       className={cn('grid gap-3 w-fit flex-wrap my-1.5', {
         'grid-cols-2': filter.hasSource,
-
       })}
     >
       {renderValueFiled(filter.value)}

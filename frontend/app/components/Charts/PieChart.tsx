@@ -1,7 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { PieChart as EchartsPieChart } from 'echarts/charts';
 import { echarts, defaultOptions } from './init';
-import { buildPieData, pieTooltipFormatter, pickColorByIndex } from './pieUtils';
+import {
+  buildPieData,
+  pieTooltipFormatter,
+  pickColorByIndex,
+} from './pieUtils';
 
 echarts.use([EchartsPieChart]);
 
@@ -22,15 +26,14 @@ interface PieChartProps {
 }
 
 function PieChart(props: PieChartProps) {
-  const {
-    data, label, onClick = () => {}, inGrid = false,
-  } = props;
+  const { data, label, onClick = () => {}, inGrid = false } = props;
   const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!chartRef.current) return;
     if (!data.chart || data.chart.length === 0) {
-      chartRef.current.innerHTML = '<div style="text-align:center;padding:20px;">No data available</div>';
+      chartRef.current.innerHTML =
+        '<div style="text-align:center;padding:20px;">No data available</div>';
       return;
     }
 
@@ -38,7 +41,8 @@ function PieChart(props: PieChartProps) {
 
     const pieData = buildPieData(data.chart, data.namesMap);
     if (!pieData.length) {
-      chartRef.current.innerHTML = '<div style="text-align:center;padding:20px;">No data available</div>';
+      chartRef.current.innerHTML =
+        '<div style="text-align:center;padding:20px;">No data available</div>';
       return;
     }
 
@@ -119,7 +123,10 @@ function PieChart(props: PieChartProps) {
   }, [data, label, onClick, inGrid]);
 
   return (
-    <div style={{ width: '100%', height: 240, position: 'relative' }} ref={chartRef} />
+    <div
+      style={{ width: '100%', height: 240, position: 'relative' }}
+      ref={chartRef}
+    />
   );
 }
 

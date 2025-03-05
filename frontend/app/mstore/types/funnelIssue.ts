@@ -27,8 +27,7 @@ export default class FunnelIssue {
 
   sessions: any[] = [];
 
-  constructor() {
-  }
+  constructor() {}
 
   fromJSON(json: any) {
     this.issueId = json.issueId;
@@ -42,10 +41,11 @@ export default class FunnelIssue {
     this.conversionImpact = json.conversionImpact;
     this.lostConversions = json.lostConversions;
 
-    const total = json.lostConversions + json.affectedSessions + json.unaffectedSessions;
-    this.lostConversionsPer = json.lostConversions * 100 / total;
-    this.affectedSessionsPer = json.affectedSessions * 100 / total;
-    this.unaffectedSessionsPer = json.unaffectedSessions * 100 / total;
+    const total =
+      json.lostConversions + json.affectedSessions + json.unaffectedSessions;
+    this.lostConversionsPer = (json.lostConversions * 100) / total;
+    this.affectedSessionsPer = (json.affectedSessions * 100) / total;
+    this.unaffectedSessionsPer = (json.unaffectedSessions * 100) / total;
     return this;
   }
 }

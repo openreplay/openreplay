@@ -4,11 +4,17 @@ import type { VElement } from './VirtualDOM';
 import ListWalker from '../../../common/ListWalker';
 
 export default class SelectionManager extends ListWalker<SelectionChange> {
-  constructor(private readonly vElements: Map<number, VElement>, private readonly screen: Screen) {
+  constructor(
+    private readonly vElements: Map<number, VElement>,
+    private readonly screen: Screen,
+  ) {
     super();
   }
 
-  private selected: [{ id: number, node: Element } | null, { id: number, node: Element } | null] = [null, null];
+  private selected: [
+    { id: number; node: Element } | null,
+    { id: number; node: Element } | null,
+  ] = [null, null];
 
   public clearSelection = () => {
     if (this.selected[0] === null && this.selected[1] === null) return;
@@ -29,13 +35,20 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
       return;
     }
     // preventing clones
-    if ((this.selected[0] && this.selected[0].id === msg.selectionStart) && (this.selected[1] && this.selected[1].id === msg.selectionEnd)) return;
+    if (
+      this.selected[0] &&
+      this.selected[0].id === msg.selectionStart &&
+      this.selected[1] &&
+      this.selected[1].id === msg.selectionEnd
+    )
+      return;
 
     const startVNode = this.vElements.get(msg.selectionStart - 1);
     const endVNode = this.vElements.get(msg.selectionEnd - 1);
 
     // only one selection present on page at the same time
-    if (this.selected[0] && this.selected[0]?.id !== msg.selectionStart) this.clearSelection();
+    if (this.selected[0] && this.selected[0]?.id !== msg.selectionStart)
+      this.clearSelection();
 
     if (startVNode && endVNode) {
       const startCoords = startVNode.node.getBoundingClientRect();
@@ -63,7 +76,10 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
 
       this.screen.createSelection(startPointer, endPointer);
 
-      this.selected = [{ id: msg.selectionStart, node: startPointer }, { id: msg.selectionEnd, node: endPointer }];
+      this.selected = [
+        { id: msg.selectionStart, node: startPointer },
+        { id: msg.selectionEnd, node: endPointer },
+      ];
     }
   }
 }

@@ -4,6 +4,7 @@ import { TYPES } from 'App/types/session/event';
 import { types as issueTypes } from 'App/types/session/issue';
 import { Icon } from 'UI';
 import { Tooltip } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 interface CommonProps {
   item: any;
@@ -16,17 +17,18 @@ export function shortenResourceName(name: string) {
     : name;
 }
 export function NetworkElement({ item, createEventClickHandler }: CommonProps) {
+  const { t } = useTranslation();
   const name = item.name || '';
   return (
     <Tooltip
       placement="right"
-      title={(
+      title={
         <div className="">
-          <b>{item.success ? 'Slow resource: ' : '4xx/5xx Error:'}</b>
+          <b>{item.success ? t('Slow resource: ') : '4xx/5xx Error:'}</b>
           <br />
           {shortenResourceName(name)}
         </div>
-      )}
+      }
     >
       <div
         onClick={createEventClickHandler(item, NETWORK)}
@@ -58,23 +60,30 @@ export function getFrustration(item: any) {
       icon: 'input-hesitation',
     });
   }
-  if (item.type === TYPES.CLICKRAGE || item.type === TYPES.TAPRAGE) Object.assign(elData, { name: 'Click Rage', icon: 'click-rage' });
-  if (item.type === TYPES.DEAD_LICK) Object.assign(elData, { name: 'Dead Click', icon: 'emoji-dizzy' });
-  if (item.type === issueTypes.MOUSE_THRASHING) Object.assign(elData, { name: 'Mouse Thrashing', icon: 'cursor-trash' });
-  if (item.type === 'ios_perf_event') Object.assign(elData, { name: item.name, icon: item.icon });
+  if (item.type === TYPES.CLICKRAGE || item.type === TYPES.TAPRAGE)
+    Object.assign(elData, { name: 'Click Rage', icon: 'click-rage' });
+  if (item.type === TYPES.DEAD_LICK)
+    Object.assign(elData, { name: 'Dead Click', icon: 'emoji-dizzy' });
+  if (item.type === issueTypes.MOUSE_THRASHING)
+    Object.assign(elData, { name: 'Mouse Thrashing', icon: 'cursor-trash' });
+  if (item.type === 'ios_perf_event')
+    Object.assign(elData, { name: item.name, icon: item.icon });
 
   return elData;
 }
-export function FrustrationElement({ item, createEventClickHandler }: CommonProps) {
+export function FrustrationElement({
+  item,
+  createEventClickHandler,
+}: CommonProps) {
   const elData = getFrustration(item);
   return (
     <Tooltip
       placement="top"
-      title={(
+      title={
         <div className="">
           <b>{elData.name}</b>
         </div>
-      )}
+      }
     >
       <div
         onClick={createEventClickHandler(item, null)}
@@ -86,15 +95,18 @@ export function FrustrationElement({ item, createEventClickHandler }: CommonProp
   );
 }
 
-export function StackEventElement({ item, createEventClickHandler }: CommonProps) {
+export function StackEventElement({
+  item,
+  createEventClickHandler,
+}: CommonProps) {
   return (
     <Tooltip
       placement="right"
-      title={(
+      title={
         <div className="">
           <b>{item.name || 'Stack Event'}</b>
         </div>
-      )}
+      }
     >
       <div
         onClick={createEventClickHandler(item, 'EVENT')}
@@ -106,15 +118,18 @@ export function StackEventElement({ item, createEventClickHandler }: CommonProps
   );
 }
 
-export function PerformanceElement({ item, createEventClickHandler }: CommonProps) {
+export function PerformanceElement({
+  item,
+  createEventClickHandler,
+}: CommonProps) {
   return (
     <Tooltip
       placement="right"
-      title={(
+      title={
         <div className="">
           <b>{item.type}</b>
         </div>
-      )}
+      }
     >
       <div
         onClick={createEventClickHandler(item, EXCEPTIONS)}
@@ -126,17 +141,21 @@ export function PerformanceElement({ item, createEventClickHandler }: CommonProp
   );
 }
 
-export function ExceptionElement({ item, createEventClickHandler }: CommonProps) {
+export function ExceptionElement({
+  item,
+  createEventClickHandler,
+}: CommonProps) {
+  const { t } = useTranslation();
   return (
     <Tooltip
       placement="right"
-      title={(
+      title={
         <div className="">
-          <b>Exception</b>
+          <b>{t('Exception')}</b>
           <br />
           <span>{item.message}</span>
         </div>
-      )}
+      }
     >
       <div
         onClick={createEventClickHandler(item, 'ERRORS')}

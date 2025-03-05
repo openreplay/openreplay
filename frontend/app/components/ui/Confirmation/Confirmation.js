@@ -12,7 +12,8 @@ function Confirmation({
   confirmButton = 'Proceed',
 }) {
   React.useEffect(() => {
-    const handleEsc = (e) => (e.key === 'Escape' || e.key === 'Esc') && proceed(false);
+    const handleEsc = (e) =>
+      (e.key === 'Escape' || e.key === 'Esc') && proceed(false);
     document.addEventListener('keydown', handleEsc, false);
 
     return () => {
@@ -20,28 +21,17 @@ function Confirmation({
     };
   }, []);
   return (
-    <Modal
-      open={show}
-      onClose={() => proceed(false)}
-    >
+    <Modal open={show} onClose={() => proceed(false)}>
       <Modal.Header>{header}</Modal.Header>
       <Modal.Content>
         <p>{confirmation}</p>
       </Modal.Content>
       <Modal.Footer>
-        <Button
-          onClick={() => proceed(true)}
-          type="primary"
-          className="mr-2"
-        >
+        <Button onClick={() => proceed(true)} type="primary" className="mr-2">
           {confirmButton}
         </Button>
 
-        <Button
-          onClick={() => proceed(false)}
-        >
-          {cancelButton}
-        </Button>
+        <Button onClick={() => proceed(false)}>{cancelButton}</Button>
       </Modal.Footer>
     </Modal>
   );

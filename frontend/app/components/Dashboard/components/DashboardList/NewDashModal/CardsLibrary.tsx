@@ -10,7 +10,9 @@ const CARD_TYPES_MAP = CARD_CATEGORIES.reduce((acc: any, category: any) => {
   return acc;
 }, {});
 
-const WidgetChart = lazy(() => import('Components/Dashboard/components/WidgetChart/WidgetChart'));
+const WidgetChart = lazy(
+  () => import('Components/Dashboard/components/WidgetChart/WidgetChart'),
+);
 
 interface Props {
   category?: string;
@@ -29,7 +31,13 @@ function CardsLibrary(props: Props) {
   //     });
   // }, [metricStore.filteredCards, props.category]);
 
-  const cards = useMemo(() => metricStore.filteredCards.filter((card: any) => card.name.toLowerCase().includes(query.toLowerCase())), [query, metricStore.filteredCards]);
+  const cards = useMemo(
+    () =>
+      metricStore.filteredCards.filter((card: any) =>
+        card.name.toLowerCase().includes(query.toLowerCase()),
+      ),
+    [query, metricStore.filteredCards],
+  );
 
   useEffect(() => {
     metricStore.fetchList();

@@ -9,6 +9,7 @@ import cn from 'classnames';
 import Event from './Event';
 import NoteEvent from './NoteEvent';
 import stl from './eventGroupWrapper.module.css';
+import { useTranslation } from 'react-i18next';
 
 function EventGroupWrapper(props) {
   const { userStore } = useStore();
@@ -32,11 +33,13 @@ function EventGroupWrapper(props) {
     isTabChange,
     filterOutNote,
   } = props;
+  const { t } = useTranslation();
   const isLocation = event.type === TYPES.LOCATION;
   const isUxtEvent = event.type === TYPES.UXT_EVENT;
 
-  const whiteBg = (isLastInGroup && event.type !== TYPES.LOCATION)
-    || (!isLastEvent && event.type !== TYPES.LOCATION);
+  const whiteBg =
+    (isLastInGroup && event.type !== TYPES.LOCATION) ||
+    (!isLastEvent && event.type !== TYPES.LOCATION);
   const safeRef = String(event.referrer || '');
 
   const returnEvt = () => {
@@ -133,8 +136,7 @@ function EventGroupWrapper(props) {
         {isFirst && isLocation && event.referrer && (
           <TextEllipsis>
             <div className={stl.referrer}>
-              Referrer:
-              {' '}
+              {t('Referrer:')}{' '}
               <span className={cn(stl.url, '!font-normal')}>{safeRef}</span>
             </div>
           </TextEllipsis>
@@ -148,9 +150,7 @@ function EventGroupWrapper(props) {
   );
 }
 
-function TabChange({
-  from, to, activeUrl, onClick,
-}) {
+function TabChange({ from, to, activeUrl, onClick }) {
   if (!from) {
     return null;
   }
@@ -164,9 +164,7 @@ function TabChange({
         <Icon name="arrow-right-short" size={18} color="gray-dark" />
         <span style={{ fontWeight: 500 }}>{to}</span>
       </div>
-      <div
-        className="break-words mt-1 px-4 text-sm font-normal color-gray-medium whitespace-nowrap"
-      >
+      <div className="break-words mt-1 px-4 text-sm font-normal color-gray-medium whitespace-nowrap">
         {activeUrl}
       </div>
     </div>

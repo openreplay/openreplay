@@ -14,7 +14,10 @@ export default class IssueReportsService extends BaseService {
   };
 
   saveIssue = async (sessionId: string, data: any) => {
-    const r = await this.client.post(`/sessions/${sessionId}/assign/projects/${data.projectId}`, data);
+    const r = await this.client.post(
+      `/sessions/${sessionId}/assign/projects/${data.projectId}`,
+      data,
+    );
 
     return await r.json();
   };

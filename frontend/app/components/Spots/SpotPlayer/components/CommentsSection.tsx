@@ -7,8 +7,10 @@ import { toast } from 'react-toastify';
 
 import { resentOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
+import { useTranslation } from 'react-i18next';
 
 function CommentsSection({ onClose }: { onClose?: () => void }) {
+  const { t } = useTranslation();
   const { spotStore, userStore } = useStore();
   const userEmail = userStore.account.name;
   const loggedIn = !!userEmail;
@@ -19,7 +21,7 @@ function CommentsSection({ onClose }: { onClose?: () => void }) {
       style={{ minWidth: 320, width: 320 }}
     >
       <div className="flex items-center justify-between mb-2">
-        <div className="font-medium text-lg">Comments</div>
+        <div className="font-medium text-lg">{t('Comments')}</div>
         <Button onClick={onClose} type="text" size="small">
           <CloseOutlined />
         </Button>
@@ -34,9 +36,7 @@ function CommentsSection({ onClose }: { onClose?: () => void }) {
             className="flex flex-col gap-2 border-b border-dotted pb-2"
           >
             <div className="flex items-center gap-2">
-              <div
-                className="w-9 h-9 text-xs bg-tealx rounded-full flex items-center justify-center color-white uppercase"
-              >
+              <div className="w-9 h-9 text-xs bg-tealx rounded-full flex items-center justify-center color-white uppercase">
                 {comment.user[0]}
               </div>
               <div className="font-medium flex flex-col ">
@@ -72,6 +72,7 @@ function BottomSection({
   loggedIn?: boolean;
   userEmail?: string;
 }) {
+  const { t } = useTranslation();
   const [commentText, setCommentText] = React.useState('');
   const [userName, setUserName] = React.useState<string>(userEmail ?? '');
   const { spotStore } = useStore();
@@ -85,13 +86,13 @@ function BottomSection({
       );
       setCommentText('');
     } catch (e) {
-      toast.error('Failed to add comment; Try again later');
+      toast.error(t('Failed to add comment; Try again later'));
     }
   };
 
   const unlogged = userName.trim().length === 0 && unloggedLimit;
-  const disableSubmit = commentText.trim().length === 0
-    || unlogged || loggedLimit;
+  const disableSubmit =
+    commentText.trim().length === 0 || unlogged || loggedLimit;
   return (
     <div
       className={cn(
@@ -104,7 +105,7 @@ function BottomSection({
           <Input
             readOnly={loggedIn}
             disabled={loggedIn}
-            placeholder="Add a name"
+            placeholder={t('Add a name')}
             required
             className="w-full disabled:hidden"
             value={userName}
@@ -121,14 +122,16 @@ function BottomSection({
               e.stopPropagation();
               setCommentText(e.target.value);
             }}
-            placeholder="Add a comment..."
+            placeholder={t('Add a comment...')}
           />
         </div>
         <Tooltip
           title={
             !disableSubmit
               ? ''
-              : unlogged ? 'Limited to 5 Messages. Join team to send more.' : 'Limited to 25 Messages.'
+              : unlogged
+                ? t('Limited to 5 Messages. Join team to send more.')
+                : t('Limited to 25 Messages.')
           }
         >
           <Button

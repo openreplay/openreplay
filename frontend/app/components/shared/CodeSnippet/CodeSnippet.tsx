@@ -8,20 +8,28 @@ const inputModeOptions = [
 ];
 
 const inputModeOptionsMap: any = {};
-inputModeOptions.forEach((o: any, i: any) => inputModeOptionsMap[o.value] = i);
+inputModeOptions.forEach(
+  (o: any, i: any) => (inputModeOptionsMap[o.value] = i),
+);
 
 interface Props {
-    isAssistEnabled: boolean;
-    host: string;
-    projectKey: string;
-    ingestPoint: string;
-    defaultInputMode: any;
-    obscureTextNumbers: boolean;
-    obscureTextEmails: boolean;
+  isAssistEnabled: boolean;
+  host: string;
+  projectKey: string;
+  ingestPoint: string;
+  defaultInputMode: any;
+  obscureTextNumbers: boolean;
+  obscureTextEmails: boolean;
 }
 function CodeSnippet(props: Props) {
   const {
-    host, projectKey, ingestPoint, defaultInputMode, obscureTextNumbers, obscureTextEmails, isAssistEnabled,
+    host,
+    projectKey,
+    ingestPoint,
+    defaultInputMode,
+    obscureTextNumbers,
+    obscureTextEmails,
+    isAssistEnabled,
   } = props;
   const codeSnippet = `<!-- OpenReplay Tracking Code for ${host} -->
 <script>

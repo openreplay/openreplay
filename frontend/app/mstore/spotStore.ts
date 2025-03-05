@@ -94,7 +94,9 @@ export default class SpotStore {
       limit: this.limit,
     } as const;
 
-    const { spots, tenantHasSpots, total } = await this.withLoader(() => spotService.fetchSpots(filters));
+    const { spots, tenantHasSpots, total } = await this.withLoader(() =>
+      spotService.fetchSpots(filters),
+    );
     this.setSpots(spots.map((spot: any) => new Spot(spot)));
     this.setTotal(total);
     this.setTenantHasSpots(tenantHasSpots);
@@ -106,7 +108,9 @@ export default class SpotStore {
 
   async fetchSpotById(id: string) {
     try {
-      const response = await this.withLoader(() => spotService.fetchSpot(id, this.accessKey));
+      const response = await this.withLoader(() =>
+        spotService.fetchSpot(id, this.accessKey),
+      );
 
       const spotInst = new Spot({ ...response.spot, id });
       this.setCurrentSpot(spotInst);
@@ -175,7 +179,9 @@ export default class SpotStore {
    * */
   generateKey = async (id: string, expiration: number) => {
     try {
-      const { key } = await this.withLoader(() => spotService.generateKey(id, expiration));
+      const { key } = await this.withLoader(() =>
+        spotService.generateKey(id, expiration),
+      );
       this.setPubKey(key);
       return key;
     } catch (e) {
@@ -194,7 +200,9 @@ export default class SpotStore {
 
   checkIsProcessed = async (id: string) => {
     try {
-      const { status } = await this.withLoader(() => spotService.checkProcessingStatus(id, this.accessKey));
+      const { status } = await this.withLoader(() =>
+        spotService.checkProcessingStatus(id, this.accessKey),
+      );
 
       return status === 'processed';
     } catch (e) {

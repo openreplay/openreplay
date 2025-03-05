@@ -8,11 +8,14 @@ export interface UnifiedLog {
 export function processLog(log: any): UnifiedLog[] {
   if (isDatadogLog(log)) {
     return log.map(processDatadogLog);
-  } if (isElasticLog(log)) {
+  }
+  if (isElasticLog(log)) {
     return log.map(processElasticLog);
-  } if (isSentryLog(log)) {
+  }
+  if (isSentryLog(log)) {
     return log.map(processSentryLog);
-  } if (isDynatraceLog(log)) {
+  }
+  if (isDynatraceLog(log)) {
     return log.map(processDynatraceLog);
   }
   throw new Error('Unknown log format');
@@ -20,15 +23,17 @@ export function processLog(log: any): UnifiedLog[] {
 
 function isDynatraceLog(log: any): boolean {
   return (
-    Array.isArray(log)
-    && log[0].eventType === 'LOG'
-    && log[0].content
-    && log[0].status
+    Array.isArray(log) &&
+    log[0].eventType === 'LOG' &&
+    log[0].content &&
+    log[0].status
   );
 }
 
 function isDatadogLog(log: any): boolean {
-  return log && log[0].attributes && typeof log[0].attributes.message === 'string';
+  return (
+    log && log[0].attributes && typeof log[0].attributes.message === 'string'
+  );
 }
 
 function isElasticLog(log: any): boolean {
@@ -42,16 +47,18 @@ function isSentryLog(log: any): boolean {
 function processDynatraceLog(log: any): UnifiedLog {
   const result = log;
 
-  const key = result.additionalColumns?.trace_id?.[0]
-    || result.additionalColumns?.span_id?.[0]
-    || String(result.timestamp);
+  const key =
+    result.additionalColumns?.trace_id?.[0] ||
+    result.additionalColumns?.span_id?.[0] ||
+    String(result.timestamp);
 
   const timestamp = new Date(result.timestamp).toISOString();
 
   let message = result.content || '';
   let level = result.status?.toLowerCase() || 'info';
 
-  const contentPattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+\|(\w+)\|.*?\| (.*)$/;
+  const contentPattern =
+    /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+\|(\w+)\|.*?\| (.*)$/;
   const contentMatch = message.match(contentPattern);
 
   if (contentMatch) {
@@ -60,7 +67,10 @@ function processDynatraceLog(log: any): UnifiedLog {
   }
 
   return {
-    key, timestamp, content: message, status: level,
+    key,
+    timestamp,
+    content: message,
+    status: level,
   };
 }
 
@@ -70,7 +80,10 @@ function processDatadogLog(log: any): UnifiedLog {
   const message = log.attributes?.message || '';
   const level = log.attributes?.status || 'info';
   return {
-    key, timestamp, content: message, status: level.toUpperCase(),
+    key,
+    timestamp,
+    content: message,
+    status: level.toUpperCase(),
   };
 }
 
@@ -80,7 +93,10 @@ function processElasticLog(log: any): UnifiedLog {
   const message = log._source.message || '';
   const level = getLevelFromElasticTags(log._source.level);
   return {
-    key, timestamp, content: message, status: level,
+    key,
+    timestamp,
+    content: message,
+    status: level,
   };
 }
 
@@ -100,7 +116,10 @@ function processSentryLog(log: any): UnifiedLog {
   const message = `${log.title}: \n ${log.message}`;
   const level = log.tags ? getLevelFromSentryTags(log.tags) : 'N/A';
   return {
-    key, timestamp, content: message, status: level,
+    key,
+    timestamp,
+    content: message,
+    status: level,
   };
 }
 

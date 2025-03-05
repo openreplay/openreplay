@@ -10,6 +10,7 @@ import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModa
 import { Loader } from 'UI';
 import { toast } from 'react-toastify';
 import DocLink from 'Shared/DocLink/DocLink';
+import { useTranslation } from 'react-i18next';
 
 interface SentryConfig {
   url: string;
@@ -32,6 +33,7 @@ function SentryForm({
   onClose: () => void;
   integrated: boolean;
 }) {
+  const { t } = useTranslation();
   const { integrationsStore } = useStore();
   const { siteId } = integrationsStore.integrations;
   const {
@@ -40,22 +42,23 @@ function SentryForm({
     saveMutation,
     removeMutation,
   } = useIntegration<SentryConfig>('sentry', siteId, initialValues);
-  const {
-    values, errors, handleChange, hasErrors, checkErrors,
-  } = useForm(data, {
-    url: {
-      required: false,
+  const { values, errors, handleChange, hasErrors, checkErrors } = useForm(
+    data,
+    {
+      url: {
+        required: false,
+      },
+      organization_slug: {
+        required: true,
+      },
+      project_slug: {
+        required: true,
+      },
+      token: {
+        required: true,
+      },
     },
-    organization_slug: {
-      required: true,
-    },
-    project_slug: {
-      required: true,
-    },
-    token: {
-      required: true,
-    },
-  });
+  );
   const exists = Boolean(data.token);
 
   const save = async () => {
@@ -89,28 +92,28 @@ function SentryForm({
         description="Integrate Sentry with session replays to seamlessly observe backend errors."
       />
       <div className="p-5 border-b mb-4">
-        <div className="font-medium mb-1">How it works?</div>
+        <div className="font-medium mb-1">{t('How it works?')}</div>
         <ol className="list-decimal list-inside">
-          <li>Generate Sentry Auth Token</li>
-          <li>Enter the token below</li>
-          <li>Propagate openReplaySessionToken</li>
+          <li>{t('Generate Sentry Auth Token')}</li>
+          <li>{t('Enter the token below')}</li>
+          <li>{t('Propagate openReplaySessionToken')}</li>
         </ol>
         <DocLink
           className="mt-4"
-          label="See detailed steps"
+          label={t('See detailed steps')}
           url="https://docs.openreplay.com/integrations/sentry"
         />
 
         <Loader loading={isPending}>
           <FormField
-            label="URL"
+            label={t('URL')}
             name="url"
             value={values.url}
             onChange={handleChange}
             errors={errors.url}
           />
           <FormField
-            label="Organization Slug"
+            label={t('Organization Slug')}
             name="organization_slug"
             value={values.organization_slug}
             onChange={handleChange}
@@ -118,14 +121,14 @@ function SentryForm({
             autoFocus
           />
           <FormField
-            label="Project Slug"
+            label={t('Project Slug')}
             name="project_slug"
             value={values.project_slug}
             onChange={handleChange}
             errors={errors.project_slug}
           />
           <FormField
-            label="Token"
+            label={t('Token')}
             name="token"
             value={values.token}
             onChange={handleChange}
@@ -139,12 +142,12 @@ function SentryForm({
               loading={saveMutation.isPending}
               type="primary"
             >
-              {exists ? 'Update' : 'Add'}
+              {exists ? t('Update') : t('Add')}
             </Button>
 
             {integrated && (
               <Button loading={removeMutation.isPending} onClick={remove}>
-                Delete
+                {t('Delete')}
               </Button>
             )}
           </div>

@@ -20,7 +20,9 @@ export default function SessionMetaList(props: Props) {
         </React.Fragment>
       ))}
 
-      {metaList.length > maxLength && <MetaMoreButton list={metaList} maxLength={maxLength} />}
+      {metaList.length > maxLength && (
+        <MetaMoreButton list={metaList} maxLength={maxLength} />
+      )}
     </div>
   );
 }

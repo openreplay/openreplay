@@ -6,12 +6,17 @@ import { Button, Modal } from 'antd';
 import Select from 'Shared/Select/Select';
 import { Form } from 'UI';
 import { useStore } from 'App/mstore';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   metricId: string;
 }
 
-export const showAddToDashboardModal = (metricId: string, dashboardStore: any) => {
+export const showAddToDashboardModal = (
+  metricId: string,
+  dashboardStore: any,
+) => {
+  const { t } = useTranslation();
   const dashboardOptions = dashboardStore.dashboards.map((i: any) => ({
     key: i.id,
     label: i.name,
@@ -27,7 +32,7 @@ export const showAddToDashboardModal = (metricId: string, dashboardStore: any) =
   };
 
   Modal.confirm({
-    title: 'Add to selected dashboard',
+    title: t('Add to selected dashboard'),
     icon: null,
     content: (
       <Form.Field>
@@ -38,9 +43,9 @@ export const showAddToDashboardModal = (metricId: string, dashboardStore: any) =
         />
       </Form.Field>
     ),
-    cancelText: 'Cancel',
+    cancelText: t('Cancel'),
     onOk: onSave,
-    okText: 'Add',
+    okText: t('Add'),
     footer: (_, { OkBtn, CancelBtn }) => (
       <>
         <CancelBtn />
@@ -51,6 +56,7 @@ export const showAddToDashboardModal = (metricId: string, dashboardStore: any) =
 };
 
 function AddToDashboardButton({ metricId }: Props) {
+  const { t } = useTranslation();
   const { dashboardStore } = useStore();
 
   return (
@@ -59,7 +65,7 @@ function AddToDashboardButton({ metricId }: Props) {
       onClick={() => showAddToDashboardModal(metricId, dashboardStore)}
       icon={<Grid2x2Check size={18} />}
     >
-      Add to Dashboard
+      {t('Add to Dashboard')}
     </Button>
   );
 }

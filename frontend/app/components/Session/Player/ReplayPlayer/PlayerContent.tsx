@@ -12,18 +12,19 @@ interface IProps {
   fullscreen: boolean;
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  session: Session
+  session: Session;
 }
 
 function PlayerContent({
-  session, fullscreen, activeTab, setActiveTab,
+  session,
+  fullscreen,
+  activeTab,
+  setActiveTab,
 }: IProps) {
   const { store } = React.useContext(PlayerContext);
   const [fullView, setFullView] = React.useState(false);
 
-  const {
-    error,
-  } = store.get();
+  const { error } = store.get();
 
   const hasError = !!error;
 
@@ -46,7 +47,9 @@ function PlayerContent({
         >
           <div className="flex flex-col items-center">
             <div className="text-lg -mt-8">
-              {sessionDays > 2 ? 'Session not found.' : 'This session is still being processed.'}
+              {sessionDays > 2
+                ? 'Session not found.'
+                : 'This session is still being processed.'}
             </div>
             <div className="text-sm">
               {sessionDays > 2
@@ -60,10 +63,21 @@ function PlayerContent({
         <div className={cn('flex', { 'pointer-events-none': hasError })}>
           <div
             className="w-full"
-            style={activeTab && !fullscreen ? { maxWidth: 'calc(100% - 270px)' } : undefined}
+            style={
+              activeTab && !fullscreen
+                ? { maxWidth: 'calc(100% - 270px)' }
+                : undefined
+            }
           >
-            <div className={cn(styles.session, 'relative')} data-fullscreen={fullscreen}>
-              <PlayerBlock setActiveTab={setActiveTab} activeTab={activeTab} fullView={fullView} />
+            <div
+              className={cn(styles.session, 'relative')}
+              data-fullscreen={fullscreen}
+            >
+              <PlayerBlock
+                setActiveTab={setActiveTab}
+                activeTab={activeTab}
+                fullView={fullView}
+              />
             </div>
           </div>
           {!fullscreen && activeTab !== '' ? (

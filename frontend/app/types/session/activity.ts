@@ -6,11 +6,14 @@ const OPEN = 'open';
 const CLOSE = 'close';
 
 export const TYPES = {
-  ASSIGN, MESSAGE, OPEN, CLOSE,
+  ASSIGN,
+  MESSAGE,
+  OPEN,
+  CLOSE,
 } as const;
 
-type TypeKeys = keyof typeof TYPES
-type TypeValues = typeof TYPES[TypeKeys]
+type TypeKeys = keyof typeof TYPES;
+type TypeValues = (typeof TYPES)[TypeKeys];
 
 export interface IActivity {
   id: string;
@@ -38,7 +41,9 @@ export default class Activity {
     if (activity) {
       Object.assign(this, {
         ...activity,
-        createdAt: activity.createdAt ? DateTime.fromMillis(activity.createdAt, {}).toUTC() : undefined,
+        createdAt: activity.createdAt
+          ? DateTime.fromMillis(activity.createdAt, {}).toUTC()
+          : undefined,
       });
     } else {
       Object.assign(this, {

@@ -38,14 +38,14 @@ function MetricTypeIcon({ type }: any) {
   return (
     <Tooltip title={<div className="capitalize">{TYPE_NAMES[type]}</div>}>
       <Avatar
-        src={(
+        src={
           <Icon
             name={TYPE_ICONS[type]}
             size="16"
             color="tealx"
             strokeColor="tealx"
           />
-        )}
+        }
         size="default"
         className="bg-tealx-lightest text-tealx mr-2 cursor-default avatar-card-list-item"
       />
@@ -147,9 +147,11 @@ const MetricListItem: React.FC<Props> = ({
 
     if (diffDays <= 1) {
       return `Today at ${formatTime(date)}`;
-    } if (diffDays <= 2) {
+    }
+    if (diffDays <= 2) {
       return `Yesterday at ${formatTime(date)}`;
-    } if (diffDays <= 3) {
+    }
+    if (diffDays <= 3) {
       return `${diffDays} days ago at ${formatTime(date)}`;
     }
     return `${date.getDate()}/${
@@ -178,7 +180,11 @@ const MetricListItem: React.FC<Props> = ({
             onClick={inLibrary ? undefined : onItemClick}
           >
             <MetricTypeIcon type={metric.metricType} />
-            <div className={cn('capitalize-first block', inLibrary ? '' : 'link')}>{metric.name}</div>
+            <div
+              className={cn('capitalize-first block', inLibrary ? '' : 'link')}
+            >
+              {metric.name}
+            </div>
           </div>
           {renderModal()}
         </>

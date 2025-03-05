@@ -51,25 +51,29 @@ export default class ReportedIssue {
     makeAutoObservable(this);
     if (assignment) {
       Object.assign(this, assignment);
-      this.timestamp = assignment.createdAt ? DateTime.fromISO(assignment.createdAt) : null;
+      this.timestamp = assignment.createdAt
+        ? DateTime.fromISO(assignment.createdAt)
+        : null;
       this.activities = assignment.comments
         ? assignment.comments.map((activity) => {
-          if (assignment.users) {
-            // @ts-ignore
-            activity.user = assignment.users.find((user) => user.id === activity.author);
-          }
-          return new Activity(activity);
-        })
+            if (assignment.users) {
+              // @ts-ignore
+              activity.user = assignment.users.find(
+                (user) => user.id === activity.author,
+              );
+            }
+            return new Activity(activity);
+          })
         : [];
     }
   }
 
   validate() {
     return (
-      !!this.projectId
-      && !!this.issueType
-      && notEmptyString(this.title)
-      && notEmptyString(this.description)
+      !!this.projectId &&
+      !!this.issueType &&
+      notEmptyString(this.title) &&
+      notEmptyString(this.description)
     );
   }
 

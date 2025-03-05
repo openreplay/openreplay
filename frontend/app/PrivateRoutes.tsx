@@ -107,7 +107,11 @@ function PrivateRoutes() {
   const { siteId } = projectsStore;
   const hasRecordings = sites.some((s) => s.recorded);
   const redirectToSetup = scope === 0;
-  const redirectToOnboarding = !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || (sites.length > 0 && !hasRecordings)) && scope > 0;
+  const redirectToOnboarding =
+    !onboarding &&
+    (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' ||
+      (sites.length > 0 && !hasRecordings)) &&
+    scope > 0;
   const siteIdList: any = sites.map(({ id }) => id);
 
   React.useEffect(() => {

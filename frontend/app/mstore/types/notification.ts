@@ -24,11 +24,13 @@ export default class Notification {
   filterKey: string;
 
   options: any = {
-    source: '', sourceId: '', projectId: '', sourceMeta: '',
+    source: '',
+    sourceId: '',
+    projectId: '',
+    sourceMeta: '',
   };
 
-  constructor() {
-  }
+  constructor() {}
 
   fromJson(json: any) {
     this.notificationId = json.notificationId;

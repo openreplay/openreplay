@@ -12,6 +12,7 @@ import {
   TimeMode,
 } from 'Components/Session_/Player/Controls/components/PlayerControls';
 import { Popover } from 'UI';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   timeMode: ITimeMode;
@@ -20,9 +21,8 @@ interface Props {
   sessionTz?: string;
 }
 
-function PlayingTime({
-  timeMode, setTimeMode, startedAt, sessionTz,
-}: Props) {
+function PlayingTime({ timeMode, setTimeMode, startedAt, sessionTz }: Props) {
+  const { t } = useTranslation();
   return (
     <Popover
       // @ts-ignore
@@ -37,13 +37,11 @@ function PlayingTime({
           className="flex flex-col gap-2 bg-white py-2 rounded color-gray-darkest text-left"
         >
           <div className="font-semibold px-4 cursor-default">
-            Playback Time Mode
+            {t('Playback Time Mode')}
           </div>
-          <div
-            className="flex flex-col cursor-pointer hover:bg-active-blue w-full px-4"
-          >
+          <div className="flex flex-col cursor-pointer hover:bg-active-blue w-full px-4">
             <div className="text-sm text-disabled-text text-left">
-              Current / Session Duration
+              {t('Current / Session Duration')}
             </div>
             <div
               className="flex items-center text-left"
@@ -66,7 +64,7 @@ function PlayingTime({
               }}
             >
               <div className="text-sm text-disabled-text text-left">
-                User's time
+                {t("User's time")}
               </div>
               <div className="text-left">
                 <RealUserReplayTimeConnected
@@ -84,7 +82,7 @@ function PlayingTime({
             }}
           >
             <div className="text-sm text-disabled-text text-left">
-              Based on your settings
+              {t('Based on your settings')}
             </div>
             <div className="text-left">
               <RealReplayTimeConnected startedAt={startedAt} />

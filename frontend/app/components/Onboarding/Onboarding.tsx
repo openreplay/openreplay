@@ -1,7 +1,5 @@
 import React from 'react';
-import {
-  Redirect, Route, RouteComponentProps, Switch,
-} from 'react-router';
+import { Redirect, Route, RouteComponentProps, Switch } from 'react-router';
 import { withRouter } from 'react-router-dom';
 
 import { OB_TABS, onboarding as onboardingRoute, withSiteId } from 'App/routes';
@@ -12,6 +10,7 @@ import InstallOpenReplayTab from './components/InstallOpenReplayTab';
 import IntegrationsTab from './components/IntegrationsTab';
 import ManageUsersTab from './components/ManageUsersTab';
 import SideMenu from './components/SideMenu';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   match: {
@@ -29,13 +28,13 @@ const platformMap = {
 };
 
 function Onboarding(props: Props) {
+  const { t } = useTranslation();
   const platforms = [
     {
       label: (
         <div className="font-semibold flex gap-2 items-center">
           <Icon name="browser/browser" size={16} />
-          {' '}
-          Web
+          &nbsp;{t('Web')}
         </div>
       ),
       value: 'web',
@@ -44,8 +43,7 @@ function Onboarding(props: Props) {
       label: (
         <div className="font-semibold flex gap-2 items-center">
           <Icon name="mobile" size={16} />
-          {' '}
-          Mobile
+          &nbsp;{t('Mobile')}
         </div>
       ),
       value: 'mobile',

@@ -9,7 +9,17 @@ export const CLOUDWATCH = 'cloudwatch';
 export const ELASTICSEARCH = 'elasticsearch';
 export const SUMOLOGIC = 'sumologic';
 
-export const typeList = [OPENREPLAY, SENTRY, DATADOG, STACKDRIVER, ROLLBAR, BUGSNAG, CLOUDWATCH, ELASTICSEARCH, SUMOLOGIC];
+export const typeList = [
+  OPENREPLAY,
+  SENTRY,
+  DATADOG,
+  STACKDRIVER,
+  ROLLBAR,
+  BUGSNAG,
+  CLOUDWATCH,
+  ELASTICSEARCH,
+  SUMOLOGIC,
+];
 
 export function isRed(event: IStackEvent) {
   if (!event.payload) return false;
@@ -67,7 +77,11 @@ export default class StackEvent {
   messageId: IStackEvent['messageId'];
 
   constructor(evt: IStackEvent) {
-    const event = { ...evt, source: evt.source || OPENREPLAY, payload: evt.payload || {} };
+    const event = {
+      ...evt,
+      source: evt.source || OPENREPLAY,
+      payload: evt.payload || {},
+    };
     Object.assign(this, {
       ...event,
       isRed: isRed(event),

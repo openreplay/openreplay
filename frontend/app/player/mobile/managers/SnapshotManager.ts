@@ -2,10 +2,10 @@ import { TarFile } from 'js-untar';
 import ListWalker from 'Player/common/ListWalker';
 
 interface Snapshots {
-  [timestamp: number]: TarFile
+  [timestamp: number]: TarFile;
 }
 
-type Timestamp = { time: number }
+type Timestamp = { time: number };
 
 export default class SnapshotManager extends ListWalker<Timestamp> {
   private snapshots: Snapshots = {};
@@ -15,8 +15,7 @@ export default class SnapshotManager extends ListWalker<Timestamp> {
     const firstPair = files[0].name.match(filenameRegexp);
     const sessionStart = firstPair ? parseInt(firstPair[1], 10) : 0;
     files.forEach((file) => {
-      const [_, _2, imageTimestamp] = file
-        .name
+      const [_, _2, imageTimestamp] = file.name
         .match(filenameRegexp)
         ?.map((n) => parseInt(n, 10)) ?? [0, 0, 0];
       const messageTime = imageTimestamp - sessionStart;

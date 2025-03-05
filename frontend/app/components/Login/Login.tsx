@@ -1,6 +1,6 @@
 import withPageTitle from 'HOCs/withPageTitle';
 import cn from 'classnames';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 // Consider using a different approach for titles in functional components
 import ReCAPTCHA from 'react-google-recaptcha';
 import { useHistory } from 'react-router-dom';
@@ -8,16 +8,15 @@ import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
-import { useStore } from 'App/mstore';
 import { forgotPassword, signup } from 'App/routes';
-import {
-  Icon, Link, Loader, Tooltip,
-} from 'UI';
+import { Icon, Link, Loader, Tooltip } from 'UI';
 import { Button, Form, Input } from 'antd';
 
 import Copyright from 'Shared/Copyright';
 
 import stl from './login.module.css';
+import { useTranslation } from 'react-i18next';
+import { useStore } from 'App/mstore';
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
@@ -26,12 +25,13 @@ interface LoginProps {
   location: Location;
 }
 
-function Login({
-  location,
-}: LoginProps) {
+const CAPTCHA_ENABLED = window.env.CAPTCHA_ENABLED === 'true';
+
+function Login({ location }: LoginProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const CAPTCHA_ENABLED = React.useMemo(() => window.env.CAPTCHA_ENABLED === 'true', []);
+  // const CAPTCHA_ENABLED = useMemo(() => window.env.CAPTCHA_ENABLED === 'true', []);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const { loginStore, userStore } = useStore();
   const { errors } = userStore.loginRequest;
@@ -70,7 +70,7 @@ function Login({
       if (event.data.type === 'orspot:logged') {
         clearInterval(int);
         window.removeEventListener('message', onSpotMsg);
-        toast.success('You have been logged into Spot successfully');
+        toast.success(t('You have been logged into Spot successfully'));
       }
     };
     window.addEventListener('message', onSpotMsg);
@@ -123,9 +123,10 @@ function Login({
     }
   };
 
-  const ssoLink = window !== window.top
-    ? `${window.location.origin}/api/sso/saml2?iFrame=true`
-    : `${window.location.origin}/api/sso/saml2`;
+  const ssoLink =
+    window !== window.top
+      ? `${window.location.origin}/api/sso/saml2?iFrame=true`
+      : `${window.location.origin}/api/sso/saml2`;
 
   return (
     <div className="flex items-center justify-center h-screen">
@@ -135,7 +136,7 @@ function Login({
         </div>
         <div className="border rounded-lg bg-white shadow-sm">
           <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
-            Login to your account
+            {t('Login to your account')}
           </h2>
           <div className={cn(authDetails?.enforceSSO ? '!hidden' : '')}>
             <Form
@@ -154,13 +155,13 @@ function Login({
                 )}
                 <div style={{ width: '350px' }} className="px-8">
                   <Form.Item>
-                    <label>Email Address</label>
+                    <label>{t('Email Address')}</label>
                     <Input
                       data-test-id="login"
                       autoFocus
                       autoComplete="username"
                       type="email"
-                      placeholder="e.g. john@example.com"
+                      placeholder={t('e.g. john@example.com')}
                       name="email"
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -168,12 +169,12 @@ function Login({
                     />
                   </Form.Item>
                   <Form.Item>
-                    <label className="mb-2">Password</label>
+                    <label className="mb-2">{t('Password')}</label>
                     <Input
                       data-test-id="password"
                       autoComplete="current-password"
                       type="password"
-                      placeholder="Password"
+                      placeholder={t('Password')}
                       name="password"
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -203,16 +204,15 @@ function Login({
                   type="primary"
                   htmlType="submit"
                 >
-                  Login
+                  {t('Login')}
                 </Button>
 
                 <div className="my-8 text-center">
                   <span className="color-gray-medium">
-                    Having trouble logging in?
-                  </span>
-                  {' '}
+                    {t('Having trouble logging in?')}
+                  </span>{' '}
                   <Link to={FORGOT_PASSWORD} className="link ml-1">
-                    Reset password
+                    {t('Reset password')}
                   </Link>
                 </div>
               </div>
@@ -222,7 +222,7 @@ function Login({
               {authDetails.sso ? (
                 <a href={ssoLink} rel="noopener noreferrer">
                   <Button type="text" htmlType="submit">
-                    {`Login with SSO ${
+                    {`${t('Login with SSO')} ${
                       authDetails.ssoProvider
                         ? `(${authDetails.ssoProvider})`
                         : ''
@@ -232,22 +232,19 @@ function Login({
               ) : (
                 <Tooltip
                   delay={0}
-                  title={(
+                  title={
                     <div className="text-center">
                       {authDetails.edition === 'ee' ? (
                         <span>
-                          SSO has not been configured.
-                          {' '}
+                          {t('SSO has not been configured.')}
                           <br />
-                          {' '}
-                          Please reach out
-                          to your admin.
+                          {t('Please reach out to your admin.')}
                         </span>
                       ) : (
-                        ENTERPRISE_REQUEIRED
+                        ENTERPRISE_REQUEIRED(t)
                       )}
                     </div>
-                  )}
+                  }
                   placement="top"
                 >
                   <Button
@@ -255,7 +252,7 @@ function Login({
                     htmlType="submit"
                     className="pointer-events-none opacity-30"
                   >
-                    {`Login with SSO ${
+                    {`${t('Login with SSO')} ${
                       authDetails.ssoProvider
                         ? `(${authDetails.ssoProvider})`
                         : ''
@@ -272,7 +269,7 @@ function Login({
           >
             <a href={ssoLink} rel="noopener noreferrer">
               <Button type="primary">
-                {`Login with SSO ${
+                {`${t('Login with SSO')} ${
                   authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
                 }`}
               </Button>

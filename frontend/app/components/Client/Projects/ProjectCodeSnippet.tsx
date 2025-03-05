@@ -10,26 +10,26 @@ import CodeSnippet from 'Shared/CodeSnippet';
 import CircleNumber from 'Components/Onboarding/components/CircleNumber';
 import Project from '@/mstore/types/project';
 import stl from './projectCodeSnippet.module.css';
+import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
 
 interface InputModeOption {
   label: string;
   value: string;
 }
 
-const inputModeOptions: InputModeOption[] = [
-  { label: 'Record all inputs', value: 'plain' },
-  { label: 'Ignore all inputs', value: 'obscured' },
-  { label: 'Obscure all inputs', value: 'hidden' },
+const inputModeOptions: (t: TFunction) => InputModeOption[] = (t) => [
+  { label: t('Record all inputs'), value: 'plain' },
+  { label: t('Ignore all inputs'), value: 'obscured' },
+  { label: t('Obscure all inputs'), value: 'hidden' },
 ];
-
-const inputModeOptionsMap: Record<string, number> = {};
-inputModeOptions.forEach((o, i) => (inputModeOptionsMap[o.value] = i));
 
 interface Props {
   project: Project;
 }
 
 const ProjectCodeSnippet: React.FC<Props> = (props) => {
+  const { t } = useTranslation();
   const { projectsStore } = useStore();
   const { siteId } = projectsStore;
   const site = props.project;
@@ -77,15 +77,17 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
       <div>
         <div className="font-medium mb-2 flex gap-2 items-center">
           <CircleNumber text="1" />
-          <span>Choose data recording options</span>
+          <span>{t('Choose data recording options')}</span>
         </div>
 
         <div className="ml-8 mb-4 w-fit">
           <Select
             name="defaultInputMode"
-            options={inputModeOptions}
-            onChange={({ value }) => onChangeSelect({ name: 'defaultInputMode', value: value.value })}
-            placeholder="Default Input Mode"
+            options={inputModeOptions(t)}
+            onChange={({ value }) =>
+              onChangeSelect({ name: 'defaultInputMode', value: value.value })
+            }
+            placeholder={t('Default Input Mode')}
             defaultValue={gdpr.defaultInputMode}
           />
         </div>
@@ -96,7 +98,7 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
             onChange={(e) => onChangeOption('maskNumbers', e.target.checked)}
             className="mr-2"
           >
-            Do not record any numeric text
+            {t('Do not record any numeric text')}
           </Checkbox>
 
           <div className="mx-4" />
@@ -106,18 +108,31 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
             onChange={(e) => onChangeOption('maskEmails', e.target.checked)}
             className="mr-2"
           >
-            Do not record email addresses
+            {t('Do not record email addresses')}
           </Checkbox>
         </div>
-        <div className={cn(stl.info, 'rounded-lg bg-gray mb-4 ml-8 bg-amber-50 w-fit text-sm mt-2', { hidden: !changed })}>
-          The code snippet below changes based on the selected data recording options and should be used for implementation.
+        <div
+          className={cn(
+            stl.info,
+            'rounded-lg bg-gray mb-4 ml-8 bg-amber-50 w-fit text-sm mt-2',
+            { hidden: !changed },
+          )}
+        >
+          {t(
+            'The code snippet below changes based on the selected data recording options and should be used for implementation.',
+          )}
         </div>
       </div>
 
-      <div className={cn(stl.instructions, 'flex flex-col !items-start !justify-start')}>
+      <div
+        className={cn(
+          stl.instructions,
+          'flex flex-col !items-start !justify-start',
+        )}
+      >
         <div className="font-medium flex gap-1 items-center">
           <CircleNumber text="2" />
-          <span>Enable Assist (Optional)</span>
+          <span>{t('Enable Assist (Optional)')}</span>
         </div>
 
         <div className="ml-7">
@@ -128,13 +143,13 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
               onChange={() => setAssistEnabled(!isAssistEnabled)}
               size="small"
             />
-            <span>Enable</span>
+            <span>{t('Enable')}</span>
           </div>
 
           <span className="text-sm text-neutral-400">
-            OpenReplay Assist allows you to support your users by seeing their
-            live screen and instantly hopping on call (WebRTC) with them without
-            requiring any 3rd-party screen sharing software.
+            {t(
+              'OpenReplay Assist allows you to support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.',
+            )}
           </span>
         </div>
       </div>
@@ -144,20 +159,23 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
           <div className="flex flex-col items-start justify-start gap-2">
             <div className="font-medium flex gap-2 items-center">
               <CircleNumber text="3" />
-              <span>Install SDK</span>
+              <span>{t('Install SDK')}</span>
             </div>
 
             <div className="ml-8 flex gap-2 items-center">
               <div>
-                Paste this snippet
-                <span>{'before the '}</span>
+                {t('Paste this snippet')}&nbsp;
+                <span>{t('before the')}&nbsp;</span>
               </div>
-              <Tag color="red" bordered={false} className="rounded-lg text-base mr-0">
+              <Tag
+                color="red"
+                bordered={false}
+                className="rounded-lg text-base mr-0"
+              >
                 {' '}
-                {'</head>'}
-                {' '}
+                {'</head>'}{' '}
               </Tag>
-              <span>{' tag of your page.'}</span>
+              <span>&nbsp;{t('tag of your page.')}&nbsp;</span>
             </div>
           </div>
           <div className={cn(stl.snippetsWrapper, 'ml-8')}>
@@ -178,9 +196,7 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
             )}
           </div>
         </div>
-
       </div>
-
     </div>
   );
 };

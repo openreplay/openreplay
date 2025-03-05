@@ -83,9 +83,7 @@ function SpeedIndexByLocationExample(props: Props) {
     unit: 'ms',
   };
   return (
-    <ExCard
-      {...props}
-    >
+    <ExCard {...props}>
       <SpeedIndexByLocation data={data} />
     </ExCard>
   );

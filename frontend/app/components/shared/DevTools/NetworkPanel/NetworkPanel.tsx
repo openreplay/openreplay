@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import { ResourceType, Timed } from 'Player';
 import MobilePlayer from 'Player/mobile/IOSPlayer';
 import WebPlayer from 'Player/web/WebPlayer';
@@ -13,9 +14,7 @@ import { formatMs } from 'App/date';
 import { useStore } from 'App/mstore';
 import { formatBytes } from 'App/utils';
 import { Icon, NoContent, Tabs } from 'UI';
-import {
-  Tooltip, Input, Switch, Form,
-} from 'antd';
+import { Tooltip, Input, Switch, Form } from 'antd';
 import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
@@ -28,6 +27,7 @@ import TimeTable from '../TimeTable';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 import WSPanel from './WSPanel';
+import { useTranslation } from 'react-i18next';
 
 const INDEX_KEY = 'network';
 
@@ -79,12 +79,13 @@ export function renderName(r: any) {
 }
 
 function renderSize(r: any) {
+  const { t } = useTranslation();
   if (r.responseBodySize) return formatBytes(r.responseBodySize);
   let triggerText;
   let content;
   if (r.decodedBodySize == null || r.decodedBodySize === 0) {
     triggerText = 'x';
-    content = 'Not captured';
+    content = t('Not captured');
   } else {
     const headerSize = r.headerSize || 0;
     const showTransferred = r.headerSize != null;
@@ -99,7 +100,7 @@ function renderSize(r: any) {
             )} transferred over network`}
           </li>
         )}
-        <li>{`Resource size: ${formatBytes(r.decodedBodySize)} `}</li>
+        <li>{`${t('Resource size')}: ${formatBytes(r.decodedBodySize)} `}</li>
       </ul>
     );
   }
@@ -112,6 +113,7 @@ function renderSize(r: any) {
 }
 
 export function renderDuration(r: any) {
+  const { t } = useTranslation();
   if (!r.success) return 'x';
 
   const text = `${Math.floor(r.duration)}ms`;
@@ -119,18 +121,14 @@ export function renderDuration(r: any) {
 
   let tooltipText;
   if (r.isYellow) {
-    tooltipText = 'Slower than average';
+    tooltipText = t('Slower than average');
   } else {
-    tooltipText = 'Much slower than average';
+    tooltipText = t('Much slower than average');
   }
 
   return (
     <Tooltip style={{ width: '100%' }} title={tooltipText}>
-      <div>
-        {' '}
-        {text}
-        {' '}
-      </div>
+      <div> {text} </div>
     </Tooltip>
   );
 }
@@ -144,12 +142,10 @@ function renderStatus({
   cached: boolean;
   error?: string;
 }) {
+  const { t } = useTranslation();
   const displayedStatus = error ? (
     <Tooltip title={error}>
-      <div
-        style={{ width: 90 }}
-        className="overflow-hidden overflow-ellipsis"
-      >
+      <div style={{ width: 90 }} className="overflow-hidden overflow-ellipsis">
         {error}
       </div>
     </Tooltip>
@@ -159,7 +155,7 @@ function renderStatus({
   return (
     <>
       {cached ? (
-        <Tooltip title="Served from cache" placement="top">
+        <Tooltip title={t('Served from cache')} placement="top">
           <div className="flex items-center">
             <span className="mr-1">{displayedStatus}</span>
             <Icon name="wifi" size={16} />
@@ -208,9 +204,7 @@ function NetworkPanelCont({ panelHeight }: { panelHeight: number }) {
   } else {
     fetchList = tabValues.flatMap((tab) => tab.fetchList);
     resourceList = tabValues.flatMap((tab) => tab.resourceList);
-    fetchListNow = tabValues
-      .flatMap((tab) => tab.fetchListNow)
-      .filter(Boolean);
+    fetchListNow = tabValues.flatMap((tab) => tab.fetchListNow).filter(Boolean);
     resourceListNow = tabValues
       .flatMap((tab) => tab.resourceListNow)
       .filter(Boolean);
@@ -349,6 +343,7 @@ export const NetworkPanelComp = observer(
     showSingleTab,
     getTabName,
   }: Props) => {
+    const { t } = useTranslation();
     const [selectedWsChannel, setSelectedWsChannel] = React.useState<
       WsChannel[] | null
     >(null);
@@ -364,9 +359,11 @@ export const NetworkPanelComp = observer(
     const activeIndex = activeOutsideIndex ?? devTools[INDEX_KEY].index;
 
     const socketList = useMemo(
-      () => websocketList.filter(
-        (ws, i, arr) => arr.findIndex((it) => it.channelName === ws.channelName) === i,
-      ),
+      () =>
+        websocketList.filter(
+          (ws, i, arr) =>
+            arr.findIndex((it) => it.channelName === ws.channelName) === i,
+        ),
       [websocketList],
     );
 
@@ -375,30 +372,31 @@ export const NetworkPanelComp = observer(
         // TODO: better merge (with body size info) - do it in player
         resourceList
           .filter(
-            (res) => !fetchList.some((ft) => {
-              // res.url !== ft.url doesn't work on relative URLs appearing within fetchList (to-fix in player)
-              if (res.name === ft.name) {
-                if (res.time === ft.time) return true;
-                if (res.url.includes(ft.url)) {
-                  return (
-                    Math.abs(res.time - ft.time) < 350
-                      || Math.abs(res.timestamp - ft.timestamp) < 350
-                  );
+            (res) =>
+              !fetchList.some((ft) => {
+                // res.url !== ft.url doesn't work on relative URLs appearing within fetchList (to-fix in player)
+                if (res.name === ft.name) {
+                  if (res.time === ft.time) return true;
+                  if (res.url.includes(ft.url)) {
+                    return (
+                      Math.abs(res.time - ft.time) < 350 ||
+                      Math.abs(res.timestamp - ft.timestamp) < 350
+                    );
+                  }
                 }
-              }
 
-              if (res.name !== ft.name) {
-                return false;
-              }
-              if (Math.abs(res.time - ft.time) > 250) {
-                return false;
-              } // TODO: find good epsilons
-              if (Math.abs(res.duration - ft.duration) > 200) {
-                return false;
-              }
+                if (res.name !== ft.name) {
+                  return false;
+                }
+                if (Math.abs(res.time - ft.time) > 250) {
+                  return false;
+                } // TODO: find good epsilons
+                if (Math.abs(res.duration - ft.duration) > 200) {
+                  return false;
+                }
 
-              return true;
-            }),
+                return true;
+              }),
           )
           .concat(fetchList)
           .concat(
@@ -413,9 +411,11 @@ export const NetworkPanelComp = observer(
               transferredBodySize: 0,
             })),
           )
-          .filter((req) => (zoomEnabled
-            ? req.time >= zoomStartTs! && req.time <= zoomEndTs!
-            : true))
+          .filter((req) =>
+            zoomEnabled
+              ? req.time >= zoomStartTs! && req.time <= zoomEndTs!
+              : true,
+          )
           .sort((a, b) => a.time - b.time),
       [resourceList.length, fetchList.length, socketList.length],
     );
@@ -440,10 +440,12 @@ export const NetworkPanelComp = observer(
       activeTab,
     );
 
-    const onTabClick = (activeTab: (typeof TAP_KEYS)[number]) => devTools.update(INDEX_KEY, { activeTab });
+    const onTabClick = (activeTab: (typeof TAP_KEYS)[number]) =>
+      devTools.update(INDEX_KEY, { activeTab });
     const onFilterChange = ({
       target: { value },
-    }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value });
+    }: React.ChangeEvent<HTMLInputElement>) =>
+      devTools.update(INDEX_KEY, { filter: value });
 
     // AutoScroll
     const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
@@ -461,17 +463,20 @@ export const NetworkPanelComp = observer(
     };
 
     const resourcesSize = useMemo(
-      () => resourceList.reduce(
-        (sum, { decodedBodySize }) => sum + (decodedBodySize || 0),
-        0,
-      ),
+      () =>
+        resourceList.reduce(
+          (sum, { decodedBodySize }) => sum + (decodedBodySize || 0),
+          0,
+        ),
       [resourceList.length],
     );
     const transferredSize = useMemo(
-      () => resourceList.reduce(
-        (sum, { headerSize, encodedBodySize }) => sum + (headerSize || 0) + (encodedBodySize || 0),
-        0,
-      ),
+      () =>
+        resourceList.reduce(
+          (sum, { headerSize, encodedBodySize }) =>
+            sum + (headerSize || 0) + (encodedBodySize || 0),
+          0,
+        ),
       [resourceList.length],
     );
 
@@ -527,37 +532,37 @@ export const NetworkPanelComp = observer(
     const tableCols = React.useMemo(() => {
       const cols: any[] = [
         {
-          label: 'Status',
+          label: t('Status'),
           dataKey: 'status',
           width: 90,
           render: renderStatus,
         },
         {
-          label: 'Type',
+          label: t('Type'),
           dataKey: 'type',
           width: 90,
           render: renderType,
         },
         {
-          label: 'Method',
+          label: t('Method'),
           width: 80,
           dataKey: 'method',
         },
         {
-          label: 'Name',
+          label: t('Name'),
           width: 240,
           dataKey: 'name',
           render: renderName,
         },
         {
-          label: 'Size',
+          label: t('Size'),
           width: 80,
           dataKey: 'decodedBodySize',
           render: renderSize,
           hidden: activeTab === XHR,
         },
         {
-          label: 'Duration',
+          label: t('Duration'),
           width: 80,
           dataKey: 'duration',
           render: renderDuration,
@@ -565,10 +570,13 @@ export const NetworkPanelComp = observer(
       ];
       if (!showSingleTab && !isSpot) {
         cols.unshift({
-          label: 'Source',
+          label: t('Source'),
           width: 64,
           render: (r: Record<string, any>) => (
-            <Tooltip title={`${getTabName?.(r.tabId) ?? `Tab ${getTabNum?.(r.tabId) ?? 0}`}`} placement="left">
+            <Tooltip
+              title={`${getTabName?.(r.tabId) ?? `Tab ${getTabNum?.(r.tabId) ?? 0}`}`}
+              placement="left"
+            >
               <div className="bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs cursor-default">
                 {getTabNum?.(r.tabId) ?? 0}
               </div>
@@ -589,7 +597,7 @@ export const NetworkPanelComp = observer(
         <BottomBlock.Header onClose={onClose}>
           <div className="flex items-center">
             <span className="font-semibold color-gray-medium mr-4">
-              Network
+              {t('Network')}
             </span>
             {isMobile ? null : (
               <Tabs
@@ -672,12 +680,12 @@ export const NetworkPanelComp = observer(
             </InfoLine>
           </div>
           <NoContent
-            title={(
+            title={
               <div className="capitalize flex items-center gap-2">
                 <InfoCircleOutlined size={18} />
-                No Data
+                {t('No Data')}
               </div>
-            )}
+            }
             size="small"
             show={filteredList.length === 0}
           >

@@ -5,6 +5,7 @@ import { Pagination, NoContent } from 'UI';
 import { useStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import Session from 'App/mstore/types/session';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   metric: any;
@@ -14,27 +15,34 @@ interface Props {
 }
 
 function CustomMetricTableSessions(props: Props) {
+  const { t } = useTranslation();
   const { isEdit = false, metric, data } = props;
 
-  const sessions = useMemo(() => (data && data.sessions ? data.sessions.map((session: any) => new Session().fromJson(session)) : []), []);
+  const sessions = useMemo(
+    () =>
+      data && data.sessions
+        ? data.sessions.map((session: any) => new Session().fromJson(session))
+        : [],
+    [],
+  );
 
   return useObserver(() => (
     <NoContent
       show={!metric || !data || !sessions || sessions.length === 0}
       size="small"
-      title={(
+      title={
         <div className="flex items-center justify-center flex-col">
           <AnimatedSVG name={ICONS.NO_SESSIONS} size={170} />
           <div className="mt-4" />
           <div className="text-center">
-            No relevant sessions found for the selected time period
+            {t('No relevant sessions found for the selected time period')}
           </div>
         </div>
-      )}
+      }
     >
       <div className="pb-4">
-        {sessions
-          && sessions.map((session: any, index: any) => (
+        {sessions &&
+          sessions.map((session: any, index: any) => (
             <div className="border-b last:border-none" key={session.sessionId}>
               <SessionItem session={session} />
             </div>
@@ -61,15 +69,13 @@ function CustomMetricTableSessions(props: Props) {
 export default observer(CustomMetricTableSessions);
 
 function ViewMore({ total, limit }: any) {
+  const { t } = useTranslation();
   return total > limit ? (
     <div className="mt-4 flex items-center justify-center cursor-pointer w-fit mx-auto">
       <div className="text-center">
         <div className="color-teal text-lg">
-          All
-          {' '}
-          <span className="font-medium">{total}</span>
-          {' '}
-          sessions
+          {t('All')}&nbsp;<span className="font-medium">{total}</span>&nbsp;
+          {t('sessions')}
         </div>
       </div>
     </div>

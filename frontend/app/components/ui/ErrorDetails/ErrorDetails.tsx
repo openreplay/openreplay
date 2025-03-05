@@ -4,17 +4,19 @@ import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import ErrorFrame from '../ErrorFrame/ErrorFrame';
+import { useTranslation } from 'react-i18next';
 
 const docLink = 'https://docs.openreplay.com/installation/upload-sourcemaps';
 
 interface Props {
-    fetchErrorStackList: any;
-    sourcemapUploaded?: boolean;
-    errorStack?: any;
-    message?: string;
-    error: any;
+  fetchErrorStackList: any;
+  sourcemapUploaded?: boolean;
+  errorStack?: any;
+  message?: string;
+  error: any;
 }
 function ErrorDetails(props: Props) {
+  const { t } = useTranslation();
   const { errorStore, sessionStore } = useStore();
   const { sessionId } = sessionStore.current;
   const errorStack = errorStore.instanceTrace;
@@ -35,22 +37,37 @@ function ErrorDetails(props: Props) {
         >
           <Icon name="info" size="16" color="red" />
           <div className="ml-2">
-            Source maps must be uploaded to OpenReplay to be able to see stack traces.
-            {' '}
-            <a href="#" className="color-red font-medium underline" style={{ textDecoration: 'underline' }} onClick={openDocs}>
-              Learn more.
+            {t(
+              'Source maps must be uploaded to OpenReplay to be able to see stack traces.',
+            )}
+            &nbsp;
+            <a
+              href="#"
+              className="color-red font-medium underline"
+              style={{ textDecoration: 'underline' }}
+              onClick={openDocs}
+            >
+              {t('Learn more.')}
             </a>
           </div>
         </div>
       )}
       <div className="flex items-center my-3">
-        <h3 className="text-xl mr-auto">Stacktrace</h3>
+        <h3 className="text-xl mr-auto">{t('Stacktrace')}</h3>
         <div className="flex justify-end mr-2">
-          <Button type="text" className={!showRaw ? 'text-main' : ''} onClick={() => setShowRaw(false)}>
-            FULL
+          <Button
+            type="text"
+            className={!showRaw ? 'text-main' : ''}
+            onClick={() => setShowRaw(false)}
+          >
+            {t('FULL')}
           </Button>
-          <Button type="text" className={showRaw ? 'text-main' : ''} onClick={() => setShowRaw(true)}>
-            RAW
+          <Button
+            type="text"
+            className={showRaw ? 'text-main' : ''}
+            onClick={() => setShowRaw(true)}
+          >
+            {t('RAW')}
           </Button>
         </div>
       </div>
@@ -60,10 +77,7 @@ function ErrorDetails(props: Props) {
       </div>
       {showRaw && (
         <div className="mb-3 code-font">
-          {error.name}
-          {' '}
-          :
-          {firstFunc || '?'}
+          {error.name} :{firstFunc || '?'}
         </div>
       )}
       {errorStack.map((frame: any, i: any) => (

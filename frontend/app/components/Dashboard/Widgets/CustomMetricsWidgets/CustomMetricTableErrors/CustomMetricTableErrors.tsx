@@ -4,20 +4,20 @@ import ErrorListItem from 'App/components/Dashboard/components/Errors/ErrorListI
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { useModal } from 'App/components/Modal';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
-import { useStore } from 'App/mstore';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
-    metric: any;
-    data: any;
-    isEdit: any;
-    history: any;
-    location: any;
+  metric: any;
+  data: any;
+  isEdit: any;
+  history: any;
+  location: any;
 }
 function CustomMetricTableErrors(props: RouteComponentProps & Props) {
-  const { metric, isEdit = false, data } = props;
+  const { t } = useTranslation();
+  const { metric, data } = props;
   const errorId = new URLSearchParams(props.location.search).get('errorId');
   const { showModal, hideModal } = useModal();
-  const { dashboardStore } = useStore();
 
   const onErrorClick = (e: any, error: any) => {
     e.stopPropagation();
@@ -33,7 +33,10 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
       right: true,
       width: 1200,
       onClose: () => {
-        if (props.history.location.pathname.includes('/dashboard') || props.history.location.pathname.includes('/metrics/')) {
+        if (
+          props.history.location.pathname.includes('/dashboard') ||
+          props.history.location.pathname.includes('/metrics/')
+        ) {
           props.history.replace({ search: '' });
         }
       },
@@ -46,26 +49,26 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
 
   return (
     <NoContent
-      title={(
+      title={
         <div className="flex items-center">
           <Icon name="info-circle" size={14} className="mr-2" />
-          No data available for the selected period.
+          {t('No data available for the selected period.')}
         </div>
-)}
+      }
       show={!data.errors || data.errors.length === 0}
       size="small"
       style={{ minHeight: 220 }}
     >
       <div className="pb-4">
-        {data.errors
-                    && data.errors.map((error: any, index: any) => (
-                      <div key={index} className="border-b last:border-none">
-                        <ErrorListItem
-                          error={error}
-                          onClick={(e) => onErrorClick(e, error)}
-                        />
-                      </div>
-                    ))}
+        {data.errors &&
+          data.errors.map((error: any, index: any) => (
+            <div key={index} className="border-b last:border-none">
+              <ErrorListItem
+                error={error}
+                onClick={(e) => onErrorClick(e, error)}
+              />
+            </div>
+          ))}
 
         {/* {isEdit && ( */}
         <div className="my-6 flex items-center justify-center">
@@ -87,20 +90,6 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
   );
 }
 
-export default withRouter<Props & RouteComponentProps, React.FunctionComponent>(CustomMetricTableErrors);
-
-function ViewMore({ total, limit }: any) {
-  return total > limit && (
-  <div className="mt-4 flex items-center justify-center cursor-pointer w-fit mx-auto">
-    <div className="text-center">
-      <div className="color-teal text-lg">
-        All
-        {' '}
-        <span className="font-medium">{total}</span>
-        {' '}
-        errors
-      </div>
-    </div>
-  </div>
-  );
-}
+export default withRouter<Props & RouteComponentProps, React.FunctionComponent>(
+  CustomMetricTableErrors,
+);

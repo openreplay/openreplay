@@ -49,7 +49,14 @@ export function createWebPlayer(
     store = wrapStore(store);
   }
 
-  const player = new WebPlayer(store, session, false, false, uiErrorHandler, prefetched);
+  const player = new WebPlayer(
+    store,
+    session,
+    false,
+    false,
+    uiErrorHandler,
+    prefetched,
+  );
   return [player, store];
 }
 
@@ -74,7 +81,7 @@ export function createLiveWebPlayer(
   config: RTCIceServer[] | null,
   agentId: number,
   projectId: number,
-  wrapStore?: (s:IWebLivePlayerStore) => IWebLivePlayerStore,
+  wrapStore?: (s: IWebLivePlayerStore) => IWebLivePlayerStore,
   uiErrorHandler?: { error: (msg: string) => void },
 ): [IWebLivePlayer, IWebLivePlayerStore] {
   let store: WebLivePlayerStore = new SimpleStore<WebLiveState>({
@@ -84,13 +91,22 @@ export function createLiveWebPlayer(
     store = wrapStore(store);
   }
 
-  const player = new WebLivePlayer(store, session, config, agentId, projectId, uiErrorHandler);
+  const player = new WebLivePlayer(
+    store,
+    session,
+    config,
+    agentId,
+    projectId,
+    uiErrorHandler,
+  );
   return [player, store];
 }
 
 export function createClipPlayer(
   session: SessionFilesInfo,
-  wrapStore?: (s: IOSPlayerStore | IWebPlayerStore) => IOSPlayerStore | IWebPlayerStore,
+  wrapStore?: (
+    s: IOSPlayerStore | IWebPlayerStore,
+  ) => IOSPlayerStore | IWebPlayerStore,
   uiErrorHandler?: { error: (msg: string) => void },
   range?: [number, number],
   isMobile?: boolean,

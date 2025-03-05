@@ -21,5 +21,9 @@ export {
 } from './schedule';
 export { default } from './filterOptions';
 // export { default as storageKeys } from './storageKeys';
-export const ENTERPRISE_REQUEIRED = 'This feature requires an enterprise license.';
-export const PASSWORD_POLICY = 'The password should have a minimum length of 8 characters and include at least one uppercase letter, one lowercase letter, one digit, and one special character.';
+export const ENTERPRISE_REQUEIRED = (t) =>
+  t('This feature requires an enterprise license.');
+export const PASSWORD_POLICY = (t) =>
+  t(
+    'The password should have a minimum length of 8 characters and include at least one uppercase letter, one lowercase letter, one digit, and one special character.',
+  );

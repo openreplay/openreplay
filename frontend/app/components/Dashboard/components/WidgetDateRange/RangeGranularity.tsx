@@ -9,9 +9,9 @@ function RangeGranularity({
 }: {
   period: {
     getDuration(): number;
-  },
-  density: number,
-  onDensityChange: (density: number) => void
+  };
+  density: number;
+  onDensityChange: (density: number) => void;
 }) {
   const granularityOptions = React.useMemo(() => {
     if (!period) return [];
@@ -41,7 +41,12 @@ function RangeGranularity({
 
   return (
     <Dropdown menu={menuProps} trigger={['click']}>
-      <Button type="text" variant="text" size="small" className="btn-granularity">
+      <Button
+        type="text"
+        variant="text"
+        size="small"
+        className="btn-granularity"
+      >
         <span>{selected}</span>
         <DownOutlined />
       </Button>
@@ -62,14 +67,14 @@ function calculateGranularities(periodDurationMs: number) {
   const result = [];
   if (periodDurationMs === PAST_24_HR_MS) {
     // if showing for 1 day, show by minute split as well
-    granularities.unshift(
-      { label: 'By minute', durationMs: 60 * 1000 },
-    );
+    granularities.unshift({ label: 'By minute', durationMs: 60 * 1000 });
   }
 
   for (const granularity of granularities) {
     if (periodDurationMs >= granularity.durationMs) {
-      const density = Math.floor(Number(BigInt(periodDurationMs) / BigInt(granularity.durationMs)));
+      const density = Math.floor(
+        Number(BigInt(periodDurationMs) / BigInt(granularity.durationMs)),
+      );
       result.push({ label: granularity.label, key: density });
     }
   }

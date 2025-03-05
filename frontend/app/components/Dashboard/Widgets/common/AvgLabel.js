@@ -1,9 +1,7 @@
 import React from 'react';
 import { numberWithCommas } from 'App/utils';
 
-function AvgLabel({
-  className = '', text, count, unit,
-}) {
+function AvgLabel({ className = '', text, count, unit }) {
   return (
     <div className={className}>
       <span className="text-sm color-gray-medium">{text}</span>

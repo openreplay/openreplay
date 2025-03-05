@@ -1,8 +1,10 @@
+/* eslint-disable i18next/no-literal-string */
 import React from 'react';
 import cn from 'classnames';
 import { CopyButton, CodeBlock } from 'UI';
 import stl from './installDocs.module.css';
 import CircleNumber from '../../CircleNumber';
+import { useTranslation } from 'react-i18next';
 
 export const installationCommand = `
 // make sure to grab latest version from https://github.com/openreplay/ios-tracker
@@ -72,14 +74,17 @@ TextField("Input", text: $text)
 Analytics.shared.addObservedInput(inputEl)`;
 
 function MobileInstallDocs({ site, ingestPoint }: any) {
-  const _usageCode = usageCode.replace('INGEST_POINT', ingestPoint).replace('PROJECT_KEY', site.projectKey);
+  const { t } = useTranslation();
+  const _usageCode = usageCode
+    .replace('INGEST_POINT', ingestPoint)
+    .replace('PROJECT_KEY', site.projectKey);
 
   return (
     <div className="flex flex-col gap-4 mt-4">
       <div>
         <div className="font-medium  flex gap-2 items-center">
           <CircleNumber text="1" />
-          <span>Install the Swift Package</span>
+          <span>{t('Install the Swift Package')}</span>
         </div>
         <div className={cn(stl.snippetWrapper, 'ml-8')}>
           <div className="absolute mt-1 mr-2 right-0">
@@ -92,7 +97,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
       <div>
         <div className="font-medium gap-2 flex items-center">
           <CircleNumber text="2" />
-          <span>Add to your app</span>
+          <span>{t('Add to your app')}</span>
         </div>
         <div className="flex ml-8">
           <div className="w-full">
@@ -109,15 +114,17 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
       <div>
         <div className="font-medium flex gap-2 items-center">
           <CircleNumber text="3" />
-          <span>Configuration</span>
+          <span>{t('Configuration')}</span>
         </div>
         <div className="flex ml-8 ">
           <div className="w-full">
             <div className={cn(stl.snippetWrapper)}>
               <CodeBlock code={configuration} language="swift" />
               <div className="mt-2">
-                By default, all options equals
-                <code className="p-1 text-red rounded bg-gray-lightest">true</code>
+                {t('By default, all options equals')}
+                <code className="p-1 text-red rounded bg-gray-lightest">
+                  true
+                </code>
               </div>
             </div>
           </div>
@@ -127,7 +134,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
       <div>
         <div className="font-medium flex gap-2 items-center">
           <CircleNumber text="4" />
-          <span> Set up touch events listener</span>
+          <span>&nbsp;{t('Set up touch events listener')}</span>
         </div>
         <div className="flex ml-8">
           <div className="w-full">
@@ -144,7 +151,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
       <div>
         <div className="font-medium flex gap-2 items-center">
           <CircleNumber text="5" />
-          <span>Hide sensitive views</span>
+          <span>{t('Hide sensitive views')}</span>
         </div>
         <div className="flex ml-8">
           <div className="w-full">
@@ -161,7 +168,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
       <div>
         <div className="font-medium flex gap-2 items-center">
           <CircleNumber text="6" />
-          <span> Track inputs</span>
+          <span>&nbsp;{t('Track inputs')}</span>
         </div>
         <div className="flex ml-8">
           <div className="w-full">
@@ -174,7 +181,6 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
           </div>
         </div>
       </div>
-
     </div>
   );
 }

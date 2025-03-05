@@ -3,6 +3,7 @@ import { Icon } from 'UI';
 import { Popover } from 'antd';
 import cn from 'classnames';
 import { IconMap } from '../../Filters/FilterModal/FilterModal';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   payload: any;
@@ -10,19 +11,23 @@ interface Props {
 
 function NodeButton(props: Props) {
   const { payload } = props;
+  const { t } = useTranslation();
 
   const payloadStr = payload.name ?? payload.eventType;
 
   // we need to only trim the middle, so its readable
-  const safePName = payloadStr.length > 70
-    ? `${payloadStr.slice(0, 25)}...${payloadStr.slice(-25)}`
-    : payloadStr;
+  const safePName =
+    payloadStr.length > 70
+      ? `${payloadStr.slice(0, 25)}...${payloadStr.slice(-25)}`
+      : payloadStr;
 
-  const eventIcon = IconMap[payload.eventType.toLowerCase()] ?? <Icon name="link-45deg" size={18} />;
+  const eventIcon = IconMap[payload.eventType.toLowerCase()] ?? (
+    <Icon name="link-45deg" size={18} />
+  );
   return (
     <div className="relative">
       <Popover
-        content={(
+        content={
           <div className="bg-white rounded mt-1 text-xs">
             <div className="border-b py-1 px-2 flex items-center gap-1">
               {eventIcon}
@@ -38,10 +43,7 @@ function NodeButton(props: Props) {
             <div className="border-b py-1 px-2 flex items-center gap-1">
               <Icon name="arrow-right-short" size={18} color="green" />
               <div className="ml-1 font-medium">
-                Continuing
-                {' '}
-                {Math.round(payload.value)}
-                %
+                {t('Continuing')}&nbsp;{Math.round(payload.value)}%
               </div>
             </div>
             {payload.avgTimeFromPrevious && (
@@ -49,14 +51,13 @@ function NodeButton(props: Props) {
                 <Icon name="clock-history" size={16} />
 
                 <div className="ml-1 font-medium">
-                  Average time from previous step
-                  {' '}
+                  {t('Average time from previous step')}{' '}
                   <span>{payload.avgTimeFromPrevious}</span>
                 </div>
               </div>
             )}
           </div>
-        )}
+        }
       >
         <div
           className="flex items-center gap-1 copy-popover select-none rounded shadow"

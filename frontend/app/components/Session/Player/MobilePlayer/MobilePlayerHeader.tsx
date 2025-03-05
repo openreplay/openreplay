@@ -25,17 +25,17 @@ function PlayerBlockHeader(props: Props) {
   const [hideBack, setHideBack] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
 
-  const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false };
+  const playerState = store?.get?.() || {
+    width: 0,
+    height: 0,
+    showEvents: false,
+  };
   const { width = 0, height = 0, showEvents = false } = playerState;
   const { customFieldStore, projectsStore, sessionStore } = useStore();
   const session = sessionStore.current;
   const siteId = projectsStore.siteId!;
   const history = useHistory();
-  const {
-    fullscreen,
-    setActiveTab,
-    activeTab,
-  } = props;
+  const { fullscreen, setActiveTab, activeTab } = props;
   const metaList = customFieldStore.list.map((i: any) => i.key);
 
   React.useEffect(() => {
@@ -63,10 +63,15 @@ function PlayerBlockHeader(props: Props) {
   }));
 
   return (
-    <div className={cn(stl.header, 'flex justify-between', { hidden: fullscreen })}>
+    <div
+      className={cn(stl.header, 'flex justify-between', { hidden: fullscreen })}
+    >
       <div className="flex w-full items-center">
         {!hideBack && (
-          <div className="flex items-center h-full cursor-pointer group" onClick={backHandler}>
+          <div
+            className="flex items-center h-full cursor-pointer group"
+            onClick={backHandler}
+          >
             {/* @ts-ignore TODO */}
             <BackLink label="Back" className="h-full ml-2" />
             <div className={stl.divider} />
@@ -77,7 +82,11 @@ function PlayerBlockHeader(props: Props) {
         <div className={cn('ml-auto flex items-center h-full')}>
           {_metaList.length > 0 && (
             <div className="border-l h-full flex items-center px-2">
-              <SessionMetaList className="" metaList={_metaList} maxLength={2} />
+              <SessionMetaList
+                className=""
+                metaList={_metaList}
+                maxLength={2}
+              />
             </div>
           )}
         </div>

@@ -3,35 +3,41 @@ import { Sankey, ResponsiveContainer } from 'recharts';
 import { NoContent, Icon } from 'UI';
 import CustomLink from './CustomLink';
 import CustomNode from './CustomNode';
+import { useTranslation } from 'react-i18next';
 
 interface Node {
-    idd: string;
-    name: string;
-    eventType: string;
-    avgTimeFromPrevious: number | null;
+  idd: string;
+  name: string;
+  eventType: string;
+  avgTimeFromPrevious: number | null;
 }
 
 interface Link {
-    id: string;
-    eventType: string;
-    value: number;
-    source: string;
-    target: string;
+  id: string;
+  eventType: string;
+  value: number;
+  source: string;
+  target: string;
 }
 
 interface Data {
-    nodes: Node[];
-    links: Link[];
+  nodes: Node[];
+  links: Link[];
 }
 
 interface Props {
-    data: Data;
-    nodeWidth?: number;
-    height?: number;
-    onChartClick?: (filters: any[]) => void;
+  data: Data;
+  nodeWidth?: number;
+  height?: number;
+  onChartClick?: (filters: any[]) => void;
 }
 
-const SankeyChart: React.FC<Props> = ({ data, height = 240, onChartClick }: Props) => {
+const SankeyChart: React.FC<Props> = ({
+  data,
+  height = 240,
+  onChartClick,
+}: Props) => {
+  const { t } = useTranslation();
   const [highlightedLinks, setHighlightedLinks] = useState<string[]>([]);
   const [hoveredLinks, setHoveredLinks] = useState<string[]>([]);
 
@@ -66,8 +72,12 @@ const SankeyChart: React.FC<Props> = ({ data, height = 240, onChartClick }: Prop
   const clickHandler = () => {
     setHighlightedLinks(hoveredLinks);
 
-    const firstLink = data.links.find((link) => link.id === hoveredLinks[0]) || null;
-    const lastLink = data.links.find((link) => link.id === hoveredLinks[hoveredLinks.length - 1]) || null;
+    const firstLink =
+      data.links.find((link) => link.id === hoveredLinks[0]) || null;
+    const lastLink =
+      data.links.find(
+        (link) => link.id === hoveredLinks[hoveredLinks.length - 1],
+      ) || null;
 
     const firstNode = data.nodes[firstLink?.source];
     const lastNode = data.nodes[lastLink?.target];
@@ -101,12 +111,12 @@ const SankeyChart: React.FC<Props> = ({ data, height = 240, onChartClick }: Prop
     <NoContent
       style={{ paddingTop: '80px' }}
       show={!data.nodes.length || !data.links.length}
-      title={(
+      title={
         <div className="flex items-center">
           <Icon name="info-circle" className="mr-2" size="14" />
-          No data available for the selected period.
+          {t('No data available for the selected period.')}
         </div>
-              )}
+      }
     >
       <ResponsiveContainer height={height} width="100%">
         <Sankey
@@ -115,11 +125,9 @@ const SankeyChart: React.FC<Props> = ({ data, height = 240, onChartClick }: Prop
           nodePadding={20}
           sort
           nodeWidth={4}
-                    // linkCurvature={0.9}
+          // linkCurvature={0.9}
           onClick={clickHandler}
-          link={({
-            source, target, id, ...linkProps
-          }, index) => (
+          link={({ source, target, id, ...linkProps }, index) => (
             <CustomLink
               {...linkProps}
               hoveredLinks={hoveredLinks}

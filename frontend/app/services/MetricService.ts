@@ -18,9 +18,10 @@ export default class MetricService {
    * @returns {Promise<any>}
    */
   getMetrics(): Promise<any> {
-    return this.client.get('/cards')
-      .then((response: { json: () => any; }) => response.json())
-      .then((response: { data: any; }) => response.data || []);
+    return this.client
+      .get('/cards')
+      .then((response: { json: () => any }) => response.json())
+      .then((response: { data: any }) => response.data || []);
   }
 
   /**
@@ -29,9 +30,10 @@ export default class MetricService {
    * @returns {Promise<any>}
    */
   getMetric(metricId: string): Promise<any> {
-    return this.client.get(`/cards/${metricId}`)
+    return this.client
+      .get(`/cards/${metricId}`)
       .then((r) => r.json())
-      .then((response: { data: any; }) => response.data || {})
+      .then((response: { data: any }) => response.data || {})
       .catch((e) => Promise.reject(e));
   }
 
@@ -44,9 +46,10 @@ export default class MetricService {
     const data = metric.toJson();
     const isCreating = !data[Widget.ID_KEY];
     const url = isCreating ? '/cards' : `/cards/${data[Widget.ID_KEY]}`;
-    return this.client.post(url, data)
+    return this.client
+      .post(url, data)
       .then((r) => r.json())
-      .then((response: { data: any; }) => response.data || {})
+      .then((response: { data: any }) => response.data || {})
       .catch((e) => Promise.reject(e));
   }
 
@@ -56,9 +59,10 @@ export default class MetricService {
    * @returns {Promise<any>}
    */
   deleteMetric(metricId: string): Promise<any> {
-    return this.client.delete(`/cards/${metricId}`)
-      .then((response: { json: () => any; }) => response.json())
-      .then((response: { data: any; }) => response.data);
+    return this.client
+      .delete(`/cards/${metricId}`)
+      .then((response: { json: () => any }) => response.json())
+      .then((response: { data: any }) => response.data);
   }
 
   /**
@@ -66,16 +70,22 @@ export default class MetricService {
    * @returns {Promise<any>}
    */
   getTemplates(): Promise<any> {
-    return this.client.get('/cards/templates')
-      .then((response: { json: () => any; }) => response.json())
-      .then((response: { data: any; }) => response.data || []);
+    return this.client
+      .get('/cards/templates')
+      .then((response: { json: () => any }) => response.json())
+      .then((response: { data: any }) => response.data || []);
   }
 
-  async getMetricChartData(metric: Widget, data: any, isSaved: boolean = false): Promise<any> {
+  async getMetricChartData(
+    metric: Widget,
+    data: any,
+    isSaved: boolean = false,
+  ): Promise<any> {
     if (
-      metric.metricType === HEATMAP
-      && document.location.pathname.split('/').pop() === 'metrics'
-      && (document.location.pathname.indexOf('dashboard') !== -1 && document.location.pathname.indexOf('metric') === -1)
+      metric.metricType === HEATMAP &&
+      document.location.pathname.split('/').pop() === 'metrics' &&
+      document.location.pathname.indexOf('dashboard') !== -1 &&
+      document.location.pathname.indexOf('metric') === -1
     ) {
       return Promise.resolve({});
     }
@@ -100,9 +110,13 @@ export default class MetricService {
    * @returns
    */
   fetchSessions(metricId: string | null, filter: any): Promise<any> {
-    return this.client.post(metricId ? `/cards/${metricId}/sessions` : '/cards/try/sessions', filter)
-      .then((response: { json: () => any; }) => response.json())
-      .then((response: { data: any; }) => response.data || []);
+    return this.client
+      .post(
+        metricId ? `/cards/${metricId}/sessions` : '/cards/try/sessions',
+        filter,
+      )
+      .then((response: { json: () => any }) => response.json())
+      .then((response: { data: any }) => response.data || []);
   }
 
   async fetchIssues(filter: any): Promise<any> {
@@ -115,12 +129,13 @@ export default class MetricService {
 
     const resp: Response = await this.client.post('/cards/try/issues', filter);
     const json: any = await resp.json();
-    return await json.data || {};
+    return (await json.data) || {};
   }
 
   fetchIssue(metricId: string, issueId: string, params: any): Promise<any> {
-    return this.client.post(`/cards/${metricId}/issues/${issueId}/sessions`, params)
-      .then((response: { json: () => any; }) => response.json())
-      .then((response: { data: any; }) => response.data || {});
+    return this.client
+      .post(`/cards/${metricId}/issues/${issueId}/sessions`, params)
+      .then((response: { json: () => any }) => response.json())
+      .then((response: { data: any }) => response.data || {});
   }
 }

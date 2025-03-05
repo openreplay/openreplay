@@ -18,69 +18,72 @@ overlay.style.bottom = 0;
 overlay.style.top = 0;
 overlay.style.zIndex = Z_BASE;
 
-const withOverlay = (
-  overlayedName = 'overlayed',
-  clickHandlerName = 'onOverlayClick',
-  zIndex = 0,
-) => (BaseComponent) => class extends React.Component {
-  constructor(props) {
-    super(props);
-    this.baseRef = React.createRef();
-    if (props[overlayedName]) {
-      overlayedCount++;
-    }
-  }
-
-  componentDidMount() {
-    this.renderOverlay();
-    this.setOverlayedStyles();
-  }
-
-  componentDidUpdate(prevProps) {
-    if (prevProps[overlayedName] !== this.props[overlayedName]) {
-      if (!this.props[overlayedName]) {
-        overlayedCount--;
+const withOverlay =
+  (
+    overlayedName = 'overlayed',
+    clickHandlerName = 'onOverlayClick',
+    zIndex = 0,
+  ) =>
+  (BaseComponent) =>
+    class extends React.Component {
+      constructor(props) {
+        super(props);
+        this.baseRef = React.createRef();
+        if (props[overlayedName]) {
+          overlayedCount++;
+        }
       }
-      if (this.props[overlayedName]) {
-        overlayedCount++;
+
+      componentDidMount() {
+        this.renderOverlay();
+        this.setOverlayedStyles();
       }
-      this.renderOverlay();
-      this.setOverlayedStyles();
-    }
-  }
 
-  clickHandler = () => {
-    const clickHandler = this.props[clickHandlerName];
-    if (clickHandler) clickHandler();
-  };
-
-  renderOverlay() {
-    if (overlayedCount > 0) {
-      if (overlay.parentNode === null) {
-        document.body.appendChild(overlay);
+      componentDidUpdate(prevProps) {
+        if (prevProps[overlayedName] !== this.props[overlayedName]) {
+          if (!this.props[overlayedName]) {
+            overlayedCount--;
+          }
+          if (this.props[overlayedName]) {
+            overlayedCount++;
+          }
+          this.renderOverlay();
+          this.setOverlayedStyles();
+        }
       }
-      if (this.props[overlayedName]) {
-        overlay.addEventListener('click', this.clickHandler);
+
+      clickHandler = () => {
+        const clickHandler = this.props[clickHandlerName];
+        if (clickHandler) clickHandler();
+      };
+
+      renderOverlay() {
+        if (overlayedCount > 0) {
+          if (overlay.parentNode === null) {
+            document.body.appendChild(overlay);
+          }
+          if (this.props[overlayedName]) {
+            overlay.addEventListener('click', this.clickHandler);
+          }
+        } else if (overlay.parentNode !== null) {
+          overlay.parentNode.removeChild(overlay);
+        }
       }
-    } else if (overlay.parentNode !== null) {
-      overlay.parentNode.removeChild(overlay);
-    }
-  }
 
-  setOverlayedStyles() {
-    const baseRoot = findDOMNode(this.baseRef.current);
-    const overlayed = this.props[overlayedName];
-    const actualZIndex = Z_BASE + 1 + zIndex;
-    if (baseRoot) {
-      // TODO: care about styles rewriting case
-      baseRoot.style.position = 'relative';
-      baseRoot.style.zIndex = overlayed ? actualZIndex : 'initial';
-    }
-  }
+      setOverlayedStyles() {
+        const baseRoot = findDOMNode(this.baseRef.current);
+        const overlayed = this.props[overlayedName];
+        const actualZIndex = Z_BASE + 1 + zIndex;
+        if (baseRoot) {
+          // TODO: care about styles rewriting case
+          baseRoot.style.position = 'relative';
+          baseRoot.style.zIndex = overlayed ? actualZIndex : 'initial';
+        }
+      }
 
-  render() {
-    return <BaseComponent {...this.props} ref={this.baseRef} />;
-  }
-};
+      render() {
+        return <BaseComponent {...this.props} ref={this.baseRef} />;
+      }
+    };
 
 export default withOverlay;

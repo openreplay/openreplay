@@ -25,7 +25,7 @@ export default class PrimitiveReader {
         return null;
       }
       b = this.buf[p++];
-      r += (b & 0x7F) * s;
+      r += (b & 0x7f) * s;
       s *= 128;
     } while (b >= 0x80);
     this.p = p;
@@ -33,14 +33,16 @@ export default class PrimitiveReader {
   }
 
   readCustomIndex(input: Uint8Array) {
-    let p = 0; let r = 0; let s = 1; let
-      b;
+    let p = 0;
+    let r = 0;
+    let s = 1;
+    let b;
     do {
       if (p > 8) {
         return null;
       }
       b = input[p++];
-      r += (b & 0x7F) * s;
+      r += (b & 0x7f) * s;
       s *= 128;
     } while (b >= 0x80);
     return r;
@@ -48,7 +50,9 @@ export default class PrimitiveReader {
 
   readInt(): number | null {
     let u = this.readUint();
-    if (u === null) { return u; }
+    if (u === null) {
+      return u;
+    }
     if (u % 2) {
       u = (u + 1) / -2;
     } else {
@@ -59,12 +63,16 @@ export default class PrimitiveReader {
 
   readString(): string | null {
     const l = this.readUint();
-    if (l === null || this.p + l > this.buf.length) { return null; }
-    return new TextDecoder().decode(this.buf.subarray(this.p, this.p += l));
+    if (l === null || this.p + l > this.buf.length) {
+      return null;
+    }
+    return new TextDecoder().decode(this.buf.subarray(this.p, (this.p += l)));
   }
 
   readBoolean(): boolean | null {
-    if (this.p >= this.buf.length) { return null; }
+    if (this.p >= this.buf.length) {
+      return null;
+    }
     return !!this.buf[this.p++];
   }
 

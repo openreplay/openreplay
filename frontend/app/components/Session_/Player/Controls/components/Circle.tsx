@@ -3,8 +3,8 @@ import cn from 'classnames';
 import styles from '../timeline.module.css';
 
 interface Props {
-    preview?: boolean;
-    isGreen?: boolean;
+  preview?: boolean;
+  isGreen?: boolean;
 }
 export const Circle: FC<Props> = memo(({ preview, isGreen }) => (
   <div

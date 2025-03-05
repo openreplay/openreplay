@@ -7,7 +7,8 @@ import { Input } from 'UI';
 const AiSearchField = observer(() => {
   const { searchStore } = useStore();
   const appliedFilter = searchStore.instance;
-  const hasFilters = appliedFilter && appliedFilter.filters && appliedFilter.filters.length > 0;
+  const hasFilters =
+    appliedFilter && appliedFilter.filters && appliedFilter.filters.length > 0;
   const { aiFiltersStore } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -50,17 +51,17 @@ const AiSearchField = observer(() => {
         autoComplete="off"
         className="px-4 py-1 text-lg placeholder-lg !border-0 nofocus"
         leadingButton={
-            searchQuery !== '' ? (
-              <div
-                className="h-full flex items-center cursor-pointer"
-                onClick={hasFilters ? clearAll : fetchResults}
-              >
-                <div className="px-2 py-1 hover:bg-active-blue rounded mr-2">
-                  {hasFilters ? <CloseOutlined /> : <EnterOutlined />}
-                </div>
+          searchQuery !== '' ? (
+            <div
+              className="h-full flex items-center cursor-pointer"
+              onClick={hasFilters ? clearAll : fetchResults}
+            >
+              <div className="px-2 py-1 hover:bg-active-blue rounded mr-2">
+                {hasFilters ? <CloseOutlined /> : <EnterOutlined />}
               </div>
-            ) : null
-          }
+            </div>
+          ) : null
+        }
       />
     </div>
   );

@@ -10,7 +10,11 @@ import { Note } from 'App/services/NotesService';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import PlayerErrorBoundary from 'Components/Session/Player/PlayerErrorBoundary';
-import { IOSPlayerContext, defaultContextValue, MobilePlayerContext } from './playerContext';
+import {
+  IOSPlayerContext,
+  defaultContextValue,
+  MobilePlayerContext,
+} from './playerContext';
 import PlayerContent from './Player/MobilePlayer/PlayerContent';
 import ReadNote from '../Session_/Player/Controls/components/ReadNote';
 
@@ -22,13 +26,18 @@ let playerInst: IOSPlayerContext['player'] | undefined;
 
 function MobilePlayer(props: any) {
   const {
-    notesStore, sessionStore, uiPlayerStore, integrationsStore, userStore,
+    notesStore,
+    sessionStore,
+    uiPlayerStore,
+    integrationsStore,
+    userStore,
   } = useStore();
   const session = sessionStore.current;
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   // @ts-ignore
-  const [contextValue, setContextValue] = useState<IOSPlayerContext>(defaultContextValue);
+  const [contextValue, setContextValue] =
+    useState<IOSPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
   const { fullscreen } = uiPlayerStore;
   const { toggleFullscreen } = uiPlayerStore;
@@ -59,7 +68,10 @@ function MobilePlayer(props: any) {
   const { messagesProcessed } = contextValue.store?.get() || {};
 
   React.useEffect(() => {
-    if ((messagesProcessed && session.events.length > 0) || session.errors.length > 0) {
+    if (
+      (messagesProcessed && session.events.length > 0) ||
+      session.errors.length > 0
+    ) {
       contextValue.player?.updateLists?.(session);
     }
   }, [session.events, session.errors, contextValue.player, messagesProcessed]);
@@ -69,7 +81,12 @@ function MobilePlayer(props: any) {
       contextValue.player.pause();
     }
 
-    if (activeTab === '' && !noteItem !== undefined && messagesProcessed && contextValue.player) {
+    if (
+      activeTab === '' &&
+      !noteItem !== undefined &&
+      messagesProcessed &&
+      contextValue.player
+    ) {
       const jumpToTime = props.query.get('jumpto');
 
       if (jumpToTime) {
@@ -131,13 +148,20 @@ function MobilePlayer(props: any) {
         ) : (
           <Loader
             style={{
-              position: 'fixed', top: '0%', left: '50%', transform: 'translateX(-50%)',
+              position: 'fixed',
+              top: '0%',
+              left: '50%',
+              transform: 'translateX(-50%)',
             }}
           />
         )}
         <Modal open={noteItem !== undefined} onClose={onNoteClose}>
           {noteItem !== undefined ? (
-            <ReadNote note={noteItem} onClose={onNoteClose} notFound={!noteItem} />
+            <ReadNote
+              note={noteItem}
+              onClose={onNoteClose}
+              notFound={!noteItem}
+            />
           ) : null}
         </Modal>
       </PlayerErrorBoundary>

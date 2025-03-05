@@ -1,22 +1,23 @@
+/* eslint-disable i18next/no-literal-string */
 import React, { useEffect } from 'react';
 import { useStore } from 'App/mstore';
 import { FilterKey } from 'App/types/filter/filterType';
-import {
-  NoContent, Pagination, Loader, Avatar,
-} from 'UI';
+import { NoContent, Pagination, Loader, Avatar } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { useObserver, observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { useTranslation } from 'react-i18next';
 
 const PER_PAGE = 10;
 interface Props {
-    userId: string;
-    hash: string;
-    name: string;
+  userId: string;
+  hash: string;
+  name: string;
 }
 function UserSessionsModal(props: Props) {
+  const { t } = useTranslation();
   const { userId, hash, name } = props;
   const { sessionStore } = useStore();
   const { hideModal } = useModal();
@@ -43,7 +44,10 @@ function UserSessionsModal(props: Props) {
 
   useEffect(() => {
     const userFilter = {
-      key: FilterKey.USERID, value: [userId], operator: 'is', isEvent: false,
+      key: FilterKey.USERID,
+      value: [userId],
+      operator: 'is',
+      isEvent: false,
     };
     filter.update('filters', [userFilter]);
   }, []);
@@ -56,30 +60,46 @@ function UserSessionsModal(props: Props) {
           <Avatar isActive={false} seed={hash} isAssist={false} className="" />
           <div className="ml-3">
             {name}
-            's
-            <span className="color-gray-dark">Sessions</span>
+            &apos;s
+            <span className="color-gray-dark">{t('Sessions')}</span>
           </div>
         </div>
         <div>
-          <SelectDateRange period={filter.period} onChange={onDateChange} right />
+          <SelectDateRange
+            period={filter.period}
+            onChange={onDateChange}
+            right
+          />
         </div>
       </div>
 
       <NoContent
         show={data.sessions.length === 0}
-        title={(
+        title={
           <div>
             <AnimatedSVG name={ICONS.NO_SESSIONS} size={60} />
             <div className="mt-4" />
-            <div className="text-center">No recordings found</div>
+            <div className="text-center">{t('No recordings found')}</div>
           </div>
-              )}
+        }
       >
-        <div className="border rounded m-5 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 85px)' }}>
+        <div
+          className="border rounded m-5 overflow-y-auto"
+          style={{ maxHeight: 'calc(100vh - 85px)' }}
+        >
           <Loader loading={loading}>
             {data.sessions.map((session: any) => (
-              <div className="border-b last:border-none" key={session.sessionId}>
-                <SessionItem key={session.sessionId} session={session} compact onClick={hideModal} ignoreAssist />
+              <div
+                className="border-b last:border-none"
+                key={session.sessionId}
+              >
+                <SessionItem
+                  key={session.sessionId}
+                  session={session}
+                  compact
+                  onClick={hideModal}
+                  ignoreAssist
+                />
               </div>
             ))}
           </Loader>
@@ -87,19 +107,16 @@ function UserSessionsModal(props: Props) {
           <div className="flex items-center justify-between p-5">
             <div>
               {/* showing x to x of total sessions  */}
-              Showing
-              {' '}
-              <span className="font-medium">{(filter.page - 1) * PER_PAGE + 1}</span>
-              {' '}
-              to
-              {' '}
-              <span className="font-medium">{(filter.page - 1) * PER_PAGE + data.sessions.length}</span>
-              {' '}
-              of
-              {' '}
-              <span className="font-medium">{data.total}</span>
-              {' '}
-              sessions.
+              {t('Showing')}{' '}
+              <span className="font-medium">
+                {(filter.page - 1) * PER_PAGE + 1}
+              </span>{' '}
+              {t('to')}{' '}
+              <span className="font-medium">
+                {(filter.page - 1) * PER_PAGE + data.sessions.length}
+              </span>{' '}
+              {t('of')}&nbsp;<span className="font-medium">{data.total}</span>
+              &nbsp;{t('sessions')}.
             </div>
             <Pagination
               page={filter.page}

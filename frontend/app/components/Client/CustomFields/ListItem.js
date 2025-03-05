@@ -17,7 +17,10 @@ function ListItem({ field, onEdit, disabled }) {
       onClick={() => field.index !== 0 && onEdit(field)}
     >
       <span>{field.key}</span>
-      <div className="invisible group-hover:visible" data-hidden={field.index === 0}>
+      <div
+        className="invisible group-hover:visible"
+        data-hidden={field.index === 0}
+      >
         <Button type="text" icon={<Icon name="pencil" size={16} />} />
       </div>
     </div>

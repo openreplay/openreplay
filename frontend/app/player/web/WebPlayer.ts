@@ -40,19 +40,33 @@ export default class WebPlayer extends Player {
     public readonly uiErrorHandler?: { error: (msg: string) => void },
     private readonly prefetched?: boolean,
   ) {
-    const initialLists = live ? {} : {
-      event: session.events || [],
-      stack: session.stackEvents || [],
-      frustrations: session.frustrations || [],
-      exceptions: session.errors?.map(({ name, ...rest }: any) => Log({
-        level: LogLevel.ERROR,
-        value: name,
-        ...rest,
-      })) || [],
-    };
+    const initialLists = live
+      ? {}
+      : {
+          event: session.events || [],
+          stack: session.stackEvents || [],
+          frustrations: session.frustrations || [],
+          exceptions:
+            session.errors?.map(({ name, ...rest }: any) =>
+              Log({
+                level: LogLevel.ERROR,
+                value: name,
+                ...rest,
+              }),
+            ) || [],
+        };
 
-    const screen = new Screen(session.isMobile, isClickMap ? ScaleMode.AdjustParentHeight : ScaleMode.Embed);
-    const messageManager = new MessageManager(session, wpState, screen, initialLists, uiErrorHandler);
+    const screen = new Screen(
+      session.isMobile,
+      isClickMap ? ScaleMode.AdjustParentHeight : ScaleMode.Embed,
+    );
+    const messageManager = new MessageManager(
+      session,
+      wpState,
+      screen,
+      initialLists,
+      uiErrorHandler,
+    );
     const messageLoader = new MessageLoader(
       session,
       wpState,
@@ -65,7 +79,8 @@ export default class WebPlayer extends Player {
     this.messageManager = messageManager;
     this.messageLoader = messageLoader;
 
-    if (!live && !prefetched) { // hack. TODO: split OfflinePlayer class
+    if (!live && !prefetched) {
+      // hack. TODO: split OfflinePlayer class
       void messageLoader.loadFiles();
       wpState.update({ mobsFetched: true });
     }
@@ -98,7 +113,10 @@ export default class WebPlayer extends Player {
     void this.messageLoader.loadFiles();
 
     this.targetMarker = new TargetMarker(this.screen, this.wpState);
-    this.inspectorController = new InspectorController(this.screen, this.wpState);
+    this.inspectorController = new InspectorController(
+      this.screen,
+      this.wpState,
+    );
 
     const endTime = session.duration?.valueOf() || 0;
     this.wpState.update({
@@ -116,11 +134,14 @@ export default class WebPlayer extends Player {
       event: session.events || [],
       frustrations: session.frustrations || [],
       stack: session.stackEvents || [],
-      exceptions: session.errors?.map(({ name, ...rest }: any) => Log({
-        level: LogLevel.ERROR,
-        value: name,
-        ...rest,
-      })) || [],
+      exceptions:
+        session.errors?.map(({ name, ...rest }: any) =>
+          Log({
+            level: LogLevel.ERROR,
+            value: name,
+            ...rest,
+          }),
+        ) || [],
     };
     this.messageManager.updateLists(lists);
   };

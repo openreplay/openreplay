@@ -9,12 +9,14 @@ import { useHistory } from 'react-router';
 import { useStore } from 'App/mstore';
 import AlertsList from './AlertsList';
 import AlertsSearch from './AlertsSearch';
+import { useTranslation } from 'react-i18next';
 
 interface IAlertsView {
-    siteId: string;
+  siteId: string;
 }
 
 function AlertsView({ siteId }: IAlertsView) {
+  const { t } = useTranslation();
   const history = useHistory();
   const { alertsStore } = useStore();
 
@@ -27,20 +29,19 @@ function AlertsView({ siteId }: IAlertsView) {
     return unmount;
   }, [history]);
   return (
-    <div style={{ maxWidth: '1360px', margin: 'auto' }} className="bg-white rounded-lg shadow-sm py-4 border">
+    <div
+      style={{ maxWidth: '1360px', margin: 'auto' }}
+      className="bg-white rounded-lg shadow-sm py-4 border"
+    >
       <div className="flex items-center mb-4 justify-between px-6">
         <div className="flex items-baseline mr-3">
           <PageTitle title="Alerts" />
         </div>
         <div className="ml-auto flex items-center">
           <Link to={withSiteId(alertCreate(), siteId)}>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-            >
-              Create Alert
+            <Button type="primary" icon={<PlusOutlined />}>
+              {t('Create Alert')}
             </Button>
-
           </Link>
           <div className="ml-4 w-1/4" style={{ minWidth: 300 }}>
             <AlertsSearch />

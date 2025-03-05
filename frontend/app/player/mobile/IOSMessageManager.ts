@@ -119,7 +119,13 @@ export default class IOSMessageManager implements IMessageManager {
 
   public snapshotManager: SnapshotManager;
 
-  private appFocusTracker = new ListWalker<{tp: 102, time: number, timestamp: number, value: number, name: string}>();
+  private appFocusTracker = new ListWalker<{
+    tp: 102;
+    time: number;
+    timestamp: number;
+    value: number;
+    name: string;
+  }>();
 
   constructor(
     private readonly session: Record<string, any>,
@@ -131,7 +137,9 @@ export default class IOSMessageManager implements IMessageManager {
     this.sessionStart = this.session.startedAt;
     this.lists = new Lists(initialLists);
     this.touchManager = new TouchManager(screen);
-    this.activityManager = new ActivityManager(this.session.duration.milliseconds); // only if not-live
+    this.activityManager = new ActivityManager(
+      this.session.duration.milliseconds,
+    ); // only if not-live
     this.snapshotManager = new SnapshotManager();
   }
 
@@ -158,9 +166,7 @@ export default class IOSMessageManager implements IMessageManager {
   }
 
   /** empty here. Kept for consistency with normal manager */
-  sortDomRemoveMessages() {
-
-  }
+  sortDomRemoveMessages() {}
 
   public getListsFullState = () => this.lists.getFullListsState();
 
@@ -200,7 +206,9 @@ export default class IOSMessageManager implements IMessageManager {
 
   resetMessageManagers() {
     this.touchManager = new TouchManager(this.screen);
-    this.activityManager = new ActivityManager(this.session.duration.milliseconds);
+    this.activityManager = new ActivityManager(
+      this.session.duration.milliseconds,
+    );
   }
 
   move(t: number): any {
@@ -222,9 +230,9 @@ export default class IOSMessageManager implements IMessageManager {
 
     this.touchManager.move(t);
     if (
-      this.waitingForFiles
-      && this.lastMessageTime <= t
-      && t !== this.session.duration.milliseconds
+      this.waitingForFiles &&
+      this.lastMessageTime <= t &&
+      t !== this.session.duration.milliseconds
     ) {
       this.setMessagesLoading(true);
     }
@@ -236,7 +244,9 @@ export default class IOSMessageManager implements IMessageManager {
       });
     }
     Object.assign(stateToUpdate, this.lists.moveGetState(t));
-    Object.assign(stateToUpdate, { performanceListNow: this.lists.lists.performance.listNow });
+    Object.assign(stateToUpdate, {
+      performanceListNow: this.lists.lists.performance.listNow,
+    });
     Object.keys(stateToUpdate).length > 0 && this.state.update(stateToUpdate);
   }
 
@@ -273,7 +283,9 @@ export default class IOSMessageManager implements IMessageManager {
       //   console.log('input', msg)
       //   break;
       case MType.MobileNetworkCall:
-        this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart));
+        this.lists.lists.fetch.insert(
+          getResourceFromNetworkRequest(msg, this.sessionStart),
+        );
         break;
       case MType.WsChannel:
         this.lists.lists.websocket.insert(msg);

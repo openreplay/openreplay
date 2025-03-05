@@ -6,7 +6,7 @@ import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 
 interface Props {
-    removeSelectedValue: (value: string) => void;
+  removeSelectedValue: (value: string) => void;
 }
 function FunnelIssuesSelectedFilters(props: Props) {
   const { funnelStore } = useStore();

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Checkbox, Modal, Input } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 function EditHlModal({
   open,
@@ -14,6 +15,7 @@ function EditHlModal({
   text: string;
   visible: boolean;
 }) {
+  const { t } = useTranslation();
   const [noteText, setNoteText] = React.useState(text);
   const [checkboxVisible, setVisible] = React.useState(visible);
 
@@ -32,7 +34,7 @@ function EditHlModal({
 
   return (
     <Modal
-      title="Edit Highlight"
+      title={t('Edit Highlight')}
       open={open}
       okText="Save"
       width={350}
@@ -42,20 +44,20 @@ function EditHlModal({
     >
       <div className="flex flex-col gap-2">
         <Input.TextArea
-          placeholder="Highlight note"
+          placeholder={t('Highlight note')}
           onChange={(e) => onEdit(e.target.value)}
           maxLength={200}
           value={noteText}
         />
         <div>
           {noteText.length}
-          /200 Characters remaining
+          {t('/200 Characters remaining')}
         </div>
         <Checkbox
           checked={checkboxVisible}
           onChange={(e) => setVisible(e.target.checked)}
         >
-          Team can see and edit this Highlight.
+          {t('Team can see and edit this Highlight.')}
         </Checkbox>
       </div>
     </Modal>

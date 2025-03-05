@@ -2,7 +2,10 @@ import type Screen from './Screen';
 import type Marker from './Marker';
 
 export default class Inspector {
-  constructor(private screen: Screen, private marker: Marker) {}
+  constructor(
+    private screen: Screen,
+    private marker: Marker,
+  ) {}
 
   private onMouseMove = (e: MouseEvent) => {
     e.stopPropagation();

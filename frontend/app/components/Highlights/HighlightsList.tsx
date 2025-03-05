@@ -14,8 +14,10 @@ import HighlightsListHeader from './HighlightsListHeader';
 import EditHlModal from './EditHlModal';
 import HighlightPlayer from './HighlightPlayer';
 import HighlightClip from './HighlightClip';
+import { useTranslation } from 'react-i18next';
 
 function HighlightsList() {
+  const { t } = useTranslation();
   const history = useHistory();
   const params = new URLSearchParams(window.location.search);
   const hlId = params.get('highlight');
@@ -76,7 +78,7 @@ function HighlightsList() {
   const onDelete = async (id: number) => {
     await notesStore.deleteNote(id);
     refetch();
-    toast.success('Highlight deleted successfully');
+    toast.success(t('Highlight deleted successfully'));
   };
 
   const onItemClick = (id: string) => {
@@ -90,7 +92,7 @@ function HighlightsList() {
   const onEdit = (id: string) => {
     const hl = notesStore.getNoteById(id);
     if (!hl) {
-      return toast.error('Highlight not found in the list');
+      return toast.error(t('Highlight not found in the list'));
     }
     setEditHl(hl);
     setEditModalOpen(true);
@@ -107,10 +109,10 @@ function HighlightsList() {
     };
     try {
       await notesStore.updateNote(editHl.noteId, newNote);
-      toast.success('Highlight updated successfully');
+      toast.success(t('Highlight updated successfully'));
     } catch (e) {
       console.error(e);
-      toast.error('Error updating highlight');
+      toast.error(t('Error updating highlight'));
     }
 
     setEditModalOpen(false);
@@ -148,12 +150,11 @@ function HighlightsList() {
         <Loader loading={isPending}>
           <NoContent
             show={isEmpty}
-            subtext={(
+            subtext={
               <div className="w-full text-center">
-                Highlight and note observations during session replays and share
-                them with your team.
+                {t('Highlight and note observations during session replays and share them with your team.')}
               </div>
-            )}
+            }
           >
             {notes.map((note) => (
               <HighlightClip
@@ -186,15 +187,13 @@ function HighlightsList() {
         )}
       >
         <div>
-          Showing
-          {' '}
+          {t('Showing')}&nbsp;
           <span className="font-medium">{(page - 1) * limit + 1}</span>
-          {' to '}
+          &nbsp;{t('to')}&nbsp;
           <span className="font-medium">{(page - 1) * limit + listLength}</span>
-          {' of '}
+          &nbsp;{t('of')}&nbsp;
           <span className="font-medium">{numberWithCommas(total)}</span>
-          {' highlights'}
-          .
+          &nbsp;{t('highlights')}.
         </div>
         <Pagination
           page={page}
@@ -208,4 +207,9 @@ function HighlightsList() {
   );
 }
 
-export default withPermissions(['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', false, false)(observer(HighlightsList));
+export default withPermissions(
+  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'],
+  '',
+  false,
+  false,
+)(observer(HighlightsList));

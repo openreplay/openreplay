@@ -35,10 +35,11 @@ class CountryIconProvider implements IconProvider {
     if (Flags[s as keyof typeof Flags]) {
       const FlagComponent = Flags[s as keyof typeof Flags];
       return (
-        <FlagComponent style={{
-          width: 24,
-          height: 24,
-        }}
+        <FlagComponent
+          style={{
+            width: 24,
+            height: 24,
+          }}
         />
       );
     }
@@ -82,8 +83,13 @@ class DeviceIconProvider implements IconProvider {
     if (s.includes('desktop')) {
       icon = 'color/device/desktop';
     } else if (
-      s.includes('mobile') || s.includes('iphone') || s === 'k' || s.includes('android')
-      || s.includes('smartphone') || s.includes('phone') || s.includes('moto')
+      s.includes('mobile') ||
+      s.includes('iphone') ||
+      s === 'k' ||
+      s.includes('android') ||
+      s.includes('smartphone') ||
+      s.includes('phone') ||
+      s.includes('moto')
     ) {
       icon = 'color/device/mobile';
     } else if (s.includes('tablet')) {
@@ -102,9 +108,11 @@ class OsIconProvider implements IconProvider {
     const s = obj.name.toLowerCase();
     if (s.includes('windows')) {
       return 'os/windows';
-    } if (s.includes('mac')) {
+    }
+    if (s.includes('mac')) {
       return 'os/mac';
-    } if (s.includes('linux')) {
+    }
+    if (s.includes('linux')) {
       return 'os/linux';
     }
     return 'os/unknown';

@@ -9,9 +9,7 @@ interface Props extends RouteComponentProps {
   selectedList: any;
 }
 function GridView(props: Props) {
-  const {
-    siteId, list, selectedList, history,
-  } = props;
+  const { siteId, list, selectedList, history } = props;
 
   const onItemClick = (metricId: number) => {
     const path = withSiteId(`/metrics/${metricId}`, siteId);

@@ -8,20 +8,20 @@ function getStck0InfoString(stack: Stack) {
   return s;
 }
 
-type Stack = { function: string; url: string }[]
+type Stack = { function: string; url: string }[];
 
 export interface IError {
-  sessionId: string
-  messageId: number
-  timestamp: number
-  errorId: string
-  projectId: string
-  source: string
-  name: string
-  message: string
-  time: number
-  function: string
-  stack: Stack
+  sessionId: string;
+  messageId: number;
+  timestamp: number;
+  errorId: string;
+  projectId: string;
+  source: string;
+  name: string;
+  message: string;
+  time: number;
+  function: string;
+  stack: Stack;
 }
 
 export default class Error {

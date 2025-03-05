@@ -1,31 +1,23 @@
 import React from 'react';
 import { Button, Space } from 'antd';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import CardBuilder from 'Components/Dashboard/components/WidgetForm/CardBuilder';
 import { useHistory } from 'react-router';
 import { useStore } from 'App/mstore';
 import { HEATMAP } from 'App/constants/card';
 import { renderClickmapThumbnail } from 'Components/Dashboard/components/WidgetForm/renderMap';
 import WidgetPreview from 'Components/Dashboard/components/WidgetPreview/WidgetPreview';
 import WidgetFormNew from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
-
-const getTitleByType = (type: string) => {
-  switch (type) {
-    case HEATMAP:
-      return 'Heatmap';
-    default:
-      return 'Trend Single';
-  }
-};
+import { useTranslation } from 'react-i18next';
 
 interface Props {
-    // cardType: string,
-    onBack?: () => void
-    onAdded?: () => void
-    extra?: React.ReactNode
+  // cardType: string,
+  onBack?: () => void;
+  onAdded?: () => void;
+  extra?: React.ReactNode;
 }
 
 function CreateCard(props: Props) {
+  const { t } = useTranslation();
   const history = useHistory();
   const { metricStore, dashboardStore, aiFiltersStore } = useStore();
   const metric = metricStore.instance;
@@ -44,7 +36,11 @@ function CreateCard(props: Props) {
       });
   };
 
-  const addCardToDashboard = async (dashboardId: string, metricId: string) => dashboardStore.addWidgetToDashboard(dashboardStore.getDashboard(parseInt(dashboardId, 10))!, [metricId]);
+  const addCardToDashboard = async (dashboardId: string, metricId: string) =>
+    dashboardStore.addWidgetToDashboard(
+      dashboardStore.getDashboard(parseInt(dashboardId, 10))!,
+      [metricId],
+    );
 
   const createCard = async () => {
     const isClickMap = metric.metricType === HEATMAP;
@@ -85,15 +81,11 @@ function CreateCard(props: Props) {
               <ArrowLeft size={16} />
             </Button>
           ) : null}
-          <div className="text-xl leading-4 font-medium">
-            {metric.name}
-          </div>
+          <div className="text-xl leading-4 font-medium">{metric.name}</div>
         </Space>
         <Button type="primary" onClick={createDashboardAndAddCard}>
           <Space>
-            Create
-            {' '}
-            <ArrowRight size={14} />
+            {t('Create')} <ArrowRight size={14} />
           </Space>
         </Button>
       </div>

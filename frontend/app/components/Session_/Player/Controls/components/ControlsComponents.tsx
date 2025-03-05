@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import React from 'react';
 import { SkipButton } from 'App/player-ui';
 import {
@@ -9,6 +10,7 @@ import { SPEED_OPTIONS } from 'Player/player/Player';
 import { Popover as AntPopover, Button } from 'antd';
 import { Popover } from 'UI';
 import cn from 'classnames';
+import { useTranslation } from 'react-i18next';
 
 export function JumpBack({
   currentInterval,
@@ -17,14 +19,15 @@ export function JumpBack({
   currentInterval: number;
   backTenSeconds: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <AntPopover
-      content={(
+      content={
         <div className="flex gap-2 items-center">
           <SkipBackwardShortcut />
-          <div>{`Rewind ${currentInterval}s`}</div>
+          <div>{`${t('Rewind')} ${currentInterval}s`}</div>
         </div>
-      )}
+      }
       placement="top"
     >
       <button
@@ -53,6 +56,7 @@ export function IntervalSelector({
   toggleTooltip: () => void;
   currentInterval: number;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       style={{ height: 22 }}
@@ -74,9 +78,8 @@ export function IntervalSelector({
             )}
           >
             <div className="font-semibold py-2 px-4 w-full text-left">
-              Jump
-              {' '}
-              <span className="text-disabled-text">(Secs)</span>
+              {t('Jump')}&nbsp;
+              <span className="text-disabled-text">({t('Secs')})</span>
             </div>
             {Object.keys(skipIntervals).map((interval) => (
               <div
@@ -97,10 +100,12 @@ export function IntervalSelector({
           </div>
         )}
       >
-        <div onClick={toggleTooltip} className="cursor-pointer select-none font-semibold">
-          <AntPopover content={<div>Set default skip duration</div>}>
-            {currentInterval}
-            s
+        <div
+          onClick={toggleTooltip}
+          className="cursor-pointer select-none font-semibold"
+        >
+          <AntPopover content={<div>{t('Set default skip duration')}</div>}>
+            {currentInterval}s
           </AntPopover>
         </div>
       </Popover>
@@ -117,12 +122,12 @@ export function JumpForward({
 }) {
   return (
     <AntPopover
-      content={(
+      content={
         <div className="flex gap-2 items-center">
           <SkipForwardShortcut />
           <div>{`Forward ${currentInterval}s`}</div>
         </div>
-      )}
+      }
       placement="top"
     >
       <button
@@ -148,6 +153,7 @@ export function SpeedOptions({
   disabled: boolean;
   speed: number;
 }) {
+  const { t } = useTranslation();
   return (
     <Popover
       // @ts-ignore
@@ -158,8 +164,13 @@ export function SpeedOptions({
       className="cursor-pointer select-none"
       distance={20}
       render={({ close }: any) => (
-        <div style={{ margin: -12 }} className="flex flex-col bg-white text-figmaColors-text-primary rounded">
-          <div className="font-semibold py-2 px-4 w-full text-left">Playback speed</div>
+        <div
+          style={{ margin: -12 }}
+          className="flex flex-col bg-white text-figmaColors-text-primary rounded"
+        >
+          <div className="font-semibold py-2 px-4 w-full text-left">
+            {t('Playback speed')}
+          </div>
           {Object.keys(SPEED_OPTIONS).map((index: any) => (
             <div
               key={SPEED_OPTIONS[index]}
@@ -181,12 +192,12 @@ export function SpeedOptions({
     >
       <div className="cursor-pointer select-none">
         <AntPopover
-          content={(
+          content={
             <div className="flex gap-2 items-center">
               <PlaybackSpeedShortcut />
-              <div>Change playback speed</div>
+              <div>{t('Change playback speed')}</div>
             </div>
-          )}
+          }
         >
           <Button disabled={disabled} size="small" className="font-semibold">
             {`${speed}x`}

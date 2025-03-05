@@ -14,7 +14,9 @@ interface Props {
 
 function Layout(props: Props) {
   const { hideHeader } = props;
-  const isPlayer = /\/(session|assist|view-spot)\//.test(window.location.pathname);
+  const isPlayer = /\/(session|assist|view-spot)\//.test(
+    window.location.pathname,
+  );
   const { settingsStore, projectsStore } = useStore();
   const [collapsed, setCollapsed] = React.useState(false);
   const { siteId } = projectsStore;
@@ -39,9 +41,7 @@ function Layout(props: Props) {
 
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
-      {!hideHeader && (
-        <TopHeader />
-      )}
+      {!hideHeader && <TopHeader />}
       <AntLayout>
         {!hideHeader && !window.location.pathname.includes('/onboarding/') ? (
           <Sider
@@ -55,10 +55,18 @@ function Layout(props: Props) {
             collapsed={settingsStore.menuCollapsed || collapsed}
             width={250}
           >
-            <SideMenu siteId={siteId!} isCollapsed={settingsStore.menuCollapsed || collapsed} />
+            <SideMenu
+              siteId={siteId!}
+              isCollapsed={settingsStore.menuCollapsed || collapsed}
+            />
           </Sider>
         ) : null}
-        <Content style={{ padding: isPlayer ? '0' : '20px', minHeight: 'calc(100vh - 60px)' }}>
+        <Content
+          style={{
+            padding: isPlayer ? '0' : '20px',
+            minHeight: 'calc(100vh - 60px)',
+          }}
+        >
           {props.children}
         </Content>
       </AntLayout>

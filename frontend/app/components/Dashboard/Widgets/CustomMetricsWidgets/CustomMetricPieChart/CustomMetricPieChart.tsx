@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import {
-  ResponsiveContainer, Tooltip, PieChart, Pie, Cell, Legend,
+  ResponsiveContainer,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from 'recharts';
 import { NoContent } from 'UI';
 import { filtersMap } from 'Types/filter/newFilter';
@@ -23,9 +28,7 @@ interface Props {
 }
 
 function CustomMetricPieChart(props: Props) {
-  const {
-    metric, data, onClick = () => null, inGrid,
-  } = props;
+  const { metric, data, onClick = () => null, inGrid } = props;
 
   const [hoveredSeries, setHoveredSeries] = useState<string | null>(null);
 
@@ -50,7 +53,8 @@ function CustomMetricPieChart(props: Props) {
   const handleMouseOver = (name: string) => setHoveredSeries(name);
   const handleMouseLeave = () => setHoveredSeries(null);
 
-  const getTotalForSeries = (series: string) => (data.chart ? data.chart.reduce((acc, curr) => acc + curr[series], 0) : 0);
+  const getTotalForSeries = (series: string) =>
+    data.chart ? data.chart.reduce((acc, curr) => acc + curr[series], 0) : 0;
 
   const values = data.namesMap.map((k) => ({
     name: k,
@@ -71,10 +75,11 @@ function CustomMetricPieChart(props: Props) {
     >
       <ResponsiveContainer height={240} width="100%">
         <PieChart>
-          <Legend iconType="triangle" wrapperStyle={{ top: inGrid ? undefined : -18 }} />
-          <Tooltip
-            content={<CustomTooltip hoveredSeries={hoveredSeries} />}
+          <Legend
+            iconType="triangle"
+            wrapperStyle={{ top: inGrid ? undefined : -18 }}
           />
+          <Tooltip content={<CustomTooltip hoveredSeries={hoveredSeries} />} />
           <Pie
             isAnimationActive={false}
             data={values}

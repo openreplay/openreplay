@@ -3,21 +3,24 @@ import { NoContent } from 'UI';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 import {
-  AreaChart, Area,
-  CartesianGrid, Tooltip,
+  AreaChart,
+  Area,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
-  XAxis, YAxis,
+  XAxis,
+  YAxis,
 } from 'recharts';
 import { NO_METRIC_DATA } from 'App/constants/messages';
 import { AvgLabel, Styles } from 'Components/Dashboard/Widgets/common';
 import ExCard from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/ExCard';
 
 interface Props {
-    title: string;
-    type: string;
-    onCard: (card: string) => void;
-    onClick?: any;
-    data?: any,
+  title: string;
+  type: string;
+  onCard: (card: string) => void;
+  onClick?: any;
+  data?: any;
 }
 
 // interface Props {
@@ -32,21 +35,19 @@ function AreaChartCard(props: Props) {
   return (
     <ExCard
       {...props}
-      title={(
+      title={
         <div className="flex items-center gap-2">
           <div>{props.title}</div>
         </div>
-              )}
+      }
     >
       <NoContent
         size="small"
-        title={(
+        title={
           <div className="flex items-center gap-2 text-base font-normal">
-            <InfoCircleOutlined size={12} />
-            {' '}
-            { NO_METRIC_DATA }
+            <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
           </div>
-                  )}
+        }
         show={data?.chart.length === 0}
       >
         <>
@@ -54,12 +55,13 @@ function AreaChartCard(props: Props) {
           {/*    <AvgLabel text="Avg" className="ml-3" count={data?.value}/> */}
           {/* </div> */}
           <ResponsiveContainer width="100%">
-            <AreaChart
-              data={data?.chart}
-              margin={Styles.chartMargins}
-            >
+            <AreaChart data={data?.chart} margin={Styles.chartMargins}>
               {gradientDef}
-              <CartesianGrid strokeDasharray="1 3" vertical={false} stroke="rgba(0,0,0,1.5)" />
+              <CartesianGrid
+                strokeDasharray="1 3"
+                vertical={false}
+                stroke="rgba(0,0,0,1.5)"
+              />
               <XAxis {...Styles.xaxis} dataKey="time" interval={3} />
               <YAxis
                 {...Styles.yaxis}

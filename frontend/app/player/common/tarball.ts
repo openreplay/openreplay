@@ -14,7 +14,10 @@ const unpackTar = (data: Uint8Array): Promise<TarFile[]> => {
   if (isTar) {
     const now = performance.now();
     return untar(data.buffer).then((files) => {
-      console.debug('Tar unpack time', `${Math.floor(performance.now() - now)}ms`);
+      console.debug(
+        'Tar unpack time',
+        `${Math.floor(performance.now() - now)}ms`,
+      );
       return files;
     });
   }

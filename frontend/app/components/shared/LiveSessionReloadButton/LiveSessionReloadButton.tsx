@@ -12,7 +12,13 @@ function LiveSessionReloadButton(props: Props) {
   const { onClick } = props;
   const loading = sessionStore.loadingLiveSessions;
   return (
-    <ReloadButton buttonSize="small" iconSize={14} loading={loading} onClick={onClick} className="cursor-pointer" />
+    <ReloadButton
+      buttonSize="small"
+      iconSize={14}
+      loading={loading}
+      onClick={onClick}
+      className="cursor-pointer"
+    />
   );
 }
 

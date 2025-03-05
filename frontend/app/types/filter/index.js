@@ -156,9 +156,15 @@ const options = [
   },
 ];
 
-export const filterOptions = options.filter(({ key }) => filterKeys.includes(key));
-export const stringFilterOptions = options.filter(({ key }) => stringFilterKeys.includes(key));
-export const targetFilterOptions = options.filter(({ key }) => targetFilterKeys.includes(key));
+export const filterOptions = options.filter(({ key }) =>
+  filterKeys.includes(key),
+);
+export const stringFilterOptions = options.filter(({ key }) =>
+  stringFilterKeys.includes(key),
+);
+export const targetFilterOptions = options.filter(({ key }) =>
+  targetFilterKeys.includes(key),
+);
 export const booleanOptions = [
   { key: 'true', text: 'true', value: 'true' },
   { key: 'false', text: 'false', value: 'false' },

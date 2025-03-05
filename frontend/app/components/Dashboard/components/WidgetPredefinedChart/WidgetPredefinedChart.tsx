@@ -20,17 +20,17 @@ import { FilterKey } from 'Types/filter/filterType';
 import CallWithErrors from '../../Widgets/PredefinedWidgets/CallWithErrors';
 import SpeedIndexByLocation from '../../Widgets/PredefinedWidgets/SpeedIndexByLocation';
 import ResponseTimeDistribution from '../../Widgets/PredefinedWidgets/ResponseTimeDistribution';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
-    data: any;
-    predefinedKey: string
-    metric?: any;
-    isTemplate?: boolean;
+  data: any;
+  predefinedKey: string;
+  metric?: any;
+  isTemplate?: boolean;
 }
 function WidgetPredefinedChart(props: Props) {
-  const {
-    data, predefinedKey, metric, isTemplate,
-  } = props;
+  const { t } = useTranslation();
+  const { data, predefinedKey, metric, isTemplate } = props;
 
   const renderWidget = () => {
     switch (predefinedKey) {
@@ -52,15 +52,13 @@ function WidgetPredefinedChart(props: Props) {
       case FilterKey.SPEED_LOCATION:
         return <SpeedIndexByLocation data={data} />;
       default:
-        return <div className="h-40 color-red">Widget not supported</div>;
+        return (
+          <div className="h-40 color-red">{t('Widget not supported')}</div>
+        );
     }
   };
 
-  return useObserver(() => (
-    <>
-      {renderWidget()}
-    </>
-  ));
+  return useObserver(() => <>{renderWidget()}</>);
 }
 
 export default WidgetPredefinedChart;

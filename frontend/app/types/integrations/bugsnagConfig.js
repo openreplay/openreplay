@@ -1,6 +1,7 @@
 import Record from 'Types/Record';
 
-export const tokenRE = /^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/i;
+export const tokenRE =
+  /^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/i;
 
 export default Record(
   {

@@ -60,13 +60,16 @@ export default class TabSessionManager {
 
   public locationManager: ListWalker<SetPageLocation> = new ListWalker();
 
-  private locationEventManager: ListWalker<any> /* <LocationEvent> */ = new ListWalker();
+  private locationEventManager: ListWalker<any> /* <LocationEvent> */ =
+    new ListWalker();
 
   private loadedLocationManager: ListWalker<SetPageLocation> = new ListWalker();
 
-  private connectionInfoManger: ListWalker<ConnectionInformation> = new ListWalker();
+  private connectionInfoManger: ListWalker<ConnectionInformation> =
+    new ListWalker();
 
-  private performanceTrackManager: PerformanceTrackManager = new PerformanceTrackManager();
+  private performanceTrackManager: PerformanceTrackManager =
+    new PerformanceTrackManager();
 
   private windowNodeCounter: WindowNodeCounter = new WindowNodeCounter();
 
@@ -139,9 +142,10 @@ export default class TabSessionManager {
       insertingList?.forEach((item) => {
         if (
           currentList.list.findIndex(
-            (exv: { time: number; key: number; messageId?: number }) => exv.time === item.time
-              && exv.key === item.key
-              && (exv.messageId && item.messageId
+            (exv: { time: number; key: number; messageId?: number }) =>
+              exv.time === item.time &&
+              exv.key === item.key &&
+              (exv.messageId && item.messageId
                 ? exv.messageId === item.messageId
                 : true),
           ) === -1
@@ -215,9 +219,15 @@ export default class TabSessionManager {
           const fileId = managerId;
           const delta = msg.timestamp - this.sessionStart;
 
-          const canvasNodeLinks = this.session.canvasURL.filter((url: string) => url.includes(fileId)) as string[];
-          const tarball = canvasNodeLinks.find((url: string) => url.includes('.tar.'));
-          const mp4file = canvasNodeLinks.find((url: string) => url.includes('.mp4'));
+          const canvasNodeLinks = this.session.canvasURL.filter((url: string) =>
+            url.includes(fileId),
+          ) as string[];
+          const tarball = canvasNodeLinks.find((url: string) =>
+            url.includes('.tar.'),
+          );
+          const mp4file = canvasNodeLinks.find((url: string) =>
+            url.includes('.mp4'),
+          );
           if (!tarball && !mp4file) {
             console.error('no canvas recording provided');
             break;
@@ -241,7 +251,12 @@ export default class TabSessionManager {
       case MType.SetPageLocation:
         this.locationManager.append(msg);
         if ('documentTitle' in msg && !this.firstTitleSet) {
-          this.state.update({ tabNames: { ...this.state.get().tabNames, [this.id]: msg.documentTitle } });
+          this.state.update({
+            tabNames: {
+              ...this.state.get().tabNames,
+              [this.id]: msg.documentTitle,
+            },
+          });
           this.firstTitleSet = true;
         }
         if (msg.navigationStart > 0) {
@@ -277,8 +292,8 @@ export default class TabSessionManager {
       case MType.ResourceTiming:
         // TODO: merge `resource` and `fetch` lists into one here instead of UI
         if (
-          msg.initiator !== ResourceType.FETCH
-          && msg.initiator !== ResourceType.XHR
+          msg.initiator !== ResourceType.FETCH &&
+          msg.initiator !== ResourceType.XHR
         ) {
           this.lists.lists.resource.insert(
             getResourceFromResourceTiming(
@@ -375,7 +390,8 @@ export default class TabSessionManager {
     );
     if (lastLoadedLocationMsg) {
       // TODO: page-wise resources list  // setListsStartTime(lastLoadedLocationMsg.time)
-      this.navigationStartOffset = lastLoadedLocationMsg.navigationStart - this.sessionStart;
+      this.navigationStartOffset =
+        lastLoadedLocationMsg.navigationStart - this.sessionStart;
     }
     const lastLocationEvent = this.locationEventManager.moveGetLast(t, index);
     if (lastLocationEvent) {
@@ -408,7 +424,8 @@ export default class TabSessionManager {
       this.state.update({ location: lastLocationMsg.url, tabNames });
     }
 
-    const lastPerformanceTrackMessage = this.performanceTrackManager.moveGetLast(t, index);
+    const lastPerformanceTrackMessage =
+      this.performanceTrackManager.moveGetLast(t, index);
     if (lastPerformanceTrackMessage) {
       stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;
     }
@@ -477,7 +494,8 @@ export default class TabSessionManager {
           const m2FromHead = headChildrenMsgIds.includes(m2.id);
           if (m1FromHead && !m2FromHead) {
             return -1;
-          } if (m2FromHead && !m1FromHead) {
+          }
+          if (m2FromHead && !m1FromHead) {
             return 1;
           }
         }

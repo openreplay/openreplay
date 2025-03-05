@@ -1,5 +1,9 @@
 import type { DataProps, DataItem } from './utils';
-import { createDataset, assignColorsByBaseName, assignColorsByCategory } from './utils';
+import {
+  createDataset,
+  assignColorsByBaseName,
+  assignColorsByCategory,
+} from './utils';
 
 export function createBarSeries(
   data: DataProps['data'],
@@ -13,7 +17,9 @@ export function createBarSeries(
     const encode = { x: 'idx', y: fullName };
 
     const borderRadius = [6, 6, 0, 0];
-    const decal = dashed ? { symbol: 'line', symbolSize: 10, rotation: 1 } : { symbol: 'none' };
+    const decal = dashed
+      ? { symbol: 'line', symbolSize: 10, rotation: 1 }
+      : { symbol: 'none' };
     return {
       name: fullName,
       _baseName: baseName,
@@ -113,7 +119,9 @@ export function buildColumnChart(
     };
   }
 
-  const series = previousSeries ? [currentSeries, previousSeries] : [currentSeries];
+  const series = previousSeries
+    ? [currentSeries, previousSeries]
+    : [currentSeries];
 
   assignColorsByCategory(series, categories);
 

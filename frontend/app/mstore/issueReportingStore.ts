@@ -101,7 +101,11 @@ export default class IssueReportingStore {
     if (this.createLoading) return;
     this.createLoading = true;
     try {
-      const payload = { ...instance, assignee: `${instance.assignee}`, issueType: `${instance.issueType}` };
+      const payload = {
+        ...instance,
+        assignee: `${instance.assignee}`,
+        issueType: `${instance.issueType}`,
+      };
       const resp = await issueReportsService.saveIssue(sessionId, payload);
       // const resp = await issueReportsService.saveIssue(sessionId, instance.toCreate());
 
@@ -117,7 +121,8 @@ export default class IssueReportingStore {
 
   fetchList = async (sessionId: string) => {
     try {
-      const { data } = await issueReportsService.fetchIssueIntegrations(sessionId);
+      const { data } =
+        await issueReportsService.fetchIssueIntegrations(sessionId);
       this.setList(data);
     } catch (e) {
       console.error(e);

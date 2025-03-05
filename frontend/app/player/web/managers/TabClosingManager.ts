@@ -1,6 +1,9 @@
 import ListWalker from '../../common/ListWalker';
 
-export default class TabClosingManager extends ListWalker<{ tabId: string, time: number }> {
+export default class TabClosingManager extends ListWalker<{
+  tabId: string;
+  time: number;
+}> {
   currentTime = 0;
 
   closedTabs: Set<string> = new Set();

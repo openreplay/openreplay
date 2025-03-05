@@ -3,8 +3,10 @@ import { Icon, JSONTree } from 'UI';
 
 export default class JsonViewer extends React.PureComponent {
   render() {
+    const { t } = this.props;
     const { data, title, icon } = this.props;
-    const isObjectData = typeof data === 'object' && !Array.isArray(data) && data !== null;
+    const isObjectData =
+      typeof data === 'object' && !Array.isArray(data) && data !== null;
     // TODO this has to be fixed in the data @Mehdi
     if (Array.isArray(data) && data.length === 1) {
       data[0] = '';
@@ -13,10 +15,7 @@ export default class JsonViewer extends React.PureComponent {
       <div>
         <div className="flex items-center">
           <Icon name={icon} size="24" />
-          <h4 className="my-5 mx-2 font-semibold text-xl">
-            {' '}
-            {title}
-          </h4>
+          <h4 className="my-5 mx-2 font-semibold text-xl"> {title}</h4>
         </div>
         {isObjectData && <JSONTree src={data} collapsed={false} />}
         {!isObjectData && Array.isArray(data) && (
@@ -29,7 +28,9 @@ export default class JsonViewer extends React.PureComponent {
         )}
         {typeof data === 'string' && (
           <>
-            <div className="-ml-2 text-disabled-text">Payload: </div>
+            <div className="-ml-2 text-disabled-text">
+              {t('Payload:')}&nbsp;
+            </div>
             <div className="mx-2">{data}</div>
           </>
         )}

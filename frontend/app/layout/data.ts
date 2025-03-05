@@ -1,3 +1,4 @@
+import { TFunction } from 'i18next';
 import React from 'react';
 
 export interface MenuItem {
@@ -54,42 +55,50 @@ export const enum MENU {
   SPOTS = 'spots',
 }
 
-export const categories: Category[] = [
+export const categories: (t: TFunction) => Category[] = (t) => [
   {
-    title: 'Replays',
+    title: t('Replays'),
     key: 'replays',
     items: [
-      { label: 'Sessions', key: MENU.SESSIONS, icon: 'collection-play' },
+      { label: t('Sessions'), key: MENU.SESSIONS, icon: 'collection-play' },
       {
-        label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic', hidden: true,
+        label: t('Recommendations'),
+        key: MENU.RECOMMENDATIONS,
+        icon: 'magic',
+        hidden: true,
       },
       {
-        label: 'Vault', key: MENU.VAULT, icon: 'safe', hidden: true,
+        label: t('Vault'),
+        key: MENU.VAULT,
+        icon: 'safe',
+        hidden: true,
       },
-      { label: 'Bookmarks', key: MENU.BOOKMARKS, icon: 'bookmark' },
-      { label: 'Highlights', key: MENU.HIGHLIGHTS, icon: 'chat-square-quote' },
+      { label: t('Bookmarks'), key: MENU.BOOKMARKS, icon: 'bookmark' },
+      {
+        label: t('Highlights'),
+        key: MENU.HIGHLIGHTS,
+        icon: 'chat-square-quote',
+      },
     ],
   },
   {
     title: '',
     key: 'spot',
-    items: [
-      { label: 'Spots', key: MENU.SPOTS, icon: 'orspotOutline' },
-    ],
+    items: [{ label: t('Spots'), key: MENU.SPOTS, icon: 'orspotOutline' }],
   },
   {
     title: '',
     key: 'assist',
     items: [
-      { label: 'Co-Browse', key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
+      { label: t('Co-Browse'), key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
     ],
   },
   {
-    title: 'Analytics',
+    title: t('Analytics'),
     key: 'analytics',
     items: [
-      { label: 'Dashboards', key: MENU.DASHBOARDS, icon: 'columns-gap' },
-      { label: 'Cards', key: MENU.CARDS, icon: 'bar-chart-line' },
+      { label: t('Dashboards'), key: MENU.DASHBOARDS, icon: 'columns-gap' },
+      { label: t('Cards'), key: MENU.CARDS, icon: 'bar-chart-line' },
       // {
       //   label: 'Cards', key: MENU.CARDS, icon: 'bar-chart-line', children: [
       //     { label: 'All', key: MENU.CARDS },
@@ -98,15 +107,19 @@ export const categories: Category[] = [
       //     { label: 'Resource Monitoring', key: MENU.RESOURCE_MONITORING }
       //   ]
       // },
-      { label: 'Alerts', key: MENU.ALERTS, icon: 'bell' },
+      { label: t('Alerts'), key: MENU.ALERTS, icon: 'bell' },
     ],
   },
   {
-    title: 'Product Optimization',
+    title: t('Product Optimization'),
     key: 'product-optimization',
     items: [
-      { label: 'Feature Flags', key: MENU.FEATURE_FLAGS, icon: 'toggles' },
-      { label: 'Usability Tests', key: MENU.USABILITY_TESTS, icon: 'clipboard-check' },
+      { label: t('Feature Flags'), key: MENU.FEATURE_FLAGS, icon: 'toggles' },
+      {
+        label: 'Usability Tests',
+        key: MENU.USABILITY_TESTS,
+        icon: 'clipboard-check',
+      },
     ],
   },
   {
@@ -114,49 +127,75 @@ export const categories: Category[] = [
     key: 'other',
     items: [
       {
-        label: 'Preferences', key: MENU.PREFERENCES, icon: 'sliders', leading: 'chevron-right',
+        label: t('Preferences'),
+        key: MENU.PREFERENCES,
+        icon: 'sliders',
+        leading: 'chevron-right',
       },
-      { label: 'Support', key: MENU.SUPPORT, icon: 'question-circle' },
+      { label: t('Support'), key: MENU.SUPPORT, icon: 'question-circle' },
     ],
   },
 ];
 
-export const preferences: Category[] = [
+export const preferences: (t: TFunction) => Category[] = (t) => [
   {
     title: '',
     key: 'exit',
-    items: [
-      { label: 'Exit', key: MENU.EXIT, icon: 'arrow-bar-left' },
-    ],
+    items: [{ label: t('Exit'), key: MENU.EXIT, icon: 'arrow-bar-left' }],
   },
   {
-    title: 'Preferences',
+    title: t('Preferences'),
     key: 'preferences',
     items: [
-      { label: 'Account', key: PREFERENCES_MENU.ACCOUNT, icon: 'person' },
-      { label: 'Sessions Listing', key: PREFERENCES_MENU.SESSION_LISTING, icon: 'card-list' },
-      { label: 'Integrations', key: PREFERENCES_MENU.INTEGRATIONS, icon: 'plug' },
-      { label: 'Webhooks', key: PREFERENCES_MENU.WEBHOOKS, icon: 'link-45deg' },
-      { label: 'Modules', key: PREFERENCES_MENU.MODULES, icon: 'puzzle' },
-      { label: 'Projects', key: PREFERENCES_MENU.PROJECTS, icon: 'folder2' },
+      { label: t('Account'), key: PREFERENCES_MENU.ACCOUNT, icon: 'person' },
       {
-        label: 'Roles & Access',
+        label: t('Sessions Listing'),
+        key: PREFERENCES_MENU.SESSION_LISTING,
+        icon: 'card-list',
+      },
+      {
+        label: t('Integrations'),
+        key: PREFERENCES_MENU.INTEGRATIONS,
+        icon: 'plug',
+      },
+      {
+        label: t('Webhooks'),
+        key: PREFERENCES_MENU.WEBHOOKS,
+        icon: 'link-45deg',
+      },
+      { label: t('Modules'), key: PREFERENCES_MENU.MODULES, icon: 'puzzle' },
+      { label: t('Projects'), key: PREFERENCES_MENU.PROJECTS, icon: 'folder2' },
+      {
+        label: t('Roles & Access'),
         key: PREFERENCES_MENU.ROLES_ACCESS,
         icon: 'diagram-3',
         isEnterprise: true,
         isAdmin: true,
       },
       {
-        label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul', isAdmin: true, isEnterprise: true,
+        label: t('Audit'),
+        key: PREFERENCES_MENU.AUDIT,
+        icon: 'list-ul',
+        isAdmin: true,
+        isEnterprise: true,
       },
       {
-        label: 'Team', key: PREFERENCES_MENU.TEAM, icon: 'people', isAdmin: true,
+        label: t('Team'),
+        key: PREFERENCES_MENU.TEAM,
+        icon: 'people',
+        isAdmin: true,
       },
       {
-        label: 'Weekly Report', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'envelope-paper', hidden: false,
+        label: t('Weekly Report'),
+        key: PREFERENCES_MENU.NOTIFICATIONS,
+        icon: 'envelope-paper',
+        hidden: false,
       },
       {
-        label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'credit-card-2-back', hidden: true,
+        label: t('Billing'),
+        key: PREFERENCES_MENU.BILLING,
+        icon: 'credit-card-2-back',
+        hidden: true,
       },
     ],
   },

@@ -17,13 +17,13 @@ function Header() {
         <PageTitle title="Dashboards" />
       </div>
       {showSearch && (
-      <div className="ml-auto flex items-center">
-        <CreateDashboardButton />
-        <div className="mx-2" />
-        <div className="w-1/4" style={{ minWidth: 300 }}>
-          <DashboardSearch />
+        <div className="ml-auto flex items-center">
+          <CreateDashboardButton />
+          <div className="mx-2" />
+          <div className="w-1/4" style={{ minWidth: 300 }}>
+            <DashboardSearch />
+          </div>
         </div>
-      </div>
       )}
     </div>
   );

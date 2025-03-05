@@ -4,6 +4,7 @@ import { Icon } from 'UI';
 import { Button } from 'antd';
 import cn from 'classnames';
 import FeatureFlag from 'App/mstore/types/FeatureFlag';
+import { useTranslation } from 'react-i18next';
 
 function Description({
   isDescrEditing,
@@ -16,17 +17,17 @@ function Description({
   current: FeatureFlag;
   setEditing: ({ isDescrEditing }: { isDescrEditing: boolean }) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       <label>
-        <span className="font-semibold">Description </span>
-        {' '}
-        <span className="text-disabled-text text-sm">(Optional)</span>
+        <span className="font-semibold">{t('Description')}&nbsp;</span>{' '}
+        <span className="text-disabled-text text-sm">({t('Optional')})</span>
       </label>
       {isDescrEditing ? (
         <textarea
           name="flag-description"
-          placeholder="Description..."
+          placeholder={t('Description...')}
           rows={3}
           autoFocus
           className="rounded fluid border px-2 py-1 w-full"
@@ -53,7 +54,7 @@ function Description({
           icon={<Icon name="edit" size={16} />}
           onClick={() => setEditing({ isDescrEditing: true })}
         >
-          Add
+          {t('Add')}
         </Button>
       )}
     </>

@@ -6,7 +6,7 @@ import SessionItem from 'App/components/shared/SessionItem/SessionItem';
 import FunnelIssuesListItem from '../FunnelIssuesListItem';
 
 interface Props {
-    issueId: string;
+  issueId: string;
 }
 function FunnelIssueDetails(props: Props) {
   const { dashboardStore, metricStore } = useStore();
@@ -21,33 +21,35 @@ function FunnelIssueDetails(props: Props) {
     setLoading(true);
     const _filters = {
       ...filter,
-      series: widget.data.stages ? widget.series.map((item: any) => ({
-        ...item,
-        filter: {
-          ...item.filter,
-          filters: item.filter.filters.filter((filter: any, index: any) => {
-            const stage = widget.data.funnel.stages[index];
-            return stage && stage.isActive;
-          }).map((f: any) => f.toJson()),
-        },
-      })) : [],
+      series: widget.data.stages
+        ? widget.series.map((item: any) => ({
+            ...item,
+            filter: {
+              ...item.filter,
+              filters: item.filter.filters
+                .filter((filter: any, index: any) => {
+                  const stage = widget.data.funnel.stages[index];
+                  return stage && stage.isActive;
+                })
+                .map((f: any) => f.toJson()),
+            },
+          }))
+        : [],
     };
-    widget.fetchIssue(widget.metricId, issueId, _filters).then((resp: any) => {
-      setFunnelIssue(resp.issue);
-      setSessions(resp.sessions);
-    }).finally(() => {
-      setLoading(false);
-    });
+    widget
+      .fetchIssue(widget.metricId, issueId, _filters)
+      .then((resp: any) => {
+        setFunnelIssue(resp.issue);
+        setSessions(resp.sessions);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   return (
     <Loader loading={loading}>
-      {funnelIssue && (
-      <FunnelIssuesListItem
-        issue={funnelIssue}
-        inDetails
-      />
-      )}
+      {funnelIssue && <FunnelIssuesListItem issue={funnelIssue} inDetails />}
 
       <div className="mt-6 bg-white p-3 rounded border">
         {sessions.map((session: any) => (

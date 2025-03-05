@@ -1,7 +1,5 @@
 import React from 'react';
-import {
-  Button, Checkbox, Input, Tag,
-} from 'antd';
+import { Button, Checkbox, Input, Tag } from 'antd';
 import { X } from 'lucide-react';
 import { TAGS, iTag, tagProps } from 'App/services/NotesService';
 import { useStore } from 'App/mstore';
@@ -10,6 +8,7 @@ import { PlayerContext } from 'Components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { shortDurationFromMs } from 'App/date';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 function maskDuration(input: string): string {
   const digits = input.replace(/\D/g, '');
@@ -25,6 +24,7 @@ function maskDuration(input: string): string {
 const duration = new RegExp(/(\d{2}):(\d{2})/);
 
 function HighlightPanel({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const { uiPlayerStore, notesStore, sessionStore } = useStore();
   const { editNote } = notesStore;
   const [message, setMessage] = React.useState(editNote?.message ?? '');
@@ -51,7 +51,10 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
       const sessLength = store.get().endTime;
       uiPlayerStore.toggleHighlightSelection({
         enabled: true,
-        range: [Math.min(newTime, sessLength), uiPlayerStore.highlightSelection.endTs],
+        range: [
+          Math.min(newTime, sessLength),
+          uiPlayerStore.highlightSelection.endTs,
+        ],
       });
     }
   };
@@ -65,7 +68,10 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
       const sessLength = store.get().endTime;
       uiPlayerStore.toggleHighlightSelection({
         enabled: true,
-        range: [uiPlayerStore.highlightSelection.startTs, Math.min(newTime, sessLength)],
+        range: [
+          uiPlayerStore.highlightSelection.startTs,
+          Math.min(newTime, sessLength),
+        ],
       });
     }
   };
@@ -111,12 +117,13 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
   const onSave = async () => {
     try {
       notesStore.setSaving(true);
-      const playerContainer = document.querySelector('iframe')?.contentWindow?.document;
+      const playerContainer =
+        document.querySelector('iframe')?.contentWindow?.document;
       let thumbnail;
       if (playerContainer) {
         thumbnail = await elementToCanvas(playerContainer);
         if (!thumbnail) {
-          thumbnail = await elementToImage(playerContainer);
+          thumbnail = await elementToImage(thumbnail);
         }
       }
       const note = {
@@ -130,15 +137,15 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
       };
       if (editNote) {
         await notesStore.updateNote(editNote.noteId, note);
-        toast.success('Highlight updated');
+        toast.success(t('Highlight updated'));
       } else {
         const { sessionId } = sessionStore.current;
         await notesStore.addNote(sessionId, note);
-        toast.success('Highlight saved. Find it in Home > Highlights');
+        toast.success(t('Highlight saved. Find it in Home > Highlights'));
       }
       onClose();
     } catch (e) {
-      toast.error('Failed to save highlight');
+      toast.error(t('Failed to save highlight'));
     } finally {
       notesStore.setSaving(false);
     }
@@ -153,16 +160,17 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
       <div className="flex items-center gap-2">
         <Icon name="chat-square-quote" color="inherit" size={16} />
         <h3 className="text-xl font-semibold">
-          {editNote ? 'Edit ' : ''}
-          Highlight
+          {editNote ? t('Edit ') : ''}
+          {t('Highlight')}
         </h3>
         <div className="cursor-pointer ml-auto" onClick={onClose}>
           <X size={18} strokeWidth={2} />
         </div>
       </div>
       <div className="text-sm text-neutral-500">
-        Save key moments from sessions. Access them anytime on the ‘Highlights’
-        page to share with your team.
+        {t(
+          'Save key moments from sessions. Access them anytime on the ‘Highlights’ page to share with your team.',
+        )}
       </div>
       <div>
         <Input.TextArea
@@ -176,12 +184,12 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
         />
         <div className="text-disabled-text text-sm">
           {message.length}
-          /200 characters remaining
+          {t('/200 characters remaining')}
         </div>
       </div>
       <div className="flex items-center gap-2">
         <div>
-          <div className="font-semibold">From</div>
+          <div className="font-semibold">{t('From')}</div>
           <Input
             value={startTs}
             onChange={onStartChange}
@@ -189,7 +197,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
           />
         </div>
         <div>
-          <div className="font-semibold">To</div>
+          <div className="font-semibold">{t('To')}</div>
           <Input value={endTs} onChange={onEndChange} className="rounded-lg" />
         </div>
       </div>
@@ -217,7 +225,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
           value={isPublic}
           className="ms-2"
         >
-          Visible to team members
+          {t('Visible to team members')}
         </Checkbox>
       </div>
       <div className="flex items-center gap-2">
@@ -227,26 +235,26 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
           loading={notesStore.isSaving}
           className="font-medium"
         >
-          <Icon name="chat-square-quote" color="inherit" size={14} />
-          {' '}
-          {editNote ? 'Update ' : 'Save '}
-          Highlight
+          <Icon name="chat-square-quote" color="inherit" size={14} />{' '}
+          {editNote ? t('Update') : t('Save')}&nbsp;
+          {t('Highlight')}
         </Button>
         <Button onClick={onClose} type="text" className="font-medium">
-          Cancel
+          {t('Cancel')}
         </Button>
       </div>
     </div>
   );
 }
-window.__debugElementToImage = (el) => elementToImage(el).then((img) => {
-  const a = document.createElement('a');
-  a.href = img;
-  a.download = 'highlight.png';
-  a.click();
-});
+window.__debugElementToImage = (el) =>
+  elementToImage(el).then((img) => {
+    const a = document.createElement('a');
+    a.href = img;
+    a.download = 'highlight.png';
+    a.click();
+  });
 
-async function elementToImage(el: Document) {
+async function elementToImage(el: any) {
   const constraints = {
     video: {
       displaySurface: 'browser',
@@ -278,7 +286,8 @@ function elementToCanvas(doc: Document) {
   return import('@codewonders/html2canvas').then(({ default: html2canvas }) => {
     const images = doc.querySelectorAll('img');
     images.forEach((img) => {
-      const sameOrigin = new URL(img.src, location.href).origin === location.origin;
+      const sameOrigin =
+        new URL(img.src, location.href).origin === location.origin;
       if (!sameOrigin) {
         srcMap.set(img, img.src);
         img.src = '';
@@ -290,15 +299,17 @@ function elementToCanvas(doc: Document) {
       foreignObjectRendering: true,
       useCORS: true,
       logging: true,
-    }).then((canvas) => {
-      images.forEach((img) => {
-        if (srcMap.has(img)) img.src = srcMap.get(img)!;
+    })
+      .then((canvas) => {
+        images.forEach((img) => {
+          if (srcMap.has(img)) img.src = srcMap.get(img)!;
+        });
+        return canvas.toDataURL('image/png');
+      })
+      .catch((e) => {
+        console.log(e);
+        return undefined;
       });
-      return canvas.toDataURL('image/png');
-    }).catch((e) => {
-      console.log(e);
-      return undefined;
-    });
   });
 }
 
@@ -311,7 +322,9 @@ const convertAllImagesToBase64 = (proxyURL, cloned) => {
   for (let i = 0; i < images.length; i += 1) {
     const promise = new Promise((resolve, reject) => {
       pendingPromisesData.push({
-        index: i, resolve, reject,
+        index: i,
+        resolve,
+        reject,
       });
     });
     pendingImagesPromises.push(promise);

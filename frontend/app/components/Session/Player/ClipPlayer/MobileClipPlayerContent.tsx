@@ -91,17 +91,15 @@ function ClipPlayerContent(props: Props) {
           </div>
         </div>
         {props.isHighlight && props.message ? (
-          <div className="shadow-inner p-3 flex gap-2 w-full items-center" style={{ background: 'rgba(252, 193, 0, 0.2)' }}>
+          <div
+            className="shadow-inner p-3 flex gap-2 w-full items-center"
+            style={{ background: 'rgba(252, 193, 0, 0.2)' }}
+          >
             <Icon name="chat-square-quote" color="inherit" size={18} />
-            <div className="leading-none font-medium">
-              {props.message}
-            </div>
+            <div className="leading-none font-medium">{props.message}</div>
           </div>
         ) : null}
-        <ClipPlayerControls
-          session={props.session}
-          range={props.range}
-        />
+        <ClipPlayerControls session={props.session} range={props.range} />
       </div>
     </div>
   );

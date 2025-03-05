@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Icon } from 'UI';
 
 function SessionTileFooter({
@@ -12,6 +13,7 @@ function SessionTileFooter({
   replaceSession: (e: any, id: string) => void;
   deleteSession: (e: any, id: string) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="absolute z-10 cursor-default bottom-0 w-full h-8 left-0 px-4 opacity-70 bg-gray-darkest text-white flex items-center justify-between">
       <div>{userDisplayName}</div>
@@ -20,7 +22,7 @@ function SessionTileFooter({
           className="cursor-pointer hover:font-semibold border-l flex items-center justify-center h-full border-r border-white px-2"
           onClick={(e) => replaceSession(e, sessionId)}
         >
-          Replace Session
+          {t('Replace Session')}
         </div>
         <div
           className="cursor-pointer hover:font-semibold"

@@ -11,7 +11,11 @@ interface Props {
   className?: string;
 }
 function DocCard(props: Props) {
-  const { className = '', iconColor = 'tealx', iconBgColor = 'bg-tealx-light' } = props;
+  const {
+    className = '',
+    iconColor = 'tealx',
+    iconBgColor = 'bg-tealx-light',
+  } = props;
 
   return (
     <div className={cn('p-5 bg-gray-lightest mb-4 rounded', className)}>

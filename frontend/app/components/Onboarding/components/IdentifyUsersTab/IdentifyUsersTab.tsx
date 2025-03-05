@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import { Segmented, Button } from 'antd';
 import React from 'react';
 import { HighlightCode, Icon } from 'UI';
@@ -7,6 +8,7 @@ import withPageTitle from 'App/components/hocs/withPageTitle';
 import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
 import MetadataList from '../MetadataList/MetadataList';
 import CircleNumber from '../CircleNumber';
+import { useTranslation } from 'react-i18next';
 
 interface Props extends WithOnboardingProps {
   platforms: Array<{
@@ -22,12 +24,16 @@ interface Props extends WithOnboardingProps {
 }
 
 function IdentifyUsersTab(props: Props) {
-  const {
-    site, platforms, platform, setPlatform, platformMap,
-  } = props;
+  const { t } = useTranslation();
+  const { site, platforms, platform, setPlatform, platformMap } = props;
 
   React.useEffect(() => {
-    if (site.platform) setPlatform(platforms.find(({ value }) => value === platformMap[site.platform]) ?? platform ?? platforms[0]);
+    if (site.platform)
+      setPlatform(
+        platforms.find(({ value }) => value === platformMap[site.platform]) ??
+          platform ??
+          platforms[0],
+      );
   }, [site]);
 
   return (
@@ -35,7 +41,7 @@ function IdentifyUsersTab(props: Props) {
       <h1 className="flex items-center px-4 py-3 border-b justify-between">
         <div className="flex items-center text-2xl">
           <span>🕵️‍♂️</span>
-          <div className="ml-3">Identify Users</div>
+          <div className="ml-3">{t('Identify Users')}</div>
         </div>
 
         <a
@@ -43,58 +49,70 @@ function IdentifyUsersTab(props: Props) {
           target="_blank"
           rel="noreferrer"
         >
-          <Button size="small" type="text" className="ml-2 flex items-center gap-2">
+          <Button
+            size="small"
+            type="text"
+            className="ml-2 flex items-center gap-2"
+          >
             <Icon name="question-circle" />
-            <div className="text-main">See Documentation</div>
+            <div className="text-main">{t('See Documentation')}</div>
           </Button>
         </a>
       </h1>
       <div className="p-4 flex gap-2 items-center">
-        <span className="font-medium">Project Type</span>
+        <span className="font-medium">{t('Project Type')}</span>
         <Segmented
           options={platforms}
           value={platform.value}
-          onChange={(value) => setPlatform(platforms.find(({ value: v }) => v === value) || platforms[0])}
+          onChange={(value) =>
+            setPlatform(
+              platforms.find(({ value: v }) => v === value) || platforms[0],
+            )
+          }
         />
       </div>
       <div className="grid grid-cols-6 gap-4 w-full p-4">
         <div className="col-span-4">
           <div>
-            <div className="font-medium mb-2 text-lg">Identify users by user ID</div>
+            <div className="font-medium mb-2 text-lg">
+              {t('Identify users by user ID')}
+            </div>
             <div className="mb-2">
-              Call
-              {' '}
-              <span className="highlight-blue">setUserID</span>
-              {' '}
-              to identify your users when
-              recording a session.
+              {t('Call')}&nbsp;<span className="highlight-blue">setUserID</span>
+              &nbsp;{t('to identify your users when recording a session.')}
             </div>
           </div>
 
           {platform.value === 'web' ? (
-            <HighlightCode className="js" text={'tracker.setUserID(\'john@doe.com\');'} />
+            <HighlightCode
+              className="js"
+              text={"tracker.setUserID('john@doe.com');"}
+            />
           ) : (
             <HighlightCode
               className="swift"
-              text={'OpenReplay.shared.setUserID(\'john@doe.com\');'}
+              text={"OpenReplay.shared.setUserID('john@doe.com');"}
             />
           )}
           {platform.value === 'web' ? (
             <div className="flex items-center my-2">
               <Icon name="info-circle" color="gray-darkest" />
-              <span className="ml-2">OpenReplay keeps the last communicated user ID.</span>
+              <span className="ml-2">
+                {t('OpenReplay keeps the last communicated user ID.')}
+              </span>
             </div>
           ) : null}
         </div>
         <div className="col-span-2">
           <DocCard
-            title="Why to identify users?"
+            title={t('Why to identify users?')}
             icon="question-lg"
             iconBgColor="bg-red-lightest"
             iconColor="red"
           >
-            Make it easy to search and filter replays by user id. OpenReplay allows you to associate
-            your internal-user-id with the recording.
+            {t(
+              'Make it easy to search and filter replays by user id. OpenReplayallows you to associate your internal-user-id with the recording.',
+            )}
           </DocCard>
         </div>
       </div>
@@ -104,10 +122,13 @@ function IdentifyUsersTab(props: Props) {
       <div className="grid grid-cols-6 gap-4 w-full p-4">
         <div className="col-span-4">
           <div>
-            <div className="font-medium mb-2 text-lg">Identify users by adding metadata</div>
+            <div className="font-medium mb-2 text-lg">
+              {t('Identify users by adding metadata')}
+            </div>
             <p>
-              To identify users through metadata, you will have to explicitly specify your user
-              metadata so it can be injected during sessions. Follow the below steps
+              {t(
+                'To identify users through metadata, you will have to explicitly specify your user metadata so it can be injected during sessions. Follow the below steps',
+              )}
             </p>
             <div className="flex items-start">
               <CircleNumber text="1" />
@@ -118,21 +139,25 @@ function IdentifyUsersTab(props: Props) {
             <div className="flex items-start">
               <CircleNumber text="2" />
               <div className="pt-1 w-full">
-                <span className="font-bold">Inject metadata when recording sessions</span>
+                <span className="font-bold">
+                  {t('Inject metadata when recording sessions')}
+                </span>
                 <div className="my-2">
-                  Use the
-                  {' '}
-                  <span className="highlight-blue">setMetadata</span>
-                  {' '}
-                  method in your code to
-                  inject custom user data in the form of a key/value pair (string).
+                  {t('Use the')}&nbsp;
+                  <span className="highlight-blue">setMetadata</span>{' '}
+                  {t(
+                    'method in your code to inject custom user data in the form of a key/value pair (string).',
+                  )}
                 </div>
                 {platform.value === 'web' ? (
-                  <HighlightCode className="js" text={'tracker.setMetadata(\'plan\', \'premium\');'} />
+                  <HighlightCode
+                    className="js"
+                    text={"tracker.setMetadata('plan', 'premium');"}
+                  />
                 ) : (
                   <HighlightCode
                     className="swift"
-                    text={'OpenReplay.shared.setMetadata(\'plan\', \'premium\');'}
+                    text={"OpenReplay.shared.setMetadata('plan', 'premium');"}
                   />
                 )}
               </div>
@@ -140,24 +165,26 @@ function IdentifyUsersTab(props: Props) {
           </div>
         </div>
         <div className="col-span-2">
-          <DocCard title="What is Metadata?" icon="lightbulb">
-            Additional information about users can be provided with metadata (also known as traits
-            or user variables). They take the form of key/value pairs, and are useful for filtering
-            and searching for specific session replays.
+          <DocCard title={t('What is Metadata?')} icon="lightbulb">
+            {t(
+              'Additional information about users can be provided with metadata (also known as traits or user variables). They take the form of key/value pairs, and are useful for filtering and searching for specific session replays.',
+            )}
           </DocCard>
         </div>
       </div>
 
       <div className="border-t px-4 py-3 flex justify-end gap-4">
         <Button type="text" onClick={() => (props.skip ? props.skip() : null)}>
-          Skip
+          {t('Skip')}
         </Button>
         <Button
           type="primary"
           className=""
-          onClick={() => (props.navTo ? props.navTo(OB_TABS.MANAGE_USERS) : null)}
+          onClick={() =>
+            props.navTo ? props.navTo(OB_TABS.MANAGE_USERS) : null
+          }
         >
-          Invite Team Members
+          {t('Invite Team Members')}
           <Icon name="arrow-right-short" color="white" size={20} />
         </Button>
       </div>
@@ -165,4 +192,6 @@ function IdentifyUsersTab(props: Props) {
   );
 }
 
-export default withOnboarding(withPageTitle('Identify Users - OpenReplay')(IdentifyUsersTab));
+export default withOnboarding(
+  withPageTitle('Identify Users - OpenReplay')(IdentifyUsersTab),
+);

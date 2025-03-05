@@ -1,6 +1,4 @@
-import React, {
-  useEffect, useRef, useState, useMemo,
-} from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { LogLevel, ILog } from 'Player';
 import { Tabs, Icon, NoContent } from 'UI';
 import { Input } from 'antd';
@@ -17,6 +15,7 @@ import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 import ConsoleRow from '../ConsoleRow';
 import BottomBlock from '../BottomBlock';
+import { useTranslation } from 'react-i18next';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -32,7 +31,10 @@ const LEVEL_TAB = {
   [LogLevel.DEBUG]: INFO,
 } as const;
 
-export const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({ text: tab, key: tab }));
+export const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({
+  text: tab,
+  key: tab,
+}));
 
 const urlRegex = /(https?:\/\/[^\s)]+)/g;
 
@@ -45,7 +47,13 @@ export function renderWithNL(s: string | null = '') {
     const formattedLine = parts.map((part, index) => {
       if (urlRegex.test(part)) {
         return (
-          <a key={`link-${index}`} className="link text-main" href={part} target="_blank" rel="noopener noreferrer">
+          <a
+            key={`link-${index}`}
+            className="link text-main"
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             {part}
           </a>
         );
@@ -88,11 +96,8 @@ export const getIconProps = (level: LogLevel) => {
 
 const INDEX_KEY = 'console';
 
-function ConsolePanel({
-  isLive,
-}: {
-  isLive?: boolean;
-}) {
+function ConsolePanel({ isLive }: { isLive?: boolean }) {
+  const { t } = useTranslation();
   const {
     sessionStore: { devTools },
     uiPlayerStore,
@@ -119,7 +124,10 @@ function ConsolePanel({
   const { dataSource } = uiPlayerStore;
   const showSingleTab = dataSource === 'current';
   const {
-    logList = [], exceptionsList = [], logListNow = [], exceptionsListNow = [],
+    logList = [],
+    exceptionsList = [],
+    logListNow = [],
+    exceptionsListNow = [],
   } = React.useMemo(() => {
     if (showSingleTab) {
       return tabStates[currentTab] ?? {};
@@ -127,25 +135,50 @@ function ConsolePanel({
     const logList = tabValues.flatMap((tab) => tab.logList);
     const exceptionsList = tabValues.flatMap((tab) => tab.exceptionsList);
     const logListNow = isLive ? tabValues.flatMap((tab) => tab.logListNow) : [];
-    const exceptionsListNow = isLive ? tabValues.flatMap((tab) => tab.exceptionsListNow) : [];
+    const exceptionsListNow = isLive
+      ? tabValues.flatMap((tab) => tab.exceptionsListNow)
+      : [];
     return {
-      logList, exceptionsList, logListNow, exceptionsListNow,
+      logList,
+      exceptionsList,
+      logListNow,
+      exceptionsListNow,
     };
   }, [currentTab, tabStates, dataSource, tabValues, isLive]);
-  const getTabNum = (tab: string) => (tabsArr.findIndex((t) => t === tab) + 1);
+  const getTabNum = (tab: string) => tabsArr.findIndex((t) => t === tab) + 1;
 
   const list = useMemo(() => {
     if (isLive) {
-      return logListNow.concat(exceptionsListNow).sort((a, b) => a.time - b.time);
+      return logListNow
+        .concat(exceptionsListNow)
+        .sort((a, b) => a.time - b.time);
     }
     const logs = logList.concat(exceptionsList).sort((a, b) => a.time - b.time);
-    return zoomEnabled ? logs.filter((l) => l.time >= zoomStartTs && l.time <= zoomEndTs) : logs;
-  }, [isLive, logList.length, exceptionsList.length, logListNow.length, exceptionsListNow.length, zoomEnabled, zoomStartTs, zoomEndTs]);
+    return zoomEnabled
+      ? logs.filter((l) => l.time >= zoomStartTs && l.time <= zoomEndTs)
+      : logs;
+  }, [
+    isLive,
+    logList.length,
+    exceptionsList.length,
+    logListNow.length,
+    exceptionsListNow.length,
+    zoomEnabled,
+    zoomStartTs,
+    zoomEndTs,
+  ]);
   let filteredList = useRegExListFilterMemo(list, (l) => l.value, filter);
-  filteredList = useTabListFilterMemo(filteredList, (l) => LEVEL_TAB[l.level], ALL, activeTab);
+  filteredList = useTabListFilterMemo(
+    filteredList,
+    (l) => LEVEL_TAB[l.level],
+    ALL,
+    activeTab,
+  );
 
-  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
-  const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value });
+  const onTabClick = (activeTab: any) =>
+    devTools.update(INDEX_KEY, { activeTab });
+  const onFilterChange = ({ target: { value } }: any) =>
+    devTools.update(INDEX_KEY, { filter: value });
 
   // AutoScroll
   const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
@@ -184,18 +217,29 @@ function ConsolePanel({
   };
 
   return (
-    <BottomBlock style={{ height: '100%' }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <BottomBlock
+      style={{ height: '100%' }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       {/* @ts-ignore */}
       <BottomBlock.Header>
         <div className="flex items-center">
-          <span className="font-semibold color-gray-medium mr-4">Console</span>
-          <Tabs tabs={TABS} active={activeTab} onClick={onTabClick} border={false} />
+          <span className="font-semibold color-gray-medium mr-4">
+            {t('Console')}
+          </span>
+          <Tabs
+            tabs={TABS}
+            active={activeTab}
+            onClick={onTabClick}
+            border={false}
+          />
         </div>
         <div className="flex items-center gap-2">
           <TabSelector />
           <Input
             className="rounded-lg"
-            placeholder="Filter by keyword"
+            placeholder={t('Filter by keyword')}
             name="filter"
             onChange={onFilterChange}
             value={filter}
@@ -208,12 +252,12 @@ function ConsolePanel({
       {/* @ts-ignore */}
       <BottomBlock.Content className="overflow-y-auto">
         <NoContent
-          title={(
+          title={
             <div className="capitalize flex items-center mt-16 gap-2">
               <InfoCircleOutlined size={18} />
-              No Data
+              {t('No Data')}
             </div>
-          )}
+          }
           size="small"
           show={filteredList.length === 0}
         >

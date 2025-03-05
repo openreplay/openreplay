@@ -3,10 +3,10 @@ import ExCard from 'Components/Dashboard/components/DashboardList/NewDashModal/E
 import { List, Progress } from 'antd';
 
 interface Props {
-    title: string;
-    type: string;
-    onCard: (card: string) => void;
-    data?: any;
+  title: string;
+  type: string;
+  onCard: (card: string) => void;
+  data?: any;
 }
 
 function Bars(props: Props) {
@@ -24,23 +24,20 @@ function Bars(props: Props) {
     ],
   };
   return (
-    <ExCard
-      {...props}
-    >
-
+    <ExCard {...props}>
       <List
         itemLayout="horizontal"
         dataSource={_data.values}
         renderItem={(item: any) => (
           <List.Item>
             <List.Item.Meta
-              title={(
+              title={
                 <div className="flex justify-between w-full">
                   <span>{item.label}</span>
                   <span>{item.value}</span>
                 </div>
-                            )}
-              description={(
+              }
+              description={
                 <Progress
                   percent={Math.round((item.value * 100) / _data.total)}
                   showInfo={false}
@@ -49,7 +46,7 @@ function Bars(props: Props) {
                   style={{ width: '100%' }}
                   size={['small', 2]}
                 />
-                            )}
+              }
             />
           </List.Item>
         )}

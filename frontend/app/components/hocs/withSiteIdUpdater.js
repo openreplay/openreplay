@@ -17,11 +17,17 @@ const withSiteIdUpdater = (BaseComponent) => {
     }, []);
 
     useEffect(() => {
-      const { location: { pathname }, history } = props;
+      const {
+        location: { pathname },
+        history,
+      } = props;
 
-      const shouldUrlUpdate = urlSiteId && parseInt(urlSiteId, 10) !== parseInt(siteId, 10);
+      const shouldUrlUpdate =
+        urlSiteId && parseInt(urlSiteId, 10) !== parseInt(siteId, 10);
       if (shouldUrlUpdate) {
-        const path = ['', siteId].concat(pathname.split('/').slice(2)).join('/');
+        const path = ['', siteId]
+          .concat(pathname.split('/').slice(2))
+          .join('/');
         history.push(path);
       }
       prevSiteIdRef.current = siteId;
@@ -30,7 +36,10 @@ const withSiteIdUpdater = (BaseComponent) => {
     const key = siteId;
 
     const passedProps = {
-      ...props, siteId, setSiteId, urlSiteId,
+      ...props,
+      siteId,
+      setSiteId,
+      urlSiteId,
     };
     return <BaseComponent key={key} {...passedProps} />;
   }

@@ -1,5 +1,8 @@
 import React, { useContext } from 'react';
-import { PlayerContext, MobilePlayerContext } from 'Components/Session/playerContext';
+import {
+  PlayerContext,
+  MobilePlayerContext,
+} from 'Components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import stl from './timeline.module.css';
 import { getTimelinePosition } from './getTimelinePosition';
@@ -10,10 +13,16 @@ function EventsList() {
   const { eventCount, endTime } = store.get();
   const { tabStates } = store.get();
   const scale = 100 / endTime;
-  const events = React.useMemo(() => Object.values(tabStates)[0]?.eventList.filter((e) => e.time) || [], [eventCount]);
+  const events = React.useMemo(
+    () => Object.values(tabStates)[0]?.eventList.filter((e) => e.time) || [],
+    [eventCount],
+  );
 
   React.useEffect(() => {
-    const hasDuplicates = events.some((e, i) => events.findIndex((el) => el.key === e.key && el.time === e.time) !== i);
+    const hasDuplicates = events.some(
+      (e, i) =>
+        events.findIndex((el) => el.key === e.key && el.time === e.time) !== i,
+    );
     if (hasDuplicates) {
       console.error('Duplicate events detected in list', events);
     }

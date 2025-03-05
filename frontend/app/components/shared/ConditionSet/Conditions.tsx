@@ -35,7 +35,9 @@ function ConditionSet({
 
   const onAddFilter = (filter: Record<string, any> = {}) => {
     setChanged?.(true);
-    if (conditions.filter.filters.findIndex((f) => f.key === filter.key) !== -1) {
+    if (
+      conditions.filter.filters.findIndex((f) => f.key === filter.key) !== -1
+    ) {
       return toast.error('Filter already exists');
     }
     conditions.filter.addFilter(filter);

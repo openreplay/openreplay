@@ -1,13 +1,8 @@
 import React from 'react';
 import { NoContent } from 'UI';
 import { Styles } from 'Components/Dashboard/Widgets/common';
-import {
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   data: any;
@@ -15,13 +10,16 @@ interface Props {
 }
 
 function Chart(props: Props) {
+  const { t } = useTranslation();
   const { data, label } = props;
   const gradientDef = Styles.gradientDef();
 
   return (
     <NoContent
       size="small"
-      title={<div className="text-base font-normal">No data available</div>}
+      title={
+        <div className="text-base font-normal">{t('No data available')}</div>
+      }
       show={data && data.length === 0}
       style={{ height: '100px' }}
     >

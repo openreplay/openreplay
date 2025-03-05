@@ -3,31 +3,31 @@ import { DateTime } from 'luxon';
 import { validateEmail, validateName } from 'App/validate';
 
 export interface IMember {
-  id: string
-  name: string
-  email: string
-  createdAt: DateTime
-  admin: boolean
-  superAdmin: boolean
-  joined: boolean
-  expiredInvitation: boolean
-  roleId: string
-  roleName: string
-  invitationLink: string
+  id: string;
+  name: string;
+  email: string;
+  createdAt: DateTime;
+  admin: boolean;
+  superAdmin: boolean;
+  joined: boolean;
+  expiredInvitation: boolean;
+  roleId: string;
+  roleName: string;
+  invitationLink: string;
 }
 
 export interface IMemberApiRes {
-  userId: string
-  name: string
-  email: string
-  createdAt: string
-  admin: boolean
-  superAdmin: boolean
-  joined: boolean
-  expiredInvitation: boolean
-  roleId: string
-  roleName: string
-  invitationLink: string
+  userId: string;
+  name: string;
+  email: string;
+  createdAt: string;
+  admin: boolean;
+  superAdmin: boolean;
+  joined: boolean;
+  expiredInvitation: boolean;
+  roleId: string;
+  roleName: string;
+  invitationLink: string;
 }
 
 export default class Member {
@@ -58,7 +58,8 @@ export default class Member {
     makeAutoObservable(this);
   }
 
-  validate = () => validateEmail(this.email) && validateName(this.name, { diacritics: true });
+  validate = () =>
+    validateEmail(this.email) && validateName(this.name, { diacritics: true });
 
   toData = () => ({
     id: this.id,

@@ -23,11 +23,15 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
   const { isEnterprise } = userStore;
   const { isMobile } = projectsStore;
   const [step, setStep] = React.useState<number>(0);
-  const [selectedCategory, setSelectedCategory] = React.useState<string>('product-analytics');
+  const [selectedCategory, setSelectedCategory] =
+    React.useState<string>('product-analytics');
 
-  useEffect(() => () => {
-    setStep(0);
-  }, [open]);
+  useEffect(
+    () => () => {
+      setStep(0);
+    },
+    [open],
+  );
 
   return (
     <Modal
@@ -53,15 +57,15 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
         }}
       >
         {step === 0 && (
-        <SelectCard
-          onClose={onClose}
-          selected={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          onCard={() => setStep(step + 1)}
-          isLibrary={isAddingFromLibrary}
-          isMobile={isMobile}
-          isEnterprise={isEnterprise}
-        />
+          <SelectCard
+            onClose={onClose}
+            selected={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            onCard={() => setStep(step + 1)}
+            isLibrary={isAddingFromLibrary}
+            isMobile={isMobile}
+            isEnterprise={isEnterprise}
+          />
         )}
         {step === 1 && <CreateCard onBack={() => setStep(0)} />}
       </div>

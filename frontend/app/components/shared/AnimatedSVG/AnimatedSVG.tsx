@@ -1,33 +1,33 @@
 import React from 'react';
 
 export enum ICONS {
-    DASHBOARD_ICON = 'dashboard-icn',
-    EMPTY_STATE = 'empty-state',
-    LOGO_SMALL = 'logo-small',
-    LOGO_FULL = 'logo-full',
-    NO_RESULTS = 'no-results',
-    LOADER = 'openreplay-preloader',
-    SIGNAL_GREEN = 'signal-green',
-    SIGNAL_RED = 'signal-red',
-    NO_BOOKMARKS = 'ca-no-bookmarked-session',
-    NO_LIVE_SESSIONS = 'ca-no-live-sessions',
-    NO_SESSIONS = 'ca-no-sessions',
-    NO_SESSIONS_IN_VAULT = 'ca-no-sessions-in-vault',
-    NO_WEBHOOKS = 'ca-no-webhooks',
-    NO_METADATA = 'ca-no-metadata',
-    NO_ISSUES = 'ca-no-issues',
-    NO_AUDIT_TRAIL = 'ca-no-audit-trail',
-    NO_ANNOUNCEMENTS = 'ca-no-announcements',
-    NO_ALERTS = 'ca-no-alerts',
-    NO_NOTES = 'ca-no-notes',
-    NO_CARDS = 'ca-no-cards',
-    NO_RECORDINGS = 'ca-no-recordings',
-    NO_SEARCH_RESULTS = 'ca-no-search-results',
-    NO_DASHBOARDS = 'ca-no-dashboards',
-    NO_PROJECTS = 'ca-no-projects',
-    NO_FFLAGS = 'no-fflags',
-    PROCESSING = 'ca-processing',
-    NO_UXT = 'ca-no-uxt',
+  DASHBOARD_ICON = 'dashboard-icn',
+  EMPTY_STATE = 'empty-state',
+  LOGO_SMALL = 'logo-small',
+  LOGO_FULL = 'logo-full',
+  NO_RESULTS = 'no-results',
+  LOADER = 'openreplay-preloader',
+  SIGNAL_GREEN = 'signal-green',
+  SIGNAL_RED = 'signal-red',
+  NO_BOOKMARKS = 'ca-no-bookmarked-session',
+  NO_LIVE_SESSIONS = 'ca-no-live-sessions',
+  NO_SESSIONS = 'ca-no-sessions',
+  NO_SESSIONS_IN_VAULT = 'ca-no-sessions-in-vault',
+  NO_WEBHOOKS = 'ca-no-webhooks',
+  NO_METADATA = 'ca-no-metadata',
+  NO_ISSUES = 'ca-no-issues',
+  NO_AUDIT_TRAIL = 'ca-no-audit-trail',
+  NO_ANNOUNCEMENTS = 'ca-no-announcements',
+  NO_ALERTS = 'ca-no-alerts',
+  NO_NOTES = 'ca-no-notes',
+  NO_CARDS = 'ca-no-cards',
+  NO_RECORDINGS = 'ca-no-recordings',
+  NO_SEARCH_RESULTS = 'ca-no-search-results',
+  NO_DASHBOARDS = 'ca-no-dashboards',
+  NO_PROJECTS = 'ca-no-projects',
+  NO_FFLAGS = 'no-fflags',
+  PROCESSING = 'ca-processing',
+  NO_UXT = 'ca-no-uxt',
 }
 
 const ICONS_SVGS = {
@@ -61,16 +61,14 @@ const ICONS_SVGS = {
 };
 
 interface Props {
-    name: string;
-    size?: number;
-    disableSize?: boolean;
-    className?: string;
+  name: string;
+  size?: number;
+  disableSize?: boolean;
+  className?: string;
 }
 
 function AnimatedSVG(props: Props): JSX.Element | null {
-  const {
-    name, size = 24, disableSize, className,
-  } = props;
+  const { name, size = 24, disableSize, className } = props;
 
   // @ts-ignore
   const SvgIcon = ICONS_SVGS[name];

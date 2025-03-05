@@ -17,6 +17,7 @@ import { Icon, TextEllipsis, Tooltip } from 'UI';
 
 import LoadInfo from './LoadInfo';
 import cls from './event.module.css';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   event: any;
@@ -32,9 +33,9 @@ type Props = {
 
 const isFrustrationEvent = (evt: any): boolean => {
   if (
-    evt.type === 'mouse_thrashing'
-    || evt.type === TYPES.CLICKRAGE
-    || evt.type === TYPES.TAPRAGE
+    evt.type === 'mouse_thrashing' ||
+    evt.type === TYPES.CLICKRAGE ||
+    evt.type === TYPES.TAPRAGE
   ) {
     return true;
   }
@@ -55,6 +56,7 @@ const Event: React.FC<Props> = ({
   presentInSearch = false,
   whiteBg,
 }) => {
+  const { t } = useTranslation();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const isLocation = event.type === TYPES.LOCATION;
@@ -83,22 +85,22 @@ const Event: React.FC<Props> = ({
 
     switch (event.type) {
       case TYPES.LOCATION:
-        title = 'Visited';
+        title = t('Visited');
         body = event.url;
         icon = <Navigation size={16} strokeWidth={1} />;
         break;
       case TYPES.SWIPE:
-        title = 'Swipe';
+        title = t('Swipe');
         body = event.direction;
         iconName = `chevron-${event.direction}`;
         break;
       case TYPES.TOUCH:
-        title = 'Tapped';
+        title = t('Tapped');
         body = event.label;
         iconName = 'event/click';
         break;
       case TYPES.CLICK:
-        title = 'Clicked';
+        title = t('Clicked');
         body = event.label;
         icon = isFrustration ? (
           <MessageCircleQuestion size={16} strokeWidth={1} />
@@ -107,11 +109,11 @@ const Event: React.FC<Props> = ({
         );
         isFrustration
           ? Object.assign(tooltip, {
-            disabled: false,
-            text: `User hesitated ${Math.round(
-              event.hesitation / 1000,
-            )}s to perform this event`,
-          })
+              disabled: false,
+              text: `${t('User hesitated')} ${Math.round(
+                event.hesitation / 1000,
+              )}${t('s to perform this event')}`,
+            })
           : null;
         break;
       case TYPES.INPUT:
@@ -124,26 +126,26 @@ const Event: React.FC<Props> = ({
         );
         isFrustration
           ? Object.assign(tooltip, {
-            disabled: false,
-            text: `User hesitated ${Math.round(
-              event.hesitation / 1000,
-            )}s to enter a value in this input field.`,
-          })
+              disabled: false,
+              text: `${t('User hesitated')} ${Math.round(
+                event.hesitation / 1000,
+              )}${t('s to enter a value in this input field.')}`,
+            })
           : null;
         break;
       case TYPES.CLICKRAGE:
       case TYPES.TAPRAGE:
-        title = event.count ? `${event.count} Clicks` : 'Click Rage';
+        title = event.count ? `${event.count} ${t('Clicks')}` : t('Click Rage');
         body = event.label;
         icon = <Angry size={16} strokeWidth={1} />;
         break;
       case TYPES.IOS_VIEW:
-        title = 'View';
+        title = t('View');
         body = event.name;
         iconName = 'event/ios_view';
         break;
       case 'mouse_thrashing':
-        title = 'Mouse Thrashing';
+        title = t('Mouse Thrashing');
         icon = <MousePointerClick size={16} strokeWidth={1} />;
         break;
     }
@@ -173,9 +175,7 @@ const Event: React.FC<Props> = ({
                   className="flex flex-col justify-center items-start w-full"
                   style={{ minWidth: '0' }}
                 >
-                  <span className={cn(cls.title, 'font-medium')}>
-                    {title}
-                  </span>
+                  <span className={cn(cls.title, 'font-medium')}>{title}</span>
                   {body && !isLocation && (
                     <TextEllipsis
                       maxWidth="80%"
@@ -186,7 +186,7 @@ const Event: React.FC<Props> = ({
                 </div>
                 {isLocation && event.speedIndex != null && (
                   <div className="color-gray-medium flex font-medium items-center leading-none justify-end">
-                    <div className="font-size-10 pr-2">Speed Index</div>
+                    <div className="font-size-10 pr-2">${t('Speed Index')}</div>
                     <div>{numberWithCommas(event.speedIndex || 0)}</div>
                   </div>
                 )}
@@ -238,33 +238,33 @@ const Event: React.FC<Props> = ({
     >
       {menuOpen && (
         <button onClick={copyHandler} className={cls.contextMenu}>
-          {event.target ? 'Copy CSS' : 'Copy URL'}
+          {event.target ? t('Copy CSS') : t('Copy URL')}
         </button>
       )}
       <div className={cn(cls.topBlock, cls.firstLine, 'w-full')}>
         {renderBody()}
       </div>
-      {isLocation
-      && (event.fcpTime
-        || event.visuallyComplete
-        || event.timeToInteractive
-        || event.webvitals) ? (
-          <LoadInfo
-            onClick={toggleLoadInfo}
-            event={event}
-            webvitals={event.webvitals}
-            prorata={prorata({
-              parts: 100,
-              elements: {
-                a: event.fcpTime,
-                b: event.visuallyComplete,
-                c: event.timeToInteractive,
-              },
-              startDivisorFn: (elements) => elements / 1.2,
-              divisorFn: (elements, parts) => elements / (2 * parts + 1),
-            })}
-          />
-        ) : null}
+      {isLocation &&
+      (event.fcpTime ||
+        event.visuallyComplete ||
+        event.timeToInteractive ||
+        event.webvitals) ? (
+        <LoadInfo
+          onClick={toggleLoadInfo}
+          event={event}
+          webvitals={event.webvitals}
+          prorata={prorata({
+            parts: 100,
+            elements: {
+              a: event.fcpTime,
+              b: event.visuallyComplete,
+              c: event.timeToInteractive,
+            },
+            startDivisorFn: (elements) => elements / 1.2,
+            divisorFn: (elements, parts) => elements / (2 * parts + 1),
+          })}
+        />
+      ) : null}
     </div>
   );
 };

@@ -1,5 +1,9 @@
 import { healthService } from 'App/services';
-import { categoryKeyNames, lastAskedKey, healthResponseKey } from 'Components/Header/HealthStatus/const';
+import {
+  categoryKeyNames,
+  lastAskedKey,
+  healthResponseKey,
+} from 'Components/Header/HealthStatus/const';
 import { IServiceStats } from 'Components/Header/HealthStatus/HealthStatus';
 
 function mapResponse(resp: Record<string, any>) {
@@ -24,9 +28,11 @@ function mapResponse(resp: Record<string, any>) {
       subservices: resp[service],
       serviceName: service,
     };
-    Object.values(healthMap[service].subservices).forEach((subservice: Record<string, any>) => {
-      if (!subservice?.health) healthMap[service].healthOk = false;
-    });
+    Object.values(healthMap[service].subservices).forEach(
+      (subservice: Record<string, any>) => {
+        if (!subservice?.health) healthMap[service].healthOk = false;
+      },
+    );
   });
 
   const overallHealth = Object.values(healthMap).every(

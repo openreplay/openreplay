@@ -67,7 +67,12 @@ const defaultOptions = {
   },
 };
 
-export function initWindowStorages(chartUuid: string, categories: string[] = [], chartArr: any[] = [], compChartArr: any[] = []) {
+export function initWindowStorages(
+  chartUuid: string,
+  categories: string[] = [],
+  chartArr: any[] = [],
+  compChartArr: any[] = [],
+) {
   (window as any).__seriesValueMap = (window as any).__seriesValueMap ?? {};
   (window as any).__seriesColorMap = (window as any).__seriesColorMap ?? {};
   (window as any).__timestampMap = (window as any).__timestampMap ?? {};
@@ -84,10 +89,14 @@ export function initWindowStorages(chartUuid: string, categories: string[] = [],
     (window as any).__categoryMap[chartUuid] = categories;
   }
   if (!(window as any).__timestampMap[chartUuid]) {
-    (window as any).__timestampMap[chartUuid] = chartArr.map((item) => item.timestamp);
+    (window as any).__timestampMap[chartUuid] = chartArr.map(
+      (item) => item.timestamp,
+    );
   }
   if (!(window as any).__timestampCompMap[chartUuid]) {
-    (window as any).__timestampCompMap[chartUuid] = compChartArr.map((item) => item.timestamp);
+    (window as any).__timestampCompMap[chartUuid] = compChartArr.map(
+      (item) => item.timestamp,
+    );
   }
 }
 

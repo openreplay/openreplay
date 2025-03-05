@@ -1,6 +1,4 @@
-import React, {
-  useState, useRef, useEffect, forwardRef,
-} from 'react';
+import React, { useState, useRef, useEffect, forwardRef } from 'react';
 import cn from 'classnames';
 import { Tooltip } from 'antd';
 import styles from './textEllipsis.module.css';
@@ -28,18 +26,18 @@ function findTextWidth(text, fontProp) {
   return result;
 }
 
-const Trigger = forwardRef(({
-  textOrChildren, maxWidth, style, className, ...rest
-}, ref) => (
-  <div
-    className={cn(styles.textEllipsis, className)}
-    style={{ maxWidth, ...style }}
-    ref={ref}
-    {...rest}
-  >
-    {textOrChildren}
-  </div>
-));
+const Trigger = forwardRef(
+  ({ textOrChildren, maxWidth, style, className, ...rest }, ref) => (
+    <div
+      className={cn(styles.textEllipsis, className)}
+      style={{ maxWidth, ...style }}
+      ref={ref}
+      {...rest}
+    >
+      {textOrChildren}
+    </div>
+  ),
+);
 
 function TextEllipsis({
   text,
@@ -66,7 +64,9 @@ function TextEllipsis({
     if (textRef.current) {
       const element = textRef.current;
 
-      const fontSize = window.getComputedStyle(element, null).getPropertyValue('font-size');
+      const fontSize = window
+        .getComputedStyle(element, null)
+        .getPropertyValue('font-size');
 
       const textWidth = findTextWidth(element.innerText, fontSize);
       if (textWidth > element.clientWidth) setShowPopup(true);
@@ -90,11 +90,11 @@ function TextEllipsis({
 
   return (
     <Tooltip
-      title={(
+      title={
         <div className="customPopupText" {...hintProps}>
           {hintText || textOrChildren}
         </div>
-      )}
+      }
       {...popupProps}
     >
       <Trigger

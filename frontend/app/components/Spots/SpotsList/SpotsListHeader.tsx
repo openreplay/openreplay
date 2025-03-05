@@ -4,6 +4,7 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
 import ReloadButton from 'Shared/ReloadButton';
+import { useTranslation } from 'react-i18next';
 
 const SpotsListHeader = observer(
   ({
@@ -20,6 +21,7 @@ const SpotsListHeader = observer(
     isEmpty?: boolean;
     tenantHasSpots: boolean;
   }) => {
+    const { t } = useTranslation();
     const { spotStore } = useStore();
 
     const debouncedFetch = React.useMemo(
@@ -42,14 +44,14 @@ const SpotsListHeader = observer(
     };
 
     const handleSegmentChange = (value: string) => {
-      const key = value === 'All Spots' ? 'all' : 'own';
+      const key = value === t('All Spots') ? 'all' : 'own';
       onFilterChange(key);
     };
 
     return (
       <div className="flex items-center justify-between w-full">
         <div className="flex gap-1 items-center">
-          <h1 className="text-2xl capitalize mr-2">Spot List</h1>
+          <h1 className="text-2xl capitalize mr-2">{t('Spot List')}</h1>
           <ReloadButton buttonSize="small" onClick={onRefresh} iconSize={14} />
         </div>
 
@@ -63,20 +65,20 @@ const SpotsListHeader = observer(
                     onClick={onClearSelection}
                     className="mr-2 px-3"
                   >
-                    Clear
+                    {t('Clear')}
                   </Button>
                   <Button onClick={onDelete} type="primary" ghost>
-                    Delete (
-                    {selectedCount}
-                    )
+                    {t('Delete')} ({selectedCount})
                   </Button>
                 </>
               )}
             </div>
 
             <Segmented
-              options={['All Spots', 'My Spots']}
-              value={spotStore.filter === 'all' ? 'All Spots' : 'My Spots'}
+              options={[t('All Spots'), t('My Spots')]}
+              value={
+                spotStore.filter === 'all' ? t('All Spots') : t('My Spots')
+              }
               onChange={handleSegmentChange}
               className="mr-4 lg:hidden xl:flex"
               size="small"
@@ -87,7 +89,7 @@ const SpotsListHeader = observer(
                 value={spotStore.query}
                 allowClear
                 name="spot-search"
-                placeholder="Filter by title"
+                placeholder={t('Filter by title')}
                 onChange={handleInputChange}
                 onSearch={onSearch}
                 className="rounded-lg"

@@ -56,7 +56,8 @@ export function useIntegration<T>(
     }) => saveIntegration(name, values, siteId, exists),
   });
   const removeMutation = useMutation({
-    mutationFn: ({ siteId }: { siteId: string }) => removeIntegration(name, siteId),
+    mutationFn: ({ siteId }: { siteId: string }) =>
+      removeIntegration(name, siteId),
   });
 
   return {

@@ -38,13 +38,7 @@ function ByCountry(props: any) {
     },
   ];
 
-  return (
-    <ByComponent
-      rows={rows}
-      lineWidth={180}
-      {...props}
-    />
-  );
+  return <ByComponent rows={rows} lineWidth={180} {...props} />;
 }
 
 export default ByCountry;

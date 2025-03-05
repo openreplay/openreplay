@@ -69,10 +69,16 @@ const IconButton = React.forwardRef(
             color="teal"
             name={icon}
             data-hidden={loading}
-            size={size === 'tiny' || size === 'small' || buttonSmall ? '14' : '16'}
+            size={
+              size === 'tiny' || size === 'small' || buttonSmall ? '14' : '16'
+            }
           />
         )}
-        {label && <span className={cn(stl.label, icon || loading ? 'ml-2' : '')}>{label}</span>}
+        {label && (
+          <span className={cn(stl.label, icon || loading ? 'ml-2' : '')}>
+            {label}
+          </span>
+        )}
       </button>
     </Tooltip>
   ),

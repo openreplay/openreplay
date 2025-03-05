@@ -26,9 +26,9 @@ function SessionBar({
     <Link
       to={sessionRoute(sessionId)}
       className={cn(
-			  className,
-			  'block border-radius-3 thin-blue-border flex justify-between items-center p-4',
-			  stl.wrapper,
+        className,
+        'block border-radius-3 thin-blue-border flex justify-between items-center p-4',
+        stl.wrapper,
       )}
     >
       <IconCard
@@ -40,11 +40,7 @@ function SessionBar({
         title={userBrowser}
         text={userBrowserVersion}
       />
-      <IconCard
-        icon={osIcon(userOs)}
-        title={userOs}
-        text={userOsVersion}
-      />
+      <IconCard icon={osIcon(userOs)} title={userOs} text={userOsVersion} />
       <IconCard
         icon={deviceTypeIcon(userDeviceType)}
         title={capitalize(userDeviceType)}

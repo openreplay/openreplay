@@ -106,12 +106,7 @@ function DraggableMarkers({
     }
     setStartPos(getTimelinePosition(defaultStartPos, scale));
     setEndPos(getTimelinePosition(defaultEndPos, scale));
-  }, [
-    defaultEndPos,
-    defaultStartPos,
-    scale,
-    dragging,
-  ]);
+  }, [defaultEndPos, defaultStartPos, scale, dragging]);
 
   const convertToPercentage = useCallback(
     (clientX: number, element: HTMLElement) => {
@@ -218,9 +213,7 @@ function DraggableMarkers({
         }}
       >
         {dragging === 'start' ? (
-          <div
-            className="absolute bg-[#FCC100] text-black rounded-xl px-2 py-1 -top-10 select-none left-1/2 -translate-x-1/2"
-          >
+          <div className="absolute bg-[#FCC100] text-black rounded-xl px-2 py-1 -top-10 select-none left-1/2 -translate-x-1/2">
             {startRangeStr}
           </div>
         ) : null}
@@ -237,7 +230,10 @@ function DraggableMarkers({
         <div
           className="bg-black/20 rounded-xl"
           style={{
-            zIndex: 101, height: 16, width: 1, overflow: 'hidden',
+            zIndex: 101,
+            height: 16,
+            width: 1,
+            overflow: 'hidden',
           }}
         />
       </div>
@@ -286,9 +282,7 @@ function DraggableMarkers({
         }}
       >
         {dragging === 'end' ? (
-          <div
-            className="absolute bg-[#FCC100] text-black rounded-xl px-2 p-1 -top-10 select-none left-1/2 -translate-x-1/2"
-          >
+          <div className="absolute bg-[#FCC100] text-black rounded-xl px-2 p-1 -top-10 select-none left-1/2 -translate-x-1/2">
             {endRangeStr}
           </div>
         ) : null}
@@ -306,7 +300,10 @@ function DraggableMarkers({
         <div
           className="bg-black/20 rounded-xl"
           style={{
-            zIndex: 101, height: 16, width: 1, overflow: 'hidden',
+            zIndex: 101,
+            height: 16,
+            width: 1,
+            overflow: 'hidden',
           }}
         />
       </div>

@@ -44,7 +44,11 @@ function ColumnChart(props: ColumnChartProps) {
     (window as any).__seriesColorMap[chartUuid.current] = {};
     (window as any).__yAxisData = (window as any).__yAxisData ?? {};
 
-    const { yAxisData, series } = buildColumnChart(chartUuid.current, data, compData);
+    const { yAxisData, series } = buildColumnChart(
+      chartUuid.current,
+      data,
+      compData,
+    );
     (window as any).__yAxisData[chartUuid.current] = yAxisData;
 
     chart.setOption({

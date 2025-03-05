@@ -3,12 +3,12 @@ import { Loader, Icon } from 'UI';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import {
-  Form, Input, Button, Typography,
-} from 'antd';
+import { Form, Input, Button, Typography } from 'antd';
 import { SquareArrowOutUpRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 function ResetPasswordRequest() {
+  const { t } = useTranslation();
   const { userStore } = useStore();
   const { loading } = userStore;
   const { requestResetPassword } = userStore;
@@ -35,7 +35,12 @@ function ResetPasswordRequest() {
   };
 
   const handleSubmit = (token?: any) => {
-    if (CAPTCHA_ENABLED && recaptchaRef.current && (token === null || token === undefined)) return;
+    if (
+      CAPTCHA_ENABLED &&
+      recaptchaRef.current &&
+      (token === null || token === undefined)
+    )
+      return;
 
     setError(null);
     requestResetPassword({ email: email.trim(), 'g-recaptcha-response': token })
@@ -45,12 +50,17 @@ function ResetPasswordRequest() {
         }
 
         setError(err.message);
-      }).finally(() => {
+      })
+      .finally(() => {
         setRequested(true);
       });
   };
   return (
-    <Form onFinish={onSubmit} style={{ minWidth: '50%' }} className="flex flex-col">
+    <Form
+      onFinish={onSubmit}
+      style={{ minWidth: '50%' }}
+      className="flex flex-col"
+    >
       <Loader loading={false}>
         {CAPTCHA_ENABLED && (
           <div className="flex justify-center">
@@ -66,12 +76,12 @@ function ResetPasswordRequest() {
         {!requested && (
           <>
             <Form.Item>
-              <label>Email Address</label>
+              <label>{t('Email Address')}</label>
               <Input
                 autoFocus
                 autoComplete="email"
                 type="email"
-                placeholder="Email"
+                placeholder={t('Email')}
                 name="email"
                 onChange={write}
                 className="w-full"
@@ -79,8 +89,13 @@ function ResetPasswordRequest() {
                 required
               />
             </Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} disabled={loading}>
-              Email Password Reset Link
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              disabled={loading}
+            >
+              {t('Email Password Reset Link')}
             </Button>
           </>
         )}
@@ -91,11 +106,10 @@ function ResetPasswordRequest() {
               <Icon name="envelope-check" size={30} color="tealx" />
             </div>
             <div>
-              Alright! a reset link was emailed to
-              {' '}
-              <span className="font-medium">{email}</span>
-              .
-              Click on it to reset your account password.
+              {t('Alright! a reset link was emailed to')}{' '}
+              <span className="font-medium">{email}</span>.{' '}
+              {t('Click on it to reset')}
+              {t('your account password.')}
             </div>
           </div>
         )}
@@ -107,18 +121,24 @@ function ResetPasswordRequest() {
             </div>
             {smtpError ? (
               <Typography.Text>
-                Email delivery failed due to invalid SMTP configuration. Please contact your admin.
+                {t('Email delivery failed due to invalid SMTP configuration. Please contact your admin.')}
                 <a
                   href="https://docs.openreplay.com/en/configuration/configure-smtp/"
                   className="!text-neutral-900 hover:!underline flex items-center justify-center gap-1 mt-2"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Learn More
-                  <SquareArrowOutUpRight size={12} strokeWidth={1.5} className="inline" />
+                  {t('Learn More')}
+                  <SquareArrowOutUpRight
+                    size={12}
+                    strokeWidth={1.5}
+                    className="inline"
+                  />
                 </a>
               </Typography.Text>
-            ) : <Typography.Text>{error}</Typography.Text>}
+            ) : (
+              <Typography.Text>{error}</Typography.Text>
+            )}
           </div>
         )}
       </Loader>

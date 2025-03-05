@@ -1,10 +1,11 @@
 import React from 'react';
 import { withRouter } from 'react-router-dom';
 import {
-  removeQueryParams, addQueryParams, setQueryParams, parseQuery,
+  removeQueryParams,
+  addQueryParams,
+  setQueryParams,
+  parseQuery,
 } from 'App/routes';
-
-/* eslint-disable react/sort-comp */
 
 const withLocationHandlers = (propNames) => (BaseComponent) => {
   @withRouter
@@ -26,7 +27,9 @@ const withLocationHandlers = (propNames) => (BaseComponent) => {
       const actualNames = Object.keys(this.getQuery(namesArray));
 
       if (actualNames.length > 0) {
-        history[replace ? 'replace' : 'push'](removeQueryParams(location, actualNames));
+        history[replace ? 'replace' : 'push'](
+          removeQueryParams(location, actualNames),
+        );
       }
     };
 
@@ -77,7 +80,14 @@ const withLocationHandlers = (propNames) => (BaseComponent) => {
 
     render() {
       const queryProps = this.getQueryProps();
-      return <BaseComponent query={this.query} hash={this.hash} {...queryProps} {...this.props} />;
+      return (
+        <BaseComponent
+          query={this.query}
+          hash={this.hash}
+          {...queryProps}
+          {...this.props}
+        />
+      );
     }
   }
   return WrapperClass;

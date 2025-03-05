@@ -4,6 +4,7 @@ import ConditionSet from 'Shared/ConditionSet';
 import { Icon } from 'UI';
 import { Button } from 'antd';
 import { nonConditionalFlagFilters } from 'Types/filter/newFilter';
+import { useTranslation } from 'react-i18next';
 
 function ConditionalRecordingSettings({
   conditions,
@@ -16,11 +17,15 @@ function ConditionalRecordingSettings({
   setConditions: (conditions: Conditions[]) => void;
   isMobile?: boolean;
 }) {
+  const { t } = useTranslation();
   const addConditionSet = () => {
     setChanged(true);
     setConditions([
       ...conditions,
-      new Conditions({ name: `Condition Set ${conditions.length + 1}` }, false),
+      new Conditions(
+        { name: `${t('Condition Set')} ${conditions.length + 1}` },
+        false,
+      ),
     ]);
   };
   const removeCondition = (index: number) => {
@@ -43,9 +48,13 @@ function ConditionalRecordingSettings({
         }}
       />
       <div className="flex gap-1 items-center">
-        <span className="font-semibold">matching</span>
-        <Button type="text" icon={<Icon name="plus" size={16} />} onClick={addConditionSet}>
-          Condition Set
+        <span className="font-semibold">{t('matching')}</span>
+        <Button
+          type="text"
+          icon={<Icon name="plus" size={16} />}
+          onClick={addConditionSet}
+        >
+          {t('Condition Set')}
         </Button>
       </div>
       <div className="mt-2 flex flex-col gap-4">
@@ -58,8 +67,8 @@ function ConditionalRecordingSettings({
               conditions={condition}
               removeCondition={() => removeCondition(index)}
               readonly={false}
-              bottomLine1="Capture"
-              bottomLine2="of total session rate matching this condition."
+              bottomLine1={t('Capture')}
+              bottomLine2={t('of total session rate matching this condition.')}
               setChanged={setChanged}
               excludeFilterKeys={nonConditionalFlagFilters}
               isConditional
@@ -67,7 +76,7 @@ function ConditionalRecordingSettings({
             />
             {index !== conditions.length - 1 ? (
               <div className="text-disabled-text flex justify-center w-full">
-                <span>OR</span>
+                <span>{t('OR')}</span>
               </div>
             ) : null}
           </React.Fragment>

@@ -1,5 +1,8 @@
 import { makeAutoObservable, runInAction } from 'mobx';
-import { GLOBAL_HAS_NO_RECORDINGS, SITE_ID_STORAGE_KEY } from 'App/constants/storageKeys';
+import {
+  GLOBAL_HAS_NO_RECORDINGS,
+  SITE_ID_STORAGE_KEY,
+} from 'App/constants/storageKeys';
 import { projectsService } from 'App/services';
 import { toast } from '.store/react-toastify-virtual-9dd0f3eae1/package';
 import GDPR from './types/gdpr';
@@ -37,7 +40,9 @@ export default class ProjectsStore {
   }
 
   get isMobile() {
-    return this.active ? ['ios', 'android'].includes(this.active.platform) : false;
+    return this.active
+      ? ['ios', 'android'].includes(this.active.platform)
+      : false;
   }
 
   get activeSiteId() {

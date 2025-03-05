@@ -10,7 +10,13 @@ function VerticalPointerLine() {
   return <VerticalPointerLineComp time={time} endTime={endTime} />;
 }
 
-export function VerticalPointerLineComp({ time, endTime }: { time: number, endTime: number }) {
+export function VerticalPointerLineComp({
+  time,
+  endTime,
+}: {
+  time: number;
+  endTime: number;
+}) {
   const scale = 100 / endTime;
   const left = time * scale;
 

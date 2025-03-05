@@ -1,14 +1,14 @@
 import React from 'react';
 
 interface Props {
-    children: React.ReactNode;
-    onSubmit?: any;
-    [x: string]: any;
+  children: React.ReactNode;
+  onSubmit?: any;
+  [x: string]: any;
 }
 
 interface FormFieldProps {
-    children: React.ReactNode;
-    [x: string]: any;
+  children: React.ReactNode;
+  [x: string]: any;
 }
 function FormField(props: FormFieldProps) {
   const { children, ...rest } = props;

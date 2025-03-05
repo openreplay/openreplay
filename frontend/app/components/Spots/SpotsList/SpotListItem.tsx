@@ -8,9 +8,7 @@ import {
   SlackOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import {
-  Button, Checkbox, Dropdown, Tooltip,
-} from 'antd';
+import { Button, Checkbox, Dropdown, Tooltip } from 'antd';
 import copy from 'copy-to-clipboard';
 import { Link2 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -140,7 +138,7 @@ function SpotListItem({
         />
       ) : null}
       <GridItem
-        modifier={(
+        modifier={
           <div className="absolute left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
             <Tooltip title={tooltipText} className="capitalize">
               <div
@@ -151,13 +149,11 @@ function SpotListItem({
                 <Link2 size={16} strokeWidth={1} />
               </div>
             </Tooltip>
-            <div
-              className="bg-black/70 text-white p-1 px-2 text-xs rounded-lg flex items-center cursor-normal"
-            >
+            <div className="bg-black/70 text-white p-1 px-2 text-xs rounded-lg flex items-center cursor-normal">
               {spot.duration}
             </div>
           </div>
-        )}
+        }
         onSave={onSave}
         setIsEdit={setIsEdit}
         isEdit={isEdit}
@@ -266,7 +262,9 @@ export function GridItem({
               </Checkbox>
             </div>
           ) : (
-            <div className="bg-yellow/50 mx-2 mt-2 px-2 w-full rounded "><TextEllipsis text={title} className="capitalize" /></div>
+            <div className="bg-yellow/50 mx-2 mt-2 px-2 w-full rounded ">
+              <TextEllipsis text={title} className="capitalize" />
+            </div>
           )}
         </div>
         <div className="flex items-center gap-1 leading-4 text-xs opacity-50 p-3">

@@ -2,16 +2,14 @@
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Browser_electron(props: Props) {
-  const {
-    size = 14, width = size, height = size, fill = '',
-  } = props;
+  const { size = 14, width = size, height = size, fill = '' } = props;
   return (
     <svg viewBox="0 0 138 150" width={`${width}px`} height={`${height}px`}>
       <path d="M48.827 32.168c-19.505-3.553-34.926.165-41.072 10.81-4.586 7.945-3.275 18.477 3.18 29.735a2 2 0 1 0 3.47-1.99c-5.815-10.14-6.946-19.23-3.186-25.744 5.106-8.843 18.861-12.16 36.89-8.876a2 2 0 0 0 .718-3.935Zm-27.75 54.23c7.887 8.666 18.133 16.795 29.817 23.541 28.293 16.335 58.412 20.7 73.256 10.58a2 2 0 0 0-2.253-3.306c-13.285 9.06-41.897 4.912-69.003-10.738-11.335-6.545-21.256-14.416-28.858-22.77a2 2 0 1 0-2.959 2.693Z" />

@@ -61,7 +61,7 @@ export default class Cursor {
     this.cursor.style.left = `${x}px`;
     this.cursor.style.top = `${y}px`;
     this.coords = { x, y };
-    setTimeout(() => this.isMoving = false, 60);
+    setTimeout(() => (this.isMoving = false), 60);
   }
 
   setDefaultStyle() {

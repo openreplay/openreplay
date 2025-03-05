@@ -1,10 +1,6 @@
 import React from 'react';
 import { BarChart } from 'echarts/charts';
-import {
-  DataProps,
-  buildCategories,
-  customTooltipFormatter,
-} from './utils';
+import { DataProps, buildCategories, customTooltipFormatter } from './utils';
 import { buildBarDatasetsAndSeries } from './barUtils';
 import { defaultOptions, echarts, initWindowStorages } from './init';
 
@@ -17,7 +13,9 @@ interface BarChartProps extends DataProps {
 }
 
 function ORBarChart(props: BarChartProps) {
-  const chartUuid = React.useRef<string>(Math.random().toString(36).substring(7));
+  const chartUuid = React.useRef<string>(
+    Math.random().toString(36).substring(7),
+  );
   const chartRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -29,9 +27,15 @@ function ORBarChart(props: BarChartProps) {
     const categories = buildCategories(props.data);
     const { datasets, series } = buildBarDatasetsAndSeries(props);
 
-    initWindowStorages(chartUuid.current, categories, props.data.chart, props.compData?.chart ?? []);
+    initWindowStorages(
+      chartUuid.current,
+      categories,
+      props.data.chart,
+      props.compData?.chart ?? [],
+    );
     series.forEach((s: any) => {
-      (window as any).__seriesColorMap[chartUuid.current][s.name] = s.itemStyle?.color ?? '#999';
+      (window as any).__seriesColorMap[chartUuid.current][s.name] =
+        s.itemStyle?.color ?? '#999';
       const ds = datasets.find((d) => d.id === s.datasetId);
       if (!ds) return;
       const yDim = s.encode.y;
@@ -41,7 +45,8 @@ function ORBarChart(props: BarChartProps) {
       (window as any).__seriesValueMap[chartUuid.current][s.name] = {};
       ds.source.forEach((row: any[]) => {
         const rowIdx = row[0]; // 'idx'
-        (window as any).__seriesValueMap[chartUuid.current][s.name][rowIdx] = row[yDimIndex];
+        (window as any).__seriesValueMap[chartUuid.current][s.name][rowIdx] =
+          row[yDimIndex];
       });
     });
 
@@ -61,7 +66,9 @@ function ORBarChart(props: BarChartProps) {
       ...defaultOptions,
       legend: {
         ...defaultOptions.legend,
-        data: series.filter((s: any) => !s._hideInLegend).map((s: any) => s.name),
+        data: series
+          .filter((s: any) => !s._hideInLegend)
+          .map((s: any) => s.name),
       },
       tooltip: {
         ...defaultOptions.tooltip,
@@ -79,7 +86,9 @@ function ORBarChart(props: BarChartProps) {
     });
     chart.on('click', (event) => {
       const index = event.dataIndex;
-      const timestamp = (window as any).__timestampMap?.[chartUuid.current]?.[index];
+      const timestamp = (window as any).__timestampMap?.[chartUuid.current]?.[
+        index
+      ];
       props.onClick?.({ activePayload: [{ payload: { timestamp } }] });
       setTimeout(() => {
         props.onSeriesFocus?.(event.seriesName);

@@ -4,9 +4,7 @@ import stl from './information.module.css';
 
 function Information({ primary = true, content = '' }) {
   return (
-    <div className={cn(stl.wrapper, { [stl.primary]: primary })}>
-      { content }
-    </div>
+    <div className={cn(stl.wrapper, { [stl.primary]: primary })}>{content}</div>
   );
 }
 

@@ -5,6 +5,7 @@ import { ENTERPRISE_REQUEIRED } from 'App/constants';
 import { Dropdown, Button } from 'antd';
 import { EllipsisVertical } from 'lucide-react';
 import { Icon } from 'UI';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   editHandler: (isTitle: boolean) => void;
@@ -12,6 +13,7 @@ interface Props {
   renderReport: any;
 }
 function DashboardOptions(props: Props) {
+  const { t } = useTranslation();
   const { userStore } = useStore();
   const { isEnterprise } = userStore;
   const { editHandler, deleteHandler, renderReport } = props;
@@ -21,13 +23,13 @@ function DashboardOptions(props: Props) {
       {
         icon: <Icon name="pencil" />,
         key: 'rename',
-        label: 'Rename',
+        label: t('Rename'),
         onClick: () => editHandler(true),
       },
       {
         icon: <Icon name="users" />,
         key: 'visibility',
-        label: 'Visibility & Access',
+        label: t('Visibility & Access'),
         onClick: editHandler,
       },
       {
@@ -39,17 +41,21 @@ function DashboardOptions(props: Props) {
       {
         icon: <Icon name="pdf-download" />,
         key: 'download',
-        label: 'Download Report',
+        label: t('Download Report'),
         onClick: renderReport,
         disabled: !isEnterprise,
-        tooltipTitle: ENTERPRISE_REQUEIRED,
+        tooltipTitle: ENTERPRISE_REQUEIRED(t),
       },
     ],
   };
 
   return (
     <Dropdown menu={menu}>
-      <Button type="text" id="ignore-prop" icon={<EllipsisVertical size={16} />} />
+      <Button
+        type="text"
+        id="ignore-prop"
+        icon={<EllipsisVertical size={16} />}
+      />
     </Dropdown>
   );
 }

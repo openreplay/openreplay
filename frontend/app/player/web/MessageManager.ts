@@ -281,7 +281,8 @@ export default class MessageManager {
         this.screen.cursor.shake();
       }
       if (!this.activeTab) {
-        this.activeTab = this.state.get().currentTab ?? Object.keys(this.tabs)[0];
+        this.activeTab =
+          this.state.get().currentTab ?? Object.keys(this.tabs)[0];
       }
 
       if (tabId) {
@@ -310,8 +311,8 @@ export default class MessageManager {
       }
     });
     if (
-      this.waitingForFiles
-      || (this.lastMessageTime <= t && t < this.session.durationMs)
+      this.waitingForFiles ||
+      (this.lastMessageTime <= t && t < this.session.durationMs)
     ) {
       this.setMessagesLoading(true);
     }

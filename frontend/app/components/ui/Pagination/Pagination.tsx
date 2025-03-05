@@ -10,13 +10,14 @@ interface Props {
   debounceRequest?: number;
 }
 export default function Pagination(props: Props) {
-  const {
-    page, total, onPageChange, limit = 5, debounceRequest = 0,
-  } = props;
+  const { page, total, onPageChange, limit = 5, debounceRequest = 0 } = props;
   const [currentPage, setCurrentPage] = React.useState(page);
   React.useMemo(() => setCurrentPage(page), [page]);
 
-  const debounceChange = React.useCallback(debounce(onPageChange, debounceRequest), []);
+  const debounceChange = React.useCallback(
+    debounce(onPageChange, debounceRequest),
+    [],
+  );
 
   const changePage = (page: number) => {
     if (page > 0) {

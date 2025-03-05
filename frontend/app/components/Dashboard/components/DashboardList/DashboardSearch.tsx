@@ -11,7 +11,11 @@ function DashboardSearch() {
   const [query, setQuery] = useState(dashboardStore.dashboardsSearch);
   useEffect(() => {
     debounceUpdate = debounce(
-      (key: string, value: any) => dashboardStore.updateKey('filter', { ...dashboardStore.filter, query: value }),
+      (key: string, value: any) =>
+        dashboardStore.updateKey('filter', {
+          ...dashboardStore.filter,
+          query: value,
+        }),
       500,
     );
   }, []);
@@ -30,7 +34,12 @@ function DashboardSearch() {
       className="w-full btn-search-dashboard"
       placeholder="Filter by dashboard title"
       onChange={write}
-      onSearch={(value) => dashboardStore.updateKey('filter', { ...dashboardStore.filter, query: value })}
+      onSearch={(value) =>
+        dashboardStore.updateKey('filter', {
+          ...dashboardStore.filter,
+          query: value,
+        })
+      }
     />
   );
 }

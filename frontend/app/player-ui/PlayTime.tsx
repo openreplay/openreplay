@@ -28,12 +28,16 @@ export function PlayTime({ time, isCustom, format = 'm:ss' }: IProps) {
 }
 
 /** Displays current time during replay */
-export function RealPlayTime({ time, sessionStart, tz }: { time: number, sessionStart: number, tz: string }) {
-  return (
-    <div>
-      {getTimeFromMill(time + sessionStart, tz)}
-    </div>
-  );
+export function RealPlayTime({
+  time,
+  sessionStart,
+  tz,
+}: {
+  time: number;
+  sessionStart: number;
+  tz: string;
+}) {
+  return <div>{getTimeFromMill(time + sessionStart, tz)}</div>;
 }
 
 PlayTime.displayName = 'PlayTime';

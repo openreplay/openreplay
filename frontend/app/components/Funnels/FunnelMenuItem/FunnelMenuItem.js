@@ -14,14 +14,28 @@ function FunnelMenuItem({
 }) {
   return (
     <div
-      className={cn(className, stl.menuItem, 'flex items-center py-1 justify-between group', {
-        [stl.active]: active,
-      })}
+      className={cn(
+        className,
+        stl.menuItem,
+        'flex items-center py-1 justify-between group',
+        {
+          [stl.active]: active,
+        },
+      )}
       onClick={disabled ? null : onClick}
     >
-      <div className={cn(stl.iconLabel, 'flex items-center', { [stl.disabled]: disabled })}>
+      <div
+        className={cn(stl.iconLabel, 'flex items-center', {
+          [stl.disabled]: disabled,
+        })}
+      >
         <div className="flex items-center justify-center w-8 h-8 flex-shrink-0">
-          <Icon name={iconName} size={16} color="gray-dark" className="absolute" />
+          <Icon
+            name={iconName}
+            size={16}
+            color="gray-dark"
+            className="absolute"
+          />
         </div>
         <span className={cn(stl.title, 'cap-first')}>{title}</span>
       </div>

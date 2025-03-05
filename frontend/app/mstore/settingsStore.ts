@@ -45,19 +45,20 @@ export default class SettingsStore {
     localStorage.setItem(MENU_COLLAPSED, collapsed.toString());
   };
 
-  saveCaptureRate = (projectId: number, data: any) => sessionService
-    .saveCaptureRate(projectId, data)
-    .then((data) => data.json())
-    .then(({ data }) => {
-      this.sessionSettings.merge({
-        captureRate: data.rate,
-        conditionalCapture: data.conditionalCapture,
+  saveCaptureRate = (projectId: number, data: any) =>
+    sessionService
+      .saveCaptureRate(projectId, data)
+      .then((data) => data.json())
+      .then(({ data }) => {
+        this.sessionSettings.merge({
+          captureRate: data.rate,
+          conditionalCapture: data.conditionalCapture,
+        });
+        toast.success('Settings updated successfully');
+      })
+      .catch((err) => {
+        toast.error('Error saving capture rate');
       });
-      toast.success('Settings updated successfully');
-    })
-    .catch((err) => {
-      toast.error('Error saving capture rate');
-    });
 
   fetchCaptureRate = (projectId: number): Promise<any> => {
     this.loadingCaptureRate = true;
@@ -78,8 +79,7 @@ export default class SettingsStore {
   fetchCaptureConditions = async (projectId: number): Promise<any> => {
     this.loadingCaptureRate = true;
     try {
-      const data = await sessionService
-        .fetchCaptureConditions(projectId);
+      const data = await sessionService.fetchCaptureConditions(projectId);
       this.sessionSettings.merge({
         captureRate: data.rate,
         conditionalCapture: data.conditionalCapture,
@@ -93,7 +93,8 @@ export default class SettingsStore {
   updateCaptureConditions = (projectId: number, data: CaptureConditions) => {
     this.loadingCaptureRate = true;
     const duplicates = data.conditions.filter(
-      (c, index) => data.conditions.findIndex((c2) => c2.name === c.name) !== index,
+      (c, index) =>
+        data.conditions.findIndex((c2) => c2.name === c.name) !== index,
     );
     if (duplicates.length > 0) {
       toast.error('Condition set names must be unique');

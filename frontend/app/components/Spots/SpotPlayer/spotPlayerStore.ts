@@ -56,15 +56,17 @@ const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
   });
   const response = JSON.stringify({
     headers: ev.responseHeaders,
-    body: ev.responseBody ?? { warn: 'Chrome Manifest V3 -- No response body available in Chrome 93+' },
+    body: ev.responseBody ?? {
+      warn: 'Chrome Manifest V3 -- No response body available in Chrome 93+',
+    },
   });
-  return ({
+  return {
     ...ev,
     request,
     response,
     type: mapType(type),
     status: statusCode,
-  });
+  };
 };
 
 export const PANELS = {
@@ -199,18 +201,26 @@ class SpotPlayerStore {
     clicks: Click[],
     network: SpotNetworkRequest[],
   ): void {
-    this.logs = logs.map((log) => PLog({
-      ...log,
-      time: log.time - this.startTs,
-      value: log.msg,
-    }));
+    this.logs = logs.map((log) =>
+      PLog({
+        ...log,
+        time: log.time - this.startTs,
+        value: log.msg,
+      }),
+    );
 
     this.locations = locations.map((location) => ({
       ...location,
       time: location.time - this.startTs,
-      fcpTime: location.navTiming.fcpTime ? Math.round(location.navTiming.fcpTime) : null,
-      timeToInteractive: location.navTiming.timeToInteractive ? Math.round(location.navTiming.timeToInteractive) : null,
-      visuallyComplete: location.navTiming.visuallyComplete ? Math.round(location.navTiming.visuallyComplete) : null,
+      fcpTime: location.navTiming.fcpTime
+        ? Math.round(location.navTiming.fcpTime)
+        : null,
+      timeToInteractive: location.navTiming.timeToInteractive
+        ? Math.round(location.navTiming.timeToInteractive)
+        : null,
+      visuallyComplete: location.navTiming.visuallyComplete
+        ? Math.round(location.navTiming.visuallyComplete)
+        : null,
     }));
 
     this.clicks = clicks.map((click) => ({
@@ -225,7 +235,8 @@ class SpotPlayerStore {
         this.startTs,
       );
       return {
-        ...req, timestamp: request.timestamp,
+        ...req,
+        timestamp: request.timestamp,
       };
     });
   }
@@ -249,8 +260,8 @@ class SpotPlayerStore {
       const nextEvent = events[i + 1];
 
       if (
-        currentTs >= event.time
-        && (!nextEvent || currentTs < nextEvent.time)
+        currentTs >= event.time &&
+        (!nextEvent || currentTs < nextEvent.time)
       ) {
         highlightedEvent = event;
         index = i;

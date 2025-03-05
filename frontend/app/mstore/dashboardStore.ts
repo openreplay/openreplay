@@ -91,7 +91,11 @@ export default class DashboardStore {
 
   get sortedDashboards() {
     const sortOrder = this.sort.by;
-    return [...this.dashboards].sort((a, b) => (sortOrder === 'desc' ? b.createdAt - a.createdAt : a.createdAt - b.createdAt));
+    return [...this.dashboards].sort((a, b) =>
+      sortOrder === 'desc'
+        ? b.createdAt - a.createdAt
+        : a.createdAt - b.createdAt,
+    );
   }
 
   resetDrillDownFilter() {
@@ -108,17 +112,27 @@ export default class DashboardStore {
     const filterRE = this.filter.query ? getRE(this.filter.query, 'i') : null;
     return this.dashboards
       .filter(
-        (dashboard) => (this.filter.showMine ? !dashboard.isPublic : true)
-          && (!filterRE
+        (dashboard) =>
+          (this.filter.showMine ? !dashboard.isPublic : true) &&
+          (!filterRE ||
             // @ts-ignore
-            || ['name', 'owner', 'description'].some((key) => filterRE.test(dashboard[key]))),
+            ['name', 'owner', 'description'].some((key) =>
+              filterRE.test(dashboard[key]),
+            )),
       )
-      .sort((a, b) => (this.sort.by === 'desc' ? b.createdAt - a.createdAt : a.createdAt - b.createdAt));
+      .sort((a, b) =>
+        this.sort.by === 'desc'
+          ? b.createdAt - a.createdAt
+          : a.createdAt - b.createdAt,
+      );
   }
 
   toggleAllSelectedWidgets(isSelected: boolean) {
     if (isSelected) {
-      const allWidgets = this.widgetCategories.reduce((acc, cat) => acc.concat(cat.widgets), []);
+      const allWidgets = this.widgetCategories.reduce(
+        (acc, cat) => acc.concat(cat.widgets),
+        [],
+      );
 
       this.selectedWidgets = allWidgets;
     } else {
@@ -127,10 +141,14 @@ export default class DashboardStore {
   }
 
   selectWidgetsByCategory(category: string) {
-    const selectedWidgetIds = this.selectedWidgets.map((widget: any) => widget.metricId);
+    const selectedWidgetIds = this.selectedWidgets.map(
+      (widget: any) => widget.metricId,
+    );
     const widgets = this.widgetCategories
       .find((cat) => cat.name === category)
-      ?.widgets.filter((widget: any) => !selectedWidgetIds.includes(widget.metricId));
+      ?.widgets.filter(
+        (widget: any) => !selectedWidgetIds.includes(widget.metricId),
+      );
     this.selectedWidgets = this.selectedWidgets.concat(widgets) || [];
   }
 
@@ -142,7 +160,9 @@ export default class DashboardStore {
   };
 
   toggleWidgetSelection = (widget: any) => {
-    const selectedWidgetIds = this.selectedWidgets.map((widget: any) => widget.metricId);
+    const selectedWidgetIds = this.selectedWidgets.map(
+      (widget: any) => widget.metricId,
+    );
     if (selectedWidgetIds.includes(widget.metricId)) {
       this.selectedWidgets = this.selectedWidgets.filter(
         (w: any) => w.metricId !== widget.metricId,
@@ -157,7 +177,9 @@ export default class DashboardStore {
   }
 
   initDashboard(dashboard?: Dashboard) {
-    this.dashboardInstance = dashboard ? new Dashboard().fromJson(dashboard) : new Dashboard();
+    this.dashboardInstance = dashboard
+      ? new Dashboard().fromJson(dashboard)
+      : new Dashboard();
     this.selectedWidgets = [];
   }
 
@@ -181,7 +203,9 @@ export default class DashboardStore {
       .getDashboards()
       .then((list: any) => {
         runInAction(() => {
-          this.dashboards = list.map((d: Record<string, any>) => new Dashboard().fromJson(d));
+          this.dashboards = list.map((d: Record<string, any>) =>
+            new Dashboard().fromJson(d),
+          );
         });
       })
       .finally(() => {
@@ -194,8 +218,7 @@ export default class DashboardStore {
   async fetch(dashboardId: string): Promise<any> {
     this.setFetchingDashboard(true);
     try {
-      const response = await dashboardService
-        .getDashboard(dashboardId);
+      const response = await dashboardService.getDashboard(dashboardId);
       this.selectedDashboard?.update({
         widgets: new Dashboard().fromJson(response).widgets,
       });
@@ -241,7 +264,15 @@ export default class DashboardStore {
     });
   }
 
-  syncDashboardInfo(id: string, info: { name: string, description: string, isPublic: boolean, createdAt: number }) {
+  syncDashboardInfo(
+    id: string,
+    info: {
+      name: string;
+      description: string;
+      isPublic: boolean;
+      createdAt: number;
+    },
+  ) {
     if (this.selectedDashboard !== null) {
       this.selectedDashboard.updateInfo(info);
     }
@@ -294,7 +325,9 @@ export default class DashboardStore {
 
   fromJson(json: any) {
     runInAction(() => {
-      this.dashboards = json.dashboards.map((d: Record<string, any>) => new Dashboard().fromJson(d));
+      this.dashboards = json.dashboards.map((d: Record<string, any>) =>
+        new Dashboard().fromJson(d),
+      );
     });
     return this;
   }
@@ -304,7 +337,9 @@ export default class DashboardStore {
   }
 
   removeDashboard(dashboard: Dashboard) {
-    this.dashboards = this.dashboards.filter((d) => d.dashboardId !== dashboard.dashboardId);
+    this.dashboards = this.dashboards.filter(
+      (d) => d.dashboardId !== dashboard.dashboardId,
+    );
   }
 
   getDashboard(dashboardId: string | number): Dashboard | null {
@@ -320,7 +355,9 @@ export default class DashboardStore {
   }
 
   updateDashboard(dashboard: Dashboard) {
-    const index = this.dashboards.findIndex((d) => d.dashboardId === dashboard.dashboardId);
+    const index = this.dashboards.findIndex(
+      (d) => d.dashboardId === dashboard.dashboardId,
+    );
     if (index >= 0) {
       this.dashboards[index] = dashboard;
       if (this.selectedDashboard?.dashboardId === dashboard.dashboardId) {
@@ -330,7 +367,9 @@ export default class DashboardStore {
   }
 
   selectDashboardById = (dashboardId: any) => {
-    this.selectedDashboard = this.dashboards.find((d) => d.dashboardId == dashboardId) || new Dashboard();
+    this.selectedDashboard =
+      this.dashboards.find((d) => d.dashboardId == dashboardId) ||
+      new Dashboard();
   };
 
   getDashboardById = (dashboardId: string) => {
@@ -390,8 +429,7 @@ export default class DashboardStore {
   async deleteDashboardWidget(dashboardId: string, widgetId: string) {
     this.isDeleting = true;
     try {
-      await dashboardService
-        .deleteWidget(dashboardId, widgetId);
+      await dashboardService.deleteWidget(dashboardId, widgetId);
       toast.success('Dashboard updated successfully');
       runInAction(() => {
         this.selectedDashboard?.removeWidget(widgetId);
@@ -401,12 +439,14 @@ export default class DashboardStore {
     }
   }
 
-  async addWidgetToDashboard(dashboard: Dashboard, metricIds: any): Promise<any> {
+  async addWidgetToDashboard(
+    dashboard: Dashboard,
+    metricIds: any,
+  ): Promise<any> {
     this.isSaving = true;
     try {
       try {
-        const response = await dashboardService
-          .addWidget(dashboard, metricIds);
+        const response = await dashboardService.addWidget(dashboard, metricIds);
         toast.success('Card added to dashboard.');
       } catch {
         toast.error('Card could not be added.');
@@ -434,7 +474,7 @@ export default class DashboardStore {
 
   setComparisonPeriod(period: any, metricId: string) {
     if (!period) {
-      return this.comparisonPeriods[metricId] = null;
+      return (this.comparisonPeriods[metricId] = null);
     }
     this.comparisonPeriods[metricId] = period;
   }
@@ -477,12 +517,20 @@ export default class DashboardStore {
     return new Promise(async (resolve, reject) => {
       this.upPendingRequests();
 
-      if (!isComparison && metric.metricType === 'table' && metric.metricOf === 'jsException') {
+      if (
+        !isComparison &&
+        metric.metricType === 'table' &&
+        metric.metricOf === 'jsException'
+      ) {
         params.limit = 5;
       }
 
       try {
-        const data = await metricService.getMetricChartData(metric, params, isSaved);
+        const data = await metricService.getMetricChartData(
+          metric,
+          params,
+          isSaved,
+        );
         resolve(metric.setData(data, period, isComparison, density));
       } catch (error) {
         reject(error);

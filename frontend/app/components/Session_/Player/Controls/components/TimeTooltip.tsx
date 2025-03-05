@@ -2,12 +2,18 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import stl from './styles.module.css';
+import { useTranslation } from 'react-i18next';
 
 function TimeTooltip() {
+  const { t } = useTranslation();
   const { sessionStore } = useStore();
   const { timeLineTooltip } = sessionStore;
   const {
-    time = 0, offset = 0, isVisible, localTime, userTime,
+    time = 0,
+    offset = 0,
+    isVisible,
+    localTime,
+    userTime,
   } = timeLineTooltip;
   return (
     <div
@@ -26,7 +32,7 @@ function TimeTooltip() {
         <>
           <br />
           <span className="text-gray-light">
-            local:
+            {t('local:')}
             {localTime}
           </span>
         </>
@@ -35,7 +41,7 @@ function TimeTooltip() {
         <>
           <br />
           <span className="text-gray-light">
-            user:
+            {t('user:')}
             {userTime}
           </span>
         </>

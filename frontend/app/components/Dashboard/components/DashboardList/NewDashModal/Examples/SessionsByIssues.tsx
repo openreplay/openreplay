@@ -4,9 +4,7 @@ import { Frustrations } from './Count';
 
 function SessionsByIssues(props: any) {
   return (
-    <ExCard
-      {...props}
-    >
+    <ExCard {...props}>
       <Frustrations />
     </ExCard>
   );

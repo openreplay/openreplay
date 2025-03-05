@@ -53,8 +53,9 @@ const CONJUGATED_ISSUE_TYPES = {
 export function getSessionWatchdogTypes(session) {
   if (!session.issueTypes) return session.errorsCount > 0 ? [ERRORS] : [];
   return WATCHDOG_TYPES.filter(
-    (wt) => (wt === ERRORS && session.errorsCount > 0)
-      || CONJUGATED_ISSUE_TYPES[wt].some((it) => session.issueTypes.includes(it)),
+    (wt) =>
+      (wt === ERRORS && session.errorsCount > 0) ||
+      CONJUGATED_ISSUE_TYPES[wt].some((it) => session.issueTypes.includes(it)),
   );
 }
 
@@ -88,7 +89,9 @@ export default Record(
           return true;
         }
         if (!!session.issueTypes && !!CONJUGATED_ISSUE_TYPES[this.type]) {
-          return session.issueTypes.some((it) => CONJUGATED_ISSUE_TYPES[this.type].includes(it));
+          return session.issueTypes.some((it) =>
+            CONJUGATED_ISSUE_TYPES[this.type].includes(it),
+          );
         }
         return false;
       },

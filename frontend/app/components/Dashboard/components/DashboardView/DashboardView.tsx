@@ -16,9 +16,9 @@ import DashboardWidgetGrid from '../DashboardWidgetGrid';
 import AiQuery from './AiQuery';
 
 interface IProps {
-    siteId: string;
-    dashboardId: any;
-    renderReport?: any;
+  siteId: string;
+  dashboardId: any;
+  renderReport?: any;
 }
 
 type Props = IProps & RouteComponentProps;
@@ -87,7 +87,11 @@ function DashboardView(props: Props) {
   const onAddWidgets = () => {
     dashboardStore.initDashboard(dashboard);
     showModal(
-      <DashboardModal siteId={siteId} onMetricAdd={pushQuery} dashboardId={dashboardId} />,
+      <DashboardModal
+        siteId={siteId}
+        onMetricAdd={pushQuery}
+        dashboardId={dashboardId}
+      />,
       { right: true },
     );
   };
@@ -98,9 +102,16 @@ function DashboardView(props: Props) {
   const isSaas = /app\.openreplay\.com/.test(originStr);
   return (
     <Loader loading={loading}>
-      <div style={{ maxWidth: '1360px', margin: 'auto' }} className="rounded-lg shadow-sm overflow-hidden bg-white border">
+      <div
+        style={{ maxWidth: '1360px', margin: 'auto' }}
+        className="rounded-lg shadow-sm overflow-hidden bg-white border"
+      >
         {/* @ts-ignore */}
-        <DashboardHeader renderReport={props.renderReport} siteId={siteId} dashboardId={dashboardId} />
+        <DashboardHeader
+          renderReport={props.renderReport}
+          siteId={siteId}
+          dashboardId={dashboardId}
+        />
         {isSaas ? <AiQuery /> : null}
         <DashboardWidgetGrid
           siteId={siteId}

@@ -7,6 +7,7 @@ import OnboardingTabs from '../OnboardingTabs';
 import MobileOnboardingTabs from '../OnboardingTabs/OnboardingMobileTabs';
 import ProjectFormButton from '../ProjectFormButton';
 import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
+import { useTranslation } from 'react-i18next';
 
 interface Props extends WithOnboardingProps {
   platforms: Array<{
@@ -18,16 +19,19 @@ interface Props extends WithOnboardingProps {
     value: string;
   };
   setPlatform: (val: { label: string; value: string }) => void;
-  platformMap: Record<string, any>
+  platformMap: Record<string, any>;
 }
 
 function InstallOpenReplayTab(props: Props) {
-  const {
-    site, platforms, platform, setPlatform, platformMap,
-  } = props;
+  const { t } = useTranslation();
+  const { site, platforms, platform, setPlatform, platformMap } = props;
 
   React.useEffect(() => {
-    if (site.platform) setPlatform(platforms.find(({ value }) => value === platformMap[site.platform]) || platforms[0]);
+    if (site.platform)
+      setPlatform(
+        platforms.find(({ value }) => value === platformMap[site.platform]) ||
+          platforms[0],
+      );
   }, [site]);
   return (
     <>
@@ -35,35 +39,53 @@ function InstallOpenReplayTab(props: Props) {
         <div className="flex items-center text-2xl">
           <span>👋</span>
           <div className="ml-3 flex items-end">
-            <span>Hey there! Setup</span>
+            <span>{t('Hey there! Setup')}</span>
             <ProjectFormButton />
           </div>
         </div>
-        <a href="https://docs.openreplay.com/en/using-or/" target="_blank" rel="noreferrer">
-          <Button size="small" type="text" className="ml-2 flex items-center gap-2">
+        <a
+          href="https://docs.openreplay.com/en/using-or/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <Button
+            size="small"
+            type="text"
+            className="ml-2 flex items-center gap-2"
+          >
             <Icon name="question-circle" />
-            <div className="text-main">See Documentation</div>
+            <div className="text-main">{t('See Documentation')}</div>
           </Button>
         </a>
       </h1>
       <div className="p-4 flex gap-2 items-center">
-        <span className="font-medium">Project Type</span>
+        <span className="font-medium">{t('Project Type')}</span>
         <Segmented
           options={platforms}
           value={platform.value}
-          onChange={(value) => setPlatform(platforms.find(({ value: v }) => v === value) || platforms[0])}
+          onChange={(value) =>
+            setPlatform(
+              platforms.find(({ value: v }) => v === value) || platforms[0],
+            )
+          }
         />
       </div>
       <div className="p-4">
-        {platform.value === 'web' ? <Snippet site={site} /> : <MobileOnboardingTabs site={site} />}
+        {platform.value === 'web' ? (
+          <Snippet site={site} />
+        ) : (
+          <MobileOnboardingTabs site={site} />
+        )}
       </div>
       <div className="border-t px-4 py-3 flex justify-end">
         <Button
           type="primary"
           className=""
-          onClick={() => (props.navTo ? props.navTo(OB_TABS.IDENTIFY_USERS) : null)}
+          onClick={() =>
+            props.navTo ? props.navTo(OB_TABS.IDENTIFY_USERS) : null
+          }
         >
-          Identify Users
+          {t('Identify Users')}
           <Icon name="arrow-right-short" color="white" size={20} />
         </Button>
       </div>
@@ -72,19 +94,19 @@ function InstallOpenReplayTab(props: Props) {
 }
 
 function Snippet({ site }: { site: Record<string, any> }) {
+  const { t } = useTranslation();
   return (
     <>
       <div className="mb-6 text-lg font-medium">
-        Setup OpenReplay through NPM package
-        {' '}
-        <span className="text-sm">(recommended)</span>
-        {' '}
-        or
-        script.
+        {t('Setup OpenReplay through NPM package')}&nbsp;
+        <span className="text-sm">({t('recommended')})</span>&nbsp;
+        {t('or script.')}
       </div>
       <OnboardingTabs site={site} />
     </>
   );
 }
 
-export default withOnboarding(withPageTitle('Project Setup - OpenReplay')(InstallOpenReplayTab));
+export default withOnboarding(
+  withPageTitle('Project Setup - OpenReplay')(InstallOpenReplayTab),
+);

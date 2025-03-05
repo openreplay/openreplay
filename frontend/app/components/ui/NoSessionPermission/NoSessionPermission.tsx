@@ -12,6 +12,7 @@ import { Icon } from 'UI';
 import { Button } from 'antd';
 
 import stl from './NoSessionPermission.module.css';
+import { useTranslation } from 'react-i18next';
 
 const SESSIONS_ROUTE = sessionsRoute();
 const ASSIST_ROUTE = assistRoute();
@@ -21,6 +22,7 @@ interface Props extends RouteComponentProps {
   isLive?: boolean;
 }
 function NoSessionPermission(props: Props) {
+  const { t } = useTranslation();
   const { projectsStore, sessionStore } = useStore();
   const session = sessionStore.current;
   const { sessionPath } = sessionStore;
@@ -30,9 +32,9 @@ function NoSessionPermission(props: Props) {
 
   const backHandler = () => {
     if (
-      sessionPath.pathname === history.location.pathname
-      || sessionPath.pathname.includes('/session/')
-      || isAssist
+      sessionPath.pathname === history.location.pathname ||
+      sessionPath.pathname.includes('/session/') ||
+      isAssist
     ) {
       history.push(
         withSiteId(isAssist ? ASSIST_ROUTE : SESSIONS_ROUTE, siteId),
@@ -49,25 +51,25 @@ function NoSessionPermission(props: Props) {
   return (
     <div className={stl.wrapper}>
       <Icon name="shield-lock" size="50" className="py-16" />
-      <div className={stl.title}>Not allowed</div>
+      <div className={stl.title}>{t('Not allowed')}</div>
       {session.isLive ? (
         <span>
-          This session is still live, and you don’t have the necessary
-          permissions to access this feature. Please check with your admin.
+          {t(
+            'This session is still live, and you don’t have the necessary permissions to access this feature. Please check with your admin.',
+          )}
         </span>
       ) : (
         <span>
-          You don’t have the necessary permissions to access this feature.
-          Please check with your admin.
+          {t(
+            'You don’t have the necessary permissions to access this feature. Please check with your admin.',
+          )}
         </span>
       )}
       <Button type="primary" onClick={backHandler} className="mt-6">
-        GO BACK
+        {t('GO BACK')}
       </Button>
     </div>
   );
 }
 
-export default withRouter(
-  observer(NoSessionPermission),
-);
+export default withRouter(observer(NoSessionPermission));

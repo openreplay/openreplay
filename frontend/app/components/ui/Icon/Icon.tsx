@@ -4,17 +4,17 @@ import SVG, { IconNames } from 'UI/SVG';
 import styles from './icon.module.css';
 
 interface IProps {
-  name: IconNames
-  size?: number | string
-  height?: number
-  width?: number
-  color?: string
-  strokeColor?: string
-  className?: string
-  style?: object
-  marginRight?: number
-  inline?: boolean
-  onClick?: () => void
+  name: IconNames;
+  size?: number | string;
+  height?: number;
+  width?: number;
+  color?: string;
+  strokeColor?: string;
+  className?: string;
+  style?: object;
+  marginRight?: number;
+  inline?: boolean;
+  onClick?: () => void;
 }
 
 const Icon: React.FunctionComponent<IProps> = ({
@@ -52,7 +52,12 @@ const Icon: React.FunctionComponent<IProps> = ({
       className={cn(className, styles.wrapper, `fill-${color}`)}
       data-inline={inline}
     >
-      <SVG name={name} height={height} width={width} style={strokeColor ? { stroke: strokeColor } : undefined} />
+      <SVG
+        name={name}
+        height={height}
+        width={width}
+        style={strokeColor ? { stroke: strokeColor } : undefined}
+      />
     </span>
   );
 };

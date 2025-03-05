@@ -11,7 +11,7 @@ import InlineInput from './InlineInput';
 
 // TODO: add attribute, add child, add text (when there was no text before), Ctrl+Z
 
- interface Window {
+interface Window {
   Element: typeof Element;
   Text: typeof Text;
   document: typeof document;
@@ -26,13 +26,13 @@ interface Props {
   selectedElement?: Element; // for deletion and other things
   setSelectedElement?: (Element) => void;
   onHover?: (Element) => void;
-  className?: String
+  className?: string;
 }
 
 interface TagEditorProps {
-	element: Element;
-	forceUpdateParent: () => void;
-	context: Window;
+  element: Element;
+  forceUpdateParent: () => void;
+  context: Window;
 }
 
 // TODO: to common space
@@ -47,10 +47,11 @@ const RESTRICTED_TAGS = ['html', 'body', 'head'];
 function TagEditor({ element, forceUpdateParent, context }: TagEditorProps) {
   const [editing, setEditing] = useState(false);
   const commitTag = (newTag: string) => {
-    if (newTag !== ''
-			&& !RESTRICTED_TAGS.includes(newTag)
-			&& element.parentNode
-			&& /^[a-zA-Z]+$/.test(newTag) // TODO: sync with spec
+    if (
+      newTag !== '' &&
+      !RESTRICTED_TAGS.includes(newTag) &&
+      element.parentNode &&
+      /^[a-zA-Z]+$/.test(newTag) // TODO: sync with spec
     ) {
       const rElem = context.document.createElement(newTag);
       rElem.innerHTML = element.innerHTML;
@@ -64,20 +65,18 @@ function TagEditor({ element, forceUpdateParent, context }: TagEditorProps) {
   };
 
   const tag = element.tagName.toLowerCase();
-  return editing && !RESTRICTED_TAGS.includes(tag)
-    ? <InlineInput value={tag} commit={commitTag} />
-    : (
-      <span
-        className={stl.tag}
-        onDoubleClick={
-					RESTRICTED_TAGS.includes(tag)
-					  ? undefined
-					  : () => setEditing(true)
-}
-      >
-        { tag }
-      </span>
-    );
+  return editing && !RESTRICTED_TAGS.includes(tag) ? (
+    <InlineInput value={tag} commit={commitTag} />
+  ) : (
+    <span
+      className={stl.tag}
+      onDoubleClick={
+        RESTRICTED_TAGS.includes(tag) ? undefined : () => setEditing(true)
+      }
+    >
+      {tag}
+    </span>
+  );
 }
 
 // const IGNORE_CLASSES = [ "-openreplay-hover" ];
@@ -119,18 +118,19 @@ export default function ElementView({
     : undefined;
   return (
     <div
-      className={cn('font-mono', className, { // todo: only in root
-			  [stl.bgHighlight]: !open && isSelected,
-			  'hover:bg-gray-light': !open && !isSelected,
+      className={cn('font-mono', className, {
+        // todo: only in root
+        [stl.bgHighlight]: !open && isSelected,
+        'hover:bg-gray-light': !open && !isSelected,
       })}
       style={{ fontSize: '12px' }}
       onMouseOver={onMouseOver}
     >
       <span
         className={cn({
-				  block: open,
-				  [stl.bgHighlight]: open && isSelected,
-				  'hover:bg-gray-light': open && !isSelected,
+          block: open,
+          [stl.bgHighlight]: open && isSelected,
+          'hover:bg-gray-light': open && !isSelected,
         })}
       >
         <span role="button mr-1" onClick={toggleOpen}>
@@ -143,47 +143,45 @@ export default function ElementView({
             context={context}
             forceUpdateParent={forceUpdateParent}
           />
-          { Array.from(element.attributes).map((attr) => (
-            <AttrView
-              attr={attr}
-              forceUpdateElement={forceUpdate}
-            />
+          {Array.from(element.attributes).map((attr) => (
+            <AttrView attr={attr} forceUpdateElement={forceUpdate} />
           ))}
           <span className={stl.tag}>{'>'}</span>
         </span>
       </span>
-      { open
-			  ? (
-  <>
-    {Array.from(element.childNodes).map((child) => {
-					  if (child instanceof context.Element) {
-					    return (
-  <ElementView
-    element={child}
-    context={context}
-    forceUpdateParent={forceUpdate}
-    level={level + 1}
-    openChain={openChain}
-    selectedElement={selectedElement}
-    setSelectedElement={setSelectedElement}
-    onHover={onHover}
-    className="pl-4"
-  />
-					    );
-					  } if (child instanceof context.Text) {
-					    if (!child.nodeValue || child.nodeValue.trim() === '') {
-					      return null;
-					    }
-					    return <TextView text={child} />;
-					  }
-					  return null;
-    })}
-  </>
-        )
-			  : '...'}
+      {open ? (
+        <>
+          {Array.from(element.childNodes).map((child) => {
+            if (child instanceof context.Element) {
+              return (
+                <ElementView
+                  element={child}
+                  context={context}
+                  forceUpdateParent={forceUpdate}
+                  level={level + 1}
+                  openChain={openChain}
+                  selectedElement={selectedElement}
+                  setSelectedElement={setSelectedElement}
+                  onHover={onHover}
+                  className="pl-4"
+                />
+              );
+            }
+            if (child instanceof context.Text) {
+              if (!child.nodeValue || child.nodeValue.trim() === '') {
+                return null;
+              }
+              return <TextView text={child} />;
+            }
+            return null;
+          })}
+        </>
+      ) : (
+        '...'
+      )}
       <span className={stl.tag}>
         {'</'}
-        { tag }
+        {tag}
         {'>'}
       </span>
     </div>

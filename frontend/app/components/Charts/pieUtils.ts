@@ -16,9 +16,7 @@ export function buildPieData(
 }
 
 export function pieTooltipFormatter(params: any) {
-  const {
-    name, value, marker, percent,
-  } = params;
+  const { name, value, marker, percent } = params;
   return `
     <div class="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
       <div style="margin-bottom: 2px;">${marker} <b>${name}</b></div>

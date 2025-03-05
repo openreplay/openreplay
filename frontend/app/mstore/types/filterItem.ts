@@ -53,7 +53,9 @@ export default class FilterItem {
     makeAutoObservable(this);
 
     if (Array.isArray(data.filters)) {
-      data.filters = data.filters.map((i: Record<string, any>) => new FilterItem(i));
+      data.filters = data.filters.map(
+        (i: Record<string, any>) => new FilterItem(i),
+      );
     }
 
     this.merge(data);
@@ -96,15 +98,18 @@ export default class FilterItem {
 
   fromJson(json: any, mainFilterKey = '', isHeatmap?: boolean) {
     const isMetadata = json.type === FilterKey.METADATA;
-    let _filter: any = (isMetadata ? filtersMap[`_${json.source}`] : filtersMap[json.type])
-      || {};
+    let _filter: any =
+      (isMetadata ? filtersMap[`_${json.source}`] : filtersMap[json.type]) ||
+      {};
     if (this.isConditional) {
       if (this.isMobile) {
-        _filter = mobileConditionalFiltersMap[_filter.key]
-          || mobileConditionalFiltersMap[_filter.source];
+        _filter =
+          mobileConditionalFiltersMap[_filter.key] ||
+          mobileConditionalFiltersMap[_filter.source];
       } else {
-        _filter = conditionalFiltersMap[_filter.key]
-          || conditionalFiltersMap[_filter.source];
+        _filter =
+          conditionalFiltersMap[_filter.key] ||
+          conditionalFiltersMap[_filter.source];
       }
     }
     if (mainFilterKey) {
@@ -136,9 +141,10 @@ export default class FilterItem {
     this.source = isMetadata ? `_${json.source}` : json.source;
     this.sourceOperator = json.sourceOperator;
 
-    this.filters = _filter.type === FilterType.SUB_FILTERS && json.filters
-      ? json.filters.map((i: any) => new FilterItem().fromJson(i, json.type))
-      : [];
+    this.filters =
+      _filter.type === FilterType.SUB_FILTERS && json.filters
+        ? json.filters.map((i: any) => new FilterItem().fromJson(i, json.type))
+        : [];
 
     this.completed = json.completed;
     this.dropped = json.dropped;

@@ -10,12 +10,14 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import stl from './SpeedIndexByLocation.module.css';
 import Scale from './Scale';
 import { Styles, AvgLabel } from '../../common';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   data?: any;
 }
 
 function SpeedIndexByLocation(props: Props) {
+  const { t } = useTranslation();
   const { data } = props;
   const wrapper: any = React.useRef(null);
   const [tooltipStyle, setTooltipStyle] = React.useState({ display: 'none' });
@@ -23,8 +25,14 @@ function SpeedIndexByLocation(props: Props) {
 
   const dataMap: any = React.useMemo(() => {
     const _data: any = {};
-    const max = data.chart?.reduce((acc: any, item: any) => Math.max(acc, item.value), 0);
-    const min = data.chart?.reduce((acc: any, item: any) => Math.min(acc, item.value), 0);
+    const max = data.chart?.reduce(
+      (acc: any, item: any) => Math.max(acc, item.value),
+      0,
+    );
+    const min = data.chart?.reduce(
+      (acc: any, item: any) => Math.min(acc, item.value),
+      0,
+    );
     data.chart?.forEach((item: any) => {
       if (!item || !item.userCountry) {
         return;
@@ -73,13 +81,11 @@ function SpeedIndexByLocation(props: Props) {
       size="small"
       show={false}
       style={{ height: '240px' }}
-      title={(
+      title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} />
-          {' '}
-          { NO_METRIC_DATA }
+          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
         </div>
-    )}
+      }
     >
       <div className="absolute right-0 mr-4 top=0 w-full flex justify-end">
         <AvgLabel text="Avg" count={Math.round(data.value)} unit="ms" />
@@ -109,9 +115,14 @@ function SpeedIndexByLocation(props: Props) {
           <>
             <div>{pointedLocation.name}</div>
             <div>
-              Avg:
-              {' '}
-              <strong>{dataMap[pointedLocation.id] ? numberWithCommas(parseInt(dataMap[pointedLocation.id].value)) : 0}</strong>
+              {t('Avg:')}{' '}
+              <strong>
+                {dataMap[pointedLocation.id]
+                  ? numberWithCommas(
+                      parseInt(dataMap[pointedLocation.id].value),
+                    )
+                  : 0}
+              </strong>
             </div>
           </>
         )}

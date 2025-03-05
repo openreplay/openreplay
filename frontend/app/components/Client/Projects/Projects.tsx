@@ -1,7 +1,5 @@
 import React from 'react';
-import {
-  App, Button, Card, Layout, Space, Tooltip, Typography,
-} from 'antd';
+import { App, Button, Card, Layout, Space, Tooltip, Typography } from 'antd';
 import ProjectList from 'Components/Client/Projects/ProjectList';
 import ProjectTabs from 'Components/Client/Projects/ProjectTabs';
 import { useHistory } from 'react-router-dom';
@@ -12,8 +10,10 @@ import ProjectTabContent from 'Components/Client/Projects/ProjectTabContent';
 import { useModal } from 'Components/ModalContext';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import Project from '@/mstore/types/project';
+import { useTranslation } from 'react-i18next';
 
 function Projects() {
+  const { t } = useTranslation();
   const { projectsStore, customFieldStore } = useStore();
   const history = useHistory();
   const { project, pid, tab } = projectsStore.config;
@@ -27,8 +27,8 @@ function Projects() {
     projectsStore.setConfigTab(tab);
 
     return () => {
-      void customFieldStore.fetchListActive(projectsStore.activeSiteId + '');
-    }
+      void customFieldStore.fetchListActive(`${projectsStore.activeSiteId}`);
+    };
   }, []);
 
   React.useEffect(() => {
@@ -45,7 +45,7 @@ function Projects() {
 
   const createProject = () => {
     openModal(<ProjectForm onClose={closeModal} project={new Project()} />, {
-      title: 'Add Project',
+      title: t('Add Project'),
     });
   };
 
@@ -57,15 +57,24 @@ function Projects() {
         header: '!border-b !px-4',
         body: '!p-0 !border-t',
       }}
-      title={<Typography.Title level={4} className="!m-0">Projects</Typography.Title>}
-      extra={<Button onClick={createProject} type="default" size="middle" icon={<PlusOutlined size={16} />}>Add Project</Button>}
+      title={
+        <Typography.Title level={4} className="!m-0">
+          {t('Projects')}
+        </Typography.Title>
+      }
+      extra={
+        <Button
+          onClick={createProject}
+          type="default"
+          size="middle"
+          icon={<PlusOutlined size={16} />}
+        >
+          {t('Add Project')}
+        </Button>
+      }
     >
       <Layout>
-        <Layout.Sider
-          width={260}
-          trigger={null}
-          className="!bg-white border-r"
-        >
+        <Layout.Sider width={260} trigger={null} className="!bg-white border-r">
           <ProjectList />
         </Layout.Sider>
 
@@ -104,18 +113,19 @@ export default observer(Projects);
 
 function ProjectKeyButton({ project }: { project: Project | null }) {
   const { message } = App.useApp();
+  const { t } = useTranslation();
 
   const copyKey = () => {
     if (!project || !project.projectKey) {
-      void message.error('Project key not found');
+      void message.error(t('Project key not found'));
       return;
     }
     void navigator.clipboard.writeText(project?.projectKey || '');
-    void message.success('Project key copied to clipboard');
+    void message.success(t('Project key copied to clipboard'));
   };
 
   return (
-    <Tooltip title="Copy Project Key">
+    <Tooltip title={t('Copy Project Key')}>
       <Button onClick={copyKey} icon={<KeyOutlined size={14} />} size="small" />
     </Tooltip>
   );

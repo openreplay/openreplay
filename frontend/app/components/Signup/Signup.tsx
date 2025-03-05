@@ -27,7 +27,9 @@ type SignupProps = RouteComponentProps;
 const Signup: React.FC<SignupProps> = ({ history }) => {
   const { userStore } = useStore();
   const { authDetails } = userStore.authStore;
-  const [healthModalPassed, setHealthModalPassed] = useState<boolean>(localStorage.getItem(healthStatusCheck_key) === 'true');
+  const [healthModalPassed, setHealthModalPassed] = useState<boolean>(
+    localStorage.getItem(healthStatusCheck_key) === 'true',
+  );
   const [healthStatusLoading, setHealthStatusLoading] = useState<boolean>(true);
   const [healthStatus, setHealthStatus] = useState<any>(null);
 
@@ -67,7 +69,10 @@ const Signup: React.FC<SignupProps> = ({ history }) => {
   }
 
   return (
-    <div className="flex justify-center items-center gap-6" style={{ height: '100vh' }}>
+    <div
+      className="flex justify-center items-center gap-6"
+      style={{ height: '100vh' }}
+    >
       <div className="flex items-center justify-center">
         <div className="">
           <SignupForm />
@@ -79,4 +84,6 @@ const Signup: React.FC<SignupProps> = ({ history }) => {
   );
 };
 
-export default withRouter(withPageTitle('Signup - OpenReplay')(observer(Signup)));
+export default withRouter(
+  withPageTitle('Signup - OpenReplay')(observer(Signup)),
+);

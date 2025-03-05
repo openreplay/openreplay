@@ -25,8 +25,8 @@ export function sankeyTooltip(
             </div>
             <div class="flex items-baseline gap-2 text-black">
               <span>${params.data.value} ( ${params.data.percentage.toFixed(
-  2,
-)}% )</span>
+                2,
+              )}% )</span>
               <span class="text-disabled-text">Sessions</span>
             </div>
           </div>
@@ -49,12 +49,13 @@ const shortenString = (str: string) => {
   const limit = 60;
   const leftPart = 25;
   const rightPart = 20;
-  const safeStr = str.length > limit
-    ? `${str.slice(0, leftPart)}...${str.slice(
-      str.length - rightPart,
-      str.length,
-    )}`
-    : str;
+  const safeStr =
+    str.length > limit
+      ? `${str.slice(0, leftPart)}...${str.slice(
+          str.length - rightPart,
+          str.length,
+        )}`
+      : str;
 
   return safeStr;
 };

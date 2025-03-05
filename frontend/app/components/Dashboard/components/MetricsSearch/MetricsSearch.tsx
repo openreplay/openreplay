@@ -11,7 +11,11 @@ function MetricsSearch() {
   const [query, setQuery] = useState(metricStore.filter.query);
   useEffect(() => {
     debounceUpdate = debounce(
-      (key: any, value: any) => metricStore.updateKey('filter', { ...metricStore.filter, query: value }),
+      (key: any, value: any) =>
+        metricStore.updateKey('filter', {
+          ...metricStore.filter,
+          query: value,
+        }),
       500,
     );
   }, []);

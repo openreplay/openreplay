@@ -4,22 +4,20 @@ import {
   MutedOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
-import {
-  Button, InputNumber, Popover, Slider,
-} from 'antd';
+import { Button, InputNumber, Popover, Slider } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import React, {
-  useContext, useEffect, useRef, useState,
-} from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { useTranslation } from 'react-i18next';
 
 function DropdownAudioPlayer({
   audioEvents,
 }: {
   audioEvents: { payload: Record<any, any>; timestamp: number }[];
 }) {
+  const { t } = useTranslation();
   const { store } = useContext(PlayerContext);
   const [isVisible, setIsVisible] = useState(false);
   const [volume, setVolume] = useState(35);
@@ -29,25 +27,24 @@ function DropdownAudioPlayer({
   const lastPlayerTime = useRef(0);
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const fileLengths = useRef<Record<string, number>>({});
-  const {
-    time = 0, speed = 1, playing, sessionStart,
-  } = store?.get() ?? {};
+  const { time = 0, speed = 1, playing, sessionStart } = store?.get() ?? {};
 
   const files = React.useMemo(
-    () => audioEvents.map((pa) => {
-      const data = pa.payload;
-      const nativeTs = data.timestamp;
-      const startTs = nativeTs
-        ? nativeTs > sessionStart
-          ? nativeTs - sessionStart
-          : nativeTs
-        : pa.timestamp - sessionStart;
-      return {
-        url: data.url,
-        timestamp: data.timestamp,
-        start: startTs,
-      };
-    }),
+    () =>
+      audioEvents.map((pa) => {
+        const data = pa.payload;
+        const nativeTs = data.timestamp;
+        const startTs = nativeTs
+          ? nativeTs > sessionStart
+            ? nativeTs - sessionStart
+            : nativeTs
+          : pa.timestamp - sessionStart;
+        return {
+          url: data.url,
+          timestamp: data.timestamp,
+          start: startTs,
+        };
+      }),
     [audioEvents.length, sessionStart],
   );
 
@@ -196,13 +193,14 @@ function DropdownAudioPlayer({
     setVolume(isMuted ? 0 : volume);
   }, [playing]);
 
-  const buttonIcon = 'px-2 cursor-pointer border border-gray-light hover:border-main hover:text-main hover:z-10 h-fit';
+  const buttonIcon =
+    'px-2 cursor-pointer border border-gray-light hover:border-main hover:text-main hover:z-10 h-fit';
   return (
     <div className="relative">
       <div className="flex items-center" style={{ height: 24 }}>
         <Popover
           trigger="click"
-          content={(
+          content={
             <div
               className="flex flex-col gap-2 rounded"
               style={{ height: 200 }}
@@ -216,7 +214,7 @@ function DropdownAudioPlayer({
                 {isMuted ? <MutedOutlined /> : <SoundOutlined />}
               </Button>
             </div>
-          )}
+          }
         >
           <div className={cn(buttonIcon, 'rounded-l')}>
             {isMuted ? <MutedOutlined /> : <SoundOutlined />}
@@ -242,7 +240,7 @@ function DropdownAudioPlayer({
         >
           <div className="font-semibold flex items-center gap-2">
             <ControlOutlined />
-            <div>Audio Track Synchronization</div>
+            <div>{t('Audio Track Synchronization')}</div>
           </div>
           <InputNumber
             style={{ width: 180 }}
@@ -257,10 +255,10 @@ function DropdownAudioPlayer({
           />
           <div className="w-full flex items-center gap-2">
             <Button size="small" type="primary" onClick={onSync}>
-              Sync
+              {t('Sync')}
             </Button>
             <Button size="small" onClick={onCancel}>
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button
               size="small"
@@ -268,7 +266,7 @@ function DropdownAudioPlayer({
               className="ml-auto"
               onClick={onReset}
             >
-              Reset
+              {t('Reset')}
             </Button>
           </div>
         </div>
@@ -286,7 +284,7 @@ function DropdownAudioPlayer({
             style={{ height: 32 }}
           >
             <source src={file.url} type="audio/mpeg" />
-            Your browser does not support the audio element.
+            {t('Your browser does not support the audio element.')}
           </audio>
         ))}
       </div>

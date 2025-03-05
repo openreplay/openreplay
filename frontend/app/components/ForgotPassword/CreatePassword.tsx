@@ -2,16 +2,15 @@ import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import ReCAPTCHA from 'react-google-recaptcha';
-import {
-  Form, Input, Loader, Icon, Message,
-} from 'UI';
+import { Form, Input, Loader, Icon, Message } from 'UI';
 import { Button } from 'antd';
 import { validatePassword } from 'App/validate';
 import { PASSWORD_POLICY } from 'App/constants';
 import stl from './forgotPassword.module.css';
+import { useTranslation } from 'react-i18next';
 
 const recaptchaRef = React.createRef();
-const ERROR_DONT_MATCH = "Passwords don't match.";
+const ERROR_DONT_MATCH = (t) => t("Passwords don't match.");
 const CAPTCHA_ENABLED = window.env.CAPTCHA_ENABLED === 'true';
 const { CAPTCHA_SITE_KEY } = window.env;
 
@@ -19,12 +18,15 @@ interface Props {
   params: any;
 }
 function CreatePassword(props: Props) {
+  const { t } = useTranslation();
   const { params } = props;
   const { userStore } = useStore();
   const { loading } = userStore;
   const { resetPassword } = userStore;
-  const [error, setError] = React.useState<String | null>(null);
-  const [validationError, setValidationError] = React.useState<String | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [validationError, setValidationError] = React.useState<string | null>(
+    null,
+  );
   const [updated, setUpdated] = React.useState(false);
   const [passwordRepeat, setPasswordRepeat] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -55,9 +57,9 @@ function CreatePassword(props: Props) {
 
   useEffect(() => {
     if (passwordRepeat.length > 0 && passwordRepeat !== password) {
-      setValidationError(ERROR_DONT_MATCH);
+      setValidationError(ERROR_DONT_MATCH(t));
     } else if (passwordRepeat.length > 0 && !validatePassword(password)) {
-      setValidationError(PASSWORD_POLICY);
+      setValidationError(PASSWORD_POLICY(t));
     } else {
       setValidationError(null);
     }
@@ -85,11 +87,11 @@ function CreatePassword(props: Props) {
               )}
 
               <Form.Field>
-                <label>New password</label>
+                <label>{t('New password')}</label>
                 <Input
                   autoComplete="new-password"
                   type="password"
-                  placeholder="Type here..."
+                  placeholder={t('Type here...')}
                   name="password"
                   onChange={write}
                   className="w-full"
@@ -98,11 +100,11 @@ function CreatePassword(props: Props) {
                 />
               </Form.Field>
               <Form.Field>
-                <label>Confirm password</label>
+                <label>{t('Confirm password')}</label>
                 <Input
                   autoComplete="new-password"
                   type="password"
-                  placeholder="Re-enter your new password"
+                  placeholder={t('Re-enter your new password')}
                   name="passwordRepeat"
                   onChange={write}
                   className="w-full"
@@ -120,23 +122,22 @@ function CreatePassword(props: Props) {
               <div className="w-10 h-10 bg-tealx-lightest rounded-full flex items-center justify-center mb-3">
                 <Icon name="check" size="30" color="tealx" />
               </div>
-              <span>Your password has been updated successfully.</span>
+              <span>{t('Your password has been updated successfully.')}</span>
             </div>
           </div>
 
           {validationError && <Message error>{validationError}</Message>}
 
-          {updated ? null
-            : (
-              <Button
-                htmlType="submit"
-                type="primary"
-                loading={loading}
-                className="w-full mt-4"
-              >
-                Create
-              </Button>
-            )}
+          {updated ? null : (
+            <Button
+              htmlType="submit"
+              type="primary"
+              loading={loading}
+              className="w-full mt-4"
+            >
+              {t('Create')}
+            </Button>
+          )}
         </>
       )}
 

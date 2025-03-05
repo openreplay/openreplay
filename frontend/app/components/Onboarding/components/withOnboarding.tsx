@@ -1,6 +1,10 @@
 import React, { useMemo } from 'react';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { sessions, withSiteId, onboarding as onboardingRoute } from 'App/routes';
+import {
+  sessions,
+  withSiteId,
+  onboarding as onboardingRoute,
+} from 'App/routes';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
@@ -28,7 +32,10 @@ const withOnboarding = <P extends RouteComponentProps>(
         params: { siteId },
       },
     } = props;
-    const site = useMemo(() => sites.find((s: any) => s.id === siteId), [sites, siteId]);
+    const site = useMemo(
+      () => sites.find((s: any) => s.id === siteId),
+      [sites, siteId],
+    );
 
     const skip = () => {
       userStore.setOnboarding(true);
@@ -42,11 +49,7 @@ const withOnboarding = <P extends RouteComponentProps>(
     return <Component skip={skip} navTo={navTo} {...props} site={site} />;
   };
 
-  return withRouter(
-    observer(
-      WithOnboarding,
-    ),
-  );
+  return withRouter(observer(WithOnboarding));
 };
 
 export default withOnboarding;

@@ -7,12 +7,14 @@ import { Button } from 'antd';
 import { useStore } from 'App/mstore';
 import SessionsModal from './SessionsModal';
 import CardUserItem from './CardUserItem';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
-    history: any;
-    location: any;
+  history: any;
+  location: any;
 }
 function CardUserList(props: RouteComponentProps<Props>) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const { showModal } = useModal();
   const userId = new URLSearchParams(props.location.search).get('userId');
@@ -27,7 +29,9 @@ function CardUserList(props: RouteComponentProps<Props>) {
   const pageSize = data.length;
 
   const handleClick = (issue: any) => {
-    props.history.replace({ search: (new URLSearchParams({ userId: '123' })).toString() });
+    props.history.replace({
+      search: new URLSearchParams({ userId: '123' }).toString(),
+    });
     // showModal(<SessionsModal list={[]} />, { right: true, width: 450 })
   };
 
@@ -48,9 +52,9 @@ function CardUserList(props: RouteComponentProps<Props>) {
   return (
     <div className="bg-white rounded p-4 border">
       <div className="flex justify-between">
-        <h1 className="font-medium text-2xl">Returning users between</h1>
+        <h1 className="font-medium text-2xl">{t('Returning users between')}</h1>
         <div>
-          <Button type="text">All Sessions</Button>
+          <Button type="text">{t('All Sessions')}</Button>
         </div>
       </div>
 
@@ -64,20 +68,17 @@ function CardUserList(props: RouteComponentProps<Props>) {
 
       <div className="w-full flex items-center justify-between pt-4">
         <div className="text-disabled-text">
-          Showing
-          {' '}
-          <span className="font-medium">{Math.min(data.length, pageSize)}</span>
-          {' '}
-          out of
-          {' '}
-          <span className="font-medium">{data.length}</span>
-          {' '}
-          Issues
+          {t('Showing')}{' '}
+          <span className="font-medium">{Math.min(data.length, pageSize)}</span>{' '}
+          {t('out of')}&nbsp;<span className="font-medium">{data.length}</span>
+          &nbsp;{t('Issues')}
         </div>
         <Pagination
           page={metricStore.sessionsPage}
           total={data.length}
-          onPageChange={(page: any) => metricStore.updateKey('sessionsPage', page)}
+          onPageChange={(page: any) =>
+            metricStore.updateKey('sessionsPage', page)
+          }
           limit={metricStore.sessionsPageSize}
           debounceRequest={500}
         />

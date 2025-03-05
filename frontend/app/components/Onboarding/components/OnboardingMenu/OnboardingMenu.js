@@ -15,9 +15,7 @@ const MENU_ITEMS = [
   OB_TABS.INTEGRATIONS,
 ];
 
-function Item({
-  icon, text, completed, active, onClick,
-}) {
+function Item({ icon, text, completed, active, onClick }) {
   return (
     <div
       className={cn('cursor-pointer', stl.stepWrapper, {

@@ -34,7 +34,12 @@ export default class IOSPlayer extends Player {
   ) {
     const hasTar = session.videoURL.some((url) => url.includes('.tar.'));
     const screen = new Screen(true, ScaleMode.Embed);
-    const messageManager = new IOSMessageManager(session, wpState, screen, uiErrorHandler);
+    const messageManager = new IOSMessageManager(
+      session,
+      wpState,
+      screen,
+      uiErrorHandler,
+    );
     const messageLoader = new MessageLoader(
       session,
       wpState,
@@ -89,14 +94,16 @@ export default class IOSPlayer extends Player {
       frustrations: session.frustrations || [],
       stack: session.stackEvents || [],
       exceptions:
-        exceptions.map(({ name, ...rest }: any) => Log({
-          level: LogLevel.ERROR,
-          value: name,
-          name,
-          message: rest.reason,
-          errorId: rest.crashId || rest.errorId,
-          ...rest,
-        })) || [],
+        exceptions.map(({ name, ...rest }: any) =>
+          Log({
+            level: LogLevel.ERROR,
+            value: name,
+            name,
+            message: rest.reason,
+            errorId: rest.crashId || rest.errorId,
+            ...rest,
+          }),
+        ) || [],
     };
 
     return this.messageManager.updateLists(lists);
@@ -110,7 +117,12 @@ export default class IOSPlayer extends Player {
     this.screen.addToBody(player);
     this.screen.addMobileStyles(stableTop);
 
-    window.addEventListener('resize', () => this.customScale(this.customConstrains.width, this.customConstrains.height));
+    window.addEventListener('resize', () =>
+      this.customScale(
+        this.customConstrains.width,
+        this.customConstrains.height,
+      ),
+    );
   };
 
   scale = () => {

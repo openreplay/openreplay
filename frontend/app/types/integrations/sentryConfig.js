@@ -16,9 +16,9 @@ export default Record(
     methods: {
       validate() {
         return (
-          this.organizationSlug !== ''
-          && this.projectSlug !== ''
-          && this.token !== ''
+          this.organizationSlug !== '' &&
+          this.projectSlug !== '' &&
+          this.token !== ''
         );
       },
       exists() {

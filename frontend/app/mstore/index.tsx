@@ -33,6 +33,7 @@ import UiPlayerStore from './uiPlayerStore';
 import userStore from './userStore';
 import UxtestingStore from './uxtestingStore';
 import WeeklyReportStore from './weeklyReportConfigStore';
+import logger from '@/logger';
 
 const projectStore = new ProjectsStore();
 const sessionStore = new SessionStore();
@@ -55,9 +56,8 @@ function copyToClipboard(text: string) {
   try {
     const successful = document.execCommand('copy');
     const msg = successful ? 'successful' : 'unsuccessful';
-    console.log(`Token copy ${msg}`);
   } catch (err) {
-    console.error('unable to copy', err);
+    logger.error('unable to copy', err);
   }
 
   document.body.removeChild(textArea);
@@ -66,10 +66,10 @@ function copyToClipboard(text: string) {
 window.getJWT = () => {
   const jwtToken = userStore.getJwt() ?? null;
   if (jwtToken) {
-    console.log(jwtToken);
+    logger.log(jwtToken);
     copyToClipboard(jwtToken);
   } else {
-    console.log('not logged in');
+    logger.log('not logged in');
   }
 };
 
@@ -194,10 +194,17 @@ export function StoreProvider({ children, store }: any) {
 
 export const useStore = () => React.useContext(StoreContext);
 
-export const withStore = (Component: any) => function (props: any) {
-  return <Component {...props} mstore={useStore()} />;
-};
+export const withStore = (Component: any) =>
+  function (props: any) {
+    return <Component {...props} mstore={useStore()} />;
+  };
 
 export {
-  userStore, sessionStore, searchStore, searchStoreLive, projectStore, client, settingsStore,
+  userStore,
+  sessionStore,
+  searchStore,
+  searchStoreLive,
+  projectStore,
+  client,
+  settingsStore,
 };

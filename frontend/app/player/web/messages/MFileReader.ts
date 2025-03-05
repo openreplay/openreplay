@@ -16,7 +16,11 @@ export default class MFileReader extends RawMessageReader {
 
   private noIndexes: boolean = false;
 
-  constructor(data: Uint8Array, private startTime?: number, private logger = console) {
+  constructor(
+    data: Uint8Array,
+    private startTime?: number,
+    private logger = console,
+  ) {
     super(data);
   }
 
@@ -72,7 +76,7 @@ export default class MFileReader extends RawMessageReader {
 
   currentTab = 'back-compatability';
 
-  readNext(): Message & { tabId: string; _index?: number } | null {
+  readNext(): (Message & { tabId: string; _index?: number }) | null {
     if (this.error || !this.hasNextByte()) {
       return null;
     }
@@ -108,11 +112,15 @@ export default class MFileReader extends RawMessageReader {
     }
 
     const index = this.noIndexes ? 0 : this.getLastMessageID();
-    const msg = Object.assign(rewriteMessage(rMsg), {
-      // @ts-ignore
-      time: this.currentTime ?? rMsg.timestamp - this.startTime!,
-      tabId: this.currentTab,
-    }, !this.noIndexes ? { _index: index } : {});
+    const msg = Object.assign(
+      rewriteMessage(rMsg),
+      {
+        // @ts-ignore
+        time: this.currentTime ?? rMsg.timestamp - this.startTime!,
+        tabId: this.currentTab,
+      },
+      !this.noIndexes ? { _index: index } : {},
+    );
 
     return msg;
   }

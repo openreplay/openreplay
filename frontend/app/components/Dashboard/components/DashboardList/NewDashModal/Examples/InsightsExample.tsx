@@ -4,9 +4,9 @@ import InsightsCard from 'Components/Dashboard/Widgets/CustomMetricsWidgets/Insi
 import { InsightIssue } from 'App/mstore/types/widget';
 
 interface Props {
-    title: string;
-    type: string;
-    onCard: (card: string) => void;
+  title: string;
+  type: string;
+  onCard: (card: string) => void;
 }
 
 function InsightsExample(props: Props) {
@@ -40,13 +40,20 @@ function InsightsExample(props: Props) {
         isNew: true,
       },
     ].map(
-      (i: any) => new InsightIssue(i.category, i.name, i.ratio, i.oldValue, i.value, i.change, i.isNew),
+      (i: any) =>
+        new InsightIssue(
+          i.category,
+          i.name,
+          i.ratio,
+          i.oldValue,
+          i.value,
+          i.change,
+          i.isNew,
+        ),
     ),
   };
   return (
-    <ExCard
-      {...props}
-    >
+    <ExCard {...props}>
       <InsightsCard data={data} />
     </ExCard>
   );

@@ -4,8 +4,10 @@ import { observer } from 'mobx-react-lite';
 import ClickMapRenderer from 'App/components/Session/Player/ClickMapRenderer';
 import { NoContent } from 'App/components/ui';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 function ClickMapCard() {
+  const { t } = useTranslation();
   const [customSession, setCustomSession] = React.useState<any>(null);
   const { metricStore, dashboardStore, sessionStore } = useStore();
   const { fetchInsights } = sessionStore;
@@ -16,15 +18,17 @@ function ClickMapCard() {
 
   const { sessionId } = metricStore.instance.data;
   const url = metricStore.instance.data.path;
-  const operator = metricStore.instance.series[0]?.filter.filters[0]?.operator ? metricStore.instance.series[0].filter.filters[0].operator : 'startsWith';
+  const operator = metricStore.instance.series[0]?.filter.filters[0]?.operator
+    ? metricStore.instance.series[0].filter.filters[0].operator
+    : 'startsWith';
 
   React.useEffect(() => () => setCustomSession(null), []);
 
   React.useEffect(() => {
     if (
-      metricStore.instance.data.domURL
-      && sessionId
-      && sessionId !== customSession?.sessionId
+      metricStore.instance.data.domURL &&
+      sessionId &&
+      sessionId !== customSession?.sessionId
     ) {
       setCustomSession(null);
       setTimeout(() => {
@@ -59,19 +63,21 @@ function ClickMapCard() {
     return (
       <NoContent
         style={{ minHeight: 220 }}
-        title={(
+        title={
           <div className="flex items-center relative">
             <InfoCircleOutlined className="hidden md:inline-block mr-1" />
-            Set a start point to visualize the heatmap. If set, try adjusting filters.
+            {t(
+              'Set a start point to visualize the heatmap. If set, try adjusting filters.',
+            )}
           </div>
-        )}
+        }
         show
       />
     );
   }
 
   if (!metricStore.instance.data?.sessionId || !customSession) {
-    return <div className="py-2">Loading session</div>;
+    return <div className="py-2">{t('Loading session')}</div>;
   }
 
   const jumpToEvent = metricStore.instance.data.events.find(

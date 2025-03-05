@@ -12,20 +12,24 @@ interface Props {
   hideModal?: boolean;
   width?: number;
 }
-function Modal({
-  component, className = 'bg-white', props, hideModal,
-}: Props) {
+function Modal({ component, className = 'bg-white', props, hideModal }: Props) {
   const history = useHistory();
 
-  useEffect(() => history.listen((location) => {
-    if (history.action === 'POP') {
-      document.querySelector('body').style.overflow = 'visible';
-    }
-  }));
+  useEffect(() =>
+    history.listen((location) => {
+      if (history.action === 'POP') {
+        document.querySelector('body').style.overflow = 'visible';
+      }
+    }),
+  );
 
   return component ? (
     ReactDOM.createPortal(
-      <ModalOverlay hideModal={hideModal} left={!props.right} right={props.right}>
+      <ModalOverlay
+        hideModal={hideModal}
+        left={!props.right}
+        right={props.right}
+      >
         <div
           className={className}
           style={{ width: `${props.width ? props.width : DEFAULT_WIDTH}px` }}
@@ -40,11 +44,15 @@ function Modal({
   );
 }
 
-Modal.Header = function ({ title, children }: { title?: string, children?: any }) {
+Modal.Header = function ({
+  title,
+  children,
+}: {
+  title?: string;
+  children?: any;
+}) {
   return children ? (
-    <div>
-      {children}
-    </div>
+    <div>{children}</div>
   ) : (
     <div className="text-lg flex items-center p-4 font-medium">
       <div>{title}</div>
@@ -52,7 +60,13 @@ Modal.Header = function ({ title, children }: { title?: string, children?: any }
   );
 };
 
-Modal.Content = function ({ children, className = 'p-4' }: { children: any; className?: string }) {
+Modal.Content = function ({
+  children,
+  className = 'p-4',
+}: {
+  children: any;
+  className?: string;
+}) {
   return (
     <div
       className={cn('overflow-y-auto relative', className)}
@@ -65,7 +79,10 @@ Modal.Content = function ({ children, className = 'p-4' }: { children: any; clas
 
 Modal.Footer = function ({ children, className = '' }: any) {
   return (
-    <div className={cn('absolute bottom-0 w-full left-0 right-0', className)} style={{}}>
+    <div
+      className={cn('absolute bottom-0 w-full left-0 right-0', className)}
+      style={{}}
+    >
       {children}
     </div>
   );

@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import React, { useState, useCallback } from 'react';
 import cn from 'classnames';
 import InlineInput from './InlineInput';
@@ -11,11 +12,13 @@ interface Props {
 const attrRE = /([A-Za-z][\w-]*)(?:=(?:"([^"]*)"|'([^']*)'|`([^`]*)`))?/g;
 // Full trim: /^['"`\d\s\uFEFF\xA0]+|['"`\s\uFEFF\xA0]+$/g
 
-function parseAttributes(s: string) : { [key: string]: string } {
+function parseAttributes(s: string): { [key: string]: string } {
   const attrs = {};
   let m;
-  while (m = attrRE.exec(s)) {
-    if (typeof m[1] !== 'string') { continue; }
+  while ((m = attrRE.exec(s))) {
+    if (typeof m[1] !== 'string') {
+      continue;
+    }
     attrs[m[1]] = m[2] || m[3] || '';
   }
   return attrs;
@@ -59,26 +62,20 @@ export default function AttrView({ attr, forceUpdateElement }: Props) {
     forceUpdateElement();
   }, []);
 
-  return editing
-    ? (
-      <InlineInput
-        value={`${attr.name}="${attr.value}"`}
-        commit={commit}
-        className={cn('ml-2', stl.attributeInput)}
-      />
-    )
-    : (
-      <span className="ml-2" onDoubleClick={() => setEditing(true)}>
-        <span className={stl.attributeName}>{attr.name}</span>
-        { attr.value
-					&& (
-<>
-  =
-  "
-  <span className={stl.attributeValue}>{attr.value}</span>
-  "
-</>
-					)}
-      </span>
-    );
+  return editing ? (
+    <InlineInput
+      value={`${attr.name}="${attr.value}"`}
+      commit={commit}
+      className={cn('ml-2', stl.attributeInput)}
+    />
+  ) : (
+    <span className="ml-2" onDoubleClick={() => setEditing(true)}>
+      <span className={stl.attributeName}>{attr.name}</span>
+      {attr.value && (
+        <>
+          = &quot;<span className={stl.attributeValue}>{attr.value}</span>&quot;
+        </>
+      )}
+    </span>
+  );
 }

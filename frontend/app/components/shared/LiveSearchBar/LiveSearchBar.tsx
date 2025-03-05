@@ -4,15 +4,18 @@ import { Tooltip } from 'UI';
 import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   appliedFilter: any;
 }
 
 function LiveSearchBar(props: Props) {
+  const { t } = useTranslation();
   const { searchStoreLive } = useStore();
   const appliedFilter = searchStoreLive.instance;
-  const hasFilters = appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
+  const hasFilters =
+    appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
   return (
     <div className="flex items-center">
       <div style={{ width: '60%', marginRight: '10px' }}>
@@ -26,7 +29,7 @@ function LiveSearchBar(props: Props) {
             className="text-main ml-auto font-medium"
             onClick={() => searchStoreLive.clearSearch()}
           >
-            Clear
+            {t('Clear')}
           </Button>
         </Tooltip>
       </div>

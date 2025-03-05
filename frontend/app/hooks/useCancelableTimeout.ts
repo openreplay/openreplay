@@ -1,10 +1,10 @@
 import { useRef, useEffect } from 'react';
 
 export default function useCancelableTimeout(
-  onTimeout: ()=> void,
-  onCancel: ()=> void,
+  onTimeout: () => void,
+  onCancel: () => void,
   delay: number,
-): [()=> void, ()=> void] {
+): [() => void, () => void] {
   const idRef = useRef<ReturnType<typeof setTimeout>>();
   const triggerTimeout = () => {
     clearTimeout(idRef.current);

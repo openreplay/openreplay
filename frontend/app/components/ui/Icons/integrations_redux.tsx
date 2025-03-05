@@ -2,18 +2,21 @@
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Integrations_redux(props: Props) {
-  const {
-    size = 14, width = size, height = size, fill = '',
-  } = props;
+  const { size = 14, width = size, height = size, fill = '' } = props;
   return (
-    <svg viewBox="0 0 120 120" width={`${width}px`} height={`${height}px`} fill={`${fill}`}>
+    <svg
+      viewBox="0 0 120 120"
+      width={`${width}px`}
+      height={`${height}px`}
+      fill={`${fill}`}
+    >
       <rect fill="#fff" height="120" rx="6.01" width="120" />
       <g fill="#764abc">
         <path d="M76.26 75.87a6 6 0 0 0-.65-12h-.21a6 6 0 0 0-5.79 6.22 6.16 6.16 0 0 0 1.71 4c-3.64 7.18-9.22 12.44-17.58 16.83a29 29 0 0 1-17.48 3.33c-4.83-.64-8.58-2.79-10.94-6.33a15.74 15.74 0 0 1-.86-16.62 25.18 25.18 0 0 1 7.29-8.58c-.43-1.39-1.07-3.75-1.39-5.47-15.55 11.22-13.94 26.45-9.23 33.63 3.54 5.37 10.73 8.69 18.66 8.69a26.22 26.22 0 0 0 6.44-.75 41.15 41.15 0 0 0 30.03-22.95z" />

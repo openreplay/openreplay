@@ -1,12 +1,12 @@
 import { State } from './Lists';
 
 export enum StorageType {
- REDUX = 'redux',
- MOBX = 'mobx',
- VUEX = 'vuex',
- NGRX = 'ngrx',
- ZUSTAND = 'zustand',
- NONE = 0,
+  REDUX = 'redux',
+  MOBX = 'mobx',
+  VUEX = 'vuex',
+  NGRX = 'ngrx',
+  ZUSTAND = 'zustand',
+  NONE = 0,
 }
 
 export const STORAGE_TYPES = StorageType; // TODO: update name everywhere
@@ -14,13 +14,17 @@ export const STORAGE_TYPES = StorageType; // TODO: update name everywhere
 export function selectStorageType(state: State): StorageType {
   if (state.reduxList?.length > 0) {
     return StorageType.REDUX;
-  } if (state.vuexList?.length > 0) {
+  }
+  if (state.vuexList?.length > 0) {
     return StorageType.VUEX;
-  } if (state.mobxList?.length > 0) {
+  }
+  if (state.mobxList?.length > 0) {
     return StorageType.MOBX;
-  } if (state.ngrxList?.length > 0) {
+  }
+  if (state.ngrxList?.length > 0) {
     return StorageType.NGRX;
-  } if (state.zustandList?.length > 0) {
+  }
+  if (state.zustandList?.length > 0) {
     return StorageType.ZUSTAND;
   }
   return StorageType.NONE;

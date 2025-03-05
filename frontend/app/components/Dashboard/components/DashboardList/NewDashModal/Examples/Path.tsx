@@ -32,9 +32,7 @@ function ExamplePath(props: any) {
   };
 
   return (
-    <ExCard
-      {...props}
-    >
+    <ExCard {...props}>
       <ResponsiveContainer width="100%" height={230}>
         <Sankey
           nodeWidth={6}

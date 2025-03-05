@@ -8,6 +8,7 @@ import Category from 'Components/Header/HealthStatus/ServiceCategory';
 import SubserviceHealth from 'Components/Header/HealthStatus/SubserviceHealth/SubserviceHealth';
 import Footer from './Footer';
 import { IServiceStats } from '../HealthStatus';
+import { useTranslation } from 'react-i18next';
 
 function HealthModal({
   getHealth,
@@ -25,6 +26,7 @@ function HealthModal({
   setShowModal: (isOpen: boolean) => void;
   setPassed?: () => void;
 }) {
+  const { t } = useTranslation();
   const [selectedService, setSelectedService] = React.useState('');
 
   React.useEffect(() => {
@@ -70,10 +72,10 @@ function HealthModal({
         onClick={(e) => e.stopPropagation()}
         className="flex flex-col bg-white rounded border border-figmaColors-divider"
       >
-        <div
-          className="flex w-full justify-between items-center p-4 border-b border-figmaColors-divider"
-        >
-          <div className="text-xl font-semibold">Installation Status</div>
+        <div className="flex w-full justify-between items-center p-4 border-b border-figmaColors-divider">
+          <div className="text-xl font-semibold">
+            {t('Installation Status')}
+          </div>
           <Button
             disabled={isLoading}
             onClick={getHealth}
@@ -81,7 +83,7 @@ function HealthModal({
             type="text"
             className="text-main"
           >
-            Recheck
+            {t('Recheck')}
           </Button>
         </div>
 
@@ -93,18 +95,18 @@ function HealthModal({
                   {isLoading
                     ? null
                     : Object.keys(healthResponse.healthMap).map((service) => (
-                      <React.Fragment key={service}>
-                        <Category
-                          onClick={() => setSelectedService(service)}
-                          healthOk={
+                        <React.Fragment key={service}>
+                          <Category
+                            onClick={() => setSelectedService(service)}
+                            healthOk={
                               healthResponse.healthMap[service].healthOk
                             }
-                          name={healthResponse.healthMap[service].name}
-                          isSelectable
-                          isSelected={selectedService === service}
-                        />
-                      </React.Fragment>
-                    ))}
+                            name={healthResponse.healthMap[service].name}
+                            isSelectable
+                            isSelected={selectedService === service}
+                          />
+                        </React.Fragment>
+                      ))}
                 </div>
                 <div
                   className="bg-gray-lightest border-l w-fit border-figmaColors-divider overflow-y-scroll relative"
@@ -120,9 +122,7 @@ function HealthModal({
                 </div>
               </div>
               {isSetup ? (
-                <div
-                  className="p-4 mt-auto w-full border-t border-figmaColors-divider"
-                >
+                <div className="p-4 mt-auto w-full border-t border-figmaColors-divider">
                   <Button
                     disabled={!healthResponse?.overallHealth}
                     loading={isLoading}
@@ -130,14 +130,14 @@ function HealthModal({
                     className="ml-auto"
                     onClick={() => setPassed?.()}
                   >
-                    Create Account
+                    {t('Create Account')}
                   </Button>
                 </div>
               ) : null}
             </>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <div>Error while fetching data...</div>
+              <div>{t('Error while fetching data...')}</div>
             </div>
           )}
         </Loader>

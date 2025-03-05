@@ -61,7 +61,10 @@ export default class UiPlayerStore {
     stack: localStorage.getItem('stackHideHint') || undefined,
   };
 
-  skipInterval: 2 | 5 | 10 | 15 | 20 | 30 | 60 = parseInt(localStorage.getItem('CHANGE_SKIP_INTERVAL') || '10', 10) as (2 | 5 | 10 | 15 | 20 | 30 | 60);
+  skipInterval: 2 | 5 | 10 | 15 | 20 | 30 | 60 = parseInt(
+    localStorage.getItem('CHANGE_SKIP_INTERVAL') || '10',
+    10,
+  ) as 2 | 5 | 10 | 15 | 20 | 30 | 60;
 
   timelineZoom = {
     enabled: false,

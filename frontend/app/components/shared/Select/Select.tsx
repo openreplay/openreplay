@@ -6,9 +6,9 @@ import colors from 'App/theme/colors';
 const { ValueContainer } = components;
 
 type ValueObject = {
-  value: string | number,
-  label: React.ReactNode,
-}
+  value: string | number;
+  label: React.ReactNode;
+};
 
 interface Props<Value extends ValueObject> {
   options: Value[];
@@ -18,14 +18,14 @@ interface Props<Value extends ValueObject> {
   components?: any;
   styles?: Record<string, any>;
   controlStyle?: Record<string, any>;
-  onChange: (newValue: { name: string, value: Value }) => void;
+  onChange: (newValue: { name: string; value: Value }) => void;
   name?: string;
   placeholder?: string;
   className?: string;
   [x: string]: any;
 }
 
-export default function <Value extends ValueObject> ({
+export default function <Value extends ValueObject>({
   placeholder = 'Select',
   name = '',
   onChange,
@@ -41,7 +41,9 @@ export default function <Value extends ValueObject> ({
   ...rest
 }: Props<Value>) {
   const defaultSelected = Array.isArray(defaultValue)
-    ? defaultValue.map((value) => options.find((option) => option.value === value))
+    ? defaultValue.map((value) =>
+        options.find((option) => option.value === value),
+      )
     : options.find((option) => option.value === defaultValue) || null;
   const customStyles = {
     option: (provided: any, state: any) => ({
@@ -120,12 +122,15 @@ export default function <Value extends ValueObject> ({
       ...provided,
       paddingRight: '0px',
     }),
-    singleValue: (provided: any, state: { isDisabled: any; }) => {
+    singleValue: (provided: any, state: { isDisabled: any }) => {
       const opacity = state.isDisabled ? 0.5 : 1;
       const transition = 'opacity 300ms';
 
       return {
-        ...provided, opacity, transition, fontWeight: '500',
+        ...provided,
+        opacity,
+        transition,
+        fontWeight: '500',
       };
     },
     input: (provided: any) => ({
@@ -179,7 +184,7 @@ function DropdownIndicator(props: DropdownIndicatorProps<true>) {
 
 function CustomValueContainer({ children, ...rest }: any) {
   const selectedCount = rest.getValue().length;
-  const conditional = (selectedCount < 3);
+  const conditional = selectedCount < 3;
 
   let firstChild: any = [];
 

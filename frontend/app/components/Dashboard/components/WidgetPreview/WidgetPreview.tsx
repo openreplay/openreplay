@@ -20,14 +20,18 @@ function WidgetPreview(props: Props) {
   const metric: any = metricStore.instance;
 
   const hasGranularSettings = [TIMESERIES, FUNNEL].includes(metric.metricType);
-  const hasGranularity = ['lineChart', 'barChart', 'areaChart'].includes(metric.viewType);
-  const hasComparison = metric.metricType === FUNNEL || ['lineChart', 'barChart', 'table', 'progressChart', 'metric'].includes(metric.viewType);
+  const hasGranularity = ['lineChart', 'barChart', 'areaChart'].includes(
+    metric.viewType,
+  );
+  const hasComparison =
+    metric.metricType === FUNNEL ||
+    ['lineChart', 'barChart', 'table', 'progressChart', 'metric'].includes(
+      metric.viewType,
+    );
   // [rangeStart, rangeEnd] or [period_name] -- have to check options
   const presetComparison = metric.compareTo;
   return (
-    <div
-      className={cn(className, 'bg-white rounded-xl border shadow-sm mt-0')}
-    >
+    <div className={cn(className, 'bg-white rounded-xl border shadow-sm mt-0')}>
       <div className="flex items-center gap-2 px-4 py-2 border-b justify-between flex-wrap">
         <WidgetDateRange
           label=""
@@ -39,12 +43,7 @@ function WidgetPreview(props: Props) {
         <WidgetOptions />
       </div>
       <div className="py-4">
-        <WidgetWrapper
-          widget={metric}
-          isPreview
-          isWidget={false}
-          hideName
-        />
+        <WidgetWrapper widget={metric} isPreview isWidget={false} hideName />
       </div>
     </div>
   );

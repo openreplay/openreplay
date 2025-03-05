@@ -5,7 +5,8 @@ import { alertsService } from 'App/services';
 export default class AlertsStore {
   alerts: Alert[] = [];
 
-  triggerOptions: { label: string; value: string | number; unit?: string }[] = [];
+  triggerOptions: { label: string; value: string | number; unit?: string }[] =
+    [];
 
   alertsSearch = '';
 
@@ -43,38 +44,43 @@ export default class AlertsStore {
     }
   };
 
-  save = (inst: Alert): Promise<void> => new Promise<void>(async (resolve, reject) => {
-    this.loading = true;
-    try {
-      await alertsService.save(inst || this.instance);
-      this.instance.isExists = true;
-      resolve();
-    } catch (e) {
-      console.error(e);
-      reject(e);
-    } finally {
-      this.loading = false;
-    }
-  });
+  save = (inst: Alert): Promise<void> =>
+    new Promise<void>(async (resolve, reject) => {
+      this.loading = true;
+      try {
+        await alertsService.save(inst || this.instance);
+        this.instance.isExists = true;
+        resolve();
+      } catch (e) {
+        console.error(e);
+        reject(e);
+      } finally {
+        this.loading = false;
+      }
+    });
 
-  remove = (id: string): Promise<void> => new Promise<void>(async (resolve, reject) => {
-    this.loading = true;
-    try {
-      await alertsService.remove(id);
-      resolve();
-    } catch (e) {
-      console.error(e);
-      reject(e);
-    } finally {
-      this.loading = false;
-    }
-  });
+  remove = (id: string): Promise<void> =>
+    new Promise<void>(async (resolve, reject) => {
+      this.loading = true;
+      try {
+        await alertsService.remove(id);
+        resolve();
+      } catch (e) {
+        console.error(e);
+        reject(e);
+      } finally {
+        this.loading = false;
+      }
+    });
 
   fetchTriggerOptions = async () => {
     this.loading = true;
     try {
       const options = await alertsService.fetchTriggerOptions();
-      this.triggerOptions = options.map(({ name, value }) => ({ label: name, value }));
+      this.triggerOptions = options.map(({ name, value }) => ({
+        label: name,
+        value,
+      }));
     } catch (e) {
       console.error(e);
     } finally {

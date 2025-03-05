@@ -15,14 +15,12 @@ function LivePlayerBlock(props: IProps) {
   const shouldShowSubHeader = !fullView && !isMultiview;
 
   return (
-    <div className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')} style={{ zIndex: undefined, minWidth: isMultiview ? '100%' : undefined }}>
-      {shouldShowSubHeader ? (
-        <SubHeader live />
-      ) : null}
-      <Player
-        fullView={fullView}
-        isMultiview={isMultiview}
-      />
+    <div
+      className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')}
+      style={{ zIndex: undefined, minWidth: isMultiview ? '100%' : undefined }}
+    >
+      {shouldShowSubHeader ? <SubHeader live /> : null}
+      <Player fullView={fullView} isMultiview={isMultiview} />
     </div>
   );
 }

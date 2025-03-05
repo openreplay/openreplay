@@ -3,15 +3,15 @@ import cn from 'classnames';
 import useInputState from 'App/hooks/useInputState';
 
 interface Props {
-	value: string;
-	commit: (string) => void;
-	className?: string;
+  value: string;
+  commit: (string) => void;
+  className?: string;
 }
 
 // TODO: maybe a better way exists?
 const stopPropagation: React.KeyboardEventHandler = (e) => {
   if (e.key === 'Backspace' || e.key === 'Delete') {
-	  e.stopPropagation();
+    e.stopPropagation();
   }
 };
 
@@ -22,7 +22,7 @@ export default function InlineInput({ value, commit, className }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     inputRef.current?.focus();
- 		inputRef.current?.setSelectionRange(0, value.length);
+    inputRef.current?.setSelectionRange(0, value.length);
   }, []);
 
   const onKeyPress = (e) => {

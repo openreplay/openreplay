@@ -4,6 +4,7 @@ import cn from 'classnames';
 import { Popover } from 'antd';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import stl from './xrayButton.module.css';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onClick?: () => void;
@@ -12,6 +13,7 @@ interface Props {
 
 function XRayButton(props: Props) {
   const { player: Player } = React.useContext(PlayerContext);
+  const { t } = useTranslation();
 
   const { isActive } = props;
   // const [showGuide, setShowGuide] = useState(!localStorage.getItem(FEATURE_KEYS.XRAY));
@@ -44,18 +46,23 @@ function XRayButton(props: Props) {
       )}
       <div className="relative">
         <Popover
-          content={(
+          content={
             <div className="flex items-center gap-2">
               <LaunchXRaShortcut />
-              <div>Get a quick overview on the issues in this session.</div>
+              <div>
+                {t('Get a quick overview on the issues in this session.')}
+              </div>
             </div>
-          )}
+          }
         >
           <button
-            className={cn(stl.wrapper, { [stl.default]: !isActive, [stl.active]: isActive })}
+            className={cn(stl.wrapper, {
+              [stl.default]: !isActive,
+              [stl.active]: isActive,
+            })}
             onClick={onClick}
           >
-            <span className="z-1">X-RAY</span>
+            <span className="z-1">{t('X-RAY')}</span>
           </button>
         </Popover>
       </div>

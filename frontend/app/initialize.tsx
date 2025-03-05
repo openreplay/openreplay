@@ -5,19 +5,15 @@ import { createRoot } from 'react-dom/client';
 import './init';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DndProvider } from 'react-dnd';
-import {
-  ConfigProvider, App, theme, ThemeConfig,
-} from 'antd';
+import { ConfigProvider, App, theme, ThemeConfig } from 'antd';
 import colors from 'App/theme/colors';
 import { BrowserRouter } from 'react-router-dom';
 import { Notification, MountPoint } from 'UI';
-import {
-  QueryClient,
-  QueryClientProvider,
-} from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StoreProvider, RootStore } from './mstore';
 import Router from './Router';
 import './i18n';
+import ErrorBoundary from './ErrorBoundary';
 
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
@@ -67,7 +63,7 @@ const customTheme: ThemeConfig = {
 
     borderRadius: 4,
     fontSize: 14,
-    fontFamily: '\'Roboto\', \'ArialMT\', \'Arial\'',
+    fontFamily: "'Roboto', 'ArialMT', 'Arial'",
     fontWeightStrong: 400,
   },
 };
@@ -79,20 +75,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // const theme = window.localStorage.getItem('theme');
   root.render(
-    <QueryClientProvider client={queryClient}>
-      <ConfigProvider theme={customTheme}>
-        <App>
-          <StoreProvider store={new RootStore()}>
-            <DndProvider backend={HTML5Backend}>
-              <BrowserRouter>
-                <Notification />
-                <Router />
-              </BrowserRouter>
-            </DndProvider>
-            <MountPoint />
-          </StoreProvider>
-        </App>
-      </ConfigProvider>
-    </QueryClientProvider>,
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ConfigProvider theme={customTheme}>
+          <App>
+            <StoreProvider store={new RootStore()}>
+              <DndProvider backend={HTML5Backend}>
+                <BrowserRouter>
+                  <Notification />
+                  <Router />
+                </BrowserRouter>
+              </DndProvider>
+              <MountPoint />
+            </StoreProvider>
+          </App>
+        </ConfigProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>,
   );
 });

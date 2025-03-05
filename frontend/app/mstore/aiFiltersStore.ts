@@ -66,7 +66,9 @@ export default class AiFiltersStore {
             return mapGraphql(f);
           }
 
-          const matchingFilter = Object.keys(filtersMap).find((k) => (f.key === 'metadata' ? `_${f.source}` === k : f.key === k));
+          const matchingFilter = Object.keys(filtersMap).find((k) =>
+            f.key === 'metadata' ? `_${f.source}` === k : f.key === k,
+          );
 
           if (f.key === 'duration') {
             const filter = matchingFilter
@@ -110,7 +112,9 @@ export default class AiFiltersStore {
             return mapGraphql(f);
           }
 
-          const matchingFilter = Object.keys(filtersMap).find((k) => (f.key === 'metadata' ? `_${f.source}` === k : f.key === k));
+          const matchingFilter = Object.keys(filtersMap).find((k) =>
+            f.key === 'metadata' ? `_${f.source}` === k : f.key === k,
+          );
 
           if (f.key === 'duration') {
             const filter = matchingFilter

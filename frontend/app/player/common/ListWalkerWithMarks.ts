@@ -1,20 +1,30 @@
 import type { Timed } from './types';
 import ListWalker from './ListWalker';
 
-type CheckFn<T> = (t: T) => boolean
+type CheckFn<T> = (t: T) => boolean;
 
-export default class ListWalkerWithMarks<T extends Timed> extends ListWalker<T> {
+export default class ListWalkerWithMarks<
+  T extends Timed,
+> extends ListWalker<T> {
   private _markCountNow: number = 0;
 
   private _markCount: number = 0;
 
-  constructor(private isMarked: CheckFn<T>, initialList: T[] = []) {
+  constructor(
+    private isMarked: CheckFn<T>,
+    initialList: T[] = [],
+  ) {
     super(initialList);
-    this._markCount = initialList.reduce((n, item) => (isMarked(item) ? n + 1 : n), 0);
+    this._markCount = initialList.reduce(
+      (n, item) => (isMarked(item) ? n + 1 : n),
+      0,
+    );
   }
 
   append(item: T) {
-    if (this.isMarked(item)) { this._markCount++; }
+    if (this.isMarked(item)) {
+      this._markCount++;
+    }
     super.append(item);
   }
 
@@ -23,7 +33,7 @@ export default class ListWalkerWithMarks<T extends Timed> extends ListWalker<T> 
     if (val && this.isMarked(val)) {
       this._markCountNow++;
     }
- 		return val;
+    return val;
   }
 
   protected movePrev() {
@@ -31,7 +41,7 @@ export default class ListWalkerWithMarks<T extends Timed> extends ListWalker<T> 
     if (val && this.isMarked(val)) {
       this._markCountNow--;
     }
- 		return val;
+    return val;
   }
 
   get markedCountNow(): number {

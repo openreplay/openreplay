@@ -20,10 +20,10 @@ export default Record(
     methods: {
       validate() {
         return (
-          this.awsAccessKeyId !== ''
-          && this.awsSecretAccessKey !== ''
-          && this.logGroupName !== ''
-          && this.region !== ''
+          this.awsAccessKeyId !== '' &&
+          this.awsSecretAccessKey !== '' &&
+          this.logGroupName !== '' &&
+          this.region !== ''
         );
       },
       exists() {

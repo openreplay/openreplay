@@ -4,10 +4,12 @@ import { Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import AddCardSelectionModal from 'Components/Dashboard/components/AddCardSelectionModal';
 import { useStore } from 'App/mstore';
+import { useTranslation } from 'react-i18next';
 
 const MAX_CARDS = 29;
 
 function CreateCardButton() {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const { dashboardStore } = useStore();
   const dashboard: any = dashboardStore.selectedDashboard;
@@ -18,7 +20,7 @@ function CreateCardButton() {
       <Tooltip
         delay={0}
         disabled={canAddMore}
-        title="The number of cards in one dashboard is limited to 30."
+        title={t('The number of cards in one dashboard is limited to 30.')}
       >
         <Button
           type="primary"
@@ -26,7 +28,7 @@ function CreateCardButton() {
           onClick={() => setOpen(true)}
           icon={<PlusOutlined />}
         >
-          Add Card
+          {t('Add Card')}
         </Button>
       </Tooltip>
       <AddCardSelectionModal open={open} onClose={() => setOpen(false)} />

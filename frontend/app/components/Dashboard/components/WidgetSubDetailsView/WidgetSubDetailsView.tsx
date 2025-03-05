@@ -7,16 +7,14 @@ import { Loader } from 'UI';
 import FunnelIssueDetails from '../Funnels/FunnelIssueDetails';
 
 interface Props {
-    history: any;
-    match: any
-    siteId: any
+  history: any;
+  match: any;
+  siteId: any;
 }
 function WidgetSubDetailsView(props: Props) {
   const {
     match: {
-      params: {
-        siteId, dashboardId, metricId, subId,
-      },
+      params: { siteId, dashboardId, metricId, subId },
     },
   } = props;
   const { metricStore, funnelStore } = useStore();
@@ -36,8 +34,16 @@ function WidgetSubDetailsView(props: Props) {
     <div>
       <Breadcrumb
         items={[
-          { label: dashboardId ? 'Dashboard' : 'Cards', to: dashboardId ? withSiteId(`/dashboard/${dashboardId}`, siteId) : withSiteId('/metrics', siteId) },
-          { label: widget.name, to: withSiteId(`/metrics/${widget.metricId}`, siteId) },
+          {
+            label: dashboardId ? 'Dashboard' : 'Cards',
+            to: dashboardId
+              ? withSiteId(`/dashboard/${dashboardId}`, siteId)
+              : withSiteId('/metrics', siteId),
+          },
+          {
+            label: widget.name,
+            to: withSiteId(`/metrics/${widget.metricId}`, siteId),
+          },
           { label: issueInstance ? issueInstance.title : 'Sub Details' },
         ]}
       />

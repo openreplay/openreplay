@@ -13,7 +13,12 @@ class Filter {
 
   filters?: Filter[];
 
-  constructor(key: string, operator: string, value?: string[], filters?: Filter[]) {
+  constructor(
+    key: string,
+    operator: string,
+    value?: string[],
+    filters?: Filter[],
+  ) {
     this.key = key;
     this.operator = operator;
     this.value = value;
@@ -77,7 +82,9 @@ export class InputJson {
 
   fromJSON(json: Record<string, any>): InputJson {
     return new InputJson(
-      json.filters.map((f: any) => new Filter(f.key, f.operator, f.value, f.filters)),
+      json.filters.map(
+        (f: any) => new Filter(f.key, f.operator, f.value, f.filters),
+      ),
       json.rangeValue,
       json.sort,
       json.order,
@@ -120,11 +127,17 @@ export class JsonUrlConverter {
     const addFilterParams = (filter: Filter, prefix: string) => {
       params.append(`${prefix}${this.keyMap.key}`, filter.key);
       params.append(`${prefix}${this.keyMap.operator}`, filter.operator);
-      filter.value?.forEach((v, i) => params.append(`${prefix}${this.keyMap.value}[${i}]`, v || ''));
-      filter.filters?.forEach((f, i) => addFilterParams(f, `${prefix}${this.keyMap.filters}[${i}].`));
+      filter.value?.forEach((v, i) =>
+        params.append(`${prefix}${this.keyMap.value}[${i}]`, v || ''),
+      );
+      filter.filters?.forEach((f, i) =>
+        addFilterParams(f, `${prefix}${this.keyMap.filters}[${i}].`),
+      );
     };
 
-    json.filters.forEach((filter: any, index: number) => addFilterParams(filter, `${this.keyMap.filters}[${index}].`));
+    json.filters.forEach((filter: any, index: number) =>
+      addFilterParams(filter, `${this.keyMap.filters}[${index}].`),
+    );
 
     params.append(this.keyMap.rangeValue, json.rangeValue);
     if (json.rangeValue === CUSTOM_RANGE) {
@@ -157,11 +170,22 @@ export class JsonUrlConverter {
       }
       const filters: Filter[] = [];
       index = 0;
-      while (params.has(`${prefix}${this.keyMap.filters}[${index}].${this.keyMap.key}`)) {
-        filters.push(getFilterParams(`${prefix}${this.keyMap.filters}[${index}].`));
+      while (
+        params.has(
+          `${prefix}${this.keyMap.filters}[${index}].${this.keyMap.key}`,
+        )
+      ) {
+        filters.push(
+          getFilterParams(`${prefix}${this.keyMap.filters}[${index}].`),
+        );
         index++;
       }
-      return new Filter(key, operator, value.length ? value : [], filters.length ? filters : []);
+      return new Filter(
+        key,
+        operator,
+        value.length ? value : [],
+        filters.length ? filters : [],
+      );
     };
 
     const filters: Filter[] = [];
@@ -172,7 +196,11 @@ export class JsonUrlConverter {
     }
 
     const rangeValue = params.get(this.keyMap.rangeValue) || LAST_24_HOURS;
-    const rangeValues = this.getDateRangeValues(rangeValue, params.get(this.keyMap.startDate), params.get(this.keyMap.endDate));
+    const rangeValues = this.getDateRangeValues(
+      rangeValue,
+      params.get(this.keyMap.startDate),
+      params.get(this.keyMap.endDate),
+    );
 
     return new InputJson(
       filters,

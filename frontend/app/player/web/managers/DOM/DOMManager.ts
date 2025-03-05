@@ -8,7 +8,8 @@ import StylesManager from './StylesManager';
 import FocusManager from './FocusManager';
 import SelectionManager from './SelectionManager';
 import {
-  StyleElement, VSpriteMap,
+  StyleElement,
+  VSpriteMap,
   OnloadStyleSheet,
   VDocument,
   VElement,
@@ -25,7 +26,11 @@ function isStyleVElement(
   return vElem.tagName.toLowerCase() === 'style';
 }
 
-function setupWindowLogging(vTexts: Map<number, VText>, vElements: Map<number, VElement>, olVRoots: Map<number, OnloadVRoot>) {
+function setupWindowLogging(
+  vTexts: Map<number, VText>,
+  vElements: Map<number, VElement>,
+  olVRoots: Map<number, OnloadVRoot>,
+) {
   // @ts-ignore
   window.checkVElements = () => vElements;
   // @ts-ignore
@@ -57,7 +62,8 @@ export default class DOMManager extends ListWalker<Message> {
 
   private upperBodyId: number = -1;
 
-  private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map();
+  private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> =
+    new Map();
 
   private stylesManager: StylesManager;
 
@@ -71,7 +77,10 @@ export default class DOMManager extends ListWalker<Message> {
 
   private readonly stringDict: Record<number, string>;
 
-  private readonly globalDict: { get: (key: string) => string | undefined, all: () => Record<string, string> };
+  private readonly globalDict: {
+    get: (key: string) => string | undefined;
+    all: () => Record<string, string>;
+  };
 
   public readonly time: number;
 
@@ -81,7 +90,10 @@ export default class DOMManager extends ListWalker<Message> {
     setCssLoading: ConstructorParameters<typeof StylesManager>[1];
     time: number;
     stringDict: Record<number, string>;
-    globalDict: { get: (key: string) => string | undefined, all: () => Record<string, string> };
+    globalDict: {
+      get: (key: string) => string | undefined;
+      all: () => Record<string, string>;
+    };
   }) {
     super();
     this.screen = params.screen;
@@ -91,11 +103,7 @@ export default class DOMManager extends ListWalker<Message> {
     this.globalDict = params.globalDict;
     this.selectionManager = new SelectionManager(this.vElements, params.screen);
     this.stylesManager = new StylesManager(params.screen, params.setCssLoading);
-    setupWindowLogging(
-      this.vTexts,
-      this.vElements,
-      this.olVRoots,
-    );
+    setupWindowLogging(this.vTexts, this.vElements, this.olVRoots);
   }
 
   public clearSelectionManager() {
@@ -125,8 +133,8 @@ export default class DOMManager extends ListWalker<Message> {
         this.upperBodyId = m.id;
       }
     } else if (
-      m.tp === MType.SetNodeAttribute
-      && (IGNORED_ATTRS.includes(m.name) || !ATTR_NAME_REGEXP.test(m.name))
+      m.tp === MType.SetNodeAttribute &&
+      (IGNORED_ATTRS.includes(m.name) || !ATTR_NAME_REGEXP.test(m.name))
     ) {
       logger.log('Ignorring message: ', m);
       return; // Ignoring
@@ -171,7 +179,12 @@ export default class DOMManager extends ListWalker<Message> {
     }
     const parent = this.vElements.get(parentID) || this.olVRoots.get(parentID);
     if ('tagName' in child && child.tagName === 'BODY') {
-      const spriteMap = new VSpriteMap('svg', true, Number.MAX_SAFE_INTEGER - 100, Number.MAX_SAFE_INTEGER - 100);
+      const spriteMap = new VSpriteMap(
+        'svg',
+        true,
+        Number.MAX_SAFE_INTEGER - 100,
+        Number.MAX_SAFE_INTEGER - 100,
+      );
       spriteMap.node.setAttribute('id', 'OPENREPLAY_SPRITES_MAP');
       spriteMap.node.setAttribute('style', 'display: none;');
       child.insertChildAt(spriteMap, Number.MAX_SAFE_INTEGER - 100);
@@ -190,11 +203,11 @@ export default class DOMManager extends ListWalker<Message> {
       // TODO: if this ever happens? ; Maybe do not send empty TextNodes in tracker
       const styleNode = parent.node;
       if (
-        styleNode.sheet
-        && styleNode.sheet.cssRules
-        && styleNode.sheet.cssRules.length > 0
-        && styleNode.textContent
-        && styleNode.textContent.trim().length === 0
+        styleNode.sheet &&
+        styleNode.sheet.cssRules &&
+        styleNode.sheet.cssRules.length > 0 &&
+        styleNode.textContent &&
+        styleNode.textContent.trim().length === 0
       ) {
         logger.log(
           'Trying to insert child to a style tag with virtual rules: ',
@@ -340,21 +353,21 @@ export default class DOMManager extends ListWalker<Message> {
         });
         return;
       case MType.SetNodeAttributeDictDeprecated:
-        this.stringDict[msg.nameKey] === undefined
-          && logger.error(
+        this.stringDict[msg.nameKey] === undefined &&
+          logger.error(
             "No local dictionary key for msg 'name': ",
             msg,
             this.stringDict,
           );
-        this.stringDict[msg.valueKey] === undefined
-          && logger.error(
+        this.stringDict[msg.valueKey] === undefined &&
+          logger.error(
             "No local dictionary key for msg 'value': ",
             msg,
             this.stringDict,
           );
         if (
-          this.stringDict[msg.nameKey] === undefined
-          || this.stringDict[msg.valueKey] === undefined
+          this.stringDict[msg.nameKey] === undefined ||
+          this.stringDict[msg.valueKey] === undefined
         ) {
           return;
         }
@@ -382,9 +395,9 @@ export default class DOMManager extends ListWalker<Message> {
         const nodeWithValue = vElem.node;
         if (
           !(
-            nodeWithValue instanceof HTMLInputElement
-            || nodeWithValue instanceof HTMLTextAreaElement
-            || nodeWithValue instanceof HTMLSelectElement
+            nodeWithValue instanceof HTMLInputElement ||
+            nodeWithValue instanceof HTMLTextAreaElement ||
+            nodeWithValue instanceof HTMLSelectElement
           )
         ) {
           logger.error('Trying to set value of non-Input element', msg);
@@ -564,7 +577,7 @@ export default class DOMManager extends ListWalker<Message> {
             logger.error(`Node ${vNode} expected to be a Document`, msg);
             return;
           }
-          let descr: Object | undefined;
+          let descr: object | undefined;
           if (msg.descriptors) {
             try {
               descr = JSON.parse(msg.descriptors);

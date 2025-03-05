@@ -14,11 +14,18 @@ interface RouterProps {
 }
 
 function NewDashboard(props: RouteComponentProps<RouterProps>) {
-  const { history, match: { params: { siteId, dashboardId } } } = props;
+  const {
+    history,
+    match: {
+      params: { siteId, dashboardId },
+    },
+  } = props;
   const { dashboardStore } = useStore();
   const initId = React.useRef(siteId);
   const loading = dashboardStore.isLoading;
-  const isDbMetric = /\/dashboard\/\d+\/metric\/\d+/.test(history.location.pathname);
+  const isDbMetric = /\/dashboard\/\d+\/metric\/\d+/.test(
+    history.location.pathname,
+  );
   const isMetricListMetric = /\/metrics\/\d+/.test(history.location.pathname);
   useEffect(() => {
     if (siteId !== initId.current) {

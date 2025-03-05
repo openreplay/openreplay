@@ -65,9 +65,7 @@ function Overlay({ nextId, isClickmap }: Props) {
   const { uiPlayerStore } = useStore();
   const { toggleBottomBlock } = uiPlayerStore;
   const togglePlay = () => player.togglePlay();
-  const {
-    playing, messagesLoading, completed, autoplay,
-  } = store.get();
+  const { playing, messagesLoading, completed, autoplay } = store.get();
   const loading = messagesLoading;
 
   const showAutoplayTimer = completed && autoplay && nextId;
@@ -102,7 +100,9 @@ function Overlay({ nextId, isClickmap }: Props) {
       {loading ? <Loader /> : null}
       <Dropdown menu={{ items: menuItems, onClick }} trigger={['contextMenu']}>
         <div>
-          {showPlayIconLayer && <PlayIconLayer playing={playing} togglePlay={togglePlay} />}
+          {showPlayIconLayer && (
+            <PlayIconLayer playing={playing} togglePlay={togglePlay} />
+          )}
         </div>
       </Dropdown>
     </>

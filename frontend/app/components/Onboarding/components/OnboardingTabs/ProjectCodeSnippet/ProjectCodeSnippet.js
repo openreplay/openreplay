@@ -8,17 +8,19 @@ import Select from 'Shared/Select';
 import CodeSnippet from 'Shared/CodeSnippet';
 import stl from './projectCodeSnippet.module.css';
 import CircleNumber from '../../CircleNumber';
+import { useTranslation } from 'react-i18next';
 
-const inputModeOptions = [
-  { label: 'Record all inputs', value: 'plain' },
-  { label: 'Ignore all inputs', value: 'obscured' },
-  { label: 'Obscure all inputs', value: 'hidden' },
+const inputModeOptions = (t) => [
+  { label: t('Record all inputs'), value: 'plain' },
+  { label: t('Ignore all inputs'), value: 'obscured' },
+  { label: t('Obscure all inputs'), value: 'hidden' },
 ];
 
 const inputModeOptionsMap = {};
 inputModeOptions.forEach((o, i) => (inputModeOptionsMap[o.value] = i));
 
 function ProjectCodeSnippet() {
+  const { t } = useTranslation();
   const { projectsStore } = useStore();
   const { siteId } = projectsStore;
   const site = projectsStore.instance;
@@ -66,16 +68,17 @@ function ProjectCodeSnippet() {
       <div className="mb-4">
         <div className="font-semibold mb-2 flex items-center">
           <CircleNumber text="1" />
-          {' '}
-          Choose data recording options
+          &nbsp;{t('Choose data recording options')}
         </div>
 
         <div className="ml-10 mb-4" style={{ maxWidth: '50%' }}>
           <Select
             name="defaultInputMode"
-            options={inputModeOptions}
-            onChange={({ value }) => onChangeSelect({ name: 'defaultInputMode', value: value.value })}
-            placeholder="Default Input Mode"
+            options={inputModeOptions(t)}
+            onChange={({ value }) =>
+              onChangeSelect({ name: 'defaultInputMode', value: value.value })
+            }
+            placeholder={t('Default Input Mode')}
             defaultValue={gdpr.defaultInputMode}
           />
         </div>
@@ -88,7 +91,7 @@ function ProjectCodeSnippet() {
             checked={gdpr.maskNumbers}
             onChange={onChangeOption}
             className="mr-2"
-            label="Do not record any numeric text"
+            label={t('Do not record any numeric text')}
           />
 
           <div className="mx-4" />
@@ -99,25 +102,31 @@ function ProjectCodeSnippet() {
             checked={gdpr.maskEmails}
             onChange={onChangeOption}
             className="mr-2"
-            label="Do not record email addresses"
+            label={t('Do not record email addresses')}
           />
         </div>
       </div>
-      <div className={cn(stl.info, 'rounded bg-gray mt-2 mb-4 ml-10', { hidden: !changed })}>
-        Below code snippet changes depending on the data recording options chosen.
+      <div
+        className={cn(stl.info, 'rounded bg-gray mt-2 mb-4 ml-10', {
+          hidden: !changed,
+        })}
+      >
+        {t(
+          ' Below code snippet changes depending on the data recording options chosen.',
+        )}
       </div>
 
       <div className={cn(stl.instructions, 'mt-8')}>
         <div className="font-semibold flex items-center">
           <CircleNumber text="2" />
-          <span>Enable Assist (Optional)</span>
+          <span>{t('Enable Assist (Optional)')}</span>
         </div>
       </div>
       <div className="ml-10">
         <p>
-          OpenReplay Assist allows you to support your users by seeing their live screen and
-          instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen
-          sharing software.
+          {t(
+            'OpenReplay Assist allows you to support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.',
+          )}
         </p>
         <div className="flex items-center gap-2">
           <Switch
@@ -125,27 +134,21 @@ function ProjectCodeSnippet() {
             className="font-medium mr-2"
             onChange={() => setAssistEnabled(!isAssistEnabled)}
           />
-          <span>Yes</span>
+          <span>{t('Yes')}</span>
         </div>
       </div>
 
       <div className={cn(stl.instructions, 'mt-8')}>
         <div className="font-semibold flex items-center">
           <CircleNumber text="3" />
-          <span>Install SDK</span>
+          <span>{t('Install SDK')}</span>
         </div>
       </div>
 
       <div className="ml-10 mb-2">
-        Paste this snippet
-        {' '}
-        <span>{'before the '}</span>
-        <span className={stl.highLight}>
-          {' '}
-          {'</head>'}
-          {' '}
-        </span>
-        <span>{' tag of your page.'}</span>
+        {t('Paste this snippet')}&nbsp;<span>{t('before the')}&nbsp;</span>
+        <span className={stl.highLight}>&nbsp;{t('</head>')}&nbsp;</span>
+        <span>&nbsp;{t('tag of your page.')}</span>
       </div>
       <div className={cn(stl.snippetsWrapper, 'ml-10')}>
         {showLoader ? (

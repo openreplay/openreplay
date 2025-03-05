@@ -7,9 +7,7 @@ function SectionWrapper({ title, children }) {
         <div className="mr-auto color-gray-medium uppercase">{title}</div>
         <div className="color-gray-medium">DURATION</div>
       </div>
-      <div>
-        { children }
-      </div>
+      <div>{children}</div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ function isNode(sth: any): sth is Node {
   return !!sth && sth.nodeType != null;
 }
 
-type Callback<T> = (o: T) => void
+type Callback<T> = (o: T) => void;
 
 /**
  * Virtual Node base class.
@@ -15,53 +15,53 @@ type Callback<T> = (o: T) => void
  * Would be better to export type-only, but didn't find a nice way to do that.
  */
 export abstract class VNode<T extends Node = Node> {
-	protected abstract createNode(): T
+  protected abstract createNode(): T;
 
-	private _node: T | null;
+  private _node: T | null;
 
-	/**
-	 * JS DOM Node getter with lazy node creation
-	 *
-	 * @returns underneath JS DOM Node
-	 * @remarks should not be called unless the real node is required since creation might be expensive
-	 * 	It is better to use `onNode` callback applicator unless in the `applyChanges` implementation
-	 */
-	get node(): T {
-	  if (!this._node) {
-	    const node = this._node = this.createNode();
-	    this.nodeCallbacks.forEach((cb) => cb(node));
-	    this.nodeCallbacks = [];
-	  }
-	  return this._node;
-	}
+  /**
+   * JS DOM Node getter with lazy node creation
+   *
+   * @returns underneath JS DOM Node
+   * @remarks should not be called unless the real node is required since creation might be expensive
+   * 	It is better to use `onNode` callback applicator unless in the `applyChanges` implementation
+   */
+  get node(): T {
+    if (!this._node) {
+      const node = (this._node = this.createNode());
+      this.nodeCallbacks.forEach((cb) => cb(node));
+      this.nodeCallbacks = [];
+    }
+    return this._node;
+  }
 
-	private nodeCallbacks: Callback<T>[] = [];
+  private nodeCallbacks: Callback<T>[] = [];
 
-	/**
-	 * Lazy Node callback applicator
-	 *
-	 * @param callback - Callback that fires on existing JS DOM Node instantly if it exists
-	 * or whenever it gets created. Call sequence is concerned.
-	 */
-	onNode(callback: Callback<T>) {
-	  if (this._node) {
-	    callback(this._node);
-	    return;
-	  }
-	  this.nodeCallbacks.push(callback);
-	}
+  /**
+   * Lazy Node callback applicator
+   *
+   * @param callback - Callback that fires on existing JS DOM Node instantly if it exists
+   * or whenever it gets created. Call sequence is concerned.
+   */
+  onNode(callback: Callback<T>) {
+    if (this._node) {
+      callback(this._node);
+      return;
+    }
+    this.nodeCallbacks.push(callback);
+  }
 
-	/**
-	 * Abstract method, should be implemented by the actual classes
-	 * It is supposed to apply virtual changes into the actual DOM
-	 */
-	public abstract applyChanges(): void
+  /**
+   * Abstract method, should be implemented by the actual classes
+   * It is supposed to apply virtual changes into the actual DOM
+   */
+  public abstract applyChanges(): void;
 }
 
-type VChild = VElement | VText | VSpriteMap
+type VChild = VElement | VText | VSpriteMap;
 abstract class VParent<T extends Node = Node> extends VNode<T> {
   /**
-	 */
+   */
   protected children: VChild[] = [];
 
   private notMontedChildren: Set<VChild> = new Set();
@@ -85,10 +85,14 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
     let nextMounted: VChild | null = null;
     for (let i = this.children.length - 1; i >= 0; i--) {
       const child = this.children[i];
-      if (this.notMontedChildren.has(child)
-				&& (!shouldInsert || shouldInsert(child)) // is there a better way of not-knowing about subclass logic on prioritized insertion?
+      if (
+        this.notMontedChildren.has(child) &&
+        (!shouldInsert || shouldInsert(child)) // is there a better way of not-knowing about subclass logic on prioritized insertion?
       ) {
-        this.node.insertBefore(child.node, nextMounted ? nextMounted.node : null);
+        this.node.insertBefore(
+          child.node,
+          nextMounted ? nextMounted.node : null,
+        );
         this.notMontedChildren.delete(child);
       }
       if (!this.notMontedChildren.has(child)) {
@@ -109,7 +113,7 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
     const { node } = this;
     const realChildren = node.childNodes;
     if (realChildren.length > 0 && this.children.length > 0) {
-		  for (let j = 0; j < this.children.length; j++) {
+      for (let j = 0; j < this.children.length; j++) {
         while (realChildren[j] !== this.children[j].node) {
           if (isNode(realChildren[j])) {
             node.removeChild(realChildren[j]);
@@ -119,20 +123,26 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
     }
     /* Removing tail */
     while (realChildren.length > this.children.length) {
-      node.removeChild(node.lastChild as Node); /* realChildren.length > this.children.length >= 0 so it is not null */
+      node.removeChild(
+        node.lastChild as Node,
+      ); /* realChildren.length > this.children.length >= 0 so it is not null */
     }
   }
 }
 
 export class VDocument extends VParent<Document> {
-  constructor(protected readonly createNode: () => Document) { super(); }
+  constructor(protected readonly createNode: () => Document) {
+    super();
+  }
 
   applyChanges() {
     if (this.children.length > 1) {
       console.error('VDocument expected to have a single child.', this);
     }
     const child = this.children[0];
-    if (!child) { return; }
+    if (!child) {
+      return;
+    }
     child.applyChanges();
     const htmlNode = child.node;
     if (htmlNode.parentNode !== this.node) {
@@ -142,13 +152,16 @@ export class VDocument extends VParent<Document> {
 }
 
 export class VShadowRoot extends VParent<ShadowRoot> {
-  constructor(protected readonly createNode: () => ShadowRoot) { super(); }
+  constructor(protected readonly createNode: () => ShadowRoot) {
+    super();
+  }
 }
 
-export type VRoot = VDocument | VShadowRoot
+export type VRoot = VDocument | VShadowRoot;
 
 export class VSpriteMap extends VParent<Element> {
-  parentNode: VParent | null = null; /** Should be modified only by he parent itself */
+  parentNode: VParent | null =
+    null; /** Should be modified only by he parent itself */
 
   private newAttributes: Map<string, string | false> = new Map();
 
@@ -187,11 +200,19 @@ export class VSpriteMap extends VParent<Element> {
 }
 
 export class VElement extends VParent<Element> {
-  parentNode: VParent | null = null; /** Should be modified only by he parent itself */
+  parentNode: VParent | null =
+    null; /** Should be modified only by he parent itself */
 
   private newAttributes: Map<string, string | false> = new Map();
 
-  constructor(readonly tagName: string, readonly isSVG = false, public readonly index: number, private readonly nodeId: number) { super(); }
+  constructor(
+    readonly tagName: string,
+    readonly isSVG = false,
+    public readonly index: number,
+    private readonly nodeId: number,
+  ) {
+    super();
+  }
 
   protected createNode() {
     try {
@@ -201,7 +222,11 @@ export class VElement extends VParent<Element> {
       element.dataset.openreplayId = this.nodeId.toString();
       return element;
     } catch (e) {
-      console.error('Openreplay: Player received invalid html tag', this.tagName, e);
+      console.error(
+        'Openreplay: Player received invalid html tag',
+        this.tagName,
+        e,
+      );
       return document.createElement(this.tagName.replace(/[^a-z]/gi, ''));
     }
   }
@@ -214,7 +239,8 @@ export class VElement extends VParent<Element> {
     this.newAttributes.set(name, false);
   }
 
-  private applyAttributeChanges() { // "changes" -> "updates" ?
+  private applyAttributeChanges() {
+    // "changes" -> "updates" ?
     this.newAttributes.forEach((value, key) => {
       if (value === false) {
         this.node.removeAttribute(key);
@@ -236,9 +262,9 @@ export class VElement extends VParent<Element> {
   }
 
   /** Insertion Prioritization
-	 * Made for styles that should be inserted as prior,
-	 * otherwise it will show visual styling lag if there is a transition CSS property)
-	 */
+   * Made for styles that should be inserted as prior,
+   * otherwise it will show visual styling lag if there is a transition CSS property)
+   */
   prioritized = false;
 
   insertChildAt(child: VChild, index: number) {
@@ -304,19 +330,21 @@ class PromiseQueue<T> {
   constructor(private promise: Promise<void | T>) {}
 
   /**
-	 * Call sequence is concerned.
-	 */
+   * Call sequence is concerned.
+   */
   // Doing this with callbacks list instead might be more efficient (but more wordy). TODO: research
   whenReady(cb: Callback<T>) {
-    this.promise = this.promise.then((vRoot) => {
-      cb(vRoot as T);
-      return vRoot;
-    }).catch((e) => {
-      this.onCatch?.(e);
-    });
+    this.promise = this.promise
+      .then((vRoot) => {
+        cb(vRoot as T);
+        return vRoot;
+      })
+      .catch((e) => {
+        this.onCatch?.(e);
+      });
   }
 
-  catch(cb:(err?: any) => void) {
+  catch(cb: (err?: any) => void) {
     this.onCatch = cb;
   }
 }
@@ -331,34 +359,36 @@ export class OnloadVRoot extends PromiseQueue<VRoot> {
   }
 
   static fromVElement(vElem: VElement): OnloadVRoot {
-    return new OnloadVRoot(new Promise((resolve, reject) => {
-      vElem.onNode((host) => {
-        if (host instanceof HTMLIFrameElement) {
-          /* IFrame case: creating Document */
-          const doc = host.contentDocument;
-          if (doc) {
-            resolve(new VDocument(() => doc));
+    return new OnloadVRoot(
+      new Promise((resolve, reject) => {
+        vElem.onNode((host) => {
+          if (host instanceof HTMLIFrameElement) {
+            /* IFrame case: creating Document */
+            const doc = host.contentDocument;
+            if (doc) {
+              resolve(new VDocument(() => doc));
+            } else {
+              host.addEventListener('load', () => {
+                const doc = host.contentDocument;
+                if (doc) {
+                  resolve(new VDocument(() => doc));
+                } else {
+                  reject('No default Document found on iframe load'); // Send `host` for logging as well
+                }
+              });
+            }
           } else {
-            host.addEventListener('load', () => {
-              const doc = host.contentDocument;
-              if (doc) {
-                resolve(new VDocument(() => doc));
-              } else {
-                reject('No default Document found on iframe load'); // Send `host` for logging as well
-              }
-            });
+            /* ShadowDom case */
+            try {
+              const shadowRoot = host.attachShadow({ mode: 'open' });
+              resolve(new VShadowRoot(() => shadowRoot));
+            } catch (e) {
+              reject(e); // "Can not attach shadow dom"
+            }
           }
-        } else {
-          /* ShadowDom case */
-          try {
-            const shadowRoot = host.attachShadow({ mode: 'open' });
-            resolve(new VShadowRoot(() => shadowRoot));
-          } catch (e) {
-            reject(e); // "Can not attach shadow dom"
-          }
-        }
-      });
-    }));
+        });
+      }),
+    );
   }
 
   onNode(cb: Callback<Document | ShadowRoot>) {
@@ -374,7 +404,7 @@ export class OnloadVRoot extends PromiseQueue<VRoot> {
   }
 }
 
-export type StyleElement = HTMLStyleElement | SVGStyleElement
+export type StyleElement = HTMLStyleElement | SVGStyleElement;
 
 /**
  * CSSStyleSheet wrapper that collects all the insertRule/deleteRule calls
@@ -382,30 +412,39 @@ export type StyleElement = HTMLStyleElement | SVGStyleElement
  */
 export class OnloadStyleSheet extends PromiseQueue<CSSStyleSheet> {
   static fromStyleElement(node: StyleElement) {
-    return new OnloadStyleSheet(new Promise((resolve, reject) => {
-      node.addEventListener('load', () => {
-        const { sheet } = node;
-        if (sheet) {
-          resolve(sheet);
-        } else {
-          reject('Style node onload: sheet is null');
-        }
-      });
-    }));
+    return new OnloadStyleSheet(
+      new Promise((resolve, reject) => {
+        node.addEventListener('load', () => {
+          const { sheet } = node;
+          if (sheet) {
+            resolve(sheet);
+          } else {
+            reject('Style node onload: sheet is null');
+          }
+        });
+      }),
+    );
   }
 
   static fromVRootContext(vRoot: OnloadVRoot) {
-    return new OnloadStyleSheet(new Promise((resolve, reject) => vRoot.onNode((node) => {
-      let context: typeof globalThis | null;
-      if (isRootNode(node)) {
-        context = node.defaultView;
-      } else {
-        context = node.ownerDocument.defaultView;
-      }
-      if (!context) { reject('Root node default view not found'); return; }
-      /* a StyleSheet from another Window context won't work */
-      resolve(new context.CSSStyleSheet());
-    })));
+    return new OnloadStyleSheet(
+      new Promise((resolve, reject) =>
+        vRoot.onNode((node) => {
+          let context: typeof globalThis | null;
+          if (isRootNode(node)) {
+            context = node.defaultView;
+          } else {
+            context = node.ownerDocument.defaultView;
+          }
+          if (!context) {
+            reject('Root node default view not found');
+            return;
+          }
+          /* a StyleSheet from another Window context won't work */
+          resolve(new context.CSSStyleSheet());
+        }),
+      ),
+    );
   }
 
   insertRule(rule: string, index: number) {

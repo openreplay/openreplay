@@ -78,7 +78,6 @@ function NoteEvent(props: Props) {
     },
   ];
 
-  console.log(props.note);
   return (
     <div
       className="flex items-start flex-col p-2 border rounded ps-4"
@@ -104,7 +103,7 @@ function NoteEvent(props: Props) {
               : formatTimeOrDate(
                   props.note.createdAt as unknown as number,
                   timezone,
-              )}
+                )}
           </div>
         </div>
         <div className="cursor-pointer absolute" style={{ right: -5 }}>

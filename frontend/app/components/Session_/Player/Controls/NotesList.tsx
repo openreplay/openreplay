@@ -10,7 +10,8 @@ function NotesList({ scale }: { scale: number }) {
   const notes = notesStore.sessionNotes;
 
   const visibleNotes = React.useMemo(
-    () => notes.filter((note) => note.startAt >= 0 && note.endAt > note.startAt), // Ensure valid highlights
+    () =>
+      notes.filter((note) => note.startAt >= 0 && note.endAt > note.startAt), // Ensure valid highlights
     [notes.length],
   );
 

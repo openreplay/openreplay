@@ -5,7 +5,9 @@ import type { IosClickEvent, IosSwipeEvent } from 'Player/web/messages';
 import { MType } from 'Player/web/messages';
 import type Screen from 'Player/web/Screen/Screen';
 
-export default class TouchManager extends ListWalker<IosClickEvent | IosSwipeEvent> {
+export default class TouchManager extends ListWalker<
+  IosClickEvent | IosSwipeEvent
+> {
   private touchTrail: MouseTrail | undefined;
 
   private readonly removeTouchTrail: boolean = false;
@@ -25,7 +27,13 @@ export default class TouchManager extends ListWalker<IosClickEvent | IosSwipeEve
     this.touchTrail?.createContext();
   }
 
-  public updateDimensions({ width, height }: { width: number; height: number; }) {
+  public updateDimensions({
+    width,
+    height,
+  }: {
+    width: number;
+    height: number;
+  }) {
     return this.touchTrail?.resizeCanvas(width, height);
   }
 
@@ -33,7 +41,6 @@ export default class TouchManager extends ListWalker<IosClickEvent | IosSwipeEve
     const lastTouch = this.moveGetLast(t);
     if (lastTouch) {
       if (lastTouch.tp === MType.MobileSwipeEvent) {
-
         // not using swipe rn
         // this.touchTrail?.createSwipeTrail({
         //   x: lastTouch.x,

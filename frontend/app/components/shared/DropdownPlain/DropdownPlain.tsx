@@ -3,18 +3,23 @@ import { Dropdown, Icon } from 'UI';
 import stl from './DropdownPlain.module.css';
 
 interface Props {
-    name?: string;
-    options: any[];
-    onChange: (e, { name, value }) => void;
-    icon?: string;
-    direction?: string;
-    value?: any;
-    multiple?: boolean;
+  name?: string;
+  options: any[];
+  onChange: (e, { name, value }) => void;
+  icon?: string;
+  direction?: string;
+  value?: any;
+  multiple?: boolean;
 }
 
 export default function DropdownPlain(props: Props) {
   const {
-    name = 'sort', value, options, icon = 'chevron-down', direction = 'right', multiple = false,
+    name = 'sort',
+    value,
+    options,
+    icon = 'chevron-down',
+    direction = 'right',
+    multiple = false,
   } = props;
   return (
     <div>
@@ -25,12 +30,21 @@ export default function DropdownPlain(props: Props) {
         direction={direction}
         options={options}
         onChange={props.onChange}
-                // floating
+        // floating
         scrolling
         multiple={multiple}
         selectOnBlur={false}
-                // defaultValue={ value }
-        icon={icon ? <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> : null}
+        // defaultValue={ value }
+        icon={
+          icon ? (
+            <Icon
+              name="chevron-down"
+              color="gray-dark"
+              size="14"
+              className={stl.dropdownIcon}
+            />
+          ) : null
+        }
       />
     </div>
   );

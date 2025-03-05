@@ -100,13 +100,13 @@ export default Record(
         let start = isLuxon
           ? period.start
           : DateTime.fromMillis(parseInt(period.start || 0, 10), {
-            zone: Settings.defaultZone,
-          });
+              zone: Settings.defaultZone,
+            });
         let end = isLuxon
           ? period.end
           : DateTime.fromMillis(parseInt(period.end || 0, 10), {
-            zone: Settings.defaultZone,
-          });
+              zone: Settings.defaultZone,
+            });
         if (period.substract) {
           const delta = substractValues[period.substract];
           start = start.minus(delta);

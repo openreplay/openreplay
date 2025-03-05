@@ -51,7 +51,7 @@ const dropdownStyles = {
     ...provided,
     minWidth: 'max-content',
   }),
-  singleValue: (provided: any, state: { isDisabled: any; }) => {
+  singleValue: (provided: any, state: { isDisabled: any }) => {
     const opacity = state.isDisabled ? 0.5 : 1;
     const transition = 'opacity 300ms';
 
@@ -72,7 +72,11 @@ interface Props {
 }
 function FilterOperator(props: Props) {
   const {
-    options, value, onChange, isDisabled = false, className = '',
+    options,
+    value,
+    onChange,
+    isDisabled = false,
+    className = '',
   } = props;
 
   return (
@@ -84,7 +88,9 @@ function FilterOperator(props: Props) {
         placeholder="Select"
         isDisabled={isDisabled}
         value={value ? options?.find((i: any) => i.value === value) : null}
-        onChange={({ value }: any) => onChange(null, { name: 'operator', value: value.value })}
+        onChange={({ value }: any) =>
+          onChange(null, { name: 'operator', value: value.value })
+        }
         className="btn-event-operator"
       />
     </div>

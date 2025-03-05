@@ -2,13 +2,46 @@ import React from 'react';
 import { numberWithCommas } from 'App/utils';
 
 const colorsTeal = ['#1E889A', '#239DB2', '#28B2C9', '#36C0D7', '#65CFE1'];
-const colors = ['#6774E2', '#929ACD', '#3EAAAF', '#565D97', '#8F9F9F', '#376F72'];
-const colorsx = ['#256669', '#38999e', '#3eaaaf', '#51b3b7', '#78c4c7', '#9fd5d7', '#c5e6e7'].reverse();
+const colors = [
+  '#6774E2',
+  '#929ACD',
+  '#3EAAAF',
+  '#565D97',
+  '#8F9F9F',
+  '#376F72',
+];
+const colorsx = [
+  '#256669',
+  '#38999e',
+  '#3eaaaf',
+  '#51b3b7',
+  '#78c4c7',
+  '#9fd5d7',
+  '#c5e6e7',
+].reverse();
 const compareColors = ['#192EDB', '#6272FF', '#808DFF', '#B3BBFF', '#C9CFFF'];
-const compareColorsx = ['#222F99', '#2E3ECC', '#394EFF', '#6171FF', '#8895FF', '#B0B8FF', '#D7DCFF'].reverse();
+const compareColorsx = [
+  '#222F99',
+  '#2E3ECC',
+  '#394EFF',
+  '#6171FF',
+  '#8895FF',
+  '#B0B8FF',
+  '#D7DCFF',
+].reverse();
 const customMetricColors = ['#394EFF', '#3EAAAF', '#565D97'];
 const colorsPie = colors.concat(['#DDDDDD']);
-const safeColors = ['#394EFF', '#3EAAAF', '#9276da', '#ceba64', '#bc6f9d', '#966fbc', '#64ce86', '#e06da3', '#6dabe0'];
+const safeColors = [
+  '#394EFF',
+  '#3EAAAF',
+  '#9276da',
+  '#ceba64',
+  '#bc6f9d',
+  '#966fbc',
+  '#64ce86',
+  '#e06da3',
+  '#6dabe0',
+];
 
 const countView = (count) => {
   const isMoreThanK = count >= 1000;
@@ -51,7 +84,10 @@ export default {
   tickFormatter: (val) => `${countView(val)}`,
   tickFormatterBytes: (val) => Math.round(val / 1024 / 1024),
   chartMargins: {
-    left: 0, right: 20, top: 10, bottom: 5,
+    left: 0,
+    right: 20,
+    top: 10,
+    bottom: 5,
   },
   tooltip: {
     wrapperStyle: {

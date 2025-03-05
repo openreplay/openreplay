@@ -33,8 +33,9 @@ export default function createRecordFactory(fields = {}, options = {}) {
     return !!this[idKey];
   };
 
-  recordFactory.prototype.toData = toData
-    || function () {
+  recordFactory.prototype.toData =
+    toData ||
+    function () {
       const data = this.toJS();
       delete data[keyKey];
       return data;
@@ -60,10 +61,11 @@ export default function createRecordFactory(fields = {}, options = {}) {
   }
 
   // TODO: add createRecord to prototype chain
-  createRecord.extend = (newFields, newOptions = {}) => createRecordFactory(
-    { ...fields, ...newFields },
-    { ...options, ...newOptions },
-  );
+  createRecord.extend = (newFields, newOptions = {}) =>
+    createRecordFactory(
+      { ...fields, ...newFields },
+      { ...options, ...newOptions },
+    );
 
   return createRecord;
 }

@@ -1,5 +1,8 @@
 import React from 'react';
-import { AutoCompleteContainer, AutocompleteModal } from '../FilterAutoComplete/AutocompleteModal';
+import {
+  AutoCompleteContainer,
+  AutocompleteModal,
+} from '../FilterAutoComplete/AutocompleteModal';
 
 interface Props {
   options: any[];
@@ -8,15 +11,14 @@ interface Props {
   values: string[];
 }
 function FilterValueDropdown(props: Props) {
-  const {
-    options,
-    onApply,
-    onClose,
-    values,
-  } = props;
+  const { options, onApply, onClose, values } = props;
   const [query, setQuery] = React.useState('');
 
-  const filteredOptions = query.length ? options.filter((option) => option.label.toLowerCase().includes(query.toLowerCase())) : options;
+  const filteredOptions = query.length
+    ? options.filter((option) =>
+        option.label.toLowerCase().includes(query.toLowerCase()),
+      )
+    : options;
   return (
     <AutocompleteModal
       values={values}
@@ -44,7 +46,8 @@ interface MainProps {
 }
 
 function FilterDropdownController(props: MainProps) {
-  const mapValues = (value: string) => props.options.find((option) => option.value === value)?.label || value;
+  const mapValues = (value: string) =>
+    props.options.find((option) => option.value === value)?.label || value;
 
   return (
     <AutoCompleteContainer
