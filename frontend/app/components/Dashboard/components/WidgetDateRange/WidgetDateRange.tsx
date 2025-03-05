@@ -45,7 +45,7 @@ function WidgetDateRange({
   }
 
   React.useEffect(() => {
-    if (presetComparison) {
+    if (presetComparison && presetComparison.length) {
       const option = DATE_RANGE_COMPARISON_OPTIONS.find((option: any) => option.value === presetComparison[0]);
       if (option) {
         // @ts-ignore
