@@ -165,7 +165,7 @@ export enum IssueType {
   MEMORY = 'memory',
   CPU = 'cpu',
   SLOW_RESOURCE = 'slow_resource',
-  SLOW_PAGE_LOAD = 'slow_pageLoad',
+  SLOW_PAGE_LOAD = 'slow_page_load',
   CRASH = 'crash',
   CUSTOM = 'custom',
   JS_EXCEPTION = 'js_exception',
