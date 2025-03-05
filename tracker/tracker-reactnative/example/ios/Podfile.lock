@@ -1,7 +1,7 @@
 PODS:
-  - BitByteData (2.0.3)
+  - BitByteData (2.0.4)
   - boost (1.83.0)
-  - DeviceKit (5.2.2)
+  - DeviceKit (5.5.0)
   - DoubleConversion (1.1.6)
   - FBLazyVector (0.74.0)
   - fmt (9.1.0)
@@ -9,10 +9,10 @@ PODS:
   - hermes-engine (0.74.0):
     - hermes-engine/Pre-built (= 0.74.0)
   - hermes-engine/Pre-built (0.74.0)
-  - Openreplay (1.0.10):
+  - Openreplay (1.0.13):
     - DeviceKit
     - SWCompression
-  - openreplay-react-native (0.6.0):
+  - openreplay-react-native (0.6.3):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1191,45 +1191,45 @@ PODS:
     - React-perflogger (= 0.74.0)
     - React-utils (= 0.74.0)
   - SocketRocket (0.7.0)
-  - SWCompression (4.8.5):
+  - SWCompression (4.8.6):
     - BitByteData (~> 2.0)
-    - SWCompression/BZip2 (= 4.8.5)
-    - SWCompression/Deflate (= 4.8.5)
-    - SWCompression/GZip (= 4.8.5)
-    - SWCompression/LZ4 (= 4.8.5)
-    - SWCompression/LZMA (= 4.8.5)
-    - SWCompression/LZMA2 (= 4.8.5)
-    - SWCompression/SevenZip (= 4.8.5)
-    - SWCompression/TAR (= 4.8.5)
-    - SWCompression/XZ (= 4.8.5)
-    - SWCompression/ZIP (= 4.8.5)
-    - SWCompression/Zlib (= 4.8.5)
-  - SWCompression/BZip2 (4.8.5):
+    - SWCompression/BZip2 (= 4.8.6)
+    - SWCompression/Deflate (= 4.8.6)
+    - SWCompression/GZip (= 4.8.6)
+    - SWCompression/LZ4 (= 4.8.6)
+    - SWCompression/LZMA (= 4.8.6)
+    - SWCompression/LZMA2 (= 4.8.6)
+    - SWCompression/SevenZip (= 4.8.6)
+    - SWCompression/TAR (= 4.8.6)
+    - SWCompression/XZ (= 4.8.6)
+    - SWCompression/ZIP (= 4.8.6)
+    - SWCompression/Zlib (= 4.8.6)
+  - SWCompression/BZip2 (4.8.6):
     - BitByteData (~> 2.0)
-  - SWCompression/Deflate (4.8.5):
+  - SWCompression/Deflate (4.8.6):
     - BitByteData (~> 2.0)
-  - SWCompression/GZip (4.8.5):
+  - SWCompression/GZip (4.8.6):
     - BitByteData (~> 2.0)
     - SWCompression/Deflate
-  - SWCompression/LZ4 (4.8.5):
+  - SWCompression/LZ4 (4.8.6):
     - BitByteData (~> 2.0)
-  - SWCompression/LZMA (4.8.5):
+  - SWCompression/LZMA (4.8.6):
     - BitByteData (~> 2.0)
-  - SWCompression/LZMA2 (4.8.5):
+  - SWCompression/LZMA2 (4.8.6):
     - BitByteData (~> 2.0)
     - SWCompression/LZMA
-  - SWCompression/SevenZip (4.8.5):
+  - SWCompression/SevenZip (4.8.6):
     - BitByteData (~> 2.0)
     - SWCompression/LZMA2
-  - SWCompression/TAR (4.8.5):
+  - SWCompression/TAR (4.8.6):
     - BitByteData (~> 2.0)
-  - SWCompression/XZ (4.8.5):
+  - SWCompression/XZ (4.8.6):
     - BitByteData (~> 2.0)
     - SWCompression/LZMA2
-  - SWCompression/ZIP (4.8.5):
+  - SWCompression/ZIP (4.8.6):
     - BitByteData (~> 2.0)
     - SWCompression/Deflate
-  - SWCompression/Zlib (4.8.5):
+  - SWCompression/Zlib (4.8.6):
     - BitByteData (~> 2.0)
     - SWCompression/Deflate
   - Yoga (0.0.0)
@@ -1415,16 +1415,16 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  BitByteData: 95b9b252c3b8d936df5e87750301f7a60542069d
+  BitByteData: 2422ed269fcddc44976d97f171a183d25ef535ce
   boost: d3f49c53809116a5d38da093a8aa78bf551aed09
-  DeviceKit: e36aaf2a0d142ef0b4fac2007649a4414af234be
+  DeviceKit: d83e38ca196a4ebf0cc5f37d6f0316a24b794d5b
   DoubleConversion: 76ab83afb40bddeeee456813d9c04f67f78771b5
   FBLazyVector: 026c8f4ae67b06e088ae01baa2271ef8a26c0e8c
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 6eae7edb2f563ee41d7c1f91f4f2e57c26d8a5c3
-  Openreplay: 6a68784c19eeacc316f13c72d4e7680bc0455bab
-  openreplay-react-native: ae597702bc56ed3dcaeb3262773d90a8726ed6b5
+  Openreplay: f016504d94ede93e3fc120b6e09de0f7cf5119e0
+  openreplay-react-native: 30eefdc4acfc89a2b19802197f1f3f5ca8b9aea0
   RCT-Folly: 045d6ecaa59d826c5736dfba0b2f4083ff8d79df
   RCTDeprecation: 3ca8b6c36bfb302e1895b72cfe7db0de0c92cd47
   RCTRequired: 9fc183af555fd0c89a366c34c1ae70b7e03b1dc5
@@ -1473,7 +1473,7 @@ SPEC CHECKSUMS:
   React-utils: f013537c3371270d2095bff1d594d00d4bc9261b
   ReactCommon: 2cde697fd80bd31da1d6448d25a5803088585219
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
-  SWCompression: 15e38b06c37077399a1b60bfecc1c2cd71f0ee99
+  SWCompression: 9379873ad5e9f25b31db88c441649b59a4c2bab7
   Yoga: 56f906bf6c11c931588191dde1229fd3e4e3d557
 
 PODFILE CHECKSUM: 78d9aa07324578c0792a36501e7b3a542f4695c4

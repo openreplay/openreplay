@@ -67,7 +67,7 @@ def make_pool():
         postgreSQL_pool = ORThreadedConnectionPool(config("PG_MINCONN", cast=int, default=4),
                                                    config("PG_MAXCONN", cast=int, default=8),
                                                    **PG_CONFIG)
-        if (postgreSQL_pool):
+        if postgreSQL_pool is not None:
             logger.info("Connection pool created successfully")
     except (Exception, psycopg2.DatabaseError) as error:
         logger.error("Error while connecting to PostgreSQL", error)

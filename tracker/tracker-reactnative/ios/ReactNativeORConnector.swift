@@ -18,6 +18,7 @@ public class ORTrackerConnector: NSObject {
           performances: optionsDict["performances"] as? Bool ?? true,
           logs: optionsDict["logs"] as? Bool ?? true,
           screen: optionsDict["screen"] as? Bool ?? true,
+          screenshotBatchSize: .normal,
           wifiOnly: optionsDict["wifiOnly"] as? Bool ?? true,
           debugLogs: optionsDict["debugLogs"] as? Bool ?? false,
           debugImages: false

@@ -36,6 +36,10 @@ class ORRoute(APIRoute):
                 # 422 validation exception
                 logger.warning(f"!!! 422 exception when calling: {request.method} {request.url}")
                 logger.warning(exc.errors())
+                for e in exc.errors():
+                    if e.get("msg", "").endswith("must be alphanumeric"):
+                        return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                            content={"errors": [e["msg"][18:]], "detail": str(exc)})
                 raise exc
             except HTTPException as e:
                 if e.status_code // 100 == 4:

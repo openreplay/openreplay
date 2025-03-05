@@ -18,9 +18,6 @@ import {
     HEATMAP,
     FUNNEL,
     ERRORS,
-    PERFORMANCE,
-    RESOURCE_MONITORING,
-    WEB_VITALS,
     INSIGHTS,
     USER_PATH,
     RETENTION
@@ -33,7 +30,7 @@ import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/
 import SankeyChart from 'Shared/Insights/SankeyChart';
 import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
 import SessionsBy from "Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy";
-import { Empty } from 'antd';
+import { useInView } from "react-intersection-observer";
 
 interface Props {
     metric: any;
@@ -43,6 +40,10 @@ interface Props {
 }
 
 function WidgetChart(props: Props) {
+    const { ref, inView } = useInView({
+        triggerOnce: true,
+        rootMargin: "200px 0px",
+    });
     const {isSaved = false, metric, isTemplate} = props;
     const {dashboardStore, metricStore, sessionStore} = useStore();
     const _metric: any = metricStore.instance;
@@ -51,8 +52,7 @@ function WidgetChart(props: Props) {
     const drillDownFilter = dashboardStore.drillDownFilter;
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(true);
-    const isOverviewWidget = metric.metricType === WEB_VITALS;
-    const params = {density: isOverviewWidget ? 7 : 70};
+    const params = {density: 70};
     const metricParams = {...params};
     const prevMetricRef = useRef<any>();
     const isMounted = useIsMounted();
@@ -105,6 +105,7 @@ function WidgetChart(props: Props) {
 
     const debounceRequest: any = React.useCallback(debounce(fetchMetricChartData, 500), []);
     const loadPage = () => {
+        if (!inView) return;
         if (prevMetricRef.current && prevMetricRef.current.name !== metric.name) {
             prevMetricRef.current = metric;
             return;
@@ -117,7 +118,18 @@ function WidgetChart(props: Props) {
     useEffect(() => {
         _metric.updateKey('page', 1);
         loadPage();
-    }, [drillDownPeriod, period, depsString, metric.metricType, metric.metricOf, metric.viewType, metric.metricValue, metric.startType, metric.metricFormat]);
+    }, [
+      drillDownPeriod,
+      period,
+      depsString,
+      metric.metricType,
+      metric.metricOf,
+      metric.viewType,
+      metric.metricValue,
+      metric.startType,
+      metric.metricFormat,
+      inView,
+    ]);
     useEffect(loadPage, [_metric.page]);
 
 
@@ -129,11 +141,8 @@ function WidgetChart(props: Props) {
             return <FunnelWidget metric={metric} data={data} isWidget={isSaved || isTemplate}/>;
         }
 
-        if (metricType === 'predefined' || metricType === ERRORS || metricType === PERFORMANCE || metricType === RESOURCE_MONITORING || metricType === WEB_VITALS) {
+        if (metricType === 'predefined' || metricType === ERRORS) {
             const defaultMetric = metric.data.chart && metric.data.chart.length === 0 ? metricWithData : metric;
-            if (isOverviewWidget) {
-                return <CustomMetricOverviewChart data={data}/>;
-            }
             return <WidgetPredefinedChart isTemplate={isTemplate} metric={defaultMetric} data={data}
                                           predefinedKey={metric.metricOf}/>;
         }
@@ -254,9 +263,11 @@ function WidgetChart(props: Props) {
         return <div>Unknown metric type</div>;
     };
     return (
+      <div ref={ref}>
         <Loader loading={loading} style={{height: `240px`}}>
             <div style={{minHeight: 240}}>{renderChart()}</div>
         </Loader>
+      </div>
     );
 }
 

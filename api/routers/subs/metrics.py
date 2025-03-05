@@ -1,9 +1,8 @@
 from typing import Union
 
-from fastapi import Body, Depends, Request
-
 import schemas
-from chalicelib.core import dashboards, custom_metrics, funnels
+from chalicelib.core import dashboards, custom_metrics
+from fastapi import Body, Depends
 from or_dependencies import OR_context
 from routers.base import get_routers
 
@@ -60,7 +59,7 @@ def add_card_to_dashboard(projectId: int, dashboardId: int,
 def create_metric_and_add_to_dashboard(projectId: int, dashboardId: int,
                                        data: schemas.CardSchema = Body(...),
                                        context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": dashboards.create_metric_add_widget(project_id=projectId, user_id=context.user_id,
+    return {"data": dashboards.create_metric_add_widget(project=context.project, user_id=context.user_id,
                                                         dashboard_id=dashboardId, data=data)}
 
 
@@ -82,7 +81,7 @@ def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetId: int
 @app.post('/{projectId}/cards/try', tags=["cards"])
 def try_card(projectId: int, data: schemas.CardSchema = Body(...),
              context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.get_chart(project_id=projectId, data=data, user_id=context.user_id)}
+    return {"data": custom_metrics.get_chart(project=context.project, data=data, user_id=context.user_id)}
 
 
 @app.post('/{projectId}/cards/try/sessions', tags=["cards"])
@@ -95,7 +94,7 @@ def try_card_sessions(projectId: int, data: schemas.CardSessionsSchema = Body(..
 @app.post('/{projectId}/cards/try/issues', tags=["cards"])
 def try_card_issues(projectId: int, data: schemas.CardSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.get_issues(project_id=projectId, user_id=context.user_id, data=data)}
+    return {"data": custom_metrics.get_issues(project=context.project, user_id=context.user_id, data=data)}
 
 
 @app.get('/{projectId}/cards', tags=["cards"])
@@ -106,7 +105,7 @@ def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR_conte
 @app.post('/{projectId}/cards', tags=["cards"])
 def create_card(projectId: int, data: schemas.CardSchema = Body(...),
                 context: schemas.CurrentContext = Depends(OR_context)):
-    return custom_metrics.create_card(project_id=projectId, user_id=context.user_id, data=data)
+    return custom_metrics.create_card(project=context.project, user_id=context.user_id, data=data)
 
 
 @app.post('/{projectId}/cards/search', tags=["cards"])
@@ -138,22 +137,6 @@ def get_card_sessions(projectId: int, metric_id: int,
     return {"data": data}
 
 
-@app.post('/{projectId}/cards/{metric_id}/issues', tags=["cards"])
-def get_card_funnel_issues(projectId: int, metric_id: Union[int, str],
-                           data: schemas.CardSessionsSchema = Body(...),
-                           context: schemas.CurrentContext = Depends(OR_context)):
-    if metric_id.isnumeric():
-        metric_id = int(metric_id)
-    else:
-        return {"errors": ["invalid card_id"]}
-
-    data = custom_metrics.get_funnel_issues(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
-                                            data=data)
-    if data is None:
-        return {"errors": ["custom metric not found"]}
-    return {"data": data}
-
-
 @app.post('/{projectId}/cards/{metric_id}/issues/{issueId}/sessions', tags=["dashboard"])
 def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issueId: str,
                                      data: schemas.CardSessionsSchema = Body(...),
@@ -165,21 +148,10 @@ def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issueId: st
     return {"data": data}
 
 
-@app.post('/{projectId}/cards/{metric_id}/errors', tags=["dashboard"])
-def get_card_errors_list(projectId: int, metric_id: int,
-                         data: schemas.CardSessionsSchema = Body(...),
-                         context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.get_errors_list(project_id=projectId, user_id=context.user_id,
-                                          metric_id=metric_id, data=data)
-    if data is None:
-        return {"errors": ["custom metric not found"]}
-    return {"data": data}
-
-
 @app.post('/{projectId}/cards/{metric_id}/chart', tags=["card"])
-def get_card_chart(projectId: int, metric_id: int, request: Request, data: schemas.CardSessionsSchema = Body(...),
+def get_card_chart(projectId: int, metric_id: int, data: schemas.CardSessionsSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.make_chart_from_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+    data = custom_metrics.make_chart_from_card(project=context.project, user_id=context.user_id, metric_id=metric_id,
                                                data=data)
     return {"data": data}
 

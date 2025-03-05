@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { Form, SegmentSelection } from 'UI';
-import { connect } from 'react-redux';
 import { validateEmail } from 'App/validate';
 import { confirm } from 'UI';
 import { toast } from 'react-toastify';

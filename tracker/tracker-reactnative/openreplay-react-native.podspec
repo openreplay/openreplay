@@ -38,7 +38,7 @@ Pod::Spec.new do |s|
     s.dependency "RCTRequired"
     s.dependency "RCTTypeSafety"
     s.dependency "ReactCommon/turbomodule/core"
-    s.dependency "Openreplay", '1.0.11'
+    s.dependency "Openreplay", '1.0.13'
    end
   end
 end

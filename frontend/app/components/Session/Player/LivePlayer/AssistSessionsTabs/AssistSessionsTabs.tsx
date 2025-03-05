@@ -5,7 +5,6 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { useHistory } from 'react-router-dom';
 import { multiview, liveSession, withSiteId } from 'App/routes';
-import { connect } from 'react-redux';
 import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
 
 interface ITab {
@@ -44,13 +43,14 @@ const CurrentTab = React.memo(() => (
   </Tab>
 ));
 
-function AssistTabs({ session, siteId }: { session: Record<string, any>; siteId: string }) {
+function AssistTabs({ session }: { session: Record<string, any> }) {
   const history = useHistory();
   const { store } = React.useContext(PlayerContext) as unknown as ILivePlayerContext
   const { recordingState, calling, remoteControl } = store.get()
   const isDisabled = recordingState !== 0 || calling !== 0 || remoteControl !== 0
 
-  const { assistMultiviewStore } = useStore();
+  const { assistMultiviewStore, projectsStore } = useStore();
+  const siteId = projectsStore.siteId!;
 
   const placeholder = new Array(4 - assistMultiviewStore.sessions.length).fill(0);
 
@@ -91,6 +91,4 @@ function AssistTabs({ session, siteId }: { session: Record<string, any>; siteId:
   );
 }
 
-export default connect((state: any) => ({ siteId: state.getIn(['site', 'siteId']) }))(
-  observer(AssistTabs)
-);
+export default observer(AssistTabs);

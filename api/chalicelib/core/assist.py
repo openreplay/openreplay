@@ -12,20 +12,6 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 ASSIST_KEY = config("ASSIST_KEY")
 ASSIST_URL = config("ASSIST_URL") % ASSIST_KEY
-SESSION_PROJECTION_COLS = """s.project_id,
-                           s.session_id::text AS session_id,
-                           s.user_uuid,
-                           s.user_id,
-                           s.user_agent,
-                           s.user_os,
-                           s.user_browser,
-                           s.user_device,
-                           s.user_device_type,
-                           s.user_country,
-                           s.start_ts,
-                           s.user_anonymous_id,
-                           s.platform
-                           """
 
 
 def get_live_sessions_ws_user_id(project_id, user_id):
@@ -194,11 +180,6 @@ def autocomplete(project_id, q: str, key: str = None):
     for r in results:
         r["type"] = __change_keys(r["type"])
     return {"data": results}
-
-
-def get_ice_servers():
-    return config("iceServers") if config("iceServers", default=None) is not None \
-                                   and len(config("iceServers")) > 0 else None
 
 
 def __get_efs_path():

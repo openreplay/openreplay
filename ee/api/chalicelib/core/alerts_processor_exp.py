@@ -52,49 +52,6 @@ LeftToDb = {
         "formula": "AVG(NULLIF(visually_complete,0))",
         "eventType": "LOCATION"
     },
-    schemas.AlertColumn.PERFORMANCE__IMAGE_LOAD_TIME__AVERAGE: {
-        "table": lambda timestamp: f"{exp_ch_helper.get_main_resources_table(timestamp)} AS resources",
-        "formula": "AVG(NULLIF(resources.duration,0))",
-        "condition": "type='img'"
-    },
-    schemas.AlertColumn.PERFORMANCE__REQUEST_LOAD_TIME__AVERAGE: {
-        "table": lambda timestamp: f"{exp_ch_helper.get_main_resources_table(timestamp)} AS resources",
-        "formula": "AVG(NULLIF(resources.duration,0))",
-        "condition": "type='fetch'"
-    },
-    schemas.AlertColumn.RESOURCES__LOAD_TIME__AVERAGE: {
-        "table": lambda timestamp: f"{exp_ch_helper.get_main_resources_table(timestamp)} AS resources",
-        "formula": "AVG(NULLIF(resources.duration,0))"
-    },
-    schemas.AlertColumn.RESOURCES__MISSING__COUNT: {
-        "table": lambda timestamp: f"{exp_ch_helper.get_main_resources_table(timestamp)} AS resources",
-        "formula": "COUNT(DISTINCT url_hostpath)",
-        "condition": "success= FALSE AND type='img'"
-    },
-    schemas.AlertColumn.ERRORS__4XX_5XX__COUNT: {
-        "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS requests",
-        "eventType": "REQUEST",
-        "formula": "COUNT(1)",
-        "condition": "intDiv(requests.status, 100)!=2"
-    },
-    schemas.AlertColumn.ERRORS__4XX__COUNT: {
-        "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS requests",
-        "eventType": "REQUEST",
-        "formula": "COUNT(1)",
-        "condition": "intDiv(requests.status, 100)==4"
-    },
-    schemas.AlertColumn.ERRORS__5XX__COUNT: {
-        "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS requests",
-        "eventType": "REQUEST",
-        "formula": "COUNT(1)",
-        "condition": "intDiv(requests.status, 100)==5"
-    },
-    schemas.AlertColumn.ERRORS__JAVASCRIPT__IMPACTED_SESSIONS__COUNT: {
-        "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS errors",
-        "eventType": "ERROR",
-        "formula": "COUNT(DISTINCT session_id)",
-        "condition": "source='js_exception'"
-    },
     schemas.AlertColumn.PERFORMANCE__CRASHES__COUNT: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_sessions_table(timestamp)} AS sessions",
         "formula": "COUNT(DISTINCT session_id)",

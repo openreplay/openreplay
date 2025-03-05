@@ -1,11 +1,9 @@
 import React, { useEffect } from 'react';
 import { convertElementToImage } from 'App/utils';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
 import { fileNameFormat } from 'App/utils';
 import { toast } from 'react-toastify';
-import { forceVisible } from 'react-lazyload';
 
 const TEXT_GENERATING = 'Generating report...';
 const TEXT_SUCCESS = 'Report successfully generated';
@@ -15,17 +13,17 @@ interface Props {
 export default function withReport<P extends Props>(WrappedComponent: React.ComponentType<P>) {
   const ComponentWithReport = (props: P) => {
     const [rendering, setRendering] = React.useState(false);
-    const { site } = props;
-    const { dashboardStore } = useStore();
-    const dashboard: any = useObserver(() => dashboardStore.selectedDashboard);
-    const period = useObserver(() => dashboardStore.period);
-    const pendingRequests = useObserver(() => dashboardStore.pendingRequests);
+    const { dashboardStore, projectsStore } = useStore();
+    const site = projectsStore.instance;
+    const dashboard: any = dashboardStore.selectedDashboard;
+    const period = dashboardStore.period;
+    // const pendingRequests = dashboardStore.pendingRequests;
 
-    useEffect(() => {
-      if (rendering && pendingRequests <= 0) {
-        processReport();
-      }
-    }, [pendingRequests]);
+    // useEffect(() => {
+    //   if (rendering && pendingRequests <= 0) {
+    //     processReport();
+    //   }
+    // }, [pendingRequests]);
 
     const addFooters = (doc: any) => {
       const pageCount = doc.internal.getNumberOfPages();
@@ -39,8 +37,8 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
     };
 
     const renderPromise = async (): Promise<any> => {
-      forceVisible();
       setRendering(true);
+      processReport();
       toast.info(TEXT_GENERATING, {
         autoClose: false,
         isLoading: true,
@@ -156,9 +154,9 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
             <div className="text-2xl font-semibold">{dashboard && dashboard.name}</div>
             <div className="font-semibold">
               {period &&
-                period.range.start.toFormat('MMM Do YY') +
+                period.range.start.toFormat('MMM D') +
                   ' - ' +
-                  period.range.end.toFormat('MMM Do YY')}
+                  period.range.end.toFormat('MMM D')}
             </div>
           </div>
           {dashboard && dashboard.description && (
@@ -181,7 +179,5 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
     );
   };
 
-  return connect((state: any) => ({
-    site: state.getIn(['site', 'instance']),
-  }))(ComponentWithReport);
+  return observer(ComponentWithReport);
 }

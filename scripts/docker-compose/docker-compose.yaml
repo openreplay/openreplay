@@ -15,7 +15,7 @@ services:
     image: bitnami/redis:${REDIS_VERSION}
     container_name: redis
     volumes:
-      - redisdata:/var/lib/postgresql/data
+      - redisdata:/bitnami/redis/data
     networks:
       - openreplay-net
     environment:

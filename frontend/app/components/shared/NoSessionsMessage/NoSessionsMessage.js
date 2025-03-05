@@ -1,23 +1,19 @@
 import React from 'react';
 import { Alert, Space, Button } from 'antd';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite'
+import { useStore } from "App/mstore";
 import { onboarding as onboardingRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 import * as routes from '../../../routes';
-import { indigo } from 'tailwindcss/colors';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import { useHistory } from 'react-router';
 
-
 const withSiteId = routes.withSiteId;
-const indigoWithOpacity = `rgba(${parseInt(indigo[500].slice(1, 3), 16)}, ${parseInt(indigo[500].slice(3, 5), 16)}, ${parseInt(indigo[500].slice(5, 7), 16)}, 0.1)`; // 0.5 is the opacity level
 
-
-const NoSessionsMessage = (props) => {
-  const {
-    sites,
-    siteId
-  } = props;
+const NoSessionsMessage = () => {
+  const { projectsStore } = useStore();
+  const sites = projectsStore.list;
+  const siteId = projectsStore.siteId;
   const history = useHistory();
   const activeSite = sites.find((s) => s.id === siteId);
   const showNoSessions = !!activeSite && !activeSite.recorded;
@@ -60,7 +56,4 @@ const NoSessionsMessage = (props) => {
   );
 };
 
-export default connect((state) => ({
-  site: state.getIn(['site', 'siteId']),
-  sites: state.getIn(['site', 'list'])
-}))(withRouter(NoSessionsMessage));
+export default withRouter(observer(NoSessionsMessage));

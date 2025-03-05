@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { List } from 'immutable';
 import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
@@ -14,9 +13,11 @@ import UserSessionsModal from 'Shared/UserSessionsModal';
 import { IFRAME } from 'App/constants/storageKeys';
 import { capitalize } from "App/utils";
 import { Popover } from 'antd'
+import { observer } from 'mobx-react-lite';
 
-function UserCard({ className, request, session, width, height, similarSessions, loading }) {
-    const { settingsStore } = useStore();
+function UserCard({ className, width, height }) {
+    const { settingsStore, sessionStore } = useStore();
+    const session = sessionStore.current;
     const { timezone } = settingsStore.sessionSettings;
     const [showMore, setShowMore] = React.useState(false)
 
@@ -155,7 +156,7 @@ function UserCard({ className, request, session, width, height, similarSessions,
     );
 }
 
-const component = React.memo(connect((state) => ({ session: state.getIn(['sessions', 'current']) }))(UserCard));
+const component = observer(UserCard);
 
 export default withRequest({
     initialData: List(),

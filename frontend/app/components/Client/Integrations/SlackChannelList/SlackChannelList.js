@@ -1,14 +1,16 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { NoContent } from 'UI';
-import { remove, edit, init } from 'Duck/integrations/slack';
 import DocLink from 'Shared/DocLink/DocLink';
+import { observer } from 'mobx-react-lite'
+import { useStore } from 'App/mstore'
 
 function SlackChannelList(props) {
-    const { list } = props;
+    const { integrationsStore } = useStore();
+    const list = integrationsStore.slack.list;
+    const edit = integrationsStore.slack.edit;
 
     const onEdit = (instance) => {
-        props.edit(instance);
+        edit(instance.toData());
         props.onEdit();
     };
 
@@ -24,7 +26,7 @@ function SlackChannelList(props) {
                     </div>
                 }
                 size="small"
-                show={list.size === 0}
+                show={list.length === 0}
             >
                 {list.map((c) => (
                     <div
@@ -43,9 +45,4 @@ function SlackChannelList(props) {
     );
 }
 
-export default connect(
-    (state) => ({
-        list: state.getIn(['slack', 'list']),
-    }),
-    { remove, edit, init }
-)(SlackChannelList);
+export default observer(SlackChannelList);

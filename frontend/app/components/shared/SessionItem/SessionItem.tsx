@@ -2,11 +2,9 @@ import cn from 'classnames';
 import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import { durationFormatted, formatTimeOrDate } from 'App/date';
-import { presetSession } from 'App/duck/sessions';
 import { useStore } from 'App/mstore';
 import {
   assist as assistRoute,
@@ -79,7 +77,6 @@ interface Props {
   bookmarked?: boolean;
   toggleFavorite?: (sessionId: string) => void;
   query?: string;
-  presetSession?: typeof presetSession;
 }
 
 const PREFETCH_STATE = {
@@ -105,7 +102,6 @@ function SessionItem(props: RouteComponentProps & Props) {
     ignoreAssist = false,
     bookmarked = false,
     query,
-    presetSession,
   } = props;
 
   const {
@@ -148,7 +144,6 @@ function SessionItem(props: RouteComponentProps & Props) {
   const isLastPlayed = lastPlayedSessionId === sessionId;
 
   const _metaList = Object.keys(metadata)
-    .filter((i) => metaList.includes(i))
     .map((key) => {
       const value = metadata[key];
       return { label: key, value };
@@ -176,8 +171,11 @@ function SessionItem(props: RouteComponentProps & Props) {
       || isAssist
       || prefetchState === PREFETCH_STATE.none
       || isMobile
-    ) return
-    presetSession?.(session);
+    ) {
+      return;
+    }
+
+    sessionStore.prefetchSession(session);
   };
   return (
     <Tooltip
@@ -417,4 +415,4 @@ function SessionItem(props: RouteComponentProps & Props) {
   );
 }
 
-export default withRouter(connect(null, { presetSession })(observer(SessionItem)));
+export default withRouter(observer(SessionItem));

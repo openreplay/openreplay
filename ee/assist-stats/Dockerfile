@@ -8,12 +8,14 @@ ARG envarg
 # Add Tini
 # Startup daemon
 ENV APP_NAME=assist-stats \
-    ENTERPRISE_BUILD=${envarg} \
-    GIT_SHA=$GIT_SHA
+  ENTERPRISE_BUILD=${envarg} \
+  GIT_SHA=$GIT_SHA
 
 WORKDIR /work
 COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN pip install --no-cache-dir --upgrade uv
+RUN uv pip install --no-cache-dir --upgrade pip setuptools wheel --system
+RUN uv pip install --no-cache-dir --upgrade -r requirements.txt --system
 
 COPY . .
 RUN mv env.default .env

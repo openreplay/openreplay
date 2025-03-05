@@ -75,11 +75,6 @@ func (conn *Conn) InsertIssueEvent(sess *sessions.Session, e *messages.IssueEven
 		payload = nil
 	}
 
-	if e.Type == "app_crash" {
-		conn.log.Warn(ctx, "app crash event: %+v", e)
-		return nil
-	}
-
 	if err := conn.bulks.Get("webIssues").Append(sess.ProjectID, issueID, e.Type, e.ContextString); err != nil {
 		conn.log.Error(ctx, "insert web issue err: %s", err)
 	}
@@ -116,7 +111,8 @@ func (conn *Conn) InsertWebPageEvent(sess *sessions.Session, e *messages.PageEve
 	// base_path is deprecated
 	if err = conn.bulks.Get("webPageEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer),
 		host, path, query, e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
-		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
+		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e),
+		e.WebVitals); err != nil {
 		sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
 		conn.log.Error(sessCtx, "insert web page event in bulk err: %s", err)
 	}
@@ -276,38 +272,6 @@ func (conn *Conn) InsertWebStatsPerformance(p *messages.PerformanceTrackAggr) er
 		p.MinCPU, p.AvgCPU, p.MinCPU,
 		p.MinTotalJSHeapSize, p.AvgTotalJSHeapSize, p.MaxTotalJSHeapSize,
 		p.MinUsedJSHeapSize, p.AvgUsedJSHeapSize, p.MaxUsedJSHeapSize,
-	)
-	return nil
-}
-
-func (conn *Conn) InsertWebStatsResourceEvent(e *messages.ResourceTiming) error {
-	sessionID := e.SessionID()
-	host, _, _, err := url.GetURLParts(e.URL)
-	if err != nil {
-		return err
-	}
-	msgType := url.GetResourceType(e.Initiator, e.URL)
-	sqlRequest := `
-		INSERT INTO events.resources (
-			session_id, timestamp, message_id, 
-			type,
-			url, url_host, url_hostpath,
-			success, status, 
-			duration, ttfb, header_size, encoded_body_size, decoded_body_size
-		) VALUES (
-			$1, $2, $3, 
-			$4, 
-			LEFT($5, 8000), LEFT($6, 300), LEFT($7, 2000), 
-			$8, $9, 
-			NULLIF($10, 0), NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), NULLIF($14, 0)
-		)`
-	urlQuery := url.DiscardURLQuery(e.URL)
-	conn.BatchQueue(sessionID, sqlRequest,
-		sessionID, e.Timestamp, truncSqIdx(e.MsgID()),
-		msgType,
-		e.URL, host, urlQuery,
-		e.Duration != 0, 0,
-		e.Duration, e.TTFB, e.HeaderSize, e.EncodedBodySize, e.DecodedBodySize,
 	)
 	return nil
 }

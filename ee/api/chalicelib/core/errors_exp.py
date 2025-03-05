@@ -3,7 +3,7 @@ from decouple import config
 import schemas
 from chalicelib.core import errors_legacy
 from chalicelib.core import metrics, metadata
-from chalicelib.core import sourcemaps, sessions
+from chalicelib.core import sessions
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -106,30 +106,6 @@ def __flatten_sort_key_count(data):
     ]
 
 
-def __rearrange_chart_details(start_at, end_at, density, chart):
-    chart = list(chart)
-    for i in range(len(chart)):
-        chart[i] = {"timestamp": chart[i][0], "count": chart[i][1]}
-    chart = metrics.__complete_missing_steps(rows=chart, start_time=start_at, end_time=end_at, density=density,
-                                             neutral={"count": 0})
-    return chart
-
-
-def __process_tags(row):
-    return [
-        {"name": "browser", "partitions": __flatten_sort_key_count_version(data=row.get("browsers_partition"))},
-        {"name": "browser.ver",
-         "partitions": __flatten_sort_key_count_version(data=row.pop("browsers_partition"), merge_nested=True)},
-        {"name": "OS", "partitions": __flatten_sort_key_count_version(data=row.get("os_partition"))},
-        {"name": "OS.ver",
-         "partitions": __flatten_sort_key_count_version(data=row.pop("os_partition"), merge_nested=True)},
-        {"name": "device.family", "partitions": __flatten_sort_key_count_version(data=row.get("device_partition"))},
-        {"name": "device",
-         "partitions": __flatten_sort_key_count_version(data=row.pop("device_partition"), merge_nested=True)},
-        {"name": "country", "partitions": __flatten_sort_key_count(data=row.pop("country_partition"))}
-    ]
-
-
 def __process_tags_map(row):
     browsers_partition = row.pop("browsers_partition")
     os_partition = row.pop("os_partition")
@@ -181,35 +157,23 @@ def get_details(project_id, error_id, user_id, **data):
     MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(0)
     MAIN_ERR_SESS_TABLE = exp_ch_helper.get_main_js_errors_sessions_table(0)
     MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(0)
-    MAIN_EVENTS_TABLE_24 = exp_ch_helper.get_main_events_table(TimeUTC.now())
 
     ch_sub_query24 = __get_basic_constraints(startTime_arg_name="startDate24", endTime_arg_name="endDate24")
     ch_sub_query24.append("error_id = %(error_id)s")
-    # pg_sub_query30_err = __get_basic_constraints(time_constraint=True, startTime_arg_name="startDate30",
-    #                                              endTime_arg_name="endDate30", project_key="errors.project_id",
-    #                                              table_name="errors")
-    # pg_sub_query30_err.append("sessions.project_id = toUInt16(%(project_id)s)")
-    # pg_sub_query30_err.append("sessions.datetime >= toDateTime(%(startDate30)s/1000)")
-    # pg_sub_query30_err.append("sessions.datetime <= toDateTime(%(endDate30)s/1000)")
-    # pg_sub_query30_err.append("error_id = %(error_id)s")
-    # pg_sub_query30_err.append("source ='js_exception'")
+
     ch_sub_query30 = __get_basic_constraints(startTime_arg_name="startDate30", endTime_arg_name="endDate30",
                                              project_key="errors.project_id")
     ch_sub_query30.append("error_id = %(error_id)s")
     ch_basic_query = __get_basic_constraints(time_constraint=False)
     ch_basic_query.append("error_id = %(error_id)s")
-    # ch_basic_query_session = ch_basic_query[:]
-    # ch_basic_query_session.append("sessions.project_id = toUInt16(%(project_id)s)")
+
+
     with ch_client.ClickHouseClient() as ch:
         data["startDate24"] = TimeUTC.now(-1)
         data["endDate24"] = TimeUTC.now()
         data["startDate30"] = TimeUTC.now(-30)
         data["endDate30"] = TimeUTC.now()
-        # # TODO: remove time limits
-        # data["startDate24"] = 1650470729000 - 24 * 60 * 60 * 1000
-        # data["endDate24"] = 1650470729000
-        # data["startDate30"] = 1650470729000 - 30 * 60 * 60 * 1000
-        # data["endDate30"] = 1650470729000
+
         density24 = int(data.get("density24", 24))
         step_size24 = __get_step_size(data["startDate24"], data["endDate24"], density24)
         density30 = int(data.get("density30", 30))
@@ -353,139 +317,17 @@ def get_details(project_id, error_id, user_id, **data):
 
     if status is not None:
         status = status[0]
-        # row["stack"] = format_first_stack_frame(status).pop("stack")
-        # row["status"] = status.pop("status")
-        # row["parent_error_id"] = status.pop("parent_error_id")
         row["favorite"] = status.pop("favorite")
         row["viewed"] = status.pop("viewed")
         row["last_hydrated_session"] = status
     else:
-        # row["stack"] = []
         row["last_hydrated_session"] = None
-        # row["status"] = "untracked"
-        # row["parent_error_id"] = None
         row["favorite"] = False
         row["viewed"] = False
     row["chart24"] = metrics.__complete_missing_steps(start_time=data["startDate24"], end_time=data["endDate24"],
                                                       density=density24, rows=row["chart24"], neutral={"count": 0})
     row["chart30"] = metrics.__complete_missing_steps(start_time=data["startDate30"], end_time=data["endDate30"],
                                                       density=density30, rows=row["chart30"], neutral={"count": 0})
-    return {"data": helper.dict_to_camel_case(row)}
-
-
-def get_details_chart(project_id, error_id, user_id, **data):
-    ch_sub_query = __get_basic_constraints()
-    ch_sub_query.append("error_id = %(error_id)s")
-    with ch_client.ClickHouseClient() as ch:
-        if data.get("startDate") is None:
-            data["startDate"] = TimeUTC.now(-7)
-        else:
-            data["startDate"] = int(data["startDate"])
-        if data.get("endDate") is None:
-            data["endDate"] = TimeUTC.now()
-        else:
-            data["endDate"] = int(data["endDate"])
-        density = int(data.get("density", 7))
-        step_size = __get_step_size(data["startDate"], data["endDate"], density)
-        params = {
-            "startDate": data['startDate'],
-            "endDate": data['endDate'],
-            "project_id": project_id,
-            "userId": user_id,
-            "step_size": step_size,
-            "error_id": error_id}
-
-        main_ch_query = f"""\
-        SELECT browser_details.error_id AS error_id,
-               browsers_partition,
-               os_partition,
-               device_partition,
-               country_partition,
-               chart
-        FROM (SELECT %(error_id)s                                             AS error_id,
-                     groupArray([[[user_browser]], [[toString(count_per_browser)]],versions_partition]) AS browsers_partition
-              FROM (SELECT user_browser,
-                           COUNT(session_id) AS count_per_browser
-                    FROM errors
-                    WHERE {" AND ".join(ch_sub_query)}
-                    GROUP BY user_browser
-                    ORDER BY count_per_browser DESC) AS count_per_browser_query
-                       INNER JOIN (SELECT user_browser,
-                                          groupArray([user_browser_version, toString(count_per_version)]) AS versions_partition
-                                   FROM (SELECT user_browser,
-                                                user_browser_version,
-                                                COUNT(session_id) AS count_per_version
-                                         FROM errors
-                                         WHERE {" AND ".join(ch_sub_query)}
-                                         GROUP BY user_browser, user_browser_version
-                                         ORDER BY count_per_version DESC) AS count_per_version_details
-                                   GROUP BY user_browser ) AS browesr_version_details USING (user_browser)) AS browser_details
-                 INNER JOIN (SELECT %(error_id)s                                   AS error_id,
-                                    groupArray(
-                                            [[[user_os]], [[toString(count_per_os)]],versions_partition]) AS os_partition
-                             FROM (SELECT user_os,
-                                          COUNT(session_id) AS count_per_os
-                                   FROM errors
-                                   WHERE {" AND ".join(ch_sub_query)}
-                                   GROUP BY user_os
-                                   ORDER BY count_per_os DESC) AS count_per_os_details
-                                      INNER JOIN (SELECT user_os,
-                                                         groupArray([user_os_version, toString(count_per_version)]) AS versions_partition
-                                                  FROM (SELECT user_os, user_os_version, COUNT(session_id) AS count_per_version
-                                                        FROM errors
-                                                        WHERE {" AND ".join(ch_sub_query)}
-                                                        GROUP BY user_os, user_os_version
-                                                        ORDER BY count_per_version DESC) AS count_per_version_query
-                                                  GROUP BY user_os ) AS os_version_query USING (user_os)) AS os_details
-                            ON os_details.error_id = browser_details.error_id
-                 INNER JOIN (SELECT %(error_id)s                                                          AS error_id,
-                                    groupArray(
-                                            [[[toString(user_device_type)]], [[toString(count_per_device)]],versions_partition]) AS device_partition
-                             FROM (SELECT user_device_type,
-                                          COUNT(session_id) AS count_per_device
-                                   FROM errors
-                                   WHERE {" AND ".join(ch_sub_query)}
-                                   GROUP BY user_device_type
-                                   ORDER BY count_per_device DESC) AS count_per_device_details
-                                      INNER JOIN (SELECT user_device_type,
-                                                         groupArray([user_device, toString(count_per_device)]) AS versions_partition
-                                                  FROM (SELECT user_device_type,
-                                                               coalesce(user_device,'unknown') AS user_device,
-                                                               COUNT(session_id) AS count_per_device
-                                                        FROM errors
-                                                        WHERE {" AND ".join(ch_sub_query)}
-                                                        GROUP BY user_device_type, user_device
-                                                        ORDER BY count_per_device DESC) AS count_per_device_details
-                                                  GROUP BY user_device_type ) AS device_version_details USING (user_device_type)) AS device_details
-                            ON device_details.error_id = os_details.error_id
-                 INNER JOIN (SELECT %(error_id)s                                    AS error_id,
-                                    groupArray(
-                                            [[[toString(user_country)]], [[toString(count_per_country)]]]) AS country_partition
-                             FROM (SELECT user_country,
-                                          COUNT(session_id) AS count_per_country
-                                   FROM errors
-                                   WHERE {" AND ".join(ch_sub_query)}
-                                   GROUP BY user_country
-                                   ORDER BY count_per_country DESC) AS count_per_country_details) AS country_details
-                            ON country_details.error_id = device_details.error_id
-                 INNER JOIN (SELECT %(error_id)s AS error_id, groupArray([timestamp, count]) AS chart
-                             FROM (SELECT toUnixTimestamp(toStartOfInterval(datetime, INTERVAL %(step_size)s second)) * 1000                       AS timestamp,
-                                          COUNT(DISTINCT session_id) AS count
-                                   FROM errors
-                                   WHERE {" AND ".join(ch_sub_query)}
-                                   GROUP BY timestamp
-                                   ORDER BY timestamp) AS chart_details) AS chart_details
-                            ON country_details.error_id = chart_details.error_id;"""
-
-        # print("--------------------")
-        # print(main_ch_query % params)
-        row = ch.execute(query=main_ch_query, params=params)
-    if len(row) == 0:
-        return {"errors": ["error not found"]}
-    row = row[0]
-    row["tags"] = __process_tags(row)
-    row["chart"] = __rearrange_chart_details(start_at=data["startDate"], end_at=data["endDate"], density=density,
-                                             chart=row["chart"])
     return {"data": helper.dict_to_camel_case(row)}
 
 
@@ -519,26 +361,6 @@ def __get_sort_key(key):
         schemas.ErrorSort.USERS_COUNT: "users",
         schemas.ErrorSort.SESSIONS_COUNT: "sessions"
     }.get(key, 'max_datetime')
-
-
-def __get_basic_constraints_pg(platform=None, time_constraint=True, startTime_arg_name="startDate",
-                               endTime_arg_name="endDate", chart=False, step_size_name="step_size",
-                               project_key="project_id"):
-    if project_key is None:
-        ch_sub_query = []
-    else:
-        ch_sub_query = [f"{project_key} =%(project_id)s"]
-    if time_constraint:
-        ch_sub_query += [f"timestamp >= %({startTime_arg_name})s",
-                         f"timestamp < %({endTime_arg_name})s"]
-    if chart:
-        ch_sub_query += [f"timestamp >=  generated_timestamp",
-                         f"timestamp <  generated_timestamp + %({step_size_name})s"]
-    if platform == schemas.PlatformType.MOBILE:
-        ch_sub_query.append("user_device_type = 'mobile'")
-    elif platform == schemas.PlatformType.DESKTOP:
-        ch_sub_query.append("user_device_type = 'desktop'")
-    return ch_sub_query
 
 
 def search(data: schemas.SearchErrorsSchema, project_id, user_id):
@@ -848,10 +670,6 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
     }
 
 
-def __save_stacktrace(error_id, data):
-    errors_legacy.__save_stacktrace(error_id=error_id, data=data)
-
-
 def get_trace(project_id, error_id):
     return errors_legacy.get_trace(project_id=project_id, error_id=error_id)
 
@@ -907,43 +725,3 @@ def merge(error_ids):
         # row = cur.fetchone()
 
     return {"data": "success"}
-
-
-def format_first_stack_frame(error):
-    error["stack"] = sourcemaps.format_payload(error.pop("payload"), truncate_to_first=True)
-    for s in error["stack"]:
-        for c in s.get("context", []):
-            for sci, sc in enumerate(c):
-                if isinstance(sc, str) and len(sc) > 1000:
-                    c[sci] = sc[:1000]
-        # convert bytes to string:
-        if isinstance(s["filename"], bytes):
-            s["filename"] = s["filename"].decode("utf-8")
-    return error
-
-
-def stats(project_id, user_id, startTimestamp=TimeUTC.now(delta_days=-7), endTimestamp=TimeUTC.now()):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            """WITH user_viewed AS (SELECT error_id FROM public.user_viewed_errors WHERE user_id = %(userId)s)
-                SELECT COUNT(timed_errors.*) AS unresolved_and_unviewed
-                FROM (SELECT root_error.error_id
-                      FROM events.errors
-                               INNER JOIN public.errors AS root_error USING (error_id)
-                               LEFT JOIN user_viewed USING (error_id)
-                      WHERE project_id = %(project_id)s
-                        AND timestamp >= %(startTimestamp)s
-                        AND timestamp <= %(endTimestamp)s
-                        AND source = 'js_exception'
-                        AND root_error.status = 'unresolved'
-                        AND user_viewed.error_id ISNULL
-                      LIMIT 1
-                     ) AS timed_errors;""",
-            {"project_id": project_id, "userId": user_id, "startTimestamp": startTimestamp,
-             "endTimestamp": endTimestamp})
-        cur.execute(query=query)
-        row = cur.fetchone()
-
-    return {
-        "data": helper.dict_to_camel_case(row)
-    }

@@ -5,3 +5,4 @@ cjs
 build
 .cache
 coverage
+dist

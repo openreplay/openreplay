@@ -33,6 +33,7 @@ interface IEvent {
   label: string;
   targetPath: string;
   tabId?: string;
+  messageId?: number;
   target: {
     path: string;
     label: string;
@@ -80,6 +81,7 @@ export interface LocationEvent extends IEvent {
   referrer: string;
   firstContentfulPaintTime: number;
   firstPaintTime: number;
+  webVitals: string | null;
 }
 
 export type EventData = ConsoleEvent | ClickEvent | InputEvent | LocationEvent | IEvent;
@@ -90,6 +92,7 @@ class Event {
   label: IEvent['label'];
   target: IEvent['target'];
   tabId: IEvent['tabId'];
+  messageId: IEvent['messageId'];
 
   constructor(event: IEvent) {
     Object.assign(this, {
@@ -97,6 +100,7 @@ class Event {
       label: event.label,
       key: event.key,
       tabId: event.tabId,
+      messageId: event.messageId,
       target: {
         path: event.target?.path || event.targetPath,
         label: event.target?.label,
@@ -192,12 +196,19 @@ export class Location extends Event {
   visuallyComplete: LocationEvent['visuallyComplete'];
   timeToInteractive: LocationEvent['timeToInteractive'];
   referrer: LocationEvent['referrer'];
+  webvitals: {
+    cls?: number;
+    lcp?: number;
+    inp?: number;
+    ttfb?: number;
+  } | null;
 
   constructor(evt: LocationEvent) {
     super(evt);
     Object.assign(this, {
       ...evt,
       fcpTime: evt.firstContentfulPaintTime || evt.firstPaintTime,
+      webvitals: evt.webVitals ? JSON.parse(evt.webVitals) : null,
     });
   }
 }

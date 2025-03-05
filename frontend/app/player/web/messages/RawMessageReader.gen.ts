@@ -377,7 +377,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const key = this.readUint(); if (key === null) { return resetPointer() }
       const value = this.readString(); if (value === null) { return resetPointer() }
       return {
-        tp: MType.StringDict,
+        tp: MType.StringDictDeprecated,
         key,
         value,
       };
@@ -388,10 +388,32 @@ export default class RawMessageReader extends PrimitiveReader {
       const nameKey = this.readUint(); if (nameKey === null) { return resetPointer() }
       const valueKey = this.readUint(); if (valueKey === null) { return resetPointer() }
       return {
-        tp: MType.SetNodeAttributeDict,
+        tp: MType.SetNodeAttributeDictDeprecated,
         id,
         nameKey,
         valueKey,
+      };
+    }
+
+    case 43: {
+      const key = this.readString(); if (key === null) { return resetPointer() }
+      const value = this.readString(); if (value === null) { return resetPointer() }
+      return {
+        tp: MType.StringDict,
+        key,
+        value,
+      };
+    }
+
+    case 52: {
+      const id = this.readUint(); if (id === null) { return resetPointer() }
+      const name = this.readString(); if (name === null) { return resetPointer() }
+      const value = this.readString(); if (value === null) { return resetPointer() }
+      return {
+        tp: MType.SetNodeAttributeDict,
+        id,
+        name,
+        value,
       };
     }
 

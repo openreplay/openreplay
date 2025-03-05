@@ -77,6 +77,7 @@ export default class MessageLoader {
 
         let artificialStartTime = Infinity;
         let startTimeSet = false;
+
         msgs.forEach((msg) => {
           if (msg.tp === MType.Redux || msg.tp === MType.ReduxDeprecated) {
             if ('actionTime' in msg && msg.actionTime) {
@@ -235,6 +236,7 @@ export default class MessageLoader {
     try {
       await this.loadMobs();
     } catch (sessionLoadError) {
+      console.info('!', sessionLoadError);
       try {
         await this.loadEFSMobs();
       } catch (unprocessedLoadError) {

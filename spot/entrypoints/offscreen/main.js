@@ -1,3 +1,6 @@
+/**
+ * 24 MB; hardlimit for video chunk
+ * */
 const hardLimit = 24 * 1024 * 1024; // 24 MB
 
 function getRecordingSettings(qualityValue) {
@@ -217,7 +220,7 @@ class ScreenRecorder {
             },
           }));
     } catch (e) {
-      console.error(e);
+      console.error('get stream error:', e);
       throw e;
     }
     try {
@@ -229,7 +232,7 @@ class ScreenRecorder {
         this.audioTrack.enabled = false;
       }
     } catch (e) {
-      console.error(e);
+      console.error('get audio error', e);
       this.audioTrack = this.createPlaceholderAudioTrack();
     }
 

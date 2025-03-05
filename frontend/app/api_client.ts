@@ -1,6 +1,4 @@
-import store from 'App/store';
 import { queried } from './routes';
-import { setJwt } from 'Duck/user';
 
 const siteIdRequiredPaths: string[] = [
   '/dashboard',
@@ -54,27 +52,42 @@ export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any =
 
 export default class APIClient {
   private init: RequestInit;
-  private readonly siteId: string | undefined;
+  private siteId: string | undefined;
+  private siteIdCheck: (() => { siteId: string | null }) | undefined;
+  private getJwt: () => string | null = () => null;
+  private onUpdateJwt: (data: { jwt?: string, spotJwt?: string }) => void;
   private refreshingTokenPromise: Promise<string> | null = null;
 
   constructor() {
-    const jwt = store.getState().getIn(['user', 'jwt']);
-    const siteId = store.getState().getIn(['site', 'siteId']);
     this.init = {
       headers: new Headers({
         Accept: 'application/json',
         'Content-Type': 'application/json'
       })
     };
+  }
+
+  setJwt(jwt: string | null): void {
     if (jwt !== null) {
       (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
     }
-    this.siteId = siteId;
+  }
+
+  setOnUpdateJwt(onUpdateJwt: (data: { jwt?: string, spotJwt?: string }) => void): void {
+    this.onUpdateJwt = onUpdateJwt;
+  }
+
+  setJwtChecker(checker: () => string | null): void {
+    this.getJwt = checker;
+  }
+
+  setSiteIdCheck(checker: () => { siteId: string | null }): void {
+    this.siteIdCheck = checker
   }
 
   private getInit(method: string = 'GET', params?: any, reqHeaders?: Record<string, any>): RequestInit {
     // Always fetch the latest JWT from the store
-    const jwt = store.getState().getIn(['user', 'jwt']);
+    const jwt = this.getJwt()
     const headers = new Headers({
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -101,6 +114,9 @@ export default class APIClient {
       delete init.body; // GET requests shouldn't have a body
     }
 
+    // /:id/path
+    // const idFromPath = window.location.pathname.split('/')[1];
+    this.siteId = this.siteIdCheck?.().siteId ?? undefined;
     return init;
   }
 
@@ -131,7 +147,7 @@ export default class APIClient {
     clean?: boolean
   } = { clean: true }, headers?: Record<string, any>): Promise<Response> {
     let _path = path;
-    let jwt = store.getState().getIn(['user', 'jwt']);
+    let jwt = this.getJwt();
     if (!path.includes('/refresh') && jwt && this.isTokenExpired(jwt)) {
       jwt = await this.handleTokenRefresh();
       (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
@@ -150,17 +166,17 @@ export default class APIClient {
 
     let fetch = window.fetch;
     let edp = window.env.API_EDP || window.location.origin + '/api';
-    const spotService = path.includes('/spot') && !path.includes('/login')
-    if (spotService && !edp.includes('api.openreplay.com')) {
+    const noChalice = path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login')
+    if (noChalice && !edp.includes('api.openreplay.com')) {
       edp = edp.replace('/api', '')
     }
     if (
       path !== '/targets_temp' &&
       !path.includes('/metadata/session_search') &&
       !path.includes('/assist/credentials') &&
-      !!this.siteId &&
       siteIdRequiredPaths.some(sidPath => path.startsWith(sidPath))
     ) {
+      if (!this.siteId) console.trace('no site id', path, this.siteId)
       edp = `${edp}/${this.siteId}`;
     }
 
@@ -182,6 +198,11 @@ export default class APIClient {
     }
 
     return fetch(edp + _path, init).then((response) => {
+      if (response.status === 403) {
+        console.warn('API returned 403. Clearing JWT token.');
+        this.onUpdateJwt({ jwt: undefined }); // Clear the token
+      }
+
       if (response.ok) {
         return response;
       } else {
@@ -202,11 +223,11 @@ export default class APIClient {
 
       const data = await response.json();
       const refreshedJwt = data.jwt;
-      store.dispatch(setJwt({ jwt: refreshedJwt, }));
+      this.onUpdateJwt({ jwt: refreshedJwt });
       return refreshedJwt;
     } catch (error) {
       console.error('Error refreshing token:', error);
-      store.dispatch(setJwt({ jwt: null }));
+      this.onUpdateJwt({ jwt: undefined });
       throw error;
     }
   }
@@ -234,5 +255,9 @@ export default class APIClient {
   patch(path: string, params?: any, options?: any): Promise<Response> {
     this.init.method = 'PATCH';
     return this.fetch(path, params, 'PATCH');
+  }
+
+  forceSiteId = (siteId: string) => {
+    this.siteId = siteId;
   }
 }

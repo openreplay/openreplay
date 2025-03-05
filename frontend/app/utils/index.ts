@@ -87,10 +87,9 @@ export const filterList = <T extends Record<string, any>>(
 ): T[] => {
   if (searchQuery === '') return list;
   const filterRE = getRE(searchQuery, 'i');
-  let _list = list.filter((listItem: T) => {
+  return list.filter((listItem: T) => {
     return testKeys.some((key) => filterRE.test(listItem[key])) || searchCb?.(listItem, filterRE);
   });
-  return _list;
 };
 
 export const getStateColor = (state) => {

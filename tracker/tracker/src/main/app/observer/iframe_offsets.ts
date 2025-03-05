@@ -8,7 +8,7 @@ type OffsetState = {
 }
 
 export default class IFrameOffsets {
-  private readonly states: Map<Document, OffsetState> = new Map()
+  private states: WeakMap<Document, OffsetState> = new WeakMap()
 
   private calcOffset(state: OffsetState): Offset {
     let parLeft = 0,
@@ -55,12 +55,10 @@ export default class IFrameOffsets {
     // anything more reliable? This does not cover all cases (layout changes are ignored, for ex.)
     parentDoc.addEventListener('scroll', invalidateOffset)
     parentDoc.defaultView?.addEventListener('resize', invalidateOffset)
-
     this.states.set(doc, state)
   }
 
   clear() {
-    this.states.forEach((s) => s.clear())
-    this.states.clear()
+    this.states = new WeakMap()
   }
 }

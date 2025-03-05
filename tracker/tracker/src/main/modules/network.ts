@@ -3,7 +3,7 @@ import { NetworkRequest } from '../app/messages.gen.js'
 import { getTimeOrigin } from '../utils.js'
 import type { AxiosInstance } from './axiosSpy.js'
 import axiosSpy from './axiosSpy.js'
-import setProxy from './Network/index.js'
+import createNetworkProxy from '@openreplay/network-proxy'
 
 type WindowFetch = typeof window.fetch
 type XHRRequestBody = Parameters<XMLHttpRequest['send']>[0]
@@ -130,13 +130,28 @@ export default function (app: App, opts: Partial<Options> = {}) {
   const patchWindow = (context: typeof globalThis) => {
     /* ====== modern way ====== */
     if (options.useProxy) {
-      return setProxy(
+      return createNetworkProxy(
         context,
         options.ignoreHeaders,
         setSessionTokenHeader,
         sanitize,
-        (message) => app.send(message),
+        (message) => {
+          app.send(
+            NetworkRequest(
+              message.requestType,
+              message.method,
+              message.url,
+              message.request,
+              message.response,
+              message.status,
+              message.startTime + getTimeOrigin(),
+              message.duration,
+              message.responseSize,
+            ),
+          )
+        },
         (url) => app.isServiceURL(url),
+        { xhr: true, fetch: true, beacon: true },
         options.tokenUrlMatcher,
       )
     }

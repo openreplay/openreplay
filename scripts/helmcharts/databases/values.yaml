@@ -106,7 +106,7 @@ postgresql:
   fullnameOverride: postgresql
   postgresqlSharedPreloadLibraries: "pgaudit,pg_stat_statements"
   image:
-    tag: 16.3.0
+    tag: 16.4.0
   resources:
     limits:
       cpu: 1
@@ -165,6 +165,8 @@ kafka:
 
 # Enterprise dbs
 clickhouse:
+  image:
+    tag: "24.9-alpine"
   enabled: false
 
 postgreql:

@@ -281,7 +281,7 @@ class Metadata(Message):
         self.value = value
 
 
-class PageEvent(Message):
+class PageEventDeprecated(Message):
     __id__ = 31
 
     def __init__(self, message_id, timestamp, url, referrer, loaded, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint, speed_index, visually_complete, time_to_interactive):
@@ -313,6 +313,30 @@ class InputEvent(Message):
         self.value = value
         self.value_masked = value_masked
         self.label = label
+
+
+class PageEvent(Message):
+    __id__ = 33
+
+    def __init__(self, message_id, timestamp, url, referrer, loaded, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint, speed_index, visually_complete, time_to_interactive, web_vitals):
+        self.message_id = message_id
+        self.timestamp = timestamp
+        self.url = url
+        self.referrer = referrer
+        self.loaded = loaded
+        self.request_start = request_start
+        self.response_start = response_start
+        self.response_end = response_end
+        self.dom_content_loaded_event_start = dom_content_loaded_event_start
+        self.dom_content_loaded_event_end = dom_content_loaded_event_end
+        self.load_event_start = load_event_start
+        self.load_event_end = load_event_end
+        self.first_paint = first_paint
+        self.first_contentful_paint = first_contentful_paint
+        self.speed_index = speed_index
+        self.visually_complete = visually_complete
+        self.time_to_interactive = time_to_interactive
+        self.web_vitals = web_vitals
 
 
 class CSSInsertRule(Message):
@@ -425,7 +449,7 @@ class PerformanceTrack(Message):
         self.used_js_heap_size = used_js_heap_size
 
 
-class StringDict(Message):
+class StringDictDeprecated(Message):
     __id__ = 50
 
     def __init__(self, key, value):
@@ -433,13 +457,30 @@ class StringDict(Message):
         self.value = value
 
 
-class SetNodeAttributeDict(Message):
+class SetNodeAttributeDictDeprecated(Message):
     __id__ = 51
 
     def __init__(self, id, name_key, value_key):
         self.id = id
         self.name_key = name_key
         self.value_key = value_key
+
+
+class StringDict(Message):
+    __id__ = 43
+
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
+
+
+class SetNodeAttributeDict(Message):
+    __id__ = 52
+
+    def __init__(self, id, name, value):
+        self.id = id
+        self.name = name
+        self.value = value
 
 
 class ResourceTimingDeprecated(Message):
@@ -857,6 +898,14 @@ class GraphQL(Message):
         self.variables = variables
         self.response = response
         self.duration = duration
+
+
+class WebVitals(Message):
+    __id__ = 124
+
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
 
 
 class IssueEvent(Message):

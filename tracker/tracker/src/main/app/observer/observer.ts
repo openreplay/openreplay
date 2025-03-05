@@ -122,7 +122,7 @@ export default abstract class Observer {
         }
         this.commitNodes()
       }) as MutationCallback,
-      this.app.options.angularMode,
+      this.app.options.forceNgOff,
     )
   }
   private clear(): void {
@@ -134,7 +134,9 @@ export default abstract class Observer {
   }
 
   /**
-   * Unbinds the removed nodes in case of iframe src change.
+   * EXPERIMENTAL: Unbinds the removed nodes in case of iframe src change.
+   *
+   * right now, we're relying on nodes.maintainer
    */
   private handleIframeSrcChange(iframe: HTMLIFrameElement): void {
     const oldContentDocument = iframe.contentDocument
@@ -402,7 +404,7 @@ export default abstract class Observer {
   }
   private commitNode(id: number): boolean {
     const node = this.app.nodes.getNode(id)
-    if (node === undefined) {
+    if (!node) {
       return false
     }
     const cmt = this.commited[id]

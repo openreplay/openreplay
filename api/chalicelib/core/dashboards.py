@@ -149,30 +149,6 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
     return helper.dict_to_camel_case(row)
 
 
-def get_widget(project_id, user_id, dashboard_id, widget_id):
-    with pg_client.PostgresClient() as cur:
-        pg_query = """SELECT metrics.*, metric_series.series
-                        FROM dashboard_widgets
-                                 INNER JOIN dashboards USING (dashboard_id)
-                                 INNER JOIN metrics USING (metric_id)
-                                 LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index), '[]'::jsonb) AS series
-                                                    FROM metric_series
-                                                    WHERE metric_series.metric_id = metrics.metric_id
-                                                      AND metric_series.deleted_at ISNULL
-                            ) AS metric_series ON (TRUE)
-                        WHERE dashboard_id = %(dashboard_id)s
-                          AND widget_id = %(widget_id)s
-                          AND (dashboards.is_public OR dashboards.user_id = %(userId)s)
-                          AND dashboards.deleted_at IS NULL
-                          AND metrics.deleted_at ISNULL
-                          AND (metrics.project_id = %(projectId)s OR metrics.project_id ISNULL)
-                          AND (metrics.is_public OR metrics.user_id = %(userId)s);"""
-        params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, "widget_id": widget_id}
-        cur.execute(cur.mogrify(pg_query, params))
-        row = cur.fetchone()
-    return helper.dict_to_camel_case(row)
-
-
 def add_widget(project_id, user_id, dashboard_id, data: schemas.AddWidgetToDashboardPayloadSchema):
     with pg_client.PostgresClient() as cur:
         pg_query = """INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
@@ -228,9 +204,9 @@ def pin_dashboard(project_id, user_id, dashboard_id):
     return helper.dict_to_camel_case(row)
 
 
-def create_metric_add_widget(project_id, user_id, dashboard_id, data: schemas.CardSchema):
-    metric_id = custom_metrics.create_card(project_id=project_id, user_id=user_id, data=data, dashboard=True)
-    return add_widget(project_id=project_id, user_id=user_id, dashboard_id=dashboard_id,
+def create_metric_add_widget(project: schemas.ProjectContext, user_id, dashboard_id, data: schemas.CardSchema):
+    metric_id = custom_metrics.create_card(project=project, user_id=user_id, data=data, dashboard=True)
+    return add_widget(project_id=project.project_id, user_id=user_id, dashboard_id=dashboard_id,
                       data=schemas.AddWidgetToDashboardPayloadSchema(metricId=metric_id))
 
 # def make_chart_widget(dashboard_id, project_id, user_id, widget_id, data: schemas.CardChartSchema):

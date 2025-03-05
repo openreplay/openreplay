@@ -68,6 +68,8 @@ function DashboardView(props: Props) {
             onAddWidgets();
             trimQuery();
         }
+
+        return () => dashboardStore.resetSelectedDashboard()
     }, []);
 
     useEffect(() => {

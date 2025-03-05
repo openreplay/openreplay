@@ -1,9 +1,8 @@
-import './styles/index.scss';
+import './styles/index.css';
+import './styles/global.scss'
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './init';
-import { Provider } from 'react-redux';
-import store from './store';
 import Router from './Router';
 import { StoreProvider, RootStore } from './mstore';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -12,10 +11,15 @@ import { ConfigProvider, theme, ThemeConfig } from 'antd';
 import colors from 'App/theme/colors';
 import { BrowserRouter } from 'react-router-dom';
 import { Notification, MountPoint } from 'UI';
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query'
 
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
 
+const queryClient = new QueryClient()
 const customTheme: ThemeConfig = {
   // algorithm: theme.compactAlgorithm,
   components: {
@@ -72,8 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // const theme = window.localStorage.getItem('theme');
   root.render(
+    <QueryClientProvider client={queryClient}>
     <ConfigProvider theme={customTheme}>
-      <Provider store={store}>
         <StoreProvider store={new RootStore()}>
           <DndProvider backend={HTML5Backend}>
             <BrowserRouter>
@@ -83,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </DndProvider>
           <MountPoint />
         </StoreProvider>
-      </Provider>
     </ConfigProvider>
+    </QueryClientProvider>
   );
 });

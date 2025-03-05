@@ -1,8 +1,9 @@
 import React from 'react';
 import { INDEXES } from 'App/constants/zindex';
-import { connect } from 'react-redux';
 import { Button, Loader, Icon } from 'UI';
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { useStore } from "App/mstore";
+import { observer } from 'mobx-react-lite';
 
 interface Props {
   userDisplayName: string;
@@ -42,7 +43,9 @@ const WIN_VARIANTS = {
   }
 };
 
-function RequestingWindow({ userDisplayName, getWindowType }: Props) {
+function RequestingWindow({ getWindowType }: Props) {
+  const { sessionStore } = useStore();
+  const userDisplayName = sessionStore.current.userDisplayName;
   const windowType = getWindowType()
   if (!windowType) return;
   const { player } = React.useContext(PlayerContext)
@@ -81,6 +84,4 @@ function RequestingWindow({ userDisplayName, getWindowType }: Props) {
   );
 }
 
-export default connect((state: any) => ({
-  userDisplayName: state.getIn(['sessions', 'current']).userDisplayName,
-}))(RequestingWindow);
+export default observer(RequestingWindow);

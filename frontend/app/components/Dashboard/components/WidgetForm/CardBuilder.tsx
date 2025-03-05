@@ -15,8 +15,7 @@ import {eventKeys} from 'App/types/filter/newFilter';
 import {renderClickmapThumbnail} from './renderMap';
 import FilterItem from 'Shared/Filters/FilterItem';
 import {
-    TIMESERIES, TABLE, HEATMAP, FUNNEL, ERRORS, RESOURCE_MONITORING,
-    PERFORMANCE, WEB_VITALS, INSIGHTS, USER_PATH, RETENTION
+    TIMESERIES, TABLE, HEATMAP, FUNNEL, ERRORS, INSIGHTS, USER_PATH, RETENTION
 } from 'App/constants/card';
 import {useHistory} from "react-router";
 
@@ -227,7 +226,7 @@ const CardBuilder = observer((props: CardBuilderProps) => {
     const metric = metricStore.instance;
     const timeseriesOptions = metricOf.filter(i => i.type === 'timeseries');
     const tableOptions = metricOf.filter(i => i.type === 'table');
-    const isPredefined = [ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS].includes(metric.metricType);
+    const isPredefined = metric.metricType === ERRORS
     const testingKey = localStorage.getItem('__mauricio_testing_access') === 'true';
 
 

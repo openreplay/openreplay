@@ -1,6 +1,6 @@
 import schemas
 from chalicelib.core import events, metadata, events_mobile, \
-    sessions_mobs, issues, resources, assist, sessions_devtool, sessions_notes, canvas, user_testing
+    sessions_mobs, issues, assist, sessions_devtool, canvas, user_testing
 from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
 
@@ -18,8 +18,24 @@ def __group_metadata(session, project_metadata):
     return meta
 
 
-def get_pre_replay(project_id, session_id, context: schemas.CurrentContext):
+def get_pre_replay(project_id, session_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            f"""\
+            SELECT encode(file_key,'hex') AS file_key
+            FROM public.sessions
+            WHERE project_id = %(project_id)s
+                AND session_id = %(session_id)s;""",
+            {"project_id": project_id, "session_id": session_id}
+        )
+        cur.execute(query=query)
+
+        data = cur.fetchone()
+        file_key = None
+        if data is not None:
+            file_key = data['file_key']
     return {
+        'fileKey': file_key,
         'domURL': [sessions_mobs.get_first_url(project_id=project_id, session_id=session_id, check_existence=False)]}
 
 
@@ -125,8 +141,6 @@ def get_events(project_id, session_id):
                                   if e['source'] == "js_exception"][:500]
                 data['userEvents'] = events.get_customs_by_session_id(project_id=project_id,
                                                                       session_id=session_id)
-                data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
-                                                                start_ts=s_data["startTs"], duration=s_data["duration"])
                 data['userTesting'] = user_testing.get_test_signals(session_id=session_id, project_id=project_id)
 
             data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)

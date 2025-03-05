@@ -3,7 +3,7 @@ name: openreplay
 description: A Helm chart for Kubernetes
 type: application
 version: 0.3.0
-AppVersion: "v1.20.0"
+AppVersion: "v1.21.0"
 dependencies:
   - name: ingress-nginx
     version: "4.x.x"

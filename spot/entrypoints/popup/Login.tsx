@@ -1,5 +1,3 @@
-import Button from "@/entrypoints/popup/Button";
-
 function Login() {
   const onOpenLoginPage = async () => {
     const { settings } = await chrome.storage.local.get("settings");
@@ -11,8 +9,20 @@ function Login() {
   };
   return (
     <div class={"flex flex-row gap-2"}>
-      <button onClick={onOpenLoginPage} name={"Login"} class="btn btn-primary text-white shadow-sm text-lg w-2/4	">Login</button>
-      <button onClick={onOpenSignupPage} name={"Create Account"} class="btn btn-primary btn-outline bg-white shadow-sm text-lg w-2/4	">Create Account</button>
+      <button
+        onClick={onOpenLoginPage}
+        name={"Login"}
+        class="btn btn-primary text-white shadow-sm text-lg w-2/4	"
+      >
+        Login
+      </button>
+      <button
+        onClick={onOpenSignupPage}
+        name={"Create Account"}
+        class="btn btn-primary btn-outline bg-white shadow-sm text-lg w-2/4	"
+      >
+        Create Account
+      </button>
     </div>
   );
 }

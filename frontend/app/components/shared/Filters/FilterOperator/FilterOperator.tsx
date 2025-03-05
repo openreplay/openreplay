@@ -75,11 +75,11 @@ function FilterOperator(props: Props) {
     <div className="mx-2">
       <Select
         name="operator"
-        options={options}
+        options={options || []}
         styles={dropdownStyles}
         placeholder="Select"
         isDisabled={isDisabled}
-        value={value ? options.find((i: any) => i.value === value) : null}
+        value={value ? options?.find((i: any) => i.value === value) : null}
         onChange={({ value }: any) => onChange(null, { name: 'operator', value: value.value })}
       />
     </div>

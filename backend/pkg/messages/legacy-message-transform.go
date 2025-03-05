@@ -59,6 +59,27 @@ func transformDeprecated(msg Message) Message {
 			NavigationStart: m.NavigationStart,
 			DocumentTitle:   "",
 		}
+	case *PageEventDeprecated:
+		return &PageEvent{
+			MessageID:                  m.MessageID,
+			Timestamp:                  m.Timestamp,
+			URL:                        m.URL,
+			Referrer:                   m.Referrer,
+			Loaded:                     m.Loaded,
+			RequestStart:               m.RequestStart,
+			ResponseStart:              m.ResponseStart,
+			ResponseEnd:                m.ResponseEnd,
+			DomContentLoadedEventStart: m.DomContentLoadedEventStart,
+			DomContentLoadedEventEnd:   m.DomContentLoadedEventEnd,
+			LoadEventStart:             m.LoadEventStart,
+			LoadEventEnd:               m.LoadEventEnd,
+			FirstPaint:                 m.FirstPaint,
+			FirstContentfulPaint:       m.FirstContentfulPaint,
+			SpeedIndex:                 m.SpeedIndex,
+			VisuallyComplete:           m.VisuallyComplete,
+			TimeToInteractive:          m.TimeToInteractive,
+			WebVitals:                  "",
+		}
 	}
 	return msg
 }

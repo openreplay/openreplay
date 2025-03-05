@@ -35,9 +35,14 @@ jobs:
 
       - uses: ./.github/composite-actions/update-keys
         with:
+          assist_jwt_secret: ${{ secrets.ASSIST_JWT_SECRET }}
+          assist_key: ${{ secrets.ASSIST_KEY }}
           domain_name: ${{ secrets.OSS_DOMAIN_NAME }}
-          license_key: ${{ secrets.OSS_LICENSE_KEY }}
+          jwt_refresh_secret: ${{ secrets.JWT_REFRESH_SECRET }}
           jwt_secret: ${{ secrets.OSS_JWT_SECRET }}
+          jwt_spot_refresh_secret: ${{ secrets.JWT_SPOT_REFRESH_SECRET }}
+          jwt_spot_secret: ${{ secrets.JWT_SPOT_SECRET }}
+          license_key: ${{ secrets.OSS_LICENSE_KEY }}
           minio_access_key: ${{ secrets.OSS_MINIO_ACCESS_KEY }}
           minio_secret_key: ${{ secrets.OSS_MINIO_SECRET_KEY }}
           pg_password: ${{ secrets.OSS_PG_PASSWORD }}
@@ -109,8 +114,8 @@ jobs:
             echo "Bulding $image"
             PUSH_IMAGE=0 bash -x ./build.sh skip $image
             [[ "x$skip_security_checks" == "xtrue" ]]  || {
-              curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
-              ./trivy image --exit-code 1 --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
+              curl -L https://github.com/aquasecurity/trivy/releases/download/v0.56.2/trivy_0.56.2_Linux-64bit.tar.gz | tar -xzf - -C ./ 
+              ./trivy image --db-repository ghcr.io/aquasecurity/trivy-db:2 --db-repository public.ecr.aws/aquasecurity/trivy-db:2 --exit-code 1 --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
               err_code=$?
               [[ $err_code -ne 0 ]] && {
                 exit $err_code
@@ -178,3 +183,4 @@ jobs:
     #     ENVIRONMENT: staging
     #    with:
     #      iimit-access-to-actor: true
+          #

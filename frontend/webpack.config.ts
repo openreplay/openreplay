@@ -6,6 +6,8 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CompressionPlugin from "compression-webpack-plugin";
+import { EsbuildPlugin } from 'esbuild-loader';
+
 const dotenv = require('dotenv').config({ path: __dirname + '/.env' })
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const stylesHandler = MiniCssExtractPlugin.loader;
@@ -15,9 +17,9 @@ import pathAlias from './path-alias';
 interface Configuration extends WebpackConfiguration {
   devServer?: WebpackDevServerConfiguration
 }
-
+console.log('running in', isDevelopment ? 'development' : 'production');
 const config: Configuration = {
-  // mode: isDevelopment ? "development" : "production",
+  mode: isDevelopment ? "development" : "production",
   output: {
     publicPath: "/",
     filename: 'app-[contenthash:7].js',
@@ -28,23 +30,32 @@ const config: Configuration = {
     splitChunks: {
       chunks: 'all',
     },
+    minimizer: [
+     new EsbuildPlugin({
+       target: 'es2020',
+       css: true
+    })
+   ]
   },
   module: {
     exprContextCritical: false,
     rules: [
       {
-        test: /\.(ts|js)x?$/i,
-        exclude: /node_modules/,
-        use: ['thread-loader', {
-          loader: "babel-loader",
-          options: {
-            presets: [
-              "@babel/preset-env",
-              "@babel/preset-react",
-              "@babel/preset-typescript",
-            ],
-          },
-        }],
+        test: /\.tsx?$/i,
+        exclude: isDevelopment ? /node_modules/ : undefined,
+        loader: "esbuild-loader",
+        options: {
+          target: 'es2020',
+        },
+      },
+      {
+        test: /\.jsx?$/i,
+        exclude: isDevelopment ? /node_modules/ : undefined,
+        loader: "esbuild-loader",
+        options: {
+          loader: 'jsx',
+          target: 'es2020',
+        },
       },
       {
         test: /\.s[ac]ss$/i,
@@ -62,6 +73,8 @@ const config: Configuration = {
               modules: {
                 mode: "local",
                 auto: true,
+                namedExport: false,
+                exportLocalsConvention: 'as-is',
                 localIdentName: "[name]__[local]--[hash:base64:5]",
               }
               // url: {
@@ -109,7 +122,11 @@ const config: Configuration = {
     },
   },
   plugins: [
-    new CompressionPlugin(),
+    (isDevelopment ? false : new CompressionPlugin({
+      test: /\.(js|css|html|svg)$/,
+      algorithm: 'brotliCompress',
+      threshold: 10240,
+    })),
     new webpack.DefinePlugin({
       // 'process.env': ENV_VARIABLES,
       'window.env': ENV_VARIABLES,
@@ -129,6 +146,7 @@ const config: Configuration = {
   performance: {
     hints: false,
   },
+  watchOptions: { ignored: "**/node_modules/**" },
   devServer: {
     // static: path.join(__dirname, "public"),
     historyApiFallback: true,
@@ -136,7 +154,6 @@ const config: Configuration = {
     open: true,
     port: 3333,
     hot: true,
-    compress: true,
     allowedHosts: "all",
       client: {
         overlay: {

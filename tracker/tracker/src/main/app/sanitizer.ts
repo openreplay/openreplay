@@ -9,8 +9,28 @@ export enum SanitizeLevel {
 }
 
 export interface Options {
+  /**
+   * Sanitize emails in text DOM nodes
+   *
+   * (for inputs, look for obscureInputEmails)
+   * */
   obscureTextEmails: boolean
+  /**
+   * Sanitize emails in text DOM nodes
+   *
+   * (for inputs, look for obscureInputNumbers)
+   * */
   obscureTextNumbers: boolean
+  /**
+   * Sanitize the DOM node based on the returned level
+   * (Plain = 0, Obscured = 1, Hidden = 2)
+   *
+   * higher security levels will override other settings or data-params.
+   *
+   * @param node - the DOM node to sanitize
+   * @returns the level of sanitization to apply
+   *
+   * */
   domSanitizer?: (node: Element) => SanitizeLevel
 }
 
@@ -23,17 +43,16 @@ export default class Sanitizer {
   private readonly obscured: Set<number> = new Set()
   private readonly hidden: Set<number> = new Set()
   private readonly options: Options
+  private readonly app: App
 
-  constructor(
-    private readonly app: App,
-    options: Partial<Options>,
-  ) {
+  constructor(params: { app: App; options?: Partial<Options> }) {
+    this.app = params.app
     this.options = Object.assign(
       {
         obscureTextEmails: true,
         obscureTextNumbers: false,
       },
-      options,
+      params.options,
     )
   }
 

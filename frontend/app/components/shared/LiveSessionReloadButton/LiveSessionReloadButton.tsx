@@ -1,19 +1,19 @@
-import React from 'react'
-import ReloadButton from '../ReloadButton'
-import { connect } from 'react-redux'
-// import { fetchSessions } from 'Duck/liveSearch'
+import React from 'react';
+import ReloadButton from '../ReloadButton';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
-    loading: boolean
-    onClick: () => void
-}
-function LiveSessionReloadButton(props: Props) {
-    const { loading, onClick } = props
-  return (
-    <ReloadButton loading={loading} onClick={onClick} className="cursor-pointer" />
-  )
+  onClick: () => void;
 }
 
-export default connect((state: any) => ({
-    loading: state.getIn([ 'sessions', 'fetchLiveListRequest', 'loading' ]),
-}))(LiveSessionReloadButton)
+function LiveSessionReloadButton(props: Props) {
+  const { sessionStore } = useStore();
+  const { onClick } = props;
+  const loading = sessionStore.loadingLiveSessions;
+  return (
+    <ReloadButton loading={loading} onClick={onClick} className="cursor-pointer" />
+  );
+}
+
+export default observer(LiveSessionReloadButton);

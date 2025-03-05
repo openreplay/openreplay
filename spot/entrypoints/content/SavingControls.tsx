@@ -1,7 +1,7 @@
 // noinspection SpellCheckingInspection
 
 import { createSignal, onCleanup, createEffect } from "solid-js";
-import { formatMsToTime } from "@/entrypoints/content/utils";
+import { formatMsToTime } from "~/entrypoints/content/utils";
 import "./style.css";
 import "./dragControls.css";
 
@@ -152,7 +152,7 @@ function SavingControls({
     const trim =
       bounds[0] + bounds[1] === 0
         ? null
-        : [Math.floor(bounds[0] * 1000), Math.ceil(bounds[1] * 1000)]
+        : [Math.floor(bounds[0] * 1000), Math.ceil(bounds[1] * 1000)];
     const dataObj = {
       blob: videoBlob(),
       name: name(),

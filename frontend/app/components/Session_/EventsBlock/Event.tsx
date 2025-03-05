@@ -25,7 +25,6 @@ type Props = {
   isCurrent?: boolean;
   onClick?: () => void;
   showSelection?: boolean;
-  showLoadInfo?: boolean;
   toggleLoadInfo?: () => void;
   isRed?: boolean;
   presentInSearch?: boolean;
@@ -52,7 +51,6 @@ const Event: React.FC<Props> = ({
   isCurrent = false,
   onClick,
   showSelection = false,
-  showLoadInfo,
   toggleLoadInfo,
   isRed = false,
   presentInSearch = false,
@@ -161,7 +159,7 @@ const Event: React.FC<Props> = ({
       >
         <div className={cn(cls.main, 'flex flex-col w-full')}>
           <div
-            className={cn('flex items-center w-full', { 'px-4': isLocation })}
+            className={cn('flex items-start w-full', { 'px-4': isLocation })}
           >
             <div style={{ minWidth: '16px' }}>
               {event.type && iconName ? (
@@ -171,20 +169,18 @@ const Event: React.FC<Props> = ({
               )}
             </div>
             <div className="ml-3 w-full">
-              <div className="flex w-full items-first justify-between">
+              <div className="flex w-full items-start">
                 <div
-                  className="flex items-center w-full"
+                  className="flex flex-col justify-center items-start w-full"
                   style={{ minWidth: '0' }}
                 >
-                  <span
-                    className={cn(cls.title, { 'font-medium': isLocation })}
-                  >
+                  <span className={cn(cls.title, 'font-medium')}>
                     {title}
                   </span>
                   {body && !isLocation && (
                     <TextEllipsis
-                      maxWidth="60%"
-                      className="w-full ml-2 text-sm color-gray-medium"
+                      maxWidth="80%"
+                      className="w-full text-sm color-gray-medium"
                       text={body}
                     />
                   )}
@@ -204,8 +200,7 @@ const Event: React.FC<Props> = ({
           {isLocation && (
             <div className="pt-1 px-4">
               <TextEllipsis
-                maxWidth="80%"
-                className="text-sm font-normal color-gray-medium"
+                className="text-sm ms-8 font-normal color-gray-medium"
                 text={body}
               />
             </div>
@@ -251,25 +246,26 @@ const Event: React.FC<Props> = ({
         {renderBody()}
       </div>
       {isLocation &&
-        (event.fcpTime ||
-          event.visuallyComplete ||
-          event.timeToInteractive) && (
-          <LoadInfo
-            showInfo={showLoadInfo}
-            onClick={toggleLoadInfo}
-            event={event}
-            prorata={prorata({
-              parts: 100,
-              elements: {
-                a: event.fcpTime,
-                b: event.visuallyComplete,
-                c: event.timeToInteractive,
-              },
-              startDivisorFn: (elements) => elements / 1.2,
-              divisorFn: (elements, parts) => elements / (2 * parts + 1),
-            })}
-          />
-        )}
+      (event.fcpTime ||
+        event.visuallyComplete ||
+        event.timeToInteractive ||
+        event.webvitals) ? (
+        <LoadInfo
+          onClick={toggleLoadInfo}
+          event={event}
+          webvitals={event.webvitals}
+          prorata={prorata({
+            parts: 100,
+            elements: {
+              a: event.fcpTime,
+              b: event.visuallyComplete,
+              c: event.timeToInteractive,
+            },
+            startDivisorFn: (elements) => elements / 1.2,
+            divisorFn: (elements, parts) => elements / (2 * parts + 1),
+          })}
+        />
+      ) : null}
     </div>
   );
 };

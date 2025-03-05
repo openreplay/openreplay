@@ -16,7 +16,7 @@ interface Props {
   backTenSeconds: () => void;
   forthTenSeconds: () => void;
   toggleSpeed: (speedIndex: number) => void;
-  toggleSkip: () => void;
+  toggleSkip?: () => void;
   sessionTz?: string;
 }
 
@@ -80,15 +80,17 @@ function PlayerControls(props: Props) {
           disabled={disabled}
           speed={speed}
         />
-        <Button
-          onClick={toggleSkip}
-          disabled={disabled}
-          size={'small'}
-          className={'flex items-center font-semibold'}
-        >
-          {skip && <Icon name="check" size="24" />}
-          <span>Skip Inactivity</span>
-        </Button>
+        {toggleSkip && (
+          <Button
+            onClick={toggleSkip}
+            disabled={disabled}
+            size={'small'}
+            className={'flex items-center font-semibold'}
+          >
+            {skip && <Icon name="check" size="24" />}
+            <span>Skip Inactivity</span>
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -1,13 +1,10 @@
 import React from 'react'
-import { connect } from 'react-redux'
 import { withRouter } from 'react-router'
 import { Button } from 'UI'
-import { OB_TABS, onboarding as onboardingRoute } from 'App/routes'
-import * as routes from '../../../../routes'
+import { OB_TABS, onboarding as onboardingRoute, withSiteId } from 'App/routes'
 import { sessions } from 'App/routes';
-import { setOnboarding } from 'Duck/user';
+import { useStore } from 'App/mstore'
 
-const withSiteId = routes.withSiteId;
 const MENU_ITEMS = [OB_TABS.INSTALLING, OB_TABS.IDENTIFY_USERS, OB_TABS.MANAGE_USERS, OB_TABS.INTEGRATIONS]
 const BTN_MSGS = [
   'Next: Identify Users',
@@ -16,8 +13,8 @@ const BTN_MSGS = [
   'See Recorded Sessions'
 ]
 
-const OnboardingNavButton = (props) => {
-  const { match: { params: { activeTab, siteId } }, history } = props;
+const OnboardingNavButton = ({ match: { params: { activeTab, siteId } }, history }) => {
+  const { userStore } = useStore();
   const activeIndex = MENU_ITEMS.findIndex(i => i === activeTab);
   const completed = activeIndex == MENU_ITEMS.length - 1;
 
@@ -31,7 +28,7 @@ const OnboardingNavButton = (props) => {
   }
 
   const onDone = () => {
-    props.setOnboarding(true);
+    userStore.setOnboarding(true);
     history.push(sessions());
   }
   
@@ -56,4 +53,4 @@ const OnboardingNavButton = (props) => {
   )
 }
 
-export default withRouter(connect(null, { setOnboarding })(OnboardingNavButton))
+export default withRouter(OnboardingNavButton)

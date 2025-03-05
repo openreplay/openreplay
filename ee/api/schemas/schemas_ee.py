@@ -25,6 +25,7 @@ class ServicePermissions(str, Enum):
     DEV_TOOLS = "SERVICE_DEV_TOOLS"
     ASSIST_LIVE = "SERVICE_ASSIST_LIVE"
     ASSIST_CALL = "SERVICE_ASSIST_CALL"
+    READ_NOTES = "SERVICE_READ_NOTES"
 
 
 class CurrentContext(schemas.CurrentContext):

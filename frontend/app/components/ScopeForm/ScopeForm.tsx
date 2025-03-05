@@ -1,23 +1,32 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Radio } from 'antd';
 import React from 'react';
-import { connect } from 'react-redux';
-import { upgradeScope, downgradeScope, getScope } from 'App/duck/user';
 import { useHistory } from 'react-router-dom';
 import * as routes from 'App/routes'
-import { SPOT_ONBOARDING } from "../../constants/storageKeys";
+import { SPOT_ONBOARDING } from "App/constants/storageKeys";
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 const Scope = {
   FULL: 'full',
   SPOT: 'spot',
 };
 
-function ScopeForm({
-  upgradeScope,
-  downgradeScope,
-  scopeState,
-}: any) {
-  const [scope, setScope] = React.useState(Scope.FULL);
+function getDefaultSetup() {
+  const isSpotSetup = localStorage.getItem(SPOT_ONBOARDING)
+  if (isSpotSetup) {
+    localStorage.removeItem(SPOT_ONBOARDING)
+    return Scope.SPOT
+  }
+  return Scope.FULL
+}
+
+function ScopeForm() {
+  const { userStore } = useStore();
+  const upgradeScope = userStore.upgradeScope
+  const downgradeScope = userStore.downgradeScope
+  const scopeState = userStore.scopeState
+  const [scope, setScope] = React.useState(getDefaultSetup);
   React.useEffect(() => {
     if (scopeState !== 0) {
       if (scopeState === 2) {
@@ -27,20 +36,14 @@ function ScopeForm({
       }
     }
   }, [scopeState])
-  React.useEffect(() => {
-    const isSpotSetup = localStorage.getItem(SPOT_ONBOARDING)
-    if (isSpotSetup) {
-      setScope(Scope.SPOT)
-      localStorage.removeItem(SPOT_ONBOARDING)
-    }
-  }, [])
+
   const history = useHistory();
   const onContinue = () => {
     if (scope === Scope.FULL) {
-      upgradeScope();
+      void upgradeScope();
       history.replace(routes.onboarding())
     } else {
-      downgradeScope();
+      void downgradeScope();
       history.replace(routes.spotsList())
     }
   };
@@ -72,9 +75,9 @@ function ScopeForm({
           className={'flex flex-col gap-2 mt-4 '}
         >
           <Radio value={'full'}>
-            Session Replay & Debugging, Customer Support and more
+            Session Replay with DevTools, Co-browsing and Product Analytics
           </Radio>
-          <Radio value={'spot'}>Report bugs via Spot</Radio>
+          <Radio value={'spot'}>Bug reporting via Spot</Radio>
         </Radio.Group>
 
         <div className={'self-end'}>
@@ -92,6 +95,4 @@ function ScopeForm({
   );
 }
 
-export default connect((state) => ({
-  scopeState: getScope(state),
-}), { upgradeScope, downgradeScope })(ScopeForm);
+export default observer(ScopeForm);

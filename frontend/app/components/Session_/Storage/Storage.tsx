@@ -1,19 +1,24 @@
 import React from 'react';
-import { connect } from 'react-redux';
-import { hideHint } from 'Duck/components/player';
+import { useStore } from 'App/mstore';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { JSONTree, NoContent, Tooltip } from 'UI';
 import { formatMs } from 'App/date';
-import diff from 'microdiff'
-import { STORAGE_TYPES, selectStorageList, selectStorageListNow, selectStorageType } from 'Player';
+import diff from 'microdiff';
+import {
+  STORAGE_TYPES,
+  selectStorageList,
+  selectStorageListNow,
+  selectStorageType,
+} from 'Player';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock/index';
 import DiffRow from './DiffRow';
 import cn from 'classnames';
 import stl from './storage.module.css';
-import logger from "App/logger";
-import ReduxViewer from './ReduxViewer'
+import logger from 'App/logger';
+import ReduxViewer from './ReduxViewer';
+import { Segmented } from 'antd'
 
 function getActionsName(type: string) {
   switch (type) {
@@ -32,61 +37,59 @@ const storageDecodeKeys = {
   [STORAGE_TYPES.ZUSTAND]: ['state', 'mutation'],
   [STORAGE_TYPES.MOBX]: ['payload'],
   [STORAGE_TYPES.NONE]: ['state, action', 'payload', 'mutation'],
-}
-interface Props {
-  hideHint: (args: string) => void;
-  hintIsHidden: boolean;
-}
+};
 
-function Storage(props: Props) {
+function Storage() {
+  const { uiPlayerStore } = useStore();
+  const hintIsHidden = uiPlayerStore.hiddenHints.storage;
+  const hideHint = uiPlayerStore.hideHint;
   const lastBtnRef = React.useRef<HTMLButtonElement>();
   const [showDiffs, setShowDiffs] = React.useState(false);
   const [stateObject, setState] = React.useState({});
 
   const { player, store } = React.useContext(PlayerContext);
-  const { tabStates, currentTab } = store.get()
-  const state = tabStates[currentTab] || {}
+  const { tabStates, currentTab } = store.get();
+  const state = tabStates[currentTab] || {};
 
   const listNow = selectStorageListNow(state) || [];
   const list = selectStorageList(state) || [];
-  const type = selectStorageType(state) || STORAGE_TYPES.NONE
+  const type = selectStorageType(state) || STORAGE_TYPES.NONE;
 
   React.useEffect(() => {
     let currentState;
     if (listNow.length === 0) {
-      currentState = decodeMessage(list[0])
+      currentState = decodeMessage(list[0]);
     } else {
-      currentState = decodeMessage(listNow[listNow.length - 1])
+      currentState = decodeMessage(listNow[listNow.length - 1]);
     }
-    const stateObj = currentState?.state || currentState?.payload?.state || {}
+    const stateObj = currentState?.state || currentState?.payload?.state || {};
     const newState = Object.assign(stateObject, stateObj);
     setState(newState);
-
   }, [listNow.length]);
 
   const decodeMessage = (msg: any) => {
     const decoded = {};
-    const pureMSG = { ...msg }
+    const pureMSG = { ...msg };
     const keys = storageDecodeKeys[type];
     try {
-      keys.forEach(key => {
+      keys.forEach((key) => {
         if (pureMSG[key]) {
           // @ts-ignore TODO: types for decoder
           decoded[key] = player.decodeMessage(pureMSG[key]);
         }
       });
     } catch (e) {
-      logger.error("Error on message decoding: ", e, pureMSG);
+      logger.error('Error on message decoding: ', e, pureMSG);
       return null;
     }
     return { ...pureMSG, ...decoded };
-  }
+  };
 
   const decodedList = React.useMemo(() => {
-    return listNow.map(msg => {
-      return decodeMessage(msg)
-    })
-  }, [listNow.length])
+    return listNow.map((msg) => {
+      return decodeMessage(msg);
+    });
+  }, [listNow.length]);
 
   const focusNextButton = () => {
     if (lastBtnRef.current) {
@@ -101,7 +104,10 @@ function Storage(props: Props) {
     focusNextButton();
   }, [listNow]);
 
-  const renderDiff = (item: Record<string, any>, prevItem?: Record<string, any>) => {
+  const renderDiff = (
+    item: Record<string, any>,
+    prevItem?: Record<string, any>
+  ) => {
     if (!showDiffs) {
       return;
     }
@@ -115,7 +121,10 @@ function Storage(props: Props) {
 
     if (!stateDiff) {
       return (
-        <div style={{ flex: 3 }} className="flex flex-col p-2 pr-0 font-mono text-disabled-text">
+        <div
+          style={{ flex: 3 }}
+          className="flex flex-col p-2 pr-0 font-mono text-disabled-text"
+        >
           No diff
         </div>
       );
@@ -123,13 +132,15 @@ function Storage(props: Props) {
 
     return (
       <div style={{ flex: 3 }} className="flex flex-col p-1 font-mono">
-        {stateDiff.map((d: Record<string, any>, i: number) => renderDiffs(d, i))}
+        {stateDiff.map((d: Record<string, any>, i: number) =>
+          renderDiffs(d, i)
+        )}
       </div>
     );
   };
 
   const renderDiffs = (diff: Record<string, any>, i: number) => {
-    const path = diff.path.join('.')
+    const path = diff.path.join('.');
     return (
       <React.Fragment key={i}>
         <DiffRow path={path} diff={diff} />
@@ -147,12 +158,16 @@ function Storage(props: Props) {
     player.jump(list[listNow.length].time);
   };
 
-  const renderItem = (item: Record<string, any>, i: number, prevItem?: Record<string, any>) => {
+  const renderItem = (
+    item: Record<string, any>,
+    i: number,
+    prevItem?: Record<string, any>
+  ) => {
     let src;
     let name;
 
-    const itemD = item
-    const prevItemD = prevItem ? prevItem : undefined
+    const itemD = item;
+    const prevItemD = prevItem ? prevItem : undefined;
 
     switch (type) {
       case STORAGE_TYPES.REDUX:
@@ -179,7 +194,10 @@ function Storage(props: Props) {
 
     return (
       <div
-        className={cn('flex justify-between items-start', src !== null ? 'border-b' : '')}
+        className={cn(
+          'flex justify-between items-start',
+          src !== null ? 'border-b' : ''
+        )}
         key={`store-${i}`}
       >
         {src === null ? (
@@ -189,7 +207,10 @@ function Storage(props: Props) {
         ) : (
           <>
             {renderDiff(itemD, prevItemD)}
-            <div style={{ flex: 2 }} className={cn("flex pt-2", showDiffs && 'pl-10')}>
+            <div
+              style={{ flex: 2 }}
+              className={cn('flex pt-2', showDiffs && 'pl-10')}
+            >
               <JSONTree
                 name={ensureString(name)}
                 src={src}
@@ -204,11 +225,16 @@ function Storage(props: Props) {
           className="flex-1 flex gap-2 pt-2 items-center justify-end self-start"
         >
           {typeof item?.duration === 'number' && (
-            <div className="font-size-12 color-gray-medium">{formatMs(itemD.duration)}</div>
+            <div className="font-size-12 color-gray-medium">
+              {formatMs(itemD.duration)}
+            </div>
           )}
           <div className="w-12">
             {i + 1 < listNow.length && (
-              <button className={stl.button} onClick={() => player.jump(item.time)}>
+              <button
+                className={stl.button}
+                onClick={() => player.jump(item.time)}
+              >
                 {'JUMP'}
               </button>
             )}
@@ -223,34 +249,37 @@ function Storage(props: Props) {
     );
   };
 
-  const { hintIsHidden } = props;
-
   if (type === STORAGE_TYPES.REDUX) {
-    return <ReduxViewer />
+    return <ReduxViewer />;
   }
   return (
     <BottomBlock>
       {/*@ts-ignore*/}
       <>
         <BottomBlock.Header>
-          {list.length > 0 && (
-            <div className="flex w-full">
-              <h3 style={{ width: '25%', marginRight: 20 }} className="font-semibold">
-                {'STATE'}
-              </h3>
-              {showDiffs ? (
-                <h3 style={{ width: '39%' }} className="font-semibold">
-                  DIFFS
-                </h3>
-              ) : null}
-              <h3 style={{ width: '30%' }} className="font-semibold">
-                {getActionsName(type)}
-              </h3>
-              <h3 style={{ paddingRight: 30, marginLeft: 'auto' }} className="font-semibold">
-                <Tooltip title="Time to execute">TTE</Tooltip>
-              </h3>
+          <div className="flex w-full items-center">
+            <div
+              style={{ width: '25%', marginRight: 20 }}
+              className="font-semibold flex items-center gap-2"
+            >
+              <h3>{'STATE'}</h3>
             </div>
-          )}
+            {showDiffs ? (
+              <h3 style={{ width: '39%' }} className="font-semibold">
+                DIFFS
+              </h3>
+            ) : null}
+            <h3 style={{ width: '30%' }} className="font-semibold">
+              {getActionsName(type)}
+            </h3>
+            <h3
+              style={{ paddingRight: 30, marginLeft: 'auto' }}
+              className="font-semibold"
+            >
+              <Tooltip title="Time to execute">TTE</Tooltip>
+            </h3>
+            <Segmented options={[{ label: 'Current Tab', value: 'all' }]} />
+          </div>
         </BottomBlock.Header>
         <BottomBlock.Content className="flex">
           <NoContent
@@ -311,7 +340,10 @@ function Storage(props: Props) {
                   .
                   <br />
                   <br />
-                  <button className="color-teal" onClick={() => props.hideHint('storage')}>
+                  <button
+                    className="color-teal"
+                    onClick={() => hideHint('storage')}
+                  >
                     Got It!
                   </button>
                 </>
@@ -326,8 +358,7 @@ function Storage(props: Props) {
                   {'Empty state.'}
                 </div>
               ) : (
-                <JSONTree collapsed={2} src={stateObject}
-                />
+                <JSONTree collapsed={2} src={stateObject} />
               )}
             </div>
             <div className="flex" style={{ width: '75%' }}>
@@ -344,15 +375,7 @@ function Storage(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    hintIsHidden: state.getIn(['components', 'player', 'hiddenHints', 'storage']),
-  }),
-  {
-    hideHint,
-  }
-)(observer(Storage));
-
+export default observer(Storage);
 
 /**
  * TODO: compute diff and only decode the required parts

@@ -67,10 +67,6 @@ def __check_database_pg(*_):
     }
 
 
-def __not_supported(*_):
-    return {"errors": ["not supported"]}
-
-
 def __always_healthy(*_):
     return {
         "health": True,

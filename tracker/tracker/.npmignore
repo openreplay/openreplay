@@ -3,7 +3,6 @@ tsconfig.json
 .prettierrc.json
 .eslintrc.cjs
 build
-compolie.js
 compile.cjs
 .cache
 js_errors.txt

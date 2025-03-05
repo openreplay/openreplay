@@ -40,30 +40,6 @@ LeftToDb = {
     schemas.AlertColumn.PERFORMANCE__TIME_TO_RENDER__AVERAGE: {
         "table": "events.pages INNER JOIN public.sessions USING(session_id)",
         "formula": "AVG(NULLIF(visually_complete,0))"},
-    schemas.AlertColumn.PERFORMANCE__IMAGE_LOAD_TIME__AVERAGE: {
-        "table": "events.resources INNER JOIN public.sessions USING(session_id)",
-        "formula": "AVG(NULLIF(resources.duration,0))", "condition": "type='img'"},
-    schemas.AlertColumn.PERFORMANCE__REQUEST_LOAD_TIME__AVERAGE: {
-        "table": "events.resources INNER JOIN public.sessions USING(session_id)",
-        "formula": "AVG(NULLIF(resources.duration,0))", "condition": "type='fetch'"},
-    schemas.AlertColumn.RESOURCES__LOAD_TIME__AVERAGE: {
-        "table": "events.resources INNER JOIN public.sessions USING(session_id)",
-        "formula": "AVG(NULLIF(resources.duration,0))"},
-    schemas.AlertColumn.RESOURCES__MISSING__COUNT: {
-        "table": "events.resources INNER JOIN public.sessions USING(session_id)",
-        "formula": "COUNT(DISTINCT url_hostpath)", "condition": "success= FALSE AND type='img'"},
-    schemas.AlertColumn.ERRORS__4XX_5XX__COUNT: {
-        "table": "events.resources INNER JOIN public.sessions USING(session_id)", "formula": "COUNT(session_id)",
-        "condition": "status/100!=2"},
-    schemas.AlertColumn.ERRORS__4XX__COUNT: {
-        "table": "events.resources INNER JOIN public.sessions USING(session_id)",
-        "formula": "COUNT(session_id)", "condition": "status/100=4"},
-    schemas.AlertColumn.ERRORS__5XX__COUNT: {
-        "table": "events.resources INNER JOIN public.sessions USING(session_id)",
-        "formula": "COUNT(session_id)", "condition": "status/100=5"},
-    schemas.AlertColumn.ERRORS__JAVASCRIPT__IMPACTED_SESSIONS__COUNT: {
-        "table": "events.resources INNER JOIN public.sessions USING(session_id)",
-        "formula": "COUNT(DISTINCT session_id)", "condition": "success= FALSE AND type='script'"},
     schemas.AlertColumn.PERFORMANCE__CRASHES__COUNT: {
         "table": "public.sessions",
         "formula": "COUNT(DISTINCT session_id)",

@@ -34,11 +34,13 @@ export default class Session {
   private projectID: string | undefined
   private tabId: string
   public userInfo: UserInfo
+  private token: string | undefined
+  private readonly app: App
+  private readonly options: Options
 
-  constructor(
-    private readonly app: App,
-    private readonly options: Options,
-  ) {
+  constructor(params: { app: App; options: Options }) {
+    this.app = params.app
+    this.options = params.options
     this.createTabId()
   }
 
@@ -89,7 +91,7 @@ export default class Session {
     this.userInfo = userInfo
   }
 
-  private getPageNumber(): number | undefined {
+  public getPageNumber = (): number | undefined => {
     const pageNoStr = this.app.sessionStorage.getItem(this.options.session_pageno_key)
     if (pageNoStr == null) {
       return undefined
@@ -97,7 +99,7 @@ export default class Session {
     return parseInt(pageNoStr)
   }
 
-  incPageNo(): number {
+  incPageNo = (): number => {
     let pageNo = this.getPageNumber()
     if (pageNo === undefined) {
       pageNo = 0
@@ -109,10 +111,12 @@ export default class Session {
   }
 
   getSessionToken(): string | undefined {
-    return this.app.sessionStorage.getItem(this.options.session_token_key) || undefined
+    const token = this.token || this.app.sessionStorage.getItem(this.options.session_token_key)
+    return token || undefined
   }
 
   setSessionToken(token: string): void {
+    this.token = token
     this.app.sessionStorage.setItem(this.options.session_token_key, token)
   }
 

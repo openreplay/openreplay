@@ -259,17 +259,30 @@ type TrPerformanceTrack = [
   usedJSHeapSize: number,
 ]
 
-type TrStringDict = [
+type TrStringDictDeprecated = [
   type: 50,
   key: number,
   value: string,
 ]
 
-type TrSetNodeAttributeDict = [
+type TrSetNodeAttributeDictDeprecated = [
   type: 51,
   id: number,
   nameKey: number,
   valueKey: number,
+]
+
+type TrStringDict = [
+  type: 43,
+  key: string,
+  value: string,
+]
+
+type TrSetNodeAttributeDict = [
+  type: 52,
+  id: number,
+  name: string,
+  value: string,
 ]
 
 type TrResourceTimingDeprecated = [
@@ -550,8 +563,14 @@ type TrGraphQL = [
   duration: number,
 ]
 
+type TrWebVitals = [
+  type: 124,
+  name: string,
+  value: string,
+]
 
-export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL
+
+export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDictDeprecated | TrSetNodeAttributeDictDeprecated | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL | TrWebVitals
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
@@ -817,7 +836,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 50: {
       return {
-        tp: MType.StringDict,
+        tp: MType.StringDictDeprecated,
         key: tMsg[1],
         value: tMsg[2],
       }
@@ -825,10 +844,27 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 51: {
       return {
-        tp: MType.SetNodeAttributeDict,
+        tp: MType.SetNodeAttributeDictDeprecated,
         id: tMsg[1],
         nameKey: tMsg[2],
         valueKey: tMsg[3],
+      }
+    }
+    
+    case 43: {
+      return {
+        tp: MType.StringDict,
+        key: tMsg[1],
+        value: tMsg[2],
+      }
+    }
+    
+    case 52: {
+      return {
+        tp: MType.SetNodeAttributeDict,
+        id: tMsg[1],
+        name: tMsg[2],
+        value: tMsg[3],
       }
     }
     

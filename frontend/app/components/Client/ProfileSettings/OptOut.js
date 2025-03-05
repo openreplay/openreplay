@@ -1,28 +1,29 @@
 import React from 'react'
-import { connect } from 'react-redux';
 import { Checkbox } from 'UI'
-import { updateClient } from 'Duck/user'
+import { observer } from 'mobx-react-lite'
+import { useStore } from "App/mstore";
 
-function OptOut(props) {
-  const { optOut } = props;
+function OptOut() {
+  const { userStore } = useStore();
+  const optOut = userStore.account.optOut;
+  const updateClient = userStore.updateClient;
+
   const onChange = () => {
-    props.updateClient({ optOut: !optOut })
+    void updateClient({ optOut: !optOut });
   }
+
   return (
     <div>
       <Checkbox
         name="isPublic"
-        className="font-medium"
         type="checkbox"
         checked={ optOut }
         onClick={ onChange }
-        className="mr-8"
+        className="font-medium mr-8"
         label="Anonymize"
       />
     </div>
   )
 }
 
-export default connect(state => ({
-  optOut: state.getIn([ 'user', 'account', 'optOut' ]),
-}), { updateClient })(OptOut);
+export default observer(OptOut);

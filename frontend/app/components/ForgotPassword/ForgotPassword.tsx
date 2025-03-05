@@ -1,19 +1,15 @@
 import Copyright from 'Shared/Copyright';
 import React from 'react';
-import { Form, Input, Loader, Link, Icon, Message } from 'UI';
+import { Link } from 'UI';
 import {Button} from 'antd';
 import { login as loginRoute } from 'App/routes';
-import { connect } from 'react-redux';
 import ResetPassword from './ResetPasswordRequest';
 import CreatePassword from './CreatePassword';
 
 const LOGIN = loginRoute();
 
-interface Props {
-  params: any;
-}
-function ForgotPassword(props: Props) {
-  const { params } = props;
+function ForgotPassword(props) {
+  const params = new URLSearchParams(props.location.search);
   const pass = params.get('pass');
   const invitation = params.get('invitation');
   const creatingNewPassword = pass && invitation;
@@ -54,6 +50,4 @@ function ForgotPassword(props: Props) {
   );
 }
 
-export default connect((state: any, props: any) => ({
-  params: new URLSearchParams(props.location.search),
-}))(ForgotPassword);
+export default ForgotPassword;

@@ -2,36 +2,27 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { BackLink } from 'UI';
 import { observer } from 'mobx-react-lite';
-import { connect } from 'react-redux';
-import { fetchSessions, customSetSessions } from 'Duck/liveSearch';
 import { useHistory, useParams } from 'react-router-dom';
 import { liveSession, assist, withSiteId, multiview } from 'App/routes';
 import AssistSessionsModal from 'App/components/Session_/Player/Controls/AssistSessionsModal';
 import { useModal } from 'App/components/Modal';
 import LivePlayer from 'App/components/Session/LivePlayer';
-import EmptyTile from './EmptyTile'
-import SessionTileFooter from './SessionTileFooter'
+import EmptyTile from './EmptyTile';
+import SessionTileFooter from './SessionTileFooter';
 
 function Multiview({
-  total,
-  fetchSessions,
-  siteId,
-  assistCredentials,
-  customSetSessions,
-}: {
-  total: number;
-  customSetSessions: (data: any) => void;
-  fetchSessions: (filter: any) => void;
-  siteId: string;
+                     assistCredentials
+                   }: {
   assistCredentials: any;
   list: Record<string, any>[];
 }) {
   const { showModal, hideModal } = useModal();
-
-  const { assistMultiviewStore } = useStore();
+  const { assistMultiviewStore, projectsStore, searchStoreLive, sessionStore } = useStore();
+  const siteId = projectsStore.siteId!;
   const history = useHistory();
   // @ts-ignore
   const { sessionsquery } = useParams();
+  const total = sessionStore.totalLiveSessions;
 
   const onSessionsChange = (sessions: Array<Record<string, any> | undefined>) => {
     const sessionIdQuery = encodeURIComponent(sessions.map((s) => s && s.sessionId).join(','));
@@ -45,21 +36,21 @@ function Multiview({
       const sessionIds = decodeURIComponent(sessionsquery).split(',');
       // preset
       assistMultiviewStore.presetSessions(sessionIds).then((data) => {
-        customSetSessions(data);
+        sessionStore.customSetSessions(data);
       });
     } else {
-      fetchSessions({});
+      searchStoreLive.fetchSessions();
     }
   }, []);
 
   const openLiveSession = (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
     assistMultiviewStore.setActiveSession(sessionId);
-    history.push(withSiteId(liveSession(sessionId)+'?multi=true', siteId));
+    history.push(withSiteId(liveSession(sessionId) + '?multi=true', siteId));
   };
 
   const returnToList = () => {
-    assistMultiviewStore.reset()
+    assistMultiviewStore.reset();
     history.push(withSiteId(assist(), siteId));
   };
 
@@ -79,7 +70,7 @@ function Multiview({
 
   const emptySpace = 4 - assistMultiviewStore.sessions.length;
 
-  const placeholder = emptySpace > 0 ? new Array(emptySpace).fill(0) : []
+  const placeholder = emptySpace > 0 ? new Array(emptySpace).fill(0) : [];
 
   return (
     <div style={{ height: '95vh' }} className="full flex flex-col">
@@ -125,13 +116,4 @@ function Multiview({
   );
 }
 
-export default connect(
-  (state: any) => ({
-    total: state.getIn(['liveSearch', 'total']),
-    siteId: state.getIn(['site', 'siteId']),
-  }),
-  {
-    fetchSessions,
-    customSetSessions,
-  }
-)(observer(Multiview));
+export default observer(Multiview);

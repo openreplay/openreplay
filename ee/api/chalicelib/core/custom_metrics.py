@@ -9,7 +9,7 @@ from chalicelib.core import funnels, issues, heatmaps, sessions_insights, sessio
     product_analytics, custom_metrics_predefined
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.storage import StorageClient, extra
+from chalicelib.utils.storage import extra
 
 if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
     logging.info(">>> Using experimental error search")
@@ -23,7 +23,6 @@ else:
     from chalicelib.core import sessions_legacy as sessions
 
 logger = logging.getLogger(__name__)
-PIE_CHART_GROUP = 5
 
 
 # TODO: refactor this to split
@@ -50,69 +49,73 @@ def __get_table_of_series(project_id, data: schemas.CardSchema):
     return results
 
 
-def __get_funnel_chart(project_id: int, data: schemas.CardFunnel, user_id: int = None):
+def __get_funnel_chart(project: schemas.ProjectContext, data: schemas.CardFunnel, user_id: int = None):
     if len(data.series) == 0:
         return {
             "stages": [],
             "totalDropDueToIssues": 0
         }
 
-    return funnels.get_top_insights_on_the_fly_widget(project_id=project_id,
-                                                      data=data.series[0].filter,
-                                                      metric_format=data.metric_format)
+    # return funnels.get_top_insights_on_the_fly_widget(project_id=project_id,
+    #                                                   data=data.series[0].filter,
+    #                                                   metric_format=data.metric_format)
+    return funnels.get_simple_funnel(project=project,
+                                     data=data.series[0].filter,
+                                     metric_format=data.metric_format)
 
 
-def __get_errors_list(project_id, user_id, data: schemas.CardSchema):
+def __get_errors_list(project: schemas.ProjectContext, user_id, data: schemas.CardSchema):
     if len(data.series) == 0:
         return {
             "total": 0,
             "errors": []
         }
-    return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
+    return errors.search(data.series[0].filter, project_id=project.project_id, user_id=user_id)
 
 
-def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
+def __get_sessions_list(project: schemas.ProjectContext, user_id, data: schemas.CardSchema):
     if len(data.series) == 0:
         logger.debug("empty series")
         return {
             "total": 0,
             "sessions": []
         }
-    return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
+    return sessions.search_sessions(data=data.series[0].filter, project_id=project.project_id, user_id=user_id)
 
 
-def __get_heat_map_chart(project_id, user_id, data: schemas.CardHeatMap, include_mobs: bool = True):
+def __get_heat_map_chart(project: schemas.ProjectContext, user_id, data: schemas.CardHeatMap,
+                         include_mobs: bool = True):
     if len(data.series) == 0:
         return None
     data.series[0].filter.filters += data.series[0].filter.events
     data.series[0].filter.events = []
-    return heatmaps.search_short_session(project_id=project_id, user_id=user_id,
+    return heatmaps.search_short_session(project_id=project.project_id, user_id=user_id,
                                          data=schemas.HeatMapSessionsSearch(
                                              **data.series[0].filter.model_dump()),
                                          include_mobs=include_mobs)
 
 
 # EE only
-def __get_insights_chart(project_id: int, data: schemas.CardInsights, user_id: int = None):
-    return sessions_insights.fetch_selected(project_id=project_id,
+def __get_insights_chart(project: schemas.ProjectContext, data: schemas.CardInsights, user_id: int = None):
+    return sessions_insights.fetch_selected(project_id=project.project_id,
                                             data=schemas.GetInsightsSchema(startTimestamp=data.startTimestamp,
                                                                            endTimestamp=data.endTimestamp,
                                                                            metricValue=data.metric_value,
                                                                            series=data.series))
 
 
-def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
+def __get_path_analysis_chart(project: schemas.ProjectContext, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.series) == 0:
         data.series.append(
             schemas.CardPathAnalysisSeriesSchema(startTimestamp=data.startTimestamp, endTimestamp=data.endTimestamp))
     elif not isinstance(data.series[0].filter, schemas.PathAnalysisSchema):
         data.series[0].filter = schemas.PathAnalysisSchema()
 
-    return product_analytics.path_analysis(project_id=project_id, data=data)
+    return product_analytics.path_analysis(project_id=project.project_id, data=data)
 
 
-def __get_timeseries_chart(project_id: int, data: schemas.CardTimeSeries, user_id: int = None):
-    series_charts = __try_live(project_id=project_id, data=data)
+def __get_timeseries_chart(project: schemas.ProjectContext, data: schemas.CardTimeSeries, user_id: int = None):
+    series_charts = __try_live(project_id=project.project_id, data=data)
     results = [{}] * len(series_charts[0])
     for i in range(len(results)):
         for j, series_chart in enumerate(series_charts):
@@ -125,47 +128,47 @@ def not_supported(**args):
     raise Exception("not supported")
 
 
-def __get_table_of_user_ids(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_user_ids(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_sessions(project_id: int, data: schemas.CardTable, user_id):
-    return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
+def __get_table_of_sessions(project: schemas.ProjectContext, data: schemas.CardTable, user_id):
+    return __get_sessions_list(project=project, user_id=user_id, data=data)
 
 
-def __get_table_of_errors(project_id: int, data: schemas.CardTable, user_id: int):
-    return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
+def __get_table_of_errors(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int):
+    return __get_errors_list(project=project, user_id=user_id, data=data)
 
 
-def __get_table_of_issues(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_issues(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_browsers(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_browsers(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_devises(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_devises(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_countries(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_countries(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_urls(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_urls(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_referrers(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_referrers(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_requests(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_requests(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
+def __get_table_chart(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int):
     supported = {
         schemas.MetricOfTable.SESSIONS: __get_table_of_sessions,
         schemas.MetricOfTable.ERRORS: __get_table_of_errors,
@@ -178,13 +181,13 @@ def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
         schemas.MetricOfTable.REFERRER: __get_table_of_referrers,
         schemas.MetricOfTable.FETCH: __get_table_of_requests
     }
-    return supported.get(data.metric_of, not_supported)(project_id=project_id, data=data, user_id=user_id)
+    return supported.get(data.metric_of, not_supported)(project=project, data=data, user_id=user_id)
 
 
-def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
+def get_chart(project: schemas.ProjectContext, data: schemas.CardSchema, user_id: int):
     if data.is_predefined:
         return custom_metrics_predefined.get_metric(key=data.metric_of,
-                                                    project_id=project_id,
+                                                    project_id=project.project_id,
                                                     data=data.model_dump())
 
     supported = {
@@ -195,24 +198,7 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
         schemas.MetricType.INSIGHTS: __get_insights_chart,
         schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_chart
     }
-    return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
-
-
-# def __merge_metric_with_data(metric: schemas.CardSchema,
-#                              data: schemas.CardSessionsSchema) -> schemas.CardSchema:
-#     metric.startTimestamp = data.startTimestamp
-#     metric.endTimestamp = data.endTimestamp
-#     metric.page = data.page
-#     metric.limit = data.limit
-#     metric.density = data.density
-#     if data.series is not None and len(data.series) > 0:
-#         metric.series = data.series
-#
-#     # if len(data.filters) > 0:
-#     #     for s in metric.series:
-#     #         s.filter.filters += data.filters
-#     # metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
-#     return metric
+    return supported.get(data.metric_type, not_supported)(project=project, data=data, user_id=user_id)
 
 
 def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
@@ -232,38 +218,6 @@ def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSe
     return results
 
 
-def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    # No need for this because UI is sending the full payload
-    # raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    # if raw_metric is None:
-    #     return None
-    # metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
-    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-    # if metric is None:
-    #     return None
-    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
-        return None
-    for s in data.series:
-        return {"seriesId": s.series_id, "seriesName": s.name,
-                **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)}
-
-
-def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    # No need for this because UI is sending the full payload
-    # raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    # if raw_metric is None:
-    #     return None
-    # metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
-    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-    # if metric is None:
-    #     return None
-    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
-        return None
-    for s in data.series:
-        return {"seriesId": s.series_id, "seriesName": s.name,
-                **errors.search(data=s.filter, project_id=project_id, user_id=user_id)}
-
-
 def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     results = []
     if len(data.series) == 0:
@@ -279,61 +233,19 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     return results
 
 
-def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel):
-    if len(data.series) == 0:
-        return []
-    data.series[0].filter.startTimestamp = data.startTimestamp
-    data.series[0].filter.endTimestamp = data.endTimestamp
-    data = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
-    return data
-
-
-def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
-    if len(data.filters) > 0 or len(data.series) > 0:
-        filters = [f.model_dump(by_alias=True) for f in data.filters] \
-                  + [f.model_dump(by_alias=True) for f in data.series[0].filter.filters]
-    else:
-        return []
-
-    search_data = schemas.SessionsSearchPayloadSchema(
-        startTimestamp=data.startTimestamp,
-        endTimestamp=data.endTimestamp,
-        limit=data.limit,
-        page=data.page,
-        filters=filters
-    )
-    # ---- To make issues response close to the chart response
-    search_data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.EVENTS_COUNT,
-                                                                 operator=schemas.MathOperator.GREATER,
-                                                                 value=[1]))
-    if len(data.start_point) == 0:
-        search_data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.LOCATION,
-                                                                    operator=schemas.SearchEventOperator.IS_ANY,
-                                                                    value=[]))
-    # ---- End
-
-    for s in data.excludes:
-        search_data.events.append(schemas.SessionSearchEventSchema2(type=s.type,
-                                                                    operator=schemas.SearchEventOperator.NOT_ON,
-                                                                    value=s.value))
-    result = sessions.search_table_of_individual_issues(project_id=project_id, data=search_data)
-    return result
-
-
-def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
+def get_issues(project: schemas.ProjectContext, user_id: int, data: schemas.CardSchema):
     if data.is_predefined:
         return not_supported()
     if data.metric_of == schemas.MetricOfTable.ISSUES:
-        return __get_table_of_issues(project_id=project_id, user_id=user_id, data=data)
+        return __get_table_of_issues(project=project, user_id=user_id, data=data)
     supported = {
         schemas.MetricType.TIMESERIES: not_supported,
         schemas.MetricType.TABLE: not_supported,
         schemas.MetricType.HEAT_MAP: not_supported,
-        schemas.MetricType.FUNNEL: __get_funnel_issues,
         schemas.MetricType.INSIGHTS: not_supported,
-        schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_issues,
+        schemas.MetricType.PATH_ANALYSIS: not_supported,
     }
-    return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
+    return supported.get(data.metric_type, not_supported)()
 
 
 def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
@@ -344,14 +256,14 @@ def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
     return r
 
 
-def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
+def create_card(project: schemas.ProjectContext, user_id, data: schemas.CardSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         session_data = None
         if data.metric_type == schemas.MetricType.HEAT_MAP:
             if data.session_id is not None:
                 session_data = {"sessionId": data.session_id}
             else:
-                session_data = __get_heat_map_chart(project_id=project_id, user_id=user_id,
+                session_data = __get_heat_map_chart(project=project, user_id=user_id,
                                                     data=data, include_mobs=False)
                 if session_data is not None:
                     session_data = {"sessionId": session_data["sessionId"]}
@@ -359,7 +271,7 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
             if session_data is not None:
                 # for EE only
                 keys = sessions_mobs. \
-                    __get_mob_keys(project_id=project_id, session_id=session_data["sessionId"])
+                    __get_mob_keys(project_id=project.project_id, session_id=session_data["sessionId"])
                 keys += sessions_mobs. \
                     __get_mob_keys_deprecated(session_id=session_data["sessionId"])  # To support old sessions
                 tag = config('RETENTION_L_VALUE', default='vault')
@@ -377,9 +289,8 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
             _data[f"index_{i}"] = i
             _data[f"filter_{i}"] = s.filter.json()
         series_len = len(data.series)
-        params = {"user_id": user_id, "project_id": project_id, **data.model_dump(), **_data}
-        params["default_config"] = json.dumps(data.default_config.model_dump())
-        params["card_info"] = None
+        params = {"user_id": user_id, "project_id": project.project_id, **data.model_dump(), **_data,
+                  "default_config": json.dumps(data.default_config.model_dump()), "card_info": None}
         if data.metric_type == schemas.MetricType.PATH_ANALYSIS:
             params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
 
@@ -404,7 +315,7 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
         r = cur.fetchone()
         if dashboard:
             return r["metric_id"]
-    return {"data": get_card(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
+    return {"data": get_card(metric_id=r["metric_id"], project_id=project.project_id, user_id=user_id)}
 
 
 def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
@@ -735,8 +646,8 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                 "issue": issue}
 
 
-def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
+def make_chart_from_card(project: schemas.ProjectContext, user_id, metric_id, data: schemas.CardSessionsSchema):
+    raw_metric: dict = get_card(metric_id=metric_id, project_id=project.project_id, user_id=user_id, include_data=True)
 
     if raw_metric is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
@@ -748,18 +659,18 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
 
     if metric.is_predefined:
         return custom_metrics_predefined.get_metric(key=metric.metric_of,
-                                                    project_id=project_id,
+                                                    project_id=project.project_id,
                                                     data=data.model_dump())
     elif metric.metric_type == schemas.MetricType.HEAT_MAP:
         if raw_metric["data"] and raw_metric["data"].get("sessionId"):
-            return heatmaps.get_selected_session(project_id=project_id,
+            return heatmaps.get_selected_session(project_id=project.project_id,
                                                  session_id=raw_metric["data"]["sessionId"])
         else:
-            return heatmaps.search_short_session(project_id=project_id,
+            return heatmaps.search_short_session(project_id=project.project_id,
                                                  data=schemas.HeatMapSessionsSearch(**metric.model_dump()),
                                                  user_id=user_id)
 
-    return get_chart(project_id=project_id, data=metric, user_id=user_id)
+    return get_chart(project=project, data=metric, user_id=user_id)
 
 
 def card_exists(metric_id, project_id, user_id) -> bool:

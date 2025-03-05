@@ -1,8 +1,7 @@
 import React, { useMemo, useContext, useState, useRef } from 'react';
-import { connect } from 'react-redux';
+import { useStore } from 'App/mstore';
 import TimeTracker from 'Components/Session_/Player/Controls/TimeTracker';
 import stl from 'Components/Session_/Player/Controls/timeline.module.css';
-import { setTimelinePointer, setTimelineHoverTime } from 'Duck/sessions';
 import DraggableCircle from 'Components/Session_/Player/Controls/components/DraggableCircle';
 import CustomDragLayer, { OnDragCallback } from 'Components/Session_/Player/Controls/components/CustomDragLayer';
 import { debounce } from 'App/utils';
@@ -11,13 +10,11 @@ import { PlayerContext, ILivePlayerContext } from 'App/components/Session/player
 import { observer } from 'mobx-react-lite';
 import { Duration } from 'luxon';
 
-interface IProps {
-  setTimelineHoverTime: (t: number) => void
-  startedAt: number
-  tooltipVisible: boolean
-}
-
-function Timeline(props: IProps) {
+function Timeline() {
+  const { sessionStore } = useStore();
+  const startedAt = sessionStore.current.startedAt ?? 0;
+  const tooltipVisible = sessionStore.timeLineTooltip.isVisible;
+  const setTimelineHoverTime = sessionStore.setTimelineTooltip;
   // @ts-ignore
   const { player, store } = useContext<ILivePlayerContext>(PlayerContext)
   const [wasPlaying, setWasPlaying] = useState(false)
@@ -35,7 +32,7 @@ function Timeline(props: IProps) {
   const scale = 100 / endTime;
 
   const debouncedJump = useMemo(() => debounce(player.jump, 500), [])
-  const debouncedTooltipChange = useMemo(() => debounce(props.setTimelineHoverTime, 50), [])
+  const debouncedTooltipChange = useMemo(() => debounce(setTimelineHoverTime, 50), [])
 
   const onDragEnd = () => {
     if (!liveTimeTravel) return;
@@ -59,7 +56,7 @@ function Timeline(props: IProps) {
   };
 
   const getLiveTime = (e: React.MouseEvent) => {
-    const duration = new Date().getTime() - props.startedAt;
+    const duration = new Date().getTime() - startedAt;
     // @ts-ignore type mismatch from react?
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
     const time = Math.max(Math.round(p * duration), 0);
@@ -69,7 +66,7 @@ function Timeline(props: IProps) {
 
   const showTimeTooltip = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target !== progressRef.current && e.target !== timelineRef.current) {
-      return props.tooltipVisible && hideTimeTooltip();
+      return tooltipVisible && hideTimeTooltip();
     }
 
     const [time, duration] = getLiveTime(e);
@@ -136,7 +133,7 @@ function Timeline(props: IProps) {
         onMouseEnter={showTimeTooltip}
         onMouseLeave={hideTimeTooltip}
       >
-        <TooltipContainer live />
+        <TooltipContainer />
         <DraggableCircle
           left={time * scale}
           onDrop={onDragEnd}
@@ -156,10 +153,4 @@ function Timeline(props: IProps) {
   )
 }
 
-export default connect(
-  (state: any) => ({
-    startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
-    tooltipVisible: state.getIn(['sessions', 'timeLineTooltip', 'isVisible']),
-  }),
-  { setTimelinePointer, setTimelineHoverTime }
-)(observer(Timeline))
+export default observer(Timeline)

@@ -1,9 +1,8 @@
-from decouple import config
-
 import schemas
-from chalicelib.core import sessions, sessions_favorite_exp, sessions_mobs, sessions_devtool
+from chalicelib.core import sessions_favorite_exp, sessions_mobs, sessions_devtool
 from chalicelib.utils import pg_client
 from chalicelib.utils.storage import extra
+from decouple import config
 
 
 def add_favorite_session(context: schemas.CurrentContext, project_id, session_id):

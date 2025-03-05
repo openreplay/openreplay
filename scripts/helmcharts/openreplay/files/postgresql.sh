@@ -14,7 +14,7 @@ pgdir=/opt/openreplay/openreplay/scripts/schema/db/init_dbs/postgresql
 
 function migrate() {
     echo "Starting postgresql migration"
-    IFS=',' read -r -a migration_versions <<< "$1"
+    IFS=',' read -r -a migration_versions <<<"$1"
     for version in ${migration_versions[*]}; do
         echo "Migrating postgresql version $version"
         psql -v ON_ERROR_STOP=1 -f ${pgdir}/${version}/${version}.sql 2>&1
@@ -28,14 +28,14 @@ function init() {
 
 # /bin/bash postgresql.sh migrate $migration_versions
 case "$1" in
-    migrate)
-        migrate $2
-        ;;
-    init)
-        init
-        ;;
-    *)
-        echo "Unknown operation for postgresql migration; exiting."
-        exit 1
-        ;;
+migrate)
+    migrate $2
+    ;;
+init)
+    init
+    ;;
+*)
+    echo "Unknown operation for postgresql migration; exiting."
+    exit 1
+    ;;
 esac

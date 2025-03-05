@@ -3,9 +3,7 @@ import { Switch } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';
@@ -30,15 +28,13 @@ import {
   PROFILER,
   STACKEVENTS,
   STORAGE,
-  changeSkipInterval,
-  fullscreenOff,
-  fullscreenOn,
-  toggleBottomBlock,
-} from 'Duck/components/player';
-import { fetchSessions } from 'Duck/liveSearch';
+  BACKENDLOGS,
+} from 'App/mstore/uiPlayerStore';
 import { Icon } from 'UI';
+import LogsButton from 'App/components/Session/Player/SharedComponents/BackendLogs/LogsButton';
 
 import ControlButton from './ControlButton';
+import { WebEventsList } from "./EventsList";
 import Timeline from './Timeline';
 import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
@@ -72,10 +68,32 @@ function getStorageName(type: any) {
   }
 }
 
-function Controls(props: any) {
+function Controls({ setActiveTab }: any) {
   const { player, store } = React.useContext(PlayerContext);
-  const { uxtestingStore } = useStore();
+  const {
+    uxtestingStore,
+    uiPlayerStore,
+    projectsStore,
+    sessionStore,
+    userStore,
+  } = useStore();
+  const permissions = userStore.account.permissions || [];
+  const disableDevtools =
+    userStore.isEnterprise &&
+    !(
+      permissions.includes('DEV_TOOLS') ||
+      permissions.includes('SERVICE_DEV_TOOLS')
+    );
+  const fullscreen = uiPlayerStore.fullscreen;
+  const bottomBlock = uiPlayerStore.bottomBlock;
+  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
+  const fullscreenOn = uiPlayerStore.fullscreenOn;
+  const fullscreenOff = uiPlayerStore.fullscreenOff;
+  const changeSkipInterval = uiPlayerStore.changeSkipInterval;
+  const skipInterval = uiPlayerStore.skipInterval;
+  const showStorageRedux = !uiPlayerStore.hiddenHints.storage;
   const history = useHistory();
+  const siteId = projectsStore.siteId;
   const {
     playing,
     completed,
@@ -86,20 +104,9 @@ function Controls(props: any) {
     inspectorMode,
   } = store.get();
 
-  const {
-    bottomBlock,
-    toggleBottomBlock,
-    fullscreen,
-    changeSkipInterval,
-    skipInterval,
-    disableDevtools,
-    showStorageRedux,
-    session,
-    previousSessionId,
-    nextSessionId,
-    siteId,
-    setActiveTab,
-  } = props;
+  const session = sessionStore.current;
+  const previousSessionId = sessionStore.previousId;
+  const nextSessionId = sessionStore.nextId;
 
   const disabled =
     disableDevtools || messagesLoading || inspectorMode || markedTargets;
@@ -115,8 +122,8 @@ function Controls(props: any) {
 
   useShortcuts({
     skipInterval,
-    fullScreenOn: props.fullscreenOn,
-    fullScreenOff: props.fullscreenOff,
+    fullScreenOn: fullscreenOn,
+    fullScreenOff: fullscreenOff,
     toggleBottomBlock,
     openNextSession: nextHandler,
     openPrevSession: prevHandler,
@@ -189,7 +196,7 @@ function Controls(props: any) {
 
             <FullScreenButton
               size={16}
-              onClick={props.fullscreenOn}
+              onClick={fullscreenOn}
               customClasses={
                 'rounded hover:bg-gray-light-shade color-gray-medium'
               }
@@ -217,7 +224,7 @@ const DevtoolsButtons = observer(
     disabled,
     events,
   }: IDevtoolsButtons) => {
-    const { aiSummaryStore } = useStore();
+    const { aiSummaryStore, integrationsStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
 
     // @ts-ignore
@@ -254,6 +261,8 @@ const DevtoolsButtons = observer(
     };
 
     const possibleAudio = events.filter((e) => e.name.includes('media/audio'));
+    const integratedServices =
+      integrationsStore.integrations.backendLogIntegrations;
     return (
       <>
         {isSaas ? <SummaryButton onClick={showSummary} /> : null}
@@ -354,6 +363,12 @@ const DevtoolsButtons = observer(
             label="Profiler"
           />
         )}
+        {integratedServices.length ? (
+          <LogsButton
+            integrated={integratedServices.map((service) => service.name)}
+            onClick={() => toggleBottomTools(BACKENDLOGS)}
+          />
+        ) : null}
         {possibleAudio.length ? (
           <DropdownAudioPlayer audioEvents={possibleAudio} />
         ) : null}
@@ -425,84 +440,4 @@ const fillStyle = {
   padding: '1px 8px',
 };
 
-const ControlPlayer = observer(Controls);
-
-export default connect(
-  (state: any) => {
-    const permissions = state.getIn(['user', 'account', 'permissions']) || [];
-    const isEnterprise = state.getIn(['user', 'account', 'edition']) === 'ee';
-    return {
-      disableDevtools:
-        isEnterprise &&
-        !(
-          permissions.includes('DEV_TOOLS') ||
-          permissions.includes('SERVICE_DEV_TOOLS')
-        ),
-      fullscreen: state.getIn(['components', 'player', 'fullscreen']),
-      bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
-      showStorageRedux: !state.getIn([
-        'components',
-        'player',
-        'hiddenHints',
-        'storage',
-      ]),
-      showStackRedux: !state.getIn([
-        'components',
-        'player',
-        'hiddenHints',
-        'stack',
-      ]),
-      session: state.getIn(['sessions', 'current']),
-      totalAssistSessions: state.getIn(['liveSearch', 'total']),
-      skipInterval: state.getIn(['components', 'player', 'skipInterval']),
-      previousSessionId: state.getIn(['sessions', 'previousId']),
-      nextSessionId: state.getIn(['sessions', 'nextId']),
-      siteId: state.getIn(['site', 'siteId']),
-    };
-  },
-  {
-    fullscreenOn,
-    fullscreenOff,
-    toggleBottomBlock,
-    fetchSessions,
-    changeSkipInterval,
-  }
-)(ControlPlayer);
-
-// shouldComponentUpdate(nextProps) {
-//   if (
-//     nextProps.fullscreen !== props.fullscreen ||
-//     nextProps.bottomBlock !== props.bottomBlock ||
-//     nextProps.live !== props.live ||
-//     nextProps.livePlay !== props.livePlay ||
-//     nextProps.playing !== props.playing ||
-//     nextProps.completed !== props.completed ||
-//     nextProps.skip !== props.skip ||
-//     nextProps.skipToIssue !== props.skipToIssue ||
-//     nextProps.speed !== props.speed ||
-//     nextProps.disabled !== props.disabled ||
-//     nextProps.fullscreenDisabled !== props.fullscreenDisabled ||
-//     // nextProps.inspectorMode !== props.inspectorMode ||
-//     // nextProps.logCount !== props.logCount ||
-//     nextProps.logRedCount !== props.logRedCount ||
-//     nextProps.showExceptions !== props.showExceptions ||
-//     nextProps.resourceRedCount !== props.resourceRedCount ||
-//     nextProps.fetchRedCount !== props.fetchRedCount ||
-//     nextProps.showStack !== props.showStack ||
-//     nextProps.stackCount !== props.stackCount ||
-//     nextProps.stackRedCount !== props.stackRedCount ||
-//     nextProps.profilesCount !== props.profilesCount ||
-//     nextProps.storageCount !== props.storageCount ||
-//     nextProps.storageType !== props.storageType ||
-//     nextProps.showStorage !== props.showStorage ||
-//     nextProps.showProfiler !== props.showProfiler ||
-//     nextProps.showGraphql !== props.showGraphql ||
-//     nextProps.showFetch !== props.showFetch ||
-//     nextProps.fetchCount !== props.fetchCount ||
-//     nextProps.graphqlCount !== props.graphqlCount ||
-//     nextProps.liveTimeTravel !== props.liveTimeTravel ||
-//     nextProps.skipInterval !== props.skipInterval
-//   )
-//     return true;
-//   return false;
-// }
+export default observer(Controls);

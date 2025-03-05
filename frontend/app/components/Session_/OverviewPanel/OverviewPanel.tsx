@@ -1,8 +1,8 @@
 import { Segmented } from 'antd';
+import {InfoCircleOutlined} from '@ant-design/icons'
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
 
 import {
   MobilePlayerContext,
@@ -12,8 +12,8 @@ import { useStore } from 'App/mstore';
 import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
 import { SummaryButton } from 'Components/Session_/Player/Controls/Controls';
 import TimelineZoomButton from 'Components/Session_/Player/Controls/components/TimelineZoomButton';
-import { setZoomTab, toggleBottomBlock } from 'Duck/components/player';
 import { Icon, NoContent } from 'UI';
+import TabSelector from "../../shared/DevTools/TabSelector";
 
 import BottomBlock from '../BottomBlock';
 import EventRow from './components/EventRow';
@@ -25,24 +25,15 @@ import TimelinePointer from './components/TimelinePointer';
 import TimelineScale from './components/TimelineScale';
 import VerticalPointerLine, { VerticalPointerLineComp } from './components/VerticalPointerLine';
 
-function MobileOverviewPanelCont({
-  issuesList,
-  sessionId,
-  zoomEnabled,
-  zoomStartTs,
-  zoomEndTs,
-  setZoomTab,
-  zoomTab,
-}: {
-  issuesList: Record<string, any>[];
-  sessionId: string;
-  zoomEnabled: boolean;
-  zoomStartTs: number;
-  zoomEndTs: number;
-  setZoomTab: (tab: string) => void;
-  zoomTab: 'overview' | 'journey' | 'issues' | 'errors';
-}) {
-  const { aiSummaryStore } = useStore();
+function MobileOverviewPanelCont() {
+  const { aiSummaryStore, uiPlayerStore, sessionStore } = useStore();
+  const sessionId = sessionStore.current.sessionId;
+  const issuesList = sessionStore.current.issues;
+  const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
+  const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
+  const setZoomTab = uiPlayerStore.setZoomTab;
+  const zoomTab = uiPlayerStore.zoomTab;
   const { store, player } = React.useContext(MobilePlayerContext);
   const [dataLoaded, setDataLoaded] = React.useState(false);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
@@ -129,22 +120,14 @@ function MobileOverviewPanelCont({
   );
 }
 
-function WebOverviewPanelCont({
-  sessionId,
-  zoomEnabled,
-  zoomStartTs,
-  zoomEndTs,
-  setZoomTab,
-  zoomTab,
-}: {
-  sessionId: string;
-  zoomEnabled: boolean;
-  zoomStartTs: number;
-  zoomEndTs: number;
-  setZoomTab: (tab: string) => void;
-  zoomTab: 'overview' | 'journey' | 'issues' | 'errors';
-}) {
-  const { aiSummaryStore } = useStore();
+function WebOverviewPanelCont() {
+  const { aiSummaryStore, uiPlayerStore, sessionStore } = useStore();
+  const sessionId = sessionStore.current.sessionId;
+  const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
+  const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
+  const setZoomTab = uiPlayerStore.setZoomTab;
+  const zoomTab = uiPlayerStore.zoomTab;
   const { store } = React.useContext(PlayerContext);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
     'PERFORMANCE',
@@ -155,14 +138,60 @@ function WebOverviewPanelCont({
 
   const { endTime, currentTab, tabStates } = store.get();
 
-  const stackEventList = tabStates[currentTab]?.stackList || [];
-  const frustrationsList = tabStates[currentTab]?.frustrationsList || [];
-  const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
-  const resourceListUnmap = tabStates[currentTab]?.resourceList || [];
-  const fetchList = tabStates[currentTab]?.fetchList || [];
-  const graphqlList = tabStates[currentTab]?.graphqlList || [];
-  const performanceChartData =
-    tabStates[currentTab]?.performanceChartData || [];
+  const tabValues = Object.values(tabStates);
+  const dataSource = uiPlayerStore.dataSource;
+  const showSingleTab = dataSource === 'current';
+
+  const {
+    stackEventList = [],
+    frustrationsList = [],
+    exceptionsList = [],
+    resourceListUnmap = [],
+    fetchList = [],
+    graphqlList = [],
+    performanceChartData = [],
+  } = React.useMemo(() => {
+    if (showSingleTab) {
+      const stackEventList = tabStates[currentTab].stackList;
+      const frustrationsList = tabStates[currentTab].frustrationsList;
+      const exceptionsList = tabStates[currentTab].exceptionsList;
+      const resourceListUnmap = tabStates[currentTab].resourceList;
+      const fetchList = tabStates[currentTab].fetchList;
+      const graphqlList = tabStates[currentTab].graphqlList;
+      const performanceChartData =
+        tabStates[currentTab].performanceChartData;
+
+      return {
+        stackEventList,
+        frustrationsList,
+        exceptionsList,
+        resourceListUnmap,
+        fetchList,
+        graphqlList,
+        performanceChartData,
+      }
+    } else {
+      const stackEventList = tabValues.flatMap((tab) => tab.stackList);
+      // these two are global
+      const frustrationsList = tabValues[0].frustrationsList;
+      const exceptionsList = tabValues[0].exceptionsList;
+      // we can't compute global chart data because some tabs coexist
+      const performanceChartData: any = [];
+      const resourceListUnmap = tabValues.flatMap((tab) => tab.resourceList);
+      const fetchList = tabValues.flatMap((tab) => tab.fetchList);
+      const graphqlList = tabValues.flatMap((tab) => tab.graphqlList);
+
+      return {
+        stackEventList,
+        frustrationsList,
+        exceptionsList,
+        resourceListUnmap,
+        fetchList,
+        graphqlList,
+        performanceChartData,
+      }
+    }
+  }, [tabStates, currentTab, dataSource, tabValues]);
 
   const fetchPresented = fetchList.length > 0;
   const resourceList = resourceListUnmap
@@ -187,7 +216,18 @@ function WebOverviewPanelCont({
       PERFORMANCE: checkInZoomRange(performanceChartData),
       FRUSTRATIONS: checkInZoomRange(frustrationsList),
     };
-  }, [tabStates, currentTab, zoomEnabled, zoomStartTs, zoomEndTs]);
+  }, [
+    tabStates,
+    currentTab,
+    zoomEnabled,
+    zoomStartTs,
+    zoomEndTs,
+    resourceList.length,
+    exceptionsList.length,
+    stackEventList.length,
+    performanceChartData.length,
+    frustrationsList.length,
+  ]);
 
   const originStr = window.env.ORIGIN || window.location.origin;
   const isSaas = /app\.openreplay\.com/.test(originStr);
@@ -206,6 +246,7 @@ function WebOverviewPanelCont({
       sessionId={sessionId}
       setZoomTab={setZoomTab}
       zoomTab={zoomTab}
+      showSingleTab={showSingleTab}
     />
   );
 }
@@ -257,6 +298,7 @@ function PanelComponent({
   spotTime,
   spotEndTime,
   onClose,
+  showSingleTab,
 }: any) {
   return (
     <React.Fragment>
@@ -299,12 +341,13 @@ function PanelComponent({
             ) : null}
           </div>
           {isSpot ? null : (
-            <div className="flex items-center h-20 mr-4 gap-2">
-              <TimelineZoomButton />
+            <div className="flex items-center h-20 mr-4 gap-3">
               <FeatureSelection
                 list={selectedFeatures}
                 updateList={setSelectedFeatures}
               />
+              {!isMobile ? <TabSelector /> : null}
+              <TimelineZoomButton />
             </div>
           )}
         </BottomBlock.Header>
@@ -321,12 +364,19 @@ function PanelComponent({
                 style={{ height: '60px', minHeight: 'unset', padding: 0 }}
                 title={
                   <div className="flex items-center">
-                    <Icon name="info-circle" className="mr-2" size="18" />
+                    <InfoCircleOutlined size={18} />
                     Select a debug option to visualize on timeline.
                   </div>
                 }
               >
-                {isSpot ? <VerticalPointerLineComp time={spotTime} endTime={spotEndTime} /> : <VerticalPointerLine />}
+                {isSpot ? (
+                  <VerticalPointerLineComp
+                    time={spotTime}
+                    endTime={spotEndTime}
+                  />
+                ) : (
+                  <VerticalPointerLine />
+                )}
                 {selectedFeatures.map((feature: any, index: number) => (
                   <div
                     key={feature}
@@ -337,11 +387,13 @@ function PanelComponent({
                     <EventRow
                       isGraph={feature === 'PERFORMANCE'}
                       title={feature}
+                      disabled={!isMobile && !showSingleTab}
                       list={resources[feature]}
-                      renderElement={(pointer: any) => (
+                      renderElement={(pointer: any[], isGrouped: boolean) => (
                         <TimelinePointer
                           pointer={pointer}
                           type={feature}
+                          isGrouped={isGrouped}
                           fetchPresented={fetchPresented}
                         />
                       )}
@@ -382,31 +434,6 @@ function PanelComponent({
   );
 }
 
-export const OverviewPanel = connect(
-  (state: Record<string, any>) => ({
-    issuesList: state.getIn(['sessions', 'current']).issues,
-    sessionId: state.getIn(['sessions', 'current']).sessionId,
-    zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-    zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-    zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
-  }),
-  {
-    toggleBottomBlock,
-    setZoomTab,
-  }
-)(observer(WebOverviewPanelCont));
+export const OverviewPanel = observer(WebOverviewPanelCont);
 
-export const MobileOverviewPanel = connect(
-  (state: Record<string, any>) => ({
-    issuesList: state.getIn(['sessions', 'current']).issues,
-    sessionId: state.getIn(['sessions', 'current']).sessionId,
-    zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-    zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-    zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
-    zoomTab: state.getIn(['components', 'player']).zoomTab,
-  }),
-  {
-    toggleBottomBlock,
-    setZoomTab,
-  }
-)(observer(MobileOverviewPanelCont));
+export const MobileOverviewPanel = observer(MobileOverviewPanelCont);

@@ -94,7 +94,6 @@ rm -rf ./schemas/transformers_validators.py
 rm -rf ./orpy.py
 rm -rf ./chalicelib/core/usability_testing/
 rm -rf ./chalicelib/core/db_request_handler.py
-rm -rf ./chalicelib/core/db_request_handler.py
 rm -rf ./chalicelib/utils/or_cache
 rm -rf ./routers/subs/health.py
 rm -rf ./chalicelib/core/spot.py

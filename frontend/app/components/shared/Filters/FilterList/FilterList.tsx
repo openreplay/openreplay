@@ -36,9 +36,9 @@ function FilterList(props: Props) {
         actions = []
     } = props;
 
-    const filters = List(filter.filters);
-    const hasEvents = filters.filter((i: any) => i.isEvent).size > 0;
-    const hasFilters = filters.filter((i: any) => !i.isEvent).size > 0;
+    const filters = filter.filters;
+    const hasEvents = filters.filter((i: any) => i.isEvent).length > 0;
+    const hasFilters = filters.filter((i: any) => !i.isEvent).length > 0;
 
     let rowIndex = 0;
     const cannotDeleteFilter = hasEvents && !supportsEmpty;

@@ -319,6 +319,7 @@ export { default as Integrations_bugsnag } from './integrations_bugsnag';
 export { default as Integrations_cloudwatch_text } from './integrations_cloudwatch_text';
 export { default as Integrations_cloudwatch } from './integrations_cloudwatch';
 export { default as Integrations_datadog } from './integrations_datadog';
+export { default as Integrations_dynatrace } from './integrations_dynatrace';
 export { default as Integrations_elasticsearch_text } from './integrations_elasticsearch_text';
 export { default as Integrations_elasticsearch } from './integrations_elasticsearch';
 export { default as Integrations_github } from './integrations_github';

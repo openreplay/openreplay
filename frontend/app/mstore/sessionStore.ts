@@ -1,14 +1,9 @@
-import Record, { LAST_7_DAYS } from 'Types/app/period';
+import { action, makeAutoObservable, observable, runInAction } from 'mobx';
+import { sessionService } from 'App/services';
+import { Note } from 'App/services/NotesService';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
 import { InjectedEvent, Location } from 'Types/session/event';
-import Watchdog from 'Types/watchdog';
-import { action, makeAutoObservable, observable } from 'mobx';
-
-import { getDateRangeFromValue } from 'App/dateRange';
-import { sessionService } from 'App/services';
-import { Note } from 'App/services/NotesService';
-import store from 'App/store';
 import {
   cleanSessionFilters,
   compareJsonObjects,
@@ -16,9 +11,20 @@ import {
   getSessionFilter,
   setSessionFilter,
 } from 'App/utils';
-import { filterMap } from 'Duck/search';
+import { loadFile } from 'App/player/web/network/loadFiles';
+import { LAST_7_DAYS } from 'Types/app/period';
+import { filterMap } from 'App/mstore/searchStore';
+import { clean as cleanParams } from "../api_client";
+import { searchStore, searchStoreLive } from "./index";
+import { getDateRangeFromValue } from 'App/dateRange';
+const range = getDateRangeFromValue(LAST_7_DAYS);
 
-import { loadFile } from '../player/web/network/loadFiles';
+const defaultDateFilters = {
+  url: '',
+  rangeValue: LAST_7_DAYS,
+  startDate: range.start?.toMillis(),
+  endDate: range.end?.toMillis(),
+};
 
 class UserFilter {
   endDate: number = new Date().getTime();
@@ -27,33 +33,24 @@ class UserFilter {
   filters: any = [];
   page: number = 1;
   limit: number = 10;
-  period: any = Record({ rangeName: LAST_7_DAYS });
-
+  period: any = { rangeName: LAST_7_DAYS };
   constructor() {
-    makeAutoObservable(this, {
-      page: observable,
-      update: action,
-    });
+    makeAutoObservable(this);
   }
-
   update(key: string, value: any) {
     // @ts-ignore
     this[key] = value;
-
     if (key === 'period') {
       this.startDate = this.period.start;
       this.endDate = this.period.end;
     }
   }
-
   setFilters(filters: any[]) {
     this.filters = filters;
   }
-
   setPage(page: number) {
     this.page = page;
   }
-
   toJson() {
     return {
       endDate: this.period.end,
@@ -97,43 +94,38 @@ class DevTools {
   }
 }
 
-const range = getDateRangeFromValue(LAST_7_DAYS);
-const defaultDateFilters = {
-  url: '',
-  rangeValue: LAST_7_DAYS,
-  startDate: range.start.ts,
-  endDate: range.end.ts,
-};
+interface Bookmarks {
+  list: Session[];
+  page: number;
+  total: number;
+  pageSize: number;
+  loading: boolean;
+}
 
 export default class SessionStore {
   userFilter: UserFilter = new UserFilter();
   devTools: DevTools = new DevTools();
-
   list: Session[] = [];
+  bookmarks: Bookmarks = { list: [], page: 1, total: 0, pageSize: 10, loading: false };
   sessionIds: string[] = [];
   current = new Session();
   total = 0;
-  keyMap = {};
-  wdTypeCount = {};
+  totalLiveSessions = 0;
   favoriteList: Session[] = [];
-  activeTab = Watchdog({ name: 'All', type: 'all' });
+  activeTab = { name: 'All', type: 'all' }
   timezone = 'local';
   errorStack: ErrorStack[] = [];
-  eventsIndex = [];
+  eventsIndex: number[] = [];
   sourcemapUploaded = true;
   filteredEvents: InjectedEvent[] | null = null;
   eventsQuery = '';
-  showChatWindow = false;
   liveSessions: Session[] = [];
-  visitedEvents = [];
+  visitedEvents: Location[] = [];
   insights: any[] = [];
-  insightFilters = defaultDateFilters;
+  insightsFilters = defaultDateFilters;
   host = '';
-  funnelPage = {};
-  /** @Deprecated */
-  timelinePointer = {};
-  sessionPath = {};
-  lastPlayedSessionId: string;
+  sessionPath: Record<string, any> = {};
+  lastPlayedSessionId: string = '';
   timeLineTooltip = {
     time: 0,
     offset: 0,
@@ -145,67 +137,61 @@ export default class SessionStore {
   previousId = '';
   nextId = '';
   userTimezone = '';
-  prefetchedMobUrls: Record<string, { data: Uint8Array; entryNum: number }> =
-    {};
+  prefetchedMobUrls: Record<string, { data: Uint8Array; entryNum: number }> = {};
+  prefetched: boolean = false;
+  fetchFailed: boolean = false;
+  loadingLiveSessions: boolean = false;
+  loadingSessions: boolean = false;
+  loadingSessionData: boolean = false;
 
   constructor() {
-    makeAutoObservable(this, {
-      userFilter: observable,
-      devTools: observable,
-    });
+    makeAutoObservable(this);
   }
 
-  setUserTimezone(timezone: string) {
+  get currentId() {
+    return this.current.sessionId;
+  }
+
+  setUserTimezone = (timezone: string) => {
     this.userTimezone = timezone;
   }
 
-  resetUserFilter() {
+  resetUserFilter = () => {
     this.userFilter = new UserFilter();
   }
 
-  async getFirstMob(sessionId: string) {
+  getFirstMob = async (sessionId: string) => {
     const { domURL } = await sessionService.getFirstMobUrl(sessionId);
-    await loadFile(domURL[0], (data) =>
-      this.setPrefetchedMobUrl(sessionId, data)
-    );
+    await loadFile(domURL[0], (data) => this.setPrefetchedMobUrl(sessionId, data));
   }
 
-  setPrefetchedMobUrl(sessionId: string, fileData: Uint8Array) {
+  setPrefetchedMobUrl = (sessionId: string, fileData: Uint8Array) => {
     const keys = Object.keys(this.prefetchedMobUrls);
     const toLimit = 10 - keys.length;
     if (toLimit < 0) {
       const oldest = keys.sort(
         (a, b) =>
-          this.prefetchedMobUrls[a].entryNum -
-          this.prefetchedMobUrls[b].entryNum
+          this.prefetchedMobUrls[a].entryNum - this.prefetchedMobUrls[b].entryNum
       )[0];
       delete this.prefetchedMobUrls[oldest];
     }
     const nextEntryNum =
       keys.length > 0
-        ? Math.max(
-            ...keys.map((key) =>
-              this.prefetchedMobUrls[key]
-                ? this.prefetchedMobUrls[key].entryNum
-                : 0
-            )
-          ) + 1
-        : 0;
+      ? Math.max(...keys.map((key) => this.prefetchedMobUrls[key]?.entryNum || 0)) + 1
+      : 0;
     this.prefetchedMobUrls[sessionId] = {
       data: fileData,
       entryNum: nextEntryNum,
     };
   }
 
-  getSessions(filter: any): Promise<any> {
+  getSessions = (filter: any): Promise<any> => {
     return new Promise((resolve, reject) => {
       sessionService
         .getSessions(filter.toJson?.() || filter)
         .then((response: any) => {
           resolve({
-            sessions: response.sessions.map(
-              (session: any) => new Session(session)
-            ),
+            sessions: response.sessions.map((session: any) => new Session(session)),
             total: response.total,
           });
         })
@@ -215,18 +201,31 @@ export default class SessionStore {
     });
   }
 
-  async fetchLiveSessions(params = {}) {
+  fetchLiveSessions = async (params: any = {}) => {
+    runInAction(() => {
+      this.loadingLiveSessions = true;
+    })
     try {
-      const data = await sessionService.getLiveSessions(params);
-      this.liveSessions = data.map(
-        (session) => new Session({ ...session, live: true })
-      );
+      if (params.sort === 'duration') { // TODO ui hack to sort by duration, should be removed once the api addressed this issue
+        params.sort = 'timestamp';
+        params.order = params.order === 'asc' ? 'desc' : 'asc';
+      }
+      const data: any = await sessionService.getLiveSessions(params);
+      this.liveSessions = data.sessions.map((session: any) => new Session({ ...session, live: true }));
+      this.totalLiveSessions = data.total;
     } catch (e) {
       console.error(e);
+    } finally {
+      runInAction(() => {
+        this.loadingLiveSessions = false;
+      });
     }
   }
 
-  async fetchSessions(params = {}, force = false) {
+  fetchSessions = async (params = {}, force = false) => {
+    runInAction(() => {
+      this.loadingSessions = true;
+    })
     try {
       if (!force) {
         const oldFilters = getSessionFilter();
@@ -237,35 +236,64 @@ export default class SessionStore {
       setSessionFilter(cleanSessionFilters(params));
       const data = await sessionService.getSessions(params);
       const list = data.sessions.map((s) => new Session(s));
-
-      this.list = list;
-      this.total = data.total;
-      this.sessionIds = data.sessions.map((s) => s.sessionId);
-      this.favoriteList = list.filter((s) => s.favorite);
+      runInAction(() => {
+        this.list = list;
+        this.total = data.total;
+        this.sessionIds = data.sessions.map((s) => s.sessionId);
+        this.favoriteList = list.filter((s) => s.favorite);
+      })
     } catch (e) {
       console.error(e);
+    } finally {
+      runInAction(() => {
+        this.loadingSessions = false;
+      });
     }
   }
 
-  async fetchSessionInfo(sessionId: string, isLive = false) {
+  clearAll = () => {
+    this.list = [];
+    this.clearCurrentSession();
+  }
+
+  fetchSessionData = async (sessionId: string, isLive = false) => {
     try {
-      const { events } = store.getState().getIn(['filters', 'appliedFilter']);
+      const filter = isLive ? searchStoreLive.instance : searchStore.instance;
       const data = await sessionService.getSessionInfo(sessionId, isLive);
-      const session = new Session(data);
+      const eventsData: Record<string, any[]> = {};
+      try {
+        const evData = await sessionService.getSessionEvents(sessionId);
+        Object.assign(eventsData, evData);
+      } catch (e) {
+        console.error('Failed to fetch events', e);
+      }
 
+      const {
+        errors = [],
+        events = [],
+        issues = [],
+        crashes = [],
+        resources = [],
+        stackEvents = [],
+        userEvents = [],
+        userTesting = [],
+      } = eventsData;
+
+      const filterEvents = filter.events as Record<string, any>[];
       const matching: number[] = [];
-      const visitedEvents: Location[] = [];
-      const tmpMap: Set<string> = new Set();
 
-      session.events.forEach((event) => {
+      const visitedEvents: Location[] = [];
+      const tmpMap = new Set();
+
+      events.forEach((event) => {
         if (event.type === 'LOCATION' && !tmpMap.has(event.url)) {
           tmpMap.add(event.url);
-          visitedEvents.push(event);
+          visitedEvents.push(event as Location);
         }
       });
 
-      (events as {}[]).forEach(({ key, operator, value }: any) => {
-        session.events.forEach((e, index) => {
+      filterEvents.forEach(({ key, operator, value }) => {
+        events.forEach((e, index) => {
           if (key === e.type) {
             const val = e.type === 'LOCATION' ? e.url : e.value;
             if (operator === 'is' && value === val) {
@@ -277,63 +305,92 @@ export default class SessionStore {
           }
         });
       });
+
+      runInAction(() => {
+        const session = new Session(data);
+        session.addEvents(
+          events,
+          crashes,
+          errors,
+          issues,
+          resources,
+          userEvents,
+          stackEvents,
+          userTesting
+        );
+        this.current = session;
+        this.eventsIndex = matching;
+        this.visitedEvents = visitedEvents;
+        this.host = visitedEvents[0]?.host || '';
+        this.prefetched = false;
+      })
     } catch (e) {
       console.error(e);
+      this.fetchFailed = true;
     }
   }
 
-  async fetchErrorStack(sessionId: string, errorId: string) {
+  fetchNotes = async (sessionId: string) => {
     try {
-      const data = await sessionService.getErrorStack(sessionId, errorId);
-      this.errorStack = data.trace.map((es) => new ErrorStack(es));
+      const notes = await sessionService.getSessionNotes(sessionId);
+      if (notes.length > 0) {
+        this.current = this.current.addNotes(notes);
+      }
     } catch (e) {
       console.error(e);
     }
   }
 
-  async fetchAutoplayList(params = {}) {
+  fetchFavoriteList = async () => {
     try {
-      setSessionFilter(cleanSessionFilters(params));
-      const data = await sessionService.getAutoplayList(params);
-      const list = [...this.sessionIds, ...data.map((s) => s.sessionId)];
-      this.sessionIds = list.filter((id, ind) => list.indexOf(id) === ind);
+      const data = await sessionService.getFavoriteSessions();
+      this.favoriteList = data.map((s: any) => new Session(s));
     } catch (e) {
       console.error(e);
     }
   }
 
-  setAutoplayValues() {
+  fetchSessionClickmap = async (sessionId: string, params: any) => {
+    try {
+      const data = await sessionService.getSessionClickMap(sessionId, params);
+      this.insights = data;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  setAutoplayValues = () => {
     const currentId = this.current.sessionId;
     const currentIndex = this.sessionIds.indexOf(currentId);
 
-    this.previousId = this.sessionIds[currentIndex - 1];
-    this.nextId = this.sessionIds[currentIndex + 1];
+    this.previousId = this.sessionIds[currentIndex - 1] || '';
+    this.nextId = this.sessionIds[currentIndex + 1] || '';
   }
 
-  setEventQuery(filter: { query: string }) {
+  setEventQuery = (filter: { query: string }) => {
     const events = this.current.events;
     const query = filter.query;
     const searchRe = getRE(query, 'i');
 
     const filteredEvents = query
-      ? events.filter(
-          (e) =>
-            searchRe.test(e.url) ||
-            searchRe.test(e.value) ||
-            searchRe.test(e.label) ||
-            searchRe.test(e.type) ||
-            (e.type === 'LOCATION' && searchRe.test('visited'))
-        )
-      : null;
+                           ? events.filter(
+        (e) =>
+          searchRe.test(e.url) ||
+          searchRe.test(e.value) ||
+          searchRe.test(e.label) ||
+          searchRe.test(e.type) ||
+          (e.type === 'LOCATION' && searchRe.test('visited'))
+      )
+                           : null;
 
     this.filteredEvents = filteredEvents;
     this.eventsQuery = query;
   }
 
-  async toggleFavorite(id: string) {
+   toggleFavorite = async (id: string) => {
     try {
       const r = await sessionService.toggleFavorite(id);
-      if (r.success) {
+      if (r.ok) {
         const list = this.list;
         const current = this.current;
         const sessionIdx = list.findIndex(({ sessionId }) => sessionId === id);
@@ -341,22 +398,20 @@ export default class SessionStore {
         const wasInFavorite =
           this.favoriteList.findIndex(({ sessionId }) => sessionId === id) > -1;
 
-        if (session && !wasInFavorite) {
-          session.favorite = true;
+        if (session) {
+          session.favorite = !wasInFavorite;
           this.list[sessionIdx] = session;
         }
         if (current.sessionId === id) {
           this.current.favorite = !wasInFavorite;
         }
 
-        if (session) {
-          if (wasInFavorite) {
-            this.favoriteList = this.favoriteList.filter(
-              ({ sessionId }) => sessionId !== id
-            );
-          } else {
-            this.favoriteList.push(session);
-          }
+        if (wasInFavorite) {
+          this.favoriteList = this.favoriteList.filter(
+            ({ sessionId }) => sessionId !== id
+          );
+        } else {
+          this.favoriteList.push(session);
         }
       } else {
         console.error(r);
@@ -366,7 +421,7 @@ export default class SessionStore {
     }
   }
 
-  sortSessions(sortKey: string, sign: number) {
+  sortSessions = (sortKey: string, sign: number = 1) => {
     const comparator = (s1: Session, s2: Session) => {
       // @ts-ignore
       let diff = s1[sortKey] - s2[sortKey];
@@ -374,87 +429,61 @@ export default class SessionStore {
       return sign * diff;
     };
 
-    this.list = this.list.sort(comparator);
-    this.favoriteList = this.favoriteList.sort(comparator);
-    return;
+    this.list = this.list.slice().sort(comparator);
+    this.favoriteList = this.favoriteList.slice().sort(comparator);
   }
 
-  setActiveTab(tab: { type: string }) {
+  setActiveTab = (tab: { type: string, name: string }) => {
     const list =
       tab.type === 'all'
-        ? this.list
-        : this.list.filter((s) => s.issueTypes.includes(tab.type));
+      ? this.list
+      : this.list.filter((s) => s.issueTypes.includes(tab.type));
 
-    // @ts-ignore
     this.activeTab = tab;
     this.sessionIds = list.map((s) => s.sessionId);
   }
 
-  setTimezone(tz: string) {
+  setTimezone = (tz: string) => {
     this.timezone = tz;
   }
 
-  toggleChatWindow(isActive: boolean) {
-    this.showChatWindow = isActive;
-  }
-
-  async fetchInsights(filters = {}) {
+  fetchInsights = async (params = {}) => {
     try {
-      const data = await sessionService.getClickMap(filters);
-
-      this.insights = data;
+      const data = await sessionService.getClickMap(params);
+      this.insights = data.sort((a: any, b: any) => b.count - a.count);
     } catch (e) {
       console.error(e);
     }
   }
 
-  setFunnelPage(page = {}) {
-    this.funnelPage = page || false;
-  }
-
-  /* @deprecated */
-  setTimelinePointer(pointer: {}) {
-    this.timelinePointer = pointer;
-  }
-
-  setTimelineTooltip(tp: {
+  setTimelineTooltip = (tp: {
     time: number;
     offset: number;
     isVisible: boolean;
     localTime: string;
     userTime?: string;
-  }) {
+  }) => {
     this.timeLineTooltip = tp;
   }
 
-  filterOutNote(noteId: string) {
-    const current = this.current;
+  setCreateNoteTooltip = (noteTooltip: any) => {
+    this.createNoteTooltip = noteTooltip;
+  }
 
-    current.notesWithEvents = current.notesWithEvents.filter((n) => {
+  setEditNoteTooltip = (noteTooltip: any) => {
+    this.createNoteTooltip = noteTooltip;
+  }
+
+  filterOutNote = (noteId: string) => {
+    this.current.notesWithEvents = this.current.notesWithEvents.filter((item) => {
       if ('noteId' in item) {
         return item.noteId !== noteId;
       }
       return true;
     });
-
-    this.current = current;
   }
 
-  addNote(note: Note) {
-    const current = this.current;
-
-    current.notesWithEvents.push(note);
-    current.notesWithEvents.sort((a, b) => {
-      const aTs = a.time || a.timestamp;
-      const bTs = b.time || b.timestamp;
-
-      return aTs - bTs;
-    });
-
-    this.current = current;
-  }
-
-  updateNote(note: Note) {
+  updateNote = (note: Note) => {
     const noteIndex = this.current.notesWithEvents.findIndex((item) => {
       if ('noteId' in item) {
         return item.noteId === note.noteId;
@@ -462,18 +491,82 @@ export default class SessionStore {
       return false;
     });
 
-    this.current.notesWithEvents[noteIndex] = note;
+    if (noteIndex !== -1) {
+      this.current.notesWithEvents[noteIndex] = note;
+    }
   }
 
-  setSessionPath(path = {}) {
+  setSessionPath = (path = {}) => {
     this.sessionPath = path;
   }
 
-  setLastPlayed(sessionId: string) {
-    const list = this.list;
-    const sIndex = list.findIndex((s) => s.sessionId === sessionId);
+  updateLastPlayedSession = (sessionId: string) => {
+    const sIndex = this.list.findIndex((s) => s.sessionId === sessionId);
     if (sIndex !== -1) {
       this.list[sIndex].viewed = true;
     }
+  }
+
+  clearCurrentSession = () => {
+    this.current = new Session();
+    this.eventsIndex = [];
+    this.visitedEvents = [];
+    this.host = '';
+  }
+
+  prefetchSession = (sessionData: Session) => {
+    this.current = sessionData;
+    this.prefetched = true;
+  }
+
+  customSetSessions = (data: any) => {
+    this.liveSessions = data.sessions.map((s: any) => new Session(s));
+    this.totalLiveSessions = data.total
+  }
+
+  fetchAutoplayList = async (page: number) => {
+    try {
+      const filter = searchStore.instance.toSearch();
+      setSessionFilter(cleanSessionFilters(filter));
+      const data = await sessionService.getAutoplayList({ ...filter, page: page });
+      const ids = data.map((i: any) => i.sessionId + '').filter((i, index) => !this.sessionIds.includes(i));
+      this.sessionIds = this.sessionIds.concat(ids);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  clearList = () => {
+    this.list = [];
+    this.total = 0;
+    this.sessionIds = [];
+    this.bookmarks = { list: [], page: 1, total: 0, pageSize: 10, loading: false };
+  }
+
+  setLastPlayedSessionId = (sessionId: string) => {
+    this.lastPlayedSessionId = sessionId;
+  }
+
+  async fetchBookmarkedSessions() {
+    try {
+      this.bookmarks.loading = true;
+      const params = {
+        page: this.bookmarks.page,
+        limit: this.bookmarks.pageSize,
+        bookmarked: true,
+      }
+      const data = await sessionService.getSessions(params);
+      this.bookmarks.list = data.sessions.map((s: any) => new Session(s));
+      this.bookmarks.total = data.total;
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.bookmarks.loading = false;
+    }
+  }
+
+  updateBookmarksPage(page: number) {
+    this.bookmarks.page = page;
+    void this.fetchBookmarkedSessions();
   }
 }

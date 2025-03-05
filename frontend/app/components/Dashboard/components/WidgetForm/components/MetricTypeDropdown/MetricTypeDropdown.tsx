@@ -7,16 +7,14 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { Icon } from 'UI';
-import { connect } from 'react-redux';
 
 interface Props {
   query: Record<string, (key: string) => any>;
   onSelect: (arg: any) => void;
-  isEnterprise?: boolean;
 }
 function MetricTypeDropdown(props: Props) {
-  const { isEnterprise } = props;
-  const { metricStore } = useStore();
+  const { metricStore, userStore } = useStore();
+  const isEnterprise = userStore.isEnterprise;
   const metric: any = metricStore.instance;
 
   const options = React.useMemo(() => {
@@ -84,6 +82,4 @@ function MetricTypeDropdown(props: Props) {
   );
 }
 
-export default connect((state: any) => ({
-  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-}))(withLocationHandlers()(observer(MetricTypeDropdown)));
+export default withLocationHandlers()(observer(MetricTypeDropdown));

@@ -158,12 +158,20 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.int(msg[1]) && this.int(msg[2]) && this.uint(msg[3]) && this.uint(msg[4])
     break
 
-    case Messages.Type.StringDict:
+    case Messages.Type.StringDictDeprecated:
       return  this.uint(msg[1]) && this.string(msg[2])
     break
 
-    case Messages.Type.SetNodeAttributeDict:
+    case Messages.Type.SetNodeAttributeDictDeprecated:
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3])
+    break
+
+    case Messages.Type.StringDict:
+      return  this.string(msg[1]) && this.string(msg[2])
+    break
+
+    case Messages.Type.SetNodeAttributeDict:
+      return  this.uint(msg[1]) && this.string(msg[2]) && this.string(msg[3])
     break
 
     case Messages.Type.ResourceTimingDeprecated:
@@ -312,6 +320,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
 
     case Messages.Type.GraphQL:
       return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.uint(msg[5])
+    break
+
+    case Messages.Type.WebVitals:
+      return  this.string(msg[1]) && this.string(msg[2])
     break
 
     }

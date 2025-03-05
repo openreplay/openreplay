@@ -40,8 +40,8 @@ class ProjectAuthorizer:
             logger.debug(f"unauthorized project {self.project_identifier}:{value}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized project.")
         else:
-            current_project = schemas.CurrentProjectContext(projectId=current_project["projectId"],
-                                                            projectKey=current_project["projectKey"],
-                                                            platform=current_project["platform"],
-                                                            name=current_project["name"])
+            current_project = schemas.ProjectContext(projectId=current_project["projectId"],
+                                                     projectKey=current_project["projectKey"],
+                                                     platform=current_project["platform"],
+                                                     name=current_project["name"])
             request.state.currentContext.project = current_project
