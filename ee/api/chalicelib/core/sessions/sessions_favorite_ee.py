@@ -4,7 +4,7 @@ from decouple import config
 
 import schemas
 from chalicelib.core.sessions import sessions_mobs, sessions_devtool
-from chalicelib.core.sessions.sessions_favorite import add_favorite_session, remove_favorite_session, \
+from .sessions_favorite import add_favorite_session, remove_favorite_session, \
     favorite_session_exists
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils.storage import extra
@@ -33,7 +33,7 @@ def remove_favorite_session(context: schemas.CurrentContext, project_id, session
 def favorite_session(context: schemas.CurrentContext, project_id, session_id):
     keys = sessions_mobs.__get_mob_keys(project_id=project_id, session_id=session_id)
     keys += sessions_mobs.__get_mob_keys_deprecated(session_id=session_id)  # To support old sessions
-    keys += sessions_devtool.__get_devtools_keys(project_id=project_id, session_id=session_id)
+    keys += sessions_devtool.get_devtools_keys(project_id=project_id, session_id=session_id)
 
     if favorite_session_exists(user_id=context.user_id, session_id=session_id):
         tag = config('RETENTION_D_VALUE', default='default')

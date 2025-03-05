@@ -36,7 +36,7 @@ rm -rf ./chalicelib/core/mobile.py
 rm -rf ./chalicelib/core/saved_search.py
 rm -rf ./chalicelib/core/sessions/sessions.py
 rm -rf ./chalicelib/core/sessions/sessions_ch.py
-rm -rf ./chalicelib/core/sessions/sessions_devtool.py
+rm -rf ./chalicelib/core/sessions/sessions_devtool/sessions_devtool.py
 rm -rf ./chalicelib/core/sessions/sessions_favorite.py
 rm -rf ./chalicelib/core/sessions/sessions_assignments.py
 rm -rf ./chalicelib/core/sessions/sessions_metas.py
