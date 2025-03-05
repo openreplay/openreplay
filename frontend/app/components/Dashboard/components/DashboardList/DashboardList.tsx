@@ -189,10 +189,10 @@ function DashboardList() {
       <div className="text-center">
         <div>
           <Typography.Text className="my-2 text-lg font-medium">
-          Create and organize your insights
+            Create and organize your insights
           </Typography.Text>
           <div className="mb-2 text-lg text-gray-500 leading-normal">
-          Build dashboards to track key metrics and monitor performance in one place.
+            Build dashboards to track key metrics and monitor performance in one place.
           </div>
           <div className="my-4 mb-10">
             <CreateDashboardButton />
@@ -224,6 +224,7 @@ function DashboardList() {
       <Table
         dataSource={list}
         columns={tableConfig}
+        showSorterTooltip={false}
         pagination={{
           showTotal: (total, range) =>
             `Showing ${range[0]}-${range[1]} of ${total} items`,

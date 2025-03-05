@@ -34,13 +34,13 @@ interface Props {
 }
 
 const ListView: React.FC<Props> = ({
-                                     list,
-                                     siteId,
-                                     selectedList,
-                                     toggleSelection,
-                                     disableSelection = false,
-                                     inLibrary = false
-                                   }) => {
+  list,
+  siteId,
+  selectedList,
+  toggleSelection,
+  disableSelection = false,
+  inLibrary = false
+}) => {
   const [sorter, setSorter] = useState<{ field: string; order: 'ascend' | 'descend' }>({
     field: 'lastModified',
     order: 'descend'
@@ -259,6 +259,7 @@ const ListView: React.FC<Props> = ({
         columns={columns}
         dataSource={paginatedData}
         rowKey="metricId"
+        showSorterTooltip={false}
         onChange={handleTableChange}
         onRow={
           inLibrary
