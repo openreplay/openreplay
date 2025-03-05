@@ -13,7 +13,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StoreProvider, RootStore } from './mstore';
 import Router from './Router';
 import './i18n';
-import ErrorBoundary from './ErrorBoundary';
 
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
@@ -75,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // const theme = window.localStorage.getItem('theme');
   root.render(
-    <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ConfigProvider theme={customTheme}>
           <App>
@@ -90,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </StoreProvider>
           </App>
         </ConfigProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>,
+      </QueryClientProvider>,
   );
 });
