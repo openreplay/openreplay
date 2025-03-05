@@ -24,9 +24,12 @@ import {
 
 const iconCache = {}
 const svgUrlCache = {}
-const domParser = new DOMParser()
 
-async function parseUseEl(useElement: SVGUseElement, mode: 'inline' | 'dataurl' | 'svgtext') {
+async function parseUseEl(
+  useElement: SVGUseElement,
+  mode: 'inline' | 'dataurl' | 'svgtext',
+  domParser: DOMParser,
+) {
   try {
     const href = useElement.getAttribute('xlink:href') || useElement.getAttribute('href')
     if (!href) {
@@ -165,6 +168,7 @@ export default abstract class Observer {
   private readonly attributesMap: Map<number, Set<string>> = new Map()
   private readonly textSet: Set<number> = new Set()
   private readonly disableSprites: boolean = false
+  private readonly domParser = new DOMParser()
   constructor(
     protected readonly app: App,
     protected readonly isTopContext = false,
@@ -281,7 +285,7 @@ export default abstract class Observer {
       }
 
       if (isUseElement(node) && name === 'href' && !this.disableSprites) {
-        parseUseEl(node, 'svgtext')
+        parseUseEl(node, 'svgtext', this.domParser)
           .then((svgData) => {
             if (svgData) {
               this.app.send(SetNodeAttribute(id, name, `_$OPENREPLAY_SPRITE$_${svgData}`))
