@@ -77,13 +77,12 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
               className={cn('flex items-center', { disabled: savedSearch.exists() && savedSearch.userId !== userId })}>
               <Checkbox
                 name="isPublic"
-                className="font-medium mr-3"
                 type="checkbox"
                 checked={savedSearch.isPublic}
                 onClick={onChangeOption}
               />
               <div
-                className="flex items-center cursor-pointer select-none"
+                className="flex items-center cursor-pointer select-none ml-2"
                 onClick={() => searchStore.editSavedSearch({ isPublic: !savedSearch.isPublic })}
               >
                 <Icon name="user-friends" size="16" />

@@ -7,7 +7,7 @@ interface Props {
     [x: string]: any;
 }
 export default (props: Props) => {
-    const { className = '', label = '', ...rest } = props;
+    const { className = '', label, ...rest } = props;
     return (
       <AntCheckbox {...rest}>
           {label}
