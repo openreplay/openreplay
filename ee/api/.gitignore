@@ -216,7 +216,7 @@ Pipfile.lock
 /chalicelib/core/sessions/sessions.py
 /chalicelib/core/sessions/sessions_ch.py
 /chalicelib/core/sessions/sessions_devtool/sessions_devtool.py
-/chalicelib/core/sessions/sessions_favorite.py
+/chalicelib/core/sessions/sessions_favorite/sessions_favorite.py
 /chalicelib/core/sessions/sessions_assignments.py
 /chalicelib/core/sessions/sessions_metas.py
 /chalicelib/core/sessions/sessions_mobs.py

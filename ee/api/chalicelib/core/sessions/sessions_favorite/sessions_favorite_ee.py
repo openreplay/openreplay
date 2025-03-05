@@ -4,14 +4,13 @@ from decouple import config
 
 import schemas
 from chalicelib.core.sessions import sessions_mobs, sessions_devtool
-from .sessions_favorite import add_favorite_session, remove_favorite_session, \
+from .sessions_favorite import add_favorite_session as _add_favorite_session, \
+    remove_favorite_session as _remove_favorite_session, \
     favorite_session_exists
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils.storage import extra
 
 logger = logging.getLogger(__name__)
-_add_favorite_session = add_favorite_session
-_remove_favorite_session = remove_favorite_session
 
 
 def add_favorite_session(context: schemas.CurrentContext, project_id, session_id):
