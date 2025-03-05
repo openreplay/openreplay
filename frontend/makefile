@@ -97,14 +97,33 @@ logs:
 		echo "No log files found in $(LOGS_DIR)"; \
 	fi
 
+# Target to deploy to production with environment validation
+.PHONY: prod-deploy
+prod-deploy:
+	@if [ ! -f .env.production ]; then \
+		echo "Error: .env.production file not found. Please create it for production deployment."; \
+		exit 1; \
+	fi
+	@echo "Deploying to production using .env.production"
+	@NODE_ENV=$$(grep -E "^NODE_ENV=" .env.production | sed -E 's/^NODE_ENV=//;s/^"//;s/"$$//;s/^'\''//;s/'\''$$//' | head -n 1); \
+	if [ -z "$$NODE_ENV" ]; then NODE_ENV=production; fi; \
+	API_EDP=$$(grep -E "^API_EDP=" .env.production | sed -E 's/^API_EDP=//;s/^"//;s/"$$//;s/^'\''//;s/'\''$$//' | head -n 1); \
+	if [ -z "$$API_EDP" ]; then API_EDP=https://api.openreplay.com; fi; \
+	echo "Deploying to production with NODE_ENV=$$NODE_ENV and API_EDP=$$API_EDP"; \
+	mkdir -p $(LOGS_DIR); \
+	LOG_FILE=$(LOGS_DIR)/production-deploy-$$(date +%Y%m%d%H%M%S).log; \
+	yes y | NODE_ENV=$$NODE_ENV API_EDP=$$API_EDP $(YARN) deploy:production 2>&1 | tee $$LOG_FILE;
+
 # Target to show help
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@echo "  make        - Starts the frontend app in the background"
-	@echo "  make start  - Starts the frontend app in the background"
-	@echo "  make start-fg - Starts the frontend app in the foreground with visible logs"
-	@echo "  make stop   - Stops all yarn processes"
-	@echo "  make status - Shows the current status of the frontend app"
-	@echo "  make logs   - Shows available log files"
-	@echo "  make help   - Shows this help message"
+	@echo " make - Starts the frontend app in the background"
+	@echo " make start - Starts the frontend app in the background"
+	@echo " make start-fg - Starts the frontend app in the foreground with visible logs"
+	@echo " make stop - Stops all yarn processes"
+	@echo " make status - Shows the current status of the frontend app"
+	@echo " make logs - Shows available log files"
+	@echo " make prod-deploy - Deploys to production with NODE_ENV and API_EDP from .env.production"
+	@echo " make help - Shows this help message"
+
