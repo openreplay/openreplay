@@ -8,6 +8,7 @@ import { getHighest } from 'App/constants/zindex';
 import Category from 'Components/Header/HealthStatus/ServiceCategory';
 import SubserviceHealth from 'Components/Header/HealthStatus/SubserviceHealth/SubserviceHealth';
 import { IServiceStats } from '../HealthStatus';
+import { RefreshCcw } from 'lucide-react';
 
 function HealthModal({
   getHealth,
@@ -81,7 +82,7 @@ function HealthModal({
           <Button
             disabled={isLoading}
             onClick={getHealth}
-            icon={'arrow-repeat'}
+            icon={<RefreshCcw size={18} />}
             type={'text'}
             className={'text-main'}
           >
@@ -97,18 +98,18 @@ function HealthModal({
                   {isLoading
                     ? null
                     : Object.keys(healthResponse.healthMap).map((service) => (
-                        <React.Fragment key={service}>
-                          <Category
-                            onClick={() => setSelectedService(service)}
-                            healthOk={
-                              healthResponse.healthMap[service].healthOk
-                            }
-                            name={healthResponse.healthMap[service].name}
-                            isSelectable
-                            isSelected={selectedService === service}
-                          />
-                        </React.Fragment>
-                      ))}
+                      <React.Fragment key={service}>
+                        <Category
+                          onClick={() => setSelectedService(service)}
+                          healthOk={
+                            healthResponse.healthMap[service].healthOk
+                          }
+                          name={healthResponse.healthMap[service].name}
+                          isSelectable
+                          isSelected={selectedService === service}
+                        />
+                      </React.Fragment>
+                    ))}
                 </div>
                 <div
                   className={
