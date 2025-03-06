@@ -74,8 +74,8 @@ function HealthWidget({
       </div>
       <div className="text-secondary flex w-full justify-between items-center text-sm">
         <span className="color-gray-medium">
-          {t('Checked')}
-          {lastAskedDiff}
+          {t('Checked')}&nbsp;
+          {lastAskedDiff}&nbsp;
           {t('min ago.')}
         </span>
         <div

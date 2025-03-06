@@ -33,7 +33,7 @@ tracker.reloadFlags()
 `;
   return (
     <div className="w-full h-screen p-4">
-      <PageTitle title="Implement feature flags" />
+      <PageTitle title={t('Implement feature flags')} />
 
       <div className="my-2">
         <CodeBlock code={code} language="typescript" />

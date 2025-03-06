@@ -13,7 +13,7 @@ function FFlagsListHeader({ siteId }: { siteId: string }) {
   return (
     <div className="flex items-center justify-between px-6">
       <div className="flex items-center mr-3 gap-2">
-        <PageTitle title="Feature Flags" />
+        <PageTitle title={t('Feature Flags')} />
       </div>
       <div className="ml-auto flex items-center">
         <Button

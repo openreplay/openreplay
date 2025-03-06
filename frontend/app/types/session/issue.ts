@@ -1,3 +1,4 @@
+import i18next, { TFunction } from 'i18next';
 import Record from 'Types/Record';
 
 export const types = {
@@ -114,7 +115,7 @@ export interface IIssue {
   messageId: number;
 }
 
-export default class Issue {
+class Issue {
   issueId: IIssue['issueId'];
 
   name: IIssue['name'];
@@ -150,3 +151,5 @@ export default class Issue {
     });
   }
 }
+
+export default Issue;

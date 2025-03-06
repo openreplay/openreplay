@@ -26,6 +26,7 @@ export default [
       '**/*.test.tsx',
       '**/*.test.js',
       '**/__tests__/**',
+      '**/*.min.js'
     ],
     languageOptions: {
       parser: tsParser,

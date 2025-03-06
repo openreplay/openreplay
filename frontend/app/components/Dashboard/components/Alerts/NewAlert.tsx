@@ -15,6 +15,7 @@ import BottomButtons from './AlertForm/BottomButtons';
 import NotifyHooks from './AlertForm/NotifyHooks';
 import AlertListItem from './AlertListItem';
 import Condition from './AlertForm/Condition';
+import { useTranslation } from 'react-i18next';
 
 function Circle({ text }: { text: string }) {
   return (
@@ -68,6 +69,7 @@ interface IProps extends RouteComponentProps {
 }
 
 function NewAlert(props: IProps) {
+  const { t } = useTranslation();
   const { alertsStore, settingsStore } = useStore();
   const {
     fetchTriggerOptions,
@@ -122,18 +124,18 @@ function NewAlert(props: IProps) {
   const onDelete = async (instance: Alert) => {
     if (
       await confirm({
-        header: 'Confirm',
-        confirmButton: 'Yes, delete',
-        confirmation: 'Are you sure you want to permanently delete this alert?',
+        header: t('Confirm'),
+        confirmButton: t('Yes, delete'),
+        confirmation: t('Are you sure you want to permanently delete this alert?'),
       })
     ) {
       remove(instance.alertId)
         .then(() => {
           props.history.push(withSiteId(alerts(), siteId));
-          toast.success('Alert deleted');
+          toast.success(t('Alert deleted'));
         })
         .catch(() => {
-          toast.error('Failed to delete an alert');
+          toast.error(t('Failed to delete an alert'));
         });
     }
   };
@@ -143,14 +145,14 @@ function NewAlert(props: IProps) {
     save(instance)
       .then(() => {
         if (!wasUpdating) {
-          toast.success('New alert saved');
+          toast.success(t('New alert saved'));
           props.history.push(withSiteId(alerts(), siteId));
         } else {
-          toast.success('Alert updated');
+          toast.success(t('Alert updated'));
         }
       })
       .catch(() => {
-        toast.error('Failed to create an alert');
+        toast.error(t('Failed to create an alert'));
       });
   };
 
@@ -202,10 +204,10 @@ function NewAlert(props: IProps) {
       <Breadcrumb
         items={[
           {
-            label: 'Alerts',
+            label: t('Alerts'),
             to: withSiteId('/alerts', siteId),
           },
-          { label: (instance && instance.name) || 'Alert' },
+          { label: (instance && instance.name) || t('Alert') },
         ]}
       />
       <Form
@@ -229,7 +231,7 @@ function NewAlert(props: IProps) {
         <div className="px-6 pb-3 flex flex-col">
           <Section
             index="1"
-            title="Alert based on"
+            title={t('Alert based on')}
             content={
               <div className="">
                 <SegmentSelection
@@ -241,15 +243,15 @@ function NewAlert(props: IProps) {
                   }
                   value={{ value: instance.detectionMethod }}
                   list={[
-                    { name: 'Threshold', value: 'threshold' },
-                    { name: 'Change', value: 'change' },
+                    { name: t('Threshold'), value: 'threshold' },
+                    { name: t('Change'), value: 'change' },
                   ]}
                 />
                 <div className="text-sm color-gray-medium">
                   {isThreshold &&
-                    'Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.'}
+                    t('Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.')}
                   {!isThreshold &&
-                    'Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.'}
+                    t('Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.')}
                 </div>
                 <div className="my-4" />
               </div>
@@ -257,7 +259,7 @@ function NewAlert(props: IProps) {
           />
           <Section
             index="2"
-            title="Condition"
+            title={t('Condition')}
             content={
               <Condition
                 isThreshold={isThreshold}
@@ -273,8 +275,8 @@ function NewAlert(props: IProps) {
           />
           <Section
             index="3"
-            title="Notify Through"
-            description="You'll be noticed in app notifications. Additionally opt in to receive alerts on:"
+            title={t('Notify Through')}
+            description={t("You'll be noticed in app notifications. Additionally opt in to receive alerts on:")}
             content={
               <NotifyHooks
                 instance={instance}

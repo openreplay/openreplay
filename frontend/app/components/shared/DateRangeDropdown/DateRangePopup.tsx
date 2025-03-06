@@ -92,7 +92,7 @@ function DateRangePopup(props: any) {
             )
             .map((value) => (
               <div key={value} onClick={() => selectValue(value)}>
-                {t(getDateRangeLabel(value))}
+                {getDateRangeLabel(value, t)}
               </div>
             ))}
         </div>

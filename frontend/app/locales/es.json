@@ -1426,5 +1426,18 @@
   "Roles & Access": "Roles y Accesos",
   "Audit": "Auditoría",
   "Billing": "Facturación",
-  "Play In Fullscreen": "Reproducir en Pantalla Completa"
+  "Play In Fullscreen": "Reproducir en Pantalla Completa",
+  "Ascending": "Ascendente",
+  "Descending": "Descendente",
+  "Implement feature flags": "Implementar flags de características",
+  "Filter by dashboard title": "Filtrar por título del panel",
+  "Filter by alert title": "Filtrar por título de la alerta",
+  "Are you sure you want to permanently delete this alert?": "¿Estás seguro de que quieres eliminar esta alerta de forma permanente?",
+  "Alert deleted": "Alerta eliminada",
+  "Failed to delete an alert": "Error al eliminar la alerta",
+  "New alert saved": "Nueva alerta guardada",
+  "Alert updated": "Alerta actualizada",
+  "Failed to create an alert": "Error al crear la alerta",
+  "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.": "Ej. Cuando el umbral supere 1ms en los últimos 15 minutos, notifícame a través de Slack #foss-notifications.",
+  "Alert based on": "Alerta basada en"
 }

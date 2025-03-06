@@ -4,9 +4,11 @@ import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
 import { Input } from 'antd';
 import { debounce } from 'App/utils';
+import { useTranslation } from 'react-i18next';
 
 let debounceUpdate: any = () => {};
 function MetricsSearch() {
+  const { t } = useTranslation();
   const { metricStore } = useStore();
   const [query, setQuery] = useState(metricStore.filter.query);
   useEffect(() => {
@@ -32,7 +34,7 @@ function MetricsSearch() {
         allowClear
         name="metricsSearch"
         className="w-full input-search-card"
-        placeholder="Filter by title or owner"
+        placeholder={t('Filter by title or owner')}
         onChange={write}
       />
     </div>

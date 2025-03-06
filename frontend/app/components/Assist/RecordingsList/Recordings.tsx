@@ -6,14 +6,16 @@ import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import { observer } from 'mobx-react-lite';
 import RecordingsList from './RecordingsList';
 import RecordingsSearch from './RecordingsSearch';
+import { useTranslation } from 'react-i18next';
 
 function Recordings() {
+  const { t } = useTranslation();
   const { recordingsStore, userStore } = useStore();
   const userId = userStore.account.id;
 
   const recordingsOwner = [
-    { value: '0', label: 'All Videos' },
-    { value: userId, label: 'My Videos' },
+    { value: '0', label: t('All Videos') },
+    { value: userId, label: t('My Videos') },
   ];
 
   const onDateChange = (e: any) => {
@@ -27,7 +29,7 @@ function Recordings() {
     >
       <div className="flex items-center mb-4 justify-between px-6">
         <div className="flex items-baseline mr-3">
-          <PageTitle title="Training Videos" />
+          <PageTitle title={t('Training Videos')} />
         </div>
         <div className="ml-auto flex items-center gap-4">
           <SelectDateRange

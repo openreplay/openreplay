@@ -1426,5 +1426,18 @@
   "Roles & Access": "Roles & Access",
   "Audit": "Audit",
   "Billing": "Billing",
-  "Play In Fullscreen": "Play In Fullscreen"
+  "Play In Fullscreen": "Play In Fullscreen",
+  "Ascending": "Ascending",
+  "Descending": "Descending",
+  "Implement feature flags": "Implement feature flags",
+  "Filter by dashboard title": "Filter by dashboard title",
+  "Filter by alert title": "Filter by alert title",
+  "Are you sure you want to permanently delete this alert?": "Are you sure you want to permanently delete this alert?",
+  "Alert deleted": "Alert deleted",
+  "Failed to delete an alert": "Failed to delete an alert",
+  "New alert saved": "New alert saved",
+  "Alert updated": "Alert updated",
+  "Failed to create an alert": "Failed to create an alert",
+  "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.": "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.",
+  "Alert based on": "Alert based on"
 }

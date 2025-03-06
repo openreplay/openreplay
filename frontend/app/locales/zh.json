@@ -1426,5 +1426,18 @@
   "Roles & Access": "角色与权限",
   "Audit": "审计",
   "Billing": "账单",
-  "Play In Fullscreen": "全屏播放"
+  "Play In Fullscreen": "全屏播放",
+  "Ascending": "升序",
+  "Descending": "降序",
+  "Implement feature flags": "实施功能标志",
+  "Filter by dashboard title": "按仪表板标题筛选",
+  "Filter by alert title": "按警报标题筛选",
+  "Are you sure you want to permanently delete this alert?": "您确定要永久删除此警报吗？",
+  "Alert deleted": "警报已删除",
+  "Failed to delete an alert": "删除警报失败",
+  "New alert saved": "新警报已保存",
+  "Alert updated": "警报已更新",
+  "Failed to create an alert": "创建警报失败",
+  "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.": "例如：当过去15分钟内阈值超过1毫秒时，通过Slack #foss-notifications通知我。",
+  "Alert based on": "警报依据"
 }

@@ -4,10 +4,12 @@ import { Input } from 'antd';
 import { debounce } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 
 let debounceUpdate: any = () => {};
 
 function AlertsSearch() {
+  const { t } = useTranslation();
   const { alertsStore } = useStore();
   const [inputValue, setInputValue] = useState(alertsStore.alertsSearch);
 
@@ -37,7 +39,7 @@ function AlertsSearch() {
         allowClear
         name="alertsSearch"
         className="w-full"
-        placeholder="Filter by alert title"
+        placeholder={t('Filter by alert title')}
         onChange={write}
       />
     </div>

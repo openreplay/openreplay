@@ -22,7 +22,7 @@ function SessionDateRange() {
   return (
     <div className="flex items-center">
       <span className="mr-1">
-        {t('No sessions')}
+        {t('No sessions')}&nbsp;
         {isCustom ? t('between') : t('in the')}
       </span>
       <SelectDateRange

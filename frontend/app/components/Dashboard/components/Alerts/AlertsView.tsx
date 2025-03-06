@@ -35,7 +35,7 @@ function AlertsView({ siteId }: IAlertsView) {
     >
       <div className="flex items-center mb-4 justify-between px-6">
         <div className="flex items-baseline mr-3">
-          <PageTitle title="Alerts" />
+          <PageTitle title={t('Alerts')} />
         </div>
         <div className="ml-auto flex items-center">
           <Link to={withSiteId(alertCreate(), siteId)}>
