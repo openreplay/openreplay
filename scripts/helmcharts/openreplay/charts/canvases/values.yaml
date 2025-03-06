@@ -5,14 +5,14 @@
 replicaCount: 1
 
 image:
-  repository: "{{ .Values.global.openReplayContainerRegistry }}/canvas-handler"
+  repository: "{{ .Values.global.openReplayContainerRegistry }}/canvases"
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
 imagePullSecrets: []
-nameOverride: "canvas-handler"
-fullnameOverride: "canvas-handler-openreplay"
+nameOverride: "canvases"
+fullnameOverride: "canvases-openreplay"
 
 serviceAccount:
   # Specifies whether a service account should be created

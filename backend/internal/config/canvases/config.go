@@ -1,4 +1,4 @@
-package canvas_handler
+package canvases
 
 import (
 	"openreplay/backend/internal/config/common"
@@ -12,8 +12,8 @@ type Config struct {
 	objectstorage.ObjectsConfig
 	FSDir              string `env:"FS_DIR,required"`
 	CanvasDir          string `env:"CANVAS_DIR,default=canvas"`
-	TopicCanvasImages  string `env:"TOPIC_CANVAS_IMAGES,required"`
-	TopicCanvasTrigger string `env:"TOPIC_CANVAS_TRIGGER,required"`
+	TopicCanvasImages  string `env:"TOPIC_CANVAS_IMAGES,required"`  // For canvas images and sessionEnd events from ender
+	TopicCanvasTrigger string `env:"TOPIC_CANVAS_TRIGGER,required"` // For trigger events to start processing (archive and upload)
 	GroupCanvasImage   string `env:"GROUP_CANVAS_IMAGE,required"`
 	UseProfiler        bool   `env:"PROFILER_ENABLED,default=false"`
 }

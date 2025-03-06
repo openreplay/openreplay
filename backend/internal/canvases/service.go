@@ -1,4 +1,4 @@
-package canvas_handler
+package canvases
 
 import (
 	"bytes"
@@ -12,10 +12,12 @@ import (
 	"strings"
 	"time"
 
-	config "openreplay/backend/internal/config/canvas-handler"
+	config "openreplay/backend/internal/config/canvases"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/pool"
+	"openreplay/backend/pkg/queue/types"
 )
 
 type ImageStorage struct {
@@ -23,8 +25,10 @@ type ImageStorage struct {
 	log          logger.Logger
 	basePath     string
 	saverPool    pool.WorkerPool
+	packerPool   pool.WorkerPool
 	uploaderPool pool.WorkerPool
 	objStorage   objectstorage.ObjectStorage
+	producer     types.Producer
 }
 
 type saveTask struct {
@@ -34,13 +38,20 @@ type saveTask struct {
 	image     *bytes.Buffer
 }
 
+type packTask struct {
+	ctx       context.Context
+	sessionID uint64
+	path      string
+	name      string
+}
+
 type uploadTask struct {
 	ctx  context.Context
 	path string
 	name string
 }
 
-func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectStorage) (*ImageStorage, error) {
+func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectStorage, producer types.Producer) (*ImageStorage, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
@@ -54,9 +65,11 @@ func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectS
 		log:        log,
 		basePath:   path,
 		objStorage: objStorage,
+		producer:   producer,
 	}
-	s.saverPool = pool.NewPool(4, 8, s.writeToDisk)
-	s.uploaderPool = pool.NewPool(4, 8, s.sendToS3)
+	s.saverPool = pool.NewPool(2, 2, s.writeToDisk)
+	s.packerPool = pool.NewPool(8, 16, s.packCanvas)
+	s.uploaderPool = pool.NewPool(8, 16, s.sendToS3)
 	return s, nil
 }
 
@@ -101,7 +114,8 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 	return
 }
 
-func (v *ImageStorage) PackSessionCanvases(ctx context.Context, sessID uint64) error {
+func (v *ImageStorage) PrepareSessionCanvases(ctx context.Context, sessID uint64) error {
+	start := time.Now()
 	path := fmt.Sprintf("%s%d/", v.basePath, sessID)
 
 	// Check that the directory exists
@@ -131,24 +145,44 @@ func (v *ImageStorage) PackSessionCanvases(ctx context.Context, sessID uint64) e
 		names[canvasID] = true
 	}
 
-	sessionID := strconv.FormatUint(sessID, 10)
 	for name := range names {
-		// Save to archives
-		archPath := fmt.Sprintf("%s%s.tar.zst", path, name)
-		fullCmd := fmt.Sprintf("find %s -type f -name '%s*' ! -name '*.tar.zst' | tar -cf - --files-from=- | zstd -f -o %s",
-			path, name, archPath)
-		cmd := exec.Command("sh", "-c", fullCmd)
-		var stdout, stderr bytes.Buffer
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-
-		err := cmd.Run()
-		if err != nil {
-			return fmt.Errorf("failed to execute command, err: %s, stderr: %v", err, stderr.String())
+		msg := &messages.CustomEvent{
+			Name:    name,
+			Payload: path,
 		}
-		v.uploaderPool.Submit(&uploadTask{ctx: ctx, path: archPath, name: sessionID + "/" + name + ".tar.zst"})
+		if err := v.producer.Produce(v.cfg.TopicCanvasTrigger, sessID, msg.Encode()); err != nil {
+			v.log.Error(ctx, "can't send canvas trigger: %s", err)
+		}
 	}
+	v.log.Info(ctx, "session canvases (%d) prepared in %.3fs, session: %d", len(names), time.Since(start).Seconds(), sessID)
 	return nil
+}
+
+func (v *ImageStorage) ProcessSessionCanvas(ctx context.Context, sessID uint64, path, name string) error {
+	v.packerPool.Submit(&packTask{ctx: ctx, sessionID: sessID, path: path, name: name})
+	return nil
+}
+
+func (v *ImageStorage) packCanvas(payload interface{}) {
+	task := payload.(*packTask)
+	start := time.Now()
+	sessionID := strconv.FormatUint(task.sessionID, 10)
+
+	// Save to archives
+	archPath := fmt.Sprintf("%s%s.tar.zst", task.path, task.name)
+	fullCmd := fmt.Sprintf("find %s -type f -name '%s*' ! -name '*.tar.zst' | tar -cf - --files-from=- | zstd -f -o %s",
+		task.path, task.name, archPath)
+	cmd := exec.Command("sh", "-c", fullCmd)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		v.log.Fatal(task.ctx, "failed to execute command, err: %s, stderr: %v", err, stderr.String())
+	}
+	v.log.Info(task.ctx, "canvas packed successfully in %.3fs, session: %d", time.Since(start).Seconds(), task.sessionID)
+	v.uploaderPool.Submit(&uploadTask{ctx: task.ctx, path: archPath, name: sessionID + "/" + task.name + ".tar.zst"})
 }
 
 func (v *ImageStorage) sendToS3(payload interface{}) {
@@ -161,6 +195,5 @@ func (v *ImageStorage) sendToS3(payload interface{}) {
 	if err := v.objStorage.Upload(bytes.NewReader(video), task.name, "application/octet-stream", objectstorage.NoContentEncoding, objectstorage.Zstd); err != nil {
 		v.log.Fatal(task.ctx, "failed to upload canvas to storage: %s", err)
 	}
-	v.log.Info(task.ctx, "replay file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
-	return
+	v.log.Info(task.ctx, "replay file (size: %d) uploaded successfully in %.3fs", len(video), time.Since(start).Seconds())
 }

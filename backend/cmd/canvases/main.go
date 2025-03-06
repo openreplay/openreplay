@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
-	"openreplay/backend/internal/canvas-handler"
-	config "openreplay/backend/internal/config/canvas-handler"
+	"openreplay/backend/internal/canvases"
+	config "openreplay/backend/internal/config/canvases"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
@@ -29,7 +29,10 @@ func main() {
 		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
 
-	srv, err := canvas_handler.New(cfg, log, objStore)
+	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
+	defer producer.Close(15000)
+
+	srv, err := canvases.New(cfg, log, objStore, producer)
 	if err != nil {
 		log.Fatal(ctx, "can't init canvas service: %s", err)
 	}
@@ -38,6 +41,7 @@ func main() {
 		cfg.GroupCanvasImage,
 		[]string{
 			cfg.TopicCanvasImages,
+			cfg.TopicCanvasTrigger,
 		},
 		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
 			isSessionEnd := func(data []byte) bool {
@@ -55,13 +59,33 @@ func main() {
 				}
 				return true
 			}
+			isTriggerEvent := func(data []byte) (string, string, bool) {
+				reader := messages.NewBytesReader(data)
+				msgType, err := reader.ReadUint()
+				if err != nil {
+					return "", "", false
+				}
+				if msgType != messages.MsgCustomEvent {
+					return "", "", false
+				}
+				msg, err := messages.ReadMessage(msgType, reader)
+				if err != nil {
+					return "", "", false
+				}
+				customEvent := msg.(*messages.CustomEvent)
+				return customEvent.Payload, customEvent.Name, true
+			}
 			sessCtx := context.WithValue(context.Background(), "sessionID", sessID)
 
 			if isSessionEnd(data) {
-				if err := srv.PackSessionCanvases(sessCtx, sessID); err != nil {
+				if err := srv.PrepareSessionCanvases(sessCtx, sessID); err != nil {
 					if !strings.Contains(err.Error(), "no such file or directory") {
 						log.Error(sessCtx, "can't pack session's canvases: %s", err)
 					}
+				}
+			} else if path, name, ok := isTriggerEvent(data); ok {
+				if err := srv.ProcessSessionCanvas(sessCtx, sessID, path, name); err != nil {
+					log.Error(sessCtx, "can't process session's canvas: %s", err)
 				}
 			} else {
 				if err := srv.SaveCanvasToDisk(sessCtx, sessID, data); err != nil {

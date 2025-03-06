@@ -2,15 +2,15 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "canvas-handler.fullname" . }}
+  name: {{ include "canvases.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "canvas-handler.labels" . | nindent 4 }}
+    {{- include "canvases.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "canvas-handler.fullname" . }}
+    name: {{ include "canvases.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:
