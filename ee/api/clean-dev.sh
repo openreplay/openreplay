@@ -18,10 +18,8 @@ rm -rf ./chalicelib/core/countries.py
 rm -rf ./chalicelib/core/metrics/custom_metrics.py
 rm -rf ./chalicelib/core/metrics/funnels.py
 rm -rf ./chalicelib/core/metrics/dashboards.py
-rm -rf ./chalicelib/core/metrics/heatmaps.py
-rm -rf ./chalicelib/core/metrics/heatmaps_ch.py
-rm -rf ./chalicelib/core/metrics/product_analytics.py
-rm -rf ./chalicelib/core/metrics/product_analytics_ch.py
+rm -rf ./chalicelib/core/metrics/heatmaps
+rm -rf ./chalicelib/core/metrics/product_analytics
 rm -rf ./chalicelib/core/metrics/product_anaytics2.py
 rm -rf ./chalicelib/core/events.py
 rm -rf ./chalicelib/core/events_mobile.py
