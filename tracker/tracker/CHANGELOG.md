@@ -3,10 +3,27 @@
 - drop computing ts digits
 - drop logLevel for "! node is already observed" message (not critical)
 - prevent crashes on buffer upload if msg value is wrapped in proxy via other frameworks
+- add support for singleton (moved from 15.x.x)
 
 ## 16.0.0
 
 - **[breaking]** new string dictionary message format
+
+## 15.1.0
+
+- move domparser for sprites under observer code for better SSR support
+- introduce singleton approach for tracker
+```js
+import { tracker } from '@openreplay/tracker'
+
+// configure it once
+tracker.configure({ ...options })
+
+// use it anywhere
+// .../main/app.tsx
+import { tracker } from '@openreplay/tracker'
+tracker.start()
+```
 
 ## 15.0.7
 
