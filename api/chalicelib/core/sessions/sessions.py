@@ -3,7 +3,7 @@ from typing import List, Union
 
 import schemas
 from chalicelib.core import events, metadata
-from chalicelib.core.sessions import performance_event
+from . import performance_event
 from chalicelib.utils import pg_client, helper, metrics_helper
 from chalicelib.utils import sql_helper as sh
 

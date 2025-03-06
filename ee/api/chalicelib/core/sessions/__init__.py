@@ -12,5 +12,3 @@ if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
 else:
     from . import sessions
     from . import sessions_search_exp
-
-from chalicelib.core.sessions import sessions_viewed_ee as sessions_viewed
