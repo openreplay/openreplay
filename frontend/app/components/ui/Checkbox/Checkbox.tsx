@@ -10,11 +10,3 @@ export default function (props: Props) {
   const { className = '', label = '', ...rest } = props;
   return <AntCheckbox {...rest}>{label}</AntCheckbox>;
 }
-export default (props: Props) => {
-    const { className = '', label, ...rest } = props;
-    return (
-      <AntCheckbox {...rest}>
-          {label}
-      </AntCheckbox>
-    );
-};
