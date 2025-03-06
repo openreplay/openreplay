@@ -155,7 +155,9 @@ const FilterSection = observer(
                   }}
                   emptyMessage={
                     isTable
-                      ? t('Filter data using any event or attribute. Use Add Step button below to do so.')
+                      ? t(
+                          'Filter data using any event or attribute. Use Add Step button below to do so.',
+                        )
                       : t('Add an event or filter step to define the series.')
                   }
                   expandable={isSingleSeries}
@@ -163,8 +165,10 @@ const FilterSection = observer(
               </div>
             ))}
         {isSingleSeries ? null : (
-          <div className={'mx-auto flex items-center gap-2 w-fit'}>
-            <Tooltip title={canAddSeries ? '' : t('Maximum of 3 series reached.')}>
+          <div className="mx-auto flex items-center gap-2 w-fit">
+            <Tooltip
+              title={canAddSeries ? '' : t('Maximum of 3 series reached.')}
+            >
               <Button
                 onClick={() => {
                   if (!canAddSeries) return;
@@ -179,8 +183,8 @@ const FilterSection = observer(
               </Button>
             </Tooltip>
             <Button
-              size={'small'}
-              type={'text'}
+              size="small"
+              type="text"
               icon={
                 <ChevronUp
                   size={16}
@@ -189,7 +193,7 @@ const FilterSection = observer(
               }
               onClick={allCollapsed ? expandAll : collapseAll}
             >
-              {allCollapsed ? t('Expand') : t('Collapse')} All
+              {allCollapsed ? t('Expand') : t('Collapse')}&nbsp;{t('All')}
             </Button>
           </div>
         )}
@@ -215,7 +219,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
       <div className="flex flex-col justify-start gap-2 flex-wrap">
         <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-1 pt-2">
           <div className="flex flex-wrap gap-2 items-center justify-start">
-            <span className="font-medium">{t('Journeys With')}&nbsp;</span>
+            <span className="font-medium">{t('Journeys With')}</span>
             <div className="flex gap-2 items-center">
               <Select
                 className="w-36 rounded-lg"

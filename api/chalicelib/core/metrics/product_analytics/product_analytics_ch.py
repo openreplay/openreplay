@@ -3,7 +3,7 @@ from time import time
 
 import schemas
 from chalicelib.core import metadata
-from chalicelib.core.metrics.product_analytics import __transform_journey
+from .product_analytics import __transform_journey
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import helper
 from chalicelib.utils import sql_helper as sh
@@ -85,10 +85,6 @@ def __complete_missing_steps(start_time, end_time, density, neutral, rows, time_
 # compute avg_time_from_previous at the same level as sessions_count (this was removed in v1.22)
 # if start-point is selected, the selected event is ranked n°1
 def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
-    # # This code is used for testing only
-    # return __get_test_data()
-
-    # ------ end of testing code ---
     sub_events = []
     start_points_conditions = []
     step_0_conditions = []
