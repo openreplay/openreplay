@@ -37,7 +37,7 @@ function ProjectTags() {
         <ul className="!list-disc list-inside">
           <li>
             <Typography.Text>
-              {t(' To create new tags, navigate to the Tags tab while playing a session')}
+              {t('To create new tags, navigate to the Tags tab while playing a session')}
             </Typography.Text>
           </li>
           <li>
