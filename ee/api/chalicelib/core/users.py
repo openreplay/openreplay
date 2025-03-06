@@ -8,8 +8,8 @@ from pydantic import BaseModel
 from starlette import status
 
 import schemas
-from chalicelib.core import authorizers, metadata
-from chalicelib.core import tenants, roles, spot, scope
+from chalicelib.core import authorizers
+from chalicelib.core import tenants, roles, spot
 from chalicelib.utils import email_helper
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
