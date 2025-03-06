@@ -1,1 +1,1 @@
-export { default } from './ZustandDoc'
+export { default } from './ZustandDoc';

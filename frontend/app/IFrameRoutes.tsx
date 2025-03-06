@@ -3,30 +3,28 @@ import { Switch, Route } from 'react-router-dom';
 import { Loader } from 'UI';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 
-import * as routes from './routes';
 import NotFoundPage from 'Shared/NotFoundPage';
 import { ModalProvider } from 'Components/Modal';
 import Layout from 'App/layout/Layout';
 import PublicRoutes from 'App/PublicRoutes';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import * as routes from './routes';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
-  LiveSessionPure: lazy(() => import('Components/Session/LiveSession'))
+  LiveSessionPure: lazy(() => import('Components/Session/LiveSession')),
 };
-
 
 const enhancedComponents: any = {
   Session: withSiteIdUpdater(components.SessionPure),
-  LiveSession: withSiteIdUpdater(components.LiveSessionPure)
+  LiveSession: withSiteIdUpdater(components.LiveSessionPure),
 };
 
-const withSiteId = routes.withSiteId;
+const { withSiteId } = routes;
 
 const SESSION_PATH = routes.session();
 const LIVE_SESSION_PATH = routes.liveSession();
-
 
 interface Props {
   isJwt?: boolean;
@@ -43,15 +41,23 @@ function IFrameRoutes(props: Props) {
   if (isLoggedIn) {
     return (
       <ModalProvider>
-        <Layout hideHeader={true}>
-          <Loader loading={!!loading} className='flex-1'>
-            <Suspense fallback={<Loader loading={true} className='flex-1' />}>
-              <Switch key='content'>
-                <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)}
-                       component={enhancedComponents.Session} />
-                <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
-                       component={enhancedComponents.LiveSession} />
-                <Route path='*' render={NotFoundPage} />
+        <Layout hideHeader>
+          <Loader loading={!!loading} className="flex-1">
+            <Suspense fallback={<Loader loading className="flex-1" />}>
+              <Switch key="content">
+                <Route
+                  exact
+                  strict
+                  path={withSiteId(SESSION_PATH, siteIdList)}
+                  component={enhancedComponents.Session}
+                />
+                <Route
+                  exact
+                  strict
+                  path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
+                  component={enhancedComponents.LiveSession}
+                />
+                <Route path="*" render={NotFoundPage} />
               </Switch>
             </Suspense>
           </Loader>
@@ -66,6 +72,5 @@ function IFrameRoutes(props: Props) {
 
   return <PublicRoutes />;
 }
-
 
 export default observer(IFrameRoutes);

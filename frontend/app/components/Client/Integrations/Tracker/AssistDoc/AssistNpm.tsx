@@ -3,8 +3,10 @@ import React from 'react';
 import { CodeBlock } from 'UI';
 
 import ToggleContent from 'Shared/ToggleContent';
+import { useTranslation } from 'react-i18next';
 
 function AssistNpm(props) {
+  const { t } = useTranslation();
   const usage = `import OpenReplay from '@openreplay/tracker';
 import trackerAssist from '@openreplay/tracker-assist';
 const tracker = new OpenReplay({
@@ -56,21 +58,23 @@ type ButtonOptions = HTMLButtonElement | string | {
   innerHTML?: string, // to pass an svg string or text
   style?: StyleObject, // style object (i.e {color: 'red', borderRadius: '10px'})
 }
-`
+`;
   return (
     <div>
       <p>
-        Initialize the tracker then load the @openreplay/tracker-assist plugin.
+        {t(
+          'Initialize the tracker then load the @openreplay/tracker-assist plugin.',
+        )}
       </p>
 
-      <div className="font-bold my-2">Usage</div>
+      <div className="font-bold my-2">{t('Usage')}</div>
       <ToggleContent
         label="Server-Side-Rendered (SSR)?"
         first={<CodeBlock code={usage} language="javascript" />}
         second={<CodeBlock code={usageCjs} language="jsx" />}
       />
 
-      <div className="font-bold my-2">Options</div>
+      <div className="font-bold my-2">{t('Options')}</div>
       <CodeBlock code={options} language="typescript" />
     </div>
   );

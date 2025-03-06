@@ -5,13 +5,9 @@ interface Props {
   redirect: string;
 }
 
-const AdditionalRoutes = (props: Props) => {
+function AdditionalRoutes(props: Props) {
   const { redirect } = props;
-  return (
-    <>
-      <Redirect to={redirect} />
-    </>
-  );
-};
+  return <Redirect to={redirect} />;
+}
 
 export default AdditionalRoutes;

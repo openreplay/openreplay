@@ -7,7 +7,6 @@ import { observer } from 'mobx-react-lite';
 import { Badge, Button, Tooltip } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 
-
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 
 function Notifications() {
@@ -28,12 +27,13 @@ function Notifications() {
   }, []);
 
   return (
-    <Badge dot={count > 0} size='small'>
-      <Tooltip title='Alerts'>
+    <Badge dot={count > 0} size="small">
+      <Tooltip title="Alerts">
         <Button
           icon={<BellOutlined />}
-          onClick={() => showModal(<AlertTriggersModal />, { right: true })}>
-          {/*<Icon name='bell' size='18' color='gray-dark' />*/}
+          onClick={() => showModal(<AlertTriggersModal />, { right: true })}
+        >
+          {/* <Icon name='bell' size='18' color='gray-dark' /> */}
         </Button>
       </Tooltip>
     </Badge>

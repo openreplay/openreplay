@@ -1,1 +1,1 @@
-export { default } from './SaveFilterButton'
+export { default } from './SaveFilterButton';

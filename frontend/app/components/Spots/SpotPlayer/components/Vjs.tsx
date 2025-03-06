@@ -24,14 +24,14 @@ function VideoJS(props: {
         onReady && onReady(player);
       }));
       player.volume(1); // Set volume to maximum
-      player.muted(false)
+      player.muted(false);
     } else {
       const player = playerRef.current;
 
       player.autoplay(options.autoplay);
       player.src(options.sources);
       player.volume(1); // Set volume to maximum
-      player.muted(false)
+      player.muted(false);
     }
   }, [options, videoRef]);
 

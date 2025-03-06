@@ -5,16 +5,16 @@ import ExampleTrend from '../Trend';
 import ExampleCount from '../Count';
 
 interface ExampleProps {
-    onCard: (card: string) => void;
+  onCard: (card: string) => void;
 }
 
 const ProductAnalytics: React.FC<ExampleProps> = ({ onCard }) => (
-    <>
-        <ExampleFunnel onCard={onCard} />
-        <ExamplePath onCard={onCard} />
-        <ExampleTrend onCard={onCard} />
-        <ExampleCount onCard={onCard} />
-    </>
+  <>
+    <ExampleFunnel onCard={onCard} />
+    <ExamplePath onCard={onCard} />
+    <ExampleTrend onCard={onCard} />
+    <ExampleCount onCard={onCard} />
+  </>
 );
 
 export default ProductAnalytics;

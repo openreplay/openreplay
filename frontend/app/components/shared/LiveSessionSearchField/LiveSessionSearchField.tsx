@@ -1,18 +1,19 @@
-import React, { useState } from 'react';;
-import stl from './LiveSessionSearchField.module.css';
+import React, { useState } from 'react';
 import { Input } from 'UI';
 import LiveFilterModal from 'Shared/Filters/LiveFilterModal';
 import { debounce } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import stl from './LiveSessionSearchField.module.css';
 
-interface Props {
-
-}
+interface Props {}
 
 function LiveSessionSearchField(props: Props) {
   const { searchStoreLive } = useStore();
-  const debounceFetchFilterSearch = debounce(searchStoreLive.fetchFilterSearch, 1000);
+  const debounceFetchFilterSearch = debounce(
+    searchStoreLive.fetchFilterSearch,
+    1000,
+  );
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -34,7 +35,7 @@ function LiveSessionSearchField(props: Props) {
         onBlur={() => setTimeout(setShowModal, 200, false)}
         onChange={onSearchChange}
         icon="search"
-        placeholder={'Find live sessions by user or metadata.'}
+        placeholder="Find live sessions by user or metadata."
         fluid
         id="search"
         type="search"
@@ -45,7 +46,7 @@ function LiveSessionSearchField(props: Props) {
         <div className="absolute left-0 shadow-sm rounded-lg bg-white z-50">
           <LiveFilterModal
             searchQuery={searchQuery}
-            isMainSearch={true}
+            isMainSearch
             onFilterClick={onAddFilter}
           />
         </div>

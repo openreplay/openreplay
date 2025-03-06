@@ -2,6 +2,7 @@ import { toast } from 'react-toastify';
 
 class AudioContextManager {
   context = new AudioContext();
+
   destination = this.context.createMediaStreamDestination();
 
   getAllTracks() {
@@ -33,14 +34,16 @@ function createFileRecorder(
   recName: string,
   sessionId: string,
   saveCb: (saveObj: { name: string; duration: number }, blob: Blob) => void,
-  onStop: () => void
+  onStop: () => void,
 ) {
   let ended = false;
   const start = new Date().getTime();
 
   let recordedChunks: BlobPart[] = [];
   const SAVE_INTERVAL_MS = 200;
-  const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8,opus' });
+  const mediaRecorder = new MediaRecorder(stream, {
+    mimeType: 'video/webm; codecs=vp8,opus',
+  });
 
   mediaRecorder.ondataavailable = function (e) {
     if (e.data.size > 0) {
@@ -76,16 +79,20 @@ function saveFile(
   startDate: number,
   recName: string,
   sessionId: string,
-  saveCb: (saveObj: { name: string; duration: number }, blob: Blob) => void
+  saveCb: (saveObj: { name: string; duration: number }, blob: Blob) => void,
 ) {
-  const saveObject = { name: recName, duration: new Date().getTime() - startDate, sessionId };
+  const saveObject = {
+    name: recName,
+    duration: new Date().getTime() - startDate,
+    sessionId,
+  };
 
   const blob = new Blob(recordedChunks, {
     type: mimeType,
   });
   saveCb(saveObject, blob);
 
-  const filename = recName + '.' + mimeType.split('/')[1];
+  const filename = `${recName}.${mimeType.split('/')[1]}`;
   const downloadLink = document.createElement('a');
   downloadLink.href = URL.createObjectURL(blob);
   downloadLink.download = filename;
@@ -137,13 +144,20 @@ export async function screenRecorder(
       name: string;
       duration: number;
     },
-    blob: Blob
+    blob: Blob,
   ) => void,
-  onStop: () => void
+  onStop: () => void,
 ) {
   try {
     const stream = await recordScreen();
-    const mediaRecorder = createFileRecorder(stream, FILE_TYPE, recName, sessionId, saveCb, onStop);
+    const mediaRecorder = createFileRecorder(
+      stream,
+      FILE_TYPE,
+      recName,
+      sessionId,
+      saveCb,
+      onStop,
+    );
 
     return () => {
       if (mediaRecorder.state !== 'inactive') {
@@ -153,9 +167,9 @@ export async function screenRecorder(
     };
   } catch (e) {
     toast.error(
-      'Screen recording is not permitted by your system and/or browser. Make sure to enable it in your browser as well as in your system settings.'
+      'Screen recording is not permitted by your system and/or browser. Make sure to enable it in your browser as well as in your system settings.',
     );
-    throw new Error('OpenReplay recording: ' + e);
+    throw new Error(`OpenReplay recording: ${e}`);
   }
 }
 

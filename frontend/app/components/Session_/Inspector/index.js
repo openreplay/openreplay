@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { PlayerContext } from 'App/components/Session/playerContext';
 import ElementView from './ElementView';
 import BottomBlock from '../BottomBlock';
 import stl from './inspector.module.css';
-import { PlayerContext } from 'App/components/Session/playerContext';
 
 // TODO: refactor: use Layout from the Sessions and put everything there under the WebPlayer folder
 
 export default function Inspector() {
   const { player } = React.useContext(PlayerContext);
 
-  const toggleInspectorMode = player.toggleInspectorMode;
+  const { toggleInspectorMode } = player;
   const markElement = player.mark;
 
   const [doc, setDoc] = useState(null);

@@ -22,7 +22,9 @@ function WidgetName(props: Props) {
   const onBlur = (nameInput?: string) => {
     setEditing(false);
     const toUpdate = nameInput || name;
-    props.onUpdate(toUpdate && toUpdate.trim() === '' ? 'New Widget' : toUpdate);
+    props.onUpdate(
+      toUpdate && toUpdate.trim() === '' ? 'New Widget' : toUpdate,
+    );
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -60,12 +62,12 @@ function WidgetName(props: Props) {
         />
       ) : (
         // @ts-ignore
-        <Tooltip  mouseEnterDelay={1} title="Click to edit" disabled={!canEdit}>
+        <Tooltip mouseEnterDelay={1} title="Click to edit" disabled={!canEdit}>
           <div
             onClick={() => setEditing(true)}
             className={cn(
-              "text-2xl h-8 flex items-center p-2 rounded-lg",
-              canEdit && 'cursor-pointer select-none ps-2 hover:bg-teal/10'
+              'text-2xl h-8 flex items-center p-2 rounded-lg',
+              canEdit && 'cursor-pointer select-none ps-2 hover:bg-teal/10',
             )}
           >
             {name}

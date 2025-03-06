@@ -2,7 +2,7 @@ import React from 'react';
 import { UxTListEntry } from 'App/services/UxtestingService';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { numberWithCommas } from 'App/utils';
+import { numberWithCommas, debounce } from 'App/utils';
 import { Button, Input, Typography, Tag, Modal, Space } from 'antd';
 import AnimatedSVG from 'Shared/AnimatedSVG';
 import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -10,21 +10,28 @@ import { Loader, NoContent, Pagination, Link, Icon } from 'UI';
 import { checkForRecent, getDateFromMill } from 'App/date';
 import { ArrowRightOutlined, PlusOutlined } from '@ant-design/icons';
 import { useHistory, useParams } from 'react-router-dom';
-import { withSiteId, usabilityTestingEdit, usabilityTestingView } from 'App/routes';
-import { debounce } from 'App/utils';
+import {
+  withSiteId,
+  usabilityTestingEdit,
+  usabilityTestingView,
+} from 'App/routes';
 import withPageTitle from 'HOCs/withPageTitle';
+import { useTranslation } from 'react-i18next';
 
 const { Search } = Input;
 
 const PER_PAGE = 10;
 
 let debouncedSearch: any = () => null;
-const defaultDescription = `To assess how easy it is to use [Feature Name], we'll look at how users interact with it, how efficient it is, and if they're happy using it.`;
+const defaultDescription =
+  "To assess how easy it is to use [Feature Name], we'll look at how users interact with it, how efficient it is, and if they're happy using it.";
 
 function TestsTable() {
+  const { t } = useTranslation();
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [newTestTitle, setNewTestTitle] = React.useState('');
-  const [newTestDescription, setNewTestDescription] = React.useState(defaultDescription);
+  const [newTestDescription, setNewTestDescription] =
+    React.useState(defaultDescription);
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const { uxtestingStore } = useStore();
 
@@ -71,20 +78,24 @@ function TestsTable() {
   return (
     <div className="w-full mx-auto" style={{ maxWidth: '1360px' }}>
       <Modal
-        title="Create Usability Test"
+        title={t('Create Usability Test')}
         open={isModalVisible}
         onOk={() => onClose(true)}
         onCancel={() => onClose(false)}
         footer={
-          <Button type={'primary'} disabled={newTestTitle.trim().length === 0} onClick={() => onClose(true)}>
-            <Space align={'center'}>
-              Continue
+          <Button
+            type="primary"
+            disabled={newTestTitle.trim().length === 0}
+            onClick={() => onClose(true)}
+          >
+            <Space align="center">
+              {t('Continue')}
               <ArrowRightOutlined rev={undefined} />
             </Space>
           </Button>
         }
       >
-        <Typography.Text strong>Title</Typography.Text>
+        <Typography.Text strong>{t('Title')}</Typography.Text>
         <Input
           autoFocus
           // @ts-ignore
@@ -92,10 +103,12 @@ function TestsTable() {
           placeholder="E.g. Checkout user journey evaluation"
           style={{ marginBottom: '2em' }}
           value={newTestTitle}
-          type={'text'}
+          type="text"
           onChange={(e) => setNewTestTitle(e.target.value)}
         />
-        <Typography.Text strong>Test Objective (optional)</Typography.Text>
+        <Typography.Text strong>
+          {t('Test Objective (optional)')}
+        </Typography.Text>
         <Input.TextArea
           rows={6}
           value={newTestDescription}
@@ -104,14 +117,14 @@ function TestsTable() {
         />
       </Modal>
 
-      <div className={'bg-white rounded-lg shadow-sm border'}>
-        <div className={'flex items-center p-4 gap-2'}>
-          <h1 style={{ marginBottom: 0 }} className='text-2xl capitalize-first'>
-            Usability Tests
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="flex items-center p-4 gap-2">
+          <h1 style={{ marginBottom: 0 }} className="text-2xl capitalize-first">
+            {t('Usability Tests')}
           </h1>
-          <div className={'ml-auto'} />
+          <div className="ml-auto" />
           <Button type="primary" icon={<PlusOutlined />} onClick={openModal}>
-            Create Usability Test
+            {t('Create Usability Test')}
           </Button>
 
           <Search
@@ -128,13 +141,13 @@ function TestsTable() {
           <NoContent
             show={uxtestingStore.total === 0}
             title={
-              <div className={'flex flex-col items-center justify-center mt-10'}>
+              <div className="flex flex-col items-center justify-center mt-10">
                 {uxtestingStore.searchQuery === '' ? (
                   <AnimatedSVG name={ICONS.NO_UXT} size={172} />
                 ) : (
                   <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
                 )}
-                <div className={'text-lg font-medium mt-4'}>
+                <div className="text-lg font-medium mt-4">
                   {uxtestingStore.searchQuery === ''
                     ? 'Uncover real user insights through usability tests'
                     : 'No matching results'}
@@ -147,30 +160,38 @@ function TestsTable() {
               </div>
             }
           >
-            <div className={'bg-gray-lightest grid grid-cols-8 items-center font-semibold p-4'}>
-              <div className="col-span-4">Test Title</div>
-              <div className="col-span-1">Created by</div>
-              <div className="col-span-2">Updated at</div>
-              <div className="col-span-1">Status</div>
+            <div className="bg-gray-lightest grid grid-cols-8 items-center font-semibold p-4">
+              <div className="col-span-4">{t('Test Title')}</div>
+              <div className="col-span-1">{t('Created by')}</div>
+              <div className="col-span-2">{t('Updated at')}</div>
+              <div className="col-span-1">{t('Status')}</div>
             </div>
-            <div className={'bg-white'}>
+            <div className="bg-white">
               {uxtestingStore.tests.map((test) => (
                 <Row test={test} siteId={siteId} />
               ))}
             </div>
           </NoContent>
         </Loader>
-        <div className={'flex items-center justify-between p-4'}>
-          {uxtestingStore.isLoading || uxtestingStore.tests?.length === 0 ? null : (
+        <div className="flex items-center justify-between p-4">
+          {uxtestingStore.isLoading ||
+          uxtestingStore.tests?.length === 0 ? null : (
             <>
               <div>
-                Showing{' '}
-                <span className="font-medium">{(uxtestingStore.page - 1) * PER_PAGE + 1}</span> to{' '}
+                {t('Showing')}{' '}
                 <span className="font-medium">
-                  {(uxtestingStore.page - 1) * PER_PAGE + uxtestingStore.tests.length}
+                  {(uxtestingStore.page - 1) * PER_PAGE + 1}
                 </span>{' '}
-                of <span className="font-medium">{numberWithCommas(uxtestingStore.total)}</span>{' '}
-                tests.
+                {t('to')}{' '}
+                <span className="font-medium">
+                  {(uxtestingStore.page - 1) * PER_PAGE +
+                    uxtestingStore.tests.length}
+                </span>{' '}
+                {t('of')}{' '}
+                <span className="font-medium">
+                  {numberWithCommas(uxtestingStore.total)}
+                </span>{' '}
+                {t('tests.')}
               </div>
               <Pagination
                 page={uxtestingStore.page}
@@ -200,28 +221,33 @@ function Row({ test, siteId }: { test: UxTListEntry; siteId: string }) {
   const history = useHistory();
 
   const redirect = () => {
-    history.push(withSiteId(test.status === 'preview' ? editLink : link, siteId));
+    history.push(
+      withSiteId(test.status === 'preview' ? editLink : link, siteId),
+    );
   };
   return (
     <div
-      className={'grid grid-cols-8 p-4 border-b hover:bg-active-blue cursor-pointer'}
+      className="grid grid-cols-8 p-4 border-b hover:bg-active-blue cursor-pointer"
       onClick={redirect}
     >
       <Cell size={4}>
-        <div className={'flex items-center gap-2'}>
+        <div className="flex items-center gap-2">
           <div style={{ minWidth: 40 }}>
             <div
-              className={'rounded-full bg-tealx-light flex items-center justify-center'}
+              className="rounded-full bg-tealx-light flex items-center justify-center"
               style={{ width: 40, height: 40 }}
             >
-              <Icon name={'list-ul'} color={'tealx'} size={20} />
+              <Icon name="list-ul" color="tealx" size={20} />
             </div>
           </div>
-          <div style={{ maxWidth: 550 }} className='cap-first'>
-            <Link className="link !p-0" to={test.status === 'preview' ? editLink : link}>
+          <div style={{ maxWidth: 550 }} className="cap-first">
+            <Link
+              className="link !p-0"
+              to={test.status === 'preview' ? editLink : link}
+            >
               {test.title}
             </Link>
-            <div className={'w-11/12 text-sm whitespace-nowrap text-ellipsis overflow-hidden'}>
+            <div className="w-11/12 text-sm whitespace-nowrap text-ellipsis overflow-hidden">
               {test.description}
             </div>
           </div>
@@ -229,10 +255,19 @@ function Row({ test, siteId }: { test: UxTListEntry; siteId: string }) {
       </Cell>
       <Cell size={1}>{test.createdBy.name}</Cell>
       <Cell size={2}>
-        {checkForRecent(getDateFromMill(test.updatedAt)!, 'LLL dd, yyyy, hh:mm a')}
+        {checkForRecent(
+          getDateFromMill(test.updatedAt)!,
+          'LLL dd, yyyy, hh:mm a',
+        )}
       </Cell>
       <Cell size={1}>
-        <Tag className='text-base rounded-lg' bordered={false} color={colors[test.status]}>{statusMap[test.status]}</Tag>
+        <Tag
+          className="text-base rounded-lg"
+          bordered={false}
+          color={colors[test.status]}
+        >
+          {statusMap[test.status]}
+        </Tag>
       </Cell>
     </div>
   );
@@ -245,7 +280,13 @@ const colors = {
   preview: 'geekblue',
 } as const;
 
-function Cell({ size, children }: { size: number; children?: React.ReactNode }) {
+function Cell({
+  size,
+  children,
+}: {
+  size: number;
+  children?: React.ReactNode;
+}) {
   return <div className={`col-span-${size}`}>{children}</div>;
 }
 

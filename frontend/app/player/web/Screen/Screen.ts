@@ -12,11 +12,14 @@ export const INITIAL_STATE: State = {
 
 export enum ScaleMode {
   Embed,
-  //AdjustParentWidth
+  // AdjustParentWidth
   AdjustParentHeight,
 }
 
-function getElementsFromInternalPoint(doc: Document, { x, y }: Point): Element[] {
+function getElementsFromInternalPoint(
+  doc: Document,
+  { x, y }: Point,
+): Element[] {
   // @ts-ignore (IE, Edge)
   if (typeof doc.msElementsFromRect === 'function') {
     // @ts-ignore
@@ -30,7 +33,10 @@ function getElementsFromInternalPoint(doc: Document, { x, y }: Point): Element[]
   return el ? [el] : [];
 }
 
-function getElementsFromInternalPointDeep(doc: Document, point: Point): Element[] {
+function getElementsFromInternalPointDeep(
+  doc: Document,
+  point: Point,
+): Element[] {
   const elements = getElementsFromInternalPoint(doc, point);
   // is it performant though??
   for (let i = 0; i < elements.length; i++) {
@@ -55,18 +61,26 @@ function isIframe(el: Element): el is HTMLIFrameElement {
 
 export default class Screen {
   readonly overlay: HTMLDivElement;
+
   readonly cursor: Cursor;
+
   private selectionTargets: { start?: HTMLDivElement; end?: HTMLDivElement } = {
     start: undefined,
     end: undefined,
   };
 
   private readonly iframe: HTMLIFrameElement;
+
   private readonly screen: HTMLDivElement;
+
   private parentElement: HTMLElement | null = null;
+
   private onUpdateHook: (w: number, h: number) => void;
 
-  constructor(isMobile: boolean, private scaleMode: ScaleMode = ScaleMode.Embed) {
+  constructor(
+    isMobile: boolean,
+    private scaleMode: ScaleMode = ScaleMode.Embed,
+  ) {
     const iframe = document.createElement('iframe');
     iframe.className = styles.iframe;
     this.iframe = iframe;
@@ -92,7 +106,10 @@ export default class Screen {
       this.screen.style.marginTop = '0px';
     }
     if (this.document) {
-      Object.assign(this.document?.body.style, { margin: 0, overflow: 'hidden' })
+      Object.assign(this.document?.body.style, {
+        margin: 0,
+        overflow: 'hidden',
+      });
     }
   }
 
@@ -108,7 +125,9 @@ export default class Screen {
 
   attach(parentElement: HTMLElement) {
     if (this.parentElement) {
-      console.error('!!! web/Screen.ts#108: Tried to reattach the parent element.');
+      console.error(
+        '!!! web/Screen.ts#108: Tried to reattach the parent element.',
+      );
       return;
     }
 
@@ -197,7 +216,9 @@ export default class Screen {
   }
 
   getElementFromPoint(point: Point): Element | null {
-    return this.getElementFromInternalPoint(this.getInternalViewportCoordinates(point));
+    return this.getElementFromInternalPoint(
+      this.getInternalViewportCoordinates(point),
+    );
   }
 
   getElementBySelector(selector: string) {
@@ -235,14 +256,14 @@ export default class Screen {
       case ScaleMode.Embed:
         this.scaleRatio = Math.min(offsetWidth / width, offsetHeight / height);
         translate = 'translate(-50%, -50%)';
-        posStyles = { height: height + 'px' };
+        posStyles = { height: `${height}px` };
         break;
       case ScaleMode.AdjustParentHeight:
         // we want to scale the document with true height so the clickmap will be scrollable
-        const usedHeight = height + 'px';
-          // this.document?.body.scrollHeight && this.document?.body.scrollHeight > height
-          //   ? this.document.body.scrollHeight + 'px'
-          //   : height + 'px';
+        const usedHeight = `${height}px`;
+        // this.document?.body.scrollHeight && this.document?.body.scrollHeight > height
+        //   ? this.document.body.scrollHeight + 'px'
+        //   : height + 'px';
         this.scaleRatio = offsetWidth / width;
         translate = 'translate(-50%, 0)';
         posStyles = { top: 0, height: usedHeight };
@@ -256,15 +277,15 @@ export default class Screen {
     }
 
     if (this.scaleMode === ScaleMode.AdjustParentHeight) {
-      this.parentElement.style.height = this.scaleRatio * height + 'px';
+      this.parentElement.style.height = `${this.scaleRatio * height}px`;
     }
 
     Object.assign(this.screen.style, posStyles, {
-      width: width + 'px',
+      width: `${width}px`,
       transform: `scale(${this.scaleRatio}) ${translate}`,
     });
     Object.assign(this.iframe.style, posStyles, {
-      width: width + 'px',
+      width: `${width}px`,
     });
 
     this.boundingRect = this.screen.getBoundingClientRect();

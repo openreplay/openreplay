@@ -13,6 +13,6 @@ export default function GDPR(data?: Partial<IGDPR>): IGDPR {
     maskNumbers: false,
     defaultInputMode: 'plain',
     sampleRate: 0,
-  }
-  return Object.assign({}, defaults, data);
+  };
+  return { ...defaults, ...data };
 }

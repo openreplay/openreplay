@@ -4,19 +4,21 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { namedStore } from 'App/mstore/integrationsStore';
 import { Checkbox, Form, Input, Loader } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 function IntegrationForm(props: any) {
+  const { t } = useTranslation();
   const { formFields, name, integrated } = props;
   const { integrationsStore } = useStore();
   const initialSiteId = integrationsStore.integrations.siteId;
   const integrationStore = integrationsStore[name as unknown as namedStore];
   const config = integrationStore.instance;
-  const loading = integrationStore.loading;
+  const { loading } = integrationStore;
   const onSave = integrationStore.saveIntegration;
   const onRemove = integrationStore.deleteIntegration;
-  const edit = integrationStore.edit;
+  const { edit } = integrationStore;
   const fetchIntegrationList = integrationsStore.integrations.fetchIntegrations;
 
   const fetchList = () => {
@@ -30,19 +32,21 @@ function IntegrationForm(props: any) {
 
   const save = () => {
     const { name, customPath } = props;
-    onSave(customPath || name).then(() => {
-      fetchList();
-      props.onClose();
-    }).catch(async (error) => {
-      if (error.response) {
-        const errorResponse = await error.response.json();
-        if (errorResponse.errors && Array.isArray(errorResponse.errors)) {
-          toast.error(errorResponse.errors.map((e: any) => e).join(', '));
-        } else {
-          toast.error('Failed to save integration');
+    onSave(customPath || name)
+      .then(() => {
+        fetchList();
+        props.onClose();
+      })
+      .catch(async (error) => {
+        if (error.response) {
+          const errorResponse = await error.response.json();
+          if (errorResponse.errors && Array.isArray(errorResponse.errors)) {
+            toast.error(errorResponse.errors.map((e: any) => e).join(', '));
+          } else {
+            toast.error(t('Failed to save integration'));
+          }
         }
-      }
-    });
+      });
   };
 
   const remove = () => {
@@ -91,7 +95,7 @@ function IntegrationForm(props: any) {
                     autoFocus={autoFocus}
                   />
                 </Form.Field>
-              ))
+              )),
           )}
 
           <Button
@@ -101,12 +105,12 @@ function IntegrationForm(props: any) {
             type="primary"
             className="float-left mr-2"
           >
-            {config?.exists() ? 'Update' : 'Add'}
+            {config?.exists() ? t('Update') : t('Add')}
           </Button>
 
           {integrated && (
             <Button loading={loading} onClick={remove}>
-              {'Delete'}
+              {t('Delete')}
             </Button>
           )}
         </Form>

@@ -1,13 +1,8 @@
 import { audioContextManager } from 'App/utils/screenRecorder';
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import withPermissions from 'HOCs/withPermissions';
-import { PlayerContext, defaultContextValue, ILivePlayerContext } from './playerContext';
 import { makeAutoObservable } from 'mobx';
 import { createLiveWebPlayer } from 'Player';
-import PlayerBlockHeader from './Player/LivePlayer/LivePlayerBlockHeader';
-import PlayerBlock from './Player/LivePlayer/LivePlayerBlock';
-import styles from '../Session_/session.module.css';
 import Session from 'App/types/session';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import APIClient from 'App/api_client';
@@ -16,6 +11,14 @@ import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { sessionService } from 'App/services';
+import styles from '../Session_/session.module.css';
+import PlayerBlock from './Player/LivePlayer/LivePlayerBlock';
+import PlayerBlockHeader from './Player/LivePlayer/LivePlayerBlockHeader';
+import {
+  PlayerContext,
+  defaultContextValue,
+  ILivePlayerContext,
+} from './playerContext';
 
 interface Props {
   customSession?: Session;
@@ -25,19 +28,16 @@ interface Props {
 
 let playerInst: ILivePlayerContext['player'] | undefined;
 
-function LivePlayer({
-  isMultiview,
-  customSession,
-  query,
-}: Props) {
+function LivePlayer({ isMultiview, customSession, query }: Props) {
   const { projectsStore, sessionStore, userStore } = useStore();
-  const isEnterprise = userStore.isEnterprise;
+  const { isEnterprise } = userStore;
   const userEmail = userStore.account.email;
   const userName = userStore.account.name;
   const userId = userStore.account.id;
   const session = sessionStore.current;
   // @ts-ignore
-  const [contextValue, setContextValue] = useState<ILivePlayerContext>(defaultContextValue);
+  const [contextValue, setContextValue] =
+    useState<ILivePlayerContext>(defaultContextValue);
   const [fullView, setFullView] = useState(false);
   const openedFromMultiview = query?.get('multi') === 'true';
   const usedSession = isMultiview ? customSession! : session;
@@ -63,7 +63,7 @@ function LivePlayer({
         userId,
         projectId,
         (state) => makeAutoObservable(state),
-        toast
+        toast,
       );
       setContextValue({ player, store });
       playerInst = player;
@@ -93,7 +93,9 @@ function LivePlayer({
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     if (
-      (queryParams.has('fullScreen') && queryParams.get('fullScreen') === 'true') || (queryParams.has('fullView') && queryParams.get('fullView') === 'true') ||
+      (queryParams.has('fullScreen') &&
+        queryParams.get('fullScreen') === 'true') ||
+      (queryParams.has('fullView') && queryParams.get('fullView') === 'true') ||
       location.pathname.includes('multiview')
     ) {
       setFullView(true);
@@ -123,6 +125,9 @@ function LivePlayer({
   );
 }
 
-export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', true, false)(
-  withLocationHandlers()(observer(LivePlayer))
-);
+export default withPermissions(
+  ['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'],
+  '',
+  true,
+  false,
+)(withLocationHandlers()(observer(LivePlayer)));

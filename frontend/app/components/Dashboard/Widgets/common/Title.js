@@ -1,11 +1,14 @@
 import styles from './title.module.css';
+import React from 'react';
 
-const Title = ({ title, sub }) => (
-  <div className={ styles.title } >
-    <h4 className='cap-first'>{ title }</h4>
-    <span>{ sub }</span>
-  </div>
-);
+function Title({ title, sub }) {
+  return (
+    <div className={styles.title}>
+      <h4 className="cap-first">{title}</h4>
+      <span>{sub}</span>
+    </div>
+  );
+}
 
 Title.displayName = 'Title';
 

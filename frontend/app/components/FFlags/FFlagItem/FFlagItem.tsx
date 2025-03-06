@@ -5,7 +5,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { resentOrDate } from 'App/date';
 import { toast } from 'react-toastify';
-import { fflagRead } from "App/routes";
+import { fflagRead } from 'App/routes';
 import { Switch } from 'antd';
 
 function FFlagItem({ flag }: { flag: FeatureFlag }) {
@@ -25,17 +25,19 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
       });
   };
 
-  const flagIcon = flag.isSingleOption ? 'fflag-single' : ('fflag-multi' as const);
+  const flagIcon = flag.isSingleOption
+    ? 'fflag-single'
+    : ('fflag-multi' as const);
   const flagOwner = flag.updatedBy || flag.createdBy;
   const user =
     userStore.list.length > 0
       ? userStore.list.find((u) => parseInt(u.userId) === flagOwner!)?.name
       : flagOwner;
   return (
-    <div className={'w-full py-2 px-6 border-b hover:bg-active-blue'}>
-      <div className={'flex items-center'}>
+    <div className="w-full py-2 px-6 border-b hover:bg-active-blue">
+      <div className="flex items-center">
         <Link style={{ flex: 1 }} to={fflagRead(flag.featureFlagId.toString())}>
-          <div className={'flex items-center gap-2'}>
+          <div className="flex items-center gap-2">
             <Tooltip
               delay={150}
               title={flag.isSingleOption ? 'Single variant' : 'Multivariant'}
@@ -43,7 +45,7 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
               <Icon name={flagIcon} size={32} />
             </Tooltip>
             <div className="flex flex-col gap-1" style={{ width: 300 }}>
-              <span className={'link'}>{flag.flagKey}</span>
+              <span className="link">{flag.flagKey}</span>
               {flag.description ? (
                 <TextEllipsis
                   hintText={flag.description}
@@ -57,11 +59,8 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
         <div style={{ flex: 1 }}>
           {resentOrDate(flag.updatedAt || flag.createdAt)}
         </div>
-        <div
-          style={{ flex: 1 }}
-          className={'flex items-center gap-2 capitalize'}
-        >
-          <Icon name={'person-fill'} />
+        <div style={{ flex: 1 }} className="flex items-center gap-2 capitalize">
+          <Icon name="person-fill" />
           {user}
         </div>
         <div

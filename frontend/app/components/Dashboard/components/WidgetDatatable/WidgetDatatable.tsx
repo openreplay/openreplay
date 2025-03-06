@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import { Button, Table, Divider } from 'antd';
 import type { TableProps } from 'antd';
 
@@ -5,6 +6,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import cn from 'classnames';
 import React, { useState } from 'react';
 import { TableExporter } from 'Components/Funnels/FunnelWidget/FunnelTable';
+import { useTranslation } from 'react-i18next';
 
 const initTableProps = [
   {
@@ -35,10 +37,11 @@ interface Props {
 }
 
 function WidgetDatatable(props: Props) {
+  const { t } = useTranslation();
   const [tableProps, setTableProps] =
     useState<TableProps['columns']>(initTableProps);
   const data = React.useMemo(() => {
-    const dataObj = { ...props.data }
+    const dataObj = { ...props.data };
     if (props.compData) {
       dataObj.chart = dataObj.chart.map((item, i) => {
         const compItem = props.compData!.chart[i];
@@ -52,22 +55,20 @@ function WidgetDatatable(props: Props) {
         return newItem;
       });
       const blank = new Array(dataObj.namesMap.length * 2).fill('');
-      dataObj.namesMap = blank.map((_, i) => {
-        return i % 2 !== 0
+      dataObj.namesMap = blank.map((_, i) =>
+        i % 2 !== 0
           ? `Previous ${dataObj.namesMap[i / 2]}`
-          : dataObj.namesMap[i / 2];
-      })
+          : dataObj.namesMap[i / 2],
+      );
     }
-    return dataObj
+    return dataObj;
   }, [props.data, props.compData]);
 
   const [showTable, setShowTable] = useState(props.defaultOpen);
   const [tableData, setTableData] = useState([]);
 
   const columnNames = [];
-  const series = !data.chart[0]
-    ? []
-    : data.namesMap;
+  const series = !data.chart[0] ? [] : data.namesMap;
 
   React.useEffect(() => {
     if (!data.chart) return;
@@ -91,24 +92,26 @@ function WidgetDatatable(props: Props) {
     }[] = [];
     columnNames.forEach((name: string, i) => {
       tableCols.push({
-        title: <span className={'font-medium'}>{name}</span>,
-        dataIndex: name+'_'+i,
-        key: name+'_'+i,
-        sorter: (a, b) => a[name+'_'+i] - b[name+'_'+i],
+        title: <span className="font-medium">{name}</span>,
+        dataIndex: `${name}_${i}`,
+        key: `${name}_${i}`,
+        sorter: (a, b) => a[`${name}_${i}`] - b[`${name}_${i}`],
       });
       const values = data.chart[i];
       series.forEach((s) => {
         const ind = items.findIndex((item) => item.seriesName === s);
         if (ind === -1) return;
-        items[ind][name+'_'+i] = values[s];
+        items[ind][`${name}_${i}`] = values[s];
       });
     });
     // calculating averages for each row
     items.forEach((item) => {
       const itemsLen = columnNames.length;
-      const keys = Object.keys(item).filter(k => !['seriesName', 'key', 'average'].includes(k));
+      const keys = Object.keys(item).filter(
+        (k) => !['seriesName', 'key', 'average'].includes(k),
+      );
       let sum = 0;
-      const values = keys.map(k => item[k]);
+      const values = keys.map((k) => item[k]);
       values.forEach((v) => {
         sum += v;
       });
@@ -146,25 +149,25 @@ function WidgetDatatable(props: Props) {
           >
             <Button
               icon={showTable ? <EyeOff size={16} /> : <Eye size={16} />}
-              size={'small'}
-              type={'default'}
+              size="small"
+              type="default"
               onClick={() => setShowTable(!showTable)}
               className="btn-show-hide-table"
             >
-              {showTable ? 'Hide Table' : 'Show Table'}
+              {showTable ? t('Hide Table') : t('Show Table')}
             </Button>
           </Divider>
         </div>
       )}
 
       {showTable || isTableOnlyMode ? (
-        <div className={'relative pb-2'}>
+        <div className="relative pb-2">
           <Table
             columns={tableProps}
             dataSource={tableData}
             pagination={false}
             rowSelection={props.tableMode ? undefined : rowSelection}
-            size={'small'}
+            size="small"
             scroll={{ x: 'max-content' }}
           />
           {props.inBuilder ? (

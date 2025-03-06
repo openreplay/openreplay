@@ -1,10 +1,15 @@
-import React from 'react'
-import { useState } from 'react';
+import React, { useState } from 'react';
 import copy from 'copy-to-clipboard';
 import { Button } from 'antd';
 
-function CopyButton({ content, variant="text",  className = 'capitalize mt-2 font-medium text-neutral-400', btnText = 'copy', size = "small" }) {
-  const [copied, setCopied] = useState(false)
+function CopyButton({
+  content,
+  variant = 'text',
+  className = 'capitalize mt-2 font-medium text-neutral-400',
+  btnText = 'copy',
+  size = 'small',
+}) {
+  const [copied, setCopied] = useState(false);
 
   const copyHandler = () => {
     setCopied(true);
@@ -13,7 +18,7 @@ function CopyButton({ content, variant="text",  className = 'capitalize mt-2 fon
       setCopied(false);
     }, 1000);
   };
-  
+
   return (
     <Button
       type={variant}
@@ -26,4 +31,4 @@ function CopyButton({ content, variant="text",  className = 'capitalize mt-2 fon
   );
 }
 
-export default CopyButton
+export default CopyButton;

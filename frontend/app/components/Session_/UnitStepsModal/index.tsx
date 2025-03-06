@@ -7,6 +7,7 @@ import { observer } from 'mobx-react-lite';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { X } from 'lucide-react';
 import { puppeteerEvents, cypressEvents, playWrightEvents } from './utils';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onClose: () => void;
@@ -23,6 +24,7 @@ export const frameworkIcons = {
   playwright: 'pwright',
 }
 function UnitStepsModal({ onClose }: Props) {
+  const { t } = useTranslation();
   const { sessionStore, uiPlayerStore } = useStore();
   const { store, player } = React.useContext(PlayerContext);
   const [eventStr, setEventStr] = React.useState('');
@@ -144,7 +146,7 @@ function UnitStepsModal({ onClose }: Props) {
       style={{ marginTop: -50 }}
     >
       <div className={'flex items-center justify-between w-full'}>
-        <div className={'font-semibold text-xl'}>Copy Events</div>
+        <div className={'font-semibold text-xl'}>{t('Copy Events')}</div>
         <div className={'cursor-pointer'} onClick={onClose}>
           <X size={18} />
         </div>
@@ -156,7 +158,7 @@ function UnitStepsModal({ onClose }: Props) {
             label: (
               <div className={'flex items-center gap-2'}>
                 <Icon name={'cypress'} size={18} />
-                <div>Cypress</div>
+                <div>{t('Cypress')}</div>
               </div>
             ),
             value: 'cypress',
@@ -165,7 +167,7 @@ function UnitStepsModal({ onClose }: Props) {
             label: (
               <div className={'flex items-center gap-2'}>
                 <Icon name={'puppeteer'} size={18} />
-                <div>Puppeteer</div>
+                <div>{t('Puppeteer')}</div>
               </div>
             ),
             value: 'puppeteer',
@@ -174,7 +176,7 @@ function UnitStepsModal({ onClose }: Props) {
             label: (
               <div className={'flex items-center gap-2'}>
                 <Icon name={'pwright'} size={18} />
-                <div>Playwright</div>
+                <div>{t('Playwright')}</div>
               </div>
             ),
             value: 'playwright',
@@ -188,14 +190,14 @@ function UnitStepsModal({ onClose }: Props) {
         onChange={(e) => setMode(e.target.value)}
         className={'w-full'}
       >
-        <Radio value={'events'}>Events Only</Radio>
-        <Radio value={'test'}>Complete Test</Radio>
+        <Radio value={'events'}>{t('Events Only')}</Radio>
+        <Radio value={'test'}>{t('Complete Test')}</Radio>
       </Radio.Group>
       <Checkbox
         value={uiPlayerStore.exportEventsSelection.enabled}
         onChange={(e) => toggleZoom(e.target.checked)}
       >
-        Select events on the timeline
+        {t('Select events on the timeline')}
       </Checkbox>
       <div className={'w-full'}>
         <CodeBlock

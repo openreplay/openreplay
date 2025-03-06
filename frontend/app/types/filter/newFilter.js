@@ -1,14 +1,25 @@
 import {
-  clickSelectorOperators, issueOptions
-} from "App/constants/filterOptions";
+  clickSelectorOperators,
+  issueOptions,
+} from 'App/constants/filterOptions';
 import Record from 'Types/Record';
-import { FilterType, FilterKey, FilterCategory } from './filterType';
 import filterOptions, { countries, platformOptions } from 'App/constants';
 import { observable } from 'mobx';
 import Search from '@/mstore/types/search';
+import { FilterType, FilterKey, FilterCategory } from './filterType';
 
-const countryOptions = Object.keys(countries).map(i => ({ label: countries[i], value: i }));
-const containsFilters = [{ key: 'contains', label: 'contains', text: 'contains', value: 'contains' }];
+const countryOptions = Object.keys(countries).map((i) => ({
+  label: countries[i],
+  value: i,
+}));
+const containsFilters = [
+  {
+    key: 'contains',
+    label: 'contains',
+    text: 'contains',
+    value: 'contains',
+  },
+];
 
 const filterOrder = {
   [FilterCategory.EVENTS]: 0,
@@ -17,7 +28,7 @@ const filterOrder = {
   [FilterCategory.USER]: 3,
   [FilterCategory.SESSION]: 4,
   [FilterCategory.ISSUE]: 5,
-  [FilterCategory.METADATA]: 6
+  [FilterCategory.METADATA]: 6,
 };
 
 export const mobileFilters = [
@@ -30,7 +41,7 @@ export const mobileFilters = [
     operator: 'on',
     operatorOptions: filterOptions.targetOperators,
     icon: 'filters/click',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.INPUT_MOBILE,
@@ -42,7 +53,7 @@ export const mobileFilters = [
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
     icon: 'filters/input',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.VIEW_MOBILE,
@@ -54,7 +65,7 @@ export const mobileFilters = [
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
     icon: 'filters/screen',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.CUSTOM_MOBILE,
@@ -65,7 +76,7 @@ export const mobileFilters = [
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
     icon: 'filters/custom',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.ERROR_MOBILE,
@@ -76,7 +87,7 @@ export const mobileFilters = [
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
     icon: 'filters/error',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.SWIPE_MOBILE,
@@ -87,8 +98,8 @@ export const mobileFilters = [
     operator: 'on',
     operatorOptions: filterOptions.targetOperators,
     icon: 'filters/chevrons-up-down',
-    isEvent: true
-  }
+    isEvent: true,
+  },
 ];
 
 const issueFilters = issueOptions.map((i) => ({
@@ -112,9 +123,11 @@ export const filters = [
     subCategory: FilterCategory.AUTOCAPTURE,
     label: 'Click',
     operator: 'on',
-    operatorOptions: filterOptions.targetOperators.concat(clickSelectorOperators),
+    operatorOptions: filterOptions.targetOperators.concat(
+      clickSelectorOperators,
+    ),
     icon: 'filters/click',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.INPUT,
@@ -126,7 +139,7 @@ export const filters = [
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
     icon: 'filters/input',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.LOCATION,
@@ -138,7 +151,7 @@ export const filters = [
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
     icon: 'filters/location',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.TAGGED_ELEMENT,
@@ -150,7 +163,7 @@ export const filters = [
     isEvent: true,
     icon: 'filters/tag-element',
     operatorOptions: filterOptions.tagElementOperators,
-    options: []
+    options: [],
   },
   {
     key: FilterKey.CUSTOM,
@@ -161,7 +174,7 @@ export const filters = [
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
     icon: 'filters/custom',
-    isEvent: true
+    isEvent: true,
   },
   // { key: FilterKey.REQUEST, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Fetch', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch', isEvent: true },
   {
@@ -179,7 +192,7 @@ export const filters = [
         placeholder: 'Enter path or URL',
         operator: 'is',
         operatorOptions: filterOptions.stringOperators,
-        icon: 'filters/fetch'
+        icon: 'filters/fetch',
       },
       {
         key: FilterKey.FETCH_STATUS_CODE,
@@ -189,7 +202,7 @@ export const filters = [
         placeholder: 'Enter status code',
         operator: '=',
         operatorOptions: filterOptions.customOperators,
-        icon: 'filters/fetch'
+        icon: 'filters/fetch',
       },
       {
         key: FilterKey.FETCH_METHOD,
@@ -200,7 +213,7 @@ export const filters = [
         placeholder: 'Select method type',
         operatorOptions: filterOptions.stringOperatorsLimited,
         icon: 'filters/fetch',
-        options: filterOptions.methodOptions
+        options: filterOptions.methodOptions,
       },
       {
         key: FilterKey.FETCH_DURATION,
@@ -210,7 +223,7 @@ export const filters = [
         placeholder: 'E.g. 12',
         operator: '=',
         operatorOptions: filterOptions.customOperators,
-        icon: 'filters/fetch'
+        icon: 'filters/fetch',
       },
       {
         key: FilterKey.FETCH_REQUEST_BODY,
@@ -219,7 +232,7 @@ export const filters = [
         label: 'with request body',
         operator: 'is',
         operatorOptions: filterOptions.stringOperators,
-        icon: 'filters/fetch'
+        icon: 'filters/fetch',
       },
       {
         key: FilterKey.FETCH_RESPONSE_BODY,
@@ -228,11 +241,11 @@ export const filters = [
         label: 'with response body',
         operator: 'is',
         operatorOptions: filterOptions.stringOperators,
-        icon: 'filters/fetch'
-      }
+        icon: 'filters/fetch',
+      },
     ],
     icon: 'filters/fetch',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.GRAPHQL,
@@ -251,7 +264,7 @@ export const filters = [
         label: 'with name',
         operator: 'is',
         operatorOptions: filterOptions.stringOperators,
-        icon: 'filters/fetch'
+        icon: 'filters/fetch',
       },
       {
         key: FilterKey.GRAPHQL_METHOD,
@@ -261,7 +274,7 @@ export const filters = [
         operator: 'is',
         operatorOptions: filterOptions.stringOperatorsLimited,
         icon: 'filters/fetch',
-        options: filterOptions.methodOptions
+        options: filterOptions.methodOptions,
       },
       {
         key: FilterKey.GRAPHQL_REQUEST_BODY,
@@ -270,7 +283,7 @@ export const filters = [
         label: 'with request body',
         operator: 'is',
         operatorOptions: filterOptions.stringOperators,
-        icon: 'filters/fetch'
+        icon: 'filters/fetch',
       },
       {
         key: FilterKey.GRAPHQL_RESPONSE_BODY,
@@ -279,9 +292,9 @@ export const filters = [
         label: 'with response body',
         operator: 'is',
         operatorOptions: filterOptions.stringOperators,
-        icon: 'filters/fetch'
-      }
-    ]
+        icon: 'filters/fetch',
+      },
+    ],
   },
   {
     key: FilterKey.STATEACTION,
@@ -292,7 +305,7 @@ export const filters = [
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
     icon: 'filters/state-action',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.ERROR,
@@ -303,7 +316,7 @@ export const filters = [
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
     icon: 'filters/error',
-    isEvent: true
+    isEvent: true,
   },
   // { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata', isEvent: true },
 
@@ -315,7 +328,7 @@ export const filters = [
     label: 'Referrer',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/arrow-return-right'
+    icon: 'filters/arrow-return-right',
   },
   {
     key: FilterKey.DURATION,
@@ -324,7 +337,7 @@ export const filters = [
     label: 'Duration',
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: 'filters/duration'
+    icon: 'filters/duration',
   },
   {
     key: FilterKey.UTM_SOURCE,
@@ -333,7 +346,7 @@ export const filters = [
     label: 'UTM Source',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/country'
+    icon: 'filters/country',
   },
   {
     key: FilterKey.UTM_MEDIUM,
@@ -342,7 +355,7 @@ export const filters = [
     label: 'UTM Medium',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/country'
+    icon: 'filters/country',
   },
   {
     key: FilterKey.UTM_CAMPAIGN,
@@ -351,7 +364,7 @@ export const filters = [
     label: 'UTM Campaign',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/country'
+    icon: 'filters/country',
   },
   {
     key: FilterKey.USER_COUNTRY,
@@ -361,7 +374,7 @@ export const filters = [
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
     icon: 'filters/country',
-    options: countryOptions
+    options: countryOptions,
   },
   {
     key: FilterKey.USER_CITY,
@@ -371,7 +384,7 @@ export const filters = [
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
     icon: 'filters/country',
-    options: countryOptions
+    options: countryOptions,
   },
   {
     key: FilterKey.USER_STATE,
@@ -381,7 +394,7 @@ export const filters = [
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
     icon: 'filters/country',
-    options: countryOptions
+    options: countryOptions,
   },
   // { key: FilterKey.CONSOLE, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Console', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/console' },
   {
@@ -391,8 +404,10 @@ export const filters = [
     label: 'User Id',
     placeholder: 'E.g. Alex, or alex@domain.com, or EMP123',
     operator: 'is',
-    operatorOptions: filterOptions.stringOperators.concat([{ label: 'is undefined', value: 'isUndefined' }]),
-    icon: 'filters/userid'
+    operatorOptions: filterOptions.stringOperators.concat([
+      { label: 'is undefined', value: 'isUndefined' },
+    ]),
+    icon: 'filters/userid',
   },
   {
     key: FilterKey.USERANONYMOUSID,
@@ -401,9 +416,8 @@ export const filters = [
     label: 'User AnonymousId',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/userid'
+    icon: 'filters/userid',
   },
-
 
   {
     key: FilterKey.AVG_CPU_LOAD,
@@ -421,7 +435,7 @@ export const filters = [
     sourcePlaceholder: 'E.g. 12',
     sourceUnit: '%',
     sourceType: FilterType.NUMBER,
-    sourceOperatorOptions: filterOptions.customOperators
+    sourceOperatorOptions: filterOptions.customOperators,
   },
   {
     key: FilterKey.AVG_MEMORY_USAGE,
@@ -439,7 +453,7 @@ export const filters = [
     sourcePlaceholder: 'E.g. 12',
     sourceUnit: 'mb',
     sourceType: FilterType.NUMBER,
-    sourceOperatorOptions: filterOptions.customOperators
+    sourceOperatorOptions: filterOptions.customOperators,
   },
   {
     key: FilterKey.ISSUE,
@@ -450,7 +464,7 @@ export const filters = [
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
     icon: 'filters/click',
-    options: filterOptions.issueOptions
+    options: filterOptions.issueOptions,
   },
   ...issueFilters,
   {
@@ -460,7 +474,7 @@ export const filters = [
     label: 'OS',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/os'
+    icon: 'filters/os',
   },
   {
     key: FilterKey.USER_BROWSER,
@@ -469,7 +483,7 @@ export const filters = [
     label: 'Browser',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/browser'
+    icon: 'filters/browser',
   },
   {
     key: FilterKey.USER_DEVICE,
@@ -478,7 +492,7 @@ export const filters = [
     label: 'Device',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/device'
+    icon: 'filters/device',
   },
   {
     key: FilterKey.PLATFORM,
@@ -488,7 +502,7 @@ export const filters = [
     operator: 'is',
     operatorOptions: filterOptions.baseOperators,
     icon: 'filters/platform',
-    options: platformOptions
+    options: platformOptions,
   },
   {
     key: FilterKey.REVID,
@@ -498,8 +512,8 @@ export const filters = [
     placeholder: 'E.g. v1.0.8',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'collection'
-  }
+    icon: 'collection',
+  },
 ].sort((a, b) => {
   const aOrder = filterOrder[a.category] ?? 9;
   const bOrder = filterOrder[b.category] ?? 9;
@@ -514,7 +528,7 @@ export const flagConditionFilters = [
     label: 'OS',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/os'
+    icon: 'filters/os',
   },
   {
     key: FilterKey.USER_BROWSER,
@@ -523,7 +537,7 @@ export const flagConditionFilters = [
     label: 'Browser',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/browser'
+    icon: 'filters/browser',
   },
   {
     key: FilterKey.USER_DEVICE,
@@ -532,7 +546,7 @@ export const flagConditionFilters = [
     label: 'Device',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/device'
+    icon: 'filters/device',
   },
   {
     key: FilterKey.REFERRER,
@@ -541,7 +555,7 @@ export const flagConditionFilters = [
     label: 'Referrer',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/arrow-return-right'
+    icon: 'filters/arrow-return-right',
   },
   {
     key: FilterKey.USER_COUNTRY,
@@ -551,7 +565,7 @@ export const flagConditionFilters = [
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
     icon: 'filters/country',
-    options: countryOptions
+    options: countryOptions,
   },
   {
     key: FilterKey.USER_CITY,
@@ -561,7 +575,7 @@ export const flagConditionFilters = [
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
     icon: 'filters/country',
-    options: countryOptions
+    options: countryOptions,
   },
   {
     key: FilterKey.USER_STATE,
@@ -571,7 +585,7 @@ export const flagConditionFilters = [
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
     icon: 'filters/country',
-    options: countryOptions
+    options: countryOptions,
   },
   {
     key: FilterKey.USERID,
@@ -579,13 +593,16 @@ export const flagConditionFilters = [
     category: FilterCategory.USER,
     label: 'User Id',
     operator: 'isUndefined',
-    operatorOptions: [{ label: 'is undefined', value: 'isUndefined' }, {
-      key: 'isAny',
-      label: 'is any',
-      value: 'isAny'
-    }],
-    icon: 'filters/userid'
-  }
+    operatorOptions: [
+      { label: 'is undefined', value: 'isUndefined' },
+      {
+        key: 'isAny',
+        label: 'is any',
+        value: 'isAny',
+      },
+    ],
+    icon: 'filters/userid',
+  },
 ].sort((a, b) => {
   const aOrder = filterOrder[a.category] ?? 9;
   const bOrder = filterOrder[b.category] ?? 9;
@@ -602,7 +619,7 @@ export const conditionalFilters = [
     operator: 'on',
     operatorOptions: filterOptions.targetConditional,
     icon: 'filters/click',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.LOCATION,
@@ -614,7 +631,7 @@ export const conditionalFilters = [
     operator: 'is',
     operatorOptions: filterOptions.stringConditional,
     icon: 'filters/location',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.CUSTOM,
@@ -625,7 +642,7 @@ export const conditionalFilters = [
     operator: 'is',
     operatorOptions: filterOptions.stringConditional,
     icon: 'filters/custom',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.FETCH,
@@ -642,7 +659,7 @@ export const conditionalFilters = [
         placeholder: 'Enter path or URL',
         operator: 'is',
         operatorOptions: filterOptions.stringConditional,
-        icon: 'filters/fetch'
+        icon: 'filters/fetch',
       },
       {
         key: FilterKey.FETCH_STATUS_CODE,
@@ -652,7 +669,7 @@ export const conditionalFilters = [
         placeholder: 'Enter status code',
         operator: '=',
         operatorOptions: filterOptions.customOperators,
-        icon: 'filters/fetch'
+        icon: 'filters/fetch',
       },
       {
         key: FilterKey.FETCH_METHOD,
@@ -663,7 +680,7 @@ export const conditionalFilters = [
         placeholder: 'Select method type',
         operatorOptions: filterOptions.stringOperatorsLimited,
         icon: 'filters/fetch',
-        options: filterOptions.methodOptions
+        options: filterOptions.methodOptions,
       },
       {
         key: FilterKey.FETCH_DURATION,
@@ -673,11 +690,11 @@ export const conditionalFilters = [
         placeholder: 'E.g. 12',
         operator: '=',
         operatorOptions: filterOptions.customOperators,
-        icon: 'filters/fetch'
-      }
+        icon: 'filters/fetch',
+      },
     ],
     icon: 'filters/fetch',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.ERROR,
@@ -688,7 +705,7 @@ export const conditionalFilters = [
     operator: 'is',
     operatorOptions: filterOptions.stringConditional,
     icon: 'filters/error',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.DURATION,
@@ -698,7 +715,7 @@ export const conditionalFilters = [
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
     icon: 'filters/duration',
-    isEvent: false
+    isEvent: false,
   },
   {
     key: FilterKey.FEATURE_FLAG,
@@ -707,7 +724,7 @@ export const conditionalFilters = [
     label: 'Feature Flag',
     operator: 'is',
     operatorOptions: filterOptions.stringConditional,
-    isEvent: false
+    isEvent: false,
   },
   {
     key: FilterKey.USERID,
@@ -716,9 +733,11 @@ export const conditionalFilters = [
     label: 'User Id',
     placeholder: 'E.g. Alex, or alex@domain.com, or EMP123',
     operator: 'is',
-    operatorOptions: filterOptions.stringOperators.concat([{ label: 'is undefined', value: 'isUndefined' }]),
-    icon: 'filters/userid'
-  }
+    operatorOptions: filterOptions.stringOperators.concat([
+      { label: 'is undefined', value: 'isUndefined' },
+    ]),
+    icon: 'filters/userid',
+  },
 ].sort((a, b) => {
   const aOrder = filterOrder[a.category] ?? 9;
   const bOrder = filterOrder[b.category] ?? 9;
@@ -734,7 +753,7 @@ export const mobileConditionalFilters = [
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
     icon: 'filters/duration',
-    isEvent: false
+    isEvent: false,
   },
   {
     key: FilterKey.FETCH,
@@ -751,7 +770,7 @@ export const mobileConditionalFilters = [
         placeholder: 'Enter path or URL',
         operator: 'is',
         operatorOptions: filterOptions.stringConditional,
-        icon: 'filters/fetch'
+        icon: 'filters/fetch',
       },
       {
         key: FilterKey.FETCH_STATUS_CODE,
@@ -761,7 +780,7 @@ export const mobileConditionalFilters = [
         placeholder: 'Enter status code',
         operator: '=',
         operatorOptions: filterOptions.customOperators,
-        icon: 'filters/fetch'
+        icon: 'filters/fetch',
       },
       {
         key: FilterKey.FETCH_METHOD,
@@ -772,7 +791,7 @@ export const mobileConditionalFilters = [
         placeholder: 'Select method type',
         operatorOptions: filterOptions.stringOperatorsLimited,
         icon: 'filters/fetch',
-        options: filterOptions.methodOptions
+        options: filterOptions.methodOptions,
       },
       {
         key: FilterKey.FETCH_DURATION,
@@ -782,11 +801,11 @@ export const mobileConditionalFilters = [
         placeholder: 'E.g. 12',
         operator: '=',
         operatorOptions: filterOptions.customOperators,
-        icon: 'filters/fetch'
-      }
+        icon: 'filters/fetch',
+      },
     ],
     icon: 'filters/fetch',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: FilterKey.CUSTOM,
@@ -797,7 +816,7 @@ export const mobileConditionalFilters = [
     operator: 'is',
     operatorOptions: filterOptions.stringConditional,
     icon: 'filters/custom',
-    isEvent: true
+    isEvent: true,
   },
   {
     key: 'thermalState',
@@ -812,8 +831,8 @@ export const mobileConditionalFilters = [
       { label: 'nominal', value: '0' },
       { label: 'warm', value: '1' },
       { label: 'hot', value: '2' },
-      { label: 'critical', value: '3' }
-    ]
+      { label: 'critical', value: '3' },
+    ],
   },
   {
     key: 'mainThreadCPU',
@@ -823,7 +842,7 @@ export const mobileConditionalFilters = [
     placeholder: '0 .. 100',
     operator: '=',
     operatorOptions: filterOptions.customOperators,
-    icon: 'filters/cpu-load'
+    icon: 'filters/cpu-load',
   },
   {
     key: 'viewComponent',
@@ -834,7 +853,7 @@ export const mobileConditionalFilters = [
     placeholder: 'View Name',
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: 'filters/view'
+    icon: 'filters/view',
   },
   {
     key: FilterKey.USERID,
@@ -846,15 +865,15 @@ export const mobileConditionalFilters = [
       {
         key: 'isUndefined',
         label: 'is undefined',
-        value: 'isUndefined'
+        value: 'isUndefined',
       },
       {
         key: 'isAny',
         label: 'is present',
-        value: 'isAny'
-      }
+        value: 'isAny',
+      },
     ],
-    icon: 'filters/userid'
+    icon: 'filters/userid',
   },
   {
     key: 'logEvent',
@@ -864,7 +883,7 @@ export const mobileConditionalFilters = [
     placeholder: 'logged value',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/console'
+    icon: 'filters/console',
   },
   {
     key: 'clickEvent',
@@ -875,7 +894,7 @@ export const mobileConditionalFilters = [
     placeholder: 'View Name',
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: 'filters/click'
+    icon: 'filters/click',
   },
   {
     key: 'memoryUsage',
@@ -884,18 +903,21 @@ export const mobileConditionalFilters = [
     label: 'Memory usage %',
     placeholder: '0 .. 100',
     operatorOptions: filterOptions.customOperators,
-    icon: 'filters/memory-load'
-  }
+    icon: 'filters/memory-load',
+  },
 ];
 
-export const eventKeys = filters.filter((i) => i.isEvent).map(i => i.key);
-export const nonFlagFilters = filters.filter(i => {
-  return flagConditionFilters.findIndex(f => f.key === i.key) === -1;
-}).map(i => i.key);
-export const nonConditionalFlagFilters = filters.filter(i => {
-  return conditionalFilters.findIndex(f => f.key === i.key) === -1
-    && mobileConditionalFilters.findIndex(f => f.key === i.key) === -1;
-}).map(i => i.key);
+export const eventKeys = filters.filter((i) => i.isEvent).map((i) => i.key);
+export const nonFlagFilters = filters
+  .filter((i) => flagConditionFilters.findIndex((f) => f.key === i.key) === -1)
+  .map((i) => i.key);
+export const nonConditionalFlagFilters = filters
+  .filter(
+    (i) =>
+      conditionalFilters.findIndex((f) => f.key === i.key) === -1 &&
+      mobileConditionalFilters.findIndex((f) => f.key === i.key) === -1,
+  )
+  .map((i) => i.key);
 
 export const clickmapFilter = {
   key: FilterKey.LOCATION,
@@ -907,18 +929,19 @@ export const clickmapFilter = {
   operator: filterOptions.pageUrlOperators[0].value,
   operatorOptions: filterOptions.pageUrlOperators,
   icon: 'filters/location',
-  isEvent: true
+  isEvent: true,
 };
 
-const mapFilters = (list) => {
-  return list.reduce((acc, filter) => {
+const mapFilters = (list) =>
+  list.reduce((acc, filter) => {
     filter.value = filter.value
-      ? Array.isArray(filter.value) ? filter.value : [filter.value]
+      ? Array.isArray(filter.value)
+        ? filter.value
+        : [filter.value]
       : [''];
     acc[filter.key] = filter;
     return acc;
   }, {});
-};
 
 const liveFilterSupportedOperators = ['is', 'contains'];
 const liveFilterKeys = [
@@ -935,17 +958,19 @@ const liveFilterKeys = [
   FilterKey.UTM_MEDIUM,
   FilterKey.UTM_SOURCE,
   FilterKey.UTM_CAMPAIGN,
-]
+];
 const mapLiveFilters = (list) => {
   const obj = {};
-  list.forEach(filter => {
+  list.forEach((filter) => {
     if (
       filter.category !== FilterCategory.EVENTS &&
       filter.category !== FilterCategory.DEVTOOLS &&
       liveFilterKeys.includes(filter.key)
     ) {
       obj[filter.key] = { ...filter };
-      obj[filter.key].operatorOptions = filter.operatorOptions.filter(operator => liveFilterSupportedOperators.includes(operator.value));
+      obj[filter.key].operatorOptions = filter.operatorOptions.filter(
+        (operator) => liveFilterSupportedOperators.includes(operator.value),
+      );
       if (filter.key === FilterKey.PLATFORM) {
         obj[filter.key].operator = 'is';
       }
@@ -962,9 +987,11 @@ export const filterLabelMap = filters.reduce((acc, filter) => {
 
 export let filtersMap = observable(mapFilters(filters));
 export let liveFiltersMap = observable(mapLiveFilters(filters));
-export let fflagsConditionsMap = observable(mapFilters(flagConditionFilters));
-export let conditionalFiltersMap = observable(mapFilters(conditionalFilters));
-export let mobileConditionalFiltersMap = observable(mapFilters(mobileConditionalFilters));
+export const fflagsConditionsMap = observable(mapFilters(flagConditionFilters));
+export const conditionalFiltersMap = observable(mapFilters(conditionalFilters));
+export const mobileConditionalFiltersMap = observable(
+  mapFilters(mobileConditionalFilters),
+);
 
 export const clearMetaFilters = () => {
   filtersMap = mapFilters(filters);
@@ -988,7 +1015,7 @@ export const addElementToFiltersMap = (
   operator = 'is',
   operatorOptions = filterOptions.stringOperators,
   icon = 'filters/metadata',
-  isEvent = false
+  isEvent = false,
 ) => {
   filtersMap[key] = {
     key,
@@ -996,7 +1023,7 @@ export const addElementToFiltersMap = (
     category,
     // remove _ from key
     label: getMetadataLabel(key),
-    operator: operator,
+    operator,
     operatorOptions,
     icon,
     isLive: true,
@@ -1004,10 +1031,7 @@ export const addElementToFiltersMap = (
   };
 };
 
-export const addOptionsToFilter = (
-  key,
-  options
-) => {
+export const addOptionsToFilter = (key, options) => {
   if (filtersMap[key] && filtersMap[key].options) {
     filtersMap[key].options = options;
   }
@@ -1024,14 +1048,14 @@ export const addElementToFlagConditionsMap = (
   operator = 'is',
   operatorOptions = filterOptions.stringOperators,
   icon = 'filters/metadata',
-  isEvent = false
+  isEvent = false,
 ) => {
   fflagsConditionsMap[key] = {
     key,
     type,
     category,
     label: getMetadataLabel(key),
-    operator: operator,
+    operator,
     operatorOptions,
     icon,
     isLive: true,
@@ -1046,14 +1070,14 @@ export const addElementToConditionalFiltersMap = (
   operator = 'is',
   operatorOptions = filterOptions.stringOperators,
   icon = 'filters/metadata',
-  isEvent = false
+  isEvent = false,
 ) => {
   conditionalFiltersMap[key] = {
     key,
     type,
     category,
     label: getMetadataLabel(key),
-    operator: operator,
+    operator,
     operatorOptions,
     icon,
     isLive: true,
@@ -1068,14 +1092,14 @@ export const addElementToMobileConditionalFiltersMap = (
   operator = 'is',
   operatorOptions = filterOptions.stringOperators,
   icon = 'filters/metadata',
-  isEvent = false
+  isEvent = false,
 ) => {
   mobileConditionalFiltersMap[key] = {
     key,
     type,
     category,
     label: getMetadataLabel(key),
-    operator: operator,
+    operator,
     operatorOptions,
     icon,
     isLive: true,
@@ -1089,103 +1113,121 @@ export const addElementToLiveFiltersMap = (
   type = FilterType.MULTIPLE,
   operator = 'contains',
   operatorOptions = containsFilters,
-  icon = 'filters/metadata'
+  icon = 'filters/metadata',
 ) => {
   liveFiltersMap[key] = {
-    key, type, category,
+    key,
+    type,
+    category,
     label: getMetadataLabel(key),
-    operator: operator,
+    operator,
     operatorOptions,
     icon,
     operatorDisabled: true,
-    isLive: true
+    isLive: true,
   };
 };
 
-export default Record({
-  timestamp: 0,
-  key: '',
-  label: '',
-  placeholder: '',
-  icon: '',
-  type: '',
-  value: [''],
-  category: '',
+export default Record(
+  {
+    timestamp: 0,
+    key: '',
+    label: '',
+    placeholder: '',
+    icon: '',
+    type: '',
+    value: [''],
+    category: '',
 
-  custom: '',
-  level: '',
+    custom: '',
+    level: '',
 
-  hasNoValue: false,
-  isFilter: false,
-  actualValue: '',
+    hasNoValue: false,
+    isFilter: false,
+    actualValue: '',
 
-  hasSource: false,
-  source: [''],
-  sourceType: '',
-  sourceOperator: '=',
-  sourcePlaceholder: '',
-  sourceUnit: '',
-  sourceOperatorOptions: [],
+    hasSource: false,
+    source: [''],
+    sourceType: '',
+    sourceOperator: '=',
+    sourcePlaceholder: '',
+    sourceUnit: '',
+    sourceOperatorOptions: [],
 
-  operator: '',
-  operatorOptions: [],
-  operatorDisabled: false,
-  isEvent: false,
-  index: 0,
-  options: [],
-  filters: [],
-  excludes: []
-}, {
-  keyKey: '_key',
-  fromJS: ({ value, type, subFilter = false, ...filter }) => {
-    let _filter = {};
-    if (subFilter) {
-      const mainFilter = filtersMap[subFilter];
-      const subFilterMap = {};
-      mainFilter.filters.forEach(option => {
-        subFilterMap[option.key] = option;
-      });
-      _filter = subFilterMap[type];
-    } else {
-      if (type === FilterKey.METADATA) {
+    operator: '',
+    operatorOptions: [],
+    operatorDisabled: false,
+    isEvent: false,
+    index: 0,
+    options: [],
+    filters: [],
+    excludes: [],
+  },
+  {
+    keyKey: '_key',
+    fromJS: ({ value, type, subFilter = false, ...filter }) => {
+      let _filter = {};
+      if (subFilter) {
+        const mainFilter = filtersMap[subFilter];
+        const subFilterMap = {};
+        mainFilter.filters.forEach((option) => {
+          subFilterMap[option.key] = option;
+        });
+        _filter = subFilterMap[type];
+      } else if (type === FilterKey.METADATA) {
         _filter = filtersMap[`_${filter.source}`];
+      } else if (filtersMap[filter.key]) {
+        _filter = filtersMap[filter.key];
       } else {
-        if (filtersMap[filter.key]) {
-          _filter = filtersMap[filter.key];
-        } else {
-          _filter = filtersMap[type];
-        }
+        _filter = filtersMap[type];
       }
-    }
 
-    if (!_filter) {
-      _filter = {
-        key: filter.key,
-        type: 'MULTIPLE'
+      if (!_filter) {
+        _filter = {
+          key: filter.key,
+          type: 'MULTIPLE',
+        };
+      }
+
+      return {
+        ..._filter,
+        ...filter,
+        key: _filter.key,
+        type: _filter.type, // camelCased(filter.type.toLowerCase()),
+        value: value.length === 0 || !value ? [''] : value,
       };
-    }
-
-    return {
-      ..._filter,
-      ...filter,
-      key: _filter.key,
-      type: _filter.type, // camelCased(filter.type.toLowerCase()),
-      value: value.length === 0 || !value ? [''] : value
-    };
-  }
-});
+    },
+  },
+);
 
 const WEB_EXCLUDE = [
-  FilterKey.CLICK_MOBILE, FilterKey.SWIPE_MOBILE, FilterKey.INPUT_MOBILE,
-  FilterKey.VIEW_MOBILE, FilterKey.CUSTOM_MOBILE, FilterKey.REQUEST_MOBILE, FilterKey.ERROR_MOBILE
+  FilterKey.CLICK_MOBILE,
+  FilterKey.SWIPE_MOBILE,
+  FilterKey.INPUT_MOBILE,
+  FilterKey.VIEW_MOBILE,
+  FilterKey.CUSTOM_MOBILE,
+  FilterKey.REQUEST_MOBILE,
+  FilterKey.ERROR_MOBILE,
 ];
 
 const MOBILE_EXCLUDE = [
-  FilterKey.CLICK, FilterKey.INPUT, FilterKey.ERROR, FilterKey.CUSTOM,
-  FilterKey.LOCATION, FilterKey.FETCH, FilterKey.DOM_COMPLETE,
-  FilterKey.LARGEST_CONTENTFUL_PAINT_TIME, FilterKey.TTFB, FilterKey.USER_BROWSER,
-  FilterKey.PLATFORM, FilterKey.TAGGED_ELEMENT, FilterKey.STATEACTION, FilterKey.UTM_CAMPAIGN,
-  FilterKey.UTM_SOURCE, FilterKey.UTM_MEDIUM, FilterKey.SLOW_SESSION
+  FilterKey.CLICK,
+  FilterKey.INPUT,
+  FilterKey.ERROR,
+  FilterKey.CUSTOM,
+  FilterKey.LOCATION,
+  FilterKey.FETCH,
+  FilterKey.DOM_COMPLETE,
+  FilterKey.LARGEST_CONTENTFUL_PAINT_TIME,
+  FilterKey.TTFB,
+  FilterKey.USER_BROWSER,
+  FilterKey.PLATFORM,
+  FilterKey.TAGGED_ELEMENT,
+  FilterKey.STATEACTION,
+  FilterKey.UTM_CAMPAIGN,
+  FilterKey.UTM_SOURCE,
+  FilterKey.UTM_MEDIUM,
+  FilterKey.SLOW_SESSION,
 ];
 
 /**
@@ -1196,7 +1238,7 @@ const MOBILE_EXCLUDE = [
  */
 export const generateFilterOptions = (map, isMobile = false) => {
   const filterSection = {};
-  Object.keys(map).forEach(key => {
+  Object.keys(map).forEach((key) => {
     if (isMobile && MOBILE_EXCLUDE.includes(key)) {
       return;
     }
@@ -1217,7 +1259,7 @@ export const generateFilterOptions = (map, isMobile = false) => {
 
 export const generateFlagConditionOptions = (map) => {
   const filterSection = {};
-  Object.keys(map).forEach(key => {
+  Object.keys(map).forEach((key) => {
     const filter = map[key];
     if (filterSection.hasOwnProperty(filter.category)) {
       filterSection[filter.category].push(filter);
@@ -1227,42 +1269,45 @@ export const generateFlagConditionOptions = (map) => {
   });
   return filterSection;
 };
-
 
 export const generateLiveFilterOptions = (map) => {
   const filterSection = {};
 
-  Object.keys(map).filter(i => map[i].isLive).forEach(key => {
-    const filter = map[key];
-    filter.operator = 'contains';
-    filter.operatorDisabled = true;
-    if (filterSection.hasOwnProperty(filter.category)) {
-      filterSection[filter.category].push(filter);
-    } else {
-      filterSection[filter.category] = [filter];
-    }
-  });
+  Object.keys(map)
+    .filter((i) => map[i].isLive)
+    .forEach((key) => {
+      const filter = map[key];
+      filter.operator = 'contains';
+      filter.operatorDisabled = true;
+      if (filterSection.hasOwnProperty(filter.category)) {
+        filterSection[filter.category].push(filter);
+      } else {
+        filterSection[filter.category] = [filter];
+      }
+    });
   return filterSection;
 };
 
-
 export const getFilterFromJson = (json) => {
   const mapFilters = (filters) =>
-    filters.map(f => {
-      let filter = { ...filtersMap[f.key], ...f };
+    filters.map((f) => {
+      const filter = { ...filtersMap[f.key], ...f };
 
       if (f.filters) {
         const mainFilterOptions = filtersMap[f.key]?.filters || [];
-        const subFilterMap = Object.fromEntries(mainFilterOptions.map(option => [option.key, option]));
+        const subFilterMap = Object.fromEntries(
+          mainFilterOptions.map((option) => [option.key, option]),
+        );
 
-        filter.filters = f.filters.map(subFilter => {
-          const baseFilter = subFilterMap[subFilter.key] || filtersMap[subFilter.type] || {};
+        filter.filters = f.filters.map((subFilter) => {
+          const baseFilter =
+            subFilterMap[subFilter.key] || filtersMap[subFilter.type] || {};
           return {
             ...baseFilter,
             ...subFilter,
             key: baseFilter.key || subFilter.key,
             type: baseFilter.type || subFilter.type,
-            value: subFilter.value?.length ? subFilter.value : ['']
+            value: subFilter.value?.length ? subFilter.value : [''],
           };
         });
       }
@@ -1272,6 +1317,6 @@ export const getFilterFromJson = (json) => {
 
   return new Search({
     ...json,
-    filters: mapFilters(json.filters)
+    filters: mapFilters(json.filters),
   });
 };

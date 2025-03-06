@@ -6,17 +6,21 @@ import { toast } from 'react-toastify';
 
 function OptOut() {
   const { userStore } = useStore();
-  const updateClient = userStore.updateClient;
+  const { updateClient } = userStore;
   const [optOut, setOptOut] = React.useState(userStore.account.optOut);
 
   const onChange = () => {
     setOptOut(!optOut);
-    void updateClient({ optOut: !optOut }).then(() => {
-      toast('Account settings updated successfully', { type: 'success' });
-    }).catch((e) => {
-      toast(e.message || 'Failed to update account settings', { type: 'error' });
-      setOptOut(optOut);
-    });
+    void updateClient({ optOut: !optOut })
+      .then(() => {
+        toast('Account settings updated successfully', { type: 'success' });
+      })
+      .catch((e) => {
+        toast(e.message || 'Failed to update account settings', {
+          type: 'error',
+        });
+        setOptOut(optOut);
+      });
   };
 
   return (

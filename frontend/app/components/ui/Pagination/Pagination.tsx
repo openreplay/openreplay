@@ -14,7 +14,10 @@ export default function Pagination(props: Props) {
   const [currentPage, setCurrentPage] = React.useState(page);
   React.useMemo(() => setCurrentPage(page), [page]);
 
-  const debounceChange = React.useCallback(debounce(onPageChange, debounceRequest), []);
+  const debounceChange = React.useCallback(
+    debounce(onPageChange, debounceRequest),
+    [],
+  );
 
   const changePage = (page: number) => {
     if (page > 0) {
@@ -24,15 +27,13 @@ export default function Pagination(props: Props) {
   };
 
   return (
-    <>
-      <AntPagination
-        simple
-        current={currentPage}
-        total={total}
-        pageSize={limit}
-        onChange={changePage}
-        showSizeChanger={false}
-      />
-    </>
-  )
+    <AntPagination
+      simple
+      current={currentPage}
+      total={total}
+      pageSize={limit}
+      onChange={changePage}
+      showSizeChanger={false}
+    />
+  );
 }

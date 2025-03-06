@@ -2,23 +2,23 @@ import { Timed } from 'Player';
 import React, { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Tabs, NoContent, Icon } from 'UI';
-import { Input } from 'antd';
+import { Input, Segmented, Tooltip } from 'antd';
 import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import {
   PlayerContext,
   MobilePlayerContext,
 } from 'App/components/Session/playerContext';
-import BottomBlock from '../BottomBlock';
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { typeList } from 'Types/session/stackEvent';
 import StackEventRow from 'Shared/DevTools/StackEventRow';
 
-import StackEventModal from '../StackEventModal';
-import { Segmented, Tooltip } from 'antd';
-import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
-import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 import { VList, VListHandle } from 'virtua';
+import StackEventModal from '../StackEventModal';
+import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
+import BottomBlock from '../BottomBlock';
+import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
+import { useTranslation } from 'react-i18next';
 
 const mapNames = (type: string) => {
   if (type === 'openreplay') return 'OpenReplay';
@@ -102,20 +102,21 @@ const EventsPanel = observer(
     zoomEndTs: number;
     isMobile?: boolean;
   }) => {
+    const { t } = useTranslation();
     const {
       sessionStore: { devTools },
     } = useStore();
     const { showModal } = useModal();
     const [isDetailsModalActive, setIsDetailsModalActive] = useState(false); // TODO:embed that into useModal
-    const filter = devTools[INDEX_KEY].filter;
-    const activeTab = devTools[INDEX_KEY].activeTab;
+    const { filter } = devTools[INDEX_KEY];
+    const { activeTab } = devTools[INDEX_KEY];
     const activeIndex = devTools[INDEX_KEY].index;
 
     const inZoomRangeList = list.filter(({ time }) =>
-      zoomEnabled ? zoomStartTs <= time && time <= zoomEndTs : true
+      zoomEnabled ? zoomStartTs <= time && time <= zoomEndTs : true,
     );
     const inZoomRangeListNow = listNow.filter(({ time }) =>
-      zoomEnabled ? zoomStartTs <= time && time <= zoomEndTs : true
+      zoomEnabled ? zoomStartTs <= time && time <= zoomEndTs : true,
     );
 
     let filteredList = useRegExListFilterMemo(
@@ -130,13 +131,13 @@ const EventsPanel = observer(
         }
         return searchBy;
       },
-      filter
+      filter,
     );
     filteredList = useTabListFilterMemo(
       filteredList,
       (it) => it.source,
       ALL,
-      activeTab
+      activeTab,
     );
 
     const onTabClick = (activeTab: (typeof TAB_KEYS)[number]) =>
@@ -149,16 +150,16 @@ const EventsPanel = observer(
       () =>
         TABS.filter(
           ({ key }) =>
-            key === ALL || inZoomRangeList.some(({ source }) => key === source)
+            key === ALL || inZoomRangeList.some(({ source }) => key === source),
         ),
-      [inZoomRangeList.length]
+      [inZoomRangeList.length],
     );
 
     const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
       filteredList,
       getLastItemTime(inZoomRangeListNow),
       activeIndex,
-      (index) => devTools.update(INDEX_KEY, { index })
+      (index) => devTools.update(INDEX_KEY, { index }),
     );
     const onMouseEnter = stopAutoscroll;
     const onMouseLeave = () => {
@@ -198,7 +199,7 @@ const EventsPanel = observer(
         <BottomBlock.Header>
           <div className="flex items-center">
             <span className="font-semibold color-gray-medium mr-4">
-              Stack Events
+              {t('Stack Events')}
             </span>
             <Tabs
               renameTab={mapNames}
@@ -208,7 +209,7 @@ const EventsPanel = observer(
               border={false}
             />
           </div>
-          <div className={'flex items-center gap-2'}>
+          <div className="flex items-center gap-2">
             {isMobile ? null : (
               <Segmented
                 options={[
@@ -216,7 +217,7 @@ const EventsPanel = observer(
                   {
                     label: (
                       <Tooltip title="Stack Events overview is available only for all tabs combined.">
-                        <span>Current Tab</span>
+                        <span>{t('Current Tab')}</span>
                       </Tooltip>
                     ),
                     value: 'current',
@@ -245,7 +246,7 @@ const EventsPanel = observer(
             title={
               <div className="capitalize flex items-center mt-16 gap-2">
                 <InfoCircleOutlined size={18} />
-                No Data
+                {t('No Data')}
               </div>
             }
             size="small"
@@ -272,5 +273,5 @@ const EventsPanel = observer(
         </BottomBlock.Content>
       </BottomBlock>
     );
-  }
+  },
 );

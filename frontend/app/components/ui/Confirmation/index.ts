@@ -1,4 +1,8 @@
-import { createConfirmationCreater, createReactTreeMounter, createMountPoint } from 'react-confirm';
+import {
+  createConfirmationCreater,
+  createReactTreeMounter,
+  createMountPoint,
+} from 'react-confirm';
 import Confirmation from './Confirmation';
 
 const mounter = createReactTreeMounter();

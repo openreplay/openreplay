@@ -1,1 +1,1 @@
-export { default } from './ClickMapRagePicker'
+export { default } from './ClickMapRagePicker';

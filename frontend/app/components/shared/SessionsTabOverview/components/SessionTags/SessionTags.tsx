@@ -14,13 +14,14 @@ const tagIcons = {
   [types.TAP_RAGE]: <Angry size={14} />,
 } as Record<string, any>;
 
-const SessionTags = () => {
+function SessionTags() {
   const { projectsStore, sessionStore, searchStore } = useStore();
-  const total = sessionStore.total;
+  const { total } = sessionStore;
   const platform = projectsStore.active?.platform || '';
   const activeTab = searchStore.activeTags;
 
-  return total === 0 && (activeTab.length === 0 || activeTab[0] === 'all') ? null : (
+  return total === 0 &&
+    (activeTab.length === 0 || activeTab[0] === 'all') ? null : (
     <div className="flex items-center">
       <Segmented
         options={issues_types
@@ -29,19 +30,19 @@ const SessionTags = () => {
               tag.type !== 'mouse_thrashing' &&
               (platform === 'web'
                 ? tag.type !== types.TAP_RAGE
-                : tag.type !== types.CLICK_RAGE)
+                : tag.type !== types.CLICK_RAGE),
           )
           .map((tag: any) => ({
             value: tag.type,
             icon: tagIcons[tag.type],
-            label: tag.name
+            label: tag.name,
           }))}
         value={activeTab[0]}
         onChange={(value: any) => searchStore.toggleTag(value)}
-        size={'small'}
+        size="small"
       />
     </div>
   );
-};
+}
 
 export default observer(SessionTags);

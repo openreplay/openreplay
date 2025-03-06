@@ -1,22 +1,22 @@
 import React from 'react';
-import { observer } from 'mobx-react-lite'
-import { useStore } from 'App/mstore'
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import Select from 'Shared/Select';
 
-const SiteDropdown = ({ contextName = '', onChange, value }) => {
+function SiteDropdown({ contextName = '', onChange, value }) {
   const { projectsStore } = useStore();
   const sites = projectsStore.list;
-  const options = sites.map(site => ({ value: site.id, label: site.host }));
+  const options = sites.map((site) => ({ value: site.id, label: site.host }));
   return (
     <Select
       name={`${contextName}_site`}
-      placeholder='Select Site'
+      placeholder="Select Site"
       options={options}
-      value={options.find(option => option.value === value)}
+      value={options.find((option) => option.value === value)}
       onChange={onChange}
     />
   );
-};
+}
 
 SiteDropdown.displayName = 'SiteDropdown';
 

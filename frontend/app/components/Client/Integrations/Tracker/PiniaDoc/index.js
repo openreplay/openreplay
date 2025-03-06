@@ -1,1 +1,1 @@
-export { default } from './PiniaDoc'
+export { default } from './PiniaDoc';

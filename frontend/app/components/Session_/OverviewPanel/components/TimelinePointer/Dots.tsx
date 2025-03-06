@@ -1,9 +1,10 @@
-import React from "react";
-import { EXCEPTIONS, NETWORK } from "App/mstore/uiPlayerStore";
-import { TYPES } from "App/types/session/event";
-import { types as issueTypes } from "App/types/session/issue";
-import { Icon } from "UI";
-import { Tooltip } from "antd";
+import React from 'react';
+import { EXCEPTIONS, NETWORK } from 'App/mstore/uiPlayerStore';
+import { TYPES } from 'App/types/session/event';
+import { types as issueTypes } from 'App/types/session/issue';
+import { Icon } from 'UI';
+import { Tooltip } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 interface CommonProps {
   item: any;
@@ -12,17 +13,18 @@ interface CommonProps {
 
 export function shortenResourceName(name: string) {
   return name.length > 100
-         ? name.slice(0, 100) + ' ... ' + name.slice(-50)
-         : name
+    ? `${name.slice(0, 100)} ... ${name.slice(-50)}`
+    : name;
 }
 export function NetworkElement({ item, createEventClickHandler }: CommonProps) {
+  const { t } = useTranslation();
   const name = item.name || '';
   return (
     <Tooltip
-      placement={'right'}
+      placement="right"
       title={
         <div className="">
-          <b>{item.success ? 'Slow resource: ' : '4xx/5xx Error:'}</b>
+          <b>{item.success ? t('Slow resource: ') : '4xx/5xx Error:'}</b>
           <br />
           {shortenResourceName(name)}
         </div>
@@ -42,20 +44,22 @@ export function NetworkElement({ item, createEventClickHandler }: CommonProps) {
 
 export function getFrustration(item: any) {
   const elData = { name: '', icon: '' };
-  if (item.type === TYPES.CLICK)
+  if (item.type === TYPES.CLICK) {
     Object.assign(elData, {
       name: `User hesitated to click for ${Math.round(
-        item.hesitation / 1000
+        item.hesitation / 1000,
       )}s`,
       icon: 'click-hesitation',
     });
-  if (item.type === TYPES.INPUT)
+  }
+  if (item.type === TYPES.INPUT) {
     Object.assign(elData, {
       name: `User hesitated to enter a value for ${Math.round(
-        item.hesitation / 1000
+        item.hesitation / 1000,
       )}s`,
       icon: 'input-hesitation',
     });
+  }
   if (item.type === TYPES.CLICKRAGE || item.type === TYPES.TAPRAGE)
     Object.assign(elData, { name: 'Click Rage', icon: 'click-rage' });
   if (item.type === TYPES.DEAD_LICK)
@@ -67,11 +71,14 @@ export function getFrustration(item: any) {
 
   return elData;
 }
-export function FrustrationElement({ item, createEventClickHandler }: CommonProps) {
+export function FrustrationElement({
+  item,
+  createEventClickHandler,
+}: CommonProps) {
   const elData = getFrustration(item);
   return (
     <Tooltip
-      placement={'top'}
+      placement="top"
       title={
         <div className="">
           <b>{elData.name}</b>
@@ -88,10 +95,13 @@ export function FrustrationElement({ item, createEventClickHandler }: CommonProp
   );
 }
 
-export function StackEventElement({ item, createEventClickHandler }: CommonProps) {
+export function StackEventElement({
+  item,
+  createEventClickHandler,
+}: CommonProps) {
   return (
     <Tooltip
-      placement={'right'}
+      placement="right"
       title={
         <div className="">
           <b>{item.name || 'Stack Event'}</b>
@@ -108,10 +118,13 @@ export function StackEventElement({ item, createEventClickHandler }: CommonProps
   );
 }
 
-export function PerformanceElement({ item, createEventClickHandler }: CommonProps) {
+export function PerformanceElement({
+  item,
+  createEventClickHandler,
+}: CommonProps) {
   return (
     <Tooltip
-      placement={'right'}
+      placement="right"
       title={
         <div className="">
           <b>{item.type}</b>
@@ -128,13 +141,17 @@ export function PerformanceElement({ item, createEventClickHandler }: CommonProp
   );
 }
 
-export function ExceptionElement({ item, createEventClickHandler }: CommonProps) {
+export function ExceptionElement({
+  item,
+  createEventClickHandler,
+}: CommonProps) {
+  const { t } = useTranslation();
   return (
     <Tooltip
-      placement={'right'}
+      placement="right"
       title={
         <div className="">
-          <b>{'Exception'}</b>
+          <b>{t('Exception')}</b>
           <br />
           <span>{item.message}</span>
         </div>

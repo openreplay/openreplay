@@ -17,22 +17,27 @@ export interface State {
 
 export default class RemoteControl {
   private assistVersion = 1;
+
   static readonly INITIAL_STATE: Readonly<State> = {
     remoteControl: RemoteControlStatus.Disabled,
     annotating: false,
   };
+
   onReject: () => void = () => {};
+
   onStart: () => void = () => {};
+
   onEnd: () => void = () => {};
+
   onBusy: () => void = () => {};
 
   constructor(
     private store: Store<State>,
     private socket: Socket,
     private screen: Screen,
-    private agentInfo: Object,
+    private agentInfo: object,
     private onToggle: (active: boolean) => void,
-    private getAssistVersion: () => number
+    private getAssistVersion: () => number,
   ) {
     socket.on('control_granted', ({ meta, data }) => {
       if (data === socket.id) {
@@ -42,20 +47,25 @@ export default class RemoteControl {
     });
     socket.on('control_rejected', ({ meta, data }) => {
       if (data === socket.id) {
-        if (this.store.get().remoteControl === RemoteControlStatus.Enabled) this.onEnd();
+        if (this.store.get().remoteControl === RemoteControlStatus.Enabled)
+          this.onEnd();
         this.toggleRemoteControl(false);
       }
       if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
         this.onReject();
-        return this.store.update({ remoteControl: RemoteControlStatus.Disabled });
+        return this.store.update({
+          remoteControl: RemoteControlStatus.Disabled,
+        });
       }
     });
     socket.on('control_busy', ({ meta, data }) => {
       this.onBusy();
       if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
-        return this.store.update({ remoteControl: RemoteControlStatus.Disabled });
+        return this.store.update({
+          remoteControl: RemoteControlStatus.Disabled,
+        });
       }
-    })
+    });
     socket.on('SESSION_DISCONNECTED', () => {
       if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
         this.toggleRemoteControl(false); // else its remaining
@@ -79,14 +89,17 @@ export default class RemoteControl {
     if (this.getAssistVersion() === 1) {
       this.socket.emit(event, data);
     } else {
-      this.socket.emit(event, { meta: { tabId: this.store.get().currentTab }, data });
+      this.socket.emit(event, {
+        meta: { tabId: this.store.get().currentTab },
+        data,
+      });
     }
   };
 
   private onWheel = (e: WheelEvent): void => {
     e.preventDefault();
-    //throttling makes movements less smooth, so it is omitted
-    //this.onMouseMove(e)
+    // throttling makes movements less smooth, so it is omitted
+    // this.onMouseMove(e)
     this.emitData('scroll', [e.deltaX, e.deltaY]);
   };
 
@@ -118,7 +131,10 @@ export default class RemoteControl {
     if (el instanceof HTMLElement) {
       el.focus();
       el.oninput = (e) => {
-        if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
+        if (
+          el instanceof HTMLTextAreaElement ||
+          el instanceof HTMLInputElement
+        ) {
           this.socket && this.emitData('input', el.value);
         } else if (el.isContentEditable) {
           this.socket && this.emitData('input', el.innerText);
@@ -155,7 +171,7 @@ export default class RemoteControl {
   }
 
   requestReleaseRemoteControl = () => {
-    const remoteControl = this.store.get().remoteControl;
+    const { remoteControl } = this.store.get();
     if (remoteControl === RemoteControlStatus.Requesting) {
       return;
     }
@@ -166,7 +182,7 @@ export default class RemoteControl {
         JSON.stringify({
           ...this.agentInfo,
           query: document.location.search,
-        })
+        }),
       );
     } else {
       this.onEnd();

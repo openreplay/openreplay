@@ -1,7 +1,8 @@
-import React from 'react'
-import { iTag, TAGS } from "App/services/NotesService";
-import { SortDropdown } from "Components/shared/SessionsTabOverview/components/SessionSort/SessionSort";
-import { Input, Segmented } from "antd";
+import React from 'react';
+import { iTag, TAGS } from 'App/services/NotesService';
+import { SortDropdown } from 'Components/shared/SessionsTabOverview/components/SessionSort/SessionSort';
+import { Input, Segmented } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 function HighlightsListHeader({
   activeTags,
@@ -10,7 +11,7 @@ function HighlightsListHeader({
   toggleTag,
   query,
   onSearch,
-  handleInputChange
+  handleInputChange,
 }: {
   activeTags: iTag[];
   ownOnly: boolean;
@@ -20,9 +21,10 @@ function HighlightsListHeader({
   onSearch: (value: string) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <div className={'flex p-2 px-4 w-full border-b gap-4 items-center'}>
-      <h1 className={'text-2xl capitalize mr-2'}>Highlights</h1>
+    <div className="flex p-2 px-4 w-full border-b gap-4 items-center">
+      <h1 className="text-2xl capitalize mr-2">{t('Highlights')}</h1>
       <Segmented
         size="small"
         options={[
@@ -32,11 +34,11 @@ function HighlightsListHeader({
               <div
                 className={
                   activeTags.includes('ALL') || activeTags.length === 0
-                  ? 'text-main'
-                  : ''
+                    ? 'text-main'
+                    : ''
                 }
               >
-                All
+                {t('All')}
               </div>
             ),
           },
@@ -46,8 +48,8 @@ function HighlightsListHeader({
               <div
                 className={
                   activeTags.includes(tag)
-                  ? 'text-main capitalize'
-                  : 'capitalize'
+                    ? 'text-main capitalize'
+                    : 'capitalize'
                 }
               >
                 {tag.toLowerCase()}
@@ -59,22 +61,22 @@ function HighlightsListHeader({
           toggleTag(value === 'ALL' ? undefined : value)
         }
       />
-      <div className={'ml-auto'}>
+      <div className="ml-auto">
         <SortDropdown
           sortOptions={[
             {
               key: 'own',
-              label: 'Personal',
+              label: t('Personal'),
             },
             {
               key: 'team',
-              label: 'Team',
+              label: t('Team'),
             },
           ]}
           onSort={({ key }) => {
             toggleShared(key === 'own');
           }}
-          current={ownOnly ? 'Personal' : 'Team'}
+          current={ownOnly ? t('Personal') : t('Team')}
         />
       </div>
       <div className="w-56">
@@ -82,7 +84,7 @@ function HighlightsListHeader({
           defaultValue={query}
           allowClear
           name="spot-search"
-          placeholder="Filter by title"
+          placeholder={t('Filter by title')}
           onChange={handleInputChange}
           onSearch={onSearch}
           className="rounded-lg"
@@ -90,7 +92,7 @@ function HighlightsListHeader({
         />
       </div>
     </div>
-  )
+  );
 }
 
-export default HighlightsListHeader
+export default HighlightsListHeader;

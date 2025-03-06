@@ -1,4 +1,4 @@
-import { Alert } from 'antd';
+import { Alert, Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React, {
   ChangeEvent,
@@ -16,18 +16,19 @@ import { useStore } from 'App/mstore';
 import { login } from 'App/routes';
 import { validatePassword } from 'App/validate';
 import { Form, Input, Link } from 'UI';
-import { Button } from 'antd'
 
 import Select from 'Shared/Select';
+import { useTranslation } from 'react-i18next';
 
 const LOGIN_ROUTE = login();
 
-const SignupForm = () => {
+function SignupForm() {
+  const { t } = useTranslation();
   const { userStore } = useStore();
-  const tenants = userStore.tenants;
-  const signup = userStore.signup;
-  const errors = userStore.signUpRequest.errors;
-  const loading = userStore.signUpRequest.loading;
+  const { tenants } = userStore;
+  const { signup } = userStore;
+  const { errors } = userStore.signUpRequest;
+  const { loading } = userStore.signUpRequest;
   const [state, setState] = useState({
     tenantId: '',
     fullname: '',
@@ -71,7 +72,9 @@ const SignupForm = () => {
       ) {
         if ((resp.errors[0] as string).includes('in use')) {
           toast.error(
-            "This email is already linked to an account or team on OpenReplay and can't be used again."
+            t(
+              "This email is already linked to an account or team on OpenReplay and can't be used again.",
+            ),
           );
         } else {
           resp.errors[0]
@@ -106,7 +109,7 @@ const SignupForm = () => {
 
   useEffect(() => {
     if (state.password && !validatePassword(state.password)) {
-      setPasswordError('Password must be at least 8 characters long');
+      setPasswordError(t('Password must be at least 8 characters long'));
     } else {
       setPasswordError(null);
     }
@@ -124,7 +127,7 @@ const SignupForm = () => {
       >
         <div className="mb-8">
           <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
-            Create Account
+            {t('Create Account')}
           </h2>
         </div>
         <>
@@ -139,10 +142,10 @@ const SignupForm = () => {
           <div className="px-8">
             {tenants.length > 0 && (
               <Form.Field>
-                <label>Existing Accounts</label>
+                <label>{t('Existing Accounts')}</label>
                 <Select
                   className="w-full"
-                  placeholder="Select account"
+                  placeholder={t('Select account')}
                   selection
                   options={tenants}
                   name="tenantId"
@@ -152,52 +155,52 @@ const SignupForm = () => {
               </Form.Field>
             )}
             <Form.Field>
-              <label>Email Address</label>
+              <label>{t('Email Address')}</label>
               <Input
-                autoFocus={true}
+                autoFocus
                 autoComplete="username"
                 type="email"
-                placeholder="E.g. email@yourcompany.com"
+                placeholder={t('E.g. email@yourcompany.com')}
                 name="email"
                 onChange={write}
-                required={true}
+                required
                 icon="envelope"
                 className="rounded-lg"
               />
             </Form.Field>
             <Form.Field>
-              <label className="mb-2">Password</label>
+              <label className="mb-2">{t('Password')}</label>
               <Input
                 type="password"
                 placeholder="Min 8 Characters"
                 minLength={8}
                 name="password"
                 onChange={write}
-                required={true}
+                required
                 icon="key"
                 className="rounded-lg"
               />
             </Form.Field>
             <Form.Field>
-              <label>Name</label>
+              <label>{t('Name')}</label>
               <Input
                 type="text"
-                placeholder="E.g John Doe"
+                placeholder={t('E.g John Doe')}
                 name="fullname"
                 onChange={write}
-                required={true}
+                required
                 icon="user-alt"
                 className="rounded-lg"
               />
             </Form.Field>
             <Form.Field>
-              <label>Organization</label>
+              <label>{t('Organization')}</label>
               <Input
                 type="text"
-                placeholder="E.g Uber"
+                placeholder={t('E.g Uber')}
                 name="organizationName"
                 onChange={write}
-                required={true}
+                required
                 icon="buildings"
                 className="rounded-lg"
               />
@@ -208,7 +211,7 @@ const SignupForm = () => {
               <Alert
                 className="my-3 rounded-lg"
                 // message="Error Text"
-                description={PASSWORD_POLICY}
+                description={PASSWORD_POLICY(t)}
                 type="error"
               />
             )}
@@ -227,17 +230,17 @@ const SignupForm = () => {
               loading={loading}
               className="w-full rounded-lg"
             >
-              Create Account
+              {t('Create Account')}
             </Button>
             <div className="my-6">
               <div className="text-sm">
-                By signing up, you agree to our{' '}
+                {t('By signing up, you agree to our')}{' '}
                 <a href="https://openreplay.com/terms.html" className="link">
-                  terms of service
+                  {t('terms of service')}
                 </a>{' '}
-                and{' '}
+                {t('and')}{' '}
                 <a href="https://openreplay.com/privacy.html" className="link">
-                  privacy policy
+                  {t('privacy policy')}
                 </a>
                 .
               </div>
@@ -247,13 +250,13 @@ const SignupForm = () => {
       </Form>
 
       <div className="text-center py-6">
-        Already having an account?{' '}
+        {t('Already having an account?')}{' '}
         <span className="link">
-          <Link to={LOGIN_ROUTE}>Login</Link>
+          <Link to={LOGIN_ROUTE}>{t('Login')}</Link>
         </span>
       </div>
     </div>
   );
-};
+}
 
 export default observer(SignupForm);

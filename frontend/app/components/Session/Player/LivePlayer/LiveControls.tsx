@@ -1,26 +1,27 @@
 import React from 'react';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
-import LiveTag from './LiveTag';
-import AssistSessionsTabs from './AssistSessionsTabs';
 
+import { CONSOLE } from 'App/mstore/uiPlayerStore';
 import {
-  CONSOLE
-} from 'App/mstore/uiPlayerStore';
-import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
+  PlayerContext,
+  ILivePlayerContext,
+} from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { useLocation } from 'react-router-dom';
-import AssistDuration from './AssistDuration';
-import Timeline from './Timeline';
 import ControlButton from 'Components/Session_/Player/Controls/ControlButton';
 import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
 import styles from 'Components/Session_/Player/Controls/controls.module.css';
+import Timeline from './Timeline';
+import AssistDuration from './AssistDuration';
+import AssistSessionsTabs from './AssistSessionsTabs';
+import LiveTag from './LiveTag';
 
 function Controls(props: any) {
   const { uiPlayerStore, searchStoreLive, sessionStore } = useStore();
-  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
-  const bottomBlock = uiPlayerStore.bottomBlock;
-  const skipInterval = uiPlayerStore.skipInterval;
+  const { toggleBottomBlock } = uiPlayerStore;
+  const { bottomBlock } = uiPlayerStore;
+  const { skipInterval } = uiPlayerStore;
   // @ts-ignore ?? TODO
   const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext);
   const [noControls, setNoControls] = React.useState(false);
@@ -28,11 +29,7 @@ function Controls(props: any) {
   const { search } = useLocation();
 
   const { jumpToLive } = player;
-  const {
-    livePlay,
-    currentTab,
-    tabStates
-  } = store.get();
+  const { livePlay, currentTab, tabStates } = store.get();
 
   const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
   const logRedCount = tabStates[currentTab]?.logMarkedCountNow || 0;
@@ -43,7 +40,10 @@ function Controls(props: any) {
   const closedLive = !!sessionStore.errorStack || !!sessionStore.current;
 
   const onKeyDown = (e: any) => {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+    if (
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement
+    ) {
       return;
     }
     if (e.key === 'ArrowRight') {
@@ -60,15 +60,11 @@ function Controls(props: any) {
       fetchAssistSessions();
     }
     const queryParams = new URLSearchParams(search);
-    if (
-      (queryParams.has('noFooter') && queryParams.get('noFooter') === 'true')
-    ) {
+    if (queryParams.has('noFooter') && queryParams.get('noFooter') === 'true') {
       setNoControls(true);
     }
 
-    if (
-      (queryParams.has('noGrid') && queryParams.get('noGrid') === 'true')
-    ) {
+    if (queryParams.has('noGrid') && queryParams.get('noGrid') === 'true') {
       setNoGrid(true);
     }
     return () => {
@@ -93,12 +89,19 @@ function Controls(props: any) {
   return (
     <div className={styles.controls}>
       {session.liveOnly ? null : <Timeline />}
-      {!noControls ?
-        <div className={cn(styles.buttons, '!px-5 !pt-0')} data-is-live style={{ height: noGrid ? '40px' : '' }}>
+      {!noControls ? (
+        <div
+          className={cn(styles.buttons, '!px-5 !pt-0')}
+          data-is-live
+          style={{ height: noGrid ? '40px' : '' }}
+        >
           <div className="flex items-center">
             {!closedLive && (
               <div className={styles.buttonsLeft}>
-                <LiveTag isLive={livePlay} onClick={() => (livePlay ? null : jumpToLive())} />
+                <LiveTag
+                  isLive={livePlay}
+                  onClick={() => (livePlay ? null : jumpToLive())}
+                />
                 <div className="font-semibold px-2">
                   <AssistDuration />
                 </div>
@@ -121,7 +124,7 @@ function Controls(props: any) {
             />
           </div>
         </div>
-        : null}
+      ) : null}
     </div>
   );
 }

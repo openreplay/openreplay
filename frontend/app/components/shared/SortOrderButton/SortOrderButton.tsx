@@ -1,13 +1,15 @@
 import React from 'react';
 import { Segmented } from 'antd';
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   sortOrder: string;
   onChange?: (sortOrder: string) => void;
 }
 
-export default React.memo(function SortOrderButton(props: Props) {
+export default React.memo((props: Props) => {
+  const { t } = useTranslation();
   const { sortOrder, onChange = () => null } = props;
   const isAscending = sortOrder === 'asc';
 
@@ -16,8 +18,8 @@ export default React.memo(function SortOrderButton(props: Props) {
       <Segmented
         size="small"
         options={[
-          { label: 'Ascending', value: 'asc', icon: <ArrowUpOutlined /> },
-          { label: 'Descending', value: 'desc', icon: <ArrowDownOutlined /> }
+          { label: t('Ascending'), value: 'asc', icon: <ArrowUpOutlined /> },
+          { label: t('Descending'), value: 'desc', icon: <ArrowDownOutlined /> },
         ]}
         defaultValue={sortOrder}
         onChange={onChange}

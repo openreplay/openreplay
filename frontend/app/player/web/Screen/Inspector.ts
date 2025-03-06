@@ -1,8 +1,11 @@
-import type Screen from './Screen'
-import type Marker from './Marker'
+import type Screen from './Screen';
+import type Marker from './Marker';
 
 export default class Inspector {
-  constructor(private screen: Screen, private marker: Marker) {}
+  constructor(
+    private screen: Screen,
+    private marker: Marker,
+  ) {}
 
   private onMouseMove = (e: MouseEvent) => {
     e.stopPropagation();
@@ -13,34 +16,33 @@ export default class Inspector {
     }
 
     this.marker.mark(target);
-  }
+  };
 
-  private onOverlayLeave = () => {
-    return this.marker.unmark();
-  }
+  private onOverlayLeave = () => this.marker.unmark();
 
   private onMarkClick = () => {
-    let target = this.marker.target;
+    const { target } = this.marker;
     if (!target) {
-      return
+      return;
     }
     this.clickCallback && this.clickCallback({ target });
-  }
+  };
 
   addClickListener(callback: (el: { target: Element }) => void) {
-    this.clickCallback = callback
+    this.clickCallback = callback;
   }
 
-  private clickCallback: (e: { target: Element }) => void = () => {}
+  private clickCallback: (e: { target: Element }) => void = () => {};
 
   enable() {
-    this.screen.overlay.addEventListener('mousemove', this.onMouseMove)
-    this.screen.overlay.addEventListener('mouseleave', this.onOverlayLeave)
-    this.screen.overlay.addEventListener('click', this.onMarkClick)
+    this.screen.overlay.addEventListener('mousemove', this.onMouseMove);
+    this.screen.overlay.addEventListener('mouseleave', this.onOverlayLeave);
+    this.screen.overlay.addEventListener('click', this.onMarkClick);
   }
+
   clean() {
-    this.screen.overlay.removeEventListener('mousemove', this.onMouseMove)
-    this.screen.overlay.removeEventListener('mouseleave', this.onOverlayLeave)
-    this.screen.overlay.removeEventListener('click', this.onMarkClick)
+    this.screen.overlay.removeEventListener('mousemove', this.onMouseMove);
+    this.screen.overlay.removeEventListener('mouseleave', this.onOverlayLeave);
+    this.screen.overlay.removeEventListener('click', this.onMarkClick);
   }
 }

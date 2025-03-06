@@ -1,1 +1,1 @@
-export { default } from './CPULoad'
+export { default } from './CPULoad';

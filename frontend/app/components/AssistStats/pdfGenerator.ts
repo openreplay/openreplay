@@ -28,9 +28,9 @@ export const getPdf2 = async () => {
         }).then((canvas) => {
           const imgData = canvas.toDataURL('img/png');
 
-          let imgWidth = 290;
-          let pageHeight = 200;
-          let imgHeight = (canvas.height * imgWidth) / canvas.width;
+          const imgWidth = 290;
+          const pageHeight = 200;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
           let heightLeft = imgHeight - pageHeight;
           let position = 0;
           const A4Height = 295;
@@ -38,16 +38,24 @@ export const getPdf2 = async () => {
           const logoWidth = 55;
           doc.addImage(imgData, 'PNG', 3, 10, imgWidth, imgHeight);
 
-          doc.addImage('/assets/img/cobrowising-report-head.png', 'png', A4Height / 2 - headerW / 2, 2, 45, 5);
-          if (position === 0 && heightLeft === 0)
+          doc.addImage(
+            '/assets/img/cobrowising-report-head.png',
+            'png',
+            A4Height / 2 - headerW / 2,
+            2,
+            45,
+            5,
+          );
+          if (position === 0 && heightLeft === 0) {
             doc.addImage(
               '/assets/img/report-head.png',
               'png',
               imgWidth / 2 - headerW / 2,
               pageHeight - 5,
               logoWidth,
-              5
+              5,
             );
+          }
 
           while (heightLeft >= 0) {
             position = heightLeft - imgHeight;
@@ -59,12 +67,12 @@ export const getPdf2 = async () => {
               A4Height / 2 - headerW / 2,
               pageHeight - 5,
               logoWidth,
-              5
+              5,
             );
             heightLeft -= pageHeight;
           }
 
-          doc.save(fileNameFormat('Assist_Stats_' + Date.now(), '.pdf'));
+          doc.save(fileNameFormat(`Assist_Stats_${Date.now()}`, '.pdf'));
         });
       }
 

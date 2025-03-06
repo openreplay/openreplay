@@ -1,1 +1,1 @@
-export { default } from './InsightsCard'
+export { default } from './InsightsCard';

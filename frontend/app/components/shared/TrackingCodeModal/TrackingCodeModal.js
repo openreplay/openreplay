@@ -34,7 +34,7 @@ class TrackingCodeModal extends React.PureComponent {
   render() {
     const { title = '', subTitle, site } = this.props;
     const { activeTab } = this.state;
-      const ingestPoint = `https://${window.location.hostname}/ingest`;
+    const ingestPoint = `https://${window.location.hostname}/ingest`;
 
     return (
       <div
@@ -49,8 +49,8 @@ class TrackingCodeModal extends React.PureComponent {
         </h3>
 
         {site.platform === 'ios' ? (
-          <div className={'p-5'}>
-            <InstallMobileDocs site={site} ingestPoint={ingestPoint}  />
+          <div className="p-5">
+            <InstallMobileDocs site={site} ingestPoint={ingestPoint} />
           </div>
         ) : (
           <div>

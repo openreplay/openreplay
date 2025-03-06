@@ -2,20 +2,22 @@ import React from 'react';
 import { Input } from 'UI';
 import Select from 'Shared/Select';
 import { alertConditions as conditions } from 'App/constants';
-import Alert from 'Types/alert'
+import Alert from 'Types/alert';
+import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
 
-const thresholdOptions = [
-  { label: '15 minutes', value: 15 },
-  { label: '30 minutes', value: 30 },
-  { label: '1 hour', value: 60 },
-  { label: '2 hours', value: 120 },
-  { label: '4 hours', value: 240 },
-  { label: '1 day', value: 1440 },
+const thresholdOptions = (t: TFunction) => [
+  { label: t('15 minutes'), value: 15 },
+  { label: t('30 minutes'), value: 30 },
+  { label: t('1 hour'), value: 60 },
+  { label: t('2 hours'), value: 120 },
+  { label: t('4 hours'), value: 240 },
+  { label: t('1 day'), value: 1440 },
 ];
 
-const changeOptions = [
-  { label: 'change', value: 'change' },
-  { label: '% change', value: 'percent' },
+const changeOptions = (t: TFunction) => [
+  { label: t('change'), value: 'change' },
+  { label: t('% change'), value: 'percent' },
 ];
 
 interface ICondition {
@@ -39,15 +41,18 @@ function Condition({
   unit,
   changeUnit,
 }: ICondition) {
+  const { t } = useTranslation();
   return (
     <div>
       {!isThreshold && (
         <div className="flex items-center my-3">
-          <label className="w-1/6 flex-shrink-0 font-normal">{'Trigger when'}</label>
+          <label className="w-1/6 flex-shrink-0 font-normal">
+            {t('Trigger when')}
+          </label>
           <Select
             className="w-2/6"
             placeholder="change"
-            options={changeOptions}
+            options={changeOptions(t)}
             name="change"
             defaultValue={instance.change}
             onChange={({ value }) => changeUnit(value)}
@@ -56,29 +61,35 @@ function Condition({
         </div>
       )}
 
-      <div className="flex items-center my-3">
+      <div className="flex itemsx-center my-3">
         <label className="w-1/6 flex-shrink-0 font-normal">
-          {isThreshold ? 'Trigger when' : 'of'}
+          {isThreshold ? t('Trigger when') : t('of')}
         </label>
         <Select
           className="w-2/6"
-          placeholder="Select Metric"
-          isSearchable={true}
+          placeholder={t('Select Metric')}
+          isSearchable
           options={triggerOptions}
           name="left"
-          value={triggerOptions.find((i) => i.value === instance.query.left) || ''}
-          onChange={({ value }) => writeQueryOption(null, { name: 'left', value: value.value })}
+          value={
+            triggerOptions.find((i) => i.value === instance.query.left) || ''
+          }
+          onChange={({ value }) =>
+            writeQueryOption(null, { name: 'left', value: value.value })
+          }
         />
       </div>
 
       <div className="flex items-center my-3">
-        <label className="w-1/6 flex-shrink-0 font-normal">{'is'}</label>
+        <label className="w-1/6 flex-shrink-0 font-normal">{t('is')}</label>
         <div className="w-2/6 flex items-center">
           <Select
-            placeholder="Select Condition"
+            placeholder={t('Select Condition')}
             options={conditions}
             name="operator"
-            value={conditions.find(c => c.value === instance.query.operator) || ''}
+            value={
+              conditions.find((c) => c.value === instance.query.operator) || ''
+            }
             onChange={({ value }) =>
               writeQueryOption(null, { name: 'operator', value: value.value })
             }
@@ -93,7 +104,7 @@ function Condition({
                 onChange={writeQuery}
                 placeholder="E.g. 3"
               />
-              <span className="ml-2">{'test'}</span>
+              <span className="ml-2">{t('test')}</span>
             </>
           )}
           {!unit && (
@@ -102,34 +113,42 @@ function Condition({
               name="right"
               value={instance.query.right}
               onChange={writeQuery}
-              placeholder="Specify Value"
-              type={"number"}
+              placeholder={t('Specify Value')}
+              type="number"
             />
           )}
         </div>
       </div>
 
       <div className="flex items-center my-3">
-        <label className="w-1/6 flex-shrink-0 font-normal">{'over the past'}</label>
+        <label className="w-1/6 flex-shrink-0 font-normal">
+          {t('over the past')}
+        </label>
         <Select
           className="w-2/6"
-          placeholder="Select timeframe"
-          options={thresholdOptions}
+          placeholder={t('Select timeframe')}
+          options={thresholdOptions(t)}
           name="currentPeriod"
           defaultValue={instance.currentPeriod}
-          onChange={({ value }) => writeOption(null, { name: 'currentPeriod', value })}
+          onChange={({ value }) =>
+            writeOption(null, { name: 'currentPeriod', value })
+          }
         />
       </div>
       {!isThreshold && (
         <div className="flex items-center my-3">
-          <label className="w-1/6 flex-shrink-0 font-normal">{'compared to previous'}</label>
+          <label className="w-1/6 flex-shrink-0 font-normal">
+            {t('compared to previous')}
+          </label>
           <Select
             className="w-2/6"
-            placeholder="Select timeframe"
-            options={thresholdOptions}
+            placeholder={t('Select timeframe')}
+            options={thresholdOptions(t)}
             name="previousPeriod"
             defaultValue={instance.previousPeriod}
-            onChange={({ value }) => writeOption(null, { name: 'previousPeriod', value })}
+            onChange={({ value }) =>
+              writeOption(null, { name: 'previousPeriod', value })
+            }
           />
         </div>
       )}

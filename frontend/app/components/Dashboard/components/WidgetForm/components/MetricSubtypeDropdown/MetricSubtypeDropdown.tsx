@@ -6,13 +6,15 @@ import React from 'react';
 import Select from 'Shared/Select';
 import { components } from 'react-select';
 import CustomDropdownOption from 'Shared/CustomDropdownOption';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onSelect: any;
 }
 function MetricSubtypeDropdown(props: Props) {
+  const { t } = useTranslation();
   const { metricStore } = useStore();
-  const metric: any =  metricStore.instance;
+  const metric: any = metricStore.instance;
 
   const options: any = React.useMemo(() => {
     const type = TYPES.find((i: MetricType) => i.slug === metric.metricType);
@@ -30,14 +32,21 @@ function MetricSubtypeDropdown(props: Props) {
 
   React.useEffect(() => {
     // @ts-ignore
-    if (options && !options.map(i => i.value).includes(metric.metricOf)) {
-      setTimeout(() => props.onSelect({ name: 'metricOf', value: { value: options[0].value }}), 0)
+    if (options && !options.map((i) => i.value).includes(metric.metricOf)) {
+      setTimeout(
+        () =>
+          props.onSelect({
+            name: 'metricOf',
+            value: { value: options[0].value },
+          }),
+        0,
+      );
     }
-  }, [metric.metricType])
+  }, [metric.metricType]);
 
   return options ? (
     <>
-      <div className="mx-3">of</div>
+      <div className="mx-3">{t('of')}</div>
       <Select
         name="metricOf"
         placeholder="Select Card Type"
@@ -46,16 +55,16 @@ function MetricSubtypeDropdown(props: Props) {
         onChange={props.onSelect}
         // className="mx-2"
         components={{
-          MenuList: ({ children, ...props }: any) => {
-            return (
-              <components.MenuList {...props} className="!p-3">
-                {children}
-              </components.MenuList>
-            );
-          },
+          MenuList: ({ children, ...props }: any) => (
+            <components.MenuList {...props} className="!p-3">
+              {children}
+            </components.MenuList>
+          ),
           Option: ({ children, ...props }: any) => {
             const { data } = props;
-            return <CustomDropdownOption children={children} {...props} {...data} />;
+            return (
+              <CustomDropdownOption children={children} {...props} {...data} />
+            );
           },
         }}
       />

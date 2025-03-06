@@ -3,26 +3,26 @@ import React from 'react';
 
 import { useStore } from 'App/mstore';
 import { confirm, Form, Input, Message } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onClose: () => void;
 }
 
 function TeamsAddForm({ onClose }: Props) {
+  const { t } = useTranslation();
   const { integrationsStore } = useStore();
-  const instance = integrationsStore.msteams.instance;
+  const { instance } = integrationsStore.msteams;
   const saving = integrationsStore.msteams.loading;
-  const errors = integrationsStore.msteams.errors;
-  const edit = integrationsStore.msteams.edit;
+  const { errors } = integrationsStore.msteams;
+  const { edit } = integrationsStore.msteams;
   const onSave = integrationsStore.msteams.saveIntegration;
-  const init = integrationsStore.msteams.init;
+  const { init } = integrationsStore.msteams;
   const onRemove = integrationsStore.msteams.removeInt;
-  const update = integrationsStore.msteams.update;
+  const { update } = integrationsStore.msteams;
 
-  React.useEffect(() => {
-    return () => init({});
-  }, []);
+  React.useEffect(() => () => init({}), []);
 
   const save = () => {
     if (instance?.exists()) {
@@ -39,9 +39,11 @@ function TeamsAddForm({ onClose }: Props) {
   const remove = async (id: string) => {
     if (
       await confirm({
-        header: 'Confirm',
-        confirmButton: 'Yes, delete',
-        confirmation: `Are you sure you want to permanently delete this channel?`
+        header: t('Confirm'),
+        confirmButton: t('Yes, delete'),
+        confirmation: t(
+          'Are you sure you want to permanently delete this channel?',
+        ),
       })
     ) {
       void onRemove(id).then(onClose);
@@ -49,8 +51,8 @@ function TeamsAddForm({ onClose }: Props) {
   };
 
   const write = ({
-                   target: { name, value }
-                 }: {
+    target: { name, value },
+  }: {
     target: { name: string; value: string };
   }) => edit({ [name]: value });
 
@@ -58,22 +60,22 @@ function TeamsAddForm({ onClose }: Props) {
     <div className="p-5" style={{ minWidth: '300px' }}>
       <Form>
         <Form.Field>
-          <label>Name</label>
+          <label>{t('Name')}</label>
           <Input
             name="name"
             value={instance?.name}
             onChange={write}
-            placeholder="Enter any name"
+            placeholder={t('Enter any name')}
             type="text"
           />
         </Form.Field>
         <Form.Field>
-          <label>URL</label>
+          <label>{t('URL')}</label>
           <Input
             name="endpoint"
             value={instance?.endpoint}
             onChange={write}
-            placeholder="Teams webhook URL"
+            placeholder={t('Teams webhook URL')}
             type="text"
           />
         </Form.Field>
@@ -86,17 +88,17 @@ function TeamsAddForm({ onClose }: Props) {
               type="primary"
               className="float-left mr-2"
             >
-              {instance?.exists() ? 'Update' : 'Add'}
+              {instance?.exists() ? t('Update') : t('Add')}
             </Button>
 
-            <Button onClick={onClose}>{'Cancel'}</Button>
+            <Button onClick={onClose}>{t('Cancel')}</Button>
           </div>
 
           <Button
             onClick={() => remove(instance?.webhookId)}
             disabled={!instance.exists()}
           >
-            {'Delete'}
+            {t('Delete')}
           </Button>
         </div>
       </Form>

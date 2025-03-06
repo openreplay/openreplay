@@ -14,7 +14,8 @@ const stepsMap: any = {
     title: '🕵️ Identify Users',
     status: 'pending',
     description: 'Filter sessions by user ID.',
-    docsLink: 'https://docs.openreplay.com/en/v1.10.0/installation/identify-user/',
+    docsLink:
+      'https://docs.openreplay.com/en/v1.10.0/installation/identify-user/',
     url: 'identify-users',
   },
   'Invite Team Members': {
@@ -42,6 +43,7 @@ export interface Step {
 
 export class GettingStarted {
   steps: Step[] = [];
+
   status: 'in-progress' | 'completed';
 
   constructor() {
@@ -93,20 +95,19 @@ export class GettingStarted {
           status: item.status,
         })),
         status: this.status,
-      })
+      }),
     );
   }
 
   calculateStatus() {
-    const numCompleted = this.numCompleted;
-    const numPending = this.numPending;
+    const { numCompleted } = this;
+    const { numPending } = this;
     const numIgnored = this.steps.length - numCompleted - numPending;
 
     if (numIgnored > 0) {
       return 'in-progress';
-    } else {
-      return numPending > 0 ? 'in-progress' : 'completed';
     }
+    return numPending > 0 ? 'in-progress' : 'completed';
   }
 
   completeStep(step: Step) {

@@ -1,33 +1,36 @@
-import React from 'react'
-import { KEY, options } from 'App/dev/console'
+import React from 'react';
+import { KEY, options } from 'App/dev/console';
 import { Switch } from 'UI';
+import { useTranslation } from 'react-i18next';
 
 function getDefaults() {
-  const storedString = localStorage.getItem(KEY)
+  const storedString = localStorage.getItem(KEY);
   if (storedString) {
-    const storedOptions = JSON.parse(storedString)
-    return storedOptions.verbose
-  } else {
-    return false
+    const storedOptions = JSON.parse(storedString);
+    return storedOptions.verbose;
   }
+  return false;
 }
 
 function DebugLog() {
-  const [showLogs, setShowLogs] = React.useState(getDefaults)
+  const { t } = useTranslation();
+  const [showLogs, setShowLogs] = React.useState(getDefaults);
 
   const onChange = (checked: boolean) => {
-    setShowLogs(checked)
-    options.logStuff(checked)
-  }
+    setShowLogs(checked);
+    options.logStuff(checked);
+  };
   return (
     <div>
-      <h3 className={'text-lg'}>Player Debug Logs</h3>
-      <div className={'my-1'}>Show debug information in browser console.</div>
-      <div className={'mt-2'}>
+      <h3 className="text-lg">{t('Player Debug Logs')}</h3>
+      <div className="my-1">
+        {t('Show debug information in browser console.')}
+      </div>
+      <div className="mt-2">
         <Switch checked={showLogs} onChange={onChange} />
       </div>
     </div>
-  )
+  );
 }
 
-export default DebugLog
+export default DebugLog;

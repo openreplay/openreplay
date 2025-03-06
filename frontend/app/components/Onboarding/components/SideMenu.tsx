@@ -7,12 +7,14 @@ import { Icon } from 'UI';
 
 import SupportModal from '../../../layout/SupportModal';
 import { useStore } from '../../../mstore';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   activeTab: string;
   onClick: (tab: string) => void;
 }
 function SideMenu(props: Props) {
+  const { t } = useTranslation();
   const [supportOpen, setSupportOpen] = React.useState(false);
   const { settingsStore } = useStore();
   const { activeTab } = props;
@@ -51,9 +53,9 @@ function SideMenu(props: Props) {
                 color={activeTab === OB_TABS.INSTALLING ? 'teal' : 'gray'}
               />
             }
-            className={'!rounded-lg hover-fill-teal'}
+            className="!rounded-lg hover-fill-teal"
           >
-            Setup OpenReplay
+            {t('Setup OpenReplay')}
           </Menu.Item>
           <Menu.Item
             key={OB_TABS.IDENTIFY_USERS}
@@ -64,9 +66,9 @@ function SideMenu(props: Props) {
                 color={activeTab === OB_TABS.IDENTIFY_USERS ? 'teal' : 'gray'}
               />
             }
-            className={'!rounded-lg hover-fill-teal'}
+            className="!rounded-lg hover-fill-teal"
           >
-            Identify Users
+            {t('Identify Users')}
           </Menu.Item>
           <Menu.Item
             key={OB_TABS.MANAGE_USERS}
@@ -77,9 +79,9 @@ function SideMenu(props: Props) {
                 color={activeTab === OB_TABS.MANAGE_USERS ? 'teal' : 'gray'}
               />
             }
-            className={'!rounded-lg hover-fill-teal'}
+            className="!rounded-lg hover-fill-teal"
           >
-            Invite Collaborators
+            {t('Invite Collaborators')}
           </Menu.Item>
           <Menu.Item
             key={OB_TABS.INTEGRATIONS}
@@ -90,13 +92,13 @@ function SideMenu(props: Props) {
                 color={activeTab === OB_TABS.INTEGRATIONS ? 'teal' : 'gray'}
               />
             }
-            className={'!rounded-lg hover-fill-teal'}
+            className="!rounded-lg hover-fill-teal"
           >
-            Integrations
+            {t('Integrations')}
           </Menu.Item>
           <Divider style={{ margin: '6px 0' }} />
           <Menu.Item
-            key={'support'}
+            key="support"
             icon={
               <Icon
                 name="question-circle"
@@ -104,9 +106,9 @@ function SideMenu(props: Props) {
                 color={activeTab === 'support' ? 'teal' : 'gray'}
               />
             }
-            className={'!rounded-lg hover-fill-teal'}
+            className="!rounded-lg hover-fill-teal"
           >
-            Support
+            {t('Support')}
           </Menu.Item>
         </Menu>
       </div>

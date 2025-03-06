@@ -10,35 +10,52 @@ import { pageUrlOperators } from '../../constants/filterOptions';
 
 export default class FilterItem {
   type: string = '';
+
   category: FilterCategory = FilterCategory.METADATA;
+
   subCategory: string = '';
+
   key: string = '';
+
   label: string = '';
+
   value: any = [''];
+
   isEvent: boolean = false;
+
   operator: string = '';
+
   hasSource: boolean = false;
+
   source: string = '';
+
   sourceOperator: string = '';
+
   sourceOperatorOptions: any = [];
+
   filters: FilterItem[] = [];
+
   operatorOptions: any[] = [];
+
   options: any[] = [];
+
   isActive: boolean = true;
+
   completed: number = 0;
+
   dropped: number = 0;
 
   constructor(
     data: any = {},
     private readonly isConditional?: boolean,
-    private readonly isMobile?: boolean
+    private readonly isMobile?: boolean,
   ) {
     makeAutoObservable(this);
 
     if (Array.isArray(data.filters)) {
-      data.filters = data.filters.map(function (i: Record<string, any>) {
-        return new FilterItem(i);
-      });
+      data.filters = data.filters.map(
+        (i: Record<string, any>) => new FilterItem(i),
+      );
     }
 
     this.merge(data);
@@ -82,7 +99,7 @@ export default class FilterItem {
   fromJson(json: any, mainFilterKey = '', isHeatmap?: boolean) {
     const isMetadata = json.type === FilterKey.METADATA;
     let _filter: any =
-      (isMetadata ? filtersMap['_' + json.source] : filtersMap[json.type]) ||
+      (isMetadata ? filtersMap[`_${json.source}`] : filtersMap[json.type]) ||
       {};
     if (this.isConditional) {
       if (this.isMobile) {
@@ -121,7 +138,7 @@ export default class FilterItem {
 
     this.value = !json.value || json.value.length === 0 ? [''] : json.value;
     this.operator = json.operator;
-    this.source = isMetadata ? '_' + json.source : json.source;
+    this.source = isMetadata ? `_${json.source}` : json.source;
     this.sourceOperator = json.sourceOperator;
 
     this.filters =
@@ -140,7 +157,7 @@ export default class FilterItem {
     const json = {
       type: isMetadata ? FilterKey.METADATA : this.key,
       isEvent: Boolean(this.isEvent),
-      value: this.value.map((i: any) => i ? i.toString() : ''),
+      value: this.value.map((i: any) => (i ? i.toString() : '')),
       operator: this.operator,
       source: isMetadata ? this.key.replace(/^_/, '') : this.source,
       sourceOperator: this.sourceOperator,

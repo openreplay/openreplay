@@ -1,1 +1,1 @@
-export { default } from './Crashes'
+export { default } from './Crashes';

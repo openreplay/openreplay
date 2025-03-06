@@ -1,1 +1,1 @@
-export { default } from './SpeedIndexByLocation'
+export { default } from './SpeedIndexByLocation';

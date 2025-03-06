@@ -7,21 +7,25 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import * as routes from 'App/routes';
 
-
 const LOGIN_PATH = routes.login();
 const SIGNUP_PATH = routes.signup();
 const FORGOT_PASSWORD = routes.forgotPassword();
 const SPOT_PATH = routes.spot();
 
 const Login = lazy(() => import('Components/Login/Login'));
-const ForgotPassword = lazy(() => import('Components/ForgotPassword/ForgotPassword'));
+const ForgotPassword = lazy(
+  () => import('Components/ForgotPassword/ForgotPassword'),
+);
 const Spot = lazy(() => import('Components/Spots/SpotPlayer/SpotPlayer'));
 
 function PublicRoutes() {
   const { userStore } = useStore();
-  const authDetails = userStore.authStore.authDetails;
-  const isEnterprise = userStore.isEnterprise;
-  const hideSupport = isEnterprise || location.pathname.includes('spots') || location.pathname.includes('view-spot');
+  const { authDetails } = userStore.authStore;
+  const { isEnterprise } = userStore;
+  const hideSupport =
+    isEnterprise ||
+    location.pathname.includes('spots') ||
+    location.pathname.includes('view-spot');
   const [loading, setLoading] = React.useState(true);
 
   useEffect(() => {
@@ -34,10 +38,15 @@ function PublicRoutes() {
 
   return (
     <Loader loading={loading} className="flex-1">
-      <Suspense fallback={<Loader loading={true} className="flex-1" />}>
+      <Suspense fallback={<Loader loading className="flex-1" />}>
         <Switch>
           <Route exact strict path={SPOT_PATH} component={Spot} />
-          <Route exact strict path={FORGOT_PASSWORD} component={ForgotPassword} />
+          <Route
+            exact
+            strict
+            path={FORGOT_PASSWORD}
+            component={ForgotPassword}
+          />
           <Route exact strict path={LOGIN_PATH} component={Login} />
           <Route exact strict path={SIGNUP_PATH} component={Signup} />
           <Redirect to={LOGIN_PATH} />
@@ -47,6 +56,5 @@ function PublicRoutes() {
     </Loader>
   );
 }
-
 
 export default observer(PublicRoutes);

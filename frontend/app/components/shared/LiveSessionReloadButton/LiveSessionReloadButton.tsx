@@ -1,7 +1,7 @@
 import React from 'react';
-import ReloadButton from '../ReloadButton';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import ReloadButton from '../ReloadButton';
 
 interface Props {
   onClick: () => void;

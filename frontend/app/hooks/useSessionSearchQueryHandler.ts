@@ -12,7 +12,12 @@ interface Props {
   onLoaded?: () => void;
 }
 
-const useSessionSearchQueryHandler = ({ onBeforeLoad, appliedFilter, loading, onLoaded = () => null }: Props) => {
+const useSessionSearchQueryHandler = ({
+  onBeforeLoad,
+  appliedFilter,
+  loading,
+  onLoaded = () => null,
+}: Props) => {
   const { searchStore } = useStore();
   const [beforeHookLoaded, setBeforeHookLoaded] = useState(!onBeforeLoad);
   const history = useHistory();
@@ -27,7 +32,9 @@ const useSessionSearchQueryHandler = ({ onBeforeLoad, appliedFilter, loading, on
             setBeforeHookLoaded(true);
           }
 
-          const converter = JsonUrlConverter.urlParamsToJson(history.location.search);
+          const converter = JsonUrlConverter.urlParamsToJson(
+            history.location.search,
+          );
           const json = getFilterFromJson(converter.toJSON());
           const filter = new Search(json);
 

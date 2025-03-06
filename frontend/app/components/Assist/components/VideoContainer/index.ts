@@ -1,1 +1,1 @@
-export { default } from './VideoContainer'
+export { default } from './VideoContainer';

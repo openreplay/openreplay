@@ -1,7 +1,4 @@
-import {
-  CaretDownOutlined,
-  FolderAddOutlined
-} from '@ant-design/icons';
+import { CaretDownOutlined, FolderAddOutlined } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps, Space, Typography } from 'antd';
 import cn from 'classnames';
 import React from 'react';
@@ -9,22 +6,23 @@ import { withRouter } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
-import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { Icon } from 'UI';
 import { useModal } from 'Components/ModalContext';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import Project from '@/mstore/types/project';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
 function ProjectDropdown(props: { location: any }) {
   const mstore = useStore();
+  const { t } = useTranslation();
   const { projectsStore, searchStore, searchStoreLive, userStore } = mstore;
-  const account = userStore.account;
+  const { account } = userStore;
   const sites = projectsStore.list;
-  const siteId = projectsStore.siteId;
-  const setSiteId = projectsStore.setSiteId;
-  const initProject = projectsStore.initProject;
+  const { siteId } = projectsStore;
+  const { setSiteId } = projectsStore;
+  const { initProject } = projectsStore;
   const { location } = props;
   const isAdmin = account.admin || account.superAdmin;
   const activeSite = sites.find((s) => s.id === siteId);
@@ -59,10 +57,7 @@ function ProjectDropdown(props: { location: any }) {
   const menuItems: MenuProps['items'] = sites.map((site) => ({
     key: site.id,
     label: (
-      <div
-        key={site.id}
-        className={'!py-1 flex items-center gap-2'}
-      >
+      <div key={site.id} className="!py-1 flex items-center gap-2">
         <Icon
           name={site.platform === 'web' ? 'browser/browser' : 'mobile'}
           color={activeSite?.host === site.host ? 'main' : undefined}
@@ -70,28 +65,29 @@ function ProjectDropdown(props: { location: any }) {
         <Text
           className={cn(
             'capitalize',
-            activeSite?.host === site.host ? 'text-main' : ''
+            activeSite?.host === site.host ? 'text-main' : '',
           )}
         >
           {site.host}
         </Text>
       </div>
-    )
+    ),
   }));
   if (isAdmin) {
-    menuItems?.unshift({
-      key: 'add-proj',
-      label: (
-        <div
-          className={'flex items-center gap-2 whitespace-nowrap'}
-        >
-          <FolderAddOutlined rev={undefined} />
-          <Text>Add Project</Text>
-        </div>
-      )
-    }, {
-      type: 'divider'
-    });
+    menuItems?.unshift(
+      {
+        key: 'add-proj',
+        label: (
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            <FolderAddOutlined rev={undefined} />
+            <Text>{t('Add Project')}</Text>
+          </div>
+        ),
+      },
+      {
+        type: 'divider',
+      },
+    );
   }
 
   return (
@@ -102,7 +98,7 @@ function ProjectDropdown(props: { location: any }) {
         defaultSelectedKeys: [siteId],
         style: {
           maxHeight: 500,
-          overflowY: 'auto'
+          overflowY: 'auto',
         },
         onClick: (e) => {
           if (e.key === 'add-proj') {
@@ -110,7 +106,7 @@ function ProjectDropdown(props: { location: any }) {
           } else {
             void handleSiteChange(e.key);
           }
-        }
+        },
       }}
       placement="bottomLeft"
     >
@@ -129,7 +125,7 @@ function ProjectDropdown(props: { location: any }) {
                 {activeSite.host}
               </div>
             ) : (
-              'All Projects'
+              t('All Projects')
             )}
           </Text>
           <CaretDownOutlined rev={undefined} />
@@ -139,6 +135,4 @@ function ProjectDropdown(props: { location: any }) {
   );
 }
 
-export default withRouter(
-  observer(ProjectDropdown)
-);
+export default withRouter(observer(ProjectDropdown));

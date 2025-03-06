@@ -11,13 +11,19 @@ function FunnelIssueGraph(props: Props) {
   return (
     <div className="flex rounded-sm" style={{ width: '600px' }}>
       <div
-        style={{ width: issue.unaffectedSessionsPer + '%', minWidth: MIN_WIDTH }}
+        style={{
+          width: `${issue.unaffectedSessionsPer}%`,
+          minWidth: MIN_WIDTH,
+        }}
         className="relative"
       >
-        <Tooltip title={`Unaffected sessions`} placement="top">
+        <Tooltip title="Unaffected sessions" placement="top">
           <div
             className="w-full relative rounded-tl-sm rounded-bl-sm"
-            style={{ height: '18px', backgroundColor: 'rgba(217, 219, 238, 0.7)' }}
+            style={{
+              height: '18px',
+              backgroundColor: 'rgba(217, 219, 238, 0.7)',
+            }}
           />
           <div className="absolute ml-2 font-bold top-0 bottom-0 text-sm">
             {issue.unaffectedSessions}
@@ -25,13 +31,16 @@ function FunnelIssueGraph(props: Props) {
         </Tooltip>
       </div>
       <div
-        style={{ width: issue.affectedSessionsPer + '%', minWidth: MIN_WIDTH }}
+        style={{ width: `${issue.affectedSessionsPer}%`, minWidth: MIN_WIDTH }}
         className="border-l relative"
       >
-        <Tooltip title={`Affected sessions`} placement="top">
+        <Tooltip title="Affected sessions" placement="top">
           <div
             className="w-full relative"
-            style={{ height: '18px', backgroundColor: 'rgba(238, 238, 238, 0.7)' }}
+            style={{
+              height: '18px',
+              backgroundColor: 'rgba(238, 238, 238, 0.7)',
+            }}
           />
           <div className="absolute ml-2 font-bold top-0 bottom-0 text-sm">
             {issue.affectedSessions}
@@ -39,10 +48,10 @@ function FunnelIssueGraph(props: Props) {
         </Tooltip>
       </div>
       <div
-        style={{ width: issue.lostConversionsPer + '%', minWidth: MIN_WIDTH }}
+        style={{ width: `${issue.lostConversionsPer}%`, minWidth: MIN_WIDTH }}
         className="border-l relative"
       >
-        <Tooltip title={`Conversion lost`} placement="top">
+        <Tooltip title="Conversion lost" placement="top">
           <div
             className="w-full relative rounded-tr-sm rounded-br-sm"
             style={{ height: '18px', backgroundColor: 'rgba(204, 0, 0, 0.26)' }}

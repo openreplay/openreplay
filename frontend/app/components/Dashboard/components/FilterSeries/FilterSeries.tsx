@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { EventsList, FilterList } from 'Shared/Filters/FilterList';
-import SeriesName from './SeriesName';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import ExcludeFilters from './ExcludeFilters';
 import { Button, Space } from 'antd';
 import { ChevronDown, ChevronUp, Trash } from 'lucide-react';
+import ExcludeFilters from './ExcludeFilters';
+import SeriesName from './SeriesName';
 
 const FilterCountLabels = observer(
   (props: { filters: any; toggleExpand: any }) => {
@@ -19,7 +19,7 @@ const FilterCountLabels = observer(
               type="text"
               size="small"
               onClick={props.toggleExpand}
-              className='btn-series-event-count'
+              className="btn-series-event-count"
             >
               {`${events} Event${events > 1 ? 's' : ''}`}
             </Button>
@@ -30,7 +30,7 @@ const FilterCountLabels = observer(
               type="text"
               size="small"
               onClick={props.toggleExpand}
-              className='btn-series-filter-count'
+              className="btn-series-filter-count"
             >
               {`${filters} Filter${filters > 1 ? 's' : ''}`}
             </Button>
@@ -38,7 +38,7 @@ const FilterCountLabels = observer(
         </Space>
       </div>
     );
-  }
+  },
 );
 
 const FilterSeriesHeader = observer(
@@ -58,10 +58,13 @@ const FilterSeriesHeader = observer(
     };
     return (
       <div
-        className={cn('px-4 ps-2  h-12 flex items-center relative bg-white border-gray-lighter border-t border-l border-r rounded-t-xl', {
-          hidden: props.hidden,
-          'rounded-b-xl': !props.expanded,
-        })}
+        className={cn(
+          'px-4 ps-2  h-12 flex items-center relative bg-white border-gray-lighter border-t border-l border-r rounded-t-xl',
+          {
+            hidden: props.hidden,
+            'rounded-b-xl': !props.expanded,
+          },
+        )}
       >
         <Space className="mr-auto" size={30}>
           <SeriesName
@@ -73,7 +76,7 @@ const FilterSeriesHeader = observer(
         </Space>
 
         <Space>
-           {!props.expanded && (
+          {!props.expanded && (
             <FilterCountLabels
               filters={props.series.filter.filters}
               toggleExpand={props.toggleExpand}
@@ -84,11 +87,9 @@ const FilterSeriesHeader = observer(
             size="small"
             disabled={!props.canDelete}
             icon={<Trash size={14} />}
-            type='text'
-            className={cn(
-              'btn-delete-series', 'disabled:hidden'
-            )}
-            />
+            type="text"
+            className={cn('btn-delete-series', 'disabled:hidden')}
+          />
           <Button
             onClick={props.toggleExpand}
             size="small"
@@ -99,13 +100,13 @@ const FilterSeriesHeader = observer(
                 <ChevronDown size={16} />
               )
             }
-            type='text'
-            className='btn-toggle-series'
+            type="text"
+            className="btn-toggle-series"
           />
         </Space>
       </div>
     );
-  }
+  },
 );
 
 interface Props {
@@ -118,7 +119,7 @@ interface Props {
   emptyMessage?: any;
   observeChanges?: () => void;
   excludeFilterKeys?: Array<string>;
-  excludeCategory?: string[]
+  excludeCategory?: string[];
   canExclude?: boolean;
   expandable?: boolean;
   isHeatmap?: boolean;
@@ -141,10 +142,10 @@ function FilterSeries(props: Props) {
     removeEvents,
     collapseState,
     onToggleCollapse,
-    excludeCategory
+    excludeCategory,
   } = props;
-  const expanded = isHeatmap || !collapseState
-  const setExpanded = onToggleCollapse
+  const expanded = isHeatmap || !collapseState;
+  const setExpanded = onToggleCollapse;
   const { series, seriesIndex } = props;
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
@@ -171,7 +172,7 @@ function FilterSeries(props: Props) {
     filter.autoOpen = true;
     series.filter.addFilter(filter);
     observeChanges();
-  }
+  };
 
   return (
     <div>
@@ -214,7 +215,7 @@ function FilterSeries(props: Props) {
 
       {expanded ? (
         <>
-          {removeEvents ? null :
+          {removeEvents ? null : (
             <EventsList
               filter={series.filter}
               onUpdateFilter={onUpdateFilter}
@@ -229,7 +230,7 @@ function FilterSeries(props: Props) {
               cannotAdd={isHeatmap}
               excludeCategory={excludeCategory}
             />
-          }
+          )}
           <FilterList
             filter={series.filter}
             onUpdateFilter={onUpdateFilter}

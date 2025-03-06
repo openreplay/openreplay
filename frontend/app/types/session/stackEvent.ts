@@ -9,7 +9,17 @@ export const CLOUDWATCH = 'cloudwatch';
 export const ELASTICSEARCH = 'elasticsearch';
 export const SUMOLOGIC = 'sumologic';
 
-export const typeList = [OPENREPLAY, SENTRY, DATADOG, STACKDRIVER, ROLLBAR, BUGSNAG, CLOUDWATCH, ELASTICSEARCH, SUMOLOGIC];
+export const typeList = [
+  OPENREPLAY,
+  SENTRY,
+  DATADOG,
+  STACKDRIVER,
+  ROLLBAR,
+  BUGSNAG,
+  CLOUDWATCH,
+  ELASTICSEARCH,
+  SUMOLOGIC,
+];
 
 export function isRed(event: IStackEvent) {
   if (!event.payload) return false;
@@ -50,17 +60,28 @@ export interface IStackEvent {
 }
 
 export default class StackEvent {
-  time: IStackEvent["time"]
-  index: IStackEvent["index"];
-  name: IStackEvent["name"];
-  message: IStackEvent["message"];
-  payload: IStackEvent["payload"];
-  source: IStackEvent["source"];
-  level: IStackEvent["level"];
-  messageId: IStackEvent["messageId"];
+  time: IStackEvent['time'];
+
+  index: IStackEvent['index'];
+
+  name: IStackEvent['name'];
+
+  message: IStackEvent['message'];
+
+  payload: IStackEvent['payload'];
+
+  source: IStackEvent['source'];
+
+  level: IStackEvent['level'];
+
+  messageId: IStackEvent['messageId'];
 
   constructor(evt: IStackEvent) {
-    const event = { ...evt, source: evt.source || OPENREPLAY, payload: evt.payload || {} };
+    const event = {
+      ...evt,
+      source: evt.source || OPENREPLAY,
+      payload: evt.payload || {},
+    };
     Object.assign(this, {
       ...event,
       isRed: isRed(event),

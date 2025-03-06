@@ -1,13 +1,13 @@
-import { Segmented } from 'antd';
+import { Segmented, Button } from 'antd';
 import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { confirm, Form, Icon, Input } from 'UI';
-import { Button } from 'antd'
 import { observer } from 'mobx-react-lite';
 
 import styles from './siteForm.module.css';
+import { useTranslation } from 'react-i18next';
 
 type OwnProps = {
   onClose: (arg: any) => void;
@@ -15,17 +15,18 @@ type OwnProps = {
 
 type Props = RouteComponentProps & OwnProps;
 
-const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
+function NewSiteForm({ location: { pathname }, onClose }: Props) {
+  const { t } = useTranslation();
   const mstore = useStore();
   const { projectsStore } = mstore;
   const activeSiteId = projectsStore.active?.id;
   const site = projectsStore.instance;
   const siteList = projectsStore.list;
-  const loading = projectsStore.loading;
+  const { loading } = projectsStore;
   const canDelete = siteList.length > 1;
-  const setSiteId = projectsStore.setSiteId;
+  const { setSiteId } = projectsStore;
   const saveProject = projectsStore.save;
-  const fetchList = projectsStore.fetchList;
+  const { fetchList } = projectsStore;
   const [existsError, setExistsError] = useState(false);
   const { searchStore } = useStore();
 
@@ -41,14 +42,17 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
     if (!projectsStore.instance) return;
     if (projectsStore.instance.id && projectsStore.instance.exists()) {
       projectsStore
-        .updateProject(projectsStore.instance.id, projectsStore.instance.toData())
+        .updateProject(
+          projectsStore.instance.id,
+          projectsStore.instance.toData(),
+        )
         .then((response: any) => {
           if (!response || !response.errors || response.errors.size === 0) {
             onClose(null);
             if (!pathname.includes('onboarding')) {
               void fetchList();
             }
-            toast.success('Project updated successfully');
+            toast.success(t('Project updated successfully'));
           } else {
             toast.error(response.errors[0]);
           }
@@ -60,7 +64,7 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
           searchStore.clearSearch();
           mstore.searchStoreLive.clearSearch();
           mstore.initClient();
-          toast.success('Project added successfully');
+          toast.success(t('Project added successfully'));
         } else {
           toast.error(response.errors[0]);
         }
@@ -71,10 +75,12 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
   const handleRemove = async () => {
     if (
       (await confirm({
-        header: 'Project Deletion Alert',
-        confirmation: `Are you sure you want to delete this project? Deleting it will permanently remove the project, along with all associated sessions and data.`,
-        confirmButton: 'Yes, delete',
-        cancelButton: 'Cancel',
+        header: t('Project Deletion Alert'),
+        confirmation: t(
+          'Are you sure you want to delete this project? Deleting it will permanently remove the project, along with all associated sessions and data.',
+        ),
+        confirmButton: t('Yes, delete'),
+        cancelButton: t('Cancel'),
       })) &&
       site?.id
     ) {
@@ -103,14 +109,14 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
       style={{ width: '350px' }}
     >
       <h3 className="p-5 text-2xl">
-        {site.exists() ? 'Edit Project' : 'New Project'}
+        {site.exists() ? t('Edit Project') : t('New Project')}
       </h3>
       <Form className={styles.formWrapper} onSubmit={site.validate && onSubmit}>
         <div className={styles.content}>
           <Form.Field>
-            <label>{'Name'}</label>
+            <label>{t('Name')}</label>
             <Input
-              placeholder="Ex. openreplay"
+              placeholder={t('Ex. openreplay')}
               name="name"
               maxLength={40}
               value={site.name}
@@ -119,17 +125,17 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
             />
           </Form.Field>
           <Form.Field>
-            <label>Project Type</label>
+            <label>{t('Project Type')}</label>
             <div>
               <Segmented
                 options={[
                   {
                     value: 'web',
-                    label: 'Web',
+                    label: t('Web'),
                   },
                   {
                     value: 'ios',
-                    label: 'Mobile',
+                    label: t('Mobile'),
                   },
                 ]}
                 value={site.platform}
@@ -147,27 +153,23 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
               loading={loading}
               disabled={!site.validate}
             >
-              {site?.exists() ? 'Update' : 'Add'}
+              {site?.exists() ? t('Update') : t('Add')}
             </Button>
             {site.exists() && (
-              <Button
-                type="text"
-                onClick={handleRemove}
-                disabled={!canDelete}
-              >
+              <Button type="text" onClick={handleRemove} disabled={!canDelete}>
                 <Icon name="trash" size="16" />
               </Button>
             )}
           </div>
           {existsError && (
             <div className={styles.errorMessage}>
-              {'Project exists already.'}
+              {t('Project exists already.')}
             </div>
           )}
         </div>
       </Form>
     </div>
   );
-};
+}
 
 export default withRouter(observer(NewSiteForm));

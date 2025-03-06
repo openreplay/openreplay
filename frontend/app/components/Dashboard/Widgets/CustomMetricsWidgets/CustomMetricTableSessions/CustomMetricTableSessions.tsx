@@ -5,6 +5,7 @@ import { Pagination, NoContent } from 'UI';
 import { useStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import Session from 'App/mstore/types/session';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   metric: any;
@@ -14,11 +15,16 @@ interface Props {
 }
 
 function CustomMetricTableSessions(props: Props) {
+  const { t } = useTranslation();
   const { isEdit = false, metric, data } = props;
 
-  const sessions = useMemo(() => {
-    return data && data.sessions ? data.sessions.map((session: any) => new Session().fromJson(session)) : [];
-  }, []);
+  const sessions = useMemo(
+    () =>
+      data && data.sessions
+        ? data.sessions.map((session: any) => new Session().fromJson(session))
+        : [],
+    [],
+  );
 
   return useObserver(() => (
     <NoContent
@@ -29,7 +35,7 @@ function CustomMetricTableSessions(props: Props) {
           <AnimatedSVG name={ICONS.NO_SESSIONS} size={170} />
           <div className="mt-4" />
           <div className="text-center">
-            No relevant sessions found for the selected time period
+            {t('No relevant sessions found for the selected time period')}
           </div>
         </div>
       }
@@ -62,13 +68,16 @@ function CustomMetricTableSessions(props: Props) {
 
 export default observer(CustomMetricTableSessions);
 
-const ViewMore = ({ total, limit }: any) =>
-  total > limit ? (
+function ViewMore({ total, limit }: any) {
+  const { t } = useTranslation();
+  return total > limit ? (
     <div className="mt-4 flex items-center justify-center cursor-pointer w-fit mx-auto">
       <div className="text-center">
         <div className="color-teal text-lg">
-          All <span className="font-medium">{total}</span> sessions
+          {t('All')}&nbsp;<span className="font-medium">{total}</span>&nbsp;
+          {t('sessions')}
         </div>
       </div>
     </div>
   ) : null;
+}

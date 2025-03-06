@@ -1,21 +1,21 @@
 // Auto-generated, do not edit
-/* eslint-disable */
 
-import PrimitiveReader from './PrimitiveReader'
-import { MType } from './raw.gen'
-import type { RawMessage } from './raw.gen'
-
+import PrimitiveReader from './PrimitiveReader';
+import { MType } from './raw.gen';
+import type { RawMessage } from './raw.gen';
 
 export default class RawMessageReader extends PrimitiveReader {
   readMessage(): RawMessage | null {
-    const p = this.p
+    const p = this.p;
     const resetPointer = () => {
-      this.p = p
-      return null
-    }
+      this.p = p;
+      return null;
+    };
 
-    const tp = this.readUint()
-    if (tp === null) { return resetPointer() }
+    const tp = this.readUint();
+    if (tp === null) {
+      return resetPointer();
+    }
 
     switch (tp) {
 

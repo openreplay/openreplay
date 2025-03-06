@@ -1,1 +1,1 @@
-export { default } from './DashbaordListModal'
+export { default } from './DashbaordListModal';

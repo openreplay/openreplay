@@ -1,37 +1,41 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
-import {
-  withSiteId,
-  multiview,
-} from 'App/routes';
+import { withSiteId, multiview } from 'App/routes';
 import { BackLink, Icon } from 'UI';
 import cn from 'classnames';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
-import UserCard from '../ReplayPlayer/EventsBlock/UserCard';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore'
-import stl from '../ReplayPlayer/playerBlockHeader.module.css';
+import { useStore } from 'App/mstore';
 import AssistActions from 'Components/Assist/components/AssistActions';
+import stl from '../ReplayPlayer/playerBlockHeader.module.css';
+import UserCard from '../ReplayPlayer/EventsBlock/UserCard';
+import { useTranslation } from 'react-i18next';
 
-function LivePlayerBlockHeader({
-  isMultiview,
-}: { isMultiview?: boolean }) {
+function LivePlayerBlockHeader({ isMultiview }: { isMultiview?: boolean }) {
+  const { t } = useTranslation();
   const [hideBack, setHideBack] = React.useState(false);
   const { store } = React.useContext(PlayerContext);
-  const { assistMultiviewStore, projectsStore, customFieldStore, sessionStore } = useStore();
+  const {
+    assistMultiviewStore,
+    projectsStore,
+    customFieldStore,
+    sessionStore,
+  } = useStore();
   const isAssist = window.location.pathname.includes('/assist/');
   const session = sessionStore.current;
   const closedLive = sessionStore.fetchFailed || (isAssist && !session.live);
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
   const history = useHistory();
   const { width, height } = store.get();
 
-  const metaList = customFieldStore.list.map((i: any) => i.key)
+  const metaList = customFieldStore.list.map((i: any) => i.key);
 
   React.useEffect(() => {
     const queryParams = new URLSearchParams(document.location.search);
-    setHideBack(queryParams.has('iframe') && queryParams.get('iframe') === 'true');
+    setHideBack(
+      queryParams.has('iframe') && queryParams.get('iframe') === 'true',
+    );
   }, []);
 
   const backHandler = () => {
@@ -39,7 +43,7 @@ function LivePlayerBlockHeader({
   };
 
   const { userId, metadata, isCallActive, agentIds } = session;
-  let _metaList = Object.keys(metadata)
+  const _metaList = Object.keys(metadata)
     .filter((i) => metaList.includes(i))
     .map((key) => {
       const value = metadata[key];
@@ -47,7 +51,9 @@ function LivePlayerBlockHeader({
     });
 
   const openGrid = () => {
-    const sessionIdQuery = encodeURIComponent(assistMultiviewStore.sessions.map((s) => s?.sessionId).join(','));
+    const sessionIdQuery = encodeURIComponent(
+      assistMultiviewStore.sessions.map((s) => s?.sessionId).join(','),
+    );
     return history.push(withSiteId(multiview(sessionIdQuery), siteId));
   };
 
@@ -57,7 +63,11 @@ function LivePlayerBlockHeader({
         {!hideBack && (
           <div
             className="flex items-center h-full cursor-pointer group"
-            onClick={() => (assistMultiviewStore.sessions.length > 1 || isMultiview ? openGrid() : backHandler())}
+            onClick={() =>
+              assistMultiviewStore.sessions.length > 1 || isMultiview
+                ? openGrid()
+                : backHandler()
+            }
           >
             {assistMultiviewStore.sessions.length > 1 || isMultiview ? (
               <>
@@ -65,7 +75,7 @@ function LivePlayerBlockHeader({
                   <Icon name="close" color="inherit" size={13} />
                 </div>
                 <span className="group-hover:text-teal group-hover:fill-teal">
-                  Close
+                  {t('Close')}
                 </span>
                 <div className={stl.divider} />
               </>
@@ -80,14 +90,26 @@ function LivePlayerBlockHeader({
         )}
         <UserCard className="" width={width} height={height} />
 
-        <div className={cn('ml-auto flex items-center h-full', { hidden: closedLive })}>
+        <div
+          className={cn('ml-auto flex items-center h-full', {
+            hidden: closedLive,
+          })}
+        >
           {_metaList.length > 0 && (
             <div className="border-l h-full flex items-center px-2">
-              <SessionMetaList className="" metaList={_metaList} maxLength={2} />
+              <SessionMetaList
+                className=""
+                metaList={_metaList}
+                maxLength={2}
+              />
             </div>
           )}
 
-            <AssistActions userId={userId} isCallActive={isCallActive} agentIds={agentIds ?? []} />
+          <AssistActions
+            userId={userId}
+            isCallActive={isCallActive}
+            agentIds={agentIds ?? []}
+          />
         </div>
       </div>
     </div>

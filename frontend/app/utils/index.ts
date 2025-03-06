@@ -8,12 +8,12 @@ export const DAY_SECS = 24 * HOUR_SECS;
 export const WEEK_SECS = 7 * DAY_SECS;
 
 export const formatExpirationTime = (seconds: number) => {
-    if (seconds >= WEEK_SECS) {
-        return `${Math.floor(seconds / DAY_SECS)} days`;
-    }
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours > 0 ? `${hours}h` : ''}${minutes > 0 ? `${minutes}m` : ''}`.trim();
+  if (seconds >= WEEK_SECS) {
+    return `${Math.floor(seconds / DAY_SECS)} days`;
+  }
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `${hours > 0 ? `${hours}h` : ''}${minutes > 0 ? `${minutes}m` : ''}`.trim();
 };
 
 export function debounce(callback, wait, context = this) {
@@ -29,7 +29,6 @@ export function debounce(callback, wait, context = this) {
   };
 }
 
-/* eslint-disable no-mixed-operators */
 export function randomInt(a, b) {
   const min = (b ? a : 0) - 0.5;
   const max = b || a || Number.MAX_SAFE_INTEGER;
@@ -50,10 +49,13 @@ export const toUnderscore = (s) =>
 
 export const getUniqueFilter = (keys) => (item, i, list) =>
   !list.some(
-    (item2, j) => j < i && keys.every((key) => item[key] === item2[key] && item[key] !== undefined)
+    (item2, j) =>
+      j < i &&
+      keys.every((key) => item[key] === item2[key] && item[key] !== undefined),
   );
 
-export const numberWithCommas = (x) => (x ? x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0);
+export const numberWithCommas = (x) =>
+  x ? x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0;
 
 export const numberCompact = (x) => {
   if (x < 1000) {
@@ -63,11 +65,13 @@ export const numberCompact = (x) => {
     return `${Math.floor(x / 1000)}K`;
   }
   return `${Math.floor(x / 1000000)}M`;
-}
+};
 
-export const cutURL = (url, prefix = '.../') => `${prefix + url.split('/').slice(3).join('/')}`;
+export const cutURL = (url, prefix = '.../') =>
+  `${prefix + url.split('/').slice(3).join('/')}`;
 
-export const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export const escapeRegExp = (string) =>
+  string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export function getRE(string: string, options: string) {
   let re;
@@ -83,13 +87,15 @@ export const filterList = <T extends Record<string, any>>(
   list: T[],
   searchQuery: string,
   testKeys: string[],
-  searchCb?: (listItem: T, query: RegExp) => boolean
+  searchCb?: (listItem: T, query: RegExp) => boolean,
 ): T[] => {
   if (searchQuery === '') return list;
   const filterRE = getRE(searchQuery, 'i');
-  return list.filter((listItem: T) => {
-    return testKeys.some((key) => filterRE.test(listItem[key])) || searchCb?.(listItem, filterRE);
-  });
+  return list.filter(
+    (listItem: T) =>
+      testKeys.some((key) => filterRE.test(listItem[key])) ||
+      searchCb?.(listItem, filterRE),
+  );
 };
 
 export const getStateColor = (state) => {
@@ -103,7 +109,13 @@ export const getStateColor = (state) => {
   }
 };
 
-export const convertNumberRange = (oldMax, oldMin, newMin, newMax, currentValue) => {
+export const convertNumberRange = (
+  oldMax,
+  oldMin,
+  newMin,
+  newMax,
+  currentValue,
+) => {
   let newValue;
   let newRange;
   const oldRange = oldMax - oldMin;
@@ -121,29 +133,36 @@ export const prorata = ({ parts, elements, startDivisorFn, divisorFn }) => {
   const byElement = Object.entries(elements).reduce(
     (ack, [element, numElements]) => ({
       ...ack,
-      [element]: { parts: 0, elements: numElements, divisor: startDivisorFn(numElements) },
+      [element]: {
+        parts: 0,
+        elements: numElements,
+        divisor: startDivisorFn(numElements),
+      },
     }),
-    {}
+    {},
   );
 
   while (parts > 0) {
     const element = Object.entries(byElement).reduce(
       (a, [k, v]) => (a.divisor > v.divisor ? a : v),
-      { divisor: 0 }
+      { divisor: 0 },
     );
-    // eslint-disable-next-line no-plusplus
+
     element.parts++;
     element.divisor = divisorFn(element.elements, element.parts);
-    // eslint-disable-next-line no-plusplus
+
     parts--;
   }
-  return Object.entries(byElement).reduce((a, [k, v]) => ({ ...a, [k]: v.parts }), {});
+  return Object.entries(byElement).reduce(
+    (a, [k, v]) => ({ ...a, [k]: v.parts }),
+    {},
+  );
 };
 
 export const titleCase = (str) => {
   str = str.toLowerCase();
   str = str.split('_');
-  for (var i = 0; i < str.length; i++) {
+  for (let i = 0; i < str.length; i++) {
     str[i] = str[i].charAt(0).toUpperCase() + str[i].slice(1);
   }
 
@@ -186,7 +205,7 @@ export function fileType(url: string) {
 
 export function fileName(url: string) {
   if (url) {
-    var m = url.toString().match(/.*\/(.+?)\./);
+    const m = url.toString().match(/.*\/(.+?)\./);
     if (m && m.length > 1) {
       return `${m[1]}.${fileType(url)}`;
     }
@@ -195,9 +214,7 @@ export function fileName(url: string) {
 }
 
 export const camelCased = (val) =>
-  val.replace(/_([a-z])/g, function (g) {
-    return g[1].toUpperCase();
-  });
+  val.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
 
 export function capitalize(s: string) {
   if (!s || !s.length) return s;
@@ -226,9 +243,7 @@ export const titleize = (str) => {
   return newStr;
 };
 
-export const colorScale = (values, colors) => {
-  return chroma.scale(colors);
-};
+export const colorScale = (values, colors) => chroma.scale(colors);
 
 export const truncate = (input, max = 10) =>
   input.length > max ? `${input.substring(0, max)}...` : input;
@@ -238,16 +253,16 @@ export const iceServerConfigFromString = (str) => {
     return null;
   }
 
-  return str.split('|').map(function (c) {
+  return str.split('|').map((c) => {
     let server = null;
     const arr = c.split(',');
 
     if (!!arr[0] !== '') {
       server = {};
       server.urls = arr[0];
-      if (!!arr[1]) {
+      if (arr[1]) {
         server.username = arr[1];
-        if (!!arr[2]) {
+        if (arr[2]) {
           server.credential = arr[2];
         }
       }
@@ -266,7 +281,11 @@ export const isGreaterOrEqualVersion = (version, compareTo) => {
   );
 };
 
-export const sliceListPerPage = <T extends Array<any>>(list: T, page: number, perPage = 10): T => {
+export const sliceListPerPage = <T extends Array<any>>(
+  list: T,
+  page: number,
+  perPage = 10,
+): T => {
   const start = page * perPage;
   const end = start + perPage;
   return list.slice(start, end) as T;
@@ -283,54 +302,56 @@ export const convertElementToImage = async (el: HTMLElement) => {
   const image = await htmlToImage.toJpeg(el, {
     pixelRatio: 2,
     // fontEmbedCss,
-    filter: function (node) {
+    filter(node) {
       return node.id !== 'no-print';
     },
   });
   return image;
 };
 
-export const unserscoreToSpaceAndCapitalize = (str) => {
-  return str.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => {
-    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-  });
-};
+export const unserscoreToSpaceAndCapitalize = (str) =>
+  str
+    .replace(/_/g, ' ')
+    .replace(
+      /\w\S*/g,
+      (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(),
+    );
 
 export const convertToCSV = (headers, objArray) => {
-  var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
-  var str = '';
+  const array = typeof objArray !== 'object' ? JSON.parse(objArray) : objArray;
+  let str = '';
   const headersMap = headers.reduce((acc, curr) => {
     acc[curr.key] = curr;
     return acc;
   }, {});
 
-  str += headers.map((h) => h.label).join(',') + '\r\n';
+  str += `${headers.map((h) => h.label).join(',')}\r\n`;
 
-  for (var i = 0; i < array.length; i++) {
-    var line = '';
-    for (var index in headersMap) {
+  for (let i = 0; i < array.length; i++) {
+    let line = '';
+    for (const index in headersMap) {
       if (line !== '') line += ',';
       line += array[i][index];
     }
-    str += line + '\r\n';
+    str += `${line}\r\n`;
   }
 
   return str;
 };
 
 export const exportCSVFile = (headers, items, fileTitle) => {
-  var jsonObject = JSON.stringify(items);
-  var csv = convertToCSV(headers, jsonObject);
-  var exportedFilenmae = fileTitle + '.csv' || 'export.csv';
+  const jsonObject = JSON.stringify(items);
+  const csv = convertToCSV(headers, jsonObject);
+  const exportedFilenmae = `${fileTitle}.csv` || 'export.csv';
 
-  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   if (navigator.msSaveBlob) {
     // IE 10+
     navigator.msSaveBlob(blob, exportedFilenmae);
   } else {
-    var link = document.createElement('a');
+    const link = document.createElement('a');
     if (link.download !== undefined) {
-      var url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
       link.setAttribute('download', exportedFilenmae);
       link.style.visibility = 'hidden';
@@ -356,17 +377,15 @@ export const cleanSessionFilters = (data: any) => {
   return { ...rest, filters: _fitlers };
 };
 
-export const getSessionFilter = () => {
-  return JSON.parse(localStorage.getItem(SESSION_FILTER));
-};
+export const getSessionFilter = () =>
+  JSON.parse(localStorage.getItem(SESSION_FILTER));
 
 export const setSessionFilter = (filter: any) => {
   localStorage.setItem(SESSION_FILTER, JSON.stringify(filter));
 };
 
-export const compareJsonObjects = (obj1: any, obj2: any) => {
-  return JSON.stringify(obj1) === JSON.stringify(obj2);
-};
+export const compareJsonObjects = (obj1: any, obj2: any) =>
+  JSON.stringify(obj1) === JSON.stringify(obj2);
 
 export const getInitials = (name = '') => {
   const names = name.split(' ');
@@ -385,12 +404,15 @@ export function getTimelinePosition(value: any, scale: any) {
 export function millisToMinutesAndSeconds(millis: any) {
   const minutes = Math.floor(millis / 60000);
   const seconds: any = ((millis % 60000) / 1000).toFixed(0);
-  return minutes + 'm' + (seconds < 10 ? '0' : '') + seconds + 's';
+  return `${minutes}m${seconds < 10 ? '0' : ''}${seconds}s`;
 }
 
-export function simpleThrottle(func: (...args: any[]) => void, limit: number): (...args: any[]) => void {
+export function simpleThrottle(
+  func: (...args: any[]) => void,
+  limit: number,
+): (...args: any[]) => void {
   let inThrottle;
-  return function() {
+  return function () {
     const args = arguments;
     const context = this;
     if (!inThrottle) {
@@ -403,7 +425,7 @@ export function simpleThrottle(func: (...args: any[]) => void, limit: number): (
 
 export const throttle = <R, A extends any[]>(
   fn: (...args: A) => R,
-  delay: number
+  delay: number,
 ): [(...args: A) => R | undefined, () => void, () => void] => {
   let wait = false;
   let timeout: undefined | number;
@@ -438,12 +460,9 @@ export const throttle = <R, A extends any[]>(
 };
 
 export function deleteCookie(name: string, path: string, domain: string) {
-  document.cookie =
-    name +
-    '=' +
-    (path ? ';path=' + path : '') +
-    (domain ? ';domain=' + domain : '') +
-    ';expires=Thu, 01 Jan 1970 00:00:01 GMT';
+  document.cookie = `${name}=${path ? `;path=${path}` : ''}${
+    domain ? `;domain=${domain}` : ''
+  };expires=Thu, 01 Jan 1970 00:00:01 GMT`;
 }
 
 /**
@@ -468,11 +487,16 @@ export function deleteCookie(name: string, path: string, domain: string) {
  * does not exist, and a storageKey is provided, any existing localStorage entry with the storageKey
  * is removed.
  */
-export const checkParam = (paramName: string, storageKey?: string, search?: string): boolean => {
-  const urlParams = new URLSearchParams(search ? search : window.location.search);
+export const checkParam = (
+  paramName: string,
+  storageKey?: string,
+  search?: string,
+): boolean => {
+  const urlParams = new URLSearchParams(search || window.location.search);
   const paramValue = urlParams.get(paramName);
 
-  const existsAndTrue = paramValue && paramValue === 'true' || paramValue?.length > 0;
+  const existsAndTrue =
+    (paramValue && paramValue === 'true') || paramValue?.length > 0;
 
   if (storageKey) {
     if (existsAndTrue) {
@@ -485,9 +509,16 @@ export const checkParam = (paramName: string, storageKey?: string, search?: stri
   return existsAndTrue;
 };
 
-export const isValidUrl = (url) => /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/.test(url);
+export const isValidUrl = (url) =>
+  /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/.test(
+    url,
+  );
 
-export function truncateStringToFit(string: string, screenWidth: number, charWidth: number = 5): string {
+export function truncateStringToFit(
+  string: string,
+  screenWidth: number,
+  charWidth: number = 5,
+): string {
   if (string.length * charWidth <= screenWidth) {
     return string;
   }
@@ -534,11 +565,11 @@ export const handleSpotJWT = (jwt: string) => {
         type: 'orspot:token',
         token: jwt,
       },
-      '*'
+      '*',
     );
     tries += 1;
-  }, 250)
-}
+  }, 250);
+};
 
 export const isTokenExpired = (token: string): boolean => {
   const decoded: any = decodeJwt(token);
@@ -547,11 +578,11 @@ export const isTokenExpired = (token: string): boolean => {
 };
 
 const decodeJwt = (jwt: string): any => {
-  const base64Url = jwt.split(".")[1];
+  const base64Url = jwt.split('.')[1];
   if (!base64Url) {
     return { exp: 0 };
   }
-  const base64 = base64Url.replace("-", "+").replace("_", "/");
+  const base64 = base64Url.replace('-', '+').replace('_', '/');
   return JSON.parse(atob(base64));
 };
 
@@ -566,16 +597,18 @@ function saveAsFile(blob: Blob, filename: string) {
 }
 
 export function exportAntCsv(tableColumns, tableData, filename = 'table.csv') {
-  console.log(tableColumns, tableData)
-  const headers = tableColumns.map(col => col.title).join(',');
-  const rows = tableData.map(row => {
-    return tableColumns
-      .map(col => {
+  console.log(tableColumns, tableData);
+  const headers = tableColumns.map((col) => col.title).join(',');
+  const rows = tableData.map((row) =>
+    tableColumns
+      .map((col) => {
         const value = col.dataIndex ? row[col.dataIndex] : '';
-        return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
+        return typeof value === 'string'
+          ? `"${value.replace(/"/g, '""')}"`
+          : value;
       })
-      .join(',');
-  });
+      .join(','),
+  );
 
   const csvContent = [headers, ...rows].join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

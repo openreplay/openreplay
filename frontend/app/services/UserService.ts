@@ -5,7 +5,7 @@ export default class UserService {
   private client: APIClient;
 
   constructor(client?: APIClient) {
-    this.client = client ? client : new APIClient();
+    this.client = client || new APIClient();
   }
 
   initClient(client?: APIClient) {
@@ -21,7 +21,7 @@ export default class UserService {
 
   one(userId: string) {
     return this.client
-      .get('/users/' + userId)
+      .get(`/users/${userId}`)
       .then((response: { json: () => any }) => response.json())
       .then((response: { data: any }) => response.data || {});
   }
@@ -30,17 +30,16 @@ export default class UserService {
     const data = user.toSave();
     if (user.userId) {
       return this.client
-        .put('/client/members/' + user.userId, data)
-        .then((r) => r.json())
-        .then((response: { data: any }) => response.data || {})
-        .catch((e) => Promise.reject(e));
-    } else {
-      return this.client
-        .post('/client/members', data)
+        .put(`/client/members/${user.userId}`, data)
         .then((r) => r.json())
         .then((response: { data: any }) => response.data || {})
         .catch((e) => Promise.reject(e));
     }
+    return this.client
+      .post('/client/members', data)
+      .then((r) => r.json())
+      .then((response: { data: any }) => response.data || {})
+      .catch((e) => Promise.reject(e));
   }
 
   generateInviteCode(userId: any): Promise<any> {
@@ -52,7 +51,7 @@ export default class UserService {
 
   delete(userId: string) {
     return this.client
-      .delete('/client/members/' + userId)
+      .delete(`/client/members/${userId}`)
       .then((r) => r.json())
       .then((response: { data: any }) => response.data || {})
       .catch((e) => Promise.reject(e));
@@ -109,7 +108,7 @@ export default class UserService {
 
   ignoreAllNotifications(params: any) {
     return this.client
-      .post(`/notifications/view`, params)
+      .post('/notifications/view', params)
       .then((response: { json: () => any }) => response.json())
       .then((response: { data: any }) => response.data || {});
   }
@@ -133,7 +132,9 @@ export default class UserService {
     return this.client
       .post('/signup', data)
       .then((response: { json: () => any }) => response.json())
-      .then((response: { data: any }) => response as Record<string, any> || {});
+      .then(
+        (response: { data: any }) => (response as Record<string, any>) || {},
+      );
   }
 
   async resetPassword(data: any) {
@@ -141,14 +142,18 @@ export default class UserService {
       const response = await this.client.post('/password/reset', data);
       const responseData = await response.json();
       if (responseData.errors) {
-        throw new Error(responseData.errors[0] || 'An unexpected error occurred.');
+        throw new Error(
+          responseData.errors[0] || 'An unexpected error occurred.',
+        );
       }
 
       return responseData || {};
     } catch (error: any) {
       if (error.response) {
         const errorData = await error.response.json();
-        const errorMessage = errorData.errors ? errorData.errors[0] : 'An unexpected error occurred.';
+        const errorMessage = errorData.errors
+          ? errorData.errors[0]
+          : 'An unexpected error occurred.';
         throw new Error(errorMessage);
       }
       throw new Error('An unexpected error occurred.');
@@ -166,14 +171,18 @@ export default class UserService {
       const response = await this.client.post('/account/password', data);
       const responseData = await response.json();
       if (responseData.errors) {
-        throw new Error(responseData.errors[0] || 'An unexpected error occurred.');
+        throw new Error(
+          responseData.errors[0] || 'An unexpected error occurred.',
+        );
       }
 
       return responseData || {};
     } catch (error: any) {
       if (error.response) {
         const errorData = await error.response.json();
-        const errorMessage = errorData.errors ? errorData.errors[0] : 'An unexpected error occurred.';
+        const errorMessage = errorData.errors
+          ? errorData.errors[0]
+          : 'An unexpected error occurred.';
         throw new Error(errorMessage);
       }
       throw new Error('An unexpected error occurred.');

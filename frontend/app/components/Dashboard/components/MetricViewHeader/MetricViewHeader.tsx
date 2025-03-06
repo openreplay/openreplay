@@ -2,38 +2,42 @@ import React, { useEffect } from 'react';
 import { PageTitle } from 'UI';
 import { Button, Popover, Space, Dropdown, Menu } from 'antd';
 import { PlusOutlined, DownOutlined } from '@ant-design/icons';
-import AddCardSection from '../AddCardSection/AddCardSection';
-import MetricsSearch from '../MetricsSearch';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { DROPDOWN_OPTIONS } from 'App/constants/card';
+import MetricsSearch from '../MetricsSearch';
+import AddCardSection from '../AddCardSection/AddCardSection';
+import { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
-const options = [
+const options = (t: TFunction) => [
   {
     key: 'all',
-    label: 'All Types',
+    label: t('All Types'),
   },
-  ...DROPDOWN_OPTIONS.map((option) => ({
+  ...DROPDOWN_OPTIONS(t).map((option) => ({
     key: option.value,
     label: option.label,
   })),
   {
     key: 'monitors',
-    label: 'Monitors',
+    label: t('Monitors'),
   },
   {
     key: 'web_analytics',
-    label: 'Web Analytics',
+    label: t('Web Analytics'),
   },
 ];
 
 function MetricViewHeader() {
+  const { t } = useTranslation();
   const { metricStore } = useStore();
-  const filter = metricStore.filter;
+  const { filter } = metricStore;
   const cardsLength = metricStore.filteredCards.length;
 
   // Determine if a filter is active (search query or metric type other than 'all')
-  const isFilterActive = filter.query !== '' || (filter.type && filter.type !== 'all');
+  const isFilterActive =
+    filter.query !== '' || (filter.type && filter.type !== 'all');
   // Show header if there are cards or if a filter is active
   const showHeader = cardsLength > 0 || isFilterActive;
 
@@ -47,7 +51,7 @@ function MetricViewHeader() {
 
   const menu = (
     <Menu onClick={handleMenuClick}>
-      {options.map((option) => (
+      {options(t).map((option) => (
         <Menu.Item key={option.key}>{option.label}</Menu.Item>
       ))}
     </Menu>
@@ -57,13 +61,14 @@ function MetricViewHeader() {
     <div>
       <div className="flex items-center justify-between pr-4">
         <div className="flex items-center gap-2 ps-4">
-          <PageTitle title="Cards" className="cursor-default" />
+          <PageTitle title={t('Cards')} className="cursor-default" />
 
           {showHeader && (
             <Space>
               <Dropdown overlay={menu} trigger={['click']}>
                 <Button type="text" size="small" className="mt-1">
-                  {options.find((opt) => opt.key === filter.type)?.label || 'Select Type'}
+                  {options(t).find((opt) => opt.key === filter.type)?.label ||
+                    t('Select Type')}
                   <DownOutlined />
                 </Button>
               </Dropdown>
@@ -79,8 +84,12 @@ function MetricViewHeader() {
               content={<AddCardSection fit inCards />}
               trigger="click"
             >
-              <Button type="primary" icon={<PlusOutlined />} className="btn-create-card">
-                Create Card
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                className="btn-create-card"
+              >
+                {t('Create Card')}
               </Button>
             </Popover>
             <Space>

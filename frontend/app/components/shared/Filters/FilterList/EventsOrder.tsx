@@ -1,26 +1,28 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Dropdown, Button, Tooltip } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const EventsOrder = observer(
   (props: { onChange: (e: any, v: any) => void; filter: any }) => {
     const { filter, onChange } = props;
-    const eventsOrderSupport = filter.eventsOrderSupport;
+    const { eventsOrderSupport } = filter;
+    const { t } = useTranslation();
 
     const menuItems = [
       {
         key: 'then',
-        label: 'THEN',
+        label: t('THEN'),
         disabled: eventsOrderSupport && !eventsOrderSupport.includes('then'),
       },
       {
         key: 'and',
-        label: 'AND',
+        label: t('AND'),
         disabled: eventsOrderSupport && !eventsOrderSupport.includes('and'),
       },
       {
         key: 'or',
-        label: 'OR',
+        label: t('OR'),
         disabled: eventsOrderSupport && !eventsOrderSupport.includes('or'),
       },
     ];
@@ -29,7 +31,7 @@ const EventsOrder = observer(
     };
 
     const selected = menuItems.find(
-      (item) => item.key === filter.eventsOrder
+      (item) => item.key === filter.eventsOrder,
     )?.label;
     return (
       <div className="flex items-center gap-2">
@@ -37,7 +39,9 @@ const EventsOrder = observer(
           title="Select the operator to be applied between events."
           placement="bottom"
         >
-          <div className="text-neutral-500/90 text-sm font-normal cursor-default">Events Order</div>
+          <div className="text-neutral-500/90 text-sm font-normal cursor-default">
+            {t('Events Order')}
+          </div>
         </Tooltip>
 
         <Dropdown
@@ -47,11 +51,13 @@ const EventsOrder = observer(
           className="text-sm rounded-lg px-1 py-0.5 btn-events-order "
           data-event="btn-events-order"
         >
-          <Button size={'small'} type='text'>{selected || 'Select'} </Button>
+          <Button size="small" type="text">
+            {selected || t('Select')}{' '}
+          </Button>
         </Dropdown>
       </div>
     );
-  }
+  },
 );
 
 export default EventsOrder;

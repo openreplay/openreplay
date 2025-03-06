@@ -1,1 +1,1 @@
-export { default } from './SlowestDomains'
+export { default } from './SlowestDomains';

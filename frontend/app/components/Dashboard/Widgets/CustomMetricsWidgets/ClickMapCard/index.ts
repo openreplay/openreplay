@@ -1,1 +1,1 @@
-export { default } from './ClickMapCard'
+export { default } from './ClickMapCard';

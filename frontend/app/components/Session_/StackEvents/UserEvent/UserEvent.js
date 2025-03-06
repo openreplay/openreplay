@@ -44,7 +44,7 @@ export default class UserEvent extends React.PureComponent {
           // {
           //   [stl.selected]: selected,
           // },
-          'hover:bg-active-blue'
+          'hover:bg-active-blue',
         )}
       >
         {/* <div className={'self-start pr-4'}>

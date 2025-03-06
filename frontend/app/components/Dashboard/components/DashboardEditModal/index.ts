@@ -1,1 +1,1 @@
-export { default } from './DashboardEditModal'
+export { default } from './DashboardEditModal';

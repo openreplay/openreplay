@@ -1,1 +1,1 @@
-export { default } from './DropdownChips'
+export { default } from './DropdownChips';

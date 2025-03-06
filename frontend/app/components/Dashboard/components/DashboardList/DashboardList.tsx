@@ -22,10 +22,12 @@ import { Icon, confirm } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import DashboardEditModal from '../DashboardEditModal';
+import { useTranslation } from 'react-i18next';
 
 function DashboardList() {
+  const { t } = useTranslation();
   const { dashboardStore, projectsStore } = useStore();
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
   const optionsRef = React.useRef<HTMLDivElement>(null);
   const [focusTitle, setFocusedInput] = React.useState(true);
   const [showEditModal, setShowEditModal] = React.useState(false);
@@ -51,9 +53,11 @@ function DashboardList() {
     if (!dashboard) return;
     if (
       await confirm({
-        header: 'Delete Dashboard',
-        confirmButton: 'Yes, delete',
-        confirmation: `Are you sure you want to permanently delete this Dashboard?`,
+        header: t('Delete Dashboard'),
+        confirmButton: t('Yes, delete'),
+        confirmation: t(
+          'Are you sure you want to permanently delete this Dashboard?',
+        ),
       })
     ) {
       void dashboardStore.deleteDashboard(dashboard);
@@ -62,7 +66,7 @@ function DashboardList() {
 
   const tableConfig: TableColumnsType<Dashboard> = [
     {
-      title: 'Title',
+      title: t('Title'),
       dataIndex: 'name',
       width: '25%',
       sorter: (a, b) => a.name?.localeCompare(b.name),
@@ -70,7 +74,7 @@ function DashboardList() {
       render: (t) => <div className="link cap-first">{t}</div>,
     },
     {
-      title: 'Owner',
+      title: t('Owner'),
       dataIndex: 'owner',
       width: '16.67%',
       sorter: (a, b) => a.owner?.localeCompare(b.owner),
@@ -78,7 +82,7 @@ function DashboardList() {
       render: (owner) => <div className="cap-first">{owner}</div>,
     },
     {
-      title: 'Last Modified',
+      title: t('Last Modified'),
       dataIndex: 'updatedAt',
       width: '16.67%',
       sorter: (a, b) => a.updatedAt.toMillis() - b.updatedAt.toMillis(),
@@ -88,10 +92,10 @@ function DashboardList() {
 
     {
       title: (
-        <div className={'flex items-center justify-start gap-2'}>
-          <div>Visibility</div>
+        <div className="flex items-center justify-start gap-2">
+          <div>{t('Visibility')}</div>
           <Tooltip
-            title="Toggle to view your dashboards or all team dashboards."
+            title={t('Toggle to view your dashboards or all team dashboards.')}
             placement="topRight"
           >
             <Switch
@@ -102,8 +106,8 @@ function DashboardList() {
                   showMine: !dashboardStore.filter.showMine,
                 })
               }
-              checkedChildren={'Team'}
-              unCheckedChildren={'Private'}
+              checkedChildren="Team"
+              unCheckedChildren="Private"
               className="toggle-team-private"
             />
           </Tooltip>
@@ -117,7 +121,7 @@ function DashboardList() {
           bordered={false}
           className="rounded-lg"
         >
-          {isPublic ? 'Team' : 'Private'}
+          {isPublic ? t('Team') : t('Private')}
         </Tag>
       ),
     },
@@ -131,23 +135,23 @@ function DashboardList() {
           <Dropdown
             arrow={false}
             trigger={['click']}
-            className={'ignore-prop-dp'}
+            className="ignore-prop-dp"
             menu={{
               items: [
                 {
-                  icon: <Icon name={'pencil'} />,
+                  icon: <Icon name="pencil" />,
                   key: 'rename',
-                  label: 'Rename',
+                  label: t('Rename'),
                 },
                 {
-                  icon: <Icon name={'users'} />,
+                  icon: <Icon name="users" />,
                   key: 'access',
-                  label: 'Visibility & Access',
+                  label: t('Visibility & Access'),
                 },
                 {
-                  icon: <Icon name={'trash'} />,
+                  icon: <Icon name="trash" />,
                   key: 'delete',
-                  label: 'Delete',
+                  label: t('Delete'),
                 },
               ],
               onClick: async ({ key }) => {
@@ -162,7 +166,7 @@ function DashboardList() {
             }}
           >
             <Button
-              id={'ignore-prop'}
+              id="ignore-prop"
               icon={<MoreOutlined />}
               type="text"
               className="btn-dashboards-list-item-more-options"
@@ -178,10 +182,12 @@ function DashboardList() {
       <div className="text-center">
         <div>
           <Typography.Text className="my-2 text-lg font-medium">
-            No matching results
+            {t('No matching results')}
           </Typography.Text>
           <div className="mb-2 text-lg text-gray-500 my-3 leading-normal">
-            Try adjusting your search criteria or creating a new dashboard.
+            {t(
+              'Try adjusting your search criteria or creating a new dashboard.',
+            )}
           </div>
         </div>
       </div>
@@ -189,10 +195,10 @@ function DashboardList() {
       <div className="text-center">
         <div>
           <Typography.Text className="my-2 text-lg font-medium">
-            Create and organize your insights
+            {t('Create and organize your insights')}
           </Typography.Text>
           <div className="mb-2 text-lg text-gray-500 leading-normal">
-            Build dashboards to track key metrics and monitor performance in one place.
+            {t('Build dashboards to track key metrics and monitor performance in one place.')}
           </div>
           <div className="my-4 mb-10">
             <CreateDashboardButton />
@@ -227,7 +233,7 @@ function DashboardList() {
         showSorterTooltip={false}
         pagination={{
           showTotal: (total, range) =>
-            `Showing ${range[0]}-${range[1]} of ${total} items`,
+            `${t('Showing')} ${range[0]}-${range[1]} ${t('of')} ${total} ${t('items')}`,
           size: 'small',
           simple: 'true',
           className: 'px-4 pr-8 mb-0',
@@ -248,7 +254,7 @@ function DashboardList() {
             dashboardStore.selectDashboardById(record.dashboardId);
             const path = withSiteId(
               dashboardSelected(record.dashboardId),
-              siteId
+              siteId,
             );
             history.push(path);
           },

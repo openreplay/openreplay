@@ -1,4 +1,4 @@
-import { Radio } from 'antd';
+import { Radio, Button } from 'antd';
 import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { toast } from 'react-toastify';
@@ -6,24 +6,27 @@ import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { Timezone } from 'App/mstore/types/sessionSettings';
 import { Icon } from 'UI';
-import { Button } from 'antd'
 import Select from 'Shared/Select';
+import { useTranslation } from 'react-i18next';
 
 type TimezonesDropdown = Timezone[];
 
 function DefaultTimezone() {
+  const { t } = useTranslation();
   const { settingsStore } = useStore();
   const sessionSettings = useObserver(() => settingsStore.sessionSettings);
   const [changed, setChanged] = React.useState(false);
   const [shownTimezone, setShownTimezone] = React.useState<'user' | 'local'>(
-    sessionSettings.shownTimezone
+    sessionSettings.shownTimezone,
   );
   const timezoneOptions: TimezonesDropdown =
     settingsStore.sessionSettings.defaultTimezones;
   const [timezone, setTimezone] = React.useState(
-    settingsStore.sessionSettings.timezone
+    settingsStore.sessionSettings.timezone,
   );
-  const [isLocal, setIsLocal] = React.useState(settingsStore.sessionSettings.usingLocal);
+  const [isLocal, setIsLocal] = React.useState(
+    settingsStore.sessionSettings.usingLocal,
+  );
 
   useEffect(() => {
     if (!timezone) setTimezone({ label: 'Local Timezone', value: 'system' });
@@ -33,15 +36,15 @@ function DefaultTimezone() {
     const timezoneOffset = Math.floor(new Date().getTimezoneOffset() / -60);
     const remainingVal = Math.abs(new Date().getTimezoneOffset() % 60);
     const sign = timezoneOffset > 0 ? '+' : '-';
-    const tzOffsHrs = Math.abs(timezoneOffset)
-      .toString()
-      .padStart(2, '0');
-    const tzOffsMins = remainingVal ? `:${remainingVal.toString().padStart(2, '0')}` : '';
+    const tzOffsHrs = Math.abs(timezoneOffset).toString().padStart(2, '0');
+    const tzOffsMins = remainingVal
+      ? `:${remainingVal.toString().padStart(2, '0')}`
+      : '';
     const timezoneValue = `UTC${sign}${tzOffsHrs}${tzOffsMins}`;
     const selectedTimezone = timezoneOptions.find(
-      (option) => option.value === timezoneValue
+      (option) => option.value === timezoneValue,
     );
-    return selectedTimezone ? selectedTimezone : null;
+    return selectedTimezone || null;
   };
 
   const setCurrentTimezone = () => {
@@ -73,10 +76,11 @@ function DefaultTimezone() {
 
   return (
     <>
-      <h3 className="text-lg">Default Timezone</h3>
+      <h3 className="text-lg">{t('Default Timezone')}</h3>
       <div className="my-1">
-        Set the timezone for this project. All Sessions, Charts will be
-        referenced to this.
+        {t(
+          'Set the timezone for this project. All Sessions, Charts will be referenced to this.',
+        )}
       </div>
       <div>
         <Radio.Group
@@ -85,8 +89,8 @@ function DefaultTimezone() {
           }}
           value={shownTimezone}
         >
-          <Radio.Button value={'local'}>Local Timezone</Radio.Button>
-          <Radio.Button value={'user'}>End User's Timezone</Radio.Button>
+          <Radio.Button value="local">{t('Local Timezone')}</Radio.Button>
+          <Radio.Button value="user">{t("End User's Timezone")}</Radio.Button>
         </Radio.Group>
       </div>
       {shownTimezone === 'local' ? (
@@ -97,7 +101,7 @@ function DefaultTimezone() {
               defaultValue={timezone.value}
               className="w-full"
               value={timezoneOptions.find(
-                (option) => option.value === timezone.value
+                (option) => option.value === timezone.value,
               )}
               onChange={onSelectChange}
             />
@@ -107,17 +111,15 @@ function DefaultTimezone() {
                 type="default"
                 onClick={onTimezoneSave}
               >
-                Update
+                {t('Update')}
               </Button>
             </div>
           </div>
-          <div className={'mt-3 flex gap-1 items-center'}>
-            <div onClick={setCurrentTimezone} className={"link"}>
-              Apply my current timezone
+          <div className="mt-3 flex gap-1 items-center">
+            <div onClick={setCurrentTimezone} className="link">
+              {t('Apply my current timezone')}
             </div>
-            {isLocal ? (
-              <Icon name={'check'} size={18} />
-            ) : null}
+            {isLocal ? <Icon name="check" size={18} /> : null}
           </div>
         </>
       ) : null}

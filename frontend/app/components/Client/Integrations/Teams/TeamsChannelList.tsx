@@ -5,11 +5,13 @@ import { useStore } from 'App/mstore';
 import { NoContent } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
+import { useTranslation } from 'react-i18next';
 
 function TeamsChannelList(props: { onEdit: () => void }) {
+  const { t } = useTranslation();
   const { integrationsStore } = useStore();
-  const list = integrationsStore.msteams.list;
-  const edit = integrationsStore.msteams.edit;
+  const { list } = integrationsStore.msteams;
+  const { edit } = integrationsStore.msteams;
 
   const onEdit = (instance: Record<string, any>) => {
     edit(instance);
@@ -22,12 +24,11 @@ function TeamsChannelList(props: { onEdit: () => void }) {
         title={
           <div className="p-5 mb-4">
             <div className="text-base text-left">
-              Integrate MS Teams with OpenReplay and share insights with the
-              rest of the team, directly from the recording page.
+              {t('Integrate MS Teams with OpenReplay and share insights with the rest of the team, directly from the recording page.')}
             </div>
             <DocLink
               className="mt-4 text-base"
-              label="Integrate MS Teams"
+              label={t('Integrate MS Teams')}
               url="https://docs.openreplay.com/integrations/msteams"
             />
           </div>

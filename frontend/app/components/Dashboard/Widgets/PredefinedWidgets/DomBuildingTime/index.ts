@@ -1,1 +1,1 @@
-export { default } from './DomBuildingTime'
+export { default } from './DomBuildingTime';

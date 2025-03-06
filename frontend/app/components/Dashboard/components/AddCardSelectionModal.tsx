@@ -6,6 +6,7 @@ import { useStore } from 'App/mstore';
 import NewDashboardModal from 'Components/Dashboard/components/DashboardList/NewDashModal';
 
 import AiQuery from './DashboardView/AiQuery';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 function AddCardSelectionModal(props: Props) {
+  const { t } = useTranslation();
   const { metricStore } = useStore();
   const [open, setOpen] = React.useState(false);
   const [isLibrary, setIsLibrary] = React.useState(false);
@@ -35,7 +37,7 @@ function AddCardSelectionModal(props: Props) {
   return (
     <>
       <Modal
-        title="Add a card to dashboard"
+        title={t('Add a card to dashboard')}
         open={props.open}
         footer={null}
         onCancel={props.onClose}
@@ -47,12 +49,8 @@ function AddCardSelectionModal(props: Props) {
             <Row gutter={16} justify="center" className="py-2">
               <AiQuery />
             </Row>
-            <div
-              className={
-                'flex items-center justify-center w-full text-disabled-text'
-              }
-            >
-              or
+            <div className="flex items-center justify-center w-full text-disabled-text">
+              {t('or')}
             </div>
           </>
         ) : null}
@@ -64,7 +62,7 @@ function AddCardSelectionModal(props: Props) {
               onClick={() => onClick(true)}
             >
               <GalleryVertical style={{ fontSize: '24px', color: '#394EFF' }} />
-              <Typography.Text strong>Add from library</Typography.Text>
+              <Typography.Text strong>{t('Add from library')}</Typography.Text>
             </div>
           </Col>
           <Col span={12}>
@@ -74,7 +72,7 @@ function AddCardSelectionModal(props: Props) {
               onClick={() => onClick(false)}
             >
               <Plus style={{ fontSize: '24px', color: '#394EFF' }} />
-              <Typography.Text strong>Create New</Typography.Text>
+              <Typography.Text strong>{t('Create New')}</Typography.Text>
             </div>
           </Col>
         </Row>

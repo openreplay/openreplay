@@ -5,13 +5,26 @@ const LOCATION = 'LOCATION';
 const CUSTOM = 'CUSTOM';
 const CLICKRAGE = 'CLICKRAGE';
 const DEAD_LICK = 'dead_click';
-const TAPRAGE = 'tap_rage'
+const TAPRAGE = 'tap_rage';
 const IOS_VIEW = 'VIEW';
 const UXT_EVENT = 'UXT_EVENT';
 const TOUCH = 'TAP';
 const SWIPE = 'SWIPE';
 
-export const TYPES = { CONSOLE, CLICK, INPUT, LOCATION, CUSTOM, CLICKRAGE, DEAD_LICK, IOS_VIEW, TOUCH, SWIPE, TAPRAGE, UXT_EVENT };
+export const TYPES = {
+  CONSOLE,
+  CLICK,
+  INPUT,
+  LOCATION,
+  CUSTOM,
+  CLICKRAGE,
+  DEAD_LICK,
+  IOS_VIEW,
+  TOUCH,
+  SWIPE,
+  TAPRAGE,
+  UXT_EVENT,
+};
 
 export type EventType =
   | typeof CONSOLE
@@ -27,7 +40,7 @@ export type EventType =
 interface IEvent {
   time: number;
   timestamp: number;
-  type: EventType
+  type: EventType;
   name: string;
   key: number;
   label: string;
@@ -59,7 +72,7 @@ interface TouchEvent extends IEvent {
 
 interface SwipeEvent extends IEvent {
   direction: 'left' | 'right' | 'up' | 'down';
-  label: string
+  label: string;
 }
 
 interface InputEvent extends IEvent {
@@ -85,14 +98,24 @@ export interface LocationEvent extends IEvent {
   webVitals: string | null;
 }
 
-export type EventData = ConsoleEvent | ClickEvent | InputEvent | LocationEvent | IEvent;
+export type EventData =
+  | ConsoleEvent
+  | ClickEvent
+  | InputEvent
+  | LocationEvent
+  | IEvent;
 
 class Event {
   key: IEvent['key'];
+
   time: IEvent['time'];
+
   label: IEvent['label'];
+
   target: IEvent['target'];
+
   tabId: IEvent['tabId'];
+
   messageId: IEvent['messageId'];
 
   constructor(event: IEvent) {
@@ -111,22 +134,28 @@ class Event {
 }
 
 class Swipe extends Event {
-    readonly type = SWIPE;
-    readonly name = 'Swipe';
-    readonly label: string;
-    readonly direction: string;
+  readonly type = SWIPE;
 
-    constructor(evt: SwipeEvent) {
-        super(evt);
-        this.label = evt.label;
-        this.direction = evt.direction;
-    }
+  readonly name = 'Swipe';
+
+  readonly label: string;
+
+  readonly direction: string;
+
+  constructor(evt: SwipeEvent) {
+    super(evt);
+    this.label = evt.label;
+    this.direction = evt.direction;
+  }
 }
 
 class Console extends Event {
   readonly type = CONSOLE;
+
   readonly name = 'Console';
+
   subtype: string;
+
   value: string;
 
   constructor(evt: ConsoleEvent) {
@@ -138,10 +167,15 @@ class Console extends Event {
 
 export class Click extends Event {
   readonly type: typeof CLICKRAGE | typeof CLICK = CLICK;
+
   readonly name = 'Click';
+
   targetContent = '';
+
   count: number;
+
   hesitation: number = 0;
+
   selector: string;
 
   constructor(evt: ClickEvent, isClickRage?: boolean) {
@@ -158,9 +192,13 @@ export class Click extends Event {
 
 export class Touch extends Event {
   readonly type: typeof TOUCH = TOUCH;
+
   readonly name = 'Tap';
+
   targetContent = '';
+
   count: number;
+
   hesitation: number = 0;
 
   constructor(evt: TouchEvent) {
@@ -172,8 +210,11 @@ export class Touch extends Event {
 
 export class Input extends Event {
   readonly type = INPUT;
+
   readonly name = 'Input';
+
   readonly hesitation: number = 0;
+
   readonly duration: number = 0;
 
   value = '';
@@ -188,17 +229,29 @@ export class Input extends Event {
 
 export class Location extends Event {
   readonly name = 'Location';
+
   readonly type = LOCATION;
+
   url: LocationEvent['url'];
+
   host: LocationEvent['host'];
+
   fcpTime: LocationEvent['fcpTime'];
+
   loadTime: LocationEvent['loadTime'];
+
   domContentLoadedTime: LocationEvent['domContentLoadedTime'];
+
   domBuildingTime: LocationEvent['domBuildingTime'];
+
   speedIndex: LocationEvent['speedIndex'];
+
   visuallyComplete: LocationEvent['visuallyComplete'];
+
   timeToInteractive: LocationEvent['timeToInteractive'];
+
   referrer: LocationEvent['referrer'];
+
   webvitals: {
     cls?: number;
     lcp?: number;
@@ -216,47 +269,65 @@ export class Location extends Event {
   }
 }
 
-export type InjectedEvent = Console | Click | Input | Location | Touch | Swipe | UxtEvent;
+export type InjectedEvent =
+  | Console
+  | Click
+  | Input
+  | Location
+  | Touch
+  | Swipe
+  | UxtEvent;
 
 export default function (event: EventData) {
   if ('allow_typing' in event) {
     return new UxtEvent(event);
   }
   if (!event.type) {
-    return console.error('Unknown event type: ', event)
+    return console.error('Unknown event type: ', event);
   }
   switch (event.type) {
     case CONSOLE:
       return new Console(event as ConsoleEvent);
     case TOUCH:
-      return new Touch(event as TouchEvent)
+      return new Touch(event as TouchEvent);
     case CLICK:
-        return new Click(event as ClickEvent);
+      return new Click(event as ClickEvent);
     case INPUT:
-        return new Input(event as InputEvent);
+      return new Input(event as InputEvent);
     case LOCATION:
-        return new Location(event as LocationEvent);
+      return new Location(event as LocationEvent);
     case CLICKRAGE:
-        return new Click(event as ClickEvent, true);
+      return new Click(event as ClickEvent, true);
     case SWIPE:
-        return new Swipe(event as SwipeEvent);
+      return new Swipe(event as SwipeEvent);
     default:
       return console.error(`Unknown event type: ${event.type}`);
   }
 }
 
 export class UxtEvent {
-  readonly name = 'UxtEvent'
+  readonly name = 'UxtEvent';
+
   readonly type = UXT_EVENT;
+
   allowTyping: boolean;
+
   comment: string;
+
   description: string;
+
   duration: number;
+
   status: string;
+
   taskId: number;
+
   timestamp: number;
+
   title: string;
+
   indexNum: number;
+
   time: number;
 
   constructor(event: Record<string, any>) {

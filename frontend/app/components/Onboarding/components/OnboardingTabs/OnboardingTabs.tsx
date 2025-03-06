@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Tabs, Icon, CopyButton } from 'UI';
-import ProjectCodeSnippet from './ProjectCodeSnippet';
-import InstallDocs from './InstallDocs';
 import DocCard from 'Shared/DocCard/DocCard';
 import { useModal } from 'App/components/Modal';
 import UserForm from 'App/components/Client/Users/components/UserForm/UserForm';
+import InstallDocs from './InstallDocs';
+import ProjectCodeSnippet from './ProjectCodeSnippet';
+import { useTranslation } from 'react-i18next';
 
 const PROJECT = 'SCRIPT';
 const DOCUMENTATION = 'NPM';
@@ -16,7 +17,8 @@ const TABS = [
 interface Props {
   site: any;
 }
-const TrackingCodeModal = (props: Props) => {
+function TrackingCodeModal(props: Props) {
+  const { t } = useTranslation();
   const { site } = props;
   const [activeTab, setActiveTab] = useState(DOCUMENTATION);
   const { showModal } = useModal();
@@ -37,13 +39,16 @@ const TrackingCodeModal = (props: Props) => {
             <div className="col-span-2">
               <DocCard title="Need help from team member?">
                 <a className="link" onClick={showUserModal}>
-                  Invite and Collaborate
+                  {t('Invite and Collaborate')}
                 </a>
               </DocCard>
               <DocCard title="Project Key">
                 <div className="rounded bg-white px-2 py-1 flex items-center justify-between">
                   <span>{site.projectKey}</span>
-                  <CopyButton content={site.projectKey} className="capitalize" />
+                  <CopyButton
+                    content={site.projectKey}
+                    className="capitalize"
+                  />
                 </div>
               </DocCard>
               <DocCard title="Other ways to install">
@@ -51,9 +56,14 @@ const TrackingCodeModal = (props: Props) => {
                   className="link flex items-center"
                   href="https://docs.openreplay.com/integrations/google-tag-manager"
                   target="_blank"
+                  rel="noreferrer"
                 >
-                  Google Tag Manager (GTM)
-                  <Icon name="external-link-alt" className="ml-1" color="blue" />
+                  {t('Google Tag Manager (GTM)')}
+                  <Icon
+                    name="external-link-alt"
+                    className="ml-1"
+                    color="blue"
+                  />
                 </a>
               </DocCard>
             </div>
@@ -69,12 +79,12 @@ const TrackingCodeModal = (props: Props) => {
             <div className="col-span-2">
               <DocCard title="Need help from team member?">
                 <a className="link" onClick={showUserModal}>
-                  Invite and Collaborate
+                  {t('Invite and Collaborate')}
                 </a>
               </DocCard>
 
               <DocCard title="Project Key">
-                <div className={'p-2 rounded bg-white flex justify-between items-center'}>
+                <div className="p-2 rounded bg-white flex justify-between items-center">
                   {site.projectKey}
                   <CopyButton content={site.projectKey} />
                 </div>
@@ -93,6 +103,6 @@ const TrackingCodeModal = (props: Props) => {
       <div className="p-5 py-8">{renderActiveTab()}</div>
     </>
   );
-};
+}
 
 export default TrackingCodeModal;

@@ -10,7 +10,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "target": "ES2017",
-    "lib": ["dom", "es2022"],
+    "lib": ["dom", "es2022", "esnext"],
     "allowJs": true,
     "isolatedModules": true,
     "moduleResolution": "node",
@@ -30,5 +30,12 @@
       "HOCs/*": ["./app/components/hocs/*"],
     }
   },
-  "include": ["app"]
+  "include": [
+    "app",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "app/**/*.js",
+    "app/**/*.jsx",
+    "window.d.ts"
+  ]
 }

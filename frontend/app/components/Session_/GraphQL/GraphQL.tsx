@@ -9,6 +9,7 @@ import { CloseButton, Input, NoContent, SlideModal } from 'UI';
 
 import BottomBlock from '../BottomBlock';
 import GQLDetails from './GQLDetails';
+import { useTranslation } from 'react-i18next';
 
 export function renderStart(r) {
   return (
@@ -52,6 +53,7 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
   };
 
   const [state, setState] = React.useState(defaultState);
+  const { t } = useTranslation();
 
   function renderName(r: Record<string, any>) {
     return (
@@ -63,13 +65,14 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
 
   const filterList = (list: any, value: string) => {
     const filterRE = getRE(value, 'i');
+    const { t } = useTranslation();
 
     return value
       ? list.filter(
           (r: any) =>
             filterRE.test(r.operationKind) ||
             filterRE.test(r.operationName) ||
-            filterRE.test(r.variables)
+            filterRE.test(r.variables),
         )
       : list;
   };
@@ -121,13 +124,13 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
   const { current, currentIndex, filteredList, lastActiveItem } = state;
 
   return (
-    <React.Fragment>
+    <>
       <SlideModal
         size="middle"
         right
         title={
           <div className="flex justify-between">
-            <h1>GraphQL</h1>
+            <h1>{t('GraphQL')}</h1>
             <div className="flex items-center">
               <CloseButton onClick={closeModal} size="18" className="ml-2" />
             </div>
@@ -147,11 +150,13 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
       />
       <BottomBlock>
         <BottomBlock.Header>
-          <span className="font-semibold color-gray-medium mr-4">GraphQL</span>
+          <span className="font-semibold color-gray-medium mr-4">
+            {t('GraphQL')}
+          </span>
           <div className="flex items-center">
             <Input
               // className="input-small"
-              placeholder="Filter by name or type"
+              placeholder={t('Filter by name or type')}
               icon="search"
               name="filter"
               onChange={onFilterChange}
@@ -161,7 +166,7 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
         <BottomBlock.Content>
           <NoContent
             size="small"
-            title="No recordings found"
+            title={t('No recordings found')}
             show={filteredList.length === 0}
           >
             <TimeTable
@@ -174,17 +179,17 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
             >
               {[
                 {
-                  label: 'Start',
+                  label: t('Start'),
                   width: 90,
                   render: renderStart,
                 },
                 {
-                  label: 'Type',
+                  label: t('Type'),
                   dataKey: 'operationKind',
                   width: 80,
                 },
                 {
-                  label: 'Name',
+                  label: t('Name'),
                   width: 300,
                   render: renderName,
                 },
@@ -193,7 +198,7 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
           </NoContent>
         </BottomBlock.Content>
       </BottomBlock>
-    </React.Fragment>
+    </>
   );
 }
 

@@ -1,1 +1,1 @@
-export  { default } from './RoleForm';
+export { default } from './RoleForm';

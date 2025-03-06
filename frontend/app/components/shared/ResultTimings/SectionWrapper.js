@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 
 function SectionWrapper({ title, children }) {
   return (
@@ -7,11 +7,9 @@ function SectionWrapper({ title, children }) {
         <div className="mr-auto color-gray-medium uppercase">{title}</div>
         <div className="color-gray-medium">DURATION</div>
       </div>
-      <div>
-        { children }
-      </div>
+      <div>{children}</div>
     </div>
-  )
+  );
 }
 
-export default SectionWrapper
+export default SectionWrapper;

@@ -4,6 +4,7 @@ import ConditionSet from 'Shared/ConditionSet';
 import { Icon } from 'UI';
 import { Button } from 'antd';
 import { nonConditionalFlagFilters } from 'Types/filter/newFilter';
+import { useTranslation } from 'react-i18next';
 
 function ConditionalRecordingSettings({
   conditions,
@@ -16,20 +17,24 @@ function ConditionalRecordingSettings({
   setConditions: (conditions: Conditions[]) => void;
   isMobile?: boolean;
 }) {
+  const { t } = useTranslation();
   const addConditionSet = () => {
     setChanged(true);
     setConditions([
       ...conditions,
-      new Conditions({ name: `Condition Set ${conditions.length + 1}` }, false),
+      new Conditions(
+        { name: `${t('Condition Set')} ${conditions.length + 1}` },
+        false,
+      ),
     ]);
   };
   const removeCondition = (index: number) => {
     setChanged(true);
-    setConditions(conditions.filter((_, i) => i !== index))
-  }
+    setConditions(conditions.filter((_, i) => i !== index));
+  };
 
   return (
-    <div className={'relative py-1 px-5'}>
+    <div className="relative py-1 px-5">
       <div
         style={{
           position: 'absolute',
@@ -42,13 +47,17 @@ function ConditionalRecordingSettings({
           width: '14px',
         }}
       />
-      <div className={'flex gap-1 items-center'}>
-        <span className={'font-semibold'}>matching</span>
-        <Button type={'text'} icon={<Icon name={'plus'} size={16} />} onClick={addConditionSet}>
-          Condition Set
+      <div className="flex gap-1 items-center">
+        <span className="font-semibold">{t('matching')}</span>
+        <Button
+          type="text"
+          icon={<Icon name="plus" size={16} />}
+          onClick={addConditionSet}
+        >
+          {t('Condition Set')}
         </Button>
       </div>
-      <div className={'mt-2 flex flex-col gap-4'}>
+      <div className="mt-2 flex flex-col gap-4">
         {conditions.map((condition, index) => (
           <React.Fragment key={`${index}_${condition.name}`}>
             <ConditionSet
@@ -58,16 +67,16 @@ function ConditionalRecordingSettings({
               conditions={condition}
               removeCondition={() => removeCondition(index)}
               readonly={false}
-              bottomLine1={'Capture'}
-              bottomLine2={'of total session rate matching this condition.'}
+              bottomLine1={t('Capture')}
+              bottomLine2={t('of total session rate matching this condition.')}
               setChanged={setChanged}
               excludeFilterKeys={nonConditionalFlagFilters}
               isConditional
               isMobile={isMobile}
             />
             {index !== conditions.length - 1 ? (
-              <div className={'text-disabled-text flex justify-center w-full'}>
-                <span>OR</span>
+              <div className="text-disabled-text flex justify-center w-full">
+                <span>{t('OR')}</span>
               </div>
             ) : null}
           </React.Fragment>

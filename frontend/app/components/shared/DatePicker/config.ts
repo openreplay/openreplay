@@ -82,23 +82,29 @@ const generateConfig: GenerateConfig<DateTime> = {
   setHour: (date, hour) => date.set({ hour }),
   setMinute: (date, minute) => date.set({ minute }),
   setSecond: (date, second) => date.set({ second }),
-  setMillisecond: (date, milliseconds) => date.set({ millisecond: milliseconds }),
+  setMillisecond: (date, milliseconds) =>
+    date.set({ millisecond: milliseconds }),
 
   // Compare
   isAfter: (date1, date2) => date1 > date2,
   isValidate: (date) => date.isValid,
 
   locale: {
-    getWeekFirstDate: (locale, date) => date.setLocale(normalizeLocale(locale)).startOf('week'),
+    getWeekFirstDate: (locale, date) =>
+      date.setLocale(normalizeLocale(locale)).startOf('week'),
     getWeekFirstDay: (locale) =>
-      DateTime.local().setLocale(normalizeLocale(locale)).startOf('week').weekday,
-    getWeek: (locale, date) => date.setLocale(normalizeLocale(locale)).weekNumber,
+      DateTime.local().setLocale(normalizeLocale(locale)).startOf('week')
+        .weekday,
+    getWeek: (locale, date) =>
+      date.setLocale(normalizeLocale(locale)).weekNumber,
     getShortWeekDays: (locale) => {
       const weekdays = Info.weekdays(weekDayFormatMap[locale] || 'short', {
         locale: normalizeLocale(locale),
       });
 
-      const shifted = weekdays.map((weekday) => weekday.slice(0, weekDayLengthMap[locale]));
+      const shifted = weekdays.map((weekday) =>
+        weekday.slice(0, weekDayLengthMap[locale]),
+      );
 
       // getShortWeekDays should return weekday labels starting from Sunday.
       // luxon returns them starting from Monday, so we have to shift the results.
@@ -106,13 +112,16 @@ const generateConfig: GenerateConfig<DateTime> = {
 
       return shifted;
     },
-    getShortMonths: (locale) => Info.months('short', { locale: normalizeLocale(locale) }),
+    getShortMonths: (locale) =>
+      Info.months('short', { locale: normalizeLocale(locale) }),
     format: (locale, date, format) => {
       if (!date || !date.isValid) {
         return null;
       }
 
-      return date.setLocale(normalizeLocale(locale)).toFormat(normalizeFormat(format));
+      return date
+        .setLocale(normalizeLocale(locale))
+        .toFormat(normalizeFormat(format));
     },
     parse: (locale, text, formats) => {
       for (let i = 0; i < formats.length; i += 1) {
@@ -180,4 +189,3 @@ export type GenerateConfig<DateType> = {
     getShortMonths?: (locale: string) => string[];
   };
 };
-

@@ -60,22 +60,37 @@ export const TAB_MAP: any = {
 
 class SearchStore {
   list: SavedSearch[] = [];
+
   latestRequestTime: number | null = null;
+
   latestList = List();
+
   alertMetricId: number | null = null;
+
   instance = new Search();
+
   savedSearch: ISavedSearch = new SavedSearch();
+
   filterSearchList: any = {};
+
   currentPage = 1;
+
   pageSize = PER_PAGE;
+
   activeTab = { name: 'All', type: 'all' };
+
   scrollY = 0;
+
   sessions = List();
+
   total: number = 0;
   latestSessionCount: number = 0;
   loadingFilterSearch = false;
+
   isSaving: boolean = false;
+
   activeTags: any[] = [];
+
   urlParsed: boolean = false;
   searchInProgress = false;
 
@@ -125,13 +140,13 @@ class SearchStore {
   }
 
   edit(instance: Partial<Search>) {
-    this.instance = new Search(Object.assign({ ...this.instance }, instance));
+    this.instance = new Search({ ...this.instance, ...instance });
     this.currentPage = 1;
   }
 
   editSavedSearch(instance: Partial<SavedSearch>) {
     this.savedSearch = new SavedSearch(
-      Object.assign(this.savedSearch.toData(), instance)
+      Object.assign(this.savedSearch.toData(), instance),
     );
   }
 
@@ -157,14 +172,14 @@ class SearchStore {
         this.filterSearchList = response.reduce(
           (
             acc: Record<string, { projectId: number; value: string }[]>,
-            item: any
+            item: any,
           ) => {
             const { projectId, type, value } = item;
             if (!acc[type]) acc[type] = [];
             acc[type].push({ projectId, value });
             return acc;
           },
-          {}
+          {},
         );
       })
       .catch((error: any) => {
@@ -227,7 +242,7 @@ class SearchStore {
   }
 
   clearSearch() {
-    const instance = this.instance;
+    const { instance } = this;
     this.edit(
       new Search({
         rangeValue: instance.rangeValue,
@@ -318,9 +333,9 @@ class SearchStore {
     value: any,
     operator?: string,
     sourceOperator?: string,
-    source?: string
+    source?: string,
   ) {
-    let defaultFilter = { ...filtersMap[key] };
+    const defaultFilter = { ...filtersMap[key] };
     defaultFilter.value = value;
 
     if (operator) {
@@ -346,9 +361,8 @@ class SearchStore {
     const newFilters = this.instance.filters.map((_filter: any, i: any) => {
       if (i === index) {
         return search;
-      } else {
-        return _filter;
       }
+      return _filter;
     });
 
     this.instance = new Search({
@@ -358,9 +372,9 @@ class SearchStore {
   };
 
   removeFilter = (index: number) => {
-    const newFilters = this.instance.filters.filter((_filter: any, i: any) => {
-      return i !== index;
-    });
+    const newFilters = this.instance.filters.filter(
+      (_filter: any, i: any) => i !== index,
+    );
 
     this.instance = new Search({
       ...this.instance.toData(),
@@ -378,7 +392,7 @@ class SearchStore {
 
   async fetchSessions(
     force: boolean = false,
-    bookmarked: boolean = false
+    bookmarked: boolean = false,
   ): Promise<void> {
     if (this.searchInProgress) return;
     const filter = this.instance.toSearch();
@@ -402,7 +416,8 @@ class SearchStore {
       if (durationFilter?.count > 0) {
         const multiplier = durationFilter.countType === 'sec' ? 1000 : 60000;
         const amount = durationFilter.count * multiplier;
-        const value = durationFilter.operator === '<' ? [amount, 0] : [0, amount];
+        const value =
+          durationFilter.operator === '<' ? [amount, 0] : [0, amount];
 
         filter.filters.push({
           type: FilterKey.DURATION,

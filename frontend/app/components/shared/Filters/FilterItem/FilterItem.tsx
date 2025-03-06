@@ -1,13 +1,13 @@
 import React from 'react';
+import { Button } from 'antd';
+import { FilterKey, FilterType } from 'App/types/filter/filterType';
+import { CircleMinus } from 'lucide-react';
+import cn from 'classnames';
 import FilterOperator from '../FilterOperator';
 import FilterSelection from '../FilterSelection';
 import FilterValue from '../FilterValue';
-import { Button } from 'antd';
 import FilterSource from '../FilterSource';
-import { FilterKey, FilterType } from 'App/types/filter/filterType';
 import SubFilterItem from '../SubFilterItem';
-import { CircleMinus } from 'lucide-react';
-import cn from 'classnames'
 
 interface Props {
   filterIndex?: number;
@@ -40,22 +40,28 @@ function FilterItem(props: Props) {
     isConditional,
     hideIndex = false,
   } = props;
-  const canShowValues = !(filter.operator === 'isAny' || filter.operator === 'onAny' || filter.operator === 'isUndefined');
+  const canShowValues = !(
+    filter.operator === 'isAny' ||
+    filter.operator === 'onAny' ||
+    filter.operator === 'isUndefined'
+  );
   const isSubFilter = filter.type === FilterType.SUB_FILTERS;
   const replaceFilter = (filter: any) => {
     props.onUpdate({
       ...filter,
       value: filter.value,
-      filters: filter.filters ? filter.filters.map((i: any) => ({...i, value: ['']})) : [],
+      filters: filter.filters
+        ? filter.filters.map((i: any) => ({ ...i, value: [''] }))
+        : [],
     });
   };
 
-  const onOperatorChange = (e: any, {value}: any) => {
-    props.onUpdate({...filter, operator: value});
+  const onOperatorChange = (e: any, { value }: any) => {
+    props.onUpdate({ ...filter, operator: value });
   };
 
-  const onSourceOperatorChange = (e: any, {value}: any) => {
-    props.onUpdate({...filter, sourceOperator: value});
+  const onSourceOperatorChange = (e: any, { value }: any) => {
+    props.onUpdate({ ...filter, sourceOperator: value });
   };
 
   const onUpdateSubFilter = (subFilter: any, subFilterIndex: any) => {
@@ -70,13 +76,12 @@ function FilterItem(props: Props) {
     });
   };
 
-  const isReversed = filter.key === FilterKey.TAGGED_ELEMENT
+  const isReversed = filter.key === FilterKey.TAGGED_ELEMENT;
   return (
     <div className="flex items-center w-full">
       <div className="flex items-center w-full flex-wrap">
         {!isFilter && !hideIndex && filterIndex >= 0 && (
-          <div
-            className="flex-shrink-0 w-6 h-6 text-xs flex items-center justify-center rounded-full bg-gray-lighter	 mr-2">
+          <div className="flex-shrink-0 w-6 h-6 text-xs flex items-center justify-center rounded-full bg-gray-lighter	 mr-2">
             <span>{filterIndex + 1}</span>
           </div>
         )}
@@ -90,7 +95,12 @@ function FilterItem(props: Props) {
           disabled={disableDelete || props.readonly}
         />
 
-        <div className={cn('flex items-center flex-wrap', isReversed ? 'flex-row-reverse ml-2' : 'flex-row')}>
+        <div
+          className={cn(
+            'flex items-center flex-wrap',
+            isReversed ? 'flex-row-reverse ml-2' : 'flex-row',
+          )}
+        >
           {/* Filter with Source */}
           {filter.hasSource && (
             <>
@@ -101,7 +111,7 @@ function FilterItem(props: Props) {
                 value={filter.sourceOperator}
                 isDisabled={filter.operatorDisabled || props.readonly}
               />
-              <FilterSource filter={filter} onUpdate={props.onUpdate}/>
+              <FilterSource filter={filter} onUpdate={props.onUpdate} />
             </>
           )}
 
@@ -118,17 +128,25 @@ function FilterItem(props: Props) {
               {canShowValues && (
                 <>
                   {props.readonly ? (
-                    <div
-                      className={'rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip hover:border-neutral-400'}
-                    >
-                      {filter.value.map((val: string) => {
-                        return filter.options && filter.options.length
-                          ? filter.options[filter.options.findIndex((i: any) => i.value === val)]?.label ?? val
-                          : val
-                      }).join(', ')}
+                    <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip hover:border-neutral-400">
+                      {filter.value
+                        .map((val: string) =>
+                          filter.options && filter.options.length
+                            ? (filter.options[
+                                filter.options.findIndex(
+                                  (i: any) => i.value === val,
+                                )
+                              ]?.label ?? val)
+                            : val,
+                        )
+                        .join(', ')}
                     </div>
                   ) : (
-                    <FilterValue isConditional={isConditional} filter={filter} onUpdate={props.onUpdate}/>
+                    <FilterValue
+                      isConditional={isConditional}
+                      filter={filter}
+                      onUpdate={props.onUpdate}
+                    />
                   )}
                 </>
               )}
@@ -144,7 +162,7 @@ function FilterItem(props: Props) {
                 (i: any) =>
                   (i.key !== FilterKey.FETCH_REQUEST_BODY &&
                     i.key !== FilterKey.FETCH_RESPONSE_BODY) ||
-                  saveRequestPayloads
+                  saveRequestPayloads,
               )
               .map((subFilter: any, subFilterIndex: any) => (
                 <SubFilterItem
@@ -157,19 +175,19 @@ function FilterItem(props: Props) {
           </div>
         )}
       </div>
-      {(props.readonly || props.hideDelete) ? null :
+      {props.readonly || props.hideDelete ? null : (
         <div className="flex flex-shrink-0 self-start ml-auto">
           <Button
             disabled={disableDelete}
             type="text"
             onClick={props.onRemoveFilter}
             size="small"
-            className='btn-remove-step mt-2'
+            className="btn-remove-step mt-2"
           >
             <CircleMinus size={14} />
           </Button>
         </div>
-      }
+      )}
     </div>
   );
 }

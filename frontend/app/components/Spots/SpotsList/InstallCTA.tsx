@@ -2,8 +2,10 @@ import React from 'react';
 import { ChromeOutlined } from '@ant-design/icons';
 import { Alert, Button } from 'antd';
 import { ArrowUpRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 function InstallCTA() {
+  const { t } = useTranslation();
   const extKey = '__$spot_ext_exist$__';
   const [extExist, setExtExist] = React.useState<boolean>(false);
   const isChromium =
@@ -11,7 +13,7 @@ function InstallCTA() {
     window.chrome ||
     // @ts-ignore
     (!!navigator.userAgentData &&
-     // @ts-ignore
+      // @ts-ignore
       navigator.userAgentData.brands.some((data) => data.brand == 'Chromium'));
 
   React.useEffect(() => {
@@ -44,7 +46,9 @@ function InstallCTA() {
   if (!isChromium && !extExist) {
     return (
       <Alert
-        message="Spot is designed for Chrome. Please install Chrome and navigate to this page to start using Spot."
+        message={t(
+          'Spot is designed for Chrome. Please install Chrome and navigate to this page to start using Spot.',
+        )}
         type="warning"
         className="w-full justify-between font-medium text-lg rounded-lg border-0 mb-4"
       />
@@ -55,7 +59,9 @@ function InstallCTA() {
     <>
       {extExist ? null : (
         <Alert
-          message="It looks like you haven’t installed the Spot extension yet."
+          message={t(
+            'It looks like you haven’t installed the Spot extension yet.',
+          )}
           type="warning"
           action={
             <Button
@@ -65,11 +71,12 @@ function InstallCTA() {
               onClick={() =>
                 window.open(
                   'https://chromewebstore.google.com/detail/openreplay-spot-record-re/ckigbicapkkgfomcfmcbaaplllopgbid?pli=1',
-                  '_blank'
+                  '_blank',
                 )
               }
             >
-              Get Chrome Extension <ArrowUpRight />
+              {t('Get Chrome Extension')}&nbsp;
+              <ArrowUpRight />
             </Button>
           }
           className="w-full justify-between font-medium text-lg rounded-lg border-0 mb-4"

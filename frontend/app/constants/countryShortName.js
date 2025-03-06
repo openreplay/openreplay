@@ -46,10 +46,10 @@ export default (countryName) => {
       return 'MDA';
     case 'Macedonia, The Former Yugoslav Republic Of':
       return 'Macedonia';
-    case 'Lao People\'s Democratic Republic':
+    case "Lao People's Democratic Republic":
       return 'LAO';
     case 'Korea, Republic Of':
-    case 'Korea, Democratic People\'s Republic Of':
+    case "Korea, Democratic People's Republic Of":
       return 'PRK';
     case 'Iran, Islamic Republic Of':
       return 'Iran';

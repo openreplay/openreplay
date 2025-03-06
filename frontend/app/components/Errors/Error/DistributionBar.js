@@ -1,9 +1,9 @@
 import React from 'react';
 import cn from 'classnames';
 import { Tooltip, TextEllipsis } from 'UI';
+import { colorScale } from 'App/utils';
 import { Styles } from '../../Dashboard/Widgets/common';
 import cls from './distributionBar.module.css';
-import { colorScale } from 'App/utils';
 
 function DistributionBar({ className, title, partitions }) {
   if (partitions.length === 0) {
@@ -20,7 +20,10 @@ function DistributionBar({ className, title, partitions }) {
       <div className="flex justify-between text-sm mb-1">
         <div className="capitalize">{title}</div>
         <div className="flex items-center">
-          <div className="font-thin capitalize" style={{ maxWidth: '80px', height: '19px' }}>
+          <div
+            className="font-thin capitalize"
+            style={{ maxWidth: '80px', height: '19px' }}
+          >
             <TextEllipsis text={partitions[0].label} />
           </div>
           <div className="ml-2">{`${Math.round(partitions[0].prc)}% `}</div>

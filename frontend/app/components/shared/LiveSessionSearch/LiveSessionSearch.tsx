@@ -22,9 +22,9 @@ function LiveSessionSearch() {
   };
 
   const onRemoveFilter = (filterIndex: number) => {
-    const newFilters = appliedFilter.filters.filter((_filter, i) => {
-      return i !== filterIndex;
-    });
+    const newFilters = appliedFilter.filters.filter(
+      (_filter, i) => i !== filterIndex,
+    );
 
     searchStoreLive.edit({
       filters: newFilters,

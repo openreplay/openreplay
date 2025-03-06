@@ -8,6 +8,7 @@ import { PlayerContext } from 'Components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { shortDurationFromMs } from 'App/date';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 function maskDuration(input: string): string {
   const digits = input.replace(/\D/g, '');
@@ -23,57 +24,64 @@ function maskDuration(input: string): string {
 const duration = new RegExp(/(\d{2}):(\d{2})/);
 
 function HighlightPanel({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const { uiPlayerStore, notesStore, sessionStore } = useStore();
-  const editNote = notesStore.editNote;
+  const { editNote } = notesStore;
   const [message, setMessage] = React.useState(editNote?.message ?? '');
   const [isPublic, setIsPublic] = React.useState(editNote?.isPublic ?? false);
   const { store, player } = React.useContext(PlayerContext);
   const currentTime = store.get().time;
 
   const startTsStr = shortDurationFromMs(
-    editNote?.startAt ?? uiPlayerStore.highlightSelection.startTs
+    editNote?.startAt ?? uiPlayerStore.highlightSelection.startTs,
   );
   const endTsStr = shortDurationFromMs(
-    editNote?.endAt ?? uiPlayerStore.highlightSelection.endTs
+    editNote?.endAt ?? uiPlayerStore.highlightSelection.endTs,
   );
   const [startTs, setStartTs] = React.useState(startTsStr);
   const [endTs, setEndTs] = React.useState(endTsStr);
   const [tag, setTag] = React.useState(editNote?.tag ?? TAGS[0]);
 
   const onStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newState = maskDuration(e.target.value)
+    const newState = maskDuration(e.target.value);
     setStartTs(newState);
     if (duration.test(newState)) {
       const [_, minutes, seconds] = duration.exec(newState) ?? [];
-      const newTime = (parseInt(minutes) * 60 + parseInt(seconds))*1000;
+      const newTime = (parseInt(minutes) * 60 + parseInt(seconds)) * 1000;
       const sessLength = store.get().endTime;
       uiPlayerStore.toggleHighlightSelection({
         enabled: true,
-        range: [Math.min(newTime, sessLength), uiPlayerStore.highlightSelection.endTs],
-      })
+        range: [
+          Math.min(newTime, sessLength),
+          uiPlayerStore.highlightSelection.endTs,
+        ],
+      });
     }
   };
 
   const onEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newState = maskDuration(e.target.value)
+    const newState = maskDuration(e.target.value);
     setEndTs(newState);
     if (duration.test(newState)) {
       const [_, minutes, seconds] = duration.exec(newState) ?? [];
-      const newTime = (parseInt(minutes) * 60 + parseInt(seconds))*1000;
+      const newTime = (parseInt(minutes) * 60 + parseInt(seconds)) * 1000;
       const sessLength = store.get().endTime;
       uiPlayerStore.toggleHighlightSelection({
         enabled: true,
-        range: [uiPlayerStore.highlightSelection.startTs, Math.min(newTime, sessLength)],
-      })
+        range: [
+          uiPlayerStore.highlightSelection.startTs,
+          Math.min(newTime, sessLength),
+        ],
+      });
     }
   };
 
-  const playing = store.get().playing;
+  const { playing } = store.get();
 
   React.useEffect(() => {
     player.pause();
-    const time = store.get().time;
-    const endTime = store.get().endTime;
+    const { time } = store.get();
+    const { endTime } = store.get();
     const distance = Math.max(endTime / 40, 2500);
     uiPlayerStore.toggleHighlightSelection({
       enabled: true,
@@ -83,12 +91,12 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
       uiPlayerStore.toggleHighlightSelection({
         enabled: false,
       });
-      notesStore.setEditNote(null)
+      notesStore.setEditNote(null);
     };
   }, []);
   React.useEffect(() => {
     const startStr = shortDurationFromMs(
-      uiPlayerStore.highlightSelection.startTs
+      uiPlayerStore.highlightSelection.startTs,
     );
     const endStr = shortDurationFromMs(uiPlayerStore.highlightSelection.endTs);
     setStartTs(startStr);
@@ -104,82 +112,84 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
   const addTag = (newTag: iTag) => {
     setTag(newTag);
   };
-  const tagActive = (checkedTag: iTag) => {
-    return tag === checkedTag;
-  };
+  const tagActive = (checkedTag: iTag) => tag === checkedTag;
 
   const onSave = async () => {
     try {
-      notesStore.setSaving(true)
-      const playerContainer = document.querySelector('iframe')?.contentWindow?.document;
+      notesStore.setSaving(true);
+      const playerContainer =
+        document.querySelector('iframe')?.contentWindow?.document;
       let thumbnail;
       if (playerContainer) {
         thumbnail = await elementToCanvas(playerContainer);
         if (!thumbnail) {
-          thumbnail = await elementToImage(playerContainer);
+          thumbnail = await elementToImage(thumbnail);
         }
       }
       const note = {
         message,
-        tag: tag,
+        tag,
         isPublic,
         timestamp: parseInt(currentTime, 10),
         startAt: parseInt(uiPlayerStore.highlightSelection.startTs, 10),
         endAt: parseInt(uiPlayerStore.highlightSelection.endTs, 10),
         thumbnail,
-      }
+      };
       if (editNote) {
         await notesStore.updateNote(editNote.noteId, note);
-        toast.success('Highlight updated');
+        toast.success(t('Highlight updated'));
       } else {
-        const sessionId = sessionStore.current.sessionId;
+        const { sessionId } = sessionStore.current;
         await notesStore.addNote(sessionId, note);
-        toast.success('Highlight saved. Find it in Home > Highlights');
+        toast.success(t('Highlight saved. Find it in Home > Highlights'));
       }
       onClose();
     } catch (e) {
-      toast.error('Failed to save highlight');
+      toast.error(t('Failed to save highlight'));
     } finally {
       notesStore.setSaving(false);
     }
-  }
+  };
 
   return (
     <div
-      className={'w-full p-4 flex flex-col gap-4'}
+      className="w-full p-4 flex flex-col gap-4"
       style={{ width: 270 }}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className={'flex items-center gap-2'}>
+      <div className="flex items-center gap-2">
         <Icon name="chat-square-quote" color="inherit" size={16} />
-        <h3 className={'text-xl font-semibold'}>
-          {editNote ? 'Edit ' : ''}Highlight
+        <h3 className="text-xl font-semibold">
+          {editNote ? t('Edit ') : ''}
+          {t('Highlight')}
         </h3>
-        <div className={'cursor-pointer ml-auto'} onClick={onClose}>
+        <div className="cursor-pointer ml-auto" onClick={onClose}>
           <X size={18} strokeWidth={2} />
         </div>
       </div>
       <div className="text-sm text-neutral-500">
-        Save key moments from sessions. Access them anytime on the ‘Highlights’
-        page to share with your team.
+        {t(
+          'Save key moments from sessions. Access them anytime on the ‘Highlights’ page to share with your team.',
+        )}
       </div>
       <div>
         <Input.TextArea
           onChange={(e) => setMessage(e.target.value)}
-          placeholder={'Enter Comments'}
+          placeholder="Enter Comments"
           maxLength={200}
           rows={6}
           value={message}
           className="rounded-lg"
           autoFocus
         />
-        <div className={'text-disabled-text text-sm'}>
-          {message.length}/200 characters remaining
+        <div className="text-disabled-text text-sm">
+          {message.length}
+          {t('/200 characters remaining')}
         </div>
       </div>
-      <div className={'flex items-center gap-2'}>
+      <div className="flex items-center gap-2">
         <div>
-          <div className={'font-semibold'}>From</div>
+          <div className="font-semibold">{t('From')}</div>
           <Input
             value={startTs}
             onChange={onStartChange}
@@ -187,11 +197,11 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
           />
         </div>
         <div>
-          <div className={'font-semibold'}>To</div>
+          <div className="font-semibold">{t('To')}</div>
           <Input value={endTs} onChange={onEndChange} className="rounded-lg" />
         </div>
       </div>
-      <div className={'flex items-center gap-2 flex-wrap'}>
+      <div className="flex items-center gap-2 flex-wrap">
         {TAGS.map((tag) => (
           <Tag
             onClick={() => addTag(tag)}
@@ -200,7 +210,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
             color={tagProps[tag]}
             bordered={false}
           >
-            <div className={'flex items-center gap-1 text-sm'}>
+            <div className="flex items-center gap-1 text-sm">
               {tagActive(tag) ? (
                 <Icon name="check-circle-fill" color="inherit" size={13} />
               ) : null}
@@ -215,41 +225,43 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
           value={isPublic}
           className="ms-2"
         >
-          Visible to team members
+          {t('Visible to team members')}
         </Checkbox>
       </div>
-      <div className={'flex items-center gap-2'}>
+      <div className="flex items-center gap-2">
         <Button
           onClick={onSave}
-          type={'primary'}
+          type="primary"
           loading={notesStore.isSaving}
           className="font-medium"
         >
-          <Icon name="chat-square-quote" color="inherit" size={14} /> {editNote ? 'Update ' : 'Save '}
-          Highlight
+          <Icon name="chat-square-quote" color="inherit" size={14} />{' '}
+          {editNote ? t('Update') : t('Save')}&nbsp;
+          {t('Highlight')}
         </Button>
         <Button onClick={onClose} type="text" className="font-medium">
-          Cancel
+          {t('Cancel')}
         </Button>
       </div>
     </div>
   );
 }
-window.__debugElementToImage = (el) => elementToImage(el).then(img => {
-  const a = document.createElement('a');
-  a.href = img;
-  a.download = 'highlight.png';
-  a.click();
-});
+window.__debugElementToImage = (el) =>
+  elementToImage(el).then((img) => {
+    const a = document.createElement('a');
+    a.href = img;
+    a.download = 'highlight.png';
+    a.click();
+  });
 
-async function elementToImage(el: Document) {
+async function elementToImage(el: any) {
   const constraints = {
     video: {
       displaySurface: 'browser',
       preferCurrentTab: true,
     },
     preferCurrentTab: true,
-    monitorTypeSurfaces: "exclude",
+    monitorTypeSurfaces: 'exclude',
     audio: false,
   };
   try {
@@ -269,33 +281,36 @@ async function elementToImage(el: Document) {
 }
 
 function elementToCanvas(doc: Document) {
-  const el = doc.body
-  const srcMap = new WeakMap<HTMLImageElement, string>()
+  const el = doc.body;
+  const srcMap = new WeakMap<HTMLImageElement, string>();
   return import('@codewonders/html2canvas').then(({ default: html2canvas }) => {
-    const images = doc.querySelectorAll('img')
+    const images = doc.querySelectorAll('img');
     images.forEach((img) => {
-      const sameOrigin = new URL(img.src, location.href).origin === location.origin
+      const sameOrigin =
+        new URL(img.src, location.href).origin === location.origin;
       if (!sameOrigin) {
-        srcMap.set(img, img.src)
-        img.src = ''
+        srcMap.set(img, img.src);
+        img.src = '';
       }
-    })
+    });
     return html2canvas(el, {
       scale: 1,
       allowTaint: false,
       foreignObjectRendering: true,
       useCORS: true,
       logging: true,
-    }).then((canvas) => {
-      images.forEach((img) => {
-        if (srcMap.has(img)) img.src = srcMap.get(img)!
-      })
-      return canvas.toDataURL('image/png')
-    }).catch(e => {
-      console.log(e)
-      return undefined
     })
-  })
+      .then((canvas) => {
+        images.forEach((img) => {
+          if (srcMap.has(img)) img.src = srcMap.get(img)!;
+        });
+        return canvas.toDataURL('image/png');
+      })
+      .catch((e) => {
+        console.log(e);
+        return undefined;
+      });
+  });
 }
 
 const convertAllImagesToBase64 = (proxyURL, cloned) => {
@@ -307,7 +322,9 @@ const convertAllImagesToBase64 = (proxyURL, cloned) => {
   for (let i = 0; i < images.length; i += 1) {
     const promise = new Promise((resolve, reject) => {
       pendingPromisesData.push({
-        index: i, resolve, reject,
+        index: i,
+        resolve,
+        reject,
       });
     });
     pendingImagesPromises.push(promise);

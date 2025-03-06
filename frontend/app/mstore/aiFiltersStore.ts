@@ -6,10 +6,15 @@ import { aiService } from 'App/services';
 
 export default class AiFiltersStore {
   filters: Record<string, any> = { filters: [] };
+
   cardFilters: Record<string, any> = { filters: [] };
+
   filtersSetKey = 0;
+
   isLoading: boolean = false;
+
   query: string = '';
+
   modalOpen: boolean = false;
 
   constructor() {
@@ -18,11 +23,11 @@ export default class AiFiltersStore {
 
   setQuery = (query: string): void => {
     this.query = query;
-  }
+  };
 
   setModalOpen = (isOpen: boolean): void => {
     this.modalOpen = isOpen;
-  }
+  };
 
   setFilters = (filters: Record<string, any>): void => {
     this.filters = filters;
@@ -36,20 +41,20 @@ export default class AiFiltersStore {
 
   getCardData = async (query: string, chartData: Record<string, any>) => {
     const r = await aiService.getCardData(query, chartData);
-    console.log(r)
-  }
+    console.log(r);
+  };
 
   omniSearch = async (query: string, filters: Record<any, any>) => {
     const r = await aiService.omniSearch(query, filters);
-    console.log(r)
-  }
+    console.log(r);
+  };
 
   setLoading = (loading: boolean): void => {
     this.isLoading = loading;
-  }
+  };
 
   getCardFilters = async (query: string, chartType?: string): Promise<any> => {
-    this.setLoading(true)
+    this.setLoading(true);
     try {
       const r = await aiService.getCardFilters(query, chartType);
       const filterObj = Filter({
@@ -62,7 +67,7 @@ export default class AiFiltersStore {
           }
 
           const matchingFilter = Object.keys(filtersMap).find((k) =>
-            f.key === 'metadata' ? `_${f.source}` === k : f.key === k
+            f.key === 'metadata' ? `_${f.source}` === k : f.key === k,
           );
 
           if (f.key === 'duration') {
@@ -90,7 +95,7 @@ export default class AiFiltersStore {
     } catch (e) {
       console.trace(e);
     } finally {
-      this.setLoading(false)
+      this.setLoading(false);
     }
   };
 
@@ -108,7 +113,7 @@ export default class AiFiltersStore {
           }
 
           const matchingFilter = Object.keys(filtersMap).find((k) =>
-            f.key === 'metadata' ? `_${f.source}` === k : f.key === k
+            f.key === 'metadata' ? `_${f.source}` === k : f.key === k,
           );
 
           if (f.key === 'duration') {
@@ -225,7 +230,7 @@ export function isObject(item: any): boolean {
 
 const updateFilters = (
   defaultFilters: (typeof defaultFetchFilter)['filters'],
-  backendFilters: Record<string, any>
+  backendFilters: Record<string, any>,
 ): (typeof defaultFetchFilter)['filters'] => {
   const updatedFilters = [...defaultFilters]; // Clone the default filters
 
@@ -243,16 +248,12 @@ const updateFilters = (
   return updatedFilters;
 };
 
-const mapFetch = (filter: Record<string, any>): Record<string, any> => {
-  return {
-    ...defaultFetchFilter,
-    filters: updateFilters(defaultFetchFilter.filters, filter.filters),
-  };
-};
+const mapFetch = (filter: Record<string, any>): Record<string, any> => ({
+  ...defaultFetchFilter,
+  filters: updateFilters(defaultFetchFilter.filters, filter.filters),
+});
 
-const mapGraphql = (filter: Record<string, any>) => {
-  return {
-    ...defaultGraphqlFilter,
-    filters: updateFilters(defaultGraphqlFilter.filters, filter.filters),
-  };
-};
+const mapGraphql = (filter: Record<string, any>) => ({
+  ...defaultGraphqlFilter,
+  filters: updateFilters(defaultGraphqlFilter.filters, filter.filters),
+});

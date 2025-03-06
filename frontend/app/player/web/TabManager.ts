@@ -59,26 +59,38 @@ export default class TabSessionManager {
   };
 
   public locationManager: ListWalker<SetPageLocation> = new ListWalker();
-  private locationEventManager: ListWalker<any> /*<LocationEvent>*/ =
+
+  private locationEventManager: ListWalker<any> /* <LocationEvent> */ =
     new ListWalker();
+
   private loadedLocationManager: ListWalker<SetPageLocation> = new ListWalker();
+
   private connectionInfoManger: ListWalker<ConnectionInformation> =
     new ListWalker();
+
   private performanceTrackManager: PerformanceTrackManager =
     new PerformanceTrackManager();
+
   private windowNodeCounter: WindowNodeCounter = new WindowNodeCounter();
 
   private resizeManager: ListWalker<SetViewportSize> = new ListWalker([]);
+
   private pagesManager: PagesManager;
+
   private scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
 
   public readonly decoder = new Decoder();
+
   public lastMessageTs = 0;
+
   private lists: Lists;
+
   private navigationStartOffset = 0;
+
   private canvasManagers: {
     [key: string]: { manager: CanvasManager; start: number; running: boolean };
   } = {};
+
   private canvasReplayWalker: ListWalker<CanvasNode> = new ListWalker();
 
   constructor(
@@ -97,12 +109,12 @@ export default class TabSessionManager {
       width: number;
     }) => void,
     private readonly sessionStart: number,
-    initialLists?: Partial<InitialLists>
+    initialLists?: Partial<InitialLists>,
   ) {
     this.pagesManager = new PagesManager(
       screen,
       this.session.isMobile,
-      this.setCSSLoading
+      this.setCSSLoading,
     );
     this.lists = new Lists(initialLists);
     initialLists?.event?.forEach((e: Record<string, string>) => {
@@ -117,13 +129,11 @@ export default class TabSessionManager {
     this.session = session;
   };
 
-  public getNode = (id: number) => {
-    return this.pagesManager.getNode(id);
-  };
+  public getNode = (id: number) => this.pagesManager.getNode(id);
 
   public injectSpriteMap = (spriteMapEl: SVGElement) => {
     this.pagesManager.injectSpriteMap(spriteMapEl);
-  }
+  };
 
   public updateLists(lists: Partial<InitialLists>) {
     Object.keys(lists).forEach((key: 'event' | 'stack' | 'exceptions') => {
@@ -137,7 +147,7 @@ export default class TabSessionManager {
               exv.key === item.key &&
               (exv.messageId && item.messageId
                 ? exv.messageId === item.messageId
-                : true)
+                : true),
           ) === -1
         ) {
           currentList.insert(item);
@@ -194,11 +204,12 @@ export default class TabSessionManager {
     this.pagesManager = new PagesManager(
       this.screen,
       this.session.isMobile,
-      this.setCSSLoading
+      this.setCSSLoading,
     );
   }
 
-  firstTitleSet = false
+  firstTitleSet = false;
+
   distributeMessage(msg: Message): void {
     if (this.lastMessageTs < msg.time) {
       this.lastMessageTs = msg.time;
@@ -211,13 +222,13 @@ export default class TabSessionManager {
           const delta = msg.timestamp - this.sessionStart;
 
           const canvasNodeLinks = this.session.canvasURL.filter((url: string) =>
-            url.includes(fileId)
+            url.includes(fileId),
           ) as string[];
           const tarball = canvasNodeLinks.find((url: string) =>
-            url.includes('.tar.')
+            url.includes('.tar.'),
           );
           const mp4file = canvasNodeLinks.find((url: string) =>
-            url.includes('.mp4')
+            url.includes('.mp4'),
           );
           if (!tarball && !mp4file) {
             console.error('no canvas recording provided');
@@ -228,7 +239,7 @@ export default class TabSessionManager {
             delta,
             [tarball, mp4file],
             this.getNode as (id: number) => VElement | undefined,
-            this.sessionStart
+            this.sessionStart,
           );
           this.canvasManagers[managerId] = {
             manager,
@@ -242,8 +253,13 @@ export default class TabSessionManager {
       case MType.SetPageLocation:
         this.locationManager.append(msg);
         if ('documentTitle' in msg && !this.firstTitleSet) {
-          this.state.update({ tabNames: { ...this.state.get().tabNames, [this.id]: msg.documentTitle } });
-          this.firstTitleSet = true
+          this.state.update({
+            tabNames: {
+              ...this.state.get().tabNames,
+              [this.id]: msg.documentTitle,
+            },
+          });
+          this.firstTitleSet = true;
         }
         if (msg.navigationStart > 0) {
           this.loadedLocationManager.append(msg);
@@ -271,7 +287,7 @@ export default class TabSessionManager {
       case MType.ConsoleLog:
         this.lists.lists.log.append(
           // @ts-ignore : TODO: enums in the message schema
-          Log(msg)
+          Log(msg),
         );
         break;
       case MType.ResourceTimingDeprecated:
@@ -284,14 +300,14 @@ export default class TabSessionManager {
           this.lists.lists.resource.insert(
             getResourceFromResourceTiming(
               msg as ResourceTiming,
-              this.sessionStart
-            )
+              this.sessionStart,
+            ),
           );
         }
         break;
       case MType.NetworkRequest:
         this.lists.lists.fetch.insert(
-          getResourceFromNetworkRequest(msg, this.sessionStart)
+          getResourceFromNetworkRequest(msg, this.sessionStart),
         );
         break;
       case MType.WsChannel:
@@ -326,26 +342,26 @@ export default class TabSessionManager {
           case MType.CreateDocument:
             this.windowNodeCounter.reset();
             this.performanceTrackManager.setCurrentNodesCount(
-              this.windowNodeCounter.count
+              this.windowNodeCounter.count,
             );
             break;
           case MType.CreateTextNode:
           case MType.CreateElementNode:
             this.windowNodeCounter.addNode(msg.id, msg.parentID);
             this.performanceTrackManager.setCurrentNodesCount(
-              this.windowNodeCounter.count
+              this.windowNodeCounter.count,
             );
             break;
           case MType.MoveNode:
             this.windowNodeCounter.moveNode(msg.id, msg.parentID);
             this.performanceTrackManager.setCurrentNodesCount(
-              this.windowNodeCounter.count
+              this.windowNodeCounter.count,
             );
             break;
           case MType.RemoveNode:
             this.windowNodeCounter.removeNode(msg.id);
             this.performanceTrackManager.setCurrentNodesCount(
-              this.windowNodeCounter.count
+              this.windowNodeCounter.count,
             );
             break;
           case MType.LoadFontFace:
@@ -354,7 +370,7 @@ export default class TabSessionManager {
               const lastUrl = this.locationManager.findLast(msg.time)?.url;
               if (lastUrl) {
                 const u = new URL(lastUrl);
-                const base = u.protocol + '//' + u.hostname + '/';
+                const base = `${u.protocol}//${u.hostname}/`;
                 msg.source = `url(${base}${relativeUrl}`;
               }
             }
@@ -371,15 +387,15 @@ export default class TabSessionManager {
     /* == REFACTOR_ME ==  */
     const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(
       t,
-      index
+      index,
     );
-    if (!!lastLoadedLocationMsg) {
+    if (lastLoadedLocationMsg) {
       // TODO: page-wise resources list  // setListsStartTime(lastLoadedLocationMsg.time)
       this.navigationStartOffset =
         lastLoadedLocationMsg.navigationStart - this.sessionStart;
     }
     const lastLocationEvent = this.locationEventManager.moveGetLast(t, index);
-    if (!!lastLocationEvent) {
+    if (lastLocationEvent) {
       if (lastLocationEvent.domContentLoadedTime != null) {
         stateToUpdate.domContentLoadedTime = {
           time:
@@ -400,8 +416,8 @@ export default class TabSessionManager {
     }
     /* === */
     const lastLocationMsg = this.locationManager.moveGetLast(t, index);
-    if (!!lastLocationMsg) {
-      const tabNames = this.state.get().tabNames;
+    if (lastLocationMsg) {
+      const { tabNames } = this.state.get();
       if (lastLocationMsg.documentTitle) {
         tabNames[this.id] = lastLocationMsg.documentTitle;
       }
@@ -411,7 +427,7 @@ export default class TabSessionManager {
 
     const lastPerformanceTrackMessage =
       this.performanceTrackManager.moveGetLast(t, index);
-    if (!!lastPerformanceTrackMessage) {
+    if (lastPerformanceTrackMessage) {
       stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;
     }
 
@@ -422,7 +438,7 @@ export default class TabSessionManager {
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"
     const lastResize = this.resizeManager.moveGetLast(t, index);
-    if (!!lastResize) {
+    if (lastResize) {
       this.setSize(lastResize);
     }
     this.pagesManager.moveReady(t).then(() => {
@@ -441,7 +457,7 @@ export default class TabSessionManager {
         }
       });
       const runningManagers = Object.values(this.canvasManagers).filter(
-        (manager) => manager.running
+        (manager) => manager.running,
       );
       runningManagers.forEach(({ manager }) => {
         manager.move(t);
@@ -479,7 +495,8 @@ export default class TabSessionManager {
           const m2FromHead = headChildrenMsgIds.includes(m2.id);
           if (m1FromHead && !m2FromHead) {
             return -1;
-          } else if (m2FromHead && !m1FromHead) {
+          }
+          if (m2FromHead && !m1FromHead) {
             return 1;
           }
         }
@@ -499,9 +516,7 @@ export default class TabSessionManager {
     this.updateLocalState(stateToUpdate);
   };
 
-  public getListsFullState = () => {
-    return this.lists.getFullListsState();
-  };
+  public getListsFullState = () => this.lists.getFullListsState();
 
   clean() {
     this.pagesManager.reset();

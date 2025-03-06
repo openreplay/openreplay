@@ -3,11 +3,13 @@ import { Icon } from 'UI';
 import { Button } from 'antd';
 import { validateKeyCode } from 'App/validate';
 import styles from './tagInput.module.css';
+import { withTranslation } from 'react-i18next';
 
 class TagInput extends React.Component {
   constructor(props) {
     super(props);
     this.state = {};
+    this.t = props.t;
   }
 
   componentDidUpdate() {
@@ -16,7 +18,7 @@ class TagInput extends React.Component {
       this.inputRef.focus();
       this.inputRef.addEventListener('keydown', this.escapeHandler, false);
     } else {
-      this.inputRef.removeEventListener('keydown', this.escapeHandler);      
+      this.inputRef.removeEventListener('keydown', this.escapeHandler);
     }
   }
 
@@ -24,7 +26,7 @@ class TagInput extends React.Component {
     if (e.keyCode === 27) {
       this.props.toggleTagEditor();
     }
-  }
+  };
 
   handleKeyPress = (e) => {
     if (!validateKeyCode(e.keyCode, e.key, new RegExp('^[a-zA-Z0-9]+'))) {
@@ -38,44 +40,52 @@ class TagInput extends React.Component {
       this.props.addTag(e.target.value);
       e.target.value = '';
     }
-  }
+  };
 
   render() {
-    const { toggleTagEditor, tagEditorDisplayed, placeholder = 'Tag' } = this.props;
+    const {
+      toggleTagEditor,
+      tagEditorDisplayed,
+      placeholder = 'Tag',
+    } = this.props;
     return (
-      <div className={ styles.wrapper }>
-        <div className={ styles.inputWrapper } data-hidden={ !tagEditorDisplayed } >
-          <div>{ '#' }</div>
+      <div className={styles.wrapper}>
+        <div className={styles.inputWrapper} data-hidden={!tagEditorDisplayed}>
+          <div>#</div>
           <input
             type="text"
-            ref={ (ref) => { this.inputRef = ref; } }
-            onKeyPress={ this.handleKeyPress }
-            placeholder={ placeholder }
+            ref={(ref) => {
+              this.inputRef = ref;
+            }}
+            onKeyPress={this.handleKeyPress}
+            placeholder={placeholder}
           />
         </div>
 
-        { tagEditorDisplayed &&
-          <Button
-            onClick={ toggleTagEditor }
-          >
-            { 'Cancel' }
-          </Button>
-        }
+        {tagEditorDisplayed && (
+          <Button onClick={toggleTagEditor}>{this.t('Cancel')}</Button>
+        )}
 
-        { !tagEditorDisplayed &&
-          <div ref={ (ref) => { this.addButtonRef = ref; } }>
+        {!tagEditorDisplayed && (
+          <div
+            ref={(ref) => {
+              this.addButtonRef = ref;
+            }}
+          >
             <div
-              onClick={ toggleTagEditor }
+              onClick={toggleTagEditor}
               className="flex items-center cursor-pointer rounded p-2 gray-hover"
             >
               <Icon name="plus" color="teal" size="12" />
-              <div className="ml-2 text-sm font-normal color-teal leading-none">ADD TAG</div>
-            </div>           
+              <div className="ml-2 text-sm font-normal color-teal leading-none">
+                {this.t('ADD TAG')}
+              </div>
+            </div>
           </div>
-        }
+        )}
       </div>
     );
   }
 }
 
-export default TagInput;
+export default withTranslation()(TagInput);

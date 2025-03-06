@@ -1,33 +1,39 @@
-import React from 'react'
+import React from 'react';
 import FilterOperator from '../FilterOperator';
 import FilterValue from '../FilterValue';
 
 interface Props {
-    filterIndex: number;
-    filter: any; // event/filter
-    onUpdate: (filter: any) => void;
-    onRemoveFilter: () => void;
-    isFilter?: boolean;
+  filterIndex: number;
+  filter: any; // event/filter
+  onUpdate: (filter: any) => void;
+  onRemoveFilter: () => void;
+  isFilter?: boolean;
 }
 export default function SubFilterItem(props: Props) {
-    const { isFilter = false, filterIndex, filter } = props;
-    const canShowValues = !(filter.operator === "isAny" || filter.operator === "onAny" || filter.operator === "isUndefined");
+  const { isFilter = false, filterIndex, filter } = props;
+  const canShowValues = !(
+    filter.operator === 'isAny' ||
+    filter.operator === 'onAny' ||
+    filter.operator === 'isUndefined'
+  );
 
-    const onOperatorChange = (e, { name, value }) => {
-        props.onUpdate({ ...filter, operator: value })
-    }
+  const onOperatorChange = (e, { name, value }) => {
+    props.onUpdate({ ...filter, operator: value });
+  };
 
-    return (
-        <div className="flex items-center hover:bg-active-blue">
-            <div className="flex-shrink-0 py-1">{filter.label}</div>
-            <FilterOperator
-              options={filter.operatorOptions}
-              onChange={onOperatorChange}
-              className="mx-2 flex-shrink-0 btn-filter-operator"
-              value={filter.operator}
-            />
+  return (
+    <div className="flex items-center hover:bg-active-blue">
+      <div className="flex-shrink-0 py-1">{filter.label}</div>
+      <FilterOperator
+        options={filter.operatorOptions}
+        onChange={onOperatorChange}
+        className="mx-2 flex-shrink-0 btn-filter-operator"
+        value={filter.operator}
+      />
 
-            { canShowValues && (<FilterValue filter={filter} onUpdate={props.onUpdate} />) }
-        </div>
-    )
+      {canShowValues && (
+        <FilterValue filter={filter} onUpdate={props.onUpdate} />
+      )}
+    </div>
+  );
 }

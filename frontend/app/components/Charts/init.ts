@@ -18,7 +18,7 @@ echarts.use([
   LegendComponent,
   // TransformComponent,
   SVGRenderer,
-  ToolboxComponent
+  ToolboxComponent,
 ]);
 
 const defaultOptions = {
@@ -38,9 +38,9 @@ const defaultOptions = {
       type: 'cross',
       snap: true,
       label: {
-        backgroundColor: '#6a7985'
+        backgroundColor: '#6a7985',
       },
-    }
+    },
   },
   grid: {
     bottom: 20,
@@ -56,18 +56,23 @@ const defaultOptions = {
     feature: {
       saveAsImage: {
         pixelRatio: 1.5,
-      }
-    }
+      },
+    },
   },
   legend: {
     type: 'plain',
     show: true,
     top: 10,
-    icon: 'pin'
+    icon: 'pin',
   },
-}
+};
 
-export function initWindowStorages(chartUuid: string, categories: string[] = [], chartArr: any[] = [], compChartArr: any[] = []) {
+export function initWindowStorages(
+  chartUuid: string,
+  categories: string[] = [],
+  chartArr: any[] = [],
+  compChartArr: any[] = [],
+) {
   (window as any).__seriesValueMap = (window as any).__seriesValueMap ?? {};
   (window as any).__seriesColorMap = (window as any).__seriesColorMap ?? {};
   (window as any).__timestampMap = (window as any).__timestampMap ?? {};
@@ -84,10 +89,14 @@ export function initWindowStorages(chartUuid: string, categories: string[] = [],
     (window as any).__categoryMap[chartUuid] = categories;
   }
   if (!(window as any).__timestampMap[chartUuid]) {
-    (window as any).__timestampMap[chartUuid] = chartArr.map((item) => item.timestamp);
+    (window as any).__timestampMap[chartUuid] = chartArr.map(
+      (item) => item.timestamp,
+    );
   }
   if (!(window as any).__timestampCompMap[chartUuid]) {
-    (window as any).__timestampCompMap[chartUuid] = compChartArr.map((item) => item.timestamp);
+    (window as any).__timestampCompMap[chartUuid] = compChartArr.map(
+      (item) => item.timestamp,
+    );
   }
 }
 

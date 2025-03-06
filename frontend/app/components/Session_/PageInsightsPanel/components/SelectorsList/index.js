@@ -1,1 +1,1 @@
-export { default } from './SelectorsList'
+export { default } from './SelectorsList';

@@ -30,7 +30,7 @@ export default function CodeBlock({
               className="cursor-pointer"
               onClick={() => copyFn(code)}
             >
-              <Tooltip title="Copy code" placement={'bottomLeft'}>
+              <Tooltip title={t('Copy code')} placement={'bottomLeft'}>
                 <Files size={14} />
               </Tooltip>
             </div>

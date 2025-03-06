@@ -3,15 +3,17 @@ import { Button, Tooltip } from 'antd';
 import { useModal } from 'App/components/Modal';
 import { MODULES } from 'Components/Client/Modules';
 
-import AssistStats from '../../AssistStats';
-import Recordings from '../RecordingsList/Recordings';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import AssistStats from '../../AssistStats';
+import Recordings from '../RecordingsList/Recordings';
+import { useTranslation } from 'react-i18next';
 
 function AssistSearchActions() {
+  const { t } = useTranslation();
   const { searchStoreLive, userStore } = useStore();
   const modules = userStore.account.settings?.modules ?? [];
-  const isEnterprise = userStore.isEnterprise
+  const { isEnterprise } = userStore;
   const hasEvents =
     searchStoreLive.instance.filters.filter((i: any) => i.isEvent).length > 0;
   const hasFilters =
@@ -30,7 +32,7 @@ function AssistSearchActions() {
   return (
     <div className="flex items-center w-full gap-2">
       <h3 className="text-2xl capitalize mr-2">
-        <span>Co-Browse</span>
+        <span>{t('Co-Browse')}</span>
       </h3>
       <Tooltip title='Clear Search Filters'>
         <Button
@@ -39,7 +41,7 @@ function AssistSearchActions() {
           onClick={() => searchStoreLive.clearSearch()}
           className="px-2 ml-auto"
         >
-          Clear
+          {t('Clear')}
         </Button>
       </Tooltip>
       {!isSaas && isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS)
@@ -48,7 +50,8 @@ function AssistSearchActions() {
       {isEnterprise && userStore.account?.admin && (
         <Button size={'small'} onClick={showStats}
                 disabled={modules.includes(MODULES.ASSIST_STATS) || modules.includes(MODULES.ASSIST)}>
-          Co-Browsing Reports</Button>
+          {t('Co-Browsing Reports')}
+        </Button>
       )}
     </div>
   );

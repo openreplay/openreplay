@@ -4,12 +4,14 @@ import withPermissions from 'HOCs/withPermissions';
 import AssistRouter from './AssistRouter';
 
 function Assist() {
-  return (
-    <AssistRouter />
-  );
+  return <AssistRouter />;
 }
 
-
 export default withPageTitle('Assist - OpenReplay')(
-  withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', false, false)(Assist)
+  withPermissions(
+    ['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'],
+    '',
+    false,
+    false,
+  )(Assist),
 );

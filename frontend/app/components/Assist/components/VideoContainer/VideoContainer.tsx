@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   stream: MediaStream | null;
@@ -17,6 +18,7 @@ function VideoContainer({
   local,
   isAgent,
 }: Props) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLVideoElement>(null);
   const [isEnabled, setEnabled] = React.useState(false);
 
@@ -50,7 +52,7 @@ function VideoContainer({
 
   return (
     <div
-      className={'flex-1'}
+      className="flex-1"
       style={{
         display: isEnabled ? undefined : 'none',
         width: isEnabled ? undefined : '0px!important',
@@ -59,14 +61,14 @@ function VideoContainer({
         transform: local ? 'scaleX(-1)' : undefined,
       }}
     >
-      <video autoPlay ref={ref} muted={muted} style={{ height: height }} />
+      <video autoPlay ref={ref} muted={muted} style={{ height }} />
       {isAgent ? (
         <div
           style={{
             position: 'absolute',
           }}
         >
-          Agent
+          {t('Agent')}
         </div>
       ) : null}
     </div>

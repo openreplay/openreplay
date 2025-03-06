@@ -1,13 +1,14 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Loader } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import WidgetWrapper from 'App/components/Dashboard/components/WidgetWrapper';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
 import { dashboardMetricCreate, withSiteId } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { WidgetCategoryItem } from 'App/components/Dashboard/components/DashboardMetricSelection/DashboardMetricSelection';
+import { useTranslation } from 'react-i18next';
 
 interface IProps extends RouteComponentProps {
   siteId: string;
@@ -16,21 +17,30 @@ interface IProps extends RouteComponentProps {
 }
 
 function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
+  const { t } = useTranslation();
   const [categories, setCategories] = React.useState([]);
   const { dashboardStore } = useStore();
   const { hideModal } = useModal();
-  const [activeCategory, setActiveCategory] = React.useState<Record<string, any>>();
+  const [activeCategory, setActiveCategory] =
+    React.useState<Record<string, any>>();
 
   const scrollContainer = React.useRef<HTMLDivElement>(null);
 
   const dashboard = dashboardStore.selectedDashboard;
-  const selectedWidgetIds = dashboardStore.selectedWidgets.map((widget: any) => widget.metricId);
+  const selectedWidgetIds = dashboardStore.selectedWidgets.map(
+    (widget: any) => widget.metricId,
+  );
   const queryParams = new URLSearchParams(location.search);
-  const totalMetricCount = categories.reduce((acc, category) => acc + category.widgets.length, 0);
+  const totalMetricCount = categories.reduce(
+    (acc, category) => acc + category.widgets.length,
+    0,
+  );
 
   React.useEffect(() => {
     dashboardStore?.fetchTemplates(true).then((categories: any[]) => {
-      const predefinedCategories = categories.filter((category) => category.name !== 'custom');
+      const predefinedCategories = categories.filter(
+        (category) => category.name !== 'custom',
+      );
       const defaultCategory = predefinedCategories[0];
       setActiveCategory(defaultCategory);
       setCategories(predefinedCategories);
@@ -61,7 +71,10 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
   };
 
   const onCreateNew = () => {
-    const path = withSiteId(dashboardMetricCreate(dashboard.dashboardId), siteId);
+    const path = withSiteId(
+      dashboardMetricCreate(dashboard.dashboardId),
+      siteId,
+    );
     if (!queryParams.has('modal')) history.push('?modal=addMetric');
     history.push(path);
     hideModal();
@@ -75,20 +88,29 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
       >
         <div className="py-6 px-8 flex items-start justify-between">
           <div className="flex flex-col">
-            <h1 className="text-2xl" style={{ marginBottom: '7px' }}>{title}</h1>
+            <h1 className="text-2xl" style={{ marginBottom: '7px' }}>
+              {title}
+            </h1>
             <div className="text-disabled-text">{description}</div>
           </div>
 
           <div className="flex flex-col items-end">
-            <Button type="text" className="text-main font-medium ml-2" onClick={onCreateNew}>
-              + Create Custom Metric
+            <Button
+              type="text"
+              className="text-main font-medium ml-2"
+              onClick={onCreateNew}
+            >
+              +&nbsp;{t('Create Custom Metric')}
             </Button>
-            <div className="text-disabled-text">Past 7 Days</div>
+            <div className="text-disabled-text">{t('Past 7 Days')}</div>
           </div>
         </div>
 
         <Loader loading={dashboardStore.loadingTemplates}>
-          <div className="flex px-8 h-full" style={{ maxHeight: 'calc(100vh - 160px)' }}>
+          <div
+            className="flex px-8 h-full"
+            style={{ maxHeight: 'calc(100vh - 160px)' }}
+          >
             <div style={{ flex: 3 }}>
               <div
                 className="grid grid-cols-1 gap-4 py-1 pr-2"
@@ -129,9 +151,11 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
                       key={metric.metricId}
                       widget={metric}
                       active={selectedWidgetIds.includes(metric.metricId)}
-                      isTemplate={true}
+                      isTemplate
                       isSaved={metric.metricType === 'predefined'}
-                      onClick={() => dashboardStore.toggleWidgetSelection(metric)}
+                      onClick={() =>
+                        dashboardStore.toggleWidgetSelection(metric)
+                      }
                     />
                   </React.Fragment>
                 ))}
@@ -146,8 +170,12 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
             {' out of '}
             <span className="font-medium">{totalMetricCount}</span>
           </div>
-          <Button type="primary" disabled={selectedWidgetIds.length === 0} onClick={onSave}>
-            Add Selected
+          <Button
+            type="primary"
+            disabled={selectedWidgetIds.length === 0}
+            onClick={onSave}
+          >
+            {t('Add Selected')}
           </Button>
         </div>
       </div>

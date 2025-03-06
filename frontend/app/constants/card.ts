@@ -1,6 +1,7 @@
 import { IconNames } from 'App/components/ui/SVG';
 import { FilterKey } from 'Types/filter/filterType';
 import { MetricType } from 'App/components/Dashboard/components/MetricTypeItem/MetricTypeItem';
+import { TFunction } from 'i18next';
 
 export interface CardType {
   title: string;
@@ -26,8 +27,7 @@ export const CATEGORIES = {
   product_analytics: 'product_analytics',
   monitors: 'monitors',
   web_analytics: 'web_analytics',
-}
-
+};
 
 export interface Option {
   label: string;
@@ -45,41 +45,51 @@ export const TYPE_ICONS = {
   [FUNNEL]: 'funnel',
   [ERRORS]: 'exclamation-circle',
   [USER_PATH]: 'user-journey',
-  [TABLE]: 'list-alt',
-} as const
-export const TYPE_NAMES = {
-  [LIBRARY]: 'Library',
-  [TIMESERIES]: 'Trend',
-  [TABLE]: 'Table',
-  [HEATMAP]: 'Heatmap',
-  [FUNNEL]: 'Funnel',
-  [ERRORS]: 'Errors',
-  [USER_PATH]: 'Journeys',
-  [RETENTION]: 'Retention',
-  [INSIGHTS]: 'Insights',
-  [PERFORMANCE]: 'Performance',
-} as const
+} as const;
+export const TYPE_NAMES = (t: TFunction) =>
+  ({
+    [LIBRARY]: t('Library'),
+    [TIMESERIES]: t('Trend'),
+    [TABLE]: t('Table'),
+    [HEATMAP]: t('Heatmap'),
+    [FUNNEL]: t('Funnel'),
+    [ERRORS]: t('Errors'),
+    [USER_PATH]: t('Journeys'),
+    [RETENTION]: t('Retention'),
+    [INSIGHTS]: t('Insights'),
+    [PERFORMANCE]: t('Performance'),
+  }) as const;
 
-export const TYPES: CardType[] = [
+export const TYPES: (t: TFunction) => CardType[] = (t) => [
   {
-    title: 'Add from Library',
+    title: t('Add from Library'),
     icon: TYPE_ICONS[LIBRARY],
-    description: 'Select an existing card from your library',
+    description: t('Select an existing card from your library'),
     slug: LIBRARY,
   },
   {
-    title: TYPE_NAMES[TIMESERIES],
+    title: TYPE_NAMES(t)[TIMESERIES],
     icon: TYPE_ICONS[TIMESERIES],
-    description: 'Combine captured events and filters to track trends over time.',
+    description: t(
+      'Combine captured events and filters to track trends over time.',
+    ),
     slug: TIMESERIES,
-    subTypes: [{ title: 'Session Count', slug: 'sessionCount', description: '' }],
+    subTypes: [
+      { title: t('Session Count'), slug: 'sessionCount', description: '' },
+    ],
   },
   {
-    title: TYPE_NAMES[HEATMAP],
+    title: TYPE_NAMES(t)[HEATMAP],
     icon: TYPE_ICONS[HEATMAP],
-    description: 'See where users click and where they get frustrated.',
+    description: t('See where users click and where they get frustrated.'),
     slug: HEATMAP,
-    subTypes: [{ title: 'Visited URL', slug: FilterKey.CLICKMAP_URL, description: '' }],
+    subTypes: [
+      {
+        title: t('Visited URL'),
+        slug: FilterKey.CLICKMAP_URL,
+        description: '',
+      },
+    ],
   },
   // {
   //   title: 'Table',
@@ -98,15 +108,15 @@ export const TYPES: CardType[] = [
   //   ],
   // },
   {
-    title: TYPE_NAMES[FUNNEL],
+    title: TYPE_NAMES(t)[FUNNEL],
     icon: TYPE_ICONS[FUNNEL],
-    description: 'Find out where users are dropping and understand why.',
+    description: t('Find out where users are dropping and understand why.'),
     slug: FUNNEL,
   },
   {
-    title: TYPE_NAMES[USER_PATH],
+    title: TYPE_NAMES(t)[USER_PATH],
     icon: TYPE_ICONS[USER_PATH],
-    description: 'See where users are flowing and explore their journeys.',
+    description: t('See where users are flowing and explore their journeys.'),
     slug: USER_PATH,
   },
   // {
@@ -130,11 +140,12 @@ export const TYPES: CardType[] = [
   // },
 ];
 
-export const DROPDOWN_OPTIONS = TYPES.filter((i: MetricType) => i.slug !== LIBRARY).map(
-  (i: MetricType) => ({
-    label: i.title,
-    icon: i.icon,
-    value: i.slug,
-    description: i.description,
-  })
-);
+export const DROPDOWN_OPTIONS = (t: TFunction) =>
+  TYPES(t)
+    .filter((i: MetricType) => i.slug !== LIBRARY)
+    .map((i: MetricType) => ({
+      label: i.title,
+      icon: i.icon,
+      value: i.slug,
+      description: i.description,
+    }));

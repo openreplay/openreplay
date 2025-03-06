@@ -2,7 +2,8 @@ import React from 'react';
 import { Icon } from 'UI';
 import { Popover } from 'antd';
 import cn from 'classnames';
-import { IconMap } from "../../Filters/FilterModal/FilterModal";
+import { IconMap } from '../../Filters/FilterModal/FilterModal';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   payload: any;
@@ -10,6 +11,7 @@ interface Props {
 
 function NodeButton(props: Props) {
   const { payload } = props;
+  const { t } = useTranslation();
 
   const payloadStr = payload.name ?? payload.eventType;
 
@@ -19,7 +21,9 @@ function NodeButton(props: Props) {
       ? `${payloadStr.slice(0, 25)}...${payloadStr.slice(-25)}`
       : payloadStr;
 
-  const eventIcon = IconMap[payload.eventType.toLowerCase()] ?? <Icon name='link-45deg' size={18}/>
+  const eventIcon = IconMap[payload.eventType.toLowerCase()] ?? (
+    <Icon name="link-45deg" size={18} />
+  );
   return (
     <div className="relative">
       <Popover
@@ -30,7 +34,7 @@ function NodeButton(props: Props) {
               <div
                 className={cn(
                   'text-ellipsis overflow-hidden',
-                  'max-w-80 whitespace-nowrap'
+                  'max-w-80 whitespace-nowrap',
                 )}
               >
                 {safePName}
@@ -39,7 +43,7 @@ function NodeButton(props: Props) {
             <div className="border-b py-1 px-2 flex items-center gap-1">
               <Icon name="arrow-right-short" size={18} color="green" />
               <div className="ml-1 font-medium">
-                Continuing {Math.round(payload.value)}%
+                {t('Continuing')}&nbsp;{Math.round(payload.value)}%
               </div>
             </div>
             {payload.avgTimeFromPrevious && (
@@ -47,7 +51,7 @@ function NodeButton(props: Props) {
                 <Icon name="clock-history" size={16} />
 
                 <div className="ml-1 font-medium">
-                  Average time from previous step{' '}
+                  {t('Average time from previous step')}{' '}
                   <span>{payload.avgTimeFromPrevious}</span>
                 </div>
               </div>
@@ -80,7 +84,7 @@ function NodeButton(props: Props) {
             {payload.name}
           </div>
           <span style={{ fontWeight: 'bold' }}>
-            {Math.round(payload.value) + '%'}
+            {`${Math.round(payload.value)}%`}
           </span>
         </div>
       </Popover>

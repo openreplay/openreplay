@@ -9,17 +9,23 @@ interface Props {
   onClose?: () => void;
 }
 
-const Popover = ({ children, render, placement = 'top', onOpen, onClose }: Props) => {
+function Popover({
+  children,
+  render,
+  placement = 'top',
+  onOpen,
+  onClose,
+}: Props) {
   const [visible, setVisible] = React.useState(false);
 
   const handleOpen = () => {
     setVisible(true);
     onOpen?.();
-  }
+  };
   const handleClose = () => {
     setVisible(false);
     onClose?.();
-  }
+  };
 
   return (
     <AntPopover
@@ -27,14 +33,11 @@ const Popover = ({ children, render, placement = 'top', onOpen, onClose }: Props
       open={visible}
       content={() => render({ close: handleClose })}
       trigger="click"
-      onOpenChange={visible => (visible
-                                ? handleOpen() :
-                                handleClose())
-    }
+      onOpenChange={(visible) => (visible ? handleOpen() : handleClose())}
     >
       {children}
     </AntPopover>
-  )
-};
+  );
+}
 
 export default Popover;

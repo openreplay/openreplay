@@ -1,8 +1,12 @@
 import React from 'react';
-import { echarts, defaultOptions, initWindowStorages } from './init';
-import { customTooltipFormatter, buildCategories, buildDatasetsAndSeries } from './utils'
-import type { DataProps } from './utils'
 import { LineChart } from 'echarts/charts';
+import { echarts, defaultOptions, initWindowStorages } from './init';
+import {
+  customTooltipFormatter,
+  buildCategories,
+  buildDatasetsAndSeries,
+} from './utils';
+import type { DataProps } from './utils';
 
 echarts.use([LineChart]);
 
@@ -16,19 +20,26 @@ interface Props extends DataProps {
 }
 
 function ORLineChart(props: Props) {
-  const chartUuid = React.useRef<string>(Math.random().toString(36).substring(7));
+  const chartUuid = React.useRef<string>(
+    Math.random().toString(36).substring(7),
+  );
   const chartRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (!chartRef.current) return;
     const chart = echarts.init(chartRef.current);
-    const obs = new ResizeObserver(() => chart.resize())
+    const obs = new ResizeObserver(() => chart.resize());
     obs.observe(chartRef.current);
 
     const categories = buildCategories(props.data);
     const { datasets, series } = buildDatasetsAndSeries(props);
 
-    initWindowStorages(chartUuid.current, categories, props.data.chart, props.compData?.chart ?? []);
+    initWindowStorages(
+      chartUuid.current,
+      categories,
+      props.data.chart,
+      props.compData?.chart ?? [],
+    );
 
     series.forEach((s: any) => {
       if (props.isArea) {
@@ -37,7 +48,8 @@ function ORLineChart(props: Props) {
       } else {
         s.areaStyle = null;
       }
-      (window as any).__seriesColorMap[chartUuid.current][s.name] = s.itemStyle?.color ?? '#999';
+      (window as any).__seriesColorMap[chartUuid.current][s.name] =
+        s.itemStyle?.color ?? '#999';
       const datasetId = s.datasetId || 'current';
       const ds = datasets.find((d) => d.id === datasetId);
       if (!ds) return;
@@ -48,20 +60,23 @@ function ORLineChart(props: Props) {
       (window as any).__seriesValueMap[chartUuid.current][s.name] = {};
       ds.source.forEach((row: any[]) => {
         const rowIdx = row[0];
-        (window as any).__seriesValueMap[chartUuid.current][s.name][rowIdx] = row[yDimIndex];
+        (window as any).__seriesValueMap[chartUuid.current][s.name][rowIdx] =
+          row[yDimIndex];
       });
     });
 
     chart.setOption({
       ...defaultOptions,
       title: {
-        text: props.chartName ?? "Line Chart",
+        text: props.chartName ?? 'Line Chart',
         show: false,
       },
       legend: {
         ...defaultOptions.legend,
         // Only show legend for “current” series
-        data: series.filter((s: any) => !s._hideInLegend).map((s: any) => s.name),
+        data: series
+          .filter((s: any) => !s._hideInLegend)
+          .map((s: any) => s.name),
       },
       xAxis: {
         type: 'category',
@@ -75,7 +90,7 @@ function ORLineChart(props: Props) {
         nameTextStyle: {
           padding: [0, 0, 0, 15],
         },
-        minInterval: 1
+        minInterval: 1,
       },
       tooltip: {
         ...defaultOptions.tooltip,
@@ -91,12 +106,14 @@ function ORLineChart(props: Props) {
     });
     chart.on('click', (event) => {
       const index = event.dataIndex;
-      const timestamp = (window as any).__timestampMap?.[chartUuid.current]?.[index];
-      props.onClick?.({ activePayload: [{ payload: { timestamp }}]})
+      const timestamp = (window as any).__timestampMap?.[chartUuid.current]?.[
+        index
+      ];
+      props.onClick?.({ activePayload: [{ payload: { timestamp } }] });
       setTimeout(() => {
-        props.onSeriesFocus?.(event.seriesName)
-      }, 0)
-    })
+        props.onSeriesFocus?.(event.seriesName);
+      }, 0);
+    });
 
     return () => {
       chart.dispose();

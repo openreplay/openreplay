@@ -1,11 +1,11 @@
 import { makeAutoObservable, runInAction } from 'mobx';
-import Dashboard from './types/dashboard';
-import Widget from './types/widget';
 import { dashboardService, metricService } from 'App/services';
 import { toast } from 'react-toastify';
 import Period, { LAST_24_HOURS, LAST_7_DAYS } from 'Types/app/period';
-import Filter from './types/filter';
 import { getRE } from 'App/utils';
+import Filter from './types/filter';
+import Widget from './types/widget';
+import Dashboard from './types/dashboard';
 
 interface DashboardFilter {
   query?: string;
@@ -13,43 +13,70 @@ interface DashboardFilter {
 }
 export default class DashboardStore {
   siteId: any = null;
+
   dashboards: Dashboard[] = [];
+
   selectedDashboard: Dashboard | null = null;
+
   dashboardInstance: Dashboard = new Dashboard();
+
   selectedWidgets: Widget[] = [];
+
   currentWidget: Widget = new Widget();
+
   widgetCategories: any[] = [];
+
   widgets: Widget[] = [];
+
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
+
   drillDownFilter: Filter = new Filter();
+
   comparisonFilter: Filter = new Filter();
+
   drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_7_DAYS });
-  selectedDensity: number = 7 // depends on default drilldown, 7 points here!!!;
-  comparisonPeriods: Record<string, any> = {}
+
+  selectedDensity: number = 7; // depends on default drilldown, 7 points here!!!;
+
+  comparisonPeriods: Record<string, any> = {};
+
   startTimestamp: number = 0;
+
   endTimestamp: number = 0;
+
   pendingRequests: number = 0;
 
   filter: DashboardFilter = { showMine: false, query: '' };
 
   // Metrics
   metricsPage: number = 1;
+
   metricsPageSize: number = 10;
+
   metricsSearch: string = '';
 
   // Loading states
   isLoading: boolean = true;
+
   isSaving: boolean = false;
+
   isDeleting: boolean = false;
+
   loadingTemplates: boolean = false;
+
   fetchingDashboard: boolean = false;
+
   sessionsLoading: boolean = false;
+
   showAlertModal: boolean = false;
 
   // Pagination
   page: number = 1;
+
   pageSize: number = 10;
+
   dashboardsSearch: string = '';
+
   sort: any = { by: 'desc' };
 
   constructor() {
@@ -60,12 +87,14 @@ export default class DashboardStore {
 
   setDensity = (density: any) => {
     this.selectedDensity = parseInt(density, 10);
-  }
+  };
 
   get sortedDashboards() {
     const sortOrder = this.sort.by;
     return [...this.dashboards].sort((a, b) =>
-      sortOrder === 'desc' ? b.createdAt - a.createdAt : a.createdAt - b.createdAt
+      sortOrder === 'desc'
+        ? b.createdAt - a.createdAt
+        : a.createdAt - b.createdAt,
     );
   }
 
@@ -76,7 +105,7 @@ export default class DashboardStore {
     const timeStamps = this.drillDownPeriod.toTimestamps();
     this.drillDownFilter.updateKey('startTimestamp', timeStamps.startTimestamp);
     this.drillDownFilter.updateKey('endTimestamp', timeStamps.endTimestamp);
-    this.updateKey('metricsPage', 1)
+    this.updateKey('metricsPage', 1);
   }
 
   get filteredList() {
@@ -87,18 +116,23 @@ export default class DashboardStore {
           (this.filter.showMine ? !dashboard.isPublic : true) &&
           (!filterRE ||
             // @ts-ignore
-            ['name', 'owner', 'description'].some((key) => filterRE.test(dashboard[key])))
+            ['name', 'owner', 'description'].some((key) =>
+              filterRE.test(dashboard[key]),
+            )),
       )
       .sort((a, b) =>
-        this.sort.by === 'desc' ? b.createdAt - a.createdAt : a.createdAt - b.createdAt
+        this.sort.by === 'desc'
+          ? b.createdAt - a.createdAt
+          : a.createdAt - b.createdAt,
       );
   }
 
   toggleAllSelectedWidgets(isSelected: boolean) {
     if (isSelected) {
-      const allWidgets = this.widgetCategories.reduce((acc, cat) => {
-        return acc.concat(cat.widgets);
-      }, []);
+      const allWidgets = this.widgetCategories.reduce(
+        (acc, cat) => acc.concat(cat.widgets),
+        [],
+      );
 
       this.selectedWidgets = allWidgets;
     } else {
@@ -107,25 +141,31 @@ export default class DashboardStore {
   }
 
   selectWidgetsByCategory(category: string) {
-    const selectedWidgetIds = this.selectedWidgets.map((widget: any) => widget.metricId);
+    const selectedWidgetIds = this.selectedWidgets.map(
+      (widget: any) => widget.metricId,
+    );
     const widgets = this.widgetCategories
       .find((cat) => cat.name === category)
-      ?.widgets.filter((widget: any) => !selectedWidgetIds.includes(widget.metricId));
+      ?.widgets.filter(
+        (widget: any) => !selectedWidgetIds.includes(widget.metricId),
+      );
     this.selectedWidgets = this.selectedWidgets.concat(widgets) || [];
   }
 
   removeSelectedWidgetByCategory = (category: any) => {
     const categoryWidgetIds = category.widgets.map((w: Widget) => w.metricId);
     this.selectedWidgets = this.selectedWidgets.filter(
-      (widget: any) => !categoryWidgetIds.includes(widget.metricId)
+      (widget: any) => !categoryWidgetIds.includes(widget.metricId),
     );
   };
 
   toggleWidgetSelection = (widget: any) => {
-    const selectedWidgetIds = this.selectedWidgets.map((widget: any) => widget.metricId);
+    const selectedWidgetIds = this.selectedWidgets.map(
+      (widget: any) => widget.metricId,
+    );
     if (selectedWidgetIds.includes(widget.metricId)) {
       this.selectedWidgets = this.selectedWidgets.filter(
-        (w: any) => w.metricId !== widget.metricId
+        (w: any) => w.metricId !== widget.metricId,
       );
     } else {
       this.selectedWidgets.push(widget);
@@ -137,7 +177,9 @@ export default class DashboardStore {
   }
 
   initDashboard(dashboard?: Dashboard) {
-    this.dashboardInstance = dashboard ? new Dashboard().fromJson(dashboard) : new Dashboard();
+    this.dashboardInstance = dashboard
+      ? new Dashboard().fromJson(dashboard)
+      : new Dashboard();
     this.selectedWidgets = [];
   }
 
@@ -161,7 +203,9 @@ export default class DashboardStore {
       .getDashboards()
       .then((list: any) => {
         runInAction(() => {
-          this.dashboards = list.map((d: Record<string, any>) => new Dashboard().fromJson(d));
+          this.dashboards = list.map((d: Record<string, any>) =>
+            new Dashboard().fromJson(d),
+          );
         });
       })
       .finally(() => {
@@ -174,8 +218,7 @@ export default class DashboardStore {
   async fetch(dashboardId: string): Promise<any> {
     this.setFetchingDashboard(true);
     try {
-      const response = await dashboardService
-          .getDashboard(dashboardId);
+      const response = await dashboardService.getDashboard(dashboardId);
       this.selectedDashboard?.update({
         widgets: new Dashboard().fromJson(response).widgets,
       });
@@ -221,9 +264,17 @@ export default class DashboardStore {
     });
   }
 
-  syncDashboardInfo(id: string, info: { name: string, description: string, isPublic: boolean, createdAt: number }) {
+  syncDashboardInfo(
+    id: string,
+    info: {
+      name: string;
+      description: string;
+      isPublic: boolean;
+      createdAt: number;
+    },
+  ) {
     if (this.selectedDashboard !== null) {
-      this.selectedDashboard.updateInfo(info)
+      this.selectedDashboard.updateInfo(info);
     }
     const index = this.dashboards.findIndex((d) => d.dashboardId === id);
     this.dashboards[index].updateInfo(info);
@@ -275,7 +326,7 @@ export default class DashboardStore {
   fromJson(json: any) {
     runInAction(() => {
       this.dashboards = json.dashboards.map((d: Record<string, any>) =>
-        new Dashboard().fromJson(d)
+        new Dashboard().fromJson(d),
       );
     });
     return this;
@@ -286,7 +337,9 @@ export default class DashboardStore {
   }
 
   removeDashboard(dashboard: Dashboard) {
-    this.dashboards = this.dashboards.filter((d) => d.dashboardId !== dashboard.dashboardId);
+    this.dashboards = this.dashboards.filter(
+      (d) => d.dashboardId !== dashboard.dashboardId,
+    );
   }
 
   getDashboard(dashboardId: string | number): Dashboard | null {
@@ -302,7 +355,9 @@ export default class DashboardStore {
   }
 
   updateDashboard(dashboard: Dashboard) {
-    const index = this.dashboards.findIndex((d) => d.dashboardId === dashboard.dashboardId);
+    const index = this.dashboards.findIndex(
+      (d) => d.dashboardId === dashboard.dashboardId,
+    );
     if (index >= 0) {
       this.dashboards[index] = dashboard;
       if (this.selectedDashboard?.dashboardId === dashboard.dashboardId) {
@@ -313,7 +368,8 @@ export default class DashboardStore {
 
   selectDashboardById = (dashboardId: any) => {
     this.selectedDashboard =
-      this.dashboards.find((d) => d.dashboardId == dashboardId) || new Dashboard();
+      this.dashboards.find((d) => d.dashboardId == dashboardId) ||
+      new Dashboard();
   };
 
   getDashboardById = (dashboardId: string) => {
@@ -322,15 +378,14 @@ export default class DashboardStore {
     if (dashboard) {
       this.selectedDashboard = dashboard;
       return true;
-    } else {
-      this.selectedDashboard = null;
-      return false;
     }
+    this.selectedDashboard = null;
+    return false;
   };
 
   resetSelectedDashboard = () => {
-    this.selectedDashboard = null
-  }
+    this.selectedDashboard = null;
+  };
 
   setSiteId = (siteId: any) => {
     this.siteId = siteId;
@@ -374,8 +429,7 @@ export default class DashboardStore {
   async deleteDashboardWidget(dashboardId: string, widgetId: string) {
     this.isDeleting = true;
     try {
-      await dashboardService
-          .deleteWidget(dashboardId, widgetId);
+      await dashboardService.deleteWidget(dashboardId, widgetId);
       toast.success('Dashboard updated successfully');
       runInAction(() => {
         this.selectedDashboard?.removeWidget(widgetId);
@@ -385,12 +439,14 @@ export default class DashboardStore {
     }
   }
 
-  async addWidgetToDashboard(dashboard: Dashboard, metricIds: any): Promise<any> {
+  async addWidgetToDashboard(
+    dashboard: Dashboard,
+    metricIds: any,
+  ): Promise<any> {
     this.isSaving = true;
     try {
       try {
-        const response = await dashboardService
-            .addWidget(dashboard, metricIds);
+        const response = await dashboardService.addWidget(dashboard, metricIds);
         toast.success('Card added to dashboard.');
       } catch {
         toast.error('Card could not be added.');
@@ -418,13 +474,13 @@ export default class DashboardStore {
 
   setComparisonPeriod(period: any, metricId: string) {
     if (!period) {
-      return this.comparisonPeriods[metricId] = null
+      return (this.comparisonPeriods[metricId] = null);
     }
     this.comparisonPeriods[metricId] = period;
   }
 
   cloneCompFilter() {
-    const filterData = this.drillDownFilter.toData()
+    const filterData = this.drillDownFilter.toData();
     this.comparisonFilter = new Filter().fromData(filterData);
 
     return this.comparisonFilter;
@@ -436,43 +492,51 @@ export default class DashboardStore {
 
   upPendingRequests = () => {
     this.pendingRequests += 1;
-  }
+  };
 
   downPendingRequests = () => {
     this.pendingRequests -= 1;
-  }
+  };
 
   fetchMetricChartData(
     metric: Widget,
     data: any,
     isSaved: boolean = false,
     period: Record<string, any>,
-    isComparison?: boolean
+    isComparison?: boolean,
   ): Promise<any> {
     period = period.toTimestamps();
-    const density = data.density;
+    const { density } = data;
     const params = { ...period, ...data, key: metric.predefinedKey };
 
     if (!isComparison && metric.page && metric.limit) {
-      params['page'] = metric.page;
-      params['limit'] = metric.limit;
+      params.page = metric.page;
+      params.limit = metric.limit;
     }
 
     return new Promise(async (resolve, reject) => {
-      this.upPendingRequests()
+      this.upPendingRequests();
 
-      if (!isComparison && metric.metricType === 'table' && metric.metricOf === 'jsException') {
+      if (
+        !isComparison &&
+        metric.metricType === 'table' &&
+        metric.metricOf === 'jsException'
+      ) {
         params.limit = 5;
       }
 
       try {
-        const data = await metricService.getMetricChartData(metric, params, isSaved);
+        const data = await metricService.getMetricChartData(
+          metric,
+          params,
+          isSaved,
+        );
         resolve(metric.setData(data, period, isComparison, density));
       } catch (error) {
         reject(error);
       } finally {
         setTimeout(() => {
-          this.downPendingRequests()
+          this.downPendingRequests();
         }, 100);
       }
     });

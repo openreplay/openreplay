@@ -13,10 +13,10 @@ const dropdownStyles = {
       backgroundColor: 'white',
       borderRadius: '.5rem',
       '&:hover': {
-      borderColor: 'rgb(115 115 115 / 0.9)', 
-    }
-    }
-    
+        borderColor: 'rgb(115 115 115 / 0.9)',
+      },
+    };
+
     return obj;
   },
   valueContainer: (provided: any) => ({
@@ -38,20 +38,20 @@ const dropdownStyles = {
   //   whiteSpace: 'nowrap',
   // }),
   menu: (provided: any, state: any) => ({
-      ...provided,
-      marginTop: '0.5rem',
-      left: 0,
-      minWidth: 'fit-content',
-      overflow: 'hidden',
-      zIndex: 100,
-      border: 'none',
-      boxShadow: '0px 4px 10px rgba(0,0,0, 0.15)',
+    ...provided,
+    marginTop: '0.5rem',
+    left: 0,
+    minWidth: 'fit-content',
+    overflow: 'hidden',
+    zIndex: 100,
+    border: 'none',
+    boxShadow: '0px 4px 10px rgba(0,0,0, 0.15)',
   }),
   container: (provided: any) => ({
-      ...provided,
-      minWidth: "max-content",
+    ...provided,
+    minWidth: 'max-content',
   }),
-  singleValue: (provided: any, state: { isDisabled: any; }) => {
+  singleValue: (provided: any, state: { isDisabled: any }) => {
     const opacity = state.isDisabled ? 0.5 : 1;
     const transition = 'opacity 300ms';
 
@@ -61,8 +61,8 @@ const dropdownStyles = {
       transition,
       marginTop: '-3px',
     };
-  }
-}
+  },
+};
 interface Props {
   onChange: (e: any, { name, value }: any) => void;
   className?: string;
@@ -71,7 +71,13 @@ interface Props {
   isDisabled?: boolean;
 }
 function FilterOperator(props: Props) {
-  const { options, value, onChange, isDisabled = false, className = '' } = props;
+  const {
+    options,
+    value,
+    onChange,
+    isDisabled = false,
+    className = '',
+  } = props;
 
   return (
     <div className="mx-2">
@@ -82,8 +88,10 @@ function FilterOperator(props: Props) {
         placeholder="Select"
         isDisabled={isDisabled}
         value={value ? options?.find((i: any) => i.value === value) : null}
-        onChange={({ value }: any) => onChange(null, { name: 'operator', value: value.value })}
-        className='btn-event-operator'
+        onChange={({ value }: any) =>
+          onChange(null, { name: 'operator', value: value.value })
+        }
+        className="btn-event-operator"
       />
     </div>
   );

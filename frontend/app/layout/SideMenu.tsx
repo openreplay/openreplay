@@ -10,12 +10,14 @@ import {
   CLIENT_DEFAULT_TAB,
   CLIENT_TABS,
   client,
-  withSiteId
+  withSiteId,
 } from 'App/routes';
 import { MODULES } from 'Components/Client/Modules';
 import { Icon } from 'UI';
 import SVG from 'UI/SVG';
 
+import { useStore } from 'App/mstore';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import InitORCard from './InitORCard';
 import SpotToOpenReplayPrompt from './SpotToOpenReplayPrompt';
 import {
@@ -23,10 +25,9 @@ import {
   PREFERENCES_MENU,
   categories as main_menu,
   preferences,
-  spotOnlyCats
+  spotOnlyCats,
 } from './data';
-import { useStore } from 'App/mstore';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
@@ -36,24 +37,22 @@ interface Props extends RouteComponentProps {
 }
 
 function SideMenu(props: Props) {
-  const {
-    location,
-    isCollapsed
-  } = props;
+  const { location, isCollapsed } = props;
 
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
   const { searchStore, projectsStore, userStore } = useStore();
   const spotOnly = userStore.scopeState === 1;
-  const account = userStore.account;
+  const { account } = userStore;
   const modules = account.settings?.modules ?? [];
   const isAdmin = account.admin || account.superAdmin;
-  const isEnterprise = userStore.isEnterprise;
-  const siteId = projectsStore.siteId;
-  const isMobile = projectsStore.isMobile;
+  const { isEnterprise } = userStore;
+  const { siteId } = projectsStore;
+  const { isMobile } = projectsStore;
+  const { t } = useTranslation();
 
-  let menu: any[] = React.useMemo(() => {
-    const sourceMenu = isPreferencesActive ? preferences : main_menu;
+  const menu: any[] = React.useMemo(() => {
+    const sourceMenu = isPreferencesActive ? preferences(t) : main_menu(t);
 
     return sourceMenu
       .filter((cat) => {
@@ -92,15 +91,18 @@ function SideMenu(props: Props) {
 
             const isHidden = [
               item.key === MENU.RECOMMENDATIONS &&
-              modules.includes(MODULES.RECOMMENDATIONS),
+                modules.includes(MODULES.RECOMMENDATIONS),
               item.key === MENU.FEATURE_FLAGS &&
-              modules.includes(MODULES.FEATURE_FLAGS),
-              item.key === MENU.HIGHLIGHTS && modules.includes(MODULES.HIGHLIGHTS),
-              item.key === MENU.LIVE_SESSIONS && (modules.includes(MODULES.ASSIST) || isMobile),
+                modules.includes(MODULES.FEATURE_FLAGS),
+              item.key === MENU.HIGHLIGHTS &&
+                modules.includes(MODULES.HIGHLIGHTS),
+              item.key === MENU.LIVE_SESSIONS &&
+                (modules.includes(MODULES.ASSIST) || isMobile),
               item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
-              item.key === MENU.USABILITY_TESTS && modules.includes(MODULES.USABILITY_TESTS),
+              item.key === MENU.USABILITY_TESTS &&
+                modules.includes(MODULES.USABILITY_TESTS),
               item.isAdmin && !isAdmin,
-              item.isEnterprise && !isEnterprise
+              item.isEnterprise && !isEnterprise,
             ].some((cond) => cond);
 
             return { ...item, hidden: isHidden };
@@ -111,7 +113,7 @@ function SideMenu(props: Props) {
         return {
           ...category,
           items: updatedItems,
-          hidden: allItemsHidden
+          hidden: allItemsHidden,
         };
       });
   }, [isAdmin, isEnterprise, isPreferencesActive, modules, spotOnly, siteId]);
@@ -142,7 +144,7 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.NOTIFICATIONS]: () => client(CLIENT_TABS.NOTIFICATIONS),
     [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
     [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
-    [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId)
+    [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
   };
 
   const handleClick = (item: any) => {
@@ -172,10 +174,10 @@ function SideMenu(props: Props) {
     props.history.push(path);
   };
 
-  const RenderDivider = (props: { index: number }) => {
+  function RenderDivider(props: { index: number }) {
     if (props.index === 0) return null;
     return <Divider style={{ margin: '6px 0' }} />;
-  };
+  }
   return (
     <>
       <Menu
@@ -185,7 +187,7 @@ function SideMenu(props: Props) {
         selectedKeys={menu.flatMap((category) =>
           category.items
             .filter((item: any) => isMenuItemActive(item.key))
-            .map((item) => item.key)
+            .map((item) => item.key),
         )}
       >
         {menu.map((category, index) => (
@@ -246,7 +248,7 @@ function SideMenu(props: Props) {
                               display: 'flex',
                               justifyContent: 'space-between',
                               alignItems: 'center',
-                              width: '100%'
+                              width: '100%',
                             }}
                           >
                             {item.label}
@@ -255,7 +257,7 @@ function SideMenu(props: Props) {
                               bordered={false}
                               className="text-xs"
                             >
-                              Beta
+                              {t('Beta')}
                             </Tag>
                           </div>
                         </Menu.Item>
@@ -276,7 +278,7 @@ function SideMenu(props: Props) {
                           <Menu.Item
                             className={cn('ml-8', {
                               'ant-menu-item-selected !bg-active-dark-blue':
-                                isMenuItemActive(child.key)
+                                isMenuItemActive(child.key),
                             })}
                             key={child.key}
                           >
@@ -292,7 +294,7 @@ function SideMenu(props: Props) {
                             name={item.icon}
                             size={16}
                             color={isActive ? 'teal' : ''}
-                            className={'hover-fill-teal'}
+                            className="hover-fill-teal"
                           />
                         }
                         style={{ paddingLeft: '20px' }}
@@ -326,8 +328,7 @@ function SideMenu(props: Props) {
 
 export default withRouter(observer(SideMenu));
 
-
-const SpotMenuItem = ({ isCollapsed }: any) => {
+function SpotMenuItem({ isCollapsed }: any) {
   const [isModalVisible, setIsModalVisible] = React.useState(false);
 
   return (
@@ -347,10 +348,8 @@ const SpotMenuItem = ({ isCollapsed }: any) => {
           </Button>
         </Popover>
       ) : (
-        <>
-          <InitORCard onOpenModal={() => setIsModalVisible(true)} />
-        </>
+        <InitORCard onOpenModal={() => setIsModalVisible(true)} />
       )}
     </>
   );
-};
+}

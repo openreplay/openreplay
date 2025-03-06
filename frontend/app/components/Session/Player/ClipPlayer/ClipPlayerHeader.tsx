@@ -8,7 +8,7 @@ import { withSiteId } from '@/routes';
 import * as routes from '@/routes';
 import { useStore } from '@/mstore';
 import { LinkIcon, X } from 'lucide-react';
-import { PartialSessionBadge } from "Components/Session_/WarnBadge";
+import { PartialSessionBadge } from 'Components/Session_/WarnBadge';
 
 interface Props {
   session: Session;
@@ -20,12 +20,12 @@ interface Props {
 function ClipPlayerHeader(props: Props) {
   const { projectsStore } = useStore();
   const { session, range, onClose, isHighlight } = props;
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
   const { message } = App.useApp();
 
   const copyHandler = () => {
-    const path = withSiteId(routes.session(session.sessionId), siteId + '');
-    copy(window.location.origin + path + '?jumpto=' + Math.round(range[0]));
+    const path = withSiteId(routes.session(session.sessionId), `${siteId}`);
+    copy(`${window.location.origin + path}?jumpto=${Math.round(range[0])}`);
 
     void message.success('Session link copied to clipboard');
   };
@@ -38,7 +38,7 @@ function ClipPlayerHeader(props: Props) {
         <Tooltip title="Copy link to clipboard" placement="bottom">
           <Button
             onClick={copyHandler}
-            size={'small'}
+            size="small"
             className="flex items-center justify-center"
           >
             <LinkIcon size={14} />
@@ -46,8 +46,14 @@ function ClipPlayerHeader(props: Props) {
         </Tooltip>
 
         {isHighlight ? (
-          <Button icon={<X size={14} strokeWidth={1} />} size={'small'} onClick={onClose} />
-        ) : <QueueControls />}
+          <Button
+            icon={<X size={14} strokeWidth={1} />}
+            size="small"
+            onClick={onClose}
+          />
+        ) : (
+          <QueueControls />
+        )}
       </Space>
     </div>
   );

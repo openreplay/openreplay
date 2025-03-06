@@ -39,7 +39,7 @@ export { default as NoSessionPermission } from './NoSessionPermission';
 export { default as SideMenuHeader } from './SideMenuHeader';
 export { default as PageTitle } from './PageTitle';
 export { default as Pagination } from './Pagination';
-export { default as Tooltip } from './Tooltip'
+export { default as Tooltip } from './Tooltip';
 export { default as Input } from './Input';
 export { default as Form } from './Form';
 export { default as Modal } from './Modal';
@@ -47,4 +47,4 @@ export { default as Message } from './Message';
 export { default as Popover } from './Popover';
 export { default as Switch } from './Switch';
 export { default as Divider } from './Divider';
-export { default as CodeBlock } from './CodeBlock'
+export { default as CodeBlock } from './CodeBlock';

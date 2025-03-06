@@ -1,11 +1,15 @@
 import logger from 'App/logger';
-import { TarFile } from "js-untar";
+import { TarFile } from 'js-untar';
 import { getResourceFromNetworkRequest } from 'Player';
 
 import type { Store } from 'Player';
 import { IMessageManager } from 'Player/player/Animator';
 
 import TouchManager from 'Player/mobile/managers/TouchManager';
+import IOSPerformanceTrackManager, {
+  PerformanceChartPoint,
+} from 'Player/mobile/managers/IOSPerformanceTrackManager';
+import SnapshotManager from 'Player/mobile/managers/SnapshotManager';
 import ActivityManager from '../web/managers/ActivityManager';
 import Lists, {
   InitialLists,
@@ -13,12 +17,8 @@ import Lists, {
   State as ListsState,
 } from './IOSLists';
 import ListWalker from '../common/ListWalker';
-import IOSPerformanceTrackManager, {
-  PerformanceChartPoint,
-} from 'Player/mobile/managers/IOSPerformanceTrackManager';
 import { MType } from '../web/messages';
 import type { Message } from '../web/messages';
-import SnapshotManager from 'Player/mobile/managers/SnapshotManager';
 
 import Screen, {
   INITIAL_STATE as SCREEN_INITIAL_STATE,
@@ -106,26 +106,40 @@ export default class IOSMessageManager implements IMessageManager {
   };
 
   private activityManager: ActivityManager | null = null;
+
   private performanceManager = new IOSPerformanceTrackManager();
 
   private readonly sessionStart: number;
+
   private lastMessageTime: number = 0;
+
   private touchManager: TouchManager;
+
   private lists: Lists;
+
   public snapshotManager: SnapshotManager;
-  private appFocusTracker = new ListWalker<{tp: 102, time: number, timestamp: number, value: number, name: string}>();
+
+  private appFocusTracker = new ListWalker<{
+    tp: 102;
+    time: number;
+    timestamp: number;
+    value: number;
+    name: string;
+  }>();
 
   constructor(
     private readonly session: Record<string, any>,
     private readonly state: Store<State & { time: number }>,
     private readonly screen: Screen,
     private readonly uiErrorHandler?: { error: (error: string) => void },
-    initialLists?: Partial<InitialLists>
+    initialLists?: Partial<InitialLists>,
   ) {
     this.sessionStart = this.session.startedAt;
     this.lists = new Lists(initialLists);
     this.touchManager = new TouchManager(screen);
-    this.activityManager = new ActivityManager(this.session.duration.milliseconds); // only if not-live
+    this.activityManager = new ActivityManager(
+      this.session.duration.milliseconds,
+    ); // only if not-live
     this.snapshotManager = new SnapshotManager();
   }
 
@@ -134,7 +148,7 @@ export default class IOSMessageManager implements IMessageManager {
   }
 
   public updateLists(lists: Partial<InitialLists>) {
-    const exceptions = lists.exceptions;
+    const { exceptions } = lists;
     exceptions?.forEach((e) => {
       this.lists.lists.exceptions.insert(e);
       this.lists.lists.log.insert(e);
@@ -143,7 +157,7 @@ export default class IOSMessageManager implements IMessageManager {
       this.lists.lists.frustrations.insert(f);
     });
 
-    const eventCount = this.lists.lists.event.count; //lists?.event?.length || 0;
+    const eventCount = this.lists.lists.event.count; // lists?.event?.length || 0;
     const currentState = this.state.get();
     this.state.update({
       eventCount: currentState.eventCount + eventCount,
@@ -152,17 +166,14 @@ export default class IOSMessageManager implements IMessageManager {
   }
 
   /** empty here. Kept for consistency with normal manager */
-  sortDomRemoveMessages() {
-    return;
-  }
+  sortDomRemoveMessages() {}
 
-  public getListsFullState = () => {
-    return this.lists.getFullListsState();
-  };
+  public getListsFullState = () => this.lists.getFullListsState();
 
   private waitingForFiles: boolean = false;
+
   public onFileReadSuccess = () => {
-    let newState: Partial<State> = {
+    const newState: Partial<State> = {
       ...this.state.get(),
       eventCount: this.lists?.lists.event?.length || 0,
       performanceChartData: this.performanceManager.chartData,
@@ -171,7 +182,7 @@ export default class IOSMessageManager implements IMessageManager {
 
     if (this.activityManager) {
       this.activityManager.end();
-      newState['skipIntervals'] = this.activityManager.list;
+      newState.skipIntervals = this.activityManager.list;
     }
     this.state.update(newState);
   };
@@ -195,7 +206,9 @@ export default class IOSMessageManager implements IMessageManager {
 
   resetMessageManagers() {
     this.touchManager = new TouchManager(this.screen);
-    this.activityManager = new ActivityManager(this.session.duration.milliseconds);
+    this.activityManager = new ActivityManager(
+      this.session.duration.milliseconds,
+    );
   }
 
   move(t: number): any {
@@ -209,7 +222,7 @@ export default class IOSMessageManager implements IMessageManager {
       });
     }
     if (lastAppFocusMessage) {
-      console.log(lastAppFocusMessage)
+      console.log(lastAppFocusMessage);
       Object.assign(stateToUpdate, {
         inBackground: lastAppFocusMessage.value === 1,
       });
@@ -231,7 +244,9 @@ export default class IOSMessageManager implements IMessageManager {
       });
     }
     Object.assign(stateToUpdate, this.lists.moveGetState(t));
-    Object.assign(stateToUpdate, { performanceListNow: this.lists.lists.performance.listNow });
+    Object.assign(stateToUpdate, {
+      performanceListNow: this.lists.lists.performance.listNow,
+    });
     Object.keys(stateToUpdate).length > 0 && this.state.update(stateToUpdate);
   }
 
@@ -268,7 +283,9 @@ export default class IOSMessageManager implements IMessageManager {
       //   console.log('input', msg)
       //   break;
       case MType.MobileNetworkCall:
-        this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart));
+        this.lists.lists.fetch.insert(
+          getResourceFromNetworkRequest(msg, this.sessionStart),
+        );
         break;
       case MType.WsChannel:
         this.lists.lists.websocket.insert(msg);

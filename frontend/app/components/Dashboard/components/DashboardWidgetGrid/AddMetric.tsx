@@ -1,12 +1,13 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Loader } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import WidgetWrapper from 'App/components/Dashboard/components/WidgetWrapper';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
 import { dashboardMetricCreate, withSiteId } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface IProps extends RouteComponentProps {
   siteId: string;
@@ -15,6 +16,7 @@ interface IProps extends RouteComponentProps {
 }
 
 function AddMetric({ history, siteId, title, description }: IProps) {
+  const { t } = useTranslation();
   const [metrics, setMetrics] = React.useState<Record<string, any>[]>([]);
 
   const { dashboardStore } = useStore();
@@ -22,14 +24,17 @@ function AddMetric({ history, siteId, title, description }: IProps) {
 
   React.useEffect(() => {
     dashboardStore?.fetchTemplates(true).then((cats: any[]) => {
-      const customMetrics = cats.find((category) => category.name === 'custom')?.widgets || [];
+      const customMetrics =
+        cats.find((category) => category.name === 'custom')?.widgets || [];
 
       setMetrics(customMetrics);
     });
   }, []);
 
   const dashboard = dashboardStore.selectedDashboard;
-  const selectedWidgetIds = dashboardStore.selectedWidgets.map((widget: any) => widget.metricId);
+  const selectedWidgetIds = dashboardStore.selectedWidgets.map(
+    (widget: any) => widget.metricId,
+  );
   const queryParams = new URLSearchParams(location.search);
 
   const onSave = () => {
@@ -46,7 +51,10 @@ function AddMetric({ history, siteId, title, description }: IProps) {
   };
 
   const onCreateNew = () => {
-    const path = withSiteId(dashboardMetricCreate(dashboard.dashboardId), siteId);
+    const path = withSiteId(
+      dashboardMetricCreate(dashboard.dashboardId),
+      siteId,
+    );
     if (!queryParams.has('modal')) history.push('?modal=addMetric');
     history.push(path);
     hideModal();
@@ -64,8 +72,12 @@ function AddMetric({ history, siteId, title, description }: IProps) {
             <div className="text-disabled-text">{description}</div>
           </div>
 
-          <Button variant="text" className="text-main font-medium ml-2" onClick={onCreateNew}>
-            + Create New
+          <Button
+            variant="text"
+            className="text-main font-medium ml-2"
+            onClick={onCreateNew}
+          >
+            +&nbsp;{t('Create New')}
           </Button>
         </div>
         <Loader loading={dashboardStore.loadingTemplates}>
@@ -83,26 +95,30 @@ function AddMetric({ history, siteId, title, description }: IProps) {
                   key={metric.metricId}
                   widget={metric}
                   active={selectedWidgetIds.includes(metric.metricId)}
-                  isTemplate={true}
+                  isTemplate
                   isSaved={metric.metricType === 'predefined'}
                   onClick={() => dashboardStore.toggleWidgetSelection(metric)}
                 />
               ))
             ) : (
-              <div>No custom metrics created.</div>
+              <div>{t('No custom metrics created.')}</div>
             )}
           </div>
         </Loader>
 
         <div className="py-4 border-t px-8 bg-white w-full flex items-center justify-between">
           <div>
-            {'Selected '}
+            {t('Selected')}
             <span className="font-medium">{selectedWidgetIds.length}</span>
-            {' out of '}
+            &nbsp;{t('out of')}&nbsp;
             <span className="font-medium">{metrics ? metrics.length : 0}</span>
           </div>
-          <Button type="primary" disabled={selectedWidgetIds.length === 0} onClick={onSave}>
-            Add Selected
+          <Button
+            type="primary"
+            disabled={selectedWidgetIds.length === 0}
+            onClick={onSave}
+          >
+            {t('Add Selected')}
           </Button>
         </div>
       </div>

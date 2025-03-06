@@ -28,67 +28,133 @@ export const options = [
   { key: 'not equal', label: 'not equal', value: 'not equal' },
   { key: 'onSelector', label: 'on selector', value: 'onSelector' },
   { key: 'onText', label: 'on text', value: 'onText' },
-  { key: 'onComponent', label: 'on component', value: 'onComponent' }
+  { key: 'onComponent', label: 'on component', value: 'onComponent' },
 ];
 
-export const tagElementOperators = [{
-  key: 'is',
-  label: 'is displayed',
-  value: 'is',
-}, {
-  key: 'isNot',
-  label: 'is not displayed',
-  value: 'isNot',
-}]
+export const tagElementOperators = [
+  {
+    key: 'is',
+    label: 'is displayed',
+    value: 'is',
+  },
+  {
+    key: 'isNot',
+    label: 'is not displayed',
+    value: 'isNot',
+  },
+];
 
 const filterKeys = ['is', 'isNot'];
 const stringFilterKeysLimited = ['is', 'isAny', 'isNot'];
-const stringFilterKeys = ['is', 'isAny', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
-const stringFilterKeysPerformance = ['is', 'inAnyPage', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
-const targetFilterKeys = ['on', 'notOn', 'onAny', 'contains', 'startsWith', 'endsWith', 'notContains'];
+const stringFilterKeys = [
+  'is',
+  'isAny',
+  'isNot',
+  'contains',
+  'startsWith',
+  'endsWith',
+  'notContains',
+];
+const stringFilterKeysPerformance = [
+  'is',
+  'inAnyPage',
+  'isNot',
+  'contains',
+  'startsWith',
+  'endsWith',
+  'notContains',
+];
+const targetFilterKeys = [
+  'on',
+  'notOn',
+  'onAny',
+  'contains',
+  'startsWith',
+  'endsWith',
+  'notContains',
+];
 const signUpStatusFilterKeys = ['isSignedUp', 'notSignedUp'];
-const rangeFilterKeys = ['before', 'after', 'on', 'inRange', 'notInRange', 'withInLast', 'notWithInLast'];
+const rangeFilterKeys = [
+  'before',
+  'after',
+  'on',
+  'inRange',
+  'notInRange',
+  'withInLast',
+  'notWithInLast',
+];
 const pageUrlFilter = ['contains', 'startsWith', 'endsWith'];
 
-const getOperatorsByKeys = (keys) => {
-  return options.filter(option => keys.includes(option.key));
-};
+const getOperatorsByKeys = (keys) =>
+  options.filter((option) => keys.includes(option.key));
 
-export const baseOperators = options.filter(({ key }) => filterKeys.includes(key));
-export const stringOperatorsLimited = options.filter(({ key }) => stringFilterKeysLimited.includes(key));
-export const stringOperators = options.filter(({ key }) => stringFilterKeys.includes(key));
-export const stringOperatorsPerformance = options.filter(({ key }) => stringFilterKeysPerformance.includes(key));
-export const targetOperators = options.filter(({ key }) => targetFilterKeys.includes(key));
-export const targetConditional = options.filter(({ key }) => ['on', 'notOn', 'startsWith', 'endsWith', 'contains'].includes(key));
-export const stringConditional = options.filter(({ key }) => ['isAny', 'is', 'isNot', 'startsWith', 'endsWith', 'contains'].includes(key));
+export const baseOperators = options.filter(({ key }) =>
+  filterKeys.includes(key),
+);
+export const stringOperatorsLimited = options.filter(({ key }) =>
+  stringFilterKeysLimited.includes(key),
+);
+export const stringOperators = options.filter(({ key }) =>
+  stringFilterKeys.includes(key),
+);
+export const stringOperatorsPerformance = options.filter(({ key }) =>
+  stringFilterKeysPerformance.includes(key),
+);
+export const targetOperators = options.filter(({ key }) =>
+  targetFilterKeys.includes(key),
+);
+export const targetConditional = options.filter(({ key }) =>
+  ['on', 'notOn', 'startsWith', 'endsWith', 'contains'].includes(key),
+);
+export const stringConditional = options.filter(({ key }) =>
+  ['isAny', 'is', 'isNot', 'startsWith', 'endsWith', 'contains'].includes(key),
+);
 export const clickSelectorOperators = [
   { key: 'selectorIs', label: 'selector is', value: 'selectorIs' },
   { key: 'selectorIsAny', label: 'selector is any', value: 'selectorIsAny' },
   { key: 'selectorIsNot', label: 'selector is not', value: 'selectorIsNot' },
-  { key: 'selectorContains', label: 'selector contains', value: 'selectorContains' },
-  { key: 'selectorNotContains', label: 'selector not contains', value: 'selectorNotContains' },
-  { key: 'selectorStartsWith', label: 'selector starts with', value: 'selectorStartsWith' },
-  { key: 'selectorEndsWith', label: 'selector ends with', value: 'selectorEndsWith' }
-]
+  {
+    key: 'selectorContains',
+    label: 'selector contains',
+    value: 'selectorContains',
+  },
+  {
+    key: 'selectorNotContains',
+    label: 'selector not contains',
+    value: 'selectorNotContains',
+  },
+  {
+    key: 'selectorStartsWith',
+    label: 'selector starts with',
+    value: 'selectorStartsWith',
+  },
+  {
+    key: 'selectorEndsWith',
+    label: 'selector ends with',
+    value: 'selectorEndsWith',
+  },
+];
 
 export const booleanOperators = [
   { key: 'true', label: 'true', value: 'true' },
-  { key: 'false', label: 'false', value: 'false' }
+  { key: 'false', label: 'false', value: 'false' },
 ];
-export const pageUrlOperators = options.filter(({ key }) => pageUrlFilter.includes(key));
+export const pageUrlOperators = options.filter(({ key }) =>
+  pageUrlFilter.includes(key),
+);
 
 export const customOperators = [
   { key: '=', label: '=', value: '=' },
   { key: '<', label: '<', value: '<' },
   { key: '>', label: '>', value: '>' },
   { key: '<=', label: '<=', value: '<=' },
-  { key: '>=', label: '>=', value: '>=' }
+  { key: '>=', label: '>=', value: '>=' },
 ];
 
 export const metricTypes = [
   { label: 'Timeseries', value: 'timeseries' },
   { label: 'Table', value: 'table' },
-  { label: 'Funnel', value: 'funnel' }
+  { label: 'Funnel', value: 'funnel' },
   // { label: 'Errors', value: 'errors' },
   // { label: 'Sessions', value: 'sessions' },
 ];
@@ -99,7 +165,7 @@ export const tableColumnName = {
   [FilterKey.USER_BROWSER]: 'Browser',
   [FilterKey.USER_DEVICE]: 'Devices',
   [FilterKey.USER_COUNTRY]: 'Countries',
-  [FilterKey.LOCATION]: 'URLs'
+  [FilterKey.LOCATION]: 'URLs',
 };
 
 export const metricOf = [
@@ -111,8 +177,7 @@ export const metricOf = [
   { label: 'Browser', value: FilterKey.USER_BROWSER, type: 'table' },
   { label: 'Devices', value: FilterKey.USER_DEVICE, type: 'table' },
   { label: 'Countries', value: FilterKey.USER_COUNTRY, type: 'table' },
-  { label: 'URLs', value: FilterKey.LOCATION, type: 'table' }
-
+  { label: 'URLs', value: FilterKey.LOCATION, type: 'table' },
 ];
 
 export const methodOptions = [
@@ -124,7 +189,7 @@ export const methodOptions = [
   { label: 'HEAD', value: 'HEAD' },
   { label: 'OPTIONS', value: 'OPTIONS' },
   { label: 'TRACE', value: 'TRACE' },
-  { label: 'CONNECT', value: 'CONNECT' }
+  { label: 'CONNECT', value: 'CONNECT' },
 ];
 
 export const issueOptions = [
@@ -140,27 +205,30 @@ export const issueOptions = [
   { label: 'Crash', value: IssueType.CRASH },
   { label: 'Custom', value: IssueType.CUSTOM },
   { label: 'Error', value: IssueType.JS_EXCEPTION },
-  { label: 'Mouse Thrashing', value: IssueType.MOUSE_THRASHING }
+  { label: 'Mouse Thrashing', value: IssueType.MOUSE_THRASHING },
 ];
 
 export const issueCategories = [
   { label: 'Resources', value: IssueCategory.RESOURCES },
   { label: 'Network Request', value: IssueCategory.NETWORK },
   { label: 'Click Rage', value: IssueCategory.RAGE },
-  { label: 'JS Errors', value: IssueCategory.ERRORS }
+  { label: 'JS Errors', value: IssueCategory.ERRORS },
 ];
 
 export const pathAnalysisEvents = [
   { value: FilterKey.LOCATION, label: 'Pages' },
   { value: FilterKey.CLICK, label: 'Clicks' },
   { value: FilterKey.INPUT, label: 'Input' },
-  { value: FilterKey.CUSTOM, label: 'Custom' }
+  { value: FilterKey.CUSTOM, label: 'Custom' },
 ];
 
-export const issueCategoriesMap = issueCategories.reduce((acc, { value, label }) => {
-  acc[value] = label;
-  return acc;
-}, {});
+export const issueCategoriesMap = issueCategories.reduce(
+  (acc, { value, label }) => {
+    acc[value] = label;
+    return acc;
+  },
+  {},
+);
 
 export default {
   options,
@@ -180,5 +248,5 @@ export default {
   pageUrlOperators,
   targetConditional,
   stringConditional,
-  tagElementOperators
+  tagElementOperators,
 };

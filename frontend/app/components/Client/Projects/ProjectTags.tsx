@@ -3,12 +3,14 @@ import { useStore } from '@/mstore';
 import { List, Button, Typography, Space, Empty } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { ScanSearch } from 'lucide-react';
-import {EditOutlined} from '@ant-design/icons'
+import { EditOutlined } from '@ant-design/icons';
 import { useModal } from 'Components/ModalContext';
 import TagForm from 'Components/Client/Projects/TagForm';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { useTranslation } from 'react-i18next';
 
 function ProjectTags() {
+  const { t } = useTranslation();
   const { tagWatchStore, projectsStore } = useStore();
   const list = tagWatchStore.tags;
   const { openModal } = useModal();
@@ -20,7 +22,7 @@ function ProjectTags() {
 
   const handleInit = (tag?: any) => {
     openModal(<TagForm tag={tag} projectId={pid!} />, {
-      title: tag ? 'Edit Tag' : 'Add Tag'
+      title: tag ? t('Edit Tag') : t('Add Tag'),
     });
   };
 
@@ -28,18 +30,31 @@ function ProjectTags() {
     <div className="flex flex-col gap-6">
       <Space direction="vertical">
         <Typography.Text>
-          Manage Tag Elements here. Rename tags for easy identification or delete those you no longer need.
+          {t(
+            'Manage Tag Elements here. Rename tags for easy identification or delete those you no longer need.',
+          )}
         </Typography.Text>
         <ul className="!list-disc list-inside">
-          <li><Typography.Text>To create new tags, navigate to the Tags tab while playing a session.</Typography.Text>
+          <li>
+            <Typography.Text>
+              {t('To create new tags, navigate to the Tags tab while playing a session')}
+            </Typography.Text>
           </li>
-          <li><Typography.Text>Use tags in OmniSearch to quickly find relevant sessions.</Typography.Text>
+          <li>
+            <Typography.Text>
+              {t('Use tags in OmniSearch to quickly find relevant sessions.')}
+            </Typography.Text>
           </li>
         </ul>
       </Space>
       <List
         locale={{
-          emptyText: <Empty description="No tags found" image={<AnimatedSVG name={ICONS.NO_METADATA} size={60} />} />
+          emptyText: (
+            <Empty
+              description={t('No tags found')}
+              image={<AnimatedSVG name={ICONS.NO_METADATA} size={60} />}
+            />
+          ),
         }}
         loading={tagWatchStore.isLoading}
         dataSource={list}
@@ -47,7 +62,11 @@ function ProjectTags() {
           <List.Item
             className="cursor-pointer group hover:bg-active-blue !px-4"
             actions={[
-              <Button type='link' className="opacity-0 group-hover:!opacity-100" icon={<EditOutlined size={14} />} />
+              <Button
+                type="link"
+                className="opacity-0 group-hover:!opacity-100"
+                icon={<EditOutlined size={14} />}
+              />,
             ]}
             onClick={() => handleInit(item)}
           >

@@ -6,8 +6,8 @@ interface SwitchProps extends AntdSwitchProps {
   // Add any additional custom props here
 }
 
-const Switch: React.FC<SwitchProps> = ({ customProp, ...restProps }) => {
-  return <AntdSwitch {...restProps} />;
-};
+const Switch: React.FC<SwitchProps> = ({ customProp, ...restProps }) => (
+  <AntdSwitch {...restProps} />
+);
 
 export default Switch;

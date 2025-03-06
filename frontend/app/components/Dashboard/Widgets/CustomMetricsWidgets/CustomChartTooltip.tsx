@@ -2,6 +2,7 @@ import React from 'react';
 import { formatTimeOrDate } from 'App/date';
 import cn from 'classnames';
 import { ArrowUp, ArrowDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface PayloadItem {
   hide?: boolean;
@@ -20,6 +21,7 @@ interface Props {
 }
 
 function CustomTooltip(props: Props) {
+  const { t } = useTranslation();
   const { active, payload, label, hoveredSeries = null } = props;
 
   // Return null if tooltip is not active or there is no valid payload
@@ -30,7 +32,7 @@ function CustomTooltip(props: Props) {
   const comparisonPayload = payload.find(
     (p) =>
       p.name === `${hoveredSeries.replace(' (Comparison)', '')} (Comparison)` ||
-      p.name === `${hoveredSeries} (Comparison)`
+      p.name === `${hoveredSeries} (Comparison)`,
   );
 
   if (!currentPayload) return null;
@@ -68,9 +70,13 @@ function CustomTooltip(props: Props) {
           >
             <div className="text-neutral-600 text-sm">
               {label},{' '}
-              {p.payload?.timestamp
-                ? formatTimeOrDate(p.payload.timestamp)
-                : <div className='hidden'>'Timestamp is not Applicable'</div>}
+              {p.payload?.timestamp ? (
+                formatTimeOrDate(p.payload.timestamp)
+              ) : (
+                <div className="hidden">
+                  &apos;{t('Timestamp is not Applicable')}&apos;
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-1">
               <div className="font-medium">{p.value}</div>
@@ -97,6 +103,7 @@ export function CompareTag({
   absDelta?: number | string | null;
   delta?: string | null;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -104,17 +111,20 @@ export function CompareTag({
         isHigher === null
           ? 'bg-neutral-200 text-neutral-600 text-xs'
           : isHigher
-          ? 'bg-green2/10 text-xs'
-          : 'bg-red2/10 text-xs'
+            ? 'bg-green2/10 text-xs'
+            : 'bg-red2/10 text-xs',
       )}
     >
       {isHigher === null ? (
-        <div>No Comparison</div>
+        <div>{t('No Comparison')}</div>
       ) : (
         <>
           {!isHigher ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
           <div>{absDelta}</div>
-          <div>({delta}%)</div>
+          <div>
+            ({delta}
+            %)
+          </div>
         </>
       )}
     </div>

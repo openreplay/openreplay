@@ -1,25 +1,29 @@
 import { validateName, validateURL } from 'App/validate';
-import { makeAutoObservable } from 'mobx'
+import { makeAutoObservable } from 'mobx';
 
 export interface IWebhook {
-  webhookId: string
-  type: string
-  name: string
-  endpoint: string
-  authHeader: string
+  webhookId: string;
+  type: string;
+  name: string;
+  endpoint: string;
+  authHeader: string;
 }
 
 export default class Webhook {
-  webhookId: IWebhook["webhookId"]
-  type: IWebhook["type"]
-  name: IWebhook["name"] = ''
-  endpoint: IWebhook["endpoint"] = ''
-  authHeader: IWebhook["authHeader"] = ''
+  webhookId: IWebhook['webhookId'];
+
+  type: IWebhook['type'];
+
+  name: IWebhook['name'] = '';
+
+  endpoint: IWebhook['endpoint'] = '';
+
+  authHeader: IWebhook['authHeader'] = '';
 
   constructor(data: Partial<IWebhook> = {}) {
-    Object.assign(this, data)
+    Object.assign(this, data);
 
-    makeAutoObservable(this)
+    makeAutoObservable(this);
   }
 
   toData() {
@@ -27,10 +31,15 @@ export default class Webhook {
   }
 
   validate() {
-    return !!this.name && validateName(this.name) && !!this.endpoint && validateURL(this.endpoint);
+    return (
+      !!this.name &&
+      validateName(this.name) &&
+      !!this.endpoint &&
+      validateURL(this.endpoint)
+    );
   }
 
   exists() {
-    return !!this.webhookId
+    return !!this.webhookId;
   }
 }

@@ -1,12 +1,15 @@
-const regexIpAddress = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+const regexIpAddress =
+  /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
 export function validateIP(value) {
   return regexIpAddress.test(value);
 }
 
 export function validateURL(value) {
   if (typeof value !== 'string') return false;
-  const urlRegex = /^(http|https):\/\/(?:www\.)?[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(:\d+)?(\/\S*)?$/i;
-  const ipRegex = /^(http|https):\/\/(?:localhost|(\d{1,3}\.){3}\d{1,3})(:\d+)?(\/\S*)?$/i;
+  const urlRegex =
+    /^(http|https):\/\/(?:www\.)?[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(:\d+)?(\/\S*)?$/i;
+  const ipRegex =
+    /^(http|https):\/\/(?:localhost|(\d{1,3}\.){3}\d{1,3})(:\d+)?(\/\S*)?$/i;
   return urlRegex.test(value) || ipRegex.test(value);
 }
 
@@ -23,24 +26,21 @@ const defaultOptions = {
   admissibleChars: '-_',
 };
 export function validateName(value, options) {
-  const {
-    admissibleChars,
-    empty,
-    spaces,
-    diacritics,
-    numbers,
-  } = Object.assign({}, defaultOptions, options);
+  const { admissibleChars, empty, spaces, diacritics, numbers } = {
+    ...defaultOptions,
+    ...options,
+  };
 
   if (typeof value !== 'string') return false; // throw Error?
   if (!empty && value && value.trim() === '') return false;
 
   const charsRegex = admissibleChars
-    ? `|${ admissibleChars.split('').map(escapeRegexp).join('|') }`
+    ? `|${admissibleChars.split('').map(escapeRegexp).join('|')}`
     : '';
   const spaceRegex = spaces ? '| ' : '';
 
-  const letters = `[A-Za-z${ numbers ? '0-9' : '' }${ diacritics ? 'À-žØ-öø-ÿ' : '' }]`;
-  const regExp = `^(${ letters }${ spaceRegex }${ charsRegex })*$`;
+  const letters = `[A-Za-z${numbers ? '0-9' : ''}${diacritics ? 'À-žØ-öø-ÿ' : ''}]`;
+  const regExp = `^(${letters}${spaceRegex}${charsRegex})*$`;
   return new RegExp(regExp).test(value);
 }
 
@@ -50,7 +50,6 @@ export function notEmptyString(value) {
   return true;
 }
 
-// eslint-disable-next-line complexity
 export function validateKeyCode(keyCode, key, regex) {
   switch (keyCode) {
     case 8: // Backspace
@@ -69,15 +68,13 @@ export function validateKeyCode(keyCode, key, regex) {
 }
 
 export function validateEmail(email) {
-  const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  const re =
+    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return re.test(String(email).toLowerCase());
 }
 
 export function validateNumber(str, options = {}) {
-  const {
-    min,
-    max,
-  } = options;
+  const { min, max } = options;
   const n = Number(str);
   if (Number.isNaN(n)) return false;
   if (min && n < min) return false;

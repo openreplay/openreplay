@@ -1,6 +1,6 @@
 export function sankeyTooltip(
   echartNodes: any[],
-  nodeValues: Record<string, number>
+  nodeValues: Record<string, number>,
 ) {
   return (params: any) => {
     if ('source' in params.data && 'target' in params.data) {
@@ -25,8 +25,8 @@ export function sankeyTooltip(
             </div>
             <div class="flex items-baseline gap-2 text-black">
               <span>${params.data.value} ( ${params.data.percentage.toFixed(
-        2
-      )}% )</span>
+                2,
+              )}% )</span>
               <span class="text-disabled-text">Sessions</span>
             </div>
           </div>
@@ -53,7 +53,7 @@ const shortenString = (str: string) => {
     str.length > limit
       ? `${str.slice(0, leftPart)}...${str.slice(
           str.length - rightPart,
-          str.length
+          str.length,
         )}`
       : str;
 
@@ -73,7 +73,7 @@ export const getEventPriority = (type: string): number => {
 
 export const getNodeName = (
   eventType: string,
-  nodeName: string | null
+  nodeName: string | null,
 ): string => {
   if (!nodeName) {
     return eventType.charAt(0) + eventType.slice(1).toLowerCase();

@@ -1,1 +1,1 @@
- export { default } from './SessionCopyLink';
+export { default } from './SessionCopyLink';

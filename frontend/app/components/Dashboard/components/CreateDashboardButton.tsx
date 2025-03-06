@@ -3,15 +3,17 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { useStore } from 'App/mstore';
 import { useHistory } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   disabled?: boolean;
 }
 
 function CreateDashboardButton({ disabled }: Props) {
+  const { t } = useTranslation();
   const [dashboardCreating, setDashboardCreating] = React.useState(false);
   const { projectsStore, dashboardStore } = useStore();
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
   const history = useHistory();
 
   const createNewDashboard = async () => {
@@ -28,17 +30,15 @@ function CreateDashboardButton({ disabled }: Props) {
       });
   };
   return (
-    <>
-      <Button
-        loading={dashboardCreating}
-        icon={<PlusOutlined />}
-        disabled={disabled}
-        type="primary"
-        onClick={createNewDashboard}
-      >
-        Create Dashboard
-      </Button>
-    </>
+    <Button
+      loading={dashboardCreating}
+      icon={<PlusOutlined />}
+      disabled={disabled}
+      type="primary"
+      onClick={createNewDashboard}
+    >
+      {t('Create Dashboard')}
+    </Button>
   );
 }
 

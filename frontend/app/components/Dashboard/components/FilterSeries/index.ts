@@ -1,1 +1,1 @@
-export { default } from './FilterSeries'
+export { default } from './FilterSeries';

@@ -3,18 +3,31 @@ import GDPR from './gdpr';
 
 export default class Project {
   id?: string;
+
   name: string = '';
+
   host: string = '';
+
   platform: string = 'web';
+
   lastRecordedSessionAt?: any;
+
   gdpr: GDPR;
+
   recorded: boolean = false;
+
   stackIntegrations: boolean = false;
+
   projectKey?: string;
+
   projectId?: number;
+
   trackerVersion?: string;
+
   saveRequestPayloads: boolean = false;
+
   sampleRate: number = 0;
+
   conditionsCount: number = 0;
 
   constructor(data: Partial<Project> = {}) {
@@ -25,9 +38,7 @@ export default class Project {
     makeAutoObservable(this);
   }
 
-  exists = () => {
-    return !!this.id;
-  };
+  exists = () => !!this.id;
 
   get validate() {
     return this.name.length > 0;
@@ -44,22 +55,20 @@ export default class Project {
     return this;
   };
 
-  toData = () => {
-    return {
-      id: this.id,
-      name: this.name,
-      host: this.host,
-      platform: this.platform,
-      lastRecordedSessionAt: this.lastRecordedSessionAt,
-      gdpr: this.gdpr.toData(),
-      recorded: this.recorded,
-      stackIntegrations: this.stackIntegrations,
-      projectKey: this.projectKey,
-      projectId: this.projectId,
-      trackerVersion: this.trackerVersion,
-      saveRequestPayloads: this.saveRequestPayloads,
-      sampleRate: this.sampleRate,
-      conditionsCount: this.conditionsCount,
-    };
-  };
+  toData = () => ({
+    id: this.id,
+    name: this.name,
+    host: this.host,
+    platform: this.platform,
+    lastRecordedSessionAt: this.lastRecordedSessionAt,
+    gdpr: this.gdpr.toData(),
+    recorded: this.recorded,
+    stackIntegrations: this.stackIntegrations,
+    projectKey: this.projectKey,
+    projectId: this.projectId,
+    trackerVersion: this.trackerVersion,
+    saveRequestPayloads: this.saveRequestPayloads,
+    sampleRate: this.sampleRate,
+    conditionsCount: this.conditionsCount,
+  });
 }

@@ -1,7 +1,5 @@
 import { InjectedEvent } from 'Types/session/event';
 import Issue from 'Types/session/issue';
-import ListWalker from '../common/ListWalker';
-import ListWalkerWithMarks from '../common/ListWalkerWithMarks';
 import type { IResourceRequest, IResourceTiming, Timed } from 'Player';
 import {
   Redux as reduxMsg,
@@ -14,6 +12,8 @@ import {
   WsChannel as websocketMsg,
   Profiler as profilerMsg,
 } from 'Player/web/messages';
+import ListWalker from '../common/ListWalker';
+import ListWalkerWithMarks from '../common/ListWalkerWithMarks';
 
 type stackMsg = {
   name: string;
@@ -44,7 +44,9 @@ type MsgTypeMap = {
   exceptionsList: exceptionsMsg;
   frustrationsList: Issue | InjectedEvent;
 };
-type ListMessageType<K> = K extends keyof MsgTypeMap ? Array<MsgTypeMap[K]> : Array<Timed>;
+type ListMessageType<K> = K extends keyof MsgTypeMap
+  ? Array<MsgTypeMap[K]>
+  : Array<Timed>;
 
 const SIMPLE_LIST_NAMES = [
   'event',
@@ -58,7 +60,13 @@ const SIMPLE_LIST_NAMES = [
   'profiles',
   'frustrations',
 ] as const;
-const MARKED_LIST_NAMES = ['log', 'resource', 'fetch', 'stack', 'websocket'] as const;
+const MARKED_LIST_NAMES = [
+  'log',
+  'resource',
+  'fetch',
+  'stack',
+  'websocket',
+] as const;
 
 const LIST_NAMES = [...SIMPLE_LIST_NAMES, ...MARKED_LIST_NAMES] as const;
 
@@ -87,7 +95,7 @@ export const INITIAL_STATE = LIST_NAMES.reduce(
   MARKED_LIST_NAMES.reduce((state, name) => {
     state[`${name}MarkedCountNow`] = 0;
     return state;
-  }, {} as Partial<StateMarkedCountNow>) as Partial<State>
+  }, {} as Partial<StateMarkedCountNow>) as Partial<State>,
 ) as State;
 
 type SimpleListsObject = {
@@ -112,7 +120,10 @@ export default class Lists {
     }
     for (const name of MARKED_LIST_NAMES) {
       // TODO: provide types
-      lists[name] = new ListWalkerWithMarks((el) => el.isRed, initialLists[name]);
+      lists[name] = new ListWalkerWithMarks(
+        (el) => el.isRed,
+        initialLists[name],
+      );
     }
     this.lists = lists as ListsObject;
   }
@@ -136,7 +147,7 @@ export default class Lists {
       MARKED_LIST_NAMES.reduce((state, name) => {
         state[`${name}MarkedCountNow`] = this.lists[name].markedCountNow; // Red --> Marked
         return state;
-      }, {} as Partial<StateMarkedCountNow>) as Partial<State>
+      }, {} as Partial<StateMarkedCountNow>) as Partial<State>,
     ) as State;
   }
 }

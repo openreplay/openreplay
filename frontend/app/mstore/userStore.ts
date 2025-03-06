@@ -9,50 +9,79 @@ import { userService } from 'App/services';
 import { deleteCookie } from 'App/utils';
 
 import User from 'App/mstore/types/user';
+import i18next, { TFunction } from 'i18next';
 
 class UserStore {
+  t: TFunction;
+
   list: User[] = [];
+
   instance: User | null = null;
+
   page: number = 1;
+
   pageSize: number = 10;
+
   searchQuery: string = '';
+
   modifiedCount: number = 0;
+
   loading: boolean = false;
+
   saving: boolean = false;
+
   limits: any = {};
+
   initialDataFetched: boolean = false;
 
   account = new Account();
+
   siteId: string | null = null;
+
   passwordRequestError: boolean = false;
+
   passwordErrors: string[] = [];
+
   tenants: any[] = [];
+
   onboarding: boolean = false;
+
   sites: any[] = [];
+
   jwt: string | null = null;
+
   spotJwt: string | null = null;
+
   errors: any[] = [];
+
   loginRequest = {
     loading: false,
-    errors: [] as string[]
+    errors: [] as string[],
   };
+
   fetchInfoRequest = {
     loading: false,
-    errors: [] as string[]
+    errors: [] as string[],
   };
+
   signUpRequest = {
     loading: false,
-    errors: [] as string[]
+    errors: [] as string[],
   };
+
   updatePasswordRequest = {
     loading: false,
-    errors: [] as string[]
+    errors: [] as string[],
   };
+
   scopeState: number | null = null;
+
   client = new Client();
+
   authStore: AuthStore;
 
-  constructor(authStore: AuthStore) {
+  constructor(authStore: AuthStore, t: TFunction) {
+    this.t = t;
     makeAutoObservable(this);
     this.authStore = authStore;
 
@@ -69,19 +98,16 @@ class UserStore {
           'onboarding',
           {
             key: 'account',
-            serialize: (acc) => {
-              return acc.id ? JSON.stringify(acc.toData()) : JSON.stringify({});
-            },
-            deserialize: (json) => {
-              return new Account(JSON.parse(json));
-            }
-          }
+            serialize: (acc) =>
+              acc.id ? JSON.stringify(acc.toData()) : JSON.stringify({}),
+            deserialize: (json) => new Account(JSON.parse(json)),
+          },
         ],
-        storage: window.localStorage
+        storage: window.localStorage,
       },
       {
-        delay: 200
-      }
+        delay: 200,
+      },
     );
   }
 
@@ -96,8 +122,8 @@ class UserStore {
     return Boolean(this.jwt);
   }
 
-  fetchLimits = (): Promise<any> => {
-    return new Promise((resolve, reject) => {
+  fetchLimits = (): Promise<any> =>
+    new Promise((resolve, reject) => {
       userService
         .getLimits()
         .then((response: any) => {
@@ -110,14 +136,13 @@ class UserStore {
           reject(error);
         });
     });
-  };
 
   setLimits = (limits: any) => {
     this.limits = limits;
   };
 
-  initUser = (user?: User): Promise<void> => {
-    return new Promise((resolve) => {
+  initUser = (user?: User): Promise<void> =>
+    new Promise((resolve) => {
       if (user) {
         this.instance = new User().fromJson(user.toJson());
       } else {
@@ -125,7 +150,6 @@ class UserStore {
       }
       resolve();
     });
-  };
 
   updateKey = (key: keyof this, value: any) => {
     // @ts-ignore
@@ -205,10 +229,10 @@ class UserStore {
             if (wasCreating) {
               this.modifiedCount -= 1;
               this.list.push(newUser);
-              toast.success('User created successfully');
+              toast.success(this.t('User created successfully'));
             } else {
               this.updateUser(newUser);
-              toast.success('User updated successfully');
+              toast.success(this.t('User updated successfully'));
             }
           });
           resolve(response);
@@ -220,9 +244,11 @@ class UserStore {
           });
           const errStr = err.errors[0]
             ? err.errors[0].includes('already exists')
-              ? `This email is already linked to an account or team on OpenReplay and can't be used again.`
+              ? this.t(
+                  "This email is already linked to an account or team on OpenReplay and can't be used again.",
+                )
               : err.errors[0]
-            : 'Error saving user';
+            : this.t('Error saving user');
           toast.error(errStr);
           reject(e);
         })
@@ -250,7 +276,7 @@ class UserStore {
           runInAction(() => {
             this.saving = false;
           });
-          toast.error('Error deleting user');
+          toast.error(this.t('Error deleting user'));
           reject(error);
         })
         .finally(() => {
@@ -265,9 +291,9 @@ class UserStore {
     const content = this.list.find((u) => u.userId === userId)?.invitationLink;
     if (content) {
       copy(content);
-      toast.success('Invite code copied successfully');
+      toast.success(this.t('Invite code copied successfully'));
     } else {
-      toast.error('Invite code not found');
+      toast.error(this.t('Invite code not found'));
     }
   };
 
@@ -283,7 +309,7 @@ class UserStore {
               this.list[index].updateKey('isExpiredInvite', false);
               this.list[index].updateKey(
                 'invitationLink',
-                response.invitationLink
+                response.invitationLink,
               );
             }
             copy(response.invitationLink);
@@ -304,8 +330,8 @@ class UserStore {
     });
 
     toast.promise(promise, {
-      pending: 'Generating an invite code...',
-      success: 'Invite code generated successfully'
+      pending: this.t('Generating an invite code...'),
+      success: this.t('Invite code generated successfully'),
     });
 
     return promise;
@@ -322,7 +348,7 @@ class UserStore {
     deleteCookie('jwt', '/', 'openreplay.com');
     this.loginRequest = {
       loading: false,
-      errors: errors || []
+      errors: errors || [],
     };
   };
 
@@ -343,7 +369,7 @@ class UserStore {
         deleteCookie('jwt', '/', 'openreplay.com');
         this.loginRequest = {
           loading: false,
-          errors: error.errors || []
+          errors: error.errors || [],
         };
       });
     }
@@ -366,10 +392,12 @@ class UserStore {
       runInAction(() => {
         this.signUpRequest = {
           loading: false,
-          errors: error.response?.errors || []
+          errors: error.response?.errors || [],
         };
       });
-      toast.error('Error signing up; please check your data and try again');
+      toast.error(
+        this.t('Error signing up; please check your data and try again'),
+      );
     } finally {
       runInAction(() => {
         this.signUpRequest.loading = false;
@@ -389,7 +417,7 @@ class UserStore {
         this.spotJwt = data.spotJwt;
       });
     } catch (error) {
-      toast.error('Error resetting your password; please try again');
+      toast.error(this.t('Error resetting your password; please try again'));
       return error.response;
     } finally {
       runInAction(() => {
@@ -405,7 +433,7 @@ class UserStore {
     } catch (error) {
       throw error;
     } finally {
-        this.loading = false;
+      this.loading = false;
     }
   };
 
@@ -414,23 +442,27 @@ class UserStore {
       this.updatePasswordRequest = { loading: true, errors: [] };
     });
     try {
-      const data = await userService.updatePassword(params) as { jwt: string, spotJwt: string, data: any };
+      const data = (await userService.updatePassword(params)) as {
+        jwt: string;
+        spotJwt: string;
+        data: any;
+      };
       runInAction(() => {
         this.jwt = data.jwt;
         this.spotJwt = data.spotJwt;
         this.scopeState = data.data.scopeState;
         this.updatePasswordRequest = { loading: false, errors: [] };
       });
-      toast.success(`Successfully changed password`);
+      toast.success(this.t('Successfully changed password'));
       return data;
     } catch (e: any) {
-      toast.error(e.message || 'Failed to updated password.');
+      toast.error(e.message || this.t('Failed to updated password.'));
       throw e;
     } finally {
       runInAction(() => {
         this.updatePasswordRequest = {
           loading: false,
-          errors: []
+          errors: [],
         };
       });
     }
@@ -497,9 +529,7 @@ class UserStore {
     this.spotJwt = spotJwt ?? null;
   };
 
-  getJwt = () => {
-    return this.jwt;
-  };
+  getJwt = () => this.jwt;
 
   updateAccount = async (params: any) => {
     runInAction(() => {
@@ -547,7 +577,7 @@ class UserStore {
     const modules = this.account.settings?.modules || [];
     if (modules.includes(moduleKey)) {
       this.account.settings.modules = modules.filter(
-        (module: string) => module !== moduleKey
+        (module: string) => module !== moduleKey,
       );
     } else {
       this.account.settings.modules = [...modules, moduleKey];
@@ -589,7 +619,7 @@ class UserStore {
     this.errors = [];
     this.loginRequest = {
       loading: false,
-      errors: []
+      errors: [],
     };
     this.scopeState = null;
     this.client = new Client();
@@ -620,7 +650,7 @@ class AuthStore {
     sso: null,
     ssoProvider: null,
     enforceSSO: null,
-    edition: 'foss'
+    edition: 'foss',
   };
 
   constructor() {
@@ -633,19 +663,21 @@ class AuthStore {
         {
           key: 'authDetails',
           serialize: (ad) => {
-            delete ad['edition']
-            return Object.keys(ad).length > 0 ? JSON.stringify(ad) : JSON.stringify({});
+            delete ad.edition;
+            return Object.keys(ad).length > 0
+              ? JSON.stringify(ad)
+              : JSON.stringify({});
           },
           deserialize: (json) => {
-            const ad = JSON.parse(json)
-            delete ad['edition']
+            const ad = JSON.parse(json);
+            delete ad.edition;
             return ad;
-          }
-        }
+          },
+        },
       ],
       expireIn: 60000 * 60,
       removeOnExpiration: true,
-      storage: window.localStorage
+      storage: window.localStorage,
     });
   }
 
@@ -661,8 +693,7 @@ class AuthStore {
   };
 }
 
-
 export const authStore = new AuthStore();
-const userStore = new UserStore(authStore);
+const userStore = new UserStore(authStore, i18next.t);
 
 export default userStore;

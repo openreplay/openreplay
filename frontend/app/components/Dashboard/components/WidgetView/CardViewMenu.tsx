@@ -2,14 +2,19 @@ import { useHistory } from 'react-router';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Button, Dropdown, MenuProps, Modal } from 'antd';
-import { BellIcon, EllipsisVertical, Grid2x2Plus, TrashIcon } from 'lucide-react';
+import {
+  BellIcon,
+  EllipsisVertical,
+  Grid2x2Plus,
+  TrashIcon,
+} from 'lucide-react';
 import { toast } from 'react-toastify';
 import React from 'react';
 import { useModal } from 'Components/ModalContext';
 import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
 import { showAddToDashboardModal } from 'Components/Dashboard/components/AddToDashboardButton';
 
-const CardViewMenu = () => {
+function CardViewMenu() {
   const history = useHistory();
   const { alertsStore, metricStore, dashboardStore } = useStore();
   const widget = metricStore.instance;
@@ -74,10 +79,14 @@ const CardViewMenu = () => {
   return (
     <div className="flex items-center justify-between">
       <Dropdown menu={{ items }}>
-        <Button type='text' icon={<EllipsisVertical size={16} />} className='btn-card-options' />
+        <Button
+          type="text"
+          icon={<EllipsisVertical size={16} />}
+          className="btn-card-options"
+        />
       </Dropdown>
     </div>
   );
-};
+}
 
 export default observer(CardViewMenu);

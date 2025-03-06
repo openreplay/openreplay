@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import CustomTooltip from "./CustomChartTooltip";
-import { Styles } from '../common';
 import {
   ResponsiveContainer,
   XAxis,
@@ -11,6 +9,8 @@ import {
   Area,
   Legend,
 } from 'recharts';
+import CustomTooltip from './CustomChartTooltip';
+import { Styles } from '../common';
 
 interface Props {
   data: { chart: any[]; namesMap: string[] };
@@ -58,17 +58,15 @@ function CustomAreaChart(props: Props) {
       >
         {!hideLegend && (
           <Legend
-            iconType={'wye'}
-            className='font-normal'
+            iconType="wye"
+            className="font-normal"
             wrapperStyle={{ top: inGrid ? undefined : -18 }}
-            payload={
-              data.namesMap.map((key, index) => ({
-                value: key,
-                type: 'line',
-                color: colors[index],
-                id: key,
-              }))
-            }
+            payload={data.namesMap.map((key, index) => ({
+              value: key,
+              type: 'line',
+              color: colors[index],
+              id: key,
+            }))}
           />
         )}
         <CartesianGrid
@@ -76,7 +74,11 @@ function CustomAreaChart(props: Props) {
           vertical={false}
           stroke="rgba(0,0,0,.15)"
         />
-        <XAxis {...Styles.xaxis} dataKey="time" interval={'equidistantPreserveStart'} />
+        <XAxis
+          {...Styles.xaxis}
+          dataKey="time"
+          interval="equidistantPreserveStart"
+        />
         <YAxis
           {...yaxis}
           allowDecimals={false}
@@ -99,12 +101,8 @@ function CustomAreaChart(props: Props) {
               dataKey={key}
               stroke={colors[data.namesMap.indexOf(key)]} // Match original color
               fill={colors[data.namesMap.indexOf(key)]}
-              fillOpacity={
-                hoveredSeries && hoveredSeries !== key ? 0.2 : 0.1
-              } // Adjust opacity for non-hovered lines
-              strokeOpacity={
-                hoveredSeries && hoveredSeries !== key ? 0.2 : 1
-              } // Adjust stroke opacity
+              fillOpacity={hoveredSeries && hoveredSeries !== key ? 0.2 : 0.1} // Adjust opacity for non-hovered lines
+              strokeOpacity={hoveredSeries && hoveredSeries !== key ? 0.2 : 1} // Adjust stroke opacity
               legendType={key === 'Total' ? 'none' : 'line'}
               dot={false}
               activeDot={

@@ -7,10 +7,15 @@ import { ErrorInfo } from './types/error';
 
 export default class ErrorStore {
   instance: ErrorInfo | null = null;
+
   instanceTrace: Record<string, any>[] = [];
+
   stats: Record<string, any> = {};
+
   sourcemapUploaded = false;
+
   isLoading = false;
+
   errorStates: Record<string, any> = {};
 
   constructor() {

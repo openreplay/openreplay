@@ -20,17 +20,29 @@ function Breadcrumb(props: Props) {
         }
         if (item.to === undefined) {
           return (
-            <div key={index} className="color-gray-darkest hover:text-teal group flex items-center">
-              <span className="color-gray-medium capitalize-first">{item.label}</span>
+            <div
+              key={index}
+              className="color-gray-darkest hover:text-teal group flex items-center"
+            >
+              <span className="color-gray-medium capitalize-first">
+                {item.label}
+              </span>
               <span className="mx-2">/</span>
             </div>
           );
         }
         return (
-          <div key={index} className="color-gray-darkest hover:text-teal group flex items-center">
+          <div
+            key={index}
+            className="color-gray-darkest hover:text-teal group flex items-center"
+          >
             <Link to={item.to} className="flex items-center default-hover">
               {index === 0 && (
-                <Icon name="chevron-left" size={16} className="mr-1 group-hover:fill-teal" />
+                <Icon
+                  name="chevron-left"
+                  size={16}
+                  className="mr-1 group-hover:fill-teal"
+                />
               )}
               <span className="capitalize-first">{item.label}</span>
             </Link>

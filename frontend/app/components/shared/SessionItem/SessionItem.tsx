@@ -20,6 +20,7 @@ import ErrorBars from './ErrorBars';
 import PlayLink from './PlayLink';
 import SessionMetaList from './SessionMetaList';
 import stl from './sessionItem.module.css';
+import { useTranslation } from 'react-i18next';
 import { Tooltip } from 'antd';
 
 const ASSIST_ROUTE = assistRoute();
@@ -82,6 +83,7 @@ function SessionItem(props: RouteComponentProps & Props) {
   const { location } = useHistory();
   const { settingsStore, sessionStore } = useStore();
   const { timezone, shownTimezone } = settingsStore.sessionSettings;
+  const { t } = useTranslation();
   const [prefetchState, setPrefetched] = useState(PREFETCH_STATE.none);
 
   // Destructure all props at the top
@@ -240,7 +242,7 @@ function SessionItem(props: RouteComponentProps & Props) {
 
   return (
     <Tooltip
-      title={!isMultiviewDisabled ? '' : `Session already added into the multiview`}
+      title={!isMultiviewDisabled ? '' : t(`Session already added into the multiview`)}
     >
       <div
         className={cn(stl.sessionItem, 'flex flex-col p-4')}
@@ -252,14 +254,14 @@ function SessionItem(props: RouteComponentProps & Props) {
           <div className={cn('flex items-center w-full')}>
             {!compact && (
               <div
-                className={'flex flex-col shrink-0 pr-2 gap-2'}
+                className="flex flex-col shrink-0 pr-2 gap-2"
                 style={{ width: '40%' }}
               >
                 <div className="flex items-center pr-2 shrink-0">
                   <div>
                     <Avatar
-                      width={'24px'}
-                      height={'24px'}
+                      width="24px"
+                      height="24px"
                       iconSize={12}
                       isActive={active}
                       seed={userNumericHash}
@@ -314,8 +316,8 @@ function SessionItem(props: RouteComponentProps & Props) {
                       <span className="mr-1">{eventsCount}</span>
                       <span>
                         {eventsCount === 0 || eventsCount > 1
-                          ? 'Events'
-                          : 'Event'}
+                          ? t('Events')
+                          : t('Event')}
                       </span>
                     </div>
                     <Icon name="circle-fill" size={3} className="mx-4" />
@@ -339,7 +341,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   userCity={userCity}
                   userState={userState}
                   country={userCountry}
-                  showLabel={true}
+                  showLabel
                 />
               </div>
               <div className="color-gray-medium flex items-center py-1">
@@ -402,7 +404,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                       className="color-gray-medium text-xs"
                       style={{ whiteSpace: 'nowrap' }}
                     >
-                      CALL IN PROGRESS
+                      {t('CALL IN PROGRESS')}
                     </span>
                   </Label>
                 </div>
@@ -415,7 +417,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                         className="color-gray-medium text-xs"
                         style={{ whiteSpace: 'nowrap' }}
                       >
-                        LAST PLAYED
+                        {t('LAST PLAYED')}
                       </span>
                     </Label>
                   )}

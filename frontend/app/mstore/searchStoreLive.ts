@@ -2,7 +2,7 @@ import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import {
   filtersMap,
   generateFilterOptions,
-  liveFiltersMap
+  liveFiltersMap,
 } from 'Types/filter/newFilter';
 import { List } from 'immutable';
 import { makeAutoObservable, reaction } from 'mobx';
@@ -22,18 +22,18 @@ export const checkValues = (key: any, value: any) => {
 };
 
 export const filterMap = ({
-                            category,
-                            value,
-                            key,
-                            operator,
-                            sourceOperator,
-                            source,
-                            custom,
-                            isEvent,
-                            filters,
-                            sort,
-                            order
-                          }: any) => ({
+  category,
+  value,
+  key,
+  operator,
+  sourceOperator,
+  source,
+  custom,
+  isEvent,
+  filters,
+  sort,
+  order,
+}: any) => ({
   value: checkValues(key, value),
   custom,
   type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
@@ -41,24 +41,38 @@ export const filterMap = ({
   source: category === FilterCategory.METADATA ? key.replace(/^_/, '') : source,
   sourceOperator,
   isEvent,
-  filters: filters ? filters.map(filterMap) : []
+  filters: filters ? filters.map(filterMap) : [],
 });
 
 class SearchStoreLive {
   list = List();
+
   latestRequestTime: number | null = null;
+
   latestList = List();
+
   alertMetricId: number | null = null;
+
   instance = new Search({ sort: 'timestamp', order: 'desc' });
+
   instanceLive = new Search();
+
   savedSearch = new Search();
+
   filterSearchList: any = {};
+
   currentPage = 1;
+
   pageSize = PER_PAGE;
+
   activeTab = { name: 'All', type: 'all' };
+
   scrollY = 0;
+
   sessions = List();
+
   total: number = 0;
+
   loadingFilterSearch = false;
 
   constructor() {
@@ -70,7 +84,7 @@ class SearchStoreLive {
       () => {
         this.currentPage = 1;
         void this.fetchSessions();
-      }
+      },
     );
 
     // Fetch sessions when currentPage changes
@@ -78,7 +92,7 @@ class SearchStoreLive {
       () => this.currentPage,
       () => {
         void this.fetchSessions();
-      }
+      },
     );
   }
 
@@ -97,13 +111,16 @@ class SearchStoreLive {
       const response: any[] = await searchService.fetchFilterSearch(params);
 
       this.filterSearchList = response.reduce(
-        (acc: Record<string, { projectId: number; value: string }[]>, item: any) => {
+        (
+          acc: Record<string, { projectId: number; value: string }[]>,
+          item: any,
+        ) => {
           const { projectId, type, value } = item;
           if (!acc[type]) acc[type] = [];
           acc[type].push({ projectId, value });
           return acc;
         },
-        {}
+        {},
       );
     } catch (error) {
       console.error('Error fetching filter search:', error);
@@ -113,9 +130,8 @@ class SearchStoreLive {
   };
 
   edit(instance: Partial<Search>) {
-    this.instance = new Search(Object.assign({ ...this.instance }, instance));
+    this.instance = new Search({ ...this.instance, ...instance });
   }
-
 
   apply(filter: any, fromUrl: boolean) {
     if (fromUrl) {
@@ -134,24 +150,28 @@ class SearchStoreLive {
   }
 
   clearSearch() {
-    const instance = this.instance;
-    this.edit(new Search({
-      rangeValue: instance.rangeValue,
-      startDate: instance.startDate,
-      endDate: instance.endDate,
-      filters: []
-    }));
+    const { instance } = this;
+    this.edit(
+      new Search({
+        rangeValue: instance.rangeValue,
+        startDate: instance.startDate,
+        endDate: instance.endDate,
+        filters: [],
+      }),
+    );
   }
 
   addFilter(filter: any) {
-    const index = this.instance.filters.findIndex((i: FilterItem) => i.key === filter.key);
+    const index = this.instance.filters.findIndex(
+      (i: FilterItem) => i.key === filter.key,
+    );
 
     filter.value = checkFilterValue(filter.value);
     filter.filters = filter.filters
       ? filter.filters.map((subFilter: any) => ({
-        ...subFilter,
-        value: checkFilterValue(subFilter.value)
-      }))
+          ...subFilter,
+          value: checkFilterValue(subFilter.value),
+        }))
       : null;
 
     if (index > -1) {
@@ -159,7 +179,7 @@ class SearchStoreLive {
       // @ts-ignore
       this.instance.filters[index] = {
         ...this.instance.filters[index],
-        value: this.instance.filters[index].value.concat(filter.value)
+        value: this.instance.filters[index].value.concat(filter.value),
       };
     } else {
       // Add new filter (create a new array reference to notify MobX)
@@ -168,7 +188,7 @@ class SearchStoreLive {
 
     // Update the instance to trigger reactions
     this.instance = new Search({
-      ...this.instance.toData()
+      ...this.instance.toData(),
     });
 
     // if (filter.value && filter.value[0] && filter.value[0] !== '') {
@@ -176,8 +196,14 @@ class SearchStoreLive {
     // }
   }
 
-  addFilterByKeyAndValue(key: any, value: any, operator?: string, sourceOperator?: string, source?: string) {
-    let defaultFilter = { ...filtersMap[key] };
+  addFilterByKeyAndValue(
+    key: any,
+    value: any,
+    operator?: string,
+    sourceOperator?: string,
+    source?: string,
+  ) {
+    const defaultFilter = { ...filtersMap[key] };
     defaultFilter.value = value;
 
     if (operator) {
@@ -195,31 +221,33 @@ class SearchStoreLive {
     const newFilters = this.instance.filters.map((_filter: any, i: any) => {
       if (i === index) {
         return search;
-      } else {
-        return _filter;
       }
+      return _filter;
     });
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters
+      filters: newFilters,
     });
   };
 
   removeFilter = (index: number) => {
-    const newFilters = this.instance.filters.filter((_filter: any, i: any) => {
-      return i !== index;
-    });
+    const newFilters = this.instance.filters.filter(
+      (_filter: any, i: any) => i !== index,
+    );
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters
+      filters: newFilters,
     });
   };
 
   async fetchSessions() {
-    await sessionStore.fetchLiveSessions({ ...this.instance.toSearch(), page: this.currentPage });
-  };
+    await sessionStore.fetchLiveSessions({
+      ...this.instance.toSearch(),
+      page: this.currentPage,
+    });
+  }
 }
 
 export default SearchStoreLive;

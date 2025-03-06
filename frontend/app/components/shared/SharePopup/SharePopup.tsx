@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { Icon, Loader } from 'UI';
-import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
-import SessionCopyLink from './SessionCopyLink';
 import { Button, Divider, Form, Input, Segmented, Select, Space } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import SessionCopyLink from './SessionCopyLink';
+import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
+import { useTranslation } from 'react-i18next';
 
 interface Channel {
   webhookId: string;
@@ -19,8 +20,9 @@ interface Props {
 }
 
 const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
+  const { t } = useTranslation();
   const { integrationsStore, sessionStore } = useStore();
-  const sessionId = sessionStore.current.sessionId;
+  const { sessionId } = sessionStore.current;
   const slackChannels: Channel[] = integrationsStore.slack.list || [];
   const msTeamsChannels: Channel[] = integrationsStore.msteams.list || [];
   const slackLoaded = integrationsStore.slack.loaded;
@@ -32,8 +34,12 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
 
   const [shareTo, setShareTo] = useState<'slack' | 'teams'>('slack');
   const [comment, setComment] = useState('');
-  const [channelId, setChannelId] = useState<string | undefined>(slackChannels[0]?.webhookId);
-  const [teamsChannel, setTeamsChannel] = useState<string | undefined>(msTeamsChannels[0]?.webhookId);
+  const [channelId, setChannelId] = useState<string | undefined>(
+    slackChannels[0]?.webhookId,
+  );
+  const [teamsChannel, setTeamsChannel] = useState<string | undefined>(
+    msTeamsChannels[0]?.webhookId,
+  );
   const [loadingSlack, setLoadingSlack] = useState(false);
   const [loadingTeams, setLoadingTeams] = useState(false);
 
@@ -57,7 +63,8 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
     }
   }, [msTeamsChannels, teamsChannel]);
 
-  const editMessage = (e: React.ChangeEvent<HTMLTextAreaElement>) => setComment(e.target.value);
+  const editMessage = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
+    setComment(e.target.value);
 
   const shareToSlack = async () => {
     if (!channelId) return;
@@ -67,12 +74,12 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
         integrationId: channelId,
         entity: 'sessions',
         entityId: sessionId,
-        data: { comment }
+        data: { comment },
       });
-      toast.success('Sent to Slack.');
+      toast.success(t('Sent to Slack.'));
       hideModal();
     } catch {
-      toast.error('Failed to send to Slack.');
+      toast.error(t('Failed to send to Slack.'));
     } finally {
       setLoadingSlack(false);
     }
@@ -86,12 +93,12 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
         integrationId: teamsChannel,
         entity: 'sessions',
         entityId: sessionId,
-        data: { comment }
+        data: { comment },
       });
-      toast.success('Sent to MS Teams.');
+      toast.success(t('Sent to MS Teams.'));
       hideModal();
     } catch {
-      toast.error('Failed to send to MS Teams.');
+      toast.error(t('Failed to send to MS Teams.'));
     } finally {
       setLoadingTeams(false);
     }
@@ -104,18 +111,18 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
     () =>
       slackChannels.map(({ webhookId, name }) => ({
         value: webhookId,
-        label: name
+        label: name,
       })),
-    [slackChannels]
+    [slackChannels],
   );
 
   const msTeamsOptions = useMemo(
     () =>
       msTeamsChannels.map(({ webhookId, name }) => ({
         value: webhookId,
-        label: name
+        label: name,
       })),
-    [msTeamsChannels]
+    [msTeamsChannels],
   );
 
   const sendMsg = async () => {
@@ -145,7 +152,7 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
           {!hasNothing ? (
             <>
               <Form layout="vertical">
-                <Form.Item label="Share via">
+                <Form.Item label={t('Share via')}>
                   {hasBoth ? (
                     <Segmented
                       options={[
@@ -153,20 +160,20 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
                           label: (
                             <div className="flex items-center gap-2">
                               <Icon name="integrations/slack-bw" size={16} />
-                              <div>Slack</div>
+                              <div>{t('Slack')}</div>
                             </div>
                           ),
-                          value: 'slack'
+                          value: 'slack',
                         },
                         {
                           label: (
                             <div className="flex items-center gap-2">
                               <Icon name="integrations/teams-white" size={16} />
-                              <div>MS Teams</div>
+                              <div>{t('MS Teams')}</div>
                             </div>
                           ),
-                          value: 'teams'
-                        }
+                          value: 'teams',
+                        },
                       ]}
                       onChange={handleSegmentChange}
                       value={shareTo}
@@ -174,17 +181,27 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
                   ) : (
                     <div className="flex items-center gap-2">
                       <Icon
-                        name={slackOptions.length > 0 ? 'integrations/slack-bw' : 'integrations/teams-white'}
+                        name={
+                          slackOptions.length > 0
+                            ? 'integrations/slack-bw'
+                            : 'integrations/teams-white'
+                        }
                         size={16}
                       />
-                      <div>{slackOptions.length > 0 ? 'Slack' : 'MS Teams'}</div>
+                      <div>
+                        {slackOptions.length > 0 ? 'Slack' : 'MS Teams'}
+                      </div>
                     </div>
                   )}
                 </Form.Item>
 
-                <Form.Item label="Select a channel or individual">
+                <Form.Item label={t('Select a channel or individual')}>
                   {shareTo === 'slack' ? (
-                    <Select value={channelId} onChange={changeSlackChannel} className="col-span-4">
+                    <Select
+                      value={channelId}
+                      onChange={changeSlackChannel}
+                      className="col-span-4"
+                    >
                       {slackOptions.map(({ value, label }) => (
                         <Select.Option key={value} value={value}>
                           {label}
@@ -192,7 +209,11 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
                       ))}
                     </Select>
                   ) : (
-                    <Select value={teamsChannel} onChange={changeTeamsChannel} className="col-span-4">
+                    <Select
+                      value={teamsChannel}
+                      onChange={changeTeamsChannel}
+                      className="col-span-4"
+                    >
                       {msTeamsOptions.map(({ value, label }) => (
                         <Select.Option key={value} value={value}>
                           {label}
@@ -202,7 +223,7 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
                   )}
                 </Form.Item>
 
-                <Form.Item label="Message">
+                <Form.Item label={t('Message')}>
                   <Input.TextArea
                     name="message"
                     id="message"
@@ -210,7 +231,7 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
                     rows={4}
                     onChange={editMessage}
                     value={comment}
-                    placeholder="Add Message (Optional)"
+                    placeholder={t('Add Message (Optional)')}
                     className="p-4 text-figmaColors-text-primary text-base bg-white border rounded border-gray-light"
                   />
                 </Form.Item>
@@ -218,10 +239,10 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
                 <Form.Item>
                   <Space>
                     <Button type="primary" onClick={sendMsg}>
-                      Send
+                      {t('Send')}
                     </Button>
                     <Button type="primary" ghost onClick={hideModal}>
-                      Cancel
+                      {t('Cancel')}
                     </Button>
                   </Space>
                 </Form.Item>

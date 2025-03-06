@@ -1,6 +1,6 @@
 import React from 'react';
-import {Input, Button, Tooltip} from 'antd';
-import {CloseOutlined, SearchOutlined} from '@ant-design/icons';
+import { Input, Button, Tooltip } from 'antd';
+import { CloseOutlined, SearchOutlined } from '@ant-design/icons';
 import { PlayerContext } from 'App/components/Session/playerContext';
 
 function EventSearch(props) {

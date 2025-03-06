@@ -1,1 +1,1 @@
-export { default, VerticalPointerLineComp } from './VerticalPointerLine'
+export { default, VerticalPointerLineComp } from './VerticalPointerLine';

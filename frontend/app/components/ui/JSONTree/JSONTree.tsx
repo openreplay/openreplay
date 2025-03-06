@@ -52,8 +52,8 @@ function JSONTree(props: Props) {
     <JsonView
       src={updateObjectLink(props.src)}
       collapsed={1}
-      displaySize={'collapsed'}
-      enableClipboard={true}
+      displaySize="collapsed"
+      enableClipboard
       {...props}
     />
   );

@@ -1,14 +1,14 @@
 import React from 'react';
-import { tagProps } from "App/services/NotesService";
+import { tagProps } from 'App/services/NotesService';
 import { GridItem } from 'App/components/Spots/SpotsList/SpotListItem';
-import { confirm } from "UI";
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Tag } from "antd";
-import copy from "copy-to-clipboard";
-import { Eye, Link } from "lucide-react";
-import { toast } from "react-toastify";
-import { resentOrDate } from 'App/date'
-import { noNoteMsg } from 'App/mstore/notesStore'
+import { confirm } from 'UI';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { Tag } from 'antd';
+import copy from 'copy-to-clipboard';
+import { Eye, Link } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { resentOrDate } from 'App/date';
+import { noNoteMsg } from 'App/mstore/notesStore';
 
 function HighlightClip({
   note = 'Highlight note',
@@ -33,7 +33,7 @@ function HighlightClip({
   onDelete: (id: any) => any;
   canEdit: boolean;
 }) {
-  const noteMsg = note || noNoteMsg
+  const noteMsg = note || noNoteMsg;
   const copyToClipboard = () => {
     const currUrl = window.location.href;
     const hUrl = `${currUrl}?highlight=${hId}`;
@@ -73,7 +73,7 @@ function HighlightClip({
       case 'copy':
         copyToClipboard();
         toast.success('Highlight link copied to clipboard');
-        return
+        return;
       case 'delete':
         const res = await confirm({
           header: 'Are you sure delete this Highlight?',
@@ -104,15 +104,17 @@ function HighlightClip({
       menuItems={menuItems}
       onMenuClick={onMenuClick}
       modifier={
-        tag ? <div className="left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
-          <Tag
-            color={tagProps[tag]}
-            className="border-0 rounded-lg hover:inherit gap-2 w-14 text-center capitalize"
-            bordered={false}
-          >
-            {tag.toLowerCase()}
-          </Tag>
-        </div> : null
+        tag ? (
+          <div className="left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
+            <Tag
+              color={tagProps[tag]}
+              className="border-0 rounded-lg hover:inherit gap-2 w-14 text-center capitalize"
+              bordered={false}
+            >
+              {tag.toLowerCase()}
+            </Tag>
+          </div>
+        ) : null
       }
     />
   );

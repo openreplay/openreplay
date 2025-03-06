@@ -21,13 +21,13 @@ const components: any = {
   DashboardPure: lazy(() => import('Components/Dashboard/NewDashboard')),
   MultiviewPure: lazy(() => import('Components/Session_/Multiview/Multiview')),
   UsabilityTestingPure: lazy(
-    () => import('Components/UsabilityTesting/UsabilityTesting')
+    () => import('Components/UsabilityTesting/UsabilityTesting'),
   ),
   UsabilityTestEditPure: lazy(
-    () => import('Components/UsabilityTesting/TestEdit')
+    () => import('Components/UsabilityTesting/TestEdit'),
   ),
   UsabilityTestOverviewPure: lazy(
-    () => import('Components/UsabilityTesting/TestOverview')
+    () => import('Components/UsabilityTesting/TestOverview'),
   ),
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
@@ -47,7 +47,7 @@ const enhancedComponents: any = {
   UsabilityTesting: withSiteIdUpdater(components.UsabilityTestingPure),
   UsabilityTestEdit: withSiteIdUpdater(components.UsabilityTestEditPure),
   UsabilityTestOverview: withSiteIdUpdater(
-    components.UsabilityTestOverviewPure
+    components.UsabilityTestOverviewPure,
   ),
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
@@ -55,7 +55,7 @@ const enhancedComponents: any = {
   Highlights: withSiteIdUpdater(components.HighlightsPure)
 };
 
-const withSiteId = routes.withSiteId;
+const { withSiteId } = routes;
 
 const METRICS_PATH = routes.metrics();
 const METRICS_DETAILS = routes.metricDetails();
@@ -104,13 +104,16 @@ function PrivateRoutes() {
   const { projectsStore, userStore, integrationsStore, searchStore } = useStore();
   const onboarding = userStore.onboarding;
   const scope = userStore.scopeState;
-  const tenantId = userStore.account.tenantId;
+  const { tenantId } = userStore.account;
   const sites = projectsStore.list;
-  const siteId = projectsStore.siteId;
-  const hasRecordings = sites.some(s => s.recorded);
+  const { siteId } = projectsStore;
+  const hasRecordings = sites.some((s) => s.recorded);
   const redirectToSetup = scope === 0;
   const redirectToOnboarding =
-    !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || (sites.length > 0 && !hasRecordings)) && scope > 0;
+    !onboarding &&
+    (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' ||
+      (sites.length > 0 && !hasRecordings)) &&
+    scope > 0;
   const siteIdList: any = sites.map(({ id }) => id);
 
   React.useEffect(() => {
@@ -130,7 +133,7 @@ function PrivateRoutes() {
   }, [searchStore.instance.filters, searchStore.instance.eventsOrder]);
 
   return (
-    <Suspense fallback={<Loader loading={true} className="flex-1" />}>
+    <Suspense fallback={<Loader loading className="flex-1" />}>
       <Switch key="content">
         <Route
           exact

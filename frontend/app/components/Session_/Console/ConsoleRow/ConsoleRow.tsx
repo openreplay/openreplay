@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import cn from 'classnames';
-import stl from '../console.module.css';
 import { Icon } from 'UI';
 import JumpButton from 'Shared/DevTools/JumpButton';
+import stl from '../console.module.css';
 
 interface Props {
   log: any;
@@ -37,7 +37,10 @@ function ConsoleRow(props: Props) {
       <div key={log.key} className={cn('')} data-scroll-item={log.isRed}>
         <div className={cn(stl.message, 'flex items-center')}>
           {canExpand && (
-            <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} className="mr-2" />
+            <Icon
+              name={expanded ? 'caret-down-fill' : 'caret-right-fill'}
+              className="mr-2"
+            />
           )}
           <span>{renderWithNL(lines.pop())}</span>
         </div>

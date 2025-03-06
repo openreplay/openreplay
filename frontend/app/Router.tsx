@@ -8,7 +8,7 @@ import {
   GLOBAL_DESTINATION_PATH,
   IFRAME,
   JWT_PARAM,
-  SPOT_ONBOARDING
+  SPOT_ONBOARDING,
 } from 'App/constants/storageKeys';
 import Layout from 'App/layout/Layout';
 import { useStore } from 'App/mstore';
@@ -16,8 +16,8 @@ import { checkParam, handleSpotJWT, isTokenExpired } from 'App/utils';
 import { ModalProvider } from 'Components/Modal';
 import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
 import { Loader } from 'UI';
+import { observer } from 'mobx-react-lite';
 import * as routes from './routes';
-import { observer } from 'mobx-react-lite'
 
 interface RouterProps extends RouteComponentProps {
   match: {
@@ -28,27 +28,32 @@ interface RouterProps extends RouteComponentProps {
 }
 
 const Router: React.FC<RouterProps> = (props) => {
-  const {
-    location,
-    history,
-  } = props;
+  const { location, history } = props;
   const mstore = useStore();
-  const { customFieldStore, projectsStore, sessionStore, searchStore, userStore } = mstore;
-  const jwt = userStore.jwt;
-  const changePassword = userStore.account.changePassword;
+  const {
+    customFieldStore,
+    projectsStore,
+    sessionStore,
+    searchStore,
+    userStore,
+  } = mstore;
+  const { jwt } = userStore;
+  const { changePassword } = userStore.account;
   const userInfoLoading = userStore.fetchInfoRequest.loading;
   const scopeSetup = userStore.scopeState === 0;
   const localSpotJwt = userStore.spotJwt;
   const isLoggedIn = Boolean(jwt && !changePassword);
-  const fetchUserInfo = userStore.fetchUserInfo;
+  const { fetchUserInfo } = userStore;
   const setJwt = userStore.updateJwt;
-  const logout = userStore.logout;
+  const { logout } = userStore;
 
-  const setSessionPath = sessionStore.setSessionPath;
-  const siteId = projectsStore.siteId;
-  const sitesLoading = projectsStore.sitesLoading;
+  const { setSessionPath } = sessionStore;
+  const { siteId } = projectsStore;
+  const { sitesLoading } = projectsStore;
   const sites = projectsStore.list;
-  const loading = Boolean(userInfoLoading || (!scopeSetup && !siteId) || sitesLoading);
+  const loading = Boolean(
+    userInfoLoading || (!scopeSetup && !siteId) || sitesLoading,
+  );
   const initSite = projectsStore.initProject;
   const fetchSiteList = projectsStore.fetchList;
 
@@ -75,10 +80,10 @@ const Router: React.FC<RouterProps> = (props) => {
   const handleSpotLogin = (jwt: string) => {
     if (spotReqSent.current) {
       return;
-    } else {
-      spotReqSent.current = true;
-      setIsSpotCb(false);
     }
+    spotReqSent.current = true;
+    setIsSpotCb(false);
+
     handleSpotJWT(jwt);
   };
 
@@ -86,7 +91,7 @@ const Router: React.FC<RouterProps> = (props) => {
     if (!isLoggedIn && location.pathname !== routes.login()) {
       localStorage.setItem(
         GLOBAL_DESTINATION_PATH,
-        location.pathname + location.search
+        location.pathname + location.search,
       );
     }
   };
@@ -143,7 +148,7 @@ const Router: React.FC<RouterProps> = (props) => {
   useEffect(() => {
     handleDestinationPath();
 
-    setSessionPath(previousLocation ? previousLocation : location);
+    setSessionPath(previousLocation || location);
   }, [location]);
 
   useEffect(() => {
@@ -163,14 +168,14 @@ const Router: React.FC<RouterProps> = (props) => {
   }, [isSpotCb, isLoggedIn, localSpotJwt, isSignup]);
 
   useEffect(() => {
-    if (!isLoggedIn)  return
+    if (!isLoggedIn) return;
     const fetchData = async () => {
       if (siteId && siteId !== lastFetchedSiteIdRef.current) {
         const activeSite = sites.find((s) => s.id == siteId);
         initSite(activeSite ?? {});
         lastFetchedSiteIdRef.current = activeSite?.id;
-        await customFieldStore.fetchListActive(siteId + '');
-        await searchStore.fetchSavedSearchList()
+        await customFieldStore.fetchListActive(`${siteId}`);
+        await searchStore.fetchSavedSearchList();
       }
     };
 

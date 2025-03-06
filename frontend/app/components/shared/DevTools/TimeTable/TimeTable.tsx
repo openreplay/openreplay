@@ -3,15 +3,16 @@ import { VList, VListHandle } from 'virtua';
 import cn from 'classnames';
 import { Duration } from 'luxon';
 import { NoContent, Icon } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import { percentOf } from 'App/utils';
 
+import { observer } from 'mobx-react-lite';
 import BarRow from './BarRow';
 import stl from './timeTable.module.css';
 
 import autoscrollStl from '../autoscroll.module.css';
 import JumpButton from '../JumpButton';
-import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 
 type Timed = {
   time: number;
@@ -22,7 +23,7 @@ type Durationed = {
 };
 
 type CanBeRed = {
-  //+isRed: boolean,
+  // +isRed: boolean,
   isRed: boolean;
 };
 
@@ -90,11 +91,11 @@ function formatTime(ms: number) {
 function computeTimeLine(
   rows: Array<Row>,
   firstVisibleRowIndex: number,
-  visibleCount: number
+  visibleCount: number,
 ): TimeLineInfo {
   const visibleRows = rows.slice(
     firstVisibleRowIndex,
-    firstVisibleRowIndex + visibleCount + _additionalHeight
+    firstVisibleRowIndex + visibleCount + _additionalHeight,
   );
   let timestart =
     visibleRows.length > 0 ? Math.min(...visibleRows.map((r) => r.time)) : 0;
@@ -133,7 +134,7 @@ function TimeTable(props: Props) {
     const { timestart, timewidth } = computeTimeLine(
       props.rows,
       firstVisibleRowIndex,
-      visibleCount
+      visibleCount,
     );
     setTimerange({ timestart, timewidth });
   }, [
@@ -205,7 +206,7 @@ function TimeTable(props: Props) {
   }
 
   const visibleRefLines = referenceLines.filter(
-    ({ time }) => time > timestart && time < timestart + timewidth
+    ({ time }) => time > timestart && time < timestart + timewidth,
   );
 
   const columnsSumWidth = columns.reduce((sum, { width }) => sum + width, 0);
@@ -216,12 +217,12 @@ function TimeTable(props: Props) {
         <div className={cn(autoscrollStl.navButtons, 'flex items-center')}>
           <Button
             type="text"
-            icon={<Icon name={'chevron-up'} />}
+            icon={<Icon name="chevron-up" />}
             onClick={onPrevClick}
           />
           <Button
             type="text"
-            icon={<Icon name={'chevron-down'} />}
+            icon={<Icon name="chevron-down" />}
             onClick={onNextClick}
           />
         </div>
@@ -235,7 +236,6 @@ function TimeTable(props: Props) {
                 'cursor-pointer': typeof onClick === 'function',
               })}
               style={{ width: `${width}px` }}
-              // onClick={() => onColumnClick(dataKey, onClick)}
             >
               <span>{label}</span>
             </div>
@@ -279,7 +279,7 @@ function TimeTable(props: Props) {
             overscan={10}
             onScroll={(offset) => {
               const firstVisibleRowIndex = Math.floor(
-                offset / ROW_HEIGHT + 0.33
+                offset / ROW_HEIGHT + 0.33,
               );
               setFirstVisibleRowIndex(firstVisibleRowIndex);
             }}
@@ -329,7 +329,7 @@ function RowRenderer({
           'cursor-pointer': typeof onRowClick === 'function',
           [stl.activeRow]: activeIndex === index,
           [stl.inactiveRow]: !activeIndex || index > activeIndex,
-        }
+        },
       )}
       onClick={
         typeof onRowClick === 'function'
@@ -356,22 +356,21 @@ function RowRenderer({
 }
 
 const RowColumns = React.memo(({ columns, row }: any) => {
+  const { t } = useTranslation();
+
   return columns.map(({ dataKey, render, width, label }: any) => (
     <div
       key={label.replace(' ', '') + dataKey}
-      className={cn(
-        stl.cell,
-        'overflow-ellipsis overflow-hidden !py-0.5'
-      )}
+      className={cn(stl.cell, 'overflow-ellipsis overflow-hidden !py-0.5')}
       style={{ width: `${width}px` }}
     >
       {render
         ? render(row)
         : row[dataKey || ''] || (
-            <i className="color-gray-light">{'empty'}</i>
+            <i className="color-gray-light">{t('empty')}</i>
           )}
     </div>
-  ))
-})
+  ));
+});
 
 export default observer(TimeTable);

@@ -31,5 +31,4 @@ const AutoplayToggle: React.FC = () => {
   );
 };
 
-
 export default observer(AutoplayToggle);
