@@ -44,9 +44,8 @@ func NewMessageIterator(log logger.Logger, messageHandler MessageHandler, messag
 		iter.filter = filter
 	}
 	iter.preFilter = map[int]struct{}{
-		MsgBatchMetadata: {}, MsgBatchMeta: {}, MsgTimestamp: {},
-		MsgSessionStart: {}, MsgSessionEnd: {}, MsgSetPageLocation: {},
-		MsgMobileBatchMeta: {},
+		MsgBatchMetadata: {}, MsgTimestamp: {}, MsgSessionStart: {},
+		MsgSessionEnd: {}, MsgSetPageLocation: {}, MsgMobileBatchMeta: {},
 	}
 	return iter
 }
@@ -151,20 +150,6 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		i.messageInfo.Url = m.Location
 		i.version = m.Version
 		i.batchInfo.version = m.Version
-
-	case *BatchMeta: // Is not required to be present in batch since Mobile doesn't have it (though we might change it)
-		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
-			return fmt.Errorf("batchMeta found at the end of the batch, info: %s", i.batchInfo.Info())
-		}
-		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
-		i.messageInfo.Timestamp = uint64(m.Timestamp)
-		if m.Timestamp == 0 {
-			i.zeroTsLog("BatchMeta")
-		}
-		// Try to get saved session's page url
-		if savedURL := i.urls.Get(i.messageInfo.batch.sessionID); savedURL != "" {
-			i.messageInfo.Url = savedURL
-		}
 
 	case *Timestamp:
 		i.messageInfo.Timestamp = m.Timestamp

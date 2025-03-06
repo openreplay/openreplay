@@ -133,17 +133,6 @@ func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 		}
 		newMsg.SetMeta(msg.Meta())
 		return newMsg
-	case *messages.CSSInsertRuleURLBased:
-		if e.shouldSkipAsset(m.BaseURL) {
-			return msg
-		}
-		newMsg := &messages.CSSInsertRule{
-			ID:    m.ID,
-			Index: m.Index,
-			Rule:  e.handleCSS(m.SessionID(), m.BaseURL, m.Rule),
-		}
-		newMsg.SetMeta(msg.Meta())
-		return newMsg
 	case *messages.AdoptedSSReplaceURLBased:
 		if e.shouldSkipAsset(m.BaseURL) {
 			return msg
