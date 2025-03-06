@@ -233,8 +233,9 @@ export default class MessageManager {
       }
     }
 
-    lastMsgArr.sort((a, b) => a[1] - b[1]);
-    lastMsgArr.forEach(([tabId, lastMessageTs]) => {
+    lastMsgArr
+      .sort((a, b) => a[1] - b[1])
+      .forEach(([tabId, lastMessageTs]) => {
       this.tabCloseManager.append({ tabId, time: lastMessageTs });
     });
   };
@@ -383,6 +384,9 @@ export default class MessageManager {
         this.mouseThrashingManager.append(msg);
         break;
       case MType.MouseMove:
+        if (this.tabs[msg.tabId].lastMessageTs < msg.time) {
+          this.tabs[msg.tabId].lastMessageTs = msg.time;
+        }
         this.mouseMoveManager.append(msg);
         break;
       case MType.MouseClickDeprecated:

@@ -90,10 +90,7 @@ function InstallDocs({ site }) {
                   {t('Otherwise, if your web app is')}&nbsp;
                   <strong>{t('Server-Side-Rendered (SSR)')}</strong>&nbsp;
                   {t('(i.e. NextJS, NuxtJS),')}&nbsp;
-                  <a
-                    className="text-main"
-                    href="https://docs.openreplay.com/en/using-or/next/"
-                  >
+                  <a className={'text-main'} href={'https://docs.openreplay.com/en/sdk/using-or/next/'}>
                     {t('consider async imports')}
                   </a>
                   {t('or cjs version of the library:')}

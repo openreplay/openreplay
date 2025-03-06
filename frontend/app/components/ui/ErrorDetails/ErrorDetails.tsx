@@ -6,7 +6,7 @@ import { useStore } from 'App/mstore';
 import ErrorFrame from '../ErrorFrame/ErrorFrame';
 import { useTranslation } from 'react-i18next';
 
-const docLink = 'https://docs.openreplay.com/installation/upload-sourcemaps';
+const docLink = 'https://docs.openreplay.com/deployment/upload-sourcemaps';
 
 interface Props {
   fetchErrorStackList: any;

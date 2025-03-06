@@ -29,7 +29,12 @@ function LongLoader({ onClick }: { onClick: () => void }) {
       <div>
         {t('Use sample data to speed up query and get a faster response.')}
       </div>
-      <Button onClick={onClick}>{t('Use Sample Data')}</Button>
+      {/*<div>*/}
+      {/*  Use sample data to speed up query and get a faster response.*/}
+      {/*</div>*/}
+      {/*<Button onClick={onClick}>*/}
+      {/*  Use Sample Data*/}
+      {/*</Button>*/}
     </div>
   );
 }

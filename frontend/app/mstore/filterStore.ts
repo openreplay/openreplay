@@ -29,12 +29,13 @@ export default class FilterStore {
     this.topValues = {};
   };
 
-  fetchTopValues = async (key: string, source?: string) => {
-    if (this.topValues.hasOwnProperty(key)) {
-      return Promise.resolve(this.topValues[key]);
+  fetchTopValues = async (key: string, siteId: string, source?: string) => {
+    const valKey = `${siteId}_${key}${source || ''}`
+    if (this.topValues[valKey] && this.topValues[valKey].length) {
+      return Promise.resolve(this.topValues[valKey]);
     }
     return filterService.fetchTopValues(key, source).then((response: []) => {
-      this.setTopValues(`${key}${source || ''}`, response);
+      this.setTopValues(valKey, response);
     });
   };
 }

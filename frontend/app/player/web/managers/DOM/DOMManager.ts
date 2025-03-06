@@ -434,38 +434,6 @@ export default class DOMManager extends ListWalker<Message> {
         vText.setData(msg.data);
         return;
       }
-
-      /** @deprecated
-       * since 4.0.2 in favor of AdoptedSsInsertRule/DeleteRule + AdoptedSsAddOwner as a common case for StyleSheets
-       */
-      case MType.CssInsertRule: {
-        let styleSheet = this.olStyleSheetsDeprecated.get(msg.id);
-        if (!styleSheet) {
-          const vElem = this.vElements.get(msg.id);
-          if (!vElem) {
-            logger.error('CssInsertRule: Node not found', msg);
-            return;
-          }
-          if (!isStyleVElement(vElem)) {
-            logger.error('CssInsertRule: Non-style element', msg);
-            return;
-          }
-          styleSheet = OnloadStyleSheet.fromStyleElement(vElem.node);
-          this.olStyleSheetsDeprecated.set(msg.id, styleSheet);
-        }
-        styleSheet.insertRule(msg.rule, msg.index);
-        return;
-      }
-      case MType.CssDeleteRule: {
-        const styleSheet = this.olStyleSheetsDeprecated.get(msg.id);
-        if (!styleSheet) {
-          logger.error('CssDeleteRule: StyleSheet was not created', msg);
-          return;
-        }
-        styleSheet.deleteRule(msg.index);
-        return;
-      }
-      /* end @deprecated */
       case MType.CreateIFrameDocument: {
         const vElem = this.vElements.get(msg.frameID);
         if (!vElem) {

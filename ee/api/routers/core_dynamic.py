@@ -12,7 +12,7 @@ from chalicelib.core import scope
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_slack import Slack
-from chalicelib.core.errors import errors
+from chalicelib.core.errors import errors, errors_details
 from chalicelib.core.metrics import heatmaps
 from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_assignments, \
     sessions_viewed, unprocessed_sessions, sessions_search
@@ -354,8 +354,8 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
          dependencies=[OR_scope(Permissions.DEV_TOOLS, ServicePermissions.DEV_TOOLS)])
 def errors_get_details(projectId: int, errorId: str, density24: int = 24, density30: int = 30,
                        context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                              **{"density24": density24, "density30": density30})
+    data = errors_details.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
+                                      **{"density24": density24, "density30": density30})
     return data
 
 
@@ -497,6 +497,18 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str,
                                         session_id=sessionId, assignment_id=issueId,
                                         user_id=context.user_id, message=data.message)
     if "errors" in data.keys():
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.get('/{projectId}/notes/{noteId}', tags=["sessions", "notes"],
+         dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
+def get_note_by_id(projectId: int, noteId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.get_note(tenant_id=context.tenant_id, project_id=projectId, note_id=noteId,
+                                   user_id=context.user_id)
+    if "errors" in data:
         return data
     return {
         'data': data

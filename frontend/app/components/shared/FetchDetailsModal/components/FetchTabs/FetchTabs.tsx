@@ -119,14 +119,10 @@ function FetchTabs({ resource, isSpot }: Props) {
                 <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
                 <div className="mt-6 text-base font-normal">
                   {t('Body is empty or not captured.')}{' '}
-                  <a
-                    href="https://docs.openreplay.com/installation/network-options"
-                    className="link"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
+                  <a href="https://docs.openreplay.com/en/sdk/network-options" className="link" target="_blank">
                     {t('Configure')}
-                  </a>{' '}
+                  </a>
+                  {' '}
                   {t(
                     'network capturing to get more out of Fetch/XHR requests.',
                   )}
@@ -161,14 +157,10 @@ function FetchTabs({ resource, isSpot }: Props) {
                 <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
                 <div className="mt-6 text-base font-normal">
                   {t('Body is empty or not captured.')}{' '}
-                  <a
-                    href="https://docs.openreplay.com/installation/network-options"
-                    className="link"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
+                  <a href="https://docs.openreplay.com/en/sdk/network-options" className="link" target="_blank">
                     {t('Configure')}
-                  </a>{' '}
+                  </a>
+                  {' '}
                   {t(
                     'network capturing to get more out of Fetch/XHR requests.',
                   )}

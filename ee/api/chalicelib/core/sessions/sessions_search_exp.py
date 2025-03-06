@@ -3,7 +3,7 @@ import logging
 
 import schemas
 from chalicelib.core import metadata, projects
-from chalicelib.core.sessions import sessions_favorite, sessions_legacy, sessions, sessions_legacy_mobil
+from . import sessions_favorite, sessions as sessions_legacy, sessions_ch as sessions, sessions_legacy_mobil
 from chalicelib.utils import pg_client, helper, ch_client, exp_ch_helper
 
 logger = logging.getLogger(__name__)

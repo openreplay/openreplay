@@ -1,8 +1,8 @@
 import cn from 'classnames';
 import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
-import React from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import React, { useState, useCallback, useMemo } from 'react';
+import { RouteComponentProps, useHistory, withRouter } from 'react-router-dom';
 
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
@@ -10,10 +10,10 @@ import {
   assist as assistRoute,
   isRoute,
   liveSession,
-  sessions as sessionsRoute,
+  sessions as sessionsRoute
 } from 'App/routes';
 import { capitalize } from 'App/utils';
-import { Avatar, CountryFlag, Icon, Label, TextEllipsis, Tooltip } from 'UI';
+import { Avatar, CountryFlag, Icon, Label, TextEllipsis } from 'UI';
 
 import Counter from './Counter';
 import ErrorBars from './ErrorBars';
@@ -21,6 +21,7 @@ import PlayLink from './PlayLink';
 import SessionMetaList from './SessionMetaList';
 import stl from './sessionItem.module.css';
 import { useTranslation } from 'react-i18next';
+import { Tooltip } from 'antd';
 
 const ASSIST_ROUTE = assistRoute();
 const ASSIST_LIVE_SESSION = liveSession();
@@ -60,7 +61,6 @@ interface Props {
   hasUserFilter?: boolean;
   disableUser?: boolean;
   metaList?: Array<any>;
-  // showActive?: boolean;
   lastPlayedSessionId?: string;
   live?: boolean;
   onClick?: any;
@@ -76,15 +76,17 @@ interface Props {
 const PREFETCH_STATE = {
   none: 0,
   loading: 1,
-  fetched: 2,
+  fetched: 2
 };
 
 function SessionItem(props: RouteComponentProps & Props) {
+  const { location } = useHistory();
   const { settingsStore, sessionStore } = useStore();
   const { timezone, shownTimezone } = settingsStore.sessionSettings;
-  const [prefetchState, setPrefetched] = React.useState(PREFETCH_STATE.none);
   const { t } = useTranslation();
+  const [prefetchState, setPrefetched] = useState(PREFETCH_STATE.none);
 
+  // Destructure all props at the top
   const {
     session,
     onUserClick = () => null,
@@ -97,6 +99,10 @@ function SessionItem(props: RouteComponentProps & Props) {
     ignoreAssist = false,
     bookmarked = false,
     query,
+    // location,
+    isDisabled,
+    live: propsLive,
+    isAdd
   } = props;
 
   const {
@@ -115,41 +121,56 @@ function SessionItem(props: RouteComponentProps & Props) {
     viewed,
     userDeviceType,
     userNumericHash,
-    live,
+    live: sessionLive,
     metadata,
     issueTypes,
     active,
     platform,
     timezone: userTimezone,
+    isCallActive,
+    agentIds
   } = session;
 
-  const { location } = props;
-  const queryParams = Object.fromEntries(new URLSearchParams(location.search));
+  // Memoize derived values
+  const queryParams = useMemo(
+    () => Object.fromEntries(new URLSearchParams(location.search)),
+    [location.search]
+  );
+
   const isMobile = platform !== 'web';
-  const formattedDuration = durationFormatted(duration);
+  const formattedDuration = useMemo(() => durationFormatted(duration), [duration]);
   const hasUserId = userId || userAnonymousId;
-  const isSessions = isRoute(SESSIONS_ROUTE, location.pathname);
-  const isAssist =
-    (!ignoreAssist &&
-      (isRoute(ASSIST_ROUTE, location.pathname) ||
-        isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
-        location.pathname.includes('multiview'))) ||
-    props.live;
+
+  const isSessions = useMemo(
+    () => isRoute(SESSIONS_ROUTE, location.pathname),
+    [location.pathname]
+  );
+
+  const isAssist = useMemo(() => {
+    return (
+      (!ignoreAssist &&
+        (isRoute(ASSIST_ROUTE, location.pathname) ||
+          isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
+          location.pathname.includes('multiview'))) ||
+      propsLive
+    );
+  }, [ignoreAssist, location.pathname, propsLive]);
 
   const isLastPlayed = lastPlayedSessionId === sessionId;
+  const live = sessionLive || propsLive;
+  const isMultiviewDisabled = isDisabled && location.pathname.includes('multiview');
 
-  const _metaList = Object.keys(metadata).map((key) => {
-    const value = metadata[key];
-    return { label: key, value };
-  });
+  // Memoize metadata list creation
+  const _metaList = useMemo(() => {
+    return Object.keys(metadata).map((key) => ({
+      label: key,
+      value: metadata[key]
+    }));
+  }, [metadata]);
 
-  const handleHover = async () => {
-    if (
-      prefetchState !== PREFETCH_STATE.none ||
-      props.live ||
-      isAssist ||
-      isMobile
-    )
+  // Memoize event handlers
+  const handleHover = useCallback(async () => {
+    if (prefetchState !== PREFETCH_STATE.none || live || isAssist || isMobile)
       return;
 
     setPrefetched(PREFETCH_STATE.loading);
@@ -159,27 +180,72 @@ function SessionItem(props: RouteComponentProps & Props) {
     } catch (e) {
       console.error('Error while prefetching first mob', e);
     }
-  };
-  const populateData = () => {
-    if (
-      props.live ||
-      isAssist ||
-      prefetchState === PREFETCH_STATE.none ||
-      isMobile
-    ) {
+  }, [prefetchState, live, isAssist, isMobile, sessionStore, sessionId]);
+
+  const populateData = useCallback(() => {
+    if (live || isAssist || prefetchState === PREFETCH_STATE.none || isMobile) {
       return;
     }
-
     sessionStore.prefetchSession(session);
-  };
+  }, [live, isAssist, prefetchState, isMobile, sessionStore, session]);
+
+  const handleUserClick = useCallback(() => {
+    if (!disableUser && !hasUserFilter && hasUserId) {
+      onUserClick(userId, userAnonymousId);
+    }
+  }, [disableUser, hasUserFilter, hasUserId, onUserClick, userId, userAnonymousId]);
+
+  const handleAddClick = useCallback(() => {
+    if (!isDisabled && onClick) {
+      onClick();
+    }
+  }, [isDisabled, onClick]);
+
+  // Memoize time formatting
+  const formattedTime = useMemo(() => {
+    const timezoneToUse =
+      shownTimezone === 'user' && userTimezone
+        ? {
+          label: userTimezone.split('+').join(' +'),
+          value: userTimezone.split(':')[0]
+        }
+        : timezone;
+
+    return formatTimeOrDate(startedAt, timezoneToUse);
+  }, [startedAt, shownTimezone, userTimezone, timezone]);
+
+  // Memoize tooltip content
+  const timeTooltipContent = useMemo(() => {
+    return (
+      <div className={'flex flex-col gap-1'}>
+        <span>
+          Local Time: {formatTimeOrDate(startedAt, timezone, true)}{' '}
+          {timezone.label}
+        </span>
+        {userTimezone ? (
+          <span>
+            User's Time:{' '}
+            {formatTimeOrDate(
+              startedAt,
+              {
+                label: userTimezone.split('+').join(' +'),
+                value: userTimezone.split(':')[0]
+              },
+              true
+            )}{' '}
+            {userTimezone}
+          </span>
+        ) : null}
+      </div>
+    );
+  }, [startedAt, timezone, userTimezone]);
+
   return (
     <Tooltip
-      delay={0}
-      title="Session already added into the multiview"
-      disabled={!props.isDisabled || !location.pathname.includes('multiview')}
+      title={!isMultiviewDisabled ? '' : t(`Session already added into the multiview`)}
     >
       <div
-        className={cn(stl.sessionItem, 'flex flex-col py-2 px-4')}
+        className={cn(stl.sessionItem, 'flex flex-col p-4')}
         id="session-item"
         onClick={(e) => e.stopPropagation()}
         onMouseEnter={handleHover}
@@ -206,16 +272,12 @@ function SessionItem(props: RouteComponentProps & Props) {
                     <div
                       className={cn('text-lg', {
                         'color-teal cursor-pointer':
-                          !disableUser && hasUserId && !props.isDisabled,
+                          !disableUser && hasUserId && !isDisabled,
                         [stl.userName]:
-                          !disableUser && hasUserId && !props.isDisabled,
-                        'color-gray-medium': disableUser || !hasUserId,
+                        !disableUser && hasUserId && !isDisabled,
+                        'color-gray-medium': disableUser || !hasUserId
                       })}
-                      onClick={() =>
-                        !disableUser && !hasUserFilter && hasUserId
-                          ? onUserClick(userId, userAnonymousId)
-                          : null
-                      }
+                      onClick={handleUserClick}
                     >
                       <TextEllipsis
                         text={userDisplayName}
@@ -236,43 +298,13 @@ function SessionItem(props: RouteComponentProps & Props) {
             >
               <div>
                 <Tooltip
-                  delay={0}
-                  disabled={props.isDisabled}
-                  title={
-                    <div className="flex flex-col gap-1">
-                      <span>
-                        {t('Local Time:')}&nbsp;
-                        {formatTimeOrDate(startedAt, timezone, true)}{' '}
-                        {timezone.label}
-                      </span>
-                      {userTimezone ? (
-                        <span>
-                          {t("User's Time")}:&nbsp;
-                          {formatTimeOrDate(
-                            startedAt,
-                            {
-                              label: userTimezone.split('+').join(' +'),
-                              value: userTimezone.split(':')[0],
-                            },
-                            true,
-                          )}{' '}
-                          {userTimezone}
-                        </span>
-                      ) : null}
-                    </div>
-                  }
+                  // delay={0}
+                  // disabled={isDisabled}
+                  title={isDisabled ? '' : timeTooltipContent}
                   className="w-fit !block"
                 >
                   <TextEllipsis
-                    text={formatTimeOrDate(
-                      startedAt,
-                      shownTimezone === 'user' && userTimezone
-                        ? {
-                            label: userTimezone.split('+').join(' +'),
-                            value: userTimezone.split(':')[0],
-                          }
-                        : timezone,
-                    )}
+                    text={formattedTime}
                     popupProps={{ inverted: true, size: 'tiny' }}
                   />
                 </Tooltip>
@@ -292,7 +324,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </>
                 )}
                 <div>
-                  {live || props.live ? (
+                  {live ? (
                     <Counter startTime={startedAt} />
                   ) : (
                     formattedDuration
@@ -313,27 +345,31 @@ function SessionItem(props: RouteComponentProps & Props) {
                 />
               </div>
               <div className="color-gray-medium flex items-center py-1">
-                {userBrowser ? (
+                {userBrowser && (
                   <span className="capitalize" style={{ maxWidth: '70px' }}>
                     <TextEllipsis
                       text={capitalize(userBrowser)}
                       popupProps={{ inverted: true, size: 'tiny' }}
                     />
                   </span>
-                ) : null}
-                {userOs && userBrowser ? (
+                )}
+                {userOs && userBrowser && (
                   <Icon name="circle-fill" size={3} className="mx-4" />
-                ) : null}
-                <span
-                  className={/ios/i.test(userOs) ? '' : 'capitalize'}
-                  style={{ maxWidth: '70px' }}
-                >
-                  <TextEllipsis
-                    text={/ios/i.test(userOs) ? 'iOS' : capitalize(userOs)}
-                    popupProps={{ inverted: true, size: 'tiny' }}
-                  />
-                </span>
-                <Icon name="circle-fill" size={3} className="mx-4" />
+                )}
+                {userOs && (
+                  <span
+                    className={/ios/i.test(userOs) ? '' : 'capitalize'}
+                    style={{ maxWidth: '70px' }}
+                  >
+                    <TextEllipsis
+                      text={/ios/i.test(userOs) ? 'iOS' : capitalize(userOs)}
+                      popupProps={{ inverted: true, size: 'tiny' }}
+                    />
+                  </span>
+                )}
+                {userOs && (
+                  <Icon name="circle-fill" size={3} className="mx-4" />
+                )}
                 <span className="capitalize" style={{ maxWidth: '70px' }}>
                   <TextEllipsis
                     text={capitalize(userDeviceType)}
@@ -356,12 +392,12 @@ function SessionItem(props: RouteComponentProps & Props) {
             <div
               className={cn(
                 stl.playLink,
-                props.isDisabled ? 'cursor-not-allowed' : 'cursor-pointer',
+                isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
               )}
               id="play-button"
               data-viewed={viewed}
             >
-              {live && session.isCallActive && session.agentIds!.length > 0 ? (
+              {live && isCallActive && agentIds && agentIds.length > 0 && (
                 <div className="mr-4">
                   <Label className="bg-gray-lightest p-1 px-2 rounded-lg">
                     <span
@@ -372,7 +408,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                     </span>
                   </Label>
                 </div>
-              ) : null}
+              )}
               {isSessions && (
                 <div className="mr-4 flex-shrink-0 w-24">
                   {isLastPlayed && (
@@ -387,10 +423,10 @@ function SessionItem(props: RouteComponentProps & Props) {
                   )}
                 </div>
               )}
-              {props.isAdd ? (
+              {isAdd ? (
                 <div
                   className="rounded-full border-tealx p-2 border"
-                  onClick={() => (props.isDisabled ? null : props.onClick())}
+                  onClick={handleAddClick}
                 >
                   <div className="bg-tealx rounded-full p-2">
                     <Icon name="plus" size={16} color="white" />
@@ -404,7 +440,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   onClick={onClick}
                   queryParams={queryParams}
                   query={query}
-                  beforeOpen={props.live || isAssist ? undefined : populateData}
+                  beforeOpen={live || isAssist ? undefined : populateData}
                 />
               )}
             </div>

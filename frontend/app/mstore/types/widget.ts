@@ -1,4 +1,5 @@
 import { makeAutoObservable, runInAction } from 'mobx';
+import FilterSeries from './filterSeries';
 import { DateTime } from 'luxon';
 import Session from 'App/mstore/types/session';
 import Funnelissue from 'App/mstore/types/funnelIssue';
@@ -10,6 +11,7 @@ import {
 } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
+import Funnel from '../types/funnel';
 import { metricService } from 'App/services';
 import {
   FUNNEL,
@@ -19,33 +21,23 @@ import {
   TIMESERIES,
   USER_PATH,
 } from 'App/constants/card';
+import { ErrorInfo } from '../types/error';
 import { getChartFormatter } from 'Types/dashboard/helper';
-import { filtersMap } from 'Types/filter/newFilter';
-import { durationFormatted } from 'App/date';
-import { ErrorInfo } from './error';
 import FilterItem from './filterItem';
-import Issue from './issue';
-import Funnel from './funnel';
-import FilterSeries from './filterSeries';
+import { filtersMap } from 'Types/filter/newFilter';
+import Issue from '../types/issue';
+import { durationFormatted } from 'App/date';
 import { SessionsByRow } from './sessionsCardData';
 
 export class InsightIssue {
   icon: string;
-
   iconColor: string;
-
   change: number;
-
   isNew = false;
-
   category: string;
-
   label: string;
-
   value: number;
-
   oldValue: number;
-
   isIncreased?: boolean;
 
   constructor(
@@ -72,12 +64,12 @@ export class InsightIssue {
 }
 
 function cleanFilter(filter: any) {
-  delete filter.operatorOptions;
-  delete filter.placeholder;
-  delete filter.category;
-  delete filter.label;
-  delete filter.icon;
-  delete filter.key;
+  delete filter['operatorOptions'];
+  delete filter['placeholder'];
+  delete filter['category'];
+  delete filter['label'];
+  delete filter['icon'];
+  delete filter['key'];
 }
 
 export default class Widget {
@@ -86,63 +78,36 @@ export default class Widget {
   }
 
   metricId: any = undefined;
-
   widgetId: any = undefined;
-
   category?: string = undefined;
-
   name: string = 'Untitled Card';
-
   metricType: string = 'timeseries';
-
   metricOf: string = 'sessionCount';
-
   metricValue: [] = [];
-
   viewType: string = 'lineChart';
-
   metricFormat: string = 'sessionCount';
-
   series: FilterSeries[] = [];
-
   sessions: [] = [];
-
   isPublic: boolean = true;
-
   owner: string = '';
-
   lastModified: DateTime | null = new Date().getTime();
-
   dashboards: any[] = [];
-
   dashboardIds: any[] = [];
-
   config: any = {};
-
   page: number = 1;
-
   limit: number = 20;
-
   thumbnail?: string;
-
   params: any = { density: 35 };
-
   startType: string = 'start';
-
   startPoint: FilterItem = new FilterItem(filtersMap[FilterKey.LOCATION]);
-
   excludes: FilterItem[] = [];
-
   hideExcess?: boolean = false;
-
   compareTo: [startDate?: string, endDate?: string] | null = null;
 
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
-
   hasChanged: boolean = false;
 
   position: number = 0;
-
   data: any = {
     sessionId: '',
     sessions: [],
@@ -154,13 +119,9 @@ export default class Widget {
     avg: 0,
     percentiles: [],
   };
-
   isLoading: boolean = false;
-
   isValid: boolean = false;
-
   dashboardId: any = undefined;
-
   predefinedKey: string = '';
 
   constructor() {
@@ -186,7 +147,7 @@ export default class Widget {
   addSeries() {
     this.hasChanged = true;
     const series = new FilterSeries();
-    series.name = `Series ${this.series.length + 1}`;
+    series.name = 'Series ' + (this.series.length + 1);
     this.series.push(series);
   }
 
@@ -251,7 +212,7 @@ export default class Widget {
             this.startPoint = new FilterItem().fromJson(json.startPoint[0]);
           }
 
-          if (json.startPoint === typeof Object) {
+          if (json.startPoint == typeof Object) {
             this.startPoint = json.startPoint;
           }
         }
@@ -355,8 +316,8 @@ export default class Widget {
     return this.metricId !== undefined;
   }
 
-  calculateTotalSeries = (data: any): any =>
-    Array.isArray(data)
+  calculateTotalSeries = (data: any): any => {
+    return Array.isArray(data)
       ? data.map((entry) => {
           const total = Object.keys(entry)
             .filter((key) => key !== 'timestamp' && key !== 'time')
@@ -364,6 +325,7 @@ export default class Widget {
           return { ...entry, Total: total };
         })
       : [];
+  };
 
   setPage(page: number) {
     this.page = page;
@@ -412,9 +374,10 @@ export default class Widget {
     }
 
     if (this.metricOf === FilterKey.ERRORS) {
-      _data.errors = data.errors.map((s: any) => new ErrorInfo(s));
+      _data['errors'] = data.errors.map((s: any) => new ErrorInfo(s));
+      _data['total'] = data.total;
     } else if (this.metricType === INSIGHTS) {
-      _data.issues = data
+      _data['issues'] = data
         .filter((i: any) => i.change > 0 || i.change < 0)
         .map(
           (i: any) =>
@@ -431,39 +394,41 @@ export default class Widget {
     } else if (this.metricType === FUNNEL) {
       _data.funnel = new Funnel().fromJSON(data);
     } else if (this.metricType === TABLE) {
-      const { count } = data[0];
-      _data.values = data[0].values.map((s: any) =>
+      const count = data[0]['count'];
+      _data['values'] = data[0]['values'].map((s: any) =>
         new SessionsByRow().fromJson(s, count, this.metricOf),
       );
-      _data.total = data[0].total;
-    } else if (data.hasOwnProperty('chart')) {
-      _data.value = data.value;
-      _data.unit = data.unit;
-      _data.chart = getChartFormatter(period, density)(data.chart);
-      _data.namesMap = data.chart
-        .map((i: any) => Object.keys(i))
-        .flat()
-        .filter((i: any) => i !== 'time' && i !== 'timestamp')
-        .reduce((unique: any, item: any) => {
-          if (!unique.includes(item)) {
-            unique.push(item);
-          }
-          return unique;
-        }, []);
+      _data['total'] = data[0]['total'];
     } else {
-      _data.chart = getChartFormatter(period, density)(data);
-      _data.namesMap = Array.isArray(data)
-        ? data
-            .map((i) => Object.keys(i))
-            .flat()
-            .filter((i) => i !== 'time' && i !== 'timestamp')
-            .reduce((unique: string[], item: string) => {
-              if (!unique.includes(item)) {
-                unique.push(item);
-              }
-              return unique;
-            }, [])
-        : [];
+      if (data.hasOwnProperty('chart')) {
+        _data['value'] = data.value;
+        _data['unit'] = data.unit;
+        _data['chart'] = getChartFormatter(period, density)(data.chart);
+        _data['namesMap'] = data.chart
+          .map((i: any) => Object.keys(i))
+          .flat()
+          .filter((i: any) => i !== 'time' && i !== 'timestamp')
+          .reduce((unique: any, item: any) => {
+            if (!unique.includes(item)) {
+              unique.push(item);
+            }
+            return unique;
+          }, []);
+      } else {
+        _data['chart'] = getChartFormatter(period, density)(data);
+        _data['namesMap'] = Array.isArray(data)
+          ? data
+              .map((i) => Object.keys(i))
+              .flat()
+              .filter((i) => i !== 'time' && i !== 'timestamp')
+              .reduce((unique: string[], item: string) => {
+                if (!unique.includes(item)) {
+                  unique.push(item);
+                }
+                return unique;
+              }, [])
+          : [];
+      }
     }
 
     if (!isComparison) {
@@ -478,10 +443,12 @@ export default class Widget {
     return new Promise((resolve) => {
       metricService.fetchSessions(metricId, filter).then((response: any[]) => {
         resolve(
-          response.map((cat: { sessions: any[] }) => ({
-            ...cat,
-            sessions: cat.sessions.map((s: any) => new Session().fromJson(s)),
-          })),
+          response.map((cat: { sessions: any[] }) => {
+            return {
+              ...cat,
+              sessions: cat.sessions.map((s: any) => new Session().fromJson(s)),
+            };
+          }),
         );
       });
     });
@@ -498,19 +465,20 @@ export default class Widget {
             new Issue().fromJSON(issue),
           ),
         };
-      }
-      const mapIssue = (issue: any) => new Funnelissue().fromJSON(issue);
-      const significantIssues =
-        response.issues.significant?.map(mapIssue) || [];
-      const insignificantIssues =
-        response.issues.insignificant?.map(mapIssue) || [];
+      } else {
+        const mapIssue = (issue: any) => new Funnelissue().fromJSON(issue);
+        const significantIssues =
+          response.issues.significant?.map(mapIssue) || [];
+        const insignificantIssues =
+          response.issues.insignificant?.map(mapIssue) || [];
 
-      return {
-        issues:
-          significantIssues.length > 0
-            ? significantIssues
-            : insignificantIssues,
-      };
+        return {
+          issues:
+            significantIssues.length > 0
+              ? significantIssues
+              : insignificantIssues,
+        };
+      }
     } catch (error) {
       console.error('Error fetching issues:', error);
       return {
@@ -545,11 +513,9 @@ export default class Widget {
     if (!Array.isArray(metricValue)) return metricValue;
     if (metricType === TABLE) {
       return issueOptions.filter((i: any) => metricValue.includes(i.value));
-    }
-    if (metricType === INSIGHTS) {
+    } else if (metricType === INSIGHTS) {
       return issueCategories.filter((i: any) => metricValue.includes(i.value));
-    }
-    if (metricType === USER_PATH) {
+    } else if (metricType === USER_PATH) {
       return pathAnalysisEvents.filter((i: any) =>
         metricValue.includes(i.value),
       );

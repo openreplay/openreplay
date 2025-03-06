@@ -22,11 +22,6 @@ message 1, 'SessionStart', :tracker => false, :replayer => false do
   string 'UserID'
 end
 
-# DEPRECATED; backend only (TODO: remove in the next release)
-message 3, 'SessionEndDeprecated', :tracker => false, :replayer => false do
-  uint 'Timestamp'
-end
-
 # DEPRECATED since 14.0.0 -> goto 122
 message 4, 'SetPageLocationDeprecated' do
   string 'URL'
@@ -134,12 +129,6 @@ message 24, 'PageRenderTiming', :replayer => false do
   uint 'VisuallyComplete'
   uint 'TimeToInteractive'
 end
-# DEPRECATED since 4.1.6 / 1.8.2 in favor of #78
-message 25, 'JSExceptionDeprecated', :replayer => false, :tracker => false do
-  string 'Name'
-  string 'Message'
-  string 'Payload'
-end
 message 26, 'IntegrationEvent', :tracker => false, :replayer => false do
   uint 'Timestamp'
   string 'Source'
@@ -218,29 +207,6 @@ message 35, 'SetNodeAttributeDictGlobal' do
     uint 'ID'
     uint 'Name'
     uint 'Value'
-end
-
-# DEPRECATED since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
-message 37, 'CSSInsertRule' do
-  uint 'ID'
-  string 'Rule'
-  uint 'Index'
-end
-# DEPRECATED since 4.0.2
-message 38, 'CSSDeleteRule' do
-  uint 'ID'
-  uint 'Index'
-end
-
-# DEPRECATED since 4.1.10 in favor of NetworkRequest
-message 39, 'Fetch', :replayer => :devtools do
-  string 'Method'
-  string 'URL'
-  string 'Request'
-  string 'Response'
-  uint 'Status'
-  uint 'Timestamp'
-  uint 'Duration'
 end
 message 40, 'Profiler', :replayer => :devtools do
   string 'Name'
@@ -342,9 +308,8 @@ message 56, 'PerformanceTrackAggr', :tracker => false, :replayer => false do
   uint 'AvgUsedJSHeapSize'
   uint 'MaxUsedJSHeapSize'
 end
-
 # Since 4.1.7 / 1.9.0
-message 57, 'LoadFontFace' do 
+message 57, 'LoadFontFace' do
   uint 'ParentID'
   string 'Family'
   string 'Source'
@@ -353,17 +318,6 @@ end
 # Since 4.1.7 / 1.9.0
 message 58, 'SetNodeFocus' do
   int 'ID'
-end
-
-#DEPRECATED (since 3.0.?)
-message 59, 'LongTask' do
-  uint 'Timestamp'
-  uint 'Duration'
-  uint 'Context'
-  uint 'ContainerType'
-  string 'ContainerSrc'
-  string 'ContainerId'
-  string 'ContainerName'
 end
 message 60, 'SetNodeAttributeURLBased' do
   uint 'ID'
@@ -377,15 +331,6 @@ message 61, 'SetCSSDataURLBased' do
   string 'Data'
   string 'BaseURL'
 end
-# DEPRECATED; backend only (TODO: remove in the next release)
-message 62, 'IssueEventDeprecated', :replayer => false, :tracker => false do
-  uint 'MessageID'
-  uint 'Timestamp'
-  string 'Type'
-  string 'ContextString'
-  string 'Context'
-  string 'Payload'
-end
 message 63, 'TechnicalInfo', :replayer => false do
   string 'Type'
   string 'Value'
@@ -398,13 +343,6 @@ end
 message 66, 'AssetCache', :replayer => false, :tracker => false do
   string 'URL'
 end
-message 67, 'CSSInsertRuleURLBased' do
-  uint 'ID'
-  string 'Rule'
-  uint 'Index'
-  string 'BaseURL'
-end
-
 message 68, 'MouseClick' do
   uint 'ID'
   uint 'HesitationTime'
@@ -413,7 +351,6 @@ message 68, 'MouseClick' do
   uint 'NormalizedX'
   uint 'NormalizedY'
 end
-
 message 69, 'MouseClickDeprecated' do
   uint 'ID'
   uint 'HesitationTime'
@@ -476,13 +413,6 @@ end
 # 80 -- 90 reserved
 
 # Special one for Batch Metadata. Message id could define the version
-
-# DEPRECATED since tracker 3.6.0 in favor of BatchMetadata
-message 80, 'BatchMeta', :replayer => false, :tracker => false do
-  uint 'PageNo'
-  uint 'FirstIndex'
-  int 'Timestamp'
-end
 
 # since tracker 3.6.0   TODO: for webworker only
 message 81, 'BatchMetadata', :replayer => false do

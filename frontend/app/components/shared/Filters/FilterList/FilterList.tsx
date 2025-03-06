@@ -62,7 +62,7 @@ export const FilterList = observer((props: Props) => {
         borderTopRightRadius: props.mergeUp ? 0 : undefined,
       }}
     >
-      <div className="flex items-center py-2" style={{ gap: '0.65rem' }}>
+      <div className={'flex items-center pt-2'} style={{ gap: '0.65rem' }}>
         <div className="font-medium">{t('Filters')}</div>
         <FilterSelection
           mode="filters"
@@ -73,12 +73,14 @@ export const FilterList = observer((props: Props) => {
           excludeCategory={excludeCategory}
         >
           <Button
-            icon={<Filter size={16} strokeWidth={1} />}
             type="default"
             size="small"
             className="btn-add-filter"
           >
-            {t('Add')}
+            <div className={'flex items-center gap-1'}>
+              <Filter size={16} strokeWidth={1} />
+              <span>{t('Add')}</span>
+            </div>
           </Button>
         </FilterSelection>
       </div>
@@ -211,9 +213,10 @@ export const EventsList = observer((props: Props) => {
   return (
     <div
       className={cn(
-        'bg-white',
-        borderless ? '' : 'pb-2 px-4 rounded-xl border border-gray-lighter',
-      )}
+      'bg-white',
+        borderless ? '' : 'py-2 px-4 rounded-xl border border-gray-lighter'
+      )
+      }
       style={{
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
         borderBottomRightRadius: props.mergeDown ? 0 : undefined,
@@ -233,12 +236,14 @@ export const EventsList = observer((props: Props) => {
             excludeCategory={excludeCategory}
           >
             <Button
-              icon={<Plus size={16} strokeWidth={1} />}
               type="default"
               size="small"
               className="btn-add-event"
             >
-              {t('Add')}
+              <div className={'flex items-center gap-1'}>
+                <Plus size={16} strokeWidth={1} />
+                <span>{t('Add')}</span>
+              </div>
             </Button>
           </FilterSelection>
         )}

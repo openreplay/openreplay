@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
-import { Pagination, NoContent, Icon } from 'UI';
-import ErrorListItem from 'App/components/Dashboard/components/Errors/ErrorListItem';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { useModal } from 'App/components/Modal';
-import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
-import { useTranslation } from 'react-i18next';
+import React, { useEffect } from "react";
+import { Pagination, NoContent, Icon } from "UI";
+import ErrorListItem from "App/components/Dashboard/components/Errors/ErrorListItem";
+import { withRouter, RouteComponentProps } from "react-router-dom";
+import { useModal } from "App/components/Modal";
+import ErrorDetailsModal from "App/components/Dashboard/components/Errors/ErrorDetailsModal";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   metric: any;
@@ -14,10 +14,9 @@ interface Props {
   location: any;
 }
 function CustomMetricTableErrors(props: RouteComponentProps & Props) {
-  const { t } = useTranslation();
-  const { metric, data } = props;
-  const errorId = new URLSearchParams(props.location.search).get('errorId');
-  const { showModal, hideModal } = useModal();
+    const { metric, data } = props;
+    const errorId = new URLSearchParams(props.location.search).get("errorId");
+    const { showModal, hideModal } = useModal();
 
   const onErrorClick = (e: any, error: any) => {
     e.stopPropagation();

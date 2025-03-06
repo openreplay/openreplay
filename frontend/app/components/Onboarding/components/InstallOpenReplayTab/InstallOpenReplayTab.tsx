@@ -43,18 +43,10 @@ function InstallOpenReplayTab(props: Props) {
             <ProjectFormButton />
           </div>
         </div>
-        <a
-          href="https://docs.openreplay.com/en/using-or/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <Button
-            size="small"
-            type="text"
-            className="ml-2 flex items-center gap-2"
-          >
-            <Icon name="question-circle" />
-            <div className="text-main">{t('See Documentation')}</div>
+        <a href={"https://docs.openreplay.com/en/sdk/using-or/"} target="_blank">
+          <Button size={"small"} type={"text"} className="ml-2 flex items-center gap-2">
+            <Icon name={"question-circle"} />
+            <div className={"text-main"}>{t('See Documentation')}</div>
           </Button>
         </a>
       </h1>

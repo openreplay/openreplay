@@ -12,9 +12,12 @@ import {
 import { WebEventsList, MobEventsList } from './EventsList';
 import NotesList from './NotesList';
 import SkipIntervalsList from './SkipIntervalsList';
-import TooltipContainer from './components/TooltipContainer';
-import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
-import stl from './timeline.module.css';
+import TimelineTracker from 'Components/Session_/Player/Controls/TimelineTracker';
+import {
+  ZoomDragLayer,
+  HighlightDragLayer,
+  ExportEventsSelection
+} from "Components/Session_/Player/Controls/components/ZoomDragLayer";
 
 function Timeline({ isMobile }: { isMobile: boolean }) {
   const { player, store } = useContext(PlayerContext);
@@ -27,6 +30,7 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
   const { timezone } = sessionStore.current;
   const issues = sessionStore.current.issues ?? [];
   const timelineZoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const exportEventsEnabled = uiPlayerStore.exportEventsSelection.enabled;
   const highlightEnabled = uiPlayerStore.highlightSelection.enabled;
   const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } =
     store.get();
@@ -145,6 +149,7 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
     >
       {timelineZoomEnabled ? <ZoomDragLayer scale={scale} /> : null}
       {highlightEnabled ? <HighlightDragLayer scale={scale} /> : null}
+      {exportEventsEnabled ? <ExportEventsSelection scale={scale} /> : null}
       <div
         className={stl.progress}
         onClick={ready ? jumpToTime : undefined}

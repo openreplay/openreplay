@@ -6,8 +6,8 @@ from fastapi import BackgroundTasks
 from pydantic import BaseModel
 
 import schemas
-from chalicelib.core import authorizers, metadata
-from chalicelib.core import tenants, spot, scope
+from chalicelib.core import authorizers
+from chalicelib.core import tenants, spot
 from chalicelib.utils import email_helper
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client

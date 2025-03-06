@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "canvases.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "canvases.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "canvases.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "canvases.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "canvases.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      shareProcessNamespace: true
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.global.enterpriseEditionLicense }}
+          image: "{{ tpl .Values.image.repository . }}:{{ .Values.image.tag | default .Chart.AppVersion }}-ee"
+          {{- else }}
+          image: "{{ tpl .Values.image.repository . }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.healthCheck}}
+          {{- .Values.healthCheck | toYaml | nindent 10}}
+          {{- end}}
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              {{- if .Values.global.s3.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.existingSecret }}
+                  key: access-key
+              {{- else }}
+              value: {{ .Values.global.s3.accessKey }}
+              {{- end }}
+            - name: AWS_SECRET_ACCESS_KEY
+              {{- if .Values.global.s3.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.existingSecret }}
+                  key: secret-key
+              {{- else }}
+              value: {{ .Values.global.s3.secretKey }}
+              {{- end }}
+            - name: AWS_ENDPOINT
+              value: '{{ .Values.global.s3.endpoint }}'
+            - name: AWS_REGION
+              value: '{{ .Values.global.s3.region }}'
+            - name: BUCKET_NAME
+              value: {{ .Values.global.s3.recordingsBucket }}
+            - name: LICENSE_KEY
+              value: '{{ .Values.global.enterpriseEditionLicense }}'
+            - name: KAFKA_SERVERS
+              value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
+            - name: KAFKA_USE_SSL
+              value: '{{ .Values.global.kafka.kafkaUseSsl }}'
+            {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end}}
+          ports:
+            {{- range $key, $val := .Values.service.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $val }}
+              protocol: TCP
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+          - name: datadir
+            mountPath: /mnt/efs
+          {{- include "openreplay.volume.redis_ca_certificate.mount" .Values.global.redis | nindent 10 }}
+          {{- with .Values.persistence.mounts  }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+      {{- if eq (tpl .Values.pvc.name . ) "hostPath" }}
+      volumes:
+      {{- with .Values.persistence.volumes  }}
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      - name: datadir
+        hostPath:
+          # Ensure the file directory is created.
+          path: {{ tpl .Values.pvc.hostMountPath . }}
+          type: DirectoryOrCreate
+      {{- else }}
+      volumes:
+      {{- with .Values.persistence.volumes  }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      - name: datadir
+        persistentVolumeClaim:
+          claimName: "{{ tpl .Values.pvc.name . }}"
+      {{- end }}
+      {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 6 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

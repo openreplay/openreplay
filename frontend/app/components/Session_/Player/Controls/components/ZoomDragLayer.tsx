@@ -79,6 +79,29 @@ export const ZoomDragLayer = observer(({ scale }: Props) => {
   );
 });
 
+export const ExportEventsSelection = observer(({ scale }: Props) => {
+  const { uiPlayerStore } = useStore();
+  const toggleExportEventsSelection = uiPlayerStore.toggleExportEventsSelection;
+  const timelineZoomStartTs = uiPlayerStore.exportEventsSelection.startTs;
+  const timelineZoomEndTs = uiPlayerStore.exportEventsSelection.endTs;
+
+  const onDrag = (start: number, end: number) => {
+    toggleExportEventsSelection({
+      enabled: true,
+      range: [start, end],
+    });
+  };
+
+  return (
+    <DraggableMarkers
+      scale={scale}
+      onDragEnd={onDrag}
+      defaultStartPos={timelineZoomStartTs}
+      defaultEndPos={timelineZoomEndTs}
+    />
+  );
+});
+
 function DraggableMarkers({
   scale,
   onDragEnd,

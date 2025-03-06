@@ -63,7 +63,7 @@ export type Options = Partial<
   __DISABLE_SECURE_MODE?: boolean
 }
 
-const DOCS_SETUP = '/installation/javascript-sdk'
+const DOCS_SETUP = '/en/sdk'
 
 function processOptions(obj: any): obj is Options {
   if (obj == null) {
@@ -109,7 +109,7 @@ export default class API {
   private readonly app: App | null = null
   private readonly crossdomainMode: boolean = false
 
-  constructor(private readonly options: Options) {
+  constructor(public readonly options: Partial<Options>) {
     this.crossdomainMode = Boolean(inIframe() && options.crossdomain?.enabled)
     if (!IN_BROWSER || !processOptions(options)) {
       return
@@ -287,7 +287,7 @@ export default class API {
     this.app.restartCanvasTracking()
   }
 
-  use<T>(fn: (app: App | null, options?: Options) => T): T {
+  use<T>(fn: (app: App | null, options?: Partial<Options>) => T): T {
     return fn(this.app, this.options)
   }
 

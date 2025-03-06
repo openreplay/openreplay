@@ -211,7 +211,9 @@ export default class TabSessionManager {
   firstTitleSet = false;
 
   distributeMessage(msg: Message): void {
-    this.lastMessageTs = msg.time;
+    if (this.lastMessageTs < msg.time) {
+      this.lastMessageTs = msg.time;
+    }
     switch (msg.tp) {
       case MType.CanvasNode:
         const managerId = `${msg.timestamp}_${msg.nodeId}`;
@@ -303,7 +305,6 @@ export default class TabSessionManager {
           );
         }
         break;
-      case MType.Fetch:
       case MType.NetworkRequest:
         this.lists.lists.fetch.insert(
           getResourceFromNetworkRequest(msg, this.sessionStart),

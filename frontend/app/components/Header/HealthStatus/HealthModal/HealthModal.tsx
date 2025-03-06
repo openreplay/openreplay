@@ -9,6 +9,7 @@ import SubserviceHealth from 'Components/Header/HealthStatus/SubserviceHealth/Su
 import Footer from './Footer';
 import { IServiceStats } from '../HealthStatus';
 import { useTranslation } from 'react-i18next';
+import { RefreshCcw } from 'lucide-react';
 
 function HealthModal({
   getHealth,
@@ -79,9 +80,9 @@ function HealthModal({
           <Button
             disabled={isLoading}
             onClick={getHealth}
-            icon="arrow-repeat"
-            type="text"
-            className="text-main"
+            icon={<RefreshCcw size={18} />}
+            type={'text'}
+            className={'text-main'}
           >
             {t('Recheck')}
           </Button>
@@ -95,18 +96,18 @@ function HealthModal({
                   {isLoading
                     ? null
                     : Object.keys(healthResponse.healthMap).map((service) => (
-                        <React.Fragment key={service}>
-                          <Category
-                            onClick={() => setSelectedService(service)}
-                            healthOk={
-                              healthResponse.healthMap[service].healthOk
-                            }
-                            name={healthResponse.healthMap[service].name}
-                            isSelectable
-                            isSelected={selectedService === service}
-                          />
-                        </React.Fragment>
-                      ))}
+                      <React.Fragment key={service}>
+                        <Category
+                          onClick={() => setSelectedService(service)}
+                          healthOk={
+                            healthResponse.healthMap[service].healthOk
+                          }
+                          name={healthResponse.healthMap[service].name}
+                          isSelectable
+                          isSelected={selectedService === service}
+                        />
+                      </React.Fragment>
+                    ))}
                 </div>
                 <div
                   className="bg-gray-lightest border-l w-fit border-figmaColors-divider overflow-y-scroll relative"

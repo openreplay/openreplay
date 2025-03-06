@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "16.0.0-beta.4",
+  "version": "16.0.1",
   "keywords": [
     "logging",
     "replay"
@@ -15,13 +15,18 @@
   "type": "module",
   "exports": {
     ".": {
+      "require": "./dist/cjs/entry.js",
+      "import": "./dist/lib/entry.js",
+      "types": "./dist/lib/main/entry.d.ts"
+    },
+    "./class": {
       "require": "./dist/cjs/index.js",
       "import": "./dist/lib/index.js",
       "types": "./dist/lib/main/index.d.ts"
     },
     "./cjs": {
-      "require": "./dist/cjs/index.js",
-      "types": "./dist/cjs/main/index.d.ts"
+      "require": "./dist/cjs/entry.js",
+      "types": "./dist/cjs/main/entry.d.ts"
     }
   },
   "files": [
@@ -29,9 +34,9 @@
     "dist/cjs/**/*",
     "dist/types/**/*"
   ],
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/lib/index.js",
-  "types": "./dist/lib/main/index.d.ts",
+  "main": "./dist/cjs/entry.js",
+  "module": "./dist/lib/entry.js",
+  "types": "./dist/lib/main/entry.d.ts",
   "scripts": {
     "lint": "eslint src --ext .ts,.js --fix --quiet",
     "clean": "rm -Rf build && rm -Rf dist",

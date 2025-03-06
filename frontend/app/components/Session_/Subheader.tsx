@@ -26,7 +26,6 @@ import IssueForm from 'Components/Session_/Issues/IssueForm';
 import QueueControls from './QueueControls';
 import HighlightButton from './Highlight/HighlightButton';
 import ShareModal from '../shared/SharePopup/SharePopup';
-import UnitStepsModal from './UnitStepsModal';
 import { useTranslation } from 'react-i18next';
 
 const disableDevtools = 'or_devtools_uxt_toggle';
@@ -128,16 +127,6 @@ function SubHeader(props) {
     });
   };
 
-  const exportEvents = () => {
-    const allEvents = sessionStore.current.events;
-    const { width } = store.get();
-    const { height } = store.get();
-    openModal(
-      <UnitStepsModal width={width} height={height} events={allEvents} />,
-      { title: t('Export Events'), width: 640 },
-    );
-  };
-
   return (
     <>
       <div
@@ -221,17 +210,7 @@ function SubHeader(props) {
                     ),
                     onClick: showKbHelp,
                   },
-                  {
-                    key: '5',
-                    label: (
-                      <div className="flex items-center gap-2">
-                        <Bot size={16} strokeWidth={1} />
-                        <span>{t('Export Events')}</span>
-                      </div>
-                    ),
-                    onClick: exportEvents,
-                  },
-                ],
+                ]
               }}
             >
               <AntButton size="small">

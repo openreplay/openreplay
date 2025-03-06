@@ -26,7 +26,6 @@ const STATUS_FREQUENCY = 5000;
 
 function SessionList() {
   const location = useLocation(); // Get the current URL location
-  const isSessionsRoute = location.pathname.includes('/sessions');
   const isBookmark = location.pathname.includes('/bookmarks');
   const { t } = useTranslation();
 
@@ -50,9 +49,7 @@ function SessionList() {
   const { filters } = searchStore.instance;
   const _filterKeys = filters.map((i: any) => i.key);
   const hasUserFilter =
-    _filterKeys.includes(FilterKey.USERID) ||
-    _filterKeys.includes(FilterKey.USERANONYMOUSID);
-  // const isBookmark = activeTab.type === 'bookmark';
+    _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
   const isVault = isBookmark && isEnterprise;
   const activeSite = projectsStore.active;
   const hasNoRecordings = !activeSite || !activeSite.recorded;
@@ -60,7 +57,7 @@ function SessionList() {
 
   useEffect(() => {
     if (!searchStore.urlParsed) return;
-    void searchStore.fetchSessions(true, isBookmark);
+    void searchStore.checkForLatestSessionCount();
   }, [location.pathname]);
 
   const NO_CONTENT = React.useMemo(() => {
@@ -123,7 +120,7 @@ function SessionList() {
   useEffect(() => {
     const id = setInterval(() => {
       if (!document.hidden) {
-        searchStore.checkForLatestSessions();
+        void searchStore.checkForLatestSessionCount();
       }
     }, AUTO_REFRESH_INTERVAL);
     return () => clearInterval(id);
@@ -145,9 +142,9 @@ function SessionList() {
       return;
     }
 
-    sessionTimeOut = setTimeout(() => {
+    sessionTimeOut = setTimeout(function () {
       if (!document.hidden) {
-        searchStore.checkForLatestSessions();
+        void searchStore.checkForLatestSessionCount();
       }
     }, 5000);
   };

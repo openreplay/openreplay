@@ -1,31 +1,32 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-function Copyright() {
+const Copyright = React.memo(() => {
+  const currentYear = new Date().getFullYear();
   const { t } = useTranslation();
   return (
-    <div className="fixed bottom-0 m-auto text-center mb-6 color-gray-medium">
-      {t('© 2024 OpenReplay. All rights reserved.')}{' '}
+    <footer className="fixed bottom-0 m-auto text-center mb-6 text-gray-500">
+      {`© ${currentYear} ${t('OpenReplay. All rights reserved')}. `}
       <a
-        className="underline"
+        className="underline hover:text-gray-700"
         href="https://openreplay.com/privacy.html"
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
       >
         {t('Privacy')}
-      </a>{' '}
-      {t('and')}{' '}
+      </a>
+      &nbsp;{t('and')}&nbsp;
       <a
-        className="underline"
+        className="underline hover:text-gray-700"
         href="https://openreplay.com/terms.html"
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
       >
         {t('Terms')}
       </a>
       .
-    </div>
+    </footer>
   );
-}
+});
 
 export default Copyright;

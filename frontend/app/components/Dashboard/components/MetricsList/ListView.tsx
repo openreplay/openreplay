@@ -45,13 +45,9 @@ const ListView: React.FC<Props> = ({
   selectedList,
   toggleSelection,
   disableSelection = false,
-  inLibrary = false,
+  inLibrary = false
 }) => {
-  const { t } = useTranslation();
-  const [sorter, setSorter] = useState<{
-    field: string;
-    order: 'ascend' | 'descend';
-  }>({
+  const [sorter, setSorter] = useState<{ field: string; order: 'ascend' | 'descend' }>({
     field: 'lastModified',
     order: 'descend',
   });
@@ -292,6 +288,7 @@ const ListView: React.FC<Props> = ({
         columns={columns}
         dataSource={paginatedData}
         rowKey="metricId"
+        showSorterTooltip={false}
         onChange={handleTableChange}
         onRow={
           inLibrary

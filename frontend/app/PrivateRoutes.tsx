@@ -2,13 +2,14 @@ import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import React, { Suspense, lazy } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
+import { useStore } from './mstore';
 import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 import { OB_DEFAULT_TAB } from 'App/routes';
 import { Loader } from 'UI';
-import { useStore } from './mstore';
 
 import APIClient from './api_client';
 import * as routes from './routes';
+import { debounce } from '@/utils';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -31,7 +32,7 @@ const components: any = {
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   ScopeSetup: lazy(() => import('Components/ScopeForm')),
-  HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
+  HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList'))
 };
 
 const enhancedComponents: any = {
@@ -51,7 +52,7 @@ const enhancedComponents: any = {
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
   ScopeSetup: components.ScopeSetup,
-  Highlights: withSiteIdUpdater(components.HighlightsPure),
+  Highlights: withSiteIdUpdater(components.HighlightsPure)
 };
 
 const { withSiteId } = routes;
@@ -97,10 +98,11 @@ const SPOT_PATH = routes.spot();
 const SCOPE_SETUP = routes.scopeSetup();
 
 const HIGHLIGHTS_PATH = routes.highlights();
+let debounceSearch: any = () => {};
 
 function PrivateRoutes() {
-  const { projectsStore, userStore, integrationsStore } = useStore();
-  const { onboarding } = userStore;
+  const { projectsStore, userStore, integrationsStore, searchStore } = useStore();
+  const onboarding = userStore.onboarding;
   const scope = userStore.scopeState;
   const { tenantId } = userStore.account;
   const sites = projectsStore.list;
@@ -120,6 +122,16 @@ function PrivateRoutes() {
       void integrationsStore.integrations.fetchIntegrations(siteId);
     }
   }, [siteId]);
+
+  React.useEffect(() => {
+    debounceSearch = debounce(() => searchStore.fetchSessions(), 500);
+  }, []);
+
+  React.useEffect(() => {
+    if (!searchStore.urlParsed) return;
+    debounceSearch();
+  }, [searchStore.instance.filters, searchStore.instance.eventsOrder]);
+
   return (
     <Suspense fallback={<Loader loading className="flex-1" />}>
       <Switch key="content">
@@ -156,13 +168,13 @@ function PrivateRoutes() {
               case '/integrations/slack':
                 client.post('integrations/slack/add', {
                   code: location.search.split('=')[1],
-                  state: tenantId,
+                  state: tenantId
                 });
                 break;
               case '/integrations/msteams':
                 client.post('integrations/msteams/add', {
                   code: location.search.split('=')[1],
-                  state: tenantId,
+                  state: tenantId
                 });
                 break;
             }
@@ -187,7 +199,7 @@ function PrivateRoutes() {
             withSiteId(DASHBOARD_PATH, siteIdList),
             withSiteId(DASHBOARD_SELECT_PATH, siteIdList),
             withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList),
-            withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList),
+            withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList)
           ]}
           component={enhancedComponents.Dashboard}
         />
@@ -248,7 +260,7 @@ function PrivateRoutes() {
             withSiteId(FFLAG_READ_PATH, siteIdList),
             withSiteId(FFLAG_CREATE_PATH, siteIdList),
             withSiteId(NOTES_PATH, siteIdList),
-            withSiteId(BOOKMARKS_PATH, siteIdList),
+            withSiteId(BOOKMARKS_PATH, siteIdList)
           ]}
           component={enhancedComponents.SessionsOverview}
         />
@@ -267,7 +279,7 @@ function PrivateRoutes() {
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />
         ))}
-        <Route path="*">
+        <Route path={'*'}>
           <Redirect to={withSiteId(routes.sessions(), siteId)} />
         </Route>
       </Switch>

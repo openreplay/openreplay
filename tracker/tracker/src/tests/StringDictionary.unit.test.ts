@@ -3,7 +3,7 @@ import { StringDictionary } from '../main/modules/attributeSender.js'
 
 describe('StringDictionary', () => {
   test('key is non-zero', () => {
-    const dict = new StringDictionary(() => 1)
+    const dict = new StringDictionary()
 
     const [key, isNew] = dict.getKey('We are Asayer')
 
@@ -12,7 +12,7 @@ describe('StringDictionary', () => {
   })
 
   test('Different strings have different keys', () => {
-    const dict = new StringDictionary(() => 1)
+    const dict = new StringDictionary()
 
     const [key1, isNew1] = dict.getKey('Datadog')
     const [key2, isNew2] = dict.getKey('PostHog')
@@ -22,7 +22,7 @@ describe('StringDictionary', () => {
   })
 
   test('Similar strings have similar keys', () => {
-    const dict = new StringDictionary(() => 1)
+    const dict = new StringDictionary()
 
     const [key1, isNew1] = dict.getKey("What's up?")
     const [key2, isNew2] = dict.getKey("What's up?")

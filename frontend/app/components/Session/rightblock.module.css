@@ -4,3 +4,10 @@
     height: calc(100vh - 50px);
     align-self: flex-end;
 }
+
+.extraPanel {
+    width: 360px;
+    min-width: 360px;
+    height: calc(100vh - 50px);
+    align-self: flex-end;
+}

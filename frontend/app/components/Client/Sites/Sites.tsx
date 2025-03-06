@@ -154,7 +154,7 @@ function Sites() {
             actionButton={
               <TextLink
                 icon="book"
-                href="https://docs.openreplay.com/installation"
+                href="https://docs.openreplay.com/deployment/setup-or"
                 label="Installation Docs"
               />
             }

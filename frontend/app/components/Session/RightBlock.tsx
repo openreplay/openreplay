@@ -1,4 +1,8 @@
 import React from 'react';
+import EventsBlock from '../Session_/EventsBlock';
+import HighlightPanel from "../Session_/Highlight/HighlightPanel";
+import PageInsightsPanel from '../Session_/PageInsightsPanel/PageInsightsPanel';
+import UnitStepsModal from "../Session_/UnitStepsModal";
 import TagWatch from 'Components/Session/Player/TagWatch';
 import cn from 'classnames';
 import EventsBlock from '../Session_/EventsBlock';
@@ -38,7 +42,13 @@ function RightBlock({
         <div className={cn('bg-white border-l', stl.panel)}>
           <HighlightPanel onClose={() => setActiveTab('')} />
         </div>
-      );
+      )
+    case 'EXPORT':
+      return (
+        <div className={cn('bg-white border-l', stl.extraPanel)}>
+          <UnitStepsModal onClose={() => setActiveTab('EVENTS')} />
+        </div>
+      )
     default:
       return null;
   }

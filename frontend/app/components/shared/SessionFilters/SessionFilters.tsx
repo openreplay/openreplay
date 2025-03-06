@@ -53,15 +53,10 @@ function SessionFilters() {
     onBeforeLoad: async () => {
       await reloadTags();
     },
+    onLoaded: () => {
+      debounceFetch = debounce(() => searchStore.fetchSessions(), 500);
+    }
   });
-
-  useEffect(() => {
-    debounceFetch = debounce(() => searchStore.fetchSessions(), 500);
-  }, []);
-
-  useEffect(() => {
-    debounceFetch();
-  }, [appliedFilter.filters]);
 
   const onAddFilter = (filter: any) => {
     filter.autoOpen = true;
@@ -73,14 +68,14 @@ function SessionFilters() {
   };
 
   const onFilterMove = (newFilters: any) => {
-    searchStore.updateSearch({ ...appliedFilter, filters: newFilters });
-    debounceFetch();
+    searchStore.updateSearch({ ...appliedFilter, filters: newFilters});
+    // debounceFetch();
   };
 
   const onRemoveFilter = (filterIndex: any) => {
     searchStore.removeFilter(filterIndex);
 
-    debounceFetch();
+    // debounceFetch();
   };
 
   const onChangeEventsOrder = (e: any, { value }: any) => {
@@ -88,7 +83,7 @@ function SessionFilters() {
       eventsOrder: value,
     });
 
-    debounceFetch();
+    // debounceFetch();
   };
 
   return (

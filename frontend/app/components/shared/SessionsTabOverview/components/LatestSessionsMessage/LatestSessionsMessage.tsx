@@ -6,10 +6,11 @@ import { useTranslation } from 'react-i18next';
 
 function LatestSessionsMessage() {
   const { searchStore } = useStore();
-  const count = searchStore.latestList.size;
   const { t } = useTranslation();
+  const count = searchStore.latestSessionCount;
 
   const onShowNewSessions = () => {
+    searchStore.updateLatestSessionCount(0);
     void searchStore.updateCurrentPage(1, true);
   };
 

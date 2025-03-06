@@ -198,9 +198,7 @@ function DashboardList() {
             {t('Create and organize your insights')}
           </Typography.Text>
           <div className="mb-2 text-lg text-gray-500 leading-normal">
-            {t(
-              'Build dashboards to track key metrics and monitor performance in one place.',
-            )}
+            {t('Build dashboards to track key metrics and monitor performance in one place.')}
           </div>
           <div className="my-4 mb-10">
             <CreateDashboardButton />
@@ -232,6 +230,7 @@ function DashboardList() {
       <Table
         dataSource={list}
         columns={tableConfig}
+        showSorterTooltip={false}
         pagination={{
           showTotal: (total, range) =>
             `${t('Showing')} ${range[0]}-${range[1]} ${t('of')} ${total} ${t('items')}`,

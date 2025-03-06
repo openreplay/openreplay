@@ -24,18 +24,6 @@ function EventSearch(props) {
             onChange={onChange}
             prefix={<SearchOutlined />}
           />
-
-          <Tooltip title="Close Panel" placement="bottom">
-            <Button
-              className="ml-2"
-              type="text"
-              onClick={() => {
-                setActiveTab('');
-                toggleEvents();
-              }}
-              icon={<CloseOutlined />}
-            />
-          </Tooltip>
         </div>
       </div>
     </div>

@@ -216,42 +216,37 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   };
   return (
     <div className="rounded-lg bg-white border">
-      <div className="flex flex-col justify-start gap-2 flex-wrap">
-        <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-1 pt-2">
-          <div className="flex flex-wrap gap-2 items-center justify-start">
-            <span className="font-medium">{t('Journeys With')}&nbsp;</span>
-            <div className="flex gap-2 items-center">
-              <Select
-                className="w-36 rounded-lg !h-[26px]"
-                name="startType"
-                options={[
-                  { value: 'start', label: t('Start Point') },
-                  { value: 'end', label: t('End Point') },
-                ]}
-                defaultValue={metric.startType || 'start'}
-                onChange={onPointChange}
-                placeholder={t('Select Start Type')}
-                size="small"
-              />
+      <div className='flex flex-col justify-start gap-2 flex-wrap'>
+      <Form.Item className='mb-0 hover:bg-bg-blue/30 px-4 pb-1 pt-2'>
+        <div className="flex flex-wrap gap-2 items-center justify-start">
+          <span className="font-medium">{t('Journeys With')}</span>
+          <div className="flex gap-2 items-center">
+            <Select
+              className="w-36 rounded-lg"
+              name="startType"
+              options={[
+                { value: 'start', label: 'Start Point' },
+                { value: 'end', label: 'End Point' },
+              ]}
+              defaultValue={metric.startType || 'start'}
+              onChange={onPointChange}
+              placeholder="Select Start Type"
+            />
 
               <span className="">{t('showing')}</span>
 
-              <Select
-                mode="multiple"
-                className="rounded-lg h-[26px] w-max	min-w-44 max-w-58"
-                allowClear
-                name="metricValue"
-                options={metricValueOptions}
-                value={metric.metricValue || []}
-                onChange={(value) =>
-                  writeOption({ name: 'metricValue', value })
-                }
-                placeholder={t('Select Metrics')}
-                size="small"
-                maxTagCount="responsive"
-                showSearch={false}
-              />
-            </div>
+            <Select
+              mode="multiple"
+              className="rounded-lg w-max	min-w-44 max-w-58"
+              allowClear
+              name="metricValue"
+              options={metricValueOptions}
+              value={metric.metricValue || []}
+              onChange={(value) => writeOption({ name: 'metricValue', value })}
+              placeholder={t('Select Metrics')}
+              maxTagCount={'responsive'}
+              showSearch={false}
+            />
           </div>
         </Form.Item>
         <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4  pb-2 pt-1">

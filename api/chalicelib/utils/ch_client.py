@@ -41,8 +41,7 @@ class ClickHouseClient:
             keys = tuple(x for x, y in results[1])
             return [dict(zip(keys, i)) for i in results[0]]
         except Exception as err:
-            logger.error("--------- CH EXCEPTION -----------")
-            logger.error(err)
+            logger.error("--------- CH EXCEPTION -----------", exc_info=err)
             logger.error("--------- CH QUERY EXCEPTION -----------")
             logger.error(self.format(query=query, parameters=parameters)
                          .replace('\n', '\\n')

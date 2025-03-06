@@ -2,6 +2,7 @@ import React from 'react';
 import { screenRecorder } from 'App/utils/screenRecorder';
 import { Tooltip, Button } from 'antd';
 import { Icon } from 'UI';
+import { Disc } from 'lucide-react';
 import { SessionRecordingStatus } from 'Player';
 import { recordingsService } from 'App/services';
 import { toast } from 'react-toastify';
@@ -133,11 +134,7 @@ function ScreenRecorder() {
         <Tooltip
           title={isEnterprise ? supportedMessage : ENTERPRISE_REQUEIRED(t)}
         >
-          <Button
-            icon={<Icon name="record-circle" size={16} />}
-            disabled
-            type="text"
-          >
+          <Button icon={<Disc size={16} />} disabled type="text">
             {t('Record Activity')}
           </Button>
         </Tooltip>

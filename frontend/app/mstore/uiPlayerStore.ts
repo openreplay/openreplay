@@ -76,11 +76,14 @@ export default class UiPlayerStore {
     enabled: false,
     startTs: 0,
     endTs: 0,
-  };
-
-  zoomTab: 'overview' | 'journey' | 'issues' | 'errors' = 'overview';
-
-  dataSource: 'all' | 'current' = 'all';
+  }
+  exportEventsSelection = {
+    enabled: false,
+    startTs: 0,
+    endTs: 0,
+  }
+  zoomTab: 'overview' | 'journey' | 'issues' | 'errors' = 'overview'
+  dataSource: 'all' | 'current' = 'all'
 
   constructor() {
     makeAutoObservable(this);
@@ -132,6 +135,12 @@ export default class UiPlayerStore {
     this.highlightSelection.startTs = payload.range?.[0] ?? 0;
     this.highlightSelection.endTs = payload.range?.[1] ?? 0;
   };
+
+  toggleExportEventsSelection = (payload: ToggleZoomPayload) => {
+    this.exportEventsSelection.enabled = payload.enabled;
+    this.exportEventsSelection.startTs = payload.range?.[0] ?? 0;
+    this.exportEventsSelection.endTs = payload.range?.[1] ?? 0;
+  }
 
   setZoomTab = (tab: 'overview' | 'journey' | 'issues' | 'errors') => {
     this.zoomTab = tab;

@@ -362,8 +362,7 @@ function FilterModal(props: Props) {
                 type="text"
                 className="text-teal"
                 onClick={() => {
-                  const docs =
-                    'https://docs.openreplay.com/en/installation/metadata/';
+                  const docs = 'https://docs.openreplay.com/en/en/session-replay/metadata/';
                   window.open(docs, '_blank');
                 }}
               >

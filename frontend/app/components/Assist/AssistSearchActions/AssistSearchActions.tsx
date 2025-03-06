@@ -26,26 +26,15 @@ function AssistSearchActions() {
   const showRecords = () => {
     showModal(<Recordings />, { right: true, width: 960 });
   };
+
+  const originStr = window.env.ORIGIN || window.location.origin;
+  const isSaas = /app\.openreplay\.com/.test(originStr);
   return (
     <div className="flex items-center w-full gap-2">
-      {isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS) ? (
-        <Button type="text" onClick={showRecords}>
-          {t('Training Videos')}
-        </Button>
-      ) : null}
-      {isEnterprise && userStore.account?.admin && (
-        <Button
-          type="text"
-          onClick={showStats}
-          disabled={
-            modules.includes(MODULES.ASSIST_STATS) ||
-            modules.includes(MODULES.ASSIST)
-          }
-        >
-          {t('Co-Browsing Reports')}
-        </Button>
-      )}
-      <Tooltip title={t('Clear Search Filters')}>
+      <h3 className="text-2xl capitalize mr-2">
+        <span>{t('Co-Browse')}</span>
+      </h3>
+      <Tooltip title='Clear Search Filters'>
         <Button
           type="text"
           disabled={!hasFilters && !hasEvents}
@@ -55,6 +44,15 @@ function AssistSearchActions() {
           {t('Clear')}
         </Button>
       </Tooltip>
+      {!isSaas && isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS)
+       ? <Button size={'small'} onClick={showRecords}>Training Videos</Button> : null
+      }
+      {isEnterprise && userStore.account?.admin && (
+        <Button size={'small'} onClick={showStats}
+                disabled={modules.includes(MODULES.ASSIST_STATS) || modules.includes(MODULES.ASSIST)}>
+          {t('Co-Browsing Reports')}
+        </Button>
+      )}
     </div>
   );
 }

@@ -5,7 +5,9 @@ public/
 drafts
 app/components/ui/SVG.js
 *.DS_Store
-.env
+.env*
+!.env.sample
+logs
 *css.d.ts
 *.cache
 .yarn/*

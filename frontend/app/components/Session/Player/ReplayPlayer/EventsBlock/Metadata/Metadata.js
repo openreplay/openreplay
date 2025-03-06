@@ -13,12 +13,11 @@ function Metadata() {
   if (metaLength === 0) {
     return (
       <span className="text-sm color-gray-medium">
-        {t('Check')}
+        {t('Check')}{' '}
         <a
-          href="https://docs.openreplay.com/installation/metadata"
+          href="https://docs.openreplay.com/en/session-replay/metadata"
           target="_blank"
           className="link"
-          rel="noreferrer"
         >
           {t('how to use Metadata')}
         </a>{' '}
