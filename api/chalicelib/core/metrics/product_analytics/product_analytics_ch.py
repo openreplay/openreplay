@@ -3,7 +3,7 @@ from time import time
 
 import schemas
 from chalicelib.core import metadata
-from chalicelib.core.metrics.product_analytics import __transform_journey
+from .product_analytics import __transform_journey
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import helper
 from chalicelib.utils import sql_helper as sh
