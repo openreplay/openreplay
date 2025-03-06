@@ -73,7 +73,7 @@ def make_pool():
         logger.error("Error while connecting to PostgreSQL", exc_info=error)
         if RETRY < RETRY_MAX:
             RETRY += 1
-            logger.info(f"waiting for {RETRY_INTERVAL}s before retry n°{RETRY}")
+            logger.info(f"Waiting for {RETRY_INTERVAL}s before retry n°{RETRY}")
             time.sleep(RETRY_INTERVAL)
             make_pool()
         else:
@@ -97,13 +97,17 @@ class PostgresClient:
         elif long_query:
             long_config = dict(_PG_CONFIG)
             long_config["application_name"] += "-LONG"
-            long_config["options"] = f"-c statement_timeout=" \
-                                     f"{config('pg_long_timeout', cast=int, default=5 * 60) * 1000}"
+            if config('PG_TIMEOUT_LONG', cast=int, default=1) > 0:
+                long_config["options"] = f"-c statement_timeout=" \
+                                         f"{config('PG_TIMEOUT_LONG', cast=int, default=5 * 60) * 1000}"
+            else:
+                logger.info("Disabled timeout for long query")
             self.connection = psycopg2.connect(**long_config)
         elif not use_pool or not config('PG_POOL', cast=bool, default=True):
             single_config = dict(_PG_CONFIG)
             single_config["application_name"] += "-NOPOOL"
-            single_config["options"] = f"-c statement_timeout={config('PG_TIMEOUT', cast=int, default=30) * 1000}"
+            if config('PG_TIMEOUT', cast=int, default=1) > 0:
+                single_config["options"] = f"-c statement_timeout={config('PG_TIMEOUT', cast=int, default=30) * 1000}"
             self.connection = psycopg2.connect(**single_config)
         else:
             self.connection = postgreSQL_pool.getconn()
