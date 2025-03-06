@@ -1,9 +1,9 @@
-from chalicelib.utils import ch_client, exp_ch_helper
 import logging
-from decouple import config
-from chalicelib.core.sessions.sessions_viewed import *
 
-_view_session = view_session
+from decouple import config
+
+from chalicelib.utils import ch_client, exp_ch_helper
+from .sessions_viewed import view_session as _view_session
 
 logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 

@@ -44,7 +44,7 @@ rm -rf ./chalicelib/core/sessions/sessions_mobs.py
 rm -rf ./chalicelib/core/sessions/sessions_replay.py
 rm -rf ./chalicelib/core/sessions/sessions_search.py
 rm -rf ./chalicelib/core/sessions/performance_event.py
-rm -rf ./chalicelib/core/sessions/sessions_viewed.py
+rm -rf ./chalicelib/core/sessions/sessions_viewed/sessions_viewed.py
 rm -rf ./chalicelib/core/sessions/unprocessed_sessions.py
 rm -rf ./chalicelib/core/metrics/modules
 rm -rf ./chalicelib/core/socket_ios.py

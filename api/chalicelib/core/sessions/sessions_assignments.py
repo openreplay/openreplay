@@ -1,9 +1,11 @@
-from decouple import config
-from chalicelib.utils import helper
-from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils import pg_client
-from chalicelib.core.issue_tracking import integrations_manager, base_issue
 import json
+
+from decouple import config
+
+from chalicelib.core.issue_tracking import integrations_manager, base_issue
+from chalicelib.utils import helper
+from chalicelib.utils import pg_client
+from chalicelib.utils.TimeUTC import TimeUTC
 
 
 def __get_saved_data(project_id, session_id, issue_id, tool):
