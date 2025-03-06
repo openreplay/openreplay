@@ -14,6 +14,7 @@ on:
 env:
   IMAGE_REGISTRY_URL: ${{ secrets.OSS_REGISTRY_URL }}
   DEPOT_PROJECT_ID: ${{ secrets.DEPOT_PROJECT_ID }}
+  DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
   DOCKER_REPO_OSS: ${{ secrets.OSS_REGISTRY_URL }}
 
 jobs:
