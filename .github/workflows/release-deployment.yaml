@@ -64,8 +64,8 @@ jobs:
             echo IMAGE_TAG=${IMAGE_TAG}-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$IMAGE_REGISTRY_URL PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
             IMAGE_TAG=${IMAGE_TAG}-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$IMAGE_REGISTRY_URL PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
           }&
-          wait
         done
+        wait
           
     - uses: azure/k8s-set-context@v1
       name: Using ee release cluster
