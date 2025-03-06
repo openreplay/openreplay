@@ -1,0 +1,92 @@
+name: Release Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Comma-separated list of services to deploy'
+        required: true
+      branch:
+        description: 'Branch to deploy (defaults to dev)'
+        required: false
+        default: 'dev'
+
+env:
+  IMAGE_REGISTRY_URL: ${{ secrets.OSS_REGISTRY_URL }}
+  DEPOT_PROJECT_ID: ${{ secrets.DEPOT_PROJECT_ID }}
+  DOCKER_REPO_OSS: ${{ secrets.OSS_REGISTRY_URL }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.branch }}
+    - name: Docker login
+      run: |
+        docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}"
+
+    - name: Set image tag with branch info
+      run: |
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        echo "IMAGE_TAG=${IMAGE_TAG}-${{ github.event.inputs.branch }}-${SHORT_SHA}" >> $GITHUB_ENV
+        echo "Using image tag: ${IMAGE_TAG}-${{ github.event.inputs.branch }}-${SHORT_SHA}"
+
+    - uses: depot/setup-action@v1
+
+    - name: Build and push Docker images
+      run: |
+        # Parse the comma-separated services list into an array
+        IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}"
+        
+        # Define backend services (consider moving this to workflow inputs or repo config)
+        ls backend/cmd >> /tmp/backend.txt
+        
+        for SERVICE in "${SERVICES[@]}"; do
+          # Check if service is backend
+          if grep -q $SERVICE /tmp/backend.txt; then 
+            cd backend 
+            foss_build_args="nil $SERVICE"
+            ee_build_args="ee $SERVICE"
+          else 
+            [[ $SERVICE == 'chalice' || $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && cd $working_dir/api || cd $SERVICE
+            [[ $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && BUILD_SCRIPT_NAME="build_${SERVICE}.sh"
+            ee_build_args="ee"
+          fi  
+          echo IMAGE_TAG=$IMAGE_TAG DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+          IMAGE_TAG=$IMAGE_TAG DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+        done
+          
+    - uses: azure/k8s-set-context@v1
+      name: Using ee release cluster
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.EE_RELEASE_KUBECONFIG }}
+
+    - name: Deploy to ee release Kubernetes
+      run: |
+        echo "Deploying services to EE cluster: ${{ github.event.inputs.services }}"
+        IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}" 
+        for SERVICE in "${SERVICES[@]}"; do
+          SERVICE=$(echo $SERVICE | xargs) # Trim whitespace
+          echo "Deploying $SERVICE to EE cluster with image tag: ${IMAGE_TAG}"
+          kubectl set image deployment/$SERVICE-openreplay -n app $SERVICE=${{ secrets.RELEASE_OSS_REGISTRY }}/$SERVICE:${IMAGE_TAG}
+        done
+
+    - uses: azure/k8s-set-context@v1
+      name: Using foss release cluster
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.FOSS_RELEASE_KUBECONFIG }}
+
+    - name: Deploy to FOSS release Kubernetes
+      run: |
+        echo "Deploying services to FOSS cluster: ${{ github.event.inputs.services }}"
+        IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}" 
+        for SERVICE in "${SERVICES[@]}"; do
+          SERVICE=$(echo $SERVICE | xargs) # Trim whitespace
+          echo "Deploying $SERVICE to FOSS cluster with image tag: ${IMAGE_TAG}"
+          kubectl set image deployment/$SERVICE-openreplay -n app $SERVICE=${{ secrets.RELEASE_OSS_REGISTRY }}/$SERVICE:${IMAGE_TAG}
+        done
