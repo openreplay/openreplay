@@ -3,10 +3,10 @@ import logging
 from pydantic_core._pydantic_core import ValidationError
 
 import schemas
-from chalicelib.core.alerts import alerts, alerts_listener
-from chalicelib.core.alerts.modules import sessions, alert_helpers
 from chalicelib.utils import pg_client, ch_client, exp_ch_helper
 from chalicelib.utils.TimeUTC import TimeUTC
+from . import alerts, alerts_listener
+from .modules import sessions, alert_helpers
 
 logger = logging.getLogger(__name__)
 
