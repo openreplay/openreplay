@@ -15,7 +15,6 @@ env:
   IMAGE_REGISTRY_URL: ${{ secrets.OSS_REGISTRY_URL }}
   DEPOT_PROJECT_ID: ${{ secrets.DEPOT_PROJECT_ID }}
   DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
-  DOCKER_REPO_OSS: ${{ secrets.OSS_REGISTRY_URL }}
 
 jobs:
   deploy:
@@ -27,7 +26,7 @@ jobs:
         ref: ${{ github.event.inputs.branch }}
     - name: Docker login
       run: |
-        docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}"
+        docker login $IMAGE_REGISTRY_URL -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}"
 
     - name: Set image tag with branch info
       run: |
@@ -73,8 +72,7 @@ jobs:
         for SERVICE in "${SERVICES[@]}"; do
           SERVICE=$(echo $SERVICE | xargs) # Trim whitespace
           echo "Deploying $SERVICE to EE cluster with image tag: ${IMAGE_TAG}"
-          kubectl set image deployment/$SERVICE-openreplay -n app $SERVICE=${{ secrets.RELEASE_OSS_REGISTRY }}/$SERVICE:${IMAGE_TAG}
-        done
+          kubectl set image deployment/$SERVICE-openreplay -n app $SERVICE=${IMAGE_REGISTRY_URL}/$SERVICE:${IMAGE_TAG}
 
     - uses: azure/k8s-set-context@v1
       name: Using foss release cluster
@@ -89,5 +87,5 @@ jobs:
         for SERVICE in "${SERVICES[@]}"; do
           SERVICE=$(echo $SERVICE | xargs) # Trim whitespace
           echo "Deploying $SERVICE to FOSS cluster with image tag: ${IMAGE_TAG}"
-          kubectl set image deployment/$SERVICE-openreplay -n app $SERVICE=${{ secrets.RELEASE_OSS_REGISTRY }}/$SERVICE:${IMAGE_TAG}
-        done
+          echo "Deploying $SERVICE to FOSS cluster with image tag: ${IMAGE_TAG}"
+          kubectl set image deployment/$SERVICE-openreplay -n app $SERVICE=${IMAGE_REGISTRY_URL}/$SERVICE:${IMAGE_TAG}
