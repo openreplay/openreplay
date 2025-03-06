@@ -1,3 +1,19 @@
+## 15.1.0
+
+- move domparser for sprites under observer code for better SSR support
+- introduce singleton approach for tracker
+```js
+import { tracker } from '@openreplay/tracker'
+
+// configure it once
+tracker.configure({ ...options })
+
+// use it anywhere
+// .../main/app.tsx
+import { tracker } from '@openreplay/tracker'
+tracker.start()
+```
+
 ## 15.0.7
 
 - fix for svg sprite handling
