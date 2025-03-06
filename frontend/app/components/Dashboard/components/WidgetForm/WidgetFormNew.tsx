@@ -155,9 +155,7 @@ const FilterSection = observer(
                   }}
                   emptyMessage={
                     isTable
-                      ? t(
-                          'Filter data using any event or attribute. Use Add Step button below to do so.',
-                        )
+                      ? t('Filter data using any event or attribute. Use Add Step button below to do so.')
                       : t('Add an event or filter step to define the series.')
                   }
                   expandable={isSingleSeries}
@@ -165,10 +163,8 @@ const FilterSection = observer(
               </div>
             ))}
         {isSingleSeries ? null : (
-          <div className="mx-auto flex items-center gap-2 w-fit">
-            <Tooltip
-              title={canAddSeries ? '' : t('Maximum of 3 series reached.')}
-            >
+          <div className={'mx-auto flex items-center gap-2 w-fit'}>
+            <Tooltip title={canAddSeries ? '' : t('Maximum of 3 series reached.')}>
               <Button
                 onClick={() => {
                   if (!canAddSeries) return;
@@ -183,8 +179,8 @@ const FilterSection = observer(
               </Button>
             </Tooltip>
             <Button
-              size="small"
-              type="text"
+              size={'small'}
+              type={'text'}
               icon={
                 <ChevronUp
                   size={16}
@@ -193,7 +189,7 @@ const FilterSection = observer(
               }
               onClick={allCollapsed ? expandAll : collapseAll}
             >
-              {allCollapsed ? t('Expand') : t('Collapse')}&nbsp;{t('All')}
+              {allCollapsed ? t('Expand') : t('Collapse')} All
             </Button>
           </div>
         )}
@@ -216,43 +212,46 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   };
   return (
     <div className="rounded-lg bg-white border">
-      <div className='flex flex-col justify-start gap-2 flex-wrap'>
-      <Form.Item className='mb-0 hover:bg-bg-blue/30 px-4 pb-1 pt-2'>
-        <div className="flex flex-wrap gap-2 items-center justify-start">
-          <span className="font-medium">{t('Journeys With')}</span>
-          <div className="flex gap-2 items-center">
-            <Select
-              className="w-36 rounded-lg"
-              name="startType"
-              options={[
-                { value: 'start', label: 'Start Point' },
-                { value: 'end', label: 'End Point' },
-              ]}
-              defaultValue={metric.startType || 'start'}
-              onChange={onPointChange}
-              placeholder="Select Start Type"
-            />
+      <div className="flex flex-col justify-start gap-2 flex-wrap">
+        <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-1 pt-2">
+          <div className="flex flex-wrap gap-2 items-center justify-start">
+            <span className="font-medium">{t('Journeys With')}&nbsp;</span>
+            <div className="flex gap-2 items-center">
+              <Select
+                className="w-36 rounded-lg"
+                name="startType"
+                options={[
+                  { value: 'start', label: t('Start Point') },
+                  { value: 'end', label: t('End Point') },
+                ]}
+                defaultValue={metric.startType || 'start'}
+                onChange={onPointChange}
+                placeholder={t('Select Start Type')}
+              />
 
               <span className="">{t('showing')}</span>
 
-            <Select
-              mode="multiple"
-              className="rounded-lg w-max	min-w-44 max-w-58"
-              allowClear
-              name="metricValue"
-              options={metricValueOptions}
-              value={metric.metricValue || []}
-              onChange={(value) => writeOption({ name: 'metricValue', value })}
-              placeholder={t('Select Metrics')}
-              maxTagCount={'responsive'}
-              showSearch={false}
-            />
+              <Select
+                mode="multiple"
+                className="rounded-lg w-max	min-w-44 max-w-58"
+                allowClear
+                name="metricValue"
+                options={metricValueOptions}
+                value={metric.metricValue || []}
+                onChange={(value) =>
+                  writeOption({ name: 'metricValue', value })
+                }
+                placeholder={t('Select Metrics')}
+                maxTagCount={'responsive'}
+                showSearch={false}
+              />
+            </div>
           </div>
         </Form.Item>
         <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4  pb-2 pt-1">
           <div className="flex flex-wrap items-center justify-start">
             <span className="font-medium mr-2">
-              {metric.startType === 'start' ? 'Start Point' : 'End Point'}
+              {metric.startType === 'start' ? t('Start Point') : t('End Point')}
             </span>
             <span className="font-normal">
               <FilterItem
@@ -318,7 +317,7 @@ const AdditionalFilters = observer(() => {
   );
 });
 
-function PredefinedMessage() {
+const PredefinedMessage = () => {
   const { t } = useTranslation();
   return (
     <Alert
@@ -329,4 +328,4 @@ function PredefinedMessage() {
       className="border-transparent rounded-lg"
     />
   );
-}
+};
