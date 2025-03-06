@@ -289,7 +289,6 @@ export default class TabSessionManager {
           );
         }
         break;
-      case MType.Fetch:
       case MType.NetworkRequest:
         this.lists.lists.fetch.insert(
           getResourceFromNetworkRequest(msg, this.sessionStart)

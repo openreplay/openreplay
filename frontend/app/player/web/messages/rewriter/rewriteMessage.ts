@@ -4,8 +4,6 @@ import type {
   RawSetNodeAttribute,
   RawSetCssDataURLBased,
   RawSetCssData,
-  RawCssInsertRuleURLBased,
-  RawCssInsertRule,
   RawAdoptedSsInsertRuleURLBased,
   RawAdoptedSsInsertRule,
   RawAdoptedSsReplaceURLBased,
@@ -56,12 +54,6 @@ const REWRITERS = {
     ...msg,
     data: rewriteCSS(msg.baseURL, msg.data),
     tp: MType.SetCssData,
-  }),
-  [MType.CssInsertRuleURLBased]: (msg: RawCssInsertRuleURLBased): RawCssInsertRule =>
-  ({
-    ...msg,
-    rule: rewriteCSS(msg.baseURL, msg.rule),
-    tp: MType.CssInsertRule,
   }),
   [MType.AdoptedSsInsertRuleURLBased]: (msg: RawAdoptedSsInsertRuleURLBased): RawAdoptedSsInsertRule =>
   ({
