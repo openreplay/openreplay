@@ -198,10 +198,8 @@ Pipfile.lock
 /chalicelib/core/metrics/custom_metrics.py
 /chalicelib/core/metrics/dashboards.py
 /chalicelib/core/metrics/funnels.py
-/chalicelib/core/metrics/heatmaps.py
-/chalicelib/core/metrics/heatmaps_ch.py
-/chalicelib/core/metrics/product_analytics.py
-/chalicelib/core/metrics/product_analytics_ch.py
+/chalicelib/core/metrics/heatmaps
+/chalicelib/core/metrics/product_analytics
 /chalicelib/core/metrics/product_anaytics2.py
 /chalicelib/core/events.py
 /chalicelib/core/events_mobile.py
