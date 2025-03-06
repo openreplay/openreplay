@@ -31,8 +31,8 @@ jobs:
     - name: Set image tag with branch info
       run: |
         SHORT_SHA=$(git rev-parse --short HEAD)
-        echo "IMAGE_TAG=${IMAGE_TAG}-${{ github.event.inputs.branch }}-${SHORT_SHA}" >> $GITHUB_ENV
-        echo "Using image tag: ${IMAGE_TAG}-${{ github.event.inputs.branch }}-${SHORT_SHA}"
+        echo "IMAGE_TAG=${{ github.event.inputs.branch }}-${SHORT_SHA}" >> $GITHUB_ENV
+        echo "Using image tag: $IMAGE_TAG"
 
     - uses: depot/setup-action@v1
 
