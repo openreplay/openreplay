@@ -81,6 +81,7 @@ jobs:
           SERVICE=$(echo $SERVICE | xargs) # Trim whitespace
           echo "Deploying $SERVICE to EE cluster with image tag: ${IMAGE_TAG}"
           kubectl set image deployment/$SERVICE-openreplay -n app $SERVICE=${IMAGE_REGISTRY_URL}/$SERVICE:${IMAGE_TAG}-ee
+        done
 
     - uses: azure/k8s-set-context@v1
       name: Using foss release cluster
@@ -97,3 +98,4 @@ jobs:
           echo "Deploying $SERVICE to FOSS cluster with image tag: ${IMAGE_TAG}"
           echo "Deploying $SERVICE to FOSS cluster with image tag: ${IMAGE_TAG}"
           kubectl set image deployment/$SERVICE-openreplay -n app $SERVICE=${IMAGE_REGISTRY_URL}/$SERVICE:${IMAGE_TAG}
+        done
