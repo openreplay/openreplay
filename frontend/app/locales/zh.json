@@ -1437,5 +1437,11 @@
   "Alert updated": "警报已更新",
   "Failed to create an alert": "创建警报失败",
   "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.": "例如：当过去15分钟内阈值超过1毫秒时，通过Slack #foss-notifications通知我。",
-  "Alert based on": "警报依据"
+  "Alert based on": "警报依据",
+  "Session Replay": "会话回放",
+  "Developer Tools": "开发者工具",
+  "Dashboard": "仪表板",
+  "Assist (Live)": "Assist（实时协助）",
+  "Assist (Call)": "Assist（通话协助）",
+  "Change Spot Visibility": "更改 Spot 可见性"
 }

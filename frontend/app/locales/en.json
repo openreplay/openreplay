@@ -1437,5 +1437,11 @@
   "Alert updated": "Alert updated",
   "Failed to create an alert": "Failed to create an alert",
   "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.": "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.",
-  "Alert based on": "Alert based on"
+  "Alert based on": "Alert based on",
+  "Session Replay": "Session Replay",
+  "Developer Tools": "Developer Tools",
+  "Dashboard": "Dashboard",
+  "Assist (Live)": "Assist (Live)",
+  "Assist (Call)": "Assist (Call)",
+  "Change Spot Visibility": "Change Spot Visibility"
 }
