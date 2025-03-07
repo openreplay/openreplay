@@ -1437,5 +1437,11 @@
   "Alert updated": "Alerta actualizada",
   "Failed to create an alert": "Error al crear la alerta",
   "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.": "Ej. Cuando el umbral supere 1ms en los últimos 15 minutos, notifícame a través de Slack #foss-notifications.",
-  "Alert based on": "Alerta basada en"
+  "Alert based on": "Alerta basada en",
+  "Session Replay": "Reproducción de sesión",
+  "Developer Tools": "Herramientas de desarrollador",
+  "Dashboard": "Panel de control",
+  "Assist (Live)": "Asistencia (En vivo)",
+  "Assist (Call)": "Asistencia (Llamada)",
+  "Change Spot Visibility": "Cambiar visibilidad de Spot"
 }

@@ -1437,5 +1437,11 @@
   "Alert updated": "Уведомление обновлено",
   "Failed to create an alert": "Не удалось создать уведомление",
   "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.": "Например: если порог превышает 1 мс за последние 15 минут, уведомить меня через Slack #foss-notifications.",
-  "Alert based on": "Уведомление на основе"
+  "Alert based on": "Уведомление на основе",
+  "Session Replay": "Воспроизведение сессий",
+  "Developer Tools": "Инструменты разработчика",
+  "Dashboard": "Дашборд",
+  "Assist (Live)": "Assist (Live)",
+  "Assist (Call)": "Assist (Call)",
+  "Change Spot Visibility": "Изменить видимость Spot"
 }
