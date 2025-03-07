@@ -10,10 +10,10 @@ import stl from './projectCodeSnippet.module.css';
 import CircleNumber from '../../CircleNumber';
 import { useTranslation } from 'react-i18next';
 
-const inputModeOptions = (t) => [
-  { label: t('Record all inputs'), value: 'plain' },
-  { label: t('Ignore all inputs'), value: 'obscured' },
-  { label: t('Obscure all inputs'), value: 'hidden' },
+const inputModeOptions = [
+  { label: 'Record all inputs', value: 'plain' },
+  { label: 'Ignore all inputs', value: 'obscured' },
+  { label: 'Obscure all inputs', value: 'hidden' },
 ];
 
 const inputModeOptionsMap = {};
@@ -74,7 +74,7 @@ function ProjectCodeSnippet() {
         <div className="ml-10 mb-4" style={{ maxWidth: '50%' }}>
           <Select
             name="defaultInputMode"
-            options={inputModeOptions(t)}
+            options={inputModeOptions}
             onChange={({ value }) =>
               onChangeSelect({ name: 'defaultInputMode', value: value.value })
             }

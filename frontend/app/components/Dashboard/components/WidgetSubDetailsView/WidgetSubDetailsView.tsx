@@ -5,6 +5,7 @@ import React, { useEffect } from 'react';
 import { withSiteId } from 'App/routes';
 import { Loader } from 'UI';
 import FunnelIssueDetails from '../Funnels/FunnelIssueDetails';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   history: any;
@@ -12,6 +13,7 @@ interface Props {
   siteId: any;
 }
 function WidgetSubDetailsView(props: Props) {
+  const { t } = useTranslation();
   const {
     match: {
       params: { siteId, dashboardId, metricId, subId },
@@ -35,7 +37,7 @@ function WidgetSubDetailsView(props: Props) {
       <Breadcrumb
         items={[
           {
-            label: dashboardId ? 'Dashboard' : 'Cards',
+            label: dashboardId ? t('Dashboard') : t('Cards'),
             to: dashboardId
               ? withSiteId(`/dashboard/${dashboardId}`, siteId)
               : withSiteId('/metrics', siteId),

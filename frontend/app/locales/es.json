@@ -1445,5 +1445,8 @@
   "Assist (Call)": "Asistencia (Llamada)",
   "Change Spot Visibility": "Cambiar visibilidad de Spot",
   "Clear Drilldown": "Limpiar desglose",
-  "Select Series": "Seleccionar Serie"
+  "Select Series": "Seleccionar Serie",
+  "Integrate Github": "Integrar con Github",
+  "Integrate GraphQL": "Integrar con GraphQL",
+  "Installation Docs": "Documentación de Instalación"
 }

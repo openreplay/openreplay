@@ -3,6 +3,7 @@ import cn from 'classnames';
 import { Icon } from 'UI';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   history: any;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 function SettingsMenu(props: RouteComponentProps<Props>) {
+  const { t } = useTranslation();
   const { history, account, className }: any = props;
   const isAdmin = account.admin || account.superAdmin;
   const isEnterprise = account.edition === 'ee';
@@ -40,33 +42,33 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
     <div>
       <MenuItem
         onClick={() => navigateTo('sessions-listing')}
-        label="Sessions Listing"
+        label={t('Sessions Listing')}
         icon="folder2"
       />
       <MenuItem
         onClick={() => navigateTo('integrations')}
-        label="Integrations"
+        label={t('Integrations')}
         icon="puzzle"
       />
       <MenuItem
         onClick={() => navigateTo('metadata')}
-        label="Metadata"
+        label={t('Metadata')}
         icon="tags"
       />
       <MenuItem
         onClick={() => navigateTo('webhooks')}
-        label="Webhooks"
+        label={t('Webhooks')}
         icon="link-45deg"
       />
       <MenuItem
         onClick={() => navigateTo('projects')}
-        label="Projects"
+        label={t('Projects')}
         icon="folder2"
       />
       {isAdmin && (
         <MenuItem
           onClick={() => navigateTo('team')}
-          label="Team"
+          label={t('Team')}
           icon="users"
         />
       )}
@@ -74,19 +76,19 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
         <>
           <MenuItem
             onClick={() => navigateTo('roles')}
-            label="Roles & Access"
+            label={t('Roles & Access')}
             icon="diagram-3"
           />
           <MenuItem
             onClick={() => navigateTo('audit')}
-            label="Audit"
+            label={t('Audit')}
             icon="list-ul"
           />
         </>
       )}
       <MenuItem
         onClick={() => navigateTo('notifications')}
-        label="Notifications"
+        label={t('Notifications')}
         icon="bell-slash"
       />
     </div>

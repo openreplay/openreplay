@@ -78,7 +78,7 @@ export const recordGraphQL = tracker.use(trackerGraphQL());`;
 
         <DocLink
           className="mt-4"
-          label="Integrate GraphQL"
+          label={t('Integrate GraphQL')}
           url="https://docs.openreplay.com/plugins/graphql"
         />
       </div>
