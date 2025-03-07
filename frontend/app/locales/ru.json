@@ -1443,5 +1443,7 @@
   "Dashboard": "Дашборд",
   "Assist (Live)": "Assist (Live)",
   "Assist (Call)": "Assist (Call)",
-  "Change Spot Visibility": "Изменить видимость Spot"
+  "Change Spot Visibility": "Изменить видимость Spot",
+  "Clear Drilldown": "Очистить детализацию",
+  "Select Series": "Выбрать серию"
 }

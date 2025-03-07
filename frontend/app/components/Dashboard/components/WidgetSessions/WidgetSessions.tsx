@@ -217,7 +217,7 @@ function WidgetSessions(props: Props) {
         <div>
           <div className="flex items-baseline gap-2">
             <h2 className="text-xl">
-              {metricStore.clickMapSearch ? 'Clicks' : 'Sessions'}
+              {metricStore.clickMapSearch ? t('Clicks') : t('Sessions')}
             </h2>
             <div className="ml-2 color-gray-medium">
               {metricStore.clickMapLabel
@@ -233,7 +233,7 @@ function WidgetSessions(props: Props) {
               </span>{' '}
             </div>
             {hasFilters && (
-              <Tooltip title="Clear Drilldown" placement="top">
+              <Tooltip title={t('Clear Drilldown')} placement="top">
                 <Button type="text" size="small" onClick={clearFilters}>
                   <UndoOutlined />
                 </Button>
@@ -270,7 +270,7 @@ function WidgetSessions(props: Props) {
               >
                 <Button type="text" size="small">
                   {seriesOptions.find((option) => option.value === activeSeries)
-                    ?.label || 'Select Series'}
+                    ?.label || t('Select Series')}
                   <DownOutlined />
                 </Button>
               </Dropdown>
