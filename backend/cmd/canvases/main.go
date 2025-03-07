@@ -13,7 +13,7 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
-	storageMetrics "openreplay/backend/pkg/metrics/images"
+	canvasesMetrics "openreplay/backend/pkg/metrics/canvas"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 )
@@ -22,7 +22,8 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
-	metrics.New(log, storageMetrics.List())
+	canvasMetrics := canvasesMetrics.New("canvases")
+	metrics.New(log, canvasMetrics.List())
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
@@ -32,7 +33,7 @@ func main() {
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(15000)
 
-	srv, err := canvases.New(cfg, log, objStore, producer)
+	srv, err := canvases.New(cfg, log, objStore, producer, canvasMetrics)
 	if err != nil {
 		log.Fatal(ctx, "can't init canvases service: %s", err)
 	}
