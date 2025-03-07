@@ -34,7 +34,7 @@ function AssistSearchActions() {
       <h3 className="text-2xl capitalize mr-2">
         <span>{t('Co-Browse')}</span>
       </h3>
-      <Tooltip title='Clear Search Filters'>
+      <Tooltip title={t('Clear Search Filters')}>
         <Button
           type="text"
           disabled={!hasFilters && !hasEvents}
@@ -45,7 +45,7 @@ function AssistSearchActions() {
         </Button>
       </Tooltip>
       {!isSaas && isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS)
-       ? <Button size={'small'} onClick={showRecords}>Training Videos</Button> : null
+       ? <Button size={'small'} onClick={showRecords}>{t('Training Videos')}</Button> : null
       }
       {isEnterprise && userStore.account?.admin && (
         <Button size={'small'} onClick={showStats}

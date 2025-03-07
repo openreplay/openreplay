@@ -115,9 +115,9 @@ function CaptureRate(props: Props) {
               title={
                 t(
                   'Define the percentage of user sessions to be recorded for detailed replay and analysis.',
-                ) +
+                ) + ' ' +
                 t(
-                  '\nSessions exceeding this specified limit will not be captured or stored.',
+                  'Sessions exceeding this specified limit will not be captured or stored.',
                 )
               }
             >
