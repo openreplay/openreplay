@@ -68,6 +68,8 @@ def __process_authentication_response(response: JSONResponse, data: dict) -> dic
                         max_age=refresh_token_max_age, secure=True, httponly=True)
     response.set_cookie(key="spotRefreshToken", value=spot_refresh_token, path=spot.COOKIE_PATH,
                         max_age=spot_refresh_token_max_age, secure=True, httponly=True)
+    logger.warning("cookie refreshToken: %s", refresh_token)
+    logger.warning("cookie spotRefreshToken: %s", spot_refresh_token)
     return data
 
 
