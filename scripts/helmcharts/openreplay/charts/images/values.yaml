@@ -5,14 +5,14 @@
 replicaCount: 1
 
 image:
-  repository: "{{ .Values.global.openReplayContainerRegistry }}/imagestorage"
+  repository: "{{ .Values.global.openReplayContainerRegistry }}/images"
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
 imagePullSecrets: []
-nameOverride: "imagestorage"
-fullnameOverride: "imagestorage-openreplay"
+nameOverride: "images"
+fullnameOverride: "images-openreplay"
 
 serviceAccount:
   # Specifies whether a service account should be created

@@ -1,4 +1,4 @@
-package imagestorage
+package images
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
