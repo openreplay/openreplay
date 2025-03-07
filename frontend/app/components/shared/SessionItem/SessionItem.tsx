@@ -288,7 +288,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </div>
                 </div>
                 {_metaList.length > 0 && (
-                  <SessionMetaList metaList={_metaList} />
+                  <SessionMetaList maxLength={1} metaList={_metaList} />
                 )}
               </div>
             )}
