@@ -50,6 +50,10 @@ def jwt_refresh_authorizer(scheme: str, token: str):
     if scheme.lower() != "bearer":
         return None
     try:
+        logger.warning("Checking JWT REF token: %s", token)
+        logger.warning("Against REF: %s",
+                       config("JWT_REFRESH_SECRET") if not is_spot_token(token) else config("JWT_SPOT_REFRESH_SECRET"))
+        logger.warning(get_supported_audience())
         payload = jwt.decode(jwt=token,
                              key=config("JWT_REFRESH_SECRET") if not is_spot_token(token) \
                                  else config("JWT_SPOT_REFRESH_SECRET"),
@@ -79,6 +83,10 @@ def generate_jwt(user_id, tenant_id, iat, aud, for_spot=False):
         key=config("JWT_SECRET") if not for_spot else config("JWT_SPOT_SECRET"),
         algorithm=config("JWT_ALGORITHM")
     )
+    logger.warning("Generated JWT token: %s", token)
+    logger.warning("For spot: %s", for_spot)
+    logger.warning("Using: %s", config("JWT_SECRET") if not for_spot else config("JWT_SPOT_SECRET"))
+    logger.warning(aud)
     return token
 
 
