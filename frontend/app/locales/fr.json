@@ -1443,5 +1443,7 @@
   "Dashboard": "Tableau de bord",
   "Assist (Live)": "Assistance (En direct)",
   "Assist (Call)": "Assistance (Appel)",
-  "Change Spot Visibility": "Modifier la visibilité du Spot"
+  "Change Spot Visibility": "Modifier la visibilité du Spot",
+  "Clear Drilldown": "Effacer le forage",
+  "Select Series": "Sélectionner la série"
 }

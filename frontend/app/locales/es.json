@@ -1443,5 +1443,7 @@
   "Dashboard": "Panel de control",
   "Assist (Live)": "Asistencia (En vivo)",
   "Assist (Call)": "Asistencia (Llamada)",
-  "Change Spot Visibility": "Cambiar visibilidad de Spot"
+  "Change Spot Visibility": "Cambiar visibilidad de Spot",
+  "Clear Drilldown": "Limpiar desglose",
+  "Select Series": "Seleccionar Serie"
 }
