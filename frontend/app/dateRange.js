@@ -33,14 +33,14 @@ Object.keys(DATE_RANGE_LABELS).forEach((key) => {
 export { DATE_RANGE_VALUES };
 export const dateRangeValues = Object.keys(DATE_RANGE_VALUES);
 
-export const DATE_RANGE_OPTIONS = (t) =>
+export const DATE_RANGE_OPTIONS = 
   Object.keys(DATE_RANGE_LABELS).map((key) => ({
-    label: t(DATE_RANGE_LABELS[key]),
+    label: DATE_RANGE_LABELS[key],
     value: key,
   }));
-export const DATE_RANGE_COMPARISON_OPTIONS = (t) =>
+export const DATE_RANGE_COMPARISON_OPTIONS =
   Object.keys(COMPARISON_DATE_RANGE_LABELS).map((key) => ({
-    label: t(COMPARISON_DATE_RANGE_LABELS[key]),
+    label: COMPARISON_DATE_RANGE_LABELS[key],
     value: key,
   }));
 

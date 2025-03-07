@@ -48,11 +48,11 @@ function SelectDateRange(props: Props) {
     ? DATE_RANGE_COMPARISON_OPTIONS
     : DATE_RANGE_OPTIONS;
   const selectedValue = usedPeriod?.rangeName
-    ? dateRangeOptions(t).find(
+    ? dateRangeOptions.find(
         (obj: any) => obj.value === usedPeriod?.rangeName,
       )
     : null;
-  const options = dateRangeOptions(t).filter((obj: any) =>
+  const options = dateRangeOptions.filter((obj: any) =>
     disableCustom ? obj.value !== CUSTOM_RANGE : true,
   );
 

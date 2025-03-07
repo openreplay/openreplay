@@ -44,17 +44,7 @@ function LanguageSwitcher() {
       }}
       placement="bottomLeft"
     >
-      <Button>
-        <Space>
-          <Typography className="font-medium capitalize">
-            <div className="flex items-center gap-2">
-              <Languages size={12} />
-              {i18n.language}
-            </div>
-          </Typography>
-          <CaretDownOutlined rev={undefined} />
-        </Space>
-      </Button>
+      <Button icon={<Languages size={12} />} />
     </Dropdown>
   );
 }

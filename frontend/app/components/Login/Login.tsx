@@ -17,6 +17,7 @@ import Copyright from 'Shared/Copyright';
 import stl from './login.module.css';
 import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
+import LanguageSwitcher from '../LanguageSwitcher';
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
@@ -279,6 +280,9 @@ function Login({ location }: LoginProps) {
       </div>
 
       <Copyright />
+      <div className="absolute bottom-0 right-0 p-4">
+        <LanguageSwitcher />
+      </div>
     </div>
   );
 }

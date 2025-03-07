@@ -47,6 +47,7 @@ const ListView: React.FC<Props> = ({
   disableSelection = false,
   inLibrary = false
 }) => {
+  const { t } = useTranslation();
   const [sorter, setSorter] = useState<{ field: string; order: 'ascend' | 'descend' }>({
     field: 'lastModified',
     order: 'descend',

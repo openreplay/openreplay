@@ -118,7 +118,7 @@ function MetricsList({
                   icon={<PlusOutlined />}
                   className="btn-create-card mt-3"
                 >
-                  {t('vCreate Card')}
+                  {t('Create Card')}
                 </Button>
               </Popover>
             </div>
