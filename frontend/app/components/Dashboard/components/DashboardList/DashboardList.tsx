@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 import {
   Empty,
   Switch,
@@ -32,7 +32,7 @@ function DashboardList() {
 
   const list = dashboardStore.filteredList;
   const dashboardsSearch = dashboardStore.filter.query;
-  const history = useHistory();
+  const navigate = useNavigate();
 
   // Define custom width and height for each scenario
   const searchImageDimensions = { width: 60, height: 'auto' };
@@ -250,7 +250,7 @@ function DashboardList() {
               dashboardSelected(record.dashboardId),
               siteId
             );
-            history.push(path);
+            navigate(path);
           },
         })}
       />

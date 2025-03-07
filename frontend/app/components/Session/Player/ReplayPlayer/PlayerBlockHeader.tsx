@@ -1,6 +1,5 @@
 import { useStore } from "App/mstore";
 import React from 'react';
-import { withRouter } from 'react-router-dom';
 import {
   sessions as sessionsRoute,
   liveSession as liveSessionRoute,
@@ -15,6 +14,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import stl from './playerBlockHeader.module.css';
 import { IFRAME } from 'App/constants/storageKeys';
+import { useNavigate } from "react-router";
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -28,13 +28,12 @@ function PlayerBlockHeader(props: any) {
   const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false }
   const { width = 0, height = 0, showEvents = false } = playerState
   const metaList = customFieldStore.list.map((i: any) => i.key)
-
+  const navigate = useNavigate();
   const {
     fullscreen,
     closedLive = false,
     setActiveTab,
     activeTab,
-    history,
   } = props;
 
   React.useEffect(() => {
@@ -46,12 +45,12 @@ function PlayerBlockHeader(props: any) {
 
   const backHandler = () => {
     if (
-      sessionPath.pathname === history.location.pathname ||
+      sessionPath.pathname === location.pathname ||
       sessionPath.pathname.includes('/session/') || sessionPath.pathname.includes('/assist/')
     ) {
-      history.push(withSiteId(SESSIONS_ROUTE, siteId));
+      navigate(withSiteId(SESSIONS_ROUTE, siteId));
     } else {
-      history.push(
+      navigate(
         sessionPath ? sessionPath.pathname + sessionPath.search : withSiteId(SESSIONS_ROUTE, siteId)
       );
     }
@@ -127,4 +126,4 @@ function PlayerBlockHeader(props: any) {
 
 const PlayerHeaderCont = observer(PlayerBlockHeader);
 
-export default withRouter(PlayerHeaderCont);
+export default PlayerHeaderCont;

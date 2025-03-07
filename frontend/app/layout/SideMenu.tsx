@@ -1,9 +1,8 @@
 import { Divider, Menu, Tag, Typography, Popover, Button } from 'antd';
 import cn from 'classnames';
 import React from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
-
+import { useLocation, useNavigate } from 'react-router';
 import SupportModal from 'App/layout/SupportModal';
 import * as routes from 'App/routes';
 import {
@@ -30,15 +29,15 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 const { Text } = Typography;
 
-interface Props extends RouteComponentProps {
-  siteId?: string;
+interface Props {
   isCollapsed?: boolean;
 }
 
 function SideMenu(props: Props) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const {
-    location,
-    isCollapsed
+    isCollapsed,
   } = props;
 
   const isPreferencesActive = location.pathname.includes('/client/');
@@ -118,7 +117,7 @@ function SideMenu(props: Props) {
 
   const menuRoutes: any = {
     [MENU.EXIT]: () =>
-      props.history.push(withSiteId(routes.sessions(), siteId)),
+      navigate(withSiteId(routes.sessions(), siteId)),
     [MENU.SESSIONS]: () => withSiteId(routes.sessions(), siteId),
     [MENU.BOOKMARKS]: () => withSiteId(routes.bookmarks(), siteId),
     [MENU.VAULT]: () => withSiteId(routes.bookmarks(), siteId),
@@ -169,7 +168,7 @@ function SideMenu(props: Props) {
   };
 
   const pushTo = (path: string) => {
-    props.history.push(path);
+    navigate(path);
   };
 
   const RenderDivider = (props: { index: number }) => {
@@ -324,8 +323,7 @@ function SideMenu(props: Props) {
   );
 }
 
-export default withRouter(observer(SideMenu));
-
+export default observer(SideMenu);
 
 const SpotMenuItem = ({ isCollapsed }: any) => {
   const [isModalVisible, setIsModalVisible] = React.useState(false);

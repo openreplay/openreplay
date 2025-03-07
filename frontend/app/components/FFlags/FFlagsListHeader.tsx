@@ -2,11 +2,11 @@ import React from 'react'
 import { PageTitle } from 'UI'
 import { Button } from 'antd'
 import FFlagsSearch from "Components/FFlags/FFlagsSearch";
-import { useHistory } from "react-router";
+import { useNavigate } from "react-router";
 import { newFFlag, withSiteId } from 'App/routes';
 
 function FFlagsListHeader({ siteId }: { siteId: string }) {
-  const history = useHistory();
+  const navigate = useNavigate();
 
   return (
     <div className="flex items-center justify-between px-6">
@@ -14,7 +14,7 @@ function FFlagsListHeader({ siteId }: { siteId: string }) {
         <PageTitle title="Feature Flags" />
       </div>
       <div className="ml-auto flex items-center">
-        <Button type="primary" onClick={() => history.push(withSiteId(newFFlag(), siteId))}>
+        <Button type="primary" onClick={() => navigate(withSiteId(newFFlag(), siteId))}>
           Create Feature Flag
         </Button>
         <div className="mx-2"></div>

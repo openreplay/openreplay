@@ -2,7 +2,6 @@ import cn from 'classnames';
 import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React, { useState, useCallback, useMemo } from 'react';
-import { RouteComponentProps, useHistory, withRouter } from 'react-router-dom';
 
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
@@ -14,7 +13,7 @@ import {
 } from 'App/routes';
 import { capitalize } from 'App/utils';
 import { Avatar, CountryFlag, Icon, Label, TextEllipsis } from 'UI';
-
+import { useLocation } from "react-router";
 import Counter from './Counter';
 import ErrorBars from './ErrorBars';
 import PlayLink from './PlayLink';
@@ -78,8 +77,8 @@ const PREFETCH_STATE = {
   fetched: 2
 };
 
-function SessionItem(props: RouteComponentProps & Props) {
-  const { location } = useHistory();
+function SessionItem(props: Props) {
+  const location = useLocation();
   const { settingsStore, sessionStore } = useStore();
   const { timezone, shownTimezone } = settingsStore.sessionSettings;
   const [prefetchState, setPrefetched] = useState(PREFETCH_STATE.none);
@@ -449,4 +448,4 @@ function SessionItem(props: RouteComponentProps & Props) {
   );
 }
 
-export default withRouter(observer(SessionItem));
+export default observer(SessionItem);

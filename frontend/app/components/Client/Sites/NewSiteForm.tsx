@@ -1,6 +1,6 @@
 import { Segmented } from 'antd';
 import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useLocation } from 'react-router'
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { confirm, Form, Icon, Input } from 'UI';
@@ -13,9 +13,10 @@ type OwnProps = {
   onClose: (arg: any) => void;
 };
 
-type Props = RouteComponentProps & OwnProps;
+type Props = OwnProps;
 
-const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
+const NewSiteForm = ({ onClose }: Props) => {
+  const { pathname } = useLocation();
   const mstore = useStore();
   const { projectsStore } = mstore;
   const activeSiteId = projectsStore.active?.id;
@@ -170,4 +171,4 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
   );
 };
 
-export default withRouter(observer(NewSiteForm));
+export default observer(NewSiteForm);

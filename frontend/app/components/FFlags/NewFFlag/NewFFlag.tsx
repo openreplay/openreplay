@@ -1,12 +1,12 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Input, SegmentSelection, Loader, NoContent } from 'UI';
+import { Input, SegmentSelection, Loader, NoContent, NavPrompt } from 'UI';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { Button, Switch } from 'antd'
 import { useModal } from 'App/components/Modal';
 import HowTo from 'Components/FFlags/NewFFlag/HowTo';
-import {Prompt, useHistory} from 'react-router';
+import { useNavigate } from 'react-router';
 import {withSiteId, fflags, fflagRead} from 'App/routes';
 import Description from './Description';
 import Header from './Header';
@@ -32,7 +32,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
 
   const current = featureFlagsStore.currentFflag;
   const { showModal } = useModal();
-  const history = useHistory();
+  const navigate = useNavigate()
 
   if (featureFlagsStore.isLoading) return <Loader loading={true} />;
   if (!current) return (
@@ -52,7 +52,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
   };
 
   const onCancel = () => {
-    history.goBack()
+    navigate(-1)
   };
 
   const onSave = () => {
@@ -61,7 +61,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
     if (fflagId) {
       featureFlagsStore.updateFlag().then(() => {
         toast.success('Feature flag updated.');
-        history.push(withSiteId(fflagRead(fflagId), siteId));
+        navigate(withSiteId(fflagRead(fflagId), siteId));
       })
         .catch(() => {
           toast.error(`Failed to update flag, check your data and try again.`)
@@ -69,7 +69,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
     } else {
       featureFlagsStore.createFlag().then(() => {
         toast.success('Feature flag created.');
-        history.push(withSiteId(fflags(), siteId));
+        navigate(withSiteId(fflags(), siteId));
       }).catch(() => {
         toast.error('Failed to create flag.');
       })
@@ -79,7 +79,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
   const showDescription = Boolean(current.description?.length);
   return (
     <div className={'w-full mx-auto mb-4'} style={{ maxWidth: '1360px' }}>
-      <Prompt
+      <NavPrompt
         when={current.hasChanged}
         message={() => {
           return 'You have unsaved changes. Are you sure you want to leave?';

@@ -2,7 +2,7 @@ import React from 'react';
 import { client as settingsPath, CLIENT_TABS } from 'App/routes';
 import { Icon } from 'UI';
 import { LoadingOutlined } from '@ant-design/icons';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Button } from 'antd';
 
 export function LoadingFetch({ provider }: { provider: string }) {
@@ -25,7 +25,7 @@ export function FailedFetch({
   provider: string;
   onRetry: () => void;
 }) {
-  const history = useHistory();
+  const navigate = useNavigate();
   const intPath = settingsPath(CLIENT_TABS.INTEGRATIONS);
   return (
     <div
@@ -45,7 +45,7 @@ export function FailedFetch({
           Retry
         </Button>
 
-      <Button  type='text' size='small'  onClick={() => history.push(intPath)}>
+      <Button  type='text' size='small'  onClick={() => navigate(intPath)}>
         Check Configuration
       </Button>
       </div>

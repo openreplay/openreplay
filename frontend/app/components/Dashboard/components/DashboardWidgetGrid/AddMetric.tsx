@@ -6,18 +6,18 @@ import WidgetWrapper from 'App/components/Dashboard/components/WidgetWrapper';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
 import { dashboardMetricCreate, withSiteId } from 'App/routes';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useNavigate } from "react-router";
 
-interface IProps extends RouteComponentProps {
-  siteId: string;
+interface IProps {
   title: string;
   description: string;
 }
 
-function AddMetric({ history, siteId, title, description }: IProps) {
+function AddMetric({ title, description }: IProps) {
   const [metrics, setMetrics] = React.useState<Record<string, any>[]>([]);
-
-  const { dashboardStore } = useStore();
+  const navigate = useNavigate();
+  const { dashboardStore, projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId
   const { hideModal } = useModal();
 
   React.useEffect(() => {
@@ -47,8 +47,8 @@ function AddMetric({ history, siteId, title, description }: IProps) {
 
   const onCreateNew = () => {
     const path = withSiteId(dashboardMetricCreate(dashboard.dashboardId), siteId);
-    if (!queryParams.has('modal')) history.push('?modal=addMetric');
-    history.push(path);
+    if (!queryParams.has('modal')) navigate('?modal=addMetric');
+    navigate(path);
     hideModal();
   };
 
@@ -110,4 +110,4 @@ function AddMetric({ history, siteId, title, description }: IProps) {
   );
 }
 
-export default withRouter(observer(AddMetric));
+export default observer(AddMetric);

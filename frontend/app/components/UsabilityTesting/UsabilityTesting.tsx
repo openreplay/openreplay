@@ -9,7 +9,7 @@ import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { Loader, NoContent, Pagination, Link, Icon } from 'UI';
 import { checkForRecent, getDateFromMill } from 'App/date';
 import { ArrowRightOutlined, PlusOutlined } from '@ant-design/icons';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { withSiteId, usabilityTestingEdit, usabilityTestingView } from 'App/routes';
 import { debounce } from 'App/utils';
 import withPageTitle from 'HOCs/withPageTitle';
@@ -45,7 +45,7 @@ function TestsTable() {
 
   // @ts-ignore
   const { siteId } = useParams();
-  const history = useHistory();
+  const navigate = useNavigate()
 
   const onClose = (confirmed: boolean) => {
     if (confirmed) {
@@ -65,7 +65,7 @@ function TestsTable() {
   };
 
   const redirect = (path: string) => {
-    history.push(withSiteId(usabilityTestingEdit(path), siteId));
+    navigate(withSiteId(usabilityTestingEdit(path), siteId));
   };
 
   return (
@@ -197,10 +197,10 @@ const statusMap = {
 function Row({ test, siteId }: { test: UxTListEntry; siteId: string }) {
   const link = usabilityTestingView(test.testId.toString());
   const editLink = usabilityTestingEdit(test.testId.toString());
-  const history = useHistory();
+  const navigate = useNavigate()
 
   const redirect = () => {
-    history.push(withSiteId(test.status === 'preview' ? editLink : link, siteId));
+    navigate(withSiteId(test.status === 'preview' ? editLink : link, siteId));
   };
   return (
     <div

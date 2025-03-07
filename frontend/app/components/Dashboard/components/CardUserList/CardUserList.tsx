@@ -1,21 +1,19 @@
 import { useModal } from 'App/components/Modal';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { RouteComponentProps, withRouter } from 'react-router';
 import { Loader, Pagination } from 'UI';
 import { Button } from 'antd'
 import SessionsModal from './SessionsModal';
 import CardUserItem from './CardUserItem';
 import { useStore } from 'App/mstore';
+import { useNavigate, useLocation } from 'react-router';
 
-interface Props {
-    history: any;
-    location: any;
-}
-function CardUserList(props: RouteComponentProps<Props>) {
+function CardUserList() {
+    const navigate = useNavigate();
+    const location = useLocation();
     const [loading, setLoading] = useState(false);
     const { showModal } = useModal();
-    const userId = new URLSearchParams(props.location.search).get("userId");
+    const userId = new URLSearchParams(location.search).get("userId");
     const { metricStore, dashboardStore } = useStore();
     
     const [data, setData] = useState<any>([
@@ -27,7 +25,8 @@ function CardUserList(props: RouteComponentProps<Props>) {
     const pageSize = data.length;
 
     const handleClick = (issue: any) => {
-        props.history.replace({search: (new URLSearchParams({userId : '123'})).toString()});
+        const search = (new URLSearchParams({userId : '123'})).toString()
+        navigate(location.pathname + "?" + search, { replace: true });
         // showModal(<SessionsModal list={[]} />, { right: true, width: 450 })
     }
 
@@ -35,8 +34,8 @@ function CardUserList(props: RouteComponentProps<Props>) {
         if (!userId) return;
 
         showModal(<SessionsModal userId={userId} name="test" hash="test" />, { right: true, width: 600, onClose: () => {
-            if (props.history.location.pathname.includes("/metric")) {
-                props.history.replace({search: ""});
+            if (location.pathname.includes("/metric")) {
+                navigate(location.pathname, { replace: true });
             }
         }});
     }, [userId]);
@@ -75,4 +74,4 @@ function CardUserList(props: RouteComponentProps<Props>) {
     );
 }
 
-export default withRouter(observer(CardUserList));
+export default observer(CardUserList);

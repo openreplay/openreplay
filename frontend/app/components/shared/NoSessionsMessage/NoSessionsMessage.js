@@ -3,17 +3,16 @@ import { Alert, Space, Button } from 'antd';
 import { observer } from 'mobx-react-lite'
 import { useStore } from "App/mstore";
 import { onboarding as onboardingRoute } from 'App/routes';
-import { withRouter } from 'react-router-dom';
 import * as routes from '../../../routes';
 import { SquareArrowOutUpRight } from 'lucide-react';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 
 const withSiteId = routes.withSiteId;
 
 const NoSessionsMessage = () => {
   const { projectsStore } = useStore();
   const siteId = projectsStore.siteId;
-  const history = useHistory();
+  const navigate = useNavigate();
   const activeSite = projectsStore.active;
   const showNoSessions = !!activeSite && !activeSite.recorded;
   const onboardingPath = withSiteId(onboardingRoute('installing'), siteId);
@@ -41,7 +40,7 @@ const NoSessionsMessage = () => {
                   <Button
                     type="default"
                     size="small"
-                    onClick={() => history.push(onboardingPath)}
+                    onClick={() => navigate(onboardingPath)}
                   >
                     Complete Project Setup
                   </Button>
@@ -55,4 +54,4 @@ const NoSessionsMessage = () => {
   );
 };
 
-export default withRouter(observer(NoSessionsMessage));
+export default observer(NoSessionsMessage)

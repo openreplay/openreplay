@@ -3,21 +3,22 @@ import React from 'react';
 import MetricsLibraryModal from '../MetricsLibraryModal';
 import MetricTypeItem, { MetricType } from '../MetricTypeItem/MetricTypeItem';
 import { TYPES, LIBRARY, INSIGHTS } from 'App/constants/card';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { dashboardMetricCreate, metricCreate, withSiteId } from 'App/routes';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
+import { useNavigate } from "react-router";
 
-interface Props extends RouteComponentProps {
+interface Props {
   dashboardId?: number;
-  siteId: string;
   isList?: boolean;
 }
 
 function MetricTypeList(props: Props) {
-  const { dashboardId, siteId, history, isList = false } = props;
-  const { metricStore, userStore } = useStore();
+  const navigate = useNavigate();
+  const { dashboardId, isList = false } = props;
+  const { metricStore, userStore, projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId;
   const { showModal, hideModal } = useModal();
   const isEnterprise = userStore.isEnterprise;
 
@@ -49,13 +50,11 @@ function MetricTypeList(props: Props) {
       });
     }
 
-    const path = dashboardId ? withSiteId(dashboardMetricCreate(dashboardId + ''), siteId) :
-      withSiteId(metricCreate(), siteId);
+    const path = dashboardId
+                 ? withSiteId(dashboardMetricCreate(dashboardId + ''), siteId)
+                 : withSiteId(metricCreate(), siteId);
     const queryString = new URLSearchParams({ type: slug }).toString();
-    history.push({
-      pathname: path,
-      search: `?${queryString}`
-    });
+    navigate(path + `?${queryString}`);
   };
 
   return (
@@ -67,4 +66,4 @@ function MetricTypeList(props: Props) {
   );
 }
 
-export default withRouter(observer(MetricTypeList));
+export default observer(MetricTypeList);

@@ -1,18 +1,20 @@
 import React from 'react';
 import WidgetWrapper from 'App/components/Dashboard/components/WidgetWrapper';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
-interface Props extends RouteComponentProps {
+import { useNavigate } from "react-router";
+
+interface Props {
   list: any;
   siteId: any;
   selectedList: any;
 }
 function GridView(props: Props) {
-  const { siteId, list, selectedList, history } = props;
+  const { siteId, list, selectedList } = props;
+  const navigate = useNavigate();
 
   const onItemClick = (metricId: number) => {
     const path = withSiteId(`/metrics/${metricId}`, siteId);
-    history.push(path);
+    navigate(path);
   };
   
   return (
@@ -33,4 +35,4 @@ function GridView(props: Props) {
   );
 }
 
-export default withRouter(GridView);
+export default GridView;

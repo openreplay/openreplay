@@ -1,7 +1,7 @@
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';
@@ -28,7 +28,6 @@ import {
 import { useStore } from 'App/mstore';
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import { SummaryButton } from 'Components/Session_/Player/Controls/Controls';
-import { MobEventsList, WebEventsList } from "../../../Session_/Player/Controls/EventsList";
 import useShortcuts from '../ReplayPlayer/useShortcuts';
 
 export const SKIP_INTERVALS = {
@@ -46,7 +45,7 @@ function Controls(props: any) {
   const permissions = userStore.account.permissions || [];
   const disableDevtools = userStore.isEnterprise && !(permissions.includes('DEV_TOOLS') || permissions.includes('SERVICE_DEV_TOOLS'));
   const { player, store } = React.useContext(MobilePlayerContext);
-  const history = useHistory();
+  const navigate = useNavigate()
   const { playing, completed, skip, speed, messagesLoading } = store.get();
   const { uiPlayerStore, projectsStore } = useStore();
   const fullscreen = uiPlayerStore.fullscreen;
@@ -68,11 +67,11 @@ function Controls(props: any) {
   const sessionTz = session?.timezone;
 
   const nextHandler = () => {
-    history.push(withSiteId(sessionRoute(nextSessionId), siteId));
+    navigate(withSiteId(sessionRoute(nextSessionId), siteId));
   };
 
   const prevHandler = () => {
-    history.push(withSiteId(sessionRoute(previousSessionId), siteId));
+    navigate(withSiteId(sessionRoute(previousSessionId), siteId));
   };
 
   useShortcuts({

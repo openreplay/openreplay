@@ -1,13 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import { useStore } from "App/mstore";
 import { observer } from 'mobx-react-lite'
+import { useParams, useNavigate } from 'react-router';
 
 const withSiteIdUpdater = (BaseComponent) => {
   const WrapperComponent = (props) => {
+    const { siteId: urlSiteId } = useParams();
+    const navigate = useNavigate();
     const { projectsStore } = useStore();
     const siteId = projectsStore.siteId;
     const setSiteId = projectsStore.setSiteId;
-    const urlSiteId = props.match.params.siteId
     const prevSiteIdRef = useRef(siteId);
 
     useEffect(() => {
@@ -17,15 +19,15 @@ const withSiteIdUpdater = (BaseComponent) => {
     }, []);
 
     useEffect(() => {
-      const { location: { pathname }, history } = props;
+      const pathname = location.pathname;
 
       const shouldUrlUpdate = urlSiteId && parseInt(urlSiteId, 10) !== parseInt(siteId, 10);
       if (shouldUrlUpdate) {
         const path = ['', siteId].concat(pathname.split('/').slice(2)).join('/');
-        history.push(path);
+        navigate(path);
       }
       prevSiteIdRef.current = siteId;
-    }, [urlSiteId, siteId, props.location.pathname, props.history]);
+    }, [urlSiteId, siteId, location.pathname]);
 
     const key = siteId;
 

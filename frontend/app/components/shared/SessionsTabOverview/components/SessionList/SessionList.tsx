@@ -3,7 +3,7 @@ import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
 import { NoContent, Loader, Pagination, Icon } from 'UI';
 import { Button } from 'antd'
-import { useLocation, withRouter } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
 import SessionDateRange from './SessionDateRange';
@@ -237,4 +237,4 @@ function SessionList() {
   );
 }
 
-export default withRouter(observer(SessionList));
+export default observer(SessionList);

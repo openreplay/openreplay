@@ -1,4 +1,4 @@
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Button, Dropdown, MenuProps, Modal } from 'antd';
@@ -10,7 +10,7 @@ import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
 import { showAddToDashboardModal } from 'Components/Dashboard/components/AddToDashboardButton';
 
 const CardViewMenu = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { alertsStore, metricStore, dashboardStore } = useStore();
   const widget = metricStore.instance;
   const { openModal, closeModal } = useModal();
@@ -60,7 +60,7 @@ const CardViewMenu = () => {
             metricStore
               .delete(widget)
               .then(() => {
-                history.goBack();
+                navigate(-1)
               })
               .catch(() => {
                 toast.error('Failed to remove card');

@@ -5,11 +5,10 @@ import {
 import { Button, Dropdown, MenuProps, Space, Typography } from 'antd';
 import cn from 'classnames';
 import React from 'react';
-import { withRouter } from 'react-router-dom';
+import { useLocation } from 'react-router'
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
-import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { Icon } from 'UI';
 import { useModal } from 'Components/ModalContext';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
@@ -17,15 +16,15 @@ import Project from '@/mstore/types/project';
 
 const { Text } = Typography;
 
-function ProjectDropdown(props: { location: any }) {
+function ProjectDropdown() {
   const mstore = useStore();
+  const location = useLocation();
   const { projectsStore, searchStore, searchStoreLive, userStore } = mstore;
   const account = userStore.account;
   const sites = projectsStore.list;
   const siteId = projectsStore.siteId;
   const setSiteId = projectsStore.setSiteId;
   const initProject = projectsStore.initProject;
-  const { location } = props;
   const isAdmin = account.admin || account.superAdmin;
   const activeSite = sites.find((s) => s.id === siteId);
   const showCurrent =
@@ -139,6 +138,4 @@ function ProjectDropdown(props: { location: any }) {
   );
 }
 
-export default withRouter(
-  observer(ProjectDropdown)
-);
+export default observer(ProjectDropdown)

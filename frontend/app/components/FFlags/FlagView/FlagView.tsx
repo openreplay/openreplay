@@ -4,7 +4,7 @@ import { useStore } from 'App/mstore';
 import { Loader, NoContent, ItemMenu } from 'UI';
 import { Button, Switch } from 'antd'
 import Breadcrumb from 'Shared/Breadcrumb';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 import { withSiteId, fflag, fflags } from 'App/routes';
 import Multivariant from "Components/FFlags/NewFFlag/Multivariant";
 import { toast } from 'react-toastify';
@@ -12,7 +12,7 @@ import RolloutCondition from "Shared/ConditionSet";
 
 function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   const { featureFlagsStore } = useStore();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     if (fflagId) {
@@ -27,7 +27,7 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   const deleteHandler = () => {
     featureFlagsStore.deleteFlag(current.featureFlagId).then(() => {
       toast.success('Feature flag deleted.');
-      history.push(withSiteId(fflags(), siteId));
+      navigate(withSiteId(fflags(), siteId));
     });
   };
 
@@ -63,7 +63,7 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
             className={'ml-auto text-main'}
             type={'text'}
             onClick={() =>
-              history.push(
+              navigate(
                 withSiteId(
                   fflag(
                     featureFlagsStore.currentFflag?.featureFlagId.toString()

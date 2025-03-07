@@ -3,20 +3,20 @@ import { useObserver } from 'mobx-react-lite';
 import DashboardMetricSelection from '../DashboardMetricSelection';
 import DashboardForm from '../DashboardForm';
 import { Button } from 'antd';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
 import { dashboardMetricCreate, withSiteId } from 'App/routes';
+import { useNavigate } from "react-router";
 
-interface Props extends RouteComponentProps {
-    history: any
-    siteId?: string
+interface Props {
     dashboardId?: string
     onMetricAdd?: () => void;
 }
 function DashboardModal(props: Props) {
-    const { history, siteId, dashboardId } = props;
-    const { dashboardStore } = useStore();
+    const navigate = useNavigate();
+    const { dashboardId } = props;
+    const { dashboardStore, projectsStore } = useStore();
+    const siteId = projectsStore.activeSiteId
     const selectedWidgetsCount = useObserver(() => dashboardStore.selectedWidgets.length);
     const { hideModal } = useModal();
     const dashboard = useObserver(() => dashboardStore.dashboardInstance);
@@ -28,7 +28,7 @@ function DashboardModal(props: Props) {
                 await dashboardStore.fetch(dashboard.dashboardId)
             }
             dashboardStore.selectDashboardById(syncedDashboard.dashboardId);
-            history.push(withSiteId(`/dashboard/${syncedDashboard.dashboardId}`, siteId))
+            navigate(withSiteId(`/dashboard/${syncedDashboard.dashboardId}`, siteId))
         })
         .then(hideModal)
     }
@@ -36,7 +36,7 @@ function DashboardModal(props: Props) {
     const handleCreateNew = () => {
         const path = withSiteId(dashboardMetricCreate(dashboardId), siteId);
         props.onMetricAdd();
-        history.push(path);
+        navigate(path);
         hideModal();
     }
     const isDashboardExists = dashboard.exists()
@@ -81,4 +81,4 @@ function DashboardModal(props: Props) {
     ));
 }
 
-export default withRouter(DashboardModal);
+export default DashboardModal;

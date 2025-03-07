@@ -2,7 +2,6 @@ import { Table, Typography } from 'antd';
 import type { TableProps } from 'antd';
 import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
@@ -10,8 +9,8 @@ import { NoContent } from 'UI';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import FunnelIssueModal from '../FunnelIssueModal';
-import FunnelIssuesListItem from '../FunnelIssuesListItem';
 const { Text } = Typography;
+import { useLocation, useNavigate } from "react-router";
 
 interface Issue {
   issueId: string;
@@ -70,26 +69,25 @@ const columns: TableProps<Issue>['columns'] = [
   },
 ];
 
-interface Props extends RouteComponentProps {
+interface Props {
   loading?: boolean;
   issues: Issue[];
-  history: any;
-  location: any;
 }
 function FunnelIssuesList(props: Props) {
   const { issues, loading } = props;
+  const location = useLocation();
+  const navigate = useNavigate();
   const { funnelStore } = useStore();
   const issuesSort = useObserver(() => funnelStore.issuesSort);
   const issuesFilter = useObserver(() =>
     funnelStore.issuesFilter.map((issue: any) => issue.value)
   );
   const { showModal } = useModal();
-  const issueId = new URLSearchParams(props.location.search).get('issueId');
+  const issueId = new URLSearchParams(location.search).get('issueId');
 
   const onIssueClick = (issue: any) => {
-    props.history.replace({
-      search: new URLSearchParams({ issueId: issue.issueId }).toString(),
-    });
+    const search = new URLSearchParams({ issueId: issue.issueId }).toString();
+    navigate(location.pathname + '?' + search, { replace: true });
   };
 
   useEffect(() => {
@@ -99,8 +97,8 @@ function FunnelIssuesList(props: Props) {
       right: true,
       width: 1000,
       onClose: () => {
-        if (props.history.location.pathname.includes('/metric')) {
-          props.history.replace({ search: '' });
+        if (location.pathname.includes('/metric')) {
+          navigate(location.pathname, { replace: true });
         }
       },
     });
@@ -147,4 +145,4 @@ function FunnelIssuesList(props: Props) {
   ));
 }
 
-export default withRouter(FunnelIssuesList);
+export default FunnelIssuesList;

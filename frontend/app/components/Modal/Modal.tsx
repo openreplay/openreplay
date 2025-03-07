@@ -1,8 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 import ModalOverlay from './ModalOverlay';
 import cn from 'classnames';
-import { useHistory } from 'react-router';
 
 const DEFAULT_WIDTH = 350;
 interface Props {
@@ -13,16 +12,6 @@ interface Props {
   width?: number;
 }
 function Modal({ component, className = 'bg-white', props, hideModal }: Props) {
-  const history = useHistory();
-
-  useEffect(() => {
-    return history.listen((location) => {
-      if (history.action === 'POP') {
-        document.querySelector('body').style.overflow = 'visible';
-      }
-    });
-  });
-
   return component ? (
     ReactDOM.createPortal(
       <ModalOverlay hideModal={hideModal} left={!props.right} right={props.right}>

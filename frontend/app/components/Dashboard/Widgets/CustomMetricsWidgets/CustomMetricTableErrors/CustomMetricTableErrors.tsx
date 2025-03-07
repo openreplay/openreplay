@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Pagination, NoContent, Icon } from "UI";
 import ErrorListItem from "App/components/Dashboard/components/Errors/ErrorListItem";
-import { withRouter, RouteComponentProps } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router";
 import { useModal } from "App/components/Modal";
 import ErrorDetailsModal from "App/components/Dashboard/components/Errors/ErrorDetailsModal";
 
@@ -9,19 +9,18 @@ interface Props {
     metric: any;
     data: any;
     isEdit: any;
-    history: any;
-    location: any;
 }
-function CustomMetricTableErrors(props: RouteComponentProps & Props) {
+function CustomMetricTableErrors(props: Props) {
     const { metric, data } = props;
-    const errorId = new URLSearchParams(props.location.search).get("errorId");
+    const location = useLocation();
+    const navigate = useNavigate();
+    const errorId = new URLSearchParams(location.search).get("errorId");
     const { showModal, hideModal } = useModal();
 
     const onErrorClick = (e: any, error: any) => {
         e.stopPropagation();
-        props.history.replace({
-            search: new URLSearchParams({ errorId: error.errorId }).toString(),
-        });
+        const search = new URLSearchParams({ errorId: error.errorId }).toString()
+        navigate(location.pathname + "?" + search, { replace: true });
     };
 
     useEffect(() => {
@@ -31,8 +30,8 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
             right: true,
             width: 1200,
             onClose: () => {
-                if (props.history.location.pathname.includes("/dashboard") || props.history.location.pathname.includes("/metrics/")) {
-                    props.history.replace({ search: "" });
+                if (location.pathname.includes("/dashboard") || location.pathname.includes("/metrics/")) {
+                    navigate(location.pathname, { replace: true });
                 }
             },
         });
@@ -60,7 +59,6 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
                         </div>
                     ))}
 
-                {/*{isEdit && (*/}
                 <div className="my-6 flex items-center justify-center">
                     <Pagination
                         page={metric.page}
@@ -72,25 +70,9 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
                         debounceRequest={500}
                     />
                 </div>
-                {/*)}*/}
-
-                {/*{!isEdit && (*/}
-                {/*    <ViewMore total={data.total} limit={5} />*/}
-                {/*)}*/}
             </div>
         </NoContent>
     );
 }
 
-export default withRouter<Props & RouteComponentProps, React.FunctionComponent>(CustomMetricTableErrors);
-
-const ViewMore = ({ total, limit }: any) =>
-    total > limit && (
-        <div className="mt-4 flex items-center justify-center cursor-pointer w-fit mx-auto">
-            <div className="text-center">
-                <div className="color-teal text-lg">
-                    All <span className="font-medium">{total}</span> errors
-                </div>
-            </div>
-        </div>
-    );
+export default CustomMetricTableErrors;

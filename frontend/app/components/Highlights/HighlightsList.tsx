@@ -12,11 +12,11 @@ import { toast } from 'react-toastify';
 import EditHlModal from './EditHlModal';
 import HighlightsListHeader from './HighlightsListHeader';
 import withPermissions from 'HOCs/withPermissions';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 import { highlights, withSiteId } from 'App/routes'
 
 function HighlightsList() {
-  const history = useHistory();
+  const navigate = useNavigate()
   const params = new URLSearchParams(window.location.search);
   const hlId = params.get('highlight');
   const { notesStore, projectsStore, userStore } = useStore();
@@ -31,7 +31,7 @@ function HighlightsList() {
   React.useEffect(() => {
     if (hlId) {
       setActiveId(hlId);
-      history.replace(withSiteId(highlights(), projectsStore.siteId));
+      navigate(withSiteId(highlights(), projectsStore.siteId), { replace: true });
     }
   }, [hlId])
 

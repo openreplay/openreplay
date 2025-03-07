@@ -1,7 +1,6 @@
 import React from 'react';
 import BackButton from 'Shared/Breadcrumb/BackButton';
 import { withSiteId } from 'App/routes';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { PageTitle, confirm } from 'UI';
 import { Tooltip, Popover, Button  } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
@@ -12,21 +11,23 @@ import withModal from 'App/components/Modal/withModal';
 import { observer } from 'mobx-react-lite';
 import DashboardEditModal from '../DashboardEditModal';
 import AddCardSection from '../AddCardSection/AddCardSection';
+import { useNavigate } from "react-router";
 
 interface IProps {
   siteId: string;
   renderReport?: any;
 }
 
-type Props = IProps & RouteComponentProps;
+type Props = IProps;
 
 function DashboardHeader(props: Props) {
-  const { siteId } = props;
+  const navigate = useNavigate();
   const [popoverOpen, setPopoverOpen] = React.useState(false);
   const handleOpenChange = (open: boolean) => {
     setPopoverOpen(open);
   };
-  const { dashboardStore } = useStore();
+  const { dashboardStore, projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId
   const [focusTitle, setFocusedInput] = React.useState(true);
   const [showEditModal, setShowEditModal] = React.useState(false);
   const period = dashboardStore.period;
@@ -48,7 +49,7 @@ function DashboardHeader(props: Props) {
       })
     ) {
       dashboardStore.deleteDashboard(dashboard).then(() => {
-        props.history.push(withSiteId(`/dashboard`, siteId));
+        navigate(withSiteId(`/dashboard`, siteId));
       });
     }
   };
@@ -118,4 +119,4 @@ function DashboardHeader(props: Props) {
   );
 }
 
-export default withRouter(withModal(observer(DashboardHeader)));
+export default withModal(observer(DashboardHeader));

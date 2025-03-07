@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Button, List, Divider } from 'antd';
 import { CircleDot, Play, TrendingUp, Radio, Sparkles, Plug, ArrowRight } from 'lucide-react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { onboarding } from 'App/routes';
 import { useStore } from 'App/mstore';
 
@@ -15,7 +15,7 @@ const SpotToOpenReplayPrompt = ({ isVisible, onCancel }: {
   onCancel: () => void;
 }) => {
   const { userStore } = useStore();
-  const history = useHistory();
+  const navigate = useNavigate()
   const features = [
     { icon: <CircleDot />, text: 'Spot', noBorder: true },
     { isDivider: true }, 
@@ -28,7 +28,7 @@ const SpotToOpenReplayPrompt = ({ isVisible, onCancel }: {
 
   const onUpgrade = () => {
     userStore.upgradeScope().then(() => {
-      history.push(onboarding());
+      navigate(onboarding());
       onCancel();
     })
   }

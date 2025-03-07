@@ -21,7 +21,7 @@ import { TYPE_ICONS, TYPE_NAMES } from 'App/constants/card';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 import { EllipsisVertical } from 'lucide-react';
 import cn from 'classnames'
 
@@ -61,7 +61,7 @@ const MetricListItem: React.FC<Props> = ({
   renderColumn,
   inLibrary,
 }) => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { metricStore } = useStore();
   const [isEdit, setIsEdit] = useState(false);
   const [newName, setNewName] = useState(metric.name);
@@ -75,7 +75,7 @@ const MetricListItem: React.FC<Props> = ({
       return toggleSelection(e);
     }
     const path = withSiteId(`/metrics/${metric.metricId}`, siteId);
-    history.push(path);
+    navigate(path);
   };
 
   const onMenuClick = async ({ key }: { key: string }) => {
@@ -99,7 +99,7 @@ const MetricListItem: React.FC<Props> = ({
     try {
       metric.update({ name: newName });
       await metricStore.save(metric);
-      metricStore.fetchList();
+      void metricStore.fetchList();
       setIsEdit(false);
     } catch (e) {
       toast.error('Failed to rename card');

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Checkbox, Input } from 'antd';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { withSiteId, sessions } from 'App/routes';
 import { useStore } from 'App/mstore';
 
@@ -14,7 +14,7 @@ interface Props {
 }
 
 function SaveModal({ onSave, hideModal }: Props) {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { projectsStore, searchStore } = useStore();
   const [name, setName] = React.useState('');
   const [ignoreClRage, setIgnoreClRage] = React.useState(false);
@@ -32,7 +32,7 @@ function SaveModal({ onSave, hideModal }: Props) {
         'tag',
         tagId.toString(),
       )
-      history.push(
+      navigate(
         withSiteId(
           sessions(),
           siteId

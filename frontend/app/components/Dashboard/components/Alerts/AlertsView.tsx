@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { PageTitle, Icon, Link } from 'UI';
+import { PageTitle, Link } from 'UI';
 import { Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import withPageTitle from 'HOCs/withPageTitle';
@@ -7,7 +7,7 @@ import { withSiteId, alertCreate } from 'App/routes';
 
 import AlertsList from './AlertsList';
 import AlertsSearch from './AlertsSearch';
-import { useHistory } from 'react-router';
+import {  useLocation } from 'react-router';
 import { useStore } from 'App/mstore';
 
 interface IAlertsView {
@@ -15,18 +15,16 @@ interface IAlertsView {
 }
 
 function AlertsView({ siteId }: IAlertsView) {
-    const history = useHistory();
+    const location = useLocation();
     const { alertsStore } = useStore();
 
-    
     useEffect(() => {
-        const unmount = history.listen((location) => {
+        return () => {
             if (!location.pathname.includes('/alert')) {
                 alertsStore.updateKey('page', 1);
             }
-        });
-        return unmount;
-      }, [history]);
+        }
+      }, [location.pathname]);
     return (
         <div style={{ maxWidth: '1360px', margin: 'auto'}} className="bg-white rounded-lg shadow-sm py-4 border">
             <div className="flex items-center mb-4 justify-between px-6">

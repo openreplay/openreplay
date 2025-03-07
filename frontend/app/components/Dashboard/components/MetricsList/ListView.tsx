@@ -15,7 +15,7 @@ import { EllipsisVertical } from 'lucide-react';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 import { withSiteId } from 'App/routes';
 import { Icon } from 'UI';
 import cn from 'classnames';
@@ -49,7 +49,7 @@ const ListView: React.FC<Props> = ({
   const [editingMetricId, setEditingMetricId] = useState<number | null>(null);
   const [newName, setNewName] = useState('');
   const { metricStore } = useStore();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const sortedData = useMemo(() => {
     return [...list].sort((a, b) => {
@@ -142,7 +142,7 @@ const ListView: React.FC<Props> = ({
   const onItemClick = (metric: Widget) => {
     if (disableSelection) {
       const path = withSiteId(`/metrics/${metric.metricId}`, siteId);
-      history.push(path);
+      navigate(path);
     } else {
       toggleSelection?.(metric.metricId);
     }

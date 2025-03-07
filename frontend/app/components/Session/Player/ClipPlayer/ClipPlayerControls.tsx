@@ -4,7 +4,7 @@ import { PlayButton, PlayingState } from '@/player-ui';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { Button } from 'antd';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { CirclePlay } from 'lucide-react';
 import { withSiteId } from '@/routes';
 import * as routes from '@/routes';
@@ -20,7 +20,7 @@ function ClipPlayerControls({
 }) {
   const { projectsStore } = useStore();
   const { player, store } = React.useContext(PlayerContext);
-  const history = useHistory();
+  const navigate = useNavigate();
   const siteId = projectsStore.siteId;
 
   const { playing, completed } = store.get();
@@ -37,7 +37,7 @@ function ClipPlayerControls({
 
   const showFullSession = () => {
     const path = withSiteId(routes.session(session.sessionId), siteId);
-    history.push(path + '?jumpto=' + Math.round(range[0]));
+    navigate(path + '?jumpto=' + Math.round(range[0]));
   };
 
   return (

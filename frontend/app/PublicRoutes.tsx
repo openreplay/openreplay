@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import { Loader } from 'UI';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import Signup from 'Components/Signup/Signup';
 import SupportCallout from 'Shared/SupportCallout';
 import { useStore } from 'App/mstore';
@@ -35,13 +35,16 @@ function PublicRoutes() {
   return (
     <Loader loading={loading} className="flex-1">
       <Suspense fallback={<Loader loading={true} className="flex-1" />}>
-        <Switch>
-          <Route exact strict path={SPOT_PATH} component={Spot} />
-          <Route exact strict path={FORGOT_PASSWORD} component={ForgotPassword} />
-          <Route exact strict path={LOGIN_PATH} component={Login} />
-          <Route exact strict path={SIGNUP_PATH} component={Signup} />
-          <Redirect to={LOGIN_PATH} />
-        </Switch>
+        <Routes>
+          <Route exact strict path={SPOT_PATH} element={<Spot />} />
+          <Route exact strict path={FORGOT_PASSWORD} element={<ForgotPassword />} />
+          <Route exact strict path={LOGIN_PATH} element={<Login />} />
+          <Route exact strict path={SIGNUP_PATH} element={Signup} />
+          <Route
+            path="*"
+            element={<Navigate to={LOGIN_PATH} replace />}
+          />
+        </Routes>
         {!hideSupport && <SupportCallout />}
       </Suspense>
     </Loader>

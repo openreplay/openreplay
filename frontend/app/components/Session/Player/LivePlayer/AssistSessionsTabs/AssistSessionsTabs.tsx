@@ -3,7 +3,7 @@ import cn from 'classnames';
 import { Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { multiview, liveSession, withSiteId } from 'App/routes';
 import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
 
@@ -44,7 +44,7 @@ const CurrentTab = React.memo(() => (
 ));
 
 function AssistTabs({ session }: { session: Record<string, any> }) {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { store } = React.useContext(PlayerContext) as unknown as ILivePlayerContext
   const { recordingState, calling, remoteControl } = store.get()
   const isDisabled = recordingState !== 0 || calling !== 0 || remoteControl !== 0
@@ -63,12 +63,12 @@ function AssistTabs({ session }: { session: Record<string, any> }) {
   const openGrid = () => {
     if (isDisabled) return;
     const sessionIdQuery = encodeURIComponent(assistMultiviewStore.sessions.map((s) => s.sessionId).join(','));
-    return history.push(withSiteId(multiview(sessionIdQuery), siteId));
+    return navigate(withSiteId(multiview(sessionIdQuery), siteId));
   };
   const openLiveSession = (sessionId: string) => {
     if (isDisabled) return;
     assistMultiviewStore.setActiveSession(sessionId);
-    history.push(withSiteId(liveSession(sessionId), siteId));
+    navigate(withSiteId(liveSession(sessionId), siteId));
   };
 
   return (

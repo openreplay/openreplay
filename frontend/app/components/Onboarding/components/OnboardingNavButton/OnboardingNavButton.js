@@ -1,9 +1,9 @@
 import React from 'react'
-import { withRouter } from 'react-router'
 import { Button } from 'antd'
 import { OB_TABS, onboarding as onboardingRoute, withSiteId } from 'App/routes'
 import { sessions } from 'App/routes';
 import { useStore } from 'App/mstore'
+import { useParams, useNavigate } from "react-router";
 
 const MENU_ITEMS = [OB_TABS.INSTALLING, OB_TABS.IDENTIFY_USERS, OB_TABS.MANAGE_USERS, OB_TABS.INTEGRATIONS]
 const BTN_MSGS = [
@@ -13,7 +13,9 @@ const BTN_MSGS = [
   'See Recorded Sessions'
 ]
 
-const OnboardingNavButton = ({ match: { params: { activeTab, siteId } }, history }) => {
+const OnboardingNavButton = () => {
+  const { activeTab, siteId } = useParams();
+  const navigate = useNavigate();
   const { userStore } = useStore();
   const activeIndex = MENU_ITEMS.findIndex(i => i === activeTab);
   const completed = activeIndex == MENU_ITEMS.length - 1;
@@ -21,7 +23,7 @@ const OnboardingNavButton = ({ match: { params: { activeTab, siteId } }, history
   const setTab = () => {
     if (!completed) {
       const tab = MENU_ITEMS[activeIndex+1]
-      history.push(withSiteId(onboardingRoute(tab), siteId));
+      navigate(withSiteId(onboardingRoute(tab), siteId));
     } else {
       onDone()
     }
@@ -29,7 +31,7 @@ const OnboardingNavButton = ({ match: { params: { activeTab, siteId } }, history
 
   const onDone = () => {
     userStore.setOnboarding(true);
-    history.push(sessions());
+    navigate(sessions());
   }
   
   return (
@@ -53,4 +55,4 @@ const OnboardingNavButton = ({ match: { params: { activeTab, siteId } }, history
   )
 }
 
-export default withRouter(OnboardingNavButton)
+export default OnboardingNavButton

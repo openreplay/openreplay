@@ -3,7 +3,7 @@ import { Switch } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';
@@ -34,7 +34,6 @@ import { Icon } from 'UI';
 import LogsButton from 'App/components/Session/Player/SharedComponents/BackendLogs/LogsButton';
 
 import ControlButton from './ControlButton';
-import { WebEventsList } from "./EventsList";
 import Timeline from './Timeline';
 import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
@@ -92,7 +91,7 @@ function Controls({ setActiveTab }: any) {
   const changeSkipInterval = uiPlayerStore.changeSkipInterval;
   const skipInterval = uiPlayerStore.skipInterval;
   const showStorageRedux = !uiPlayerStore.hiddenHints.storage;
-  const history = useHistory();
+  const navigate = useNavigate()
   const siteId = projectsStore.siteId;
   const {
     playing,
@@ -113,11 +112,11 @@ function Controls({ setActiveTab }: any) {
   const sessionTz = session?.timezone;
 
   const nextHandler = () => {
-    history.push(withSiteId(sessionRoute(nextSessionId), siteId));
+    navigate(withSiteId(sessionRoute(nextSessionId), siteId));
   };
 
   const prevHandler = () => {
-    history.push(withSiteId(sessionRoute(previousSessionId), siteId));
+    navigate(withSiteId(sessionRoute(previousSessionId), siteId));
   };
 
   useShortcuts({

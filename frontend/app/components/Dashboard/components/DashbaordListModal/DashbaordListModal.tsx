@@ -2,23 +2,21 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { SideMenuitem, Icon } from 'UI';
 import { withSiteId, dashboardSelected } from 'App/routes';
-import { withRouter } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useModal } from 'App/components/Modal';
 
-interface Props {
-    siteId: string
-    history: any
-}
-function DashbaordListModal(props: Props) {
-    const { dashboardStore } = useStore();
+function DashbaordListModal() {
+    const navigate = useNavigate();
+    const { dashboardStore, projectsStore } = useStore();
+    const siteId = projectsStore.activeSiteId;
     const { hideModal } = useModal();
     const dashboards = dashboardStore.dashboards;
     const activeDashboardId = dashboardStore.selectedDashboard?.dashboardId;
 
     const onItemClick = (dashboard) => {
         dashboardStore.selectDashboardById(dashboard.dashboardId);
-        const path = withSiteId(dashboardSelected(dashboard.dashboardId), parseInt(props.siteId));
-        props.history.push(path);
+        const path = withSiteId(dashboardSelected(dashboard.dashboardId), parseInt(siteId));
+        navigate(path);
         hideModal();
     };
     return (
@@ -46,4 +44,4 @@ function DashbaordListModal(props: Props) {
     );
 }
 
-export default withRouter(DashbaordListModal);
+export default DashbaordListModal;

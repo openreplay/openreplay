@@ -3,7 +3,7 @@ import cn from 'classnames';
 import { Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { multiview, liveSession, withSiteId } from 'App/routes';
 
 interface ITab {
@@ -42,7 +42,7 @@ const CurrentTab = React.memo(() => (
 ));
 
 function AssistTabs({ session }: { session: Record<string, any> }) {
-  const history = useHistory();
+  const navigate = useNavigate()
   const { assistMultiviewStore, projectsStore } = useStore();
   const siteId = projectsStore.siteId!;
 
@@ -56,11 +56,11 @@ function AssistTabs({ session }: { session: Record<string, any> }) {
 
   const openGrid = () => {
     const sessionIdQuery = encodeURIComponent(assistMultiviewStore.sessions.map((s) => s.sessionId).join(','));
-    return history.push(withSiteId(multiview(sessionIdQuery), siteId));
+    return navigate(withSiteId(multiview(sessionIdQuery), siteId));
   };
   const openLiveSession = (sessionId: string) => {
     assistMultiviewStore.setActiveSession(sessionId);
-    history.push(withSiteId(liveSession(sessionId), siteId));
+    navigate(withSiteId(liveSession(sessionId), siteId));
   };
 
   return (

@@ -12,7 +12,7 @@ import { Button, Checkbox, Dropdown, Tooltip } from 'antd';
 import copy from 'copy-to-clipboard';
 import { Link2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { toast } from 'react-toastify';
 import { TextEllipsis } from "UI";
 
@@ -45,7 +45,7 @@ function SpotListItem({
   const [isEdit, setIsEdit] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tooltipText, setTooltipText] = useState('Copy link to clipboard');
-  const history = useHistory();
+  const navigate = useNavigate();
   const { siteId } = useParams<{ siteId: string }>();
 
   const menuItems = [
@@ -104,7 +104,7 @@ function SpotListItem({
       const fullLink = `${window.location.origin}${spotLink}`;
       window.open(fullLink, '_blank');
     } else {
-      history.push(withSiteId(spotUrl(spot.spotId.toString()), siteId));
+      navigate(withSiteId(spotUrl(spot.spotId.toString()), siteId));
     }
   };
 

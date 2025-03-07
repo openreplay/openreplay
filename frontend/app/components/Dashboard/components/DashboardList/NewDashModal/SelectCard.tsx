@@ -1,13 +1,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Button, Input, Segmented, Space } from 'antd';
 import { RightOutlined } from '@ant-design/icons';
-import { ArrowRight, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { CARD_LIST, CARD_CATEGORIES, CardType } from './ExampleCards';
 import { useStore } from 'App/mstore';
 import Option from './Option';
 import CardsLibrary from 'Components/Dashboard/components/DashboardList/NewDashModal/CardsLibrary';
 import { FUNNEL } from 'App/constants/card';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 import { FilterKey } from 'Types/filter/filterType';
 import FilterSeries from '@/mstore/types/filterSeries';
 
@@ -32,7 +32,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
   const isCreatingDashboard = !dashboardId && location.pathname.includes('dashboard');
   const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
   const [dashboardUpdating, setDashboardUpdating] = useState<boolean>(false);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (dashboardId) {
@@ -49,8 +49,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
       .save(dashboardStore.dashboardInstance)
       .then(async (syncedDashboard) => {
         dashboardStore.selectDashboardById(syncedDashboard.dashboardId);
-        history.push(`/${siteId}/dashboard/${syncedDashboard.dashboardId}`);
-        //return syncedDashboard.dashboardId;
+        navigate(`/${siteId}/dashboard/${syncedDashboard.dashboardId}`);
       }).finally(() => {
         setDashboardCreating(false);
       });

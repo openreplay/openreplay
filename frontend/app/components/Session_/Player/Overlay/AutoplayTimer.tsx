@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import { withRouter } from 'react-router-dom';
+import { useNavigate } from "react-router";
 import { Link } from 'UI';
 import { Button } from 'antd'
 import { session as sessionRoute, withSiteId } from 'App/routes';
@@ -10,7 +10,8 @@ import clsOv from './overlay.module.css';
 import AutoplayToggle from 'Shared/AutoplayToggle';
 import { useStore } from 'App/mstore';
 
-function AutoplayTimer({ history }: any) {
+function AutoplayTimer() {
+  const navigate = useNavigate();
   let timer: NodeJS.Timer;
   const [cancelled, setCancelled] = useState(false);
   const [counter, setCounter] = useState(5);
@@ -25,8 +26,8 @@ function AutoplayTimer({ history }: any) {
     }
 
     if (counter === 0) {
-      const siteId = projectsStore.getSiteId().siteId;
-      history.push(withSiteId(sessionRoute(nextId), siteId));
+      const siteId = projectsStore.activeSiteId;
+      navigate(withSiteId(sessionRoute(nextId), siteId));
     }
 
     return () => clearTimeout(timer);
@@ -60,14 +61,10 @@ function AutoplayTimer({ history }: any) {
             </Link>
           </div>
         </div>
-        {/* <div className="mt-2 flex items-center color-gray-dark">
-          Turn on/off auto-replay in <Icon name="ellipsis-v" className="mx-1" /> More options
-        </div> */}
       </div>
     </div>
   );
 }
 
-export default withRouter(
-  observer(AutoplayTimer)
-);
+export default observer(AutoplayTimer)
+

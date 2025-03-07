@@ -48,3 +48,4 @@ export { default as Popover } from './Popover';
 export { default as Switch } from './Switch';
 export { default as Divider } from './Divider';
 export { default as CodeBlock } from './CodeBlock'
+export { default as NavPrompt } from './NavPrompt';

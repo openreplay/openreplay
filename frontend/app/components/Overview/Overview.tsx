@@ -3,27 +3,25 @@ import withPageTitle from 'HOCs/withPageTitle';
 import SessionsTabOverview from 'Shared/SessionsTabOverview/SessionsTabOverview';
 import FFlagsList from 'Components/FFlags';
 import NewFFlag from 'Components/FFlags/NewFFlag';
-import { Switch, Route } from 'react-router';
-import { sessions, fflags, withSiteId, newFFlag, fflag, fflagRead, bookmarks } from 'App/routes';
-import { withRouter, RouteComponentProps, useLocation } from 'react-router-dom';
+import { Routes, Route } from 'react-router';
+import {
+  sessions,
+  fflags,
+  withSiteId,
+  newFFlag,
+  fflag,
+  fflagRead,
+  bookmarks,
+} from 'App/routes';
+import { useLocation, useParams, useNavigate } from 'react-router';
 import FlagView from 'Components/FFlags/FlagView/FlagView';
 import { observer } from 'mobx-react-lite';
 import { useStore } from '@/mstore';
 import Bookmarks from 'Shared/SessionsTabOverview/components/Bookmarks/Bookmarks';
 
-// @ts-ignore
-interface IProps extends RouteComponentProps {
-  match: {
-    params: {
-      siteId: string;
-      fflagId?: string;
-    };
-  };
-}
-// TODO should move these routes to the Routes file
-function Overview({ match: { params } }: IProps) {
+function Overview() {
   const { searchStore } = useStore();
-  const { siteId, fflagId } = params;
+  const { siteId, fflagId } = useParams();
   const location = useLocation();
   const tab = location.pathname.split('/')[2];
 
@@ -31,34 +29,50 @@ function Overview({ match: { params } }: IProps) {
     searchStore.setActiveTab(tab);
   }, [tab]);
 
-  return (
-    <Switch>
-      <Route exact strict
-             path={withSiteId(sessions(), siteId)}>
+  console.log(location.pathname)
+  const renderContent = () => {
+    const path = location.pathname;
+
+    if (path.startsWith(withSiteId(sessions()), siteId)) {
+      return (
         <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
           <SessionsTabOverview />
         </div>
-      </Route>
-      <Route exact strict
-             path={withSiteId(bookmarks(), siteId)}>
+      );
+    }
+
+    if (path.startsWith(withSiteId(bookmarks()), siteId)) {
+      return (
         <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
           <Bookmarks />
         </div>
-      </Route>
-      <Route exact strict path={withSiteId(fflags(), siteId)}>
-        <FFlagsList siteId={siteId} />
-      </Route>
-      <Route exact strict path={withSiteId(newFFlag(), siteId)}>
-        <NewFFlag siteId={siteId} />
-      </Route>
-      <Route exact strict path={withSiteId(fflag(), siteId)}>
-        <NewFFlag siteId={siteId} fflagId={fflagId} />
-      </Route>
-      <Route exact strict path={withSiteId(fflagRead(), siteId)}>
-        <FlagView siteId={siteId} fflagId={fflagId!} />
-      </Route>
-    </Switch>
-  );
+      );
+    }
+
+    if (path.startsWith(withSiteId(fflags()), siteId)) {
+      return <FFlagsList siteId={siteId} />;
+    }
+
+    if (path.startsWith(withSiteId(newFFlag()), siteId)) {
+      return <NewFFlag siteId={siteId} />;
+    }
+
+    if (path.match(new RegExp(`^${withSiteId(fflag(), siteId).replace(':fflagId', '\\d+')}$`))) {
+      return <NewFFlag siteId={siteId} fflagId={fflagId} />;
+    }
+
+    if (path.match(new RegExp(`^${withSiteId(fflagRead(), siteId).replace(':fflagId', '\\d+')}$`))) {
+      return <FlagView siteId={siteId} fflagId={fflagId!} />;
+    }
+
+    return (
+      <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
+        <SessionsTabOverview />
+      </div>
+    );
+  };
+
+  return renderContent();
 }
 
-export default withPageTitle('Sessions - OpenReplay')(withRouter(observer(Overview)));
+export default withPageTitle('Sessions - OpenReplay')(observer(Overview));

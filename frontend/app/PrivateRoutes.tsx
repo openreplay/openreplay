@@ -1,6 +1,7 @@
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import React, { Suspense, lazy } from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { useNavigate } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { useStore } from './mstore';
 import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
@@ -101,6 +102,7 @@ const HIGHLIGHTS_PATH = routes.highlights();
 let debounceSearch: any = () => {};
 
 function PrivateRoutes() {
+  const navigate = useNavigate();
   const { projectsStore, userStore, integrationsStore, searchStore } = useStore();
   const onboarding = userStore.onboarding;
   const scope = userStore.scopeState;
@@ -129,34 +131,52 @@ function PrivateRoutes() {
     debounceSearch();
   }, [searchStore.instance.filters, searchStore.instance.eventsOrder]);
 
+  React.useEffect(() => {
+    if (redirectToSetup) {
+      navigate(SCOPE_SETUP)
+    }
+  }, [redirectToSetup])
+  React.useEffect(() => {
+    if (redirectToOnboarding) {
+      navigate(withSiteId(ONBOARDING_REDIRECT_PATH, siteId))
+    }
+  }, [redirectToOnboarding]);
+
+  console.log(withSiteId(SESSIONS_PATH, siteIdList))
   return (
     <Suspense fallback={<Loader loading={true} className="flex-1" />}>
-      <Switch key="content">
+      <Routes key="content">
         <Route
           exact
           strict
           path={SCOPE_SETUP}
-          component={enhancedComponents.ScopeSetup}
+          element={enhancedComponents.ScopeSetup}
         />
-        {redirectToSetup ? <Redirect to={SCOPE_SETUP} /> : null}
-        <Route path={CLIENT_PATH} component={enhancedComponents.Client} />
+        <Route path={CLIENT_PATH} element={enhancedComponents.Client} />
         <Route
           path={withSiteId(ONBOARDING_PATH, siteIdList)}
-          component={enhancedComponents.Onboarding}
+          element={enhancedComponents.Onboarding}
         />
         <Route
           exact
           strict
           path={SPOTS_LIST_PATH}
-          component={enhancedComponents.SpotsList}
+          element={enhancedComponents.SpotsList}
         />
         <Route
           exact
           strict
           path={SPOT_PATH}
-          component={enhancedComponents.Spot}
+          element={enhancedComponents.Spot}
         />
-        {scope === 1 ? <Redirect to={SPOTS_LIST_PATH} /> : null}
+        {scope === 1
+         ? <Route
+           path="*"
+         >
+           <Redirect to={SPOTS_LIST_PATH} />
+         </Route>
+         : null
+        }
         <Route
           path="/integrations/"
           render={({ location }) => {
@@ -175,111 +195,106 @@ function PrivateRoutes() {
                 });
                 break;
             }
-            return <Redirect to={CLIENT_PATH} />;
+            return <Route
+              path="*"
+              element={<Navigate to={CLIENT_PATH} />}
+            />
           }}
         />
-        {redirectToOnboarding && (
-          <Redirect to={withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />
-        )}
 
         {/* DASHBOARD and Metrics */}
-        <Route
-          exact
-          strict
-          path={[
-            withSiteId(ALERTS_PATH, siteIdList),
-            withSiteId(ALERT_EDIT_PATH, siteIdList),
-            withSiteId(ALERT_CREATE_PATH, siteIdList),
-            withSiteId(METRICS_PATH, siteIdList),
-            withSiteId(METRICS_DETAILS, siteIdList),
-            withSiteId(METRICS_DETAILS_SUB, siteIdList),
-            withSiteId(DASHBOARD_PATH, siteIdList),
-            withSiteId(DASHBOARD_SELECT_PATH, siteIdList),
-            withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList),
-            withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList)
-          ]}
-          component={enhancedComponents.Dashboard}
-        />
+        {[
+          withSiteId(ALERTS_PATH, siteIdList),
+          withSiteId(ALERT_EDIT_PATH, siteIdList),
+          withSiteId(ALERT_CREATE_PATH, siteIdList),
+          withSiteId(METRICS_PATH, siteIdList),
+          withSiteId(METRICS_DETAILS, siteIdList),
+          withSiteId(METRICS_DETAILS_SUB, siteIdList),
+          withSiteId(DASHBOARD_PATH, siteIdList),
+          withSiteId(DASHBOARD_SELECT_PATH, siteIdList),
+          withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList),
+          withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList)
+        ].map((path) => (
+          <Route
+            path={path}
+            element={enhancedComponents.Dashboard}
+          />
+        ))}
 
         <Route
           exact
           strict
           path={withSiteId(USABILITY_TESTING_PATH, siteIdList)}
-          component={enhancedComponents.UsabilityTesting}
+          element={enhancedComponents.UsabilityTesting}
         />
         <Route
           exact
           strict
           path={withSiteId(USABILITY_TESTING_EDIT_PATH, siteIdList)}
-          component={enhancedComponents.UsabilityTestEdit}
+          element={enhancedComponents.UsabilityTestEdit}
         />
         <Route
           exact
           strict
           path={withSiteId(USABILITY_TESTING_VIEW_PATH, siteIdList)}
-          component={enhancedComponents.UsabilityTestOverview}
+          element={enhancedComponents.UsabilityTestOverview}
         />
 
         <Route
           exact
           path={withSiteId(MULTIVIEW_INDEX_PATH, siteIdList)}
-          component={enhancedComponents.Multiview}
+          element={enhancedComponents.Multiview}
         />
         <Route
           path={withSiteId(MULTIVIEW_PATH, siteIdList)}
-          component={enhancedComponents.Multiview}
+          element={enhancedComponents.Multiview}
         />
         <Route
           exact
           strict
           path={withSiteId(ASSIST_PATH, siteIdList)}
-          component={enhancedComponents.Assist}
+          element={enhancedComponents.Assist}
         />
         <Route
           exact
           strict
           path={withSiteId(RECORDINGS_PATH, siteIdList)}
-          component={enhancedComponents.Assist}
+          element={enhancedComponents.Assist}
         />
         <Route
           exact
           strict
           path={withSiteId(HIGHLIGHTS_PATH, siteIdList)}
-          component={enhancedComponents.Highlights}
+          element={enhancedComponents.Highlights}
         />
-        <Route
-          exact
-          strict
-          path={[
-            withSiteId(SESSIONS_PATH, siteIdList),
-            withSiteId(FFLAGS_PATH, siteIdList),
-            withSiteId(FFLAG_PATH, siteIdList),
-            withSiteId(FFLAG_READ_PATH, siteIdList),
-            withSiteId(FFLAG_CREATE_PATH, siteIdList),
-            withSiteId(NOTES_PATH, siteIdList),
-            withSiteId(BOOKMARKS_PATH, siteIdList)
-          ]}
-          component={enhancedComponents.SessionsOverview}
-        />
+        {[
+          withSiteId(SESSIONS_PATH),
+          withSiteId(FFLAGS_PATH, siteIdList),
+          withSiteId(FFLAG_PATH, siteIdList),
+          withSiteId(FFLAG_READ_PATH, siteIdList),
+          withSiteId(FFLAG_CREATE_PATH, siteIdList),
+          withSiteId(NOTES_PATH, siteIdList),
+          withSiteId(BOOKMARKS_PATH, siteIdList)
+        ].map((path) => (
+          <Route
+            path={path}
+            element={<enhancedComponents.SessionsOverview />}
+          />
+        ))}
         <Route
           exact
           strict
           path={withSiteId(SESSION_PATH, siteIdList)}
-          component={enhancedComponents.Session}
+          element={enhancedComponents.Session}
         />
         <Route
           exact
           strict
           path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
-          component={enhancedComponents.LiveSession}
+          element={enhancedComponents.LiveSession}
         />
-        {Object.entries(routes.redirects).map(([fr, to]) => (
-          <Redirect key={fr} exact strict from={fr} to={to} />
-        ))}
-        <Route path={'*'}>
-          <Redirect to={withSiteId(routes.sessions(), siteId)} />
-        </Route>
-      </Switch>
+        {/*<Route path={'*'} element={<Navigate to={withSiteId(routes.sessions(), siteId)} />} />*/}
+      </Routes>
     </Suspense>
   );
 }

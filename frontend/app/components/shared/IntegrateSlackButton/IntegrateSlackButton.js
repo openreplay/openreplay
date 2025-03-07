@@ -2,12 +2,12 @@ import React from 'react'
 import { Icon } from 'UI'
 import { Button } from 'antd'
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
-import { withRouter } from 'react-router-dom';
+import { useNavigate } from "react-router";
 
-function IntegrateSlackTeamsButton({ history }) {
-
+function IntegrateSlackTeamsButton() {
+  const navigate = useNavigate();
   const gotoPreferencesIntegrations = () => {
-    history.push(clientRoute(CLIENT_TABS.INTEGRATIONS));
+    navigate(clientRoute(CLIENT_TABS.INTEGRATIONS));
   }
 
   return (
@@ -26,4 +26,4 @@ function IntegrateSlackTeamsButton({ history }) {
   )
 }
 
-export default withRouter(IntegrateSlackTeamsButton)
+export default IntegrateSlackTeamsButton

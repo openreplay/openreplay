@@ -1,10 +1,10 @@
 import React from 'react';
-import { Icon, SideMenuitem } from 'UI';
+import { SideMenuitem } from 'UI';
 import cn from 'classnames';
 import stl from './onboardingMenu.module.css';
 import { OB_TABS, onboarding as onboardingRoute } from 'App/routes';
-import { withRouter } from 'react-router-dom';
-import * as routes from '../../../../routes';
+import * as routes from 'App/routes';
+import { useParams, useNavigate } from "react-router";
 
 const withSiteId = routes.withSiteId;
 
@@ -15,7 +15,7 @@ const MENU_ITEMS = [
   OB_TABS.INTEGRATIONS,
 ];
 
-const Item = ({ icon, text, completed, active, onClick }) => (
+const Item = ({ text, completed, active, onClick }) => (
   <div
     className={cn('cursor-pointer', stl.stepWrapper, {
       [stl.completed]: completed,
@@ -39,17 +39,14 @@ const Item = ({ icon, text, completed, active, onClick }) => (
   </div>
 );
 
-const OnboardingMenu = (props) => {
-  const {
-    match: {
-      params: { activeTab, siteId },
-    },
-    history,
-  } = props;
+const OnboardingMenu = () => {
+  const { siteId, activeTab } = useParams();
+  const navigate = useNavigate();
+
   const activeIndex = MENU_ITEMS.findIndex((i) => i === activeTab);
 
   const setTab = (tab) => {
-    history.push(withSiteId(onboardingRoute(tab), siteId));
+    navigate(withSiteId(onboardingRoute(tab), siteId));
   };
 
   return (
@@ -61,28 +58,24 @@ const OnboardingMenu = (props) => {
       
         <>
           <Item
-            icon="check"
             text="Install OpenReplay"
             completed={activeIndex >= 0}
             active={activeIndex === 0}
             onClick={() => setTab(MENU_ITEMS[0])}
           />
           <Item
-            icon="check"
             text="Identify Users"
             completed={activeIndex >= 1}
             active={activeIndex === 1}
             onClick={() => setTab(MENU_ITEMS[1])}
           />
           <Item
-            icon="check"
             text="Invite Collaborators"
             completed={activeIndex >= 2}
             active={activeIndex === 2}
             onClick={() => setTab(MENU_ITEMS[2])}
           />
           <Item
-            icon="check"
             text="Integrations"
             completed={activeIndex >= 3}
             active={activeIndex === 3}
@@ -93,4 +86,4 @@ const OnboardingMenu = (props) => {
   );
 };
 
-export default withRouter(OnboardingMenu);
+export default OnboardingMenu;

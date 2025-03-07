@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
-
+import { useLocation, useNavigate } from 'react-router'
 import IFrameRoutes from 'App/IFrameRoutes';
 import PrivateRoutes from 'App/PrivateRoutes';
 import PublicRoutes from 'App/PublicRoutes';
@@ -19,19 +18,9 @@ import { Loader } from 'UI';
 import * as routes from './routes';
 import { observer } from 'mobx-react-lite'
 
-interface RouterProps extends RouteComponentProps {
-  match: {
-    params: {
-      siteId: string;
-    };
-  };
-}
-
-const Router: React.FC<RouterProps> = (props) => {
-  const {
-    location,
-    history,
-  } = props;
+const Router = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
   const mstore = useStore();
   const { customFieldStore, projectsStore, sessionStore, searchStore, userStore } = mstore;
   const jwt = userStore.jwt;
@@ -113,7 +102,7 @@ const Router: React.FC<RouterProps> = (props) => {
     ) {
       const url = new URL(destinationPath, window.location.origin);
       checkParams(url.search);
-      history.push(destinationPath);
+      navigate(destinationPath);
       localStorage.removeItem(GLOBAL_DESTINATION_PATH);
     }
   };
@@ -219,4 +208,4 @@ const Router: React.FC<RouterProps> = (props) => {
   );
 };
 
-export default withRouter(observer(Router));
+export default observer(Router);

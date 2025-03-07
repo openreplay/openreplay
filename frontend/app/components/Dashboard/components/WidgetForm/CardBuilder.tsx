@@ -17,7 +17,7 @@ import FilterItem from 'Shared/Filters/FilterItem';
 import {
     TIMESERIES, TABLE, HEATMAP, FUNNEL, ERRORS, INSIGHTS, USER_PATH, RETENTION
 } from 'App/constants/card';
-import {useHistory} from "react-router";
+import { useNavigate } from "react-router";
 
 const tableOptions = metricOf.filter((i) => i.type === 'table');
 
@@ -217,8 +217,8 @@ interface CardBuilderProps {
 }
 
 const CardBuilder = observer((props: CardBuilderProps) => {
-    const history = useHistory();
-    const {siteId, dashboardId, metricId} = props;
+    const navigate = useNavigate();
+    const { siteId, dashboardId, metricId } = props;
     const {metricStore, dashboardStore, aiFiltersStore} = useStore();
     const [aiQuery, setAiQuery] = useState('');
     const [aiAskChart, setAiAskChart] = useState('');
@@ -259,7 +259,7 @@ const CardBuilder = observer((props: CardBuilderProps) => {
             const route = parseInt(dashboardId, 10) > 0
                 ? withSiteId(dashboardMetricDetails(dashboardId, savedMetric.metricId), siteId)
                 : withSiteId(metricDetails(savedMetric.metricId), siteId);
-            history.replace(route);
+            navigate(route, { replace: true });
             if (parseInt(dashboardId, 10) > 0) {
                 dashboardStore.addWidgetToDashboard(
                     dashboardStore.getDashboard(parseInt(dashboardId, 10)),
@@ -267,7 +267,7 @@ const CardBuilder = observer((props: CardBuilderProps) => {
                 );
             }
         }
-    }, [dashboardId, dashboardStore, history, metric, metricStore, siteId]);
+    }, [dashboardId, dashboardStore, metric, metricStore, siteId]);
 
     const onDelete = useCallback(async () => {
         if (await confirm({

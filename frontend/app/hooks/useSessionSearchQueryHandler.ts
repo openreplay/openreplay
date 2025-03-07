@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 import { JsonUrlConverter } from 'App/utils/search';
 import { useStore } from '@/mstore';
 import Search from '@/mstore/types/search';
@@ -15,7 +15,7 @@ interface Props {
 const useSessionSearchQueryHandler = ({ onBeforeLoad, appliedFilter, loading, onLoaded = () => null }: Props) => {
   const { searchStore } = useStore();
   const [beforeHookLoaded, setBeforeHookLoaded] = useState(!onBeforeLoad);
-  const history = useHistory();
+  const navigate = useNavigate()
 
   // Apply filter from the query string when the component mounts
   useEffect(() => {
@@ -27,7 +27,7 @@ const useSessionSearchQueryHandler = ({ onBeforeLoad, appliedFilter, loading, on
             setBeforeHookLoaded(true);
           }
 
-          const converter = JsonUrlConverter.urlParamsToJson(history.location.search);
+          const converter = JsonUrlConverter.urlParamsToJson(location.search);
           const json = getFilterFromJson(converter.toJSON());
           const filter = new Search(json);
 
@@ -57,27 +57,27 @@ const useSessionSearchQueryHandler = ({ onBeforeLoad, appliedFilter, loading, on
     };
 
     void applyFilterFromQuery();
-  }, [loading, searchStore, history.location.search, onBeforeLoad]);
+  }, [loading, searchStore, location.search, onBeforeLoad]);
 
   // Update the URL whenever the appliedFilter changes
   useEffect(() => {
     const updateUrlWithFilter = () => {
       if (!loading && beforeHookLoaded) {
         const query = JsonUrlConverter.jsonToUrlParams(appliedFilter);
-        history.replace({ search: query });
+        navigate({ search: query }, { replace: true });
       }
     };
 
     updateUrlWithFilter();
-  }, [appliedFilter, loading, beforeHookLoaded, history]);
+  }, [appliedFilter, loading, beforeHookLoaded]);
 
   // Ensure the URL syncs on remount if already parsed
   useEffect(() => {
     if (searchStore.urlParsed) {
       const query = JsonUrlConverter.jsonToUrlParams(appliedFilter);
-      history.replace({ search: query });
+      navigate({ search: query }, { replace: true });
     }
-  }, [appliedFilter, searchStore.urlParsed, history]);
+  }, [appliedFilter, searchStore.urlParsed]);
 
   return null;
 };

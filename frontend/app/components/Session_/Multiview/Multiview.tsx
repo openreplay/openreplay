@@ -2,7 +2,7 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { BackLink } from 'UI';
 import { observer } from 'mobx-react-lite';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { liveSession, assist, withSiteId, multiview } from 'App/routes';
 import AssistSessionsModal from 'App/components/Session_/Player/Controls/AssistSessionsModal';
 import { useModal } from 'App/components/Modal';
@@ -19,14 +19,14 @@ function Multiview({
   const { showModal, hideModal } = useModal();
   const { assistMultiviewStore, projectsStore, searchStoreLive, sessionStore } = useStore();
   const siteId = projectsStore.siteId!;
-  const history = useHistory();
+  const navigate = useNavigate()
   // @ts-ignore
   const { sessionsquery } = useParams();
   const total = sessionStore.totalLiveSessions;
 
   const onSessionsChange = (sessions: Array<Record<string, any> | undefined>) => {
     const sessionIdQuery = encodeURIComponent(sessions.map((s) => s && s.sessionId).join(','));
-    return history.replace(withSiteId(multiview(sessionIdQuery), siteId));
+    return navigate(withSiteId(multiview(sessionIdQuery), siteId), { replace: true });
   };
 
   React.useEffect(() => {
@@ -46,12 +46,12 @@ function Multiview({
   const openLiveSession = (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
     assistMultiviewStore.setActiveSession(sessionId);
-    history.push(withSiteId(liveSession(sessionId) + '?multi=true', siteId));
+    navigate(withSiteId(liveSession(sessionId) + '?multi=true', siteId));
   };
 
   const returnToList = () => {
     assistMultiviewStore.reset();
-    history.push(withSiteId(assist(), siteId));
+    navigate(withSiteId(assist(), siteId));
   };
 
   const openListModal = () => {

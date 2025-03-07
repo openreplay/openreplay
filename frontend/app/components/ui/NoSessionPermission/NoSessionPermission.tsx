@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useNavigate, useLocation } from "react-router";
 
 import { useStore } from 'App/mstore';
 import {
@@ -16,8 +16,7 @@ import stl from './NoSessionPermission.module.css';
 const SESSIONS_ROUTE = sessionsRoute();
 const ASSIST_ROUTE = assistRoute();
 
-interface Props extends RouteComponentProps {
-  history: any;
+interface Props {
   isLive?: boolean;
 }
 function NoSessionPermission(props: Props) {
@@ -26,19 +25,20 @@ function NoSessionPermission(props: Props) {
   const sessionPath = sessionStore.sessionPath;
   const isAssist = window.location.pathname.includes('/assist/');
   const siteId = projectsStore.siteId!;
-  const { history } = props;
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const backHandler = () => {
     if (
-      sessionPath.pathname === history.location.pathname ||
+      sessionPath.pathname === location.pathname ||
       sessionPath.pathname.includes('/session/') ||
       isAssist
     ) {
-      history.push(
+      navigate(
         withSiteId(isAssist ? ASSIST_ROUTE : SESSIONS_ROUTE, siteId)
       );
     } else {
-      history.push(
+      navigate(
         sessionPath
           ? sessionPath.pathname + sessionPath.search
           : withSiteId(SESSIONS_ROUTE, siteId)
@@ -50,7 +50,7 @@ function NoSessionPermission(props: Props) {
     <div className={stl.wrapper}>
       <Icon name="shield-lock" size="50" className="py-16" />
       <div className={stl.title}>Not allowed</div>
-      {session.isLive ? (
+      {session.live ? (
         <span>
           This session is still live, and you don’t have the necessary
           permissions to access this feature. Please check with your admin.
@@ -68,6 +68,4 @@ function NoSessionPermission(props: Props) {
   );
 }
 
-export default withRouter(
-  observer(NoSessionPermission)
-);
+export default observer(NoSessionPermission)

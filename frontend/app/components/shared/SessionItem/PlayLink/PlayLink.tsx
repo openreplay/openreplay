@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 
 import {
   liveSession as liveSessionRoute,
@@ -31,7 +31,7 @@ interface Props {
 function PlayLink(props: Props) {
   const { projectsStore } = useStore();
   const { isAssist, viewed, sessionId, onClick = null, queryParams } = props;
-  const history = useHistory();
+  const navigate = useNavigate()
   const defaultIconName = getIconName(viewed);
 
   const [iconName, setIconName] = useState<typeof PLAY_ICON_NAMES[keyof typeof PLAY_ICON_NAMES]>(defaultIconName);
@@ -58,7 +58,7 @@ function PlayLink(props: Props) {
       } else {
         e.preventDefault();
         props.beforeOpen();
-        history.push(replayLink);
+        navigate(replayLink);
       }
     }
   };

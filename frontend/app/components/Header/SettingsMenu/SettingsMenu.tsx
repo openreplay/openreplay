@@ -1,39 +1,38 @@
 import React from 'react';
-import cn from 'classnames';
 import { Icon } from 'UI';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
-import { withRouter, RouteComponentProps } from 'react-router';
+import { useNavigate } from "react-router";
 
 interface Props {
-  history: any;
   className: string;
   account: any;
 }
 
-function SettingsMenu(props: RouteComponentProps<Props>) {
-  const { history, account, className }: any = props;
+function SettingsMenu(props: Props) {
+  const navigate = useNavigate();
+  const { account, className }: any = props;
   const isAdmin = account.admin || account.superAdmin;
   const isEnterprise = account.edition === 'ee';
   const navigateTo = (path: any) => {
     switch (path) {
       case 'sessions-listing':
-        return history.push(clientRoute(CLIENT_TABS.SESSIONS_LISTING));
+        return navigate(clientRoute(CLIENT_TABS.SESSIONS_LISTING));
       case 'projects':
-        return history.push(clientRoute(CLIENT_TABS.SITES));
+        return navigate(clientRoute(CLIENT_TABS.SITES));
       case 'team':
-        return history.push(clientRoute(CLIENT_TABS.MANAGE_USERS));
+        return navigate(clientRoute(CLIENT_TABS.MANAGE_USERS));
       case 'metadata':
-        return history.push(clientRoute(CLIENT_TABS.CUSTOM_FIELDS));
+        return navigate(clientRoute(CLIENT_TABS.CUSTOM_FIELDS));
       case 'webhooks':
-        return history.push(clientRoute(CLIENT_TABS.WEBHOOKS));
+        return navigate(clientRoute(CLIENT_TABS.WEBHOOKS));
       case 'integrations':
-        return history.push(clientRoute(CLIENT_TABS.INTEGRATIONS));
+        return navigate(clientRoute(CLIENT_TABS.INTEGRATIONS));
       case 'notifications':
-        return history.push(clientRoute(CLIENT_TABS.NOTIFICATIONS));
+        return navigate(clientRoute(CLIENT_TABS.NOTIFICATIONS));
       case 'roles':
-        return history.push(clientRoute(CLIENT_TABS.MANAGE_ROLES));
+        return navigate(clientRoute(CLIENT_TABS.MANAGE_ROLES));
       case 'audit':
-        return history.push(clientRoute(CLIENT_TABS.AUDIT));
+        return navigate(clientRoute(CLIENT_TABS.AUDIT));
     }
   };
   return (
@@ -64,7 +63,7 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
   );
 }
 
-export default withRouter(SettingsMenu);
+export default SettingsMenu;
 
 function MenuItem({ onClick, label, icon }: any) {
   return (

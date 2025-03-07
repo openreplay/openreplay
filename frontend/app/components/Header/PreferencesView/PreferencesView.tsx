@@ -1,13 +1,12 @@
 import React from 'react';
 import { Icon } from 'UI';
-import { withRouter } from 'react-router-dom';
+import { useNavigate } from "react-router";
 
-interface Props {
-  history: any;
-}
-function PreferencesView(props: Props) {
+
+function PreferencesView() {
+  const navigate = useNavigate();
   const onExit = () => {
-    props.history.push('/');
+    navigate('/');
   };
   return (
     <>
@@ -24,4 +23,4 @@ function PreferencesView(props: Props) {
   );
 }
 
-export default withRouter(PreferencesView);
+export default PreferencesView;

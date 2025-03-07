@@ -1,20 +1,21 @@
 import React from 'react';
 import { SideMenuitem } from 'UI';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, metrics, dashboard, alerts } from 'App/routes';
+import { useLocation, useNavigate } from "react-router";
 
-interface Props extends RouteComponentProps {
+interface Props {
   siteId: string;
-  history: any;
 }
 function DashboardSideMenu(props: Props) {
-  const { history, siteId } = props;
-  const isMetric = history.location.pathname.includes('metrics');
-  const isDashboards = history.location.pathname.includes('dashboard');
-  const isAlerts = history.location.pathname.includes('alerts');
+  const { siteId } = props;
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isMetric = location.pathname.includes('metrics');
+  const isDashboards = location.pathname.includes('dashboard');
+  const isAlerts = location.pathname.includes('alerts');
 
   const redirect = (path: string) => {
-    history.push(path);
+    navigate(path);
   };
 
   return (
@@ -53,4 +54,4 @@ function DashboardSideMenu(props: Props) {
   );
 }
 
-export default withRouter(DashboardSideMenu);
+export default DashboardSideMenu;

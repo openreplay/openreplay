@@ -1,5 +1,5 @@
 import React from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   withSiteId,
   multiview,
@@ -24,7 +24,7 @@ function LivePlayerBlockHeader({
   const session = sessionStore.current;
   const closedLive = sessionStore.fetchFailed || (isAssist && !session.live);
   const siteId = projectsStore.siteId;
-  const history = useHistory();
+  const navigate = useNavigate()
   const { width, height } = store.get();
 
   const metaList = customFieldStore.list.map((i: any) => i.key)
@@ -35,7 +35,7 @@ function LivePlayerBlockHeader({
   }, []);
 
   const backHandler = () => {
-    history.goBack();
+    navigate(-1)
   };
 
   const { userId, metadata, isCallActive, agentIds } = session;
@@ -48,7 +48,7 @@ function LivePlayerBlockHeader({
 
   const openGrid = () => {
     const sessionIdQuery = encodeURIComponent(assistMultiviewStore.sessions.map((s) => s?.sessionId).join(','));
-    return history.push(withSiteId(multiview(sessionIdQuery), siteId));
+    return navigate(withSiteId(multiview(sessionIdQuery), siteId));
   };
 
   return (

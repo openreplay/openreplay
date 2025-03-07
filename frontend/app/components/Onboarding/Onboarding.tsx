@@ -1,7 +1,6 @@
 import React from 'react';
-import { Redirect, Route, RouteComponentProps, Switch } from 'react-router';
-import { withRouter } from 'react-router-dom';
-
+import { Navigate, Route, Routes } from 'react-router';
+import { useParams, useNavigate } from "react-router";
 import { OB_TABS, onboarding as onboardingRoute } from 'App/routes';
 import { withSiteId } from 'App/routes';
 import { Icon } from 'UI';
@@ -12,22 +11,14 @@ import IntegrationsTab from './components/IntegrationsTab';
 import ManageUsersTab from './components/ManageUsersTab';
 import SideMenu from './components/SideMenu';
 
-interface Props {
-  match: {
-    params: {
-      activeTab: string;
-      siteId: string;
-    };
-  };
-  history: RouteComponentProps['history'];
-}
-
 const platformMap = {
   ios: 'mobile',
   web: 'web',
 };
 
-const Onboarding = (props: Props) => {
+const Onboarding = (props) => {
+  const navigate = useNavigate();
+  const { activeTab, siteId } = useParams();
   const platforms = [
     {
       label: (
@@ -47,18 +38,13 @@ const Onboarding = (props: Props) => {
     } as const,
   ] as const;
   const [platform, setPlatform] = React.useState(platforms[0]);
-  const {
-    match: {
-      params: { activeTab, siteId },
-    },
-  } = props;
 
   const route = (path: string) => {
     return withSiteId(onboardingRoute(path));
   };
 
   const onMenuItemClick = (tab: string) => {
-    props.history.push(withSiteId(onboardingRoute(tab), siteId));
+    navigate(withSiteId(onboardingRoute(tab), siteId));
   };
 
   return (
@@ -69,7 +55,7 @@ const Onboarding = (props: Props) => {
           className="bg-white w-full rounded-lg mx-auto mb-8 border"
           style={{ maxWidth: '1360px' }}
         >
-          <Switch>
+          <Routes>
             <Route exact strict path={route(OB_TABS.INSTALLING)}>
               <InstallOpenReplayTab
                 platforms={platforms}
@@ -98,17 +84,14 @@ const Onboarding = (props: Props) => {
               path={route(OB_TABS.INTEGRATIONS)}
               component={IntegrationsTab}
             />
-            <Redirect to={route(OB_TABS.INSTALLING)} />
-          </Switch>
+            <Route path={'*'}>
+              <Navigate to={route(OB_TABS.INSTALLING)} />
+            </Route>
+          </Routes>
         </div>
       </div>
-      {/* <div className="py-6 px-4 w-full flex items-center fixed bottom-0 bg-white border-t z-10">
-        <div className="ml-auto">
-          <OnboardingNavButton />
-        </div>
-      </div> */}
     </div>
   );
 };
 
-export default withRouter(Onboarding);
+export default Onboarding;

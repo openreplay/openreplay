@@ -1,6 +1,5 @@
 import React from 'react';
-import { Switch, Route } from 'react-router';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { Routes, Route } from 'react-router';
 
 import {
   metrics,
@@ -22,26 +21,18 @@ import WidgetSubDetailsView from '../WidgetSubDetailsView';
 import DashboardsView from '../DashboardList';
 import Alerts from '../Alerts';
 import CreateAlert from '../Alerts/NewAlert'
+import { useParams, useNavigate } from "react-router";
 
 function DashboardViewSelected({ siteId, dashboardId }: { siteId: string; dashboardId: string }) {
   return <DashboardView siteId={siteId} dashboardId={dashboardId} />;
 }
 
-interface Props extends RouteComponentProps {
-  match: any;
-}
-
-function DashboardRouter(props: Props) {
-  const {
-    match: {
-      params: { siteId, dashboardId },
-    },
-    history,
-  } = props;
+function DashboardRouter(props: any) {
+  const { siteId, dashboardId } = useParams();
 
   return (
     <div>
-      <Switch>
+      <Routes>
         <Route exact strict path={withSiteId(metrics(), siteId)}>
           <MetricsView siteId={siteId} />
         </Route>
@@ -55,7 +46,7 @@ function DashboardRouter(props: Props) {
         </Route>
 
         <Route exact path={withSiteId(dashboard(), siteId)}>
-          <DashboardsView siteId={siteId} history={history} />
+          <DashboardsView siteId={siteId} />
         </Route>
 
         <Route exact strict path={withSiteId(dashboardMetricDetails(dashboardId), siteId)}>
@@ -83,9 +74,9 @@ function DashboardRouter(props: Props) {
           {/* @ts-ignore */}
           <CreateAlert siteId={siteId} {...props} />
         </Route>
-      </Switch>
+      </Routes>
     </div>
   );
 }
 
-export default withRouter(DashboardRouter);
+export default DashboardRouter;

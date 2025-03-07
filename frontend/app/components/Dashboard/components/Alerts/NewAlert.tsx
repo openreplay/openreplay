@@ -6,7 +6,6 @@ import { toast } from 'react-toastify';
 import { SLACK, WEBHOOK, TEAMS } from 'App/constants/schedule';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { withSiteId, alerts } from 'App/routes';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { useStore } from 'App/mstore'
 import { observer } from 'mobx-react-lite'
 import Alert from 'Types/alert'
@@ -16,6 +15,7 @@ import BottomButtons from './AlertForm/BottomButtons';
 import NotifyHooks from './AlertForm/NotifyHooks';
 import AlertListItem from './AlertListItem';
 import Condition from './AlertForm/Condition';
+import { useNavigate } from "react-router";
 
 const Circle = ({ text }: { text: string }) => (
   <div
@@ -52,7 +52,7 @@ interface Select {
   value: string | number
 }
 
-interface IProps extends RouteComponentProps {
+interface IProps {
   siteId: string;
   slackChannels: any[];
   loading: boolean;
@@ -63,7 +63,9 @@ interface IProps extends RouteComponentProps {
 }
 
 const NewAlert = (props: IProps) => {
-  const { alertsStore, settingsStore } = useStore();
+  const navigate = useNavigate();
+  const { alertsStore, settingsStore, projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId
   const {
     fetchTriggerOptions,
     init,
@@ -80,9 +82,6 @@ const NewAlert = (props: IProps) => {
   const deleting = loading
   const webhooks = settingsStore.webhooks
   const fetchWebhooks = settingsStore.fetchWebhooks
-  const {
-    siteId,
-  } = props;
 
   useEffect(() => {
     init({});
@@ -120,7 +119,7 @@ const NewAlert = (props: IProps) => {
       })
     ) {
       remove(instance.alertId).then(() => {
-        props.history.push(withSiteId(alerts(), siteId));
+        navigate(withSiteId(alerts(), siteId));
         toast.success('Alert deleted');
       }).catch(() => {
         toast.error('Failed to delete an alert');
@@ -133,7 +132,7 @@ const NewAlert = (props: IProps) => {
     save(instance).then(() => {
       if (!wasUpdating) {
         toast.success('New alert saved');
-        props.history.push(withSiteId(alerts(), siteId));
+        navigate(withSiteId(alerts(), siteId));
       } else {
         toast.success('Alert updated');
       }
@@ -296,4 +295,4 @@ const NewAlert = (props: IProps) => {
   );
 };
 
-export default withRouter(observer(NewAlert))
+export default observer(NewAlert)

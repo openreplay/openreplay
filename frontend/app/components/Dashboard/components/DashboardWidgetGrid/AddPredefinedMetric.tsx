@@ -6,18 +6,19 @@ import WidgetWrapper from 'App/components/Dashboard/components/WidgetWrapper';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
 import { dashboardMetricCreate, withSiteId } from 'App/routes';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { WidgetCategoryItem } from 'App/components/Dashboard/components/DashboardMetricSelection/DashboardMetricSelection';
+import { useNavigate } from "react-router";
 
-interface IProps extends RouteComponentProps {
-  siteId: string;
+interface IProps {
   title: string;
   description: string;
 }
 
-function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
+function AddPredefinedMetric({ title, description }: IProps) {
+  const navigate = useNavigate();
   const [categories, setCategories] = React.useState([]);
-  const { dashboardStore } = useStore();
+  const { dashboardStore, projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId
   const { hideModal } = useModal();
   const [activeCategory, setActiveCategory] = React.useState<Record<string, any>>();
 
@@ -62,8 +63,8 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
 
   const onCreateNew = () => {
     const path = withSiteId(dashboardMetricCreate(dashboard.dashboardId), siteId);
-    if (!queryParams.has('modal')) history.push('?modal=addMetric');
-    history.push(path);
+    if (!queryParams.has('modal')) navigate('?modal=addMetric');
+    navigate(path);
     hideModal();
   };
 
@@ -155,4 +156,4 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
   );
 }
 
-export default withRouter(observer(AddPredefinedMetric));
+export default observer(AddPredefinedMetric);

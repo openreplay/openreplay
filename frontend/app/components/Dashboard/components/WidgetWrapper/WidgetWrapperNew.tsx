@@ -4,8 +4,8 @@ import { Card, Tooltip } from 'antd';
 import { useDrag, useDrop } from 'react-dnd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, dashboardMetricDetails } from 'App/routes';
+import { useNavigate } from "react-router";
 import TemplateOverlay from './TemplateOverlay';
 import stl from './widgetWrapper.module.css';
 import { FilterKey } from 'App/types/filter/filterType';
@@ -25,7 +25,6 @@ interface Props {
   dashboardId?: string;
   siteId?: string;
   active?: boolean;
-  history?: any;
   onClick?: () => void;
   isWidget?: boolean;
   hideName?: boolean;
@@ -35,8 +34,10 @@ interface Props {
   isSaved?: boolean;
 }
 
-function WidgetWrapperNew(props: Props & RouteComponentProps) {
-  const { dashboardStore, metricStore } = useStore();
+function WidgetWrapperNew(props: Props) {
+  const navigate = useNavigate()
+  const { dashboardStore, metricStore, projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId;
   const {
     isWidget = false,
     active = false,
@@ -44,7 +45,6 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
     moveListItem = null,
     isPreview = false,
     isTemplate = false,
-    siteId,
     grid = '',
     isGridView = false,
     showMenu = false,
@@ -80,7 +80,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
 
   const onChartClick = () => {
     // if (!isWidget || isPredefined) return;
-    props.history.push(
+    navigate(
       withSiteId(dashboardMetricDetails(dashboard?.dashboardId, widget.metricId), siteId)
     );
   };
@@ -164,4 +164,4 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
   );
 }
 
-export default withRouter(observer(WidgetWrapperNew));
+export default observer(WidgetWrapperNew);

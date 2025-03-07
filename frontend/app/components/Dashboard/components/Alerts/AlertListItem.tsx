@@ -6,10 +6,10 @@ import { withSiteId, alertEdit } from 'App/routes';
 import { numberWithCommas } from 'App/utils';
 // @ts-ignore
 import { DateTime } from 'luxon';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
 import Alert from 'Types/alert';
 import { observer } from 'mobx-react-lite'
+import { useNavigate } from 'react-router';
 
 const getThreshold = (threshold: number) => {
   if (threshold === 15) return '15 Minutes';
@@ -84,7 +84,8 @@ interface Props extends RouteComponentProps {
 }
 
 function AlertListItem(props: Props) {
-  const { alert, siteId, history, init, demo, webhooks, triggerOptions } = props;
+  const { alert, siteId, init, demo, webhooks, triggerOptions } = props;
+  const navigate = useNavigate();
 
   if (!alert) {
     return null;
@@ -94,7 +95,7 @@ function AlertListItem(props: Props) {
     if (demo) return;
     const path = withSiteId(alertEdit(alert.alertId), siteId);
     init(alert || {});
-    history.push(path);
+    navigate(path);
   };
 
   const formTriggerName = () =>
@@ -169,4 +170,4 @@ function AlertListItem(props: Props) {
   );
 }
 
-export default withRouter(observer(AlertListItem));
+export default observer(AlertListItem);

@@ -1,14 +1,14 @@
 import React, { useRef, lazy } from 'react';
 import cn from 'classnames';
-import { ItemMenu, TextEllipsis } from 'UI';
+import { TextEllipsis } from 'UI';
 import { useDrag, useDrop } from 'react-dnd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, dashboardMetricDetails } from 'App/routes';
 import TemplateOverlay from './TemplateOverlay';
 import { FilterKey } from 'App/types/filter/filterType';
 import { TIMESERIES } from 'App/constants/card';
+import { useNavigate } from "react-router";
 
 const WidgetChart = lazy(
   () => import('Components/Dashboard/components/WidgetChart')
@@ -22,17 +22,17 @@ interface Props {
   isPreview?: boolean;
   isTemplate?: boolean;
   dashboardId?: string;
-  siteId?: string;
   active?: boolean;
-  history?: any;
   onClick?: () => void;
   isSaved?: boolean;
   hideName?: boolean;
   grid?: string;
   isGridView?: boolean;
 }
-function WidgetWrapper(props: Props & RouteComponentProps) {
-  const { dashboardStore } = useStore();
+function WidgetWrapper(props: Props) {
+  const { dashboardStore, projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId;
+  const navigate = useNavigate();
   const {
     isSaved = false,
     active = false,
@@ -40,7 +40,6 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
     moveListItem = null,
     isPreview = false,
     isTemplate = false,
-    siteId,
     grid = '',
     isGridView = false,
   } = props;
@@ -83,7 +82,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
   const onChartClick = () => {
     if (!isSaved || isPredefined) return;
 
-    props.history.push(
+    navigate(
       withSiteId(
         dashboardMetricDetails(dashboard?.dashboardId, widget.metricId),
         siteId
@@ -150,4 +149,4 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
   );
 }
 
-export default withRouter(observer(WidgetWrapper));
+export default observer(WidgetWrapper);

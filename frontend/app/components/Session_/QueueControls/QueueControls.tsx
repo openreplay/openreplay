@@ -1,16 +1,16 @@
 import React, { useEffect } from 'react';
 import { withSiteId, session as sessionRoute } from 'App/routes';
 import AutoplayToggle from 'Shared/AutoplayToggle/AutoplayToggle';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Popover } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { useParams, useNavigate } from 'react-router';
 
 const PER_PAGE = 10;
 
-interface Props extends RouteComponentProps {
+interface Props {
   defaultList: any;
   currentPage: number;
   latestRequestTime: any;
@@ -24,12 +24,8 @@ function QueueControls(props: Props) {
   const total = sessionStore.total;
   const sessionIds = sessionStore.sessionIds ?? [];
   const setAutoplayValues = sessionStore.setAutoplayValues;
-  const {
-    match: {
-      // @ts-ignore
-      params: { sessionId },
-    },
-  } = props;
+  const { sessionId } = useParams();
+  const navigate = useNavigate();
 
   const currentPage = searchStore.currentPage;
 
@@ -46,13 +42,13 @@ function QueueControls(props: Props) {
   }, []);
 
   const nextHandler = () => {
-    const siteId = projectsStore.getSiteId().siteId!;
-    props.history.push(withSiteId(sessionRoute(nextId), siteId));
+    const siteId = projectsStore.activeSiteId!;
+    navigate(withSiteId(sessionRoute(nextId), siteId));
   };
 
   const prevHandler = () => {
-    const siteId = projectsStore.getSiteId().siteId!;
-    props.history.push(withSiteId(sessionRoute(previousId), siteId));
+    const siteId = projectsStore.activeSiteId!;
+    navigate(withSiteId(sessionRoute(previousId), siteId));
   };
 
   return (
@@ -108,4 +104,4 @@ function QueueControls(props: Props) {
   );
 }
 
-export default withRouter(observer(QueueControls));
+export default observer(QueueControls);

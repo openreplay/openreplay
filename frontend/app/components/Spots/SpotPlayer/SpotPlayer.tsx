@@ -1,7 +1,7 @@
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 
 import { useStore } from 'App/mstore';
 import {
@@ -27,7 +27,7 @@ import spotPlayerStore, { PANELS } from './spotPlayerStore';
 
 function SpotPlayer() {
   const defaultHeight = getDefaultPanelHeight();
-  const history = useHistory();
+  const navigate = useNavigate()
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
   const { spotStore, userStore } = useStore();
   const userEmail = userStore.account.name;
@@ -47,7 +47,7 @@ function SpotPlayer() {
       if (pubKey) {
         spotStore.setAccessKey(pubKey);
       } else {
-        history.push('/');
+        navigate('/');
       }
     }
   }, [loggedIn]);

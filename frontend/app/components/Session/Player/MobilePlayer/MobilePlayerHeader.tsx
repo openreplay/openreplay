@@ -1,5 +1,5 @@
 import React from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { BackLink } from 'UI';
 import cn from 'classnames';
@@ -30,7 +30,7 @@ function PlayerBlockHeader(props: Props) {
   const { customFieldStore, projectsStore, sessionStore } = useStore();
   const session = sessionStore.current;
   const siteId = projectsStore.siteId!;
-  const history = useHistory();
+  const navigate = useNavigate();
   const {
     fullscreen,
     setActiveTab,
@@ -46,7 +46,7 @@ function PlayerBlockHeader(props: Props) {
   }, []);
 
   const backHandler = () => {
-    history.push(withSiteId(SESSIONS_ROUTE, siteId));
+    navigate(withSiteId(SESSIONS_ROUTE, siteId));
   };
 
   const { metadata } = session;

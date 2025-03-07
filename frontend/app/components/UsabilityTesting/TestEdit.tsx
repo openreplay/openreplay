@@ -7,14 +7,14 @@ import {
   usabilityTestingView,
   usabilityTestingEdit,
 } from 'App/routes';
-import { useParams, useHistory, Prompt } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
 import {Power, Info, ListTodo} from 'lucide-react';
 import { useModal } from 'App/components/Modal';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { confirm } from 'UI';
+import { confirm, NavPrompt } from 'UI';
 import StepsModal from './StepsModal';
 import SidePanel from './SidePanel';
 import usePageTitle from 'App/hooks/usePageTitle';
@@ -48,12 +48,12 @@ function TestEdit() {
   const [isOverviewEditing, setIsOverviewEditing] = React.useState(false);
 
   const { showModal, hideModal } = useModal();
-  const history = useHistory();
+  const navigate = useNavigate()
   usePageTitle(`Usability Tests | ${uxtestingStore.instance ? 'Edit' : 'Create'}`);
 
   React.useEffect(() => {
     if (uxtestingStore.instanceCreationSiteId && siteId !== uxtestingStore.instanceCreationSiteId) {
-      history.push(withSiteId(usabilityTesting(), siteId));
+      navigate(withSiteId(usabilityTesting(), siteId));
     }
   }, [siteId]);
   React.useEffect(() => {
@@ -66,7 +66,7 @@ function TestEdit() {
       });
     } else {
       if (!uxtestingStore.instance) {
-        history.push(withSiteId(usabilityTesting(), siteId));
+        navigate(withSiteId(usabilityTesting(), siteId));
       } else {
         setConclusion(uxtestingStore.instance!.conclusionMessage);
         setGuidelines(uxtestingStore.instance!.guidelines);
@@ -89,16 +89,16 @@ function TestEdit() {
           );
         } else {
           toast.success('The usability test is now live and accessible to participants.');
-          history.push(withSiteId(usabilityTestingView(testId!.toString()), siteId));
+          navigate(withSiteId(usabilityTestingView(testId!.toString()), siteId));
         }
       });
     } else {
       uxtestingStore.createNewTest(isPreview).then((test) => {
         if (isPreview) {
           window.open(`${test.startingPath}?oruxt=${test.testId}`, '_blank', 'noopener,noreferrer');
-          history.replace(withSiteId(usabilityTestingEdit(test.testId), siteId));
+          navigate(withSiteId(usabilityTestingEdit(test.testId), siteId), { replace: true });
         } else {
-          history.push(withSiteId(usabilityTestingView(test.testId), siteId));
+          navigate(withSiteId(usabilityTestingView(test.testId), siteId));
         }
       });
     }
@@ -128,7 +128,7 @@ function TestEdit() {
         })
       ) {
         uxtestingStore.deleteTest(testId).then(() => {
-          history.push(withSiteId(usabilityTesting(), siteId));
+          navigate(withSiteId(usabilityTesting(), siteId));
         });
       }
     }
@@ -155,7 +155,7 @@ function TestEdit() {
           },
         ]}
       />
-      <Prompt
+      <NavPrompt
         when={hasChanged}
         message={() => {
           return 'You have unsaved changes. Are you sure you want to leave?';

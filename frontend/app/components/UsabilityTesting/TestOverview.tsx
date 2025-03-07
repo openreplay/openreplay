@@ -4,10 +4,10 @@ import { getPdf2 } from 'Components/AssistStats/pdfGenerator';
 import { useModal } from 'Components/Modal';
 import LiveTestsModal from 'Components/UsabilityTesting/LiveTestsModal';
 import React from 'react';
-import { Button, Typography, Select, Space, Popover, Dropdown, Tooltip } from 'antd';
+import { Button, Typography, Select, Space, Popover, Dropdown } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { withSiteId, usabilityTesting, usabilityTestingEdit } from 'App/routes';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -91,7 +91,7 @@ function TestOverview() {
   // @ts-ignore
   const { siteId, testId } = useParams();
   const { showModal, hideModal } = useModal();
-  const history = useHistory();
+  const navigate = useNavigate()
   const { uxtestingStore } = useStore();
 
   React.useEffect(() => {
@@ -99,7 +99,7 @@ function TestOverview() {
       try {
         await uxtestingStore.getTest(testId);
       } catch {
-        history.push(withSiteId(usabilityTesting(), siteId));
+        navigate(withSiteId(usabilityTesting(), siteId));
       }
     };
 
@@ -375,7 +375,7 @@ const TaskSummary = observer(() => {
 const Title = observer(({ testId, siteId }: any) => {
   const [truncate, setTruncate] = React.useState(true);
   const { uxtestingStore } = useStore();
-  const history = useHistory();
+  const navigate = useNavigate()
 
   const handleChange = (value: string) => {
     uxtestingStore.updateTestStatus(value);
@@ -411,7 +411,7 @@ const Title = observer(({ testId, siteId }: any) => {
         })
       ) {
         uxtestingStore.deleteTest(testId).then(() => {
-          history.push(withSiteId(usabilityTesting(), siteId));
+          navigate(withSiteId(usabilityTesting(), siteId));
         });
       }
     }
@@ -441,7 +441,7 @@ const Title = observer(({ testId, siteId }: any) => {
         confirmButton: 'Edit'
       })
     ) {
-      history.push(withSiteId(usabilityTestingEdit(testId), siteId));
+      navigate(withSiteId(usabilityTestingEdit(testId), siteId));
     }
   };
 

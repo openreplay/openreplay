@@ -25,7 +25,7 @@ import {
   USER_PATH,
   CATEGORIES,
 } from 'App/constants/card';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { dashboardMetricCreate, withSiteId, metricCreate } from 'App/routes';
 import { FilterKey } from 'Types/filter/filterType';
 import MetricsLibraryModal from '../MetricsLibraryModal/MetricsLibraryModal';
@@ -183,16 +183,16 @@ function CategoryTab({
 }) {
   const items = isMobile ? mobileTabItems[tab] : tabItems[tab];
   const { projectsStore, dashboardStore } = useStore();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const handleCardSelection = (card: string) => {
     if (projectsStore.activeSiteId) {
       if (inCards) {
-        history.push(
+        navigate(
           withSiteId(metricCreate(), projectsStore.activeSiteId) + `?mk=${card}`
         );
       } else if (dashboardStore.selectedDashboard) {
-        history.push(
+        navigate(
           withSiteId(
             dashboardMetricCreate(dashboardStore.selectedDashboard.dashboardId),
             projectsStore.activeSiteId

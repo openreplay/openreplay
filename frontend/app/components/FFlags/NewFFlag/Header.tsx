@@ -3,19 +3,19 @@ import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
 import { ItemMenu } from 'UI';
 import { useStore } from 'App/mstore';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
 import { fflags, withSiteId } from "App/routes";
 import { Button } from 'antd';
 
 function Header({ current, onCancel, onSave, isNew, siteId }: any) {
   const { featureFlagsStore } = useStore();
-  const history = useHistory();
+  const navigate = useNavigate()
 
   const deleteHandler = () => {
     featureFlagsStore.deleteFlag(current.featureFlagId).then(() => {
       toast.success('Feature flag deleted.');
-      history.push(withSiteId(fflags(), siteId));
+      navigate(withSiteId(fflags(), siteId));
     });
   };
 

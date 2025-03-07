@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from 'App/mstore';
-import { Loader } from 'UI';
+import { Loader, NavPrompt } from 'UI';
 import WidgetPreview from '../WidgetPreview';
 import WidgetSessions from '../WidgetSessions';
 import { observer } from 'mobx-react-lite';
 import { dashboardMetricDetails, metricDetails, withSiteId } from 'App/routes';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { FilterKey } from 'Types/filter/filterType';
-import { Prompt, useHistory, useLocation } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import {
   TIMESERIES,
   TABLE,
@@ -29,7 +29,6 @@ import { CARD_LIST, CardType } from 'Components/Dashboard/components/DashboardLi
 import FilterSeries from '@/mstore/types/filterSeries';
 
 interface Props {
-  history: any;
   match: any;
   siteId: any;
 }
@@ -50,7 +49,7 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
   const dashboard = dashboardStore.dashboards.find((d: any) => d.dashboardId == dashboardId);
   const dashboardName = dashboard ? dashboard.name : null;
   const [metricNotFound, setMetricNotFound] = useState(false);
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
   const [initialInstance, setInitialInstance] = useState();
   const isClickMap = widget.metricType === HEATMAP;
@@ -112,9 +111,9 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
 
   useEffect(() => {
     if (metricNotFound) {
-      history.replace(withSiteId('/metrics', siteId));
+      navigate(withSiteId('/metrics', siteId), { replace: true });
     }
-  }, [metricNotFound, history, siteId]);
+  }, [metricNotFound, siteId]);
 
   const undoChanges = () => {
     const w = new Widget();
@@ -134,15 +133,15 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
     setInitialInstance(widget.toJson());
     if (wasCreating) {
       if (parseInt(dashboardId, 10) > 0) {
-        history.replace(
+        navigate(
           withSiteId(dashboardMetricDetails(dashboardId, savedMetric.metricId), siteId)
-        );
+        , { replace: true });
         void dashboardStore.addWidgetToDashboard(
           dashboardStore.getDashboard(parseInt(dashboardId, 10))!,
           [savedMetric.metricId]
         );
       } else {
-        history.replace(withSiteId(metricDetails(savedMetric.metricId), siteId));
+        navigate(withSiteId(metricDetails(savedMetric.metricId), siteId), { replace: true });
       }
     }
   };
@@ -154,7 +153,7 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
 
   return (
     <Loader loading={loading}>
-      <Prompt
+      <NavPrompt
         when={hasChanged}
         message={(loc: any) =>
           loc.pathname.includes('/metrics/') || loc.pathname.includes('/metric/')

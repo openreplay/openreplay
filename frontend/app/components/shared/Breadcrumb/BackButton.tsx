@@ -1,14 +1,14 @@
 import React from 'react';
 import { Button } from 'antd';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { LeftOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 
 function BackButton({ compact }: { compact?: boolean }) {
-  const history = useHistory();
+  const navigate = useNavigate()
   const siteId = location.pathname.split('/')[1];
 
   const handleBackClick = () => {
-    history.push(`/${siteId}/dashboard`);
+    navigate(`/${siteId}/dashboard`);
   };
   if (compact) {
     return (

@@ -1,7 +1,7 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Radio } from 'antd';
 import React from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import * as routes from 'App/routes'
 import { SPOT_ONBOARDING } from "App/constants/storageKeys";
 import { useStore } from 'App/mstore';
@@ -27,24 +27,24 @@ function ScopeForm() {
   const downgradeScope = userStore.downgradeScope
   const scopeState = userStore.scopeState
   const [scope, setScope] = React.useState(getDefaultSetup);
+  const navigate = useNavigate()
   React.useEffect(() => {
     if (scopeState !== 0) {
       if (scopeState === 2) {
-        history.replace(routes.onboarding())
+        navigate(routes.onboarding(), { replace: true })
       } else {
-        history.replace(routes.spotsList())
+        navigate(routes.spotsList(), { replace: true })
       }
     }
   }, [scopeState])
 
-  const history = useHistory();
   const onContinue = () => {
     if (scope === Scope.FULL) {
       void upgradeScope();
-      history.replace(routes.onboarding())
+      navigate(routes.onboarding(), { replace: true })
     } else {
       void downgradeScope();
-      history.replace(routes.spotsList())
+      navigate(routes.spotsList(), { replace: true })
     }
   };
   return (

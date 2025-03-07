@@ -3,8 +3,7 @@ import { FilterKey } from 'Types/filter/filterType';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { withRouter } from 'react-router-dom';
-
+import { useNavigate } from 'react-router'
 import { resentOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { sessions as sessionsRoute } from 'App/routes';
@@ -17,6 +16,7 @@ import { Button } from 'antd'
 import SessionBar from './SessionBar';
 
 function MainSection(props) {
+  const navigate = useNavigate();
   const { errorStore, searchStore } = useStore();
   const error = errorStore.instance;
   const trace = errorStore.instanceTrace;
@@ -26,7 +26,7 @@ function MainSection(props) {
 
   const findSessions = () => {
     searchStore.addFilterByKeyAndValue(FilterKey.ERROR, error.message);
-    props.history.push(sessionsRoute());
+    navigate(sessionsRoute());
   };
   return (
     <div
@@ -129,6 +129,4 @@ function MainSection(props) {
   );
 }
 
-export default withRouter(
-  (observer(MainSection))
-);
+export default observer(MainSection)

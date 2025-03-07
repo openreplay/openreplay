@@ -1,8 +1,8 @@
 import React from 'react';
-import { App, Button, Card, Layout, Space, Tooltip, Typography } from 'antd';
+import { App, Button, Card, Layout, Tooltip, Typography } from 'antd';
 import ProjectList from 'Components/Client/Projects/ProjectList';
 import ProjectTabs from 'Components/Client/Projects/ProjectTabs';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
 import {PlusOutlined, KeyOutlined} from '@ant-design/icons'
@@ -13,12 +13,12 @@ import Project from '@/mstore/types/project';
 
 function Projects() {
   const { projectsStore, customFieldStore } = useStore();
-  const history = useHistory();
+  const navigate = useNavigate();
   const { project, pid, tab } = projectsStore.config;
   const { openModal, closeModal } = useModal();
 
   React.useEffect(() => {
-    const params = new URLSearchParams(history.location.search);
+    const params = new URLSearchParams(location.search);
     const pid = params.get('pid');
     const tab = params.get('tab');
     projectsStore.setConfigProject(pid ? parseInt(pid) : undefined);
@@ -30,7 +30,7 @@ function Projects() {
   }, []);
 
   React.useEffect(() => {
-    const params = new URLSearchParams(history.location.search);
+    const params = new URLSearchParams(location.search);
     if (projectsStore.config.pid) {
       params.set('pid', projectsStore.config.pid + '');
     }
@@ -38,7 +38,8 @@ function Projects() {
     if (projectsStore.config.tab) {
       params.set('tab', projectsStore.config.tab);
     }
-    history.push({ search: params.toString() });
+    const search = params.toString();
+    navigate(location.pathname + '?' + search);
   }, [pid, tab]);
 
   const createProject = () => {

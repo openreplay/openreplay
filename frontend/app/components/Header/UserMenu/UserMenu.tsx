@@ -1,24 +1,21 @@
 import React from 'react';
-import { withRouter } from 'react-router-dom';
 import { client, CLIENT_DEFAULT_TAB } from 'App/routes';
 import { Icon } from 'UI';
 import { getInitials } from 'App/utils';
 import { useStore } from "App/mstore";
 import { observer } from 'mobx-react-lite';
+import { useNavigate } from "react-router";
 
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
-interface Props {
-  history: any;
-}
-function UserMenu(props: Props) {
-  const { history }: any = props;
+function UserMenu() {
+  const navigate = useNavigate();
   const { loginStore, userStore } = useStore();
   const account = userStore.account;
   const onLogoutClick = userStore.logout;
 
   const onAccountClick = () => {
-    history.push(CLIENT_PATH);
+    navigate(CLIENT_PATH);
   };
 
   const onLogout = () => {
@@ -59,4 +56,4 @@ function UserMenu(props: Props) {
   );
 }
 
-export default withRouter(observer(UserMenu))
+export default observer(UserMenu)

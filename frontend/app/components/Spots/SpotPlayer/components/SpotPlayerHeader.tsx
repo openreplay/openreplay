@@ -20,7 +20,7 @@ import {
 import copy from 'copy-to-clipboard';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 import Tabs from 'App/components/Session/Tabs';
 import { useStore } from 'App/mstore';
@@ -58,7 +58,7 @@ function SpotPlayerHeader({
   const comments = spotStore.currentSpot?.comments ?? [];
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const history = useHistory();
+  const navigate = useNavigate()
 
   const onCopy = () => {
     copy(window.location.href);
@@ -66,7 +66,7 @@ function SpotPlayerHeader({
   };
 
   const navigateToSpotsList = () => {
-    history.push(spotLink);
+    navigate(spotLink);
   };
 
   const items: MenuProps['items'] = [
@@ -88,7 +88,7 @@ function SpotPlayerHeader({
       await downloadFile(url, `${spotStore.currentSpot!.title}.webm`);
     } else if (key === '2') {
       spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
-        history.push(spotsList());
+        navigate(spotsList());
         message.success('Spot successfully deleted');
       });
     }

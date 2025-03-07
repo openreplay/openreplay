@@ -3,7 +3,7 @@ import cn from 'classnames';
 import React, { useEffect, useRef, useState } from 'react';
 // Consider using a different approach for titles in functional components
 import ReCAPTCHA from 'react-google-recaptcha';
-import { useHistory } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 
@@ -20,13 +20,8 @@ import stl from './login.module.css';
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
 
-interface LoginProps {
-  location: Location;
-}
-
-const Login = ({
-                 location
-               }: LoginProps) => {
+const Login = () => {
+  const location = useLocation()
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const CAPTCHA_ENABLED = React.useMemo(() => {
@@ -38,12 +33,12 @@ const Login = ({
   const loading = loginStore.loading;
   const authDetails = userStore.authStore.authDetails;
   const setJwt = userStore.updateJwt;
-  const history = useHistory();
+  const navigate = useNavigate()
   const params = new URLSearchParams(location.search);
 
   useEffect(() => {
     if (authDetails && !authDetails.tenants) {
-      history.push(SIGNUP_ROUTE);
+      navigate(SIGNUP_ROUTE);
     }
   }, [authDetails]);
 
