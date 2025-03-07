@@ -1,4 +1,4 @@
-package imagestorage
+package images
 
 import (
 	"openreplay/backend/internal/config/common"

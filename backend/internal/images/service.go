@@ -1,4 +1,4 @@
-package screenshot_handler
+package images
 
 import (
 	"archive/tar"
@@ -6,16 +6,17 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/objectstorage"
-	"openreplay/backend/pkg/pool"
 	"os"
 	"os/exec"
 	"strconv"
 	"time"
 
 	gzip "github.com/klauspost/pgzip"
-	config "openreplay/backend/internal/config/imagestorage"
+
+	config "openreplay/backend/internal/config/images"
+	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/pool"
 )
 
 type saveTask struct {
@@ -43,6 +44,10 @@ func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectS
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
+	case log == nil:
+		return nil, fmt.Errorf("logger is empty")
+	case objStorage == nil:
+		return nil, fmt.Errorf("objStorage is empty")
 	}
 	s := &ImageStorage{
 		cfg:        cfg,
@@ -50,7 +55,7 @@ func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectS
 		objStorage: objStorage,
 	}
 	s.saverPool = pool.NewPool(4, 8, s.writeToDisk)
-	s.uploaderPool = pool.NewPool(4, 4, s.sendToS3)
+	s.uploaderPool = pool.NewPool(8, 8, s.sendToS3)
 	return s, nil
 }
 
@@ -100,12 +105,11 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 	if v.cfg.ScreenshotsDir != "" {
 		path += v.cfg.ScreenshotsDir + "/"
 	}
-
 	path += strconv.FormatUint(task.sessionID, 10) + "/"
 
 	// Ensure the directory exists
 	if err := os.MkdirAll(path, 0755); err != nil {
-		v.log.Fatal(task.ctx, "Error creating directories: %v", err)
+		v.log.Fatal(task.ctx, "error creating directories: %v", err)
 	}
 
 	// Write images to disk
@@ -118,7 +122,12 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 		if _, err := io.Copy(outFile, img); err != nil {
 			v.log.Error(task.ctx, "can't copy file: %s", err.Error())
 		}
-		outFile.Close()
+		if outFile == nil {
+			continue
+		}
+		if err := outFile.Close(); err != nil {
+			v.log.Warn(task.ctx, "can't close file: %s", err.Error())
+		}
 		saved++
 	}
 	v.log.Info(task.ctx, "saved %d images to disk", saved)
@@ -126,10 +135,6 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 }
 
 func (v *ImageStorage) PackScreenshots(ctx context.Context, sessID uint64, filesPath string) error {
-	// Temporarily disabled for tests
-	if v.objStorage == nil {
-		return fmt.Errorf("object storage is empty")
-	}
 	start := time.Now()
 	sessionID := strconv.FormatUint(sessID, 10)
 	selector := fmt.Sprintf("%s*.jpeg", filesPath)

@@ -13,7 +13,7 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
-	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"
+	storageMetrics "openreplay/backend/pkg/metrics/images"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 )
@@ -34,7 +34,7 @@ func main() {
 
 	srv, err := canvases.New(cfg, log, objStore, producer)
 	if err != nil {
-		log.Fatal(ctx, "can't init canvas service: %s", err)
+		log.Fatal(ctx, "can't init canvases service: %s", err)
 	}
 
 	canvasConsumer := queue.NewConsumer(
@@ -97,7 +97,7 @@ func main() {
 		cfg.MessageSizeLimit,
 	)
 
-	log.Info(ctx, "canvas handler service started")
+	log.Info(ctx, "canvases service started")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)

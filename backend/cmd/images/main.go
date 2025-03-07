@@ -9,12 +9,12 @@ import (
 	"syscall"
 	"time"
 
-	config "openreplay/backend/internal/config/imagestorage"
-	"openreplay/backend/internal/screenshot-handler"
+	config "openreplay/backend/internal/config/images"
+	"openreplay/backend/internal/images"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
-	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"
+	storageMetrics "openreplay/backend/pkg/metrics/images"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 )
@@ -30,9 +30,9 @@ func main() {
 		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
 
-	srv, err := screenshot_handler.New(cfg, log, objStore)
+	srv, err := images.New(cfg, log, objStore)
 	if err != nil {
-		log.Fatal(ctx, "can't init storage service: %s", err)
+		log.Fatal(ctx, "can't init images service: %s", err)
 	}
 
 	workDir := cfg.FSDir
@@ -74,7 +74,7 @@ func main() {
 		cfg.MessageSizeLimit,
 	)
 
-	log.Info(ctx, "Image storage service started")
+	log.Info(ctx, "Images service started")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
