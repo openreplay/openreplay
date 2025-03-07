@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Tooltip } from 'antd';
 import { SyncOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   loading?: boolean;
@@ -10,9 +11,10 @@ interface Props {
   label?: string
 }
 export default function ReloadButton(props: Props) {
+  const { t } = useTranslation();
   const { loading, onClick, iconSize = 18, buttonSize } = props;
   return (
-    <Tooltip title="Refresh" placement="right">
+    <Tooltip title={t('Refresh')} placement="right">
       <Button
         type="default"
         size={buttonSize}
