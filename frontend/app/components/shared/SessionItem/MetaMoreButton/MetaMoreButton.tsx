@@ -26,8 +26,9 @@ export default function MetaMoreButton(props: Props) {
       placement="bottom"
     >
       <div className="flex items-center">
-        <Button variant="text">
+        <Button size={'small'} variant="text">
           +{list.length - maxLength}
+          {' '}
           {t('More')}
         </Button>
       </div>

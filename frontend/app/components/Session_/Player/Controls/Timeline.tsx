@@ -4,11 +4,6 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { DateTime, Duration } from 'luxon';
-import TimelineTracker from 'Components/Session_/Player/Controls/TimelineTracker';
-import {
-  ZoomDragLayer,
-  HighlightDragLayer,
-} from 'Components/Session_/Player/Controls/components/ZoomDragLayer';
 import { WebEventsList, MobEventsList } from './EventsList';
 import NotesList from './NotesList';
 import SkipIntervalsList from './SkipIntervalsList';
@@ -18,6 +13,9 @@ import {
   HighlightDragLayer,
   ExportEventsSelection
 } from "Components/Session_/Player/Controls/components/ZoomDragLayer";
+import stl from './timeline.module.css'
+import TooltipContainer from './components/TooltipContainer';
+import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
 
 function Timeline({ isMobile }: { isMobile: boolean }) {
   const { player, store } = useContext(PlayerContext);
