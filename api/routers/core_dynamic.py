@@ -73,6 +73,11 @@ def __process_authentication_response(response: JSONResponse, data: dict) -> dic
 
 @public_app.post('/login', tags=["authentication"])
 def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)):
+    if data.email != 'tahay@asayer.io':
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Enforced testing mode is active."
+        )
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
