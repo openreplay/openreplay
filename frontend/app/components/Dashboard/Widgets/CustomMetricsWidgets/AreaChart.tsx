@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import CustomTooltip from './CustomChartTooltip';
 import { Styles } from '../common';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   data: { chart: any[]; namesMap: string[] };
@@ -23,6 +24,7 @@ interface Props {
 }
 
 function CustomAreaChart(props: Props) {
+  const { t } = useTranslation();
   const {
     data = { chart: [], namesMap: [] },
     colors,
@@ -85,7 +87,7 @@ function CustomAreaChart(props: Props) {
           tickFormatter={(val) => Styles.tickFormatter(val)}
           label={{
             ...Styles.axisLabelLeft,
-            value: label || 'Number of Sessions',
+            value: label || t('Number of Sessions'),
           }}
         />
         <Tooltip

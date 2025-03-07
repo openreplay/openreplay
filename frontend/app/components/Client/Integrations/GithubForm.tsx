@@ -27,7 +27,7 @@ function GithubForm(props) {
         <div className="mt-8">
           <DocLink
             className="mt-4"
-            label="Integrate Github"
+            label={t('Integrate Github')}
             url="https://docs.openreplay.com/integrations/github"
           />
         </div>

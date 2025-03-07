@@ -1445,5 +1445,8 @@
   "Assist (Call)": "Assist（通话协助）",
   "Change Spot Visibility": "更改 Spot 可见性",
   "Clear Drilldown": "清除下钻",
-  "Select Series": "选择系列"
+  "Select Series": "选择系列",
+  "Integrate Github": "集成 Github",
+  "Integrate GraphQL": "集成 GraphQL",
+  "Installation Docs": "安装文档"
 }

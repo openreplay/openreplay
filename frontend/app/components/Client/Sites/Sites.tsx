@@ -155,7 +155,7 @@ function Sites() {
               <TextLink
                 icon="book"
                 href="https://docs.openreplay.com/deployment/setup-or"
-                label="Installation Docs"
+                label={t('Installation Docs')}
               />
             }
           />
