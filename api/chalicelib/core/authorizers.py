@@ -105,6 +105,10 @@ def generate_jwt_refresh(user_id, tenant_id, iat, aud, jwt_jti, for_spot=False):
         key=config("JWT_REFRESH_SECRET") if not for_spot else config("JWT_SPOT_REFRESH_SECRET"),
         algorithm=config("JWT_ALGORITHM")
     )
+    logger.warning("Generated JWT REF token: %s", token)
+    logger.warning("For spot REF: %s", for_spot)
+    logger.warning("Using: %s", config("JWT_REFRESH_SECRET") if not for_spot else config("JWT_SPOT_REFRESH_SECRET"))
+    logger.warning(aud)
     return token
 
 
