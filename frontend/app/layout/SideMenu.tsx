@@ -49,7 +49,7 @@ function SideMenu(props: Props) {
   const { isEnterprise } = userStore;
   const { siteId } = projectsStore;
   const { isMobile } = projectsStore;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const menu: any[] = React.useMemo(() => {
     const sourceMenu = isPreferencesActive ? preferences(t) : main_menu(t);
@@ -116,7 +116,7 @@ function SideMenu(props: Props) {
           hidden: allItemsHidden,
         };
       });
-  }, [isAdmin, isEnterprise, isPreferencesActive, modules, spotOnly, siteId]);
+  }, [isAdmin, isEnterprise, isPreferencesActive, modules, spotOnly, siteId, i18n.language]);
 
   const menuRoutes: any = {
     [MENU.EXIT]: () =>

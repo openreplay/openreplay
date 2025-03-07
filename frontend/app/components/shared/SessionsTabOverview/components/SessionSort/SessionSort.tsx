@@ -66,7 +66,7 @@ function SessionSort() {
     <SortDropdown
       defaultOption={defaultOption}
       onSort={onSort}
-      sortOptions={sortOptions}
+      sortOptions={sortOptions(t)}
       current={sortOptionsMap(t)[defaultOption]}
     />
   );

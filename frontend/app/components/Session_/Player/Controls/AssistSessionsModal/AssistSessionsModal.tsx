@@ -70,7 +70,7 @@ function AssistSessionsModal(props: ConnectProps) {
     <div className="bg-gray-lightest box-shadow h-screen p-4">
       <div className="flex flex-col my-2 w-full gap-2 ">
         <div className="flex items-center gap-2 w-full">
-          <Tooltip title="Refresh" placement="top" delay={200}>
+          <Tooltip title={t('Refresh')} placement="top" delay={200}>
             <Button
               loading={loading}
               className="mr-2"
