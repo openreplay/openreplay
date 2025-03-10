@@ -42,7 +42,7 @@ func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, webMetrics w
 		return nil, err
 	}
 	builder := &ServiceBuilder{
-		Auth:            auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil),
+		Auth:            auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix),
 		RateLimiter:     limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
 		AuditTrail:      auditrail,
 		IntegrationsAPI: handlers,
