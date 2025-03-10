@@ -15,6 +15,7 @@ import (
 
 	config "openreplay/backend/internal/config/images"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/images"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/pool"
 )
@@ -38,9 +39,10 @@ type ImageStorage struct {
 	objStorage   objectstorage.ObjectStorage
 	saverPool    pool.WorkerPool
 	uploaderPool pool.WorkerPool
+	metrics      images.Images
 }
 
-func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectStorage) (*ImageStorage, error) {
+func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectStorage, metrics images.Images) (*ImageStorage, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
@@ -48,11 +50,14 @@ func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectS
 		return nil, fmt.Errorf("logger is empty")
 	case objStorage == nil:
 		return nil, fmt.Errorf("objStorage is empty")
+	case metrics == nil:
+		return nil, fmt.Errorf("metrics is empty")
 	}
 	s := &ImageStorage{
 		cfg:        cfg,
 		log:        log,
 		objStorage: objStorage,
+		metrics:    metrics,
 	}
 	s.saverPool = pool.NewPool(4, 8, s.writeToDisk)
 	s.uploaderPool = pool.NewPool(8, 8, s.sendToS3)
@@ -92,8 +97,11 @@ func (v *ImageStorage) Process(ctx context.Context, sessID uint64, data []byte) 
 			v.log.Error(ctx, "ExtractTarGz: unknown type: %d in %s", header.Typeflag, header.Name)
 		}
 	}
+	v.metrics.RecordOriginalArchiveExtractionDuration(time.Since(start).Seconds())
+	v.metrics.RecordOriginalArchiveSize(float64(len(images)))
+	v.metrics.IncreaseTotalSavedArchives()
 
-	v.log.Info(ctx, "arch size: %d, extracted archive in: %s", len(data), time.Since(start))
+	v.log.Debug(ctx, "arch size: %d, extracted archive in: %s", len(data), time.Since(start))
 	v.saverPool.Submit(&saveTask{ctx: ctx, sessionID: sessID, images: images})
 	return nil
 }
@@ -115,6 +123,7 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 	// Write images to disk
 	saved := 0
 	for name, img := range task.images {
+		start := time.Now()
 		outFile, err := os.Create(path + name) // or open file in rewrite mode
 		if err != nil {
 			v.log.Error(task.ctx, "can't create file: %s", err.Error())
@@ -128,9 +137,11 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 		if err := outFile.Close(); err != nil {
 			v.log.Warn(task.ctx, "can't close file: %s", err.Error())
 		}
+		v.metrics.RecordSavingImageDuration(time.Since(start).Seconds())
+		v.metrics.IncreaseTotalSavedImages()
 		saved++
 	}
-	v.log.Info(task.ctx, "saved %d images to disk", saved)
+	v.log.Debug(task.ctx, "saved %d images to disk", saved)
 	return
 }
 
@@ -151,8 +162,10 @@ func (v *ImageStorage) PackScreenshots(ctx context.Context, sessID uint64, files
 	if err != nil {
 		return fmt.Errorf("failed to execute command: %v, stderr: %v", err, stderr.String())
 	}
-	v.log.Info(ctx, "packed replay in %v", time.Since(start))
+	v.metrics.RecordArchivingDuration(time.Since(start).Seconds())
+	v.metrics.IncreaseTotalCreatedArchives()
 
+	v.log.Debug(ctx, "packed replay in %v", time.Since(start))
 	v.uploaderPool.Submit(&uploadTask{ctx: ctx, sessionID: sessionID, path: archPath, name: sessionID + "/replay.tar.zst"})
 	return nil
 }
@@ -167,6 +180,9 @@ func (v *ImageStorage) sendToS3(payload interface{}) {
 	if err := v.objStorage.Upload(bytes.NewReader(video), task.name, "application/octet-stream", objectstorage.NoContentEncoding, objectstorage.Zstd); err != nil {
 		v.log.Fatal(task.ctx, "failed to upload replay file: %s", err)
 	}
-	v.log.Info(task.ctx, "replay file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
+	v.metrics.RecordUploadingDuration(time.Since(start).Seconds())
+	v.metrics.RecordArchiveSize(float64(len(video)))
+
+	v.log.Debug(task.ctx, "replay file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
 	return
 }
