@@ -205,7 +205,7 @@ function WidgetView({
                   {
                     value: 'flex-row',
                     icon: (
-                      <Tooltip title="Filters on Left">
+                      <Tooltip title={t('Filters on Left')}>
                         <LayoutPanelLeft size={16} />
                       </Tooltip>
                     ),
@@ -213,7 +213,7 @@ function WidgetView({
                   {
                     value: 'flex-col',
                     icon: (
-                      <Tooltip title="Filters on Top">
+                      <Tooltip title={t('Filters on Top')}>
                         <LayoutPanelTop size={16} />
                       </Tooltip>
                     ),
@@ -221,7 +221,7 @@ function WidgetView({
                   {
                     value: 'flex-row-reverse',
                     icon: (
-                      <Tooltip title="Filters on Right">
+                      <Tooltip title={t('Filters on Right')}>
                         <div className="rotate-180">
                           <LayoutPanelLeft size={16} />
                         </div>

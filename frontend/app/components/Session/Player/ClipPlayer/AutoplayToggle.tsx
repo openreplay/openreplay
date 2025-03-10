@@ -10,8 +10,10 @@ import {
   CaretRightOutlined,
   PauseOutlined,
 } from './.store/@ant-design-icons-virtual-de151eefe5/package';
+import { useTranslation } from 'react-i18next';
 
 function AutoplayToggle() {
+  const { t } = useTranslation();
   const { clipStore } = useStore();
   const playerContext = React.useContext<IPlayerContext>(PlayerContext);
   // const { player, store } = playerContext;
@@ -22,7 +24,7 @@ function AutoplayToggle() {
   };
 
   return (
-    <Tooltip title="Toggle Autoplay" placement="bottom">
+    <Tooltip title={t('Toggle Autoplay')} placement="bottom">
       <Switch
         className="custom-switch"
         onChange={handleToggle}

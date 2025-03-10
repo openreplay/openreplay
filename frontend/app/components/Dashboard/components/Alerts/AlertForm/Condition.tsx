@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Input } from 'UI';
 import Select from 'Shared/Select';
 import { alertConditions as conditions } from 'App/constants';
@@ -41,7 +41,13 @@ function Condition({
   unit,
   changeUnit,
 }: ICondition) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const localizedConditions = useMemo(() => conditions.map((c) => ({
+    ...c,
+    label: t(c.label),
+  })), [i18n.language]);
+
   return (
     <div>
       {!isThreshold && (
@@ -85,10 +91,10 @@ function Condition({
         <div className="w-2/6 flex items-center">
           <Select
             placeholder={t('Select Condition')}
-            options={conditions}
+            options={localizedConditions}
             name="operator"
             value={
-              conditions.find((c) => c.value === instance.query.operator) || ''
+              localizedConditions.find((c) => c.value === instance.query.operator) || ''
             }
             onChange={({ value }) =>
               writeQueryOption(null, { name: 'operator', value: value.value })

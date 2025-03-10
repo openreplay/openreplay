@@ -228,7 +228,10 @@ function AlertForm(props) {
                 <div className="w-4/6 flex items-center">
                   <Select
                     placeholder={t('Select Condition')}
-                    options={conditions}
+                    options={conditions.map((c) => ({
+                      ...c,
+                      label: t(c.label),
+                    }))}
                     name="operator"
                     defaultValue={instance.query.operator}
                     // onChange={ writeQueryOption }

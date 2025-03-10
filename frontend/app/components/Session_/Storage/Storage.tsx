@@ -277,20 +277,21 @@ function Storage() {
               style={{ paddingRight: 30, marginLeft: 'auto' }}
               className="font-semibold"
             >
-              <Tooltip title="Time to execute">{t('TTE')}</Tooltip>
+              <Tooltip title={t('Time to execute')}>{t('TTE')}</Tooltip>
             </h3>
             <Segmented options={[{ label: 'Current Tab', value: 'all' }]} />
           </div>
         </BottomBlock.Header>
         <BottomBlock.Content className="flex">
           <NoContent
-            title="Nothing to display yet"
+            title={t('Nothing to display yet')}
             subtext={
               !hintIsHidden ? (
                 <>
-                  {
-                    'Inspect your application state while you’re replaying your users sessions. OpenReplay supports '
-                  }
+                  {t(
+                    'Inspect your application state while you’re replaying your users sessions. OpenReplay supports',
+                  )}
+                  &nbsp;
                   <a
                     className="underline color-teal"
                     href="https://docs.openreplay.com/plugins/redux"

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input, Tooltip } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   name: string;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 function SeriesName(props: Props) {
+  const { t } = useTranslation();
   const { seriesIndex = 1 } = props;
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(props.name);
@@ -56,7 +58,7 @@ function SeriesName(props: Props) {
           size="small"
         />
       ) : (
-        <Tooltip title="Click to rename">
+        <Tooltip title={t('Click to rename')}>
           <div
             className="text-lg font-medium h-8 flex items-center border-transparent p-2 hover:bg-teal/10 cursor-pointer rounded-lg btn-input-rename-series"
             onClick={() => setEditing(true)}

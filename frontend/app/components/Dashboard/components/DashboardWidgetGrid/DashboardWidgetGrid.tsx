@@ -7,6 +7,7 @@ import { Button, Popover, Tooltip } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { Loader } from 'UI';
 import AddCardSection from '../AddCardSection/AddCardSection';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   siteId: string;
@@ -53,6 +54,7 @@ function DashboardWidgetGrid(props: Props) {
 }
 
 function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
+  const { t } = useTranslation();
   const [popoverOpen, setPopoverOpen] = React.useState(false);
   const handleOpenChange = (open: boolean) => {
     setPopoverOpen(open);
@@ -92,7 +94,7 @@ function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
           content={<AddCardSection handleOpenChange={handleOpenChange} />}
           trigger="click"
         >
-          <Tooltip title="Add Card">
+          <Tooltip title={t('Add Card')}>
             <Button
               icon={<PlusOutlined size={14} />}
               shape="circle"

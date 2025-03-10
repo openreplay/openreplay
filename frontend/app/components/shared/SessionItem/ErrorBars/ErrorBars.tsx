@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import stl from './ErrorBars.module.css';
+import { useTranslation } from 'react-i18next';
 
 const GOOD = 'Good';
 const LESS_CRITICAL = 'Few Issues';
@@ -19,6 +20,7 @@ interface Props {
   count?: number;
 }
 export default function ErrorBars(props: Props) {
+  const { t } = useTranslation();
   const { count = 2 } = props;
   const state = React.useMemo(() => getErrorState(count), [count]);
   const isGood = state === GOOD;
@@ -50,7 +52,7 @@ export default function ErrorBars(props: Props) {
           {/* <div className={cn("rounded-tr rounded-br", bgColor, stl.bar)}></div> */}
         </div>
       </div>
-      <div className="mt-1 color-gray-medium text-sm">{state}</div>
+      <div className="mt-1 color-gray-medium text-sm">{t(state)}</div>
     </div>
   );
 }

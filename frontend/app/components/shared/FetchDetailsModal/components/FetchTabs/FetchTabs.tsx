@@ -4,6 +4,7 @@ import { JSONTree, Tabs, NoContent } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import Headers from '../Headers';
 import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
 
 const HEADERS = 'HEADERS';
 const REQUEST = 'REQUEST';
@@ -23,8 +24,8 @@ function parseRequestResponse(
   setHeaders: (hs: Record<string, string> | null) => void,
   setJSONBody: (body: Record<string, unknown> | null) => void,
   setStringBody: (body: string) => void,
+  t: TFunction,
 ): void {
-  const { t } = useTranslation();
   try {
     if (!r) {
       setHeaders(null);
@@ -100,12 +101,14 @@ function FetchTabs({ resource, isSpot }: Props) {
       setRequestHeaders,
       setJsonRequest,
       setStringRequest,
+      t,
     );
     parseRequestResponse(
       response,
       setResponseHeaders,
       setJsonResponse,
       setStringResponse,
+      t,
     );
   }, [resource]);
 

@@ -4,8 +4,10 @@ import { Link2 } from 'lucide-react';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
+import { useTranslation } from 'react-i18next';
 
 function SubHeader() {
+  const { t } = useTranslation();
   const { store } = React.useContext(PlayerContext);
   const { location: currentLocation = 'loading...' } = store.get();
 
@@ -23,7 +25,7 @@ function SubHeader() {
         <div className="w-full bg-white border-b border-gray-lighter">
           <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
             <Link2 className="mx-2" size={16} />
-            <Tooltip title="Open in new tab" delay={0} placement="bottom">
+            <Tooltip title={t('Open in new tab')} delay={0} placement="bottom">
               <a href={location} target="_blank" rel="noreferrer">
                 {location}
               </a>

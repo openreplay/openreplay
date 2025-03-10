@@ -47,14 +47,18 @@ function SelectDateRange(props: Props) {
   const dateRangeOptions = props.comparison
     ? DATE_RANGE_COMPARISON_OPTIONS
     : DATE_RANGE_OPTIONS;
+  const dateRangeOptionsLocalized = dateRangeOptions.map((obj: any) => ({
+    ...obj,
+    label: t(obj.label),
+  }));
   const selectedValue = usedPeriod?.rangeName
-    ? dateRangeOptions.find(
+    ? dateRangeOptionsLocalized.find(
         (obj: any) => obj.value === usedPeriod?.rangeName,
       )
     : null;
-  const options = dateRangeOptions.filter((obj: any) =>
+  const options = dateRangeOptionsLocalized.filter((obj: any) =>
     disableCustom ? obj.value !== CUSTOM_RANGE : true,
-  );
+  ).map((obj) => ({ ...obj, label: t(obj.label) }));
 
   const onChange = (value: any) => {
     if (value === CUSTOM_RANGE) {
@@ -215,6 +219,7 @@ function AndDateRange({
   onApplyDateRange,
   isTileDisabled,
 }: Props) {
+  const { t } = useTranslation();
   const menuProps = {
     items: options.map((opt: any) => ({
       label: opt.label,
@@ -245,7 +250,7 @@ function AndDateRange({
             >
               <span>{`Compare to ${comparisonValue || ''}`}</span>
               {selectedValue && (
-                <Tooltip title="Reset">
+                <Tooltip title={t('Reset')}>
                   <SyncOutlined
                     className="cursor-pointer p-2 py-1.5 hover:bg-neutral-200/50 text-sm"
                     onClick={(e) => {

@@ -36,7 +36,7 @@ const EventsOrder = observer(
     return (
       <div className="flex items-center gap-2">
         <Tooltip
-          title="Select the operator to be applied between events."
+          title={t('Select the operator to be applied between events.')}
           placement="bottom"
         >
           <div className="text-neutral-500/90 text-sm font-normal cursor-default">

@@ -28,6 +28,8 @@ const MODES = {
 }
 
 function EventsBlock(props: IProps) {
+  const defaultFramework = getDefaultFramework();
+  const [mode, setMode] = React.useState(MODES.SELECT);
   const { t } = useTranslation();
   const { notesStore, uxtestingStore, uiPlayerStore, sessionStore } =
     useStore();

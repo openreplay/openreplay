@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Tooltip } from 'UI';
 
 const MIN_WIDTH = '20px';
@@ -6,6 +7,7 @@ interface Props {
   issue: any;
 }
 function FunnelIssueGraph(props: Props) {
+  const { t } = useTranslation();
   const { issue } = props;
 
   return (
@@ -17,7 +19,7 @@ function FunnelIssueGraph(props: Props) {
         }}
         className="relative"
       >
-        <Tooltip title="Unaffected sessions" placement="top">
+        <Tooltip title={t('Unaffected sessions')} placement="top">
           <div
             className="w-full relative rounded-tl-sm rounded-bl-sm"
             style={{
@@ -34,7 +36,7 @@ function FunnelIssueGraph(props: Props) {
         style={{ width: `${issue.affectedSessionsPer}%`, minWidth: MIN_WIDTH }}
         className="border-l relative"
       >
-        <Tooltip title="Affected sessions" placement="top">
+        <Tooltip title={t('Affected sessions')} placement="top">
           <div
             className="w-full relative"
             style={{
@@ -51,7 +53,7 @@ function FunnelIssueGraph(props: Props) {
         style={{ width: `${issue.lostConversionsPer}%`, minWidth: MIN_WIDTH }}
         className="border-l relative"
       >
-        <Tooltip title="Conversion lost" placement="top">
+        <Tooltip title={t('Conversion lost')} placement="top">
           <div
             className="w-full relative rounded-tr-sm rounded-br-sm"
             style={{ height: '18px', backgroundColor: 'rgba(204, 0, 0, 0.26)' }}

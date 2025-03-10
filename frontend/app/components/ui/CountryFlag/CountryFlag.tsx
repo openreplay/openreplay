@@ -4,6 +4,7 @@ import { Icon, TextEllipsis } from 'UI';
 import { Tooltip } from 'antd';
 import { countries } from 'App/constants';
 import CountryFlagIcon from 'Shared/CountryFlagIcon';
+import { useTranslation } from 'react-i18next';
 
 interface CountryFlagProps {
   userCity?: string;
@@ -26,9 +27,10 @@ const CountryFlag: FC<CountryFlagProps> = ({
   height = 15,
   showLabel = false,
 }) => {
+  const { t } = useTranslation();
   const knownCountry = !!country && country !== 'UN';
   const countryFlag = knownCountry ? country.toLowerCase() : '';
-  const countryName = knownCountry ? countries[country] : 'Unknown Country';
+  const countryName = knownCountry ? countries[country] : t('Unknown Country');
 
   const displayGeoInfo = userCity || userState || countryName;
 

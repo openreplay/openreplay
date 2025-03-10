@@ -258,7 +258,7 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
       <ScreenRecorder />
 
       {/* @ts-ignore */}
-      <Tooltip title="Call user to initiate remote control" disabled={livePlay}>
+      <Tooltip title={t('Call user to initiate remote control')} disabled={livePlay}>
         <div
           className={cn('cursor-pointer p-2 flex items-center', {
             [stl.disabled]:

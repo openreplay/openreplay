@@ -3,8 +3,10 @@ import React from 'react';
 import SessionSettings from 'Shared/SessionSettings';
 import { Icon, Tooltip } from 'UI';
 import { Button } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 function SessionSettingButton(props: any) {
+  const { t } = useTranslation();
   const { showModal } = useModal();
 
   const handleClick = () => {
@@ -13,7 +15,7 @@ function SessionSettingButton(props: any) {
 
   return (
     <div className="cursor-pointer ml-4" onClick={handleClick}>
-      <Tooltip title="Session Settings">
+      <Tooltip title={t('Session Settings')}>
         <Button
           icon={<Icon name="sliders" />}
           type="text"

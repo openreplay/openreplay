@@ -216,7 +216,7 @@ const EventsPanel = observer(
                   { label: 'All Tabs', value: 'all' },
                   {
                     label: (
-                      <Tooltip title="Stack Events overview is available only for all tabs combined.">
+                      <Tooltip title={t('Stack Events overview is available only for all tabs combined.')}>
                         <span>{t('Current Tab')}</span>
                       </Tooltip>
                     ),

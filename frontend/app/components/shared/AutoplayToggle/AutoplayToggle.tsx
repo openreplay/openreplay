@@ -4,22 +4,24 @@ import { observer } from 'mobx-react-lite';
 import { Switch, Tooltip, message } from 'antd';
 import { CaretRightOutlined, PauseOutlined } from '@ant-design/icons';
 import './AutoplayToggle.css';
+import { useTranslation } from 'react-i18next';
 
 const AutoplayToggle: React.FC = () => {
+  const { t } = useTranslation();
   const { player, store } = useContext(PlayerContext);
   const { autoplay } = store.get();
 
   const handleToggle = () => {
     player.toggleAutoplay();
     if (!autoplay) {
-      message.success('Autoplay is ON');
+      message.success(t('Autoplay is ON'));
     } else {
-      message.info('Autoplay is OFF');
+      message.info(t('Autoplay is OFF'));
     }
   };
 
   return (
-    <Tooltip title="Toggle Autoplay" placement="bottom">
+    <Tooltip title={t('Toggle Autoplay')} placement="bottom">
       <Switch
         className="custom-switch"
         onChange={handleToggle}
