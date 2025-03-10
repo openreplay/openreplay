@@ -14,14 +14,15 @@ from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.errors import errors, errors_details
 from chalicelib.core.metrics import heatmaps
-from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_assignments, \
-    sessions_viewed, unprocessed_sessions, sessions_search
-from chalicelib.utils import SAML2_helper, smtp
-from chalicelib.utils import captcha
+from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_viewed, \
+    sessions_assignments, unprocessed_sessions, sessions_search
+from chalicelib.utils import SAML2_helper
+from chalicelib.utils import captcha, smtp
 from chalicelib.utils import contextual_validators
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from or_dependencies import OR_context, OR_scope, OR_role
+from or_dependencies import OR_context, OR_role
+from or_dependencies import OR_scope
 from routers.base import get_routers
 from routers.subs import spot
 from schemas import Permissions, ServicePermissions
@@ -31,7 +32,10 @@ if config("ENABLE_SSO", cast=bool, default=True):
 logger = logging.getLogger(__name__)
 public_app, app, app_apikey = get_routers()
 
-COOKIE_PATH = "/api/refresh"
+if config("LOCAL_DEV", cast=bool, default=False):
+    COOKIE_PATH = "/refresh"
+else:
+    COOKIE_PATH = "/api/refresh"
 
 
 @public_app.get('/signup', tags=['signup'])
