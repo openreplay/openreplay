@@ -142,3 +142,11 @@ Create the volume mount config for redis TLS certificates
   subPath: {{ .tls.certCAFilename }}
 {{- end }}
 {{- end }}
+
+{{- define "openreplay.assets_origin"}}
+{{- if .Values.global.assetsOrigin }}
+{{- .Values.global.assetsOrigin }}
+{{- else }}
+{{- include "openreplay.s3Endpoint" . }}/{{.Values.global.s3.assetsBucket}}
+{{- end }}
+{{- end }}
