@@ -1486,5 +1486,9 @@
   "above": "por encima de",
   "above or equal to": "por encima o igual a",
   "below": "por debajo de",
-  "below or equal to": "por debajo o igual a"
+  "below or equal to": "por debajo o igual a",
+  "Highlight link copied to clipboard": "Enlace resaltado copiado al portapapeles",
+  "Are you sure delete this Highlight?": "¿Estás seguro de que deseas eliminar este Resaltado?",
+  "Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.": "Eliminar un Resaltado solo eliminará esta instancia y su nota asociada. No afectará a la sesión original.",
+  "Yes, Delete": "Sí, eliminar"
 }

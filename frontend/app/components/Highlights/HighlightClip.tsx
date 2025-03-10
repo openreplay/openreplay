@@ -9,6 +9,7 @@ import { Eye, Link } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { resentOrDate } from 'App/date';
 import { noNoteMsg } from 'App/mstore/notesStore';
+import { useTranslation } from 'react-i18next';
 
 function HighlightClip({
   note = 'Highlight note',
@@ -33,6 +34,7 @@ function HighlightClip({
   onDelete: (id: any) => any;
   canEdit: boolean;
 }) {
+  const { t } = useTranslation();
   const noteMsg = note || noNoteMsg;
   const copyToClipboard = () => {
     const currUrl = window.location.href;
@@ -44,24 +46,24 @@ function HighlightClip({
     {
       key: 'copy',
       icon: <Link size={14} strokeWidth={1} />,
-      label: 'Copy Link',
+      label: t('Copy Link'),
     },
     {
       key: 'edit',
       icon: <EditOutlined />,
-      label: 'Edit',
+      label: t('Edit'),
       disabled: !canEdit,
     },
     {
       key: 'visibility',
       icon: <Eye strokeWidth={1} size={14} />,
-      label: 'Visibility',
+      label: t('Visibility'),
       disabled: !canEdit,
     },
     {
       key: 'delete',
       icon: <DeleteOutlined />,
-      label: 'Delete',
+      label: t('Delete'),
       disabled: !canEdit,
     },
   ];
@@ -72,14 +74,14 @@ function HighlightClip({
         return openEdit();
       case 'copy':
         copyToClipboard();
-        toast.success('Highlight link copied to clipboard');
+        toast.success(t('Highlight link copied to clipboard'));
         return;
       case 'delete':
         const res = await confirm({
-          header: 'Are you sure delete this Highlight?',
+          header: t('Are you sure delete this Highlight?'),
           confirmation:
-            'Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.',
-          confirmButton: 'Yes, Delete',
+            t('Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.'),
+          confirmButton: t('Yes, Delete'),
         });
         if (res) {
           onDelete();

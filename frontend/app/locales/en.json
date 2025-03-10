@@ -1486,5 +1486,9 @@
   "above": "above",
   "above or equal to": "above or equal to",
   "below": "below",
-  "below or equal to": "below or equal to"
+  "below or equal to": "below or equal to",
+  "Highlight link copied to clipboard": "Highlight link copied to clipboard",
+  "Are you sure delete this Highlight?": "Are you sure delete this Highlight?",
+  "Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.": "Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.",
+  "Yes, Delete": "Yes, Delete"
 }
