@@ -1490,5 +1490,9 @@
   "Highlight link copied to clipboard": "Lien de mise en avant copié dans le presse-papiers",
   "Are you sure delete this Highlight?": "Êtes-vous sûr de vouloir supprimer cette mise en avant ?",
   "Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.": "La suppression d'une mise en avant ne supprimera que cette instance et sa note associée. Cela n'affectera pas la session d'origine.",
-  "Yes, Delete": "Oui, supprimer"
+  "Yes, Delete": "Oui, supprimer",
+  "Search projects": "Rechercher des projets",
+  "Crashes": "Plantages",
+  "Bad Requests": "Mauvaises requêtes",
+  "Tap Rage": "Rage au tap"
 }

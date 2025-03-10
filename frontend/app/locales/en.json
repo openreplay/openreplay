@@ -1490,5 +1490,9 @@
   "Highlight link copied to clipboard": "Highlight link copied to clipboard",
   "Are you sure delete this Highlight?": "Are you sure delete this Highlight?",
   "Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.": "Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.",
-  "Yes, Delete": "Yes, Delete"
+  "Yes, Delete": "Yes, Delete",
+  "Search projects": "Search projects",
+  "Crashes": "Crashes",
+  "Bad Requests": "Bad Requests",
+  "Tap Rage": "Tap Rage"
 }
