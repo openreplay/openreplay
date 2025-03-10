@@ -28,32 +28,24 @@ function ProjectTags() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Space direction="vertical">
-        <Typography.Text>
-          {t(
-            'Manage Tag Elements here. Rename tags for easy identification or delete those you no longer need.',
-          )}
-        </Typography.Text>
-        <ul className="!list-disc list-inside">
-          <li>
-            <Typography.Text>
-              {t('To create new tags, navigate to the Tags tab while playing a session')}
-            </Typography.Text>
-          </li>
-          <li>
-            <Typography.Text>
-              {t('Use tags in OmniSearch to quickly find relevant sessions.')}
-            </Typography.Text>
-          </li>
-        </ul>
-      </Space>
       <List
         locale={{
-          emptyText: (
-            <Empty
-              description={t('No tags found')}
-              image={<AnimatedSVG name={ICONS.NO_METADATA} size={60} />}
-            />
+          emptyText: (                  
+                <div>
+                <div className="w-fit border border-gray-100 rounded-lg overflow-hidden  bg-white shadow-sm mx-auto">                      
+                        <div className="w-full h-48 md:h-64 lg:h-96 flex items-center justify-center border border-gray-100  bg-white  rounded-md">
+                          <img src="/assets/img/img-tagging.jpg" alt="Tag Elements" className="max-w-full max-h-full object-contain" />
+                        </div>
+                    </div>
+                    <div className="text-center mt-4">
+                        <Typography.Text className="my-2 text-lg font-medium">
+                          {t('Organize and Manage Your Element Tags')}
+                        </Typography.Text>
+                        <div className="mb-2 text-lg text-gray-500 leading-normal">
+                          {t('Tag elements during session playback and use them in OmniSearch to find relevant sessions.')}
+                        </div>
+                      </div>
+                  </div>
           ),
         }}
         loading={tagWatchStore.isLoading}

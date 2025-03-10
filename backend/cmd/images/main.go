@@ -14,7 +14,7 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
-	storageMetrics "openreplay/backend/pkg/metrics/images"
+	imagesMetrics "openreplay/backend/pkg/metrics/images"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 )
@@ -23,14 +23,15 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
-	metrics.New(log, storageMetrics.List())
+	imageMetrics := imagesMetrics.New("images")
+	metrics.New(log, imageMetrics.List())
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
 
-	srv, err := images.New(cfg, log, objStore)
+	srv, err := images.New(cfg, log, objStore, imageMetrics)
 	if err != nil {
 		log.Fatal(ctx, "can't init images service: %s", err)
 	}

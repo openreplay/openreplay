@@ -8,13 +8,13 @@ import {
   Button,
   Dropdown,
   Modal as AntdModal,
-  Avatar,
+  Avatar, TableColumnType
 } from 'antd';
 import {
   TeamOutlined,
   LockOutlined,
   EditOutlined,
-  DeleteOutlined,
+  DeleteOutlined
 } from '@ant-design/icons';
 import { EllipsisVertical } from 'lucide-react';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
@@ -37,89 +37,40 @@ interface Props {
   toggleSelection?: (metricId: number | number[]) => void;
   disableSelection?: boolean;
   inLibrary?: boolean;
+  loading?: boolean;
 }
 
 const ListView: React.FC<Props> = ({
-  list,
-  siteId,
-  selectedList,
-  toggleSelection,
-  disableSelection = false,
-  inLibrary = false
-}) => {
+                                     list,
+                                     siteId,
+                                     selectedList,
+                                     toggleSelection,
+                                     disableSelection = false,
+                                     inLibrary = false,
+                                     loading = false
+                                   }) => {
   const { t } = useTranslation();
-  const [sorter, setSorter] = useState<{ field: string; order: 'ascend' | 'descend' }>({
-    field: 'lastModified',
-    order: 'descend',
-  });
-  const [pagination, setPagination] = useState<TablePaginationConfig>({
-    current: 1,
-    pageSize: 10,
-  });
   const [editingMetricId, setEditingMetricId] = useState<number | null>(null);
   const [newName, setNewName] = useState('');
   const { metricStore } = useStore();
   const history = useHistory();
 
-  const sortedData = useMemo(
-    () =>
-      [...list].sort((a, b) => {
-        if (sorter.field === 'lastModified') {
-          return sorter.order === 'ascend'
-            ? new Date(a.lastModified).getTime() -
-                new Date(b.lastModified).getTime()
-            : new Date(b.lastModified).getTime() -
-                new Date(a.lastModified).getTime();
-        }
-        if (sorter.field === 'name') {
-          return sorter.order === 'ascend'
-            ? a.name?.localeCompare(b.name) || 0
-            : b.name?.localeCompare(a.name) || 0;
-        }
-        if (sorter.field === 'owner') {
-          return sorter.order === 'ascend'
-            ? a.owner?.localeCompare(b.owner) || 0
-            : b.owner?.localeCompare(a.owner) || 0;
-        }
-        return 0;
-      }),
-    [list, sorter],
-  );
-
-  const paginatedData = useMemo(() => {
-    const start = ((pagination.current || 1) - 1) * (pagination.pageSize || 10);
-    return sortedData.slice(start, start + (pagination.pageSize || 10));
-  }, [sortedData, pagination]);
-
   const totalMessage = (
     <>
       {t('Showing')}{' '}
       <Text strong>
-        {(pagination.pageSize || 10) * ((pagination.current || 1) - 1) + 1}
+        {(metricStore.pageSize || 10) * ((metricStore.page || 1) - 1) + 1}
       </Text>{' '}
       {t('to')}{' '}
       <Text strong>
         {Math.min(
-          (pagination.pageSize || 10) * (pagination.current || 1),
-          list.length,
+          (metricStore.pageSize || 10) * (metricStore.page || 1),
+          list.length
         )}
       </Text>{' '}
       {t('of')}&nbsp;<Text strong>{list.length}</Text>&nbsp;{t('cards')}
     </>
   );
-
-  const handleTableChange = (
-    pag: TablePaginationConfig,
-    _filters: Record<string, (string | number | boolean)[] | null>,
-    sorterParam: SorterResult<Widget> | SorterResult<Widget>[],
-  ) => {
-    const sortRes = sorterParam as SorterResult<Widget>;
-    setSorter({
-      field: sortRes.field as string,
-      order: sortRes.order as 'ascend' | 'descend',
-    });
-    setPagination(pag);
-  };
 
   const parseDate = (dateString: string) => {
     let date = new Date(dateString);
@@ -182,7 +133,7 @@ const ListView: React.FC<Props> = ({
         cancelText: t('No'),
         onOk: async () => {
           await metricStore.delete(metric);
-        },
+        }
       });
     }
     if (key === 'rename') {
@@ -206,7 +157,7 @@ const ListView: React.FC<Props> = ({
 
   const menuItems = [
     { key: 'rename', icon: <EditOutlined />, label: t('Rename') },
-    { key: 'delete', icon: <DeleteOutlined />, label: t('Delete') },
+    { key: 'delete', icon: <DeleteOutlined />, label: t('Delete') }
   ];
 
   const renderTitle = (_text: string, metric: Widget) => (
@@ -245,80 +196,109 @@ const ListView: React.FC<Props> = ({
     </div>
   );
 
-  const columns = [
+  const columns: TableColumnType<any>[] = [
     {
       title: t('Title'),
       dataIndex: 'name',
       key: 'title',
       className: 'cap-first pl-4',
       sorter: true,
+      sortOrder: metricStore.sort.field === 'name' ? metricStore.sort.order : undefined,
       width: inLibrary ? '31%' : '25%',
-      render: renderTitle,
+      render: renderTitle
     },
     {
       title: t('Owner'),
-      dataIndex: 'owner',
+      dataIndex: 'owner_email',
       key: 'owner',
       className: 'capitalize',
       sorter: true,
+      sortOrder: metricStore.sort.field === 'owner_email' ? metricStore.sort.order : undefined,
       width: inLibrary ? '31%' : '25%',
-      render: renderOwner,
+      render: renderOwner
     },
     {
       title: t('Last Modified'),
-      dataIndex: 'lastModified',
+      dataIndex: 'edited_at',
       key: 'lastModified',
       sorter: true,
+      sortOrder: metricStore.sort.field === 'edited_at' ? metricStore.sort.order : undefined,
       width: inLibrary ? '31%' : '25%',
-      render: renderLastModified,
-    },
+      render: renderLastModified
+    }
   ];
+
   if (!inLibrary) {
     columns.push({
       title: '',
       key: 'options',
       className: 'text-right',
       width: '5%',
-      render: renderOptions,
+      render: renderOptions
     });
   }
+
+  // if (metricStore.sort.field) {
+  //   columns.forEach((col) => {
+  //     col.sortOrder = col.key === metricStore.sort.field ? metricStore.sort.order : false;
+  //   });
+  // }
+
+  console.log('store', metricStore.sort);
+
+  const handleTableChange = (
+    pag: TablePaginationConfig,
+    _filters: Record<string, (string | number | boolean)[] | null>,
+    sorterParam: SorterResult<Widget> | SorterResult<Widget>[]
+  ) => {
+    const sorter = Array.isArray(sorterParam) ? sorterParam[0] : sorterParam;
+    let order = sorter.order;
+    if (metricStore.sort.field === sorter.field) {
+      order = metricStore.sort.order === 'ascend' ? 'descend' : 'ascend';
+    }
+    console.log('sorter', { field: sorter.field, order });
+    metricStore.updateKey('sort', { field: sorter.field, order });
+    metricStore.updateKey('page', pag.current || 1);
+  };
 
   return (
     <>
       <Table
+        loading={loading}
         columns={columns}
-        dataSource={paginatedData}
+        dataSource={list}
         rowKey="metricId"
         showSorterTooltip={false}
         onChange={handleTableChange}
+        sortDirections={['ascend', 'descend']}
         onRow={
           inLibrary
             ? (record) => ({
-                onClick: () => {
-                  if (!disableSelection) toggleSelection?.(record?.metricId);
-                },
-              })
+              onClick: () => {
+                if (!disableSelection) toggleSelection?.(record?.metricId);
+              }
+            })
             : undefined
         }
         rowSelection={
           !disableSelection
             ? {
-                selectedRowKeys: selectedList,
-                onChange: (keys) => toggleSelection && toggleSelection(keys),
-                columnWidth: 16,
-              }
+              selectedRowKeys: selectedList,
+              onChange: (keys) => toggleSelection && toggleSelection(keys),
+              columnWidth: 16
+            }
             : undefined
         }
         pagination={{
-          current: pagination.current,
-          pageSize: pagination.pageSize,
-          total: sortedData.length,
+          current: metricStore.page,
+          pageSize: metricStore.pageSize,
+          total: metricStore.total,
           showSizeChanger: false,
           className: 'px-4',
           showLessItems: true,
           showTotal: () => totalMessage,
           size: 'small',
-          simple: true,
+          simple: true
         }}
       />
       <AntdModal

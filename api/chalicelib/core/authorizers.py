@@ -28,9 +28,6 @@ def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
     if scheme.lower() != "bearer":
         return None
     try:
-        logger.warning("Checking JWT token: %s", token)
-        logger.warning("Against: %s", config("JWT_SECRET") if not is_spot_token(token) else config("JWT_SPOT_SECRET"))
-        logger.warning(get_supported_audience())
         payload = jwt.decode(jwt=token,
                              key=config("JWT_SECRET") if not is_spot_token(token) else config("JWT_SPOT_SECRET"),
                              algorithms=config("JWT_ALGORITHM"),
@@ -40,8 +37,7 @@ def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
         logger.debug("! JWT Expired signature")
         return None
     except BaseException as e:
-        logger.warning("! JWT Base Exception")
-        logger.debug(e)
+        logger.warning("! JWT Base Exception", exc_info=e)
         return None
     return payload
 
@@ -50,10 +46,6 @@ def jwt_refresh_authorizer(scheme: str, token: str):
     if scheme.lower() != "bearer":
         return None
     try:
-        logger.warning("Checking JWT REF token: %s", token)
-        logger.warning("Against REF: %s",
-                       config("JWT_REFRESH_SECRET") if not is_spot_token(token) else config("JWT_SPOT_REFRESH_SECRET"))
-        logger.warning(get_supported_audience())
         payload = jwt.decode(jwt=token,
                              key=config("JWT_REFRESH_SECRET") if not is_spot_token(token) \
                                  else config("JWT_SPOT_REFRESH_SECRET"),
@@ -63,8 +55,7 @@ def jwt_refresh_authorizer(scheme: str, token: str):
         logger.debug("! JWT-refresh Expired signature")
         return None
     except BaseException as e:
-        logger.warning("! JWT-refresh Base Exception")
-        logger.debug(e)
+        logger.error("! JWT-refresh Base Exception", exc_info=e)
         return None
     return payload
 
@@ -83,10 +74,6 @@ def generate_jwt(user_id, tenant_id, iat, aud, for_spot=False):
         key=config("JWT_SECRET") if not for_spot else config("JWT_SPOT_SECRET"),
         algorithm=config("JWT_ALGORITHM")
     )
-    logger.warning("Generated JWT token: %s", token)
-    logger.warning("For spot: %s", for_spot)
-    logger.warning("Using: %s", config("JWT_SECRET") if not for_spot else config("JWT_SPOT_SECRET"))
-    logger.warning(aud)
     return token
 
 

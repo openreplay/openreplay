@@ -1,10 +1,11 @@
 import json
 import logging
 import secrets
+from typing import Optional
 
 from decouple import config
 from fastapi import BackgroundTasks, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from starlette import status
 
 import schemas
@@ -657,13 +658,34 @@ def refresh_auth_exists(user_id, tenant_id, jwt_jti=None):
     return r is not None
 
 
-class ChangeJwt(BaseModel):
+class FullLoginJWTs(BaseModel):
     jwt_iat: int
-    jwt_refresh_jti: int
+    jwt_refresh_jti: str
     jwt_refresh_iat: int
     spot_jwt_iat: int
-    spot_jwt_refresh_jti: int
+    spot_jwt_refresh_jti: str
     spot_jwt_refresh_iat: int
+
+    @model_validator(mode="before")
+    @classmethod
+    def _transform_data(cls, values):
+        if values.get("jwt_refresh_jti") is not None:
+            values["jwt_refresh_jti"] = str(values["jwt_refresh_jti"])
+        if values.get("spot_jwt_refresh_jti") is not None:
+            values["spot_jwt_refresh_jti"] = str(values["spot_jwt_refresh_jti"])
+        return values
+
+
+class RefreshLoginJWTs(FullLoginJWTs):
+    spot_jwt_iat: Optional[int] = None
+    spot_jwt_refresh_jti: Optional[str] = None
+    spot_jwt_refresh_iat: Optional[int] = None
+
+
+class RefreshSpotJWTs(FullLoginJWTs):
+    jwt_iat: Optional[int] = None
+    jwt_refresh_jti: Optional[str] = None
+    jwt_refresh_iat: Optional[int] = None
 
 
 def change_jwt_iat_jti(user_id):
@@ -685,7 +707,7 @@ def change_jwt_iat_jti(user_id):
                             {"user_id": user_id})
         cur.execute(query)
         row = cur.fetchone()
-        return ChangeJwt(**row)
+        return FullLoginJWTs(**row)
 
 
 def refresh_jwt_iat_jti(user_id):
@@ -700,7 +722,7 @@ def refresh_jwt_iat_jti(user_id):
                             {"user_id": user_id})
         cur.execute(query)
         row = cur.fetchone()
-        return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
+        return RefreshLoginJWTs(**row)
 
 
 def authenticate(email, password, for_change_password=False) -> dict | bool | None:
@@ -759,9 +781,12 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
         response = {
             "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=j_r.jwt_iat,
                                             aud=AUDIENCE),
-            "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                             iat=j_r.jwt_refresh_iat, aud=AUDIENCE,
-                                                             jwt_jti=j_r.jwt_refresh_jti),
+            "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'],
+                                                             tenant_id=r['tenantId'],
+                                                             iat=j_r.jwt_refresh_iat,
+                                                             aud=AUDIENCE,
+                                                             jwt_jti=j_r.jwt_refresh_jti,
+                                                             for_spot=False),
             "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
             "email": email,
             "spotJwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'],
@@ -856,14 +881,14 @@ def logout(user_id: int):
         cur.execute(query)
 
 
-def refresh(user_id: int, tenant_id: int) -> dict:
-    jwt_iat, jwt_r_jti, jwt_r_iat = refresh_jwt_iat_jti(user_id=user_id)
+def refresh(user_id: int, tenant_id: int = -1) -> dict:
+    j = refresh_jwt_iat_jti(user_id=user_id)
     return {
-        "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=jwt_iat,
+        "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=j.jwt_iat,
                                         aud=AUDIENCE),
-        "refreshToken": authorizers.generate_jwt_refresh(user_id=user_id, tenant_id=tenant_id, iat=jwt_r_iat,
-                                                         aud=AUDIENCE, jwt_jti=jwt_r_jti),
-        "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int) - (jwt_iat - jwt_r_iat)
+        "refreshToken": authorizers.generate_jwt_refresh(user_id=user_id, tenant_id=tenant_id, iat=j.jwt_refresh_iat,
+                                                         aud=AUDIENCE, jwt_jti=j.jwt_refresh_jti),
+        "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int) - (j.jwt_iat - j.jwt_refresh_iat),
     }
 
 

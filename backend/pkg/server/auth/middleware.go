@@ -36,9 +36,9 @@ func (e *authImpl) isExtensionRequest(r *http.Request) bool {
 	if err != nil {
 		e.log.Error(r.Context(), "failed to get path template: %s", err)
 	} else {
-		if pathTemplate == "/v1/ping" ||
-			(pathTemplate == "/v1/spots" && r.Method == "POST") ||
-			(pathTemplate == "/v1/spots/{id}/uploaded" && r.Method == "POST") {
+		if pathTemplate == e.prefix+"/v1/ping" ||
+			(pathTemplate == e.prefix+"/v1/spots" && r.Method == "POST") ||
+			(pathTemplate == e.prefix+"/v1/spots/{id}/uploaded" && r.Method == "POST") {
 			return true
 		}
 	}
@@ -53,9 +53,9 @@ func (e *authImpl) isSpotWithKeyRequest(r *http.Request) bool {
 	if err != nil {
 		return false
 	}
-	getSpotPrefix := "/v1/spots/{id}"            // GET
-	addCommentPrefix := "/v1/spots/{id}/comment" // POST
-	getStatusPrefix := "/v1/spots/{id}/status"   // GET
+	getSpotPrefix := e.prefix + "/v1/spots/{id}"            // GET
+	addCommentPrefix := e.prefix + "/v1/spots/{id}/comment" // POST
+	getStatusPrefix := e.prefix + "/v1/spots/{id}/status"   // GET
 	if (pathTemplate == getSpotPrefix && r.Method == "GET") ||
 		(pathTemplate == addCommentPrefix && r.Method == "POST") ||
 		(pathTemplate == getStatusPrefix && r.Method == "GET") {

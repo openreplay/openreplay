@@ -1,9 +1,10 @@
 import json
 import secrets
+from typing import Optional
 
 from decouple import config
 from fastapi import BackgroundTasks
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 import schemas
 from chalicelib.core import authorizers
@@ -83,7 +84,6 @@ def restore_member(user_id, email, invitation_token, admin, name, owner=False):
                              "name": name, "invitation_token": invitation_token})
         cur.execute(query)
         result = cur.fetchone()
-        cur.execute(query)
         result["created_at"] = TimeUTC.datetime_to_timestamp(result["created_at"])
     return helper.dict_to_camel_case(result)
 
@@ -284,7 +284,7 @@ def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema,
     if editor_id != user_id_to_update:
         admin = get_user_role(tenant_id=tenant_id, user_id=editor_id)
         if not admin["superAdmin"] and not admin["admin"]:
-            return {"errors": ["unauthorized"]}
+            return {"errors": ["unauthorized, you must have admin privileges"]}
         if admin["admin"] and user["superAdmin"]:
             return {"errors": ["only the owner can edit his own details"]}
     else:
@@ -552,13 +552,34 @@ def refresh_auth_exists(user_id, jwt_jti=None):
     return r is not None
 
 
-class ChangeJwt(BaseModel):
+class FullLoginJWTs(BaseModel):
     jwt_iat: int
-    jwt_refresh_jti: int
+    jwt_refresh_jti: str
     jwt_refresh_iat: int
     spot_jwt_iat: int
-    spot_jwt_refresh_jti: int
+    spot_jwt_refresh_jti: str
     spot_jwt_refresh_iat: int
+
+    @model_validator(mode="before")
+    @classmethod
+    def _transform_data(cls, values):
+        if values.get("jwt_refresh_jti") is not None:
+            values["jwt_refresh_jti"] = str(values["jwt_refresh_jti"])
+        if values.get("spot_jwt_refresh_jti") is not None:
+            values["spot_jwt_refresh_jti"] = str(values["spot_jwt_refresh_jti"])
+        return values
+
+
+class RefreshLoginJWTs(FullLoginJWTs):
+    spot_jwt_iat: Optional[int] = None
+    spot_jwt_refresh_jti: Optional[str] = None
+    spot_jwt_refresh_iat: Optional[int] = None
+
+
+class RefreshSpotJWTs(FullLoginJWTs):
+    jwt_iat: Optional[int] = None
+    jwt_refresh_jti: Optional[str] = None
+    jwt_refresh_iat: Optional[int] = None
 
 
 def change_jwt_iat_jti(user_id):
@@ -580,7 +601,7 @@ def change_jwt_iat_jti(user_id):
                             {"user_id": user_id})
         cur.execute(query)
         row = cur.fetchone()
-        return ChangeJwt(**row)
+        return FullLoginJWTs(**row)
 
 
 def refresh_jwt_iat_jti(user_id):
@@ -595,7 +616,7 @@ def refresh_jwt_iat_jti(user_id):
                             {"user_id": user_id})
         cur.execute(query)
         row = cur.fetchone()
-        return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
+        return RefreshLoginJWTs(**row)
 
 
 def authenticate(email, password, for_change_password=False) -> dict | bool | None:
@@ -663,13 +684,13 @@ def logout(user_id: int):
 
 
 def refresh(user_id: int, tenant_id: int = -1) -> dict:
-    jwt_iat, jwt_r_jti, jwt_r_iat = refresh_jwt_iat_jti(user_id=user_id)
+    j = refresh_jwt_iat_jti(user_id=user_id)
     return {
-        "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=jwt_iat,
+        "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=j.jwt_iat,
                                         aud=AUDIENCE),
-        "refreshToken": authorizers.generate_jwt_refresh(user_id=user_id, tenant_id=tenant_id, iat=jwt_r_iat,
-                                                         aud=AUDIENCE, jwt_jti=jwt_r_jti),
-        "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int) - (jwt_iat - jwt_r_iat)
+        "refreshToken": authorizers.generate_jwt_refresh(user_id=user_id, tenant_id=tenant_id, iat=j.jwt_refresh_iat,
+                                                         aud=AUDIENCE, jwt_jti=j.jwt_refresh_jti),
+        "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int) - (j.jwt_iat - j.jwt_refresh_iat),
     }
 
 

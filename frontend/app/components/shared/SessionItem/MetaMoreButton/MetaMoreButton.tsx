@@ -15,7 +15,7 @@ export default function MetaMoreButton(props: Props) {
     <Popover
       render={() => (
         <div
-          className="text-sm grid grid-col p-4 gap-3 bg-white"
+          className="text-sm grid grid-col gap-3 bg-white"
           style={{ maxHeight: '200px', overflowY: 'auto' }}
         >
           {list.slice(maxLength).map(({ label, value }, index) => (
@@ -26,7 +26,7 @@ export default function MetaMoreButton(props: Props) {
       placement="bottom"
     >
       <div className="flex items-center">
-        <Button size={'small'} variant="text">
+        <Button type="link">
           +{list.length - maxLength}
           {' '}
           {t('More')}

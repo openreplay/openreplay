@@ -10,7 +10,7 @@ import {
   HEATMAP,
   USER_PATH,
   RETENTION,
-  CATEGORIES,
+  CATEGORIES
 } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
 import { getRE } from 'App/utils';
@@ -31,7 +31,7 @@ const handleFilter = (card: Widget, filterType?: string) => {
         FilterKey.ERRORS,
         FilterKey.FETCH,
         `${TIMESERIES}_4xx_requests`,
-        `${TIMESERIES}_slow_network_requests`,
+        `${TIMESERIES}_slow_network_requests`
       ].includes(metricOf);
     }
     if (filterType === CATEGORIES.web_analytics) {
@@ -41,7 +41,7 @@ const handleFilter = (card: Widget, filterType?: string) => {
         FilterKey.REFERRER,
         FilterKey.USERID,
         FilterKey.LOCATION,
-        FilterKey.USER_DEVICE,
+        FilterKey.USER_DEVICE
       ].includes(metricOf);
     }
   } else {
@@ -75,58 +75,42 @@ interface MetricFilter {
   query?: string;
   showMine?: boolean;
   type?: string;
-  dashboard?: [];
+  // dashboard?: [];
 }
+
 export default class MetricStore {
   isLoading: boolean = false;
-
   isSaving: boolean = false;
-
   metrics: Widget[] = [];
-
   instance = new Widget();
-
   page: number = 1;
-
+  total: number = 0;
   pageSize: number = 10;
-
   metricsSearch: string = '';
-
-  sort: any = { by: 'desc' };
-
-  filter: MetricFilter = { type: 'all', dashboard: [], query: '' };
-
+  sort: any = { columnKey: '', field: '', order: false };
+  filter: any = { type: '', query: '' };
   sessionsPage: number = 1;
-
   sessionsPageSize: number = 10;
-
   listView?: boolean = true;
-
   clickMapFilter: boolean = false;
-
   clickMapSearch = '';
-
   clickMapLabel = '';
-
   cardCategory: string | null = CATEGORIES.product_analytics;
-
   focusedSeriesName: string | null = null;
-
   disabledSeries: string[] = [];
-
   drillDown = false;
 
   constructor() {
     makeAutoObservable(this);
   }
 
-  get sortedWidgets() {
-    return [...this.metrics].sort((a, b) =>
-      this.sort.by === 'desc'
-        ? b.lastModified - a.lastModified
-        : a.lastModified - b.lastModified,
-    );
-  }
+  // get sortedWidgets() {
+  //   return [...this.metrics].sort((a, b) =>
+  //     this.sort.by === 'desc'
+  //       ? b.lastModified - a.lastModified
+  //       : a.lastModified - b.lastModified
+  //   );
+  // }
 
   get filteredCards() {
     const filterRE = this.filter.query ? getRE(this.filter.query, 'i') : null;
@@ -138,7 +122,7 @@ export default class MetricStore {
         (card) =>
           (this.filter.showMine
             ? card.owner ===
-              JSON.parse(localStorage.getItem('user')!).account.email
+            JSON.parse(localStorage.getItem('user')!).account.email
             : true) &&
           handleFilter(card, this.filter.type) &&
           (!dbIds.length ||
@@ -147,13 +131,13 @@ export default class MetricStore {
               .some((id) => dbIds.includes(id))) &&
           // @ts-ignore
           (!filterRE ||
-            ['name', 'owner'].some((key) => filterRE.test(card[key]))),
-      )
-      .sort((a, b) =>
-        this.sort.by === 'desc'
-          ? b.lastModified - a.lastModified
-          : a.lastModified - b.lastModified,
+            ['name', 'owner'].some((key) => filterRE.test(card[key])))
       );
+    // .sort((a, b) =>
+    //   this.sort.by === 'desc'
+    //     ? b.lastModified - a.lastModified
+    //     : a.lastModified - b.lastModified
+    // );
   }
 
   // State Actions
@@ -182,6 +166,7 @@ export default class MetricStore {
   }
 
   updateKey(key: string, value: any) {
+    console.log('key', key, value);
     // @ts-ignore
     this[key] = value;
 
@@ -207,7 +192,7 @@ export default class MetricStore {
         this.instance.series[i].filter.eventsOrderSupport = [
           'then',
           'or',
-          'and',
+          'and'
         ];
       });
       if (type === HEATMAP && 'series' in obj) {
@@ -254,7 +239,7 @@ export default class MetricStore {
       namesMap: {},
       avg: 0,
       percentiles: [],
-      values: [],
+      values: []
     };
     const obj: any = { metricType: value, data: defaultData };
     obj.series = this.instance.series;
@@ -311,7 +296,7 @@ export default class MetricStore {
       if (obj.series[0] && obj.series[0].filter.filters.length < 1) {
         obj.series[0].filter.addFilter({
           ...clickmapFilter,
-          value: [''],
+          value: ['']
         });
       }
     }
@@ -341,7 +326,7 @@ export default class MetricStore {
   updateInList(metric: Widget) {
     // @ts-ignore
     const index = this.metrics.findIndex(
-      (m: Widget) => m[Widget.ID_KEY] === metric[Widget.ID_KEY],
+      (m: Widget) => m[Widget.ID_KEY] === metric[Widget.ID_KEY]
     );
     if (index >= 0) {
       this.metrics[index] = metric;
@@ -356,12 +341,6 @@ export default class MetricStore {
   removeById(id: string): void {
     // @ts-ignore
     this.metrics = this.metrics.filter((m) => m[Widget.ID_KEY] !== id);
-  }
-
-  get paginatedList(): Widget[] {
-    const start = (this.page - 1) * this.pageSize;
-    const end = start + this.pageSize;
-    return this.metrics.slice(start, end);
   }
 
   // API Communication
@@ -396,16 +375,27 @@ export default class MetricStore {
     this.metrics = metrics;
   }
 
-  fetchList() {
+  async fetchList() {
     this.setLoading(true);
-    return metricService
-      .getMetrics()
-      .then((metrics: any[]) => {
-        this.setMetrics(metrics.map((m) => new Widget().fromJson(m)));
-      })
-      .finally(() => {
-        this.setLoading(false);
-      });
+    try {
+      const resp = await metricService
+        .getMetricsPaginated({
+          page: this.page,
+          limit: this.pageSize,
+          sort: {
+            field: this.sort.field,
+            order: this.sort.order === 'ascend' ? 'asc' : 'desc'
+          },
+          filter: {
+            query: this.filter.query,
+            type: this.filter.type === 'all' ? '' : this.filter.type,
+          }
+        });
+      this.total = resp.total;
+      this.setMetrics(resp.list.map((m) => new Widget().fromJson(m)));
+    } finally {
+      this.setLoading(false);
+    }
   }
 
   fetch(id: string, period?: any) {
