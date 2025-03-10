@@ -1,7 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Tooltip } from 'UI';
 
 function IssueGraph({ issue }) {
+  const { t } = useTranslation();
   return (
     <div className="flex rounded-sm" style={{ width: '600px' }}>
       <Tooltip title={t('Unaffected sessions')}>
