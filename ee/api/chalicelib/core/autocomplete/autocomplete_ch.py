@@ -125,7 +125,7 @@ def __generic_autocomplete(event: Event):
     return f
 
 
-def __generic_autocomplete_metas(typename):
+def generic_autocomplete_metas(typename):
     def f(project_id, text):
         with ch_client.ClickHouseClient() as cur:
             params = {"project_id": project_id, "value": helper.string_to_sql_like(text),
