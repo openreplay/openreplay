@@ -37,7 +37,7 @@ function Controls(props: any) {
   const session = sessionStore.current;
   const fetchAssistSessions = sessionStore.fetchLiveSessions;
   const totalAssistSessions = sessionStore.totalLiveSessions;
-  const closedLive = !!sessionStore.errorStack || !!sessionStore.current;
+  const closedLive = !!sessionStore.errorStack?.length || !sessionStore.current;
 
   const onKeyDown = (e: any) => {
     if (
