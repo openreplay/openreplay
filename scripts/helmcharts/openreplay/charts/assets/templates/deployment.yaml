@@ -89,7 +89,7 @@ spec:
             # 4. Using AWS itself.
             # AWS uses bucketname.endpoint/object while others use endpoint/bucketname/object
             - name: ASSETS_ORIGIN
-              value: "{{ include "openreplay.s3Endpoint" . }}/{{.Values.global.s3.assetsBucket}}"
+              value: "{{ include "openreplay.assets_origin" . }}"
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
           ports:
             {{- range $key, $val := .Values.service.ports }}
