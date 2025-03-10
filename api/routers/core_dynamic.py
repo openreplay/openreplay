@@ -7,27 +7,30 @@ from fastapi import HTTPException, status
 from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Response
 
 import schemas
-from chalicelib.core import scope
 from chalicelib.core import assist, signup, feature_flags
-from chalicelib.core.metrics import heatmaps
-from chalicelib.core.errors import errors, errors_details
-from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_viewed, \
-    sessions_assignments, unprocessed_sessions, sessions_search
+from chalicelib.core import scope
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_slack import Slack
+from chalicelib.core.errors import errors, errors_details
+from chalicelib.core.metrics import heatmaps
+from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_viewed, \
+    sessions_assignments, unprocessed_sessions, sessions_search
 from chalicelib.utils import captcha, smtp
+from chalicelib.utils import contextual_validators
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
 from routers.subs import spot
-from chalicelib.utils import contextual_validators
 
 logger = logging.getLogger(__name__)
 public_app, app, app_apikey = get_routers()
 
-COOKIE_PATH = "/api/refresh"
+if config("LOCAL_DEV", cast=bool, default=False):
+    COOKIE_PATH = "/refresh"
+else:
+    COOKIE_PATH = "/api/refresh"
 
 
 @public_app.get('/signup', tags=['signup'])
@@ -68,18 +71,11 @@ def __process_authentication_response(response: JSONResponse, data: dict) -> dic
                         max_age=refresh_token_max_age, secure=True, httponly=True)
     response.set_cookie(key="spotRefreshToken", value=spot_refresh_token, path=spot.COOKIE_PATH,
                         max_age=spot_refresh_token_max_age, secure=True, httponly=True)
-    logger.warning("cookie refreshToken: %s", refresh_token)
-    logger.warning("cookie spotRefreshToken: %s", spot_refresh_token)
     return data
 
 
 @public_app.post('/login', tags=["authentication"])
 def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)):
-    # if data.email != 'tahay@asayer.io':
-    #     raise HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         detail="Enforced testing mode is active."
-    #     )
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
