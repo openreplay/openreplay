@@ -28,7 +28,8 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	builder, err := spot.NewServiceBuilder(log, cfg, webMetrics, pgConn)
+	prefix := api.NoPrefix
+	builder, err := spot.NewServiceBuilder(log, cfg, webMetrics, pgConn, prefix)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
@@ -37,7 +38,7 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
-	router.AddHandlers(api.NoPrefix, builder.SpotsAPI)
+	router.AddHandlers(prefix, builder.SpotsAPI)
 	router.AddMiddlewares(builder.Auth.Middleware, builder.RateLimiter.Middleware, builder.AuditTrail.Middleware)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
