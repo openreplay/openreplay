@@ -109,9 +109,9 @@ def create_card(projectId: int, data: schemas.CardSchema = Body(...),
 
 
 @app.post('/{projectId}/cards/search', tags=["cards"])
-def search_cards(projectId: int, data: schemas.SearchCardsSchema = Body(...),
+def search_cards(projectId: int, data: schemas.MetricSearchSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.search_all(project_id=projectId, user_id=context.user_id, data=data)}
+    return {"data": custom_metrics.search_metrics(project_id=projectId, user_id=context.user_id, data=data)}
 
 
 @app.get('/{projectId}/cards/{metric_id}', tags=["cards"])
