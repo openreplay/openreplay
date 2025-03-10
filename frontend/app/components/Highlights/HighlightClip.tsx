@@ -110,10 +110,10 @@ function HighlightClip({
           <div className="left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
             <Tag
               color={tagProps[tag]}
-              className="border-0 rounded-lg hover:inherit gap-2 w-14 text-center capitalize"
+              className="border-0 rounded-lg hover:inherit gap-2 text-center capitalize"
               bordered={false}
             >
-              {tag.toLowerCase()}
+              {t(tag.toLowerCase())}
             </Tag>
           </div>
         ) : null
