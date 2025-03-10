@@ -35,7 +35,7 @@ function DashboardOptions(props: Props) {
       {
         icon: <Icon name="trash" />,
         key: 'delete',
-        label: 'Delete',
+        label: t('Delete'),
         onClick: deleteHandler,
       },
       {

@@ -35,7 +35,7 @@ const CopyableTextArea: React.FC<CopyableTextAreaProps> = ({
         style={{ paddingRight: '40px' }}
         placeholder={t('Enter selector to tag elements. E.g. .btn-primary')}
       />
-      <Tooltip title="Copy">
+      <Tooltip title={t('Copy')}>
         <Button
           type="text"
           icon={<CopyOutlined />}

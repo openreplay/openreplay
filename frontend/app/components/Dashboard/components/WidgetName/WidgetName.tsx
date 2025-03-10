@@ -62,7 +62,7 @@ function WidgetName(props: Props) {
         />
       ) : (
         // @ts-ignore
-        <Tooltip mouseEnterDelay={1} title="Click to edit" disabled={!canEdit}>
+        <Tooltip mouseEnterDelay={1} title={t('Click to edit')} disabled={!canEdit}>
           <div
             onClick={() => setEditing(true)}
             className={cn(

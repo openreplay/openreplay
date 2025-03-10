@@ -8,6 +8,7 @@ import { Button, Space, Tooltip } from 'antd';
 import CardViewMenu from 'Components/Dashboard/components/WidgetView/CardViewMenu';
 import { Link2 } from 'lucide-react';
 import copy from 'copy-to-clipboard';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onClick?: () => void;
@@ -17,15 +18,16 @@ interface Props {
   isPreview?: boolean;
 }
 
-const defaultText = 'Copy link to clipboard';
-
 function WidgetViewHeader({
   onClick,
   onSave,
   layoutControl,
   isPreview,
 }: Props) {
+  const { t } = useTranslation();
+  const defaultText = t('Copy link to clipboard');
   const [tooltipText, setTooltipText] = React.useState(defaultText);
+
   const { metricStore } = useStore();
   const widget = metricStore.instance;
 
@@ -39,7 +41,7 @@ function WidgetViewHeader({
   const copyUrl = () => {
     const url = window.location.href;
     copy(url);
-    setTooltipText('Link copied to clipboard!');
+    setTooltipText(t('Link copied to clipboard!'));
     setTimeout(() => setTooltipText(defaultText), 2000);
   };
   return (
@@ -73,7 +75,7 @@ function WidgetViewHeader({
           className="font-medium btn-update-card"
           size="small"
         >
-          {widget.exists() ? 'Update' : 'Create'}
+          {widget.exists() ? t('Update') : t('Create')}
         </Button>
 
         {/* <MetricTypeSelector /> */}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Tooltip } from 'antd';
 import copy from 'copy-to-clipboard';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   label?: string;
@@ -9,10 +10,11 @@ interface Props {
   content: string;
 }
 function CopyText(props: Props) {
+  const { t } = useTranslation();
   const {
     children,
-    label = 'Click to copy',
-    afterLabel = 'Copied',
+    label = t('Click to copy'),
+    afterLabel = t('Copied'),
     content = '',
   } = props;
   const [isCopied, setIsCopied] = useState(false);

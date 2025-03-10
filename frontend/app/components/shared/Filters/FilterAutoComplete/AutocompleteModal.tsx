@@ -205,7 +205,7 @@ export function AutocompleteModal({
             </Button>
           </div>
 
-          <Tooltip title="Clear all selection">
+          <Tooltip title={t('Clear all selection')}>
             <Button
               onClick={clearSelection}
               type="text"

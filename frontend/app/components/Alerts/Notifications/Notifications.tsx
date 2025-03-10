@@ -6,10 +6,12 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Badge, Button, Tooltip } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 
 function Notifications() {
+  const { t } = useTranslation();
   const { showModal } = useModal();
   const { notificationStore } = useStore();
   const count = notificationStore.notificationsCount;
@@ -28,7 +30,7 @@ function Notifications() {
 
   return (
     <Badge dot={count > 0} size="small">
-      <Tooltip title="Alerts">
+      <Tooltip title={t('Alerts')}>
         <Button
           icon={<BellOutlined />}
           onClick={() => showModal(<AlertTriggersModal />, { right: true })}

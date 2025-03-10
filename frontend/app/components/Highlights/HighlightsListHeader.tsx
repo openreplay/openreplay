@@ -52,7 +52,7 @@ function HighlightsListHeader({
                     : 'capitalize'
                 }
               >
-                {tag.toLowerCase()}
+                {(t(tag.toLowerCase()))}
               </div>
             ),
           })),

@@ -22,7 +22,7 @@ function LiveSearchBar(props: Props) {
         <LiveSessionSearchField />
       </div>
       <div className="flex items-center" style={{ width: '40%' }}>
-        <Tooltip title="Clear Steps">
+        <Tooltip title={t('Clear Steps')}>
           <Button
             type="text"
             disabled={!hasFilters}

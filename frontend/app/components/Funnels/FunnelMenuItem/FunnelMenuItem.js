@@ -2,6 +2,7 @@ import React from 'react';
 import cn from 'classnames';
 import { Icon, Tooltip } from 'UI';
 import stl from './funnelMenuItem.module.css';
+import { useTranslation } from 'react-i18next';
 
 function FunnelMenuItem({
   iconName = 'info',
@@ -12,6 +13,7 @@ function FunnelMenuItem({
   isPublic = false,
   onClick,
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -41,7 +43,7 @@ function FunnelMenuItem({
       </div>
       <div className="flex items-center">
         <div className={cn('mx-2', { invisible: !isPublic })}>
-          <Tooltip title="Shared with team">
+          <Tooltip title={t('Shared with team')}>
             <div
               className={cn(
                 'bg-gray-light h-8 w-8 rounded-full flex items-center justify-center',

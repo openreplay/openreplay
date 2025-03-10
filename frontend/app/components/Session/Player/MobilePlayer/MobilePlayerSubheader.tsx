@@ -11,6 +11,7 @@ import { useModal } from 'Components/ModalContext';
 import { PlayerContext } from 'Components/Session/playerContext';
 import HighlightButton from 'Components/Session_/Highlight/HighlightButton';
 import IssueForm from 'Components/Session_/Issues/IssueForm';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   setActiveTab: (tab: string) => void;
@@ -18,6 +19,7 @@ interface Props {
 }
 
 function SubHeader(props: Props) {
+  const { t } = useTranslation();
   const { sessionStore, integrationsStore, issueReportingStore } = useStore();
   const integrations = integrationsStore.issues.list;
   const isIOS = sessionStore.current.platform === 'ios';
@@ -66,7 +68,7 @@ function SubHeader(props: Props) {
         <HighlightButton onClick={() => props.setActiveTab('HIGHLIGHT')} />
         {enabledIntegration && <Issues sessionId={props.sessionId} />}
         <Bookmark sessionId={props.sessionId} />
-        <Tooltip title="Share Session" placement="bottom">
+        <Tooltip title={t('Share Session')} placement="bottom">
           <AntButton
             size="small"
             className="flex items-center justify-center"
@@ -77,7 +79,7 @@ function SubHeader(props: Props) {
                   hideModal={closeModal}
                   time={store?.get().time}
                 />,
-                { title: 'Share Session' },
+                { title: t('Share Session') },
               )
             }
           >

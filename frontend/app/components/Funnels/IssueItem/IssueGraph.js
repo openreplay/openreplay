@@ -4,7 +4,7 @@ import { Tooltip } from 'UI';
 function IssueGraph({ issue }) {
   return (
     <div className="flex rounded-sm" style={{ width: '600px' }}>
-      <Tooltip title="Unaffected sessions">
+      <Tooltip title={t('Unaffected sessions')}>
         <div
           style={{ width: `${issue.unaffectedSessionsPer}%` }}
           className="relative"
@@ -21,7 +21,7 @@ function IssueGraph({ issue }) {
           </div>
         </div>
       </Tooltip>
-      <Tooltip title="Affected sessions">
+      <Tooltip title={t('Affected sessions')}>
         <div
           style={{ width: `${issue.affectedSessionsPer}%` }}
           className="border-l relative"
@@ -39,7 +39,7 @@ function IssueGraph({ issue }) {
           {/* <div className="absolute left-0 ml-1 text-xs">{issue.affectedSessionsPer}</div> */}
         </div>
       </Tooltip>
-      <Tooltip title="Conversion lost">
+      <Tooltip title={t('Conversion lost')}>
         <div
           style={{ width: `${issue.lostConversionsPer}%` }}
           className="border-l relative"

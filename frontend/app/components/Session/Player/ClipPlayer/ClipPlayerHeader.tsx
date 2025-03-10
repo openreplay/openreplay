@@ -9,6 +9,7 @@ import * as routes from '@/routes';
 import { useStore } from '@/mstore';
 import { LinkIcon, X } from 'lucide-react';
 import { PartialSessionBadge } from 'Components/Session_/WarnBadge';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   session: Session;
@@ -18,6 +19,7 @@ interface Props {
 }
 
 function ClipPlayerHeader(props: Props) {
+  const { t } = useTranslation();
   const { projectsStore } = useStore();
   const { session, range, onClose, isHighlight } = props;
   const { siteId } = projectsStore;
@@ -35,7 +37,7 @@ function ClipPlayerHeader(props: Props) {
       <UserCard session={props.session} />
 
       <Space>
-        <Tooltip title="Copy link to clipboard" placement="bottom">
+        <Tooltip title={t('Copy link to clipboard')} placement="bottom">
           <Button
             onClick={copyHandler}
             size="small"

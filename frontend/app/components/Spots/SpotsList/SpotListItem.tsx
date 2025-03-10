@@ -22,6 +22,7 @@ import { spot as spotUrl, withSiteId } from 'App/routes';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import EditItemModal from './EditItemModal';
+import { useTranslation } from 'react-i18next';
 
 const backgroundUrl = '/assets/img/spotThumbBg.svg';
 
@@ -42,9 +43,10 @@ function SpotListItem({
   onSelect,
   isSelected,
 }: ISpotListItem) {
+  const { t } = useTranslation();
   const [isEdit, setIsEdit] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [tooltipText, setTooltipText] = useState('Copy link to clipboard');
+  const [tooltipText, setTooltipText] = useState(t('Copy link to clipboard'));
   const history = useHistory();
   const { siteId } = useParams<{ siteId: string }>();
 
@@ -52,17 +54,17 @@ function SpotListItem({
     {
       key: 'rename',
       icon: <EditOutlined />,
-      label: 'Rename',
+      label: t('Rename'),
     },
     {
       key: 'download',
-      label: 'Download Video',
+      label: t('Download Video'),
       icon: <DownloadOutlined />,
     },
     {
       key: 'delete',
       icon: <DeleteOutlined />,
-      label: 'Delete',
+      label: t('Delete'),
     },
   ];
 
@@ -70,7 +72,7 @@ function SpotListItem({
     menuItems.splice(1, 0, {
       key: 'slack',
       icon: <SlackOutlined />,
-      label: 'Share via Slack',
+      label: t('Share via Slack'),
     });
   }, []);
   const onMenuClick = async ({ key }: any) => {
@@ -88,7 +90,7 @@ function SpotListItem({
             siteId,
           )}`,
         );
-        return toast.success('Spot URL copied to clipboard');
+        return toast.success(t('Spot URL copied to clipboard'));
       case 'delete':
         return onDelete();
       case 'slack':
@@ -114,12 +116,12 @@ function SpotListItem({
     navigator.clipboard
       .writeText(fullLink)
       .then(() => {
-        setTooltipText('Link copied to clipboard!');
-        setTimeout(() => setTooltipText('Copy link to clipboard'), 2000); // Reset tooltip text after 2 seconds
+        setTooltipText(t('Link copied to clipboard!'));
+        setTimeout(() => setTooltipText(t('Copy link to clipboard')), 2000); // Reset tooltip text after 2 seconds
       })
       .catch(() => {
-        setTooltipText('Failed to copy URL');
-        setTimeout(() => setTooltipText('Copy link to clipboard'), 2000); // Reset tooltip text after 2 seconds
+        setTooltipText(t('Failed to copy URL'));
+        setTimeout(() => setTooltipText(t('Copy link to clipboard')), 2000); // Reset tooltip text after 2 seconds
       });
   };
 
