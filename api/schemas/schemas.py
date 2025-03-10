@@ -7,43 +7,29 @@ from pydantic.functional_validators import BeforeValidator
 
 from chalicelib.utils.TimeUTC import TimeUTC
 from .overrides import BaseModel, Enum, ORUnion
-from .transformers_validators import (
-    transform_email,
-    remove_whitespace,
-    remove_duplicate_values,
-    single_to_list,
-    force_is_event,
-    NAME_PATTERN,
-    int_to_string,
-    check_alphanumeric,
-)
+from .transformers_validators import transform_email, remove_whitespace, remove_duplicate_values, single_to_list, \
+    force_is_event, NAME_PATTERN, int_to_string, check_alphanumeric
 
 
 class _GRecaptcha(BaseModel):
-    g_recaptcha_response: Optional[str] = Field(
-        default=None, alias="g-recaptcha-response"
-    )
+    g_recaptcha_response: Optional[str] = Field(default=None, alias='g-recaptcha-response')
 
 
 class UserLoginSchema(_GRecaptcha):
     email: EmailStr = Field(...)
     password: SecretStr = Field(...)
 
-    _transform_email = field_validator("email", mode="before")(transform_email)
+    _transform_email = field_validator('email', mode='before')(transform_email)
 
 
 class UserSignupSchema(UserLoginSchema):
     fullname: str = Field(..., min_length=1)
     organizationName: str = Field(..., min_length=1)
 
-    _transform_fullname = field_validator("fullname", mode="before")(remove_whitespace)
-    _transform_organizationName = field_validator("organizationName", mode="before")(
-        remove_whitespace
-    )
+    _transform_fullname = field_validator('fullname', mode='before')(remove_whitespace)
+    _transform_organizationName = field_validator('organizationName', mode='before')(remove_whitespace)
 
-    _check_alphanumeric = field_validator("fullname", "organizationName")(
-        check_alphanumeric
-    )
+    _check_alphanumeric = field_validator('fullname', 'organizationName')(check_alphanumeric)
 
 
 class EditAccountSchema(BaseModel):
@@ -51,17 +37,15 @@ class EditAccountSchema(BaseModel):
     tenantName: Optional[str] = Field(default=None)
     opt_out: Optional[bool] = Field(default=None)
 
-    _transform_name = field_validator("name", mode="before")(remove_whitespace)
-    _transform_tenantName = field_validator("tenantName", mode="before")(
-        remove_whitespace
-    )
-    _check_alphanumeric = field_validator("name", "tenantName")(check_alphanumeric)
+    _transform_name = field_validator('name', mode='before')(remove_whitespace)
+    _transform_tenantName = field_validator('tenantName', mode='before')(remove_whitespace)
+    _check_alphanumeric = field_validator('name', 'tenantName')(check_alphanumeric)
 
 
 class ForgetPasswordPayloadSchema(_GRecaptcha):
     email: EmailStr = Field(...)
 
-    _transform_email = field_validator("email", mode="before")(transform_email)
+    _transform_email = field_validator('email', mode='before')(transform_email)
 
 
 class EditUserPasswordSchema(BaseModel):
@@ -73,7 +57,7 @@ class CreateProjectSchema(BaseModel):
     name: str = Field(default="my first project", pattern=NAME_PATTERN)
     platform: Literal["web", "ios"] = Field(default="web")
 
-    _transform_name = field_validator("name", mode="before")(remove_whitespace)
+    _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
 
 class ProjectContext(BaseModel):
@@ -93,7 +77,7 @@ class CurrentContext(CurrentAPIContext):
     email: EmailStr = Field(...)
     role: str = Field(...)
 
-    _transform_email = field_validator("email", mode="before")(transform_email)
+    _transform_email = field_validator('email', mode='before')(transform_email)
 
     @computed_field
     @property
@@ -115,8 +99,8 @@ class AddCollaborationSchema(BaseModel):
     name: str = Field(..., pattern=NAME_PATTERN)
     url: HttpUrl = Field(...)
 
-    _transform_name = field_validator("name", mode="before")(remove_whitespace)
-    _transform_url = field_validator("url", mode="before")(remove_whitespace)
+    _transform_name = field_validator('name', mode='before')(remove_whitespace)
+    _transform_url = field_validator('url', mode='before')(remove_whitespace)
 
 
 class EditCollaborationSchema(AddCollaborationSchema):
@@ -139,15 +123,12 @@ class _TimedSchema(BaseModel):
     @model_validator(mode="after")
     def __time_validator(self):
         if self.startTimestamp is not None:
-            assert (
-                    0 <= self.startTimestamp
-            ), "startTimestamp must be greater or equal to 0"
+            assert 0 <= self.startTimestamp, "startTimestamp must be greater or equal to 0"
         if self.endTimestamp is not None:
             assert 0 <= self.endTimestamp, "endTimestamp must be greater or equal to 0"
         if self.startTimestamp is not None and self.endTimestamp is not None:
-            assert (
-                    self.startTimestamp <= self.endTimestamp
-            ), "endTimestamp must be greater or equal to startTimestamp"
+            assert self.startTimestamp <= self.endTimestamp, \
+                "endTimestamp must be greater or equal to startTimestamp"
         return self
 
 
@@ -169,7 +150,7 @@ class IssueTrackingJiraSchema(IssueTrackingIntegration):
     username: str = Field(...)
     url: HttpUrl = Field(...)
 
-    @field_validator("url")
+    @field_validator('url')
     @classmethod
     def transform_url(cls, v: HttpUrl):
         return HttpUrl.build(scheme=v.scheme.lower(), host=v.host.lower())
@@ -182,7 +163,7 @@ class WebhookSchema(BaseModel):
     auth_header: Optional[str] = Field(default=None)
     name: str = Field(default="", max_length=100, pattern=NAME_PATTERN)
 
-    _transform_name = field_validator("name", mode="before")(remove_whitespace)
+    _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
 
 class CreateMemberSchema(BaseModel):
@@ -191,8 +172,8 @@ class CreateMemberSchema(BaseModel):
     email: EmailStr = Field(...)
     admin: Optional[bool] = Field(default=False)
 
-    _transform_email = field_validator("email", mode="before")(transform_email)
-    _transform_name = field_validator("name", mode="before")(remove_whitespace)
+    _transform_email = field_validator('email', mode='before')(transform_email)
+    _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
 
 class EditMemberSchema(BaseModel):
@@ -200,9 +181,9 @@ class EditMemberSchema(BaseModel):
     email: EmailStr = Field(...)
     admin: bool = Field(default=False)
 
-    _transform_email = field_validator("email", mode="before")(transform_email)
-    _transform_name = field_validator("name", mode="before")(remove_whitespace)
-    _check_alphanumeric = field_validator("name")(check_alphanumeric)
+    _transform_email = field_validator('email', mode='before')(transform_email)
+    _transform_name = field_validator('name', mode='before')(remove_whitespace)
+    _check_alphanumeric = field_validator('name')(check_alphanumeric)
 
 
 class EditPasswordByInvitationSchema(BaseModel):
@@ -217,7 +198,7 @@ class AssignmentSchema(BaseModel):
     title: str = Field(...)
     issue_type: str = Field(...)
 
-    _transform_title = field_validator("title", mode="before")(remove_whitespace)
+    _transform_title = field_validator('title', mode='before')(remove_whitespace)
 
 
 class CommentAssignmentSchema(BaseModel):
@@ -313,14 +294,14 @@ class MetadataSchema(BaseModel):
     index: Optional[int] = Field(default=None)
     key: str = Field(...)
 
-    _transform_key = field_validator("key", mode="before")(remove_whitespace)
+    _transform_key = field_validator('key', mode='before')(remove_whitespace)
 
 
 class _AlertMessageSchema(BaseModel):
     type: str = Field(...)
     value: str = Field(...)
 
-    _transform_value = field_validator("value", mode="before")(int_to_string)
+    _transform_value = field_validator('value', mode='before')(int_to_string)
 
 
 class AlertDetectionType(str, Enum):
@@ -338,9 +319,7 @@ class _AlertOptionSchema(BaseModel):
 
 class AlertColumn(str, Enum):
     PERFORMANCE__DOM_CONTENT_LOADED__AVERAGE = "performance.dom_content_loaded.average"
-    PERFORMANCE__FIRST_MEANINGFUL_PAINT__AVERAGE = (
-        "performance.first_meaningful_paint.average"
-    )
+    PERFORMANCE__FIRST_MEANINGFUL_PAINT__AVERAGE = "performance.first_meaningful_paint.average"
     PERFORMANCE__PAGE_LOAD_TIME__AVERAGE = "performance.page_load_time.average"
     PERFORMANCE__DOM_BUILD_TIME__AVERAGE = "performance.dom_build_time.average"
     PERFORMANCE__SPEED_INDEX__AVERAGE = "performance.speed_index.average"
@@ -511,30 +490,30 @@ class SearchEventOrder(str, Enum):
 
 
 class IssueType(str, Enum):
-    CLICK_RAGE = "click_rage"
-    DEAD_CLICK = "dead_click"
-    EXCESSIVE_SCROLLING = "excessive_scrolling"
-    BAD_REQUEST = "bad_request"
-    MISSING_RESOURCE = "missing_resource"
-    MEMORY = "memory"
-    CPU = "cpu"
-    SLOW_RESOURCE = "slow_resource"
-    SLOW_PAGE_LOAD = "slow_page_load"
-    CRASH = "crash"
-    CUSTOM = "custom"
-    JS_EXCEPTION = "js_exception"
-    MOUSE_THRASHING = "mouse_thrashing"
+    CLICK_RAGE = 'click_rage'
+    DEAD_CLICK = 'dead_click'
+    EXCESSIVE_SCROLLING = 'excessive_scrolling'
+    BAD_REQUEST = 'bad_request'
+    MISSING_RESOURCE = 'missing_resource'
+    MEMORY = 'memory'
+    CPU = 'cpu'
+    SLOW_RESOURCE = 'slow_resource'
+    SLOW_PAGE_LOAD = 'slow_page_load'
+    CRASH = 'crash'
+    CUSTOM = 'custom'
+    JS_EXCEPTION = 'js_exception'
+    MOUSE_THRASHING = 'mouse_thrashing'
     # IOS
-    TAP_RAGE = "tap_rage"
+    TAP_RAGE = 'tap_rage'
 
 
 class MetricFormatType(str, Enum):
-    SESSION_COUNT = "sessionCount"
+    SESSION_COUNT = 'sessionCount'
 
 
 class MetricExtendedFormatType(str, Enum):
-    SESSION_COUNT = "sessionCount"
-    USER_COUNT = "userCount"
+    SESSION_COUNT = 'sessionCount'
+    USER_COUNT = 'userCount'
 
 
 class FetchFilterType(str, Enum):
@@ -561,13 +540,8 @@ class RequestGraphqlFilterSchema(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _transform_data(cls, values):
-        if values.get("type") in [
-            FetchFilterType.FETCH_DURATION,
-            FetchFilterType.FETCH_STATUS_CODE,
-        ]:
-            values["value"] = [
-                int(v) for v in values["value"] if v is not None and str(v).isnumeric()
-            ]
+        if values.get("type") in [FetchFilterType.FETCH_DURATION, FetchFilterType.FETCH_STATUS_CODE]:
+            values["value"] = [int(v) for v in values["value"] if v is not None and str(v).isnumeric()]
         return values
 
 
@@ -580,10 +554,8 @@ class SessionSearchEventSchema2(BaseModel):
     sourceOperator: Optional[MathOperator] = Field(default=None)
     filters: Optional[List[RequestGraphqlFilterSchema]] = Field(default_factory=list)
 
-    _remove_duplicate_values = field_validator("value", mode="before")(
-        remove_duplicate_values
-    )
-    _single_to_list_values = field_validator("value", mode="before")(single_to_list)
+    _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
+    _single_to_list_values = field_validator('value', mode='before')(single_to_list)
 
     @model_validator(mode="after")
     def event_validator(self):
@@ -591,32 +563,24 @@ class SessionSearchEventSchema2(BaseModel):
             if self.type == PerformanceEventType.FETCH_FAILED:
                 return self
 
-            assert (
-                    self.sourceOperator is not None
-            ), "sourceOperator should not be null for PerformanceEventType"
+            assert self.sourceOperator is not None, \
+                "sourceOperator should not be null for PerformanceEventType"
             assert self.source is not None, f"source is required for {self.type}"
-            assert isinstance(
-                self.source, list
-            ), f"source of type list is required for {self.type}"
+            assert isinstance(self.source, list), f"source of type list is required for {self.type}"
             for c in self.source:
-                assert isinstance(
-                    c, int
-                ), f"source value should be of type int for {self.type}"
+                assert isinstance(c, int), f"source value should be of type int for {self.type}"
         elif self.type == EventType.ERROR and self.source is None:
             self.source = [ErrorSource.JS_EXCEPTION]
         elif self.type == EventType.REQUEST_DETAILS:
-            assert (
-                    isinstance(self.filters, List) and len(self.filters) > 0
-            ), f"filters should be defined for {EventType.REQUEST_DETAILS}"
+            assert isinstance(self.filters, List) and len(self.filters) > 0, \
+                f"filters should be defined for {EventType.REQUEST_DETAILS}"
         elif self.type == EventType.GRAPHQL:
-            assert (
-                    isinstance(self.filters, List) and len(self.filters) > 0
-            ), f"filters should be defined for {EventType.GRAPHQL}"
+            assert isinstance(self.filters, List) and len(self.filters) > 0, \
+                f"filters should be defined for {EventType.GRAPHQL}"
 
         if isinstance(self.operator, ClickEventExtraOperator):
-            assert (
-                    self.type == EventType.CLICK
-            ), f"operator:{self.operator} is only available for event-type: {EventType.CLICK}"
+            assert self.type == EventType.CLICK, \
+                f"operator:{self.operator} is only available for event-type: {EventType.CLICK}"
         return self
 
 
@@ -627,10 +591,8 @@ class SessionSearchFilterSchema(BaseModel):
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[Union[ErrorSource, str]] = Field(default=None)
 
-    _remove_duplicate_values = field_validator("value", mode="before")(
-        remove_duplicate_values
-    )
-    _single_to_list_values = field_validator("value", mode="before")(single_to_list)
+    _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
+    _single_to_list_values = field_validator('value', mode='before')(single_to_list)
 
     @model_validator(mode="before")
     @classmethod
@@ -648,44 +610,33 @@ class SessionSearchFilterSchema(BaseModel):
     @model_validator(mode="after")
     def filter_validator(self):
         if self.type == FilterType.METADATA:
-            assert (
-                    self.source is not None and len(self.source) > 0
-            ), "must specify a valid 'source' for metadata filter"
+            assert self.source is not None and len(self.source) > 0, \
+                "must specify a valid 'source' for metadata filter"
         elif self.type == FilterType.ISSUE:
             for i, v in enumerate(self.value):
                 if IssueType.has_value(v):
                     self.value[i] = IssueType(v)
                 else:
-                    raise ValueError(
-                        f"value should be of type IssueType for {self.type} filter"
-                    )
+                    raise ValueError(f"value should be of type IssueType for {self.type} filter")
         elif self.type == FilterType.PLATFORM:
             for i, v in enumerate(self.value):
                 if PlatformType.has_value(v):
                     self.value[i] = PlatformType(v)
                 else:
-                    raise ValueError(
-                        f"value should be of type PlatformType for {self.type} filter"
-                    )
+                    raise ValueError(f"value should be of type PlatformType for {self.type} filter")
         elif self.type == FilterType.EVENTS_COUNT:
             if MathOperator.has_value(self.operator):
                 self.operator = MathOperator(self.operator)
             else:
-                raise ValueError(
-                    f"operator should be of type MathOperator for {self.type} filter"
-                )
+                raise ValueError(f"operator should be of type MathOperator for {self.type} filter")
 
             for v in self.value:
-                assert isinstance(
-                    v, int
-                ), f"value should be of type int for {self.type} filter"
+                assert isinstance(v, int), f"value should be of type int for {self.type} filter"
         else:
             if SearchEventOperator.has_value(self.operator):
                 self.operator = SearchEventOperator(self.operator)
             else:
-                raise ValueError(
-                    f"operator should be of type SearchEventOperator for {self.type} filter"
-                )
+                raise ValueError(f"operator should be of type SearchEventOperator for {self.type} filter")
 
         return self
 
@@ -702,26 +653,19 @@ class SortOrderType(str, Enum):
 
 def add_missing_is_event(values: dict):
     if values.get("isEvent") is None:
-        values["isEvent"] = (
-                EventType.has_value(values["type"])
-                or PerformanceEventType.has_value(values["type"])
-                or ProductAnalyticsSelectedEventType.has_value(values["type"])
-        )
+        values["isEvent"] = (EventType.has_value(values["type"])
+                             or PerformanceEventType.has_value(values["type"])
+                             or ProductAnalyticsSelectedEventType.has_value(values["type"]))
     return values
 
 
 # this type is created to allow mixing events&filters and specifying a discriminator
-GroupedFilterType = Annotated[
-    Union[SessionSearchFilterSchema, SessionSearchEventSchema2],
-    Field(discriminator="is_event"),
-    BeforeValidator(add_missing_is_event),
-]
+GroupedFilterType = Annotated[Union[SessionSearchFilterSchema, SessionSearchEventSchema2],
+Field(discriminator='is_event'), BeforeValidator(add_missing_is_event)]
 
 
 class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
-    events: List[SessionSearchEventSchema2] = Field(
-        default_factory=list, doc_hidden=True
-    )
+    events: List[SessionSearchEventSchema2] = Field(default_factory=list, doc_hidden=True)
     filters: List[GroupedFilterType] = Field(default_factory=list)
     sort: str = Field(default="startTs")
     order: SortOrderType = Field(default=SortOrderType.DESC)
@@ -765,9 +709,8 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
             for v in f.get("value", []):
                 if f.get("type", "") == FilterType.DURATION.value and v is None:
                     v = 0
-                if v is not None and (
-                        f.get("type", "") != FilterType.DURATION.value or str(v).isnumeric()
-                ):
+                if v is not None and (f.get("type", "") != FilterType.DURATION.value
+                                      or str(v).isnumeric()):
                     vals.append(v)
             f["value"] = vals
         return values
@@ -798,14 +741,9 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
                 continue
             j = i + 1
             while j < len(values):
-                if (
-                        values[i].type == values[j].type
-                        and values[i].operator == values[j].operator
-                        and (
-                        values[i].type != FilterType.METADATA
-                        or values[i].source == values[j].source
-                )
-                ):
+                if values[i].type == values[j].type \
+                        and values[i].operator == values[j].operator \
+                        and (values[i].type != FilterType.METADATA or values[i].source == values[j].source):
                     values[i].value += values[j].value
                     del values[j]
                 else:
@@ -817,16 +755,16 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
 
 
 class ErrorStatus(str, Enum):
-    ALL = "all"
-    UNRESOLVED = "unresolved"
-    RESOLVED = "resolved"
-    IGNORED = "ignored"
+    ALL = 'all'
+    UNRESOLVED = 'unresolved'
+    RESOLVED = 'resolved'
+    IGNORED = 'ignored'
 
 
 class ErrorSort(str, Enum):
-    OCCURRENCE = "occurrence"
-    USERS_COUNT = "users"
-    SESSIONS_COUNT = "sessions"
+    OCCURRENCE = 'occurrence'
+    USERS_COUNT = 'users'
+    SESSIONS_COUNT = 'sessions'
 
 
 class SearchErrorsSchema(SessionsSearchPayloadSchema):
@@ -849,9 +787,7 @@ class PathAnalysisSubFilterSchema(BaseModel):
     type: ProductAnalyticsSelectedEventType = Field(...)
     operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
 
-    _remove_duplicate_values = field_validator("value", mode="before")(
-        remove_duplicate_values
-    )
+    _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
 
     @model_validator(mode="before")
     @classmethod
@@ -863,36 +799,26 @@ class PathAnalysisSubFilterSchema(BaseModel):
 class _ProductAnalyticsFilter(BaseModel):
     is_event: Literal[False] = False
     type: FilterType
-    operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(
-        ...
-    )
+    operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
     value: List[Union[IssueType, PlatformType, int, str]] = Field(...)
     source: Optional[str] = Field(default=None)
 
-    _remove_duplicate_values = field_validator("value", mode="before")(
-        remove_duplicate_values
-    )
+    _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
 
 
 class _ProductAnalyticsEventFilter(BaseModel):
     is_event: Literal[True] = True
     type: ProductAnalyticsSelectedEventType
-    operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(
-        ...
-    )
+    operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
     # TODO: support session metadata filters
     value: List[Union[IssueType, PlatformType, int, str]] = Field(...)
 
-    _remove_duplicate_values = field_validator("value", mode="before")(
-        remove_duplicate_values
-    )
+    _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
 
 
 # this type is created to allow mixing events&filters and specifying a discriminator for PathAnalysis series filter
-ProductAnalyticsFilter = Annotated[
-    Union[_ProductAnalyticsFilter, _ProductAnalyticsEventFilter],
-    Field(discriminator="is_event"),
-]
+ProductAnalyticsFilter = Annotated[Union[_ProductAnalyticsFilter, _ProductAnalyticsEventFilter],
+Field(discriminator='is_event')]
 
 
 class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
@@ -900,9 +826,8 @@ class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
     filters: List[ProductAnalyticsFilter] = Field(default_factory=list)
     type: Optional[str] = Field(default=None)
 
-    _transform_filters = field_validator("filters", mode="before")(
-        force_is_event(events_enum=[ProductAnalyticsSelectedEventType])
-    )
+    _transform_filters = field_validator('filters', mode='before') \
+        (force_is_event(events_enum=[ProductAnalyticsSelectedEventType]))
 
 
 class MobileSignPayloadSchema(BaseModel):
@@ -999,9 +924,8 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
     # Used mainly for PathAnalysis, and could be used by other cards
     hide_excess: Optional[bool] = Field(default=False, description="Hide extra values")
 
-    _transform_filters = field_validator("filters", mode="before")(
-        force_is_event(events_enum=[EventType, PerformanceEventType])
-    )
+    _transform_filters = field_validator('filters', mode='before') \
+        (force_is_event(events_enum=[EventType, PerformanceEventType]))
 
     @model_validator(mode="before")
     @classmethod
@@ -1127,17 +1051,12 @@ class CardTable(__CardSchema):
     metric_type: Literal[MetricType.TABLE]
     metric_of: MetricOfTable = Field(default=MetricOfTable.USER_ID)
     view_type: MetricTableViewType = Field(...)
-    metric_format: MetricExtendedFormatType = Field(
-        default=MetricExtendedFormatType.SESSION_COUNT
-    )
+    metric_format: MetricExtendedFormatType = Field(default=MetricExtendedFormatType.SESSION_COUNT)
 
     @model_validator(mode="before")
     @classmethod
     def __enforce_default(cls, values):
-        if (
-                values.get("metricOf") is not None
-                and values.get("metricOf") != MetricOfTable.ISSUES
-        ):
+        if values.get("metricOf") is not None and values.get("metricOf") != MetricOfTable.ISSUES:
             values["metricValue"] = []
         return values
 
@@ -1148,18 +1067,12 @@ class CardTable(__CardSchema):
 
     @model_validator(mode="after")
     def __validator(self):
-        if self.metric_of not in (
-                MetricOfTable.ISSUES,
-                MetricOfTable.USER_BROWSER,
-                MetricOfTable.USER_DEVICE,
-                MetricOfTable.USER_COUNTRY,
-                MetricOfTable.VISITED_URL,
-                MetricOfTable.REFERRER,
-                MetricOfTable.FETCH,
-        ):
-            assert (
-                    self.metric_format == MetricExtendedFormatType.SESSION_COUNT
-            ), f"metricFormat:{MetricExtendedFormatType.USER_COUNT.value} is not supported for this metricOf"
+        if self.metric_of not in (MetricOfTable.ISSUES, MetricOfTable.USER_BROWSER,
+                                  MetricOfTable.USER_DEVICE, MetricOfTable.USER_COUNTRY,
+                                  MetricOfTable.VISITED_URL, MetricOfTable.REFERRER,
+                                  MetricOfTable.FETCH):
+            assert self.metric_format == MetricExtendedFormatType.SESSION_COUNT, \
+                f'metricFormat:{MetricExtendedFormatType.USER_COUNT.value} is not supported for this metricOf'
         return self
 
 
@@ -1167,9 +1080,7 @@ class CardFunnel(__CardSchema):
     metric_type: Literal[MetricType.FUNNEL]
     metric_of: MetricOfFunnels = Field(default=MetricOfFunnels.SESSION_COUNT)
     view_type: MetricOtherViewType = Field(...)
-    metric_format: MetricExtendedFormatType = Field(
-        default=MetricExtendedFormatType.SESSION_COUNT
-    )
+    metric_format: MetricExtendedFormatType = Field(default=MetricExtendedFormatType.SESSION_COUNT)
 
     @model_validator(mode="before")
     @classmethod
@@ -1211,16 +1122,10 @@ class CardPathAnalysisSeriesSchema(CardSeriesSchema):
     @model_validator(mode="before")
     @classmethod
     def __enforce_default(cls, values):
-        if (
-                values.get("filter") is None
-                and values.get("startTimestamp")
-                and values.get("endTimestamp")
-        ):
-            values["filter"] = PathAnalysisSchema(
-                startTimestamp=values["startTimestamp"],
-                endTimestamp=values["endTimestamp"],
-                density=values.get("density", 4),
-            )
+        if values.get("filter") is None and values.get("startTimestamp") and values.get("endTimestamp"):
+            values["filter"] = PathAnalysisSchema(startTimestamp=values["startTimestamp"],
+                                                  endTimestamp=values["endTimestamp"],
+                                                  density=values.get("density", 4))
         return values
 
 
@@ -1270,23 +1175,20 @@ class CardPathAnalysis(__CardSchema):
         for f in self.excludes:
             exclude_values[f.type] = exclude_values.get(f.type, []) + f.value
 
-        assert (
-                len(self.start_point) <= 1
-        ), f"Only 1 startPoint with multiple values OR 1 endPoint with multiple values is allowed"
+        assert len(
+            self.start_point) <= 1, \
+            f"Only 1 startPoint with multiple values OR 1 endPoint with multiple values is allowed"
         for t in exclude_values:
             for v in t:
-                assert v not in s_e_values.get(
-                    t, []
-                ), f"startPoint and endPoint cannot be excluded, value: {v}"
+                assert v not in s_e_values.get(t, []), f"startPoint and endPoint cannot be excluded, value: {v}"
 
         return self
 
 
 # Union of cards-schemas that doesn't change between FOSS and EE
 __cards_union_base = Union[
-    CardTimeSeries, CardTable, CardFunnel, CardHeatMap, CardPathAnalysis
-]
-CardSchema = ORUnion(__cards_union_base, discriminator="metric_type")
+    CardTimeSeries, CardTable, CardFunnel, CardHeatMap, CardPathAnalysis]
+CardSchema = ORUnion(__cards_union_base, discriminator='metric_type')
 
 
 class UpdateCardStatusSchema(BaseModel):
@@ -1314,7 +1216,7 @@ class ProjectSettings(BaseModel):
 
 class CreateDashboardSchema(BaseModel):
     name: str = Field(..., min_length=1)
-    description: Optional[str] = Field(default="")
+    description: Optional[str] = Field(default='')
     is_public: bool = Field(default=False)
     is_pinned: bool = Field(default=False)
     metrics: Optional[List[int]] = Field(default_factory=list)
@@ -1367,16 +1269,13 @@ class LiveSessionSearchFilterSchema(BaseModel):
     value: Union[List[str], str] = Field(...)
     type: LiveFilterType = Field(...)
     source: Optional[str] = Field(default=None)
-    operator: Literal[SearchEventOperator.IS, SearchEventOperator.CONTAINS] = Field(
-        default=SearchEventOperator.CONTAINS
-    )
+    operator: Literal[SearchEventOperator.IS, SearchEventOperator.CONTAINS] \
+        = Field(default=SearchEventOperator.CONTAINS)
 
     @model_validator(mode="after")
     def __validator(self):
         if self.type is not None and self.type == LiveFilterType.METADATA:
-            assert (
-                    self.source is not None
-            ), "source should not be null for METADATA type"
+            assert self.source is not None, "source should not be null for METADATA type"
             assert len(self.source) > 0, "source should not be empty for METADATA type"
         return self
 
@@ -1394,10 +1293,7 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
         if values.get("filters") is not None:
             i = 0
             while i < len(values["filters"]):
-                if (
-                        values["filters"][i]["value"] is None
-                        or len(values["filters"][i]["value"]) == 0
-                ):
+                if values["filters"][i]["value"] is None or len(values["filters"][i]["value"]) == 0:
                     del values["filters"][i]
                 else:
                     i += 1
@@ -1453,11 +1349,8 @@ class SessionUpdateNoteSchema(SessionNoteSchema):
 
     @model_validator(mode="after")
     def __validator(self):
-        assert (
-                self.message is not None
-                or self.timestamp is not None
-                or self.is_public is not None
-        ), "at least 1 attribute should be provided for update"
+        assert self.message is not None or self.timestamp is not None or self.is_public is not None, \
+            "at least 1 attribute should be provided for update"
         return self
 
 
@@ -1475,56 +1368,13 @@ class SearchCardsSchema(_PaginatedSchema):
     query: Optional[str] = Field(default=None)
 
 
-class MetricSortColumnType(str, Enum):
-    NAME = "name"
-    METRIC_TYPE = "metric_type"
-    METRIC_OF = "metric_of"
-    IS_PUBLIC = "is_public"
-    CREATED_AT = "created_at"
-    EDITED_AT = "edited_at"
-
-
-class MetricFilterColumnType(str, Enum):
-    NAME = "name"
-    METRIC_TYPE = "metric_type"
-    METRIC_OF = "metric_of"
-    IS_PUBLIC = "is_public"
-    USER_ID = "user_id"
-    CREATED_AT = "created_at"
-    EDITED_AT = "edited_at"
-
-
-class MetricListSort(BaseModel):
-    # column_key: Optional[MetricSortColumnType] = Field(
-    #     default=MetricSortColumnType.CREATED_AT
-    # )
-    field: Optional[str] = Field(default=None)
-    order: Optional[str] = Field(default=SortOrderType.DESC)
-
-
-class MetricFilter(BaseModel):
-    type: Optional[str] = Field(default=None)
-    query: Optional[str] = Field(default=None)
-
-
-class MetricSearchSchema(_PaginatedSchema):
-    # order: SortOrderType = Field(default=SortOrderType.DESC)
-    filter: Optional[MetricFilter] = Field(default=None)
-    sort: Optional[MetricListSort] = Field(default=MetricListSort())
-    shared_only: bool = Field(default=False)
-    mine_only: bool = Field(default=False)
-    # query: Optional[str] = Field(default=None)
-
-
 class _HeatMapSearchEventRaw(SessionSearchEventSchema2):
     type: Literal[EventType.LOCATION] = Field(...)
 
 
 class HeatMapSessionsSearch(SessionsSearchPayloadSchema):
     events: Optional[List[_HeatMapSearchEventRaw]] = Field(default_factory=list)
-    filters: List[Union[SessionSearchFilterSchema, _HeatMapSearchEventRaw]] = Field(
-        default_factory=list
-    )
+    filters: List[Union[SessionSearchFilterSchema, _HeatMapSearchEventRaw]] = Field(default_factory=list)
 
     @model_validator(mode="before")
     @classmethod
@@ -1533,21 +1383,13 @@ class HeatMapSessionsSearch(SessionsSearchPayloadSchema):
             if f.get("type") == FilterType.DURATION:
                 return values
         values["filters"] = values.get("filters", [])
-        values["filters"].append(
-            {
-                "value": [5000],
-                "type": FilterType.DURATION,
-                "operator": SearchEventOperator.IS,
-                "filters": [],
-            }
-        )
+        values["filters"].append({"value": [5000], "type": FilterType.DURATION,
+                                  "operator": SearchEventOperator.IS, "filters": []})
         return values
 
 
 class HeatMapFilterSchema(BaseModel):
-    value: List[Literal[IssueType.CLICK_RAGE, IssueType.DEAD_CLICK]] = Field(
-        default_factory=list
-    )
+    value: List[Literal[IssueType.CLICK_RAGE, IssueType.DEAD_CLICK]] = Field(default_factory=list)
     type: Literal[FilterType.ISSUE] = Field(...)
     operator: Literal[SearchEventOperator.IS, MathOperator.EQUAL] = Field(...)
 
@@ -1556,12 +1398,8 @@ class GetHeatMapPayloadSchema(_TimedSchema):
     url: Optional[str] = Field(default=None)
     filters: List[HeatMapFilterSchema] = Field(default_factory=list)
     click_rage: bool = Field(default=False)
-    operator: Literal[
-        SearchEventOperator.IS,
-        SearchEventOperator.STARTS_WITH,
-        SearchEventOperator.CONTAINS,
-        SearchEventOperator.ENDS_WITH,
-    ] = Field(default=SearchEventOperator.STARTS_WITH)
+    operator: Literal[SearchEventOperator.IS, SearchEventOperator.STARTS_WITH,
+    SearchEventOperator.CONTAINS, SearchEventOperator.ENDS_WITH] = Field(default=SearchEventOperator.STARTS_WITH)
 
 
 class GetClickMapPayloadSchema(GetHeatMapPayloadSchema):
@@ -1582,9 +1420,7 @@ class FeatureFlagConditionFilterSchema(BaseModel):
     value: List[str] = Field(default_factory=list, min_length=1)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[str] = Field(default=None)
-    sourceOperator: Optional[Union[SearchEventOperator, MathOperator]] = Field(
-        default=None
-    )
+    sourceOperator: Optional[Union[SearchEventOperator, MathOperator]] = Field(default=None)
 
     @model_validator(mode="before")
     @classmethod
@@ -1619,7 +1455,7 @@ class FeatureFlagStatus(BaseModel):
 
 class FeatureFlagSchema(BaseModel):
     payload: Optional[str] = Field(default=None)
-    flag_key: str = Field(..., pattern=r"^[a-zA-Z0-9\-]+$")
+    flag_key: str = Field(..., pattern=r'^[a-zA-Z0-9\-]+$')
     description: Optional[str] = Field(default=None)
     flag_type: FeatureFlagType = Field(default=FeatureFlagType.SINGLE_VARIANT)
     is_persist: Optional[bool] = Field(default=False)
@@ -1646,7 +1482,7 @@ class ModuleStatus(BaseModel):
 
 
 class TagUpdate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100, pattern='^[a-zA-Z0-9" -]*$')
+    name: str = Field(..., min_length=1, max_length=100, pattern='^[a-zA-Z0-9\" -]*$')
 
 
 class TagCreate(TagUpdate):
