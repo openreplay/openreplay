@@ -6,16 +6,15 @@ import { sliceListPerPage } from 'App/utils';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { Popover, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import GridView from './GridView';
 import ListView from './ListView';
 import AddCardSection from '../AddCardSection/AddCardSection';
 import { useTranslation } from 'react-i18next';
 
 function MetricsList({
-  siteId,
-  onSelectionChange,
-  inLibrary,
-}: {
+                       siteId,
+                       onSelectionChange,
+                       inLibrary
+                     }: {
   siteId: string;
   onSelectionChange?: (selected: any[]) => void;
   inLibrary?: boolean;
@@ -23,28 +22,27 @@ function MetricsList({
   const { t } = useTranslation();
   const { metricStore, dashboardStore } = useStore();
   const metricsSearch = metricStore.filter.query;
-  const listView = inLibrary ? true : metricStore.listView;
   const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
 
   const dashboard = dashboardStore.selectedDashboard;
   const existingCardIds = useMemo(
     () => dashboard?.widgets?.map((i) => parseInt(i.metricId)),
-    [dashboard],
+    [dashboard]
   );
   const cards = useMemo(
     () =>
       onSelectionChange
         ? metricStore.filteredCards.filter(
-            (i) => !existingCardIds?.includes(parseInt(i.metricId)),
-          )
+          (i) => !existingCardIds?.includes(parseInt(i.metricId))
+        )
         : metricStore.filteredCards,
-    [metricStore.filteredCards, existingCardIds, onSelectionChange],
+    [metricStore.filteredCards, existingCardIds, onSelectionChange]
   );
   const loading = metricStore.isLoading;
 
   useEffect(() => {
     void metricStore.fetchList();
-  }, [metricStore]);
+  }, [metricStore.page, metricStore.filter, metricStore.sort]);
 
   useEffect(() => {
     if (!onSelectionChange) return;
@@ -69,14 +67,8 @@ function MetricsList({
     metricStore.updateKey('sessionsPage', 1);
   }, [metricStore]);
 
-  const showOwn = metricStore.filter.showMine;
-  const toggleOwn = () => {
-    metricStore.updateKey('showMine', !showOwn);
-  };
 
-  const isFiltered =
-    metricsSearch !== '' ||
-    (metricStore.filter.type && metricStore.filter.type !== 'all');
+  const isFiltered = metricStore.filter.query !== '' || metricStore.filter.type !== 'all';
 
   const searchImageDimensions = { width: 60, height: 'auto' };
   const defaultImageDimensions = { width: 600, height: 'auto' };
@@ -86,101 +78,65 @@ function MetricsList({
     : defaultImageDimensions;
 
   return (
-    <Loader loading={loading}>
-      <NoContent
-        show={length === 0}
-        title={
-          <div className="flex flex-col items-center justify-center">
-            <AnimatedSVG name={emptyImage} size={imageDimensions.width} />
-            <div className="text-center mt-3 text-lg font-medium">
-              {isFiltered
-                ? t('No matching results')
-                : t('Unlock insights with data cards')}
-            </div>
+    <NoContent
+      show={!loading && length === 0}
+      title={
+        <div className="flex flex-col items-center justify-center">
+          <AnimatedSVG name={emptyImage} size={imageDimensions.width} />
+          <div className="text-center mt-3 text-lg font-medium">
+            {isFiltered
+              ? t('No matching results')
+              : t('Unlock insights with data cards')}
           </div>
-        }
-        subtext={
-          isFiltered ? (
-            ''
-          ) : (
-            <div className="flex flex-col items-center">
-              <div>
-                {t('Create and customize cards to analyze trends and user behavior effectively.')}
-              </div>
-              <Popover
-                arrow={false}
-                overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
-                content={<AddCardSection fit inCards />}
-                trigger="click"
-              >
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  className="btn-create-card mt-3"
-                >
-                  {t('Create Card')}
-                </Button>
-              </Popover>
-            </div>
-          )
-        }
-      >
-        {listView ? (
-          <ListView
-            disableSelection={!onSelectionChange}
-            siteId={siteId}
-            list={cards}
-            inLibrary={inLibrary}
-            selectedList={selectedMetrics}
-            existingCardIds={existingCardIds}
-            toggleSelection={toggleMetricSelection}
-            allSelected={cards.length === selectedMetrics.length}
-            showOwn={showOwn}
-            toggleOwn={toggleOwn}
-            toggleAll={({ target: { checked } }) =>
-              setSelectedMetrics(
-                checked
-                  ? cards
-                      .map((i: any) => i.metricId)
-                      .slice(0, 30 - (existingCardIds?.length || 0))
-                  : [],
-              )
-            }
-          />
+        </div>
+      }
+      subtext={
+        isFiltered ? (
+          ''
         ) : (
-          <>
-            <GridView
-              siteId={siteId}
-              list={sliceListPerPage(
-                cards,
-                metricStore.page - 1,
-                metricStore.pageSize,
-              )}
-              selectedList={selectedMetrics}
-              toggleSelection={toggleMetricSelection}
-            />
-            <div className="w-full flex items-center justify-between py-4 px-6 border-t">
-              <div>
-                {t('Showing')}{' '}
-                <span className="font-medium">
-                  {Math.min(cards.length, metricStore.pageSize)}
-                </span>{' '}
-                {t('out of')}&nbsp;
-                <span className="font-medium">{cards.length}</span>&nbsp;
-                {t('cards')}
-              </div>
-              <Pagination
-                page={metricStore.page}
-                total={length}
-                onPageChange={(page) => metricStore.updateKey('page', page)}
-                limit={metricStore.pageSize}
-                debounceRequest={100}
-              />
+          <div className="flex flex-col items-center">
+            <div>
+              {t('Create and customize cards to analyze trends and user behavior effectively.')}
             </div>
-          </>
-        )}
-      </NoContent>
-    </Loader>
+            <Popover
+              arrow={false}
+              overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
+              content={<AddCardSection fit inCards />}
+              trigger="click"
+            >
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                className="btn-create-card mt-3"
+              >
+                {t('Create Card')}
+              </Button>
+            </Popover>
+          </div>
+        )
+      }
+    >
+      <ListView
+        loading={loading}
+        disableSelection={!onSelectionChange}
+        siteId={siteId}
+        list={cards}
+        inLibrary={inLibrary}
+        selectedList={selectedMetrics}
+        // existingCardIds={existingCardIds}
+        toggleSelection={toggleMetricSelection}
+        // allSelected={cards.length === selectedMetrics.length}
+        // toggleAll={({ target: { checked } }) =>
+        //   setSelectedMetrics(
+        //     checked
+        //       ? cards
+        //         .map((i: any) => i.metricId)
+        //         .slice(0, 30 - (existingCardIds?.length || 0))
+        //       : []
+        //   )
+        // }
+      />
+    </NoContent>
   );
 }
 

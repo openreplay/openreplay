@@ -41,9 +41,9 @@ function MetricViewHeader() {
   // Show header if there are cards or if a filter is active
   const showHeader = cardsLength > 0 || isFilterActive;
 
-  useEffect(() => {
-    metricStore.updateKey('sort', { by: 'desc' });
-  }, [metricStore]);
+  // useEffect(() => {
+  //   metricStore.updateKey('sort', { by: 'desc' });
+  // }, [metricStore]);
 
   const handleMenuClick = ({ key }: { key: string }) => {
     metricStore.updateKey('filter', { ...filter, type: key });

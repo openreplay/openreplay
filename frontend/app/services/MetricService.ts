@@ -25,6 +25,17 @@ export default class MetricService {
   }
 
   /**
+   * Get all metrics paginated.
+   * @returns {Promise<any>}
+   */
+  getMetricsPaginated(params: any): Promise<any> {
+    return this.client
+      .post('/cards/search', params)
+      .then((response: { json: () => any }) => response.json())
+      .then((response: { data: any }) => response.data || []);
+  }
+
+  /**
    * Get a metric by metricId.
    * @param metricId
    * @returns {Promise<any>}
