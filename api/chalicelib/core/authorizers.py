@@ -28,9 +28,6 @@ def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
     if scheme.lower() != "bearer":
         return None
     try:
-        logger.warning("Checking JWT token: %s", token)
-        logger.warning("Against: %s", config("JWT_SECRET") if not is_spot_token(token) else config("JWT_SPOT_SECRET"))
-        logger.warning(get_supported_audience())
         payload = jwt.decode(jwt=token,
                              key=config("JWT_SECRET") if not is_spot_token(token) else config("JWT_SPOT_SECRET"),
                              algorithms=config("JWT_ALGORITHM"),
