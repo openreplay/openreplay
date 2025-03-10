@@ -42,7 +42,7 @@ function ListingVisibility() {
       <div className="grid grid-cols-12 gap-2 mt-2">
         <div className="col-span-4">
           <Select
-            options={numberOptions}
+            options={numberOptions.map((o) => ({ ...o, label: t(o.label) }))}
             defaultValue={durationSettings.operator || numberOptions[0].value}
             onChange={({ value }) => {
               changeSettings({ operator: value.value });

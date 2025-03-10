@@ -16,10 +16,12 @@ import { Globe, Smartphone } from 'lucide-react';
 import { SearchOutlined, EditOutlined } from '@ant-design/icons';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import { useModal } from 'Components/ModalContext';
+import { useTranslation } from 'react-i18next';
 
 type MenuItem = Required<MenuProps>['items'][number];
 
 const ProjectList: React.FC = () => {
+  const { t } = useTranslation();
   const { projectsStore } = useStore();
   const [search, setSearch] = React.useState('');
   const { openModal, closeModal } = useModal();
@@ -41,7 +43,7 @@ const ProjectList: React.FC = () => {
     projectsStore.initProject(project);
 
     openModal(<ProjectForm onClose={closeModal} project={project} />, {
-      title: 'Edit Project',
+      title: t('Edit Project'),
     });
   };
 
@@ -74,7 +76,7 @@ const ProjectList: React.FC = () => {
     <div className="h-full flex flex-col gap-4">
       <div className="flex flex-row gap-2 items-center p-3">
         <Input
-          placeholder="Search projects"
+          placeholder={t('Search projects')}
           // onSearch={handleSearch}
           prefix={<SearchOutlined />}
           onChange={(e) => setSearch(e.target.value)}

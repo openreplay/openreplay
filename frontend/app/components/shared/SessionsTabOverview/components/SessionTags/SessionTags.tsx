@@ -4,6 +4,7 @@ import { Angry, CircleAlert, Skull, WifiOff } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useStore } from 'App/mstore';
+import { useTranslation } from 'react-i18next';
 
 const tagIcons = {
   [types.ALL]: undefined,
@@ -15,6 +16,7 @@ const tagIcons = {
 } as Record<string, any>;
 
 function SessionTags() {
+  const { t } = useTranslation();
   const { projectsStore, sessionStore, searchStore } = useStore();
   const { total } = sessionStore;
   const platform = projectsStore.active?.platform || '';
@@ -35,7 +37,7 @@ function SessionTags() {
           .map((tag: any) => ({
             value: tag.type,
             icon: tagIcons[tag.type],
-            label: tag.name,
+            label: t(tag.name),
           }))}
         value={activeTab[0]}
         onChange={(value: any) => searchStore.toggleTag(value)}

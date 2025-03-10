@@ -4,6 +4,7 @@ import { Button } from 'antd';
 import cn from 'classnames';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import stl from './roleItem.module.css';
+import { useTranslation } from 'react-i18next';
 
 function PermisionLabel({ label }: any) {
   return <div className={cn(stl.label, 'mb-2')}>{label}</div>;
@@ -33,6 +34,7 @@ function RoleItem({
   permissions,
   projects,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -46,7 +48,7 @@ function RoleItem({
       <div className="flex items-start flex-wrap" style={{ width: '30%' }}>
         {role.allProjects ? (
           <PermisionLabelLinked
-            label="All projects"
+            label={t('All projects')}
             route={clientRoute(CLIENT_TABS.SITES)}
           />
         ) : (
