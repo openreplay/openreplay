@@ -1,134 +1,133 @@
 import logging
-import time
 from contextlib import asynccontextmanager
 
-import psycopg_pool
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from decouple import config
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
-from psycopg import AsyncConnection
-from psycopg.rows import dict_row
-from starlette.responses import StreamingResponse
 
-from chalicelib.utils import helper
+from boot.config import settings
+from boot.middleware import timing_middleware, setup_cors
+from boot.scheduler.manager import SchedulerManager
+from boot.health.router import health_router
 from chalicelib.utils import pg_client, ch_client
+
+# Import routers and cron jobs
 from crons import core_crons, core_dynamic_crons
 from routers import core, core_dynamic
 from routers.subs import insights, metrics, v1_api, health, usability_tests, spot, product_anaytics
 
-loglevel = config("LOGLEVEL", default=logging.WARNING)
-print(f">Loglevel set to: {loglevel}")
-logging.basicConfig(level=loglevel)
-
-
-class ORPYAsyncConnection(AsyncConnection):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, row_factory=dict_row, **kwargs)
+# Configure logging
+settings.configure_logging()
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    logging.info(">>>>> starting up <<<<<")
-    ap_logger = logging.getLogger('apscheduler')
-    ap_logger.setLevel(loglevel)
+    """
+    Application lifespan context manager.
 
-    app.schedule = AsyncIOScheduler()
+    Handles startup and shutdown tasks:
+    - Database connections initialization
+    - Scheduler setup
+    - Cleanup on shutdown
+    """
+    # Startup
+    logger.info(">>>>> starting up <<<<<")
+
+    # Initialize database connections
     await pg_client.init()
     await ch_client.init()
-    app.schedule.start()
 
-    for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs:
-        app.schedule.add_job(id=job["func"].__name__, **job)
+    # Initialize scheduler with jobs
+    all_jobs = core_crons.cron_jobs + core_dynamic_crons.cron_jobs
+    SchedulerManager.initialize(all_jobs)
 
-    ap_logger.info(">Scheduled jobs:")
-    for job in app.schedule.get_jobs():
-        ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
+    # Store PostgreSQL pool in app state for backwards compatibility
+    # app.state.postgresql = pg_client.
 
-    database = {
-        "host": config("pg_host", default="localhost"),
-        "dbname": config("pg_dbname", default="orpy"),
-        "user": config("pg_user", default="orpy"),
-        "password": config("pg_password", default="orpy"),
-        "port": config("pg_port", cast=int, default=5432),
-        "application_name": "AIO" + config("APP_NAME", default="PY"),
-    }
-
-    database = psycopg_pool.AsyncConnectionPool(kwargs=database, connection_class=ORPYAsyncConnection,
-                                                min_size=config("PG_AIO_MINCONN", cast=int, default=1),
-                                                max_size=config("PG_AIO_MAXCONN", cast=int, default=5), )
-    app.state.postgresql = database
-
-    # App listening
+    # App is ready to handle requests
     yield
 
     # Shutdown
-    await database.close()
-    logging.info(">>>>> shutting down <<<<<")
-    app.schedule.shutdown(wait=False)
+    logger.info(">>>>> shutting down <<<<<")
+
+    # Shutdown scheduler
+    SchedulerManager.shutdown()
+
+    # Close database connections
     await pg_client.terminate()
+    await ch_client.terminate()
 
 
-app = FastAPI(root_path=config("root_path", default="/api"), docs_url=config("docs_url", default=""),
-              redoc_url=config("redoc_url", default=""), lifespan=lifespan)
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+def create_app() -> FastAPI:
+    """Create and configure the FastAPI application."""
+    # Create FastAPI app
+    app = FastAPI(
+        root_path=settings.ROOT_PATH,
+        docs_url=settings.DOCS_URL,
+        redoc_url=settings.REDOC_URL,
+        lifespan=lifespan,
+        title=f"{settings.APP_NAME} API",
+        description=f"API for {settings.APP_NAME}",
+        version="1.0.0"
+    )
+
+    # Add middlewares
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
+    app.middleware('http')(timing_middleware)
+    setup_cors(app)
+
+    # Register health check routes first for monitoring systems
+    app.include_router(health_router)
+
+    # Register existing application routers
+    register_routers(app)
+
+    return app
 
 
-@app.middleware('http')
-async def or_middleware(request: Request, call_next):
-    if helper.TRACK_TIME:
-        now = time.time()
-    try:
-        response: StreamingResponse = await call_next(request)
-    except:
-        logging.error(f"{request.method}: {request.url.path} FAILED!")
-        raise
-    if response.status_code // 100 != 2:
-        logging.warning(f"{request.method}:{request.url.path} {response.status_code}!")
-    if helper.TRACK_TIME:
-        now = time.time() - now
-        if now > 2:
-            now = round(now, 2)
-            logging.warning(f"Execution time: {now} s for {request.method}: {request.url.path}")
-    response.headers["x-robots-tag"] = 'noindex, nofollow'
-    return response
+def register_routers(app: FastAPI) -> None:
+    """Register all application routers."""
+    # Core routers
+    app.include_router(core.public_app)
+    app.include_router(core.app)
+    app.include_router(core.app_apikey)
+
+    # Core dynamic routers
+    app.include_router(core_dynamic.public_app)
+    app.include_router(core_dynamic.app)
+    app.include_router(core_dynamic.app_apikey)
+
+    # Feature routers
+    app.include_router(metrics.app)
+    app.include_router(insights.app)
+    app.include_router(v1_api.app_apikey)
+
+    # Health routers (existing ones from the codebase)
+    app.include_router(health.public_app)
+    app.include_router(health.app)
+    app.include_router(health.app_apikey)
+
+    # Usability tests routers
+    app.include_router(usability_tests.public_app)
+    app.include_router(usability_tests.app)
+    app.include_router(usability_tests.app_apikey)
+
+    # Spot routers
+    app.include_router(spot.public_app)
+    app.include_router(spot.app)
+    app.include_router(spot.app_apikey)
+
+    # Product analytics routers
+    app.include_router(product_anaytics.public_app)
+    app.include_router(product_anaytics.app)
+    app.include_router(product_anaytics.app_apikey)
 
 
-origins = [
-    "*",
-]
+# Create application instance
+app = create_app()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-app.include_router(core.public_app)
-app.include_router(core.app)
-app.include_router(core.app_apikey)
-app.include_router(core_dynamic.public_app)
-app.include_router(core_dynamic.app)
-app.include_router(core_dynamic.app_apikey)
-app.include_router(metrics.app)
-app.include_router(insights.app)
-app.include_router(v1_api.app_apikey)
-app.include_router(health.public_app)
-app.include_router(health.app)
-app.include_router(health.app_apikey)
+# For running with a proper ASGI server like uvicorn
+if __name__ == "__main__":
+    import uvicorn
 
-app.include_router(usability_tests.public_app)
-app.include_router(usability_tests.app)
-app.include_router(usability_tests.app_apikey)
-
-app.include_router(spot.public_app)
-app.include_router(spot.app)
-app.include_router(spot.app_apikey)
-
-app.include_router(product_anaytics.public_app)
-app.include_router(product_anaytics.app)
-app.include_router(product_anaytics.app_apikey)
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

@@ -1,8 +1,10 @@
 import logging
 import threading
 import time
+import asyncio
 from functools import wraps
 from queue import Queue, Empty
+from typing import Dict, Any, Optional
 
 import clickhouse_connect
 from clickhouse_connect.driver.query import QueryContext
@@ -154,6 +156,73 @@ class ClickHouseClient:
             for key, value in parameters.items()
         }
 
+    async def health_check(self) -> Dict[str, Any]:
+        """
+        Check if the connection to ClickHouse is working.
+
+        Returns:
+            Dict with status information:
+            {
+                "status": "ok" | "error",
+                "message": str,
+                "ping_time_ms": float (if available)
+            }
+        """
+        try:
+            start_time = asyncio.get_event_loop().time()
+
+            # Run the query in a thread pool to avoid blocking the event loop
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, lambda: self.__client.query("SELECT 1"))
+
+            end_time = asyncio.get_event_loop().time()
+            ping_time_ms = (end_time - start_time) * 1000
+
+            return {
+                "status": "ok",
+                "message": "ClickHouse connection is healthy",
+                "ping_time_ms": round(ping_time_ms, 2)
+            }
+        except Exception as e:
+            logger.error(f"ClickHouse health check failed: {str(e)}")
+            return {
+                "status": "error",
+                "message": f"Failed to connect to ClickHouse: {str(e)}",
+            }
+
+    @classmethod
+    async def health_check(cls) -> Dict[str, Any]:
+        """
+        Class method to check if the ClickHouse connection is working.
+        Can be called directly on the class: await ClickHouseClient.health_check()
+
+        Returns:
+            Dict with status information
+        """
+        client = get_client()
+        try:
+            start_time = asyncio.get_event_loop().time()
+
+            # Run the query in a thread pool to avoid blocking the event loop
+            loop = asyncio.get_event_loop()
+            client_instance = client.__client
+            await loop.run_in_executor(None, lambda: client_instance.query("SELECT 1"))
+
+            end_time = asyncio.get_event_loop().time()
+            ping_time_ms = (end_time - start_time) * 1000
+
+            return {
+                "status": "ok",
+                "message": "ClickHouse connection is healthy",
+                "ping_time_ms": round(ping_time_ms, 2)
+            }
+        except Exception as e:
+            logger.error(f"ClickHouse health check failed: {str(e)}")
+            return {
+                "status": "error",
+                "message": f"Failed to connect to ClickHouse: {str(e)}",
+            }
+
     def __exit__(self, *args):
         if config('CH_POOL', cast=bool, default=True):
             CH_pool.release_connection(self.__client)
@@ -161,10 +230,34 @@ class ClickHouseClient:
             self.__client.close()
 
 
+# Add the get_client function at module level
+def get_client(database=None) -> ClickHouseClient:
+    """
+    Get a ClickHouse client instance.
+
+    Args:
+        database: Optional database name to override the default
+
+    Returns:
+        ClickHouseClient instance
+    """
+    return ClickHouseClient(database=database)
+
+
 async def init():
     logger.info(f">use CH_POOL:{config('CH_POOL', default=True)}")
     if config('CH_POOL', cast=bool, default=True):
         make_pool()
+
+    # Do a health check at initialization to verify connection
+    try:
+        health_status = await ClickHouseClient.health_check()
+        if health_status["status"] == "ok":
+            logger.info(f"ClickHouse connection verified. Ping: {health_status.get('ping_time_ms', 'N/A')}ms")
+        else:
+            logger.warning(f"ClickHouse connection check failed: {health_status['message']}")
+    except Exception as e:
+        logger.error(f"Error during initialization health check: {str(e)}")
 
 
 async def terminate():
@@ -175,3 +268,13 @@ async def terminate():
             logger.info("Closed all connexions to CH")
         except Exception as error:
             logger.error("Error while closing all connexions to CH", exc_info=error)
+
+
+async def health_check() -> Dict[str, Any]:
+    """
+    Public health check function that can be used by the application.
+
+    Returns:
+        Health status dict
+    """
+    return await ClickHouseClient.health_check()

@@ -1,6 +1,8 @@
 import logging
 import time
+import asyncio
 from threading import Semaphore
+from typing import Dict, Any, Optional
 
 import psycopg2
 import psycopg2.extras
@@ -173,11 +175,114 @@ class PostgresClient:
         self.cursor = None
         return self.__enter__()
 
+    async def health_check(self) -> Dict[str, Any]:
+        """
+        Instance method to check DB connection health
+        """
+        try:
+            start_time = asyncio.get_event_loop().time()
+
+            # Run the query in a thread pool to avoid blocking the event loop
+            loop = asyncio.get_event_loop()
+
+            def check_db():
+                cursor = self.connection.cursor()
+                cursor.execute("SELECT 1")
+                cursor.close()
+                return True
+
+            await loop.run_in_executor(None, check_db)
+
+            end_time = asyncio.get_event_loop().time()
+            ping_time_ms = (end_time - start_time) * 1000
+
+            return {
+                "status": "ok",
+                "message": "PostgreSQL connection is healthy",
+                "ping_time_ms": round(ping_time_ms, 2)
+            }
+        except Exception as e:
+            logger.error(f"PostgreSQL health check failed: {e}")
+            return {
+                "status": "error",
+                "message": f"Failed to connect to PostgreSQL: {str(e)}"
+            }
+
+    @classmethod
+    async def health_check(cls) -> Dict[str, Any]:
+        """
+        Class method to check if PostgreSQL connection works.
+        Can be called directly on the class: await PostgresClient.health_check()
+        """
+        try:
+            # Create a temporary client for the health check
+            client = cls()
+
+            start_time = asyncio.get_event_loop().time()
+
+            # Run the query in a thread pool
+            loop = asyncio.get_event_loop()
+
+            def check_db():
+                cursor = client.connection.cursor()
+                cursor.execute("SELECT 1")
+                cursor.close()
+                return True
+
+            await loop.run_in_executor(None, check_db)
+
+            end_time = asyncio.get_event_loop().time()
+            ping_time_ms = (end_time - start_time) * 1000
+
+            # Properly clean up the connection
+            if not client.use_pool or client.long_query or client.unlimited_query:
+                client.connection.close()
+            else:
+                postgreSQL_pool.putconn(client.connection)
+
+            return {
+                "status": "ok",
+                "message": "PostgreSQL connection is healthy",
+                "ping_time_ms": round(ping_time_ms, 2)
+            }
+        except Exception as e:
+            logger.error(f"PostgreSQL health check failed: {e}")
+            return {
+                "status": "error",
+                "message": f"Failed to connect to PostgreSQL: {str(e)}"
+            }
+
+
+# Add get_client function at module level
+def get_client(long_query=False, unlimited_query=False, use_pool=True) -> PostgresClient:
+    """
+    Get a PostgreSQL client instance.
+
+    Args:
+        long_query: Set True for queries with extended timeout
+        unlimited_query: Set True for queries with no timeout
+        use_pool: Whether to use the connection pool
+
+    Returns:
+        PostgresClient instance
+    """
+    return PostgresClient(long_query=long_query, unlimited_query=unlimited_query, use_pool=use_pool)
+
 
 async def init():
     logger.info(f">use PG_POOL:{config('PG_POOL', default=True)}")
     if config('PG_POOL', cast=bool, default=True):
         make_pool()
+
+    # Do a health check at initialization
+    try:
+        health_status = await PostgresClient.health_check()
+        if health_status["status"] == "ok":
+            logger.info(f"PostgreSQL connection verified. Ping: {health_status.get('ping_time_ms', 'N/A')}ms")
+        else:
+            logger.warning(f"PostgreSQL connection check failed: {health_status['message']}")
+    except Exception as e:
+        logger.error(f"Error during initialization health check: {str(e)}")
 
 
 async def terminate():
@@ -188,3 +293,13 @@ async def terminate():
             logger.info("Closed all connexions to PostgreSQL")
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error("Error while closing all connexions to PostgreSQL", exc_info=error)
+
+
+async def health_check() -> Dict[str, Any]:
+    """
+    Public health check function that can be used by the application.
+
+    Returns:
+        Health status dict
+    """
+    return await PostgresClient.health_check()
