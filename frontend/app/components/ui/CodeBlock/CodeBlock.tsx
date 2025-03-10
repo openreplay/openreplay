@@ -3,6 +3,7 @@ import copyFn from 'copy-to-clipboard';
 import { Files } from 'lucide-react';
 import { Tooltip } from 'antd';
 import cn from 'classnames';
+import { useTranslation } from 'react-i18next';
 
 export default function CodeBlock({
   code = '',
@@ -12,6 +13,7 @@ export default function CodeBlock({
   width = undefined,
   height = undefined,
 }) {
+  const { t } = useTranslation();
   useEffect(() => {
     setTimeout(() => {
       if (window.Prism) {
@@ -26,10 +28,7 @@ export default function CodeBlock({
         <div className={'w-full flex items-center justify-between mb-2'}>
           {extra && <div className="text-sm text-disabled-text">{extra}</div>}
           {copy && (
-            <div
-              className="cursor-pointer"
-              onClick={() => copyFn(code)}
-            >
+            <div className="cursor-pointer" onClick={() => copyFn(code)}>
               <Tooltip title={t('Copy code')} placement={'bottomLeft'}>
                 <Files size={14} />
               </Tooltip>

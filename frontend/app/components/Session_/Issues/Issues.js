@@ -6,8 +6,10 @@ import { useStore } from 'App/mstore';
 import { Icon, Popover } from 'UI';
 
 import IssuesModal from './IssuesModal';
+import { useTranslation } from 'react-i18next';
 
 function Issues({ sessionId }) {
+  const { t } = useTranslation();
   const { issueReportingStore, integrationsStore } = useStore();
   const issuesIntegration = integrationsStore.issues.list;
   const handleOpen = () => {
