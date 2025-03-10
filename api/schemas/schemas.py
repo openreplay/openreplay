@@ -1368,6 +1368,42 @@ class SearchCardsSchema(_PaginatedSchema):
     query: Optional[str] = Field(default=None)
 
 
+class MetricSortColumnType(str, Enum):
+    NAME = "name"
+    METRIC_TYPE = "metric_type"
+    METRIC_OF = "metric_of"
+    IS_PUBLIC = "is_public"
+    CREATED_AT = "created_at"
+    EDITED_AT = "edited_at"
+
+
+class MetricFilterColumnType(str, Enum):
+    NAME = "name"
+    METRIC_TYPE = "metric_type"
+    METRIC_OF = "metric_of"
+    IS_PUBLIC = "is_public"
+    USER_ID = "user_id"
+    CREATED_AT = "created_at"
+    EDITED_AT = "edited_at"
+
+
+class MetricListSort(BaseModel):
+    field: Optional[str] = Field(default=None)
+    order: Optional[str] = Field(default=SortOrderType.DESC)
+
+
+class MetricFilter(BaseModel):
+    type: Optional[str] = Field(default=None)
+    query: Optional[str] = Field(default=None)
+
+
+class MetricSearchSchema(_PaginatedSchema):
+    filter: Optional[MetricFilter] = Field(default=None)
+    sort: Optional[MetricListSort] = Field(default=MetricListSort())
+    shared_only: bool = Field(default=False)
+    mine_only: bool = Field(default=False)
+
+
 class _HeatMapSearchEventRaw(SessionSearchEventSchema2):
     type: Literal[EventType.LOCATION] = Field(...)
 
