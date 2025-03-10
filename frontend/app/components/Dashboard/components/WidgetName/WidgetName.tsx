@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input, Tooltip } from 'antd';
 import cn from 'classnames';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   name: string;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 function WidgetName(props: Props) {
+  const { t } = useTranslation();
   const { canEdit = true } = props;
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(props.name);

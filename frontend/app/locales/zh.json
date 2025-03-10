@@ -1486,5 +1486,9 @@
   "above": "大于",
   "above or equal to": "大于或等于",
   "below": "小于",
-  "below or equal to": "小于或等于"
+  "below or equal to": "小于或等于",
+  "Highlight link copied to clipboard": "突出显示链接已复制到剪贴板",
+  "Are you sure delete this Highlight?": "确定要删除此突出显示吗？",
+  "Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.": "删除突出显示仅会删除此实例及其关联的备注。不会影响原始会话。",
+  "Yes, Delete": "是的，删除"
 }
