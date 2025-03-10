@@ -3,7 +3,7 @@ import secrets
 
 from decouple import config
 from fastapi import BackgroundTasks
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 import schemas
 from chalicelib.core import authorizers
@@ -284,7 +284,7 @@ def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema,
     if editor_id != user_id_to_update:
         admin = get_user_role(tenant_id=tenant_id, user_id=editor_id)
         if not admin["superAdmin"] and not admin["admin"]:
-            return {"errors": ["unauthorized"]}
+            return {"errors": ["unauthorized, you must have admin privileges"]}
         if admin["admin"] and user["superAdmin"]:
             return {"errors": ["only the owner can edit his own details"]}
     else:
@@ -554,11 +554,20 @@ def refresh_auth_exists(user_id, jwt_jti=None):
 
 class ChangeJwt(BaseModel):
     jwt_iat: int
-    jwt_refresh_jti: int
+    jwt_refresh_jti: str
     jwt_refresh_iat: int
     spot_jwt_iat: int
-    spot_jwt_refresh_jti: int
+    spot_jwt_refresh_jti: str
     spot_jwt_refresh_iat: int
+
+    @model_validator(mode="before")
+    @classmethod
+    def _transform_data(cls, values):
+        if values.get("jwt_refresh_jti") is not None:
+            values["jwt_refresh_jti"] = str(values["jwt_refresh_jti"])
+        if values.get("jwt_refresh_jti") is not None:
+            values["spot_jwt_refresh_jti"] = str(values["spot_jwt_refresh_jti"])
+        return values
 
 
 def change_jwt_iat_jti(user_id):
