@@ -20,7 +20,7 @@ function SessionDateRange() {
     searchStore.applyFilter(dateValues);
   };
   return (
-    <div className="flex items-center">
+    <div className="flex items-center text-start">
       <span className="mr-1">
         {t('No sessions')}&nbsp;
         {isCustom ? t('between') : t('in the')}
