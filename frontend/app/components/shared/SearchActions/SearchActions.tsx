@@ -39,7 +39,7 @@ function SearchActions() {
     <div className="mb-2">
       <div className={'flex flex-col lg:hidden items-start  gap-2 w-full'}>
         <div className='flex items-center justify-between w-full'>
-          <h2 className="text-2xl capitalize mr-4 inline">Sessions</h2>
+          <h2 className="text-2xl capitalize mr-4 inline">{title}</h2>
           <div className={'ml-auto flex gap-1'}>
             <SavedSearch/>
             <Tooltip title='Clear Search Filters'>
