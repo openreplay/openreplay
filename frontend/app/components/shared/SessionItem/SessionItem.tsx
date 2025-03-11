@@ -242,7 +242,11 @@ function SessionItem(props: RouteComponentProps & Props) {
 
   return (
     <Tooltip
-      title={!isMultiviewDisabled ? '' : t(`Session already added into the multiview`)}
+      title={
+        !isMultiviewDisabled
+          ? ''
+          : t(`Session already added into the multiview`)
+      }
     >
       <div
         className={cn(stl.sessionItem, 'flex flex-col p-4')}
@@ -255,7 +259,7 @@ function SessionItem(props: RouteComponentProps & Props) {
             {!compact && (
               <div
                 className="flex flex-col shrink-0 pr-2 gap-2"
-                style={{ width: '40%' }}
+                style={{ width: '250px' }}
               >
                 <div className="flex items-center pr-2 shrink-0">
                   <div>
@@ -274,8 +278,8 @@ function SessionItem(props: RouteComponentProps & Props) {
                         'color-teal cursor-pointer':
                           !disableUser && hasUserId && !isDisabled,
                         [stl.userName]:
-                        !disableUser && hasUserId && !isDisabled,
-                        'color-gray-medium': disableUser || !hasUserId
+                          !disableUser && hasUserId && !isDisabled,
+                        'color-gray-medium': disableUser || !hasUserId,
                       })}
                       onClick={handleUserClick}
                     >
@@ -293,8 +297,8 @@ function SessionItem(props: RouteComponentProps & Props) {
               </div>
             )}
             <div
-              style={{ width: compact ? '40%' : '20%' }}
-              className="px-2 flex flex-col justify-between"
+              style={{ width: compact ? '40%' : '20%', minWidth: '170px' }}
+              className="px-2 sm:flex flex-col justify-between hidden"
             >
               <div>
                 <Tooltip
@@ -324,17 +328,13 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </>
                 )}
                 <div>
-                  {live ? (
-                    <Counter startTime={startedAt} />
-                  ) : (
-                    formattedDuration
-                  )}
+                  {live ? <Counter startTime={startedAt} /> : formattedDuration}
                 </div>
               </div>
             </div>
             <div
-              style={{ width: '30%' }}
-              className="px-2 flex flex-col justify-between"
+              style={{ width: '30%', maxWidth: '300px' }}
+              className="px-2 flex max-[860px]:hidden flex-col justify-between"
             >
               <div style={{ height: '21px' }}>
                 <CountryFlag
@@ -378,21 +378,23 @@ function SessionItem(props: RouteComponentProps & Props) {
                 </span>
               </div>
             </div>
-            {isSessions && (
+            {isSessions && issueTypes.length > 0 && (
               <div
-                style={{ width: '10%' }}
-                className="self-center px-2 flex items-center"
+                style={{ width: '15%' }}
+                className="self-center px-2 max-[1200px]:hidden flex items-center"
               >
                 <ErrorBars count={issueTypes.length} />
               </div>
             )}
-          </div>
+            {/* </div>
 
-          <div className="flex items-center m-auto">
+          <div className="flex items-center m-auto"> */}
             <div
+              style={{ width: 'calc(35% - 250px)' }}
               className={cn(
                 stl.playLink,
-                isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
+                isDisabled ? 'cursor-not-allowed' : 'cursor-pointer',
+                'justify-end flex flex-1',
               )}
               id="play-button"
               data-viewed={viewed}
@@ -409,18 +411,18 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </Label>
                 </div>
               )}
-              {isSessions && (
-                <div className="mr-4 flex-shrink-0 w-24">
-                  {isLastPlayed && (
-                    <Label className="bg-gray-lightest p-1 px-2 rounded-lg">
-                      <span
-                        className="color-gray-medium text-xs"
-                        style={{ whiteSpace: 'nowrap' }}
-                      >
-                        {t('LAST PLAYED')}
-                      </span>
-                    </Label>
-                  )}
+              {isSessions && isLastPlayed && (
+                <div className="mr-4 flex-shrink-0 hidden lg:flex">
+                  {/* {isLastPlayed && ( */}
+                  <Label className="bg-gray-lightest p-1 px-2 rounded-lg">
+                    <span
+                      className="color-gray-medium text-xs"
+                      style={{ whiteSpace: 'nowrap' }}
+                    >
+                      {t('LAST PLAYED')}
+                    </span>
+                  </Label>
+                  {/* )} */}
                 </div>
               )}
               {isAdd ? (

@@ -208,7 +208,7 @@ function Login({ location }: LoginProps) {
                   {t('Login')}
                 </Button>
 
-                <div className="my-8 text-center">
+                <div className="my-8 flex justify-center items-center flex-wrap">
                   <span className="color-gray-medium">
                     {t('Having trouble logging in?')}
                   </span>{' '}

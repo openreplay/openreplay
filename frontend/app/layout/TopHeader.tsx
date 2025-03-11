@@ -48,7 +48,7 @@ function TopHeader() {
             settingsStore.updateMenuCollapsed(!settingsStore.menuCollapsed);
           }}
           style={{ paddingTop: '4px' }}
-          className="cursor-pointer"
+          className="cursor-pointer xl:block hidden"
         >
           <Tooltip
             title={

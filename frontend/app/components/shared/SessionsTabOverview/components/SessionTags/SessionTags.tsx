@@ -1,10 +1,12 @@
 import { issues_types, types } from 'Types/session/issue';
-import { Segmented } from 'antd';
+import { Grid, Segmented } from 'antd';
 import { Angry, CircleAlert, Skull, WifiOff } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useStore } from 'App/mstore';
 import { useTranslation } from 'react-i18next';
+
+const { useBreakpoint } = Grid;
 
 const tagIcons = {
   [types.ALL]: undefined,
@@ -17,6 +19,7 @@ const tagIcons = {
 
 function SessionTags() {
   const { t } = useTranslation();
+  const screens = useBreakpoint();
   const { projectsStore, sessionStore, searchStore } = useStore();
   const { total } = sessionStore;
   const platform = projectsStore.active?.platform || '';
@@ -26,6 +29,7 @@ function SessionTags() {
     (activeTab.length === 0 || activeTab[0] === 'all') ? null : (
     <div className="flex items-center">
       <Segmented
+        vertical={!screens.md}
         options={issues_types
           .filter(
             (tag) =>

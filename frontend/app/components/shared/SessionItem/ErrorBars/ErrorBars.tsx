@@ -52,7 +52,7 @@ export default function ErrorBars(props: Props) {
           {/* <div className={cn("rounded-tr rounded-br", bgColor, stl.bar)}></div> */}
         </div>
       </div>
-      <div className="mt-1 color-gray-medium text-sm">{t(state)}</div>
+      <div className="mt-1 color-gray-medium text-sm truncate">{t(state)}</div>
     </div>
   );
 }

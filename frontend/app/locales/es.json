@@ -1307,7 +1307,7 @@
   "User's Time": "Hora del usuario",
   "Event": "Evento",
   "CALL IN PROGRESS": "LLAMADA EN CURSO",
-  "LAST PLAYED": "ÚLTIMA REPRODUCCIÓN",
+  "LAST PLAYED": "VISTO",
   "Sessions Settings": "Configuración de Sesiones",
   "The percentage of session you want to capture": "El porcentaje de sesiones que deseas capturar",
   "Sessions exceeding this specified limit will not be captured or stored.": "Las sesiones que superen este límite especificado no se capturarán ni almacenarán.",
