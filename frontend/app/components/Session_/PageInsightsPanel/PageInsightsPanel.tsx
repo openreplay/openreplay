@@ -59,7 +59,6 @@ function PageInsightsPanel({ setActiveTab }: Props) {
         ? insightsFilters.url
         : urlOptions[0].value;
       Player.pause();
-      markTargets(null);
       void fetchSessionClickmap(sessionId, {
         ...insightsFilters,
         sessionId,

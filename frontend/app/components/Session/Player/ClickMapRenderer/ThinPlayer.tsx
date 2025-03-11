@@ -67,8 +67,8 @@ function WebPlayer(props: any) {
       setTimeout(() => {
         contextValue.player.pause();
         contextValue.player.jump(jumpTimestamp);
-        contextValue.player.scale();
         setTimeout(() => {
+          contextValue.player.scale();
           contextValue.player.showClickmap(insights);
         }, 250);
       }, 250);
