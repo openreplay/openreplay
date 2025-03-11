@@ -1,4 +1,4 @@
-from functools import lru_cache
+from functools import cache
 from typing import Optional
 
 import schemas
@@ -138,7 +138,7 @@ class EventType:
                          column=None)  # column=None because errors are searched by name or message
 
 
-@lru_cache
+@cache
 def supported_types():
     return {
         EventType.CLICK.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CLICK),

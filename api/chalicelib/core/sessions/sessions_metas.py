@@ -1,11 +1,11 @@
-from functools import lru_cache
+from functools import cache
 
 import schemas
 from chalicelib.core.autocomplete import autocomplete
 from chalicelib.utils.event_filter_definition import SupportedFilter
 
 
-@lru_cache
+@cache
 def supported_types():
     return {
         schemas.FilterType.USER_OS: SupportedFilter(
