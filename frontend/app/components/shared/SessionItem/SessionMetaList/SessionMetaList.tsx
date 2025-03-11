@@ -10,10 +10,10 @@ interface Props {
 }
 
 export default function SessionMetaList(props: Props) {
-  const { className = '', metaList, maxLength = 4 } = props;
+  const { className = '', metaList, maxLength = 14 } = props;
 
   return (
-    <div className={cn('text-sm flex items-center gap-2', className)}>
+    <div className={cn('flex items-center flex-wrap gap-1', className)}>
       {metaList.slice(0, maxLength).map(({ label, value }, index) => (
         <React.Fragment key={index}>
           <MetaItem label={label} value={`${value}`} />

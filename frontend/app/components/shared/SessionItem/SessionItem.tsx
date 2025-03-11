@@ -10,7 +10,7 @@ import {
   assist as assistRoute,
   isRoute,
   liveSession,
-  sessions as sessionsRoute
+  sessions as sessionsRoute,
 } from 'App/routes';
 import { capitalize } from 'App/utils';
 import { Avatar, CountryFlag, Icon, Label, TextEllipsis } from 'UI';
@@ -76,7 +76,7 @@ interface Props {
 const PREFETCH_STATE = {
   none: 0,
   loading: 1,
-  fetched: 2
+  fetched: 2,
 };
 
 function SessionItem(props: RouteComponentProps & Props) {
@@ -102,7 +102,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     // location,
     isDisabled,
     live: propsLive,
-    isAdd
+    isAdd,
   } = props;
 
   const {
@@ -128,22 +128,25 @@ function SessionItem(props: RouteComponentProps & Props) {
     platform,
     timezone: userTimezone,
     isCallActive,
-    agentIds
+    agentIds,
   } = session;
 
   // Memoize derived values
   const queryParams = useMemo(
     () => Object.fromEntries(new URLSearchParams(location.search)),
-    [location.search]
+    [location.search],
   );
 
   const isMobile = platform !== 'web';
-  const formattedDuration = useMemo(() => durationFormatted(duration), [duration]);
+  const formattedDuration = useMemo(
+    () => durationFormatted(duration),
+    [duration],
+  );
   const hasUserId = userId || userAnonymousId;
 
   const isSessions = useMemo(
     () => isRoute(SESSIONS_ROUTE, location.pathname),
-    [location.pathname]
+    [location.pathname],
   );
 
   const isAssist = useMemo(() => {
@@ -158,13 +161,14 @@ function SessionItem(props: RouteComponentProps & Props) {
 
   const isLastPlayed = lastPlayedSessionId === sessionId;
   const live = sessionLive || propsLive;
-  const isMultiviewDisabled = isDisabled && location.pathname.includes('multiview');
+  const isMultiviewDisabled =
+    isDisabled && location.pathname.includes('multiview');
 
   // Memoize metadata list creation
   const _metaList = useMemo(() => {
     return Object.keys(metadata).map((key) => ({
       label: key,
-      value: metadata[key]
+      value: metadata[key],
     }));
   }, [metadata]);
 
@@ -193,7 +197,14 @@ function SessionItem(props: RouteComponentProps & Props) {
     if (!disableUser && !hasUserFilter && hasUserId) {
       onUserClick(userId, userAnonymousId);
     }
-  }, [disableUser, hasUserFilter, hasUserId, onUserClick, userId, userAnonymousId]);
+  }, [
+    disableUser,
+    hasUserFilter,
+    hasUserId,
+    onUserClick,
+    userId,
+    userAnonymousId,
+  ]);
 
   const handleAddClick = useCallback(() => {
     if (!isDisabled && onClick) {
@@ -206,9 +217,9 @@ function SessionItem(props: RouteComponentProps & Props) {
     const timezoneToUse =
       shownTimezone === 'user' && userTimezone
         ? {
-          label: userTimezone.split('+').join(' +'),
-          value: userTimezone.split(':')[0]
-        }
+            label: userTimezone.split('+').join(' +'),
+            value: userTimezone.split(':')[0],
+          }
         : timezone;
 
     return formatTimeOrDate(startedAt, timezoneToUse);
@@ -229,9 +240,9 @@ function SessionItem(props: RouteComponentProps & Props) {
               startedAt,
               {
                 label: userTimezone.split('+').join(' +'),
-                value: userTimezone.split(':')[0]
+                value: userTimezone.split(':')[0],
               },
-              true
+              true,
             )}{' '}
             {userTimezone}
           </span>
@@ -254,18 +265,23 @@ function SessionItem(props: RouteComponentProps & Props) {
         onClick={(e) => e.stopPropagation()}
         onMouseEnter={handleHover}
       >
-        <div className="flex items-start">
-          <div className={cn('flex items-center w-full')}>
+        <div className="flex items-start ">
+          <div
+            className={cn(
+              'flex flex-col items-start lg:flex-row lg:items-center w-full',
+            )}
+          >
             {!compact && (
               <div
-                className="flex flex-col shrink-0 pr-2 gap-2"
-                style={{ width: '250px' }}
+                className={
+                  'flex flex-col shrink-0 pr-2 gap-2 w-full lg:w-[40%] max-w-[260px]'
+                }
               >
                 <div className="flex items-center pr-2 shrink-0">
                   <div>
                     <Avatar
-                      width="24px"
-                      height="24px"
+                      width={'24px'}
+                      height={'24px'}
                       iconSize={12}
                       isActive={active}
                       seed={userNumericHash}
@@ -292,13 +308,15 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </div>
                 </div>
                 {_metaList.length > 0 && (
-                  <SessionMetaList maxLength={1} metaList={_metaList} />
+                  <SessionMetaList maxLength={3} metaList={_metaList} />
                 )}
               </div>
             )}
             <div
-              style={{ width: compact ? '40%' : '20%', minWidth: '170px' }}
-              className="px-2 sm:flex flex-col justify-between hidden"
+              className={cn(
+                'px-2 flex flex-col justify-between gap-2 mt-3 lg:mt-0',
+                compact ? 'w-[40%]' : 'lg:w-1/5',
+              )}
             >
               <div>
                 <Tooltip
@@ -313,15 +331,15 @@ function SessionItem(props: RouteComponentProps & Props) {
                   />
                 </Tooltip>
               </div>
-              <div className="flex items-center color-gray-medium py-1">
+              <div className="flex items-center text-sm text-neutral-500">
                 {!isAssist && (
                   <>
-                    <div className="color-gray-medium">
+                    <div className="">
                       <span className="mr-1">{eventsCount}</span>
                       <span>
                         {eventsCount === 0 || eventsCount > 1
-                          ? t('Events')
-                          : t('Event')}
+                          ? 'Events'
+                          : 'Event'}
                       </span>
                     </div>
                     <Icon name="circle-fill" size={3} className="mx-4" />
@@ -333,18 +351,18 @@ function SessionItem(props: RouteComponentProps & Props) {
               </div>
             </div>
             <div
-              style={{ width: '30%', maxWidth: '300px' }}
-              className="px-2 flex max-[860px]:hidden flex-col justify-between"
+              style={{ width: '30%' }}
+              className="px-2 flex flex-col justify-between gap-2"
             >
               <div style={{ height: '21px' }}>
                 <CountryFlag
                   userCity={userCity}
                   userState={userState}
                   country={userCountry}
-                  showLabel
+                  showLabel={true}
                 />
               </div>
-              <div className="color-gray-medium flex items-center py-1">
+              <div className="flex items-center text-sm text-neutral-500">
                 {userBrowser && (
                   <span className="capitalize" style={{ maxWidth: '70px' }}>
                     <TextEllipsis
@@ -378,23 +396,23 @@ function SessionItem(props: RouteComponentProps & Props) {
                 </span>
               </div>
             </div>
-            {isSessions && issueTypes.length > 0 && (
+            {isSessions && (
               <div
-                style={{ width: '15%' }}
-                className="self-center px-2 max-[1200px]:hidden flex items-center"
+                style={{ width: '10%' }}
+                className="self-center px-2 flex items-center"
               >
                 <ErrorBars count={issueTypes.length} />
               </div>
             )}
-            {/* </div>
+          </div>
 
-          <div className="flex items-center m-auto"> */}
+          <div className="flex items-center m-auto w-[15%] justify-end">
             <div
-              style={{ width: 'calc(35% - 250px)' }}
               className={cn(
                 stl.playLink,
-                isDisabled ? 'cursor-not-allowed' : 'cursor-pointer',
-                'justify-end flex flex-1',
+                isDisabled
+                  ? 'cursor-not-allowed'
+                  : 'cursor-pointer flex flex-col lg:flex-row',
               )}
               id="play-button"
               data-viewed={viewed}
@@ -412,18 +430,9 @@ function SessionItem(props: RouteComponentProps & Props) {
                 </div>
               )}
               {isSessions && isLastPlayed && (
-                <div className="mr-4 flex-shrink-0 hidden lg:flex">
-                  {/* {isLastPlayed && ( */}
-                  <Label className="bg-gray-lightest p-1 px-2 rounded-lg">
-                    <span
-                      className="color-gray-medium text-xs"
-                      style={{ whiteSpace: 'nowrap' }}
-                    >
-                      {t('LAST PLAYED')}
-                    </span>
-                  </Label>
-                  {/* )} */}
-                </div>
+                <Label className="bg-neutral-100 p-1 py-0 text-xs whitespace-nowrap rounded-xl text-neutral-400 ms-auto">
+                  {t('LAST PLAYED')}
+                </Label>
               )}
               {isAdd ? (
                 <div
