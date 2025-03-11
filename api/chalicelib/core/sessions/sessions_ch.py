@@ -1416,9 +1416,10 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         query_part = f"""{f"({events_query_part}) AS f" if len(events_query_part) > 0 else ""}"""
     else:
         if len(events_query_part) > 0:
-            extra_join += f"""INNER JOIN (SELECT * 
+            extra_join += f"""INNER JOIN (SELECT DISTINCT ON (session_id) * 
                                     FROM {MAIN_SESSIONS_TABLE} AS s {extra_event}
-                                    WHERE {" AND ".join(extra_constraints)}) AS s ON(s.session_id=f.session_id)"""
+                                    WHERE {" AND ".join(extra_constraints)}
+                                    ORDER BY _timestamp DESC) AS s ON(s.session_id=f.session_id)"""
         else:
             deduplication_keys = ["session_id"] + extra_deduplication
             extra_join = f"""(SELECT * 
