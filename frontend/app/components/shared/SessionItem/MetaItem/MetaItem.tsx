@@ -12,30 +12,21 @@ export default function MetaItem(props: Props) {
   return (
     <div
       className={cn(
-        'flex items-center rounded border border-gray-light-shade',
+        'text-sm flex flex-row items-center px-2 py-0 gap-1 rounded-lg bg-white border border-neutral-100 overflow-hidden',
         className,
       )}
     >
-      <span
-        className="rounded-tl rounded-bl bg-gray-light-shade px-2"
-        style={{ maxWidth: '150px' }}
-      >
-        <TextEllipsis
-          text={label}
-          className="p-0"
-          popupProps={{ size: 'small', disabled: true }}
-        />
-      </span>
-      <span
-        className="rounded-tr rounded-br bg-white px-2"
-        style={{ maxWidth: '150px' }}
-      >
-        <TextEllipsis
-          text={value}
-          className="p-0"
-          popupProps={{ size: 'small', disabled: true }}
-        />
-      </span>
+      <TextEllipsis
+        text={label}
+        className="p-0"
+        popupProps={{ size: 'small', disabled: true }}
+      />
+      <span className="bg-neutral-200 inline-block w-[1px] min-h-[17px]"></span>
+      <TextEllipsis
+        text={value}
+        className="p-0 text-neutral-500"
+        popupProps={{ size: 'small', disabled: true }}
+      />
     </div>
   );
 }

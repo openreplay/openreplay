@@ -1,3 +1,4 @@
+
 /* Auto-generated, do not edit */
 export { default as Activity } from './activity';
 export { default as Analytics } from './analytics';
@@ -366,6 +367,7 @@ export { default as Magic } from './magic';
 export { default as Map_marker_alt } from './map_marker_alt';
 export { default as Memory_ios } from './memory_ios';
 export { default as Memory } from './memory';
+export { default as Metadata_more } from './metadata_more';
 export { default as Mic_mute } from './mic_mute';
 export { default as Mic } from './mic';
 export { default as Minus } from './minus';

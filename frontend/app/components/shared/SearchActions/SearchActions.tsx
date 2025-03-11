@@ -37,7 +37,27 @@ function SearchActions() {
   const showPanel = hasEvents || hasFilters || aiFiltersStore.isLoading;
   return !metaLoading ? (
     <div className="mb-2">
-      <div className="flex items-center gap-2 w-full">
+      <div className={'flex flex-col lg:hidden items-start  gap-2 w-full'}>
+        <div className='flex items-center justify-between w-full'>
+          <h2 className="text-2xl capitalize mr-4 inline">Sessions</h2>
+          <div className={'ml-auto flex gap-1'}>
+            <SavedSearch/>
+            <Tooltip title='Clear Search Filters'>
+              <Button
+                type="text"
+                disabled={!hasSearch}
+                onClick={() => searchStore.clearSearch()}
+                className="px-2"
+              >
+                Clear
+              </Button>
+            </Tooltip>
+          </div>
+        </div>
+        {isSaas ? <AiSessionSearchField/> : null}
+      </div>
+
+      <div className={'hidden lg:flex items-center gap-2 w-full '}>
         <h2 className="text-2xl capitalize mr-4">{title}</h2>
         {isSaas && showAiField ? <AiSessionSearchField /> : null}
         <div className="ml-auto" />

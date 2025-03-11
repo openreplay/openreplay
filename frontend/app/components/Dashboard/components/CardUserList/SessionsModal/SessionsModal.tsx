@@ -102,7 +102,7 @@ function SessionsModal(props: Props) {
             ))}
           </Loader>
 
-          <div className="flex items-center justify-between p-5">
+          <div className="flex flex-col items-start lg:flex-row lg:items-center lg:justify-between p-5">
             <div>
               {/* showing x to x of total sessions  */}
               {t('Showing')}{' '}
