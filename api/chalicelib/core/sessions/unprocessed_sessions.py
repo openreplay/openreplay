@@ -1,7 +1,7 @@
 import logging
 
 from chalicelib.core import assist
-from chalicelib.core.sessions import sessions
+from . import sessions
 
 logger = logging.getLogger(__name__)
 
