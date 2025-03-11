@@ -24,9 +24,9 @@ export function sankeyTooltip(
               <span class="text-base" style="color:#394eff">&#8594;</span> ${safeTargetName}
             </div>
             <div class="flex items-baseline gap-2 text-black">
-              <span>${params.data.value} ( ${params.data.percentage.toFixed(
+              <span>${params.data.value} (${params.data.percentage.toFixed(
                 2,
-              )}% )</span>
+              )}%)</span>
               <span class="text-disabled-text">Sessions</span>
             </div>
           </div>
