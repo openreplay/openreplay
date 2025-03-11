@@ -149,9 +149,9 @@ function SessionItem(props: RouteComponentProps & Props) {
   const isAssist = useMemo(() => {
     return (
       (!ignoreAssist &&
-        (isRoute(ASSIST_ROUTE, location.pathname) ||
-          isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
-          location.pathname.includes('multiview'))) ||
+       (isRoute(ASSIST_ROUTE, location.pathname) ||
+        isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
+        location.pathname.includes('multiview'))) ||
       propsLive
     );
   }, [ignoreAssist, location.pathname, propsLive]);
@@ -205,11 +205,11 @@ function SessionItem(props: RouteComponentProps & Props) {
   const formattedTime = useMemo(() => {
     const timezoneToUse =
       shownTimezone === 'user' && userTimezone
-        ? {
+      ? {
           label: userTimezone.split('+').join(' +'),
           value: userTimezone.split(':')[0]
         }
-        : timezone;
+      : timezone;
 
     return formatTimeOrDate(startedAt, timezoneToUse);
   }, [startedAt, shownTimezone, userTimezone, timezone]);
@@ -242,7 +242,9 @@ function SessionItem(props: RouteComponentProps & Props) {
 
   return (
     <Tooltip
-      title={!isMultiviewDisabled ? '' : t(`Session already added into the multiview`)}
+      title={
+        !isMultiviewDisabled ? '' : t(`Session already added into the multiview`)
+      }
     >
       <div
         className={cn(stl.sessionItem, 'flex flex-col p-4')}
@@ -250,18 +252,23 @@ function SessionItem(props: RouteComponentProps & Props) {
         onClick={(e) => e.stopPropagation()}
         onMouseEnter={handleHover}
       >
-        <div className="flex items-start">
-          <div className={cn('flex items-center w-full')}>
+        <div className="flex items-start ">
+          <div
+            className={cn(
+              'flex flex-col items-start lg:flex-row lg:items-center w-full',
+            )}
+          >
             {!compact && (
               <div
-                className="flex flex-col shrink-0 pr-2 gap-2"
-                style={{ width: '40%' }}
+                className={
+                  'flex flex-col shrink-0 pr-2 gap-2 w-full lg:w-[40%]'
+                }
               >
                 <div className="flex items-center pr-2 shrink-0">
                   <div>
                     <Avatar
-                      width="24px"
-                      height="24px"
+                      width={'24px'}
+                      height={'24px'}
                       iconSize={12}
                       isActive={active}
                       seed={userNumericHash}
@@ -274,8 +281,8 @@ function SessionItem(props: RouteComponentProps & Props) {
                         'color-teal cursor-pointer':
                           !disableUser && hasUserId && !isDisabled,
                         [stl.userName]:
-                        !disableUser && hasUserId && !isDisabled,
-                        'color-gray-medium': disableUser || !hasUserId
+                          !disableUser && hasUserId && !isDisabled,
+                        'color-gray-medium': disableUser || !hasUserId,
                       })}
                       onClick={handleUserClick}
                     >
@@ -288,13 +295,15 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </div>
                 </div>
                 {_metaList.length > 0 && (
-                  <SessionMetaList maxLength={1} metaList={_metaList} />
+                  <SessionMetaList maxLength={3} metaList={_metaList} />
                 )}
               </div>
             )}
             <div
-              style={{ width: compact ? '40%' : '20%' }}
-              className="px-2 flex flex-col justify-between"
+              className={cn(
+                'px-2 flex flex-col justify-between gap-2 mt-3 lg:mt-0',
+                compact ? 'w-[40%]' : 'lg:w-1/5',
+              )}
             >
               <div>
                 <Tooltip
@@ -309,42 +318,38 @@ function SessionItem(props: RouteComponentProps & Props) {
                   />
                 </Tooltip>
               </div>
-              <div className="flex items-center color-gray-medium py-1">
+              <div className="flex items-center text-sm text-neutral-500">
                 {!isAssist && (
                   <>
-                    <div className="color-gray-medium">
+                    <div className="">
                       <span className="mr-1">{eventsCount}</span>
                       <span>
                         {eventsCount === 0 || eventsCount > 1
-                          ? t('Events')
-                          : t('Event')}
+                          ? 'Events'
+                          : 'Event'}
                       </span>
                     </div>
                     <Icon name="circle-fill" size={3} className="mx-4" />
                   </>
                 )}
                 <div>
-                  {live ? (
-                    <Counter startTime={startedAt} />
-                  ) : (
-                    formattedDuration
-                  )}
+                  {live ? <Counter startTime={startedAt} /> : formattedDuration}
                 </div>
               </div>
             </div>
             <div
               style={{ width: '30%' }}
-              className="px-2 flex flex-col justify-between"
+              className="px-2 flex flex-col justify-between gap-2"
             >
               <div style={{ height: '21px' }}>
                 <CountryFlag
                   userCity={userCity}
                   userState={userState}
                   country={userCountry}
-                  showLabel
+                  showLabel={true}
                 />
               </div>
-              <div className="color-gray-medium flex items-center py-1">
+              <div className="flex items-center text-sm text-neutral-500">
                 {userBrowser && (
                   <span className="capitalize" style={{ maxWidth: '70px' }}>
                     <TextEllipsis
@@ -392,7 +397,9 @@ function SessionItem(props: RouteComponentProps & Props) {
             <div
               className={cn(
                 stl.playLink,
-                isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
+                isDisabled
+                  ? 'cursor-not-allowed'
+                  : 'cursor-pointer flex flex-col lg:flex-row',
               )}
               id="play-button"
               data-viewed={viewed}
@@ -410,15 +417,10 @@ function SessionItem(props: RouteComponentProps & Props) {
                 </div>
               )}
               {isSessions && (
-                <div className="mr-4 flex-shrink-0 w-24">
+                <div className="flex-shrink-0 w-24  mb-2 lg:mb-0">
                   {isLastPlayed && (
-                    <Label className="bg-gray-lightest p-1 px-2 rounded-lg">
-                      <span
-                        className="color-gray-medium text-xs"
-                        style={{ whiteSpace: 'nowrap' }}
-                      >
-                        {t('LAST PLAYED')}
-                      </span>
+                    <Label className="bg-neutral-100 p-1 py-0 text-xs whitespace-nowrap rounded-xl text-neutral-400 ms-auto">
+                      {t('LAST PLAYED')}
                     </Label>
                   )}
                 </div>
