@@ -49,7 +49,7 @@ function SearchActions() {
                 onClick={() => searchStore.clearSearch()}
                 className="px-2"
               >
-                Clear
+                {t('Clear')}
               </Button>
             </Tooltip>
           </div>
