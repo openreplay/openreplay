@@ -67,10 +67,12 @@ function PageInsightsPanel({ setActiveTab }: Props) {
       });
     }
     prevInsights.current = insightsFilters;
+    return () => {
+      prevInsights.current = undefined;
+    }
   }, [insightsFilters]);
 
   const onPageSelect = ({ value }: any) => {
-    const { t } = useTranslation();
     const event = events.find((item) => item.url === value.value);
     Player.jump(event.timestamp - startTs + JUMP_OFFSET);
     Player.pause();

@@ -5,9 +5,6 @@ import PageInsightsPanel from '../Session_/PageInsightsPanel/PageInsightsPanel';
 import UnitStepsModal from "../Session_/UnitStepsModal";
 import TagWatch from 'Components/Session/Player/TagWatch';
 import cn from 'classnames';
-import EventsBlock from '../Session_/EventsBlock';
-import HighlightPanel from '../Session_/Highlight/HighlightPanel';
-import PageInsightsPanel from '../Session_/PageInsightsPanel/PageInsightsPanel';
 
 import stl from './rightblock.module.css';
 
