@@ -1,8 +1,8 @@
 from typing import Optional
 
 import schemas
-from chalicelib.core.autocomplete import autocomplete
 from chalicelib.core import issues
+from chalicelib.core.autocomplete import autocomplete
 from chalicelib.core.sessions import sessions_metas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -206,13 +206,13 @@ def search(text, event_type, project_id, source, key):
         rows = SUPPORTED_TYPES[event_type].get(project_id=project_id, value=text, key=key, source=source)
     elif event_type + "_MOBILE" in SUPPORTED_TYPES.keys():
         rows = SUPPORTED_TYPES[event_type + "_MOBILE"].get(project_id=project_id, value=text, key=key, source=source)
-    elif event_type in sessions_metas.SUPPORTED_TYPES.keys():
+    elif event_type in sessions_metas.supported_types().keys():
         return sessions_metas.search(text, event_type, project_id)
     elif event_type.endswith("_IOS") \
-            and event_type[:-len("_IOS")] in sessions_metas.SUPPORTED_TYPES.keys():
+            and event_type[:-len("_IOS")] in sessions_metas.supported_types().keys():
         return sessions_metas.search(text, event_type, project_id)
     elif event_type.endswith("_MOBILE") \
-            and event_type[:-len("_MOBILE")] in sessions_metas.SUPPORTED_TYPES.keys():
+            and event_type[:-len("_MOBILE")] in sessions_metas.supported_types().keys():
         return sessions_metas.search(text, event_type, project_id)
     else:
         return {"errors": ["unsupported event"]}
