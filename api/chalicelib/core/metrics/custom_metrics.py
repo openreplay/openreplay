@@ -378,21 +378,6 @@ def search_metrics(project_id, user_id, data: schemas.MetricSearchSchema, includ
             )
 
     with pg_client.PostgresClient() as cur:
-        count_query = cur.mogrify(
-            f"""SELECT COUNT(*)
-                FROM metrics
-                LEFT JOIN LATERAL (
-                    SELECT email AS owner_email, name AS owner_name
-                    FROM users
-                    WHERE deleted_at ISNULL
-                      AND users.user_id = metrics.user_id
-                ) AS owner ON (TRUE)
-                WHERE {" AND ".join(constraints)};""",
-            params
-        )
-        cur.execute(count_query)
-        total = cur.fetchone()["count"]
-
         sub_join = ""
         if include_series:
             sub_join = """LEFT JOIN LATERAL (
@@ -402,7 +387,8 @@ def search_metrics(project_id, user_id, data: schemas.MetricSearchSchema, includ
                               AND metric_series.deleted_at ISNULL 
                          ) AS metric_series ON (TRUE)"""
 
-        sort_column = data.sort.field if data.sort.field is not None else "created_at"
+        sort_column = data.sort.field if data.sort.field is not None and len(data.sort.field) > 0 \
+            else "created_at"
         # change ascend to asc and descend to desc
         sort_order = data.sort.order.value if hasattr(data.sort.order, "value") else data.sort.order
         if sort_order == "ascend":
@@ -411,7 +397,7 @@ def search_metrics(project_id, user_id, data: schemas.MetricSearchSchema, includ
             sort_order = "desc"
 
         query = cur.mogrify(
-            f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, edited_at,
+            f"""SELECT count(1) OVER () AS total,metric_id, project_id, user_id, name, is_public, created_at, edited_at,
                         metric_type, metric_of, metric_format, metric_value, view_type, is_pinned, 
                         dashboards, owner_email, owner_name, default_config AS config, thumbnail
                 FROM metrics
@@ -441,15 +427,21 @@ def search_metrics(project_id, user_id, data: schemas.MetricSearchSchema, includ
         )
         cur.execute(query)
         rows = cur.fetchall()
-        if include_series:
-            for r in rows:
-                for s in r.get("series", []):
-                    s["filter"] = helper.old_search_payload_to_flat(s["filter"])
+        if len(rows) > 0:
+            total = rows[0]["total"]
+            if include_series:
+                for r in rows:
+                    r.pop("total")
+                    for s in r.get("series", []):
+                        s["filter"] = helper.old_search_payload_to_flat(s["filter"])
+            else:
+                for r in rows:
+                    r.pop("total")
+                    r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+                    r["edited_at"] = TimeUTC.datetime_to_timestamp(r["edited_at"])
+            rows = helper.list_to_camel_case(rows)
         else:
-            for r in rows:
-                r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
-                r["edited_at"] = TimeUTC.datetime_to_timestamp(r["edited_at"])
-        rows = helper.list_to_camel_case(rows)
+            total = 0
 
     return {"total": total, "list": rows}
 
