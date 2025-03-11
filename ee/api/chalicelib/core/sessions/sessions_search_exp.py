@@ -201,7 +201,8 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
 
     return {
         'total': total,
-        'sessions': sessions_list
+        'sessions': sessions_list,
+        'src': 2
     }
 
 

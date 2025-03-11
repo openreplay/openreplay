@@ -166,7 +166,8 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
     #                       reverse=data.order.upper() == "DESC")
     return {
         'total': total,
-        'sessions': helper.list_to_camel_case(sessions)
+        'sessions': helper.list_to_camel_case(sessions),
+        'src': 1
     }
 
 
