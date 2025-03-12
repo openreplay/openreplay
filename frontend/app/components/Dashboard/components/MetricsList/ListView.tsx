@@ -1,20 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   Typography,
-  Tag,
   Tooltip,
   Input,
   Button,
   Dropdown,
   Modal as AntdModal,
-  Avatar, TableColumnType
+  Avatar, TableColumnType, Spin
 } from 'antd';
 import {
-  TeamOutlined,
-  LockOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
 } from '@ant-design/icons';
 import { EllipsisVertical } from 'lucide-react';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
@@ -27,6 +24,7 @@ import cn from 'classnames';
 import { TYPE_ICONS, TYPE_NAMES } from 'App/constants/card';
 import Widget from 'App/mstore/types/widget';
 import { useTranslation } from 'react-i18next';
+import ORLoader from 'Shared/ORLoader';
 
 const { Text } = Typography;
 
@@ -41,14 +39,14 @@ interface Props {
 }
 
 const ListView: React.FC<Props> = ({
-                                     list,
-                                     siteId,
-                                     selectedList,
-                                     toggleSelection,
-                                     disableSelection = false,
-                                     inLibrary = false,
-                                     loading = false
-                                   }) => {
+  list,
+  siteId,
+  selectedList,
+  toggleSelection,
+  disableSelection = false,
+  inLibrary = false,
+  loading = false
+}) => {
   const { t } = useTranslation();
   const [editingMetricId, setEditingMetricId] = useState<number | null>(null);
   const [newName, setNewName] = useState('');
@@ -238,14 +236,6 @@ const ListView: React.FC<Props> = ({
     });
   }
 
-  // if (metricStore.sort.field) {
-  //   columns.forEach((col) => {
-  //     col.sortOrder = col.key === metricStore.sort.field ? metricStore.sort.order : false;
-  //   });
-  // }
-
-  console.log('store', metricStore.sort);
-
   const handleTableChange = (
     pag: TablePaginationConfig,
     _filters: Record<string, (string | number | boolean)[] | null>,
@@ -264,13 +254,17 @@ const ListView: React.FC<Props> = ({
   return (
     <>
       <Table
-        loading={loading}
         columns={columns}
         dataSource={list}
         rowKey="metricId"
         showSorterTooltip={false}
         onChange={handleTableChange}
         sortDirections={['ascend', 'descend']}
+        loading={{
+          spinning: loading,
+          delay: 0,
+          indicator: <Spin indicator={<ORLoader />} />,
+        }}
         onRow={
           inLibrary
             ? (record) => ({

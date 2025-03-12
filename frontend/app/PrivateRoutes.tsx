@@ -1,4 +1,5 @@
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
+import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import React, { Suspense, lazy } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
