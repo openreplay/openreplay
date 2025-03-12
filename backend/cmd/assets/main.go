@@ -30,7 +30,7 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
-	cacher, err := cacher.NewCacher(cfg, objStore)
+	cacher, err := cacher.NewCacher(cfg, objStore, assetMetrics)
 	if err != nil {
 		log.Fatal(ctx, "can't init cacher: %s", err)
 	}

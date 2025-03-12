@@ -38,7 +38,7 @@ func (c *cacher) CanCache() bool {
 	return c.workers.CanAddTask()
 }
 
-func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage) (*cacher, error) {
+func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage, metrics metrics.Assets) (*cacher, error) {
 	switch {
 	case cfg == nil:
 		return nil, errors.New("config is nil")
@@ -94,6 +94,7 @@ func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage) (*cacher, 
 		Errors:         make(chan error),
 		sizeLimit:      cfg.AssetsSizeLimit,
 		requestHeaders: cfg.AssetsRequestHeaders,
+		metrics:        metrics,
 	}
 	c.workers = NewPool(64, c.CacheFile)
 	return c, nil
