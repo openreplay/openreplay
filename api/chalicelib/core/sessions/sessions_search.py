@@ -48,7 +48,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
         return {
             'total': 0,
             'sessions': [],
-            'src': 2
+            'src': 1
         }
     full_args, query_part = sessions_legacy.search_query_parts(data=data, error_status=error_status,
                                                                errors_only=errors_only,
