@@ -141,7 +141,11 @@ const config: Configuration = {
         { from: "./app/assets", to: "assets" },
       ],
     }),
-    new MiniCssExtractPlugin({ ignoreOrder: true }),
+    new MiniCssExtractPlugin({
+      filename: '[name]-[contenthash:7].css',
+      chunkFilename: '[id]-[contenthash:7].css',
+      ignoreOrder: true
+    }),
 ],
   devtool: isDevelopment ? "inline-source-map" : false,
   performance: {
