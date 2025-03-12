@@ -3,6 +3,7 @@ package analytics
 import (
 	"github.com/go-playground/validator/v10"
 	"openreplay/backend/pkg/analytics/charts"
+	"openreplay/backend/pkg/analytics/db"
 	"time"
 
 	"openreplay/backend/internal/config/analytics"
@@ -26,13 +27,14 @@ type ServicesBuilder struct {
 	ChartsAPI     api.Handlers
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, pgconn pool.Pool) (*ServicesBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, pgconn pool.Pool, chConn db.Connector) (*ServicesBuilder, error) {
 	responser := api.NewResponser(webMetrics)
 	audiTrail, err := tracer.NewTracer(log, pgconn)
 	if err != nil {
 		return nil, err
 	}
 	reqValidator := validator.New()
+
 	cardsService, err := cards.New(log, pgconn)
 	if err != nil {
 		return nil, err
@@ -41,6 +43,7 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	if err != nil {
 		return nil, err
 	}
+
 	dashboardsService, err := dashboards.New(log, pgconn)
 	if err != nil {
 		return nil, err
@@ -49,7 +52,8 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	if err != nil {
 		return nil, err
 	}
-	chartsService, err := charts.New(log, pgconn)
+
+	chartsService, err := charts.New(log, pgconn, chConn)
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +61,7 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	if err != nil {
 		return nil, err
 	}
+
 	return &ServicesBuilder{
 		Auth:          auth.NewAuth(log, cfg.JWTSecret, cfg.JWTSpotSecret, pgconn, nil, api.NoPrefix),
 		RateLimiter:   limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
