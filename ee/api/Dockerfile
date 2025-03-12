@@ -14,7 +14,7 @@ WORKDIR /work
 COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 # This code is used to solve 'lxml & xmlsec libxml2 library version mismatch' error
-RUN pip uninstall -y lxml && pip install lxml
+RUN pip uninstall -y lxml && pip install --no-binary lxml lxml --force-reinstall
 
 COPY . .
 RUN mv env.default .env
