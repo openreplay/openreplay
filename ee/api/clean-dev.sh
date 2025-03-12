@@ -32,7 +32,7 @@ rm -rf ./chalicelib/core/log_tools
 rm -rf ./chalicelib/core/metadata.py
 rm -rf ./chalicelib/core/mobile.py
 rm -rf ./chalicelib/core/saved_search.py
-rm -rf ./chalicelib/core/sessions/sessions.py
+rm -rf ./chalicelib/core/sessions/sessions_pg.py
 rm -rf ./chalicelib/core/sessions/sessions_ch.py
 rm -rf ./chalicelib/core/sessions/sessions_devtool/sessions_devtool.py
 rm -rf ./chalicelib/core/sessions/sessions_favorite/sessions_favorite.py
