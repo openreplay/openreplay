@@ -64,6 +64,13 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
                     platform="web"):
     if data.bookmarked:
         data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project.project_id, user_id)
+    if data.startTimestamp is None:
+        logger.debug(f"No vault sessions found for project:{project.project_id}")
+        return {
+            'total': 0,
+            'sessions': [],
+            'src': 2
+        }
     if project.platform == "web":
         full_args, query_part = sessions.search_query_parts_ch(data=data, error_status=error_status,
                                                                errors_only=errors_only,
