@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"log"
+	"openreplay/backend/pkg/metrics/database"
 	"strings"
 	"time"
 
@@ -57,13 +58,14 @@ func NewTask() *task {
 
 type connectorImpl struct {
 	conn       driver.Conn
+	metrics    database.Database
 	batches    map[string]Bulk //driver.Batch
 	workerTask chan *task
 	done       chan struct{}
 	finished   chan struct{}
 }
 
-func NewConnector(cfg common.Clickhouse) Connector {
+func NewConnector(cfg common.Clickhouse, metrics database.Database) Connector {
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{cfg.GetTrimmedURL()},
 		Auth: clickhouse.Auth{
@@ -84,6 +86,7 @@ func NewConnector(cfg common.Clickhouse) Connector {
 
 	c := &connectorImpl{
 		conn:       conn,
+		metrics:    metrics,
 		batches:    make(map[string]Bulk, 20),
 		workerTask: make(chan *task, 1),
 		done:       make(chan struct{}),
@@ -94,7 +97,7 @@ func NewConnector(cfg common.Clickhouse) Connector {
 }
 
 func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBulk(c.conn, name, query)
+	batch, err := NewBulk(c.conn, c.metrics, name, query)
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}

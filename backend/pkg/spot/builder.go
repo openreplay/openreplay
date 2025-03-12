@@ -7,6 +7,7 @@ import (
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
+	spotMetrics "openreplay/backend/pkg/metrics/spot"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/server/api"
@@ -26,14 +27,14 @@ type ServicesBuilder struct {
 	SpotsAPI    api.Handlers
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, pgconn pool.Pool, prefix string) (*ServicesBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, spotMetrics spotMetrics.Spot, pgconn pool.Pool, prefix string) (*ServicesBuilder, error) {
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		return nil, err
 	}
 	flaker := flakeid.NewFlaker(cfg.WorkerID)
 	spots := service.NewSpots(log, pgconn, flaker)
-	transcoder := transcoder.NewTranscoder(cfg, log, objStore, pgconn, spots)
+	transcoder := transcoder.NewTranscoder(cfg, log, objStore, pgconn, spots, spotMetrics)
 	keys := keys.NewKeys(log, pgconn)
 	auditrail, err := tracer.NewTracer(log, pgconn)
 	if err != nil {

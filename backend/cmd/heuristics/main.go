@@ -23,7 +23,9 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
-	metrics.New(log, heuristicsMetrics.List())
+	// Observability
+	heuristicsMetric := heuristicsMetrics.New("heuristics")
+	metrics.New(log, heuristicsMetric.List())
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
 	handlersFabric := func() []handlers.MessageProcessor {
@@ -62,7 +64,7 @@ func main() {
 	}
 
 	// Run service and wait for TERM signal
-	service := heuristics.New(log, cfg, producer, consumer, eventBuilder, memoryManager)
+	service := heuristics.New(log, cfg, producer, consumer, eventBuilder, memoryManager, heuristicsMetric)
 	log.Info(ctx, "Heuristics service started")
 	terminator.Wait(log, service)
 }

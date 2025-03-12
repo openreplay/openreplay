@@ -14,7 +14,7 @@ import (
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
-	databaseMetrics "openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/sessions"
@@ -26,22 +26,24 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
-	metrics.New(log, databaseMetrics.List())
+	// Observability
+	dbMetric := database.New("db")
+	metrics.New(log, dbMetric.List())
 
-	pgConn, err := pool.New(cfg.Postgres.String())
+	pgConn, err := pool.New(dbMetric, cfg.Postgres.String())
 	if err != nil {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
 	defer pgConn.Close()
 
-	chConn := clickhouse.NewConnector(cfg.Clickhouse)
+	chConn := clickhouse.NewConnector(cfg.Clickhouse, dbMetric)
 	if err := chConn.Prepare(); err != nil {
 		log.Fatal(ctx, "can't prepare clickhouse: %s", err)
 	}
 	defer chConn.Stop()
 
 	// Init db proxy module (postgres + clickhouse + batches)
-	dbProxy := postgres.NewConn(log, pgConn, chConn)
+	dbProxy := postgres.NewConn(log, pgConn, chConn, dbMetric)
 	defer dbProxy.Close()
 
 	// Init redis connection
@@ -51,8 +53,8 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	projManager := projects.New(log, pgConn, redisClient)
-	sessManager := sessions.New(log, pgConn, projManager, redisClient)
+	projManager := projects.New(log, pgConn, redisClient, dbMetric)
+	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric)
 	tagsManager := tags.New(log, pgConn)
 
 	// Init data saver

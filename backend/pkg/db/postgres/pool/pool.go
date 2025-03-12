@@ -23,58 +23,12 @@ type Pool interface {
 }
 
 type poolImpl struct {
-	url  string
-	conn *pgxpool.Pool
+	url     string
+	conn    *pgxpool.Pool
+	metrics database.Database
 }
 
-func (p *poolImpl) Query(sql string, args ...interface{}) (pgx.Rows, error) {
-	start := time.Now()
-	res, err := p.conn.Query(getTimeoutContext(), sql, args...)
-	method, table := methodName(sql)
-	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
-	database.IncreaseTotalRequests(method, table)
-	return res, err
-}
-
-func (p *poolImpl) QueryRow(sql string, args ...interface{}) pgx.Row {
-	start := time.Now()
-	res := p.conn.QueryRow(getTimeoutContext(), sql, args...)
-	method, table := methodName(sql)
-	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
-	database.IncreaseTotalRequests(method, table)
-	return res
-}
-
-func (p *poolImpl) Exec(sql string, arguments ...interface{}) error {
-	start := time.Now()
-	_, err := p.conn.Exec(getTimeoutContext(), sql, arguments...)
-	method, table := methodName(sql)
-	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
-	database.IncreaseTotalRequests(method, table)
-	return err
-}
-
-func (p *poolImpl) SendBatch(b *pgx.Batch) pgx.BatchResults {
-	start := time.Now()
-	res := p.conn.SendBatch(getTimeoutContext(), b)
-	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "sendBatch", "")
-	database.IncreaseTotalRequests("sendBatch", "")
-	return res
-}
-
-func (p *poolImpl) Begin() (*Tx, error) {
-	start := time.Now()
-	tx, err := p.conn.Begin(context.Background())
-	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "begin", "")
-	database.IncreaseTotalRequests("begin", "")
-	return &Tx{tx}, err
-}
-
-func (p *poolImpl) Close() {
-	p.conn.Close()
-}
-
-func New(url string) (Pool, error) {
+func New(metrics database.Database, url string) (Pool, error) {
 	if url == "" {
 		return nil, errors.New("pg connection url is empty")
 	}
@@ -83,24 +37,73 @@ func New(url string) (Pool, error) {
 		return nil, fmt.Errorf("pgxpool.Connect error: %v", err)
 	}
 	res := &poolImpl{
-		url:  url,
-		conn: conn,
+		url:     url,
+		conn:    conn,
+		metrics: metrics,
 	}
 	return res, nil
+}
+
+func (p *poolImpl) Query(sql string, args ...interface{}) (pgx.Rows, error) {
+	start := time.Now()
+	res, err := p.conn.Query(getTimeoutContext(), sql, args...)
+	method, table := methodName(sql)
+	p.metrics.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
+	p.metrics.IncreaseTotalRequests(method, table)
+	return res, err
+}
+
+func (p *poolImpl) QueryRow(sql string, args ...interface{}) pgx.Row {
+	start := time.Now()
+	res := p.conn.QueryRow(getTimeoutContext(), sql, args...)
+	method, table := methodName(sql)
+	p.metrics.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
+	p.metrics.IncreaseTotalRequests(method, table)
+	return res
+}
+
+func (p *poolImpl) Exec(sql string, arguments ...interface{}) error {
+	start := time.Now()
+	_, err := p.conn.Exec(getTimeoutContext(), sql, arguments...)
+	method, table := methodName(sql)
+	p.metrics.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
+	p.metrics.IncreaseTotalRequests(method, table)
+	return err
+}
+
+func (p *poolImpl) SendBatch(b *pgx.Batch) pgx.BatchResults {
+	start := time.Now()
+	res := p.conn.SendBatch(getTimeoutContext(), b)
+	p.metrics.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "sendBatch", "")
+	p.metrics.IncreaseTotalRequests("sendBatch", "")
+	return res
+}
+
+func (p *poolImpl) Begin() (*Tx, error) {
+	start := time.Now()
+	tx, err := p.conn.Begin(context.Background())
+	p.metrics.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "begin", "")
+	p.metrics.IncreaseTotalRequests("begin", "")
+	return &Tx{tx, p.metrics}, err
+}
+
+func (p *poolImpl) Close() {
+	p.conn.Close()
 }
 
 // TX - start
 
 type Tx struct {
 	pgx.Tx
+	metrics database.Database
 }
 
 func (tx *Tx) TxExec(sql string, args ...interface{}) error {
 	start := time.Now()
 	_, err := tx.Exec(context.Background(), sql, args...)
 	method, table := methodName(sql)
-	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
-	database.IncreaseTotalRequests(method, table)
+	tx.metrics.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
+	tx.metrics.IncreaseTotalRequests(method, table)
 	return err
 }
 
@@ -108,24 +111,24 @@ func (tx *Tx) TxQueryRow(sql string, args ...interface{}) pgx.Row {
 	start := time.Now()
 	res := tx.QueryRow(context.Background(), sql, args...)
 	method, table := methodName(sql)
-	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
-	database.IncreaseTotalRequests(method, table)
+	tx.metrics.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
+	tx.metrics.IncreaseTotalRequests(method, table)
 	return res
 }
 
 func (tx *Tx) TxRollback() error {
 	start := time.Now()
 	err := tx.Rollback(context.Background())
-	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "rollback", "")
-	database.IncreaseTotalRequests("rollback", "")
+	tx.metrics.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "rollback", "")
+	tx.metrics.IncreaseTotalRequests("rollback", "")
 	return err
 }
 
 func (tx *Tx) TxCommit() error {
 	start := time.Now()
 	err := tx.Commit(context.Background())
-	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "commit", "")
-	database.IncreaseTotalRequests("commit", "")
+	tx.metrics.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "commit", "")
+	tx.metrics.IncreaseTotalRequests("commit", "")
 	return err
 }
 

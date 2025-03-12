@@ -23,6 +23,7 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
+	// Observability
 	imageMetrics := imagesMetrics.New("images")
 	metrics.New(log, imageMetrics.List())
 

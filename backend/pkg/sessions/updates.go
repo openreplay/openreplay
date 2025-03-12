@@ -27,13 +27,15 @@ type updatesImpl struct {
 	log     logger.Logger
 	db      pool.Pool
 	updates map[uint64]*sessionUpdate
+	metrics database.Database
 }
 
-func NewSessionUpdates(log logger.Logger, db pool.Pool) Updates {
+func NewSessionUpdates(log logger.Logger, db pool.Pool, metrics database.Database) Updates {
 	return &updatesImpl{
 		log:     log,
 		db:      db,
 		updates: make(map[uint64]*sessionUpdate),
+		metrics: metrics,
 	}
 }
 
@@ -94,7 +96,7 @@ func (u *updatesImpl) Commit() {
 		}
 	}
 	// Record batch size
-	database.RecordBatchElements(float64(b.Len()))
+	u.metrics.RecordBatchElements(float64(b.Len()))
 
 	start := time.Now()
 
@@ -121,7 +123,7 @@ func (u *updatesImpl) Commit() {
 			}
 		}
 	}
-	database.RecordBatchInsertDuration(float64(time.Now().Sub(start).Milliseconds()))
+	u.metrics.RecordBatchInsertDuration(float64(time.Now().Sub(start).Milliseconds()))
 	u.updates = make(map[uint64]*sessionUpdate)
 }
 

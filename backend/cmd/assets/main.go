@@ -22,7 +22,9 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
-	metrics.New(log, assetsMetrics.List())
+	// Observability
+	assetMetrics := assetsMetrics.New("assets")
+	metrics.New(log, assetMetrics.List())
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
@@ -37,7 +39,7 @@ func main() {
 		switch m := msg.(type) {
 		case *messages.AssetCache:
 			cacher.CacheURL(m.SessionID(), m.URL)
-			assetsMetrics.IncreaseProcessesSessions()
+			assetMetrics.IncreaseProcessesSessions()
 		case *messages.JSException:
 			sourceList, err := assets.ExtractJSExceptionSources(&m.Payload)
 			if err != nil {
