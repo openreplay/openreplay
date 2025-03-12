@@ -23,7 +23,7 @@ function Layout(props: Props) {
 
   useEffect(() => {
     const handleResize = () => {
-      const isMobile = window.innerWidth < 1200;
+      const isMobile = window.innerWidth < 1280;
       if (isMobile) {
         setCollapsed(true);
       } else {

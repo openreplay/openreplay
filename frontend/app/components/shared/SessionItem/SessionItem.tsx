@@ -10,7 +10,7 @@ import {
   assist as assistRoute,
   isRoute,
   liveSession,
-  sessions as sessionsRoute
+  sessions as sessionsRoute,
 } from 'App/routes';
 import { capitalize } from 'App/utils';
 import { Avatar, CountryFlag, Icon, Label, TextEllipsis } from 'UI';
@@ -76,7 +76,7 @@ interface Props {
 const PREFETCH_STATE = {
   none: 0,
   loading: 1,
-  fetched: 2
+  fetched: 2,
 };
 
 function SessionItem(props: RouteComponentProps & Props) {
@@ -102,7 +102,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     // location,
     isDisabled,
     live: propsLive,
-    isAdd
+    isAdd,
   } = props;
 
   const {
@@ -128,43 +128,47 @@ function SessionItem(props: RouteComponentProps & Props) {
     platform,
     timezone: userTimezone,
     isCallActive,
-    agentIds
+    agentIds,
   } = session;
 
   // Memoize derived values
   const queryParams = useMemo(
     () => Object.fromEntries(new URLSearchParams(location.search)),
-    [location.search]
+    [location.search],
   );
 
   const isMobile = platform !== 'web';
-  const formattedDuration = useMemo(() => durationFormatted(duration), [duration]);
+  const formattedDuration = useMemo(
+    () => durationFormatted(duration),
+    [duration],
+  );
   const hasUserId = userId || userAnonymousId;
 
   const isSessions = useMemo(
     () => isRoute(SESSIONS_ROUTE, location.pathname),
-    [location.pathname]
+    [location.pathname],
   );
 
   const isAssist = useMemo(() => {
     return (
       (!ignoreAssist &&
-       (isRoute(ASSIST_ROUTE, location.pathname) ||
-        isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
-        location.pathname.includes('multiview'))) ||
+        (isRoute(ASSIST_ROUTE, location.pathname) ||
+          isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
+          location.pathname.includes('multiview'))) ||
       propsLive
     );
   }, [ignoreAssist, location.pathname, propsLive]);
 
   const isLastPlayed = lastPlayedSessionId === sessionId;
   const live = sessionLive || propsLive;
-  const isMultiviewDisabled = isDisabled && location.pathname.includes('multiview');
+  const isMultiviewDisabled =
+    isDisabled && location.pathname.includes('multiview');
 
   // Memoize metadata list creation
   const _metaList = useMemo(() => {
     return Object.keys(metadata).map((key) => ({
       label: key,
-      value: metadata[key]
+      value: metadata[key],
     }));
   }, [metadata]);
 
@@ -193,7 +197,14 @@ function SessionItem(props: RouteComponentProps & Props) {
     if (!disableUser && !hasUserFilter && hasUserId) {
       onUserClick(userId, userAnonymousId);
     }
-  }, [disableUser, hasUserFilter, hasUserId, onUserClick, userId, userAnonymousId]);
+  }, [
+    disableUser,
+    hasUserFilter,
+    hasUserId,
+    onUserClick,
+    userId,
+    userAnonymousId,
+  ]);
 
   const handleAddClick = useCallback(() => {
     if (!isDisabled && onClick) {
@@ -205,11 +216,11 @@ function SessionItem(props: RouteComponentProps & Props) {
   const formattedTime = useMemo(() => {
     const timezoneToUse =
       shownTimezone === 'user' && userTimezone
-      ? {
-          label: userTimezone.split('+').join(' +'),
-          value: userTimezone.split(':')[0]
-        }
-      : timezone;
+        ? {
+            label: userTimezone.split('+').join(' +'),
+            value: userTimezone.split(':')[0],
+          }
+        : timezone;
 
     return formatTimeOrDate(startedAt, timezoneToUse);
   }, [startedAt, shownTimezone, userTimezone, timezone]);
@@ -229,9 +240,9 @@ function SessionItem(props: RouteComponentProps & Props) {
               startedAt,
               {
                 label: userTimezone.split('+').join(' +'),
-                value: userTimezone.split(':')[0]
+                value: userTimezone.split(':')[0],
               },
-              true
+              true,
             )}{' '}
             {userTimezone}
           </span>
@@ -243,7 +254,9 @@ function SessionItem(props: RouteComponentProps & Props) {
   return (
     <Tooltip
       title={
-        !isMultiviewDisabled ? '' : t(`Session already added into the multiview`)
+        !isMultiviewDisabled
+          ? ''
+          : t(`Session already added into the multiview`)
       }
     >
       <div
@@ -261,7 +274,7 @@ function SessionItem(props: RouteComponentProps & Props) {
             {!compact && (
               <div
                 className={
-                  'flex flex-col shrink-0 pr-2 gap-2 w-full lg:w-[40%]'
+                  'flex flex-col shrink-0 pr-2 gap-2 w-full lg:w-[40%] max-w-[260px]'
                 }
               >
                 <div className="flex items-center pr-2 shrink-0">
@@ -393,7 +406,7 @@ function SessionItem(props: RouteComponentProps & Props) {
             )}
           </div>
 
-          <div className="flex items-center m-auto">
+          <div className="flex items-center m-auto w-[15%] justify-end">
             <div
               className={cn(
                 stl.playLink,
@@ -416,14 +429,10 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </Label>
                 </div>
               )}
-              {isSessions && (
-                <div className="flex-shrink-0 w-24  mb-2 lg:mb-0">
-                  {isLastPlayed && (
-                    <Label className="bg-neutral-100 p-1 py-0 text-xs whitespace-nowrap rounded-xl text-neutral-400 ms-auto">
-                      {t('LAST PLAYED')}
-                    </Label>
-                  )}
-                </div>
+              {isSessions && isLastPlayed && (
+                <Label className="bg-neutral-100 p-1 py-0 text-xs whitespace-nowrap rounded-xl text-neutral-400 ms-auto">
+                  {t('LAST PLAYED')}
+                </Label>
               )}
               {isAdd ? (
                 <div

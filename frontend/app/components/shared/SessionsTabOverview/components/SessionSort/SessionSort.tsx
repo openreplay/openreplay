@@ -63,12 +63,14 @@ function SessionSort() {
   const defaultOption = `${sort}-${order}`;
 
   return (
-    <SortDropdown
-      defaultOption={defaultOption}
-      onSort={onSort}
-      sortOptions={sortOptions(t)}
-      current={sortOptionsMap(t)[defaultOption]}
-    />
+    <div className="px-[7px]">
+      <SortDropdown
+        defaultOption={defaultOption}
+        onSort={onSort}
+        sortOptions={sortOptions(t)}
+        current={sortOptionsMap(t)[defaultOption]}
+      />
+    </div>
   );
 }
 
