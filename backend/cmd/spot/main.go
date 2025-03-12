@@ -32,7 +32,7 @@ func main() {
 	defer pgConn.Close()
 
 	prefix := api.NoPrefix
-	builder, err := spot.NewServiceBuilder(log, cfg, webMetrics, spotMetric, pgConn, prefix)
+	builder, err := spot.NewServiceBuilder(log, cfg, webMetrics, spotMetric, dbMetric, pgConn, prefix)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}

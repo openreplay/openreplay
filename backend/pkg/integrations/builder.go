@@ -2,6 +2,7 @@ package integrations
 
 import (
 	"openreplay/backend/pkg/integrations/service"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server/tracer"
 	"time"
@@ -23,7 +24,7 @@ type ServiceBuilder struct {
 	IntegrationsAPI api.Handlers
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, webMetrics web.Web, pgconn pool.Pool) (*ServiceBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool) (*ServiceBuilder, error) {
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		return nil, err
@@ -37,7 +38,7 @@ func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, webMetrics w
 	if err != nil {
 		return nil, err
 	}
-	auditrail, err := tracer.NewTracer(log, pgconn)
+	auditrail, err := tracer.NewTracer(log, pgconn, dbMetrics)
 	if err != nil {
 		return nil, err
 	}

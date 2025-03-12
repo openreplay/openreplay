@@ -29,7 +29,7 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	builder, err := analytics.NewServiceBuilder(log, cfg, webMetrics, pgConn)
+	builder, err := analytics.NewServiceBuilder(log, cfg, webMetrics, dbMetrics, pgConn)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
