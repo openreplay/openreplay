@@ -96,7 +96,7 @@ func newSkippedSessionSize(serviceName string) *prometheus.HistogramVec {
 	return prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: serviceName,
-			Name:      "session_size_bytes",
+			Name:      "skipped_session_size_bytes",
 			Help:      "A histogram displaying the size of each skipped session file in bytes.",
 			Buckets:   common.DefaultSizeBuckets,
 		},

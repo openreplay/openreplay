@@ -41,7 +41,7 @@ func newRequestSizeMetric(serviceName string) *prometheus.HistogramVec {
 	return prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: serviceName,
-			Name:      "request_size_bytes",
+			Name:      "web_request_size_bytes",
 			Help:      "A histogram displaying the size of each HTTP request in bytes.",
 			Buckets:   common.DefaultSizeBuckets,
 		},
@@ -57,7 +57,7 @@ func newRequestDurationMetric(serviceName string) *prometheus.HistogramVec {
 	return prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: serviceName,
-			Name:      "request_duration_seconds",
+			Name:      "web_request_duration_seconds",
 			Help:      "A histogram displaying the duration of each HTTP request in seconds.",
 			Buckets:   common.DefaultDurationBuckets,
 		},
@@ -73,7 +73,7 @@ func newTotalRequestsMetric(serviceName string) prometheus.Counter {
 	return prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: serviceName,
-			Name:      "requests_total",
+			Name:      "web_requests_total",
 			Help:      "A counter displaying the number all HTTP requests.",
 		},
 	)
