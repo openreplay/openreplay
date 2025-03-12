@@ -102,31 +102,85 @@ class ScreenRecorder {
   };
 
   async startRecording(type, streamId, microphone = false, audioId) {
-    this.duration = 0;
-    if (this.isRecording) {
-      throw new Error("Called startRecording while recording is in progress.");
+    try {
+      this.duration = 0;
+      if (this.isRecording) {
+        throw new Error("Recording already in progress.");
+      }
+
+      const combinedStream = await this._getStream(
+        type,
+        streamId,
+        microphone,
+        audioId,
+      );
+
+      if (!combinedStream) {
+        throw new Error('Failed to get media stream');
+      }
+
+      this.stream = combinedStream;
+
+      const configurations = [
+        {
+          mimeType: 'video/webm;codecs=vp8,opus',
+          videoBitsPerSecond: 2500000,
+          audioBitsPerSecond: combinedStream.getAudioTracks().length > 0 ? 96000 : undefined
+        },
+        {
+          mimeType: 'video/webm;codecs=vp9,opus',
+          videoBitsPerSecond: 2500000,
+        },
+        {
+          mimeType: 'video/webm;codecs=h264',
+          videoBitsPerSecond: 1000000,
+        },
+        {
+          mimeType: 'video/webm',
+          videoBitsPerSecond: 2500000,
+        },
+        {
+          mimeType: 'video/webm'
+        },
+        {}
+      ];
+
+      let lastError;
+      for (const config of configurations) {
+        try {
+          // Verify MIME type support before trying to use it
+          if (config.mimeType && !MediaRecorder.isTypeSupported(config.mimeType)) {
+            console.warn(`MIME type ${config.mimeType} is not supported, skipping...`);
+            continue;
+          }
+
+          this.mRecorder = new MediaRecorder(combinedStream, config);
+          console.log('Successfully initialized MediaRecorder with config:', config);
+          break;
+        } catch (err) {
+          lastError = err;
+          console.warn('Failed to initialize MediaRecorder with config:', config, err);
+          continue;
+        }
+      }
+
+      if (!this.mRecorder) {
+        throw new Error(`Failed to initialize MediaRecorder: ${lastError?.message}`);
+      }
+
+      this.mRecorder.ondataavailable = this._handleDataAvailable;
+      this.mRecorder.onstop = this._handleStop;
+      
+      this.mRecorder.start();
+      this.isRecording = true;
+      this.trackDuration();
+
+      return true;
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      this.clearAll();
+      throw error;
     }
-    const combinedStream = await this._getStream(
-      type,
-      streamId,
-      microphone,
-      audioId,
-    );
-
-    this.stream = combinedStream;
-    this.mRecorder = new MediaRecorder(combinedStream, {
-      mimeType: this.settings.mimeType,
-      audioBitsPerSecond: this.settings.audioBitsPerSecond,
-      videoBitsPerSecond: this.settings.videoBitsPerSecond,
-      videoKeyFrameIntervalDuration: 1000,
-    });
-
-    this.mRecorder.ondataavailable = this._handleDataAvailable;
-    this.mRecorder.onstop = this._handleStop;
-
-    this.mRecorder.start();
-    this.isRecording = true;
-    this.trackDuration();
   }
 
   stop() {
