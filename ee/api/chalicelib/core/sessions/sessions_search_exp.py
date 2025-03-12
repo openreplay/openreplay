@@ -3,7 +3,7 @@ import logging
 
 import schemas
 from chalicelib.core import metadata, projects
-from . import sessions_favorite, sessions as sessions_legacy, sessions_ch as sessions, sessions_legacy_mobil
+from . import sessions_favorite, sessions_search_legacy, sessions_ch as sessions, sessions_legacy_mobil
 from chalicelib.utils import pg_client, helper, ch_client, exp_ch_helper
 
 logger = logging.getLogger(__name__)
@@ -279,4 +279,4 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
 # TODO: rewrite this function to use ClickHouse
 def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 'session_id',
                            ascending: bool = False) -> dict:
-    return sessions_legacy.search_sessions_by_ids(project_id, session_ids, sort_by, ascending)
+    return sessions_search_legacy.search_sessions_by_ids(project_id, session_ids, sort_by, ascending)
