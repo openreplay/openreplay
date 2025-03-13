@@ -1,8 +1,12 @@
+import logging
+
 from chalicelib.core.errors.modules import errors_helper
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import get_step_size
+
+logger = logging.getLogger(__name__)
 
 
 def __transform_map_to_tag(data, key1, key2, requested_key):
@@ -200,9 +204,9 @@ def get_details(project_id, error_id, user_id, **data):
                                    ORDER BY timestamp) AS chart_details
                             ) AS chart_details30 ON TRUE;"""
 
-        # print("--------------------")
-        # print(ch.format(main_ch_query, params))
-        # print("--------------------")
+        logger.debug("--------------------")
+        logging.debug(ch.format(query=main_ch_query, parameters=params))
+        logger.debug("--------------------")
         row = ch.execute(query=main_ch_query, parameters=params)
         if len(row) == 0:
             return {"errors": ["error not found"]}
@@ -219,12 +223,12 @@ def get_details(project_id, error_id, user_id, **data):
                     ORDER BY datetime DESC
                     LIMIT 1;"""
         params = {"project_id": project_id, "session_id": row["last_session_id"], "userId": user_id}
-        # print("--------------------")
-        # print(ch.format(query, params))
-        # print("--------------------")
+        logger.debug("--------------------")
+        logging.debug(ch.format(query=query, parameters=params))
+        logger.debug("--------------------")
         status = ch.execute(query=query, parameters=params)
 
-    if status is not None:
+    if status is not None and len(status) > 0:
         status = status[0]
         row["favorite"] = status.pop("favorite")
         row["viewed"] = status.pop("viewed")
