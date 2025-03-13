@@ -3,6 +3,7 @@ import { Checkbox } from 'UI';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
+import { t } from 'i18next';
 
 function OptOut() {
   const { userStore } = useStore();
@@ -13,10 +14,10 @@ function OptOut() {
     setOptOut(!optOut);
     void updateClient({ optOut: !optOut })
       .then(() => {
-        toast('Account settings updated successfully', { type: 'success' });
+        toast(t('Account settings updated successfully'), { type: 'success' });
       })
       .catch((e) => {
-        toast(e.message || 'Failed to update account settings', {
+        toast(e.message || t('Failed to update account settings'), {
           type: 'error',
         });
         setOptOut(optOut);

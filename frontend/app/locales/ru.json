@@ -1496,5 +1496,7 @@
   "Bad Requests": "Неудачные запросы",
   "Tap Rage": "Невыносимые тапы",
   "More attribute": "Еще атрибут",
-  "More attributes": "Еще атрибуты"
+  "More attributes": "Еще атрибуты",
+  "Account settings updated successfully": "Настройки аккаунта успешно обновлены",
+  "Include rage clicks": "Включить невыносимые клики"
 } 
