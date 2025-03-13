@@ -1,13 +1,13 @@
 import json
-from typing import Optional, List
+from typing import List
 
 import schemas
+from chalicelib.core.errors.modules import errors_helper
 from chalicelib.core.sessions import sessions_search
 from chalicelib.core.sourcemaps import sourcemaps
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import get_step_size
-from chalicelib.core.errors.modules import errors_helper
 
 
 def get(error_id, family=False) -> dict | List[dict]:
