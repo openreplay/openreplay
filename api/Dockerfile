@@ -1,10 +1,9 @@
 FROM python:3.12-alpine
-LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
-LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
-ARG GIT_SHA
-LABEL GIT_SHA=$GIT_SHA
+LABEL maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
+LABEL maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 
-RUN apk add --no-cache build-base tini
+RUN apk add --no-cache build-base=~1.2 tini=~0.19
+ARG GIT_SHA
 ARG envarg
 # Add Tini
 # Startup daemon
@@ -17,16 +16,15 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
 
 WORKDIR /work
 COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir --upgrade uv
-RUN uv pip install --no-cache-dir --upgrade pip setuptools wheel --system
-RUN uv pip install --no-cache-dir --upgrade -r requirements.txt --system
+RUN pip install --no-cache-dir --upgrade uv && \
+  uv pip install --no-cache-dir --upgrade pip setuptools wheel --system && \
+  uv pip install --no-cache-dir --upgrade -r requirements.txt --system
 
 COPY . .
-RUN mv env.default .env
-
-RUN adduser -u 1001 openreplay -D
+RUN mv env.default .env && \
+  adduser -u 1001 openreplay -D
 USER 1001
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ./entrypoint.sh
+CMD ["./entrypoint.sh"]
 
