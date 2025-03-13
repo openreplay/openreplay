@@ -348,7 +348,7 @@ function AlertForm(props) {
                   type="checkbox"
                   checked={instance.webhook}
                   onClick={onChangeCheck}
-                  label="Webhook"
+                  label={t('Webhook')}
                 />
               </div>
 

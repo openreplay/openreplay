@@ -40,7 +40,7 @@ function ClickMapRagePicker() {
 
   return (
     <div className="mr-4 flex items-center gap-2 cursor-pointer">
-      <Checkbox onChange={onToggle} label="Include rage clicks" />
+      <Checkbox onChange={onToggle} label={t('Include rage clicks')} />
 
       <Button size="small" onClick={refreshHeatmapSession}>
         {t('Get new session')}

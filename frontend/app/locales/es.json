@@ -1496,5 +1496,7 @@
   "Bad Requests": "Solicitudes incorrectas",
   "Tap Rage": "Ira al tocar",
   "More attribute": "Más atributos",
-  "More attributes": "Más atributos"
+  "More attributes": "Más atributos",
+  "Account settings updated successfully": "Configuración de la cuenta actualizada correctamente",
+  "Include rage clicks": "Incluir clics de ira"
 }
