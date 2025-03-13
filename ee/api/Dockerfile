@@ -1,8 +1,25 @@
 FROM python:3.12-alpine
-LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
-RUN apk add --no-cache build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec tini
+LABEL maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
+RUN apk add --no-cache tini=0.19.0-r0 xmlsec=1.2.37-r0 && \
+  apk add --no-cache --virtual .build-deps \
+  build-base=0.5-r3 \
+  libressl=3.6.1-r0 \
+  libffi-dev=3.4.4-r0 \
+  libressl-dev=3.6.1-r0 \
+  libxslt-dev=1.1.37-r0 \
+  libxml2-dev=2.10.4-r0 \
+  xmlsec-dev=1.2.37-r0 && \
+  pip install --no-cache-dir --upgrade -r requirements.txt && \
+  # Solve the libxml2 library version mismatch by reinstalling lxml with matching libxml2
+  pip uninstall -y lxml && \
+  pip install --no-cache-dir --no-binary lxml lxml --force-reinstall && \
+  # Create non-root user
+  adduser -u 1001 openreplay -D && \
+  # Cleanup build dependencies
+  apk del .build-deps
 
 ARG envarg
+ARG GIT_SHA
 ENV SOURCE_MAP_VERSION=0.7.4 \
   APP_NAME=chalice \
   LISTEN_PORT=8000 \
@@ -10,17 +27,12 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
   ENTERPRISE_BUILD=${envarg} \
   GIT_SHA=$GIT_SHA
 
-WORKDIR /work
-COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
-# This code is used to solve 'lxml & xmlsec libxml2 library version mismatch' error
-RUN pip uninstall -y lxml && pip install --no-binary lxml lxml --force-reinstall
+WORKDIR /app
 
 COPY . .
 RUN mv env.default .env
 
-RUN adduser -u 1001 openreplay -D
 USER 1001
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ./entrypoint.sh
+CMD ["./entrypoint.sh"]
