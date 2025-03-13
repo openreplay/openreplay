@@ -11,6 +11,8 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/metrics"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue"
@@ -22,6 +24,9 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
+	// Observability
+	dbMetrics := database.New("connector")
+	metrics.New(log, dbMetrics.List())
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
@@ -56,7 +61,7 @@ func main() {
 	defer db.Close()
 
 	// Init postgres connection
-	pgConn, err := pool.New(cfg.Postgres.String())
+	pgConn, err := pool.New(dbMetrics, cfg.Postgres.String())
 	if err != nil {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
@@ -69,10 +74,8 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	projManager := projects.New(log, pgConn, redisClient)
-	sessManager := sessions.New(log, pgConn, projManager, redisClient)
-
-	// Saves messages to Redshift
+	projManager := projects.New(log, pgConn, redisClient, dbMetrics)
+	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetrics)
 	dataSaver := saver.New(log, cfg, db, sessManager, projManager)
 
 	// Message filter
@@ -80,8 +83,7 @@ func main() {
 		messages.MsgNetworkRequest, messages.MsgIssueEvent, messages.MsgCustomIssue,
 		messages.MsgSessionStart, messages.MsgSessionEnd, messages.MsgConnectionInformation,
 		messages.MsgMetadata, messages.MsgPageEvent, messages.MsgPerformanceTrackAggr, messages.MsgUserID,
-		messages.MsgUserAnonymousID, messages.MsgJSException, messages.MsgJSExceptionDeprecated,
-		messages.MsgInputEvent, messages.MsgMouseClick, messages.MsgIssueEventDeprecated,
+		messages.MsgUserAnonymousID, messages.MsgJSException, messages.MsgInputEvent, messages.MsgMouseClick,
 		// Mobile messages
 		messages.MsgMobileSessionStart, messages.MsgMobileSessionEnd, messages.MsgMobileUserID, messages.MsgMobileUserAnonymousID,
 		messages.MsgMobileMetadata, messages.MsgMobileEvent, messages.MsgMobileNetworkCall,
