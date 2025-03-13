@@ -21,8 +21,11 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
 
   const onErrorClick = (e: any, error: any) => {
     e.stopPropagation();
+    const urlParams = new URLSearchParams(props.location.search);
+    // add new param to old ones
+    urlParams.set('errorId', error.errorId);
     props.history.replace({
-      search: new URLSearchParams({ errorId: error.errorId }).toString(),
+      search: urlParams.toString(),
     });
   };
 
@@ -37,14 +40,12 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
           props.history.location.pathname.includes('/dashboard') ||
           props.history.location.pathname.includes('/metrics/')
         ) {
-          props.history.replace({ search: '' });
+          const urlParams = new URLSearchParams(props.location.search);
+          urlParams.delete('errorId');
+          props.history.replace({ search: urlParams.toString() });
         }
       },
     });
-
-    return () => {
-      hideModal();
-    };
   }, [errorId]);
 
   return (

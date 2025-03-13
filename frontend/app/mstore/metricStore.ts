@@ -166,7 +166,6 @@ export default class MetricStore {
   }
 
   updateKey(key: string, value: any) {
-    console.log('key', key, value);
     // @ts-ignore
     this[key] = value;
 

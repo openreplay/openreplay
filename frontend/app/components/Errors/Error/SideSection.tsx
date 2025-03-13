@@ -11,6 +11,7 @@ import DateAgo from './DateAgo';
 import DistributionBar from './DistributionBar';
 import Trend from './Trend';
 import { useTranslation } from 'react-i18next';
+import i18n from 'App/i18n'
 
 const MAX_PERCENTAGE = 3;
 const MIN_COUNT = 4;
@@ -20,8 +21,9 @@ function hidePredicate(percentage, index) {
   if (index < MAX_COUNT && percentage < MAX_PERCENTAGE) return false;
   return true;
 }
+
 function partitionsWrapper(partitions = [], mapCountry = false) {
-  const { t } = useTranslation();
+  const t = i18n.t
   const counts = partitions.map(({ count }) => count);
   const sum = counts.reduce((a, b) => parseInt(a) + parseInt(b), 0);
   if (sum === 0) {
@@ -69,20 +71,9 @@ function SideSection(props) {
     chart30: [],
     tags: [],
   });
-  const [loading, setLoading] = React.useState(false);
   const { className } = props;
   const { errorStore } = useStore();
   const error = errorStore.instance;
-
-  const grabData = async () => {
-    setLoading(true);
-    errorService
-      .fetchErrorStats(error.errorId)
-      .then((data) => {
-        setData(dataWrapper(data));
-      })
-      .finally(() => setLoading(false));
-  };
 
   React.useEffect(() => {
     setData(dataWrapper(error));
@@ -108,16 +99,14 @@ function SideSection(props) {
       {data.tags.length > 0 && (
         <h4 className="text-xl mt-6 mb-3">{t('Summary')}</h4>
       )}
-      <Loader loading={loading}>
-        {data.tags.map(({ name, partitions }) => (
-          <DistributionBar
-            key={name}
-            title={name}
-            partitions={partitions}
-            className="mb-6"
-          />
-        ))}
-      </Loader>
+      {data.tags.map(({ name, partitions }) => (
+        <DistributionBar
+          key={name}
+          title={name}
+          partitions={partitions}
+          className="mb-6"
+        />
+      ))}
     </div>
   );
 }

@@ -26,9 +26,9 @@ function LongLoader({ onClick }: { onClick: () => void }) {
         />
       </div>
       <div>{t('This is taking longer than expected.')}</div>
-      <div>
-        {t('Use sample data to speed up query and get a faster response.')}
-      </div>
+      {/*<div>*/}
+      {/*  {t('Use sample data to speed up query and get a faster response.')}*/}
+      {/*</div>*/}
       {/*<div>*/}
       {/*  Use sample data to speed up query and get a faster response.*/}
       {/*</div>*/}

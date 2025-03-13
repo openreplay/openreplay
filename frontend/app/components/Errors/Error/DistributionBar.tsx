@@ -40,16 +40,13 @@ function DistributionBar({ className, title, partitions }) {
                 {`${Math.round(p.prc)}%`}
               </div>
             }
-            style={{
-              marginLeft: '1px',
-              width: `${p.prc}%`,
-              backgroundColor: colors(index),
-            }}
           >
             <div
               className="h-full bg-tealx"
               style={{
                 backgroundColor: colors(index),
+                marginLeft: '1px',
+                width: `${p.prc}%`,
               }}
             />
           </Tooltip>
