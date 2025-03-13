@@ -1,11 +1,11 @@
 import schemas
 from chalicelib.core import metadata
+from chalicelib.core.errors import errors_legacy
+from chalicelib.core.errors.modules import errors_helper
 from chalicelib.core.errors.modules import sessions
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import helper, metrics_helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from . import errors as errors_legacy
-from chalicelib.core.errors.modules import errors_helper
 
 
 def _multiple_values(values, value_key="value"):
