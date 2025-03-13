@@ -219,6 +219,7 @@ function AndDateRange({
   onApplyDateRange,
   isTileDisabled,
 }: Props) {
+  const customRangeRef = React.useRef(null);
   const { t } = useTranslation();
   const menuProps = {
     items: options.map((opt: any) => ({
@@ -280,22 +281,31 @@ function AndDateRange({
       {isCustom && (
         <OutsideClickDetectingDiv
           onClickOutside={(e: any) => {
+            if (customRangeRef.current && customRangeRef.current.contains(e.target)) {
+              return false;
+            }
             if (
               e.target.className.includes('react-calendar') ||
+              e.target.className.includes('ant-picker')
+            ) {
+              return false;
+            }
+            if (
               e.target.parentElement.parentElement.classList.contains(
                 'rc-time-picker-panel-select',
               ) ||
               e.target.parentElement.parentElement.classList[0]?.includes(
                 '-menu',
               ) ||
-              e.target.className.includes('ant-picker')
+              e.target.parentElement.className.includes('react-calendar')
             ) {
-              return false;
+              return false
             }
             setIsCustom(false);
           }}
         >
           <div
+            ref={customRangeRef}
             className={cn(
               'absolute top-0 mt-10 z-40',
               right ? 'right-0' : 'left-0',

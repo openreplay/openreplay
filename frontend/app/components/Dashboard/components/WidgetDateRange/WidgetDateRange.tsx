@@ -15,7 +15,6 @@ function WidgetDateRange({
   hasComparison = false,
   presetComparison = null,
 }: any) {
-  const { t } = useTranslation();
   const { dashboardStore, metricStore } = useStore();
   const density = dashboardStore.selectedDensity;
   const onDensityChange = (density: number) => {
