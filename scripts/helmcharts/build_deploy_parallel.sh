@@ -25,7 +25,6 @@ echo $DOCKER_REPO
     tmux split-window "cd ../../backend && DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=$ARCH IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=0 bash build.sh $@; read"
     tmux split-window "cd ../../assist && DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=$ARCH IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=0 bash build.sh $@; read"
     tmux select-layout tiled
-    tmux split-window "cd ../../peers && DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=$ARCH IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=0 bash build.sh $@; read"
     tmux split-window "cd ../../frontend && DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=$ARCH IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=0 bash build.sh $@; read"
     tmux select-layout tiled
     tmux split-window "cd ../../sourcemapreader && DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=$ARCH IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=0 bash build.sh $@; read"
