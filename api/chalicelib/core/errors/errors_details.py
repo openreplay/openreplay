@@ -1,4 +1,4 @@
-from chalicelib.core.errors import errors_legacy as errors
+from chalicelib.core.errors.modules import errors_helper
 from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -40,26 +40,29 @@ def __process_tags(row):
 
 
 def get_details(project_id, error_id, user_id, **data):
-    pg_sub_query24 = errors.__get_basic_constraints(time_constraint=False, chart=True, step_size_name="step_size24")
+    pg_sub_query24 = errors_helper.__get_basic_constraints(time_constraint=False, chart=True,
+                                                           step_size_name="step_size24")
     pg_sub_query24.append("error_id = %(error_id)s")
-    pg_sub_query30_session = errors.__get_basic_constraints(time_constraint=True, chart=False,
-                                                            startTime_arg_name="startDate30",
-                                                            endTime_arg_name="endDate30",
-                                                            project_key="sessions.project_id")
+    pg_sub_query30_session = errors_helper.__get_basic_constraints(time_constraint=True, chart=False,
+                                                                   startTime_arg_name="startDate30",
+                                                                   endTime_arg_name="endDate30",
+                                                                   project_key="sessions.project_id")
     pg_sub_query30_session.append("sessions.start_ts >= %(startDate30)s")
     pg_sub_query30_session.append("sessions.start_ts <= %(endDate30)s")
     pg_sub_query30_session.append("error_id = %(error_id)s")
-    pg_sub_query30_err = errors.__get_basic_constraints(time_constraint=True, chart=False,
-                                                        startTime_arg_name="startDate30",
-                                                        endTime_arg_name="endDate30", project_key="errors.project_id")
+    pg_sub_query30_err = errors_helper.__get_basic_constraints(time_constraint=True, chart=False,
+                                                               startTime_arg_name="startDate30",
+                                                               endTime_arg_name="endDate30",
+                                                               project_key="errors.project_id")
     pg_sub_query30_err.append("sessions.project_id = %(project_id)s")
     pg_sub_query30_err.append("sessions.start_ts >= %(startDate30)s")
     pg_sub_query30_err.append("sessions.start_ts <= %(endDate30)s")
     pg_sub_query30_err.append("error_id = %(error_id)s")
     pg_sub_query30_err.append("source ='js_exception'")
-    pg_sub_query30 = errors.__get_basic_constraints(time_constraint=False, chart=True, step_size_name="step_size30")
+    pg_sub_query30 = errors_helper.__get_basic_constraints(time_constraint=False, chart=True,
+                                                           step_size_name="step_size30")
     pg_sub_query30.append("error_id = %(error_id)s")
-    pg_basic_query = errors.__get_basic_constraints(time_constraint=False)
+    pg_basic_query = errors_helper.__get_basic_constraints(time_constraint=False)
     pg_basic_query.append("error_id = %(error_id)s")
     with pg_client.PostgresClient() as cur:
         data["startDate24"] = TimeUTC.now(-1)

@@ -7,6 +7,7 @@ from chalicelib.core.sourcemaps import sourcemaps
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import get_step_size
+from chalicelib.core.errors.modules import errors_helper
 
 
 def get(error_id, family=False) -> dict | List[dict]:
@@ -51,27 +52,6 @@ def get_batch(error_ids):
         return helper.list_to_camel_case(errors)
 
 
-def __get_basic_constraints(platform: Optional[schemas.PlatformType] = None, time_constraint: bool = True,
-                            startTime_arg_name: str = "startDate", endTime_arg_name: str = "endDate",
-                            chart: bool = False, step_size_name: str = "step_size",
-                            project_key: Optional[str] = "project_id"):
-    if project_key is None:
-        ch_sub_query = []
-    else:
-        ch_sub_query = [f"{project_key} =%(project_id)s"]
-    if time_constraint:
-        ch_sub_query += [f"timestamp >= %({startTime_arg_name})s",
-                         f"timestamp < %({endTime_arg_name})s"]
-    if chart:
-        ch_sub_query += [f"timestamp >=  generated_timestamp",
-                         f"timestamp <  generated_timestamp + %({step_size_name})s"]
-    if platform == schemas.PlatformType.MOBILE:
-        ch_sub_query.append("user_device_type = 'mobile'")
-    elif platform == schemas.PlatformType.DESKTOP:
-        ch_sub_query.append("user_device_type = 'desktop'")
-    return ch_sub_query
-
-
 def __get_sort_key(key):
     return {
         schemas.ErrorSort.OCCURRENCE: "max_datetime",
@@ -90,12 +70,13 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
     for f in data.filters:
         if f.type == schemas.FilterType.PLATFORM and len(f.value) > 0:
             platform = f.value[0]
-    pg_sub_query = __get_basic_constraints(platform, project_key="sessions.project_id")
+    pg_sub_query = errors_helper.__get_basic_constraints(platform, project_key="sessions.project_id")
     pg_sub_query += ["sessions.start_ts>=%(startDate)s", "sessions.start_ts<%(endDate)s", "source ='js_exception'",
                      "pe.project_id=%(project_id)s"]
     # To ignore Script error
     pg_sub_query.append("pe.message!='Script error.'")
-    pg_sub_query_chart = __get_basic_constraints(platform, time_constraint=False, chart=True, project_key=None)
+    pg_sub_query_chart = errors_helper.__get_basic_constraints(platform, time_constraint=False, chart=True,
+                                                               project_key=None)
     if platform:
         pg_sub_query_chart += ["start_ts>=%(startDate)s", "start_ts<%(endDate)s", "project_id=%(project_id)s"]
     pg_sub_query_chart.append("errors.error_id =details.error_id")
