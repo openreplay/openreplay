@@ -19,8 +19,8 @@ apscheduler==3.11.0
 
 # TODO: enable after xmlsec fix https://github.com/xmlsec/python-xmlsec/issues/252
 #--no-binary is used to avoid libxml2 library version incompatibilities between xmlsec and lxml
-lxml >= 4.6.5, !=4.7.0, <=5.2.1
-python3-saml==1.16.0 --no-binary=lxml
+python3-saml==1.16.0
+--no-binary=lxml
 python-multipart==0.0.20
 
 redis==5.2.1

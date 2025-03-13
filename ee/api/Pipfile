@@ -21,7 +21,6 @@ gunicorn = "==23.0.0"
 python-decouple = "==3.8"
 pydantic = {extras = ["email"], version = "==2.10.6"}
 apscheduler = "==3.11.0"
-lxml = "!=4.7.0,<=5.2.1,>=4.6.5"
 python3-saml = "==1.16.0"
 python-multipart = "==0.0.20"
 redis = "==5.2.1"

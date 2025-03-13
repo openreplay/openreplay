@@ -1,18 +1,24 @@
 FROM python:3.12-alpine
 LABEL maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
-RUN apk add --no-cache tini=0.19.0-r0 xmlsec=1.2.37-r0 && \
+WORKDIR /app
+
+COPY . .
+RUN mv env.default .env
+RUN apk add --no-cache tini xmlsec && \
+  export UV_SYSTEM_PYTHON=true && \
+  pip install uv && \
   apk add --no-cache --virtual .build-deps \
-  build-base=0.5-r3 \
-  libressl=3.6.1-r0 \
-  libffi-dev=3.4.4-r0 \
-  libressl-dev=3.6.1-r0 \
-  libxslt-dev=1.1.37-r0 \
-  libxml2-dev=2.10.4-r0 \
-  xmlsec-dev=1.2.37-r0 && \
-  pip install --no-cache-dir --upgrade -r requirements.txt && \
+  build-base \
+  libressl \
+  libffi-dev \
+  libressl-dev \
+  libxslt-dev \
+  libxml2-dev \
+  xmlsec-dev && \
+  uv pip install --no-cache-dir --upgrade -r requirements.txt && \
   # Solve the libxml2 library version mismatch by reinstalling lxml with matching libxml2
-  pip uninstall -y lxml && \
-  pip install --no-cache-dir --no-binary lxml lxml --force-reinstall && \
+  uv pip uninstall lxml && \
+  uv pip install --no-cache-dir --no-binary lxml lxml --force-reinstall && \
   # Create non-root user
   adduser -u 1001 openreplay -D && \
   # Cleanup build dependencies
