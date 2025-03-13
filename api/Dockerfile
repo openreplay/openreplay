@@ -23,9 +23,9 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
   GIT_SHA=$GIT_SHA
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
-RUN apk add --no-cache tini
 WORKDIR /work
 COPY . .
+RUN apk add --no-cache tini && mv env.default .env
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["./entrypoint.sh"]
