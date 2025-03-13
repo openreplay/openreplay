@@ -14,3 +14,11 @@ clean: ## Clean up the installation
 
 install: ## Install the application
 	OR_VERSION=$(version) OVERRIDE_FILE=$(override_file) openreplay -i $(domain)
+
+pull: ## Pull the latest version of the application
+	for image in $(shell kubectl get pods -n app -o jsonpath='{.items[*].spec.containers[*].image}'); do \
+		sudo crictl pull $$image; \
+	done
+
+restart: ## Restart the application
+	kubectl rollout restart deployment -n app
