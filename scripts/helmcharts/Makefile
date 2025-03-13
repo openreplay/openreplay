@@ -7,6 +7,7 @@ override_file ?= "/home/ubuntu/vars_override.yaml"
 shell := /bin/bash -eo pipefail
 
 clean: ## Clean up the installation
+	kubectl delete cm openreplay-version -n app || true
 	helm uninstall openreplay -n app || true
 	helm uninstall databases -n db || true
 	kubectl delete pvc -n db --all || true
