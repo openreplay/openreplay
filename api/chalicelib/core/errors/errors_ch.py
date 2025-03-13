@@ -5,6 +5,7 @@ from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import helper, metrics_helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from . import errors as errors_legacy
+from chalicelib.core.errors.modules import errors_helper
 
 
 def _multiple_values(values, value_key="value"):
@@ -61,25 +62,6 @@ def get_batch(error_ids):
     return errors_legacy.get_batch(error_ids=error_ids)
 
 
-def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_name="startDate",
-                            endTime_arg_name="endDate", type_condition=True, project_key="project_id", table_name=None):
-    ch_sub_query = [f"{project_key} =toUInt16(%(project_id)s)"]
-    if table_name is not None:
-        table_name = table_name + "."
-    else:
-        table_name = ""
-    if type_condition:
-        ch_sub_query.append(f"{table_name}`$event_name`='ERROR'")
-    if time_constraint:
-        ch_sub_query += [f"{table_name}datetime >= toDateTime(%({startTime_arg_name})s/1000)",
-                         f"{table_name}datetime < toDateTime(%({endTime_arg_name})s/1000)"]
-    if platform == schemas.PlatformType.MOBILE:
-        ch_sub_query.append("user_device_type = 'mobile'")
-    elif platform == schemas.PlatformType.DESKTOP:
-        ch_sub_query.append("user_device_type = 'desktop'")
-    return ch_sub_query
-
-
 def __get_basic_constraints_events(platform=None, time_constraint=True, startTime_arg_name="startDate",
                                    endTime_arg_name="endDate", type_condition=True, project_key="project_id",
                                    table_name=None):
@@ -116,7 +98,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
     for f in data.filters:
         if f.type == schemas.FilterType.PLATFORM and len(f.value) > 0:
             platform = f.value[0]
-    ch_sessions_sub_query = __get_basic_constraints(platform, type_condition=False)
+    ch_sessions_sub_query = errors_helper.__get_basic_constraints_ch(platform, type_condition=False)
     # ignore platform for errors table
     ch_sub_query = __get_basic_constraints_events(None, type_condition=True)
     ch_sub_query.append("JSONExtractString(toString(`$properties`), 'source') = 'js_exception'")
@@ -148,7 +130,8 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
         if len(data.events) > errors_condition_count:
             subquery_part_args, subquery_part = sessions.search_query_parts_ch(data=data, error_status=data.status,
                                                                                errors_only=True,
-                                                                               project_id=project.project_id, user_id=user_id,
+                                                                               project_id=project.project_id,
+                                                                               user_id=user_id,
                                                                                issue=None,
                                                                                favorite_only=False)
             subquery_part = f"INNER JOIN {subquery_part} USING(session_id)"

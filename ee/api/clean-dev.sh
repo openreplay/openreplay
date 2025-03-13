@@ -107,7 +107,7 @@ rm -rf ./chalicelib/core/alerts/alerts_processor_ch.py
 rm -rf ./chalicelib/core/alerts/alerts_listener.py
 rm -rf ./chalicelib/core/alerts/modules/helpers.py
 rm -rf ./chalicelib/core/errors/modules
-rm -rf ./chalicelib/core/errors/errors.py
+rm -rf ./chalicelib/core/errors/errors_pg.py
 rm -rf ./chalicelib/core/errors/errors_ch.py
 rm -rf ./chalicelib/core/errors/errors_details.py
 rm -rf ./chalicelib/utils/contextual_validators.py
