@@ -501,11 +501,6 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 }
 
 func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *types.ErrorEvent) error {
-	keys, values := make([]string, 0, len(msg.Tags)), make([]*string, 0, len(msg.Tags))
-	for k, v := range msg.Tags {
-		keys = append(keys, k)
-		values = append(values, v)
-	}
 	// Check error source before insert to avoid panic from clickhouse lib
 	switch msg.Source {
 	case "js_exception", "bugsnag", "cloudwatch", "datadog", "elasticsearch", "newrelic", "rollbar", "sentry", "stackdriver", "sumologic":
@@ -514,12 +509,10 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 	}
 	msgID, _ := msg.ID(session.ProjectID)
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"source":            msg.Source,
-		"name":              nullableString(msg.Name),
-		"message":           msg.Message,
-		"error_id":          msgID,
-		"error_tags_keys":   keys,
-		"error_tags_values": values,
+		"source":   msg.Source,
+		"name":     nullableString(msg.Name),
+		"message":  msg.Message,
+		"error_id": msgID,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal error event: %s", err)
