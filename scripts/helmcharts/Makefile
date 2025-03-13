@@ -6,6 +6,9 @@ override_file ?= "/home/ubuntu/vars_override.yaml"
 shell := /bin/bash -eo pipefail
 version ?= $(shell yq e '.appVersion' openreplay/Chart.yaml || "")
 
+download-cli: ## Download the latest version of the application
+	sudo wget https://raw.githubusercontent.com/openreplay/openreplay/$(version)/scripts/helmcharts/openreplay-cli -O /bin/openreplay ; sudo chmod +x /bin/openreplay
+
 clean: ## Clean up the installation
 	sudo rm /var/lib/openreplay/vars.yaml
 	kubectl delete cm openreplay-version -n app || true
@@ -17,7 +20,7 @@ install: ## Install the application
 	OR_VERSION=$(version) OVERRIDE_FILE=$(override_file) openreplay -i $(domain)
 
 upgrade-release: ## upgrade the application
-	OR_VERSION=$(version) OVERRIDE_FILE=$(override_file) RELEASE_UPGRADE=1 openreplay -u
+	OR_VERSION=$(version) RELEASE_UPGRADE=1 openreplay -u
 
 pull: ## Pull the latest version of the application
 	for image in $(shell kubectl get pods -n app -o jsonpath='{.items[*].spec.containers[*].image}'); do \
