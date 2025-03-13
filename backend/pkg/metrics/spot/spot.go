@@ -2,148 +2,34 @@ package spot
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-
-	"openreplay/backend/pkg/metrics/common"
 )
 
-var spotOriginalVideoSize = prometheus.NewHistogram(
-	prometheus.HistogramOpts{
-		Namespace: "spot",
-		Name:      "original_video_size_bytes",
-		Help:      "A histogram displaying the size of each original video in bytes.",
-		Buckets:   common.VideoSizeBuckets,
-	},
-)
-
-func RecordOriginalVideoSize(size float64) {
-	spotOriginalVideoSize.Observe(size)
+type Spot interface {
+	RecordOriginalVideoSize(size float64)
+	RecordCroppedVideoSize(size float64)
+	IncreaseVideosTotal()
+	IncreaseVideosCropped()
+	IncreaseVideosTranscoded()
+	RecordOriginalVideoDownloadDuration(durMillis float64)
+	RecordCroppingDuration(durMillis float64)
+	RecordCroppedVideoUploadDuration(durMillis float64)
+	RecordTranscodingDuration(durMillis float64)
+	RecordTranscodedVideoUploadDuration(durMillis float64)
+	List() []prometheus.Collector
 }
 
-var spotCroppedVideoSize = prometheus.NewHistogram(
-	prometheus.HistogramOpts{
-		Namespace: "spot",
-		Name:      "cropped_video_size_bytes",
-		Help:      "A histogram displaying the size of each cropped video in bytes.",
-		Buckets:   common.VideoSizeBuckets,
-	},
-)
+type spotImpl struct{}
 
-func RecordCroppedVideoSize(size float64) {
-	spotCroppedVideoSize.Observe(size)
-}
+func New(serviceName string) Spot { return &spotImpl{} }
 
-var spotVideosTotal = prometheus.NewCounter(
-	prometheus.CounterOpts{
-		Namespace: "spot",
-		Name:      "videos_total",
-		Help:      "A counter displaying the total number of all processed videos.",
-	},
-)
-
-func IncreaseVideosTotal() {
-	spotVideosTotal.Inc()
-}
-
-var spotVideosCropped = prometheus.NewCounter(
-	prometheus.CounterOpts{
-		Namespace: "spot",
-		Name:      "videos_cropped_total",
-		Help:      "A counter displaying the total number of all cropped videos.",
-	},
-)
-
-func IncreaseVideosCropped() {
-	spotVideosCropped.Inc()
-}
-
-var spotVideosTranscoded = prometheus.NewCounter(
-	prometheus.CounterOpts{
-		Namespace: "spot",
-		Name:      "videos_transcoded_total",
-		Help:      "A counter displaying the total number of all transcoded videos.",
-	},
-)
-
-func IncreaseVideosTranscoded() {
-	spotVideosTranscoded.Inc()
-}
-
-var spotOriginalVideoDownloadDuration = prometheus.NewHistogram(
-	prometheus.HistogramOpts{
-		Namespace: "spot",
-		Name:      "original_video_download_duration_seconds",
-		Help:      "A histogram displaying the duration of downloading each original video in seconds.",
-		Buckets:   common.DefaultDurationBuckets,
-	},
-)
-
-func RecordOriginalVideoDownloadDuration(durMillis float64) {
-	spotOriginalVideoDownloadDuration.Observe(durMillis / 1000.0)
-}
-
-var spotCroppingDuration = prometheus.NewHistogram(
-	prometheus.HistogramOpts{
-		Namespace: "spot",
-		Name:      "cropping_duration_seconds",
-		Help:      "A histogram displaying the duration of cropping each video in seconds.",
-		Buckets:   common.DefaultDurationBuckets,
-	},
-)
-
-func RecordCroppingDuration(durMillis float64) {
-	spotCroppingDuration.Observe(durMillis / 1000.0)
-}
-
-var spotCroppedVideoUploadDuration = prometheus.NewHistogram(
-	prometheus.HistogramOpts{
-		Namespace: "spot",
-		Name:      "cropped_video_upload_duration_seconds",
-		Help:      "A histogram displaying the duration of uploading each cropped video in seconds.",
-		Buckets:   common.DefaultDurationBuckets,
-	},
-)
-
-func RecordCroppedVideoUploadDuration(durMillis float64) {
-	spotCroppedVideoUploadDuration.Observe(durMillis / 1000.0)
-}
-
-var spotTranscodingDuration = prometheus.NewHistogram(
-	prometheus.HistogramOpts{
-		Namespace: "spot",
-		Name:      "transcoding_duration_seconds",
-		Help:      "A histogram displaying the duration of transcoding each video in seconds.",
-		Buckets:   common.DefaultDurationBuckets,
-	},
-)
-
-func RecordTranscodingDuration(durMillis float64) {
-	spotTranscodingDuration.Observe(durMillis / 1000.0)
-}
-
-var spotTranscodedVideoUploadDuration = prometheus.NewHistogram(
-	prometheus.HistogramOpts{
-		Namespace: "spot",
-		Name:      "transcoded_video_upload_duration_seconds",
-		Help:      "A histogram displaying the duration of uploading each transcoded video in seconds.",
-		Buckets:   common.DefaultDurationBuckets,
-	},
-)
-
-func RecordTranscodedVideoUploadDuration(durMillis float64) {
-	spotTranscodedVideoUploadDuration.Observe(durMillis / 1000.0)
-}
-
-func List() []prometheus.Collector {
-	return []prometheus.Collector{
-		spotOriginalVideoSize,
-		spotCroppedVideoSize,
-		spotVideosTotal,
-		spotVideosCropped,
-		spotVideosTranscoded,
-		spotOriginalVideoDownloadDuration,
-		spotCroppingDuration,
-		spotCroppedVideoUploadDuration,
-		spotTranscodingDuration,
-		spotTranscodedVideoUploadDuration,
-	}
-}
+func (s *spotImpl) List() []prometheus.Collector                          { return []prometheus.Collector{} }
+func (s *spotImpl) RecordOriginalVideoSize(size float64)                  {}
+func (s *spotImpl) RecordCroppedVideoSize(size float64)                   {}
+func (s *spotImpl) IncreaseVideosTotal()                                  {}
+func (s *spotImpl) IncreaseVideosCropped()                                {}
+func (s *spotImpl) IncreaseVideosTranscoded()                             {}
+func (s *spotImpl) RecordOriginalVideoDownloadDuration(durMillis float64) {}
+func (s *spotImpl) RecordCroppingDuration(durMillis float64)              {}
+func (s *spotImpl) RecordCroppedVideoUploadDuration(durMillis float64)    {}
+func (s *spotImpl) RecordTranscodingDuration(durMillis float64)           {}
+func (s *spotImpl) RecordTranscodedVideoUploadDuration(durMillis float64) {}

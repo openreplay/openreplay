@@ -3,6 +3,7 @@ package analytics
 import (
 	"github.com/go-playground/validator/v10"
 	"openreplay/backend/pkg/analytics/charts"
+	"openreplay/backend/pkg/metrics/database"
 	"time"
 
 	"openreplay/backend/internal/config/analytics"
@@ -26,9 +27,9 @@ type ServicesBuilder struct {
 	ChartsAPI     api.Handlers
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, pgconn pool.Pool) (*ServicesBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool) (*ServicesBuilder, error) {
 	responser := api.NewResponser(webMetrics)
-	audiTrail, err := tracer.NewTracer(log, pgconn)
+	audiTrail, err := tracer.NewTracer(log, pgconn, dbMetrics)
 	if err != nil {
 		return nil, err
 	}

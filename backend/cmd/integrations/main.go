@@ -18,16 +18,18 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
+	// Observability
 	webMetrics := web.New("integrations")
-	metrics.New(log, append(webMetrics.List(), database.List()...))
+	dbMetric := database.New("integrations")
+	metrics.New(log, append(webMetrics.List(), dbMetric.List()...))
 
-	pgConn, err := pool.New(cfg.Postgres.String())
+	pgConn, err := pool.New(dbMetric, cfg.Postgres.String())
 	if err != nil {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
 	defer pgConn.Close()
 
-	builder, err := integrations.NewServiceBuilder(log, cfg, webMetrics, pgConn)
+	builder, err := integrations.NewServiceBuilder(log, cfg, webMetrics, dbMetric, pgConn)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}

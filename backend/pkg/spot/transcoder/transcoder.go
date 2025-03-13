@@ -16,7 +16,7 @@ import (
 	"openreplay/backend/internal/config/spot"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
-	metrics "openreplay/backend/pkg/metrics/spot"
+	spotMetrics "openreplay/backend/pkg/metrics/spot"
 	"openreplay/backend/pkg/objectstorage"
 	workers "openreplay/backend/pkg/pool"
 	"openreplay/backend/pkg/spot/service"
@@ -39,9 +39,10 @@ type transcoderImpl struct {
 	spots            service.Spots
 	prepareWorkers   workers.WorkerPool
 	transcodeWorkers workers.WorkerPool
+	metrics          spotMetrics.Spot
 }
 
-func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage.ObjectStorage, conn pool.Pool, spots service.Spots) Transcoder {
+func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage.ObjectStorage, conn pool.Pool, spots service.Spots, metrics spotMetrics.Spot) Transcoder {
 	tnsc := &transcoderImpl{
 		cfg:        cfg,
 		log:        log,
@@ -114,7 +115,7 @@ func (t *transcoderImpl) doneTask(task *Task) {
 }
 
 func (t *transcoderImpl) process(task *Task) {
-	metrics.IncreaseVideosTotal()
+	t.metrics.IncreaseVideosTotal()
 	//spotID := task.SpotID
 	t.log.Info(context.Background(), "Processing spot %s", task.SpotID)
 
@@ -200,11 +201,11 @@ func (t *transcoderImpl) downloadSpotVideo(spotID uint64, path string) error {
 	if fileInfo, err := originVideo.Stat(); err != nil {
 		t.log.Error(context.Background(), "Failed to get file info: %v", err)
 	} else {
-		metrics.RecordOriginalVideoSize(float64(fileInfo.Size()))
+		t.metrics.RecordOriginalVideoSize(float64(fileInfo.Size()))
 	}
 	originVideo.Close()
 
-	metrics.RecordOriginalVideoDownloadDuration(time.Since(start).Seconds())
+	t.metrics.RecordOriginalVideoDownloadDuration(time.Since(start).Seconds())
 
 	t.log.Info(context.Background(), "Saved origin video to disk, spot: %d in %v sec", spotID, time.Since(start).Seconds())
 	return nil
@@ -227,8 +228,8 @@ func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) e
 	if err != nil {
 		return fmt.Errorf("failed to execute command: %v, stderr: %v", err, stderr.String())
 	}
-	metrics.IncreaseVideosCropped()
-	metrics.RecordCroppingDuration(time.Since(start).Seconds())
+	t.metrics.IncreaseVideosCropped()
+	t.metrics.RecordCroppingDuration(time.Since(start).Seconds())
 
 	t.log.Info(context.Background(), "Cropped spot %d in %v", spotID, time.Since(start).Seconds())
 
@@ -246,7 +247,7 @@ func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) e
 	if fileInfo, err := video.Stat(); err != nil {
 		t.log.Error(context.Background(), "Failed to get file info: %v", err)
 	} else {
-		metrics.RecordCroppedVideoSize(float64(fileInfo.Size()))
+		t.metrics.RecordCroppedVideoSize(float64(fileInfo.Size()))
 	}
 
 	err = t.objStorage.Upload(video, fmt.Sprintf("%d/video.webm", spotID), "video/webm", objectstorage.NoContentEncoding, objectstorage.NoCompression)
@@ -254,7 +255,7 @@ func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) e
 		return fmt.Errorf("failed to upload cropped video: %v", err)
 	}
 
-	metrics.RecordCroppedVideoUploadDuration(time.Since(start).Seconds())
+	t.metrics.RecordCroppedVideoUploadDuration(time.Since(start).Seconds())
 
 	t.log.Info(context.Background(), "Uploaded cropped spot %d in %v", spotID, time.Since(start).Seconds())
 	return nil
@@ -279,8 +280,8 @@ func (t *transcoderImpl) transcodeSpotVideo(spotID uint64, path string) (string,
 		t.log.Error(context.Background(), "Failed to execute command: %v, stderr: %v", err, stderr.String())
 		return "", err
 	}
-	metrics.IncreaseVideosTranscoded()
-	metrics.RecordTranscodingDuration(time.Since(start).Seconds())
+	t.metrics.IncreaseVideosTranscoded()
+	t.metrics.RecordTranscodingDuration(time.Since(start).Seconds())
 	t.log.Info(context.Background(), "Transcoded spot %d in %v", spotID, time.Since(start).Seconds())
 
 	start = time.Now()
@@ -327,7 +328,7 @@ func (t *transcoderImpl) transcodeSpotVideo(spotID uint64, path string) (string,
 			return "", err
 		}
 	}
-	metrics.RecordTranscodedVideoUploadDuration(time.Since(start).Seconds())
+	t.metrics.RecordTranscodedVideoUploadDuration(time.Since(start).Seconds())
 
 	t.log.Info(context.Background(), "Uploaded chunks for spot %d in %v", spotID, time.Since(start).Seconds())
 	return strings.Join(lines, "\n"), nil

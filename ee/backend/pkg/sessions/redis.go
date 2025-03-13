@@ -10,8 +10,15 @@ import (
 	"openreplay/backend/pkg/metrics/database"
 )
 
+var ErrDisabledCache = errors.New("cache is disabled")
+
 type cacheImpl struct {
-	db *redis.Client
+	db      *redis.Client
+	metrics database.Database
+}
+
+func NewCache(db *redis.Client, metrics database.Database) Cache {
+	return &cacheImpl{db: db, metrics: metrics}
 }
 
 func (c *cacheImpl) SetCache(sessID uint64, data map[string]string) error {
@@ -32,8 +39,8 @@ func (c *cacheImpl) SetCache(sessID uint64, data map[string]string) error {
 	if _, err = c.db.Redis.Set(fmt.Sprintf("session:cache:id:%d", sessID), sessionBytes, time.Minute*120).Result(); err != nil {
 		return err
 	}
-	database.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "setCache", "session")
-	database.IncreaseRedisRequests("setCache", "sessions")
+	c.metrics.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "setCache", "session")
+	c.metrics.IncreaseRedisRequests("setCache", "sessions")
 	return nil
 }
 
@@ -53,8 +60,8 @@ func (c *cacheImpl) GetCache(sessID uint64) (map[string]string, error) {
 	if err = json.Unmarshal([]byte(result), &session); err != nil {
 		return nil, err
 	}
-	database.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "getCache", "session")
-	database.IncreaseRedisRequests("getCache", "sessions")
+	c.metrics.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "getCache", "session")
+	c.metrics.IncreaseRedisRequests("getCache", "sessions")
 	return session, nil
 }
 
@@ -76,8 +83,8 @@ func (c *cacheImpl) Set(session *Session) error {
 	if _, err = c.db.Redis.Set(fmt.Sprintf("session:id:%d", session.SessionID), sessionBytes, time.Minute*60).Result(); err != nil {
 		return err
 	}
-	database.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "set", "session")
-	database.IncreaseRedisRequests("set", "sessions")
+	c.metrics.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "set", "session")
+	c.metrics.IncreaseRedisRequests("set", "sessions")
 	return nil
 }
 
@@ -97,13 +104,7 @@ func (c *cacheImpl) Get(sessionID uint64) (*Session, error) {
 	if err = json.Unmarshal([]byte(result), session); err != nil {
 		return nil, err
 	}
-	database.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "get", "session")
-	database.IncreaseRedisRequests("get", "sessions")
+	c.metrics.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "get", "session")
+	c.metrics.IncreaseRedisRequests("get", "sessions")
 	return session, nil
-}
-
-var ErrDisabledCache = errors.New("cache is disabled")
-
-func NewCache(db *redis.Client) Cache {
-	return &cacheImpl{db: db}
 }

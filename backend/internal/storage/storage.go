@@ -18,7 +18,7 @@ import (
 	config "openreplay/backend/internal/config/storage"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
-	metrics "openreplay/backend/pkg/metrics/storage"
+	storageMetrics "openreplay/backend/pkg/metrics/storage"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/pool"
 )
@@ -77,9 +77,10 @@ type Storage struct {
 	splitTime     uint64
 	processorPool pool.WorkerPool
 	uploaderPool  pool.WorkerPool
+	metrics       storageMetrics.Storage
 }
 
-func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectStorage) (*Storage, error) {
+func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectStorage, metrics storageMetrics.Storage) (*Storage, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
@@ -92,6 +93,7 @@ func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectS
 		objStorage: objStorage,
 		startBytes: make([]byte, cfg.FileSplitSize),
 		splitTime:  parseSplitTime(cfg.FileSplitTime),
+		metrics:    metrics,
 	}
 	s.processorPool = pool.NewPool(1, 1, s.doCompression)
 	s.uploaderPool = pool.NewPool(1, 1, s.uploadSession)
@@ -141,7 +143,7 @@ func (s *Storage) Process(ctx context.Context, msg *messages.SessionEnd) (err er
 	if err != nil {
 		if strings.Contains(err.Error(), "big file") {
 			s.log.Warn(ctx, "can't process session: %s", err)
-			metrics.IncreaseStorageTotalSkippedSessions()
+			s.metrics.IncreaseStorageTotalSkippedSessions()
 			return nil
 		}
 		return err
@@ -159,8 +161,8 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 		return err
 	}
 
-	metrics.RecordSessionReadDuration(float64(time.Now().Sub(startRead).Milliseconds()), tp.String())
-	metrics.RecordSessionSize(float64(len(mob)), tp.String())
+	s.metrics.RecordSessionReadDuration(float64(time.Now().Sub(startRead).Milliseconds()), tp.String())
+	s.metrics.RecordSessionSize(float64(len(mob)), tp.String())
 
 	// Put opened session file into task struct
 	task.SetMob(mob, index, tp)
@@ -174,7 +176,7 @@ func (s *Storage) openSession(ctx context.Context, filePath string, tp FileType)
 	// Check file size before download into memory
 	info, err := os.Stat(filePath)
 	if err == nil && info.Size() > s.cfg.MaxFileSize {
-		metrics.RecordSkippedSessionSize(float64(info.Size()), tp.String())
+		s.metrics.RecordSkippedSessionSize(float64(info.Size()), tp.String())
 		return nil, -1, fmt.Errorf("big file, size: %d", info.Size())
 	}
 	// Read file into memory
@@ -190,7 +192,7 @@ func (s *Storage) openSession(ctx context.Context, filePath string, tp FileType)
 	if err != nil {
 		return nil, -1, fmt.Errorf("can't sort session, err: %s", err)
 	}
-	metrics.RecordSessionSortDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
+	s.metrics.RecordSessionSortDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 	return mob, index, nil
 }
 
@@ -234,12 +236,12 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 		// Compression
 		start := time.Now()
 		data := s.compress(task.ctx, mob, task.compression)
-		metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
+		s.metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 
 		// Encryption
 		start = time.Now()
 		result := s.encryptSession(task.ctx, data.Bytes(), task.key)
-		metrics.RecordSessionEncryptionDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
+		s.metrics.RecordSessionEncryptionDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 
 		if tp == DOM {
 			task.doms = bytes.NewBuffer(result)
@@ -296,8 +298,8 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 	wg.Wait()
 
 	// Record metrics
-	metrics.RecordSessionEncryptionDuration(float64(firstEncrypt+secondEncrypt), tp.String())
-	metrics.RecordSessionCompressDuration(float64(firstPart+secondPart), tp.String())
+	s.metrics.RecordSessionEncryptionDuration(float64(firstEncrypt+secondEncrypt), tp.String())
+	s.metrics.RecordSessionCompressDuration(float64(firstPart+secondPart), tp.String())
 }
 
 func (s *Storage) encryptSession(ctx context.Context, data []byte, encryptionKey string) []byte {
@@ -382,7 +384,7 @@ func (s *Storage) uploadSession(payload interface{}) {
 	go func() {
 		if task.doms != nil {
 			// Record compression ratio
-			metrics.RecordSessionCompressionRatio(task.domsRawSize/float64(task.doms.Len()), DOM.String())
+			s.metrics.RecordSessionCompressionRatio(task.domsRawSize/float64(task.doms.Len()), DOM.String())
 			// Upload session to s3
 			start := time.Now()
 			if err := s.objStorage.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", objectstorage.NoContentEncoding, task.compression); err != nil {
@@ -395,7 +397,7 @@ func (s *Storage) uploadSession(payload interface{}) {
 	go func() {
 		if task.dome != nil {
 			// Record compression ratio
-			metrics.RecordSessionCompressionRatio(task.domeRawSize/float64(task.dome.Len()), DOM.String())
+			s.metrics.RecordSessionCompressionRatio(task.domeRawSize/float64(task.dome.Len()), DOM.String())
 			// Upload session to s3
 			start := time.Now()
 			if err := s.objStorage.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", objectstorage.NoContentEncoding, task.compression); err != nil {
@@ -408,7 +410,7 @@ func (s *Storage) uploadSession(payload interface{}) {
 	go func() {
 		if task.dev != nil {
 			// Record compression ratio
-			metrics.RecordSessionCompressionRatio(task.devRawSize/float64(task.dev.Len()), DEV.String())
+			s.metrics.RecordSessionCompressionRatio(task.devRawSize/float64(task.dev.Len()), DEV.String())
 			// Upload session to s3
 			start := time.Now()
 			if err := s.objStorage.Upload(task.dev, task.id+string(DEV), "application/octet-stream", objectstorage.NoContentEncoding, task.compression); err != nil {
@@ -419,9 +421,9 @@ func (s *Storage) uploadSession(payload interface{}) {
 		wg.Done()
 	}()
 	wg.Wait()
-	metrics.RecordSessionUploadDuration(float64(uploadDoms+uploadDome), DOM.String())
-	metrics.RecordSessionUploadDuration(float64(uploadDev), DEV.String())
-	metrics.IncreaseStorageTotalSessions()
+	s.metrics.RecordSessionUploadDuration(float64(uploadDoms+uploadDome), DOM.String())
+	s.metrics.RecordSessionUploadDuration(float64(uploadDev), DEV.String())
+	s.metrics.IncreaseStorageTotalSessions()
 }
 
 func (s *Storage) doCompression(payload interface{}) {

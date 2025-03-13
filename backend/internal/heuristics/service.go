@@ -11,7 +11,7 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
-	metrics "openreplay/backend/pkg/metrics/heuristics"
+	heuristicMetrics "openreplay/backend/pkg/metrics/heuristics"
 	"openreplay/backend/pkg/queue/types"
 )
 
@@ -23,11 +23,12 @@ type heuristicsImpl struct {
 	consumer types.Consumer
 	events   builders.EventBuilder
 	mm       memory.Manager
+	metrics  heuristicMetrics.Heuristics
 	done     chan struct{}
 	finished chan struct{}
 }
 
-func New(log logger.Logger, cfg *heuristics.Config, p types.Producer, c types.Consumer, e builders.EventBuilder, mm memory.Manager) service.Interface {
+func New(log logger.Logger, cfg *heuristics.Config, p types.Producer, c types.Consumer, e builders.EventBuilder, mm memory.Manager, metrics heuristicMetrics.Heuristics) service.Interface {
 	s := &heuristicsImpl{
 		log:      log,
 		ctx:      context.Background(),
@@ -36,6 +37,7 @@ func New(log logger.Logger, cfg *heuristics.Config, p types.Producer, c types.Co
 		consumer: c,
 		events:   e,
 		mm:       mm,
+		metrics:  metrics,
 		done:     make(chan struct{}),
 		finished: make(chan struct{}),
 	}
@@ -51,7 +53,7 @@ func (h *heuristicsImpl) run() {
 			if err := h.producer.Produce(h.cfg.TopicAnalytics, evt.SessionID(), evt.Encode()); err != nil {
 				h.log.Error(h.ctx, "can't send new event to queue: %s", err)
 			} else {
-				metrics.IncreaseTotalEvents(messageTypeName(evt))
+				h.metrics.IncreaseTotalEvents(messageTypeName(evt))
 			}
 		case <-tick:
 			h.producer.Flush(h.cfg.ProducerTimeout)

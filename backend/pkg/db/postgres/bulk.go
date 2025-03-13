@@ -24,6 +24,7 @@ type Bulk interface {
 
 type bulkImpl struct {
 	conn      pool.Pool
+	metrics   database.Database
 	table     string
 	columns   string
 	template  string
@@ -75,12 +76,12 @@ func (b *bulkImpl) send() error {
 		return fmt.Errorf("send bulk err: %s", err)
 	}
 	// Save bulk metrics
-	database.RecordBulkElements(float64(size), "pg", b.table)
-	database.RecordBulkInsertDuration(float64(time.Now().Sub(start).Milliseconds()), "pg", b.table)
+	b.metrics.RecordBulkElements(float64(size), "pg", b.table)
+	b.metrics.RecordBulkInsertDuration(float64(time.Now().Sub(start).Milliseconds()), "pg", b.table)
 	return nil
 }
 
-func NewBulk(conn pool.Pool, table, columns, template string, setSize, sizeLimit int) (Bulk, error) {
+func NewBulk(conn pool.Pool, metrics database.Database, table, columns, template string, setSize, sizeLimit int) (Bulk, error) {
 	switch {
 	case conn == nil:
 		return nil, errors.New("db conn is empty")
@@ -97,6 +98,7 @@ func NewBulk(conn pool.Pool, table, columns, template string, setSize, sizeLimit
 	}
 	return &bulkImpl{
 		conn:      conn,
+		metrics:   metrics,
 		table:     table,
 		columns:   columns,
 		template:  template,

@@ -9,14 +9,14 @@ import (
 	"syscall"
 	"time"
 
-	"openreplay/backend/internal/config/sink"
+	config "openreplay/backend/internal/config/sink"
 	"openreplay/backend/internal/sink/assetscache"
 	"openreplay/backend/internal/sink/sessionwriter"
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
-	sinkMetrics "openreplay/backend/pkg/metrics/sink"
+	"openreplay/backend/pkg/metrics/sink"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/url/assets"
 )
@@ -24,7 +24,9 @@ import (
 func main() {
 	ctx := context.Background()
 	log := logger.New()
-	cfg := sink.New(log)
+	cfg := config.New(log)
+	// Observability
+	sinkMetrics := sink.New("sink")
 	metrics.New(log, sinkMetrics.List())
 
 	if _, err := os.Stat(cfg.FsDir); os.IsNotExist(err) {
@@ -39,7 +41,7 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init rewriter: %s", err)
 	}
-	assetMessageHandler := assetscache.New(log, cfg, rewriter, producer)
+	assetMessageHandler := assetscache.New(log, cfg, rewriter, producer, sinkMetrics)
 	counter := storage.NewLogCounter()
 
 	var (
@@ -191,7 +193,7 @@ func main() {
 			cfg.TopicRawWeb,
 			cfg.TopicRawMobile,
 		},
-		messages.NewSinkMessageIterator(log, msgHandler, nil, false),
+		messages.NewSinkMessageIterator(log, msgHandler, nil, false, sinkMetrics),
 		false,
 		cfg.MessageSizeLimit,
 	)
