@@ -3,13 +3,13 @@ package projects
 import (
 	"context"
 	"errors"
-	"openreplay/backend/pkg/metrics/database"
 	"time"
 
 	"openreplay/backend/pkg/cache"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/database"
 )
 
 type Projects interface {
