@@ -1,5 +1,4 @@
 import React from 'react';
-import { findDOMNode } from 'react-dom';
 import cn from 'classnames';
 import Overlay from 'Components/Session_/Player/Overlay';
 import stl from 'Components/Session_/Player/player.module.css';
@@ -10,9 +9,7 @@ function Player() {
   const playerContext = React.useContext(PlayerContext);
   const screenWrapper = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    const parentElement = findDOMNode(
-      screenWrapper.current,
-    ) as HTMLDivElement | null;
+    const parentElement = screenWrapper.current
     if (parentElement) {
       playerContext.player.attach(parentElement);
     }

@@ -1,7 +1,6 @@
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { findDOMNode } from 'react-dom';
 
 import {
   ILivePlayerContext,
@@ -40,9 +39,7 @@ function Player({ fullView, isMultiview }: IProps) {
 
   React.useEffect(() => {
     if (!closedLive || isMultiview) {
-      const parentElement = findDOMNode(
-        screenWrapper.current,
-      ) as HTMLDivElement | null; // TODO: good architecture
+      const parentElement = screenWrapper.current // TODO: good architecture
       if (parentElement) {
         playerContext.player.attach(parentElement);
         playerContext.player.play();
