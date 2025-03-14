@@ -357,6 +357,9 @@ export default abstract class Observer {
     if (name === 'href' || value.length > 1e5) {
       value = ''
     }
+    if (['alt', 'placeholder'].includes(name) && this.app.sanitizer.privateMode) {
+      value = value.replaceAll(/./g, '*')
+    }
     this.app.attributeSender.sendSetAttribute(id, name, value)
   }
 
