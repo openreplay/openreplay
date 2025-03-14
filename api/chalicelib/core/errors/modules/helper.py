@@ -1,6 +1,7 @@
 from typing import Optional
 
 import schemas
+from chalicelib.core.sourcemaps import sourcemaps
 
 
 def __get_basic_constraints(platform: Optional[schemas.PlatformType] = None, time_constraint: bool = True,
@@ -42,3 +43,16 @@ def __get_basic_constraints_ch(platform=None, time_constraint=True, startTime_ar
     elif platform == schemas.PlatformType.DESKTOP:
         ch_sub_query.append("user_device_type = 'desktop'")
     return ch_sub_query
+
+
+def format_first_stack_frame(error):
+    error["stack"] = sourcemaps.format_payload(error.pop("payload"), truncate_to_first=True)
+    for s in error["stack"]:
+        for c in s.get("context", []):
+            for sci, sc in enumerate(c):
+                if isinstance(sc, str) and len(sc) > 1000:
+                    c[sci] = sc[:1000]
+        # convert bytes to string:
+        if isinstance(s["filename"], bytes):
+            s["filename"] = s["filename"].decode("utf-8")
+    return error
