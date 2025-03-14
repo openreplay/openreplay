@@ -101,7 +101,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
   }
 
   function sanitize(reqResInfo: RequestResponseData) {
-    if (!options.capturePayload) {
+    if (!options.capturePayload || app.sanitizer.privateMode) {
       // @ts-ignore
       delete reqResInfo.request.body
       delete reqResInfo.response.body
@@ -136,18 +136,19 @@ export default function (app: App, opts: Partial<Options> = {}) {
     if (options.useProxy) {
       return createNetworkProxy(
         context,
-        options.ignoreHeaders,
+        app.sanitizer.privateMode ? true : options.ignoreHeaders,
         setSessionTokenHeader,
         sanitize,
         (message) => {
           if (options.failuresOnly && message.status < 400) {
             return
           }
+          const url = app.sanitizer.privateMode ? '************' : message.url
           app.send(
             NetworkRequest(
               message.requestType,
               message.method,
-              message.url,
+              url,
               message.request,
               message.response,
               message.status,
