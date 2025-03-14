@@ -95,19 +95,19 @@ def get_details(project_id, error_id, user_id, **data):
             "error_id": error_id}
 
         main_ch_query = f"""\
-        WITH pre_processed AS (SELECT toString(`$properties`.error_id) AS error_id,
-                                      toString(`$properties`.name)     AS name,
-                                      toString(`$properties`.message)  AS message,
+        WITH pre_processed AS (SELECT toString(`$properties`.error_id)         AS error_id,
+                                      toString(`$properties`.name)             AS name,
+                                      toString(`$properties`.message)          AS message,
                                       session_id,
-                                      created_at                       AS datetime,
-                                      `$user_id`                       AS user_id,
-                                      `$browser`                       AS user_browser,
-                                      `$browser_version`               AS user_browser_version,
-                                      `$os`                            AS user_os,
-                                      'UNDEFINED'                      AS user_os_version,
-                                      NULL                             AS user_device_type,
-                                      `$device`                        AS user_device,
-                                      `$country`                       AS user_country
+                                      created_at                               AS datetime,
+                                      `$user_id`                               AS user_id,
+                                      `$browser`                               AS user_browser,
+                                      `$browser_version`                       AS user_browser_version,
+                                      `$os`                                    AS user_os,
+                                      '$os_version'                            AS user_os_version,
+                                      toString(`$properties`.user_device_type) AS user_device_type,
+                                      toString(`$properties`.user_device)      AS user_device,
+                                      `$country`                               AS user_country
                                FROM {MAIN_ERR_SESS_TABLE} AS errors
                                WHERE {" AND ".join(ch_basic_query)}
                                )
