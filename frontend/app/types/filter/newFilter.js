@@ -1037,7 +1037,7 @@ export const addOptionsToFilter = (key, options) => {
   }
 };
 
-function getMetadataLabel(key) {
+export function getMetadataLabel(key) {
   return key.replace(/^_/, '').charAt(0).toUpperCase() + key.slice(2);
 }
 
