@@ -1,6 +1,6 @@
 import type App from './index.js'
 import { stars, hasOpenreplayAttribute } from '../utils.js'
-import { isElementNode } from './guards.js'
+import { isElementNode, isTextNode } from './guards.js'
 
 export enum SanitizeLevel {
   Plain,
@@ -32,6 +32,10 @@ export interface Options {
    *
    * */
   domSanitizer?: (node: Element) => SanitizeLevel
+  /**
+   * private by default mode that will mask all elements not marked by data-openreplay-unmask
+   * */
+  privateMode?: boolean
 }
 
 export const stringWiper = (input: string) =>
@@ -47,16 +51,25 @@ export default class Sanitizer {
 
   constructor(params: { app: App; options?: Partial<Options> }) {
     this.app = params.app
-    this.options = Object.assign(
-      {
-        obscureTextEmails: true,
-        obscureTextNumbers: false,
-      },
-      params.options,
-    )
+    const defaultOptions: Options = {
+      obscureTextEmails: true,
+      obscureTextNumbers: false,
+      privateMode: false,
+      domSanitizer: undefined,
+    }
+    this.options = Object.assign(defaultOptions, params.options)
   }
 
   handleNode(id: number, parentID: number, node: Node) {
+    if (this.options.privateMode) {
+      if (isElementNode(node) && !hasOpenreplayAttribute(node, 'unmask')) {
+        this.obscured.add(id)
+      }
+      if (isTextNode(node) && !hasOpenreplayAttribute(node.parentNode as Element, 'unmask')) {
+        this.obscured.add(id)
+      }
+    }
+
     if (
       this.obscured.has(parentID) ||
       (isElementNode(node) &&
