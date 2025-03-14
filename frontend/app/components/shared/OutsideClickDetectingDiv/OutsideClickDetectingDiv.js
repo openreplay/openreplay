@@ -1,4 +1,3 @@
-import { findDOMNode } from 'react-dom';
 import React, { useRef, useLayoutEffect } from 'react';
 
 const refs = [];
