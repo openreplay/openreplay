@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"log"
-	"openreplay/backend/pkg/metrics/database"
 	"strings"
 	"time"
 
@@ -19,6 +18,7 @@ import (
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/url"
 )
@@ -106,25 +106,25 @@ func (c *connectorImpl) newBatch(name, query string) error {
 }
 
 var batches = map[string]string{
-	"sessions":        "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, timezone, utm_source, utm_medium, utm_campaign) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?, ?, ?)",
+	"sessions":        "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, platform, timezone, utm_source, utm_medium, utm_campaign) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?, ?, ?)",
 	"autocompletes":   "INSERT INTO experimental.autocomplete (project_id, type, value) VALUES (?, ?, SUBSTR(?, 1, 8000))",
-	"pages":           `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$current_url", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"clicks":          `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$current_url", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"inputs":          `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$duration_s", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"errors":          `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"performance":     `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"requests":        `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$duration_s", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"custom":          `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?,	?, ?)`,
-	"graphql":         `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"issuesEvents":    `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", issue_type, issue_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"pages":           `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$current_url", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"clicks":          `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$current_url", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"inputs":          `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$duration_s", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"errors":          `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"performance":     `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"requests":        `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$duration_s", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"custom":          `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?,	?, ?)`,
+	"graphql":         `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"issuesEvents":    `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", issue_type, issue_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 	"issues":          "INSERT INTO experimental.issues (project_id, issue_id, type, context_string) VALUES (?, ?, ?, ?)",
 	"mobile_sessions": "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, platform, timezone) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?)",
-	"mobile_custom":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"mobile_clicks":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"mobile_swipes":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"mobile_inputs":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"mobile_requests": `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"mobile_crashes":  `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"mobile_custom":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"mobile_clicks":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"mobile_swipes":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"mobile_inputs":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"mobile_requests": `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"mobile_crashes":  `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 }
 
 func (c *connectorImpl) Prepare() error {
@@ -215,6 +215,7 @@ func (c *connectorImpl) InsertWebSession(session *sessions.Session) error {
 		session.Metadata8,
 		session.Metadata9,
 		session.Metadata10,
+		"web",
 		session.Timezone,
 		session.UtmSource,
 		session.UtmMedium,
@@ -246,8 +247,10 @@ func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *m
 		return nil
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"label":           msg.Label,
-		"hesitation_time": nullableUint32(uint32(msg.HesitationTime)),
+		"label":            msg.Label,
+		"hesitation_time":  nullableUint32(uint32(msg.HesitationTime)),
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal input event: %s", err)
@@ -262,6 +265,8 @@ func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *m
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		nullableUint16(uint16(msg.InputDuration)),
 		jsonString,
 	); err != nil {
@@ -278,12 +283,14 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"issue_id":     issueID,
-		"issue_type":   "mouse_thrashing",
-		"url":          cropString(msg.Url),
-		"url_host":     host,
-		"url_path":     path,
-		"url_hostpath": hostpath,
+		"issue_id":         issueID,
+		"issue_type":       "mouse_thrashing",
+		"url":              cropString(msg.Url),
+		"url_host":         host,
+		"url_path":         path,
+		"url_hostpath":     hostpath,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal issue event: %s", err)
@@ -298,6 +305,8 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		"mouse_thrashing",
 		issueID,
 		jsonString,
@@ -330,12 +339,14 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"issue_id":     issueID,
-		"issue_type":   msg.Type,
-		"url":          cropString(msg.Url),
-		"url_host":     host,
-		"url_path":     path,
-		"url_hostpath": hostpath,
+		"issue_id":         issueID,
+		"issue_type":       msg.Type,
+		"url":              cropString(msg.Url),
+		"url_host":         host,
+		"url_path":         path,
+		"url_hostpath":     hostpath,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal issue event: %s", err)
@@ -350,6 +361,8 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		msg.Type,
 		issueID,
 		jsonString,
@@ -421,6 +434,8 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		"dom_building_time":              domBuildingTime,
 		"dom_content_loaded_event_time":  domContentLoadedEventTime,
 		"load_event_time":                loadEventTime,
+		"user_device":                    session.UserDevice,
+		"user_device_type":               session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal page event: %s", err)
@@ -435,6 +450,8 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		cropString(msg.URL),
 		jsonString,
 	); err != nil {
@@ -468,15 +485,17 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"label":           msg.Label,
-		"hesitation_time": nullableUint32(uint32(msg.HesitationTime)),
-		"selector":        msg.Selector,
-		"normalized_x":    nX,
-		"normalized_y":    nY,
-		"url":             cropString(msg.Url),
-		"url_host":        host,
-		"url_path":        path,
-		"url_hostpath":    hostpath,
+		"label":            msg.Label,
+		"hesitation_time":  nullableUint32(uint32(msg.HesitationTime)),
+		"selector":         msg.Selector,
+		"normalized_x":     nX,
+		"normalized_y":     nY,
+		"url":              cropString(msg.Url),
+		"url_host":         host,
+		"url_path":         path,
+		"url_hostpath":     hostpath,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal click event: %s", err)
@@ -491,6 +510,8 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		cropString(msg.Url),
 		jsonString,
 	); err != nil {
@@ -509,10 +530,12 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 	}
 	msgID, _ := msg.ID(session.ProjectID)
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"source":   msg.Source,
-		"name":     nullableString(msg.Name),
-		"message":  msg.Message,
-		"error_id": msgID,
+		"source":           msg.Source,
+		"name":             nullableString(msg.Name),
+		"message":          msg.Message,
+		"error_id":         msgID,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal error event: %s", err)
@@ -527,6 +550,8 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		jsonString,
 	); err != nil {
 		c.checkError("errors", err)
@@ -558,6 +583,8 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session,
 		"min_used_js_heap_size":  msg.MinUsedJSHeapSize,
 		"avg_used_js_heap_size":  msg.AvgUsedJSHeapSize,
 		"max_used_js_heap_size":  msg.MaxUsedJSHeapSize,
+		"user_device":            session.UserDevice,
+		"user_device_type":       session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal performance event: %s", err)
@@ -572,6 +599,8 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session,
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		jsonString,
 	); err != nil {
 		c.checkError("performance", err)
@@ -595,16 +624,18 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"request_body":  request,
-		"response_body": response,
-		"status":        uint16(msg.Status),
-		"method":        url.EnsureMethod(msg.Method),
-		"success":       msg.Status < 400,
-		"transfer_size": uint32(msg.TransferredBodySize),
-		"url":           cropString(msg.URL),
-		"url_host":      host,
-		"url_path":      path,
-		"url_hostpath":  hostpath,
+		"request_body":     request,
+		"response_body":    response,
+		"status":           uint16(msg.Status),
+		"method":           url.EnsureMethod(msg.Method),
+		"success":          msg.Status < 400,
+		"transfer_size":    uint32(msg.TransferredBodySize),
+		"url":              cropString(msg.URL),
+		"url_host":         host,
+		"url_path":         path,
+		"url_hostpath":     hostpath,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal request event: %s", err)
@@ -619,6 +650,8 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		nullableUint16(uint16(msg.Duration)),
 		jsonString,
 	); err != nil {
@@ -630,8 +663,10 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 
 func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.CustomEvent) error {
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"name":    msg.Name,
-		"payload": msg.Payload,
+		"name":             msg.Name,
+		"payload":          msg.Payload,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal custom event: %s", err)
@@ -646,6 +681,8 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		jsonString,
 	); err != nil {
 		c.checkError("custom", err)
@@ -656,9 +693,11 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 
 func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.GraphQL) error {
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"name":          msg.OperationName,
-		"request_body":  nullableString(msg.Variables),
-		"response_body": nullableString(msg.Response),
+		"name":             msg.OperationName,
+		"request_body":     nullableString(msg.Variables),
+		"response_body":    nullableString(msg.Response),
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal graphql event: %s", err)
@@ -673,6 +712,8 @@ func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.G
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		jsonString,
 	); err != nil {
 		c.checkError("graphql", err)
@@ -720,7 +761,7 @@ func (c *connectorImpl) InsertMobileSession(session *sessions.Session) error {
 		session.Metadata8,
 		session.Metadata9,
 		session.Metadata10,
-		"ios",
+		"mobile",
 		session.Timezone,
 	); err != nil {
 		c.checkError("mobile_sessions", err)
@@ -731,8 +772,10 @@ func (c *connectorImpl) InsertMobileSession(session *sessions.Session) error {
 
 func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messages.MobileEvent) error {
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"name":    msg.Name,
-		"payload": msg.Payload,
+		"name":             msg.Name,
+		"payload":          msg.Payload,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile custom event: %s", err)
@@ -747,6 +790,8 @@ func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messa
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		jsonString,
 	); err != nil {
 		c.checkError("mobile_custom", err)
@@ -760,7 +805,9 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 		return nil
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"label": msg.Label,
+		"label":            msg.Label,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile clicks event: %s", err)
@@ -775,6 +822,8 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		jsonString,
 	); err != nil {
 		c.checkError("mobile_clicks", err)
@@ -788,8 +837,10 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 		return nil
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"label":     msg.Label,
-		"direction": nullableString(msg.Direction),
+		"label":            msg.Label,
+		"direction":        nullableString(msg.Direction),
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile swipe event: %s", err)
@@ -804,6 +855,8 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		jsonString,
 	); err != nil {
 		c.checkError("mobile_swipes", err)
@@ -817,7 +870,9 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 		return nil
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"label": msg.Label,
+		"label":            msg.Label,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile input event: %s", err)
@@ -832,6 +887,8 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		jsonString,
 	); err != nil {
 		c.checkError("mobile_inputs", err)
@@ -851,13 +908,15 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 		response = &msg.Response
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"url":           cropString(msg.URL),
-		"request_body":  request,
-		"response_body": response,
-		"status":        uint16(msg.Status),
-		"method":        url.EnsureMethod(msg.Method),
-		"duration":      uint16(msg.Duration),
-		"success":       msg.Status < 400,
+		"url":              cropString(msg.URL),
+		"request_body":     request,
+		"response_body":    response,
+		"status":           uint16(msg.Status),
+		"method":           url.EnsureMethod(msg.Method),
+		"duration":         uint16(msg.Duration),
+		"success":          msg.Status < 400,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile request event: %s", err)
@@ -872,6 +931,8 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		jsonString,
 	); err != nil {
 		c.checkError("mobile_requests", err)
@@ -882,9 +943,11 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 
 func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messages.MobileCrash) error {
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"name":       msg.Name,
-		"reason":     msg.Reason,
-		"stacktrace": msg.Stacktrace,
+		"name":             msg.Name,
+		"reason":           msg.Reason,
+		"stacktrace":       msg.Stacktrace,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile crash event: %s", err)
@@ -899,6 +962,8 @@ func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messag
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		session.Platform,
+		session.UserOSVersion,
 		jsonString,
 	); err != nil {
 		c.checkError("mobile_crashes", err)
