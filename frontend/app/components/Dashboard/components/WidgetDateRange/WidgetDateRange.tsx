@@ -35,7 +35,7 @@ function WidgetDateRange({
   };
 
   const onChangeComparison = (period: any) => {
-    if (compPeriod) {
+    if (compPeriod && period) {
       if (compPeriod.start === period.start && compPeriod.end === period.end) {
         return;
       }
