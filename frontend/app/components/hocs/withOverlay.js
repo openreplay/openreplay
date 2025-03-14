@@ -1,5 +1,4 @@
 import React from 'react';
-import { findDOMNode } from 'react-dom';
 
 let overlayedCount = 0;
 
@@ -71,7 +70,7 @@ const withOverlay =
       }
 
       setOverlayedStyles() {
-        const baseRoot = findDOMNode(this.baseRef.current);
+        const baseRoot = this.baseRef.current;
         const overlayed = this.props[overlayedName];
         const actualZIndex = Z_BASE + 1 + zIndex;
         if (baseRoot) {

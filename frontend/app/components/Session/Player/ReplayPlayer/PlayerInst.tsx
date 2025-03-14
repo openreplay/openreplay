@@ -1,5 +1,4 @@
 import React from 'react';
-import { findDOMNode } from 'react-dom';
 import cn from 'classnames';
 import { WebStackEventPanel } from 'Shared/DevTools/StackEventPanel/StackEventPanel';
 import { EscapeButton } from 'UI';
@@ -74,9 +73,7 @@ function Player(props: IProps) {
   React.useEffect(() => {
     updateLastPlayedSession(sessionId);
     if (isReady && !isAttached.current) {
-      const parentElement = findDOMNode(
-        screenWrapper.current,
-      ) as HTMLDivElement | null; // TODO: good architecture
+      const parentElement = screenWrapper.current // TODO: good architecture
       if (parentElement) {
         playerContext.player.attach(parentElement);
         isAttached.current = true;
