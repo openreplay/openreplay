@@ -476,6 +476,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     "$timezone"                 Int8 DEFAULT 0 COMMENT 'timezone will be x10 in order to take into consideration countries with tz=N,5H',
     issue_type                  Enum8(''=0,'click_rage'=1,'dead_click'=2,'excessive_scrolling'=3,'bad_request'=4,'missing_resource'=5,'memory'=6,'cpu'=7,'slow_resource'=8,'slow_page_load'=9,'crash'=10,'ml_cpu'=11,'ml_memory'=12,'ml_dead_click'=13,'ml_click_rage'=14,'ml_mouse_thrashing'=15,'ml_excessive_scrolling'=16,'ml_slow_resources'=17,'custom'=18,'js_exception'=19,'mouse_thrashing'=20,'app_crash'=21) DEFAULT '',
     issue_id                    String DEFAULT '',
+    error_id                    String DEFAULT '',
     -- Created by the backend
     "$tags"                     Array(String) DEFAULT [] COMMENT 'tags are used to filter events',
     "$import"                   BOOL DEFAULT FALSE,
