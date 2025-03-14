@@ -41,12 +41,13 @@ export interface Options {
 export const stringWiper = (input: string) =>
   input
     .trim()
-    .replace(/[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/g, '█')
+    .replace(/[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/g, '*')
 
 export default class Sanitizer {
   private readonly obscured: Set<number> = new Set()
   private readonly hidden: Set<number> = new Set()
   private readonly options: Options
+  public readonly privateMode: boolean
   private readonly app: App
 
   constructor(params: { app: App; options?: Partial<Options> }) {
@@ -57,16 +58,17 @@ export default class Sanitizer {
       privateMode: false,
       domSanitizer: undefined,
     }
+    this.privateMode = params.options?.privateMode ?? false
     this.options = Object.assign(defaultOptions, params.options)
   }
 
   handleNode(id: number, parentID: number, node: Node) {
     if (this.options.privateMode) {
       if (isElementNode(node) && !hasOpenreplayAttribute(node, 'unmask')) {
-        this.obscured.add(id)
+        return this.obscured.add(id)
       }
       if (isTextNode(node) && !hasOpenreplayAttribute(node.parentNode as Element, 'unmask')) {
-        this.obscured.add(id)
+        return this.obscured.add(id)
       }
     }
 

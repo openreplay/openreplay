@@ -230,11 +230,12 @@ export default function (app: App, options?: MouseHandlerOptions): void {
         const normalizedY = roundNumber(clickY / contentHeight)
 
         sendMouseMove()
+        const label = getTargetLabel(target)
         app.send(
           MouseClick(
             id,
             mouseTarget === target ? Math.round(performance.now() - mouseTargetTime) : 0,
-            getTargetLabel(target),
+            app.sanitizer.privateMode ? label.replaceAll(/./g, '*') : label,
             isClickable(target) && !disableClickmaps ? getSelector(id, target, options) : '',
             normalizedX,
             normalizedY,
