@@ -343,10 +343,6 @@ export default class MessageLoader {
     const efsDomFilePromise = requestEFSDom(this.session.sessionId);
     const efsDevtoolsFilePromise = requestEFSDevtools(this.session.sessionId);
 
-    const [domData, devtoolsData] = await Promise.allSettled([
-      efsDomFilePromise,
-      efsDevtoolsFilePromise,
-    ]);
     const domParser = this.createNewParser(
       false,
       this.processMessages,
@@ -357,6 +353,11 @@ export default class MessageLoader {
       this.processMessages,
       'devtoolsEFS',
     );
+    const [domData, devtoolsData] = await Promise.allSettled([
+      efsDomFilePromise,
+      efsDevtoolsFilePromise,
+    ]);
+
     const parseDomPromise: Promise<any> =
       domData.status === 'fulfilled'
         ? domParser(domData.value)
@@ -366,7 +367,8 @@ export default class MessageLoader {
         ? devtoolsParser(devtoolsData.value)
         : Promise.reject('No devtools file in EFS');
 
-    await Promise.all([parseDomPromise, parseDevtoolsPromise]);
+    await Promise.allSettled([parseDomPromise, parseDevtoolsPromise]);
+    this.store.update({ domLoading: false, devtoolsLoading: false });
     this.messageManager.onFileReadFinally();
     this.messageManager.onFileReadSuccess();
   };
