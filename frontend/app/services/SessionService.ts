@@ -45,7 +45,7 @@ export default class SettingsService {
       .catch((e) => Promise.reject(e));
   }
 
-  getFirstMobUrl(sessionId: string): Promise<{ domURL: string[] }> {
+  getFirstMobUrl(sessionId: string): Promise<{ domURL: string[], fileKey?: string }> {
     return this.client
       .get(`/sessions/${sessionId}/first-mob`)
       .then((r) => r.json())

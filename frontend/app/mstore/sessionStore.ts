@@ -200,7 +200,7 @@ export default class SessionStore {
 
   userTimezone = '';
 
-  prefetchedMobUrls: Record<string, { data: Uint8Array; entryNum: number }> =
+  prefetchedMobUrls: Record<string, { data: Uint8Array; entryNum: number, fileKey?: string }> =
     {};
 
   prefetched: boolean = false;
@@ -230,13 +230,13 @@ export default class SessionStore {
   };
 
   getFirstMob = async (sessionId: string) => {
-    const { domURL } = await sessionService.getFirstMobUrl(sessionId);
+    const { domURL, fileKey } = await sessionService.getFirstMobUrl(sessionId);
     await loadFile(domURL[0], (data) =>
-      this.setPrefetchedMobUrl(sessionId, data),
+      this.setPrefetchedMobUrl(sessionId, data, fileKey),
     );
   };
 
-  setPrefetchedMobUrl = (sessionId: string, fileData: Uint8Array) => {
+  setPrefetchedMobUrl = (sessionId: string, fileData: Uint8Array, fileKey?: string) => {
     const keys = Object.keys(this.prefetchedMobUrls);
     const toLimit = 10 - keys.length;
     if (toLimit < 0) {
@@ -255,6 +255,7 @@ export default class SessionStore {
         : 0;
     this.prefetchedMobUrls[sessionId] = {
       data: fileData,
+      fileKey,
       entryNum: nextEntryNum,
     };
   };

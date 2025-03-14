@@ -88,7 +88,7 @@ function WebPlayer(props: any) {
     );
     if (usePrefetched) {
       if (mobData?.data) {
-        WebPlayerInst.preloadFirstFile(mobData?.data);
+        WebPlayerInst.preloadFirstFile(mobData?.data, mobData?.fileKey);
       }
     }
     setContextValue({ player: WebPlayerInst, store: PlayerStore });

@@ -45,7 +45,7 @@ export interface SessionFilesInfo {
   devtoolsURL: string[];
   /** deprecated */
   mobsUrl: string[];
-  fileKey: string | null;
+  fileKey?: string | null;
   events: Record<string, any>[];
   stackEvents: Record<string, any>[];
   frustrations: Record<string, any>[];

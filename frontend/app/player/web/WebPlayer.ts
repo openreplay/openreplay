@@ -102,8 +102,8 @@ export default class WebPlayer extends Player {
     window.playerJumpToTime = this.jump.bind(this);
   }
 
-  preloadFirstFile(data: Uint8Array) {
-    void this.messageLoader.preloadFirstFile(data);
+  preloadFirstFile(data: Uint8Array, fileKey?: string) {
+    void this.messageLoader.preloadFirstFile(data, fileKey);
   }
 
   reinit(session: SessionFilesInfo) {
