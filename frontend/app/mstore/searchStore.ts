@@ -28,18 +28,18 @@ export const checkValues = (key: any, value: any) => {
 };
 
 export const filterMap = ({
-                            category,
-                            value,
-                            key,
-                            operator,
-                            sourceOperator,
-                            source,
-                            custom,
-                            isEvent,
-                            filters,
-                            sort,
-                            order
-                          }: any) => ({
+  category,
+  value,
+  key,
+  operator,
+  sourceOperator,
+  source,
+  custom,
+  isEvent,
+  filters,
+  sort,
+  order
+}: any) => ({
   value: checkValues(key, value),
   custom,
   type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
@@ -254,7 +254,7 @@ class SearchStore {
 
     this.savedSearch = new SavedSearch({});
     sessionStore.clearList();
-    void this.fetchSessions(true);
+    // void this.fetchSessions(true);
   }
 
   async checkForLatestSessionCount(): Promise<void> {
