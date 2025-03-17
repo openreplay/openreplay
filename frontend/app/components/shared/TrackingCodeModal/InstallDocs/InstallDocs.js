@@ -5,17 +5,18 @@ import stl from './installDocs.module.css';
 import { useTranslation } from 'react-i18next';
 
 const installationCommand = 'npm i @openreplay/tracker';
-const usageCode = `import Tracker from '@openreplay/tracker';
+const usageCode = `import { tracker } from '@openreplay/tracker';
 
-const tracker = new Tracker({
+tracker.configure({
   projectKey: "PROJECT_KEY",
   ingestPoint: "https://${window.location.hostname}/ingest",
 });
 
 tracker.start()`;
-const usageCodeSST = `import Tracker from '@openreplay/tracker/cjs';
+const usageCodeSST = `import { tracker } from '@openreplay/tracker/cjs';
+// alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
 
-const tracker = new Tracker({
+tracker.configure({
   projectKey: "PROJECT_KEY",
   ingestPoint: "https://${window.location.hostname}/ingest",
 });

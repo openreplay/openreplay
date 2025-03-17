@@ -16,10 +16,10 @@ function ProfilerDoc() {
     ? sites.find((site) => site.id === siteId)?.projectKey
     : sites[0]?.projectKey;
 
-  const usage = `import OpenReplay from '@openreplay/tracker';
+  const usage = `import { tracker } from '@openreplay/tracker';
 import trackerProfiler from '@openreplay/tracker-profiler';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 tracker.start()
@@ -29,10 +29,12 @@ export const profiler = tracker.use(trackerProfiler());
 const fn = profiler('call_name')(() => {
 //...
 }, thisArg); // thisArg is optional`;
-  const usageCjs = `import OpenReplay from '@openreplay/tracker/cjs';
+  const usageCjs = `import { tracker } from '@openreplay/tracker/cjs';
+// alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
+
 import trackerProfiler from '@openreplay/tracker-profiler/cjs';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 //...

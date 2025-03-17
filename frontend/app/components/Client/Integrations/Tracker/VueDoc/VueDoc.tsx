@@ -16,10 +16,10 @@ function VueDoc() {
     : sites[0]?.projectKey;
 
   const usage = `import Vuex from 'vuex'
-import OpenReplay from '@openreplay/tracker';
+import { tracker } from '@openreplay/tracker';
 import trackerVuex from '@openreplay/tracker-vuex';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 tracker.start()
@@ -29,10 +29,11 @@ const store = new Vuex.Store({
   plugins: [tracker.use(trackerVuex(<options>))] // check list of available options below
 });`;
   const usageCjs = `import Vuex from 'vuex'
-import OpenReplay from '@openreplay/tracker/cjs';
+import { tracker } from '@openreplay/tracker/cjs';
+// alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
 import trackerVuex from '@openreplay/tracker-vuex/cjs';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 //...

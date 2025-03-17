@@ -16,11 +16,10 @@ function ZustandDoc(props) {
     : sites[0]?.projectKey;
 
   const usage = `import create from "zustand";
-import Tracker from '@openreplay/tracker';
+import { tracker } from '@openreplay/tracker';
 import trackerZustand, { StateLogger } from '@openreplay/tracker-zustand';
 
-
-const tracker = new Tracker({
+tracker.configure({
   projectKey: ${projectKey},
 });
 
@@ -43,11 +42,12 @@ const useBearStore = create(
 )
 `;
   const usageCjs = `import create from "zustand";
-import Tracker from '@openreplay/tracker/cjs';
+import { tracker } from '@openreplay/tracker/cjs';
+// alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
 import trackerZustand, { StateLogger } from '@openreplay/tracker-zustand/cjs';
 
 
-const tracker = new Tracker({
+tracker.configure({
   projectKey: ${projectKey},
 });
 
