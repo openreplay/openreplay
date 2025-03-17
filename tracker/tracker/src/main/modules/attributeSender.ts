@@ -15,7 +15,9 @@ export class StringDictionary {
 
   getKey = (str: string): [number, boolean] => {
     let isNew = false
-    if (!this.backDict[str]) {
+    // avoiding potential native object properties
+    const safeKey = `__${str}`
+    if (!this.backDict[safeKey]) {
       isNew = true
       // shaving the first 2 digits of the timestamp (since they are irrelevant for next millennia)
       const shavedTs = Date.now() % 10 ** (13 - 2)
@@ -26,10 +28,10 @@ export class StringDictionary {
       } else {
         this.lastSuffix = 1
       }
-      this.backDict[str] = id
+      this.backDict[safeKey] = id
       this.lastTs = shavedTs
     }
-    return [this.backDict[str], isNew]
+    return [this.backDict[safeKey], isNew]
   }
 }
 

@@ -1,3 +1,7 @@
+## 16.0.2
+
+- fix attributeSender key generation to prevent calling native methods on objects
+
 ## 16.0.1
 
 - drop computing ts digits
