@@ -870,12 +870,12 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions[-1]["condition"] = []
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
-                        sh.multi_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
+                        sh.multi_conditions(f"(toString(main1.`$properties`.message) {op} %({e_k})s OR toString(main1.`$properties`.name) {op} %({e_k})s)",
                                             event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                     events_extra_join += f" AND {event_where[-1]}"
                 if len(event.source) > 0 and event.source[0] not in [None, "*", ""]:
-                    event_where.append(sh.multi_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
+                    event_where.append(sh.multi_conditions(f"toString(main1.`$properties`.source) = %({s_k})s", event.source, value_key=s_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                     events_extra_join += f" AND {event_where[-1]}"
 

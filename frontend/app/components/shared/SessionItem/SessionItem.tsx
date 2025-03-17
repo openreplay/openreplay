@@ -182,6 +182,7 @@ function SessionItem(props: RouteComponentProps & Props) {
       await sessionStore.getFirstMob(sessionId);
       setPrefetched(PREFETCH_STATE.fetched);
     } catch (e) {
+      setPrefetched(PREFETCH_STATE.none)
       console.error('Error while prefetching first mob', e);
     }
   }, [prefetchState, live, isAssist, isMobile, sessionStore, sessionId]);

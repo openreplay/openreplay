@@ -95,28 +95,26 @@ def get_details(project_id, error_id, user_id, **data):
             "error_id": error_id}
 
         main_ch_query = f"""\
-        WITH pre_processed AS (SELECT toString(`$properties`.error_id) AS error_id,
-                                      toString(`$properties`.name)     AS name,
-                                      toString(`$properties`.message)  AS message,
+        WITH pre_processed AS (SELECT toString(`$properties`.error_id)         AS error_id,
+                                      toString(`$properties`.name)             AS name,
+                                      toString(`$properties`.message)          AS message,
                                       session_id,
-                                      created_at                       AS datetime,
-                                      `$user_id`                       AS user_id,
-                                      `$browser`                       AS user_browser,
-                                      `$browser_version`               AS user_browser_version,
-                                      `$os`                            AS user_os,
-                                      'UNDEFINED'                      AS user_os_version,
-                                      NULL                             AS user_device_type,
-                                      `$device`                        AS user_device,
-                                      `$country`                       AS user_country,
-                                      []                               AS error_tags_keys,
-                                      []                               AS error_tags_values
+                                      created_at                               AS datetime,
+                                      `$user_id`                               AS user_id,
+                                      `$browser`                               AS user_browser,
+                                      `$browser_version`                       AS user_browser_version,
+                                      `$os`                                    AS user_os,
+                                      '$os_version'                            AS user_os_version,
+                                      toString(`$properties`.user_device_type) AS user_device_type,
+                                      toString(`$properties`.user_device)      AS user_device,
+                                      `$country`                               AS user_country
                                FROM {MAIN_ERR_SESS_TABLE} AS errors
                                WHERE {" AND ".join(ch_basic_query)}
                                )
         SELECT %(error_id)s AS error_id, name, message,users,
                 first_occurrence,last_occurrence,last_session_id,
                 sessions,browsers_partition,os_partition,device_partition,
-                country_partition,chart24,chart30,custom_tags
+                country_partition,chart24,chart30
         FROM (SELECT error_id,
                      name,
                      message
@@ -131,8 +129,7 @@ def get_details(project_id, error_id, user_id, **data):
                   INNER JOIN (SELECT toUnixTimestamp(max(datetime)) * 1000 AS last_occurrence,
                                      toUnixTimestamp(min(datetime)) * 1000 AS first_occurrence
                               FROM pre_processed) AS time_details ON TRUE
-                  INNER JOIN (SELECT session_id AS last_session_id,
-                                    arrayMap((key, value)->(map(key, value)), error_tags_keys, error_tags_values) AS custom_tags
+                  INNER JOIN (SELECT session_id AS last_session_id
                               FROM pre_processed
                               ORDER BY datetime DESC
                               LIMIT 1) AS last_session_details ON TRUE

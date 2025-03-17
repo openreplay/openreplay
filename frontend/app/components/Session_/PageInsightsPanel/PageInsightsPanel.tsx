@@ -71,11 +71,11 @@ function PageInsightsPanel({ setActiveTab }: Props) {
     }
   }, [insightsFilters]);
 
-  const onPageSelect = ({ value }: any) => {
-    const event = events.find((item) => item.url === value.value);
+  const onPageSelect = (value: any) => {
+    const event = events.find((item) => item.url === value);
     Player.jump(event.timestamp - startTs + JUMP_OFFSET);
     Player.pause();
-    setInsightsFilters({ ...insightsFilters, url: value.value });
+    setInsightsFilters({ ...insightsFilters, url: value });
   };
 
   return (
@@ -88,10 +88,9 @@ function PageInsightsPanel({ setActiveTab }: Props) {
             placeholder="change"
             options={urlOptions}
             defaultValue={defaultValue}
-            onChange={onPageSelect}
+            onChange={(value) => onPageSelect(value)}
             id="change-dropdown"
             className="w-full rounded-lg max-w-[270px]"
-            dropdownStyle={{}}
           />
         </Form.Item>
         <Tooltip title={t('Close Panel')} placement="bottomRight">

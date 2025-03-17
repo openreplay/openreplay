@@ -12,7 +12,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 
 # Default step in docker build
-FROM nginx:alpine
+FROM cgr.dev/chainguard/nginx
 LABEL maintainer=Rajesh<rajesh@openreplay.com>
 ARG GIT_SHA
 LABEL GIT_SHA=$GIT_SHA
@@ -22,10 +22,3 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 ENV GIT_SHA=$GIT_SHA
 
 EXPOSE 8080
-RUN chown -R nginx:nginx /var/cache/nginx && \
-    chown -R nginx:nginx /var/log/nginx && \
-    chown -R nginx:nginx /etc/nginx/conf.d && \
-    touch /var/run/nginx.pid && \
-    chown -R nginx:nginx /var/run/nginx.pid
-
-USER nginx

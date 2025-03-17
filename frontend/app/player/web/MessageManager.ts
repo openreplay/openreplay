@@ -211,6 +211,7 @@ export default class MessageManager {
 
   public onFileReadFinally = () => {
     this.waitingForFiles = false;
+    this.setMessagesLoading(false);
     this.state.update({ messagesProcessed: true });
   };
 

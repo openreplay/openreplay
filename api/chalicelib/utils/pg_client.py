@@ -19,6 +19,16 @@ PG_CONFIG = dict(_PG_CONFIG)
 if config("PG_TIMEOUT", cast=int, default=0) > 0:
     PG_CONFIG["options"] = f"-c statement_timeout={config('PG_TIMEOUT', cast=int) * 1000}"
 
+if config('PG_POOL', cast=bool, default=True):
+    PG_CONFIG = {
+        **PG_CONFIG,
+        # Keepalive settings
+        "keepalives": 1,  # Enable keepalives
+        "keepalives_idle": 300,  # Seconds before sending keepalive
+        "keepalives_interval": 10,  # Seconds between keepalives
+        "keepalives_count": 3  # Number of keepalives before giving up
+    }
+
 
 class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
     def __init__(self, minconn, maxconn, *args, **kwargs):
@@ -55,6 +65,7 @@ RETRY = 0
 
 def make_pool():
     if not config('PG_POOL', cast=bool, default=True):
+        logger.info("PG_POOL is disabled, not creating a new one")
         return
     global postgreSQL_pool
     global RETRY
@@ -176,8 +187,7 @@ class PostgresClient:
 
 async def init():
     logger.info(f">use PG_POOL:{config('PG_POOL', default=True)}")
-    if config('PG_POOL', cast=bool, default=True):
-        make_pool()
+    make_pool()
 
 
 async def terminate():

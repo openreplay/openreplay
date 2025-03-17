@@ -61,7 +61,6 @@ func parseTags(tagsJSON string) (tags map[string]*string, err error) {
 }
 
 func WrapJSException(m *JSException) (*ErrorEvent, error) {
-	meta, err := parseTags(m.Metadata)
 	return &ErrorEvent{
 		MessageID:  m.Meta().Index,
 		Timestamp:  m.Meta().Timestamp,
@@ -69,9 +68,8 @@ func WrapJSException(m *JSException) (*ErrorEvent, error) {
 		Name:       m.Name,
 		Message:    m.Message,
 		Payload:    m.Payload,
-		Tags:       meta,
 		OriginType: m.TypeID(),
-	}, err
+	}, nil
 }
 
 func WrapIntegrationEvent(m *IntegrationEvent) *ErrorEvent {
