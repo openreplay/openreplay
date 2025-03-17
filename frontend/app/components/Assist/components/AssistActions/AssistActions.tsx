@@ -82,7 +82,7 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
     { stream: MediaStream; isAgent: boolean }[] | null
   >([]);
   const [localStream, setLocalStream] = useState<LocalStream | null>(null);
-  const [callObject, setCallObject] = useState<{ end: () => void } | null>(
+  const [callObject, setCallObject] = useState<{ end: () => void } | null | undefined>(
     null,
   );
 
@@ -135,6 +135,7 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
   }, [peerConnectionStatus]);
 
   const addIncomeStream = (stream: MediaStream, isAgent: boolean) => {
+    if (!stream.active) return;
     setIncomeStream((oldState) => {
       if (oldState === null) return [{ stream, isAgent }];
       if (
@@ -149,13 +150,8 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
     });
   };
 
-  const removeIncomeStream = (stream: MediaStream) => {
-    setIncomeStream((prevState) => {
-      if (!prevState) return [];
-      return prevState.filter(
-        (existingStream) => existingStream.stream.id !== stream.id,
-      );
-    });
+  const removeIncomeStream = () => {
+    setIncomeStream([]);
   };
 
   function onReject() {
@@ -181,7 +177,12 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
           () => {
             player.assistManager.ping(AssistActionsPing.call.end, agentId);
             lStream.stop.apply(lStream);
-            removeIncomeStream(lStream.stream);
+            removeIncomeStream();
+          },
+          () => {
+            player.assistManager.ping(AssistActionsPing.call.end, agentId);
+            lStream.stop.apply(lStream);
+            removeIncomeStream();
           },
           onReject,
           onError,

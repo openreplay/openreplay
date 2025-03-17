@@ -185,8 +185,7 @@ export default class Call {
     pc.ontrack = (event) => {
       const stream = event.streams[0];
       if (stream && !this.videoStreams[remotePeerId]) {
-        const clonnedStream = stream.clone();
-        this.videoStreams[remotePeerId] = clonnedStream.getVideoTracks()[0];
+        this.videoStreams[remotePeerId] = stream.getVideoTracks()[0];
         if (this.store.get().calling !== CallingState.OnCall) {
           this.store.update({ calling: CallingState.OnCall });
         }
@@ -305,22 +304,18 @@ export default class Call {
     }
     try {
       // if the connection is not established yet, then set remoteDescription to peer
-      if (!pc.localDescription) {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        if (isAgent) {
-          this.socket.emit('WEBRTC_AGENT_CALL', {
-            from: this.callID,
-            answer,
-            toAgentId: getSocketIdByCallId(fromCallId),
-            type: WEBRTC_CALL_AGENT_EVENT_TYPES.ANSWER,
-          });
-        } else {
-          this.socket.emit('webrtc_call_answer', { from: fromCallId, answer });
-        }
+      await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      if (isAgent) {
+        this.socket.emit('WEBRTC_AGENT_CALL', {
+          from: this.callID,
+          answer,
+          toAgentId: getSocketIdByCallId(fromCallId),
+          type: WEBRTC_CALL_AGENT_EVENT_TYPES.ANSWER,
+        });
       } else {
-        logger.warn('Skipping setRemoteDescription: Already in stable state');
+        this.socket.emit('webrtc_call_answer', { from: fromCallId, answer });
       }
     } catch (e) {
       logger.error('Error setting remote description from answer', e);
@@ -388,13 +383,13 @@ export default class Call {
   private handleCallEnd() {
     // If the call is not completed, then call onCallEnd
     if (this.store.get().calling !== CallingState.NoCall) {
-      this.callArgs && this.callArgs.onCallEnd();
+      this.callArgs && this.callArgs.onRemoteCallEnd();
     }
     // change state to NoCall
     this.store.update({ calling: CallingState.NoCall });
     // Close all created RTCPeerConnection
     Object.values(this.connections).forEach((pc) => pc.close());
-    this.callArgs?.onCallEnd();
+    this.callArgs?.onRemoteCallEnd();
     // Clear connections
     this.connections = {};
     this.callArgs = null;
@@ -414,7 +409,7 @@ export default class Call {
       // Close all connections and reset callArgs
       Object.values(this.connections).forEach((pc) => pc.close());
       this.connections = {};
-      this.callArgs?.onCallEnd();
+      this.callArgs?.onRemoteCallEnd();
       this.store.update({ calling: CallingState.NoCall });
       this.callArgs = null;
     } else {
@@ -443,7 +438,8 @@ export default class Call {
   private callArgs: {
     localStream: LocalStream;
     onStream: (s: MediaStream, isAgent: boolean) => void;
-    onCallEnd: () => void;
+    onRemoteCallEnd: () => void;
+    onLocalCallEnd: () => void;
     onReject: () => void;
     onError?: (arg?: any) => void;
   } | null = null;
@@ -451,14 +447,16 @@ export default class Call {
   setCallArgs(
     localStream: LocalStream,
     onStream: (s: MediaStream, isAgent: boolean) => void,
-    onCallEnd: () => void,
+    onRemoteCallEnd: () => void,
+    onLocalCallEnd: () => void,
     onReject: () => void,
     onError?: (e?: any) => void,
   ) {
     this.callArgs = {
       localStream,
       onStream,
-      onCallEnd,
+      onRemoteCallEnd,
+      onLocalCallEnd,
       onReject,
       onError,
     };
@@ -549,7 +547,7 @@ export default class Call {
     void this.initiateCallEnd();
     Object.values(this.connections).forEach((pc) => pc.close());
     this.connections = {};
-    this.callArgs?.onCallEnd();
+    this.callArgs?.onLocalCallEnd();
   }
 }
 

@@ -553,6 +553,16 @@ export default class Assist {
       }
     }
 
+    const renegotiateConnection = async ({ pc, from }: { pc: RTCPeerConnection, from: string }) => {
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        this.emit('webrtc_call_offer', { from, offer });
+      } catch (error) {
+        app.debug.error("Error with renegotiation:", error);
+      }
+    };
+
     const handleIncomingCallOffer = async (from: string, offer: RTCSessionDescriptionInit) => {
       app.debug.log('handleIncomingCallOffer', from)
       let confirmAnswer: Promise<boolean>
@@ -577,7 +587,7 @@ export default class Assist {
 
       try {
         // waiting for a decision on accepting the challenge
-        const agreed = await confirmAnswer
+        const agreed = await confirmAnswer;
         // if rejected, then terminate the call
         if (!agreed) {
           initiateCallEnd()
@@ -609,7 +619,7 @@ export default class Assist {
           if (!lStreams[from]) {
             app.debug.log('starting new stream for', from)
             // request a local stream, and set it to lStreams
-            lStreams[from] = await RequestLocalStream()
+            lStreams[from] = await RequestLocalStream(pc, renegotiateConnection.bind(null, { pc, from }))
           }
          // we pass the received tracks to Call ui
           callUI.setLocalStreams(Object.values(lStreams))
@@ -617,18 +627,50 @@ export default class Assist {
           app.debug.error('Error requesting local stream', e);
           // if something didn't work out, we terminate the call
           initiateCallEnd();
+          this.options.onCallDeny?.();
+          return;
+        }
+
+        if (!callUI) {
+          callUI = new CallWindow(app.debug.error, this.options.callUITemplate);
+          callUI.setVideoToggleCallback((args: { enabled: boolean }) => {
+            this.emit("videofeed", { streamId: from, enabled: args.enabled })
+          });
+        }
+        // show buttons in the call window
+        callUI.showControls(initiateCallEnd);
+        if (!annot) {
+          annot = new AnnotationCanvas();
+          annot.mount();
+        }
+
+        
+
+        // callUI.setLocalStreams(Object.values(lStreams))
+        try {
+          // if there are no local streams in lStrems then we set
+          if (!lStreams[from]) {
+            app.debug.log("starting new stream for", from);
+            // request a local stream, and set it to lStreams
+            lStreams[from] = await RequestLocalStream(pc, renegotiateConnection.bind(null, { pc, from }));
+          }
+          // we pass the received tracks to Call ui
+          callUI.setLocalStreams(Object.values(lStreams));
+        } catch (e) {
+          app.debug.error("Error requesting local stream", e);
+          // if something didn't work out, we terminate the call
+          initiateCallEnd();
           return;
         }
 
         // get all local tracks and add them to RTCPeerConnection
-        lStreams[from].stream.getTracks().forEach(track => {
-          pc.addTrack(track, lStreams[from].stream);
-        });
-
         // When we receive local ice candidates, we emit them via socket
         pc.onicecandidate = (event) => {
           if (event.candidate) {
-            socket.emit('webrtc_call_ice_candidate', { from, candidate: event.candidate });
+            socket.emit("webrtc_call_ice_candidate", {
+              from,
+              candidate: event.candidate,
+            });
           }
         };
 
@@ -639,9 +681,9 @@ export default class Assist {
             callUI.addRemoteStream(rStream, from);
             const onInteraction = () => {
               callUI?.playRemote();
-              document.removeEventListener('click', onInteraction);
+              document.removeEventListener("click", onInteraction);
             };
-            document.addEventListener('click', onInteraction);
+            document.addEventListener("click", onInteraction);
           }
         };
 
@@ -655,7 +697,7 @@ export default class Assist {
         // set answer as local description
         await pc.setLocalDescription(answer);
         // set the response as local
-        socket.emit('webrtc_call_answer', { from, answer });
+        socket.emit("webrtc_call_answer", { from, answer });
 
         // If the state changes to an error, we terminate the call
         // pc.onconnectionstatechange = () => {
@@ -665,27 +707,35 @@ export default class Assist {
         // };
 
         // Update track when local video changes
-        lStreams[from].onVideoTrack(vTrack => {
-          const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+        lStreams[from].onVideoTrack((vTrack) => {
+          const sender = pc.getSenders().find((s) => s.track?.kind === "video");
           if (!sender) {
-            app.debug.warn('No video sender found')
-            return
+            app.debug.warn("No video sender found");
+            return;
           }
-          sender.replaceTrack(vTrack)
-        })
+          sender.replaceTrack(vTrack);
+        });
 
         // if the user closed the tab or switched, then we end the call
-        document.addEventListener('visibilitychange', () => {
-          initiateCallEnd()
-        })
+        document.addEventListener("visibilitychange", () => {
+          initiateCallEnd();
+        });
 
         // when everything is set, we change the state to true
-        this.setCallingState(CallingState.True)
-        if (!callEndCallback) { callEndCallback = this.options.onCallStart?.() }
-        const callingPeerIdsNow = Array.from(this.calls.keys())
+        this.setCallingState(CallingState.True);
+        if (!callEndCallback) {
+          callEndCallback = this.options.onCallStart?.();
+        }
+        const callingPeerIdsNow = Array.from(this.calls.keys());
         // in session storage we write down everyone with whom the call is established
-        sessionStorage.setItem(this.options.session_calling_peer_key, JSON.stringify(callingPeerIdsNow))
-        this.emit('UPDATE_SESSION', { agentIds: callingPeerIdsNow, isCallActive: true })
+        sessionStorage.setItem(
+          this.options.session_calling_peer_key,
+          JSON.stringify(callingPeerIdsNow)
+        );
+        this.emit("UPDATE_SESSION", {
+          agentIds: callingPeerIdsNow,
+          isCallActive: true,
+        });
       } catch (reason) {
         app.debug.log(reason);
       }
