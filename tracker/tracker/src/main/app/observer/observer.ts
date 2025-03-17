@@ -392,7 +392,7 @@ export default abstract class Observer {
       {
         acceptNode: (node) => {
           if (this.app.nodes.getID(node) !== undefined) {
-            this.app.debug.warn('! Node is already bound', node)
+            this.app.debug.info('! Node is already bound', node)
           }
           return isIgnored(node) || this.app.nodes.getID(node) !== undefined
             ? NodeFilter.FILTER_REJECT
