@@ -34,43 +34,40 @@ function VideoContainer({
     }
     const iid = setInterval(() => {
       const track = stream.getVideoTracks()[0];
-      const settings = track?.getSettings();
-      const isDummyVideoTrack = settings
-        ? settings.width === 2 ||
-          settings.frameRate === 0 ||
-          (!settings.frameRate && !settings.width)
-        : true;
-      const shouldBeEnabled = track.enabled && !isDummyVideoTrack;
 
-      if (isEnabled !== shouldBeEnabled) {
-        setEnabled(shouldBeEnabled);
-        setRemoteEnabled?.(shouldBeEnabled);
+      if (track) {
+        if (!track.enabled) {
+          setEnabled(false);
+          setRemoteEnabled?.(false);
+        } else {
+          setEnabled(true);
+          setRemoteEnabled?.(true);
+        }
+      } else {
+        setEnabled(false);
+        setRemoteEnabled?.(false);
       }
     }, 500);
     return () => clearInterval(iid);
-  }, [stream, isEnabled]);
+  }, [stream]);
 
   return (
     <div
       className="flex-1"
       style={{
-        display: isEnabled ? undefined : 'none',
         width: isEnabled ? undefined : '0px!important',
-        height: isEnabled ? undefined : '0px!important',
+        height: isEnabled ? undefined : '0px !important',
         border: '1px solid grey',
         transform: local ? 'scaleX(-1)' : undefined,
+        display: isEnabled ? 'block' : 'none',
       }}
     >
-      <video autoPlay ref={ref} muted={muted} style={{ height }} />
-      {isAgent ? (
-        <div
-          style={{
-            position: 'absolute',
-          }}
-        >
-          {t('Agent')}
-        </div>
-      ) : null}
+      <video
+        autoPlay
+        ref={ref}
+        muted={muted}
+        style={{ height }}
+      />
     </div>
   );
 }
