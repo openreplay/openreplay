@@ -12,12 +12,13 @@ export class StringDictionary {
 
   getKey = (str: string): [string, boolean] => {
     let isNew = false
-    if (!this.backDict[str]) {
+    const safeKey = `__${str}`
+    if (!this.backDict[safeKey]) {
       isNew = true
-      this.backDict[str] = `${this.getPageNo() ?? 0}_${this.idx}`
+      this.backDict[safeKey] = `${this.getPageNo() ?? 0}_${this.idx}`
       this.idx += 1
     }
-    return [this.backDict[str], isNew]
+    return [this.backDict[safeKey], isNew]
   }
 }
 

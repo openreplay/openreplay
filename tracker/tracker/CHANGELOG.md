@@ -1,3 +1,7 @@
+## 15.1.1
+
+- fix for attributeSender dictionary keys
+
 ## 15.1.0
 
 - move domparser for sprites under observer code for better SSR support
