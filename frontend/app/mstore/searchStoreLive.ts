@@ -75,6 +75,8 @@ class SearchStoreLive {
 
   loadingFilterSearch = false;
 
+  loading = false;
+
   constructor() {
     makeAutoObservable(this);
 
@@ -242,11 +244,22 @@ class SearchStoreLive {
     });
   };
 
-  async fetchSessions() {
-    await sessionStore.fetchLiveSessions({
-      ...this.instance.toSearch(),
-      page: this.currentPage,
-    });
+  setLoading = (val: boolean) => {
+    this.loading = val;
+  }
+
+  fetchSessions = async () => {
+    this.setLoading(true)
+    try {
+      await sessionStore.fetchLiveSessions({
+        ...this.instance.toSearch(),
+        page: this.currentPage,
+      });
+    } catch (e) {
+      console.error('Error fetching sessions:', e);
+    } finally {
+      this.setLoading(false)
+    }
   }
 }
 
