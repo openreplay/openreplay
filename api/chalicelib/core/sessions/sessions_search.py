@@ -122,7 +122,10 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
             sort = 'session_id'
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
-                sort = helper.key_to_snake_case(data.sort)
+                if data.sort == 'datetime':
+                    sort = 'start_ts'
+                else:
+                    sort = helper.key_to_snake_case(data.sort)
 
             meta_keys = metadata.get(project_id=project.project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
