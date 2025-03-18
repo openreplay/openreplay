@@ -16,10 +16,10 @@ function ReduxDoc() {
     : sites[0]?.projectKey;
 
   const usage = `import { applyMiddleware, createStore } from 'redux';
-import OpenReplay from '@openreplay/tracker';
+import { tracker } from '@openreplay/tracker';
 import trackerRedux from '@openreplay/tracker-redux';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 tracker.start()
@@ -29,10 +29,11 @@ const store = createStore(
   applyMiddleware(tracker.use(trackerRedux(<options>))) // check list of available options below
 );`;
   const usageCjs = `import { applyMiddleware, createStore } from 'redux';
-import OpenReplay from '@openreplay/tracker/cjs';
+import { tracker } from '@openreplay/tracker/cjs';
+// alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
 import trackerRedux from '@openreplay/tracker-redux/cjs';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 //...

@@ -15,20 +15,21 @@ function MobxDoc() {
     ? sites.find((site) => site.id === siteId)?.projectKey
     : sites[0]?.projectKey;
 
-  const mobxUsage = `import OpenReplay from '@openreplay/tracker';
+  const mobxUsage = `import { tracker } from '@openreplay/tracker';
 import trackerMobX from '@openreplay/tracker-mobx';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 tracker.use(trackerMobX(<options>)); // check list of available options below
 tracker.start();
 `;
 
-  const mobxUsageCjs = `import OpenReplay from '@openreplay/tracker/cjs';
+  const mobxUsageCjs = `import { tracker } from '@openreplay/tracker/cjs';
+// alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
 import trackerMobX from '@openreplay/tracker-mobx/cjs';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 tracker.use(trackerMobX(<options>)); // check list of available options below

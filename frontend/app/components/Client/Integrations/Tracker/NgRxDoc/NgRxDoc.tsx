@@ -16,10 +16,10 @@ function NgRxDoc() {
     : sites[0]?.projectKey;
   const usage = `import { StoreModule } from '@ngrx/store';
 import { reducers } from './reducers';
-import OpenReplay from '@openreplay/tracker';
+import { tracker } from '@openreplay/tracker';
 import trackerNgRx from '@openreplay/tracker-ngrx';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 tracker.start()
@@ -32,10 +32,11 @@ const metaReducers = [tracker.use(trackerNgRx(<options>))]; // check list of ava
 export class AppModule {}`;
   const usageCjs = `import { StoreModule } from '@ngrx/store';
 import { reducers } from './reducers';
-import OpenReplay from '@openreplay/tracker/cjs';
+import { tracker } from '@openreplay/tracker/cjs';
+// alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
 import trackerNgRx from '@openreplay/tracker-ngrx/cjs';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 //...

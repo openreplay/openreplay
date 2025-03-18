@@ -135,11 +135,6 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 
 	// Add tracker version to context
 	r = r.WithContext(context.WithValue(r.Context(), "tracker", req.TrackerVersion))
-	if err := validateTrackerVersion(req.TrackerVersion); err != nil {
-		e.log.Error(r.Context(), "unsupported tracker version: %s, err: %s", req.TrackerVersion, err)
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUpgradeRequired, errors.New("please upgrade the tracker version"), startTime, r.URL.Path, bodySize)
-		return
-	}
 
 	// Handler's logic
 	if req.ProjectKey == nil {
@@ -161,6 +156,13 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 
 	// Add projectID to context
 	r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", p.ProjectID)))
+
+	// Validate tracker version
+	if err := validateTrackerVersion(req.TrackerVersion); err != nil {
+		e.log.Error(r.Context(), "unsupported tracker version: %s, err: %s", req.TrackerVersion, err)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUpgradeRequired, errors.New("please upgrade the tracker version"), startTime, r.URL.Path, bodySize)
+		return
+	}
 
 	// Check if the project supports mobile sessions
 	if !p.IsWeb() {

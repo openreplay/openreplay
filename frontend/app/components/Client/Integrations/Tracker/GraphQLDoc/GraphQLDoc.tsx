@@ -14,19 +14,20 @@ function GraphQLDoc() {
   const projectKey = siteId
     ? sites.find((site) => site.id === siteId)?.projectKey
     : sites[0]?.projectKey;
-  const usage = `import OpenReplay from '@openreplay/tracker';
+  const usage = `import { tracker } from '@openreplay/tracker';
 import trackerGraphQL from '@openreplay/tracker-graphql';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 tracker.start()
 //...
 export const recordGraphQL = tracker.use(trackerGraphQL());`;
-  const usageCjs = `import OpenReplay from '@openreplay/tracker/cjs';
+  const usageCjs = `import { tracker } from '@openreplay/tracker/cjs';
+// alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
 import trackerGraphQL from '@openreplay/tracker-graphql/cjs';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 //...

@@ -17,10 +17,10 @@ function PiniaDoc() {
     ? sites.find((site) => site.id === siteId)?.projectKey
     : sites[0]?.projectKey;
   const usage = `import Vuex from 'vuex'
-import OpenReplay from '@openreplay/tracker';
+import { tracker } from '@openreplay/tracker';
 import trackerVuex from '@openreplay/tracker-vuex';
 //...
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${projectKey}'
 });
 tracker.start()
