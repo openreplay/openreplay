@@ -223,6 +223,9 @@ Pipfile.lock
 /chalicelib/core/sessions/performance_event.py
 /chalicelib/core/sessions/sessions_viewed/sessions_viewed.py
 /chalicelib/core/sessions/unprocessed_sessions.py
+/chalicelib/core/sessions/__init__.py
+/chalicelib/core/sessions/sessions_legacy_mobil.py
+/chalicelib/core/sessions/sessions_search_exp.py
 /chalicelib/core/metrics/modules
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps

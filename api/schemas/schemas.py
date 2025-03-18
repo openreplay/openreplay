@@ -1529,3 +1529,30 @@ class TagCreate(TagUpdate):
 
 class ScopeSchema(BaseModel):
     scope: int = Field(default=1, ge=1, le=2)
+
+
+class SessionModel(BaseModel):
+    duration: int
+    errorsCount: int
+    eventsCount: int
+    favorite: bool = Field(default=False)
+    issueScore: int
+    issueTypes: List[IssueType] = Field(default=[])
+    metadata: dict = Field(default={})
+    pagesCount: int
+    platform: str
+    projectId: int
+    sessionId: str
+    startTs: int
+    timezone: Optional[str]
+    userAnonymousId: Optional[str]
+    userBrowser: str
+    userCity: str
+    userCountry: str
+    userDevice: Optional[str]
+    userDeviceType: str
+    userId: Optional[str]
+    userOs: str
+    userState: str
+    userUuid: str
+    viewed: bool = Field(default=False)

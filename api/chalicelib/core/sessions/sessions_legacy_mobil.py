@@ -1,6 +1,5 @@
 import ast
 import logging
-from typing import List, Union
 
 import schemas
 from chalicelib.core import events, metadata, projects
