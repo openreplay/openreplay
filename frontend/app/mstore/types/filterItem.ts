@@ -1,12 +1,13 @@
 import { FilterCategory, FilterKey, FilterType } from 'Types/filter/filterType';
 import {
   conditionalFiltersMap,
-  filtersMap,
-  mobileConditionalFiltersMap,
+  filtersMap, getMetadataLabel,
+  mobileConditionalFiltersMap
 } from 'Types/filter/newFilter';
 import { makeAutoObservable } from 'mobx';
 
 import { pageUrlOperators } from '../../constants/filterOptions';
+import filterOptions from '@/constants/filterOptions';
 
 export default class FilterItem {
   type: string = '';
@@ -121,6 +122,20 @@ export default class FilterItem {
       });
       // @ts-ignore
       _filter = subFilterMap[json.type];
+    }
+
+    if (isMetadata && !_filter) {
+      _filter = {
+        key: json.source,
+        type: FilterType.MULTIPLE,
+        category: FilterCategory.METADATA,
+        label: getMetadataLabel(json.source),
+        operator: 'is',
+        operatorOptions: filterOptions.stringConditional,
+        isEvent: false,
+        value: json.value,
+        icon: 'filters/metadata',
+      }
     }
     this.type = _filter.type;
     this.key = _filter.key;
