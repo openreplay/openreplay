@@ -1,0 +1,120 @@
+import SharedProperties from './sharedProperties.js'
+import { isObject } from './utils.js'
+
+const reservedProps = ['distinct_id', 'event_name', 'properties']
+
+export default class People {
+  ownProperties: Record<string, any> = {}
+  user_id: string | null = null
+
+  constructor(
+    private readonly sharedProperties: SharedProperties,
+    private readonly getToken: () => string,
+    private readonly getTimestamp: () => number,
+  ) {}
+
+  identify = (user_id: string) => {
+    this.user_id = user_id
+
+    // TODO: fetch endpoint when it will be here
+  }
+
+  // TODO: what exactly we're removing here besides properties and id?
+  deleteUser = () => {
+    this.user_id = null
+    this.ownProperties = {}
+
+    // TODO: fetch endpoint when it will be here
+  }
+
+  /**
+   * set ownProperties, overwriting entire object
+   *
+   * TODO: exported as people.set
+   * */
+  setProperties = (properties: Record<string, any>) => {
+    if (!isObject(properties)) {
+      throw new Error('Properties must be an object')
+    }
+    Object.entries(properties).forEach(([key, value]) => {
+      if (!reservedProps.includes(key)) {
+        this.ownProperties[key] = value
+      }
+    })
+  }
+
+  /**
+   * Set property if it doesn't exist yet
+   *
+   * TODO: exported as people.set_once
+   * */
+  setPropertiesOnce = (properties: Record<string, any>) => {
+    if (!isObject(properties)) {
+      throw new Error('Properties must be an object')
+    }
+    Object.entries(properties).forEach(([key, value]) => {
+      if (!reservedProps.includes(key) && !this.ownProperties[key]) {
+        this.ownProperties[key] = value
+      }
+    })
+  }
+
+  /**
+   * Add value to property (will turn string prop into array)
+   *
+   * TODO: exported as people.append
+   * */
+  appendValues = (key: string, value: string | number) => {
+    if (!reservedProps.includes(key) && this.ownProperties[key]) {
+      if (Array.isArray(this.ownProperties[key])) {
+        this.ownProperties[key].push(value)
+      } else {
+        this.ownProperties[key] = [this.ownProperties[key], value]
+      }
+    }
+  }
+
+  /**
+   * Add unique values to property (will turn string prop into array)
+   *
+   * TODO: exported as people.union
+   * */
+  appendUniqueValues = (key: string, value: string | number) => {
+    if (!this.ownProperties[key]) return
+    if (Array.isArray(this.ownProperties[key])) {
+      if (!this.ownProperties[key].includes(value)) {
+        this.appendValues(key, value)
+      }
+    } else if (this.ownProperties[key] !== value) {
+      this.appendValues(key, value)
+    }
+  }
+
+  /**
+   * Adds value (incl. negative) to existing numerical property
+   *
+   * TODO: exported as people.increment
+   * */
+  increment = (key: string, value: number) => {
+    if (!reservedProps.includes(key) && typeof this.ownProperties[key] === 'number') {
+      this.ownProperties[key] += value
+    }
+  }
+
+  fetchUserProperties = async () => {
+    if (!this.user_id) return
+    const userObj = {
+      user_id: this.user_id,
+      distinct_id: this.sharedProperties.distinctId,
+      properties: {
+        ...this.sharedProperties.all,
+        ...this.ownProperties,
+      },
+    }
+    const headers = {
+      Authorization: `Bearer ${this.getToken()}`,
+    }
+
+    // fetch user properties
+  }
+}

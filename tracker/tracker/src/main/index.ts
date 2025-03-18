@@ -1,4 +1,4 @@
-import App from './app/index.js'
+import App from './app/index'
 
 export { default as App } from './app/index.js'
 
@@ -30,6 +30,7 @@ import Selection from './modules/selection.js'
 import Tabs from './modules/tabs.js'
 import LongAnimationTask from "./modules/longAnimationTask.js";
 import WebAnimations from './modules/webAnimations.js'
+import AnalyticsSDK from './modules/analytics/index.js'
 
 import { IN_BROWSER, deprecationWarn, DOCS_HOST, inIframe } from './utils.js'
 
@@ -117,6 +118,7 @@ const canAccessTop = () => {
 
 export default class API {
   private readonly app: App | null = null
+  public readonly analytics: AnalyticsSDK | null = null
   private readonly crossdomainMode: boolean = false
 
   constructor(public readonly options: Partial<Options>) {
@@ -187,6 +189,11 @@ export default class API {
       options,
       this.signalStartIssue,
       this.crossdomainMode,
+    )
+    this.analytics = new AnalyticsSDK(
+      options.localStorage ?? localStorage,
+      options.sessionStorage ?? sessionStorage,
+      this.getAnalyticsToken,
     )
     this.app = app
     if (!this.crossdomainMode) {
@@ -526,5 +533,20 @@ export default class API {
       return
     }
     this.app.send(Incident(options.label ?? '', options.startTime, options.endTime ?? options.startTime))
+  }
+
+  private analyticsToken: string | null = null
+  /**
+   * Use custom token for analytics events without session recording
+   * */
+  public setAnalyticsToken = (token: string) => {
+    this.analyticsToken = token
+  }
+  public getAnalyticsToken = () => {
+    if (this.analyticsToken) {
+      return this.analyticsToken
+    } else {
+      return this.app?.session.getSessionToken() ?? ''
+    }
   }
 }

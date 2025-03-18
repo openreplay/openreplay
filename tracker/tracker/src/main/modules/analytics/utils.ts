@@ -19,7 +19,7 @@ interface ClientOS {
 /**
  * Detects client browser, OS, and device information
  */
-export function uaParse(window: Window & typeof globalThis): ClientData {
+export function uaParse(sWindow: Window & typeof globalThis): ClientData {
   const unknown = '-'
 
   // Screen detection
@@ -27,16 +27,16 @@ export function uaParse(window: Window & typeof globalThis): ClientData {
   let height: number = 0
   let screenSize = ''
 
-  if (screen.width) {
-    width = screen.width
-    height = screen.height
+  if (sWindow.screen.width) {
+    width = sWindow.screen.width
+    height = sWindow.screen.height
     screenSize = `${width} x ${height}`
   }
 
   // Browser detection
-  const nVer: string = navigator.appVersion
-  const nAgt: string = navigator.userAgent
-  let browser: string = navigator.appName
+  const nVer: string = sWindow.navigator.appVersion
+  const nAgt: string = sWindow.navigator.userAgent
+  let browser: string = sWindow.navigator.appName
   let version: string = String(parseFloat(nVer))
   let nameOffset: number
   let verOffset: number
@@ -89,7 +89,7 @@ export function uaParse(window: Window & typeof globalThis): ClientData {
     browser = nAgt.substring(nameOffset, verOffset)
     version = nAgt.substring(verOffset + 1)
     if (browser.toLowerCase() === browser.toUpperCase()) {
-      browser = navigator.appName
+      browser = sWindow.navigator.appName
     }
   }
 
@@ -114,11 +114,11 @@ export function uaParse(window: Window & typeof globalThis): ClientData {
   const mobile: boolean = /Mobile|mini|Fennec|Android|iP(ad|od|hone)/.test(nVer)
 
   // Cookie detection
-  let cookieEnabled: boolean = navigator.cookieEnabled || false
+  let cookieEnabled: boolean = sWindow.navigator.cookieEnabled || false
 
   if (typeof navigator.cookieEnabled === 'undefined' && !cookieEnabled) {
-    document.cookie = 'testcookie'
-    cookieEnabled = document.cookie.indexOf('testcookie') !== -1
+    sWindow.document.cookie = 'testcookie'
+    cookieEnabled = sWindow.document.cookie.indexOf('testcookie') !== -1
   }
 
   // OS detection
@@ -172,7 +172,7 @@ export function uaParse(window: Window & typeof globalThis): ClientData {
     if (matches && matches[1]) {
       osVersion = matches[1]
       // Handle Windows 10/11 detection with newer API if available
-      if (osVersion === '10' && 'userAgentData' in navigator) {
+      if (osVersion === '10' && 'userAgentData' in sWindow.navigator) {
         const nav = navigator as Navigator & {
           userAgentData?: {
             getHighEntropyValues(values: string[]): Promise<{ platformVersion: string }>
@@ -184,7 +184,7 @@ export function uaParse(window: Window & typeof globalThis): ClientData {
             .getHighEntropyValues(['platformVersion'])
             .then((ua) => {
               const version = parseInt(ua.platformVersion.split('.')[0], 10)
-              ;(window as any).jscd.osVersion = version < 13 ? '10' : '11'
+              osVersion = version < 13 ? '10' : '11'
             })
             .catch(() => {
               // Fallback if high entropy values not available
@@ -227,4 +227,24 @@ export function uaParse(window: Window & typeof globalThis): ClientData {
     osVersion,
     cookies: cookieEnabled,
   }
+}
+
+export function isObject(item: any): boolean {
+  const isNull = item === null
+  return Boolean(item && typeof item === 'object' && !Array.isArray(item) && !isNull)
+}
+
+export function getUTCOffsetString() {
+  const date = new Date()
+  const offsetMinutes = date.getTimezoneOffset()
+
+  const hours = Math.abs(Math.floor(offsetMinutes / 60))
+  const minutes = Math.abs(offsetMinutes % 60)
+
+  const sign = offsetMinutes <= 0 ? '+' : '-'
+
+  const hoursStr = hours.toString().padStart(2, '0')
+  const minutesStr = minutes.toString().padStart(2, '0')
+
+  return `UTC${sign}${hoursStr}:${minutesStr}`
 }
