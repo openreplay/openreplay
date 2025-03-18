@@ -34,7 +34,10 @@ if config("CH_COMPRESSION", cast=bool, default=True):
 def transform_result(self, original_function):
     @wraps(original_function)
     def wrapper(*args, **kwargs):
-        logger.debug(str.encode(self.format(query=kwargs.get("query", ""), parameters=kwargs.get("parameters"))))
+        if kwargs.get("parameters"):
+            logger.debug(str.encode(self.format(query=kwargs.get("query", ""), parameters=kwargs.get("parameters"))))
+        elif len(args) > 0:
+            logger.debug(str.encode(args[0]))
         result = original_function(*args, **kwargs)
         if isinstance(result, clickhouse_connect.driver.query.QueryResult):
             column_names = result.column_names
@@ -146,13 +149,11 @@ class ClickHouseClient:
     def __enter__(self):
         return self.__client
 
-    def format(self, query, *, parameters=None):
-        if parameters is None:
-            return query
-        return query % {
-            key: f"'{value}'" if isinstance(value, str) else value
-            for key, value in parameters.items()
-        }
+    def format(self, query, parameters=None):
+        if parameters:
+            ctx = QueryContext(query=query, parameters=parameters)
+            return ctx.final_query
+        return query
 
     def __exit__(self, *args):
         if config('CH_POOL', cast=bool, default=True):

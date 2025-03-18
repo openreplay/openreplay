@@ -141,7 +141,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
                                             ) AS users_sessions;""",
                                      full_args)
         elif ids_only:
-            main_query = cur.format(query=f"""SELECT DISTINCT ON(s.session_id) s.session_id
+            main_query = cur.format(query=f"""SELECT DISTINCT ON(s.session_id) s.session_id AS session_id
                                               {query_part}
                                               ORDER BY s.session_id desc
                                               LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s;""",
