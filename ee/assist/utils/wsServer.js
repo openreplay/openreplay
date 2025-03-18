@@ -62,7 +62,9 @@ const doFetchAllSockets = async function () {
         }
     }
     try {
-        return await io.fetchSockets();
+        let result = await io.fetchSockets();
+        lastKnownResult = result;
+        return result;
     } catch (error) {
         logger.error('Error fetching sockets:', error);
         return lastKnownResult;
