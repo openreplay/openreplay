@@ -157,7 +157,9 @@ describe('SharedProperties', () => {
       $utm_medium: 'test_medium',
       $utm_campaign: 'test_campaign',
       $distinct_id: expect.stringMatching(/^[a-z0-9]{6,12}-[a-z0-9]{6,12}-[a-z0-9]{6,12}$/),
-      $search_engine: null
+      $search_engine: null,
+      $user_id: null,
+      $device_id: expect.stringMatching(/^[a-z0-9]{6,12}-[a-z0-9]{6,12}-[a-z0-9]{6,12}$/),
     })
   })
 

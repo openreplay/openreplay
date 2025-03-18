@@ -98,6 +98,11 @@ export default class SharedProperties {
     this.user_id = user_id
   }
 
+  resetUserId = () => {
+    this.user_id = null
+    this.deviceId = this.getDistinctDeviceId(true)
+  }
+
   public get defaultPropertyKeys() {
     return Object.keys(this.all)
   }
@@ -106,9 +111,9 @@ export default class SharedProperties {
     return this.deviceId
   }
 
-  private getDistinctDeviceId = () => {
+  private getDistinctDeviceId = (force?: boolean) => {
     const potentialStored = this.localStorage.getItem(distinctIdKey)
-    if (potentialStored) {
+    if (potentialStored && !force) {
       return potentialStored
     } else {
       const distinctId = `${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`
