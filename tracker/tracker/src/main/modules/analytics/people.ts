@@ -3,7 +3,6 @@ import { isObject } from './utils.js'
 
 export default class People {
   ownProperties: Record<string, any> = {}
-  user_id: string | null = null
 
   constructor(
     private readonly sharedProperties: SharedProperties,
@@ -12,14 +11,18 @@ export default class People {
   ) {}
 
   identify = (user_id: string) => {
-    this.user_id = user_id
+    this.sharedProperties.setUserId(user_id)
 
     // TODO: fetch endpoint when it will be here
   }
 
+  get user_id() {
+    return this.sharedProperties.user_id
+  }
+
   // TODO: what exactly we're removing here besides properties and id?
   deleteUser = () => {
-    this.user_id = null
+    this.sharedProperties.setUserId(null)
     this.ownProperties = {}
 
     // TODO: fetch endpoint when it will be here
