@@ -8,6 +8,15 @@ export default class Analytics {
   public readonly sharedProperties: SharedProperties
   public readonly people: People
 
+  /**
+   * @param localStorage Class or Object that implements Storage-like interface that stores
+   * values persistently like window.localStorage or any other file-based storage
+   *
+   * @param sessionStorage Class or Object that implements Storage-like interface that stores values
+   * on per-session basis like window.sessionStorage or any other in-memory storage
+   *
+   * @param getToken Function that returns token to bind events to a se
+   * */
   constructor(
     private readonly localStorage: StorageLike,
     private readonly sessionStorage: StorageLike,

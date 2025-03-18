@@ -47,6 +47,7 @@ export default class SharedProperties {
   utmCampaign: string | null
   deviceId: string
   searchEngine: string | null
+  user_id: string | null = null
 
   constructor(
     private readonly localStorage: StorageLike,
@@ -83,12 +84,18 @@ export default class SharedProperties {
       [`${prefix}utm_source`]: this.utmSource,
       [`${prefix}utm_medium`]: this.utmMedium,
       [`${prefix}utm_campaign`]: this.utmCampaign,
-      [`${prefix}distinct_id`]: this.deviceId,
+      [`${prefix}device_id`]: this.deviceId,
+      [`${prefix}user_id`]: this.user_id,
+      [`${prefix}distinct_id`]: this.user_id ?? this.deviceId,
       [`${prefix}sdk_edition`]: 'web',
       [`${prefix}sdk_version`]: 'TRACKER_VERSION',
       [`${prefix}timezone`]: getUTCOffsetString(),
       [`${prefix}search_engine`]: this.searchEngine,
     }
+  }
+
+  setUserId = (user_id: string | null) => {
+    this.user_id = user_id
   }
 
   public get defaultPropertyKeys() {
