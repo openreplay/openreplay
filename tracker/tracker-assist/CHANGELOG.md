@@ -1,3 +1,8 @@
+## 11.0.1
+
+- fixed rare issue causing videocam feed to be black during calls
+- new call widget url to prepare for multi-user calls
+
 ## 11.0.0
 
 - migrate to native webrtc, remove peerjs
