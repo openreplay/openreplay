@@ -1,3 +1,7 @@
+## 16.1.0
+
+- new `privateMode` option to hide all possible data from tracking
+
 ## 16.0.2
 
 - fix attributeSender key generation to prevent calling native methods on objects

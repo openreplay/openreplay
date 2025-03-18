@@ -1,6 +1,7 @@
 import type App from '../app/index.js'
 import { getTimeOrigin } from '../utils.js'
 import { SetPageLocation, SetViewportSize, SetPageVisibility } from '../app/messages.gen.js'
+import { stringWiper } from '../app/sanitizer.js'
 
 export default function (app: App): void {
   let url: string | null, width: number, height: number
@@ -11,7 +12,10 @@ export default function (app: App): void {
     const { URL } = document
     if (URL !== url) {
       url = URL
-      app.send(SetPageLocation(url, referrer, navigationStart, document.title))
+      const safeTitle = app.sanitizer.privateMode ? stringWiper(document.title) : document.title
+      const safeUrl = app.sanitizer.privateMode ? stringWiper(url) : url
+      const safeReferrer = app.sanitizer.privateMode ? stringWiper(referrer) : referrer
+      app.send(SetPageLocation(safeUrl, safeReferrer, navigationStart, safeTitle))
       navigationStart = 0
       referrer = url
     }
