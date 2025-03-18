@@ -16,6 +16,12 @@ export default class People {
     // TODO: fetch endpoint when it will be here
   }
 
+  // add "hard" flag to force generate device id as well ?
+  reset = () => {
+    this.sharedProperties.resetUserId()
+    this.ownProperties = {}
+  }
+
   get user_id() {
     return this.sharedProperties.user_id
   }
