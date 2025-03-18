@@ -22,7 +22,7 @@ const {createClient} = require("redis");
 const REDIS_URL = (process.env.REDIS_URL || "localhost:6379").replace(/((^\w+:|^)\/\/|^)/, 'redis://');
 const pubClient = createClient({url: REDIS_URL});
 const subClient = pubClient.duplicate();
-logger.info(`Using Redis: ${REDIS_URL}`);
+logger.info(`Using Redis in cluster-adapter: ${REDIS_URL}`);
 
 const wsRouter = express.Router();
 wsRouter.get(`/sockets-list/:projectKey/autocomplete`, autocomplete); // autocomplete

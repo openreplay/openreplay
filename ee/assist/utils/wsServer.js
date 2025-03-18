@@ -1,22 +1,27 @@
 const _io = require("socket.io");
 const {getCompressionConfig} = require("./helper");
 const {logger} = require('./logger');
+const {Mutex} = require('async-mutex');
 
 let io;
+const getServer = function () {return io;}
 
-const getServer = function () {
-    return io;
-}
-
-let redisClient;
 const useRedis = process.env.redis === "true";
+const cacheExpiration = parseInt(process.env.cacheExpiration) || 10; // in seconds
+const mutexTimeout = parseInt(process.env.mutexTimeout) || 10000; // in milliseconds
+const fetchMutex = new Mutex();
+const fetchAllSocketsResultKey = 'fetchSocketsResult';
+let lastKnownResult = [];
 
+// Cache layer
+let redisClient;
 if (useRedis) {
     const {createClient} = require("redis");
     const REDIS_URL = (process.env.REDIS_URL || "localhost:6379").replace(/((^\w+:|^)\/\/|^)/, 'redis://');
     redisClient = createClient({url: REDIS_URL});
     redisClient.on("error", (error) => logger.error(`Redis error : ${error}`));
     void redisClient.connect();
+    logger.info(`Using Redis for cache: ${REDIS_URL}`);
 }
 
 const processSocketsList = function (sockets) {
@@ -31,19 +36,37 @@ const processSocketsList = function (sockets) {
 const doFetchAllSockets = async function () {
     if (useRedis) {
         try {
-            let cachedResult = await redisClient.get('fetchSocketsResult');
+            let cachedResult = await redisClient.get(fetchAllSocketsResultKey);
             if (cachedResult) {
                 return JSON.parse(cachedResult);
             }
-            let result = await io.fetchSockets();
-            let cachedString = JSON.stringify(processSocketsList(result));
-            await redisClient.set('fetchSocketsResult', cachedString, {EX: 5});
-            return result;
+            return await fetchMutex.runExclusive(async () => {
+                try {
+                    cachedResult = await redisClient.get(fetchAllSocketsResultKey);
+                    if (cachedResult) {
+                        return JSON.parse(cachedResult);
+                    }
+                    let result = await io.fetchSockets();
+                    let cachedString = JSON.stringify(processSocketsList(result));
+                    lastKnownResult = result;
+                    await redisClient.set(fetchAllSocketsResultKey, cachedString, {EX: cacheExpiration});
+                    return result;
+                } catch (err) {
+                    logger.error('Error fetching new sockets:', err);
+                    return lastKnownResult;
+                }
+            }, mutexTimeout);
         } catch (error) {
-            logger.error('Error setting value with expiration:', error);
+            logger.error('Error fetching cached sockets:', error);
+            return lastKnownResult;
         }
     }
-    return await io.fetchSockets();
+    try {
+        return await io.fetchSockets();
+    } catch (error) {
+        logger.error('Error fetching sockets:', error);
+        return lastKnownResult;
+    }
 }
 
 const fetchSockets = async function (roomID) {
