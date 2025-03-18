@@ -46,8 +46,7 @@ rm -rf ./chalicelib/core/sessions/sessions_viewed/sessions_viewed.py
 rm -rf ./chalicelib/core/sessions/unprocessed_sessions.py
 rm -rf ./chalicelib/core/metrics/modules
 rm -rf ./chalicelib/core/socket_ios.py
-rm -rf ./chalicelib/core/sourcemaps.py
-rm -rf ./chalicelib/core/sourcemaps_parser.py
+rm -rf ./chalicelib/core/sourcemaps
 rm -rf ./chalicelib/core/user_testing.py
 rm -rf ./chalicelib/core/tags.py
 rm -rf ./chalicelib/saml
