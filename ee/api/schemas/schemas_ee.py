@@ -4,7 +4,7 @@ from pydantic import Field, EmailStr, field_validator, model_validator
 
 from chalicelib.utils.TimeUTC import TimeUTC
 from . import schemas
-from .overrides import BaseModel, Enum, ORUnion
+from .overrides import BaseModel, Enum
 from .transformers_validators import remove_whitespace
 
 
@@ -89,33 +89,6 @@ class TrailSearchPayloadSchema(schemas._PaginatedSchema):
         else:
             values["order"] = values["order"].upper()
         return values
-
-
-class SessionModel(BaseModel):
-    duration: int
-    errorsCount: int
-    eventsCount: int
-    favorite: bool = Field(default=False)
-    issueScore: int
-    issueTypes: List[schemas.IssueType] = Field(default=[])
-    metadata: dict = Field(default={})
-    pagesCount: int
-    platform: str
-    projectId: int
-    sessionId: str
-    startTs: int
-    timezone: Optional[str]
-    userAnonymousId: Optional[str]
-    userBrowser: str
-    userCity: str
-    userCountry: str
-    userDevice: Optional[str]
-    userDeviceType: str
-    userId: Optional[str]
-    userOs: str
-    userState: str
-    userUuid: str
-    viewed: bool = Field(default=False)
 
 
 class AssistRecordUpdatePayloadSchema(BaseModel):
