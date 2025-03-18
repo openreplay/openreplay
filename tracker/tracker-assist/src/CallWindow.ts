@@ -48,7 +48,7 @@ export default class CallWindow {
 		}
 
 		// const baseHref = "https://static.openreplay.com/tracker-assist/test"
-		const baseHref = 'https://static.openreplay.com/tracker-assist/4.0.0'
+		const baseHref = 'https://static.openreplay.com/tracker-assist/widget'
 		// this.load = fetch(this.callUITemplate || baseHref + '/index2.html')
 		this.load = fetch(this.callUITemplate || baseHref + '/index.html')
 			.then((r) => r.text())
@@ -60,7 +60,7 @@ export default class CallWindow {
 					}, 0)
 					//iframe.style.height = doc.body.scrollHeight + 'px';
 					//iframe.style.width = doc.body.scrollWidth + 'px';
-					this.adjustIframeSize()
+				    this.adjustIframeSize()
 					iframe.onload = null
 				}
 				// ?
