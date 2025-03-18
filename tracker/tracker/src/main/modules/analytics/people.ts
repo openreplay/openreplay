@@ -1,8 +1,6 @@
 import SharedProperties from './sharedProperties.js'
 import { isObject } from './utils.js'
 
-const reservedProps = ['distinct_id', 'event_name', 'properties']
-
 export default class People {
   ownProperties: Record<string, any> = {}
   user_id: string | null = null
@@ -37,7 +35,7 @@ export default class People {
       throw new Error('Properties must be an object')
     }
     Object.entries(properties).forEach(([key, value]) => {
-      if (!reservedProps.includes(key)) {
+      if (!this.sharedProperties.defaultPropertyKeys.includes(key)) {
         this.ownProperties[key] = value
       }
     })
@@ -53,7 +51,7 @@ export default class People {
       throw new Error('Properties must be an object')
     }
     Object.entries(properties).forEach(([key, value]) => {
-      if (!reservedProps.includes(key) && !this.ownProperties[key]) {
+      if (!this.sharedProperties.defaultPropertyKeys.includes(key) && !this.ownProperties[key]) {
         this.ownProperties[key] = value
       }
     })
@@ -65,7 +63,7 @@ export default class People {
    * TODO: exported as people.append
    * */
   appendValues = (key: string, value: string | number) => {
-    if (!reservedProps.includes(key) && this.ownProperties[key]) {
+    if (!this.sharedProperties.defaultPropertyKeys.includes(key) && this.ownProperties[key]) {
       if (Array.isArray(this.ownProperties[key])) {
         this.ownProperties[key].push(value)
       } else {
@@ -96,7 +94,7 @@ export default class People {
    * TODO: exported as people.increment
    * */
   increment = (key: string, value: number) => {
-    if (!reservedProps.includes(key) && typeof this.ownProperties[key] === 'number') {
+    if (!this.sharedProperties.defaultPropertyKeys.includes(key) && typeof this.ownProperties[key] === 'number') {
       this.ownProperties[key] += value
     }
   }

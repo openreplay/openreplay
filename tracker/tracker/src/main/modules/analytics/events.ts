@@ -1,8 +1,6 @@
 import SharedProperties from './sharedProperties.js'
 import { isObject } from './utils.js'
 
-const reservedProps = ['distinct_id', 'event_name', 'properties']
-
 export default class Events {
   queue: Record<string, any> = []
   sendInterval: ReturnType<typeof setInterval> | null = null
@@ -35,7 +33,7 @@ export default class Events {
         throw new Error('Properties must be an object')
       }
       Object.entries(properties).forEach(([key, value]) => {
-        if (!reservedProps.includes(key)) {
+        if (!this.sharedProperties.defaultPropertyKeys.includes(key)) {
           eventProps[key] = value
         }
       })
@@ -78,13 +76,13 @@ export default class Events {
   setProperty = (nameOrProperties: Record<string, any> | string, value?: any) => {
     if (isObject(nameOrProperties)) {
       Object.entries(nameOrProperties).forEach(([key, val]) => {
-        if (!reservedProps.includes(key)) {
+        if (!this.sharedProperties.defaultPropertyKeys.includes(key)) {
           this.ownProperties[key] = val
         }
       })
     }
     if (typeof nameOrProperties === 'string' && value !== undefined) {
-      if (!reservedProps.includes(nameOrProperties)) {
+      if (!this.sharedProperties.defaultPropertyKeys.includes(nameOrProperties)) {
         this.ownProperties[nameOrProperties] = value
       }
     }
