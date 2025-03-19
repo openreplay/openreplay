@@ -38,7 +38,6 @@ export function debounceCall(func, wait) {
   };
 }
 
-
 export function randomInt(a, b) {
   const min = (b ? a : 0) - 0.5;
   const max = b || a || Number.MAX_SAFE_INTEGER;
