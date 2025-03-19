@@ -114,7 +114,9 @@ class UserStore {
   get isEnterprise() {
     return (
       this.account?.edition === 'ee' ||
-      this.authStore.authDetails?.edition === 'ee'
+      this.account?.edition === 'msaas' ||
+      this.authStore.authDetails?.edition === 'ee' ||
+      this.authStore.authDetails?.edition === 'msaas'
     );
   }
 
@@ -245,8 +247,8 @@ class UserStore {
           const errStr = err.errors[0]
             ? err.errors[0].includes('already exists')
               ? this.t(
-                  "This email is already linked to an account or team on OpenReplay and can't be used again.",
-                )
+                "This email is already linked to an account or team on OpenReplay and can't be used again.",
+              )
               : err.errors[0]
             : this.t('Error saving user');
           toast.error(errStr);
@@ -416,9 +418,9 @@ class UserStore {
         this.jwt = data.jwt;
         this.spotJwt = data.spotJwt;
       });
-    } catch (error) {
-      toast.error(this.t('Error resetting your password; please try again'));
-      return error.response;
+    } catch (e) {
+      toast.error(e.message || this.t('Error resetting your password; please try again'));
+      throw e;
     } finally {
       runInAction(() => {
         this.loading = false;
@@ -663,14 +665,14 @@ class AuthStore {
         {
           key: 'authDetails',
           serialize: (ad) => {
-            delete ad.edition;
+            // delete ad.edition;
             return Object.keys(ad).length > 0
               ? JSON.stringify(ad)
               : JSON.stringify({});
           },
           deserialize: (json) => {
             const ad = JSON.parse(json);
-            delete ad.edition;
+            // delete ad.edition;
             return ad;
           },
         },

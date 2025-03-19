@@ -1,52 +1,80 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import ReCAPTCHA from 'react-google-recaptcha';
 import { Form, Input, Loader, Icon, Message } from 'UI';
 import { Button } from 'antd';
 import { validatePassword } from 'App/validate';
 import { PASSWORD_POLICY } from 'App/constants';
-import stl from './forgotPassword.module.css';
 import { useTranslation } from 'react-i18next';
+import withCaptcha, { WithCaptchaProps } from 'App/withRecaptcha';
 
-const recaptchaRef = React.createRef();
 const ERROR_DONT_MATCH = (t) => t("Passwords don't match.");
-const CAPTCHA_ENABLED = window.env.CAPTCHA_ENABLED === 'true';
-const { CAPTCHA_SITE_KEY } = window.env;
 
 interface Props {
   params: any;
 }
-function CreatePassword(props: Props) {
+
+function CreatePassword(props: Props & WithCaptchaProps) {
   const { t } = useTranslation();
   const { params } = props;
   const { userStore } = useStore();
   const { loading } = userStore;
   const { resetPassword } = userStore;
-  const [error, setError] = React.useState<string | null>(null);
-  const [validationError, setValidationError] = React.useState<string | null>(
-    null,
-  );
-  const [updated, setUpdated] = React.useState(false);
-  const [passwordRepeat, setPasswordRepeat] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [updated, setUpdated] = useState(false);
+  const [passwordRepeat, setPasswordRepeat] = useState('');
+  const [password, setPassword] = useState('');
+
   const pass = params.get('pass');
   const invitation = params.get('invitation');
 
-  const handleSubmit = () => {
-    if (!validatePassword(password)) {
+  const { submitWithCaptcha, isVerifyingCaptcha, resetCaptcha } = props;
+
+  const handleSubmit = (token?: string) => {
+    if (!validatePassword(password) || !token) {
       return;
     }
-    void resetPassword({ invitation, pass, password });
+
+    resetPassword({
+      invitation,
+      pass,
+      password,
+      'g-recaptcha-response': token
+    })
+      .then(() => {
+        setUpdated(true);
+      })
+      .catch((err) => {
+        setError(err.message);
+        // Reset captcha for the next attempt
+        resetCaptcha();
+      });
   };
 
-  const onSubmit = (e: any) => {
-    e.preventDefault();
-    if (CAPTCHA_ENABLED && recaptchaRef.current) {
-      recaptchaRef.current.execute();
-    } else if (!CAPTCHA_ENABLED) {
-      handleSubmit();
+  const onSubmit = () => {
+    // Validate before attempting captcha verification
+    if (!validatePassword(password) || password !== passwordRepeat) {
+      setValidationError(
+        password !== passwordRepeat
+          ? ERROR_DONT_MATCH(t)
+          : PASSWORD_POLICY(t)
+      );
+      return;
     }
+
+    // Reset any previous errors
+    setError(null);
+    setValidationError(null);
+
+    submitWithCaptcha({ pass, invitation, password })
+      .then((data) => {
+        handleSubmit(data['g-recaptcha-response']);
+      })
+      .catch((error) => {
+        console.error('Captcha verification failed:', error);
+        // The component will handle showing appropriate messages
+      });
   };
 
   const write = (e: any) => {
@@ -63,7 +91,7 @@ function CreatePassword(props: Props) {
     } else {
       setValidationError(null);
     }
-  }, [passwordRepeat, password]);
+  }, [passwordRepeat, password, t]);
 
   return (
     <Form
@@ -73,19 +101,8 @@ function CreatePassword(props: Props) {
     >
       {!error && (
         <>
-          <Loader loading={loading}>
+          <Loader loading={loading || isVerifyingCaptcha}>
             <div data-hidden={updated} className="w-full">
-              {CAPTCHA_ENABLED && (
-                <div className={stl.recaptcha}>
-                  <ReCAPTCHA
-                    ref={recaptchaRef}
-                    size="invisible"
-                    sitekey={CAPTCHA_SITE_KEY}
-                    onChange={(token: any) => handleSubmit(token)}
-                  />
-                </div>
-              )}
-
               <Form.Field>
                 <label>{t('New password')}</label>
                 <Input
@@ -132,10 +149,15 @@ function CreatePassword(props: Props) {
             <Button
               htmlType="submit"
               type="primary"
-              loading={loading}
+              loading={loading || isVerifyingCaptcha}
+              disabled={loading || isVerifyingCaptcha || validationError !== null}
               className="w-full mt-4"
             >
-              {t('Create')}
+              {isVerifyingCaptcha
+                ? t('Verifying...')
+                : loading
+                  ? t('Processing...')
+                  : t('Create')}
             </Button>
           )}
         </>
@@ -153,4 +175,4 @@ function CreatePassword(props: Props) {
   );
 }
 
-export default observer(CreatePassword);
+export default withCaptcha(observer(CreatePassword));
