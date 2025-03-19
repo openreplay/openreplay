@@ -248,7 +248,10 @@ class SearchStoreLive {
     this.loading = val;
   }
 
-  fetchSessions = async () => {
+  fetchSessions = async (force?: boolean) => {
+    if (!force && this.loading) {
+      return;
+    }
     this.setLoading(true)
     try {
       await sessionStore.fetchLiveSessions({

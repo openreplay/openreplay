@@ -19,7 +19,7 @@ const AUTOREFRESH_INTERVAL = 2 * 60 * 1000;
 const PER_PAGE = 10;
 
 function LiveSessionList() {
-  const { searchStoreLive, sessionStore, customFieldStore } = useStore();
+  const { searchStoreLive, sessionStore, customFieldStore, projectsStore } = useStore();
   const filter = searchStoreLive.instance;
   const list = sessionStore.liveSessions;
   const { totalLiveSessions } = sessionStore;
@@ -71,6 +71,12 @@ function LiveSessionList() {
   const refetch = () => {
     void searchStoreLive.fetchSessions();
   };
+
+  useEffect(() => {
+    if (projectsStore.activeSiteId) {
+      void searchStoreLive.fetchSessions(true);
+    }
+  }, [projectsStore.activeSiteId])
 
   const onUserClick = (userId: string, userAnonymousId: string) => {
     if (userId) {
