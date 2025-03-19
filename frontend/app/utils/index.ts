@@ -29,7 +29,15 @@ export function debounce(callback, wait, context = this) {
   };
 }
 
-/* eslint-disable no-mixed-operators */
+export function debounceCall(func, wait) {
+  let timeout;
+  return function (...args) {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), wait);
+  };
+}
+
 export function randomInt(a, b) {
   const min = (b ? a : 0) - 0.5;
   const max = b || a || Number.MAX_SAFE_INTEGER;
