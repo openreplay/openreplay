@@ -298,7 +298,6 @@ function MobileNetworkPanelCont({ panelHeight }: { panelHeight: number }) {
   );
 }
 
-// Custom hook for infinite scrolling
 const useInfiniteScroll = (loadMoreCallback: () => void, hasMore: boolean) => {
   const observerRef = useRef<IntersectionObserver>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
@@ -401,7 +400,6 @@ export const NetworkPanelComp = observer(
       transferredSize: 0,
     });
 
-    // Store original data in refs to avoid reprocessing
     const originalListRef = useRef([]);
     const socketListRef = useRef([]);
 
@@ -799,7 +797,7 @@ export const NetworkPanelComp = observer(
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
-                <p>Loading network data...</p>
+                <p>Processing initial network data...</p>
               </div>
             </div>
           ) : (
