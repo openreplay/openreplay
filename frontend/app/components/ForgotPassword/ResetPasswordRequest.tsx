@@ -1,24 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Loader, Icon } from 'UI';
-import ReCAPTCHA from 'react-google-recaptcha';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { Form, Input, Button, Typography } from 'antd';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import withCaptcha, { WithCaptchaProps } from 'App/withRecaptcha';
 
-function ResetPasswordRequest() {
+interface Props {
+}
+
+function ResetPasswordRequest(props: Props & WithCaptchaProps) {
   const { t } = useTranslation();
   const { userStore } = useStore();
   const { loading } = userStore;
   const { requestResetPassword } = userStore;
-  const recaptchaRef = React.createRef();
-  const [requested, setRequested] = React.useState(false);
-  const [email, setEmail] = React.useState('');
-  const [error, setError] = React.useState(null);
-  const CAPTCHA_ENABLED = window.env.CAPTCHA_ENABLED === 'true';
-  const { CAPTCHA_SITE_KEY } = window.env;
-  const [smtpError, setSmtpError] = React.useState<boolean>(false);
+  const [requested, setRequested] = useState(false);
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState(null);
+  const [smtpError, setSmtpError] = useState<boolean>(false);
+
+  const { submitWithCaptcha, isVerifyingCaptcha, resetCaptcha } = props;
 
   const write = (e: any) => {
     const { name, value } = e.target;
@@ -26,21 +28,22 @@ function ResetPasswordRequest() {
   };
 
   const onSubmit = () => {
-    // e.preventDefault();
-    if (CAPTCHA_ENABLED && recaptchaRef.current) {
-      recaptchaRef.current.execute();
-    } else if (!CAPTCHA_ENABLED) {
-      handleSubmit();
+    // Validation check
+    if (!email || email.trim() === '') {
+      return;
     }
+
+    submitWithCaptcha({ email: email.trim() })
+      .then((data) => {
+        handleSubmit(data['g-recaptcha-response']);
+      })
+      .catch((error: any) => {
+        console.error('Captcha verification failed:', error);
+      });
   };
 
-  const handleSubmit = (token?: any) => {
-    if (
-      CAPTCHA_ENABLED &&
-      recaptchaRef.current &&
-      (token === null || token === undefined)
-    )
-      return;
+  const handleSubmit = (token?: string) => {
+    if (!token) return;
 
     setError(null);
     requestResetPassword({ email: email.trim(), 'g-recaptcha-response': token })
@@ -50,29 +53,21 @@ function ResetPasswordRequest() {
         }
 
         setError(err.message);
+        // Reset captcha for the next attempt
+        resetCaptcha();
       })
       .finally(() => {
         setRequested(true);
       });
   };
+
   return (
     <Form
       onFinish={onSubmit}
       style={{ minWidth: '50%' }}
       className="flex flex-col"
     >
-      <Loader loading={false}>
-        {CAPTCHA_ENABLED && (
-          <div className="flex justify-center">
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              size="invisible"
-              data-hidden={requested}
-              sitekey={CAPTCHA_SITE_KEY}
-              onChange={(token: any) => handleSubmit(token)}
-            />
-          </div>
-        )}
+      <Loader loading={loading || isVerifyingCaptcha}>
         {!requested && (
           <>
             <Form.Item>
@@ -92,10 +87,14 @@ function ResetPasswordRequest() {
             <Button
               type="primary"
               htmlType="submit"
-              loading={loading}
-              disabled={loading}
+              loading={loading || isVerifyingCaptcha}
+              disabled={loading || isVerifyingCaptcha}
             >
-              {t('Email Password Reset Link')}
+              {isVerifyingCaptcha
+                ? t('Verifying...')
+                : loading
+                  ? t('Processing...')
+                  : t('Email Password Reset Link')}
             </Button>
           </>
         )}
@@ -146,4 +145,4 @@ function ResetPasswordRequest() {
   );
 }
 
-export default observer(ResetPasswordRequest);
+export default withCaptcha(observer(ResetPasswordRequest));
