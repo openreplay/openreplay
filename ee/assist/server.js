@@ -83,9 +83,11 @@ if (process.env.uws !== "true") {
     const uWrapper = function (fn) {
         return (res, req) => {
             res.id = 1;
+            res.aborted = false;
             req.startTs = performance.now(); // track request's start timestamp
             req.method = req.getMethod();
             res.onAborted(() => {
+                res.aborted = true;
                 onAbortedOrFinishedResponse(res);
             });
             return fn(req, res);
