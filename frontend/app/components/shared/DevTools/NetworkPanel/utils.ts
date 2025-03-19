@@ -13,11 +13,7 @@ export function mergeListsWithZoom<
     return [];
   }
 
-  // Create result array with pre-allocated size estimation
-  // (We'll set an initial capacity based on rough estimate)
-  const merged = [];
-
-  // Optimize for common case - no zoom
+  // Optimized for common case - no zoom
   if (!zoom?.enabled) {
     return mergeThreeSortedArrays(arr1, arr2, arr3);
   }
@@ -40,7 +36,6 @@ export function mergeListsWithZoom<
   );
 }
 
-// Helper function to perform binary search to find index of first element >= threshold
 function binarySearchStartIndex<T extends Record<string, any>>(
   arr: T[],
   threshold: number,
@@ -67,13 +62,13 @@ function binarySearchStartIndex<T extends Record<string, any>>(
   return low;
 }
 
-// Specialized function for when no zoom is applied
 function mergeThreeSortedArrays<
   T extends Record<string, any>,
   Y extends Record<string, any>,
   Z extends Record<string, any>,
 >(arr1: T[], arr2: Y[], arr3: Z[]): Array<T | Y | Z> {
   const totalLength = arr1.length + arr2.length + arr3.length;
+  // prealloc array size
   const result = new Array(totalLength);
 
   let i = 0,
@@ -98,7 +93,7 @@ function mergeThreeSortedArrays<
   return result;
 }
 
-// Specialized function for merging with zoom range
+// same as above, just with zoom stuff
 function mergeThreeSortedArraysWithinRange<
   T extends Record<string, any>,
   Y extends Record<string, any>,
@@ -113,6 +108,7 @@ function mergeThreeSortedArraysWithinRange<
   start: number,
   end: number,
 ): Array<T | Y | Z> {
+  // we don't know beforehand how many items will be there
   const result = [];
 
   let i = startIdx1;
