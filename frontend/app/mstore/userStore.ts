@@ -114,7 +114,9 @@ class UserStore {
   get isEnterprise() {
     return (
       this.account?.edition === 'ee' ||
-      this.authStore.authDetails?.edition === 'ee'
+      this.account?.edition === 'msaas' ||
+      this.authStore.authDetails?.edition === 'ee' ||
+      this.authStore.authDetails?.edition === 'msaas'
     );
   }
 
@@ -663,14 +665,14 @@ class AuthStore {
         {
           key: 'authDetails',
           serialize: (ad) => {
-            delete ad.edition;
+            // delete ad.edition;
             return Object.keys(ad).length > 0
               ? JSON.stringify(ad)
               : JSON.stringify({});
           },
           deserialize: (json) => {
             const ad = JSON.parse(json);
-            delete ad.edition;
+            // delete ad.edition;
             return ad;
           },
         },

@@ -4,6 +4,7 @@ import { Button, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
 import stl from './login.module.css';
+import { useStore } from 'App/mstore';
 
 interface SSOLoginProps {
   authDetails: any;
@@ -11,7 +12,9 @@ interface SSOLoginProps {
 }
 
 const SSOLogin = ({ authDetails, enforceSSO = false }: SSOLoginProps) => {
+  const { userStore } = useStore();
   const { t } = useTranslation();
+  const { isEnterprise } = userStore;
 
   const getSSOLink = () =>
     window !== window.top
@@ -44,7 +47,7 @@ const SSOLogin = ({ authDetails, enforceSSO = false }: SSOLoginProps) => {
         <Tooltip
           title={
             <div className="text-center">
-              {authDetails.edition === 'ee' ? (
+              {isEnterprise ? (
                 <span>
                   {t('SSO has not been configured.')}
                   <br />
