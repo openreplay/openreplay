@@ -1,23 +1,18 @@
 import withPageTitle from 'HOCs/withPageTitle';
 import cn from 'classnames';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-// Consider using a different approach for titles in functional components
-import ReCAPTCHA from 'react-google-recaptcha';
+import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
-
-import { ENTERPRISE_REQUEIRED } from 'App/constants';
 import { forgotPassword, signup } from 'App/routes';
-import { Icon, Link, Loader, Tooltip } from 'UI';
+import { Icon, Link, Loader } from 'UI';
 import { Button, Form, Input } from 'antd';
-
 import Copyright from 'Shared/Copyright';
-
-import stl from './login.module.css';
 import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import LanguageSwitcher from '../LanguageSwitcher';
+import withCaptcha, { WithCaptchaProps } from 'App/withRecaptcha';
+import SSOLogin from './SSOLogin';
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
@@ -26,14 +21,15 @@ interface LoginProps {
   location: Location;
 }
 
-const CAPTCHA_ENABLED = window.env.CAPTCHA_ENABLED === 'true';
-
-function Login({ location }: LoginProps) {
+function Login({
+  location,
+  submitWithCaptcha,
+  isVerifyingCaptcha,
+  resetCaptcha,
+}: LoginProps & WithCaptchaProps) {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // const CAPTCHA_ENABLED = useMemo(() => window.env.CAPTCHA_ENABLED === 'true', []);
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const { loginStore, userStore } = useStore();
   const { errors } = userStore.loginRequest;
   const { loading } = loginStore;
@@ -49,7 +45,6 @@ function Login({ location }: LoginProps) {
   }, [authDetails]);
 
   useEffect(() => {
-    // void fetchTenants();
     const jwt = params.get('jwt');
     const spotJwt = params.get('spotJwt');
     if (spotJwt) {
@@ -108,32 +103,36 @@ function Login({ location }: LoginProps) {
         if (resp) {
           userStore.syntheticLogin(resp);
           setJwt({ jwt: resp.jwt, spotJwt: resp.spotJwt ?? null });
-          handleSpotLogin(resp.spotJwt);
+          if (resp.spotJwt) {
+            handleSpotLogin(resp.spotJwt);
+          }
         }
       })
       .catch((e) => {
         userStore.syntheticLoginError(e);
+        resetCaptcha();
       });
   };
 
   const onSubmit = () => {
-    if (CAPTCHA_ENABLED && recaptchaRef.current) {
-      recaptchaRef.current.execute();
-    } else if (!CAPTCHA_ENABLED) {
-      handleSubmit();
+    if (!email || !password) {
+      return;
     }
-  };
 
-  const ssoLink =
-    window !== window.top
-      ? `${window.location.origin}/api/sso/saml2?iFrame=true`
-      : `${window.location.origin}/api/sso/saml2`;
+    submitWithCaptcha({ email: email.trim(), password })
+      .then((data) => {
+        handleSubmit(data['g-recaptcha-response']);
+      })
+      .catch((error: any) => {
+        console.error('Captcha error:', error);
+      });
+  };
 
   return (
     <div className="flex items-center justify-center h-screen">
       <div className="flex flex-col items-center">
         <div className="m-10 ">
-          <img src="/assets/logo.svg" width={200} />
+          <img src="/assets/logo.svg" width={200} alt="Company Logo" />
         </div>
         <div className="border rounded-lg bg-white shadow-sm">
           <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
@@ -145,15 +144,7 @@ function Login({ location }: LoginProps) {
               className={cn('flex items-center justify-center flex-col')}
               style={{ width: '350px' }}
             >
-              <Loader loading={loading}>
-                {CAPTCHA_ENABLED && (
-                  <ReCAPTCHA
-                    ref={recaptchaRef}
-                    size="invisible"
-                    sitekey={window.env.CAPTCHA_SITE_KEY}
-                    onChange={(token) => handleSubmit(token)}
-                  />
-                )}
+              <Loader loading={loading || isVerifyingCaptcha}>
                 <div style={{ width: '350px' }} className="px-8">
                   <Form.Item>
                     <label>{t('Email Address')}</label>
@@ -186,8 +177,8 @@ function Login({ location }: LoginProps) {
               </Loader>
               {errors && errors.length ? (
                 <div className="px-8 my-2 w-full">
-                  {errors.map((error) => (
-                    <div className="flex items-center bg-red-lightest rounded p-3">
+                  {errors.map((error, index) => (
+                    <div key={index} className="flex items-center bg-red-lightest rounded p-3">
                       <Icon name="info" color="red" size="20" />
                       <span className="color-red ml-2">
                         {error}
@@ -204,8 +195,14 @@ function Login({ location }: LoginProps) {
                   className="mt-2 w-full text-center rounded-lg"
                   type="primary"
                   htmlType="submit"
+                  loading={loading || isVerifyingCaptcha}
+                  disabled={loading || isVerifyingCaptcha}
                 >
-                  {t('Login')}
+                  {isVerifyingCaptcha
+                    ? t('Verifying...')
+                    : loading
+                      ? t('Logging in...')
+                      : t('Login')}
                 </Button>
 
                 <div className="my-8 flex justify-center items-center flex-wrap">
@@ -219,63 +216,12 @@ function Login({ location }: LoginProps) {
               </div>
             </Form>
 
-            <div className={cn(stl.sso, 'py-2 flex flex-col items-center')}>
-              {authDetails.sso ? (
-                <a href={ssoLink} rel="noopener noreferrer">
-                  <Button type="text" htmlType="submit">
-                    {`${t('Login with SSO')} ${
-                      authDetails.ssoProvider
-                        ? `(${authDetails.ssoProvider})`
-                        : ''
-                    }`}
-                  </Button>
-                </a>
-              ) : (
-                <Tooltip
-                  delay={0}
-                  title={
-                    <div className="text-center">
-                      {authDetails.edition === 'ee' ? (
-                        <span>
-                          {t('SSO has not been configured.')}
-                          <br />
-                          {t('Please reach out to your admin.')}
-                        </span>
-                      ) : (
-                        ENTERPRISE_REQUEIRED(t)
-                      )}
-                    </div>
-                  }
-                  placement="top"
-                >
-                  <Button
-                    type="text"
-                    htmlType="submit"
-                    className="pointer-events-none opacity-30"
-                  >
-                    {`${t('Login with SSO')} ${
-                      authDetails.ssoProvider
-                        ? `(${authDetails.ssoProvider})`
-                        : ''
-                    }`}
-                  </Button>
-                </Tooltip>
-              )}
-            </div>
+            <SSOLogin authDetails={authDetails} />
           </div>
-          <div
-            className={cn('flex items-center w-96 justify-center my-8', {
-              '!hidden': !authDetails?.enforceSSO,
-            })}
-          >
-            <a href={ssoLink} rel="noopener noreferrer">
-              <Button type="primary">
-                {`${t('Login with SSO')} ${
-                  authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
-                }`}
-              </Button>
-            </a>
-          </div>
+
+          {authDetails?.enforceSSO && (
+            <SSOLogin authDetails={authDetails} enforceSSO={true} />
+          )}
         </div>
       </div>
 
@@ -287,4 +233,6 @@ function Login({ location }: LoginProps) {
   );
 }
 
-export default withPageTitle('Login - OpenReplay')(observer(Login));
+export default withPageTitle('Login - OpenReplay')(
+  withCaptcha(observer(Login))
+);
