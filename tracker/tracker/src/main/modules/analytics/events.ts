@@ -1,6 +1,9 @@
 import SharedProperties from './sharedProperties.js'
 import { isObject } from './utils.js'
 
+const maxProperties = 100;
+const maxPropLength = 100;
+
 export default class Events {
   queue: Record<string, any> = []
   sendInterval: ReturnType<typeof setInterval> | null = null
