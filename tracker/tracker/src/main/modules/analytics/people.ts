@@ -8,11 +8,14 @@ export default class People {
     private readonly sharedProperties: SharedProperties,
     private readonly getToken: () => string,
     private readonly getTimestamp: () => number,
+    private readonly onId: (user_id: string) => void,
   ) {}
 
-  identify = (user_id: string) => {
+  identify = (user_id: string, options?: { fromTracker: boolean }) => {
     this.sharedProperties.setUserId(user_id)
-
+    if (!options?.fromTracker) {
+      this.onId(user_id)
+    }
     // TODO: fetch endpoint when it will be here
   }
 

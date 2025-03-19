@@ -15,15 +15,21 @@ export default class Analytics {
    * @param sessionStorage Class or Object that implements Storage-like interface that stores values
    * on per-session basis like window.sessionStorage or any other in-memory storage
    *
-   * @param getToken Function that returns token to bind events to a se
+   * @param getToken Function that returns token to bind events to a session
+   *
+   * @param getTimestamp returns current timestamp
+   *
+   * @param setUserId callback for people.identify
    * */
   constructor(
     private readonly localStorage: StorageLike,
     private readonly sessionStorage: StorageLike,
     private readonly getToken: () => string,
+    private readonly getTimestamp: () => number,
+    private readonly setUserId: (user_id: string) => void,
   ) {
     this.sharedProperties = new SharedProperties(localStorage, sessionStorage)
-    this.events = new Events(this.sharedProperties, getToken, Date.now)
-    this.people = new People(this.sharedProperties, getToken, Date.now)
+    this.events = new Events(this.sharedProperties, getToken, getTimestamp)
+    this.people = new People(this.sharedProperties, getToken, getTimestamp, setUserId)
   }
 }
