@@ -10,7 +10,15 @@ metadata:
     {{- include "assist.labels" . | nindent 4 }}
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$1
-    nginx.ingress.kubernetes.io/upstream-hash-by: $http_x_forwarded_for
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      # Extract sessionID from peerId using regex
+      if ($arg_peerId ~ ".*-(?<extracted_sid>[^-]+)-.*") {
+        set $session_id $extracted_sid;
+      }
+      add_header X-Debug-Session-ID $session_id;
+      add_header X-Debug-Session-Type "wss";
+    nginx.ingress.kubernetes.io/upstream-hash-by: $session_id
+
   {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
