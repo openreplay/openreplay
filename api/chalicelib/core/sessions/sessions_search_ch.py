@@ -175,11 +175,11 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
                                               ORDER BY sort_key {data.order}
                                               LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s) AS sorted_sessions;""",
                                     parameters=full_args)
-        logging.debug("--------------------")
-        logging.debug(main_query)
-        logging.debug("--------------------")
+
         try:
+            logging.debug("--------------------")
             sessions_list = cur.execute(main_query)
+            logging.debug("--------------------")
         except Exception as err:
             logging.warning("--------- SESSIONS-CH SEARCH QUERY EXCEPTION -----------")
             logging.warning(main_query)
