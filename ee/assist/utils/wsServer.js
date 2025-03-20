@@ -70,7 +70,7 @@ const fetchSockets = async function (roomID) {
     }
     try {
         if (useStickySessions) {
-            return await io.in(roomID).local().fetchSockets();
+            return await io.local.in(roomID).fetchSockets();
         } else {
             return await io.in(roomID).fetchSockets();
         }
