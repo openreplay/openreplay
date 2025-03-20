@@ -42,7 +42,7 @@ up to date with every new library you use.
 | elasticsearch-py                  | Apache2            | Python          |
 | jira                              | BSD2               | Python          |
 | redis-py                          | MIT                | Python          |
-| clickhouse-driver                 | MIT                | Python          |
+| clickhouse-connect                | Apache2            | Python          |
 | python3-saml                      | MIT                | Python          |
 | kubernetes                        | Apache2            | Python          |
 | chalice                           | Apache2            | Python          |
