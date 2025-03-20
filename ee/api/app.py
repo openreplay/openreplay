@@ -150,9 +150,9 @@ app.include_router(spot.public_app)
 app.include_router(spot.app)
 app.include_router(spot.app_apikey)
 
-app.include_router(product_anaytics.public_app)
-app.include_router(product_anaytics.app)
-app.include_router(product_anaytics.app_apikey)
+app.include_router(product_anaytics.public_app, prefix="/ap")
+app.include_router(product_anaytics.app, prefix="/ap")
+app.include_router(product_anaytics.app_apikey, prefix="/ap")
 
 if config("ENABLE_SSO", cast=bool, default=True):
     app.include_router(saml.public_app)

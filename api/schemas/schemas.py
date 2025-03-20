@@ -545,6 +545,70 @@ class RequestGraphqlFilterSchema(BaseModel):
         return values
 
 
+class EventPredefinedPropertyType(str, Enum):
+    TIME = "$time"
+    SOURCE = "$source"
+    DURATION_S = "$duration_s"
+    DESCRIPTION = "description"
+    AUTO_CAPTURED = "$auto_captured"
+    SDK_EDITION = "$sdk_edition"
+    SDK_VERSION = "$sdk_version"
+    DEVICE_ID = "$device_id"
+    OS = "$os"
+    OS_VERSION = "$os_version"
+    BROWSER = "$browser"
+    BROWSER_VERSION = "$browser_version"
+    DEVICE = "$device"
+    SCREEN_HEIGHT = "$screen_height"
+    SCREEN_WIDTH = "$screen_width"
+    CURRENT_URL = "$current_url"
+    INITIAL_REFERRER = "$initial_referrer"
+    REFERRING_DOMAIN = "$referring_domain"
+    REFERRER = "$referrer"
+    INITIAL_REFERRING_DOMAIN = "$initial_referring_domain"
+    SEARCH_ENGINE = "$search_engine"
+    SEARCH_ENGINE_KEYWORD = "$search_engine_keyword"
+    UTM_SOURCE = "utm_source"
+    UTM_MEDIUM = "utm_medium"
+    UTM_CAMPAIGN = "utm_campaign"
+    COUNTRY = "$country"
+    STATE = "$state"
+    CITY = "$city"
+    ISSUE_TYPE = "issue_type"
+    TAGS = "$tags"
+    IMPORT = "$import"
+
+
+class PropertyFilterSchema(BaseModel):
+    name: Union[EventPredefinedPropertyType, str] = Field(...)
+    operator: Union[SearchEventOperator, MathOperator] = Field(...)
+    value: List[Union[int, str]] = Field(...)
+    property_type: Optional[Literal["string", "number", "date"]] = Field(default=None)
+
+    @computed_field
+    @property
+    def is_predefined(self) -> bool:
+        return EventPredefinedPropertyType.has_value(self.name)
+
+    @model_validator(mode="after")
+    def transform_name(self):
+        if isinstance(self.name, Enum):
+            self.name = self.name.value
+        return self
+
+
+class EventPropertiesSchema(BaseModel):
+    operators: List[Literal["and", "or"]] = Field(...)
+    filters: List[PropertyFilterSchema] = Field(...)
+
+    @model_validator(mode="after")
+    def event_filter_validator(self):
+        assert len(self.filters) == 0 \
+               or len(self.operators) == len(self.filters) - 1, \
+            "Number of operators must match the number of filter-1"
+        return self
+
+
 class SessionSearchEventSchema2(BaseModel):
     is_event: Literal[True] = True
     value: List[Union[str, int]] = Field(...)
@@ -553,6 +617,7 @@ class SessionSearchEventSchema2(BaseModel):
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(default=None)
     sourceOperator: Optional[MathOperator] = Field(default=None)
     filters: Optional[List[RequestGraphqlFilterSchema]] = Field(default_factory=list)
+    properties: Optional[EventPropertiesSchema] = Field(default=None)
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
     _single_to_list_values = field_validator('value', mode='before')(single_to_list)

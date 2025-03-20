@@ -671,24 +671,36 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
                         if schemas.ClickEventExtraOperator.has_value(event.operator):
-                            event_where.append(json_condition(
-                                "main",
-                                "$properties",
-                                "selector", op, event.value, e_k)
+                            # event_where.append(json_condition(
+                            #     "main",
+                            #     "$properties",
+                            #     "selector", op, event.value, e_k)
+                            # )
+                            event_where.append(
+                                sh.multi_conditions(f"main.`$properties`.selector {op} %({e_k})s",
+                                                    event.value, value_key=e_k)
                             )
                             events_conditions[-1]["condition"] = event_where[-1]
                         else:
                             if is_not:
-                                event_where.append(json_condition(
-                                    "sub", "$properties", _column, op, event.value, e_k
-                                ))
+                                # event_where.append(json_condition(
+                                #     "sub", "$properties", _column, op, event.value, e_k
+                                # ))
+                                event_where.append(
+                                    sh.multi_conditions(f"sub.`$properties`.{_column} {op} %({e_k})s",
+                                                        event.value, value_key=e_k)
+                                )
                                 events_conditions_not.append(
                                     {
                                         "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                                 events_conditions_not[-1]["condition"] = event_where[-1]
                             else:
+                                # event_where.append(
+                                #     json_condition("main", "$properties", _column, op, event.value, e_k)
+                                # )
                                 event_where.append(
-                                    json_condition("main", "$properties", _column, op, event.value, e_k)
+                                    sh.multi_conditions(f"main.`$properties`.{_column} {op} %({e_k})s",
+                                                        event.value, value_key=e_k)
                                 )
                                 events_conditions[-1]["condition"] = event_where[-1]
                 else:
@@ -870,12 +882,15 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions[-1]["condition"] = []
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
-                        sh.multi_conditions(f"(toString(main1.`$properties`.message) {op} %({e_k})s OR toString(main1.`$properties`.name) {op} %({e_k})s)",
-                                            event.value, value_key=e_k))
+                        sh.multi_conditions(
+                            f"(toString(main1.`$properties`.message) {op} %({e_k})s OR toString(main1.`$properties`.name) {op} %({e_k})s)",
+                            event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                     events_extra_join += f" AND {event_where[-1]}"
                 if len(event.source) > 0 and event.source[0] not in [None, "*", ""]:
-                    event_where.append(sh.multi_conditions(f"toString(main1.`$properties`.source) = %({s_k})s", event.source, value_key=s_k))
+                    event_where.append(
+                        sh.multi_conditions(f"toString(main1.`$properties`.source) = %({s_k})s", event.source,
+                                            value_key=s_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                     events_extra_join += f" AND {event_where[-1]}"
 
@@ -1193,6 +1208,28 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
             else:
                 continue
+            if event.properties is not None and len(event.properties.filters) > 0:
+                event_fiters = []
+                for l, property in enumerate(event.properties.filters):
+                    a_k = f"{e_k}_att_{l}"
+                    full_args = {**full_args,
+                                 **sh.multi_values(property.value, value_key=a_k)}
+                    op = sh.get_sql_operator(property.operator)
+                    condition = f"main.properties.{property.name} {op} %({a_k})s"
+                    if property.is_predefined:
+                        condition = f"main.{property.name} {op} %({a_k})s"
+                    event_where.append(
+                        sh.multi_conditions(condition, property.value, value_key=a_k)
+                    )
+                    event_fiters.append(event_where[-1])
+                if len(event_fiters) > 0:
+                    events_conditions[-1]["condition"] += " AND ("
+                    for l, e_f in enumerate(event_fiters):
+                        if l > 0:
+                            events_conditions[-1]["condition"] += event.properties.operators[l - 1] + e_f
+                        else:
+                            events_conditions[-1]["condition"] += e_f
+                    events_conditions[-1]["condition"] += ")"
             if event_index == 0 or or_events:
                 event_where += ss_constraints
             if is_not:
