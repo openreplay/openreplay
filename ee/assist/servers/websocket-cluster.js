@@ -47,7 +47,7 @@ module.exports = {
         Promise.all([pubClient.connect(), subClient.connect()])
             .then(() => {
                 io.adapter(createAdapter(pubClient, subClient,
-                    {requestsTimeout: process.env.REDIS_REQUESTS_TIMEOUT || 5000}));
+                    {requestsTimeout: parseInt(process.env.REDIS_REQUESTS_TIMEOUT) || 10000}));
                 logger.info("> redis connected.");
             })
             .catch((err) => {

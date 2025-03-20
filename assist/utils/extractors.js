@@ -1,13 +1,11 @@
 const {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
-    extractPayloadFromRequest,
-    getAvailableRooms
+    extractPayloadFromRequest
 } = require("./helper");
 
 module.exports = {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
-    extractPayloadFromRequest,
-    getAvailableRooms
+    extractPayloadFromRequest
 }
