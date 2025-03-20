@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 const initTableProps = [
   {
     title: <span className="font-medium">Series</span>,
+    _pureTitle: 'Series',
     dataIndex: 'seriesName',
     key: 'seriesName',
     sorter: (a, b) => a.seriesName.localeCompare(b.seriesName),
@@ -18,6 +19,7 @@ const initTableProps = [
   },
   {
     title: <span className="font-medium">Avg.</span>,
+    _pureTitle: 'Avg.',
     dataIndex: 'average',
     key: 'average',
     sorter: (a, b) => a.average - b.average,
@@ -94,6 +96,8 @@ function WidgetDatatable(props: Props) {
       tableCols.push({
         title: <span className="font-medium">{name}</span>,
         dataIndex: `${name}_${i}`,
+        // @ts-ignore
+        _pureTitle: name,
         key: `${name}_${i}`,
         sorter: (a, b) => a[`${name}_${i}`] - b[`${name}_${i}`],
       });
