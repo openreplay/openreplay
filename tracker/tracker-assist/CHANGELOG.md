@@ -1,3 +1,7 @@
+## 11.0.2
+
+- add sessionId header on socket.connect for sticky sessions
+
 ## 11.0.1
 
 - fixed rare issue causing videocam feed to be black during calls

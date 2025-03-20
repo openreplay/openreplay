@@ -238,6 +238,9 @@ export default class Assist {
           ...this.app.getSessionInfo(),
         }),
       },
+      extraHeaders: {
+        sessionId,
+      },
       transports: ['websocket',],
       withCredentials: true,
       reconnection: true,
