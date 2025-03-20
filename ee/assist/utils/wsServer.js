@@ -51,7 +51,7 @@ function startCacheRefresher() {
 
 function sendFrom(from, to, eventName, ...data) {
     if (useStickySessions) {
-        from.to(to).local().emit(eventName, ...data);
+        from.local.to(to).emit(eventName, ...data);
     } else {
         from.to(to).emit(eventName, ...data);
     }
