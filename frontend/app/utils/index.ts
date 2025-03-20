@@ -597,8 +597,7 @@ function saveAsFile(blob: Blob, filename: string) {
 }
 
 export function exportAntCsv(tableColumns, tableData, filename = 'table.csv') {
-  console.log(tableColumns, tableData);
-  const headers = tableColumns.map((col) => col.title).join(',');
+  const headers = tableColumns.map((col) => col._pureTitle).join(',');
   const rows = tableData.map((row) =>
     tableColumns
       .map((col) => {
