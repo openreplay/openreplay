@@ -190,6 +190,9 @@ export default class AssistManager {
         auth: {
           token: agentToken,
         },
+        extraHeaders: {
+          sessionId: this.session.sessionId,
+        },
         query: {
           peerId: this.peerID,
           projectId,
