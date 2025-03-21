@@ -848,8 +848,7 @@ export default class App {
    * */
   private _nCommit(): void {
     if (this.socketMode) {
-      this.messages.unshift(TabData(this.session.getTabId()))
-      this.messages.unshift(Timestamp(this.timestamp()))
+      this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
       return
@@ -874,8 +873,7 @@ export default class App {
 
     try {
       requestIdleCb(() => {
-        this.messages.unshift(TabData(this.session.getTabId()))
-        this.messages.unshift(Timestamp(this.timestamp()))
+        this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
         this.worker?.postMessage(this.messages)
         this.commitCallbacks.forEach((cb) => cb(this.messages))
         this.messages.length = 0
@@ -900,10 +898,9 @@ export default class App {
   private _cStartCommit(): void {
     this.coldStartCommitN += 1
     if (this.coldStartCommitN === 2) {
-      this.bufferedMessages1.push(Timestamp(this.timestamp()))
-      this.bufferedMessages1.push(TabData(this.session.getTabId()))
-      this.bufferedMessages2.push(Timestamp(this.timestamp()))
-      this.bufferedMessages2.push(TabData(this.session.getTabId()))
+      const payload = [Timestamp(this.timestamp()), TabData(this.session.getTabId())]
+      this.bufferedMessages1.push(...payload)
+      this.bufferedMessages2.push(...payload)
       this.coldStartCommitN = 0
     }
   }
