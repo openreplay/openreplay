@@ -391,15 +391,16 @@ class UserStore {
         this.signUpRequest = { loading: false, errors: [] };
       });
     } catch (error) {
+      const inUse = error.message.includes('already in use');
+      const inUseMsg = this.t('An account with this email already exists. Please log in or use a different email address.')
+      const genericMsg = this.t('Error signing up; please check your data and try again')
       runInAction(() => {
         this.signUpRequest = {
           loading: false,
           errors: error.response?.errors || [],
         };
       });
-      toast.error(
-        this.t('Error signing up; please check your data and try again'),
-      );
+      toast.error(inUse ? inUseMsg : genericMsg);
     } finally {
       runInAction(() => {
         this.signUpRequest.loading = false;
