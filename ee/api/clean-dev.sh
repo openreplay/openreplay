@@ -114,3 +114,4 @@ rm -rf ./chalicelib/core/errors/errors_ch.py
 rm -rf ./chalicelib/core/errors/errors_details.py
 rm -rf ./chalicelib/utils/contextual_validators.py
 rm -rf ./routers/subs/product_analytics.py
+rm -rf ./schemas/product_analytics.py
