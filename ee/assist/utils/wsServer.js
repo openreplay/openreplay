@@ -84,30 +84,30 @@ const createSocketIOServer = function (server, prefix) {
     if (io) {
         return io;
     }
+
+    // Common options for both initialization methods
+    const options = {
+        maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
+        cors: {
+            origin: "*",
+            methods: ["GET", "POST", "PUT"],
+            credentials: true
+        },
+        path: (prefix ? prefix : '') + '/socket',
+        allowRequest: (req, callback) => {
+            req.res.setHeader('x-host-id', process.env.HOSTNAME || 'unknown');
+            callback(null, true);
+        },
+        ...getCompressionConfig()
+    };
+
     if (process.env.uws !== "true") {
-        io = _io(server, {
-            maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST", "PUT"],
-                credentials: true
-            },
-            path: (prefix ? prefix : '') + '/socket',
-            ...getCompressionConfig()
-        });
+        io = _io(server, options);
     } else {
-        io = new _io.Server({
-            maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST", "PUT"],
-                credentials: true
-            },
-            path: (prefix ? prefix : '') + '/socket',
-            ...getCompressionConfig()
-        });
+        io = new _io.Server(options);
         io.attachApp(server);
     }
+
     if (useRedis) {
         startCacheRefresher();
     }
