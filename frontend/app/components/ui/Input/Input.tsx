@@ -31,7 +31,7 @@ const Input = React.forwardRef((props: Props, ref: any) => {
       {icon && (
         <Icon
           name={icon}
-          className="absolute top-0 bottom-0 my-auto ml-4"
+          className="absolute top-0 bottom-0 my-auto ml-4 z-10"
           size="14"
         />
       )}
