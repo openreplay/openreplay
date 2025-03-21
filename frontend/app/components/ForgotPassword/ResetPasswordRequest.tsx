@@ -43,8 +43,6 @@ function ResetPasswordRequest(props: Props & WithCaptchaProps) {
   };
 
   const handleSubmit = (token?: string) => {
-    if (!token) return;
-
     setError(null);
     requestResetPassword({ email: email.trim(), 'g-recaptcha-response': token })
       .catch((err: any) => {
