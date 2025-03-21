@@ -94,10 +94,6 @@ const createSocketIOServer = function (server, prefix) {
             credentials: true
         },
         path: (prefix ? prefix : '') + '/socket',
-        allowRequest: (req, callback) => {
-            req.res.setHeader('x-host-id', process.env.HOSTNAME || 'unknown');
-            callback(null, true);
-        },
         ...getCompressionConfig()
     };
 
@@ -107,6 +103,10 @@ const createSocketIOServer = function (server, prefix) {
         io = new _io.Server(options);
         io.attachApp(server);
     }
+
+    io.engine.on("headers", (headers) => {
+        headers["x-host-id"] = process.env.HOSTNAME || "unknown";
+    });
 
     if (useRedis) {
         startCacheRefresher();
