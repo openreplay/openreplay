@@ -3,6 +3,7 @@ from chalicelib.core.product_analytics import events, properties
 from fastapi import Depends
 from or_dependencies import OR_context
 from routers.base import get_routers
+from fastapi import Body, Depends, BackgroundTasks
 
 public_app, app, app_apikey = get_routers()
 
@@ -15,14 +16,13 @@ def get_event_properties(projectId: int, event_name: str = None,
     return {"data": properties.get_properties(project_id=projectId, event_name=event_name)}
 
 
-@app.get('/{projectId}/events/names', tags=["dashboard"])
+@app.get('/{projectId}/events/names', tags=["product_analytics"])
 def get_all_events(projectId: int,
                    context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": events.get_events(project_id=projectId)}
 
 
-@app.post('/{projectId}/events/search', tags=["dashboard"])
-def search_events(projectId: int,
-                  # data: schemas.CreateDashboardSchema = Body(...),
+@app.post('/{projectId}/events/search', tags=["product_analytics"])
+def search_events(projectId: int, data: schemas.EventsSearchPayloadSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": events.search_events(project_id=projectId, data={})}
+    return {"data": events.search_events(project_id=projectId, data=data)}
