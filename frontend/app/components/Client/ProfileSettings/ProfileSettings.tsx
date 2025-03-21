@@ -1,8 +1,8 @@
 import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
-import { PageTitle } from 'UI';
-import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
+import {PageTitle} from 'UI';
+import {observer} from 'mobx-react-lite';
+import {useStore} from 'App/mstore';
 import Settings from './Settings';
 import ChangePassword from './ChangePassword';
 import styles from './profileSettings.module.css';
@@ -10,7 +10,8 @@ import Api from './Api';
 import TenantKey from './TenantKey';
 import OptOut from './OptOut';
 import Licenses from './Licenses';
-import { useTranslation } from 'react-i18next';
+import {useTranslation} from 'react-i18next';
+import ThemeToggle from './ThemeToggle';
 
 function ProfileSettings() {
   const { t } = useTranslation();
@@ -31,6 +32,20 @@ function ProfileSettings() {
         </div>
         <div>
           <Settings />
+        </div>
+      </div>
+
+      <div className="border-b my-10" />
+
+      <div className="flex items-center">
+        <div className={styles.left}>
+          <h4 className="text-lg mb-4">{t('Theme')}</h4>
+          <div className={styles.info}>
+            {t('Choose between light and dark theme for your workspace.')}
+          </div>
+        </div>
+        <div>
+          <ThemeToggle />
         </div>
       </div>
 
