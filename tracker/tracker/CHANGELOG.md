@@ -1,3 +1,7 @@
+## 16.0.3
+
+- better handling for local svg spritemaps
+
 ## 16.0.2
 
 - fix attributeSender key generation to prevent calling native methods on objects
