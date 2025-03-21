@@ -91,13 +91,7 @@ const extractPayloadFromRequest = async function (req, res) {
     logger.debug("payload/filters:" + JSON.stringify(filters))
     return Object.keys(filters).length > 0 ? filters : undefined;
 }
-const getAvailableRooms = async function (io) {
-    if (process.env.redis === "true") {
-        return io.of('/').adapter.allRooms();
-    } else {
-        return helper.getAvailableRooms(io);
-    }
-}
+
 const getCompressionConfig = function () {
     if (process.env.uws !== "true") {
         return helper.getCompressionConfig();
@@ -121,6 +115,5 @@ module.exports = {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
     extractPayloadFromRequest,
-    getCompressionConfig,
-    getAvailableRooms
+    getCompressionConfig
 };

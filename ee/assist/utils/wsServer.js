@@ -3,9 +3,9 @@ const {getCompressionConfig} = require("./helper");
 const {logger} = require('./logger');
 
 let io;
-const getServer = function () {return io;}
 
 const useRedis = process.env.redis === "true";
+const useStickySessions = process.env.stickySessions === "true";
 let inMemorySocketsCache = [];
 let lastCacheUpdateTime = 0;
 const CACHE_REFRESH_INTERVAL = parseInt(process.env.cacheRefreshInterval) || 5000;
@@ -49,13 +49,16 @@ function startCacheRefresher() {
     }, CACHE_REFRESH_INTERVAL / 2);
 }
 
-const processSocketsList = function (sockets) {
-    let res = []
-    for (let socket of sockets) {
-        let {handshake} = socket;
-        res.push({handshake});
+function sendFrom(from, to, eventName, ...data) {
+    if (useStickySessions) {
+        from.local.to(to).emit(eventName, ...data);
+    } else {
+        from.to(to).emit(eventName, ...data);
     }
-    return res
+}
+
+function sendTo(to, eventName, ...data) {
+    sendFrom(io, to, eventName, ...data);
 }
 
 const fetchSockets = async function (roomID) {
@@ -65,43 +68,55 @@ const fetchSockets = async function (roomID) {
     if (!roomID) {
         return await doFetchAllSockets();
     }
-    return await io.in(roomID).fetchSockets();
+    try {
+        if (useStickySessions) {
+            return await io.local.in(roomID).fetchSockets();
+        } else {
+            return await io.in(roomID).fetchSockets();
+        }
+    } catch (error) {
+        logger.error('Error fetching sockets:', error);
+        return [];
+    }
 }
 
 const createSocketIOServer = function (server, prefix) {
     if (io) {
         return io;
     }
+
+    // Common options for both initialization methods
+    const options = {
+        maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
+        cors: {
+            origin: "*",
+            methods: ["GET", "POST", "PUT"],
+            credentials: true
+        },
+        path: (prefix ? prefix : '') + '/socket',
+        ...getCompressionConfig()
+    };
+
     if (process.env.uws !== "true") {
-        io = _io(server, {
-            maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST", "PUT"],
-                credentials: true
-            },
-            path: (prefix ? prefix : '') + '/socket',
-            ...getCompressionConfig()
-        });
+        io = _io(server, options);
     } else {
-        io = new _io.Server({
-            maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST", "PUT"],
-                credentials: true
-            },
-            path: (prefix ? prefix : '') + '/socket',
-            ...getCompressionConfig()
-        });
+        io = new _io.Server(options);
         io.attachApp(server);
     }
-    startCacheRefresher();
+
+    io.engine.on("headers", (headers) => {
+        headers["x-host-id"] = process.env.HOSTNAME || "unknown";
+    });
+
+    if (useRedis) {
+        startCacheRefresher();
+    }
     return io;
 }
 
 module.exports = {
     createSocketIOServer,
-    getServer,
+    sendTo,
+    sendFrom,
     fetchSockets,
 }
