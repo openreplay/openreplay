@@ -21,7 +21,7 @@ from chalicelib.utils import pg_client, ch_client
 from crons import core_crons, ee_crons, core_dynamic_crons
 from routers import core, core_dynamic
 from routers import ee
-from routers.subs import insights, metrics, v1_api, health, usability_tests, spot, product_anaytics
+from routers.subs import insights, metrics, v1_api, health, usability_tests, spot, product_analytics
 from routers.subs import v1_api_ee
 
 if config("ENABLE_SSO", cast=bool, default=True):
@@ -150,9 +150,9 @@ app.include_router(spot.public_app)
 app.include_router(spot.app)
 app.include_router(spot.app_apikey)
 
-app.include_router(product_anaytics.public_app, prefix="/ap")
-app.include_router(product_anaytics.app, prefix="/ap")
-app.include_router(product_anaytics.app_apikey, prefix="/ap")
+app.include_router(product_analytics.public_app, prefix="/ap")
+app.include_router(product_analytics.app, prefix="/ap")
+app.include_router(product_analytics.app_apikey, prefix="/ap")
 
 if config("ENABLE_SSO", cast=bool, default=True):
     app.include_router(saml.public_app)
