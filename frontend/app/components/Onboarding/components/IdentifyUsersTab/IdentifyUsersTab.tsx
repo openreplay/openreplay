@@ -130,18 +130,20 @@ function IdentifyUsersTab(props: Props) {
                 'To identify users through metadata, you will have to explicitly specify your user metadata so it can be injected during sessions. Follow the below steps',
               )}
             </p>
-            <div className="flex items-start">
+            <div className="flex items-center gap-2 mb-2">
               <CircleNumber text="1" />
               <MetadataList />
             </div>
 
             <div className="my-6" />
             <div className="flex items-start">
-              <CircleNumber text="2" />
-              <div className="pt-1 w-full">
+              <div>
+                <CircleNumber text="2" />
                 <span className="font-bold">
                   {t('Inject metadata when recording sessions')}
                 </span>
+              </div>
+              <div className="pt-1 w-full">
                 <div className="my-2">
                   {t('Use the')}&nbsp;
                   <span className="highlight-blue">setMetadata</span>{' '}

@@ -55,16 +55,14 @@ function MetadataList() {
       <Button type="default" onClick={() => openModal()}>
         {t('Add Metadata')}
       </Button>
-      <div className="flex ml-2">
-        {fields.map((f, index) => (
-          <TagBadge
-            key={index}
-            text={f.key}
-            onRemove={() => removeMetadata(f)}
-            outline
-          />
-        ))}
-      </div>
+      {fields.map((f, index) => (
+        <TagBadge
+          key={index}
+          text={f.key}
+          onRemove={() => removeMetadata(f)}
+          outline
+        />
+      ))}
     </div>
   );
 }
