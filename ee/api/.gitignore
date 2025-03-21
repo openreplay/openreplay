@@ -294,3 +294,4 @@ Pipfile.lock
 /chalicelib/core/errors/errors_details.py
 /chalicelib/utils/contextual_validators.py
 /routers/subs/product_analytics.py
+/schemas/product_analytics.py
