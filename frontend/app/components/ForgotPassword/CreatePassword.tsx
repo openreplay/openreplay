@@ -32,7 +32,7 @@ function CreatePassword(props: Props & WithCaptchaProps) {
   const { submitWithCaptcha, isVerifyingCaptcha, resetCaptcha } = props;
 
   const handleSubmit = (token?: string) => {
-    if (!validatePassword(password) || !token) {
+    if (!validatePassword(password)) {
       return;
     }
 
