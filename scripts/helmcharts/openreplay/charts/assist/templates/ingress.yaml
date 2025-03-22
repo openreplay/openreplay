@@ -11,12 +11,24 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      # Extract sessionID from peerId using regex
-      if ($arg_peerId ~ ".*-(?<extracted_sid>[^-]+)-.*") {
-        set $session_id $extracted_sid;
-      }
-      add_header X-Debug-Session-ID $session_id;
-      add_header X-Debug-Session-Type "wss";
+      #set $sticky_used "no";
+      #if ($sessionid != "") {
+      #  set $sticky_used "yes";
+      #}
+
+      #add_header X-Debug-Session-ID $sessionid;
+      #add_header X-Debug-Session-Type "wss";
+      #add_header X-Sticky-Session-Used $sticky_used;
+      #add_header X-Upstream-Server $upstream_addr;
+
+      proxy_hide_header access-control-allow-headers;
+      proxy_hide_header Access-Control-Allow-Origin;
+      add_header 'Access-Control-Allow-Origin' $http_origin always;
+      add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS' always;
+      add_header 'Access-Control-Allow-Headers' 'sessionid, Content-Type, Authorization' always;
+      add_header 'Access-Control-Max-Age' 1728000;
+      add_header 'Content-Type' 'text/plain charset=UTF-8';
+
     nginx.ingress.kubernetes.io/upstream-hash-by: $session_id
 
   {{- with .Values.ingress.annotations }}
