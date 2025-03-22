@@ -241,7 +241,7 @@ export default class Assist {
       extraHeaders: {
         sessionId,
       },
-      transports: ['polling', 'websocket',],
+      transports: ['websocket',],
       withCredentials: true,
       reconnection: true,
       reconnectionAttempts: 30,
