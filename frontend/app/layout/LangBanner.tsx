@@ -1,6 +1,6 @@
 import React from 'react'
 import {
-  Languages, X
+  Languages, X, Info
 } from 'lucide-react'
 import { Button } from 'antd';
 import { useHistory } from "react-router-dom";
@@ -14,6 +14,7 @@ function LangBanner({ onClose }: { onClose: () => void }) {
   }
   return (
     <div className={'px-4 py-2 bg-yellow flex items-center w-screen gap-2'}>
+      <Info size={16} />
       <div>
         OpenReplay now supports French, Russian, Chinese, and Spanish 🎉. Update your language in settings.
       </div>
