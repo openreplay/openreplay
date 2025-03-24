@@ -11,7 +11,7 @@ function sendTo(to, eventName, ...data) {
     sendFrom(io, to, eventName, ...data);
 }
 
-const fetchSockets = async function (roomID) {
+const fetchSockets = async function (roomID, all=false) {
     if (!io) {
         return [];
     }

@@ -41,8 +41,8 @@ const respond = function (req, res, data) {
     RecordRequestDuration(req.method.toLowerCase(), res.handlerName, 200, duration/1000.0);
 }
 
-const getParticularSession = async function (roomId, filters) {
-    let connected_sockets = await fetchSockets(roomId);
+const getParticularSession = async function (roomId, filters, all=false) {
+    let connected_sockets = await fetchSockets(roomId, all);
     if (connected_sockets.length === 0) {
         return null;
     }
@@ -172,7 +172,7 @@ const socketsLiveBySession = async function (req, res) {
 
     // find a particular session
     if (_sessionId) {
-        let sessInfo = await getParticularSession(`${_projectKey}-${_sessionId}`, filters);
+        let sessInfo = await getParticularSession(`${_projectKey}-${_sessionId}`, filters, true);
         return respond(req, res, sessInfo);
     }
     return respond(req, res, null);

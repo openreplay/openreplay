@@ -61,7 +61,7 @@ function sendTo(to, eventName, ...data) {
     sendFrom(io, to, eventName, ...data);
 }
 
-const fetchSockets = async function (roomID) {
+const fetchSockets = async function (roomID, all=false) {
     if (!io) {
         return [];
     }
@@ -69,7 +69,7 @@ const fetchSockets = async function (roomID) {
         return await doFetchAllSockets();
     }
     try {
-        if (useStickySessions) {
+        if (useStickySessions && !all) {
             return await io.local.in(roomID).fetchSockets();
         } else {
             return await io.in(roomID).fetchSockets();
