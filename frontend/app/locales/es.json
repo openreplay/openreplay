@@ -1498,5 +1498,8 @@
   "More attribute": "Más atributos",
   "More attributes": "Más atributos",
   "Account settings updated successfully": "Configuración de la cuenta actualizada correctamente",
-  "Include rage clicks": "Incluir clics de ira"
+  "Include rage clicks": "Incluir clics de ira",
+  "Interface Language": "Idioma de la interfaz",
+  "Select the language in which OpenReplay will appear.": "Selecciona el idioma en el que aparecerá OpenReplay.",
+  "Language": "Idioma"
 }

@@ -1,9 +1,7 @@
-import { Button, Dropdown, MenuProps, Space, Typography } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { Button, Dropdown, MenuProps, Typography } from 'antd';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CaretDownOutlined } from '@ant-design/icons';
-import { Languages } from 'lucide-react';
-import { Icon } from '../ui';
+import { ChevronDown } from 'lucide-react';
 
 const langs = [
   { code: 'en', label: 'English' },
@@ -12,14 +10,25 @@ const langs = [
   { code: 'ru', label: 'Русский' },
   { code: 'zh', label: '中國人' },
 ];
+const langLabels = {
+  en: 'English',
+  fr: 'Français',
+  es: 'Español',
+  ru: 'Русский',
+  zh: '中國人',
+}
 
 function LanguageSwitcher() {
   const { i18n } = useTranslation();
+  const [selected, setSelected] = React.useState(i18n.language);
 
-  const handleChangeLanguage = useCallback((lang: string) => {
-    i18n.changeLanguage(lang);
-    localStorage.setItem('i18nextLng', lang);
-  }, []);
+  const onChange = (val: string) => {
+    setSelected(val)
+  }
+  const handleChangeLanguage = () => {
+    void i18n.changeLanguage(selected)
+    localStorage.setItem('i18nextLng', selected)
+  }
 
   const menuItems: MenuProps['items'] = langs.map((lang) => ({
     key: lang.code,
@@ -31,21 +40,31 @@ function LanguageSwitcher() {
   }));
 
   return (
-    <Dropdown
-      menu={{
-        items: menuItems,
-        selectable: true,
-        defaultSelectedKeys: [i18n.language],
-        style: {
-          maxHeight: 500,
-          overflowY: 'auto',
-        },
-        onClick: (e) => handleChangeLanguage(e.key),
-      }}
-      placement="bottomLeft"
-    >
-      <Button icon={<Languages size={12} />} />
-    </Dropdown>
+    <div className={'flex flex-col gap-2 align-start'}>
+      <div className={'font-semibold'}>{i18n.t('Language')}</div>
+      <Dropdown
+        menu={{
+          items: menuItems,
+          selectable: true,
+          defaultSelectedKeys: [i18n.language],
+          style: {
+            maxHeight: 500,
+            overflowY: 'auto',
+          },
+          onClick: (e) => onChange(e.key),
+        }}
+      >
+        <Button>
+          <div className={'flex justify-between items-center gap-8'}>
+            <span>{langLabels[selected]}</span>
+            <ChevronDown size={14} />
+          </div>
+        </Button>
+      </Dropdown>
+      <Button className={'w-fit'} onClick={handleChangeLanguage}>
+        {i18n.t('Update')}
+      </Button>
+    </div>
   );
 }
 
