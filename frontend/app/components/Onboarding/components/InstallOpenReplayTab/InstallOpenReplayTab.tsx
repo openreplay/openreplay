@@ -8,6 +8,7 @@ import MobileOnboardingTabs from '../OnboardingTabs/OnboardingMobileTabs';
 import ProjectFormButton from '../ProjectFormButton';
 import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
 import { useTranslation } from 'react-i18next';
+import { CircleHelp } from 'lucide-react'
 
 interface Props extends WithOnboardingProps {
   platforms: Array<{
@@ -45,8 +46,8 @@ function InstallOpenReplayTab(props: Props) {
         </div>
         <a href={"https://docs.openreplay.com/en/sdk/using-or/"} target="_blank">
           <Button size={"small"} type={"text"} className="ml-2 flex items-center gap-2">
-            <Icon name={"question-circle"} />
-            <div className={"text-main"}>{t('See Documentation')}</div>
+            <CircleHelp size={14} />
+            <div>{t('See Documentation')}</div>
           </Button>
         </a>
       </h1>
