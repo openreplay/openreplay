@@ -11,18 +11,13 @@ import ProjectDropdown from 'Shared/ProjectDropdown';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
-interface Props {
-  account: any;
-  spotOnly?: boolean;
-}
-
-function TopRight(props: Props) {
+function TopRight() {
   const { userStore } = useStore();
   const spotOnly = userStore.scopeState === 1;
   const { account } = userStore;
   return (
     <Space style={{ lineHeight: '0' }}>
-      {props.spotOnly ? null : (
+      {spotOnly ? null : (
         <>
           <ProjectDropdown />
           <GettingStartedProgress />
@@ -30,7 +25,6 @@ function TopRight(props: Props) {
           <Notifications />
 
           {account.name ? <HealthStatus /> : null}
-          <LanguageSwitcher />
         </>
       )}
 

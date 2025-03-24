@@ -41,7 +41,7 @@ function SideMenu(props: Props) {
         <Menu
           mode="inline"
           onClick={handleClick}
-          style={{ marginTop: '8px', border: 'none' }}
+          style={{ border: 'none' }}
           selectedKeys={activeTab ? [activeTab] : []}
         >
           <Menu.Item

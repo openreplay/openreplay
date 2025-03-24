@@ -240,18 +240,7 @@ class UserStore {
           resolve(response);
         })
         .catch(async (e) => {
-          const err = await e.response?.json();
-          runInAction(() => {
-            this.saving = false;
-          });
-          const errStr = err.errors[0]
-            ? err.errors[0].includes('already exists')
-              ? this.t(
-                "This email is already linked to an account or team on OpenReplay and can't be used again.",
-              )
-              : err.errors[0]
-            : this.t('Error saving user');
-          toast.error(errStr);
+          toast.error(e.message || this.t("Failed to save user's data.")); 
           reject(e);
         })
         .finally(() => {

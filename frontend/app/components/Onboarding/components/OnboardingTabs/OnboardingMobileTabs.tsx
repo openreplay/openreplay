@@ -4,6 +4,7 @@ import DocCard from 'Shared/DocCard/DocCard';
 import { useModal } from 'App/components/Modal';
 import UserForm from 'App/components/Client/Users/components/UserForm/UserForm';
 import AndroidInstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs/AndroidInstallDocs';
+import { CollabCard, ProjectKeyCard } from "./Callouts";
 import MobileInstallDocs from './InstallDocs/MobileInstallDocs';
 import { useTranslation } from 'react-i18next';
 
@@ -39,18 +40,9 @@ function MobileTrackingCodeModal(props: Props) {
             </div>
 
             <div className="col-span-2">
-              <DocCard title={t('Need help from team member?')}>
-                <a className="link" onClick={showUserModal}>
-                  {t('Invite and Collaborate')}
-                </a>
-              </DocCard>
+              <CollabCard showUserModal={showUserModal} />
 
-              <DocCard title={t('Project Key')}>
-                <div className="p-2 rounded bg-white flex justify-between items-center">
-                  {site.projectKey}
-                  <CopyButton content={site.projectKey} />
-                </div>
-              </DocCard>
+              <ProjectKeyCard projectKey={site.projectKey} />
             </div>
           </div>
         );
@@ -62,18 +54,9 @@ function MobileTrackingCodeModal(props: Props) {
             </div>
 
             <div className="col-span-2">
-              <DocCard title={t('Need help from team member?')}>
-                <a className="link" onClick={showUserModal}>
-                  {t('Invite and Collaborate')}
-                </a>
-              </DocCard>
+              <CollabCard showUserModal={showUserModal} />
 
-              <DocCard title={t('Project Key')}>
-                <div className="p-2 rounded bg-white flex justify-between items-center">
-                  {site.projectKey}
-                  <CopyButton content={site.projectKey} />
-                </div>
-              </DocCard>
+              <ProjectKeyCard projectKey={site.projectKey} />
             </div>
           </div>
         );

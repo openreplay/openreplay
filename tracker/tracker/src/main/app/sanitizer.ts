@@ -1,6 +1,6 @@
 import type App from './index.js'
 import { stars, hasOpenreplayAttribute } from '../utils.js'
-import { isElementNode } from './guards.js'
+import { isElementNode, isTextNode } from './guards.js'
 
 export enum SanitizeLevel {
   Plain,
@@ -32,31 +32,46 @@ export interface Options {
    *
    * */
   domSanitizer?: (node: Element) => SanitizeLevel
+  /**
+   * private by default mode that will mask all elements not marked by data-openreplay-unmask
+   * */
+  privateMode?: boolean
 }
 
 export const stringWiper = (input: string) =>
   input
     .trim()
-    .replace(/[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/g, '█')
+    .replace(/[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff\s]/g, '*')
 
 export default class Sanitizer {
   private readonly obscured: Set<number> = new Set()
   private readonly hidden: Set<number> = new Set()
   private readonly options: Options
+  public readonly privateMode: boolean
   private readonly app: App
 
   constructor(params: { app: App; options?: Partial<Options> }) {
     this.app = params.app
-    this.options = Object.assign(
-      {
-        obscureTextEmails: true,
-        obscureTextNumbers: false,
-      },
-      params.options,
-    )
+    const defaultOptions: Options = {
+      obscureTextEmails: true,
+      obscureTextNumbers: false,
+      privateMode: false,
+      domSanitizer: undefined,
+    }
+    this.privateMode = params.options?.privateMode ?? false
+    this.options = Object.assign(defaultOptions, params.options)
   }
 
   handleNode(id: number, parentID: number, node: Node) {
+    if (this.options.privateMode) {
+      if (isElementNode(node) && !hasOpenreplayAttribute(node, 'unmask')) {
+        return this.obscured.add(id)
+      }
+      if (isTextNode(node) && !hasOpenreplayAttribute(node.parentNode as Element, 'unmask')) {
+        return this.obscured.add(id)
+      }
+    }
+
     if (
       this.obscured.has(parentID) ||
       (isElementNode(node) &&
