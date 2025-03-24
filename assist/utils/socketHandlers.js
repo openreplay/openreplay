@@ -86,6 +86,7 @@ async function onConnect(socket) {
     //
     let debugLogs = false;
     if (socket.handshake.query.identity === IDENTITIES.session) {
+        console.log(JSON.stringify(socket.handshake.query));
         debugLogs = projectToTrack == socket.handshake.query.sessionInfo?.projectID;
     } else if (socket.handshake.query.identity === IDENTITIES.agent) {
         debugLogs = projectToTrack == String(socket.handshake.query.projectId);
