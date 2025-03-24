@@ -100,7 +100,6 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
-  TOKEN_SECRET: secret_token_string # TODO: generate on buld
   CACHE_ASSETS: true
   BUCKET_NAME: 'uxtesting-records'
 
