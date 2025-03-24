@@ -489,6 +489,11 @@ export default defineBackground(() => {
           }, PING_INT);
         }
       });
+      if (request.ingest) {
+        const updatedSettings = Object.assign(settings, { ingestPoint: request.ingest });
+        settings = updatedSettings;
+        void browser.storage.local.set({ settings: updatedSettings });
+      }
     }
     if (request.type === messages.content.from.invalidateToken) {
       if (refreshInt) {
