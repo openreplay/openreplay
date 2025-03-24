@@ -22,7 +22,7 @@ describe('BatchWriter', () => {
     expect(batchWriter['url']).toBe('example.com')
     expect(batchWriter['onBatch']).toBe(onBatchMock)
     // we add tab id as first in the batch
-    expect(batchWriter['nextIndex']).toBe(1)
+    expect(batchWriter['nextIndex']).toBe(2)
     expect(batchWriter['beaconSize']).toBe(200000)
     expect(batchWriter['encoder']).toBeDefined()
     expect(batchWriter['sizeBuffer']).toHaveLength(3)

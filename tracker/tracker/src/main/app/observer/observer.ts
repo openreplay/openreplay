@@ -357,6 +357,9 @@ export default abstract class Observer {
     if (name === 'href' || value.length > 1e5) {
       value = ''
     }
+    if (['alt', 'placeholder'].includes(name) && this.app.sanitizer.privateMode) {
+      value = value.replaceAll(/./g, '*')
+    }
     this.app.attributeSender.sendSetAttribute(id, name, value)
   }
 
@@ -389,7 +392,7 @@ export default abstract class Observer {
       {
         acceptNode: (node) => {
           if (this.app.nodes.getID(node) !== undefined) {
-            this.app.debug.warn('! Node is already bound', node)
+            this.app.debug.info('! Node is already bound', node)
           }
           return isIgnored(node) || this.app.nodes.getID(node) !== undefined
             ? NodeFilter.FILTER_REJECT

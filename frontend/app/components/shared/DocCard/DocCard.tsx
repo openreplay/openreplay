@@ -18,7 +18,7 @@ function DocCard(props: Props) {
   } = props;
 
   return (
-    <div className={cn('p-5 bg-gray-lightest mb-4 rounded', className)}>
+    <div className={cn('p-5 bg-gray-lightest mb-4 rounded-lg', className)}>
       <div className="font-medium mb-2 flex items-center">
         {props.icon && (
           <div

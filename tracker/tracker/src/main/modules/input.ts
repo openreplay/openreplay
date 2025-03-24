@@ -205,7 +205,10 @@ export default function (app: App, opts: Partial<Options>): void {
     inputTime: number,
   ) {
     const { value, mask } = getInputValue(id, node)
-    const label = getInputLabel(node)
+    let label = getInputLabel(node)
+    if (app.sanitizer.privateMode) {
+      label = label.replaceAll(/./g, '*')
+    }
 
     app.send(InputChange(id, value, mask !== 0, label, hesitationTime, inputTime))
   }
