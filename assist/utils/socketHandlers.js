@@ -87,8 +87,12 @@ async function onConnect(socket) {
     let debugLogs = false;
     if (socket.handshake.query.identity === IDENTITIES.session) {
         // console.log(JSON.stringify(socket.handshake.query));
-        console.log("projectToTrack: " + projectToTrack + ", socketProject: " + socket.handshake.query.sessionInfo?.projectID);
-        debugLogs = projectToTrack == socket.handshake.query.sessionInfo?.projectID;
+        let sessInfo = socket.handshake.query.sessionInfo;
+        if (typeof sessInfo === "string") {
+            sessInfo = JSON.parse(socket.handshake.query.sessionInfo);
+        }
+        // console.log("projectToTrack: " + projectToTrack + ", socketProject: " + sessInfo);
+        debugLogs = projectToTrack == sessInfo.projectID;
     } else if (socket.handshake.query.identity === IDENTITIES.agent) {
         debugLogs = projectToTrack == String(socket.handshake.query.projectId);
     }
