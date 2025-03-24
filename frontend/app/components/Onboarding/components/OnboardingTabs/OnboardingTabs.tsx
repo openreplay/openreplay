@@ -3,6 +3,7 @@ import { Tabs, Icon, CopyButton } from 'UI';
 import DocCard from 'Shared/DocCard/DocCard';
 import { useModal } from 'App/components/Modal';
 import UserForm from 'App/components/Client/Users/components/UserForm/UserForm';
+import { CollabCard, ProjectKeyCard } from "./Callouts";
 import InstallDocs from './InstallDocs';
 import ProjectCodeSnippet from './ProjectCodeSnippet';
 import { useTranslation } from 'react-i18next';
@@ -37,20 +38,9 @@ function TrackingCodeModal(props: Props) {
             </div>
 
             <div className="col-span-2">
-              <DocCard title="Need help from team member?">
-                <a className="link" onClick={showUserModal}>
-                  {t('Invite and Collaborate')}
-                </a>
-              </DocCard>
-              <DocCard title="Project Key">
-                <div className="rounded bg-white px-2 py-1 flex items-center justify-between">
-                  <span>{site.projectKey}</span>
-                  <CopyButton
-                    content={site.projectKey}
-                    className="capitalize"
-                  />
-                </div>
-              </DocCard>
+              <CollabCard showUserModal={showUserModal} />
+
+              <ProjectKeyCard projectKey={site.projectKey} />
               <DocCard title="Other ways to install">
                 <a
                   className="link flex items-center"
@@ -77,18 +67,9 @@ function TrackingCodeModal(props: Props) {
             </div>
 
             <div className="col-span-2">
-              <DocCard title="Need help from team member?">
-                <a className="link" onClick={showUserModal}>
-                  {t('Invite and Collaborate')}
-                </a>
-              </DocCard>
+              <CollabCard showUserModal={showUserModal} />
 
-              <DocCard title="Project Key">
-                <div className="p-2 rounded bg-white flex justify-between items-center">
-                  {site.projectKey}
-                  <CopyButton content={site.projectKey} />
-                </div>
-              </DocCard>
+              <ProjectKeyCard projectKey={site.projectKey} />
             </div>
           </div>
         );
