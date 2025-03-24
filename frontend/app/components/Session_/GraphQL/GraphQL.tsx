@@ -65,7 +65,6 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
 
   const filterList = (list: any, value: string) => {
     const filterRE = getRE(value, 'i');
-    const { t } = useTranslation();
 
     return value
       ? list.filter(

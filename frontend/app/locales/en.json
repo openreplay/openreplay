@@ -1498,5 +1498,8 @@
   "More attribute": "More attribute",
   "More attributes": "More attributes",
   "Account settings updated successfully": "Account settings updated successfully",
-  "Include rage clicks": "Include rage clicks"
+  "Include rage clicks": "Include rage clicks",
+  "Interface Language": "Interface Language",
+  "Select the language in which OpenReplay will appear.": "Select the language in which OpenReplay will appear.",
+  "Language": "Language"
 }
