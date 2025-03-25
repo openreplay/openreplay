@@ -48,7 +48,7 @@ function ClipPlayerControls({
       <Timeline range={range} />
       <Button size="small" type="primary" onClick={showFullSession}>
         {t('Play Full Session')}
-        <CirclePlay size={16} />
+        <CirclePlay size={16} style={{ marginLeft: '0px'}} />
       </Button>
     </div>
   );
