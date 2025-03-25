@@ -242,11 +242,10 @@ export default defineContentScript({
       if (event.data.type === "orspot:token") {
         window.postMessage({ type: "orspot:logged" }, "*");
         const ingest = window.location.origin;
-        const isSaas = ingest === 'https://app.openreplay.com'
         void browser.runtime.sendMessage({
           type: messages.content.from.setLoginToken,
           token: event.data.token,
-          ingest: isSaas ? undefined : ingest
+          ingest
         });
       }
       if (event.data.type === "orspot:invalidate") {
