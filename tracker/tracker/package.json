@@ -76,7 +76,7 @@
   },
   "dependencies": {
     "@medv/finder": "^4.0.2",
-    "@openreplay/network-proxy": "^1.0.5",
+    "@openreplay/network-proxy": "^1.1.0",
     "error-stack-parser": "^2.0.6",
     "error-stack-parser-es": "^0.1.5",
     "fflate": "^0.8.2",
