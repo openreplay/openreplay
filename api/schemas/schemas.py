@@ -584,7 +584,7 @@ class PropertyFilterSchema(BaseModel):
     name: Union[EventPredefinedPropertyType, str] = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     value: List[Union[int, str]] = Field(...)
-    property_type: Optional[Literal["string", "number", "date"]] = Field(default=None)
+    # property_type: Optional[Literal["string", "number", "date"]] = Field(default=None)
 
     @computed_field
     @property

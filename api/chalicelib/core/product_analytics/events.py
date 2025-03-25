@@ -12,17 +12,21 @@ def get_events(project_id: int, page: schemas.PaginatedSchema):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
             """SELECT COUNT(1) OVER () AS total,
-                            event_name, display_name
+                            event_name, display_name, description,
+                            auto_captured
                       FROM product_analytics.all_events 
                       WHERE project_id=%(project_id)s
-                      ORDER BY display_name
+                      ORDER BY auto_captured,display_name
                       LIMIT %(limit)s OFFSET %(offset)s;""",
             parameters={"project_id": project_id, "limit": page.limit, "offset": (page.page - 1) * page.limit})
         rows = ch_client.execute(r)
     if len(rows) == 0:
         return {"total": 0, "list": []}
     total = rows[0]["total"]
-    for row in rows:
+    for i, row in enumerate(rows):
+        row["id"] = f"event_{i}"
+        row["icon"] = None
+        row["type"] = "string"
         row.pop("total")
     return {"total": total, "list": rows}
 
