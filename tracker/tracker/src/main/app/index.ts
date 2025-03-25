@@ -873,6 +873,7 @@ export default class App {
     }
 
     if (!this.messages.length) {
+      // Release empty batches every 30 secs (1000 * 30ms)
       if (this.emptyBatchCounter < 1000) {
         this.emptyBatchCounter++;
         return;
