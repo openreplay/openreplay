@@ -501,6 +501,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.group_properties
 
 
 -- The full list of events
+-- Experimental: This table is filled by an incremental materialized view
 CREATE TABLE IF NOT EXISTS product_analytics.all_events
 (
     project_id          UInt16,
@@ -516,19 +517,62 @@ CREATE TABLE IF NOT EXISTS product_analytics.all_events
 ) ENGINE = ReplacingMergeTree(_timestamp)
       ORDER BY (project_id, auto_captured, event_name);
 
+-- ----------------- This is experimental, if it doesn't work, we need to do it in db worker -------------
+-- Incremental materialized view to fill event_properties using $properties
+CREATE MATERIALIZED VIEW product_analytics.events_extractor TO product_analytics.all_events AS
+SELECT DISTINCT ON (project_id,auto_captured,event_name) project_id,
+                                                         `$auto_captured` AS auto_captured,
+                                                         `$event_name`    AS event_name,
+                                                         display_name,
+                                                         description
+FROM product_analytics.events
+         LEFT JOIN (SELECT project_id,
+                           auto_captured,
+                           event_name,
+                           display_name,
+                           description
+                    FROM product_analytics.all_events
+                    WHERE all_events.display_name != ''
+                       OR all_events.description != '') AS old_data
+                   ON (events.project_id = old_data.project_id AND events.`$auto_captured` = old_data.auto_captured AND
+                       events.`$event_name` = old_data.event_name);
+-- -------- END ---------
+
 -- The full list of event-properties (used to tell which property belongs to which event)
+-- Experimental: This table is filled by an incremental materialized view
 CREATE TABLE IF NOT EXISTS product_analytics.event_properties
 (
     project_id    UInt16,
     event_name    String,
     property_name String,
+-- TODO: find a fix for this
+--     value_type    String,
 
     _timestamp    DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
-      ORDER BY (project_id, event_name, property_name);
+      ORDER BY (project_id, event_name, property_name, value_type);
+
+-- ----------------- This is experimental, if it doesn't work, we need to do it in db worker -------------
+-- Incremental materialized view to fill event_properties using $properties
+CREATE MATERIALIZED VIEW product_analytics.event_properties_extractor TO product_analytics.event_properties AS
+SELECT project_id,
+       `$event_name` AS event_name,
+       property_name
+FROM product_analytics.events
+         ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name;
+
+-- Incremental materialized view to fill event_properties using properties
+CREATE MATERIALIZED VIEW product_analytics.event_cproperties_extractor TO product_analytics.event_properties AS
+SELECT project_id,
+       `$event_name` AS event_name,
+       property_name
+FROM product_analytics.events
+         ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name;
+-- -------- END ---------
 
 
 -- The full list of properties (events and users)
+-- Experimental: This table is filled by an incremental materialized view
 CREATE TABLE IF NOT EXISTS product_analytics.all_properties
 (
     project_id        UInt16,
@@ -556,3 +600,22 @@ CREATE TABLE IF NOT EXISTS experimental.user_viewed_sessions
       PARTITION BY toYYYYMM(_timestamp)
       ORDER BY (project_id, user_id, session_id)
       TTL _timestamp + INTERVAL 3 MONTH;
+
+CREATE TABLE product_analytics.properties_example_values
+(
+    id           UInt64,
+    value        String,
+    random_value Float64
+)
+    ENGINE = ReplacingMergeTree()
+        ORDER BY random_value;
+
+-- Incremental materialized view to get random examples of property values
+CREATE MATERIALIZED VIEW product_analytics.properties_values_random_sampler TO product_analytics.properties_example_values AS
+SELECT id,
+       value,
+       rand() AS random_value
+FROM product_analytics.events
+WHERE rand() < 0.5 -- This randomly skips ~50% of inserts
+ORDER BY random_value
+LIMIT 10;
