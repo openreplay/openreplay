@@ -1,9 +1,6 @@
 import createNetworkProxy, { INetworkMessage } from "@openreplay/network-proxy";
 import {
   SpotNetworkRequest,
-  filterBody,
-  filterHeaders,
-  tryFilterUrl,
   getTopWindow,
 } from "./networkTrackingUtils";
 
@@ -36,7 +33,7 @@ function getBody(req: { body?: string | Record<string, any> }): string {
 
   if (req.body) {
     try {
-      body = filterBody(req.body);
+      body = req.body;
     } catch (e) {
       body = "Error parsing body";
       console.error(e);
@@ -63,8 +60,8 @@ export function createSpotNetworkRequest(
   } catch (e) {
     console.error("Error parsing response", e);
   }
-  const reqHeaders = request.headers ? filterHeaders(request.headers) : {};
-  const resHeaders = response.headers ? filterHeaders(response.headers) : {};
+  const reqHeaders = request.headers ?? {};
+  const resHeaders = response.headers ?? {};
   const responseBodySize = msg.responseSize || 0;
   const reqSize = msg.request ? msg.request.length : 0;
   const body = getBody(request);
@@ -81,7 +78,7 @@ export function createSpotNetworkRequest(
     timestamp: Date.now(),
     statusCode: msg.status || 0,
     error: undefined,
-    url: tryFilterUrl(msg.url),
+    url: msg.url,
     fromCache: false,
     encodedBodySize: reqSize,
     responseBodySize,
