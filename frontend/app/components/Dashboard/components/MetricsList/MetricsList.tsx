@@ -68,7 +68,7 @@ function MetricsList({
   }, [metricStore]);
 
 
-  const isFiltered = metricStore.filter.query !== '' || metricStore.filter.type !== 'all';
+  const isFiltered = metricStore.filter.query !== '' || metricStore.filter.type !== '';
 
   const searchImageDimensions = { width: 60, height: 'auto' };
   const defaultImageDimensions = { width: 600, height: 'auto' };
