@@ -642,6 +642,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.group_properties
 CREATE TABLE IF NOT EXISTS product_analytics.all_events
 (
     project_id          UInt16,
+    auto_captured       BOOL     DEFAULT FALSE,
     event_name          String,
     display_name        String   DEFAULT '',
     description         String   DEFAULT '',
@@ -651,7 +652,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.all_events
     created_at          DateTime64,
     _timestamp          DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
-      ORDER BY (project_id, event_name);
+      ORDER BY (project_id, auto_captured, event_name);
 
 
 -- The full list of event-properties (used to tell which property belongs to which event)
