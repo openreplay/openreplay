@@ -580,6 +580,7 @@ class EventPredefinedPropertyType(str, Enum):
 
 
 class PropertyFilterSchema(BaseModel):
+    is_event: Literal[False] = False
     name: Union[EventPredefinedPropertyType, str] = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     value: List[Union[int, str]] = Field(...)
@@ -598,15 +599,8 @@ class PropertyFilterSchema(BaseModel):
 
 
 class EventPropertiesSchema(BaseModel):
-    operators: List[Literal["and", "or"]] = Field(...)
+    operator: Literal["and", "or"] = Field(...)
     filters: List[PropertyFilterSchema] = Field(...)
-
-    @model_validator(mode="after")
-    def event_filter_validator(self):
-        assert len(self.filters) == 0 \
-               or len(self.operators) == len(self.filters) - 1, \
-            "Number of operators must match the number of filter-1"
-        return self
 
 
 class SessionSearchEventSchema2(BaseModel):
