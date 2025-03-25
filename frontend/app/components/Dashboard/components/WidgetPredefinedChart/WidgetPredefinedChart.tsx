@@ -18,7 +18,6 @@ import SessionsImpactedBySlowRequests from 'App/components/Dashboard/Widgets/Pre
 import SessionsPerBrowser from 'App/components/Dashboard/Widgets/PredefinedWidgets/SessionsPerBrowser';
 import { FilterKey } from 'Types/filter/filterType';
 import CallWithErrors from '../../Widgets/PredefinedWidgets/CallWithErrors';
-import SpeedIndexByLocation from '../../Widgets/PredefinedWidgets/SpeedIndexByLocation';
 import ResponseTimeDistribution from '../../Widgets/PredefinedWidgets/ResponseTimeDistribution';
 import { useTranslation } from 'react-i18next';
 
@@ -49,8 +48,6 @@ function WidgetPredefinedChart(props: Props) {
         return <CallsErrors5xx data={data} metric={metric} />;
       case FilterKey.CALLS_ERRORS:
         return <CallWithErrors isTemplate={isTemplate} data={data} />;
-      case FilterKey.SPEED_LOCATION:
-        return <SpeedIndexByLocation data={data} />;
       default:
         return (
           <div className="h-40 color-red">{t('Widget not supported')}</div>
