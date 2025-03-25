@@ -948,7 +948,6 @@ export default defineBackground(() => {
       console.log('restoring content at', res)
     }
     await checkTokenValidity();
-    await initializeOffscreenDocument();
   });
   void initializeOffscreenDocument();
 
