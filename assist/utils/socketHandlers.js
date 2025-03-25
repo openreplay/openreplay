@@ -73,8 +73,6 @@ function processNewSocket(socket) {
     logger.debug(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.handshake.query.roomId}`);
 }
 
-const projectToTrack = process.env.projectToTrack || "95";
-
 async function onConnect(socket) {
     logger.debug(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
     processNewSocket(socket);
@@ -82,23 +80,6 @@ async function onConnect(socket) {
     IncreaseOnlineConnections(socket.handshake.query.identity);
 
     const {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(socket.handshake.query.roomId);
-
-    //
-    let debugLogs = false;
-    if (socket.handshake.query.identity === IDENTITIES.session) {
-        // console.log(JSON.stringify(socket.handshake.query));
-        let sessInfo = socket.handshake.query.sessionInfo;
-        if (typeof sessInfo === "string") {
-            sessInfo = JSON.parse(socket.handshake.query.sessionInfo);
-        }
-        // console.log("projectToTrack: " + projectToTrack + ", socketProject: " + sessInfo);
-        debugLogs = projectToTrack == sessInfo.projectID;
-    } else if (socket.handshake.query.identity === IDENTITIES.agent) {
-        debugLogs = projectToTrack == String(socket.handshake.query.projectId);
-    }
-    if (debugLogs) {
-        logger.info(`[+] new connection, sessionID: ${socket.handshake.query.sessId}, type: ${socket.handshake.query.identity}`);
-    }
 
     if (socket.handshake.query.identity === IDENTITIES.session) {
         // Check if session with the same tabID already connected, if so, refuse new connexion
