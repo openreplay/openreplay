@@ -21,7 +21,7 @@ describe('BatchWriter', () => {
     expect(batchWriter['timestamp']).toBe(123456789)
     expect(batchWriter['url']).toBe('example.com')
     expect(batchWriter['onBatch']).toBe(onBatchMock)
-    // we add tab id as first in the batch
+    // we add tab and timestamp as first in the batch
     expect(batchWriter['nextIndex']).toBe(2)
     expect(batchWriter['beaconSize']).toBe(200000)
     expect(batchWriter['encoder']).toBeDefined()
