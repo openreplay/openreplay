@@ -1,3 +1,8 @@
+## 16.1.1
+
+- reduced the frequency of performance tracker calls
+- reduced the number of events when the user is idle
+
 ## 16.1.0
 
 - new `privateMode` option to hide all possible data from tracking
