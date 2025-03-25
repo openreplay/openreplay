@@ -52,6 +52,7 @@ func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage
 		tasks:      NewTasks(conn),
 		streams:    NewStreams(log, conn, objStorage),
 		spots:      spots,
+		metrics:    metrics,
 	}
 	tnsc.prepareWorkers = workers.NewPool(2, 4, tnsc.prepare)
 	tnsc.transcodeWorkers = workers.NewPool(2, 4, tnsc.transcode)
