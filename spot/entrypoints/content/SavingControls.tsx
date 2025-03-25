@@ -199,6 +199,7 @@ function SavingControls({
 
     return new Promise((res) => {
       const interval = setInterval(() => {
+        videoRef.currentTime = 0;
         if (thumbnailRes) {
           clearInterval(interval);
           res(thumbnailRes);
