@@ -5,9 +5,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"hash/fnv"
 	"strconv"
+
+	"github.com/google/uuid"
 
 	. "openreplay/backend/pkg/messages"
 )
@@ -23,41 +24,7 @@ type ErrorEvent struct {
 	Payload    string
 	Tags       map[string]*string
 	OriginType int
-}
-
-func unquote(s string) string {
-	if s[0] == '"' {
-		return s[1 : len(s)-1]
-	}
-	return s
-}
-func parseTags(tagsJSON string) (tags map[string]*string, err error) {
-	if len(tagsJSON) == 0 {
-		return nil, fmt.Errorf("empty tags")
-	}
-	if tagsJSON[0] == '[' {
-		var tagsArr []json.RawMessage
-		if err = json.Unmarshal([]byte(tagsJSON), &tagsArr); err != nil {
-			return
-		}
-
-		tags = make(map[string]*string)
-		for _, keyBts := range tagsArr {
-			tags[unquote(string(keyBts))] = nil
-		}
-	} else if tagsJSON[0] == '{' {
-		var tagsObj map[string]json.RawMessage
-		if err = json.Unmarshal([]byte(tagsJSON), &tagsObj); err != nil {
-			return
-		}
-
-		tags = make(map[string]*string)
-		for key, valBts := range tagsObj {
-			val := unquote(string(valBts))
-			tags[key] = &val
-		}
-	}
-	return
+	Url        string
 }
 
 func WrapJSException(m *JSException) (*ErrorEvent, error) {
@@ -69,6 +36,7 @@ func WrapJSException(m *JSException) (*ErrorEvent, error) {
 		Message:    m.Message,
 		Payload:    m.Payload,
 		OriginType: m.TypeID(),
+		Url:        m.Url,
 	}, nil
 }
 
@@ -81,6 +49,7 @@ func WrapIntegrationEvent(m *IntegrationEvent) *ErrorEvent {
 		Message:    m.Message,
 		Payload:    m.Payload,
 		OriginType: m.TypeID(),
+		Url:        m.Url,
 	}
 }
 
