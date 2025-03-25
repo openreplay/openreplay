@@ -1,5 +1,4 @@
-from typing import Optional, List
-
+from typing import Optional, List, Literal, Union, Annotated
 from pydantic import Field
 
 from .overrides import BaseModel
@@ -8,12 +7,16 @@ from .schemas import EventPropertiesSchema, SortOrderType, _TimedSchema, \
 
 
 class EventSearchSchema(BaseModel):
-    event_name: str = Field(...)
+    is_event: Literal[True] = True
+    name: str = Field(...)
     properties: Optional[EventPropertiesSchema] = Field(default=None)
 
 
+ProductAnalyticsGroupedFilter = Annotated[Union[EventSearchSchema, PropertyFilterSchema], \
+    Field(discriminator='is_event')]
+
+
 class EventsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
-    events: List[EventSearchSchema] = Field(default_factory=list, description="operator between events is OR")
-    filters: List[PropertyFilterSchema] = Field(default_factory=list, description="operator between filters is AND")
+    filters: List[ProductAnalyticsGroupedFilter] = Field(...)
     sort: str = Field(default="startTs")
     order: SortOrderType = Field(default=SortOrderType.DESC)
