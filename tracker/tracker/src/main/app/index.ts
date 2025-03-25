@@ -272,6 +272,7 @@ export default class App {
     'feature-flags': true,
     'usability-test': true,
   }
+  private emptyBatchCounter = 0
 
   constructor(
     projectKey: string,
@@ -870,6 +871,17 @@ export default class App {
     if (this.worker === undefined || !this.messages.length) {
       return
     }
+
+    if (!this.messages.length) {
+      // Release empty batches every 30 secs (1000 * 30ms)
+      if (this.emptyBatchCounter < 1000) {
+        this.emptyBatchCounter++;
+        return;
+      }
+    }
+
+    this.emptyBatchCounter = 0
+    console.log('messages', this.messages.join(', '))
 
     try {
       requestIdleCb(() => {
