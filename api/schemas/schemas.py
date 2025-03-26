@@ -1135,7 +1135,7 @@ class CardPathAnalysis(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
     metric_value: List[ProductAnalyticsSelectedEventType] = Field(default_factory=list)
     density: int = Field(default=4, ge=2, le=10)
-    rows: int = Field(default=3, ge=1, le=10)
+    rows: int = Field(default=5, ge=1, le=10)
 
     start_type: Literal["start", "end"] = Field(default="start")
     start_point: List[PathAnalysisSubFilterSchema] = Field(default_factory=list)
