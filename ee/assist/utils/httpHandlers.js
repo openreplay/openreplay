@@ -42,17 +42,6 @@ const respond = function (req, res, data) {
 }
 
 const getParticularSession = async function (roomId, filters, all=false) {
-    // let connected_sockets = await fetchSockets(roomId, all);
-    // if (connected_sockets.length === 0) {
-    //     return null;
-    // }
-    // let sessInfo;
-    // for (let item of connected_sockets) {
-    //     if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
-    //         sessInfo = item.handshake.query.sessionInfo;
-    //         break;
-    //     }
-    // }
     let sessInfo = await getSessionFromCache(roomId);
     if (!sessInfo) {
         return null;

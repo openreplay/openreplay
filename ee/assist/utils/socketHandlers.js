@@ -189,6 +189,9 @@ async function onUpdateEvent(socket, ...args) {
     args[0] = updateSessionData(socket, args[0])
     socket.handshake.query.sessionInfo = deepMerge(socket.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
 
+    // update session cache
+    await addSessionToCache(socket.handshake.query.sessId, socket.handshake.query.sessionInfo);
+
     // Update sessionInfo for all agents in the room
     const connected_sockets = await fetchSockets(socket.handshake.query.roomId);
     for (let item of connected_sockets) {

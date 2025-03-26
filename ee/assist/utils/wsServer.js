@@ -15,16 +15,16 @@ if (useRedis) {
     const {createClient} = require("redis");
     const REDIS_URL = (process.env.REDIS_URL || "localhost:6379").replace(/((^\w+:|^)\/\/|^)/, 'redis://');
     redisClient = createClient({url: REDIS_URL});
-    redisClient.on("error", (error) => logger.error(`Redis error : ${error}`));
+    redisClient.on("error", (error) => logger.error(`Redis cache error : ${error}`));
     void redisClient.connect();
 }
 
 const addSessionToCache =  async function (sessionID, sessionData) {
     try {
         await redisClient.set(`active_sessions:${sessionID}`, JSON.stringify(sessionData), 'EX', 3600); // 60 minutes
-        console.log(`Session ${sessionID} stored in Redis`);
+        logger.debug(`Session ${sessionID} stored in Redis`);
     } catch (error) {
-        console.log(error);
+        logger.error(error);
     }
 }
 
@@ -32,12 +32,12 @@ const getSessionFromCache = async function (sessionID) {
     try {
         const sessionData = await redisClient.get(`active_sessions:${sessionID}`);
         if (sessionData) {
-            console.log(`Session ${sessionID} retrieved from Redis`);
+            logger.debug(`Session ${sessionID} retrieved from Redis`);
             return JSON.parse(sessionData);
         }
         return null;
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         return null;
     }
 }
@@ -45,9 +45,9 @@ const getSessionFromCache = async function (sessionID) {
 const removeSessionFromCache = async function (sessionID) {
     try {
         await redisClient.del(`active_sessions:${sessionID}`);
-        console.log(`Session ${sessionID} removed from Redis`);
+        logger.debug(`Session ${sessionID} removed from Redis`);
     } catch (error) {
-        console.log(error);
+        logger.error(error);
     }
 }
 
