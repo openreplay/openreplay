@@ -200,7 +200,6 @@ function WidgetChart(props: Props) {
     const payload = {
       ...params,
       ..._metric.toJson(),
-      viewType: 'lineChart',
     };
     fetchMetricChartData(
       _metric,
