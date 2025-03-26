@@ -111,3 +111,26 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
         for r in rows:
             r.pop("total")
         return {"total": total, "rows": rows, "src": 2}
+
+
+def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
+    with ClickHouseClient() as ch_client:
+        r = ch_client.format(
+            """SELECT COUNT(1) OVER () AS total,
+                            all_events.event_name AS name,
+                            *
+                      FROM product_analytics.all_events 
+                      WHERE project_id=%(project_id)s
+                      ORDER BY display_name
+                      LIMIT %(limit)s OFFSET %(offset)s;""",
+            parameters={"project_id": project_id, "limit": page.limit, "offset": (page.page - 1) * page.limit})
+        rows = ch_client.execute(r)
+    if len(rows) == 0:
+        return {"total": 0, "list": []}
+    total = rows[0]["total"]
+    for i, row in enumerate(rows):
+        row["id"] = f"event_{i}"
+        row["icon"] = None
+        row["possibleTypes"] = ["String"]
+        row.pop("total")
+    return {"total": total, "list": helper.list_to_camel_case(rows)}
