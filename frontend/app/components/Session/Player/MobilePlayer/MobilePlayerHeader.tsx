@@ -91,7 +91,7 @@ function PlayerBlockHeader(props: Props) {
           )}
         </div>
       </div>
-      <div className="relative border-l" style={{ minWidth: '270px' }}>
+      <div className="relative border-l" style={{ minWidth: activeTab === 'EXPORT' ? '360px' : '270px' }}>
         <Tabs
           tabs={TABS}
           active={activeTab}

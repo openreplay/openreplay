@@ -5,6 +5,15 @@ import { Tooltip } from 'antd';
 import cn from 'classnames';
 import { useTranslation } from 'react-i18next';
 
+interface Props {
+  code?: string;
+  extra?: string;
+  language?: string;
+  copy?: boolean;
+  width?: string;
+  height?: string;
+}
+
 export default function CodeBlock({
   code = '',
   extra = '',
@@ -12,7 +21,7 @@ export default function CodeBlock({
   copy = false,
   width = undefined,
   height = undefined,
-}) {
+}: Props) {
   const { t } = useTranslation();
   useEffect(() => {
     setTimeout(() => {
