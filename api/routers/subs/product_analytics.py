@@ -41,3 +41,15 @@ def get_event_properties(projectId: int, event_name: str = None,
 def search_events(projectId: int, data: schemas.EventsSearchPayloadSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": events.search_events(project_id=projectId, data=data)}
+
+
+@app.get('/{projectId}/lexicon/events', tags=["product_analytics", "lexicon"])
+def get_all_lexicon_events(projectId: int, filter_query: Annotated[schemas.PaginatedSchema, Query()],
+                           context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": events.get_lexicon(project_id=projectId, page=filter_query)}
+
+
+@app.get('/{projectId}/lexicon/properties', tags=["product_analytics", "lexicon"])
+def get_all_lexicon_properties(projectId: int, filter_query: Annotated[schemas.PaginatedSchema, Query()],
+                               context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": properties.get_lexicon(project_id=projectId, page=filter_query)}
