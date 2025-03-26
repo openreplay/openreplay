@@ -7,10 +7,12 @@ def get_all_properties(project_id: int, page: schemas.PaginatedSchema):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
             """SELECT COUNT(1) OVER () AS total, 
-                            property_name,
-                            display_name
-                      FROM product_analytics.all_properties 
+                            property_name AS name, display_name,
+                            array_agg(DISTINCT event_properties.value_type) AS possible_types
+                      FROM product_analytics.all_properties
+                        LEFT JOIN product_analytics.event_properties USING (project_id, property_name)
                       WHERE all_properties.project_id=%(project_id)s
+                      GROUP BY property_name,display_name
                       ORDER BY display_name
                       LIMIT %(limit)s OFFSET %(offset)s;""",
             parameters={"project_id": project_id,
