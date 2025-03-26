@@ -53,7 +53,7 @@ const getParticularSession = async function (roomId, filters, all=false) {
     //         break;
     //     }
     // }
-    let sessInfo = await getSessionFromCache();
+    let sessInfo = await getSessionFromCache(roomId);
     if (!sessInfo) {
         return null;
     }
