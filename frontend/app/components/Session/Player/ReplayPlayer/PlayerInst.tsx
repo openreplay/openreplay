@@ -182,6 +182,7 @@ function Player(props: IProps) {
           setActiveTab={(tab: string) =>
             activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)
           }
+          activeTab={activeTab}
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}
