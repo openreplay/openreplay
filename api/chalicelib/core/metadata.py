@@ -259,7 +259,7 @@ def get_for_filters(project_id):
                     results.append({"id": f"meta_{i}",
                                     "name": k,
                                     "displayName": metas[k],
-                                    "type": "string",
+                                    "possibleTypes": ["String"],
                                     "autoCaptured": False,
                                     "icon": None})
         return {"total": len(results), "list": results}

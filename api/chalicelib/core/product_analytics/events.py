@@ -12,7 +12,7 @@ def get_events(project_id: int, page: schemas.PaginatedSchema):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
             """SELECT COUNT(1) OVER () AS total,
-                            event_name, display_name, description,
+                            event_name AS name, display_name, description,
                             auto_captured
                       FROM product_analytics.all_events 
                       WHERE project_id=%(project_id)s
@@ -26,9 +26,9 @@ def get_events(project_id: int, page: schemas.PaginatedSchema):
     for i, row in enumerate(rows):
         row["id"] = f"event_{i}"
         row["icon"] = None
-        row["type"] = "string"
+        row["possibleTypes"] = ["String"]
         row.pop("total")
-    return {"total": total, "list": rows}
+    return {"total": total, "list": helper.list_to_camel_case(rows)}
 
 
 def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
