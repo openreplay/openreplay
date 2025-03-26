@@ -143,6 +143,18 @@ CREATE TABLE IF NOT EXISTS experimental.sessions
       TTL datetime + INTERVAL 1 MONTH
       SETTINGS index_granularity = 512;
 
+CREATE TABLE IF NOT EXISTS experimental.user_favorite_sessions
+(
+    project_id UInt16,
+    user_id    UInt32,
+    session_id UInt64,
+    _timestamp DateTime DEFAULT now(),
+    sign       Int8
+) ENGINE = CollapsingMergeTree(sign)
+      PARTITION BY toYYYYMM(_timestamp)
+      ORDER BY (project_id, user_id, session_id)
+      TTL _timestamp + INTERVAL 3 MONTH;
+
 CREATE TABLE IF NOT EXISTS experimental.user_viewed_sessions
 (
     project_id UInt16,
@@ -152,6 +164,17 @@ CREATE TABLE IF NOT EXISTS experimental.user_viewed_sessions
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(_timestamp)
       ORDER BY (project_id, user_id, session_id)
+      TTL _timestamp + INTERVAL 3 MONTH;
+
+CREATE TABLE IF NOT EXISTS experimental.user_viewed_errors
+(
+    project_id UInt16,
+    user_id    UInt32,
+    error_id   String,
+    _timestamp DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(_timestamp)
+      PARTITION BY toYYYYMM(_timestamp)
+      ORDER BY (project_id, user_id, error_id)
       TTL _timestamp + INTERVAL 3 MONTH;
 
 CREATE TABLE IF NOT EXISTS experimental.issues
@@ -673,7 +696,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.property_values_samples
     ENGINE = ReplacingMergeTree(_timestamp)
         ORDER BY (project_id, property_name, is_event_property);
 -- Incremental materialized view to get random examples of property values using $properties & properties
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_values_sampler_mvREFRESHEVERY30HOURTOproduct_analytics.property_values_samples AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_values_sampler_mv
+    REFRESH EVERY 30 HOUR TO product_analytics.property_values_samples AS
 SELECT project_id,
        property_name,
        TRUE                                                      AS is_event_property,
