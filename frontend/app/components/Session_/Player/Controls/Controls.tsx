@@ -269,7 +269,6 @@ const DevtoolsButtons = observer(
       integrationsStore.integrations.backendLogIntegrations;
 
     const showIcons = activeTab === 'EXPORT'
-    console.log(activeTab)
     const labels = {
       console: {
         icon: <CodeOutlined size={14} />,
