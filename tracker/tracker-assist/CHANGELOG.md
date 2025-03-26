@@ -1,3 +1,7 @@
+## 11.0.3
+
+- fix for remote-contorl clicks on svg elements (+ bubbling)
+
 ## 11.0.2
 
 - add sessionId header on socket.connect for sticky sessions
@@ -81,7 +85,7 @@
 
 ## 5.0.0
 
-- fix recording state import 
+- fix recording state import
 
 ## 4.1.5
 
