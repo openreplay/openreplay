@@ -191,7 +191,7 @@ async function onUpdateEvent(socket, ...args) {
 
 async function onWebrtcAgentHandler(socket, ...args) {
     if (socket.handshake.query.identity === IDENTITIES.agent) {
-        const agentIdToConnect = args[0]?.data?.toAgentId;
+        const agentIdToConnect = args[2]?.toAgentId;
         logger.debug(`${socket.id} sent webrtc event to agent:${agentIdToConnect}`);
         if (agentIdToConnect && socket.handshake.sessionData.AGENTS_CONNECTED.includes(agentIdToConnect)) {
             socket.to(agentIdToConnect).emit(EVENTS_DEFINITION.listen.WEBRTC_AGENT_CALL, args[0]);

@@ -254,7 +254,7 @@ export default class Assist {
         return
       }
       if (args[0] !== 'webrtc_call_ice_candidate') {
-        app.debug.log("Socket:", ...args, args[2]?.data?.toAgentId);
+        app.debug.log("Socket:", ...args);
       };
       socket.on('close', (e) => {
         app.debug.warn('Socket closed:', e);

@@ -50,7 +50,6 @@ export default class Call {
     private agentIds: string[],
   ) {
     socket.on('WEBRTC_AGENT_CALL', (data) => {
-      console.log('WEBRTC_AGENT_CALL', data);
       switch (data.type) {
         case WEBRTC_CALL_AGENT_EVENT_TYPES.OFFER:
           this.handleOffer(data, true);
@@ -236,7 +235,6 @@ export default class Call {
     socketId?: string;
     localPeerId?: string;
   }) {
-    console.log('ESTABLISHING CONNECTION WITH', remotePeerId, isAgent ? 'AGENT' : 'CLIENT');
     try {
       // Create RTCPeerConnection with client
       const pc = await this.createPeerConnection({
@@ -252,8 +250,7 @@ export default class Call {
 
       // Sending offer
       if (isAgent) {
-        console.log('SENDING OFFER TO AGENT', socketId);
-        this.socket.emit('WEBRTC_AGENT_CALL1', {
+        this.socket.emit('WEBRTC_AGENT_CALL', {
           from: localPeerId,
           offer,
           toAgentId: socketId,
