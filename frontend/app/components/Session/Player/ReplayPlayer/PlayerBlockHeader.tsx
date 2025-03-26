@@ -126,7 +126,7 @@ function PlayerBlockHeader(props: any) {
       </div>
       <div
         className="px-2 relative border-l border-l-gray-lighter"
-        style={{ minWidth: '270px' }}
+        style={{ minWidth: activeTab === 'EXPORT' ? '360px' : '270px' }}
       >
         <Tabs
           tabs={TABS}
