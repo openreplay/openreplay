@@ -32,6 +32,8 @@ import {
 } from 'App/mstore/uiPlayerStore';
 import { Icon } from 'UI';
 import LogsButton from 'App/components/Session/Player/SharedComponents/BackendLogs/LogsButton';
+import { CodeOutlined, DashboardOutlined, ClusterOutlined } from '@ant-design/icons';
+import { ArrowDownUp, ListCollapse, Merge, Waypoints } from 'lucide-react'
 
 import ControlButton from './ControlButton';
 import Timeline from './Timeline';
@@ -52,23 +54,23 @@ export const SKIP_INTERVALS = {
 function getStorageName(type: any) {
   switch (type) {
     case STORAGE_TYPES.REDUX:
-      return 'Redux';
+      return { name: 'Redux', icon: <Icon name='integrations/redux' size={14} /> };
     case STORAGE_TYPES.MOBX:
-      return 'Mobx';
+      return { name: 'Mobx', icon: <Icon name='integrations/mobx' size={14} /> };
     case STORAGE_TYPES.VUEX:
-      return 'Vuex';
+      return { name: 'Vuex', icon: <Icon name='integrations/vuejs' size={14} /> };
     case STORAGE_TYPES.NGRX:
-      return 'NgRx';
+      return { name: 'NgRx', icon: <Icon name='integrations/ngrx' size={14} /> };
     case STORAGE_TYPES.ZUSTAND:
-      return 'Zustand';
+      return { name: 'Zustand', icon: <Icon name='integrations/zustand' size={14} /> };
     case STORAGE_TYPES.NONE:
-      return 'State';
+      return { name: 'State', icon: <ClusterOutlined size={14} /> };
     default:
-      return 'State';
+      return { name: 'State', icon: <ClusterOutlined size={14} /> };
   }
 }
 
-function Controls({ setActiveTab }: any) {
+function Controls({ setActiveTab, activeTab }: any) {
   const { player, store } = React.useContext(PlayerContext);
   const {
     uxtestingStore,
@@ -191,6 +193,7 @@ function Controls({ setActiveTab }: any) {
                 bottomBlock={bottomBlock}
                 disabled={disabled}
                 events={events}
+                activeTab={activeTab}
               />
             )}
 
@@ -212,6 +215,7 @@ interface IDevtoolsButtons {
   bottomBlock: number;
   disabled: boolean;
   events: any[];
+  activeTab?: string;
 }
 
 const DevtoolsButtons = observer(
@@ -221,6 +225,7 @@ const DevtoolsButtons = observer(
     bottomBlock,
     disabled,
     events,
+    activeTab,
   }: IDevtoolsButtons) => {
     const { t } = useTranslation();
     const { aiSummaryStore, integrationsStore } = useStore();
@@ -262,6 +267,37 @@ const DevtoolsButtons = observer(
     const possibleAudio = events.filter((e) => e.name.includes('media/audio'));
     const integratedServices =
       integrationsStore.integrations.backendLogIntegrations;
+
+    const showIcons = activeTab === 'EXPORT'
+    console.log(activeTab)
+    const labels = {
+      console: {
+        icon: <CodeOutlined size={14} />,
+        label: t('Console'),
+      },
+      performance: {
+        icon: <DashboardOutlined size={14} />,
+        label: t('Performance'),
+      },
+      network: {
+        icon: <ArrowDownUp size={14} strokeWidth={2} />,
+        label: t('Network'),
+      },
+      events: {
+        icon: <ListCollapse size={14} strokeWidth={2} />,
+        label: t('Events'),
+      },
+      state: {
+        icon: getStorageName(storageType).icon,
+        label: getStorageName(storageType).name,
+      },
+      graphql: {
+        icon: <Merge size={14} strokeWidth={2} />,
+        label: 'Graphql',
+      }
+    }
+    // @ts-ignore
+    const getLabel = (block: string) => labels[block][showIcons ? 'icon' : 'label']
     return (
       <>
         {isSaas ? <SummaryButton onClick={showSummary} /> : null}
@@ -274,6 +310,7 @@ const DevtoolsButtons = observer(
               </div>
             </div>
           }
+          customKey="xray"
           label="X-Ray"
           onClick={() => toggleBottomTools(OVERVIEW)}
           active={bottomBlock === OVERVIEW && !inspectorMode}
@@ -286,10 +323,11 @@ const DevtoolsButtons = observer(
               <div>{t('Launch Console')}</div>
             </div>
           }
+          customKey="console"
           disabled={disableButtons}
           onClick={() => toggleBottomTools(CONSOLE)}
           active={bottomBlock === CONSOLE && !inspectorMode}
-          label={t('Console')}
+          label={getLabel('console')}
           hasErrors={logRedCount > 0 || showExceptions}
         />
 
@@ -300,10 +338,11 @@ const DevtoolsButtons = observer(
               <div>{t('Launch Network')}</div>
             </div>
           }
+          customKey="network"
           disabled={disableButtons}
           onClick={() => toggleBottomTools(NETWORK)}
           active={bottomBlock === NETWORK && !inspectorMode}
-          label={t('Network')}
+          label={getLabel('network')}
           hasErrors={resourceRedCount > 0}
         />
 
@@ -314,10 +353,11 @@ const DevtoolsButtons = observer(
               <div>{t('Launch Performance')}</div>
             </div>
           }
+          customKey="performance"
           disabled={disableButtons}
           onClick={() => toggleBottomTools(PERFORMANCE)}
           active={bottomBlock === PERFORMANCE && !inspectorMode}
-          label="Performance"
+          label={getLabel('performance')}
         />
 
         {showGraphql && (
@@ -325,7 +365,8 @@ const DevtoolsButtons = observer(
             disabled={disableButtons}
             onClick={() => toggleBottomTools(GRAPHQL)}
             active={bottomBlock === GRAPHQL && !inspectorMode}
-            label="Graphql"
+            label={getLabel('graphql')}
+            customKey="graphql"
           />
         )}
 
@@ -337,10 +378,11 @@ const DevtoolsButtons = observer(
                 <div>{t('Launch State')}</div>
               </div>
             }
+            customKey="state"
             disabled={disableButtons}
             onClick={() => toggleBottomTools(STORAGE)}
             active={bottomBlock === STORAGE && !inspectorMode}
-            label={getStorageName(storageType) as string}
+            label={getLabel('state')}
           />
         )}
         <ControlButton
@@ -350,14 +392,16 @@ const DevtoolsButtons = observer(
               <div>{t('Launch Events')}</div>
             </div>
           }
+          customKey="events"
           disabled={disableButtons}
           onClick={() => toggleBottomTools(STACKEVENTS)}
           active={bottomBlock === STACKEVENTS && !inspectorMode}
-          label={t('Events')}
+          label={getLabel('events')}
           hasErrors={stackRedCount > 0}
         />
         {showProfiler && (
           <ControlButton
+            customKey="profiler"
             disabled={disableButtons}
             onClick={() => toggleBottomTools(PROFILER)}
             active={bottomBlock === PROFILER && !inspectorMode}
@@ -368,6 +412,7 @@ const DevtoolsButtons = observer(
           <LogsButton
             integrated={integratedServices.map((service) => service.name)}
             onClick={() => toggleBottomTools(BACKENDLOGS)}
+            shorten={showIcons}
           />
         ) : null}
         {possibleAudio.length ? (
