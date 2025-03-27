@@ -14,7 +14,7 @@ interface SSOLoginProps {
 const SSOLogin = ({ authDetails, enforceSSO = false }: SSOLoginProps) => {
   const { userStore } = useStore();
   const { t } = useTranslation();
-  const { isEnterprise } = userStore;
+  const { isSSOSupported } = userStore;
 
   const getSSOLink = () =>
     window !== window.top
@@ -23,7 +23,7 @@ const SSOLogin = ({ authDetails, enforceSSO = false }: SSOLoginProps) => {
 
   const ssoLink = getSSOLink();
   const ssoButtonText = `${t('Login with SSO')} ${authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
-    }`;
+  }`;
 
   if (enforceSSO) {
     return (
@@ -47,7 +47,7 @@ const SSOLogin = ({ authDetails, enforceSSO = false }: SSOLoginProps) => {
         <Tooltip
           title={
             <div className="text-center">
-              {isEnterprise ? (
+              {isSSOSupported ? (
                 <span>
                   {t('SSO has not been configured.')}
                   <br />
