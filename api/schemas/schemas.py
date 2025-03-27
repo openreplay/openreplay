@@ -404,6 +404,7 @@ class EventType(str, Enum):
     REQUEST_MOBILE = "requestMobile"
     ERROR_MOBILE = "errorMobile"
     SWIPE_MOBILE = "swipeMobile"
+    EVENT = "event"
 
 
 class PerformanceEventType(str, Enum):
@@ -776,6 +777,15 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
                     vals.append(v)
             f["value"] = vals
         return values
+
+    @model_validator(mode="after")
+    def check_pa_event_filter(self):
+        for v in self.filters + self.events:
+            if v.type == EventType.EVENT:
+                assert v.operator in (SearchEventOperator.IS, MathOperator.EQUAL), \
+                    "operator must be {SearchEventOperator.IS} or {MathOperator.EQUAL} for EVENT type"
+                assert len(v.value) == 1, "value must have 1 single value for EVENT type"
+        return self
 
     @model_validator(mode="after")
     def split_filters_events(self):
