@@ -1210,7 +1210,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             elif event_type == schemas.EventType.EVENT:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = events.EventType.CLICK.column
-                event_where.append(f"main.`$event_name`=%({e_k})s")
+                event_where.append(f"main.`$event_name`=%({e_k})s AND main.session_id != ''")
                 events_conditions.append({"type": event_where[-1], "condition": ""})
 
             else:
