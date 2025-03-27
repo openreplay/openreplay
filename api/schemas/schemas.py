@@ -584,6 +584,7 @@ class PropertyFilterSchema(BaseModel):
     name: Union[EventPredefinedPropertyType, str] = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     value: List[Union[int, str]] = Field(...)
+
     # property_type: Optional[Literal["string", "number", "date"]] = Field(default=None)
 
     @computed_field
@@ -603,7 +604,7 @@ class EventPropertiesSchema(BaseModel):
     filters: List[PropertyFilterSchema] = Field(...)
 
 
-class SessionSearchEventSchema2(BaseModel):
+class SessionSearchEventSchema(BaseModel):
     is_event: Literal[True] = True
     value: List[Union[str, int]] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
@@ -719,12 +720,12 @@ def add_missing_is_event(values: dict):
 
 
 # this type is created to allow mixing events&filters and specifying a discriminator
-GroupedFilterType = Annotated[Union[SessionSearchFilterSchema, SessionSearchEventSchema2],
+GroupedFilterType = Annotated[Union[SessionSearchFilterSchema, SessionSearchEventSchema],
 Field(discriminator='is_event'), BeforeValidator(add_missing_is_event)]
 
 
 class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
-    events: List[SessionSearchEventSchema2] = Field(default_factory=list, doc_hidden=True)
+    events: List[SessionSearchEventSchema] = Field(default_factory=list, doc_hidden=True)
     filters: List[GroupedFilterType] = Field(default_factory=list)
     sort: str = Field(default="startTs")
     order: SortOrderType = Field(default=SortOrderType.DESC)
@@ -749,6 +750,8 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
     def add_missing_attributes(cls, values):
         # in case isEvent is wrong:
         for f in values.get("filters") or []:
+            if f.get("type") is None:
+                continue
             if EventType.has_value(f["type"]) and not f.get("isEvent"):
                 f["isEvent"] = True
             elif FilterType.has_value(f["type"]) and f.get("isEvent"):
@@ -1463,7 +1466,7 @@ class MetricSearchSchema(_PaginatedSchema):
     mine_only: bool = Field(default=False)
 
 
-class _HeatMapSearchEventRaw(SessionSearchEventSchema2):
+class _HeatMapSearchEventRaw(SessionSearchEventSchema):
     type: Literal[EventType.LOCATION] = Field(...)
 
 

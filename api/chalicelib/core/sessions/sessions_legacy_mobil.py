@@ -218,7 +218,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
     }
 
 
-def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
+def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema):
     return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.REQUEST_DETAILS,
                                                                             schemas.EventType.GRAPHQL] \
                 or event.type in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
