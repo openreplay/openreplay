@@ -15,7 +15,7 @@ const {
     RecordRequestDuration,
     IncreaseTotalRequests
 } = require('../utils/metrics');
-const {fetchSockets} = require("./wsServer");
+const {fetchSockets, getSessionFromCache} = require("./wsServer");
 const {IDENTITIES} = require("./assistHelper");
 const {logger} = require('./logger');
 
@@ -42,17 +42,7 @@ const respond = function (req, res, data) {
 }
 
 const getParticularSession = async function (roomId, filters, all=false) {
-    let connected_sockets = await fetchSockets(roomId, all);
-    if (connected_sockets.length === 0) {
-        return null;
-    }
-    let sessInfo;
-    for (let item of connected_sockets) {
-        if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
-            sessInfo = item.handshake.query.sessionInfo;
-            break;
-        }
-    }
+    let sessInfo = await getSessionFromCache(roomId);
     if (!sessInfo) {
         return null;
     }
@@ -126,7 +116,7 @@ const socketsListByProject = async function (req, res) {
 
     // find a particular session
     if (_sessionId) {
-        const sessInfo = await getParticularSession(`${_projectKey}-${_sessionId}`, filters);
+        const sessInfo = await getParticularSession(_sessionId, filters);//(`${_projectKey}-${_sessionId}`, filters);
         return respond(req, res, sessInfo);
     }
 
@@ -149,7 +139,7 @@ const socketsLiveByProject = async function (req, res) {
 
     // find a particular session
     if (_sessionId) {
-        let sessInfo = await getParticularSession(`${_projectKey}-${_sessionId}`, filters);
+        let sessInfo = await getParticularSession(_sessionId, filters);//(`${_projectKey}-${_sessionId}`, filters);
         return respond(req, res, sessInfo);
     }
 
@@ -172,7 +162,7 @@ const socketsLiveBySession = async function (req, res) {
 
     // find a particular session
     if (_sessionId) {
-        let sessInfo = await getParticularSession(`${_projectKey}-${_sessionId}`, filters, true);
+        let sessInfo = await getParticularSession(_sessionId, filters);//(`${_projectKey}-${_sessionId}`, filters, true);
         return respond(req, res, sessInfo);
     }
     return respond(req, res, null);

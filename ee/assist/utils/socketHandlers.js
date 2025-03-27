@@ -15,7 +15,10 @@ const {
 const {
     sendTo,
     sendFrom,
-    fetchSockets
+    fetchSockets,
+    addSessionToCache,
+    getSessionFromCache,
+    removeSessionFromCache
 } = require('../utils/wsServer');
 const {
     IncreaseTotalWSConnections,
@@ -110,6 +113,11 @@ async function onConnect(socket) {
     }
     await socket.join(socket.handshake.query.roomId);
 
+    // Add session to cache
+    if (socket.handshake.query.identity === IDENTITIES.session) {
+        await addSessionToCache(socket.handshake.query.sessId, socket.handshake.query.sessionInfo);
+    }
+
     logger.debug(`${socket.id} joined room:${socket.handshake.query.roomId}, as:${socket.handshake.query.identity}, connections:${agentsCount + tabsCount + 1}`)
 
     if (socket.handshake.query.identity === IDENTITIES.agent) {
@@ -152,6 +160,10 @@ async function onDisconnect(socket) {
     logger.debug("checking for number of connected agents and sessions");
     let {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(socket.handshake.query.roomId);
 
+    if (tabsCount <= 0) {
+        await removeSessionFromCache(socket.handshake.query.sessId);
+    }
+
     if (tabsCount === -1 && agentsCount === -1) {
         DecreaseOnlineRooms();
         logger.debug(`room not found: ${socket.handshake.query.roomId}`);
@@ -176,6 +188,9 @@ async function onUpdateEvent(socket, ...args) {
 
     args[0] = updateSessionData(socket, args[0])
     socket.handshake.query.sessionInfo = deepMerge(socket.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
+
+    // update session cache
+    await addSessionToCache(socket.handshake.query.sessId, socket.handshake.query.sessionInfo);
 
     // Update sessionInfo for all agents in the room
     const connected_sockets = await fetchSockets(socket.handshake.query.roomId);

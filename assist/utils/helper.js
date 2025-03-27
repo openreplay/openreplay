@@ -261,10 +261,6 @@ const uniqueAutocomplete = function (list) {
     return _list;
 }
 
-const getAvailableRooms = async function (io) {
-    return io.sockets.adapter.rooms;
-}
-
 const getCompressionConfig = function () {
     // WS: The theoretical overhead per socket is 19KB (11KB for compressor and 8KB for decompressor)
     let perMessageDeflate = false;
@@ -305,6 +301,5 @@ module.exports = {
     extractPayloadFromRequest,
     sortPaginate,
     uniqueAutocomplete,
-    getAvailableRooms,
     getCompressionConfig
 };

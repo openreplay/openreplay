@@ -3,11 +3,15 @@ const {getCompressionConfig} = require("./helper");
 
 let io;
 
-const getServer = function () {
-    return io;
+function sendFrom(from, to, eventName, ...data) {
+    from.to(to).emit(eventName, ...data);
 }
 
-const fetchSockets = async function (roomID) {
+function sendTo(to, eventName, ...data) {
+    sendFrom(io, to, eventName, ...data);
+}
+
+const fetchSockets = async function (roomID, all=false) {
     if (!io) {
         return [];
     }
@@ -35,6 +39,7 @@ const createSocketIOServer = function (server, prefix) {
 
 module.exports = {
     createSocketIOServer,
-    getServer,
+    sendTo,
+    sendFrom,
     fetchSockets,
 }
