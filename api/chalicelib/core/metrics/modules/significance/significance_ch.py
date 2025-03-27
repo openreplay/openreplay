@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas.ProjectContext,
                       metric_format: schemas.MetricExtendedFormatType) -> List[RealDictRow]:
-    stages: List[schemas.SessionSearchEventSchema2] = filter_d.events
+    stages: List[schemas.SessionSearchEventSchema] = filter_d.events
     filters: List[schemas.SessionSearchFilterSchema] = filter_d.filters
     platform = project.platform
     constraints = ["e.project_id = %(project_id)s",
