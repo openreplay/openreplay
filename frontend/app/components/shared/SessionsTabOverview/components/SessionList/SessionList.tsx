@@ -55,11 +55,6 @@ function SessionList() {
   const hasNoRecordings = !activeSite || !activeSite.recorded;
   const metaList = customFieldStore.list;
 
-  useEffect(() => {
-    if (!searchStore.urlParsed) return;
-    void searchStore.checkForLatestSessionCount();
-  }, [location.pathname]);
-
   const NO_CONTENT = React.useMemo(() => {
     if (isBookmark && !isEnterprise) {
       return {
