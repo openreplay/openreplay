@@ -478,9 +478,9 @@ export default class Assist {
       }
     })
 
-    socket.on('webrtc_call_offer', async (_, data: { from: string, offer: RTCSessionDescriptionInit }) => {
+    socket.on('webrtc_call_offer', async (_, data: { from: string, offer: RTCSessionDescriptionInit, config }) => {
       if (!this.calls.has(data.from)) {
-        await handleIncomingCallOffer(data.from, data.offer);
+        await handleIncomingCallOffer(data.from, data.offer, data.config);
       }
     });
 
@@ -494,6 +494,10 @@ export default class Assist {
         }
       }
     });
+
+    socket.on('ICE_SERVERS_CONFIG', async (data) => {
+      console.log("ICE_SERVERS_CONFIG", data)
+    })
 
     const callingAgents: Map<string, string> = new Map() // !! uses socket.io ID
     // TODO: merge peerId & socket.io id  (simplest way - send peerId with the name)
@@ -561,7 +565,7 @@ export default class Assist {
       }
     };
 
-    const handleIncomingCallOffer = async (from: string, offer: RTCSessionDescriptionInit) => {
+    const handleIncomingCallOffer = async (from: string, offer: RTCSessionDescriptionInit, config) => {
       app.debug.log('handleIncomingCallOffer', from)
       let confirmAnswer: Promise<boolean>
       const callingPeerIds = JSON.parse(sessionStorage.getItem(this.options.session_calling_peer_key) || '[]')
@@ -595,7 +599,7 @@ export default class Assist {
 
          // create a new RTCPeerConnection with ice server config
         const pc = new RTCPeerConnection({
-          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+          iceServers: config,
         });
 
         if (!callUI) {
@@ -750,7 +754,6 @@ export default class Assist {
 
           // Send offer via signaling server
           socket.emit('webrtc_canvas_offer', { offer, id: uniqueId });
-
         }
       }
     }
