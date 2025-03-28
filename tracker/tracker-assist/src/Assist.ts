@@ -500,10 +500,6 @@ export default class Assist {
       }
     });
 
-    socket.on('ICE_SERVERS_CONFIG', async (data) => {
-      console.log("ICE_SERVERS_CONFIG", data)
-    })
-
     const callingAgents: Map<string, string> = new Map() // !! uses socket.io ID
     // TODO: merge peerId & socket.io id  (simplest way - send peerId with the name)
     const lStreams: Record<string, LocalStream> = {}
