@@ -12042,7 +12042,7 @@ __metadata:
     react-router-dom: "npm:^5.3.3"
     react-select: "npm:^5.3.2"
     react-svg-map: "npm:^2.2.0"
-    react-toastify: "npm:^10.0.6"
+    react-toastify: "npm:^11.0.5"
     react18-json-view: "npm:^0.2.8"
     recharts: "npm:^2.12.7"
     sass: "npm:^1.51.0"
@@ -14169,15 +14169,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-toastify@npm:^10.0.6":
-  version: 10.0.6
-  resolution: "react-toastify@npm:10.0.6"
+"react-toastify@npm:^11.0.5":
+  version: 11.0.5
+  resolution: "react-toastify@npm:11.0.5"
   dependencies:
-    clsx: "npm:^2.1.0"
+    clsx: "npm:^2.1.1"
   peerDependencies:
-    react: ">=18"
-    react-dom: ">=18"
-  checksum: 10c1/6f34ed20677e77eeaddc7c55ce0b170b12735034f25c4917adfb9d1921b87fcae59b685b4479040c0d42244d771250475534e59040fe9c0c61c7437b12973186
+    react: ^18 || ^19
+    react-dom: ^18 || ^19
+  checksum: 10c1/608c0a24fdbfcabe19f33570b9469921857ba24efb929083ab46c321b99cefeb4c76f53a788bb8796ff49bb729d7ab8d22a0ef17c1ea6f70e47ee74ec89aadf1
   languageName: node
   linkType: hard
 
