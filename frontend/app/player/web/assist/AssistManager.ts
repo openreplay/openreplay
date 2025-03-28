@@ -203,6 +203,7 @@ export default class AssistManager {
             peerId: this.peerID,
             query: document.location.search,
           }),
+          config: JSON.stringify(this.config),
         },
       }));
 
