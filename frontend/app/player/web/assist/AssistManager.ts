@@ -3,14 +3,14 @@ import type { Socket } from 'socket.io-client';
 import type { PlayerMsg, Store } from 'App/player';
 import CanvasReceiver from 'Player/web/assist/CanvasReceiver';
 import { gunzipSync } from 'fflate';
-import { Message } from '../messages';
+import { Message, MType } from '../messages';
 import type Screen from '../Screen/Screen';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader';
 import Call, { CallingState } from './Call';
 import RemoteControl, { RemoteControlStatus } from './RemoteControl';
 import ScreenRecording, { SessionRecordingStatus } from './ScreenRecording';
-
+import { debounceCall } from 'App/utils'
 export { RemoteControlStatus, SessionRecordingStatus, CallingState };
 
 export enum ConnectionStatus {
@@ -82,6 +82,7 @@ export default class AssistManager {
     private store: Store<typeof AssistManager.INITIAL_STATE>,
     private getNode: MessageManager['getNode'],
     public readonly agentId: number,
+    private readonly updateSpriteMap: () => void,
     public readonly uiErrorHandler?: {
       error: (msg: string) => void;
     },
@@ -200,6 +201,7 @@ export default class AssistManager {
             peerId: this.peerID,
             query: document.location.search,
           }),
+          config: JSON.stringify(this.getIceServers()),
         },
       }));
 
@@ -239,6 +241,11 @@ export default class AssistManager {
           msg !== null;
           msg = reader.readNext()
         ) {
+          if (msg.tp === MType.SetNodeAttribute) {
+            if (msg.value.includes('_$OPENREPLAY_SPRITE$_')) {
+              debounceCall(this.updateSpriteMap, 250)()
+            }
+          }
           this.handleMessage(msg, msg._index);
         }
       };
@@ -314,7 +321,7 @@ export default class AssistManager {
       this.callManager = new Call(
         this.store,
         socket,
-        this.config,
+        this.getIceServers(),
         this.peerID,
         this.getAssistVersion,
         {
@@ -353,6 +360,23 @@ export default class AssistManager {
       document.addEventListener('visibilitychange', this.onVisChange);
     });
   }
+
+  private getIceServers = () => {
+    if (this.config) {
+      return this.config;
+    }
+    return [
+      {
+        urls: [
+          'stun:stun.l.google.com:19302',
+          'stun:stun1.l.google.com:19302',
+          'stun:stun2.l.google.com:19302',
+          'stun:stun3.l.google.com:19302',
+          'stun:stun4.l.google.com:19302'
+        ],
+      },
+    ] as RTCIceServer[];
+  };
 
   /**
    * Sends event ping to stats service

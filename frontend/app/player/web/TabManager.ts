@@ -98,6 +98,7 @@ export default class TabSessionManager {
     private readonly state: Store<{
       tabStates: { [tabId: string]: TabState };
       tabNames: { [tabId: string]: string };
+      location?: string;
     }>,
     private readonly screen: Screen,
     private readonly id: string,
@@ -415,14 +416,16 @@ export default class TabSessionManager {
       }
     }
     /* === */
-    const lastLocationMsg = this.locationManager.moveGetLast(t, index);
+    const lastLocationMsg = this.locationManager.moveGetLast(t, index, true);
     if (lastLocationMsg) {
-      const { tabNames } = this.state.get();
-      if (lastLocationMsg.documentTitle) {
-        tabNames[this.id] = lastLocationMsg.documentTitle;
+      const { tabNames, location } = this.state.get();
+      if (location !== lastLocationMsg.url) {
+        if (lastLocationMsg.documentTitle) {
+          tabNames[this.id] = lastLocationMsg.documentTitle;
+        }
+        // @ts-ignore comes from parent state
+        this.state.update({ location: lastLocationMsg.url, tabNames });
       }
-      // @ts-ignore comes from parent state
-      this.state.update({ location: lastLocationMsg.url, tabNames });
     }
 
     const lastPerformanceTrackMessage =
