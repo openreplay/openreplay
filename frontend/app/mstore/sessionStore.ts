@@ -288,10 +288,7 @@ export default class SessionStore {
         params.order = params.order === 'asc' ? 'desc' : 'asc';
       }
       const data: any = await sessionService.getLiveSessions(params);
-      this.liveSessions = data.sessions.map(
-        (session: any) => new Session({ ...session, live: true }),
-      );
-      this.totalLiveSessions = data.total;
+      this.customSetSessions(data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -603,7 +600,9 @@ export default class SessionStore {
   };
 
   customSetSessions = (data: any) => {
-    this.liveSessions = data.sessions.map((s: any) => new Session(s));
+    this.liveSessions = data.sessions.map(
+      (session: any) => new Session({ ...session, live: true }),
+    );
     this.totalLiveSessions = data.total;
   };
 

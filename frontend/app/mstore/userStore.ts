@@ -114,10 +114,12 @@ class UserStore {
   get isEnterprise() {
     return (
       this.account?.edition === 'ee' ||
-      this.account?.edition === 'msaas' ||
-      this.authStore.authDetails?.edition === 'ee' ||
-      this.authStore.authDetails?.edition === 'msaas'
+      this.authStore.authDetails?.edition === 'ee'
     );
+  }
+
+  get isSSOSupported() {
+    return this.isEnterprise || this.account?.edition === 'msaas' || this.authStore.authDetails?.edition === 'msaas';
   }
 
   get isLoggedIn() {

@@ -25,7 +25,7 @@ function SessionTags() {
   const activeTab = searchStore.activeTags;
 
   React.useEffect(() => {
-    searchStore.toggleTag(types.ALL);
+    searchStore.resetTags();
   }, [projectsStore.activeSiteId])
 
   return (

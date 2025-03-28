@@ -4,7 +4,7 @@ import { Popover, Button } from 'antd';
 import stl from './controlButton.module.css';
 
 interface IProps {
-  label: string;
+  label: React.ReactNode;
   icon?: string;
   disabled?: boolean;
   onClick?: () => void;
@@ -18,6 +18,7 @@ interface IProps {
   noIcon?: boolean;
   popover?: React.ReactNode;
   customTags?: React.ReactNode;
+  customKey?: string;
 }
 
 function ControlButton({
@@ -28,29 +29,28 @@ function ControlButton({
   active = false,
   popover = undefined,
   customTags,
+  customKey,
 }: IProps) {
   return (
     <Popover content={popover} open={popover ? undefined : false}>
       <Button
         size="small"
         onClick={onClick}
-        id={`control-button-${label.toLowerCase()}`}
+        id={`control-button-${customKey ? customKey.toLowerCase() : label!.toString().toLowerCase()}`}
         disabled={disabled}
       >
         {customTags}
         {hasErrors && (
-          <div className={stl.labels}>
-            <div className={stl.errorSymbol} />
-          </div>
+          <div className="w-2 h-2 rounded-full bg-red" />
         )}
-        <span
+        {label && <span
           className={cn(
             'font-semibold hover:text-main',
             active ? 'color-main' : 'color-gray-darkest',
           )}
         >
           {label}
-        </span>
+        </span>}
       </Button>
     </Popover>
   );

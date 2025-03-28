@@ -38,13 +38,10 @@ function SessionList() {
   } = useStore();
   const { isEnterprise } = userStore;
   const { isLoggedIn } = userStore;
-  const { list } = sessionStore;
-  const { lastPlayedSessionId } = sessionStore;
+  const { lastPlayedSessionId, list, total } = sessionStore;
   const loading = sessionStore.loadingSessions;
-  const { total } = sessionStore;
   const onToggleFavorite = sessionStore.toggleFavorite;
-  const { siteId } = projectsStore;
-  const { updateProjectRecordingStatus } = projectsStore;
+  const { updateProjectRecordingStatus, siteId, previousSiteid } = projectsStore;
   const { currentPage, activeTab, pageSize } = searchStore;
   const { filters } = searchStore.instance;
   const _filterKeys = filters.map((i: any) => i.key);
@@ -56,7 +53,7 @@ function SessionList() {
   const metaList = customFieldStore.list;
 
   useEffect(() => {
-    if (!searchStore.urlParsed) return;
+    if (!searchStore.urlParsed || siteId !== previousSiteid) return;
     void searchStore.checkForLatestSessionCount();
   }, [location.pathname]);
 

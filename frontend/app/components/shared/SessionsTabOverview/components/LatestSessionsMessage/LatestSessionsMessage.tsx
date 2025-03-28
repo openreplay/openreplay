@@ -23,9 +23,7 @@ function LatestSessionsMessage() {
       {t('Show')} {numberWithCommas(count)} {t('New')}{' '}
       {count > 1 ? t('Sessions') : t('Session')}
     </div>
-  ) : (
-    <></>
-  );
+  ) : null;
 }
 
 export default observer(LatestSessionsMessage);

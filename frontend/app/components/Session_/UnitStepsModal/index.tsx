@@ -202,7 +202,7 @@ function UnitStepsModal({ onClose }: Props) {
       <div className={'w-full'}>
         <CodeBlock
           width={340}
-          height={'calc(100vh - 146px)'}
+          height={'calc(100vh - 174px)'}
           extra={`${events.length} Events`}
           copy
           code={eventStr}

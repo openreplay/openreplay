@@ -359,15 +359,20 @@ export default class AssistManager {
   }
 
   private getIceServers = () => {
-    const servers: RTCIceServer[] = [
-      {
-        urls: 'stun:stun.l.google.com:19302',
-      },
-    ];
     if (this.config) {
-      servers.push(...this.config);
+      return this.config;
     }
-    return servers;
+    return [
+      {
+        urls: [
+          'stun:stun.l.google.com:19302',
+          'stun:stun1.l.google.com:19302',
+          'stun:stun2.l.google.com:19302',
+          'stun:stun3.l.google.com:19302',
+          'stun:stun4.l.google.com:19302'
+        ],
+      },
+    ] as RTCIceServer[];
   };
 
   /**

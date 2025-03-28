@@ -2584,6 +2584,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@neodrag/react@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "@neodrag/react@npm:2.3.0"
+  checksum: 10c1/37f549ad0bdab8badb0799bf4e6f1714fe52a2ace6c09447a9dc97a9483a0fb40f75b35b121c78a1cba3a27ec9076a5db9672454af3a216d9efee8dcd34c6736
+  languageName: node
+  linkType: hard
+
 "@nicolo-ribaudo/chokidar-2@npm:2.1.8-no-fsevents.3":
   version: 2.1.8-no-fsevents.3
   resolution: "@nicolo-ribaudo/chokidar-2@npm:2.1.8-no-fsevents.3"
@@ -5538,13 +5545,6 @@ __metadata:
     kind-of: "npm:^6.0.2"
     shallow-clone: "npm:^3.0.0"
   checksum: 10c1/35f5b651684d5d9cfa57eeae17a0348d636556ebb60b8a6440fb16d7db742a69b1e39f6d68cd2e4325f48445e81d99f95bc315bcc9e9d2c9db4d422a3a60918d
-  languageName: node
-  linkType: hard
-
-"clsx@npm:^1.1.1":
-  version: 1.2.1
-  resolution: "clsx@npm:1.2.1"
-  checksum: 10c1/45d7148b63e9ec9c32bd31f8289f1c52f1ca6c3a392a0d60978c8590faa71f4a9a3acef0a71eb3492a672a3cebc6019230799bfc59ec2e96b5f32eb58fe0976f
   languageName: node
   linkType: hard
 
@@ -11947,6 +11947,7 @@ __metadata:
     "@eslint/js": "npm:^9.21.0"
     "@jest/globals": "npm:^29.7.0"
     "@medv/finder": "npm:^4.0.2"
+    "@neodrag/react": "npm:^2.3.0"
     "@openreplay/sourcemap-uploader": "npm:^3.0.10"
     "@sentry/browser": "npm:^5.21.1"
     "@svg-maps/world": "npm:^1.0.1"
@@ -12034,7 +12035,6 @@ __metadata:
     react-dnd: "npm:^16.0.1"
     react-dnd-html5-backend: "npm:^15.1.2"
     react-dom: "npm:^19.0.0"
-    react-draggable: "npm:^4.4.5"
     react-google-recaptcha: "npm:^2.1.0"
     react-i18next: "npm:^15.4.1"
     react-intersection-observer: "npm:^9.13.1"
@@ -14001,19 +14001,6 @@ __metadata:
   peerDependencies:
     react: ^19.0.0
   checksum: 10c1/a8df7203aeaf200ab998b9d8617fd266392e14ca5d2c88a7cc5cb0977ea26262c27ca32208e71eb9a3335b9724ea7549defe25ae5c618c229273a8b0824d27ee
-  languageName: node
-  linkType: hard
-
-"react-draggable@npm:^4.4.5":
-  version: 4.4.6
-  resolution: "react-draggable@npm:4.4.6"
-  dependencies:
-    clsx: "npm:^1.1.1"
-    prop-types: "npm:^15.8.1"
-  peerDependencies:
-    react: ">= 16.3.0"
-    react-dom: ">= 16.3.0"
-  checksum: 10c1/b8ae807f4556b658ae149b6542af5222d75996da47c549db54be22276579549ca2cd2fd06ca5c0852fbd1b663853cc0568b68215bd6e62433b46a7e154ddf8e2
   languageName: node
   linkType: hard
 

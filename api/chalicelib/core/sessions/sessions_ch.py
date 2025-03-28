@@ -148,7 +148,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         for e in data.events:
             if e.type == schemas.EventType.LOCATION:
                 if e.operator not in extra_conditions:
-                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
+                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema.model_validate({
                         "type": e.type,
                         "isEvent": True,
                         "value": [],
@@ -173,7 +173,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         for e in data.events:
             if e.type == schemas.EventType.REQUEST_DETAILS:
                 if e.operator not in extra_conditions:
-                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
+                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema.model_validate({
                         "type": e.type,
                         "isEvent": True,
                         "value": [],
@@ -277,7 +277,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         return sessions
 
 
-def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
+def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema):
     return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.REQUEST_DETAILS,
                                                                             schemas.EventType.GRAPHQL] \
                 or event.type in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
@@ -660,7 +660,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             event.value = helper.values_for_operator(value=event.value, op=event.operator)
             full_args = {**full_args,
                          **sh.multi_values(event.value, value_key=e_k),
-                         **sh.multi_values(event.source, value_key=s_k)}
+                         **sh.multi_values(event.source, value_key=s_k),
+                         e_k: event.value[0] if len(event.value) > 0 else event.value}
 
             if event_type == events.EventType.CLICK.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
@@ -1206,10 +1207,16 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     else:
                         logging.warning(f"undefined GRAPHQL filter: {f.type}")
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
+            elif event_type == schemas.EventType.EVENT:
+                event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
+                _column = events.EventType.CLICK.column
+                event_where.append(f"main.`$event_name`=%({e_k})s AND main.session_id != ''")
+                events_conditions.append({"type": event_where[-1], "condition": ""})
+
             else:
                 continue
             if event.properties is not None and len(event.properties.filters) > 0:
-                event_fiters = []
+                sub_conditions = []
                 for l, property in enumerate(event.properties.filters):
                     a_k = f"{e_k}_att_{l}"
                     full_args = {**full_args,
@@ -1221,15 +1228,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     event_where.append(
                         sh.multi_conditions(condition, property.value, value_key=a_k)
                     )
-                    event_fiters.append(event_where[-1])
-                if len(event_fiters) > 0:
-                    events_conditions[-1]["condition"] += " AND ("
-                    for l, e_f in enumerate(event_fiters):
-                        if l > 0:
-                            events_conditions[-1]["condition"] += event.properties.operators[l - 1] + e_f
-                        else:
-                            events_conditions[-1]["condition"] += e_f
-                    events_conditions[-1]["condition"] += ")"
+                    sub_conditions.append(event_where[-1])
+                if len(sub_conditions) > 0:
+                    sub_conditions = (" " + event.properties.operator + " ").join(sub_conditions)
+                    events_conditions[-1]["condition"] += " AND " if len(events_conditions[-1]["condition"]) > 0 else ""
+                    events_conditions[-1]["condition"] += "(" + sub_conditions + ")"
             if event_index == 0 or or_events:
                 event_where += ss_constraints
             if is_not:

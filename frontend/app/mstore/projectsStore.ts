@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+import { makeAutoObservable, runInAction, reaction } from 'mobx';
 import {
   GLOBAL_HAS_NO_RECORDINGS,
   SITE_ID_STORAGE_KEY,
@@ -20,6 +20,7 @@ export default class ProjectsStore {
   instance: Project | null = null;
 
   siteId: string | null = null;
+  previousSiteid: string | null = null;
 
   active: Project | null = null;
 
@@ -37,6 +38,15 @@ export default class ProjectsStore {
     const storedSiteId = localStorage.getItem(SITE_ID_STORAGE_KEY);
     this.siteId = storedSiteId ?? null;
     makeAutoObservable(this);
+
+    reaction(
+      () => this.activeSiteId,
+      (_, prevId) => {
+        if (prevId) {
+          this.previousSiteid = prevId;
+        }
+      }
+    )
   }
 
   get isMobile() {

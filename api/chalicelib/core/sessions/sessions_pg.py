@@ -143,7 +143,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         for e in data.events:
             if e.type == schemas.EventType.LOCATION:
                 if e.operator not in extra_conditions:
-                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
+                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema.model_validate({
                         "type": e.type,
                         "isEvent": True,
                         "value": [],
@@ -160,7 +160,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         for e in data.events:
             if e.type == schemas.EventType.REQUEST_DETAILS:
                 if e.operator not in extra_conditions:
-                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
+                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema.model_validate({
                         "type": e.type,
                         "isEvent": True,
                         "value": [],
@@ -273,7 +273,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         return sessions
 
 
-def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
+def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema):
     return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.REQUEST_DETAILS,
                                                                             schemas.EventType.GRAPHQL] \
                 or event.type in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,

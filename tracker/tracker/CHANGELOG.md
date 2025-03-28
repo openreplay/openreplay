@@ -1,3 +1,7 @@
+## 16.1.1
+
+- fixing debug logs from 16.1.0
+
 ## 16.1.0
 
 - new `privateMode` option to hide all possible data from tracking
@@ -51,7 +55,7 @@ tracker.start()
 ## 15.0.5
 
 - update medv/finder to 4.0.2 for better support of css-in-js libs
-- fixes for single tab recording 
+- fixes for single tab recording
 - add option to disable network completely `{ network: { disabled: true } }`
 - fix for batching during offline recording syncs
 
