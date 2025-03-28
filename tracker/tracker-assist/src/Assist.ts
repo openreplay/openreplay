@@ -619,10 +619,6 @@ export default class Assist {
           initiateCallEnd();
           return;
         }
-        // create a new RTCPeerConnection with ice server config
-        const pc = new RTCPeerConnection({
-          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-        });
 
         // get all local tracks and add them to RTCPeerConnection
         lStreams[from].stream.getTracks().forEach(track => {
