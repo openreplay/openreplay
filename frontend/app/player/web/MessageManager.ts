@@ -288,15 +288,17 @@ export default class MessageManager {
       }
 
       if (tabId) {
+        const stateUpdate: { currentTab?: string, tabs?: Set<string> } = {}
         if (this.activeTab !== tabId) {
-          this.state.update({ currentTab: tabId });
+          stateUpdate['currentTab'] = tabId;
           this.activeTab = tabId;
           this.tabs[this.activeTab].clean();
         }
         const activeTabs = this.state.get().tabs;
         if (activeTabs.size !== this.activeTabManager.tabInstances.size) {
-          this.state.update({ tabs: this.activeTabManager.tabInstances });
+          stateUpdate['tabs'] = this.activeTabManager.tabInstances;
         }
+        this.state.update(stateUpdate)
       }
 
       if (this.tabs[this.activeTab]) {
