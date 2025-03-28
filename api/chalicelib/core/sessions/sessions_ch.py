@@ -48,8 +48,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 query = f"""SELECT gs.generate_series AS timestamp,
                                 COALESCE(COUNT(DISTINCT processed_sessions.user_id),0) AS count
                             FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS gs
-                                LEFT JOIN (SELECT multiIf(s.user_id IS NOT NULL AND s.user_id != '', s.user_id,
-                                                         s.user_anonymous_id IS NOT NULL AND s.user_anonymous_id != '', 
+                                LEFT JOIN (SELECT multiIf(isNotNull(s.user_id) AND notEmpty(s.user_id), s.user_id,
+                                                         isNotNull(s.user_anonymous_id) AND notEmpty(s.user_anonymous_id), 
                                                          s.user_anonymous_id, toString(s.user_uuid)) AS user_id,
                                                 s.datetime AS datetime
                                             {query_part}) AS processed_sessions ON(TRUE)
@@ -253,7 +253,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                 FROM (SELECT s.user_id AS user_id {extra_col}
                                 {query_part}
                                 WHERE isNotNull(user_id)
-                                    AND user_id != '') AS filtred_sessions
+                                    AND notEmpty(user_id)) AS filtred_sessions
                                 {extra_where}
                                 GROUP BY {main_col}
                                 ORDER BY total DESC
@@ -1210,7 +1210,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             elif event_type == schemas.EventType.EVENT:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = events.EventType.CLICK.column
-                event_where.append(f"main.`$event_name`=%({e_k})s AND main.session_id != ''")
+                event_where.append(f"main.`$event_name`=%({e_k})s AND notEmpty(main.session_id)")
                 events_conditions.append({"type": event_where[-1], "condition": ""})
 
             else:

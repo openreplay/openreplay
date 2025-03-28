@@ -262,7 +262,7 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
                                                                                     FROM public.user_favorite_sessions
                                                                                     WHERE user_favorite_sessions.user_id = %(userId)s
                                                                                 ) AS favorite_sessions USING (session_id)
-                                            WHERE s.project_id = %(id)s AND s.duration IS NOT NULL AND s.{col_name} = %(value)s
+                                            WHERE s.project_id = %(id)s AND isNotNull(s.duration) AND s.{col_name} = %(value)s
                                         ) AS full_sessions
                                     ORDER BY favorite DESC, issue_score DESC
                                     LIMIT 10
