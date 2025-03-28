@@ -375,8 +375,13 @@ export default class AssistManager {
           'stun:stun1.l.google.com:19302',
           'stun:stun2.l.google.com:19302',
           'stun:stun3.l.google.com:19302',
-          'stun:stun4.l.google.com:19302'
+          'stun:stun4.l.google.com:19302',
         ],
+      },
+      {
+        urls: 'turn:global.relay.metered.ca:443',
+        username: 'e63d65356e9516340ab2199d',
+        credential: 'aMREG9wSfzxdT6rD',
       },
     ] as RTCIceServer[];
   };
