@@ -203,7 +203,7 @@ export default class AssistManager {
             peerId: this.peerID,
             query: document.location.search,
           }),
-          config: JSON.stringify(this.config),
+          config: JSON.stringify(this.getIceServers()),
         },
       }));
 
@@ -318,7 +318,7 @@ export default class AssistManager {
       this.callManager = new Call(
         this.store,
         socket,
-        this.config,
+        this.getIceServers(),
         this.peerID,
         this.getAssistVersion,
         {
@@ -357,6 +357,18 @@ export default class AssistManager {
       document.addEventListener('visibilitychange', this.onVisChange);
     });
   }
+
+  private getIceServers = () => {
+    const servers: RTCIceServer[] = [
+      {
+        urls: 'stun:stun.l.google.com:19302',
+      },
+    ];
+    if (this.config) {
+      servers.push(...this.config);
+    }
+    return servers;
+  };
 
   /**
    * Sends event ping to stats service
