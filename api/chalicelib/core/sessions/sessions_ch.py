@@ -6,6 +6,7 @@ from chalicelib.core import events, metadata
 from . import performance_event, sessions_legacy
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 from chalicelib.utils import sql_helper as sh
+from chalicelib.utils.exp_ch_helper import get_sub_condition
 
 logger = logging.getLogger(__name__)
 
@@ -330,7 +331,11 @@ def json_condition(table_alias, json_column, json_key, op, values, value_key, ch
         extract_func = "JSONExtractFloat" if numeric_type == "float" else "JSONExtractInt"
         condition = f"{extract_func}(toString({table_alias}.`{json_column}`), '{json_key}') {op} %({value_key})s"
     else:
-        condition = f"JSONExtractString(toString({table_alias}.`{json_column}`), '{json_key}') {op} %({value_key})s"
+        # condition = f"JSONExtractString(toString({table_alias}.`{json_column}`), '{json_key}') {op} %({value_key})s"
+        condition = get_sub_condition(
+            col_name=f"JSONExtractString(toString({table_alias}.`{json_column}`), '{json_key}')",
+            val_name=value_key, operator=op
+        )
 
     conditions.append(sh.multi_conditions(condition, values, value_key=value_key))
 
@@ -678,8 +683,10 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             #     "selector", op, event.value, e_k)
                             # )
                             event_where.append(
-                                sh.multi_conditions(f"main.`$properties`.selector {op} %({e_k})s",
-                                                    event.value, value_key=e_k)
+                                sh.multi_conditions(
+                                    get_sub_condition(col_name=f"main.`$properties`.selector",
+                                                      val_name=e_k, operator=event.operator),
+                                    event.value, value_key=e_k)
                             )
                             events_conditions[-1]["condition"] = event_where[-1]
                         else:
@@ -688,20 +695,26 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                 #     "sub", "$properties", _column, op, event.value, e_k
                                 # ))
                                 event_where.append(
-                                    sh.multi_conditions(f"sub.`$properties`.{_column} {op} %({e_k})s",
-                                                        event.value, value_key=e_k)
+                                    sh.multi_conditions(
+                                        get_sub_condition(col_name=f"sub.`$properties`.{_column}",
+                                                          val_name=e_k, operator=event.operator),
+                                        event.value, value_key=e_k)
                                 )
                                 events_conditions_not.append(
                                     {
-                                        "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                                        "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"
+                                    }
+                                )
                                 events_conditions_not[-1]["condition"] = event_where[-1]
                             else:
                                 # event_where.append(
                                 #     json_condition("main", "$properties", _column, op, event.value, e_k)
                                 # )
                                 event_where.append(
-                                    sh.multi_conditions(f"main.`$properties`.{_column} {op} %({e_k})s",
-                                                        event.value, value_key=e_k)
+                                    sh.multi_conditions(
+                                        get_sub_condition(col_name=f"main.`$properties`.{_column}",
+                                                          val_name=e_k, operator=event.operator),
+                                        event.value, value_key=e_k)
                                 )
                                 events_conditions[-1]["condition"] = event_where[-1]
                 else:
@@ -1210,7 +1223,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             elif event_type == schemas.EventType.EVENT:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = events.EventType.CLICK.column
-                event_where.append(f"main.`$event_name`=%({e_k})s AND notEmpty(main.session_id)")
+                event_where.append(f"main.`$event_name`=%({e_k})s AND main.session_id>0")
                 events_conditions.append({"type": event_where[-1], "condition": ""})
 
             else:
@@ -1221,10 +1234,13 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     a_k = f"{e_k}_att_{l}"
                     full_args = {**full_args,
                                  **sh.multi_values(property.value, value_key=a_k)}
-                    op = sh.get_sql_operator(property.operator)
-                    condition = f"main.properties.{property.name} {op} %({a_k})s"
+
                     if property.is_predefined:
-                        condition = f"main.{property.name} {op} %({a_k})s"
+                        condition = get_sub_condition(col_name=f"main.{property.name}",
+                                                      val_name=a_k, operator=property.operator)
+                    else:
+                        condition = get_sub_condition(col_name=f"main.properties.{property.name}",
+                                                      val_name=a_k, operator=property.operator)
                     event_where.append(
                         sh.multi_conditions(condition, property.value, value_key=a_k)
                     )
