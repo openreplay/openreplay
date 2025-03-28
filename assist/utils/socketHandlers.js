@@ -118,7 +118,7 @@ async function onConnect(socket) {
             // Stats
             startAssist(socket, socket.handshake.query.agentID);
         }
-        socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, socket.handshake.query.agentInfo);
+        socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, { ...socket.handshake.query.agentInfo, config: socket.handshake.query.config });
     }
 
     // Set disconnect handler
