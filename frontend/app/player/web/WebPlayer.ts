@@ -100,6 +100,8 @@ export default class WebPlayer extends Player {
 
     // @ts-ignore
     window.playerJumpToTime = this.jump.bind(this);
+    // @ts-ignore
+    window.__OPENREPLAY_DEV_TOOLS__.player = this;
   }
 
   preloadFirstFile(data: Uint8Array, fileKey?: string) {
