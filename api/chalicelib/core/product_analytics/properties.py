@@ -1,4 +1,4 @@
-from chalicelib.utils import helper
+from chalicelib.utils import helper, exp_ch_helper
 from chalicelib.utils.ch_client import ClickHouseClient
 import schemas
 
@@ -22,11 +22,13 @@ def get_all_properties(project_id: int, page: schemas.PaginatedSchema):
         if len(properties) == 0:
             return {"total": 0, "list": []}
         total = properties[0]["total"]
+        properties = helper.list_to_camel_case(properties)
         for i, p in enumerate(properties):
             p["id"] = f"prop_{i}"
             p["icon"] = None
+            p["possibleTypes"] = exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"])
             p.pop("total")
-        return {"total": total, "list": helper.list_to_camel_case(properties)}
+        return {"total": total, "list": properties}
 
 
 def get_event_properties(project_id: int, event_name):
