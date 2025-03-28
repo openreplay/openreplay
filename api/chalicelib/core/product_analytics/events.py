@@ -1,9 +1,10 @@
 import logging
-
+from typing import Union
 import schemas
 from chalicelib.utils import helper
 from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.ch_client import ClickHouseClient
+from schemas import SearchEventOperator
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,14 @@ def get_events(project_id: int, page: schemas.PaginatedSchema):
     return {"total": total, "list": helper.list_to_camel_case(rows)}
 
 
+def __get_sub_condition(col_name: str, val_name: str,
+                        operator: Union[schemas.SearchEventOperator, schemas.MathOperator]):
+    if operator == SearchEventOperator.PATTERN:
+        return f"match({col_name}, %({val_name})s)"
+    op = sh.get_sql_operator(operator)
+    return f"{col_name} {op} %({val_name})s"
+
+
 def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
     with ClickHouseClient() as ch_client:
         full_args = {"project_id": project_id, "startDate": data.startTimestamp, "endDate": data.endTimestamp,
@@ -45,7 +54,6 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
                 f.value = helper.values_for_operator(value=f.value, op=f.operator)
                 f_k = f"f_value{i}"
                 full_args = {**full_args, f_k: sh.single_value(f.value), **sh.multi_values(f.value, value_key=f_k)}
-                op = sh.get_sql_operator(f.operator)
                 is_any = sh.isAny_opreator(f.operator)
                 is_undefined = sh.isUndefined_operator(f.operator)
                 full_args = {**full_args, f_k: sh.single_value(f.value), **sh.multi_values(f.value, value_key=f_k)}
@@ -55,11 +63,13 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
                     column = f"properties.{f.name}"
 
                 if is_any:
-                    condition = f"isNotNull({column})"
+                    condition = f"notEmpty{column})"
                 elif is_undefined:
-                    condition = f"isNull({column})"
+                    condition = f"empty({column})"
                 else:
-                    condition = sh.multi_conditions(f"{column} {op} %({f_k})s", f.value, value_key=f_k)
+                    condition = sh.multi_conditions(
+                        __get_sub_condition(col_name=column, val_name=f_k, operator=f.operator),
+                        values=f.value, value_key=f_k)
                 constraints.append(condition)
 
             else:
@@ -70,11 +80,11 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
                 for j, ef in enumerate(f.properties.filters):
                     p_k = f"e_{i}_p_{j}"
                     full_args = {**full_args, **sh.multi_values(ef.value, value_key=p_k)}
-                    op = sh.get_sql_operator(ef.operator)
                     if ef.is_predefined:
-                        sub_condition = f"{ef.name} {op} %({p_k})s"
+                        sub_condition = __get_sub_condition(col_name=ef.name, val_name=p_k, operator=ef.operator)
                     else:
-                        sub_condition = f"properties.{ef.name} {op} %({p_k})s"
+                        sub_condition = __get_sub_condition(col_name=f"properties.{ef.name}",
+                                                            val_name=p_k, operator=ef.operator)
                     sub_conditions.append(sh.multi_conditions(sub_condition, ef.value, value_key=p_k))
                 if len(sub_conditions) > 0:
                     condition += " AND (" + (" " + f.properties.operator + " ").join(sub_conditions) + ")"

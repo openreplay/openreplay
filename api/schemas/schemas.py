@@ -465,6 +465,7 @@ class SearchEventOperator(str, Enum):
     NOT_CONTAINS = "notContains"
     STARTS_WITH = "startsWith"
     ENDS_WITH = "endsWith"
+    PATTERN = "regex"
 
 
 class ClickEventExtraOperator(str, Enum):
