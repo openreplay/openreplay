@@ -12087,7 +12087,6 @@ __metadata:
     react-dnd: "npm:^16.0.1"
     react-dnd-html5-backend: "npm:^15.1.2"
     react-dom: "npm:^18.2.0"
-    react-draggable: "npm:^4.4.5"
     react-google-recaptcha: "npm:^2.1.0"
     react-i18next: "npm:^15.4.1"
     react-intersection-observer: "npm:^9.13.1"
@@ -14065,19 +14064,6 @@ __metadata:
   peerDependencies:
     react: ^18.3.1
   checksum: 10c1/c016cff925b919fb1595c821326a03b47541978e3d31d166ba7dbda4b8a302b1bf7e6718e09b6052fa0e60c01c263ec12c3a6c291913fefc9325f06479c0ce10
-  languageName: node
-  linkType: hard
-
-"react-draggable@npm:^4.4.5":
-  version: 4.4.6
-  resolution: "react-draggable@npm:4.4.6"
-  dependencies:
-    clsx: "npm:^1.1.1"
-    prop-types: "npm:^15.8.1"
-  peerDependencies:
-    react: ">= 16.3.0"
-    react-dom: ">= 16.3.0"
-  checksum: 10c1/b8ae807f4556b658ae149b6542af5222d75996da47c549db54be22276579549ca2cd2fd06ca5c0852fbd1b663853cc0568b68215bd6e62433b46a7e154ddf8e2
   languageName: node
   linkType: hard
 
