@@ -43,27 +43,6 @@ export default class MessageLoader {
     this.session = session;
   }
 
-  /**
-   * TODO: has to be moved out of messageLoader logic somehow
-   * */
-  spriteMapSvg: SVGElement | null = null;
-
-  potentialSpriteMap: Record<string, any> = {};
-
-  domParser: DOMParser | null = null;
-
-  createSpriteMap = () => {
-    if (!this.spriteMapSvg) {
-      this.domParser = new DOMParser();
-      this.spriteMapSvg = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'svg',
-      );
-      this.spriteMapSvg.setAttribute('style', 'display: none;');
-      this.spriteMapSvg.setAttribute('id', 'reconstructed-sprite');
-    }
-  };
-
   createNewParser(
     shouldDecrypt = true,
     onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
@@ -101,21 +80,6 @@ export default class MessageLoader {
         let startTimeSet = false;
 
         msgs.forEach((msg, i) => {
-          if (msg.tp === MType.SetNodeAttribute) {
-            if (msg.value.includes('_$OPENREPLAY_SPRITE$_')) {
-              this.createSpriteMap();
-              if (!this.domParser) {
-                return console.error('DOM parser is not initialized?');
-              }
-              handleSprites(
-                this.potentialSpriteMap,
-                this.domParser,
-                msg,
-                this.spriteMapSvg!,
-                i,
-              );
-            }
-          }
           if (msg.tp === MType.Redux || msg.tp === MType.ReduxDeprecated) {
             if ('actionTime' in msg && msg.actionTime) {
               msg.time = msg.actionTime - this.session.startedAt;
@@ -153,7 +117,7 @@ export default class MessageLoader {
           // .sort((m1, m2) => m1.time - m2.time)
           .sort(brokenDomSorter)
           .sort(sortIframes);
-        
+
         if (brokenMessages > 0) {
           console.warn(
             'Broken timestamp messages',
@@ -333,10 +297,6 @@ export default class MessageLoader {
 
     await Promise.allSettled([restDomFilesPromise, restDevtoolsFilesPromise]);
     this.messageManager.onFileReadSuccess();
-    // no sprites for mobile
-    if (this.spriteMapSvg && 'injectSpriteMap' in this.messageManager) {
-      this.messageManager.injectSpriteMap(this.spriteMapSvg);
-    }
   };
 
   loadEFSMobs = async () => {
@@ -469,40 +429,6 @@ function findBrokenNodes(nodes: any[]) {
   });
 
   return result;
-}
-
-function handleSprites(
-  potentialSpriteMap: Record<string, any>,
-  parser: DOMParser,
-  msg: Record<string, any>,
-  spriteMapSvg: SVGElement,
-  i: number,
-) {
-  const [_, svgData] = msg.value.split('_$OPENREPLAY_SPRITE$_');
-  const potentialSprite = potentialSpriteMap[svgData];
-  if (potentialSprite) {
-    msg.value = potentialSprite;
-  } else {
-    const svgDoc = parser.parseFromString(svgData, 'image/svg+xml');
-    const originalSvg = svgDoc.querySelector('svg');
-    if (originalSvg) {
-      const symbol = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'symbol',
-      );
-      const symbolId = `symbol-${msg.id || `ind-${i}`}`; // Generate an ID if missing
-      symbol.setAttribute('id', symbolId);
-      symbol.setAttribute(
-        'viewBox',
-        originalSvg.getAttribute('viewBox') || '0 0 24 24',
-      );
-      symbol.innerHTML = originalSvg.innerHTML;
-
-      spriteMapSvg.appendChild(symbol);
-      msg.value = `#${symbolId}`;
-      potentialSpriteMap[svgData] = `#${symbolId}`;
-    }
-  }
 }
 
 // @ts-ignore
