@@ -20,6 +20,7 @@ import { gzip } from 'fflate'
 type StartEndCallback = (agentInfo?: Record<string, any>) => ((() => any) | void)
 
 interface AgentInfo {
+  config: string;
   email: string;
   id: number
   name: string
@@ -85,6 +86,7 @@ export default class Assist {
   private remoteControl: RemoteControl | null = null;
   private peerReconnectTimeout: ReturnType<typeof setTimeout> | null = null
   private agents: Record<string, Agent> = {}
+  private config: RTCIceServer[] | undefined
   private readonly options: Options
   private readonly canvasMap: Map<number, Canvas> = new Map()
 
@@ -254,7 +256,7 @@ export default class Assist {
         return
       }
       if (args[0] !== 'webrtc_call_ice_candidate') {
-        app.debug.log("Socket:", ...args, args[2]?.data?.toAgentId);
+        app.debug.log("Socket:", ...args);
       };
       socket.on('close', (e) => {
         app.debug.warn('Socket closed:', e);
@@ -356,6 +358,9 @@ export default class Assist {
         this.app.stop()
         this.app.clearBuffers()
         this.app.waitStatus(0)
+          .then(() => {
+            this.config = JSON.parse(info.config);
+          })
           .then(() => {
             this.app.allowAppStart()
             setTimeout(() => {
@@ -478,9 +483,9 @@ export default class Assist {
       }
     })
 
-    socket.on('webrtc_call_offer', async (_, data: { from: string, offer: RTCSessionDescriptionInit, config }) => {
+    socket.on('webrtc_call_offer', async (_, data: { from: string, offer: RTCSessionDescriptionInit }) => {
       if (!this.calls.has(data.from)) {
-        await handleIncomingCallOffer(data.from, data.offer, data.config);
+        await handleIncomingCallOffer(data.from, data.offer);
       }
     });
 
@@ -565,7 +570,7 @@ export default class Assist {
       }
     };
 
-    const handleIncomingCallOffer = async (from: string, offer: RTCSessionDescriptionInit, config) => {
+    const handleIncomingCallOffer = async (from: string, offer: RTCSessionDescriptionInit) => {
       app.debug.log('handleIncomingCallOffer', from)
       let confirmAnswer: Promise<boolean>
       const callingPeerIds = JSON.parse(sessionStorage.getItem(this.options.session_calling_peer_key) || '[]')
@@ -599,7 +604,7 @@ export default class Assist {
 
          // create a new RTCPeerConnection with ice server config
         const pc = new RTCPeerConnection({
-          iceServers: config,
+          iceServers: this.config,
         });
 
         if (!callUI) {
@@ -740,7 +745,7 @@ export default class Assist {
 
         if (!this.canvasPeers[uniqueId]) {
           this.canvasPeers[uniqueId] = new RTCPeerConnection({
-            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+            iceServers: this.config,
           });
           this.setupPeerListeners(uniqueId);
 

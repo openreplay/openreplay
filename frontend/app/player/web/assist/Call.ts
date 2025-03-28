@@ -43,7 +43,7 @@ export default class Call {
   constructor(
     private store: Store<State & { tabs: Set<string> }>,
     private socket: Socket,
-    private config: RTCIceServer[] | null,
+    private config: RTCIceServer[],
     private peerID: string,
     private getAssistVersion: () => number,
     private agent: Record<string, any>,
@@ -146,7 +146,7 @@ export default class Call {
     // create pc with ice config
 
     const pc = new RTCPeerConnection({
-      iceServers: this.getIceServers(),
+      iceServers: this.config,
     });
 
     // If there is a local stream, add its tracks to the connection
@@ -258,7 +258,7 @@ export default class Call {
           type: WEBRTC_CALL_AGENT_EVENT_TYPES.OFFER,
         });
       } else {
-        this.socket.emit('webrtc_call_offer', { from: remotePeerId, offer, config: this.getIceServers() });
+        this.socket.emit('webrtc_call_offer', { from: remotePeerId, offer });
       }
       this.connectAttempts = 0;
     } catch (e: any) {
@@ -418,18 +418,6 @@ export default class Call {
       this.handleCallEnd();
     }
   };
-
-  private getIceServers = () => {
-    const servers: RTCIceServer[] = [
-      {
-        urls: 'stun:stun.l.google.com:19302',
-      },
-    ];
-    if (this.config) {
-      servers.push(...this.config);
-    }
-    return servers;
-  }
 
   // Ends the call and sends the call_end signal
   initiateCallEnd = async () => {
