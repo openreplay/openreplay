@@ -3,6 +3,8 @@ import re
 from typing import Union
 
 import schemas
+from chalicelib.utils import sql_helper as sh
+from schemas import SearchEventOperator
 
 logger = logging.getLogger(__name__)
 
@@ -150,3 +152,11 @@ def simplify_clickhouse_types(ch_types: list[str]) -> list[str]:
     by calling `simplify_clickhouse_type` on each.
     """
     return list(set([simplify_clickhouse_type(t) for t in ch_types]))
+
+
+def get_sub_condition(col_name: str, val_name: str,
+                      operator: Union[schemas.SearchEventOperator, schemas.MathOperator]):
+    if operator == SearchEventOperator.PATTERN:
+        return f"match({col_name}, %({val_name})s)"
+    op = sh.get_sql_operator(operator)
+    return f"{col_name} {op} %({val_name})s"
