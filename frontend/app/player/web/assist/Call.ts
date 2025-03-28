@@ -250,7 +250,6 @@ export default class Call {
 
       // Sending offer
       if (isAgent) {
-        console.log('SENDING OFFER TO AGENT', socketId);
         this.socket.emit('WEBRTC_AGENT_CALL', {
           from: localPeerId,
           offer,
@@ -501,7 +500,6 @@ export default class Call {
   }
 
   private callAgentsInSession({ agentIds }: { agentIds: string[] }) {
-    console.log('CALLING AGENTS IN SESSION', agentIds);
     if (agentIds) {
       const filteredAgentIds = agentIds.filter(
         (id: string) => id.split('-')[3] !== this.agent.id.toString(),
