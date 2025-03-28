@@ -10,7 +10,7 @@ import {
 } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
-import { SummaryButton } from 'Components/Session_/Player/Controls/Controls';
+import SummaryButton from 'Components/Session_/Player/Controls/SummaryButton';
 import TimelineZoomButton from 'Components/Session_/Player/Controls/components/TimelineZoomButton';
 import { Icon, NoContent } from 'UI';
 import TabSelector from '../../shared/DevTools/TabSelector';
@@ -99,8 +99,6 @@ function MobileOverviewPanelCont() {
     player.scale();
   }, [selectedFeatures]);
 
-  const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /app\.openreplay\.com/.test(originStr);
   return (
     <PanelComponent
       resources={resources}
@@ -111,7 +109,7 @@ function MobileOverviewPanelCont() {
       isMobile
       performanceList={performanceList}
       sessionId={sessionId}
-      showSummary={isSaas}
+      showSummary
       toggleSummary={() =>
         aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary)
       }
@@ -229,8 +227,6 @@ function WebOverviewPanelCont() {
     ],
   );
 
-  const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /app\.openreplay\.com/.test(originStr);
   return (
     <PanelComponent
       resources={resources}
@@ -238,7 +234,7 @@ function WebOverviewPanelCont() {
       selectedFeatures={selectedFeatures}
       fetchPresented={fetchPresented}
       setSelectedFeatures={setSelectedFeatures}
-      showSummary={isSaas}
+      showSummary
       toggleSummary={() =>
         aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary)
       }

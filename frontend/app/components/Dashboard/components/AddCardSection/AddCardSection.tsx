@@ -11,7 +11,6 @@ import {
   AppWindow,
   Combine,
   Users,
-  Sparkles,
   Globe,
   MonitorSmartphone,
 } from 'lucide-react';
@@ -250,8 +249,6 @@ const AddCardSection = observer(
           { label: t('Web Analytics'), value: 'web_analytics' },
         ];
 
-    const originStr = window.env.ORIGIN || window.location.origin;
-    const isSaas = /api\.openreplay\.com/.test(originStr);
     const onExistingClick = () => {
       const dashboardId = dashboardStore.selectedDashboard?.dashboardId;
       const siteId = projectsStore.activeSiteId;
@@ -273,12 +270,6 @@ const AddCardSection = observer(
           <div className="text-xl font-medium mb-1">
             {t('What do you want to visualize?')}
           </div>
-          {isSaas ? (
-            <div className="font-medium flex items-center gap-2 cursor-pointer">
-              <Sparkles color="#3C00FFD8" size={16} />
-              <div className="ai-gradient">{t('Ask AI')}</div>
-            </div>
-          ) : null}
         </div>
         <div>
           {options.length > 1 ? (
