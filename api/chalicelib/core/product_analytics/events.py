@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 def get_events(project_id: int, page: schemas.PaginatedSchema):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
-            """SELECT COUNT(1) OVER () AS total,
+            """SELECT DISTINCT ON(event_name,auto_captured)
+                            COUNT(1) OVER () AS total,
                             event_name AS name, display_name, description,
                             auto_captured
                       FROM product_analytics.all_events 
