@@ -1,3 +1,7 @@
+## 11.0.4
+
+- pass stun/turn credentials (if present) from ui
+
 ## 11.0.3
 
 - fix for remote-contorl clicks on svg elements (+ bubbling)

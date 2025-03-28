@@ -5548,7 +5548,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clsx@npm:^2.0.0, clsx@npm:^2.1.0":
+"clsx@npm:^2.0.0, clsx@npm:^2.1.1":
   version: 2.1.1
   resolution: "clsx@npm:2.1.1"
   checksum: 10c1/441be4753d5e5797ebf734b2945129abe0cee8c578733948b71a0ca1b64808378c9ccf7a7a7794c840d21346cbb8314c5769cf68e3bba45a615b5c05f0448f35
