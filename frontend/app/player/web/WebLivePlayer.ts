@@ -43,6 +43,7 @@ export default class WebLivePlayer extends WebPlayer {
       wpState,
       (id) => this.messageManager.getNode(id),
       agentId,
+      this.messageManager.updateSpriteMap,
       uiErrorHandler,
     );
     this.assistManager.connect(session.agentToken!, agentId, projectId);
