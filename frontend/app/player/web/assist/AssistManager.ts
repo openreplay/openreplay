@@ -200,6 +200,7 @@ export default class AssistManager {
             peerId: this.peerID,
             query: document.location.search,
           }),
+          config: JSON.stringify(this.getIceServers()),
         },
       }));
 
@@ -314,7 +315,7 @@ export default class AssistManager {
       this.callManager = new Call(
         this.store,
         socket,
-        this.config,
+        this.getIceServers(),
         this.peerID,
         this.getAssistVersion,
         {
@@ -353,6 +354,23 @@ export default class AssistManager {
       document.addEventListener('visibilitychange', this.onVisChange);
     });
   }
+
+  private getIceServers = () => {
+    if (this.config) {
+      return this.config;
+    }
+    return [
+      {
+        urls: [
+          'stun:stun.l.google.com:19302',
+          'stun:stun1.l.google.com:19302',
+          'stun:stun2.l.google.com:19302',
+          'stun:stun3.l.google.com:19302',
+          'stun:stun4.l.google.com:19302'
+        ],
+      },
+    ] as RTCIceServer[];
+  };
 
   /**
    * Sends event ping to stats service

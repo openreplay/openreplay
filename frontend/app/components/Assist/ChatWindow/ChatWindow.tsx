@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import cn from 'classnames';
 import Counter from 'App/components/shared/SessionItem/Counter';
-import Draggable from 'react-draggable';
+import { useDraggable } from '@neodrag/react';
 import type { LocalStream } from 'Player';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import ChatControls from '../ChatControls/ChatControls';
@@ -25,6 +25,8 @@ function ChatWindow({
   isPrestart,
 }: Props) {
   const { t } = useTranslation();
+  const dragRef = React.useRef<HTMLDivElement>(null);
+  useDraggable(dragRef, { bounds: 'body', defaultPosition: { x: 50, y: 200 } })
   const { player } = React.useContext(PlayerContext);
 
   const { toggleVideoLocalStream } = player.assistManager;
@@ -39,11 +41,7 @@ function ChatWindow({
   }, [localVideoEnabled]);
 
   return (
-    <Draggable
-      handle=".handle"
-      bounds="body"
-      defaultPosition={{ x: 50, y: 200 }}
-    >
+    <div ref={dragRef}>
       <div
         className={cn(stl.wrapper, 'fixed radius bg-white shadow-xl mt-16')}
         style={{ width: '280px' }}
@@ -102,7 +100,7 @@ function ChatWindow({
           isPrestart={isPrestart}
         />
       </div>
-    </Draggable>
+    </div>
   );
 }
 

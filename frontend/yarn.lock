@@ -2584,6 +2584,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@neodrag/react@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "@neodrag/react@npm:2.3.0"
+  checksum: 10c1/37f549ad0bdab8badb0799bf4e6f1714fe52a2ace6c09447a9dc97a9483a0fb40f75b35b121c78a1cba3a27ec9076a5db9672454af3a216d9efee8dcd34c6736
+  languageName: node
+  linkType: hard
+
 "@nicolo-ribaudo/chokidar-2@npm:2.1.8-no-fsevents.3":
   version: 2.1.8-no-fsevents.3
   resolution: "@nicolo-ribaudo/chokidar-2@npm:2.1.8-no-fsevents.3"
@@ -11989,6 +11996,7 @@ __metadata:
     "@eslint/js": "npm:^9.21.0"
     "@jest/globals": "npm:^29.7.0"
     "@medv/finder": "npm:^4.0.2"
+    "@neodrag/react": "npm:^2.3.0"
     "@openreplay/sourcemap-uploader": "npm:^3.0.10"
     "@sentry/browser": "npm:^5.21.1"
     "@svg-maps/world": "npm:^1.0.1"

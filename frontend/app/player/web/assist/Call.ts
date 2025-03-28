@@ -43,7 +43,7 @@ export default class Call {
   constructor(
     private store: Store<State & { tabs: Set<string> }>,
     private socket: Socket,
-    private config: RTCIceServer[] | null,
+    private config: RTCIceServer[],
     private peerID: string,
     private getAssistVersion: () => number,
     private agent: Record<string, any>,
@@ -146,7 +146,7 @@ export default class Call {
     // create pc with ice config
 
     const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      iceServers: this.config,
     });
 
     // If there is a local stream, add its tracks to the connection
