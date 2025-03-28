@@ -24,8 +24,9 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
         "main_events.`$event_name` = 'CLICK'",
         "isNotNull(JSON_VALUE(CAST(main_events.`$properties` AS String), '$.normalized_x'))"
     ]
-
-    if data.operator == schemas.SearchEventOperator.IS:
+    if data.operator == schemas.SearchEventOperator.PATTERN:
+        constraints.append("match(main_events.`$properties`.url_path'.:String,%(url)s)")
+    elif data.operator == schemas.SearchEventOperator.IS:
         constraints.append("JSON_VALUE(CAST(main_events.`$properties` AS String), '$.url_path') = %(url)s")
     else:
         constraints.append("JSON_VALUE(CAST(main_events.`$properties` AS String), '$.url_path') ILIKE %(url)s")
