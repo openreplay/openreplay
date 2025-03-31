@@ -61,7 +61,7 @@ async function getRoomData(io, roomID) {
         tabsCount = -1;
         agentsCount = -1;
     }
-    return {tabsCount, agentsCount, tabIDs, agentIDs, agentsInfo, config};
+    return {tabsCount, agentsCount, tabIDs, agentIDs, config};
 }
 
 function processNewSocket(socket) {
