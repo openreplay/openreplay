@@ -49,13 +49,8 @@ const useSessionSearchQueryHandler = ({
             searchStore.applyFilter(filter, true);
           }
 
-          // Important: Mark URL as parsed BEFORE fetching
-          // This prevents the initial fetch when the URL is parsed
           searchStore.setUrlParsed();
-
-          // Then fetch sessions - this is the only place that should fetch initially
-          await searchStore.fetchSessions();
-          onLoaded();
+          onLoaded?.();
         } catch (error) {
           console.error('Error applying filter from query:', error);
           searchStore.setUrlParsed();

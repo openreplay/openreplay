@@ -255,7 +255,7 @@ function SideMenu(props: Props) {
                             <Tag
                               color="cyan"
                               bordered={false}
-                              className="text-xs"
+                              className="text-xs ml-2"
                             >
                               {t('Beta')}
                             </Tag>
