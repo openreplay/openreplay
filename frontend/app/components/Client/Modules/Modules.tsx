@@ -40,11 +40,12 @@ function Modules() {
   };
 
   useEffect(() => {
-    list(t).forEach((module) => {
+    const moduleList = list(t)
+    moduleList.forEach((module) => {
       module.isEnabled = modules.includes(module.key);
     });
     setModulesState(
-      list(t).filter(
+      moduleList.filter(
         (module) => !module.hidden && (!module.enterprise || isEnterprise),
       ),
     );
