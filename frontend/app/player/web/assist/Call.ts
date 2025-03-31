@@ -365,10 +365,7 @@ export default class Call {
     const pc = this.connections[callId];
     if (!pc) return;
     // if there are ice candidates then add candidate to peer
-    if (
-      data.candidate &&
-      (data.candidate.sdpMid || data.candidate.sdpMLineIndex !== null)
-    ) {
+    if (data.candidate) {
       try {
         await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
       } catch (e) {
