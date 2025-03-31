@@ -24,7 +24,7 @@ function ModuleCard(props: Props) {
           <Switch
             size="small"
             checked={!module.isEnabled}
-            title={module.isEnabled ? 'Enabled' : 'Disabled'}
+            title={!module.isEnabled ? 'Enabled' : 'Disabled'}
             onChange={() => props.onToggle(module)}
           />
         </div>
