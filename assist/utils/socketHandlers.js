@@ -42,7 +42,7 @@ const findSessionSocketId = async (io, roomId, tabId) => {
 };
 
 async function getRoomData(io, roomID) {
-    let tabsCount = 0, agentsCount = 0, tabIDs = [], agentIDs = [];
+    let tabsCount = 0, agentsCount = 0, tabIDs = [], agentIDs = [], config = null;
     const connected_sockets = await io.in(roomID).fetchSockets();
     if (connected_sockets.length > 0) {
         for (let socket of connected_sockets) {
@@ -52,13 +52,16 @@ async function getRoomData(io, roomID) {
             } else {
                 agentsCount++;
                 agentIDs.push(socket.id);
+                if (socket.handshake.query.config !== undefined) {
+                    config = socket.handshake.query.config;
+                }
             }
         }
     } else {
         tabsCount = -1;
         agentsCount = -1;
     }
-    return {tabsCount, agentsCount, tabIDs, agentIDs};
+    return {tabsCount, agentsCount, tabIDs, agentIDs, config};
 }
 
 function processNewSocket(socket) {
@@ -78,7 +81,7 @@ async function onConnect(socket) {
     IncreaseOnlineConnections(socket.handshake.query.identity);
 
     const io = getServer();
-    const {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.handshake.query.roomId);
+    const {tabsCount, agentsCount, tabIDs, agentIDs, config} = await getRoomData(io, socket.handshake.query.roomId);
 
     if (socket.handshake.query.identity === IDENTITIES.session) {
         // Check if session with the same tabID already connected, if so, refuse new connexion
@@ -100,6 +103,7 @@ async function onConnect(socket) {
         // Inform all connected agents about reconnected session
         if (agentsCount > 0) {
             logger.debug(`notifying new session about agent-existence`);
+            io.to(socket.id).emit(EVENTS_DEFINITION.emit.WEBRTC_CONFIG, config);
             io.to(socket.id).emit(EVENTS_DEFINITION.emit.AGENTS_CONNECTED, agentIDs);
             socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.SESSION_RECONNECTED, socket.id);
         }
@@ -118,7 +122,8 @@ async function onConnect(socket) {
             // Stats
             startAssist(socket, socket.handshake.query.agentID);
         }
-        socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, { ...socket.handshake.query.agentInfo, config: socket.handshake.query.config });
+        io.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.WEBRTC_CONFIG, socket.handshake.query.config);
+        socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, { ...socket.handshake.query.agentInfo });
     }
 
     // Set disconnect handler
