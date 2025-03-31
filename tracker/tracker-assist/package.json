@@ -54,5 +54,5 @@
       "eslint --fix --quiet"
     ]
   },
-  "packageManager": "yarn@4.6.0"
+  "packageManager": "bun@1.2.7"
 }
