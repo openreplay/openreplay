@@ -4,8 +4,7 @@ import { getInitials } from 'App/utils';
 import Notifications from 'Components/Alerts/Notifications/Notifications';
 import HealthStatus from 'Components/Header/HealthStatus';
 import UserMenu from 'Components/Header/UserMenu/UserMenu';
-import LanguageSwitcher from 'Components/LanguageSwitcher/LanguageSwitcher';
-
+import SaasHeaderMenuItems from 'Components/Header/SaasHeaderMenuItems/SaasHeaderMenuItems';
 import GettingStartedProgress from 'Shared/GettingStarted/GettingStartedProgress';
 import ProjectDropdown from 'Shared/ProjectDropdown';
 import { useStore } from 'App/mstore';
@@ -20,6 +19,7 @@ function TopRight() {
     <Space style={{ lineHeight: '0' }}>
       {spotOnly ? null : (
         <>
+          <SaasHeaderMenuItems />
           <ProjectDropdown />
           <GettingStartedProgress />
 

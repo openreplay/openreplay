@@ -1,8 +1,6 @@
 import React from 'react';
-import { Icon } from 'UI';
 import HealthModal from 'Components/Header/HealthStatus/HealthModal/HealthModal';
 import HealthWidget from 'Components/Header/HealthStatus/HealthWidget';
-import UserMenu from 'Components/Header/UserMenu/UserMenu';
 import { Popover, Button } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { getHealthRequest } from './getHealth';
