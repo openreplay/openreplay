@@ -53,9 +53,6 @@ function SessionFilters() {
     onBeforeLoad: async () => {
       await reloadTags();
     },
-    onLoaded: () => {
-      debounceFetch = debounce(() => searchStore.fetchSessions(), 500);
-    }
   });
 
   const onAddFilter = (filter: any) => {

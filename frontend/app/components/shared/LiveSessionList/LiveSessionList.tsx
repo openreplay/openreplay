@@ -64,12 +64,6 @@ function LiveSessionList() {
     void searchStoreLive.fetchSessions();
   };
 
-  useEffect(() => {
-    if (projectsStore.activeSiteId) {
-      void searchStoreLive.fetchSessions(true);
-    }
-  }, [projectsStore.activeSiteId])
-
   const onUserClick = (userId: string, userAnonymousId: string) => {
     if (userId) {
       searchStoreLive.addFilterByKeyAndValue(FilterKey.USERID, userId);
