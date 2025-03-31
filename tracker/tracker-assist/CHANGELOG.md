@@ -1,10 +1,14 @@
+## 11.0.5
+
+- fix ice candidates usage
+
 ## 11.0.4
 
 - pass stun/turn credentials (if present) from ui
 
 ## 11.0.3
 
-- fix for remote-contorl clicks on svg elements (+ bubbling)
+- fix for remote-control clicks on svg elements (+ bubbling)
 
 ## 11.0.2
 
