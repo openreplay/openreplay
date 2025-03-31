@@ -440,7 +440,7 @@ export const filters = [
   {
     key: FilterKey.DOM_COMPLETE,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.PERFORMANCE,
+    category: FilterCategory.DEVTOOLS,
     label: 'DOM Complete',
     placeholder: 'Enter path',
     operator: 'isAny',
@@ -458,7 +458,7 @@ export const filters = [
   {
     key: FilterKey.LARGEST_CONTENTFUL_PAINT_TIME,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.PERFORMANCE,
+    category: FilterCategory.DEVTOOLS,
     label: 'Largest Contentful Paint',
     placeholder: 'Enter path',
     operator: 'isAny',
@@ -476,7 +476,7 @@ export const filters = [
   {
     key: FilterKey.TTFB,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.PERFORMANCE,
+    category: FilterCategory.DEVTOOLS,
     label: 'Time to First Byte',
     placeholder: 'Enter path',
     operator: 'isAny',
