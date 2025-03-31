@@ -122,7 +122,7 @@ async function onConnect(socket) {
             // Stats
             startAssist(socket, socket.handshake.query.agentID);
         }
-        io.to(socket.id).emit(EVENTS_DEFINITION.emit.WEBRTC_CONFIG, socket.handshake.query.config);
+        io.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.WEBRTC_CONFIG, socket.handshake.query.config);
         socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, { ...socket.handshake.query.agentInfo });
     }
 
