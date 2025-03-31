@@ -953,6 +953,7 @@ export default class Assist {
     this.canvasPeers = {};
     this.canvasNodeCheckers.forEach((int) => clearInterval(int));
     this.canvasNodeCheckers.clear();
+    this.iceCandidatesBuffer.clear();
   }
 
   private cleanCanvasConnections() {
