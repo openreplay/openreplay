@@ -9,8 +9,10 @@ function LiveSessionSearch() {
   const appliedFilter = searchStoreLive.instance;
 
   useEffect(() => {
-    void searchStoreLive.fetchSessions();
-  }, []);
+    if (projectsStore.activeSiteId) {
+      void searchStoreLive.fetchSessions(true);
+    }
+  }, [projectsStore.activeSiteId])
 
   const onAddFilter = (filter: any) => {
     filter.autoOpen = true;

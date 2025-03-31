@@ -125,13 +125,13 @@ function PrivateRoutes() {
   }, [siteId]);
 
   React.useEffect(() => {
-    debounceSearch = debounce(() => searchStore.fetchSessions(), 500);
+    debounceSearch = debounce(() => searchStore.fetchSessions(), 250);
   }, []);
 
   React.useEffect(() => {
     if (!searchStore.urlParsed) return;
     debounceSearch();
-  }, [searchStore.instance.filters, searchStore.instance.eventsOrder]);
+  }, [searchStore.urlParsed, searchStore.instance.filters, searchStore.instance.eventsOrder]);
 
   return (
     <Suspense fallback={<Loader loading className="flex-1" />}>
