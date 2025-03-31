@@ -378,11 +378,6 @@ export default class AssistManager {
           'stun:stun4.l.google.com:19302',
         ],
       },
-      {
-        urls: 'turn:turn.openreplay.com:443?transport=udp',
-        username: '1743592972:Bd6D7C671f5d47382EcafB9d3d4Db4b80f21',
-        credential: 'qpyYRCfxOLLFIQAxiHf3Gpj/JW0=',
-      },
     ] as RTCIceServer[];
   };
 

@@ -147,7 +147,6 @@ export default class Call {
 
     const pc = new RTCPeerConnection({
       iceServers: this.config,
-      iceTransportPolicy: 'relay',
     });
 
     // If there is a local stream, add its tracks to the connection

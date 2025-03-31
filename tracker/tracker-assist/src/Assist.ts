@@ -16,7 +16,6 @@ import ScreenRecordingState from "./ScreenRecordingState.js";
 import { pkgVersion } from "./version.js";
 import Canvas from "./Canvas.js";
 import { gzip } from "fflate";
-import { runTest } from "./TestCall.js";
 
 type StartEndCallback = (agentInfo?: Record<string, any>) => (() => any) | void;
 
@@ -403,7 +402,14 @@ export default class Assist {
       processEvent(id, event, annot?.stop)
     );
 
-    socket.on('WEBRTC_CONFIG', (_, config: string) => this.config = JSON.parse(config))
+    socket.on(
+      "WEBRTC_CONFIG",
+      (config: string) => {
+        if (config) {
+          this.config = JSON.parse(config)
+        }
+      }
+    );
 
     socket.on("NEW_AGENT", (id: string, info: AgentInfo) => {
       this.cleanCanvasConnections();
@@ -415,26 +421,21 @@ export default class Assist {
         this.assistDemandedRestart = true;
         this.app.stop();
         this.app.clearBuffers();
-        this.app
-          .waitStatus(0)
-          .then(() => {
-            this.config = JSON.parse(info.config);
-          })
-          .then(() => {
-            this.app.allowAppStart();
-            setTimeout(() => {
-              this.app
-                .start()
-                .then(() => {
-                  this.assistDemandedRestart = false;
-                })
-                .then(() => {
-                  this.remoteControl?.reconnect([id]);
-                })
-                .catch((e) => app.debug.error(e));
-              // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
-            }, 100);
-          });
+        this.app.waitStatus(0).then(() => {
+          this.app.allowAppStart();
+          setTimeout(() => {
+            this.app
+              .start()
+              .then(() => {
+                this.assistDemandedRestart = false;
+              })
+              .then(() => {
+                this.remoteControl?.reconnect([id]);
+              })
+              .catch((e) => app.debug.error(e));
+            // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
+          }, 100);
+        });
       }
     });
 
@@ -711,7 +712,6 @@ export default class Assist {
         // create a new RTCPeerConnection with ice server config
         const pc = new RTCPeerConnection({
           iceServers: this.config,
-          iceTransportPolicy: "relay",
         });
         this.calls.set(from, pc);
 
@@ -859,7 +859,6 @@ export default class Assist {
         if (!this.canvasPeers[uniqueId]) {
           this.canvasPeers[uniqueId] = new RTCPeerConnection({
             iceServers: this.config,
-            iceTransportPolicy: "relay",
           });
           this.setupPeerListeners(uniqueId);
 
