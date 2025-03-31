@@ -369,19 +369,19 @@ export default class AssistManager {
       return this.config;
     }
     return [
-      // {
-      //   urls: [
-      //     'stun:stun.l.google.com:19302',
-      //     'stun:stun1.l.google.com:19302',
-      //     'stun:stun2.l.google.com:19302',
-      //     'stun:stun3.l.google.com:19302',
-      //     'stun:stun4.l.google.com:19302',
-      //   ],
-      // },
       {
-        urls: 'turn:global.relay.metered.ca:443',
-        username: 'e63d65356e9516340ab2199d',
-        credential: 'aMREG9wSfzxdT6rD',
+        urls: [
+          'stun:stun.l.google.com:19302',
+          'stun:stun1.l.google.com:19302',
+          'stun:stun2.l.google.com:19302',
+          'stun:stun3.l.google.com:19302',
+          'stun:stun4.l.google.com:19302',
+        ],
+      },
+      {
+        urls: 'turn:turn.openreplay.com:443?transport=udp',
+        username: '1743592972:Bd6D7C671f5d47382EcafB9d3d4Db4b80f21',
+        credential: 'qpyYRCfxOLLFIQAxiHf3Gpj/JW0=',
       },
     ] as RTCIceServer[];
   };

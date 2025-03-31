@@ -69,6 +69,7 @@ export default class CanvasReceiver {
       iceServers: this.config
         ? this.config
         : [{ urls: 'stun:stun.l.google.com:19302' }],
+      iceTransportPolicy: 'relay',
     });
 
     // Save the connection
