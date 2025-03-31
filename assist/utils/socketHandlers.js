@@ -42,7 +42,7 @@ const findSessionSocketId = async (io, roomId, tabId) => {
 };
 
 async function getRoomData(io, roomID) {
-    let tabsCount = 0, agentsCount = 0, tabIDs = [], agentIDs = [], agentsInfo = [], config = null;
+    let tabsCount = 0, agentsCount = 0, tabIDs = [], agentIDs = [], config = null;
     const connected_sockets = await io.in(roomID).fetchSockets();
     if (connected_sockets.length > 0) {
         for (let socket of connected_sockets) {
@@ -52,7 +52,6 @@ async function getRoomData(io, roomID) {
             } else {
                 agentsCount++;
                 agentIDs.push(socket.id);
-                agentsInfo.push(socket.handshake.query.agentInfo);
                 if (socket.handshake.query.config !== undefined) {
                     config = socket.handshake.query.config;
                 }
@@ -123,7 +122,8 @@ async function onConnect(socket) {
             // Stats
             startAssist(socket, socket.handshake.query.agentID);
         }
-        socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, { ...socket.handshake.query.agentInfo, config: socket.handshake.query.config });
+        io.to(socket.id).emit(EVENTS_DEFINITION.emit.WEBRTC_CONFIG, socket.handshake.query.config);
+        socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, { ...socket.handshake.query.agentInfo });
     }
 
     // Set disconnect handler
