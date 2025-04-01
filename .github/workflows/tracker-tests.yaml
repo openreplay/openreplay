@@ -22,22 +22,14 @@ jobs:
       - name: Cache tracker modules
         uses: actions/cache@v3
         with:
-          path: tracker/tracker/node_modules
-          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/bun.lockb') }}
-          restore-keys: |
-            test_tracker_build{{ runner.OS }}-build-
-            test_tracker_build{{ runner.OS }}-
-      - name: Cache tracker-assist modules
-        uses: actions/cache@v3
-        with:
-          path: tracker/tracker-assist/node_modules
-          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/bun.lockb') }}
+          path: tracker/node_modules
+          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             test_tracker_build{{ runner.OS }}-build-
             test_tracker_build{{ runner.OS }}-
       - name: Setup Testing packages
         run: |
-          cd tracker/tracker
+          cd tracker
           bun install
       - name: Jest tests
         run: |
@@ -47,10 +39,6 @@ jobs:
         run: |
           cd tracker/tracker
           bun run build
-      - name: (TA) Setup Testing packages
-        run: |
-          cd tracker
-          bun install
       - name: (TA) Jest tests
         run: |
           cd tracker/tracker-assist
