@@ -19,6 +19,8 @@ jobs:
         with:
           bun-version: latest
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Required for coverage comparison
       - name: Cache tracker modules
         uses: actions/cache@v3
         with:
@@ -31,25 +33,246 @@ jobs:
         run: |
           cd tracker
           bun install
+
+      # Run tracker tests and generate coverage
       - name: Jest tests
         run: |
           cd tracker/tracker
           bun run test:ci
+
       - name: Building test
         run: |
           cd tracker/tracker
           bun run build
+
+      # Run tracker-assist tests and generate coverage
       - name: (TA) Jest tests
         run: |
           cd tracker/tracker-assist
           bun run test:ci
+
       - name: (TA) Building test
         run: |
           cd tracker/tracker-assist
           bun run build
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+
+      # For PRs, parse coverage and create comment
+      - name: Parse Coverage Reports
+        if: github.event_name == 'pull_request'
+        id: coverage-report
+        run: |
+          echo "TRACKER_COVERAGE=$(cd tracker/tracker && jq -r '.total.lines.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          echo "TRACKER_STATEMENTS=$(cd tracker/tracker && jq -r '.total.statements.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          echo "TRACKER_BRANCHES=$(cd tracker/tracker && jq -r '.total.branches.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          echo "TRACKER_FUNCTIONS=$(cd tracker/tracker && jq -r '.total.functions.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          
+          echo "TA_COVERAGE=$(cd tracker/tracker-assist && jq -r '.total.lines.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          echo "TA_STATEMENTS=$(cd tracker/tracker-assist && jq -r '.total.statements.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          echo "TA_BRANCHES=$(cd tracker/tracker-assist && jq -r '.total.branches.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          echo "TA_FUNCTIONS=$(cd tracker/tracker-assist && jq -r '.total.functions.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+
+      # For PRs, check out base branch for comparison
+      - name: Check out base branch for coverage comparison
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: tracker
-          iame: tracker
+          ref: ${{ github.base_ref }}
+          path: dev
+
+      - name: Setup base branch for comparison
+        if: github.event_name == 'pull_request'
+        run: |
+          cd base-branch/tracker
+          bun install
+
+      # Calculate coverage for base branch
+      - name: Get base branch coverage
+        if: github.event_name == 'pull_request'
+        id: base-coverage
+        run: |
+          cd base-branch/tracker/tracker
+          bun run test:ci
+          echo "BASE_TRACKER_COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          echo "BASE_TRACKER_STATEMENTS=$(jq -r '.total.statements.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          echo "BASE_TRACKER_BRANCHES=$(jq -r '.total.branches.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          echo "BASE_TRACKER_FUNCTIONS=$(jq -r '.total.functions.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          
+          cd ../tracker-assist
+          bun run test:ci
+          echo "BASE_TA_COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          echo "BASE_TA_STATEMENTS=$(jq -r '.total.statements.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          echo "BASE_TA_BRANCHES=$(jq -r '.total.branches.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+          echo "BASE_TA_FUNCTIONS=$(jq -r '.total.functions.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
+
+      # Calculate coverage changes
+      - name: Calculate Coverage Changes
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "TRACKER_COVERAGE_CHANGE=$(echo "$TRACKER_COVERAGE - $BASE_TRACKER_COVERAGE" | bc)" >> $GITHUB_ENV
+          echo "TRACKER_STATEMENTS_CHANGE=$(echo "$TRACKER_STATEMENTS - $BASE_TRACKER_STATEMENTS" | bc)" >> $GITHUB_ENV
+          echo "TRACKER_BRANCHES_CHANGE=$(echo "$TRACKER_BRANCHES - $BASE_TRACKER_BRANCHES" | bc)" >> $GITHUB_ENV
+          echo "TRACKER_FUNCTIONS_CHANGE=$(echo "$TRACKER_FUNCTIONS - $BASE_TRACKER_FUNCTIONS" | bc)" >> $GITHUB_ENV
+          
+          echo "TA_COVERAGE_CHANGE=$(echo "$TA_COVERAGE - $BASE_TA_COVERAGE" | bc)" >> $GITHUB_ENV
+          echo "TA_STATEMENTS_CHANGE=$(echo "$TA_STATEMENTS - $BASE_TA_STATEMENTS" | bc)" >> $GITHUB_ENV
+          echo "TA_BRANCHES_CHANGE=$(echo "$TA_BRANCHES - $BASE_TA_BRANCHES" | bc)" >> $GITHUB_ENV
+          echo "TA_FUNCTIONS_CHANGE=$(echo "$TA_FUNCTIONS - $BASE_TA_FUNCTIONS" | bc)" >> $GITHUB_ENV
+
+      # Generate coverage badge SVGs and html report
+      - name: Generate Coverage Badges and Reports
+        if: github.event_name == 'pull_request'
+        run: |
+          mkdir -p coverage-report
+          
+          # Create a simple HTML report with coverage data
+          cat > coverage-report/index.html << EOL
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Coverage Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .container { max-width: 1000px; margin: 0 auto; }
+              table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; }
+              .positive { color: green; }
+              .negative { color: red; }
+              .package { font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Code Coverage Report</h1>
+          
+              <h2>Tracker Coverage</h2>
+              <table>
+                <tr>
+                  <th>Metric</th>
+                  <th>Current</th>
+                  <th>Base</th>
+                  <th>Change</th>
+                </tr>
+                <tr>
+                  <td class="package">Lines</td>
+                  <td>${TRACKER_COVERAGE}%</td>
+                  <td>${BASE_TRACKER_COVERAGE}%</td>
+                  <td class="${TRACKER_COVERAGE_CHANGE >= 0 ? 'positive' : 'negative'}">
+                    ${TRACKER_COVERAGE_CHANGE >= 0 ? '+' : ''}${TRACKER_COVERAGE_CHANGE}%
+                  </td>
+                </tr>
+                <tr>
+                  <td>Statements</td>
+                  <td>${TRACKER_STATEMENTS}%</td>
+                  <td>${BASE_TRACKER_STATEMENTS}%</td>
+                  <td class="${TRACKER_STATEMENTS_CHANGE >= 0 ? 'positive' : 'negative'}">
+                    ${TRACKER_STATEMENTS_CHANGE >= 0 ? '+' : ''}${TRACKER_STATEMENTS_CHANGE}%
+                  </td>
+                </tr>
+                <tr>
+                  <td>Branches</td>
+                  <td>${TRACKER_BRANCHES}%</td>
+                  <td>${BASE_TRACKER_BRANCHES}%</td>
+                  <td class="${TRACKER_BRANCHES_CHANGE >= 0 ? 'positive' : 'negative'}">
+                    ${TRACKER_BRANCHES_CHANGE >= 0 ? '+' : ''}${TRACKER_BRANCHES_CHANGE}%
+                  </td>
+                </tr>
+                <tr>
+                  <td>Functions</td>
+                  <td>${TRACKER_FUNCTIONS}%</td>
+                  <td>${BASE_TRACKER_FUNCTIONS}%</td>
+                  <td class="${TRACKER_FUNCTIONS_CHANGE >= 0 ? 'positive' : 'negative'}">
+                    ${TRACKER_FUNCTIONS_CHANGE >= 0 ? '+' : ''}${TRACKER_FUNCTIONS_CHANGE}%
+                  </td>
+                </tr>
+              </table>
+          
+              <h2>Tracker-Assist Coverage</h2>
+              <table>
+                <tr>
+                  <th>Metric</th>
+                  <th>Current</th>
+                  <th>Base</th>
+                  <th>Change</th>
+                </tr>
+                <tr>
+                  <td class="package">Lines</td>
+                  <td>${TA_COVERAGE}%</td>
+                  <td>${BASE_TA_COVERAGE}%</td>
+                  <td class="${TA_COVERAGE_CHANGE >= 0 ? 'positive' : 'negative'}">
+                    ${TA_COVERAGE_CHANGE >= 0 ? '+' : ''}${TA_COVERAGE_CHANGE}%
+                  </td>
+                </tr>
+                <tr>
+                  <td>Statements</td>
+                  <td>${TA_STATEMENTS}%</td>
+                  <td>${BASE_TA_STATEMENTS}%</td>
+                  <td class="${TA_STATEMENTS_CHANGE >= 0 ? 'positive' : 'negative'}">
+                    ${TA_STATEMENTS_CHANGE >= 0 ? '+' : ''}${TA_STATEMENTS_CHANGE}%
+                  </td>
+                </tr>
+                <tr>
+                  <td>Branches</td>
+                  <td>${TA_BRANCHES}%</td>
+                  <td>${BASE_TA_BRANCHES}%</td>
+                  <td class="${TA_BRANCHES_CHANGE >= 0 ? 'positive' : 'negative'}">
+                    ${TA_BRANCHES_CHANGE >= 0 ? '+' : ''}${TA_BRANCHES_CHANGE}%
+                  </td>
+                </tr>
+                <tr>
+                  <td>Functions</td>
+                  <td>${TA_FUNCTIONS}%</td>
+                  <td>${BASE_TA_FUNCTIONS}%</td>
+                  <td class="${TA_FUNCTIONS_CHANGE >= 0 ? 'positive' : 'negative'}">
+                    ${TA_FUNCTIONS_CHANGE >= 0 ? '+' : ''}${TA_FUNCTIONS_CHANGE}%
+                  </td>
+                </tr>
+              </table>
+          
+              <p>Generated on $(date)</p>
+            </div>
+          </body>
+          </html>
+          EOL
+          
+          # Copy the actual coverage reports
+          mkdir -p coverage-report/tracker
+          mkdir -p coverage-report/tracker-assist
+          cp -r tracker/tracker/coverage/* coverage-report/tracker/
+          cp -r tracker/tracker-assist/coverage/* coverage-report/tracker-assist/
+
+      # Upload coverage report as an artifact
+      - name: Upload Coverage Report
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage-report
+          retention-days: 3
+
+      # Post coverage summary as PR comment
+      - name: Create Coverage PR Comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: coverage-report
+          message: |
+            ## Code Coverage Report 📊
+            
+            ### Tracker
+            | Metric | Current | Base | Change |
+            | ------ | ------- | ---- | ------ |
+            | Lines | ${{ env.TRACKER_COVERAGE }}% | ${{ env.BASE_TRACKER_COVERAGE }}% | ${{ env.TRACKER_COVERAGE_CHANGE >= 0 && '+' || '' }}${{ env.TRACKER_COVERAGE_CHANGE }}% |
+            | Statements | ${{ env.TRACKER_STATEMENTS }}% | ${{ env.BASE_TRACKER_STATEMENTS }}% | ${{ env.TRACKER_STATEMENTS_CHANGE >= 0 && '+' || '' }}${{ env.TRACKER_STATEMENTS_CHANGE }}% |
+            | Branches | ${{ env.TRACKER_BRANCHES }}% | ${{ env.BASE_TRACKER_BRANCHES }}% | ${{ env.TRACKER_BRANCHES_CHANGE >= 0 && '+' || '' }}${{ env.TRACKER_BRANCHES_CHANGE }}% |
+            | Functions | ${{ env.TRACKER_FUNCTIONS }}% | ${{ env.BASE_TRACKER_FUNCTIONS }}% | ${{ env.TRACKER_FUNCTIONS_CHANGE >= 0 && '+' || '' }}${{ env.TRACKER_FUNCTIONS_CHANGE }}% |
+            
+            ### Tracker-Assist
+            | Metric | Current | Base | Change |
+            | ------ | ------- | ---- | ------ |
+            | Lines | ${{ env.TA_COVERAGE }}% | ${{ env.BASE_TA_COVERAGE }}% | ${{ env.TA_COVERAGE_CHANGE >= 0 && '+' || '' }}${{ env.TA_COVERAGE_CHANGE }}% |
+            | Statements | ${{ env.TA_STATEMENTS }}% | ${{ env.BASE_TA_STATEMENTS }}% | ${{ env.TA_STATEMENTS_CHANGE >= 0 && '+' || '' }}${{ env.TA_STATEMENTS_CHANGE }}% |
+            | Branches | ${{ env.TA_BRANCHES }}% | ${{ env.BASE_TA_BRANCHES }}% | ${{ env.TA_BRANCHES_CHANGE >= 0 && '+' || '' }}${{ env.TA_BRANCHES_CHANGE }}% |
+            | Functions | ${{ env.TA_FUNCTIONS }}% | ${{ env.BASE_TA_FUNCTIONS }}% | ${{ env.TA_FUNCTIONS_CHANGE >= 0 && '+' || '' }}${{ env.TA_FUNCTIONS_CHANGE }}% |
+            
+            [View detailed coverage report](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})
