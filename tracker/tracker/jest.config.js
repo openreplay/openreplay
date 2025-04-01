@@ -4,6 +4,17 @@ const config = {
   testEnvironment: 'jsdom',
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
+  // Add more detailed coverage reporters for PR comments
+  coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
+  // Optional: Add coverage thresholds if desired
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 75,
+      lines: 80,
+      statements: 80
+    }
+  },
   // .js file extension fix
   moduleNameMapper: {
     '(.+)\\.js': '$1',
