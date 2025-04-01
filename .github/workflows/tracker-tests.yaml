@@ -80,7 +80,7 @@ jobs:
       - name: Setup base branch for comparison
         if: github.event_name == 'pull_request'
         run: |
-          cd base-branch/tracker
+          cd tracker/tracker
           bun install
 
       # Calculate coverage for base branch
@@ -88,7 +88,7 @@ jobs:
         if: github.event_name == 'pull_request'
         id: base-coverage
         run: |
-          cd base-branch/tracker/tracker
+          cd tracker/tracker
           bun run test:ci
           echo "BASE_TRACKER_COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
           echo "BASE_TRACKER_STATEMENTS=$(jq -r '.total.statements.pct' coverage/coverage-summary.json)" >> $GITHUB_ENV
