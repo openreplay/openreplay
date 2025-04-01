@@ -3,11 +3,21 @@ const config = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   collectCoverage: true,
-  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts',],
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
+  // Add more detailed coverage reporters for PR comments
+  coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
   // .js file extension fix
   moduleNameMapper: {
     '(.+)\\.js': '$1',
   },
+  transform: {
+    '^.+\\.ts$': ['ts-jest', {
+      tsConfig: {
+        target: "es2020",
+        lib: ["DOM", "ES2022"]
+      }
+    }],
+  }
 }
 
 export default config
