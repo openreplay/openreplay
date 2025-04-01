@@ -18,9 +18,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Required for coverage comparison
+      - uses: actions/checkout@v4
       - name: Cache tracker modules
         uses: actions/cache@v3
         with:
@@ -74,7 +72,7 @@ jobs:
       # For PRs, check out base branch for comparison
       - name: Check out base branch for coverage comparison
         if: github.event_name == 'pull_request'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
           path: dev
