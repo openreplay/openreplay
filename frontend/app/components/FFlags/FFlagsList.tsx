@@ -10,6 +10,7 @@ import Select from 'Shared/Select';
 import usePageTitle from '@/hooks/usePageTitle';
 import FFlagItem from './FFlagItem';
 import { useTranslation } from 'react-i18next';
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 function FFlagsList({ siteId }: { siteId: string }) {
   const { t } = useTranslation();
@@ -24,7 +25,7 @@ function FFlagsList({ siteId }: { siteId: string }) {
   return (
     <div
       className="mb-5 w-full mx-auto bg-white rounded pb-10 pt-4 widget-wrapper"
-      style={{ maxWidth: '1360px' }}
+      style={{ maxWidth: PANEL_SIZES.maxWidth }}
     >
       <FFlagsListHeader siteId={siteId} />
       <div className="border-y px-3 py-2 mt-2 flex items-center w-full justify-end gap-4">

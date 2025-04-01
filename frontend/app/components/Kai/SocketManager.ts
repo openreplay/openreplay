@@ -1,0 +1,75 @@
+import io from 'socket.io-client';
+
+export class ChatManager {
+  socket: ReturnType<typeof io>;
+  threadId: string | null = null;
+
+  constructor({ projectId, userId, threadId }: { projectId: string; userId: string; threadId: string }) {
+    this.threadId = threadId;
+    const socket = io(`localhost:8700/kai/chat`, {
+      transports: ['websocket'],
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      withCredentials: true,
+      multiplex: true,
+      query: {
+        user_id: userId,
+        token: window.env.KAI_TESTING,
+        project_id: projectId,
+      },
+    });
+    socket.on('connect', () => {
+      console.log('Connected to server');
+    });
+    socket.on('disconnect', () => {
+      console.log('Disconnected from server');
+    });
+    socket.onAny((e) => console.log('event', e));
+
+    this.socket = socket;
+  }
+
+  sendMesage = (message: string) => {
+    this.socket.emit(
+      'message',
+      JSON.stringify({
+        message,
+        threadId: this.threadId,
+      }),
+    );
+  };
+
+  setOnMsgHook = ({
+    msgCallback,
+    titleCallback,
+  }: {
+    msgCallback: (msg: BotChunk) => void;
+    titleCallback: (title: string) => void;
+  }) => {
+    this.socket.on('chunk', (msg: BotChunk) => {
+      console.log('Received message:', msg);
+      msgCallback(msg);
+    });
+    this.socket.on('title', (msg: { content: string }) => {
+      console.log('Received title:', msg);
+      titleCallback(msg.content);
+    });
+  };
+
+  disconnect = () => {
+    this.socket.disconnect();
+  };
+}
+
+export interface BotChunk {
+  stage: 'chart' | 'final' | 'title';
+  content: string;
+  data?: any[];
+}
+export interface Message {
+  text: string;
+  isUser: boolean;
+}

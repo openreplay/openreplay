@@ -3,6 +3,7 @@ import withPageTitle from 'HOCs/withPageTitle';
 import { observer } from 'mobx-react-lite';
 import MetricsList from '../MetricsList';
 import MetricViewHeader from '../MetricViewHeader';
+import { PANEL_SIZES } from 'App/constants/panelSizes'
 
 interface Props {
   siteId: string;
@@ -10,7 +11,7 @@ interface Props {
 function MetricsView({ siteId }: Props) {
   return (
     <div
-      style={{ maxWidth: '1360px', margin: 'auto' }}
+      style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}
       className="bg-white rounded-lg shadow-sm pt-4 border"
     >
       <MetricViewHeader siteId={siteId} />

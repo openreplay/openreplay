@@ -10,6 +10,7 @@ import Multivariant from 'Components/FFlags/NewFFlag/Multivariant';
 import { toast } from 'react-toastify';
 import RolloutCondition from 'Shared/ConditionSet';
 import { useTranslation } from 'react-i18next';
+import { PANEL_SIZES } from "App/constants/panelSizes";
 
 function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   const { t } = useTranslation();
@@ -52,7 +53,7 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   };
 
   return (
-    <div className="w-full mx-auto mb-4" style={{ maxWidth: '1360px' }}>
+    <div className="w-full mx-auto mb-4" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
       <Breadcrumb
         items={[
           { label: t('Feature Flags'), to: withSiteId(fflags(), siteId) },

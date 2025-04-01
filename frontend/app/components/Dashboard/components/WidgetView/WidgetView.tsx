@@ -31,6 +31,7 @@ import CardUserList from '../CardUserList/CardUserList';
 import WidgetSessions from '../WidgetSessions';
 import WidgetPreview from '../WidgetPreview';
 import { useTranslation } from 'react-i18next';
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 interface Props {
   history: any;
@@ -183,7 +184,7 @@ function WidgetView({
             : 'You have unsaved changes. Are you sure you want to leave?'
         }
       />
-      <div style={{ maxWidth: '1360px', margin: 'auto' }}>
+      <div style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}>
         <Breadcrumb
           items={[
             {

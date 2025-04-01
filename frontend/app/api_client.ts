@@ -60,7 +60,7 @@ export default class APIClient {
 
   private siteIdCheck: (() => { siteId: string | null }) | undefined;
 
-  private getJwt: () => string | null = () => null;
+  public getJwt: () => string | null = () => null;
 
   private onUpdateJwt: (data: { jwt?: string; spotJwt?: string }) => void;
 
@@ -197,7 +197,7 @@ export default class APIClient {
       delete init.credentials;
     }
 
-    const noChalice = path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login');
+    const noChalice = path.includes('/kai') || path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login');
     let edp = window.env.API_EDP || window.location.origin + '/api';
     if (noChalice && !edp.includes('api.openreplay.com')) {
       edp = edp.replace('/api', '');

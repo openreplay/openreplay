@@ -10,6 +10,7 @@ import { useStore } from 'App/mstore';
 import AlertsList from './AlertsList';
 import AlertsSearch from './AlertsSearch';
 import { useTranslation } from 'react-i18next';
+import { PANEL_SIZES } from 'App/constants/panelSizes'
 
 interface IAlertsView {
   siteId: string;
@@ -30,7 +31,7 @@ function AlertsView({ siteId }: IAlertsView) {
   }, [history]);
   return (
     <div
-      style={{ maxWidth: '1360px', margin: 'auto' }}
+      style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}
       className="bg-white rounded-lg shadow-sm py-4 border"
     >
       <div className="flex items-center mb-4 justify-between px-6">

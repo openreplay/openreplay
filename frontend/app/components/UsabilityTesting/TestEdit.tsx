@@ -20,7 +20,7 @@ import { toast } from 'react-toastify';
 import StepsModal from './StepsModal';
 import SidePanel from './SidePanel';
 import { useTranslation } from 'react-i18next';
-
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 const menuItems = [
   {
     key: '1',
@@ -160,7 +160,7 @@ function TestEdit() {
   const isStartingPointValid = isValidUrl(uxtestingStore.instance.startingPath);
 
   return (
-    <div className="w-full mx-auto" style={{ maxWidth: '1360px' }}>
+    <div className="w-full mx-auto" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
       <Breadcrumb
         items={[
           {
