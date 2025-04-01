@@ -488,11 +488,12 @@ export default class Assist {
       if (recordingState.isActive) recordingState.stopRecording();
     });
 
-    socket.on("call_end", (socketId, { data: callId }) => {
-      if (!callingAgents.has(socketId)) {
+    socket.on("call_end", (socketId, msg) => {
+      if (!callingAgents.has(socketId) || !msg) {
         app.debug.warn("Received call_end from unknown agent", socketId);
         return;
       }
+      const { data: callId } = msg;
 
       endAgentCall({ socketId, callId });
     });
