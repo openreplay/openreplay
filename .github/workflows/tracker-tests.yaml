@@ -49,7 +49,7 @@ jobs:
           bun run build
       - name: (TA) Setup Testing packages
         run: |
-          cd tracker/tracker-assist
+          cd tracker
           bun install
       - name: (TA) Jest tests
         run: |
