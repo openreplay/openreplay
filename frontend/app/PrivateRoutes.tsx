@@ -32,7 +32,8 @@ const components: any = {
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   ScopeSetup: lazy(() => import('Components/ScopeForm')),
-  HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList'))
+  HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
+  KaiPure: lazy(() => import('Components/Kai/KaiChat')),
 };
 
 const enhancedComponents: any = {
@@ -52,7 +53,8 @@ const enhancedComponents: any = {
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
   ScopeSetup: components.ScopeSetup,
-  Highlights: withSiteIdUpdater(components.HighlightsPure)
+  Highlights: withSiteIdUpdater(components.HighlightsPure),
+  Kai: withSiteIdUpdater(components.KaiPure),
 };
 
 const { withSiteId } = routes;
@@ -97,6 +99,7 @@ const SPOT_PATH = routes.spot();
 const SCOPE_SETUP = routes.scopeSetup();
 
 const HIGHLIGHTS_PATH = routes.highlights();
+const KAI_PATH = routes.kai();
 
 function PrivateRoutes() {
   const { projectsStore, userStore, integrationsStore, searchStore } = useStore();
@@ -269,6 +272,12 @@ function PrivateRoutes() {
           strict
           path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
           component={enhancedComponents.LiveSession}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(KAI_PATH, siteIdList)}
+          component={enhancedComponents.Kai}
         />
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />

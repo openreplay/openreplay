@@ -9,6 +9,7 @@ import ManageUsersTab from './components/ManageUsersTab';
 import SideMenu from './components/SideMenu';
 import { useTranslation } from 'react-i18next';
 import { Smartphone, AppWindow } from 'lucide-react';
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 interface Props {
   match: {
@@ -66,7 +67,7 @@ function Onboarding(props: Props) {
       <div className="w-full">
         <div
           className="bg-white w-full rounded-lg mx-auto mb-8 border"
-          style={{ maxWidth: '1360px' }}
+          style={{ maxWidth: PANEL_SIZES.maxWidth }}
         >
           <Switch>
             <Route exact strict path={route(OB_TABS.INSTALLING)}>

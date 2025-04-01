@@ -33,6 +33,8 @@ import UiPlayerStore from './uiPlayerStore';
 import userStore from './userStore';
 import UxtestingStore from './uxtestingStore';
 import WeeklyReportStore from './weeklyReportConfigStore';
+import KaiStore from './kaiStore';
+
 import logger from '@/logger';
 
 const projectStore = new ProjectsStore();
@@ -81,64 +83,36 @@ const client = new APIClient();
 
 export class RootStore {
   dashboardStore: DashboardStore;
-
   metricStore: MetricStore;
-
   funnelStore: FunnelStore;
-
   settingsStore: SettingsStore;
-
   userStore: typeof userStore;
-
   roleStore: RoleStore;
-
   auditStore: AuditStore;
-
   errorStore: ErrorStore;
-
   notificationStore: NotificationStore;
-
   sessionStore: SessionStore;
-
   notesStore: NotesStore;
-
   recordingsStore: RecordingsStore;
-
   assistMultiviewStore: AssistMultiviewStore;
-
   weeklyReportStore: WeeklyReportStore;
-
   alertsStore: AlertStore;
-
   featureFlagsStore: FeatureFlagsStore;
-
   uxtestingStore: UxtestingStore;
-
   tagWatchStore: TagWatchStore;
-
   aiSummaryStore: AiSummaryStore;
-
   aiFiltersStore: AiFiltersStore;
-
   spotStore: SpotStore;
-
   loginStore: LoginStore;
-
   filterStore: FilterStore;
-
   uiPlayerStore: UiPlayerStore;
-
   issueReportingStore: IssueReportingStore;
-
   customFieldStore: CustomFieldStore;
-
   searchStore: SearchStore;
-
   searchStoreLive: SearchStoreLive;
-
   integrationsStore: IntegrationsStore;
-
   projectsStore: ProjectsStore;
+  kaiStore: KaiStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -171,6 +145,7 @@ export class RootStore {
     this.searchStore = searchStore;
     this.searchStoreLive = searchStoreLive;
     this.integrationsStore = new IntegrationsStore();
+    this.kaiStore = new KaiStore();
   }
 
   initClient() {

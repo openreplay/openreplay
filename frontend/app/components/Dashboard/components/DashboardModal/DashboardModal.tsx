@@ -8,6 +8,7 @@ import { dashboardMetricCreate, withSiteId } from 'App/routes';
 import DashboardForm from '../DashboardForm';
 import DashboardMetricSelection from '../DashboardMetricSelection';
 import { useTranslation } from 'react-i18next';
+import { PANEL_SIZES } from 'App/constants/panelSizes'
 
 interface Props extends RouteComponentProps {
   history: any;
@@ -57,7 +58,7 @@ function DashboardModal(props: Props) {
           backgroundColor: '#FAFAFA',
           zIndex: 999,
           width: '100%',
-          maxWidth: '1360px',
+          maxWidth: PANEL_SIZES.maxWidth,
         }}
       >
         <div className="mb-6 flex items-end justify-between">

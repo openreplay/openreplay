@@ -2,11 +2,12 @@ import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
 import DashboardList from './DashboardList';
 import Header from './Header';
+import { PANEL_SIZES } from 'App/constants/panelSizes'
 
-function DashboardsView({ history, siteId }: { history: any; siteId: string }) {
+function DashboardsView() {
   return (
     <div
-      style={{ maxWidth: '1360px', margin: 'auto' }}
+      style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}
       className="bg-white rounded-lg py-4 border shadow-sm"
     >
       <Header />

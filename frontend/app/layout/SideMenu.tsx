@@ -15,6 +15,7 @@ import {
 import { MODULES } from 'Components/Client/Modules';
 import { Icon } from 'UI';
 import SVG from 'UI/SVG';
+import { hasAi } from 'App/utils/split-utils'
 
 import { useStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -41,7 +42,7 @@ function SideMenu(props: Props) {
 
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
-  const { searchStore, projectsStore, userStore } = useStore();
+  const { projectsStore, userStore } = useStore();
   const spotOnly = userStore.scopeState === 1;
   const { account } = userStore;
   const modules = account.settings?.modules ?? [];
@@ -103,6 +104,7 @@ function SideMenu(props: Props) {
                 modules.includes(MODULES.USABILITY_TESTS),
               item.isAdmin && !isAdmin,
               item.isEnterprise && !isEnterprise,
+              item.key === MENU.KAI && !hasAi
             ].some((cond) => cond);
 
             return { ...item, hidden: isHidden };
@@ -145,6 +147,7 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
     [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
     [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
+    [MENU.KAI]: () => withSiteId(routes.kai(), siteId),
   };
 
   const handleClick = (item: any) => {
