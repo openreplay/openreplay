@@ -1,7 +1,8 @@
 import React from 'react';
 import { withRouter } from 'react-router-dom';
 import { Switch, Route, Redirect } from 'react-router';
-import { CLIENT_TABS, client as clientRoute } from 'App/routes';
+import { client as clientRoute } from 'App/routes';
+import { CLIENT_TABS } from 'App/utils/routeUtils';
 
 import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
 import Modules from 'Components/Client/Modules';
@@ -9,7 +10,7 @@ import ProfileSettings from './ProfileSettings';
 import Integrations from './Integrations';
 import UserView from './Users/UsersView';
 import AuditView from './Audit/AuditView';
-import Sites from './Sites';
+import Billing from './Billing/Billing';
 import Projects from './Projects';
 import CustomFields from './CustomFields';
 import Webhooks from './Webhooks';
@@ -63,6 +64,12 @@ export default class Client extends React.PureComponent {
         strict
         path={clientRoute(CLIENT_TABS.CUSTOM_FIELDS)}
         component={CustomFields}
+      />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.BILLING)}
+        component={Billing}
       />
       <Route
         exact
