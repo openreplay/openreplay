@@ -28,7 +28,7 @@ export default class CanvasReceiver {
   // sendSignal – for sending signals (offer/answer/ICE)
   constructor(
     private readonly peerIdPrefix: string,
-    private readonly config: RTCIceServer[] | null,
+    private readonly config: RTCIceServer[],
     private readonly getNode: MessageManager['getNode'],
     private readonly agentInfo: Record<string, any>,
     private readonly socket: Socket,
@@ -66,9 +66,7 @@ export default class CanvasReceiver {
     id: string,
   ): Promise<void> {
     const pc = new RTCPeerConnection({
-      iceServers: this.config
-        ? this.config
-        : [{ urls: 'stun:stun.l.google.com:19302' }],
+      iceServers: this.config,
     });
 
     // Save the connection
@@ -175,44 +173,6 @@ function spawnVideo(stream: MediaStream, node: VElement) {
   document.addEventListener('click', startStream);
 
   return videoEl;
-}
-
-function spawnDebugVideo(stream: MediaStream, node: VElement) {
-  const video = document.createElement('video');
-  video.id = 'canvas-or-testing';
-  video.style.border = '1px solid red';
-  video.setAttribute('autoplay', 'true');
-  video.setAttribute('muted', 'true');
-  video.setAttribute('playsinline', 'true');
-  video.setAttribute('crossorigin', 'anonymous');
-
-  const coords = node.node.getBoundingClientRect();
-
-  Object.assign(video.style, {
-    position: 'absolute',
-    left: `${coords.left}px`,
-    top: `${coords.top}px`,
-    width: `${coords.width}px`,
-    height: `${coords.height}px`,
-  });
-  video.width = coords.width;
-  video.height = coords.height;
-  video.srcObject = stream;
-
-  document.body.appendChild(video);
-  video
-    .play()
-    .then(() => {
-      console.debug('started streaming canvas');
-    })
-    .catch((e) => {
-      console.error(e);
-      const waiter = () => {
-        void video.play();
-        document.removeEventListener('click', waiter);
-      };
-      document.addEventListener('click', waiter);
-    });
 }
 
 function checkId(id: string, cId: string): boolean {

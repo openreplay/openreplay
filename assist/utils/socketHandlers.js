@@ -42,7 +42,7 @@ const findSessionSocketId = async (io, roomId, tabId) => {
 };
 
 async function getRoomData(io, roomID) {
-    let tabsCount = 0, agentsCount = 0, tabIDs = [], agentIDs = [], config = null;
+    let tabsCount = 0, agentsCount = 0, tabIDs = [], agentIDs = [], config = null, agentInfos = [];
     const connected_sockets = await io.in(roomID).fetchSockets();
     if (connected_sockets.length > 0) {
         for (let socket of connected_sockets) {
@@ -52,6 +52,7 @@ async function getRoomData(io, roomID) {
             } else {
                 agentsCount++;
                 agentIDs.push(socket.id);
+                agentInfos.push({ ...socket.handshake.query.agentInfo, socketId: socket.id });
                 if (socket.handshake.query.config !== undefined) {
                     config = socket.handshake.query.config;
                 }
@@ -60,8 +61,10 @@ async function getRoomData(io, roomID) {
     } else {
         tabsCount = -1;
         agentsCount = -1;
+        agentInfos = [];
+        agentIDs = [];
     }
-    return {tabsCount, agentsCount, tabIDs, agentIDs, config};
+    return {tabsCount, agentsCount, tabIDs, agentIDs, config, agentInfos};
 }
 
 function processNewSocket(socket) {
@@ -81,7 +84,7 @@ async function onConnect(socket) {
     IncreaseOnlineConnections(socket.handshake.query.identity);
 
     const io = getServer();
-    const {tabsCount, agentsCount, tabIDs, agentIDs, config} = await getRoomData(io, socket.handshake.query.roomId);
+    const {tabsCount, agentsCount, tabIDs, agentInfos, agentIDs, config} = await getRoomData(io, socket.handshake.query.roomId);
 
     if (socket.handshake.query.identity === IDENTITIES.session) {
         // Check if session with the same tabID already connected, if so, refuse new connexion
@@ -105,6 +108,7 @@ async function onConnect(socket) {
             logger.debug(`notifying new session about agent-existence`);
             io.to(socket.id).emit(EVENTS_DEFINITION.emit.WEBRTC_CONFIG, config);
             io.to(socket.id).emit(EVENTS_DEFINITION.emit.AGENTS_CONNECTED, agentIDs);
+            io.to(socket.id).emit(EVENTS_DEFINITION.emit.AGENTS_INFO_CONNECTED, agentInfos);
             socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.SESSION_RECONNECTED, socket.id);
         }
     } else if (tabsCount <= 0) {
