@@ -337,6 +337,9 @@ export default class TabSessionManager {
       case MType.Profiler:
         this.lists.lists.profiles.append(msg);
         break;
+      case MType.LongAnimationTask:
+        this.lists.lists.longTask.append(msg);
+        break;
       /* ===|=== */
       default:
         switch (msg.tp) {

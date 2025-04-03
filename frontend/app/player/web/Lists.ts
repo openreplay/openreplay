@@ -11,6 +11,7 @@ import {
   ConsoleLog as logMsg,
   WsChannel as websocketMsg,
   Profiler as profilerMsg,
+  LongAnimationTask as longTaskMsg,
 } from 'Player/web/messages';
 import ListWalker from '../common/ListWalker';
 import ListWalkerWithMarks from '../common/ListWalkerWithMarks';
@@ -43,6 +44,7 @@ type MsgTypeMap = {
   profilerList: profilerMsg;
   exceptionsList: exceptionsMsg;
   frustrationsList: Issue | InjectedEvent;
+  longTaskList: longTaskMsg;
 };
 type ListMessageType<K> = K extends keyof MsgTypeMap
   ? Array<MsgTypeMap[K]>
@@ -66,6 +68,7 @@ const MARKED_LIST_NAMES = [
   'fetch',
   'stack',
   'websocket',
+  'longTask',
 ] as const;
 
 const LIST_NAMES = [...SIMPLE_LIST_NAMES, ...MARKED_LIST_NAMES] as const;
