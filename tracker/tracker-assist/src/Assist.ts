@@ -440,35 +440,6 @@ export default class Assist {
       }
     });
 
-    socket.on("AGENTS_CONNECTED", (ids: string[]) => {
-      this.cleanCanvasConnections();
-      ids.forEach((id) => {
-        const agentInfo = this.agents[id]?.agentInfo;
-        this.agents[id] = {
-          agentInfo,
-          onDisconnect: this.options.onAgentConnect?.(agentInfo),
-        };
-      });
-      if (this.app.active()) {
-        this.assistDemandedRestart = true;
-        this.app.stop();
-        this.app.waitStatus(0).then(() => {
-          this.app.allowAppStart();
-          setTimeout(() => {
-            this.app
-              .start()
-              .then(() => {
-                this.assistDemandedRestart = false;
-              })
-              .then(() => {
-                this.remoteControl?.reconnect(ids);
-              })
-              .catch((e) => app.debug.error(e));
-          }, 100);
-        });
-      }
-    });
-
     socket.on("AGENTS_INFO_CONNECTED", (agentsInfo: AgentInfo[]) => {
       this.cleanCanvasConnections();
       agentsInfo.forEach((agentInfo) => {
@@ -481,6 +452,7 @@ export default class Assist {
       if (this.app.active()) {
         this.assistDemandedRestart = true;
         this.app.stop();
+        this.app.clearBuffers();
         this.app.waitStatus(0).then(() => {
           this.app.allowAppStart();
           setTimeout(() => {
