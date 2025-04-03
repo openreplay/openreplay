@@ -44,12 +44,12 @@ interface Props {
 
 const FilterAutoComplete = observer(
   ({
-    params = {},
-    onClose,
-    onApply,
-    values,
-    placeholder,
-  }: {
+     params = {},
+     onClose,
+     onApply,
+     values,
+     placeholder
+   }: {
     params: any;
     values: string[];
     onClose: () => void;
@@ -57,32 +57,32 @@ const FilterAutoComplete = observer(
     placeholder?: string;
   }) => {
     const [options, setOptions] = useState<{ value: string; label: string }[]>(
-      [],
+      []
     );
     const [initialFocus, setInitialFocus] = useState(false);
     const [loading, setLoading] = useState(false);
     const { filterStore, projectsStore } = useStore();
     const _params = processKey(params);
-    const filterKey = `${projectsStore.siteId}_${_params.type}${_params.key || ''}`;
+    const filterKey = `${projectsStore.siteId}_${params.id}`;
     const topValues = filterStore.topValues[filterKey] || [];
 
     React.useEffect(() => {
-      setOptions([])
-    }, [projectsStore.siteId])
+      setOptions([]);
+    }, [projectsStore.siteId]);
 
     const loadTopValues = async () => {
-      setLoading(true)
+      setLoading(true);
       if (projectsStore.siteId) {
-        await filterStore.fetchTopValues(_params.type, projectsStore.siteId, _params.key);
+        await filterStore.fetchTopValues(params.id, projectsStore.siteId);
       }
-      setLoading(false)
+      setLoading(false);
     };
 
     useEffect(() => {
       if (topValues.length > 0) {
         const mappedValues = topValues.map((i) => ({
           value: i.value,
-          label: i.value,
+          label: i.value
         }));
         setOptions(mappedValues);
       }
@@ -96,7 +96,7 @@ const FilterAutoComplete = observer(
       if (!inputValue.length) {
         const mappedValues = topValues.map((i) => ({
           value: i.value,
-          label: i.value,
+          label: i.value
         }));
         setOptions(mappedValues);
         return;
@@ -104,8 +104,8 @@ const FilterAutoComplete = observer(
       setLoading(true);
       try {
         const data = await searchService.fetchAutoCompleteValues({
-          ..._params,
-          q: inputValue,
+          type: params.name?.toLowerCase(),
+          q: inputValue
         });
         const _options =
           data.map((i: any) => ({ value: i.value, label: i.value })) || [];
@@ -119,7 +119,7 @@ const FilterAutoComplete = observer(
 
     const debouncedLoadOptions = useCallback(debounce(loadOptions, 500), [
       params,
-      topValues,
+      topValues
     ]);
 
     const handleInputChange = (newValue: string) => {
@@ -146,7 +146,7 @@ const FilterAutoComplete = observer(
         placeholder={placeholder}
       />
     );
-  },
+  }
 );
 
 function AutoCompleteController(props: Props) {

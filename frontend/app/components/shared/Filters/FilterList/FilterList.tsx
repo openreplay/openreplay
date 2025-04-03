@@ -33,14 +33,15 @@ interface Props {
 export const FilterList = observer((props: Props) => {
   const { t } = useTranslation();
   const {
-    observeChanges = () => {},
+    observeChanges = () => {
+    },
     filter,
     excludeFilterKeys = [],
     isConditional,
     onAddFilter,
     readonly,
     borderless,
-    excludeCategory,
+    excludeCategory
   } = props;
 
   const { filters } = filter;
@@ -53,13 +54,13 @@ export const FilterList = observer((props: Props) => {
     <div
       className={cn(
         'bg-white',
-        borderless ? '' : 'pb-2 px-4 rounded-xl border border-gray-lighter',
+        borderless ? '' : 'pb-2 px-4 rounded-xl border border-gray-lighter'
       )}
       style={{
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
         borderBottomRightRadius: props.mergeDown ? 0 : undefined,
         borderTopLeftRadius: props.mergeUp ? 0 : undefined,
-        borderTopRightRadius: props.mergeUp ? 0 : undefined,
+        borderTopRightRadius: props.mergeUp ? 0 : undefined
       }}
     >
       <div className={'flex items-center pt-2'} style={{ gap: '0.65rem' }}>
@@ -91,7 +92,7 @@ export const FilterList = observer((props: Props) => {
             className="hover:bg-active-blue px-5 "
             style={{
               marginLeft: '-1rem',
-              width: 'calc(100% + 2rem)',
+              width: 'calc(100% + 2rem)'
             }}
           >
             <FilterItem
@@ -106,7 +107,7 @@ export const FilterList = observer((props: Props) => {
               isConditional={isConditional}
             />
           </div>
-        ) : null,
+        ) : null
       )}
     </div>
   );
@@ -115,7 +116,8 @@ export const FilterList = observer((props: Props) => {
 export const EventsList = observer((props: Props) => {
   const { t } = useTranslation();
   const {
-    observeChanges = () => {},
+    observeChanges = () => {
+    },
     filter,
     hideEventsOrder = false,
     saveRequestPayloads,
@@ -126,7 +128,7 @@ export const EventsList = observer((props: Props) => {
     onAddFilter,
     cannotAdd,
     excludeCategory,
-    borderless,
+    borderless
   } = props;
 
   const { filters } = filter;
@@ -143,7 +145,7 @@ export const EventsList = observer((props: Props) => {
 
   const [hoveredItem, setHoveredItem] = React.useState<Record<string, any>>({
     i: null,
-    position: null,
+    position: null
   });
   const [draggedInd, setDraggedItem] = React.useState<number | null>(null);
 
@@ -164,7 +166,7 @@ export const EventsList = observer((props: Props) => {
       }
       return draggedInd < hoveredIndex ? hoveredIndex - 1 : hoveredIndex;
     },
-    [],
+    []
   );
 
   const handleDragStart = React.useCallback(
@@ -176,7 +178,7 @@ export const EventsList = observer((props: Props) => {
         ev.dataTransfer.setDragImage(el, 0, 0);
       }
     },
-    [],
+    []
   );
 
   const handleDrop = React.useCallback(
@@ -187,7 +189,7 @@ export const EventsList = observer((props: Props) => {
       const newPosition = calculateNewPosition(
         draggedInd,
         hoveredItem.i,
-        hoveredItem.position,
+        hoveredItem.position
       );
 
       const reorderedItem = newItems.splice(draggedInd, 1)[0];
@@ -205,15 +207,15 @@ export const EventsList = observer((props: Props) => {
       hoveredItem.position,
       props,
       setHoveredItem,
-      setDraggedItem,
-    ],
+      setDraggedItem
+    ]
   );
 
   const eventsNum = filters.filter((i: any) => i.isEvent).length;
   return (
     <div
       className={cn(
-      'bg-white',
+        'bg-white',
         borderless ? '' : 'py-2 px-4 rounded-xl border border-gray-lighter'
       )
       }
@@ -222,7 +224,7 @@ export const EventsList = observer((props: Props) => {
         borderBottomRightRadius: props.mergeDown ? 0 : undefined,
         borderTopLeftRadius: props.mergeUp ? 0 : undefined,
         borderTopRightRadius: props.mergeUp ? 0 : undefined,
-        marginBottom: props.mergeDown ? '-1px' : undefined,
+        marginBottom: props.mergeDown ? '-1px' : undefined
       }}
     >
       <div className="flex items-center mb-2 gap-2">
@@ -232,8 +234,8 @@ export const EventsList = observer((props: Props) => {
             mode="events"
             filter={undefined}
             onFilterClick={onAddFilter}
-            excludeFilterKeys={excludeFilterKeys}
-            excludeCategory={excludeCategory}
+            // excludeFilterKeys={excludeFilterKeys}
+            // excludeCategory={excludeCategory}
           >
             <Button
               type="default"
@@ -263,8 +265,8 @@ export const EventsList = observer((props: Props) => {
               className={cn(
                 'hover:bg-active-blue px-5 pe-3 gap-2 items-center flex',
                 {
-                  'bg-[#f6f6f6]': hoveredItem.i === filterIndex,
-                },
+                  'bg-[#f6f6f6]': hoveredItem.i === filterIndex
+                }
               )}
               style={{
                 pointerEvents: 'unset',
@@ -290,7 +292,7 @@ export const EventsList = observer((props: Props) => {
                   hoveredItem.i === filterIndex &&
                   hoveredItem.position === 'bottom'
                     ? '1px dashed #888'
-                    : undefined,
+                    : undefined
               }}
               id={`${filter.key}-${filterIndex}`}
               onDragOver={(e) => handleDragOverEv(e, filterIndex)}
@@ -305,7 +307,7 @@ export const EventsList = observer((props: Props) => {
                     handleDragStart(
                       e,
                       filterIndex,
-                      `${filter.key}-${filterIndex}`,
+                      `${filter.key}-${filterIndex}`
                     )
                   }
                   onDragEnd={() => {
@@ -313,7 +315,7 @@ export const EventsList = observer((props: Props) => {
                     setDraggedItem(null);
                   }}
                   style={{
-                    cursor: draggedInd !== null ? 'grabbing' : 'grab',
+                    cursor: draggedInd !== null ? 'grabbing' : 'grab'
                   }}
                 >
                   <GripVertical size={16} />
@@ -326,13 +328,13 @@ export const EventsList = observer((props: Props) => {
                 onRemoveFilter={() => onRemoveFilter(filterIndex)}
                 saveRequestPayloads={saveRequestPayloads}
                 disableDelete={cannotDeleteFilter}
-                excludeFilterKeys={excludeFilterKeys}
+                // excludeFilterKeys={excludeFilterKeys}
                 readonly={props.readonly}
                 isConditional={isConditional}
-                excludeCategory={excludeCategory}
+                // excludeCategory={excludeCategory}
               />
             </div>
-          ) : null,
+          ) : null
         )}
       </div>
     </div>

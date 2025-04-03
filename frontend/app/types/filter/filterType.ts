@@ -181,7 +181,7 @@ export enum IssueCategory {
 }
 
 export enum FilterType {
-  STRING = 'STRING',
+  STRING = 'string',
   ISSUE = 'ISSUE',
   BOOLEAN = 'BOOLEAN',
   NUMBER = 'NUMBER',

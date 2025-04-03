@@ -28,18 +28,18 @@ export const checkValues = (key: any, value: any) => {
 };
 
 export const filterMap = ({
-  category,
-  value,
-  key,
-  operator,
-  sourceOperator,
-  source,
-  custom,
-  isEvent,
-  filters,
-  sort,
-  order
-}: any) => ({
+                            category,
+                            value,
+                            key,
+                            operator,
+                            sourceOperator,
+                            source,
+                            custom,
+                            isEvent,
+                            filters,
+                            sort,
+                            order
+                          }: any) => ({
   value: checkValues(key, value),
   custom,
   type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
@@ -60,37 +60,22 @@ export const TAB_MAP: any = {
 
 class SearchStore {
   list: SavedSearch[] = [];
-
   latestRequestTime: number | null = null;
-
   latestList = List();
-
   alertMetricId: number | null = null;
-
   instance = new Search();
-
   savedSearch: ISavedSearch = new SavedSearch();
-
   filterSearchList: any = {};
-
   currentPage = 1;
-
   pageSize = PER_PAGE;
-
   activeTab = { name: 'All', type: 'all' };
-
   scrollY = 0;
-
   sessions = List();
-
   total: number = 0;
   latestSessionCount: number = 0;
   loadingFilterSearch = false;
-
   isSaving: boolean = false;
-
   activeTags: any[] = [];
-
   urlParsed: boolean = false;
   searchInProgress = false;
 
@@ -146,7 +131,7 @@ class SearchStore {
 
   editSavedSearch(instance: Partial<SavedSearch>) {
     this.savedSearch = new SavedSearch(
-      Object.assign(this.savedSearch.toData(), instance),
+      Object.assign(this.savedSearch.toData(), instance)
     );
   }
 
@@ -172,14 +157,14 @@ class SearchStore {
         this.filterSearchList = response.reduce(
           (
             acc: Record<string, { projectId: number; value: string }[]>,
-            item: any,
+            item: any
           ) => {
             const { projectId, type, value } = item;
             if (!acc[type]) acc[type] = [];
             acc[type].push({ projectId, value });
             return acc;
           },
-          {},
+          {}
         );
       })
       .catch((error: any) => {
@@ -207,7 +192,7 @@ class SearchStore {
 
   resetTags = () => {
     this.activeTags = ['all'];
-  }
+  };
 
   toggleTag(tag?: iTag) {
     if (!tag) {
@@ -302,6 +287,7 @@ class SearchStore {
         (i: FilterItem) => i.key === filter.key
       );
 
+    // new random key
     filter.value = checkFilterValue(filter.value);
     filter.filters = filter.filters
       ? filter.filters.map((subFilter: any) => ({
@@ -319,6 +305,7 @@ class SearchStore {
       oldFilter.merge(updatedFilter);
       this.updateFilter(index, updatedFilter);
     } else {
+      filter.key = Math.random().toString(36).substring(7);
       this.instance.filters.push(filter);
       this.instance = new Search({
         ...this.instance.toData()
@@ -332,12 +319,23 @@ class SearchStore {
     }
   }
 
+  moveFilter(draggedIndex: number, newPosition: number) {
+    const newFilters = this.instance.filters.slice();
+    const [removed] = newFilters.splice(draggedIndex, 1);
+    newFilters.splice(newPosition, 0, removed);
+
+    this.instance = new Search({
+      ...this.instance.toData(),
+      filters: newFilters
+    });
+  }
+
   addFilterByKeyAndValue(
     key: any,
     value: any,
     operator?: string,
     sourceOperator?: string,
-    source?: string,
+    source?: string
   ) {
     const defaultFilter = { ...filtersMap[key] };
     defaultFilter.value = value;
@@ -353,20 +351,19 @@ class SearchStore {
     this.addFilter(defaultFilter);
   }
 
-  refreshFilterOptions() {
-    // TODO
-  }
-
   updateSearch = (search: Partial<Search>) => {
     this.instance = Object.assign(this.instance, search);
   };
 
-  updateFilter = (index: number, search: Partial<FilterItem>) => {
-    const newFilters = this.instance.filters.map((_filter: any, i: any) => {
-      if (i === index) {
-        return search;
+  updateFilter = (key: string, search: Partial<FilterItem>) => {
+    const newFilters = this.instance.filters.map((f: any) => {
+      if (f.key === key) {
+        return {
+          ...f,
+          ...search
+        };
       }
-      return _filter;
+      return f;
     });
 
     this.instance = new Search({
@@ -375,9 +372,9 @@ class SearchStore {
     });
   };
 
-  removeFilter = (index: number) => {
+  removeFilter = (key: string) => {
     const newFilters = this.instance.filters.filter(
-      (_filter: any, i: any) => i !== index,
+      (f: any) => f.key !== key
     );
 
     this.instance = new Search({
@@ -390,13 +387,9 @@ class SearchStore {
     this.scrollY = y;
   };
 
-  async fetchAutoplaySessions(page: number): Promise<void> {
-    // TODO
-  }
-
-  fetchSessions = async (
+  async fetchSessions(
     force: boolean = false,
-    bookmarked: boolean = false,
+    bookmarked: boolean = false
   ): Promise<void> => {
     if (this.searchInProgress) return;
     const filter = this.instance.toSearch();

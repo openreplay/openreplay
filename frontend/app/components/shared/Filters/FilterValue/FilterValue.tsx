@@ -16,6 +16,7 @@ interface Props {
   onUpdate: (filter: any) => void;
   isConditional?: boolean;
 }
+
 function FilterValue(props: Props) {
   const { filter } = props;
   const isAutoOpen = filter.autoOpen;
@@ -29,7 +30,7 @@ function FilterValue(props: Props) {
   }, [isAutoOpen]);
   const [durationValues, setDurationValues] = useState({
     minDuration: filter.value?.[0],
-    maxDuration: filter.value.length > 1 ? filter.value[1] : filter.value[0],
+    maxDuration: filter.value.length > 1 ? filter.value[1] : filter.value[0]
   });
   const showCloseButton = filter.value.length > 1;
 
@@ -44,7 +45,7 @@ function FilterValue(props: Props) {
 
   const onRemoveValue = (valueIndex: any) => {
     const newValue = filter.value.filter(
-      (_: any, index: any) => index !== valueIndex,
+      (_: any, index: any) => index !== valueIndex
     );
     props.onUpdate({ ...filter, value: newValue });
   };
@@ -60,7 +61,7 @@ function FilterValue(props: Props) {
   };
 
   const debounceOnSelect = React.useCallback(debounce(onChange, 500), [
-    onChange,
+    onChange
   ]);
 
   const onDurationChange = (newValues: any) => {
@@ -77,14 +78,19 @@ function FilterValue(props: Props) {
       ) {
         props.onUpdate({
           ...filter,
-          value: [durationValues.minDuration, durationValues.maxDuration],
+          value: [durationValues.minDuration, durationValues.maxDuration]
         });
       }
     }
   };
 
-  const getParms = (key: any) => {
-    let params: any = { type: filter.key };
+  const getParams = (key: any) => {
+    let params: any = {
+      type: filter.key,
+      name: filter.name,
+      isEvent: filter.isEvent,
+      id: filter.id
+    };
     switch (filter.category) {
       case FilterCategory.METADATA:
         params = { type: FilterKey.METADATA, key };
@@ -99,6 +105,7 @@ function FilterValue(props: Props) {
 
   const renderValueFiled = (value: any[]) => {
     const showOrButton = filter.value.length > 1;
+
     function BaseFilterLocalAutoComplete(props) {
       return (
         <FilterAutoCompleteLocal
@@ -115,6 +122,7 @@ function FilterValue(props: Props) {
         />
       );
     }
+
     function BaseDropDown(props) {
       return (
         <FilterValueDropdown
@@ -127,6 +135,7 @@ function FilterValue(props: Props) {
         />
       );
     }
+
     switch (filter.type) {
       case FilterType.NUMBER_MULTIPLE:
         return (
@@ -145,7 +154,23 @@ function FilterValue(props: Props) {
           />
         );
       case FilterType.STRING:
-        return <BaseFilterLocalAutoComplete placeholder={filter.placeholder} />;
+        // return <BaseFilterLocalAutoComplete placeholder={filter.placeholder} />;
+        return <FilterAutoComplete
+          value={value}
+          isAutoOpen={isAutoOpen}
+          showCloseButton={showCloseButton}
+          showOrButton={showOrButton}
+          onApplyValues={onApplyValues}
+          onRemoveValue={(index) => onRemoveValue(index)}
+          method="GET"
+          endpoint="/PROJECT_ID/events/search"
+          params={getParams(filter.key)}
+          headerText=""
+          placeholder={filter.placeholder}
+          onSelect={(e, item, index) => onChange(e, item, index)}
+          icon={filter.icon}
+          modalProps={{ placeholder: 'Search' }}
+        />;
       case FilterType.DROPDOWN:
         return <BaseDropDown />;
       case FilterType.ISSUE:
@@ -181,7 +206,7 @@ function FilterValue(props: Props) {
             onRemoveValue={(index) => onRemoveValue(index)}
             method="GET"
             endpoint="/PROJECT_ID/events/search"
-            params={getParms(filter.key)}
+            params={getParams(filter.key)}
             headerText=""
             placeholder={filter.placeholder}
             onSelect={(e, item, index) => onChange(e, item, index)}
@@ -196,7 +221,7 @@ function FilterValue(props: Props) {
     <div
       id="ignore-outside"
       className={cn('grid gap-3 w-fit flex-wrap my-1.5', {
-        'grid-cols-2': filter.hasSource,
+        'grid-cols-2': filter.hasSource
       })}
     >
       {renderValueFiled(filter.value)}

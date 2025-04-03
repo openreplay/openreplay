@@ -1,107 +1,128 @@
 import React, { useEffect } from 'react';
-import { debounce } from 'App/utils';
-import { FilterList, EventsList } from 'Shared/Filters/FilterList';
-
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import useSessionSearchQueryHandler from 'App/hooks/useSessionSearchQueryHandler';
-import { FilterKey } from 'App/types/filter/filterType';
-import { addOptionsToFilter } from 'App/types/filter/newFilter';
+import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
+import FilterSelection from 'Shared/Filters/FilterSelection';
+import { Button, Divider } from 'antd';
+import { Plus } from 'lucide-react';
+import cn from 'classnames';
+import { Filter } from '@/mstore/types/filterConstants';
+import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 
-let debounceFetch: any = () => {};
+let debounceFetch: any = () => {
+};
+
 function SessionFilters() {
-  const { searchStore, projectsStore, customFieldStore, tagWatchStore } =
+  const { searchStore, projectsStore, filterStore } =
     useStore();
 
-  const appliedFilter = searchStore.instance;
-  const metaLoading = customFieldStore.isLoading;
+  const searchInstance = searchStore.instance;
   const saveRequestPayloads =
     projectsStore.instance?.saveRequestPayloads ?? false;
-  const activeProject = projectsStore.active;
 
-  const reloadTags = async () => {
-    const tags = await tagWatchStore.getTags();
-    if (tags) {
-      addOptionsToFilter(
-        FilterKey.TAGGED_ELEMENT,
-        tags.map((tag) => ({
-          label: tag.name,
-          value: tag.tagId.toString(),
-        })),
-      );
-      searchStore.refreshFilterOptions();
-    }
-  };
-
-  useEffect(() => {
-    // Add default location/screen filter if no filters are present
-    if (
-      searchStore.instance.filters.length === 0 &&
-      activeProject?.platform === 'web'
-    ) {
-      searchStore.addFilterByKeyAndValue(FilterKey.LOCATION, '', 'isAny');
-    }
-    void reloadTags();
-  }, [projectsStore.activeSiteId, activeProject]);
-
-  useSessionSearchQueryHandler({
-    appliedFilter,
-    loading: metaLoading,
-    onBeforeLoad: async () => {
-      await reloadTags();
-    },
-  });
+  const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
+  const eventOptions = allFilterOptions.filter(i => i.isEvent);
+  const propertyOptions = allFilterOptions.filter(i => !i.isEvent);
 
   const onAddFilter = (filter: any) => {
     filter.autoOpen = true;
     searchStore.addFilter(filter);
   };
 
-  const onUpdateFilter = (filterIndex: any, filter: any) => {
-    searchStore.updateFilter(filterIndex, filter);
-  };
-
-  const onFilterMove = (newFilters: any) => {
-    searchStore.updateSearch({ ...appliedFilter, filters: newFilters });
-    // debounceFetch();
-  };
-
-  const onRemoveFilter = (filterIndex: any) => {
-    searchStore.removeFilter(filterIndex);
-
-    // debounceFetch();
-  };
-
   const onChangeEventsOrder = (e: any, { value }: any) => {
     searchStore.edit({
-      eventsOrder: value,
+      eventsOrder: value
     });
-
-    // debounceFetch();
   };
 
   return (
     <div className="relative">
-      <EventsList
-        filter={appliedFilter}
-        onAddFilter={onAddFilter}
-        onUpdateFilter={onUpdateFilter}
-        onRemoveFilter={onRemoveFilter}
-        onChangeEventsOrder={onChangeEventsOrder}
-        saveRequestPayloads={saveRequestPayloads}
-        onFilterMove={onFilterMove}
-        mergeDown
-      />
-      <FilterList
-        mergeUp
-        filter={appliedFilter}
-        onAddFilter={onAddFilter}
-        onUpdateFilter={onUpdateFilter}
-        onRemoveFilter={onRemoveFilter}
-        onChangeEventsOrder={onChangeEventsOrder}
-        saveRequestPayloads={saveRequestPayloads}
-        onFilterMove={onFilterMove}
-      />
+      <div
+        className={cn(
+          'bg-white',
+          'py-2 px-4 rounded-xl border border-gray-lighter'
+        )}
+      >
+        <FilterListHeader
+          title={'Events'}
+          showEventsOrder={true}
+          orderProps={searchInstance}
+          onChangeOrder={onChangeEventsOrder}
+          filterSelection={
+            <FilterSelection
+              filters={eventOptions}
+              onFilterClick={(newFilter) => {
+                console.log('newFilter', newFilter);
+                onAddFilter(newFilter);
+              }}>
+              <Button type="default" size="small">
+                <div className="flex items-center gap-1">
+                  <Plus size={16} strokeWidth={1} />
+                  <span>Add Event</span>
+                </div>
+              </Button>
+            </FilterSelection>
+          }
+        />
+
+        <UnifiedFilterList
+          title="Events"
+          filters={searchInstance.filters.filter(i => i.isEvent)}
+          isDraggable={true}
+          showIndices={true}
+          handleRemove={function(key: string): void {
+            searchStore.removeFilter(key);
+          }}
+          handleUpdate={function(key: string, updatedFilter: any): void {
+            searchStore.updateFilter(key, updatedFilter);
+          }}
+          handleAdd={function(newFilter: Filter): void {
+            searchStore.addFilter(newFilter);
+          }}
+          handleMove={function(draggedIndex: number, newPosition: number): void {
+            searchStore.moveFilter(draggedIndex, newPosition);
+          }}
+        />
+
+        <Divider className="my-3" />
+
+        <FilterListHeader
+          title={'Filters'}
+          filterSelection={
+            <FilterSelection
+              filters={propertyOptions}
+              onFilterClick={(newFilter) => {
+                onAddFilter(newFilter);
+              }}
+            >
+              <Button type="default" size="small">
+                <div className="flex items-center gap-1">
+                  <Plus size={16} strokeWidth={1} />
+                  <span>Filter</span>
+                </div>
+              </Button>
+            </FilterSelection>
+          } />
+
+        <UnifiedFilterList
+          title="Filters"
+          filters={searchInstance.filters.filter(i => !i.isEvent)}
+          isDraggable={false}
+          showIndices={false}
+          handleRemove={function(key: string): void {
+            searchStore.removeFilter(key);
+          }}
+          handleUpdate={function(key: string, updatedFilter: any): void {
+            searchStore.updateFilter(key, updatedFilter);
+          }}
+          handleAdd={function(newFilter: Filter): void {
+            searchStore.addFilter(newFilter);
+          }}
+          handleMove={function(draggedIndex: number, newPosition: number): void {
+            searchStore.moveFilter(draggedIndex, newPosition);
+          }}
+        />
+      </div>
     </div>
   );
 }

@@ -4,34 +4,34 @@ import { Dropdown, Button, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 const EventsOrder = observer(
-  (props: { onChange: (e: any, v: any) => void; filter: any }) => {
-    const { filter, onChange } = props;
-    const { eventsOrderSupport } = filter;
+  (props: { onChange: (e: any, v: any) => void; orderProps: any }) => {
+    const { onChange, orderProps: { eventsOrder, eventsOrderSupport } } = props;
+    // const { eventsOrderSupport } = filter;
     const { t } = useTranslation();
 
     const menuItems = [
       {
         key: 'then',
         label: t('THEN'),
-        disabled: eventsOrderSupport && !eventsOrderSupport.includes('then'),
+        disabled: eventsOrderSupport && !eventsOrderSupport.includes('then')
       },
       {
         key: 'and',
         label: t('AND'),
-        disabled: eventsOrderSupport && !eventsOrderSupport.includes('and'),
+        disabled: eventsOrderSupport && !eventsOrderSupport.includes('and')
       },
       {
         key: 'or',
         label: t('OR'),
-        disabled: eventsOrderSupport && !eventsOrderSupport.includes('or'),
-      },
+        disabled: eventsOrderSupport && !eventsOrderSupport.includes('or')
+      }
     ];
     const onClick = ({ key }: any) => {
       onChange(null, { name: 'eventsOrder', value: key, key });
     };
 
     const selected = menuItems.find(
-      (item) => item.key === filter.eventsOrder,
+      (item) => item.key === eventsOrder
     )?.label;
     return (
       <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ const EventsOrder = observer(
         </Dropdown>
       </div>
     );
-  },
+  }
 );
 
 export default EventsOrder;
