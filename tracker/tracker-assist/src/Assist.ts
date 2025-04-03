@@ -26,6 +26,7 @@ interface AgentInfo {
   name: string;
   peerId: string;
   query: string;
+  socketId?: string;
 }
 
 export interface Options {
@@ -468,6 +469,35 @@ export default class Assist {
       }
     });
 
+    socket.on("AGENTS_INFO_CONNECTED", (agentsInfo: AgentInfo[]) => {
+      this.cleanCanvasConnections();
+      agentsInfo.forEach((agentInfo) => {
+        if (!agentInfo.socketId) return;
+        this.agents[agentInfo.socketId] = {
+          agentInfo,
+          onDisconnect: this.options.onAgentConnect?.(agentInfo),
+        };
+      });
+      if (this.app.active()) {
+        this.assistDemandedRestart = true;
+        this.app.stop();
+        this.app.waitStatus(0).then(() => {
+          this.app.allowAppStart();
+          setTimeout(() => {
+            this.app
+              .start()
+              .then(() => {
+                this.assistDemandedRestart = false;
+              })
+              .then(() => {
+                this.remoteControl?.reconnect(Object.keys(this.agents));
+              })
+              .catch((e) => app.debug.error(e));
+          }, 100);
+        });
+      }
+    });
+
     socket.on("AGENT_DISCONNECTED", (id) => {
       this.remoteControl?.releaseControl();
 
@@ -525,6 +555,13 @@ export default class Assist {
           } catch (e) {
             app.debug.error("Error adding ICE candidate", e);
           }
+        } else {
+          this.iceCandidatesBuffer.set(
+            data.id,
+            this.iceCandidatesBuffer
+              .get(data.id)
+              ?.concat([data.candidate]) || [data.candidate]
+          );
         }
       }
     );
@@ -861,6 +898,7 @@ export default class Assist {
             iceServers: this.config,
           });
           this.setupPeerListeners(uniqueId);
+          this.applyBufferedIceCandidates(uniqueId);
 
           stream.getTracks().forEach((track) => {
             this.canvasPeers[uniqueId]?.addTrack(track, stream);
