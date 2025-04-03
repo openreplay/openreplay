@@ -33,6 +33,7 @@ import { TYPES as EVENT_TYPES } from 'Types/session/event';
 import { Decoder } from 'syncod';
 
 import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
+import { getLongTask } from './types/longTask';
 
 export interface TabState extends ListsState {
   performanceAvailability?: PerformanceTrackManager['availability'];
@@ -338,7 +339,7 @@ export default class TabSessionManager {
         this.lists.lists.profiles.append(msg);
         break;
       case MType.LongAnimationTask:
-        this.lists.lists.longTask.append(msg);
+        this.lists.lists.longTask.append(getLongTask(msg));
         break;
       /* ===|=== */
       default:

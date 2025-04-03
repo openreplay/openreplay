@@ -27,7 +27,7 @@ export interface LATOptions {
 }
 
 export default function (app: App, opts: Partial<LATOptions>): void {
-  if (!opts.longTasks || !('PerformanceObserver' in window) || !('LongTaskObserver' in window)) {
+  if (!opts.longTasks || !('PerformanceObserver' in window)) {
     return;
   }
   const onEntry = (entry: LongAnimationTask) => {
