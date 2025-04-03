@@ -1176,6 +1176,25 @@ cdef class WSChannel(PyMessage):
         self.message_type = message_type
 
 
+cdef class LongAnimationTask(PyMessage):
+    cdef public int __id__
+    cdef public str name
+    cdef public long duration
+    cdef public long blocking_duration
+    cdef public long first_ui_event_timestamp
+    cdef public long start_time
+    cdef public str scripts
+
+    def __init__(self, str name, long duration, long blocking_duration, long first_ui_event_timestamp, long start_time, str scripts):
+        self.__id__ = 89
+        self.name = name
+        self.duration = duration
+        self.blocking_duration = blocking_duration
+        self.first_ui_event_timestamp = first_ui_event_timestamp
+        self.start_time = start_time
+        self.scripts = scripts
+
+
 cdef class InputChange(PyMessage):
     cdef public int __id__
     cdef public unsigned long id

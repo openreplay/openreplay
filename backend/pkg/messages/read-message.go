@@ -1419,6 +1419,30 @@ func DecodeWSChannel(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeLongAnimationTask(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &LongAnimationTask{}
+	if msg.Name, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	if msg.BlockingDuration, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	if msg.FirstUIEventTimestamp, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	if msg.StartTime, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	if msg.Scripts, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeInputChange(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &InputChange{}
@@ -2248,6 +2272,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeNetworkRequest(reader)
 	case 84:
 		return DecodeWSChannel(reader)
+	case 89:
+		return DecodeLongAnimationTask(reader)
 	case 112:
 		return DecodeInputChange(reader)
 	case 113:

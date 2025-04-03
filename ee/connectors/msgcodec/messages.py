@@ -789,6 +789,18 @@ class WSChannel(Message):
         self.message_type = message_type
 
 
+class LongAnimationTask(Message):
+    __id__ = 89
+
+    def __init__(self, name, duration, blocking_duration, first_ui_event_timestamp, start_time, scripts):
+        self.name = name
+        self.duration = duration
+        self.blocking_duration = blocking_duration
+        self.first_ui_event_timestamp = first_ui_event_timestamp
+        self.start_time = start_time
+        self.scripts = scripts
+
+
 class InputChange(Message):
     __id__ = 112
 

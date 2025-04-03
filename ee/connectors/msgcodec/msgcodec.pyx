@@ -814,6 +814,16 @@ cdef class MessageCodec:
                 message_type=self.read_string(reader)
             )
 
+        if message_id == 89:
+            return LongAnimationTask(
+                name=self.read_string(reader),
+                duration=self.read_int(reader),
+                blocking_duration=self.read_int(reader),
+                first_ui_event_timestamp=self.read_int(reader),
+                start_time=self.read_int(reader),
+                scripts=self.read_string(reader)
+            )
+
         if message_id == 112:
             return InputChange(
                 id=self.read_uint(reader),

@@ -70,6 +70,7 @@ export declare const enum Type {
   PartitionedMessage = 82,
   NetworkRequest = 83,
   WSChannel = 84,
+  LongAnimationTask = 89,
   InputChange = 112,
   SelectionChange = 113,
   MouseThrashing = 114,
@@ -112,7 +113,7 @@ export type SetViewportScroll = [
 
 export type CreateDocument = [
   /*type:*/ Type.CreateDocument,
-  
+
 ]
 
 export type CreateElementNode = [
@@ -568,6 +569,16 @@ export type WSChannel = [
   /*timestamp:*/ number,
   /*dir:*/ string,
   /*messageType:*/ string,
+]
+
+export type LongAnimationTask = [
+  /*type:*/ Type.LongAnimationTask,
+  /*name:*/ string,
+  /*duration:*/ number,
+  /*blockingDuration:*/ number,
+  /*firstUIEventTimestamp:*/ number,
+  /*startTime:*/ number,
+  /*scripts:*/ string,
 ]
 
 export type InputChange = [

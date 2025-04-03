@@ -84,6 +84,7 @@ const (
 	MsgPartitionedMessage             = 82
 	MsgNetworkRequest                 = 83
 	MsgWSChannel                      = 84
+	MsgLongAnimationTask              = 89
 	MsgInputChange                    = 112
 	MsgSelectionChange                = 113
 	MsgMouseThrashing                 = 114
@@ -2292,6 +2293,37 @@ func (msg *WSChannel) Decode() Message {
 
 func (msg *WSChannel) TypeID() int {
 	return 84
+}
+
+type LongAnimationTask struct {
+	message
+	Name                  string
+	Duration              int64
+	BlockingDuration      int64
+	FirstUIEventTimestamp int64
+	StartTime             int64
+	Scripts               string
+}
+
+func (msg *LongAnimationTask) Encode() []byte {
+	buf := make([]byte, 61+len(msg.Name)+len(msg.Scripts))
+	buf[0] = 89
+	p := 1
+	p = WriteString(msg.Name, buf, p)
+	p = WriteInt(msg.Duration, buf, p)
+	p = WriteInt(msg.BlockingDuration, buf, p)
+	p = WriteInt(msg.FirstUIEventTimestamp, buf, p)
+	p = WriteInt(msg.StartTime, buf, p)
+	p = WriteString(msg.Scripts, buf, p)
+	return buf[:p]
+}
+
+func (msg *LongAnimationTask) Decode() Message {
+	return msg
+}
+
+func (msg *LongAnimationTask) TypeID() int {
+	return 89
 }
 
 type InputChange struct {
