@@ -131,7 +131,7 @@ function LongTaskRow({
   return (
     <div
       className={
-        'relative group hover:bg-active-blue cursor-pointer flex items-start gap-2 py-1 px-4 pe-8'
+        'relative border-b border-neutral-950/5 group hover:bg-active-blue cursor-pointer flex items-start gap-2 py-1 px-4 pe-8'
       }
       onClick={() => setExpanded(!expanded)}
     >
