@@ -1,3 +1,7 @@
+## 11.0.6
+
+- fix for canvas assist
+
 ## 11.0.5
 
 - fix ice candidates usage

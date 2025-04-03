@@ -47,6 +47,7 @@ runs:
             "JWT_SECRET:.global.jwtSecret"
             "JWT_SPOT_REFRESH_SECRET:.chalice.env.JWT_SPOT_REFRESH_SECRET"
             "JWT_SPOT_SECRET:.global.jwtSpotSecret"
+            "JWT_SECRET:.global.tokenSecret"
             "LICENSE_KEY:.global.enterpriseEditionLicense"
             "MINIO_ACCESS_KEY:.global.s3.accessKey"
             "MINIO_SECRET_KEY:.global.s3.secretKey"
