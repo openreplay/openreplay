@@ -27,8 +27,9 @@ function LongTaskPanel() {
   const [searchValue, setSearchValue] = React.useState('');
 
   const { currentTab, tabStates } = store.get();
-  const longTasks: LongAnimationTask[] = mockData; //tabStates[currentTab]?.longTasksList || [];
+  const longTasks = tabStates[currentTab]?.longTaskList || [];
 
+  console.log('list', longTasks)
   const filteredList = useRegExListFilterMemo(
     longTasks,
     (task: LongAnimationTask) => [
