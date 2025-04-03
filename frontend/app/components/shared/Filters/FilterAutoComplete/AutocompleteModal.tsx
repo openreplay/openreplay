@@ -224,7 +224,7 @@ export function AutocompleteModal({
   );
 }
 
-interface Props {
+export interface Props {
   value: string[];
   params?: any;
   onApplyValues: (values: string[]) => void;
