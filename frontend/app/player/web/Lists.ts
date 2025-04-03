@@ -15,6 +15,7 @@ import {
 } from 'Player/web/messages';
 import ListWalker from '../common/ListWalker';
 import ListWalkerWithMarks from '../common/ListWalkerWithMarks';
+import { ILongAnimationTask } from './types/longTask';
 
 type stackMsg = {
   name: string;
@@ -44,7 +45,7 @@ type MsgTypeMap = {
   profilerList: profilerMsg;
   exceptionsList: exceptionsMsg;
   frustrationsList: Issue | InjectedEvent;
-  longTaskList: longTaskMsg;
+  longTaskList: ILongAnimationTask;
 };
 type ListMessageType<K> = K extends keyof MsgTypeMap
   ? Array<MsgTypeMap[K]>
