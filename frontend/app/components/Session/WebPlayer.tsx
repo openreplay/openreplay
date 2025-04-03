@@ -38,8 +38,8 @@ function WebPlayer(props: any) {
     uxtestingStore,
     uiPlayerStore,
     integrationsStore,
-    userStore,
   } = useStore();
+  const devTools = sessionStore.devTools
   const session = sessionStore.current;
   const { prefetched } = sessionStore;
   const startedAt = sessionStore.current.startedAt || 0;
@@ -65,6 +65,10 @@ function WebPlayer(props: any) {
         }
       };
       document.addEventListener('visibilitychange', handleActivation);
+    }
+
+    return () => {
+      devTools.update('network', { activeTab: 'ALL' });
     }
   }, []);
 

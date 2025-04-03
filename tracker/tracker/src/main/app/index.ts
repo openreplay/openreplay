@@ -432,6 +432,7 @@ export default class App {
         if (ev.data.context === this.contextId) {
           return
         }
+        this.debug.log(ev)
         if (ev.data.line === proto.resp) {
           const sessionToken = ev.data.token
           this.session.setSessionToken(sessionToken)
