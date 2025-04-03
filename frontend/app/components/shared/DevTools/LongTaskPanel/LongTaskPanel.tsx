@@ -1,13 +1,14 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { Input } from 'antd';
+import { Input, Tag } from 'antd';
 import { VList, VListHandle } from 'virtua';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import JumpButton from '../JumpButton';
 import { useRegExListFilterMemo } from '../useListFilter';
 import BottomBlock from '../BottomBlock';
-import { NoContent, Icon } from 'UI';
+import { NoContent, Icon, TagBadge } from 'UI';
+import { Hourglass } from 'lucide-react';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { mockData } from './__mock';
 import { Segmented } from 'antd';
@@ -140,22 +141,24 @@ function LongTaskRow({
         className={'mt-1'}
       />
 
-      <div className="flex flex-col">
+      <div className="flex flex-col w-full">
         <div className="flex flex-col">
           <TaskTitle entry={task} />
         </div>
         {expanded ? (
           <>
             <TaskTimeline task={task} />
-            <div className={'flex items-center gap-1'}>
-              <div className={'text-gray-dark'}>First UI event timestamp:</div>
-              <div>{task.firstUIEventTimestamp.toFixed(2)} ms</div>
+            <div className={'flex items-center gap-1 mb-2'}>
+              <div className={'text-neutral-900 font-medium'}>First UI event timestamp:</div>
+              <div className='text-neutral-600 font-mono block'>{task.firstUIEventTimestamp.toFixed(2)} ms</div>
             </div>
-            <div className={'text-gray-dark'}>Scripts:</div>
-            <div className="flex flex-col gap-1 pl-2">
-              {task.scripts.map((script, index) => (
-                <Script script={script} key={index} />
-              ))}
+            <div className='flex gap-1'>
+              <div className={'text-neutral-900 font-medium'}>Scripts:</div>
+              <div className="flex flex-col gap-1">
+                {task.scripts.map((script, index) => (
+                  <Script script={script} key={index} />
+                ))}
+              </div>
             </div>
           </>
         ) : null}
@@ -165,6 +168,8 @@ function LongTaskRow({
   );
 }
 
+
+
 function TaskTitle({
   entry,
 }: {
@@ -172,20 +177,42 @@ function TaskTitle({
     name: string;
     duration: number;
     blockingDuration?: number;
+    scripts: LongAnimationTask['scripts'];
   };
 }) {
   const isBlocking =
     entry.blockingDuration !== undefined && entry.blockingDuration > 0;
+  
+  const scriptTitles = entry.scripts.map(script => 
+    script.invokerType ? script.invokerType : script.name
+  );
+  
+  let scriptsDisplay;
+  if (scriptTitles.length === 0) {
+    scriptsDisplay = <span className="font-mono font-bold">No Scripts</span>;
+  } else if (scriptTitles.length === 1) {
+    scriptsDisplay = <span className="font-mono font-bold">{scriptTitles[0]}</span>;
+  } else if (scriptTitles.length === 2) {
+    scriptsDisplay = <span className="font-mono font-bold">{scriptTitles[0]}, {scriptTitles[1]}</span>;
+  } else {
+    scriptsDisplay = (
+      <span className="font-mono font-bold">
+        {scriptTitles[0]}, {scriptTitles[1]} {' '}
+        <Tag color="default" bordered={false}>+{scriptTitles.length - 2} More</Tag>
+      </span>
+    );
+  }
+
   return (
-    <div className={'flex items-center gap-1'}>
-      <span>Long Animation Frame</span>
-      <span className={'text-disabled-text'}>
-        ({entry.duration.toFixed(2)} ms)
+    <div className={'flex items-center gap-1 text-sm'}>
+      {scriptsDisplay}
+      <span className={'text-neutral-600 font-mono'}>
+        {Math.round(entry.duration)} ms
       </span>
       {isBlocking ? (
-        <span className={'text-red'}>
-          {entry.blockingDuration!.toFixed(2)} ms blocking
-        </span>
+        <Tag  bordered={false} color="red" className="font-mono rounded-lg text-xs flex gap-1 items-center text-red-600">
+         <Hourglass size={11} /> {Math.round(entry.blockingDuration!)} ms blocking
+        </Tag>
       ) : null}
     </div>
   );
