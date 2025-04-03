@@ -6,6 +6,7 @@ export interface ILongAnimationTask {
   blockingDuration: number;
   firstUIEventTimestamp: number;
   startTime: number;
+  time: number;
   scripts: [
     {
       name: string;
@@ -36,6 +37,7 @@ export const getLongTask = (msg: LongAnimationTask): ILongAnimationTask => {
     firstUIEventTimestamp: msg.firstUIEventTimestamp,
     startTime: msg.startTime,
     scripts,
-    isRed: msg.blockingDuration > 50
+    isRed: msg.blockingDuration > 50,
+    time: msg.startTime,
   });
 }
