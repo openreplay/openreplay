@@ -61,33 +61,22 @@ export default class Filter implements IFilter {
   }
 
   filterId: string = '';
-
   name: string = '';
-
   autoOpen = false;
-
   filters: FilterItem[] = [];
-
   excludes: FilterItem[] = [];
-
   eventsOrder: string = 'then';
-
   eventsOrderSupport: string[] = ['then', 'or', 'and'];
-
   startTimestamp: number = 0;
-
   endTimestamp: number = 0;
-
   eventsHeader: string = 'EVENTS';
-
   page: number = 1;
-
   limit: number = 10;
 
   constructor(
     filters: any[] = [],
     private readonly isConditional = false,
-    private readonly isMobile = false,
+    private readonly isMobile = false
   ) {
     makeAutoObservable(this, {
       filters: observable,
@@ -101,7 +90,7 @@ export default class Filter implements IFilter {
       merge: action,
       addExcludeFilter: action,
       updateFilter: action,
-      replaceFilters: action,
+      replaceFilters: action
     });
     this.filters = filters.map((i) => new FilterItem(i));
   }
@@ -146,8 +135,8 @@ export default class Filter implements IFilter {
       new FilterItem(undefined, this.isConditional, this.isMobile).fromJson(
         i,
         undefined,
-        isHeatmap,
-      ),
+        isHeatmap
+      )
     );
     this.eventsOrder = json.eventsOrder;
     return this;
@@ -156,7 +145,7 @@ export default class Filter implements IFilter {
   fromData(data: any) {
     this.name = data.name;
     this.filters = data.filters.map((i: Record<string, any>) =>
-      new FilterItem(undefined, this.isConditional, this.isMobile).fromData(i),
+      new FilterItem(undefined, this.isConditional, this.isMobile).fromData(i)
     );
     this.eventsOrder = data.eventsOrder;
     return this;
@@ -168,7 +157,7 @@ export default class Filter implements IFilter {
       filters: this.filters.map((i) => i.toJson()),
       eventsOrder: this.eventsOrder,
       startTimestamp: this.startTimestamp,
-      endTimestamp: this.endTimestamp,
+      endTimestamp: this.endTimestamp
     };
     return json;
   }
@@ -182,7 +171,7 @@ export default class Filter implements IFilter {
     const json = {
       name: this.name,
       filters: this.filters.map((i) => i.toJson()),
-      eventsOrder: this.eventsOrder,
+      eventsOrder: this.eventsOrder
     };
     return json;
   }
@@ -204,12 +193,12 @@ export default class Filter implements IFilter {
     this.addFilter({
       ...filtersMap[FilterKey.LOCATION],
       value: [''],
-      operator: 'isAny',
+      operator: 'isAny'
     });
     this.addFilter({
       ...filtersMap[FilterKey.CLICK],
       value: [''],
-      operator: 'onAny',
+      operator: 'onAny'
     });
   }
 
@@ -217,7 +206,7 @@ export default class Filter implements IFilter {
     return {
       name: this.name,
       filters: this.filters.map((i) => i.toJson()),
-      eventsOrder: this.eventsOrder,
+      eventsOrder: this.eventsOrder
     };
   }
 
