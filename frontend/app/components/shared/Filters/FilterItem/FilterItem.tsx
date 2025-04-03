@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
-import { Button, Space, Typography } from 'antd';
+import { Button, Space, Typography, Tooltip } from 'antd';
 import { FilterKey } from 'App/types/filter/filterType';
-import { CircleMinus, Filter as FilterIcon } from 'lucide-react';
+import { CircleMinus, FunnelPlus } from 'lucide-react';
 import cn from 'classnames';
 import FilterOperator from '../FilterOperator';
 import FilterSelection from '../FilterSelection';
@@ -27,11 +27,13 @@ interface Props {
   subFilterIndex?: number;
   propertyOrder?: string;
   onToggleOperator?: (newOp: string) => void;
+  parentEventFilterOptions?: Filter[];
+  isDragging?: boolean;
+  isFirst?: boolean;
 }
 
 function FilterItem(props: Props) {
   const {
-    isFilter = false,
     filterIndex,
     filter,
     saveRequestPayloads,
@@ -43,35 +45,52 @@ function FilterItem(props: Props) {
     onRemoveFilter,
     readonly,
     isSubItem = false,
-    subFilterIndex,
+    subFilterIndex = 0, // Default to 0
     propertyOrder,
-    onToggleOperator
+    onToggleOperator,
+    parentEventFilterOptions,
+    isDragging,
+    isFirst = false // Default to false
   } = props;
+
   const [eventFilterOptions, setEventFilterOptions] = useState<Filter[]>([]);
+  const [eventFiltersLoading, setEventFiltersLoading] = useState(false);
 
   const { filterStore } = useStore();
   const allFilters = filterStore.getCurrentProjectFilters();
   const eventSelections = allFilters.filter((i) => i.isEvent === filter.isEvent);
-  const filterSelections = isSubItem ? eventFilterOptions : eventSelections;
 
+  const filterSelections = useMemo(() => {
+    if (isSubItem) {
+      return parentEventFilterOptions || [];
+    }
+    return eventSelections;
+  }, [isSubItem, parentEventFilterOptions, eventSelections]);
 
-  const [eventFiltersLoading, setEventFiltersLoading] = useState(false);
   const operatorOptions = getOperatorsByType(filter.type);
-
 
   useEffect(() => {
     async function loadFilters() {
-      try {
-        setEventFiltersLoading(true);
-        const options = await filterStore.getEventFilters(filter.name);
-        setEventFilterOptions(options);
-      } finally {
-        setEventFiltersLoading(false);
+      if (!isSubItem && filter.isEvent && filter.name) {
+        try {
+          setEventFiltersLoading(true);
+          const options = await filterStore.getEventFilters(filter.name);
+          setEventFilterOptions(options);
+        } catch (error) {
+          console.error('Failed to load event filters:', error);
+          setEventFilterOptions([]);
+        } finally {
+          setEventFiltersLoading(false);
+        }
+      } else {
+        if (eventFilterOptions.length > 0) {
+          setEventFilterOptions([]);
+        }
       }
     }
 
     void loadFilters();
-  }, [filter.name]); // Re-fetch when filter name changes
+  }, [filter.name, filter.isEvent, isSubItem, filterStore]);
 
   const canShowValues = useMemo(
     () =>
@@ -89,10 +108,11 @@ function FilterItem(props: Props) {
     (selectedFilter: any) => {
       onUpdate({
         ...selectedFilter,
-        value: selectedFilter.value,
+        value: selectedFilter.value || [''],
         filters: selectedFilter.filters
           ? selectedFilter.filters.map((i: any) => ({ ...i, value: [''] }))
-          : []
+          : [],
+        operator: selectedFilter.operator // Ensure operator is carried over or reset if needed
       });
     },
     [onUpdate]
@@ -146,78 +166,98 @@ function FilterItem(props: Props) {
 
   const addSubFilter = useCallback(
     (selectedFilter: any) => {
+      const newSubFilter = {
+        ...selectedFilter,
+        value: selectedFilter.value || [''],
+        operator: selectedFilter.operator || getOperatorsByType(selectedFilter.type)[0]?.value // Default operator
+      };
       onUpdate({
         ...filter,
-        filters: [...filteredSubFilters, selectedFilter]
+        filters: [...(filter.filters || []), newSubFilter]
       });
     },
     [filter, onUpdate]
   );
 
+  const parentShowsIndex = !hideIndex;
+  const subFilterMarginLeftClass = parentShowsIndex ? 'ml-[1.75rem]' : 'ml-[0.75rem]';
+  const subFilterPaddingLeftClass = parentShowsIndex ? 'pl-11' : 'pl-7';
+
   return (
-    <div className="w-full">
-      <div className="flex items-center w-full">
-        <div className="flex items-center flex-grow flex-wrap">
-          {!isFilter && !hideIndex && filterIndex !== undefined && filterIndex >= 0 && (
-            <div
-              className="flex-shrink-0 w-6 h-6 text-xs flex items-center justify-center rounded-full bg-gray-lighter mr-2">
-              <span>{filterIndex + 1}</span>
-            </div>
-          )}
+    <div className={cn('w-full', isDragging ? 'opacity-50' : '')}>
+      <div className="flex items-start w-full gap-x-2"> {/* Use items-start */}
 
-          {isSubItem && (
-            <div className="w-14 text-right">
-              {subFilterIndex === 0 && (
-                <Typography.Text className="text-neutral-500/90 mr-2">
-                  where
-                </Typography.Text>
-              )}
-              {subFilterIndex != 0 && propertyOrder && onToggleOperator && (
-                <Typography.Text
-                  className="text-neutral-500/90 mr-2 cursor-pointer"
-                  onClick={() =>
-                    onToggleOperator(propertyOrder === 'and' ? 'or' : 'and')
-                  }
-                >
-                  {propertyOrder}
-                </Typography.Text>
-              )}
-            </div>
-          )}
+        {!isSubItem && !hideIndex && filterIndex !== undefined && filterIndex >= 0 && (
+          <div
+            className="flex-shrink-0 w-6 h-6 mt-[7px] text-xs flex items-center justify-center rounded-full bg-gray-lightest text-gray-600 font-medium"> {/* Align index top */}
+            <span>{filterIndex + 1}</span>
+          </div>
+        )}
 
+        {isSubItem && (
+          <div
+            className="flex-shrink-0 w-14 text-right text-sm text-neutral-500/90 pr-2 pt-[5px]"> {/* Align where/and top */}
+            {subFilterIndex === 0 && (
+              <Typography.Text className="text-inherit">
+                where
+              </Typography.Text>
+            )}
+            {subFilterIndex !== 0 && propertyOrder && onToggleOperator && (
+              <Typography.Text
+                className={cn(
+                  'text-inherit',
+                  !readonly && 'cursor-pointer hover:text-main transition-colors'
+                )}
+                onClick={() =>
+                  !readonly && onToggleOperator(propertyOrder === 'and' ? 'or' : 'and')
+                }
+              >
+                {propertyOrder}
+              </Typography.Text>
+            )}
+          </div>
+        )}
+
+        {/* Main content area */}
+        <div
+          className="flex flex-grow flex-wrap gap-x-1 items-center"> {/* Use baseline inside here */}
           <FilterSelection
             filters={filterSelections}
             onFilterClick={replaceFilter}
             disabled={disableDelete || readonly}
+            loading={isSubItem ? false : eventFiltersLoading}
           >
             <Space
               className={cn(
-                'rounded-lg py-1 px-2 cursor-pointer bg-white border border-gray-light text-ellipsis hover:border-neutral-400 btn-select-event',
-                { 'opacity-50 pointer-events-none': disableDelete || readonly }
+                'rounded-lg px-2 cursor-pointer bg-white border border-gray-light text-ellipsis hover:border-main',
+                'transition-colors duration-100 flex-shrink-0 max-w-xs h-[26px] items-center gap-1', // Fixed height, ensure items-center
+                { 'opacity-70 pointer-events-none': disableDelete || readonly }
               )}
-              style={{ height: '26px' }}
+              // style={{ lineHeight: '1rem' }}
             >
-              <div className="text-xs">
+              <div className="text-gray-600 flex-shrink-0">
                 {filter && getIconForFilter(filter)}
               </div>
-              <div className="text-neutral-500/90 capitalize">
-                {`${filter?.subCategory ? filter.subCategory : filter?.category}`}
-              </div>
-              <span className="text-neutral-500/90">•</span>
+              {(filter?.subCategory || filter?.category) && (
+                <div className="text-neutral-500/90 capitalize text-sm truncate">
+                  {`${filter?.subCategory ? filter.subCategory : filter?.category}`}
+                </div>
+              )}
+              {(filter?.subCategory || filter?.category) && (filter.displayName || filter.name) &&
+                <span className="text-neutral-400 mx-1">•</span>
+              }
               <div
-                className="rounded-lg overflow-hidden whitespace-nowrap text-ellipsis mr-auto truncate"
-                style={{ textOverflow: 'ellipsis' }}
+                className="text-sm text-black truncate"
               >
-                {filter.displayName || filter.name}
+                {filter.displayName || filter.name || 'Select Filter'}
               </div>
             </Space>
-
           </FilterSelection>
 
           <div
             className={cn(
-              'flex items-center flex-wrap',
-              isReversed ? 'flex-row-reverse ml-2' : 'flex-row'
+              'flex items-center flex-wrap gap-x-2 gap-y-1', // Use baseline inside here
+              isReversed ? 'flex-row-reverse' : 'flex-row'
             )}
           >
             {filter.hasSource && (
@@ -225,7 +265,6 @@ function FilterItem(props: Props) {
                 <FilterOperator
                   options={filter.sourceOperatorOptions}
                   onChange={handleSourceOperatorChange}
-                  className="mx-2 flex-shrink-0 btn-event-operator"
                   value={filter.sourceOperator}
                   isDisabled={filter.operatorDisabled || readonly}
                 />
@@ -233,89 +272,108 @@ function FilterItem(props: Props) {
               </>
             )}
 
-            {operatorOptions.length && (
+            {operatorOptions.length > 0 && filter.type && (
               <>
                 <FilterOperator
                   options={operatorOptions}
                   onChange={handleOperatorChange}
-                  className="mx-2 flex-shrink-0 btn-sub-event-operator"
                   value={filter.operator}
                   isDisabled={filter.operatorDisabled || readonly}
                 />
                 {canShowValues &&
                   (readonly ? (
                     <div
-                      className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip hover:border-neutral-400">
+                      className="rounded bg-gray-lightest text-gray-dark px-2 py-1 text-sm whitespace-nowrap overflow-hidden text-ellipsis border border-gray-light max-w-xs"
+                      title={filter.value.join(', ')}
+                    >
                       {filter.value
                         .map((val: string) =>
-                          filter.options && filter.options.length
-                            ? filter.options[
-                            filter.options.findIndex((i: any) => i.value === val)
-                            ]?.label ?? val
-                            : val
+                          filter.options?.find((i: any) => i.value === val)?.label ?? val
                         )
                         .join(', ')}
                     </div>
                   ) : (
-                    <FilterValue isConditional={isConditional} filter={filter} onUpdate={onUpdate} />
+                    <div className="inline-flex"> {/* Wrap FilterValue */}
+                      <FilterValue isConditional={isConditional} filter={filter} onUpdate={onUpdate} />
+                    </div>
                   ))}
               </>
             )}
-          </div>
-        </div>
 
-        {!readonly && !hideDelete && (
-          <div className="flex flex-shrink-0 gap-2">
             {filter.isEvent && !isSubItem && (
               <FilterSelection
                 filters={eventFilterOptions}
                 onFilterClick={addSubFilter}
-                disabled={disableDelete || readonly}
+                disabled={disableDelete || readonly || eventFiltersLoading}
+                loading={eventFiltersLoading}
               >
-                <Button
-                  type="text"
-                  icon={<FilterIcon size={13} />}
-                  size="small"
-                  aria-label="Add filter"
-                  title="Filter"
-                />
+                <Tooltip title="Add filter condition" mouseEnterDelay={1}>
+                  <Button
+                    type="text"
+                    icon={<FunnelPlus size={14} className="text-gray-600" />}
+                    size="small"
+                    className="h-[26px] w-[26px] flex items-center justify-center" // Fixed size button
+                  />
+                </Tooltip>
               </FilterSelection>
             )}
+          </div>
+        </div>
 
-            <Button
-              type="text"
-              icon={<CircleMinus size={13} />}
-              disabled={disableDelete}
-              onClick={onRemoveFilter}
-              size="small"
-              aria-label="Remove filter"
-            />
+        {/* Action Buttons */}
+        {!readonly && !hideDelete && (
+          <div className="flex flex-shrink-0 gap-1 items-center self-start mt-[1px]"> {/* Align top */}
+            <Tooltip title={isSubItem ? 'Remove filter condition' : 'Remove filter'} mouseEnterDelay={1}>
+              <Button
+                type="text"
+                icon={<CircleMinus size={14} />}
+                disabled={disableDelete}
+                onClick={onRemoveFilter}
+                size="small"
+                className="h-[26px] w-[26px] flex items-center justify-center" // Fixed size button
+              />
+            </Tooltip>
           </div>
         )}
       </div>
 
-      {filter.filters?.length > 0 && (
-        <div className="pl-8 w-full">
+      {/* Sub-Filter Rendering */}
+      {filteredSubFilters.length > 0 && (
+        <div
+          className={cn(
+            'relative w-full mt-1' // Relative parent for border
+          )}
+        >
+          {/* Dashed line */}
+          <div className={cn(
+            'absolute top-0 bottom-0 left-1 w-px',
+            'border-l border-dashed border-gray-300',
+            subFilterMarginLeftClass // Dynamic margin based on parent index visibility
+          )} style={{ height: 'calc(100% - 4px)' }} />
+
           {filteredSubFilters.map((subFilter: any, index: number) => (
-            <FilterItem
-              key={`subfilter-${index}`}
-              filter={subFilter}
-              subFilterIndex={index}
-              onUpdate={(updatedSubFilter) => handleUpdateSubFilter(updatedSubFilter, index)}
-              onRemoveFilter={() => handleRemoveSubFilter(index)}
-              isFilter={isFilter}
-              saveRequestPayloads={saveRequestPayloads}
-              disableDelete={disableDelete}
-              readonly={readonly}
-              hideIndex={hideIndex}
-              hideDelete={hideDelete}
-              isConditional={isConditional}
-              isSubItem={true}
-              propertyOrder={filter.propertyOrder || 'and'}
-              onToggleOperator={(newOp) =>
-                onUpdate({ ...filter, propertyOrder: newOp })
-              }
-            />
+            <div
+              key={`subfilter-wrapper-${filter.id || filterIndex}-${subFilter.key || index}`}
+              className={cn('relative', subFilterPaddingLeftClass)} // Apply padding to the wrapper, keep relative
+            >
+              <FilterItem
+                filter={subFilter}
+                subFilterIndex={index}
+                onUpdate={(updatedSubFilter) => handleUpdateSubFilter(updatedSubFilter, index)}
+                onRemoveFilter={() => handleRemoveSubFilter(index)}
+                saveRequestPayloads={saveRequestPayloads}
+                disableDelete={disableDelete}
+                readonly={readonly}
+                hideIndex={true} // Sub-items always hide index
+                hideDelete={hideDelete}
+                isConditional={isConditional}
+                isSubItem={true}
+                propertyOrder={filter.propertyOrder || 'and'} // Sub-items use parent's propertyOrder
+                onToggleOperator={onToggleOperator} // Pass down the parent's toggle function
+                parentEventFilterOptions={isSubItem ? parentEventFilterOptions : eventFilterOptions} // Pass options down
+                isFirst={index === 0} // Mark the first sub-filter
+              />
+            </div>
           ))}
         </div>
       )}

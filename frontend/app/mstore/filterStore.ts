@@ -95,7 +95,7 @@ export default class FilterStore {
       possibleTypes: filter.possibleTypes?.map(type => type.toLowerCase()) || [],
       type: filter.possibleTypes?.[0].toLowerCase() || 'string',
       category: category || 'custom',
-      subCategory: category === 'events' ? (filter.autoCaptured ? 'auto' : 'user') : category,
+      subCategory: category === 'events' ? (filter.autoCaptured ? 'autocapture' : 'user') : category,
       displayName: filter.displayName || filter.name,
       icon: FilterKey.LOCATION, // TODO - use actual icons
       isEvent: category === 'events',

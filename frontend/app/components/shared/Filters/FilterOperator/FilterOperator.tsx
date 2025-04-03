@@ -30,7 +30,7 @@ function FilterOperator(props: Props) {
         onChange={({ value }: any) =>
           onChange(null, { name: 'operator', value: value.value })
         }
-        className="btn-event-operator"
+        className=""
       />
     </div>
   );

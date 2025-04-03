@@ -20,7 +20,7 @@ const FilterListHeader = ({
                             actions = []
                           }: FilterListHeaderProps) => {
   return (
-    <div className="flex items-center mb-2 gap-2">
+    <div className="flex items-center gap-2">
       <Space>
         <div className="font-medium">{title}</div>
         <Typography.Text>{filterSelection}</Typography.Text>
