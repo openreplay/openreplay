@@ -1,129 +1,132 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { debounce } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { searchService } from 'App/services';
-import { AutocompleteModal, AutoCompleteContainer } from './AutocompleteModal';
+import { AutoCompleteContainer, AutocompleteModal, Props } from './AutocompleteModal';
+import { TopValue } from '@/mstore/filterStore';
 
-type FilterParam = { [key: string]: any };
+interface FilterParams {
+  id: string;
+  type: string;
+  name?: string;
 
-function processKey(input: FilterParam): FilterParam {
-  const result: FilterParam = {};
+  // ... other potential properties
+  [key: string]: any; // Keep flexible if needed, but prefer specific types
+}
+
+interface OptionType {
+  value: string;
+  label: string;
+}
+
+function processMetadataValues(input: FilterParams): FilterParams {
+  const result: Partial<FilterParams> = {}; // Use Partial if creating a subset initially
+  const isMetadata = input.type === 'metadata';
+
   for (const key in input) {
-    if (
-      input.type === 'metadata' &&
-      typeof input[key] === 'string' &&
-      input[key].startsWith('_')
-    ) {
-      result[key] = input[key].substring(1);
-    } else {
-      result[key] = input[key];
+    if (Object.prototype.hasOwnProperty.call(input, key)) {
+      const value = input[key];
+      if (isMetadata && typeof value === 'string' && value.startsWith('_')) {
+        result[key] = value.substring(1);
+      } else {
+        result[key] = value;
+      }
     }
   }
-  return result;
+  return result as FilterParams; // Cast back if confident, or adjust logic
 }
 
-interface Props {
-  showOrButton?: boolean;
-  showCloseButton?: boolean;
-  onRemoveValue?: (ind: number) => void;
-  onAddValue?: (ind: number) => void;
-  endpoint?: string;
-  method?: string;
-  params?: any;
-  headerText?: string;
-  placeholder?: string;
-  onSelect: (e: any, item: any, index: number) => void;
-  value: any;
-  icon?: string;
-  hideOrText?: boolean;
-  onApplyValues: (values: string[]) => void;
-  modalProps?: Record<string, any>;
-  isAutoOpen?: boolean;
-}
 
 const FilterAutoComplete = observer(
   ({
-     params = {},
+     params, // Expect FilterParams type here
+     values,
      onClose,
      onApply,
-     values,
      placeholder
    }: {
-    params: any;
+    params: FilterParams;
     values: string[];
     onClose: () => void;
     onApply: (values: string[]) => void;
     placeholder?: string;
   }) => {
-    const [options, setOptions] = useState<{ value: string; label: string }[]>(
-      []
-    );
-    const [initialFocus, setInitialFocus] = useState(false);
+    const [options, setOptions] = useState<OptionType[]>([]);
     const [loading, setLoading] = useState(false);
     const { filterStore, projectsStore } = useStore();
-    const _params = processKey(params);
-    const filterKey = `${projectsStore.siteId}_${params.id}`;
-    const topValues = filterStore.topValues[filterKey] || [];
 
-    React.useEffect(() => {
+    const filterKey = `${projectsStore.siteId}_${params.id}`;
+    const topValues: TopValue[] = filterStore.topValues[filterKey] || [];
+
+    // Memoize the mapped top values
+    const mappedTopValues = useMemo(() => {
+      console.log('Recalculating mappedTopValues'); // For debugging memoization
+      return topValues.map((i) => ({ value: i.value, label: i.value }));
+    }, [topValues]);
+
+    useEffect(() => {
       setOptions([]);
     }, [projectsStore.siteId]);
 
-    const loadTopValues = async () => {
-      setLoading(true);
-      if (projectsStore.siteId) {
-        await filterStore.fetchTopValues(params.id, projectsStore.siteId);
+    const loadTopValues = useCallback(async () => {
+      if (projectsStore.siteId && params.id) {
+        setLoading(true);
+        try {
+          await filterStore.fetchTopValues(params.id, projectsStore.siteId);
+        } catch (error) {
+          console.error('Failed to load top values', error);
+          // Handle error state if needed
+        } finally {
+          setLoading(false); // Ensure loading is set false even on error
+        }
+      } else {
+        setOptions([]);
       }
-      setLoading(false);
-    };
-
-    useEffect(() => {
-      if (topValues.length > 0) {
-        const mappedValues = topValues.map((i) => ({
-          value: i.value,
-          label: i.value
-        }));
-        setOptions(mappedValues);
-      }
-    }, [topValues, initialFocus]);
+    }, [filterStore, params.id, projectsStore.siteId]);
 
     useEffect(() => {
       void loadTopValues();
-    }, [_params.type]);
+    }, [loadTopValues]);
 
-    const loadOptions = async (inputValue: string) => {
+    useEffect(() => {
+      setOptions(mappedTopValues);
+    }, [mappedTopValues]);
+
+
+    const loadOptions = useCallback(async (inputValue: string) => {
       if (!inputValue.length) {
-        const mappedValues = topValues.map((i) => ({
-          value: i.value,
-          label: i.value
-        }));
-        setOptions(mappedValues);
+        setOptions(mappedTopValues);
         return;
       }
+
       setLoading(true);
       try {
-        const data = await searchService.fetchAutoCompleteValues({
-          type: params.name?.toLowerCase(),
+        const searchType = params.name?.toLowerCase();
+        if (!searchType) {
+          console.warn('Search type (params.name) is missing.');
+          setOptions([]);
+          return;
+        }
+
+        const data: { value: string }[] = await searchService.fetchAutoCompleteValues({
+          type: searchType,
           q: inputValue
         });
-        const _options =
-          data.map((i: any) => ({ value: i.value, label: i.value })) || [];
+        const _options = data.map((i) => ({ value: i.value, label: i.value })) || [];
         setOptions(_options);
       } catch (e) {
-        throw new Error(e);
+        console.error('Failed to fetch autocomplete values:', e);
+        setOptions(mappedTopValues);
       } finally {
         setLoading(false);
       }
-    };
+    }, [mappedTopValues, params.name, searchService.fetchAutoCompleteValues]);
 
-    const debouncedLoadOptions = useCallback(debounce(loadOptions, 500), [
-      params,
-      topValues
-    ]);
+
+    const debouncedLoadOptions = useCallback(debounce(loadOptions, 500), [loadOptions]);
 
     const handleInputChange = (newValue: string) => {
-      setInitialFocus(true);
       debouncedLoadOptions(newValue);
     };
 

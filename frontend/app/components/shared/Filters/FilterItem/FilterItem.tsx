@@ -183,20 +183,27 @@ function FilterItem(props: Props) {
   const subFilterMarginLeftClass = parentShowsIndex ? 'ml-[1.75rem]' : 'ml-[0.75rem]';
   const subFilterPaddingLeftClass = parentShowsIndex ? 'pl-11' : 'pl-7';
 
+  const categoryPart = filter?.subCategory ? filter.subCategory : filter?.category;
+  const namePart = filter?.displayName || filter?.name;
+  const hasCategory = Boolean(categoryPart);
+  const hasName = Boolean(namePart);
+  const showSeparator = hasCategory && hasName;
+  const defaultText = 'Select Filter';
+
   return (
     <div className={cn('w-full', isDragging ? 'opacity-50' : '')}>
       <div className="flex items-start w-full gap-x-2"> {/* Use items-start */}
 
         {!isSubItem && !hideIndex && filterIndex !== undefined && filterIndex >= 0 && (
           <div
-            className="flex-shrink-0 w-6 h-6 mt-[7px] text-xs flex items-center justify-center rounded-full bg-gray-lightest text-gray-600 font-medium"> {/* Align index top */}
+            className="flex-shrink-0 w-6 h-6 mt-[2px] text-xs flex items-center justify-center rounded-full bg-gray-lightest text-gray-600 font-medium"> {/* Align index top */}
             <span>{filterIndex + 1}</span>
           </div>
         )}
 
         {isSubItem && (
           <div
-            className="flex-shrink-0 w-14 text-right text-sm text-neutral-500/90 pr-2 pt-[5px]"> {/* Align where/and top */}
+            className="flex-shrink-0 w-14 text-right text-sm text-neutral-500/90 pr-2">
             {subFilterIndex === 0 && (
               <Typography.Text className="text-inherit">
                 where
@@ -220,109 +227,120 @@ function FilterItem(props: Props) {
 
         {/* Main content area */}
         <div
-          className="flex flex-grow flex-wrap gap-x-1 items-center"> {/* Use baseline inside here */}
+          className="flex flex-grow flex-wrap gap-x-1 items-center">
           <FilterSelection
             filters={filterSelections}
             onFilterClick={replaceFilter}
             disabled={disableDelete || readonly}
             loading={isSubItem ? false : eventFiltersLoading}
           >
-            <Space
-              className={cn(
-                'rounded-lg px-2 cursor-pointer bg-white border border-gray-light text-ellipsis hover:border-main',
-                'transition-colors duration-100 flex-shrink-0 max-w-xs h-[26px] items-center gap-1', // Fixed height, ensure items-center
-                { 'opacity-70 pointer-events-none': disableDelete || readonly }
-              )}
-              // style={{ lineHeight: '1rem' }}
+            <Button
+              type="default"
+              size="small"
+              // disabled={isDisabled}
+              // onClick={onClick} // Pass onClick handler
+              style={{
+                maxWidth: '20rem',
+                flexShrink: 0
+              }}
             >
-              <div className="text-gray-600 flex-shrink-0">
-                {filter && getIconForFilter(filter)}
-              </div>
-              {(filter?.subCategory || filter?.category) && (
-                <div className="text-neutral-500/90 capitalize text-sm truncate">
-                  {`${filter?.subCategory ? filter.subCategory : filter?.category}`}
-                </div>
-              )}
-              {(filter?.subCategory || filter?.category) && (filter.displayName || filter.name) &&
-                <span className="text-neutral-400 mx-1">•</span>
-              }
-              <div
-                className="text-sm text-black truncate"
-              >
-                {filter.displayName || filter.name || 'Select Filter'}
-              </div>
-            </Space>
+              <Space size={4} align="center">
+                {/* Icon */}
+                {filter && (
+                  <span className="text-gray-600 flex-shrink-0">
+                    {getIconForFilter(filter)}
+                    </span>
+                )}
+
+                {/* Category/SubCategory */}
+                {hasCategory && (
+                  <span className="text-neutral-500/90 capitalize text-sm truncate">
+                        {categoryPart}
+                    </span>
+                )}
+
+                {showSeparator && (
+                  <span className="text-neutral-400">•</span>
+                )}
+
+                <span className="text-sm text-black truncate">
+                    {hasName ? namePart : (hasCategory ? '' : defaultText)} {/* Show name or placeholder */}
+                </span>
+              </Space>
+            </Button>
           </FilterSelection>
 
-          <div
-            className={cn(
-              'flex items-center flex-wrap gap-x-2 gap-y-1', // Use baseline inside here
-              isReversed ? 'flex-row-reverse' : 'flex-row'
-            )}
-          >
-            {filter.hasSource && (
-              <>
-                <FilterOperator
-                  options={filter.sourceOperatorOptions}
-                  onChange={handleSourceOperatorChange}
-                  value={filter.sourceOperator}
-                  isDisabled={filter.operatorDisabled || readonly}
-                />
-                <FilterSource filter={filter} onUpdate={onUpdate} />
-              </>
-            )}
+          {/*<div*/}
+          {/*  className={cn(*/}
+          {/*    'flex items-center flex-wrap gap-x-2 gap-y-1', // Use baseline inside here*/}
+          {/*    isReversed ? 'flex-row-reverse' : 'flex-row'*/}
+          {/*  )}*/}
+          {/*>*/}
+          {filter.hasSource && (
+            <>
+              <FilterOperator
+                options={filter.sourceOperatorOptions}
+                onChange={handleSourceOperatorChange}
+                value={filter.sourceOperator}
+                isDisabled={filter.operatorDisabled || readonly}
+                name="operator"
+              />
+              <FilterSource filter={filter} onUpdate={onUpdate} />
+            </>
+          )}
 
-            {operatorOptions.length > 0 && filter.type && (
-              <>
-                <FilterOperator
-                  options={operatorOptions}
-                  onChange={handleOperatorChange}
-                  value={filter.operator}
-                  isDisabled={filter.operatorDisabled || readonly}
-                />
-                {canShowValues &&
-                  (readonly ? (
-                    <div
-                      className="rounded bg-gray-lightest text-gray-dark px-2 py-1 text-sm whitespace-nowrap overflow-hidden text-ellipsis border border-gray-light max-w-xs"
-                      title={filter.value.join(', ')}
-                    >
-                      {filter.value
-                        .map((val: string) =>
-                          filter.options?.find((i: any) => i.value === val)?.label ?? val
-                        )
-                        .join(', ')}
-                    </div>
-                  ) : (
-                    <div className="inline-flex"> {/* Wrap FilterValue */}
-                      <FilterValue isConditional={isConditional} filter={filter} onUpdate={onUpdate} />
-                    </div>
-                  ))}
-              </>
-            )}
+          {operatorOptions.length > 0 && filter.type && (
+            <>
+              <FilterOperator
+                options={operatorOptions}
+                onChange={handleOperatorChange}
+                value={filter.operator}
+                isDisabled={filter.operatorDisabled || readonly}
+                name="operator"
+              />
+              {canShowValues &&
+                (readonly ? (
+                  <div
+                    className="rounded bg-gray-lightest text-gray-dark px-2 py-1 text-sm whitespace-nowrap overflow-hidden text-ellipsis border border-gray-light max-w-xs"
+                    title={filter.value.join(', ')}
+                  >
+                    {filter.value
+                      .map((val: string) =>
+                        filter.options?.find((i: any) => i.value === val)?.label ?? val
+                      )
+                      .join(', ')}
+                  </div>
+                ) : (
+                  <div className="inline-flex"> {/* Wrap FilterValue */}
+                    <FilterValue isConditional={isConditional} filter={filter} onUpdate={onUpdate} />
+                  </div>
+                ))}
+            </>
+          )}
 
-            {filter.isEvent && !isSubItem && (
-              <FilterSelection
-                filters={eventFilterOptions}
-                onFilterClick={addSubFilter}
-                disabled={disableDelete || readonly || eventFiltersLoading}
-                loading={eventFiltersLoading}
-              >
-                <Tooltip title="Add filter condition" mouseEnterDelay={1}>
-                  <Button
-                    type="text"
-                    icon={<FunnelPlus size={14} className="text-gray-600" />}
-                    size="small"
-                    className="h-[26px] w-[26px] flex items-center justify-center" // Fixed size button
-                  />
-                </Tooltip>
-              </FilterSelection>
-            )}
-          </div>
+          {filter.isEvent && !isSubItem && (
+            <FilterSelection
+              filters={eventFilterOptions}
+              onFilterClick={addSubFilter}
+              disabled={disableDelete || readonly || eventFiltersLoading}
+              loading={eventFiltersLoading}
+            >
+              <Tooltip title="Add filter condition" mouseEnterDelay={1}>
+                <Button
+                  type="text"
+                  icon={<FunnelPlus size={14} className="text-gray-600" />}
+                  size="small"
+                  className="flex items-center justify-center" // Fixed size button
+                />
+              </Tooltip>
+            </FilterSelection>
+          )}
+          {/*</div>*/}
         </div>
 
         {/* Action Buttons */}
         {!readonly && !hideDelete && (
-          <div className="flex flex-shrink-0 gap-1 items-center self-start mt-[1px]"> {/* Align top */}
+          <div className="flex flex-shrink-0 gap-1 items-center self-start"> {/* Align top */}
             <Tooltip title={isSubItem ? 'Remove filter condition' : 'Remove filter'} mouseEnterDelay={1}>
               <Button
                 type="text"
@@ -330,7 +348,7 @@ function FilterItem(props: Props) {
                 disabled={disableDelete}
                 onClick={onRemoveFilter}
                 size="small"
-                className="h-[26px] w-[26px] flex items-center justify-center" // Fixed size button
+                className="flex items-center justify-center" // Fixed size button
               />
             </Tooltip>
           </div>
@@ -341,7 +359,7 @@ function FilterItem(props: Props) {
       {filteredSubFilters.length > 0 && (
         <div
           className={cn(
-            'relative w-full mt-1' // Relative parent for border
+            'relative w-full mt-3 mb-2 flex flex-col gap-2' // Relative parent for border
           )}
         >
           {/* Dashed line */}

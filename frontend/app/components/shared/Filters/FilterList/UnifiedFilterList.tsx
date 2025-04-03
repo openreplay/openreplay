@@ -153,7 +153,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
   }, []);
 
   return filters.length ? (
-    <div className={cn('flex flex-col', className)} style={style}>
+    <div className={cn('flex flex-col gap-2', className)} style={style}>
       {filters.map((filterItem: any, filterIndex: number) => (
         <div
           key={`filter-${filterItem.key || filterIndex}`}
@@ -176,7 +176,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
         >
           {isDraggable && filters.length > 1 && (
             <div
-              className="cursor-grab text-neutral-500 hover:text-neutral-700 pt-[10px] flex-shrink-0" // Align handle visually
+              className="cursor-grab text-neutral-500 hover:text-neutral-700 pt-[4px] flex-shrink-0" // Align handle visually
               // Draggable is set on parent div
               style={{ cursor: draggedInd !== null ? 'grabbing' : 'grab' }}
               title="Drag to reorder"

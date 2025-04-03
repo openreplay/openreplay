@@ -8,6 +8,7 @@ import FilterDuration from '../FilterDuration';
 import FilterValueDropdown from '../FilterValueDropdown';
 import FilterAutoCompleteLocal from '../FilterAutoCompleteLocal';
 import FilterAutoComplete from '../FilterAutoComplete';
+import ValueAutoComplete from 'Shared/Filters/FilterValue/ValueAutoComplete';
 
 const ASSIST_ROUTE = assistRoute();
 
@@ -154,23 +155,40 @@ function FilterValue(props: Props) {
           />
         );
       case FilterType.STRING:
-        // return <BaseFilterLocalAutoComplete placeholder={filter.placeholder} />;
-        return <FilterAutoComplete
-          value={value}
+        return <ValueAutoComplete
+          initialValues={value}
           isAutoOpen={isAutoOpen}
-          showCloseButton={showCloseButton}
-          showOrButton={showOrButton}
+          // showCloseButton={showCloseButton}
+          // showOrButton={showOrButton}
           onApplyValues={onApplyValues}
-          onRemoveValue={(index) => onRemoveValue(index)}
-          method="GET"
-          endpoint="/PROJECT_ID/events/search"
+          // onRemoveValue={(index) => onRemoveValue(index)}
+          // method="GET"
+          // endpoint="/PROJECT_ID/events/search"
           params={getParams(filter.key)}
-          headerText=""
-          placeholder={filter.placeholder}
-          onSelect={(e, item, index) => onChange(e, item, index)}
-          icon={filter.icon}
-          modalProps={{ placeholder: 'Search' }}
+          // headerText=""
+          // placeholder={filter.placeholder}
+          commaQuery={true}
+          // onSelect={(e, item, index) => onChange(e, item, index)}
+          // icon={filter.icon}
+          // modalProps={{ placeholder: 'Search' }}
         />;
+      // return <BaseFilterLocalAutoComplete placeholder={filter.placeholder} />;
+      // return <FilterAutoComplete
+      //   value={value}
+      //   isAutoOpen={isAutoOpen}
+      //   showCloseButton={showCloseButton}
+      //   showOrButton={showOrButton}
+      //   onApplyValues={onApplyValues}
+      //   onRemoveValue={(index) => onRemoveValue(index)}
+      //   method="GET"
+      //   endpoint="/PROJECT_ID/events/search"
+      //   params={getParams(filter.key)}
+      //   headerText=""
+      //   placeholder={filter.placeholder}
+      //   onSelect={(e, item, index) => onChange(e, item, index)}
+      //   icon={filter.icon}
+      //   modalProps={{ placeholder: 'Search' }}
+      // />;
       case FilterType.DROPDOWN:
         return <BaseDropDown />;
       case FilterType.ISSUE:
@@ -218,14 +236,14 @@ function FilterValue(props: Props) {
   };
 
   return (
-    <div
-      id="ignore-outside"
-      className={cn('grid gap-3 w-fit flex-wrap my-1.5', {
-        'grid-cols-2': filter.hasSource
-      })}
+    <
+      // id="ignore-outside"
+      // className={cn('grid gap-3 w-fit flex-wrap my-1.5', {
+      //   'grid-cols-2': filter.hasSource
+      // })}
     >
       {renderValueFiled(filter.value)}
-    </div>
+    </>
   );
 }
 

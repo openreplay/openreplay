@@ -1,17 +1,16 @@
 import { makeAutoObservable, runInAction } from 'mobx';
-import { makePersistable } from 'mobx-persist-store';
 import { filterService } from 'App/services';
 import { Filter, Operator, COMMON_FILTERS, getOperatorsByType } from './types/filterConstants';
 import { FilterKey } from 'Types/filter/filterType';
 import { projectStore } from '@/mstore/index';
 
-interface TopValue {
+export interface TopValue {
   rowCount?: number;
   rowPercentage?: number;
   value?: string;
 }
 
-interface TopValues {
+export interface TopValues {
   [key: string]: TopValue[];
 }
 
@@ -31,17 +30,6 @@ export default class FilterStore {
   constructor() {
     makeAutoObservable(this);
 
-    // Set up persistence with 10-minute expiration
-    /*void makePersistable(this, {
-      name: 'FilterStore',
-      // properties: ['filters', 'commonFilters'],
-      properties: ['filters'],
-      storage: window.localStorage,
-      expireIn: 10 * 60 * 1000, // 10 minutes in milliseconds
-      removeOnExpiration: true
-    });*/
-
-    // Initialize common static filters
     this.initCommonFilters();
   }
 
@@ -156,34 +144,29 @@ export default class FilterStore {
     return this.getAllFilters(projectStore.activeSiteId + '');
   };
 
-  // getEventFilters = (eventName: string): Filter[] => {
-  //   const filters = await filterService.fetchProperties(eventName)
-  //   return filters;
-  //   // const filters = this.getAllFilters(projectStore.activeSiteId + '');
-  //   // return filters.filter(i => !i.isEvent); // TODO fetch from the API for this event and cache them
-  // };
-
   getEventFilters = async (eventName: string): Promise<Filter[]> => {
-    if (this.filterCache[eventName]) {
-      return this.filterCache[eventName];
+    const cacheKey = `${projectStore.activeSiteId}_${eventName}`;
+    console.log('cacheKey store', cacheKey);
+    if (this.filterCache[cacheKey]) {
+      return this.filterCache[cacheKey];
     }
 
-    if (await this.pendingFetches[eventName]) {
-      return this.pendingFetches[eventName];
+    if (await this.pendingFetches[cacheKey]) {
+      return this.pendingFetches[cacheKey];
     }
 
     try {
-      this.pendingFetches[eventName] = this.fetchAndProcessPropertyFilters(eventName);
-      const filters = await this.pendingFetches[eventName];
+      this.pendingFetches[cacheKey] = this.fetchAndProcessPropertyFilters(eventName);
+      const filters = await this.pendingFetches[cacheKey];
 
       runInAction(() => {
-        this.filterCache[eventName] = filters;
+        this.filterCache[cacheKey] = filters;
       });
 
-      delete this.pendingFetches[eventName];
+      delete this.pendingFetches[cacheKey];
       return filters;
     } catch (error) {
-      delete this.pendingFetches[eventName];
+      delete this.pendingFetches[cacheKey];
       throw error;
     }
   };
