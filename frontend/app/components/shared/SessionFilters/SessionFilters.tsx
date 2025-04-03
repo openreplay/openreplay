@@ -40,12 +40,12 @@ function SessionFilters() {
       <div
         className={cn(
           'bg-white',
-          'py-2 px-4 rounded-xl border border-gray-lighter'
+          'py-2 px-4 rounded-xl border border-gray-lighter pt-4'
         )}
       >
         <FilterListHeader
           title={'Events'}
-          showEventsOrder={true}
+          showEventsOrder={searchInstance.filters.filter(i => i.isEvent).length > 0}
           orderProps={searchInstance}
           onChangeOrder={onChangeEventsOrder}
           filterSelection={
@@ -70,6 +70,7 @@ function SessionFilters() {
           filters={searchInstance.filters.filter(i => i.isEvent)}
           isDraggable={true}
           showIndices={true}
+          className="mt-2"
           handleRemove={function(key: string): void {
             searchStore.removeFilter(key);
           }}
@@ -107,6 +108,7 @@ function SessionFilters() {
         <UnifiedFilterList
           title="Filters"
           filters={searchInstance.filters.filter(i => !i.isEvent)}
+          className="mt-2"
           isDraggable={false}
           showIndices={false}
           handleRemove={function(key: string): void {
