@@ -348,7 +348,7 @@ export default class AssistManager {
       );
       this.canvasReceiver = new CanvasReceiver(
         this.peerID,
-        this.config,
+        this.getIceServers(),
         this.getNode,
         {
           ...this.session.agentInfo,

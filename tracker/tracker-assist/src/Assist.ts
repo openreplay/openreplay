@@ -26,6 +26,7 @@ interface AgentInfo {
   name: string;
   peerId: string;
   query: string;
+  socketId?: string;
 }
 
 export interface Options {
@@ -436,11 +437,11 @@ export default class Assist {
       }
     });
 
-    socket.on("AGENTS_CONNECTED", (ids: string[]) => {
+    socket.on("AGENTS_INFO_CONNECTED", (agentsInfo: AgentInfo[]) => {
       this.cleanCanvasConnections();
-      ids.forEach((id) => {
-        const agentInfo = this.agents[id]?.agentInfo;
-        this.agents[id] = {
+      agentsInfo.forEach((agentInfo) => {
+        if (!agentInfo.socketId) return;
+        this.agents[agentInfo.socketId] = {
           agentInfo,
           onDisconnect: this.options.onAgentConnect?.(agentInfo),
         };
@@ -448,6 +449,7 @@ export default class Assist {
       if (this.app.active()) {
         this.assistDemandedRestart = true;
         this.app.stop();
+        this.app.clearBuffers();
         this.app.waitStatus(0).then(() => {
           this.app.allowAppStart();
           setTimeout(() => {
@@ -457,7 +459,7 @@ export default class Assist {
                 this.assistDemandedRestart = false;
               })
               .then(() => {
-                this.remoteControl?.reconnect(ids);
+                this.remoteControl?.reconnect(Object.keys(this.agents));
               })
               .catch((e) => app.debug.error(e));
           }, 100);
@@ -522,6 +524,13 @@ export default class Assist {
           } catch (e) {
             app.debug.error("Error adding ICE candidate", e);
           }
+        } else {
+          this.iceCandidatesBuffer.set(
+            data.id,
+            this.iceCandidatesBuffer
+              .get(data.id)
+              ?.concat([data.candidate]) || [data.candidate]
+          );
         }
       }
     );
@@ -889,6 +898,7 @@ export default class Assist {
             iceServers: this.config,
           });
           this.setupPeerListeners(uniqueId);
+          this.applyBufferedIceCandidates(uniqueId);
 
           stream.getTracks().forEach((track) => {
             this.canvasPeers[uniqueId]?.addTrack(track, stream);
