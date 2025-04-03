@@ -824,6 +824,25 @@ export function WSChannel(
   ]
 }
 
+export function LongAnimationTask(
+  name: string,
+  duration: number,
+  blockingDuration: number,
+  firstUIEventTimestamp: number,
+  startTime: number,
+  scripts: string,
+): Messages.LongAnimationTask {
+  return [
+    Messages.Type.LongAnimationTask,
+    name,
+    duration,
+    blockingDuration,
+    firstUIEventTimestamp,
+    startTime,
+    scripts,
+  ]
+}
+
 export function InputChange(
   id: number,
   value: string,
