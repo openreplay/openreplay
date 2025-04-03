@@ -1,7 +1,8 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { Input, Tag } from 'antd';
+import { Input, Tag, Select, Segmented } from 'antd';
+import { LongAnimationTask } from './type';
 import { VList, VListHandle } from 'virtua';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import JumpButton from '../JumpButton';
@@ -11,8 +12,6 @@ import { NoContent, Icon, TagBadge } from 'UI';
 import { Hourglass } from 'lucide-react';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { mockData } from './__mock';
-import { Segmented } from 'antd';
-import { LongAnimationTask } from './type';
 import Script from './Script'
 import TaskTimeline from "./TaskTimeline";
 
@@ -23,6 +22,7 @@ interface Row extends LongAnimationTask {
 function LongTaskPanel() {
   const { t } = useTranslation();
   const [tab, setTab] = React.useState('all');
+  const [sortBy, setSortBy] = React.useState('timeAsc');
   const _list = React.useRef<VListHandle>(null);
   const { player, store } = React.useContext(PlayerContext);
   const [searchValue, setSearchValue] = React.useState('');
@@ -51,17 +51,30 @@ function LongTaskPanel() {
   };
 
   const rows: Row[] = React.useMemo(() => {
-    const rowMap = filteredList.map((task) => ({
+    // First map and filter by tab
+    let rowMap = filteredList.map((task) => ({
       ...task,
       time: task.time ?? task.startTime,
-    }))
+    }));
+    
     if (tab === 'blocking') {
-      return rowMap.filter((task) => task.blockingDuration > 0);
+      rowMap = rowMap.filter((task) => task.blockingDuration > 0);
     }
+    
+    // Then sort based on selected sort option
+    if (sortBy === 'blockingDesc') {
+      return [...rowMap].sort((a, b) => (b.blockingDuration || 0) - (a.blockingDuration || 0));
+    } else if (sortBy === 'durationDesc') {
+      return [...rowMap].sort((a, b) => b.duration - a.duration);
+    } else if (sortBy === 'timeAsc') {
+      return [...rowMap].sort((a, b) => a.time - b.time);
+    }
+    
+    // Default sorting (by time)
     return rowMap;
-  }, [filteredList.length, tab]);
+  }, [filteredList.length, tab, sortBy]);
 
-  const blockingTasks = rows.filter((task) => task.blockingDuration > 0);
+  const blockingTasks = filteredList.filter((task) => task.blockingDuration > 0);
 
   return (
     <BottomBlock style={{ height: '100%' }}>
@@ -86,6 +99,19 @@ function LongTaskPanel() {
                 ),
                 value: 'blocking',
               },
+            ]}
+          />
+          <Select
+            size="small"
+            className='rounded-lg'
+            value={sortBy}
+            onChange={setSortBy}
+            popupMatchSelectWidth={150}
+            dropdownStyle={{ minWidth: '150px' }}
+            options={[
+              { label: t('Default Order'), value: 'timeAsc' },
+              { label: t('Blocking Duration'), value: 'blockingDesc' },
+              { label: t('Task Duration'), value: 'durationDesc' },
             ]}
           />
           <Input.Search
@@ -168,8 +194,6 @@ function LongTaskRow({
   );
 }
 
-
-
 function TaskTitle({
   entry,
 }: {
@@ -210,7 +234,7 @@ function TaskTitle({
         {Math.round(entry.duration)} ms
       </span>
       {isBlocking ? (
-        <Tag  bordered={false} color="red" className="font-mono rounded-lg text-xs flex gap-1 items-center text-red-600">
+        <Tag bordered={false} color="red" className="font-mono rounded-lg text-xs flex gap-1 items-center text-red-600">
          <Hourglass size={11} /> {Math.round(entry.blockingDuration!)} ms blocking
         </Tag>
       ) : null}
