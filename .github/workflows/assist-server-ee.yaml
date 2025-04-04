@@ -102,7 +102,7 @@ jobs:
           done
       - name: Deploy to kubernetes
         run: |
-          cd ../../scripts/helmcharts/
+          cd ../scripts/helmcharts/
 
           # Update changed image tag
           sed -i "/assist-server/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
