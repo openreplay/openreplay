@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import cn from 'classnames';
 import { Icon } from 'UI';
 import JumpButton from 'Shared/DevTools/JumpButton';
-import { Tag } from 'antd';
 import TabTag from '../TabTag';
 
 interface Props {
