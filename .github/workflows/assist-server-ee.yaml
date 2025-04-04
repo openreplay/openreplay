@@ -102,6 +102,7 @@ jobs:
           done
       - name: Deploy to kubernetes
         run: |
+          pwd
           cd ../scripts/helmcharts/
 
           # Update changed image tag

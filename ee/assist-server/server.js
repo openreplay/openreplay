@@ -5,7 +5,6 @@ const { authorizer } = require("./app/assist");
 const { onConnect, setSocketIOServer } = require("./app/socket");
 const { startCacheRefresher } = require("./app/cache");
 
-// Create uWebSockets.js app
 const app = App();
 const prefix = process.env.PREFIX || process.env.prefix || `/assist`;
 const pingInterval = parseInt(process.env.PING_INTERVAL) || 5000;
@@ -62,10 +61,8 @@ app.listen(PORT, (token) => {
         console.log(`Failed to listen on port ${PORT}`);
     }
 });
-
 startCacheRefresher(io);
 
-// Error handling for uncaught exceptions
 process.on('uncaughtException', err => {
     logger.error(`Uncaught Exception: ${err}`);
 });
