@@ -13,15 +13,18 @@ function generateNodeID() {
     return "node_"+buffer.readBigUInt64BE(0).toString();
 }
 
-const pingInterval = parseInt(process.env.PING_INTERVAL) || 25000;
-const CACHE_REFRESH_INTERVAL = parseInt(process.env.cacheRefreshInterval) || 10000;
+const PING_INTERVAL = parseInt(process.env.PING_INTERVAL_SECONDS) || 25;
+const CACHE_REFRESH_INTERVAL = parseInt(process.env.CACHE_REFRESH_INTERVAL_SECONDS) || 10;
+const pingInterval = PING_INTERVAL + PING_INTERVAL/2;
+const cacheRefreshInterval = CACHE_REFRESH_INTERVAL + CACHE_REFRESH_INTERVAL/2;
+const cacheRefreshIntervalMs = CACHE_REFRESH_INTERVAL * 1000;
 let lastCacheUpdateTime = 0;
 let cacheRefresher = null;
 const nodeID = process.env.HOSTNAME || generateNodeID();
 
 const addSessionToCache =  async function (sessionID, sessionData) {
     try {
-        await redisClient.set(`active_sessions:${sessionID}`, JSON.stringify(sessionData), 'EX', pingInterval*2);
+        await redisClient.set(`active_sessions:${sessionID}`, JSON.stringify(sessionData), 'EX', pingInterval);
         logger.debug(`Session ${sessionID} stored in Redis`);
     } catch (error) {
         logger.error(error);
@@ -30,7 +33,7 @@ const addSessionToCache =  async function (sessionID, sessionData) {
 
 const renewSession = async function (sessionID){
     try {
-        await redisClient.expire(`active_sessions:${sessionID}`, pingInterval*2);
+        await redisClient.expire(`active_sessions:${sessionID}`, pingInterval);
         logger.debug(`Session ${sessionID} renewed in Redis`);
     } catch (error) {
         logger.error(error);
@@ -62,7 +65,7 @@ const removeSessionFromCache = async function (sessionID) {
 
 const setNodeSessions = async function (nodeID, sessionIDs) {
     try {
-        await redisClient.set(`node:${nodeID}:sessions`, JSON.stringify(sessionIDs), 'EX', CACHE_REFRESH_INTERVAL*2);
+        await redisClient.set(`node:${nodeID}:sessions`, JSON.stringify(sessionIDs), 'EX', cacheRefreshInterval);
         logger.debug(`Node ${nodeID} sessions stored in Redis`);
     } catch (error) {
         logger.error(error);
@@ -74,7 +77,7 @@ function startCacheRefresher(io) {
 
     cacheRefresher = setInterval(async () => {
         const now = Date.now();
-        if (now - lastCacheUpdateTime < CACHE_REFRESH_INTERVAL) {
+        if (now - lastCacheUpdateTime < cacheRefreshIntervalMs) {
             return;
         }
         logger.debug('Background refresh triggered');
@@ -82,9 +85,9 @@ function startCacheRefresher(io) {
             const startTime = performance.now();
             const sessionIDs = new Set();
             const result = await io.fetchSockets();
-            result.forEach((r) => {
-                if (r.handshake.query.sessionID) {
-                    sessionIDs.add(r.handshake.query.sessionID);
+            result.forEach((socket) => {
+                if (socket.handshake.query.sessId) {
+                    sessionIDs.add(socket.handshake.query.sessId);
                 }
             })
             await setNodeSessions(nodeID, Array.from(sessionIDs));
@@ -94,7 +97,7 @@ function startCacheRefresher(io) {
         } catch (error) {
             logger.error(`Background refresh error: ${error}`);
         }
-    }, CACHE_REFRESH_INTERVAL / 2);
+    }, cacheRefreshIntervalMs / 2);
 }
 
 module.exports = {

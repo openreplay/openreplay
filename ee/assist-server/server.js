@@ -6,7 +6,7 @@ const { onConnect, setSocketIOServer } = require("./app/socket");
 const { startCacheRefresher } = require("./app/cache");
 
 const app = App();
-const pingInterval = parseInt(process.env.PING_INTERVAL) || 5000;
+const pingInterval = parseInt(process.env.PING_INTERVAL) || 25000;
 
 const getCompressionConfig = function () {
     // WS: The theoretical overhead per socket is 19KB (11KB for compressor and 8KB for decompressor)
