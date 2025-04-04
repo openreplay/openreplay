@@ -404,7 +404,7 @@ spec:
           - name: AWS_DEFAULT_REGION
             value: "{{ .Values.global.s3.region }}"
           - name: AWS_ENDPOINT
-            value: "{{ .Values.global.s3.endpoint }}"
+            value: "{{- include "openreplay.s3Endpoint" . }}"
           - name: VAULT_BUCKET
             value: "{{ .Values.global.s3.vaultBucket }}"
         image: amazon/aws-cli
