@@ -52,5 +52,5 @@ spec:
                 name: {{ $fullName }}
                 port:
                   number: {{ $socketioSvcPort }}
-            path: /ws-assist-old/(.*)
+            path: /ws-assist/(.*)
 {{- end }}
