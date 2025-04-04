@@ -6,7 +6,6 @@ const { onConnect, setSocketIOServer } = require("./app/socket");
 const { startCacheRefresher } = require("./app/cache");
 
 const app = App();
-const prefix = process.env.PREFIX || process.env.prefix || `/assist`;
 const pingInterval = parseInt(process.env.PING_INTERVAL) || 5000;
 
 const getCompressionConfig = function () {
@@ -40,7 +39,7 @@ const io = new Server({
         methods: ["GET", "POST"],
         credentials: true
     },
-    path: (prefix ? prefix : '') + '/socket',
+    path: '/socket',
     ...getCompressionConfig()
 });
 
