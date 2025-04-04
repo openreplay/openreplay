@@ -548,7 +548,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 53:
-            return ResourceTimingDeprecated(
+            return ResourceTimingDeprecatedDeprecated(
                 timestamp=self.read_uint(reader),
                 duration=self.read_uint(reader),
                 ttfb=self.read_uint(reader),
@@ -755,6 +755,26 @@ cdef class MessageCodec:
                 message_type=self.read_string(reader)
             )
 
+        if message_id == 85:
+            return ResourceTiming(
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader),
+                ttfb=self.read_uint(reader),
+                header_size=self.read_uint(reader),
+                encoded_body_size=self.read_uint(reader),
+                decoded_body_size=self.read_uint(reader),
+                url=self.read_string(reader),
+                initiator=self.read_string(reader),
+                transferred_size=self.read_uint(reader),
+                cached=self.read_boolean(reader),
+                queueing=self.read_uint(reader),
+                dns_lookup=self.read_uint(reader),
+                initial_connection=self.read_uint(reader),
+                ssl=self.read_uint(reader),
+                content_download=self.read_uint(reader),
+                total=self.read_uint(reader)
+            )
+
         if message_id == 112:
             return InputChange(
                 id=self.read_uint(reader),
@@ -783,7 +803,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 116:
-            return ResourceTiming(
+            return ResourceTimingDeprecated(
                 timestamp=self.read_uint(reader),
                 duration=self.read_uint(reader),
                 ttfb=self.read_uint(reader),

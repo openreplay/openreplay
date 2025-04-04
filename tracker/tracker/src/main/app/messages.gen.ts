@@ -503,7 +503,7 @@ export function SetNodeAttributeDict(
   ]
 }
 
-export function ResourceTimingDeprecated(
+export function ResourceTimingDeprecatedDeprecated(
   timestamp: number,
   duration: number,
   ttfb: number,
@@ -512,9 +512,9 @@ export function ResourceTimingDeprecated(
   decodedBodySize: number,
   url: string,
   initiator: string,
-): Messages.ResourceTimingDeprecated {
+): Messages.ResourceTimingDeprecatedDeprecated {
   return [
-    Messages.Type.ResourceTimingDeprecated,
+    Messages.Type.ResourceTimingDeprecatedDeprecated,
     timestamp,
     duration,
     ttfb,
@@ -824,6 +824,45 @@ export function WSChannel(
   ]
 }
 
+export function ResourceTiming(
+  timestamp: number,
+  duration: number,
+  ttfb: number,
+  headerSize: number,
+  encodedBodySize: number,
+  decodedBodySize: number,
+  url: string,
+  initiator: string,
+  transferredSize: number,
+  cached: boolean,
+  queueing: number,
+  dnsLookup: number,
+  initialConnection: number,
+  ssl: number,
+  contentDownload: number,
+  total: number,
+): Messages.ResourceTiming {
+  return [
+    Messages.Type.ResourceTiming,
+    timestamp,
+    duration,
+    ttfb,
+    headerSize,
+    encodedBodySize,
+    decodedBodySize,
+    url,
+    initiator,
+    transferredSize,
+    cached,
+    queueing,
+    dnsLookup,
+    initialConnection,
+    ssl,
+    contentDownload,
+    total,
+  ]
+}
+
 export function InputChange(
   id: number,
   value: string,
@@ -874,7 +913,7 @@ export function UnbindNodes(
   ]
 }
 
-export function ResourceTiming(
+export function ResourceTimingDeprecated(
   timestamp: number,
   duration: number,
   ttfb: number,
@@ -885,9 +924,9 @@ export function ResourceTiming(
   initiator: string,
   transferredSize: number,
   cached: boolean,
-): Messages.ResourceTiming {
+): Messages.ResourceTimingDeprecated {
   return [
-    Messages.Type.ResourceTiming,
+    Messages.Type.ResourceTimingDeprecated,
     timestamp,
     duration,
     ttfb,

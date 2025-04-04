@@ -9,10 +9,17 @@ import { TFunction } from 'i18next';
 const HEADERS = 'HEADERS';
 const REQUEST = 'REQUEST';
 const RESPONSE = 'RESPONSE';
-const TABS = [HEADERS, REQUEST, RESPONSE].map((tab) => ({
+const TIMINGS = 'TIMINGS';
+const TABS = [HEADERS, REQUEST, RESPONSE, TIMINGS].map((tab) => ({
   text: tab,
   key: tab,
 }));
+const RESOURCE_TABS = [
+  {
+    text: TIMINGS,
+    key: TIMINGS,
+  },
+];
 
 type RequestResponse = {
   headers?: Record<string, string>;
@@ -76,10 +83,11 @@ function parseRequestResponse(
 interface Props {
   resource: { request: string; response: string };
   isSpot?: boolean;
+  isXHR?: boolean;
 }
-function FetchTabs({ resource, isSpot }: Props) {
+function FetchTabs({ resource, isSpot, isXHR }: Props) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState(HEADERS);
+  const [activeTab, setActiveTab] = useState(isXHR ? HEADERS : TIMINGS);
   const onTabClick = (tab: string) => setActiveTab(tab);
   const [jsonRequest, setJsonRequest] = useState<object | null>(null);
   const [jsonResponse, setJsonResponse] = useState<object | null>(null);
@@ -122,10 +130,13 @@ function FetchTabs({ resource, isSpot }: Props) {
                 <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
                 <div className="mt-6 text-base font-normal">
                   {t('Body is empty or not captured.')}{' '}
-                  <a href="https://docs.openreplay.com/en/sdk/network-options" className="link" target="_blank">
+                  <a
+                    href="https://docs.openreplay.com/en/sdk/network-options"
+                    className="link"
+                    target="_blank"
+                  >
                     {t('Configure')}
-                  </a>
-                  {' '}
+                  </a>{' '}
                   {t(
                     'network capturing to get more out of Fetch/XHR requests.',
                   )}
@@ -160,10 +171,13 @@ function FetchTabs({ resource, isSpot }: Props) {
                 <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
                 <div className="mt-6 text-base font-normal">
                   {t('Body is empty or not captured.')}{' '}
-                  <a href="https://docs.openreplay.com/en/sdk/network-options" className="link" target="_blank">
+                  <a
+                    href="https://docs.openreplay.com/en/sdk/network-options"
+                    className="link"
+                    target="_blank"
+                  >
                     {t('Configure')}
-                  </a>
-                  {' '}
+                  </a>{' '}
                   {t(
                     'network capturing to get more out of Fetch/XHR requests.',
                   )}
@@ -197,11 +211,16 @@ function FetchTabs({ resource, isSpot }: Props) {
             responseHeaders={responseHeaders}
           />
         );
+      case TIMINGS:
+        return <div>
+          {resource.timings ? JSON.stringify(resource.timings, null, 2) : 'notihng :('}
+        </div>;
     }
   };
+  const usedTabs = isXHR ? TABS : RESOURCE_TABS;
   return (
     <div>
-      <Tabs tabs={TABS} active={activeTab} onClick={onTabClick} border />
+      <Tabs tabs={usedTabs} active={activeTab} onClick={onTabClick} border />
       <div style={{ height: 'calc(100vh - 364px)', overflowY: 'auto' }}>
         {renderActiveTab()}
       </div>

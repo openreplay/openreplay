@@ -1,21 +1,21 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
-import PrimitiveReader from './PrimitiveReader';
-import { MType } from './raw.gen';
-import type { RawMessage } from './raw.gen';
+import PrimitiveReader from './PrimitiveReader'
+import { MType } from './raw.gen'
+import type { RawMessage } from './raw.gen'
+
 
 export default class RawMessageReader extends PrimitiveReader {
   readMessage(): RawMessage | null {
-    const p = this.p;
+    const p = this.p
     const resetPointer = () => {
-      this.p = p;
-      return null;
-    };
-
-    const tp = this.readUint();
-    if (tp === null) {
-      return resetPointer();
+      this.p = p
+      return null
     }
+
+    const tp = this.readUint()
+    if (tp === null) { return resetPointer() }
 
     switch (tp) {
 
@@ -407,7 +407,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const url = this.readString(); if (url === null) { return resetPointer() }
       const initiator = this.readString(); if (initiator === null) { return resetPointer() }
       return {
-        tp: MType.ResourceTimingDeprecated,
+        tp: MType.ResourceTimingDeprecatedDeprecated,
         timestamp,
         duration,
         ttfb,
@@ -657,6 +657,44 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 85: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const ttfb = this.readUint(); if (ttfb === null) { return resetPointer() }
+      const headerSize = this.readUint(); if (headerSize === null) { return resetPointer() }
+      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { return resetPointer() }
+      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { return resetPointer() }
+      const url = this.readString(); if (url === null) { return resetPointer() }
+      const initiator = this.readString(); if (initiator === null) { return resetPointer() }
+      const transferredSize = this.readUint(); if (transferredSize === null) { return resetPointer() }
+      const cached = this.readBoolean(); if (cached === null) { return resetPointer() }
+      const queueing = this.readUint(); if (queueing === null) { return resetPointer() }
+      const dnsLookup = this.readUint(); if (dnsLookup === null) { return resetPointer() }
+      const initialConnection = this.readUint(); if (initialConnection === null) { return resetPointer() }
+      const ssl = this.readUint(); if (ssl === null) { return resetPointer() }
+      const contentDownload = this.readUint(); if (contentDownload === null) { return resetPointer() }
+      const total = this.readUint(); if (total === null) { return resetPointer() }
+      return {
+        tp: MType.ResourceTiming,
+        timestamp,
+        duration,
+        ttfb,
+        headerSize,
+        encodedBodySize,
+        decodedBodySize,
+        url,
+        initiator,
+        transferredSize,
+        cached,
+        queueing,
+        dnsLookup,
+        initialConnection,
+        ssl,
+        contentDownload,
+        total,
+      };
+    }
+
     case 113: {
       const selectionStart = this.readUint(); if (selectionStart === null) { return resetPointer() }
       const selectionEnd = this.readUint(); if (selectionEnd === null) { return resetPointer() }
@@ -689,7 +727,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const transferredSize = this.readUint(); if (transferredSize === null) { return resetPointer() }
       const cached = this.readBoolean(); if (cached === null) { return resetPointer() }
       return {
-        tp: MType.ResourceTiming,
+        tp: MType.ResourceTimingDeprecated,
         timestamp,
         duration,
         ttfb,

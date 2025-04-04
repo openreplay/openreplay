@@ -123,19 +123,37 @@ export default function (app: App, opts: Partial<Options>): void {
     }
     const failed = entry.responseEnd === 0
                    || (entry.transferSize === 0 && entry.decodedBodySize === 0)
+                   || (entry.responseStatus && entry.responseStatus >= 400)
+
+    const timings = {
+      queueing: entry.domainLookupStart - entry.startTime,
+      dnsLookup: entry.domainLookupEnd - entry.domainLookupStart,
+      initialConnection: entry.connectEnd - entry.connectStart,
+      ssl: entry.secureConnectionStart > 0
+          ? entry.connectEnd - entry.secureConnectionStart : 0,
+      ttfb: entry.responseStart - entry.requestStart,
+      contentDownload: entry.responseEnd - entry.responseStart,
+      total: entry.responseEnd - entry.startTime
+    };
     if (failed) {
       app.send(
         ResourceTiming(
           entry.startTime + getTimeOrigin(),
           0,
-          0,
+          timings.ttfb,
           0,
           0,
           0,
           entry.name,
           entry.initiatorType,
           0,
-          true,
+          false,
+          timings.queueing,
+          timings.dnsLookup,
+          timings.initialConnection,
+          timings.ssl,
+          timings.contentDownload,
+          timings.total,
         ),
       )
     }
@@ -143,15 +161,20 @@ export default function (app: App, opts: Partial<Options>): void {
       ResourceTiming(
         entry.startTime + getTimeOrigin(),
         entry.duration,
-        entry.responseStart && entry.startTime ? entry.responseStart - entry.startTime : 0,
+        timings.ttfb,
         entry.transferSize > entry.encodedBodySize ? entry.transferSize - entry.encodedBodySize : 0,
         entry.encodedBodySize || 0,
         entry.decodedBodySize || 0,
         app.sanitizer.privateMode ? entry.name.replaceAll(/./g, '*') : entry.name,
         entry.initiatorType,
         entry.transferSize,
-        // @ts-ignore
         (entry.responseStatus && entry.responseStatus === 304) || entry.transferSize === 0,
+        timings.queueing,
+        timings.dnsLookup,
+        timings.initialConnection,
+        timings.ssl,
+        timings.contentDownload,
+        timings.total,
       ),
     )
   }

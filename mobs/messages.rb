@@ -275,7 +275,9 @@ message 52, 'SetNodeAttributeDict' do
     string 'Name'
     string 'Value'
 end
-message 53, 'ResourceTimingDeprecated', :replayer => :devtools do
+
+# deprecated during 1.16.0 release
+message 53, 'ResourceTimingDeprecatedDeprecated', :replayer => :devtools do
   uint 'Timestamp'
   uint 'Duration'
   uint 'TTFB'
@@ -450,6 +452,25 @@ message 84, 'WSChannel', :replayer => :devtools do
     string 'MessageType'
 end
 
+message 85, 'ResourceTiming', :replayer => :devtools do
+  uint 'Timestamp'
+  uint 'Duration'
+  uint 'TTFB'
+  uint 'HeaderSize'
+  uint 'EncodedBodySize'
+  uint 'DecodedBodySize'
+  string 'URL'
+  string 'Initiator'
+  uint 'TransferredSize'
+  boolean 'Cached'
+  uint 'Queueing'
+  uint 'DnsLookup'
+  uint 'InitialConnection'
+  uint 'SSL'
+  uint 'ContentDownload'
+  uint 'Total'
+end
+
 # 90-111 reserved iOS
 
 message 112, 'InputChange', :replayer => false do
@@ -475,7 +496,8 @@ message 115, 'UnbindNodes', :replayer => false do
     uint 'TotalRemovedPercent'
 end
 
-message 116, 'ResourceTiming', :replayer => :devtools do
+#deprecated during 1.23.0 release
+message 116, 'ResourceTimingDeprecated', :replayer => :devtools do
   uint 'Timestamp'
   uint 'Duration'
   uint 'TTFB'
