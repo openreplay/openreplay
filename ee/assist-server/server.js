@@ -5,7 +5,6 @@ const { authorizer } = require("./app/assist");
 const { onConnect, setSocketIOServer } = require("./app/socket");
 const { startCacheRefresher } = require("./app/cache");
 
-// Create uWebSockets.js app
 const app = App();
 const prefix = process.env.PREFIX || process.env.prefix || `/assist`;
 const pingInterval = parseInt(process.env.PING_INTERVAL) || 5000;
@@ -33,7 +32,6 @@ const getCompressionConfig = function () {
     };
 }
 
-// Create a Socket.IO server with uWebSockets.js adapter
 const io = new Server({
     maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
     pingInterval: pingInterval, // Will use it for cache invalidation
@@ -46,22 +44,19 @@ const io = new Server({
     ...getCompressionConfig()
 });
 
-// Middleware for Socket.IO to check authorization
 io.use(async (socket, next) => await authorizer.check(socket, next));
-// Socket.IO connection handler
 io.on('connection', (socket) => onConnect(socket));
-// Attach Socket.IO to uWebSockets.js
 io.attachApp(app);
 io.engine.on("headers", (headers) => {
     headers["x-host-id"] = process.env.HOSTNAME || "unknown";
 });
 setSocketIOServer(io);
 
-// Start the server
-const PORT = process.env.PORT || 3000;
+const HOST = process.env.LISTEN_HOST || '0.0.0.0';
+const PORT = process.env.PORT || 9001;
 app.listen(PORT, (token) => {
     if (token) {
-        console.log(`Server running at http://localhost:${PORT}`);
+        console.log(`Server running at http://${HOST}:${PORT}`);
     } else {
         console.log(`Failed to listen on port ${PORT}`);
     }
