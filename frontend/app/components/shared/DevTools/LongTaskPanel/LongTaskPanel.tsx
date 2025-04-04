@@ -9,19 +9,31 @@ import { useRegExListFilterMemo } from '../useListFilter';
 import BottomBlock from '../BottomBlock';
 import { NoContent, Icon } from 'UI';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { mockData } from './__mock';
-import { Segmented } from 'antd';
+import { Segmented, Select, Tag } from 'antd';
 import { LongAnimationTask } from './type';
-import Script from './Script'
-import TaskTimeline from "./TaskTimeline";
+import Script from './Script';
+import TaskTimeline from './TaskTimeline';
+import { Hourglass } from 'lucide-react';
 
 interface Row extends LongAnimationTask {
   time: number;
 }
 
+const TABS = {
+  all: 'all',
+  blocking: 'blocking',
+};
+
+const SORT_BY = {
+  timeAsc: 'timeAsc',
+  blocking: 'blockingDesc',
+  duration: 'durationDesc',
+};
+
 function LongTaskPanel() {
   const { t } = useTranslation();
-  const [tab, setTab] = React.useState('all');
+  const [tab, setTab] = React.useState(TABS.all);
+  const [sortBy, setSortBy] = React.useState(SORT_BY.timeAsc);
   const _list = React.useRef<VListHandle>(null);
   const { player, store } = React.useContext(PlayerContext);
   const [searchValue, setSearchValue] = React.useState('');
@@ -29,7 +41,6 @@ function LongTaskPanel() {
   const { currentTab, tabStates } = store.get();
   const longTasks = tabStates[currentTab]?.longTaskList || [];
 
-  console.log('list', longTasks)
   const filteredList = useRegExListFilterMemo(
     longTasks,
     (task: LongAnimationTask) => [
@@ -38,7 +49,7 @@ function LongTaskPanel() {
       task.scripts.map((script) => script.sourceURL).join(','),
     ],
     searchValue,
-  )
+  );
 
   const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -50,17 +61,35 @@ function LongTaskPanel() {
   };
 
   const rows: Row[] = React.useMemo(() => {
-    const rowMap = filteredList.map((task) => ({
+    let rowMap = filteredList.map((task) => ({
       ...task,
       time: task.time ?? task.startTime,
-    }))
+    }));
     if (tab === 'blocking') {
-      return rowMap.filter((task) => task.blockingDuration > 0);
+      rowMap = rowMap.filter((task) => task.blockingDuration > 0);
+    }
+    switch (sortBy) {
+      case SORT_BY.blocking:
+        rowMap = rowMap.sort((a, b) => b.blockingDuration - a.blockingDuration);
+        break;
+      case SORT_BY.duration:
+        rowMap = rowMap.sort((a, b) => b.duration - a.duration);
+        break;
+      default:
+        rowMap = rowMap.sort((a, b) => a.time - b.time);
     }
     return rowMap;
-  }, [filteredList.length, tab]);
+  }, [filteredList.length, tab, sortBy]);
 
-  const blockingTasks = rows.filter((task) => task.blockingDuration > 0);
+  const blockingTasks = React.useMemo(() => {
+    let blockingAmount = 0;
+    for (const task of longTasks) {
+      if (task.blockingDuration > 0) {
+        blockingAmount++;
+      }
+    }
+    return blockingAmount;
+  }, [longTasks.length]);
 
   return (
     <BottomBlock style={{ height: '100%' }}>
@@ -80,11 +109,24 @@ function LongTaskPanel() {
               {
                 label: (
                   <div>
-                    {t('Blocking')} ({blockingTasks.length})
+                    {t('Blocking')} ({blockingTasks})
                   </div>
                 ),
                 value: 'blocking',
               },
+            ]}
+          />
+          <Select
+            size="small"
+            className="rounded-lg"
+            value={sortBy}
+            onChange={setSortBy}
+            popupMatchSelectWidth={150}
+            dropdownStyle={{ minWidth: '150px' }}
+            options={[
+              { label: t('Default Order'), value: 'timeAsc' },
+              { label: t('Blocking Duration'), value: 'blockingDesc' },
+              { label: t('Task Duration'), value: 'durationDesc' },
             ]}
           />
           <Input.Search
@@ -131,28 +173,24 @@ function LongTaskRow({
   return (
     <div
       className={
-        'relative border-b border-neutral-950/5 group hover:bg-active-blue cursor-pointer flex items-start gap-2 py-1 px-4 pe-8'
+        'relative border-b border-neutral-950/5 group hover:bg-active-blue py-1 px-4 pe-8'
       }
-      onClick={() => setExpanded(!expanded)}
     >
-      <Icon
-        name={expanded ? 'caret-down-fill' : 'caret-right-fill'}
-        className={'mt-1'}
-      />
-
-      <div className="flex flex-col">
-        <div className="flex flex-col">
-          <TaskTitle entry={task} />
-        </div>
+      <div className="flex flex-col w-full">
+        <TaskTitle expanded={expanded} entry={task} toggleExpand={() => setExpanded(!expanded)} />
         {expanded ? (
           <>
             <TaskTimeline task={task} />
-            <div className={'flex items-center gap-1'}>
-              <div className={'text-gray-dark'}>First UI event timestamp:</div>
-              <div>{task.firstUIEventTimestamp.toFixed(2)} ms</div>
+            <div className={'flex items-center gap-1 mb-2'}>
+              <div className={'text-neutral-900 font-medium'}>
+                First UI event timestamp:
+              </div>
+              <div className="text-neutral-600 font-mono block">
+                {Math.round(task.firstUIEventTimestamp)} ms
+              </div>
             </div>
-            <div className={'text-gray-dark'}>Scripts:</div>
-            <div className="flex flex-col gap-1 pl-2">
+            <div className={'text-neutral-900 font-medium'}>Scripts:</div>
+            <div className="flex flex-col gap-1">
               {task.scripts.map((script, index) => (
                 <Script script={script} key={index} />
               ))}
@@ -167,28 +205,61 @@ function LongTaskRow({
 
 function TaskTitle({
   entry,
+  toggleExpand,
+  expanded,
 }: {
   entry: {
     name: string;
     duration: number;
     blockingDuration?: number;
+    scripts: LongAnimationTask['scripts'];
   };
+  expanded: boolean;
+  toggleExpand: () => void;
 }) {
   const isBlocking =
     entry.blockingDuration !== undefined && entry.blockingDuration > 0;
+
+  const scriptTitles = entry.scripts.map((script) =>
+    script.invokerType ? script.invokerType : script.name,
+  );
+  const { title, plusMore } = getFirstTwoScripts(scriptTitles);
   return (
-    <div className={'flex items-center gap-1'}>
-      <span>Long Animation Frame</span>
-      <span className={'text-disabled-text'}>
-        ({entry.duration.toFixed(2)} ms)
+    <div className={'flex items-center gap-1 text-sm cursor-pointer'} onClick={toggleExpand}>
+      <Icon
+        name={expanded ? 'caret-down-fill' : 'caret-right-fill'}
+      />
+      <span className="font-mono font-bold">{title}</span>
+      <Tag color="default" bordered={false}>
+        {plusMore}
+      </Tag>
+      <span className={'text-neutral-600 font-mono'}>
+        {Math.round(entry.duration)} ms
       </span>
       {isBlocking ? (
-        <span className={'text-red'}>
-          {entry.blockingDuration!.toFixed(2)} ms blocking
-        </span>
+        <Tag
+          bordered={false}
+          color="red"
+          className="font-mono rounded-lg text-xs flex gap-1 items-center text-red-600"
+        >
+          <Hourglass size={11} /> {Math.round(entry.blockingDuration!)} ms
+          blocking
+        </Tag>
       ) : null}
     </div>
   );
+}
+
+function getFirstTwoScripts(titles: string[]) {
+  if (titles.length === 0) {
+    return { title: 'Long Animation Task', plusMore: null };
+  }
+  const additional = titles.length - 2;
+  const additionalStr = additional > 0 ? `+ ${additional} more` : null;
+  return {
+    title: `${titles[0]}${titles[1] ? `, ${titles[1]}` : ''}`,
+    plusMore: additionalStr,
+  };
 }
 
 export default observer(LongTaskPanel);
