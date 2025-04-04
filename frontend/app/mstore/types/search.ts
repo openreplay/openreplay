@@ -3,11 +3,11 @@ import {
   DATE_RANGE_VALUES,
   getDateRangeFromValue
 } from 'App/dateRange';
-import Filter, { IFilter } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
 import { makeAutoObservable, observable } from 'mobx';
 import { LAST_24_HOURS, LAST_30_DAYS, LAST_7_DAYS } from 'Types/app/period';
 import { roundToNextMinutes } from '@/utils';
+// import { Filter } from '@/mstore/types/filterConstants';
 
 // @ts-ignore
 const rangeValue = DATE_RANGE_VALUES.LAST_24_HOURS;
@@ -25,7 +25,7 @@ interface ISearch {
   userDevice?: string;
   fid0?: string;
   events: Event[];
-  filters: FilterItem[];
+  filters: Filter[];
   minDuration?: number;
   maxDuration?: number;
   custom: Record<string, any>;
@@ -54,7 +54,7 @@ export default class Search {
   userDevice?: string;
   fid0?: string;
   events: Event[];
-  filters: FilterItem[];
+  filters: Filter[];
   minDuration?: number;
   maxDuration?: number;
   custom: Record<string, any>;

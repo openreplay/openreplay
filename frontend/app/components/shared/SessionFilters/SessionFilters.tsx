@@ -1,131 +1,107 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
-import { Button, Divider } from 'antd';
+import { Button, Divider, Card } from 'antd';
 import { Plus } from 'lucide-react';
-import cn from 'classnames';
 import { Filter } from '@/mstore/types/filterConstants';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 
-let debounceFetch: any = () => {
-};
 
 function SessionFilters() {
-  const { searchStore, projectsStore, filterStore } =
-    useStore();
-
+  const { searchStore, filterStore } = useStore();
   const searchInstance = searchStore.instance;
-  const saveRequestPayloads =
-    projectsStore.instance?.saveRequestPayloads ?? false;
 
   const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
-  const eventOptions = allFilterOptions.filter(i => i.isEvent);
-  const propertyOptions = allFilterOptions.filter(i => !i.isEvent);
+  const eventOptions = allFilterOptions.filter((i) => i.isEvent);
+  const propertyOptions = allFilterOptions.filter((i) => !i.isEvent);
 
-  const onAddFilter = (filter: any) => {
-    filter.autoOpen = true;
-    searchStore.addFilter(filter);
+  const onAddFilter = (filter: Filter) => {
+    searchStore.addFilter({ ...filter, autoOpen: true });
   };
 
-  const onChangeEventsOrder = (e: any, { value }: any) => {
+  const onChangeEventsOrder = (
+    _e: React.MouseEvent<HTMLButtonElement>,
+    { value }: { value: string }
+  ) => {
     searchStore.edit({
       eventsOrder: value
     });
   };
 
+  const eventFilters = searchInstance.filters.filter((i) => i.isEvent);
+  const attributeFilters = searchInstance.filters.filter((i) => !i.isEvent);
+
   return (
-    <div className="relative">
-      <div
-        className={cn(
-          'bg-white',
-          'py-2 px-4 rounded-xl border border-gray-lighter pt-4'
-        )}
-      >
-        <FilterListHeader
-          title={'Events'}
-          showEventsOrder={searchInstance.filters.filter(i => i.isEvent).length > 0}
-          orderProps={searchInstance}
-          onChangeOrder={onChangeEventsOrder}
-          filterSelection={
-            <FilterSelection
-              filters={eventOptions}
-              onFilterClick={(newFilter) => {
-                console.log('newFilter', newFilter);
-                onAddFilter(newFilter);
-              }}>
-              <Button type="default" size="small">
-                <div className="flex items-center gap-1">
-                  <Plus size={16} strokeWidth={1} />
-                  <span>Add Event</span>
-                </div>
-              </Button>
-            </FilterSelection>
-          }
-        />
+    <Card className="rounded-lg" classNames={{ body: '!p-4' }}>
+      <FilterListHeader
+        title={'Events'}
+        showEventsOrder={eventFilters.length > 0}
+        orderProps={searchInstance}
+        onChangeOrder={onChangeEventsOrder}
+        filterSelection={
+          <FilterSelection
+            filters={eventOptions}
+            onFilterClick={(newFilter: Filter) => {
+              onAddFilter(newFilter);
+            }}
+          >
+            <Button type="default" size="small">
+              <div className="flex items-center gap-1">
+                <Plus size={16} strokeWidth={1} />
+                <span>Add</span>
+              </div>
+            </Button>
+          </FilterSelection>
+        }
+      />
 
-        <UnifiedFilterList
-          title="Events"
-          filters={searchInstance.filters.filter(i => i.isEvent)}
-          isDraggable={true}
-          showIndices={true}
-          className="mt-2"
-          handleRemove={function(key: string): void {
-            searchStore.removeFilter(key);
-          }}
-          handleUpdate={function(key: string, updatedFilter: any): void {
-            searchStore.updateFilter(key, updatedFilter);
-          }}
-          handleAdd={function(newFilter: Filter): void {
-            searchStore.addFilter(newFilter);
-          }}
-          handleMove={function(draggedIndex: number, newPosition: number): void {
-            searchStore.moveFilter(draggedIndex, newPosition);
-          }}
-        />
+      <UnifiedFilterList
+        title="Events"
+        filters={eventFilters}
+        isDraggable={true}
+        showIndices={true}
+        className="mt-2"
+        handleRemove={searchStore.removeFilter}
+        handleUpdate={searchStore.updateFilter}
+        handleAdd={searchStore.addFilter}
+        handleMove={searchStore.moveFilter}
+      />
 
-        <Divider className="my-3" />
+      <Divider className="my-3" />
 
-        <FilterListHeader
-          title={'Filters'}
-          filterSelection={
-            <FilterSelection
-              filters={propertyOptions}
-              onFilterClick={(newFilter) => {
-                onAddFilter(newFilter);
-              }}
-            >
-              <Button type="default" size="small">
-                <div className="flex items-center gap-1">
-                  <Plus size={16} strokeWidth={1} />
-                  <span>Filter</span>
-                </div>
-              </Button>
-            </FilterSelection>
-          } />
+      <FilterListHeader
+        title={'Filters'}
+        filterSelection={
+          <FilterSelection
+            filters={propertyOptions}
+            onFilterClick={(newFilter: Filter) => {
+              onAddFilter(newFilter);
+            }}
+          >
+            <Button type="default" size="small">
+              <div className="flex items-center gap-1">
+                <Plus size={16} strokeWidth={1} />
+                <span>Add</span>
+              </div>
+            </Button>
+          </FilterSelection>
+        }
+      />
 
-        <UnifiedFilterList
-          title="Filters"
-          filters={searchInstance.filters.filter(i => !i.isEvent)}
-          className="mt-2"
-          isDraggable={false}
-          showIndices={false}
-          handleRemove={function(key: string): void {
-            searchStore.removeFilter(key);
-          }}
-          handleUpdate={function(key: string, updatedFilter: any): void {
-            searchStore.updateFilter(key, updatedFilter);
-          }}
-          handleAdd={function(newFilter: Filter): void {
-            searchStore.addFilter(newFilter);
-          }}
-          handleMove={function(draggedIndex: number, newPosition: number): void {
-            searchStore.moveFilter(draggedIndex, newPosition);
-          }}
-        />
-      </div>
-    </div>
+      <UnifiedFilterList
+        title="Filters"
+        filters={attributeFilters}
+        className="mt-2"
+        isDraggable={false}
+        showIndices={false}
+        handleRemove={searchStore.removeFilter}
+        handleUpdate={searchStore.updateFilter}
+        handleAdd={searchStore.addFilter}
+        handleMove={searchStore.moveFilter}
+      />
+    </Card>
   );
 }
 

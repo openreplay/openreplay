@@ -182,11 +182,13 @@ export enum IssueCategory {
 
 export enum FilterType {
   STRING = 'string',
+  NUMBER = 'number',
+  DOUBLE = 'double',
+  INTEGER = 'int',
   ISSUE = 'ISSUE',
-  BOOLEAN = 'BOOLEAN',
-  NUMBER = 'NUMBER',
+  BOOLEAN = 'bool',
   NUMBER_MULTIPLE = 'NUMBER_MULTIPLE',
-  DURATION = 'DURATION',
+  DURATION = 'duration',
   MULTIPLE = 'MULTIPLE',
   SUB_FILTERS = 'SUB_FILTERS',
   COUNTRY = 'COUNTRY',

@@ -24,8 +24,6 @@ interface OptionType {
   label: string;
 }
 
-// Removed custom TruncatedText, will use Typography.Text ellipsis
-
 interface Props {
   initialValues: string[];
   params: FilterParams;
@@ -57,7 +55,7 @@ const ValueAutoComplete = observer(
     const [loadingSearch, setLoadingSearch] = useState(false);
     const [query, setQuery] = useState('');
     const [selectedValues, setSelectedValues] = useState<string[]>([]);
-    const triggerRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null); // Ref for the main trigger button
 
     const filterKey = useMemo(() => {
       if (!projectsStore.siteId || !params.id) return null;
@@ -92,13 +90,14 @@ const ValueAutoComplete = observer(
 
 
     useEffect(() => {
+      if (loadingTopValues) return;
       if (showValueModal) {
         setSelectedValues(initialValues.filter((i) => i && i.length > 0));
         setQuery('');
         setOptions(mappedTopValues.length > 0 ? mappedTopValues : []);
         setLoadingSearch(false);
       }
-    }, [showValueModal, initialValues, mappedTopValues]);
+    }, [showValueModal, loadingTopValues]);
 
     const loadOptions = useCallback(async (inputValue: string) => {
       const trimmedQuery = inputValue.trim();
@@ -195,8 +194,8 @@ const ValueAutoComplete = observer(
     }, [queryBlocks]);
 
 
-    const onClearClick = (event: React.MouseEvent) => {
-      event.stopPropagation();
+    const onClearClick = (event: React.MouseEvent | React.KeyboardEvent) => {
+      event.stopPropagation(); // Prevent popover toggle
       onApplyValues([]);
       setShowValueModal(false);
     };
@@ -206,7 +205,7 @@ const ValueAutoComplete = observer(
       setShowValueModal(visible);
     };
 
-    const isEmpty = initialValues.length === 0;
+    const isEmpty = initialValues[0] === '' || initialValues.length === 0;
 
     const popoverContent = (
       <div
@@ -302,37 +301,15 @@ const ValueAutoComplete = observer(
         onOpenChange={handleOpenChange}
         placement="bottomLeft"
         arrow={false}
-        getPopupContainer={triggerNode => triggerNode || document.body} // Ensure it attaches correctly
+        getPopupContainer={triggerNode => triggerNode || document.body}
       >
-      {/*  className={cn(*/}
-      {/*  'rounded-lg px-2 cursor-pointer bg-white border border-gray-light text-ellipsis hover:border-main',*/}
-      {/*  'transition-colors duration-100 flex-shrink-0 max-w-xs h-[26px] items-center gap-1', // Fixed height, ensure items-center*/}
-      {/*  { 'opacity-70 pointer-events-none': disableDelete || readonly }*/}
-      {/*)}*/}
-        <Button // Main trigger container using Ant Design classes
-          // className={cn(
-          //   // 'ant-input', // Mimic Ant Input appearance
-          //   'relative rounded-xl px-2 cursor-pointer bg-white border border-gray-light text-ellipsis hover:border-main',
-          //   'transition-colors duration-100 flex-shrink-0 max-w-xs h-[24px] items-center gap-1 pr-8',
-          //   {
-          //     // 'cursor-pointer hover:border-primary': !isDisabled, // Use theme primary color for hover
-          //     'cursor-not-allowed bg-disabled border-disabled': isDisabled, // Ant disabled styles
-          //     // 'border-primary shadow-outline-primary': showValueModal && !isDisabled, // Ant focus styles
-          //     // 'border': true, // Base border
-          //     // 'rounded': true // Base rounded corners
-          //   }
-          // )}
+        <Button
+          className="pr-8"
           size="small"
-          // style={{ height: 26, lineHeight: 'normal' }} // Adjust styling
           ref={triggerRef}
           disabled={isDisabled}
           onMouseEnter={() => !isDisabled && setHovered(true)}
           onMouseLeave={() => setHovered(false)}
-          role={isDisabled ? undefined : 'button'}
-          tabIndex={isDisabled ? -1 : 0}
-          aria-haspopup="listbox"
-          aria-expanded={showValueModal}
-          aria-disabled={isDisabled}
         >
           <Space size={4} wrap className="w-full overflow-hidden">
             {!isEmpty ? (
@@ -367,25 +344,37 @@ const ValueAutoComplete = observer(
                 )}
               </>
             ) : (
-              <Text type={isDisabled ? 'secondary' : undefined} className={cn({ 'text-disabled': isDisabled })}>
+              <Text type={'secondary'} className={cn({ 'text-disabled': isDisabled })}>
                 {placeholder}
               </Text>
             )}
           </Space>
+
           {!isEmpty && hovered && !isDisabled && (
-            // Using Button for clear for better accessibility/styling consistency
-            <Button
-              className="absolute right-1 top-1/2 -translate-y-1/2"
-              type="text"
-              size="small"
-              icon={<CloseCircleFilled className="text-neutral-400 hover:text-neutral-600" />}
-              onClick={onClearClick}
+            <span
+              role="button"
               aria-label={t('Clear selection')}
+              onClick={onClearClick}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  onClearClick(e);
+                }
+              }}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              style={{ height: '100%', border: 'none', background: 'transparent', zIndex: 1 }} // Ensure clickable area
-            />
+              tabIndex={0} // Make it focusable if needed
+              className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center text-neutral-400 hover:text-neutral-600"
+              style={{
+                height: '100%',
+                cursor: 'pointer',
+                zIndex: 1,
+                padding: '0 4px'
+              }}
+            >
+              <CloseCircleFilled />
+            </span>
           )}
+
         </Button>
       </Popover>
     );

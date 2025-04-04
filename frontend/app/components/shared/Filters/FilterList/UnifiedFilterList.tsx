@@ -63,9 +63,6 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
 
   const calculateNewPosition = useCallback(
     (hoverIndex: number, hoverPosition: string) => {
-      // Calculate the target *visual* position
-      // If hovering top half, target index is hoverIndex.
-      // If bottom half, target index is hoverIndex + 1.
       return hoverPosition === 'bottom' ? hoverIndex + 1 : hoverIndex;
     },
     []
@@ -124,13 +121,10 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
 
       let newPosition = calculateNewPosition(hoverIndex, hoverPosition);
 
-      // Important: Adjust newPosition if dragging downwards past the original position
-      // because the removal shifts subsequent indices up.
       if (dragInd < newPosition) {
         newPosition--;
       }
 
-      // Only call move if the position actually changed
       if (dragInd !== newPosition && !(dragInd === hoverIndex && hoverPosition === 'top') && !(dragInd === hoverIndex - 1 && hoverPosition === 'bottom')) {
         handleMove(dragInd, newPosition);
       }
@@ -148,21 +142,18 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
   }, []);
 
   const handleDragLeave = useCallback(() => {
-    // Only clear if leaving the specific item, not just moving within it
     setHoveredItem({ i: null, position: null });
   }, []);
 
   return filters.length ? (
-    <div className={cn('flex flex-col gap-2', className)} style={style}>
+    <div className={cn('flex flex-col', className)} style={style}>
       {filters.map((filterItem: any, filterIndex: number) => (
         <div
           key={`filter-${filterItem.key || filterIndex}`}
-          className={cn('flex gap-2 items-start hover:bg-active-blue/5 -mx-5 px-5 pe-3 transition-colors duration-100 relative', { // Lighter hover, keep relative
+          className={cn('flex gap-2 py-2 items-start hover:bg-active-blue -mx-5 px-5 pe-3 transition-colors duration-100 relative', { // Lighter hover, keep relative
             'opacity-50': draggedInd === filterIndex,
-            // Add top/bottom borders based on hover state for visual feedback
             'border-t-2 border-dashed border-teal': hoveredItem.i === filterIndex && hoveredItem.position === 'top',
             'border-b-2 border-dashed border-teal': hoveredItem.i === filterIndex && hoveredItem.position === 'bottom',
-            // Add negative margin to compensate for border height only when border is visible
             '-mt-0.5': hoveredItem.i === filterIndex && hoveredItem.position === 'top',
             '-mb-0.5': hoveredItem.i === filterIndex && hoveredItem.position === 'bottom'
           })}
@@ -177,7 +168,6 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
           {isDraggable && filters.length > 1 && (
             <div
               className="cursor-grab text-neutral-500 hover:text-neutral-700 pt-[4px] flex-shrink-0" // Align handle visually
-              // Draggable is set on parent div
               style={{ cursor: draggedInd !== null ? 'grabbing' : 'grab' }}
               title="Drag to reorder"
             >
@@ -186,22 +176,26 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
           )}
 
           {!isDraggable && showIndices &&
-            <div className="w-4 flex-shrink-0" />} {/* Placeholder for alignment if not draggable but indices shown */}
+            <div className="w-4 flex-shrink-0" />}
           {!isDraggable && !showIndices &&
-            <div className="w-4 flex-shrink-0" />} {/* Placeholder for alignment if not draggable and no indices */}
+            <div className="w-4 flex-shrink-0" />}
 
 
           <FilterItem
             filterIndex={showIndices ? filterIndex : undefined}
             filter={filterItem}
-            onUpdate={(updatedFilter) => updateFilter(filterItem.key, updatedFilter)}
-            onRemoveFilter={() => removeFilter(filterItem.key)}
+            onUpdate={(updatedFilter) => updateFilter(filterItem.id, updatedFilter)}
+            onRemoveFilter={() => removeFilter(filterItem.id)}
             saveRequestPayloads={saveRequestPayloads}
             disableDelete={cannotDelete}
             readonly={readonly}
             isConditional={isConditional}
             hideIndex={!showIndices}
             isDragging={draggedInd === filterIndex}
+            onPropertyOrderChange={filterItem.isEvent ? (order: string) => {
+              const newFilter = { ...filterItem, propertyOrder: order };
+              updateFilter(filterItem.id, newFilter);
+            } : undefined}
             // Pass down if this is the first item for potential styling (e.g., no 'and'/'or' toggle)
             isFirst={filterIndex === 0}
           />
