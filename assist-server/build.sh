@@ -2,6 +2,7 @@
 
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 
+ARCH=${ARCH:-amd64}
 git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-git_sha}
 check_prereq() {
@@ -12,12 +13,9 @@ check_prereq() {
 }
 source ../scripts/lib/_docker.sh
 
-[[ $1 == ee ]] && ee=true
 [[ $PATCH -eq 1 ]] && {
     image_tag="$(grep -ER ^.ppVersion ../scripts/helmcharts/openreplay/charts/$chart | xargs | awk '{print $2}' | awk -F. -v OFS=. '{$NF += 1 ; print}')"
-    [[ $ee == "true" ]] && {
-        image_tag="${image_tag}-ee"
-    }
+    image_tag="${image_tag}-ee"
 }
 update_helm_release() {
     chart=$1
@@ -32,20 +30,18 @@ update_helm_release() {
 }
 
 function build_api() {
-    destination="_assist-server"
-    [[ $1 == "ee" ]] && {
-        destination="_assist-server_ee"
-    }
+    destination="_assist-server_ee"
     [[ -d ../${destination} ]] && {
         echo "Removing previous build cache"
         rm -rf ../${destination}
     }
-    cp -R ../ee/assist-server ../${destination}
-    cd ../${destination}
+    cp -R ../assist-server ../${destination}
+    cd ../${destination} || exit 1
+    cp -rf ../ee/assist-server/* ./
 
     docker build -f ./Dockerfile --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/assist-server:${image_tag} .
 
-    cd ../assist
+    cd ../assist-server || exit 1
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/assist-server:${image_tag}
