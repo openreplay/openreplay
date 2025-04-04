@@ -53,7 +53,7 @@ io.engine.on("headers", (headers) => {
 setSocketIOServer(io);
 
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT) || 9001;
 app.listen(PORT, (token) => {
     if (token) {
         console.log(`Server running at http://${HOST}:${PORT}`);
