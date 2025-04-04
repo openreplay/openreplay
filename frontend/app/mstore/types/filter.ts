@@ -1,12 +1,29 @@
-import { makeAutoObservable, runInAction, observable, action } from 'mobx';
-import { filtersMap, conditionalFiltersMap } from 'Types/filter/newFilter';
+import { action, makeAutoObservable, observable, runInAction } from 'mobx';
+import { conditionalFiltersMap, filtersMap } from 'Types/filter/newFilter';
 import { FilterKey } from 'Types/filter/filterType';
 import FilterItem from './filterItem';
+import { JsonData } from '@/mstore/types/filterConstants';
 
-export const checkFilterValue = (value: any) =>
-  Array.isArray(value) ? (value.length === 0 ? [''] : value) : [value];
+type FilterData = Partial<FilterItem> & {
+  key?: FilterKey | string;
+  value?: any;
+  operator?: string;
+  sourceOperator?: string;
+  source?: any;
+  filters?: FilterData[]
+};
 
-export interface IFilter {
+export const checkFilterValue = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.length === 0 ? [''] : value.map(val => String(val ?? ''));
+  }
+  if (value === null || value === undefined) {
+    return [''];
+  }
+  return [String(value)];
+};
+
+export interface IFilterStore {
   filterId: string;
   name: string;
   filters: FilterItem[];
@@ -20,204 +37,330 @@ export interface IFilter {
   limit: number;
   autoOpen: boolean;
 
-  merge(filter: any): void;
-
-  addFilter(filter: any): void;
-
-  replaceFilters(filters: any): void;
-
-  updateFilter(index: number, filter: any): void;
+  merge(filterData: Partial<FilterStore>): void;
 
   updateKey(key: string, value: any): void;
 
-  removeFilter(index: number): void;
+  addFilter(filterData: FilterData): void;
 
-  fromJson(json: any, isHeatmap?: boolean): IFilter;
+  replaceFilters(newFilters: FilterItem[]): void;
 
-  fromData(data: any): IFilter;
+  updateFilter(filterId: string, filterData: FilterData): void;
 
-  toJsonDrilldown(): any;
+  removeFilter(filterId: string): void;
 
-  createFilterBykey(key: string): FilterItem;
+  fromJson(json: JsonData, isHeatmap?: boolean): this;
 
-  toJson(): any;
+  fromData(data: JsonData): this;
 
-  addExcludeFilter(filter: FilterItem): void;
+  toJsonDrilldown(): JsonData;
 
-  updateExcludeFilter(index: number, filter: FilterItem): void;
+  createFilterByKey(key: FilterKey | string): FilterItem;
 
-  removeExcludeFilter(index: number): void;
+  toJson(): JsonData;
+
+  addExcludeFilter(filterData: FilterData): void;
+
+  updateExcludeFilter(filterId: string, filterData: FilterData): void;
+
+  removeExcludeFilter(filterId: string): void;
 
   addFunnelDefaultFilters(): void;
 
-  toData(): any;
+  addOrUpdateFilter(filterData: FilterData): void;
 
-  addOrUpdateFilter(filter: any): void;
+  addFilterByKeyAndValue(
+    key: FilterKey | string,
+    value: unknown,
+    operator?: string,
+    sourceOperator?: string,
+    source?: unknown
+  ): void;
 }
 
-export default class Filter implements IFilter {
-  public static get ID_KEY(): string {
-    return 'filterId';
-  }
+export default class FilterStore implements IFilterStore {
+  public static readonly ID_KEY: string = 'filterId';
 
   filterId: string = '';
   name: string = '';
-  autoOpen = false;
+  autoOpen: boolean = false;
   filters: FilterItem[] = [];
   excludes: FilterItem[] = [];
   eventsOrder: string = 'then';
-  eventsOrderSupport: string[] = ['then', 'or', 'and'];
+  readonly eventsOrderSupport: string[] = ['then', 'or', 'and'];
   startTimestamp: number = 0;
   endTimestamp: number = 0;
   eventsHeader: string = 'EVENTS';
   page: number = 1;
   limit: number = 10;
 
+  private readonly isConditional: boolean;
+  private readonly isMobile: boolean;
+
   constructor(
-    filters: any[] = [],
-    private readonly isConditional = false,
-    private readonly isMobile = false
+    initialFilters: FilterData[] = [],
+    isConditional = false,
+    isMobile = false
   ) {
+    this.isConditional = isConditional;
+    this.isMobile = isMobile;
+    this.filters = initialFilters.map(
+      (filterData) => this.createFilterItemFromData(filterData)
+    );
+
     makeAutoObservable(this, {
-      filters: observable,
+      filters: observable.shallow,
+      excludes: observable.shallow,
       eventsOrder: observable,
       startTimestamp: observable,
       endTimestamp: observable,
-
-      addFilter: action,
-      removeFilter: action,
-      updateKey: action,
+      name: observable,
+      page: observable,
+      limit: observable,
+      autoOpen: observable,
+      filterId: observable,
+      eventsHeader: observable,
       merge: action,
-      addExcludeFilter: action,
+      addFilter: action,
+      replaceFilters: action,
       updateFilter: action,
-      replaceFilters: action
-    });
-    this.filters = filters.map((i) => new FilterItem(i));
+      removeFilter: action,
+      fromJson: action,
+      fromData: action,
+      addExcludeFilter: action,
+      updateExcludeFilter: action,
+      removeExcludeFilter: action,
+      addFunnelDefaultFilters: action,
+      addOrUpdateFilter: action,
+      addFilterByKeyAndValue: action,
+      isConditional: false,
+      isMobile: false,
+      eventsOrderSupport: false,
+      ID_KEY: false
+    }, { autoBind: true });
   }
 
-  merge(filter: any) {
+  merge(filterData: Partial<FilterStore>) {
     runInAction(() => {
-      Object.assign(this, filter);
+      const validKeys = Object.keys(this).filter(key => typeof (this as any)[key] !== 'function' && key !== 'eventsOrderSupport' && key !== 'isConditional' && key !== 'isMobile');
+      for (const key in filterData) {
+        if (validKeys.includes(key)) {
+          (this as any)[key] = (filterData as any)[key];
+        }
+      }
+      if (filterData.filters) {
+        this.filters = filterData.filters.map(f => f);
+      }
+      if (filterData.excludes) {
+        this.excludes = filterData.excludes.map(f => f);
+      }
     });
-  }
-
-  addFilter(filter: any) {
-    filter.value = [''];
-    if (Array.isArray(filter.filters)) {
-      filter.filters = filter.filters.map((i: Record<string, any>) => {
-        i.value = [''];
-        return new FilterItem(i);
-      });
-    }
-    this.filters.push(new FilterItem(filter));
-  }
-
-  replaceFilters(filters: any) {
-    this.filters = filters;
-  }
-
-  updateFilter(index: number, filter: any) {
-    this.filters[index] = new FilterItem(filter);
   }
 
   updateKey(key: string, value: any) {
-    // @ts-ignore fix later
+    // @ts-ignore
     this[key] = value;
   }
 
-  removeFilter(index: number) {
-    this.filters.splice(index, 1);
+  private createFilterItemFromData(filterData: FilterData): FilterItem {
+    const dataWithValue = {
+      ...filterData,
+      value: checkFilterValue(filterData.value)
+    };
+    if (Array.isArray(dataWithValue.filters)) {
+      dataWithValue.filters = dataWithValue.filters.map(nestedFilter => this.createFilterItemFromData(nestedFilter));
+    }
+    return new FilterItem(dataWithValue);
   }
 
-  fromJson(json: any, isHeatmap?: boolean) {
-    this.name = json.name;
-    this.filters = json.filters.map((i: Record<string, any>) =>
-      new FilterItem(undefined, this.isConditional, this.isMobile).fromJson(
-        i,
-        undefined,
-        isHeatmap
-      )
-    );
-    this.eventsOrder = json.eventsOrder;
+  addFilter(filterData: FilterData) {
+    const newFilter = this.createFilterItemFromData(filterData);
+    this.filters.push(newFilter);
+  }
+
+  replaceFilters(newFilters: FilterItem[]) {
+    this.filters = newFilters.map(f => f);
+  }
+
+  private updateFilterByIndex(index: number, filterData: FilterData) {
+    if (index >= 0 && index < this.filters.length) {
+      const originalId = this.filters[index].id;
+      const updatedFilter = this.createFilterItemFromData(filterData);
+      updatedFilter.id = originalId; // Ensure ID is not lost
+      this.filters[index] = updatedFilter;
+    } else {
+      console.warn(`FilterStore.updateFilterByIndex: Invalid index ${index}`);
+    }
+  }
+
+  updateFilter(filterId: string, filterData: FilterData) {
+    const index = this.filters.findIndex(f => f.id === filterId);
+    if (index > -1) {
+      const updatedFilter = this.createFilterItemFromData(filterData);
+      updatedFilter.id = filterId; // Ensure the ID remains the same
+      this.filters[index] = updatedFilter;
+    } else {
+      console.warn(`FilterStore.updateFilter: Filter with id ${filterId} not found.`);
+    }
+  }
+
+  removeFilter(filterId: string) {
+    const index = this.filters.findIndex(f => f.id === filterId);
+    if (index > -1) {
+      this.filters.splice(index, 1);
+    } else {
+      console.warn(`FilterStore.removeFilter: Filter with id ${filterId} not found.`);
+    }
+  }
+
+  fromJson(json: JsonData, isHeatmap?: boolean): this {
+    runInAction(() => {
+      this.name = json.name ?? '';
+      this.filters = Array.isArray(json.filters)
+        ? json.filters.map((filterJson: JsonData) =>
+          new FilterItem().fromJson(filterJson)
+        )
+        : [];
+      this.excludes = Array.isArray(json.excludes)
+        ? json.excludes.map((filterJson: JsonData) =>
+          new FilterItem().fromJson(filterJson)
+        )
+        : [];
+      this.eventsOrder = json.eventsOrder ?? 'then';
+      this.startTimestamp = json.startTimestamp ?? 0;
+      this.endTimestamp = json.endTimestamp ?? 0;
+      this.page = json.page ?? 1;
+      this.limit = json.limit ?? 10;
+      this.autoOpen = json.autoOpen ?? false;
+      this.filterId = json.filterId ?? '';
+      this.eventsHeader = json.eventsHeader ?? 'EVENTS';
+    });
     return this;
   }
 
-  fromData(data: any) {
-    this.name = data.name;
-    this.filters = data.filters.map((i: Record<string, any>) =>
-      new FilterItem(undefined, this.isConditional, this.isMobile).fromData(i)
-    );
-    this.eventsOrder = data.eventsOrder;
+  fromData(data: JsonData): this {
+    runInAction(() => {
+      this.name = data.name ?? '';
+      this.filters = Array.isArray(data.filters)
+        ? data.filters.map((filterData: JsonData) =>
+            this.createFilterItemFromData(filterData)
+          // new FilterItem(undefined, this.isConditional, this.isMobile).fromData(filterData)
+        )
+        : [];
+      this.excludes = Array.isArray(data.excludes)
+        ? data.excludes.map((filterData: JsonData) =>
+            this.createFilterItemFromData(filterData)
+          // new FilterItem(undefined, this.isConditional, this.isMobile).fromData(filterData)
+        )
+        : [];
+      this.eventsOrder = data.eventsOrder ?? 'then';
+      this.startTimestamp = data.startTimestamp ?? 0;
+      this.endTimestamp = data.endTimestamp ?? 0;
+      this.page = data.page ?? 1;
+      this.limit = data.limit ?? 10;
+      this.autoOpen = data.autoOpen ?? false;
+      this.filterId = data.filterId ?? '';
+      this.eventsHeader = data.eventsHeader ?? 'EVENTS';
+    });
     return this;
   }
 
-  toJsonDrilldown() {
-    const json = {
+  toJsonDrilldown(): JsonData {
+    return {
       name: this.name,
-      filters: this.filters.map((i) => i.toJson()),
+      filters: this.filters.map((filterItem) => filterItem.toJson()),
       eventsOrder: this.eventsOrder,
       startTimestamp: this.startTimestamp,
       endTimestamp: this.endTimestamp
     };
-    return json;
   }
 
-  createFilterBykey(key: string) {
-    const usedMap = this.isConditional ? conditionalFiltersMap : filtersMap;
-    return usedMap[key] ? new FilterItem(usedMap[key]) : new FilterItem();
+  createFilterByKey(key: FilterKey | string): FilterItem {
+    const sourceMap = this.isConditional ? conditionalFiltersMap : filtersMap;
+    const filterTemplate = sourceMap[key as FilterKey];
+    const newFilterData = filterTemplate ? { ...filterTemplate, value: [''] } : { key: key, value: [''] };
+    return this.createFilterItemFromData(newFilterData); // Use helper
   }
 
-  toJson() {
-    const json = {
+  toJson(): JsonData {
+    return {
       name: this.name,
-      filters: this.filters.map((i) => i.toJson()),
-      eventsOrder: this.eventsOrder
+      filterId: this.filterId,
+      autoOpen: this.autoOpen,
+      filters: this.filters.map((filterItem) => filterItem?.toJson()),
+      excludes: this.excludes.map((filterItem) => filterItem?.toJson()),
+      eventsOrder: this.eventsOrder,
+      startTimestamp: this.startTimestamp,
+      endTimestamp: this.endTimestamp,
+      eventsHeader: this.eventsHeader,
+      page: this.page,
+      limit: this.limit
     };
-    return json;
   }
 
-  addExcludeFilter(filter: FilterItem) {
-    this.excludes.push(filter);
+  addExcludeFilter(filterData: FilterData) {
+    const newExclude = this.createFilterItemFromData(filterData);
+    this.excludes.push(newExclude);
   }
 
-  updateExcludeFilter(index: number, filter: FilterItem) {
-    this.excludes[index] = new FilterItem(filter);
+  updateExcludeFilter(filterId: string, filterData: FilterData) {
+    const index = this.excludes.findIndex(f => f.id === filterId);
+    if (index > -1) {
+      const updatedExclude = this.createFilterItemFromData(filterData);
+      updatedExclude.id = filterId; // Ensure the ID remains the same
+      this.excludes[index] = updatedExclude;
+    } else {
+      console.warn(`FilterStore.updateExcludeFilter: Exclude filter with id ${filterId} not found.`);
+    }
   }
 
-  removeExcludeFilter(index: number) {
-    this.excludes.splice(index, 1);
+  removeExcludeFilter(filterId: string) {
+    const index = this.excludes.findIndex(f => f.id === filterId);
+    if (index > -1) {
+      this.excludes.splice(index, 1);
+    } else {
+      console.warn(`FilterStore.removeExcludeFilter: Exclude filter with id ${filterId} not found.`);
+    }
   }
 
   addFunnelDefaultFilters() {
-    this.filters = [];
-    this.addFilter({
-      ...filtersMap[FilterKey.LOCATION],
-      value: [''],
-      operator: 'isAny'
-    });
-    this.addFilter({
-      ...filtersMap[FilterKey.CLICK],
-      value: [''],
-      operator: 'onAny'
+    runInAction(() => {
+      this.filters = []; // Clear existing filters
+      const locationFilterData = filtersMap[FilterKey.LOCATION];
+      if (locationFilterData) {
+        this.addFilter({
+          ...locationFilterData,
+          value: [''],
+          operator: 'isAny'
+        });
+      } else {
+        console.warn(`FilterStore.addFunnelDefaultFilters: Default filter not found for key ${FilterKey.LOCATION}`);
+      }
+
+      const clickFilterData = filtersMap[FilterKey.CLICK];
+      if (clickFilterData) {
+        this.addFilter({
+          ...clickFilterData,
+          value: [''],
+          operator: 'onAny'
+        });
+      } else {
+        console.warn(`FilterStore.addFunnelDefaultFilters: Default filter not found for key ${FilterKey.CLICK}`);
+      }
     });
   }
 
-  toData() {
-    return {
-      name: this.name,
-      filters: this.filters.map((i) => i.toJson()),
-      eventsOrder: this.eventsOrder
+  addOrUpdateFilter(filterData: FilterData) {
+    const index = this.filters.findIndex((f) => f.key === filterData.key);
+    const dataWithCheckedValue = {
+      ...filterData,
+      value: checkFilterValue(filterData.value)
     };
-  }
-
-  addOrUpdateFilter(filter: any) {
-    const index = this.filters.findIndex((i) => i.key === filter.key);
-    filter.value = checkFilterValue;
 
     if (index > -1) {
-      this.updateFilter(index, filter);
+      this.updateFilterByIndex(index, dataWithCheckedValue);
     } else {
-      this.addFilter(filter);
+      this.addFilter(dataWithCheckedValue);
     }
   }
 
@@ -228,19 +371,22 @@ export default class Filter implements IFilter {
     sourceOperator?: string,
     source?: any,
   ) {
-    let defaultFilter = { ...filtersMap[key] };
-    if (defaultFilter) {
-      defaultFilter = { ...defaultFilter, value: checkFilterValue(value) };
-      if (operator) {
-        defaultFilter.operator = operator;
-      }
-      if (sourceOperator) {
-        defaultFilter.sourceOperator = sourceOperator;
-      }
-      if (source) {
-        defaultFilter.source = source;
-      }
-      this.addOrUpdateFilter(defaultFilter);
+    const sourceMap = this.isConditional ? conditionalFiltersMap : filtersMap;
+    const defaultFilterData = sourceMap[key as FilterKey];
+
+    if (defaultFilterData) {
+      const newFilterData: FilterData = {
+        ...defaultFilterData,
+        key: key,
+        value: checkFilterValue(value),
+        operator: operator ?? defaultFilterData.operator,
+        sourceOperator: sourceOperator ?? defaultFilterData.sourceOperator,
+        source: source ?? defaultFilterData.source
+      };
+      this.addOrUpdateFilter(newFilterData);
+    } else {
+      console.warn(`FilterStore.addFilterByKeyAndValue: No default filter template found for key ${key}. Adding generic filter.`);
+      this.addOrUpdateFilter({ key: key, value: checkFilterValue(value), operator, sourceOperator, source });
     }
   }
 }

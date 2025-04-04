@@ -1,11 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { EventsList, FilterList } from 'Shared/Filters/FilterList';
+import React from 'react';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import { Button, Space } from 'antd';
+import { Button, Divider, Space } from 'antd';
 import { ChevronDown, ChevronUp, Trash } from 'lucide-react';
 import ExcludeFilters from './ExcludeFilters';
 import SeriesName from './SeriesName';
+import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
+import FilterSelection from 'Shared/Filters/FilterSelection';
+import { Filter } from '@/mstore/types/filterConstants';
+import { Plus } from '.store/lucide-react-virtual-9282d60eb0/package';
+import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
+import { useStore } from '@/mstore';
 
 const FilterCountLabels = observer(
   (props: { filters: any; toggleExpand: any }) => {
@@ -38,7 +43,7 @@ const FilterCountLabels = observer(
         </Space>
       </div>
     );
-  },
+  }
 );
 
 const FilterSeriesHeader = observer(
@@ -62,8 +67,8 @@ const FilterSeriesHeader = observer(
           'px-4 ps-2  h-12 flex items-center relative bg-white border-gray-lighter border-t border-l border-r rounded-t-xl',
           {
             hidden: props.hidden,
-            'rounded-b-xl': !props.expanded,
-          },
+            'rounded-b-xl': !props.expanded
+          }
         )}
       >
         <Space className="mr-auto" size={30}>
@@ -106,7 +111,7 @@ const FilterSeriesHeader = observer(
         </Space>
       </div>
     );
-  },
+  }
 );
 
 interface Props {
@@ -130,7 +135,8 @@ interface Props {
 
 function FilterSeries(props: Props) {
   const {
-    observeChanges = () => {},
+    observeChanges = () => {
+    },
     canDelete,
     hideHeader = false,
     emptyMessage = 'Add an event or filter step to define the series.',
@@ -142,11 +148,16 @@ function FilterSeries(props: Props) {
     removeEvents,
     collapseState,
     onToggleCollapse,
-    excludeCategory,
+    excludeCategory
   } = props;
+  const { filterStore } = useStore();
   const expanded = isHeatmap || !collapseState;
   const setExpanded = onToggleCollapse;
   const { series, seriesIndex } = props;
+
+  const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
+  const eventOptions: Filter[] = allFilterOptions.filter((i) => i.isEvent);
+  const propertyOptions: Filter[] = allFilterOptions.filter((i) => !i.isEvent);
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
     series.filter.updateFilter(filterIndex, filter);
@@ -173,6 +184,8 @@ function FilterSeries(props: Props) {
     series.filter.addFilter(filter);
     observeChanges();
   };
+
+  console.log('series.filter.filters', series.filter.filters);
 
   return (
     <div>
@@ -216,33 +229,79 @@ function FilterSeries(props: Props) {
       {expanded ? (
         <>
           {removeEvents ? null : (
-            <EventsList
-              filter={series.filter}
-              onUpdateFilter={onUpdateFilter}
-              onRemoveFilter={onRemoveFilter}
-              onChangeEventsOrder={onChangeEventsOrder}
-              supportsEmpty={supportsEmpty}
-              onFilterMove={onFilterMove}
-              excludeFilterKeys={excludeFilterKeys}
-              onAddFilter={onAddFilter}
-              mergeUp={!hideHeader}
-              mergeDown
-              cannotAdd={isHeatmap}
-              excludeCategory={excludeCategory}
-            />
+            <div className="bg-white rounded-b-xl border p-4">
+              <FilterListHeader
+                title={'Events'}
+                showEventsOrder={series.filter.filters.filter((f: any) => f.isEvent).length > 0}
+                orderProps={{
+                  eventsOrder: series.filter.eventsOrder,
+                  eventsOrderSupport: ['then', 'and', 'or']
+                }}
+                onChangeOrder={onChangeEventsOrder}
+                filterSelection={
+                  <FilterSelection
+                    filters={eventOptions}
+                    onFilterClick={(newFilter: Filter) => {
+                      onAddFilter(newFilter);
+                    }}
+                  >
+                    <Button type="default" size="small">
+                      <div className="flex items-center gap-1">
+                        <Plus size={16} strokeWidth={1} />
+                        <span>Add</span>
+                      </div>
+                    </Button>
+                  </FilterSelection>
+                }
+              />
+
+              <UnifiedFilterList
+                title="Events"
+                filters={series.filter.filters.filter((f: any) => f.isEvent)}
+                isDraggable={true}
+                showIndices={true}
+                className="mt-2"
+                handleRemove={onRemoveFilter}
+                handleUpdate={onUpdateFilter}
+                handleAdd={onAddFilter}
+                handleMove={onFilterMove}
+              />
+
+              <Divider className="my-2" />
+
+              <FilterListHeader
+                title={'Filters'}
+                showEventsOrder={series.filter.filters.map((f: any) => !f.isEvent).length > 0}
+                filterSelection={
+                  <FilterSelection
+                    filters={propertyOptions}
+                    onFilterClick={(newFilter: Filter) => {
+                      onAddFilter(newFilter);
+                    }}
+                  >
+                    <Button type="default" size="small">
+                      <div className="flex items-center gap-1">
+                        <Plus size={16} strokeWidth={1} />
+                        <span>Add</span>
+                      </div>
+                    </Button>
+                  </FilterSelection>
+                }
+              />
+
+              <UnifiedFilterList
+                title="Events"
+                filters={series.filter.filters.filter((f: any) => !f.isEvent)}
+                isDraggable={false}
+                showIndices={false}
+                className="mt-2"
+                handleRemove={onRemoveFilter}
+                handleUpdate={onUpdateFilter}
+                handleAdd={onAddFilter}
+                handleMove={onFilterMove}
+              />
+            </div>
           )}
-          <FilterList
-            filter={series.filter}
-            onUpdateFilter={onUpdateFilter}
-            onRemoveFilter={onRemoveFilter}
-            onChangeEventsOrder={onChangeEventsOrder}
-            supportsEmpty={supportsEmpty}
-            onFilterMove={onFilterMove}
-            excludeFilterKeys={excludeFilterKeys}
-            onAddFilter={onAddFilter}
-            mergeUp={!removeEvents}
-            excludeCategory={excludeCategory}
-          />
         </>
       ) : null}
     </div>

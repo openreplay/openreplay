@@ -252,7 +252,10 @@ export const EventsList = observer((props: Props) => {
 
         <div className="ml-auto">
           {!hideEventsOrder && (
-            <EventsOrder filter={filter} onChange={props.onChangeEventsOrder} />
+            <EventsOrder orderProps={{
+              eventsOrder: filter.eventsOrder,
+              eventsOrderSupport: filter.eventsOrderSupport
+            }} onChange={props.onChangeEventsOrder} />
           )}
           {actions &&
             actions.map((action, index) => <div key={index}>{action}</div>)}

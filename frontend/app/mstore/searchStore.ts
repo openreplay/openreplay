@@ -17,6 +17,7 @@ import { sessionStore, settingsStore } from 'App/mstore';
 import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
 import { iTag } from '@/services/NotesService';
 import { issues_types } from 'Types/session/issue';
+import { Filter } from '@/mstore/types/filterConstants';
 
 const PER_PAGE = 10;
 
@@ -63,7 +64,58 @@ class SearchStore {
   latestRequestTime: number | null = null;
   latestList = List();
   alertMetricId: number | null = null;
-  instance = new Search();
+  instance = new Search({
+    // rangeValue: LAST_24_HOURS,
+    startDate: Date.now() - 24 * 60 * 60 * 1000,
+    endDate: Date.now(),
+    filters: [
+      {
+        id: Math.random().toString(36).substring(7),
+        name: 'CLICK',
+        category: 'events',
+        type: 'string',
+        value: ['/client/account'],
+        operator: 'is',
+        isEvent: true,
+        filters: [
+          {
+            id: Math.random().toString(36).substring(7),
+            name: 'select',
+            category: 'filters',
+            type: 'bool',
+            value: ['true'],
+            operator: 'is'
+          },
+          {
+            id: Math.random().toString(36).substring(7),
+            name: 'label',
+            category: 'filters',
+            type: 'double',
+            value: [1],
+            operator: 'is'
+          }
+        ]
+      },
+      {
+        id: Math.random().toString(36).substring(7),
+        name: 'Browser',
+        category: 'filters',
+        type: 'string',
+        value: ['/client/account'],
+        operator: 'is',
+        isEvent: false
+      }
+    ],
+    groupByUser: false,
+    sort: 'start',
+    order: 'desc',
+    viewed: false,
+    eventsCount: 0,
+    suspicious: false,
+    consoleLevel: '',
+    strict: true,
+    eventsOrder: 'start'
+  });
   savedSearch: ISavedSearch = new SavedSearch();
   filterSearchList: any = {};
   currentPage = 1;
@@ -284,11 +336,11 @@ class SearchStore {
     const index = filter.isEvent
       ? -1
       : this.instance.filters.findIndex(
-        (i: FilterItem) => i.key === filter.key
+        (i: Filter) => i.id === filter.id
       );
 
-    // new random key
     filter.value = checkFilterValue(filter.value);
+    filter.operator = 'is';
     filter.filters = filter.filters
       ? filter.filters.map((subFilter: any) => ({
         ...subFilter,
@@ -305,7 +357,7 @@ class SearchStore {
       oldFilter.merge(updatedFilter);
       this.updateFilter(index, updatedFilter);
     } else {
-      filter.key = Math.random().toString(36).substring(7);
+      // filter.key = Math.random().toString(36).substring(7);
       this.instance.filters.push(filter);
       this.instance = new Search({
         ...this.instance.toData()
@@ -355,9 +407,9 @@ class SearchStore {
     this.instance = Object.assign(this.instance, search);
   };
 
-  updateFilter = (key: string, search: Partial<FilterItem>) => {
+  updateFilter = (id: string, search: Partial<FilterItem>) => {
     const newFilters = this.instance.filters.map((f: any) => {
-      if (f.key === key) {
+      if (f.id === id) {
         return {
           ...f,
           ...search
@@ -372,9 +424,9 @@ class SearchStore {
     });
   };
 
-  removeFilter = (key: string) => {
+  removeFilter = (id: string) => {
     const newFilters = this.instance.filters.filter(
-      (f: any) => f.key !== key
+      (f: any) => f.id !== id
     );
 
     this.instance = new Search({

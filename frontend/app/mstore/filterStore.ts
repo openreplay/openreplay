@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { filterService } from 'App/services';
-import { Filter, Operator, COMMON_FILTERS, getOperatorsByType } from './types/filterConstants';
+import { Filter, COMMON_FILTERS } from './types/filterConstants';
 import { FilterKey } from 'Types/filter/filterType';
 import { projectStore } from '@/mstore/index';
 
@@ -88,14 +88,14 @@ export default class FilterStore {
       icon: FilterKey.LOCATION, // TODO - use actual icons
       isEvent: category === 'events',
       value: filter.value || [],
-      propertyOrder: 'and'
+      propertyOrder: 'and',
+      operator: filter.operator || 'is'
     }));
   };
 
   addOperatorsToFilters = (filters: Filter[]): Filter[] => {
     return filters.map(filter => ({
-      ...filter
-      // operators: filter.operators?.length ? filter.operators : getOperatorsByType(filter.possibleTypes || [])
+      ...filter,
     }));
   };
 

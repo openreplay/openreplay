@@ -1,6 +1,6 @@
-// import Filter from 'Types/filter';
 import { makeAutoObservable, observable, action } from 'mobx';
-import Filter from './filter';
+import FilterStore from './filter';
+import { JsonData } from '@/mstore/types/filterConstants';
 
 export default class FilterSeries {
   public static get ID_KEY(): string {
@@ -8,38 +8,37 @@ export default class FilterSeries {
   }
 
   seriesId?: any = undefined;
-
   name: string = 'Series 1';
-
-  filter: Filter = new Filter();
+  filter: FilterStore = new FilterStore();
 
   constructor() {
     makeAutoObservable(this, {
       name: observable,
-      filter: observable,
+      filter: observable.shallow,
 
-      update: action,
+      update: action
     });
   }
 
-  update(key, value) {
+  update(key: any, value: any) {
+    // @ts-ignore
     this[key] = value;
   }
 
-  fromJson(json, isHeatmap = false) {
+  fromJson(json: JsonData, isHeatmap = false) {
     this.seriesId = json.seriesId;
     this.name = json.name;
-    this.filter = new Filter().fromJson(
+    this.filter = new FilterStore().fromJson(
       json.filter || { filters: [] },
-      isHeatmap,
+      isHeatmap
     );
     return this;
   }
 
-  fromData(data) {
+  fromData(data: any) {
     this.seriesId = data.seriesId;
     this.name = data.name;
-    this.filter = new Filter().fromData(data.filter);
+    this.filter = new FilterStore().fromData(data.filter);
     return this;
   }
 
@@ -47,7 +46,7 @@ export default class FilterSeries {
     return {
       seriesId: this.seriesId,
       name: this.name,
-      filter: this.filter.toJson(),
+      filter: this.filter.toJson()
     };
   }
 }
