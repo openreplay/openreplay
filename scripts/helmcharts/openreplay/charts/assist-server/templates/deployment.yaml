@@ -44,9 +44,9 @@ spec:
           {{- end}}
           env:
             - name: ASSIST_JWT_SECRET
-              value: {{ .Values.global.assist-serverJWTSecret }}
+              value: {{ .Values.global.assistJWTSecret }}
             - name: ASSIST_KEY
-              value: {{ .Values.global.assist-serverKey }}
+              value: {{ .Values.global.assistKey }}
             - name: AWS_DEFAULT_REGION
               value: "{{ .Values.global.s3.region }}"
             - name: S3_HOST
