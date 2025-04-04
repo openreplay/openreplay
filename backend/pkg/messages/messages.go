@@ -2,114 +2,115 @@
 package messages
 
 const (
-	MsgTimestamp                      = 0
-	MsgSessionStart                   = 1
-	MsgSetPageLocationDeprecated      = 4
-	MsgSetViewportSize                = 5
-	MsgSetViewportScroll              = 6
-	MsgCreateDocument                 = 7
-	MsgCreateElementNode              = 8
-	MsgCreateTextNode                 = 9
-	MsgMoveNode                       = 10
-	MsgRemoveNode                     = 11
-	MsgSetNodeAttribute               = 12
-	MsgRemoveNodeAttribute            = 13
-	MsgSetNodeData                    = 14
-	MsgSetCSSData                     = 15
-	MsgSetNodeScroll                  = 16
-	MsgSetInputTarget                 = 17
-	MsgSetInputValue                  = 18
-	MsgSetInputChecked                = 19
-	MsgMouseMove                      = 20
-	MsgNetworkRequestDeprecated       = 21
-	MsgConsoleLog                     = 22
-	MsgPageLoadTiming                 = 23
-	MsgPageRenderTiming               = 24
-	MsgIntegrationEvent               = 26
-	MsgCustomEvent                    = 27
-	MsgUserID                         = 28
-	MsgUserAnonymousID                = 29
-	MsgMetadata                       = 30
-	MsgPageEventDeprecated            = 31
-	MsgInputEvent                     = 32
-	MsgPageEvent                      = 33
-	MsgStringDictGlobal               = 34
-	MsgSetNodeAttributeDictGlobal     = 35
-	MsgProfiler                       = 40
-	MsgOTable                         = 41
-	MsgStateAction                    = 42
-	MsgReduxDeprecated                = 44
-	MsgVuex                           = 45
-	MsgMobX                           = 46
-	MsgNgRx                           = 47
-	MsgGraphQLDeprecated              = 48
-	MsgPerformanceTrack               = 49
-	MsgStringDictDeprecated           = 50
-	MsgSetNodeAttributeDictDeprecated = 51
-	MsgStringDict                     = 43
-	MsgSetNodeAttributeDict           = 52
-	MsgResourceTimingDeprecated       = 53
-	MsgConnectionInformation          = 54
-	MsgSetPageVisibility              = 55
-	MsgPerformanceTrackAggr           = 56
-	MsgLoadFontFace                   = 57
-	MsgSetNodeFocus                   = 58
-	MsgSetNodeAttributeURLBased       = 60
-	MsgSetCSSDataURLBased             = 61
-	MsgTechnicalInfo                  = 63
-	MsgCustomIssue                    = 64
-	MsgAssetCache                     = 66
-	MsgMouseClick                     = 68
-	MsgMouseClickDeprecated           = 69
-	MsgCreateIFrameDocument           = 70
-	MsgAdoptedSSReplaceURLBased       = 71
-	MsgAdoptedSSReplace               = 72
-	MsgAdoptedSSInsertRuleURLBased    = 73
-	MsgAdoptedSSInsertRule            = 74
-	MsgAdoptedSSDeleteRule            = 75
-	MsgAdoptedSSAddOwner              = 76
-	MsgAdoptedSSRemoveOwner           = 77
-	MsgJSException                    = 78
-	MsgZustand                        = 79
-	MsgBatchMetadata                  = 81
-	MsgPartitionedMessage             = 82
-	MsgNetworkRequest                 = 83
-	MsgWSChannel                      = 84
-	MsgInputChange                    = 112
-	MsgSelectionChange                = 113
-	MsgMouseThrashing                 = 114
-	MsgUnbindNodes                    = 115
-	MsgResourceTiming                 = 116
-	MsgTabChange                      = 117
-	MsgTabData                        = 118
-	MsgCanvasNode                     = 119
-	MsgTagTrigger                     = 120
-	MsgRedux                          = 121
-	MsgSetPageLocation                = 122
-	MsgGraphQL                        = 123
-	MsgWebVitals                      = 124
-	MsgIssueEvent                     = 125
-	MsgSessionEnd                     = 126
-	MsgSessionSearch                  = 127
-	MsgMobileSessionStart             = 90
-	MsgMobileSessionEnd               = 91
-	MsgMobileMetadata                 = 92
-	MsgMobileEvent                    = 93
-	MsgMobileUserID                   = 94
-	MsgMobileUserAnonymousID          = 95
-	MsgMobileScreenChanges            = 96
-	MsgMobileCrash                    = 97
-	MsgMobileViewComponentEvent       = 98
-	MsgMobileClickEvent               = 100
-	MsgMobileInputEvent               = 101
-	MsgMobilePerformanceEvent         = 102
-	MsgMobileLog                      = 103
-	MsgMobileInternalError            = 104
-	MsgMobileNetworkCall              = 105
-	MsgMobileSwipeEvent               = 106
-	MsgMobileBatchMeta                = 107
-	MsgMobilePerformanceAggregated    = 110
-	MsgMobileIssueEvent               = 111
+	MsgTimestamp                          = 0
+	MsgSessionStart                       = 1
+	MsgSetPageLocationDeprecated          = 4
+	MsgSetViewportSize                    = 5
+	MsgSetViewportScroll                  = 6
+	MsgCreateDocument                     = 7
+	MsgCreateElementNode                  = 8
+	MsgCreateTextNode                     = 9
+	MsgMoveNode                           = 10
+	MsgRemoveNode                         = 11
+	MsgSetNodeAttribute                   = 12
+	MsgRemoveNodeAttribute                = 13
+	MsgSetNodeData                        = 14
+	MsgSetCSSData                         = 15
+	MsgSetNodeScroll                      = 16
+	MsgSetInputTarget                     = 17
+	MsgSetInputValue                      = 18
+	MsgSetInputChecked                    = 19
+	MsgMouseMove                          = 20
+	MsgNetworkRequestDeprecated           = 21
+	MsgConsoleLog                         = 22
+	MsgPageLoadTiming                     = 23
+	MsgPageRenderTiming                   = 24
+	MsgIntegrationEvent                   = 26
+	MsgCustomEvent                        = 27
+	MsgUserID                             = 28
+	MsgUserAnonymousID                    = 29
+	MsgMetadata                           = 30
+	MsgPageEventDeprecated                = 31
+	MsgInputEvent                         = 32
+	MsgPageEvent                          = 33
+	MsgStringDictGlobal                   = 34
+	MsgSetNodeAttributeDictGlobal         = 35
+	MsgProfiler                           = 40
+	MsgOTable                             = 41
+	MsgStateAction                        = 42
+	MsgReduxDeprecated                    = 44
+	MsgVuex                               = 45
+	MsgMobX                               = 46
+	MsgNgRx                               = 47
+	MsgGraphQLDeprecated                  = 48
+	MsgPerformanceTrack                   = 49
+	MsgStringDictDeprecated               = 50
+	MsgSetNodeAttributeDictDeprecated     = 51
+	MsgStringDict                         = 43
+	MsgSetNodeAttributeDict               = 52
+	MsgResourceTimingDeprecatedDeprecated = 53
+	MsgConnectionInformation              = 54
+	MsgSetPageVisibility                  = 55
+	MsgPerformanceTrackAggr               = 56
+	MsgLoadFontFace                       = 57
+	MsgSetNodeFocus                       = 58
+	MsgSetNodeAttributeURLBased           = 60
+	MsgSetCSSDataURLBased                 = 61
+	MsgTechnicalInfo                      = 63
+	MsgCustomIssue                        = 64
+	MsgAssetCache                         = 66
+	MsgMouseClick                         = 68
+	MsgMouseClickDeprecated               = 69
+	MsgCreateIFrameDocument               = 70
+	MsgAdoptedSSReplaceURLBased           = 71
+	MsgAdoptedSSReplace                   = 72
+	MsgAdoptedSSInsertRuleURLBased        = 73
+	MsgAdoptedSSInsertRule                = 74
+	MsgAdoptedSSDeleteRule                = 75
+	MsgAdoptedSSAddOwner                  = 76
+	MsgAdoptedSSRemoveOwner               = 77
+	MsgJSException                        = 78
+	MsgZustand                            = 79
+	MsgBatchMetadata                      = 81
+	MsgPartitionedMessage                 = 82
+	MsgNetworkRequest                     = 83
+	MsgWSChannel                          = 84
+	MsgResourceTiming                     = 85
+	MsgInputChange                        = 112
+	MsgSelectionChange                    = 113
+	MsgMouseThrashing                     = 114
+	MsgUnbindNodes                        = 115
+	MsgResourceTimingDeprecated           = 116
+	MsgTabChange                          = 117
+	MsgTabData                            = 118
+	MsgCanvasNode                         = 119
+	MsgTagTrigger                         = 120
+	MsgRedux                              = 121
+	MsgSetPageLocation                    = 122
+	MsgGraphQL                            = 123
+	MsgWebVitals                          = 124
+	MsgIssueEvent                         = 125
+	MsgSessionEnd                         = 126
+	MsgSessionSearch                      = 127
+	MsgMobileSessionStart                 = 90
+	MsgMobileSessionEnd                   = 91
+	MsgMobileMetadata                     = 92
+	MsgMobileEvent                        = 93
+	MsgMobileUserID                       = 94
+	MsgMobileUserAnonymousID              = 95
+	MsgMobileScreenChanges                = 96
+	MsgMobileCrash                        = 97
+	MsgMobileViewComponentEvent           = 98
+	MsgMobileClickEvent                   = 100
+	MsgMobileInputEvent                   = 101
+	MsgMobilePerformanceEvent             = 102
+	MsgMobileLog                          = 103
+	MsgMobileInternalError                = 104
+	MsgMobileNetworkCall                  = 105
+	MsgMobileSwipeEvent                   = 106
+	MsgMobileBatchMeta                    = 107
+	MsgMobilePerformanceAggregated        = 110
+	MsgMobileIssueEvent                   = 111
 )
 
 type Timestamp struct {
@@ -1329,7 +1330,7 @@ func (msg *SetNodeAttributeDict) TypeID() int {
 	return 52
 }
 
-type ResourceTimingDeprecated struct {
+type ResourceTimingDeprecatedDeprecated struct {
 	message
 	Timestamp       uint64
 	Duration        uint64
@@ -1341,7 +1342,7 @@ type ResourceTimingDeprecated struct {
 	Initiator       string
 }
 
-func (msg *ResourceTimingDeprecated) Encode() []byte {
+func (msg *ResourceTimingDeprecatedDeprecated) Encode() []byte {
 	buf := make([]byte, 81+len(msg.URL)+len(msg.Initiator))
 	buf[0] = 53
 	p := 1
@@ -1356,11 +1357,11 @@ func (msg *ResourceTimingDeprecated) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *ResourceTimingDeprecated) Decode() Message {
+func (msg *ResourceTimingDeprecatedDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *ResourceTimingDeprecated) TypeID() int {
+func (msg *ResourceTimingDeprecatedDeprecated) TypeID() int {
 	return 53
 }
 
@@ -2042,6 +2043,57 @@ func (msg *WSChannel) TypeID() int {
 	return 84
 }
 
+type ResourceTiming struct {
+	message
+	Timestamp         uint64
+	Duration          uint64
+	TTFB              uint64
+	HeaderSize        uint64
+	EncodedBodySize   uint64
+	DecodedBodySize   uint64
+	URL               string
+	Initiator         string
+	TransferredSize   uint64
+	Cached            bool
+	Queueing          uint64
+	DnsLookup         uint64
+	InitialConnection uint64
+	SSL               uint64
+	ContentDownload   uint64
+	Total             uint64
+}
+
+func (msg *ResourceTiming) Encode() []byte {
+	buf := make([]byte, 161+len(msg.URL)+len(msg.Initiator))
+	buf[0] = 85
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	p = WriteUint(msg.TTFB, buf, p)
+	p = WriteUint(msg.HeaderSize, buf, p)
+	p = WriteUint(msg.EncodedBodySize, buf, p)
+	p = WriteUint(msg.DecodedBodySize, buf, p)
+	p = WriteString(msg.URL, buf, p)
+	p = WriteString(msg.Initiator, buf, p)
+	p = WriteUint(msg.TransferredSize, buf, p)
+	p = WriteBoolean(msg.Cached, buf, p)
+	p = WriteUint(msg.Queueing, buf, p)
+	p = WriteUint(msg.DnsLookup, buf, p)
+	p = WriteUint(msg.InitialConnection, buf, p)
+	p = WriteUint(msg.SSL, buf, p)
+	p = WriteUint(msg.ContentDownload, buf, p)
+	p = WriteUint(msg.Total, buf, p)
+	return buf[:p]
+}
+
+func (msg *ResourceTiming) Decode() Message {
+	return msg
+}
+
+func (msg *ResourceTiming) TypeID() int {
+	return 85
+}
+
 type InputChange struct {
 	message
 	ID             uint64
@@ -2140,7 +2192,7 @@ func (msg *UnbindNodes) TypeID() int {
 	return 115
 }
 
-type ResourceTiming struct {
+type ResourceTimingDeprecated struct {
 	message
 	Timestamp       uint64
 	Duration        uint64
@@ -2154,7 +2206,7 @@ type ResourceTiming struct {
 	Cached          bool
 }
 
-func (msg *ResourceTiming) Encode() []byte {
+func (msg *ResourceTimingDeprecated) Encode() []byte {
 	buf := make([]byte, 101+len(msg.URL)+len(msg.Initiator))
 	buf[0] = 116
 	p := 1
@@ -2171,11 +2223,11 @@ func (msg *ResourceTiming) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *ResourceTiming) Decode() Message {
+func (msg *ResourceTimingDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *ResourceTiming) TypeID() int {
+func (msg *ResourceTimingDeprecated) TypeID() int {
 	return 116
 }
 
