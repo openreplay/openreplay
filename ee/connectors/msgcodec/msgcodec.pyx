@@ -242,7 +242,7 @@ cdef class MessageCodec:
 
         if message_id == 7:
             return CreateDocument(
-                
+
             )
 
         if message_id == 8:
@@ -584,7 +584,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 53:
-            return ResourceTimingDeprecated(
+            return ResourceTimingDeprecatedDeprecated(
                 timestamp=self.read_uint(reader),
                 duration=self.read_uint(reader),
                 ttfb=self.read_uint(reader),
@@ -865,7 +865,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 116:
-            return ResourceTiming(
+            return ResourceTimingDeprecated(
                 timestamp=self.read_uint(reader),
                 duration=self.read_uint(reader),
                 ttfb=self.read_uint(reader),
@@ -1127,4 +1127,3 @@ cdef class MessageCodec:
                 context=self.read_string(reader),
                 payload=self.read_string(reader)
             )
-

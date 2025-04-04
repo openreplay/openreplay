@@ -40,7 +40,7 @@ import type {
   RawSetNodeAttributeDictDeprecated,
   RawStringDict,
   RawSetNodeAttributeDict,
-  RawResourceTimingDeprecated,
+  RawResourceTimingDeprecatedDeprecated,
   RawConnectionInformation,
   RawSetPageVisibility,
   RawLoadFontFace,
@@ -65,7 +65,7 @@ import type {
   RawLongAnimationTask,
   RawSelectionChange,
   RawMouseThrashing,
-  RawResourceTiming,
+  RawResourceTimingDeprecated,
   RawTabChange,
   RawTabData,
   RawCanvasNode,
@@ -245,4 +245,3 @@ export type MobileNetworkCall = RawMobileNetworkCall & Timed
 export type MobileSwipeEvent = RawMobileSwipeEvent & Timed
 
 export type MobileIssueEvent = RawMobileIssueEvent & Timed
-

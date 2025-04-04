@@ -873,9 +873,9 @@ func DecodeSetNodeAttributeDict(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeResourceTimingDeprecated(reader BytesReader) (Message, error) {
+func DecodeResourceTimingDeprecatedDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &ResourceTimingDeprecated{}
+	msg := &ResourceTimingDeprecatedDeprecated{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1500,9 +1500,9 @@ func DecodeUnbindNodes(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeResourceTiming(reader BytesReader) (Message, error) {
+func DecodeResourceTimingDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &ResourceTiming{}
+	msg := &ResourceTimingDeprecated{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -2211,7 +2211,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 52:
 		return DecodeSetNodeAttributeDict(reader)
 	case 53:
-		return DecodeResourceTimingDeprecated(reader)
+		return DecodeResourceTimingDeprecatedDeprecated(reader)
 	case 54:
 		return DecodeConnectionInformation(reader)
 	case 55:
@@ -2283,7 +2283,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 115:
 		return DecodeUnbindNodes(reader)
 	case 116:
-		return DecodeResourceTiming(reader)
+		return DecodeResourceTimingDeprecated(reader)
 	case 117:
 		return DecodeTabChange(reader)
 	case 118:

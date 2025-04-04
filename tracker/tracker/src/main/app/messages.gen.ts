@@ -50,11 +50,11 @@ export function SetViewportScroll(
 }
 
 export function CreateDocument(
-  
+
 ): Messages.CreateDocument {
   return [
     Messages.Type.CreateDocument,
-    
+
   ]
 }
 
@@ -548,7 +548,7 @@ export function SetNodeAttributeDict(
   ]
 }
 
-export function ResourceTimingDeprecated(
+export function ResourceTimingDeprecatedDeprecated(
   timestamp: number,
   duration: number,
   ttfb: number,
@@ -557,9 +557,9 @@ export function ResourceTimingDeprecated(
   decodedBodySize: number,
   url: string,
   initiator: string,
-): Messages.ResourceTimingDeprecated {
+): Messages.ResourceTimingDeprecatedDeprecated {
   return [
-    Messages.Type.ResourceTimingDeprecated,
+    Messages.Type.ResourceTimingDeprecatedDeprecated,
     timestamp,
     duration,
     ttfb,
@@ -974,7 +974,7 @@ export function UnbindNodes(
   ]
 }
 
-export function ResourceTiming(
+export function ResourceTimingDeprecated(
   timestamp: number,
   duration: number,
   ttfb: number,
@@ -985,9 +985,9 @@ export function ResourceTiming(
   initiator: string,
   transferredSize: number,
   cached: boolean,
-): Messages.ResourceTiming {
+): Messages.ResourceTimingDeprecated {
   return [
-    Messages.Type.ResourceTiming,
+    Messages.Type.ResourceTimingDeprecated,
     timestamp,
     duration,
     ttfb,
@@ -1096,4 +1096,3 @@ export function WebVitals(
     value,
   ]
 }
-

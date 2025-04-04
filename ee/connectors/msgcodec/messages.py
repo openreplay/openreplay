@@ -71,7 +71,7 @@ class CreateDocument(Message):
     __id__ = 7
 
     def __init__(self, ):
-        
+
 
 
 class CreateElementNode(Message):
@@ -500,7 +500,7 @@ class SetNodeAttributeDict(Message):
         self.value = value
 
 
-class ResourceTimingDeprecated(Message):
+class ResourceTimingDeprecatedDeprecated(Message):
     __id__ = 53
 
     def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator):
@@ -853,7 +853,7 @@ class UnbindNodes(Message):
         self.total_removed_percent = total_removed_percent
 
 
-class ResourceTiming(Message):
+class ResourceTimingDeprecated(Message):
     __id__ = 116
 
     def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator, transferred_size, cached):
@@ -1177,5 +1177,3 @@ class MobileIssueEvent(Message):
         self.context_string = context_string
         self.context = context
         self.payload = payload
-
-

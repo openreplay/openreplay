@@ -144,7 +144,7 @@ class MessageCodec(Codec):
 
         if message_id == 7:
             return CreateDocument(
-                
+
             )
 
         if message_id == 8:
@@ -486,7 +486,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 53:
-            return ResourceTimingDeprecated(
+            return ResourceTimingDeprecatedDeprecated(
                 timestamp=self.read_uint(reader),
                 duration=self.read_uint(reader),
                 ttfb=self.read_uint(reader),
@@ -767,7 +767,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 116:
-            return ResourceTiming(
+            return ResourceTimingDeprecated(
                 timestamp=self.read_uint(reader),
                 duration=self.read_uint(reader),
                 ttfb=self.read_uint(reader),
@@ -1029,4 +1029,3 @@ class MessageCodec(Codec):
                 context=self.read_string(reader),
                 payload=self.read_string(reader)
             )
-

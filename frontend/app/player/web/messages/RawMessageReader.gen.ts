@@ -449,7 +449,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const url = this.readString(); if (url === null) { return resetPointer() }
       const initiator = this.readString(); if (initiator === null) { return resetPointer() }
       return {
-        tp: MType.ResourceTimingDeprecated,
+        tp: MType.ResourceTimingDeprecatedDeprecated,
         timestamp,
         duration,
         ttfb,
@@ -783,7 +783,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const transferredSize = this.readUint(); if (transferredSize === null) { return resetPointer() }
       const cached = this.readBoolean(); if (cached === null) { return resetPointer() }
       return {
-        tp: MType.ResourceTiming,
+        tp: MType.ResourceTimingDeprecated,
         timestamp,
         duration,
         ttfb,

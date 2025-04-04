@@ -1466,7 +1466,7 @@ func (msg *SetNodeAttributeDict) TypeID() int {
 	return 52
 }
 
-type ResourceTimingDeprecated struct {
+type ResourceTimingDeprecatedDeprecated struct {
 	message
 	Timestamp       uint64
 	Duration        uint64
@@ -1478,7 +1478,7 @@ type ResourceTimingDeprecated struct {
 	Initiator       string
 }
 
-func (msg *ResourceTimingDeprecated) Encode() []byte {
+func (msg *ResourceTimingDeprecatedDeprecated) Encode() []byte {
 	buf := make([]byte, 81+len(msg.URL)+len(msg.Initiator))
 	buf[0] = 53
 	p := 1
@@ -1493,11 +1493,11 @@ func (msg *ResourceTimingDeprecated) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *ResourceTimingDeprecated) Decode() Message {
+func (msg *ResourceTimingDeprecatedDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *ResourceTimingDeprecated) TypeID() int {
+func (msg *ResourceTimingDeprecatedDeprecated) TypeID() int {
 	return 53
 }
 
@@ -2424,7 +2424,7 @@ func (msg *UnbindNodes) TypeID() int {
 	return 115
 }
 
-type ResourceTiming struct {
+type ResourceTimingDeprecated struct {
 	message
 	Timestamp       uint64
 	Duration        uint64
@@ -2438,7 +2438,7 @@ type ResourceTiming struct {
 	Cached          bool
 }
 
-func (msg *ResourceTiming) Encode() []byte {
+func (msg *ResourceTimingDeprecated) Encode() []byte {
 	buf := make([]byte, 101+len(msg.URL)+len(msg.Initiator))
 	buf[0] = 116
 	p := 1
@@ -2455,11 +2455,11 @@ func (msg *ResourceTiming) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *ResourceTiming) Decode() Message {
+func (msg *ResourceTimingDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *ResourceTiming) TypeID() int {
+func (msg *ResourceTimingDeprecated) TypeID() int {
 	return 116
 }
 
