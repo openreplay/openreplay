@@ -1,0 +1,42 @@
+# Ref: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+
+on:
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Comma separated names of services to build(in small letters).'
+        required: true
+        default: 'chalice,frontend'
+      tag:
+        description: 'Tag to build patches from.'
+        required: true
+        type: string
+
+name: Build patches from tag, rewrite commit HEAD to older timestamp, and Push the tag
+
+jobs:
+  deploy:
+    name: Build Patch from old tag
+    runs-on: ubuntu-latest
+    env:
+      DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
+      DEPOT_PROJECT_ID: ${{ secrets.DEPOT_PROJECT_ID }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+        ref: ${{ github.event.inputs.tag }}
+
+    - name: Create backup tag with timestamp
+      run: |
+        set -e  # Exit immediately if a command exits with a non-zero status
+        TIMESTAMP=$(date +%Y%m%d%H%M%S)
+        BACKUP_TAG="${{ github.event.inputs.tag }}-backup-${TIMESTAMP}"
+        echo "BACKUP_TAG=${BACKUP_TAG}" >> $GITHUB_ENV
+        git tag $BACKUP_TAG || { echo "Failed to create backup tag"; exit 1; }
+        git push origin $BACKUP_TAG || { echo "Failed to push backup tag"; exit 1; }
+        echo "Created backup tag: $BACKUP_TAG"
+
+    - name: Setup yq
+      uses: mikefarah/yq@master
