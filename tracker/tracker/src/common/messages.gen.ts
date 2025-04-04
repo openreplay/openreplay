@@ -45,7 +45,7 @@ export declare const enum Type {
   SetNodeAttributeDictDeprecated = 51,
   StringDict = 43,
   SetNodeAttributeDict = 52,
-  ResourceTimingDeprecated = 53,
+  ResourceTimingDeprecatedDeprecated = 53,
   ConnectionInformation = 54,
   SetPageVisibility = 55,
   LoadFontFace = 57,
@@ -75,7 +75,7 @@ export declare const enum Type {
   SelectionChange = 113,
   MouseThrashing = 114,
   UnbindNodes = 115,
-  ResourceTiming = 116,
+  ResourceTimingDeprecated = 116,
   TabChange = 117,
   TabData = 118,
   CanvasNode = 119,
@@ -113,7 +113,7 @@ export type SetViewportScroll = [
 
 export type CreateDocument = [
   /*type:*/ Type.CreateDocument,
-  
+
 ]
 
 export type CreateElementNode = [
@@ -380,8 +380,8 @@ export type SetNodeAttributeDict = [
   /*value:*/ string,
 ]
 
-export type ResourceTimingDeprecated = [
-  /*type:*/ Type.ResourceTimingDeprecated,
+export type ResourceTimingDeprecatedDeprecated = [
+  /*type:*/ Type.ResourceTimingDeprecatedDeprecated,
   /*timestamp:*/ number,
   /*duration:*/ number,
   /*ttfb:*/ number,
@@ -608,8 +608,8 @@ export type UnbindNodes = [
   /*totalRemovedPercent:*/ number,
 ]
 
-export type ResourceTiming = [
-  /*type:*/ Type.ResourceTiming,
+export type ResourceTimingDeprecated = [
+  /*type:*/ Type.ResourceTimingDeprecated,
   /*timestamp:*/ number,
   /*duration:*/ number,
   /*ttfb:*/ number,

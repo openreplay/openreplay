@@ -104,11 +104,11 @@ cdef class SetViewportScroll(PyMessage):
 
 cdef class CreateDocument(PyMessage):
     cdef public int __id__
-    
+
 
     def __init__(self, ):
         self.__id__ = 7
-        
+
 
 
 cdef class CreateElementNode(PyMessage):
@@ -743,7 +743,7 @@ cdef class SetNodeAttributeDict(PyMessage):
         self.value = value
 
 
-cdef class ResourceTimingDeprecated(PyMessage):
+cdef class ResourceTimingDeprecatedDeprecated(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long duration
@@ -1269,7 +1269,7 @@ cdef class UnbindNodes(PyMessage):
         self.total_removed_percent = total_removed_percent
 
 
-cdef class ResourceTiming(PyMessage):
+cdef class ResourceTimingDeprecated(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long duration
@@ -1764,5 +1764,3 @@ cdef class MobileIssueEvent(PyMessage):
         self.context_string = context_string
         self.context = context
         self.payload = payload
-
-
