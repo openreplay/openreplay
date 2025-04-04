@@ -61,7 +61,6 @@ app.listen(PORT, (token) => {
         console.log(`Failed to listen on port ${PORT}`);
     }
 });
-
 startCacheRefresher(io);
 
 process.on('uncaughtException', err => {
