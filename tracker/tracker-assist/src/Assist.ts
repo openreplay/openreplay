@@ -907,12 +907,7 @@ export default class Assist {
         const int = setInterval(() => {
           const isPresent = node.ownerDocument.defaultView && node.isConnected;
           if (!isPresent) {
-            canvasHandler.stop();
-            this.canvasMap.delete(id);
-            if (this.canvasPeers[id]) {
-              this.canvasPeers[id]?.close();
-              this.canvasPeers[id] = null;
-            }
+            this.stopCanvasStream(id);
             clearInterval(int);
           }
         }, 5000);
@@ -971,6 +966,25 @@ export default class Assist {
     Object.values(this.canvasPeers).forEach((pc) => pc?.close());
     this.canvasPeers = {};
     this.socket?.emit("webrtc_canvas_restart");
+  }
+
+  private stopCanvasStream(id: number) {
+    for (const agent of Object.values(this.agents)) {
+        if (!agent.agentInfo) return;
+
+        const uniqueId = `${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas-${id}`;
+        this.socket?.emit("webrtc_canvas_stop", { id: uniqueId });
+
+        if (this.canvasPeers[uniqueId]) {
+          this.canvasPeers[uniqueId]?.close();
+          delete this.canvasPeers[uniqueId];
+
+          this.canvasMap.get(id)?.stop();
+          this.canvasMap.delete(id);
+          this.canvasNodeCheckers.get(id) && clearInterval(this.canvasNodeCheckers.get(id));
+          this.canvasNodeCheckers.delete(id);
+        }
+      }
   }
 
   private applyBufferedIceCandidates(from) {

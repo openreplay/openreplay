@@ -2,21 +2,7 @@ import logger from '@/logger';
 import { VElement } from 'Player/web/managers/DOM/VirtualDOM';
 import MessageManager from 'Player/web/MessageManager';
 import { Socket } from 'socket.io-client';
-
-let frameCounter = 0;
-
-function draw(
-  video: HTMLVideoElement,
-  canvas: HTMLCanvasElement,
-  canvasCtx: CanvasRenderingContext2D,
-) {
-  if (frameCounter % 4 === 0) {
-    canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  }
-  frameCounter++;
-  requestAnimationFrame(() => draw(video, canvas, canvasCtx));
-}
-
+import { toast } from 'react-toastify';
 export default class CanvasReceiver {
   private streams: Map<string, MediaStream> = new Map();
 
@@ -24,6 +10,16 @@ export default class CanvasReceiver {
   private connections: Map<string, RTCPeerConnection> = new Map();
 
   private cId: string;
+
+  private frameCounter = 0;
+  private canvasesData = new Map<
+    string,
+    {
+      video: HTMLVideoElement;
+      canvas: HTMLCanvasElement;
+      canvasCtx: CanvasRenderingContext2D;
+    }
+  >(new Map());
 
   // sendSignal – for sending signals (offer/answer/ICE)
   constructor(
@@ -56,6 +52,14 @@ export default class CanvasReceiver {
       },
     );
 
+    this.socket.on('webrtc_canvas_stop', (data: { id: string }) => {
+      const { id } = data;
+      const canvasId = getCanvasId(id);
+      this.connections.delete(id);
+      this.streams.delete(id);
+      this.canvasesData.delete(canvasId);
+    });
+
     this.socket.on('webrtc_canvas_restart', () => {
       this.clear();
     });
@@ -85,7 +89,7 @@ export default class CanvasReceiver {
       const stream = event.streams[0];
       if (stream) {
         // Detect canvasId from remote peer id
-        const canvasId = id.split('-')[4];
+        const canvasId = getCanvasId(id);
         this.streams.set(canvasId, stream);
         setTimeout(() => {
           const node = this.getNode(parseInt(canvasId, 10));
@@ -93,14 +97,15 @@ export default class CanvasReceiver {
             stream.clone() as MediaStream,
             node as VElement,
           );
-          if (node) {
-            draw(
-              videoEl,
-              node.node as HTMLCanvasElement,
-              (node.node as HTMLCanvasElement).getContext(
+          if (node && videoEl) {
+            this.canvasesData.set(canvasId, {
+              video: videoEl,
+              canvas: node.node as HTMLCanvasElement,
+              canvasCtx: (node.node as HTMLCanvasElement)?.getContext(
                 '2d',
               ) as CanvasRenderingContext2D,
-            );
+            });
+            this.draw();
           } else {
             logger.log('NODE', canvasId, 'IS NOT FOUND');
           }
@@ -136,7 +141,27 @@ export default class CanvasReceiver {
     });
     this.connections.clear();
     this.streams.clear();
+    this.canvasesData.clear();
   }
+
+  draw = () => {
+    if (this.frameCounter % 4 === 0) {
+      if (this.canvasesData.size === 0) {
+        return;
+      }
+      this.canvasesData.forEach((canvasData, id) => {
+        const { video, canvas, canvasCtx } = canvasData;
+        const node = this.getNode(parseInt(id, 10));
+        if (node) {
+          canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        } else {
+          this.canvasesData.delete(id);
+        }
+      });
+    }
+    this.frameCounter++;
+    requestAnimationFrame(() => this.draw());
+  };
 }
 
 function spawnVideo(stream: MediaStream, node: VElement) {
@@ -152,6 +177,10 @@ function spawnVideo(stream: MediaStream, node: VElement) {
     .play()
     .then(() => true)
     .catch(() => {
+      toast.error('Click to unpause canvas stream', {
+        autoClose: false,
+        toastId: 'canvas-stream',
+      });
       // we allow that if user just reloaded the page
     });
 
@@ -164,6 +193,10 @@ function spawnVideo(stream: MediaStream, node: VElement) {
   const startStream = () => {
     videoEl
       .play()
+      .then(() => {
+        toast.dismiss('canvas-stream');
+        clearListeners();
+      })
       .then(() => console.log('unpaused'))
       .catch(() => {
         // we allow that if user just reloaded the page
@@ -177,6 +210,10 @@ function spawnVideo(stream: MediaStream, node: VElement) {
 
 function checkId(id: string, cId: string): boolean {
   return id.includes(cId);
+}
+
+function getCanvasId(id: string): string {
+  return id.split('-')[4];
 }
 
 /** simple peer example

@@ -42,14 +42,13 @@
     },
     "tracker-assist": {
       "name": "@openreplay/tracker-assist",
-      "version": "11.0.5",
+      "version": "11.0.6",
       "dependencies": {
         "csstype": "^3.0.10",
         "fflate": "^0.8.2",
         "socket.io-client": "^4.8.1",
       },
       "devDependencies": {
-        "@openreplay/tracker": "workspace:*",
         "@typescript-eslint/eslint-plugin": "^8.14.0",
         "@typescript-eslint/parser": "^8.14.0",
         "eslint": "^9.15.0",
