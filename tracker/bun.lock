@@ -6,7 +6,7 @@
     },
     "tracker": {
       "name": "@openreplay/tracker",
-      "version": "16.1.2-beta.0",
+      "version": "16.1.1",
       "dependencies": {
         "@medv/finder": "^4.0.2",
         "@openreplay/network-proxy": "^1.1.0",
