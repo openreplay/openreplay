@@ -24,7 +24,7 @@ const nodeID = process.env.HOSTNAME || generateNodeID();
 
 const addSessionToCache =  async function (sessionID, sessionData) {
     try {
-        await redisClient.set(`active_sessions:${sessionID}`, JSON.stringify(sessionData), 'EX', pingInterval);
+        await redisClient.set(`active_sessions:${sessionID}`, JSON.stringify(sessionData), {EX: pingInterval});
         logger.debug(`Session ${sessionID} stored in Redis`);
     } catch (error) {
         logger.error(error);
@@ -33,7 +33,7 @@ const addSessionToCache =  async function (sessionID, sessionData) {
 
 const renewSession = async function (sessionID){
     try {
-        await redisClient.expire(`active_sessions:${sessionID}`, pingInterval);
+        await redisClient.expire(`active_sessions:${sessionID}`, {EX: pingInterval});
         logger.debug(`Session ${sessionID} renewed in Redis`);
     } catch (error) {
         logger.error(error);
@@ -65,7 +65,7 @@ const removeSessionFromCache = async function (sessionID) {
 
 const setNodeSessions = async function (nodeID, sessionIDs) {
     try {
-        await redisClient.set(`node:${nodeID}:sessions`, JSON.stringify(sessionIDs), 'EX', cacheRefreshInterval);
+        await redisClient.set(`node:${nodeID}:sessions`, JSON.stringify(sessionIDs), {EX: cacheRefreshInterval});
         logger.debug(`Node ${nodeID} sessions stored in Redis`);
     } catch (error) {
         logger.error(error);
