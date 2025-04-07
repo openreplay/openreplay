@@ -15,8 +15,8 @@ function generateNodeID() {
 
 const PING_INTERVAL = parseInt(process.env.PING_INTERVAL_SECONDS) || 25;
 const CACHE_REFRESH_INTERVAL = parseInt(process.env.CACHE_REFRESH_INTERVAL_SECONDS) || 10;
-const pingInterval = PING_INTERVAL + PING_INTERVAL/2;
-const cacheRefreshInterval = CACHE_REFRESH_INTERVAL + CACHE_REFRESH_INTERVAL/2;
+const pingInterval = Math.floor(PING_INTERVAL + PING_INTERVAL/2);
+const cacheRefreshInterval = Math.floor(CACHE_REFRESH_INTERVAL + CACHE_REFRESH_INTERVAL/2);
 const cacheRefreshIntervalMs = CACHE_REFRESH_INTERVAL * 1000;
 let lastCacheUpdateTime = 0;
 let cacheRefresher = null;
