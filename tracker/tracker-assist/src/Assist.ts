@@ -907,12 +907,6 @@ export default class Assist {
         const int = setInterval(() => {
           const isPresent = node.ownerDocument.defaultView && node.isConnected;
           if (!isPresent) {
-            // canvasHandler.stop();
-            // this.canvasMap.delete(id);
-            // if (this.canvasPeers[id]) {
-            //   this.canvasPeers[id]?.close();
-            //   this.canvasPeers[id] = null;
-            // }
             this.stopCanvasStream(id);
             clearInterval(int);
           }

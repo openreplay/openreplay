@@ -52,9 +52,8 @@ export default class CanvasReceiver {
       },
     );
 
-    this.socket.on('webrtc_canvas_stop', (data: { id: string }) => {ц
+    this.socket.on('webrtc_canvas_stop', (data: { id: string }) => {
       const { id } = data;
-      console.log('Connection closed', id);
       const canvasId = getCanvasId(id);
       this.connections.delete(id);
       this.streams.delete(id);
