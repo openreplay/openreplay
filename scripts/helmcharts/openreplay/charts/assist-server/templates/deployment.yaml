@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "connector.fullname" . }}
+  name: {{ include "assist-server.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "connector.labels" . | nindent 4 }}
+    {{- include "assist-server.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "connector.selectorLabels" . | nindent 6 }}
+      {{- include "assist-server.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -19,13 +19,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "connector.selectorLabels" . | nindent 8 }}
+        {{- include "assist-server.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "connector.serviceAccountName" . }}
+      serviceAccountName: {{ include "assist-server.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       shareProcessNamespace: true
@@ -43,28 +43,19 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
-            {{- range $key, $val := .Values.global.connector.env }}
-            - name: {{ $key }}
-              value: '{{ $val }}'
-            {{- end}}
-            - name: pg_password
-              {{- if .Values.global.postgresql.existingSecret }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.postgresql.existingSecret }}
-                  key: postgresql-postgres-password
-              {{- else }}
-              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
+            - name: ASSIST_JWT_SECRET
+              value: {{ .Values.global.assistJWTSecret }}
+            - name: ASSIST_KEY
+              value: {{ .Values.global.assistKey }}
+            - name: AWS_DEFAULT_REGION
+              value: "{{ .Values.global.s3.region }}"
+            - name: S3_HOST
+              {{- if contains "minio" .Values.global.s3.endpoint }}
+              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}'
+              {{- else}}
+              value: '{{ .Values.global.s3.endpoint }}'
               {{- end}}
-            - name: POSTGRES_STRING
-              value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:$(pg_password)@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
-            - name: KAFKA_SERVERS
-              value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
-            - name: KAFKA_USE_SSL
-              value: '{{ .Values.global.kafka.kafkaUseSsl }}'
-            - name: LICENSE_KEY
-              value: '{{ .Values.global.enterpriseEditionLicense }}'
-            - name: AWS_ACCESS_KEY_ID
+            - name: S3_KEY
               {{- if .Values.global.s3.existingSecret }}
               valueFrom:
                 secretKeyRef:
@@ -73,7 +64,7 @@ spec:
               {{- else }}
               value: {{ .Values.global.s3.accessKey }}
               {{- end }}
-            - name: AWS_SECRET_ACCESS_KEY
+            - name: S3_SECRET
               {{- if .Values.global.s3.existingSecret }}
               valueFrom:
                 secretKeyRef:
@@ -82,13 +73,32 @@ spec:
               {{- else }}
               value: {{ .Values.global.s3.secretKey }}
               {{- end }}
-            - name: AWS_ENDPOINT
-              value: '{{- include "openreplay.s3Endpoint" . }}'
-            - name: AWS_REGION
-              value: '{{ .Values.global.s3.region }}'
-            {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
+            - name: REDIS_URL
+              value: {{ .Values.global.redis.redisHost }}
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end}}
+          ports:
+            {{- range $key, $val := .Values.service.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $val }}
+            {{- end }}
+              protocol: TCP
+          {{- with .Values.persistence.mounts  }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.persistence.volumes  }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

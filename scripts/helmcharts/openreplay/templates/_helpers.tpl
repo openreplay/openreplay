@@ -33,10 +33,13 @@ ingress-nginx: &ingress-nginx
   {{- if contains "minio" .Values.global.s3.endpoint -}}
     {{- include "openreplay.domainURL" . -}}
   {{- else -}}
-    {{- .Values.global.s3.endpoint -}}
+    {{-  .Values.global.s3.endpoint -}}
   {{- end -}}
-{{- else -}}
+{{/* Endpoint wil be empty if used with aws iam roles*/}}
+{{- else if and .Values.global.s3.accessKey .Values.global.s3.secretKey -}}
   {{- printf "https://s3.%s.amazonaws.com" .Values.global.s3.region -}}
+{{- else -}}
+  {{- .Values.global.s3.endpoint -}}
 {{- end -}}
 {{- end -}}
 

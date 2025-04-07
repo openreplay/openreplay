@@ -8,7 +8,6 @@ ignore:
   - "**/*/build/**"
   - "**/*/.test.*"
   - "**/*/version.ts"
-review:
-  poem: false
-  review_status: false
-  collapse_walkthrough: true
+comment:
+    layout: "condensed_header, condensed_files, condensed_footer"
+    hide_project_coverage: TRUE
