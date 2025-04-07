@@ -355,20 +355,20 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                               AND ev.event_type = 'LOCATION'"""
         extra_deduplication.append("url_path")
         extra_conditions = {}
-        for e in data.events:
-            if e.type == schemas.EventType.LOCATION:
-                if e.operator not in extra_conditions:
-                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
-                        "type": e.type,
-                        "isEvent": True,
-                        "value": [],
-                        "operator": e.operator,
-                        "filters": []
-                    })
-                for v in e.value:
-                    if v not in extra_conditions[e.operator].value:
-                        extra_conditions[e.operator].value.append(v)
-        extra_conditions = list(extra_conditions.values())
+        # for e in data.events:
+        #     if e.type == schemas.EventType.LOCATION:
+        #         if e.operator not in extra_conditions:
+        #             extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
+        #                 "type": e.type,
+        #                 "isEvent": True,
+        #                 "value": [],
+        #                 "operator": e.operator,
+        #                 "filters": []
+        #             })
+        #         for v in e.value:
+        #             if v not in extra_conditions[e.operator].value:
+        #                 extra_conditions[e.operator].value.append(v)
+        # extra_conditions = list(extra_conditions.values())
     elif metric_of == schemas.MetricOfTable.FETCH:
         extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
                             FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
@@ -378,20 +378,20 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                               AND ev.event_type = 'REQUEST'"""
         extra_deduplication.append("url_path")
         extra_conditions = {}
-        for e in data.events:
-            if e.type == schemas.EventType.REQUEST_DETAILS:
-                if e.operator not in extra_conditions:
-                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
-                        "type": e.type,
-                        "isEvent": True,
-                        "value": [],
-                        "operator": e.operator,
-                        "filters": []
-                    })
-                for v in e.value:
-                    if v not in extra_conditions[e.operator].value:
-                        extra_conditions[e.operator].value.append(v)
-        extra_conditions = list(extra_conditions.values())
+        # for e in data.events:
+        #     if e.type == schemas.EventType.REQUEST_DETAILS:
+        #         if e.operator not in extra_conditions:
+        #             extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
+        #                 "type": e.type,
+        #                 "isEvent": True,
+        #                 "value": [],
+        #                 "operator": e.operator,
+        #                 "filters": []
+        #             })
+        #         for v in e.value:
+        #             if v not in extra_conditions[e.operator].value:
+        #                 extra_conditions[e.operator].value.append(v)
+        # extra_conditions = list(extra_conditions.values())
 
     elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
