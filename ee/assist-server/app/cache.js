@@ -33,7 +33,7 @@ const addSessionToCache =  async function (sessionID, sessionData) {
 
 const renewSession = async function (sessionID){
     try {
-        await redisClient.expire(`active_sessions:${sessionID}`, {EX: pingInterval});
+        await redisClient.expire(`active_sessions:${sessionID}`, pingInterval);
         logger.debug(`Session ${sessionID} renewed in Redis`);
     } catch (error) {
         logger.error(error);
