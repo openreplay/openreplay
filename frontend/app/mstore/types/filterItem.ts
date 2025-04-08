@@ -2,7 +2,7 @@ import { FilterCategory, FilterKey, FilterType } from 'Types/filter/filterType';
 import {
   conditionalFiltersMap,
   filtersMap,
-  mobileConditionalFiltersMap,
+  mobileConditionalFiltersMap
 } from 'Types/filter/newFilter';
 import { action, makeAutoObservable, observable } from 'mobx';
 
@@ -35,7 +35,7 @@ export default class FilterItem {
     makeAutoObservable(this);
 
     if (Array.isArray(data.filters)) {
-      data.filters = data.filters.map(function (i: Record<string, any>) {
+      data.filters = data.filters.map(function(i: Record<string, any>) {
         return new FilterItem(i);
       });
     }
@@ -132,22 +132,29 @@ export default class FilterItem {
     return this;
   }
 
-  toJson(): any {
+  toJson(): Record<string, any> {
     const isMetadata = this.category === FilterCategory.METADATA;
-    const json = {
+    const json: Record<string, any> = {
       type: isMetadata ? FilterKey.METADATA : this.key,
       isEvent: Boolean(this.isEvent),
-      value: this.value.map((i: any) => i ? i.toString() : ''),
       operator: this.operator,
       source: isMetadata ? this.key.replace(/^_/, '') : this.source,
       sourceOperator: this.sourceOperator,
       filters: Array.isArray(this.filters)
         ? this.filters.map((i) => i.toJson())
-        : [],
+        : []
     };
-    if (this.type === FilterKey.DURATION) {
+
+    if (!this.value || !Array.isArray(this.value) || this.value.length === 0 || this.value[0] === '') {
+      json.value = [];
+    } else if (this.type === FilterKey.DURATION) {
       json.value = this.value.map((i: any) => (!i ? 0 : i));
+    } else if (this.type === FilterKey.FETCH_DURATION) {
+      json.value = this.value.map((i: any) => (!i ? 0 : String(i)));
+    } else {
+      json.value = this.value.map((i: any) => i ? String(i) : '');
     }
+
     return json;
   }
 }
