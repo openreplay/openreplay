@@ -49,8 +49,7 @@ const BASE_sessionInfo = {
     "userDeviceType": "",
     "userCountry": "",
     "userState": "",
-    "userCity": "",
-    "projectId": 0
+    "userCity": ""
 };
 
 const extractPeerId = (peerId) => {
