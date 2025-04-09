@@ -83,3 +83,28 @@ tolerations: []
 
 affinity: {}
 storageSize: 100Gi
+
+configOverride:
+  zzoverride.xml: |-
+    <clickhouse>
+      <logger>
+          <level>information</level>
+          <console>true</console>
+      <log remove="remove"></log>
+      <errorlog remove="remove"></errorlog>
+      </logger>
+      <listen_host>0.0.0.0</listen_host>
+      <keep_alive_timeout>100</keep_alive_timeout>
+      <concurrent_threads_soft_limit_num>64</concurrent_threads_soft_limit_num>
+      <concurrent_threads_soft_limit_ratio_to_cores>2</concurrent_threads_soft_limit_ratio_to_cores>
+      <concurrent_threads_scheduler>fair_round_robin</concurrent_threads_scheduler>
+      <max_server_memory_usage>102400000000</max_server_memory_usage>
+      <max_thread_pool_size>10000</max_thread_pool_size>
+      <max_server_memory_usage_to_ram_ratio>0.8</max_server_memory_usage_to_ram_ratio>
+      <uncompressed_cache_size remove="remove"></uncompressed_cache_size>
+      <mmap_cache_size>26214</mmap_cache_size>
+    </clickhouse>
+  # another-config.xml: |-
+  #   <clickhouse>
+  #     <another_setting>value</another_setting>
+  #   </clickhouse>
