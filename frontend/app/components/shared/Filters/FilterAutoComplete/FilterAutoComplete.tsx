@@ -8,7 +8,7 @@ import Select from 'react-select';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { searchService} from 'App/services';
+import { searchService } from 'App/services';
 
 const dropdownStyles = {
   option: (provided: any, state: any) => ({
@@ -31,22 +31,18 @@ const dropdownStyles = {
       backgroundColor: colors['active-blue']
     }
   }),
-  control: (provided: any) => {
-    const obj = {
-      ...provided,
-      border: 'solid thin transparent !important',
-      backgroundColor: 'transparent',
-      cursor: 'pointer',
-      height: '26px',
-      minHeight: '26px',
-      borderRadius: '.5rem',
-      boxShadow: 'none !important'
-    };
-    return obj;
-  },
+  control: (provided: any) => ({
+    ...provided,
+    border: 'solid thin transparent !important',
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    height: '26px',
+    minHeight: '26px',
+    borderRadius: '.5rem',
+    boxShadow: 'none !important'
+  }),
   valueContainer: (provided: any) => ({
     ...provided,
-    // paddingRight: '0px',
     width: 'fit-content',
     alignItems: 'center',
     height: '26px',
@@ -77,7 +73,6 @@ const dropdownStyles = {
   noOptionsMessage: (provided: any) => ({
     ...provided,
     whiteSpace: 'nowrap !important'
-    // minWidth: 'fit-content',
   }),
   container: (provided: any) => ({
     ...provided,
@@ -93,12 +88,10 @@ const dropdownStyles = {
   }),
   singleValue: (provided: any, state: { isDisabled: any }) => {
     const opacity = state.isDisabled ? 0.5 : 1;
-    const transition = 'opacity 300ms';
-
     return {
       ...provided,
       opacity,
-      transition,
+      transition: 'opacity 300ms',
       display: 'flex',
       alignItems: 'center',
       height: '20px'
@@ -187,30 +180,41 @@ const FilterAutoComplete: React.FC<Props> = ({
     setQuery(value);
   }, [value]);
 
-  const loadOptions = async (inputValue: string, callback: (options: { value: string; label: string }[]) => void) => {
-    if (!inputValue.length) {
-      const mappedValues = topValues.map((i) => ({ value: i.value, label: i.value }));
-      setOptions(mappedValues);
-      callback(mappedValues);
-      setLoading(false);
-      return;
-    }
+  const loadOptions = useCallback(
+    async (inputValue: string, callback: (options: { value: string; label: string }[]) => void) => {
+      if (!inputValue.length) {
+        const mappedValues = topValues.map((i) => ({ value: i.value, label: i.value }));
+        setOptions(mappedValues);
+        callback(mappedValues);
+        setLoading(false);
+        return;
+      }
 
-    try {
-      // const response = await new APIClient()[method.toLowerCase()](endpoint, { ..._params, q: inputValue });
-      const data = await searchService.fetchAutoCompleteValues({ ..._params, q: inputValue })
-      // const data = await response.json();
-      const _options = data.map((i: any) => ({ value: i.value, label: i.value })) || [];
-      setOptions(_options);
-      callback(_options);
-    } catch (e) {
-      throw new Error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const data = await searchService.fetchAutoCompleteValues({ ..._params, q: inputValue });
+        const _options = data.map((i: any) => ({ value: i.value, label: i.value })) || [];
+        setOptions(_options);
+        callback(_options);
+      } catch (e) {
+        throw new Error(e);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [topValues, _params]
+  );
 
-  const debouncedLoadOptions = useCallback(debounce(loadOptions, 1000), [params, topValues]);
+  const debouncedLoadOptions = useRef(
+    debounce((inputValue: string, callback: (options: { value: string; label: string }[]) => void) => {
+      loadOptions(inputValue, callback);
+    }, 1000)
+  ).current;
+
+  useEffect(() => {
+    return () => {
+      debouncedLoadOptions.cancel && debouncedLoadOptions.cancel();
+    };
+  }, [debouncedLoadOptions]);
 
   const handleInputChange = (newValue: string) => {
     setLoading(true);
