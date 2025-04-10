@@ -148,7 +148,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                         "isEvent": True,
                         "value": [],
                         "operator": e.operator,
-                        "filters": []
+                        "filters": e.filters
                     })
                 for v in e.value:
                     if v not in extra_conditions[e.operator].value:
@@ -165,7 +165,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                         "isEvent": True,
                         "value": [],
                         "operator": e.operator,
-                        "filters": []
+                        "filters": e.filters
                     })
                 for v in e.value:
                     if v not in extra_conditions[e.operator].value:
@@ -989,7 +989,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                         sh.multi_conditions(f"ev.{events.EventType.LOCATION.column} {op} %({e_k})s",
                                             c.value, value_key=e_k))
                 else:
-                    logger.warning(f"unsupported extra_event type:${c.type}")
+                    logger.warning(f"unsupported extra_event type: {c.type}")
             if len(_extra_or_condition) > 0:
                 extra_constraints.append("(" + " OR ".join(_extra_or_condition) + ")")
     query_part = f"""\
