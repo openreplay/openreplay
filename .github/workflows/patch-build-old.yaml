@@ -99,7 +99,7 @@ jobs:
         }
         function clone_msaas() {
           [ -d $MSAAS_REPO_FOLDER ] || {
-          git clone -b dev --recursive https://x-access-token:$MSAAS_REPO_CLONE_TOKEN@$MSAAS_REPO_URL $MSAAS_REPO_FOLDER
+          git clone -b $INPUT_TAG --recursive https://x-access-token:$MSAAS_REPO_CLONE_TOKEN@$MSAAS_REPO_URL $MSAAS_REPO_FOLDER
           cd $MSAAS_REPO_FOLDER
           cd openreplay && git fetch origin && git checkout $INPUT_TAG
           git log -1
