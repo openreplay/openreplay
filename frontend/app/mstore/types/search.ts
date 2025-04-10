@@ -143,7 +143,7 @@ export default class Search {
       return new FilterItem(filter).toJson();
     });
 
-    const { startDate, endDate } = this.getDateRange(js.rangeValue, js.startDate, js.endDate);
+    const { startDate, endDate } = this.getDateRange(js.rangeValue, js.startDate, js.endDate, 15);
     js.startDate = startDate;
     js.endDate = endDate;
 
@@ -152,7 +152,38 @@ export default class Search {
     return js;
   }
 
-  private getDateRange(rangeName: string, customStartDate: number, customEndDate: number): {
+  private roundToNextInterval(timestamp: number, intervalMinutes: number): number {
+    if (intervalMinutes <= 0) {
+      return timestamp; // No rounding if interval is invalid
+    }
+
+    const date = new Date(timestamp);
+    const minutes = date.getMinutes();
+    const seconds = date.getSeconds();
+    const milliseconds = date.getMilliseconds();
+
+    // Calculate minutes to add to reach next interval slot
+    const minutesToAdd = (intervalMinutes - (minutes % intervalMinutes)) % intervalMinutes;
+
+    // If exactly at interval mark but has seconds/milliseconds, round up to next slot
+    const shouldAddExtra = (minutesToAdd === 0 && (seconds > 0 || milliseconds > 0));
+    const adjustedMinutesToAdd = shouldAddExtra ? intervalMinutes : minutesToAdd;
+
+    // Create a new date with added minutes and zeroed seconds/milliseconds
+    const roundedDate = new Date(timestamp);
+    roundedDate.setMinutes(minutes + adjustedMinutesToAdd);
+    roundedDate.setSeconds(0);
+    roundedDate.setMilliseconds(0);
+
+    return roundedDate.getTime();
+  }
+
+  private getDateRange(
+    rangeName: string,
+    customStartDate: number,
+    customEndDate: number,
+    roundingOption: number | 'none' = 'none'
+  ): {
     startDate: number;
     endDate: number
   } {
@@ -176,6 +207,29 @@ export default class Search {
       case LAST_24_HOURS:
       default:
         startDate = endDate - 24 * 60 * 60 * 1000;
+    }
+
+    // Apply rounding if specified and it's a number
+    if (roundingOption !== 'none' && typeof roundingOption === 'number') {
+      const intervalMinutes = roundingOption;
+
+      // For CUSTOM_RANGE, do not apply rounding
+      if (rangeName !== CUSTOM_RANGE) {
+        endDate = this.roundToNextInterval(endDate, intervalMinutes);
+
+        // Recalculate the start date based on the rounded end date to maintain the correct time span
+        switch (rangeName) {
+          case LAST_7_DAYS:
+            startDate = endDate - 7 * 24 * 60 * 60 * 1000;
+            break;
+          case LAST_30_DAYS:
+            startDate = endDate - 30 * 24 * 60 * 60 * 1000;
+            break;
+          case LAST_24_HOURS:
+          default:
+            startDate = endDate - 24 * 60 * 60 * 1000;
+        }
+      }
     }
 
     return {
