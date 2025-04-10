@@ -1,35 +1,41 @@
 from typing import Union
 
+from enum import Enum
+
 import schemas
 
 
 def get_sql_operator(op: Union[schemas.SearchEventOperator, schemas.ClickEventExtraOperator]):
+    if isinstance(op, Enum):
+        op = op.value
     return {
-        schemas.SearchEventOperator.IS: "=",
-        schemas.SearchEventOperator.ON: "=",
-        schemas.SearchEventOperator.ON_ANY: "IN",
-        schemas.SearchEventOperator.IS_NOT: "!=",
-        schemas.SearchEventOperator.NOT_ON: "!=",
-        schemas.SearchEventOperator.CONTAINS: "ILIKE",
-        schemas.SearchEventOperator.NOT_CONTAINS: "NOT ILIKE",
-        schemas.SearchEventOperator.STARTS_WITH: "ILIKE",
-        schemas.SearchEventOperator.ENDS_WITH: "ILIKE",
+        schemas.SearchEventOperator.IS.value: "=",
+        schemas.SearchEventOperator.ON.value: "=",
+        schemas.SearchEventOperator.ON_ANY.value: "IN",
+        schemas.SearchEventOperator.IS_NOT.value: "!=",
+        schemas.SearchEventOperator.NOT_ON.value: "!=",
+        schemas.SearchEventOperator.CONTAINS.value: "ILIKE",
+        schemas.SearchEventOperator.NOT_CONTAINS.value: "NOT ILIKE",
+        schemas.SearchEventOperator.STARTS_WITH.value: "ILIKE",
+        schemas.SearchEventOperator.ENDS_WITH.value: "ILIKE",
         # Selector operators:
-        schemas.ClickEventExtraOperator.IS: "=",
-        schemas.ClickEventExtraOperator.IS_NOT: "!=",
-        schemas.ClickEventExtraOperator.CONTAINS: "ILIKE",
-        schemas.ClickEventExtraOperator.NOT_CONTAINS: "NOT ILIKE",
-        schemas.ClickEventExtraOperator.STARTS_WITH: "ILIKE",
-        schemas.ClickEventExtraOperator.ENDS_WITH: "ILIKE",
+        schemas.ClickEventExtraOperator.IS.value: "=",
+        schemas.ClickEventExtraOperator.IS_NOT.value: "!=",
+        schemas.ClickEventExtraOperator.CONTAINS.value: "ILIKE",
+        schemas.ClickEventExtraOperator.NOT_CONTAINS.value: "NOT ILIKE",
+        schemas.ClickEventExtraOperator.STARTS_WITH.value: "ILIKE",
+        schemas.ClickEventExtraOperator.ENDS_WITH.value: "ILIKE",
     }.get(op, "=")
 
 
 def is_negation_operator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator.IS_NOT,
-                  schemas.SearchEventOperator.NOT_ON,
-                  schemas.SearchEventOperator.NOT_CONTAINS,
-                  schemas.ClickEventExtraOperator.IS_NOT,
-                  schemas.ClickEventExtraOperator.NOT_CONTAINS]
+    if isinstance(op, Enum):
+        op = op.value
+    return op in [schemas.SearchEventOperator.IS_NOT.value,
+                  schemas.SearchEventOperator.NOT_ON.value,
+                  schemas.SearchEventOperator.NOT_CONTAINS.value,
+                  schemas.ClickEventExtraOperator.IS_NOT.value,
+                  schemas.ClickEventExtraOperator.NOT_CONTAINS.value]
 
 
 def reverse_sql_operator(op):
