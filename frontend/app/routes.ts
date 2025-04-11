@@ -1,3 +1,5 @@
+import { CLIENT_TABS } from './utils/routeUtils'
+
 const hashed = (path: string, hash?: string | number): string => {
   if ((typeof hash === 'string' && hash !== '') || typeof hash === 'number') {
     return `${path}#${hash}`;
@@ -77,20 +79,6 @@ export const signup = (): string => '/signup';
 
 export const forgotPassword = (): string => '/reset-password';
 
-export const CLIENT_TABS = {
-  INTEGRATIONS: 'integrations',
-  PROFILE: 'account',
-  SESSIONS_LISTING: 'sessions-listing',
-  MANAGE_USERS: 'team',
-  MANAGE_ROLES: 'roles',
-  SITES: 'projects',
-  CUSTOM_FIELDS: 'metadata',
-  WEBHOOKS: 'webhooks',
-  NOTIFICATIONS: 'notifications',
-  AUDIT: 'audit',
-  BILLING: 'billing',
-  MODULES: 'modules',
-};
 export const CLIENT_DEFAULT_TAB = CLIENT_TABS.PROFILE;
 const routerClientTabString = `:activeTab(${Object.values(CLIENT_TABS).join('|')})`;
 export const client = (tab = routerClientTabString): string => `/client/${tab}`;
