@@ -379,6 +379,15 @@ export default class Assist {
       socket.on("move", (id, event) =>
         processEvent(id, event, this.remoteControl?.move)
       );
+      socket.on("startDrag", (id, event) =>
+        processEvent(id, event, this.remoteControl?.startDrag)
+      );
+      socket.on("drag", (id, event) =>
+        processEvent(id, event, this.remoteControl?.drag)
+      );
+      socket.on("stopDrag", (id, event) =>
+        processEvent(id, event, this.remoteControl?.stopDrag)
+      );
       socket.on("focus", (id, event) =>
         processEvent(id, event, (clientID, nodeID) => {
           const el = app.nodes.getNode(nodeID);
@@ -724,6 +733,40 @@ export default class Assist {
           iceServers: this.config,
         });
         this.calls.set(from, pc);
+
+        if (!callUI) {
+          callUI = new CallWindow(app.debug.error, this.options.callUITemplate);
+          callUI.setVideoToggleCallback((args: { enabled: boolean }) => {
+            this.emit("videofeed", { streamId: from, enabled: args.enabled });
+          });
+        }
+        // show buttons in the call window
+        callUI.showControls(initiateCallEnd);
+        if (!annot) {
+          annot = new AnnotationCanvas();
+          annot.mount();
+        }
+
+        // callUI.setLocalStreams(Object.values(lStreams))
+        try {
+          // if there are no local streams in lStrems then we set
+          if (!lStreams[from]) {
+            app.debug.log("starting new stream for", from);
+            // request a local stream, and set it to lStreams
+            lStreams[from] = await RequestLocalStream(
+              pc,
+              renegotiateConnection.bind(null, { pc, from })
+            );
+          }
+          // we pass the received tracks to Call ui
+          callUI.setLocalStreams(Object.values(lStreams));
+        } catch (e) {
+          app.debug.error("Error requesting local stream", e);
+          // if something didn't work out, we terminate the call
+          initiateCallEnd();
+          this.options.onCallDeny?.();
+          return;
+        }
 
         if (!callUI) {
           callUI = new CallWindow(app.debug.error, this.options.callUITemplate);

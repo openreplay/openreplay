@@ -123,6 +123,15 @@ export default class RemoteControl {
   focus = (id, el: HTMLElement) => {
     this.focused = el
   }
+  startDrag = (id, xy) => {
+    this.mouse?.startDrag(xy)
+  }
+  drag = (id, xydxdy) => {
+    this.mouse?.drag(xydxdy);
+  }
+  stopDrag = (id) => {
+    this.mouse?.stopDrag();
+  }
   input = (id, value: string) => {
     if (id !== this.agentID || !this.mouse || !this.focused) { return }
     if (this.focused instanceof HTMLTextAreaElement
