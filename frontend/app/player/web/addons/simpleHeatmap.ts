@@ -8,15 +8,25 @@
 
 class SimpleHeatmap {
   private canvas: HTMLCanvasElement;
+
   private ctx: CanvasRenderingContext2D | null;
+
   private width: number;
+
   private height: number;
+
   private max: number;
+
   private data: number[][];
+
   private circle: HTMLCanvasElement;
+
   private grad: Uint8ClampedArray;
+
   private r: number;
+
   private defaultRadius = 25;
+
   private defaultGradient = {
     0.4: 'blue',
     0.6: 'cyan',
@@ -118,7 +128,7 @@ class SimpleHeatmap {
     if (!this.circle) this.setRadius(this.defaultRadius);
     if (!this.grad) this.setGradient(this.defaultGradient);
 
-    const ctx = this.ctx;
+    const { ctx } = this;
     if (!ctx) {
       throw new Error('Canvas 2d context is not supported');
     }
@@ -139,7 +149,7 @@ class SimpleHeatmap {
 
   private colorize(
     pixels: Uint8ClampedArray,
-    gradient: Uint8ClampedArray
+    gradient: Uint8ClampedArray,
   ): void {
     for (let i = 0, len = pixels.length; i < len; i += 4) {
       const j = pixels[i + 3] * 4;

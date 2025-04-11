@@ -1,1 +1,1 @@
-export { default } from './WidgetView'
+export { default } from './WidgetView';

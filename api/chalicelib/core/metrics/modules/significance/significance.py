@@ -241,7 +241,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
     :return:
     """
 
-    stages: List[schemas.SessionSearchEventSchema2] = filter_d.events
+    stages: List[schemas.SessionSearchEventSchema] = filter_d.events
     filters: List[schemas.SessionSearchFilterSchema] = filter_d.filters
 
     stage_constraints = ["main.timestamp <= %(endTimestamp)s"]

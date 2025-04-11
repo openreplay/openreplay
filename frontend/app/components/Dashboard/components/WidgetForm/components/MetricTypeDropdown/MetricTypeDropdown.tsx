@@ -1,5 +1,10 @@
 import React from 'react';
-import { DROPDOWN_OPTIONS, INSIGHTS, Option, USER_PATH } from 'App/constants/card';
+import {
+  DROPDOWN_OPTIONS,
+  INSIGHTS,
+  Option,
+  USER_PATH,
+} from 'App/constants/card';
 import Select from 'Shared/Select';
 import { components } from 'react-select';
 import CustomDropdownOption from 'Shared/CustomDropdownOption';
@@ -15,16 +20,16 @@ interface Props {
 function MetricTypeDropdown(props: Props) {
   const { metricStore, userStore } = useStore();
   const metric: any = metricStore.instance;
-  const isEnterprise = userStore.isEnterprise;
+  const { isEnterprise } = userStore;
 
-  const options = React.useMemo(() => {
-    return DROPDOWN_OPTIONS.map((option: any) => {
-      return {
+  const options = React.useMemo(
+    () =>
+      DROPDOWN_OPTIONS.map((option: any) => ({
         ...option,
         disabled: !isEnterprise && option.value === INSIGHTS,
-      };
-    });
-  }, []);
+      })),
+    [],
+  );
 
   const onChange = (type: string) => {
     metricStore.changeType(type);
@@ -37,7 +42,8 @@ function MetricTypeDropdown(props: Props) {
       options={options}
       isOptionDisabled={(option: Option) => option.disabled}
       value={
-        DROPDOWN_OPTIONS.find((i: any) => i.value === metric.metricType) || DROPDOWN_OPTIONS[0]
+        DROPDOWN_OPTIONS.find((i: any) => i.value === metric.metricType) ||
+        DROPDOWN_OPTIONS[0]
       }
       onChange={({ value }) => onChange(value.value)}
       components={{
@@ -54,16 +60,16 @@ function MetricTypeDropdown(props: Props) {
             </components.SingleValue>
           );
         },
-        MenuList: ({ children, ...props }: any) => {
-          return (
-            <components.MenuList {...props} className="!p-3">
-              {children}
-            </components.MenuList>
-          );
-        },
+        MenuList: ({ children, ...props }: any) => (
+          <components.MenuList {...props} className="!p-3">
+            {children}
+          </components.MenuList>
+        ),
         Option: ({ children, ...props }: any) => {
           const { data } = props;
-          return <CustomDropdownOption children={children} {...props} {...data} />;
+          return (
+            <CustomDropdownOption children={children} {...props} {...data} />
+          );
         },
       }}
     />

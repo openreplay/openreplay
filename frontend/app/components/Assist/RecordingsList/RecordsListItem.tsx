@@ -6,12 +6,14 @@ import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
 import cn from 'classnames';
 import EditRecordingModal from './EditRecordingModal';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   record: IRecord;
 }
 
 function RecordsListItem(props: Props) {
+  const { t } = useTranslation();
   const { record } = props;
   const { recordingsStore, settingsStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
@@ -34,17 +36,19 @@ function RecordsListItem(props: Props) {
   const onDelete = () => {
     recordingsStore.deleteRecording(record.recordId).then(() => {
       recordingsStore.setRecordings(
-        recordingsStore.recordings.filter((rec) => rec.recordId !== record.recordId)
+        recordingsStore.recordings.filter(
+          (rec) => rec.recordId !== record.recordId,
+        ),
       );
-      toast.success('Recording deleted');
+      toast.success(t('Recording deleted'));
     });
   };
 
   const menuItems = [
-    { icon: 'pencil', text: 'Rename', onClick: () => setEdit(true) },
+    { icon: 'pencil', text: t('Rename'), onClick: () => setEdit(true) },
     {
       icon: 'trash',
-      text: 'Delete',
+      text: t('Delete'),
       onClick: onDelete,
     },
   ];
@@ -54,9 +58,9 @@ function RecordsListItem(props: Props) {
       .updateRecordingName(record.recordId, title)
       .then(() => {
         setRecordingTitle(title);
-        toast.success('Recording name updated');
+        toast.success(t('Recording name updated'));
       })
-      .catch(() => toast.error("Couldn't update recording name"));
+      .catch(() => toast.error(t("Couldn't update recording name")));
     setEdit(false);
   };
 
@@ -78,7 +82,9 @@ function RecordsListItem(props: Props) {
             </div>
             <div className="flex flex-col">
               <div className={cn('pt-1 w-fit -mt-2')}>{recordingTitle}</div>
-              <div className="text-gray-medium text-sm">{durationFromMs(record.duration)}</div>
+              <div className="text-gray-medium text-sm">
+                {durationFromMs(record.duration)}
+              </div>
             </div>
           </div>
         </div>
@@ -95,14 +101,19 @@ function RecordsListItem(props: Props) {
             className="group flex items-center gap-1 cursor-pointer link"
             onClick={onRecordClick}
           >
-            <Icon name="play" size={18} color="teal" className="!block group-hover:!hidden" />
+            <Icon
+              name="play"
+              size={18}
+              color="teal"
+              className="!block group-hover:!hidden"
+            />
             <Icon
               name="play-fill-new"
               size={18}
               color="teal"
               className="!hidden group-hover:!block"
             />
-            <div>Play Video</div>
+            <div>{t('Play Video')}</div>
           </div>
           <div className="hover:border-teal border border-transparent rounded-full">
             <ItemMenu bold items={menuItems} sm />

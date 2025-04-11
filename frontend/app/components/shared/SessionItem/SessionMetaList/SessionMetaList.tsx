@@ -7,20 +7,23 @@ interface Props {
   className?: string;
   metaList: any[];
   maxLength?: number;
+  onMetaClick?: (meta: { name: string, value: string }) => void;
 }
 
 export default function SessionMetaList(props: Props) {
-  const { className = '', metaList, maxLength = 4 } = props;
+  const { className = '', metaList, maxLength = 14 } = props;
 
   return (
-    <div className={cn('text-sm flex items-center', className)}>
+    <div className={cn('flex items-center flex-wrap gap-1', className)}>
       {metaList.slice(0, maxLength).map(({ label, value }, index) => (
-        <React.Fragment key={index}>
-          <MetaItem label={label} value={'' + value} className="mr-3" />
-        </React.Fragment>
+          <div key={index} className='cursor-pointer' onClick={() => props.onMetaClick?.({ name: `_${label}`, value })}>
+            <MetaItem label={label} value={`${value}`} />
+          </div>
       ))}
 
-      {metaList.length > maxLength && <MetaMoreButton list={metaList} maxLength={maxLength} />}
+      {metaList.length > maxLength && (
+        <MetaMoreButton list={metaList} maxLength={maxLength} />
+      )}
     </div>
   );
 }

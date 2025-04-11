@@ -2,6 +2,7 @@ import AiService from 'App/services/AiService';
 import FFlagsService from 'App/services/FFlagsService';
 import TagWatchService from 'App/services/TagWatchService';
 
+import SearchService from 'App/services/SearchService';
 import AlertsService from './AlertsService';
 import AssistStatsService from './AssistStatsService';
 import AuditService from './AuditService';
@@ -24,7 +25,6 @@ import IssueReportsService from './IssueReportsService';
 import CustomFieldService from './CustomFieldService';
 import IntegrationsService from './IntegrationsService';
 import ProjectsService from './ProjectsService';
-import SearchService from 'App/services/SearchService';
 
 export const dashboardService = new DashboardService();
 export const metricService = new MetricService();

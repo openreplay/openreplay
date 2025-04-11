@@ -1,1 +1,1 @@
-export { default } from './MobxDoc'
+export { default } from './MobxDoc';

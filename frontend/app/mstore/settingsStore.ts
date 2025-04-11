@@ -1,12 +1,11 @@
 import { makeAutoObservable, observable } from 'mobx';
-import SessionSettings from './types/sessionSettings';
-import { sessionService } from 'App/services';
+import { sessionService, webhookService } from 'App/services';
 import { toast } from 'react-toastify';
 import Webhook, { IWebhook } from 'Types/webhook';
-import { webhookService } from 'App/services';
-import { GettingStarted } from './types/gettingStarted';
 import { MENU_COLLAPSED } from 'App/constants/storageKeys';
 import { projectStore } from '@/mstore/index';
+import { GettingStarted } from './types/gettingStarted';
+import SessionSettings from './types/sessionSettings';
 
 interface CaptureConditions {
   rate: number;
@@ -16,19 +15,28 @@ interface CaptureConditions {
 
 export default class SettingsStore {
   loadingCaptureRate: boolean = false;
+
   sessionSettings: SessionSettings = new SessionSettings();
+
   captureRateFetched: boolean = false;
+
   limits: any = null;
+
   webhooks: Webhook[] = [];
+
   webhookInst = new Webhook();
+
   hooksLoading = false;
+
   saving: boolean = false;
+
   gettingStarted: GettingStarted = new GettingStarted();
+
   menuCollapsed: boolean = localStorage.getItem(MENU_COLLAPSED) === 'true';
 
   constructor() {
     makeAutoObservable(this, {
-      sessionSettings: observable
+      sessionSettings: observable,
     });
   }
 
@@ -37,21 +45,20 @@ export default class SettingsStore {
     localStorage.setItem(MENU_COLLAPSED, collapsed.toString());
   };
 
-  saveCaptureRate = (projectId: number, data: any) => {
-    return sessionService
+  saveCaptureRate = (projectId: number, data: any) =>
+    sessionService
       .saveCaptureRate(projectId, data)
       .then((data) => data.json())
       .then(({ data }) => {
         this.sessionSettings.merge({
           captureRate: data.rate,
-          conditionalCapture: data.conditionalCapture
+          conditionalCapture: data.conditionalCapture,
         });
         toast.success('Settings updated successfully');
       })
       .catch((err) => {
         toast.error('Error saving capture rate');
       });
-  };
 
   fetchCaptureRate = (projectId: number): Promise<any> => {
     this.loadingCaptureRate = true;
@@ -60,7 +67,7 @@ export default class SettingsStore {
       .then((data) => {
         this.sessionSettings.merge({
           captureRate: data.rate,
-          conditionalCapture: data.conditionalCapture
+          conditionalCapture: data.conditionalCapture,
         });
         this.captureRateFetched = true;
       })
@@ -72,12 +79,11 @@ export default class SettingsStore {
   fetchCaptureConditions = async (projectId: number): Promise<any> => {
     this.loadingCaptureRate = true;
     try {
-      const data = await sessionService
-        .fetchCaptureConditions(projectId);
+      const data = await sessionService.fetchCaptureConditions(projectId);
       this.sessionSettings.merge({
         captureRate: data.rate,
         conditionalCapture: data.conditionalCapture,
-        captureConditions: data.conditions
+        captureConditions: data.conditions,
       });
     } finally {
       this.loadingCaptureRate = false;
@@ -87,7 +93,8 @@ export default class SettingsStore {
   updateCaptureConditions = (projectId: number, data: CaptureConditions) => {
     this.loadingCaptureRate = true;
     const duplicates = data.conditions.filter(
-      (c, index) => data.conditions.findIndex((c2) => c2.name === c.name) !== index
+      (c, index) =>
+        data.conditions.findIndex((c2) => c2.name === c.name) !== index,
     );
     if (duplicates.length > 0) {
       toast.error('Condition set names must be unique');
@@ -101,13 +108,13 @@ export default class SettingsStore {
         this.sessionSettings.merge({
           captureRate: data.rate,
           conditionalCapture: data.conditionalCapture,
-          captureConditions: data.conditions
+          captureConditions: data.conditions,
         });
 
         try {
           projectStore.syncProjectInList({
-            id: projectId + '',
-            sampleRate: data.rate
+            id: `${projectId}`,
+            sampleRate: data.rate,
           });
         } catch (e) {
           console.error('Failed to update project in list:', e);
@@ -143,7 +150,7 @@ export default class SettingsStore {
       } else {
         this.setWebhooks([
           ...this.webhooks.filter((hook) => hook.webhookId !== data.webhookId),
-          this.webhookInst
+          this.webhookInst,
         ]);
       }
     } finally {

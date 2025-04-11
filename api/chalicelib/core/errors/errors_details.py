@@ -1,5 +1,5 @@
-from chalicelib.core.errors import errors_legacy as errors
-from chalicelib.utils import errors_helper
+from chalicelib.core.errors.modules import errors_helper
+
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import get_step_size
@@ -40,26 +40,29 @@ def __process_tags(row):
 
 
 def get_details(project_id, error_id, user_id, **data):
-    pg_sub_query24 = errors.__get_basic_constraints(time_constraint=False, chart=True, step_size_name="step_size24")
+    pg_sub_query24 = errors_helper.__get_basic_constraints(time_constraint=False, chart=True,
+                                                           step_size_name="step_size24")
     pg_sub_query24.append("error_id = %(error_id)s")
-    pg_sub_query30_session = errors.__get_basic_constraints(time_constraint=True, chart=False,
-                                                            startTime_arg_name="startDate30",
-                                                            endTime_arg_name="endDate30",
-                                                            project_key="sessions.project_id")
+    pg_sub_query30_session = errors_helper.__get_basic_constraints(time_constraint=True, chart=False,
+                                                                   startTime_arg_name="startDate30",
+                                                                   endTime_arg_name="endDate30",
+                                                                   project_key="sessions.project_id")
     pg_sub_query30_session.append("sessions.start_ts >= %(startDate30)s")
     pg_sub_query30_session.append("sessions.start_ts <= %(endDate30)s")
     pg_sub_query30_session.append("error_id = %(error_id)s")
-    pg_sub_query30_err = errors.__get_basic_constraints(time_constraint=True, chart=False,
-                                                        startTime_arg_name="startDate30",
-                                                        endTime_arg_name="endDate30", project_key="errors.project_id")
+    pg_sub_query30_err = errors_helper.__get_basic_constraints(time_constraint=True, chart=False,
+                                                               startTime_arg_name="startDate30",
+                                                               endTime_arg_name="endDate30",
+                                                               project_key="errors.project_id")
     pg_sub_query30_err.append("sessions.project_id = %(project_id)s")
     pg_sub_query30_err.append("sessions.start_ts >= %(startDate30)s")
     pg_sub_query30_err.append("sessions.start_ts <= %(endDate30)s")
     pg_sub_query30_err.append("error_id = %(error_id)s")
     pg_sub_query30_err.append("source ='js_exception'")
-    pg_sub_query30 = errors.__get_basic_constraints(time_constraint=False, chart=True, step_size_name="step_size30")
+    pg_sub_query30 = errors_helper.__get_basic_constraints(time_constraint=False, chart=True,
+                                                           step_size_name="step_size30")
     pg_sub_query30.append("error_id = %(error_id)s")
-    pg_basic_query = errors.__get_basic_constraints(time_constraint=False)
+    pg_basic_query = errors_helper.__get_basic_constraints(time_constraint=False)
     pg_basic_query.append("error_id = %(error_id)s")
     with pg_client.PostgresClient() as cur:
         data["startDate24"] = TimeUTC.now(-1)
@@ -95,8 +98,7 @@ def get_details(project_id, error_id, user_id, **data):
                device_partition,
                country_partition,
                chart24,
-               chart30,
-               custom_tags
+               chart30
         FROM (SELECT error_id,
                      name,
                      message,
@@ -111,15 +113,8 @@ def get_details(project_id, error_id, user_id, **data):
                                     MIN(timestamp) AS first_occurrence
                              FROM events.errors
                              WHERE error_id = %(error_id)s) AS time_details ON (TRUE)
-                 INNER JOIN (SELECT session_id AS last_session_id,
-                                    coalesce(custom_tags, '[]')::jsonb AS custom_tags
+                 INNER JOIN (SELECT session_id AS last_session_id
                              FROM events.errors
-                             LEFT JOIN LATERAL (
-                                    SELECT jsonb_agg(jsonb_build_object(errors_tags.key, errors_tags.value)) AS custom_tags
-                                    FROM errors_tags
-                                    WHERE errors_tags.error_id = %(error_id)s
-                                      AND errors_tags.session_id = errors.session_id
-                                      AND errors_tags.message_id = errors.message_id) AS errors_tags ON (TRUE)
                              WHERE error_id = %(error_id)s
                              ORDER BY errors.timestamp DESC
                              LIMIT 1) AS last_session_details ON (TRUE)

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "images.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "images.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    {{- range $key, $val := .Values.service.ports }}
+    - port: {{ $val }}
+      targetPort: {{ $key }}
+      protocol: TCP
+      name: {{ $key }}
+    {{- end}}
+  selector:
+    {{- include "images.selectorLabels" . | nindent 4 }}

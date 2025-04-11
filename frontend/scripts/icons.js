@@ -92,15 +92,14 @@ icons.forEach((icon) => {
     : optimize(svg, plugins(canOptimize));
   fs.writeFileSync(
     path,
-    `
-/* Auto-generated, do not edit */
+    `/* Auto-generated, do not edit */
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function ${titleCase(fileName)}(props: Props) {

@@ -1,1 +1,1 @@
-export { default } from './ThinPlayer'
+export { default } from './ThinPlayer';

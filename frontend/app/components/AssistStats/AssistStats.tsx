@@ -13,34 +13,42 @@ import { FilePdfOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import TeamMembers from 'Components/AssistStats/components/TeamMembers';
-import { durationFromMsFormatted, formatTimeOrDate } from 'App/date'
+import { durationFromMsFormatted, formatTimeOrDate } from 'App/date';
 import { exportCSVFile } from 'App/utils';
 import { assistStatsService } from 'App/services';
 
+import { getPdf2 } from 'Components/AssistStats/pdfGenerator';
 import UserSearch from './components/UserSearch';
 import Chart from './components/Charts';
 import StatsTable from './components/Table';
-import { getPdf2 } from "Components/AssistStats/pdfGenerator";
+import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
 
-const chartNames = {
-  assistTotal: 'Total Live Duration',
-  assistAvg: 'Avg Live Duration',
-  callTotal: 'Total Call Duration',
-  callAvg: 'Avg Call Duration',
-  controlTotal: 'Total Remote Duration',
-  controlAvg: 'Avg Remote Duration',
-};
+const chartNames = (t: TFunction) => ({
+  assistTotal: t('Total Live Duration'),
+  assistAvg: t('Avg Live Duration'),
+  callTotal: t('Total Call Duration'),
+  callAvg: t('Avg Call Duration'),
+  controlTotal: t('Total Remote Duration'),
+  controlAvg: t('Avg Remote Duration'),
+});
 
 function calculatePercentageDelta(currP: number, prevP: number) {
   return ((currP - prevP) / prevP) * 100;
 }
 
 function AssistStats() {
+  const { t } = useTranslation();
   const [selectedUser, setSelectedUser] = React.useState<any>(null);
-  const [period, setPeriod] = React.useState<any>(Period({ rangeName: LAST_24_HOURS }));
+  const [period, setPeriod] = React.useState<any>(
+    Period({ rangeName: LAST_24_HOURS }),
+  );
   const [membersSort, setMembersSort] = React.useState('sessionsAssisted');
   const [tableSort, setTableSort] = React.useState('timestamp');
-  const [topMembers, setTopMembers] = React.useState<{ list: Member[]; total: number }>({
+  const [topMembers, setTopMembers] = React.useState<{
+    list: Member[];
+    total: number;
+  }>({
     list: [],
     total: 0,
   });
@@ -68,7 +76,7 @@ function AssistStats() {
     const topMembersPr = assistStatsService.getTopMembers({
       startTimestamp: usedP.start,
       endTimestamp: usedP.end,
-      userId: selectedUser ? selectedUser : undefined,
+      userId: selectedUser || undefined,
       sort: membersSort,
       order: 'desc',
     });
@@ -79,7 +87,7 @@ function AssistStats() {
       endTimestamp: usedP.end,
       sort: tableSort,
       order: 'desc',
-      userId: selectedUser ? selectedUser : undefined,
+      userId: selectedUser || undefined,
       page: 1,
       limit: 10,
     });
@@ -88,7 +96,7 @@ function AssistStats() {
         topMembers.status === 'fulfilled' && setTopMembers(topMembers.value);
         graphs.status === 'fulfilled' && setGraphs(graphs.value);
         sessions.status === 'fulfilled' && setSessions(sessions.value);
-      }
+      },
     );
     setIsLoading(false);
   };
@@ -148,27 +156,31 @@ function AssistStats() {
         order: 'desc',
         page: 1,
         limit: 10000,
-      }).then((sessions) => {
-      const data = sessions.list.map((s) => ({
-        ...s,
-        members: `"${s.teamMembers.map((m) => m.name).join(', ')}"`,
-        dateStr: `"${formatTimeOrDate(s.timestamp, undefined, true)}"`,
-        assistDuration: `"${durationFromMsFormatted(s.assistDuration)}"`,
-        callDuration: `"${durationFromMsFormatted(s.callDuration)}"`,
-        controlDuration: `"${durationFromMsFormatted(s.controlDuration)}"`,
-      }));
-      const headers = [
-        { label: 'Date', key: 'dateStr' },
-        { label: 'Team Members', key: 'members' },
-        { label: 'Live Duration', key: 'assistDuration' },
-        { label: 'Call Duration', key: 'callDuration' },
-        { label: 'Remote Duration', key: 'controlDuration' },
-        { label: 'Session ID', key: 'sessionId' }
-      ];
+      })
+      .then((sessions) => {
+        const data = sessions.list.map((s) => ({
+          ...s,
+          members: `"${s.teamMembers.map((m) => m.name).join(', ')}"`,
+          dateStr: `"${formatTimeOrDate(s.timestamp, undefined, true)}"`,
+          assistDuration: `"${durationFromMsFormatted(s.assistDuration)}"`,
+          callDuration: `"${durationFromMsFormatted(s.callDuration)}"`,
+          controlDuration: `"${durationFromMsFormatted(s.controlDuration)}"`,
+        }));
+        const headers = [
+          { label: t('Date'), key: 'dateStr' },
+          { label: t('Team Members'), key: 'members' },
+          { label: t('Live Duration'), key: 'assistDuration' },
+          { label: t('Call Duration'), key: 'callDuration' },
+          { label: t('Remote Duration'), key: 'controlDuration' },
+          { label: t('Session ID'), key: 'sessionId' },
+        ];
 
-      exportCSVFile(headers, data, `Assist_Stats_${new Date().toLocaleDateString()}`)
-
-    })
+        exportCSVFile(
+          headers,
+          data,
+          `Assist_Stats_${new Date().toLocaleDateString()}`,
+        );
+      });
   };
 
   const onUserSelect = (id: any) => {
@@ -191,83 +203,109 @@ function AssistStats() {
       order: 'desc',
       page: 1,
       limit: 10,
-    })
+    });
 
     Promise.allSettled([topMembersPr, graphsPr, sessionsPr]).then(
       ([topMembers, graphs, sessions]) => {
         topMembers.status === 'fulfilled' && setTopMembers(topMembers.value);
         graphs.status === 'fulfilled' && setGraphs(graphs.value);
         sessions.status === 'fulfilled' && setSessions(sessions.value);
-      }
+      },
     );
     setIsLoading(false);
-
   };
 
   return (
-    <div className={'w-full h-screen overflow-y-auto'}>
-      <div className={'mx-auto p-4 bg-white rounded border'} style={{ maxWidth: 1360 }} id={'pdf-anchor'}>
-        <div id={'pdf-ignore'} className={'w-full flex items-center mb-2'}>
+    <div className="w-full h-screen overflow-y-auto">
+      <div
+        className="mx-auto p-4 bg-white rounded border"
+        style={{ maxWidth: 1360 }}
+        id="pdf-anchor"
+      >
+        <div id="pdf-ignore" className="w-full flex items-center mb-2">
           <Typography.Title style={{ marginBottom: 0 }} level={4}>
-            Co-browsing Reports
+            {t('Co-browsing Reports')}
           </Typography.Title>
-          <div className={'ml-auto flex items-center gap-2'}>
+          <div className="ml-auto flex items-center gap-2">
             <UserSearch onUserSelect={onUserSelect} />
 
-            <SelectDateRange period={period} onChange={onChangePeriod} right={true} isAnt small />
-            <Tooltip title={!sessions || sessions.total === 0 ? 'No data at the moment to export.' : 'Export PDF'}>
+            <SelectDateRange
+              period={period}
+              onChange={onChangePeriod}
+              right
+              isAnt
+              small
+            />
+            <Tooltip
+              title={
+                !sessions || sessions.total === 0
+                  ? t('No data at the moment to export.')
+                  : t('Export PDF')
+              }
+            >
               <Button
                 onClick={getPdf2}
-                shape={'default'}
-                size={'small'}
+                shape="default"
+                size="small"
                 disabled={!sessions || sessions.total === 0}
                 icon={<FilePdfOutlined rev={undefined} />}
               />
             </Tooltip>
           </div>
         </div>
-          <div className={'w-full grid grid-cols-3 gap-2 flex-2 col-span-2'}>
-            {Object.keys(graphs.currentPeriod).map((i: PeriodKeys) => (
-              <div className={'bg-white rounded border'}>
-                <div className={'pt-2 px-2'}>
-                  <Typography.Text strong style={{ marginBottom: 0 }}>
-                    {chartNames[i]}
-                  </Typography.Text>
-                  <div className={'flex gap-1 items-center'}>
-                    <Typography.Title style={{ marginBottom: 0 }} level={5}>
-                      {graphs.currentPeriod[i]
-                       ? durationFromMsFormatted(graphs.currentPeriod[i])
-                       : null}
-                    </Typography.Title>
-                    {graphs.previousPeriod[i] ? (
-                      <div
-                        className={
-                          graphs.currentPeriod[i] > graphs.previousPeriod[i]
+        <div className="w-full grid grid-cols-3 gap-2 flex-2 col-span-2">
+          {Object.keys(graphs.currentPeriod).map((i: PeriodKeys) => (
+            <div className="bg-white rounded border">
+              <div className="pt-2 px-2">
+                <Typography.Text strong style={{ marginBottom: 0 }}>
+                  {chartNames(t)[i]}
+                </Typography.Text>
+                <div className="flex gap-1 items-center">
+                  <Typography.Title style={{ marginBottom: 0 }} level={5}>
+                    {graphs.currentPeriod[i]
+                      ? durationFromMsFormatted(graphs.currentPeriod[i])
+                      : null}
+                  </Typography.Title>
+                  {graphs.previousPeriod[i] ? (
+                    <div
+                      className={
+                        graphs.currentPeriod[i] > graphs.previousPeriod[i]
                           ? 'flex items-center gap-1 text-green'
                           : 'flex items-center gap-2 text-red'
+                      }
+                    >
+                      <ArrowUpOutlined
+                        rev={undefined}
+                        rotate={
+                          graphs.currentPeriod[i] > graphs.previousPeriod[i]
+                            ? 0
+                            : 180
                         }
-                      >
-                        <ArrowUpOutlined
-                          rev={undefined}
-                          rotate={graphs.currentPeriod[i] > graphs.previousPeriod[i] ? 0 : 180}
-                        />
-                        {`${Math.round(
-                          calculatePercentageDelta(
-                            graphs.currentPeriod[i],
-                            graphs.previousPeriod[i]
-                          )
-                        )}%`}
-                      </div>
-                    ) : null}
-                  </div>
+                      />
+                      {`${Math.round(
+                        calculatePercentageDelta(
+                          graphs.currentPeriod[i],
+                          graphs.previousPeriod[i],
+                        ),
+                      )}%`}
+                    </div>
+                  ) : null}
                 </div>
-                <Loader loading={isLoading} style={{ minHeight: 90, height: 90 }} size={36}>
-                  <Chart data={generateListData(graphs.list, i)} label={chartNames[i]} />
-                </Loader>
               </div>
-            ))}
+              <Loader
+                loading={isLoading}
+                style={{ minHeight: 90, height: 90 }}
+                size={36}
+              >
+                <Chart
+                  data={generateListData(graphs.list, i)}
+                  label={chartNames(t)[i]}
+                />
+              </Loader>
+            </div>
+          ))}
         </div>
-        <div className={'w-full mt-2'}>
+        <div className="w-full mt-2">
           <TeamMembers
             isLoading={isLoading}
             topMembers={topMembers}
@@ -275,7 +313,7 @@ function AssistStats() {
             membersSort={membersSort}
           />
         </div>
-        <div className={'w-full mt-2'}>
+        <div className="w-full mt-2">
           <StatsTable
             exportCSV={exportCSV}
             sessions={sessions}
@@ -286,7 +324,7 @@ function AssistStats() {
           />
         </div>
       </div>
-      <div id={'stats-layer'} />
+      <div id="stats-layer" />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import React from 'react';
 import { countries } from 'App/constants';
 import { numberWithCommas } from 'App/utils';
 
+import { FilterKey } from 'Types/filter/filterType';
 import {
   BrowserIconProvider,
   CountryIconProvider,
@@ -15,7 +16,6 @@ import {
   UserIconProvider,
   FetchIconProvider,
 } from './IconProvider';
-import { FilterKey } from 'Types/filter/filterType';
 
 interface NameFormatter {
   format(name: string): string;
@@ -75,9 +75,13 @@ class UserNameFormatter extends BaseFormatter {
 
 export class SessionsByRow {
   name: string;
+
   displayName: string;
+
   sessionCount: number;
+
   progress: number;
+
   icon: React.ReactNode;
 
   fromJson(json: any, totalSessions: number, metricType: string) {
@@ -126,9 +130,15 @@ export class SessionsByRow {
           iconProvider: new OsIconProvider(),
         };
       case 'userId':
-        return { nameFormatter: new UserNameFormatter(), iconProvider: new UserIconProvider() };
+        return {
+          nameFormatter: new UserNameFormatter(),
+          iconProvider: new UserIconProvider(),
+        };
       case FilterKey.REFERRER:
-        return { nameFormatter: new DefaultFormatter(), iconProvider: new ReferrerIconProvider() };
+        return {
+          nameFormatter: new DefaultFormatter(),
+          iconProvider: new ReferrerIconProvider(),
+        };
       case FilterKey.FETCH:
         return {
           nameFormatter: new DefaultFormatter(),

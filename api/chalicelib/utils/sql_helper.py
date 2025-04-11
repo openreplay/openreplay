@@ -14,6 +14,9 @@ def get_sql_operator(op: Union[schemas.SearchEventOperator, schemas.ClickEventEx
         schemas.SearchEventOperator.NOT_CONTAINS: "NOT ILIKE",
         schemas.SearchEventOperator.STARTS_WITH: "ILIKE",
         schemas.SearchEventOperator.ENDS_WITH: "ILIKE",
+        # this is not used as an operator, it is used in order to maintain a valid value for conditions
+        schemas.SearchEventOperator.PATTERN: "regex",
+
         # Selector operators:
         schemas.ClickEventExtraOperator.IS: "=",
         schemas.ClickEventExtraOperator.IS_NOT: "!=",
@@ -64,3 +67,11 @@ def isAny_opreator(op: schemas.SearchEventOperator):
 
 def isUndefined_operator(op: schemas.SearchEventOperator):
     return op in [schemas.SearchEventOperator.IS_UNDEFINED]
+
+
+def single_value(values):
+    if values is not None and isinstance(values, list):
+        for i, v in enumerate(values):
+            if isinstance(v, Enum):
+                values[i] = v.value
+    return values

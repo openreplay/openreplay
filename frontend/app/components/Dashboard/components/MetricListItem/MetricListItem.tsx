@@ -23,7 +23,7 @@ import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 import { useHistory } from 'react-router';
 import { EllipsisVertical } from 'lucide-react';
-import cn from 'classnames'
+import cn from 'classnames';
 
 interface Props extends RouteComponentProps {
   metric: any;
@@ -140,22 +140,23 @@ const MetricListItem: React.FC<Props> = ({
       let hours = date.getHours();
       const minutes = date.getMinutes().toString().padStart(2, '0');
       const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours ? hours : 12; // the hour '0' should be '12'
+      hours %= 12;
+      hours = hours || 12; // the hour '0' should be '12'
       return `${hours}:${minutes} ${ampm}`;
     };
 
     if (diffDays <= 1) {
       return `Today at ${formatTime(date)}`;
-    } else if (diffDays <= 2) {
-      return `Yesterday at ${formatTime(date)}`;
-    } else if (diffDays <= 3) {
-      return `${diffDays} days ago at ${formatTime(date)}`;
-    } else {
-      return `${date.getDate()}/${
-        date.getMonth() + 1
-      }/${date.getFullYear()} at ${formatTime(date)}`;
     }
+    if (diffDays <= 2) {
+      return `Yesterday at ${formatTime(date)}`;
+    }
+    if (diffDays <= 3) {
+      return `${diffDays} days ago at ${formatTime(date)}`;
+    }
+    return `${date.getDate()}/${
+      date.getMonth() + 1
+    }/${date.getFullYear()} at ${formatTime(date)}`;
   };
 
   const menuItems = [
@@ -179,7 +180,11 @@ const MetricListItem: React.FC<Props> = ({
             onClick={inLibrary ? undefined : onItemClick}
           >
             <MetricTypeIcon type={metric.metricType} />
-            <div className={cn('capitalize-first block', inLibrary ? '' : 'link')}>{metric.name}</div>
+            <div
+              className={cn('capitalize-first block', inLibrary ? '' : 'link')}
+            >
+              {metric.name}
+            </div>
           </div>
           {renderModal()}
         </>
@@ -211,7 +216,7 @@ const MetricListItem: React.FC<Props> = ({
               trigger={['click']}
             >
               <Button
-                id={'ignore-prop'}
+                id="ignore-prop"
                 icon={<EllipsisVertical size={16} />}
                 className="btn-cards-list-item-more-options"
                 type="text"

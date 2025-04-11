@@ -1,13 +1,12 @@
 import { List, Map } from 'immutable';
 import Record from 'Types/Record';
 import { KEYS } from 'Types/filter/customFilter';
-import { TYPES } from 'Types/filter/event';
+import Event, { TYPES } from 'Types/filter/event';
 import {
   DATE_RANGE_VALUES,
   CUSTOM_RANGE,
-  getDateRangeFromValue
+  getDateRangeFromValue,
 } from 'App/dateRange';
-import Event from './event';
 import NewFilter from './newFilter';
 
 const rangeValue = DATE_RANGE_VALUES.LAST_24_HOURS;
@@ -15,99 +14,104 @@ const range = getDateRangeFromValue(rangeValue);
 const startDate = range.start.ts;
 const endDate = range.end.ts;
 
-export default Record({
-  name: '',
-  searchId: undefined,
-  referrer: undefined,
-  userBrowser: undefined,
-  userOs: undefined,
-  userCountry: undefined,
-  userDevice: undefined,
-  fid0: undefined,
-  events: List(),
-  filters: List(),
-  minDuration: undefined,
-  maxDuration: undefined,
-  custom: Map(),
-  rangeValue,
-  startDate,
-  endDate,
-  groupByUser: false,
+export default Record(
+  {
+    name: '',
+    searchId: undefined,
+    referrer: undefined,
+    userBrowser: undefined,
+    userOs: undefined,
+    userCountry: undefined,
+    userDevice: undefined,
+    fid0: undefined,
+    events: List(),
+    filters: List(),
+    minDuration: undefined,
+    maxDuration: undefined,
+    custom: Map(),
+    rangeValue,
+    startDate,
+    endDate,
+    groupByUser: false,
 
-  sort: 'startTs',
-  order: 'desc',
+    sort: 'startTs',
+    order: 'desc',
 
-  viewed: undefined,
-  consoleLogCount: undefined,
-  eventsCount: undefined,
+    viewed: undefined,
+    consoleLogCount: undefined,
+    eventsCount: undefined,
 
-  suspicious: undefined,
-  consoleLevel: undefined,
-  strict: false,
-  eventsOrder: 'then',
-}, {
-  idKey: 'searchId',
-  methods: {
-    toSaveData() {
-      const js = this.toJS();
-      js.filters = js.filters.map(filter => {
-        filter.type = filter.key
-
-        delete filter.category
-        delete filter.icon
-        delete filter.operatorOptions
-        delete filter._key
-        delete filter.key
-        return filter;
-      });
-
-      delete js.createdAt;
-      delete js.key;
-      delete js._key;
-      return js;
-    },
-    toData() {
-      const js = this.toJS();
-      js.filters = js.filters.map(filter => {
-        // delete filter.operatorOptions
-        // delete filter._key
-        return filter;
-      });
-
-      delete js.createdAt;
-      delete js.key;
-      return js;
-    }
+    suspicious: undefined,
+    consoleLevel: undefined,
+    strict: false,
+    eventsOrder: 'then',
   },
-  fromJS({ eventsOrder, filters, events, custom, ...filter }) {
-    let startDate;
-    let endDate;
-    const rValue = filter.rangeValue || rangeValue;
-    if (rValue !== CUSTOM_RANGE) {
-      const range = getDateRangeFromValue(rValue);
-      startDate = range.start.ts;
-      endDate = range.end.ts;
-    } else if (filter.startDate && filter.endDate) {
-      startDate = filter.startDate;
-      endDate = filter.endDate;
-    }
-    return {
-      ...filter,
-      eventsOrder,
-      startDate,
-      endDate,
-      events: List(events).map(Event),
-      filters: List(filters)
-        .map(i => {
+  {
+    idKey: 'searchId',
+    methods: {
+      toSaveData() {
+        const js = this.toJS();
+        js.filters = js.filters.map((filter) => {
+          filter.type = filter.key;
+
+          delete filter.category;
+          delete filter.icon;
+          delete filter.operatorOptions;
+          delete filter._key;
+          delete filter.key;
+          return filter;
+        });
+
+        delete js.createdAt;
+        delete js.key;
+        delete js._key;
+        return js;
+      },
+      toData() {
+        const js = this.toJS();
+        js.filters = js.filters.map(
+          (filter) =>
+            // delete filter.operatorOptions
+            // delete filter._key
+            filter,
+        );
+
+        delete js.createdAt;
+        delete js.key;
+        return js;
+      },
+    },
+    fromJS({ eventsOrder, filters, events, custom, ...filter }) {
+      let startDate;
+      let endDate;
+      const rValue = filter.rangeValue || rangeValue;
+      if (rValue !== CUSTOM_RANGE) {
+        const range = getDateRangeFromValue(rValue);
+        startDate = range.start.ts;
+        endDate = range.end.ts;
+      } else if (filter.startDate && filter.endDate) {
+        startDate = filter.startDate;
+        endDate = filter.endDate;
+      }
+      return {
+        ...filter,
+        eventsOrder,
+        startDate,
+        endDate,
+        events: List(events).map(Event),
+        filters: List(filters).map((i) => {
           const filter = NewFilter(i).toData();
           if (Array.isArray(i.filters)) {
-            filter.filters = i.filters.map(f => NewFilter({...f, subFilter: i.type}).toData());
+            filter.filters = i.filters.map((f) =>
+              NewFilter({ ...f, subFilter: i.type }).toData(),
+            );
           }
           return filter;
         }),
-    }
-  }
-});
+      };
+    },
+  },
+);
 
 // export const preloadedFilters = [];
 
@@ -201,7 +205,7 @@ export const getEventIcon = (filter) => {
   if (type === TYPES.STATEACTION) return 'store';
   if (type === TYPES.CUSTOM) {
     if (!source) return 'Custom';
-		return 'integrations/' + source;
+    return `integrations/${source}`;
   }
   return '';
-}
+};

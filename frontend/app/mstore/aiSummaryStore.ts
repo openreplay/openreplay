@@ -4,7 +4,9 @@ import { aiService } from 'App/services';
 
 export default class AiSummaryStore {
   text = '';
+
   toggleSummary = false;
+
   isLoading = false;
 
   constructor() {
@@ -40,13 +42,25 @@ export default class AiSummaryStore {
     }
   };
 
-  getDetailedSummary = async (sessionId: string, networkEvents: any[], feat: 'errors' | 'issues' | 'journey', startTs: number, endTs: number) => {
+  getDetailedSummary = async (
+    sessionId: string,
+    networkEvents: any[],
+    feat: 'errors' | 'issues' | 'journey',
+    startTs: number,
+    endTs: number,
+  ) => {
     if (this.isLoading) return;
 
     this.setLoading(true);
     this.setText('');
     try {
-      const respText = await aiService.getDetailedSummary(sessionId, networkEvents,feat, startTs, endTs);
+      const respText = await aiService.getDetailedSummary(
+        sessionId,
+        networkEvents,
+        feat,
+        startTs,
+        endTs,
+      );
       if (!respText) return;
 
       this.setText(respText);
@@ -55,5 +69,5 @@ export default class AiSummaryStore {
     } finally {
       this.setLoading(false);
     }
-  }
+  };
 }

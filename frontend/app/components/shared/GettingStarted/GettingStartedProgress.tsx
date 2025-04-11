@@ -1,18 +1,20 @@
 import React, { useEffect } from 'react';
-import CircleProgress from './CircleProgress';
 import { useModal } from 'App/components/Modal';
-import GettingStartedModal from './GettingStartedModal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import GettingStartedModal from './GettingStartedModal';
+import CircleProgress from './CircleProgress';
+import { useTranslation } from 'react-i18next';
 
-const GettingStartedProgress = () => {
+function GettingStartedProgress() {
   const { showModal } = useModal();
+  const { t } = useTranslation();
 
   const {
     settingsStore: { gettingStarted },
-    userStore
+    userStore,
   } = useStore();
-  const isLoggedIn = userStore.isLoggedIn;
+  const { isLoggedIn } = userStore;
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -21,7 +23,10 @@ const GettingStartedProgress = () => {
   }, [isLoggedIn]);
 
   const clickHandler = () => {
-    showModal(<GettingStartedModal list={gettingStarted.steps} />, { right: true, width: 450 });
+    showModal(<GettingStartedModal list={gettingStarted.steps} />, {
+      right: true,
+      width: 450,
+    });
   };
   return gettingStarted.status === 'completed' ? null : (
     <div className="mr-4 flex items-cetner cursor-pointer hover:bg-active-blue px-4">
@@ -32,14 +37,15 @@ const GettingStartedProgress = () => {
         />
         <div className="ml-2">
           <div className="text-lg color-teal" style={{ lineHeight: '15px' }}>
-            Setup
+            {t('Setup')}
           </div>
-          <div className="color-gray-meidum text-sm">{gettingStarted.numPending} Pending</div>
+          <div className="color-gray-meidum text-sm">
+            {gettingStarted.numPending}&nbsp;{t('Pending')}
+          </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default observer(GettingStartedProgress);
-

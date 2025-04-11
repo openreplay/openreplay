@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import FilterModal from '../FilterModal';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { assist as assistRoute, isRoute } from 'App/routes';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import { getNewIcon } from "../FilterModal/FilterModal";
+import FilterModal from '../FilterModal';
+import { getNewIcon } from '../FilterModal/FilterModal';
 
 const ASSIST_ROUTE = assistRoute();
 
@@ -42,19 +42,18 @@ function FilterSelection(props: Props) {
   const onAddFilter = (filter: any) => {
     onFilterClick(filter);
     setShowModal(false);
-  }
+  };
 
   React.useEffect(() => {
     if (showModal && modalRef.current) {
       const modalRect = modalRef.current.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
       if (modalRect.right > viewportWidth) {
-        modalRef.current.style.left = `unset`;
-        modalRef.current.style.right = `-280px`;
+        modalRef.current.style.left = 'unset';
+        modalRef.current.style.right = '-280px';
       }
     }
   }, [showModal]);
-
 
   const label = filter?.category === 'Issue' ? 'Issue' : filter?.label;
   return (
@@ -64,30 +63,31 @@ function FilterSelection(props: Props) {
         onClickOutside={() => {
           setTimeout(() => {
             setShowModal(false);
-          }, 0)
-        }
-        }
+          }, 0);
+        }}
       >
         {children ? (
           React.cloneElement(children, {
             onClick: (e) => {
               setShowModal(true);
             },
-            disabled: disabled,
+            disabled,
           })
         ) : (
           <div
             className={cn(
               'rounded-lg py-1 px-2 flex items-center gap-1 cursor-pointer bg-white border border-gray-light text-ellipsis hover:border-neutral-400 btn-select-event',
-              { 'opacity-50 pointer-events-none': disabled }
+              { 'opacity-50 pointer-events-none': disabled },
             )}
             style={{
               height: '26px',
             }}
             onClick={() => setShowModal(true)}
           >
-            <div className='text-xs text-neutral-500/90 hover:border-neutral-400'>{getNewIcon(filter)}</div>
-            <div className={'text-neutral-500/90 flex gap-2 hover:border-neutral-400 '}>{`${filter.subCategory ? filter.subCategory : filter.category} •`}</div>
+            <div className="text-xs text-neutral-500/90 hover:border-neutral-400">
+              {getNewIcon(filter)}
+            </div>
+            <div className="text-neutral-500/90 flex gap-2 hover:border-neutral-400 ">{`${filter.subCategory ? filter.subCategory : filter.category} •`}</div>
             <div
               className="rounded-lg overflow-hidden whitespace-nowrap text-ellipsis mr-auto truncate "
               style={{ textOverflow: 'ellipsis' }}

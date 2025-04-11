@@ -1,1 +1,1 @@
-export {default} from './SavedSearchModal'
+export { default } from './SavedSearchModal';

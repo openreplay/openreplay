@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
 import { Tabs, CopyButton } from 'UI';
-import MobileInstallDocs from './InstallDocs/MobileInstallDocs';
 import DocCard from 'Shared/DocCard/DocCard';
 import { useModal } from 'App/components/Modal';
 import UserForm from 'App/components/Client/Users/components/UserForm/UserForm';
-import AndroidInstallDocs from "Components/Onboarding/components/OnboardingTabs/InstallDocs/AndroidInstallDocs";
+import AndroidInstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs/AndroidInstallDocs';
+import { CollabCard, ProjectKeyCard } from "./Callouts";
+import MobileInstallDocs from './InstallDocs/MobileInstallDocs';
+import { useTranslation } from 'react-i18next';
 
 const iOS = 'iOS';
 const ANDROID = 'Android';
 const TABS = [
   { key: iOS, text: iOS },
-  { key: ANDROID, text: 'Android' },
+  { key: ANDROID, text: ANDROID },
 ];
 
 interface Props {
   site: Record<string, any>;
 }
 
-const MobileTrackingCodeModal = (props: Props) => {
+function MobileTrackingCodeModal(props: Props) {
+  const { t } = useTranslation();
   const { site } = props;
   const [activeTab, setActiveTab] = useState(iOS);
   const { showModal } = useModal();
@@ -37,18 +40,9 @@ const MobileTrackingCodeModal = (props: Props) => {
             </div>
 
             <div className="col-span-2">
-              <DocCard title="Need help from team member?">
-                <a className="link" onClick={showUserModal}>
-                  Invite and Collaborate
-                </a>
-              </DocCard>
+              <CollabCard showUserModal={showUserModal} />
 
-              <DocCard title="Project Key">
-                <div className={'p-2 rounded bg-white flex justify-between items-center'}>
-                  {site.projectKey}
-                  <CopyButton content={site.projectKey} />
-                </div>
-              </DocCard>
+              <ProjectKeyCard projectKey={site.projectKey} />
             </div>
           </div>
         );
@@ -60,18 +54,9 @@ const MobileTrackingCodeModal = (props: Props) => {
             </div>
 
             <div className="col-span-2">
-              <DocCard title="Need help from team member?">
-                <a className="link" onClick={showUserModal}>
-                  Invite and Collaborate
-                </a>
-              </DocCard>
+              <CollabCard showUserModal={showUserModal} />
 
-              <DocCard title="Project Key">
-                <div className={'p-2 rounded bg-white flex justify-between items-center'}>
-                  {site.projectKey}
-                  <CopyButton content={site.projectKey} />
-                </div>
-              </DocCard>
+              <ProjectKeyCard projectKey={site.projectKey} />
             </div>
           </div>
         );
@@ -86,6 +71,6 @@ const MobileTrackingCodeModal = (props: Props) => {
       <div className="p-5 py-8">{renderActiveTab()}</div>
     </>
   );
-};
+}
 
 export default MobileTrackingCodeModal;

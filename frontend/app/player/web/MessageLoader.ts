@@ -1,4 +1,4 @@
- import type { PlayerMsg, SessionFilesInfo, Store } from 'Player';
+import type { PlayerMsg, SessionFilesInfo, Store } from 'Player';
 import unpackTar from 'Player/common/tarball';
 import unpack from 'Player/common/unpack';
 import IOSMessageManager from 'Player/mobile/IOSMessageManager';
@@ -36,31 +36,17 @@ export default class MessageLoader {
     private store: Store<State>,
     private messageManager: MessageManager | IOSMessageManager,
     private isClickmap: boolean,
-    private uiErrorHandler?: { error: (msg: string) => void }
+    private uiErrorHandler?: { error: (msg: string) => void },
   ) {}
-  setSession(session: SessionFilesInfo) {
-    this.session = session
-  }
 
-  /**
-   * TODO: has to be moved out of messageLoader logic somehow
-   * */
-  spriteMapSvg: SVGElement | null = null;
-  potentialSpriteMap: Record<string, any> = {};
-  domParser: DOMParser | null = null;
-  createSpriteMap = () => {
-    if (!this.spriteMapSvg) {
-      this.domParser = new DOMParser();
-      this.spriteMapSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      this.spriteMapSvg.setAttribute("style", "display: none;");
-      this.spriteMapSvg.setAttribute("id", "reconstructed-sprite");
-    }
+  setSession(session: SessionFilesInfo) {
+    this.session = session;
   }
 
   createNewParser(
     shouldDecrypt = true,
     onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
-    file?: string
+    file?: string,
   ) {
     const decrypt =
       shouldDecrypt && this.session.fileKey
@@ -68,7 +54,7 @@ export default class MessageLoader {
         : (b: Uint8Array) => Promise.resolve(b);
     const fileReader = new MFileReader(
       new Uint8Array(),
-      this.session.startedAt
+      this.session.startedAt,
     );
     let fileNum = 0;
     return async (b: Uint8Array) => {
@@ -94,21 +80,6 @@ export default class MessageLoader {
         let startTimeSet = false;
 
         msgs.forEach((msg, i) => {
-          if (msg.tp === MType.SetNodeAttribute) {
-            if (msg.value.includes('_$OPENREPLAY_SPRITE$_')) {
-              this.createSpriteMap()
-              if (!this.domParser) {
-                return console.error('DOM parser is not initialized?');
-              }
-              handleSprites(
-                this.potentialSpriteMap,
-                this.domParser,
-                msg,
-                this.spriteMapSvg!,
-                i
-              );
-            }
-          }
           if (msg.tp === MType.Redux || msg.tp === MType.ReduxDeprecated) {
             if ('actionTime' in msg && msg.actionTime) {
               msg.time = msg.actionTime - this.session.startedAt;
@@ -134,7 +105,7 @@ export default class MessageLoader {
         }
 
         let brokenMessages = 0;
-        let originalCopy = [...msgs];
+        const originalCopy = [...msgs];
         msgs.forEach((msg) => {
           if (!msg.time) {
             msg.time = artificialStartTime;
@@ -143,18 +114,22 @@ export default class MessageLoader {
         });
 
         const sortedMsgs = msgs
-          // .sort((m1, m2) => m1.time - m2.time);
+          // .sort((m1, m2) => m1.time - m2.time)
           .sort(brokenDomSorter)
           .sort(sortIframes);
 
         if (brokenMessages > 0) {
-          console.warn('Broken timestamp messages', brokenMessages, originalCopy);
+          console.warn(
+            'Broken timestamp messages',
+            brokenMessages,
+            originalCopy,
+          );
         }
 
         onMessagesDone(sortedMsgs, `${file} ${fileNum}`);
       } catch (e) {
         console.error(e);
-        this.uiErrorHandler?.error('Error parsing file: ' + e.message);
+        this.uiErrorHandler?.error(`Error parsing file: ${e.message}`);
       }
     };
   }
@@ -163,14 +138,12 @@ export default class MessageLoader {
     const start = Date.now();
     return new Promise((resolve) => {
       const checkInterval = setInterval(() => {
-        if (Boolean(this.session.canvasURL?.length)) {
+        if (this.session.canvasURL?.length) {
           clearInterval(checkInterval);
           resolve(true);
-        } else {
-          if (Date.now() - start > 15000) {
-            clearInterval(checkInterval);
-            throw new Error('could not load canvas data after 15 seconds')
-          }
+        } else if (Date.now() - start > 15000) {
+          clearInterval(checkInterval);
+          throw new Error('could not load canvas data after 15 seconds');
         }
       }, 100);
     });
@@ -183,8 +156,8 @@ export default class MessageLoader {
          * in case of prefetched sessions with canvases,
          * we wait for signed urls and then parse the session
          * */
-        if (file?.includes('p:dom') && !Boolean(this.session.canvasURL?.length)) {
-          console.warn('⚠️Openreplay is waiting for canvas node to load')
+        if (file?.includes('p:dom') && !this.session.canvasURL?.length) {
+          console.warn('⚠️Openreplay is waiting for canvas node to load');
           await this.waitForCanvasURL();
         }
       }
@@ -214,14 +187,16 @@ export default class MessageLoader {
   }
 
   preloaded = false;
-  async preloadFirstFile(data: Uint8Array) {
+
+  async preloadFirstFile(data: Uint8Array, fileKey?: string) {
+    this.session.fileKey = fileKey;
     this.mobParser = this.createNewParser(true, this.processMessages, 'p:dom');
 
     try {
-      await this.mobParser(data)
+      await this.mobParser(data);
       this.preloaded = true;
     } catch (e) {
-      console.error('error parsing msgs', e)
+      console.error('error parsing msgs', e);
     }
   }
 
@@ -230,9 +205,8 @@ export default class MessageLoader {
       this.store.update({ domLoading: true });
       await loadFiles(urls, parser, true);
       return this.store.update({ domLoading: false });
-    } else {
-      return Promise.resolve();
     }
+    return Promise.resolve();
   }
 
   loadDevtools(parser: (b: Uint8Array) => Promise<void>) {
@@ -249,9 +223,8 @@ export default class MessageLoader {
             });
           })
       );
-    } else {
-      return Promise.resolve();
     }
+    return Promise.resolve();
   }
 
   /**
@@ -272,16 +245,17 @@ export default class MessageLoader {
       } catch (unprocessedLoadError) {
         this.messageManager.onFileReadFailed(
           sessionLoadError,
-          unprocessedLoadError
+          unprocessedLoadError,
         );
       }
     } finally {
-      this.createTabCloseEvents()
+      this.createTabCloseEvents();
       this.store.update({ domLoading: false, devtoolsLoading: false });
     }
   }
 
-  mobParser: (b: Uint8Array) => Promise<void>
+  mobParser: (b: Uint8Array) => Promise<void>;
+
   loadMobs = async () => {
     const loadMethod =
       this.session.domURL && this.session.domURL.length > 0
@@ -299,11 +273,11 @@ export default class MessageLoader {
     if (!this.mobParser) {
       this.mobParser = loadMethod.parser();
     }
-    const parser = this.mobParser
+    const parser = this.mobParser;
     const devtoolsParser = this.createNewParser(
       true,
       this.processMessages,
-      'devtools'
+      'devtools',
     );
 
     /**
@@ -317,16 +291,12 @@ export default class MessageLoader {
     this.messageManager.onFileReadFinally();
     const restDomFilesPromise = this.loadDomFiles(
       [...loadMethod.mobUrls.slice(1)],
-      parser
+      parser,
     );
     const restDevtoolsFilesPromise = this.loadDevtools(devtoolsParser);
 
     await Promise.allSettled([restDomFilesPromise, restDevtoolsFilesPromise]);
     this.messageManager.onFileReadSuccess();
-    // no sprites for mobile
-    if (this.spriteMapSvg && 'injectSpriteMap' in this.messageManager) {
-      this.messageManager.injectSpriteMap(this.spriteMapSvg);
-    }
   };
 
   loadEFSMobs = async () => {
@@ -334,20 +304,21 @@ export default class MessageLoader {
     const efsDomFilePromise = requestEFSDom(this.session.sessionId);
     const efsDevtoolsFilePromise = requestEFSDevtools(this.session.sessionId);
 
-    const [domData, devtoolsData] = await Promise.allSettled([
-      efsDomFilePromise,
-      efsDevtoolsFilePromise,
-    ]);
     const domParser = this.createNewParser(
       false,
       this.processMessages,
-      'domEFS'
+      'domEFS',
     );
     const devtoolsParser = this.createNewParser(
       false,
       this.processMessages,
-      'devtoolsEFS'
+      'devtoolsEFS',
     );
+    const [domData, devtoolsData] = await Promise.allSettled([
+      efsDomFilePromise,
+      efsDevtoolsFilePromise,
+    ]);
+
     const parseDomPromise: Promise<any> =
       domData.status === 'fulfilled'
         ? domParser(domData.value)
@@ -357,7 +328,8 @@ export default class MessageLoader {
         ? devtoolsParser(devtoolsData.value)
         : Promise.reject('No devtools file in EFS');
 
-    await Promise.all([parseDomPromise, parseDevtoolsPromise]);
+    await Promise.allSettled([parseDomPromise, parseDevtoolsPromise]);
+    this.store.update({ domLoading: false, devtoolsLoading: false });
     this.messageManager.onFileReadFinally();
     this.messageManager.onFileReadSuccess();
   };
@@ -371,8 +343,7 @@ const DOMMessages = [
   MType.CreateElementNode,
   MType.CreateTextNode,
   MType.MoveNode,
-  MType.RemoveNode,
-  MType.CreateIFrameDocument
+  MType.CreateIFrameDocument,
 ];
 
 function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
@@ -382,6 +353,11 @@ function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
     return -1;
   if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument)
     return 1;
+
+  if (m1.tp === MType.RemoveNode)
+    return 1;
+  if (m2.tp === MType.RemoveNode)
+    return -1;
 
   const m1IsDOM = DOMMessages.includes(m1.tp);
   const m2IsDOM = DOMMessages.includes(m2.tp);
@@ -397,9 +373,10 @@ function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
 }
 
 function sortIframes(m1, m2) {
-  if (m1.time === m2.time
-      && [MType.CreateIFrameDocument, MType.CreateElementNode].includes(m1.tp)
-      && [MType.CreateIFrameDocument, MType.CreateElementNode].includes(m2.tp)
+  if (
+    m1.time === m2.time &&
+    [MType.CreateIFrameDocument, MType.CreateElementNode].includes(m1.tp) &&
+    [MType.CreateIFrameDocument, MType.CreateElementNode].includes(m2.tp)
   ) {
     if (m1.frameID === m2.id) return 1;
     if (m1.id === m2.frameID) return -1;
@@ -454,27 +431,6 @@ function findBrokenNodes(nodes: any[]) {
   return result;
 }
 
-function handleSprites(potentialSpriteMap: Record<string, any>, parser: DOMParser, msg: Record<string, any>, spriteMapSvg: SVGElement, i: number) {
-  const [_, svgData] = msg.value.split('_$OPENREPLAY_SPRITE$_');
-  const potentialSprite = potentialSpriteMap[svgData];
-  if (potentialSprite) {
-    msg.value = potentialSprite;
-  } else {
-    const svgDoc = parser.parseFromString(svgData, "image/svg+xml");
-    const originalSvg = svgDoc.querySelector("svg");
-    if (originalSvg) {
-      const symbol = document.createElementNS("http://www.w3.org/2000/svg", "symbol");
-      const symbolId = `symbol-${msg.id || 'ind-' + i}`; // Generate an ID if missing
-      symbol.setAttribute("id", symbolId);
-      symbol.setAttribute("viewBox", originalSvg.getAttribute("viewBox") || "0 0 24 24");
-      symbol.innerHTML = originalSvg.innerHTML;
-
-      spriteMapSvg.appendChild(symbol);
-      msg.value = `#${symbolId}`;
-      potentialSpriteMap[svgData] = `#${symbolId}`;
-    }
-  }
-}
-
 // @ts-ignore
-window.searchOrphans = (msgs) => findBrokenNodes(msgs.filter(m => [8,9,10,70].includes(m.tp)));
+window.searchOrphans = (msgs) =>
+  findBrokenNodes(msgs.filter((m) => [8, 9, 10, 70].includes(m.tp)));

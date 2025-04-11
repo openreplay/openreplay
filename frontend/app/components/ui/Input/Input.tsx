@@ -1,6 +1,6 @@
 import cn from 'classnames';
 import React from 'react';
-
+import { Input as AntInput } from 'antd';
 import { Icon } from 'UI';
 
 interface Props {
@@ -31,12 +31,12 @@ const Input = React.forwardRef((props: Props, ref: any) => {
       {icon && (
         <Icon
           name={icon}
-          className="absolute top-0 bottom-0 my-auto ml-4"
+          className="absolute top-0 bottom-0 my-auto ml-4 z-10"
           size="14"
         />
       )}
       {type === 'textarea' ? (
-        <textarea
+        <AntInput.TextArea
           ref={ref}
           rows={rows}
           style={{ resize: 'none' }}
@@ -44,19 +44,19 @@ const Input = React.forwardRef((props: Props, ref: any) => {
           className={cn(
             'p-2 border border-gray-light bg-white w-full rounded-lg',
             className,
-            { 'pl-10': icon }
+            { 'pl-10': icon },
           )}
           {...rest}
         />
       ) : (
-        <input
+        <AntInput
           ref={ref}
           type={type}
           style={{ height: `${height}px`, width: width ? `${width}px` : '' }}
           className={cn(
             'p-2 border border-gray-light bg-white w-full rounded-lg',
             className,
-            { 'pl-10': icon }
+            { 'pl-10': icon },
           )}
           {...rest}
         />

@@ -1,1 +1,1 @@
-export { default } from './InstallButton'
+export { default } from './InstallButton';

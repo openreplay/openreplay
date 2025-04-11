@@ -13,24 +13,36 @@ interface ITab {
   style?: Record<string, any>;
 }
 
-const Tab = (props: ITab) => (
-  <div
-    onClick={props.onClick}
-    className={cn('p-1 rounded flex items-center justify-center cursor-pointer', props.classNames)}
-    style={props.style}
-  >
-    {props.children}
-  </div>
-);
+function Tab(props: ITab) {
+  return (
+    <div
+      onClick={props.onClick}
+      className={cn(
+        'p-1 rounded flex items-center justify-center cursor-pointer',
+        props.classNames,
+      )}
+      style={props.style}
+    >
+      {props.children}
+    </div>
+  );
+}
 
 export const InactiveTab = React.memo((props: Omit<ITab, 'children'>) => (
-  <Tab onClick={props.onClick} classNames={cn("hover:bg-gray-bg bg-gray-light", props.classNames)}>
+  <Tab
+    onClick={props.onClick}
+    classNames={cn('hover:bg-gray-bg bg-gray-light', props.classNames)}
+  >
     <Icon name="plus" size="22" color="white" />
   </Tab>
 ));
 
 const ActiveTab = React.memo((props: Omit<ITab, 'children'>) => (
-  <Tab onClick={props.onClick} classNames="hover:bg-teal" style={{ background: 'rgba(57, 78, 255, 0.5)' }}>
+  <Tab
+    onClick={props.onClick}
+    classNames="hover:bg-teal"
+    style={{ background: 'rgba(57, 78, 255, 0.5)' }}
+  >
     <Icon name="play-fill-new" size="22" color="white" />
   </Tab>
 ));
@@ -46,7 +58,9 @@ function AssistTabs({ session }: { session: Record<string, any> }) {
   const { assistMultiviewStore, projectsStore } = useStore();
   const siteId = projectsStore.siteId!;
 
-  const placeholder = new Array(4 - assistMultiviewStore.sessions.length).fill(0);
+  const placeholder = new Array(4 - assistMultiviewStore.sessions.length).fill(
+    0,
+  );
 
   React.useEffect(() => {
     if (assistMultiviewStore.sessions.length === 0) {
@@ -55,7 +69,9 @@ function AssistTabs({ session }: { session: Record<string, any> }) {
   }, []);
 
   const openGrid = () => {
-    const sessionIdQuery = encodeURIComponent(assistMultiviewStore.sessions.map((s) => s.sessionId).join(','));
+    const sessionIdQuery = encodeURIComponent(
+      assistMultiviewStore.sessions.map((s) => s.sessionId).join(','),
+    );
     return history.push(withSiteId(multiview(sessionIdQuery), siteId));
   };
   const openLiveSession = (sessionId: string) => {
@@ -65,15 +81,17 @@ function AssistTabs({ session }: { session: Record<string, any> }) {
 
   return (
     <div className="grid grid-cols-2 w-28 h-full" style={{ gap: '4px' }}>
-      {assistMultiviewStore.sortedSessions.map((session: { key: number, sessionId: string }) => (
-        <React.Fragment key={session.key}>
-          {assistMultiviewStore.isActive(session.sessionId) ? (
-            <CurrentTab />
-          ) : (
-            <ActiveTab onClick={() => openLiveSession(session.sessionId)} />
-          )}
-        </React.Fragment>
-      ))}
+      {assistMultiviewStore.sortedSessions.map(
+        (session: { key: number; sessionId: string }) => (
+          <React.Fragment key={session.key}>
+            {assistMultiviewStore.isActive(session.sessionId) ? (
+              <CurrentTab />
+            ) : (
+              <ActiveTab onClick={() => openLiveSession(session.sessionId)} />
+            )}
+          </React.Fragment>
+        ),
+      )}
       {placeholder.map((_, i) => (
         <React.Fragment key={i}>
           <InactiveTab onClick={openGrid} />
@@ -83,4 +101,4 @@ function AssistTabs({ session }: { session: Record<string, any> }) {
   );
 }
 
-export default observer(AssistTabs)
+export default observer(AssistTabs);

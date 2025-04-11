@@ -1,12 +1,11 @@
-
 /* Auto-generated, do not edit */
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Os_chrome_os(props: Props) {

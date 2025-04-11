@@ -1,8 +1,5 @@
 import React, { useEffect, useMemo, useContext, useState, useRef } from 'react';
-import stl from './timeline.module.css';
-import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
 import { debounce } from 'App/utils';
-import TooltipContainer from './components/TooltipContainer';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -11,7 +8,14 @@ import { WebEventsList, MobEventsList } from './EventsList';
 import NotesList from './NotesList';
 import SkipIntervalsList from './SkipIntervalsList';
 import TimelineTracker from 'Components/Session_/Player/Controls/TimelineTracker';
-import { ZoomDragLayer, HighlightDragLayer } from 'Components/Session_/Player/Controls/components/ZoomDragLayer';
+import {
+  ZoomDragLayer,
+  HighlightDragLayer,
+  ExportEventsSelection
+} from "Components/Session_/Player/Controls/components/ZoomDragLayer";
+import stl from './timeline.module.css'
+import TooltipContainer from './components/TooltipContainer';
+import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
 
 function Timeline({ isMobile }: { isMobile: boolean }) {
   const { player, store } = useContext(PlayerContext);
@@ -21,11 +25,13 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
   const startedAt = sessionStore.current.startedAt ?? 0;
   const tooltipVisible = sessionStore.timeLineTooltip.isVisible;
   const setTimelineHoverTime = sessionStore.setTimelineTooltip;
-  const timezone = sessionStore.current.timezone;
+  const { timezone } = sessionStore.current;
   const issues = sessionStore.current.issues ?? [];
   const timelineZoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const exportEventsEnabled = uiPlayerStore.exportEventsSelection.enabled;
   const highlightEnabled = uiPlayerStore.highlightSelection.enabled;
-  const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } = store.get();
+  const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } =
+    store.get();
 
   const progressRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -44,7 +50,10 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
   }, []);
 
   const debouncedJump = useMemo(() => debounce(player.jump, 500), []);
-  const debouncedTooltipChange = useMemo(() => debounce(setTimelineHoverTime, 50), []);
+  const debouncedTooltipChange = useMemo(
+    () => debounce(setTimelineHoverTime, 50),
+    [],
+  );
 
   const onDragEnd = () => {
     if (wasPlaying) {
@@ -79,15 +88,15 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
     const tz = settingsStore.sessionSettings.timezone.value;
     const timeStr = DateTime.fromMillis(startedAt + time)
       .setZone(tz)
-      .toFormat(`hh:mm:ss a`);
+      .toFormat('hh:mm:ss a');
     const userTimeStr = timezone
       ? DateTime.fromMillis(startedAt + time)
           .setZone(timezone)
-          .toFormat(`hh:mm:ss a`)
+          .toFormat('hh:mm:ss a')
       : undefined;
 
     const timeLineTooltip = {
-      time: Duration.fromMillis(time).toFormat(`mm:ss`),
+      time: Duration.fromMillis(time).toFormat('mm:ss'),
       localTime: timeStr,
       userTime: userTimeStr,
       offset: e.nativeEvent.pageX,
@@ -115,7 +124,10 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
     seekProgress(e);
   };
 
-  const getTime = (e: React.MouseEvent<HTMLDivElement>, customEndTime?: number) => {
+  const getTime = (
+    e: React.MouseEvent<HTMLDivElement>,
+    customEndTime?: number,
+  ) => {
     // @ts-ignore react mismatch
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
     const targetTime = customEndTime || endTime;
@@ -135,6 +147,7 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
     >
       {timelineZoomEnabled ? <ZoomDragLayer scale={scale} /> : null}
       {highlightEnabled ? <HighlightDragLayer scale={scale} /> : null}
+      {exportEventsEnabled ? <ExportEventsSelection scale={scale} /> : null}
       <div
         className={stl.progress}
         onClick={ready ? jumpToTime : undefined}
@@ -145,7 +158,9 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
         onMouseLeave={hideTimeTooltip}
       >
         <TooltipContainer />
-        {highlightEnabled ? null : <TimelineTracker scale={scale} onDragEnd={onDragEnd} />}
+        {highlightEnabled ? null : (
+          <TimelineTracker scale={scale} onDragEnd={onDragEnd} />
+        )}
         <CustomDragLayer onDrag={onDrag} minX={0} maxX={maxWidth} />
 
         <div className={stl.timeline} ref={timelineRef}>
@@ -160,13 +175,13 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
 
         {/* TODO: refactor and make any sense out of this */}
 
-        {/*  {issues.map((i: Issue) => (*/}
-        {/*  <div*/}
-        {/*    key={i.key}*/}
-        {/*    className={stl.redEvent}*/}
-        {/*    style={{ left: `${getTimelinePosition(i.time, scale)}%` }}*/}
-        {/*  />*/}
-        {/*))}*/}
+        {/*  {issues.map((i: Issue) => ( */}
+        {/*  <div */}
+        {/*    key={i.key} */}
+        {/*    className={stl.redEvent} */}
+        {/*    style={{ left: `${getTimelinePosition(i.time, scale)}%` }} */}
+        {/*  /> */}
+        {/* ))} */}
       </div>
     </div>
   );

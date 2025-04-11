@@ -10,51 +10,50 @@ import { addOptionsToFilter } from 'App/types/filter/newFilter';
 
 let debounceFetch: any = () => {};
 function SessionFilters() {
-  const {
-    searchStore,
-    projectsStore,
-    customFieldStore,
-    tagWatchStore,
-  } = useStore();
+  const { searchStore, projectsStore, customFieldStore, tagWatchStore } =
+    useStore();
 
   const appliedFilter = searchStore.instance;
   const metaLoading = customFieldStore.isLoading;
   const saveRequestPayloads =
     projectsStore.instance?.saveRequestPayloads ?? false;
-  const activeProject = projectsStore.active
+  const activeProject = projectsStore.active;
+
+  const reloadTags = async () => {
+    const tags = await tagWatchStore.getTags();
+    if (tags) {
+      addOptionsToFilter(
+        FilterKey.TAGGED_ELEMENT,
+        tags.map((tag) => ({
+          label: tag.name,
+          value: tag.tagId.toString(),
+        })),
+      );
+      searchStore.refreshFilterOptions();
+    }
+  };
 
   useEffect(() => {
     // Add default location/screen filter if no filters are present
     if (searchStore.instance.filters.length === 0) {
-      searchStore.addFilterByKeyAndValue(activeProject?.platform === 'web' ? FilterKey.LOCATION : FilterKey.VIEW_MOBILE , '', 'isAny')
+      searchStore.addFilterByKeyAndValue(
+        activeProject?.platform === 'web'
+          ? FilterKey.LOCATION
+          : FilterKey.VIEW_MOBILE,
+        '',
+        'isAny',
+      );
     }
-  }, [projectsStore.activeSiteId, activeProject])
+    void reloadTags();
+  }, [projectsStore.activeSiteId, activeProject]);
 
   useSessionSearchQueryHandler({
     appliedFilter,
     loading: metaLoading,
     onBeforeLoad: async () => {
-      const tags = await tagWatchStore.getTags();
-      if (tags) {
-        addOptionsToFilter(
-          FilterKey.TAGGED_ELEMENT,
-          tags.map((tag) => ({
-            label: tag.name,
-            value: tag.tagId.toString(),
-          }))
-        );
-        searchStore.refreshFilterOptions();
-      }
+      await reloadTags();
     },
   });
-
-  useEffect(() => {
-    debounceFetch = debounce(() => searchStore.fetchSessions(), 500);
-  }, []);
-
-  useEffect(() => {
-    debounceFetch();
-  }, [appliedFilter.filters]);
 
   const onAddFilter = (filter: any) => {
     filter.autoOpen = true;
@@ -67,13 +66,13 @@ function SessionFilters() {
 
   const onFilterMove = (newFilters: any) => {
     searchStore.updateSearch({ ...appliedFilter, filters: newFilters});
-    debounceFetch();
+    // debounceFetch();
   };
 
   const onRemoveFilter = (filterIndex: any) => {
     searchStore.removeFilter(filterIndex);
 
-    debounceFetch();
+    // debounceFetch();
   };
 
   const onChangeEventsOrder = (e: any, { value }: any) => {
@@ -81,7 +80,7 @@ function SessionFilters() {
       eventsOrder: value,
     });
 
-    debounceFetch();
+    // debounceFetch();
   };
 
   return (

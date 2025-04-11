@@ -6,11 +6,19 @@ const DEFAULT_EVENTS_ORDER = 'then';
 
 class Filter {
   key: string;
+
   operator: string;
+
   value?: string[];
+
   filters?: Filter[];
 
-  constructor(key: string, operator: string, value?: string[], filters?: Filter[]) {
+  constructor(
+    key: string,
+    operator: string,
+    value?: string[],
+    filters?: Filter[],
+  ) {
     this.key = key;
     this.operator = operator;
     this.value = value;
@@ -22,18 +30,24 @@ class Filter {
       key: this.key,
       operator: this.operator,
       value: this.value,
-      filters: this.filters ? this.filters.map(f => f.toJSON()) : undefined
+      filters: this.filters ? this.filters.map((f) => f.toJSON()) : undefined,
     };
   }
 }
 
 export class InputJson {
   filters: Filter[];
+
   rangeValue: string;
+
   startDate?: number;
+
   endDate?: number;
+
   sort: string;
+
   order: string;
+
   eventsOrder: string;
 
   constructor(
@@ -43,7 +57,7 @@ export class InputJson {
     order: string,
     eventsOrder: string,
     startDate?: string | number,
-    endDate?: string | number
+    endDate?: string | number,
   ) {
     this.filters = filters;
     this.rangeValue = rangeValue;
@@ -62,19 +76,21 @@ export class InputJson {
       endDate: this.endDate ?? null,
       sort: this.sort,
       order: this.order,
-      eventsOrder: this.eventsOrder
+      eventsOrder: this.eventsOrder,
     };
   }
 
   fromJSON(json: Record<string, any>): InputJson {
     return new InputJson(
-      json.filters.map((f: any) => new Filter(f.key, f.operator, f.value, f.filters)),
+      json.filters.map(
+        (f: any) => new Filter(f.key, f.operator, f.value, f.filters),
+      ),
       json.rangeValue,
       json.sort,
       json.order,
       json.eventsOrder,
       json.startDate,
-      json.endDate
+      json.endDate,
     );
   }
 }
@@ -90,13 +106,13 @@ export class JsonUrlConverter {
     key: 'k',
     operator: 'op',
     value: 'v',
-    filters: 'f'
+    filters: 'f',
   };
 
   static getDateRangeValues(
     rangeValue: string,
     startDate: string | null,
-    endDate: string | null
+    endDate: string | null,
   ): [string, string] {
     if (rangeValue === CUSTOM_RANGE) {
       return [startDate || '', endDate || ''];
@@ -112,15 +128,15 @@ export class JsonUrlConverter {
       params.append(`${prefix}${this.keyMap.key}`, filter.key);
       params.append(`${prefix}${this.keyMap.operator}`, filter.operator);
       filter.value?.forEach((v, i) =>
-        params.append(`${prefix}${this.keyMap.value}[${i}]`, v || '')
+        params.append(`${prefix}${this.keyMap.value}[${i}]`, v || ''),
       );
       filter.filters?.forEach((f, i) =>
-        addFilterParams(f, `${prefix}${this.keyMap.filters}[${i}].`)
+        addFilterParams(f, `${prefix}${this.keyMap.filters}[${i}].`),
       );
     };
 
     json.filters.forEach((filter: any, index: number) =>
-      addFilterParams(filter, `${this.keyMap.filters}[${index}].`)
+      addFilterParams(filter, `${this.keyMap.filters}[${index}].`),
     );
 
     params.append(this.keyMap.rangeValue, json.rangeValue);
@@ -128,7 +144,7 @@ export class JsonUrlConverter {
       const rangeValues = this.getDateRangeValues(
         json.rangeValue,
         json.startDate?.toString() || null,
-        json.endDate?.toString() || null
+        json.endDate?.toString() || null,
       );
       params.append(this.keyMap.startDate, rangeValues[0]);
       params.append(this.keyMap.endDate, rangeValues[1]);
@@ -154,11 +170,22 @@ export class JsonUrlConverter {
       }
       const filters: Filter[] = [];
       index = 0;
-      while (params.has(`${prefix}${this.keyMap.filters}[${index}].${this.keyMap.key}`)) {
-        filters.push(getFilterParams(`${prefix}${this.keyMap.filters}[${index}].`));
+      while (
+        params.has(
+          `${prefix}${this.keyMap.filters}[${index}].${this.keyMap.key}`,
+        )
+      ) {
+        filters.push(
+          getFilterParams(`${prefix}${this.keyMap.filters}[${index}].`),
+        );
         index++;
       }
-      return new Filter(key, operator, value.length ? value : [], filters.length ? filters : []);
+      return new Filter(
+        key,
+        operator,
+        value.length ? value : [],
+        filters.length ? filters : [],
+      );
     };
 
     const filters: Filter[] = [];
@@ -169,7 +196,11 @@ export class JsonUrlConverter {
     }
 
     const rangeValue = params.get(this.keyMap.rangeValue) || LAST_24_HOURS;
-    const rangeValues = this.getDateRangeValues(rangeValue, params.get(this.keyMap.startDate), params.get(this.keyMap.endDate));
+    const rangeValues = this.getDateRangeValues(
+      rangeValue,
+      params.get(this.keyMap.startDate),
+      params.get(this.keyMap.endDate),
+    );
 
     return new InputJson(
       filters,
@@ -178,11 +209,10 @@ export class JsonUrlConverter {
       params.get(this.keyMap.order) || DEFAULT_ORDER,
       params.get(this.keyMap.eventsOrder) || DEFAULT_EVENTS_ORDER,
       rangeValues[0],
-      rangeValues[1]
+      rangeValues[1],
     );
   }
 }
-
 
 // Example usage
 // const urlParams = '?f[0].k=click&f[0].op=on&f[0].v[0]=Refresh&f[1].k=fetch&f[1].op=is&f[1].v[0]=&f[1].f[0].k=fetchUrl&f[1].f[0].op=is&f[1].f[0].v[0]=/g/collect&f[1].f[1].k=fetchStatusCode&f[1].f[1].op=>=&f[1].f[1].v[0]=400&f[1].f[2].k=fetchMethod&f[1].f[2].op=is&f[1].f[2].v[0]=&f[1].f[3].k=fetchDuration&f[1].f[3].op==&f[1].f[3].v[0]=&f[1].f[4].k=fetchRequestBody&f[1].f[4].op=is&f[1].f[4].v[0]=&f[1].f[5].k=fetchResponseBody&f[1].f[5].op=is&f[1].f[5].v[0]=&rv=LAST_24_HOURS&sd=1731343412555&ed=1731429812555&s=startTs&o=desc&st=false&eo=then';

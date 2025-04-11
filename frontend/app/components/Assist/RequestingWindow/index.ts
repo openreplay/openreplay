@@ -1,1 +1,1 @@
-export { default, WindowType } from './RequestingWindow'
+export { default, WindowType } from './RequestingWindow';

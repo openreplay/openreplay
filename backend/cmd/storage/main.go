@@ -23,13 +23,15 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
-	metrics.New(log, storageMetrics.List())
+	// Observability
+	storageMetric := storageMetrics.New("storage")
+	metrics.New(log, storageMetric.List())
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
-	srv, err := storage.New(cfg, log, objStore)
+	srv, err := storage.New(cfg, log, objStore, storageMetric)
 	if err != nil {
 		log.Fatal(ctx, "can't init storage service: %s", err)
 	}

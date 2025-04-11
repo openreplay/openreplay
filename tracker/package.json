@@ -1,0 +1,8 @@
+{
+  "name": "tracker-family",
+  "private": true,
+  "workspaces": [
+    "tracker",
+    "tracker-assist"
+  ]
+}

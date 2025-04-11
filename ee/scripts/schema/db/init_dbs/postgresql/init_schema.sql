@@ -1,4 +1,4 @@
-\set or_version 'v1.22.0-ee'
+\set or_version 'v1.23.0-ee'
 SET client_min_messages TO NOTICE;
 \set ON_ERROR_STOP true
 SELECT EXISTS (SELECT 1
@@ -937,7 +937,11 @@ CREATE TABLE public.sessions_notes
     session_id bigint                      NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
     project_id integer                     NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
     timestamp  integer                     NOT NULL DEFAULT -1,
-    is_public  boolean                     NOT NULL DEFAULT FALSE
+    is_public  boolean                     NOT NULL DEFAULT FALSE,
+    thumbnail  text                        NULL,
+    updated_at timestamp without time zone NULL     DEFAULT NULL,
+    start_at   integer                     NULL,
+    end_at     integer                     NULL
 );
 
 CREATE TABLE public.errors_tags

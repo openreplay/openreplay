@@ -9,8 +9,10 @@ function LiveSessionSearch() {
   const appliedFilter = searchStoreLive.instance;
 
   useEffect(() => {
-    void searchStoreLive.fetchSessions();
-  }, []);
+    if (projectsStore.activeSiteId) {
+      void searchStoreLive.fetchSessions(true);
+    }
+  }, [projectsStore.activeSiteId])
 
   const onAddFilter = (filter: any) => {
     filter.autoOpen = true;
@@ -22,9 +24,9 @@ function LiveSessionSearch() {
   };
 
   const onRemoveFilter = (filterIndex: number) => {
-    const newFilters = appliedFilter.filters.filter((_filter, i) => {
-      return i !== filterIndex;
-    });
+    const newFilters = appliedFilter.filters.filter(
+      (_filter, i) => i !== filterIndex,
+    );
 
     searchStoreLive.edit({
       filters: newFilters,

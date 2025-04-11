@@ -16,13 +16,12 @@ import {
 } from 'App/mstore/uiPlayerStore';
 import { Icon } from 'UI';
 
+import { useStore } from 'App/mstore';
 import { useModal } from '../../Modal';
-import CreateNote from './Controls/components/CreateNote';
 import AutoplayTimer from './Overlay/AutoplayTimer';
 import ElementsMarker from './Overlay/ElementsMarker';
 import Loader from './Overlay/Loader';
 import PlayIconLayer from './Overlay/PlayIconLayer';
-import { useStore } from 'App/mstore'
 
 interface Props {
   nextId?: string;
@@ -45,34 +44,34 @@ const menuItems: MenuProps['items'] = [
   {
     key: ItemKey.Console,
     label: 'Console',
-    icon: <Icon name={'terminal'} size={14} />,
+    icon: <Icon name="terminal" size={14} />,
   },
   {
     key: ItemKey.Network,
     label: 'Network',
-    icon: <Icon name={'arrow-down-up'} size={14} />,
+    icon: <Icon name="arrow-down-up" size={14} />,
   },
   {
     key: ItemKey.Performance,
     label: 'Performance',
-    icon: <Icon name={'speedometer2'} size={14} />,
+    icon: <Icon name="speedometer2" size={14} />,
   },
   {
     key: ItemKey.Events,
     label: 'Events',
-    icon: <Icon name={'filetype-js'} size={14} />,
+    icon: <Icon name="filetype-js" size={14} />,
   },
   {
     key: ItemKey.State,
     label: 'State',
-    icon: <Icon name={'redux'} size={14} />,
+    icon: <Icon name="redux" size={14} />,
   },
   { type: 'divider' },
-  {
-    key: ItemKey.AddNote,
-    label: 'Add Note',
-    icon: <Icon name={'quotes'} size={14} />,
-  },
+  // {
+  //   key: ItemKey.AddNote,
+  //   label: 'Add Note',
+  //   icon: <Icon name={'quotes'} size={14} />,
+  // },
   {
     key: ItemKey.CopySessionUrl,
     label: 'Copy Session URL',
@@ -88,7 +87,7 @@ const menuItems: MenuProps['items'] = [
 function Overlay({ nextId, isClickmap }: Props) {
   const { player, store } = React.useContext(PlayerContext);
   const { uiPlayerStore } = useStore();
-  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
+  const { toggleBottomBlock } = uiPlayerStore;
   const togglePlay = () => player.togglePlay();
   const {
     playing,
@@ -102,7 +101,7 @@ function Overlay({ nextId, isClickmap }: Props) {
   } = store.get();
   const { showModal, hideModal } = useModal();
   const cssLoading = Object.values(tabStates).some(
-    ({ cssLoading }) => cssLoading
+    ({ cssLoading }) => cssLoading,
   );
   const loading = messagesLoading || cssLoading;
 
@@ -131,29 +130,29 @@ function Overlay({ nextId, isClickmap }: Props) {
       case ItemKey.State:
         toggleBottomBlock(STORAGE);
         break;
-      case ItemKey.AddNote:
-        showModal(
-          <CreateNote
-            hideModal={hideModal}
-            isEdit={false}
-            time={Math.round(store.get().time)}
-          />,
-          { right: true, width: 380 }
-        );
-        break;
+      // case ItemKey.AddNote:
+      //   showModal(
+      //     <CreateNote
+      //       hideModal={hideModal}
+      //       isEdit={false}
+      //       time={Math.round(store.get().time)}
+      //     />,
+      //     { right: true, width: 380 }
+      //   );
+      //   break;
       case ItemKey.CopySessionUrl:
         copy(window.location.origin + window.location.pathname);
         toast.success('Session URL copied to clipboard');
         break;
       case ItemKey.CopySessionUrlTs:
-        copy(window.location.origin
-             + window.location.pathname
-             + '?jumpto='
-             + String(Math.round(store.get().time)));
+        copy(
+          `${window.location.origin + window.location.pathname}?jumpto=${String(
+            Math.round(store.get().time),
+          )}`,
+        );
         toast.success('Session URL at current time copied to clipboard');
         break;
       default:
-        return;
     }
   };
   return (

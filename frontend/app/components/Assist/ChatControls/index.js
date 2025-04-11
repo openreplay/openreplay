@@ -1,1 +1,1 @@
-export { default } from './ChatControls'
+export { default } from './ChatControls';

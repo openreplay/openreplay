@@ -6,7 +6,7 @@ from chalicelib.utils import helper
 from chalicelib.utils import sql_helper as sh
 
 
-def filter_stages(stages: List[schemas.SessionSearchEventSchema2]):
+def filter_stages(stages: List[schemas.SessionSearchEventSchema]):
     ALLOW_TYPES = [schemas.EventType.CLICK, schemas.EventType.INPUT,
                    schemas.EventType.LOCATION, schemas.EventType.CUSTOM,
                    schemas.EventType.CLICK_MOBILE, schemas.EventType.INPUT_MOBILE,
@@ -15,10 +15,10 @@ def filter_stages(stages: List[schemas.SessionSearchEventSchema2]):
 
 
 def __parse_events(f_events: List[dict]):
-    return [schemas.SessionSearchEventSchema2.parse_obj(e) for e in f_events]
+    return [schemas.SessionSearchEventSchema.parse_obj(e) for e in f_events]
 
 
-def __fix_stages(f_events: List[schemas.SessionSearchEventSchema2]):
+def __fix_stages(f_events: List[schemas.SessionSearchEventSchema]):
     if f_events is None:
         return
     events = []

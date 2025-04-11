@@ -1,2 +1,2 @@
-export * from './log'
-export * from './resource'
+export * from './log';
+export * from './resource';

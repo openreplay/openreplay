@@ -52,10 +52,13 @@ export default class BatchWriter {
       this.url,
     ]
 
+    const timestamp: Messages.Timestamp = [Messages.Type.Timestamp, this.timestamp]
+
     const tabData: Messages.TabData = [Messages.Type.TabData, this.tabId]
 
     this.writeType(batchMetadata)
     this.writeFields(batchMetadata)
+    this.writeWithSize(timestamp as Message)
     this.writeWithSize(tabData as Message)
     this.isEmpty = true
   }

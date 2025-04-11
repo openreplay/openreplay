@@ -1,1 +1,1 @@
-export { default } from './AssistDoc'
+export { default } from './AssistDoc';

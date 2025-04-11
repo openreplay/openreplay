@@ -12,16 +12,17 @@ from chalicelib.core import scope
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_slack import Slack
-from chalicelib.core.errors import errors
+from chalicelib.core.errors import errors, errors_details
 from chalicelib.core.metrics import heatmaps
-from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_assignments, \
-    sessions_viewed, unprocessed_sessions, sessions_search
-from chalicelib.utils import SAML2_helper, smtp
-from chalicelib.utils import captcha
+from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_viewed, \
+    sessions_assignments, unprocessed_sessions, sessions_search
+from chalicelib.utils import SAML2_helper
+from chalicelib.utils import captcha, smtp
 from chalicelib.utils import contextual_validators
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from or_dependencies import OR_context, OR_scope, OR_role
+from or_dependencies import OR_context, OR_role
+from or_dependencies import OR_scope
 from routers.base import get_routers
 from routers.subs import spot
 from schemas import Permissions, ServicePermissions
@@ -31,7 +32,10 @@ if config("ENABLE_SSO", cast=bool, default=True):
 logger = logging.getLogger(__name__)
 public_app, app, app_apikey = get_routers()
 
-COOKIE_PATH = "/api/refresh"
+if config("LOCAL_DEV", cast=bool, default=False):
+    COOKIE_PATH = "/refresh"
+else:
+    COOKIE_PATH = "/api/refresh"
 
 
 @public_app.get('/signup', tags=['signup'])
@@ -354,8 +358,8 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
          dependencies=[OR_scope(Permissions.DEV_TOOLS, ServicePermissions.DEV_TOOLS)])
 def errors_get_details(projectId: int, errorId: str, density24: int = 24, density30: int = 30,
                        context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                              **{"density24": density24, "density30": density30})
+    data = errors_details.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
+                                      **{"density24": density24, "density30": density30})
     return data
 
 
@@ -497,6 +501,18 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str,
                                         session_id=sessionId, assignment_id=issueId,
                                         user_id=context.user_id, message=data.message)
     if "errors" in data.keys():
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.get('/{projectId}/notes/{noteId}', tags=["sessions", "notes"],
+         dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
+def get_note_by_id(projectId: int, noteId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.get_note(tenant_id=context.tenant_id, project_id=projectId, note_id=noteId,
+                                   user_id=context.user_id)
+    if "errors" in data:
         return data
     return {
         'data': data

@@ -1,8 +1,9 @@
+from functools import cache
 from typing import Optional
 
 import schemas
-from chalicelib.core.autocomplete import autocomplete
 from chalicelib.core import issues
+from chalicelib.core.autocomplete import autocomplete
 from chalicelib.core.sessions import sessions_metas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -137,52 +138,57 @@ class EventType:
                          column=None)  # column=None because errors are searched by name or message
 
 
-SUPPORTED_TYPES = {
-    EventType.CLICK.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CLICK),
-                                             query=autocomplete.__generic_query(typename=EventType.CLICK.ui_type)),
-    EventType.INPUT.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.INPUT),
-                                             query=autocomplete.__generic_query(typename=EventType.INPUT.ui_type)),
-    EventType.LOCATION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.LOCATION),
-                                                query=autocomplete.__generic_query(
-                                                    typename=EventType.LOCATION.ui_type)),
-    EventType.CUSTOM.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CUSTOM),
-                                              query=autocomplete.__generic_query(typename=EventType.CUSTOM.ui_type)),
-    EventType.REQUEST.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.REQUEST),
-                                               query=autocomplete.__generic_query(
-                                                   typename=EventType.REQUEST.ui_type)),
-    EventType.GRAPHQL.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.GRAPHQL),
-                                               query=autocomplete.__generic_query(
-                                                   typename=EventType.GRAPHQL.ui_type)),
-    EventType.STATEACTION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.STATEACTION),
+@cache
+def supported_types():
+    return {
+        EventType.CLICK.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CLICK),
+                                                 query=autocomplete.__generic_query(typename=EventType.CLICK.ui_type)),
+        EventType.INPUT.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.INPUT),
+                                                 query=autocomplete.__generic_query(typename=EventType.INPUT.ui_type)),
+        EventType.LOCATION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.LOCATION),
+                                                    query=autocomplete.__generic_query(
+                                                        typename=EventType.LOCATION.ui_type)),
+        EventType.CUSTOM.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CUSTOM),
+                                                  query=autocomplete.__generic_query(
+                                                      typename=EventType.CUSTOM.ui_type)),
+        EventType.REQUEST.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.REQUEST),
                                                    query=autocomplete.__generic_query(
-                                                       typename=EventType.STATEACTION.ui_type)),
-    EventType.TAG.ui_type: SupportedFilter(get=_search_tags, query=None),
-    EventType.ERROR.ui_type: SupportedFilter(get=autocomplete.__search_errors,
-                                             query=None),
-    EventType.METADATA.ui_type: SupportedFilter(get=autocomplete.__search_metadata,
-                                                query=None),
-    #     MOBILE
-    EventType.CLICK_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CLICK_MOBILE),
-                                                    query=autocomplete.__generic_query(
-                                                        typename=EventType.CLICK_MOBILE.ui_type)),
-    EventType.SWIPE_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.SWIPE_MOBILE),
-                                                    query=autocomplete.__generic_query(
-                                                        typename=EventType.SWIPE_MOBILE.ui_type)),
-    EventType.INPUT_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.INPUT_MOBILE),
-                                                    query=autocomplete.__generic_query(
-                                                        typename=EventType.INPUT_MOBILE.ui_type)),
-    EventType.VIEW_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.VIEW_MOBILE),
+                                                       typename=EventType.REQUEST.ui_type)),
+        EventType.GRAPHQL.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.GRAPHQL),
                                                    query=autocomplete.__generic_query(
-                                                       typename=EventType.VIEW_MOBILE.ui_type)),
-    EventType.CUSTOM_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CUSTOM_MOBILE),
-                                                     query=autocomplete.__generic_query(
-                                                         typename=EventType.CUSTOM_MOBILE.ui_type)),
-    EventType.REQUEST_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.REQUEST_MOBILE),
-                                                      query=autocomplete.__generic_query(
-                                                          typename=EventType.REQUEST_MOBILE.ui_type)),
-    EventType.CRASH_MOBILE.ui_type: SupportedFilter(get=autocomplete.__search_errors_mobile,
+                                                       typename=EventType.GRAPHQL.ui_type)),
+        EventType.STATEACTION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.STATEACTION),
+                                                       query=autocomplete.__generic_query(
+                                                           typename=EventType.STATEACTION.ui_type)),
+        EventType.TAG.ui_type: SupportedFilter(get=_search_tags, query=None),
+        EventType.ERROR.ui_type: SupportedFilter(get=autocomplete.__search_errors,
+                                                 query=None),
+        EventType.METADATA.ui_type: SupportedFilter(get=autocomplete.__search_metadata,
                                                     query=None),
-}
+        #     MOBILE
+        EventType.CLICK_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CLICK_MOBILE),
+                                                        query=autocomplete.__generic_query(
+                                                            typename=EventType.CLICK_MOBILE.ui_type)),
+        EventType.SWIPE_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.SWIPE_MOBILE),
+                                                        query=autocomplete.__generic_query(
+                                                            typename=EventType.SWIPE_MOBILE.ui_type)),
+        EventType.INPUT_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.INPUT_MOBILE),
+                                                        query=autocomplete.__generic_query(
+                                                            typename=EventType.INPUT_MOBILE.ui_type)),
+        EventType.VIEW_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.VIEW_MOBILE),
+                                                       query=autocomplete.__generic_query(
+                                                           typename=EventType.VIEW_MOBILE.ui_type)),
+        EventType.CUSTOM_MOBILE.ui_type: SupportedFilter(
+            get=autocomplete.__generic_autocomplete(EventType.CUSTOM_MOBILE),
+            query=autocomplete.__generic_query(
+                typename=EventType.CUSTOM_MOBILE.ui_type)),
+        EventType.REQUEST_MOBILE.ui_type: SupportedFilter(
+            get=autocomplete.__generic_autocomplete(EventType.REQUEST_MOBILE),
+            query=autocomplete.__generic_query(
+                typename=EventType.REQUEST_MOBILE.ui_type)),
+        EventType.CRASH_MOBILE.ui_type: SupportedFilter(get=autocomplete.__search_errors_mobile,
+                                                        query=None),
+    }
 
 
 def get_errors_by_session_id(session_id, project_id):
@@ -202,17 +208,17 @@ def search(text, event_type, project_id, source, key):
     if not event_type:
         return {"data": autocomplete.__get_autocomplete_table(text, project_id)}
 
-    if event_type in SUPPORTED_TYPES.keys():
-        rows = SUPPORTED_TYPES[event_type].get(project_id=project_id, value=text, key=key, source=source)
-    elif event_type + "_MOBILE" in SUPPORTED_TYPES.keys():
-        rows = SUPPORTED_TYPES[event_type + "_MOBILE"].get(project_id=project_id, value=text, key=key, source=source)
-    elif event_type in sessions_metas.SUPPORTED_TYPES.keys():
+    if event_type in supported_types().keys():
+        rows = supported_types()[event_type].get(project_id=project_id, value=text, key=key, source=source)
+    elif event_type + "_MOBILE" in supported_types().keys():
+        rows = supported_types()[event_type + "_MOBILE"].get(project_id=project_id, value=text, key=key, source=source)
+    elif event_type in sessions_metas.supported_types().keys():
         return sessions_metas.search(text, event_type, project_id)
     elif event_type.endswith("_IOS") \
-            and event_type[:-len("_IOS")] in sessions_metas.SUPPORTED_TYPES.keys():
+            and event_type[:-len("_IOS")] in sessions_metas.supported_types().keys():
         return sessions_metas.search(text, event_type, project_id)
     elif event_type.endswith("_MOBILE") \
-            and event_type[:-len("_MOBILE")] in sessions_metas.SUPPORTED_TYPES.keys():
+            and event_type[:-len("_MOBILE")] in sessions_metas.supported_types().keys():
         return sessions_metas.search(text, event_type, project_id)
     else:
         return {"errors": ["unsupported event"]}

@@ -11,6 +11,7 @@ import { IN_BROWSER, hasOpenreplayAttribute, canAccessIframe } from '../../utils
 
 export interface Options {
   captureIFrames: boolean
+  disableSprites: boolean
 }
 
 type Context = Window & typeof globalThis
@@ -24,14 +25,16 @@ export default class TopObserver extends Observer {
   readonly app: App
 
   constructor(params: { app: App; options: Partial<Options> }) {
-    super(params.app, true)
-    this.app = params.app
-    this.options = Object.assign(
+    const opts = Object.assign(
       {
         captureIFrames: true,
+        disableSprites: false,
       },
       params.options,
     )
+    super(params.app, true, opts)
+    this.app = params.app
+    this.options = opts
     // IFrames
     this.app.nodes.attachNodeCallback((node) => {
       if (

@@ -1,1 +1,1 @@
-export { default } from './ErrorLabel'
+export { default } from './ErrorLabel';

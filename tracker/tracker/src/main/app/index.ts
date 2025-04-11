@@ -272,6 +272,7 @@ export default class App {
     'feature-flags': true,
     'usability-test': true,
   }
+  private emptyBatchCounter = 0
 
   constructor(
     projectKey: string,
@@ -324,6 +325,7 @@ export default class App {
       fixedCanvasScaling: false,
       disableCanvas: false,
       captureIFrames: true,
+      disableSprites: false,
       obscureTextEmails: true,
       obscureTextNumbers: false,
       crossdomain: {
@@ -430,6 +432,7 @@ export default class App {
         if (ev.data.context === this.contextId) {
           return
         }
+        this.debug.log(ev)
         if (ev.data.line === proto.resp) {
           const sessionToken = ev.data.token
           this.session.setSessionToken(sessionToken)
@@ -847,8 +850,7 @@ export default class App {
    * */
   private _nCommit(): void {
     if (this.socketMode) {
-      this.messages.unshift(TabData(this.session.getTabId()))
-      this.messages.unshift(Timestamp(this.timestamp()))
+      this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
       return
@@ -871,10 +873,19 @@ export default class App {
       return
     }
 
+    if (!this.messages.length) {
+      // Release empty batches every 30 secs (1000 * 30ms)
+      if (this.emptyBatchCounter < 1000) {
+        this.emptyBatchCounter++;
+        return;
+      }
+    }
+
+    this.emptyBatchCounter = 0
+
     try {
       requestIdleCb(() => {
-        this.messages.unshift(TabData(this.session.getTabId()))
-        this.messages.unshift(Timestamp(this.timestamp()))
+        this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
         this.worker?.postMessage(this.messages)
         this.commitCallbacks.forEach((cb) => cb(this.messages))
         this.messages.length = 0
@@ -899,10 +910,9 @@ export default class App {
   private _cStartCommit(): void {
     this.coldStartCommitN += 1
     if (this.coldStartCommitN === 2) {
-      this.bufferedMessages1.push(Timestamp(this.timestamp()))
-      this.bufferedMessages1.push(TabData(this.session.getTabId()))
-      this.bufferedMessages2.push(Timestamp(this.timestamp()))
-      this.bufferedMessages2.push(TabData(this.session.getTabId()))
+      const payload = [Timestamp(this.timestamp()), TabData(this.session.getTabId())]
+      this.bufferedMessages1.push(...payload)
+      this.bufferedMessages2.push(...payload)
       this.coldStartCommitN = 0
     }
   }
@@ -918,7 +928,6 @@ export default class App {
   private postToWorker(messages: Array<Message>) {
     this.worker?.postMessage(messages)
     this.commitCallbacks.forEach((cb) => cb(messages))
-    messages.length = 0
   }
 
   private delay = 0
@@ -1637,19 +1646,31 @@ export default class App {
   }
 
   flushBuffer = async (buffer: Message[]) => {
-    return new Promise((res) => {
-      let ended = false
-      const messagesBatch: Message[] = [buffer.shift() as unknown as Message]
-      while (!ended) {
-        const nextMsg = buffer[0]
-        if (!nextMsg || nextMsg[0] === MType.Timestamp) {
-          ended = true
-        } else {
-          messagesBatch.push(buffer.shift() as unknown as Message)
-        }
+    return new Promise((res, reject) => {
+      if (buffer.length === 0) {
+        res(null)
+        return
       }
-      this.postToWorker(messagesBatch)
-      res(null)
+
+      // Since the first element is always a Timestamp, include it by default.
+      let endIndex = 1
+      while (endIndex < buffer.length && buffer[endIndex][0] !== MType.Timestamp) {
+        endIndex++
+      }
+
+      requestIdleCb(() => {
+        try {
+          const messagesBatch = buffer.splice(0, endIndex)
+
+          // Cast out potential proxy objects (produced from vue.js deep reactivity, for example) to a regular array.
+          this.postToWorker(messagesBatch.map((x) => [...x]))
+
+          res(null)
+        } catch (e) {
+          this._debug('flushBuffer', e)
+          reject(new Error('flushBuffer failed'))
+        }
+      })
     })
   }
 

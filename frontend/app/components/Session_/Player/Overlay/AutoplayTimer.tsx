@@ -2,19 +2,22 @@ import React, { useEffect, useState } from 'react';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { withRouter } from 'react-router-dom';
-import { Button, Link } from 'UI';
+import { Link } from 'UI';
+import { Button } from 'antd';
 import { session as sessionRoute, withSiteId } from 'App/routes';
-import stl from './AutoplayTimer.module.css';
-import clsOv from './overlay.module.css';
 import AutoplayToggle from 'Shared/AutoplayToggle';
 import { useStore } from 'App/mstore';
+import stl from './AutoplayTimer.module.css';
+import clsOv from './overlay.module.css';
+import { useTranslation } from 'react-i18next';
 
 function AutoplayTimer({ history }: any) {
+  const { t } = useTranslation();
   let timer: NodeJS.Timer;
   const [cancelled, setCancelled] = useState(false);
   const [counter, setCounter] = useState(5);
   const { projectsStore, sessionStore } = useStore();
-  const nextId = sessionStore.nextId;
+  const { nextId } = sessionStore;
 
   useEffect(() => {
     if (counter > 0) {
@@ -24,7 +27,7 @@ function AutoplayTimer({ history }: any) {
     }
 
     if (counter === 0) {
-      const siteId = projectsStore.getSiteId().siteId;
+      const { siteId } = projectsStore.getSiteId();
       history.push(withSiteId(sessionRoute(nextId), siteId));
     }
 
@@ -42,7 +45,8 @@ function AutoplayTimer({ history }: any) {
     <div className={cn(clsOv.overlay, stl.overlayBg)}>
       <div className="border p-5 shadow-lg bg-white rounded">
         <div className="mb-5">
-          Autoplaying next session in <span className="font-medium">{counter}</span> seconds
+          {t('Autoplaying next session in')}{' '}
+          <span className="font-medium">{counter}</span>&nbsp;{t('seconds')}
         </div>
 
         <div className="flex items-center justify-between">
@@ -50,12 +54,12 @@ function AutoplayTimer({ history }: any) {
             <AutoplayToggle />
           </div>
           <div className="flex items-center">
-            <Button variant="text-primary" onClick={cancel}>
-              Cancel
+            <Button variant="text" onClick={cancel}>
+              {t('Cancel')}
             </Button>
             <div className="px-2" />
             <Link to={sessionRoute(nextId)} disabled={!nextId}>
-              <Button variant="outline">Play Now</Button>
+              <Button type="default">{t('Play Now')}</Button>
             </Link>
           </div>
         </div>
@@ -67,6 +71,4 @@ function AutoplayTimer({ history }: any) {
   );
 }
 
-export default withRouter(
-  observer(AutoplayTimer)
-);
+export default withRouter(observer(AutoplayTimer));

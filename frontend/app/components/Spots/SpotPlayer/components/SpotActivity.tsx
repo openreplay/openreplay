@@ -7,8 +7,10 @@ import React from 'react';
 import Event from 'Components/Session_/EventsBlock/Event';
 
 import spotPlayerStore from '../spotPlayerStore';
+import { useTranslation } from 'react-i18next';
 
 function SpotActivity({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const mixedEvents = React.useMemo(() => {
     const result = [...spotPlayerStore.locations, ...spotPlayerStore.clicks];
     return result.sort((a, b) => a.time - b.time);
@@ -16,7 +18,7 @@ function SpotActivity({ onClose }: { onClose: () => void }) {
 
   const { index } = spotPlayerStore.getHighlightedEvent(
     spotPlayerStore.time,
-    mixedEvents
+    mixedEvents,
   );
   const jump = (time: number) => {
     spotPlayerStore.setTime(time / 1000);
@@ -29,24 +31,24 @@ function SpotActivity({ onClose }: { onClose: () => void }) {
   };
   return (
     <div
-      className={'h-full bg-white border-l'}
+      className="h-full bg-white border-l"
       style={{ minWidth: 320, width: 320 }}
     >
-      <div className={'flex items-center justify-between p-4'}>
-        <div className={'font-medium text-lg'}>Activity</div>
+      <div className="flex items-center justify-between p-4">
+        <div className="font-medium text-lg">{t('Activity')}</div>
         <Button type="text" size="small" onClick={onClose}>
           <CloseOutlined />
         </Button>
       </div>
       <div
-        className={'overflow-y-auto'}
+        className="overflow-y-auto"
         style={{ maxHeight: 'calc(100vh - 128px)' }}
       >
         {mixedEvents.map((event, i) => (
           <div
             key={event.time}
             onClick={() => jump(event.time)}
-            className={'relative'}
+            className="relative"
           >
             <div
               style={{

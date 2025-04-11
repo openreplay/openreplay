@@ -181,11 +181,6 @@ func (conn *Conn) InsertWebErrorEvent(sess *sessions.Session, e *types.ErrorEven
 	if err := conn.bulks.Get("webErrorEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, errorID); err != nil {
 		conn.log.Error(sessCtx, "insert web error event err: %s", err)
 	}
-	for key, value := range e.Tags {
-		if err := conn.bulks.Get("webErrorTags").Append(sess.SessionID, truncSqIdx(e.MessageID), errorID, key, value); err != nil {
-			conn.log.Error(sessCtx, "insert web error token err: %s", err)
-		}
-	}
 	return nil
 }
 

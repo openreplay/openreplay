@@ -14,22 +14,20 @@ function SessionsPerBrowserExample(props: Props) {
   const data = {
     chart: [
       {
-        'browser': 'Chrome',
-        'count': 1524,
+        browser: 'Chrome',
+        count: 1524,
         '126.0.0': 1157,
-        '125.0.0': 224
+        '125.0.0': 224,
       },
       {
-        'browser': 'Edge',
-        'count': 159,
-        '126.0.0': 145
-      }
-    ]
+        browser: 'Edge',
+        count: 159,
+        '126.0.0': 145,
+      },
+    ],
   };
   return (
-    <ExCard
-      {...props}
-    >
+    <ExCard {...props}>
       <SessionsPerBrowser data={data} />
     </ExCard>
   );

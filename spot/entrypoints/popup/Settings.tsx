@@ -11,11 +11,11 @@ function Settings({ goBack }: { goBack: () => void }) {
   const [ingest, setIngest] = createSignal(defaultIngest);
   const [editIngest, setEditIngest] = createSignal(false);
   const [tempIngest, setTempIngest] = createSignal("");
+  const [useDebugger, setUseDebugger] = createSignal(false);
 
   onMount(() => {
     chrome.storage.local.get("settings", (data: any) => {
       if (data.settings) {
-        console.log('update state', data.settings)
         const ingest =
           data.settings.ingestPoint || defaultIngest;
         const devToolsEnabled =
@@ -26,6 +26,7 @@ function Settings({ goBack }: { goBack: () => void }) {
         setTempIngest(ingest);
         setShowIngest(ingest !== defaultIngest);
         setEditIngest(!data.settings.ingestPoint);
+        setUseDebugger(data.settings.useDebugger);
       }
     });
   });
@@ -94,6 +95,16 @@ function Settings({ goBack }: { goBack: () => void }) {
     });
   };
 
+  const toggleUseDebugger = (e: Event) => {
+    e.stopPropagation();
+    const value = useDebugger();
+    setUseDebugger(!value);
+    chrome.runtime.sendMessage({
+      type: "ort:settings",
+      settings: { useDebugger: !value },
+    });
+  }
+
   return (
     <div class={"flex flex-col"}>
       <div class={"flex gap-2 items-center justify-between p-4"}>
@@ -150,6 +161,27 @@ function Settings({ goBack }: { goBack: () => void }) {
           <p class="text-xs">
             Include console logs, network calls and other useful debugging
             information for developers.
+          </p>
+        </div>
+
+        <div class="p-4 border-b border-slate-300 hover:bg-indigo-50 cursor-default">
+          <div class="flex flex-row justify-between items-center">
+            <p class="font-semibold mb-1 flex items-center">
+              <span>Use Debugger</span>
+            </p>
+            <div>
+              <label class="cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="toggle toggle-primary toggle-sm"
+                  checked={useDebugger()}
+                  onChange={toggleUseDebugger}
+                />
+              </label>
+            </div>
+          </div>
+          <p class="text-xs">
+            Enable the chrome debugger to track network requests with more precision.
           </p>
         </div>
 

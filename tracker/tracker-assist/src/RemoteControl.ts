@@ -63,10 +63,10 @@ export default class RemoteControl {
         this.releaseControl(true)
       }
     })
-    .then(() => {
-      this.confirm?.remove()
-    })
-    .catch(e => {
+      .then(() => {
+        this.confirm?.remove()
+      })
+      .catch(e => {
         this.confirm?.remove()
         console.error(e)
       })
@@ -113,9 +113,9 @@ export default class RemoteControl {
 
   scroll = (id, d) => { id === this.agentID && this.mouse?.scroll(d) }
   move = (id, xy) => {
-   return id === this.agentID && this.mouse?.move(xy)
+    return id === this.agentID && this.mouse?.move(xy)
   }
-  private focused: HTMLElement | null = null
+  private focused: HTMLElement | SVGElement | null = null
   click = (id, xy) => {
     if (id !== this.agentID || !this.mouse) { return }
     this.focused = this.mouse.click(xy)
@@ -132,7 +132,9 @@ export default class RemoteControl {
       setInputValue.call(this.focused, value)
       const ev = new Event('input', { bubbles: true,})
       this.focused.dispatchEvent(ev)
+      // @ts-ignore
     } else if (this.focused.isContentEditable) {
+      // @ts-ignore
       this.focused.innerText = value
     }
   }

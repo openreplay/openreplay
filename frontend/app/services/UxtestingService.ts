@@ -1,4 +1,4 @@
-import BaseService from "./BaseService";
+import BaseService from './BaseService';
 
 type Nullable<T> = T | null;
 
@@ -7,7 +7,7 @@ export interface UxTSearchFilters {
   page: Nullable<number>;
   limit: Nullable<number>;
   sortBy: Nullable<string>;
-  sortOrder: Nullable<"asc" | "desc">;
+  sortOrder: Nullable<'asc' | 'desc'>;
   isActive: Nullable<boolean>;
   userId: Nullable<number>;
 }
@@ -32,10 +32,9 @@ export interface UxTest {
   status: string;
 }
 
-
 export interface UxTListEntry {
- createdAt: string;
- status: 'preview' | 'in-progress' | 'paused' | 'closed';
+  createdAt: string;
+  status: 'preview' | 'in-progress' | 'paused' | 'closed';
   createdBy: {
     userId: number;
     name: string;
@@ -50,9 +49,9 @@ export default class UxtestingService extends BaseService {
   private readonly prefix = '/usability-tests';
 
   async fetchTestsList(
-    filters: Partial<UxTSearchFilters>
+    filters: Partial<UxTSearchFilters>,
   ): Promise<{ list: UxTListEntry[]; total: number }> {
-    const r = await this.client.post(this.prefix + '/search', filters);
+    const r = await this.client.post(`${this.prefix}/search`, filters);
     const j = await r.json();
     return j.data || [];
   }
@@ -81,12 +80,29 @@ export default class UxtestingService extends BaseService {
     return j.data || [];
   }
 
-  async fetchTestSessions(id: string, page: number, limit: number, isLive?: boolean, userId?: string) {
-    const r = await this.client.get(`${this.prefix}/${id}/sessions`, { page, limit, live: isLive, userId });
+  async fetchTestSessions(
+    id: string,
+    page: number,
+    limit: number,
+    isLive?: boolean,
+    userId?: string,
+  ) {
+    const r = await this.client.get(`${this.prefix}/${id}/sessions`, {
+      page,
+      limit,
+      live: isLive,
+      userId,
+    });
     return await r.json();
   }
 
-  async fetchTaskResponses(id: number, task: number, page: number, limit: number, query?: string) {
+  async fetchTaskResponses(
+    id: number,
+    task: number,
+    page: number,
+    limit: number,
+    query?: string,
+  ) {
     const r = await this.client.get(`${this.prefix}/${id}/responses/${task}`, {
       page,
       limit,

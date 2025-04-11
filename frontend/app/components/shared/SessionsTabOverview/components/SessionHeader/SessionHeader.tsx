@@ -1,17 +1,24 @@
 import React from 'react';
 import Period from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange';
-import SessionTags from '../SessionTags';
-import SessionSort from '../SessionSort';
-import { Space } from 'antd';
+import { Grid, Space } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import SessionSort from '../SessionSort';
+import SessionTags from '../SessionTags';
+
+const { useBreakpoint } = Grid;
 
 function SessionHeader() {
   const { searchStore } = useStore();
+  const screens = useBreakpoint();
   const { startDate, endDate, rangeValue } = searchStore.instance;
 
-  const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
+  const period = Period({
+    start: startDate,
+    end: endDate,
+    rangeName: rangeValue,
+  });
 
   const onDateChange = (e: any) => {
     const dateValues = e.toJSON();
@@ -20,14 +27,23 @@ function SessionHeader() {
   };
 
   return (
-    <div className="flex items-center px-4 py-1 justify-between w-full">
-      <div className="flex items-center w-full justify-end">
+    <div className="flex items-center px-4 py-3 justify-between w-full">
+      <div
+        className={`flex w-full flex-wrap gap-2 ${screens.md ? 'justify-between' : 'justify-start'}`}
+      >
         <SessionTags />
-        <div className="mr-auto" />
-        <Space>
-          <SelectDateRange isAnt period={period} onChange={onDateChange} right={true} />
+        <div
+          style={{ flexDirection: screens.md ? 'row' : 'column' }}
+          className={'flex items-start'}
+        >
+          <SelectDateRange
+            isAnt
+            period={period}
+            onChange={onDateChange}
+            right
+          />
           <SessionSort />
-        </Space>
+        </div>
       </div>
     </div>
   );

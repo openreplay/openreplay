@@ -1,5 +1,9 @@
 import type { DataProps, DataItem } from './utils';
-import { createDataset, assignColorsByBaseName, assignColorsByCategory } from './utils';
+import {
+  createDataset,
+  assignColorsByBaseName,
+  assignColorsByCategory,
+} from './utils';
 
 export function createBarSeries(
   data: DataProps['data'],
@@ -13,7 +17,9 @@ export function createBarSeries(
     const encode = { x: 'idx', y: fullName };
 
     const borderRadius = [6, 6, 0, 0];
-    const decal = dashed ? { symbol: 'line', symbolSize: 10, rotation: 1 } : { symbol: 'none' };
+    const decal = dashed
+      ? { symbol: 'line', symbolSize: 10, rotation: 1 }
+      : { symbol: 'none' };
     return {
       name: fullName,
       _baseName: baseName,
@@ -47,7 +53,6 @@ export function buildBarDatasetsAndSeries(props: DataProps) {
   return { datasets, series };
 }
 
-
 // START GEN
 function sumSeries(chart: DataItem[], seriesName: string): number {
   return chart.reduce((acc, row) => acc + (Number(row[seriesName]) || 0), 0);
@@ -62,7 +67,7 @@ function sumSeries(chart: DataItem[], seriesName: string): number {
 export function buildColumnChart(
   chartUuid: string,
   data: DataProps['data'],
-  compData: DataProps['compData']
+  compData: DataProps['compData'],
 ) {
   const categories = data.namesMap.filter(Boolean);
 
@@ -114,7 +119,9 @@ export function buildColumnChart(
     };
   }
 
-  const series = previousSeries ? [currentSeries, previousSeries] : [currentSeries];
+  const series = previousSeries
+    ? [currentSeries, previousSeries]
+    : [currentSeries];
 
   assignColorsByCategory(series, categories);
 

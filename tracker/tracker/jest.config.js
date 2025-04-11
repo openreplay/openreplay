@@ -8,6 +8,14 @@ const config = {
   moduleNameMapper: {
     '(.+)\\.js': '$1',
   },
+  globals: {
+    'ts-jest': {
+      tsConfig: {
+        target: 'es2020',
+        lib: ['DOM', 'ES2022'],
+      },
+    },
+  },
 }
 
 export default config

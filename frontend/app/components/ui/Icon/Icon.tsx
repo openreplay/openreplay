@@ -3,18 +3,18 @@ import cn from 'classnames';
 import SVG, { IconNames } from 'UI/SVG';
 import styles from './icon.module.css';
 
-interface IProps { 
-  name: IconNames
-  size?: number | string
-  height?: number
-  width?: number
-  color?: string
-  strokeColor?: string
-  className?: string
-  style?: object
-  marginRight?: number
-  inline?: boolean
-  onClick?: () => void
+interface IProps {
+  name: IconNames;
+  size?: number | string;
+  height?: number;
+  width?: number;
+  color?: string;
+  strokeColor?: string;
+  className?: string;
+  style?: object;
+  marginRight?: number;
+  inline?: boolean;
+  onClick?: () => void;
 }
 
 const Icon: React.FunctionComponent<IProps> = ({
@@ -25,37 +25,42 @@ const Icon: React.FunctionComponent<IProps> = ({
   color = 'gray-medium',
   strokeColor,
   className = '',
-  style={},
+  style = {},
   marginRight = 0,
   inline = false,
   ...props
 }) => {
   const _style = {
-    width: `${ width }px`,
-    height: `${ height }px`,
+    width: `${width}px`,
+    height: `${height}px`,
     ...style,
   };
-  if (marginRight){
+  if (marginRight) {
     // @ts-ignore
-    _style.marginRight = `${ marginRight }px`;
+    _style.marginRight = `${marginRight}px`;
   }
 
   const additionalStyles = {
     ...(color === 'inherit' ? { fill: 'currentColor' } : {}),
-    ...(strokeColor ? { stroke: strokeColor } : {}), 
+    ...(strokeColor ? { stroke: strokeColor } : {}),
   };
 
   return (
     <span
-      { ...props }
-      style={{..._style, ...additionalStyles }}
-      className={ cn(className, styles.wrapper, `fill-${ color }`) }
-      data-inline={ inline }
+      {...props}
+      style={{ ..._style, ...additionalStyles }}
+      className={cn(className, styles.wrapper, `fill-${color}`)}
+      data-inline={inline}
     >
-      <SVG name={ name } height={ height } width={ width }  style={strokeColor ? { stroke: strokeColor } : undefined}  />
+      <SVG
+        name={name}
+        height={height}
+        width={width}
+        style={strokeColor ? { stroke: strokeColor } : undefined}
+      />
     </span>
   );
-}
+};
 
 Icon.displayName = 'Icon';
 export default Icon;

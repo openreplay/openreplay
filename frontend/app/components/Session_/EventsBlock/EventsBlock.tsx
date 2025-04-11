@@ -4,29 +4,43 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { VList, VListHandle } from 'virtua';
-
+import { Button } from 'antd'
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
-
+import { Search } from 'lucide-react'
 import EventGroupWrapper from './EventGroupWrapper';
 import EventSearch from './EventSearch/EventSearch';
 import styles from './eventsBlock.module.css';
+import { useTranslation } from 'react-i18next';
+import { CloseOutlined } from ".store/@ant-design-icons-virtual-42686020c5/package";
+import { Tooltip } from ".store/antd-virtual-9dbfadb7f6/package";
+import { getDefaultFramework, frameworkIcons } from "../UnitStepsModal";
 
 interface IProps {
   setActiveTab: (tab?: string) => void;
 }
 
+const MODES = {
+  SELECT: 'select',
+  SEARCH: 'search',
+  EXPORT: 'export',
+}
+
 function EventsBlock(props: IProps) {
-  const { notesStore, uxtestingStore, uiPlayerStore, sessionStore } = useStore();
+  const defaultFramework = getDefaultFramework();
+  const [mode, setMode] = React.useState(MODES.SELECT);
+  const { t } = useTranslation();
+  const { notesStore, uxtestingStore, uiPlayerStore, sessionStore } =
+    useStore();
   const session = sessionStore.current;
-  const notesWithEvents = session.notesWithEvents;
-  const uxtVideo = session.uxtVideo;
-  const filteredEvents = sessionStore.filteredEvents;
+  const { notesWithEvents } = session;
+  const { uxtVideo } = session;
+  const { filteredEvents } = sessionStore;
   const query = sessionStore.eventsQuery;
-  const eventsIndex = sessionStore.eventsIndex;
+  const { eventsIndex } = sessionStore;
   const setEventFilter = sessionStore.setEventQuery;
-  const filterOutNote = sessionStore.filterOutNote;
+  const { filterOutNote } = sessionStore;
   const [mouseOver, setMouseOver] = React.useState(false);
   const scroller = React.useRef<VListHandle>(null);
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
@@ -42,9 +56,7 @@ function EventsBlock(props: IProps) {
     tabChangeEvents = [],
   } = store.get();
 
-  const {
-    setActiveTab,
-  } = props;
+  const { setActiveTab } = props;
   const notes = notesStore.sessionNotes;
 
   const filteredLength = filteredEvents?.length || 0;
@@ -73,19 +85,30 @@ function EventsBlock(props: IProps) {
         }
       });
     }
-    const eventsWithMobxNotes = [...notesWithEvents, ...notes].sort(sortEvents);
-    return mergeEventLists(
-      filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
-      tabChangeEvents
-    ).filter((e) =>
-      zoomEnabled
+    const eventsWithMobxNotes = [...notesWithEvents, ...notes]
+      .sort(sortEvents);
+    const filteredTabEvents = query.length
+                              ? tabChangeEvents
+                                .filter((e => (e.activeUrl as string).includes(query)))
+                              : tabChangeEvents;
+    const list = mergeEventLists(
+      query.length > 0 ? filteredEvents : eventsWithMobxNotes,
+      filteredTabEvents
+    )
+    if (zoomEnabled) {
+      return list.filter((e) =>
+        zoomEnabled
         ? 'time' in e
           ? e.time >= zoomStartTs && e.time <= zoomEndTs
           : false
         : true
-    );
+      );
+    } else {
+      return list
+    }
   }, [
     filteredLength,
+    query,
     notesWithEvtsLength,
     notesLength,
     zoomEnabled,
@@ -103,17 +126,16 @@ function EventsBlock(props: IProps) {
           i--;
         }
         return i;
-      } else {
-        let l = 0;
-        while (l < i) {
-          const event = usedEvents[l];
-          if ('time' in event && event.time >= time) break;
-          l++;
-        }
-        return l;
       }
+      let l = 0;
+      while (l < i) {
+        const event = usedEvents[l];
+        if ('time' in event && event.time >= time) break;
+        l++;
+      }
+      return l;
     },
-    [usedEvents, time, endTime]
+    [usedEvents, time, endTime],
   );
   const currentTimeEventIndex = findLastFitting(time);
 
@@ -139,15 +161,18 @@ function EventsBlock(props: IProps) {
     }, 100);
   };
 
-  React.useEffect(() => {
-    return () => {
+  React.useEffect(
+    () => () => {
       clearSearch();
-    };
-  }, []);
+    },
+    [],
+  );
   React.useEffect(() => {
     if (scroller.current) {
       if (!mouseOver) {
-        scroller.current.scrollToIndex(currentTimeEventIndex, { align: 'center' });
+        scroller.current.scrollToIndex(currentTimeEventIndex, {
+          align: 'center',
+        });
       }
     }
   }, [currentTimeEventIndex]);
@@ -159,11 +184,7 @@ function EventsBlock(props: IProps) {
   const onMouseOver = () => setMouseOver(true);
   const onMouseLeave = () => setMouseOver(false);
 
-  const renderGroup = ({
-    index,
-  }: {
-    index: number;
-  }) => {
+  const renderGroup = ({ index }: { index: number }) => {
     const isLastEvent = index === usedEvents.length - 1;
     const isLastInGroup =
       isLastEvent || usedEvents[index + 1]?.type === TYPES.LOCATION;
@@ -193,15 +214,20 @@ function EventsBlock(props: IProps) {
   };
 
   const isEmptySearch = query && (usedEvents.length === 0 || !usedEvents);
-  const eventsText = `${query ? 'Filtered' : ''} ${usedEvents.length} Events`;
+  const eventsText = `${query ? t('Filtered') : ''} ${usedEvents.length} Events`;
 
   return (
     <>
-      <div className={cn(styles.header, 'py-4 px-2 bg-gradient-to-t from-transparent to-neutral-50 h-[57px]'  )}>
+      <div
+        className={cn(
+          styles.header,
+          'py-4 px-2 bg-gradient-to-t from-transparent to-neutral-50 h-[57px]',
+        )}
+      >
         {uxtestingStore.isUxt() ? (
-          <div style={{ width: 240, height: 130 }} className={'relative'}>
+          <div style={{ width: 240, height: 130 }} className="relative">
             <video
-              className={'z-20 fixed'}
+              className="z-20 fixed"
               muted
               autoPlay
               controls
@@ -214,20 +240,53 @@ function EventsBlock(props: IProps) {
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
               }}
-              className={'absolute z-10'}
+              className="absolute z-10"
             >
-              No video
+              {t('No video')}
             </div>
           </div>
         ) : null}
-        <div className={cn(styles.hAndProgress, 'mt-0')}>
-          <EventSearch
-            onChange={write}
-            setActiveTab={setActiveTab}
-            value={query}
-            eventsText={usedEvents.length ? `${usedEvents.length} Events` : '0 Events'}
-          />
-        </div>
+        {mode === MODES.SELECT ? (
+          <div className={'flex items-center gap-2'}>
+            <Button
+              onClick={() => setActiveTab('EXPORT')}
+              type={'default'}
+              shape={'circle'}
+            >
+              <Icon name={frameworkIcons[defaultFramework]} size={18} />
+            </Button>
+            <Button
+              className={'flex items-center gap-2'}
+              onClick={() => setMode(MODES.SEARCH)}
+            >
+              <Search size={14} />
+              <div>{t('Search')}&nbsp;{usedEvents.length}&nbsp;{t('events')}</div>
+            </Button>
+            <Tooltip title={t('Close Panel')} placement='bottom' >
+              <Button
+                className="ml-auto"
+                type='text'
+                onClick={() => {
+                  setActiveTab('');
+                }}
+                icon={<CloseOutlined />}
+              />
+            </Tooltip>
+          </div>
+        ) : null}
+        {mode === MODES.SEARCH ?
+          <div className={'flex items-center gap-2'}>
+            <EventSearch
+              onChange={write}
+              setActiveTab={setActiveTab}
+              value={query}
+              eventsText={
+                usedEvents.length ? `${usedEvents.length} ${t('Events')}` : `0 ${t('Events')}`
+              }
+            />
+            <Button type={'text'} onClick={() => setMode(MODES.SELECT)}>{t('Cancel')}</Button>
+          </div>
+        : null}
       </div>
       <div
         className={cn('flex-1 pb-4', styles.eventsList)}
@@ -239,7 +298,7 @@ function EventsBlock(props: IProps) {
         {isEmptySearch && (
           <div className="flex items-center p-4">
             <Icon name="binoculars" size={18} />
-            <span className="ml-2">No Matching Results</span>
+            <span className="ml-2">{t('No Matching Results')}</span>
           </div>
         )}
         <VList
@@ -248,9 +307,8 @@ function EventsBlock(props: IProps) {
           ref={scroller}
         >
           {usedEvents.map((_, i) => {
-              return renderGroup({ index: i })
-            }
-          )}
+            return renderGroup({ index: i });
+          })}
         </VList>
       </div>
     </>

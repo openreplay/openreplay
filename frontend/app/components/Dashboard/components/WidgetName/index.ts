@@ -1,1 +1,1 @@
-export { default }  from './WidgetName';
+export { default } from './WidgetName';

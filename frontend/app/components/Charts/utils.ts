@@ -52,10 +52,7 @@ function buildCategoryColorMap(categories: string[]): Record<number, string> {
  * For each series, transform its data array to an array of objects
  * with `value` and `itemStyle.color` based on the category index.
  */
-export function assignColorsByCategory(
-  series: any[],
-  categories: string[]
-) {
+export function assignColorsByCategory(series: any[], categories: string[]) {
   const categoryColorMap = buildCategoryColorMap(categories);
 
   series.forEach((s, si) => {
@@ -94,7 +91,9 @@ export function customTooltipFormatter(uuid: string) {
       const isPrevious = /Previous/.test(seriesName);
       const categoryName = (window as any).__yAxisData?.[uuid]?.[dataIndex];
       const fullname = isPrevious ? `Previous ${categoryName}` : categoryName;
-      const partnerName = isPrevious ? categoryName : `Previous ${categoryName}`;
+      const partnerName = isPrevious
+        ? categoryName
+        : `Previous ${categoryName}`;
       const partnerValue = (window as any).__seriesValueMap?.[uuid]?.[
         partnerName
       ];
@@ -279,7 +278,7 @@ export function createSeries(
   data: DataProps['data'],
   datasetId: string,
   dashed: boolean,
-  hideFromLegend: boolean
+  hideFromLegend: boolean,
 ) {
   return data.namesMap.filter(Boolean).map((fullName) => {
     const baseName = fullName.replace(/^Previous\s+/, '');

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"openreplay/backend/pkg/metrics/database"
 
 	"openreplay/backend/pkg/db/postgres"
 	db "openreplay/backend/pkg/db/postgres/pool"
@@ -18,13 +19,14 @@ type Tracer interface {
 }
 
 type tracerImpl struct {
-	log    logger.Logger
-	conn   db.Pool
-	traces postgres.Bulk
-	saver  pool.WorkerPool
+	log     logger.Logger
+	conn    db.Pool
+	traces  postgres.Bulk
+	saver   pool.WorkerPool
+	metrics database.Database
 }
 
-func NewTracer(log logger.Logger, conn db.Pool) (Tracer, error) {
+func NewTracer(log logger.Logger, conn db.Pool, metrics database.Database) (Tracer, error) {
 	switch {
 	case log == nil:
 		return nil, errors.New("logger is required")
@@ -32,8 +34,9 @@ func NewTracer(log logger.Logger, conn db.Pool) (Tracer, error) {
 		return nil, errors.New("connection is required")
 	}
 	tracer := &tracerImpl{
-		log:  log,
-		conn: conn,
+		log:     log,
+		conn:    conn,
+		metrics: metrics,
 	}
 	if err := tracer.initBulk(); err != nil {
 		return nil, err
@@ -43,7 +46,7 @@ func NewTracer(log logger.Logger, conn db.Pool) (Tracer, error) {
 }
 
 func (t *tracerImpl) initBulk() (err error) {
-	t.traces, err = postgres.NewBulk(t.conn,
+	t.traces, err = postgres.NewBulk(t.conn, t.metrics,
 		"traces",
 		"(user_id, tenant_id, auth, action, method, path_format, endpoint, payload, parameters, status)",
 		"($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",

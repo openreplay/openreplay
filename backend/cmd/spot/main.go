@@ -19,16 +19,20 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := spotConfig.New(log)
+	// Observability
 	webMetrics := web.New("spot")
-	metrics.New(log, append(webMetrics.List(), append(spotMetrics.List(), databaseMetrics.List()...)...))
+	spotMetric := spotMetrics.New("spot")
+	dbMetric := databaseMetrics.New("spot")
+	metrics.New(log, append(webMetrics.List(), append(spotMetric.List(), dbMetric.List()...)...))
 
-	pgConn, err := pool.New(cfg.Postgres.String())
+	pgConn, err := pool.New(dbMetric, cfg.Postgres.String())
 	if err != nil {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
 	defer pgConn.Close()
 
-	builder, err := spot.NewServiceBuilder(log, cfg, webMetrics, pgConn)
+	prefix := api.NoPrefix
+	builder, err := spot.NewServiceBuilder(log, cfg, webMetrics, spotMetric, dbMetric, pgConn, prefix)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
@@ -37,7 +41,7 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
-	router.AddHandlers(api.NoPrefix, builder.SpotsAPI)
+	router.AddHandlers(prefix, builder.SpotsAPI)
 	router.AddMiddlewares(builder.Auth.Middleware, builder.RateLimiter.Middleware, builder.AuditTrail.Middleware)
 
 	server.Run(ctx, log, &cfg.HTTP, router)

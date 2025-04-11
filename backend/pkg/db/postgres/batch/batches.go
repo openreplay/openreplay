@@ -52,6 +52,7 @@ func NewBatchesTask(size int) *batchesTask {
 type BatchSet struct {
 	log        logger.Logger
 	c          pool.Pool
+	metrics    database.Database
 	ctx        context.Context
 	batches    map[uint64]*SessionBatch
 	workerTask chan *batchesTask
@@ -59,10 +60,11 @@ type BatchSet struct {
 	finished   chan struct{}
 }
 
-func NewBatchSet(log logger.Logger, c pool.Pool) *BatchSet {
+func NewBatchSet(log logger.Logger, c pool.Pool, metrics database.Database) *BatchSet {
 	bs := &BatchSet{
 		log:        log,
 		c:          c,
+		metrics:    metrics,
 		ctx:        context.Background(),
 		batches:    make(map[uint64]*SessionBatch),
 		workerTask: make(chan *batchesTask, 1),
@@ -104,7 +106,7 @@ func (conn *BatchSet) Stop() {
 func (conn *BatchSet) sendBatches(t *batchesTask) {
 	for _, batch := range t.batches {
 		// Record batch size
-		database.RecordBatchElements(float64(batch.Len()))
+		conn.metrics.RecordBatchElements(float64(batch.Len()))
 
 		start := time.Now()
 
@@ -120,7 +122,7 @@ func (conn *BatchSet) sendBatches(t *batchesTask) {
 			}
 		}
 		br.Close() // returns err
-		database.RecordBatchInsertDuration(float64(time.Now().Sub(start).Milliseconds()))
+		conn.metrics.RecordBatchInsertDuration(float64(time.Now().Sub(start).Milliseconds()))
 	}
 }
 

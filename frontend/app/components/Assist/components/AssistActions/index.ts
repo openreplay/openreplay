@@ -1,1 +1,1 @@
-export { default } from './AssistActions'
+export { default } from './AssistActions';

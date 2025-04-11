@@ -1,1 +1,1 @@
-export { default } from './IntegrationsTab'
+export { default } from './IntegrationsTab';

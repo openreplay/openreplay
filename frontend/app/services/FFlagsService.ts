@@ -22,7 +22,7 @@ type Variant = {
   description?: string;
   payload: string;
   rolloutPercentage: number;
-}
+};
 
 export interface FFlag extends SimpleFlag {
   featureFlagId: number;
@@ -32,7 +32,7 @@ export interface FFlag extends SimpleFlag {
   createdBy: number;
   updatedBy: number;
   conditions: never;
-  variants: Variant[]
+  variants: Variant[];
 }
 
 export interface SingleFFlag extends SimpleFlag {
@@ -42,11 +42,13 @@ export interface SingleFFlag extends SimpleFlag {
   updatedBy: number;
   featureFlagId: number;
   isActive: boolean;
-  variants: Variant[]
+  variants: Variant[];
 }
 
 export default class FFlagsService extends BaseService {
-  fetchFlags(filters: Record<string, any>): Promise<{ list: FFlag[]; total: number }> {
+  fetchFlags(
+    filters: Record<string, any>,
+  ): Promise<{ list: FFlag[]; total: number }> {
     return this.client
       .post('/feature-flags/search', filters)
       .then((r) => r.json())

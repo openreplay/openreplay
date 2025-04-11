@@ -24,9 +24,11 @@ import {
   Library,
   ChartColumnBig,
   ChartBarBig,
-}  from 'lucide-react';
+} from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 function WidgetOptions() {
+  const { t } = useTranslation();
   const { metricStore } = useStore();
   const metric: any = metricStore.instance;
 
@@ -38,7 +40,7 @@ function WidgetOptions() {
   // const hasSeriesTypes = [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
   const hasViewTypes = [TIMESERIES, FUNNEL].includes(metric.metricType);
   return (
-    <div className={'flex items-center gap-2'}>
+    <div className="flex items-center gap-2">
       {metric.metricType === USER_PATH && (
         <a
           href="#"
@@ -50,12 +52,16 @@ function WidgetOptions() {
         >
           <Space>
             <Switch checked={metric.hideExcess} size="small" />
-            <span className="mr-4 color-gray-medium">Group Minor Paths</span>
+            <span className="mr-4 color-gray-medium">
+              {t('Group Minor Paths')}
+            </span>
           </Space>
         </a>
       )}
 
-      {metric.metricType === TIMESERIES && <SeriesTypeOptions metric={metric} />}
+      {metric.metricType === TIMESERIES && (
+        <SeriesTypeOptions metric={metric} />
+      )}
       {(metric.metricType === FUNNEL || metric.metricType === TABLE) &&
         metric.metricOf !== FilterKey.USERID &&
         metric.metricOf !== FilterKey.ERRORS && (
@@ -64,17 +70,16 @@ function WidgetOptions() {
             menu={{
               selectable: true,
               items: [
-                { key: 'sessionCount', label: 'All Sessions' },
-                { key: 'userCount', label: 'Unique Users' },
+                { key: 'sessionCount', label: t('All Sessions') },
+                { key: 'userCount', label: t('Unique Users') },
               ],
               onClick: (info: { key: string }) => handleChange(info.key),
             }}
-
           >
             <Button type="text" variant="text" size="small">
               {metric.metricFormat === 'sessionCount'
-                ? 'All Sessions'
-                : 'Unique Users'}
+                ? t('All Sessions')
+                : t('Unique Users')}
               <DownOutlined className="text-sm" />
             </Button>
           </Dropdown>
@@ -86,8 +91,9 @@ function WidgetOptions() {
 }
 
 const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
+  const { t } = useTranslation();
   const items = {
-    sessionCount: 'Total Sessions',
+    sessionCount: t('Total Sessions'),
     userCount: 'Unique Users',
   };
   const chartIcons = {
@@ -103,11 +109,9 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
         items: Object.entries(items).map(([key, name]) => ({
           key,
           label: (
-            <div className={'flex items-center gap-2'}>
-              <>
-                {chartIcons[key]}
-                <div>{name}</div>
-              </>
+            <div className="flex items-center gap-2">
+              {chartIcons[key]}
+              <div>{name}</div>
             </div>
           ),
         })),
@@ -125,7 +129,7 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
       >
         <Space>
           {chartIcons[metric.metricOf]}
-          <div>{items[metric.metricOf] || 'Total Sessions'}</div>
+          <div>{items[metric.metricOf] || t('Total Sessions')}</div>
           <DownOutlined className="text-sm" />
         </Space>
       </Button>
@@ -149,10 +153,11 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
     columnChart: 'Funnel Column',
     metric: 'Metric',
     table: 'Table',
-  }
-  const usedChartTypes = metric.metricType === FUNNEL ? funnelChartTypes : chartTypes;
+  };
+  const usedChartTypes =
+    metric.metricType === FUNNEL ? funnelChartTypes : chartTypes;
   const chartIcons = {
-    lineChart: <ChartLine size={16} strokeWidth={1} /> ,
+    lineChart: <ChartLine size={16} strokeWidth={1} />,
     barChart: <ChartColumn size={16} strokeWidth={1} />,
     areaChart: <ChartArea size={16} strokeWidth={1} />,
     pieChart: <ChartPie size={16} strokeWidth={1} />,
@@ -184,8 +189,8 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
           key,
           label: (
             <div className="flex gap-2 items-center">
-                {chartIcons[key]}
-                <div>{usedChartTypes[key]}</div>
+              {chartIcons[key]}
+              <div>{usedChartTypes[key]}</div>
             </div>
           ),
         })),

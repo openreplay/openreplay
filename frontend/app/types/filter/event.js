@@ -39,7 +39,7 @@ export const TYPES = {
   USERANONYMOUSID,
   USERID,
   ERROR,
-  
+
   DOM_COMPLETE,
   LARGEST_CONTENTFUL_PAINT_TIME,
   TIME_BETWEEN_EVENTS,
@@ -65,7 +65,8 @@ function getLabelText(type, source) {
   if (type === TYPES.REVID) return 'Rev ID';
 
   if (type === TYPES.DOM_COMPLETE) return 'DOM Complete';
-  if (type === TYPES.LARGEST_CONTENTFUL_PAINT_TIME) return 'Largest Contentful Paint Time';
+  if (type === TYPES.LARGEST_CONTENTFUL_PAINT_TIME)
+    return 'Largest Contentful Paint Time';
   if (type === TYPES.TIME_BETWEEN_EVENTS) return 'Time Between Events';
   if (type === TYPES.TTFB) return 'TTFB';
   if (type === TYPES.AVG_CPU_LOAD) return 'Avg CPU Load';
@@ -73,38 +74,40 @@ function getLabelText(type, source) {
 
   if (type === TYPES.CUSTOM) {
     if (!source) return 'Custom';
-		return source;
+    return source;
   }
   return type;
 }
 
-export default Record({
-  timestamp: 0,
-  key: '',
-  label: '',
-  operator: 'on',
-  type: '',
-  searchType: '',
-  value: [],
-  custom: '',
-  inputValue: '',
-  target: Target(),
-  level: '',
-  source: null,
-  icon: '',
-}, {
-  keyKey: "_key",
-  fromJS: ({ target, type = "" , ...event }) => {
-    // const viewType = type.split('_')[0];
-    return {
-      ...event,
-      type: type,
-      searchType: event.searchType || type,
-      label: getLabelText(type, event.source),
-      target: Target(target),
-      operator: event.operator || defaultOperator(event),
-      // value: target ? target.label : event.value,
-      icon: event.icon || getEventIcon({...event, type: type })
-    };
-  }
-})
+export default Record(
+  {
+    timestamp: 0,
+    key: '',
+    label: '',
+    operator: 'on',
+    type: '',
+    searchType: '',
+    value: [],
+    custom: '',
+    inputValue: '',
+    target: Target(),
+    level: '',
+    source: null,
+    icon: '',
+  },
+  {
+    keyKey: '_key',
+    fromJS: ({ target, type = '', ...event }) =>
+      // const viewType = type.split('_')[0];
+      ({
+        ...event,
+        type,
+        searchType: event.searchType || type,
+        label: getLabelText(type, event.source),
+        target: Target(target),
+        operator: event.operator || defaultOperator(event),
+        // value: target ? target.label : event.value,
+        icon: event.icon || getEventIcon({ ...event, type }),
+      }),
+  },
+);

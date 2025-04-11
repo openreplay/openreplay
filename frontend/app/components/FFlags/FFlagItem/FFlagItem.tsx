@@ -1,11 +1,12 @@
 import React from 'react';
 import FeatureFlag from 'App/mstore/types/FeatureFlag';
-import { Icon, Toggler, Link, TextEllipsis, Tooltip } from 'UI';
+import { Icon, Link, TextEllipsis, Tooltip } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { resentOrDate } from 'App/date';
 import { toast } from 'react-toastify';
-import { fflagRead } from "App/routes";
+import { fflagRead } from 'App/routes';
+import { Switch } from 'antd';
 
 function FFlagItem({ flag }: { flag: FeatureFlag }) {
   const { featureFlagsStore, userStore } = useStore();
@@ -24,22 +25,27 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
       });
   };
 
-  const flagIcon = flag.isSingleOption ? 'fflag-single' : ('fflag-multi' as const);
+  const flagIcon = flag.isSingleOption
+    ? 'fflag-single'
+    : ('fflag-multi' as const);
   const flagOwner = flag.updatedBy || flag.createdBy;
   const user =
     userStore.list.length > 0
       ? userStore.list.find((u) => parseInt(u.userId) === flagOwner!)?.name
       : flagOwner;
   return (
-    <div className={'w-full py-2 px-6 border-b hover:bg-active-blue'}>
-      <div className={'flex items-center'}>
+    <div className="w-full py-2 px-6 border-b hover:bg-active-blue">
+      <div className="flex items-center">
         <Link style={{ flex: 1 }} to={fflagRead(flag.featureFlagId.toString())}>
-          <div className={'flex items-center gap-2'}>
-            <Tooltip delay={150} title={flag.isSingleOption ? 'Single variant' : 'Multivariant'}>
+          <div className="flex items-center gap-2">
+            <Tooltip
+              delay={150}
+              title={flag.isSingleOption ? 'Single variant' : 'Multivariant'}
+            >
               <Icon name={flagIcon} size={32} />
             </Tooltip>
             <div className="flex flex-col gap-1" style={{ width: 300 }}>
-              <span className={'link'}>{flag.flagKey}</span>
+              <span className="link">{flag.flagKey}</span>
               {flag.description ? (
                 <TextEllipsis
                   hintText={flag.description}
@@ -50,18 +56,24 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
             </div>
           </div>
         </Link>
-        <div style={{ flex: 1 }}>{resentOrDate(flag.updatedAt || flag.createdAt)}</div>
-        <div style={{ flex: 1 }} className={'flex items-center gap-2 capitalize'}>
-          <Icon name={'person-fill'} />
+        <div style={{ flex: 1 }}>
+          {resentOrDate(flag.updatedAt || flag.createdAt)}
+        </div>
+        <div style={{ flex: 1 }} className="flex items-center gap-2 capitalize">
+          <Icon name="person-fill" />
           {user}
         </div>
-        <div style={{ marginLeft: 'auto', width: 115 }}>
-          <Toggler
-            checked={flag.isActive}
-            name={'persist-flag'}
-            label={flag.isActive ? 'Enabled' : 'Disabled'}
-            onChange={toggleActivity}
-          />
+        <div
+          style={{
+            marginLeft: 'auto',
+            width: 115,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+          }}
+        >
+          <Switch checked={flag.isActive} onChange={toggleActivity} />
+          <div>{flag.isActive ? 'Enabled' : 'Disabled'}</div>
         </div>
       </div>
     </div>

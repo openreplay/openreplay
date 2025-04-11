@@ -1,1 +1,1 @@
-export { default } from './PlayLink'
+export { default } from './PlayLink';

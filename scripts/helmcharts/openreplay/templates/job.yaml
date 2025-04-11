@@ -86,7 +86,6 @@ spec:
               for i in {1..10}; do
                 if ping -c 1 github.com &> /dev/null || wget -q --spider https://github.com; then
                   echo "GitHub is available."
-                  git clone {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }} .
                   break
                 else
                   echo "GitHub is not available. Retrying in 3 seconds..."
@@ -227,8 +226,8 @@ spec:
           - -c
         args:
           - |
-            lowVersion=24.9
-            highVersion=24
+            lowVersion=25.1
+            highVersion=25
             [[ "${CH_PASSWORD}" == "" ]] || {
               CH_PASSWORD="--password $CH_PASSWORD"
             }
@@ -405,7 +404,7 @@ spec:
           - name: AWS_DEFAULT_REGION
             value: "{{ .Values.global.s3.region }}"
           - name: AWS_ENDPOINT
-            value: "{{ .Values.global.s3.endpoint }}"
+            value: "{{- include "openreplay.s3Endpoint" . }}"
           - name: VAULT_BUCKET
             value: "{{ .Values.global.s3.vaultBucket }}"
         image: amazon/aws-cli

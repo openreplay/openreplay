@@ -42,7 +42,7 @@ const findSessionSocketId = async (io, roomId, tabId) => {
 };
 
 async function getRoomData(io, roomID) {
-    let tabsCount = 0, agentsCount = 0, tabIDs = [], agentIDs = [];
+    let tabsCount = 0, agentsCount = 0, tabIDs = [], agentIDs = [], config = null, agentInfos = [];
     const connected_sockets = await io.in(roomID).fetchSockets();
     if (connected_sockets.length > 0) {
         for (let socket of connected_sockets) {
@@ -52,13 +52,19 @@ async function getRoomData(io, roomID) {
             } else {
                 agentsCount++;
                 agentIDs.push(socket.id);
+                agentInfos.push({ ...socket.handshake.query.agentInfo, socketId: socket.id });
+                if (socket.handshake.query.config !== undefined) {
+                    config = socket.handshake.query.config;
+                }
             }
         }
     } else {
         tabsCount = -1;
         agentsCount = -1;
+        agentInfos = [];
+        agentIDs = [];
     }
-    return {tabsCount, agentsCount, tabIDs, agentIDs};
+    return {tabsCount, agentsCount, tabIDs, agentIDs, config, agentInfos};
 }
 
 function processNewSocket(socket) {
@@ -78,7 +84,7 @@ async function onConnect(socket) {
     IncreaseOnlineConnections(socket.handshake.query.identity);
 
     const io = getServer();
-    const {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.handshake.query.roomId);
+    const {tabsCount, agentsCount, tabIDs, agentInfos, agentIDs, config} = await getRoomData(io, socket.handshake.query.roomId);
 
     if (socket.handshake.query.identity === IDENTITIES.session) {
         // Check if session with the same tabID already connected, if so, refuse new connexion
@@ -100,7 +106,9 @@ async function onConnect(socket) {
         // Inform all connected agents about reconnected session
         if (agentsCount > 0) {
             logger.debug(`notifying new session about agent-existence`);
+            io.to(socket.id).emit(EVENTS_DEFINITION.emit.WEBRTC_CONFIG, config);
             io.to(socket.id).emit(EVENTS_DEFINITION.emit.AGENTS_CONNECTED, agentIDs);
+            io.to(socket.id).emit(EVENTS_DEFINITION.emit.AGENTS_INFO_CONNECTED, agentInfos);
             socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.SESSION_RECONNECTED, socket.id);
         }
     } else if (tabsCount <= 0) {
@@ -118,7 +126,8 @@ async function onConnect(socket) {
             // Stats
             startAssist(socket, socket.handshake.query.agentID);
         }
-        socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, socket.handshake.query.agentInfo);
+        io.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.WEBRTC_CONFIG, socket.handshake.query.config);
+        socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, { ...socket.handshake.query.agentInfo });
     }
 
     // Set disconnect handler
@@ -126,6 +135,9 @@ async function onConnect(socket) {
 
     // Handle update event
     socket.on(EVENTS_DEFINITION.listen.UPDATE_EVENT, (...args) => onUpdateEvent(socket, ...args));
+
+    // Handle webrtc events
+    socket.on(EVENTS_DEFINITION.listen.WEBRTC_AGENT_CALL, (...args) => onWebrtcAgentHandler(socket, ...args));
 
     // Handle errors
     socket.on(EVENTS_DEFINITION.listen.ERROR, err => errorHandler(EVENTS_DEFINITION.listen.ERROR, err));
@@ -182,6 +194,16 @@ async function onUpdateEvent(socket, ...args) {
             item.handshake.query.sessionInfo = deepMerge(item.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
         } else if (item.handshake.query.identity === IDENTITIES.agent) {
             socket.to(item.id).emit(EVENTS_DEFINITION.listen.UPDATE_EVENT, args[0]);
+        }
+    }
+}
+
+async function onWebrtcAgentHandler(socket, ...args) {
+    if (socket.handshake.query.identity === IDENTITIES.agent) {
+        const agentIdToConnect = args[0]?.data?.toAgentId;
+        logger.debug(`${socket.id} sent webrtc event to agent:${agentIdToConnect}`);
+        if (agentIdToConnect && socket.handshake.sessionData.AGENTS_CONNECTED.includes(agentIdToConnect)) {
+            socket.to(agentIdToConnect).emit(EVENTS_DEFINITION.listen.WEBRTC_AGENT_CALL, args[0]);
         }
     }
 }

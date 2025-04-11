@@ -316,48 +316,27 @@ export function Metadata(
   ]
 }
 
-export function CSSInsertRule(
-  id: number,
-  rule: string,
-  index: number,
-): Messages.CSSInsertRule {
+export function StringDictGlobal(
+  key: number,
+  value: string,
+): Messages.StringDictGlobal {
   return [
-    Messages.Type.CSSInsertRule,
-    id,
-    rule,
-    index,
+    Messages.Type.StringDictGlobal,
+    key,
+    value,
   ]
 }
 
-export function CSSDeleteRule(
+export function SetNodeAttributeDictGlobal(
   id: number,
-  index: number,
-): Messages.CSSDeleteRule {
+  name: number,
+  value: number,
+): Messages.SetNodeAttributeDictGlobal {
   return [
-    Messages.Type.CSSDeleteRule,
+    Messages.Type.SetNodeAttributeDictGlobal,
     id,
-    index,
-  ]
-}
-
-export function Fetch(
-  method: string,
-  url: string,
-  request: string,
-  response: string,
-  status: number,
-  timestamp: number,
-  duration: number,
-): Messages.Fetch {
-  return [
-    Messages.Type.Fetch,
-    method,
-    url,
-    request,
-    response,
-    status,
-    timestamp,
-    duration,
+    name,
+    value,
   ]
 }
 
@@ -591,27 +570,6 @@ export function SetNodeFocus(
   ]
 }
 
-export function LongTask(
-  timestamp: number,
-  duration: number,
-  context: number,
-  containerType: number,
-  containerSrc: string,
-  containerId: string,
-  containerName: string,
-): Messages.LongTask {
-  return [
-    Messages.Type.LongTask,
-    timestamp,
-    duration,
-    context,
-    containerType,
-    containerSrc,
-    containerId,
-    containerName,
-  ]
-}
-
 export function SetNodeAttributeURLBased(
   id: number,
   name: string,
@@ -659,21 +617,6 @@ export function CustomIssue(
     Messages.Type.CustomIssue,
     name,
     payload,
-  ]
-}
-
-export function CSSInsertRuleURLBased(
-  id: number,
-  rule: string,
-  index: number,
-  baseURL: string,
-): Messages.CSSInsertRuleURLBased {
-  return [
-    Messages.Type.CSSInsertRuleURLBased,
-    id,
-    rule,
-    index,
-    baseURL,
   ]
 }
 

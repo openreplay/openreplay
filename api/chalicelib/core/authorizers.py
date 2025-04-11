@@ -37,8 +37,7 @@ def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
         logger.debug("! JWT Expired signature")
         return None
     except BaseException as e:
-        logger.warning("! JWT Base Exception")
-        logger.debug(e)
+        logger.warning("! JWT Base Exception", exc_info=e)
         return None
     return payload
 
@@ -56,8 +55,7 @@ def jwt_refresh_authorizer(scheme: str, token: str):
         logger.debug("! JWT-refresh Expired signature")
         return None
     except BaseException as e:
-        logger.warning("! JWT-refresh Base Exception")
-        logger.debug(e)
+        logger.error("! JWT-refresh Base Exception", exc_info=e)
         return None
     return payload
 

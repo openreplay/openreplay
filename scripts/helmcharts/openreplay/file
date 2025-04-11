@@ -6,7 +6,5 @@ charts/heuristics/values.yaml
 charts/integrations/values.yaml
 charts/sink/values.yaml
 charts/storage/values.yaml
-charts/imagestorage/values.yaml
-charts/canvas-handler/values.yaml
-charts/canvas-maker/values.yaml
-charts/videostorage/values.yaml
+charts/images/values.yaml
+charts/canvases/values.yaml

@@ -33,10 +33,13 @@ ingress-nginx: &ingress-nginx
   {{- if contains "minio" .Values.global.s3.endpoint -}}
     {{- include "openreplay.domainURL" . -}}
   {{- else -}}
-    {{- .Values.global.s3.endpoint -}}
+    {{-  .Values.global.s3.endpoint -}}
   {{- end -}}
-{{- else -}}
+{{/* Endpoint wil be empty if used with aws iam roles*/}}
+{{- else if and .Values.global.s3.accessKey .Values.global.s3.secretKey -}}
   {{- printf "https://s3.%s.amazonaws.com" .Values.global.s3.region -}}
+{{- else -}}
+  {{- .Values.global.s3.endpoint -}}
 {{- end -}}
 {{- end -}}
 
@@ -140,5 +143,13 @@ Create the volume mount config for redis TLS certificates
 - name: redis-ca-certificate
   mountPath: /etc/ssl/certs/redis-ca-certificate.pem
   subPath: {{ .tls.certCAFilename }}
+{{- end }}
+{{- end }}
+
+{{- define "openreplay.assets_origin"}}
+{{- if .Values.global.assetsOrigin }}
+{{- .Values.global.assetsOrigin }}
+{{- else }}
+{{- include "openreplay.s3Endpoint" . }}/{{.Values.global.s3.assetsBucket}}
 {{- end }}
 {{- end }}

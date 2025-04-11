@@ -1,1 +1,1 @@
-export { default } from './MetricsGrid'
+export { default } from './MetricsGrid';

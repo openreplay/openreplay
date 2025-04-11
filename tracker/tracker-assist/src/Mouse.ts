@@ -63,8 +63,21 @@ export default class Mouse {
 
   click(pos: XY) {
     const el = document.elementFromPoint(pos[0], pos[1])
-    if (el instanceof HTMLElement) {
-      el.click()
+    if (el instanceof HTMLElement || el instanceof SVGElement) {
+      try {
+        const clickEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          clientX: pos[0],
+          clientY: pos[1]
+        })
+        el.dispatchEvent(clickEvent)
+      } catch (e) {
+        console.error(e);
+        // @ts-ignore
+        el.click && el.click()
+      }
       el.focus()
       return el
     }

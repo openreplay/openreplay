@@ -1,1 +1,1 @@
-export { default } from './LiveOverlay'
+export { default } from './LiveOverlay';

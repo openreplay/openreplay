@@ -1,1 +1,1 @@
-export { default } from './ToggleContent'
+export { default } from './ToggleContent';

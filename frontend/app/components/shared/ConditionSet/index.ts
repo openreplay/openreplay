@@ -1,1 +1,1 @@
-export { default } from './Conditions'
+export { default } from './Conditions';

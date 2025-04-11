@@ -147,7 +147,7 @@ export default function (app: App, opts: Partial<Options>): void {
         entry.transferSize > entry.encodedBodySize ? entry.transferSize - entry.encodedBodySize : 0,
         entry.encodedBodySize || 0,
         entry.decodedBodySize || 0,
-        entry.name,
+        app.sanitizer.privateMode ? entry.name.replaceAll(/./g, '*') : entry.name,
         entry.initiatorType,
         entry.transferSize,
         // @ts-ignore

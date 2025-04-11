@@ -2,23 +2,34 @@ import { NoContent, Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import InsightItem from './InsightItem';
 import { InishtIssue } from 'App/mstore/types/widget';
 import FilterItem from 'App/mstore/types/filterItem';
-import { FilterKey, IssueCategory, IssueType } from 'App/types/filter/filterType';
+import {
+  FilterKey,
+  IssueCategory,
+  IssueType,
+} from 'App/types/filter/filterType';
 import { filtersMap } from 'Types/filter/newFilter';
+import InsightItem from './InsightItem';
+import { useTranslation } from 'react-i18next';
 
 function InsightsCard({ data }: any) {
   const { dashboardStore } = useStore();
-  const drillDownFilter = dashboardStore.drillDownFilter;
+  const { drillDownFilter } = dashboardStore;
+  const { t } = useTranslation();
 
-  const clickHanddler = (e: React.MouseEvent<HTMLDivElement>, item: InishtIssue) => {
+  const clickHanddler = (
+    e: React.MouseEvent<HTMLDivElement>,
+    item: InishtIssue,
+  ) => {
     let filter: any = {};
     switch (item.category) {
       case IssueCategory.RESOURCES:
         filter = {
           ...filtersMap[
-            item.name === IssueType.MEMORY ? FilterKey.AVG_MEMORY_USAGE : FilterKey.AVG_CPU_LOAD
+            item.name === IssueType.MEMORY
+              ? FilterKey.AVG_MEMORY_USAGE
+              : FilterKey.AVG_CPU_LOAD
           ],
         };
         filter.source = [item.oldValue];
@@ -61,7 +72,7 @@ function InsightsCard({ data }: any) {
       title={
         <div className="flex items-center text-lg">
           <Icon name="info-circle" className="mr-2" size="14" />
-          No data available for the selected period.
+          {t('No data available for the selected period.')}
         </div>
       }
       show={data.issues && data.issues.length === 0}
@@ -69,7 +80,11 @@ function InsightsCard({ data }: any) {
       <div className="overflow-y-auto" style={{ maxHeight: '240px' }}>
         {data.issues &&
           data.issues.map((item: any) => (
-            <InsightItem key={item.name} item={item} onClick={(e) => clickHanddler(e, item)} />
+            <InsightItem
+              key={item.name}
+              item={item}
+              onClick={(e) => clickHanddler(e, item)}
+            />
           ))}
       </div>
     </NoContent>

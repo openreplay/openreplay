@@ -5,6 +5,7 @@ import { CodeBlock, CopyButton } from 'UI';
 
 import CircleNumber from '../../CircleNumber';
 import stl from './installDocs.module.css';
+import { useTranslation } from 'react-i18next';
 
 export const installationCommand = `// Add it in your root build.gradle at the end of repositories:
 dependencyResolutionManagement {
@@ -64,16 +65,17 @@ val passwordEditText = binding.password
 passwordEditText.trackTextInput(label = "password", masked = true)`;
 
 function AndroidInstallDocs({ site, ingestPoint }: any) {
-  let _usageCode = usageCode
+  const { t } = useTranslation();
+  const _usageCode = usageCode
     .replace('PROJECT_KEY', site.projectKey)
     .replace('INGEST_POINT', ingestPoint);
 
   return (
-    <div  className='flex flex-col gap-4 mt-4'>
+    <div className="flex flex-col gap-4 mt-4">
       <div>
         <div className="font-medium flex items-center gap-2">
           <CircleNumber text="1" />
-          <span>Install the SDK</span>
+          <span>{t('Install the SDK')}</span>
         </div>
         <div className={cn(stl.snippetWrapper, 'ml-8')}>
           <div className="absolute mt-1 mr-2 right-0">
@@ -86,7 +88,7 @@ function AndroidInstallDocs({ site, ingestPoint }: any) {
       <div>
         <div className="font-medium flex gap-2 items-center">
           <CircleNumber text="2" />
-          <span>Add to your app</span>
+          <span>{t('Add to your app')}</span>
         </div>
         <div className="flex ml-8 mt-4">
           <div className="w-full">
@@ -94,25 +96,25 @@ function AndroidInstallDocs({ site, ingestPoint }: any) {
               <div className="absolute mt-1 mr-2 right-0">
                 <CopyButton content={_usageCode} />
               </div>
-              <CodeBlock language={'kt'} code={_usageCode} />
+              <CodeBlock language="kt" code={_usageCode} />
             </div>
           </div>
         </div>
-        </div>
+      </div>
 
       <div>
         <div className="font-medium flex gap-2 items-center">
           <CircleNumber text="3" />
-          <span>Configuration</span>
+          <span>{t('Configuration')}</span>
         </div>
         <div className="flex ml-8 mt-4">
           <div className="w-full">
             <div className={cn(stl.snippetWrapper)}>
-              <CodeBlock code={configuration} language={'kt'} />
-              <div className={'mt-2'}>
-                By default, all options equals{' '}
-                <code className={'p-1 text-red rounded bg-gray-lightest'}>
-                  true
+              <CodeBlock code={configuration} language="kt" />
+              <div className="mt-2">
+                {t('By default, all options equals')}&nbsp;
+                <code className="p-1 text-red rounded bg-gray-lightest">
+                  {t('true')}
                 </code>
               </div>
             </div>
@@ -123,7 +125,7 @@ function AndroidInstallDocs({ site, ingestPoint }: any) {
       <div>
         <div className="font-medium flex gap-2 items-center">
           <CircleNumber text="4" />
-        <span> Set up touch events listener</span>
+          <span>&nbsp;{t('Set up touch events listener')}</span>
         </div>
         <div className="flex ml-8 mt-4">
           <div className="w-full">
@@ -131,34 +133,33 @@ function AndroidInstallDocs({ site, ingestPoint }: any) {
               <div className="absolute mt-1 mr-2 right-0">
                 <CopyButton content={touches} />
               </div>
-              <CodeBlock code={touches} language={'kt'} />
+              <CodeBlock code={touches} language="kt" />
             </div>
           </div>
         </div>
       </div>
 
-
       <div>
-          <div className="font-medium flex gap-2 items-center">
-            <CircleNumber text="5" />
-            <span>Hide sensitive views</span>
-          </div>
-          <div className="flex ml-8 mt-4">
-            <div className="w-full">
-              <div className={cn(stl.snippetWrapper)}>
-                <div className="absolute mt-1 mr-2 right-0">
-                  <CopyButton content={sensitive} />
-                </div>
-                <CodeBlock code={sensitive} language={'kt'} />
+        <div className="font-medium flex gap-2 items-center">
+          <CircleNumber text="5" />
+          <span>{t('Hide sensitive views')}</span>
+        </div>
+        <div className="flex ml-8 mt-4">
+          <div className="w-full">
+            <div className={cn(stl.snippetWrapper)}>
+              <div className="absolute mt-1 mr-2 right-0">
+                <CopyButton content={sensitive} />
               </div>
+              <CodeBlock code={sensitive} language="kt" />
             </div>
           </div>
         </div>
+      </div>
 
       <div>
         <div className="font-medium flex gap-2 items-center">
           <CircleNumber text="6" />
-          <span>Track inputs</span>
+          <span>{t('Track inputs')}</span>
         </div>
         <div className="flex ml-8 mt-4">
           <div className="w-full">
@@ -166,12 +167,11 @@ function AndroidInstallDocs({ site, ingestPoint }: any) {
               <div className="absolute mt-1 mr-2 right-0">
                 <CopyButton content={inputs} />
               </div>
-              <CodeBlock code={inputs} language={'kt'} />
+              <CodeBlock code={inputs} language="kt" />
             </div>
           </div>
         </div>
       </div>
-
     </div>
   );
 }

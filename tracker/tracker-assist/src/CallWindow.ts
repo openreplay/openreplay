@@ -12,6 +12,7 @@ export default class CallWindow {
 	private videoBtn: HTMLElement | null = null
 	private endCallBtn: HTMLElement | null = null
 	private agentNameElem: HTMLElement | null = null
+	private remoteStreamVideoContainerSample: HTMLElement | null = null
 	private videoContainer: HTMLElement | null = null
 	private vPlaceholder: HTMLElement | null = null
 	private remoteControlContainer: HTMLElement | null = null
@@ -47,7 +48,7 @@ export default class CallWindow {
 		}
 
 		// const baseHref = "https://static.openreplay.com/tracker-assist/test"
-		const baseHref = 'https://static.openreplay.com/tracker-assist/4.0.0'
+		const baseHref = 'https://static.openreplay.com/tracker-assist/widget'
 		// this.load = fetch(this.callUITemplate || baseHref + '/index2.html')
 		this.load = fetch(this.callUITemplate || baseHref + '/index.html')
 			.then((r) => r.text())
@@ -59,10 +60,9 @@ export default class CallWindow {
 					}, 0)
 					//iframe.style.height = doc.body.scrollHeight + 'px';
 					//iframe.style.width = doc.body.scrollWidth + 'px';
-					this.adjustIframeSize()
+				    this.adjustIframeSize()
 					iframe.onload = null
 				}
-
 				// ?
 				text = text.replace(/href="css/g, `href="${baseHref}/css`)
 				doc.open()
@@ -71,8 +71,9 @@ export default class CallWindow {
 
 				this.vLocal = doc.getElementById('video-local') as HTMLVideoElement | null
 				this.vRemote = doc.getElementById('video-remote') as HTMLVideoElement | null
+				
 				this.videoContainer = doc.getElementById('video-container')
-
+				
 				this.audioBtn = doc.getElementById('audio-btn')
 				if (this.audioBtn) {
 					this.audioBtn.onclick = () => this.toggleAudio()
@@ -151,15 +152,6 @@ export default class CallWindow {
 					if (this.checkRemoteVideoInterval) {
 						clearInterval(this.checkRemoteVideoInterval)
 					} // just in case
-					let enabled = false
-					this.checkRemoteVideoInterval = setInterval(() => {
-						const settings = this.remoteVideo?.getSettings()
-						const isDummyVideoTrack = !this.remoteVideo.enabled || (!!settings && (settings.width === 2 || settings.frameRate === 0))
-						const shouldBeEnabled = !isDummyVideoTrack
-						if (enabled !== shouldBeEnabled) {
-							this.toggleRemoteVideoUI((enabled = shouldBeEnabled))
-						}
-					}, 1000)
 				}
 
 				// Audio

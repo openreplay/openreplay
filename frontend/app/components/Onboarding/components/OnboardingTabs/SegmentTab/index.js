@@ -1,1 +1,1 @@
-export { default } from './SegmentTab'
+export { default } from './SegmentTab';

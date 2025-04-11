@@ -4,7 +4,8 @@ from pydantic_core._pydantic_core import ValidationError
 
 import schemas
 from chalicelib.core.alerts import alerts, alerts_listener
-from chalicelib.core.alerts.modules import sessions, alert_helpers
+from chalicelib.core.alerts.modules import alert_helpers
+from chalicelib.core.sessions import sessions_pg as sessions
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -131,6 +132,7 @@ def Build(a):
 
 
 def process():
+    logger.info("> processing alerts on PG")
     notifications = []
     all_alerts = alerts_listener.get_all_alerts()
     with pg_client.PostgresClient() as cur:

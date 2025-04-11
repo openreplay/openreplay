@@ -80,7 +80,7 @@ export default function (app: App, opts: Partial<Options>): void {
     ticks = frames = undefined
   })
 
-  app.ticker.attach(sendPerformanceTrack, 40, false)
+  app.ticker.attach(sendPerformanceTrack, 165, false)
 
   if (document.hidden !== undefined) {
     app.attachEventListener(

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas.ProjectContext,
                       metric_format: schemas.MetricExtendedFormatType) -> List[RealDictRow]:
-    stages: List[schemas.SessionSearchEventSchema2] = filter_d.events
+    stages: List[schemas.SessionSearchEventSchema] = filter_d.events
     filters: List[schemas.SessionSearchFilterSchema] = filter_d.filters
     platform = project.platform
     constraints = ["e.project_id = %(project_id)s",
@@ -175,7 +175,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
                     value_key=e_k
                 ) if not specific_condition else specific_condition)
 
-    full_args = {"eventTypes": tuple(event_types), **full_args, **values}
+    full_args = {"eventTypes": event_types, **full_args, **values}
     n_stages = len(n_stages_query)
     if n_stages == 0:
         return []
@@ -243,7 +243,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
         logger.debug(query)
         logger.debug("---------------------------------------------------")
         try:
-            row = cur.execute(query)
+            row = cur.execute(query=query)
         except Exception as err:
             logger.warning("--------- SIMPLE FUNNEL SEARCH QUERY EXCEPTION CH-----------")
             logger.warning(query)

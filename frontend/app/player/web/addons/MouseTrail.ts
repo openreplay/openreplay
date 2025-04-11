@@ -3,19 +3,30 @@
  * */
 
 const LINE_DURATION = 3.5;
-const LINE_DURATION_MOBILE = 5
+const LINE_DURATION_MOBILE = 5;
 const LINE_WIDTH_START = 5;
 
-export type SwipeEvent = { x: number; y: number; direction: 'up' | 'down' | 'left' | 'right' }
+export type SwipeEvent = {
+  x: number;
+  y: number;
+  direction: 'up' | 'down' | 'left' | 'right';
+};
 
 export default class MouseTrail {
   public isActive = true;
+
   public context: CanvasRenderingContext2D;
-  private dimensions = {width: 0, height: 0};
+
+  private dimensions = { width: 0, height: 0 };
+
   private readonly lineDuration: number;
+
   private points: Point[] = [];
 
-  constructor(private readonly canvas: HTMLCanvasElement, isNativeMobile: boolean = false) {
+  constructor(
+    private readonly canvas: HTMLCanvasElement,
+    isNativeMobile: boolean = false,
+  ) {
     // @ts-ignore patching window
     window.requestAnimFrame =
       window.requestAnimationFrame ||
@@ -31,7 +42,7 @@ export default class MouseTrail {
         window.setTimeout(callback, 1000 / 60);
       };
 
-    this.lineDuration = isNativeMobile ? LINE_DURATION_MOBILE : LINE_DURATION
+    this.lineDuration = isNativeMobile ? LINE_DURATION_MOBILE : LINE_DURATION;
   }
 
   resizeCanvas = (w: number, h: number) => {
@@ -68,11 +79,17 @@ export default class MouseTrail {
   };
 
   animatePoints = () => {
-    this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
+    this.context.clearRect(
+      0,
+      0,
+      this.context.canvas.width,
+      this.context.canvas.height,
+    );
 
     const duration = (this.lineDuration * 1000) / 60;
-    const points = this.points;
-    let point, lastPoint;
+    const { points } = this;
+    let point;
+    let lastPoint;
 
     for (let i = 0; i < points.length; i++) {
       point = points[i];
@@ -97,7 +114,7 @@ export default class MouseTrail {
       const spreadRate = LINE_WIDTH_START * (1 - inc);
       this.context.lineJoin = 'round';
       this.context.lineWidth = spreadRate;
-      this.context.strokeStyle = `rgba(60, 170, 170, ${dec})`
+      this.context.strokeStyle = `rgba(60, 170, 170, ${dec})`;
 
       this.context.beginPath();
       this.context.moveTo(lastPoint.x, lastPoint.y);
@@ -116,7 +133,11 @@ export default class MouseTrail {
 type Coords = { x: number; y: number };
 
 class Point {
-  constructor(public x: number, public y: number, public lifetime?: number) {}
+  constructor(
+    public x: number,
+    public y: number,
+    public lifetime?: number,
+  ) {}
 
   static distance(a: Coords, b: Coords) {
     const dx = a.x - b.x;
@@ -140,6 +161,6 @@ class Point {
   }
 
   get pos() {
-    return this.x + ',' + this.y;
+    return `${this.x},${this.y}`;
   }
 }

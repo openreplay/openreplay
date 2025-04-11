@@ -1,1 +1,1 @@
-export { default } from './AssistSearchActions'
+export { default } from './AssistSearchActions';

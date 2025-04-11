@@ -3,6 +3,7 @@ package sessions
 import (
 	"errors"
 	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/metrics/database"
 )
 
 type cacheImpl struct{}
@@ -25,6 +26,6 @@ func (c *cacheImpl) Get(sessionID uint64) (*Session, error) {
 
 var ErrDisabledCache = errors.New("cache is disabled")
 
-func NewCache(db *redis.Client) Cache {
+func NewCache(db *redis.Client, metrics database.Database) Cache {
 	return &cacheImpl{}
 }

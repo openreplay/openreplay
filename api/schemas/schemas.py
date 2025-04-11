@@ -404,6 +404,7 @@ class EventType(str, Enum):
     REQUEST_MOBILE = "requestMobile"
     ERROR_MOBILE = "errorMobile"
     SWIPE_MOBILE = "swipeMobile"
+    EVENT = "event"
 
 
 class PerformanceEventType(str, Enum):
@@ -464,6 +465,7 @@ class SearchEventOperator(str, Enum):
     NOT_CONTAINS = "notContains"
     STARTS_WITH = "startsWith"
     ENDS_WITH = "endsWith"
+    PATTERN = "regex"
 
 
 class ClickEventExtraOperator(str, Enum):
@@ -541,11 +543,70 @@ class RequestGraphqlFilterSchema(BaseModel):
     @classmethod
     def _transform_data(cls, values):
         if values.get("type") in [FetchFilterType.FETCH_DURATION, FetchFilterType.FETCH_STATUS_CODE]:
-            values["value"] = [int(v) for v in values["value"] if v is not None and v.isnumeric()]
+            values["value"] = [int(v) for v in values["value"] if v is not None and str(v).isnumeric()]
         return values
 
 
-class SessionSearchEventSchema2(BaseModel):
+class EventPredefinedPropertyType(str, Enum):
+    TIME = "$time"
+    SOURCE = "$source"
+    DURATION_S = "$duration_s"
+    DESCRIPTION = "description"
+    AUTO_CAPTURED = "$auto_captured"
+    SDK_EDITION = "$sdk_edition"
+    SDK_VERSION = "$sdk_version"
+    DEVICE_ID = "$device_id"
+    OS = "$os"
+    OS_VERSION = "$os_version"
+    BROWSER = "$browser"
+    BROWSER_VERSION = "$browser_version"
+    DEVICE = "$device"
+    SCREEN_HEIGHT = "$screen_height"
+    SCREEN_WIDTH = "$screen_width"
+    CURRENT_URL = "$current_url"
+    INITIAL_REFERRER = "$initial_referrer"
+    REFERRING_DOMAIN = "$referring_domain"
+    REFERRER = "$referrer"
+    INITIAL_REFERRING_DOMAIN = "$initial_referring_domain"
+    SEARCH_ENGINE = "$search_engine"
+    SEARCH_ENGINE_KEYWORD = "$search_engine_keyword"
+    UTM_SOURCE = "utm_source"
+    UTM_MEDIUM = "utm_medium"
+    UTM_CAMPAIGN = "utm_campaign"
+    COUNTRY = "$country"
+    STATE = "$state"
+    CITY = "$city"
+    ISSUE_TYPE = "issue_type"
+    TAGS = "$tags"
+    IMPORT = "$import"
+
+
+class PropertyFilterSchema(BaseModel):
+    is_event: Literal[False] = False
+    name: Union[EventPredefinedPropertyType, str] = Field(...)
+    operator: Union[SearchEventOperator, MathOperator] = Field(...)
+    value: List[Union[int, str]] = Field(...)
+
+    # property_type: Optional[Literal["string", "number", "date"]] = Field(default=None)
+
+    @computed_field
+    @property
+    def is_predefined(self) -> bool:
+        return EventPredefinedPropertyType.has_value(self.name)
+
+    @model_validator(mode="after")
+    def transform_name(self):
+        if isinstance(self.name, Enum):
+            self.name = self.name.value
+        return self
+
+
+class EventPropertiesSchema(BaseModel):
+    operator: Literal["and", "or"] = Field(...)
+    filters: List[PropertyFilterSchema] = Field(...)
+
+
+class SessionSearchEventSchema(BaseModel):
     is_event: Literal[True] = True
     value: List[Union[str, int]] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
@@ -553,6 +614,7 @@ class SessionSearchEventSchema2(BaseModel):
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(default=None)
     sourceOperator: Optional[MathOperator] = Field(default=None)
     filters: Optional[List[RequestGraphqlFilterSchema]] = Field(default_factory=list)
+    properties: Optional[EventPropertiesSchema] = Field(default=None)
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
     _single_to_list_values = field_validator('value', mode='before')(single_to_list)
@@ -660,12 +722,12 @@ def add_missing_is_event(values: dict):
 
 
 # this type is created to allow mixing events&filters and specifying a discriminator
-GroupedFilterType = Annotated[Union[SessionSearchFilterSchema, SessionSearchEventSchema2],
+GroupedFilterType = Annotated[Union[SessionSearchFilterSchema, SessionSearchEventSchema],
 Field(discriminator='is_event'), BeforeValidator(add_missing_is_event)]
 
 
 class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
-    events: List[SessionSearchEventSchema2] = Field(default_factory=list, doc_hidden=True)
+    events: List[SessionSearchEventSchema] = Field(default_factory=list, doc_hidden=True)
     filters: List[GroupedFilterType] = Field(default_factory=list)
     sort: str = Field(default="startTs")
     order: SortOrderType = Field(default=SortOrderType.DESC)
@@ -690,6 +752,8 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
     def add_missing_attributes(cls, values):
         # in case isEvent is wrong:
         for f in values.get("filters") or []:
+            if f.get("type") is None:
+                continue
             if EventType.has_value(f["type"]) and not f.get("isEvent"):
                 f["isEvent"] = True
             elif FilterType.has_value(f["type"]) and f.get("isEvent"):
@@ -714,6 +778,15 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
                     vals.append(v)
             f["value"] = vals
         return values
+
+    @model_validator(mode="after")
+    def check_pa_event_filter(self):
+        for v in self.filters + self.events:
+            if v.type == EventType.EVENT:
+                assert v.operator in (SearchEventOperator.IS, MathOperator.EQUAL), \
+                    "operator must be {SearchEventOperator.IS} or {MathOperator.EQUAL} for EVENT type"
+                assert len(v.value) == 1, "value must have 1 single value for EVENT type"
+        return self
 
     @model_validator(mode="after")
     def split_filters_events(self):
@@ -851,18 +924,21 @@ class MetricTimeseriesViewType(str, Enum):
     LINE_CHART = "lineChart"
     AREA_CHART = "areaChart"
     BAR_CHART = "barChart"
-    PIE_CHART = "pieChart"
     PROGRESS_CHART = "progressChart"
-    TABLE_CHART = "table"
+    PIE_CHART = "pieChart"
     METRIC_CHART = "metric"
+    TABLE_CHART = "table"
 
 
 class MetricTableViewType(str, Enum):
-    TABLE = "table"
+    TABLE_CHART = "table"
 
 
 class MetricOtherViewType(str, Enum):
     OTHER_CHART = "chart"
+    COLUMN_CHART = "columnChart"
+    METRIC_CHART = "metric"
+    TABLE_CHART = "table"
     LIST_CHART = "list"
 
 
@@ -874,8 +950,6 @@ class MetricType(str, Enum):
     RETENTION = "retention"
     STICKINESS = "stickiness"
     HEAT_MAP = "heatMap"
-
-
 
 
 class MetricOfTable(str, Enum):
@@ -1086,7 +1160,7 @@ class CardFunnel(__CardSchema):
     def __enforce_default(cls, values):
         if values.get("metricOf") and not MetricOfFunnels.has_value(values["metricOf"]):
             values["metricOf"] = MetricOfFunnels.SESSION_COUNT
-        values["viewType"] = MetricOtherViewType.OTHER_CHART
+        # values["viewType"] = MetricOtherViewType.OTHER_CHART
         if values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
         return values
@@ -1134,7 +1208,7 @@ class CardPathAnalysis(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
     metric_value: List[ProductAnalyticsSelectedEventType] = Field(default_factory=list)
     density: int = Field(default=4, ge=2, le=10)
-    rows: int = Field(default=3, ge=1, le=10)
+    rows: int = Field(default=5, ge=1, le=10)
 
     start_type: Literal["start", "end"] = Field(default="start")
     start_point: List[PathAnalysisSubFilterSchema] = Field(default_factory=list)
@@ -1367,7 +1441,43 @@ class SearchCardsSchema(_PaginatedSchema):
     query: Optional[str] = Field(default=None)
 
 
-class _HeatMapSearchEventRaw(SessionSearchEventSchema2):
+class MetricSortColumnType(str, Enum):
+    NAME = "name"
+    METRIC_TYPE = "metric_type"
+    METRIC_OF = "metric_of"
+    IS_PUBLIC = "is_public"
+    CREATED_AT = "created_at"
+    EDITED_AT = "edited_at"
+
+
+class MetricFilterColumnType(str, Enum):
+    NAME = "name"
+    METRIC_TYPE = "metric_type"
+    METRIC_OF = "metric_of"
+    IS_PUBLIC = "is_public"
+    USER_ID = "user_id"
+    CREATED_AT = "created_at"
+    EDITED_AT = "edited_at"
+
+
+class MetricListSort(BaseModel):
+    field: Optional[str] = Field(default=None)
+    order: Optional[str] = Field(default=SortOrderType.DESC)
+
+
+class MetricFilter(BaseModel):
+    type: Optional[str] = Field(default=None)
+    query: Optional[str] = Field(default=None)
+
+
+class MetricSearchSchema(_PaginatedSchema):
+    filter: Optional[MetricFilter] = Field(default=None)
+    sort: Optional[MetricListSort] = Field(default=MetricListSort())
+    shared_only: bool = Field(default=False)
+    mine_only: bool = Field(default=False)
+
+
+class _HeatMapSearchEventRaw(SessionSearchEventSchema):
     type: Literal[EventType.LOCATION] = Field(...)
 
 
@@ -1492,3 +1602,30 @@ class TagCreate(TagUpdate):
 
 class ScopeSchema(BaseModel):
     scope: int = Field(default=1, ge=1, le=2)
+
+
+class SessionModel(BaseModel):
+    duration: int
+    errorsCount: int
+    eventsCount: int
+    favorite: bool = Field(default=False)
+    issueScore: int
+    issueTypes: List[IssueType] = Field(default=[])
+    metadata: dict = Field(default={})
+    pagesCount: int
+    platform: str
+    projectId: int
+    sessionId: str
+    startTs: int
+    timezone: Optional[str]
+    userAnonymousId: Optional[str]
+    userBrowser: str
+    userCity: str
+    userCountry: str
+    userDevice: Optional[str]
+    userDeviceType: str
+    userId: Optional[str]
+    userOs: str
+    userState: str
+    userUuid: str
+    viewed: bool = Field(default=False)

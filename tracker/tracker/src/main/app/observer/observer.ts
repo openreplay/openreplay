@@ -23,9 +23,13 @@ import {
 } from '../guards.js'
 
 const iconCache = {}
-const domParser = new DOMParser()
+const svgUrlCache = {}
 
-async function parseUseEl(useElement: SVGUseElement, mode: 'inline' | 'dataurl' | 'svgtext') {
+async function parseUseEl(
+  useElement: SVGUseElement,
+  mode: 'inline' | 'dataurl' | 'svgtext',
+  domParser: DOMParser,
+) {
   try {
     const href = useElement.getAttribute('xlink:href') || useElement.getAttribute('href')
     if (!href) {
@@ -33,9 +37,29 @@ async function parseUseEl(useElement: SVGUseElement, mode: 'inline' | 'dataurl' 
       return
     }
 
-    const [url, symbolId] = href.split('#')
-    if (!url || !symbolId) {
-      console.debug('Openreplay: Invalid xlink:href or href found on <use>.')
+    let [url, symbolId] = href.split('#')
+
+    // happens if svg spritemap is local, fastest case for us
+    if (!url && symbolId) {
+      const symbol = document.querySelector(href)
+      if (symbol) {
+        const inlineSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
+          ${symbol.innerHTML}
+        </svg>
+      `.trim()
+
+        iconCache[symbolId] = inlineSvg
+
+        return inlineSvg
+      } else {
+        console.warn('Openreplay: Sprite symbol not found in the document.')
+        return
+      }
+    }
+
+    if (!url && !symbolId) {
+      console.warn('Openreplay: Invalid xlink:href or href found on <use>.')
       return
     }
 
@@ -43,15 +67,42 @@ async function parseUseEl(useElement: SVGUseElement, mode: 'inline' | 'dataurl' 
       return iconCache[symbolId]
     }
 
-    const response = await fetch(url)
-    const svgText = await response.text()
+    let svgDoc: Document
+    if (svgUrlCache[url]) {
+      if (svgUrlCache[url] === 1) {
+        await new Promise((resolve) => {
+          let tries = 0
+          const interval = setInterval(() => {
+            if (tries > 100) {
+              clearInterval(interval)
+              resolve(false)
+            }
+            if (svgUrlCache[url] !== 1) {
+              svgDoc = svgUrlCache[url]
+              clearInterval(interval)
+              resolve(true)
+            } else {
+              tries++
+            }
+          }, 100)
+        })
+      } else {
+        svgDoc = svgUrlCache[url] ?? `<svg xmlns="http://www.w3.org/2000/svg"></svg>`
+      }
+    } else {
+      svgUrlCache[url] = 1
+      const response = await fetch(url)
+      const svgText = await response.text()
+      svgDoc = domParser.parseFromString(svgText, 'image/svg+xml')
+      svgUrlCache[url] = svgDoc
+    }
 
-    const svgDoc = domParser.parseFromString(svgText, 'image/svg+xml')
+    // @ts-ignore
     const symbol = svgDoc.getElementById(symbolId)
 
     if (!symbol) {
       console.debug('Openreplay: Symbol not found in SVG.')
-      return
+      return ''
     }
 
     if (mode === 'inline') {
@@ -136,10 +187,14 @@ export default abstract class Observer {
   private readonly indexes: Array<number> = []
   private readonly attributesMap: Map<number, Set<string>> = new Map()
   private readonly textSet: Set<number> = new Set()
+  private readonly disableSprites: boolean = false
+  private readonly domParser = new DOMParser()
   constructor(
     protected readonly app: App,
     protected readonly isTopContext = false,
+    options: { disableSprites: boolean } = { disableSprites: false },
   ) {
+    this.disableSprites = options.disableSprites
     this.observer = createMutationObserver(
       this.app.safe((mutations) => {
         for (const mutation of mutations) {
@@ -249,8 +304,8 @@ export default abstract class Observer {
         this.app.send(RemoveNodeAttribute(id, name))
       }
 
-      if (isUseElement(node) && name === 'href') {
-        parseUseEl(node, 'svgtext')
+      if (isUseElement(node) && name === 'href' && !this.disableSprites) {
+        parseUseEl(node, 'svgtext', this.domParser)
           .then((svgData) => {
             if (svgData) {
               this.app.send(SetNodeAttribute(id, name, `_$OPENREPLAY_SPRITE$_${svgData}`))
@@ -302,6 +357,9 @@ export default abstract class Observer {
     if (name === 'href' || value.length > 1e5) {
       value = ''
     }
+    if (['alt', 'placeholder'].includes(name) && this.app.sanitizer.privateMode) {
+      value = value.replaceAll(/./g, '*')
+    }
     this.app.attributeSender.sendSetAttribute(id, name, value)
   }
 
@@ -334,7 +392,7 @@ export default abstract class Observer {
       {
         acceptNode: (node) => {
           if (this.app.nodes.getID(node) !== undefined) {
-            this.app.debug.error('! Node is already bound', node)
+            this.app.debug.info('! Node is already bound', node)
           }
           return isIgnored(node) || this.app.nodes.getID(node) !== undefined
             ? NodeFilter.FILTER_REJECT

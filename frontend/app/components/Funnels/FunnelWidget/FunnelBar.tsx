@@ -1,10 +1,11 @@
 import { durationFormatted } from 'App/date';
 import React from 'react';
-import FunnelStepText from './FunnelStepText';
 import { Icon } from 'UI';
 import { Space } from 'antd';
 import { Styles } from 'Components/Dashboard/Widgets/common';
 import cn from 'classnames';
+import FunnelStepText from './FunnelStepText';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   filter: any;
@@ -17,7 +18,8 @@ interface Props {
 }
 
 function FunnelBar(props: Props) {
-  const { filter, index, focusStage, focusedFilter, compData, isHorizontal } = props;
+  const { filter, index, focusStage, focusedFilter, compData, isHorizontal } =
+    props;
 
   const isFocused =
     focusedFilter && index ? focusedFilter === index - 1 : false;
@@ -63,6 +65,7 @@ function FunnelBarData({
   index?: number;
   isHorizontal?: boolean;
 }) {
+  const { t } = useTranslation();
   const vertFillBarStyle = {
     width: `${data.completedPercentageTotal}%`,
     height: '100%',
@@ -72,27 +75,29 @@ function FunnelBarData({
     width: '100%',
     height: `${data.completedPercentageTotal}%`,
     backgroundColor: isComp ? Styles.compareColors[2] : Styles.compareColors[1],
-  }
+  };
 
   const vertEmptyBarStyle = {
     width: `${100.1 - data.completedPercentageTotal}%`,
     height: '100%',
     background: isFocused
-                ? 'rgba(204, 0, 0, 0.3)'
-                : 'repeating-linear-gradient(325deg, lightgray, lightgray 1px, #FFF1F0 1px, #FFF1F0 6px)',
+      ? 'rgba(204, 0, 0, 0.3)'
+      : 'repeating-linear-gradient(325deg, lightgray, lightgray 1px, #FFF1F0 1px, #FFF1F0 6px)',
     cursor: 'pointer',
-  }
+  };
   const horizontalEmptyBarStyle = {
     height: `${100.1 - data.completedPercentageTotal}%`,
     width: '100%',
     background: isFocused
-                ? 'rgba(204, 0, 0, 0.3)'
-                : 'repeating-linear-gradient(325deg, lightgray, lightgray 1px, #FFF1F0 1px, #FFF1F0 6px)',
+      ? 'rgba(204, 0, 0, 0.3)'
+      : 'repeating-linear-gradient(325deg, lightgray, lightgray 1px, #FFF1F0 1px, #FFF1F0 6px)',
     cursor: 'pointer',
-  }
+  };
 
   const fillBarStyle = isHorizontal ? horizontalFillBarStyle : vertFillBarStyle;
-  const emptyBarStyle = isHorizontal ? horizontalEmptyBarStyle : vertEmptyBarStyle
+  const emptyBarStyle = isHorizontal
+    ? horizontalEmptyBarStyle
+    : vertEmptyBarStyle;
   return (
     <div>
       <div
@@ -110,7 +115,12 @@ function FunnelBarData({
         }}
       >
         <div
-          className={cn("flex", isHorizontal ? 'justify-center items-start pt-1' : 'justify-end items-center pr-1')}
+          className={cn(
+            'flex',
+            isHorizontal
+              ? 'justify-center items-start pt-1'
+              : 'justify-end items-center pr-1',
+          )}
           style={fillBarStyle}
         >
           <div className="color-white flex items-center font-medium leading-3">
@@ -120,12 +130,10 @@ function FunnelBarData({
         <div
           style={emptyBarStyle}
           onClick={() => focusStage?.(index! - 1, isComp)}
-          className={'hover:opacity-70'}
+          className="hover:opacity-70"
         />
       </div>
-      <div
-        className={cn('flex justify-between', isComp ? 'opacity-60' : '')}
-      >
+      <div className={cn('flex justify-between', isComp ? 'opacity-60' : '')}>
         {/* @ts-ignore */}
         <div className="flex items-center">
           <Icon name="arrow-right-short" size="20" color="green" />
@@ -141,11 +149,9 @@ function FunnelBarData({
               size={16}
             />
             <span
-              className={
-                'mr-1 text-sm' + (data.droppedCount > 0 ? 'color-red' : 'disabled')
-              }
+              className={`mr-1 text-sm${data.droppedCount > 0 ? 'color-red' : 'disabled'}`}
             >
-              {data.droppedCount} Skipped
+              {data.droppedCount}&nbsp;{t('Skipped')}
             </span>
           </Space>
         )}
@@ -155,11 +161,12 @@ function FunnelBarData({
 }
 
 export function UxTFunnelBar(props: Props) {
+  const { t } = useTranslation();
   const { filter } = props;
 
   return (
     <div className="w-full mb-2">
-      <div className={'font-medium'}>{filter.title}</div>
+      <div className="font-medium">{filter.title}</div>
       <div
         style={{
           height: '25px',
@@ -194,25 +201,25 @@ export function UxTFunnelBar(props: Props) {
       </div>
       <div className="flex justify-between py-2">
         {/* @ts-ignore */}
-        <div className={'flex items-center gap-4'}>
+        <div className="flex items-center gap-4">
           <div className="flex items-center">
             <Icon name="arrow-right-short" size="20" color="green" />
             <span className="mx-1 font-medium">{filter.completed}</span>
-            <span>completed this step</span>
+            <span>{t('completed this step')}</span>
           </div>
-          <div className={'flex items-center'}>
+          <div className="flex items-center">
             <Icon name="clock" size="16" />
             <span className="mx-1 font-medium">
               {durationFormatted(filter.avgCompletionTime)}
             </span>
-            <span>avg. completion time</span>
+            <span>{t('avg. completion time')}</span>
           </div>
         </div>
         {/* @ts-ignore */}
         <div className="flex items-center">
           <Icon name="caret-down-fill" color="red" size={16} />
           <span className="font-medium mx-1">{filter.skipped}</span>
-          <span> skipped</span>
+          <span>&nbsp;{t('skipped')}</span>
         </div>
       </div>
     </div>

@@ -1,1 +1,1 @@
-export { default } from './WidgetChart'
+export { default } from './WidgetChart';

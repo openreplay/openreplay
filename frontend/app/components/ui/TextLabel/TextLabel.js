@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
-import { Icon, Tooltip } from 'UI';
+import { Icon } from 'UI';
+import { Tooltip } from 'antd';
 import styles from './textLabel.module.css';
 
 export default function TextLabel({

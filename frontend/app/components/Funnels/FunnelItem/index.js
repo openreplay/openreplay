@@ -1,1 +1,1 @@
-export { default } from './FunnelItem'
+export { default } from './FunnelItem';

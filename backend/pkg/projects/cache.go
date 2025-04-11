@@ -11,6 +11,8 @@ import (
 	"openreplay/backend/pkg/metrics/database"
 )
 
+var ErrDisabledCache = errors.New("cache is disabled")
+
 type Cache interface {
 	Set(project *Project) error
 	GetByID(projectID uint32) (*Project, error)
@@ -18,10 +20,16 @@ type Cache interface {
 }
 
 type cacheImpl struct {
-	db *redis.Client
+	db      *redis.Client
+	metrics database.Database
 }
 
-var ErrDisabledCache = errors.New("cache is disabled")
+func NewCache(db *redis.Client, metrics database.Database) Cache {
+	return &cacheImpl{
+		db:      db,
+		metrics: metrics,
+	}
+}
 
 func (c *cacheImpl) Set(project *Project) error {
 	if c.db == nil {
@@ -38,8 +46,8 @@ func (c *cacheImpl) Set(project *Project) error {
 	if _, err = c.db.Redis.Set(fmt.Sprintf("project:key:%s", project.ProjectKey), projectBytes, time.Minute*10).Result(); err != nil {
 		return err
 	}
-	database.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "set", "project")
-	database.IncreaseRedisRequests("set", "project")
+	c.metrics.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "set", "project")
+	c.metrics.IncreaseRedisRequests("set", "project")
 	return nil
 }
 
@@ -52,8 +60,8 @@ func (c *cacheImpl) GetByID(projectID uint32) (*Project, error) {
 	if err != nil {
 		return nil, err
 	}
-	database.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "get", "project")
-	database.IncreaseRedisRequests("get", "project")
+	c.metrics.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "get", "project")
+	c.metrics.IncreaseRedisRequests("get", "project")
 	project := &Project{}
 	if err = json.Unmarshal([]byte(result), project); err != nil {
 		return nil, err
@@ -70,15 +78,11 @@ func (c *cacheImpl) GetByKey(projectKey string) (*Project, error) {
 	if err != nil {
 		return nil, err
 	}
-	database.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "get", "project")
-	database.IncreaseRedisRequests("get", "project")
+	c.metrics.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "get", "project")
+	c.metrics.IncreaseRedisRequests("get", "project")
 	project := &Project{}
 	if err = json.Unmarshal([]byte(result), project); err != nil {
 		return nil, err
 	}
 	return project, nil
-}
-
-func NewCache(db *redis.Client) Cache {
-	return &cacheImpl{db: db}
 }

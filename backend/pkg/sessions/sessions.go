@@ -3,6 +3,7 @@ package sessions
 import (
 	"context"
 	"fmt"
+	"openreplay/backend/pkg/metrics/database"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
@@ -38,12 +39,12 @@ type sessionsImpl struct {
 	projects projects.Projects
 }
 
-func New(log logger.Logger, db pool.Pool, proj projects.Projects, redis *redis.Client) Sessions {
+func New(log logger.Logger, db pool.Pool, proj projects.Projects, redis *redis.Client, metrics database.Database) Sessions {
 	return &sessionsImpl{
 		log:      log,
-		cache:    NewInMemoryCache(log, NewCache(redis)),
+		cache:    NewInMemoryCache(log, NewCache(redis, metrics)),
 		storage:  NewStorage(db),
-		updates:  NewSessionUpdates(log, db),
+		updates:  NewSessionUpdates(log, db, metrics),
 		projects: proj,
 	}
 }
@@ -76,7 +77,7 @@ func (s *sessionsImpl) getFromDB(sessionID uint64) (*Session, error) {
 	}
 	proj, err := s.projects.GetProject(session.ProjectID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get active project: %d, err: %s", session.ProjectID, err)
 	}
 	session.SaveRequestPayload = proj.SaveRequestPayloads
 	return session, nil

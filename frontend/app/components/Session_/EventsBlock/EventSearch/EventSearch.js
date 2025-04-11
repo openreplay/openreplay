@@ -1,6 +1,6 @@
 import React from 'react';
-import {Input, Button, Tooltip} from 'antd';
-import {CloseOutlined, SearchOutlined} from '@ant-design/icons';
+import { Input, Button, Tooltip } from 'antd';
+import { CloseOutlined, SearchOutlined } from '@ant-design/icons';
 import { PlayerContext } from 'App/components/Session/playerContext';
 
 function EventSearch(props) {
@@ -24,18 +24,6 @@ function EventSearch(props) {
             onChange={onChange}
             prefix={<SearchOutlined />}
           />
-
-          <Tooltip title="Close Panel" placement='bottom' >
-              <Button
-                className="ml-2"
-                type='text'
-                onClick={() => {
-                  setActiveTab('');
-                  toggleEvents();
-                }}
-                icon={<CloseOutlined />}
-              />
-          </Tooltip>
         </div>
       </div>
     </div>

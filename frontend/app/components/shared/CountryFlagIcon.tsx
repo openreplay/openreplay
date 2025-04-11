@@ -7,13 +7,16 @@ interface CountryFlagProps {
   style?: React.CSSProperties;
 }
 
-const CountryFlagIcon: React.FC<CountryFlagProps> = ({ countryCode, style }) => {
+const CountryFlagIcon: React.FC<CountryFlagProps> = ({
+  countryCode,
+  style,
+}) => {
   const FlagComponent = Flags[countryCode as keyof typeof Flags];
 
   return hasFlag(countryCode) && FlagComponent ? (
     <FlagComponent style={style} />
   ) : (
-    <div className='text-xs bg-gray-bg px-1 rounded color-white'>N/A</div>
+    <div className="text-xs bg-gray-bg px-1 rounded color-white">N/A</div>
   );
 };
 

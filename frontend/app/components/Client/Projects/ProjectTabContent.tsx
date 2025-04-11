@@ -13,7 +13,7 @@ const ProjectTabContent: React.FC = () => {
 
   const project = React.useMemo(
     () => projectsStore.list.find((p) => p.projectId === pid),
-    [pid, projectsStore.list]
+    [pid, projectsStore.list],
   );
 
   if (!project) {
@@ -25,16 +25,12 @@ const ProjectTabContent: React.FC = () => {
       installation: <ProjectTabTracking project={project} />,
       captureRate: <ProjectCaptureRate project={project} />,
       metadata: <CustomFields />,
-      tags: <ProjectTags />
+      tags: <ProjectTags />,
     }),
-    [project]
+    [project],
   );
 
-  return (
-    <div>
-      {tabContent[tab] || <Empty description="Tab not found" />}
-    </div>
-  );
+  return <div>{tabContent[tab] || <Empty description="Tab not found" />}</div>;
 };
 
 export default observer(ProjectTabContent);

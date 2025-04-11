@@ -12,6 +12,7 @@ import (
 	featureflagsAPI "openreplay/backend/pkg/featureflags/api"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/projects"
@@ -36,8 +37,8 @@ type ServicesBuilder struct {
 	UxTestsAPI      api.Handlers
 }
 
-func New(log logger.Logger, cfg *http.Config, metrics web.Web, producer types.Producer, pgconn pool.Pool, redis *redis.Client) (*ServicesBuilder, error) {
-	projs := projects.New(log, pgconn, redis)
+func New(log logger.Logger, cfg *http.Config, webMetrics web.Web, dbMetrics database.Database, producer types.Producer, pgconn pool.Pool, redis *redis.Client) (*ServicesBuilder, error) {
+	projs := projects.New(log, pgconn, redis, dbMetrics)
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		return nil, err
@@ -53,11 +54,11 @@ func New(log logger.Logger, cfg *http.Config, metrics web.Web, producer types.Pr
 	tokenizer := token.NewTokenizer(cfg.TokenSecret)
 	conditions := conditions.New(pgconn)
 	flaker := flakeid.NewFlaker(cfg.WorkerID)
-	sessions := sessions.New(log, pgconn, projs, redis)
+	sessions := sessions.New(log, pgconn, projs, redis, dbMetrics)
 	featureFlags := featureflags.New(pgconn)
 	tags := tags.New(log, pgconn)
 	uxTesting := uxtesting.New(pgconn)
-	responser := api.NewResponser(metrics)
+	responser := api.NewResponser(webMetrics)
 	builder := &ServicesBuilder{}
 	if builder.WebAPI, err = websessions.NewHandlers(cfg, log, responser, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker); err != nil {
 		return nil, err

@@ -6,7 +6,7 @@ import { useStore } from 'App/mstore';
 
 function SaveFilterButton({ disabled }: { disabled?: boolean }) {
   const { searchStore } = useStore();
-  const savedSearch = searchStore.savedSearch;
+  const { savedSearch } = searchStore;
   const [showModal, setShowModal] = useState(false);
 
   return (

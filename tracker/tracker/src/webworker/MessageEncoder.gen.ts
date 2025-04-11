@@ -110,16 +110,12 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1]) && this.string(msg[2])
     break
 
-    case Messages.Type.CSSInsertRule:
-      return  this.uint(msg[1]) && this.string(msg[2]) && this.uint(msg[3])
+    case Messages.Type.StringDictGlobal:
+      return  this.uint(msg[1]) && this.string(msg[2])
     break
 
-    case Messages.Type.CSSDeleteRule:
-      return  this.uint(msg[1]) && this.uint(msg[2])
-    break
-
-    case Messages.Type.Fetch:
-      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.uint(msg[5]) && this.uint(msg[6]) && this.uint(msg[7])
+    case Messages.Type.SetNodeAttributeDictGlobal:
+      return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3])
     break
 
     case Messages.Type.Profiler:
@@ -194,10 +190,6 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.int(msg[1])
     break
 
-    case Messages.Type.LongTask:
-      return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.uint(msg[4]) && this.string(msg[5]) && this.string(msg[6]) && this.string(msg[7])
-    break
-
     case Messages.Type.SetNodeAttributeURLBased:
       return  this.uint(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4])
     break
@@ -212,10 +204,6 @@ export default class MessageEncoder extends PrimitiveEncoder {
 
     case Messages.Type.CustomIssue:
       return  this.string(msg[1]) && this.string(msg[2])
-    break
-
-    case Messages.Type.CSSInsertRuleURLBased:
-      return  this.uint(msg[1]) && this.string(msg[2]) && this.uint(msg[3]) && this.string(msg[4])
     break
 
     case Messages.Type.MouseClick:

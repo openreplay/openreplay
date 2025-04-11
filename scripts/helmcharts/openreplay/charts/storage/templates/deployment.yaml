@@ -62,7 +62,7 @@ spec:
               value: {{ .Values.global.s3.secretKey }}
               {{- end }}
             - name: AWS_ENDPOINT
-              value: '{{ .Values.global.s3.endpoint }}'
+              value: '{{- include "openreplay.s3Endpoint" . }}'
             - name: AWS_REGION
               value: '{{ .Values.global.s3.region }}'
             - name: BUCKET_NAME

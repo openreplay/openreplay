@@ -5,18 +5,21 @@ export const MINUTES = [
   { value: 60, label: '60 Minutes' },
 ];
 
-export const HOURS = [ ...Array(24).keys() ].map(i => ({ value: i, label: `${ i > 9 ? '' : '0' }${ i }:00` }));
+export const HOURS = [...Array(24).keys()].map((i) => ({
+  value: i,
+  label: `${i > 9 ? '' : '0'}${i}:00`,
+}));
 
 export const DAYS = [
-  { value: -2, label: 'Every', },
-  { value: -1, label: 'Everyday', },
-  { value: 6, label: 'Sunday', },
-  { value: 0, label: 'Monday', },
-  { value: 1, label: 'Tuesday', },
-  { value: 2, label: 'Wednesday', },
-  { value: 3, label: 'Thursday', },
-  { value: 4, label: 'Friday', },
-  { value: 5, label: 'Saturday', },
+  { value: -2, label: 'Every' },
+  { value: -1, label: 'Everyday' },
+  { value: 6, label: 'Sunday' },
+  { value: 0, label: 'Monday' },
+  { value: 1, label: 'Tuesday' },
+  { value: 2, label: 'Wednesday' },
+  { value: 3, label: 'Thursday' },
+  { value: 4, label: 'Friday' },
+  { value: 5, label: 'Saturday' },
 ];
 
 export const EMAIL = 'email';
@@ -28,4 +31,4 @@ export const CHANNEL = [
   { value: EMAIL, label: 'Email' },
   { value: SLACK, label: 'Slack' },
   { value: WEBHOOK, label: 'Webhook' },
-]
+];

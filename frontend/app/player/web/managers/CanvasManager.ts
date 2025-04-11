@@ -16,11 +16,17 @@ type Timestamp = { time: number };
 
 export default class CanvasManager extends ListWalker<Timestamp> {
   private fileData: string | undefined;
+
   private videoTag = document.createElement('video');
+
   private snapImage = document.createElement('img');
+
   private lastTs = 0;
+
   private playMode: string = playMode.snaps;
+
   private snapshots: Record<number, TarFile> = {};
+
   private debugCanvas: HTMLCanvasElement | undefined;
 
   constructor(
@@ -47,16 +53,15 @@ export default class CanvasManager extends ListWalker<Timestamp> {
           this.loadMp4().catch((e2) => {
             if (e2 === MP4_MISSING) {
               return console.error(
-                `both tar and mp4 recordings for canvas ${this.nodeId} not found`
+                `both tar and mp4 recordings for canvas ${this.nodeId} not found`,
               );
-            } else {
-              return console.error('Failed to load canvas recording');
             }
+            return console.error('Failed to load canvas recording');
           });
         } else {
           return console.error(
             'Failed to load canvas recording for node',
-            this.nodeId
+            this.nodeId,
           );
         }
       });
@@ -95,7 +100,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
 
     files.forEach((file) => {
       const [_, _1, _2, imageTimestampStr] = file.name.match(
-        filenameRegexp
+        filenameRegexp,
       ) ?? [0, 0, 0, '0'];
 
       const imageTimestamp = parseInt(imageTimestampStr, 10);
@@ -119,9 +124,8 @@ export default class CanvasManager extends ListWalker<Timestamp> {
       .then((r) => {
         if (r.status === 200) {
           return r.arrayBuffer();
-        } else {
-          return Promise.reject(TAR_MISSING);
         }
+        return Promise.reject(TAR_MISSING);
       })
       .then((buf) => {
         const tar = unpack(new Uint8Array(buf));
@@ -138,9 +142,8 @@ export default class CanvasManager extends ListWalker<Timestamp> {
       .then((r) => {
         if (r.status === 200) {
           return r.blob();
-        } else {
-          return Promise.reject(MP4_MISSING);
         }
+        return Promise.reject(MP4_MISSING);
       })
       .then((blob) => {
         this.playMode = playMode.video;
@@ -162,15 +165,14 @@ export default class CanvasManager extends ListWalker<Timestamp> {
               0,
               0,
               canvasEl.width,
-              canvasEl.height
+              canvasEl.height,
             );
-          })
+          });
           this.debugCanvas
             ?.getContext('2d')
             ?.drawImage(this.snapImage, 0, 0, 300, 200);
         } else {
           console.error(`CanvasManager: Node ${this.nodeId} not found`);
-
         }
       };
     } else {
@@ -210,7 +212,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
           0,
           0,
           canvasEl.width,
-          canvasEl.height
+          canvasEl.height,
         );
       } else {
         console.error(`VideoMode CanvasManager: Node ${this.nodeId} not found`);

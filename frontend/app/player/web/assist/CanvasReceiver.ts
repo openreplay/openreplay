@@ -1,160 +1,219 @@
-import Peer from 'peerjs';
+import logger from '@/logger';
 import { VElement } from 'Player/web/managers/DOM/VirtualDOM';
 import MessageManager from 'Player/web/MessageManager';
-
-let frameCounter = 0;
-
-function draw(
-  video: HTMLVideoElement,
-  canvas: HTMLCanvasElement,
-  canvasCtx: CanvasRenderingContext2D
-) {
-  if (frameCounter % 4 === 0) {
-    canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  }
-  frameCounter++;
-  requestAnimationFrame(() => draw(video, canvas, canvasCtx));
-}
-
+import { Socket } from 'socket.io-client';
+import { toast } from 'react-toastify';
 export default class CanvasReceiver {
   private streams: Map<string, MediaStream> = new Map();
-  private peer: Peer | null = null;
 
+  // Store RTCPeerConnection for each remote peer
+  private connections: Map<string, RTCPeerConnection> = new Map();
+
+  private cId: string;
+
+  private frameCounter = 0;
+  private canvasesData = new Map<
+    string,
+    {
+      video: HTMLVideoElement;
+      canvas: HTMLCanvasElement;
+      canvasCtx: CanvasRenderingContext2D;
+    }
+  >(new Map());
+
+  // sendSignal – for sending signals (offer/answer/ICE)
   constructor(
     private readonly peerIdPrefix: string,
-    private readonly config: RTCIceServer[] | null,
+    private readonly config: RTCIceServer[],
     private readonly getNode: MessageManager['getNode'],
-    private readonly agentInfo: Record<string, any>
+    private readonly agentInfo: Record<string, any>,
+    private readonly socket: Socket,
   ) {
-    // @ts-ignore
-    const urlObject = new URL(window.env.API_EDP || window.location.origin);
-    const peerOpts: Peer.PeerJSOption = {
-      host: urlObject.hostname,
-      path: '/assist',
-      port:
-        urlObject.port === ''
-        ? location.protocol === 'https:'
-          ? 443
-          : 80
-        : parseInt(urlObject.port),
+    // Form an id like in PeerJS
+    this.cId = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
+
+    this.socket.on(
+      'webrtc_canvas_offer',
+      (data: { data: { offer: RTCSessionDescriptionInit; id: string } }) => {
+        const { offer, id } = data.data;
+        if (checkId(id, this.cId)) {
+          this.handleOffer(offer, id);
+        }
+      },
+    );
+
+    this.socket.on(
+      'webrtc_canvas_ice_candidate',
+      (data: { data: { candidate: RTCIceCandidateInit; id: string } }) => {
+        const { candidate, id } = data.data;
+        if (checkId(id, this.cId)) {
+          this.handleCandidate(candidate, id);
+        }
+      },
+    );
+
+    this.socket.on('webrtc_canvas_stop', (data: { id: string }) => {
+      const { id } = data;
+      const canvasId = getCanvasId(id);
+      this.connections.delete(id);
+      this.streams.delete(id);
+      this.canvasesData.delete(canvasId);
+    });
+
+    this.socket.on('webrtc_canvas_restart', () => {
+      this.clear();
+    });
+  }
+
+  async handleOffer(
+    offer: RTCSessionDescriptionInit,
+    id: string,
+  ): Promise<void> {
+    const pc = new RTCPeerConnection({
+      iceServers: this.config,
+    });
+
+    // Save the connection
+    this.connections.set(id, pc);
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        this.socket.emit('webrtc_canvas_ice_candidate', {
+          candidate: event.candidate,
+          id,
+        });
+      }
     };
-    if (this.config) {
-      peerOpts['config'] = {
-        iceServers: this.config,
-        //@ts-ignore
-        sdpSemantics: 'unified-plan',
-        iceTransportPolicy: 'all',
-      };
-    }
-    const id = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
-    const canvasPeer = new Peer(id, peerOpts);
-    this.peer = canvasPeer;
-    canvasPeer.on('error', (err) => console.error('canvas peer error', err));
-    canvasPeer.on('call', (call) => {
-      call.answer();
-      const canvasId = call.peer.split('-')[2];
-      call.on('stream', (stream) => {
+
+    pc.ontrack = (event) => {
+      const stream = event.streams[0];
+      if (stream) {
+        // Detect canvasId from remote peer id
+        const canvasId = getCanvasId(id);
         this.streams.set(canvasId, stream);
         setTimeout(() => {
           const node = this.getNode(parseInt(canvasId, 10));
           const videoEl = spawnVideo(
-            this.streams.get(canvasId)?.clone() as MediaStream,
-            node as VElement
+            stream.clone() as MediaStream,
+            node as VElement,
           );
-          if (node) {
-            draw(
-              videoEl,
-              node.node as HTMLCanvasElement,
-              (node.node as HTMLCanvasElement).getContext('2d') as CanvasRenderingContext2D
-            );
+          if (node && videoEl) {
+            this.canvasesData.set(canvasId, {
+              video: videoEl,
+              canvas: node.node as HTMLCanvasElement,
+              canvasCtx: (node.node as HTMLCanvasElement)?.getContext(
+                '2d',
+              ) as CanvasRenderingContext2D,
+            });
+            this.draw();
+          } else {
+            logger.log('NODE', canvasId, 'IS NOT FOUND');
           }
         }, 250);
-      });
-      call.on('error', (err) => console.error('canvas call error', err));
-    });
+      }
+    };
+
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+
+    this.socket.emit('webrtc_canvas_answer', { answer, id });
+  }
+
+  async handleCandidate(
+    candidate: RTCIceCandidateInit,
+    id: string,
+  ): Promise<void> {
+    const pc = this.connections.get(id);
+    if (pc) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.error('Error adding ICE candidate', e);
+      }
+    }
   }
 
   clear() {
-    if (this.peer) {
-      // otherwise it calls reconnection on data chan close
-      const peer = this.peer;
-      this.peer = null;
-      peer.disconnect();
-      peer.destroy();
-    }
+    this.connections.forEach((pc) => {
+      pc.close();
+    });
+    this.connections.clear();
+    this.streams.clear();
+    this.canvasesData.clear();
   }
+
+  draw = () => {
+    if (this.frameCounter % 4 === 0) {
+      if (this.canvasesData.size === 0) {
+        return;
+      }
+      this.canvasesData.forEach((canvasData, id) => {
+        const { video, canvas, canvasCtx } = canvasData;
+        const node = this.getNode(parseInt(id, 10));
+        if (node) {
+          canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        } else {
+          this.canvasesData.delete(id);
+        }
+      });
+    }
+    this.frameCounter++;
+    requestAnimationFrame(() => this.draw());
+  };
 }
 
 function spawnVideo(stream: MediaStream, node: VElement) {
   const videoEl = document.createElement('video');
 
-  videoEl.srcObject = stream
+  videoEl.srcObject = stream;
   videoEl.setAttribute('autoplay', 'true');
   videoEl.setAttribute('muted', 'true');
   videoEl.setAttribute('playsinline', 'true');
   videoEl.setAttribute('crossorigin', 'anonymous');
 
-  videoEl.play()
+  videoEl
+    .play()
     .then(() => true)
     .catch(() => {
+      toast.error('Click to unpause canvas stream', {
+        autoClose: false,
+        toastId: 'canvas-stream',
+      });
       // we allow that if user just reloaded the page
-    })
+    });
 
   const clearListeners = () => {
-    document.removeEventListener('click', startStream)
-    videoEl.removeEventListener('playing', clearListeners)
-  }
-  videoEl.addEventListener('playing', clearListeners)
+    document.removeEventListener('click', startStream);
+    videoEl.removeEventListener('playing', clearListeners);
+  };
+  videoEl.addEventListener('playing', clearListeners);
 
   const startStream = () => {
-    videoEl.play()
+    videoEl
+      .play()
+      .then(() => {
+        toast.dismiss('canvas-stream');
+        clearListeners();
+      })
       .then(() => console.log('unpaused'))
       .catch(() => {
         // we allow that if user just reloaded the page
-      })
-    document.removeEventListener('click', startStream)
-  }
-  document.addEventListener('click', startStream)
+      });
+    document.removeEventListener('click', startStream);
+  };
+  document.addEventListener('click', startStream);
 
   return videoEl;
 }
 
-function spawnDebugVideo(stream: MediaStream, node: VElement) {
-  const video = document.createElement('video');
-  video.id = 'canvas-or-testing';
-  video.style.border = '1px solid red';
-  video.setAttribute('autoplay', 'true');
-  video.setAttribute('muted', 'true');
-  video.setAttribute('playsinline', 'true');
-  video.setAttribute('crossorigin', 'anonymous');
+function checkId(id: string, cId: string): boolean {
+  return id.includes(cId);
+}
 
-  const coords = node.node.getBoundingClientRect();
-
-  Object.assign(video.style, {
-    position: 'absolute',
-    left: `${coords.left}px`,
-    top: `${coords.top}px`,
-    width: `${coords.width}px`,
-    height: `${coords.height}px`,
-  });
-  video.width = coords.width;
-  video.height = coords.height;
-  video.srcObject = stream;
-
-  document.body.appendChild(video);
-  video
-    .play()
-    .then(() => {
-      console.debug('started streaming canvas');
-    })
-    .catch((e) => {
-      console.error(e);
-      const waiter = () => {
-        void video.play();
-        document.removeEventListener('click', waiter);
-      };
-      document.addEventListener('click', waiter);
-    });
+function getCanvasId(id: string): string {
+  return id.split('-')[4];
 }
 
 /** simple peer example

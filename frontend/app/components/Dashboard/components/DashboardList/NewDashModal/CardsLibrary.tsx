@@ -10,7 +10,9 @@ const CARD_TYPES_MAP = CARD_CATEGORIES.reduce((acc: any, category: any) => {
   return acc;
 }, {});
 
-const WidgetChart = lazy(() => import('Components/Dashboard/components/WidgetChart/WidgetChart'));
+const WidgetChart = lazy(
+  () => import('Components/Dashboard/components/WidgetChart/WidgetChart'),
+);
 
 interface Props {
   category?: string;
@@ -29,11 +31,13 @@ function CardsLibrary(props: Props) {
   //     });
   // }, [metricStore.filteredCards, props.category]);
 
-  const cards = useMemo(() => {
-    return metricStore.filteredCards.filter((card: any) => {
-      return card.name.toLowerCase().includes(query.toLowerCase());
-    });
-  }, [query, metricStore.filteredCards]);
+  const cards = useMemo(
+    () =>
+      metricStore.filteredCards.filter((card: any) =>
+        card.name.toLowerCase().includes(query.toLowerCase()),
+      ),
+    [query, metricStore.filteredCards],
+  );
 
   useEffect(() => {
     metricStore.fetchList();
@@ -50,7 +54,7 @@ function CardsLibrary(props: Props) {
       <div className="grid grid-cols-4 gap-4 items-start">
         {cards.map((metric: any) => (
           <React.Fragment key={metric.metricId}>
-            <div className={'relative col-span-' + metric.config.col}>
+            <div className={`relative col-span-${metric.config.col}`}>
               <div
                 className="absolute inset-0 z-10 cursor-pointer"
                 onClick={(e) => onItemClick(e, metric.metricId)}
@@ -80,9 +84,9 @@ function CardsLibrary(props: Props) {
                 <WidgetChart
                   // isPreview={true}
                   metric={metric}
-                  isTemplate={true}
-                  isWidget={true}
-                  isSaved={true}
+                  isTemplate
+                  isWidget
+                  isSaved
                 />
               </Card>
             </div>

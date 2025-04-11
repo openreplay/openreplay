@@ -1,0 +1,185 @@
+# Ref: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+
+on:
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Comma separated names of services to build(in small letters).'
+        required: true
+        default: 'chalice,frontend'
+      tag:
+        description: 'Tag to build patches from.'
+        required: true
+        type: string
+
+name: Build patches from tag, rewrite commit HEAD to older timestamp, and Push the tag
+
+jobs:
+  deploy:
+    name: Build Patch from old tag
+    runs-on: ubuntu-latest
+    env:
+      DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
+      DEPOT_PROJECT_ID: ${{ secrets.DEPOT_PROJECT_ID }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 4
+        ref: ${{ github.event.inputs.tag }}
+
+    - name: Set Remote with GITHUB_TOKEN
+      run: |
+        git config --unset http.https://github.com/.extraheader
+        git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_COMMMIT_TOKEN }}@github.com/${{ github.repository }}.git
+
+    - name: Create backup tag with timestamp
+      run: |
+        set -e  # Exit immediately if a command exits with a non-zero status
+        TIMESTAMP=$(date +%Y%m%d%H%M%S)
+        BACKUP_TAG="${{ github.event.inputs.tag }}-backup-${TIMESTAMP}"
+        echo "BACKUP_TAG=${BACKUP_TAG}" >> $GITHUB_ENV
+        echo "INPUT_TAG=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+        git tag $BACKUP_TAG || { echo "Failed to create backup tag"; exit 1; }
+        git push origin $BACKUP_TAG || { echo "Failed to push backup tag"; exit 1; }
+        echo "Created backup tag: $BACKUP_TAG"
+
+        # Get the oldest commit date from the last 3 commits in raw format
+        OLDEST_COMMIT_TIMESTAMP=$(git log -3 --pretty=format:"%at" | tail -1)
+        echo "Oldest commit timestamp: $OLDEST_COMMIT_TIMESTAMP"
+        # Add 1 second to the timestamp
+        NEW_TIMESTAMP=$((OLDEST_COMMIT_TIMESTAMP + 1))
+        echo "NEW_TIMESTAMP=$NEW_TIMESTAMP" >> $GITHUB_ENV
+
+
+    - name: Setup yq
+      uses: mikefarah/yq@master
+
+    # Configure AWS credentials for the first registry
+    - name: Configure AWS credentials for RELEASE_ARM_REGISTRY
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_DEPOT_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_DEPOT_SECRET_KEY }}
+        aws-region: ${{ secrets.AWS_DEPOT_DEFAULT_REGION }}
+
+    - name: Login to Amazon ECR for RELEASE_ARM_REGISTRY
+      id: login-ecr-arm
+      run: |
+        aws ecr get-login-password --region ${{ secrets.AWS_DEPOT_DEFAULT_REGION }} | docker login --username AWS --password-stdin ${{ secrets.RELEASE_ARM_REGISTRY }}
+        aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.RELEASE_OSS_REGISTRY }}
+
+    - uses: depot/setup-action@v1
+    - name: Get HEAD Commit ID
+      run: echo "HEAD_COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
+    - name: Define Branch Name
+      run: echo "BRANCH_NAME=patch/main/${HEAD_COMMIT_ID}" >> $GITHUB_ENV
+
+    - name: Build
+      id: build-image
+      env:
+        DOCKER_REPO_ARM: ${{ secrets.RELEASE_ARM_REGISTRY }}
+        DOCKER_REPO_OSS: ${{ secrets.RELEASE_OSS_REGISTRY }}
+        MSAAS_REPO_CLONE_TOKEN: ${{ secrets.MSAAS_REPO_CLONE_TOKEN }}
+        MSAAS_REPO_URL: ${{ secrets.MSAAS_REPO_URL }}
+        MSAAS_REPO_FOLDER: /tmp/msaas
+      run: |
+        set -exo pipefail
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git checkout -b $BRANCH_NAME
+        working_dir=$(pwd)
+        function image_version(){
+          local service=$1
+          chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$service/Chart.yaml"
+          current_version=$(yq eval '.AppVersion' $chart_path)
+          new_version=$(echo $current_version | awk -F. '{$NF += 1 ; print $1"."$2"."$3}')
+          echo $new_version
+          # yq eval ".AppVersion = \"$new_version\"" -i $chart_path
+        }
+        function clone_msaas() {
+          [ -d $MSAAS_REPO_FOLDER ] || {
+          git clone -b $INPUT_TAG --recursive https://x-access-token:$MSAAS_REPO_CLONE_TOKEN@$MSAAS_REPO_URL $MSAAS_REPO_FOLDER
+          cd $MSAAS_REPO_FOLDER
+          cd openreplay && git fetch origin && git checkout $INPUT_TAG
+          git log -1
+          cd $MSAAS_REPO_FOLDER
+          bash git-init.sh
+          git checkout
+          }
+        }
+        function build_managed() {
+          local service=$1
+          local version=$2
+          echo building managed
+          clone_msaas
+          if [[ $service == 'chalice' ]]; then
+            cd $MSAAS_REPO_FOLDER/openreplay/api
+          else
+            cd $MSAAS_REPO_FOLDER/openreplay/$service
+          fi
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/arm.txt
+        }
+        # Checking for backend images
+        ls backend/cmd >> /tmp/backend.txt
+        echo Services: "${{ github.event.inputs.services }}"
+        IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}" 
+        BUILD_SCRIPT_NAME="build.sh"
+        # Build FOSS
+        for SERVICE in "${SERVICES[@]}"; do
+          # Check if service is backend
+          if grep -q $SERVICE /tmp/backend.txt; then 
+            cd backend 
+            foss_build_args="nil $SERVICE"
+            ee_build_args="ee $SERVICE"
+          else 
+            [[ $SERVICE == 'chalice' || $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && cd $working_dir/api || cd $SERVICE
+            [[ $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && BUILD_SCRIPT_NAME="build_${SERVICE}.sh"
+            ee_build_args="ee"
+          fi  
+          version=$(image_version $SERVICE)
+          echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+          echo IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
+          IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
+          if [[ "$SERVICE" != "chalice" && "$SERVICE" != "frontend" ]]; then
+            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+            echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+          else
+            build_managed $SERVICE $version
+          fi
+          cd $working_dir
+          chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$SERVICE/Chart.yaml"
+          yq eval ".AppVersion = \"$version\"" -i $chart_path
+          git add $chart_path
+          git commit -m "Increment $SERVICE chart version"
+        done
+
+    - name: Change commit timestamp
+      run: |
+        # Convert the timestamp to a date format git can understand
+        NEW_DATE=$(perl -le 'print scalar gmtime($ARGV[0])." +0000"' $NEW_TIMESTAMP)
+        echo "Setting commit date to: $NEW_DATE"
+
+        # Amend the commit with the new date
+        GIT_COMMITTER_DATE="$NEW_DATE" git commit --amend --no-edit --date="$NEW_DATE"
+
+        # Verify the change
+        git log -1 --pretty=format:"Commit now dated: %cD"
+
+        # git tag and push
+        git tag $INPUT_TAG -f
+        git push origin $INPUT_TAG -f
+
+
+    # - name: Debug Job
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO_ARM: ${{ secrets.RELEASE_ARM_REGISTRY }}
+    #     DOCKER_REPO_OSS: ${{ secrets.RELEASE_OSS_REGISTRY }}
+    #     MSAAS_REPO_CLONE_TOKEN: ${{ secrets.MSAAS_REPO_CLONE_TOKEN }}
+    #     MSAAS_REPO_URL: ${{ secrets.MSAAS_REPO_URL }}
+    #     MSAAS_REPO_FOLDER: /tmp/msaas
+    #   with:
+    #     limit-access-to-actor: true

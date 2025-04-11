@@ -1,41 +1,45 @@
 import React, { useEffect } from 'react';
-import { NoContent, Loader, Pagination, Button } from 'UI';
+import { NoContent, Loader, Pagination, Icon } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions';
 import { KEYS } from 'Types/filter/customFilter';
 import { FilterKey } from 'App/types/filter/filterType';
 import Select from 'Shared/Select';
 import SortOrderButton from 'Shared/SortOrderButton';
-import { capitalize } from 'App/utils';
+import { capitalize, numberWithCommas } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 import cn from 'classnames';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { numberWithCommas } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { Button } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const AUTOREFRESH_INTERVAL = 2 * 60 * 1000;
 const PER_PAGE = 10;
 
 function LiveSessionList() {
-  const { searchStoreLive, sessionStore, customFieldStore } = useStore();
+  const { searchStoreLive, sessionStore, customFieldStore, projectsStore } = useStore();
   const filter = searchStoreLive.instance;
   const list = sessionStore.liveSessions;
-  const totalLiveSessions = sessionStore.totalLiveSessions;
+  const { totalLiveSessions } = sessionStore;
   const loading = sessionStore.loadingLiveSessions;
   const { currentPage } = searchStoreLive;
   const metaList = customFieldStore.list;
   const metaListLoading = customFieldStore.isLoading;
+  const { t } = useTranslation();
 
   let timeoutId: any;
   const { filters } = filter;
   const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
-  const sortOptions = [{ label: 'Start Time', value: 'timestamp' }, { label: 'Duration', value: 'duration' }].concat(
-    metaList
-      .map(({ key }: any) => ({
-        label: capitalize(key),
-        value: key
-      }))
+  const sortOptions = [
+    { label: 'Start Time', value: 'timestamp' },
+    { label: 'Duration', value: 'duration' },
+  ].concat(
+    metaList.map(({ key }: any) => ({
+      label: capitalize(key),
+      value: key,
+    })),
   );
 
   useEffect(() => {
@@ -43,26 +47,18 @@ function LiveSessionList() {
 
     const _filter = { ...filter };
     let shouldUpdate = false;
-
-    // Set default sort if not already set
     if (sortOptions[1] && !filter.sort) {
       _filter.sort = sortOptions[1].value;
       shouldUpdate = true;
     }
-
-    // Only update filters if there's a change
     if (shouldUpdate) {
       searchStoreLive.edit(_filter);
     }
-
-    // Start auto-refresh timeout
     timeout();
-
-    // Cleanup on component unmount or re-run
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [metaListLoading, filter.sort]); // Add necessary dependencies
+  }, [metaListLoading, filter.sort]);
 
   const refetch = () => {
     void searchStoreLive.fetchSessions();
@@ -72,7 +68,10 @@ function LiveSessionList() {
     if (userId) {
       searchStoreLive.addFilterByKeyAndValue(FilterKey.USERID, userId);
     } else {
-      searchStoreLive.addFilterByKeyAndValue(FilterKey.USERANONYMOUSID, userAnonymousId);
+      searchStoreLive.addFilterByKeyAndValue(
+        FilterKey.USERANONYMOUSID,
+        userAnonymousId,
+      );
     }
   };
 
@@ -91,23 +90,24 @@ function LiveSessionList() {
     <div>
       <div className="bg-white py-3 rounded-lg border shadow-sm">
         <div className="flex mb-4 pb-2 px-3 justify-between items-center border-b border-b-gray-lighter">
-          <div className="flex items-center">
-            <h3 className="text-2xl capitalize mr-2">
-              <span>Co-Browse</span>
-            </h3>
-
-            <LiveSessionReloadButton onClick={refetch} />
-          </div>
+          <LiveSessionReloadButton />
           <div className="flex items-center">
             <div className="flex items-center ml-6">
-              <span className="mr-2 color-gray-medium">Sort By</span>
-              <div className={cn('flex items-center', { disabled: sortOptions.length === 0 })}>
+              <span className="mr-2 color-gray-medium">{t('Sort By')}</span>
+              <div
+                className={cn('flex items-center', {
+                  disabled: sortOptions.length === 0,
+                })}
+              >
                 <Select
                   plain
                   right
                   options={sortOptions}
                   onChange={onSortChange}
-                  value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
+                  value={
+                    sortOptions.find((i: any) => i.value === filter.sort) ||
+                    sortOptions[0]
+                  }
                 />
 
                 <div className="mx-2" />
@@ -127,34 +127,37 @@ function LiveSessionList() {
               <div className="flex items-center justify-center flex-col">
                 <AnimatedSVG name={ICONS.NO_LIVE_SESSIONS} size={60} />
                 <div className="mt-4" />
-                <div className="text-center  text-lg font-medium">No live sessions found</div>
+                <div className="text-center  text-lg font-medium">
+                  {t('No live sessions found')}
+                </div>
               </div>
             }
             subtext={
               <div className="text-center flex justify-center items-center flex-col">
                 <span>
-                  Support users with live sessions, cobrowsing, and video calls.
+                  {t(
+                    'Support users with live sessions, cobrowsing, and video calls.',
+                  )}
                   <a
                     target="_blank"
                     className="link ml-1"
                     href="https://docs.openreplay.com/plugins/assist"
+                    rel="noreferrer"
                   >
-                    {'Learn More'}
+                    {t('Learn More')}
                   </a>
                 </span>
 
                 <Button
-                  variant="text-primary"
+                  variant="text"
                   className="mt-4"
-                  icon="arrow-repeat"
-                  iconSize={20}
+                  icon={<Icon name="arrow-repeat" size={20} />}
                   onClick={refetch}
                 >
-                  Refresh
+                  {t('Refresh')}
                 </Button>
               </div>
             }
-            // image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
             show={!loading && list.length === 0}
           >
             <div>
@@ -171,16 +174,32 @@ function LiveSessionList() {
                 </React.Fragment>
               ))}
             </div>
-            <div className={cn('flex items-center justify-between p-5', { disabled: loading })}>
+            <div
+              className={cn('flex items-center justify-between p-5', {
+                disabled: loading,
+              })}
+            >
               <div>
-                Showing <span className="font-medium">{(currentPage - 1) * PER_PAGE + 1}</span> to{' '}
-                <span className="font-medium">{(currentPage - 1) * PER_PAGE + list.length}</span> of{' '}
-                <span className="font-medium">{numberWithCommas(totalLiveSessions)}</span> sessions.
+                {t('Showing')}{' '}
+                <span className="font-medium">
+                  {(currentPage - 1) * PER_PAGE + 1}
+                </span>{' '}
+                {t('to')}{' '}
+                <span className="font-medium">
+                  {(currentPage - 1) * PER_PAGE + list.length}
+                </span>{' '}
+                {t('of')}{' '}
+                <span className="font-medium">
+                  {numberWithCommas(totalLiveSessions)}
+                </span>{' '}
+                {t('sessions.')}
               </div>
               <Pagination
                 page={currentPage}
                 total={totalLiveSessions}
-                onPageChange={(page: any) => searchStoreLive.updateCurrentPage(page)}
+                onPageChange={(page: any) =>
+                  searchStoreLive.updateCurrentPage(page)
+                }
                 limit={PER_PAGE}
                 debounceRequest={500}
               />
@@ -193,7 +212,8 @@ function LiveSessionList() {
 }
 
 export default withPermissions(
-  ['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', false, false)(
-  observer(LiveSessionList)
-);
-
+  ['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'],
+  '',
+  false,
+  false,
+)(observer(LiveSessionList));

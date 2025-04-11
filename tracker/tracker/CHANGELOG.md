@@ -1,8 +1,63 @@
+## 16.1.1
+
+- fixing debug logs from 16.1.0
+
+## 16.1.0
+
+- new `privateMode` option to hide all possible data from tracking
+- update `networkProxy` to 1.1.0 (auto sanitizer for sensitive parameters in network requests)
+- reduced the frequency of performance tracker calls
+- reduced the number of events when the user is idle
+
+## 16.0.3
+
+- better handling for local svg spritemaps
+
+## 16.0.2
+
+- fix attributeSender key generation to prevent calling native methods on objects
+
+## 16.0.1
+
+- drop computing ts digits
+- drop logLevel for "! node is already observed" message (not critical)
+- prevent crashes on buffer upload if msg value is wrapped in proxy via other frameworks
+- add support for singleton (moved from 15.x.x)
+
+## 16.0.0
+
+- **[breaking]** new string dictionary message format
+
+## 15.1.0
+
+- move domparser for sprites under observer code for better SSR support
+- introduce singleton approach for tracker
+```js
+import { tracker } from '@openreplay/tracker'
+
+// configure it once
+tracker.configure({ ...options })
+
+// use it anywhere
+// .../main/app.tsx
+import { tracker } from '@openreplay/tracker'
+tracker.start()
+```
+
+## 15.0.7
+
+- fix for svg sprite handling
+
+## 15.0.6
+
+- fix for batch sending to prevent proxy wrappers
+
 ## 15.0.5
 
 - update medv/finder to 4.0.2 for better support of css-in-js libs
-- fixes for single tab recording 
+- fixes for single tab recording
 - add option to disable network completely `{ network: { disabled: true } }`
+- fix for batching during offline recording syncs
 
 ## 15.0.4
 

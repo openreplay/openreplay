@@ -3,19 +3,23 @@ import React from 'react';
 import { CodeBlock } from 'UI';
 
 import ToggleContent from 'Shared/ToggleContent';
+import { useTranslation } from 'react-i18next';
 
 function AssistNpm(props) {
-  const usage = `import OpenReplay from '@openreplay/tracker';
+  const { t } = useTranslation();
+  const usage = `import { tracker } from '@openreplay/tracker';
 import trackerAssist from '@openreplay/tracker-assist';
-const tracker = new OpenReplay({
+tracker.configure({
   projectKey: '${props.projectKey}',
 });
 tracker.start()
 
 tracker.use(trackerAssist(options)); // check the list of available options below`;
-  const usageCjs = `import OpenReplay from '@openreplay/tracker/cjs';
+  const usageCjs = `import { tracker } from '@openreplay/tracker/cjs';
+// alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
 import trackerAssist from '@openreplay/tracker-assist/cjs';
-const tracker = new OpenReplay({
+
+tracker.configure({
   projectKey: '${props.projectKey}'
 });
 const trackerAssist = tracker.use(trackerAssist(options)); // check the list of available options below
@@ -56,21 +60,23 @@ type ButtonOptions = HTMLButtonElement | string | {
   innerHTML?: string, // to pass an svg string or text
   style?: StyleObject, // style object (i.e {color: 'red', borderRadius: '10px'})
 }
-`
+`;
   return (
     <div>
       <p>
-        Initialize the tracker then load the @openreplay/tracker-assist plugin.
+        {t(
+          'Initialize the tracker then load the @openreplay/tracker-assist plugin.',
+        )}
       </p>
 
-      <div className="font-bold my-2">Usage</div>
+      <div className="font-bold my-2">{t('Usage')}</div>
       <ToggleContent
         label="Server-Side-Rendered (SSR)?"
         first={<CodeBlock code={usage} language="javascript" />}
         second={<CodeBlock code={usageCjs} language="jsx" />}
       />
 
-      <div className="font-bold my-2">Options</div>
+      <div className="font-bold my-2">{t('Options')}</div>
       <CodeBlock code={options} language="typescript" />
     </div>
   );

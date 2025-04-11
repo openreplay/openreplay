@@ -7,4 +7,7 @@ BottomBlock.Header = Header;
 // @ts-ignore
 BottomBlock.Content = Content;
 
-export default BottomBlock as typeof BottomBlock & { Header: typeof Header, Content: typeof Content }
+export default BottomBlock as typeof BottomBlock & {
+  Header: typeof Header;
+  Content: typeof Content;
+};

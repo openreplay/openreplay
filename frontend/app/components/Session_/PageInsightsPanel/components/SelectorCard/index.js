@@ -1,1 +1,1 @@
-export { default } from './SelectorCard'
+export { default } from './SelectorCard';

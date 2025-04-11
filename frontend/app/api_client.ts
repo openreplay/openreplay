@@ -30,15 +30,18 @@ const siteIdRequiredPaths: string[] = [
   '/check-recording-status',
   '/usability-tests',
   '/tags',
-  '/intelligent'
+  '/intelligent',
 ];
 
-export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any => {
+export const clean = (
+  obj: any,
+  forbiddenValues: any[] = [undefined, ''],
+): any => {
   const keys = Array.isArray(obj)
     ? new Array(obj.length).fill().map((_, i) => i)
     : Object.keys(obj);
   const retObj = Array.isArray(obj) ? [] : {};
-  keys.map(key => {
+  keys.map((key) => {
     const value = obj[key];
     if (typeof value === 'object' && value !== null) {
       retObj[key] = clean(value);
@@ -52,18 +55,23 @@ export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any =
 
 export default class APIClient {
   private init: RequestInit;
+
   private siteId: string | undefined;
+
   private siteIdCheck: (() => { siteId: string | null }) | undefined;
+
   private getJwt: () => string | null = () => null;
-  private onUpdateJwt: (data: { jwt?: string, spotJwt?: string }) => void;
+
+  private onUpdateJwt: (data: { jwt?: string; spotJwt?: string }) => void;
+
   private refreshingTokenPromise: Promise<string> | null = null;
 
   constructor() {
     this.init = {
       headers: new Headers({
         Accept: 'application/json',
-        'Content-Type': 'application/json'
-      })
+        'Content-Type': 'application/json',
+      }),
     };
   }
 
@@ -73,7 +81,9 @@ export default class APIClient {
     }
   }
 
-  setOnUpdateJwt(onUpdateJwt: (data: { jwt?: string, spotJwt?: string }) => void): void {
+  setOnUpdateJwt(
+    onUpdateJwt: (data: { jwt?: string; spotJwt?: string }) => void,
+  ): void {
     this.onUpdateJwt = onUpdateJwt;
   }
 
@@ -82,15 +92,19 @@ export default class APIClient {
   }
 
   setSiteIdCheck(checker: () => { siteId: string | null }): void {
-    this.siteIdCheck = checker
+    this.siteIdCheck = checker;
   }
 
-  private getInit(method: string = 'GET', params?: any, reqHeaders?: Record<string, any>): RequestInit {
+  private getInit(
+    method: string = 'GET',
+    params?: any,
+    reqHeaders?: Record<string, any>,
+  ): RequestInit {
     // Always fetch the latest JWT from the store
-    const jwt = this.getJwt()
+    const jwt = this.getJwt();
     const headers = new Headers({
       'Accept': 'application/json',
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     });
 
     if (reqHeaders) {
@@ -107,7 +121,7 @@ export default class APIClient {
     const init: RequestInit = {
       method,
       headers,
-      body: params ? JSON.stringify(params) : undefined,
+      body: params ? JSON.stringify(params) : undefined
     };
 
     if (method === 'GET') {
@@ -148,7 +162,7 @@ export default class APIClient {
     params?: any,
     method: string = 'GET',
     options: { clean?: boolean } = { clean: true },
-    headers?: Record<string, any>
+    headers?: Record<string, any>,
   ): Promise<Response> {
     let _path = path;
     let jwt = this.getJwt();
@@ -157,7 +171,11 @@ export default class APIClient {
       (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
     }
 
-    const init = this.getInit(method, options.clean && params ? clean(params) : params, headers);
+    const init = this.getInit(
+      method,
+      options.clean && params ? clean(params) : params,
+      headers,
+    );
 
     if (params !== undefined) {
       const cleanedParams = options.clean ? clean(params) : params;
@@ -167,10 +185,22 @@ export default class APIClient {
       delete init.body;
     }
 
-    const noChalice = path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login')
+    if ((
+      path.includes('login')
+      || path.includes('refresh')
+      || path.includes('logout')
+      || path.includes('reset')
+    ) && window.env.NODE_ENV !== 'development'
+    ) {
+      init.credentials = 'include';
+    } else {
+      delete init.credentials;
+    }
+
+    const noChalice = path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login');
     let edp = window.env.API_EDP || window.location.origin + '/api';
     if (noChalice && !edp.includes('api.openreplay.com')) {
-      edp = edp.replace('/api', '')
+      edp = edp.replace('/api', '');
     }
     if (
       path !== '/targets_temp' &&
@@ -181,7 +211,7 @@ export default class APIClient {
       edp = `${edp}/${this.siteId ?? ''}`;
     }
     if (path.includes('PROJECT_ID')) {
-      _path = _path.replace('PROJECT_ID', this.siteId + '');
+      _path = _path.replace('PROJECT_ID', `${this.siteId}`);
     }
 
     const fullUrl = edp + _path;
@@ -193,19 +223,25 @@ export default class APIClient {
     if (response.ok) {
       return response;
     }
-    let errorMsg = `Something went wrong.`;
+    let errorMsg = 'Something went wrong.';
     try {
       const errorData = await response.json();
       errorMsg = errorData.errors?.[0] || errorMsg;
-    } catch {}
+    } catch {
+    }
     throw new Error(errorMsg);
   }
 
   async refreshToken(): Promise<string> {
     try {
-      const response = await this.fetch('/refresh', {
-        headers: this.init.headers
-      }, 'GET', { clean: false });
+      const response = await this.fetch(
+        '/refresh',
+        {
+          headers: this.init.headers,
+        },
+        'GET',
+        { clean: false },
+      );
 
       if (!response.ok) {
         throw new Error('Failed to refresh token');
@@ -222,12 +258,28 @@ export default class APIClient {
     }
   }
 
-  get(path: string, params?: any, options?: any, headers?: Record<string, any>): Promise<Response> {
+  get(
+    path: string,
+    params?: any,
+    options?: any,
+    headers?: Record<string, any>,
+  ): Promise<Response> {
     this.init.method = 'GET';
-    return this.fetch(queried(path, params), options, 'GET', undefined, headers);
+    return this.fetch(
+      queried(path, params),
+      options,
+      'GET',
+      undefined,
+      headers,
+    );
   }
 
-  post(path: string, params?: any, options?: any, headers?: Record<string, any>): Promise<Response> {
+  post(
+    path: string,
+    params?: any,
+    options?: any,
+    headers?: Record<string, any>,
+  ): Promise<Response> {
     this.init.method = 'POST';
     return this.fetch(path, params, 'POST', options, headers);
   }
@@ -249,5 +301,5 @@ export default class APIClient {
 
   forceSiteId = (siteId: string) => {
     this.siteId = siteId;
-  }
+  };
 }

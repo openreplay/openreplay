@@ -27,7 +27,6 @@ HEALTH_ENDPOINTS = {
     "http": app_connection_string("http-openreplay", 8888, "metrics"),
     "ingress-nginx": app_connection_string("ingress-nginx-openreplay", 80, "healthz"),
     "integrations": app_connection_string("integrations-openreplay", 8888, "metrics"),
-    "peers": app_connection_string("peers-openreplay", 8888, "health"),
     "sink": app_connection_string("sink-openreplay", 8888, "metrics"),
     "sourcemapreader": app_connection_string(
         "sourcemapreader-openreplay", 8888, "health"
@@ -39,9 +38,7 @@ HEALTH_ENDPOINTS = {
 def __check_database_pg(*_):
     fail_response = {
         "health": False,
-        "details": {
-            "errors": ["Postgres health-check failed"]
-        }
+        "details": {"errors": ["Postgres health-check failed"]},
     }
     with pg_client.PostgresClient() as cur:
         try:
@@ -63,29 +60,26 @@ def __check_database_pg(*_):
         "details": {
             # "version": server_version["server_version"],
             # "schema": schema_version["version"]
-        }
+        },
     }
 
 
 def __always_healthy(*_):
-    return {
-        "health": True,
-        "details": {}
-    }
+    return {"health": True, "details": {}}
 
 
 def __check_be_service(service_name):
     def fn(*_):
         fail_response = {
             "health": False,
-            "details": {
-                "errors": ["server health-check failed"]
-            }
+            "details": {"errors": ["server health-check failed"]},
         }
         try:
             results = requests.get(HEALTH_ENDPOINTS.get(service_name), timeout=2)
             if results.status_code != 200:
-                logger.error(f"!! issue with the {service_name}-health code:{results.status_code}")
+                logger.error(
+                    f"!! issue with the {service_name}-health code:{results.status_code}"
+                )
                 logger.error(results.text)
                 # fail_response["details"]["errors"].append(results.text)
                 return fail_response
@@ -103,10 +97,7 @@ def __check_be_service(service_name):
                 logger.error("couldn't get response")
                 # fail_response["details"]["errors"].append(str(e))
             return fail_response
-        return {
-            "health": True,
-            "details": {}
-        }
+        return {"health": True, "details": {}}
 
     return fn
 
@@ -114,7 +105,7 @@ def __check_be_service(service_name):
 def __check_redis(*_):
     fail_response = {
         "health": False,
-        "details": {"errors": ["server health-check failed"]}
+        "details": {"errors": ["server health-check failed"]},
     }
     if config("REDIS_STRING", default=None) is None:
         # fail_response["details"]["errors"].append("REDIS_STRING not defined in env-vars")
@@ -133,16 +124,14 @@ def __check_redis(*_):
         "health": True,
         "details": {
             # "version": r.execute_command('INFO')['redis_version']
-        }
+        },
     }
 
 
 def __check_SSL(*_):
     fail_response = {
         "health": False,
-        "details": {
-            "errors": ["SSL Certificate health-check failed"]
-        }
+        "details": {"errors": ["SSL Certificate health-check failed"]},
     }
     try:
         requests.get(config("SITE_URL"), verify=True, allow_redirects=True)
@@ -150,36 +139,28 @@ def __check_SSL(*_):
         logger.error("!! health failed: SSL Certificate")
         logger.exception(e)
         return fail_response
-    return {
-        "health": True,
-        "details": {}
-    }
+    return {"health": True, "details": {}}
 
 
 def __get_sessions_stats(*_):
     with pg_client.PostgresClient() as cur:
         constraints = ["projects.deleted_at IS NULL"]
-        query = cur.mogrify(f"""SELECT COALESCE(SUM(sessions_count),0) AS s_c,
+        query = cur.mogrify(
+            f"""SELECT COALESCE(SUM(sessions_count),0) AS s_c,
                                        COALESCE(SUM(events_count),0) AS e_c
                                 FROM public.projects_stats
                                      INNER JOIN public.projects USING(project_id)
-                                WHERE {" AND ".join(constraints)};""")
+                                WHERE {" AND ".join(constraints)};"""
+        )
         cur.execute(query)
         row = cur.fetchone()
-    return {
-        "numberOfSessionsCaptured": row["s_c"],
-        "numberOfEventCaptured": row["e_c"]
-    }
+    return {"numberOfSessionsCaptured": row["s_c"], "numberOfEventCaptured": row["e_c"]}
 
 
 def get_health(tenant_id=None):
     health_map = {
-        "databases": {
-            "postgres": __check_database_pg
-        },
-        "ingestionPipeline": {
-            "redis": __check_redis
-        },
+        "databases": {"postgres": __check_database_pg},
+        "ingestionPipeline": {"redis": __check_redis},
         "backendServices": {
             "alerts": __check_be_service("alerts"),
             "assets": __check_be_service("assets"),
@@ -192,13 +173,12 @@ def get_health(tenant_id=None):
             "http": __check_be_service("http"),
             "ingress-nginx": __always_healthy,
             "integrations": __check_be_service("integrations"),
-            "peers": __check_be_service("peers"),
             "sink": __check_be_service("sink"),
             "sourcemapreader": __check_be_service("sourcemapreader"),
-            "storage": __check_be_service("storage")
+            "storage": __check_be_service("storage"),
         },
         "details": __get_sessions_stats,
-        "ssl": __check_SSL
+        "ssl": __check_SSL,
     }
     return __process_health(health_map=health_map)
 
@@ -210,10 +190,16 @@ def __process_health(health_map):
             response.pop(parent_key)
         elif isinstance(health_map[parent_key], dict):
             for element_key in health_map[parent_key]:
-                if config(f"SKIP_H_{parent_key.upper()}_{element_key.upper()}", cast=bool, default=False):
+                if config(
+                    f"SKIP_H_{parent_key.upper()}_{element_key.upper()}",
+                    cast=bool,
+                    default=False,
+                ):
                     response[parent_key].pop(element_key)
                 else:
-                    response[parent_key][element_key] = health_map[parent_key][element_key]()
+                    response[parent_key][element_key] = health_map[parent_key][
+                        element_key
+                    ]()
         else:
             response[parent_key] = health_map[parent_key]()
     return response
@@ -221,7 +207,8 @@ def __process_health(health_map):
 
 def cron():
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""SELECT projects.project_id,
+        query = cur.mogrify(
+            """SELECT projects.project_id,
                                       projects.created_at,
                                       projects.sessions_last_check_at,
                                       projects.first_recorded_session_at,
@@ -229,7 +216,8 @@ def cron():
                                 FROM public.projects
                                      LEFT JOIN public.projects_stats USING (project_id)
                                 WHERE projects.deleted_at IS NULL
-                                ORDER BY project_id;""")
+                                ORDER BY project_id;"""
+        )
         cur.execute(query)
         rows = cur.fetchall()
         for r in rows:
@@ -250,20 +238,24 @@ def cron():
                 count_start_from = r["last_update_at"]
 
             count_start_from = TimeUTC.datetime_to_timestamp(count_start_from)
-            params = {"project_id": r["project_id"],
-                      "start_ts": count_start_from,
-                      "end_ts": TimeUTC.now(),
-                      "sessions_count": 0,
-                      "events_count": 0}
+            params = {
+                "project_id": r["project_id"],
+                "start_ts": count_start_from,
+                "end_ts": TimeUTC.now(),
+                "sessions_count": 0,
+                "events_count": 0,
+            }
 
-            query = cur.mogrify("""SELECT COUNT(1) AS sessions_count,
+            query = cur.mogrify(
+                """SELECT COUNT(1) AS sessions_count,
                                           COALESCE(SUM(events_count),0) AS events_count
                                    FROM public.sessions
                                    WHERE project_id=%(project_id)s
                                       AND start_ts>=%(start_ts)s
                                       AND start_ts<=%(end_ts)s
                                       AND duration IS NOT NULL;""",
-                                params)
+                params,
+            )
             cur.execute(query)
             row = cur.fetchone()
             if row is not None:
@@ -271,56 +263,68 @@ def cron():
                 params["events_count"] = row["events_count"]
 
             if insert:
-                query = cur.mogrify("""INSERT INTO public.projects_stats(project_id, sessions_count, events_count, last_update_at)
+                query = cur.mogrify(
+                    """INSERT INTO public.projects_stats(project_id, sessions_count, events_count, last_update_at)
                                        VALUES (%(project_id)s, %(sessions_count)s, %(events_count)s, (now() AT TIME ZONE 'utc'::text));""",
-                                    params)
+                    params,
+                )
             else:
-                query = cur.mogrify("""UPDATE public.projects_stats
+                query = cur.mogrify(
+                    """UPDATE public.projects_stats
                                        SET sessions_count=sessions_count+%(sessions_count)s,
                                            events_count=events_count+%(events_count)s,
                                            last_update_at=(now() AT TIME ZONE 'utc'::text)
                                        WHERE project_id=%(project_id)s;""",
-                                    params)
+                    params,
+                )
             cur.execute(query)
 
 
 # this cron is used to correct the sessions&events count every week
 def weekly_cron():
     with pg_client.PostgresClient(long_query=True) as cur:
-        query = cur.mogrify("""SELECT project_id,
+        query = cur.mogrify(
+            """SELECT project_id,
                                       projects_stats.last_update_at
                                FROM public.projects
                                     LEFT JOIN public.projects_stats USING (project_id)
                                WHERE projects.deleted_at IS NULL
-                               ORDER BY project_id;""")
+                               ORDER BY project_id;"""
+        )
         cur.execute(query)
         rows = cur.fetchall()
         for r in rows:
             if r["last_update_at"] is None:
                 continue
 
-            params = {"project_id": r["project_id"],
-                      "end_ts": TimeUTC.now(),
-                      "sessions_count": 0,
-                      "events_count": 0}
+            params = {
+                "project_id": r["project_id"],
+                "end_ts": TimeUTC.now(),
+                "sessions_count": 0,
+                "events_count": 0,
+            }
 
-            query = cur.mogrify("""SELECT COUNT(1) AS sessions_count,
+            query = cur.mogrify(
+                """SELECT COUNT(1) AS sessions_count,
                                           COALESCE(SUM(events_count),0) AS events_count
                                    FROM public.sessions
                                    WHERE project_id=%(project_id)s
                                       AND start_ts<=%(end_ts)s
                                       AND duration IS NOT NULL;""",
-                                params)
+                params,
+            )
             cur.execute(query)
             row = cur.fetchone()
             if row is not None:
                 params["sessions_count"] = row["sessions_count"]
                 params["events_count"] = row["events_count"]
 
-            query = cur.mogrify("""UPDATE public.projects_stats
+            query = cur.mogrify(
+                """UPDATE public.projects_stats
                                    SET sessions_count=%(sessions_count)s,
                                        events_count=%(events_count)s,
                                        last_update_at=(now() AT TIME ZONE 'utc'::text)
                                    WHERE project_id=%(project_id)s;""",
-                                params)
+                params,
+            )
             cur.execute(query)

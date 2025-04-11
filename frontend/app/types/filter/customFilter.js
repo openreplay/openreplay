@@ -11,13 +11,13 @@ const METADATA = 'METADATA';
 const CUSTOM = 'CUSTOM';
 const URL = 'URL';
 const CLICK_RAGE = 'CLICKRAGE';
-const USER_BROWSER  = 'USERBROWSER';
+const USER_BROWSER = 'USERBROWSER';
 const USER_OS = 'USEROS';
-const USER_COUNTRY  = 'USERCOUNTRY';
+const USER_COUNTRY = 'USERCOUNTRY';
 const USER_DEVICE = 'USERDEVICE';
 const PLATFORM = 'PLATFORM';
-const DURATION  = 'DURATION';
-const REFERRER  = 'REFERRER';
+const DURATION = 'DURATION';
+const REFERRER = 'REFERRER';
 const ERROR = 'ERROR';
 const MISSING_RESOURCE = 'MISSINGRESOURCE';
 const SLOW_SESSION = 'SLOWSESSION';
@@ -34,7 +34,6 @@ const EVENTS_COUNT = 'EVENTS_COUNT';
 const UTM_SOURCE = 'UTM_SOURCE';
 const UTM_MEDIUM = 'UTM_MEDIUM';
 const UTM_CAMPAIGN = 'UTM_CAMPAIGN';
-
 
 const DOM_COMPLETE = 'DOM_COMPLETE';
 const LARGEST_CONTENTFUL_PAINT_TIME = 'LARGEST_CONTENTFUL_PAINT_TIME';
@@ -91,7 +90,7 @@ const getOperatorDefault = (type) => {
   if (type === KEYS.CLICK) return 'on';
 
   return 'is';
-}
+};
 
 const getLabel = (event) => {
   if (event.type === KEYS.USER_COUNTRY) return 'Country';
@@ -101,34 +100,37 @@ const getLabel = (event) => {
   if (event.type === KEYS.REFERRER) return 'Referrer';
 
   return event.label || event.type || event.key;
-}
+};
 
-export default Record({
-  timestamp: 0,
-  key: '',
-  operator: 'is',
-  label: '',
-  type: '',
-  value: [""],
-  custom: '',
-  target: Target(),
-  level: '',
-  source: null,
-  hasNoValue: false,
-  isFilter: false,
-  icon: '',
-  actualValue: '',
-}, {
-  keyKey: "_key",
-  fromJS: ({ value, target, ...event }) => ({
-    ...event,
-    type: event.type, // camelCased(event.type.toLowerCase()),
-    key: event.type === METADATA ? event.label : event.key || event.type, // || camelCased(event.type.toLowerCase()),
-    label: getLabel(event),
-    target: Target(target),
-    operator: event.operator || getOperatorDefault(event.type),
-    // value: target ? target.label : event.value,
-    value: typeof value === 'string' ? [value] : value,
-    icon: event.type ? getEventIcon(event.type) : 'filters/metadata'
-  }),
-})
+export default Record(
+  {
+    timestamp: 0,
+    key: '',
+    operator: 'is',
+    label: '',
+    type: '',
+    value: [''],
+    custom: '',
+    target: Target(),
+    level: '',
+    source: null,
+    hasNoValue: false,
+    isFilter: false,
+    icon: '',
+    actualValue: '',
+  },
+  {
+    keyKey: '_key',
+    fromJS: ({ value, target, ...event }) => ({
+      ...event,
+      type: event.type, // camelCased(event.type.toLowerCase()),
+      key: event.type === METADATA ? event.label : event.key || event.type, // || camelCased(event.type.toLowerCase()),
+      label: getLabel(event),
+      target: Target(target),
+      operator: event.operator || getOperatorDefault(event.type),
+      // value: target ? target.label : event.value,
+      value: typeof value === 'string' ? [value] : value,
+      icon: event.type ? getEventIcon(event.type) : 'filters/metadata',
+    }),
+  },
+);

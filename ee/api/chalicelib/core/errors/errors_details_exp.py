@@ -1,31 +1,12 @@
-from decouple import config
+import logging
 
-import schemas
-from . import errors
-from chalicelib.core import metrics, metadata
-from chalicelib.core import sessions
+from chalicelib.core.errors.modules import errors_helper
 from chalicelib.utils import ch_client, exp_ch_helper
-from chalicelib.utils import pg_client, helper
+from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.metrics_helper import get_step_size
 
-
-def __flatten_sort_key_count_version(data, merge_nested=False):
-    if data is None:
-        return []
-    return sorted(
-        [
-            {
-                "name": f"{o[0][0][0]}@{v[0]}",
-                "count": v[1]
-            } for o in data for v in o[2]
-        ],
-        key=lambda o: o["count"], reverse=True) if merge_nested else \
-        [
-            {
-                "name": o[0][0][0],
-                "count": o[1][0][0],
-            } for o in data
-        ]
+logger = logging.getLogger(__name__)
 
 
 def __transform_map_to_tag(data, key1, key2, requested_key):
@@ -89,14 +70,8 @@ def get_details(project_id, error_id, user_id, **data):
     MAIN_ERR_SESS_TABLE = exp_ch_helper.get_main_js_errors_sessions_table(0)
     MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(0)
 
-    ch_sub_query24 = errors.__get_basic_constraints(startTime_arg_name="startDate24", endTime_arg_name="endDate24")
-    ch_sub_query24.append("error_id = %(error_id)s")
-
-    ch_sub_query30 = errors.__get_basic_constraints(startTime_arg_name="startDate30", endTime_arg_name="endDate30",
-                                                    project_key="errors.project_id")
-    ch_sub_query30.append("error_id = %(error_id)s")
-    ch_basic_query = errors.__get_basic_constraints(time_constraint=False)
-    ch_basic_query.append("error_id = %(error_id)s")
+    ch_basic_query = errors_helper.__get_basic_constraints_ch(time_constraint=False)
+    ch_basic_query.append("toString(`$properties`.error_id) = %(error_id)s")
 
     with ch_client.ClickHouseClient() as ch:
         data["startDate24"] = TimeUTC.now(-1)
@@ -105,9 +80,9 @@ def get_details(project_id, error_id, user_id, **data):
         data["endDate30"] = TimeUTC.now()
 
         density24 = int(data.get("density24", 24))
-        step_size24 = errors.get_step_size(data["startDate24"], data["endDate24"], density24)
+        step_size24 = get_step_size(data["startDate24"], data["endDate24"], density24)
         density30 = int(data.get("density30", 30))
-        step_size30 = errors.get_step_size(data["startDate30"], data["endDate30"], density30)
+        step_size30 = get_step_size(data["startDate30"], data["endDate30"], density30)
         params = {
             "startDate24": data['startDate24'],
             "endDate24": data['endDate24'],
@@ -120,28 +95,26 @@ def get_details(project_id, error_id, user_id, **data):
             "error_id": error_id}
 
         main_ch_query = f"""\
-        WITH pre_processed AS (SELECT error_id,
-                                      name,
-                                      message,
+        WITH pre_processed AS (SELECT toString(`$properties`.error_id)         AS error_id,
+                                      toString(`$properties`.name)             AS name,
+                                      toString(`$properties`.message)          AS message,
                                       session_id,
-                                      datetime,
-                                      user_id,
-                                      user_browser,
-                                      user_browser_version,
-                                      user_os,
-                                      user_os_version,
-                                      user_device_type,
-                                      user_device,
-                                      user_country,
-                                      error_tags_keys, 
-                                      error_tags_values
+                                      created_at                               AS datetime,
+                                      `$user_id`                               AS user_id,
+                                      `$browser`                               AS user_browser,
+                                      `$browser_version`                       AS user_browser_version,
+                                      `$os`                                    AS user_os,
+                                      '$os_version'                            AS user_os_version,
+                                      toString(`$properties`.user_device_type) AS user_device_type,
+                                      toString(`$properties`.user_device)      AS user_device,
+                                      `$country`                               AS user_country
                                FROM {MAIN_ERR_SESS_TABLE} AS errors
                                WHERE {" AND ".join(ch_basic_query)}
                                )
         SELECT %(error_id)s AS error_id, name, message,users,
                 first_occurrence,last_occurrence,last_session_id,
                 sessions,browsers_partition,os_partition,device_partition,
-                country_partition,chart24,chart30,custom_tags
+                country_partition,chart24,chart30
         FROM (SELECT error_id,
                      name,
                      message
@@ -156,8 +129,7 @@ def get_details(project_id, error_id, user_id, **data):
                   INNER JOIN (SELECT toUnixTimestamp(max(datetime)) * 1000 AS last_occurrence,
                                      toUnixTimestamp(min(datetime)) * 1000 AS first_occurrence
                               FROM pre_processed) AS time_details ON TRUE
-                  INNER JOIN (SELECT session_id AS last_session_id,
-                                    arrayMap((key, value)->(map(key, value)), error_tags_keys, error_tags_values) AS custom_tags
+                  INNER JOIN (SELECT session_id AS last_session_id
                               FROM pre_processed
                               ORDER BY datetime DESC
                               LIMIT 1) AS last_session_details ON TRUE
@@ -203,27 +175,35 @@ def get_details(project_id, error_id, user_id, **data):
                                    ORDER BY count DESC) AS count_per_country_details
                             ) AS mapped_country_details ON TRUE
                  INNER JOIN (SELECT groupArray(map('timestamp', timestamp, 'count', count)) AS chart24
-                             FROM (SELECT toUnixTimestamp(toStartOfInterval(datetime, INTERVAL 3756 second)) *
-                                          1000                       AS timestamp,
+                             FROM (SELECT gs.generate_series         AS timestamp,
                                           COUNT(DISTINCT session_id) AS count
-                                   FROM {MAIN_EVENTS_TABLE} AS errors
-                                   WHERE {" AND ".join(ch_sub_query24)}
+                                   FROM generate_series(%(startDate24)s, %(endDate24)s, %(step_size24)s) AS gs
+                                        LEFT JOIN {MAIN_EVENTS_TABLE} AS errors ON(TRUE)
+                                   WHERE project_id = toUInt16(%(project_id)s)
+                                         AND `$event_name` = 'ERROR'
+                                         AND events.created_at >= toDateTime(timestamp / 1000)
+                                         AND events.created_at < toDateTime((timestamp + %(step_size24)s) / 1000)
+                                         AND toString(`$properties`.error_id) = %(error_id)s
                                    GROUP BY timestamp
                                    ORDER BY timestamp) AS chart_details
                             ) AS chart_details24 ON TRUE
                  INNER JOIN (SELECT groupArray(map('timestamp', timestamp, 'count', count)) AS chart30
-                             FROM (SELECT toUnixTimestamp(toStartOfInterval(datetime, INTERVAL 3724 second)) *
-                                          1000                       AS timestamp,
+                             FROM (SELECT gs.generate_series         AS timestamp,
                                           COUNT(DISTINCT session_id) AS count
-                                   FROM {MAIN_EVENTS_TABLE} AS errors
-                                   WHERE {" AND ".join(ch_sub_query30)}
+                                   FROM generate_series(%(startDate30)s, %(endDate30)s, %(step_size30)s) AS gs
+                                        LEFT JOIN {MAIN_EVENTS_TABLE} AS errors ON(TRUE)
+                                   WHERE project_id = toUInt16(%(project_id)s)
+                                         AND `$event_name` = 'ERROR'
+                                         AND events.created_at >= toDateTime(timestamp / 1000)
+                                         AND events.created_at < toDateTime((timestamp + %(step_size30)s) / 1000)
+                                         AND toString(`$properties`.error_id) = %(error_id)s
                                    GROUP BY timestamp
                                    ORDER BY timestamp) AS chart_details
                             ) AS chart_details30 ON TRUE;"""
 
-        # print("--------------------")
-        # print(ch.format(main_ch_query, params))
-        # print("--------------------")
+        logger.debug("--------------------")
+        logging.debug(ch.format(query=main_ch_query, parameters=params))
+        logger.debug("--------------------")
         row = ch.execute(query=main_ch_query, parameters=params)
         if len(row) == 0:
             return {"errors": ["error not found"]}
@@ -240,12 +220,12 @@ def get_details(project_id, error_id, user_id, **data):
                     ORDER BY datetime DESC
                     LIMIT 1;"""
         params = {"project_id": project_id, "session_id": row["last_session_id"], "userId": user_id}
-        # print("--------------------")
-        # print(ch.format(query, params))
-        # print("--------------------")
+        logger.debug("--------------------")
+        logging.debug(ch.format(query=query, parameters=params))
+        logger.debug("--------------------")
         status = ch.execute(query=query, parameters=params)
 
-    if status is not None:
+    if status is not None and len(status) > 0:
         status = status[0]
         row["favorite"] = status.pop("favorite")
         row["viewed"] = status.pop("viewed")
@@ -254,8 +234,4 @@ def get_details(project_id, error_id, user_id, **data):
         row["last_hydrated_session"] = None
         row["favorite"] = False
         row["viewed"] = False
-    row["chart24"] = metrics.__complete_missing_steps(start_time=data["startDate24"], end_time=data["endDate24"],
-                                                      density=density24, rows=row["chart24"], neutral={"count": 0})
-    row["chart30"] = metrics.__complete_missing_steps(start_time=data["startDate30"], end_time=data["endDate30"],
-                                                      density=density30, rows=row["chart30"], neutral={"count": 0})
     return {"data": helper.dict_to_camel_case(row)}

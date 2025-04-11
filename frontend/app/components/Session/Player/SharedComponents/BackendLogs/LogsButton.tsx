@@ -7,20 +7,25 @@ import { Icon } from 'UI';
 function LogsButton({
   integrated,
   onClick,
+  shorten,
 }: {
   integrated: string[];
   onClick: () => void;
+  shorten?: boolean;
 }) {
-
   return (
     <ControlButton
-      label={'Traces'}
+      label={shorten ? null : "Traces"}
+      customKey="traces"
       customTags={
         <Avatar.Group>
           {integrated.map((name) => (
-            <Avatar key={name} size={16} src={<Icon name={`integrations/${name}`} size={14} />} />
-           ))
-          }
+            <Avatar
+              key={name}
+              size={16}
+              src={<Icon name={`integrations/${name}`} size={14} />}
+            />
+          ))}
         </Avatar.Group>
       }
       onClick={onClick}

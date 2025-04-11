@@ -1,3 +1,4 @@
+from decouple import config
 from fastapi import Depends
 from starlette.responses import JSONResponse, Response
 
@@ -8,7 +9,10 @@ from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers(prefix="/spot", tags=["spot"])
 
-COOKIE_PATH = "/api/spot/refresh"
+if config("LOCAL_DEV", cast=bool, default=False):
+    COOKIE_PATH = "/spot/refresh"
+else:
+    COOKIE_PATH = "/api/spot/refresh"
 
 
 @app.get('/logout')

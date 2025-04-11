@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"openreplay/backend/pkg/metrics/database"
 
 	"openreplay/backend/pkg/db/postgres/batch"
 	"openreplay/backend/pkg/db/postgres/pool"
@@ -22,7 +23,7 @@ type Conn struct {
 	chConn  CH
 }
 
-func NewConn(log logger.Logger, pool pool.Pool, ch CH) *Conn {
+func NewConn(log logger.Logger, pool pool.Pool, ch CH, metrics database.Database) *Conn {
 	if pool == nil {
 		log.Fatal(context.Background(), "pg pool is empty")
 	}
@@ -30,8 +31,8 @@ func NewConn(log logger.Logger, pool pool.Pool, ch CH) *Conn {
 		log:     log,
 		Pool:    pool,
 		chConn:  ch,
-		bulks:   NewBulkSet(log, pool),
-		batches: batch.NewBatchSet(log, pool),
+		bulks:   NewBulkSet(log, pool, metrics),
+		batches: batch.NewBatchSet(log, pool, metrics),
 	}
 }
 

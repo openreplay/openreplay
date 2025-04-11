@@ -1,10 +1,12 @@
-from fastapi import Body, Depends
+from typing import Annotated
 
+from fastapi import Body, Depends, Query
+
+import schemas
 from chalicelib.core.usability_testing import service
 from chalicelib.core.usability_testing.schema import UTTestCreate, UTTestUpdate, UTTestSearch
 from or_dependencies import OR_context
 from routers.base import get_routers
-from schemas import schemas
 
 public_app, app, app_apikey = get_routers()
 tags = ["usability-tests"]
@@ -77,9 +79,8 @@ async def update_ut_test(projectId: int, test_id: int, test_update: UTTestUpdate
 
 
 @app.get('/{projectId}/usability-tests/{test_id}/sessions', tags=tags)
-async def get_sessions(projectId: int, test_id: int, page: int = 1, limit: int = 10,
-                       live: bool = False,
-                       user_id: str = None):
+async def get_sessions(projectId: int, test_id: int, filter_query: Annotated[schemas.PaginatedSchema, Query()],
+                       live: bool = False, user_id: str = None):
     """
     Get sessions related to a specific UT test.
 
@@ -88,20 +89,21 @@ async def get_sessions(projectId: int, test_id: int, page: int = 1, limit: int =
     """
 
     if live:
-        return service.ut_tests_sessions_live(projectId, test_id, page, limit)
+        return service.ut_tests_sessions_live(projectId, test_id, filter_query.page, filter_query.limit)
     else:
-        return service.ut_tests_sessions(projectId, test_id, page, limit, user_id, live)
+        return service.ut_tests_sessions(projectId, test_id, filter_query.page, filter_query.limit, user_id, live)
 
 
 @app.get('/{projectId}/usability-tests/{test_id}/responses/{task_id}', tags=tags)
-async def get_responses(projectId: int, test_id: int, task_id: int, page: int = 1, limit: int = 10, query: str = None):
+async def get_responses(projectId: int, test_id: int, task_id: int,
+                        filter_query: Annotated[schemas.PaginatedSchema, Query()], query: str = None):
     """
     Get responses related to a specific UT test.
 
     - **project_id**: The unique identifier of the project.
     - **test_id**: The unique identifier of the UT test.
     """
-    return service.get_responses(test_id, task_id, page, limit, query)
+    return service.get_responses(test_id, task_id, filter_query.page, filter_query.limit, query)
 
 
 @app.get('/{projectId}/usability-tests/{test_id}/statistics', tags=tags)

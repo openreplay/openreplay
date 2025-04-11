@@ -3,7 +3,7 @@ import typescript from '@rollup/plugin-typescript'
 import terser from '@rollup/plugin-terser'
 import replace from '@rollup/plugin-replace'
 import { rollup } from 'rollup'
-import commonjs from '@rollup/plugin-commonjs';
+import commonjs from '@rollup/plugin-commonjs'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 const packageConfig = require('./package.json')
@@ -21,33 +21,32 @@ export default async () => {
       },
     }),
   ]
-  return [
-    {
-      input: 'build/main/index.js',
-      output: {
-        dir: 'dist/lib',
-        format: 'es',
-        sourcemap: true,
-        entryFileNames: '[name].js',
-      },
-      plugins: [
-        ...commonPlugins,
-      ],
+
+  const entryPoints = ['build/main/index.js', 'build/main/entry.js']
+
+  const esmBuilds = entryPoints.map((input) => ({
+    input,
+    output: {
+      dir: 'dist/lib',
+      format: 'es',
+      sourcemap: true,
+      entryFileNames: '[name].js',
     },
-    {
-      input: 'build/main/index.js',
-      output: {
-        dir: 'dist/cjs',
-        format: 'cjs',
-        sourcemap: true,
-        entryFileNames: '[name].js',
-      },
-      plugins: [
-        ...commonPlugins,
-        commonjs(),
-      ],
+    plugins: [...commonPlugins],
+  }))
+
+  const cjsBuilds = entryPoints.map((input) => ({
+    input,
+    output: {
+      dir: 'dist/cjs',
+      format: 'cjs',
+      sourcemap: true,
+      entryFileNames: '[name].js',
     },
-  ]
+    plugins: [...commonPlugins, commonjs()],
+  }))
+
+  return [...esmBuilds, ...cjsBuilds]
 }
 
 async function buildWebWorker() {

@@ -1,16 +1,18 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   Typography,
-  Tag,
   Tooltip,
   Input,
   Button,
   Dropdown,
   Modal as AntdModal,
-  Avatar
+  Avatar, TableColumnType, Spin
 } from 'antd';
-import { TeamOutlined, LockOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+  EditOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons';
 import { EllipsisVertical } from 'lucide-react';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
 import { useStore } from 'App/mstore';
@@ -21,6 +23,8 @@ import { Icon } from 'UI';
 import cn from 'classnames';
 import { TYPE_ICONS, TYPE_NAMES } from 'App/constants/card';
 import Widget from 'App/mstore/types/widget';
+import { useTranslation } from 'react-i18next';
+import ORLoader from 'Shared/ORLoader';
 
 const { Text } = Typography;
 
@@ -31,76 +35,40 @@ interface Props {
   toggleSelection?: (metricId: number | number[]) => void;
   disableSelection?: boolean;
   inLibrary?: boolean;
+  loading?: boolean;
 }
 
 const ListView: React.FC<Props> = ({
-                                     list,
-                                     siteId,
-                                     selectedList,
-                                     toggleSelection,
-                                     disableSelection = false,
-                                     inLibrary = false
-                                   }) => {
-  const [sorter, setSorter] = useState<{ field: string; order: 'ascend' | 'descend' }>({
-    field: 'lastModified',
-    order: 'descend'
-  });
-  const [pagination, setPagination] = useState<TablePaginationConfig>({ current: 1, pageSize: 10 });
+  list,
+  siteId,
+  selectedList,
+  toggleSelection,
+  disableSelection = false,
+  inLibrary = false,
+  loading = false
+}) => {
+  const { t } = useTranslation();
   const [editingMetricId, setEditingMetricId] = useState<number | null>(null);
   const [newName, setNewName] = useState('');
   const { metricStore } = useStore();
   const history = useHistory();
 
-  const sortedData = useMemo(() => {
-    return [...list].sort((a, b) => {
-      if (sorter.field === 'lastModified') {
-        return sorter.order === 'ascend'
-          ? new Date(a.lastModified).getTime() - new Date(b.lastModified).getTime()
-          : new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime();
-      } else if (sorter.field === 'name') {
-        return sorter.order === 'ascend'
-          ? (a.name?.localeCompare(b.name) || 0)
-          : (b.name?.localeCompare(a.name) || 0);
-      } else if (sorter.field === 'owner') {
-        return sorter.order === 'ascend'
-          ? (a.owner?.localeCompare(b.owner) || 0)
-          : (b.owner?.localeCompare(a.owner) || 0);
-      }
-      return 0;
-    });
-  }, [list, sorter]);
-
-  const paginatedData = useMemo(() => {
-    const start = ((pagination.current || 1) - 1) * (pagination.pageSize || 10);
-    return sortedData.slice(start, start + (pagination.pageSize || 10));
-  }, [sortedData, pagination]);
-
   const totalMessage = (
     <>
-      Showing{' '}
+      {t('Showing')}{' '}
       <Text strong>
-        {(pagination.pageSize || 10) * ((pagination.current || 1) - 1) + 1}
+        {(metricStore.pageSize || 10) * ((metricStore.page || 1) - 1) + 1}
       </Text>{' '}
-      to{' '}
+      {t('to')}{' '}
       <Text strong>
-        {Math.min((pagination.pageSize || 10) * (pagination.current || 1), list.length)}
+        {Math.min(
+          (metricStore.pageSize || 10) * (metricStore.page || 1),
+          list.length
+        )}
       </Text>{' '}
-      of <Text strong>{list.length}</Text> cards
+      {t('of')}&nbsp;<Text strong>{list.length}</Text>&nbsp;{t('cards')}
     </>
   );
-
-  const handleTableChange = (
-    pag: TablePaginationConfig,
-    _filters: Record<string, (string | number | boolean)[] | null>,
-    sorterParam: SorterResult<Widget> | SorterResult<Widget>[]
-  ) => {
-    const sortRes = sorterParam as SorterResult<Widget>;
-    setSorter({
-      field: sortRes.field as string,
-      order: sortRes.order as 'ascend' | 'descend'
-    });
-    setPagination(pag);
-  };
 
   const parseDate = (dateString: string) => {
     let date = new Date(dateString);
@@ -121,17 +89,23 @@ const ListView: React.FC<Props> = ({
       hours = hours % 12 || 12;
       return `${hours}:${minutes} ${ampm}`;
     };
-    if (diffDays <= 1) return `Today at ${formatTime(date)}`;
-    if (diffDays === 2) return `Yesterday at ${formatTime(date)}`;
-    if (diffDays <= 3) return `${diffDays} days ago at ${formatTime(date)}`;
-    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} at ${formatTime(date)}`;
+    if (diffDays <= 1) return `${t('Today at')} ${formatTime(date)}`;
+    if (diffDays === 2) return `${t('Yesterday at')} ${formatTime(date)}`;
+    if (diffDays <= 3)
+      return `${diffDays} ${t('days ago at')} ${formatTime(date)}`;
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${t('at')} ${formatTime(date)}`;
   };
 
   const MetricTypeIcon: React.FC<{ type: string }> = ({ type }) => (
-    <Tooltip title={<div className="capitalize">{TYPE_NAMES[type]}</div>}>
+    <Tooltip title={<div className="capitalize">{TYPE_NAMES(t)[type]}</div>}>
       <Avatar
         src={
-          <Icon name={TYPE_ICONS[type]} size="16" color="tealx" strokeColor="tealx" />
+          <Icon
+            name={TYPE_ICONS[type]}
+            size="16"
+            color="tealx"
+            strokeColor="tealx"
+          />
         }
         size="default"
         className="bg-tealx-lightest text-tealx mr-2 cursor-default avatar-card-list-item"
@@ -151,10 +125,10 @@ const ListView: React.FC<Props> = ({
   const onMenuClick = async (metric: Widget, { key }: { key: string }) => {
     if (key === 'delete') {
       AntdModal.confirm({
-        title: 'Confirm',
-        content: 'Are you sure you want to permanently delete this card?',
-        okText: 'Yes, delete',
-        cancelText: 'No',
+        title: t('Confirm'),
+        content: t('Are you sure you want to permanently delete this card?'),
+        okText: t('Yes, delete'),
+        cancelText: t('No'),
         onOk: async () => {
           await metricStore.delete(metric);
         }
@@ -175,17 +149,20 @@ const ListView: React.FC<Props> = ({
       // await metricStore.fetchList();
       setEditingMetricId(null);
     } catch (e) {
-      toast.error('Failed to rename card');
+      toast.error(t('Failed to rename card'));
     }
   };
 
   const menuItems = [
-    { key: 'rename', icon: <EditOutlined />, label: 'Rename' },
-    { key: 'delete', icon: <DeleteOutlined />, label: 'Delete' }
+    { key: 'rename', icon: <EditOutlined />, label: t('Rename') },
+    { key: 'delete', icon: <DeleteOutlined />, label: t('Delete') }
   ];
 
   const renderTitle = (_text: string, metric: Widget) => (
-    <div className="flex items-center cursor-pointer" onClick={() => onItemClick(metric)}>
+    <div
+      className="flex items-center cursor-pointer"
+      onClick={() => onItemClick(metric)}
+    >
       <MetricTypeIcon type={metric.metricType} />
       <div className={cn('capitalize-first block', !inLibrary ? 'link' : '')}>
         {metric.name}
@@ -193,7 +170,9 @@ const ListView: React.FC<Props> = ({
     </div>
   );
 
-  const renderOwner = (_text: string, metric: Widget) => <div>{metric.owner}</div>;
+  const renderOwner = (_text: string, metric: Widget) => (
+    <div>{metric.owner}</div>
+  );
 
   const renderLastModified = (_text: string, metric: Widget) => {
     const date = parseDate(metric.lastModified);
@@ -215,34 +194,38 @@ const ListView: React.FC<Props> = ({
     </div>
   );
 
-  const columns = [
+  const columns: TableColumnType<any>[] = [
     {
-      title: 'Title',
+      title: t('Title'),
       dataIndex: 'name',
       key: 'title',
       className: 'cap-first pl-4',
       sorter: true,
+      sortOrder: metricStore.sort.field === 'name' ? metricStore.sort.order : undefined,
       width: inLibrary ? '31%' : '25%',
       render: renderTitle
     },
     {
-      title: 'Owner',
-      dataIndex: 'owner',
+      title: t('Owner'),
+      dataIndex: 'owner_email',
       key: 'owner',
       className: 'capitalize',
       sorter: true,
+      sortOrder: metricStore.sort.field === 'owner_email' ? metricStore.sort.order : undefined,
       width: inLibrary ? '31%' : '25%',
       render: renderOwner
     },
     {
-      title: 'Last Modified',
-      dataIndex: 'lastModified',
+      title: t('Last Modified'),
+      dataIndex: 'edited_at',
       key: 'lastModified',
       sorter: true,
+      sortOrder: metricStore.sort.field === 'edited_at' ? metricStore.sort.order : undefined,
       width: inLibrary ? '31%' : '25%',
       render: renderLastModified
     }
   ];
+
   if (!inLibrary) {
     columns.push({
       title: '',
@@ -253,18 +236,40 @@ const ListView: React.FC<Props> = ({
     });
   }
 
+  const handleTableChange = (
+    pag: TablePaginationConfig,
+    _filters: Record<string, (string | number | boolean)[] | null>,
+    sorterParam: SorterResult<Widget> | SorterResult<Widget>[]
+  ) => {
+    const sorter = Array.isArray(sorterParam) ? sorterParam[0] : sorterParam;
+    let order = sorter.order;
+    if (metricStore.sort.field === sorter.field) {
+      order = metricStore.sort.order === 'ascend' ? 'descend' : 'ascend';
+    }
+    console.log('sorter', { field: sorter.field, order });
+    metricStore.updateKey('sort', { field: sorter.field, order });
+    metricStore.updateKey('page', pag.current || 1);
+  };
+
   return (
     <>
       <Table
         columns={columns}
-        dataSource={paginatedData}
+        dataSource={list}
         rowKey="metricId"
+        showSorterTooltip={false}
         onChange={handleTableChange}
+        sortDirections={['ascend', 'descend']}
+        loading={{
+          spinning: loading,
+          delay: 0,
+          indicator: <Spin indicator={<ORLoader />} />,
+        }}
         onRow={
           inLibrary
             ? (record) => ({
               onClick: () => {
-                if (!disableSelection) toggleSelection?.(record.metricId);
+                if (!disableSelection) toggleSelection?.(record?.metricId);
               }
             })
             : undefined
@@ -279,9 +284,9 @@ const ListView: React.FC<Props> = ({
             : undefined
         }
         pagination={{
-          current: pagination.current,
-          pageSize: pagination.pageSize,
-          total: sortedData.length,
+          current: metricStore.page,
+          pageSize: metricStore.pageSize,
+          total: metricStore.total,
           showSizeChanger: false,
           className: 'px-4',
           showLessItems: true,
@@ -291,15 +296,15 @@ const ListView: React.FC<Props> = ({
         }}
       />
       <AntdModal
-        title="Rename Card"
+        title={t('Rename Card')}
         open={editingMetricId !== null}
-        okText="Save"
-        cancelText="Cancel"
+        okText={t('Save')}
+        cancelText={t('Cancel')}
         onOk={onRename}
         onCancel={() => setEditingMetricId(null)}
       >
         <Input
-          placeholder="Enter new card title"
+          placeholder={t('Enter new card title')}
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
         />

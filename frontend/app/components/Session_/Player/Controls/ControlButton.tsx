@@ -1,10 +1,10 @@
 import React from 'react';
 import cn from 'classnames';
-import stl from './controlButton.module.css';
 import { Popover, Button } from 'antd';
+import stl from './controlButton.module.css';
 
 interface IProps {
-  label: string;
+  label: React.ReactNode;
   icon?: string;
   disabled?: boolean;
   onClick?: () => void;
@@ -18,9 +18,10 @@ interface IProps {
   noIcon?: boolean;
   popover?: React.ReactNode;
   customTags?: React.ReactNode;
+  customKey?: string;
 }
 
-const ControlButton = ({
+function ControlButton({
   label,
   disabled = false,
   onClick,
@@ -28,22 +29,32 @@ const ControlButton = ({
   active = false,
   popover = undefined,
   customTags,
-}: IProps) => (
-  <Popover content={popover} open={popover ? undefined : false}>
-    <Button
-      size={'small'}
-      onClick={onClick}
-      id={'control-button-' + label.toLowerCase()}
-      disabled={disabled}
-    >
-      {customTags}
-      {hasErrors && <div className={stl.labels}><div className={stl.errorSymbol} /></div>}
-      <span className={cn('font-semibold hover:text-main', active ? 'color-main' : 'color-gray-darkest')}>
-        {label}
-      </span>
-    </Button>
-  </Popover>
-);
+  customKey,
+}: IProps) {
+  return (
+    <Popover content={popover} open={popover ? undefined : false}>
+      <Button
+        size="small"
+        onClick={onClick}
+        id={`control-button-${customKey ? customKey.toLowerCase() : label!.toString().toLowerCase()}`}
+        disabled={disabled}
+      >
+        {customTags}
+        {hasErrors && (
+          <div className="w-2 h-2 rounded-full bg-red" />
+        )}
+        {label && <span
+          className={cn(
+            'font-semibold hover:text-main',
+            active ? 'color-main' : 'color-gray-darkest',
+          )}
+        >
+          {label}
+        </span>}
+      </Button>
+    </Popover>
+  );
+}
 
 ControlButton.displayName = 'ControlButton';
 

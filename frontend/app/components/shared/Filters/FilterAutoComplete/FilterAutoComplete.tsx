@@ -1,9 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { debounce } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -43,7 +38,7 @@ interface Props {
   icon?: string;
   hideOrText?: boolean;
   onApplyValues: (values: string[]) => void;
-  modalProps?: Record<string, any>
+  modalProps?: Record<string, any>;
   isAutoOpen?: boolean;
 }
 
@@ -54,25 +49,32 @@ const FilterAutoComplete = observer(
     onApply,
     values,
     placeholder,
-  }: { params: any, values: string[], onClose: () => void, onApply: (values: string[]) => void, placeholder?: string }) => {
+  }: {
+    params: any;
+    values: string[];
+    onClose: () => void;
+    onApply: (values: string[]) => void;
+    placeholder?: string;
+  }) => {
     const [options, setOptions] = useState<{ value: string; label: string }[]>(
-      []
+      [],
     );
     const [initialFocus, setInitialFocus] = useState(false);
     const [loading, setLoading] = useState(false);
     const { filterStore, projectsStore } = useStore();
     const _params = processKey(params);
-    const filterKey = `${_params.type}${_params.key || ''}`;
+    const filterKey = `${projectsStore.siteId}_${_params.type}${_params.key || ''}`;
     const topValues = filterStore.topValues[filterKey] || [];
 
     React.useEffect(() => {
-      filterStore.resetValues()
       setOptions([])
     }, [projectsStore.siteId])
 
     const loadTopValues = async () => {
       setLoading(true)
-      await filterStore.fetchTopValues(_params.type, _params.key);
+      if (projectsStore.siteId) {
+        await filterStore.fetchTopValues(_params.type, projectsStore.siteId, _params.key);
+      }
       setLoading(false)
     };
 
@@ -87,12 +89,10 @@ const FilterAutoComplete = observer(
     }, [topValues, initialFocus]);
 
     useEffect(() => {
-      void loadTopValues()
+      void loadTopValues();
     }, [_params.type]);
 
-    const loadOptions = async (
-      inputValue: string,
-    ) => {
+    const loadOptions = async (inputValue: string) => {
       if (!inputValue.length) {
         const mappedValues = topValues.map((i) => ({
           value: i.value,
@@ -132,21 +132,25 @@ const FilterAutoComplete = observer(
       setOptions(topValues.map((i) => ({ value: i.value, label: i.value })));
     };
 
-    return <AutocompleteModal 
-      values={values} 
-      onClose={onClose} 
-      onApply={onApply} 
-      handleFocus={handleFocus} 
-      loadOptions={handleInputChange}
-      options={options}
-      isLoading={loading}
-      placeholder={placeholder}
-    />
-  }
+    return (
+      <AutocompleteModal
+        values={values}
+        onClose={onClose}
+        onApply={onApply}
+        handleFocus={handleFocus}
+        loadOptions={handleInputChange}
+        options={options}
+        isLoading={loading}
+        placeholder={placeholder}
+      />
+    );
+  },
 );
 
 function AutoCompleteController(props: Props) {
-  return <AutoCompleteContainer {...props} modalRenderer={FilterAutoComplete} />
+  return (
+    <AutoCompleteContainer {...props} modalRenderer={FilterAutoComplete} />
+  );
 }
 
 export default AutoCompleteController;

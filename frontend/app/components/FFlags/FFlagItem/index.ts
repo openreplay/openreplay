@@ -1,1 +1,1 @@
-export { default } from './FFlagItem'
+export { default } from './FFlagItem';

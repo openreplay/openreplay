@@ -1,1 +1,1 @@
-export { default } from './SessionsImpactedBySlowRequests'
+export { default } from './SessionsImpactedBySlowRequests';

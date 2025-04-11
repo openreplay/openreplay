@@ -1,1 +1,1 @@
-export { default } from './LiveSessionList'
+export { default } from './LiveSessionList';

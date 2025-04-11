@@ -9,7 +9,7 @@ import (
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
-	databaseMetrics "openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/server"
@@ -20,13 +20,15 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := http.New(log)
+	// Observability
 	webMetrics := web.New("http")
-	metrics.New(log, append(webMetrics.List(), databaseMetrics.List()...))
+	dbMetric := database.New("http")
+	metrics.New(log, append(webMetrics.List(), dbMetric.List()...))
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(15000)
 
-	pgConn, err := pool.New(cfg.Postgres.String())
+	pgConn, err := pool.New(dbMetric, cfg.Postgres.String())
 	if err != nil {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
@@ -38,7 +40,7 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	builder, err := services.New(log, cfg, webMetrics, producer, pgConn, redisClient)
+	builder, err := services.New(log, cfg, webMetrics, dbMetric, producer, pgConn, redisClient)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating services: %s", err)
 	}

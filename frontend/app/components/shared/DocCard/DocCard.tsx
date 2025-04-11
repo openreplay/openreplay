@@ -11,16 +11,20 @@ interface Props {
   className?: string;
 }
 function DocCard(props: Props) {
-  const { className = '', iconColor = 'tealx', iconBgColor = 'bg-tealx-light' } = props;
+  const {
+    className = '',
+    iconColor = 'tealx',
+    iconBgColor = 'bg-tealx-light',
+  } = props;
 
   return (
-    <div className={cn('p-5 bg-gray-lightest mb-4 rounded', className)}>
+    <div className={cn('p-5 bg-gray-lightest mb-4 rounded-lg', className)}>
       <div className="font-medium mb-2 flex items-center">
         {props.icon && (
           <div
             className={cn(
               'w-8 h-8 rounded-full flex items-center justify-center shrink-0 mr-2',
-              iconBgColor
+              iconBgColor,
             )}
           >
             {/* @ts-ignore */}

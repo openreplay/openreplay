@@ -4,11 +4,17 @@ import { alertsService } from 'App/services';
 
 export default class AlertsStore {
   alerts: Alert[] = [];
-  triggerOptions: { label: string; value: string | number; unit?: string }[] = [];
+
+  triggerOptions: { label: string; value: string | number; unit?: string }[] =
+    [];
+
   alertsSearch = '';
+
   // @ts-ignore
   instance: Alert = new Alert({}, false);
+
   loading = false;
+
   page: number = 1;
 
   constructor() {
@@ -38,11 +44,11 @@ export default class AlertsStore {
     }
   };
 
-  save = (inst: Alert): Promise<void> => {
-    return new Promise<void>(async (resolve, reject) => {
+  save = (inst: Alert): Promise<void> =>
+    new Promise<void>(async (resolve, reject) => {
       this.loading = true;
       try {
-        await alertsService.save(inst ? inst : this.instance);
+        await alertsService.save(inst || this.instance);
         this.instance.isExists = true;
         resolve();
       } catch (e) {
@@ -52,10 +58,9 @@ export default class AlertsStore {
         this.loading = false;
       }
     });
-  };
 
-  remove = (id: string): Promise<void> => {
-    return new Promise<void>(async (resolve, reject) => {
+  remove = (id: string): Promise<void> =>
+    new Promise<void>(async (resolve, reject) => {
       this.loading = true;
       try {
         await alertsService.remove(id);
@@ -67,13 +72,15 @@ export default class AlertsStore {
         this.loading = false;
       }
     });
-  };
 
   fetchTriggerOptions = async () => {
     this.loading = true;
     try {
       const options = await alertsService.fetchTriggerOptions();
-      this.triggerOptions = options.map(({ name, value }) => ({ label: name, value }));
+      this.triggerOptions = options.map(({ name, value }) => ({
+        label: name,
+        value,
+      }));
     } catch (e) {
       console.error(e);
     } finally {

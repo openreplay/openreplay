@@ -11,8 +11,8 @@ interface Props {
 
 function Bookmark({ sessionId }: Props) {
   const { sessionStore, userStore } = useStore();
-  const isEnterprise = userStore.isEnterprise;
-  const favorite = sessionStore.current.favorite;
+  const { isEnterprise } = userStore;
+  const { favorite } = sessionStore.current;
   const onToggleFavorite = sessionStore.toggleFavorite;
   const [isFavorite, setIsFavorite] = useState(favorite);
 
@@ -48,12 +48,15 @@ function Bookmark({ sessionId }: Props) {
 
   return (
     <div onClick={toggleFavorite} className="w-full">
-      <Tooltip title={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD} placement='bottom'>
+      <Tooltip
+        title={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}
+        placement="bottom"
+      >
         <Button
           type={isFavorite ? 'primary' : undefined}
           ghost={isFavorite}
-          size={'small'}
-          className={'flex items-center justify-center'}
+          size="small"
+          className="flex items-center justify-center"
         >
           {icon}
         </Button>

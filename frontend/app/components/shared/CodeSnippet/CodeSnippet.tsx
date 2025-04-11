@@ -2,26 +2,36 @@ import React from 'react';
 import { CopyButton, CodeBlock } from 'UI';
 
 const inputModeOptions = [
-    { label: 'Record all inputs', value: 'plain' },
-    { label: 'Obscure all inputs', value: 'hidden' },
-    { label: 'Ignore all inputs', value: 'obscured' },
+  { label: 'Record all inputs', value: 'plain' },
+  { label: 'Obscure all inputs', value: 'hidden' },
+  { label: 'Ignore all inputs', value: 'obscured' },
 ];
-  
-const inputModeOptionsMap: any = {}
-inputModeOptions.forEach((o: any, i: any) => inputModeOptionsMap[o.value] = i)
+
+const inputModeOptionsMap: any = {};
+inputModeOptions.forEach(
+  (o: any, i: any) => (inputModeOptionsMap[o.value] = i),
+);
 
 interface Props {
-    isAssistEnabled: boolean;
-    host: string;
-    projectKey: string;
-    ingestPoint: string;
-    defaultInputMode: any;
-    obscureTextNumbers: boolean;
-    obscureTextEmails: boolean;
+  isAssistEnabled: boolean;
+  host: string;
+  projectKey: string;
+  ingestPoint: string;
+  defaultInputMode: any;
+  obscureTextNumbers: boolean;
+  obscureTextEmails: boolean;
 }
 function CodeSnippet(props: Props) {
-    const { host, projectKey, ingestPoint, defaultInputMode, obscureTextNumbers, obscureTextEmails, isAssistEnabled } = props;
-    const codeSnippet = `<!-- OpenReplay Tracking Code for ${host} -->
+  const {
+    host,
+    projectKey,
+    ingestPoint,
+    defaultInputMode,
+    obscureTextNumbers,
+    obscureTextEmails,
+    isAssistEnabled,
+  } = props;
+  const codeSnippet = `<!-- OpenReplay Tracking Code for ${host} -->
 <script>
   var initOpts = {
     projectKey: "${projectKey}",
@@ -47,14 +57,14 @@ function CodeSnippet(props: Props) {
   })("${window.env.TRACKER_HOST || '//static.openreplay.com'}/${window.env.TRACKER_VERSION}/openreplay${isAssistEnabled ? '-assist.js' : '.js'}",1,0,initOpts,startOpts);
 </script>`;
 
-    return (
-        <div className="relative">
-            <div className="absolute top-0 right-0 mt-2 mr-2">                
-                <CopyButton content={codeSnippet} className="uppercase" />
-            </div>
-          <CodeBlock code={codeSnippet} language={'js'} />
-        </div>
-    );
+  return (
+    <div className="relative">
+      <div className="absolute top-0 right-0 mt-2 mr-2">
+        <CopyButton content={codeSnippet} className="uppercase" />
+      </div>
+      <CodeBlock code={codeSnippet} language="js" />
+    </div>
+  );
 }
 
 export default CodeSnippet;

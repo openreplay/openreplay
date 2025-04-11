@@ -114,9 +114,9 @@ ENV TZ=UTC \
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
       wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
       wget https://static.openreplay.com/geoip/GeoLite2-City.mmdb -O "$MAXMINDDB_FILE"; \
-    elif [ "$SERVICE_NAME" = "imagestorage" ]; then \
+    elif [ "$SERVICE_NAME" = "images" ]; then \
       apk add --no-cache zstd; \
-    elif [ "$SERVICE_NAME" = "canvas-handler" ]; then \
+    elif [ "$SERVICE_NAME" = "canvases" ]; then \
           apk add --no-cache zstd; \
     elif [ "$SERVICE_NAME" = "spot" ]; then \
           apk add --no-cache ffmpeg; \

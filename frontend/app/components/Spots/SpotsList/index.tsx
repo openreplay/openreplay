@@ -11,11 +11,13 @@ import { Loader, NoContent, Pagination } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import EmptyPage from './EmptyPage';
-import InstallCTA from "./InstallCTA";
+import InstallCTA from './InstallCTA';
 import SpotListItem from './SpotListItem';
 import SpotsListHeader from './SpotsListHeader';
+import { useTranslation } from 'react-i18next';
 
 function SpotsList() {
+  const { t } = useTranslation();
   const [selectedSpots, setSelectedSpots] = React.useState<string[]>([]);
   const { spotStore } = useStore();
 
@@ -47,17 +49,14 @@ function SpotsList() {
     }
 
     message.success(
-      `${deletedCount} Spot${deletedCount > 1 ? 's' : ''} deleted successfully.`
+      `${deletedCount} Spot${deletedCount > 1 ? 's' : ''} ${t('deleted successfully.')}`,
     );
   };
 
-  const onRename = (id: string, newName: string) => {
-    return spotStore.updateSpot(id, { name: newName });
-  };
+  const onRename = (id: string, newName: string) =>
+    spotStore.updateSpot(id, { name: newName });
 
-  const onVideo = (id: string) => {
-    return spotStore.getVideo(id);
-  };
+  const onVideo = (id: string) => spotStore.getVideo(id);
 
   const handleSelectSpot = (spotId: string, isSelected: boolean) => {
     if (isSelected) {
@@ -73,16 +72,12 @@ function SpotsList() {
     setSelectedSpots([]);
   };
 
-  const isLoading = spotStore.isLoading;
+  const { isLoading } = spotStore;
   const isEmpty = spotStore.total === 0 && spotStore.query === '';
   return (
-    <div className={'relative w-full mx-auto'} style={{ maxWidth: 1360 }}>
+    <div className="relative w-full mx-auto" style={{ maxWidth: 1360 }}>
       <InstallCTA />
-      <div
-        className={
-          'flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm w-full z-50 border-b'
-        }
-      >
+      <div className="flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm w-full z-50 border-b">
         <SpotsListHeader
           onDelete={batchDelete}
           onRefresh={spotStore.fetchSpots}
@@ -93,7 +88,7 @@ function SpotsList() {
         />
       </div>
 
-      <div className={'pb-4 w-full'}>
+      <div className="pb-4 w-full">
         {isEmpty ? (
           isLoading ? (
             <Loader />
@@ -109,14 +104,12 @@ function SpotsList() {
                 <div>
                   <AnimatedSVG name={ICONS.NO_RECORDINGS} size={60} />
                   <div className="font-medium text-center mt-4">
-                    No Matching Results.
+                    {t('No Matching Results.')}
                   </div>
                 </div>
               }
             >
-              <div
-                className={'py-2 border-gray-lighter grid grid-cols-3 gap-6'}
-              >
+              <div className="py-2 border-gray-lighter grid grid-cols-3 gap-6">
                 {spotStore.spots.map((spot) => (
                   <SpotListItem
                     key={spot.spotId}
@@ -134,20 +127,20 @@ function SpotsList() {
             </NoContent>
             <div className="flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2">
               <div>
-                Showing{' '}
+                {t('Showing')}{' '}
                 <span className="font-medium">
                   {(spotStore.page - 1) * spotStore.limit + 1}
                 </span>{' '}
-                to{' '}
+                {t('to')}{' '}
                 <span className="font-medium">
                   {(spotStore.page - 1) * spotStore.limit +
                     spotStore.spots.length}
                 </span>{' '}
-                of{' '}
+                {t('of')}{' '}
                 <span className="font-medium">
                   {numberWithCommas(spotStore.total)}
                 </span>{' '}
-                spots.
+                {t('spots.')}
               </div>
               <Pagination
                 page={spotStore.page}
@@ -165,5 +158,5 @@ function SpotsList() {
 }
 
 export default withPermissions(['SPOT'])(
-  withPageTitle('Spot List - OpenReplay')(observer(SpotsList))
+  withPageTitle('Spot List - OpenReplay')(observer(SpotsList)),
 );

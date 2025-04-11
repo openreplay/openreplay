@@ -1,8 +1,17 @@
+/* eslint-disable i18next/no-literal-string */
 import { ResourceType, Timed } from 'Player';
+import { WsChannel } from 'Player/web/messages';
 import MobilePlayer from 'Player/mobile/IOSPlayer';
 import WebPlayer from 'Player/web/WebPlayer';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo, useState } from 'react';
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from 'react';
+import i18n from 'App/i18n'
 
 import { useModal } from 'App/components/Modal';
 import {
@@ -11,24 +20,27 @@ import {
 } from 'App/components/Session/playerContext';
 import { formatMs } from 'App/date';
 import { useStore } from 'App/mstore';
-import { formatBytes } from 'App/utils';
+import { formatBytes, debounceCall } from 'App/utils';
 import { Icon, NoContent, Tabs } from 'UI';
 import { Tooltip, Input, Switch, Form } from 'antd';
-import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import {
+  SearchOutlined,
+  InfoCircleOutlined,
+} from '@ant-design/icons';
 
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
-import { WsChannel } from 'App/player/web/messages';
 
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import TabSelector from '../TabSelector';
 import TimeTable from '../TimeTable';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
-import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 import WSPanel from './WSPanel';
+import { useTranslation } from 'react-i18next';
+import { mergeListsWithZoom, processInChunks } from './utils'
 
+// Constants remain the same
 const INDEX_KEY = 'network';
-
 const ALL = 'ALL';
 const XHR = 'xhr';
 const JS = 'js';
@@ -60,6 +72,9 @@ export const NETWORK_TABS = TAP_KEYS.map((tab) => ({
 const DOM_LOADED_TIME_COLOR = 'teal';
 const LOAD_TIME_COLOR = 'red';
 
+const BATCH_SIZE = 2500;
+const INITIAL_LOAD_SIZE = 5000;
+
 export function renderType(r: any) {
   return (
     <Tooltip style={{ width: '100%' }} title={<div>{r.type}</div>}>
@@ -77,12 +92,17 @@ export function renderName(r: any) {
 }
 
 function renderSize(r: any) {
-  if (r.responseBodySize) return formatBytes(r.responseBodySize);
+  const t = i18n.t;
+  const notCaptured = t('Not captured');
+  const resSizeStr = t('Resource size')
   let triggerText;
   let content;
-  if (r.decodedBodySize == null || r.decodedBodySize === 0) {
+  if (r.responseBodySize) {
+    triggerText = formatBytes(r.responseBodySize);
+    content = undefined;
+  } else if (r.decodedBodySize == null || r.decodedBodySize === 0) {
     triggerText = 'x';
-    content = 'Not captured';
+    content = notCaptured;
   } else {
     const headerSize = r.headerSize || 0;
     const showTransferred = r.headerSize != null;
@@ -91,11 +111,13 @@ function renderSize(r: any) {
     content = (
       <ul>
         {showTransferred && (
-          <li>{`${formatBytes(
-            r.encodedBodySize + headerSize
-          )} transferred over network`}</li>
+          <li>
+            {`${formatBytes(
+              r.encodedBodySize + headerSize,
+            )} transferred over network`}
+          </li>
         )}
-        <li>{`Resource size: ${formatBytes(r.decodedBodySize)} `}</li>
+        <li>{`${resSizeStr}: ${formatBytes(r.decodedBodySize)} `}</li>
       </ul>
     );
   }
@@ -108,6 +130,7 @@ function renderSize(r: any) {
 }
 
 export function renderDuration(r: any) {
+  const { t } = useTranslation();
   if (!r.success) return 'x';
 
   const text = `${Math.floor(r.duration)}ms`;
@@ -115,9 +138,9 @@ export function renderDuration(r: any) {
 
   let tooltipText;
   if (r.isYellow) {
-    tooltipText = 'Slower than average';
+    tooltipText = t('Slower than average');
   } else {
-    tooltipText = 'Much slower than average';
+    tooltipText = t('Much slower than average');
   }
 
   return (
@@ -136,12 +159,10 @@ function renderStatus({
   cached: boolean;
   error?: string;
 }) {
+  const { t } = useTranslation();
   const displayedStatus = error ? (
     <Tooltip title={error}>
-      <div
-        style={{ width: 90 }}
-        className={'overflow-hidden overflow-ellipsis'}
-      >
+      <div style={{ width: 90 }} className="overflow-hidden overflow-ellipsis">
         {error}
       </div>
     </Tooltip>
@@ -151,7 +172,7 @@ function renderStatus({
   return (
     <>
       {cached ? (
-        <Tooltip title={'Served from cache'} placement="top">
+        <Tooltip title={t('Served from cache')} placement="top">
           <div className="flex items-center">
             <span className="mr-1">{displayedStatus}</span>
             <Icon name="wifi" size={16} />
@@ -164,11 +185,13 @@ function renderStatus({
   );
 }
 
+
+// Main component for Network Panel
 function NetworkPanelCont({ panelHeight }: { panelHeight: number }) {
   const { player, store } = React.useContext(PlayerContext);
   const { sessionStore, uiPlayerStore } = useStore();
 
-  const startedAt = sessionStore.current.startedAt;
+  const { startedAt } = sessionStore.current;
   const {
     domContentLoadedTime,
     loadTime,
@@ -179,7 +202,7 @@ function NetworkPanelCont({ panelHeight }: { panelHeight: number }) {
   } = store.get();
   const tabsArr = Object.keys(tabStates);
   const tabValues = Object.values(tabStates);
-  const dataSource = uiPlayerStore.dataSource;
+  const { dataSource } = uiPlayerStore;
   const showSingleTab = dataSource === 'current';
 
   let fetchList = [];
@@ -200,20 +223,19 @@ function NetworkPanelCont({ panelHeight }: { panelHeight: number }) {
   } else {
     fetchList = tabValues.flatMap((tab) => tab.fetchList);
     resourceList = tabValues.flatMap((tab) => tab.resourceList);
-    fetchListNow = tabValues
-    .flatMap((tab) => tab.fetchListNow)
-    .filter(Boolean);
+    fetchListNow = tabValues.flatMap((tab) => tab.fetchListNow).filter(Boolean);
     resourceListNow = tabValues
-    .flatMap((tab) => tab.resourceListNow)
-    .filter(Boolean);
+      .flatMap((tab) => tab.resourceListNow)
+      .filter(Boolean);
     websocketList = tabValues.flatMap((tab) => tab.websocketList);
     websocketListNow = tabValues
-    .flatMap((tab) => tab.websocketListNow)
-    .filter(Boolean);
+      .flatMap((tab) => tab.websocketListNow)
+      .filter(Boolean);
   }
 
   const getTabNum = (tab: string) => tabsArr.findIndex((t) => t === tab) + 1;
-  const getTabName = (tabId: string) => tabNames[tabId]
+  const getTabName = (tabId: string) => tabNames[tabId];
+
   return (
     <NetworkPanelComp
       loadTime={loadTime}
@@ -226,8 +248,8 @@ function NetworkPanelCont({ panelHeight }: { panelHeight: number }) {
       resourceListNow={resourceListNow}
       player={player}
       startedAt={startedAt}
-      websocketList={websocketList as WSMessage[]}
-      websocketListNow={websocketListNow as WSMessage[]}
+      websocketList={websocketList}
+      websocketListNow={websocketListNow}
       getTabNum={getTabNum}
       getTabName={getTabName}
       showSingleTab={showSingleTab}
@@ -238,7 +260,7 @@ function NetworkPanelCont({ panelHeight }: { panelHeight: number }) {
 function MobileNetworkPanelCont({ panelHeight }: { panelHeight: number }) {
   const { player, store } = React.useContext(MobilePlayerContext);
   const { uiPlayerStore, sessionStore } = useStore();
-  const startedAt = sessionStore.current.startedAt;
+  const { startedAt } = sessionStore.current;
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
@@ -267,9 +289,7 @@ function MobileNetworkPanelCont({ panelHeight }: { panelHeight: number }) {
       resourceListNow={resourceListNow}
       player={player}
       startedAt={startedAt}
-      // @ts-ignore
       websocketList={websocketList}
-      // @ts-ignore
       websocketListNow={websocketListNow}
       zoomEnabled={zoomEnabled}
       zoomStartTs={zoomStartTs}
@@ -278,12 +298,35 @@ function MobileNetworkPanelCont({ panelHeight }: { panelHeight: number }) {
   );
 }
 
-type WSMessage = Timed & {
-  channelName: string;
-  data: string;
-  timestamp: number;
-  dir: 'up' | 'down';
-  messageType: string;
+const useInfiniteScroll = (loadMoreCallback: () => void, hasMore: boolean) => {
+  const observerRef = useRef<IntersectionObserver>(null);
+  const loadingRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore) {
+          loadMoreCallback();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    if (loadingRef.current) {
+      observer.observe(loadingRef.current);
+    }
+
+    // @ts-ignore
+    observerRef.current = observer;
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [loadMoreCallback, hasMore, loadingRef]);
+
+  return loadingRef;
 };
 
 interface Props {
@@ -300,8 +343,8 @@ interface Props {
   resourceList: Timed[];
   fetchListNow: Timed[];
   resourceListNow: Timed[];
-  websocketList: Array<WSMessage>;
-  websocketListNow: Array<WSMessage>;
+  websocketList: Array<WsChannel>;
+  websocketListNow: Array<WsChannel>;
   player: WebPlayer | MobilePlayer;
   startedAt: number;
   isMobile?: boolean;
@@ -341,115 +384,198 @@ export const NetworkPanelComp = observer(
     showSingleTab,
     getTabName,
   }: Props) => {
+    const { t } = useTranslation();
     const [selectedWsChannel, setSelectedWsChannel] = React.useState<
       WsChannel[] | null
     >(null);
     const { showModal } = useModal();
     const [showOnlyErrors, setShowOnlyErrors] = useState(false);
-
     const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [displayedItems, setDisplayedItems] = useState([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [summaryStats, setSummaryStats] = useState({
+      resourcesSize: 0,
+      transferredSize: 0,
+    });
+
+    const originalListRef = useRef([]);
+    const socketListRef = useRef([]);
+
     const {
       sessionStore: { devTools },
     } = useStore();
-    const filter = devTools[INDEX_KEY].filter;
-    const activeTab = devTools[INDEX_KEY].activeTab;
+    const { filter } = devTools[INDEX_KEY];
+    const { activeTab } = devTools[INDEX_KEY];
     const activeIndex = activeOutsideIndex ?? devTools[INDEX_KEY].index;
+    const [inputFilterValue, setInputFilterValue] = useState(filter);
 
-    const socketList = useMemo(
-      () =>
-        websocketList.filter(
-          (ws, i, arr) =>
-            arr.findIndex((it) => it.channelName === ws.channelName) === i
-        ),
-      [websocketList]
+    const debouncedFilter = useCallback(
+      debounceCall((filterValue) => {
+        devTools.update(INDEX_KEY, { filter: filterValue });
+      }, 300),
+      [],
     );
 
-    const list = useMemo(
-      () =>
-        // TODO: better merge (with body size info) - do it in player
-        resourceList
-          .filter(
-            (res) =>
-              !fetchList.some((ft) => {
-                // res.url !== ft.url doesn't work on relative URLs appearing within fetchList (to-fix in player)
-                if (res.name === ft.name) {
-                  if (res.time === ft.time) return true;
-                  if (res.url.includes(ft.url)) {
-                    return (
-                      Math.abs(res.time - ft.time) < 350 ||
-                      Math.abs(res.timestamp - ft.timestamp) < 350
-                    );
-                  }
-                }
-
-                if (res.name !== ft.name) {
-                  return false;
-                }
-                if (Math.abs(res.time - ft.time) > 250) {
-                  return false;
-                } // TODO: find good epsilons
-                if (Math.abs(res.duration - ft.duration) > 200) {
-                  return false;
-                }
-
-                return true;
-              })
-          )
-          .concat(fetchList)
-          .concat(
-            socketList.map((ws) => ({
-              ...ws,
-              type: 'websocket',
-              method: 'ws',
-              url: ws.channelName,
-              name: ws.channelName,
-              status: '101',
-              duration: 0,
-              transferredBodySize: 0,
-            }))
-          )
-          .filter((req) =>
-            zoomEnabled
-              ? req.time >= zoomStartTs! && req.time <= zoomEndTs!
-              : true
-          )
-          .sort((a, b) => a.time - b.time),
-      [resourceList.length, fetchList.length, socketList.length]
-    );
-
-    let filteredList = useMemo(() => {
-      if (!showOnlyErrors) {
-        return list;
-      }
-      return list.filter(
-        (it) => parseInt(it.status) >= 400 || !it.success || it.error
+    // Process socket lists once
+    useEffect(() => {
+      const uniqueSocketList = websocketList.filter(
+        (ws, i, arr) =>
+          arr.findIndex((it) => it.channelName === ws.channelName) === i,
       );
-    }, [showOnlyErrors, list]);
-    filteredList = useRegExListFilterMemo(
-      filteredList,
-      (it) => [it.status, it.name, it.type, it.method],
-      filter
-    );
-    filteredList = useTabListFilterMemo(
-      filteredList,
-      (it) => TYPE_TO_TAB[it.type],
-      ALL,
-      activeTab
-    );
+      socketListRef.current = uniqueSocketList;
+    }, [websocketList.length]);
 
-    const onTabClick = (activeTab: (typeof TAP_KEYS)[number]) =>
+    // Initial data processing - do this only once when data changes
+    useEffect(() => {
+      setIsLoading(true);
+
+      // Heaviest operation here, will create a final merged network list
+      const processData = async () => {
+        const fetchUrls = new Set(
+          fetchList.map((ft) => {
+            return `${ft.name}-${Math.floor(ft.time / 100)}-${Math.floor(ft.duration / 100)}`;
+          }),
+        );
+
+        // We want to get resources that aren't in fetch list
+        const filteredResources = await processInChunks(resourceList, (chunk) =>
+          chunk.filter((res: any) => {
+            const key = `${res.name}-${Math.floor(res.time / 100)}-${Math.floor(res.duration / 100)}`;
+            return !fetchUrls.has(key);
+          }),
+          BATCH_SIZE,
+          25,
+        );
+
+        const processedSockets = socketListRef.current.map((ws: any) => ({
+          ...ws,
+          type: 'websocket',
+          method: 'ws',
+          url: ws.channelName,
+          name: ws.channelName,
+          status: '101',
+          duration: 0,
+          transferredBodySize: 0,
+        }));
+
+        const mergedList: Timed[] = mergeListsWithZoom(
+          filteredResources as Timed[],
+          fetchList,
+          processedSockets as Timed[],
+          { enabled: Boolean(zoomEnabled), start: zoomStartTs ?? 0, end: zoomEndTs ?? 0 }
+        )
+
+        originalListRef.current = mergedList;
+        setTotalItems(mergedList.length);
+
+        calculateResourceStats(resourceList);
+
+        // Only display initial chunk
+        setDisplayedItems(mergedList.slice(0, INITIAL_LOAD_SIZE));
+        setIsLoading(false);
+      };
+
+      void processData();
+    }, [
+      resourceList.length,
+      fetchList.length,
+      socketListRef.current.length,
+      zoomEnabled,
+      zoomStartTs,
+      zoomEndTs,
+    ]);
+
+    const calculateResourceStats = (resourceList: Record<string, any>) => {
+      setTimeout(() => {
+        let resourcesSize = 0
+        let transferredSize = 0
+        resourceList.forEach(({ decodedBodySize, headerSize, encodedBodySize }: any) => {
+          resourcesSize += decodedBodySize || 0
+          transferredSize += (headerSize || 0) + (encodedBodySize || 0)
+        })
+
+        setSummaryStats({
+          resourcesSize,
+          transferredSize,
+        });
+      }, 0);
+    }
+
+    useEffect(() => {
+      if (originalListRef.current.length === 0) return;
+      setIsProcessing(true);
+      const applyFilters = async () => {
+        let filteredItems: any[] = originalListRef.current;
+
+        filteredItems = await processInChunks(filteredItems, (chunk) =>
+          chunk.filter(
+            (it) => {
+              let valid = true;
+              if (showOnlyErrors) {
+                valid = parseInt(it.status) >= 400 || !it.success || it.error
+              }
+              if (filter) {
+                try {
+                  const regex = new RegExp(filter, 'i');
+                  valid = valid && regex.test(it.status) || regex.test(it.name) || regex.test(it.type) || regex.test(it.method);
+                } catch (e) {
+                  valid = valid && String(it.status).includes(filter) || it.name.includes(filter) || it.type.includes(filter) || (it.method && it.method.includes(filter));
+                }
+              }
+              if (activeTab !== ALL) {
+                valid = valid && TYPE_TO_TAB[it.type] === activeTab;
+              }
+
+              return valid;
+            },
+          ),
+        );
+
+        // Update displayed items
+        setDisplayedItems(filteredItems.slice(0, INITIAL_LOAD_SIZE));
+        setTotalItems(filteredItems.length);
+        setIsProcessing(false);
+      };
+
+      void applyFilters();
+    }, [filter, activeTab, showOnlyErrors]);
+
+    const loadMoreItems = useCallback(() => {
+      if (isProcessing) return;
+
+      setIsProcessing(true);
+      setTimeout(() => {
+        setDisplayedItems((prevItems) => {
+          const currentLength = prevItems.length;
+          const newItems = originalListRef.current.slice(
+            currentLength,
+            currentLength + BATCH_SIZE,
+          );
+          return [...prevItems, ...newItems];
+        });
+        setIsProcessing(false);
+      }, 10);
+    }, [isProcessing]);
+
+    const hasMoreItems = displayedItems.length < totalItems;
+    const loadingRef = useInfiniteScroll(loadMoreItems, hasMoreItems);
+
+    const onTabClick = (activeTab) => {
       devTools.update(INDEX_KEY, { activeTab });
-    const onFilterChange = ({
-      target: { value },
-    }: React.ChangeEvent<HTMLInputElement>) =>
-      devTools.update(INDEX_KEY, { filter: value });
+    };
 
-    // AutoScroll
+    const onFilterChange = ({ target: { value } }) => {
+      setInputFilterValue(value)
+      debouncedFilter(value);
+    };
+
     const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
-      filteredList,
+      displayedItems,
       getLastItemTime(fetchListNow, resourceListNow),
       activeIndex,
-      (index) => devTools.update(INDEX_KEY, { index })
+      (index) => devTools.update(INDEX_KEY, { index }),
     );
     const onMouseEnter = () => stopAutoscroll;
     const onMouseLeave = () => {
@@ -458,24 +584,6 @@ export const NetworkPanelComp = observer(
       }
       timeoutStartAutoscroll();
     };
-
-    const resourcesSize = useMemo(
-      () =>
-        resourceList.reduce(
-          (sum, { decodedBodySize }) => sum + (decodedBodySize || 0),
-          0
-        ),
-      [resourceList.length]
-    );
-    const transferredSize = useMemo(
-      () =>
-        resourceList.reduce(
-          (sum, { headerSize, encodedBodySize }) =>
-            sum + (headerSize || 0) + (encodedBodySize || 0),
-          0
-        ),
-      [resourceList.length]
-    );
 
     const referenceLines = useMemo(() => {
       const arr = [];
@@ -499,7 +607,7 @@ export const NetworkPanelComp = observer(
     const showDetailsModal = (item: any) => {
       if (item.type === 'websocket') {
         const socketMsgList = websocketList.filter(
-          (ws) => ws.channelName === item.channelName
+          (ws) => ws.channelName === item.channelName,
         );
 
         return setSelectedWsChannel(socketMsgList);
@@ -510,7 +618,7 @@ export const NetworkPanelComp = observer(
           isSpot={isSpot}
           time={item.time + startedAt}
           resource={item}
-          rows={filteredList}
+          rows={displayedItems}
           fetchPresented={fetchList.length > 0}
         />,
         {
@@ -520,46 +628,46 @@ export const NetworkPanelComp = observer(
             setIsDetailsModalActive(false);
             timeoutStartAutoscroll();
           },
-        }
+        },
       );
-      devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) });
+      devTools.update(INDEX_KEY, { index: displayedItems.indexOf(item) });
       stopAutoscroll();
     };
 
-    const tableCols = React.useMemo(() => {
-      const cols: any[] = [
+    const tableCols = useMemo(() => {
+      const cols = [
         {
-          label: 'Status',
+          label: t('Status'),
           dataKey: 'status',
           width: 90,
           render: renderStatus,
         },
         {
-          label: 'Type',
+          label: t('Type'),
           dataKey: 'type',
           width: 90,
           render: renderType,
         },
         {
-          label: 'Method',
+          label: t('Method'),
           width: 80,
           dataKey: 'method',
         },
         {
-          label: 'Name',
+          label: t('Name'),
           width: 240,
           dataKey: 'name',
           render: renderName,
         },
         {
-          label: 'Size',
+          label: t('Size'),
           width: 80,
           dataKey: 'decodedBodySize',
           render: renderSize,
           hidden: activeTab === XHR,
         },
         {
-          label: 'Duration',
+          label: t('Duration'),
           width: 80,
           dataKey: 'duration',
           render: renderDuration,
@@ -567,10 +675,13 @@ export const NetworkPanelComp = observer(
       ];
       if (!showSingleTab && !isSpot) {
         cols.unshift({
-          label: 'Source',
+          label: t('Source'),
           width: 64,
           render: (r: Record<string, any>) => (
-            <Tooltip title={`${getTabName?.(r.tabId) ?? `Tab ${getTabNum?.(r.tabId) ?? 0}`}`} placement="left">
+            <Tooltip
+              title={`${getTabName?.(r.tabId) ?? `Tab ${getTabNum?.(r.tabId) ?? 0}`}`}
+              placement="left"
+            >
               <div className="bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs cursor-default">
                 {getTabNum?.(r.tabId) ?? 0}
               </div>
@@ -579,7 +690,7 @@ export const NetworkPanelComp = observer(
         });
       }
       return cols;
-    }, [showSingleTab]);
+    }, [showSingleTab, activeTab, t, getTabName, getTabNum, isSpot]);
 
     return (
       <BottomBlock
@@ -591,7 +702,7 @@ export const NetworkPanelComp = observer(
         <BottomBlock.Header onClose={onClose}>
           <div className="flex items-center">
             <span className="font-semibold color-gray-medium mr-4">
-              Network
+              {t('Network')}
             </span>
             {isMobile ? null : (
               <Tabs
@@ -603,7 +714,7 @@ export const NetworkPanelComp = observer(
               />
             )}
           </div>
-          <div className={'flex items-center gap-2'}>
+          <div className="flex items-center gap-2">
             {!isMobile && !isSpot ? <TabSelector /> : null}
             <Input
               className="rounded-lg"
@@ -611,7 +722,7 @@ export const NetworkPanelComp = observer(
               name="filter"
               onChange={onFilterChange}
               width={280}
-              value={filter}
+              value={inputFilterValue}
               size="small"
               prefix={<SearchOutlined className="text-neutral-400" />}
             />
@@ -619,7 +730,7 @@ export const NetworkPanelComp = observer(
         </BottomBlock.Header>
         <BottomBlock.Content>
           <div className="flex items-center justify-between px-4 border-b bg-teal/5 h-8">
-            <div>
+            <div className="flex items-center">
               <Form.Item name="show-errors-only" className="mb-0">
                 <label
                   style={{
@@ -636,21 +747,29 @@ export const NetworkPanelComp = observer(
                   <span className="text-sm ms-2">4xx-5xx Only</span>
                 </label>
               </Form.Item>
+
+              {isProcessing && (
+                <span className="text-xs text-gray-500 ml-4">
+                  Processing data...
+                </span>
+              )}
             </div>
             <InfoLine>
+              <InfoLine.Point label={`${totalItems}`} value="requests" />
               <InfoLine.Point
-                label={filteredList.length + ''}
-                value=" requests"
+                label={`${displayedItems.length}/${totalItems}`}
+                value="displayed"
+                display={displayedItems.length < totalItems}
               />
               <InfoLine.Point
-                label={formatBytes(transferredSize)}
+                label={formatBytes(summaryStats.transferredSize)}
                 value="transferred"
-                display={transferredSize > 0}
+                display={summaryStats.transferredSize > 0}
               />
               <InfoLine.Point
-                label={formatBytes(resourcesSize)}
+                label={formatBytes(summaryStats.resourcesSize)}
                 value="resources"
-                display={resourcesSize > 0}
+                display={summaryStats.resourcesSize > 0}
               />
               <InfoLine.Point
                 label={formatMs(domBuildingTime)}
@@ -673,50 +792,74 @@ export const NetworkPanelComp = observer(
               />
             </InfoLine>
           </div>
-          <NoContent
-            title={
-              <div className="capitalize flex items-center gap-2">
-                <InfoCircleOutlined size={18} />
-                No Data
+
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
+                <p>Processing initial network data...</p>
               </div>
-            }
-            size="small"
-            show={filteredList.length === 0}
-          >
-            {/*@ts-ignore*/}
-            <TimeTable
-              rows={filteredList}
-              tableHeight={panelHeight - 102}
-              referenceLines={referenceLines}
-              renderPopup
-              onRowClick={showDetailsModal}
-              sortBy={'time'}
-              sortAscending
-              onJump={(row: any) => {
-                devTools.update(INDEX_KEY, {
-                  index: filteredList.indexOf(row),
-                });
-                player.jump(row.time);
-              }}
-              activeIndex={activeIndex}
+            </div>
+          ) : (
+            <NoContent
+              title={
+                <div className="capitalize flex items-center gap-2">
+                  <InfoCircleOutlined size={18} />
+                  {t('No Data')}
+                </div>
+              }
+              size="small"
+              show={displayedItems.length === 0}
             >
-              {tableCols}
-            </TimeTable>
-            {selectedWsChannel ? (
-              <WSPanel
-                socketMsgList={selectedWsChannel}
-                onClose={() => setSelectedWsChannel(null)}
-              />
-            ) : null}
-          </NoContent>
+              <div>
+                <TimeTable
+                  rows={displayedItems}
+                  tableHeight={panelHeight - 102 - (hasMoreItems ? 30 : 0)}
+                  referenceLines={referenceLines}
+                  renderPopup
+                  onRowClick={showDetailsModal}
+                  sortBy="time"
+                  sortAscending
+                  onJump={(row) => {
+                    devTools.update(INDEX_KEY, {
+                      index: displayedItems.indexOf(row),
+                    });
+                    player.jump(row.time);
+                  }}
+                  activeIndex={activeIndex}
+                >
+                  {tableCols}
+                </TimeTable>
+
+                {hasMoreItems && (
+                  <div
+                    ref={loadingRef}
+                    className="flex justify-center items-center text-xs text-gray-500"
+                  >
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                        Loading more data ({totalItems - displayedItems.length}{' '}
+                        remaining)
+                      </div>
+                  </div>
+                )}
+              </div>
+
+              {selectedWsChannel ? (
+                <WSPanel
+                  socketMsgList={selectedWsChannel}
+                  onClose={() => setSelectedWsChannel(null)}
+                />
+              ) : null}
+            </NoContent>
+          )}
         </BottomBlock.Content>
       </BottomBlock>
     );
-  }
+  },
 );
 
 const WebNetworkPanel = observer(NetworkPanelCont);
-
 const MobileNetworkPanel = observer(MobileNetworkPanelCont);
 
 export { WebNetworkPanel, MobileNetworkPanel };

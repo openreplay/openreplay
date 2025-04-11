@@ -1,5 +1,5 @@
 // this can be reducer level to call it once and optimize the performance.
-export default (iconName="") => {
+export default (iconName = '') => {
   switch (iconName.toLocaleLowerCase()) {
     case 'chrome':
     case 'chrome mobile':

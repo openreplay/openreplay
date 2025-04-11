@@ -1,1 +1,1 @@
-export { default } from './OnboardingNavButton'
+export { default } from './OnboardingNavButton';

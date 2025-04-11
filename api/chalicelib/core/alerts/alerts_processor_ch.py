@@ -3,10 +3,11 @@ import logging
 from pydantic_core._pydantic_core import ValidationError
 
 import schemas
-from chalicelib.core.alerts import alerts, alerts_listener
-from chalicelib.core.alerts.modules import sessions, alert_helpers
 from chalicelib.utils import pg_client, ch_client, exp_ch_helper
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.core.alerts import alerts, alerts_listener
+from chalicelib.core.alerts.modules import alert_helpers
+from chalicelib.core.sessions import sessions_ch as sessions
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +156,7 @@ def Build(a):
 
 
 def process():
+    logger.info("> processing alerts on CH")
     notifications = []
     all_alerts = alerts_listener.get_all_alerts()
     with pg_client.PostgresClient() as cur, ch_client.ClickHouseClient() as ch_cur:
@@ -173,7 +175,7 @@ def process():
                 logger.debug(alert)
                 logger.debug(query)
                 try:
-                    result = ch_cur.execute(query)
+                    result = ch_cur.execute(query=query)
                     if len(result) > 0:
                         result = result[0]
 

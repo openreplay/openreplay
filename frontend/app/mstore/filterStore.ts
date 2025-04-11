@@ -19,20 +19,23 @@ export default class FilterStore {
   }
 
   setTopValues = (key: string, values: Record<string, any> | TopValue[]) => {
-    const vals = Array.isArray(values) ? values : values.data
-    this.topValues[key] = vals?.filter((value) => value !== null && value.value !== '');
+    const vals = Array.isArray(values) ? values : values.data;
+    this.topValues[key] = vals?.filter(
+      (value) => value !== null && value.value !== '',
+    );
   };
 
   resetValues = () => {
     this.topValues = {};
-  }
+  };
 
-  fetchTopValues = async (key: string, source?: string) => {
-    if (this.topValues.hasOwnProperty(key)) {
-      return Promise.resolve(this.topValues[key]);
+  fetchTopValues = async (key: string, siteId: string, source?: string) => {
+    const valKey = `${siteId}_${key}${source || ''}`
+    if (this.topValues[valKey] && this.topValues[valKey].length) {
+      return Promise.resolve(this.topValues[valKey]);
     }
     return filterService.fetchTopValues(key, source).then((response: []) => {
-      this.setTopValues(`${key}${source || ''}`, response);
+      this.setTopValues(valKey, response);
     });
   };
 }

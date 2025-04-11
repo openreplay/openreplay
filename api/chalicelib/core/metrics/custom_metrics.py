@@ -55,8 +55,8 @@ def __get_sessions_list(project: schemas.ProjectContext, user_id, data: schemas.
     return sessions_search.search_sessions(data=data.series[0].filter, project=project, user_id=user_id)
 
 
-def __get_heat_map_chart(project: schemas.ProjectContext, user_id, data: schemas.CardHeatMap,
-                         include_mobs: bool = True):
+def get_heat_map_chart(project: schemas.ProjectContext, user_id, data: schemas.CardHeatMap,
+                       include_mobs: bool = True):
     if len(data.series) == 0:
         return None
     data.series[0].filter.filters += data.series[0].filter.events
@@ -156,7 +156,7 @@ def get_chart(project: schemas.ProjectContext, data: schemas.CardSchema, user_id
     supported = {
         schemas.MetricType.TIMESERIES: __get_timeseries_chart,
         schemas.MetricType.TABLE: __get_table_chart,
-        schemas.MetricType.HEAT_MAP: __get_heat_map_chart,
+        schemas.MetricType.HEAT_MAP: get_heat_map_chart,
         schemas.MetricType.FUNNEL: __get_funnel_chart,
         schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_chart
     }
@@ -201,12 +201,12 @@ def get_issues(project: schemas.ProjectContext, user_id: int, data: schemas.Card
     return supported.get(data.metric_type, not_supported)()
 
 
-def __get_global_card_info(data: schemas.CardSchema):
+def get_global_card_info(data: schemas.CardSchema):
     r = {"hideExcess": data.hide_excess, "compareTo": data.compare_to, "rows": data.rows}
     return r
 
 
-def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
+def get_path_analysis_card_info(data: schemas.CardPathAnalysis):
     r = {"start_point": [s.model_dump() for s in data.start_point],
          "start_type": data.start_type,
          "excludes": [e.model_dump() for e in data.excludes],
@@ -221,8 +221,8 @@ def create_card(project: schemas.ProjectContext, user_id, data: schemas.CardSche
             if data.session_id is not None:
                 session_data = {"sessionId": data.session_id}
             else:
-                session_data = __get_heat_map_chart(project=project, user_id=user_id,
-                                                    data=data, include_mobs=False)
+                session_data = get_heat_map_chart(project=project, user_id=user_id,
+                                                  data=data, include_mobs=False)
                 if session_data is not None:
                     session_data = {"sessionId": session_data["sessionId"]}
 
@@ -235,9 +235,9 @@ def create_card(project: schemas.ProjectContext, user_id, data: schemas.CardSche
         series_len = len(data.series)
         params = {"user_id": user_id, "project_id": project.project_id, **data.model_dump(), **_data,
                   "default_config": json.dumps(data.default_config.model_dump()), "card_info": None}
-        params["card_info"] = __get_global_card_info(data=data)
+        params["card_info"] = get_global_card_info(data=data)
         if data.metric_type == schemas.MetricType.PATH_ANALYSIS:
-            params["card_info"] = {**params["card_info"], **__get_path_analysis_card_info(data=data)}
+            params["card_info"] = {**params["card_info"], **get_path_analysis_card_info(data=data)}
         params["card_info"] = json.dumps(params["card_info"])
 
         query = """INSERT INTO metrics (project_id, user_id, name, is_public,
@@ -299,9 +299,9 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
             d_series_ids.append(i)
     params["d_series_ids"] = tuple(d_series_ids)
     params["session_data"] = json.dumps(metric["data"])
-    params["card_info"] = __get_global_card_info(data=data)
+    params["card_info"] = get_global_card_info(data=data)
     if data.metric_type == schemas.MetricType.PATH_ANALYSIS:
-        params["card_info"] = {**params["card_info"], **__get_path_analysis_card_info(data=data)}
+        params["card_info"] = {**params["card_info"], **get_path_analysis_card_info(data=data)}
     elif data.metric_type == schemas.MetricType.HEAT_MAP:
         if data.session_id is not None:
             params["session_data"] = json.dumps({"sessionId": data.session_id})
@@ -350,6 +350,100 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
             RETURNING metric_id;""", params)
         cur.execute(query)
     return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
+
+
+def search_metrics(project_id, user_id, data: schemas.MetricSearchSchema, include_series=False):
+    constraints = ["metrics.project_id = %(project_id)s", "metrics.deleted_at ISNULL"]
+    params = {
+        "project_id": project_id,
+        "user_id": user_id,
+        "offset": (data.page - 1) * data.limit,
+        "limit": data.limit,
+    }
+    if data.mine_only:
+        constraints.append("user_id = %(user_id)s")
+    else:
+        constraints.append("(user_id = %(user_id)s OR metrics.is_public)")
+    if data.shared_only:
+        constraints.append("is_public")
+
+    if data.filter is not None:
+        if data.filter.type:
+            constraints.append("metrics.metric_type = %(filter_type)s")
+            params["filter_type"] = data.filter.type
+        if data.filter.query and len(data.filter.query) > 0:
+            constraints.append("(metrics.name ILIKE %(filter_query)s OR owner.owner_name ILIKE %(filter_query)s)")
+            params["filter_query"] = helper.values_for_operator(
+                value=data.filter.query, op=schemas.SearchEventOperator.CONTAINS
+            )
+
+    with pg_client.PostgresClient() as cur:
+        sub_join = ""
+        if include_series:
+            sub_join = """LEFT JOIN LATERAL (
+                            SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
+                            FROM metric_series
+                            WHERE metric_series.metric_id = metrics.metric_id
+                              AND metric_series.deleted_at ISNULL 
+                         ) AS metric_series ON (TRUE)"""
+
+        sort_column = data.sort.field if data.sort.field is not None and len(data.sort.field) > 0 \
+            else "created_at"
+        # change ascend to asc and descend to desc
+        sort_order = data.sort.order.value if hasattr(data.sort.order, "value") else data.sort.order
+        if sort_order == "ascend":
+            sort_order = "asc"
+        elif sort_order == "descend":
+            sort_order = "desc"
+
+        query = cur.mogrify(
+            f"""SELECT count(1) OVER () AS total,metric_id, project_id, user_id, name, is_public, created_at, edited_at,
+                        metric_type, metric_of, metric_format, metric_value, view_type, is_pinned, 
+                        dashboards, owner_email, owner_name, default_config AS config, thumbnail
+                FROM metrics
+                {sub_join}
+                LEFT JOIN LATERAL (
+                    SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public, name),'[]'::jsonb) AS dashboards
+                    FROM (
+                        SELECT DISTINCT dashboard_id, name, is_public
+                        FROM dashboards
+                        INNER JOIN dashboard_widgets USING (dashboard_id)
+                        WHERE deleted_at ISNULL
+                          AND dashboard_widgets.metric_id = metrics.metric_id
+                          AND project_id = %(project_id)s
+                          AND ((dashboards.user_id = %(user_id)s OR is_public))
+                    ) AS connected_dashboards
+                ) AS connected_dashboards ON (TRUE)
+                LEFT JOIN LATERAL (
+                    SELECT email AS owner_email, name AS owner_name
+                    FROM users
+                    WHERE deleted_at ISNULL
+                      AND users.user_id = metrics.user_id
+                ) AS owner ON (TRUE)
+                WHERE {" AND ".join(constraints)}
+                ORDER BY {sort_column} {sort_order}
+                LIMIT %(limit)s OFFSET %(offset)s;""",
+            params
+        )
+        cur.execute(query)
+        rows = cur.fetchall()
+        if len(rows) > 0:
+            total = rows[0]["total"]
+            if include_series:
+                for r in rows:
+                    r.pop("total")
+                    for s in r.get("series", []):
+                        s["filter"] = helper.old_search_payload_to_flat(s["filter"])
+            else:
+                for r in rows:
+                    r.pop("total")
+                    r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+                    r["edited_at"] = TimeUTC.datetime_to_timestamp(r["edited_at"])
+            rows = helper.list_to_camel_case(rows)
+        else:
+            total = 0
+
+    return {"total": total, "list": rows}
 
 
 def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
@@ -448,7 +542,7 @@ def __get_global_attributes(row):
     if row is None or row.get("cardInfo") is None:
         return row
     card_info = row.get("cardInfo", {})
-    row["compareTo"] = card_info.get("compareTo", [])
+    row["compareTo"] = card_info["compareTo"] if card_info.get("compareTo") is not None else []
     return row
 
 

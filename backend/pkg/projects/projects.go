@@ -9,6 +9,7 @@ import (
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/database"
 )
 
 type Projects interface {
@@ -24,8 +25,8 @@ type projectsImpl struct {
 	projectsByKeys cache.Cache
 }
 
-func New(log logger.Logger, db pool.Pool, redis *redis.Client) Projects {
-	cl := NewCache(redis)
+func New(log logger.Logger, db pool.Pool, redis *redis.Client, metrics database.Database) Projects {
+	cl := NewCache(redis, metrics)
 	return &projectsImpl{
 		log:            log,
 		db:             db,

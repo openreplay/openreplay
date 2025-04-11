@@ -26,7 +26,10 @@ export default class SearchService extends BaseService {
   }
 
   async saveSavedSearch(data: any, id: string) {
-    const r = await this.client.post(id ? `/PROJECT_ID/saved_search/${id}` : '/PROJECT_ID/saved_search', data);
+    const r = await this.client.post(
+      id ? `/PROJECT_ID/saved_search/${id}` : '/PROJECT_ID/saved_search',
+      data,
+    );
     const j = await r.json();
     return j.data;
   }

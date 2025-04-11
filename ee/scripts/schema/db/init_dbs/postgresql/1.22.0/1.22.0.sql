@@ -41,6 +41,10 @@ WHERE metric_of IN ('domainsErrors4xx', 'domainsErrors5xx', 'countSessions',
                     'speedLocation', 'avgVisitedPages')
    OR metric_type IN ('webVitals', 'errors', 'performance', 'resources');
 
+UPDATE public.metrics
+SET view_type='chart'
+WHERE metric_type = 'funnel';
+
 COMMIT;
 
 \elif :is_next

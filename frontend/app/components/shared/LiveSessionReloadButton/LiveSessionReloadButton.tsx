@@ -1,18 +1,16 @@
 import React from 'react';
-import ReloadButton from '../ReloadButton';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import ReloadButton from '../ReloadButton';
+import { useTranslation } from 'react-i18next';
 
-interface Props {
-  onClick: () => void;
-}
-
-function LiveSessionReloadButton(props: Props) {
-  const { sessionStore } = useStore();
-  const { onClick } = props;
-  const loading = sessionStore.loadingLiveSessions;
+function LiveSessionReloadButton() {
+  const { t } = useTranslation();
+  const { searchStoreLive } = useStore();
+  const onClick = searchStoreLive.fetchSessions
+  const loading = searchStoreLive.loading;
   return (
-    <ReloadButton buttonSize={'small'} iconSize={14} loading={loading} onClick={onClick} className="cursor-pointer" />
+    <ReloadButton label={t('Refresh')} buttonSize={'small'} iconSize={14} loading={loading} onClick={onClick} className="cursor-pointer" />
   );
 }
 

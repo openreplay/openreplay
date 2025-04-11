@@ -269,8 +269,7 @@ func (s *Saver) handleSession(msg messages.Message) {
 	switch msg.(type) {
 	case *messages.SessionStart, *messages.SessionEnd, *messages.ConnectionInformation, *messages.Metadata,
 		*messages.PageEvent, *messages.PerformanceTrackAggr, *messages.UserID, *messages.UserAnonymousID,
-		*messages.JSException, *messages.JSExceptionDeprecated, *messages.InputEvent, *messages.MouseClick,
-		*messages.IssueEvent, *messages.IssueEventDeprecated,
+		*messages.JSException, *messages.InputEvent, *messages.MouseClick, *messages.IssueEvent,
 		// Mobile messages
 		*messages.MobileSessionStart, *messages.MobileSessionEnd, *messages.MobileUserID, *messages.MobileUserAnonymousID,
 		*messages.MobileMetadata:
@@ -369,7 +368,7 @@ func (s *Saver) handleSession(msg messages.Message) {
 		}
 	case *messages.UserAnonymousID:
 		sess["user_anonymous_id"] = QUOTES(m.ID)
-	case *messages.JSException, *messages.JSExceptionDeprecated:
+	case *messages.JSException:
 		currExceptionsCount, err := strconv.Atoi(sess["js_exceptions_count"])
 		if err != nil {
 			currExceptionsCount = 0
@@ -387,7 +386,7 @@ func (s *Saver) handleSession(msg messages.Message) {
 			currMouseClicksCount = 0
 		}
 		sess["clicks_count"] = fmt.Sprintf("%d", currMouseClicksCount+1)
-	case *messages.IssueEvent, *messages.IssueEventDeprecated:
+	case *messages.IssueEvent:
 		currIssuesCount, err := strconv.Atoi(sess["issues_count"])
 		if err != nil {
 			currIssuesCount = 0

@@ -28,7 +28,7 @@ function JumpButton(props: Props) {
           JUMP
         </Button>
         {props.time ? (
-          <div className={'block group-hover:hidden mr-2 text-sm'}>
+          <div className="block group-hover:hidden mr-2 text-sm">
             {shortDurationFromMs(props.time)}
           </div>
         ) : null}

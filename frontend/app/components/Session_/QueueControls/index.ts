@@ -1,1 +1,1 @@
-export { default } from './QueueControls'
+export { default } from './QueueControls';

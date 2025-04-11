@@ -10,6 +10,7 @@ import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModa
 import { Loader } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
+import { useTranslation } from 'react-i18next';
 
 interface DatadogConfig {
   site: string;
@@ -23,15 +24,16 @@ const initialValues = {
   app_key: '',
 };
 
-const DatadogFormModal = ({
+function DatadogFormModal({
   onClose,
   integrated,
 }: {
   onClose: () => void;
   integrated: boolean;
-}) => {
+}) {
+  const { t } = useTranslation();
   const { integrationsStore } = useStore();
-  const siteId = integrationsStore.integrations.siteId;
+  const { siteId } = integrationsStore.integrations;
 
   const {
     data = initialValues,
@@ -39,17 +41,20 @@ const DatadogFormModal = ({
     saveMutation,
     removeMutation,
   } = useIntegration<DatadogConfig>('datadog', siteId, initialValues);
-  const { values, errors, handleChange, hasErrors, checkErrors } = useForm(data, {
-    site: {
-      required: true,
+  const { values, errors, handleChange, hasErrors, checkErrors } = useForm(
+    data,
+    {
+      site: {
+        required: true,
+      },
+      api_key: {
+        required: true,
+      },
+      app_key: {
+        required: true,
+      },
     },
-    api_key: {
-      required: true,
-    },
-    app_key: {
-      required: true,
-    },
-  });
+  );
   const exists = Boolean(data.api_key);
 
   const save = async () => {
@@ -59,7 +64,7 @@ const DatadogFormModal = ({
     try {
       await saveMutation.mutateAsync({ values, siteId, exists });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
     onClose();
   };
@@ -68,7 +73,7 @@ const DatadogFormModal = ({
     try {
       await removeMutation.mutateAsync({ siteId });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
     onClose();
   };
@@ -83,20 +88,20 @@ const DatadogFormModal = ({
         description="Incorporate DataDog to visualize backend errors alongside session replay, for easy troubleshooting."
       />
       <div className="p-5 border-b mb-4">
-        <div className="font-medium mb-1">How it works?</div>
+        <div className="font-medium mb-1">{t('How it works?')}</div>
         <ol className="list-decimal list-inside">
-          <li>Generate Datadog API Key & Application Key</li>
-          <li>Enter the API key below</li>
-          <li>Propagate openReplaySessionToken</li>
+          <li>{t('Generate Datadog API Key & Application Key')}</li>
+          <li>{t('Enter the API key below')}</li>
+          <li>{t('Propagate openReplaySessionToken')}</li>
         </ol>
         <DocLink
           className="mt-4"
-          label="Integrate Datadog"
+          label={t('Integrate Datadog')}
           url="https://docs.openreplay.com/integrations/datadog"
         />
         <Loader loading={isPending}>
           <FormField
-            label="Site"
+            label={t('Site')}
             name="site"
             value={values.site}
             onChange={handleChange}
@@ -104,32 +109,32 @@ const DatadogFormModal = ({
             errors={errors.site}
           />
           <FormField
-            label="API Key"
+            label={t('API Key')}
             name="api_key"
             value={values.api_key}
             onChange={handleChange}
             errors={errors.api_key}
           />
           <FormField
-            label="Application Key"
+            label={t('Application Key')}
             name="app_key"
             value={values.app_key}
             onChange={handleChange}
             errors={errors.app_key}
           />
-          <div className={'flex items-center gap-2'}>
+          <div className="flex items-center gap-2">
             <Button
               onClick={save}
               disabled={hasErrors}
               loading={saveMutation.isPending}
               type="primary"
             >
-              {exists ? 'Update' : 'Add'}
+              {exists ? t('Update') : t('Add')}
             </Button>
 
             {integrated && (
               <Button loading={removeMutation.isPending} onClick={remove}>
-                {'Delete'}
+                {t('Delete')}
               </Button>
             )}
           </div>
@@ -137,7 +142,7 @@ const DatadogFormModal = ({
       </div>
     </div>
   );
-};
+}
 
 DatadogFormModal.displayName = 'DatadogForm';
 

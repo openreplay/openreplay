@@ -1,1 +1,1 @@
-export { default } from './EventSearch'
+export { default } from './EventSearch';

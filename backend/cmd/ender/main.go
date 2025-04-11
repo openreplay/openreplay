@@ -19,7 +19,7 @@ import (
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
-	databaseMetrics "openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/metrics/database"
 	enderMetrics "openreplay/backend/pkg/metrics/ender"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue"
@@ -31,9 +31,12 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := ender.New(log)
-	metrics.New(log, append(enderMetrics.List(), databaseMetrics.List()...))
+	// Observability
+	dbMetric := database.New("ender")
+	enderMetric := enderMetrics.New("ender")
+	metrics.New(log, append(enderMetric.List(), dbMetric.List()...))
 
-	pgConn, err := pool.New(cfg.Postgres.String())
+	pgConn, err := pool.New(dbMetric, cfg.Postgres.String())
 	if err != nil {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
@@ -45,10 +48,10 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	projManager := projects.New(log, pgConn, redisClient)
-	sessManager := sessions.New(log, pgConn, projManager, redisClient)
+	projManager := projects.New(log, pgConn, redisClient, dbMetric)
+	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric)
 
-	sessionEndGenerator, err := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
+	sessionEndGenerator, err := sessionender.New(enderMetric, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Fatal(ctx, "can't init ender service: %s", err)
 	}

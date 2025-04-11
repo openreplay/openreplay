@@ -75,7 +75,7 @@ export function hasOpenreplayAttribute(e: Element, attr: string): boolean {
         `"${newName}" attribute`,
         // @ts-ignore
         `"${DEPRECATED_ATTRS[attr] as string}" attribute`,
-        '/installation/sanitize-data',
+        '/en/sdk/sanitize-data',
       )
     }
     return true

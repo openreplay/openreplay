@@ -1,1 +1,1 @@
-export { default } from './SlackChannelList'
+export { default } from './SlackChannelList';

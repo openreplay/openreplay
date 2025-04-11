@@ -24,15 +24,17 @@ type authImpl struct {
 	spotSecret string
 	pgconn     pool.Pool
 	keys       keys.Keys
+	prefix     string
 }
 
-func NewAuth(log logger.Logger, jwtSecret, jwtSpotSecret string, conn pool.Pool, keys keys.Keys) Auth {
+func NewAuth(log logger.Logger, jwtSecret, jwtSpotSecret string, conn pool.Pool, keys keys.Keys, prefix string) Auth {
 	return &authImpl{
 		log:        log,
 		secret:     jwtSecret,
 		spotSecret: jwtSpotSecret,
 		pgconn:     conn,
 		keys:       keys,
+		prefix:     prefix,
 	}
 }
 

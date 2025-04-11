@@ -1,28 +1,38 @@
 import type Screen from 'App/player/web/Screen/Screen';
-import { replaceCSSPseudoclasses } from 'App/player/web/messages/rewriter/rewriteMessage'
-import logger from 'App/logger'
+import { replaceCSSPseudoclasses } from 'App/player/web/messages/rewriter/rewriteMessage';
+import logger from 'App/logger';
 
 // Doesn't work with css files (hasOwnProperty returns false)
 // TODO: recheck and remove if true
-function rewriteNodeStyleSheet(doc: Document, node: HTMLLinkElement | HTMLStyleElement) {
-  const ss = Object.values(doc.styleSheets).find(s => s.ownerNode === node);
-  if (!ss || !ss.hasOwnProperty('rules')) { return; }
-  for(let i = 0; i < ss.cssRules.length; i++){
-    const r = ss.cssRules[i]
+function rewriteNodeStyleSheet(
+  doc: Document,
+  node: HTMLLinkElement | HTMLStyleElement,
+) {
+  const ss = Object.values(doc.styleSheets).find((s) => s.ownerNode === node);
+  if (!ss || !ss.hasOwnProperty('rules')) {
+    return;
+  }
+  for (let i = 0; i < ss.cssRules.length; i++) {
+    const r = ss.cssRules[i];
     if (r instanceof CSSStyleRule) {
-      r.selectorText = replaceCSSPseudoclasses(r.selectorText)
+      r.selectorText = replaceCSSPseudoclasses(r.selectorText);
     }
   }
 }
 
 export default class StylesManager {
   private linkLoadingCount: number = 0;
+
   private linkLoadPromises: Array<Promise<void>> = [];
+
   private skipCSSLinks: Array<string> = [];
 
-  constructor(private readonly screen: Screen, private readonly setLoading: (flag: boolean) => void) {}
+  constructor(
+    private readonly screen: Screen,
+    private readonly setLoading: (flag: boolean) => void,
+  ) {}
 
-  reset():void {
+  reset(): void {
     this.linkLoadingCount = 0;
     this.linkLoadPromises = [];
   }
@@ -35,18 +45,18 @@ export default class StylesManager {
       this.setLoading(true);
       const addSkipAndResolve = (e: any) => {
         this.skipCSSLinks.push(value);
-        logger.error('skip node', e)
-        resolve()
-      }
+        logger.error('skip node', e);
+        resolve();
+      };
       timeoutId = setTimeout(() => addSkipAndResolve('by timeout'), 5000);
 
       node.onload = () => {
         const doc = this.screen.document;
         if (node.ownerDocument === doc && doc) {
-           rewriteNodeStyleSheet(doc, node);
+          rewriteNodeStyleSheet(doc, node);
         }
         resolve();
-      }
+      };
       node.onerror = addSkipAndResolve;
     }).then(() => {
       node.onload = null;
@@ -54,7 +64,7 @@ export default class StylesManager {
       clearTimeout(timeoutId);
       this.linkLoadingCount--;
       if (this.linkLoadingCount === 0) {
-        this.setLoading(false)
+        this.setLoading(false);
         this.linkLoadPromises = [];
       }
     });
@@ -63,9 +73,8 @@ export default class StylesManager {
 
   moveReady(): Promise<void[]> {
     if (this.linkLoadingCount > 0) {
-      return Promise.all(this.linkLoadPromises)
-    } else {
-      return Promise.resolve([])
+      return Promise.all(this.linkLoadPromises);
     }
+    return Promise.resolve([]);
   }
 }

@@ -1,1 +1,1 @@
-export { default } from './TimeToRender'
+export { default } from './TimeToRender';

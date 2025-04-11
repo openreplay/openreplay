@@ -7,11 +7,11 @@ export function resolveURL(baseURL: string, relURL: string): string {
 
 function rewriteCSSLinks(
   css: string,
-  rewriter: (rawurl: string) => string
+  rewriter: (rawurl: string) => string,
 ): string {
   // Replace url() functions
   css = css.replace(/url\(\s*(['"]?)(.*?)\1\s*\)/gs, (match, quote, url) => {
-    let newurl = rewriter(url.trim());
+    const newurl = rewriter(url.trim());
     return `url(${quote}${newurl}${quote})`;
   });
 
@@ -19,18 +19,18 @@ function rewriteCSSLinks(
   css = css.replace(
     /@import\s+(url\(\s*(['"]?)(.*?)\2\s*\)|(['"])(.*?)\4)([^;]*);?/gs,
     (match, _, quote1, url1, quote2, url2, media) => {
-      let url = url1 || url2;
-      let newurl = rewriter(url.trim());
-      let quote = quote1 || quote2 || '';
+      const url = url1 || url2;
+      const newurl = rewriter(url.trim());
+      const quote = quote1 || quote2 || '';
       return `@import ${
         quote ? `url(${quote}${newurl}${quote})` : `"${newurl}"`
       }${media};`;
-    }
+    },
   );
 
   // Ensure the CSS ends with a semicolon
   const dontNeedSemi = css.trim().endsWith(';') || css.trim().endsWith('}');
-  return dontNeedSemi ? css : css + ';';
+  return dontNeedSemi ? css : `${css};`;
 }
 
 function rewritePseudoclasses(css: string): string {
@@ -41,6 +41,6 @@ function rewritePseudoclasses(css: string): string {
 
 export function resolveCSS(baseURL: string, css: string): string {
   return rewritePseudoclasses(
-    rewriteCSSLinks(css, (rawurl) => resolveURL(baseURL, rawurl))
+    rewriteCSSLinks(css, (rawurl) => resolveURL(baseURL, rawurl)),
   );
 }

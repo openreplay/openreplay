@@ -21,8 +21,11 @@ export interface Integration {
 
 export class SentryInt implements Integration {
   projectId: number;
+
   organizationSlug: string = '';
+
   projectSlug: string = '';
+
   token: string = '';
 
   constructor(config: any) {
@@ -59,7 +62,9 @@ export class SentryInt implements Integration {
 
 export class DatadogInt implements Integration {
   apiKey: string = '';
+
   applicationKey: string = '';
+
   projectId: number;
 
   constructor(config: any) {
@@ -95,7 +100,9 @@ export class DatadogInt implements Integration {
 
 export class StackDriverInt implements Integration {
   projectId: number;
+
   logName: string = '';
+
   serviceAccountCredentials: string = '';
 
   constructor(config: any) {
@@ -114,7 +121,7 @@ export class StackDriverInt implements Integration {
 
   validate() {
     return Boolean(
-      this.serviceAccountCredentials !== '' && this.logName !== ''
+      this.serviceAccountCredentials !== '' && this.logName !== '',
     );
   }
 
@@ -133,6 +140,7 @@ export class StackDriverInt implements Integration {
 
 export class RollbarInt implements Integration {
   projectId: number;
+
   accessToken: string = '';
 
   constructor(config: any) {
@@ -167,8 +175,11 @@ export class RollbarInt implements Integration {
 
 export class NewRelicInt implements Integration {
   projectId: number;
+
   applicationId: string = '';
+
   xQueryKey: string = '';
+
   region: boolean = true;
 
   constructor(config: any) {
@@ -205,7 +216,9 @@ export class NewRelicInt implements Integration {
 
 export class Bugsnag implements Integration {
   projectId: number;
+
   authorizationToken: string = '';
+
   bugsnagProjectId: string = '';
 
   constructor(config: any) {
@@ -224,7 +237,7 @@ export class Bugsnag implements Integration {
 
   validate() {
     return Boolean(
-      this.bugsnagProjectId !== '' && tokenRE.test(this.authorizationToken)
+      this.bugsnagProjectId !== '' && tokenRE.test(this.authorizationToken),
     );
   }
 
@@ -243,9 +256,13 @@ export class Bugsnag implements Integration {
 
 export class Cloudwatch implements Integration {
   projectId: number;
+
   awsAccessKeyId: string = '';
+
   awsSecretAccessKey: string = '';
+
   region: string = 'us-east-1';
+
   logGroupName: string = '';
 
   constructor(config: any) {
@@ -267,7 +284,7 @@ export class Cloudwatch implements Integration {
       this.awsAccessKeyId !== '' &&
         this.awsSecretAccessKey !== '' &&
         this.logGroupName !== '' &&
-        this.region !== ''
+        this.region !== '',
     );
   }
 
@@ -288,10 +305,15 @@ export class Cloudwatch implements Integration {
 
 export class ElasticSearchInt implements Integration {
   projectId: number;
+
   host: string = '';
+
   apiKeyId: string = '';
+
   apiKey: string = '';
+
   indexes: string = '*log*';
+
   port: number = 9200;
 
   constructor(config: any) {
@@ -312,7 +334,7 @@ export class ElasticSearchInt implements Integration {
     return Boolean(
       this.apiKeyId.length > API_KEY_ID_LENGTH &&
         this.apiKey.length > API_KEY_LENGTH &&
-        validateURL(this.host)
+        validateURL(this.host),
     );
   }
 
@@ -345,8 +367,11 @@ export class ElasticSearchInt implements Integration {
 
 export class SumoLogic implements Integration {
   projectId: number;
+
   accessId: string = '';
+
   accessKey: string = '';
+
   region: 'au';
 
   constructor(config: any) {
@@ -383,8 +408,11 @@ export class SumoLogic implements Integration {
 
 export class JiraInt implements Integration {
   projectId: number;
+
   username: string = '';
+
   token: string = '';
+
   url: string = '';
 
   constructor(config: any) {
@@ -425,7 +453,9 @@ export class JiraInt implements Integration {
 
 export class GithubInt implements Integration {
   projectId: number;
+
   provider: string = 'github';
+
   token: string = '';
 
   constructor(config: any) {
@@ -461,8 +491,11 @@ export class GithubInt implements Integration {
 
 export class IssueTracker implements Integration {
   username: string = '';
+
   token: string = '';
+
   url: string = '';
+
   provider = 'jira';
 
   constructor(config: any) {

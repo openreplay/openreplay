@@ -1,1 +1,1 @@
-export { default } from './SlackAddForm'
+export { default } from './SlackAddForm';

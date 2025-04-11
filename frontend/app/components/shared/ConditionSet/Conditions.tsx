@@ -35,7 +35,9 @@ function ConditionSet({
 
   const onAddFilter = (filter: Record<string, any> = {}) => {
     setChanged?.(true);
-    if (conditions.filter.filters.findIndex((f) => f.key === filter.key) !== -1) {
+    if (
+      conditions.filter.filters.findIndex((f) => f.key === filter.key) !== -1
+    ) {
       return toast.error('Filter already exists');
     }
     conditions.filter.addFilter(filter);
@@ -48,19 +50,19 @@ function ConditionSet({
   };
 
   const onChangeEventsOrder = (_: any, { name, value }: any) => {
-    setChanged?.(true)
+    setChanged?.(true);
     conditions.filter.updateKey(name, value);
     forceRerender(!forceRender);
   };
 
   const onRemoveFilter = (filterIndex: number) => {
-    setChanged?.(true)
+    setChanged?.(true);
     conditions.filter.removeFilter(filterIndex);
     forceRerender(!forceRender);
   };
 
   const onPercentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setChanged?.(true)
+    setChanged?.(true);
     const value = e.target.value || '0';
     if (value.length > 3) return;
     if (parseInt(value, 10) > 100) return conditions.setRollout(100);

@@ -14,7 +14,7 @@ import { Link2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { TextEllipsis } from "UI";
+import { TextEllipsis } from 'UI';
 
 import { Spot } from 'App/mstore/types/spot';
 import { spot as spotUrl, withSiteId } from 'App/routes';
@@ -22,6 +22,7 @@ import { spot as spotUrl, withSiteId } from 'App/routes';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import EditItemModal from './EditItemModal';
+import { useTranslation } from 'react-i18next';
 
 const backgroundUrl = '/assets/img/spotThumbBg.svg';
 
@@ -42,9 +43,10 @@ function SpotListItem({
   onSelect,
   isSelected,
 }: ISpotListItem) {
+  const { t } = useTranslation();
   const [isEdit, setIsEdit] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [tooltipText, setTooltipText] = useState('Copy link to clipboard');
+  const [tooltipText, setTooltipText] = useState(t('Copy link to clipboard'));
   const history = useHistory();
   const { siteId } = useParams<{ siteId: string }>();
 
@@ -52,17 +54,17 @@ function SpotListItem({
     {
       key: 'rename',
       icon: <EditOutlined />,
-      label: 'Rename',
+      label: t('Rename'),
     },
     {
       key: 'download',
-      label: 'Download Video',
+      label: t('Download Video'),
       icon: <DownloadOutlined />,
     },
     {
       key: 'delete',
       icon: <DeleteOutlined />,
-      label: 'Delete',
+      label: t('Delete'),
     },
   ];
 
@@ -70,7 +72,7 @@ function SpotListItem({
     menuItems.splice(1, 0, {
       key: 'slack',
       icon: <SlackOutlined />,
-      label: 'Share via Slack',
+      label: t('Share via Slack'),
     });
   }, []);
   const onMenuClick = async ({ key }: any) => {
@@ -79,16 +81,16 @@ function SpotListItem({
         return setIsEdit(true);
       case 'download':
         const { url } = await onVideo(spot.spotId);
-        await downloadFile(url, `${spot.title}.webm`);
+        await downloadFile(url, `${spot.title}.mp4`);
         return;
       case 'copy':
         copy(
           `${window.location.origin}${withSiteId(
             spotUrl(spot.spotId.toString()),
-            siteId
-          )}`
+            siteId,
+          )}`,
         );
-        return toast.success('Spot URL copied to clipboard');
+        return toast.success(t('Spot URL copied to clipboard'));
       case 'delete':
         return onDelete();
       case 'slack':
@@ -114,12 +116,12 @@ function SpotListItem({
     navigator.clipboard
       .writeText(fullLink)
       .then(() => {
-        setTooltipText('Link copied to clipboard!');
-        setTimeout(() => setTooltipText('Copy link to clipboard'), 2000); // Reset tooltip text after 2 seconds
+        setTooltipText(t('Link copied to clipboard!'));
+        setTimeout(() => setTooltipText(t('Copy link to clipboard')), 2000); // Reset tooltip text after 2 seconds
       })
       .catch(() => {
-        setTooltipText('Failed to copy URL');
-        setTimeout(() => setTooltipText('Copy link to clipboard'), 2000); // Reset tooltip text after 2 seconds
+        setTooltipText(t('Failed to copy URL'));
+        setTimeout(() => setTooltipText(t('Copy link to clipboard')), 2000); // Reset tooltip text after 2 seconds
       });
   };
 
@@ -140,22 +142,16 @@ function SpotListItem({
       <GridItem
         modifier={
           <div className="absolute left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
-            <Tooltip title={tooltipText} className='capitalize'>
+            <Tooltip title={tooltipText} className="capitalize">
               <div
-                className={
-                  'bg-black/70 text-white p-1 px-2 text-xs rounded-lg transition-transform transform translate-y-14 group-hover:translate-y-0 '
-                }
+                className="bg-black/70 text-white p-1 px-2 text-xs rounded-lg transition-transform transform translate-y-14 group-hover:translate-y-0 "
                 onClick={copyToClipboard}
                 style={{ cursor: 'pointer' }}
               >
                 <Link2 size={16} strokeWidth={1} />
               </div>
             </Tooltip>
-            <div
-              className={
-                'bg-black/70 text-white p-1 px-2 text-xs rounded-lg flex items-center cursor-normal'
-              }
-            >
+            <div className="bg-black/70 text-white p-1 px-2 text-xs rounded-lg flex items-center cursor-normal">
               {spot.duration}
             </div>
           </div>
@@ -238,7 +234,7 @@ export function GridItem({
           <img
             src={thumbnail}
             alt={title}
-            className={'w-full h-full object-cover opacity-80'}
+            className="w-full h-full object-cover opacity-80"
             onLoad={() => setLoading(false)}
             onError={() => setLoading(false)}
             style={{ display: loading ? 'none' : 'block' }}
@@ -253,29 +249,31 @@ export function GridItem({
 
         {modifier}
       </div>
-      <div className={'w-full border-t'}>
-        <div className={'flex items-center gap-2'}>
+      <div className="w-full border-t">
+        <div className="flex items-center gap-2">
           {onSelect ? (
-            <div className='px-3 pt-2'>
-            <Checkbox
-              checked={isSelected}
-              onChange={({ target: { checked } }) => onSelect(checked)}
-              className={`flex cursor-pointer w-full hover:text-teal ${
-                isSelected ? 'text-teal' : ''
-              }`}
-            >
-              <TextEllipsis text={title} className='w-full'/>
-            </Checkbox>
+            <div className="px-3 pt-2">
+              <Checkbox
+                checked={isSelected}
+                onChange={({ target: { checked } }) => onSelect(checked)}
+                className={`flex cursor-pointer w-full hover:text-teal ${
+                  isSelected ? 'text-teal' : ''
+                }`}
+              >
+                <TextEllipsis text={title} className="w-full" />
+              </Checkbox>
             </div>
           ) : (
-            <div className='bg-yellow/50 mx-2 mt-2 px-2 w-full rounded '><TextEllipsis text={title} className='capitalize'  /></div>
+            <div className="bg-yellow/50 mx-2 mt-2 px-2 w-full rounded ">
+              <TextEllipsis text={title} className="capitalize" />
+            </div>
           )}
         </div>
-        <div className={'flex items-center gap-1 leading-4 text-xs opacity-50 p-3'}>
+        <div className="flex items-center gap-1 leading-4 text-xs opacity-50 p-3">
           <div>
             <UserOutlined />
           </div>
-          <TextEllipsis text={user} className='capitalize' />
+          <TextEllipsis text={user} className="capitalize" />
           <div className="ml-auto">
             <ClockCircleOutlined />
           </div>
@@ -285,7 +283,7 @@ export function GridItem({
               menu={{ items: menuItems, onClick: onMenuClick }}
               trigger={['click']}
             >
-              <Button type="text" icon={<MoreOutlined />} size={'small'} />
+              <Button type="text" icon={<MoreOutlined />} size="small" />
             </Dropdown>
           </div>
         </div>

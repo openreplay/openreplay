@@ -1,14 +1,16 @@
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
+import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import React, { Suspense, lazy } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
-import { observer } from 'mobx-react-lite'
-import { useStore } from "./mstore";
+import { observer } from 'mobx-react-lite';
+import { useStore } from './mstore';
 import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 import { OB_DEFAULT_TAB } from 'App/routes';
 import { Loader } from 'UI';
 
 import APIClient from './api_client';
 import * as routes from './routes';
+import { debounce } from '@/utils';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -18,25 +20,20 @@ const components: any = {
   AssistPure: lazy(() => import('Components/Assist/AssistRouter')),
   SessionsOverviewPure: lazy(() => import('Components/Overview')),
   DashboardPure: lazy(() => import('Components/Dashboard/NewDashboard')),
-  FunnelDetailsPure: lazy(() => import('Components/Funnels/FunnelDetails')),
-  FunnelIssueDetails: lazy(
-    () => import('Components/Funnels/FunnelIssueDetails')
-  ),
-  FunnelPagePure: lazy(() => import('Components/Funnels/FunnelPage')),
   MultiviewPure: lazy(() => import('Components/Session_/Multiview/Multiview')),
   UsabilityTestingPure: lazy(
-    () => import('Components/UsabilityTesting/UsabilityTesting')
+    () => import('Components/UsabilityTesting/UsabilityTesting'),
   ),
   UsabilityTestEditPure: lazy(
-    () => import('Components/UsabilityTesting/TestEdit')
+    () => import('Components/UsabilityTesting/TestEdit'),
   ),
   UsabilityTestOverviewPure: lazy(
-    () => import('Components/UsabilityTesting/TestOverview')
+    () => import('Components/UsabilityTesting/TestOverview'),
   ),
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   ScopeSetup: lazy(() => import('Components/ScopeForm')),
-  HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
+  HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList'))
 };
 
 const enhancedComponents: any = {
@@ -47,22 +44,19 @@ const enhancedComponents: any = {
   Assist: withSiteIdUpdater(components.AssistPure),
   Client: withSiteIdUpdater(components.ClientPure),
   Onboarding: withSiteIdUpdater(components.OnboardingPure),
-  FunnelPage: withSiteIdUpdater(components.FunnelPagePure),
-  FunnelsDetails: withSiteIdUpdater(components.FunnelDetailsPure),
-  FunnelIssue: withSiteIdUpdater(components.FunnelIssueDetails),
   Multiview: withSiteIdUpdater(components.MultiviewPure),
   UsabilityTesting: withSiteIdUpdater(components.UsabilityTestingPure),
   UsabilityTestEdit: withSiteIdUpdater(components.UsabilityTestEditPure),
   UsabilityTestOverview: withSiteIdUpdater(
-    components.UsabilityTestOverviewPure
+    components.UsabilityTestOverviewPure,
   ),
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
   ScopeSetup: components.ScopeSetup,
-  Highlights: components.HighlightsPure,
+  Highlights: withSiteIdUpdater(components.HighlightsPure)
 };
 
-const withSiteId = routes.withSiteId;
+const { withSiteId } = routes;
 
 const METRICS_PATH = routes.metrics();
 const METRICS_DETAILS = routes.metricDetails();
@@ -85,9 +79,6 @@ const FFLAG_READ_PATH = routes.fflagRead();
 const NOTES_PATH = routes.notes();
 const BOOKMARKS_PATH = routes.bookmarks();
 const RECORDINGS_PATH = routes.recordings();
-const FUNNEL_PATH = routes.funnels();
-const FUNNEL_CREATE_PATH = routes.funnelsCreate();
-const FUNNEL_ISSUE_PATH = routes.funnelIssue();
 const SESSION_PATH = routes.session();
 const CLIENT_PATH = routes.client();
 const ONBOARDING_PATH = routes.onboarding();
@@ -108,28 +99,42 @@ const SPOT_PATH = routes.spot();
 const SCOPE_SETUP = routes.scopeSetup();
 
 const HIGHLIGHTS_PATH = routes.highlights();
+let debounceSearch: any = () => {};
 
 function PrivateRoutes() {
-  const { projectsStore, userStore, integrationsStore } = useStore();
+  const { projectsStore, userStore, integrationsStore, searchStore } = useStore();
   const onboarding = userStore.onboarding;
   const scope = userStore.scopeState;
-  const tenantId = userStore.account.tenantId;
+  const { tenantId } = userStore.account;
   const sites = projectsStore.list;
-  const siteId = projectsStore.siteId;
-  const hasRecordings = sites.some(s => s.recorded);
+  const { siteId } = projectsStore;
+  const hasRecordings = sites.some((s) => s.recorded);
   const redirectToSetup = scope === 0;
   const redirectToOnboarding =
-    !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || (sites.length > 0 && !hasRecordings)) && scope > 0;
+    !onboarding &&
+    (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' ||
+      (sites.length > 0 && !hasRecordings)) &&
+    scope > 0;
   const siteIdList: any = sites.map(({ id }) => id);
 
   React.useEffect(() => {
     if (siteId && integrationsStore.integrations.siteId !== siteId) {
-      integrationsStore.integrations.setSiteId(siteId)
+      integrationsStore.integrations.setSiteId(siteId);
       void integrationsStore.integrations.fetchIntegrations(siteId);
     }
-  }, [siteId])
+  }, [siteId]);
+
+  React.useEffect(() => {
+    debounceSearch = debounce(() => searchStore.fetchSessions(), 250);
+  }, []);
+
+  React.useEffect(() => {
+    if (!searchStore.urlParsed) return;
+    debounceSearch();
+  }, [searchStore.urlParsed, searchStore.instance.filters, searchStore.instance.eventsOrder]);
+
   return (
-    <Suspense fallback={<Loader loading={true} className="flex-1" />}>
+    <Suspense fallback={<Loader loading className="flex-1" />}>
       <Switch key="content">
         <Route
           exact
@@ -164,13 +169,13 @@ function PrivateRoutes() {
               case '/integrations/slack':
                 client.post('integrations/slack/add', {
                   code: location.search.split('=')[1],
-                  state: tenantId,
+                  state: tenantId
                 });
                 break;
               case '/integrations/msteams':
                 client.post('integrations/msteams/add', {
                   code: location.search.split('=')[1],
-                  state: tenantId,
+                  state: tenantId
                 });
                 break;
             }
@@ -195,7 +200,7 @@ function PrivateRoutes() {
             withSiteId(DASHBOARD_PATH, siteIdList),
             withSiteId(DASHBOARD_SELECT_PATH, siteIdList),
             withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList),
-            withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList),
+            withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList)
           ]}
           component={enhancedComponents.Dashboard}
         />
@@ -249,24 +254,6 @@ function PrivateRoutes() {
         <Route
           exact
           strict
-          path={withSiteId(FUNNEL_PATH, siteIdList)}
-          component={enhancedComponents.FunnelPage}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(FUNNEL_CREATE_PATH, siteIdList)}
-          component={enhancedComponents.FunnelsDetails}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(FUNNEL_ISSUE_PATH, siteIdList)}
-          component={enhancedComponents.FunnelIssue}
-        />
-        <Route
-          exact
-          strict
           path={[
             withSiteId(SESSIONS_PATH, siteIdList),
             withSiteId(FFLAGS_PATH, siteIdList),
@@ -274,7 +261,7 @@ function PrivateRoutes() {
             withSiteId(FFLAG_READ_PATH, siteIdList),
             withSiteId(FFLAG_CREATE_PATH, siteIdList),
             withSiteId(NOTES_PATH, siteIdList),
-            withSiteId(BOOKMARKS_PATH, siteIdList),
+            withSiteId(BOOKMARKS_PATH, siteIdList)
           ]}
           component={enhancedComponents.SessionsOverview}
         />
@@ -293,7 +280,7 @@ function PrivateRoutes() {
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />
         ))}
-        <Route path={"*"}>
+        <Route path={'*'}>
           <Redirect to={withSiteId(routes.sessions(), siteId)} />
         </Route>
       </Switch>

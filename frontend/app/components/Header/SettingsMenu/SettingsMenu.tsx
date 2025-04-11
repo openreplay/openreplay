@@ -3,6 +3,7 @@ import cn from 'classnames';
 import { Icon } from 'UI';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   history: any;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 function SettingsMenu(props: RouteComponentProps<Props>) {
+  const { t } = useTranslation();
   const { history, account, className }: any = props;
   const isAdmin = account.admin || account.superAdmin;
   const isEnterprise = account.edition === 'ee';
@@ -37,28 +39,57 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
     }
   };
   return (
-    <div
-      // style={{ width: '160px', marginTop: '34px' }}
-      // className={cn(className, 'rounded absolute -right-4 top-0 bg-white border p-2 text-left')}
-    >
-      <MenuItem onClick={() => navigateTo('sessions-listing')} label='Sessions Listing' icon='folder2' />
-      <MenuItem onClick={() => navigateTo('integrations')} label='Integrations' icon='puzzle' />
-      <MenuItem onClick={() => navigateTo('metadata')} label='Metadata' icon='tags' />
-      <MenuItem onClick={() => navigateTo('webhooks')} label='Webhooks' icon='link-45deg' />
-      <MenuItem onClick={() => navigateTo('projects')} label='Projects' icon='folder2' />
+    <div>
+      <MenuItem
+        onClick={() => navigateTo('sessions-listing')}
+        label={t('Sessions Listing')}
+        icon="folder2"
+      />
+      <MenuItem
+        onClick={() => navigateTo('integrations')}
+        label={t('Integrations')}
+        icon="puzzle"
+      />
+      <MenuItem
+        onClick={() => navigateTo('metadata')}
+        label={t('Metadata')}
+        icon="tags"
+      />
+      <MenuItem
+        onClick={() => navigateTo('webhooks')}
+        label={t('Webhooks')}
+        icon="link-45deg"
+      />
+      <MenuItem
+        onClick={() => navigateTo('projects')}
+        label={t('Projects')}
+        icon="folder2"
+      />
       {isAdmin && (
-        <MenuItem onClick={() => navigateTo('team')} label='Team' icon='users' />
+        <MenuItem
+          onClick={() => navigateTo('team')}
+          label={t('Team')}
+          icon="users"
+        />
       )}
       {isEnterprise && isAdmin && (
         <>
-          <MenuItem onClick={() => navigateTo('roles')} label='Roles & Access' icon='diagram-3' />
-          <MenuItem onClick={() => navigateTo('audit')} label='Audit' icon='list-ul' />
+          <MenuItem
+            onClick={() => navigateTo('roles')}
+            label={t('Roles & Access')}
+            icon="diagram-3"
+          />
+          <MenuItem
+            onClick={() => navigateTo('audit')}
+            label={t('Audit')}
+            icon="list-ul"
+          />
         </>
       )}
       <MenuItem
         onClick={() => navigateTo('notifications')}
-        label='Notifications'
-        icon='bell-slash'
+        label={t('Notifications')}
+        icon="bell-slash"
       />
     </div>
   );
@@ -69,11 +100,11 @@ export default withRouter(SettingsMenu);
 function MenuItem({ onClick, label, icon }: any) {
   return (
     <div
-      className='rounded border border-transparent p-2 cursor-pointer flex items-center hover:bg-active-blue hover:!border-active-blue-border hover-teal'
+      className="rounded border border-transparent p-2 cursor-pointer flex items-center hover:bg-active-blue hover:!border-active-blue-border hover-teal"
       onClick={onClick}
     >
-      <Icon name={icon} size='16' />
-      <button className='ml-2'>{label}</button>
+      <Icon name={icon} size="16" />
+      <button className="ml-2">{label}</button>
     </div>
   );
 }

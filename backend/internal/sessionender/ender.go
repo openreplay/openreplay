@@ -21,6 +21,7 @@ type session struct {
 
 // SessionEnder updates timestamp of last message for each session
 type SessionEnder struct {
+	metrics  ender.Ender
 	timeout  int64
 	sessions map[uint64]*session // map[sessionID]session
 	timeCtrl *timeController
@@ -28,8 +29,9 @@ type SessionEnder struct {
 	enabled  bool
 }
 
-func New(timeout int64, parts int) (*SessionEnder, error) {
+func New(metrics ender.Ender, timeout int64, parts int) (*SessionEnder, error) {
 	return &SessionEnder{
+		metrics:  metrics,
 		timeout:  timeout,
 		sessions: make(map[uint64]*session),
 		timeCtrl: NewTimeController(parts),
@@ -56,7 +58,7 @@ func (se *SessionEnder) ActivePartitions(parts []uint64) {
 	for sessID, _ := range se.sessions {
 		if !activeParts[sessID%se.parts] {
 			delete(se.sessions, sessID)
-			ender.DecreaseActiveSessions()
+			se.metrics.DecreaseActiveSessions()
 			removedSessions++
 		} else {
 			activeSessions++
@@ -89,8 +91,8 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 			isEnded:       false,
 			isMobile:      messages.IsMobileType(msg.TypeID()),
 		}
-		ender.IncreaseActiveSessions()
-		ender.IncreaseTotalSessions()
+		se.metrics.IncreaseActiveSessions()
+		se.metrics.IncreaseTotalSessions()
 		return
 	}
 	// Keep the highest user's timestamp for correct session duration value
@@ -139,8 +141,8 @@ func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 			sess.isEnded = true
 			if res, _ := handler(sessID, sess.lastUserTime); res {
 				delete(se.sessions, sessID)
-				ender.DecreaseActiveSessions()
-				ender.IncreaseClosedSessions()
+				se.metrics.DecreaseActiveSessions()
+				se.metrics.IncreaseClosedSessions()
 				removedSessions++
 				if endCase == 2 {
 					brokerTime[1]++

@@ -95,6 +95,8 @@ spec:
               value: {{ .Values.global.jwtSecret }}
             - name: JWT_SPOT_SECRET
               value: {{ .Values.global.jwtSpotSecret }}
+            - name: TOKEN_SECRET
+              value: {{ .Values.global.tokenSecret }}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}

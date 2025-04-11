@@ -30,7 +30,7 @@ const base64ToBlob = (base64: string) => {
   for (let i = 0; i < byteString.length; i++) {
     ia[i] = byteString.charCodeAt(i);
   }
-  return new Blob([ab], { type: "video/webm" });
+  return new Blob([ab], { type: "video/mp4" });
 };
 
 function SavingControls({
@@ -199,6 +199,7 @@ function SavingControls({
 
     return new Promise((res) => {
       const interval = setInterval(() => {
+        videoRef.currentTime = 0;
         if (thumbnailRes) {
           clearInterval(interval);
           res(thumbnailRes);

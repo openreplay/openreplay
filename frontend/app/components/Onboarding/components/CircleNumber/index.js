@@ -1,1 +1,1 @@
-export { default } from './CircleNumber'
+export { default } from './CircleNumber';

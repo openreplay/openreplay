@@ -1,10 +1,9 @@
+import IOSPlayer from 'Player/mobile/IOSPlayer';
 import SimpleStore from './common/SimpleStore';
 import type { Store, SessionFilesInfo } from './common/types';
 
 import WebPlayer from './web/WebPlayer';
 import WebLivePlayer from './web/WebLivePlayer';
-
-import IOSPlayer from 'Player/mobile/IOSPlayer';
 
 type IosState = typeof IOSPlayer.INITIAL_STATE;
 type IOSPlayerStore = Store<IosState>;
@@ -24,7 +23,7 @@ export type IWebLivePlayerStore = WebLivePlayerStore;
 export function createIOSPlayer(
   session: SessionFilesInfo,
   wrapStore?: (s: IOSPlayerStore) => IOSPlayerStore,
-  uiErrorHandler?: { error: (msg: string) => void }
+  uiErrorHandler?: { error: (msg: string) => void },
 ): [IIosPlayer, IOSPlayerStore] {
   let store: IOSPlayerStore = new SimpleStore<IosState>({
     ...IOSPlayer.INITIAL_STATE,
@@ -50,14 +49,21 @@ export function createWebPlayer(
     store = wrapStore(store);
   }
 
-  const player = new WebPlayer(store, session, false, false, uiErrorHandler, prefetched);
+  const player = new WebPlayer(
+    store,
+    session,
+    false,
+    false,
+    uiErrorHandler,
+    prefetched,
+  );
   return [player, store];
 }
 
 export function createClickMapPlayer(
   session: SessionFilesInfo,
   wrapStore?: (s: IWebPlayerStore) => IWebPlayerStore,
-  uiErrorHandler?: { error: (msg: string) => void }
+  uiErrorHandler?: { error: (msg: string) => void },
 ): [IWebPlayer, IWebPlayerStore] {
   let store: WebPlayerStore = new SimpleStore<WebState>({
     ...WebPlayer.INITIAL_STATE,
@@ -71,27 +77,36 @@ export function createClickMapPlayer(
 }
 
 export function createLiveWebPlayer(
-	session: SessionFilesInfo,
-	config: RTCIceServer[] | null,
-	agentId: number,
-	projectId: number,
-	wrapStore?: (s:IWebLivePlayerStore) => IWebLivePlayerStore,
-	uiErrorHandler?: { error: (msg: string) => void }
+  session: SessionFilesInfo,
+  config: RTCIceServer[] | null,
+  agentId: number,
+  projectId: number,
+  wrapStore?: (s: IWebLivePlayerStore) => IWebLivePlayerStore,
+  uiErrorHandler?: { error: (msg: string) => void },
 ): [IWebLivePlayer, IWebLivePlayerStore] {
-	let store: WebLivePlayerStore = new SimpleStore<WebLiveState>({
-		...WebLivePlayer.INITIAL_STATE,
-	})
-	if (wrapStore) {
-		store = wrapStore(store)
-	}
+  let store: WebLivePlayerStore = new SimpleStore<WebLiveState>({
+    ...WebLivePlayer.INITIAL_STATE,
+  });
+  if (wrapStore) {
+    store = wrapStore(store);
+  }
 
-	const player = new WebLivePlayer(store, session, config, agentId, projectId, uiErrorHandler)
-	return [player, store]
+  const player = new WebLivePlayer(
+    store,
+    session,
+    config,
+    agentId,
+    projectId,
+    uiErrorHandler,
+  );
+  return [player, store];
 }
 
 export function createClipPlayer(
   session: SessionFilesInfo,
-  wrapStore?: (s: IOSPlayerStore | IWebPlayerStore) => IOSPlayerStore | IWebPlayerStore,
+  wrapStore?: (
+    s: IOSPlayerStore | IWebPlayerStore,
+  ) => IOSPlayerStore | IWebPlayerStore,
   uiErrorHandler?: { error: (msg: string) => void },
   range?: [number, number],
   isMobile?: boolean,
@@ -110,19 +125,18 @@ export function createClipPlayer(
       player.toggleRange(range[0], range[1]);
     }
     return [player, store] as [IIosPlayer, IOSPlayerStore];
-  } else {
-    let store: WebPlayerStore = new SimpleStore<WebState>({
-      ...WebPlayer.INITIAL_STATE,
-    });
-    if (wrapStore) {
-      // @ts-ignore
-      store = wrapStore(store);
-    }
-
-    const player = new WebPlayer(store, session, false, false, uiErrorHandler);
-    if (range && range[0] !== range[1]) {
-      player.toggleRange(range[0], range[1]);
-    }
-    return [player, store] as [IWebPlayer, IWebPlayerStore];
   }
+  let store: WebPlayerStore = new SimpleStore<WebState>({
+    ...WebPlayer.INITIAL_STATE,
+  });
+  if (wrapStore) {
+    // @ts-ignore
+    store = wrapStore(store);
+  }
+
+  const player = new WebPlayer(store, session, false, false, uiErrorHandler);
+  if (range && range[0] !== range[1]) {
+    player.toggleRange(range[0], range[1]);
+  }
+  return [player, store] as [IWebPlayer, IWebPlayerStore];
 }

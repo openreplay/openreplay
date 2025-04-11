@@ -3,6 +3,8 @@ import { Decoder } from 'syncod';
 import logger from 'App/logger';
 
 import type { Store, ILog, SessionFilesInfo } from 'Player';
+import TabSessionManager, { TabState } from 'Player/web/TabManager';
+import ActiveTabManager from 'Player/web/managers/ActiveTabManager';
 import ListWalker from '../common/ListWalker';
 
 import MouseMoveManager from './managers/MouseMoveManager';
@@ -20,8 +22,6 @@ import Screen, {
 
 import type { InitialLists } from './Lists';
 import type { SkipInterval } from './managers/ActivityManager';
-import TabSessionManager, { TabState } from 'Player/web/TabManager';
-import ActiveTabManager from 'Player/web/managers/ActiveTabManager';
 
 interface RawList {
   event: Record<string, any>[] & { tabId: string | null };
@@ -102,20 +102,31 @@ export default class MessageManager {
   };
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
+
   private mouseThrashingManager: ListWalker<MouseThrashing> = new ListWalker();
+
   private activityManager: ActivityManager | null = null;
+
   private mouseMoveManager: MouseMoveManager;
+
   private activeTabManager = new ActiveTabManager();
+
   private tabCloseManager = new TabClosingManager();
 
   public readonly decoder = new Decoder();
 
   private sessionStart: number;
+
   private lastMessageTime: number = 0;
+
   private firstVisualEventSet = false;
+
   public readonly tabs: Record<string, TabSessionManager> = {};
+
   private tabsAmount = 0;
+
   private tabChangeEvents: TabChangeEvent[] = [];
+
   private activeTab = '';
 
   constructor(
@@ -123,19 +134,19 @@ export default class MessageManager {
     private readonly state: Store<State & { time: number }>,
     private readonly screen: Screen,
     private readonly initialLists?: Partial<InitialLists>,
-    private readonly uiErrorHandler?: { error: (error: string) => void }
+    private readonly uiErrorHandler?: { error: (error: string) => void },
   ) {
     this.mouseMoveManager = new MouseMoveManager(screen);
     this.sessionStart = this.session.startedAt;
     state.update({ sessionStart: this.sessionStart });
     this.activityManager = new ActivityManager(
-      this.session.duration.milliseconds
+      this.session.duration.milliseconds,
     ); // only if not-live
   }
 
   public getListsFullState = () => {
     const fullState: Record<string, any> = {};
-    for (let tab in Object.keys(this.tabs)) {
+    for (const tab in Object.keys(this.tabs)) {
       fullState[tab] = this.tabs[tab].getListsFullState();
     }
     return Object.values(this.tabs)[0].getListsFullState();
@@ -143,8 +154,8 @@ export default class MessageManager {
 
   public injectSpriteMap = (spriteEl: SVGElement) => {
     Object.values(this.tabs).forEach((tab) => {
-      tab.injectSpriteMap(spriteEl)
-    })
+      tab.injectSpriteMap(spriteEl);
+    });
   };
 
   public setSession = (session: SessionFilesInfo) => {
@@ -182,6 +193,7 @@ export default class MessageManager {
   };
 
   private waitingForFiles: boolean = false;
+
   public onFileReadSuccess = () => {
     if (this.activityManager) {
       this.activityManager.end();
@@ -189,7 +201,15 @@ export default class MessageManager {
     }
 
     Object.values(this.tabs).forEach((tab) => tab.onFileReadSuccess?.());
+
+    this.updateSpriteMap();
   };
+
+  public updateSpriteMap = () => {
+    if (this.spriteMapSvg) {
+      this.injectSpriteMap(this.spriteMapSvg);
+    }
+  }
 
   public onFileReadFailed = (...e: any[]) => {
     logger.error(e);
@@ -199,6 +219,7 @@ export default class MessageManager {
 
   public onFileReadFinally = () => {
     this.waitingForFiles = false;
+    this.setMessagesLoading(false);
     this.state.update({ messagesProcessed: true });
   };
 
@@ -221,8 +242,9 @@ export default class MessageManager {
       }
     }
 
-    lastMsgArr.sort((a, b) => a[1] - b[1]);
-    lastMsgArr.forEach(([tabId, lastMessageTs]) => {
+    lastMsgArr
+      .sort((a, b) => a[1] - b[1])
+      .forEach(([tabId, lastMessageTs]) => {
       this.tabCloseManager.append({ tabId, time: lastMessageTs });
     });
   };
@@ -248,7 +270,7 @@ export default class MessageManager {
     this.activeTabManager.moveReady(t).then(async (tabId) => {
       const closeMessage = await this.tabCloseManager.moveReady(t);
       if (closeMessage) {
-        const closedTabs = this.tabCloseManager.closedTabs;
+        const { closedTabs } = this.tabCloseManager;
         if (closedTabs.size === this.tabsAmount) {
           if (this.session.durationMs - t < 250) {
             this.state.update({ closedTabs: Array.from(closedTabs) });
@@ -274,15 +296,17 @@ export default class MessageManager {
       }
 
       if (tabId) {
+        const stateUpdate: { currentTab?: string, tabs?: Set<string> } = {}
         if (this.activeTab !== tabId) {
-          this.state.update({ currentTab: tabId });
+          stateUpdate['currentTab'] = tabId;
           this.activeTab = tabId;
           this.tabs[this.activeTab].clean();
         }
         const activeTabs = this.state.get().tabs;
         if (activeTabs.size !== this.activeTabManager.tabInstances.size) {
-          this.state.update({ tabs: this.activeTabManager.tabInstances });
+          stateUpdate['tabs'] = this.activeTabManager.tabInstances;
         }
+        this.state.update(stateUpdate)
       }
 
       if (this.tabs[this.activeTab]) {
@@ -294,7 +318,7 @@ export default class MessageManager {
           this.tabs,
           this.activeTab,
           tabId,
-          this.activeTabManager.list
+          this.activeTabManager.list,
         );
       }
     });
@@ -321,9 +345,38 @@ export default class MessageManager {
     this.state.update({ tabChangeEvents: this.tabChangeEvents });
   }
 
+  spriteMapSvg: SVGElement | null = null;
+  potentialSpriteMap: Record<string, any> = {};
+  domParser: DOMParser | null = null;
+  createSpriteMap = () => {
+    if (!this.spriteMapSvg) {
+      this.domParser = new DOMParser();
+      this.spriteMapSvg = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'svg',
+      );
+      this.spriteMapSvg.setAttribute('style', 'display: none;');
+      this.spriteMapSvg.setAttribute('id', 'reconstructed-sprite');
+    }
+  };
+
   distributeMessage = (msg: Message & { tabId: string }): void => {
     // @ts-ignore placeholder msg for timestamps
     if (msg.tp === 9999) return;
+    if (msg.tp === MType.SetNodeAttribute) {
+      if (msg.value.includes('_$OPENREPLAY_SPRITE$_')) {
+        this.createSpriteMap();
+        if (!this.domParser) {
+          return console.error('DOM parser is not initialized?');
+        }
+        handleSprites(
+          this.potentialSpriteMap,
+          this.domParser,
+          msg,
+          this.spriteMapSvg!,
+        );
+      }
+    }
     if (!this.tabs[msg.tabId]) {
       this.tabsAmount++;
       this.state.update({
@@ -339,7 +392,7 @@ export default class MessageManager {
         msg.tabId,
         this.setSize,
         this.sessionStart,
-        this.initialLists
+        this.initialLists,
       );
     }
 
@@ -371,6 +424,9 @@ export default class MessageManager {
         this.mouseThrashingManager.append(msg);
         break;
       case MType.MouseMove:
+        if (this.tabs[msg.tabId].lastMessageTs < msg.time) {
+          this.tabs[msg.tabId].lastMessageTs = msg.time;
+        }
         this.mouseMoveManager.append(msg);
         break;
       case MType.MouseClickDeprecated:
@@ -405,7 +461,7 @@ export default class MessageManager {
     }
     this.screen.display(!messagesLoading);
     const cssLoading = Object.values(this.state.get().tabStates).some(
-      (tab) => tab.cssLoading
+      (tab) => tab.cssLoading,
     );
     const isReady = !messagesLoading && !cssLoading;
     this.state.update({ messagesLoading, ready: isReady });
@@ -434,4 +490,37 @@ function mapTabs(tabs: Record<string, TabSessionManager>) {
   });
 
   return tabMap;
+}
+
+function handleSprites(
+  potentialSpriteMap: Record<string, any>,
+  parser: DOMParser,
+  msg: Record<string, any>,
+  spriteMapSvg: SVGElement,
+) {
+  const [_, svgData] = msg.value.split('_$OPENREPLAY_SPRITE$_');
+  const potentialSprite = potentialSpriteMap[svgData];
+  if (potentialSprite) {
+    msg.value = potentialSprite;
+  } else {
+    const svgDoc = parser.parseFromString(svgData, 'image/svg+xml');
+    const originalSvg = svgDoc.querySelector('svg');
+    if (originalSvg) {
+      const symbol = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'symbol',
+      );
+      const symbolId = `symbol-${msg.id || `ind-${msg.time}`}`; // Generate an ID if missing
+      symbol.setAttribute('id', symbolId);
+      symbol.setAttribute(
+        'viewBox',
+        originalSvg.getAttribute('viewBox') || '0 0 24 24',
+      );
+      symbol.innerHTML = originalSvg.innerHTML;
+
+      spriteMapSvg.appendChild(symbol);
+      msg.value = `#${symbolId}`;
+      potentialSpriteMap[svgData] = `#${symbolId}`;
+    }
+  }
 }

@@ -3,17 +3,22 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
 import { Input } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 let debounceUpdate: any = () => {};
 
 function DashboardSearch() {
+  const { t } = useTranslation();
   const { dashboardStore } = useStore();
   const [query, setQuery] = useState(dashboardStore.dashboardsSearch);
   useEffect(() => {
     debounceUpdate = debounce(
       (key: string, value: any) =>
-        dashboardStore.updateKey('filter', { ...dashboardStore.filter, query: value }),
-      500
+        dashboardStore.updateKey('filter', {
+          ...dashboardStore.filter,
+          query: value,
+        }),
+      500,
     );
   }, []);
 
@@ -29,9 +34,14 @@ function DashboardSearch() {
       allowClear
       name="dashboardsSearch"
       className="w-full btn-search-dashboard"
-      placeholder="Filter by dashboard title"
+      placeholder={t('Filter by dashboard title')}
       onChange={write}
-      onSearch={(value) => dashboardStore.updateKey('filter', { ...dashboardStore.filter, query: value })}
+      onSearch={(value) =>
+        dashboardStore.updateKey('filter', {
+          ...dashboardStore.filter,
+          query: value,
+        })
+      }
     />
   );
 }

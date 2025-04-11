@@ -1,14 +1,15 @@
 import React from 'react';
-import { tagProps } from "App/services/NotesService";
+import { tagProps } from 'App/services/NotesService';
 import { GridItem } from 'App/components/Spots/SpotsList/SpotListItem';
-import { confirm } from "UI";
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Tag } from "antd";
-import copy from "copy-to-clipboard";
-import { Eye, Link } from "lucide-react";
-import { toast } from "react-toastify";
-import { resentOrDate } from 'App/date'
-import { noNoteMsg } from 'App/mstore/notesStore'
+import { confirm } from 'UI';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { Tag } from 'antd';
+import copy from 'copy-to-clipboard';
+import { Eye, Link } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { resentOrDate } from 'App/date';
+import { noNoteMsg } from 'App/mstore/notesStore';
+import { useTranslation } from 'react-i18next';
 
 function HighlightClip({
   note = 'Highlight note',
@@ -20,6 +21,7 @@ function HighlightClip({
   openEdit = () => undefined,
   onItemClick = () => undefined,
   onDelete = () => undefined,
+  canEdit = false,
 }: {
   note: string | null;
   tag: string;
@@ -30,8 +32,10 @@ function HighlightClip({
   openEdit: (id: any) => any;
   onItemClick: (id: any) => any;
   onDelete: (id: any) => any;
+  canEdit: boolean;
 }) {
-  const noteMsg = note || noNoteMsg
+  const { t } = useTranslation();
+  const noteMsg = note || noNoteMsg;
   const copyToClipboard = () => {
     const currUrl = window.location.href;
     const hUrl = `${currUrl}?highlight=${hId}`;
@@ -42,22 +46,25 @@ function HighlightClip({
     {
       key: 'copy',
       icon: <Link size={14} strokeWidth={1} />,
-      label: 'Copy Link',
+      label: t('Copy Link'),
     },
     {
       key: 'edit',
       icon: <EditOutlined />,
-      label: 'Edit',
+      label: t('Edit'),
+      disabled: !canEdit,
     },
     {
       key: 'visibility',
       icon: <Eye strokeWidth={1} size={14} />,
-      label: 'Visibility',
+      label: t('Visibility'),
+      disabled: !canEdit,
     },
     {
       key: 'delete',
       icon: <DeleteOutlined />,
-      label: 'Delete',
+      label: t('Delete'),
+      disabled: !canEdit,
     },
   ];
 
@@ -67,14 +74,14 @@ function HighlightClip({
         return openEdit();
       case 'copy':
         copyToClipboard();
-        toast.success('Highlight link copied to clipboard');
-        return
+        toast.success(t('Highlight link copied to clipboard'));
+        return;
       case 'delete':
         const res = await confirm({
-          header: 'Are you sure delete this Highlight?',
+          header: t('Are you sure delete this Highlight?'),
           confirmation:
-            'Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.',
-          confirmButton: 'Yes, Delete',
+            t('Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.'),
+          confirmButton: t('Yes, Delete'),
         });
         if (res) {
           onDelete();
@@ -99,15 +106,17 @@ function HighlightClip({
       menuItems={menuItems}
       onMenuClick={onMenuClick}
       modifier={
-        tag ? <div className="left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
-          <Tag
-            color={tagProps[tag]}
-            className="border-0 rounded-lg hover:inherit gap-2 w-14 text-center capitalize"
-            bordered={false}
-          >
-            {tag.toLowerCase()}
-          </Tag>
-        </div> : null
+        tag ? (
+          <div className="left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
+            <Tag
+              color={tagProps[tag]}
+              className="border-0 rounded-lg hover:inherit gap-2 text-center capitalize"
+              bordered={false}
+            >
+              {t(tag.toLowerCase())}
+            </Tag>
+          </div>
+        ) : null
       }
     />
   );

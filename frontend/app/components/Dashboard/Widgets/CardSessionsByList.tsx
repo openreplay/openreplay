@@ -14,9 +14,16 @@ interface Props {
   paginated?: boolean;
 }
 
-function CardSessionsByList({ list, selected, paginated, onClickHandler = () => null, metric, total }: Props) {
+function CardSessionsByList({
+  list,
+  selected,
+  paginated,
+  onClickHandler = () => null,
+  metric,
+  total,
+}: Props) {
   const { dashboardStore, metricStore, sessionStore } = useStore();
-  const drillDownPeriod = dashboardStore.drillDownPeriod;
+  const { drillDownPeriod } = dashboardStore;
   const params = { density: 35 };
   const metricParams = { ...params };
   const [loading, setLoading] = React.useState(false);
@@ -25,9 +32,17 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
   const loadData = async (page: number) => {
     const timestamps = drillDownPeriod.toTimestamps();
     const payload = { ...metricParams, ...timestamps, ...metric?.toJson() };
-    const params = { ...drillDownPeriod, ...payload, key: metric.predefinedKey };
+    const params = {
+      ...drillDownPeriod,
+      ...payload,
+      key: metric.predefinedKey,
+    };
     setLoading(true);
-    const data = await metricService.getMetricChartData(metric, { ...params, page, limit: 20 }, false);
+    const data = await metricService.getMetricChartData(
+      metric,
+      { ...params, page, limit: 20 },
+      false,
+    );
     metric.setData(data, drillDownPeriod);
     setLoading(false);
   };
@@ -46,18 +61,26 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
               style={{
                 borderBottom: index === data.length - 1 ? 'none' : 'none',
                 padding: '4px 10px',
-                lineHeight: '1px'
+                lineHeight: '1px',
               }}
-              className={cn('rounded-lg border-b-0 hover:bg-active-blue cursor-pointer', selected === row.name ? 'bg-active-blue' : '')}
+              className={cn(
+                'rounded-lg border-b-0 hover:bg-active-blue cursor-pointer',
+                selected === row.name ? 'bg-active-blue' : '',
+              )}
             >
               <List.Item.Meta
                 className="m-0"
                 avatar={<Avatar src={row.icon} />}
-                title={(
+                title={
                   <div className="m-0">
                     <div className="flex justify-between m-0 p-0">
-                      <Typography.Text ellipsis={true} className='w-[90%]'>{row.displayName}</Typography.Text>
-                      <Typography.Text type="secondary"> {row.sessionCount}</Typography.Text>
+                      <Typography.Text ellipsis className="w-[90%]">
+                        {row.displayName}
+                      </Typography.Text>
+                      <Typography.Text type="secondary">
+                        {' '}
+                        {row.sessionCount}
+                      </Typography.Text>
                     </div>
 
                     <Progress
@@ -65,17 +88,17 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
                       showInfo={false}
                       strokeColor={{
                         '0%': '#394EFF',
-                        '100%': '#394EFF'
+                        '100%': '#394EFF',
                       }}
                       size={['small', 2]}
                       style={{
                         padding: '0 0px',
                         margin: '0 0px',
-                        height: 4
+                        height: 4,
                       }}
                     />
                   </div>
-                )}
+                }
               />
             </List.Item>
           )}
@@ -97,7 +120,6 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
           />
         </div>
       )}
-
     </div>
   );
 }

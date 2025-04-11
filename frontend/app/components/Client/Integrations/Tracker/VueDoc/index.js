@@ -1,1 +1,1 @@
-export { default } from './VueDoc'
+export { default } from './VueDoc';

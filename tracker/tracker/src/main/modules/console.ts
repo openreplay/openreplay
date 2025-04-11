@@ -108,9 +108,13 @@ export default function (app: App, opts: Partial<Options>): void {
     return
   }
 
-  const sendConsoleLog = app.safe((level: string, args: unknown[]): void =>
-    app.send(ConsoleLog(level, printf(args))),
-  )
+  const sendConsoleLog = app.safe((level: string, args: unknown[]): void => {
+    let logMsg = printf(args)
+    if (app.sanitizer.privateMode) {
+      logMsg = logMsg.replaceAll(/./g, '*')
+    }
+    app.send(ConsoleLog(level, logMsg))
+  })
 
   let n = 0
   const reset = (): void => {

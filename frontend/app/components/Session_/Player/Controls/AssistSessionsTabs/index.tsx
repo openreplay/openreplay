@@ -1,1 +1,1 @@
-export { default, InactiveTab } from './AssistSessionsTabs'
+export { default, InactiveTab } from './AssistSessionsTabs';

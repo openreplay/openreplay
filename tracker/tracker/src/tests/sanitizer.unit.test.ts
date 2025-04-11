@@ -2,8 +2,8 @@ import { describe, expect, jest, afterEach, beforeEach, test } from '@jest/globa
 import Sanitizer, { SanitizeLevel, Options, stringWiper } from '../main/app/sanitizer.js'
 
 describe('stringWiper', () => {
-  test('should replace all characters with █', () => {
-    expect(stringWiper('Sensitive Data')).toBe('██████████████')
+  test('should replace all characters with *', () => {
+    expect(stringWiper('Sensitive Data')).toBe('********* ****')
   })
 })
 
@@ -126,7 +126,7 @@ describe('Sanitizer', () => {
     element.mockId = 1
     element.innerText = 'Sensitive Data'
     const sanitizedText = sanitizer.getInnerTextSecure(element)
-    expect(sanitizedText).toEqual('██████████████')
+    expect(sanitizedText).toEqual('********* ****')
   })
 
   test('should return empty string if node element does not exist', () => {

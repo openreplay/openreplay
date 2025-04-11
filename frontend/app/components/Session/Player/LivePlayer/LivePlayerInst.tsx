@@ -1,7 +1,6 @@
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { findDOMNode } from 'react-dom';
 
 import {
   ILivePlayerContext,
@@ -35,14 +34,12 @@ function Player({ fullView, isMultiview }: IProps) {
   // @ts-ignore TODO
   const playerContext = React.useContext<ILivePlayerContext>(PlayerContext);
   const screenWrapper = React.useRef<HTMLDivElement>(null);
-  const ready = playerContext.store.get().ready;
-  const bottomBlock = uiPlayerStore.bottomBlock;
+  const { ready } = playerContext.store.get();
+  const { bottomBlock } = uiPlayerStore;
 
   React.useEffect(() => {
     if (!closedLive || isMultiview) {
-      const parentElement = findDOMNode(
-        screenWrapper.current
-      ) as HTMLDivElement | null; //TODO: good architecture
+      const parentElement = screenWrapper.current // TODO: good architecture
       if (parentElement) {
         playerContext.player.attach(parentElement);
         playerContext.player.play();
@@ -103,9 +100,9 @@ function Player({ fullView, isMultiview }: IProps) {
         >
           <div
             onMouseDown={handleResize}
-            className={'w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20'}
+            className="w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20"
           />
-            <ConsolePanel isLive />
+          <ConsolePanel isLive />
         </div>
       ) : null}
       {!fullView && !isMultiview ? (

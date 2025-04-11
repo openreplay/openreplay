@@ -1,15 +1,19 @@
 import BaseService from './BaseService';
 
 export default class LoginService extends BaseService {
-  public async login({ email, password, captchaResponse }: {
-    email: string,
-    password: string,
-    captchaResponse?: string
+  public async login({
+    email,
+    password,
+    captchaResponse,
+  }: {
+    email: string;
+    password: string;
+    captchaResponse?: string;
   }) {
     const response = await this.client.post('/login', {
       email: email.trim(),
       password,
-      'g-recaptcha-response': captchaResponse
+      'g-recaptcha-response': captchaResponse,
     });
 
     const responseData = await response.json();

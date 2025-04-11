@@ -1,17 +1,23 @@
 import React from 'react';
-import { MenuProps, Select } from 'antd';
+import { Select } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   payload: any;
 }
 
 function NodeDropdown(props: Props) {
+  const { t } = useTranslation();
   return (
-    <Select style={{ width: 120 }} placeholder='Slect Event' dropdownStyle={{
-      border: 'none'
-    }}>
-      <Select.Option value='jack'>Jack</Select.Option>
-      <Select.Option value='lucy'>Lucy</Select.Option>
+    <Select
+      style={{ width: 120 }}
+      placeholder={t('Select Event')}
+      dropdownStyle={{
+        border: 'none',
+      }}
+    >
+      <Select.Option value="jack">{t('Jack')}</Select.Option>
+      <Select.Option value="lucy">{t('Lucy')}</Select.Option>
     </Select>
   );
 }

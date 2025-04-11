@@ -1,10 +1,9 @@
-import { colors } from './utils';
 import { numberWithCommas } from 'App/utils';
-
+import { colors } from './utils';
 
 export function buildPieData(
   chart: Array<Record<string, any>>,
-  namesMap: string[]
+  namesMap: string[],
 ) {
   const result: { name: string; value: number }[] = namesMap.map((name) => {
     let sum = 0;

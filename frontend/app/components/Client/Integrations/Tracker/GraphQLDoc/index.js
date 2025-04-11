@@ -1,1 +1,1 @@
-export { default } from './GraphQLDoc'
+export { default } from './GraphQLDoc';

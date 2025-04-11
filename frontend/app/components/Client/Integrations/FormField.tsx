@@ -1,5 +1,5 @@
-import React from "react";
-import { Input } from 'antd'
+import React from 'react';
+import { Input } from 'antd';
 
 export function FormField({
   label,
@@ -10,7 +10,7 @@ export function FormField({
   errors,
 }: {
   label: string;
-  name: string
+  name: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   autoFocus?: boolean;

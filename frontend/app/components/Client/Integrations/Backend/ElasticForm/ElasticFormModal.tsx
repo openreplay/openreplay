@@ -10,6 +10,7 @@ import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModa
 import { Loader } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
+import { useTranslation } from 'react-i18next';
 
 interface ElasticConfig {
   url: string;
@@ -32,25 +33,29 @@ function ElasticsearchForm({
   onClose: () => void;
   integrated: boolean;
 }) {
+  const { t } = useTranslation();
   const { integrationsStore } = useStore();
-  const siteId = integrationsStore.integrations.siteId;
+  const { siteId } = integrationsStore.integrations;
   const {
     data = initialValues,
     isPending,
     saveMutation,
     removeMutation,
   } = useIntegration<ElasticConfig>('elasticsearch', siteId, initialValues);
-  const { values, errors, handleChange, hasErrors, checkErrors } = useForm(data, {
-    url: {
-      required: true,
+  const { values, errors, handleChange, hasErrors, checkErrors } = useForm(
+    data,
+    {
+      url: {
+        required: true,
+      },
+      api_key_id: {
+        required: true,
+      },
+      api_key: {
+        required: true,
+      },
     },
-    api_key_id: {
-      required: true,
-    },
-    api_key: {
-      required: true,
-    },
-  });
+  );
   const exists = Boolean(data.api_key_id);
 
   const save = async () => {
@@ -60,7 +65,7 @@ function ElasticsearchForm({
     try {
       await saveMutation.mutateAsync({ values, siteId, exists });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
     onClose();
   };
@@ -69,7 +74,7 @@ function ElasticsearchForm({
     try {
       await removeMutation.mutateAsync({ siteId });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
     onClose();
   };
@@ -81,24 +86,26 @@ function ElasticsearchForm({
       <IntegrationModalCard
         title="Elasticsearch"
         icon="integrations/elasticsearch"
-        description="Integrate Elasticsearch with session replays to seamlessly observe backend errors."
+        description={t(
+          'Integrate Elasticsearch with session replays to seamlessly observe backend errors.',
+        )}
       />
 
       <div className="p-5 border-b mb-4">
-        <div className="font-medium mb-1">How it works?</div>
+        <div className="font-medium mb-1">{t('How it works?')}</div>
         <ol className="list-decimal list-inside">
-          <li>Create a new Elastic API key</li>
-          <li>Enter the API key below</li>
-          <li>Propagate openReplaySessionToken</li>
+          <li>{t('Create a new Elastic API key')}</li>
+          <li>{t('Enter the API key below')}</li>
+          <li>{t('Propagate openReplaySessionToken')}</li>
         </ol>
         <DocLink
           className="mt-4"
-          label="Integrate Elasticsearch"
+          label={t('Integrate Elasticsearch')}
           url="https://docs.openreplay.com/integrations/elastic"
         />
         <Loader loading={isPending}>
           <FormField
-            label="URL"
+            label={t('URL')}
             name="url"
             value={values.url}
             onChange={handleChange}
@@ -106,39 +113,39 @@ function ElasticsearchForm({
             autoFocus
           />
           <FormField
-            label="API Key ID"
+            label={t('API Key ID')}
             name="api_key_id"
             value={values.api_key_id}
             onChange={handleChange}
             errors={errors.api_key_id}
           />
           <FormField
-            label="API Key"
+            label={t('API Key')}
             name="api_key"
             value={values.api_key}
             onChange={handleChange}
             errors={errors.api_key}
           />
           <FormField
-            label="Indexes"
+            label={t('Indexes')}
             name="indexes"
             value={values.indexes}
             onChange={handleChange}
             errors={errors.indexes}
           />
-          <div className={'flex items-center gap-2'}>
+          <div className="flex items-center gap-2">
             <Button
               onClick={save}
               disabled={hasErrors}
               loading={saveMutation.isPending}
               type="primary"
             >
-              {exists ? 'Update' : 'Add'}
+              {exists ? t('Update') : t('Add')}
             </Button>
 
             {integrated && (
               <Button loading={removeMutation.isPending} onClick={remove}>
-                {'Delete'}
+                {t('Delete')}
               </Button>
             )}
           </div>

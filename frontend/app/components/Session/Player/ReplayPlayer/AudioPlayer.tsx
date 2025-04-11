@@ -4,19 +4,20 @@ import {
   MutedOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
-import { Button, InputNumber, Popover } from 'antd';
-import { Slider } from 'antd';
+import { Button, InputNumber, Popover, Slider } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { useTranslation } from 'react-i18next';
 
 function DropdownAudioPlayer({
   audioEvents,
 }: {
   audioEvents: { payload: Record<any, any>; timestamp: number }[];
 }) {
+  const { t } = useTranslation();
   const { store } = useContext(PlayerContext);
   const [isVisible, setIsVisible] = useState(false);
   const [volume, setVolume] = useState(35);
@@ -44,7 +45,7 @@ function DropdownAudioPlayer({
           start: startTs,
         };
       }),
-    [audioEvents.length, sessionStart]
+    [audioEvents.length, sessionStart],
   );
 
   React.useEffect(() => {
@@ -116,7 +117,6 @@ function DropdownAudioPlayer({
           if (targetTime < 0 || (fileLength && targetTime > fileLength)) {
             audio.pause();
             audio.currentTime = 0;
-            return;
           } else {
             audio.currentTime = targetTime;
           }
@@ -196,20 +196,20 @@ function DropdownAudioPlayer({
   const buttonIcon =
     'px-2 cursor-pointer border border-gray-light hover:border-main hover:text-main hover:z-10 h-fit';
   return (
-    <div className={'relative'}>
-      <div className={'flex items-center'} style={{ height: 24 }}>
+    <div className="relative">
+      <div className="flex items-center" style={{ height: 24 }}>
         <Popover
-          trigger={'click'}
+          trigger="click"
           content={
             <div
-              className={'flex flex-col gap-2 rounded'}
+              className="flex flex-col gap-2 rounded"
               style={{ height: 200 }}
             >
               <Slider vertical value={volume} onChange={onVolumeChange} />
               <Button
-                className={'flex items-center justify-center py-4 px-4'}
+                className="flex items-center justify-center py-4 px-4"
                 onClick={toggleMute}
-                shape={'circle'}
+                shape="circle"
               >
                 {isMuted ? <MutedOutlined /> : <SoundOutlined />}
               </Button>
@@ -231,44 +231,42 @@ function DropdownAudioPlayer({
 
       {isVisible ? (
         <div
-          className={
-            'absolute left-1/2 top-0 border shadow border-gray-light rounded bg-white p-4 flex flex-col gap-4 mb-4'
-          }
+          className="absolute left-1/2 top-0 border shadow border-gray-light rounded bg-white p-4 flex flex-col gap-4 mb-4"
           style={{
             width: 240,
             transform: 'translate(-75%, -110%)',
             zIndex: 101,
           }}
         >
-          <div className={'font-semibold flex items-center gap-2'}>
+          <div className="font-semibold flex items-center gap-2">
             <ControlOutlined />
-            <div>Audio Track Synchronization</div>
+            <div>{t('Audio Track Synchronization')}</div>
           </div>
           <InputNumber
             style={{ width: 180 }}
             value={deltaInputValue}
-            size={'small'}
-            step={'0.250'}
-            name={'audio delta'}
+            size="small"
+            step="0.250"
+            name="audio delta"
             formatter={(value) => `${value}s`}
             parser={(value) => value?.replace('s', '') as unknown as number}
             stringMode
             onChange={handleDelta}
           />
-          <div className={'w-full flex items-center gap-2'}>
-            <Button size={'small'} type={'primary'} onClick={onSync}>
-              Sync
+          <div className="w-full flex items-center gap-2">
+            <Button size="small" type="primary" onClick={onSync}>
+              {t('Sync')}
             </Button>
-            <Button size={'small'} onClick={onCancel}>
-              Cancel
+            <Button size="small" onClick={onCancel}>
+              {t('Cancel')}
             </Button>
             <Button
-              size={'small'}
-              type={'text'}
-              className={'ml-auto'}
+              size="small"
+              type="text"
+              className="ml-auto"
               onClick={onReset}
             >
-              Reset
+              {t('Reset')}
             </Button>
           </div>
         </div>
@@ -286,7 +284,7 @@ function DropdownAudioPlayer({
             style={{ height: 32 }}
           >
             <source src={file.url} type="audio/mpeg" />
-            Your browser does not support the audio element.
+            {t('Your browser does not support the audio element.')}
           </audio>
         ))}
       </div>

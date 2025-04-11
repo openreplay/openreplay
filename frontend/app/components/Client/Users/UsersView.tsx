@@ -1,22 +1,23 @@
 import React, { useEffect } from 'react';
-import UserList from './components/UserList';
 import { PageTitle } from 'UI';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import UserSearch from './components/UserSearch';
+import { useObserver, observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
-import UserForm from './components/UserForm';
-import { observer } from 'mobx-react-lite';
-import AddUserButton from './components/AddUserButton';
 import withPageTitle from 'HOCs/withPageTitle';
+import UserSearch from './components/UserSearch';
+import UserForm from './components/UserForm';
+import AddUserButton from './components/AddUserButton';
+import UserList from './components/UserList';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   isOnboarding?: boolean;
 }
 function UsersView({ isOnboarding = false }: Props) {
+  const { t } = useTranslation();
   const { userStore, roleStore } = useStore();
-  const account = userStore.account;
-  const isEnterprise = userStore.isEnterprise;
+  const { account } = userStore;
+  const { isEnterprise } = userStore;
   const userCount = useObserver(() => userStore.list.length);
   const roles = useObserver(() => roleStore.list);
   const { showModal } = useModal();
@@ -40,7 +41,8 @@ function UsersView({ isOnboarding = false }: Props) {
         <PageTitle
           title={
             <div>
-              Team <span className="color-gray-medium">{userCount}</span>
+              {t('Team')}&nbsp;
+              <span className="color-gray-medium">{userCount}</span>
             </div>
           }
         />
@@ -59,4 +61,6 @@ function UsersView({ isOnboarding = false }: Props) {
   );
 }
 
-export default withPageTitle('Team - OpenReplay Preferences')(observer(UsersView));
+export default withPageTitle('Team - OpenReplay Preferences')(
+  observer(UsersView),
+);

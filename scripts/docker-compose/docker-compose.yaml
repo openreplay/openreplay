@@ -15,7 +15,7 @@ services:
     image: bitnami/redis:${REDIS_VERSION}
     container_name: redis
     volumes:
-      - redisdata:/var/lib/postgresql/data
+      - redisdata:/bitnami/redis/data
     networks:
       - openreplay-net
     environment:
@@ -206,15 +206,6 @@ services:
       - openreplay-net
     env_file:
       - sourcemapreader.env
-    restart: unless-stopped
-
-  videostorage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/videostorage:${COMMON_VERSION}
-    container_name: videostorage
-    networks:
-      - openreplay-net
-    env_file:
-      - videostorage.env
     restart: unless-stopped
 
   http-openreplay:

@@ -31,17 +31,20 @@ export default class RecordingsService {
   private client: APIClient;
 
   constructor(client?: APIClient) {
-    this.client = client ? client : new APIClient();
+    this.client = client || new APIClient();
   }
 
   initClient(client?: APIClient) {
     this.client = client || new APIClient();
   }
 
-  reserveUrl(siteId: string, recordingData: RecordingData): Promise<{ URL: string; key: string }> {
-    return this.client.put(`/${siteId}/assist/save`, recordingData).then((r) => {
-        return r.json().then((j) => j.data);
-    });
+  reserveUrl(
+    siteId: string,
+    recordingData: RecordingData,
+  ): Promise<{ URL: string; key: string }> {
+    return this.client
+      .put(`/${siteId}/assist/save`, recordingData)
+      .then((r) => r.json().then((j) => j.data));
   }
 
   saveFile(url: string, file: Blob) {
@@ -49,38 +52,40 @@ export default class RecordingsService {
       method: 'PUT',
       headers: { 'Content-Type': 'video/webm' },
       body: file,
-    }).then(() => {
-        return true;
-    });
+    }).then(() => true);
   }
 
-  confirmFile(siteId: string, recordingData: RecordingData, key: string): Promise<any> {
-    return this.client.put(`/${siteId}/assist/save/done`, { ...recordingData, key }).then((r) => {
-        return r.json().then((j) => j.data);
-    });
+  confirmFile(
+    siteId: string,
+    recordingData: RecordingData,
+    key: string,
+  ): Promise<any> {
+    return this.client
+      .put(`/${siteId}/assist/save/done`, { ...recordingData, key })
+      .then((r) => r.json().then((j) => j.data));
   }
 
   fetchRecordings(filters: FetchFilter): Promise<any> {
-    return this.client.post(`/assist/records`, filters).then((r) => {
-        return r.json().then((j) => j.data);
-    });
+    return this.client
+      .post('/assist/records', filters)
+      .then((r) => r.json().then((j) => j.data));
   }
 
   fetchRecording(id: number | string): Promise<IRecord> {
-    return this.client.get(`/assist/records/${id}`).then((r) => {
-        return r.json().then((j) => j.data);
-    });
+    return this.client
+      .get(`/assist/records/${id}`)
+      .then((r) => r.json().then((j) => j.data));
   }
 
   updateRecordingName(id: number, name: string): Promise<IRecord> {
-    return this.client.post(`/assist/records/${id}`, { name }).then((r) => {
-        return r.json().then((j) => j.data);
-    });
+    return this.client
+      .post(`/assist/records/${id}`, { name })
+      .then((r) => r.json().then((j) => j.data));
   }
 
   deleteRecording(id: number): Promise<any> {
-    return this.client.delete(`/assist/records/${id}`).then((r) => {
-        return r.json().then((j) => j.data);
-    });
+    return this.client
+      .delete(`/assist/records/${id}`)
+      .then((r) => r.json().then((j) => j.data));
   }
 }

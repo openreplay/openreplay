@@ -1,1 +1,1 @@
-export { default } from './FunnelGraphSmall'
+export { default } from './FunnelGraphSmall';

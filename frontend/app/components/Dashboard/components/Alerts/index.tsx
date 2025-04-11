@@ -1,1 +1,1 @@
-export { default } from './AlertsView'
+export { default } from './AlertsView';

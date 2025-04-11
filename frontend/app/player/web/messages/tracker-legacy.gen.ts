@@ -1,6 +1,6 @@
 // Auto-generated, do not edit
 
-import { MType } from './raw.gen'
+import { MType } from './raw.gen';
 
 export const TP_MAP = {
   0: MType.Timestamp,
@@ -22,9 +22,8 @@ export const TP_MAP = {
   20: MType.MouseMove,
   21: MType.NetworkRequestDeprecated,
   22: MType.ConsoleLog,
-  37: MType.CssInsertRule,
-  38: MType.CssDeleteRule,
-  39: MType.Fetch,
+  34: MType.StringDictGlobal,
+  35: MType.SetNodeAttributeDictGlobal,
   40: MType.Profiler,
   41: MType.OTable,
   44: MType.ReduxDeprecated,
@@ -42,10 +41,8 @@ export const TP_MAP = {
   55: MType.SetPageVisibility,
   57: MType.LoadFontFace,
   58: MType.SetNodeFocus,
-  59: MType.LongTask,
   60: MType.SetNodeAttributeURLBased,
   61: MType.SetCssDataURLBased,
-  67: MType.CssInsertRuleURLBased,
   68: MType.MouseClick,
   69: MType.MouseClickDeprecated,
   70: MType.CreateIFrameDocument,
@@ -79,4 +76,4 @@ export const TP_MAP = {
   105: MType.MobileNetworkCall,
   106: MType.MobileSwipeEvent,
   111: MType.MobileIssueEvent,
-} as const
+} as const;

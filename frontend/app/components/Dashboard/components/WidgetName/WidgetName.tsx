@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input, Tooltip } from 'antd';
 import cn from 'classnames';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   name: string;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 function WidgetName(props: Props) {
+  const { t } = useTranslation();
   const { canEdit = true } = props;
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(props.name);
@@ -22,7 +24,9 @@ function WidgetName(props: Props) {
   const onBlur = (nameInput?: string) => {
     setEditing(false);
     const toUpdate = nameInput || name;
-    props.onUpdate(toUpdate && toUpdate.trim() === '' ? 'New Widget' : toUpdate);
+    props.onUpdate(
+      toUpdate && toUpdate.trim() === '' ? 'New Widget' : toUpdate,
+    );
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -55,17 +59,17 @@ function WidgetName(props: Props) {
           onBlur={() => onBlur()}
           onKeyDown={onKeyDown}
           onFocus={() => setEditing(true)}
-          maxLength={80}
+          maxLength={40}
           className="bg-white text-2xl ps-2 rounded-lg h-8"
         />
       ) : (
         // @ts-ignore
-        <Tooltip  mouseEnterDelay={1} title="Click to edit" disabled={!canEdit}>
+        <Tooltip mouseEnterDelay={1} title={t('Click to edit')} disabled={!canEdit}>
           <div
             onClick={() => setEditing(true)}
             className={cn(
-              "text-2xl h-8 flex items-center p-2 rounded-lg",
-              canEdit && 'cursor-pointer select-none ps-2 hover:bg-teal/10'
+              'text-2xl h-8 flex items-center p-2 rounded-lg',
+              canEdit && 'cursor-pointer select-none ps-2 hover:bg-teal/10',
             )}
           >
             {name}

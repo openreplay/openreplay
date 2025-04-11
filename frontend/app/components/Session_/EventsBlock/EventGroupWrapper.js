@@ -1,14 +1,15 @@
 import { TYPES } from 'Types/session/event';
 import React from 'react';
-import { observer } from 'mobx-react-lite'
+import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import UxtEvent from 'Components/Session_/EventsBlock/UxtEvent';
 import { Icon, TextEllipsis } from 'UI';
 
+import cn from 'classnames';
 import Event from './Event';
 import NoteEvent from './NoteEvent';
 import stl from './eventGroupWrapper.module.css';
-import cn from 'classnames'
+import { useTranslation } from 'react-i18next';
 
 function EventGroupWrapper(props) {
   const { userStore } = useStore();
@@ -32,6 +33,7 @@ function EventGroupWrapper(props) {
     isTabChange,
     filterOutNote,
   } = props;
+  const { t } = useTranslation();
   const isLocation = event.type === TYPES.LOCATION;
   const isUxtEvent = event.type === TYPES.UXT_EVENT;
 
@@ -66,7 +68,7 @@ function EventGroupWrapper(props) {
           isCurrent={isCurrent}
           presentInSearch={presentInSearch}
           isLastInGroup={isLastInGroup}
-          whiteBg={true}
+          whiteBg
         />
       );
     }
@@ -100,8 +102,8 @@ function EventGroupWrapper(props) {
   const shadowColor = props.isPrev
     ? '#A7BFFF'
     : props.isCurrent
-    ? '#394EFF'
-    : 'transparent';
+      ? '#394EFF'
+      : 'transparent';
   return (
     <>
       <div>
@@ -134,7 +136,8 @@ function EventGroupWrapper(props) {
         {isFirst && isLocation && event.referrer && (
           <TextEllipsis>
             <div className={stl.referrer}>
-              Referrer: <span className={cn(stl.url, '!font-normal')}>{safeRef}</span>
+              {t('Referrer:')}{' '}
+              <span className={cn(stl.url, '!font-normal')}>{safeRef}</span>
             </div>
           </TextEllipsis>
         )}
@@ -154,20 +157,14 @@ function TabChange({ from, to, activeUrl, onClick }) {
   return (
     <div
       onClick={onClick}
-      className={
-        'cursor-pointer bg-gray-lightest w-full py-2 border-b hover:bg-active-blue'
-      }
+      className="cursor-pointer bg-gray-lightest w-full py-2 border-b hover:bg-active-blue"
     >
-      <div className={'flex items-center gap-2 px-4'}>
+      <div className="flex items-center gap-2 px-4">
         <span style={{ fontWeight: 500 }}>{from}</span>
-        <Icon name={'arrow-right-short'} size={18} color={'gray-dark'} />
+        <Icon name="arrow-right-short" size={18} color="gray-dark" />
         <span style={{ fontWeight: 500 }}>{to}</span>
       </div>
-      <div
-        className={
-          'break-words mt-1 px-4 text-sm font-normal color-gray-medium whitespace-nowrap'
-        }
-      >
+      <div className="break-words mt-1 px-4 text-sm font-normal color-gray-medium whitespace-nowrap">
         {activeUrl}
       </div>
     </div>

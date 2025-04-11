@@ -8,7 +8,7 @@ Please use [bun](https://bun.sh/) to install and build this library. Any submitt
 
 ## Documentation
 
-For launch options and available public methods, [refer to the documentation](https://docs.openreplay.com/installation/javascript-sdk#options)
+For launch options and available public methods, [refer to the documentation](https://docs.openreplay.com/en/sdk/methods)
 
 ## Installation
 

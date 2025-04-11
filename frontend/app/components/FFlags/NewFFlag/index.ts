@@ -1,1 +1,1 @@
-export { default } from './NewFFlag'
+export { default } from './NewFFlag';

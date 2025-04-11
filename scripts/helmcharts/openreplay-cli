@@ -376,7 +376,7 @@ function version_specific_checks() {
         log info "Checking clickhouse"
         if [ -z "$(kubectl get pods -n db -l app.kubernetes.io/name=clickhouse --no-headers 2>/dev/null)" ]; then
             log info "Installing clickhouse"
-            kubectl apply -f https://github.com/openreplay/openreplay/raw/refs/heads/master/scripts/helmcharts/manifests/clickhouse-db.yaml -n db
+            kubectl apply -f https://github.com/openreplay/openreplay/raw/refs/heads/main/scripts/helmcharts/manifests/clickhouse-db.yaml -n db
         fi
     fi
     return

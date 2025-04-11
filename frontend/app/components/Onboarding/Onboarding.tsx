@@ -1,16 +1,14 @@
 import React from 'react';
 import { Redirect, Route, RouteComponentProps, Switch } from 'react-router';
 import { withRouter } from 'react-router-dom';
-
-import { OB_TABS, onboarding as onboardingRoute } from 'App/routes';
-import { withSiteId } from 'App/routes';
-import { Icon } from 'UI';
-
+import { OB_TABS, onboarding as onboardingRoute, withSiteId } from 'App/routes';
 import IdentifyUsersTab from './components/IdentifyUsersTab';
 import InstallOpenReplayTab from './components/InstallOpenReplayTab';
 import IntegrationsTab from './components/IntegrationsTab';
 import ManageUsersTab from './components/ManageUsersTab';
 import SideMenu from './components/SideMenu';
+import { useTranslation } from 'react-i18next';
+import { Smartphone, AppWindow } from 'lucide-react';
 
 interface Props {
   match: {
@@ -27,20 +25,23 @@ const platformMap = {
   web: 'web',
 };
 
-const Onboarding = (props: Props) => {
+function Onboarding(props: Props) {
+  const { t } = useTranslation();
   const platforms = [
     {
       label: (
-        <div className={'font-semibold flex gap-2 items-center'}>
-          <Icon name="browser/browser" size={16} /> Web
+        <div className="font-semibold flex gap-2 items-center">
+          <AppWindow size={16} />
+          &nbsp;{t('Web')}
         </div>
       ),
       value: 'web',
     } as const,
     {
       label: (
-        <div className={'font-semibold flex gap-2 items-center'}>
-          <Icon name="mobile" size={16} /> Mobile
+        <div className="font-semibold flex gap-2 items-center">
+          <Smartphone size={16} />
+          &nbsp;{t('Mobile')}
         </div>
       ),
       value: 'mobile',
@@ -53,9 +54,7 @@ const Onboarding = (props: Props) => {
     },
   } = props;
 
-  const route = (path: string) => {
-    return withSiteId(onboardingRoute(path));
-  };
+  const route = (path: string) => withSiteId(onboardingRoute(path));
 
   const onMenuItemClick = (tab: string) => {
     props.history.push(withSiteId(onboardingRoute(tab), siteId));
@@ -109,6 +108,6 @@ const Onboarding = (props: Props) => {
       </div> */}
     </div>
   );
-};
+}
 
 export default withRouter(Onboarding);

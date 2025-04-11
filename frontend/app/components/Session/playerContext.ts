@@ -28,7 +28,11 @@ type MobileContextType = IOSPlayerContext;
 
 export const defaultContextValue = { player: undefined, store: undefined };
 
-const ContextProvider = createContext<Partial<WebContextType | MobileContextType>>(defaultContextValue);
+const ContextProvider =
+  createContext<Partial<WebContextType | MobileContextType>>(
+    defaultContextValue,
+  );
 
 export const PlayerContext = ContextProvider as Context<WebContextType>;
-export const MobilePlayerContext = ContextProvider as Context<MobileContextType>;
+export const MobilePlayerContext =
+  ContextProvider as Context<MobileContextType>;

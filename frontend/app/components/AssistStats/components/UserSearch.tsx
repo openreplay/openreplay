@@ -4,8 +4,10 @@ import type { SelectProps } from 'antd/es/select';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
-const UserSearch = ({ onUserSelect }: { onUserSelect: (id: any) => void }) => {
-  const [selectedValue, setSelectedValue] = useState<string | undefined>(undefined);
+function UserSearch({ onUserSelect }: { onUserSelect: (id: any) => void }) {
+  const [selectedValue, setSelectedValue] = useState<string | undefined>(
+    undefined,
+  );
   const { userStore } = useStore();
   const allUsers = userStore.list.map((user) => ({
     value: user.userId,
@@ -20,7 +22,7 @@ const UserSearch = ({ onUserSelect }: { onUserSelect: (id: any) => void }) => {
           r.map((user: any) => ({
             value: user.userId,
             label: user.name,
-          }))
+          })),
         );
       });
     }
@@ -28,12 +30,16 @@ const UserSearch = ({ onUserSelect }: { onUserSelect: (id: any) => void }) => {
 
   const handleSearch = (value: string) => {
     setOptions(
-      value ? allUsers.filter((u) => u.label.toLowerCase().includes(value.toLocaleLowerCase())) : []
+      value
+        ? allUsers.filter((u) =>
+            u.label.toLowerCase().includes(value.toLocaleLowerCase()),
+          )
+        : [],
     );
   };
 
   const onSelect = (value?: string) => {
-    onUserSelect(value)
+    onUserSelect(value);
     setSelectedValue(allUsers.find((u) => u.value === value)?.label || '');
   };
 
@@ -46,8 +52,8 @@ const UserSearch = ({ onUserSelect }: { onUserSelect: (id: any) => void }) => {
       onSearch={handleSearch}
       value={selectedValue}
       onChange={(e) => {
-        setSelectedValue(e)
-        if (!e) onUserSelect(undefined)
+        setSelectedValue(e);
+        if (!e) onUserSelect(undefined);
       }}
       onClear={() => onSelect(undefined)}
       onDeselect={() => onSelect(undefined)}
@@ -56,12 +62,12 @@ const UserSearch = ({ onUserSelect }: { onUserSelect: (id: any) => void }) => {
       <Input.Search
         allowClear
         placeholder="Filter by team member name"
-        size={'small'}
+        size="small"
         classNames={{ input: '!border-0 focus:!border-0' }}
         style={{ width: 200 }}
       />
     </AutoComplete>
   );
-};
+}
 
 export default observer(UserSearch);

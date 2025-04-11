@@ -27,6 +27,7 @@ type cacher struct {
 	objStorage     objectstorage.ObjectStorage // AWS Docs: "These clients are safe to use concurrently."
 	httpClient     *http.Client                // Docs: "Clients are safe for concurrent use by multiple goroutines."
 	rewriter       *assets.Rewriter            // Read only
+	metrics        metrics.Assets
 	Errors         chan error
 	sizeLimit      int
 	requestHeaders map[string]string
@@ -37,7 +38,7 @@ func (c *cacher) CanCache() bool {
 	return c.workers.CanAddTask()
 }
 
-func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage) (*cacher, error) {
+func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage, metrics metrics.Assets) (*cacher, error) {
 	switch {
 	case cfg == nil:
 		return nil, errors.New("config is nil")
@@ -93,6 +94,7 @@ func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage) (*cacher, 
 		Errors:         make(chan error),
 		sizeLimit:      cfg.AssetsSizeLimit,
 		requestHeaders: cfg.AssetsRequestHeaders,
+		metrics:        metrics,
 	}
 	c.workers = NewPool(64, c.CacheFile)
 	return c, nil
@@ -115,7 +117,7 @@ func (c *cacher) cacheURL(t *Task) {
 		c.Errors <- errors.Wrap(err, t.urlContext)
 		return
 	}
-	metrics.RecordDownloadDuration(float64(time.Now().Sub(start).Milliseconds()), res.StatusCode)
+	c.metrics.RecordDownloadDuration(float64(time.Now().Sub(start).Milliseconds()), res.StatusCode)
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		printErr := true
@@ -162,12 +164,12 @@ func (c *cacher) cacheURL(t *Task) {
 	start = time.Now()
 	err = c.objStorage.Upload(strings.NewReader(strData), t.cachePath, contentType, contentEncoding, objectstorage.NoCompression)
 	if err != nil {
-		metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
+		c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
 		c.Errors <- errors.Wrap(err, t.urlContext)
 		return
 	}
-	metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), false)
-	metrics.IncreaseSavedSessions()
+	c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), false)
+	c.metrics.IncreaseSavedSessions()
 
 	if isCSS {
 		if t.depth > 0 {

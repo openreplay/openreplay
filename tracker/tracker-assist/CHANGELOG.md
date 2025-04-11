@@ -1,3 +1,32 @@
+## 11.0.6
+
+- fix for canvas assist
+
+## 11.0.5
+
+- fix ice candidates usage
+
+## 11.0.4
+
+- pass stun/turn credentials (if present) from ui
+
+## 11.0.3
+
+- fix for remote-control clicks on svg elements (+ bubbling)
+
+## 11.0.2
+
+- add sessionId header on socket.connect for sticky sessions
+
+## 11.0.1
+
+- fixed rare issue causing videocam feed to be black during calls
+- new call widget url to prepare for multi-user calls
+
+## 11.0.0
+
+- migrate to native webrtc, remove peerjs
+
 ## 10.0.0
 
 - memory handling improvements to prevent possible leaks on sessions with multiple canvas nodes
@@ -68,7 +97,7 @@
 
 ## 5.0.0
 
-- fix recording state import 
+- fix recording state import
 
 ## 4.1.5
 

@@ -4,150 +4,179 @@ import { TYPES } from 'Types/filter/event';
 export { default } from './filter';
 export * from './filter';
 
-
 const filterKeys = ['is', 'isNot'];
 const stringFilterKeys = ['is', 'isNot', 'contains', 'startsWith', 'endsWith'];
 const targetFilterKeys = ['on', 'notOn'];
 const signUpStatusFilterKeys = ['isSignedUp', 'notSignedUp'];
-const rangeFilterKeys = ['before', 'after', 'on', 'inRange', 'notInRange', 'withInLast', 'notWithInLast'];
+const rangeFilterKeys = [
+  'before',
+  'after',
+  'on',
+  'inRange',
+  'notInRange',
+  'withInLast',
+  'notWithInLast',
+];
 
 const options = [
   {
     key: 'is',
     text: 'is',
-    value: 'is'
-  }, {
+    value: 'is',
+  },
+  {
     key: 'isNot',
     text: 'is not',
-    value: 'isNot'
-  }, {
+    value: 'isNot',
+  },
+  {
     key: 'startsWith',
     text: 'starts with',
-    value: 'startsWith'
-  }, {
+    value: 'startsWith',
+  },
+  {
     key: 'endsWith',
     text: 'ends with',
-    value: 'endsWith'
-  }, {
+    value: 'endsWith',
+  },
+  {
     key: 'contains',
     text: 'contains',
-    value: 'contains'
-  }, {
+    value: 'contains',
+  },
+  {
     key: 'doesNotContain',
     text: 'does not contain',
-    value: 'doesNotContain'
-  }, {
+    value: 'doesNotContain',
+  },
+  {
     key: 'hasAnyValue',
     text: 'has any value',
-    value: 'hasAnyValue'
-  }, {
+    value: 'hasAnyValue',
+  },
+  {
     key: 'hasNoValue',
     text: 'has no value',
-    value: 'hasNoValue'
-  }, 
-  
+    value: 'hasNoValue',
+  },
 
   {
     key: 'isSignedUp',
     text: 'is signed up',
-    value: 'isSignedUp'
-  }, {
+    value: 'isSignedUp',
+  },
+  {
     key: 'notSignedUp',
     text: 'not signed up',
-    value: 'notSignedUp'
+    value: 'notSignedUp',
   },
-  
-  
+
   {
     key: 'before',
     text: 'before',
-    value: 'before'
-  }, {
+    value: 'before',
+  },
+  {
     key: 'after',
     text: 'after',
-    value: 'after'
-  }, {
+    value: 'after',
+  },
+  {
     key: 'on',
     text: 'on',
-    value: 'on'
-  }, {
+    value: 'on',
+  },
+  {
     key: 'notOn',
     text: 'not on',
-    value: 'notOn'
-  }, {
+    value: 'notOn',
+  },
+  {
     key: 'inRage',
     text: 'in rage',
-    value: 'inRage'
-  }, {
+    value: 'inRage',
+  },
+  {
     key: 'notInRage',
     text: 'not in rage',
-    value: 'notInRage'
-  }, {
+    value: 'notInRage',
+  },
+  {
     key: 'withinLast',
     text: 'within last',
-    value: 'withinLast'
-  }, {
+    value: 'withinLast',
+  },
+  {
     key: 'notWithinLast',
     text: 'not within last',
-    value: 'notWithinLast'
+    value: 'notWithinLast',
   },
 
   {
     key: 'greaterThan',
     text: 'greater than',
-    value: 'greaterThan'
-  }, {
+    value: 'greaterThan',
+  },
+  {
     key: 'lessThan',
     text: 'less than',
-    value: 'lessThan'
-  }, {
+    value: 'lessThan',
+  },
+  {
     key: 'equal',
     text: 'equal',
-    value: 'equal'
-  }, {
+    value: 'equal',
+  },
+  {
     key: 'not equal',
     text: 'not equal',
-    value: 'not equal'
+    value: 'not equal',
   },
-
 
   {
     key: 'onSelector',
     text: 'on selector',
-    value: 'onSelector'
-  }, {
+    value: 'onSelector',
+  },
+  {
     key: 'onText',
     text: 'on text',
-    value: 'onText'
-  }, {
+    value: 'onText',
+  },
+  {
     key: 'onComponent',
     text: 'on component',
-    value: 'onComponent'
+    value: 'onComponent',
   },
-
 
   {
     key: 'onAnything',
     text: 'on anything',
-    value: 'onAnything'
-  }
+    value: 'onAnything',
+  },
 ];
 
-export const filterOptions = options.filter(({key}) => filterKeys.includes(key));
-export const stringFilterOptions = options.filter(({key}) => stringFilterKeys.includes(key));
-export const targetFilterOptions = options.filter(({key}) => targetFilterKeys.includes(key));
+export const filterOptions = options.filter(({ key }) =>
+  filterKeys.includes(key),
+);
+export const stringFilterOptions = options.filter(({ key }) =>
+  stringFilterKeys.includes(key),
+);
+export const targetFilterOptions = options.filter(({ key }) =>
+  targetFilterKeys.includes(key),
+);
 export const booleanOptions = [
   { key: 'true', text: 'true', value: 'true' },
   { key: 'false', text: 'false', value: 'false' },
-]
+];
 
 export const defaultOperator = (filter) => {
   let { type, key } = filter;
   type = type || key;
 
-  switch(type) {
+  switch (type) {
     // on element
-    case (TYPES.CLICK):
+    case TYPES.CLICK:
       return 'on';
 
     // string
@@ -183,12 +212,12 @@ export const defaultOperator = (filter) => {
     default:
       return 'is';
   }
-}
+};
 
 export const operatorOptions = (filter) => {
   let { type, key } = filter;
   type = type || key;
-  
+
   switch (type) {
     // on element
     case TYPES.CLICK:
@@ -215,7 +244,7 @@ export const operatorOptions = (filter) => {
     case TYPES.AVG_CPU_LOAD:
     case TYPES.AVG_MEMORY_USAGE:
       return stringFilterOptions;
-    
+
     case TYPES.INPUT:
     case KEYS.URL:
     case KEYS.USER_BROWSER:
@@ -226,13 +255,13 @@ export const operatorOptions = (filter) => {
     case KEYS.DURATION:
     case KEYS.USER_COUNTRY:
       return filterOptions;
-    
+
     // boolean
     case KEYS.SLOW_SESSION:
       return [{ key: 'true', text: 'true', value: 'true' }];
     case KEYS.MISSING_RESOURCE: // true/false
       return [{ key: 'inImages', text: 'in images', value: 'true' }];
     case KEYS.CLICK_RAGE:
-      return [{ key: 'onAnything', text: 'on anything', value: 'true' }]
+      return [{ key: 'onAnything', text: 'on anything', value: 'true' }];
   }
-}
+};

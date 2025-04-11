@@ -10,6 +10,7 @@
 .fill-gray-medium { fill: #888 }
 .fill-gray-dark { fill: #666 }
 .fill-gray-darkest { fill: #333 }
+.fill-gray-light-blue { fill: #F8F8FA }
 .fill-teal { fill: #394EFF }
 .fill-teal-dark { fill: #2331A8 }
 .fill-teal-light { fill: rgba(57, 78, 255, 0.1) }
@@ -61,6 +62,7 @@
 .hover-fill-gray-medium:hover svg { fill: #888 }
 .hover-fill-gray-dark:hover svg { fill: #666 }
 .hover-fill-gray-darkest:hover svg { fill: #333 }
+.hover-fill-gray-light-blue:hover svg { fill: #F8F8FA }
 .hover-fill-teal:hover svg { fill: #394EFF }
 .hover-fill-teal-dark:hover svg { fill: #2331A8 }
 .hover-fill-teal-light:hover svg { fill: rgba(57, 78, 255, 0.1) }
@@ -114,6 +116,7 @@
 .color-gray-medium { color: #888 }
 .color-gray-dark { color: #666 }
 .color-gray-darkest { color: #333 }
+.color-gray-light-blue { color: #F8F8FA }
 .color-teal { color: #394EFF }
 .color-teal-dark { color: #2331A8 }
 .color-teal-light { color: rgba(57, 78, 255, 0.1) }
@@ -167,6 +170,7 @@
 .hover-gray-medium:hover { color: #888 }
 .hover-gray-dark:hover { color: #666 }
 .hover-gray-darkest:hover { color: #333 }
+.hover-gray-light-blue:hover { color: #F8F8FA }
 .hover-teal:hover { color: #394EFF }
 .hover-teal-dark:hover { color: #2331A8 }
 .hover-teal-light:hover { color: rgba(57, 78, 255, 0.1) }
@@ -219,6 +223,7 @@
 .border-gray-medium { border-color: #888 }
 .border-gray-dark { border-color: #666 }
 .border-gray-darkest { border-color: #333 }
+.border-gray-light-blue { border-color: #F8F8FA }
 .border-teal { border-color: #394EFF }
 .border-teal-dark { border-color: #2331A8 }
 .border-teal-light { border-color: rgba(57, 78, 255, 0.1) }

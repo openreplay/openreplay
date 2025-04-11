@@ -8,10 +8,9 @@ interface IProps {
 }
 
 export const ProgressCircle = memo(({ preview, isGreen }: IProps) => (
-    <div
-      className={cn(styles.positionTracker, { [styles.greenTracker]: isGreen })}
-      id={'click-ignore'}
-      role={preview ? 'BoxPreview' : 'Box'}
-    />
-  )
-)
+  <div
+    className={cn(styles.positionTracker, { [styles.greenTracker]: isGreen })}
+    id="click-ignore"
+    role={preview ? 'BoxPreview' : 'Box'}
+  />
+));

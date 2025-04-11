@@ -18,8 +18,11 @@ interface CustomRecord {
 
 class CustomField implements CustomRecord {
   index: string = '';
+
   key: string = '';
+
   label: string = '';
+
   type: string = STRING;
 
   constructor(props: Partial<CustomRecord> = {}) {
@@ -47,7 +50,7 @@ class CustomField implements CustomRecord {
       index: this.index,
       key: this.key,
       label: this.label,
-      type: this.type
+      type: this.type,
     };
   }
 }

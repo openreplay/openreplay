@@ -1,12 +1,11 @@
-
 /* Auto-generated, do not edit */
 import React from 'react';
 
 interface Props {
-    size?: number | string;
-    width?: number | string;
-    height?: number | string;
-    fill?: string;
+  size?: number | string;
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
 }
 
 function Color_issues_slow_page_load(props: Props) {

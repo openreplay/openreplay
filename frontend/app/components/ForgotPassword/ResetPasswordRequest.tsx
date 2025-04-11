@@ -1,22 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Loader, Icon } from 'UI';
-import ReCAPTCHA from 'react-google-recaptcha';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { Form, Input, Button, Typography } from 'antd';
-import {SquareArrowOutUpRight} from 'lucide-react';
+import { SquareArrowOutUpRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import withCaptcha, { WithCaptchaProps } from 'App/withRecaptcha';
 
-function ResetPasswordRequest() {
+interface Props {
+}
+
+function ResetPasswordRequest(props: Props & WithCaptchaProps) {
+  const { t } = useTranslation();
   const { userStore } = useStore();
-  const loading = userStore.loading;
-  const requestResetPassword = userStore.requestResetPassword;
-  const recaptchaRef = React.createRef();
-  const [requested, setRequested] = React.useState(false);
-  const [email, setEmail] = React.useState('');
-  const [error, setError] = React.useState(null);
-  const CAPTCHA_ENABLED = window.env.CAPTCHA_ENABLED === 'true';
-  const CAPTCHA_SITE_KEY = window.env.CAPTCHA_SITE_KEY;
-  const [smtpError, setSmtpError] = React.useState<boolean>(false);
+  const { loading } = userStore;
+  const { requestResetPassword } = userStore;
+  const [requested, setRequested] = useState(false);
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState(null);
+  const [smtpError, setSmtpError] = useState<boolean>(false);
+
+  const { submitWithCaptcha, isVerifyingCaptcha, resetCaptcha } = props;
 
   const write = (e: any) => {
     const { name, value } = e.target;
@@ -24,17 +28,21 @@ function ResetPasswordRequest() {
   };
 
   const onSubmit = () => {
-    // e.preventDefault();
-    if (CAPTCHA_ENABLED && recaptchaRef.current) {
-      recaptchaRef.current.execute();
-    } else if (!CAPTCHA_ENABLED) {
-      handleSubmit();
+    // Validation check
+    if (!email || email.trim() === '') {
+      return;
     }
+
+    submitWithCaptcha({ email: email.trim() })
+      .then((data) => {
+        handleSubmit(data['g-recaptcha-response']);
+      })
+      .catch((error: any) => {
+        console.error('Captcha verification failed:', error);
+      });
   };
 
-  const handleSubmit = (token?: any) => {
-    if (CAPTCHA_ENABLED && recaptchaRef.current && (token === null || token === undefined)) return;
-
+  const handleSubmit = (token?: string) => {
     setError(null);
     requestResetPassword({ email: email.trim(), 'g-recaptcha-response': token })
       .catch((err: any) => {
@@ -43,33 +51,30 @@ function ResetPasswordRequest() {
         }
 
         setError(err.message);
-      }).finally(() => {
-      setRequested(true);
-    });
+        // Reset captcha for the next attempt
+        resetCaptcha();
+      })
+      .finally(() => {
+        setRequested(true);
+      });
   };
+
   return (
-    <Form onFinish={onSubmit} style={{ minWidth: '50%' }} className="flex flex-col">
-      <Loader loading={false}>
-        {CAPTCHA_ENABLED && (
-          <div className="flex justify-center">
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              size="invisible"
-              data-hidden={requested}
-              sitekey={CAPTCHA_SITE_KEY}
-              onChange={(token: any) => handleSubmit(token)}
-            />
-          </div>
-        )}
+    <Form
+      onFinish={onSubmit}
+      style={{ minWidth: '50%' }}
+      className="flex flex-col"
+    >
+      <Loader loading={loading || isVerifyingCaptcha}>
         {!requested && (
           <>
             <Form.Item>
-              <label>{'Email Address'}</label>
+              <label>{t('Email Address')}</label>
               <Input
-                autoFocus={true}
+                autoFocus
                 autoComplete="email"
                 type="email"
-                placeholder="Email"
+                placeholder={t('Email')}
                 name="email"
                 onChange={write}
                 className="w-full"
@@ -77,8 +82,17 @@ function ResetPasswordRequest() {
                 required
               />
             </Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} disabled={loading}>
-              Email Password Reset Link
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading || isVerifyingCaptcha}
+              disabled={loading || isVerifyingCaptcha}
+            >
+              {isVerifyingCaptcha
+                ? t('Verifying...')
+                : loading
+                  ? t('Processing...')
+                  : t('Email Password Reset Link')}
             </Button>
           </>
         )}
@@ -89,8 +103,10 @@ function ResetPasswordRequest() {
               <Icon name="envelope-check" size={30} color="tealx" />
             </div>
             <div>
-              Alright! a reset link was emailed to <span className="font-medium">{email}</span>.
-              Click on it to reset your account password.
+              {t('Alright! a reset link was emailed to')}{' '}
+              <span className="font-medium">{email}</span>.{' '}
+              {t('Click on it to reset')}
+              {t('your account password.')}
             </div>
           </div>
         )}
@@ -101,10 +117,25 @@ function ResetPasswordRequest() {
               <Icon name="envelope-x" size="30" color="red" />
             </div>
             {smtpError ? (
-              <Typography.Text>Email delivery failed due to invalid SMTP configuration. Please contact your admin. <a
-                href="https://docs.openreplay.com/en/configuration/configure-smtp/" className="!text-neutral-900 hover:!underline flex items-center justify-center gap-1 mt-2"
-                target="_blank">Learn More <SquareArrowOutUpRight size={12} strokeWidth={1.5} className='inline' /></a></Typography.Text>
-            ) : <Typography.Text>{error}</Typography.Text>}
+              <Typography.Text>
+                {t('Email delivery failed due to invalid SMTP configuration. Please contact your admin.')}
+                <a
+                  href="https://docs.openreplay.com/en/configuration/configure-smtp/"
+                  className="!text-neutral-900 hover:!underline flex items-center justify-center gap-1 mt-2"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t('Learn More')}
+                  <SquareArrowOutUpRight
+                    size={12}
+                    strokeWidth={1.5}
+                    className="inline"
+                  />
+                </a>
+              </Typography.Text>
+            ) : (
+              <Typography.Text>{error}</Typography.Text>
+            )}
           </div>
         )}
       </Loader>
@@ -112,4 +143,4 @@ function ResetPasswordRequest() {
   );
 }
 
-export default observer(ResetPasswordRequest);
+export default withCaptcha(observer(ResetPasswordRequest));

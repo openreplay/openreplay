@@ -65,7 +65,7 @@ export const setQueryParamKeyFromFilterkey = (filterKey: string) => {
     case FilterKey.FEATURE_FLAG:
       return 'feature_flag';
     case FilterKey.TAGGED_ELEMENT:
-      return 'tnw'
+      return 'tnw';
   }
 };
 
@@ -152,7 +152,7 @@ export const getFilterKeyTypeByKey = (key: string) => {
     case FilterKey.FEATURE_FLAG:
       return 'feature_flag';
     case 'tnw':
-      return FilterKey.TAGGED_ELEMENT
+      return FilterKey.TAGGED_ELEMENT;
   }
 };
 
@@ -165,7 +165,7 @@ export enum IssueType {
   MEMORY = 'memory',
   CPU = 'cpu',
   SLOW_RESOURCE = 'slow_resource',
-  SLOW_PAGE_LOAD = 'slow_pageLoad',
+  SLOW_PAGE_LOAD = 'slow_page_load',
   CRASH = 'crash',
   CUSTOM = 'custom',
   JS_EXCEPTION = 'js_exception',
@@ -177,7 +177,7 @@ export enum IssueCategory {
   RESOURCES = 'resources',
   NETWORK = 'network',
   RAGE = 'rage',
-  ERRORS = 'errors'
+  ERRORS = 'errors',
 }
 
 export enum FilterType {

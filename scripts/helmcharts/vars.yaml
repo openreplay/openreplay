@@ -124,6 +124,7 @@ global:
   assistJWTSecret: "{{ randAlphaNum 20}}"
   jwtSecret: "{{ randAlphaNum 20}}"
   jwtSpotSecret: "{{ randAlphaNum 20}}"
+  tokenSecret: "{{randAlphaNum 20}}"
   # In case of multiple nodes in the kubernetes cluster,
   # we'll have to create an RWX PVC for shared components.
   # If it's a single node, we'll use hostVolume, which is the default for the community/oss edition.

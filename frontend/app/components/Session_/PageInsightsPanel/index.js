@@ -1,1 +1,1 @@
-export { default } from './PageInsightsPanel'
+export { default } from './PageInsightsPanel';

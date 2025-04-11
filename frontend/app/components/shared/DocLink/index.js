@@ -1,1 +1,1 @@
-export { default } from './DocLink'
+export { default } from './DocLink';

@@ -1,7 +1,7 @@
 import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
-import MetricsList from '../MetricsList';
 import { observer } from 'mobx-react-lite';
+import MetricsList from '../MetricsList';
 import MetricViewHeader from '../MetricViewHeader';
 
 interface Props {
@@ -9,10 +9,13 @@ interface Props {
 }
 function MetricsView({ siteId }: Props) {
   return (
-    <div style={{ maxWidth: '1360px', margin: 'auto' }} className="bg-white rounded-lg shadow-sm pt-4 border">
+    <div
+      style={{ maxWidth: '1360px', margin: 'auto' }}
+      className="bg-white rounded-lg shadow-sm pt-4 border"
+    >
       <MetricViewHeader siteId={siteId} />
-      <div className='pt-3'>
-      <MetricsList siteId={siteId} />
+      <div className="pt-3">
+        <MetricsList siteId={siteId} />
       </div>
     </div>
   );

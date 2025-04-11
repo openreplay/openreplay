@@ -8,8 +8,8 @@ import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CompressionPlugin from "compression-webpack-plugin";
 import { EsbuildPlugin } from 'esbuild-loader';
 
-const dotenv = require('dotenv').config({ path: __dirname + '/.env' })
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const dotenv = require('dotenv').config({ path: __dirname + (isDevelopment ? '/.env' : '/.env.production') });
 const stylesHandler = MiniCssExtractPlugin.loader;
 const ENV_VARIABLES = JSON.stringify(dotenv.parsed);
 import pathAlias from './path-alias';
@@ -141,7 +141,11 @@ const config: Configuration = {
         { from: "./app/assets", to: "assets" },
       ],
     }),
-    new MiniCssExtractPlugin({ ignoreOrder: true }),
+    new MiniCssExtractPlugin({
+      filename: '[name]-[contenthash:7].css',
+      chunkFilename: '[id]-[contenthash:7].css',
+      ignoreOrder: true
+    }),
 ],
   devtool: isDevelopment ? "inline-source-map" : false,
   performance: {
