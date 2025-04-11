@@ -44,11 +44,15 @@ rm -rf ./chalicelib/core/sessions/sessions_search.py
 rm -rf ./chalicelib/core/sessions/performance_event.py
 rm -rf ./chalicelib/core/sessions/sessions_viewed/sessions_viewed.py
 rm -rf ./chalicelib/core/sessions/unprocessed_sessions.py
+rm -rf ./chalicelib/core/sessions/__init__.py
+rm -rf ./chalicelib/core/sessions/sessions_legacy_mobil.py
+rm -rf ./chalicelib/core/sessions/sessions_search_exp.py
 rm -rf ./chalicelib/core/metrics/modules
 rm -rf ./chalicelib/core/socket_ios.py
 rm -rf ./chalicelib/core/sourcemaps
 rm -rf ./chalicelib/core/user_testing.py
 rm -rf ./chalicelib/core/tags.py
+rm -rf ./chalicelib/core/product_analytics
 rm -rf ./chalicelib/saml
 rm -rf ./chalicelib/utils/__init__.py
 rm -rf ./chalicelib/utils/args_transformer.py
@@ -109,3 +113,5 @@ rm -rf ./chalicelib/core/errors/errors_pg.py
 rm -rf ./chalicelib/core/errors/errors_ch.py
 rm -rf ./chalicelib/core/errors/errors_details.py
 rm -rf ./chalicelib/utils/contextual_validators.py
+rm -rf ./routers/subs/product_analytics.py
+rm -rf ./schemas/product_analytics.py

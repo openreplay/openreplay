@@ -1,3 +1,22 @@
+## 16.1.1
+
+- fixing debug logs from 16.1.0
+
+## 16.1.0
+
+- new `privateMode` option to hide all possible data from tracking
+- update `networkProxy` to 1.1.0 (auto sanitizer for sensitive parameters in network requests)
+- reduced the frequency of performance tracker calls
+- reduced the number of events when the user is idle
+
+## 16.0.3
+
+- better handling for local svg spritemaps
+
+## 16.0.2
+
+- fix attributeSender key generation to prevent calling native methods on objects
+
 ## 16.0.1
 
 - drop computing ts digits
@@ -36,7 +55,7 @@ tracker.start()
 ## 15.0.5
 
 - update medv/finder to 4.0.2 for better support of css-in-js libs
-- fixes for single tab recording 
+- fixes for single tab recording
 - add option to disable network completely `{ network: { disabled: true } }`
 - fix for batching during offline recording syncs
 

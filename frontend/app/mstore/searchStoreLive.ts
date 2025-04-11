@@ -75,6 +75,8 @@ class SearchStoreLive {
 
   loadingFilterSearch = false;
 
+  loading = false;
+
   constructor() {
     makeAutoObservable(this);
 
@@ -220,6 +222,7 @@ class SearchStoreLive {
   updateFilter = (index: number, search: Partial<IFilter>) => {
     const newFilters = this.instance.filters.map((_filter: any, i: any) => {
       if (i === index) {
+        search.value = checkFilterValue(search.value);
         return search;
       }
       return _filter;
@@ -242,11 +245,25 @@ class SearchStoreLive {
     });
   };
 
-  async fetchSessions() {
-    await sessionStore.fetchLiveSessions({
-      ...this.instance.toSearch(),
-      page: this.currentPage,
-    });
+  setLoading = (val: boolean) => {
+    this.loading = val;
+  }
+
+  fetchSessions = async (force?: boolean) => {
+    if (!force && this.loading) {
+      return;
+    }
+    this.setLoading(true)
+    try {
+      await sessionStore.fetchLiveSessions({
+        ...this.instance.toSearch(),
+        page: this.currentPage,
+      });
+    } catch (e) {
+      console.error('Error fetching sessions:', e);
+    } finally {
+      this.setLoading(false)
+    }
   }
 }
 

@@ -241,3 +241,25 @@ def get_colname_by_key(project_id, key):
         return None
 
     return index_to_colname(meta_keys[key])
+
+
+def get_for_filters(project_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""SELECT {",".join(column_names())}
+                                FROM public.projects
+                                WHERE project_id = %(project_id)s 
+                                    AND deleted_at ISNULL
+                                LIMIT 1;""", {"project_id": project_id})
+        cur.execute(query=query)
+        metas = cur.fetchone()
+        results = []
+        if metas is not None:
+            for i, k in enumerate(metas.keys()):
+                if metas[k] is not None:
+                    results.append({"id": f"meta_{i}",
+                                    "name": k,
+                                    "displayName": metas[k],
+                                    "possibleTypes": ["String"],
+                                    "autoCaptured": False,
+                                    "icon": None})
+        return {"total": len(results), "list": results}

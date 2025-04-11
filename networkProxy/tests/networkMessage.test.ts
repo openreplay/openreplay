@@ -13,7 +13,7 @@ describe('NetworkMessage', () => {
   describe('getMessage', () => {
     it('should properly construct and return a NetworkRequest', () => {
       // @ts-ignore
-      const networkMessage = new NetworkMessage(ignoredHeaders, setSessionTokenHeader, sanitize);
+      const networkMessage = new NetworkMessage(ignoredHeaders, setSessionTokenHeader, (data) => data);
 
       networkMessage.method = 'GET';
       networkMessage.url = 'https://example.com';
@@ -21,25 +21,35 @@ describe('NetworkMessage', () => {
       networkMessage.requestType = 'xhr';
       networkMessage.startTime = 0;
       networkMessage.duration = 500;
-      networkMessage.getData = { key: 'value' };
-
-      // Expect sanitized message
-      sanitize.mockReturnValueOnce({
-        url: 'https://example.com',
-        method: 'GET',
-        status: 200,
-        request: {},
-        response: {},
-      });
+      networkMessage.getData = {
+        test: 'value',
+        test2: 123
+      };
+      networkMessage.response = JSON.stringify({
+        token: '123123',
+        password: 'qwerty123'
+      })
 
       const result = networkMessage.getMessage();
 
       const expected = {
         requestType: 'xhr',
         method: 'GET',
-        url: 'https://example.com',
-        request: JSON.stringify({}),
-        response: JSON.stringify({}),
+        url: 'https://example.com/',
+        request: JSON.stringify({
+          headers: {},
+          body: JSON.stringify({
+            test: 'value',
+            test2: 123
+          }),
+        }),
+        response: JSON.stringify({
+          headers: {},
+          body: JSON.stringify({
+            token: '******',
+            password: '*********',
+          }),
+        }),
         status: 200,
         startTime: result!.startTime,
         duration: 500,
@@ -48,7 +58,6 @@ describe('NetworkMessage', () => {
 
       expect(result).toBeDefined();
       expect(result).toEqual(expected);
-      expect(sanitize).toHaveBeenCalledTimes(1);
     });
   });
 

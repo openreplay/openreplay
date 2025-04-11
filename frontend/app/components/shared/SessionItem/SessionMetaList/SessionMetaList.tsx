@@ -7,6 +7,7 @@ interface Props {
   className?: string;
   metaList: any[];
   maxLength?: number;
+  onMetaClick?: (meta: { name: string, value: string }) => void;
 }
 
 export default function SessionMetaList(props: Props) {
@@ -15,9 +16,9 @@ export default function SessionMetaList(props: Props) {
   return (
     <div className={cn('flex items-center flex-wrap gap-1', className)}>
       {metaList.slice(0, maxLength).map(({ label, value }, index) => (
-        <React.Fragment key={index}>
-          <MetaItem label={label} value={`${value}`} />
-        </React.Fragment>
+          <div key={index} className='cursor-pointer' onClick={() => props.onMetaClick?.({ name: `_${label}`, value })}>
+            <MetaItem label={label} value={`${value}`} />
+          </div>
       ))}
 
       {metaList.length > maxLength && (

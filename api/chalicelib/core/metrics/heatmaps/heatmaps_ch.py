@@ -24,8 +24,9 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
         "main_events.`$event_name` = 'CLICK'",
         "isNotNull(JSON_VALUE(CAST(main_events.`$properties` AS String), '$.normalized_x'))"
     ]
-
-    if data.operator == schemas.SearchEventOperator.IS:
+    if data.operator == schemas.SearchEventOperator.PATTERN:
+        constraints.append("match(main_events.`$properties`.url_path'.:String,%(url)s)")
+    elif data.operator == schemas.SearchEventOperator.IS:
         constraints.append("JSON_VALUE(CAST(main_events.`$properties` AS String), '$.url_path') = %(url)s")
     else:
         constraints.append("JSON_VALUE(CAST(main_events.`$properties` AS String), '$.url_path') ILIKE %(url)s")
@@ -179,7 +180,7 @@ toUnixTimestamp(s.datetime)*1000 AS start_ts,
 s.duration AS duration"""
 
 
-def __get_1_url(location_condition: schemas.SessionSearchEventSchema2 | None, session_id: str, project_id: int,
+def __get_1_url(location_condition: schemas.SessionSearchEventSchema | None, session_id: str, project_id: int,
                 start_time: int,
                 end_time: int) -> str | None:
     full_args = {
@@ -262,13 +263,13 @@ def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_i
                                                               value=[schemas.PlatformType.DESKTOP],
                                                               operator=schemas.SearchEventOperator.IS))
     if not location_condition:
-        data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.LOCATION,
-                                                             value=[],
-                                                             operator=schemas.SearchEventOperator.IS_ANY))
+        data.events.append(schemas.SessionSearchEventSchema(type=schemas.EventType.LOCATION,
+                                                            value=[],
+                                                            operator=schemas.SearchEventOperator.IS_ANY))
     if no_click:
-        data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.CLICK,
-                                                             value=[],
-                                                             operator=schemas.SearchEventOperator.IS_ANY))
+        data.events.append(schemas.SessionSearchEventSchema(type=schemas.EventType.CLICK,
+                                                            value=[],
+                                                            operator=schemas.SearchEventOperator.IS_ANY))
 
     data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.EVENTS_COUNT,
                                                           value=[0],

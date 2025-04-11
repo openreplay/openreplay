@@ -242,18 +242,7 @@ class UserStore {
           resolve(response);
         })
         .catch(async (e) => {
-          const err = await e.response?.json();
-          runInAction(() => {
-            this.saving = false;
-          });
-          const errStr = err.errors[0]
-            ? err.errors[0].includes('already exists')
-              ? this.t(
-                "This email is already linked to an account or team on OpenReplay and can't be used again.",
-              )
-              : err.errors[0]
-            : this.t('Error saving user');
-          toast.error(errStr);
+          toast.error(e.message || this.t("Failed to save user's data.")); 
           reject(e);
         })
         .finally(() => {
@@ -393,15 +382,16 @@ class UserStore {
         this.signUpRequest = { loading: false, errors: [] };
       });
     } catch (error) {
+      const inUse = error.message.includes('already in use');
+      const inUseMsg = this.t('An account with this email already exists. Please log in or use a different email address.')
+      const genericMsg = this.t('Error signing up; please check your data and try again')
       runInAction(() => {
         this.signUpRequest = {
           loading: false,
           errors: error.response?.errors || [],
         };
       });
-      toast.error(
-        this.t('Error signing up; please check your data and try again'),
-      );
+      toast.error(inUse ? inUseMsg : genericMsg);
     } finally {
       runInAction(() => {
         this.signUpRequest.loading = false;

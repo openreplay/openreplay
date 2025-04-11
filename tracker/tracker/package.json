@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "16.0.1",
+  "version": "16.1.2-beta.0",
   "keywords": [
     "logging",
     "replay"
@@ -43,7 +43,7 @@
     "build:common": "tsc -b src/common",
     "compile": "tsc --project src/main/tsconfig.json",
     "create-types": "mkdir dist/lib/ dist/cjs && cp -r dist/types/* dist/lib/ && cp -r dist/types/* dist/cjs/",
-    "build": "yarn run clean && yarn compile && yarn create-types && rollup --config rollup.config.js",
+    "build": "bun run clean && bun compile && bun create-types && rollup --config rollup.config.js",
     "lint-front": "lint-staged",
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",
@@ -76,7 +76,7 @@
   },
   "dependencies": {
     "@medv/finder": "^4.0.2",
-    "@openreplay/network-proxy": "^1.0.5",
+    "@openreplay/network-proxy": "^1.1.0",
     "error-stack-parser": "^2.0.6",
     "error-stack-parser-es": "^0.1.5",
     "fflate": "^0.8.2",
@@ -85,5 +85,5 @@
   "engines": {
     "node": ">=14.0"
   },
-  "packageManager": "yarn@4.6.0"
+  "packageManager": "bun@1.2.7"
 }

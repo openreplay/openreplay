@@ -85,19 +85,30 @@ function EventsBlock(props: IProps) {
         }
       });
     }
-    const eventsWithMobxNotes = [...notesWithEvents, ...notes].sort(sortEvents);
-    return mergeEventLists(
-      filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
-      tabChangeEvents,
-    ).filter((e) =>
-      zoomEnabled
+    const eventsWithMobxNotes = [...notesWithEvents, ...notes]
+      .sort(sortEvents);
+    const filteredTabEvents = query.length
+                              ? tabChangeEvents
+                                .filter((e => (e.activeUrl as string).includes(query)))
+                              : tabChangeEvents;
+    const list = mergeEventLists(
+      query.length > 0 ? filteredEvents : eventsWithMobxNotes,
+      filteredTabEvents
+    )
+    if (zoomEnabled) {
+      return list.filter((e) =>
+        zoomEnabled
         ? 'time' in e
           ? e.time >= zoomStartTs && e.time <= zoomEndTs
           : false
-        : true,
-    );
+        : true
+      );
+    } else {
+      return list
+    }
   }, [
     filteredLength,
+    query,
     notesWithEvtsLength,
     notesLength,
     zoomEnabled,

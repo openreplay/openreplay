@@ -19,7 +19,7 @@ const AUTOREFRESH_INTERVAL = 2 * 60 * 1000;
 const PER_PAGE = 10;
 
 function LiveSessionList() {
-  const { searchStoreLive, sessionStore, customFieldStore } = useStore();
+  const { searchStoreLive, sessionStore, customFieldStore, projectsStore } = useStore();
   const filter = searchStoreLive.instance;
   const list = sessionStore.liveSessions;
   const { totalLiveSessions } = sessionStore;
@@ -47,26 +47,18 @@ function LiveSessionList() {
 
     const _filter = { ...filter };
     let shouldUpdate = false;
-
-    // Set default sort if not already set
     if (sortOptions[1] && !filter.sort) {
       _filter.sort = sortOptions[1].value;
       shouldUpdate = true;
     }
-
-    // Only update filters if there's a change
     if (shouldUpdate) {
       searchStoreLive.edit(_filter);
     }
-
-    // Start auto-refresh timeout
     timeout();
-
-    // Cleanup on component unmount or re-run
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [metaListLoading, filter.sort]); // Add necessary dependencies
+  }, [metaListLoading, filter.sort]);
 
   const refetch = () => {
     void searchStoreLive.fetchSessions();
@@ -98,7 +90,7 @@ function LiveSessionList() {
     <div>
       <div className="bg-white py-3 rounded-lg border shadow-sm">
         <div className="flex mb-4 pb-2 px-3 justify-between items-center border-b border-b-gray-lighter">
-          <LiveSessionReloadButton onClick={refetch} />
+          <LiveSessionReloadButton />
           <div className="flex items-center">
             <div className="flex items-center ml-6">
               <span className="mr-2 color-gray-medium">{t('Sort By')}</span>
@@ -166,7 +158,6 @@ function LiveSessionList() {
                 </Button>
               </div>
             }
-            // image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
             show={!loading && list.length === 0}
           >
             <div>

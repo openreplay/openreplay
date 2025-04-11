@@ -83,6 +83,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
   });
 
   const onChartClick = () => {
+    dashboardStore.setDrillDownPeriod(dashboardStore.period);
     // if (!isWidget || isPredefined) return;
     props.history.push(
       withSiteId(

@@ -66,7 +66,8 @@ function Login({
       if (event.data.type === 'orspot:logged') {
         clearInterval(int);
         window.removeEventListener('message', onSpotMsg);
-        toast.success(t('You have been logged into Spot successfully'));
+        const msg = t('You have been logged into Spot successfully')
+        toast.success(msg);
       }
     };
     window.addEventListener('message', onSpotMsg);

@@ -23,6 +23,9 @@ describe('Console logging module', () => {
       safe: jest.fn((callback) => callback),
       send: jest.fn(),
       attachStartCallback: jest.fn(),
+      sanitizer: {
+        privateMode: false,
+      },
       ticker: {
         attach: jest.fn(),
       },

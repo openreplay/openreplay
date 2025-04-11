@@ -1,73 +1,25 @@
 import { isTokenExpired } from "~/utils/jwt";
+import {
+  startTrackingNetwork,
+  getFinalRequests,
+  stopTrackingNetwork,
+} from "~/utils/networkTracking";
+import { mergeRequests, SpotNetworkRequest } from "~/utils/networkTrackingUtils";
+import { safeApiUrl } from '~/utils/smallUtils'
+import {
+  attachDebuggerToTab,
+  stopDebugger,
+  getRequests as getDebuggerRequests,
+  resetMap,
+} from "~/utils/networkDebuggerTracking";
+import { messages } from '~/utils/messages'
 
 let checkBusy = false;
 
 export default defineBackground(() => {
   const CHECK_INT = 60 * 1000;
   const PING_INT = 30 * 1000;
-  const VER = "1.0.10";
-
-  const messages = {
-    popup: {
-      from: {
-        updateSettings: "ort:settings",
-        start: "popup:start",
-      },
-      to: {
-        micStatus: "popup:mic-status",
-        stopped: "popup:stopped",
-        started: "popup:started",
-        noLogin: "popup:no-login",
-      },
-      stop: "popup:stop",
-      checkStatus: "popup:check-status",
-      loginExist: "popup:login",
-      getAudioPerms: "popup:get-audio-perm",
-    },
-    content: {
-      from: {
-        bumpVitals: "ort:bump-vitals",
-        bumpClicks: "ort:bump-clicks",
-        bumpLocation: "ort:bump-location",
-        discard: "ort:discard",
-        checkLogin: "ort:get-login",
-        checkRecStatus: "ort:check-status",
-        checkMicStatus: "ort:getMicStatus",
-        setLoginToken: "ort:login-token",
-        invalidateToken: "ort:invalidate-token",
-        saveSpotData: "ort:save-spot",
-        saveSpotVidChunk: "ort:save-spot-part",
-        countEnd: "ort:countend",
-        contentReady: "ort:content-ready",
-        checkNewTab: "ort:check-new-tab",
-        started: "ort:started",
-        stopped: "ort:stopped",
-        toStop: "ort:stop",
-        restart: "ort:restart",
-        getErrorEvents: "ort:get-error-events",
-      },
-      to: {
-        setJWT: "content:set-jwt",
-        micStatus: "content:mic-status",
-        unmount: "content:unmount",
-        notification: "notif:display",
-        updateErrorEvents: "content:error-events",
-      },
-    },
-    injected: {
-      from: {
-        bumpLogs: "ort:bump-logs",
-        bumpNetwork: "ort:bump-network",
-      },
-    },
-    offscreen: {
-      to: {
-        checkRecStatus: "offscr:check-status",
-        startRecording: "offscr:start-recording",
-        stopRecording: "offscr:stop-recording",
-      },
-    },
-  };
+  const VER = "1.0.14";
 
   interface SpotObj {
     name: string;
@@ -110,6 +62,7 @@ export default defineBackground(() => {
     openInNewTab: true,
     consoleLogs: true,
     networkLogs: true,
+    useDebugger: false,
     ingestPoint: "https://app.openreplay.com",
   };
   const defaultSpotObj = {
@@ -136,14 +89,21 @@ export default defineBackground(() => {
   let finalVideoBase64 = "";
   let finalReady = false;
   let finalSpotObj: SpotObj = defaultSpotObj;
+  let injectNetworkRequests = [];
   let onStop: (() => void) | null = null;
   let settings = defaultSettings;
-  let recordingState = {
+  type recState = {
+    activeTabId: number | null;
+    area: string | null;
+    recording: string;
+    audioPerm: number;
+  }
+  let recordingState: recState = {
     activeTabId: null,
     area: null,
     recording: REC_STATE.stopped,
     audioPerm: 0,
-  } as Record<string, any>;
+  }
   let jwtToken = "";
   let refreshInt: any;
   let pingInt: any;
@@ -178,17 +138,6 @@ export default defineBackground(() => {
         clearInterval(pingInt);
       }
     }
-  }
-
-  function safeApiUrl(url: string) {
-    let str = url;
-    if (str.endsWith("/")) {
-      str = str.slice(0, -1);
-    }
-    if (str.includes("app.openreplay.com")) {
-      str = str.replace("app.openreplay.com", "api.openreplay.com");
-    }
-    return str;
   }
 
   let slackChannels: { name: string; webhookId: number }[] = [];
@@ -359,6 +308,9 @@ export default defineBackground(() => {
             });
           });
       } else {
+        if (!settings.useDebugger) {
+          startTrackingNetwork();
+        }
         void sendToActiveTab({
           type: "content:mount",
           area: request.area,
@@ -384,12 +336,30 @@ export default defineBackground(() => {
       finalVideoBase64 = "";
       const recArea = request.area;
       finalSpotObj.startTs = Date.now();
+      if (settings.networkLogs) {
+        if (settings.useDebugger) {
+          resetMap();
+          browser.tabs.query({
+            active: true,
+            currentWindow: true,
+          }).then((tabs) => {
+            if (tabs.length === 0) {
+              return console.error("No active tab found");
+            }
+            recordingState.activeTabId = tabs[0].id;
+            void attachDebuggerToTab(recordingState.activeTabId)
+          })
+        } else {
+          startTrackingNetwork();
+        }
+      }
       if (recArea === "tab") {
         function signalTabRecording() {
           recordingState = {
             activeTabId: recordingState.activeTabId,
             area: "tab",
             recording: REC_STATE.recording,
+            audioPerm: recordingState.audioPerm,
           };
           const microphone = request.mic;
           micStatus = microphone ? "on" : "off";
@@ -431,6 +401,7 @@ export default defineBackground(() => {
           activeTabId: null,
           area: "desktop",
           recording: REC_STATE.recording,
+          audioPerm: recordingState.audioPerm
         };
         startRecording(
           recArea,
@@ -518,6 +489,11 @@ export default defineBackground(() => {
           }, PING_INT);
         }
       });
+      if (request.ingest) {
+        const updatedSettings = Object.assign(settings, { ingestPoint: request.ingest });
+        settings = updatedSettings;
+        void browser.storage.local.set({ settings: updatedSettings });
+      }
     }
     if (request.type === messages.content.from.invalidateToken) {
       if (refreshInt) {
@@ -577,7 +553,7 @@ export default defineBackground(() => {
       return "pong";
     }
     if (request.type === messages.injected.from.bumpNetwork) {
-      finalSpotObj.network.push(request.event);
+      injectNetworkRequests.push(request.event);
       return "pong";
     }
     if (request.type === messages.content.from.bumpClicks) {
@@ -618,6 +594,7 @@ export default defineBackground(() => {
         activeTabId: null,
         area: null,
         recording: REC_STATE.stopped,
+        audioPerm: recordingState.audioPerm
       };
     }
     if (request.type === messages.content.from.restart) {
@@ -649,7 +626,7 @@ export default defineBackground(() => {
           title: "JS Error",
           time: (l.time - finalSpotObj.startTs) / 1000,
         }));
-      const network = finalSpotObj.network
+      const network = [...injectNetworkRequests, ...finalSpotObj.network]
         .filter((net) => net.statusCode >= 400 || net.error)
         .map((n) => ({
           title: "Network Error",
@@ -665,8 +642,27 @@ export default defineBackground(() => {
     }
     if (request.type === messages.content.from.toStop) {
       if (recordingState.recording === REC_STATE.stopped) {
-        return console.error('Calling stopped recording?')
+        return console.error("Calling stopped recording?");
       }
+      let networkRequests: any = [];
+      let mappedNetwork: any = [];
+      if (settings.networkLogs) {
+        if (settings.useDebugger) {
+          stopDebugger();
+          mappedNetwork = getDebuggerRequests();
+        } else {
+          networkRequests = getFinalRequests(
+            recordingState.area === 'tab' ? recordingState.activeTabId! : undefined,
+          );
+          stopTrackingNetwork();
+          mappedNetwork = mergeRequests(
+            networkRequests,
+            injectNetworkRequests,
+          );
+        }
+      }
+      injectNetworkRequests = [];
+      finalSpotObj.network = mappedNetwork;
       browser.runtime
         .sendMessage({
           type: messages.offscreen.to.stopRecording,
@@ -749,12 +745,12 @@ export default defineBackground(() => {
     if (request.type === messages.content.from.saveSpotVidChunk) {
       finalVideoBase64 += request.part;
       finalReady = request.index === request.total - 1;
-      const getPlatformData = async () => {
-        const vendor = await browser.runtime.getPlatformInfo();
-        const platform = `${vendor.os} ${vendor.arch}`;
-        return { platform };
-      };
       if (finalReady) {
+        const getPlatformData = async () => {
+          const vendor = await browser.runtime.getPlatformInfo();
+          const platform = `${vendor.os} ${vendor.arch}`;
+          return { platform };
+        };
         const duration = finalSpotObj.crop
           ? finalSpotObj.crop[1] - finalSpotObj.crop[0]
           : finalSpotObj.duration;
@@ -860,6 +856,7 @@ export default defineBackground(() => {
                     activeTabId: null,
                     area: null,
                     recording: REC_STATE.stopped,
+                    audioPerm: recordingState.audioPerm
                   };
                   // id of spot, mobURL - for events, videoURL - for video
                   if (!resp || !resp.id) {
@@ -896,7 +893,7 @@ export default defineBackground(() => {
                   const vPromise = fetch(videoURL, {
                     method: "PUT",
                     headers: {
-                      "Content-Type": "video/webm",
+                      "Content-Type": "video/mp4",
                     },
                     body: blob,
                   });
@@ -945,16 +942,17 @@ export default defineBackground(() => {
         active: true,
       });
     }
-    // in future:
-    // const tabs = await browser.tabs.query({}) as chrome.tabs.Tab[]
-    // for (const tab of tabs) {
-    //   if (tab.id) {
-    // this will require more permissions, do we even want this?
-    //     void chrome.tabs.executeScript(tab.id, {file: "content"});
-    //   }
-    // }
+    for (const tab of await chrome.tabs.query({})) {
+      if (tab.url?.match(/(chrome|chrome-extension):\/\//gi)) {
+        continue;
+      }
+      const res = await browser.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ["/content-scripts/content.js"],
+      });
+      console.log('restoring content at', res)
+    }
     await checkTokenValidity();
-    await initializeOffscreenDocument();
   });
   void initializeOffscreenDocument();
 
@@ -993,7 +991,7 @@ export default defineBackground(() => {
     data?: any;
     activeTabId?: number;
     [key: string]: any;
-  }) {
+  }, onSent?: (tabId: number) => void) {
     let activeTabs = await browser.tabs.query({
       active: true,
       currentWindow: true,
@@ -1019,6 +1017,7 @@ export default defineBackground(() => {
         message,
       );
       await browser.tabs.sendMessage(sendTo, message);
+      onSent?.(sendTo);
     }
   }
 
@@ -1035,7 +1034,7 @@ export default defineBackground(() => {
     }
   }
 
-  function base64ToBlob(base64: string, mimeType = "video/webm") {
+  function base64ToBlob(base64: string, mimeType = "video/mp4") {
     const binaryString = atob(base64.split(",")[1]);
     const byteNumbers = new Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
@@ -1083,6 +1082,7 @@ export default defineBackground(() => {
           activeTabId: null,
           area: null,
           recording: REC_STATE.stopped,
+          audioPerm: recordingState.audioPerm
         };
         void sendToActiveTab({
           type: messages.content.to.unmount,
@@ -1094,7 +1094,7 @@ export default defineBackground(() => {
         return;
       }
       const mountMsg = {
-        type: "content:start",
+        type: messages.content.to.start,
         microphone,
         time: 0,
         slackChannels,
@@ -1129,6 +1129,8 @@ export default defineBackground(() => {
                 state: getRecState(),
                 activeTabId: null,
               };
+              console.log(tabId, 'activation for new')
+              attachDebuggerToTab(tabId)
               void sendToActiveTab(msg);
             });
           if (previousTab) {
@@ -1155,7 +1157,7 @@ export default defineBackground(() => {
         if (state === REC_STATE.stopped) {
           return stopNavListening();
         }
-        contentArmy[details.tabId] = false
+        contentArmy[details.tabId] = false;
 
         if (area === "tab" && (!trackedTab || details.tabId !== trackedTab)) {
           return;
@@ -1179,10 +1181,10 @@ export default defineBackground(() => {
       }
 
       function startNavListening() {
-        browser.webNavigation.onCompleted.addListener(tabNavigatedListener)
+        browser.webNavigation.onCompleted.addListener(tabNavigatedListener);
       }
       function stopNavListening() {
-        browser.webNavigation.onCompleted.removeListener(tabNavigatedListener)
+        browser.webNavigation.onCompleted.removeListener(tabNavigatedListener);
       }
 
       /** discards recording if was recording single tab and its now closed */
@@ -1199,6 +1201,7 @@ export default defineBackground(() => {
             activeTabId: null,
             area: null,
             recording: REC_STATE.stopped,
+            audioPerm: recordingState.audioPerm
           };
         }
       }

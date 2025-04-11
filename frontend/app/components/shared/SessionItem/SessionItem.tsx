@@ -81,25 +81,21 @@ const PREFETCH_STATE = {
 
 function SessionItem(props: RouteComponentProps & Props) {
   const { location } = useHistory();
-  const { settingsStore, sessionStore } = useStore();
+  const { settingsStore, sessionStore, searchStore, searchStoreLive } = useStore();
   const { timezone, shownTimezone } = settingsStore.sessionSettings;
   const { t } = useTranslation();
   const [prefetchState, setPrefetched] = useState(PREFETCH_STATE.none);
 
-  // Destructure all props at the top
   const {
     session,
     onUserClick = () => null,
     hasUserFilter = false,
     disableUser = false,
-    metaList = [],
     lastPlayedSessionId,
     onClick = null,
     compact = false,
     ignoreAssist = false,
-    bookmarked = false,
     query,
-    // location,
     isDisabled,
     live: propsLive,
     isAdd,
@@ -131,7 +127,6 @@ function SessionItem(props: RouteComponentProps & Props) {
     agentIds,
   } = session;
 
-  // Memoize derived values
   const queryParams = useMemo(
     () => Object.fromEntries(new URLSearchParams(location.search)),
     [location.search],
@@ -164,7 +159,6 @@ function SessionItem(props: RouteComponentProps & Props) {
   const isMultiviewDisabled =
     isDisabled && location.pathname.includes('multiview');
 
-  // Memoize metadata list creation
   const _metaList = useMemo(() => {
     return Object.keys(metadata).map((key) => ({
       label: key,
@@ -172,7 +166,6 @@ function SessionItem(props: RouteComponentProps & Props) {
     }));
   }, [metadata]);
 
-  // Memoize event handlers
   const handleHover = useCallback(async () => {
     if (prefetchState !== PREFETCH_STATE.none || live || isAssist || isMobile)
       return;
@@ -226,7 +219,6 @@ function SessionItem(props: RouteComponentProps & Props) {
     return formatTimeOrDate(startedAt, timezoneToUse);
   }, [startedAt, shownTimezone, userTimezone, timezone]);
 
-  // Memoize tooltip content
   const timeTooltipContent = useMemo(() => {
     return (
       <div className={'flex flex-col gap-1'}>
@@ -252,6 +244,13 @@ function SessionItem(props: RouteComponentProps & Props) {
     );
   }, [startedAt, timezone, userTimezone]);
 
+  const onMetaClick = (meta: { name: string, value: string }) => {
+    if (isAssist) {
+      searchStoreLive.addFilterByKeyAndValue(meta.name, meta.value)
+    } else {
+      searchStore.addFilterByKeyAndValue(meta.name, meta.value);
+    }
+  }
   return (
     <Tooltip
       title={
@@ -309,7 +308,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </div>
                 </div>
                 {_metaList.length > 0 && (
-                  <SessionMetaList maxLength={3} metaList={_metaList} />
+                  <SessionMetaList onMetaClick={onMetaClick} maxLength={3} metaList={_metaList} />
                 )}
               </div>
             )}

@@ -145,7 +145,7 @@ function TimeTable(props: Props) {
   ]);
   React.useEffect(() => {
     if (props.activeIndex && props.activeIndex >= 0 && scroller.current) {
-      scroller.current.scrollToIndex(props.activeIndex);
+      scroller.current.scrollToIndex(props.activeIndex, { align: 'center', smooth: false });
       setFirstVisibleRowIndex(props.activeIndex ?? 0);
     }
   }, [props.activeIndex]);

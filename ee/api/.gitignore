@@ -223,10 +223,14 @@ Pipfile.lock
 /chalicelib/core/sessions/performance_event.py
 /chalicelib/core/sessions/sessions_viewed/sessions_viewed.py
 /chalicelib/core/sessions/unprocessed_sessions.py
+/chalicelib/core/sessions/__init__.py
+/chalicelib/core/sessions/sessions_legacy_mobil.py
+/chalicelib/core/sessions/sessions_search_exp.py
 /chalicelib/core/metrics/modules
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps
 /chalicelib/core/tags.py
+/chalicelib/core/product_analytics
 /chalicelib/saml
 /chalicelib/utils/__init__.py
 /chalicelib/utils/args_transformer.py
@@ -289,3 +293,5 @@ Pipfile.lock
 /chalicelib/core/errors/errors_ch.py
 /chalicelib/core/errors/errors_details.py
 /chalicelib/utils/contextual_validators.py
+/routers/subs/product_analytics.py
+/schemas/product_analytics.py

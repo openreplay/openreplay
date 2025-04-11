@@ -1,5 +1,6 @@
 import { DateTime, Interval, Settings } from 'luxon';
 import Record from 'Types/Record';
+import { roundToNextMinutes } from '@/utils';
 
 export const LAST_30_MINUTES = 'LAST_30_MINUTES';
 export const TODAY = 'TODAY';
@@ -30,7 +31,9 @@ function getRange(rangeName, offset) {
         now.startOf('day'),
       );
     case LAST_24_HOURS:
-      return Interval.fromDateTimes(now.minus({ hours: 24 }), now);
+      const mod = now.minute % 15;
+      const next = now.plus({ minutes: mod === 0 ? 15 : 15 - mod }).startOf('minute');
+      return Interval.fromDateTimes(next.minus({ hours: 24 }), next);
     case LAST_30_MINUTES:
       return Interval.fromDateTimes(
         now.minus({ minutes: 30 }).startOf('minute'),

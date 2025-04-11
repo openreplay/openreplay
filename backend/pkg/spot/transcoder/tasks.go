@@ -29,7 +29,7 @@ type Task struct {
 	Duration int
 	Status   string
 	Path     string
-	tx       pool.Tx
+	tx       *pool.Tx
 }
 
 func (t *Task) HasToTrim() bool {
@@ -65,7 +65,7 @@ func (t *tasksImpl) Get() (task *Task, err error) {
 		}
 	}()
 
-	task = &Task{tx: pool.Tx{Tx: tx}}
+	task = &Task{tx: tx}
 	sql := `SELECT spot_id, crop, duration FROM spots.tasks WHERE status = 'pending' ORDER BY added_time FOR UPDATE SKIP LOCKED LIMIT 1`
 	err = tx.TxQueryRow(sql).Scan(&task.SpotID, &task.Crop, &task.Duration)
 	if err != nil {

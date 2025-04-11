@@ -66,8 +66,23 @@ export default observer(WidgetFormNew);
 
 const FilterSection = observer(
   ({ layout, metric, excludeFilterKeys, excludeCategory }: any) => {
+    const isTable = metric.metricType === TABLE;
+    const isHeatMap = metric.metricType === HEATMAP;
+    const isFunnel = metric.metricType === FUNNEL;
+    const isInsights = metric.metricType === INSIGHTS;
+    const isPathAnalysis = metric.metricType === USER_PATH;
+    const isRetention = metric.metricType === RETENTION;
+    const canAddSeries = metric.series.length < 3;
+
+    const isSingleSeries =
+      isTable ||
+      isFunnel ||
+      isHeatMap ||
+      isInsights ||
+      isRetention ||
+      isPathAnalysis;
     const { t } = useTranslation();
-    const allOpen = layout.startsWith('flex-row');
+    const allOpen = isSingleSeries || layout.startsWith('flex-row');
     const defaultClosed = React.useRef(!allOpen && metric.exists());
     const [seriesCollapseState, setSeriesCollapseState] = React.useState<
       Record<number, boolean>
@@ -84,21 +99,6 @@ const FilterSection = observer(
       });
       setSeriesCollapseState(defaultSeriesCollapseState);
     }, [metric.series]);
-    const isTable = metric.metricType === TABLE;
-    const isHeatMap = metric.metricType === HEATMAP;
-    const isFunnel = metric.metricType === FUNNEL;
-    const isInsights = metric.metricType === INSIGHTS;
-    const isPathAnalysis = metric.metricType === USER_PATH;
-    const isRetention = metric.metricType === RETENTION;
-    const canAddSeries = metric.series.length < 3;
-
-    const isSingleSeries =
-      isTable ||
-      isFunnel ||
-      isHeatMap ||
-      isInsights ||
-      isRetention ||
-      isPathAnalysis;
 
     const collapseAll = () => {
       setSeriesCollapseState((seriesCollapseState) => {

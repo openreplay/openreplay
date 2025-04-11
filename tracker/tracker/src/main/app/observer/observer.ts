@@ -37,9 +37,29 @@ async function parseUseEl(
       return
     }
 
-    const [url, symbolId] = href.split('#')
-    if (!url || !symbolId) {
-      console.debug('Openreplay: Invalid xlink:href or href found on <use>.')
+    let [url, symbolId] = href.split('#')
+
+    // happens if svg spritemap is local, fastest case for us
+    if (!url && symbolId) {
+      const symbol = document.querySelector(href)
+      if (symbol) {
+        const inlineSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
+          ${symbol.innerHTML}
+        </svg>
+      `.trim()
+
+        iconCache[symbolId] = inlineSvg
+
+        return inlineSvg
+      } else {
+        console.warn('Openreplay: Sprite symbol not found in the document.')
+        return
+      }
+    }
+
+    if (!url && !symbolId) {
+      console.warn('Openreplay: Invalid xlink:href or href found on <use>.')
       return
     }
 
@@ -337,6 +357,9 @@ export default abstract class Observer {
     if (name === 'href' || value.length > 1e5) {
       value = ''
     }
+    if (['alt', 'placeholder'].includes(name) && this.app.sanitizer.privateMode) {
+      value = value.replaceAll(/./g, '*')
+    }
     this.app.attributeSender.sendSetAttribute(id, name, value)
   }
 
@@ -369,7 +392,7 @@ export default abstract class Observer {
       {
         acceptNode: (node) => {
           if (this.app.nodes.getID(node) !== undefined) {
-            this.app.debug.warn('! Node is already bound', node)
+            this.app.debug.info('! Node is already bound', node)
           }
           return isIgnored(node) || this.app.nodes.getID(node) !== undefined
             ? NodeFilter.FILTER_REJECT

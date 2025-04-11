@@ -205,6 +205,10 @@ class SearchStore {
     });
   }
 
+  resetTags = () => {
+    this.activeTags = ['all'];
+  }
+
   toggleTag(tag?: iTag) {
     if (!tag) {
       this.activeTags = [];

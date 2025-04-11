@@ -8,7 +8,7 @@ function getRecordingSettings(qualityValue) {
     "4k": { audioBitsPerSecond: 192000, videoBitsPerSecond: 40000000, width: 4096, height: 2160 },
     "1080p": { audioBitsPerSecond: 192000, videoBitsPerSecond: 8000000, width: 1920, height: 1080 },
     // @default
-    "720p": { audioBitsPerSecond: 96000, videoBitsPerSecond: 2500000, width: 1280, height: 720 },
+    "720p": { audioBitsPerSecond: 128000, videoBitsPerSecond: 2500000, width: 1280, height: 720 },
     "480p": { audioBitsPerSecond: 96000, videoBitsPerSecond: 2500000, width: 854, height: 480 },
     "360p": { audioBitsPerSecond: 96000, videoBitsPerSecond: 1000000, width: 640, height: 360 },
     "240p": { audioBitsPerSecond: 64000, videoBitsPerSecond: 500000, width: 426, height: 240 },
@@ -19,7 +19,9 @@ function getRecordingSettings(qualityValue) {
   const duration = 3 * 60 * 1000; // 3 minutes
 
   const mimeTypes = [
-    // fastest trimming and HLS
+    // best support for backend
+    'video/mp4; codecs="avc1.42E01E, mp4a.40.2"',
+    // fast trimming if we "pretend" that its a webm
     "video/webm;codecs=h264",
     "video/webm;codecs=avc1",
     "video/webm;codecs=av1",

@@ -17,6 +17,13 @@ redis: &redis
 ingress-nginx:
   enabled: true
   controller:
+    config:
+      http-snippet: |-
+        # Extract sessionid from peerId, it'll be used for sticky session.
+        map $arg_peerId $sessionid {
+          default "";
+          "~.*-(\d+)(?:-.*|$)" $1;
+        }
     admissionWebhooks:
       patch:
         podAnnotations:

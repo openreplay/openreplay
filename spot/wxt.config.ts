@@ -16,7 +16,7 @@ export default defineConfig({
     },
     web_accessible_resources: [
       {
-        resources: ["injected.js", "notifications.js"],
+        resources: ["injected.js", "notifications.js", "/content-scripts/content.css"],
         matches: ["<all_urls>"],
       },
     ],
@@ -26,6 +26,12 @@ export default defineConfig({
       "offscreen",
       "unlimitedStorage",
       "webNavigation",
+      "webRequest",
+      "<all_urls>",
+      "debugger",
     ],
   },
+  runner: {
+    chromiumArgs: ['--user-data-dir=./.wxt/chrome-data'],
+  }
 });

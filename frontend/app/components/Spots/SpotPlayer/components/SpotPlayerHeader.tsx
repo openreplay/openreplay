@@ -90,7 +90,7 @@ function SpotPlayerHeader({
   const onMenuClick = async ({ key }: { key: string }) => {
     if (key === '1') {
       const { url } = await spotStore.getVideo(spotStore.currentSpot!.spotId);
-      await downloadFile(url, `${spotStore.currentSpot!.title}.webm`);
+      await downloadFile(url, `${spotStore.currentSpot!.title}.mp4`);
     } else if (key === '2') {
       spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
         history.push(spotsList());

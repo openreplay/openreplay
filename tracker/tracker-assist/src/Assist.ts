@@ -270,7 +270,10 @@ export default class Assist {
           ...this.app.getSessionInfo(),
         }),
       },
-      transports: ['websocket',],
+      extraHeaders: {
+        sessionId,
+      },
+      transports: ["websocket"],
       withCredentials: true,
       reconnection: true,
       reconnectionAttempts: 30,
@@ -496,11 +499,12 @@ export default class Assist {
       if (recordingState.isActive) recordingState.stopRecording();
     });
 
-    socket.on("call_end", (socketId, { data: callId }) => {
-      if (!callingAgents.has(socketId)) {
+    socket.on("call_end", (socketId, msg) => {
+      if (!callingAgents.has(socketId) || !msg) {
         app.debug.warn("Received call_end from unknown agent", socketId);
         return;
       }
+      const { data: callId } = msg;
 
       endAgentCall({ socketId, callId });
     });
@@ -719,9 +723,9 @@ export default class Assist {
         const agreed = await confirmAnswer;
         // if rejected, then terminate the call
         if (!agreed) {
-          initiateCallEnd()
-          this.options.onCallDeny?.()
-          return
+          initiateCallEnd();
+          this.options.onCallDeny?.();
+          return;
         }
 
         // create a new RTCPeerConnection with ice server config
@@ -731,30 +735,33 @@ export default class Assist {
         this.calls.set(from, pc);
 
         if (!callUI) {
-          callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
-          callUI.setVideoToggleCallback((args: { enabled: boolean }) =>
-            this.emit('videofeed', { streamId: from, enabled: args.enabled })
-          );
+          callUI = new CallWindow(app.debug.error, this.options.callUITemplate);
+          callUI.setVideoToggleCallback((args: { enabled: boolean }) => {
+            this.emit("videofeed", { streamId: from, enabled: args.enabled });
+          });
         }
         // show buttons in the call window
-        callUI.showControls(initiateCallEnd)
+        callUI.showControls(initiateCallEnd);
         if (!annot) {
-          annot = new AnnotationCanvas()
-          annot.mount()
+          annot = new AnnotationCanvas();
+          annot.mount();
         }
 
         // callUI.setLocalStreams(Object.values(lStreams))
         try {
-         // if there are no local streams in lStrems then we set
+          // if there are no local streams in lStrems then we set
           if (!lStreams[from]) {
-            app.debug.log('starting new stream for', from)
+            app.debug.log("starting new stream for", from);
             // request a local stream, and set it to lStreams
-            lStreams[from] = await RequestLocalStream(pc, renegotiateConnection.bind(null, { pc, from }))
+            lStreams[from] = await RequestLocalStream(
+              pc,
+              renegotiateConnection.bind(null, { pc, from })
+            );
           }
-         // we pass the received tracks to Call ui
-          callUI.setLocalStreams(Object.values(lStreams))
+          // we pass the received tracks to Call ui
+          callUI.setLocalStreams(Object.values(lStreams));
         } catch (e) {
-          app.debug.error('Error requesting local stream', e);
+          app.debug.error("Error requesting local stream", e);
           // if something didn't work out, we terminate the call
           initiateCallEnd();
           this.options.onCallDeny?.();

@@ -74,7 +74,7 @@ spec:
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
             - name: AWS_ENDPOINT
-              value: '{{ .Values.global.s3.endpoint }}'
+              value: '{{- include "openreplay.s3Endpoint" . }}'
             - name: AWS_REGION
               value: '{{ .Values.global.s3.region }}'
             - name: KAFKA_SERVERS

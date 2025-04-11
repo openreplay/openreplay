@@ -1498,5 +1498,8 @@
   "More attributes": "更多属性",
   "More attribute": "更多属性",
   "Account settings updated successfully": "帐户设置已成功更新",
-  "Include rage clicks": "包括点击狂怒"
+  "Include rage clicks": "包括点击狂怒",
+  "Interface Language": "界面语言",
+  "Select the language in which OpenReplay will appear.": "选择 OpenReplay 将显示的语言。",
+  "Language": "语言"
 }

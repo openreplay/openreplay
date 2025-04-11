@@ -4,6 +4,13 @@ import {
   httpMethod,
   RequestState,
 } from './types'
+import {
+  tryFilterUrl,
+  filterHeaders,
+  filterBody,
+  sanitizeObject,
+} from "./sanitizers";
+
 /**
  * I know we're not using most of the information from this class
  * but it can be useful in the future if we will decide to display more stuff in our ui
@@ -39,14 +46,19 @@ export default class NetworkMessage {
 
   getMessage(): INetworkMessage | null {
     const { reqHs, resHs } = this.writeHeaders()
+    const reqBody = this.method === 'GET'
+                    ? JSON.stringify(sanitizeObject(this.getData)) : filterBody(this.requestData)
     const request = {
-      headers: reqHs,
-      body: this.method === 'GET' ? JSON.stringify(this.getData) : this.requestData,
+      headers: filterHeaders(reqHs),
+      body: reqBody,
     }
-    const response = { headers: resHs, body: this.response }
+    const response = {
+      headers: filterHeaders(resHs),
+      body: filterBody(this.response)
+    }
 
     const messageInfo = this.sanitize({
-      url: this.url,
+      url: tryFilterUrl(this.url),
       method: this.method,
       status: this.status,
       request,

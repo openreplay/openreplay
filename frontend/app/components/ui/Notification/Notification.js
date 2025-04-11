@@ -5,17 +5,14 @@ import styles from './notification.module.css';
 export default function ({
   transition = Flip,
   position = 'bottom-right',
-  autoClose = 3000,
   ...props
 }) {
   return (
     <ToastContainer
-      hideProgressBar
       position={position}
-      draggable
       pauseOnHover
       transition={transition}
-      autoClose={autoClose}
+      autoClose={3000}
       className={styles.container}
       toastClassName={styles.toast}
       closeButton={false}

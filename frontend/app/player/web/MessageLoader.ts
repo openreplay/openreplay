@@ -114,7 +114,7 @@ export default class MessageLoader {
         });
 
         const sortedMsgs = msgs
-          // .sort((m1, m2) => m1.time - m2.time);
+          // .sort((m1, m2) => m1.time - m2.time)
           .sort(brokenDomSorter)
           .sort(sortIframes);
 
@@ -343,7 +343,6 @@ const DOMMessages = [
   MType.CreateElementNode,
   MType.CreateTextNode,
   MType.MoveNode,
-  MType.RemoveNode,
   MType.CreateIFrameDocument,
 ];
 
@@ -354,6 +353,11 @@ function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
     return -1;
   if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument)
     return 1;
+
+  if (m1.tp === MType.RemoveNode)
+    return 1;
+  if (m2.tp === MType.RemoveNode)
+    return -1;
 
   const m1IsDOM = DOMMessages.includes(m1.tp);
   const m2IsDOM = DOMMessages.includes(m2.tp);

@@ -115,7 +115,7 @@ export default class RemoteControl {
   move = (id, xy) => {
     return id === this.agentID && this.mouse?.move(xy)
   }
-  private focused: HTMLElement | null = null
+  private focused: HTMLElement | SVGElement | null = null
   click = (id, xy) => {
     if (id !== this.agentID || !this.mouse) { return }
     this.focused = this.mouse.click(xy)
@@ -141,7 +141,9 @@ export default class RemoteControl {
       setInputValue.call(this.focused, value)
       const ev = new Event('input', { bubbles: true,})
       this.focused.dispatchEvent(ev)
+      // @ts-ignore
     } else if (this.focused.isContentEditable) {
+      // @ts-ignore
       this.focused.innerText = value
     }
   }

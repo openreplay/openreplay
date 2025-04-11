@@ -18,6 +18,7 @@ export default function ReloadButton(props: Props) {
       <Button
         type="default"
         size={buttonSize}
+        loading={loading}
         onClick={onClick}
         icon={<SyncOutlined style={{ fontSize: iconSize }} />}
       >
