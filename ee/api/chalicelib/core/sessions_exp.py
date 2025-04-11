@@ -1513,7 +1513,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         if extra_conditions and len(extra_conditions) > 0:
             _extra_or_condition = []
             for i, c in enumerate(extra_conditions):
-                if _isAny_opreator(c.operator):
+                if _isAny_opreator(c.operator) and c.type != schemas.EventType.REQUEST_DETAILS.value:
                     continue
                 e_k = f"ec_value{i}"
                 op = sh.get_sql_operator(c.operator)
@@ -1526,6 +1526,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                              c.value, value_key=e_k))
                 elif c.type == schemas.EventType.REQUEST_DETAILS.value:
                     for j, c_f in enumerate(c.filters):
+                        if _isAny_opreator(c_f.operator) or len(c_f.value) == 0:
+                            continue
                         e_k += f"_{j}"
                         op = sh.get_sql_operator(c_f.operator)
                         c_f.value = helper.values_for_operator(value=c_f.value, op=c_f.operator)
