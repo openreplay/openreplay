@@ -220,6 +220,7 @@ class SearchStoreLive {
   updateFilter = (index: number, search: Partial<IFilter>) => {
     const newFilters = this.instance.filters.map((_filter: any, i: any) => {
       if (i === index) {
+        search.value = checkFilterValue(search.value);
         return search;
       }
       return _filter;
