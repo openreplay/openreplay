@@ -20,6 +20,7 @@ apscheduler==3.11.0
 #--no-binary is used to avoid libxml2 library version incompatibilities between xmlsec and lxml
 
 python-multipart==0.0.20
+xmlsec==1.3.14 --no-binary=xmlsec
 
 redis==5.2.1
 #confluent-kafka==2.1.0
