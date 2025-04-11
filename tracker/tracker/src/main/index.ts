@@ -28,6 +28,7 @@ import Network from './modules/network.js'
 import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
 import Selection from './modules/selection.js'
 import Tabs from './modules/tabs.js'
+import LongAnimationTask from "./modules/longAnimationTask.js";
 
 import { IN_BROWSER, deprecationWarn, DOCS_HOST, inIframe } from './utils.js'
 import FeatureFlags, { IFeatureFlag } from './modules/featureFlags.js'
@@ -40,13 +41,20 @@ import type { Options as TimingOptions } from './modules/timing.js'
 import type { Options as NetworkOptions } from './modules/network.js'
 import type { MouseHandlerOptions } from './modules/mouse.js'
 import type { SessionInfo } from './app/session.js'
+import type { LATOptions } from './modules/longAnimationTask.js'
 
 import type { StartOptions } from './app/index.js'
 //TODO: unique options init
 import type { StartPromiseReturn } from './app/index.js'
 
 export type Options = Partial<
-  AppOptions & ConsoleOptions & ExceptionOptions & InputOptions & PerformanceOptions & TimingOptions
+  AppOptions &
+  ConsoleOptions &
+  ExceptionOptions &
+  InputOptions &
+  PerformanceOptions &
+  TimingOptions &
+  LATOptions
 > & {
   projectID?: number // For the back compatibility only (deprecated)
   projectKey: string
@@ -199,6 +207,7 @@ export default class API {
     Img(app)
     Input(app, options)
     Timing(app, options)
+    LongAnimationTask(app, options)
     Focus(app)
     Fonts(app)
     const skipNetwork = options.network?.disabled
