@@ -613,3 +613,14 @@ export function exportAntCsv(tableColumns, tableData, filename = 'table.csv') {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   saveAsFile(blob, filename);
 }
+
+export function roundToNextMinutes(timestamp: number, minutes: number): number {
+  const date = new Date(timestamp);
+  date.setSeconds(0, 0);
+  const currentMinutes = date.getMinutes();
+  const remainder = currentMinutes % minutes;
+  if (remainder !== 0) {
+    date.setMinutes(currentMinutes + (minutes - remainder));
+  }
+  return date.getTime();
+}
