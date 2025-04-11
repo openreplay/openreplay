@@ -1,9 +1,12 @@
 type XY = [number, number]
+type XYDXDY = [number, number, number, number]
 
 
 export default class Mouse {
   private readonly mouse: HTMLDivElement
   private position: [number,number] = [0,0,]
+  private isDragging = false
+
   constructor(private readonly agentName?: string) {
     this.mouse = document.createElement('div')
     const agentBubble = document.createElement('div')
@@ -71,8 +74,63 @@ export default class Mouse {
     return null
   }
 
-  private readonly pScrEl = document.scrollingElement || document.documentElement // Is it always correct
-  private lastScrEl: Element | 'window' | null = null
+  startDrag(pos: XY) {
+    this.move(pos)
+    const el = document.elementFromPoint(pos[0], pos[1])
+    if (el) {
+      const downEvt = new MouseEvent("mousedown", {
+        bubbles: true,
+        cancelable: true,
+        clientX: pos[0],
+        clientY: pos[1],
+        buttons: 1,
+      });
+      el.dispatchEvent(downEvt);
+      this.isDragging = true;
+    }
+  }
+
+  drag(pos: XYDXDY) {
+    const [x, y, dx, dy] = pos
+    this.move([x, y]);
+
+    if (!this.isDragging) return;
+
+    const el = document.elementFromPoint(x, y);
+    if (el) {
+      const moveEvt = new MouseEvent("mousemove", {
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+        buttons: 1,
+      });
+      el.dispatchEvent(moveEvt);
+    }
+    if ((window as any).__REMOTE__) {
+      (window as any).__REMOTE__.dragCamera(dx, dy);
+    }
+  }
+
+  stopDrag() {
+    if (!this.isDragging) return;
+    const [x, y] = this.position;
+    const el = document.elementFromPoint(x, y);
+    if (el) {
+      const upEvt = new MouseEvent("mouseup", {
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+        buttons: 0,
+      });
+      el.dispatchEvent(upEvt);
+    }
+    this.isDragging = false;
+  }
+
+  private readonly pScrEl = document.scrollingElement || document.documentElement; // Is it always correct
+  private lastScrEl: Element | "window" | null = null;
   private readonly resetLastScrEl = () => { this.lastScrEl = null }
   private readonly handleWScroll = e => {
     if (e.target !== this.lastScrEl &&
