@@ -17,6 +17,9 @@ export interface State {
 
 export default class RemoteControl {
   private assistVersion = 1;
+  private isDragging = false;
+  private dragStart: any | null = null;
+  private readonly dragThreshold = 3;
 
   static readonly INITIAL_STATE: Readonly<State> = {
     remoteControl: RemoteControlStatus.Disabled,
@@ -81,6 +84,7 @@ export default class RemoteControl {
   }
 
   private onMouseMove = (e: MouseEvent): void => {
+    if (this.isDragging) return;
     const data = this.screen.getInternalCoordinates(e);
     this.emitData('move', [data.x, data.y]);
   };
@@ -154,16 +158,61 @@ export default class RemoteControl {
     this.emitData('click', [data.x, data.y]);
   };
 
+  private onMouseDown = (e: MouseEvent): void => {
+    if (this.store.get().annotating) return;
+
+    const { x, y } = this.screen.getInternalViewportCoordinates(e);
+    this.dragStart = [x, y];
+    this.isDragging = false;
+
+    const handleMove = (moveEvent: MouseEvent) => {
+      const { x: mx, y: my } =
+        this.screen.getInternalViewportCoordinates(moveEvent);
+      const [sx, sy] = this.dragStart!;
+      const dx = Math.abs(mx - sx);
+      const dy = Math.abs(my - sy);
+
+      if (
+        !this.isDragging &&
+        (dx > this.dragThreshold || dy > this.dragThreshold)
+      ) {
+        this.emitData('startDrag', [sx, sy]);
+        this.isDragging = true;
+      }
+
+      if (this.isDragging) {
+        this.emitData('drag', [mx, my, mx - sx, my - sy]);
+      }
+    };
+
+    const handleUp = () => {
+      if (this.isDragging) {
+        this.emitData('stopDrag');
+      }
+
+      this.dragStart = null;
+      this.isDragging = false;
+
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+  };
+
   private toggleRemoteControl(enable: boolean) {
     if (enable) {
       this.screen.overlay.addEventListener('mousemove', this.onMouseMove);
       this.screen.overlay.addEventListener('click', this.onMouseClick);
       this.screen.overlay.addEventListener('wheel', this.onWheel);
+      this.screen.overlay.addEventListener('mousedown', this.onMouseDown);
       this.store.update({ remoteControl: RemoteControlStatus.Enabled });
     } else {
       this.screen.overlay.removeEventListener('mousemove', this.onMouseMove);
       this.screen.overlay.removeEventListener('click', this.onMouseClick);
       this.screen.overlay.removeEventListener('wheel', this.onWheel);
+      this.screen.overlay.removeEventListener('mousedown', this.onMouseDown);
       this.store.update({ remoteControl: RemoteControlStatus.Disabled });
       this.toggleAnnotation(false);
     }

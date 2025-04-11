@@ -376,6 +376,15 @@ export default class Assist {
       socket.on("move", (id, event) =>
         processEvent(id, event, this.remoteControl?.move)
       );
+      socket.on("startDrag", (id, event) =>
+        processEvent(id, event, this.remoteControl?.startDrag)
+      );
+      socket.on("drag", (id, event) =>
+        processEvent(id, event, this.remoteControl?.drag)
+      );
+      socket.on("stopDrag", (id, event) =>
+        processEvent(id, event, this.remoteControl?.stopDrag)
+      );
       socket.on("focus", (id, event) =>
         processEvent(id, event, (clientID, nodeID) => {
           const el = app.nodes.getNode(nodeID);
