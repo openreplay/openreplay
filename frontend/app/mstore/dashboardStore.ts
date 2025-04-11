@@ -34,7 +34,7 @@ export default class DashboardStore {
 
   comparisonFilter: Filter = new Filter();
 
-  drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_7_DAYS });
+  drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
 
   selectedDensity: number = 7; // depends on default drilldown, 7 points here!!!;
 
