@@ -7,6 +7,7 @@ import Filter, { IFilter } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
 import { makeAutoObservable, observable } from 'mobx';
 import { LAST_24_HOURS, LAST_30_DAYS, LAST_7_DAYS } from 'Types/app/period';
+import { roundToNextMinutes } from '@/utils';
 
 // @ts-ignore
 const rangeValue = DATE_RANGE_VALUES.LAST_24_HOURS;
@@ -177,6 +178,7 @@ export default class Search {
       js.rangeValue,
       js.startDate,
       js.endDate,
+      15,
     );
     js.startDate = startDate;
     js.endDate = endDate;
@@ -190,12 +192,11 @@ export default class Search {
     rangeName: string,
     customStartDate: number,
     customEndDate: number,
-  ): {
-    startDate: number;
-    endDate: number;
-  } {
+    roundMinutes?: number,
+  ): { startDate: number; endDate: number } {
     let endDate = new Date().getTime();
     let startDate: number;
+    const minutes = roundMinutes || 15;
 
     switch (rangeName) {
       case LAST_7_DAYS:
@@ -206,9 +207,7 @@ export default class Search {
         break;
       case CUSTOM_RANGE:
         if (!customStartDate || !customEndDate) {
-          throw new Error(
-            'Start date and end date must be provided for CUSTOM_RANGE.',
-          );
+          throw new Error('Start date and end date must be provided for CUSTOM_RANGE.');
         }
         startDate = customStartDate;
         endDate = customEndDate;
@@ -218,10 +217,12 @@ export default class Search {
         startDate = endDate - 24 * 60 * 60 * 1000;
     }
 
-    return {
-      startDate,
-      endDate,
-    };
+    if (rangeName !== CUSTOM_RANGE) {
+      startDate = roundToNextMinutes(startDate, minutes);
+      endDate = roundToNextMinutes(endDate, minutes);
+    }
+
+    return { startDate, endDate };
   }
 
   fromJS({ eventsOrder, filters, events, custom, ...filterData }: any) {
