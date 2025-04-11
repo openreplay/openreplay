@@ -73,7 +73,9 @@ spec:
           volumeMounts:
           - name: default-chi-openreplay-clickhouse-replicated-0-0-0 
             mountPath: /var/lib/clickhouse
-          - name: clickhouse-override-config
+          - name: clickhouse-override-server-config
+            mountPath: /etc/clickhouse-server/config.d
+          - name: clickhouse-override-user-config
             mountPath: /etc/clickhouse-server/config.d
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
@@ -90,9 +92,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
-        - name: clickhouse-override-config
+        - name: clickhouse-override-server-config
           configMap:
-            name: clickhouse-override
+            name: clickhouse-server-override
+            optional: true
+        - name: clickhouse-override-user-config
+          configMap:
+            name: clickhouse-user-override
             optional: true
   volumeClaimTemplates:
   - metadata:

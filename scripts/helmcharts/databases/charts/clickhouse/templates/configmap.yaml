@@ -1,10 +1,20 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: clickhouse-override
+  name: clickhouse-server-override
 data:
-  {{- range $filename, $content := .Values.configOverride }}
+  {{- range $filename, $content := .Values.configOverride.serverConfig }}
   {{ $filename }}: |-
 {{ $content | indent 4 }}
   {{- end }}
-
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-user-override
+data:
+  {{- range $filename, $content := .Values.configOverride.userConfig }}
+  {{ $filename }}: |-
+{{ $content | indent 4 }}
+  {{- end }}
