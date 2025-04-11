@@ -9,6 +9,7 @@ deprecatedDefaults.forEach(color => {
 module.exports = {
   mode: 'jit',
   content: ['./app/**/*.tsx', './app/**/*.js'],
+  darkMode: 'class',
   theme: {
     colors: {
       ...defaultColors,
