@@ -24,7 +24,7 @@ const nodeID = process.env.HOSTNAME || generateNodeID();
 
 const addSessionToCache =  async function (sessionID, sessionData) {
     try {
-        await redisClient.set(`active_sessions:${sessionID}`, JSON.stringify(sessionData), {EX: pingInterval});
+        await redisClient.set(`assist:online_sessions:${sessionID}`, JSON.stringify(sessionData), {EX: pingInterval});
         logger.debug(`Session ${sessionID} stored in Redis`);
     } catch (error) {
         logger.error(error);
@@ -33,7 +33,7 @@ const addSessionToCache =  async function (sessionID, sessionData) {
 
 const renewSession = async function (sessionID){
     try {
-        await redisClient.expire(`active_sessions:${sessionID}`, pingInterval);
+        await redisClient.expire(`assist:online_sessions:${sessionID}`, pingInterval);
         logger.debug(`Session ${sessionID} renewed in Redis`);
     } catch (error) {
         logger.error(error);
@@ -42,7 +42,7 @@ const renewSession = async function (sessionID){
 
 const getSessionFromCache = async function (sessionID) {
     try {
-        const sessionData = await redisClient.get(`active_sessions:${sessionID}`);
+        const sessionData = await redisClient.get(`assist:online_sessions:${sessionID}`);
         if (sessionData) {
             logger.debug(`Session ${sessionID} retrieved from Redis`);
             return JSON.parse(sessionData);
@@ -56,7 +56,7 @@ const getSessionFromCache = async function (sessionID) {
 
 const removeSessionFromCache = async function (sessionID) {
     try {
-        await redisClient.del(`active_sessions:${sessionID}`);
+        await redisClient.del(`assist:online_sessions:${sessionID}`);
         logger.debug(`Session ${sessionID} removed from Redis`);
     } catch (error) {
         logger.error(error);
@@ -65,7 +65,7 @@ const removeSessionFromCache = async function (sessionID) {
 
 const setNodeSessions = async function (nodeID, sessionIDs) {
     try {
-        await redisClient.set(`node:${nodeID}:sessions`, JSON.stringify(sessionIDs), {EX: cacheRefreshInterval});
+        await redisClient.set(`assist:nodes:${nodeID}:sessions`, JSON.stringify(sessionIDs), {EX: cacheRefreshInterval});
         logger.debug(`Node ${nodeID} sessions stored in Redis`);
     } catch (error) {
         logger.error(error);
