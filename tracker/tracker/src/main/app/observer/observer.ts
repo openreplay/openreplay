@@ -10,8 +10,6 @@ import {
   RemoveNode,
   UnbindNodes,
   SetNodeAttribute,
-  AdoptedSSInsertRuleURLBased,
-  AdoptedSSAddOwner
 } from '../messages.gen.js'
 import App from '../index.js'
 import {
@@ -24,7 +22,6 @@ import {
   isCommentNode,
 } from '../guards.js'
 import { inlineRemoteCss } from './cssInliner.js'
-import { nextID } from "../../modules/constructedStyleSheets.js";
 
 const iconCache = {}
 const svgUrlCache = {}
@@ -368,16 +365,10 @@ export default abstract class Observer {
         setTimeout(() => {
           inlineRemoteCss(
             // @ts-ignore
-          node,
-          id,
-          this.app.getBaseHref(),
-          nextID,
-            (id: number, cssText: string, index: number, baseHref: string) => {
-              this.app.send(AdoptedSSInsertRuleURLBased(id, cssText, index, baseHref))
-            },
-            (sheetId: number, ownerId: number) => {
-              this.app.send(AdoptedSSAddOwner(sheetId, ownerId))
-            }
+            node,
+            id,
+            this.app.send,
+            this.app.getBaseHref(),
           )
         }, 0)
         return
