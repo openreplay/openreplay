@@ -539,6 +539,7 @@ message 85, 'ResourceTiming', :replayer => :devtools do
   uint 'SSL'
   uint 'ContentDownload'
   uint 'Total'
+  uint 'Stalled'
 end
 
 message 89, 'LongAnimationTask', :replayer => :devtools do

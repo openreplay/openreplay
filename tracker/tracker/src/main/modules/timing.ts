@@ -130,6 +130,14 @@ export default function (app: App, opts: Partial<Options>): void {
     // will probably require custom header added to responses for tracked fetch/xhr requests:
     // Timing-Allow-Origin: *
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Timing-Allow-Origin
+    let stalled = 0;
+    if (entry.connectEnd && entry.connectEnd > entry.domainLookupEnd) {
+      // Usual case stalled is time between connection establishment and request start
+      stalled = Math.max(0, entry.requestStart - entry.connectEnd);
+    } else {
+      // Connection reuse case - stalled is time between domain lookup and request start
+      stalled = Math.max(0, entry.requestStart - entry.domainLookupEnd);
+    }
     const timings = {
       queueing: entry.domainLookupStart - entry.startTime,
       dnsLookup: entry.domainLookupEnd - entry.domainLookupStart,
@@ -138,7 +146,8 @@ export default function (app: App, opts: Partial<Options>): void {
           ? entry.connectEnd - entry.secureConnectionStart : 0,
       ttfb: entry.responseStart - entry.requestStart,
       contentDownload: entry.responseEnd - entry.responseStart,
-      total: entry.responseEnd - entry.startTime
+      total: entry.duration ?? (entry.responseEnd - entry.startTime),
+      stalled,
     };
     if (failed) {
       app.send(
@@ -159,6 +168,7 @@ export default function (app: App, opts: Partial<Options>): void {
           timings.ssl,
           timings.contentDownload,
           timings.total,
+          timings.stalled,
         ),
       )
     }
@@ -180,6 +190,7 @@ export default function (app: App, opts: Partial<Options>): void {
         timings.ssl,
         timings.contentDownload,
         timings.total,
+        timings.stalled
       ),
     )
   }
