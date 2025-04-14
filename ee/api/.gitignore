@@ -297,3 +297,4 @@ Pipfile.lock
 /chalicelib/utils/contextual_validators.py
 /routers/subs/product_analytics.py
 /schemas/product_analytics.py
+/ee/bin/*
