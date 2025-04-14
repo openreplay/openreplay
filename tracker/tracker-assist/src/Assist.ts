@@ -37,6 +37,7 @@ export interface Options {
   onCallDeny?: () => any;
   onRemoteControlDeny?: (agentInfo: Record<string, any>) => any;
   onRecordingDeny?: (agentInfo: Record<string, any>) => any;
+  onDragCamera?: (dx: number, dy: number) => void;
   session_calling_peer_key: string;
   session_control_peer_key: string;
   callConfirm: ConfirmOptions;
@@ -106,6 +107,7 @@ export default class Assist {
         onCallStart: () => {},
         onAgentConnect: () => {},
         onRemoteControlStart: () => {},
+        onDragCamera: () => {},
         callConfirm: {},
         controlConfirm: {}, // TODO: clear options passing/merging/overwriting
         recordingConfirm: {},
