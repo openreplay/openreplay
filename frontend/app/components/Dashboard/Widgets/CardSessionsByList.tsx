@@ -57,7 +57,7 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
                   <div className="m-0">
                     <div className="flex justify-between m-0 p-0">
                       <Typography.Text ellipsis={true}>{row.displayName}</Typography.Text>
-                      <Typography.Text type="secondary"> {row.sessionCount}</Typography.Text>
+                      <Typography.Text type="secondary" className="flex-shrink-0"> {row.sessionCount}</Typography.Text>
                     </div>
 
                     <Progress
