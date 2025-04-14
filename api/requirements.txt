@@ -4,7 +4,7 @@ boto3==1.37.21
 pyjwt==2.10.1
 psycopg2-binary==2.9.10
 psycopg[pool,binary]==3.2.6
-clickhouse-connect==0.8.15
+clickhouse-connect==0.8.17
 elasticsearch==8.17.2
 jira==3.8.0
 cachetools==5.5.2
