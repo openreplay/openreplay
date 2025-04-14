@@ -13,6 +13,7 @@ import { useStore } from 'App/mstore';
 import LanguageSwitcher from '../LanguageSwitcher';
 import withCaptcha, { WithCaptchaProps } from 'App/withRecaptcha';
 import SSOLogin from './SSOLogin';
+import { extKey } from 'Components/Spots/SpotsList/InstallCTA';
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
@@ -30,6 +31,7 @@ function Login({
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [extExist, setExtExist] = useState<boolean>(false);
   const { loginStore, userStore } = useStore();
   const { errors } = userStore.loginRequest;
   const { loading } = loginStore;
@@ -37,6 +39,33 @@ function Login({
   const setJwt = userStore.updateJwt;
   const history = useHistory();
   const params = new URLSearchParams(location.search);
+
+  useEffect(() => {
+      let int: any;
+      const v = localStorage.getItem(extKey);
+      if (v) {
+        setExtExist(true);
+      } else {
+        int = setInterval(() => {
+          window.postMessage({ type: 'orspot:ping' }, '*');
+        });
+        const onSpotMsg = (e: any) => {
+          if (e.data.type === 'orspot:pong') {
+            setExtExist(true);
+            localStorage.setItem(extKey, '1');
+            clearInterval(int);
+            int = null;
+            window.removeEventListener('message', onSpotMsg);
+          }
+        };
+        window.addEventListener('message', onSpotMsg);
+      }
+      return () => {
+        if (int) {
+          clearInterval(int);
+        }
+      };
+    }, []);
 
   useEffect(() => {
     if (authDetails && !authDetails.tenants) {
@@ -63,7 +92,7 @@ function Login({
     let int: ReturnType<typeof setInterval>;
 
     const onSpotMsg = (event: any) => {
-      if (event.data.type === 'orspot:logged') {
+      if (event.data.type === 'orspot:logged' && extExist) {
         clearInterval(int);
         window.removeEventListener('message', onSpotMsg);
         const msg = t('You have been logged into Spot successfully')
