@@ -1,8 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useState } from 'react';
-import { NoContent, Loader, Pagination } from 'UI';
+import { NoContent } from 'UI';
 import { useStore } from 'App/mstore';
-import { sliceListPerPage } from 'App/utils';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { Popover, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
@@ -11,10 +10,10 @@ import AddCardSection from '../AddCardSection/AddCardSection';
 import { useTranslation } from 'react-i18next';
 
 function MetricsList({
-                       siteId,
-                       onSelectionChange,
-                       inLibrary
-                     }: {
+    siteId,
+    onSelectionChange,
+    inLibrary
+  }: {
   siteId: string;
   onSelectionChange?: (selected: any[]) => void;
   inLibrary?: boolean;
@@ -67,7 +66,6 @@ function MetricsList({
     metricStore.updateKey('sessionsPage', 1);
   }, [metricStore]);
 
-
   const isFiltered = metricStore.filter.query !== '' || metricStore.filter.type !== '';
 
   const searchImageDimensions = { width: 60, height: 'auto' };
@@ -76,7 +74,6 @@ function MetricsList({
   const imageDimensions = isFiltered
     ? searchImageDimensions
     : defaultImageDimensions;
-
   return (
     <NoContent
       show={!loading && length === 0}

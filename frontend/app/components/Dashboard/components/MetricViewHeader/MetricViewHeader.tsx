@@ -4,7 +4,7 @@ import { Button, Popover, Space, Dropdown, Menu } from 'antd';
 import { PlusOutlined, DownOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { DROPDOWN_OPTIONS } from 'App/constants/card';
+import { DROPDOWN_OPTIONS, CATEGORIES } from 'App/constants/card';
 import MetricsSearch from '../MetricsSearch';
 import AddCardSection from '../AddCardSection/AddCardSection';
 import { TFunction } from 'i18next';
@@ -20,11 +20,11 @@ const options = (t: TFunction) => [
     label: option.label,
   })),
   {
-    key: 'monitors',
+    key: CATEGORIES.monitors,
     label: t('Monitors'),
   },
   {
-    key: 'web_analytics',
+    key: CATEGORIES.web_analytics,
     label: t('Web Analytics'),
   },
 ];

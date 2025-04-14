@@ -18,7 +18,7 @@ import { FilterKey } from 'Types/filter/filterType';
 import { ErrorInfo } from './types/error';
 import Widget from './types/widget';
 
-const handleFilter = (card: Widget, filterType?: string) => {
+const handleTypeFilter = (card: Widget, filterType?: string) => {
   const { metricType } = card;
   if (filterType === 'all' || !filterType || !metricType) {
     return true;
@@ -121,10 +121,9 @@ export default class MetricStore {
       .filter(
         (card) =>
           (this.filter.showMine
-            ? card.owner ===
-            JSON.parse(localStorage.getItem('user')!).account.email
+            ? card.owner === JSON.parse(localStorage.getItem('user')!).account.email
             : true) &&
-          handleFilter(card, this.filter.type) &&
+          handleTypeFilter(card, this.filter.type) &&
           (!dbIds.length ||
             card.dashboards
               .map((i) => i.dashboardId)
