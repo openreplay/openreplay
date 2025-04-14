@@ -326,6 +326,7 @@ export default class App {
       disableCanvas: false,
       captureIFrames: true,
       disableSprites: false,
+      inlineRemoteCss: false,
       obscureTextEmails: true,
       obscureTextNumbers: false,
       crossdomain: {
@@ -820,7 +821,7 @@ export default class App {
     this.debug.error('OpenReplay error: ', context, e)
   }
 
-  send(message: Message, urgent = false): void {
+  send = (message: Message, urgent = false): void => {
     if (this.activityState === ActivityState.NotActive) {
       return
     }
