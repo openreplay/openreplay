@@ -10,7 +10,7 @@ jira==3.8.0
 cachetools==5.5.2
 
 fastapi==0.115.12
-uvicorn[standard]==0.34.0
+uvicorn[standard]==0.34.1
 python-decouple==3.8
 pydantic[email]==2.10.6
 apscheduler==3.11.0
