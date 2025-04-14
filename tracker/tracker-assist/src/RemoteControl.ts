@@ -94,7 +94,7 @@ export default class RemoteControl {
     if (this.mouse) {
       this.resetMouse()
     }
-    this.mouse = new Mouse(agentName)
+    this.mouse = new Mouse(agentName, this.options.onDragCamera)
     this.mouse.mount()
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) this.releaseControl(false, true)
@@ -122,6 +122,15 @@ export default class RemoteControl {
   }
   focus = (id, el: HTMLElement) => {
     this.focused = el
+  }
+  startDrag = (id, xy) => {
+    this.mouse?.startDrag(xy)
+  }
+  drag = (id, xydxdy) => {
+    this.mouse?.drag(xydxdy);
+  }
+  stopDrag = (id) => {
+    this.mouse?.stopDrag();
   }
   input = (id, value: string) => {
     if (id !== this.agentID || !this.mouse || !this.focused) { return }

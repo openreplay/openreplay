@@ -1,10 +1,15 @@
+import { hasOpenreplayAttribute } from "./utils.js"
+
 type XY = [number, number]
+type XYDXDY = [number, number, number, number]
 
 
 export default class Mouse {
   private readonly mouse: HTMLDivElement
   private position: [number,number] = [0,0,]
-  constructor(private readonly agentName?: string) {
+  private isDragging = false
+
+  constructor(private readonly agentName?: string, private onDragCamera?: (dx: number, dy: number) => void) {
     this.mouse = document.createElement('div')
     const agentBubble = document.createElement('div')
     const svg ='<svg version="1.1" width="20" height="20" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" xml:space="" viewBox="8.2 4.9 11.6 18.2"><polygon fill="#FFFFFF" points="8.2,20.9 8.2,4.9 19.8,16.5 13,16.5 12.6,16.6 "></polygon><polygon fill="#FFFFFF" points="17.3,21.6 13.7,23.1 9,12 12.7,10.5 "></polygon><rect x="12.5" y="13.6" transform="matrix(0.9221 -0.3871 0.3871 0.9221 -5.7605 6.5909)" width="2" height="8"></rect><polygon points="9.2,7.3 9.2,18.5 12.2,15.6 12.6,15.5 17.4,15.5 "></polygon></svg>'
@@ -22,6 +27,8 @@ export default class Mouse {
       fontSize: '12px',
       whiteSpace: 'nowrap',
     })
+
+    this.onDragCamera = onDragCamera
 
     const agentNameStr = this.agentName ? this.agentName.length > 10 ? this.agentName.slice(0, 9) + '...' : this.agentName : 'Agent'
     agentBubble.innerHTML = `<span>${agentNameStr}</span>`
@@ -71,8 +78,63 @@ export default class Mouse {
     return null
   }
 
-  private readonly pScrEl = document.scrollingElement || document.documentElement // Is it always correct
-  private lastScrEl: Element | 'window' | null = null
+  startDrag(pos: XY) {
+    this.move(pos)
+    const el = document.elementFromPoint(pos[0], pos[1])
+    if (el) {
+      const downEvt = new MouseEvent("mousedown", {
+        bubbles: true,
+        cancelable: true,
+        clientX: pos[0],
+        clientY: pos[1],
+        buttons: 1,
+      });
+      el.dispatchEvent(downEvt);
+      this.isDragging = true;
+    }
+  }
+
+  drag(pos: XYDXDY) {
+    const [x, y, dx, dy] = pos
+    this.move([x, y]);
+
+    if (!this.isDragging) return;
+
+    const el = document.elementFromPoint(x, y);
+    if (el) {
+      const moveEvt = new MouseEvent("mousemove", {
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+        buttons: 1,
+      });
+      el.dispatchEvent(moveEvt);
+      if (hasOpenreplayAttribute(el, 'draggable') && this.onDragCamera) {
+        this.onDragCamera(dx, dy);
+      }
+    }
+  }
+
+  stopDrag() {
+    if (!this.isDragging) return;
+    const [x, y] = this.position;
+    const el = document.elementFromPoint(x, y);
+    if (el) {
+      const upEvt = new MouseEvent("mouseup", {
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+        buttons: 0,
+      });
+      el.dispatchEvent(upEvt);
+    }
+    this.isDragging = false;
+  }
+
+  private readonly pScrEl = document.scrollingElement || document.documentElement; // Is it always correct
+  private lastScrEl: Element | "window" | null = null;
   private readonly resetLastScrEl = () => { this.lastScrEl = null }
   private readonly handleWScroll = e => {
     if (e.target !== this.lastScrEl &&
