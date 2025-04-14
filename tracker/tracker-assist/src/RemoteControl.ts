@@ -94,7 +94,7 @@ export default class RemoteControl {
     if (this.mouse) {
       this.resetMouse()
     }
-    this.mouse = new Mouse(agentName)
+    this.mouse = new Mouse(agentName, this.options.onDragCamera)
     this.mouse.mount()
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) this.releaseControl(false, true)
