@@ -298,7 +298,7 @@ func (sm *sessionManagerImpl) getAllRecentlyUpdatedSessions() (map[string]struct
 
 	if len(allIDs) == 0 {
 		sm.log.Debug(sm.ctx, "No updated session IDs found")
-		return nil, nil
+		return allIDs, nil
 	}
 
 	var sessionIDsSlice []interface{}
