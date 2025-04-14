@@ -5,6 +5,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import Headers from '../Headers';
 import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
+import FetchTimings from './FetchTimings';
 
 const HEADERS = 'HEADERS';
 const REQUEST = 'REQUEST';
@@ -120,6 +121,8 @@ function FetchTabs({ resource, isSpot, isXHR }: Props) {
     );
   }, [resource]);
 
+  const noTimings = resource.timings ? Object.values(resource.timings).every((v) => v === 0) : true;
+
   const renderActiveTab = () => {
     switch (activeTab) {
       case REQUEST:
@@ -212,9 +215,28 @@ function FetchTabs({ resource, isSpot, isXHR }: Props) {
           />
         );
       case TIMINGS:
-        return <div>
-          {resource.timings ? JSON.stringify(resource.timings, null, 2) : 'notihng :('}
-        </div>;
+        return <NoContent
+          title={
+            <div className="flex flex-col items-center justify-center">
+              <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
+              <div className="mt-6 text-base font-normal">
+                {t('No timings recorded.')}
+                <br />
+                <a
+                  href="https://docs.openreplay.com/en/sdk/network-options"
+                  className="link"
+                  target="_blank"
+                >
+                  {t('Learn how to get more out of Fetch/XHR requests.')}
+                </a>
+              </div>
+            </div>
+          }
+          size="small"
+          show={noTimings}
+        >
+          <FetchTimings timings={resource.timings} />
+        </NoContent>
     }
   };
   const usedTabs = isXHR ? TABS : RESOURCE_TABS;
