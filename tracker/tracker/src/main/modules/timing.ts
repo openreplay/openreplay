@@ -121,9 +121,11 @@ export default function (app: App, opts: Partial<Options>): void {
     if (shouldSkip) {
       return
     }
-    const failed = entry.responseEnd === 0
-                   || (entry.transferSize === 0 && entry.decodedBodySize === 0)
-                   || (entry.responseStatus && entry.responseStatus >= 400)
+    const failed = entry.initiatorType !== 'fetch'
+      ? entry.responseEnd === 0
+        || (entry.transferSize === 0 && entry.decodedBodySize === 0)
+        || (entry.responseStatus && entry.responseStatus >= 400)
+      : entry.responseStatus && entry.responseStatus >= 400
 
     const timings = {
       queueing: entry.domainLookupStart - entry.startTime,
