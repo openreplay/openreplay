@@ -781,26 +781,7 @@ export default class Assist {
           annot.mount();
         }
 
-        // callUI.setLocalStreams(Object.values(lStreams))
-        try {
-          // if there are no local streams in lStrems then we set
-          if (!lStreams[from]) {
-            app.debug.log("starting new stream for", from);
-            // request a local stream, and set it to lStreams
-            lStreams[from] = await RequestLocalStream(
-              pc,
-              renegotiateConnection.bind(null, { pc, from })
-            );
-          }
-          // we pass the received tracks to Call ui
-          callUI.setLocalStreams(Object.values(lStreams));
-        } catch (e) {
-          app.debug.error("Error requesting local stream", e);
-          // if something didn't work out, we terminate the call
-          initiateCallEnd();
-          return;
-        }
-
+        
         // get all local tracks and add them to RTCPeerConnection
         // When we receive local ice candidates, we emit them via socket
         pc.onicecandidate = (event) => {
