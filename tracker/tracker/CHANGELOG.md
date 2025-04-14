@@ -1,3 +1,7 @@
+## 16.1.2
+
+- bump networkProxy version (prevent reusage of body streams, fix for sanitizer network body checks)
+
 ## 16.1.1
 
 - fixing debug logs from 16.1.0

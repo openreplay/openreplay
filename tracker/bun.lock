@@ -6,10 +6,10 @@
     },
     "tracker": {
       "name": "@openreplay/tracker",
-      "version": "16.1.1",
+      "version": "16.1.2-beta.0",
       "dependencies": {
         "@medv/finder": "^4.0.2",
-        "@openreplay/network-proxy": "^1.1.0",
+        "@openreplay/network-proxy": "^1.1.1",
         "error-stack-parser": "^2.0.6",
         "error-stack-parser-es": "^0.1.5",
         "fflate": "^0.8.2",
@@ -215,7 +215,7 @@
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
 
-    "@openreplay/network-proxy": ["@openreplay/network-proxy@1.1.0", "", {}, "sha512-p/LP+j8j4v3dXVgfYOIc3FwP8b+u+tSRiBcpBJsBktt29t1vAJW6ge0ww3lEUpP9HMIkkoayWIeYVfwhPpb7cg=="],
+    "@openreplay/network-proxy": ["@openreplay/network-proxy@1.1.1", "", {}, "sha512-MzAiicdMwj03TtHKF3QR/8HAz2BtxqTlzyJgzV/r1k6hzMrPHJqqBvdEUhz+A8Rg6bSE4jnzfcu/5bAarev8CQ=="],
 
     "@openreplay/tracker": ["@openreplay/tracker@workspace:tracker"],
 
