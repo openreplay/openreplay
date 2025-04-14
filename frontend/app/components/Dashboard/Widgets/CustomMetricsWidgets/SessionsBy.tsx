@@ -6,6 +6,7 @@ import CardSessionsByList from 'Components/Dashboard/Widgets/CardSessionsByList'
 import { useModal } from 'Components/ModalContext';
 import Widget from '@/mstore/types/widget';
 import { useTranslation } from 'react-i18next';
+import { FilterKey } from 'Types/filter/filterType';
 
 interface Props {
   metric?: any;
@@ -35,19 +36,19 @@ function SessionsBy(props: Props) {
       ...filtersMap[metric.metricOf],
       value: [data.name],
       type: filtersMap[metric.metricOf].key,
-      filters: filtersMap[metric.metricOf].filters?.map((f: any) => {
-        const {
-          key,
-          operatorOptions,
-          category,
-          icon,
-          label,
-          options,
-          ...cleaned
-        } = f;
-        return { ...cleaned, type: f.key, value: [] };
-      }),
+      filters: [],
     };
+
+    if (metric.metricOf === FilterKey.FETCH) {
+      baseFilter.filters = [
+        {
+          key: FilterKey.FETCH_URL,
+          operator: 'is',
+          value: [data.name],
+          type: FilterKey.FETCH_URL,
+        }
+      ];
+    }
 
     const {
       key,
