@@ -86,7 +86,7 @@ storageSize: 100Gi
 
 configOverride:
   serverConfig:
-    zzoverride.xml: |-
+    zz-server-override.xml: |-
     # <clickhouse>
     #   <logger>
     #       <level>information</level>
@@ -110,4 +110,21 @@ configOverride:
     #     <another_setting>value</another_setting>
     #   </clickhouse>
   userConfig:
-    user-default.xml: |-
+    zz-user-override.xml: |-
+      <clickhouse>
+        <profiles>
+          <default>
+              <allow_experimental_json_type>1</allow_experimental_json_type>
+              <use_query_cache>1</use_query_cache>
+              <query_cache_min_query_duration>5000</query_cache_min_query_duration>
+              <query_cache_ttl>900</query_cache_ttl>
+              <query_cache_nondeterministic_function_handling>ignore</query_cache_nondeterministic_function_handling>
+              <query_cache_system_table_handling>ignore</query_cache_system_table_handling>
+          </default>
+        </profiles>
+        <users>
+          <default>
+            <profile>default</profile>
+          </default>
+        </users>
+      </clickhouse>
