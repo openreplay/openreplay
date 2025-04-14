@@ -24,10 +24,6 @@ func main() {
 	dbMetric := databaseMetrics.New("assist")
 	metrics.New(log, append(webMetrics.List(), dbMetric.List()...))
 
-	if cfg.AssistKey == "" {
-		log.Fatal(ctx, "assist key is not set")
-	}
-
 	pgConn, err := pool.New(dbMetric, cfg.Postgres.String())
 	if err != nil {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
@@ -41,20 +37,17 @@ func main() {
 	defer redisClient.Close()
 
 	prefix := api.NoPrefix
-	builder, err := assist.NewServiceBuilder(log, cfg, webMetrics, dbMetric, pgConn, redisClient)
+	builder, err := assist.NewServiceBuilder(log, cfg, webMetrics, dbMetric, pgConn, redisClient, prefix)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
-	defer func() {
-		builder.AssistStats.Stop()
-	}()
 
 	router, err := api.NewRouter(&cfg.HTTP, log)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
 	router.AddHandlers(prefix, builder.AssistAPI)
-	router.AddMiddlewares(builder.RateLimiter.Middleware)
+	router.AddMiddlewares(builder.Auth.Middleware, builder.RateLimiter.Middleware, builder.AuditTrail.Middleware)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
 }

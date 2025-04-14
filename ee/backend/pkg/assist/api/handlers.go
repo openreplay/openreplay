@@ -1,9 +1,7 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -14,7 +12,6 @@ import (
 	"openreplay/backend/pkg/assist/service"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/sessionmanager"
 )
 
 type handlersImpl struct {
@@ -36,14 +33,14 @@ func NewHandlers(log logger.Logger, cfg *assistAPI.Config, responser *api.Respon
 }
 
 func (e *handlersImpl) GetAll() []*api.Description {
-	keyPrefix := "/assist"
+	keyPrefix := ""
 	if e.cfg.AssistKey != "" {
-		keyPrefix = fmt.Sprintf("/assist/%s", e.cfg.AssistKey)
+		keyPrefix = fmt.Sprintf("/%s", e.cfg.AssistKey)
 	}
 	return []*api.Description{
 		{keyPrefix + "/sockets-list/{projectKey}/autocomplete", e.autocomplete, "GET"},        // event search with live=true
 		{keyPrefix + "/sockets-list/{projectKey}/{sessionId}", e.socketsListByProject, "GET"}, // is_live for getReplay call
-		{keyPrefix + "/sockets-live/{projectKey}", e.socketsLiveByProject, "POST"},            // handler /{projectId}/assist/sessions for co-browser
+		{keyPrefix + "/sockets-live/{projectKey}", e.socketsLiveByProject, "GET"},             // handler /{projectId}/assist/sessions for co-browser
 		{keyPrefix + "/sockets-live/{projectKey}/{sessionId}", e.socketsLiveBySession, "GET"}, // for get_live_session (with data) and for session_exists
 		{"/v1/ping", e.ping, "GET"},
 	}
@@ -103,10 +100,7 @@ func (e *handlersImpl) autocomplete(w http.ResponseWriter, r *http.Request) {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	response := map[string]interface{}{
-		"data": resp,
-	}
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, response, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) socketsListByProject(w http.ResponseWriter, r *http.Request) {
@@ -123,22 +117,24 @@ func (e *handlersImpl) socketsListByProject(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-
-	resp, err := e.assist.GetByID(projectKey, sessionID)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
-		if errors.Is(err, sessionmanager.ErrSessionNotFound) {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
-		} else if errors.Is(err, sessionmanager.ErrSessionNotBelongToProject) {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
-		} else {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		}
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	response := map[string]interface{}{
-		"data": resp,
+	bodySize = len(bodyBytes)
+	req := &service.Request{}
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
 	}
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, response, startTime, r.URL.Path, bodySize)
+
+	resp, err := e.assist.IsLive(projectKey, sessionID, req)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) socketsLiveByProject(w http.ResponseWriter, r *http.Request) {
@@ -155,7 +151,6 @@ func (e *handlersImpl) socketsLiveByProject(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	e.log.Debug(context.Background(), "bodyBytes: %s", bodyBytes)
 	bodySize = len(bodyBytes)
 	req := &service.Request{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
@@ -168,10 +163,7 @@ func (e *handlersImpl) socketsLiveByProject(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	response := map[string]interface{}{
-		"data": resp,
-	}
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, response, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) socketsLiveBySession(w http.ResponseWriter, r *http.Request) {
@@ -188,20 +180,22 @@ func (e *handlersImpl) socketsLiveBySession(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-
-	resp, err := e.assist.GetByID(projectKey, sessionID)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
-		if errors.Is(err, sessionmanager.ErrSessionNotFound) {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
-		} else if errors.Is(err, sessionmanager.ErrSessionNotBelongToProject) {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
-		} else {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		}
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	response := map[string]interface{}{
-		"data": resp,
+	bodySize = len(bodyBytes)
+	req := &service.Request{}
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
 	}
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, response, startTime, r.URL.Path, bodySize)
+
+	resp, err := e.assist.GetByID(projectKey, sessionID, req)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }

@@ -19,7 +19,7 @@ const (
 	UserCountry                = "userCountry"
 	UserState                  = "userState"
 	UserCity                   = "userCity"
-	IsActive                   = "active"
+	Metadata                   = "metadata"
 )
 
 type FilterOperator bool
