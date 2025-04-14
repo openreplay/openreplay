@@ -761,20 +761,6 @@ export default class Assist {
           return;
         }
 
-        if (!callUI) {
-          callUI = new CallWindow(app.debug.error, this.options.callUITemplate);
-          callUI.setVideoToggleCallback((args: { enabled: boolean }) => {
-            this.emit("videofeed", { streamId: from, enabled: args.enabled });
-          });
-        }
-        // show buttons in the call window
-        callUI.showControls(initiateCallEnd);
-        if (!annot) {
-          annot = new AnnotationCanvas();
-          annot.mount();
-        }
-
-        
         // get all local tracks and add them to RTCPeerConnection
         // When we receive local ice candidates, we emit them via socket
         pc.onicecandidate = (event) => {
