@@ -1308,6 +1308,9 @@ func DecodeResourceTiming(reader BytesReader) (Message, error) {
 	if msg.Total, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
+	if msg.Stalled, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
 	return msg, err
 }
 

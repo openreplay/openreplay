@@ -85,6 +85,7 @@ interface IResource {
   decodedBodySize?: number;
   responseBodySize?: number;
   error?: string;
+  stalled?: number;
 }
 
 export interface IResourceTiming extends IResource {
@@ -103,6 +104,7 @@ export interface IResourceTiming extends IResource {
     ssl: number;
     ttfb: number;
     contentDownload: number;
+    stalled: number;
     total: number;
   };
 }
@@ -175,6 +177,7 @@ export function getResourceFromResourceTiming(
       ttfb: msg.ttfb,
       contentDownload: msg.contentDownload,
       total: msg.total,
+      stalled: msg.stalled,
     },
   });
 }

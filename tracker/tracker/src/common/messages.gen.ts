@@ -541,6 +541,7 @@ export type ResourceTiming = [
   /*ssl:*/ number,
   /*contentDownload:*/ number,
   /*total:*/ number,
+  /*stalled:*/ number,
 ]
 
 export type InputChange = [

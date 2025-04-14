@@ -469,6 +469,7 @@ export interface RawResourceTiming {
   ssl: number,
   contentDownload: number,
   total: number,
+  stalled: number,
 }
 
 export interface RawSelectionChange {

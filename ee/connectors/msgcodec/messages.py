@@ -719,7 +719,7 @@ class WSChannel(Message):
 class ResourceTiming(Message):
     __id__ = 85
 
-    def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator, transferred_size, cached, queueing, dns_lookup, initial_connection, ssl, content_download, total):
+    def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator, transferred_size, cached, queueing, dns_lookup, initial_connection, ssl, content_download, total, stalled):
         self.timestamp = timestamp
         self.duration = duration
         self.ttfb = ttfb
@@ -736,6 +736,7 @@ class ResourceTiming(Message):
         self.ssl = ssl
         self.content_download = content_download
         self.total = total
+        self.stalled = stalled
 
 
 class InputChange(Message):

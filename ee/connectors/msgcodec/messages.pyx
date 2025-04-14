@@ -1083,8 +1083,9 @@ cdef class ResourceTiming(PyMessage):
     cdef public unsigned long ssl
     cdef public unsigned long content_download
     cdef public unsigned long total
+    cdef public unsigned long stalled
 
-    def __init__(self, unsigned long timestamp, unsigned long duration, unsigned long ttfb, unsigned long header_size, unsigned long encoded_body_size, unsigned long decoded_body_size, str url, str initiator, unsigned long transferred_size, bint cached, unsigned long queueing, unsigned long dns_lookup, unsigned long initial_connection, unsigned long ssl, unsigned long content_download, unsigned long total):
+    def __init__(self, unsigned long timestamp, unsigned long duration, unsigned long ttfb, unsigned long header_size, unsigned long encoded_body_size, unsigned long decoded_body_size, str url, str initiator, unsigned long transferred_size, bint cached, unsigned long queueing, unsigned long dns_lookup, unsigned long initial_connection, unsigned long ssl, unsigned long content_download, unsigned long total, unsigned long stalled):
         self.__id__ = 85
         self.timestamp = timestamp
         self.duration = duration
@@ -1102,6 +1103,7 @@ cdef class ResourceTiming(PyMessage):
         self.ssl = ssl
         self.content_download = content_download
         self.total = total
+        self.stalled = stalled
 
 
 cdef class InputChange(PyMessage):

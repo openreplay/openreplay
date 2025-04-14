@@ -469,6 +469,7 @@ message 85, 'ResourceTiming', :replayer => :devtools do
   uint 'SSL'
   uint 'ContentDownload'
   uint 'Total'
+  uint 'Stalled'
 end
 
 # 90-111 reserved iOS

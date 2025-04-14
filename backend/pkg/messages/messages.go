@@ -2061,10 +2061,11 @@ type ResourceTiming struct {
 	SSL               uint64
 	ContentDownload   uint64
 	Total             uint64
+	Stalled           uint64
 }
 
 func (msg *ResourceTiming) Encode() []byte {
-	buf := make([]byte, 161+len(msg.URL)+len(msg.Initiator))
+	buf := make([]byte, 171+len(msg.URL)+len(msg.Initiator))
 	buf[0] = 85
 	p := 1
 	p = WriteUint(msg.Timestamp, buf, p)
@@ -2083,6 +2084,7 @@ func (msg *ResourceTiming) Encode() []byte {
 	p = WriteUint(msg.SSL, buf, p)
 	p = WriteUint(msg.ContentDownload, buf, p)
 	p = WriteUint(msg.Total, buf, p)
+	p = WriteUint(msg.Stalled, buf, p)
 	return buf[:p]
 }
 

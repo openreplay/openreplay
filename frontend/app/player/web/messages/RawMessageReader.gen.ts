@@ -674,6 +674,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const ssl = this.readUint(); if (ssl === null) { return resetPointer() }
       const contentDownload = this.readUint(); if (contentDownload === null) { return resetPointer() }
       const total = this.readUint(); if (total === null) { return resetPointer() }
+      const stalled = this.readUint(); if (stalled === null) { return resetPointer() }
       return {
         tp: MType.ResourceTiming,
         timestamp,
@@ -692,6 +693,7 @@ export default class RawMessageReader extends PrimitiveReader {
         ssl,
         contentDownload,
         total,
+        stalled,
       };
     }
 

@@ -674,7 +674,8 @@ class MessageCodec(Codec):
                 initial_connection=self.read_uint(reader),
                 ssl=self.read_uint(reader),
                 content_download=self.read_uint(reader),
-                total=self.read_uint(reader)
+                total=self.read_uint(reader),
+                stalled=self.read_uint(reader)
             )
 
         if message_id == 112:

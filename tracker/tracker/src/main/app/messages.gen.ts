@@ -841,6 +841,7 @@ export function ResourceTiming(
   ssl: number,
   contentDownload: number,
   total: number,
+  stalled: number,
 ): Messages.ResourceTiming {
   return [
     Messages.Type.ResourceTiming,
@@ -860,6 +861,7 @@ export function ResourceTiming(
     ssl,
     contentDownload,
     total,
+    stalled,
   ]
 }
 

@@ -464,6 +464,7 @@ type TrResourceTiming = [
   ssl: number,
   contentDownload: number,
   total: number,
+  stalled: number,
 ]
 
 type TrInputChange = [
@@ -1037,6 +1038,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         ssl: tMsg[14],
         contentDownload: tMsg[15],
         total: tMsg[16],
+        stalled: tMsg[17],
       }
     }
     
