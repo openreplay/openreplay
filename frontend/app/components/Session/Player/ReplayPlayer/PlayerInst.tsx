@@ -14,8 +14,8 @@ import {
   EXCEPTIONS,
   INSPECTOR,
   OVERVIEW,
-  BACKENDLOGS,
-} from 'App/mstore/uiPlayerStore';
+  BACKENDLOGS, LONG_TASK
+} from "App/mstore/uiPlayerStore";
 import { WebNetworkPanel } from 'Shared/DevTools/NetworkPanel';
 import Storage from 'Components/Session_/Storage';
 import { ConnectedPerformance } from 'Components/Session_/Performance';
@@ -31,6 +31,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { debounce } from 'App/utils';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import LongTaskPanel from "../../../shared/DevTools/LongTaskPanel/LongTaskPanel";
 import BackendLogsPanel from '../SharedComponents/BackendLogs/BackendLogsPanel';
 
 interface IProps {
@@ -158,20 +159,7 @@ function Player(props: IProps) {
             onMouseDown={handleResize}
             className="w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20"
           />
-          {bottomBlock === OVERVIEW && <OverviewPanel />}
-          {bottomBlock === CONSOLE && <ConsolePanel />}
-          {bottomBlock === NETWORK && (
-            <WebNetworkPanel panelHeight={panelHeight} />
-          )}
-          {bottomBlock === STACKEVENTS && <WebStackEventPanel />}
-          {bottomBlock === STORAGE && <Storage />}
-          {bottomBlock === PROFILER && (
-            <ProfilerPanel panelHeight={panelHeight} />
-          )}
-          {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
-          {bottomBlock === GRAPHQL && <GraphQL panelHeight={panelHeight} />}
-          {bottomBlock === EXCEPTIONS && <Exceptions />}
-          {bottomBlock === BACKENDLOGS && <BackendLogsPanel />}
+          <BottomBlock block={bottomBlock} panelHeight={panelHeight} />
         </div>
       )}
       {!fullView ? (
@@ -187,6 +175,33 @@ function Player(props: IProps) {
       ) : null}
     </div>
   );
+}
+
+function BottomBlock({ panelHeight, block }: { panelHeight: number; block: number }) {
+  switch (block) {
+    case CONSOLE:
+      return <ConsolePanel />;
+    case NETWORK:
+      return <WebNetworkPanel panelHeight={panelHeight} />;
+    case STACKEVENTS:
+      return <WebStackEventPanel />;
+    case STORAGE:
+      return <Storage />;
+    case PROFILER:
+      return <ProfilerPanel panelHeight={panelHeight} />;
+    case PERFORMANCE:
+      return <ConnectedPerformance />;
+    case GRAPHQL:
+      return <GraphQL panelHeight={panelHeight} />;
+    case EXCEPTIONS:
+      return <Exceptions />;
+    case BACKENDLOGS:
+      return <BackendLogsPanel />;
+    case LONG_TASK:
+      return <LongTaskPanel />;
+    default:
+      return null;
+  }
 }
 
 export default observer(Player);
