@@ -37,6 +37,7 @@ export interface Options {
   onCallDeny?: () => any;
   onRemoteControlDeny?: (agentInfo: Record<string, any>) => any;
   onRecordingDeny?: (agentInfo: Record<string, any>) => any;
+  onDragCamera?: (dx: number, dy: number) => void;
   session_calling_peer_key: string;
   session_control_peer_key: string;
   callConfirm: ConfirmOptions;
@@ -106,6 +107,7 @@ export default class Assist {
         onCallStart: () => {},
         onAgentConnect: () => {},
         onRemoteControlStart: () => {},
+        onDragCamera: () => {},
         callConfirm: {},
         controlConfirm: {}, // TODO: clear options passing/merging/overwriting
         recordingConfirm: {},
@@ -378,6 +380,15 @@ export default class Assist {
       );
       socket.on("move", (id, event) =>
         processEvent(id, event, this.remoteControl?.move)
+      );
+      socket.on("startDrag", (id, event) =>
+        processEvent(id, event, this.remoteControl?.startDrag)
+      );
+      socket.on("drag", (id, event) =>
+        processEvent(id, event, this.remoteControl?.drag)
+      );
+      socket.on("stopDrag", (id, event) =>
+        processEvent(id, event, this.remoteControl?.stopDrag)
       );
       socket.on("focus", (id, event) =>
         processEvent(id, event, (clientID, nodeID) => {
@@ -755,6 +766,7 @@ export default class Assist {
           app.debug.error("Error requesting local stream", e);
           // if something didn't work out, we terminate the call
           initiateCallEnd();
+          this.options.onCallDeny?.();
           return;
         }
 
