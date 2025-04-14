@@ -4,9 +4,10 @@ import { Alert, Button } from 'antd';
 import { ArrowUpRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+export const extKey = '__$spot_ext_exist$__';
+
 function InstallCTA() {
   const { t } = useTranslation();
-  const extKey = '__$spot_ext_exist$__';
   const [extExist, setExtExist] = React.useState<boolean>(false);
   const isChromium =
     // @ts-ignore
