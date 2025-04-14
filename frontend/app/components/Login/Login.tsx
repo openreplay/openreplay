@@ -56,6 +56,7 @@ function Login({
             clearInterval(int);
             int = null;
             window.removeEventListener('message', onSpotMsg);
+            console.log('Spot extension is installed');
           }
         };
         window.addEventListener('message', onSpotMsg);
