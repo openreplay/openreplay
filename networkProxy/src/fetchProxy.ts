@@ -56,9 +56,10 @@ export class ResponseProxyHandler<T extends Response> implements ProxyHandler<T>
     if (typeof this.resp.body.getReader !== 'function') {
       return
     }
-    const _getReader = this.resp.body.getReader
+    const clonedResp = this.resp.clone();
+    const _getReader = clonedResp.body.getReader
     // @ts-ignore
-    this.resp.body.getReader = () => {
+    clonedResp.body.getReader = () => {
       const reader = <ReturnType<typeof _getReader>>_getReader.apply(this.resp.body)
 
       // when readyState is already 4,

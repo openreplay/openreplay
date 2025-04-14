@@ -80,15 +80,19 @@ export function filterBody(body: any): string {
     obscureSensitiveData(parsedBody);
     return JSON.stringify(parsedBody);
   } else {
-    const params = new URLSearchParams(body);
-    for (const key of params.keys()) {
-      if (sensitiveParams.has(key.toLowerCase())) {
-        const value = obscure(params.get(key))
-        params.set(key, value);
+    try {
+      const params = new URLSearchParams(body);
+      for (const key of params.keys()) {
+        if (sensitiveParams.has(key.toLowerCase())) {
+          const value = obscure(params.get(key))
+          params.set(key, value);
+        }
       }
+      return params.toString();
+    } catch (e) {
+      // not string or url query
+      return body;
     }
-
-    return params.toString();
   }
 }
 
