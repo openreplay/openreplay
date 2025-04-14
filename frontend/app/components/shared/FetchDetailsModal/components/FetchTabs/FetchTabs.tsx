@@ -220,7 +220,7 @@ function FetchTabs({ resource, isSpot, isXHR }: Props) {
             <div className="flex flex-col items-center justify-center">
               <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
               <div className="mt-6 text-base font-normal">
-                {t('No timings recorded.')}
+                {t('Request was instant (cached) or no timings were recorded.')}
                 <br />
                 <a
                   href="https://docs.openreplay.com/en/sdk/network-options"
