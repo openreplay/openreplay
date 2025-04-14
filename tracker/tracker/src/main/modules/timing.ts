@@ -127,6 +127,9 @@ export default function (app: App, opts: Partial<Options>): void {
         || (entry.responseStatus && entry.responseStatus >= 400)
       : entry.responseStatus && entry.responseStatus >= 400
 
+    // will probably require custom header added to responses for tracked fetch/xhr requests:
+    // Timing-Allow-Origin: *
+    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Timing-Allow-Origin
     const timings = {
       queueing: entry.domainLookupStart - entry.startTime,
       dnsLookup: entry.domainLookupEnd - entry.domainLookupStart,
