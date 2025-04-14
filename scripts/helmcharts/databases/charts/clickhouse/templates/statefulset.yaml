@@ -75,8 +75,11 @@ spec:
             mountPath: /var/lib/clickhouse
           - name: clickhouse-override-server-config
             mountPath: /etc/clickhouse-server/config.d
+          {{- range $filename, $_ := .Values.configOverride.userConfig }}
           - name: clickhouse-override-user-config
-            mountPath: /etc/clickhouse-server/config.d
+            mountPath: /etc/clickhouse-server/users.d/{{$filename}}
+            subPath: {{$filename}}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
