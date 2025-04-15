@@ -135,13 +135,16 @@ func (e *handlersImpl) socketsListByProject(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	resp, err := e.assist.IsLive(projectKey, sessionID, req)
+	resp, err := e.assist.GetByID(projectKey, sessionID, req)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	e.log.Debug(context.Background(), "socketsListByProject request, projectKey: %s, sessionID: %s, req: %v, response: %v", projectKey, sessionID, req, resp)
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	response := map[string]interface{}{
+		"data": resp,
+	}
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, response, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) socketsLiveByProject(w http.ResponseWriter, r *http.Request) {
@@ -211,5 +214,8 @@ func (e *handlersImpl) socketsLiveBySession(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	e.log.Debug(context.Background(), "socketsLiveBySession request, projectKey: %s, sessionID: %s, req: %v, response: %v", projectKey, sessionID, req, resp)
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	response := map[string]interface{}{
+		"data": resp,
+	}
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, response, startTime, r.URL.Path, bodySize)
 }
