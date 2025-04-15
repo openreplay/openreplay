@@ -43,7 +43,7 @@ type SessionData struct {
 type SessionManager interface {
 	Start()
 	Stop()
-	GetByID(projectID, sessionID string) (*SessionData, error)
+	GetByID(projectID, sessionID string) (interface{}, error)
 	GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]interface{}, int, map[string]map[string]int, error)
 	Autocomplete(projectID string, key FilterType, value string) ([]interface{}, error)
 }
@@ -362,7 +362,7 @@ func (sm *sessionManagerImpl) updateSessions() {
 	sm.log.Debug(sm.ctx, "Session processing cycle completed in %v. Processed %d sessions", duration, len(sm.cache))
 }
 
-func (sm *sessionManagerImpl) GetByID(projectID, sessionID string) (*SessionData, error) {
+func (sm *sessionManagerImpl) GetByID(projectID, sessionID string) (interface{}, error) {
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
@@ -377,7 +377,7 @@ func (sm *sessionManagerImpl) GetByID(projectID, sessionID string) (*SessionData
 	if sessionData.ProjectID != projectID {
 		return nil, fmt.Errorf("session does not belong to the project")
 	}
-	return sessionData, nil
+	return sessionData.Raw, nil
 }
 
 func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]interface{}, int, map[string]map[string]int, error) {
