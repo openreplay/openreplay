@@ -347,6 +347,7 @@ const DOMMessages = [
   MType.CreateIFrameDocument,
 ];
 
+// fixed times: 3
 function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
   if (m1.time !== m2.time) return m1.time - m2.time;
 
@@ -357,10 +358,10 @@ function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
 
   const m1IsDOM = DOMMessages.includes(m1.tp);
   const m2IsDOM = DOMMessages.includes(m2.tp);
-  if (m1IsDOM && m2IsDOM) {
-    // @ts-ignore DOM msg has id but checking for 'id' in m is expensive
-    return m1.id - m2.id;
-  }
+  // if (m1IsDOM && m2IsDOM) {
+  //   // @ts-ignore DOM msg has id but checking for 'id' in m is expensive
+  //   return m1.id - m2.id;
+  // }
 
   if (m1IsDOM && !m2IsDOM) return -1;
   if (!m1IsDOM && m2IsDOM) return 1;
