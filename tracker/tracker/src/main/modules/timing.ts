@@ -139,7 +139,7 @@ export default function (app: App, opts: Partial<Options>): void {
       stalled = Math.max(0, entry.requestStart - entry.domainLookupEnd);
     }
     const timings = {
-      queueing: entry.domainLookupStart - entry.startTime,
+      queueing: entry.requestStart - entry.fetchStart,
       dnsLookup: entry.domainLookupEnd - entry.domainLookupStart,
       initialConnection: entry.connectEnd - entry.connectStart,
       ssl: entry.secureConnectionStart > 0
