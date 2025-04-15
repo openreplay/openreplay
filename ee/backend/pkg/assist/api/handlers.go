@@ -101,7 +101,7 @@ func (e *handlersImpl) autocomplete(w http.ResponseWriter, r *http.Request) {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	e.log.Debug(context.Background(), "autocomplete request, projectKey: %s, query: %s, response: %v", projectKey, query.Value, resp)
+	e.log.Debug(context.Background(), "autocomplete request, projectKey: %s, query: %v, response: %v", projectKey, query, resp)
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
@@ -136,7 +136,7 @@ func (e *handlersImpl) socketsListByProject(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	e.log.Debug(context.Background(), "socketsListByProject request, projectKey: %s, sessionID: %s, response: %v", projectKey, sessionID, resp)
+	e.log.Debug(context.Background(), "socketsListByProject request, projectKey: %s, sessionID: %s, req: %v, response: %v", projectKey, sessionID, req, resp)
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
@@ -166,7 +166,7 @@ func (e *handlersImpl) socketsLiveByProject(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	e.log.Debug(context.Background(), "socketsLiveByProject request, projectKey: %s, response: %v", projectKey, resp)
+	e.log.Debug(context.Background(), "socketsLiveByProject request, filters: %v, projectKey: %s, response: %v", req, projectKey, resp)
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
@@ -201,6 +201,6 @@ func (e *handlersImpl) socketsLiveBySession(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	e.log.Debug(context.Background(), "socketsLiveBySession request, projectKey: %s, sessionID: %s, response: %v", projectKey, sessionID, resp)
+	e.log.Debug(context.Background(), "socketsLiveBySession request, projectKey: %s, sessionID: %s, req: %v, response: %v", projectKey, sessionID, req, resp)
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
