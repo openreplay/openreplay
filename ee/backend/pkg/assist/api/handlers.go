@@ -124,6 +124,7 @@ func (e *handlersImpl) socketsListByProject(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+	e.log.Debug(context.Background(), "bodyBytes: %s", bodyBytes)
 	bodySize = len(bodyBytes)
 	req := &service.Request{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
@@ -154,6 +155,7 @@ func (e *handlersImpl) socketsLiveByProject(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+	e.log.Debug(context.Background(), "bodyBytes: %s", bodyBytes)
 	bodySize = len(bodyBytes)
 	req := &service.Request{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
@@ -189,6 +191,7 @@ func (e *handlersImpl) socketsLiveBySession(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+	e.log.Debug(context.Background(), "bodyBytes: %s", bodyBytes)
 	bodySize = len(bodyBytes)
 	req := &service.Request{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
