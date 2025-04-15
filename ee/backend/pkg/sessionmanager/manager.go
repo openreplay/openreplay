@@ -405,6 +405,9 @@ func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort S
 }
 
 func matchesFilters(session *SessionData, filters []*Filter) bool {
+	if filters == nil || len(filters) == 0 {
+		return true
+	}
 	for _, filter := range filters {
 		var value string
 
@@ -452,14 +455,14 @@ func matchesFilters(session *SessionData, filters []*Filter) bool {
 		}
 
 		for _, filterValue := range filter.Value {
-			if filter.Operator == Is && value == filterValue {
-				return true
-			} else if filter.Operator == Contains && strings.Contains(strings.ToLower(value), strings.ToLower(filterValue)) {
-				return true
+			if filter.Operator == Is && value != filterValue {
+				return false
+			} else if filter.Operator == Contains && !strings.Contains(strings.ToLower(value), strings.ToLower(filterValue)) {
+				return false
 			}
 		}
 	}
-	return false
+	return true
 }
 
 func (sm *sessionManagerImpl) Autocomplete(projectID string, key FilterType, value string) ([]string, error) {
