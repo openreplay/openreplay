@@ -98,10 +98,30 @@ export default class WebPlayer extends Player {
       endTime, // : 0,
     });
 
+    Object.assign(window, {
+      playerJumpToTime: this.jump.bind(this),
+    })
     // @ts-ignore
-    window.playerJumpToTime = this.jump.bind(this);
-    // @ts-ignore
-    window.__OPENREPLAY_DEV_TOOLS__.player = this;
+    Object.assign(window.__OPENREPLAY_DEV_TOOLS__, {
+      player: this,
+      getNode: (nodeId: number, tabId?: string) => {
+        if (tabId) {
+          console.log(this.messageManager.tabs[tabId].getNode(nodeId))
+        } else {
+          Object.values(this.messageManager.tabs).forEach(tab => console.log(tab.getNode(nodeId)))
+        }
+      },
+      getNodeMessages: (nodeId: number, tabId?: string) => {
+        let messages = this.messageLoader.rawMessages
+          .filter((m) => m.id === nodeId)
+        if (tabId) {
+          messages = messages.filter((m) => m.tabId === tabId)
+        }
+        console.log(
+          messages
+        )
+      }
+    })
   }
 
   preloadFirstFile(data: Uint8Array, fileKey?: string) {
