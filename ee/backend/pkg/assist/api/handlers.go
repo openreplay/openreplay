@@ -102,7 +102,10 @@ func (e *handlersImpl) autocomplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	e.log.Debug(context.Background(), "autocomplete request, projectKey: %s, query: %v, response: %v", projectKey, query, resp)
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	response := map[string]interface{}{
+		"data": resp,
+	}
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, response, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) socketsListByProject(w http.ResponseWriter, r *http.Request) {
