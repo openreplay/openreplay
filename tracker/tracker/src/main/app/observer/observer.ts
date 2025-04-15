@@ -10,6 +10,8 @@ import {
   RemoveNode,
   UnbindNodes,
   SetNodeAttribute,
+  AdoptedSSInsertRuleURLBased,
+  AdoptedSSAddOwner
 } from '../messages.gen.js'
 import App from '../index.js'
 import {
@@ -22,6 +24,7 @@ import {
   isCommentNode,
 } from '../guards.js'
 import { inlineRemoteCss } from './cssInliner.js'
+import { nextID } from "../../modules/constructedStyleSheets.js";
 
 const iconCache = {}
 const svgUrlCache = {}
@@ -48,7 +51,7 @@ async function parseUseEl(
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
           ${symbol.innerHTML}
         </svg>
-      `.trim()
+      `
 
         iconCache[symbolId] = inlineSvg
 
@@ -116,7 +119,7 @@ async function parseUseEl(
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
           ${symbol.innerHTML}
         </svg>
-      `.trim()
+      `
 
       iconCache[symbolId] = inlineSvg
 
@@ -288,10 +291,12 @@ export default abstract class Observer {
         let removed = 0
         const totalBeforeRemove = this.app.nodes.getNodeCount()
 
+        const contentDocument = iframe.contentDocument;
+        const nodesUnregister = this.app.nodes.unregisterNode.bind(this.app.nodes);
         while (walker.nextNode()) {
-          if (!iframe.contentDocument.contains(walker.currentNode)) {
+          if (!contentDocument.contains(walker.currentNode)) {
             removed += 1
-            this.app.nodes.unregisterNode(walker.currentNode)
+            nodesUnregister(walker.currentNode)
           }
         }
 
@@ -305,7 +310,7 @@ export default abstract class Observer {
 
   private sendNodeAttribute(id: number, node: Element, name: string, value: string | null): void {
     if (isSVGElement(node)) {
-      if (name.substring(0, 6) === 'xlink:') {
+      if (name.startsWith('xlink:')) {
         name = name.substring(6)
       }
       if (value === null) {
@@ -363,10 +368,16 @@ export default abstract class Observer {
         setTimeout(() => {
           inlineRemoteCss(
             // @ts-ignore
-            node,
-            id,
-            this.app.send,
-            this.app.getBaseHref(),
+          node,
+          id,
+          this.app.getBaseHref(),
+          nextID,
+            (id: number, cssText: string, index: number, baseHref: string) => {
+              this.app.send(AdoptedSSInsertRuleURLBased(id, cssText, index, baseHref))
+            },
+            (sheetId: number, ownerId: number) => {
+              this.app.send(AdoptedSSAddOwner(sheetId, ownerId))
+            }
           )
         }, 0)
         return
@@ -577,12 +588,12 @@ export default abstract class Observer {
   }
   private commitNodes(isStart = false): void {
     let node
-    this.recents.forEach((type, id) => {
+    for (const [id, type] of this.recents.entries()) {
       this.commitNode(id)
       if (type === RecentsType.New && (node = this.app.nodes.getNode(id))) {
         this.app.nodes.callNodeCallbacks(node, isStart)
       }
-    })
+    }
     this.clear()
   }
 

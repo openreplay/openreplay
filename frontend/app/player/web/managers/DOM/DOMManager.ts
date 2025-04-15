@@ -452,7 +452,7 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.AdoptedSsInsertRule: {
         const styleSheet = this.olStyleSheets.get(msg.sheetID);
         if (!styleSheet) {
-          logger.warn('No stylesheet was created for ', msg);
+          logger.warn('No stylesheet was created for ', msg, this.olStyleSheets);
           return;
         }
         insertRule(styleSheet, msg);

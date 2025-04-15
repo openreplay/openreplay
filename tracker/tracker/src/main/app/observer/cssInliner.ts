@@ -1,29 +1,27 @@
-import { AdoptedSSInsertRuleURLBased, AdoptedSSAddOwner } from "../messages.gen.js";
-import { nextID } from "../../modules/constructedStyleSheets.js";
-
 export function inlineRemoteCss(
   node: HTMLLinkElement,
   id: number,
-  sendMessage: (msg: any) => void,
   baseHref: string,
+  getNextID: () => number,
+  insertRule: (id: number, cssText: string, index: number, baseHref: string) => any[],
+  addOwner: (sheetId: number, ownerId: number) => any[],
 ) {
   const sheet = node.sheet;
+  const sheetId = getNextID()
+  addOwner(sheetId, id);
 
   const processRules = (rules: CSSRuleList) => {
-    const sheetId = nextID()
-    sendMessage(AdoptedSSAddOwner(sheetId, id));
-
     if (rules.length) {
-      for (let i = 0; i < rules.length; i++) {
-        const rule = rules[i];
-        sendMessage(AdoptedSSInsertRuleURLBased(id, rule.cssText, i, baseHref));
-      }
+      setTimeout(() => {
+        for (let i = 0; i < rules.length; i++) {
+          const rule = rules[i];
+          insertRule(sheetId, rule.cssText, i, baseHref);
+        }
+      }, 0)
     }
   };
 
   const processCssText = (cssText: string) => {
-    const sheetId = nextID()
-    sendMessage(AdoptedSSAddOwner(sheetId, id));
     cssText = cssText.replace(/\/\*[\s\S]*?\*\//g, '');
 
     const ruleTexts: string[] = [];
@@ -50,7 +48,7 @@ export function inlineRemoteCss(
 
     for (let i = 0; i < ruleTexts.length; i++) {
       const ruleText = ruleTexts[i];
-      sendMessage(AdoptedSSInsertRuleURLBased(sheetId, ruleText, i, baseHref));
+      insertRule(sheetId, ruleText, i, baseHref);
     }
   };
 
