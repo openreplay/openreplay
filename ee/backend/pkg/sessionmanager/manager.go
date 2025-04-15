@@ -329,9 +329,6 @@ func (sm *sessionManagerImpl) updateSessions() {
 
 	sm.mutex.RLock()
 	toAdd := make([]string, 0, len(updatedSessIDs))
-	if updatedSessIDs == nil {
-		updatedSessIDs = make(map[string]struct{})
-	}
 	for sessID, _ := range sessIDs {
 		if _, exists := sm.cache[sessID]; !exists {
 			updatedSessIDs[sessID] = struct{}{} // Add to updated sessions if not in cache
