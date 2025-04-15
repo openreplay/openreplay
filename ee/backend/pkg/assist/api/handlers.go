@@ -41,7 +41,7 @@ func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
 		{keyPrefix + "/sockets-list/{projectKey}/autocomplete", e.autocomplete, "GET"},        // event search with live=true
 		{keyPrefix + "/sockets-list/{projectKey}/{sessionId}", e.socketsListByProject, "GET"}, // is_live for getReplay call
-		{keyPrefix + "/sockets-live/{projectKey}", e.socketsLiveByProject, "GET"},             // handler /{projectId}/assist/sessions for co-browser
+		{keyPrefix + "/sockets-live/{projectKey}", e.socketsLiveByProject, "POST"},            // handler /{projectId}/assist/sessions for co-browser
 		{keyPrefix + "/sockets-live/{projectKey}/{sessionId}", e.socketsLiveBySession, "GET"}, // for get_live_session (with data) and for session_exists
 		{"/v1/ping", e.ping, "GET"},
 	}
