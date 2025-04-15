@@ -380,15 +380,15 @@ func (sm *sessionManagerImpl) GetByID(projectID, sessionID string) (interface{},
 	return sessionData.Raw, nil
 }
 
-func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]interface{}, int, map[string]map[string]int, error) {
+func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sortOrder SortOrder, page, limit int) ([]interface{}, int, map[string]map[string]int, error) {
 	if page < 1 || limit < 1 {
-		page, limit = 1, 10 // Set default values
+		page, limit = 1, 10
 	}
 
 	sm.mutex.RLock()
 	defer sm.mutex.RUnlock()
 
-	// Prepare filter counter
+	// Initialize filter counters
 	counter := make(map[string]map[string]int)
 	for _, filter := range filters {
 		if _, ok := counter[string(filter.Type)]; !ok {
@@ -398,26 +398,43 @@ func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort S
 			counter[string(filter.Type)][value] = 0
 		}
 	}
-	filtered := make([]interface{}, 0, limit)
-	for _, session := range sm.sorted {
-		sm.log.Info(sm.ctx, "projectID: %s, sessionID: %s", session.ProjectID, session.SessionID)
-		if session.ProjectID != projectID {
-			continue
-		}
-		if matchesFilters(session, filters, counter) {
-			filtered = append(filtered, session.Raw)
-		}
-	}
 
 	start := (page - 1) * limit
 	end := start + limit
-	if start > len(filtered) {
-		return []interface{}{}, 0, make(map[string]map[string]int), nil
+
+	result := make([]interface{}, 0, limit)
+	totalMatches := 0
+
+	doFiltering := func(session *SessionData) bool {
+		if session.ProjectID != projectID {
+			return true
+		}
+		if matchesFilters(session, filters, counter) {
+			if totalMatches >= start && totalMatches < end {
+				result = append(result, session.Raw)
+			}
+			totalMatches++
+			if totalMatches >= end {
+				return false
+			}
+		}
+		return true
 	}
-	if end > len(filtered) {
-		end = len(filtered)
+
+	if sortOrder == Asc {
+		for _, session := range sm.sorted {
+			if !doFiltering(session) {
+				break
+			}
+		}
+	} else {
+		for i := len(sm.sorted) - 1; i >= 0; i-- {
+			if !doFiltering(sm.sorted[i]) {
+				break
+			}
+		}
 	}
-	return filtered[start:end], len(filtered), counter, nil
+	return result, totalMatches, counter, nil
 }
 
 func matchesFilters(session *SessionData, filters []*Filter, counter map[string]map[string]int) bool {
