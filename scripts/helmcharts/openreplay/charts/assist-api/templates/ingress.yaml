@@ -26,7 +26,7 @@ spec:
     - host: {{ .Values.global.domainName }}
       http:
         paths:
-          - path: /?(.*)
+          - path: /api-assist/(.*)
             pathType: Prefix
             backend:
               service:
