@@ -44,7 +44,7 @@ type SessionManager interface {
 	Start()
 	Stop()
 	GetByID(projectID, sessionID string) (*SessionData, error)
-	GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]*SessionData, int, map[string]map[string]int, error)
+	GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]string, int, map[string]map[string]int, error)
 	Autocomplete(projectID string, key FilterType, value string) ([]string, error)
 }
 
@@ -375,7 +375,7 @@ func (sm *sessionManagerImpl) GetByID(projectID, sessionID string) (*SessionData
 	return sessionData, nil
 }
 
-func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]*SessionData, int, map[string]map[string]int, error) {
+func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]string, int, map[string]map[string]int, error) {
 	if page < 1 || limit < 1 {
 		page, limit = 1, 10 // Set default values
 	}
@@ -393,21 +393,21 @@ func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort S
 			counter[string(filter.Type)][value] = 0
 		}
 	}
-	filtered := make([]*SessionData, 0, limit)
+	filtered := make([]string, 0, limit)
 	for _, session := range sm.sorted {
 		sm.log.Info(sm.ctx, "projectID: %s, sessionID: %s", session.ProjectID, session.SessionID)
 		if session.ProjectID != projectID {
 			continue
 		}
 		if matchesFilters(session, filters, counter) {
-			filtered = append(filtered, session)
+			filtered = append(filtered, session.Raw)
 		}
 	}
 
 	start := (page - 1) * limit
 	end := start + limit
 	if start > len(filtered) {
-		return []*SessionData{}, 0, make(map[string]map[string]int), nil
+		return []string{}, 0, make(map[string]map[string]int), nil
 	}
 	if end > len(filtered) {
 		end = len(filtered)

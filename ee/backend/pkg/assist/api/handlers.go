@@ -169,7 +169,10 @@ func (e *handlersImpl) socketsLiveByProject(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	e.log.Debug(context.Background(), "socketsLiveByProject request, filters: %v, projectKey: %s, response: %v", req, projectKey, resp)
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	response := map[string]interface{}{
+		"data": resp,
+	}
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, response, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) socketsLiveBySession(w http.ResponseWriter, r *http.Request) {
