@@ -34,9 +34,9 @@ func NewHandlers(log logger.Logger, cfg *assistAPI.Config, responser *api.Respon
 }
 
 func (e *handlersImpl) GetAll() []*api.Description {
-	keyPrefix := ""
+	keyPrefix := "/assist"
 	if e.cfg.AssistKey != "" {
-		keyPrefix = fmt.Sprintf("/%s", e.cfg.AssistKey)
+		keyPrefix = fmt.Sprintf("/assist/%s", e.cfg.AssistKey)
 	}
 	return []*api.Description{
 		{keyPrefix + "/sockets-list/{projectKey}/autocomplete", e.autocomplete, "GET"},        // event search with live=true

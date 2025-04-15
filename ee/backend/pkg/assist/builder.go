@@ -14,13 +14,11 @@ import (
 	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/server/auth"
 	"openreplay/backend/pkg/server/limiter"
 	"openreplay/backend/pkg/server/tracer"
 )
 
 type ServicesBuilder struct {
-	Auth        auth.Auth
 	RateLimiter *limiter.UserRateLimiter
 	AuditTrail  tracer.Tracer
 	AssistAPI   api.Handlers
@@ -44,7 +42,6 @@ func NewServiceBuilder(log logger.Logger, cfg *assist.Config, webMetrics web.Web
 		return nil, err
 	}
 	return &ServicesBuilder{
-		Auth:        auth.NewAuth(log, cfg.JWTSecret, cfg.JWTSpotSecret, pgconn, nil, prefix),
 		RateLimiter: limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
 		AuditTrail:  auditrail,
 		AssistAPI:   handlers,
