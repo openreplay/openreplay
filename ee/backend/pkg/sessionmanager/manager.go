@@ -45,7 +45,7 @@ type SessionManager interface {
 	Stop()
 	GetByID(projectID, sessionID string) (*SessionData, error)
 	GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]interface{}, int, map[string]map[string]int, error)
-	Autocomplete(projectID string, key FilterType, value string) ([]string, error)
+	Autocomplete(projectID string, key FilterType, value string) ([]interface{}, error)
 }
 
 type sessionManagerImpl struct {
@@ -497,7 +497,7 @@ func matchesFilters(session *SessionData, filters []*Filter, counter map[string]
 	return true
 }
 
-func (sm *sessionManagerImpl) Autocomplete(projectID string, key FilterType, value string) ([]string, error) {
+func (sm *sessionManagerImpl) Autocomplete(projectID string, key FilterType, value string) ([]interface{}, error) {
 	matches := make(map[string]struct{}) // To ensure uniqueness
 	lowerValue := strings.ToLower(value)
 
@@ -550,9 +550,14 @@ func (sm *sessionManagerImpl) Autocomplete(projectID string, key FilterType, val
 		}
 	}
 
-	results := make([]string, 0, len(matches))
+	results := make([]interface{}, 0, len(matches))
+	keyName := strings.ToUpper(string(key))
+	type pair struct {
+		Type  string `json:"type"`
+		Value string `json:"value"`
+	}
 	for k := range matches {
-		results = append(results, k)
+		results = append(results, pair{Type: keyName, Value: k})
 	}
 	return results, nil
 }
