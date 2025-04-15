@@ -4,7 +4,7 @@ import uuid
 from typing import Optional
 
 from decouple import config
-from fastapi import Depends, HTTPException, Header, Query, Response
+from fastapi import Depends, HTTPException, Header, Query, Response, Request
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
@@ -31,12 +31,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 @public_app.post("/token")
 async def login(host: str = Header(..., alias="Host"), form_data: OAuth2PasswordRequestForm = Depends()):
     subdomain = host.split(".")[0]
-    
+
     # Missing authentication part, to add
     if form_data.username != config("SCIM_USER") or form_data.password != config("SCIM_PASSWORD"):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    subdomain = "Openreplay EE"
     tenant = tenants.get_by_name(subdomain)
     access_token, refresh_token = create_tokens(tenant_id=tenant["tenantId"])
 
@@ -49,7 +48,71 @@ async def refresh_token(r: RefreshRequest):
     payload = verify_refresh_token(r.refresh_token)
     new_access_token, _ = create_tokens(tenant_id=payload["tenant_id"])
 
-    return {"access_token": new_access_token, "token_type": "Bearer"}
+    return {"access_token": new_access_token, "token_type": "bearer"}
+
+
+RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS = {
+    "User": {
+        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:ResourceType"],
+        "id": "User",
+        "name": "User",
+        "endpoint": "/Users",
+        "description": "User account",
+        "schema": "urn:ietf:params:scim:schemas:core:2.0:User",
+    }
+}
+
+
+def _not_found_error_response(resource_id: str):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+            "detail": f"Resource {resource_id} not found",
+            "status": "404",
+        }
+    )
+
+
+@public_app.get("/ResourceTypes", dependencies=[Depends(auth_required)])
+async def get_resource_types(r: Request):
+    return JSONResponse(
+        status_code=200,
+        content={
+            "totalResults": len(RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS),
+            "itemsPerPage": len(RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS),
+            "startIndex": 1,
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+            "Resources": sorted(
+                {
+                    **value,
+                    "meta": {
+                        "location": str(r.url_for("get_resource_type", resource_id=value["id"])),
+                        "resourceType": "ResourceType",
+                    }
+                }
+                for value in RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS.values()
+            ),
+        },
+    )
+
+
+@public_app.get("/ResourceTypes/{resource_id}", dependencies=[Depends(auth_required)])
+async def get_resource_type(r: Request, resource_id: str):
+    if resource_id not in RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS:
+        return _not_found_error_response(resource_id)
+    content = {
+        **RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS[resource_id],
+        "meta": {
+            "location": str(r.url),
+            "resourceType": "ResourceType",
+        }
+    }
+    return JSONResponse(
+        status_code=200,
+        content=content,
+    )
+
 
 """
 User endpoints
@@ -104,7 +167,7 @@ async def get_users(
     if email:
         email = email.split(" ")[2].strip('"')
     result_users = users.get_users_paginated(start_index, count, email)
-    
+
     serialized_users = []
     for user in result_users:
         serialized_users.append(
@@ -168,7 +231,7 @@ async def create_user(r: UserRequest):
     tenant_id = 1
     existing_user = users.get_by_email_only(r.userName)
     deleted_user = users.get_deleted_user_by_email(r.userName)
-    
+
     if existing_user:
         return JSONResponse(
             status_code = 409,
@@ -205,7 +268,7 @@ async def create_user(r: UserRequest):
     )
     return JSONResponse(status_code=201, content=res.model_dump(mode='json'))
 
-            
+
 
 @public_app.put("/Users/{user_id}", dependencies=[Depends(auth_required)])
 def update_user(user_id: str, r: UserRequest):
@@ -239,7 +302,7 @@ def update_user(user_id: str, r: UserRequest):
             active = r.active, # ignore for now, since, can't insert actual timestamp
             groups = [], # ignore
         )
-        
+
         return JSONResponse(status_code=201, content=res.model_dump(mode='json'))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -266,7 +329,7 @@ def delete_user(user_uuid: str):
     user = users.get_by_uuid(user_uuid, tenant_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     users.__hard_delete_user_uuid(user_uuid)
     return Response(status_code=204, content="")
 
@@ -393,7 +456,7 @@ def update_put_group(group_id: str, r: GroupRequest):
     group = roles.get_role_by_group_id(tenant_id, group_id)
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
-    
+
     if r.operations and r.operations[0].op == "replace" and r.operations[0].path is None:
         roles.update_group_name(tenant_id, group["data"]["groupId"], r.operations[0].value["displayName"])
         return Response(status_code=200, content="")
@@ -408,7 +471,7 @@ def update_put_group(group_id: str, r: GroupRequest):
                 "value": user["data"]["userId"],
                 "display": user["name"]
             })
-    
+
     return JSONResponse(
         status_code=200,
         content=GroupResponse(
