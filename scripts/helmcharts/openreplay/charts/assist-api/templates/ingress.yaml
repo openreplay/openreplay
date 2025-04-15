@@ -11,9 +11,9 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/upstream-hash-by: $http_x_forwarded_for
-  {{- with .Values.ingress.annotations }}
+    {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 spec:
   ingressClassName: "{{ tpl .Values.ingress.className . }}"
   tls:
@@ -21,5 +21,16 @@ spec:
         - {{ .Values.global.domainName }}
       {{- if .Values.ingress.tls.secretName}}
       secretName: {{ .Values.ingress.tls.secretName }}
-      {{- end}}
+      {{- end }}
+  rules:
+    - host: {{ .Values.global.domainName }}
+      http:
+        paths:
+          - path: /?(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
 {{- end }}
