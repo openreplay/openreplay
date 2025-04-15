@@ -329,6 +329,9 @@ func (sm *sessionManagerImpl) updateSessions() {
 
 	sm.mutex.RLock()
 	toAdd := make([]string, 0, len(updatedSessIDs))
+	if updatedSessIDs == nil {
+		updatedSessIDs = make(map[string]struct{})
+	}
 	for sessID, _ := range sessIDs {
 		if _, exists := sm.cache[sessID]; !exists {
 			updatedSessIDs[sessID] = struct{}{} // Add to updated sessions if not in cache
@@ -442,12 +445,10 @@ func matchesFilters(session *SessionData, filters []*Filter) bool {
 			if session.UserCity != nil {
 				value = *session.UserCity
 			}
-		case Metadata:
-			if session.Metadata != nil {
-				value = (*session.Metadata)[filter.Source]
-			}
 		default:
-			return false // Unknown filter type
+			if val, ok := (*session.Metadata)[string(filter.Type)]; ok {
+				value = val
+			}
 		}
 
 		for _, filterValue := range filter.Value {
@@ -503,14 +504,10 @@ func (sm *sessionManagerImpl) Autocomplete(projectID string, key FilterType, val
 			if session.UserCity != nil {
 				fieldValue = *session.UserCity
 			}
-		case Metadata:
-			if session.Metadata != nil {
-				if v, ok := (*session.Metadata)[string(key)]; ok {
-					fieldValue = v
-				}
-			}
 		default:
-			return nil, fmt.Errorf("unknown filter type: %s", key)
+			if v, ok := (*session.Metadata)[string(key)]; ok {
+				fieldValue = v
+			}
 		}
 
 		if fieldValue != "" && strings.Contains(strings.ToLower(fieldValue), lowerValue) {

@@ -16,17 +16,24 @@ type Query struct {
 }
 
 type Filter struct {
-	Type     string   `json:"type"`
-	Value    []string `json:"value"`
+	Value    []string `json:"values"`
 	Operator string   `json:"operator"` // is|contains
-	Source   string   `json:"source"`   // for metadata only
+}
+
+type Pagination struct {
+	Limit int `json:"limit"`
+	Page  int `json:"page"`
+}
+
+type Sort struct {
+	Key   string `json:"key"`   // useless
+	Order string `json:"order"` // [ASC|DESC]
 }
 
 type Request struct {
-	Filters []Filter `json:"filters"`
-	Order   string   `json:"order"` // sort.order [asc|desc]
-	Limit   int      `json:"limit"` // pagination.limit
-	Page    int      `json:"page"`  // pagination.page
+	Filters    map[string]Filter `json:"filter"`
+	Pagination Pagination        `json:"pagination"`
+	Sort       Sort              `json:"sort"`
 }
 
 type assistImpl struct {
@@ -102,19 +109,18 @@ func (a *assistImpl) GetAll(projectKey string, request *Request) (interface{}, e
 		return nil, fmt.Errorf("failed to get project by key: %s", err)
 	}
 	order := sessionmanager.Asc
-	if request.Order == "desc" {
+	if request.Sort.Order == "DESC" {
 		order = sessionmanager.Desc
 	}
 	filters := make([]*sessionmanager.Filter, 0, len(request.Filters))
-	for _, f := range request.Filters {
+	for name, f := range request.Filters {
 		filters = append(filters, &sessionmanager.Filter{
-			Type:     sessionmanager.FilterType(f.Type),
+			Type:     sessionmanager.FilterType(name),
 			Value:    f.Value,
 			Operator: f.Operator == "is",
-			Source:   f.Source,
 		})
 	}
-	return a.sessions.GetAll(strconv.Itoa(int(project.ProjectID)), filters, order, request.Page, request.Limit)
+	return a.sessions.GetAll(strconv.Itoa(int(project.ProjectID)), filters, order, request.Pagination.Page, request.Pagination.Limit)
 }
 
 func (a *assistImpl) GetByID(projectKey, sessionID string, filters *Request) (interface{}, error) {
