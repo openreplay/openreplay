@@ -70,7 +70,16 @@ def _not_found_error_response(resource_id: str):
 
 
 @public_app.get("/ResourceTypes", dependencies=[Depends(auth_required)])
-async def get_resource_types(r: Request):
+async def get_resource_types(r: Request, filter_param: str | None = Query(None, alias="filter")):
+    if filter_param is not None:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+                "detail": "Operation is not permitted based on the supplied authorization",
+                "status": "403",
+            }
+        )
     return JSONResponse(
         status_code=200,
         content={
@@ -116,7 +125,16 @@ SCHEMA_IDS_TO_SCHEMA_DETAILS = {
 
 
 @public_app.get("/Schemas", dependencies=[Depends(auth_required)])
-async def get_schemas():
+async def get_schemas(filter_param: str | None = Query(None, alias="filter")):
+    if filter_param is not None:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+                "detail": "Operation is not permitted based on the supplied authorization",
+                "status": "403",
+            }
+        )
     return JSONResponse(
         status_code=200,
         content={
