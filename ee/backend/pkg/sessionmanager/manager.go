@@ -44,7 +44,7 @@ type SessionManager interface {
 	Start()
 	Stop()
 	GetByID(projectID, sessionID string) (*SessionData, error)
-	GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]*SessionData, error)
+	GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]*SessionData, int, map[string]map[string]int, error)
 	Autocomplete(projectID string, key FilterType, value string) ([]string, error)
 }
 
@@ -375,7 +375,7 @@ func (sm *sessionManagerImpl) GetByID(projectID, sessionID string) (*SessionData
 	return sessionData, nil
 }
 
-func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]*SessionData, error) {
+func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]*SessionData, int, map[string]map[string]int, error) {
 	if page < 1 || limit < 1 {
 		page, limit = 1, 10 // Set default values
 	}
@@ -383,12 +383,23 @@ func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort S
 	sm.mutex.RLock()
 	defer sm.mutex.RUnlock()
 
+	// Prepare filter counter
+	counter := make(map[string]map[string]int)
+	for _, filter := range filters {
+		if _, ok := counter[string(filter.Type)]; !ok {
+			counter[string(filter.Type)] = make(map[string]int)
+		}
+		for _, value := range filter.Value {
+			counter[string(filter.Type)][value] = 0
+		}
+	}
 	filtered := make([]*SessionData, 0, limit)
 	for _, session := range sm.sorted {
+		sm.log.Info(sm.ctx, "projectID: %s, sessionID: %s", session.ProjectID, session.SessionID)
 		if session.ProjectID != projectID {
 			continue
 		}
-		if matchesFilters(session, filters) {
+		if matchesFilters(session, filters, counter) {
 			filtered = append(filtered, session)
 		}
 	}
@@ -396,19 +407,24 @@ func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort S
 	start := (page - 1) * limit
 	end := start + limit
 	if start > len(filtered) {
-		return []*SessionData{}, nil
+		return []*SessionData{}, 0, make(map[string]map[string]int), nil
 	}
 	if end > len(filtered) {
 		end = len(filtered)
 	}
-	return filtered[start:end], nil
+	return filtered[start:end], len(filtered), counter, nil
 }
 
-func matchesFilters(session *SessionData, filters []*Filter) bool {
+func matchesFilters(session *SessionData, filters []*Filter, counter map[string]map[string]int) bool {
 	if filters == nil || len(filters) == 0 {
 		return true
 	}
+	matchedFilters := make(map[string][]string, len(filters))
 	for _, filter := range filters {
+		name := string(filter.Type)
+		if _, ok := matchedFilters[name]; !ok {
+			matchedFilters[name] = make([]string, 0, len(filter.Value))
+		}
 		var value string
 
 		switch filter.Type {
@@ -449,17 +465,28 @@ func matchesFilters(session *SessionData, filters []*Filter) bool {
 				value = *session.UserCity
 			}
 		default:
-			if val, ok := (*session.Metadata)[string(filter.Type)]; ok {
+			if val, ok := (*session.Metadata)[name]; ok {
 				value = val
 			}
 		}
 
+		matched := false
 		for _, filterValue := range filter.Value {
 			if filter.Operator == Is && value != filterValue {
-				return false
+				continue
 			} else if filter.Operator == Contains && !strings.Contains(strings.ToLower(value), strings.ToLower(filterValue)) {
-				return false
+				continue
 			}
+			matched = true
+			matchedFilters[name] = append(matchedFilters[name], value)
+		}
+		if !matched {
+			return false
+		}
+	}
+	for values, filter := range matchedFilters {
+		for _, value := range filter {
+			counter[values][value]++
 		}
 	}
 	return true

@@ -120,7 +120,16 @@ func (a *assistImpl) GetAll(projectKey string, request *Request) (interface{}, e
 			Operator: f.Operator == "is",
 		})
 	}
-	return a.sessions.GetAll(strconv.Itoa(int(project.ProjectID)), filters, order, request.Pagination.Page, request.Pagination.Limit)
+	sessions, total, counter, err := a.sessions.GetAll(strconv.Itoa(int(project.ProjectID)), filters, order, request.Pagination.Page, request.Pagination.Limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sessions: %s", err)
+	}
+	resp := map[string]interface{}{
+		"total":    total,
+		"counter":  counter,
+		"sessions": sessions,
+	}
+	return resp, nil
 }
 
 func (a *assistImpl) GetByID(projectKey, sessionID string, filters *Request) (interface{}, error) {
