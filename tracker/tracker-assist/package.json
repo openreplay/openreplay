@@ -22,7 +22,6 @@
     "replace-pkg-version": "sh pkgver.sh",
     "replace-req-version": "replace-in-files lib/* cjs/* --string='REQUIRED_TRACKER_VERSION' --replacement='14.0.14'",
     "prepublishOnly": "bun run test && bun run build",
-    "lint-front": "lint-staged",
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",
     "postversion": "bun run build"
@@ -48,11 +47,6 @@
     "replace-in-files-cli": "^1.0.0",
     "ts-jest": "^29.2.5",
     "typescript": "^5.6.3"
-  },
-  "lint-staged": {
-    "*.{js,mjs,cjs,jsx,ts,tsx}": [
-      "eslint --fix --quiet"
-    ]
   },
   "packageManager": "bun@1.2.7"
 }

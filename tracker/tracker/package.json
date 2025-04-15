@@ -44,7 +44,6 @@
     "compile": "tsc --project src/main/tsconfig.json",
     "create-types": "mkdir dist/lib/ dist/cjs && cp -r dist/types/* dist/lib/ && cp -r dist/types/* dist/cjs/",
     "build": "bun run clean && bun compile && bun create-types && rollup --config rollup.config.js",
-    "lint-front": "lint-staged",
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",
     "postversion": "bun run build",
