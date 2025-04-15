@@ -37,14 +37,14 @@ type SessionData struct {
 	UserState    *string            `json:"userState"`      // is
 	UserCity     *string            `json:"userCity"`       // is
 	Metadata     *map[string]string `json:"metadata"`       // contains
-	Raw          string
+	Raw          interface{}
 }
 
 type SessionManager interface {
 	Start()
 	Stop()
 	GetByID(projectID, sessionID string) (*SessionData, error)
-	GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]string, int, map[string]map[string]int, error)
+	GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]interface{}, int, map[string]map[string]int, error)
 	Autocomplete(projectID string, key FilterType, value string) ([]string, error)
 }
 
@@ -214,7 +214,12 @@ func (sm *sessionManagerImpl) getSessionData(sessionIDs []string) map[string]*Se
 				sm.log.Debug(sm.ctx, "Error unmarshalling session data: %v", err)
 				continue
 			}
-			data.Raw = strVal
+			raw := make(map[string]interface{})
+			if err := json.Unmarshal([]byte(strVal), &raw); err != nil {
+				sm.log.Debug(sm.ctx, "Error unmarshalling raw session data: %v", err)
+				continue
+			}
+			data.Raw = raw
 			sessionData[batch[j]] = &data
 		}
 		sm.log.Debug(sm.ctx, "Collected %d sessions", len(results))
@@ -375,7 +380,7 @@ func (sm *sessionManagerImpl) GetByID(projectID, sessionID string) (*SessionData
 	return sessionData, nil
 }
 
-func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]string, int, map[string]map[string]int, error) {
+func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]interface{}, int, map[string]map[string]int, error) {
 	if page < 1 || limit < 1 {
 		page, limit = 1, 10 // Set default values
 	}
@@ -393,7 +398,7 @@ func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort S
 			counter[string(filter.Type)][value] = 0
 		}
 	}
-	filtered := make([]string, 0, limit)
+	filtered := make([]interface{}, 0, limit)
 	for _, session := range sm.sorted {
 		sm.log.Info(sm.ctx, "projectID: %s, sessionID: %s", session.ProjectID, session.SessionID)
 		if session.ProjectID != projectID {
@@ -407,7 +412,7 @@ func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sort S
 	start := (page - 1) * limit
 	end := start + limit
 	if start > len(filtered) {
-		return []string{}, 0, make(map[string]map[string]int), nil
+		return []interface{}{}, 0, make(map[string]map[string]int), nil
 	}
 	if end > len(filtered) {
 		end = len(filtered)
