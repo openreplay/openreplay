@@ -173,29 +173,6 @@ function FetchTimings({ timings }: { timings: Record<string, number> }) {
               ) : null}
             </div>
           </div>
-          <div className="mb-2">
-            <div className="relative h-6 bg-gray-lightest rounded overflow-hidden">
-              {timelineData
-                .flatMap((phase) => phase.children)
-                .filter((phase) => phase.width > 0)
-                .map((phase, index) => (
-                  <div
-                    key={index}
-                    className={`absolute top-0 h-full ${phase.color} hover:opacity-80 transition-opacity`}
-                    style={{
-                      left: `${phase.position}%`,
-                      width: `${Math.max(phase.width, 0.5)}%`, // Ensure minimum visibility
-                    }}
-                    title={`${phase.name}: ${formatTime(phase.duration)}`}
-                  />
-                ))}
-            </div>
-
-            <div className="flex justify-between mt-1 text-xs text-gray-medium">
-              <div>0ms</div>
-              <div>{formatTime(total)}</div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
