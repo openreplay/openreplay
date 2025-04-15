@@ -24,6 +24,10 @@ func main() {
 	dbMetric := databaseMetrics.New("assist")
 	metrics.New(log, append(webMetrics.List(), dbMetric.List()...))
 
+	if cfg.AssistKey == "" {
+		log.Fatal(ctx, "assist key is not set")
+	}
+
 	pgConn, err := pool.New(dbMetric, cfg.Postgres.String())
 	if err != nil {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
@@ -47,7 +51,7 @@ func main() {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
 	router.AddHandlers(prefix, builder.AssistAPI)
-	router.AddMiddlewares(builder.Auth.Middleware, builder.RateLimiter.Middleware, builder.AuditTrail.Middleware)
+	router.AddMiddlewares(builder.RateLimiter.Middleware, builder.AuditTrail.Middleware)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
 }
