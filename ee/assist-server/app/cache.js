@@ -1,13 +1,13 @@
 const {logger} = require('./logger');
-const {createClient} = require("redis");
+const Redis = require("ioredis");
 const crypto = require("crypto");
-const { Mutex } = require('async-mutex');
+const { Mutex } = require("async-mutex");
 
-let redisClient;
-const REDIS_URL = (process.env.REDIS_URL || "localhost:6379").replace(/((^\w+:|^)\/\/|^)/, 'redis://');
-redisClient = createClient({url: REDIS_URL});
-redisClient.on("error", (error) => logger.error(`Redis cache error : ${error}`));
-void redisClient.connect();
+const REDIS_URL = process.env.REDIS_URL || "localhost:6379";
+const redisClient = new Redis(REDIS_URL);
+redisClient.on("error", (error) => {
+    logger.error(`Redis cache error : ${error}`);
+});
 
 function generateNodeID() {
     const buffer = crypto.randomBytes(8);
@@ -95,7 +95,7 @@ const updateNodeCache = async function (io) {
             const batch = toAddArray.slice(i, i + batchSize);
             const pipeline = redisClient.pipeline();
             for (const sessionID of batch) {
-                pipeline.set(`assist:online_sessions:${sessionID}`, JSON.stringify(toAdd.get(sessionID)), {EX: pingInterval});
+                pipeline.set(`assist:online_sessions:${sessionID}`, JSON.stringify(toAdd.get(sessionID)), 'EX', pingInterval);
             }
             await pipeline.exec();
         }
@@ -119,10 +119,10 @@ const updateNodeCache = async function (io) {
         }
         // add recently updated sessions
         if (toUpdate.length > 0) {
-            await redisClient.sendCommand(['SADD','assist:updated_sessions', ...toUpdate]);
+            await redisClient.sadd('assist:updated_sessions', toUpdate);
         }
         // store the node sessions
-        await redisClient.set(`assist:nodes:${nodeID}:sessions`, JSON.stringify(Array.from(sessionIDs)), {EX: cacheRefreshInterval});
+        await redisClient.set(`assist:nodes:${nodeID}:sessions`, JSON.stringify(Array.from(sessionIDs)), 'EX', cacheRefreshInterval);
 
         const duration = performance.now() - startTime;
         logger.info(`Background refresh complete: ${duration}ms, ${result.length} sockets`);
