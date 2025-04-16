@@ -46,9 +46,6 @@ const io = new Server({
 io.use(async (socket, next) => await authorizer.check(socket, next));
 io.on('connection', (socket) => onConnect(socket));
 io.attachApp(app);
-io.engine.on("headers", (headers) => {
-    headers["x-host-id"] = process.env.HOSTNAME || "unknown";
-});
 setSocketIOServer(io);
 
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';

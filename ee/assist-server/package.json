@@ -12,6 +12,7 @@
   "dependencies": {
     "@fastify/deepmerge": "^3.0.0",
     "@maxmind/geoip2-node": "^6.0.0",
+    "async-mutex": "^0.5.0",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "redis": "^4.7.0",
