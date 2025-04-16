@@ -2,6 +2,7 @@ import logging
 import re
 import uuid
 from typing import Optional
+import copy
 
 from decouple import config
 from fastapi import Depends, HTTPException, Header, Query, Response, Request
@@ -11,9 +12,9 @@ from pydantic import BaseModel, Field
 
 import schemas
 from chalicelib.core import users, roles, tenants
-from chalicelib.utils.scim_auth import auth_required, create_tokens, verify_refresh_token
+from chalicelib.utils.scim_auth import auth_optional, auth_required, create_tokens, verify_refresh_token
 from routers.base import get_routers
-from routers.scim_constants import RESOURCE_TYPES, SCHEMAS
+from routers.scim_constants import RESOURCE_TYPES, SCHEMAS, SERVICE_PROVIDER_CONFIG
 
 
 logger = logging.getLogger(__name__)
@@ -157,6 +158,25 @@ async def get_schema(schema_id: str):
     return JSONResponse(
         status_code=200,
         content=SCHEMA_IDS_TO_SCHEMA_DETAILS[schema_id],
+    )
+
+
+# note(jon): it was recommended to make this endpoint partially open
+# so that clients can view the `authenticationSchemes` prior to being authenticated.
+@public_app.get("/ServiceProviderConfig")
+async def get_service_provider_config(r: Request, tenant_id: str | None = Depends(auth_optional)):
+    content = copy.deepcopy(SERVICE_PROVIDER_CONFIG)
+    content["meta"]["location"] = str(r.url)
+    is_authenticated = tenant_id is not None
+    if not is_authenticated:
+        content = {
+            "schemas": content["schemas"],
+            "authenticationSchemes": content["authenticationSchemes"],
+            "meta": content["meta"],
+        }
+    return JSONResponse(
+        status_code=200,
+        content=content,
     )
 
 

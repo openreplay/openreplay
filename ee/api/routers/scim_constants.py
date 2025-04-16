@@ -1,3 +1,5 @@
+# note(jon): please see https://datatracker.ietf.org/doc/html/rfc7643 for details on these constants
+
 RESOURCE_TYPES = sorted(
     [
         {
@@ -15,6 +17,7 @@ RESOURCE_TYPES = sorted(
 SCHEMAS = sorted(
     # todo(jon): add the user schema
     [
+        # todo(jon): update the ResourceType schema to have the correct values
         {
             "id": "urn:ietf:params:scim:schemas:core:2.0:ResourceType",
             "name": "ResourceType",
@@ -110,6 +113,7 @@ SCHEMAS = sorted(
                 }
             ]
         },
+        # todo(jon): update the Schema schema to have the correct values
         {
             "id": "urn:ietf:params:scim:schemas:core:2.0:Schema",
             "name": "Schema",
@@ -249,39 +253,38 @@ SCHEMAS = sorted(
         },
         {
             "id": "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
-            "name": "ServiceProviderConfig",
-            "description": "Defines the configuration options for the SCIM service provider.",
+            "name": "Service Provider Configuration",
+            "description": "Schema for representing the service provider's configuration.",
             "attributes": [
                 {
                     "name": "documentationUri",
-                    "type": "string",
+                    "type": "reference",
+                    "referenceTypes": ["external"],
                     "multiValued": False,
-                    "description": "The base or canonical URL of the service provider's documentation.",
+                    "description": "An HTTP-addressable URL pointing to the service provider's human consumable help documentation.",
                     "required": False,
                     "caseExact": False,
-                    "mutability": "readWrite",
+                    "mutability": "readOnly",
                     "returned": "default",
-                    "uniqueness": "none"
+                    "uniqueness": "none",
                 },
                 {
                     "name": "patch",
                     "type": "complex",
                     "multiValued": False,
-                    "description": "A complex attribute indicating the service provider's support for PATCH requests.",
-                    "required": False,
-                    "mutability": "readOnly",
+                    "description": "A complex type that specifies PATCH configuration options.",
+                    "required": True,
                     "returned": "default",
-                    "uniqueness": "none",
+                    "mutability": "readOnly",
                     "subAttributes": [
                         {
                             "name": "supported",
                             "type": "boolean",
                             "multiValued": False,
-                            "description": "A Boolean value that indicates whether PATCH is supported.",
-                            "required": False,
+                            "description": "A Boolean value specifying whether or not the operation is supported.",
+                            "required": True,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
                         }
                     ]
                 },
@@ -289,41 +292,39 @@ SCHEMAS = sorted(
                     "name": "bulk",
                     "type": "complex",
                     "multiValued": False,
-                    "description": "A complex attribute that indicates the service provider's support for bulk operations.",
-                    "required": False,
-                    "mutability": "readOnly",
+                    "description": "A complex type that specifies bulk configuration options.",
+                    "required": True,
                     "returned": "default",
-                    "uniqueness": "none",
+                    "mutability": "readOnly",
                     "subAttributes": [
                         {
                             "name": "supported",
                             "type": "boolean",
                             "multiValued": False,
-                            "description": "A Boolean value that indicates whether bulk operations are supported.",
-                            "required": False,
+                            "description": "A Boolean value specifying whether or not the operation is supported.",
+                            "required": True,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
                         },
                         {
                             "name": "maxOperations",
                             "type": "integer",
                             "multiValued": False,
-                            "description": "The maximum number of operations that can be performed in a bulk request.",
-                            "required": False,
+                            "description": "An integer value specifying the maximum number of operations.",
+                            "required": True,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
+                            "uniqueness": "none",
                         },
                         {
                             "name": "maxPayloadSize",
                             "type": "integer",
                             "multiValued": False,
-                            "description": "The maximum payload size in bytes for a bulk request.",
-                            "required": False,
+                            "description": "An integer value specifying the maximum payload size in bytes.",
+                            "required": True,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
+                            "uniqueness": "none",
                         }
                     ]
                 },
@@ -331,31 +332,29 @@ SCHEMAS = sorted(
                     "name": "filter",
                     "type": "complex",
                     "multiValued": False,
-                    "description": "A complex attribute that indicates the service provider's support for filtering.",
-                    "required": False,
-                    "mutability": "readOnly",
+                    "description": "A complex type that specifies FILTER options.",
+                    "required": True,
                     "returned": "default",
-                    "uniqueness": "none",
+                    "mutability": "readOnly",
                     "subAttributes": [
                         {
                             "name": "supported",
                             "type": "boolean",
                             "multiValued": False,
-                            "description": "A Boolean value that indicates whether filtering is supported.",
-                            "required": False,
+                            "description": "A Boolean value specifying whether or not the operation is supported.",
+                            "required": True,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
                         },
                         {
                             "name": "maxResults",
                             "type": "integer",
                             "multiValued": False,
-                            "description": "The maximum number of resources returned in a search response.",
-                            "required": False,
+                            "description": "The integer value specifying the maximum number of resources returned in a response.",
+                            "required": True,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
+                            "uniqueness": "none",
                         }
                     ]
                 },
@@ -363,137 +362,237 @@ SCHEMAS = sorted(
                     "name": "changePassword",
                     "type": "complex",
                     "multiValued": False,
-                    "description": "A complex attribute that indicates the service provider's support for change password requests.",
-                    "required": False,
-                    "mutability": "readOnly",
+                    "description": "A complex type that specifies configuration options related to changing a password.",
+                    "required": True,
                     "returned": "default",
-                    "uniqueness": "none",
+                    "mutability": "readOnly",
                     "subAttributes": [
                         {
                             "name": "supported",
                             "type": "boolean",
                             "multiValued": False,
-                            "description": "A Boolean value that indicates whether the change password operation is supported.",
-                            "required": False,
+                            "description": "A Boolean value specifying whether or not the operation is supported.",
+                            "required": True,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
                         }
-                    ]
+                    ],
                 },
                 {
                     "name": "sort",
                     "type": "complex",
                     "multiValued": False,
-                    "description": "A complex attribute that indicates the service provider's support for sorting.",
-                    "required": False,
-                    "mutability": "readOnly",
+                    "description": "A complex type that specifies sort result options.",
+                    "required": True,
                     "returned": "default",
-                    "uniqueness": "none",
+                    "mutability": "readOnly",
                     "subAttributes": [
                         {
                             "name": "supported",
                             "type": "boolean",
                             "multiValued": False,
-                            "description": "A Boolean value that indicates whether sorting is supported.",
-                            "required": False,
+                            "description": "A Boolean value specifying whether or not the operation is supported.",
+                            "required": True,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
                         }
-                    ]
+                    ],
                 },
                 {
                     "name": "etag",
                     "type": "complex",
                     "multiValued": False,
-                    "description": "A complex attribute that indicates the service provider's support for ETag in responses.",
-                    "required": False,
-                    "mutability": "readOnly",
+                    "description": "A complex type that specifies ETag configuration options.",
+                    "required": True,
                     "returned": "default",
-                    "uniqueness": "none",
+                    "mutability": "readOnly",
                     "subAttributes": [
                         {
                             "name": "supported",
                             "type": "boolean",
                             "multiValued": False,
-                            "description": "A Boolean value that indicates whether ETag is supported.",
-                            "required": False,
+                            "description": "A Boolean value specifying whether or not the operation is supported.",
+                            "required": True,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
                         }
-                    ]
+                    ],
                 },
                 {
                     "name": "authenticationSchemes",
                     "type": "complex",
                     "multiValued": True,
-                    "description": "A multi-valued complex attribute that defines the authentication schemes supported by the service provider.",
-                    "required": False,
-                    "mutability": "readOnly",
+                    "description": "A complex type that specifies supported authentication scheme properties.",
+                    "required": True,
                     "returned": "default",
-                    "uniqueness": "none",
+                    "mutability": "readOnly",
                     "subAttributes": [
                         {
                             "name": "type",
                             "type": "string",
                             "multiValued": False,
-                            "description": "The type of the authentication scheme.",
-                            "required": False,
+                            "description": "The authentication scheme.  This specification defines the values 'oauth', 'oauth2', 'oauthbearertoken', 'httpbasic', and 'httpdigest'.",
+                            "required": True,
                             "caseExact": False,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
+                            "uniqueness": "none",
                         },
                         {
                             "name": "name",
                             "type": "string",
                             "multiValued": False,
-                            "description": "The common name of the authentication scheme.",
-                            "required": False,
+                            "description": "The common authentication scheme name, e.g., HTTP Basic.",
+                            "required": True,
                             "caseExact": False,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
+                            "uniqueness": "none",
                         },
                         {
                             "name": "description",
                             "type": "string",
                             "multiValued": False,
                             "description": "A description of the authentication scheme.",
-                            "required": False,
+                            "required": True,
                             "caseExact": False,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
+                            "uniqueness": "none",
                         },
                         {
                             "name": "specUri",
-                            "type": "string",
+                            "type": "reference",
+                            "referenceTypes": ["external"],
                             "multiValued": False,
-                            "description": "A URI that points to the authentication scheme's specification.",
+                            "description": "An HTTP-addressable URL pointing to the authentication scheme's specification.",
                             "required": False,
                             "caseExact": False,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
+                            "uniqueness": "none",
                         },
                         {
                             "name": "documentationUri",
-                            "type": "string",
+                            "type": "reference",
+                            "referenceTypes": ["external"],
                             "multiValued": False,
-                            "description": "A URI that points to the documentation for this scheme.",
+                            "description": "An HTTP-addressable URL pointing to the authentication scheme's usage documentation.",
                             "required": False,
                             "caseExact": False,
                             "mutability": "readOnly",
                             "returned": "default",
-                            "uniqueness": "none"
+                            "uniqueness": "none",
+                        },
+                        {
+                            "name": "primary",
+                            "type": "boolean",
+                            "multiValued": False,
+                            "description": "A Boolean value specifying whether or not the attribute is the preferred attribute value.",
+                            "required": True,
+                            "mutability": "readOnly",
+                            "returned": "default",
                         }
                     ]
-                }
+                },
+                {
+                    "name": "meta",
+                    "type": "complex",
+                    "multiValued": True,
+                    "description": "A complex type that specifies resource metadata.",
+                    "required": True,
+                    "returned": "default",
+                    "mutability": "readOnly",
+                    "subAttributes": [
+                        {
+                            "name": "resourceType",
+                            "type": "string",
+                            "multiValued": False,
+                            "description": "The name of the resource type of the resource.",
+                            "required": True,
+                            "caseExact": True,
+                            "mutability": "readOnly",
+                            "returned": "default",
+                        },
+                        {
+                            "name": "created",
+                            "type": "datetime",
+                            "multiValued": False,
+                            "description": " The 'DateTime' that the resource was added to the service provider.",
+                            "required": True,
+                            "mutability": "readOnly",
+                            "returned": "default",
+                        },
+                        {
+                            "name": "lastModified",
+                            "type": "datetime",
+                            "multiValued": False,
+                            "description": "The most recent DateTime that the details of this resource were updated at the service provider.",
+                            "required": True,
+                            "mutability": "readOnly",
+                            "returned": "default",
+                        },
+                        {
+                            "name": "location",
+                            "type": "reference",
+                            "referenceTypes": ["ServiceProviderConfig"],
+                            "multiValued": False,
+                            "description": "The URI of the resource being returned.",
+                            "required": True,
+                            "mutability": "readOnly",
+                            "returned": "default",
+                        },
+                    ]
+                },                
             ]
         },
     ],
     key=lambda x: x["id"],
 )
+
+SERVICE_PROVIDER_CONFIG = {
+    "schemas": ["urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"],
+    "patch": {
+        # todo(jon): this needs to be updated to True once we properly implement patching for users and groups
+        "supported": False,
+    },
+    "bulk": {
+        "supported": False,
+        "maxOperations": 0,
+        "maxPayloadSize": 0,
+    },
+    "filter": {
+        # todo(jon): this needs to be updated to True once we properly implement filtering for users and groups
+        "supported": False,
+        "maxResults": 0,
+    },
+    "changePassword": {
+        "supported": False,
+    },
+    "sort": {
+        "supported": False,
+    },
+    "etag": {
+        "supported": False,
+    },
+    "authenticationSchemes": [
+        {
+            "type": "oauthbearertoken",
+            "name": "OAuth Bearer Token",
+            "description": "Authentication scheme using the OAuth Bearer Token Standard. The access token should be sent in the 'Authorization' header using the Bearer schema.",
+            "specUri": "https://tools.ietf.org/html/rfc6750",
+            # todo(jon): see if we have our own documentation for this
+            # "documentationUri": "", # optional
+            "primary": True,
+        },
+    ],
+    "meta": {
+        "resourceType": "ServiceProviderConfig",
+        "created": "2025-04-15T15:45",
+        # note(jon): we might want to think about adding this resource as part of our db
+        # and then updating these timestamps from an api and such. for now, if we update
+        # the configuration, we should update the timestamp here.
+        "lastModified": "2025-04-15T15:45",
+        "location": "", # note(jon): this field will be computed in the /ServiceProviderConfig endpoint
+    },
+}
