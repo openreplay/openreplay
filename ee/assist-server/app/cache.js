@@ -118,7 +118,9 @@ const updateNodeCache = async function (io) {
             await pipeline.exec();
         }
         // add recently updated sessions
-        await redisClient.sadd(`assist:updated_sessions`, JSON.stringify(toUpdate));
+        if (toUpdate.length > 0) {
+            await redisClient.sendCommand(['SADD','assist:updated_sessions', ...toUpdate]);
+        }
         // store the node sessions
         await redisClient.set(`assist:nodes:${nodeID}:sessions`, JSON.stringify(Array.from(sessionIDs)), {EX: cacheRefreshInterval});
 
