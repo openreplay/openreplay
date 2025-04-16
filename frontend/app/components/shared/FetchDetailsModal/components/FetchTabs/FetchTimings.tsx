@@ -32,14 +32,8 @@ function FetchTimings({ timings }: { timings: Record<string, number> }) {
         {
           key: 'queueing',
           name: 'Queueing',
-          color: 'bg-[#99a1af]',
+          color: 'bg-transparent border border-[#666]',
           description: 'Time spent in browser queue before connection start',
-        },
-        {
-          key: 'stalled',
-          name: 'Stalled',
-          color: 'bg-[#c3c3c3]',
-          description: 'Time request was stalled after connection start',
         },
       ],
     },
@@ -47,21 +41,27 @@ function FetchTimings({ timings }: { timings: Record<string, number> }) {
       category: 'Connection Start',
       children: [
         {
+          key: 'stalled',
+          name: 'Stalled',
+          color: 'bg-[#c3c3c3]',
+          description: 'Time request was stalled after connection start',
+        },
+        {
           key: 'dnsLookup',
           name: 'DNS Lookup',
-          color: 'bg-[#00c951]',
+          color: 'bg-[#12546C]',
           description: 'Time spent resolving the DNS',
         },
         {
           key: 'initialConnection',
           name: 'Initial Connection',
-          color: 'bg-[#efb100]',
+          color: 'bg-[#DD4F18]',
           description: 'Time establishing connection (TCP handshakes/retries)',
         },
         {
           key: 'ssl',
           name: 'SSL',
-          color: 'bg-[#ad46ff]',
+          color: 'bg-[#C079FF]',
           description: 'Time spent completing SSL/TLS handshake',
         },
       ],
@@ -72,13 +72,13 @@ function FetchTimings({ timings }: { timings: Record<string, number> }) {
         {
           key: 'ttfb',
           name: 'Request & TTFB',
-          color: 'bg-[#2b7fff]',
+          color: 'bg-[#3CB347]',
           description: 'Time waiting for first byte (server response time)',
         },
         {
           key: 'contentDownload',
           name: 'Content Download',
-          color: 'bg-[#00a63e]',
+          color: 'bg-[#3E78F7]',
           description: 'Time spent receiving the response data',
         },
       ],
@@ -116,27 +116,27 @@ function FetchTimings({ timings }: { timings: Record<string, number> }) {
   const timelineData = React.useMemo(() => calculateTimelines(), [total]);
 
   return (
-    <div className="w-full bg-white rounded-lg shadow-sm p-4 font-sans">
+    <div className="w-full py-4 font-sans">
       <div>
         <div className="space-y-4">
           {timelineData.map((cat, index) => (
             <div>
-              <div>{cat.category}</div>
+              <div className='text-neutral-500'>{cat.category}</div>
               <div>
                 {cat.children.map((phase, index) => (
                   <div
                     key={index}
                     className="grid grid-cols-12 items-center gap-2 space-y-2"
                   >
-                    <div className="col-span-4 text-sm text-gray-dark font-medium flex items-center gap-2">
+                    <div className="col-span-4 text-sm text-neutral-950 font-medium flex items-center gap-2">
                       <Tooltip title={phase.description}>
                         <HelpCircle size={12} />
                       </Tooltip>
                       <span>{phase.name}:</span>
                     </div>
 
-                    <div className="col-span-6 relative">
-                      <div className="h-5 bg-gray-lightest rounded overflow-hidden">
+                    <div className="col-span-7 relative">
+                      <div className="h-4 bg-neutral-50 overflow-hidden">
                         {phase.width > 0 && (
                           <div
                             className={`absolute top-0 h-full ${phase.color} hover:opacity-80 transition-opacity`}
@@ -150,7 +150,7 @@ function FetchTimings({ timings }: { timings: Record<string, number> }) {
                       </div>
                     </div>
 
-                    <div className="col-span-2 text-right font-mono text-sm text-gray-dark">
+                    <div className="col-span-1 text-right font-mono text-sm text-gray-dark">
                       {formatTime(phase.duration)}
                     </div>
                   </div>
@@ -160,11 +160,11 @@ function FetchTimings({ timings }: { timings: Record<string, number> }) {
           ))}
 
           <div className="grid grid-cols-12 items-center gap-2 pt-2 border-t border-t-gray-light mt-2">
-            <div className="col-span-3 text-sm text-gray-dark font-semibold">
+            <div className="col-span-3 text-sm text-neutral-950 font-semibold">
               Total:
             </div>
             <div className="col-span-7"></div>
-            <div className="col-span-2 text-right font-mono text-sm text-gray-dark font-semibold">
+            <div className="col-span-2 text-right font-mono text-sm text-neutral-950 font-semibold">
               {formatTime(total)}{' '}
               {isAdjusted ? (
                 <span className="ml-1 text-xs text-yellow">
