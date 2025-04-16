@@ -1,3 +1,7 @@
+## 16.1.3
+
+- same as previous, more strict checks for body obj
+
 ## 16.1.2
 
 - bump networkProxy version (prevent reusage of body streams, fix for sanitizer network body checks)

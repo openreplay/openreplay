@@ -80,17 +80,23 @@ export function filterBody(body: any): string {
     obscureSensitiveData(parsedBody);
     return JSON.stringify(parsedBody);
   } else {
-    try {
-      const params = new URLSearchParams(body);
-      for (const key of params.keys()) {
-        if (sensitiveParams.has(key.toLowerCase())) {
-          const value = obscure(params.get(key))
-          params.set(key, value);
+    const isUrlSearch = typeof body === "string" && body.includes("?") && body.includes("=");
+    if (isUrlSearch) {
+      try {
+        const params = new URLSearchParams(body);
+        for (const key of params.keys()) {
+          if (sensitiveParams.has(key.toLowerCase())) {
+            const value = obscure(params.get(key))
+            params.set(key, value);
+          }
         }
+        return params.toString();
+      } catch (e) {
+        // not url query ?
+        return body;
       }
-      return params.toString();
-    } catch (e) {
-      // not string or url query
+    } else {
+      // not json or url query
       return body;
     }
   }

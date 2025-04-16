@@ -1,6 +1,6 @@
 {
   "name": "@openreplay/network-proxy",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "this library helps us to create proxy objects for fetch, XHR and beacons for proper request tracking.",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -17,10 +17,10 @@
   "author": "Nikita <nikita@openreplay.com>",
   "license": "MIT",
   "devDependencies": {
-    "@vitest/coverage-istanbul": "^3.0.9",
-    "jsdom": "^26.0.0",
-    "typescript": "^5.8.2",
-    "vitest": "^3.0.9"
+    "@vitest/coverage-istanbul": "^3.1.1",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.1"
   },
   "packageManager": "yarn@4.7.0"
 }
