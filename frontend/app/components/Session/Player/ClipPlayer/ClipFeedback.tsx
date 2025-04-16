@@ -8,7 +8,7 @@ import {
   LikeFilled,
   LikeOutlined,
 } from '@ant-design/icons';
-import { Tour, TourProps } from './.store/antd-virtual-7db13b4af6/package';
+import { Tour, TourProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 interface Props {

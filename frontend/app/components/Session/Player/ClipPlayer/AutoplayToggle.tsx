@@ -5,11 +5,11 @@ import {
   PlayerContext,
 } from 'Components/Session/playerContext';
 import { useStore } from '@/mstore';
-import { Switch, Tooltip } from './.store/antd-virtual-7db13b4af6/package';
+import { Switch, Tooltip } from 'antd';
 import {
   CaretRightOutlined,
   PauseOutlined,
-} from './.store/@ant-design-icons-virtual-de151eefe5/package';
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
 function AutoplayToggle() {
