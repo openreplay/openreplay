@@ -101,7 +101,6 @@ func (e *handlersImpl) autocomplete(w http.ResponseWriter, r *http.Request) {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	e.log.Debug(context.Background(), "autocomplete request, projectKey: %s, query: %v, response: %v", projectKey, query, resp)
 	response := map[string]interface{}{
 		"data": resp,
 	}
@@ -122,25 +121,12 @@ func (e *handlersImpl) socketsListByProject(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-	e.log.Debug(context.Background(), "bodyBytes: %s", bodyBytes)
-	bodySize = len(bodyBytes)
-	req := &service.Request{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
 
-	resp, err := e.assist.GetByID(projectKey, sessionID, req)
+	resp, err := e.assist.GetByID(projectKey, sessionID)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	e.log.Debug(context.Background(), "socketsListByProject request, projectKey: %s, sessionID: %s, req: %v, response: %v", projectKey, sessionID, req, resp)
 	response := map[string]interface{}{
 		"data": resp,
 	}
@@ -174,7 +160,6 @@ func (e *handlersImpl) socketsLiveByProject(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	e.log.Debug(context.Background(), "socketsLiveByProject request, filters: %v, projectKey: %s, response: %v", req, projectKey, resp)
 	response := map[string]interface{}{
 		"data": resp,
 	}
@@ -195,25 +180,12 @@ func (e *handlersImpl) socketsLiveBySession(w http.ResponseWriter, r *http.Reque
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-	e.log.Debug(context.Background(), "bodyBytes: %s", bodyBytes)
-	bodySize = len(bodyBytes)
-	req := &service.Request{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
 
-	resp, err := e.assist.GetByID(projectKey, sessionID, req)
+	resp, err := e.assist.GetByID(projectKey, sessionID)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	e.log.Debug(context.Background(), "socketsLiveBySession request, projectKey: %s, sessionID: %s, req: %v, response: %v", projectKey, sessionID, req, resp)
 	response := map[string]interface{}{
 		"data": resp,
 	}

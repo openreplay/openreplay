@@ -10,32 +10,6 @@ import (
 	"openreplay/backend/pkg/sessionmanager"
 )
 
-type Query struct {
-	Key   string
-	Value string
-}
-
-type Filter struct {
-	Value    []string `json:"values"`
-	Operator string   `json:"operator"` // is|contains
-}
-
-type Pagination struct {
-	Limit int `json:"limit"`
-	Page  int `json:"page"`
-}
-
-type Sort struct {
-	Key   string `json:"key"`   // useless
-	Order string `json:"order"` // [ASC|DESC]
-}
-
-type Request struct {
-	Filters    map[string]Filter `json:"filter"`
-	Pagination Pagination        `json:"pagination"`
-	Sort       Sort              `json:"sort"`
-}
-
 type assistImpl struct {
 	log      logger.Logger
 	pgconn   pool.Pool
@@ -45,9 +19,9 @@ type assistImpl struct {
 
 type Assist interface {
 	Autocomplete(projectKey string, query *Query) (interface{}, error)
-	IsLive(projectKey, sessionID string, filters *Request) (bool, error)
+	IsLive(projectKey, sessionID string) (bool, error)
 	GetAll(projectKey string, filters *Request) (interface{}, error)
-	GetByID(projectKey, sessionID string, filters *Request) (interface{}, error)
+	GetByID(projectKey, sessionID string) (interface{}, error)
 }
 
 func NewAssist(log logger.Logger, pgconn pool.Pool, projects projects.Projects, sessions sessionmanager.SessionManager) Assist {
@@ -77,14 +51,12 @@ func (a *assistImpl) Autocomplete(projectKey string, query *Query) (interface{},
 	return a.sessions.Autocomplete(strconv.Itoa(int(project.ProjectID)), sessionmanager.FilterType(query.Key), query.Value)
 }
 
-func (a *assistImpl) IsLive(projectKey, sessionID string, filters *Request) (bool, error) {
+func (a *assistImpl) IsLive(projectKey, sessionID string) (bool, error) {
 	switch {
 	case projectKey == "":
 		return false, fmt.Errorf("project key is required")
 	case sessionID == "":
 		return false, fmt.Errorf("session ID is required")
-	case filters == nil:
-		return false, fmt.Errorf("filters are required")
 	}
 	project, err := a.projects.GetProjectByKey(projectKey)
 	if err != nil {
@@ -132,14 +104,12 @@ func (a *assistImpl) GetAll(projectKey string, request *Request) (interface{}, e
 	return resp, nil
 }
 
-func (a *assistImpl) GetByID(projectKey, sessionID string, filters *Request) (interface{}, error) {
+func (a *assistImpl) GetByID(projectKey, sessionID string) (interface{}, error) {
 	switch {
 	case projectKey == "":
 		return nil, fmt.Errorf("project key is required")
 	case sessionID == "":
 		return nil, fmt.Errorf("session ID is required")
-	case filters == nil:
-		return nil, fmt.Errorf("filters are required")
 	}
 	project, err := a.projects.GetProjectByKey(projectKey)
 	if err != nil {
