@@ -68,10 +68,21 @@ def verify_refresh_token(token: str):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+required_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # Authentication Dependency
-def auth_required(token: str = Depends(oauth2_scheme)):
+def auth_required(token: str = Depends(required_oauth2_scheme)):
     """Dependency to check Authorization header."""
     if config("SCIM_AUTH_TYPE") == "OAuth2":
         payload = verify_access_token(token)
     return payload["tenant_id"]
+
+
+optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+def auth_optional(token: str | None = Depends(optional_oauth2_scheme)):
+    if token is None:
+        return None
+    try:
+        tenant_id = auth_required(token)
+        return tenant_id
+    except HTTPException:
+        return None
