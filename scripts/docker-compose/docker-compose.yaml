@@ -10,6 +10,13 @@ services:
       - openreplay-net
     environment:
       POSTGRESQL_PASSWORD: ${COMMON_PG_PASSWORD}
+  clickhouse:
+    image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
+    container_name: clickhouse
+    volumes:
+      - clickhouse:/var/lib/clickhouse
+    networks:
+      - openreplay-net
 
   redis:
     image: bitnami/redis:${REDIS_VERSION}
