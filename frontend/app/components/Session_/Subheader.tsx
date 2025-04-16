@@ -137,6 +137,13 @@ function SubHeader(props) {
 
   return (
     <>
+   <WarnBadge
+      siteId={projectId!}
+      currentLocation={currentLocation}
+      version={currentSession?.trackerVersion ?? ''}
+      containerStyle={{ position: 'relative', left: 0, top: 0, transform: 'none', zIndex: 10 }}
+      trackerWarnStyle={{ backgroundColor: '#fffbeb' }}
+    />
       <div
         className="w-full px-4 flex items-center border-b relative"
         style={{
