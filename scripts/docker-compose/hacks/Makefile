@@ -9,9 +9,9 @@ helm-template:
 
 .PHONY: create-yamls
 create-yamls: helm-template
-	@# @cat ../deployment.yaml | awk -v RS='---' 'NR>1{kind=""; name=""; if(match($0, /kind:[[:space:]]*([a-zA-Z]+)/, k) && match($0, /name:[[:space:]]*([a-zA-Z0-9_.-]+)/, n)) {kind=k[1]; name=n[1]; print $0 > kind"-"name".yaml";}}'
-	@# Only deployments
-	@cat yamls/deployment.yaml | awk -v RS='---' 'NR>1{kind=""; name=""; if(match($$0, /kind:[[:space:]]*([a-zA-Z]+)/, k) && match($$0, /name:[[:space:]]*([a-zA-Z0-9_.-]+)/, n)) {kind=k[1]; name=n[1]; if(kind == "Deployment") print $$0 > "yamls/"name".yaml";}}'
+	@cat yamls/deployment.yaml | awk -v RS='---' 'NR>1{kind=""; name=""; if(match($$0, /kind:[[:space:]]*([a-zA-Z]+)/, k) &&  \
+						match($$0, /name:[[:space:]]*([a-zA-Z0-9_.-]+)/, n)) \
+						{kind=k[1]; name=n[1]; if(kind == "Deployment") print $$0 > "yamls/"name".yaml";}}'
 	@rm yamls/ingress-nginx.yaml
 	@rm yamls/deployment.yaml
 

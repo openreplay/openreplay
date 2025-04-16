@@ -1,17 +1,19 @@
 postgresql: &postgres
-  postgresqlPassword: change_me_pg_password
+  postgresqlPassword: '${COMMON_PG_PASSWORD}'
 minio:
   global:
     minio:
-      accessKey: &accessKey 'change_me_s3_key'
-      secretKey: &secretKey 'change_me_s3_secret'
+      accessKey: &accessKey '${COMMON_S3_KEY}'
+      secretKey: &secretKey '${COMMON_S3_SECRET}'
 global:
   postgresql: *postgres
-  assistKey: 'change_me_assist_secret'
+  assistKey: '${COMMON_ASSIST_KEY}'
   assistJWTSecret: 'change_me_assist_jwt_secret'
   jwtSecret: 'change_me_jwt'
   jwtSpotSecret: 'change_me_jwt_spot'
   tokenSecret: 'change_me_token_secret'
+  domainName: "${COMMON_DOMAIN_NAME}"
+  ORSecureAccess: false
   s3:
     accessKey: *accessKey
     secretKey: *secretKey
