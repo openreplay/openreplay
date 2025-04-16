@@ -1,0 +1,17 @@
+postgresql: &postgres
+  postgresqlPassword: change_me_pg_password
+minio:
+  global:
+    minio:
+      accessKey: &accessKey 'change_me_s3_key'
+      secretKey: &secretKey 'change_me_s3_secret'
+global:
+  postgresql: *postgres
+  assistKey: 'change_me_assist_secret'
+  assistJWTSecret: 'change_me_assist_jwt_secret'
+  jwtSecret: 'change_me_jwt'
+  jwtSpotSecret: 'change_me_jwt_spot'
+  tokenSecret: 'change_me_token_secret'
+  s3:
+    accessKey: *accessKey
+    secretKey: *secretKey
