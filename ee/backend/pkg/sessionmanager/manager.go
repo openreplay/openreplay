@@ -381,14 +381,10 @@ func (sm *sessionManagerImpl) GetByID(projectID, sessionID string) (interface{},
 }
 
 func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sortOrder SortOrder, page, limit int) ([]interface{}, int, map[string]map[string]int, error) {
-	if page < 1 || limit < 1 {
-		page, limit = 1, 10
+	if projectID == "" {
+		return nil, 0, nil, fmt.Errorf("project ID is required")
 	}
 
-	sm.mutex.RLock()
-	defer sm.mutex.RUnlock()
-
-	// Initialize filter counters
 	counter := make(map[string]map[string]int)
 	for _, filter := range filters {
 		if _, ok := counter[string(filter.Type)]; !ok {
@@ -399,39 +395,37 @@ func (sm *sessionManagerImpl) GetAll(projectID string, filters []*Filter, sortOr
 		}
 	}
 
+	if page < 1 || limit < 1 {
+		page, limit = 1, 10
+	}
 	start := (page - 1) * limit
 	end := start + limit
 
 	result := make([]interface{}, 0, limit)
 	totalMatches := 0
 
-	doFiltering := func(session *SessionData) bool {
+	doFiltering := func(session *SessionData) {
 		if session.ProjectID != projectID {
-			return true
+			return // TODO: keep sessions separate by projectID
 		}
 		if matchesFilters(session, filters, counter) {
 			if totalMatches >= start && totalMatches < end {
 				result = append(result, session.Raw)
 			}
 			totalMatches++
-			if totalMatches >= end {
-				return false
-			}
 		}
-		return true
 	}
+
+	sm.mutex.RLock()
+	defer sm.mutex.RUnlock()
 
 	if sortOrder == Asc {
 		for _, session := range sm.sorted {
-			if !doFiltering(session) {
-				break
-			}
+			doFiltering(session)
 		}
 	} else {
 		for i := len(sm.sorted) - 1; i >= 0; i-- {
-			if !doFiltering(sm.sorted[i]) {
-				break
-			}
+			doFiltering(sm.sorted[i])
 		}
 	}
 	return result, totalMatches, counter, nil
