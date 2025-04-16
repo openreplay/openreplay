@@ -3,20 +3,21 @@ help: ## Prints help for targets with comments
 
 .PHONY: helm-template
 helm-template:
-	@rm -rf tmpdir
-	@mkdir tmpdir
-	@helm template op ../../helmcharts/openreplay -f ../../helmcharts/vars.yaml -f vars.yaml > tmpdir/deployment.yaml 
+	@rm -rf yamls
+	@mkdir yamls
+	@helm template op ../../helmcharts/openreplay -f ../../helmcharts/vars.yaml -f vars.yaml > yamls/deployment.yaml 
 
 .PHONY: create-yamls
 create-yamls: helm-template
 	@# @cat ../deployment.yaml | awk -v RS='---' 'NR>1{kind=""; name=""; if(match($0, /kind:[[:space:]]*([a-zA-Z]+)/, k) && match($0, /name:[[:space:]]*([a-zA-Z0-9_.-]+)/, n)) {kind=k[1]; name=n[1]; print $0 > kind"-"name".yaml";}}'
 	@# Only deployments
-	@cat tmpdir/deployment.yaml | awk -v RS='---' 'NR>1{kind=""; name=""; if(match($$0, /kind:[[:space:]]*([a-zA-Z]+)/, k) && match($$0, /name:[[:space:]]*([a-zA-Z0-9_.-]+)/, n)) {kind=k[1]; name=n[1]; if(kind == "Deployment") print $$0 > "tmpdir/"name".yaml";}}'
-	@rm tmpdir/ingress-nginx.yaml
+	@cat yamls/deployment.yaml | awk -v RS='---' 'NR>1{kind=""; name=""; if(match($$0, /kind:[[:space:]]*([a-zA-Z]+)/, k) && match($$0, /name:[[:space:]]*([a-zA-Z0-9_.-]+)/, n)) {kind=k[1]; name=n[1]; if(kind == "Deployment") print $$0 > "yamls/"name".yaml";}}'
+	@rm yamls/ingress-nginx.yaml
+	@rm yamls/deployment.yaml
 
 .PHONY: create-envs
 create-envs: create-yamls ## Create envs from deployment
 	@rm -rf envs
 	@mkdir envs
 	@# @find ./ -type f -iname "Deployment" -exec templater -i env.tpl -f ../deployment.yaml {} > {}.env \;
-	@find tmpdir/ -type f -name "*.yaml" -exec sh -c 'filename=$$(basename {} .yaml); templater -i tpls/env.tpl -f {} > envs/$${filename}.env' \;
+	@find yamls/ -type f -name "*.yaml" -exec sh -c 'filename=$$(basename {} -openreplay.yaml); templater -i tpls/env.tpl -f {} > envs/$${filename}.env' \;
