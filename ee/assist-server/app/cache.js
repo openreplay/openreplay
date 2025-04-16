@@ -40,20 +40,6 @@ const renewSession = async function (sessionID){
     }
 }
 
-const getSessionFromCache = async function (sessionID) {
-    try {
-        const sessionData = await redisClient.get(`assist:online_sessions:${sessionID}`);
-        if (sessionData) {
-            logger.debug(`Session ${sessionID} retrieved from Redis`);
-            return JSON.parse(sessionData);
-        }
-        return null;
-    } catch (error) {
-        logger.error(error);
-        return null;
-    }
-}
-
 const removeSessionFromCache = async function (sessionID) {
     try {
         await redisClient.del(`assist:online_sessions:${sessionID}`);
@@ -103,7 +89,6 @@ function startCacheRefresher(io) {
 module.exports = {
     addSessionToCache,
     renewSession,
-    getSessionFromCache,
     removeSessionFromCache,
     startCacheRefresher,
 }
