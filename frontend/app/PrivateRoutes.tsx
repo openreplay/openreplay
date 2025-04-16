@@ -1,5 +1,4 @@
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
-import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import React, { Suspense, lazy } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
@@ -10,7 +9,7 @@ import { Loader } from 'UI';
 
 import APIClient from './api_client';
 import * as routes from './routes';
-import { debounce } from '@/utils';
+import { debounceCall } from '@/utils';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -88,7 +87,6 @@ const ASSIST_PATH = routes.assist();
 const LIVE_SESSION_PATH = routes.liveSession();
 const MULTIVIEW_PATH = routes.multiview();
 const MULTIVIEW_INDEX_PATH = routes.multiviewIndex();
-const ASSIST_STATS_PATH = routes.assistStats();
 
 const USABILITY_TESTING_PATH = routes.usabilityTesting();
 const USABILITY_TESTING_EDIT_PATH = routes.usabilityTestingEdit();
@@ -99,7 +97,6 @@ const SPOT_PATH = routes.spot();
 const SCOPE_SETUP = routes.scopeSetup();
 
 const HIGHLIGHTS_PATH = routes.highlights();
-let debounceSearch: any = () => {};
 
 function PrivateRoutes() {
   const { projectsStore, userStore, integrationsStore, searchStore } = useStore();
@@ -125,12 +122,8 @@ function PrivateRoutes() {
   }, [siteId]);
 
   React.useEffect(() => {
-    debounceSearch = debounce(() => searchStore.fetchSessions(), 250);
-  }, []);
-
-  React.useEffect(() => {
     if (!searchStore.urlParsed) return;
-    debounceSearch();
+    debounceCall(() => searchStore.fetchSessions(true), 250)()
   }, [searchStore.urlParsed, searchStore.instance.filters, searchStore.instance.eventsOrder]);
 
   return (
