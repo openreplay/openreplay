@@ -83,8 +83,11 @@ async function getRoomData(roomID) {
 async function onConnect(socket) {
     logger.debug(`A new client:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
     // Drop unknown socket.io connections
-    if (socket.handshake.query.identity === undefined || socket.handshake.query.peerId === undefined || socket.handshake.query.sessionInfo === undefined) {
-        logger.debug(`something is undefined, refusing connexion`);
+    if (socket.handshake.query.identity === undefined || socket.handshake.query.peerId === undefined) {
+        logger.debug(`no identity or peerId, refusing connexion`);
+        return socket.disconnect();
+    } else if (socket.handshake.query.identity === IDENTITIES.session && socket.handshake.query.sessionInfo === undefined) {
+        logger.debug(`sessionInfo is undefined, refusing connexion`);
         return socket.disconnect();
     }
     processPeerInfo(socket);
