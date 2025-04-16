@@ -5,6 +5,7 @@ import cn from 'classnames';
 import { Loader } from 'UI';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { useTranslation } from 'react-i18next';
+import { VList } from 'virtua';
 
 function TruncatedText({
   text,
@@ -170,17 +171,19 @@ export function AutocompleteModal({
           <>
             <div
               className="flex flex-col gap-2 overflow-y-auto py-2 overflow-x-hidden text-ellipsis"
-              style={{ maxHeight: 200 }}
+              style={{ height: Math.min(sortedOptions.length * 32, 240) }}
             >
-              {sortedOptions.map((item) => (
-                <div
-                  key={item.value}
-                  onClick={() => onSelectOption(item)}
-                  className="cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2"
-                >
-                  <Checkbox checked={isSelected(item)} /> {item.label}
-                </div>
-              ))}
+              <VList count={sortedOptions.length} itemSize={18}>
+                {sortedOptions.map((item) => (
+                  <div
+                    key={item.value}
+                    onClick={() => onSelectOption(item)}
+                    className="cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2"
+                  >
+                    <Checkbox checked={isSelected(item)} /> {item.label}
+                  </div>
+                ))}
+              </VList>
             </div>
             {query.length ? (
               <div className="border-y border-y-gray-light py-2">
