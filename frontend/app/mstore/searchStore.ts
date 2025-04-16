@@ -394,10 +394,11 @@ class SearchStore {
     // TODO
   }
 
-  async fetchSessions(
+  fetchSessions = async (
     force: boolean = false,
     bookmarked: boolean = false,
-  ): Promise<void> {
+  ): Promise<void> => {
+    console.log(this.searchInProgress)
     if (this.searchInProgress) return;
     const filter = this.instance.toSearch();
 
