@@ -1,7 +1,7 @@
 const {logger} = require('./logger');
 const {createClient} = require("redis");
 const crypto = require("crypto");
-import { Mutex } from 'async-mutex';
+const { Mutex } = require('async-mutex');
 
 let redisClient;
 const REDIS_URL = (process.env.REDIS_URL || "localhost:6379").replace(/((^\w+:|^)\/\/|^)/, 'redis://');
