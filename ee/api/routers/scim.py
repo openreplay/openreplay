@@ -71,7 +71,7 @@ def _not_found_error_response(resource_id: str):
 
 
 @public_app.get("/ResourceTypes", dependencies=[Depends(auth_required)])
-async def get_resource_types(r: Request, filter_param: str | None = Query(None, alias="filter")):
+async def get_resource_types(filter_param: str | None = Query(None, alias="filter")):
     if filter_param is not None:
         return JSONResponse(
             status_code=403,
@@ -88,34 +88,18 @@ async def get_resource_types(r: Request, filter_param: str | None = Query(None, 
             "itemsPerPage": len(RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS),
             "startIndex": 1,
             "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
-            "Resources": [
-                {
-                    **value,
-                    "meta": {
-                        "location": str(r.url_for("get_resource_type", resource_id=value["id"])),
-                        "resourceType": "ResourceType",
-                    }
-                }
-                for value in RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS.values()
-            ],
+            "Resources": list(RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS.values()),
         },
     )
 
 
 @public_app.get("/ResourceTypes/{resource_id}", dependencies=[Depends(auth_required)])
-async def get_resource_type(r: Request, resource_id: str):
+async def get_resource_type(resource_id: str):
     if resource_id not in RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS:
         return _not_found_error_response(resource_id)
-    content = {
-        **RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS[resource_id],
-        "meta": {
-            "location": str(r.url),
-            "resourceType": "ResourceType",
-        }
-    }
     return JSONResponse(
         status_code=200,
-        content=content,
+        content=RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS[resource_id],
     )
 
 
