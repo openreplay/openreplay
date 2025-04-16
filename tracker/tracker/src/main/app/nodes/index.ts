@@ -98,6 +98,13 @@ export default class Nodes {
     return id
   }
 
+  unregisterNodeById(id: number): void {
+    const node = this.nodes.get(id)
+    if (node) {
+      this.unregisterNode(node)
+    }
+  }
+
   cleanTree() {
     // sadly we keep empty items in array here resulting in some memory still being used
     // but its still better than keeping dead nodes or undef elements
