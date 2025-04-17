@@ -7,7 +7,6 @@ export default class VirtualNodeTree {
 
   addNode(id: number, parentId: number | null = null) {
     this.nodeParents[id] = parentId;
-    console.log(id, parentId, this.tree, this.nodeParents)
     if (parentId === null) {
       this.tree[id] = null;
     } else {
@@ -21,7 +20,6 @@ export default class VirtualNodeTree {
   }
 
   removeNode(id: number) {
-    console.log('del', id, this)
     if (!(id in this.nodeParents)) {
       // throw new Error(`Node ${id} doesn't exist`); ? since its just for tracking, nothing
       return;
@@ -107,16 +105,3 @@ export default class VirtualNodeTree {
     this.nodeParents = {};
   }
 }
-
-// TODO add tests
-// const tree = new VirtualNodeTree();
-
-// tree.addNode(0);
-// tree.addNode(1, 0);
-// tree.addNode(2, 1);
-// tree.addNode(3, 1);
-// tree.addNode(4, 3);
-// console.log({ ...tree.tree });
-
-// tree.removeNode(1)
-// console.log(tree.tree)

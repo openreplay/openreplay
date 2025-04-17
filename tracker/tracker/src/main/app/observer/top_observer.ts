@@ -23,8 +23,9 @@ export default class TopObserver extends Observer {
   private readonly options: Options
   private readonly iframeOffsets: IFrameOffsets = new IFrameOffsets()
   readonly app: App
+  public iframes: Map<number, HTMLIFrameElement> = new Map()
 
-  constructor(params: { app: App; options: Partial<Options> }) {
+  constructor(params: { app: App; options: Partial<Options>; vTree: any }) {
     const opts = Object.assign(
       {
         captureIFrames: true,
@@ -32,17 +33,37 @@ export default class TopObserver extends Observer {
       },
       params.options,
     )
-    super(params.app, true, opts)
+    super(params.app, true, opts, params.vTree)
     this.app = params.app
     this.options = opts
+    this.vTree = params.vTree
     // IFrames
     this.app.nodes.attachNodeCallback((node) => {
+      const nodeId = this.app.nodes.getID(node);
       if (
         hasTag(node, 'iframe') &&
         ((this.options.captureIFrames && !hasOpenreplayAttribute(node, 'obscured')) ||
           hasOpenreplayAttribute(node, 'capture'))
       ) {
         this.handleIframe(node)
+        if (nodeId) {
+          this.iframes.set(nodeId, node)
+        }
+      }
+      if (nodeId || nodeId === 0) {
+        if (node.parentNode) {
+          const parentId = this.app.nodes.getID(node.parentNode)
+          this.vTree.addNode(nodeId, parentId ?? null)
+        } 
+        else {
+          for (const iframe of this.iframes.entries()) {
+            const [iframeId, iframeElement] = iframe
+            if (iframeElement?.contentDocument === node) {
+              this.vTree.addNode(nodeId, iframeId)
+              this.iframes.delete(iframeId)
+            }
+          }
+        }
       }
     })
 
@@ -86,7 +107,7 @@ export default class TopObserver extends Observer {
           this.app.debug.info('doc already observed for', id)
           return
         }
-        const observer = new IFrameObserver(this.app)
+        const observer = new IFrameObserver(this.app, false, undefined, this.vTree)
         this.iframeObservers.set(iframe, observer)
         this.docObservers.set(currentDoc, observer)
         this.iframeObserversArr.push(observer)
@@ -114,7 +135,7 @@ export default class TopObserver extends Observer {
 
   private shadowRootObservers: WeakMap<ShadowRoot, ShadowRootObserver> = new WeakMap()
   private handleShadowRoot(shRoot: ShadowRoot) {
-    const observer = new ShadowRootObserver(this.app)
+    const observer = new ShadowRootObserver(this.app, false, undefined, this.vTree)
     this.shadowRootObservers.set(shRoot, observer)
     observer.observe(shRoot.host)
   }
@@ -130,6 +151,7 @@ export default class TopObserver extends Observer {
       return shadow
     }
     this.app.nodes.clear()
+    this.vTree.clearAll()
     // Can observe documentElement (<html>) here, because it is not supposed to be changing.
     // However, it is possible in some exotic cases and may cause an ignorance of the newly created <html>
     // In this case context.document have to be observed, but this will cause
@@ -157,7 +179,7 @@ export default class TopObserver extends Observer {
     }
     this.app.nodes.clear()
     this.app.nodes.syntheticMode(frameOder)
-    const iframeObserver = new IFrameObserver(this.app)
+    const iframeObserver = new IFrameObserver(this.app, false, undefined, this.vTree)
     this.iframeObservers.set(window.document, iframeObserver)
     iframeObserver.syntheticObserve(rootNodeId, window.document)
   }
@@ -168,8 +190,10 @@ export default class TopObserver extends Observer {
     this.iframeObserversArr.forEach((observer) => observer.disconnect())
     this.iframeObserversArr = []
     this.iframeObservers = new WeakMap()
+    this.iframes.clear()
     this.shadowRootObservers = new WeakMap()
     this.docObservers = new WeakMap()
     super.disconnect()
+    this.vTree.clearAll()
   }
 }
