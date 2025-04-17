@@ -1,7 +1,10 @@
-ee ?= "false" # true to build ee
+distro ?= "foss" # ee to build ee
 app ?= "" # app name, default all
 arch ?= "amd64" # default amd64
+docker_repo ?= "public.ecr.aws/p1t3u8a3"
 docker_runtime ?= "docker"  # default docker runtime
+image_tag ?= "" # image tag to build. Default is git sha short
+docker_build_args ?= $(if $(filter depot,$(docker_runtime)),"--push","")
 
 .PHONY: help
 help: ## Prints help for targets with comments
@@ -11,7 +14,7 @@ help: ## Prints help for targets with comments
 
 .PHONY: build
 build: ## Build the backend. ee=true for ee build. app=app name for only one app. Default build all apps.
-	ARCH=$(arch) DOCKER_RUNTIME=$(docker_runtime) bash build.sh $(ee) $(app)
+	IMAGE_TAG=$(image_tag) DOCKER_BUILD_ARGS=$(docker_build_args) DOCKER_REPO=$(docker_repo) ARCH=$(arch) DOCKER_RUNTIME=$(docker_runtime) bash build.sh $(ee) $(app)
 
 ##@ Local Dev
 
