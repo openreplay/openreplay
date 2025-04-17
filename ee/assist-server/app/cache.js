@@ -101,7 +101,7 @@ const updateNodeCache = async function (io) {
             }
             await pipeline.exec();
         }
-        logger.info(`step 1 (toAdd) complete: ${performance.now() - currStepTs}ms, ${toAddArray.length} sockets`);
+        logger.info(`step 1 (toAdd) complete: ${(performance.now() - currStepTs).toFixed(2)}ms, ${toAddArray.length} sockets`);
         currStepTs = performance.now();
 
         // renew sessions in pipeline
@@ -113,7 +113,7 @@ const updateNodeCache = async function (io) {
             }
             await pipeline.exec();
         }
-        logger.info(`step 2 (toRenew) complete: ${performance.now() - currStepTs}ms, ${toRenew.length} sockets`);
+        logger.info(`step 2 (toRenew) complete: ${(performance.now() - currStepTs).toFixed(2)}ms, ${toRenew.length} sockets`);
         currStepTs = performance.now();
 
         // delete sessions in pipeline
@@ -125,7 +125,7 @@ const updateNodeCache = async function (io) {
             }
             await pipeline.exec();
         }
-        logger.info(`step 3 (toDelete) complete: ${performance.now() - currStepTs}ms, ${toDelete.length} sockets`);
+        logger.info(`step 3 (toDelete) complete: ${(performance.now() - currStepTs).toFixed(2)}ms, ${toDelete.length} sockets`);
         currStepTs = performance.now();
 
         // add recently updated sessions
@@ -134,10 +134,10 @@ const updateNodeCache = async function (io) {
         }
         // store the node sessions
         await redisClient.set(`assist:nodes:${nodeID}:sessions`, JSON.stringify(Array.from(sessionIDs)), 'EX', cacheRefreshInterval);
-        logger.info(`step 4 (full list + updated) complete: ${performance.now() - currStepTs}ms, ${toUpdate.length} sockets`);
+        logger.info(`step 4 (full list + updated) complete: ${(performance.now() - currStepTs).toFixed(2)}ms, ${toUpdate.length} sockets`);
 
         const duration = performance.now() - startTime;
-        logger.info(`Background refresh complete: ${duration}ms, ${result.length} sockets`);
+        logger.info(`Background refresh complete: ${duration.toFixed(2)}ms, ${result.length} sockets`);
     } catch (error) {
         logger.error(`Background refresh error: ${error}`);
     }
