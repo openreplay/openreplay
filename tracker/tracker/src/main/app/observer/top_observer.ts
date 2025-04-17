@@ -62,7 +62,6 @@ export default class TopObserver extends Observer {
             const [iframeId, iframeElement] = iframe
             if (iframeElement?.contentDocument === node) {
               this.vTree.addNode(nodeId, iframeId)
-              this.iframes.delete(iframeId)
             }
           }
         }

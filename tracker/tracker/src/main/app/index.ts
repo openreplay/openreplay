@@ -277,6 +277,7 @@ export default class App {
   private emptyBatchCounter = 0
   private readonly vTree = new vElTree((id: number) => {
       this.nodes.unregisterNodeById(id)
+      this.iframes.delete(id)
       this.send(RemoveNode(id))
     })
   private readonly iframes: Map<number, HTMLIFrameElement> = new Map();
