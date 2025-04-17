@@ -1,7 +1,7 @@
 import json
 import logging
 import secrets
-from typing import Optional
+from typing import Any, Optional
 
 from decouple import config
 from fastapi import BackgroundTasks, HTTPException
@@ -284,7 +284,7 @@ def get(user_id, tenant_id):
         r = cur.fetchone()
         return helper.dict_to_camel_case(r)
 
-def get_by_uuid(user_uuid, tenant_id):
+def get_scim_user_by_id(user_id, tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -292,19 +292,17 @@ def get_by_uuid(user_uuid, tenant_id):
                 SELECT *
                 FROM public.users
                 WHERE
-                    users.deleted_at IS NULL
-                    AND users.user_id = %(user_id)s
+                    users.user_id = %(user_id)s
                     AND users.tenant_id = %(tenant_id)s
                 LIMIT 1;
                 """,
                 {
-                    "user_id": user_uuid,
+                    "user_id": user_id,
                     "tenant_id": tenant_id,
                 },
             )
         )
-        r = cur.fetchone()
-        return helper.dict_to_camel_case(r)
+        return helper.dict_to_camel_case(cur.fetchone())
 
 def get_deleted_by_uuid(user_uuid, tenant_id):
     with pg_client.PostgresClient() as cur:
@@ -440,6 +438,21 @@ def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema,
     return {"data": user}
 
 
+def get_scim_user_by_unique_values(email):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """
+                SELECT *
+                FROM public.users
+                WHERE users.email = %(email)s
+                """,
+                {"email": email}
+            )
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
 def get_by_email_only(email):
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -475,9 +488,7 @@ def get_users_paginated(start_index, tenant_id, count=None):
                 """
                 SELECT *
                 FROM public.users
-                WHERE
-                    users.deleted_at IS NULL
-                    AND users.tenant_id = %(tenant_id)s
+                WHERE users.tenant_id = %(tenant_id)s
                 LIMIT %(limit)s
                 OFFSET %(offset)s;
                 """,
@@ -1011,48 +1022,36 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
         return helper.dict_to_camel_case(cur.fetchone())
 
 def create_scim_user(
-    tenant_id,
-    user_uuid,
     email,
-    admin,
-    display_name,
-    full_name: dict,
-    emails,
-    origin,
-    locale,
-    role_id,
-    internal_id=None,
+    name,
+    tenant_id,
 ):
-
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""\
-                    WITH u AS (
-                        INSERT INTO public.users (tenant_id, email, role, name, data, origin, internal_id, role_id)
-                            VALUES (%(tenant_id)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s,
-                                            (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
-                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
-                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))))
-                            RETURNING *
-                    ),
-                    au AS (
-                        INSERT INTO public.basic_authentication(user_id)
-                        VALUES ((SELECT user_id FROM u))
-                    )
-                    SELECT u.user_id                                              AS id,
-                           u.email,
-                           u.role,
-                           u.name,
-                           u.data,
-                           (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                           (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                           (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           origin
-                    FROM u;""",
-                            {"tenant_id": tenant_id, "email": email, "internal_id": internal_id,
-                             "role": "admin" if admin else "member", "name": display_name, "origin": origin,
-                             "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now(), "user_id": user_uuid, "locale": locale, "name": full_name, "emails": emails})})
         cur.execute(
-            query
+            cur.mogrify(
+                """
+                WITH u AS (
+                    INSERT INTO public.users (
+                        tenant_id,
+                        email,
+                        name
+                    )
+                    VALUES (
+                        %(tenant_id)s,
+                        %(email)s,
+                        %(name)s
+                    )
+                    RETURNING *
+                )
+                SELECT *
+                FROM u;
+                """,
+                {
+                    "tenant_id": tenant_id,
+                    "email": email,
+                    "name": name,
+                }
+            )
         )
         return helper.dict_to_camel_case(cur.fetchone())
 
