@@ -696,7 +696,6 @@ USER_SCHEMA = {
 }
 
 
-
 SCHEMAS = sorted(
     [
         SERVICE_PROVIDER_CONFIG_SCHEMA,
