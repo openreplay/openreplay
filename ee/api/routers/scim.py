@@ -367,21 +367,6 @@ def update_user(user_id: str, r: UserRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@public_app.patch("/Users/{user_id}", dependencies=[Depends(auth_required)])
-def deactivate_user(user_id: str, r: PatchUserRequest):
-    """Deactivate user, soft-delete"""
-    tenant_id = 1
-    active = r.model_dump(mode='json')["Operations"][0]["value"]["active"]
-    if active:
-        raise HTTPException(status_code=404, detail="Activating user is not supported")
-    user = users.get_by_uuid(user_id, tenant_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    users.delete_member_as_admin(tenant_id, user["userId"])
-
-    return Response(status_code=204, content="")
-
-
 @public_app.delete("/Users/{user_id}")
 def delete_user(user_id: str, tenant_id = Depends(auth_required)):
     user = users.get_scim_user_by_id(user_id, tenant_id)
