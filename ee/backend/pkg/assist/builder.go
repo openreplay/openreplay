@@ -26,7 +26,7 @@ type ServicesBuilder struct {
 
 func NewServiceBuilder(log logger.Logger, cfg *assist.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, redis *redis.Client, prefix string) (*ServicesBuilder, error) {
 	projectsManager := projects.New(log, pgconn, redis, dbMetrics)
-	sessManager, err := sessionmanager.New(log, redis.Redis)
+	sessManager, err := sessionmanager.New(log, cfg, redis.Redis)
 	if err != nil {
 		return nil, err
 	}
