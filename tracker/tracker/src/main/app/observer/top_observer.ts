@@ -8,6 +8,7 @@ import IFrameOffsets, { Offset } from './iframe_offsets.js'
 import { CreateDocument } from '../messages.gen.js'
 import App from '../index.js'
 import { IN_BROWSER, hasOpenreplayAttribute, canAccessIframe } from '../../utils.js'
+import VirtualNodeTree from './vTree.js'
 
 export interface Options {
   captureIFrames: boolean
@@ -22,10 +23,10 @@ const attachShadowNativeFn = IN_BROWSER ? Element.prototype.attachShadow : () =>
 export default class TopObserver extends Observer {
   private readonly options: Options
   private readonly iframeOffsets: IFrameOffsets = new IFrameOffsets()
+  private readonly iframes: Map<number, HTMLIFrameElement>
   readonly app: App
-  public iframes: Map<number, HTMLIFrameElement> = new Map()
 
-  constructor(params: { app: App; options: Partial<Options>; vTree: any }) {
+  constructor(params: { app: App; options: Partial<Options> }, vTree: VirtualNodeTree, iframes: Map<number, HTMLIFrameElement>) {
     const opts = Object.assign(
       {
         captureIFrames: true,
@@ -33,10 +34,11 @@ export default class TopObserver extends Observer {
       },
       params.options,
     )
-    super(params.app, true, opts, params.vTree)
+    super(params.app, true, opts, vTree)
     this.app = params.app
     this.options = opts
-    this.vTree = params.vTree
+    this.vTree = vTree
+    this.iframes = iframes
     // IFrames
     this.app.nodes.attachNodeCallback((node) => {
       const nodeId = this.app.nodes.getID(node);

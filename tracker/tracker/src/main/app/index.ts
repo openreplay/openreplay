@@ -279,6 +279,7 @@ export default class App {
       this.nodes.unregisterNodeById(id)
       this.send(RemoveNode(id))
     })
+  private readonly iframes: Map<number, HTMLIFrameElement> = new Map();
 
   constructor(
     projectKey: string,
@@ -367,8 +368,10 @@ export default class App {
       node_id: this.options.node_id,
       forceNgOff: Boolean(options.forceNgOff),
       maintainer: this.options.nodes?.maintainer,
+      vTree: this.vTree,
+      iframes: this.iframes,
     })
-    this.observer = new Observer({ app: this, options, vTree: this.vTree })
+    this.observer = new Observer({ app: this, options }, this.vTree, this.iframes)
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)

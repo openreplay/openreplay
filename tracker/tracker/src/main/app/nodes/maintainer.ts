@@ -1,9 +1,11 @@
+import VirtualNodeTree from "../observer/vTree"
+
 const SECOND = 1000
 
 function processMapInBatches(
   map: Map<number, Node | void>,
   batchSize: number,
-  processBatchCallback: (node: Node) => void,
+  processBatchCallback: (node: Node, nodeId: number) => void,
 ) {
   const iterator = map.entries()
 
@@ -17,9 +19,9 @@ function processMapInBatches(
     }
 
     if (batch.length > 0) {
-      batch.forEach(([_, node]) => {
+      batch.forEach(([nodeId, node]) => {
         if (node) {
-          processBatchCallback(node)
+          processBatchCallback(node, nodeId)
         }
       })
 
@@ -87,12 +89,18 @@ const defaults = {
 class Maintainer {
   private interval: ReturnType<typeof setInterval>
   private readonly options: MaintainerOptions
+  private readonly vTree: VirtualNodeTree
+  private readonly iframes: Map<number, HTMLIFrameElement>
   constructor(
     private readonly nodes: Map<number, Node | void>,
     private readonly unregisterNode: (node: Node) => void,
+    vTree: VirtualNodeTree,
+    iframes: Map<number, HTMLIFrameElement>,
     options?: Partial<MaintainerOptions>,
   ) {
     this.options = { ...defaults, ...options }
+    this.vTree = vTree
+    this.iframes = iframes
   }
 
   public start = () => {
@@ -103,10 +111,12 @@ class Maintainer {
     this.stop()
 
     this.interval = setInterval(() => {
-      processMapInBatches(this.nodes, this.options.batchSize, (node) => {
+      processMapInBatches(this.nodes, this.options.batchSize, (node, nodeId) => {
         const isActive = isNodeStillActive(node)[0]
         if (!isActive) {
           this.unregisterNode(node)
+          this.vTree?.removeNode(nodeId)
+          this.iframes.delete(nodeId)
         }
       })
     }, this.options.interval)

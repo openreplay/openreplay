@@ -184,10 +184,6 @@ enum RecentsType {
 
 export default abstract class Observer {
   /** object tree where key is node id, value is null if it has no children, or object with same structure */
-  // private readonly vTree = new vElTree((id: number) => {
-  //   this.app.nodes.unregisterNodeById(id)
-  //   this.app.send(RemoveNode(id))
-  // })
   private readonly observer: MutationObserver
   private readonly commited: Array<boolean | undefined> = []
   private readonly recents: Map<number, RecentsType> = new Map()
