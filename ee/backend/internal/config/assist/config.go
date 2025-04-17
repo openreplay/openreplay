@@ -17,6 +17,9 @@ type Config struct {
 	common.HTTP
 	ProjectExpiration time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	AssistKey         string        `env:"ASSIST_KEY"`
+	CacheTTL          time.Duration `env:"REDIS_CACHE_TTL,default=5s"`
+	BatchSize         int           `env:"REDIS_BATCH_SIZE,default=1000"`
+	ScanSize          int64         `env:"REDIS_SCAN_SIZE,default=1000"`
 	WorkerID          uint16
 }
 
