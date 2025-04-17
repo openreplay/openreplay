@@ -115,7 +115,6 @@ class Maintainer {
         const isActive = isNodeStillActive(node)[0]
         if (!isActive) {
           this.unregisterNode(node)
-          this.vTree?.removeNode(nodeId)
           this.iframes.delete(nodeId)
         }
       })
