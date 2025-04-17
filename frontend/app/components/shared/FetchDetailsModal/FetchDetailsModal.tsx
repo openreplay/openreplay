@@ -75,7 +75,7 @@ function FetchDetailsModal(props: Props) {
         }
       />
 
-      {isXHR && <FetchTabs isSpot={isSpot} resource={resource} />}
+      <FetchTabs isSpot={isSpot} resource={resource} isXHR={isXHR} />
 
       {rows && rows.length > 0 && (
         <div className="flex justify-between absolute bottom-0 left-0 right-0 p-3 border-t bg-white">

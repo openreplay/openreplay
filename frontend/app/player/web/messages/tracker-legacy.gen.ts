@@ -1,6 +1,6 @@
 // Auto-generated, do not edit
 
-import { MType } from './raw.gen';
+import { MType } from './raw.gen'
 
 export const TP_MAP = {
   0: MType.Timestamp,
@@ -36,7 +36,7 @@ export const TP_MAP = {
   51: MType.SetNodeAttributeDictDeprecated,
   43: MType.StringDict,
   52: MType.SetNodeAttributeDict,
-  53: MType.ResourceTimingDeprecated,
+  53: MType.ResourceTimingDeprecatedDeprecated,
   54: MType.ConnectionInformation,
   55: MType.SetPageVisibility,
   57: MType.LoadFontFace,
@@ -56,9 +56,10 @@ export const TP_MAP = {
   79: MType.Zustand,
   83: MType.NetworkRequest,
   84: MType.WsChannel,
+  85: MType.ResourceTiming,
   113: MType.SelectionChange,
   114: MType.MouseThrashing,
-  116: MType.ResourceTiming,
+  116: MType.ResourceTimingDeprecated,
   117: MType.TabChange,
   118: MType.TabData,
   119: MType.CanvasNode,
@@ -76,4 +77,4 @@ export const TP_MAP = {
   105: MType.MobileNetworkCall,
   106: MType.MobileSwipeEvent,
   111: MType.MobileIssueEvent,
-} as const;
+} as const
