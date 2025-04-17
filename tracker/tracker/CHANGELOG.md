@@ -1,3 +1,7 @@
+## 16.1.4
+
+- bump proxy version to .3
+
 ## 16.1.3
 
 - same as previous, more strict checks for body obj

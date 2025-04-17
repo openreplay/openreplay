@@ -36,7 +36,10 @@ function obscure(value: string | number) {
     const digits = numDigits(value)
     return "9".repeat(digits)
   }
-  return value.replace(/[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff\s]/g, '*')
+  if (typeof value === "string") {
+    return value.replace(/[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff\s]/g, '*');
+  }
+  return value;
 }
 
 export function filterHeaders(headers: Record<string, string> | { name: string; value: string }[]) {
