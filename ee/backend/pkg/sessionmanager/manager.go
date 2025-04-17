@@ -36,6 +36,7 @@ type SessionData struct {
 	UserState    *string            `json:"userState"`      // is
 	UserCity     *string            `json:"userCity"`       // is
 	Metadata     *map[string]string `json:"metadata"`       // contains
+	IsActive     bool               `json:"active"`
 	Raw          interface{}
 }
 
@@ -484,6 +485,12 @@ func matchesFilters(session *SessionData, filters []*Filter, counter map[string]
 		case UserCity:
 			if session.UserCity != nil {
 				value = *session.UserCity
+			}
+		case IsActive:
+			if session.IsActive {
+				value = "true"
+			} else {
+				value = "false"
 			}
 		default:
 			if val, ok := (*session.Metadata)[name]; ok {
