@@ -306,30 +306,20 @@ def get_user(
 
 @public_app.post("/Users")
 async def create_user(r: UserRequest, tenant_id = Depends(auth_required)):
-    existing_db_user = users.get_scim_user_by_unique_values(r.userName)
-    # todo(jon): we have a conflict in our db schema and the docs for SCIM.
-    # here is a quote from section 3.6 of RFC 7644:
-    #   For example, if a User resource is deleted, a CREATE
-    #   request for a User resource with the same userName as the previously
-    #   deleted resource SHOULD NOT fail with a 409 error due to userName
-    #   conflict.
-    # this doesn't work with our db schema as `public.users.email` is UNIQUE
-    # but not conditionaly unique based on deletion. this would be fine if
-    # we did a hard delete, but it seems like we do soft deletes.
-    # so, we need to figure out how to handle this:
-    #   1. we do hard deletes for scim users.
-    #   2. we change how we handle the unique constraint for users on the email field.
-    # i think the easiest thing to do here would be 1, since it wouldn't require
-    # updating any other parts of the codebase (potentially)
-    if existing_db_user:
+    # note(jon): this method will return soft deleted users as well
+    existing_db_user = users.get_existing_scim_user_by_unique_values(r.userName)
+    if existing_db_user and existing_db_user["deletedAt"] is None:
         return _uniqueness_error_response()
-    db_user = users.create_scim_user(
-        email=r.userName,
-        # note(jon): scim schema does not require the `name.formatted` attribute, but we require `name`.
-        # so, we have to define the value ourselves here
-        name="",
-        tenant_id=tenant_id,
-    )
+    if existing_db_user and existing_db_user["deletedAt"] is not None:
+        db_user = users.restore_scim_user(existing_db_user["userId"], tenant_id)
+    else:
+        db_user = users.create_scim_user(
+            email=r.userName,
+            # note(jon): scim schema does not require the `name.formatted` attribute, but we require `name`.
+            # so, we have to define the value ourselves here
+            name="",
+            tenant_id=tenant_id,
+        )
     scim_user = _convert_db_user_to_scim_user(db_user)
     response = JSONResponse(
         status_code=201,
@@ -391,15 +381,13 @@ def deactivate_user(user_id: str, r: PatchUserRequest):
 
     return Response(status_code=204, content="")
 
-@public_app.delete("/Users/{user_uuid}", dependencies=[Depends(auth_required)])
-def delete_user(user_uuid: str):
-    """Delete user from database, hard-delete"""
-    tenant_id = 1
-    user = users.get_by_uuid(user_uuid, tenant_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
 
-    users.__hard_delete_user_uuid(user_uuid)
+@public_app.delete("/Users/{user_id}")
+def delete_user(user_id: str, tenant_id = Depends(auth_required)):
+    user = users.get_scim_user_by_id(user_id, tenant_id)
+    if not user:
+        return _not_found_error_response(user_id)
+    users.soft_delete_scim_user_by_id(user_id, tenant_id)
     return Response(status_code=204, content="")
 
 

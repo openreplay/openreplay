@@ -294,6 +294,7 @@ def get_scim_user_by_id(user_id, tenant_id):
                 WHERE
                     users.user_id = %(user_id)s
                     AND users.tenant_id = %(tenant_id)s
+                    AND users.deleted_at IS NULL
                 LIMIT 1;
                 """,
                 {
@@ -303,42 +304,6 @@ def get_scim_user_by_id(user_id, tenant_id):
             )
         )
         return helper.dict_to_camel_case(cur.fetchone())
-
-def get_deleted_by_uuid(user_uuid, tenant_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT
-                        users.user_id,
-                        users.tenant_id,
-                        email,
-                        role,
-                        users.name,
-                        users.data,
-                        users.internal_id,
-                        (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                        (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                        (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                        origin,
-                        role_id,
-                        roles.name AS role_name,
-                        roles.permissions,
-                        roles.all_projects,
-                        basic_authentication.password IS NOT NULL AS has_password,
-                        users.service_account
-                    FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
-                        LEFT JOIN public.roles USING (role_id)
-                    WHERE
-                     users.data->>'user_id' = %(user_uuid)s
-                     AND users.tenant_id = %(tenant_id)s
-                     AND users.deleted_at IS NOT NULL
-                     AND (roles.role_id IS NULL OR roles.deleted_at IS NULL AND roles.tenant_id = %(tenant_id)s)
-                    LIMIT 1;""",
-                {"user_uuid": user_uuid, "tenant_id": tenant_id})
-        )
-        r = cur.fetchone()
-        return helper.dict_to_camel_case(r)
-
 
 
 def generate_new_api_key(user_id):
@@ -438,7 +403,7 @@ def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema,
     return {"data": user}
 
 
-def get_scim_user_by_unique_values(email):
+def get_existing_scim_user_by_unique_values(email):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -488,7 +453,9 @@ def get_users_paginated(start_index, tenant_id, count=None):
                 """
                 SELECT *
                 FROM public.users
-                WHERE users.tenant_id = %(tenant_id)s
+                WHERE
+                    users.tenant_id = %(tenant_id)s
+                    AND users.deleted_at IS NULL
                 LIMIT %(limit)s
                 OFFSET %(offset)s;
                 """,
@@ -614,70 +581,6 @@ def delete_member(user_id, tenant_id, id_to_delete):
                            WHERE user_id=%(user_id)s;""",
                         {"user_id": id_to_delete, "tenant_id": tenant_id}))
     return {"data": get_members(tenant_id=tenant_id)}
-
-
-def delete_member_as_admin(tenant_id, id_to_delete):
-
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT
-                        users.user_id AS user_id,
-                        users.tenant_id,
-                        email,
-                        role,
-                        users.name,
-                        origin,
-                        role_id,
-                        roles.name AS role_name,
-                        (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                        roles.permissions,
-                        roles.all_projects,
-                        basic_authentication.password IS NOT NULL AS has_password,
-                        users.service_account
-                    FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
-                        LEFT JOIN public.roles USING (role_id)
-                    WHERE
-                     role = 'owner'
-                     AND users.tenant_id = %(tenant_id)s
-                     AND users.deleted_at IS NULL
-                     AND (roles.role_id IS NULL OR roles.deleted_at IS NULL AND roles.tenant_id = %(tenant_id)s)
-                    LIMIT 1;""",
-                {"tenant_id": tenant_id, "user_uuid": id_to_delete})
-        )
-        r = cur.fetchone()
-
-    if r["user_id"] == id_to_delete:
-        return {"errors": ["unauthorized, cannot delete self"]}
-
-    if r["member"]:
-        return {"errors": ["unauthorized"]}
-
-    to_delete = get(user_id=id_to_delete, tenant_id=tenant_id)
-    if to_delete is None:
-        return {"errors": ["not found"]}
-
-    if to_delete["superAdmin"]:
-        return {"errors": ["cannot delete super admin"]}
-
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(f"""UPDATE public.users
-                           SET deleted_at = timezone('utc'::text, now()),
-                                jwt_iat= NULL, jwt_refresh_jti= NULL,
-                                jwt_refresh_iat= NULL,
-                                role_id=NULL
-                           WHERE user_id=%(user_id)s AND tenant_id=%(tenant_id)s;""",
-                        {"user_id": id_to_delete, "tenant_id": tenant_id}))
-        cur.execute(
-            cur.mogrify(f"""UPDATE public.basic_authentication
-                           SET password= NULL, invitation_token= NULL,
-                                invited_at= NULL, changed_at= NULL,
-                                change_pwd_expire_at= NULL, change_pwd_token= NULL
-                           WHERE user_id=%(user_id)s;""",
-                        {"user_id": id_to_delete, "tenant_id": tenant_id}))
-    return {"data": get_members(tenant_id=tenant_id)}
-
 
 
 def change_password(tenant_id, user_id, email, old_password, new_password):
@@ -1056,6 +959,21 @@ def create_scim_user(
         return helper.dict_to_camel_case(cur.fetchone())
 
 
+def soft_delete_scim_user_by_id(user_id, tenant_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """
+                UPDATE public.users
+                SET deleted_at = NULL
+                WHERE
+                    users.user_id = %(user_id)s
+                    AND users.tenant_id = %(tenant_id)s
+                """,
+                {"user_id": user_id, "tenant_id": tenant_id}
+            )
+        )
+
 
 def __hard_delete_user(user_id):
     with pg_client.PostgresClient() as cur:
@@ -1065,13 +983,6 @@ def __hard_delete_user(user_id):
             {"user_id": user_id})
         cur.execute(query)
 
-def __hard_delete_user_uuid(user_uuid):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            f"""DELETE FROM public.users
-                WHERE users.data->>'user_id' = %(user_uuid)s;""",  # removed this: AND users.deleted_at IS NOT NULL
-            {"user_uuid": user_uuid})
-        cur.execute(query)
 
 
 def logout(user_id: int):
@@ -1199,64 +1110,28 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
 def restore_scim_user(
     user_id,
     tenant_id,
-    user_uuid,
-    email,
-    admin,
-    display_name,
-    full_name: dict,
-    emails,
-    origin,
-    locale,
-    role_id,
-    internal_id=None):
+):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""\
-                    WITH u AS (
-                        UPDATE public.users
-                        SET tenant_id= %(tenant_id)s,
-                         role= %(role)s,
-                         name= %(name)s,
-                         data= %(data)s,
-                         origin= %(origin)s,
-                         internal_id= %(internal_id)s,
-                         role_id= (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
-                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
-                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))),
-                         deleted_at= NULL,
-                         created_at= default,
-                         api_key= default,
-                         jwt_iat= NULL,
-                         weekly_report= default
-                        WHERE user_id = %(user_id)s
-                        RETURNING *
-                    ),
-                    au AS (
-                        UPDATE public.basic_authentication
-                        SET password= default,
-                            invitation_token= default,
-                            invited_at= default,
-                            change_pwd_token= default,
-                            change_pwd_expire_at= default,
-                            changed_at= NULL
-                        WHERE user_id = %(user_id)s
-                        RETURNING user_id
-                    )
-                    SELECT u.user_id                                              AS id,
-                           u.email,
-                           u.role,
-                           u.name,
-                           u.data,
-                           (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                           (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                           (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           origin
-                    FROM u;""",
-                            {"tenant_id": tenant_id, "email": email, "internal_id": internal_id,
-                             "role": "admin" if admin else "member", "name": display_name, "origin": origin,
-                             "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now(), "user_id": user_uuid, "locale": locale, "name": full_name, "emails": emails}),
-                             "user_id": user_id})
         cur.execute(
-            query
+            cur.mogrify(
+                """
+                WITH u AS (
+                    UPDATE public.users
+                    SET
+                        tenant_id = %(tenant_id)s,
+                        deleted_at = NULL,
+                        created_at = default,
+                        api_key = default,
+                        jwt_iat = NULL,
+                        weekly_report = default
+                    WHERE user_id = %(user_id)s
+                    RETURNING *
+                )
+                SELECT *
+                FROM u;
+                """,
+                {"tenant_id": tenant_id, "user_id": user_id}
+            )
         )
         return helper.dict_to_camel_case(cur.fetchone())
 
