@@ -72,6 +72,18 @@ def _not_found_error_response(resource_id: str):
     )
 
 
+def _uniqueness_error_response():
+    return JSONResponse(
+        status_code=409,
+        content={
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+            "detail": "One or more of the attribute values are already in use or are reserved.",
+            "status": "409",
+            "scimType": "uniqueness",
+        }
+    )
+
+
 @public_app.get("/ResourceTypes", dependencies=[Depends(auth_required)])
 async def get_resource_types(filter_param: str | None = Query(None, alias="filter")):
     if filter_param is not None:
@@ -169,27 +181,8 @@ async def get_service_provider_config(r: Request, tenant_id: str | None = Depend
 """
 User endpoints
 """
-
-class Name(BaseModel):
-    givenName: str
-    familyName: str
-
-class Email(BaseModel):
-    primary: bool
-    value: str
-    type: str
-
 class UserRequest(BaseModel):
-    schemas: list[str]
     userName: str
-    name: Name
-    emails: list[Email]
-    displayName: str
-    locale: str
-    externalId: str
-    groups: list[dict]
-    password: str = Field(default=None)
-    active: bool
 
 
 class PatchUserRequest(BaseModel):
@@ -301,7 +294,7 @@ def get_user(
     attributes: list[str] | None = Query(None),
     excluded_attributes: list[str] | None = Query(None, alias="excludedAttributes"),
 ):
-    db_user = users.get_by_uuid(user_id, tenant_id)
+    db_user = users.get_scim_user_by_id(user_id, tenant_id)
     if not db_user:
         return _not_found_error_response(user_id)
     scim_user = _convert_db_user_to_scim_user(db_user, attributes, excluded_attributes)
@@ -311,49 +304,39 @@ def get_user(
     )
 
 
-@public_app.post("/Users", dependencies=[Depends(auth_required)])
-async def create_user(r: UserRequest):
-    """Create SCIM User"""
-    tenant_id = 1
-    existing_user = users.get_by_email_only(r.userName)
-    deleted_user = users.get_deleted_user_by_email(r.userName)
-
-    if existing_user:
-        return JSONResponse(
-            status_code = 409,
-            content = {
-                "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
-                "detail": "User already exists in the database.",
-                "status": 409,
-            }
-        )
-    elif deleted_user:
-        user_id = users.get_deleted_by_uuid(deleted_user["data"]["userId"], tenant_id)
-        user = users.restore_scim_user(user_id=user_id["userId"], tenant_id=tenant_id, user_uuid=uuid.uuid4().hex, email=r.emails[0].value, admin=False,
-                                   display_name=r.displayName, full_name=r.name.model_dump(mode='json'), emails=r.emails[0].model_dump(mode='json'),
-                                   origin="okta", locale=r.locale, role_id=None, internal_id=r.externalId)
-    else:
-        try:
-            user = users.create_scim_user(tenant_id=tenant_id, user_uuid=uuid.uuid4().hex, email=r.emails[0].value, admin=False,
-                                   display_name=r.displayName, full_name=r.name.model_dump(mode='json'), emails=r.emails[0].model_dump(mode='json'),
-                                   origin="okta", locale=r.locale, role_id=None, internal_id=r.externalId)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-    res = UserResponse(
-        schemas = ["urn:ietf:params:scim:schemas:core:2.0:User"],
-        id = user["data"]["userId"],
-        userName = r.userName,
-        name = r.name,
-        emails = r.emails,
-        displayName = r.displayName,
-        locale = r.locale,
-        externalId = r.externalId,
-        active = r.active, # ignore for now, since, can't insert actual timestamp
-        groups = [], # ignore
+@public_app.post("/Users")
+async def create_user(r: UserRequest, tenant_id = Depends(auth_required)):
+    existing_db_user = users.get_scim_user_by_unique_values(r.userName)
+    # todo(jon): we have a conflict in our db schema and the docs for SCIM.
+    # here is a quote from section 3.6 of RFC 7644:
+    #   For example, if a User resource is deleted, a CREATE
+    #   request for a User resource with the same userName as the previously
+    #   deleted resource SHOULD NOT fail with a 409 error due to userName
+    #   conflict.
+    # this doesn't work with our db schema as `public.users.email` is UNIQUE
+    # but not conditionaly unique based on deletion. this would be fine if
+    # we did a hard delete, but it seems like we do soft deletes.
+    # so, we need to figure out how to handle this:
+    #   1. we do hard deletes for scim users.
+    #   2. we change how we handle the unique constraint for users on the email field.
+    # i think the easiest thing to do here would be 1, since it wouldn't require
+    # updating any other parts of the codebase (potentially)
+    if existing_db_user:
+        return _uniqueness_error_response()
+    db_user = users.create_scim_user(
+        email=r.userName,
+        # note(jon): scim schema does not require the `name.formatted` attribute, but we require `name`.
+        # so, we have to define the value ourselves here
+        name="",
+        tenant_id=tenant_id,
     )
-    return JSONResponse(status_code=201, content=res.model_dump(mode='json'))
-
+    scim_user = _convert_db_user_to_scim_user(db_user)
+    response = JSONResponse(
+        status_code=201,
+        content=scim_user.model_dump(mode="json", exclude_none=True)
+    )
+    response.headers["Location"] = scim_user.meta.location
+    return response
 
 
 @public_app.put("/Users/{user_id}", dependencies=[Depends(auth_required)])
