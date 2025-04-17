@@ -10,6 +10,7 @@ import RecordingStatus from 'Shared/SessionsTabOverview/components/RecordingStat
 import { sessionService } from 'App/services';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import { debounce } from 'App/utils'
 
 type SessionStatus = {
   status: number;
@@ -48,10 +49,14 @@ function SessionList() {
   const hasNoRecordings = !activeSite || !activeSite.recorded;
   const metaList = customFieldStore.list;
 
+  const debouncedFetchSessions = debounce(() => {
+      searchStore.fetchSessions(true, isBookmark)
+    }, 200)
+
   useEffect(() => {
     if (!searchStore.urlParsed) return;
-    void searchStore.fetchSessions(true, isBookmark);
-  }, [searchStore.urlParsed]);
+    debouncedFetchSessions()
+  }, [searchStore.urlParsed, searchStore.instance.filters, searchStore.instance.eventsOrder]);
 
 
   const NO_CONTENT = React.useMemo(() => {
