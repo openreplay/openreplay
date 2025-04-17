@@ -25,6 +25,10 @@ function AssistSearchField() {
   const showRecords = () => {
     showModal(<Recordings />, { right: true, width: 960 });
   };
+
+  const onClear = () => {
+    searchStoreLive.clearSearch();
+  }
   return (
     <div className="flex items-center w-full gap-2">
       <div style={{ width: '60%' }}>
@@ -42,7 +46,7 @@ function AssistSearchField() {
         type="link"
         className="ml-auto font-medium"
         disabled={!hasFilters && !hasEvents}
-        onClick={() => searchStoreLive.clearSearch()}
+        onClick={onClear}
       >
         Clear Search
       </Button>

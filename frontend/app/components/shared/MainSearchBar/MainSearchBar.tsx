@@ -32,6 +32,11 @@ const MainSearchBar = (props: Props) => {
       currSite.current = projectId;
     }
   }, [projectId]);
+
+  const onClear = () => {
+    searchStore.clearSearch();
+    void searchStore.fetchSessions(true);
+  }
   return (
     <div className="flex items-center flex-wrap">
       <div style={{ flex: 3, marginRight: '10px' }}>
@@ -45,7 +50,7 @@ const MainSearchBar = (props: Props) => {
           // className="ml-auto font-medium"
           type="link"
           disabled={!hasSearch}
-          onClick={() => searchStore.clearSearch()}
+          onClick={onClear}
           className="ml-auto font-medium"
         >
           Clear Search
