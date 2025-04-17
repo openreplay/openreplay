@@ -1,20 +1,22 @@
 import logging
 import re
 import uuid
-from typing import Optional
+from typing import Any, Literal, Optional
 import copy
+from datetime import datetime
 
 from decouple import config
 from fastapi import Depends, HTTPException, Header, Query, Response, Request
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 import schemas
 from chalicelib.core import users, roles, tenants
 from chalicelib.utils.scim_auth import auth_optional, auth_required, create_tokens, verify_refresh_token
 from routers.base import get_routers
 from routers.scim_constants import RESOURCE_TYPES, SCHEMAS, SERVICE_PROVIDER_CONFIG
+from routers import scim_helpers
 
 
 logger = logging.getLogger(__name__)
@@ -189,90 +191,124 @@ class UserRequest(BaseModel):
     password: str = Field(default=None)
     active: bool
 
-class UserResponse(BaseModel):
-    schemas: list[str]
-    id: str
-    userName: str
-    name: Name
-    emails: list[Email] # ignore for now
-    displayName: str
-    locale: str
-    externalId: str
-    active: bool
-    groups: list[dict]
-    meta: dict = Field(default={"resourceType": "User"})
 
 class PatchUserRequest(BaseModel):
     schemas: list[str]
     Operations: list[dict]
 
 
-@public_app.get("/Users", dependencies=[Depends(auth_required)])
-async def get_users(
-    start_index: int = Query(1, alias="startIndex"),
-    count: Optional[int] = Query(None, alias="count"),
-    email: Optional[str] = Query(None, alias="filter"),
-):
-    """Get SCIM Users"""
-    if email:
-        email = email.split(" ")[2].strip('"')
-    result_users = users.get_users_paginated(start_index, count, email)
+class ResourceMetaResponse(BaseModel):
+    resourceType: Literal["ServiceProviderConfig", "ResourceType", "Schema", "User"] | None = None
+    created: datetime | None = None
+    lastModified: datetime | None = None
+    location: str | None = None
+    version: str | None = None
 
-    serialized_users = []
-    for user in result_users:
-        serialized_users.append(
-            UserResponse(
-                schemas = ["urn:ietf:params:scim:schemas:core:2.0:User"],
-                id = user["data"]["userId"],
-                userName = user["email"],
-                name = Name.model_validate(user["data"]["name"]),
-                emails = [Email.model_validate(user["data"]["emails"])],
-                displayName = user["name"],
-                locale = user["data"]["locale"],
-                externalId = user["internalId"],
-                active = True, # ignore for now, since, can't insert actual timestamp
-                groups = [], # ignore
-            ).model_dump(mode='json')
-        )
+    @field_serializer("created", "lastModified")
+    def serialize_datetime(self, dt: datetime) -> str | None:
+        if not dt:
+            return None
+        return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+class CommonResourceResponse(BaseModel):
+    id: str
+    externalId: str | None = None
+    schemas: list[
+        Literal[
+            "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
+            "urn:ietf:params:scim:schemas:core:2.0:ResourceType",
+            "urn:ietf:params:scim:schemas:core:2.0:Schema",
+            "urn:ietf:params:scim:schemas:core:2.0:User",
+        ]
+    ]
+    meta: ResourceMetaResponse | None = None
+
+
+class UserResponse(CommonResourceResponse):
+    schemas: list[Literal["urn:ietf:params:scim:schemas:core:2.0:User"]] = ["urn:ietf:params:scim:schemas:core:2.0:User"]
+    userName: str | None = None
+
+
+class QueryResourceResponse(BaseModel):
+    schemas: list[Literal["urn:ietf:params:scim:api:messages:2.0:ListResponse"]] = ["urn:ietf:params:scim:api:messages:2.0:ListResponse"]
+    totalResults: int
+    # todo(jon): add the other schemas
+    Resources: list[UserResponse]
+    startIndex: int
+    itemsPerPage: int
+
+
+MAX_USERS_PER_PAGE = 10
+
+
+def _convert_db_user_to_scim_user(db_user: dict[str, Any], attributes: list[str] | None = None, excluded_attributes: list[str] | None = None) -> UserResponse:
+    user_schema = SCHEMA_IDS_TO_SCHEMA_DETAILS["urn:ietf:params:scim:schemas:core:2.0:User"]
+    all_attributes = scim_helpers.get_all_attribute_names(user_schema)
+    attributes = attributes or all_attributes
+    always_returned_attributes = scim_helpers.get_all_attribute_names_where_returned_is_always(user_schema)
+    included_attributes = list(set(attributes).union(set(always_returned_attributes)))
+    excluded_attributes = excluded_attributes or []
+    excluded_attributes = list(set(excluded_attributes).difference(set(always_returned_attributes)))
+    scim_user = {
+        "id": str(db_user["userId"]),
+        "meta": {
+            "resourceType": "User",
+            "created": db_user["createdAt"],
+            "lastModified": db_user["createdAt"], # todo(jon): we currently don't keep track of this in the db
+            "location": f"Users/{db_user['userId']}"
+        },
+        "userName": db_user["email"],
+    }
+    scim_user = scim_helpers.filter_attributes(scim_user, included_attributes)
+    scim_user = scim_helpers.exclude_attributes(scim_user, excluded_attributes)
+    return UserResponse(**scim_user)
+
+
+@public_app.get("/Users")
+async def get_users(
+    tenant_id = Depends(auth_required),
+    requested_start_index: int = Query(1, alias="startIndex"),
+    requested_items_per_page: int | None = Query(None, alias="count"),
+    attributes: list[str] | None = Query(None),
+    excluded_attributes: list[str] | None = Query(None, alias="excludedAttributes"),
+):
+    start_index = max(1, requested_start_index)
+    items_per_page = min(max(0, requested_items_per_page or MAX_USERS_PER_PAGE), MAX_USERS_PER_PAGE)
+    # todo(jon): this might not be the most efficient thing to do. could be better to just do a count.
+    # but this is the fastest thing at the moment just to test that it's working
+    total_users = users.get_users_paginated(1, tenant_id)
+    db_users = users.get_users_paginated(start_index, tenant_id, count=items_per_page)
+    scim_users = [
+        _convert_db_user_to_scim_user(user, attributes, excluded_attributes)
+        for user in db_users
+    ]
     return JSONResponse(
         status_code=200,
-        content={
-            "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
-            "totalResults": len(serialized_users),
-            "startIndex": start_index,
-            "itemsPerPage": len(serialized_users),
-            "Resources": serialized_users,
-        },
+        content=QueryResourceResponse(
+            totalResults=len(total_users),
+            startIndex=start_index,
+            itemsPerPage=len(scim_users),
+            Resources=scim_users,
+        ).model_dump(mode="json", exclude_none=True),
     )
 
-@public_app.get("/Users/{user_id}", dependencies=[Depends(auth_required)])
-def get_user(user_id: str):
-    """Get SCIM User"""
-    tenant_id = 1
-    user = users.get_by_uuid(user_id, tenant_id)
-    if not user:
-        return JSONResponse(
-            status_code=404,
-            content={
-                "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
-                "detail": "User not found",
-                "status": 404,
-            }
-        )
 
-    res = UserResponse(
-        schemas = ["urn:ietf:params:scim:schemas:core:2.0:User"],
-        id = user["data"]["userId"],
-        userName = user["email"],
-        name = Name.model_validate(user["data"]["name"]),
-        emails = [Email.model_validate(user["data"]["emails"])],
-        displayName = user["name"],
-        locale = user["data"]["locale"],
-        externalId = user["internalId"],
-        active = True, # ignore for now, since, can't insert actual timestamp
-        groups = [], # ignore
+@public_app.get("/Users/{user_id}")
+def get_user(
+    user_id: str,
+    tenant_id = Depends(auth_required),
+    attributes: list[str] | None = Query(None),
+    excluded_attributes: list[str] | None = Query(None, alias="excludedAttributes"),
+):
+    db_user = users.get_by_uuid(user_id, tenant_id)
+    if not db_user:
+        return _not_found_error_response(user_id)
+    scim_user = _convert_db_user_to_scim_user(db_user, attributes, excluded_attributes)
+    return JSONResponse(
+        status_code=200,
+        content=scim_user.model_dump(mode="json", exclude_none=True)
     )
-    return JSONResponse(status_code=201, content=res.model_dump(mode='json'))
 
 
 @public_app.post("/Users", dependencies=[Depends(auth_required)])

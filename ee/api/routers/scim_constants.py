@@ -1,5 +1,6 @@
 # note(jon): please see https://datatracker.ietf.org/doc/html/rfc7643 for details on these constants
-from typing import Any
+from typing import Any, Literal
+
 
 def _attribute_characteristics(
         name: str,
@@ -102,12 +103,12 @@ def _common_resource_attributes(id_required: bool=True, id_uniqueness: str="none
                 "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
                 "urn:ietf:params:scim:schemas:core:2.0:ResourceType",
                 "urn:ietf:params:scim:schemas:core:2.0:Schema",
-                # todo(jon): add the user and group schem when completed
+                "urn:ietf:params:scim:schemas:core:2.0:User",
             ],
             case_exact=True,
             mutability="readOnly",
-            returned="default",
             required=True,
+            returned="always",
         ),
         _attribute_characteristics(
             name="meta",
@@ -670,13 +671,38 @@ SCHEMA_SCHEMA = {
 }
 
 
+USER_SCHEMA = {
+    "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Schema"],
+    "id": "urn:ietf:params:scim:schemas:core:2.0:User",
+    "name": "User",
+    "description": "User account.",
+    "meta": {
+        "resourceType": "Schema",
+        "created": "2025-04-16T14:48:00Z",
+        # note(jon): we might want to think about adding this resource as part of our db
+        # and then updating these timestamps from an api and such. for now, if we update
+        # the configuration, we should update the timestamp here.
+        "lastModified": "2025-04-16T14:48:00Z",
+        "location": "Schemas/urn:ietf:params:scim:schemas:core:2.0:User",
+    },
+    "attributes": [
+        *_common_resource_attributes(),
+        _attribute_characteristics(
+            name="userName",
+            description="A service provider's unique identifier for the user.",
+            required=True,
+        ),
+    ],
+}
+
+
 
 SCHEMAS = sorted(
-    # todo(jon): add the user schema
     [
         SERVICE_PROVIDER_CONFIG_SCHEMA,
         RESOURCE_TYPE_SCHEMA,
         SCHEMA_SCHEMA,
+        USER_SCHEMA,
     ],
     key=lambda x: x["id"],
 )
