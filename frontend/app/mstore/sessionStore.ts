@@ -223,6 +223,7 @@ export default class SessionStore {
   }
 
   fetchSessions = async (params = {}, force = false) => {
+    if (this.loadingSessions) return;
     runInAction(() => {
       this.loadingSessions = true;
     })

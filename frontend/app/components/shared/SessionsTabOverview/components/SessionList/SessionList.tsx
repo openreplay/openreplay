@@ -51,7 +51,7 @@ function SessionList() {
   useEffect(() => {
     if (!searchStore.urlParsed) return;
     void searchStore.fetchSessions(true, isBookmark);
-  }, [location.pathname]);
+  }, [searchStore.urlParsed]);
 
 
   const NO_CONTENT = React.useMemo(() => {
