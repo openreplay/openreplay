@@ -31,6 +31,7 @@ import Message, {
   Type as MType,
   UserID,
   WSChannel,
+  RemoveNode,
 } from './messages.gen.js'
 import Nodes from './nodes/index.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
@@ -41,6 +42,7 @@ import type { Options as SessOptions } from './session.js'
 import Session from './session.js'
 import Ticker from './ticker.js'
 import { MaintainerOptions } from './nodes/maintainer.js'
+import vElTree from './observer/vTree.js'
 
 interface TypedWorker extends Omit<Worker, 'postMessage'> {
   postMessage(data: ToWorkerData): void
@@ -273,6 +275,12 @@ export default class App {
     'usability-test': true,
   }
   private emptyBatchCounter = 0
+  private readonly vTree = new vElTree((id: number) => {
+      this.nodes.unregisterNodeById(id)
+      this.iframes.delete(id)
+      this.send(RemoveNode(id))
+    })
+  private readonly iframes: Map<number, HTMLIFrameElement> = new Map();
 
   constructor(
     projectKey: string,
@@ -361,8 +369,10 @@ export default class App {
       node_id: this.options.node_id,
       forceNgOff: Boolean(options.forceNgOff),
       maintainer: this.options.nodes?.maintainer,
+      vTree: this.vTree,
+      iframes: this.iframes,
     })
-    this.observer = new Observer({ app: this, options })
+    this.observer = new Observer({ app: this, options }, this.vTree, this.iframes)
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)

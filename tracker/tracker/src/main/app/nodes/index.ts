@@ -1,4 +1,5 @@
 import { createEventListener, deleteEventListener } from '../../utils.js'
+import VirtualNodeTree from '../observer/vTree.js'
 import Maintainer, { MaintainerOptions } from './maintainer.js'
 
 type NodeCallback = (node: Node, isStart: boolean) => void
@@ -8,6 +9,8 @@ export interface NodesOptions {
   node_id: string
   forceNgOff: boolean
   maintainer?: Partial<MaintainerOptions>
+  vTree: VirtualNodeTree
+  iframes: Map<number, HTMLIFrameElement>
 }
 
 export default class Nodes {
@@ -23,7 +26,7 @@ export default class Nodes {
   constructor(params: NodesOptions) {
     this.node_id = params.node_id
     this.forceNgOff = params.forceNgOff
-    this.maintainer = new Maintainer(this.nodes, this.unregisterNode, params.maintainer)
+    this.maintainer = new Maintainer(this.nodes, this.unregisterNode, params.vTree, params.iframes, params.maintainer)
     this.maintainer.start()
   }
 
@@ -96,6 +99,13 @@ export default class Nodes {
       this.totalNodeAmount--
     }
     return id
+  }
+
+  unregisterNodeById(id: number): void {
+    const node = this.nodes.get(id)
+    if (node) {
+      this.unregisterNode(node)
+    }
   }
 
   cleanTree() {

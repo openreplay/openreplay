@@ -20,7 +20,9 @@ import {
   isUseElement,
   hasTag,
   isCommentNode,
+  isDocument,
 } from '../guards.js'
+import VirtualNodeTree from './vTree.js'
 
 const iconCache = {}
 const svgUrlCache = {}
@@ -181,6 +183,7 @@ enum RecentsType {
 }
 
 export default abstract class Observer {
+  /** object tree where key is node id, value is null if it has no children, or object with same structure */
   private readonly observer: MutationObserver
   private readonly commited: Array<boolean | undefined> = []
   private readonly recents: Map<number, RecentsType> = new Map()
@@ -193,7 +196,9 @@ export default abstract class Observer {
     protected readonly app: App,
     protected readonly isTopContext = false,
     options: { disableSprites: boolean } = { disableSprites: false },
+    public vTree: VirtualNodeTree,
   ) {
+    this.vTree = vTree
     this.disableSprites = options.disableSprites
     this.observer = createMutationObserver(
       this.app.safe((mutations) => {
@@ -412,6 +417,7 @@ export default abstract class Observer {
     if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       // Sending RemoveNode only for parent to maintain
       this.app.send(RemoveNode(id))
+      this.vTree.removeNode(id)
 
       // Unregistering all the children in order to clear the memory
       const walker = document.createTreeWalker(
@@ -506,7 +512,6 @@ export default abstract class Observer {
             ;(el as HTMLElement | SVGElement).style.width = `${width}px`
             ;(el as HTMLElement | SVGElement).style.height = `${height}px`
           }
-
           this.app.send(CreateElementNode(id, parentID, index, el.tagName, isSVGElement(node)))
         }
         for (let i = 0; i < el.attributes.length; i++) {
@@ -586,5 +591,6 @@ export default abstract class Observer {
   disconnect(): void {
     this.observer.disconnect()
     this.clear()
+    this.vTree.clearAll()
   }
 }
