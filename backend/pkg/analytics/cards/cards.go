@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jackc/pgx/v4"
 	"github.com/lib/pq"
 
 	"openreplay/backend/pkg/db/postgres/pool"
@@ -48,12 +47,12 @@ func (s *cardsImpl) Create(projectId int, userID uint64, req *CardCreateRequest)
 	ctx := context.Background()
 	defer func() {
 		if err != nil {
-			tx.Rollback(ctx)
+			err := tx.TxRollback()
 			if err != nil {
 				return
 			}
 		} else {
-			err := tx.Commit(ctx)
+			err := tx.TxCommit()
 			if err != nil {
 				return
 			}
@@ -67,8 +66,8 @@ func (s *cardsImpl) Create(projectId int, userID uint64, req *CardCreateRequest)
 		RETURNING metric_id, project_id, user_id, name, metric_type, view_type, metric_of, metric_value, metric_format, is_public, created_at, edited_at`
 
 	card := &CardGetResponse{}
-	err = tx.QueryRow(
-		ctx, sql,
+	err = tx.TxQueryRow(
+		sql,
 		projectId, userID, req.Name, req.MetricType, req.ViewType, req.MetricOf, req.MetricValue, req.MetricFormat, req.IsPublic,
 	).Scan(
 		&card.CardID,
@@ -98,7 +97,7 @@ func (s *cardsImpl) Create(projectId int, userID uint64, req *CardCreateRequest)
 	return card, nil
 }
 
-func (s *cardsImpl) CreateSeries(ctx context.Context, tx pgx.Tx, metricId int64, series []CardSeriesBase) []CardSeries {
+func (s *cardsImpl) CreateSeries(ctx context.Context, tx *pool.Tx, metricId int64, series []CardSeriesBase) []CardSeries {
 	if len(series) == 0 {
 		return nil // No series to create
 	}
@@ -126,7 +125,7 @@ func (s *cardsImpl) CreateSeries(ctx context.Context, tx pgx.Tx, metricId int64,
 	query := fmt.Sprintf(sql, strings.Join(values, ","))
 	s.log.Info(ctx, "Executing query: %s with args: %v", query, args)
 
-	rows, err := tx.Query(ctx, query, args...)
+	rows, err := tx.TxQuery(query, args...)
 	if err != nil {
 		s.log.Error(ctx, "failed to execute batch insert for series: %v", err)
 		return nil
@@ -359,12 +358,12 @@ func (s *cardsImpl) Update(projectId int, cardID int64, userID uint64, req *Card
 	ctx := context.Background()
 	defer func() {
 		if err != nil {
-			tx.Rollback(ctx)
+			err := tx.TxRollback()
 			if err != nil {
 				return
 			}
 		} else {
-			err := tx.Commit(ctx)
+			err := tx.TxCommit()
 			if err != nil {
 				return
 			}
@@ -379,7 +378,7 @@ func (s *cardsImpl) Update(projectId int, cardID int64, userID uint64, req *Card
 		RETURNING metric_id, project_id, user_id, name, metric_type, view_type, metric_of, metric_value, metric_format, is_public, created_at, edited_at`
 
 	card := &CardGetResponse{}
-	err = tx.QueryRow(ctx, sql,
+	err = tx.TxQueryRow(sql,
 		req.Name, req.MetricType, req.ViewType, req.MetricOf, req.MetricValue, req.MetricFormat, req.IsPublic, cardID, projectId,
 	).Scan(
 		&card.CardID, &card.ProjectID, &card.UserID, &card.Name, &card.MetricType, &card.ViewType, &card.MetricOf,

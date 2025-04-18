@@ -8,8 +8,9 @@ import (
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
-	analyticsMetrics "openreplay/backend/pkg/metrics/analytics"
-	databaseMetrics "openreplay/backend/pkg/metrics/database"
+	//analyticsMetrics "openreplay/backend/pkg/metrics/analytics"
+	//databaseMetrics "openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
@@ -20,9 +21,10 @@ func main() {
 	log := logger.New()
 	cfg := analyticsConfig.New(log)
 	webMetrics := web.New("analytics")
-	metrics.New(log, append(webMetrics.List(), append(analyticsMetrics.List(), databaseMetrics.List()...)...))
+	dbMetrics := database.New("analytics")
+	metrics.New(log, append(webMetrics.List(), dbMetrics.List()...))
 
-	pgConn, err := pool.New(cfg.Postgres.String())
+	pgConn, err := pool.New(dbMetrics, cfg.Postgres.String())
 	if err != nil {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
@@ -34,7 +36,7 @@ func main() {
 	}
 	defer chConn.Stop()
 
-	builder, err := analytics.NewServiceBuilder(log, cfg, webMetrics, pgConn, chConn)
+	builder, err := analytics.NewServiceBuilder(log, cfg, webMetrics, dbMetrics, pgConn, chConn)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
