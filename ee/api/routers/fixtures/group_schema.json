@@ -1,0 +1,70 @@
+{
+  "id": "urn:ietf:params:scim:schemas:core:2.0:Group",
+  "name": "Group",
+  "description": "Group",
+  "attributes": [
+    {
+      "name": "displayName",
+      "type": "string",
+      "multiValued": false,
+      "description": "Human readable name for the Group. REQUIRED.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "members",
+      "type": "complex",
+      "multiValued": true,
+      "description": "A list of members of the Group.",
+      "required": false,
+      "subAttributes": [
+        {
+          "name": "value",
+          "type": "string",
+          "multiValued": false,
+          "description": "Identifier of the member of this Group.",
+          "required": false,
+          "caseExact": false,
+          "mutability": "immutable",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "$ref",
+          "type": "reference",
+          "referenceTypes": ["User", "Group"],
+          "multiValued": false,
+          "description": "The URI of the corresponding member resource of this Group.",
+          "required": false,
+          "caseExact": false,
+          "mutability": "immutable",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "multiValued": false,
+          "description": "A label indicating the type of resource; e.g., 'User' or 'Group'.",
+          "required": false,
+          "caseExact": false,
+          "canonicalValues": ["User", "Group"],
+          "mutability": "immutable",
+          "returned": "default",
+          "uniqueness": "none"
+        }
+      ],
+      "mutability": "readWrite",
+      "returned": "default"
+    }
+  ],
+  "meta": {
+    "resourceType": "Schema",
+    "location": "/v2/Schemas/urn:ietf:params:scim:schemas:core:2.0:Group",
+    "created": "2025-04-17T15:48:00",
+    "lastModified": "2025-04-17T15:48:00"      
+  }
+}

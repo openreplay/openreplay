@@ -1,0 +1,19 @@
+[
+    {
+        "schemas": [
+            "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
+        ],
+        "id": "User",
+        "name": "User",
+        "endpoint": "/Users",
+        "description": "User account",
+        "schema": "urn:ietf:params:scim:schemas:core:2.0:User",
+        "meta": {
+            "resourceType": "ResourceType",
+            "created": "2025-04-16T08:37:00Z",
+            "lastModified": "2025-04-16T08:37:00Z",
+            "location": "ResourceType/User"
+        },
+        "schemaExtensions": []
+    }
+]
