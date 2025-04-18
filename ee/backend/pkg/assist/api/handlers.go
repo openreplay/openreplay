@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"openreplay/backend/pkg/assist/service"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/sessionmanager"
 )
 
 type handlersImpl struct {
@@ -124,7 +126,13 @@ func (e *handlersImpl) socketsListByProject(w http.ResponseWriter, r *http.Reque
 
 	resp, err := e.assist.GetByID(projectKey, sessionID)
 	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		if errors.Is(err, sessionmanager.ErrSessionNotFound) {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		} else if errors.Is(err, sessionmanager.ErrSessionNotBelongToProject) {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+		} else {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
 		return
 	}
 	response := map[string]interface{}{
@@ -183,7 +191,13 @@ func (e *handlersImpl) socketsLiveBySession(w http.ResponseWriter, r *http.Reque
 
 	resp, err := e.assist.GetByID(projectKey, sessionID)
 	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		if errors.Is(err, sessionmanager.ErrSessionNotFound) {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		} else if errors.Is(err, sessionmanager.ErrSessionNotBelongToProject) {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+		} else {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
 		return
 	}
 	response := map[string]interface{}{

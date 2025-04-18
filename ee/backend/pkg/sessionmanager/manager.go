@@ -368,6 +368,9 @@ func (sm *sessionManagerImpl) updateSessions() {
 	sm.log.Debug(sm.ctx, "Session processing cycle completed in %v. Processed %d sessions", duration, len(sm.cache))
 }
 
+var ErrSessionNotFound = errors.New("session not found")
+var ErrSessionNotBelongToProject = errors.New("session does not belong to the project")
+
 func (sm *sessionManagerImpl) GetByID(projectID, sessionID string) (interface{}, error) {
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
@@ -378,10 +381,10 @@ func (sm *sessionManagerImpl) GetByID(projectID, sessionID string) (interface{},
 
 	sessionData, exists := sm.cache[sessionID]
 	if !exists {
-		return nil, fmt.Errorf("session not found")
+		return nil, ErrSessionNotFound
 	}
 	if sessionData.ProjectID != projectID {
-		return nil, fmt.Errorf("session does not belong to the project")
+		return nil, ErrSessionNotBelongToProject
 	}
 	return sessionData.Raw, nil
 }
