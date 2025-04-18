@@ -41,7 +41,7 @@ func main() {
 	defer redisClient.Close()
 
 	prefix := api.NoPrefix
-	builder, err := assist.NewServiceBuilder(log, cfg, webMetrics, dbMetric, pgConn, redisClient, prefix)
+	builder, err := assist.NewServiceBuilder(log, cfg, webMetrics, dbMetric, pgConn, redisClient)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
@@ -51,7 +51,7 @@ func main() {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
 	router.AddHandlers(prefix, builder.AssistAPI)
-	router.AddMiddlewares(builder.RateLimiter.Middleware, builder.AuditTrail.Middleware)
+	router.AddMiddlewares(builder.RateLimiter.Middleware)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
 }
