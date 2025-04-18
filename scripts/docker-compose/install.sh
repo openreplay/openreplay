@@ -123,10 +123,10 @@ n)
     ;;
 esac
 
-services=$(sudo -E docker-compose config --services)
-for service in $services; do
+readarray -t services < <(sudo -E docker-compose config --services)
+for service in "${services[@]}"; do
     echo "Pulling image for $service..."
-    sudo -E docker-compose pull $service --no-parallel
+    sudo -E docker-compose pull --no-parallel "$service"
     sleep 5
 done
 
