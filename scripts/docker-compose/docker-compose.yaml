@@ -179,11 +179,11 @@ services:
       - docker-envs/heuristics.env
     restart: unless-stopped
 
-  imagestorage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/imagestorage:${COMMON_VERSION}
-    container_name: imagestorage
+  images-openreplay:
+    image: public.ecr.aws/p1t3u8a3/images:${COMMON_VERSION}
+    container_name: images
     env_file:
-      - docker-envs/imagestorage.env
+      - docker-envs/images.env
     networks:
       - openreplay-net
     restart: unless-stopped
