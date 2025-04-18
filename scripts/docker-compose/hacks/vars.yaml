@@ -8,10 +8,10 @@ minio:
 global:
   postgresql: *postgres
   assistKey: '${COMMON_ASSIST_KEY}'
-  assistJWTSecret: 'change_me_assist_jwt_secret'
-  jwtSecret: 'change_me_jwt'
-  jwtSpotSecret: 'change_me_jwt_spot'
-  tokenSecret: 'change_me_token_secret'
+  assistJWTSecret: '${COMMON_ASSIST_JWT_SECRET}'
+  jwtSecret: '${COMMON_JWT_SECRET}'
+  jwtSpotSecret: '${COMMON_JWT_SPOT_SECRET}'
+  tokenSecret: '${COMMON_TOKEN_SECRET}'
   domainName: "${COMMON_DOMAIN_NAME}"
   ORSecureAccess: false
   s3:
