@@ -234,6 +234,12 @@ def _convert_db_user_to_scim_user(
             "location": f"Users/{db_user['userId']}",
         },
         "userName": db_user["email"],
+        "externalId": db_user["internalId"],
+        "name": {
+            "formatted": db_user["name"],
+        },
+        "displayName": db_user["name"] or db_user["email"],
+
     }
     scim_user = scim_helpers.filter_attributes(scim_user, included_attributes)
     scim_user = scim_helpers.exclude_attributes(scim_user, excluded_attributes)
