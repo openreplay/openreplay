@@ -1,18 +1,22 @@
 import logging
-import re
-import uuid
-from typing import Optional
+from typing import Any
 
 from decouple import config
-from fastapi import Depends, HTTPException, Header, Query, Response
+from fastapi import Depends, HTTPException, Header, Query, Response, Request
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, Field
+from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
 
-import schemas
-from chalicelib.core import users, roles, tenants
-from chalicelib.utils.scim_auth import auth_required, create_tokens, verify_refresh_token
+from chalicelib.core import users, tenants
+from chalicelib.utils.scim_auth import (
+    auth_optional,
+    auth_required,
+    create_tokens,
+    verify_refresh_token,
+)
 from routers.base import get_routers
+from routers.scim_constants import RESOURCE_TYPES, SCHEMAS, SERVICE_PROVIDER_CONFIG
+from routers import scim_helpers
 
 
 logger = logging.getLogger(__name__)
@@ -20,447 +24,335 @@ logger = logging.getLogger(__name__)
 public_app, app, app_apikey = get_routers(prefix="/sso/scim/v2")
 
 
-"""Authentication endpoints"""
+@public_app.post("/token")
+async def post_token(
+    host: str = Header(..., alias="Host"),
+    form_data: OAuth2PasswordRequestForm = Depends(),
+):
+    subdomain = host.split(".")[0]
+
+    # Missing authentication part, to add
+    if form_data.username != config("SCIM_USER") or form_data.password != config(
+        "SCIM_PASSWORD"
+    ):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    tenant = tenants.get_by_name(subdomain)
+    access_token, refresh_token = create_tokens(tenant_id=tenant["tenantId"])
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "Bearer",
+    }
+
 
 class RefreshRequest(BaseModel):
     refresh_token: str
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# Login endpoint to generate tokens
-@public_app.post("/token")
-async def login(host: str = Header(..., alias="Host"), form_data: OAuth2PasswordRequestForm = Depends()):
-    subdomain = host.split(".")[0]
-    
-    # Missing authentication part, to add
-    if form_data.username != config("SCIM_USER") or form_data.password != config("SCIM_PASSWORD"):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    subdomain = "Openreplay EE"
-    tenant = tenants.get_by_name(subdomain)
-    access_token, refresh_token = create_tokens(tenant_id=tenant["tenantId"])
-
-    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
-
-# Refresh token endpoint
 @public_app.post("/refresh")
-async def refresh_token(r: RefreshRequest):
-
+async def post_refresh(r: RefreshRequest):
     payload = verify_refresh_token(r.refresh_token)
     new_access_token, _ = create_tokens(tenant_id=payload["tenant_id"])
-
     return {"access_token": new_access_token, "token_type": "Bearer"}
 
-"""
-User endpoints
-"""
 
-class Name(BaseModel):
-    givenName: str
-    familyName: str
-
-class Email(BaseModel):
-    primary: bool
-    value: str
-    type: str
-
-class UserRequest(BaseModel):
-    schemas: list[str]
-    userName: str
-    name: Name
-    emails: list[Email]
-    displayName: str
-    locale: str
-    externalId: str
-    groups: list[dict]
-    password: str = Field(default=None)
-    active: bool
-
-class UserResponse(BaseModel):
-    schemas: list[str]
-    id: str
-    userName: str
-    name: Name
-    emails: list[Email] # ignore for now
-    displayName: str
-    locale: str
-    externalId: str
-    active: bool
-    groups: list[dict]
-    meta: dict = Field(default={"resourceType": "User"})
-
-class PatchUserRequest(BaseModel):
-    schemas: list[str]
-    Operations: list[dict]
+RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS = {
+    resource_type_detail["id"]: resource_type_detail
+    for resource_type_detail in RESOURCE_TYPES
+}
 
 
-@public_app.get("/Users", dependencies=[Depends(auth_required)])
-async def get_users(
-    start_index: int = Query(1, alias="startIndex"),
-    count: Optional[int] = Query(None, alias="count"),
-    email: Optional[str] = Query(None, alias="filter"),
-):
-    """Get SCIM Users"""
-    if email:
-        email = email.split(" ")[2].strip('"')
-    result_users = users.get_users_paginated(start_index, count, email)
-    
-    serialized_users = []
-    for user in result_users:
-        serialized_users.append(
-            UserResponse(
-                schemas = ["urn:ietf:params:scim:schemas:core:2.0:User"],
-                id = user["data"]["userId"],
-                userName = user["email"],
-                name = Name.model_validate(user["data"]["name"]),
-                emails = [Email.model_validate(user["data"]["emails"])],
-                displayName = user["name"],
-                locale = user["data"]["locale"],
-                externalId = user["internalId"],
-                active = True, # ignore for now, since, can't insert actual timestamp
-                groups = [], # ignore
-            ).model_dump(mode='json')
-        )
+def _not_found_error_response(resource_id: str):
     return JSONResponse(
-        status_code=200,
+        status_code=404,
         content={
-            "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
-            "totalResults": len(serialized_users),
-            "startIndex": start_index,
-            "itemsPerPage": len(serialized_users),
-            "Resources": serialized_users,
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+            "detail": f"Resource {resource_id} not found",
+            "status": "404",
         },
     )
 
-@public_app.get("/Users/{user_id}", dependencies=[Depends(auth_required)])
-def get_user(user_id: str):
-    """Get SCIM User"""
-    tenant_id = 1
-    user = users.get_by_uuid(user_id, tenant_id)
-    if not user:
+
+def _uniqueness_error_response():
+    return JSONResponse(
+        status_code=409,
+        content={
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+            "detail": "One or more of the attribute values are already in use or are reserved.",
+            "status": "409",
+            "scimType": "uniqueness",
+        },
+    )
+
+
+def _mutability_error_response():
+    return JSONResponse(
+        status_code=400,
+        content={
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+            "detail": "The attempted modification is not compatible with the target attribute's mutability or current state.",
+            "status": "400",
+            "scimType": "mutability",
+        },
+    )
+
+
+def _operation_not_permitted_error_response():
+    return JSONResponse(
+        status_code=403,
+        content={
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+            "detail": "Operation is not permitted based on the supplied authorization",
+            "status": "403",
+        },
+    )
+
+
+def _invalid_value_error_response():
+    return JSONResponse(
+        status_code=400,
+        content={
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+            "detail": "A required value was missing, or the value specified was not compatible with the operation or attribtue type, or resource schema.",
+            "status": "400",
+            "scimType": "invalidValue",
+        },
+    )
+
+
+@public_app.get("/ResourceTypes", dependencies=[Depends(auth_required)])
+async def get_resource_types(filter_param: str | None = Query(None, alias="filter")):
+    if filter_param is not None:
+        return _operation_not_permitted_error_response()
+    return JSONResponse(
+        status_code=200,
+        content={
+            "totalResults": len(RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS),
+            "itemsPerPage": len(RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS),
+            "startIndex": 1,
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+            "Resources": list(RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS.values()),
+        },
+    )
+
+
+@public_app.get("/ResourceTypes/{resource_id}", dependencies=[Depends(auth_required)])
+async def get_resource_type(resource_id: str):
+    if resource_id not in RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS:
+        return _not_found_error_response(resource_id)
+    return JSONResponse(
+        status_code=200,
+        content=RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS[resource_id],
+    )
+
+
+SCHEMA_IDS_TO_SCHEMA_DETAILS = {
+    schema_detail["id"]: schema_detail for schema_detail in SCHEMAS
+}
+
+
+@public_app.get("/Schemas", dependencies=[Depends(auth_required)])
+async def get_schemas(filter_param: str | None = Query(None, alias="filter")):
+    if filter_param is not None:
+        return _operation_not_permitted_error_response()
+    return JSONResponse(
+        status_code=200,
+        content={
+            "totalResults": len(SCHEMA_IDS_TO_SCHEMA_DETAILS),
+            "itemsPerPage": len(SCHEMA_IDS_TO_SCHEMA_DETAILS),
+            "startIndex": 1,
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+            "Resources": [
+                value for _, value in sorted(SCHEMA_IDS_TO_SCHEMA_DETAILS.items())
+            ],
+        },
+    )
+
+
+@public_app.get("/Schemas/{schema_id}", dependencies=[Depends(auth_required)])
+async def get_schema(schema_id: str):
+    if schema_id not in SCHEMA_IDS_TO_SCHEMA_DETAILS:
+        return _not_found_error_response(schema_id)
+    return JSONResponse(
+        status_code=200,
+        content=SCHEMA_IDS_TO_SCHEMA_DETAILS[schema_id],
+    )
+
+
+# note(jon): it was recommended to make this endpoint partially open
+# so that clients can view the `authenticationSchemes` prior to being authenticated.
+@public_app.get("/ServiceProviderConfig")
+async def get_service_provider_config(
+    r: Request, tenant_id: str | None = Depends(auth_optional)
+):
+    is_authenticated = tenant_id is not None
+    if not is_authenticated:
         return JSONResponse(
-            status_code=404,
+            status_code=200,
             content={
-                "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
-                "detail": "User not found",
-                "status": 404,
-            }
-        )
-
-    res = UserResponse(
-        schemas = ["urn:ietf:params:scim:schemas:core:2.0:User"],
-        id = user["data"]["userId"],
-        userName = user["email"],
-        name = Name.model_validate(user["data"]["name"]),
-        emails = [Email.model_validate(user["data"]["emails"])],
-        displayName = user["name"],
-        locale = user["data"]["locale"],
-        externalId = user["internalId"],
-        active = True, # ignore for now, since, can't insert actual timestamp
-        groups = [], # ignore
-    )
-    return JSONResponse(status_code=201, content=res.model_dump(mode='json'))
-
-
-@public_app.post("/Users", dependencies=[Depends(auth_required)])
-async def create_user(r: UserRequest):
-    """Create SCIM User"""
-    tenant_id = 1
-    existing_user = users.get_by_email_only(r.userName)
-    deleted_user = users.get_deleted_user_by_email(r.userName)
-    
-    if existing_user:
-        return JSONResponse(
-            status_code = 409,
-            content = {
-                "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
-                "detail": "User already exists in the database.",
-                "status": 409,
-            }
-        )
-    elif deleted_user:
-        user_id = users.get_deleted_by_uuid(deleted_user["data"]["userId"], tenant_id)
-        user = users.restore_scim_user(user_id=user_id["userId"], tenant_id=tenant_id, user_uuid=uuid.uuid4().hex, email=r.emails[0].value, admin=False,
-                                   display_name=r.displayName, full_name=r.name.model_dump(mode='json'), emails=r.emails[0].model_dump(mode='json'),
-                                   origin="okta", locale=r.locale, role_id=None, internal_id=r.externalId)
-    else:
-        try:
-            user = users.create_scim_user(tenant_id=tenant_id, user_uuid=uuid.uuid4().hex, email=r.emails[0].value, admin=False,
-                                   display_name=r.displayName, full_name=r.name.model_dump(mode='json'), emails=r.emails[0].model_dump(mode='json'),
-                                   origin="okta", locale=r.locale, role_id=None, internal_id=r.externalId)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-    res = UserResponse(
-        schemas = ["urn:ietf:params:scim:schemas:core:2.0:User"],
-        id = user["data"]["userId"],
-        userName = r.userName,
-        name = r.name,
-        emails = r.emails,
-        displayName = r.displayName,
-        locale = r.locale,
-        externalId = r.externalId,
-        active = r.active, # ignore for now, since, can't insert actual timestamp
-        groups = [], # ignore
-    )
-    return JSONResponse(status_code=201, content=res.model_dump(mode='json'))
-
-            
-
-@public_app.put("/Users/{user_id}", dependencies=[Depends(auth_required)])
-def update_user(user_id: str, r: UserRequest):
-    """Update SCIM User"""
-    tenant_id = 1
-    user = users.get_by_uuid(user_id, tenant_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    changes = r.model_dump(mode='json', exclude={"schemas", "emails", "name", "locale", "groups", "password", "active"}) # some of these should be added later if necessary
-    nested_changes = r.model_dump(mode='json', include={"name", "emails"})
-    mapping = {"userName": "email", "displayName": "name", "externalId": "internal_id"} # mapping between scim schema field names and local database model, can be done as config?
-    for k, v in mapping.items():
-        if k in changes:
-            changes[v] = changes.pop(k)
-    changes["data"] = {}
-    for k, v in nested_changes.items():
-        value_to_insert = v[0] if k == "emails" else v
-        changes["data"][k] = value_to_insert
-    try:
-        users.update(tenant_id, user["userId"], changes)
-        res = UserResponse(
-            schemas = ["urn:ietf:params:scim:schemas:core:2.0:User"],
-            id = user["data"]["userId"],
-            userName = r.userName,
-            name = r.name,
-            emails = r.emails,
-            displayName = r.displayName,
-            locale = r.locale,
-            externalId = r.externalId,
-            active = r.active, # ignore for now, since, can't insert actual timestamp
-            groups = [], # ignore
-        )
-        
-        return JSONResponse(status_code=201, content=res.model_dump(mode='json'))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@public_app.patch("/Users/{user_id}", dependencies=[Depends(auth_required)])
-def deactivate_user(user_id: str, r: PatchUserRequest):
-    """Deactivate user, soft-delete"""
-    tenant_id = 1
-    active = r.model_dump(mode='json')["Operations"][0]["value"]["active"]
-    if active:
-        raise HTTPException(status_code=404, detail="Activating user is not supported")
-    user = users.get_by_uuid(user_id, tenant_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    users.delete_member_as_admin(tenant_id, user["userId"])
-
-    return Response(status_code=204, content="")
-
-@public_app.delete("/Users/{user_uuid}", dependencies=[Depends(auth_required)])
-def delete_user(user_uuid: str):
-    """Delete user from database, hard-delete"""
-    tenant_id = 1
-    user = users.get_by_uuid(user_uuid, tenant_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    users.__hard_delete_user_uuid(user_uuid)
-    return Response(status_code=204, content="")
-
-
-
-"""
-Group endpoints
-"""
-
-class Operation(BaseModel):
-    op: str
-    path: str = Field(default=None)
-    value: list[dict] | dict = Field(default=None)
-
-class GroupGetResponse(BaseModel):
-    schemas: list[str] = Field(default=["urn:ietf:params:scim:api:messages:2.0:ListResponse"])
-    totalResults: int
-    startIndex: int
-    itemsPerPage: int
-    resources: list = Field(alias="Resources")
-
-class GroupRequest(BaseModel):
-    schemas: list[str] = Field(default=["urn:ietf:params:scim:schemas:core:2.0:Group"])
-    displayName: str = Field(default=None)
-    members: list = Field(default=None)
-    operations: list[Operation] = Field(default=None, alias="Operations")
-
-class GroupPatchRequest(BaseModel):
-    schemas: list[str] = Field(default=["urn:ietf:params:scim:api:messages:2.0:PatchOp"])
-    operations: list[Operation] = Field(alias="Operations")
-
-class GroupResponse(BaseModel):
-    schemas: list[str] = Field(default=["urn:ietf:params:scim:schemas:core:2.0:Group"])
-    id: str
-    displayName: str
-    members: list
-    meta: dict = Field(default={"resourceType": "Group"})
-
-
-@public_app.get("/Groups", dependencies=[Depends(auth_required)])
-def get_groups(
-    start_index: int = Query(1, alias="startIndex"),
-    count: Optional[int] = Query(None, alias="count"),
-    group_name: Optional[str] = Query(None, alias="filter"),
-    ):
-    """Get groups"""
-    tenant_id = 1
-    res = []
-    if group_name:
-        group_name = group_name.split(" ")[2].strip('"')
-
-    groups = roles.get_roles_with_uuid_paginated(tenant_id, start_index, count, group_name)
-    res = [{
-            "id": group["data"]["groupId"],
-            "meta": {
-                "created": group["createdAt"],
-                "lastModified": "", # not currently a field
-                "version": "v1.0"
+                "schemas": SERVICE_PROVIDER_CONFIG["schemas"],
+                "authenticationSchemes": SERVICE_PROVIDER_CONFIG[
+                    "authenticationSchemes"
+                ],
+                "meta": SERVICE_PROVIDER_CONFIG["meta"],
             },
-            "displayName": group["name"]
-        } for group in groups
+        )
+    return JSONResponse(status_code=200, content=SERVICE_PROVIDER_CONFIG)
+
+
+MAX_USERS_PER_PAGE = 10
+
+
+def _convert_db_user_to_scim_user(
+    db_user: dict[str, Any],
+    attributes: list[str] | None = None,
+    excluded_attributes: list[str] | None = None,
+) -> dict[str, Any]:
+    user_schema = SCHEMA_IDS_TO_SCHEMA_DETAILS[
+        "urn:ietf:params:scim:schemas:core:2.0:User"
+    ]
+    all_attributes = scim_helpers.get_all_attribute_names(user_schema)
+    attributes = attributes or all_attributes
+    always_returned_attributes = (
+        scim_helpers.get_all_attribute_names_where_returned_is_always(user_schema)
+    )
+    included_attributes = list(set(attributes).union(set(always_returned_attributes)))
+    excluded_attributes = excluded_attributes or []
+    excluded_attributes = list(
+        set(excluded_attributes).difference(set(always_returned_attributes))
+    )
+    scim_user = {
+        "id": str(db_user["userId"]),
+        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+        "meta": {
+            "resourceType": "User",
+            "created": db_user["createdAt"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+            # todo(jon): we currently don't keep track of this in the db
+            "lastModified": db_user["createdAt"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "location": f"Users/{db_user['userId']}",
+        },
+        "userName": db_user["email"],
+        "externalId": db_user["internalId"],
+        "name": {
+            "formatted": db_user["name"],
+        },
+        "displayName": db_user["name"] or db_user["email"],
+
+    }
+    scim_user = scim_helpers.filter_attributes(scim_user, included_attributes)
+    scim_user = scim_helpers.exclude_attributes(scim_user, excluded_attributes)
+    return scim_user
+
+
+@public_app.get("/Users")
+async def get_users(
+    tenant_id=Depends(auth_required),
+    requested_start_index: int = Query(1, alias="startIndex"),
+    requested_items_per_page: int | None = Query(None, alias="count"),
+    attributes: list[str] | None = Query(None),
+    excluded_attributes: list[str] | None = Query(None, alias="excludedAttributes"),
+):
+    start_index = max(1, requested_start_index)
+    items_per_page = min(
+        max(0, requested_items_per_page or MAX_USERS_PER_PAGE), MAX_USERS_PER_PAGE
+    )
+    # todo(jon): this might not be the most efficient thing to do. could be better to just do a count.
+    # but this is the fastest thing at the moment just to test that it's working
+    total_resources = users.get_users_paginated(1, tenant_id)
+    db_resources = users.get_users_paginated(
+        start_index, tenant_id, count=items_per_page
+    )
+    scim_resources = [
+        _convert_db_user_to_scim_user(resource, attributes, excluded_attributes)
+        for resource in db_resources
     ]
     return JSONResponse(
         status_code=200,
-        content=GroupGetResponse(
-            totalResults=len(groups),
-            startIndex=start_index,
-            itemsPerPage=len(groups),
-            Resources=res
-        ).model_dump(mode='json'))
+        content={
+            "totalResults": len(total_resources),
+            "startIndex": start_index,
+            "itemsPerPage": len(scim_resources),
+            "Resources": scim_resources,
+        },
+    )
 
-@public_app.get("/Groups/{group_id}", dependencies=[Depends(auth_required)])
-def get_group(group_id: str):
-    """Get a group by id"""
-    tenant_id = 1
-    group = roles.get_role_by_group_id(tenant_id, group_id)
-    if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
-    members = roles.get_users_by_group_uuid(tenant_id, group["data"]["groupId"])
-    members = [{"value": member["data"]["userId"], "display": member["name"]} for member in members]
 
-    return JSONResponse(
-        status_code=200,
-        content=GroupResponse(
-            id=group["data"]["groupId"],
-            displayName=group["name"],
-            members=members,
-    ).model_dump(mode='json'))
+@public_app.get("/Users/{user_id}")
+async def get_user(
+    user_id: str,
+    tenant_id=Depends(auth_required),
+    attributes: list[str] | None = Query(None),
+    excluded_attributes: list[str] | None = Query(None, alias="excludedAttributes"),
+):
+    db_resource = users.get_scim_user_by_id(user_id, tenant_id)
+    if not db_resource:
+        return _not_found_error_response(user_id)
+    scim_resource = _convert_db_user_to_scim_user(
+        db_resource, attributes, excluded_attributes
+    )
+    return JSONResponse(status_code=200, content=scim_resource)
 
-@public_app.post("/Groups", dependencies=[Depends(auth_required)])
-def create_group(r: GroupRequest):
-    """Create a group"""
-    tenant_id = 1
-    member_role = roles.get_member_permissions(tenant_id)
+
+@public_app.post("/Users")
+async def create_user(r: Request, tenant_id=Depends(auth_required)):
+    payload = await r.json()
+    if "userName" not in payload:
+        return _invalid_value_error_response()
+    # note(jon): this method will return soft deleted users as well
+    existing_db_resource = users.get_existing_scim_user_by_unique_values(
+        payload["userName"]
+    )
+    if existing_db_resource and existing_db_resource["deletedAt"] is None:
+        return _uniqueness_error_response()
+    if existing_db_resource and existing_db_resource["deletedAt"] is not None:
+        db_resource = users.restore_scim_user(existing_db_resource["userId"], tenant_id)
+    else:
+        db_resource = users.create_scim_user(
+            email=payload["userName"],
+            # note(jon): scim schema does not require the `name.formatted` attribute, but we require `name`.
+            # so, we have to define the value ourselves here
+            name="",
+            tenant_id=tenant_id,
+        )
+    scim_resource = _convert_db_user_to_scim_user(db_resource)
+    response = JSONResponse(status_code=201, content=scim_resource)
+    response.headers["Location"] = scim_resource["meta"]["location"]
+    return response
+
+
+@public_app.put("/Users/{user_id}")
+async def update_user(user_id: str, r: Request, tenant_id=Depends(auth_required)):
+    db_resource = users.get_scim_user_by_id(user_id, tenant_id)
+    if not db_resource:
+        return _not_found_error_response(user_id)
+    current_scim_resource = _convert_db_user_to_scim_user(db_resource)
+    changes = await r.json()
+    schema = SCHEMA_IDS_TO_SCHEMA_DETAILS["urn:ietf:params:scim:schemas:core:2.0:User"]
     try:
-        data = schemas.RolePayloadSchema(name=r.displayName, permissions=member_role["permissions"]) # permissions by default are same as for member role
-        group = roles.create_as_admin(tenant_id, uuid.uuid4().hex, data)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    added_members = []
-    for member in r.members:
-        user = users.get_by_uuid(member["value"], tenant_id)
-        if user:
-            users.update(tenant_id, user["userId"], {"role_id": group["roleId"]})
-            added_members.append({
-                "value": user["data"]["userId"],
-                "display": user["name"]
-            })
-
-    return JSONResponse(
-        status_code=200,
-        content=GroupResponse(
-            id=group["data"]["groupId"],
-            displayName=group["name"],
-            members=added_members,
-    ).model_dump(mode='json'))
+        valid_mutable_changes = scim_helpers.filter_mutable_attributes(
+            schema, changes, current_scim_resource
+        )
+    except ValueError:
+        return _mutability_error_response()
+    try:
+        updated_db_resource = users.update_scim_user(
+            user_id,
+            tenant_id,
+            email=valid_mutable_changes["userName"],
+        )
+        updated_scim_resource = _convert_db_user_to_scim_user(updated_db_resource)
+        return JSONResponse(status_code=200, content=updated_scim_resource)
+    except Exception:
+        # note(jon): for now, this is the only error that would happen when updating the scim user
+        return _uniqueness_error_response()
 
 
-@public_app.put("/Groups/{group_id}", dependencies=[Depends(auth_required)])
-def update_put_group(group_id: str, r: GroupRequest):
-    """Update a group or members of the group (not used by anything yet)"""
-    tenant_id = 1
-    group = roles.get_role_by_group_id(tenant_id, group_id)
-    if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
-    
-    if r.operations and r.operations[0].op == "replace" and r.operations[0].path is None:
-        roles.update_group_name(tenant_id, group["data"]["groupId"], r.operations[0].value["displayName"])
-        return Response(status_code=200, content="")
-
-    members = r.members
-    modified_members = []
-    for member in members:
-        user = users.get_by_uuid(member["value"], tenant_id)
-        if user:
-            users.update(tenant_id, user["userId"], {"role_id": group["roleId"]})
-            modified_members.append({
-                "value": user["data"]["userId"],
-                "display": user["name"]
-            })
-    
-    return JSONResponse(
-        status_code=200,
-        content=GroupResponse(
-            id=group_id,
-            displayName=group["name"],
-            members=modified_members,
-    ).model_dump(mode='json'))
-
-
-@public_app.patch("/Groups/{group_id}", dependencies=[Depends(auth_required)])
-def update_patch_group(group_id: str, r: GroupPatchRequest):
-    """Update a group or members of the group, used by AIW"""
-    tenant_id = 1
-    group = roles.get_role_by_group_id(tenant_id, group_id)
-    if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
-    if r.operations[0].op == "replace" and r.operations[0].path is None:
-        roles.update_group_name(tenant_id, group["data"]["groupId"], r.operations[0].value["displayName"])
-        return Response(status_code=200, content="")
-
-    modified_members = []
-    for op in r.operations:
-        if op.op == "add" or op.op == "replace":
-            # Both methods work as "replace"
-            for u in op.value:
-                user = users.get_by_uuid(u["value"], tenant_id)
-                if user:
-                    users.update(tenant_id, user["userId"], {"role_id": group["roleId"]})
-                    modified_members.append({
-                        "value": user["data"]["userId"],
-                        "display": user["name"]
-                    })
-        elif op.op == "remove":
-            user_id = re.search(r'\[value eq \"([a-f0-9]+)\"\]', op.path).group(1)
-            roles.remove_group_membership(tenant_id, group_id, user_id)
-    return JSONResponse(
-        status_code=200,
-        content=GroupResponse(
-            id=group_id,
-            displayName=group["name"],
-            members=modified_members,
-    ).model_dump(mode='json'))
-
-
-@public_app.delete("/Groups/{group_id}", dependencies=[Depends(auth_required)])
-def delete_group(group_id: str):
-    """Delete a group, hard-delete"""
-    # possibly need to set the user's roles to default member role, instead of null
-    tenant_id = 1
-    group = roles.get_role_by_group_id(tenant_id, group_id)
-    if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
-    roles.delete_scim_group(tenant_id, group["data"]["groupId"])
-
-    return Response(status_code=200, content="")
+@public_app.delete("/Users/{user_id}")
+async def delete_user(user_id: str, tenant_id=Depends(auth_required)):
+    db_resource = users.get_scim_user_by_id(user_id, tenant_id)
+    if not db_resource:
+        return _not_found_error_response(user_id)
+    users.soft_delete_scim_user_by_id(user_id, tenant_id)
+    return Response(status_code=204, content="")

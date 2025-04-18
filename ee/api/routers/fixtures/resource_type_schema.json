@@ -1,0 +1,102 @@
+{
+  "id": "urn:ietf:params:scim:schemas:core:2.0:ResourceType",
+  "name": "ResourceType",
+  "description": "Specifies the schema that describes a SCIM Resource Type",
+  "attributes": [
+    {
+      "name": "id",
+      "type": "string",
+      "multiValued": false,
+      "description": "The resource type's server unique id. May be the same as the 'name' attribute.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readOnly",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "multiValued": false,
+      "description": "The resource type name.",
+      "required": true,
+      "caseExact": false,
+      "mutability": "readOnly",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "multiValued": false,
+      "description": "The resource type's human readable description.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readOnly",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "endpoint",
+      "type": "reference",
+      "referenceTypes": ["uri"],
+      "multiValued": false,
+      "description": "The resource type's HTTP addressable endpoint relative to the Base URL; e.g., /Users.",
+      "required": true,
+      "caseExact": false,
+      "mutability": "readOnly",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "schema",
+      "type": "reference",
+      "referenceTypes": ["uri"],
+      "multiValued": false,
+      "description": "The resource types primary/base schema URI.",
+      "required": true,
+      "caseExact": true,
+      "mutability": "readOnly",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "schemaExtensions",
+      "type": "complex",
+      "multiValued": true,
+      "description": "A list of URIs of the resource type's schema extensions",
+      "required": false,
+      "mutability": "readOnly",
+      "returned": "default",
+      "subAttributes": [
+        {
+          "name": "schema",
+          "type": "reference",
+          "referenceTypes": ["uri"],
+          "multiValued": false,
+          "description": "The URI of a schema extension.",
+          "required": true,
+          "caseExact": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "multiValued": false,
+          "description": "Specifies whether the schema extension is required for the resource type.",
+          "required": true,
+          "mutability": "readOnly",
+          "returned": "default"
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "resourceType": "Schema",
+    "location": "/v2/Schemas/urn:ietf:params:scim:schemas:core:2.0:ResourceType",
+    "created": "2025-04-17T15:48:00",
+    "lastModified": "2025-04-17T15:48:00"      
+  }
+}

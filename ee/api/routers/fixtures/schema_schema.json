@@ -1,0 +1,304 @@
+{
+  "id": "urn:ietf:params:scim:schemas:core:2.0:Schema",
+  "name": "Schema",
+  "description": "Specifies the schema that describes a SCIM Schema",
+  "attributes": [
+    {
+      "name": "id",
+      "type": "string",
+      "multiValued": false,
+      "description": "The unique URI of the schema.",
+      "required": true,
+      "caseExact": false,
+      "mutability": "readOnly",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "multiValued": false,
+      "description": "The schema's human readable name.",
+      "required": true,
+      "caseExact": false,
+      "mutability": "readOnly",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "multiValued": false,
+      "description": "The schema's human readable description.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readOnly",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "attributes",
+      "type": "complex",
+      "multiValued": true,
+      "description": "A complex attribute that includes the attributes of a schema",
+      "required": true,
+      "mutability": "readOnly",
+      "returned": "default",
+      "subAttributes": [
+        {
+          "name": "name",
+          "type": "string",
+          "multiValued": false,
+          "description": "The attribute's name",
+          "required": true,
+          "caseExact": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "multiValued": false,
+          "description": "The attribute's data type.",
+          "required": true,
+          "canonicalValues": ["string","complex","boolean","decimal","integer","dateTime","reference"],
+          "caseExact": false,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "multiValued",
+          "type": "boolean",
+          "multiValued": false,
+          "description": "Boolean indicating an attribute's plurality.",
+          "required": true,
+          "mutability": "readOnly",
+          "returned": "default"
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "multiValued": false,
+          "description": "A human readable description of the attribute.",
+          "required": false,
+          "caseExact": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "multiValued": false,
+          "description": "A boolean indicating if the attribute is required.",
+          "required": false,
+          "mutability": "readOnly",
+          "returned": "default"
+        },
+        {
+          "name": "canonicalValues",
+          "type": "string",
+          "multiValued": true,
+          "description": "A collection of canonical values.",
+          "required": false,
+          "caseExact": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "caseExact",
+          "type": "boolean",
+          "multiValued": false,
+          "description": "Indicates if a string attribute is case-sensitive.",
+          "required": false,
+          "mutability": "readOnly",
+          "returned": "default"
+        },
+        {
+          "name": "mutability",
+          "type": "string",
+          "multiValued": false,
+          "description": "Indicates if an attribute is modifiable.",
+          "required": false,
+          "caseExact": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none",
+          "canonicalValues": ["readOnly","readWrite","immutable","writeOnly"]
+        },
+        {
+          "name": "returned",
+          "type": "string",
+          "multiValued": false,
+          "description": "Indicates when an attribute is returned in a response.",
+          "required": false,
+          "caseExact": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none",
+          "canonicalValues": ["always","never","default","request"]
+        },
+        {
+          "name": "uniqueness",
+          "type": "string",
+          "multiValued": false,
+          "description": "Indicates how unique a value must be.",
+          "required": false,
+          "caseExact": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none",
+          "canonicalValues": ["none","server","global"]
+        },
+        {
+          "name": "referenceTypes",
+          "type": "string",
+          "multiValued": true,
+          "description": "Specifies a resourceType that a reference attribute may refer to.",
+          "required": false,
+          "caseExact": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "subAttributes",
+          "type": "complex",
+          "multiValued": true,
+          "description": "Used to define the sub-attributes of a complex attribute",
+          "required": false,
+          "mutability": "readOnly",
+          "returned": "default",
+          "subAttributes": [
+            {
+              "name": "name",
+              "type": "string",
+              "multiValued": false,
+              "description": "The sub-attribute's name",
+              "required": true,
+              "caseExact": true,
+              "mutability": "readOnly",
+              "returned": "default",
+              "uniqueness": "none"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "multiValued": false,
+              "description": "The sub-attribute's data type.",
+              "required": true,
+              "canonicalValues": ["string","complex","boolean","decimal","integer","dateTime","reference"],
+              "caseExact": false,
+              "mutability": "readOnly",
+              "returned": "default",
+              "uniqueness": "none"
+            },
+            {
+              "name": "multiValued",
+              "type": "boolean",
+              "multiValued": false,
+              "description": "Boolean indicating sub-attribute plurality.",
+              "required": true,
+              "mutability": "readOnly",
+              "returned": "default"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "multiValued": false,
+              "description": "Human readable description of the sub-attribute.",
+              "required": false,
+              "caseExact": true,
+              "mutability": "readOnly",
+              "returned": "default",
+              "uniqueness": "none"
+            },
+            {
+              "name": "required",
+              "type": "boolean",
+              "multiValued": false,
+              "description": "Whether the sub-attribute is required.",
+              "required": false,
+              "mutability": "readOnly",
+              "returned": "default"
+            },
+            {
+              "name": "canonicalValues",
+              "type": "string",
+              "multiValued": true,
+              "description": "A collection of canonical values for the sub-attribute.",
+              "required": false,
+              "caseExact": true,
+              "mutability": "readOnly",
+              "returned": "default",
+              "uniqueness": "none"
+            },
+            {
+              "name": "caseExact",
+              "type": "boolean",
+              "multiValued": false,
+              "description": "Case sensitivity of the sub-attribute.",
+              "required": false,
+              "mutability": "readOnly",
+              "returned": "default"
+            },
+            {
+              "name": "mutability",
+              "type": "string",
+              "multiValued": false,
+              "description": "Modifiability of the sub-attribute.",
+              "required": false,
+              "caseExact": true,
+              "mutability": "readOnly",
+              "returned": "default",
+              "canonicalValues": ["readOnly","readWrite","immutable","writeOnly"]
+            },
+            {
+              "name": "returned",
+              "type": "string",
+              "multiValued": false,
+              "description": "When the sub-attribute is returned.",
+              "required": false,
+              "caseExact": true,
+              "mutability": "readOnly",
+              "returned": "default",
+              "canonicalValues": ["always","never","default","request"]
+            },
+            {
+              "name": "uniqueness",
+              "type": "string",
+              "multiValued": false,
+              "description": "Uniqueness constraint of the sub-attribute.",
+              "required": false,
+              "caseExact": true,
+              "mutability": "readOnly",
+              "returned": "default",
+              "uniqueness": "none",
+              "canonicalValues": ["none","server","global"]
+            },
+            {
+              "name": "referenceTypes",
+              "type": "string",
+              "multiValued": true,
+              "description": "ResourceTypes that the sub-attribute may reference.",
+              "required": false,
+              "caseExact": true,
+              "mutability": "readOnly",
+              "returned": "default",
+              "uniqueness": "none"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "resourceType": "Schema",
+    "location": "/v2/Schemas/urn:ietf:params:scim:schemas:core:2.0:Schema",
+    "created": "2025-04-17T15:48:00",
+    "lastModified": "2025-04-17T15:48:00"      
+  }
+}
