@@ -226,6 +226,8 @@ Pipfile.lock
 /chalicelib/core/sessions/__init__.py
 /chalicelib/core/sessions/sessions_legacy_mobil.py
 /chalicelib/core/sessions/sessions_search_exp.py
+/chalicelib/core/sessions/sessions_search_ch.py
+/chalicelib/core/sessions/sessions_search_pg.py
 /chalicelib/core/metrics/modules
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps

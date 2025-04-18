@@ -2,6 +2,7 @@ from typing import Union
 
 import schemas
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils import sql_helper as sh
 from decouple import config
 import logging
 
@@ -80,3 +81,11 @@ def get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEvent
     if event_type not in defs:
         raise Exception(f"unsupported EventType:{event_type}")
     return defs.get(event_type)
+
+
+def get_sub_condition(col_name: str, val_name: str,
+                      operator: Union[schemas.SearchEventOperator, schemas.MathOperator]):
+    if operator == schemas.SearchEventOperator.PATTERN:
+        return f"match({col_name}, %({val_name})s)"
+    op = sh.get_sql_operator(operator)
+    return f"{col_name} {op} %({val_name})s"

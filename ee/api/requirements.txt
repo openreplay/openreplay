@@ -1,15 +1,16 @@
 urllib3==2.3.0
 requests==2.32.3
-boto3==1.37.21
+boto3==1.36.12
 pyjwt==2.10.1
 psycopg2-binary==2.9.10
-psycopg[pool,binary]==3.2.6
+psycopg[pool,binary]==3.2.4
+clickhouse-driver[lz4]==0.2.9
 clickhouse-connect==0.8.15
-elasticsearch==8.17.2
+elasticsearch==8.17.1
 jira==3.8.0
-cachetools==5.5.2
+cachetools==5.5.1
 
-fastapi==0.115.12
+fastapi==0.115.8
 uvicorn[standard]==0.34.0
 gunicorn==23.0.0
 python-decouple==3.8
@@ -18,9 +19,11 @@ apscheduler==3.11.0
 
 # TODO: enable after xmlsec fix https://github.com/xmlsec/python-xmlsec/issues/252
 #--no-binary is used to avoid libxml2 library version incompatibilities between xmlsec and lxml
-
+python3-saml==1.16.0
+--no-binary=lxml
 python-multipart==0.0.20
+xmlsec==1.3.14 --no-binary=xmlsec
 
 redis==5.2.1
 #confluent-kafka==2.1.0
-azure-storage-blob==12.25.0
+azure-storage-blob==12.24.1
