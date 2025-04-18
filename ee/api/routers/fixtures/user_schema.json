@@ -1,0 +1,386 @@
+{
+  "id": "urn:ietf:params:scim:schemas:core:2.0:User",
+  "name": "User",
+  "description": "User Account",
+  "attributes": [
+    {
+      "name": "schemas",
+      "type": "string",
+      "multiValued": true,
+      "description": "An array of Strings containing URI that are used to indicate the namespaces of the SCIM schemas that define the attributes present in the current JSON structure.",
+      "required": true,
+      "caseExact": false,
+      "mutability": "immutable",
+      "returned": "always",
+      "uniqueness": "none"
+    },
+    {
+      "name": "id",
+      "type": "string",
+      "multiValued": false,
+      "description": "Unique identifier for the resource, assigned by the service provider. MUST be non-empty, unique, stable, and non-reassignable. Clients MUST NOT specify this value.",
+      "required": true,
+      "caseExact": true,
+      "mutability": "readOnly",
+      "returned": "always",
+      "uniqueness": "server"
+    },
+    {
+      "name": "externalId",
+      "type": "string",
+      "multiValued": false,
+      "description": "Identifier for the resource as defined by the provisioning client. OPTIONAL; clients MAY include a non-empty value.",
+      "required": false,
+      "caseExact": true,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "meta",
+      "type": "complex",
+      "multiValued": false,
+      "description": "Resource metadata. MUST be ignored when provided by clients.",
+      "required": false,
+      "mutability": "readOnly",
+      "returned": "default",
+      "subAttributes": [
+        {
+          "name": "resourceType",
+          "type": "string",
+          "multiValued": false,
+          "description": "The resource type name.",
+          "required": false,
+          "caseExact": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "created",
+          "type": "dateTime",
+          "multiValued": false,
+          "description": "The date and time the resource was added.",
+          "required": false,
+          "mutability": "readOnly",
+          "returned": "default"
+        },
+        {
+          "name": "lastModified",
+          "type": "dateTime",
+          "multiValued": false,
+          "description": "The most recent date and time the resource was modified.",
+          "required": false,
+          "mutability": "readOnly",
+          "returned": "default"
+        },
+        {
+          "name": "location",
+          "type": "reference",
+          "referenceTypes": ["external"],
+          "multiValued": false,
+          "description": "The URI of the resource being returned.",
+          "required": false,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "multiValued": false,
+          "description": "The version (ETag) of the resource being returned.",
+          "required": false,
+          "caseExact": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        }
+      ]
+    },
+    {
+      "name": "userName",
+      "type": "string",
+      "multiValued": false,
+      "description": "Unique identifier for the User, used to authenticate. REQUIRED.",
+      "required": true,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "server"
+    },
+    {
+      "name": "name",
+      "type": "complex",
+      "multiValued": false,
+      "description": "Components of the user's real name.",
+      "required": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none",
+      "subAttributes": [
+        { "name": "formatted",      "type": "string",   "multiValued": false, "description": "Complete name, formatted for display.", "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "familyName",     "type": "string",   "multiValued": false, "description": "Family name.",          "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "givenName",      "type": "string",   "multiValued": false, "description": "Given name.",           "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "middleName",     "type": "string",   "multiValued": false, "description": "Middle name(s).",       "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "honorificPrefix","type": "string",   "multiValued": false, "description": "Honorific prefix.",     "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "honorificSuffix","type": "string",   "multiValued": false, "description": "Honorific suffix.",     "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" }
+      ]
+    },
+    {
+      "name": "displayName",
+      "type": "string",
+      "multiValued": false,
+      "description": "Full name, suitable for display.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "nickName",
+      "type": "string",
+      "multiValued": false,
+      "description": "Casual name.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "profileUrl",
+      "type": "reference",
+      "referenceTypes": ["external"],
+      "multiValued": false,
+      "description": "URL of the user's profile.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "title",
+      "type": "string",
+      "multiValued": false,
+      "description": "User's title (e.g., 'Vice President').",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "userType",
+      "type": "string",
+      "multiValued": false,
+      "description": "Relationship between organization and user.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "preferredLanguage",
+      "type": "string",
+      "multiValued": false,
+      "description": "Preferred language, e.g., 'en_US'.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "locale",
+      "type": "string",
+      "multiValued": false,
+      "description": "Locale for formatting, e.g., 'en-US'.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "timezone",
+      "type": "string",
+      "multiValued": false,
+      "description": "Time zone in Olson format, e.g., 'America/Los_Angeles'.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "active",
+      "type": "boolean",
+      "multiValued": false,
+      "description": "Administrative status.",
+      "required": false,
+      "mutability": "readWrite",
+      "returned": "default"
+    },
+    {
+      "name": "password",
+      "type": "string",
+      "multiValued": false,
+      "description": "Cleartext password for create/reset operations.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "writeOnly",
+      "returned": "never",
+      "uniqueness": "none"
+    },
+    {
+      "name": "emails",
+      "type": "complex",
+      "multiValued": true,
+      "description": "Email addresses for the user.",
+      "required": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none",
+      "subAttributes": [
+        { "name": "value",   "type": "string",   "multiValued": false, "description": "Email address.",         "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "display", "type": "string",   "multiValued": false, "description": "Display name.",           "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "type",    "type": "string",   "multiValued": false, "description": "Type: 'work','home','other'.", "required": false, "caseExact": false, "canonicalValues": ["work","home","other"], "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "primary", "type": "boolean",  "multiValued": false, "description": "Primary flag; one per list.", "required": false, "mutability": "readWrite", "returned": "default" }
+      ]
+    },
+    {
+      "name": "phoneNumbers",
+      "type": "complex",
+      "multiValued": true,
+      "description": "Phone numbers for the user.",
+      "required": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "subAttributes": [
+        { "name": "value",   "type": "string",   "multiValued": false, "description": "Phone number (tel URI).", "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "display", "type": "string",   "multiValued": false, "description": "Display name.",           "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "type",    "type": "string",   "multiValued": false, "description": "Type: 'work','home','mobile','fax','pager','other'.", "required": false, "caseExact": false, "canonicalValues": ["work","home","mobile","fax","pager","other"], "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "primary", "type": "boolean",  "multiValued": false, "description": "Primary flag; one per list.", "required": false, "mutability": "readWrite", "returned": "default" }
+      ]
+    },
+    {
+      "name": "ims",
+      "type": "complex",
+      "multiValued": true,
+      "description": "Instant messaging addresses.",
+      "required": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "subAttributes": [
+        { "name": "value",   "type": "string",   "multiValued": false, "description": "IM address.",           "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "display", "type": "string",   "multiValued": false, "description": "Display name.",         "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "type",    "type": "string",   "multiValued": false, "description": "Type: 'aim','gtalk','icq','xmpp','msn','skype','qq','yahoo'.", "required": false, "caseExact": false, "canonicalValues": ["aim","gtalk","icq","xmpp","msn","skype","qq","yahoo"], "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "primary", "type": "boolean",  "multiValued": false, "description": "Primary flag; one per list.", "required": false, "mutability": "readWrite", "returned": "default" }
+      ]
+    },
+    {
+      "name": "photos",
+      "type": "complex",
+      "multiValued": true,
+      "description": "URLs of photos of the user.",
+      "required": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "subAttributes": [
+        { "name": "value",   "type": "reference", "referenceTypes": ["external"], "multiValued": false, "description": "Photo URL.",        "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "display", "type": "string",    "multiValued": false, "description": "Display name.",      "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "type",    "type": "string",    "multiValued": false, "description": "Type: 'photo','thumbnail'.", "required": false, "caseExact": false, "canonicalValues": ["photo","thumbnail"], "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "primary", "type": "boolean",   "multiValued": false, "description": "Primary flag; one per list.", "required": false, "mutability": "readWrite", "returned": "default" }
+      ]
+    },
+    {
+      "name": "addresses",
+      "type": "complex",
+      "multiValued": true,
+      "description": "Physical mailing addresses.",
+      "required": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none",
+      "subAttributes": [
+        { "name": "formatted",     "type": "string", "multiValued": false, "description": "Full address, may contain newlines.", "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "streetAddress", "type": "string", "multiValued": false, "description": "Street address.",       "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "locality",      "type": "string", "multiValued": false, "description": "City or locality.",     "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "region",        "type": "string", "multiValued": false, "description": "State or region.",      "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "postalCode",    "type": "string", "multiValued": false, "description": "Zip or postal code.",   "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "country",       "type": "string", "multiValued": false, "description": "Country name.",         "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "type",          "type": "string", "multiValued": false, "description": "Type: 'work','home','other'.", "required": false, "caseExact": false, "canonicalValues": ["work","home","other"], "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "primary",       "type": "boolean","multiValued": false, "description": "Primary flag; one per list.", "required": false, "mutability": "readWrite", "returned": "default" }
+      ]
+    },
+    {
+      "name": "groups",
+      "type": "complex",
+      "multiValued": true,
+      "description": "Groups to which the user belongs.",
+      "required": false,
+      "mutability": "readOnly",
+      "returned": "default",
+      "subAttributes": [
+        { "name": "value",   "type": "string",    "multiValued": false, "description": "Group identifier.",     "required": false, "caseExact": false, "mutability": "readOnly", "returned": "default", "uniqueness": "none" },
+        { "name": "$ref",    "type": "reference", "referenceTypes": ["User","Group"], "multiValued": false, "description": "URI of the Group resource.", "required": false, "caseExact": false, "mutability": "readOnly", "returned": "default", "uniqueness": "none" },
+        { "name": "display", "type": "string",    "multiValued": false, "description": "Display name.",          "required": false, "caseExact": false, "mutability": "readOnly", "returned": "default", "uniqueness": "none" }
+      ]
+    },
+    {
+      "name": "entitlements",
+      "type": "complex",
+      "multiValued": true,
+      "description": "Entitlements granted to the user.",
+      "required": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "subAttributes": [
+        { "name": "value",   "type": "string",  "multiValued": false, "description": "Entitlement value.",      "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "display", "type": "string",  "multiValued": false, "description": "Display name.",           "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "type",    "type": "string",  "multiValued": false, "description": "Type label.",             "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "primary", "type": "boolean", "multiValued": false, "description": "Primary flag; one per list.", "required": false, "mutability": "readWrite", "returned": "default" }
+      ]
+    },
+    {
+      "name": "roles",
+      "type": "complex",
+      "multiValued": true,
+      "description": "Roles granted to the user.",
+      "required": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "subAttributes": [
+        { "name": "value",   "type": "string",  "multiValued": false, "description": "Role value.",             "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "display", "type": "string",  "multiValued": false, "description": "Display name.",           "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "type",    "type": "string",  "multiValued": false, "description": "Type label.",             "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "primary", "type": "boolean", "multiValued": false, "description": "Primary flag; one per list.", "required": false, "mutability": "readWrite", "returned": "default" }
+      ]
+    },
+    {
+      "name": "x509Certificates",
+      "type": "complex",
+      "multiValued": true,
+      "description": "X.509 certificates issued to the user.",
+      "required": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "subAttributes": [
+        { "name": "value",   "type": "binary",  "multiValued": false, "description": "Certificate value.",      "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "display", "type": "string",  "multiValued": false, "description": "Display name.",           "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "type",    "type": "string",  "multiValued": false, "description": "Type label.",             "required": false, "caseExact": false, "canonicalValues": [], "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "primary", "type": "boolean", "multiValued": false, "description": "Primary flag; one per list.", "required": false, "mutability": "readWrite", "returned": "default" }
+      ]
+    }
+  ],
+  "meta": {
+    "resourceType": "Schema",
+    "location": "/v2/Schemas/urn:ietf:params:scim:schemas:core:2.0:User",
+    "created": "2025-04-17T15:48:00",
+    "lastModified": "2025-04-17T15:48:00"
+  }
+}
