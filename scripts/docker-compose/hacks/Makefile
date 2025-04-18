@@ -29,4 +29,9 @@ create-envs: create-yamls ## Create envs from deployment
 				templater -i tpls/env.tpl -f {} > ../docker-envs/$${filename}.env' \;
 	@# Replace all http/https for COMMON_DOMAIN_NAME with COMMON_PROTOCOL
 	@find ../docker-envs/ -type f -name "*.env" -exec sed -i 's|http[s]\?://\$${COMMON_DOMAIN_NAME}|\$${COMMON_PROTOCOL}://\$${COMMON_DOMAIN_NAME}|g' {} \;
-	@rm -rf yamls
+
+create-compose: create-envs ## Create docker-compose.yml
+	@echo creating docker-compose yaml
+	$(eval FILES := $(shell find yamls/ -type f -name "*.yaml" -exec basename {} .yaml \; | tr '\n' ',' | sed 's/,$$//'))
+	@echo "Files found: $(FILES)"
+	@FILES=$(FILES) templater -i tpls/docker-compose.tpl > ../docker-compose.yaml
