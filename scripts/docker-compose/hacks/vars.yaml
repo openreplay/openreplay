@@ -1,0 +1,19 @@
+postgresql: &postgres
+  postgresqlPassword: '${COMMON_PG_PASSWORD}'
+minio:
+  global:
+    minio:
+      accessKey: &accessKey '${COMMON_S3_KEY}'
+      secretKey: &secretKey '${COMMON_S3_SECRET}'
+global:
+  postgresql: *postgres
+  assistKey: '${COMMON_ASSIST_KEY}'
+  assistJWTSecret: '${COMMON_ASSIST_JWT_SECRET}'
+  jwtSecret: '${COMMON_JWT_SECRET}'
+  jwtSpotSecret: '${COMMON_JWT_SPOT_SECRET}'
+  tokenSecret: '${COMMON_TOKEN_SECRET}'
+  domainName: "${COMMON_DOMAIN_NAME}"
+  ORSecureAccess: false
+  s3:
+    accessKey: *accessKey
+    secretKey: *secretKey
