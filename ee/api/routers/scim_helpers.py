@@ -103,3 +103,40 @@ def exclude_attributes(resource: dict[str, Any], exclude_list: list[str]) -> dic
             else:
                 new_resource[key] = value
     return new_resource
+
+
+def filter_mutable_attributes(schema: dict[str, Any], requested_changes: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
+    attributes = {attr.get("name"): attr for attr in schema.get("attributes", [])}
+
+    valid_changes = {}
+
+    for attr_name, new_value in requested_changes.items():
+        attr_def = attributes.get(attr_name)
+        if not attr_def:
+            # Unknown attribute: ignore per RFC 7644
+            continue
+
+        mutability = attr_def.get("mutability", "readWrite")
+
+        if mutability == "readWrite" or mutability == "writeOnly":
+            valid_changes[attr_name] = new_value
+
+        elif mutability == "readOnly":
+            # Cannot modify read-only attributes: ignore
+            continue
+
+        elif mutability == "immutable":
+            # Only valid if the new value matches the current value exactly
+            current_value = current_values.get(attr_name)
+            if new_value != current_value:
+                raise ValueError(
+                    f"Attribute '{attr_name}' is immutable (cannot change). "
+                    f"Current value: {current_value!r}, attempted change: {new_value!r}"
+                )
+            # If it matches, no change is needed (already set)
+
+        else:
+            # Unknown mutability: default to safe behavior (ignore)
+            continue
+
+    return valid_changes
