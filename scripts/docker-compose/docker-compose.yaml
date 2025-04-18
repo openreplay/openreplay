@@ -287,6 +287,7 @@ services:
 
 volumes:
   pgdata:
+  clickhouse:
   redisdata:
   miniodata:
   shared-volume:
