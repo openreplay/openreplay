@@ -84,6 +84,18 @@ def _uniqueness_error_response():
     )
 
 
+def _mutability_error_response():
+    return JSONResponse(
+        status_code=400,
+        content={
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+            "detail": "The attempted modification is not compatible with the target attribute's mutability or current state.",
+            "status": "400",
+            "scimType": "mutability",
+        }
+    )
+
+
 @public_app.get("/ResourceTypes", dependencies=[Depends(auth_required)])
 async def get_resource_types(filter_param: str | None = Query(None, alias="filter")):
     if filter_param is not None:
@@ -329,42 +341,33 @@ async def create_user(r: UserRequest, tenant_id = Depends(auth_required)):
     return response
 
 
-@public_app.put("/Users/{user_id}", dependencies=[Depends(auth_required)])
-def update_user(user_id: str, r: UserRequest):
-    """Update SCIM User"""
-    tenant_id = 1
-    user = users.get_by_uuid(user_id, tenant_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    changes = r.model_dump(mode='json', exclude={"schemas", "emails", "name", "locale", "groups", "password", "active"}) # some of these should be added later if necessary
-    nested_changes = r.model_dump(mode='json', include={"name", "emails"})
-    mapping = {"userName": "email", "displayName": "name", "externalId": "internal_id"} # mapping between scim schema field names and local database model, can be done as config?
-    for k, v in mapping.items():
-        if k in changes:
-            changes[v] = changes.pop(k)
-    changes["data"] = {}
-    for k, v in nested_changes.items():
-        value_to_insert = v[0] if k == "emails" else v
-        changes["data"][k] = value_to_insert
+@public_app.put("/Users/{user_id}")
+def update_user(user_id: str, r: UserRequest, tenant_id = Depends(auth_required)):
+    db_resource = users.get_scim_user_by_id(user_id, tenant_id)
+    if not db_resource:
+        return _not_found_error_response(user_id)
+    current_scim_resource = _convert_db_user_to_scim_user(db_resource).model_dump(mode="json", exclude_none=True)
+    changes = r.model_dump(mode="json")
+    schema = SCHEMA_IDS_TO_SCHEMA_DETAILS["urn:ietf:params:scim:schemas:core:2.0:User"]
     try:
-        users.update(tenant_id, user["userId"], changes)
-        res = UserResponse(
-            schemas = ["urn:ietf:params:scim:schemas:core:2.0:User"],
-            id = user["data"]["userId"],
-            userName = r.userName,
-            name = r.name,
-            emails = r.emails,
-            displayName = r.displayName,
-            locale = r.locale,
-            externalId = r.externalId,
-            active = r.active, # ignore for now, since, can't insert actual timestamp
-            groups = [], # ignore
+        valid_mutable_changes = scim_helpers.filter_mutable_attributes(schema, changes, current_scim_resource)
+    except ValueError:
+        # todo(jon): will need to add a test for this once we have an immutable field
+        return _mutability_error_response()
+    try:
+        updated_db_resource = users.update_scim_user(
+            user_id,
+            tenant_id,
+            email=valid_mutable_changes["userName"],
         )
-
-        return JSONResponse(status_code=201, content=res.model_dump(mode='json'))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        updated_scim_resource = _convert_db_user_to_scim_user(updated_db_resource)
+        return JSONResponse(
+            status_code=200,
+            content=updated_scim_resource.model_dump(mode="json", exclude_none=True),
+        )
+    except Exception:
+        # note(jon): for now, this is the only error that would happen when updating the scim user
+        return _uniqueness_error_response()
 
 
 @public_app.delete("/Users/{user_id}")

@@ -143,6 +143,37 @@ def reset_member(tenant_id, editor_id, user_id_to_update):
     return {"data": {"invitationLink": generate_new_invitation(user_id_to_update)}}
 
 
+def update_scim_user(
+    user_id: int,
+    tenant_id: int,
+    email: str,
+):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """
+                WITH u AS (
+                    UPDATE public.users
+                    SET email = %(email)s
+                    WHERE
+                        users.user_id = %(user_id)s
+                        AND users.tenant_id = %(tenant_id)s
+                        AND users.deleted_at IS NULL
+                    RETURNING *
+                )
+                SELECT *
+                FROM u;
+                """,
+                {
+                    "tenant_id": tenant_id,
+                    "user_id": user_id,
+                    "email": email,
+                }
+            )
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
 def update(tenant_id, user_id, changes, output=True):
     AUTH_KEYS = ["password", "invitationToken", "invitedAt", "changePwdExpireAt", "changePwdToken"]
     if len(changes.keys()) == 0:
@@ -1124,7 +1155,7 @@ def restore_scim_user(
                         api_key = default,
                         jwt_iat = NULL,
                         weekly_report = default
-                    WHERE user_id = %(user_id)s
+                    WHERE users.user_id = %(user_id)s
                     RETURNING *
                 )
                 SELECT *
