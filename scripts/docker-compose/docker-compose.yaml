@@ -1,3 +1,4 @@
+# vim: ft=yaml
 version: '3'
 
 services:
@@ -114,59 +115,39 @@ services:
           done
           echo "PostgreSQL is up - executing command"
           psql -v ON_ERROR_STOP=1 -f /tmp/init_schema.sql
-
-  frontend-openreplay:
-    image: public.ecr.aws/p1t3u8a3/frontend:${COMMON_VERSION}
-    container_name: frontend
-    networks:
-      - openreplay-net
-    restart: unless-stopped
-
+  
   alerts-openreplay:
     image: public.ecr.aws/p1t3u8a3/alerts:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
     container_name: alerts
     networks:
-      - openreplay-net
+      openreplay-net:
+        aliases:
+          - alerts-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
     env_file:
       - docker-envs/alerts.env
+    environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
-
-  assets-openreplay:
-    image: public.ecr.aws/p1t3u8a3/assets:${COMMON_VERSION}
-    container_name: assets
+  
+  
+  analytics-openreplay:
+    image: public.ecr.aws/p1t3u8a3/analytics:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: analytics
     networks:
-      - openreplay-net
+      openreplay-net:
+        aliases:
+          - analytics-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
     env_file:
-      - docker-envs/assets.env
+      - docker-envs/analytics.env
+    environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
-
-  assist-openreplay:
-    image: public.ecr.aws/p1t3u8a3/assist:${COMMON_VERSION}
-    container_name: assist
-    networks:
-      - openreplay-net
-    env_file:
-      - docker-envs/assist.env
-    restart: unless-stopped
-
-  db-openreplay:
-    image: public.ecr.aws/p1t3u8a3/db:${COMMON_VERSION}
-    container_name: db
-    networks:
-      - openreplay-net
-    env_file:
-      - docker-envs/db.env
-    restart: unless-stopped
-
-  ender-openreplay:
-    image: public.ecr.aws/p1t3u8a3/ender:${COMMON_VERSION}
-    container_name: ender
-    networks:
-      - openreplay-net
-    env_file:
-      - docker-envs/ender.env
-    restart: unless-stopped
-
+  
+  
   heuristics-openreplay:
     image: public.ecr.aws/p1t3u8a3/heuristics:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -175,87 +156,253 @@ services:
       openreplay-net:
         aliases:
           - heuristics-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
     env_file:
       - docker-envs/heuristics.env
+    environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
-
-  images-openreplay:
-    image: public.ecr.aws/p1t3u8a3/images:${COMMON_VERSION}
-    container_name: images
-    env_file:
-      - docker-envs/images.env
-    networks:
-      - openreplay-net
-    restart: unless-stopped
-
-  integrations-openreplay:
-    image: public.ecr.aws/p1t3u8a3/integrations:${COMMON_VERSION}
-    container_name: integrations
-    networks:
-      - openreplay-net
-    env_file:
-      - docker-envs/integrations.env
-    restart: unless-stopped
-
-  peers-openreplay:
-    image: public.ecr.aws/p1t3u8a3/peers:${COMMON_VERSION}
-    container_name: peers
-    networks:
-      - openreplay-net
-    env_file:
-      - docker-envs/peers.env
-    restart: unless-stopped
-
-  sourcemapreader-openreplay:
-    image: public.ecr.aws/p1t3u8a3/sourcemapreader:${COMMON_VERSION}
-    container_name: sourcemapreader
-    networks:
-      - openreplay-net
-    env_file:
-      - docker-envs/sourcemapreader.env
-    restart: unless-stopped
-
+  
+  
   http-openreplay:
     image: public.ecr.aws/p1t3u8a3/http:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
     container_name: http
     networks:
-      - openreplay-net
+      openreplay-net:
+        aliases:
+          - http-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
     env_file:
       - docker-envs/http.env
+    environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
-
-  chalice-openreplay:
-    image: public.ecr.aws/p1t3u8a3/chalice:${COMMON_VERSION}
-    container_name: chalice
+  
+  
+  images-openreplay:
+    image: public.ecr.aws/p1t3u8a3/images:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: images
+    networks:
+      openreplay-net:
+        aliases:
+          - images-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
-    networks:
-      - openreplay-net
     env_file:
-      - docker-envs/chalice.env
+      - docker-envs/images.env
+    environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
-
+  
+  
+  integrations-openreplay:
+    image: public.ecr.aws/p1t3u8a3/integrations:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: integrations
+    networks:
+      openreplay-net:
+        aliases:
+          - integrations-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/integrations.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
+  
   sink-openreplay:
     image: public.ecr.aws/p1t3u8a3/sink:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
     container_name: sink
+    networks:
+      openreplay-net:
+        aliases:
+          - sink-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
-    networks:
-      - openreplay-net
     env_file:
       - docker-envs/sink.env
+    environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
-
-  storage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/storage:${COMMON_VERSION}
-    container_name: storage
+  
+  
+  sourcemapreader-openreplay:
+    image: public.ecr.aws/p1t3u8a3/sourcemapreader:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: sourcemapreader
+    networks:
+      openreplay-net:
+        aliases:
+          - sourcemapreader-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/sourcemapreader.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
+  
+  spot-openreplay:
+    image: public.ecr.aws/p1t3u8a3/spot:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: spot
     networks:
-      - openreplay-net
+      openreplay-net:
+        aliases:
+          - spot-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/spot.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
+  
+  storage-openreplay:
+    image: public.ecr.aws/p1t3u8a3/storage:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: storage
+    networks:
+      openreplay-net:
+        aliases:
+          - storage-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
     env_file:
       - docker-envs/storage.env
+    environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
+  
+  
+  assets-openreplay:
+    image: public.ecr.aws/p1t3u8a3/assets:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: assets
+    networks:
+      openreplay-net:
+        aliases:
+          - assets-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/assets.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
+  
+  assist-server-openreplay:
+    image: public.ecr.aws/p1t3u8a3/assist:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: assist
+    networks:
+      openreplay-net:
+        aliases:
+          - assist-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/assist.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
+  
+  assist-openreplay:
+    image: public.ecr.aws/p1t3u8a3/assist:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: assist
+    networks:
+      openreplay-net:
+        aliases:
+          - assist-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/assist.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
+  
+  canvases-openreplay:
+    image: public.ecr.aws/p1t3u8a3/canvases:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: canvases
+    networks:
+      openreplay-net:
+        aliases:
+          - canvases-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/canvases.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
+  
+  chalice-openreplay:
+    image: public.ecr.aws/p1t3u8a3/chalice:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: chalice
+    networks:
+      openreplay-net:
+        aliases:
+          - chalice-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/chalice.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
+  
+  db-openreplay:
+    image: public.ecr.aws/p1t3u8a3/db:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: db
+    networks:
+      openreplay-net:
+        aliases:
+          - db-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/db.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
+  
+  ender-openreplay:
+    image: public.ecr.aws/p1t3u8a3/ender:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: ender
+    networks:
+      openreplay-net:
+        aliases:
+          - ender-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/ender.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
+  
+  frontend-openreplay:
+    image: public.ecr.aws/p1t3u8a3/frontend:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: frontend
+    networks:
+      openreplay-net:
+        aliases:
+          - frontend-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/frontend.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
 
   nginx-openreplay:
     image: nginx:latest
