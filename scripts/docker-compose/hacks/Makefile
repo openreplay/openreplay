@@ -25,4 +25,7 @@ create-envs: create-yamls ## Create envs from deployment
 	@rm -rf envs
 	@mkdir envs
 	@# @find ./ -type f -iname "Deployment" -exec templater -i env.tpl -f ../deployment.yaml {} > {}.env \;
-	@find yamls/ -type f -name "*.yaml" -exec sh -c 'filename=$$(basename {} -openreplay.yaml); templater -i tpls/env.tpl -f {} > envs/$${filename}.env' \;
+	@find yamls/ -type f -name "*.yaml" -exec sh -c 'filename=$$(basename {} -openreplay.yaml); \
+				templater -i tpls/env.tpl -f {} > envs/$${filename}.env' \;
+	@# Replace all http/https for COMMON_DOMAIN_NAME with COMMON_PROTOCOL
+	@find envs/ -type f -name "*.env" -exec sed -i 's|http[s]\?://\$${COMMON_DOMAIN_NAME}|\$${COMMON_PROTOCOL}://\$${COMMON_DOMAIN_NAME}|g' {} \;
