@@ -132,6 +132,7 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/{{print $container_name}}.env
+    environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   {{ end -}}
 
