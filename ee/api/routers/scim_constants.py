@@ -1,22 +1,22 @@
 # note(jon): please see https://datatracker.ietf.org/doc/html/rfc7643 for details on these constants
-from typing import Any, Literal
+from typing import Any
 
 
 def _attribute_characteristics(
-        name: str,
-        description: str,
-        type: str="string",
-        sub_attributes: dict[str, Any] | None=None,
-        # note(jon): no default for multiValued is defined in the docs and it is marked as optional.
-        # from our side, we'll default it to False.
-        multi_valued: bool=False,
-        required: bool=False,
-        canonical_values: list[str] | None=None,
-        case_exact: bool=False,
-        mutability: str="readWrite",
-        returned: str="default",
-        uniqueness: str="none",
-        reference_types: list[str] | None=None,
+    name: str,
+    description: str,
+    type: str = "string",
+    sub_attributes: dict[str, Any] | None = None,
+    # note(jon): no default for multiValued is defined in the docs and it is marked as optional.
+    # from our side, we'll default it to False.
+    multi_valued: bool = False,
+    required: bool = False,
+    canonical_values: list[str] | None = None,
+    case_exact: bool = False,
+    mutability: str = "readWrite",
+    returned: str = "default",
+    uniqueness: str = "none",
+    reference_types: list[str] | None = None,
 ):
     characteristics = {
         "name": name,
@@ -33,14 +33,16 @@ def _attribute_characteristics(
         "referenceTypes": reference_types,
     }
     characteristics_without_none = {
-        key: value
-        for key, value in characteristics.items()
-        if value is not None
+        key: value for key, value in characteristics.items() if value is not None
     }
     return characteristics_without_none
 
 
-def _multi_valued_attributes(type_canonical_values: list[str], type_required: bool=False, type_mutability="readWrite"):
+def _multi_valued_attributes(
+    type_canonical_values: list[str],
+    type_required: bool = False,
+    type_mutability="readWrite",
+):
     return [
         _attribute_characteristics(
             name="type",
@@ -68,7 +70,7 @@ def _multi_valued_attributes(type_canonical_values: list[str], type_required: bo
             name="$ref",
             type="reference",
             reference_types=["uri"],
-            description="The reference URI of a target resource."
+            description="The reference URI of a target resource.",
         ),
     ]
 
@@ -77,7 +79,7 @@ def _multi_valued_attributes(type_canonical_values: list[str], type_required: bo
 # in section 3.1 of RFC7643, it is specified that ResourceType and
 # ServiceProviderConfig are not included in the common attributes. but
 # in other references, they treat them as a resource.
-def _common_resource_attributes(id_required: bool=True, id_uniqueness: str="none"):
+def _common_resource_attributes(id_required: bool = True, id_uniqueness: str = "none"):
     return [
         _attribute_characteristics(
             name="id",
@@ -149,7 +151,6 @@ def _common_resource_attributes(id_required: bool=True, id_uniqueness: str="none
             ],
         ),
     ]
-
 
 
 SERVICE_PROVIDER_CONFIG_SCHEMA = {
@@ -339,7 +340,7 @@ SERVICE_PROVIDER_CONFIG_SCHEMA = {
                 ),
             ],
         ),
-    ]
+    ],
 }
 
 
@@ -409,9 +410,9 @@ RESOURCE_TYPE_SCHEMA = {
                     required=True,
                     mutability="readOnly",
                 ),
-            ]
+            ],
         ),
-    ]
+    ],
 }
 
 SCHEMA_SCHEMA = {
@@ -548,7 +549,7 @@ SCHEMA_SCHEMA = {
                     canonical_values=[
                         # todo(jon): add "User" and "Group" once those are done.
                         "external",
-                        "uri"
+                        "uri",
                     ],
                     case_exact=True,
                 ),
@@ -659,15 +660,15 @@ SCHEMA_SCHEMA = {
                             canonical_values=[
                                 # todo(jon): add "User" and "Group" once those are done.
                                 "external",
-                                "uri"
+                                "uri",
                             ],
                             case_exact=True,
                         ),
                     ],
                 ),
-            ]
-        )
-    ]
+            ],
+        ),
+    ],
 }
 
 
@@ -749,7 +750,7 @@ SERVICE_PROVIDER_CONFIG = {
         # and then updating these timestamps from an api and such. for now, if we update
         # the configuration, we should update the timestamp here.
         "lastModified": "2025-04-15T15:45:00Z",
-        "location": "", # note(jon): this field will be computed in the /ServiceProviderConfig endpoint
+        "location": "",  # note(jon): this field will be computed in the /ServiceProviderConfig endpoint
     },
 }
 
