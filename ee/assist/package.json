@@ -1,33 +1,26 @@
 {
   "name": "assist-server",
-  "version": "v1.22.0-ee",
-  "description": "assist server to get live sessions & sourcemaps reader to get stack trace",
-  "main": "peerjs-server.js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/openreplay/openreplay.git"
-  },
-  "author": "KRAIEM Taha Yassine <tahayk2@gmail.com>",
-  "license": "Elastic License 2.0 (ELv2)",
-  "bugs": {
-    "url": "https://github.com/openreplay/openreplay/issues"
-  },
-  "homepage": "https://github.com/openreplay/openreplay#readme",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "@fastify/deepmerge": "^2.0.1",
-    "@maxmind/geoip2-node": "^4.2.0",
-    "@socket.io/redis-adapter": "^8.2.1",
-    "express": "^4.21.1",
+    "@fastify/deepmerge": "^3.0.0",
+    "@maxmind/geoip2-node": "^6.0.0",
+    "async-mutex": "^0.5.0",
+    "express": "^4.21.2",
+    "ioredis": "^5.6.1",
     "jsonwebtoken": "^9.0.2",
-    "prom-client": "^15.0.0",
-    "redis": "^4.6.10",
-    "socket.io": "^4.8.0",
-    "ua-parser-js": "^1.0.37",
+    "redis": "^4.7.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "ua-parser-js": "^2.0.3",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.51.0",
-    "winston": "^3.13.0"
+    "winston": "^3.17.0"
   }
 }
