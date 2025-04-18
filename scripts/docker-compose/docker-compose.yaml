@@ -24,7 +24,7 @@ services:
     networks:
       openreplay-net:
         aliases:
-          - clickhouse.db.svc.cluster.local
+          - clickhouse-openreplay-clickhouse.db.svc.cluster.local
 
   redis:
     image: bitnami/redis:${REDIS_VERSION}
