@@ -13,8 +13,8 @@ REFRESH_SECRET_KEY = config("SCIM_REFRESH_SECRET_KEY")
 ALGORITHM = config("SCIM_JWT_ALGORITHM")
 ACCESS_TOKEN_EXPIRE_SECONDS = int(config("SCIM_ACCESS_TOKEN_EXPIRE_SECONDS"))
 REFRESH_TOKEN_EXPIRE_SECONDS = int(config("SCIM_REFRESH_TOKEN_EXPIRE_SECONDS"))
-AUDIENCE="okta_client"
-ISSUER=config("JWT_ISSUER"),
+AUDIENCE = "okta_client"
+ISSUER = (config("JWT_ISSUER"),)
 
 # Simulated Okta Client Credentials
 # OKTA_CLIENT_ID = "okta-client"
@@ -23,13 +23,14 @@ ISSUER=config("JWT_ISSUER"),
 # class TokenRequest(BaseModel):
 #     client_id: str
 #     client_secret: str
-    
+
 # async def authenticate_client(token_request: TokenRequest):
 #     """Validate Okta Client Credentials and issue JWT"""
 #     if token_request.client_id != OKTA_CLIENT_ID or token_request.client_secret != OKTA_CLIENT_SECRET:
 #         raise HTTPException(status_code=401, detail="Invalid client credentials")
 
 #     return {"access_token": create_jwt(), "token_type": "bearer"}
+
 
 def create_tokens(tenant_id):
     curr_time = time.time()
@@ -38,7 +39,7 @@ def create_tokens(tenant_id):
         "sub": "scim_server",
         "aud": AUDIENCE,
         "iss": ISSUER,
-        "exp": ""
+        "exp": "",
     }
     access_payload.update({"exp": curr_time + ACCESS_TOKEN_EXPIRE_SECONDS})
     access_token = jwt.encode(access_payload, ACCESS_SECRET_KEY, algorithm=ALGORITHM)
@@ -49,18 +50,24 @@ def create_tokens(tenant_id):
 
     return access_token, refresh_token
 
+
 def verify_access_token(token: str):
     try:
-        payload = jwt.decode(token, ACCESS_SECRET_KEY, algorithms=[ALGORITHM], audience=AUDIENCE)
+        payload = jwt.decode(
+            token, ACCESS_SECRET_KEY, algorithms=[ALGORITHM], audience=AUDIENCE
+        )
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+
 def verify_refresh_token(token: str):
     try:
-        payload = jwt.decode(token, REFRESH_SECRET_KEY, algorithms=[ALGORITHM], audience=AUDIENCE)
+        payload = jwt.decode(
+            token, REFRESH_SECRET_KEY, algorithms=[ALGORITHM], audience=AUDIENCE
+        )
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
@@ -69,6 +76,8 @@ def verify_refresh_token(token: str):
 
 
 required_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
 # Authentication Dependency
 def auth_required(token: str = Depends(required_oauth2_scheme)):
     """Dependency to check Authorization header."""
@@ -78,6 +87,8 @@ def auth_required(token: str = Depends(required_oauth2_scheme)):
 
 
 optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+
+
 def auth_optional(token: str | None = Depends(optional_oauth2_scheme)):
     if token is None:
         return None

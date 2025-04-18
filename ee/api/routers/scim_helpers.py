@@ -4,6 +4,7 @@ from copy import deepcopy
 
 def get_all_attribute_names(schema: dict[str, Any]) -> list[str]:
     result = []
+
     def _walk(attrs, prefix=None):
         for attr in attrs:
             name = attr["name"]
@@ -12,12 +13,16 @@ def get_all_attribute_names(schema: dict[str, Any]) -> list[str]:
             if attr["type"] == "complex":
                 sub = attr.get("subAttributes") or attr.get("attributes") or []
                 _walk(sub, path)
+
     _walk(schema["attributes"])
     return result
 
 
-def get_all_attribute_names_where_returned_is_always(schema: dict[str, Any]) -> list[str]:
+def get_all_attribute_names_where_returned_is_always(
+    schema: dict[str, Any],
+) -> list[str]:
     result = []
+
     def _walk(attrs, prefix=None):
         for attr in attrs:
             name = attr["name"]
@@ -27,11 +32,14 @@ def get_all_attribute_names_where_returned_is_always(schema: dict[str, Any]) -> 
             if attr["type"] == "complex":
                 sub = attr.get("subAttributes") or attr.get("attributes") or []
                 _walk(sub, path)
+
     _walk(schema["attributes"])
     return result
 
 
-def filter_attributes(resource: dict[str, Any], include_list: list[str]) -> dict[str, Any]:
+def filter_attributes(
+    resource: dict[str, Any], include_list: list[str]
+) -> dict[str, Any]:
     result = {}
     for attr in include_list:
         parts = attr.split(".", 1)
@@ -63,7 +71,9 @@ def filter_attributes(resource: dict[str, Any], include_list: list[str]) -> dict
     return result
 
 
-def exclude_attributes(resource: dict[str, Any], exclude_list: list[str]) -> dict[str, Any]:
+def exclude_attributes(
+    resource: dict[str, Any], exclude_list: list[str]
+) -> dict[str, Any]:
     exclude_map = {}
     for attr in exclude_list:
         parts = attr.split(".", 1)
@@ -105,7 +115,11 @@ def exclude_attributes(resource: dict[str, Any], exclude_list: list[str]) -> dic
     return new_resource
 
 
-def filter_mutable_attributes(schema: dict[str, Any], requested_changes: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
+def filter_mutable_attributes(
+    schema: dict[str, Any],
+    requested_changes: dict[str, Any],
+    current_values: dict[str, Any],
+) -> dict[str, Any]:
     attributes = {attr.get("name"): attr for attr in schema.get("attributes", [])}
 
     valid_changes = {}
