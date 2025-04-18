@@ -1,0 +1,212 @@
+{
+  "id": "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
+  "name": "Service Provider Configuration",
+  "description": "Schema for representing the service provider's configuration",
+  "attributes": [
+    {
+      "name": "documentationUri",
+      "type": "reference",
+      "referenceTypes": ["external"],
+      "multiValued": false,
+      "description": "An HTTP addressable URL pointing to the service provider's human consumable help documentation.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readOnly",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "patch",
+      "type": "complex",
+      "multiValued": false,
+      "description": "A complex type that specifies PATCH configuration options.",
+      "required": true,
+      "returned": "default",
+      "mutability": "readOnly",
+      "subAttributes": [
+        {
+          "name": "supported",
+          "type": "boolean",
+          "multiValued": false,
+          "description": "Boolean value specifying whether the operation is supported.",
+          "required": true,
+          "mutability": "readOnly",
+          "returned": "default"
+        }
+      ]
+    },
+    {
+      "name": "bulk",
+      "type": "complex",
+      "multiValued": false,
+      "description": "A complex type that specifies BULK configuration options.",
+      "required": true,
+      "returned": "default",
+      "mutability": "readOnly",
+      "subAttributes": [
+        {
+          "name": "supported",
+          "type": "boolean",
+          "multiValued": false,
+          "description": "Boolean value specifying whether the operation is supported.",
+          "required": true,
+          "mutability": "readOnly",
+          "returned": "default"
+        },
+        {
+          "name": "maxOperations",
+          "type": "integer",
+          "multiValued": false,
+          "description": "An integer value specifying the maximum number of operations.",
+          "required": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "maxPayloadSize",
+          "type": "integer",
+          "multiValued": false,
+          "description": "An integer value specifying the maximum payload size in bytes.",
+          "required": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        }
+      ]
+    },
+    {
+      "name": "filter",
+      "type": "complex",
+      "multiValued": false,
+      "description": "A complex type that specifies FILTER options.",
+      "required": true,
+      "returned": "default",
+      "mutability": "readOnly",
+      "subAttributes": [
+        {
+          "name": "supported",
+          "type": "boolean",
+          "multiValued": false,
+          "description": "Boolean value specifying whether the operation is supported.",
+          "required": true,
+          "mutability": "readOnly",
+          "returned": "default"
+        },
+        {
+          "name": "maxResults",
+          "type": "integer",
+          "multiValued": false,
+          "description": "Integer value specifying the maximum number of resources returned in a response.",
+          "required": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        }
+      ]
+    },
+    {
+      "name": "changePassword",
+      "type": "complex",
+      "multiValued": false,
+      "description": "A complex type that specifies change password options.",
+      "required": true,
+      "returned": "default",
+      "mutability": "readOnly",
+      "subAttributes": [
+        {
+          "name": "supported",
+          "type": "boolean",
+          "multiValued": false,
+          "description": "Boolean value specifying whether the operation is supported.",
+          "required": true,
+          "mutability": "readOnly",
+          "returned": "default"
+        }
+      ]
+    },
+    {
+      "name": "sort",
+      "type": "complex",
+      "multiValued": false,
+      "description": "A complex type that specifies sort result options.",
+      "required": true,
+      "returned": "default",
+      "mutability": "readOnly",
+      "subAttributes": [
+        {
+          "name": "supported",
+          "type": "boolean",
+          "multiValued": false,
+          "description": "Boolean value specifying whether the operation is supported.",
+          "required": true,
+          "mutability": "readOnly",
+          "returned": "default"
+        }
+      ]
+    },
+    {
+      "name": "authenticationSchemes",
+      "type": "complex",
+      "multiValued": true,
+      "description": "A complex type that specifies supported Authentication Scheme properties.",
+      "required": true,
+      "returned": "default",
+      "mutability": "readOnly",
+      "subAttributes": [
+        {
+          "name": "name",
+          "type": "string",
+          "multiValued": false,
+          "description": "The common authentication scheme name; e.g., HTTP Basic.",
+          "required": true,
+          "caseExact": false,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "multiValued": false,
+          "description": "A description of the authentication scheme.",
+          "required": true,
+          "caseExact": false,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "specUri",
+          "type": "reference",
+          "referenceTypes": ["external"],
+          "multiValued": false,
+          "description": "An HTTP addressable URL pointing to the Authentication Scheme's specification.",
+          "required": false,
+          "caseExact": false,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "documentationUri",
+          "type": "reference",
+          "referenceTypes": ["external"],
+          "multiValued": false,
+          "description": "An HTTP addressable URL pointing to the Authentication Scheme's usage documentation.",
+          "required": false,
+          "caseExact": false,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "resourceType": "Schema",
+    "location": "/v2/Schemas/urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
+    "created": "2025-04-17T15:48:00",
+    "lastModified": "2025-04-17T15:48:00"      
+  }
+}

@@ -1,0 +1,41 @@
+{
+    "schemas": [
+        "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"
+    ],
+    "patch": {
+        "supported": false
+    },
+    "bulk": {
+        "supported": false,
+        "maxOperations": 0,
+        "maxPayloadSize": 0
+    },
+    "filter": {
+        "supported": false,
+        "maxResults": 0
+    },
+    "changePassword": {
+        "supported": false
+    },
+    "sort": {
+        "supported": false
+    },
+    "etag": {
+        "supported": false
+    },
+    "authenticationSchemes": [
+        {
+            "type": "oauthbearertoken",
+            "name": "OAuth Bearer Token",
+            "description": "Authentication scheme using the OAuth Bearer Token Standard. The access token should be sent in the 'Authorization' header using the Bearer schema.",
+            "specUri": "https://tools.ietf.org/html/rfc6750",
+            "primary": true
+        }
+    ],
+    "meta": {
+        "resourceType": "ServiceProviderConfig",
+        "created": "2025-04-15T15:45:00Z",
+        "lastModified": "2025-04-15T15:45:00Z",
+        "location": "/ServiceProviderConfig"
+    }
+}
