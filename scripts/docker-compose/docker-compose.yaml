@@ -1,23 +1,30 @@
+
 # vim: ft=yaml
 version: '3'
 
 services:
+
   postgresql:
     image: bitnami/postgresql:${POSTGRES_VERSION}
     container_name: postgres
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
-      - openreplay-net
+      openreplay-net:
+        aliases:
+          - postgresql.db.svc.cluster.local
     environment:
       POSTGRESQL_PASSWORD: ${COMMON_PG_PASSWORD}
+
   clickhouse:
     image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
     container_name: clickhouse
     volumes:
       - clickhouse:/var/lib/clickhouse
     networks:
-      - openreplay-net
+      openreplay-net:
+        aliases:
+          - clickhouse.db.svc.cluster.local
 
   redis:
     image: bitnami/redis:${REDIS_VERSION}
@@ -25,7 +32,9 @@ services:
     volumes:
       - redisdata:/bitnami/redis/data
     networks:
-      - openreplay-net
+      openreplay-net:
+        aliases:
+          - redis-master.db.svc.cluster.local
     environment:
       ALLOW_EMPTY_PASSWORD: "yes"
 
@@ -35,7 +44,9 @@ services:
     volumes:
       - miniodata:/bitnami/minio/data
     networks:
-      - openreplay-net
+      openreplay-net:
+        aliases:
+          - minio.db.svc.cluster.local
     ports:
       - 9001:9001
     environment:
@@ -71,7 +82,7 @@ services:
     volumes:
       - ../helmcharts/openreplay/files/minio.sh:/tmp/minio.sh
     environment:
-      MINIO_HOST: http://minio:9000
+      MINIO_HOST: http://minio.db.svc.cluster.local:9000
       MINIO_ACCESS_KEY: ${COMMON_S3_KEY}
       MINIO_SECRET_KEY: ${COMMON_S3_SECRET}
     user: root
@@ -88,7 +99,7 @@ services:
           bash /tmp/minio.sh init || exit 100
 
   db-migration:
-    image: bitnami/postgresql:14.5.0 
+    image: bitnami/postgresql:14.5.0
     container_name: db-migration
     profiles:
       - "migration"
