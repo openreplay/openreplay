@@ -128,7 +128,7 @@ services:
     networks:
       - openreplay-net
     env_file:
-      - alerts.env
+      - docker-envs/alerts.env
     restart: unless-stopped
 
   assets-openreplay:
@@ -137,7 +137,7 @@ services:
     networks:
       - openreplay-net
     env_file:
-      - assets.env
+      - docker-envs/assets.env
     restart: unless-stopped
 
   assist-openreplay:
@@ -146,7 +146,7 @@ services:
     networks:
       - openreplay-net
     env_file:
-      - assist.env
+      - docker-envs/assist.env
     restart: unless-stopped
 
   db-openreplay:
@@ -155,7 +155,7 @@ services:
     networks:
       - openreplay-net
     env_file:
-      - db.env
+      - docker-envs/db.env
     restart: unless-stopped
 
   ender-openreplay:
@@ -164,7 +164,7 @@ services:
     networks:
       - openreplay-net
     env_file:
-      - ender.env
+      - docker-envs/ender.env
     restart: unless-stopped
 
   heuristics-openreplay:
@@ -176,14 +176,14 @@ services:
         aliases:
           - heuristics-openreplay.app.svc.cluster.local
     env_file:
-      - heuristics.env
+      - docker-envs/heuristics.env
     restart: unless-stopped
 
   imagestorage-openreplay:
     image: public.ecr.aws/p1t3u8a3/imagestorage:${COMMON_VERSION}
     container_name: imagestorage
     env_file:
-      - imagestorage.env
+      - docker-envs/imagestorage.env
     networks:
       - openreplay-net
     restart: unless-stopped
@@ -194,7 +194,7 @@ services:
     networks:
       - openreplay-net
     env_file:
-      - integrations.env
+      - docker-envs/integrations.env
     restart: unless-stopped
 
   peers-openreplay:
@@ -203,7 +203,7 @@ services:
     networks:
       - openreplay-net
     env_file:
-      - peers.env
+      - docker-envs/peers.env
     restart: unless-stopped
 
   sourcemapreader-openreplay:
@@ -212,7 +212,7 @@ services:
     networks:
       - openreplay-net
     env_file:
-      - sourcemapreader.env
+      - docker-envs/sourcemapreader.env
     restart: unless-stopped
 
   http-openreplay:
@@ -221,7 +221,7 @@ services:
     networks:
       - openreplay-net
     env_file:
-      - http.env
+      - docker-envs/http.env
     restart: unless-stopped
 
   chalice-openreplay:
@@ -232,7 +232,7 @@ services:
     networks:
       - openreplay-net
     env_file:
-      - chalice.env
+      - docker-envs/chalice.env
     restart: unless-stopped
 
   sink-openreplay:
@@ -243,7 +243,7 @@ services:
     networks:
       - openreplay-net
     env_file:
-      - sink.env
+      - docker-envs/sink.env
     restart: unless-stopped
 
   storage-openreplay:
@@ -254,7 +254,7 @@ services:
     networks:
       - openreplay-net
     env_file:
-      - storage.env
+      - docker-envs/storage.env
     restart: unless-stopped
 
   nginx-openreplay:
