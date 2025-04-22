@@ -150,25 +150,12 @@ services:
       - -c
       - |
           # Checking variable is empty. Shell independant method.
-          exit_count=0
-          error_connection=1
-          while [ $exit_count -le 20 ];do
-            nc -zv clickhouse-openreplay-clickhouse.db.svc.cluster.local 9000 -w 1
-            if [ $? -ne 0 ]; then
-              echo "[info] clickhouse is not up; retrying in 5 seconds"
-              sleep 4
-              exit_count=$(($exit_count+1))
-              echo $exit_count
-            else
-              error_connection=0
-              break
-            fi
+          # Wait for Minio to be ready
+          until nc -z -v -w30 clickhouse-openreplay-clickhouse.db.svc.cluster.local 9000; do
+              echo "Waiting for Minio server to be ready..."
+              sleep 1
           done
 
-          if [ $error_connection -eq 1 ]; then
-            echo "[error] clickhouse is not running. Check kubectl get po -n db; exiting"
-            exit 100
-          fi
           echo "clickhouse is up - executing command"
           clickhouse-client -h ${CH_HOST} --user ${CH_USERNAME} ${CH_PASSWORD} --port ${CH_PORT} --multiquery < /tmp/init_schema.sql || true
   
