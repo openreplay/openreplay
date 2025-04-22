@@ -133,7 +133,7 @@ services:
 
   clickhouse-migration:
     image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
-    container_name: db-migration
+    container_name: clickhouse-migration
     profiles:
       - "migration"
     depends_on:
