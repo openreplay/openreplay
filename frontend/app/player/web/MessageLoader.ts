@@ -43,6 +43,7 @@ export default class MessageLoader {
     this.session = session;
   }
 
+  rawMessages: any[] = []
   createNewParser(
     shouldDecrypt = true,
     onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
@@ -69,6 +70,7 @@ export default class MessageLoader {
         while (!finished) {
           const msg = fileReader.readNext();
           if (msg) {
+            this.rawMessages.push(msg)
             msgs.push(msg);
           } else {
             finished = true;
@@ -343,7 +345,6 @@ const DOMMessages = [
   MType.CreateElementNode,
   MType.CreateTextNode,
   MType.MoveNode,
-  MType.RemoveNode,
   MType.CreateIFrameDocument,
 ];
 
@@ -351,20 +352,25 @@ const DOMMessages = [
 function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
   if (m1.time !== m2.time) return m1.time - m2.time;
 
-  if (m1.tp === MType.CreateDocument && m2.tp !== MType.CreateDocument)
-    return -1;
-  if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument)
-    return 1;
+  // if (m1.tp === MType.CreateDocument && m2.tp !== MType.CreateDocument)
+  //   return -1;
+  // if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument)
+  //   return 1;
 
-  const m1IsDOM = DOMMessages.includes(m1.tp);
-  const m2IsDOM = DOMMessages.includes(m2.tp);
+  // if (m1.tp === MType.RemoveNode)
+  //   return 1;
+  // if (m2.tp === MType.RemoveNode)
+  //   return -1;
+
+  // const m1IsDOM = DOMMessages.includes(m1.tp);
+  // const m2IsDOM = DOMMessages.includes(m2.tp);
   // if (m1IsDOM && m2IsDOM) {
   //   // @ts-ignore DOM msg has id but checking for 'id' in m is expensive
   //   return m1.id - m2.id;
   // }
 
-  if (m1IsDOM && !m2IsDOM) return -1;
-  if (!m1IsDOM && m2IsDOM) return 1;
+  // if (m1IsDOM && !m2IsDOM) return -1;
+  // if (!m1IsDOM && m2IsDOM) return 1;
 
   return 0;
 }
