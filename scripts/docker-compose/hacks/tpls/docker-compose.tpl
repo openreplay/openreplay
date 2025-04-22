@@ -169,6 +169,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - {{print $container_name}}-openreplay
           - {{print $container_name}}-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs

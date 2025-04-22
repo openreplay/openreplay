@@ -166,6 +166,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - alerts-openreplay
           - alerts-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -182,6 +183,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - analytics-openreplay
           - analytics-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -198,6 +200,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - http-openreplay
           - http-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -214,6 +217,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - images-openreplay
           - images-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -230,6 +234,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - integrations-openreplay
           - integrations-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -246,6 +251,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - sink-openreplay
           - sink-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -262,6 +268,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - sourcemapreader-openreplay
           - sourcemapreader-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -278,6 +285,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - spot-openreplay
           - spot-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -294,6 +302,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - storage-openreplay
           - storage-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -310,6 +319,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - assets-openreplay
           - assets-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -326,6 +336,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - assist-openreplay
           - assist-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -342,6 +353,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - canvases-openreplay
           - canvases-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -358,6 +370,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - chalice-openreplay
           - chalice-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -374,6 +387,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - db-openreplay
           - db-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -390,6 +404,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - ender-openreplay
           - ender-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -406,6 +421,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - frontend-openreplay
           - frontend-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
@@ -422,6 +438,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - heuristics-openreplay
           - heuristics-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
