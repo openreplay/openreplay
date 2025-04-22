@@ -444,12 +444,13 @@ def create_scim_user(
 
 
 def restore_scim_user(
-    user_id: int,
-    tenant_id: int,
+    userId: int,
+    tenantId: int,
     email: str,
     name: str = "",
     internal_id: str | None = None,
     role_id: int | None = None,
+    **kwargs,
 ):
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -477,8 +478,8 @@ def restore_scim_user(
                 FROM u LEFT JOIN public.roles USING (role_id);
                 """,
                 {
-                    "tenant_id": tenant_id,
-                    "user_id": user_id,
+                    "tenant_id": tenantId,
+                    "user_id": userId,
                     "email": email,
                     "name": name,
                     "internal_id": internal_id,
@@ -642,7 +643,7 @@ def edit_member(
     return {"data": user}
 
 
-def get_existing_scim_user_by_unique_values_from_all_users(email):
+def get_existing_scim_user_by_unique_values_from_all_users(email: str, **kwargs):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(

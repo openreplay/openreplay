@@ -41,31 +41,35 @@ def filter_attributes(
     resource: dict[str, Any], include_list: list[str]
 ) -> dict[str, Any]:
     result = {}
-    for attr in include_list:
-        parts = attr.split(".", 1)
+
+    # Group include paths by top-level key
+    includes_by_key = {}
+    for path in include_list:
+        parts = path.split(".", 1)
         key = parts[0]
+        rest = parts[1] if len(parts) == 2 else None
+        includes_by_key.setdefault(key, []).append(rest)
+
+    for key, subpaths in includes_by_key.items():
         if key not in resource:
             continue
 
-        if len(parts) == 1:
-            # top‑level attr
-            result[key] = resource[key]
+        value = resource[key]
+        if all(p is None for p in subpaths):
+            result[key] = value
         else:
-            # nested attr
-            sub = resource[key]
-            rest = parts[1]
-            if isinstance(sub, dict):
-                filtered = filter_attributes(sub, [rest])
+            nested_paths = [p for p in subpaths if p is not None]
+            if isinstance(value, dict):
+                filtered = filter_attributes(value, nested_paths)
                 if filtered:
-                    result.setdefault(key, {}).update(filtered)
-            elif isinstance(sub, list):
-                # apply to each element
+                    result[key] = filtered
+            elif isinstance(value, list):
                 new_list = []
-                for item in sub:
+                for item in value:
                     if isinstance(item, dict):
-                        f = filter_attributes(item, [rest])
-                        if f:
-                            new_list.append(f)
+                        filtered_item = filter_attributes(item, nested_paths)
+                        if filtered_item:
+                            new_list.append(filtered_item)
                 if new_list:
                     result[key] = new_list
     return result
