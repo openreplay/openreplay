@@ -5,7 +5,16 @@ minio:
     minio:
       accessKey: &accessKey '${COMMON_S3_KEY}'
       secretKey: &secretKey '${COMMON_S3_SECRET}'
+clickhouse: &clickhouse
+  enabled: true
+  chHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
+  username: default
+  password: ""
+  service:
+    webPort: 9000
+    dataPort: 8123
 global:
+  clickhouse: *clickhouse
   postgresql: *postgres
   assistKey: '${COMMON_ASSIST_KEY}'
   assistJWTSecret: '${COMMON_ASSIST_JWT_SECRET}'

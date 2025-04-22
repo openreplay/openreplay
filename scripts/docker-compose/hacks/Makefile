@@ -1,5 +1,5 @@
 .PHONY: default
-default: create-envs
+default: create-compose
 
 help: ## Prints help for targets with comments
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ \
@@ -30,8 +30,9 @@ create-envs: create-yamls ## Create envs from deployment
 	@# Replace all http/https for COMMON_DOMAIN_NAME with COMMON_PROTOCOL
 	@find ../docker-envs/ -type f -name "*.env" -exec sed -i 's|http[s]\?://\$${COMMON_DOMAIN_NAME}|\$${COMMON_PROTOCOL}://\$${COMMON_DOMAIN_NAME}|g' {} \;
 
+.PHONY: create-compose
 create-compose: create-envs ## Create docker-compose.yml
 	@echo creating docker-compose yaml
 	$(eval FILES := $(shell find yamls/ -type f -name "*.yaml" -exec basename {} .yaml \; | tr '\n' ',' | sed 's/,$$//'))
-	@echo "Files found: $(FILES)"
+	@#echo "Files found: $(FILES)"
 	@FILES=$(FILES) templater -i tpls/docker-compose.tpl > ../docker-compose.yaml
