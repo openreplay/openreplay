@@ -127,6 +127,50 @@ services:
           echo "PostgreSQL is up - executing command"
           psql -v ON_ERROR_STOP=1 -f /tmp/init_schema.sql
 
+  clickhouse-migration:
+    image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
+    container_name: db-migration
+    profiles:
+      - "migration"
+    depends_on:
+      - clickhouse
+      - minio-migration
+    networks:
+      - openreplay-net
+    volumes:
+      - ../schema/db/init_dbs/clickhouse/init_schema.sql:/tmp/init_schema.sql
+    environment:
+      CH_HOST: "{{.Values.global.clickhouse.chHost}}"
+      CH_PORT: "{{.Values.global.clickhouse.service.webPort}}"
+      CH_PORT_HTTP: "{{.Values.global.clickhouse.service.dataPort}}"
+      CH_USERNAME: "{{.Values.global.clickhouse.username}}"
+      CH_PASSWORD: "{{.Values.global.clickhouse.password}}"
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+          # Checking variable is empty. Shell independant method.
+          exit_count=0
+          error_connection=1
+          while [ $exit_count -le 20 ];do
+            nc -zv {{.Values.global.clickhouse.chHost}} 9000 -w 1
+            if [ $? -ne 0 ]; then
+              echo "[info] clickhouse is not up; retrying in 5 seconds"
+              sleep 4
+              exit_count=$(($exit_count+1))
+              echo $exit_count
+            else
+              error_connection=0
+              break
+            fi
+          done
+
+          if [ $error_connection -eq 1 ]; then
+            echo "[error] clickhouse is not running. Check kubectl get po -n db; exiting"
+            exit 100
+          fi
+          echo "clickhouse is up - executing command"
+          clickhouse-client -h ${CH_HOST} --user ${CH_USERNAME} ${CH_PASSWORD} --port ${CH_PORT} --multiquery < /tmp/init_schema.sql || true
 
   {{- define "service" -}}
   {{- $service_name := . }}
