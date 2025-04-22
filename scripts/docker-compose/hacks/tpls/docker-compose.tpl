@@ -14,7 +14,7 @@ services:
         aliases:
           - postgresql.db.svc.cluster.local
     environment:
-      POSTGRESQL_PASSWORD: ${COMMON_PG_PASSWORD}
+      POSTGRESQL_PASSWORD: "{{.Values.global.postgresql.postgresqlPassword}}"
 
   clickhouse:
     image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
@@ -50,8 +50,8 @@ services:
     ports:
       - 9001:9001
     environment:
-      MINIO_ROOT_USER: ${COMMON_S3_KEY}
-      MINIO_ROOT_PASSWORD: ${COMMON_S3_SECRET}
+      MINIO_ROOT_USER: {{.Values.minio.global.minio.accessKey}}
+      MINIO_ROOT_PASSWORD: {{.Values.minio.global.minio.secretKey}}
 
   fs-permission:
     image: debian:stable-slim
@@ -83,8 +83,8 @@ services:
       - ../helmcharts/openreplay/files/minio.sh:/tmp/minio.sh
     environment:
       MINIO_HOST: http://minio.db.svc.cluster.local:9000
-      MINIO_ACCESS_KEY: ${COMMON_S3_KEY}
-      MINIO_SECRET_KEY: ${COMMON_S3_SECRET}
+      MINIO_ACCESS_KEY: {{.Values.minio.global.minio.accessKey}}
+      MINIO_SECRET_KEY: {{.Values.minio.global.minio.secretKey}}
     user: root
     entrypoint:
       - /bin/bash
@@ -115,12 +115,12 @@ services:
       PGPORT: 5432
       PGDATABASE: postgres
       PGUSER: postgres
-      PGPASSWORD: ${COMMON_PG_PASSWORD}
+      PGPASSWORD: {{.Values.global.postgresql.postgresqlPassword}}
     entrypoint:
       - /bin/bash
       - -c
       - |
-          until PGPASSWORD=${COMMON_PG_PASSWORD} psql -h postgresql -U postgres -d postgres -c '\q'; do
+          until psql -c '\q'; do
           echo "PostgreSQL is unavailable - sleeping"
           sleep 1
           done

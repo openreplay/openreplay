@@ -35,4 +35,4 @@ create-compose: create-envs ## Create docker-compose.yml
 	@echo creating docker-compose yaml
 	$(eval FILES := $(shell find yamls/ -type f -name "*.yaml" -exec basename {} .yaml \; | tr '\n' ',' | sed 's/,$$//'))
 	@#echo "Files found: $(FILES)"
-	@FILES=$(FILES) templater -i tpls/docker-compose.tpl > ../docker-compose.yaml
+	@FILES=$(FILES) templater -i tpls/docker-compose.tpl -f vars.yaml > ../docker-compose.yaml

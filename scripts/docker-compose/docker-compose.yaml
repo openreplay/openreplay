@@ -14,7 +14,7 @@ services:
         aliases:
           - postgresql.db.svc.cluster.local
     environment:
-      POSTGRESQL_PASSWORD: ${COMMON_PG_PASSWORD}
+      POSTGRESQL_PASSWORD: "${COMMON_PG_PASSWORD}"
 
   clickhouse:
     image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
@@ -120,7 +120,7 @@ services:
       - /bin/bash
       - -c
       - |
-          until PGPASSWORD=${COMMON_PG_PASSWORD} psql -h postgresql -U postgres -d postgres -c '\q'; do
+          until psql -c '\q'; do
           echo "PostgreSQL is unavailable - sleeping"
           sleep 1
           done
@@ -140,11 +140,11 @@ services:
     volumes:
       - ../schema/db/init_dbs/clickhouse/init_schema.sql:/tmp/init_schema.sql
     environment:
-      CH_HOST: "<no value>"
-      CH_PORT: "<no value>"
-      CH_PORT_HTTP: "<no value>"
-      CH_USERNAME: "<no value>"
-      CH_PASSWORD: "<no value>"
+      CH_HOST: "clickhouse-openreplay-clickhouse.db.svc.cluster.local"
+      CH_PORT: "9000"
+      CH_PORT_HTTP: "8123"
+      CH_USERNAME: "default"
+      CH_PASSWORD: ""
     entrypoint:
       - /bin/bash
       - -c
@@ -153,7 +153,7 @@ services:
           exit_count=0
           error_connection=1
           while [ $exit_count -le 20 ];do
-            nc -zv <no value> 9000 -w 1
+            nc -zv clickhouse-openreplay-clickhouse.db.svc.cluster.local 9000 -w 1
             if [ $? -ne 0 ]; then
               echo "[info] clickhouse is not up; retrying in 5 seconds"
               sleep 4
