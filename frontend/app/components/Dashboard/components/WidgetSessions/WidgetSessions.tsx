@@ -165,7 +165,7 @@ function WidgetSessions(props: Props) {
             if (widget.metricType === USER_PATH) {
                 if (
                     seriesJson[0].filter.filters[0].value[0] === '' &&
-                    widget.data.nodes
+                    widget.data.nodes?.length
                 ) {
                     seriesJson[0].filter.filters[0].value = widget.data.nodes[0].name;
                 } else if (
