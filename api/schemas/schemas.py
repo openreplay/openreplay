@@ -1128,6 +1128,16 @@ class CardTable(__CardSchema):
         return values
 
     @model_validator(mode="after")
+    def __enforce_AND_operator(self):
+        self.metric_of = MetricOfTable(self.metric_of)
+        if self.metric_of in (MetricOfTable.VISITED_URL, MetricOfTable.FETCH, \
+                              MetricOfTable.VISITED_URL.value, MetricOfTable.FETCH.value):
+            for s in self.series:
+                if s.filter is not None:
+                    s.filter.events_order = SearchEventOrder.AND
+        return self
+
+    @model_validator(mode="after")
     def __transform(self):
         self.metric_of = MetricOfTable(self.metric_of)
         return self
