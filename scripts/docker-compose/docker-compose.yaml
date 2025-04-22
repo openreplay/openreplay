@@ -140,11 +140,11 @@ services:
     volumes:
       - ../schema/db/init_dbs/clickhouse/init_schema.sql:/tmp/init_schema.sql
     environment:
-      CH_HOST: "<no value>"
-      CH_PORT: "<no value>"
-      CH_PORT_HTTP: "<no value>"
-      CH_USERNAME: "<no value>"
-      CH_PASSWORD: "<no value>"
+      CH_HOST: "clickhouse-openreplay-clickhouse.db.svc.cluster.local"
+      CH_PORT: "9000"
+      CH_PORT_HTTP: "8123"
+      CH_USERNAME: "default"
+      CH_PASSWORD: ""
     entrypoint:
       - /bin/bash
       - -c
