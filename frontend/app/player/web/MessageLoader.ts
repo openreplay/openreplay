@@ -43,6 +43,7 @@ export default class MessageLoader {
     this.session = session;
   }
 
+  rawMessages: any[] = []
   createNewParser(
     shouldDecrypt = true,
     onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
@@ -69,6 +70,7 @@ export default class MessageLoader {
         while (!finished) {
           const msg = fileReader.readNext();
           if (msg) {
+            this.rawMessages.push(msg)
             msgs.push(msg);
           } else {
             finished = true;
@@ -346,6 +348,7 @@ const DOMMessages = [
   MType.CreateIFrameDocument,
 ];
 
+// fixed times: 3
 function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
   if (m1.time !== m2.time) return m1.time - m2.time;
 

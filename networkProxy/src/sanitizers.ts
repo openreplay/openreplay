@@ -36,7 +36,10 @@ function obscure(value: string | number) {
     const digits = numDigits(value)
     return "9".repeat(digits)
   }
-  return value.replace(/[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff\s]/g, '*')
+  if (typeof value === "string") {
+    return value.replace(/[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff\s]/g, '*');
+  }
+  return value;
 }
 
 export function filterHeaders(headers: Record<string, string> | { name: string; value: string }[]) {
@@ -80,17 +83,23 @@ export function filterBody(body: any): string {
     obscureSensitiveData(parsedBody);
     return JSON.stringify(parsedBody);
   } else {
-    try {
-      const params = new URLSearchParams(body);
-      for (const key of params.keys()) {
-        if (sensitiveParams.has(key.toLowerCase())) {
-          const value = obscure(params.get(key))
-          params.set(key, value);
+    const isUrlSearch = typeof body === "string" && body.includes("?") && body.includes("=");
+    if (isUrlSearch) {
+      try {
+        const params = new URLSearchParams(body);
+        for (const key of params.keys()) {
+          if (sensitiveParams.has(key.toLowerCase())) {
+            const value = obscure(params.get(key))
+            params.set(key, value);
+          }
         }
+        return params.toString();
+      } catch (e) {
+        // not url query ?
+        return body;
       }
-      return params.toString();
-    } catch (e) {
-      // not string or url query
+    } else {
+      // not json or url query
       return body;
     }
   }
