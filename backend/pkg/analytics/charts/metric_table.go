@@ -43,6 +43,13 @@ var propertySelectorMap = map[string]string{
 	string(MetricOfTableReferrer): "main.$referrer AS metric_value",
 }
 
+var mainColumns = map[string]string{
+	"user_browser": "$browser",
+	"user_device":  "$device_type",
+	"user_country": "$country",
+	"referrer":     "$referrer",
+}
+
 func (t TableQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
 	if p.MetricOf == "" {
 		return nil, fmt.Errorf("MetricOf is empty")
@@ -120,7 +127,9 @@ func (t TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, e
 	propertyName = originalMetricOf
 
 	eventFilters := s.Filter.Filters
-	eventConds, eventNames := buildEventConditions(eventFilters)
+	eventConds, eventNames := buildEventConditions(eventFilters, BuildConditionsOptions{
+		DefinedColumns: mainColumns,
+	})
 
 	baseWhereConditions := []string{
 		fmt.Sprintf("main.created_at >= toDateTime(%d/1000)", r.StartTimestamp),

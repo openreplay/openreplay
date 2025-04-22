@@ -41,62 +41,186 @@ func partitionFilters(filters []Filter) (sessionFilters []Filter, eventFilters [
 	return
 }
 
-func buildEventConditions(filters []Filter) (conds, names []string) {
+var validFilterTypes = map[FilterType]struct{}{
+	FilterClick:           {},
+	FilterInput:           {},
+	FilterLocation:        {},
+	FilterCustom:          {},
+	FilterFetch:           {},
+	FilterTag:             {},
+	FilterUserCountry:     {},
+	FilterUserCity:        {},
+	FilterUserState:       {},
+	FilterUserId:          {},
+	FilterUserAnonymousId: {},
+	FilterUserOs:          {},
+	FilterUserBrowser:     {},
+	FilterUserDevice:      {},
+	FilterPlatform:        {},
+	FilterRevId:           {},
+	FilterReferrer:        {},
+	FilterUtmSource:       {},
+	FilterUtmMedium:       {},
+	FilterUtmCampaign:     {},
+	FilterDuration:        {},
+	FilterMetadata:        {},
+}
+
+type BuildConditionsOptions struct {
+	MainTableAlias       string
+	PropertiesColumnName string
+	DefinedColumns       map[string]string
+}
+
+type filterConfig struct {
+	LogicalProperty string
+	EventName       string
+	IsNumeric       bool
+}
+
+var filterTypeConfigs = map[FilterType]filterConfig{
+	FilterClick:    {LogicalProperty: "label", EventName: "CLICK"},
+	FilterInput:    {LogicalProperty: "label", EventName: "INPUT"},
+	FilterLocation: {LogicalProperty: "url_path", EventName: "LOCATION"},
+	FilterCustom:   {LogicalProperty: "name", EventName: "CUSTOM"},
+	FilterTag:      {LogicalProperty: "tag", EventName: "TAG"},
+}
+
+var nestedFilterTypeConfigs = map[string]filterConfig{
+	"fetchUrl":        {LogicalProperty: "url_path"},
+	"fetchStatusCode": {LogicalProperty: "status", IsNumeric: true},
+}
+
+func getColumnAccessor(logicalProp string, isNumeric bool, opts BuildConditionsOptions) string {
+	if actualCol, ok := opts.DefinedColumns[logicalProp]; ok && actualCol != "" {
+		return fmt.Sprintf("%s.`%s`", opts.MainTableAlias, actualCol)
+	}
+
+	jsonFunc := "JSONExtractString"
+	if isNumeric {
+		jsonFunc = "JSONExtractFloat" // Or JSONExtractInt, etc.
+	}
+
+	return fmt.Sprintf("%s(toString(%s.`%s`), '%s')",
+		jsonFunc, opts.MainTableAlias, opts.PropertiesColumnName, logicalProp)
+}
+
+func buildEventConditions(filters []Filter, options ...BuildConditionsOptions) (conds, names []string) {
+	opts := BuildConditionsOptions{
+		MainTableAlias:       "main",
+		PropertiesColumnName: "$properties",
+		DefinedColumns:       make(map[string]string),
+	}
+
+	if len(options) > 0 {
+		if options[0].MainTableAlias != "" {
+			opts.MainTableAlias = options[0].MainTableAlias
+		}
+		if options[0].PropertiesColumnName != "" {
+			opts.PropertiesColumnName = options[0].PropertiesColumnName
+		}
+		if options[0].DefinedColumns != nil {
+			opts.DefinedColumns = options[0].DefinedColumns
+		}
+	}
+
 	for _, f := range filters {
-		//if f.IsEvent {
-		switch f.Type {
-		case FilterClick:
-			c := buildCond("JSONExtractString(toString(main.`$properties`), 'label')", f.Value, "is")
-			if c != "" {
-				conds = append(conds, c)
-			}
-			names = append(names, "CLICK")
-		case FilterInput:
-			c := buildCond("JSONExtractString(toString(main.`$properties`), 'label')", f.Value, f.Operator)
-			if c != "" {
-				conds = append(conds, c)
-			}
-			names = append(names, "INPUT")
-		case FilterLocation:
-			c := buildCond("JSONExtractString(toString(main.`$properties`), 'url_path')", f.Value, f.Operator)
-			if c != "" {
-				conds = append(conds, c)
-			}
-			names = append(names, "LOCATION")
-		case FilterCustom:
-			c := buildCond("JSONExtractString(toString(main.`$properties`), 'name')", f.Value, f.Operator)
-			if c != "" {
-				conds = append(conds, c)
-			}
-			names = append(names, "CUSTOM")
-		case FilterFetch:
+		_, isValidType := validFilterTypes[f.Type]
+		if !isValidType || !f.IsEvent {
+			continue
+		}
+
+		if f.Type == FilterFetch {
 			var fetchConds []string
 			for _, nf := range f.Filters {
-				switch nf.Type {
-				case "fetchUrl":
-					c := buildCond("JSONExtractString(toString(main.`$properties`), 'url_path')", nf.Value, f.Operator)
-					if c != "" {
-						fetchConds = append(fetchConds, c)
-					}
-				case "fetchStatusCode":
-					c := buildCond("JSONExtractFloat(toString(main.`$properties`), 'status')", nf.Value, f.Operator)
-					if c != "" {
-						fetchConds = append(fetchConds, c)
-					}
+				nestedConfig, ok := nestedFilterTypeConfigs[string(nf.Type)]
+				if !ok {
+					continue
+				}
+
+				accessor := getColumnAccessor(nestedConfig.LogicalProperty, nestedConfig.IsNumeric, opts)
+				c := buildCond(accessor, nf.Value, f.Operator) // Uses parent filter's operator
+				if c != "" {
+					fetchConds = append(fetchConds, c)
 				}
 			}
 			if len(fetchConds) > 0 {
 				conds = append(conds, strings.Join(fetchConds, " AND "))
+				names = append(names, "REQUEST")
 			}
-			names = append(names, "REQUEST")
-		case FilterTag:
-			c := buildCond("JSONExtractString(toString(main.`$properties`), 'tag')", f.Value, f.Operator)
+		} else {
+			config, ok := filterTypeConfigs[f.Type]
+			if !ok {
+				continue
+			}
+
+			accessor := getColumnAccessor(config.LogicalProperty, config.IsNumeric, opts)
+			c := buildCond(accessor, f.Value, f.Operator)
 			if c != "" {
 				conds = append(conds, c)
+				names = append(names, config.EventName)
 			}
-			names = append(names, "TAG")
 		}
-		//}
+	}
+	return
+}
+
+func buildEventConditionsX(filters []Filter) (conds, names []string) {
+	for _, f := range filters {
+		if f.IsEvent {
+			switch f.Type {
+			case FilterClick:
+				c := buildCond("JSONExtractString(toString(main.`$properties`), 'label')", f.Value, "is")
+				if c != "" {
+					conds = append(conds, c)
+				}
+				names = append(names, "CLICK")
+			case FilterInput:
+				c := buildCond("JSONExtractString(toString(main.`$properties`), 'label')", f.Value, f.Operator)
+				if c != "" {
+					conds = append(conds, c)
+				}
+				names = append(names, "INPUT")
+			case FilterLocation:
+				c := buildCond("JSONExtractString(toString(main.`$properties`), 'url_path')", f.Value, f.Operator)
+				if c != "" {
+					conds = append(conds, c)
+				}
+				names = append(names, "LOCATION")
+			case FilterCustom:
+				c := buildCond("JSONExtractString(toString(main.`$properties`), 'name')", f.Value, f.Operator)
+				if c != "" {
+					conds = append(conds, c)
+				}
+				names = append(names, "CUSTOM")
+			case FilterFetch:
+				var fetchConds []string
+				for _, nf := range f.Filters {
+					switch nf.Type {
+					case "fetchUrl":
+						c := buildCond("JSONExtractString(toString(main.`$properties`), 'url_path')", nf.Value, f.Operator)
+						if c != "" {
+							fetchConds = append(fetchConds, c)
+						}
+					case "fetchStatusCode":
+						c := buildCond("JSONExtractFloat(toString(main.`$properties`), 'status')", nf.Value, f.Operator)
+						if c != "" {
+							fetchConds = append(fetchConds, c)
+						}
+					}
+				}
+				if len(fetchConds) > 0 {
+					conds = append(conds, strings.Join(fetchConds, " AND "))
+				}
+				names = append(names, "REQUEST")
+			case FilterTag:
+				c := buildCond("JSONExtractString(toString(main.`$properties`), 'tag')", f.Value, f.Operator)
+				if c != "" {
+					conds = append(conds, c)
+				}
+				names = append(names, "TAG")
+			}
+		}
 	}
 	return
 }
