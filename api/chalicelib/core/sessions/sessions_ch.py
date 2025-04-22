@@ -153,7 +153,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                         "isEvent": True,
                         "value": [],
                         "operator": e.operator,
-                        "filters": []
+                        "filters": e.filters
                     })
                 for v in e.value:
                     if v not in extra_conditions[e.operator].value:
@@ -178,7 +178,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                         "isEvent": True,
                         "value": [],
                         "operator": e.operator,
-                        "filters": []
+                        "filters": e.filters
                     })
                 for v in e.value:
                     if v not in extra_conditions[e.operator].value:
@@ -1108,8 +1108,12 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     is_any = sh.isAny_opreator(f.operator)
                     if is_any or len(f.value) == 0:
                         continue
+                    is_negative_operator = sh.is_negation_operator(f.operator)
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
                     op = sh.get_sql_operator(f.operator)
+                    r_op = ""
+                    if is_negative_operator:
+                        r_op = sh.reverse_sql_operator(op)
                     e_k_f = e_k + f"_fetch{j}"
                     full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.FetchFilterType.FETCH_URL:
@@ -1118,6 +1122,12 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         ))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
+                        if is_negative_operator:
+                            events_conditions_not.append(
+                                {
+                                    "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            events_conditions_not[-1]["condition"] = sh.multi_conditions(
+                                f"sub.`$properties`.url_path {r_op} %({e_k_f})s", f.value, value_key=e_k_f)
                     elif f.type == schemas.FetchFilterType.FETCH_STATUS_CODE:
                         event_where.append(json_condition(
                             "main", "$properties", 'status', op, f.value, e_k_f, True, True
@@ -1130,6 +1140,13 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         ))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
+                        if is_negative_operator:
+                            events_conditions_not.append(
+                                {
+                                    "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            events_conditions_not[-1]["condition"] = sh.multi_conditions(
+                                f"sub.`$properties`.method {r_op} %({e_k_f})s", f.value,
+                                value_key=e_k_f)
                     elif f.type == schemas.FetchFilterType.FETCH_DURATION:
                         event_where.append(
                             sh.multi_conditions(f"main.`$duration_s` {f.operator} %({e_k_f})s/1000", f.value,
@@ -1142,12 +1159,26 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         ))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
+                        if is_negative_operator:
+                            events_conditions_not.append(
+                                {
+                                    "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            events_conditions_not[-1]["condition"] = sh.multi_conditions(
+                                f"sub.`$properties`.request_body {r_op} %({e_k_f})s", f.value,
+                                value_key=e_k_f)
                     elif f.type == schemas.FetchFilterType.FETCH_RESPONSE_BODY:
                         event_where.append(json_condition(
                             "main", "$properties", 'response_body', op, f.value, e_k_f
                         ))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
+                        if is_negative_operator:
+                            events_conditions_not.append(
+                                {
+                                    "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            events_conditions_not[-1]["condition"] = sh.multi_conditions(
+                                f"sub.`$properties`.response_body {r_op} %({e_k_f})s", f.value,
+                                value_key=e_k_f)
                     else:
                         logging.warning(f"undefined FETCH filter: {f.type}")
                 if not apply:
@@ -1395,17 +1426,30 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         if extra_conditions and len(extra_conditions) > 0:
             _extra_or_condition = []
             for i, c in enumerate(extra_conditions):
-                if sh.isAny_opreator(c.operator):
+                if sh.isAny_opreator(c.operator) and c.type != schemas.EventType.REQUEST_DETAILS.value:
                     continue
                 e_k = f"ec_value{i}"
                 op = sh.get_sql_operator(c.operator)
                 c.value = helper.values_for_operator(value=c.value, op=c.operator)
                 full_args = {**full_args,
                              **sh.multi_values(c.value, value_key=e_k)}
-                if c.type == events.EventType.LOCATION.ui_type:
+                if c.type in (schemas.EventType.LOCATION.value, schemas.EventType.REQUEST.value):
                     _extra_or_condition.append(
                         sh.multi_conditions(f"extra_event.url_path {op} %({e_k})s",
                                             c.value, value_key=e_k))
+                elif c.type == schemas.EventType.REQUEST_DETAILS.value:
+                    for j, c_f in enumerate(c.filters):
+                        if sh.isAny_opreator(c_f.operator) or len(c_f.value) == 0:
+                            continue
+                        e_k += f"_{j}"
+                        op = sh.get_sql_operator(c_f.operator)
+                        c_f.value = helper.values_for_operator(value=c_f.value, op=c_f.operator)
+                        full_args = {**full_args,
+                                     **sh.multi_values(c_f.value, value_key=e_k)}
+                        if c_f.type == schemas.FetchFilterType.FETCH_URL.value:
+                            _extra_or_condition.append(
+                                sh.multi_conditions(f"extra_event.url_path {op} %({e_k})s",
+                                                     c_f.value, value_key=e_k))
                 else:
                     logging.warning(f"unsupported extra_event type:${c.type}")
             if len(_extra_or_condition) > 0:

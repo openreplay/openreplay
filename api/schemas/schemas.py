@@ -960,36 +960,6 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
 
         return self
 
-    # We don't need this as the UI is expecting filters to override the full series' filters
-    # @model_validator(mode="after")
-    # def __merge_out_filters_with_series(self):
-    #     for f in self.filters:
-    #         for s in self.series:
-    #             found = False
-    #
-    #             if f.is_event:
-    #                 sub = s.filter.events
-    #             else:
-    #                 sub = s.filter.filters
-    #
-    #             for e in sub:
-    #                 if f.type == e.type and f.operator == e.operator:
-    #                     found = True
-    #                     if f.is_event:
-    #                         # If extra event: append value
-    #                         for v in f.value:
-    #                             if v not in e.value:
-    #                                 e.value.append(v)
-    #                     else:
-    #                         # If extra filter: override value
-    #                         e.value = f.value
-    #             if not found:
-    #                 sub.append(f)
-    #
-    #     self.filters = []
-    #
-    #     return self
-
     # UI is expecting filters to override the full series' filters
     @model_validator(mode="after")
     def __override_series_filters_with_outer_filters(self):
