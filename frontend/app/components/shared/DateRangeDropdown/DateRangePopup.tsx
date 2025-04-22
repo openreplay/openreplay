@@ -12,39 +12,114 @@ import {
   getDateRangeFromValue,
   getDateRangeLabel,
 } from 'App/dateRange';
-import { DateTime, Interval } from 'luxon';
+import { DateTime, Interval, Settings } from 'luxon';
 
 import styles from './dateRangePopup.module.css';
 
 function DateRangePopup(props: any) {
   const [range, setRange] = React.useState(props.selectedDateRange || Interval.fromDateTimes(DateTime.now(), DateTime.now()));
+
+  const [displayDates, setDisplayDates] = React.useState<Date[]>([new Date(), new Date()]);
+
   const [value, setValue] = React.useState<string | null>(null);
 
-  const selectCustomRange = (range) => {
-    const updatedRange = Interval.fromDateTimes(DateTime.fromJSDate(range[0]), DateTime.fromJSDate(range[1]));
+  React.useEffect(() => {
+    if (props.selectedDateRange) {
+      const start = new Date(
+        props.selectedDateRange.start.year,
+        props.selectedDateRange.start.month - 1, // JS months are 0-based
+        props.selectedDateRange.start.day
+      );
+      const end = new Date(
+        props.selectedDateRange.end.year,
+        props.selectedDateRange.end.month - 1,
+        props.selectedDateRange.end.day
+      );
+      setDisplayDates([start, end]);
+    }
+  }, [props.selectedDateRange]);
+
+  const createNaiveTime = (dateTime: DateTime) => {
+    if (!dateTime) return null;
+    return DateTime.fromObject({
+      hour: dateTime.hour,
+      minute: dateTime.minute
+    });
+  };
+
+  const selectCustomRange = (newDates) => {
+    if (!newDates || !newDates[0] || !newDates[1]) return;
+
+    setDisplayDates(newDates);
+
+    const selectedTzStart = DateTime.fromObject({
+      year: newDates[0].getFullYear(),
+      month: newDates[0].getMonth() + 1,
+      day: newDates[0].getDate(),
+      hour: 0,
+      minute: 0
+    }).setZone(Settings.defaultZone);
+
+    const selectedTzEnd = DateTime.fromObject({
+      year: newDates[1].getFullYear(),
+      month: newDates[1].getMonth() + 1,
+      day: newDates[1].getDate(),
+      hour: 23,
+      minute: 59
+    }).setZone(Settings.defaultZone);
+
+    const updatedRange = Interval.fromDateTimes(selectedTzStart, selectedTzEnd);
     setRange(updatedRange);
     setValue(CUSTOM_RANGE);
   };
 
-  const setRangeTimeStart = (value: DateTime) => {
-    if (!range.end || value > range.end) {
-      return;
-    }
-    setRange(Interval.fromDateTimes(value, range.end));
+  const setRangeTimeStart = (naiveTime: DateTime) => {
+    if (!range.end || !naiveTime) return;
+
+    const newStart = range.start.set({
+      hour: naiveTime.hour,
+      minute: naiveTime.minute
+    });
+
+    if (newStart > range.end) return;
+
+    setRange(Interval.fromDateTimes(newStart, range.end));
     setValue(CUSTOM_RANGE);
   };
 
-  const setRangeTimeEnd = (value: DateTime) => {
-    if (!range.start || (value && value < range.start)) {
-      return;
-    }
-    setRange(Interval.fromDateTimes(range.start, value));
+  const setRangeTimeEnd = (naiveTime: DateTime) => {
+    if (!range.start || !naiveTime) return;
+
+    const newEnd = range.end.set({
+      hour: naiveTime.hour,
+      minute: naiveTime.minute
+    });
+
+    if (newEnd < range.start) return;
+
+    setRange(Interval.fromDateTimes(range.start, newEnd));
     setValue(CUSTOM_RANGE);
   };
 
   const selectValue = (value: string) => {
-    const range = getDateRangeFromValue(value);
-    setRange(range);
+    const newRange = getDateRangeFromValue(value);
+
+    const zonedStart = newRange.start.setZone(Settings.defaultZone);
+    const zonedEnd = newRange.end.setZone(Settings.defaultZone);
+    setRange(Interval.fromDateTimes(zonedStart, zonedEnd));
+
+    const start = new Date(
+      zonedStart.year,
+      zonedStart.month - 1,
+      zonedStart.day
+    );
+    const end = new Date(
+      zonedEnd.year,
+      zonedEnd.month - 1,
+      zonedEnd.day
+    );
+    setDisplayDates([start, end]);
+
     setValue(value);
   };
 
@@ -54,7 +129,11 @@ function DateRangePopup(props: any) {
 
   const { onCancel } = props;
   const isUSLocale = navigator.language === 'en-US' || navigator.language.startsWith('en-US');
-  const rangeForDisplay = [range.start!.startOf('day').ts, range.end!.startOf('day').ts]
+
+  // Create naive DateTime objects for TimePicker
+  const naiveStartTime = createNaiveTime(range.start);
+  const naiveEndTime = createNaiveTime(range.end);
+
   return (
     <div className={styles.wrapper}>
       <div className={`${styles.body} h-fit`}>
@@ -74,16 +153,11 @@ function DateRangePopup(props: any) {
         <div className="flex justify-center h-fit w-full items-center dateRangeContainer">
           <DateRangePicker
             name="dateRangePicker"
-            // onSelect={this.selectCustomRange} -> onChange
-            // numberOfCalendars={2}
-            // selectionType="range"
-            // maximumDate={new Date()}
-            // singleDateRange={true}
             onChange={selectCustomRange}
             shouldCloseCalendar={() => false}
             isOpen
             maxDate={new Date()}
-            value={rangeForDisplay}
+            value={displayDates}
           />
         </div>
       </div>
@@ -93,7 +167,7 @@ function DateRangePopup(props: any) {
           <span>{range.start.toFormat(isUSLocale ? "MM/dd" : "dd/MM")} </span>
           <TimePicker
             format={isUSLocale ? 'hh:mm a' : "HH:mm"}
-            value={range.start}
+            value={naiveStartTime}
             onChange={setRangeTimeStart}
             needConfirm={false}
             showNow={false}
@@ -103,7 +177,7 @@ function DateRangePopup(props: any) {
           <span>{range.end.toFormat(isUSLocale ? "MM/dd" : "dd/MM")} </span>
           <TimePicker
             format={isUSLocale ? 'hh:mm a' : "HH:mm"}
-            value={range.end}
+            value={naiveEndTime}
             onChange={setRangeTimeEnd}
             needConfirm={false}
             showNow={false}
