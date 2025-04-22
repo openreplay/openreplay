@@ -272,6 +272,7 @@ export default class App {
     'feature-flags': true,
     'usability-test': true,
   }
+  private emptyBatchCounter = 0
 
   constructor(
     projectKey: string,
@@ -318,14 +319,16 @@ export default class App {
       __save_canvas_locally: false,
       localStorage: null,
       sessionStorage: null,
+      disableStringDict: true,
       forceSingleTab: false,
       assistSocketHost: '',
       fixedCanvasScaling: false,
       disableCanvas: false,
       captureIFrames: true,
-      obscureTextEmails: false,
+      disableSprites: false,
+      inlineRemoteCss: true,
+      obscureTextEmails: true,
       obscureTextNumbers: false,
-      disableStringDict: false,
       crossdomain: {
         parentDomain: '*',
       },
@@ -336,12 +339,6 @@ export default class App {
         useAnimationFrame: false,
       },
       forceNgOff: false,
-      inlineRemoteCss: false,
-      disableSprites: false,
-      inlinerOptions: {
-        forceFetch: false,
-        forcePlain: false,
-      }
     }
     this.options = simpleMerge(defaultOptions, options)
 
@@ -436,6 +433,7 @@ export default class App {
         if (ev.data.context === this.contextId) {
           return
         }
+        this.debug.log(ev)
         if (ev.data.line === proto.resp) {
           const sessionToken = ev.data.token
           this.session.setSessionToken(sessionToken)
@@ -853,8 +851,7 @@ export default class App {
    * */
   private _nCommit(): void {
     if (this.socketMode) {
-      this.messages.unshift(TabData(this.session.getTabId()))
-      this.messages.unshift(Timestamp(this.timestamp()))
+      this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
       return
@@ -877,10 +874,19 @@ export default class App {
       return
     }
 
+    if (!this.messages.length) {
+      // Release empty batches every 30 secs (1000 * 30ms)
+      if (this.emptyBatchCounter < 1000) {
+        this.emptyBatchCounter++;
+        return;
+      }
+    }
+
+    this.emptyBatchCounter = 0
+
     try {
       requestIdleCb(() => {
-        this.messages.unshift(TabData(this.session.getTabId()))
-        this.messages.unshift(Timestamp(this.timestamp()))
+        this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
         this.worker?.postMessage(this.messages)
         this.commitCallbacks.forEach((cb) => cb(this.messages))
         this.messages.length = 0
@@ -905,10 +911,9 @@ export default class App {
   private _cStartCommit(): void {
     this.coldStartCommitN += 1
     if (this.coldStartCommitN === 2) {
-      this.bufferedMessages1.push(Timestamp(this.timestamp()))
-      this.bufferedMessages1.push(TabData(this.session.getTabId()))
-      this.bufferedMessages2.push(Timestamp(this.timestamp()))
-      this.bufferedMessages2.push(TabData(this.session.getTabId()))
+      const payload = [Timestamp(this.timestamp()), TabData(this.session.getTabId())]
+      this.bufferedMessages1.push(...payload)
+      this.bufferedMessages2.push(...payload)
       this.coldStartCommitN = 0
     }
   }

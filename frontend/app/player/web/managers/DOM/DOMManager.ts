@@ -1,5 +1,4 @@
 import logger from 'App/logger';
-import { resolveCSS } from '../../messages/rewriter/urlResolve';
 
 import type Screen from '../../Screen/Screen';
 import type { Message, SetNodeScroll } from '../../messages';
@@ -450,8 +449,9 @@ export default class DOMManager extends ListWalker<Message> {
           logger.error('CreateIFrameDocument: Node not found', msg);
           return;
         }
-        // shadow DOM for a custom element + SALESFORCE (<slot>) 
-        const isCustomElement = vElem.tagName.includes('-') || vElem.tagName === 'SLOT';
+
+        // shadow DOM for a custom element
+        const isCustomElement = vElem.tagName.includes('-');
         const isNotActualIframe = !["IFRAME", "FRAME"].includes(vElem.tagName.toUpperCase());
         const isLikelyShadowRoot = isCustomElement && isNotActualIframe;
 
