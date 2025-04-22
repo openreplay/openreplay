@@ -25,10 +25,6 @@ services:
       openreplay-net:
         aliases:
           - clickhouse-openreplay-clickhouse.db.svc.cluster.local
-    environment:
-      CLICKHOUSE_USER: "default"
-      CLICKHOUSE_PASSWORD: ""
-      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
 
   redis:
     image: bitnami/redis:${REDIS_VERSION}
@@ -133,7 +129,7 @@ services:
 
   clickhouse-migration:
     image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
-    container_name: clickhouse-migration
+    container_name: db-migration
     profiles:
       - "migration"
     depends_on:
