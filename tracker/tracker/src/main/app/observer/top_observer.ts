@@ -12,6 +12,14 @@ import { IN_BROWSER, hasOpenreplayAttribute, canAccessIframe } from '../../utils
 export interface Options {
   captureIFrames: boolean
   disableSprites: boolean
+  /**
+   * with this option instead of using link element with href to load css,
+   * we will try to parse the css text instead and send it as css rules set
+   * can (and probably will) affect performance to certain degree,
+   * especially if the css itself is crossdomain
+   * @default false
+   * */
+  inlineRemoteCss: boolean
 }
 
 type Context = Window & typeof globalThis
@@ -29,6 +37,7 @@ export default class TopObserver extends Observer {
       {
         captureIFrames: true,
         disableSprites: false,
+        inlineRemoteCss: false,
       },
       params.options,
     )

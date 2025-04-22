@@ -10,6 +10,8 @@ import {
   RemoveNode,
   UnbindNodes,
   SetNodeAttribute,
+  AdoptedSSInsertRuleURLBased,
+  AdoptedSSAddOwner
 } from '../messages.gen.js'
 import App from '../index.js'
 import {
@@ -21,6 +23,8 @@ import {
   hasTag,
   isCommentNode,
 } from '../guards.js'
+import { inlineRemoteCss } from './cssInliner.js'
+import { nextID } from "../../modules/constructedStyleSheets.js";
 
 const iconCache = {}
 const svgUrlCache = {}
@@ -47,7 +51,7 @@ async function parseUseEl(
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
           ${symbol.innerHTML}
         </svg>
-      `.trim()
+      `
 
         iconCache[symbolId] = inlineSvg
 
@@ -115,7 +119,7 @@ async function parseUseEl(
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
           ${symbol.innerHTML}
         </svg>
-      `.trim()
+      `
 
       iconCache[symbolId] = inlineSvg
 
@@ -188,13 +192,20 @@ export default abstract class Observer {
   private readonly attributesMap: Map<number, Set<string>> = new Map()
   private readonly textSet: Set<number> = new Set()
   private readonly disableSprites: boolean = false
+  /**
+   * this option means that, instead of using link element with href to load css,
+   * we will try to parse the css text instead and send it as css rules set
+   * can (and will) affect performance
+   * */
+  private readonly inlineRemoteCss: boolean = false
   private readonly domParser = new DOMParser()
   constructor(
     protected readonly app: App,
     protected readonly isTopContext = false,
-    options: { disableSprites: boolean } = { disableSprites: false },
+    options: { disableSprites: boolean, inlineRemoteCss: boolean } = { disableSprites: false, inlineRemoteCss: false },
   ) {
     this.disableSprites = options.disableSprites
+    this.inlineRemoteCss = options.inlineRemoteCss
     this.observer = createMutationObserver(
       this.app.safe((mutations) => {
         for (const mutation of mutations) {
@@ -280,10 +291,12 @@ export default abstract class Observer {
         let removed = 0
         const totalBeforeRemove = this.app.nodes.getNodeCount()
 
+        const contentDocument = iframe.contentDocument;
+        const nodesUnregister = this.app.nodes.unregisterNode.bind(this.app.nodes);
         while (walker.nextNode()) {
-          if (!iframe.contentDocument.contains(walker.currentNode)) {
+          if (!contentDocument.contains(walker.currentNode)) {
             removed += 1
-            this.app.nodes.unregisterNode(walker.currentNode)
+            nodesUnregister(walker.currentNode)
           }
         }
 
@@ -297,7 +310,7 @@ export default abstract class Observer {
 
   private sendNodeAttribute(id: number, node: Element, name: string, value: string | null): void {
     if (isSVGElement(node)) {
-      if (name.substring(0, 6) === 'xlink:') {
+      if (name.startsWith('xlink:')) {
         name = name.substring(6)
       }
       if (value === null) {
@@ -351,6 +364,24 @@ export default abstract class Observer {
       return
     }
     if (name === 'style' || (name === 'href' && hasTag(node, 'link'))) {
+      if ('rel' in node && node.rel === 'stylesheet' && this.inlineRemoteCss) {
+        setTimeout(() => {
+          inlineRemoteCss(
+            // @ts-ignore
+          node,
+          id,
+          this.app.getBaseHref(),
+          nextID,
+            (id: number, cssText: string, index: number, baseHref: string) => {
+              this.app.send(AdoptedSSInsertRuleURLBased(id, cssText, index, baseHref))
+            },
+            (sheetId: number, ownerId: number) => {
+              this.app.send(AdoptedSSAddOwner(sheetId, ownerId))
+            }
+          )
+        }, 0)
+        return
+      }
       this.app.send(SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()))
       return
     }
@@ -506,8 +537,11 @@ export default abstract class Observer {
             ;(el as HTMLElement | SVGElement).style.width = `${width}px`
             ;(el as HTMLElement | SVGElement).style.height = `${height}px`
           }
-
-          this.app.send(CreateElementNode(id, parentID, index, el.tagName, isSVGElement(node)))
+          if ('rel' in el && el.rel === 'stylesheet' && this.inlineRemoteCss) {
+            this.app.send(CreateElementNode(id, parentID, index, 'STYLE', false))
+          } else {
+            this.app.send(CreateElementNode(id, parentID, index, el.tagName, isSVGElement(node)))
+          }
         }
         for (let i = 0; i < el.attributes.length; i++) {
           const attr = el.attributes[i]
@@ -554,12 +588,12 @@ export default abstract class Observer {
   }
   private commitNodes(isStart = false): void {
     let node
-    this.recents.forEach((type, id) => {
+    for (const [id, type] of this.recents.entries()) {
       this.commitNode(id)
       if (type === RecentsType.New && (node = this.app.nodes.getNode(id))) {
         this.app.nodes.callNodeCallbacks(node, isStart)
       }
-    })
+    }
     this.clear()
   }
 

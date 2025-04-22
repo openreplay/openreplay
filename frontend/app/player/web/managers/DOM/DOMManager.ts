@@ -52,6 +52,8 @@ export default class DOMManager extends ListWalker<Message> {
   /** required to keep track of iframes, frameId : vnodeId */
   private readonly iframeRoots: Record<number, number> = {};
 
+  private shadowRootParentMap: Map<number, number> = new Map();
+
   /** Constructed StyleSheets https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptedStyleSheets
    * as well as <style> tag owned StyleSheets
    */
@@ -163,6 +165,11 @@ export default class DOMManager extends ListWalker<Message> {
   }
 
   public getNode(id: number) {
+    const mappedId = this.shadowRootParentMap.get(id);
+    if (mappedId !== undefined) {
+      // If this is a shadow root ID, return the parent element instead
+      return this.vElements.get(mappedId);
+    }
     return this.vElements.get(id) || this.vTexts.get(id);
   }
 
@@ -171,24 +178,21 @@ export default class DOMManager extends ListWalker<Message> {
     id: number;
     index: number;
   }): void {
-    const { parentID, id, index } = msg;
+    let { parentID, id, index } = msg;
+
+    // Check if parentID is a shadow root, and get the real parent element if so
+    const actualParentID = this.shadowRootParentMap.get(parentID);
+    if (actualParentID !== undefined) {
+      parentID = actualParentID;
+    }
+
     const child = this.vElements.get(id) || this.vTexts.get(id);
     if (!child) {
       logger.error('Insert error. Node not found', id);
       return;
     }
+
     const parent = this.vElements.get(parentID) || this.olVRoots.get(parentID);
-    if ('tagName' in child && child.tagName === 'BODY') {
-      const spriteMap = new VSpriteMap(
-        'svg',
-        true,
-        Number.MAX_SAFE_INTEGER - 100,
-        Number.MAX_SAFE_INTEGER - 100,
-      );
-      spriteMap.node.setAttribute('id', 'OPENREPLAY_SPRITES_MAP');
-      spriteMap.node.setAttribute('style', 'display: none;');
-      child.insertChildAt(spriteMap, Number.MAX_SAFE_INTEGER - 100);
-    }
     if (!parent) {
       logger.error(
         `${id} Insert error. Parent vNode ${parentID} not found`,
@@ -305,9 +309,14 @@ export default class DOMManager extends ListWalker<Message> {
         this.removeAutocomplete(vElem);
         return;
       }
-      case MType.MoveNode:
+      case MType.MoveNode: {
+        // if the parent ID is in shadow root map -> custom elements case
+        if (this.shadowRootParentMap.has(msg.parentID)) {
+          msg.parentID = this.shadowRootParentMap.get(msg.parentID)!;
+        }
         this.insertNode(msg);
         return;
+      }
       case MType.RemoveNode: {
         const vChild = this.vElements.get(msg.id) || this.vTexts.get(msg.id);
         if (!vChild) {
@@ -440,6 +449,19 @@ export default class DOMManager extends ListWalker<Message> {
           logger.error('CreateIFrameDocument: Node not found', msg);
           return;
         }
+
+        // shadow DOM for a custom element
+        const isCustomElement = vElem.tagName.includes('-');
+        const isNotActualIframe = !["IFRAME", "FRAME"].includes(vElem.tagName.toUpperCase());
+        const isLikelyShadowRoot = isCustomElement && isNotActualIframe;
+
+        if (isLikelyShadowRoot) {
+          // Store the mapping but don't create the actual shadow root
+          this.shadowRootParentMap.set(msg.id, msg.frameID);
+          return;
+        }
+
+        // Real iframes
         if (this.iframeRoots[msg.frameID] && !this.olVRoots.has(msg.id)) {
           this.olVRoots.delete(this.iframeRoots[msg.frameID]);
         }
@@ -452,7 +474,7 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.AdoptedSsInsertRule: {
         const styleSheet = this.olStyleSheets.get(msg.sheetID);
         if (!styleSheet) {
-          logger.warn('No stylesheet was created for ', msg);
+          logger.warn('No stylesheet was created for ', msg, this.olStyleSheets);
           return;
         }
         insertRule(styleSheet, msg);

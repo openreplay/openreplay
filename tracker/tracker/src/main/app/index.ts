@@ -319,13 +319,14 @@ export default class App {
       __save_canvas_locally: false,
       localStorage: null,
       sessionStorage: null,
-      disableStringDict: false,
+      disableStringDict: true,
       forceSingleTab: false,
       assistSocketHost: '',
       fixedCanvasScaling: false,
       disableCanvas: false,
       captureIFrames: true,
       disableSprites: false,
+      inlineRemoteCss: true,
       obscureTextEmails: true,
       obscureTextNumbers: false,
       crossdomain: {
@@ -820,7 +821,7 @@ export default class App {
     this.debug.error('OpenReplay error: ', context, e)
   }
 
-  send(message: Message, urgent = false): void {
+  send = (message: Message, urgent = false): void => {
     if (this.activityState === ActivityState.NotActive) {
       return
     }
