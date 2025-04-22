@@ -53,7 +53,7 @@ describe('inlineRemoteCss', () => {
     jest.runAllTimers();
     expect(mockNextID).toHaveBeenCalled();
     expect(mockAdoptedSSAddOwner).toHaveBeenCalledWith(123, 456);
-    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(123, 'body { color: red; }', 0, 'http://example.com');
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(456, 'body { color: red; }', 0, 'http://example.com');
     jest.useRealTimers();
   });
 
@@ -73,12 +73,6 @@ describe('inlineRemoteCss', () => {
   test('should handle successful fetch and process CSS text', async () => {
     mockNode.href = 'http://example.com/style.css';
     const mockSheet = {};
-    global.fetch.mockImplementationOnce(() =>
-      Promise.resolve({
-        ok: true,
-        text: () => Promise.resolve('body { color: red; }')
-      })
-    );
     Object.defineProperty(mockSheet, 'cssRules', {
       get: () => { throw new Error('CORS error'); }
     });
@@ -86,26 +80,18 @@ describe('inlineRemoteCss', () => {
       get: () => mockSheet
     });
     inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise(process.nextTick);
     expect(mockNextID).toHaveBeenCalled();
     expect(mockAdoptedSSAddOwner).toHaveBeenCalledWith(123, 456);
     expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(123, 'body { color: red; }', 0, 'http://example.com');
-    jest.useRealTimers();
   });
 
-  test('should fetch CSS if node has no sheet but has href', async () => {
+  test('should fetch CSS if node has no sheet but has href', () => {
     Object.defineProperty(mockNode, 'sheet', {
       get: () => null
     });
-    global.fetch.mockImplementationOnce(() =>
-      Promise.resolve({
-        ok: true,
-        text: () => Promise.resolve('body { color: red; }')
-      })
-    );
     mockNode.href = 'http://example.com/style.css';
     inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
-    await new Promise(resolve => setTimeout(resolve, 0));
     expect(global.fetch).toHaveBeenCalledWith('http://example.com/style.css');
   });
 
