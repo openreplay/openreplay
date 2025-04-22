@@ -42,11 +42,17 @@ randomPass() {
 # Create dynamic passwords and update the environment file
 function create_passwords() {
     info "Creating dynamic passwords..."
+
+    # Update domain name replacement
     sed -i "s/change_me_domain/${DOMAIN_NAME}/g" common.env
-    sed -i "s/change_me_jwt/$(randomPass)/g" common.env
-    sed -i "s/change_me_s3_key/$(randomPass)/g" common.env
-    sed -i "s/change_me_s3_secret/$(randomPass)/g" common.env
-    sed -i "s/change_me_pg_password/$(randomPass)/g" common.env
+
+    # Find all change_me_ entries and replace them with random passwords
+    grep -o 'change_me_[a-zA-Z0-9_]*' common.env | sort -u | while read -r token; do
+        random_pass=$(randomPass)
+        sed -i "s/${token}/${random_pass}/g" common.env
+        info "Generated password for ${token}"
+    done
+
     info "Passwords created and updated in common.env file."
 }
 
