@@ -18,3 +18,7 @@ global:
   s3:
     accessKey: *accessKey
     secretKey: *secretKey
+chalice:
+  env:
+    JWT_REFRESH_SECRET: "${COMMON_JWT_REFRESH_SECRET}"
+    JWT_SPOT_REFRESH_SECRET: "${COMMON_JWT_SPOT_REFRESH_SECRET}"
