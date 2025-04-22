@@ -162,37 +162,6 @@ def reset_member(tenant_id, editor_id, user_id_to_update):
     return {"data": {"invitationLink": generate_new_invitation(user_id_to_update)}}
 
 
-def update_scim_user(
-    user_id: int,
-    tenant_id: int,
-    email: str,
-):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                WITH u AS (
-                    UPDATE public.users
-                    SET email = %(email)s
-                    WHERE
-                        users.user_id = %(user_id)s
-                        AND users.tenant_id = %(tenant_id)s
-                        AND users.deleted_at IS NULL
-                    RETURNING *
-                )
-                SELECT *
-                FROM u;
-                """,
-                {
-                    "tenant_id": tenant_id,
-                    "user_id": user_id,
-                    "email": email,
-                },
-            )
-        )
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
 def update(tenant_id, user_id, changes, output=True):
     AUTH_KEYS = [
         "password",
@@ -381,13 +350,39 @@ def get(user_id, tenant_id):
         return helper.dict_to_camel_case(r)
 
 
+def get_scim_users_paginated(start_index, tenant_id, count=None):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """
+                SELECT
+                    users.*,
+                    roles.name AS role_name
+                FROM public.users
+                LEFT JOIN public.roles USING (role_id)
+                WHERE
+                    users.tenant_id = %(tenant_id)s
+                    AND users.deleted_at IS NULL
+                LIMIT %(limit)s
+                OFFSET %(offset)s;
+                """,
+                {"offset": start_index - 1, "limit": count, "tenant_id": tenant_id},
+            )
+        )
+        r = cur.fetchall()
+        return helper.list_to_camel_case(r)
+
+
 def get_scim_user_by_id(user_id, tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 """
-                SELECT *
+                SELECT
+                    users.*,
+                    roles.name AS role_name
                 FROM public.users
+                LEFT JOIN public.roles USING (role_id)
                 WHERE
                     users.user_id = %(user_id)s
                     AND users.tenant_id = %(tenant_id)s
@@ -397,6 +392,140 @@ def get_scim_user_by_id(user_id, tenant_id):
                 {
                     "user_id": user_id,
                     "tenant_id": tenant_id,
+                },
+            )
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
+def create_scim_user(
+    email: str,
+    tenant_id: int,
+    name: str = "",
+    internal_id: str | None = None,
+    role_id: int | None = None,
+):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """
+                WITH u AS (
+                    INSERT INTO public.users (
+                        tenant_id,
+                        email,
+                        name,
+                        internal_id,
+                        role_id
+                    )
+                    VALUES (
+                        %(tenant_id)s,
+                        %(email)s,
+                        %(name)s,
+                        %(internal_id)s,
+                        %(role_id)s
+                    )
+                    RETURNING *
+                )
+                SELECT
+                    u.*,
+                    roles.name as role_name
+                FROM u LEFT JOIN public.roles USING (role_id);
+                """,
+                {
+                    "tenant_id": tenant_id,
+                    "email": email,
+                    "name": name,
+                    "internal_id": internal_id,
+                    "role_id": role_id,
+                },
+            )
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
+def restore_scim_user(
+    user_id: int,
+    tenant_id: int,
+    email: str,
+    name: str = "",
+    internal_id: str | None = None,
+    role_id: int | None = None,
+):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """
+                WITH u AS (
+                    UPDATE public.users
+                    SET
+                        tenant_id = %(tenant_id)s,
+                        email = %(email)s,
+                        name = %(name)s,
+                        internal_id = %(internal_id)s,
+                        role_id = %(role_id)s,
+                        deleted_at = NULL,
+                        created_at = default,
+                        api_key = default,
+                        jwt_iat = NULL,
+                        weekly_report = default
+                    WHERE users.user_id = %(user_id)s
+                    RETURNING *
+                )
+                SELECT
+                    u.*,
+                    roles.name as role_name
+                FROM u LEFT JOIN public.roles USING (role_id);
+                """,
+                {
+                    "tenant_id": tenant_id,
+                    "user_id": user_id,
+                    "email": email,
+                    "name": name,
+                    "internal_id": internal_id,
+                    "role_id": role_id,
+                },
+            )
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
+def update_scim_user(
+    user_id: int,
+    tenant_id: int,
+    email: str,
+    name: str = "",
+    internal_id: str | None = None,
+    role_id: int | None = None,
+):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """
+                WITH u AS (
+                    UPDATE public.users
+                    SET
+                        email = %(email)s,
+                        name = %(name)s,
+                        internal_id = %(internal_id)s,
+                        role_id = %(role_id)s
+                    WHERE
+                        users.user_id = %(user_id)s
+                        AND users.tenant_id = %(tenant_id)s
+                        AND users.deleted_at IS NULL
+                    RETURNING *
+                )
+                SELECT
+                    u.*,
+                    roles.name as role_name
+                FROM u LEFT JOIN public.roles USING (role_id);
+                """,
+                {
+                    "tenant_id": tenant_id,
+                    "user_id": user_id,
+                    "email": email,
+                    "name": name,
+                    "internal_id": internal_id,
+                    "role_id": role_id,
                 },
             )
         )
@@ -513,7 +642,7 @@ def edit_member(
     return {"data": user}
 
 
-def get_existing_scim_user_by_unique_values(email):
+def get_existing_scim_user_by_unique_values_from_all_users(email):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -556,26 +685,6 @@ def get_by_email_only(email):
         )
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)
-
-
-def get_users_paginated(start_index, tenant_id, count=None):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                SELECT *
-                FROM public.users
-                WHERE
-                    users.tenant_id = %(tenant_id)s
-                    AND users.deleted_at IS NULL
-                LIMIT %(limit)s
-                OFFSET %(offset)s;
-                """,
-                {"offset": start_index - 1, "limit": count, "tenant_id": tenant_id},
-            )
-        )
-        r = cur.fetchall()
-        return helper.list_to_camel_case(r)
 
 
 def get_member(tenant_id, user_id):
@@ -1093,41 +1202,6 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def create_scim_user(
-    email,
-    name,
-    tenant_id,
-):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                WITH u AS (
-                    INSERT INTO public.users (
-                        tenant_id,
-                        email,
-                        name
-                    )
-                    VALUES (
-                        %(tenant_id)s,
-                        %(email)s,
-                        %(name)s
-                    )
-                    RETURNING *
-                )
-                SELECT *
-                FROM u;
-                """,
-                {
-                    "tenant_id": tenant_id,
-                    "email": email,
-                    "name": name,
-                },
-            )
-        )
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
 def soft_delete_scim_user_by_id(user_id, tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -1311,35 +1385,6 @@ def restore_sso_user(
             },
         )
         cur.execute(query)
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
-def restore_scim_user(
-    user_id,
-    tenant_id,
-):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                WITH u AS (
-                    UPDATE public.users
-                    SET
-                        tenant_id = %(tenant_id)s,
-                        deleted_at = NULL,
-                        created_at = default,
-                        api_key = default,
-                        jwt_iat = NULL,
-                        weekly_report = default
-                    WHERE users.user_id = %(user_id)s
-                    RETURNING *
-                )
-                SELECT *
-                FROM u;
-                """,
-                {"tenant_id": tenant_id, "user_id": user_id},
-            )
-        )
         return helper.dict_to_camel_case(cur.fetchone())
 
 

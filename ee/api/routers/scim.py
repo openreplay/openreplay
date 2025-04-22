@@ -1,3 +1,4 @@
+from copy import deepcopy
 import logging
 from typing import Any
 
@@ -7,7 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
-from chalicelib.core import users, tenants
+from chalicelib.core import users, roles, tenants
 from chalicelib.utils.scim_auth import (
     auth_optional,
     auth_required,
@@ -171,13 +172,21 @@ async def get_schemas(filter_param: str | None = Query(None, alias="filter")):
     )
 
 
-@public_app.get("/Schemas/{schema_id}", dependencies=[Depends(auth_required)])
-async def get_schema(schema_id: str):
+@public_app.get("/Schemas/{schema_id}")
+async def get_schema(schema_id: str, tenant_id=Depends(auth_required)):
     if schema_id not in SCHEMA_IDS_TO_SCHEMA_DETAILS:
         return _not_found_error_response(schema_id)
+    schema = deepcopy(SCHEMA_IDS_TO_SCHEMA_DETAILS[schema_id])
+    if schema_id == "urn:ietf:params:scim:schemas:core:2.0:User":
+        db_roles = roles.get_roles(tenant_id)
+        role_names = [role["name"] for role in db_roles]
+        user_type_attribute = next(
+            filter(lambda x: x["name"] == "userType", schema["attributes"])
+        )
+        user_type_attribute["canonicalValues"] = role_names
     return JSONResponse(
         status_code=200,
-        content=SCHEMA_IDS_TO_SCHEMA_DETAILS[schema_id],
+        content=schema,
     )
 
 
@@ -205,7 +214,22 @@ async def get_service_provider_config(
 MAX_USERS_PER_PAGE = 10
 
 
-def _convert_db_user_to_scim_user(
+def _parse_scim_user_input(data: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    role_id = None
+    if "userType" in data:
+        role = roles.get_role_by_name(tenant_id, data["userType"])
+        role_id = role["roleId"] if role else None
+    result = {
+        "email": data["userName"],
+        "internal_id": data.get("externalId"),
+        "name": data.get("name", {}).get("formatted") or data.get("displayName"),
+        "role_id": role_id,
+    }
+    result = {k: v for k, v in result.items() if v is not None}
+    return result
+
+
+def _serialize_db_user_to_scim_user(
     db_user: dict[str, Any],
     attributes: list[str] | None = None,
     excluded_attributes: list[str] | None = None,
@@ -239,7 +263,8 @@ def _convert_db_user_to_scim_user(
             "formatted": db_user["name"],
         },
         "displayName": db_user["name"] or db_user["email"],
-
+        "userType": db_user.get("roleName"),
+        "active": db_user["deletedAt"] is None,
     }
     scim_user = scim_helpers.filter_attributes(scim_user, included_attributes)
     scim_user = scim_helpers.exclude_attributes(scim_user, excluded_attributes)
@@ -260,12 +285,12 @@ async def get_users(
     )
     # todo(jon): this might not be the most efficient thing to do. could be better to just do a count.
     # but this is the fastest thing at the moment just to test that it's working
-    total_resources = users.get_users_paginated(1, tenant_id)
-    db_resources = users.get_users_paginated(
+    total_resources = users.get_scim_users_paginated(1, tenant_id)
+    db_resources = users.get_scim_users_paginated(
         start_index, tenant_id, count=items_per_page
     )
     scim_resources = [
-        _convert_db_user_to_scim_user(resource, attributes, excluded_attributes)
+        _serialize_db_user_to_scim_user(resource, attributes, excluded_attributes)
         for resource in db_resources
     ]
     return JSONResponse(
@@ -289,7 +314,7 @@ async def get_user(
     db_resource = users.get_scim_user_by_id(user_id, tenant_id)
     if not db_resource:
         return _not_found_error_response(user_id)
-    scim_resource = _convert_db_user_to_scim_user(
+    scim_resource = _serialize_db_user_to_scim_user(
         db_resource, attributes, excluded_attributes
     )
     return JSONResponse(status_code=200, content=scim_resource)
@@ -297,26 +322,28 @@ async def get_user(
 
 @public_app.post("/Users")
 async def create_user(r: Request, tenant_id=Depends(auth_required)):
-    payload = await r.json()
-    if "userName" not in payload:
+    scim_payload = await r.json()
+    try:
+        db_payload = _parse_scim_user_input(scim_payload, tenant_id)
+    except KeyError:
         return _invalid_value_error_response()
-    # note(jon): this method will return soft deleted users as well
-    existing_db_resource = users.get_existing_scim_user_by_unique_values(
-        payload["userName"]
+    existing_db_resource = users.get_existing_scim_user_by_unique_values_from_all_users(
+        db_payload["email"]
     )
     if existing_db_resource and existing_db_resource["deletedAt"] is None:
         return _uniqueness_error_response()
     if existing_db_resource and existing_db_resource["deletedAt"] is not None:
-        db_resource = users.restore_scim_user(existing_db_resource["userId"], tenant_id)
+        db_resource = users.restore_scim_user(
+            user_id=existing_db_resource["userId"],
+            tenant_id=tenant_id,
+            **db_payload,
+        )
     else:
         db_resource = users.create_scim_user(
-            email=payload["userName"],
-            # note(jon): scim schema does not require the `name.formatted` attribute, but we require `name`.
-            # so, we have to define the value ourselves here
-            name="",
             tenant_id=tenant_id,
+            **db_payload,
         )
-    scim_resource = _convert_db_user_to_scim_user(db_resource)
+    scim_resource = _serialize_db_user_to_scim_user(db_resource)
     response = JSONResponse(status_code=201, content=scim_resource)
     response.headers["Location"] = scim_resource["meta"]["location"]
     return response
@@ -327,22 +354,26 @@ async def update_user(user_id: str, r: Request, tenant_id=Depends(auth_required)
     db_resource = users.get_scim_user_by_id(user_id, tenant_id)
     if not db_resource:
         return _not_found_error_response(user_id)
-    current_scim_resource = _convert_db_user_to_scim_user(db_resource)
-    changes = await r.json()
+    current_scim_resource = _serialize_db_user_to_scim_user(db_resource)
+    requested_scim_changes = await r.json()
     schema = SCHEMA_IDS_TO_SCHEMA_DETAILS["urn:ietf:params:scim:schemas:core:2.0:User"]
     try:
-        valid_mutable_changes = scim_helpers.filter_mutable_attributes(
-            schema, changes, current_scim_resource
+        valid_mutable_scim_changes = scim_helpers.filter_mutable_attributes(
+            schema, requested_scim_changes, current_scim_resource
         )
     except ValueError:
         return _mutability_error_response()
+    valid_mutable_db_changes = _parse_scim_user_input(
+        valid_mutable_scim_changes,
+        tenant_id,
+    )
     try:
         updated_db_resource = users.update_scim_user(
             user_id,
             tenant_id,
-            email=valid_mutable_changes["userName"],
+            **valid_mutable_db_changes,
         )
-        updated_scim_resource = _convert_db_user_to_scim_user(updated_db_resource)
+        updated_scim_resource = _serialize_db_user_to_scim_user(updated_db_resource)
         return JSONResponse(status_code=200, content=updated_scim_resource)
     except Exception:
         # note(jon): for now, this is the only error that would happen when updating the scim user
@@ -351,6 +382,7 @@ async def update_user(user_id: str, r: Request, tenant_id=Depends(auth_required)
 
 @public_app.delete("/Users/{user_id}")
 async def delete_user(user_id: str, tenant_id=Depends(auth_required)):
+    # note(jon): this is a soft delete
     db_resource = users.get_scim_user_by_id(user_id, tenant_id)
     if not db_resource:
         return _not_found_error_response(user_id)
