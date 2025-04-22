@@ -43,60 +43,60 @@ func partitionFilters(filters []Filter) (sessionFilters []Filter, eventFilters [
 
 func buildEventConditions(filters []Filter) (conds, names []string) {
 	for _, f := range filters {
-		if f.IsEvent {
-			switch f.Type {
-			case FilterClick:
-				c := buildCond("JSONExtractString(toString(main.`$properties`), 'label')", f.Value, "is")
-				if c != "" {
-					conds = append(conds, c)
-				}
-				names = append(names, "CLICK")
-			case FilterInput:
-				c := buildCond("JSONExtractString(toString(main.`$properties`), 'label')", f.Value, f.Operator)
-				if c != "" {
-					conds = append(conds, c)
-				}
-				names = append(names, "INPUT")
-			case FilterLocation:
-				c := buildCond("JSONExtractString(toString(main.`$properties`), 'url_path')", f.Value, f.Operator)
-				if c != "" {
-					conds = append(conds, c)
-				}
-				names = append(names, "LOCATION")
-			case FilterCustom:
-				c := buildCond("JSONExtractString(toString(main.`$properties`), 'name')", f.Value, f.Operator)
-				if c != "" {
-					conds = append(conds, c)
-				}
-				names = append(names, "CUSTOM")
-			case FilterFetch:
-				var fetchConds []string
-				for _, nf := range f.Filters {
-					switch nf.Type {
-					case "fetchUrl":
-						c := buildCond("JSONExtractString(toString(main.`$properties`), 'url_path')", nf.Value, f.Operator)
-						if c != "" {
-							fetchConds = append(fetchConds, c)
-						}
-					case "fetchStatusCode":
-						c := buildCond("JSONExtractFloat(toString(main.`$properties`), 'status')", nf.Value, f.Operator)
-						if c != "" {
-							fetchConds = append(fetchConds, c)
-						}
+		//if f.IsEvent {
+		switch f.Type {
+		case FilterClick:
+			c := buildCond("JSONExtractString(toString(main.`$properties`), 'label')", f.Value, "is")
+			if c != "" {
+				conds = append(conds, c)
+			}
+			names = append(names, "CLICK")
+		case FilterInput:
+			c := buildCond("JSONExtractString(toString(main.`$properties`), 'label')", f.Value, f.Operator)
+			if c != "" {
+				conds = append(conds, c)
+			}
+			names = append(names, "INPUT")
+		case FilterLocation:
+			c := buildCond("JSONExtractString(toString(main.`$properties`), 'url_path')", f.Value, f.Operator)
+			if c != "" {
+				conds = append(conds, c)
+			}
+			names = append(names, "LOCATION")
+		case FilterCustom:
+			c := buildCond("JSONExtractString(toString(main.`$properties`), 'name')", f.Value, f.Operator)
+			if c != "" {
+				conds = append(conds, c)
+			}
+			names = append(names, "CUSTOM")
+		case FilterFetch:
+			var fetchConds []string
+			for _, nf := range f.Filters {
+				switch nf.Type {
+				case "fetchUrl":
+					c := buildCond("JSONExtractString(toString(main.`$properties`), 'url_path')", nf.Value, f.Operator)
+					if c != "" {
+						fetchConds = append(fetchConds, c)
+					}
+				case "fetchStatusCode":
+					c := buildCond("JSONExtractFloat(toString(main.`$properties`), 'status')", nf.Value, f.Operator)
+					if c != "" {
+						fetchConds = append(fetchConds, c)
 					}
 				}
-				if len(fetchConds) > 0 {
-					conds = append(conds, strings.Join(fetchConds, " AND "))
-				}
-				names = append(names, "REQUEST")
-			case FilterTag:
-				c := buildCond("JSONExtractString(toString(main.`$properties`), 'tag')", f.Value, f.Operator)
-				if c != "" {
-					conds = append(conds, c)
-				}
-				names = append(names, "TAG")
 			}
+			if len(fetchConds) > 0 {
+				conds = append(conds, strings.Join(fetchConds, " AND "))
+			}
+			names = append(names, "REQUEST")
+		case FilterTag:
+			c := buildCond("JSONExtractString(toString(main.`$properties`), 'tag')", f.Value, f.Operator)
+			if c != "" {
+				conds = append(conds, c)
+			}
+			names = append(names, "TAG")
 		}
+		//}
 	}
 	return
 }
