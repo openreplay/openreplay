@@ -153,3 +153,11 @@ Create the volume mount config for redis TLS certificates
 {{- include "openreplay.s3Endpoint" . }}/{{.Values.global.s3.assetsBucket}}
 {{- end }}
 {{- end }}
+
+{{- define "openreplay.pg_connection_string"}}
+{{- if .Values.global.pg_connection_string }}
+{{- .Values.global.pg_connection_string -}}
+{{- else -}}
+{{- printf "postgres://%s:$(pg_password)@%s:%s/%s" .Values.global.postgresql.postgresqlUser .Values.global.postgresql.postgresqlHost .Values.global.postgresql.postgresqlPort .Values.global.postgresql.postgresqlDatabase -}}
+{{- end -}}
+{{- end}}
