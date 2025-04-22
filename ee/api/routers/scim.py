@@ -1,12 +1,14 @@
 from copy import deepcopy
 import logging
-from typing import Any
+from typing import Any, Callable
+from enum import Enum
 
 from decouple import config
 from fastapi import Depends, HTTPException, Header, Query, Response, Request
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
+from psycopg2 import errors
 
 from chalicelib.core import users, roles, tenants
 from chalicelib.utils.scim_auth import (
@@ -17,7 +19,7 @@ from chalicelib.utils.scim_auth import (
 )
 from routers.base import get_routers
 from routers.scim_constants import RESOURCE_TYPES, SCHEMAS, SERVICE_PROVIDER_CONFIG
-from routers import scim_helpers
+from routers import scim_helpers, scim_groups
 
 
 logger = logging.getLogger(__name__)
@@ -65,7 +67,7 @@ RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS = {
 }
 
 
-def _not_found_error_response(resource_id: str):
+def _not_found_error_response(resource_id: int):
     return JSONResponse(
         status_code=404,
         content={
@@ -119,6 +121,17 @@ def _invalid_value_error_response():
             "detail": "A required value was missing, or the value specified was not compatible with the operation or attribtue type, or resource schema.",
             "status": "400",
             "scimType": "invalidValue",
+        },
+    )
+
+
+def _internal_server_error_response(detail: str):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+            "detail": detail,
+            "status": "500",
         },
     )
 
@@ -211,7 +224,28 @@ async def get_service_provider_config(
     return JSONResponse(status_code=200, content=SERVICE_PROVIDER_CONFIG)
 
 
-MAX_USERS_PER_PAGE = 10
+def _serialize_db_resource_to_scim_resource_with_attribute_awareness(
+    db_resource: dict[str, Any],
+    schema_id: str,
+    serialize_db_resource_to_scim_resource: Callable[[dict[str, Any]], dict[str, Any]],
+    attributes: list[str] | None = None,
+    excluded_attributes: list[str] | None = None,
+) -> dict[str, Any]:
+    schema = SCHEMA_IDS_TO_SCHEMA_DETAILS[schema_id]
+    all_attributes = scim_helpers.get_all_attribute_names(schema)
+    attributes = attributes or all_attributes
+    always_returned_attributes = (
+        scim_helpers.get_all_attribute_names_where_returned_is_always(schema)
+    )
+    included_attributes = list(set(attributes).union(set(always_returned_attributes)))
+    excluded_attributes = excluded_attributes or []
+    excluded_attributes = list(
+        set(excluded_attributes).difference(set(always_returned_attributes))
+    )
+    scim_resource = serialize_db_resource_to_scim_resource(db_resource)
+    scim_resource = scim_helpers.filter_attributes(scim_resource, included_attributes)
+    scim_resource = scim_helpers.exclude_attributes(scim_resource, excluded_attributes)
+    return scim_resource
 
 
 def _parse_scim_user_input(data: dict[str, Any], tenant_id: str) -> dict[str, Any]:
@@ -229,25 +263,8 @@ def _parse_scim_user_input(data: dict[str, Any], tenant_id: str) -> dict[str, An
     return result
 
 
-def _serialize_db_user_to_scim_user(
-    db_user: dict[str, Any],
-    attributes: list[str] | None = None,
-    excluded_attributes: list[str] | None = None,
-) -> dict[str, Any]:
-    user_schema = SCHEMA_IDS_TO_SCHEMA_DETAILS[
-        "urn:ietf:params:scim:schemas:core:2.0:User"
-    ]
-    all_attributes = scim_helpers.get_all_attribute_names(user_schema)
-    attributes = attributes or all_attributes
-    always_returned_attributes = (
-        scim_helpers.get_all_attribute_names_where_returned_is_always(user_schema)
-    )
-    included_attributes = list(set(attributes).union(set(always_returned_attributes)))
-    excluded_attributes = excluded_attributes or []
-    excluded_attributes = list(
-        set(excluded_attributes).difference(set(always_returned_attributes))
-    )
-    scim_user = {
+def _serialize_db_user_to_scim_user(db_user: dict[str, Any]) -> dict[str, Any]:
+    return {
         "id": str(db_user["userId"]),
         "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
         "meta": {
@@ -266,32 +283,107 @@ def _serialize_db_user_to_scim_user(
         "userType": db_user.get("roleName"),
         "active": db_user["deletedAt"] is None,
     }
-    scim_user = scim_helpers.filter_attributes(scim_user, included_attributes)
-    scim_user = scim_helpers.exclude_attributes(scim_user, excluded_attributes)
-    return scim_user
 
 
-@public_app.get("/Users")
-async def get_users(
+def _serialize_db_group_to_scim_group(db_resource: dict[str, Any]) -> dict[str, Any]:
+    members = db_resource["users"] or []
+    return {
+        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+        "id": str(db_resource["groupId"]),
+        "externalId": db_resource["externalId"],
+        "meta": {
+            "resourceType": "Group",
+            "created": db_resource["createdAt"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "lastModified": db_resource["updatedAt"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "location": f"Groups/{db_resource['groupId']}",
+        },
+        "displayName": db_resource["name"],
+        "members": [
+            {
+                "value": str(member["userId"]),
+                "$ref": f"Users/{member['userId']}",
+                "type": "User",
+            }
+            for member in members
+        ],
+    }
+
+
+def _parse_scim_group_input(data: dict[str, Any], tenant_id: int) -> dict[str, Any]:
+    return {
+        "name": data["displayName"],
+        "external_id": data.get("externalId"),
+        "user_ids": [int(member["value"]) for member in data.get("members", [])],
+    }
+
+
+RESOURCE_TYPE_TO_RESOURCE_CONFIG = {
+    "Users": {
+        "max_items_per_page": 10,
+        "schema_id": "urn:ietf:params:scim:schemas:core:2.0:User",
+        "db_to_scim_serializer": _serialize_db_user_to_scim_user,
+        "get_paginated_resources": users.get_scim_users_paginated,
+        "get_unique_resource": users.get_scim_user_by_id,
+        "parse_post_payload": _parse_scim_user_input,
+        "get_resource_by_unique_values": users.get_existing_scim_user_by_unique_values_from_all_users,
+        "restore_resource": users.restore_scim_user,
+        "create_resource": users.create_scim_user,
+        "delete_resource": users.soft_delete_scim_user_by_id,
+        "parse_put_payload": _parse_scim_user_input,
+        "update_resource": users.update_scim_user,
+    },
+    "Groups": {
+        "max_items_per_page": 10,
+        "schema_id": "urn:ietf:params:scim:schemas:core:2.0:Group",
+        "db_to_scim_serializer": _serialize_db_group_to_scim_group,
+        "get_paginated_resources": scim_groups.get_resources_paginated,
+        "get_unique_resource": scim_groups.get_resource_by_id,
+        "parse_post_payload": _parse_scim_group_input,
+        "get_resource_by_unique_values": scim_groups.get_existing_resource_by_unique_values_from_all_resources,
+        "restore_resource": scim_groups.restore_resource,
+        "create_resource": scim_groups.create_resource,
+        "delete_resource": scim_groups.delete_resource,
+        "parse_put_payload": _parse_scim_group_input,
+        "update_resource": scim_groups.update_resource,
+    },
+}
+
+
+class ListResourceType(str, Enum):
+    USERS = "Users"
+    GROUPS = "Groups"
+
+
+@public_app.get("/{resource_type}")
+async def get_resources(
+    resource_type: ListResourceType,
     tenant_id=Depends(auth_required),
     requested_start_index: int = Query(1, alias="startIndex"),
     requested_items_per_page: int | None = Query(None, alias="count"),
     attributes: list[str] | None = Query(None),
     excluded_attributes: list[str] | None = Query(None, alias="excludedAttributes"),
 ):
+    resource_config = RESOURCE_TYPE_TO_RESOURCE_CONFIG[resource_type]
     start_index = max(1, requested_start_index)
+    max_items_per_page = resource_config["max_items_per_page"]
     items_per_page = min(
-        max(0, requested_items_per_page or MAX_USERS_PER_PAGE), MAX_USERS_PER_PAGE
+        max(0, requested_items_per_page or max_items_per_page), max_items_per_page
     )
     # todo(jon): this might not be the most efficient thing to do. could be better to just do a count.
     # but this is the fastest thing at the moment just to test that it's working
-    total_resources = users.get_scim_users_paginated(1, tenant_id)
-    db_resources = users.get_scim_users_paginated(
-        start_index, tenant_id, count=items_per_page
+    total_resources = resource_config["get_paginated_resources"](1, tenant_id)
+    db_resources = resource_config["get_paginated_resources"](
+        start_index, tenant_id, items_per_page
     )
     scim_resources = [
-        _serialize_db_user_to_scim_user(resource, attributes, excluded_attributes)
-        for resource in db_resources
+        _serialize_db_resource_to_scim_resource_with_attribute_awareness(
+            db_resource,
+            resource_config["schema_id"],
+            resource_config["db_to_scim_serializer"],
+            attributes,
+            excluded_attributes,
+        )
+        for db_resource in db_resources
     ]
     return JSONResponse(
         status_code=200,
@@ -304,87 +396,145 @@ async def get_users(
     )
 
 
-@public_app.get("/Users/{user_id}")
-async def get_user(
-    user_id: str,
+class GetResourceType(str, Enum):
+    USERS = "Users"
+    GROUPS = "Groups"
+
+
+@public_app.get("/{resource_type}/{resource_id}")
+async def get_resource(
+    resource_type: GetResourceType,
+    resource_id: int,
     tenant_id=Depends(auth_required),
     attributes: list[str] | None = Query(None),
     excluded_attributes: list[str] | None = Query(None, alias="excludedAttributes"),
 ):
-    db_resource = users.get_scim_user_by_id(user_id, tenant_id)
+    resource_config = RESOURCE_TYPE_TO_RESOURCE_CONFIG[resource_type]
+    db_resource = resource_config["get_unique_resource"](resource_id, tenant_id)
     if not db_resource:
-        return _not_found_error_response(user_id)
-    scim_resource = _serialize_db_user_to_scim_user(
-        db_resource, attributes, excluded_attributes
+        return _not_found_error_response(resource_id)
+    scim_resource = _serialize_db_resource_to_scim_resource_with_attribute_awareness(
+        db_resource,
+        resource_config["schema_id"],
+        resource_config["db_to_scim_serializer"],
+        attributes,
+        excluded_attributes,
     )
     return JSONResponse(status_code=200, content=scim_resource)
 
 
-@public_app.post("/Users")
-async def create_user(r: Request, tenant_id=Depends(auth_required)):
+class PostResourceType(str, Enum):
+    USERS = "Users"
+    GROUPS = "Groups"
+
+
+@public_app.post("/{resource_type}")
+async def create_resource(
+    resource_type: PostResourceType,
+    r: Request,
+    tenant_id=Depends(auth_required),
+):
+    resource_config = RESOURCE_TYPE_TO_RESOURCE_CONFIG[resource_type]
     scim_payload = await r.json()
     try:
-        db_payload = _parse_scim_user_input(scim_payload, tenant_id)
+        db_payload = resource_config["parse_post_payload"](scim_payload, tenant_id)
     except KeyError:
         return _invalid_value_error_response()
-    existing_db_resource = users.get_existing_scim_user_by_unique_values_from_all_users(
-        db_payload["email"]
+    existing_db_resource = resource_config["get_resource_by_unique_values"](
+        **db_payload
     )
-    if existing_db_resource and existing_db_resource["deletedAt"] is None:
+    if existing_db_resource and existing_db_resource.get("deletedAt") is None:
         return _uniqueness_error_response()
-    if existing_db_resource and existing_db_resource["deletedAt"] is not None:
-        db_resource = users.restore_scim_user(
-            user_id=existing_db_resource["userId"],
-            tenant_id=tenant_id,
-            **db_payload,
-        )
+    if existing_db_resource and existing_db_resource.get("deletedAt") is not None:
+        # todo(jon): not a super elegant solution overwriting the existing db resource.
+        # maybe we should try something else.
+        existing_db_resource.update(db_payload)
+        db_resource = resource_config["restore_resource"](**existing_db_resource)
     else:
-        db_resource = users.create_scim_user(
+        db_resource = resource_config["create_resource"](
             tenant_id=tenant_id,
             **db_payload,
         )
-    scim_resource = _serialize_db_user_to_scim_user(db_resource)
+    scim_resource = _serialize_db_resource_to_scim_resource_with_attribute_awareness(
+        db_resource,
+        resource_config["schema_id"],
+        resource_config["db_to_scim_serializer"],
+    )
     response = JSONResponse(status_code=201, content=scim_resource)
     response.headers["Location"] = scim_resource["meta"]["location"]
     return response
 
 
-@public_app.put("/Users/{user_id}")
-async def update_user(user_id: str, r: Request, tenant_id=Depends(auth_required)):
-    db_resource = users.get_scim_user_by_id(user_id, tenant_id)
+class DeleteResourceType(str, Enum):
+    USERS = "Users"
+    GROUPS = "Groups"
+
+
+@public_app.delete("/{resource_type}/{resource_id}")
+async def delete_resource(
+    resource_type: DeleteResourceType,
+    resource_id: str,
+    tenant_id=Depends(auth_required),
+):
+    # note(jon): this can be a soft or a hard delete
+    resource_config = RESOURCE_TYPE_TO_RESOURCE_CONFIG[resource_type]
+    db_resource = resource_config["get_unique_resource"](resource_id, tenant_id)
     if not db_resource:
-        return _not_found_error_response(user_id)
-    current_scim_resource = _serialize_db_user_to_scim_user(db_resource)
+        return _not_found_error_response(resource_id)
+    resource_config["delete_resource"](resource_id, tenant_id)
+    return Response(status_code=204, content="")
+
+
+class PutResourceType(str, Enum):
+    USERS = "Users"
+    GROUPS = "Groups"
+
+
+@public_app.put("/{resource_type}/{resource_id}")
+async def update_resource(
+    resource_type: PutResourceType,
+    resource_id: str,
+    r: Request,
+    tenant_id=Depends(auth_required),
+):
+    resource_config = RESOURCE_TYPE_TO_RESOURCE_CONFIG[resource_type]
+    db_resource = resource_config["get_unique_resource"](resource_id, tenant_id)
+    if not db_resource:
+        return _not_found_error_response(resource_id)
+    current_scim_resource = (
+        _serialize_db_resource_to_scim_resource_with_attribute_awareness(
+            db_resource,
+            resource_config["schema_id"],
+            resource_config["db_to_scim_serializer"],
+        )
+    )
     requested_scim_changes = await r.json()
-    schema = SCHEMA_IDS_TO_SCHEMA_DETAILS["urn:ietf:params:scim:schemas:core:2.0:User"]
+    schema = SCHEMA_IDS_TO_SCHEMA_DETAILS[resource_config["schema_id"]]
     try:
         valid_mutable_scim_changes = scim_helpers.filter_mutable_attributes(
             schema, requested_scim_changes, current_scim_resource
         )
     except ValueError:
         return _mutability_error_response()
-    valid_mutable_db_changes = _parse_scim_user_input(
+    valid_mutable_db_changes = resource_config["parse_put_payload"](
         valid_mutable_scim_changes,
         tenant_id,
     )
     try:
-        updated_db_resource = users.update_scim_user(
-            user_id,
+        updated_db_resource = resource_config["update_resource"](
+            resource_id,
             tenant_id,
             **valid_mutable_db_changes,
         )
-        updated_scim_resource = _serialize_db_user_to_scim_user(updated_db_resource)
+        updated_scim_resource = (
+            _serialize_db_resource_to_scim_resource_with_attribute_awareness(
+                updated_db_resource,
+                resource_config["schema_id"],
+                resource_config["db_to_scim_serializer"],
+            )
+        )
         return JSONResponse(status_code=200, content=updated_scim_resource)
-    except Exception:
-        # note(jon): for now, this is the only error that would happen when updating the scim user
+    except errors.UniqueViolation:
         return _uniqueness_error_response()
-
-
-@public_app.delete("/Users/{user_id}")
-async def delete_user(user_id: str, tenant_id=Depends(auth_required)):
-    # note(jon): this is a soft delete
-    db_resource = users.get_scim_user_by_id(user_id, tenant_id)
-    if not db_resource:
-        return _not_found_error_response(user_id)
-    users.soft_delete_scim_user_by_id(user_id, tenant_id)
-    return Response(status_code=204, content="")
+    except Exception as e:
+        return _internal_server_error_response(str(e))
