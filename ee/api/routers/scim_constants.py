@@ -7,8 +7,7 @@ SCHEMAS = sorted(
         json.load(open("routers/fixtures/resource_type_schema.json", "r")),
         json.load(open("routers/fixtures/schema_schema.json", "r")),
         json.load(open("routers/fixtures/user_schema.json", "r")),
-        # todo(jon): add this when we have groups
-        # json.load(open("routers/schemas/group_schema.json", "r")),
+        json.load(open("routers/fixtures/group_schema.json", "r")),
     ],
     key=lambda x: x["id"],
 )
