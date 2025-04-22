@@ -16,14 +16,14 @@ func (t TimeSeriesQueryBuilder) Execute(p Payload, conn db.Connector) (interface
 	for _, s := range p.Series {
 		query, err := t.buildQuery(p, s)
 		if err != nil {
-			log.Fatalf("Error building query for series %s: %v", s.Name, err)
-			return nil, err
+			log.Printf("Error building query for series %s: %v", s.Name, err)
+			return nil, fmt.Errorf("error building query for series %s: %v", s.Name, err)
 		}
 
 		rows, err := conn.Query(query)
 		if err != nil {
-			log.Fatalf("Error executing query for series %s: %v", s.Name, err)
-			return nil, err
+			log.Printf("Error executing query for series %s: %v", s.Name, err)
+			return nil, fmt.Errorf("error executing query for series %s: %v", s.Name, err)
 		}
 
 		var results []DataPoint
