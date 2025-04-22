@@ -2,7 +2,6 @@ package charts
 
 import (
 	"fmt"
-	"log"
 	"openreplay/backend/pkg/analytics/db"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
@@ -39,12 +38,12 @@ func (s *chartsImpl) GetData(projectId int, userID uint64, req *MetricPayload) (
 	}
 	qb, err := NewQueryBuilder(payload)
 	if err != nil {
-		log.Fatalf("Error creating query builder: %v", err)
+		return nil, fmt.Errorf("error creating query builder: %v", err)
 	}
 
 	resp, err := qb.Execute(payload, s.chConn)
 	if err != nil {
-		log.Fatalf("Error building query: %v", err)
+		return nil, fmt.Errorf("error executing query: %v", err)
 	}
 
 	return resp, nil

@@ -66,21 +66,24 @@ type MetricPayload struct {
 	ViewType       string     `json:"viewType"`
 	Name           string     `json:"name"`
 	Series         []Series   `json:"series"`
+	Limit          int        `json:"limit"`
+	Page           int        `json:"page"`
 }
 
 type MetricOfTable string
 
 const (
-	MetricOfTableBrowser  MetricOfTable = "browser"
-	MetricOfTableDevice   MetricOfTable = "device"
-	MetricOfTableCountry  MetricOfTable = "country"
-	MetricOfTableUserId   MetricOfTable = "userId"
-	MetricOfTableIssues   MetricOfTable = "issues"
-	MetricOfTableLocation MetricOfTable = "location"
-	MetricOfTableSessions MetricOfTable = "sessions"
-	MetricOfTableErrors   MetricOfTable = "errors"
+	MetricOfTableLocation MetricOfTable = "url_path" // TOP Pages
+	MetricOfTableBrowser  MetricOfTable = "user_browser"
 	MetricOfTableReferrer MetricOfTable = "referrer"
+	MetricOfTableUserId   MetricOfTable = "user_id"
+	MetricOfTableCountry  MetricOfTable = "user_country"
+	MetricOfTableDevice   MetricOfTable = "user_device"
 	MetricOfTableFetch    MetricOfTable = "fetch"
+
+	//MetricOfTableIssues   MetricOfTable = "issues"
+	//MetricOfTableSessions MetricOfTable = "sessions"
+	//MetricOfTableErrors   MetricOfTable = "errors"
 )
 
 type FilterGroup struct {
