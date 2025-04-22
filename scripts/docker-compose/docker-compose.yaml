@@ -25,6 +25,10 @@ services:
       openreplay-net:
         aliases:
           - clickhouse-openreplay-clickhouse.db.svc.cluster.local
+    environment:
+      CLICKHOUSE_USER: "default"
+      CLICKHOUSE_PASSWORD: ""
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
 
   redis:
     image: bitnami/redis:${REDIS_VERSION}
