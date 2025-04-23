@@ -99,7 +99,7 @@ export default class TopObserver extends Observer {
           this.app.debug.info('doc already observed for', id)
           return
         }
-        const observer = new IFrameObserver(this.app)
+        const observer = new IFrameObserver(this.app, false, {})
         this.iframeObservers.set(iframe, observer)
         this.docObservers.set(currentDoc, observer)
         this.iframeObserversArr.push(observer)

@@ -211,11 +211,12 @@ export default abstract class Observer {
   private readonly domParser = new DOMParser()
   constructor(
     protected readonly app: App,
-    protected readonly isTopContext = false,
-    options: Options,
+    protected readonly isTopContext: boolean = false,
+    options: Options = {},
   ) {
     this.disableSprites = Boolean(options.disableSprites)
     this.inlineRemoteCss = Boolean(options.inlineRemoteCss)
+    this.inlinerOptions = options.inlinerOptions
     this.observer = createMutationObserver(
       this.app.safe((mutations) => {
         for (const mutation of mutations) {
