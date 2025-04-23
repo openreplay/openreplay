@@ -214,6 +214,11 @@ export class VElement extends VParent<Element> {
     super();
   }
 
+  data = '';
+  setData(data: string) {
+    this.data = data;
+  }
+
   protected createNode() {
     try {
       const element = this.isSVG
@@ -257,6 +262,7 @@ export class VElement extends VParent<Element> {
 
   applyChanges() {
     this.prioritized && this.applyPrioritizedChanges();
+    this.node.data = this.data;
     this.applyAttributeChanges();
     super.applyChanges();
   }

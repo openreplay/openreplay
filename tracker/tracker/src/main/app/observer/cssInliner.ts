@@ -1,3 +1,5 @@
+let fakeIdHolder = 1000000 * 99;
+
 export function inlineRemoteCss(
   node: HTMLLinkElement,
   id: number,
@@ -6,16 +8,18 @@ export function inlineRemoteCss(
   insertRule: (id: number, cssText: string, index: number, baseHref: string) => any[],
   addOwner: (sheetId: number, ownerId: number) => any[],
   forceFetch?: boolean,
+  sendPlain?: boolean,
+  onPlain?: (cssText: string, id: number) => void,
 ) {
   const sheetId = getNextID();
   addOwner(sheetId, id);
-  
+
   const sheet = node.sheet;
-  
-  if (sheet) {
+
+  if (sheet && !forceFetch) {
     try {
       const cssText = stringifyStylesheet(sheet);
-      
+
       if (cssText) {
         processCssText(cssText);
         return;
@@ -24,7 +28,7 @@ export function inlineRemoteCss(
       console.warn("Could not stringify sheet, falling back to fetch:", e);
     }
   }
-  
+
   // Fall back to fetching if we couldn't get or stringify the sheet
   if (node.href) {
     fetch(node.href)
@@ -35,6 +39,9 @@ export function inlineRemoteCss(
         return response.text();
       })
       .then(cssText => {
+        if (sendPlain && onPlain) {
+          onPlain(cssText, fakeIdHolder++);
+        }
         processCssText(cssText);
       })
       .catch(error => {
@@ -45,16 +52,16 @@ export function inlineRemoteCss(
   function processCssText(cssText: string) {
     // Remove comments
     cssText = cssText.replace(/\/\*[\s\S]*?\*\//g, '');
-    
+
     // Parse and process the CSS text to extract rules
     const ruleTexts = parseCSS(cssText);
-    
+
     for (let i = 0; i < ruleTexts.length; i++) {
       insertRule(sheetId, ruleTexts[i], i, baseHref);
     }
   }
 
-  
+
   function parseCSS(cssText: string): string[] {
     const rules: string[] = [];
     let inComment = false;
@@ -62,18 +69,18 @@ export function inlineRemoteCss(
     let stringChar = '';
     let braceLevel = 0;
     let currentRule = '';
-    
+
     for (let i = 0; i < cssText.length; i++) {
       const char = cssText[i];
       const nextChar = cssText[i + 1] || '';
-      
+
       // comments
       if (!inString && char === '/' && nextChar === '*') {
         inComment = true;
         i++; // Skip the next character
         continue;
       }
-      
+
       if (inComment) {
         if (char === '*' && nextChar === '/') {
           inComment = false;
@@ -81,15 +88,15 @@ export function inlineRemoteCss(
         }
         continue;
       }
-      
-      
+
+
       if (!inString && (char === '"' || char === "'")) {
         inString = true;
         stringChar = char;
         currentRule += char;
         continue;
       }
-      
+
       if (inString) {
         currentRule += char;
         if (char === stringChar && cssText[i - 1] !== '\\') {
@@ -97,15 +104,15 @@ export function inlineRemoteCss(
         }
         continue;
       }
-      
-     
+
+
       currentRule += char;
-      
+
       if (char === '{') {
         braceLevel++;
       } else if (char === '}') {
         braceLevel--;
-        
+
         if (braceLevel === 0) {
           // End of a top-level rule
           rules.push(currentRule.trim());
@@ -113,33 +120,33 @@ export function inlineRemoteCss(
         }
       }
     }
-    
+
     // Handle any remaining text (should be rare)
     if (currentRule.trim()) {
       rules.push(currentRule.trim());
     }
-    
+
     return rules;
   }
 
-  
+
   function stringifyStylesheet(s: CSSStyleSheet): string | null {
     try {
       const rules = s.rules || s.cssRules;
       if (!rules) {
         return null;
       }
-      
+
       let sheetHref = s.href;
       if (!sheetHref && s.ownerNode && (s.ownerNode as HTMLElement).ownerDocument) {
         // an inline <style> element
         sheetHref = (s.ownerNode as HTMLElement).ownerDocument.location.href;
       }
-      
+
       const stringifiedRules = Array.from(rules, (rule: CSSRule) =>
         stringifyRule(rule, sheetHref)
       ).join('');
-      
+
       return fixBrowserCompatibilityIssuesInCSS(stringifiedRules);
     } catch (error) {
       return null;
@@ -223,12 +230,12 @@ export function inlineRemoteCss(
 
   function absolutifyURLs(cssText: string | null, href: string): string {
     if (!cssText) return '';
-    
+
     const URL_IN_CSS_REF = /url\((?:(')([^']*)'|(")(.*?)"|([^)]*))\)/gm;
     const URL_PROTOCOL_MATCH = /^(?:[a-z+]+:)?\/\//i;
     const URL_WWW_MATCH = /^www\..*/i;
     const DATA_URI = /^(data:)([^,]*),(.*)/i;
-    
+
     return cssText.replace(
       URL_IN_CSS_REF,
       (

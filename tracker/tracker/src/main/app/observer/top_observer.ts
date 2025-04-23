@@ -20,6 +20,10 @@ export interface Options {
    * @default false
    * */
   inlineRemoteCss: boolean
+  inlinerOptions?: {
+    forceFetch?: boolean,
+    forcePlain?: boolean,
+  }
 }
 
 type Context = Window & typeof globalThis
