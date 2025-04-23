@@ -1,0 +1,26 @@
+postgresql: &postgres
+  postgresqlPassword: '${COMMON_PG_PASSWORD}'
+minio:
+  global:
+    minio:
+      accessKey: &accessKey '${COMMON_S3_KEY}'
+      secretKey: &secretKey '${COMMON_S3_SECRET}'
+global:
+  pg_connection_string: "postgres://postgres:${COMMON_PG_PASSWORD}@postgresql.db.svc.cluster.local:5432/postgres?sslmode=disable"
+  postgresql: *postgres
+  assistKey: '${COMMON_ASSIST_KEY}'
+  assistJWTSecret: '${COMMON_ASSIST_JWT_SECRET}'
+  jwtSecret: '${COMMON_JWT_SECRET}'
+  jwtSpotSecret: '${COMMON_JWT_SPOT_SECRET}'
+  tokenSecret: '${COMMON_TOKEN_SECRET}'
+  domainName: "${COMMON_DOMAIN_NAME}"
+  ORSecureAccess: false
+  s3:
+    accessKey: *accessKey
+    secretKey: *secretKey
+chalice:
+  env:
+    JWT_REFRESH_SECRET: "${COMMON_JWT_REFRESH_SECRET}"
+    JWT_SPOT_REFRESH_SECRET: "${COMMON_JWT_SPOT_REFRESH_SECRET}"
+    POD_NAMESPACE: app
+    CLUSTER_URL: svc.cluster.local
