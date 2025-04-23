@@ -200,6 +200,11 @@ function status() {
     log info Openreplay Component
     kubecolor get po -n "${APP_NS}"
     kubecolor get po -n "${DB_NS}"
+    echo
+    log info Openreplay Images
+    echo
+    kubectl get pods -n "${APP_NS}" -o jsonpath='{range .items[*]}{@.metadata.name}{" "}{@.spec.containers[*].image}{"\n"}{end}' | column -t
+    kubectl get pods -n "${DB_NS}" -o jsonpath='{range .items[*]}{@.metadata.name}{" "}{@.spec.containers[*].image}{"\n"}{end}' | column -t
     return
 }
 
