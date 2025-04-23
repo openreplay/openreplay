@@ -2,6 +2,7 @@ from copy import deepcopy
 import logging
 from typing import Any, Callable
 from enum import Enum
+from datetime import datetime
 
 from decouple import config
 from fastapi import Depends, HTTPException, Header, Query, Response, Request
@@ -263,6 +264,15 @@ def _parse_scim_user_input(data: dict[str, Any], tenant_id: str) -> dict[str, An
     return result
 
 
+def _parse_user_patch_operations(data: dict[str, Any]) -> dict[str, Any]:
+    result = {}
+    operations = data["Operations"]
+    for operation in operations:
+        if operation["op"] == "replace" and "active" in operation["value"]:
+            result["deleted_at"] = None if operation["value"]["active"] is True else datetime.now()
+    return result
+
+
 def _serialize_db_user_to_scim_user(db_user: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": str(db_user["userId"]),
@@ -331,6 +341,8 @@ RESOURCE_TYPE_TO_RESOURCE_CONFIG = {
         "delete_resource": users.soft_delete_scim_user_by_id,
         "parse_put_payload": _parse_scim_user_input,
         "update_resource": users.update_scim_user,
+        "parse_patch_operations": _parse_user_patch_operations,
+        "patch_resource": users.patch_scim_user,
     },
     "Groups": {
         "max_items_per_page": 10,
@@ -430,6 +442,7 @@ class PostResourceType(str, Enum):
     GROUPS = "Groups"
 
 
+
 @public_app.post("/{resource_type}")
 async def create_resource(
     resource_type: PostResourceType,
@@ -492,7 +505,7 @@ class PutResourceType(str, Enum):
 
 
 @public_app.put("/{resource_type}/{resource_id}")
-async def update_resource(
+async def put_resource(
     resource_type: PutResourceType,
     resource_id: str,
     r: Request,
@@ -539,3 +552,44 @@ async def update_resource(
         return _uniqueness_error_response()
     except Exception as e:
         return _internal_server_error_response(str(e))
+
+
+class PatchResourceType(str, Enum):
+    USERS = "Users"
+
+
+@public_app.patch("/{resource_type}/{resource_id}")
+async def patch_resource(
+    resource_type: PatchResourceType,
+    resource_id: str,
+    r: Request,
+    tenant_id=Depends(auth_required),
+):
+    resource_config = RESOURCE_TYPE_TO_RESOURCE_CONFIG[resource_type]
+    db_resource = resource_config["get_unique_resource"](resource_id, tenant_id)
+    if not db_resource:
+        return _not_found_error_response(resource_id)
+    current_scim_resource = (
+        _serialize_db_resource_to_scim_resource_with_attribute_awareness(
+            db_resource,
+            resource_config["schema_id"],
+            resource_config["db_to_scim_serializer"],
+        )
+    )
+    payload = await r.json()
+    parsed_payload = resource_config["parse_patch_operations"](payload)
+    # note(jon): we don't need to handle uniqueness contraints and etc. like in PUT
+    # because we are only covering the User resource and the field `active`
+    updated_db_resource = resource_config["patch_resource"](
+        resource_id,
+        tenant_id,
+        **parsed_payload,
+    )
+    updated_scim_resource = (
+        _serialize_db_resource_to_scim_resource_with_attribute_awareness(
+            updated_db_resource,
+            resource_config["schema_id"],
+            resource_config["db_to_scim_serializer"],
+        )
+    )
+    return JSONResponse(status_code=200, content=updated_scim_resource)

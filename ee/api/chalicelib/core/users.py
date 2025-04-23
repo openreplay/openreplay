@@ -2,9 +2,11 @@ import json
 import logging
 import secrets
 from typing import Optional
+from datetime import datetime
 
 from decouple import config
 from fastapi import BackgroundTasks, HTTPException
+from psycopg2.extensions import AsIs
 from psycopg2.extras import Json
 from pydantic import BaseModel, model_validator
 from starlette import status
@@ -482,6 +484,7 @@ def restore_scim_user(
                         role_id = %(role_id)s,
                         deleted_at = NULL,
                         created_at = default,
+                        updated_at = default,
                         api_key = default,
                         jwt_iat = NULL,
                         weekly_report = default
@@ -523,7 +526,8 @@ def update_scim_user(
                         email = %(email)s,
                         name = %(name)s,
                         internal_id = %(internal_id)s,
-                        role_id = %(role_id)s
+                        role_id = %(role_id)s,
+                        updated_at = default
                     WHERE
                         users.user_id = %(user_id)s
                         AND users.tenant_id = %(tenant_id)s
@@ -546,6 +550,39 @@ def update_scim_user(
             )
         )
         return helper.dict_to_camel_case(cur.fetchone())
+
+
+def patch_scim_user(
+    user_id: int,
+    tenant_id: int,
+    **kwargs,
+):
+    with pg_client.PostgresClient() as cur:
+        set_fragments = []
+        kwargs["updated_at"] = datetime.now()
+        for k, v in kwargs.items():
+            fragment = cur.mogrify(
+                "%s = %s",
+                (AsIs(k), v),
+            ).decode("utf-8")
+            set_fragments.append(fragment)
+        set_clause = ", ".join(set_fragments)
+        query = f"""
+            WITH u AS (
+                UPDATE public.users
+                SET {set_clause}
+                WHERE
+                    users.user_id = {user_id}
+                    AND users.tenant_id = {tenant_id}
+                    AND users.deleted_at IS NULL
+                RETURNING *
+            )
+            SELECT
+                u.*,
+                roles.name as role_name
+            FROM u LEFT JOIN public.roles USING (role_id);"""
+        cur.execute(query)
+        return helper.dict_to_camel_case(cur.fetchone())    
 
 
 def generate_new_api_key(user_id):
@@ -1224,7 +1261,9 @@ def soft_delete_scim_user_by_id(user_id, tenant_id):
             cur.mogrify(
                 """
                 UPDATE public.users
-                SET deleted_at = NULL
+                SET
+                    deleted_at = NULL,
+                    updated_at = default
                 WHERE
                     users.user_id = %(user_id)s
                     AND users.tenant_id = %(tenant_id)s
