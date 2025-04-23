@@ -9,7 +9,7 @@ help: ## Prints help for targets with comments
 helm-template:
 	@rm -rf yamls
 	@mkdir yamls
-	@helm template op ../../helmcharts/openreplay -f ../../helmcharts/vars.yaml -f vars.yaml > yamls/deployment.yaml 
+	@helm template op ../../helmcharts/openreplay -n app -f ../../helmcharts/vars.yaml -f vars.yaml > yamls/deployment.yaml 
 
 .PHONY: create-yamls
 create-yamls: helm-template
