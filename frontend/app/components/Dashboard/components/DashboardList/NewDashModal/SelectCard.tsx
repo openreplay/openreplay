@@ -6,7 +6,7 @@ import { CARD_LIST, CARD_CATEGORIES, CardType } from './ExampleCards';
 import { useStore } from 'App/mstore';
 import Option from './Option';
 import CardsLibrary from 'Components/Dashboard/components/DashboardList/NewDashModal/CardsLibrary';
-import { FUNNEL } from 'App/constants/card';
+import { FUNNEL, TABLE } from 'App/constants/card';
 import { useHistory } from 'react-router';
 import { FilterKey } from 'Types/filter/filterType';
 import FilterSeries from '@/mstore/types/filterSeries';
@@ -72,9 +72,18 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
           name: "Series 1",
           filter: {
             filters: selectedCard.filters,
+            eventsOrder: selectedCard.cardType === TABLE ? 'and' : 'then'
           }
         })
       ];
+    } else if (selectedCard.cardType === TABLE) {
+      cardData.series = [new FilterSeries().fromJson({
+        name: "Series 1",
+        filter: {
+          filters: [],
+          eventsOrder: 'and'
+        }
+      })];
     }
 
     if (selectedCard.cardType === FUNNEL) {
