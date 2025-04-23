@@ -57,7 +57,7 @@ spec:
               value: '{{ .Values.global.postgresql.postgresqlPassword }}'
               {{- end}}
             - name: POSTGRES_STRING
-              value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:$(pg_password)@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
+              value: {{ include "openreplay.pg_connection_string" .}}
             - name: KAFKA_SERVERS
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
             - name: KAFKA_USE_SSL
