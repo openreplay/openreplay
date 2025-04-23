@@ -11,7 +11,7 @@ import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, {ICONS} from 'Shared/AnimatedSVG/AnimatedSVG';
 import {numberWithCommas} from 'App/utils';
 import {HEATMAP} from 'App/constants/card';
-import {Tag} from 'antd';
+import { Tag, Typography } from 'antd';
 
 interface Props {
     className?: string;
@@ -75,7 +75,7 @@ function WidgetSessions(props: Props) {
                 setLoading(false);
             });
     };
-    
+
     const fetchClickmapSessions = (customFilters: Record<string, any>) => {
         sessionStore.getSessions(customFilters).then((data) => {
             setData([{...data, seriesId: 1, seriesName: 'Clicks'}]);
@@ -148,7 +148,13 @@ function WidgetSessions(props: Props) {
                     </div>
 
                     {hasFilters && widget.metricType === 'table' &&
-                        <div className="py-2"><Tag closable onClose={clearFilters}>{filterText}</Tag></div>}
+                        <div className="py-2">
+                            <Tag closable onClose={clearFilters} className="inline-flex">
+                                <Typography.Text className="max-w-80 overflow-hidden text-ellipsis inline-block">
+                                    {filterText}
+                                </Typography.Text>
+                            </Tag>
+                        </div>}
                 </div>
 
                 <div className="flex items-center gap-4">
