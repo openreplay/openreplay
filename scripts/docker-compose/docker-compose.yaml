@@ -142,7 +142,7 @@ services:
     networks:
       - openreplay-net
     volumes:
-      - ../schema/db/init_dbs/clickhouse/init_schema.sql:/tmp/init_schema.sql
+      - ../schema/db/init_dbs/clickhouse/create/init_schema.sql:/tmp/init_schema.sql
     environment:
       CH_HOST: "clickhouse-openreplay-clickhouse.db.svc.cluster.local"
       CH_PORT: "9000"
@@ -161,7 +161,7 @@ services:
           done
 
           echo "clickhouse is up - executing command"
-          clickhouse-client -h clickhouse-openreplay-clickhouse.db.svc.cluster.local --user default --port 8123 --multiquery < /tmp/init_schema.sql || true
+          clickhouse-client -h clickhouse-openreplay-clickhouse.db.svc.cluster.local --user default --port 9000 --multiquery < /tmp/init_schema.sql || true
   
   alerts-openreplay:
     image: public.ecr.aws/p1t3u8a3/alerts:${COMMON_VERSION}
