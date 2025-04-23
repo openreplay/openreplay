@@ -92,6 +92,9 @@ function WidgetView({
                 filter: { filters: selectedCard.filters },
               }),
             ];
+          } else if (selectedCard.cardType === TABLE) {
+            cardData.series = [new FilterSeries()];
+            cardData.series[0].filter.eventsOrder = 'and';
           }
           if (selectedCard.cardType === FUNNEL) {
             cardData.series = [new FilterSeries()];
