@@ -161,7 +161,7 @@ services:
           done
 
           echo "clickhouse is up - executing command"
-          clickhouse-client -h ${CH_HOST} --user ${CH_USERNAME} ${CH_PASSWORD} --port ${CH_PORT} --multiquery < /tmp/init_schema.sql || true
+          clickhouse-client -h {{.Values.global.clickhouse.chHost}} --user {{.Values.global.clickhouse.username}} --port {{.Values.global.clickhouse.service.dataPort}} --multiquery < /tmp/init_schema.sql || true
 
   {{- define "service" -}}
   {{- $service_name := . }}
