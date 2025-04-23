@@ -2,6 +2,12 @@ from typing import Any
 from copy import deepcopy
 
 
+def convert_query_str_to_list(query_str: str | None) -> list[str]:
+    if query_str is None:
+        return None
+    return query_str.split(",")
+
+
 def get_all_attribute_names(schema: dict[str, Any]) -> list[str]:
     result = []
 
@@ -102,14 +108,10 @@ def exclude_attributes(
             elif isinstance(value, list):
                 new_list = []
                 for item in value:
-                    if isinstance(item, dict):
-                        new_item = exclude_attributes(item, subs)
-                        new_list.append(new_item)
-                    else:
-                        new_list.append(item)
+                    # note(jon): `item` should always be a dict here
+                    new_item = exclude_attributes(item, subs)
+                    new_list.append(new_item)
                 new_resource[key] = new_list
-            else:
-                new_resource[key] = value
         else:
             # No exclusion for this key: copy safely
             if isinstance(value, (dict, list)):
@@ -152,9 +154,5 @@ def filter_mutable_attributes(
                     f"Current value: {current_value!r}, attempted change: {new_value!r}"
                 )
             # If it matches, no change is needed (already set)
-
-        else:
-            # Unknown mutability: default to safe behavior (ignore)
-            continue
 
     return valid_changes

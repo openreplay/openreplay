@@ -142,6 +142,7 @@ CREATE TABLE public.users
     role                 user_role                   NOT NULL DEFAULT 'member',
     name                 text                        NOT NULL,
     created_at           timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
+    updated_at           timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
     deleted_at           timestamp without time zone NULL     DEFAULT NULL,
     api_key              text UNIQUE                          DEFAULT generate_api_key(20) NOT NULL,
     jwt_iat              timestamp without time zone NULL     DEFAULT NULL,
