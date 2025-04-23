@@ -20,6 +20,7 @@ export default class FilterStore {
   }
 
   setTopValues = (key: string, values: TopValue[]) => {
+    if(!Array.isArray(values)) return;
     this.topValues[key] = values?.filter((value) => value !== null && value.value !== '');
   };
 

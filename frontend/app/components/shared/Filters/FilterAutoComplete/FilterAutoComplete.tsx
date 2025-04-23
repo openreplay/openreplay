@@ -194,6 +194,9 @@ const FilterAutoComplete: React.FC<Props> = ({
         const data = await searchService.fetchAutoCompleteValues({ ..._params, q: inputValue });
         const _options = data.map((i: any) => ({ value: i.value, label: i.value })) || [];
         setOptions(_options);
+        if (inputRef.current === document.activeElement) {
+          setMenuIsOpen(true);
+        }
         callback(_options);
       } catch (e) {
         throw new Error(e);
