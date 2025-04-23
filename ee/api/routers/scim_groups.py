@@ -3,6 +3,21 @@ from typing import Any
 from chalicelib.utils import helper, pg_client
 
 
+def count_total_resources(tenant_id: int) -> int:
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """
+                SELECT COUNT(*)
+                FROM public.groups
+                WHERE groups.tenant_id = %(tenant_id)s
+                """,
+                {"tenant_id": tenant_id},
+            )
+        )
+        return cur.fetchone()["count"]
+
+
 def get_resources_paginated(
     offset_one_indexed: int, tenant_id: int, limit: int | None = None
 ) -> list[dict[str, Any]]:
@@ -63,11 +78,6 @@ def get_existing_resource_by_unique_values_from_all_resources(
 ) -> dict[str, Any] | None:
     # note(jon): we do not really use this for groups as we don't have unique values outside
     # of the primary key
-    return None
-
-
-def restore_resource(**kwargs: dict[str, Any]) -> dict[str, Any] | None:
-    # note(jon): we're not soft deleting groups, so we don't need this
     return None
 
 

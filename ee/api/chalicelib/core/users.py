@@ -350,6 +350,23 @@ def get(user_id, tenant_id):
         return helper.dict_to_camel_case(r)
 
 
+def count_total_scim_users(tenant_id: int) -> int:
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """
+                SELECT COUNT(*)
+                FROM public.users
+                WHERE
+                    users.tenant_id = %(tenant_id)s
+                    AND users.deleted_at IS NULL
+                """,
+                {"tenant_id": tenant_id},
+            )
+        )
+        return cur.fetchone()["count"]
+
+
 def get_scim_users_paginated(start_index, tenant_id, count=None):
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -444,8 +461,7 @@ def create_scim_user(
 
 
 def restore_scim_user(
-    userId: int,
-    tenantId: int,
+    tenant_id: int,
     email: str,
     name: str = "",
     internal_id: str | None = None,
@@ -469,7 +485,7 @@ def restore_scim_user(
                         api_key = default,
                         jwt_iat = NULL,
                         weekly_report = default
-                    WHERE users.user_id = %(user_id)s
+                    WHERE users.email = %(email)s
                     RETURNING *
                 )
                 SELECT
@@ -478,8 +494,7 @@ def restore_scim_user(
                 FROM u LEFT JOIN public.roles USING (role_id);
                 """,
                 {
-                    "tenant_id": tenantId,
-                    "user_id": userId,
+                    "tenant_id": tenant_id,
                     "email": email,
                     "name": name,
                     "internal_id": internal_id,

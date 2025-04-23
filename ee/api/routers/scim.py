@@ -270,8 +270,7 @@ def _serialize_db_user_to_scim_user(db_user: dict[str, Any]) -> dict[str, Any]:
         "meta": {
             "resourceType": "User",
             "created": db_user["createdAt"].strftime("%Y-%m-%dT%H:%M:%SZ"),
-            # todo(jon): we currently don't keep track of this in the db
-            "lastModified": db_user["createdAt"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "lastModified": db_user["updatedAt"].strftime("%Y-%m-%dT%H:%M:%SZ"),
             "location": f"Users/{db_user['userId']}",
         },
         "userName": db_user["email"],
@@ -322,6 +321,7 @@ RESOURCE_TYPE_TO_RESOURCE_CONFIG = {
         "max_items_per_page": 10,
         "schema_id": "urn:ietf:params:scim:schemas:core:2.0:User",
         "db_to_scim_serializer": _serialize_db_user_to_scim_user,
+        "count_total_resources": users.count_total_scim_users,
         "get_paginated_resources": users.get_scim_users_paginated,
         "get_unique_resource": users.get_scim_user_by_id,
         "parse_post_payload": _parse_scim_user_input,
@@ -336,11 +336,13 @@ RESOURCE_TYPE_TO_RESOURCE_CONFIG = {
         "max_items_per_page": 10,
         "schema_id": "urn:ietf:params:scim:schemas:core:2.0:Group",
         "db_to_scim_serializer": _serialize_db_group_to_scim_group,
+        "count_total_resources": scim_groups.count_total_resources,
         "get_paginated_resources": scim_groups.get_resources_paginated,
         "get_unique_resource": scim_groups.get_resource_by_id,
         "parse_post_payload": _parse_scim_group_input,
         "get_resource_by_unique_values": scim_groups.get_existing_resource_by_unique_values_from_all_resources,
-        "restore_resource": scim_groups.restore_resource,
+        # note(jon): we're not soft deleting groups, so we don't need this
+        "restore_resource": None,
         "create_resource": scim_groups.create_resource,
         "delete_resource": scim_groups.delete_resource,
         "parse_put_payload": _parse_scim_group_input,
@@ -360,8 +362,8 @@ async def get_resources(
     tenant_id=Depends(auth_required),
     requested_start_index: int = Query(1, alias="startIndex"),
     requested_items_per_page: int | None = Query(None, alias="count"),
-    attributes: list[str] | None = Query(None),
-    excluded_attributes: list[str] | None = Query(None, alias="excludedAttributes"),
+    attributes: str | None = Query(None),
+    excluded_attributes: str | None = Query(None, alias="excludedAttributes"),
 ):
     resource_config = RESOURCE_TYPE_TO_RESOURCE_CONFIG[resource_type]
     start_index = max(1, requested_start_index)
@@ -369,12 +371,12 @@ async def get_resources(
     items_per_page = min(
         max(0, requested_items_per_page or max_items_per_page), max_items_per_page
     )
-    # todo(jon): this might not be the most efficient thing to do. could be better to just do a count.
-    # but this is the fastest thing at the moment just to test that it's working
-    total_resources = resource_config["get_paginated_resources"](1, tenant_id)
+    total_resources = resource_config["count_total_resources"](tenant_id)
     db_resources = resource_config["get_paginated_resources"](
         start_index, tenant_id, items_per_page
     )
+    attributes = scim_helpers.convert_query_str_to_list(attributes)
+    excluded_attributes = scim_helpers.convert_query_str_to_list(excluded_attributes)
     scim_resources = [
         _serialize_db_resource_to_scim_resource_with_attribute_awareness(
             db_resource,
@@ -388,7 +390,7 @@ async def get_resources(
     return JSONResponse(
         status_code=200,
         content={
-            "totalResults": len(total_resources),
+            "totalResults": total_resources,
             "startIndex": start_index,
             "itemsPerPage": len(scim_resources),
             "Resources": scim_resources,
@@ -446,10 +448,9 @@ async def create_resource(
     if existing_db_resource and existing_db_resource.get("deletedAt") is None:
         return _uniqueness_error_response()
     if existing_db_resource and existing_db_resource.get("deletedAt") is not None:
-        # todo(jon): not a super elegant solution overwriting the existing db resource.
-        # maybe we should try something else.
-        existing_db_resource.update(db_payload)
-        db_resource = resource_config["restore_resource"](**existing_db_resource)
+        db_resource = resource_config["restore_resource"](
+            tenant_id=tenant_id, **db_payload
+        )
     else:
         db_resource = resource_config["create_resource"](
             tenant_id=tenant_id,
