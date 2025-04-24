@@ -257,6 +257,7 @@ export class VElement extends VParent<Element> {
 
   applyChanges() {
     this.prioritized && this.applyPrioritizedChanges();
+    this.node.data = this.data;
     this.applyAttributeChanges();
     super.applyChanges();
   }
