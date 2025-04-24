@@ -40,7 +40,8 @@ COALESCE((SELECT TRUE
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.ProjectContext,
                     user_id, errors_only=False, error_status=schemas.ErrorStatus.ALL,
-                    count_only=False, issue=None, ids_only=False, platform="web"):
+                    count_only=False, issue=None, ids_only=False):
+    platform = project.platform
     if data.bookmarked:
         data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project.project_id, user_id)
     if data.startTimestamp is None:
@@ -239,6 +240,7 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
                 cur.execute("\nUNION\n".join(sub_queries))
                 rows = cur.fetchall()
                 for i in rows:
+                    i["src"] = 1
                     results[str(i["project_id"])]["sessions"].append(helper.dict_to_camel_case(i))
     return results
 
@@ -246,7 +248,7 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
 def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 'session_id',
                            ascending: bool = False) -> dict:
     if session_ids is None or len(session_ids) == 0:
-        return {"total": 0, "sessions": []}
+        return {"total": 0, "sessions": [], "src": 1}
     with pg_client.PostgresClient() as cur:
         meta_keys = metadata.get(project_id=project_id)
         params = {"project_id": project_id, "session_ids": tuple(session_ids)}
@@ -265,4 +267,4 @@ def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 's
                 s["metadata"] = {}
                 for m in meta_keys:
                     s["metadata"][m["key"]] = s.pop(f'metadata_{m["index"]}')
-    return {"total": len(rows), "sessions": helper.list_to_camel_case(rows)}
+    return {"total": len(rows), "sessions": helper.list_to_camel_case(rows), "src": 1}
