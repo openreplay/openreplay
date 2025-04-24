@@ -348,19 +348,19 @@ export default class TabSessionManager {
             break;
           case MType.CreateTextNode:
           case MType.CreateElementNode:
-            this.windowNodeCounter.addNode(msg.id, msg.parentID);
+            this.windowNodeCounter.addNode(msg);
             this.performanceTrackManager.setCurrentNodesCount(
               this.windowNodeCounter.count,
             );
             break;
           case MType.MoveNode:
-            this.windowNodeCounter.moveNode(msg.id, msg.parentID);
+            this.windowNodeCounter.moveNode(msg);
             this.performanceTrackManager.setCurrentNodesCount(
               this.windowNodeCounter.count,
             );
             break;
           case MType.RemoveNode:
-            this.windowNodeCounter.removeNode(msg.id);
+            this.windowNodeCounter.removeNode(msg);
             this.performanceTrackManager.setCurrentNodesCount(
               this.windowNodeCounter.count,
             );

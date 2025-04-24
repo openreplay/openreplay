@@ -1,3 +1,15 @@
+## 16.2.0
+
+- css batching and inlining via (!plain mode will cause fake text nodes in style tags occupying 99*10^6 id space, can conflict with crossdomain iframes!)
+
+```
+inlineRemoteCss: boolean
+  inlinerOptions?: {
+    forceFetch?: boolean,
+    forcePlain?: boolean,
+  }
+```
+
 ## 16.1.4
 
 - bump proxy version to .3

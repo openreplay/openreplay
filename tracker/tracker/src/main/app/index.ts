@@ -319,16 +319,14 @@ export default class App {
       __save_canvas_locally: false,
       localStorage: null,
       sessionStorage: null,
-      disableStringDict: true,
       forceSingleTab: false,
       assistSocketHost: '',
       fixedCanvasScaling: false,
       disableCanvas: false,
       captureIFrames: true,
-      disableSprites: false,
-      inlineRemoteCss: true,
-      obscureTextEmails: true,
+      obscureTextEmails: false,
       obscureTextNumbers: false,
+      disableStringDict: false,
       crossdomain: {
         parentDomain: '*',
       },
@@ -339,6 +337,12 @@ export default class App {
         useAnimationFrame: false,
       },
       forceNgOff: false,
+      inlineRemoteCss: false,
+      disableSprites: false,
+      inlinerOptions: {
+        forceFetch: false,
+        forcePlain: false,
+      }
     }
     this.options = simpleMerge(defaultOptions, options)
 

@@ -54,40 +54,45 @@ export default class WindowNodeCounter {
     this.nodes = [this.root];
   }
 
-  addNode(id: number, parentID: number) {
+  addNode(msg: { id: number, parentID: number, time: number }): boolean {
+    const { id, parentID } = msg;
     if (!this.nodes[parentID]) {
       // TODO: iframe case
       // console.error(`Wrong! Node with id ${ parentID } (parentId) not found.`);
-      return;
+      return false;
     }
     if (this.nodes[id]) {
       // console.error(`Wrong! Node with id ${ id } already exists.`);
-      return;
+      return false;
     }
     this.nodes[id] = this.nodes[parentID].newChild();
+    return true;
   }
 
-  removeNode(id: number) {
+  removeNode({ id }: { id: number }) {
     if (!this.nodes[id]) {
       // Might be text node
       // console.error(`Wrong! Node with id ${ id } not found.`);
-      return;
+      return false;
     }
     this.nodes[id].removeNode();
+    return true;
   }
 
-  moveNode(id: number, parentId: number) {
+  moveNode(msg: { id: number, parentID: number, time: number }) {
+    const { id, parentID, time } = msg;
     if (!this.nodes[id]) {
-      console.warn(`Node Counter: Node with id ${id} not found.`);
-      return;
+      console.warn(`Node Counter: Node with id ${id} (parent: ${parentID}) not found. time: ${time}`);
+      return false;
     }
-    if (!this.nodes[parentId]) {
+    if (!this.nodes[parentID]) {
       console.warn(
-        `Node Counter: Node with id ${parentId} (parentId) not found.`,
+        `Node Counter: Node with id ${parentID} (parentId) not found. time: ${time}`,
       );
-      return;
+      return false;
     }
-    this.nodes[id].moveNode(this.nodes[parentId]);
+    this.nodes[id].moveNode(this.nodes[parentID]);
+    return true;
   }
 
   get count() {
