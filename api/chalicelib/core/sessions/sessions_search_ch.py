@@ -56,14 +56,16 @@ SESSION_PROJECTION_COLS_CH_MAP = """\
 'viewed',            toString(viewed_sessions.session_id > 0)
 """
 
+
 def __parse_metadata(metadata_map):
     return json.loads(metadata_map.replace("'", '"').replace("NULL", 'null'))
 
+
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.ProjectContext,
-                    user_id, errors_only=False,
-                    error_status=schemas.ErrorStatus.ALL, count_only=False, issue=None, ids_only=False,
-                    platform="web"):
+                    user_id, errors_only=False, error_status=schemas.ErrorStatus.ALL,
+                    count_only=False, issue=None, ids_only=False):
+    platform = project.platform
     if data.bookmarked:
         data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project.project_id, user_id)
     if data.startTimestamp is None:
@@ -219,69 +221,9 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
 
 
 def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
-    if project_id is None:
-        all_projects = projects.get_projects(tenant_id=tenant_id)
-    else:
-        all_projects = [
-            projects.get_project(tenant_id=tenant_id, project_id=int(project_id), include_last_session=False,
-                                 include_gdpr=False)]
-
-    all_projects = {int(p["projectId"]): p["name"] for p in all_projects}
-    project_ids = list(all_projects.keys())
-
-    available_keys = metadata.get_keys_by_projects(project_ids)
-    for i in available_keys:
-        available_keys[i]["user_id"] = schemas.FilterType.USER_ID
-        available_keys[i]["user_anonymous_id"] = schemas.FilterType.USER_ANONYMOUS_ID
-    results = {}
-    for i in project_ids:
-        if m_key not in available_keys[i].values():
-            available_keys.pop(i)
-            results[i] = {"total": 0, "sessions": [], "missingMetadata": True}
-    project_ids = list(available_keys.keys())
-    if len(project_ids) > 0:
-        with pg_client.PostgresClient() as cur:
-            sub_queries = []
-            for i in project_ids:
-                col_name = list(available_keys[i].keys())[list(available_keys[i].values()).index(m_key)]
-                sub_queries.append(cur.mogrify(
-                    f"(SELECT COALESCE(COUNT(s.*)) AS count FROM public.sessions AS s WHERE s.project_id = %(id)s AND s.{col_name} = %(value)s) AS \"{i}\"",
-                    {"id": i, "value": m_value}).decode('UTF-8'))
-            query = f"""SELECT {", ".join(sub_queries)};"""
-            cur.execute(query=query)
-
-            rows = cur.fetchone()
-
-            sub_queries = []
-            for i in rows.keys():
-                results[i] = {"total": rows[i], "sessions": [], "missingMetadata": False, "name": all_projects[int(i)]}
-                if rows[i] > 0:
-                    col_name = list(available_keys[int(i)].keys())[list(available_keys[int(i)].values()).index(m_key)]
-                    sub_queries.append(
-                        cur.mogrify(
-                            f"""(
-                                    SELECT *
-                                    FROM (
-                                            SELECT DISTINCT ON(favorite_sessions.session_id, s.session_id) {SESSION_PROJECTION_COLS_CH}
-                                            FROM public.sessions AS s LEFT JOIN (SELECT session_id
-                                                                                    FROM public.user_favorite_sessions
-                                                                                    WHERE user_favorite_sessions.user_id = %(userId)s
-                                                                                ) AS favorite_sessions USING (session_id)
-                                            WHERE s.project_id = %(id)s AND isNotNull(s.duration) AND s.{col_name} = %(value)s
-                                        ) AS full_sessions
-                                    ORDER BY favorite DESC, issue_score DESC
-                                    LIMIT 10
-                                )""",
-                            {"id": i, "value": m_value, "userId": user_id}).decode('UTF-8'))
-            if len(sub_queries) > 0:
-                cur.execute("\nUNION\n".join(sub_queries))
-                rows = cur.fetchall()
-                for i in rows:
-                    results[str(i["project_id"])]["sessions"].append(helper.dict_to_camel_case(i))
-    return results
+    return sessions_search_legacy.search_by_metadata(tenant_id, user_id, m_key, m_value, project_id)
 
 
-# TODO: rewrite this function to use ClickHouse
 def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 'session_id',
                            ascending: bool = False) -> dict:
     return sessions_search_legacy.search_sessions_by_ids(project_id, session_ids, sort_by, ascending)

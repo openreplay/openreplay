@@ -79,8 +79,7 @@ async def update_ut_test(projectId: int, test_id: int, test_update: UTTestUpdate
 
 
 @app.get('/{projectId}/usability-tests/{test_id}/sessions', tags=tags)
-async def get_sessions(projectId: int, test_id: int, filter_query: Annotated[schemas.PaginatedSchema, Query()],
-                       live: bool = False, user_id: str = None):
+async def get_sessions(projectId: int, test_id: int, filter_query: Annotated[schemas.UsabilityTestQuery, Query()]):
     """
     Get sessions related to a specific UT test.
 
@@ -88,10 +87,11 @@ async def get_sessions(projectId: int, test_id: int, filter_query: Annotated[sch
     - **test_id**: The unique identifier of the UT test.
     """
 
-    if live:
+    if filter_query.live:
         return service.ut_tests_sessions_live(projectId, test_id, filter_query.page, filter_query.limit)
     else:
-        return service.ut_tests_sessions(projectId, test_id, filter_query.page, filter_query.limit, user_id, live)
+        return service.ut_tests_sessions(projectId, test_id, filter_query.page, filter_query.limit,
+                                         filter_query.user_id, filter_query.live)
 
 
 @app.get('/{projectId}/usability-tests/{test_id}/responses/{task_id}', tags=tags)

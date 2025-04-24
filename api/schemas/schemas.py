@@ -1608,3 +1608,8 @@ class SessionModel(BaseModel):
     userState: str
     userUuid: str
     viewed: bool = Field(default=False)
+
+
+class UsabilityTestQuery(_PaginatedSchema):
+    live: bool = Field(default=False)
+    user_id: Optional[str] = Field(default=None)
