@@ -2,11 +2,9 @@ import json
 import logging
 import secrets
 from typing import Optional
-from datetime import datetime
 
 from decouple import config
 from fastapi import BackgroundTasks, HTTPException
-from psycopg2.extensions import AsIs
 from psycopg2.extras import Json
 from pydantic import BaseModel, model_validator
 from starlette import status
@@ -352,239 +350,6 @@ def get(user_id, tenant_id):
         return helper.dict_to_camel_case(r)
 
 
-def count_total_scim_users(tenant_id: int) -> int:
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                SELECT COUNT(*)
-                FROM public.users
-                WHERE
-                    users.tenant_id = %(tenant_id)s
-                    AND users.deleted_at IS NULL
-                """,
-                {"tenant_id": tenant_id},
-            )
-        )
-        return cur.fetchone()["count"]
-
-
-def get_scim_users_paginated(start_index, tenant_id, count=None):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                SELECT
-                    users.*,
-                    roles.name AS role_name
-                FROM public.users
-                LEFT JOIN public.roles USING (role_id)
-                WHERE
-                    users.tenant_id = %(tenant_id)s
-                    AND users.deleted_at IS NULL
-                LIMIT %(limit)s
-                OFFSET %(offset)s;
-                """,
-                {"offset": start_index - 1, "limit": count, "tenant_id": tenant_id},
-            )
-        )
-        r = cur.fetchall()
-        return helper.list_to_camel_case(r)
-
-
-def get_scim_user_by_id(user_id, tenant_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                SELECT
-                    users.*,
-                    roles.name AS role_name
-                FROM public.users
-                LEFT JOIN public.roles USING (role_id)
-                WHERE
-                    users.user_id = %(user_id)s
-                    AND users.tenant_id = %(tenant_id)s
-                    AND users.deleted_at IS NULL
-                LIMIT 1;
-                """,
-                {
-                    "user_id": user_id,
-                    "tenant_id": tenant_id,
-                },
-            )
-        )
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
-def create_scim_user(
-    email: str,
-    tenant_id: int,
-    name: str = "",
-    internal_id: str | None = None,
-    role_id: int | None = None,
-):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                WITH u AS (
-                    INSERT INTO public.users (
-                        tenant_id,
-                        email,
-                        name,
-                        internal_id,
-                        role_id
-                    )
-                    VALUES (
-                        %(tenant_id)s,
-                        %(email)s,
-                        %(name)s,
-                        %(internal_id)s,
-                        %(role_id)s
-                    )
-                    RETURNING *
-                )
-                SELECT
-                    u.*,
-                    roles.name as role_name
-                FROM u LEFT JOIN public.roles USING (role_id);
-                """,
-                {
-                    "tenant_id": tenant_id,
-                    "email": email,
-                    "name": name,
-                    "internal_id": internal_id,
-                    "role_id": role_id,
-                },
-            )
-        )
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
-def restore_scim_user(
-    tenant_id: int,
-    email: str,
-    name: str = "",
-    internal_id: str | None = None,
-    role_id: int | None = None,
-    **kwargs,
-):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                WITH u AS (
-                    UPDATE public.users
-                    SET
-                        tenant_id = %(tenant_id)s,
-                        email = %(email)s,
-                        name = %(name)s,
-                        internal_id = %(internal_id)s,
-                        role_id = %(role_id)s,
-                        deleted_at = NULL,
-                        created_at = now(),
-                        updated_at = now(),
-                        api_key = default,
-                        jwt_iat = NULL,
-                        weekly_report = default
-                    WHERE users.email = %(email)s
-                    RETURNING *
-                )
-                SELECT
-                    u.*,
-                    roles.name as role_name
-                FROM u LEFT JOIN public.roles USING (role_id);
-                """,
-                {
-                    "tenant_id": tenant_id,
-                    "email": email,
-                    "name": name,
-                    "internal_id": internal_id,
-                    "role_id": role_id,
-                },
-            )
-        )
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
-def update_scim_user(
-    user_id: int,
-    tenant_id: int,
-    email: str,
-    name: str = "",
-    internal_id: str | None = None,
-    role_id: int | None = None,
-):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                WITH u AS (
-                    UPDATE public.users
-                    SET
-                        email = %(email)s,
-                        name = %(name)s,
-                        internal_id = %(internal_id)s,
-                        role_id = %(role_id)s,
-                        updated_at = now()
-                    WHERE
-                        users.user_id = %(user_id)s
-                        AND users.tenant_id = %(tenant_id)s
-                        AND users.deleted_at IS NULL
-                    RETURNING *
-                )
-                SELECT
-                    u.*,
-                    roles.name as role_name
-                FROM u LEFT JOIN public.roles USING (role_id);
-                """,
-                {
-                    "tenant_id": tenant_id,
-                    "user_id": user_id,
-                    "email": email,
-                    "name": name,
-                    "internal_id": internal_id,
-                    "role_id": role_id,
-                },
-            )
-        )
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
-def patch_scim_user(
-    user_id: int,
-    tenant_id: int,
-    **kwargs,
-):
-    with pg_client.PostgresClient() as cur:
-        set_fragments = []
-        kwargs["updated_at"] = datetime.now()
-        for k, v in kwargs.items():
-            fragment = cur.mogrify(
-                "%s = %s",
-                (AsIs(k), v),
-            ).decode("utf-8")
-            set_fragments.append(fragment)
-        set_clause = ", ".join(set_fragments)
-        query = f"""
-            WITH u AS (
-                UPDATE public.users
-                SET {set_clause}
-                WHERE
-                    users.user_id = {user_id}
-                    AND users.tenant_id = {tenant_id}
-                    AND users.deleted_at IS NULL
-                RETURNING *
-            )
-            SELECT
-                u.*,
-                roles.name as role_name
-            FROM u LEFT JOIN public.roles USING (role_id);"""
-        cur.execute(query)
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
 def generate_new_api_key(user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -693,21 +458,6 @@ def edit_member(
         )
         return {"data": get_member(user_id=user_id_to_update, tenant_id=tenant_id)}
     return {"data": user}
-
-
-def get_existing_scim_user_by_unique_values_from_all_users(email: str, **kwargs):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                SELECT *
-                FROM public.users
-                WHERE users.email = %(email)s
-                """,
-                {"email": email},
-            )
-        )
-        return helper.dict_to_camel_case(cur.fetchone())
 
 
 def get_by_email_only(email):
@@ -1253,24 +1003,6 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
         )
         cur.execute(query)
         return helper.dict_to_camel_case(cur.fetchone())
-
-
-def soft_delete_scim_user_by_id(user_id, tenant_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                UPDATE public.users
-                SET
-                    deleted_at = NULL,
-                    updated_at = default
-                WHERE
-                    users.user_id = %(user_id)s
-                    AND users.tenant_id = %(tenant_id)s
-                """,
-                {"user_id": user_id, "tenant_id": tenant_id},
-            )
-        )
 
 
 def __hard_delete_user(user_id):

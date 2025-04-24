@@ -2,10 +2,59 @@ from typing import Any
 from datetime import datetime
 from psycopg2.extensions import AsIs
 
-from chalicelib.utils import helper, pg_client
+from chalicelib.utils import pg_client
+from routers.scim.resource_config import (
+    ProviderResource,
+    ClientResource,
+    ResourceId,
+    ClientInput,
+    ProviderInput,
+)
 
 
-def count_total_resources(tenant_id: int) -> int:
+def convert_client_resource_update_input_to_provider_resource_update_input(
+    tenant_id: int, client_input: ClientInput
+) -> ProviderInput:
+    result = {}
+    if "displayName" in client_input:
+        result["name"] = client_input["displayName"]
+    if "externalId" in client_input:
+        result["external_id"] = client_input["externalId"]
+    if "members" in client_input:
+        members = client_input["members"] or []
+        result["user_ids"] = [int(member["value"]) for member in members]
+    return result
+
+
+def convert_provider_resource_to_client_resource(
+    provider_resource: ProviderResource,
+) -> ClientResource:
+    members = provider_resource["users"] or []
+    return {
+        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+        "id": str(provider_resource["group_id"]),
+        "externalId": provider_resource["external_id"],
+        "meta": {
+            "resourceType": "Group",
+            "created": provider_resource["created_at"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "lastModified": provider_resource["updated_at"].strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            ),
+            "location": f"Groups/{provider_resource['group_id']}",
+        },
+        "displayName": provider_resource["name"],
+        "members": [
+            {
+                "value": str(member["user_id"]),
+                "$ref": f"Users/{member['user_id']}",
+                "type": "User",
+            }
+            for member in members
+        ],
+    }
+
+
+def get_active_resource_count(tenant_id: int) -> int:
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -20,9 +69,9 @@ def count_total_resources(tenant_id: int) -> int:
         return cur.fetchone()["count"]
 
 
-def get_resources_paginated(
-    offset_one_indexed: int, tenant_id: int, limit: int | None = None
-) -> list[dict[str, Any]]:
+def get_provider_resource_chunk(
+    offset: int, tenant_id: int, limit: int
+) -> list[ProviderResource]:
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -41,16 +90,18 @@ def get_resources_paginated(
                 OFFSET %(offset)s;
                 """,
                 {
-                    "offset": offset_one_indexed - 1,
+                    "offset": offset,
                     "limit": limit,
                     "tenant_id": tenant_id,
                 },
             )
         )
-        return helper.list_to_camel_case(cur.fetchall())
+        return cur.fetchall()
 
 
-def get_resource_by_id(group_id: int, tenant_id: int) -> dict[str, Any]:
+def get_provider_resource(
+    resource_id: ResourceId, tenant_id: int
+) -> ProviderResource | None:
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -69,26 +120,50 @@ def get_resource_by_id(group_id: int, tenant_id: int) -> dict[str, Any]:
                     AND groups.group_id = %(group_id)s
                 LIMIT 1;
                 """,
-                {"group_id": group_id, "tenant_id": tenant_id},
+                {"group_id": resource_id, "tenant_id": tenant_id},
             )
         )
-        return helper.dict_to_camel_case(cur.fetchone())
+        return cur.fetchone()
 
 
-def get_existing_resource_by_unique_values_from_all_resources(
-    **kwargs,
-) -> dict[str, Any] | None:
+def get_provider_resource_from_unique_fields(
+    **kwargs: dict[str, Any],
+) -> ProviderResource | None:
     # note(jon): we do not really use this for groups as we don't have unique values outside
     # of the primary key
     return None
 
 
-def create_resource(
+def convert_client_resource_creation_input_to_provider_resource_creation_input(
+    tenant_id: int, client_input: ClientInput
+) -> ProviderInput:
+    return {
+        "name": client_input["displayName"],
+        "external_id": client_input.get("externalId"),
+        "user_ids": [
+            int(member["value"]) for member in client_input.get("members", [])
+        ],
+    }
+
+
+def convert_client_resource_rewrite_input_to_provider_resource_rewrite_input(
+    tenant_id: int, client_input: ClientInput
+) -> ProviderInput:
+    return {
+        "name": client_input["displayName"],
+        "external_id": client_input.get("externalId"),
+        "user_ids": [
+            int(member["value"]) for member in client_input.get("members", [])
+        ],
+    }
+
+
+def create_provider_resource(
     name: str,
     tenant_id: int,
     user_ids: list[str] | None = None,
     **kwargs: dict[str, Any],
-) -> dict[str, Any]:
+) -> ProviderResource:
     with pg_client.PostgresClient() as cur:
         kwargs["name"] = name
         kwargs["tenant_id"] = tenant_id
@@ -136,10 +211,10 @@ def create_resource(
             LIMIT 1;
             """
         )
-        return helper.dict_to_camel_case(cur.fetchone())
+        return cur.fetchone()
 
 
-def delete_resource(group_id: int, tenant_id: int) -> None:
+def delete_provider_resource(resource_id: ResourceId, tenant_id: int) -> None:
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -148,7 +223,7 @@ def delete_resource(group_id: int, tenant_id: int) -> None:
                 WHERE groups.group_id = %(group_id)s AND groups.tenant_id = %(tenant_id)s;
                 """
             ),
-            {"tenant_id": tenant_id, "group_id": group_id},
+            {"tenant_id": tenant_id, "group_id": resource_id},
         )
 
 
@@ -214,30 +289,30 @@ def _update_resource_sql(
             LIMIT 1;
             """
         )
-        return helper.dict_to_camel_case(cur.fetchone())
+        return cur.fetchone()
 
 
-def update_resource(
-    group_id: int,
+def rewrite_provider_resource(
+    resource_id: int,
     tenant_id: int,
     name: str,
     **kwargs: dict[str, Any],
 ) -> dict[str, Any]:
     return _update_resource_sql(
-        group_id=group_id,
+        group_id=resource_id,
         tenant_id=tenant_id,
         name=name,
         **kwargs,
     )
 
 
-def patch_resource(
-    group_id: int,
+def update_provider_resource(
+    resource_id: int,
     tenant_id: int,
     **kwargs: dict[str, Any],
 ):
     return _update_resource_sql(
-        group_id=group_id,
+        group_id=resource_id,
         tenant_id=tenant_id,
         **kwargs,
     )
