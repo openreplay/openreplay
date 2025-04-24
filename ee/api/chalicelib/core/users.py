@@ -483,8 +483,8 @@ def restore_scim_user(
                         internal_id = %(internal_id)s,
                         role_id = %(role_id)s,
                         deleted_at = NULL,
-                        created_at = default,
-                        updated_at = default,
+                        created_at = now(),
+                        updated_at = now(),
                         api_key = default,
                         jwt_iat = NULL,
                         weekly_report = default
@@ -527,7 +527,7 @@ def update_scim_user(
                         name = %(name)s,
                         internal_id = %(internal_id)s,
                         role_id = %(role_id)s,
-                        updated_at = default
+                        updated_at = now()
                     WHERE
                         users.user_id = %(user_id)s
                         AND users.tenant_id = %(tenant_id)s
@@ -582,7 +582,7 @@ def patch_scim_user(
                 roles.name as role_name
             FROM u LEFT JOIN public.roles USING (role_id);"""
         cur.execute(query)
-        return helper.dict_to_camel_case(cur.fetchone())    
+        return helper.dict_to_camel_case(cur.fetchone())
 
 
 def generate_new_api_key(user_id):
