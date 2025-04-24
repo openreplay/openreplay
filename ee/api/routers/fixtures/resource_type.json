@@ -15,5 +15,22 @@
             "location": "ResourceType/User"
         },
         "schemaExtensions": []
+    },
+    {
+        "schemas": [
+            "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
+        ],
+        "id": "Group",
+        "name": "Group",
+        "endpoint": "/Groups",
+        "description": "A collection of users",
+        "schema": "urn:ietf:params:scim:schemas:core:2.0:Group",
+        "meta": {
+            "resourceType": "ResourceType",
+            "created": "2025-04-16T08:37:00Z",
+            "lastModified": "2025-04-16T08:37:00Z",
+            "location": "ResourceType/Group"
+        },
+        "schemaExtensions": []
     }
 ]
