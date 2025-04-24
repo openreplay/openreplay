@@ -1,10 +1,10 @@
-import ast
+import json
 import logging
 
 import schemas
 from chalicelib.core import metadata, projects
-from . import sessions_favorite, sessions_search_legacy, sessions_ch as sessions, sessions_legacy_mobil
 from chalicelib.utils import pg_client, helper, ch_client, exp_ch_helper
+from . import sessions_favorite, sessions_search_legacy, sessions_ch as sessions, sessions_legacy_mobil
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +56,8 @@ SESSION_PROJECTION_COLS_CH_MAP = """\
 'viewed',            toString(viewed_sessions.session_id > 0)
 """
 
+def __parse_metadata(metadata_map):
+    return json.loads(metadata_map.replace("'", '"').replace("NULL", 'null'))
 
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.ProjectContext,
@@ -123,7 +125,8 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
 
             meta_keys = metadata.get(project_id=project.project_id)
             meta_map = ",map(%s) AS 'metadata'" \
-                       % ','.join([f"'{m['key']}',coalesce(metadata_{m['index']},'None')" for m in meta_keys])
+                       % ','.join(
+                [f"'{m['key']}',coalesce(metadata_{m['index']},CAST(NULL AS Nullable(String)))" for m in meta_keys])
             main_query = cur.mogrify(f"""SELECT COUNT(*) AS count,
                                                 COALESCE(JSONB_AGG(users_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
@@ -158,7 +161,8 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
 
             meta_keys = metadata.get(project_id=project.project_id)
             meta_map = ",'metadata',toString(map(%s))" \
-                       % ','.join([f"'{m['key']}',coalesce(metadata_{m['index']},'None')" for m in meta_keys])
+                       % ','.join(
+                [f"'{m['key']}',coalesce(metadata_{m['index']},CAST(NULL AS Nullable(String)))" for m in meta_keys])
             main_query = cur.format(query=f"""SELECT any(total) AS count, 
                                                      groupArray(%(sessions_limit)s)(details) AS sessions
                                               FROM (SELECT total, details
@@ -200,11 +204,12 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
         for i, s in enumerate(sessions_list):
             sessions_list[i] = {**s.pop("last_session")[0], **s}
             sessions_list[i].pop("rn")
-            sessions_list[i]["metadata"] = ast.literal_eval(sessions_list[i]["metadata"])
+            sessions_list[i]["metadata"] = __parse_metadata(sessions_list[i]["metadata"])
     else:
+        import json
         for i in range(len(sessions_list)):
-            sessions_list[i]["metadata"] = ast.literal_eval(sessions_list[i]["metadata"])
-            sessions_list[i] = schemas.SessionModel.parse_obj(helper.dict_to_camel_case(sessions_list[i]))
+            sessions_list[i]["metadata"] = __parse_metadata(sessions_list[i]["metadata"])
+            sessions_list[i] = schemas.SessionModel.model_validate(helper.dict_to_camel_case(sessions_list[i]))
 
     return {
         'total': total,
