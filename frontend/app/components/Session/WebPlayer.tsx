@@ -38,8 +38,8 @@ function WebPlayer(props: any) {
     uxtestingStore,
     uiPlayerStore,
     integrationsStore,
-    userStore,
   } = useStore();
+  const devTools = sessionStore.devTools
   const session = sessionStore.current;
   const { prefetched } = sessionStore;
   const startedAt = sessionStore.current.startedAt || 0;
@@ -57,14 +57,17 @@ function WebPlayer(props: any) {
   const [fullView, setFullView] = useState(false);
 
   React.useEffect(() => {
-    if (windowActive) {
-      const handleActivation = () => {
-        if (!document.hidden) {
-          setWindowActive(true);
-          document.removeEventListener('visibilitychange', handleActivation);
-        }
-      };
-      document.addEventListener('visibilitychange', handleActivation);
+    const handleActivation = () => {
+      if (!document.hidden) {
+        setWindowActive(true);
+        document.removeEventListener('visibilitychange', handleActivation);
+      }
+    };
+    document.addEventListener('visibilitychange', handleActivation);
+
+    return () => {
+      devTools.update('network', { activeTab: 'ALL' });
+      document.removeEventListener('visibilitychange', handleActivation);
     }
   }, []);
 
