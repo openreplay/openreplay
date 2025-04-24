@@ -214,10 +214,9 @@ export default abstract class Observer {
     protected readonly isTopContext: boolean = false,
     options: Options = {},
   ) {
-    const debugOptions = { inlineRemoteCss: true, inlinerOptions: { forceFetch: true, forcePlain: true } }
     this.disableSprites = Boolean(options.disableSprites)
-    this.inlineRemoteCss = Boolean(debugOptions.inlineRemoteCss)
-    this.inlinerOptions = debugOptions.inlinerOptions
+    this.inlineRemoteCss = Boolean(options.inlineRemoteCss)
+    this.inlinerOptions = options.inlinerOptions
     this.observer = createMutationObserver(
       this.app.safe((mutations) => {
         for (const mutation of mutations) {
