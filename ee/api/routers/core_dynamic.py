@@ -14,7 +14,7 @@ from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.errors import errors, errors_details
 from chalicelib.core.metrics import heatmaps
-from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_viewed, \
+from chalicelib.core.sessions import sessions, sessions_replay, sessions_favorite, sessions_viewed, \
     sessions_assignments, unprocessed_sessions, sessions_search
 from chalicelib.utils import SAML2_helper
 from chalicelib.utils import captcha, smtp
