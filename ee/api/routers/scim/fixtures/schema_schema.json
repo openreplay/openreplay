@@ -2,7 +2,19 @@
   "id": "urn:ietf:params:scim:schemas:core:2.0:Schema",
   "name": "Schema",
   "description": "Specifies the schema that describes a SCIM Schema",
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Schema"],        
   "attributes": [
+    {
+      "name": "schemas",
+      "type": "string",
+      "multiValued": true,
+      "description": "An array of Strings containing URI that are used to indicate the namespaces of the SCIM schemas that define the attributes present in the current JSON structure.",
+      "required": true,
+      "caseExact": false,
+      "mutability": "immutable",
+      "returned": "always",
+      "uniqueness": "none"
+    },
     {
       "name": "id",
       "type": "string",
@@ -14,6 +26,79 @@
       "returned": "default",
       "uniqueness": "none"
     },
+    {
+      "name": "externalId",
+      "type": "string",
+      "multiValued": false,
+      "description": "Identifier for the resource as defined by the provisioning client. OPTIONAL; clients MAY include a non-empty value.",
+      "required": false,
+      "caseExact": true,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "meta",
+      "type": "complex",
+      "multiValued": false,
+      "description": "Resource metadata. MUST be ignored when provided by clients.",
+      "required": false,
+      "mutability": "readOnly",
+      "returned": "default",
+      "subAttributes": [
+        {
+          "name": "resourceType",
+          "type": "string",
+          "multiValued": false,
+          "description": "The resource type name.",
+          "required": false,
+          "caseExact": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "created",
+          "type": "dateTime",
+          "multiValued": false,
+          "description": "The date and time the resource was added.",
+          "required": false,
+          "mutability": "readOnly",
+          "returned": "default"
+        },
+        {
+          "name": "lastModified",
+          "type": "dateTime",
+          "multiValued": false,
+          "description": "The most recent date and time the resource was modified.",
+          "required": false,
+          "mutability": "readOnly",
+          "returned": "default"
+        },
+        {
+          "name": "location",
+          "type": "reference",
+          "referenceTypes": ["external"],
+          "multiValued": false,
+          "description": "The URI of the resource being returned.",
+          "required": false,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "multiValued": false,
+          "description": "The version (ETag) of the resource being returned.",
+          "required": false,
+          "caseExact": true,
+          "mutability": "readOnly",
+          "returned": "default",
+          "uniqueness": "none"
+        }
+      ]
+    },	
     {
       "name": "name",
       "type": "string",
@@ -172,7 +257,7 @@
           "required": false,
           "mutability": "readOnly",
           "returned": "default",
-          "subAttributes": [
+          "subAttribtes": [
             {
               "name": "name",
               "type": "string",
@@ -298,7 +383,7 @@
   "meta": {
     "resourceType": "Schema",
     "location": "/v2/Schemas/urn:ietf:params:scim:schemas:core:2.0:Schema",
-    "created": "2025-04-17T15:48:00",
-    "lastModified": "2025-04-17T15:48:00"      
+    "created": "2025-04-17T15:48:00Z",
+    "lastModified": "2025-04-17T15:48:00Z"      
   }
 }

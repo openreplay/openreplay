@@ -2,6 +2,7 @@
   "id": "urn:ietf:params:scim:schemas:core:2.0:Group",
   "name": "Group",
   "description": "Group",
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Schema"],
   "attributes": [
     {
       "name": "schemas",
@@ -97,7 +98,7 @@
           "uniqueness": "none"
         }
       ]
-    },	
+    },
     {
       "name": "displayName",
       "type": "string",
@@ -159,7 +160,7 @@
   "meta": {
     "resourceType": "Schema",
     "location": "/v2/Schemas/urn:ietf:params:scim:schemas:core:2.0:Group",
-    "created": "2025-04-17T15:48:00",
-    "lastModified": "2025-04-17T15:48:00"      
+    "created": "2025-04-17T15:48:00Z",
+    "lastModified": "2025-04-17T15:48:00Z"
   }
 }

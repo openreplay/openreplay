@@ -2,6 +2,7 @@
   "id": "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
   "name": "Service Provider Configuration",
   "description": "Schema for representing the service provider's configuration",
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Schema"],        
   "attributes": [
     {
       "name": "documentationUri",
@@ -206,7 +207,7 @@
   "meta": {
     "resourceType": "Schema",
     "location": "/v2/Schemas/urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
-    "created": "2025-04-17T15:48:00",
-    "lastModified": "2025-04-17T15:48:00"      
+    "created": "2025-04-17T15:48:00Z",
+    "lastModified": "2025-04-17T15:48:00Z"      
   }
 }
