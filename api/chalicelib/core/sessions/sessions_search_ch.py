@@ -2,8 +2,8 @@ import json
 import logging
 
 import schemas
-from chalicelib.core import metadata, projects
-from chalicelib.utils import pg_client, helper, ch_client, exp_ch_helper
+from chalicelib.core import metadata
+from chalicelib.utils import helper, ch_client, exp_ch_helper
 from . import sessions_favorite, sessions_search_legacy, sessions_ch as sessions, sessions_legacy_mobil
 
 logger = logging.getLogger(__name__)
