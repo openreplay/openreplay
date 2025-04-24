@@ -324,9 +324,9 @@ export default class App {
       fixedCanvasScaling: false,
       disableCanvas: false,
       captureIFrames: true,
-      disableSprites: false,
-      inlineRemoteCss: true,
+      obscureTextEmails: false,
       obscureTextNumbers: false,
+      disableStringDict: false,
       crossdomain: {
         parentDomain: '*',
       },
@@ -337,14 +337,12 @@ export default class App {
         useAnimationFrame: false,
       },
       forceNgOff: false,
-      // TODO !!! remove
-      disableStringDict: true,
-      obscureTextEmails: true,
+      inlineRemoteCss: false,
+      disableSprites: false,
       inlinerOptions: {
-        forceFetch: true,
-        forcePlain: true,
+        forceFetch: false,
+        forcePlain: false,
       }
-      // TODO !!! remove
     }
     this.options = simpleMerge(defaultOptions, options)
 

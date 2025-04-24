@@ -214,11 +214,6 @@ export class VElement extends VParent<Element> {
     super();
   }
 
-  data = '';
-  setData(data: string) {
-    this.data = data;
-  }
-
   protected createNode() {
     try {
       const element = this.isSVG
