@@ -254,22 +254,48 @@ def _parse_scim_user_input(data: dict[str, Any], tenant_id: str) -> dict[str, An
     if "userType" in data:
         role = roles.get_role_by_name(tenant_id, data["userType"])
         role_id = role["roleId"] if role else None
+    name = data.get("name", {}).get("formatted")
+    if not name:
+        name = " ".join(
+            [
+                x
+                for x in [
+                    data.get("name", {}).get("honorificPrefix"),
+                    data.get("name", {}).get("givenName"),
+                    data.get("name", {}).get("middleName"),
+                    data.get("name", {}).get("familyName"),
+                    data.get("name", {}).get("honorificSuffix"),
+                ]
+                if x
+            ]
+        )
     result = {
         "email": data["userName"],
         "internal_id": data.get("externalId"),
-        "name": data.get("name", {}).get("formatted") or data.get("displayName"),
+        "name": name,
         "role_id": role_id,
     }
     result = {k: v for k, v in result.items() if v is not None}
     return result
 
 
-def _parse_user_patch_operations(data: dict[str, Any]) -> dict[str, Any]:
+def _parse_user_patch_payload(data: dict[str, Any], tenant_id: str) -> dict[str, Any]:
     result = {}
-    operations = data["Operations"]
-    for operation in operations:
-        if operation["op"] == "replace" and "active" in operation["value"]:
-            result["deleted_at"] = None if operation["value"]["active"] is True else datetime.now()
+    if "userType" in data:
+        role = roles.get_role_by_name(tenant_id, data["userType"])
+        result["role_id"] = role["roleId"] if role else None
+    if "name" in data:
+        # note(jon): we're currently not handling the case where the client
+        # send patches of individual name components (e.g. name.middleName)
+        name = data.get("name", {}).get("formatted")
+        if name:
+            result["name"] = name
+    if "userName" in data:
+        result["email"] = data["userName"]
+    if "externalId" in data:
+        result["internal_id"] = data["externalId"]
+    if "active" in data:
+        result["deleted_at"] = None if data["active"] else datetime.now()
     return result
 
 
@@ -326,6 +352,18 @@ def _parse_scim_group_input(data: dict[str, Any], tenant_id: int) -> dict[str, A
     }
 
 
+def _parse_scim_group_patch(data: dict[str, Any], tenant_id: int) -> dict[str, Any]:
+    result = {}
+    if "displayName" in data:
+        result["name"] = data["displayName"]
+    if "externalId" in data:
+        result["external_id"] = data["externalId"]
+    if "members" in data:
+        members = data["members"] or []
+        result["user_ids"] = [int(member["value"]) for member in members]
+    return result
+
+
 RESOURCE_TYPE_TO_RESOURCE_CONFIG = {
     "Users": {
         "max_items_per_page": 10,
@@ -341,7 +379,7 @@ RESOURCE_TYPE_TO_RESOURCE_CONFIG = {
         "delete_resource": users.soft_delete_scim_user_by_id,
         "parse_put_payload": _parse_scim_user_input,
         "update_resource": users.update_scim_user,
-        "parse_patch_operations": _parse_user_patch_operations,
+        "parse_patch_payload": _parse_user_patch_payload,
         "patch_resource": users.patch_scim_user,
     },
     "Groups": {
@@ -359,6 +397,8 @@ RESOURCE_TYPE_TO_RESOURCE_CONFIG = {
         "delete_resource": scim_groups.delete_resource,
         "parse_put_payload": _parse_scim_group_input,
         "update_resource": scim_groups.update_resource,
+        "parse_patch_payload": _parse_scim_group_patch,
+        "patch_resource": scim_groups.patch_resource,
     },
 }
 
@@ -440,7 +480,6 @@ async def get_resource(
 class PostResourceType(str, Enum):
     USERS = "Users"
     GROUPS = "Groups"
-
 
 
 @public_app.post("/{resource_type}")
@@ -556,6 +595,7 @@ async def put_resource(
 
 class PatchResourceType(str, Enum):
     USERS = "Users"
+    GROUPS = "Groups"
 
 
 @public_app.patch("/{resource_type}/{resource_id}")
@@ -577,13 +617,22 @@ async def patch_resource(
         )
     )
     payload = await r.json()
-    parsed_payload = resource_config["parse_patch_operations"](payload)
-    # note(jon): we don't need to handle uniqueness contraints and etc. like in PUT
-    # because we are only covering the User resource and the field `active`
+    _, changes = scim_helpers.apply_scim_patch(
+        payload["Operations"],
+        current_scim_resource,
+        SCHEMA_IDS_TO_SCHEMA_DETAILS[resource_config["schema_id"]],
+    )
+    reformatted_scim_changes = {
+        k: new_value for k, (old_value, new_value) in changes.items()
+    }
+    db_changes = resource_config["parse_patch_payload"](
+        reformatted_scim_changes,
+        tenant_id,
+    )
     updated_db_resource = resource_config["patch_resource"](
         resource_id,
         tenant_id,
-        **parsed_payload,
+        **db_changes,
     )
     updated_scim_resource = (
         _serialize_db_resource_to_scim_resource_with_attribute_awareness(
