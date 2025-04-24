@@ -11,10 +11,8 @@ export function inlineRemoteCss(
   sendPlain?: boolean,
   onPlain?: (cssText: string, id: number) => void,
 ) {
-  const sheetId = sendPlain ? null : getNextID();
-  if (!sendPlain) {
-    addOwner(sheetId!, id);
-  }
+  const sheetId = getNextID();
+  addOwner(sheetId, id);
 
   const sheet = node.sheet;
 
@@ -27,7 +25,7 @@ export function inlineRemoteCss(
         return;
       }
     } catch (e) {
-      // console.warn("Could not stringify sheet, falling back to fetch:", e);
+      console.warn("Could not stringify sheet, falling back to fetch:", e);
     }
   }
 
@@ -36,19 +34,18 @@ export function inlineRemoteCss(
     fetch(node.href)
       .then(response => {
         if (!response.ok) {
-          throw new Error(`response status ${response.status}`);
+          throw new Error(`Failed to fetch CSS: ${response.status}`);
         }
         return response.text();
       })
       .then(cssText => {
         if (sendPlain && onPlain) {
           onPlain(cssText, fakeIdHolder++);
-        } else {
-          processCssText(cssText);
         }
+        processCssText(cssText);
       })
       .catch(error => {
-        console.error(`OpenReplay: Failed to fetch CSS from ${node.href}:`, error);
+        console.error(`Failed to fetch CSS from ${node.href}:`, error);
       });
   }
 
@@ -60,7 +57,7 @@ export function inlineRemoteCss(
     const ruleTexts = parseCSS(cssText);
 
     for (let i = 0; i < ruleTexts.length; i++) {
-      insertRule(sheetId!, ruleTexts[i], i, baseHref);
+      insertRule(sheetId, ruleTexts[i], i, baseHref);
     }
   }
 
