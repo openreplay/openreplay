@@ -45,81 +45,48 @@ def get_all_attribute_names_where_returned_is_always(
 
 
 def filter_attributes(
-    resource: dict[str, Any], include_list: list[str]
+    obj: dict[str, Any],
+    attributes_query_str: str | None,
+    excluded_attributes_query_str: str | None,
+    schema: dict[str, Any],
 ) -> dict[str, Any]:
-    result = {}
+    all_attributes = get_all_attribute_names(schema)
+    always_returned_attributes = get_all_attribute_names_where_returned_is_always(
+        schema
+    )
+    included_attributes = convert_query_str_to_list(attributes_query_str)
+    included_attributes = included_attributes or all_attributes
+    included_attributes_set = set(included_attributes).union(
+        set(always_returned_attributes)
+    )
+    excluded_attributes = convert_query_str_to_list(excluded_attributes_query_str)
+    excluded_attributes = excluded_attributes or []
+    excluded_attributes_set = set(excluded_attributes).difference(
+        set(always_returned_attributes)
+    )
+    include_paths = included_attributes_set.difference(excluded_attributes_set)
 
-    # Group include paths by top-level key
-    includes_by_key = {}
-    for path in include_list:
-        parts = path.split(".", 1)
-        key = parts[0]
-        rest = parts[1] if len(parts) == 2 else None
-        includes_by_key.setdefault(key, []).append(rest)
+    include_tree = {}
+    for path in include_paths:
+        parts = path.split(".")
+        node = include_tree
+        for part in parts:
+            node = node.setdefault(part, {})
 
-    for key, subpaths in includes_by_key.items():
-        if key not in resource:
-            continue
+    def _recurse(o, tree, parent_key=None):
+        if isinstance(o, dict):
+            out = {}
+            for key, subtree in tree.items():
+                if key in o:
+                    out[key] = _recurse(o[key], subtree, key)
+            return out
+        if isinstance(o, list):
+            out = [_recurse(item, tree, parent_key) for item in o]
+            return out
+        return o
 
-        value = resource[key]
-        if all(p is None for p in subpaths):
-            result[key] = value
-        else:
-            nested_paths = [p for p in subpaths if p is not None]
-            if isinstance(value, dict):
-                filtered = filter_attributes(value, nested_paths)
-                if filtered:
-                    result[key] = filtered
-            elif isinstance(value, list):
-                new_list = []
-                for item in value:
-                    if isinstance(item, dict):
-                        filtered_item = filter_attributes(item, nested_paths)
-                        if filtered_item:
-                            new_list.append(filtered_item)
-                if new_list:
-                    result[key] = new_list
+    result = _recurse(obj, include_tree)
     return result
-
-
-def exclude_attributes(
-    resource: dict[str, Any], exclude_list: list[str]
-) -> dict[str, Any]:
-    exclude_map = {}
-    for attr in exclude_list:
-        parts = attr.split(".", 1)
-        key = parts[0]
-        # rest is empty string for top-level exclusion
-        rest = parts[1] if len(parts) == 2 else ""
-        exclude_map.setdefault(key, []).append(rest)
-
-    new_resource = {}
-    for key, value in resource.items():
-        if key in exclude_map:
-            subs = exclude_map[key]
-            # If any attr has no rest, exclude entire key
-            if "" in subs:
-                continue
-            # Exclude nested attributes
-            if isinstance(value, dict):
-                new_sub = exclude_attributes(value, subs)
-                if not new_sub:
-                    continue
-                new_resource[key] = new_sub
-            elif isinstance(value, list):
-                new_list = []
-                for item in value:
-                    # note(jon): `item` should always be a dict here
-                    new_item = exclude_attributes(item, subs)
-                    new_list.append(new_item)
-                new_resource[key] = new_list
-        else:
-            # No exclusion for this key: copy safely
-            if isinstance(value, (dict, list)):
-                new_resource[key] = deepcopy(value)
-            else:
-                new_resource[key] = value
-    return new_resource
 
 
 def filter_mutable_attributes(

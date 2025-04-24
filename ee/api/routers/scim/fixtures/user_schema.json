@@ -2,6 +2,7 @@
   "id": "urn:ietf:params:scim:schemas:core:2.0:User",
   "name": "User",
   "description": "User Account",
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Schema"],
   "attributes": [
     {
       "name": "schemas",
@@ -380,7 +381,7 @@
   "meta": {
     "resourceType": "Schema",
     "location": "/v2/Schemas/urn:ietf:params:scim:schemas:core:2.0:User",
-    "created": "2025-04-17T15:48:00",
-    "lastModified": "2025-04-17T15:48:00"
+    "created": "2025-04-17T15:48:00Z",
+    "lastModified": "2025-04-17T15:48:00Z"
   }
 }
