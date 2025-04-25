@@ -450,8 +450,8 @@ export default class DOMManager extends ListWalker<Message> {
           logger.error('CreateIFrameDocument: Node not found', msg);
           return;
         }
-        // shadow DOM for a custom element
-        const isCustomElement = true; //vElem.tagName.includes('-');
+        // shadow DOM for a custom element + SALESFORCE (<slot>) 
+        const isCustomElement = vElem.tagName.includes('-') || vElem.tagName === 'SLOT';
         const isNotActualIframe = !["IFRAME", "FRAME"].includes(vElem.tagName.toUpperCase());
         const isLikelyShadowRoot = isCustomElement && isNotActualIframe;
 
