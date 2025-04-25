@@ -497,7 +497,8 @@ export default abstract class Observer {
     if (isRootNode(node)) {
       return true
     }
-    const parent = node.parentNode
+    // @ts-ignore SALESFORCE
+    const parent = node.assignedSlot ? node.assignedSlot : node.parentNode
     let parentID: number | undefined
 
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
