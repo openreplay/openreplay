@@ -60,7 +60,7 @@ export function inlineRemoteCss(
     const ruleTexts = parseCSS(cssText);
 
     for (let i = 0; i < ruleTexts.length; i++) {
-      insertRule(sheetId, ruleTexts[i], i, baseHref);
+      insertRule(sheetId!, ruleTexts[i], i, baseHref);
     }
   }
 
