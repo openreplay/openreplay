@@ -42,6 +42,8 @@ func partitionFilters(filters []Filter) (sessionFilters []Filter, eventFilters [
 }
 
 var validFilterTypes = map[FilterType]struct{}{
+	"LOCATION":            {},
+	"CLICK":               {},
 	FilterClick:           {},
 	FilterInput:           {},
 	FilterLocation:        {},
@@ -78,17 +80,13 @@ type filterConfig struct {
 	IsNumeric       bool
 }
 
-var filterTypeConfigs = map[FilterType]filterConfig{
-	FilterClick:    {LogicalProperty: "label", EventName: "CLICK"},
-	FilterInput:    {LogicalProperty: "label", EventName: "INPUT"},
-	FilterLocation: {LogicalProperty: "url_path", EventName: "LOCATION"},
-	FilterCustom:   {LogicalProperty: "name", EventName: "CUSTOM"},
-	FilterTag:      {LogicalProperty: "tag", EventName: "TAG"},
-}
-
-var nestedFilterTypeConfigs = map[string]filterConfig{
+var propertyKeyMap = map[string]filterConfig{
+	"LOCATION":        {LogicalProperty: "url_path"},
+	"CLICK":           {LogicalProperty: "label"},
+	"INPUT":           {LogicalProperty: "label"},
 	"fetchUrl":        {LogicalProperty: "url_path"},
 	"fetchStatusCode": {LogicalProperty: "status", IsNumeric: true},
+	// TODO add more mappings as needed
 }
 
 func getColumnAccessor(logicalProp string, isNumeric bool, opts BuildConditionsOptions) string {
@@ -126,14 +124,14 @@ func buildEventConditions(filters []Filter, options ...BuildConditionsOptions) (
 
 	for _, f := range filters {
 		_, isValidType := validFilterTypes[f.Type]
-		if !isValidType || !f.IsEvent {
+		if !isValidType {
 			continue
 		}
 
 		if f.Type == FilterFetch {
 			var fetchConds []string
 			for _, nf := range f.Filters {
-				nestedConfig, ok := nestedFilterTypeConfigs[string(nf.Type)]
+				nestedConfig, ok := propertyKeyMap[string(nf.Type)]
 				if !ok {
 					continue
 				}
@@ -149,16 +147,20 @@ func buildEventConditions(filters []Filter, options ...BuildConditionsOptions) (
 				names = append(names, "REQUEST")
 			}
 		} else {
-			config, ok := filterTypeConfigs[f.Type]
+			config, ok := propertyKeyMap[string(f.Type)]
 			if !ok {
-				continue
+				config = filterConfig{
+					LogicalProperty: string(f.Type),
+				}
 			}
 
 			accessor := getColumnAccessor(config.LogicalProperty, config.IsNumeric, opts)
 			c := buildCond(accessor, f.Value, f.Operator)
 			if c != "" {
 				conds = append(conds, c)
-				names = append(names, config.EventName)
+				if f.IsEvent {
+					names = append(names, string(f.Type))
+				}
 			}
 		}
 	}
