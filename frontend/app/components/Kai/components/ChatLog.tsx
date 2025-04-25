@@ -27,7 +27,7 @@ function ChatLog({
   const chatManager = React.useRef<ChatManager | null>(null);
   const chatRef = React.useRef<HTMLDivElement>(null);
   const [messages, setMessages] = React.useState<Message[]>(
-    initialMsg ? [{ text: initialMsg, isUser: true }] : [],
+    initialMsg ? [{ text: initialMsg, isUser: true, messageId: '123' }] : [],
   );
   const [processingStage, setProcessing] = React.useState<BotChunk | null>(
     null,
@@ -49,6 +49,7 @@ function ChatLog({
                 return {
                   text: m.content,
                   isUser: isUser,
+                  messageId: m.message_id,
                 };
               }),
             );
@@ -69,6 +70,9 @@ function ChatLog({
           if (msg.stage === 'chart') {
             setProcessing(msg);
           }
+          if (msg.stage === 'start') {
+            setProcessing({ ...msg, content: 'Processing your request...' });
+          }
           if (msg.stage === 'final') {
             setMessages((prev) => [
               ...prev,
@@ -76,6 +80,7 @@ function ChatLog({
                 text: msg.content,
                 isUser: false,
                 userName: 'Kai',
+                messageId: msg.messageId,
               },
             ]);
             setProcessing(null);
@@ -112,9 +117,8 @@ function ChatLog({
       top: chatRef.current.scrollHeight,
       behavior: 'smooth',
     });
-  }, [messages.length]);
+  }, [messages.length, processingStage]);
 
-  const newChat = messages.length === 1 && processingStage === null;
   return (
     <Loader loading={isLoading} className={'w-full h-full'}>
       <div
@@ -130,13 +134,11 @@ function ChatLog({
               text={msg.text}
               isUser={msg.isUser}
               userName={userLetter}
+              messageId={msg.messageId}
             />
           ))}
           {processingStage ? (
             <ChatNotice content={processingStage.content} />
-          ) : null}
-          {newChat ? (
-            <ChatNotice content={'Processing your question...'} />
           ) : null}
         </div>
         <div className={'sticky bottom-0 pt-6 w-2/3'}>
