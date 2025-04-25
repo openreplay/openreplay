@@ -69,11 +69,12 @@ export class ChatManager {
 }
 
 export interface BotChunk {
-  stage: 'chart' | 'final' | 'title';
+  stage: 'start' | 'chart' | 'final' | 'title';
   content: string;
-  data?: any[];
+  messageId: string;
 }
 export interface Message {
   text: string;
   isUser: boolean;
+  messageId: string;
 }

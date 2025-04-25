@@ -151,4 +151,26 @@ export default class AiService extends BaseService {
     const data = await r.json();
     return data;
   }
+
+  feedback = async (positive: boolean | null, messageId: string, projectId: string, userId: string) => {
+    const jwt = window.env.KAI_TESTING // this.client.getJwt()
+    const r = await fetch(`http://localhost:8700/kai/${projectId}/messages/feedback`, {
+      method: 'POST',
+      headers: new Headers({
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwt}`
+      }),
+      body: JSON.stringify({
+        message_id: messageId,
+        value: positive,
+        user_id: userId,
+      }),
+    });
+    if (!r.ok) {
+      throw new Error('Failed to send feedback');
+    }
+
+    return await r.json()
+  }
 }
