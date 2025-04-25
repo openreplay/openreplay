@@ -6,6 +6,7 @@ export class ChatManager {
 
   constructor({ projectId, userId, threadId }: { projectId: string; userId: string; threadId: string }) {
     this.threadId = threadId;
+    console.log('Kai socket', projectId, userId, threadId, window.env.KAI_TESTING);
     const socket = io(`localhost:8700/kai/chat`, {
       transports: ['websocket'],
       autoConnect: true,
@@ -27,6 +28,9 @@ export class ChatManager {
     socket.on('disconnect', () => {
       console.log('Disconnected from server');
     });
+    socket.on('error', (err) => {
+      console.error('Socket error:', err);
+    })
     socket.onAny((e) => console.log('event', e));
 
     this.socket = socket;

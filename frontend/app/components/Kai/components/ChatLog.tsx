@@ -35,11 +35,10 @@ function ChatLog({
   const [isLoading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
-    console.log(threadId, initialMsg);
+    //const settings = { projectId: projectId ?? 2325, userId: userId ?? 65 };
+    const settings = { projectId: '2325', userId: '0', threadId, };
     if (threadId && !initialMsg) {
       setLoading(true);
-      //const settings = { projectId: projectId ?? 2325, userId: userId ?? 65 };
-      const settings = { projectId: '2325', userId: '0' };
       aiService
         .getKaiChat(settings.projectId, settings.userId, threadId)
         .then((res) => {
@@ -62,6 +61,8 @@ function ChatLog({
         .finally(() => {
           setLoading(false);
         });
+    }
+    if (threadId) {
       chatManager.current = new ChatManager(settings);
       chatManager.current.setOnMsgHook({
         msgCallback: (msg) => {
