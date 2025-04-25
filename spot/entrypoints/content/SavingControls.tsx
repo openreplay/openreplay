@@ -38,6 +38,8 @@ function SavingControls({
   getVideoData,
   getErrorEvents,
 }: ISavingControls) {
+  let nameInputRef: HTMLInputElement;
+  let descriptionInputRef: HTMLTextAreaElement;
   const [name, setName] = createSignal(`Issues in — ${document.title}`);
   const [description, setDescription] = createSignal("");
   const [currentTime, setCurrentTime] = createSignal(0);
@@ -62,6 +64,43 @@ function SavingControls({
     });
   });
 
+  createEffect(() => {
+    const stopEvents = (e: Event) => {
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+    };
+    if (nameInputRef) {
+      nameInputRef.addEventListener('keydown', stopEvents, true);
+      nameInputRef.addEventListener('keyup', stopEvents, true);
+      nameInputRef.addEventListener('keypress', stopEvents, true);
+      nameInputRef.addEventListener('input', stopEvents, true);
+      nameInputRef.addEventListener('change', stopEvents, true);
+
+      onCleanup(() => {
+        nameInputRef.removeEventListener('keydown', stopEvents, true);
+        nameInputRef.removeEventListener('keyup', stopEvents, true);
+        nameInputRef.removeEventListener('keypress', stopEvents, true);
+        nameInputRef.removeEventListener('input', stopEvents, true);
+        nameInputRef.removeEventListener('change', stopEvents, true);
+      });
+    }
+    if (descriptionInputRef) {
+      descriptionInputRef.addEventListener('keydown', stopEvents, true);
+      descriptionInputRef.addEventListener('keyup', stopEvents, true);
+      descriptionInputRef.addEventListener('keypress', stopEvents, true);
+      descriptionInputRef.addEventListener('input', stopEvents, true);
+      descriptionInputRef.addEventListener('change', stopEvents, true);
+
+      onCleanup(() => {
+        descriptionInputRef.removeEventListener('keydown', stopEvents, true);
+        descriptionInputRef.removeEventListener('keyup', stopEvents, true);
+        descriptionInputRef.removeEventListener('keypress', stopEvents, true);
+        descriptionInputRef.removeEventListener('input', stopEvents, true);
+        descriptionInputRef.removeEventListener('change', stopEvents, true);
+      });
+    }
+  });
+
   const spacePressed = (e: KeyboardEvent) => {
     if (
       e.target instanceof HTMLInputElement ||
@@ -72,6 +111,7 @@ function SavingControls({
     }
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation()
     if (e.key === " ") {
       if (playing()) {
         pause();
@@ -456,19 +496,25 @@ function SavingControls({
                 <div class="mb-4">
                   <label class={"text-base font-medium mb-2"}>Title</label>
                   <input
+                    ref={el => nameInputRef = el}
                     type="text"
                     placeholder="Name this Spot"
                     maxlength={64}
                     value={name()}
                     onFocus={() => setIsTyping(true)}
                     onBlur={() => setIsTyping(false)}
-                    onInput={(e) => setName(e.currentTarget.value)}
+                    onInput={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setName(e.currentTarget.value)
+                    }}
                     class="input input-bordered w-full input-sm text-base mt-1"
                   />
                 </div>
                 <div>
                   <label class={"text-base font-medium"}>Comments</label>
                   <textarea
+                    ref={el => descriptionInputRef = el}
                     placeholder="Add more details..."
                     value={description()}
                     maxLength={256}

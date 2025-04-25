@@ -20,8 +20,6 @@
     "@openreplay/network-proxy": "^1.1.0",
     "@thedutchcoder/postcss-rem-to-px": "^0.0.2",
     "autoprefixer": "^10.4.21",
-    "install": "^0.13.0",
-    "npm": "^10.9.2",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
     "solid-js": "^1.9.5",
