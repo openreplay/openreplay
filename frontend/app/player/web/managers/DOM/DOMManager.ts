@@ -1,4 +1,5 @@
 import logger from 'App/logger';
+import { resolveCSS } from '../../messages/rewriter/urlResolve';
 
 import type Screen from '../../Screen/Screen';
 import type { Message, SetNodeScroll } from '../../messages';

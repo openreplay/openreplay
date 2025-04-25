@@ -184,6 +184,15 @@ enum RecentsType {
   Changed,
 }
 
+interface Options {
+  inlineRemoteCss?: boolean,
+  disableSprites?: boolean,
+  inlinerOptions?: {
+    forceFetch?: boolean,
+    forcePlain?: boolean,
+  }
+}
+
 export default abstract class Observer {
   private readonly observer: MutationObserver
   private readonly commited: Array<boolean | undefined> = []
@@ -198,14 +207,16 @@ export default abstract class Observer {
    * can (and will) affect performance
    * */
   private readonly inlineRemoteCss: boolean = false
+  private readonly inlinerOptions: Options['inlinerOptions'] = undefined
   private readonly domParser = new DOMParser()
   constructor(
     protected readonly app: App,
-    protected readonly isTopContext = false,
-    options: { disableSprites: boolean, inlineRemoteCss: boolean } = { disableSprites: false, inlineRemoteCss: false },
+    protected readonly isTopContext: boolean = false,
+    options: Options = {},
   ) {
-    this.disableSprites = options.disableSprites
-    this.inlineRemoteCss = options.inlineRemoteCss
+    this.disableSprites = Boolean(options.disableSprites)
+    this.inlineRemoteCss = Boolean(options.inlineRemoteCss)
+    this.inlinerOptions = options.inlinerOptions
     this.observer = createMutationObserver(
       this.app.safe((mutations) => {
         for (const mutation of mutations) {
@@ -368,15 +379,23 @@ export default abstract class Observer {
         setTimeout(() => {
           inlineRemoteCss(
             // @ts-ignore
-          node,
-          id,
-          this.app.getBaseHref(),
-          nextID,
+            node,
+            id,
+            this.app.getBaseHref(),
+            nextID,
             (id: number, cssText: string, index: number, baseHref: string) => {
               this.app.send(AdoptedSSInsertRuleURLBased(id, cssText, index, baseHref))
             },
             (sheetId: number, ownerId: number) => {
               this.app.send(AdoptedSSAddOwner(sheetId, ownerId))
+            },
+            this.inlinerOptions?.forceFetch,
+            this.inlinerOptions?.forcePlain,
+            (cssText: string, fakeTextId: number) => {
+              this.app.send(CreateTextNode(fakeTextId, id, 0))
+              setTimeout(() => {
+                this.app.send(SetCSSDataURLBased(fakeTextId, cssText, this.app.getBaseHref()))
+              }, 10)
             }
           )
         }, 0)
@@ -478,8 +497,7 @@ export default abstract class Observer {
     if (isRootNode(node)) {
       return true
     }
-    // @ts-ignore SALESFORCE
-    const parent = node.assignedSlot ? node.assignedSlot : node.parentNode
+    const parent = node.parentNode
     let parentID: number | undefined
 
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
