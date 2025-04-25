@@ -394,7 +394,7 @@ export default abstract class Observer {
             (cssText: string, fakeTextId: number) => {
               this.app.send(CreateTextNode(fakeTextId, id, 0))
               setTimeout(() => {
-                this.app.send(SetNodeData(fakeTextId, cssText))
+                this.app.send(SetCSSDataURLBased(fakeTextId, cssText, this.app.getBaseHref()))
               }, 10)
             }
           )
