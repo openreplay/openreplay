@@ -59,6 +59,18 @@ func (f FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 		}
 	}
 
+	// extract duration filter
+	var minDur, maxDur int64
+	for i := len(globalFilters) - 1; i >= 0; i-- {
+		if globalFilters[i].Type == "duration" {
+			if vals, ok := globalFilters[i].Value.([]interface{}); ok && len(vals) == 2 {
+				minDur = int64(vals[0].(float64))
+				maxDur = int64(vals[1].(float64))
+			}
+			globalFilters = append(globalFilters[:i], globalFilters[i+1:]...)
+		}
+	}
+
 	// Global filters
 	globalConds, globalNames := buildEventConditions(globalFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
@@ -70,6 +82,9 @@ func (f FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 		"s.duration > 0",
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
 	}
+	if maxDur > 0 {
+		base = append(base, fmt.Sprintf("s.duration BETWEEN %d AND %d", minDur, maxDur))
+	}
 	base = append(base, globalConds...)
 	if len(globalNames) > 0 {
 		base = append(base, "e.`$event_name` IN ("+buildInClause(globalNames)+")")
@@ -79,14 +94,11 @@ func (f FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 	var stepNames []string
 	var stepExprs []string
 	for i, filter := range eventFilters {
-		// Step name from filter type
 		stepNames = append(stepNames, fmt.Sprintf("'%s'", filter.Type))
 		exprs, _ := buildEventConditions([]Filter{filter}, BuildConditionsOptions{DefinedColumns: mainColumns})
-		// replace main.$properties references
 		for j, c := range exprs {
 			c = strings.ReplaceAll(c, "toString(main.`$properties`)", "properties")
 			c = strings.ReplaceAll(c, "main.`$properties`", "properties")
-			// wrap JSON for JSONExtractString
 			c = strings.ReplaceAll(c, "JSONExtractString(properties", "JSONExtractString(toString(properties)")
 			exprs[j] = c
 		}
