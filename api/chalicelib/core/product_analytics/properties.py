@@ -1,6 +1,32 @@
+import re
+from functools import cache
+
+import schemas
 from chalicelib.utils import helper, exp_ch_helper
 from chalicelib.utils.ch_client import ClickHouseClient
-import schemas
+
+
+@cache
+def get_predefined_property_types():
+    with ClickHouseClient() as ch_client:
+        properties_type = ch_client.execute("""\
+        SELECT type
+        FROM system.columns
+        WHERE database = 'product_analytics'
+          AND table = 'events'
+          AND name = '$properties';""")
+    if len(properties_type) == 0:
+        return {}
+    properties_type = properties_type[0]["type"]
+
+    pattern = r'(\w+)\s+(Enum8\([^\)]+\)|[A-Za-z0-9_]+(?:\([^\)]+\))?)'
+
+    # Find all matches
+    matches = re.findall(pattern, properties_type)
+
+    # Create a dictionary of attribute names and types
+    attributes = {match[0]: match[1] for match in matches}
+    return attributes
 
 
 def get_all_properties(project_id: int, page: schemas.PaginatedSchema):
@@ -23,9 +49,13 @@ def get_all_properties(project_id: int, page: schemas.PaginatedSchema):
             return {"total": 0, "list": []}
         total = properties[0]["total"]
         properties = helper.list_to_camel_case(properties)
+        predefined_properties = get_predefined_property_types()
         for i, p in enumerate(properties):
             p["id"] = f"prop_{i}"
             p["icon"] = None
+            if p["name"] in predefined_properties:
+                p["possibleTypes"].insert(0, predefined_properties[p["name"]])
+                p["possibleTypes"] = list(set(p["possibleTypes"]))
             p["possibleTypes"] = exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"])
             p.pop("total")
         return {"total": total, "list": properties}
