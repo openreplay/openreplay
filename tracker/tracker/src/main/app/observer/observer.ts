@@ -185,8 +185,8 @@ enum RecentsType {
 }
 
 interface Options {
-  inlineRemoteCss?: boolean,
   disableSprites?: boolean,
+  inlineRemoteCss?: boolean,
   inlinerOptions?: {
     forceFetch?: boolean,
     forcePlain?: boolean,
