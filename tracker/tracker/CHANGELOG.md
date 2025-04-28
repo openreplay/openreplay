@@ -1,3 +1,21 @@
+## 16.2.1
+
+- easier inliner options:
+```
+inlineCss: InlineCssMode
+
+enum InlineCssMode {
+  /** default behavior -- will parse and cache the css file on backend */
+  Disabled = 0,
+  /** will attempt to record the linked css file as AdoptedStyleSheet object */
+  Inline = 1,
+  /** will fetch the file, then simulated AdoptedStyleSheets behavior programmaticaly for the replay */
+  InlineFetched = 2,
+  /** will fetch the file, then save it as plain css inside <style> node */
+  PlainFetched = 3,
+}
+```
+
 ## 16.2.0
 
 - css batching and inlining via (!plain mode will cause fake text nodes in style tags occupying 99*10^6 id space, can conflict with crossdomain iframes!)

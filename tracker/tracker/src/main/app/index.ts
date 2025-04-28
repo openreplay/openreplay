@@ -285,23 +285,6 @@ export default class App {
     this.contextId = Math.random().toString(36).slice(2)
     this.projectKey = projectKey
 
-    if (
-      Object.keys(options).findIndex((k) => ['fixedCanvasScaling', 'disableCanvas'].includes(k)) !==
-      -1
-    ) {
-      console.warn(
-        'Openreplay: canvas options are moving to separate key "canvas" in next update. Please update your configuration.',
-      )
-      options = {
-        ...options,
-        canvas: {
-          __save_canvas_locally: options.__save_canvas_locally,
-          fixedCanvasScaling: options.fixedCanvasScaling,
-          disableCanvas: options.disableCanvas,
-        },
-      }
-    }
-
     this.networkOptions = options.network
 
     const defaultOptions: Options = {
