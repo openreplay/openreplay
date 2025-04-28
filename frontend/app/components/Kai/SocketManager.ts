@@ -36,12 +36,13 @@ export class ChatManager {
     this.socket = socket;
   }
 
-  sendMesage = (message: string) => {
+  sendMessage = (message: string, isReplace = false) => {
     this.socket.emit(
       'message',
       JSON.stringify({
         message,
         threadId: this.threadId,
+        replace: isReplace,
       }),
     );
   };
@@ -77,4 +78,8 @@ export interface Message {
   text: string;
   isUser: boolean;
   messageId: string;
+}
+
+export interface SentMessage extends Message {
+  replace: boolean
 }

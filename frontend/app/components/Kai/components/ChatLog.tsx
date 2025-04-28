@@ -1,11 +1,9 @@
 import React from 'react';
 import ChatInput from './ChatInput';
 import { ChatMsg, ChatNotice } from './ChatMsg';
-import { ChatManager } from '../SocketManager';
-import type { BotChunk, Message } from '../SocketManager';
-import { aiService } from 'App/services';
-import { toast } from 'react-toastify';
 import { Loader } from 'UI';
+import { kaiStore } from '../KaiStore'
+import { observer } from 'mobx-react-lite';
 
 function ChatLog({
   projectId,
@@ -24,92 +22,28 @@ function ChatLog({
   initialMsg: string | null;
   setInitialMsg: (msg: string | null) => void;
 }) {
-  const chatManager = React.useRef<ChatManager | null>(null);
+  const messages = kaiStore.messages;
+  const loading = kaiStore.loadingChat;
   const chatRef = React.useRef<HTMLDivElement>(null);
-  const [messages, setMessages] = React.useState<Message[]>(
-    initialMsg ? [{ text: initialMsg, isUser: true, messageId: '123' }] : [],
-  );
-  const [processingStage, setProcessing] = React.useState<BotChunk | null>(
-    null,
-  );
-  const [isLoading, setLoading] = React.useState(false);
+  const processingStage = kaiStore.processingStage;
 
   React.useEffect(() => {
     //const settings = { projectId: projectId ?? 2325, userId: userId ?? 65 };
     const settings = { projectId: '2325', userId: '0', threadId, };
     if (threadId && !initialMsg) {
-      setLoading(true);
-      aiService
-        .getKaiChat(settings.projectId, settings.userId, threadId)
-        .then((res) => {
-          if (res && res.length) {
-            setMessages(
-              res.map((m) => {
-                const isUser = m.role === 'human';
-                return {
-                  text: m.content,
-                  isUser: isUser,
-                  messageId: m.message_id,
-                };
-              }),
-            );
-          }
-        })
-        .catch((e) => {
-          console.error(e);
-          toast.error("Couldn't load chat history. Please try again later.");
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+      void kaiStore.getChat(settings.projectId, settings.userId, threadId)
     }
     if (threadId) {
-      chatManager.current = new ChatManager(settings);
-      chatManager.current.setOnMsgHook({
-        msgCallback: (msg) => {
-          if (msg.stage === 'chart') {
-            setProcessing(msg);
-          }
-          if (msg.stage === 'start') {
-            setProcessing({ ...msg, content: 'Processing your request...' });
-          }
-          if (msg.stage === 'final') {
-            setMessages((prev) => [
-              ...prev,
-              {
-                text: msg.content,
-                isUser: false,
-                userName: 'Kai',
-                messageId: msg.messageId,
-              },
-            ]);
-            setProcessing(null);
-          }
-        },
-        titleCallback: (title) => onTitleChange(title),
-      });
+      kaiStore.createChatManager(settings, onTitleChange, initialMsg)
     }
     return () => {
-      chatManager.current?.disconnect();
+      kaiStore.clearChat();
       setInitialMsg(null);
     };
   }, [threadId]);
 
-  React.useEffect(() => {
-    if (initialMsg) {
-      chatManager.current?.sendMesage(initialMsg);
-    }
-  }, [initialMsg]);
-
   const onSubmit = (text: string) => {
-    chatManager.current?.sendMesage(text);
-    setMessages((prev) => [
-      ...prev,
-      {
-        text,
-        isUser: true,
-      },
-    ]);
+    kaiStore.sendMessage(text)
   };
 
   React.useEffect(() => {
@@ -119,8 +53,10 @@ function ChatLog({
     });
   }, [messages.length, processingStage]);
 
+  const lastHumanMsgInd: null | number = kaiStore.lastHumanMessage.index;
+  console.log('messages', messages)
   return (
-    <Loader loading={isLoading} className={'w-full h-full'}>
+    <Loader loading={loading} className={'w-full h-full'}>
       <div
         ref={chatRef}
         className={
@@ -135,6 +71,7 @@ function ChatLog({
               isUser={msg.isUser}
               userName={userLetter}
               messageId={msg.messageId}
+              isLast={index === lastHumanMsgInd}
             />
           ))}
           {processingStage ? (
@@ -149,4 +86,4 @@ function ChatLog({
   );
 }
 
-export default ChatLog;
+export default observer(ChatLog);
