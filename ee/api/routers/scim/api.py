@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 from enum import Enum
 
 from decouple import config
@@ -8,7 +9,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from psycopg2 import errors
 
-from chalicelib.core import tenants
+from chalicelib.core import roles, tenants
 from chalicelib.utils.scim_auth import (
     auth_optional,
     auth_required,
@@ -203,9 +204,17 @@ async def get_schemas(filter_param: str | None = Query(None, alias="filter")):
 async def get_schema(schema_id: str, tenant_id=Depends(auth_required)):
     if schema_id not in SCHEMA_IDS_TO_SCHEMA_DETAILS:
         return _not_found_error_response(schema_id)
+    schema = deepcopy(SCHEMA_IDS_TO_SCHEMA_DETAILS[schema_id])
+    if schema_id == "urn:ietf:params:scim:schemas:core:2.0:User":
+        db_roles = roles.get_roles(tenant_id)
+        role_names = [role["name"] for role in db_roles]
+        user_type_attribute = next(
+            filter(lambda x: x["name"] == "userType", schema["attributes"])
+        )
+        user_type_attribute["canonicalValues"] = role_names
     return JSONResponse(
         status_code=200,
-        content=SCHEMA_IDS_TO_SCHEMA_DETAILS[schema_id],
+        content=schema,
     )
 
 
