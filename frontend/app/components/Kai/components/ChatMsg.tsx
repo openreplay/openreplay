@@ -3,7 +3,6 @@ import { Icon } from 'UI';
 import cn from 'classnames';
 import Markdown from 'react-markdown';
 import { Loader, ThumbsUp, ThumbsDown, ListRestart } from 'lucide-react';
-import { toast } from 'react-toastify';
 import { kaiStore } from '../KaiStore';
 
 export function ChatMsg({
