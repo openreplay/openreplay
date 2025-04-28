@@ -182,7 +182,8 @@
       "caseExact": false,
       "mutability": "readWrite",
       "returned": "default",
-      "uniqueness": "none"
+      "uniqueness": "none",
+      "canonicalValues": ["owner", "admin", "member", "service"]
     },
     {
       "name": "preferredLanguage",
