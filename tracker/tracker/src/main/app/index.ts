@@ -41,18 +41,10 @@ import type { Options as SessOptions } from './session.js'
 import Session from './session.js'
 import Ticker from './ticker.js'
 import { MaintainerOptions } from './nodes/maintainer.js'
+export { InlineCssMode } from './observer/top_observer.js'
 
 interface TypedWorker extends Omit<Worker, 'postMessage'> {
   postMessage(data: ToWorkerData): void
-}
-
-interface InlineOptions {
-  inlineRemoteCss: boolean
-  inlinerOptions: {
-    forceFetch: boolean,
-    forcePlain: boolean
-    ,
-  },
 }
 
 // TODO: Unify and clearly describe options logic
@@ -216,44 +208,6 @@ function getTimezone() {
 }
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
-function getInlineOptions(mode: InlineCssMode): InlineOptions {
-  switch (mode) {
-    case InlineCssMode.RemoteOnly:
-      return {
-        inlineRemoteCss: true,
-        inlinerOptions: {
-          forceFetch: false,
-          forcePlain: false,
-        },
-      }
-    case InlineCssMode.RemoteWithForceFetch:
-      return {
-        inlineRemoteCss: true,
-        inlinerOptions: {
-          forceFetch: true,
-          forcePlain: false,
-        },
-      };
-    case InlineCssMode.All:
-      return {
-        inlineRemoteCss: true,
-        inlinerOptions: {
-          forceFetch: true,
-          forcePlain: true,
-        },
-      };
-    case InlineCssMode.None:
-    default:
-      return {
-        inlineRemoteCss: false,
-        inlinerOptions: {
-          forceFetch: false,
-          forcePlain: false,
-        },
-      };
-  }
-}
-
 const proto = {
   // ask if there are any tabs alive
   ask: 'never-gonna-give-you-up',
@@ -293,7 +247,7 @@ export default class App {
   private readonly startCallbacks: Array<StartCallback> = []
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
-  public readonly options: AppOptions
+  public readonly options: Options
   public readonly networkOptions?: NetworkOptions
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
@@ -305,7 +259,7 @@ export default class App {
   public socketMode = false
   private compressionThreshold = 24 * 1000
   private readonly bc: BroadcastChannel | null = null
-  private readonly contextId
+  private readonly contextId: string
   private canvasRecorder: CanvasRecorder | null = null
   private uxtManager: UserTestManager
   private conditionsManager: ConditionsManager | null = null
@@ -320,13 +274,6 @@ export default class App {
     'usability-test': true,
   }
   private emptyBatchCounter = 0
-  private inlineCss: {
-    inlineRemoteCss: boolean
-    inlinerOptions: {
-      forceFetch: boolean
-      forcePlain: boolean
-    }
-  }
 
   constructor(
     projectKey: string,
@@ -337,8 +284,6 @@ export default class App {
   ) {
     this.contextId = Math.random().toString(36).slice(2)
     this.projectKey = projectKey
-
-    this.inlineCss = getInlineOptions(options.inlineCss ?? 0)
 
     if (
       Object.keys(options).findIndex((k) => ['fixedCanvasScaling', 'disableCanvas'].includes(k)) !==
@@ -419,7 +364,7 @@ export default class App {
       forceNgOff: Boolean(options.forceNgOff),
       maintainer: this.options.nodes?.maintainer,
     })
-    this.observer = new Observer({ app: this, options: { ...options, ...this.inlineCss } })
+    this.observer = new Observer({ app: this, options })
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)

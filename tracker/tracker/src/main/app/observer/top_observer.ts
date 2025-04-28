@@ -10,10 +10,52 @@ import App from '../index.js'
 import { IN_BROWSER, hasOpenreplayAttribute, canAccessIframe } from '../../utils.js'
 
 export enum InlineCssMode {
-  None = 0,
-  RemoteOnly = 1,
-  RemoteWithForceFetch = 2,
-  All = 3,
+  /** default behavior -- will parse and cache the css file on backend */
+  Disabled = 0,
+  /** will attempt to record the linked css file as AdoptedStyleSheet object */
+  Inline = 1,
+  /** will fetch the file, then simulated AdoptedStyleSheets behavior programmaticaly for the replay */
+  InlineFetched = 2,
+  /** will fetch the file, then save it as plain css inside <style> node */
+  PlainFetched = 3,
+}
+
+function getInlineOptions(mode: InlineCssMode) {
+  switch (mode) {
+    case InlineCssMode.Inline:
+      return {
+        inlineRemoteCss: true,
+        inlinerOptions: {
+          forceFetch: false,
+          forcePlain: false,
+        },
+      }
+    case InlineCssMode.InlineFetched:
+      return {
+        inlineRemoteCss: true,
+        inlinerOptions: {
+          forceFetch: true,
+          forcePlain: false,
+        },
+      };
+    case InlineCssMode.PlainFetched:
+      return {
+        inlineRemoteCss: true,
+        inlinerOptions: {
+          forceFetch: true,
+          forcePlain: true,
+        },
+      };
+    case InlineCssMode.Disabled:
+    default:
+      return {
+        inlineRemoteCss: false,
+        inlinerOptions: {
+          forceFetch: false,
+          forcePlain: false,
+        },
+      };
+  }
 }
 
 export interface Options {
@@ -24,7 +66,7 @@ export interface Options {
    * we will try to parse the css text instead and send it as css rules set
    * can (and probably will) affect performance to certain degree,
    * especially if the css itself is crossdomain
-   * @default false
+   * @default InlineCssMode.None = 0
    * */
   inlineCss: InlineCssMode;
 }
@@ -48,7 +90,11 @@ export default class TopObserver extends Observer {
       },
       params.options,
     )
-    super(params.app, true, opts)
+    const observerOptions = {
+      disableSprites: opts.disableSprites,
+      ...getInlineOptions(opts.inlineCss)
+    }
+    super(params.app, true, observerOptions)
     this.app = params.app
     this.options = opts
     // IFrames
