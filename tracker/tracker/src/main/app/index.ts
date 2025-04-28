@@ -34,7 +34,7 @@ import Message, {
 } from './messages.gen.js'
 import Nodes from './nodes/index.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
-import Observer from './observer/top_observer.js'
+import Observer, { InlineCssMode } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
 import Sanitizer from './sanitizer.js'
 import type { Options as SessOptions } from './session.js'
@@ -44,6 +44,15 @@ import { MaintainerOptions } from './nodes/maintainer.js'
 
 interface TypedWorker extends Omit<Worker, 'postMessage'> {
   postMessage(data: ToWorkerData): void
+}
+
+interface InlineOptions {
+  inlineRemoteCss: boolean
+  inlinerOptions: {
+    forceFetch: boolean,
+    forcePlain: boolean
+    ,
+  },
 }
 
 // TODO: Unify and clearly describe options logic
@@ -207,6 +216,44 @@ function getTimezone() {
 }
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
+function getInlineOptions(mode: InlineCssMode): InlineOptions {
+  switch (mode) {
+    case InlineCssMode.RemoteOnly:
+      return {
+        inlineRemoteCss: true,
+        inlinerOptions: {
+          forceFetch: false,
+          forcePlain: false,
+        },
+      }
+    case InlineCssMode.RemoteWithForceFetch:
+      return {
+        inlineRemoteCss: true,
+        inlinerOptions: {
+          forceFetch: true,
+          forcePlain: false,
+        },
+      };
+    case InlineCssMode.All:
+      return {
+        inlineRemoteCss: true,
+        inlinerOptions: {
+          forceFetch: true,
+          forcePlain: true,
+        },
+      };
+    case InlineCssMode.None:
+    default:
+      return {
+        inlineRemoteCss: false,
+        inlinerOptions: {
+          forceFetch: false,
+          forcePlain: false,
+        },
+      };
+  }
+}
+
 const proto = {
   // ask if there are any tabs alive
   ask: 'never-gonna-give-you-up',
@@ -273,6 +320,13 @@ export default class App {
     'usability-test': true,
   }
   private emptyBatchCounter = 0
+  private inlineCss: {
+    inlineRemoteCss: boolean
+    inlinerOptions: {
+      forceFetch: boolean
+      forcePlain: boolean
+    }
+  }
 
   constructor(
     projectKey: string,
@@ -283,6 +337,8 @@ export default class App {
   ) {
     this.contextId = Math.random().toString(36).slice(2)
     this.projectKey = projectKey
+
+    this.inlineCss = getInlineOptions(options.inlineCss ?? 0)
 
     if (
       Object.keys(options).findIndex((k) => ['fixedCanvasScaling', 'disableCanvas'].includes(k)) !==
@@ -326,7 +382,6 @@ export default class App {
       disableCanvas: false,
       captureIFrames: true,
       disableSprites: false,
-      inlineRemoteCss: true,
       obscureTextEmails: true,
       obscureTextNumbers: false,
       crossdomain: {
@@ -339,6 +394,7 @@ export default class App {
         useAnimationFrame: false,
       },
       forceNgOff: false,
+      inlineCss: 0,
     }
     this.options = simpleMerge(defaultOptions, options)
 
@@ -363,7 +419,7 @@ export default class App {
       forceNgOff: Boolean(options.forceNgOff),
       maintainer: this.options.nodes?.maintainer,
     })
-    this.observer = new Observer({ app: this, options })
+    this.observer = new Observer({ app: this, options: { ...options, ...this.inlineCss } })
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)

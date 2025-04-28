@@ -9,6 +9,13 @@ import { CreateDocument } from '../messages.gen.js'
 import App from '../index.js'
 import { IN_BROWSER, hasOpenreplayAttribute, canAccessIframe } from '../../utils.js'
 
+export enum InlineCssMode {
+  None = 0,
+  RemoteOnly = 1,
+  RemoteWithForceFetch = 2,
+  All = 3,
+}
+
 export interface Options {
   captureIFrames: boolean
   disableSprites: boolean
@@ -19,7 +26,7 @@ export interface Options {
    * especially if the css itself is crossdomain
    * @default false
    * */
-  inlineRemoteCss: boolean
+  inlineCss: InlineCssMode;
 }
 
 type Context = Window & typeof globalThis
@@ -37,7 +44,7 @@ export default class TopObserver extends Observer {
       {
         captureIFrames: true,
         disableSprites: false,
-        inlineRemoteCss: false,
+        inlineCss: 0,
       },
       params.options,
     )
