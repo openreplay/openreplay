@@ -3,6 +3,7 @@ package charts
 import (
 	"fmt"
 	"openreplay/backend/pkg/analytics/db"
+	"strconv"
 	"strings"
 )
 
@@ -49,8 +50,7 @@ func (f FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 	metricFormat := p.MetricPayload.MetricFormat
 
 	// separate global vs step filters based on IsEvent flag
-	var globalFilters []Filter
-	var eventFilters []Filter
+	var globalFilters, eventFilters []Filter
 	for _, flt := range s.Filter.Filters {
 		if flt.IsEvent {
 			eventFilters = append(eventFilters, flt)
@@ -63,9 +63,10 @@ func (f FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 	var minDur, maxDur int64
 	for i := len(globalFilters) - 1; i >= 0; i-- {
 		if globalFilters[i].Type == "duration" {
-			if vals, ok := globalFilters[i].Value.([]interface{}); ok && len(vals) == 2 {
-				minDur = int64(vals[0].(float64))
-				maxDur = int64(vals[1].(float64))
+			vals := globalFilters[i].Value // []string
+			if len(vals) == 2 {
+				minDur, _ = strconv.ParseInt(vals[0], 10, 64)
+				maxDur, _ = strconv.ParseInt(vals[1], 10, 64)
 			}
 			globalFilters = append(globalFilters[:i], globalFilters[i+1:]...)
 		}
@@ -85,6 +86,7 @@ func (f FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 	if maxDur > 0 {
 		base = append(base, fmt.Sprintf("s.duration BETWEEN %d AND %d", minDur, maxDur))
 	}
+
 	base = append(base, globalConds...)
 	if len(globalNames) > 0 {
 		base = append(base, "e.`$event_name` IN ("+buildInClause(globalNames)+")")
