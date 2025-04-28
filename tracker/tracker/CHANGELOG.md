@@ -3,11 +3,16 @@
 - css batching and inlining via (!plain mode will cause fake text nodes in style tags occupying 99*10^6 id space, can conflict with crossdomain iframes!)
 
 ```
-inlineRemoteCss: boolean
-  inlinerOptions?: {
-    forceFetch?: boolean,
-    forcePlain?: boolean,
-  }
+inlineCss: 0 | 1 | 2 | 3
+
+/**
+* export enum InlineCssMode {
+*  0 = None,
+*  1 = inlineRemoteCss,
+*  2 = inlineRemoteCss + forceFetch
+*  3 = inlineRemoteCss + forceFetch + forcePlain
+* }
+* */
 ```
 
 ## 16.1.4
