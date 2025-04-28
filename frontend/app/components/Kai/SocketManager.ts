@@ -20,6 +20,7 @@ export class ChatManager {
         user_id: userId,
         token: window.env.KAI_TESTING,
         project_id: projectId,
+        thread_id: threadId,
       },
     });
     socket.on('connect', () => {
