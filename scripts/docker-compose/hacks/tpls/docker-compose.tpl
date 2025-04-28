@@ -8,7 +8,7 @@ services:
     image: bitnami/postgresql:${POSTGRES_VERSION}
     container_name: postgres
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/bitnami/postgresql
     networks:
       openreplay-net:
         aliases:
