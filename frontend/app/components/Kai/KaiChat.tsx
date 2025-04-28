@@ -123,7 +123,6 @@ function ChatsModal({ onSelect }: { onSelect: (threadId: string, title: string) 
     queryKey: ['kai', 'chats'],
     queryFn: () => aiService.getKaiChats(userId, projectId),
     staleTime: 1000 * 60,
-    cacheTime: 1000 * 60 * 5,
   });
 
   const onDelete = async (id: string) => {

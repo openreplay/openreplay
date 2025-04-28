@@ -25,6 +25,7 @@ import IssueReportsService from './IssueReportsService';
 import CustomFieldService from './CustomFieldService';
 import IntegrationsService from './IntegrationsService';
 import ProjectsService from './ProjectsService';
+import KaiService from '@/components/Kai/KaiService';
 
 export const dashboardService = new DashboardService();
 export const metricService = new MetricService();
@@ -52,6 +53,7 @@ export const customFieldService = new CustomFieldService();
 export const integrationsService = new IntegrationsService();
 export const searchService = new SearchService();
 export const projectsService = new ProjectsService();
+export const kaiService = new KaiService();
 
 export const services = [
   projectsService,
@@ -80,4 +82,5 @@ export const services = [
   customFieldService,
   integrationsService,
   searchService,
+  kaiService,
 ];

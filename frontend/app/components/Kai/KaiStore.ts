@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { BotChunk, ChatManager, Message } from './SocketManager';
-import { aiService } from 'App/services';
+import { kaiService as aiService } from 'App/services';
 import { toast } from 'react-toastify';
 
 class KaiStore {
