@@ -78,13 +78,16 @@ def get_provider_resource_chunk(
                 """
                 SELECT
                     groups.*,
-                    users_data.array as users
+                    COALESCE(
+                        (
+                            SELECT json_agg(users)
+                            FROM public.user_group
+                            JOIN public.users USING (user_id)
+                            WHERE user_group.group_id = groups.group_id
+                        ),
+                        '[]'
+                    ) AS users
                 FROM public.groups
-                LEFT JOIN LATERAL (
-                    SELECT json_agg(users) AS array
-                    FROM public.users
-                    WHERE users.group_id = groups.group_id
-                ) users_data ON true
                 WHERE groups.tenant_id = %(tenant_id)s
                 LIMIT %(limit)s
                 OFFSET %(offset)s;
@@ -108,13 +111,16 @@ def get_provider_resource(
                 """
                 SELECT
                     groups.*,
-                    users_data.array as users
+                    COALESCE(
+                        (
+                            SELECT json_agg(users)
+                            FROM public.user_group
+                            JOIN public.users USING (user_id)
+                            WHERE user_group.group_id = groups.group_id
+                        ),
+                        '[]'
+                    ) AS users
                 FROM public.groups
-                LEFT JOIN LATERAL (
-                    SELECT json_agg(users) AS array
-                    FROM public.users
-                    WHERE users.group_id = groups.group_id
-                ) users_data ON true
                 WHERE
                     groups.tenant_id = %(tenant_id)s
                     AND groups.group_id = %(group_id)s
@@ -188,26 +194,24 @@ def create_provider_resource(
                     VALUES ({value_clause})
                     RETURNING *
                 ),
-                linked_users AS (
-                    UPDATE public.users
-                    SET
-                        group_id = g.group_id,
-                        updated_at = now()
+                ugs AS (
+                    INSERT INTO public.user_group (user_id, group_id)
+                    SELECT users.user_id, g.group_id
                     FROM g
-                    WHERE
-                        users.user_id = ANY({user_id_clause})
-                        AND users.deleted_at IS NULL
-                        AND users.tenant_id = {tenant_id}
+                    JOIN public.users ON users.user_id = ANY({user_id_clause})
                     RETURNING *
                 )
             SELECT
                 g.*,
-                COALESCE(users_data.array, '[]') as users
+                COALESCE(
+                    (
+                        SELECT json_agg(users)
+                        FROM ugs
+                        JOIN public.users USING (user_id)
+                    ),
+                    '[]'
+                ) AS users
             FROM g
-            LEFT JOIN LATERAL (
-                SELECT json_agg(lu) AS array
-                FROM linked_users AS lu
-            ) users_data ON true
             LIMIT 1;
             """
         )
@@ -247,6 +251,12 @@ def _update_resource_sql(
         user_id_clause = f"ARRAY[{', '.join(user_id_fragments)}]::int[]"
         cur.execute(
             f"""
+            DELETE FROM public.user_group
+            WHERE user_group.group_id = {group_id}
+            """
+        )
+        cur.execute(
+            f"""
             WITH
                 g AS (
                     UPDATE public.groups
@@ -256,36 +266,25 @@ def _update_resource_sql(
                         AND groups.tenant_id = {tenant_id}
                     RETURNING *
                 ),
-                unlinked_users AS (
-                    UPDATE public.users
-                    SET
-                        group_id = null,
-                        updated_at = now()
-                    WHERE
-                        users.group_id = {group_id}
-                        AND users.user_id <> ALL({user_id_clause})
-                        AND users.deleted_at IS NULL
-                        AND users.tenant_id = {tenant_id}
-                ),
-                linked_users AS (
-                    UPDATE public.users
-                    SET
-                        group_id = {group_id},
-                        updated_at = now()
-                    WHERE
-                        users.user_id = ANY({user_id_clause})
-                        AND users.deleted_at IS NULL
-                        AND users.tenant_id = {tenant_id}
+                linked_user_group AS (
+                    INSERT INTO public.user_group (user_id, group_id)
+                    SELECT users.user_id, g.group_id
+                    FROM g
+                    JOIN public.users ON users.user_id = ANY({user_id_clause})
+                    WHERE users.deleted_at IS NULL AND users.tenant_id = {tenant_id}
                     RETURNING *
                 )
             SELECT
                 g.*,
-                COALESCE(users_data.array, '[]') as users
+                COALESCE(
+                    (
+                        SELECT json_agg(users)
+                        FROM linked_user_group
+                        JOIN public.users USING (user_id)
+                    ),
+                    '[]'
+                ) AS users
             FROM g
-            LEFT JOIN LATERAL (
-                SELECT json_agg(lu) AS array
-                FROM linked_users AS lu
-            ) users_data ON true
             LIMIT 1;
             """
         )
