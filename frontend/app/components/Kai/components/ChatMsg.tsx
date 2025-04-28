@@ -56,7 +56,7 @@ export function ChatMsg({
             <div
               onClick={onRetry}
               className={
-                'flex items-center gap-2 px-2 rounded-lg border border-gray-medium text-sm cursor-pointer hover:border-main hover:text-main w-fit'
+                'ml-auto flex items-center gap-2 px-2 rounded-lg border border-gray-medium text-sm cursor-pointer hover:border-main hover:text-main w-fit'
               }
             >
               <ListRestart size={16} />
