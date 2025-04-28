@@ -34,7 +34,7 @@ import Message, {
 } from './messages.gen.js'
 import Nodes from './nodes/index.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
-import Observer, { InlineCssMode } from './observer/top_observer.js'
+import Observer from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
 import Sanitizer from './sanitizer.js'
 import type { Options as SessOptions } from './session.js'
@@ -129,18 +129,12 @@ type AppOptions = {
   __is_snippet: boolean
   __debug_report_edp: string | null
   __debug__?: ILogLevel
-  /** @deprecated see canvas prop */
-  __save_canvas_locally?: boolean
-  /** @deprecated see canvas prop */
-  fixedCanvasScaling?: boolean
   localStorage: Storage | null
   sessionStorage: Storage | null
   forceSingleTab?: boolean
   /** Sometimes helps to prevent session breaking due to dict reset */
   disableStringDict?: boolean
   assistSocketHost?: string
-  /** @deprecated see canvas prop */
-  disableCanvas?: boolean
   canvas: {
     disableCanvas?: boolean
     /**
@@ -300,13 +294,10 @@ export default class App {
       __is_snippet: false,
       __debug_report_edp: null,
       __debug__: LogLevel.Silent,
-      __save_canvas_locally: false,
       localStorage: null,
       sessionStorage: null,
       forceSingleTab: false,
       assistSocketHost: '',
-      fixedCanvasScaling: false,
-      disableCanvas: false,
       captureIFrames: true,
       obscureTextEmails: false,
       obscureTextNumbers: false,
