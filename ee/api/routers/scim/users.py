@@ -156,6 +156,13 @@ def convert_provider_resource_to_client_resource(
         "displayName": provider_resource["name"] or provider_resource["email"],
         "userType": provider_resource.get("role_name"),
         "active": provider_resource["deleted_at"] is None,
+        "groups": [
+            {
+                "value": str(group["group_id"]),
+                "$ref": f"Groups/{group['group_id']}",
+            }
+            for group in provider_resource["groups"]
+        ],
     }
 
 
@@ -185,7 +192,16 @@ def get_provider_resource_chunk(
                 """
                 SELECT
                     users.*,
-                    roles.name AS role_name
+                    roles.name AS role_name,
+                    COALESCE(
+                        (
+                            SELECT json_agg(groups)
+                            FROM public.user_group
+                            JOIN public.groups USING (group_id)
+                            WHERE user_group.user_id = users.user_id
+                        ),
+                        '[]'
+                    ) AS groups
                 FROM public.users
                 LEFT JOIN public.roles USING (role_id)
                 WHERE
@@ -209,7 +225,16 @@ def get_provider_resource(
                 """
                 SELECT
                     users.*,
-                    roles.name AS role_name
+                    roles.name AS role_name,
+                    COALESCE(
+                        (
+                            SELECT json_agg(groups)
+                            FROM public.user_group
+                            JOIN public.groups USING (group_id)
+                            WHERE user_group.user_id = users.user_id
+                        ),
+                        '[]'
+                    ) AS groups
                 FROM public.users
                 LEFT JOIN public.roles USING (role_id)
                 WHERE
@@ -257,8 +282,18 @@ def create_provider_resource(
                 )
                 SELECT
                     u.*,
-                    roles.name as role_name
-                FROM u LEFT JOIN public.roles USING (role_id);
+                    roles.name as role_name,
+                    COALESCE(
+                        (
+                            SELECT json_agg(groups)
+                            FROM public.user_group
+                            JOIN public.groups USING (group_id)
+                            WHERE user_group.user_id = u.user_id
+                        ),
+                        '[]'
+                    ) AS groups
+                FROM u
+                LEFT JOIN public.roles USING (role_id)
                 """,
                 {
                     "tenant_id": tenant_id,
@@ -303,7 +338,16 @@ def restore_provider_resource(
                 )
                 SELECT
                     u.*,
-                    roles.name as role_name
+                    roles.name as role_name,
+                    COALESCE(
+                        (
+                            SELECT json_agg(groups)
+                            FROM public.user_group
+                            JOIN public.groups USING (group_id)
+                            WHERE user_group.user_id = u.user_id
+                        ),
+                        '[]'
+                    ) AS groups
                 FROM u LEFT JOIN public.roles USING (role_id);
                 """,
                 {
@@ -346,7 +390,16 @@ def rewrite_provider_resource(
                 )
                 SELECT
                     u.*,
-                    roles.name as role_name
+                    roles.name as role_name,
+                    COALESCE(
+                        (
+                            SELECT json_agg(groups)
+                            FROM public.user_group
+                            JOIN public.groups USING (group_id)
+                            WHERE user_group.user_id = u.user_id
+                        ),
+                        '[]'
+                    ) AS groups
                 FROM u LEFT JOIN public.roles USING (role_id);
                 """,
                 {
@@ -377,7 +430,8 @@ def update_provider_resource(
             ).decode("utf-8")
             set_fragments.append(fragment)
         set_clause = ", ".join(set_fragments)
-        query = f"""
+        cur.execute(
+            f"""
             WITH u AS (
                 UPDATE public.users
                 SET {set_clause}
@@ -389,7 +443,17 @@ def update_provider_resource(
             )
             SELECT
                 u.*,
-                roles.name as role_name
-            FROM u LEFT JOIN public.roles USING (role_id);"""
-        cur.execute(query)
+                roles.name as role_name,
+                COALESCE(
+                    (
+                        SELECT json_agg(groups)
+                        FROM public.user_group
+                        JOIN public.groups USING (group_id)
+                        WHERE user_group.user_id = u.user_id
+                    ),
+                    '[]'
+                ) AS groups
+            FROM u LEFT JOIN public.roles USING (role_id)
+            """
+        )
         return cur.fetchone()
