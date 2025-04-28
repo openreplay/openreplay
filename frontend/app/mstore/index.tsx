@@ -33,8 +33,6 @@ import UiPlayerStore from './uiPlayerStore';
 import userStore from './userStore';
 import UxtestingStore from './uxtestingStore';
 import WeeklyReportStore from './weeklyReportConfigStore';
-import KaiStore from './kaiStore';
-
 import logger from '@/logger';
 
 const projectStore = new ProjectsStore();
@@ -112,7 +110,6 @@ export class RootStore {
   searchStoreLive: SearchStoreLive;
   integrationsStore: IntegrationsStore;
   projectsStore: ProjectsStore;
-  kaiStore: KaiStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -145,7 +142,6 @@ export class RootStore {
     this.searchStore = searchStore;
     this.searchStoreLive = searchStoreLive;
     this.integrationsStore = new IntegrationsStore();
-    this.kaiStore = new KaiStore();
   }
 
   initClient() {

@@ -4,34 +4,27 @@ import cn from 'classnames';
 import Markdown from 'react-markdown';
 import { Loader, ThumbsUp, ThumbsDown, ListRestart } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { aiService } from 'App/services';
+import { kaiStore } from '../KaiStore';
 
 export function ChatMsg({
   text,
   isUser,
   userName,
   messageId,
+  isLast,
 }: {
   text: string;
   isUser: boolean;
   messageId: string;
   userName?: string;
+  isLast?: boolean;
 }) {
-  const onClick = () => {
-    toast.info('I do nothing!');
-  };
-  const onFeedback = (feedback: 'like' | 'dislike', messageId: string) => {
-    const settings = { projectId: '2325', userId: '0' };
-    aiService
-      .feedback(feedback === 'like', messageId, settings.projectId, settings.userId)
-      .then(() => {
-        toast.success('Feedback saved.');
-      })
-      .catch((e) => {
-        console.error(e);
-        toast.error('Failed to send feedback. Please try again later.');
-      });
+  const onRetry = () => {
+    kaiStore.editMessage(text)
   }
+  const onFeedback = (feedback: 'like' | 'dislike', messageId: string) => {
+    kaiStore.sendMsgFeedback(feedback, messageId);
+  };
   return (
     <div
       className={cn(
@@ -58,7 +51,19 @@ export function ChatMsg({
       )}
       <div className={'mt-1'}>
         <Markdown>{text}</Markdown>
-        {isUser ? null : (
+        {isUser ? (
+          isLast ? (
+            <div
+              onClick={onRetry}
+              className={
+                'flex items-center gap-2 px-2 rounded-lg border border-gray-medium text-sm cursor-pointer hover:border-main hover:text-main w-fit'
+              }
+            >
+              <ListRestart size={16} />
+              <div>Edit</div>
+            </div>
+          ) : null
+        ) : (
           <div className={'flex items-center gap-2'}>
             <IconButton onClick={() => onFeedback('like', messageId)}>
               <ThumbsUp size={16} />
@@ -66,16 +71,6 @@ export function ChatMsg({
             <IconButton onClick={() => onFeedback('dislike', messageId)}>
               <ThumbsDown size={16} />
             </IconButton>
-
-            <div
-              onClick={onClick}
-              className={
-                'flex items-center gap-2 px-2 rounded-lg border border-gray-medium text-sm cursor-pointer hover:border-main hover:text-main'
-              }
-            >
-              <ListRestart size={16} />
-              <div>Retry</div>
-            </div>
           </div>
         )}
       </div>
