@@ -1,32 +1,62 @@
-import re
-from functools import cache
-
 import schemas
 from chalicelib.utils import helper, exp_ch_helper
 from chalicelib.utils.ch_client import ClickHouseClient
 
-
-@cache
-def get_predefined_property_types():
-    with ClickHouseClient() as ch_client:
-        properties_type = ch_client.execute("""\
-        SELECT type
-        FROM system.columns
-        WHERE database = 'product_analytics'
-          AND table = 'events'
-          AND name = '$properties';""")
-    if len(properties_type) == 0:
-        return {}
-    properties_type = properties_type[0]["type"]
-
-    pattern = r'(\w+)\s+(Enum8\([^\)]+\)|[A-Za-z0-9_]+(?:\([^\)]+\))?)'
-
-    # Find all matches
-    matches = re.findall(pattern, properties_type)
-
-    # Create a dictionary of attribute names and types
-    attributes = {match[0]: match[1] for match in matches}
-    return attributes
+PREDEFINED_PROPERTY_TYPES = {
+    "label": "String",
+    "hesitation_time": "UInt32",
+    "name": "String",
+    "payload": "String",
+    "level": "Enum8",
+    "source": "Enum8",
+    "message": "String",
+    "error_id": "String",
+    "duration": "UInt16",
+    "context": "Enum8",
+    "url_host": "String",
+    "url_path": "String",
+    "url_hostpath": "String",
+    "request_start": "UInt16",
+    "response_start": "UInt16",
+    "response_end": "UInt16",
+    "dom_content_loaded_event_start": "UInt16",
+    "dom_content_loaded_event_end": "UInt16",
+    "load_event_start": "UInt16",
+    "load_event_end": "UInt16",
+    "first_paint": "UInt16",
+    "first_contentful_paint_time": "UInt16",
+    "speed_index": "UInt16",
+    "visually_complete": "UInt16",
+    "time_to_interactive": "UInt16",
+    "ttfb": "UInt16",
+    "ttlb": "UInt16",
+    "response_time": "UInt16",
+    "dom_building_time": "UInt16",
+    "dom_content_loaded_event_time": "UInt16",
+    "load_event_time": "UInt16",
+    "min_fps": "UInt8",
+    "avg_fps": "UInt8",
+    "max_fps": "UInt8",
+    "min_cpu": "UInt8",
+    "avg_cpu": "UInt8",
+    "max_cpu": "UInt8",
+    "min_total_js_heap_size": "UInt64",
+    "avg_total_js_heap_size": "UInt64",
+    "max_total_js_heap_size": "UInt64",
+    "min_used_js_heap_size": "UInt64",
+    "avg_used_js_heap_size": "UInt64",
+    "max_used_js_heap_size": "UInt64",
+    "method": "Enum8",
+    "status": "UInt16",
+    "success": "UInt8",
+    "request_body": "String",
+    "response_body": "String",
+    "transfer_size": "UInt32",
+    "selector": "String",
+    "normalized_x": "Float32",
+    "normalized_y": "Float32",
+    "message_id": "UInt64"
+}
 
 
 def get_all_properties(project_id: int, page: schemas.PaginatedSchema):
@@ -49,12 +79,11 @@ def get_all_properties(project_id: int, page: schemas.PaginatedSchema):
             return {"total": 0, "list": []}
         total = properties[0]["total"]
         properties = helper.list_to_camel_case(properties)
-        predefined_properties = get_predefined_property_types()
         for i, p in enumerate(properties):
             p["id"] = f"prop_{i}"
             p["_foundInPredefinedList"] = False
-            if p["name"] in predefined_properties:
-                p["dataType"] = exp_ch_helper.simplify_clickhouse_type(predefined_properties[p["name"]])
+            if p["name"] in PREDEFINED_PROPERTY_TYPES:
+                p["dataType"] = exp_ch_helper.simplify_clickhouse_type(PREDEFINED_PROPERTY_TYPES[p["name"]])
                 p["_foundInPredefinedList"] = True
             p["possibleTypes"] = list(set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"])))
             p.pop("total")
@@ -77,12 +106,11 @@ def get_event_properties(project_id: int, event_name):
             parameters={"project_id": project_id, "event_name": event_name})
         properties = ch_client.execute(r)
         properties = helper.list_to_camel_case(properties)
-        predefined_properties = get_predefined_property_types()
         for i, p in enumerate(properties):
             p["id"] = f"prop_{i}"
             p["_foundInPredefinedList"] = False
-            if p["name"] in predefined_properties:
-                p["dataType"] = exp_ch_helper.simplify_clickhouse_type(predefined_properties[p["name"]])
+            if p["name"] in PREDEFINED_PROPERTY_TYPES:
+                p["dataType"] = exp_ch_helper.simplify_clickhouse_type(PREDEFINED_PROPERTY_TYPES[p["name"]])
                 p["_foundInPredefinedList"] = True
             p["possibleTypes"] = list(set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"])))
 
