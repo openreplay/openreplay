@@ -205,7 +205,7 @@ class KaiStore {
       this.setProcessingStage(null)
     } catch (e) {
       console.error(e)
-      toast.error('Failed to cancel the generation, please try again later.')
+      toast.error('Failed to cancel the response generation, please try again later.')
     }
   }
 
