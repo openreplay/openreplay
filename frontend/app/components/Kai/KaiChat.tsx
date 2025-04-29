@@ -71,7 +71,7 @@ function KaiChat() {
     if (firstMsg) {
       setInitialMsg(firstMsg);
     }
-    const newThread = await aiService.createKaiChat(settings.projectId, settings.userId)
+    const newThread = await kaiService.createKaiChat(settings.projectId, settings.userId)
     if (newThread) {
       setThreadId(newThread.toString());
       setSection('chat');

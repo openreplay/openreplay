@@ -1,20 +1,26 @@
 import React from 'react'
 import { Button, Input } from "antd";
-import { SendHorizonal } from "lucide-react";
+import { SendHorizonal, OctagonX } from "lucide-react";
 import { kaiStore } from "../KaiStore";
 import { observer } from "mobx-react-lite";
 
-function ChatInput({ isLoading, onSubmit }: { isLoading?: boolean, onSubmit: (str: string) => void }) {
+function ChatInput({ isLoading, onSubmit, threadId }: { isLoading?: boolean, onSubmit: (str: string) => void, threadId: string }) {
   const inputRef = React.useRef<Input>(null);
   const inputValue = kaiStore.queryText;
+  const isProcessing = kaiStore.processingStage !== null
   const setInputValue = (text: string) => {
     kaiStore.setQueryText(text)
   }
 
   const submit = () => {
-    if (inputValue.length > 0) {
-      onSubmit(inputValue)
-      setInputValue('')
+    if (isProcessing) {
+      const settings = { projectId: '2325', userId: '0', threadId, };
+      void kaiStore.cancelGeneration(settings)
+    } else {
+      if (inputValue.length > 0) {
+        onSubmit(inputValue)
+        setInputValue('')
+      }
     }
   }
 
@@ -36,7 +42,7 @@ function ChatInput({ isLoading, onSubmit }: { isLoading?: boolean, onSubmit: (st
         <Button
           loading={isLoading}
           onClick={submit}
-          icon={<SendHorizonal size={16} />}
+          icon={isProcessing ? <OctagonX size={16} /> : <SendHorizonal size={16} />}
           type={'text'}
           size={'small'}
           shape={'circle'}
