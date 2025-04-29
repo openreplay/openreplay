@@ -25,20 +25,11 @@ func NewQueryBuilder(p Payload) (QueryBuilder, error) {
 		return FunnelQueryBuilder{}, nil
 	case MetricTypeTable:
 		return TableQueryBuilder{}, nil
+	case MetricTypeHeatmap:
+		return HeatmapQueryBuilder{}, nil
 	default:
 		return nil, fmt.Errorf("unknown metric type: %s", p.MetricType)
 	}
-}
-
-func partitionFilters(filters []Filter) (sessionFilters []Filter, eventFilters []Filter) {
-	for _, f := range filters {
-		if f.IsEvent {
-			eventFilters = append(eventFilters, f)
-		} else {
-			sessionFilters = append(sessionFilters, f)
-		}
-	}
-	return
 }
 
 var validFilterTypes = map[FilterType]struct{}{
@@ -90,17 +81,16 @@ var propertyKeyMap = map[string]filterConfig{
 }
 
 func getColumnAccessor(logicalProp string, isNumeric bool, opts BuildConditionsOptions) string {
+	// Use CTE alias if present in DefinedColumns
 	if actualCol, ok := opts.DefinedColumns[logicalProp]; ok && actualCol != "" {
-		return fmt.Sprintf("%s.`%s`", opts.MainTableAlias, actualCol)
+		return actualCol
 	}
-
+	// Otherwise, extract from $properties JSON
 	jsonFunc := "JSONExtractString"
 	if isNumeric {
-		jsonFunc = "JSONExtractFloat" // Or JSONExtractInt, etc.
+		jsonFunc = "JSONExtractFloat"
 	}
-
-	return fmt.Sprintf("%s(toString(%s.`%s`), '%s')",
-		jsonFunc, opts.MainTableAlias, opts.PropertiesColumnName, logicalProp)
+	return fmt.Sprintf("%s(toString(%s), '%s')", jsonFunc, opts.PropertiesColumnName, logicalProp)
 }
 
 func buildEventConditions(filters []Filter, options ...BuildConditionsOptions) (conds, names []string) {
@@ -109,7 +99,6 @@ func buildEventConditions(filters []Filter, options ...BuildConditionsOptions) (
 		PropertiesColumnName: "$properties",
 		DefinedColumns:       make(map[string]string),
 	}
-
 	if len(options) > 0 {
 		if options[0].MainTableAlias != "" {
 			opts.MainTableAlias = options[0].MainTableAlias
@@ -121,24 +110,21 @@ func buildEventConditions(filters []Filter, options ...BuildConditionsOptions) (
 			opts.DefinedColumns = options[0].DefinedColumns
 		}
 	}
-
 	for _, f := range filters {
-		_, isValidType := validFilterTypes[f.Type]
-		if !isValidType {
+		_, okType := validFilterTypes[f.Type]
+		if !okType {
 			continue
 		}
-
+		// process main filter
 		if f.Type == FilterFetch {
 			var fetchConds []string
 			for _, nf := range f.Filters {
-				nestedConfig, ok := propertyKeyMap[string(nf.Type)]
+				cfg, ok := propertyKeyMap[string(nf.Type)]
 				if !ok {
 					continue
 				}
-
-				accessor := getColumnAccessor(nestedConfig.LogicalProperty, nestedConfig.IsNumeric, opts)
-				c := buildCond(accessor, nf.Value, f.Operator) // Uses parent filter's operator
-				if c != "" {
+				acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
+				if c := buildCond(acc, nf.Value, f.Operator); c != "" {
 					fetchConds = append(fetchConds, c)
 				}
 			}
@@ -147,80 +133,35 @@ func buildEventConditions(filters []Filter, options ...BuildConditionsOptions) (
 				names = append(names, "REQUEST")
 			}
 		} else {
-			config, ok := propertyKeyMap[string(f.Type)]
+			cfg, ok := propertyKeyMap[string(f.Type)]
 			if !ok {
-				config = filterConfig{
-					LogicalProperty: string(f.Type),
+				cfg = filterConfig{LogicalProperty: string(f.Type)}
+			}
+			acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
+
+			// when the Operator isAny or onAny just add the event name to the list
+			if f.Operator == "isAny" || f.Operator == "onAny" {
+				if f.IsEvent {
+					names = append(names, string(f.Type))
 				}
+				continue
 			}
 
-			accessor := getColumnAccessor(config.LogicalProperty, config.IsNumeric, opts)
-			c := buildCond(accessor, f.Value, f.Operator)
-			if c != "" {
+			if c := buildCond(acc, f.Value, f.Operator); c != "" {
 				conds = append(conds, c)
 				if f.IsEvent {
 					names = append(names, string(f.Type))
 				}
 			}
 		}
-	}
-	return
-}
 
-func buildEventConditionsX(filters []Filter) (conds, names []string) {
-	for _, f := range filters {
-		if f.IsEvent {
-			switch f.Type {
-			case FilterClick:
-				c := buildCond("JSONExtractString(toString(main.`$properties`), 'label')", f.Value, "is")
-				if c != "" {
-					conds = append(conds, c)
-				}
-				names = append(names, "CLICK")
-			case FilterInput:
-				c := buildCond("JSONExtractString(toString(main.`$properties`), 'label')", f.Value, f.Operator)
-				if c != "" {
-					conds = append(conds, c)
-				}
-				names = append(names, "INPUT")
-			case FilterLocation:
-				c := buildCond("JSONExtractString(toString(main.`$properties`), 'url_path')", f.Value, f.Operator)
-				if c != "" {
-					conds = append(conds, c)
-				}
-				names = append(names, "LOCATION")
-			case FilterCustom:
-				c := buildCond("JSONExtractString(toString(main.`$properties`), 'name')", f.Value, f.Operator)
-				if c != "" {
-					conds = append(conds, c)
-				}
-				names = append(names, "CUSTOM")
-			case FilterFetch:
-				var fetchConds []string
-				for _, nf := range f.Filters {
-					switch nf.Type {
-					case "fetchUrl":
-						c := buildCond("JSONExtractString(toString(main.`$properties`), 'url_path')", nf.Value, f.Operator)
-						if c != "" {
-							fetchConds = append(fetchConds, c)
-						}
-					case "fetchStatusCode":
-						c := buildCond("JSONExtractFloat(toString(main.`$properties`), 'status')", nf.Value, f.Operator)
-						if c != "" {
-							fetchConds = append(fetchConds, c)
-						}
-					}
-				}
-				if len(fetchConds) > 0 {
-					conds = append(conds, strings.Join(fetchConds, " AND "))
-				}
-				names = append(names, "REQUEST")
-			case FilterTag:
-				c := buildCond("JSONExtractString(toString(main.`$properties`), 'tag')", f.Value, f.Operator)
-				if c != "" {
-					conds = append(conds, c)
-				}
-				names = append(names, "TAG")
+		// process sub-filters
+		if len(f.Filters) > 0 && f.Type != FilterFetch {
+			subOpts := opts // Inherit parent's options
+			subConds, subNames := buildEventConditions(f.Filters, subOpts)
+			if len(subConds) > 0 {
+				conds = append(conds, strings.Join(subConds, " AND "))
+				names = append(names, subNames...)
 			}
 		}
 	}
@@ -289,6 +230,16 @@ func buildCond(expr string, values []string, operator string) string {
 			return "(" + strings.Join(conds, " OR ") + ")"
 		}
 		return conds[0]
+	case "regex":
+		var conds []string
+		for _, v := range values {
+			conds = append(conds, fmt.Sprintf("match(%s, '%s')", expr, v))
+		}
+
+		if len(conds) > 1 {
+			return "(" + strings.Join(conds, " OR ") + ")"
+		}
+		return conds[0]
 	case "notContains":
 		var conds []string
 		for _, v := range values {
@@ -316,12 +267,12 @@ func buildCond(expr string, values []string, operator string) string {
 			return "(" + strings.Join(conds, " OR ") + ")"
 		}
 		return conds[0]
-	case "notEquals":
+	case "notEquals", "not", "off":
 		if len(values) > 1 {
 			return fmt.Sprintf("%s NOT IN (%s)", expr, buildInClause(values))
 		}
 		return fmt.Sprintf("%s <> '%s'", expr, values[0])
-	case "greaterThan":
+	case "greaterThan", "gt":
 		var conds []string
 		for _, v := range values {
 			conds = append(conds, fmt.Sprintf("%s > '%s'", expr, v))
@@ -330,7 +281,7 @@ func buildCond(expr string, values []string, operator string) string {
 			return "(" + strings.Join(conds, " OR ") + ")"
 		}
 		return conds[0]
-	case "greaterThanOrEqual":
+	case "greaterThanOrEqual", "gte":
 		var conds []string
 		for _, v := range values {
 			conds = append(conds, fmt.Sprintf("%s >= '%s'", expr, v))
@@ -339,7 +290,7 @@ func buildCond(expr string, values []string, operator string) string {
 			return "(" + strings.Join(conds, " OR ") + ")"
 		}
 		return conds[0]
-	case "lessThan":
+	case "lessThan", "lt":
 		var conds []string
 		for _, v := range values {
 			conds = append(conds, fmt.Sprintf("%s < '%s'", expr, v))
@@ -348,7 +299,7 @@ func buildCond(expr string, values []string, operator string) string {
 			return "(" + strings.Join(conds, " OR ") + ")"
 		}
 		return conds[0]
-	case "lessThanOrEqual":
+	case "lessThanOrEqual", "lte":
 		var conds []string
 		for _, v := range values {
 			conds = append(conds, fmt.Sprintf("%s <= '%s'", expr, v))
@@ -367,7 +318,7 @@ func buildCond(expr string, values []string, operator string) string {
 			return fmt.Sprintf("%s NOT IN (%s)", expr, buildInClause(values))
 		}
 		return fmt.Sprintf("%s <> '%s'", expr, values[0])
-	case "equals", "is":
+	case "equals", "is", "on":
 		if len(values) > 1 {
 			return fmt.Sprintf("%s IN (%s)", expr, buildInClause(values))
 		}
@@ -470,4 +421,43 @@ func FillMissingDataPoints(
 		}
 	}
 	return results
+}
+
+func partitionFilters(filters []Filter) (sessionFilters []Filter, eventFilters []Filter) {
+	for _, f := range filters {
+		if f.IsEvent {
+			eventFilters = append(eventFilters, f)
+		} else {
+			sessionFilters = append(sessionFilters, f)
+		}
+	}
+	return
+}
+
+// Returns a map: logical property -> CTE alias (e.g., "userBrowser" -> "userBrowser")
+func cteColumnAliases() map[string]string {
+	aliases := make(map[string]string)
+	for logical := range mainColumns {
+		aliases[logical] = logical
+	}
+	return aliases
+}
+
+// Returns a map: logical property -> source column (e.g., "userBrowser" -> "$browser")
+func cteSourceColumns() map[string]string {
+	cols := make(map[string]string)
+	for logical, col := range mainColumns {
+		cols[logical] = col
+	}
+	return cols
+}
+
+// Helper for reverse lookup (used for dynamic SELECT)
+func reverseLookup(m map[string]string, value string) string {
+	for k, v := range m {
+		if v == value {
+			return k
+		}
+	}
+	return ""
 }

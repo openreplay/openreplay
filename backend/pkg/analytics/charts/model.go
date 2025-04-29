@@ -48,6 +48,7 @@ const (
 	MetricTypeTimeseries MetricType = "timeseries"
 	MetricTypeTable      MetricType = "table"
 	MetricTypeFunnel     MetricType = "funnel"
+	MetricTypeHeatmap    MetricType = "heatmaps"
 )
 
 const (

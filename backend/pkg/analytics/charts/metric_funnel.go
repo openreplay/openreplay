@@ -3,7 +3,6 @@ package charts
 import (
 	"fmt"
 	"openreplay/backend/pkg/analytics/db"
-	"strconv"
 	"strings"
 )
 
@@ -49,33 +48,52 @@ func (f FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 	s := p.MetricPayload.Series[0]
 	metricFormat := p.MetricPayload.MetricFormat
 
-	// separate global vs step filters based on IsEvent flag
-	var globalFilters, eventFilters []Filter
+	// Separate global vs step filters
+	var globalFilters, stepFilters []Filter
 	for _, flt := range s.Filter.Filters {
 		if flt.IsEvent {
-			eventFilters = append(eventFilters, flt)
+			stepFilters = append(stepFilters, flt)
 		} else {
 			globalFilters = append(globalFilters, flt)
 		}
 	}
 
-	// extract duration filter
-	var minDur, maxDur int64
-	for i := len(globalFilters) - 1; i >= 0; i-- {
-		if globalFilters[i].Type == "duration" {
-			vals := globalFilters[i].Value // []string
-			if len(vals) == 2 {
-				minDur, _ = strconv.ParseInt(vals[0], 10, 64)
-				maxDur, _ = strconv.ParseInt(vals[1], 10, 64)
+	// 1. Collect required mainColumns from all filters (including nested)
+	requiredColumns := make(map[string]struct{})
+	var collectColumns func([]Filter)
+	collectColumns = func(filters []Filter) {
+		for _, flt := range filters {
+			if col, ok := mainColumns[string(flt.Type)]; ok {
+				requiredColumns[col] = struct{}{}
 			}
-			globalFilters = append(globalFilters[:i], globalFilters[i+1:]...)
+			collectColumns(flt.Filters)
 		}
 	}
+	collectColumns(globalFilters)
+	collectColumns(stepFilters)
 
-	// Global filters
-	globalConds, globalNames := buildEventConditions(globalFilters, BuildConditionsOptions{
-		DefinedColumns: mainColumns,
-		MainTableAlias: "e",
+	// 2. Build SELECT clause for CTE
+	selectCols := []string{
+		`e.created_at`,
+		`e."$event_name" AS event_name`,
+		`e."$properties" AS properties`,
+	}
+	for col := range requiredColumns {
+		logical := reverseLookup(mainColumns, col)
+		selectCols = append(selectCols, fmt.Sprintf(`e."%s" AS %s`, col, logical))
+	}
+	selectCols = append(selectCols,
+		`e.session_id`,
+		`e.distinct_id`,
+		`s.user_id AS session_user_id`,
+		fmt.Sprintf("if('%s' = 'sessionCount', toString(e.session_id), coalesce(nullif(s.user_id,''),e.distinct_id)) AS entity_id", metricFormat),
+	)
+
+	// 3. Global conditions
+	globalConds, _ := buildEventConditions(globalFilters, BuildConditionsOptions{
+		DefinedColumns:       cteColumnAliases(), // logical -> logical (CTE alias)
+		MainTableAlias:       "e",
+		PropertiesColumnName: "$properties",
 	})
 	base := []string{
 		fmt.Sprintf("e.created_at >= toDateTime(%d/1000)", p.MetricPayload.StartTimestamp),
@@ -83,55 +101,37 @@ func (f FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 		"s.duration > 0",
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
 	}
-	if maxDur > 0 {
-		base = append(base, fmt.Sprintf("s.duration BETWEEN %d AND %d", minDur, maxDur))
-	}
-
 	base = append(base, globalConds...)
-	if len(globalNames) > 0 {
-		base = append(base, "e.`$event_name` IN ("+buildInClause(globalNames)+")")
-	}
-
-	// Build steps and per-step conditions only for eventFilters
-	var stepNames []string
-	var stepExprs []string
-	for i, filter := range eventFilters {
-		stepNames = append(stepNames, fmt.Sprintf("'%s'", filter.Type))
-		exprs, _ := buildEventConditions([]Filter{filter}, BuildConditionsOptions{DefinedColumns: mainColumns})
-		for j, c := range exprs {
-			c = strings.ReplaceAll(c, "toString(main.`$properties`)", "properties")
-			c = strings.ReplaceAll(c, "main.`$properties`", "properties")
-			c = strings.ReplaceAll(c, "JSONExtractString(properties", "JSONExtractString(toString(properties)")
-			exprs[j] = c
-		}
-		var expr string
-		if len(exprs) > 0 {
-			expr = fmt.Sprintf("(event_name = funnel_steps[%d] AND %s)", i+1, strings.Join(exprs, " AND "))
-		} else {
-			expr = fmt.Sprintf("(event_name = funnel_steps[%d])", i+1)
-		}
-		stepExprs = append(stepExprs, expr)
-	}
-	stepsArr := "[" + strings.Join(stepNames, ",") + "]"
-	windowArgs := strings.Join(stepExprs, ",")
-
-	// Compose WHERE clause
 	where := strings.Join(base, " AND ")
 
-	// Final query
+	// 4. Step conditions
+	var stepNames []string
+	var stepExprs []string
+	for i, filter := range stepFilters {
+		stepNames = append(stepNames, fmt.Sprintf("'%s'", filter.Type))
+		stepConds, _ := buildEventConditions([]Filter{filter}, BuildConditionsOptions{
+			DefinedColumns:       cteColumnAliases(), // logical -> logical (CTE alias)
+			PropertiesColumnName: "properties",
+			MainTableAlias:       "",
+		})
+
+		stepCondExprs := []string{fmt.Sprintf("event_name = funnel_steps[%d]", i+1)}
+		if len(stepConds) > 0 {
+			stepCondExprs = append(stepCondExprs, stepConds...)
+		}
+		stepExprs = append(stepExprs, fmt.Sprintf("(%s)", strings.Join(stepCondExprs, " AND ")))
+	}
+
+	stepsArr := "[" + strings.Join(stepNames, ",") + "]"
+	windowArgs := strings.Join(stepExprs, ",\n                ")
+
 	q := fmt.Sprintf(`
 WITH
     %s AS funnel_steps,
     86400 AS funnel_window_seconds,
     events_for_funnel AS (
         SELECT
-            e.created_at,
-            e."$event_name" AS event_name,
-            e."$properties" AS properties,
-            e.session_id,
-            e.distinct_id,
-            s.user_id AS session_user_id,
-            if('%s' = 'sessionCount', toString(e.session_id), coalesce(nullif(s.user_id,''),e.distinct_id)) AS entity_id
+            %s
         FROM product_analytics.events AS e
         JOIN experimental.sessions AS s USING(session_id)
         WHERE %s
@@ -167,7 +167,7 @@ SELECT
 FROM step_list AS s
 LEFT JOIN counts_by_level AS c ON s.level_number = c.level_number
 ORDER BY s.level_number;
-`, stepsArr, metricFormat, where, windowArgs)
+`, stepsArr, strings.Join(selectCols, ",\n            "), where, windowArgs)
 
 	return q, nil
 }
