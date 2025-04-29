@@ -33,7 +33,7 @@ function SearchActions() {
   // @ts-ignore
   const originStr = window.env.ORIGIN || window.location.origin;
   const isSaas = /app\.openreplay\.com/.test(originStr);
-  const showAiField = isSaas && activeTab.type === 'sessions';
+  const showAiField = isSaas && activeTab?.type === 'sessions';
   const showPanel = hasEvents || hasFilters || aiFiltersStore.isLoading;
   return !metaLoading ? (
     <div className="mb-2">

@@ -2,7 +2,7 @@
   height: 50px;
   border-bottom: solid thin $gray-lighter;
   padding-right: 0;
-  background-color: white;
+  background-color: $white;
 }
 
 .divider {

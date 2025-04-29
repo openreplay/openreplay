@@ -3,7 +3,7 @@
   border-bottom: solid thin $gray-light;
   padding-left: 15px;
   padding-right: 0;
-  background-color: white;
+  background-color: $white;
 }
 
 .divider {

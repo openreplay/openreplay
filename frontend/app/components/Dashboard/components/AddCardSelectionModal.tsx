@@ -44,16 +44,6 @@ function AddCardSelectionModal(props: Props) {
         className="addCard"
         width={isSaas ? 900 : undefined}
       >
-        {isSaas ? (
-          <>
-            <Row gutter={16} justify="center" className="py-2">
-              <AiQuery />
-            </Row>
-            <div className="flex items-center justify-center w-full text-disabled-text">
-              {t('or')}
-            </div>
-          </>
-        ) : null}
         <Row gutter={16} justify="center" className="py-5">
           <Col span={12}>
             <div
