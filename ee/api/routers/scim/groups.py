@@ -18,8 +18,6 @@ def convert_client_resource_update_input_to_provider_resource_update_input(
     result = {}
     if "displayName" in client_input:
         result["name"] = client_input["displayName"]
-    if "externalId" in client_input:
-        result["external_id"] = client_input["externalId"]
     if "members" in client_input:
         members = client_input["members"] or []
         result["user_ids"] = [int(member["value"]) for member in members]
@@ -32,15 +30,14 @@ def convert_provider_resource_to_client_resource(
     members = provider_resource["users"] or []
     return {
         "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
-        "id": str(provider_resource["group_id"]),
-        "externalId": provider_resource["external_id"],
+        "id": str(provider_resource["role_id"]),
         "meta": {
             "resourceType": "Group",
             "created": provider_resource["created_at"].strftime("%Y-%m-%dT%H:%M:%SZ"),
             "lastModified": provider_resource["updated_at"].strftime(
                 "%Y-%m-%dT%H:%M:%SZ"
             ),
-            "location": f"Groups/{provider_resource['group_id']}",
+            "location": f"Groups/{provider_resource['role_id']}",
         },
         "displayName": provider_resource["name"],
         "members": [
@@ -60,8 +57,10 @@ def get_active_resource_count(tenant_id: int) -> int:
             cur.mogrify(
                 """
                 SELECT COUNT(*)
-                FROM public.groups
-                WHERE groups.tenant_id = %(tenant_id)s
+                FROM public.roles
+                WHERE
+                    roles.tenant_id = %(tenant_id)s
+                    AND roles.deleted_at IS NULL
                 """,
                 {"tenant_id": tenant_id},
             )
@@ -77,18 +76,19 @@ def get_provider_resource_chunk(
             cur.mogrify(
                 """
                 SELECT
-                    groups.*,
+                    roles.*,
                     COALESCE(
                         (
                             SELECT json_agg(users)
-                            FROM public.user_group
-                            JOIN public.users USING (user_id)
-                            WHERE user_group.group_id = groups.group_id
+                            FROM public.users
+                            WHERE users.role_id = roles.role_id
                         ),
                         '[]'
                     ) AS users
-                FROM public.groups
-                WHERE groups.tenant_id = %(tenant_id)s
+                FROM public.roles
+                WHERE
+                    roles.tenant_id = %(tenant_id)s
+                    AND roles.deleted_at IS NULL
                 LIMIT %(limit)s
                 OFFSET %(offset)s;
                 """,
@@ -110,23 +110,23 @@ def get_provider_resource(
             cur.mogrify(
                 """
                 SELECT
-                    groups.*,
+                    roles.*,
                     COALESCE(
                         (
                             SELECT json_agg(users)
-                            FROM public.user_group
-                            JOIN public.users USING (user_id)
-                            WHERE user_group.group_id = groups.group_id
+                            FROM public.users
+                            WHERE users.role_id = roles.role_id
                         ),
                         '[]'
                     ) AS users
-                FROM public.groups
+                FROM public.roles
                 WHERE
-                    groups.tenant_id = %(tenant_id)s
-                    AND groups.group_id = %(group_id)s
+                    roles.tenant_id = %(tenant_id)s
+                    AND roles.role_id = %(resource_id)s
+                    AND roles.deleted_at IS NULL
                 LIMIT 1;
                 """,
-                {"group_id": resource_id, "tenant_id": tenant_id},
+                {"resource_id": resource_id, "tenant_id": tenant_id},
             )
         )
         return cur.fetchone()
@@ -135,7 +135,7 @@ def get_provider_resource(
 def get_provider_resource_from_unique_fields(
     **kwargs: dict[str, Any],
 ) -> ProviderResource | None:
-    # note(jon): we do not really use this for groups as we don't have unique values outside
+    # note(jon): we do not really use this for scim.groups (openreplay.roles) as we don't have unique values outside
     # of the primary key
     return None
 
@@ -145,7 +145,6 @@ def convert_client_resource_creation_input_to_provider_resource_creation_input(
 ) -> ProviderInput:
     return {
         "name": client_input["displayName"],
-        "external_id": client_input.get("externalId"),
         "user_ids": [
             int(member["value"]) for member in client_input.get("members", [])
         ],
@@ -157,7 +156,6 @@ def convert_client_resource_rewrite_input_to_provider_resource_rewrite_input(
 ) -> ProviderInput:
     return {
         "name": client_input["displayName"],
-        "external_id": client_input.get("externalId"),
         "user_ids": [
             int(member["value"]) for member in client_input.get("members", [])
         ],
@@ -189,50 +187,37 @@ def create_provider_resource(
         cur.execute(
             f"""
             WITH
-                g AS (
-                    INSERT INTO public.groups ({column_clause})
+                r AS (
+                    INSERT INTO public.roles ({column_clause})
                     VALUES ({value_clause})
                     RETURNING *
                 ),
-                ugs AS (
-                    INSERT INTO public.user_group (user_id, group_id)
-                    SELECT users.user_id, g.group_id
-                    FROM g
-                    JOIN public.users ON users.user_id = ANY({user_id_clause})
+                linked_users AS (
+                    UPDATE public.users
+                    SET
+                        updated_at = now(),
+                        role_id = (SELECT r.role_id FROM r)
+                    WHERE users.user_id = ANY({user_id_clause})
                     RETURNING *
                 )
             SELECT
-                g.*,
+                r.*,
                 COALESCE(
                     (
-                        SELECT json_agg(users)
-                        FROM ugs
-                        JOIN public.users USING (user_id)
+                        SELECT json_agg(linked_users.*)
+                        FROM linked_users
                     ),
                     '[]'
                 ) AS users
-            FROM g
+            FROM r
             LIMIT 1;
             """
         )
         return cur.fetchone()
 
 
-def delete_provider_resource(resource_id: ResourceId, tenant_id: int) -> None:
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                DELETE FROM public.groups
-                WHERE groups.group_id = %(group_id)s AND groups.tenant_id = %(tenant_id)s;
-                """
-            ),
-            {"tenant_id": tenant_id, "group_id": resource_id},
-        )
-
-
 def _update_resource_sql(
-    group_id: int,
+    resource_id: int,
     tenant_id: int,
     user_ids: list[int] | None = None,
     **kwargs: dict[str, Any],
@@ -251,44 +236,69 @@ def _update_resource_sql(
         user_id_clause = f"ARRAY[{', '.join(user_id_fragments)}]::int[]"
         cur.execute(
             f"""
-            DELETE FROM public.user_group
-            WHERE user_group.group_id = {group_id}
+            UPDATE public.users
+            SET role_id = NULL
+            WHERE users.role_id = {resource_id}
             """
         )
         cur.execute(
             f"""
             WITH
-                g AS (
-                    UPDATE public.groups
+                r AS (
+                    UPDATE public.roles
                     SET {set_clause}
                     WHERE
-                        groups.group_id = {group_id}
-                        AND groups.tenant_id = {tenant_id}
+                        roles.role_id = {resource_id}
+                        AND roles.tenant_id = {tenant_id}
+                        AND roles.deleted_at IS NULL
                     RETURNING *
                 ),
-                linked_user_group AS (
-                    INSERT INTO public.user_group (user_id, group_id)
-                    SELECT users.user_id, g.group_id
-                    FROM g
-                    JOIN public.users ON users.user_id = ANY({user_id_clause})
-                    WHERE users.deleted_at IS NULL AND users.tenant_id = {tenant_id}
+                linked_users AS (
+                    UPDATE public.users
+                    SET
+                        updated_at = now(),
+                        role_id = {resource_id}
+                    WHERE users.user_id = ANY({user_id_clause})
                     RETURNING *
                 )
             SELECT
-                g.*,
+                r.*,
                 COALESCE(
                     (
-                        SELECT json_agg(users)
-                        FROM linked_user_group
-                        JOIN public.users USING (user_id)
+                        SELECT json_agg(linked_users.*)
+                        FROM linked_users
                     ),
                     '[]'
                 ) AS users
-            FROM g
+            FROM r
             LIMIT 1;
             """
         )
         return cur.fetchone()
+
+
+def delete_provider_resource(resource_id: ResourceId, tenant_id: int) -> None:
+    _update_resource_sql(
+        resource_id=resource_id,
+        tenant_id=tenant_id,
+        deleted_at=datetime.now(),
+    )
+
+
+def restore_provider_resource(
+    resource_id: int,
+    tenant_id: int,
+    name: str,
+    **kwargs: dict[str, Any],
+) -> dict[str, Any]:
+    return _update_resource_sql(
+        resource_id=resource_id,
+        tenant_id=tenant_id,
+        name=name,
+        created_at=datetime.now(),
+        deleted_at=None,
+        **kwargs,
+    )
 
 
 def rewrite_provider_resource(
@@ -298,7 +308,7 @@ def rewrite_provider_resource(
     **kwargs: dict[str, Any],
 ) -> dict[str, Any]:
     return _update_resource_sql(
-        group_id=resource_id,
+        resource_id=resource_id,
         tenant_id=tenant_id,
         name=name,
         **kwargs,
@@ -311,7 +321,7 @@ def update_provider_resource(
     **kwargs: dict[str, Any],
 ):
     return _update_resource_sql(
-        group_id=resource_id,
+        resource_id=resource_id,
         tenant_id=tenant_id,
         **kwargs,
     )

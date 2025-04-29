@@ -17,9 +17,6 @@ def convert_client_resource_update_input_to_provider_resource_update_input(
     tenant_id: int, client_input: ClientInput
 ) -> ProviderInput:
     result = {}
-    if "userType" in client_input:
-        role = roles.get_role_by_name(tenant_id, client_input["userType"])
-        result["role_id"] = role["roleId"] if role else None
     if "name" in client_input:
         # note(jon): we're currently not handling the case where the client
         # send patches of individual name components (e.g. name.middleName)
@@ -38,10 +35,6 @@ def convert_client_resource_update_input_to_provider_resource_update_input(
 def convert_client_resource_rewrite_input_to_provider_resource_rewrite_input(
     tenant_id: int, client_input: ClientInput
 ) -> ProviderInput:
-    role_id = None
-    if "userType" in client_input:
-        role = roles.get_role_by_name(tenant_id, client_input["userType"])
-        role_id = role["roleId"] if role else None
     name = client_input.get("name", {}).get("formatted")
     if not name:
         name = " ".join(
@@ -61,7 +54,6 @@ def convert_client_resource_rewrite_input_to_provider_resource_rewrite_input(
         "email": client_input["userName"],
         "internal_id": client_input.get("externalId"),
         "name": name,
-        "role_id": role_id,
     }
     result = {k: v for k, v in result.items() if v is not None}
     return result
@@ -70,10 +62,6 @@ def convert_client_resource_rewrite_input_to_provider_resource_rewrite_input(
 def convert_client_resource_creation_input_to_provider_resource_creation_input(
     tenant_id: int, client_input: ClientInput
 ) -> ProviderInput:
-    role_id = None
-    if "userType" in client_input:
-        role = roles.get_role_by_name(tenant_id, client_input["userType"])
-        role_id = role["roleId"] if role else None
     name = client_input.get("name", {}).get("formatted")
     if not name:
         name = " ".join(
@@ -93,7 +81,6 @@ def convert_client_resource_creation_input_to_provider_resource_creation_input(
         "email": client_input["userName"],
         "internal_id": client_input.get("externalId"),
         "name": name,
-        "role_id": role_id,
     }
     result = {k: v for k, v in result.items() if v is not None}
     return result
@@ -124,7 +111,7 @@ def delete_provider_resource(resource_id: ResourceId, tenant_id: int) -> None:
                 UPDATE public.users
                 SET
                     deleted_at = NULL,
-                    updated_at = default
+                    updated_at = now()
                 WHERE
                     users.user_id = %(user_id)s
                     AND users.tenant_id = %(tenant_id)s
@@ -137,6 +124,14 @@ def delete_provider_resource(resource_id: ResourceId, tenant_id: int) -> None:
 def convert_provider_resource_to_client_resource(
     provider_resource: ProviderResource,
 ) -> ClientResource:
+    groups = []
+    if provider_resource["role_id"]:
+        groups.append(
+            {
+                "value": str(provider_resource["role_id"]),
+                "$ref": f"Groups/{provider_resource['role_id']}",
+            }
+        )
     return {
         "id": str(provider_resource["user_id"]),
         "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
@@ -154,15 +149,8 @@ def convert_provider_resource_to_client_resource(
             "formatted": provider_resource["name"],
         },
         "displayName": provider_resource["name"] or provider_resource["email"],
-        "userType": provider_resource.get("role_name"),
         "active": provider_resource["deleted_at"] is None,
-        "groups": [
-            {
-                "value": str(group["group_id"]),
-                "$ref": f"Groups/{group['group_id']}",
-            }
-            for group in provider_resource["groups"]
-        ],
+        "groups": groups,
     }
 
 
@@ -190,20 +178,8 @@ def get_provider_resource_chunk(
         cur.execute(
             cur.mogrify(
                 """
-                SELECT
-                    users.*,
-                    roles.name AS role_name,
-                    COALESCE(
-                        (
-                            SELECT json_agg(groups)
-                            FROM public.user_group
-                            JOIN public.groups USING (group_id)
-                            WHERE user_group.user_id = users.user_id
-                        ),
-                        '[]'
-                    ) AS groups
+                SELECT *
                 FROM public.users
-                LEFT JOIN public.roles USING (role_id)
                 WHERE
                     users.tenant_id = %(tenant_id)s
                     AND users.deleted_at IS NULL
@@ -223,20 +199,8 @@ def get_provider_resource(
         cur.execute(
             cur.mogrify(
                 """
-                SELECT
-                    users.*,
-                    roles.name AS role_name,
-                    COALESCE(
-                        (
-                            SELECT json_agg(groups)
-                            FROM public.user_group
-                            JOIN public.groups USING (group_id)
-                            WHERE user_group.user_id = users.user_id
-                        ),
-                        '[]'
-                    ) AS groups
+                SELECT *
                 FROM public.users
-                LEFT JOIN public.roles USING (role_id)
                 WHERE
                     users.user_id = %(user_id)s
                     AND users.tenant_id = %(tenant_id)s
@@ -257,7 +221,6 @@ def create_provider_resource(
     tenant_id: int,
     name: str = "",
     internal_id: str | None = None,
-    role_id: int | None = None,
 ) -> ProviderResource:
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -268,39 +231,24 @@ def create_provider_resource(
                         tenant_id,
                         email,
                         name,
-                        internal_id,
-                        role_id
+                        internal_id
                     )
                     VALUES (
                         %(tenant_id)s,
                         %(email)s,
                         %(name)s,
-                        %(internal_id)s,
-                        %(role_id)s
+                        %(internal_id)s
                     )
                     RETURNING *
                 )
-                SELECT
-                    u.*,
-                    roles.name as role_name,
-                    COALESCE(
-                        (
-                            SELECT json_agg(groups)
-                            FROM public.user_group
-                            JOIN public.groups USING (group_id)
-                            WHERE user_group.user_id = u.user_id
-                        ),
-                        '[]'
-                    ) AS groups
+                SELECT *
                 FROM u
-                LEFT JOIN public.roles USING (role_id)
                 """,
                 {
                     "tenant_id": tenant_id,
                     "email": email,
                     "name": name,
                     "internal_id": internal_id,
-                    "role_id": role_id,
                 },
             )
         )
@@ -312,7 +260,6 @@ def restore_provider_resource(
     email: str,
     name: str = "",
     internal_id: str | None = None,
-    role_id: int | None = None,
     **kwargs: dict[str, Any],
 ) -> ProviderResource:
     with pg_client.PostgresClient() as cur:
@@ -326,7 +273,6 @@ def restore_provider_resource(
                         email = %(email)s,
                         name = %(name)s,
                         internal_id = %(internal_id)s,
-                        role_id = %(role_id)s,
                         deleted_at = NULL,
                         created_at = now(),
                         updated_at = now(),
@@ -336,26 +282,14 @@ def restore_provider_resource(
                     WHERE users.email = %(email)s
                     RETURNING *
                 )
-                SELECT
-                    u.*,
-                    roles.name as role_name,
-                    COALESCE(
-                        (
-                            SELECT json_agg(groups)
-                            FROM public.user_group
-                            JOIN public.groups USING (group_id)
-                            WHERE user_group.user_id = u.user_id
-                        ),
-                        '[]'
-                    ) AS groups
-                FROM u LEFT JOIN public.roles USING (role_id);
+                SELECT *
+                FROM u
                 """,
                 {
                     "tenant_id": tenant_id,
                     "email": email,
                     "name": name,
                     "internal_id": internal_id,
-                    "role_id": role_id,
                 },
             )
         )
@@ -368,7 +302,6 @@ def rewrite_provider_resource(
     email: str,
     name: str = "",
     internal_id: str | None = None,
-    role_id: int | None = None,
 ):
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -380,7 +313,6 @@ def rewrite_provider_resource(
                         email = %(email)s,
                         name = %(name)s,
                         internal_id = %(internal_id)s,
-                        role_id = %(role_id)s,
                         updated_at = now()
                     WHERE
                         users.user_id = %(user_id)s
@@ -388,19 +320,8 @@ def rewrite_provider_resource(
                         AND users.deleted_at IS NULL
                     RETURNING *
                 )
-                SELECT
-                    u.*,
-                    roles.name as role_name,
-                    COALESCE(
-                        (
-                            SELECT json_agg(groups)
-                            FROM public.user_group
-                            JOIN public.groups USING (group_id)
-                            WHERE user_group.user_id = u.user_id
-                        ),
-                        '[]'
-                    ) AS groups
-                FROM u LEFT JOIN public.roles USING (role_id);
+                SELECT *
+                FROM u
                 """,
                 {
                     "tenant_id": tenant_id,
@@ -408,7 +329,6 @@ def rewrite_provider_resource(
                     "email": email,
                     "name": name,
                     "internal_id": internal_id,
-                    "role_id": role_id,
                 },
             )
         )
@@ -441,19 +361,8 @@ def update_provider_resource(
                     AND users.deleted_at IS NULL
                 RETURNING *
             )
-            SELECT
-                u.*,
-                roles.name as role_name,
-                COALESCE(
-                    (
-                        SELECT json_agg(groups)
-                        FROM public.user_group
-                        JOIN public.groups USING (group_id)
-                        WHERE user_group.user_id = u.user_id
-                    ),
-                    '[]'
-                ) AS groups
-            FROM u LEFT JOIN public.roles USING (role_id)
+            SELECT *
+            FROM u
             """
         )
         return cur.fetchone()
