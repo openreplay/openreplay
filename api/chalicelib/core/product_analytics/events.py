@@ -27,7 +27,7 @@ def get_events(project_id: int, page: schemas.PaginatedSchema):
     total = rows[0]["total"]
     for i, row in enumerate(rows):
         row["id"] = f"event_{i}"
-        row["icon"] = None
+        row["dataType"] = "string"
         row["possibleTypes"] = ["string"]
         row.pop("total")
     return {"total": total, "list": helper.list_to_camel_case(rows)}
@@ -133,7 +133,7 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
     total = rows[0]["total"]
     for i, row in enumerate(rows):
         row["id"] = f"event_{i}"
-        row["icon"] = None
+        row["dataType"] = "string"
         row["possibleTypes"] = ["string"]
         row.pop("total")
     return {"total": total, "list": helper.list_to_camel_case(rows)}

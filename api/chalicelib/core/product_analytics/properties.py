@@ -52,11 +52,11 @@ def get_all_properties(project_id: int, page: schemas.PaginatedSchema):
         predefined_properties = get_predefined_property_types()
         for i, p in enumerate(properties):
             p["id"] = f"prop_{i}"
-            p["icon"] = None
+            p["_foundInPredefinedList"] = False
             if p["name"] in predefined_properties:
-                p["possibleTypes"].insert(0, predefined_properties[p["name"]])
-                p["possibleTypes"] = list(set(p["possibleTypes"]))
-            p["possibleTypes"] = exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"])
+                p["dataType"] = exp_ch_helper.simplify_clickhouse_type(predefined_properties[p["name"]])
+                p["_foundInPredefinedList"] = True
+            p["possibleTypes"] = list(set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"])))
             p.pop("total")
         return {"total": total, "list": properties}
 
@@ -64,18 +64,29 @@ def get_all_properties(project_id: int, page: schemas.PaginatedSchema):
 def get_event_properties(project_id: int, event_name):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
-            """SELECT all_properties.property_name,
-                            all_properties.display_name
+            """SELECT all_properties.property_name AS name,
+                            all_properties.display_name,
+                            array_agg(DISTINCT event_properties.value_type) AS possible_types
                       FROM product_analytics.event_properties 
                         INNER JOIN product_analytics.all_properties USING (property_name) 
                       WHERE event_properties.project_id=%(project_id)s
                         AND all_properties.project_id=%(project_id)s
                         AND event_properties.event_name=%(event_name)s
-                      ORDER BY created_at;""",
+                      GROUP BY ALL
+                      ORDER BY 1;""",
             parameters={"project_id": project_id, "event_name": event_name})
         properties = ch_client.execute(r)
+        properties = helper.list_to_camel_case(properties)
+        predefined_properties = get_predefined_property_types()
+        for i, p in enumerate(properties):
+            p["id"] = f"prop_{i}"
+            p["_foundInPredefinedList"] = False
+            if p["name"] in predefined_properties:
+                p["dataType"] = exp_ch_helper.simplify_clickhouse_type(predefined_properties[p["name"]])
+                p["_foundInPredefinedList"] = True
+            p["possibleTypes"] = list(set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"])))
 
-        return helper.list_to_camel_case(properties)
+        return properties
 
 
 def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
@@ -108,6 +119,5 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
         total = properties[0]["total"]
         for i, p in enumerate(properties):
             p["id"] = f"prop_{i}"
-            p["icon"] = None
             p.pop("total")
         return {"total": total, "list": helper.list_to_camel_case(properties)}
