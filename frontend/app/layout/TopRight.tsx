@@ -10,6 +10,7 @@ import GettingStartedProgress from 'Shared/GettingStarted/GettingStartedProgress
 import ProjectDropdown from 'Shared/ProjectDropdown';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import ThemeToggle from 'Components/ThemeToggle';
 
 function TopRight() {
   const { userStore } = useStore();
@@ -27,6 +28,7 @@ function TopRight() {
           {account.name ? <HealthStatus /> : null}
         </>
       )}
+      <ThemeToggle />
 
       <Popover content={<UserMenu />} placement="topRight">
         <div className="flex items-center cursor-pointer">

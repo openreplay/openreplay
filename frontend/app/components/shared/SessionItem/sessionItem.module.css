@@ -1,8 +1,6 @@
 .sessionItem {
-  background-color: #fff;
+  background-color: $white;
   user-select: none;
-  /* border-radius: 3px; */
-  /* border: solid thin #EEEEEE; */
   transition: all 0.4s;
 
   & .favorite {

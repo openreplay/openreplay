@@ -13,7 +13,7 @@
 
 .event {
   position: relative;
-  background: #f6f6f6;
+  background: $gray-lightest;
   /* border-radius: 3px; */
   user-select: none;
   transition: all 0.2s;
@@ -147,5 +147,5 @@
 }
 
 .lastInGroup {
-  background: white;
+  background: $white;
 }
