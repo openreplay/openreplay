@@ -89,4 +89,22 @@ export default class KaiService extends AiService {
 
     return await r.json()
   }
+
+  cancelGeneration = async (projectId: string, threadId: string, userId: string) => {
+    const jwt = window.env.KAI_TESTING // this.client.getJwt()
+    const r = await fetch(`http://localhost:8700/kai/${projectId}/cancel/${threadId}?user_id=${userId}`, {
+      method: 'POST',
+      headers: new Headers({
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwt}`
+      }),
+    });
+    if (!r.ok) {
+      throw new Error('Failed to cancel generation');
+    }
+
+    const data = await r.json();
+    return data;
+  }
 }

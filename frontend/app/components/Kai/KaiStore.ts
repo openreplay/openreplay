@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { BotChunk, ChatManager, Message } from './SocketManager';
-import { kaiService as aiService } from 'App/services';
+import { kaiService as aiService, kaiService } from 'App/services';
 import { toast } from 'react-toastify';
 
 class KaiStore {
@@ -159,7 +159,6 @@ class KaiStore {
   };
 
   sendMessage = (message: string) => {
-    console.log('send')
     if (this.chatManager) {
       this.chatManager.sendMessage(message, this.replacing);
     }
@@ -199,6 +198,16 @@ class KaiStore {
         toast.error('Failed to send feedback. Please try again later.');
       });
   };
+
+  cancelGeneration = async (settings: { projectId: string; userId: string; threadId: string }) => {
+    try {
+      await kaiService.cancelGeneration(settings.projectId, settings.threadId, settings.userId)
+      this.setProcessingStage(null)
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to cancel the generation, please try again later.')
+    }
+  }
 
   clearChat = () => {
     this.setMessages([]);

@@ -79,7 +79,7 @@ function ChatLog({
           ) : null}
         </div>
         <div className={'sticky bottom-0 pt-6 w-2/3'}>
-          <ChatInput onSubmit={onSubmit} />
+          <ChatInput onSubmit={onSubmit} threadId={threadId} />
         </div>
       </div>
     </Loader>
