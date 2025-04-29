@@ -52,7 +52,7 @@ export class ChatManager {
     msgCallback,
     titleCallback,
   }: {
-    msgCallback: (msg: BotChunk) => void;
+    msgCallback: (msg: BotChunk | { state: string, type: 'state' }) => void;
     titleCallback: (title: string) => void;
   }) => {
     this.socket.on('chunk', (msg: BotChunk) => {
@@ -63,6 +63,9 @@ export class ChatManager {
       console.log('Received title:', msg);
       titleCallback(msg.content);
     });
+    this.socket.on('state', (state: { message: 'idle' | 'running' }) => {
+      msgCallback({ state: state.message, type: 'state' })
+    })
   };
 
   disconnect = () => {

@@ -6,7 +6,7 @@ import { PANEL_SIZES } from 'App/constants/panelSizes';
 import ChatLog from './components/ChatLog';
 import IntroSection from './components/IntroSection';
 import { useQuery } from '@tanstack/react-query';
-import { aiService } from 'App/services';
+import { kaiService } from 'App/services';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -121,13 +121,13 @@ function ChatsModal({ onSelect }: { onSelect: (threadId: string, title: string) 
     refetch,
   } = useQuery({
     queryKey: ['kai', 'chats'],
-    queryFn: () => aiService.getKaiChats(userId, projectId),
+    queryFn: () => kaiService.getKaiChats(userId, projectId),
     staleTime: 1000 * 60,
   });
 
   const onDelete = async (id: string) => {
     try {
-      await aiService.deleteKaiChat(projectId, userId, id);
+      await kaiService.deleteKaiChat(projectId, userId, id);
     } catch (e) {
       toast.error("Something wen't wrong. Please try again later.");
     }

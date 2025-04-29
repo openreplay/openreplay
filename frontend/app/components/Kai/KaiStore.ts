@@ -119,23 +119,31 @@ class KaiStore {
     this.chatManager = new ChatManager(settings);
     this.chatManager.setOnMsgHook({
       msgCallback: (msg) => {
-        if (msg.stage === 'start') {
-          this.setProcessingStage({
-            ...msg,
-            content: 'Processing your request...',
-          });
-        }
-        if (msg.stage === 'chart') {
-          this.setProcessingStage(msg);
-        }
-        if (msg.stage === 'final') {
-          const msgObj = {
-            text: msg.content,
-            isUser: false,
-            messageId: msg.messageId,
+        if ('state' in msg) {
+          if (msg.state === 'running') {
+            this.setProcessingStage({ content: 'Processing your request...', stage: 'chart', messageId: Date.now().toPrecision() })
+          } else {
+            this.setProcessingStage(null)
           }
-          this.addMessage(msgObj);
-          this.setProcessingStage(null);
+        } else {
+          if (msg.stage === 'start') {
+            this.setProcessingStage({
+              ...msg,
+              content: 'Processing your request...',
+            });
+          }
+          if (msg.stage === 'chart') {
+            this.setProcessingStage(msg);
+          }
+          if (msg.stage === 'final') {
+            const msgObj = {
+              text: msg.content,
+              isUser: false,
+              messageId: msg.messageId,
+            }
+            this.addMessage(msgObj);
+            this.setProcessingStage(null);
+          }
         }
       },
       titleCallback: setTitle,
