@@ -627,8 +627,6 @@ export const NetworkPanelComp = observer(
           },
         }
       );
-      devTools.update(INDEX_KEY, { index: displayedItems.indexOf(item) });
-      stopAutoscroll();
     };
 
     const tableCols = useMemo(() => {
