@@ -5,6 +5,7 @@ import PieChart from 'Components/Charts/PieChart';
 import SankeyChart from 'Components/Charts/SankeyChart';
 import ColumnChart from 'Components/Charts/ColumnChart';
 import WebVitalsChart from 'Components/Charts/WebVitals'
+import SunBurstChart from 'Components/Charts/SunburstChart/Sunburst';
 
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
@@ -552,7 +553,17 @@ function WidgetChart(props: Props) {
         : false;
       const height = props.height ? props.height : props.isPreview ? 550 : 240;
       return (
-        <SankeyChart
+        <div>
+          <SankeyChart
+            height={height}
+            data={data}
+            inGrid={!props.isPreview}
+            onChartClick={(filters: any) => {
+              dashboardStore.drillDownFilter.merge({ filters, page: 1 });
+            }}
+            isUngrouped={isUngrouped}
+          />
+        <SunBurstChart
           height={height}
           data={data}
           inGrid={!props.isPreview}
@@ -562,7 +573,8 @@ function WidgetChart(props: Props) {
           isUngrouped={isUngrouped}
           startPoint={metric.startType}
         />
-      );
+        </div>
+      )
     }
 
     if (metricType === RETENTION) {
