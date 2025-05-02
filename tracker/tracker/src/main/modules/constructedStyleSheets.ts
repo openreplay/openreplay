@@ -127,7 +127,6 @@ export default function (app: App | null) {
       return replace.call(this, text).then((sheet: CSSStyleSheet) => {
         const sheetID = styleSheetIDMap.get(this)
         if (sheetID) {
-          console.log('replace')
           app.send(AdoptedSSReplaceURLBased(sheetID, text, app.getBaseHref()))
         }
         return sheet
@@ -137,7 +136,6 @@ export default function (app: App | null) {
     context.CSSStyleSheet.prototype.replaceSync = function (text: string) {
       const sheetID = styleSheetIDMap.get(this)
       if (sheetID) {
-        console.log('replaceSync')
         app.send(AdoptedSSReplaceURLBased(sheetID, text, app.getBaseHref()))
       }
       return replaceSync.call(this, text)
