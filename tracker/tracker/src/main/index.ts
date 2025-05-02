@@ -61,6 +61,7 @@ export type Options = Partial<
   }
   // dev only
   __DISABLE_SECURE_MODE?: boolean
+  checkCssInterval?: number
 }
 
 const DOCS_SETUP = '/en/sdk'
@@ -192,7 +193,7 @@ export default class API {
     Mouse(app, options.mouse)
     // inside iframe, we ignore viewport scroll
     Scroll(app, this.crossdomainMode)
-    CSSRules(app)
+    CSSRules(app, options)
     ConstructedStyleSheets(app)
     Console(app, options)
     Exception(app, options)
