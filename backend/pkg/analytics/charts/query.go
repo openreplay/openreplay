@@ -2,6 +2,7 @@ package charts
 
 import (
 	"fmt"
+	"log"
 	"openreplay/backend/pkg/analytics/db"
 	"strings"
 )
@@ -27,48 +28,17 @@ func NewQueryBuilder(p Payload) (QueryBuilder, error) {
 		return TableQueryBuilder{}, nil
 	case MetricTypeHeatmap:
 		return HeatmapQueryBuilder{}, nil
+	case MetricTypeSession:
+		return HeatmapSessionQueryBuilder{}, nil
 	default:
 		return nil, fmt.Errorf("unknown metric type: %s", p.MetricType)
 	}
-}
-
-var validFilterTypes = map[FilterType]struct{}{
-	"LOCATION":            {},
-	"CLICK":               {},
-	FilterClick:           {},
-	FilterInput:           {},
-	FilterLocation:        {},
-	FilterCustom:          {},
-	FilterFetch:           {},
-	FilterTag:             {},
-	FilterUserCountry:     {},
-	FilterUserCity:        {},
-	FilterUserState:       {},
-	FilterUserId:          {},
-	FilterUserAnonymousId: {},
-	FilterUserOs:          {},
-	FilterUserBrowser:     {},
-	FilterUserDevice:      {},
-	FilterPlatform:        {},
-	FilterRevId:           {},
-	FilterReferrer:        {},
-	FilterUtmSource:       {},
-	FilterUtmMedium:       {},
-	FilterUtmCampaign:     {},
-	FilterDuration:        {},
-	FilterMetadata:        {},
 }
 
 type BuildConditionsOptions struct {
 	MainTableAlias       string
 	PropertiesColumnName string
 	DefinedColumns       map[string]string
-}
-
-type filterConfig struct {
-	LogicalProperty string
-	EventName       string
-	IsNumeric       bool
 }
 
 var propertyKeyMap = map[string]filterConfig{
@@ -80,255 +50,234 @@ var propertyKeyMap = map[string]filterConfig{
 	// TODO add more mappings as needed
 }
 
-func getColumnAccessor(logicalProp string, isNumeric bool, opts BuildConditionsOptions) string {
-	// Use CTE alias if present in DefinedColumns
-	if actualCol, ok := opts.DefinedColumns[logicalProp]; ok && actualCol != "" {
-		return actualCol
-	}
-	// Otherwise, extract from $properties JSON
-	jsonFunc := "JSONExtractString"
-	if isNumeric {
-		jsonFunc = "JSONExtractFloat"
-	}
-	return fmt.Sprintf("%s(toString(%s), '%s')", jsonFunc, opts.PropertiesColumnName, logicalProp)
+// filterConfig holds configuration for a filter type
+type filterConfig struct {
+	LogicalProperty string
+	IsNumeric       bool
 }
 
+// getColumnAccessor returns the column name for a logical property
+func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptions) string {
+	// helper: wrap names starting with $ in quotes
+	quote := func(name string) string {
+		if strings.HasPrefix(name, "$") {
+			return fmt.Sprintf("\"%s\"", name)
+		}
+		return name
+	}
+
+	// explicit column mapping
+	if col, ok := opts.DefinedColumns[logical]; ok {
+		col = quote(col)
+		if opts.MainTableAlias != "" {
+			return fmt.Sprintf("%s.%s", opts.MainTableAlias, col)
+		}
+		return col
+	}
+
+	// determine property key
+	propKey := logical
+	if cfg, ok := propertyKeyMap[logical]; ok {
+		propKey = cfg.LogicalProperty
+	}
+
+	// build properties column reference
+	colName := opts.PropertiesColumnName
+	if opts.MainTableAlias != "" {
+		colName = fmt.Sprintf("%s.%s", opts.MainTableAlias, colName)
+	}
+	colName = quote(colName)
+
+	// JSON extraction
+	if isNumeric {
+		return fmt.Sprintf("toFloat64(JSONExtractString(toString(%s), '%s'))", colName, propKey)
+	}
+	return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, propKey)
+}
+
+// buildEventConditions builds SQL conditions and names from filters
 func buildEventConditions(filters []Filter, options ...BuildConditionsOptions) (conds, names []string) {
 	opts := BuildConditionsOptions{
-		MainTableAlias:       "main",
+		MainTableAlias:       "",
 		PropertiesColumnName: "$properties",
 		DefinedColumns:       make(map[string]string),
 	}
 	if len(options) > 0 {
-		if options[0].MainTableAlias != "" {
-			opts.MainTableAlias = options[0].MainTableAlias
+		opt := options[0]
+		if opt.MainTableAlias != "" {
+			opts.MainTableAlias = opt.MainTableAlias
 		}
-		if options[0].PropertiesColumnName != "" {
-			opts.PropertiesColumnName = options[0].PropertiesColumnName
+		if opt.PropertiesColumnName != "" {
+			opts.PropertiesColumnName = opt.PropertiesColumnName
 		}
-		if options[0].DefinedColumns != nil {
-			opts.DefinedColumns = options[0].DefinedColumns
+		if opt.DefinedColumns != nil {
+			opts.DefinedColumns = opt.DefinedColumns
 		}
 	}
 	for _, f := range filters {
-		_, okType := validFilterTypes[f.Type]
-		if !okType {
-			continue
-		}
-		// process main filter
-		if f.Type == FilterFetch {
-			var fetchConds []string
-			for _, nf := range f.Filters {
-				cfg, ok := propertyKeyMap[string(nf.Type)]
-				if !ok {
-					continue
-				}
-				acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
-				if c := buildCond(acc, nf.Value, f.Operator); c != "" {
-					fetchConds = append(fetchConds, c)
-				}
-			}
-			if len(fetchConds) > 0 {
-				conds = append(conds, strings.Join(fetchConds, " AND "))
-				names = append(names, "REQUEST")
-			}
-		} else {
-			cfg, ok := propertyKeyMap[string(f.Type)]
-			if !ok {
-				cfg = filterConfig{LogicalProperty: string(f.Type)}
-			}
-			acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
-
-			// when the Operator isAny or onAny just add the event name to the list
-			if f.Operator == "isAny" || f.Operator == "onAny" {
-				if f.IsEvent {
-					names = append(names, string(f.Type))
-				}
-				continue
-			}
-
-			if c := buildCond(acc, f.Value, f.Operator); c != "" {
-				conds = append(conds, c)
-				if f.IsEvent {
-					names = append(names, string(f.Type))
-				}
-			}
-		}
-
-		// process sub-filters
-		if len(f.Filters) > 0 && f.Type != FilterFetch {
-			subOpts := opts // Inherit parent's options
-			subConds, subNames := buildEventConditions(f.Filters, subOpts)
-			if len(subConds) > 0 {
-				conds = append(conds, strings.Join(subConds, " AND "))
-				names = append(names, subNames...)
-			}
+		fConds, fNames := addFilter(f, opts)
+		if len(fConds) > 0 {
+			conds = append(conds, fConds...)
+			names = append(names, fNames...)
 		}
 	}
 	return
 }
 
-func buildSessionConditions(filters []Filter) []string {
-	var conds []string
-	for _, f := range filters {
-		if !f.IsEvent {
-			switch f.Type {
-			case FilterUserCountry:
-				conds = append(conds, buildCond("s.user_country", f.Value, f.Operator))
-			case FilterUserCity:
-				conds = append(conds, buildCond("s.user_city", f.Value, f.Operator))
-			case FilterUserState:
-				conds = append(conds, buildCond("s.user_state", f.Value, f.Operator))
-			case FilterUserId:
-				conds = append(conds, buildCond("s.user_id", f.Value, f.Operator))
-			case FilterUserAnonymousId:
-				conds = append(conds, buildCond("s.user_anonymous_id", f.Value, f.Operator))
-			case FilterUserOs:
-				conds = append(conds, buildCond("s.user_os", f.Value, f.Operator))
-			case FilterUserBrowser:
-				conds = append(conds, buildCond("s.user_browser", f.Value, f.Operator))
-			case FilterUserDevice:
-				conds = append(conds, buildCond("s.user_device", f.Value, f.Operator))
-			case FilterPlatform:
-				conds = append(conds, buildCond("s.user_device_type", f.Value, f.Operator))
-			case FilterRevId:
-				conds = append(conds, buildCond("s.rev_id", f.Value, f.Operator))
-			case FilterReferrer:
-				conds = append(conds, buildCond("s.base_referrer", f.Value, f.Operator))
-			case FilterUtmSource:
-				conds = append(conds, buildCond("s.utm_source", f.Value, f.Operator))
-			case FilterUtmMedium:
-				conds = append(conds, buildCond("s.utm_medium", f.Value, f.Operator))
-			case FilterUtmCampaign:
-				conds = append(conds, buildCond("s.utm_campaign", f.Value, f.Operator))
-			case FilterDuration:
-				if len(f.Value) == 2 {
-					conds = append(conds, fmt.Sprintf("s.duration >= '%s'", f.Value[0]))
-					conds = append(conds, fmt.Sprintf("s.duration <= '%s'", f.Value[1]))
-				}
-			case FilterMetadata:
-				if f.Source != "" {
-					conds = append(conds, buildCond(fmt.Sprintf("s.%s", f.Source), f.Value, f.Operator))
-				}
+// addFilter processes a single Filter and returns its SQL conditions and associated event names
+func addFilter(f Filter, opts BuildConditionsOptions) (conds []string, names []string) {
+	var ftype = string(f.Type)
+	// resolve filter configuration, default if missing
+	cfg, ok := propertyKeyMap[ftype]
+	if !ok {
+		cfg = filterConfig{LogicalProperty: ftype, IsNumeric: false}
+		log.Printf("using default config for type: %v", f.Type)
+	}
+	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
+
+	// operator-based conditions
+	switch f.Operator {
+	case "isAny", "onAny":
+		if f.IsEvent {
+			names = append(names, ftype)
+		}
+	default:
+		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric); c != "" {
+			conds = append(conds, c)
+			if f.IsEvent {
+				names = append(names, ftype)
 			}
 		}
 	}
-	return conds
+
+	// nested sub-filters
+	if len(f.Filters) > 0 {
+		subConds, subNames := buildEventConditions(f.Filters, opts)
+		if len(subConds) > 0 {
+			conds = append(conds, strings.Join(subConds, " AND "))
+			names = append(names, subNames...)
+		}
+	}
+
+	return
 }
 
-func buildCond(expr string, values []string, operator string) string {
+var compOps = map[string]string{
+	"equals": "=", "is": "=", "on": "=",
+	"notEquals": "<>", "not": "<>", "off": "<>",
+	"greaterThan": ">", "gt": ">",
+	"greaterThanOrEqual": ">=", "gte": ">=",
+	"lessThan": "<", "lt": "<",
+	"lessThanOrEqual": "<=", "lte": "<=",
+}
+
+// buildCond constructs a condition string based on operator and values
+func buildCond(expr string, values []string, operator string, isNumeric bool) string {
 	if len(values) == 0 {
 		return ""
 	}
 	switch operator {
 	case "contains":
-		var conds []string
-		for _, v := range values {
-			conds = append(conds, fmt.Sprintf("%s ILIKE '%%%s%%'", expr, v))
+		// wrap values with % on both sides
+		wrapped := make([]string, len(values))
+		for i, v := range values {
+			wrapped[i] = fmt.Sprintf("%%%s%%", v)
 		}
-		if len(conds) > 1 {
-			return "(" + strings.Join(conds, " OR ") + ")"
-		}
-		return conds[0]
-	case "regex":
-		var conds []string
-		for _, v := range values {
-			conds = append(conds, fmt.Sprintf("match(%s, '%s')", expr, v))
-		}
-
-		if len(conds) > 1 {
-			return "(" + strings.Join(conds, " OR ") + ")"
-		}
-		return conds[0]
+		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
 	case "notContains":
-		var conds []string
-		for _, v := range values {
-			conds = append(conds, fmt.Sprintf("NOT (%s ILIKE '%%%s%%')", expr, v))
+		wrapped := make([]string, len(values))
+		for i, v := range values {
+			wrapped[i] = fmt.Sprintf("%%%s%%", v)
 		}
-		if len(conds) > 1 {
-			return "(" + strings.Join(conds, " OR ") + ")"
-		}
-		return conds[0]
+		cond := multiValCond(expr, wrapped, "%s ILIKE %s", false)
+		return "NOT (" + cond + ")"
 	case "startsWith":
-		var conds []string
-		for _, v := range values {
-			conds = append(conds, fmt.Sprintf("%s ILIKE '%s%%'", expr, v))
+		wrapped := make([]string, len(values))
+		for i, v := range values {
+			wrapped[i] = v + "%"
 		}
-		if len(conds) > 1 {
-			return "(" + strings.Join(conds, " OR ") + ")"
-		}
-		return conds[0]
+		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
 	case "endsWith":
-		var conds []string
+		wrapped := make([]string, len(values))
+		for i, v := range values {
+			wrapped[i] = "%" + v
+		}
+		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
+	case "regex":
+		// build match expressions
+		var parts []string
 		for _, v := range values {
-			conds = append(conds, fmt.Sprintf("%s ILIKE '%%%s'", expr, v))
+			parts = append(parts, fmt.Sprintf("match(%s, '%s')", expr, v))
 		}
-		if len(conds) > 1 {
-			return "(" + strings.Join(conds, " OR ") + ")"
+		if len(parts) > 1 {
+			return "(" + strings.Join(parts, " OR ") + ")"
 		}
-		return conds[0]
-	case "notEquals", "not", "off":
-		if len(values) > 1 {
-			return fmt.Sprintf("%s NOT IN (%s)", expr, buildInClause(values))
-		}
-		return fmt.Sprintf("%s <> '%s'", expr, values[0])
-	case "greaterThan", "gt":
-		var conds []string
-		for _, v := range values {
-			conds = append(conds, fmt.Sprintf("%s > '%s'", expr, v))
-		}
-		if len(conds) > 1 {
-			return "(" + strings.Join(conds, " OR ") + ")"
-		}
-		return conds[0]
-	case "greaterThanOrEqual", "gte":
-		var conds []string
-		for _, v := range values {
-			conds = append(conds, fmt.Sprintf("%s >= '%s'", expr, v))
-		}
-		if len(conds) > 1 {
-			return "(" + strings.Join(conds, " OR ") + ")"
-		}
-		return conds[0]
-	case "lessThan", "lt":
-		var conds []string
-		for _, v := range values {
-			conds = append(conds, fmt.Sprintf("%s < '%s'", expr, v))
-		}
-		if len(conds) > 1 {
-			return "(" + strings.Join(conds, " OR ") + ")"
-		}
-		return conds[0]
-	case "lessThanOrEqual", "lte":
-		var conds []string
-		for _, v := range values {
-			conds = append(conds, fmt.Sprintf("%s <= '%s'", expr, v))
-		}
-		if len(conds) > 1 {
-			return "(" + strings.Join(conds, " OR ") + ")"
-		}
-		return conds[0]
-	case "in":
-		if len(values) > 1 {
-			return fmt.Sprintf("%s IN (%s)", expr, buildInClause(values))
-		}
-		return fmt.Sprintf("%s = '%s'", expr, values[0])
-	case "notIn":
-		if len(values) > 1 {
-			return fmt.Sprintf("%s NOT IN (%s)", expr, buildInClause(values))
-		}
-		return fmt.Sprintf("%s <> '%s'", expr, values[0])
-	case "equals", "is", "on":
-		if len(values) > 1 {
-			return fmt.Sprintf("%s IN (%s)", expr, buildInClause(values))
-		}
-		return fmt.Sprintf("%s = '%s'", expr, values[0])
+		return parts[0]
+	case "in", "notIn":
+		neg := operator == "notIn"
+		return inClause(expr, values, neg, isNumeric)
 	default:
-		if len(values) > 1 {
-			return fmt.Sprintf("%s IN (%s)", expr, buildInClause(values))
+		if op, ok := compOps[operator]; ok {
+			tmpl := "%s " + op + " %s"
+			return multiValCond(expr, values, tmpl, isNumeric)
 		}
-		return fmt.Sprintf("%s = '%s'", expr, values[0])
+		// fallback equals
+		tmpl := "%s = %s"
+		return multiValCond(expr, values, tmpl, isNumeric)
 	}
+}
+
+// formatCondition applies a template to a single value, handling quoting
+func formatCondition(expr, tmpl, value string, isNumeric bool) string {
+	val := value
+	if !isNumeric {
+		val = fmt.Sprintf("'%s'", value)
+	}
+	return fmt.Sprintf(tmpl, expr, val)
+}
+
+// multiValCond applies a template to one or multiple values, using formatCondition
+func multiValCond(expr string, values []string, tmpl string, isNumeric bool) string {
+	if len(values) == 1 {
+		return formatCondition(expr, tmpl, values[0], isNumeric)
+	}
+	parts := make([]string, len(values))
+	for i, v := range values {
+		parts[i] = formatCondition(expr, tmpl, v, isNumeric)
+	}
+	return "(" + strings.Join(parts, " OR ") + ")"
+}
+
+// inClause constructs IN/NOT IN clauses with proper quoting
+func inClause(expr string, values []string, negate, isNumeric bool) string {
+	op := "IN"
+	if negate {
+		op = "NOT IN"
+	}
+
+	if len(values) == 1 {
+		return fmt.Sprintf("%s %s (%s)", expr, op, func() string {
+			if isNumeric {
+				return values[0]
+			}
+			return fmt.Sprintf("'%s'", values[0])
+		}())
+	}
+	quoted := make([]string, len(values))
+	for i, v := range values {
+		if isNumeric {
+			quoted[i] = v
+		} else {
+			quoted[i] = fmt.Sprintf("'%s'", v)
+		}
+	}
+	return fmt.Sprintf("%s %s (%s)", expr, op, strings.Join(quoted, ", "))
+}
+
+func buildSessionConditions(filters []Filter) []string {
+	var conds []string
+
+	return conds
 }
 
 func buildInClause(values []string) string {

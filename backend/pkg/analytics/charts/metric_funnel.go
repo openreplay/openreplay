@@ -91,7 +91,7 @@ func (f FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 
 	// 3. Global conditions
 	globalConds, _ := buildEventConditions(globalFilters, BuildConditionsOptions{
-		DefinedColumns:       cteColumnAliases(), // logical -> logical (CTE alias)
+		DefinedColumns:       mainColumns,
 		MainTableAlias:       "e",
 		PropertiesColumnName: "$properties",
 	})

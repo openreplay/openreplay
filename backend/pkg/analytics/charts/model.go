@@ -49,6 +49,7 @@ const (
 	MetricTypeTable      MetricType = "table"
 	MetricTypeFunnel     MetricType = "funnel"
 	MetricTypeHeatmap    MetricType = "heatmaps"
+	MetricTypeSession    MetricType = "heatmaps_session"
 )
 
 const (
