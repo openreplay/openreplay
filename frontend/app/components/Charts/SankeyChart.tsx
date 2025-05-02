@@ -23,7 +23,7 @@ interface SankeyLink {
   eventType?: string;
 }
 
-interface Data {
+export interface Data {
   nodes: SankeyNode[];
   links: SankeyLink[];
 }
