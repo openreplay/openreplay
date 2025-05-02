@@ -15,35 +15,34 @@ export default function (app: App, opts: { checkCssInterval?: number }) {
     return
   }
 
-  // Track CSS rule snapshots by sheetID:index
+  //  sheetID:index -> ruleText
   const ruleSnapshots = new Map<string, string>()
   let checkInterval: number | null = null
-  const checkIntervalMs = opts.checkCssInterval || 200 // Check every 200ms
+  const trackedSheetIDs = new Set<number>()
+  const checkIntervalMs = opts.checkCssInterval || 200
 
-  // Check all rules for changes
   function checkRuleChanges() {
     for (let i = 0; i < document.styleSheets.length; i++) {
       try {
         const sheet = document.styleSheets[i]
         const sheetID = styleSheetIDMap.get(sheet)
         if (!sheetID) continue
+        if (!trackedSheetIDs.has(sheetID)) continue
 
-        // Check each rule in the sheet
         for (let j = 0; j < sheet.cssRules.length; j++) {
           try {
             const rule = sheet.cssRules[j]
             const key = `${sheetID}:${j}`
-            const newText = rule.cssText
             const oldText = ruleSnapshots.get(key)
+            const newText = rule.cssText
 
             if (oldText !== newText) {
-              // Rule is new or changed
               if (oldText !== undefined) {
-                // Rule changed - send update
+                // Rule is changed
                 app.send(AdoptedSSDeleteRule(sheetID, j))
                 app.send(AdoptedSSInsertRuleURLBased(sheetID, newText, j, app.getBaseHref()))
               } else {
-                // Rule added - send insert
+                // Rule added
                 app.send(AdoptedSSInsertRuleURLBased(sheetID, newText, j, app.getBaseHref()))
               }
               ruleSnapshots.set(key, newText)
@@ -53,7 +52,6 @@ export default function (app: App, opts: { checkCssInterval?: number }) {
           }
         }
 
-        // Check for deleted rules
         const keysToCheck = Array.from(ruleSnapshots.keys()).filter((key) =>
           key.startsWith(`${sheetID}:`),
         )
@@ -70,17 +68,26 @@ export default function (app: App, opts: { checkCssInterval?: number }) {
     }
   }
 
-  // Standard API hooks
+  const emptyRuleReg = /{\s*}/
+  function isRuleEmpty(rule: string) {
+    return emptyRuleReg.test(rule)
+  }
+
   const sendInsertDeleteRule = app.safe((sheet: CSSStyleSheet, index: number, rule?: string) => {
     const sheetID = styleSheetIDMap.get(sheet)
     if (!sheetID) return
 
     if (typeof rule === 'string') {
       app.send(AdoptedSSInsertRuleURLBased(sheetID, rule, index, app.getBaseHref()))
-      ruleSnapshots.set(`${sheetID}:${index}`, rule)
+      if (isRuleEmpty(rule)) {
+        ruleSnapshots.set(`${sheetID}:${index}`, rule)
+        trackedSheetIDs.add(sheetID)
+      }
     } else {
       app.send(AdoptedSSDeleteRule(sheetID, index))
-      ruleSnapshots.delete(`${sheetID}:${index}`)
+      if (ruleSnapshots.has(`${sheetID}:${index}`)) {
+        ruleSnapshots.delete(`${sheetID}:${index}`)
+      }
     }
   })
 
@@ -100,7 +107,10 @@ export default function (app: App, opts: { checkCssInterval?: number }) {
     if (idx >= 0) {
       app.send(AdoptedSSInsertRuleURLBased(sheetID, cssText, idx, app.getBaseHref()))
       app.send(AdoptedSSDeleteRule(sheetID, idx + 1))
-      ruleSnapshots.set(`${sheetID}:${idx}`, cssText)
+      if (isRuleEmpty(cssText)) {
+        ruleSnapshots.set(`${sheetID}:${idx}`, cssText)
+        trackedSheetIDs.add(sheetID)
+      }
     }
   })
 
@@ -137,11 +147,9 @@ export default function (app: App, opts: { checkCssInterval?: number }) {
     }
   })
 
-  // Apply patches
   patchContext(window)
   app.observer.attachContextCallback(patchContext)
 
-  // Track style nodes
   app.nodes.attachNodeCallback((node: Node): void => {
     if (!hasTag(node, 'style') || !node.sheet) return
     if (node.textContent !== null && node.textContent.trim().length > 0) return
@@ -163,7 +171,6 @@ export default function (app: App, opts: { checkCssInterval?: number }) {
     }
   })
 
-  // Start checking and setup cleanup
   function startChecking() {
     if (checkInterval) return
     checkInterval = window.setInterval(checkRuleChanges, checkIntervalMs)
