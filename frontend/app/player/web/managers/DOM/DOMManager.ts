@@ -450,7 +450,7 @@ export default class DOMManager extends ListWalker<Message> {
           logger.error('CreateIFrameDocument: Node not found', msg);
           return;
         }
-        // shadow DOM for a custom element + SALESFORCE (<slot>) 
+        // shadow DOM for a custom element + SALESFORCE (<slot>)
         const isCustomElement = vElem.tagName.includes('-') || vElem.tagName === 'SLOT';
         const isNotActualIframe = !["IFRAME", "FRAME"].includes(vElem.tagName.toUpperCase());
         const isLikelyShadowRoot = isCustomElement && isNotActualIframe;
@@ -495,8 +495,9 @@ export default class DOMManager extends ListWalker<Message> {
           logger.warn('No stylesheet was created for ', msg);
           return;
         }
-        // @ts-ignore (configure ts with recent WebaAPI)
-        styleSheet.replaceSync(msg.text);
+
+        // styleSheet.replaceRule(msg.text);
+        // styleSheet.whenReady((sheet) => sheet.replaceSync(msg.text))
         return;
       }
       case MType.AdoptedSsAddOwner: {

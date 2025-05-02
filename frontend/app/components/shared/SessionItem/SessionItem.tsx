@@ -160,6 +160,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     isDisabled && location.pathname.includes('multiview');
 
   const _metaList = useMemo(() => {
+    if (!metadata) return [];
     return Object.keys(metadata).map((key) => ({
       label: key,
       value: metadata[key],

@@ -24,7 +24,7 @@ export function insertRule(
     try {
       sheet.insertRule(msg.rule);
     } catch (e) {
-      logger.warn('Cannot insert rule.', e, '\nmessage: ', msg);
+      logger.warn('Cannot insert rule.', e, '\nmessage: ', msg, sheet);
     }
   }
 }
@@ -36,6 +36,18 @@ export function deleteRule(
   try {
     sheet.deleteRule(msg.index);
   } catch (e) {
-    logger.warn(e, msg);
+    logger.warn(e, msg, sheet);
+  }
+}
+
+export function replaceRule(
+  sheet: { insertRule: (rule: string, index?: number) => void, deleteRule: (index: number) => void },
+  msg: { rule: string, index: number },
+) {
+  try {
+    sheet.deleteRule(msg.index);
+    sheet.insertRule(msg.rule, msg.index);
+  } catch (e) {
+    logger.warn('Cannot replace rule.', e, '\nmessage: ', msg);
   }
 }

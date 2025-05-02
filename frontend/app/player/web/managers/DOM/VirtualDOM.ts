@@ -1,5 +1,5 @@
 import { isRootNode } from 'App/player/guards';
-import { insertRule, deleteRule } from './safeCSSRules';
+import { insertRule, deleteRule, replaceRule } from './safeCSSRules';
 
 function isNode(sth: any): sth is Node {
   return !!sth && sth.nodeType != null;
