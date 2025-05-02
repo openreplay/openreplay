@@ -287,3 +287,59 @@ svg {
 .text-black {
     color: $black;
 }
+
+.markdown-body table {
+    table-layout: auto;
+    width: 100%;
+}
+
+.markdown-body dl dt {
+  padding: 0;
+  margin-top: 16px;
+  font-size: 1em;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.markdown-body dl dd {
+  padding: 0 16px;
+  margin-bottom: 16px;
+}
+
+.markdown-body table th {
+  font-weight: 600;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+  padding: 3px 6px;
+  border: 1px solid $gray-light;
+}
+
+.markdown-body table td>:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body table thead {
+  background-color: rgba(235, 235, 255, 1);
+}
+
+.markdown-body table tbody tr {
+  background-color: rgba(250, 250, 255, 1);
+}
+
+.markdown-body table tbody td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 30px;
+    max-width: 300px;
+}
+
+.markdown-body table tr:nth-child(2n) {
+  background-color: rgba(235, 235, 255, 1);
+}
+
+.markdown-body table img {
+  background-color: transparent;
+}
