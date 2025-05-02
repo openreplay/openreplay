@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon } from 'UI';
 import cn from 'classnames';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm'
 import { Loader, ThumbsUp, ThumbsDown, ListRestart } from 'lucide-react';
 import { kaiStore } from '../KaiStore';
 
@@ -49,7 +50,7 @@ export function ChatMsg({
         </div>
       )}
       <div className={'mt-1'}>
-        <Markdown>{text}</Markdown>
+        <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
         {isUser ? (
           isLast ? (
             <div
