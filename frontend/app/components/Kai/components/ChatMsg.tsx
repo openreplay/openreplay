@@ -50,7 +50,9 @@ export function ChatMsg({
         </div>
       )}
       <div className={'mt-1'}>
-        <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
+        <div className='markdown-body'>
+          <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
+        </div>
         {isUser ? (
           isLast ? (
             <div
