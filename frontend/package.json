@@ -82,6 +82,7 @@
     "react-toastify": "^11.0.5",
     "react18-json-view": "^0.2.8",
     "recharts": "^2.12.7",
+    "remark-gfm": "^4.0.1",
     "socket.io-client": "^4.4.1",
     "syncod": "^0.0.1",
     "ts-api-utils": "^2.0.1",
