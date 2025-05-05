@@ -151,8 +151,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     _timestamp                  DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       ORDER BY (project_id, "$event_name", created_at, session_id)
-      TTL _timestamp + INTERVAL 1 MONTH ,
-          _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00';
+      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00';
 
 -- The list of events that should not be ingested,
 -- according to a specific event_name and optional properties
