@@ -9,8 +9,7 @@ CREATE TABLE IF NOT EXISTS experimental.autocomplete
     _timestamp DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(_timestamp)
-      ORDER BY (project_id, type, value)
-      TTL _timestamp + INTERVAL 1 MONTH;
+      ORDER BY (project_id, type, value);
 
 CREATE TABLE IF NOT EXISTS experimental.events
 (
@@ -87,8 +86,7 @@ CREATE TABLE IF NOT EXISTS experimental.events
     _timestamp                     DateTime                             DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(datetime)
-      ORDER BY (project_id, datetime, event_type, session_id, message_id)
-      TTL datetime + INTERVAL 1 MONTH;
+      ORDER BY (project_id, datetime, event_type, session_id, message_id);
 
 
 
@@ -140,7 +138,6 @@ CREATE TABLE IF NOT EXISTS experimental.sessions
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMMDD(datetime)
       ORDER BY (project_id, datetime, session_id)
-      TTL datetime + INTERVAL 1 MONTH
       SETTINGS index_granularity = 512;
 
 CREATE TABLE IF NOT EXISTS experimental.issues
@@ -154,8 +151,7 @@ CREATE TABLE IF NOT EXISTS experimental.issues
     _timestamp     DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(_timestamp)
-      ORDER BY (project_id, issue_id, type)
-      TTL _timestamp + INTERVAL 1 MONTH;
+      ORDER BY (project_id, issue_id, type);
 
 CREATE TABLE IF NOT EXISTS experimental.ios_events
 (
@@ -191,8 +187,7 @@ CREATE TABLE IF NOT EXISTS experimental.ios_events
     _timestamp     DateTime                             DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(datetime)
-      ORDER BY (project_id, datetime, event_type, session_id, message_id)
-      TTL datetime + INTERVAL 1 MONTH;
+      ORDER BY (project_id, datetime, event_type, session_id, message_id);
 
 
 SET allow_experimental_json_type = 1;
@@ -346,8 +341,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     _timestamp                  DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       ORDER BY (project_id, "$event_name", created_at, session_id)
-      TTL _timestamp + INTERVAL 1 MONTH ,
-          _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00';
+      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00';
 
 -- The list of events that should not be ingested,
 -- according to a specific event_name and optional properties
