@@ -14,6 +14,7 @@ const colorMap = new Map();
 export function convertSankeyToSunburst(data: Data): {
   tree: SunburstChild;
   colors: Map<string, string>;
+  dropsByUrl: Record<string, { drop: number, ids: any[] }>;
 } {
   const dataLinks = data.links.filter((link) => {
     const sourceNode = data.nodes.find((node) => node.id === link.source);
@@ -34,8 +35,26 @@ export function convertSankeyToSunburst(data: Data): {
   }));
 
   const nodesById: Record<number, (typeof nodesCopy)[number]> = {};
+  const dropsByUrl: Record<string, { drop: number, ids: any[] }> = {};
+  dataLinks.forEach((link) => {
+    const targetNode = nodesCopy.find((node) => node.id === link.target);
+    const sourceNode = nodesCopy.find((node) => node.id === link.source);
+    if (!targetNode || !sourceNode) return;
+
+    const isDrop = targetNode.eventType === 'DROP';
+    if (!isDrop) return;
+
+    const sourceUrl = sourceNode.name;
+    if (sourceUrl) {
+      if (dropsByUrl[sourceUrl]) {
+        dropsByUrl[sourceUrl].drop = dropsByUrl[sourceUrl].drop + link.sessionsCount;
+      } else {
+        dropsByUrl[sourceUrl] = { drop: link.sessionsCount, ids: [] };
+      }
+    }
+  });
   nodesCopy.forEach((node) => {
-    nodesById[node.id as number] = node;
+    nodesById[node.id as number] = { ...node, dataIndex: node.id };
   });
 
   dataLinks.forEach((link) => {
@@ -67,7 +86,6 @@ export function convertSankeyToSunburst(data: Data): {
 
   const rootNode = nodesById[0];
   const nameCount: Record<string, number> = {};
-  let dataIndex = 0;
   function buildSunburstNode(node: SunburstChild): SunburstChild | null {
     if (!node) return null;
     // eventType === DROP
@@ -76,22 +94,29 @@ export function convertSankeyToSunburst(data: Data): {
       // colorMap.set('DROP', 'black')
       return null;
     }
+
     let color = colorMap.get(node.name);
     if (!color) {
       color = randomColor(colorMap.size);
       colorMap.set(node.name, color);
     }
     let nodeName;
+    if (node.name.includes('feature/sess')) {
+      console.log(node)
+    }
     if (nameCount[node.name]) {
-      nodeName = `${node.name}_$$$_${nameCount[node.name]++}`;
+      nodeName = `${node.name}_OPENREPLAY_NODE_${nameCount[node.name]++}`;
     } else {
       nodeName = node.name;
       nameCount[node.name] = 1;
     }
+    if (dropsByUrl[node.name]) {
+      dropsByUrl[node.name].ids.push(node.dataIndex);
+    }
     const result: SunburstChild = {
       name: nodeName,
       value: node.value || 0,
-      dataIndex: dataIndex++,
+      dataIndex: node.dataIndex,
       itemStyle: {
         color,
       },
@@ -109,6 +134,7 @@ export function convertSankeyToSunburst(data: Data): {
   return {
     tree: buildSunburstNode(rootNode) as SunburstChild,
     colors: colorMap,
+    dropsByUrl,
   };
 }
 
@@ -125,7 +151,7 @@ export function sunburstTooltip(colorMap: Map<string, string>) {
     if ('name' in params.data) {
       const color = colorMap.get(params.data.name);
       const clearName = params.data.name
-        ? params.data.name.split('_$$$_')[0]
+        ? params.data.name.split('_OPENREPLAY_NODE_')[0]
         : 'Total';
       return `
       <div class="flex flex-col bg-white p-2 rounded shadow border">
