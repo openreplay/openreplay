@@ -67,6 +67,10 @@
   };*/
 }
 
+.event__highlighted {
+  background: #f0a930;
+}
+
 /* .event.click, .event.input {
   background: $green;
 }

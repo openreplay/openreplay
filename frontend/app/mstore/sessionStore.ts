@@ -15,9 +15,7 @@ import { loadFile } from 'App/player/web/network/loadFiles';
 import { LAST_7_DAYS } from 'Types/app/period';
 import { filterMap } from 'App/mstore/searchStore';
 import { getDateRangeFromValue } from 'App/dateRange';
-import { clean as cleanParams } from '../api_client';
-import { searchStore, searchStoreLive } from './index';
-
+import { checkEventWithFilters } from '@/components/Session_/Player/Controls/checkEventWithFilters';
 const range = getDateRangeFromValue(LAST_7_DAYS);
 
 const defaultDateFilters = {
@@ -339,7 +337,14 @@ export default class SessionStore {
       const eventsData: Record<string, any[]> = {};
       try {
         const evData = await sessionService.getSessionEvents(sessionId);
-        Object.assign(eventsData, evData);
+
+        Object.assign(eventsData, {
+          ...evData,
+          events: evData.events.map((e) => ({
+            ...e,
+            isHighlighted: checkEventWithFilters(e, searchStore.instance.filters) 
+          }))
+        });
       } catch (e) {
         console.error('Failed to fetch events', e);
       }

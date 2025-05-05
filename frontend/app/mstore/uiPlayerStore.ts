@@ -53,6 +53,8 @@ export const blockValues = [
 
 export default class UiPlayerStore {
   fullscreen = false;
+  showOnlySearchEvents = false;
+  showSearchEventsSwitchButton = false;
 
   bottomBlock = 0;
 
@@ -144,5 +146,13 @@ export default class UiPlayerStore {
 
   setZoomTab = (tab: 'overview' | 'journey' | 'issues' | 'errors') => {
     this.zoomTab = tab;
+  };
+
+  setShowOnlySearchEvents = (show: boolean) => {
+    this.showOnlySearchEvents = show;
+  };
+
+  setSearchEventsSwitchButton = (show: boolean) => {
+    this.showSearchEventsSwitchButton = show;
   };
 }
