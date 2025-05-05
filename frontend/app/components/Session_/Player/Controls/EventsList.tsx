@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import {
   PlayerContext,
   MobilePlayerContext,
@@ -6,18 +6,26 @@ import {
 import { observer } from 'mobx-react-lite';
 import stl from './timeline.module.css';
 import { getTimelinePosition } from './getTimelinePosition';
+import classNames from 'classnames';
+import { useStore } from '@/mstore';
 
 function EventsList() {
   const { store } = useContext(PlayerContext);
+  const { uiPlayerStore } = useStore();
 
   const { eventCount, endTime } = store.get();
   const { tabStates } = store.get();
   const scale = 100 / endTime;
   const events = React.useMemo(
-    () => Object.values(tabStates)[0]?.eventList.filter((e) => e.time) || [],
-    [eventCount],
+    () => Object.values(tabStates)[0]?.eventList.filter((e) => {
+      if (uiPlayerStore.showOnlySearchEvents) {
+        return e.time && (e as any).isHighlighted
+      } else {
+        return e.time
+      }
+  }) || [],
+    [eventCount, uiPlayerStore.showOnlySearchEvents],
   );
-
   React.useEffect(() => {
     const hasDuplicates = events.some(
       (e, i) =>
@@ -33,7 +41,9 @@ function EventsList() {
         <div
           /* @ts-ignore TODO */
           key={`${e.key}_${e.time}`}
-          className={stl.event}
+          className={classNames(stl.event, {
+            [stl.event__highlighted]: e.isHighlighted,
+          })}
           style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
         />
       ))}

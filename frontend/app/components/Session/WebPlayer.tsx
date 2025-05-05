@@ -31,6 +31,10 @@ const UXTTABS = {
 
 let playerInst: IPlayerContext['player'] | undefined;
 
+const isDefaultEventsFilterSearch = (filters: FilterItem[]) => {
+  return filters.length === 1 && filters[0].key === 'location' && filters[0].value[0] === '';
+}
+
 function WebPlayer(props: any) {
   const {
     notesStore,
@@ -38,6 +42,7 @@ function WebPlayer(props: any) {
     uxtestingStore,
     uiPlayerStore,
     integrationsStore,
+    searchStore,
   } = useStore();
   const devTools = sessionStore.devTools
   const session = sessionStore.current;
@@ -57,6 +62,17 @@ function WebPlayer(props: any) {
   const [fullView, setFullView] = useState(false);
 
   React.useEffect(() => {
+    if (searchStore.instance.filters?.length && !isDefaultEventsFilterSearch(searchStore.instance.filters)) {
+      uiPlayerStore.setSearchEventsSwitchButton(true);
+      uiPlayerStore.setShowOnlySearchEvents(true);
+    } else {
+      uiPlayerStore.setSearchEventsSwitchButton(false);
+      uiPlayerStore.setShowOnlySearchEvents(false);
+    }
+  }, [searchStore.instance.filters]);
+
+  React.useEffect(() => {
+    openedAt.current = Date.now();
     const handleActivation = () => {
       if (!document.hidden) {
         setWindowActive(true);
