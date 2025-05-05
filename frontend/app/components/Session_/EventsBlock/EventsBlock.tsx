@@ -2,20 +2,20 @@ import { mergeEventLists, sortEvents } from 'Types/session';
 import { TYPES } from 'Types/session/event';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { VList, VListHandle } from 'virtua';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
-import { Search } from 'lucide-react'
+import { Search } from 'lucide-react';
 import EventGroupWrapper from './EventGroupWrapper';
 import EventSearch from './EventSearch/EventSearch';
 import styles from './eventsBlock.module.css';
 import { useTranslation } from 'react-i18next';
-import { CloseOutlined } from "@ant-design/icons";
-import { Tooltip } from "antd";
-import { getDefaultFramework, frameworkIcons } from "../UnitStepsModal";
+import { CloseOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
+import { getDefaultFramework, frameworkIcons } from '../UnitStepsModal';
 
 interface IProps {
   setActiveTab: (tab?: string) => void;
@@ -25,7 +25,7 @@ const MODES = {
   SELECT: 'select',
   SEARCH: 'search',
   EXPORT: 'export',
-}
+};
 
 function EventsBlock(props: IProps) {
   const defaultFramework = getDefaultFramework();
@@ -47,6 +47,7 @@ function EventsBlock(props: IProps) {
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
   const { store, player } = React.useContext(PlayerContext);
+  const [currentTimeEventIndex, setCurrentTimeEventIndex] = React.useState(0);
 
   const {
     time,
@@ -102,10 +103,7 @@ function EventsBlock(props: IProps) {
           ? e.time >= zoomStartTs && e.time <= zoomEndTs
           : false
         : true
-      );
-    } else {
-      return list
-    }
+      ).filter((e: any) => !e.noteId && e.type !== 'TABCHANGE' && uiPlayerStore.showOnlySearchEvents ? e.isHighlighted : true);
   }, [
     filteredLength,
     query,
@@ -114,6 +112,7 @@ function EventsBlock(props: IProps) {
     zoomEnabled,
     zoomStartTs,
     zoomEndTs,
+    uiPlayerStore.showOnlySearchEvents
   ]);
   const findLastFitting = React.useCallback(
     (time: number) => {
@@ -137,7 +136,10 @@ function EventsBlock(props: IProps) {
     },
     [usedEvents, time, endTime],
   );
-  const currentTimeEventIndex = findLastFitting(time);
+
+  useEffect(() => {
+    setCurrentTimeEventIndex(findLastFitting(time));
+  }, [])
 
   const write = ({
     target: { value },
@@ -193,6 +195,8 @@ function EventsBlock(props: IProps) {
     const isTabChange = 'type' in event && event.type === 'TABCHANGE';
     const isCurrent = index === currentTimeEventIndex;
     const isPrev = index < currentTimeEventIndex;
+    const isSearched = event.isHighlighted
+
     return (
       <EventGroupWrapper
         query={query}
@@ -203,6 +207,7 @@ function EventsBlock(props: IProps) {
         isLastEvent={isLastEvent}
         isLastInGroup={isLastInGroup}
         isCurrent={isCurrent}
+        isSearched={isSearched}
         showSelection={!playing}
         isNote={isNote}
         isTabChange={isTabChange}
@@ -260,12 +265,14 @@ function EventsBlock(props: IProps) {
               onClick={() => setMode(MODES.SEARCH)}
             >
               <Search size={14} />
-              <div>{t('Search')}&nbsp;{usedEvents.length}&nbsp;{t('events')}</div>
+              <div>
+                {t('Search')}&nbsp;{usedEvents.length}&nbsp;{t('events')}
+              </div>
             </Button>
-            <Tooltip title={t('Close Panel')} placement='bottom' >
+            <Tooltip title={t('Close Panel')} placement="bottom">
               <Button
                 className="ml-auto"
-                type='text'
+                type="text"
                 onClick={() => {
                   setActiveTab('');
                 }}
@@ -274,19 +281,23 @@ function EventsBlock(props: IProps) {
             </Tooltip>
           </div>
         ) : null}
-        {mode === MODES.SEARCH ?
+        {mode === MODES.SEARCH ? (
           <div className={'flex items-center gap-2'}>
             <EventSearch
               onChange={write}
               setActiveTab={setActiveTab}
               value={query}
               eventsText={
-                usedEvents.length ? `${usedEvents.length} ${t('Events')}` : `0 ${t('Events')}`
+                usedEvents.length
+                  ? `${usedEvents.length} ${t('Events')}`
+                  : `0 ${t('Events')}`
               }
             />
-            <Button type={'text'} onClick={() => setMode(MODES.SELECT)}>{t('Cancel')}</Button>
+            <Button type={'text'} onClick={() => setMode(MODES.SELECT)}>
+              {t('Cancel')}
+            </Button>
           </div>
-        : null}
+        ) : null}
       </div>
       <div
         className={cn('flex-1 pb-4', styles.eventsList)}
