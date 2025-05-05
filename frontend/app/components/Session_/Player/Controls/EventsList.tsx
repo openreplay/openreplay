@@ -41,9 +41,9 @@ function EventsList() {
         <div
           /* @ts-ignore TODO */
           key={`${e.key}_${e.time}`}
-          className={classNames(stl.event, {
-            [stl.event__highlighted]: e.isHighlighted,
-          })}
+          className={classNames(
+            `absolute w-[2px] h-[10px] z-[3] pointer-events-none ${e.isHighlighted ? 'bg-[#f0a930]' : 'bg-[#394eff]'}`,
+          )}
           style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
         />
       ))}
