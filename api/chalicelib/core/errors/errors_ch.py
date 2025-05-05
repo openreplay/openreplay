@@ -338,14 +338,14 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
                 SELECT details.error_id as error_id,
                         name, message, users, total, 
                         sessions, last_occurrence, first_occurrence, chart
-                FROM (SELECT JSONExtractString(toString(`$properties`), 'error_id') AS error_id,
+                FROM (SELECT error_id,
                              JSONExtractString(toString(`$properties`), 'name') AS name,
                              JSONExtractString(toString(`$properties`), 'message') AS message,
                              COUNT(DISTINCT user_id)  AS users,
                              COUNT(DISTINCT events.session_id) AS sessions,
                              MAX(created_at)              AS max_datetime,
                              MIN(created_at)              AS min_datetime,
-                             COUNT(DISTINCT JSONExtractString(toString(`$properties`), 'error_id')) 
+                             COUNT(DISTINCT error_id) 
                                 OVER() AS total
                       FROM {MAIN_EVENTS_TABLE} AS events
                             INNER JOIN (SELECT session_id, coalesce(user_id,toString(user_uuid)) AS user_id 
@@ -357,7 +357,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
                       GROUP BY error_id, name, message
                       ORDER BY {sort} {order}
                       LIMIT %(errors_limit)s OFFSET %(errors_offset)s) AS details 
-                        INNER JOIN (SELECT JSONExtractString(toString(`$properties`), 'error_id') AS error_id, 
+                        INNER JOIN (SELECT error_id, 
                                             toUnixTimestamp(MAX(created_at))*1000 AS last_occurrence, 
                                             toUnixTimestamp(MIN(created_at))*1000 AS first_occurrence
                                      FROM {MAIN_EVENTS_TABLE}
@@ -366,7 +366,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
                                      GROUP BY error_id) AS time_details
                 ON details.error_id=time_details.error_id
                     INNER JOIN (SELECT error_id, groupArray([timestamp, count]) AS chart
-                    FROM (SELECT JSONExtractString(toString(`$properties`), 'error_id') AS error_id, 
+                    FROM (SELECT error_id, 
                                  gs.generate_series AS timestamp,
                                  COUNT(DISTINCT session_id) AS count
                             FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS gs
