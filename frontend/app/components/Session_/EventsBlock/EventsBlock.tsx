@@ -131,9 +131,7 @@ function EventsBlock(props: IProps) {
 
   useEffect(() => {
     setCurrentTimeEventIndex(findLastFitting(time));
-    console.log('CUURENT TIME EVENT INDEX');
   }, [])
-  // const currentTimeEventIndex = findLastFitting(time);
 
   const write = ({
     target: { value },
@@ -306,10 +304,7 @@ function EventsBlock(props: IProps) {
             <span className="ml-2">{t('No Matching Results')}</span>
           </div>
         )}
-        {usedEvents.map((_, i) => {
-            return renderGroup({ index: i });
-          })}
-        {/* <VList
+        <VList
           count={usedEvents.length}
           className={styles.eventsList}
           ref={scroller}
@@ -317,7 +312,7 @@ function EventsBlock(props: IProps) {
           {usedEvents.map((_, i) => {
             return renderGroup({ index: i });
           })}
-        </VList> */}
+        </VList>
       </div>
     </>
   );
