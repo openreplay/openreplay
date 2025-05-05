@@ -182,7 +182,7 @@ export class Click extends Event {
 
   selector: string;
 
-  isHighlighted: boolean = false;
+  isHighlighted: boolean | undefined = false;
 
   constructor(evt: ClickEvent, isClickRage?: boolean) {
     super(evt);

@@ -11,16 +11,13 @@ import NoteEvent from './NoteEvent';
 import stl from './eventGroupWrapper.module.css';
 import { useTranslation } from 'react-i18next';
 
-const EventGroupWrapper = (props: any) => {
+function EventGroupWrapper(props) {
   const { userStore } = useStore();
   const currentUserId = userStore.account.id;
 
   const onEventClick = (e) => props.onEventClick(e, props.event);
 
   const onCheckboxClick = (e) => props.onCheckboxClick(e, props.event);
-
-  console.log('tick');
-  
 
   const {
     event,
