@@ -34,11 +34,12 @@ interface Props {
   onChartClick?: (filters: any[]) => void;
   isUngrouped?: boolean;
   inGrid?: boolean;
+  startPoint: 'end' | 'start'
 }
 
 const EChartsSankey: React.FC<Props> = (props) => {
   const { t } = useTranslation();
-  const { data, height = 240, onChartClick, isUngrouped } = props;
+  const { data, height = 240, onChartClick, isUngrouped, startPoint } = props;
   const chartRef = React.useRef<HTMLDivElement>(null);
 
   const [finalNodeCount, setFinalNodeCount] = React.useState(data.nodes.length);
@@ -110,8 +111,9 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
     if (echartNodes.length === 0) return;
 
+    const mainNodeLink = startPoint === 'end' ? echartNodes.findIndex(n => n.id === 0) : 0;
     const startNodeValue = echartLinks
-      .filter((link) => link.source === 0)
+      .filter((link) => startPoint === 'start' ? link.source === mainNodeLink : link.target === mainNodeLink)
       .reduce((sum, link) => sum + link.value, 0);
 
     Object.keys(nodeValues).forEach((nodeId) => {

@@ -538,6 +538,7 @@ function WidgetChart(props: Props) {
             dashboardStore.drillDownFilter.merge({ filters, page: 1 });
           }}
           isUngrouped={isUngrouped}
+          startPoint={metric.startType}
         />
       );
     }
