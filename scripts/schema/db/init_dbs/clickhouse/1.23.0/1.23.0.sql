@@ -9,8 +9,7 @@ CREATE TABLE IF NOT EXISTS experimental.user_viewed_sessions
     _timestamp DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(_timestamp)
-      ORDER BY (project_id, user_id, session_id)
-      TTL _timestamp + INTERVAL 3 MONTH;
+      ORDER BY (project_id, user_id, session_id);
 
 DROP TABLE IF EXISTS product_analytics.all_events;
 CREATE TABLE IF NOT EXISTS product_analytics.all_events

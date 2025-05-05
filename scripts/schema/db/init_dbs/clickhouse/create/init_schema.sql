@@ -149,8 +149,7 @@ CREATE TABLE IF NOT EXISTS experimental.user_favorite_sessions
     sign       Int8
 ) ENGINE = CollapsingMergeTree(sign)
       PARTITION BY toYYYYMM(_timestamp)
-      ORDER BY (project_id, user_id, session_id)
-      TTL _timestamp + INTERVAL 3 MONTH;
+      ORDER BY (project_id, user_id, session_id);
 
 CREATE TABLE IF NOT EXISTS experimental.user_viewed_sessions
 (
@@ -160,8 +159,7 @@ CREATE TABLE IF NOT EXISTS experimental.user_viewed_sessions
     _timestamp DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(_timestamp)
-      ORDER BY (project_id, user_id, session_id)
-      TTL _timestamp + INTERVAL 3 MONTH;
+      ORDER BY (project_id, user_id, session_id);
 
 CREATE TABLE IF NOT EXISTS experimental.user_viewed_errors
 (
@@ -171,8 +169,7 @@ CREATE TABLE IF NOT EXISTS experimental.user_viewed_errors
     _timestamp DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(_timestamp)
-      ORDER BY (project_id, user_id, error_id)
-      TTL _timestamp + INTERVAL 3 MONTH;
+      ORDER BY (project_id, user_id, error_id);
 
 CREATE TABLE IF NOT EXISTS experimental.issues
 (
