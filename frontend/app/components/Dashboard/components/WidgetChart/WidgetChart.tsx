@@ -555,13 +555,13 @@ function WidgetChart(props: Props) {
     }
 
     if (metricType === USER_PATH && data && data.links) {
-      const isUngrouped = props.isPreview
-        ? !(_metric.hideExcess ?? true)
-        : false;
-      const height = props.height ? props.height : props.isPreview ? 550 : 240;
-      return (
-        <div>
-          <SankeyChart
+      if (viewType === 'sunburst') {
+        const isUngrouped = props.isPreview
+          ? !(_metric.hideExcess ?? true)
+          : false;
+        const height = props.isPreview ? 550 : 240;
+        return (
+          <SunBurstChart
             height={height}
             data={data}
             inGrid={!props.isPreview}
@@ -570,18 +570,25 @@ function WidgetChart(props: Props) {
             }}
             isUngrouped={isUngrouped}
           />
-        <SunBurstChart
-          height={height}
-          data={data}
-          inGrid={!props.isPreview}
-          onChartClick={(filters: any) => {
-            dashboardStore.drillDownFilter.merge({ filters, page: 1 });
-          }}
-          isUngrouped={isUngrouped}
-          startPoint={metric.startType}
-        />
-        </div>
-      )
+        );
+      }
+      if (viewType === 'chart') {
+        const isUngrouped = props.isPreview
+          ? !(_metric.hideExcess ?? true)
+          : false;
+        const height = props.isPreview ? 550 : 240;
+        return (
+            <SankeyChart
+              height={height}
+              data={data}
+              inGrid={!props.isPreview}
+              onChartClick={(filters: any) => {
+                dashboardStore.drillDownFilter.merge({ filters, page: 1 });
+              }}
+              isUngrouped={isUngrouped}
+            />
+        )
+        }
     }
 
     if (metricType === RETENTION) {
