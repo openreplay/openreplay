@@ -25,6 +25,7 @@ function EventGroupWrapper(props) {
     isLastInGroup,
     isSelected,
     isCurrent,
+    isSearched,
     isEditing,
     showSelection,
     isFirst,
@@ -99,7 +100,7 @@ function EventGroupWrapper(props) {
     );
   };
 
-  const shadowColor = props.isPrev
+  const shadowColor = isSearched ? '#F0A930' : props.isPrev
     ? '#A7BFFF'
     : props.isCurrent
       ? '#394EFF'
@@ -127,7 +128,7 @@ function EventGroupWrapper(props) {
               width: 10,
               height: 10,
               transform: 'rotate(45deg) translate(0, -50%)',
-              background: '#394EFF',
+              background: isSearched ? '#F0A930' : '#394EFF',
               zIndex: 99,
               borderRadius: '.15rem',
             }}
@@ -169,6 +170,6 @@ function TabChange({ from, to, activeUrl, onClick }) {
       </div>
     </div>
   );
-}
+};
 
 export default observer(EventGroupWrapper);

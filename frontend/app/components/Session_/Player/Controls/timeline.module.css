@@ -49,24 +49,6 @@
   z-index: 2;
 }
 
-
-.event {
-  position: absolute;
-  width: 2px;
-  height: 10px;
-  background: $main;
-  z-index: 3;
-  pointer-events: none;
-  /* top: 0; */
-  /* bottom: 0; */
- /*  &:hover {
-    width: 10px;
-    height: 10px;
-    margin-left: -6px;
-    z-index: 1;
-  };*/
-}
-
 /* .event.click, .event.input {
   background: $green;
 }
