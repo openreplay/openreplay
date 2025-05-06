@@ -111,6 +111,29 @@
       "uniqueness": "none"
     },
     {
+      "name": "projectKeys",
+      "type": "complex",
+      "multiValued": true,
+      "description": "A list of project keys associated with the group.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "subAttributes": [
+        {
+          "name": "value",
+          "type": "string",
+          "multiValued": false,
+          "description": "The unique project key.",
+          "required": true,
+          "mutability": "immutable",
+          "returned": "default",
+          "caseExact": true,
+          "uniqueness": "none"
+        }
+      ]
+    },
+    {
       "name": "members",
       "type": "complex",
       "multiValued": true,
