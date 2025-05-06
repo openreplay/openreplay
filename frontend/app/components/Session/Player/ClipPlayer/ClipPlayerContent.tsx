@@ -56,9 +56,9 @@ function ClipPlayerContent(props: Props) {
 
   return (
     <div
-      className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')}
+      className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden max-h-[556px] h-[556px]')}
     >
-      <div className={cn(stl.playerBody, 'flex-1 flex flex-col relative')}>
+      <div className={cn(stl.playerBody, 'flex-1 flex flex-col relative max-h-[504px] h-[504px]')}>
         <div className={cn(stl.playerBody, 'flex flex-1 flex-col relative')}>
           <div className="relative flex-1 overflow-hidden group">
             <ClipPlayerOverlay autoplay={props.autoplay} />
