@@ -4,7 +4,7 @@ import BarChart from 'App/components/Charts/BarChart';
 import PieChart from 'App/components/Charts/PieChart';
 import ColumnChart from 'App/components/Charts/ColumnChart';
 import SankeyChart from 'Components/Charts/SankeyChart';
-
+import SunBurstChart from 'Components/Charts/SunburstChart/Sunburst'
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
 import { observer } from 'mobx-react-lite';
@@ -525,21 +525,40 @@ function WidgetChart(props: Props) {
     }
 
     if (metricType === USER_PATH && data && data.links) {
-      const isUngrouped = props.isPreview
-        ? !(_metric.hideExcess ?? true)
-        : false;
-      const height = props.isPreview ? 550 : 240;
-      return (
-        <SankeyChart
-          height={height}
-          data={data}
-          inGrid={!props.isPreview}
-          onChartClick={(filters: any) => {
-            dashboardStore.drillDownFilter.merge({ filters, page: 1 });
-          }}
-          isUngrouped={isUngrouped}
-        />
-      );
+      if (viewType === 'sunburst') {
+        const isUngrouped = props.isPreview
+          ? !(_metric.hideExcess ?? true)
+          : false;
+        const height = props.isPreview ? 550 : 240;
+        return (
+          <SunBurstChart
+            height={height}
+            data={data}
+            inGrid={!props.isPreview}
+            onChartClick={(filters: any) => {
+              dashboardStore.drillDownFilter.merge({ filters, page: 1 });
+            }}
+            isUngrouped={isUngrouped}
+          />
+        );
+      }
+      if (viewType === 'chart') {
+        const isUngrouped = props.isPreview
+          ? !(_metric.hideExcess ?? true)
+          : false;
+        const height = props.isPreview ? 550 : 240;
+        return (
+            <SankeyChart
+              height={height}
+              data={data}
+              inGrid={!props.isPreview}
+              onChartClick={(filters: any) => {
+                dashboardStore.drillDownFilter.merge({ filters, page: 1 });
+              }}
+              isUngrouped={isUngrouped}
+            />
+        )
+        }
     }
 
     if (metricType === RETENTION) {
