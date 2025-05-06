@@ -243,7 +243,7 @@ group_config = ResourceConfig(
     get_provider_resource_chunk=groups.get_provider_resource_chunk,
     get_provider_resource=groups.get_provider_resource,
     convert_client_resource_creation_input_to_provider_resource_creation_input=groups.convert_client_resource_creation_input_to_provider_resource_creation_input,
-    get_provider_resource_from_unique_fields=groups.get_provider_resource_from_unique_fields,
+    get_provider_resource_from_unique_fields=lambda **kwargs: None,
     restore_provider_resource=None,
     create_provider_resource=groups.create_provider_resource,
     delete_provider_resource=groups.delete_provider_resource,
@@ -382,7 +382,7 @@ async def delete_resource(
 @public_app.put("/{resource_type}/{resource_id}")
 async def put_resource(
     resource_type: SCIMResource,
-    resource_id: str,
+    resource_id: int | str,
     r: Request,
     tenant_id=Depends(auth_required),
     attributes: list[str] | None = Query(None),
@@ -424,7 +424,7 @@ async def put_resource(
 @public_app.patch("/{resource_type}/{resource_id}")
 async def patch_resource(
     resource_type: SCIMResource,
-    resource_id: str,
+    resource_id: int | str,
     r: Request,
     tenant_id=Depends(auth_required),
     attributes: list[str] | None = Query(None),
