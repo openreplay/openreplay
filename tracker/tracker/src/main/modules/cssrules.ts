@@ -26,8 +26,7 @@ export default function (app: App, opts: { checkCssInterval?: number }) {
       try {
         const sheet = document.styleSheets[i]
         const sheetID = styleSheetIDMap.get(sheet)
-        if (!sheetID) continue
-        if (!trackedSheetIDs.has(sheetID)) continue
+        if (!sheetID || !trackedSheetIDs.has(sheetID)) continue
 
         for (let j = 0; j < sheet.cssRules.length; j++) {
           try {
