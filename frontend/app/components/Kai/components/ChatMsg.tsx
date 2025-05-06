@@ -1,10 +1,12 @@
 import React from 'react';
-import { Icon } from 'UI';
+import { Icon, CopyButton } from 'UI';
 import cn from 'classnames';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'
-import { Loader, ThumbsUp, ThumbsDown, ListRestart } from 'lucide-react';
+import { Loader, ThumbsUp, ThumbsDown, ListRestart, FileDown } from 'lucide-react';
+import { Button, Tooltip } from 'antd';
 import { kaiStore } from '../KaiStore';
+import { toast } from 'react-toastify';
 
 export function ChatMsg({
   text,
@@ -19,12 +21,39 @@ export function ChatMsg({
   userName?: string;
   isLast?: boolean;
 }) {
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const bodyRef = React.useRef<HTMLDivElement>(null);
   const onRetry = () => {
     kaiStore.editMessage(text)
   }
   const onFeedback = (feedback: 'like' | 'dislike', messageId: string) => {
     kaiStore.sendMsgFeedback(feedback, messageId);
   };
+
+  const onExport = () => {
+    setIsProcessing(true);
+    import('jsPDF').then(({ jsPDF }) => {
+      const doc = new jsPDF();
+
+      doc.html(bodyRef.current, {
+        callback: function(doc) {
+          doc.save('document.pdf');
+        },
+        margin: [10, 10, 10, 10],
+        x: 0,
+        y: 0,
+        width: 190, // Target width
+        windowWidth: 675 // Window width for rendering
+      });
+    })
+    .catch(e => {
+      console.error('Error exporting message:', e);
+      toast.error('Failed to export message');
+    })
+    .finally(() => {
+      setIsProcessing(false);
+    });
+  }
   return (
     <div
       className={cn(
@@ -50,7 +79,7 @@ export function ChatMsg({
         </div>
       )}
       <div className={'mt-1'}>
-        <div className='markdown-body'>
+        <div className='markdown-body' ref={bodyRef}>
           <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </div>
         {isUser ? (
@@ -67,11 +96,15 @@ export function ChatMsg({
           ) : null
         ) : (
           <div className={'flex items-center gap-2'}>
-            <IconButton onClick={() => onFeedback('like', messageId)}>
+            <IconButton tooltip="Like this answer" onClick={() => onFeedback('like', messageId)}>
               <ThumbsUp size={16} />
             </IconButton>
-            <IconButton onClick={() => onFeedback('dislike', messageId)}>
+            <IconButton tooltip="Dislike this answer" onClick={() => onFeedback('dislike', messageId)}>
               <ThumbsDown size={16} />
+            </IconButton>
+            <CopyButton content={text} isIcon />
+            <IconButton processing={isProcessing} tooltip="Export as PDF" onClick={onExport}>
+              <FileDown size={16} />
             </IconButton>
           </div>
         )}
@@ -83,14 +116,18 @@ export function ChatMsg({
 function IconButton({
   children,
   onClick,
+  tooltip,
+  processing,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
+  tooltip?: string;
+  processing?: boolean;
 }) {
   return (
-    <div className={'cursor-pointer hover:text-main'} onClick={onClick}>
-      {children}
-    </div>
+    <Tooltip title={tooltip}>
+      <Button onClick={onClick} type="text" icon={children} size='small' loading={processing} />
+    </Tooltip>
   );
 }
 
