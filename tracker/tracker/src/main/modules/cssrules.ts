@@ -8,7 +8,12 @@ import {
 import { hasTag } from '../app/guards.js'
 import { nextID, styleSheetIDMap } from './constructedStyleSheets.js'
 
-export default function (app: App, opts: { checkCssInterval?: number }) {
+export interface CssRulesOptions {
+  checkCssInterval?: number
+  scanInMemoryCSS?: boolean
+}
+
+export default function (app: App, opts: CssRulesOptions) {
   if (app === null) return
   if (!window.CSSStyleSheet) {
     app.send(TechnicalInfo('no_stylesheet_prototype_in_window', ''))
@@ -22,6 +27,7 @@ export default function (app: App, opts: { checkCssInterval?: number }) {
   const checkIntervalMs = opts.checkCssInterval || 200
 
   function checkRuleChanges() {
+    if (!opts.scanInMemoryCSS) return
     for (let i = 0; i < document.styleSheets.length; i++) {
       try {
         const sheet = document.styleSheets[i]
@@ -171,7 +177,7 @@ export default function (app: App, opts: { checkCssInterval?: number }) {
   })
 
   function startChecking() {
-    if (checkInterval) return
+    if (checkInterval || !opts.scanInMemoryCSS) return
     checkInterval = window.setInterval(checkRuleChanges, checkIntervalMs)
   }
 
