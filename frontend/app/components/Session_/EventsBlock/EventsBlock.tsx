@@ -2,7 +2,7 @@ import { mergeEventLists, sortEvents } from 'Types/session';
 import { TYPES } from 'Types/session/event';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { VList, VListHandle } from 'virtua';
 import { Button } from 'antd';
 import { PlayerContext } from 'App/components/Session/playerContext';
@@ -47,7 +47,6 @@ function EventsBlock(props: IProps) {
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
   const { store, player } = React.useContext(PlayerContext);
-  const [currentTimeEventIndex, setCurrentTimeEventIndex] = React.useState(0);
 
   const {
     time,
@@ -95,8 +94,8 @@ function EventsBlock(props: IProps) {
         ? 'time' in e
           ? e.time >= zoomStartTs && e.time <= zoomEndTs
           : false
-        : true
-      ).filter((e: any) => !e.noteId && e.type !== 'TABCHANGE' && uiPlayerStore.showOnlySearchEvents ? e.isHighlighted : true);
+        : true,
+      );
   }, [
     filteredLength,
     notesWithEvtsLength,
@@ -104,7 +103,6 @@ function EventsBlock(props: IProps) {
     zoomEnabled,
     zoomStartTs,
     zoomEndTs,
-    uiPlayerStore.showOnlySearchEvents
   ]);
   const findLastFitting = React.useCallback(
     (time: number) => {
@@ -129,9 +127,7 @@ function EventsBlock(props: IProps) {
     [usedEvents, time, endTime],
   );
 
-  useEffect(() => {
-    setCurrentTimeEventIndex(findLastFitting(time));
-  }, [])
+  const currentTimeEventIndex = findLastFitting(time);
 
   const write = ({
     target: { value },
@@ -187,7 +183,6 @@ function EventsBlock(props: IProps) {
     const isTabChange = 'type' in event && event.type === 'TABCHANGE';
     const isCurrent = index === currentTimeEventIndex;
     const isPrev = index < currentTimeEventIndex;
-    const isSearched = event.isHighlighted
 
     return (
       <EventGroupWrapper
@@ -199,7 +194,6 @@ function EventsBlock(props: IProps) {
         isLastEvent={isLastEvent}
         isLastInGroup={isLastInGroup}
         isCurrent={isCurrent}
-        isSearched={isSearched}
         showSelection={!playing}
         isNote={isNote}
         isTabChange={isTabChange}

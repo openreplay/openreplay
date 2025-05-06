@@ -16,14 +16,12 @@ import { IFRAME } from 'App/constants/storageKeys';
 import stl from './playerBlockHeader.module.css';
 import UserCard from './EventsBlock/UserCard';
 import { useTranslation } from 'react-i18next';
-import { Switch } from 'antd';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
 function PlayerBlockHeader(props: any) {
   const { t } = useTranslation();
   const [hideBack, setHideBack] = React.useState(false);
-  const { uiPlayerStore } = useStore();
   const { player, store } = React.useContext(PlayerContext);
   const { uxtestingStore, customFieldStore, projectsStore, sessionStore } =
     useStore();
@@ -125,25 +123,9 @@ function PlayerBlockHeader(props: any) {
             </div>
           )}
         </div>
-        {uiPlayerStore.showSearchEventsSwitchButton ? (
-          <div className="px-2 relative flex items-center border-r border-r-gray-lighter">
-            <Switch
-              checked={uiPlayerStore.showOnlySearchEvents}
-              onChange={uiPlayerStore.setShowOnlySearchEvents}
-              style={{
-                background: uiPlayerStore.showOnlySearchEvents
-                  ? '#f0a930'
-                  : 'rgba(0, 0, 0, 0.25)',
-              }}
-            />
-            <span className="ml-2 whitespace-nowrap">
-              {t('Search Events Only')}
-            </span>
-          </div>
-        ) : null}
       </div>
       <div
-        className="px-2 relative"
+        className="px-2 relative border-l border-l-gray-lighter"
         style={{ minWidth: activeTab === 'EXPORT' ? '360px' : '270px' }}
       >
         <Tabs
