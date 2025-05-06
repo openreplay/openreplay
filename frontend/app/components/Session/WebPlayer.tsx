@@ -72,7 +72,6 @@ function WebPlayer(props: any) {
   }, [searchStore.instance.filters]);
 
   React.useEffect(() => {
-    openedAt.current = Date.now();
     const handleActivation = () => {
       if (!document.hidden) {
         setWindowActive(true);
