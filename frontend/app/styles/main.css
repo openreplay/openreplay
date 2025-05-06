@@ -291,6 +291,9 @@ svg {
 .markdown-body table {
     table-layout: auto;
     width: 100%;
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
 }
 
 .markdown-body dl dt {
@@ -385,4 +388,14 @@ svg {
 .markdown-body ul {
     margin-top: 4px!important;
     margin-bottom: 4px!important;
+}
+
+.markdown-body ul {
+  list-style-type: none; /* Remove default bullets */
+}
+.markdown-body ul li:before {
+  content: "•"; /* Use standard bullet character */
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
 }
