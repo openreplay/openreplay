@@ -3,7 +3,6 @@ from datetime import datetime
 from psycopg2.extensions import AsIs
 
 from chalicelib.utils import pg_client
-from chalicelib.core import roles
 from routers.scim.resource_config import (
     ProviderResource,
     ClientResource,
@@ -35,21 +34,21 @@ def convert_client_resource_update_input_to_provider_resource_update_input(
 def convert_client_resource_rewrite_input_to_provider_resource_rewrite_input(
     tenant_id: int, client_input: ClientInput
 ) -> ProviderInput:
-    name = client_input.get("name", {}).get("formatted")
-    if not name:
-        name = " ".join(
-            [
-                x
-                for x in [
-                    client_input.get("name", {}).get("honorificPrefix"),
-                    client_input.get("name", {}).get("givenName"),
-                    client_input.get("name", {}).get("middleName"),
-                    client_input.get("name", {}).get("familyName"),
-                    client_input.get("name", {}).get("honorificSuffix"),
-                ]
-                if x
+    name = " ".join(
+        [
+            x
+            for x in [
+                client_input.get("name", {}).get("honorificPrefix"),
+                client_input.get("name", {}).get("givenName"),
+                client_input.get("name", {}).get("middleName"),
+                client_input.get("name", {}).get("familyName"),
+                client_input.get("name", {}).get("honorificSuffix"),
             ]
-        )
+            if x
+        ]
+    )
+    if not name:
+        name = client_input.get("displayName")
     result = {
         "email": client_input["userName"],
         "internal_id": client_input.get("externalId"),
@@ -62,21 +61,21 @@ def convert_client_resource_rewrite_input_to_provider_resource_rewrite_input(
 def convert_client_resource_creation_input_to_provider_resource_creation_input(
     tenant_id: int, client_input: ClientInput
 ) -> ProviderInput:
-    name = client_input.get("name", {}).get("formatted")
-    if not name:
-        name = " ".join(
-            [
-                x
-                for x in [
-                    client_input.get("name", {}).get("honorificPrefix"),
-                    client_input.get("name", {}).get("givenName"),
-                    client_input.get("name", {}).get("middleName"),
-                    client_input.get("name", {}).get("familyName"),
-                    client_input.get("name", {}).get("honorificSuffix"),
-                ]
-                if x
+    name = " ".join(
+        [
+            x
+            for x in [
+                client_input.get("name", {}).get("honorificPrefix"),
+                client_input.get("name", {}).get("givenName"),
+                client_input.get("name", {}).get("middleName"),
+                client_input.get("name", {}).get("familyName"),
+                client_input.get("name", {}).get("honorificSuffix"),
             ]
-        )
+            if x
+        ]
+    )
+    if not name:
+        name = client_input.get("displayName")
     result = {
         "email": client_input["userName"],
         "internal_id": client_input.get("externalId"),
