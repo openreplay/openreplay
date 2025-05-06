@@ -51,7 +51,6 @@ interface IEvent {
     path: string;
     label: string;
   };
-  isHighlighted?: boolean;
 }
 
 interface ConsoleEvent extends IEvent {
@@ -119,8 +118,6 @@ class Event {
 
   messageId: IEvent['messageId'];
 
-  isHighlighted: IEvent['isHighlighted'];
-
   constructor(event: IEvent) {
     Object.assign(this, {
       time: event.time,
@@ -128,7 +125,6 @@ class Event {
       key: event.key,
       tabId: event.tabId,
       messageId: event.messageId,
-      isHighlighted: event.isHighlighted,
       target: {
         path: event.target?.path || event.targetPath,
         label: event.target?.label,
@@ -190,7 +186,6 @@ export class Click extends Event {
     this.count = evt.count;
     this.hesitation = evt.hesitation;
     this.selector = evt.selector;
-    this.isHighlighted = evt.isHighlighted;
     if (isClickRage) {
       this.type = CLICKRAGE;
     }
