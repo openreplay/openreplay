@@ -114,13 +114,11 @@ function PlayerBlockHeader(props: any) {
           )}
 
           {_metaList.length > 0 && (
-            <div className="h-full flex items-center px-2 gap-1">
-              <SessionMetaList
-                className=""
-                metaList={_metaList}
-                maxLength={2}
-              />
-            </div>
+            <SessionMetaList
+              horizontal
+              metaList={_metaList}
+              maxLength={2}
+            />
           )}
         </div>
       </div>
