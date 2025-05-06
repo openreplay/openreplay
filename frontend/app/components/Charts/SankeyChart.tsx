@@ -111,9 +111,13 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
     if (echartNodes.length === 0) return;
 
-    const mainNodeLink = startPoint === 'end' ? echartNodes.findIndex(n => n.id === 0) : 0;
+    const startDepth = startPoint === 'end' ? Math.max(...echartNodes.map(n => n.depth ?? 0)) : 0;
+    const mainNodeLinks = echartNodes.filter(n => n.depth === startDepth).map(n => echartNodes.findIndex(node => node.id === n.id))
     const startNodeValue = echartLinks
-      .filter((link) => startPoint === 'start' ? link.source === mainNodeLink : link.target === mainNodeLink)
+      .filter((link) => startPoint === 'start'
+        ? mainNodeLinks.includes(link.source)
+        : mainNodeLinks.includes(link.target)
+      )
       .reduce((sum, link) => sum + link.value, 0);
 
     Object.keys(nodeValues).forEach((nodeId) => {
