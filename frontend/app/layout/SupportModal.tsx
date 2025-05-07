@@ -2,7 +2,7 @@ import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Drawer, Space, Typography } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-
+import CrispIframe from './CrispIframe';
 import { Icon } from 'UI';
 
 const { Text } = Typography;
@@ -126,19 +126,7 @@ function SupportModal(props: Props) {
           </div>
         </div>
 
-        {!!WEBSITE_ID && (
-          <div className="flex rounded border w-full">
-            <iframe
-              src={`https://go.crisp.chat/chat/embed/?website_id=${WEBSITE_ID}`}
-              style={{
-                height: '415px',
-                margin: '0',
-                padding: '0',
-                width: '100%',
-              }}
-            />
-          </div>
-        )}
+        <CrispIframe WEBSITE_ID={WEBSITE_ID} />
       </div>
     </Drawer>
   );
