@@ -119,6 +119,7 @@ CREATE TABLE public.roles
     protected    bool      NOT NULL DEFAULT FALSE,
     all_projects bool      NOT NULL DEFAULT TRUE,
     created_at   timestamp NOT NULL DEFAULT timezone('utc'::text, now()),
+    updated_at   timestamp NOT NULL DEFAULT timezone('utc'::text, now()),
     deleted_at   timestamp NULL     DEFAULT NULL,
     service_role bool      NOT NULL DEFAULT FALSE
 );
@@ -133,6 +134,7 @@ CREATE TABLE public.users
     role                 user_role                   NOT NULL DEFAULT 'member',
     name                 text                        NOT NULL,
     created_at           timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
+    updated_at           timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
     deleted_at           timestamp without time zone NULL     DEFAULT NULL,
     api_key              text UNIQUE                          DEFAULT generate_api_key(20) NOT NULL,
     jwt_iat              timestamp without time zone NULL     DEFAULT NULL,
