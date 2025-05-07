@@ -40,6 +40,7 @@ class ResourceConfig:
         [int, ClientInput], ProviderInput
     ]
     update_provider_resource: Callable[..., ProviderResource]
+    filter_attribute_mapping: Callable[None, dict[str, str]]
 
 
 def get_schema(config: ResourceConfig) -> Schema:

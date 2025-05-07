@@ -11,8 +11,8 @@
         "maxPayloadSize": 0
     },
     "filter": {
-        "supported": false,
-        "maxResults": 0
+        "supported": true,
+        "maxResults": 10
     },
     "changePassword": {
         "supported": false
