@@ -12,7 +12,7 @@ export default function MetaItem(props: Props) {
   return (
     <div
       className={cn(
-        'text-sm flex flex-row items-center px-2 py-0 gap-1 rounded-lg bg-white border border-neutral-100 overflow-hidden',
+        'text-sm flex flex-row items-center px-2 py-0 gap-1 rounded-lg bg-white border border-gray-light overflow-hidden',
         className,
       )}
     >
@@ -22,7 +22,7 @@ export default function MetaItem(props: Props) {
         maxWidth={'300px'}
         popupProps={{ size: 'small', disabled: true }}
       />
-      <span className="bg-neutral-200 inline-block w-[1px] min-h-[17px]"></span>
+      <span className="bg-gray-light inline-block w-[1px] min-h-[17px]"></span>
       <TextEllipsis
         text={value}
         maxWidth={'350px'}

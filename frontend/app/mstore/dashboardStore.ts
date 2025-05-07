@@ -57,7 +57,7 @@ export default class DashboardStore {
   metricsSearch: string = '';
 
   // Loading states
-  isLoading: boolean = true;
+  isLoading: boolean = false;
 
   isSaving: boolean = false;
 

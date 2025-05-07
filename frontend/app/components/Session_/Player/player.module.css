@@ -13,7 +13,7 @@
 }
 
 .checkers {
-  background: repeating-linear-gradient(135deg, #f3f3f3, #f3f3f3 1px, #f6f6f6 1px, #FFF 4px);
+  background: repeating-linear-gradient(135deg, var(--color-gray-lighter), var(--color-gray-lighter) 1px, var(--color-gray-lightest) 1px, var(--color-white) 4px);
 }
 .solidBg {
   background: $gray-lightest;

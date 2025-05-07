@@ -105,6 +105,7 @@ function EventsBlock(props: IProps) {
         : true
       ).filter((e: any) => !e.noteId && e.type !== 'TABCHANGE' && uiPlayerStore.showOnlySearchEvents ? e.isHighlighted : true);
     }
+    return list;
   }, [
     filteredLength,
     query,

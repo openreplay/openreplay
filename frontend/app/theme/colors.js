@@ -1,5 +1,5 @@
 module.exports = {
-  main: '#394EFF',
+  main: 'oklch(54.6% 0.245 262.881)',
   'gray-light-shade': '#EEEEEE',
   'gray-lightest': '#f6f6f6',
   'gray-lighter': '#f1f1f1',
@@ -35,6 +35,7 @@ module.exports = {
   pink: '#ffb9b9',
   'light-blue-bg': '#E5F7F7',
   white: '#fff',
+  black: 'black',
   'gray-border': '#999', // Added for border-gray shadow
   borderColor: {
     default: '#DDDDDD',
@@ -44,7 +45,8 @@ module.exports = {
   },
   transparent: 'transparent',
   cyan: '#EBF4F5',
-  // actual theme colors - use this for new components
+  amber: 'oklch(98.7% 0.022 95.277)',
+
   figmaColors: {
     'accent-secondary': 'rgba(62, 170, 175, 1)',
     main: 'rgba(57, 78, 255, 1)',
@@ -60,36 +62,38 @@ module.exports = {
 
   dark: {
     // used as background in multiple places
-    white: '#0d0d0d',
-    teal: '#394EFF',
-    main: '#394EFF',
-    'text-primary': 'rgba(255, 255, 255, 0.87)',
+    white: 'oklch(20.5% 0 0)',
+    black: '#fff',
+    teal: 'oklch(70.7% 0.165 254.624)',
+    main: 'oklch(70.7% 0.165 254.624)',
+    'text-primary': 'oklch(97% 0 0)',
     'text-disabled': 'rgba(255, 255, 255, 0.38)',
     'outlined-border': 'rgba(255, 255, 255, 0.23)',
     divider: 'rgba(255, 255, 255, 0.12)',
-    'background': '#f1f1f1',
+    'background': 'oklch(20.5% 0 0)',
     'surface': '#1E1E1E',
+    amber: 'oklch(41.4% 0.112 45.904)',
 
-    'gray-light-shade': '#333333',
-    'gray-lightest': '#2A2A2A',
-    'gray-lighter': '#262626',
-    'gray-light': '#444',
-    'gray-bg': '#555',
-    'gray-medium': '#999',
-    'gray-dark': '#AAA',
-    'gray-darkest': '#EEE',
-    'gray-light-blue': '#1A1A2A',
+    'gray-light-shade': 'oklch(37.1% 0 0)',
+    'gray-lightest': 'oklch(26.9% 0 0)',
+    'gray-lighter': 'oklch(29.9% 0 0)',
+    'gray-light': 'oklch(37.1% 0 0)',
+    'gray-bg': 'oklch(37.1% 0 0)',
+    'gray-medium': 'oklch(70.7% 0.022 261.325)',
+    'gray-dark': 'oklch(87% 0 0)',
+    'gray-darkest': 'oklch(97% 0 0)',
+    'gray-light-blue': 'oklch(55.4% 0.046 257.417)',
     'gray-border': '#888',
 
-    'active-blue': '#1A1B32',
-    'active-dark-blue': '#1D1F3A',
-    'bg-blue': '#161A4D',
-    'active-blue-border': '#2F337D',
+    'active-blue': 'oklch(43.2% 0.232 292.759)',
+    'active-dark-blue': 'oklch(43.2% 0.232 292.759)',
+    'bg-blue': 'oklch(35.9% 0.144 278.697)',
+    'active-blue-border': 'oklch(45.7% 0.24 277.023)',
+    'tealx': 'oklch(77.7% 0.152 181.912)',
+    'tealx-light': 'oklch(38.6% 0.063 188.416)',
+    'tealx-light-border': 'oklch(43.7% 0.078 188.216)',
 
-    'tealx-light': '#1A2A2A',
-    'tealx-light-border': '#2A3F3F',
-
-    'light-blue-bg': '#15292C',
+    'light-blue-bg': 'oklch(39.8% 0.07 227.392)',
     'disabled-text': 'rgba(255, 255, 255, 0.38)',
 
     figmaColors: {
