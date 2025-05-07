@@ -38,6 +38,7 @@
 .fill-pink { fill: var(--color-pink) }
 .fill-light-blue-bg { fill: var(--color-light-blue-bg) }
 .fill-white { fill: var(--color-white) }
+.fill-black { fill: var(--color-black) }
 .fill-gray-border { fill: var(--color-gray-border) }
 .fill-borderColor-default { fill: var(--color-borderColor-default) }
 .fill-borderColor-gray-light-shade { fill: var(--color-borderColor-gray-light-shade) }
@@ -45,6 +46,7 @@
 .fill-borderColor-transparent { fill: var(--color-borderColor-transparent) }
 .fill-transparent { fill: var(--color-transparent) }
 .fill-cyan { fill: var(--color-cyan) }
+.fill-amber { fill: var(--color-amber) }
 .fill-figmaColors-accent-secondary { fill: var(--color-figmaColors-accent-secondary) }
 .fill-figmaColors-main { fill: var(--color-figmaColors-main) }
 .fill-figmaColors-primary-outlined-hover-background { fill: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -91,6 +93,7 @@
 .hover-fill-pink:hover svg { fill: var(--color-pink) }
 .hover-fill-light-blue-bg:hover svg { fill: var(--color-light-blue-bg) }
 .hover-fill-white:hover svg { fill: var(--color-white) }
+.hover-fill-black:hover svg { fill: var(--color-black) }
 .hover-fill-gray-border:hover svg { fill: var(--color-gray-border) }
 .hover-fill-borderColor-default:hover svg { fill: var(--color-borderColor-default) }
 .hover-fill-borderColor-gray-light-shade:hover svg { fill: var(--color-borderColor-gray-light-shade) }
@@ -98,6 +101,7 @@
 .hover-fill-borderColor-transparent:hover svg { fill: var(--color-borderColor-transparent) }
 .hover-fill-transparent:hover svg { fill: var(--color-transparent) }
 .hover-fill-cyan:hover svg { fill: var(--color-cyan) }
+.hover-fill-amber:hover svg { fill: var(--color-amber) }
 .hover-fill-figmaColors-accent-secondary:hover svg { fill: var(--color-figmaColors-accent-secondary) }
 .hover-fill-figmaColors-main:hover svg { fill: var(--color-figmaColors-main) }
 .hover-fill-figmaColors-primary-outlined-hover-background:hover svg { fill: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -146,6 +150,7 @@
 .color-pink { color: var(--color-pink) }
 .color-light-blue-bg { color: var(--color-light-blue-bg) }
 .color-white { color: var(--color-white) }
+.color-black { color: var(--color-black) }
 .color-gray-border { color: var(--color-gray-border) }
 .color-borderColor-default { color: var(--color-borderColor-default) }
 .color-borderColor-gray-light-shade { color: var(--color-borderColor-gray-light-shade) }
@@ -153,6 +158,7 @@
 .color-borderColor-transparent { color: var(--color-borderColor-transparent) }
 .color-transparent { color: var(--color-transparent) }
 .color-cyan { color: var(--color-cyan) }
+.color-amber { color: var(--color-amber) }
 .color-figmaColors-accent-secondary { color: var(--color-figmaColors-accent-secondary) }
 .color-figmaColors-main { color: var(--color-figmaColors-main) }
 .color-figmaColors-primary-outlined-hover-background { color: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -201,6 +207,7 @@
 .hover-pink:hover { color: var(--color-pink) }
 .hover-light-blue-bg:hover { color: var(--color-light-blue-bg) }
 .hover-white:hover { color: var(--color-white) }
+.hover-black:hover { color: var(--color-black) }
 .hover-gray-border:hover { color: var(--color-gray-border) }
 .hover-borderColor-default:hover { color: var(--color-borderColor-default) }
 .hover-borderColor-gray-light-shade:hover { color: var(--color-borderColor-gray-light-shade) }
@@ -208,6 +215,7 @@
 .hover-borderColor-transparent:hover { color: var(--color-borderColor-transparent) }
 .hover-transparent:hover { color: var(--color-transparent) }
 .hover-cyan:hover { color: var(--color-cyan) }
+.hover-amber:hover { color: var(--color-amber) }
 .hover-figmaColors-accent-secondary:hover { color: var(--color-figmaColors-accent-secondary) }
 .hover-figmaColors-main:hover { color: var(--color-figmaColors-main) }
 .hover-figmaColors-primary-outlined-hover-background:hover { color: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -256,6 +264,7 @@
 .border-pink { border-color: var(--color-pink) }
 .border-light-blue-bg { border-color: var(--color-light-blue-bg) }
 .border-white { border-color: var(--color-white) }
+.border-black { border-color: var(--color-black) }
 .border-gray-border { border-color: var(--color-gray-border) }
 .border-borderColor-default { border-color: var(--color-borderColor-default) }
 .border-borderColor-gray-light-shade { border-color: var(--color-borderColor-gray-light-shade) }
@@ -263,6 +272,7 @@
 .border-borderColor-transparent { border-color: var(--color-borderColor-transparent) }
 .border-transparent { border-color: var(--color-transparent) }
 .border-cyan { border-color: var(--color-cyan) }
+.border-amber { border-color: var(--color-amber) }
 .border-figmaColors-accent-secondary { border-color: var(--color-figmaColors-accent-secondary) }
 .border-figmaColors-main { border-color: var(--color-figmaColors-main) }
 .border-figmaColors-primary-outlined-hover-background { border-color: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -311,6 +321,7 @@
 .bg-pink { background-color: var(--color-pink) }
 .bg-light-blue-bg { background-color: var(--color-light-blue-bg) }
 .bg-white { background-color: var(--color-white) }
+.bg-black { background-color: var(--color-black) }
 .bg-gray-border { background-color: var(--color-gray-border) }
 .bg-borderColor-default { background-color: var(--color-borderColor-default) }
 .bg-borderColor-gray-light-shade { background-color: var(--color-borderColor-gray-light-shade) }
@@ -318,6 +329,7 @@
 .bg-borderColor-transparent { background-color: var(--color-borderColor-transparent) }
 .bg-transparent { background-color: var(--color-transparent) }
 .bg-cyan { background-color: var(--color-cyan) }
+.bg-amber { background-color: var(--color-amber) }
 .bg-figmaColors-accent-secondary { background-color: var(--color-figmaColors-accent-secondary) }
 .bg-figmaColors-main { background-color: var(--color-figmaColors-main) }
 .bg-figmaColors-primary-outlined-hover-background { background-color: var(--color-figmaColors-primary-outlined-hover-background) }

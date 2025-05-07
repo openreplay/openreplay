@@ -96,7 +96,10 @@ const ThemedApp: React.FC = () => {
         colorText: cssVar('gray-darkest'),
         colorTextHeading: cssVar('gray-darkest'),
         colorBorderSecondary: cssVar('gray-light'),
-        headerBg: cssVar('gray-lighter'),
+        headerBg: cssVar('gray-lightest'),
+        rowHoverBg: cssVar('gray-lightest'),
+        headerSortHoverBg: cssVar('gray-lighter'),
+        headerSortActiveBg: cssVar('gray-lighter')
       },
       Modal: {
         colorBgElevated: cssVar('white'),
@@ -110,15 +113,27 @@ const ThemedApp: React.FC = () => {
         colorBgSpotlight: cssVar('white'),
         colorTextLightSolid: cssVar('gray-darkest'),
       },
+      Tabs: {
+        itemActiveColor: cssVar('main'),
+        inkBarColor: cssVar('main'),
+        itemSelectedColor: cssVar('main')
+      },
+      Tag: {
+        defaultBg: cssVar('gray-lightest'),
+        defaultColor: cssVar('gray-darkest')
+      }
     },
     token: {
       colorPrimary: cssVar('main'),
       colorPrimaryActive: cssVar('teal-dark'),
       colorPrimaryHover: cssVar('main'),
       colorPrimaryBorder: cssVar('main'),
-      colorBorder: cssVar('gray-lightest'),
+      colorBorder: cssVar('gray-light'),
       colorBgLayout: cssVar('gray-lightest'),
       colorBgContainer: cssVar('white'),
+      controlItemBgActive: cssVar('active-blue'),
+      controlItemBgActiveHover: cssVar('active-blue'),
+      controlItemBgHover: cssVar('active-blue'),
       colorLink: cssVar('teal'),
       colorLinkHover: cssVar('teal-dark'),
       colorText: cssVar('gray-darkest'),
@@ -128,6 +143,7 @@ const ThemedApp: React.FC = () => {
       fontSize: 14,
       fontFamily: "'Roboto', 'ArialMT', 'Arial'",
       fontWeightStrong: 400,
+      colorSplit: cssVar('gray-light')
     },
   };
 

@@ -16,8 +16,7 @@ function LatestSessionsMessage() {
 
   return count > 0 ? (
     <div
-      className="bg-amber-50 p-1 flex w-full border-b text-center justify-center link"
-      style={{ backgroundColor: 'rgb(255 251 235)' }}
+      className="bg-amber p-1 flex w-full border-b text-center justify-center link"
       onClick={onShowNewSessions}
     >
       {t('Show')} {numberWithCommas(count)} {t('New')}{' '}

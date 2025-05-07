@@ -210,10 +210,10 @@ function SideMenu(props: Props) {
                             <Icon
                               name={item.icon}
                               size={16}
-                              color={isActive ? 'teal' : ''}
+                              color={isActive ? 'teal' : 'black'}
                             />
                           }
-                          className={cn('!rounded-lg hover-fill-teal')}
+                          className={cn('!rounded-lg hover-fill-teal', isActive ? 'color-main' : 'color-black')}
                         >
                           {item.label}
                         </Menu.Item>
@@ -228,17 +228,17 @@ function SideMenu(props: Props) {
                             <Icon
                               name={item.icon}
                               size={16}
-                              color={isActive ? 'teal' : ''}
+                              color={isActive ? 'teal' : 'black'}
                             />
                           }
                           style={{ paddingLeft: '20px' }}
-                          className={cn('!rounded-lg !pe-0')}
+                          className={cn('!rounded-lg !pe-0', isActive ? 'color-main' : 'color-black')}
                           itemIcon={
                             item.leading ? (
                               <Icon
                                 name={item.leading}
                                 size={16}
-                                color={isActive ? 'teal' : ''}
+                                color={isActive ? 'teal' : 'black'}
                               />
                             ) : null
                           }
@@ -293,18 +293,18 @@ function SideMenu(props: Props) {
                           <Icon
                             name={item.icon}
                             size={16}
-                            color={isActive ? 'teal' : ''}
+                            color={isActive ? 'teal' : 'black'}
                             className="hover-fill-teal"
                           />
                         }
                         style={{ paddingLeft: '20px' }}
-                        className={cn('!rounded-lg hover-fill-teal')}
+                        className={cn('!rounded-lg hover-fill-teal', isActive ? 'color-main' : 'color-black')}
                         itemIcon={
                           item.leading ? (
                             <Icon
                               name={item.leading}
                               size={16}
-                              color={isActive ? 'teal' : ''}
+                              color={isActive ? 'teal' : 'black'}
                             />
                           ) : null
                         }

@@ -114,7 +114,7 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
         <div
           className={cn(
             stl.info,
-            'rounded-lg bg-gray mb-4 ml-8 bg-amber-50 w-fit text-sm mt-2',
+            'rounded-lg bg-gray mb-4 ml-8 bg-amber w-fit text-sm mt-2',
             { hidden: !changed },
           )}
         >

@@ -27,6 +27,7 @@ export default function CustomSelect<Value extends ValueObject>({
   defaultValue = '',
   className = '',
   mode,
+  styles,
   ...rest
 }: Props<Value>) {
   // Handle onChange to maintain compatibility with the original component
@@ -43,6 +44,7 @@ export default function CustomSelect<Value extends ValueObject>({
       onChange={handleChange}
       placeholder={placeholder}
       mode={mode}
+      style={styles}
       {...rest}
     />
   );

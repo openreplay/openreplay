@@ -22,7 +22,7 @@ function TimelineScale(props: Props) {
       el.style.opacity = '0.8';
       el.innerHTML = `${txt}`;
       el.style.fontSize = '12px';
-      el.style.color = 'white';
+      el.classList.add('text-white')
 
       container.appendChild(el);
     }

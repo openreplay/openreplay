@@ -173,7 +173,7 @@
 }
 
 .border-gray-light {
-  border: solid thin rgb(229 231 235  / var(--tw-text-opacity, 1))
+  border: solid thin var(--color-gray-light)
 }
 
 .btn-disabled {

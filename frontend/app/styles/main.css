@@ -283,3 +283,7 @@ svg {
     border-radius: 4px;
     cursor: grab;
 }
+
+.text-black {
+    color: $black;
+}

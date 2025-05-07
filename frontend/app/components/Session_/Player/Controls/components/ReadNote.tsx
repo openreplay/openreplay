@@ -66,7 +66,7 @@ function ReadNote(props: Props) {
       className="flex items-center justify-center"
     >
       <div
-        className="flex items-start !text-lg flex-col p-4 border gap-2 rounded-lg bg-amber-50"
+        className="flex items-start !text-lg flex-col p-4 border gap-2 rounded-lg bg-amber"
         style={{ width: 500 }}
       >
         <div className="flex items-center w-full">
