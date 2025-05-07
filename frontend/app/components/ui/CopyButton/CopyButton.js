@@ -10,15 +10,36 @@ function CopyButton({
   btnText = 'copy',
   size = 'small',
   isIcon = false,
+  format = 'text/plain',
 }) {
   const [copied, setCopied] = useState(false);
 
-  const copyHandler = () => {
-    setCopied(true);
-    copy(content);
+  const reset = () => {
     setTimeout(() => {
       setCopied(false);
     }, 1000);
+  }
+  const copyHandler = () => {
+    setCopied(true);
+    const contentIsGetter = typeof content === 'function'
+    const textContent = contentIsGetter ? content() : content;
+    const isHttps = window.location.protocol === 'https:';
+    if (!isHttps) {
+      copy(textContent);
+      reset();
+      return;
+    }
+    const blob = new Blob([textContent], { type: format });
+    const cbItem = new ClipboardItem({
+      [format]: blob
+    })
+    navigator.clipboard.write([cbItem])
+      .catch(e => {
+        copy(textContent);
+      })
+      .finally(() => {
+        reset()
+      })
   };
 
   if (isIcon) {
