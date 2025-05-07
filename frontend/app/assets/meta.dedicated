@@ -1,0 +1,13 @@
+<!-- Open Graph Meta Tags -->
+<meta property="og:title" content="OpenReplay Dedicated: Private Cloud Session Replay" />
+<meta property="og:description" content="Session replay and product analytics on your own dedicated instance. Hosted by us, fully isolated for you." />
+<meta property="og:image" content="https://openreplay.com/images/dedicated-share.jpg" />
+<meta property="og:url" content="https://dedicated.openreplay.com" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="OpenReplay" />
+
+<!-- Twitter Card Tags -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="OpenReplay Dedicated: Private Cloud Session Replay" />
+<meta name="twitter:description" content="Session replay and product analytics on your own dedicated instance. Hosted by us, fully isolated for you." />
+<meta name="twitter:image" content="https://openreplay.com/images/dedicated-share.jpg" />

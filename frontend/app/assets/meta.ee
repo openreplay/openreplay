@@ -1,0 +1,13 @@
+<!-- Open Graph Meta Tags -->
+<meta property="og:title" content="OpenReplay Enterprise: Self-Hosted Session Replay & Product Analytics" />
+<meta property="og:description" content="Full control over data and compliance. Deploy session replay and product analytics on your infrastructure." />
+<meta property="og:image" content="https://openreplay.com/images/enterprise-share.jpg" />
+<meta property="og:url" content="https://ee.openreplay.com" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="OpenReplay" />
+
+<!-- Twitter Card Tags -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="OpenReplay Enterprise: Self-Hosted Session Replay & Product Analytics" />
+<meta name="twitter:description" content="Full control over data and compliance. Deploy session replay and product analytics on your infrastructure." />
+<meta name="twitter:image" content="https://openreplay.com/images/enterprise-share.jpg" />
