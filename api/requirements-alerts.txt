@@ -1,16 +1,16 @@
-urllib3==2.3.0
+urllib3==2.4.0
 requests==2.32.3
-boto3==1.37.21
+boto3==1.38.10
 pyjwt==2.10.1
 psycopg2-binary==2.9.10
-psycopg[pool,binary]==3.2.6
-clickhouse-connect==0.8.15
-elasticsearch==8.17.2
+psycopg[pool,binary]==3.2.7
+clickhouse-connect==0.8.17
+elasticsearch==9.0.1
 jira==3.8.0
 cachetools==5.5.2
 
 fastapi==0.115.12
-uvicorn[standard]==0.34.0
+uvicorn[standard]==0.34.2
 python-decouple==3.8
-pydantic[email]==2.10.6
+pydantic[email]==2.11.4
 apscheduler==3.11.0
