@@ -1,10 +1,9 @@
-package charts
+package query
 
 type Table string
 type Column string
 type MetricType string
 type FilterType string
-type EventType string
 type EventOrder string
 
 const (
@@ -66,34 +65,15 @@ type MetricPayload struct {
 	ViewType       string     `json:"viewType"`
 	Name           string     `json:"name"`
 	Series         []Series   `json:"series"`
-	Limit          int        `json:"limit"`
-	Page           int        `json:"page"`
-}
-
-type MetricOfTable string
-
-const (
-	MetricOfTableLocation MetricOfTable = "url_path" // TOP Pages
-	MetricOfTableBrowser  MetricOfTable = "user_browser"
-	MetricOfTableReferrer MetricOfTable = "referrer"
-	MetricOfTableUserId   MetricOfTable = "user_id"
-	MetricOfTableCountry  MetricOfTable = "user_country"
-	MetricOfTableDevice   MetricOfTable = "user_device"
-	MetricOfTableFetch    MetricOfTable = "fetch"
-
-	//MetricOfTableIssues   MetricOfTable = "issues"
-	//MetricOfTableSessions MetricOfTable = "sessions"
-	//MetricOfTableErrors   MetricOfTable = "errors"
-)
-
-type FilterGroup struct {
-	Filters     []Filter   `json:"filters"`
-	EventsOrder EventOrder `json:"eventsOrder"`
+	CompareTo      *string    `json:"compareTo"`
 }
 
 type Series struct {
-	Name   string      `json:"name"`
-	Filter FilterGroup `json:"filter"`
+	Name   string `json:"name"`
+	Filter struct {
+		Filters     []Filter   `json:"filters"`
+		EventsOrder EventOrder `json:"eventsOrder"`
+	} `json:"filter"`
 }
 
 type Filter struct {
@@ -101,54 +81,45 @@ type Filter struct {
 	IsEvent  bool       `json:"isEvent"`
 	Value    []string   `json:"value"`
 	Operator string     `json:"operator"`
-	Source   string     `json:"source,omitempty"`
 	Filters  []Filter   `json:"filters"`
 }
 
 const (
-	FilterUserId          FilterType = "userId"
-	FilterUserAnonymousId FilterType = "userAnonymousId"
-	FilterReferrer        FilterType = "referrer"
-	FilterDuration        FilterType = "duration"
-	FilterUtmSource       FilterType = "utmSource"
-	FilterUtmMedium       FilterType = "utmMedium"
-	FilterUtmCampaign     FilterType = "utmCampaign"
-	FilterUserCountry     FilterType = "userCountry"
-	FilterUserCity        FilterType = "userCity"
-	FilterUserState       FilterType = "userState"
-	FilterUserOs          FilterType = "userOs"
-	FilterUserBrowser     FilterType = "userBrowser"
-	FilterUserDevice      FilterType = "userDevice"
-	FilterPlatform        FilterType = "platform"
-	FilterRevId           FilterType = "revId"
-	FilterIssue           FilterType = "issue"
-	FilterMetadata        FilterType = "metadata"
-)
-
-// Event filters
-const (
-	FilterClick           FilterType = "click"
-	FilterInput           FilterType = "input"
-	FilterLocation        FilterType = "location"
-	FilterTag             FilterType = "tag"
-	FilterCustom          FilterType = "customEvent"
-	FilterFetch           FilterType = "fetch"
-	FilterFetchStatusCode FilterType = "fetchStatusCode" // Subfilter
-	FilterGraphQLRequest  FilterType = "graphql"
-	FilterStateAction     FilterType = "stateAction"
-	FilterError           FilterType = "error"
-	FilterAvgCpuLoad      FilterType = "avgCpuLoad"
-	FilterAvgMemoryUsage  FilterType = "avgMemoryUsage"
-)
-
-// MOBILE FILTERS
-const (
+	FilterUserOs             FilterType = "userOs"
+	FilterUserBrowser        FilterType = "userBrowser"
+	FilterUserDevice         FilterType = "userDevice"
+	FilterUserCountry        FilterType = "userCountry"
+	FilterUserCity           FilterType = "userCity"
+	FilterUserState          FilterType = "userState"
+	FilterUserId             FilterType = "userId"
+	FilterUserAnonymousId    FilterType = "userAnonymousId"
+	FilterReferrer           FilterType = "referrer"
+	FilterRevId              FilterType = "revId"
 	FilterUserOsIos          FilterType = "userOsIos"
 	FilterUserDeviceIos      FilterType = "userDeviceIos"
 	FilterUserCountryIos     FilterType = "userCountryIos"
 	FilterUserIdIos          FilterType = "userIdIos"
 	FilterUserAnonymousIdIos FilterType = "userAnonymousIdIos"
 	FilterRevIdIos           FilterType = "revIdIos"
+	FilterDuration           FilterType = "duration"
+	FilterPlatform           FilterType = "platform"
+	FilterMetadata           FilterType = "metadata"
+	FilterIssue              FilterType = "issue"
+	FilterEventsCount        FilterType = "eventsCount"
+	FilterUtmSource          FilterType = "utmSource"
+	FilterUtmMedium          FilterType = "utmMedium"
+	FilterUtmCampaign        FilterType = "utmCampaign"
+	FilterThermalState       FilterType = "thermalState"
+	FilterMainThreadCPU      FilterType = "mainThreadCPU"
+	FilterViewComponent      FilterType = "viewComponent"
+	FilterLogEvent           FilterType = "logEvent"
+	FilterMemoryUsage        FilterType = "memoryUsage"
+	FilterClick              FilterType = "click"
+	FilterInput              FilterType = "input"
+	FilterLocation           FilterType = "location"
+	FilterCustom             FilterType = "customEvent"
+	FilterFetch              FilterType = "fetch"
+	FilterFetchStatusCode    FilterType = "status"
 )
 
 const (
@@ -159,17 +130,8 @@ const (
 	OperatorStringIsNot       = "isNot"
 	OperatorStringIsUndefined = "isUndefined"
 	OperatorStringNotOn       = "notOn"
-	OperatorContains          = "contains"
+	OperatorStringContains    = "contains"
 	OperatorStringNotContains = "notContains"
 	OperatorStringStartsWith  = "startsWith"
 	OperatorStringEndsWith    = "endsWith"
 )
-
-type DataPoint struct {
-	Timestamp uint64 `json:"timestamp"`
-	Count     uint64 `json:"count"`
-}
-
-//type TimeseriesResponse struct {
-//	Data []DataPoint `json:"data"`
-//}
