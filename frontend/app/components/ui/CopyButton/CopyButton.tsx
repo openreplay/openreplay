@@ -3,15 +3,27 @@ import copy from 'copy-to-clipboard';
 import { Button, Tooltip } from 'antd';
 import { ClipboardCopy, ClipboardCheck } from 'lucide-react';
 
+interface Props {
+  content: string;
+  getHtml?: () => any;
+  variant?: 'text' | 'primary' | 'ghost' | 'link' | 'default';
+  className?: string;
+  btnText?: string;
+  size?: 'small' | 'middle' | 'large';
+  isIcon?: boolean;
+  format?: string;
+}
+
 function CopyButton({
   content,
+  getHtml,
   variant = 'text',
   className = 'capitalize mt-2 font-medium text-neutral-400',
   btnText = 'copy',
   size = 'small',
   isIcon = false,
   format = 'text/plain',
-}) {
+}: Props) {
   const [copied, setCopied] = useState(false);
 
   const reset = () => {
@@ -21,8 +33,8 @@ function CopyButton({
   }
   const copyHandler = () => {
     setCopied(true);
-    const contentIsGetter = typeof content === 'function'
-    const textContent = contentIsGetter ? content() : content;
+    const contentIsGetter = !!getHtml
+    const textContent = contentIsGetter ? getHtml() : content;
     const isHttps = window.location.protocol === 'https:';
     if (!isHttps) {
       copy(textContent);

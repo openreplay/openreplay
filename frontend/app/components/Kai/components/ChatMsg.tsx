@@ -102,7 +102,7 @@ export function ChatMsg({
             <IconButton tooltip="Dislike this answer" onClick={() => onFeedback('dislike', messageId)}>
               <ThumbsDown size={16} />
             </IconButton>
-            <CopyButton content={() => bodyRef.current?.innerHTML} isIcon format={'text/html'} />
+            <CopyButton getHtml={() => bodyRef.current?.innerHTML} content={text} isIcon format={'text/html'} />
             <IconButton processing={isProcessing} tooltip="Export as PDF" onClick={onExport}>
               <FileDown size={16} />
             </IconButton>
