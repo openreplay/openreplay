@@ -234,6 +234,7 @@ user_config = ResourceConfig(
     rewrite_provider_resource=users.rewrite_provider_resource,
     convert_client_resource_update_input_to_provider_resource_update_input=users.convert_client_resource_update_input_to_provider_resource_update_input,
     update_provider_resource=users.update_provider_resource,
+    filter_attribute_mapping=users.filter_attribute_mapping,
 )
 group_config = ResourceConfig(
     schema_id="urn:ietf:params:scim:schemas:core:2.0:Group",
@@ -251,6 +252,7 @@ group_config = ResourceConfig(
     rewrite_provider_resource=groups.rewrite_provider_resource,
     convert_client_resource_update_input_to_provider_resource_update_input=groups.convert_client_resource_update_input_to_provider_resource_update_input,
     update_provider_resource=groups.update_provider_resource,
+    filter_attribute_mapping=groups.filter_attribute_mapping,
 )
 
 RESOURCE_TYPE_TO_RESOURCE_CONFIG: dict[str, ResourceConfig] = {
@@ -272,15 +274,19 @@ async def get_resources(
     requested_items_per_page: int | None = Query(None, alias="count"),
     attributes: str | None = Query(None),
     excluded_attributes: str | None = Query(None, alias="excludedAttributes"),
+    filter: str | None = Query(None),
 ):
     config = RESOURCE_TYPE_TO_RESOURCE_CONFIG[resource_type]
-    total_resources = config.get_active_resource_count(tenant_id)
+    filter_clause = helpers.scim_to_sql_where(filter, config.filter_attribute_mapping())
+    total_resources = config.get_active_resource_count(tenant_id, filter_clause)
     start_index_one_indexed = max(1, requested_start_index_one_indexed)
     offset = start_index_one_indexed - 1
     limit = min(
         max(0, requested_items_per_page or config.max_chunk_size), config.max_chunk_size
     )
-    provider_resources = config.get_provider_resource_chunk(offset, tenant_id, limit)
+    provider_resources = config.get_provider_resource_chunk(
+        offset, tenant_id, limit, filter_clause
+    )
     client_resources = [
         api_helper.convert_provider_resource_to_client_resource(
             config, provider_resource, attributes, excluded_attributes

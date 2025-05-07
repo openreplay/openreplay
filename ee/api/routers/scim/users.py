@@ -85,6 +85,10 @@ def convert_client_resource_creation_input_to_provider_resource_creation_input(
     return result
 
 
+def filter_attribute_mapping() -> dict[str, str]:
+    return {"userName": "users.email"}
+
+
 def get_provider_resource_from_unique_fields(
     email: str, **kwargs: dict[str, Any]
 ) -> ProviderResource | None:
@@ -153,40 +157,44 @@ def convert_provider_resource_to_client_resource(
     }
 
 
-def get_active_resource_count(tenant_id: int) -> int:
+def get_active_resource_count(tenant_id: int, filter_clause: str | None = None) -> int:
+    where_and_statements = [
+        f"users.tenant_id = {tenant_id}",
+        "users.deleted_at IS NULL",
+    ]
+    if filter_clause is not None:
+        where_and_statements.append(filter_clause)
+    where_clause = " AND ".join(where_and_statements)
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(
-                """
-                SELECT COUNT(*)
-                FROM public.users
-                WHERE
-                    users.tenant_id = %(tenant_id)s
-                    AND users.deleted_at IS NULL
-                """,
-                {"tenant_id": tenant_id},
-            )
+            f"""
+            SELECT COUNT(*)
+            FROM public.users
+            WHERE {where_clause}
+            """
         )
         return cur.fetchone()["count"]
 
 
 def get_provider_resource_chunk(
-    offset: int, tenant_id: int, limit: int
+    offset: int, tenant_id: int, limit: int, filter_clause: str | None = None
 ) -> list[ProviderResource]:
+    where_and_statements = [
+        f"users.tenant_id = {tenant_id}",
+        "users.deleted_at IS NULL",
+    ]
+    if filter_clause is not None:
+        where_and_statements.append(filter_clause)
+    where_clause = " AND ".join(where_and_statements)
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(
-                """
-                SELECT *
-                FROM public.users
-                WHERE
-                    users.tenant_id = %(tenant_id)s
-                    AND users.deleted_at IS NULL
-                LIMIT %(limit)s
-                OFFSET %(offset)s;
-                """,
-                {"offset": offset, "limit": limit, "tenant_id": tenant_id},
-            )
+            f"""
+            SELECT *
+            FROM public.users
+            WHERE {where_clause}
+            LIMIT {limit}
+            OFFSET {offset};
+            """
         )
         return cur.fetchall()
 

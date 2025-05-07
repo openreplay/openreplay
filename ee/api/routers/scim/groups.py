@@ -56,30 +56,36 @@ def convert_provider_resource_to_client_resource(
     }
 
 
-def get_active_resource_count(tenant_id: int) -> int:
+def get_active_resource_count(tenant_id: int, filter_clause: str | None = None) -> int:
+    where_and_clauses = [
+        f"roles.tenant_id = {tenant_id}",
+        "roles.deleted_at IS NULL",
+    ]
+    if filter_clause is not None:
+        where_and_clauses.append(filter_clause)
+    where_clause = " AND ".join(where_and_clauses)
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(
-                """
-                SELECT COUNT(*)
-                FROM public.roles
-                WHERE
-                    roles.tenant_id = %(tenant_id)s
-                    AND roles.deleted_at IS NULL
-                """,
-                {"tenant_id": tenant_id},
-            )
+            f"""
+            SELECT COUNT(*)
+            FROM public.roles
+            WHERE {where_clause}
+            """
         )
         return cur.fetchone()["count"]
 
 
-def _main_select_query(tenant_id: int, resource_id: int | None = None) -> str:
+def _main_select_query(
+    tenant_id: int, resource_id: int | None = None, filter_clause: str | None = None
+) -> str:
     where_and_clauses = [
         f"roles.tenant_id = {tenant_id}",
         "roles.deleted_at IS NULL",
     ]
     if resource_id is not None:
         where_and_clauses.append(f"roles.role_id = {resource_id}")
+    if filter_clause is not None:
+        where_and_clauses.append(filter_clause)
     where_clause = " AND ".join(where_and_clauses)
     return f"""
         SELECT
@@ -107,12 +113,16 @@ def _main_select_query(tenant_id: int, resource_id: int | None = None) -> str:
 
 
 def get_provider_resource_chunk(
-    offset: int, tenant_id: int, limit: int
+    offset: int, tenant_id: int, limit: int, filter_clause: str | None = None
 ) -> list[ProviderResource]:
-    query = _main_select_query(tenant_id)
+    query = _main_select_query(tenant_id, filter_clause=filter_clause)
     with pg_client.PostgresClient() as cur:
         cur.execute(f"{query} LIMIT {limit} OFFSET {offset}")
         return cur.fetchall()
+
+
+def filter_attribute_mapping() -> dict[str, str]:
+    return {"displayName": "roles.name"}
 
 
 def get_provider_resource(

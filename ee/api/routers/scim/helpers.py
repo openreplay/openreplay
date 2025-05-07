@@ -366,3 +366,118 @@ def remove_by_path(doc, tokens):
                     cur = cur[token] if 0 <= token < len(cur) else None
                 else:
                     return
+
+
+class SCIMFilterParser:
+    _TOK_RE = re.compile(
+        r"""
+        (?:"[^"]*"|'[^']*')|      # double- or single-quoted string
+        \band\b|\bor\b|\bnot\b|
+        \beq\b|\bne\b|\bco\b|\bsw\b|\bew\b|\bgt\b|\blt\b|\bge\b|\ble\b|\bpr\b|
+        [()]|                     # parentheses
+        [^\s()]+                  # bare token
+        """,
+        re.IGNORECASE | re.VERBOSE,
+    )
+    _NUMERIC_RE = re.compile(r"^-?\d+(\.\d+)?$")
+
+    def __init__(self, text: str, attr_map: dict[str, str]):
+        self.tokens = [tok for tok in self._TOK_RE.findall(text)]
+        self.pos = 0
+        self.attr_map = attr_map
+
+    def peek(self) -> str | None:
+        return self.tokens[self.pos].lower() if self.pos < len(self.tokens) else None
+
+    def next(self) -> str:
+        tok = self.tokens[self.pos]
+        self.pos += 1
+        return tok
+
+    def parse(self) -> str:
+        expr = self._parse_or()
+        if self.pos != len(self.tokens):
+            raise ValueError(f"Unexpected token at end: {self.peek()}")
+        return expr
+
+    def _parse_or(self) -> str:
+        left = self._parse_and()
+        while self.peek() == "or":
+            self.next()
+            right = self._parse_and()
+            left = f"({left} OR {right})"
+        return left
+
+    def _parse_and(self) -> str:
+        left = self._parse_not()
+        while self.peek() == "and":
+            self.next()
+            right = self._parse_not()
+            left = f"({left} AND {right})"
+        return left
+
+    def _parse_not(self) -> str:
+        if self.peek() == "not":
+            self.next()
+            inner = self._parse_simple()
+            return f"(NOT {inner})"
+        return self._parse_simple()
+
+    def _parse_simple(self) -> str:
+        if self.peek() == "(":
+            self.next()
+            expr = self._parse_or()
+            if self.next() != ")":
+                raise ValueError("Missing closing parenthesis")
+            return f"({expr})"
+        return self._parse_comparison()
+
+    def _parse_comparison(self) -> str:
+        raw_attr = self.next()
+        col = self.attr_map.get(raw_attr, raw_attr)
+        op = self.next().lower()
+
+        if op == "pr":
+            return f"{col} IS NOT NULL"
+
+        val = self.next()
+
+        # strip quotes if present (single or double)
+        if (val.startswith('"') and val.endswith('"')) or (
+            val.startswith("'") and val.endswith("'")
+        ):
+            inner = val[1:-1].replace("'", "''")
+            sql_val = f"'{inner}'"
+        elif self._NUMERIC_RE.match(val):
+            sql_val = val
+        else:
+            inner = val.replace("'", "''")
+            sql_val = f"'{inner}'"
+
+        if op == "eq":
+            return f"{col} = {sql_val}"
+        if op == "ne":
+            return f"{col} <> {sql_val}"
+        if op == "co":
+            return f"{col} LIKE '%' || {sql_val} || '%'"
+        if op == "sw":
+            return f"{col} LIKE {sql_val} || '%'"
+        if op == "ew":
+            return f"{col} LIKE '%' || {sql_val}"
+        if op in ("gt", "lt", "ge", "le"):
+            sql_ops = {"gt": ">", "lt": "<", "ge": ">=", "le": "<="}
+            return f"{col} {sql_ops[op]} {sql_val}"
+
+        raise ValueError(f"Unknown operator: {op}")
+
+
+def scim_to_sql_where(filter_str: str | None, attr_map: dict[str, str]) -> str | None:
+    """
+    Convert a SCIM filter into an SQL WHERE fragment,
+    mapping SCIM attributes per attr_map and correctly quoting
+    both single- and double-quoted strings.
+    """
+    if filter_str is None:
+        return None
+    parser = SCIMFilterParser(filter_str, attr_map)
+    return parser.parse()
