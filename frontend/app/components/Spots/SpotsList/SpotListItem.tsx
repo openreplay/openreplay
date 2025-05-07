@@ -80,8 +80,12 @@ function SpotListItem({
       case 'rename':
         return setIsEdit(true);
       case 'download':
+        const loader = toast.loading('Retrieving Spot video...')
         const { url } = await onVideo(spot.spotId);
         await downloadFile(url, `${spot.title}.mp4`);
+        setTimeout(() => {
+          toast.dismiss(loader)
+        }, 0)
         return;
       case 'copy':
         copy(

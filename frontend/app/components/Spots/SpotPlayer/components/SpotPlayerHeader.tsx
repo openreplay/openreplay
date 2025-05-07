@@ -32,6 +32,7 @@ import { Avatar, Icon } from 'UI';
 import { TABS, Tab } from '../consts';
 import AccessModal from './AccessModal';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify'
 
 const spotLink = spotsList();
 
@@ -89,8 +90,12 @@ function SpotPlayerHeader({
 
   const onMenuClick = async ({ key }: { key: string }) => {
     if (key === '1') {
+      const loader = toast.loading('Retrieving Spot video...')
       const { url } = await spotStore.getVideo(spotStore.currentSpot!.spotId);
       await downloadFile(url, `${spotStore.currentSpot!.title}.mp4`);
+      setTimeout(() => {
+        toast.dismiss(loader)
+      }, 0)
     } else if (key === '2') {
       spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
         history.push(spotsList());
@@ -245,12 +250,11 @@ function SpotPlayerHeader({
 }
 
 async function downloadFile(url: string, fileName: string) {
-  const { t } = useTranslation();
   try {
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error(t('Network response was not ok'));
+      throw new Error('Network response was not ok');
     }
 
     const blob = await response.blob();
@@ -263,6 +267,7 @@ async function downloadFile(url: string, fileName: string) {
     document.body.removeChild(a);
     URL.revokeObjectURL(blobUrl);
   } catch (error) {
+    toast.error('Error downloading file.')
     console.error('Error downloading file:', error);
   }
 }
