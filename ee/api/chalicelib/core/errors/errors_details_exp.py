@@ -71,7 +71,7 @@ def get_details(project_id, error_id, user_id, **data):
     MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(0)
 
     ch_basic_query = errors_helper.__get_basic_constraints_ch(time_constraint=False)
-    ch_basic_query.append("toString(`$properties`.error_id) = %(error_id)s")
+    ch_basic_query.append("error_id = %(error_id)s")
 
     with ch_client.ClickHouseClient() as ch:
         data["startDate24"] = TimeUTC.now(-1)
@@ -95,7 +95,7 @@ def get_details(project_id, error_id, user_id, **data):
             "error_id": error_id}
 
         main_ch_query = f"""\
-        WITH pre_processed AS (SELECT toString(`$properties`.error_id)         AS error_id,
+        WITH pre_processed AS (SELECT error_id,
                                       toString(`$properties`.name)             AS name,
                                       toString(`$properties`.message)          AS message,
                                       session_id,
@@ -183,7 +183,7 @@ def get_details(project_id, error_id, user_id, **data):
                                          AND `$event_name` = 'ERROR'
                                          AND events.created_at >= toDateTime(timestamp / 1000)
                                          AND events.created_at < toDateTime((timestamp + %(step_size24)s) / 1000)
-                                         AND toString(`$properties`.error_id) = %(error_id)s
+                                         AND error_id = %(error_id)s
                                    GROUP BY timestamp
                                    ORDER BY timestamp) AS chart_details
                             ) AS chart_details24 ON TRUE
@@ -196,7 +196,7 @@ def get_details(project_id, error_id, user_id, **data):
                                          AND `$event_name` = 'ERROR'
                                          AND events.created_at >= toDateTime(timestamp / 1000)
                                          AND events.created_at < toDateTime((timestamp + %(step_size30)s) / 1000)
-                                         AND toString(`$properties`.error_id) = %(error_id)s
+                                         AND error_id = %(error_id)s
                                    GROUP BY timestamp
                                    ORDER BY timestamp) AS chart_details
                             ) AS chart_details30 ON TRUE;"""
