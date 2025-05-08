@@ -49,7 +49,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
         return {
             'total': 0,
             'sessions': [],
-            'src': 1
+            '_src': 1
         }
     full_args, query_part = sessions_legacy.search_query_parts(data=data, error_status=error_status,
                                                                errors_only=errors_only,
@@ -177,7 +177,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
     return {
         'total': total,
         'sessions': helper.list_to_camel_case(sessions),
-        'src': 1
+        '_src': 1
     }
 
 
@@ -240,7 +240,7 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
                 cur.execute("\nUNION\n".join(sub_queries))
                 rows = cur.fetchall()
                 for i in rows:
-                    i["src"] = 1
+                    i["_src"] = 1
                     results[str(i["project_id"])]["sessions"].append(helper.dict_to_camel_case(i))
     return results
 
@@ -248,7 +248,7 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
 def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 'session_id',
                            ascending: bool = False) -> dict:
     if session_ids is None or len(session_ids) == 0:
-        return {"total": 0, "sessions": [], "src": 1}
+        return {"total": 0, "sessions": [], "_src": 1}
     with pg_client.PostgresClient() as cur:
         meta_keys = metadata.get(project_id=project_id)
         params = {"project_id": project_id, "session_ids": tuple(session_ids)}
@@ -267,4 +267,4 @@ def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 's
                 s["metadata"] = {}
                 for m in meta_keys:
                     s["metadata"][m["key"]] = s.pop(f'metadata_{m["index"]}')
-    return {"total": len(rows), "sessions": helper.list_to_camel_case(rows), "src": 1}
+    return {"total": len(rows), "sessions": helper.list_to_camel_case(rows), "_src": 1}

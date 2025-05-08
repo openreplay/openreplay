@@ -148,11 +148,11 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
             parameters=full_args)
         rows = ch_client.execute(query)
         if len(rows) == 0:
-            return {"total": 0, "rows": [], "src": 2}
+            return {"total": 0, "rows": [], "_src": 2}
         total = rows[0]["total"]
         for r in rows:
             r.pop("total")
-        return {"total": total, "rows": rows, "src": 2}
+        return {"total": total, "rows": rows, "_src": 2}
 
 
 def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
