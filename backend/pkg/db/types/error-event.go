@@ -25,6 +25,7 @@ type ErrorEvent struct {
 	Tags       map[string]*string
 	OriginType int
 	Url        string
+	PageTitle  string
 }
 
 func WrapJSException(m *JSException) (*ErrorEvent, error) {
@@ -37,6 +38,7 @@ func WrapJSException(m *JSException) (*ErrorEvent, error) {
 		Payload:    m.Payload,
 		OriginType: m.TypeID(),
 		Url:        m.Url,
+		PageTitle:  m.PageTitle,
 	}, nil
 }
 
@@ -50,6 +52,7 @@ func WrapIntegrationEvent(m *IntegrationEvent) *ErrorEvent {
 		Payload:    m.Payload,
 		OriginType: m.TypeID(),
 		Url:        m.Url,
+		PageTitle:  m.PageTitle,
 	}
 }
 

@@ -176,6 +176,7 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 
 	case *SetPageLocation:
 		i.messageInfo.Url = m.URL
+		i.messageInfo.PageTitle = m.DocumentTitle
 		// Save session page url in cache for using in next batches
 		i.urls.Set(i.messageInfo.batch.sessionID, m.URL)
 
