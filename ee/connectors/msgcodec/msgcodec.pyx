@@ -755,6 +755,13 @@ cdef class MessageCodec:
                 message_type=self.read_string(reader)
             )
 
+        if message_id == 85:
+            return Incident(
+                label=self.read_string(reader),
+                start_time=self.read_string(reader),
+                end_time=self.read_string(reader)
+            )
+
         if message_id == 112:
             return InputChange(
                 id=self.read_uint(reader),

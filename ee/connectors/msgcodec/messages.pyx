@@ -1065,6 +1065,19 @@ cdef class WSChannel(PyMessage):
         self.message_type = message_type
 
 
+cdef class Incident(PyMessage):
+    cdef public int __id__
+    cdef public str label
+    cdef public str start_time
+    cdef public str end_time
+
+    def __init__(self, str label, str start_time, str end_time):
+        self.__id__ = 85
+        self.label = label
+        self.start_time = start_time
+        self.end_time = end_time
+
+
 cdef class InputChange(PyMessage):
     cdef public int __id__
     cdef public unsigned long id

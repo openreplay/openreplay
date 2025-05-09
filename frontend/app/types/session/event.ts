@@ -10,6 +10,7 @@ const IOS_VIEW = 'VIEW';
 const UXT_EVENT = 'UXT_EVENT';
 const TOUCH = 'TAP';
 const SWIPE = 'SWIPE';
+const INCIDENT = 'INCIDENT';
 
 export const TYPES = {
   CONSOLE,
@@ -24,6 +25,7 @@ export const TYPES = {
   SWIPE,
   TAPRAGE,
   UXT_EVENT,
+  INCIDENT,
 };
 
 export type EventType =
@@ -35,7 +37,8 @@ export type EventType =
   | typeof CLICKRAGE
   | typeof IOS_VIEW
   | typeof TOUCH
-  | typeof SWIPE;
+  | typeof SWIPE
+  | typeof INCIDENT
 
 interface IEvent {
   time: number;
@@ -97,6 +100,12 @@ export interface LocationEvent extends IEvent {
   firstContentfulPaintTime: number;
   firstPaintTime: number;
   webVitals: string | null;
+}
+
+export interface IncidentEvent extends IEvent {
+  label: string;
+  startTime: number;
+  endTime: number;
 }
 
 export type EventData =
@@ -276,6 +285,22 @@ export class Location extends Event {
   }
 }
 
+export class Incident extends Event {
+  readonly name = 'Incident';
+
+  readonly type = CUSTOM;
+
+  constructor(evt: IncidentEvent) {
+    super(evt);
+    Object.assign(this, {
+      ...evt,
+      label: evt.label || 'User signaled an incident',
+      startTime: evt.startTime,
+      endTime: evt.startTime || evt.endTime,
+    });
+  }
+}
+
 export type InjectedEvent =
   | Console
   | Click
@@ -283,9 +308,11 @@ export type InjectedEvent =
   | Location
   | Touch
   | Swipe
-  | UxtEvent;
+  | UxtEvent
+  | Incident;
 
 export default function (event: EventData) {
+  console.log('DEETECT EVENT', event);
   if ('allow_typing' in event) {
     return new UxtEvent(event);
   }
@@ -307,6 +334,8 @@ export default function (event: EventData) {
       return new Click(event as ClickEvent, true);
     case SWIPE:
       return new Swipe(event as SwipeEvent);
+    case INCIDENT:
+      return new Incident(event as IncidentEvent);
     default:
       return console.error(`Unknown event type: ${event.type}`);
   }

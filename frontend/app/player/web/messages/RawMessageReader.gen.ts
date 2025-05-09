@@ -1,21 +1,21 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
-import PrimitiveReader from './PrimitiveReader';
-import { MType } from './raw.gen';
-import type { RawMessage } from './raw.gen';
+import PrimitiveReader from './PrimitiveReader'
+import { MType } from './raw.gen'
+import type { RawMessage } from './raw.gen'
+
 
 export default class RawMessageReader extends PrimitiveReader {
   readMessage(): RawMessage | null {
-    const p = this.p;
+    const p = this.p
     const resetPointer = () => {
-      this.p = p;
-      return null;
-    };
-
-    const tp = this.readUint();
-    if (tp === null) {
-      return resetPointer();
+      this.p = p
+      return null
     }
+
+    const tp = this.readUint()
+    if (tp === null) { return resetPointer() }
 
     switch (tp) {
 
@@ -654,6 +654,18 @@ export default class RawMessageReader extends PrimitiveReader {
         timestamp,
         dir,
         messageType,
+      };
+    }
+
+    case 85: {
+      const label = this.readString(); if (label === null) { return resetPointer() }
+      const startTime = this.readString(); if (startTime === null) { return resetPointer() }
+      const endTime = this.readString(); if (endTime === null) { return resetPointer() }
+      return {
+        tp: MType.Incident,
+        label,
+        startTime,
+        endTime,
       };
     }
 

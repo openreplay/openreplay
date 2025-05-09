@@ -450,6 +450,12 @@ message 84, 'WSChannel', :replayer => :devtools do
     string 'MessageType'
 end
 
+message 85, 'Incident', :replayer => :devtools do
+  string 'Label'
+  string 'StartTime'
+  string 'EndTime'
+end
+
 # 90-111 reserved iOS
 
 message 112, 'InputChange', :replayer => false do
@@ -551,4 +557,4 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Partition'
 end
 
-# FREE 2, 34, 35, 36, 65, 85, 86, 87, 88, 89
+# FREE 2, 34, 35, 36, 65, 86, 87, 88, 89

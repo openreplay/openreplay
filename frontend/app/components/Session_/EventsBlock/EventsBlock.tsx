@@ -49,6 +49,8 @@ function EventsBlock(props: IProps) {
   const { store, player } = React.useContext(PlayerContext);
   const [currentTimeEventIndex, setCurrentTimeEventIndex] = React.useState(0);
 
+  console.log('FILTER', uiPlayerStore.showOnlySearchEvents)
+
   const {
     time,
     endTime,
@@ -86,25 +88,28 @@ function EventsBlock(props: IProps) {
         }
       });
     }
-    const eventsWithMobxNotes = [...notesWithEvents, ...notes]
-      .sort(sortEvents);
+    const eventsWithMobxNotes = [...notesWithEvents, ...notes].sort(sortEvents);
     const filteredTabEvents = query.length
-                              ? tabChangeEvents
-                                .filter((e => (e.activeUrl as string).includes(query)))
-                              : tabChangeEvents;
-    const list = mergeEventLists(
-      query.length > 0 ? filteredEvents : eventsWithMobxNotes,
-      filteredTabEvents
+      ? tabChangeEvents.filter((e) => (e.activeUrl as string).includes(query))
+      : tabChangeEvents;
+    return mergeEventLists(
+      filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
+      tabChangeEvents,
     )
-    if (zoomEnabled) {
-      return list.filter((e) =>
+      .filter((e) =>
         zoomEnabled
-        ? 'time' in e
-          ? e.time >= zoomStartTs && e.time <= zoomEndTs
-          : false
-        : true
-      ).filter((e: any) => !e.noteId && e.type !== 'TABCHANGE' && uiPlayerStore.showOnlySearchEvents ? e.isHighlighted : true);
-    }
+          ? 'time' in e
+            ? e.time >= zoomStartTs && e.time <= zoomEndTs
+            : false
+          : true,
+      )
+      .filter((e: any) =>
+        !e.noteId &&
+        e.type !== 'TABCHANGE' &&
+        uiPlayerStore.showOnlySearchEvents
+          ? e.isHighlighted
+          : true,
+      );
   }, [
     filteredLength,
     query,
@@ -113,8 +118,9 @@ function EventsBlock(props: IProps) {
     zoomEnabled,
     zoomStartTs,
     zoomEndTs,
-    uiPlayerStore.showOnlySearchEvents
+    uiPlayerStore.showOnlySearchEvents,
   ]);
+
   const findLastFitting = React.useCallback(
     (time: number) => {
       if (!usedEvents.length) return 0;
@@ -140,7 +146,7 @@ function EventsBlock(props: IProps) {
 
   useEffect(() => {
     setCurrentTimeEventIndex(findLastFitting(time));
-  }, [])
+  }, []);
 
   const write = ({
     target: { value },
@@ -196,7 +202,7 @@ function EventsBlock(props: IProps) {
     const isTabChange = 'type' in event && event.type === 'TABCHANGE';
     const isCurrent = index === currentTimeEventIndex;
     const isPrev = index < currentTimeEventIndex;
-    const isSearched = event.isHighlighted
+    const isSearched = event.isHighlighted;
 
     return (
       <EventGroupWrapper

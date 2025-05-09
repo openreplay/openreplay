@@ -716,6 +716,15 @@ class WSChannel(Message):
         self.message_type = message_type
 
 
+class Incident(Message):
+    __id__ = 85
+
+    def __init__(self, label, start_time, end_time):
+        self.label = label
+        self.start_time = start_time
+        self.end_time = end_time
+
+
 class InputChange(Message):
     __id__ = 112
 

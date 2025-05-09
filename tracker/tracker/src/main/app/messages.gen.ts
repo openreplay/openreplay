@@ -824,6 +824,19 @@ export function WSChannel(
   ]
 }
 
+export function Incident(
+  label: string,
+  startTime: string,
+  endTime: string,
+): Messages.Incident {
+  return [
+    Messages.Type.Incident,
+    label,
+    startTime,
+    endTime,
+  ]
+}
+
 export function InputChange(
   id: number,
   value: string,
