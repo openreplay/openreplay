@@ -50,6 +50,7 @@ const (
 	MetricTypeFunnel     MetricType = "funnel"
 	MetricTypeHeatmap    MetricType = "heatmaps"
 	MetricTypeSession    MetricType = "heatmaps_session"
+	MetricUserJourney    MetricType = "pathAnalysis"
 )
 
 const (
@@ -64,12 +65,17 @@ type MetricPayload struct {
 	Density        int        `json:"density"`
 	MetricOf       string     `json:"metricOf"`
 	MetricType     MetricType `json:"metricType"`
+	MetricValue    []string   `json:"metricValue"`
 	MetricFormat   string     `json:"metricFormat"`
 	ViewType       string     `json:"viewType"`
 	Name           string     `json:"name"`
 	Series         []Series   `json:"series"`
 	Limit          int        `json:"limit"`
 	Page           int        `json:"page"`
+	StartPoint     []Filter   `json:"startPoint"`
+	Exclude        []Filter   `json:"exclude"`
+	Rows           uint64     `json:"rows"`
+	Columns        uint64     `json:"columns"`
 }
 
 type MetricOfTable string

@@ -30,6 +30,8 @@ func NewQueryBuilder(p Payload) (QueryBuilder, error) {
 		return HeatmapQueryBuilder{}, nil
 	case MetricTypeSession:
 		return HeatmapSessionQueryBuilder{}, nil
+	case MetricUserJourney:
+		return UserJourneyQueryBuilder{}, nil
 	default:
 		return nil, fmt.Errorf("unknown metric type: %s", p.MetricType)
 	}
