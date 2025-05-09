@@ -72,10 +72,11 @@ function ChatLog({
               userName={userLetter}
               messageId={msg.messageId}
               isLast={index === lastHumanMsgInd}
+              duration={msg.duration}
             />
           ))}
           {processingStage ? (
-            <ChatNotice content={processingStage.content} />
+            <ChatNotice content={processingStage.content} duration={processingStage.duration} />
           ) : null}
         </div>
         <div className={'sticky bottom-0 pt-6 w-2/3'}>

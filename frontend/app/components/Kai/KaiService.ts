@@ -34,7 +34,7 @@ export default class KaiService extends AiService {
     return true;
   }
 
-  getKaiChat = async (projectId: string, userId: string, threadId: string): Promise<{ role: string, content: string, message_id: any }[]> => {
+  getKaiChat = async (projectId: string, userId: string, threadId: string): Promise<{ role: string, content: string, message_id: any, duration?: number }[]> => {
     const jwt = window.env.KAI_TESTING // this.client.getJwt()
     const r = await fetch(`http://localhost:8700/kai/${projectId}/chats/${threadId}?user_id=${userId}`, {
       method: 'GET',

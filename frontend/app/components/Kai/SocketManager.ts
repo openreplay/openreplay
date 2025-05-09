@@ -52,7 +52,7 @@ export class ChatManager {
     msgCallback,
     titleCallback,
   }: {
-    msgCallback: (msg: BotChunk | { state: string, type: 'state' }) => void;
+    msgCallback: (msg: BotChunk | { state: string, type: 'state', start_time?: number }) => void;
     titleCallback: (title: string) => void;
   }) => {
     this.socket.on('chunk', (msg: BotChunk) => {
@@ -63,8 +63,8 @@ export class ChatManager {
       console.log('Received title:', msg);
       titleCallback(msg.content);
     });
-    this.socket.on('state', (state: { message: 'idle' | 'running' }) => {
-      msgCallback({ state: state.message, type: 'state' })
+    this.socket.on('state', (state: { message: 'idle' | 'running', start_time: number }) => {
+      msgCallback({ state: state.message, type: 'state', start_time: state.start_time })
     })
   };
 
@@ -77,11 +77,13 @@ export interface BotChunk {
   stage: 'start' | 'chart' | 'final' | 'title';
   content: string;
   messageId: string;
+  duration?: number;
 }
 export interface Message {
   text: string;
   isUser: boolean;
   messageId: string;
+  duration?: number;
 }
 
 export interface SentMessage extends Message {
