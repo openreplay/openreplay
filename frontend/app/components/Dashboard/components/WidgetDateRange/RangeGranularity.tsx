@@ -55,7 +55,7 @@ function RangeGranularity({
 }
 
 const PAST_24_HR_MS = 24 * 60 * 60 * 1000;
-function calculateGranularities(periodDurationMs: number) {
+export function calculateGranularities(periodDurationMs: number) {
   const granularities = [
     { label: 'Hourly', durationMs: 60 * 60 * 1000 },
     { label: 'Daily', durationMs: 24 * 60 * 60 * 1000 },

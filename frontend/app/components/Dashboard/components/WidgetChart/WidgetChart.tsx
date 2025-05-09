@@ -181,9 +181,10 @@ function WidgetChart(props: Props) {
     }
     prevMetricRef.current = _metric;
     const timestmaps = drillDownPeriod.toTimestamps();
+    const density = props.isPreview ? metric.density : dashboardStore.selectedDensity
     const payload = isSaved
-      ? { ...metricParams }
-      : { ...params, ...timestmaps, ..._metric.toJson() };
+      ? { ...metricParams, density }
+      : { ...params, ...timestmaps, ..._metric.toJson(), density };
     debounceRequest(
       _metric,
       payload,
