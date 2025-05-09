@@ -51,6 +51,7 @@ module.exports = {
   glassLavander: 'rgba(243, 241, 255, 0.5)',
   blueLight: 'rgba(235, 235, 255, 1)',
   offWhite: 'rgba(250, 250, 255, 1)',
+  'disabled-text': 'rgba(0,0,0, 0.38)',
 
   figmaColors: {
     'accent-secondary': 'rgba(62, 170, 175, 1)',

@@ -99,6 +99,7 @@ class KaiStore {
               text: m.content,
               isUser: isUser,
               messageId: m.message_id,
+              duration: m.duration,
             };
           }),
         );
@@ -121,7 +122,12 @@ class KaiStore {
       msgCallback: (msg) => {
         if ('state' in msg) {
           if (msg.state === 'running') {
-            this.setProcessingStage({ content: 'Processing your request...', stage: 'chart', messageId: Date.now().toPrecision() })
+            this.setProcessingStage({
+              content: 'Processing your request...',
+              stage: 'chart',
+              messageId: Date.now().toPrecision(),
+              duration: msg.start_time ? Date.now() - msg.start_time : 0
+            })
           } else {
             this.setProcessingStage(null)
           }
@@ -140,6 +146,7 @@ class KaiStore {
               text: msg.content,
               isUser: false,
               messageId: msg.messageId,
+              duration: msg.duration
             }
             this.addMessage(msgObj);
             this.setProcessingStage(null);

@@ -52,6 +52,7 @@
 .fill-glassLavander { fill: var(--color-glassLavander) }
 .fill-blueLight { fill: var(--color-blueLight) }
 .fill-offWhite { fill: var(--color-offWhite) }
+.fill-disabled-text { fill: var(--color-disabled-text) }
 .fill-figmaColors-accent-secondary { fill: var(--color-figmaColors-accent-secondary) }
 .fill-figmaColors-main { fill: var(--color-figmaColors-main) }
 .fill-figmaColors-primary-outlined-hover-background { fill: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -112,6 +113,7 @@
 .hover-fill-glassLavander:hover svg { fill: var(--color-glassLavander) }
 .hover-fill-blueLight:hover svg { fill: var(--color-blueLight) }
 .hover-fill-offWhite:hover svg { fill: var(--color-offWhite) }
+.hover-fill-disabled-text:hover svg { fill: var(--color-disabled-text) }
 .hover-fill-figmaColors-accent-secondary:hover svg { fill: var(--color-figmaColors-accent-secondary) }
 .hover-fill-figmaColors-main:hover svg { fill: var(--color-figmaColors-main) }
 .hover-fill-figmaColors-primary-outlined-hover-background:hover svg { fill: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -174,6 +176,7 @@
 .color-glassLavander { color: var(--color-glassLavander) }
 .color-blueLight { color: var(--color-blueLight) }
 .color-offWhite { color: var(--color-offWhite) }
+.color-disabled-text { color: var(--color-disabled-text) }
 .color-figmaColors-accent-secondary { color: var(--color-figmaColors-accent-secondary) }
 .color-figmaColors-main { color: var(--color-figmaColors-main) }
 .color-figmaColors-primary-outlined-hover-background { color: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -236,6 +239,7 @@
 .hover-glassLavander:hover { color: var(--color-glassLavander) }
 .hover-blueLight:hover { color: var(--color-blueLight) }
 .hover-offWhite:hover { color: var(--color-offWhite) }
+.hover-disabled-text:hover { color: var(--color-disabled-text) }
 .hover-figmaColors-accent-secondary:hover { color: var(--color-figmaColors-accent-secondary) }
 .hover-figmaColors-main:hover { color: var(--color-figmaColors-main) }
 .hover-figmaColors-primary-outlined-hover-background:hover { color: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -298,6 +302,7 @@
 .border-glassLavander { border-color: var(--color-glassLavander) }
 .border-blueLight { border-color: var(--color-blueLight) }
 .border-offWhite { border-color: var(--color-offWhite) }
+.border-disabled-text { border-color: var(--color-disabled-text) }
 .border-figmaColors-accent-secondary { border-color: var(--color-figmaColors-accent-secondary) }
 .border-figmaColors-main { border-color: var(--color-figmaColors-main) }
 .border-figmaColors-primary-outlined-hover-background { border-color: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -360,6 +365,7 @@
 .bg-glassLavander { background-color: var(--color-glassLavander) }
 .bg-blueLight { background-color: var(--color-blueLight) }
 .bg-offWhite { background-color: var(--color-offWhite) }
+.bg-disabled-text { background-color: var(--color-disabled-text) }
 .bg-figmaColors-accent-secondary { background-color: var(--color-figmaColors-accent-secondary) }
 .bg-figmaColors-main { background-color: var(--color-figmaColors-main) }
 .bg-figmaColors-primary-outlined-hover-background { background-color: var(--color-figmaColors-primary-outlined-hover-background) }

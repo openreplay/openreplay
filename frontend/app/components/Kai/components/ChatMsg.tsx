@@ -3,10 +3,11 @@ import { Icon, CopyButton } from 'UI';
 import cn from 'classnames';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'
-import { Loader, ThumbsUp, ThumbsDown, ListRestart, FileDown } from 'lucide-react';
+import { Loader, ThumbsUp, ThumbsDown, ListRestart, FileDown, Clock } from 'lucide-react';
 import { Button, Tooltip } from 'antd';
 import { kaiStore } from '../KaiStore';
 import { toast } from 'react-toastify';
+import { durationFormatted } from 'App/date';
 
 export function ChatMsg({
   text,
@@ -14,12 +15,14 @@ export function ChatMsg({
   userName,
   messageId,
   isLast,
+  duration,
 }: {
   text: string;
   isUser: boolean;
   messageId: string;
   userName?: string;
   isLast?: boolean;
+  duration?: number;
 }) {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const bodyRef = React.useRef<HTMLDivElement>(null);
@@ -78,7 +81,7 @@ export function ChatMsg({
           <Icon name={'kai_colored'} size={18} />
         </div>
       )}
-      <div className={'mt-1'}>
+      <div className={'mt-1 flex flex-col'}>
         <div className='markdown-body' ref={bodyRef}>
           <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </div>
@@ -96,6 +99,10 @@ export function ChatMsg({
           ) : null
         ) : (
           <div className={'flex items-center gap-2'}>
+            {duration ? (
+              <MsgDuration duration={duration} />
+            ) : null}
+            <div className='ml-auto' />
             <IconButton tooltip="Like this answer" onClick={() => onFeedback('like', messageId)}>
               <ThumbsUp size={16} />
             </IconButton>
@@ -131,13 +138,36 @@ function IconButton({
   );
 }
 
-export function ChatNotice({ content }: { content: string }) {
+export function ChatNotice({ content, duration }: { content: string, duration?: number }) {
+  const startTime = React.useRef(duration ? Date.now() - duration : Date.now());
+  const [activeDuration, setDuration] = React.useState(duration ?? 0);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setDuration(Math.round((Date.now() - startTime.current)));
+    }, 250);
+    return () => clearInterval(interval);
+  }, []);
   return (
-    <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-lightest border-gray-light w-fit">
-      <div className={'animate-spin'}>
-        <Loader size={14} />
+    <div className='flex flex-col gap-1 items-start p-2 rounded-lg bg-gray-lightest border-gray-light w-fit '>
+      <div className="flex gap-2 items-start">
+        <div className={'animate-spin mt-1'}>
+          <Loader size={14} />
+        </div>
+        <div className={'animate-pulse'}>{content}</div>
       </div>
-      <div className={'animate-pulse text-disabled-text'}>{content}</div>
+      <MsgDuration duration={activeDuration} />
     </div>
   );
+}
+
+function MsgDuration({ duration }: { duration: number }) {
+  return (
+    <div className="text-disabled-text text-sm flex items-center gap-1">
+      <Clock size={14} />
+      <span className="leading-none">
+        {durationFormatted(duration)}
+      </span>
+    </div>
+  )
 }
