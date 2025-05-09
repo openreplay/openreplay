@@ -1,10 +1,11 @@
 import { TFunction } from 'i18next';
+import { IconNames } from "../components/ui/SVG";
 import React from 'react';
 
 export interface MenuItem {
   label: React.ReactNode;
   key: React.Key;
-  icon?: string;
+  icon?: IconNames;
   children?: MenuItem[];
   route?: string;
   hidden?: boolean;
@@ -53,6 +54,7 @@ export const enum MENU {
   SUPPORT = 'support',
   EXIT = 'exit',
   SPOTS = 'spots',
+  KAI = 'kai',
 }
 
 export const categories: (t: TFunction) => Category[] = (t) => [
@@ -91,6 +93,13 @@ export const categories: (t: TFunction) => Category[] = (t) => [
     key: 'assist',
     items: [
       { label: t('Co-Browse'), key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
+    ],
+  },
+  {
+    title: '',
+    key: 'kai',
+    items: [
+      { label: t('Kai'), key: MENU.KAI, icon: 'kai' },
     ],
   },
   {

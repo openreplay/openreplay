@@ -17,6 +17,7 @@ import {
 } from 'App/routes';
 import withPageTitle from 'HOCs/withPageTitle';
 import { useTranslation } from 'react-i18next';
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 const { Search } = Input;
 
@@ -76,7 +77,7 @@ function TestsTable() {
   };
 
   return (
-    <div className="w-full mx-auto" style={{ maxWidth: '1360px' }}>
+    <div className="w-full mx-auto" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
       <Modal
         title={t('Create Usability Test')}
         open={isModalVisible}

@@ -7,6 +7,7 @@ import { observer } from 'mobx-react-lite';
 import RecordingsList from './RecordingsList';
 import RecordingsSearch from './RecordingsSearch';
 import { useTranslation } from 'react-i18next';
+import { PANEL_SIZES } from 'App/constants/panelSizes'
 
 function Recordings() {
   const { t } = useTranslation();
@@ -24,7 +25,7 @@ function Recordings() {
 
   return (
     <div
-      style={{ maxWidth: '1360px', margin: 'auto' }}
+      style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}
       className="bg-white rounded-lg py-4 border h-screen overflow-y-scroll"
     >
       <div className="flex items-center mb-4 justify-between px-6">

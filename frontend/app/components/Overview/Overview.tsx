@@ -18,6 +18,7 @@ import FlagView from 'Components/FFlags/FlagView/FlagView';
 import { observer } from 'mobx-react-lite';
 import { useStore } from '@/mstore';
 import Bookmarks from 'Shared/SessionsTabOverview/components/Bookmarks/Bookmarks';
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 // @ts-ignore
 interface IProps extends RouteComponentProps {
@@ -42,12 +43,12 @@ function Overview({ match: { params } }: IProps) {
   return (
     <Switch>
       <Route exact strict path={withSiteId(sessions(), siteId)}>
-        <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
+        <div className="mb-5 w-full mx-auto" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
           <SessionsTabOverview />
         </div>
       </Route>
       <Route exact strict path={withSiteId(bookmarks(), siteId)}>
-        <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
+        <div className="mb-5 w-full mx-auto" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
           <Bookmarks />
         </div>
       </Route>

@@ -14,6 +14,7 @@ import DashboardHeader from '../DashboardHeader';
 import DashboardModal from '../DashboardModal';
 import DashboardWidgetGrid from '../DashboardWidgetGrid';
 import AiQuery from './AiQuery';
+import { PANEL_SIZES } from 'App/constants/panelSizes'
 
 interface IProps {
   siteId: string;
@@ -103,7 +104,7 @@ function DashboardView(props: Props) {
   return (
     <Loader loading={loading}>
       <div
-        style={{ maxWidth: '1360px', margin: 'auto' }}
+        style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}
         className="rounded-lg shadow-sm overflow-hidden bg-white border"
       >
         {/* @ts-ignore */}

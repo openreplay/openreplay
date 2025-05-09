@@ -43,6 +43,7 @@ import { toast } from 'react-toastify';
 import ResponsesOverview from './ResponsesOverview';
 import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 function StatusItem({
   iconName,
@@ -155,7 +156,7 @@ function TestOverview() {
   return (
     <div
       className="w-full mx-auto"
-      style={{ maxWidth: '1360px' }}
+      style={{ maxWidth: PANEL_SIZES.maxWidth }}
       id="pdf-anchor"
     >
       <Breadcrumb

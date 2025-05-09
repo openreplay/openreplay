@@ -16,6 +16,7 @@ import NotifyHooks from './AlertForm/NotifyHooks';
 import AlertListItem from './AlertListItem';
 import Condition from './AlertForm/Condition';
 import { useTranslation } from 'react-i18next';
+import { PANEL_SIZES } from 'App/constants/panelSizes'
 
 function Circle({ text }: { text: string }) {
   return (
@@ -200,7 +201,7 @@ function NewAlert(props: IProps) {
   const isThreshold = instance.detectionMethod === 'threshold';
 
   return (
-    <div style={{ maxWidth: '1360px', margin: 'auto' }}>
+    <div style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}>
       <Breadcrumb
         items={[
           {

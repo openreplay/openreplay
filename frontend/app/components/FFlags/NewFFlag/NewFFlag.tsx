@@ -17,6 +17,7 @@ import Header from './Header';
 import Multivariant from './Multivariant';
 import { Payload } from './Helpers';
 import { useTranslation } from 'react-i18next';
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
   const { t } = useTranslation();
@@ -40,7 +41,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
   if (featureFlagsStore.isLoading) return <Loader loading />;
   if (!current) {
     return (
-      <div className="w-full mx-auto mb-4" style={{ maxWidth: '1360px' }}>
+      <div className="w-full mx-auto mb-4" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
         <Breadcrumb
           items={[
             { label: 'Feature Flags', to: withSiteId(fflags(), siteId) },
@@ -90,7 +91,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
 
   const showDescription = Boolean(current.description?.length);
   return (
-    <div className="w-full mx-auto mb-4" style={{ maxWidth: '1360px' }}>
+    <div className="w-full mx-auto mb-4" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
       <Prompt
         when={current.hasChanged}
         message={() =>
