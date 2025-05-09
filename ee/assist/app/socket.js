@@ -6,9 +6,10 @@ const {
     errorHandler
 } = require("./assist");
 const {
-    addSessionToCache,
+    addSession,
+    updateSession,
     renewSession,
-    removeSessionFromCache
+    removeSession
 } = require('./cache');
 const {
     logger
@@ -83,8 +84,11 @@ async function getRoomData(roomID) {
 async function onConnect(socket) {
     logger.debug(`A new client:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
     // Drop unknown socket.io connections
-    if (socket.handshake.query.identity === undefined || socket.handshake.query.peerId === undefined || socket.handshake.query.sessionInfo === undefined) {
-        logger.debug(`something is undefined, refusing connexion`);
+    if (socket.handshake.query.identity === undefined || socket.handshake.query.peerId === undefined) {
+        logger.debug(`no identity or peerId, refusing connexion`);
+        return socket.disconnect();
+    } else if (socket.handshake.query.identity === IDENTITIES.session && socket.handshake.query.sessionInfo === undefined) {
+        logger.debug(`sessionInfo is undefined, refusing connexion`);
         return socket.disconnect();
     }
     processPeerInfo(socket);
@@ -122,7 +126,7 @@ async function onConnect(socket) {
 
     // Add session to cache
     if (socket.handshake.query.identity === IDENTITIES.session) {
-        await addSessionToCache(socket.handshake.query.sessId, socket.handshake.query.sessionInfo);
+        await addSession(socket.handshake.query.sessId, socket.handshake.query.sessionInfo);
     }
 
     if (socket.handshake.query.identity === IDENTITIES.agent) {
@@ -167,7 +171,7 @@ async function onDisconnect(socket) {
     let {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(socket.handshake.query.roomId);
 
     if (tabsCount <= 0) {
-        await removeSessionFromCache(socket.handshake.query.sessId);
+        await removeSession(socket.handshake.query.sessId);
     }
 
     if (tabsCount === -1 && agentsCount === -1) {
@@ -195,7 +199,7 @@ async function onUpdateEvent(socket, ...args) {
     socket.handshake.query.sessionInfo = deepMerge(socket.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
 
     // update session cache
-    await addSessionToCache(socket.handshake.query.sessId, socket.handshake.query.sessionInfo);
+    await updateSession(socket.handshake.query.sessId, socket.handshake.query.sessionInfo);
 
     // Update sessionInfo for all agents in the room
     const connected_sockets = await fetchSockets(socket.handshake.query.roomId);
