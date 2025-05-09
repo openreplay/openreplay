@@ -90,7 +90,7 @@ function KaiChat() {
           style={{
             height: '70svh',
             background:
-              'radial-gradient(50% 50% at 50% 50%, rgba(255, 255, 255, 0.50) 0%, rgba(248, 255, 254, 0.50) 46%, rgba(243, 241, 255, 0.50) 100%)',
+              'radial-gradient(50% 50% at 50% 50%, var(--color-glassWhite) 0%, var(--color-glassMint) 46%, var(--color-glassLavander) 100%)',
           }}
         >
           {section === 'intro' ? (
