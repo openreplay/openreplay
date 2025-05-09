@@ -11,6 +11,16 @@ import { nextID, styleSheetIDMap } from './constructedStyleSheets.js'
 export interface CssRulesOptions {
   checkCssInterval?: number
   scanInMemoryCSS?: boolean
+  /**
+  Useful for cases where you expect limited amount of mutations
+
+  i.e when sheets are hydrated on client after initial render.
+
+  if you want to observe for x seconds, do (x*1000)/checkCssInterval = checkLimit
+
+  applied to each stylesheet individually.
+  */
+  checkLimit?: number
 }
 
 export default function (app: App, opts: CssRulesOptions) {
@@ -23,17 +33,28 @@ export default function (app: App, opts: CssRulesOptions) {
   //  sheetID:index -> ruleText
   const ruleSnapshots = new Map<string, string>()
   let checkInterval: number | null = null
-  const trackedSheetIDs = new Set<number>()
+  const trackedSheets: Set<CSSStyleSheet> = new Set();
   const checkIntervalMs = opts.checkCssInterval || 200
+  let checkIterations: Record<number, number> = {}
 
   function checkRuleChanges() {
     if (!opts.scanInMemoryCSS) return
-    for (let i = 0; i < document.styleSheets.length; i++) {
+    const allSheets = trackedSheets.values()
+    for (const sheet of allSheets) {
       try {
-        const sheet = document.styleSheets[i]
         const sheetID = styleSheetIDMap.get(sheet)
-        if (!sheetID || !trackedSheetIDs.has(sheetID)) continue
-
+        if (!sheetID) continue
+        if (opts.checkLimit) {
+          if (!checkIterations[sheetID]) {
+            checkIterations[sheetID] = 0
+          } else {
+            checkIterations[sheetID]++
+          }
+          if (checkIterations[sheetID] > opts.checkLimit) {
+            trackedSheets.delete(sheet)
+            return
+          }
+        }
         for (let j = 0; j < sheet.cssRules.length; j++) {
           try {
             const rule = sheet.cssRules[j]
@@ -69,6 +90,7 @@ export default function (app: App, opts: CssRulesOptions) {
         }
       } catch (e) {
         /* Skip inaccessible sheets */
+        trackedSheets.delete(sheet)
       }
     }
   }
@@ -86,7 +108,7 @@ export default function (app: App, opts: CssRulesOptions) {
       app.send(AdoptedSSInsertRuleURLBased(sheetID, rule, index, app.getBaseHref()))
       if (isRuleEmpty(rule)) {
         ruleSnapshots.set(`${sheetID}:${index}`, rule)
-        trackedSheetIDs.add(sheetID)
+        trackedSheets.add(sheet)
       }
     } else {
       app.send(AdoptedSSDeleteRule(sheetID, index))
@@ -114,7 +136,7 @@ export default function (app: App, opts: CssRulesOptions) {
       app.send(AdoptedSSDeleteRule(sheetID, idx + 1))
       if (isRuleEmpty(cssText)) {
         ruleSnapshots.set(`${sheetID}:${idx}`, cssText)
-        trackedSheetIDs.add(sheetID)
+        trackedSheets.add(sheet)
       }
     }
   })
