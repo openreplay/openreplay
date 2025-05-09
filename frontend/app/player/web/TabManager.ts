@@ -291,6 +291,7 @@ export default class TabSessionManager {
           Log(msg),
         );
         break;
+      case MType.ResourceTimingDeprecatedDeprecated:
       case MType.ResourceTimingDeprecated:
       case MType.ResourceTiming:
         // TODO: merge `resource` and `fetch` lists into one here instead of UI

@@ -1,5 +1,5 @@
 /* eslint-disable i18next/no-literal-string */
-import { ResourceType, Timed } from 'Player';
+import { IResourceRequest, ResourceType, Timed } from 'Player';
 import { WsChannel } from 'Player/web/messages';
 import MobilePlayer from 'Player/mobile/IOSPlayer';
 import WebPlayer from 'Player/web/WebPlayer';
@@ -400,8 +400,8 @@ export const NetworkPanelComp = observer(
       transferredSize: 0,
     });
 
-    const originalListRef = useRef([]);
-    const socketListRef = useRef([]);
+    const originalListRef = useRef<IResourceRequest[]>([]);
+    const socketListRef = useRef<any[]>([]);
 
     const {
       sessionStore: { devTools },
@@ -433,18 +433,38 @@ export const NetworkPanelComp = observer(
 
       // Heaviest operation here, will create a final merged network list
       const processData = async () => {
-        const fetchUrls = new Set(
-          fetchList.map((ft) => {
-            return `${ft.name}-${Math.floor(ft.time / 100)}-${Math.floor(ft.duration / 100)}`;
-          }),
-        );
+        const fetchUrlMap: Record<string, number[]> = {}
+        const len = fetchList.length;
+        for (let i = 0; i < len; i++) {
+          const ft = fetchList[i] as any;
+          const key = `${ft.name}-${Math.round(ft.time / 10)}-${Math.round(ft.duration / 10)}`
+          if (fetchUrlMap[key]) {
+            fetchUrlMap[key].push(i);
+          }
+          fetchUrlMap[key] = [i];
+        }
 
         // We want to get resources that aren't in fetch list
-        const filteredResources = await processInChunks(resourceList, (chunk) =>
-          chunk.filter((res: any) => {
-            const key = `${res.name}-${Math.floor(res.time / 100)}-${Math.floor(res.duration / 100)}`;
-            return !fetchUrls.has(key);
-          }),
+        const filteredResources = await processInChunks(resourceList, (chunk) => {
+          const clearChunk = [];
+          for (const res of chunk) {
+            const key = `${res.name}-${Math.floor(res.time / 10)}-${Math.floor(res.duration / 10)}`;
+            const possibleRequests = fetchUrlMap[key]
+            if (possibleRequests && possibleRequests.length) {
+              for (const i of possibleRequests) {
+                fetchList[i].timings = res.timings;
+              }
+              fetchUrlMap[key] = [];
+            } else {
+              clearChunk.push(res);
+            }
+          }
+          return clearChunk;
+          },
+          // chunk.filter((res: any) => {
+          //   const key = `${res.name}-${Math.floor(res.time / 100)}-${Math.floor(res.duration / 100)}`;
+          //   return !fetchUrls.has(key);
+          // }),
           BATCH_SIZE,
           25,
         );
@@ -612,6 +632,7 @@ export const NetworkPanelComp = observer(
 
         return setSelectedWsChannel(socketMsgList);
       }
+
       setIsDetailsModalActive(true);
       showModal(
         <FetchDetailsModal
