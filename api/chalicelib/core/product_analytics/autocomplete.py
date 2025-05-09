@@ -30,21 +30,23 @@ def search_properties(project_id: int, property_name: Optional[str] = None, even
     with ClickHouseClient() as ch_client:
         select = "value"
         full_args = {"project_id": project_id, "limit": 20,
-                     "event_name": event_name, "property_name": property_name}
+                     "event_name": event_name, "property_name": property_name, "q": q,
+                     "property_name_l": helper.string_to_sql_like(property_name),
+                     "q_l": helper.string_to_sql_like(q)}
 
         constraints = ["project_id = %(project_id)s",
                        "_timestamp >= now()-INTERVAL 1 MONTH"]
         if event_name:
             constraints += ["event_name = %(event_name)s"]
+
         if property_name and q:
             constraints += ["property_name = %(property_name)s"]
         elif property_name:
             select = "DISTINCT ON(property_name) property_name AS value"
-            constraints += ["property_name ILIKE %(property_name)s"]
-            full_args["property_name"] = helper.string_to_sql_like(property_name)
+            constraints += ["property_name ILIKE %(property_name_l)s"]
+
         if q:
-            constraints += ["value ILIKE %(q)s"]
-            full_args["q"] = helper.string_to_sql_like(q)
+            constraints += ["value ILIKE %(q_l)s"]
         query = ch_client.format(
             f"""SELECT {select},data_count
                       FROM product_analytics.autocomplete_event_properties_grouped 
