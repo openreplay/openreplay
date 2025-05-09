@@ -9,8 +9,10 @@ import { hasTag } from '../app/guards.js'
 import { nextID, styleSheetIDMap } from './constructedStyleSheets.js'
 
 export interface CssRulesOptions {
-  checkCssInterval?: number
+  /** turn this on if you have issues with emotionjs created styles */
   scanInMemoryCSS?: boolean
+  /** how often to scan tracked stylesheets (with "empty" rules) */
+  checkCssInterval?: number
   /**
   Useful for cases where you expect limited amount of mutations
 
@@ -23,34 +25,41 @@ export interface CssRulesOptions {
   checkLimit?: number
 }
 
+const defaults: CssRulesOptions = {
+  checkCssInterval: 200,
+  scanInMemoryCSS: false,
+  checkLimit: undefined,
+}
+
 export default function (app: App, opts: CssRulesOptions) {
   if (app === null) return
   if (!window.CSSStyleSheet) {
     app.send(TechnicalInfo('no_stylesheet_prototype_in_window', ''))
     return
   }
+  const options = { ...defaults, ...opts }
 
   //  sheetID:index -> ruleText
   const ruleSnapshots = new Map<string, string>()
   let checkInterval: number | null = null
   const trackedSheets: Set<CSSStyleSheet> = new Set();
-  const checkIntervalMs = opts.checkCssInterval || 200
+  const checkIntervalMs = options.checkCssInterval || 200
   let checkIterations: Record<number, number> = {}
 
   function checkRuleChanges() {
-    if (!opts.scanInMemoryCSS) return
+    if (!options.scanInMemoryCSS) return
     const allSheets = trackedSheets.values()
     for (const sheet of allSheets) {
       try {
         const sheetID = styleSheetIDMap.get(sheet)
         if (!sheetID) continue
-        if (opts.checkLimit) {
+        if (options.checkLimit) {
           if (!checkIterations[sheetID]) {
             checkIterations[sheetID] = 0
           } else {
             checkIterations[sheetID]++
           }
-          if (checkIterations[sheetID] > opts.checkLimit) {
+          if (checkIterations[sheetID] > options.checkLimit) {
             trackedSheets.delete(sheet)
             return
           }
@@ -199,7 +208,7 @@ export default function (app: App, opts: CssRulesOptions) {
   })
 
   function startChecking() {
-    if (checkInterval || !opts.scanInMemoryCSS) return
+    if (checkInterval || !options.scanInMemoryCSS) return
     checkInterval = window.setInterval(checkRuleChanges, checkIntervalMs)
   }
 

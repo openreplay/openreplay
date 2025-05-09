@@ -1,3 +1,30 @@
+## 16.3.0
+
+- optional dynamic css scanning for better emotionjs support
+
+```
+new Tracker({
+...css: cssScanOptions
+})
+
+interface cssScanOptions {
+  /** turn this on if you have issues with emotionjs created styles */
+  scanInMemoryCSS?: boolean
+  /** how often to scan tracked stylesheets (with "empty" rules) */
+  checkCssInterval?: number
+  /**
+  Useful for cases where you expect limited amount of mutations
+
+  i.e when sheets are hydrated on client after initial render.
+
+  if you want to observe for x seconds, do (x*1000)/checkCssInterval = checkLimit
+
+  applied to each stylesheet individually.
+  */
+  checkLimit?: number
+}
+```
+
 ## 16.2.1
 
 - easier inliner options:
