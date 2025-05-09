@@ -99,6 +99,8 @@ def allow_captcha():
 
 
 def string_to_sql_like(value):
+    if value is None:
+        return None
     value = re.sub(' +', ' ', value)
     value = value.replace("*", "%")
     if value.startswith("^"):
@@ -334,5 +336,3 @@ def cast_session_id_to_string(data):
             for key in keys:
                 data[key] = cast_session_id_to_string(data[key])
     return data
-
-

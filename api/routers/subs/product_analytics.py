@@ -63,8 +63,12 @@ def autocomplete_events(projectId: int, q: Optional[str] = None,
 
 
 @app.get('/{projectId}/properties/autocomplete', tags=["autocomplete"])
-def autocomplete_properties(projectId: int, propertyName: str, eventName: Optional[str] = None,
+def autocomplete_properties(projectId: int, propertyName: Optional[str] = None, eventName: Optional[str] = None,
                             q: Optional[str] = None, context: schemas.CurrentContext = Depends(OR_context)):
+    if not propertyName and not eventName and not q:
+        return {"error": ["Specify eventName to get top properties",
+                          "Specify propertyName to get top values of that property",
+                          "Specify eventName&propertyName to get top values of that property for the selected event"]}
     return {"data": autocomplete.search_properties(project_id=projectId,
                                                    event_name=None if not eventName \
                                                                       or len(eventName) == 0 else eventName,
