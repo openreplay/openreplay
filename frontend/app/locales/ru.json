@@ -504,7 +504,7 @@
   "Returning users between": "Возвращающиеся пользователи за период",
   "Sessions": "Сессии",
   "No recordings found.": "Записей не найдено.",
-  "Get new session": "Получить новую сессию",
+  "Get new image": "Получить новую сессию",
   "The number of cards in one dashboard is limited to 30.": "Количество карточек в одном дашборде ограничено 30.",
   "Add Card": "Добавить карточку",
   "Create Dashboard": "Создать дашборд",
@@ -1502,4 +1502,4 @@
   "Interface Language": "Язык интерфейса",
   "Select the language in which OpenReplay will appear.": "Выберите язык, на котором будет отображаться OpenReplay.",
   "Language": "Язык"
-} 
+}

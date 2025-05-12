@@ -140,11 +140,16 @@ class SimpleHeatmap {
       ctx.drawImage(this.circle, p[0] - this.r, p[1] - this.r);
     });
 
-    const colored = ctx.getImageData(0, 0, this.width, this.height);
-    this.colorize(colored.data, this.grad);
-    ctx.putImageData(colored, 0, 0);
-
-    return this;
+    try {
+      const colored = ctx.getImageData(0, 0, this.width, this.height);
+      this.colorize(colored.data, this.grad);
+      ctx.putImageData(colored, 0, 0);
+    } catch (e) {
+      // usually happens if session is corrupted ?
+      console.error('Error while colorizing heatmap:', e);
+    } finally {
+      return this;
+    }
   }
 
   private colorize(
