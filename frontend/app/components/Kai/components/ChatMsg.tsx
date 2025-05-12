@@ -35,7 +35,7 @@ export function ChatMsg({
 
   const onExport = () => {
     setIsProcessing(true);
-    import('jsPDF').then(({ jsPDF }) => {
+    import('jspdf').then(({ jsPDF }) => {
       const doc = new jsPDF();
 
       doc.html(bodyRef.current, {

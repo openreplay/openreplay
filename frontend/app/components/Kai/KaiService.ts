@@ -3,8 +3,8 @@ import AiService from "@/services/AiService";
 export default class KaiService extends AiService {
   getKaiChats = async (userId: string, projectId: string): Promise<{ title: string, threadId: string }[]> => {
     // const r = await this.client.get('/kai/PROJECT_ID/chats');
-    const jwt = window.env.KAI_TESTING // this.client.getJwt()
-    const r = await fetch(`http://localhost:8700/kai/${projectId}/chats?user_id=${userId}`, {
+    const jwt = this.client.getJwt()
+    const r = await fetch(`http://localhost:8700/kai/${projectId}/chats`, {
       headers: new Headers({
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -19,8 +19,8 @@ export default class KaiService extends AiService {
   }
 
   deleteKaiChat = async (projectId: string, userId: string, threadId: string): Promise<boolean> => {
-    const jwt = window.env.KAI_TESTING // this.client.getJwt()
-    const r = await fetch(`http://localhost:8700/kai/${projectId}/chats/${threadId}?user_id=${userId}`, {
+    const jwt = this.client.getJwt()
+    const r = await fetch(`http://localhost:8700/kai/${projectId}/chats/${threadId}`, {
       method: 'DELETE',
       headers: new Headers({
         Accept: 'application/json',
@@ -35,8 +35,8 @@ export default class KaiService extends AiService {
   }
 
   getKaiChat = async (projectId: string, userId: string, threadId: string): Promise<{ role: string, content: string, message_id: any, duration?: number }[]> => {
-    const jwt = window.env.KAI_TESTING // this.client.getJwt()
-    const r = await fetch(`http://localhost:8700/kai/${projectId}/chats/${threadId}?user_id=${userId}`, {
+    const jwt = this.client.getJwt()
+    const r = await fetch(`http://localhost:8700/kai/${projectId}/chats/${threadId}`, {
       method: 'GET',
       headers: new Headers({
         Accept: 'application/json',
@@ -52,8 +52,8 @@ export default class KaiService extends AiService {
   }
 
   createKaiChat = async (projectId: string, userId: string): Promise<number> => {
-    const jwt = window.env.KAI_TESTING // this.client.getJwt()
-    const r = await fetch(`http://localhost:8700/kai/${projectId}/chat/new?user_id=${userId}`, {
+    const jwt = this.client.getJwt()
+    const r = await fetch(`http://localhost:8700/kai/${projectId}/chat/new`, {
       method: 'GET',
       headers: new Headers({
         Accept: 'application/json',
@@ -69,7 +69,7 @@ export default class KaiService extends AiService {
   }
 
   feedback = async (positive: boolean | null, messageId: string, projectId: string, userId: string) => {
-    const jwt = window.env.KAI_TESTING // this.client.getJwt()
+    const jwt = this.client.getJwt()
     const r = await fetch(`http://localhost:8700/kai/${projectId}/messages/feedback`, {
       method: 'POST',
       headers: new Headers({
@@ -91,8 +91,8 @@ export default class KaiService extends AiService {
   }
 
   cancelGeneration = async (projectId: string, threadId: string, userId: string) => {
-    const jwt = window.env.KAI_TESTING // this.client.getJwt()
-    const r = await fetch(`http://localhost:8700/kai/${projectId}/cancel/${threadId}?user_id=${userId}`, {
+    const jwt = this.client.getJwt()
+    const r = await fetch(`http://localhost:8700/kai/${projectId}/cancel/${threadId}`, {
       method: 'POST',
       headers: new Headers({
         Accept: 'application/json',
