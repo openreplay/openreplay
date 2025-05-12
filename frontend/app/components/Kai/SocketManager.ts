@@ -6,9 +6,11 @@ export class ChatManager {
 
   constructor({ projectId, threadId, token }: { projectId: string; threadId: string, token: string }) {
     this.threadId = threadId;
-    console.log('Kai socket', projectId, threadId, token);
-    const socket = io(`localhost:8700/kai/chat`, {
+    const urlObject = new URL(window.env.API_EDP || window.location.origin);
+    console.log(token, projectId, threadId)
+    const socket = io(urlObject.origin, {
       transports: ['websocket'],
+      path: '/kai/chat',
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 5,
@@ -21,7 +23,7 @@ export class ChatManager {
         thread_id: threadId,
       },
       auth: {
-        token: `Bearer ${token}`,
+        token,
       }
     });
     socket.on('connect', () => {
