@@ -1,21 +1,15 @@
 on:
-  workflow_dispatch:
-    inputs:
-      services:
-        description: "This action will update the latest tag with current main branch HEAD. Should I proceed ? true/false"
-        required: true
-        default: "false"
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - main
-
 name: Release tag update --force
 
 jobs:
   deploy:
     name: Build Patch from main
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' || github.event.inputs.services == 'true' }}
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event.inputs.services == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
