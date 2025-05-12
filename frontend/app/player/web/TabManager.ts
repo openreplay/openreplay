@@ -126,6 +126,12 @@ export default class TabSessionManager {
     });
   }
 
+  private virtualMode = false;
+  public setVirtualMode = (virtualMode: boolean) => {
+    this.virtualMode = virtualMode;
+    this.pagesManager.setVirtualMode(virtualMode);
+  };
+
   setSession = (session: any) => {
     this.session = session;
   };

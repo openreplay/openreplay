@@ -1,5 +1,4 @@
 import logger from 'App/logger';
-import { resolveCSS } from '../../messages/rewriter/urlResolve';
 
 import type Screen from '../../Screen/Screen';
 import type { Message, SetNodeScroll } from '../../messages';
@@ -86,6 +85,7 @@ export default class DOMManager extends ListWalker<Message> {
   };
 
   public readonly time: number;
+  private virtualMode: boolean = false;
 
   constructor(params: {
     screen: Screen;
@@ -97,6 +97,7 @@ export default class DOMManager extends ListWalker<Message> {
       get: (key: string) => string | undefined;
       all: () => Record<string, string>;
     };
+    virtualMode?: boolean;
   }) {
     super();
     this.screen = params.screen;
@@ -106,6 +107,7 @@ export default class DOMManager extends ListWalker<Message> {
     this.globalDict = params.globalDict;
     this.selectionManager = new SelectionManager(this.vElements, params.screen);
     this.stylesManager = new StylesManager(params.screen, params.setCssLoading);
+    this.virtualMode = params.virtualMode || false;
     setupWindowLogging(this.vTexts, this.vElements, this.olVRoots);
   }
 
@@ -452,10 +454,9 @@ export default class DOMManager extends ListWalker<Message> {
         }
         // shadow DOM for a custom element + SALESFORCE (<slot>)
         const isCustomElement = vElem.tagName.includes('-') || vElem.tagName === 'SLOT';
-        const isNotActualIframe = !["IFRAME", "FRAME"].includes(vElem.tagName.toUpperCase());
-        const isLikelyShadowRoot = isCustomElement && isNotActualIframe;
+        const isLikelyShadowRoot = isCustomElement;
 
-        if (isLikelyShadowRoot) {
+        if (isLikelyShadowRoot && !this.virtualMode) {
           // Store the mapping but don't create the actual shadow root
           this.shadowRootParentMap.set(msg.id, msg.frameID);
           return;
@@ -495,9 +496,8 @@ export default class DOMManager extends ListWalker<Message> {
           logger.warn('No stylesheet was created for ', msg);
           return;
         }
-
-        // styleSheet.replaceRule(msg.text);
-        // styleSheet.whenReady((sheet) => sheet.replaceSync(msg.text))
+        // @ts-ignore (configure ts with recent WebaAPI)
+        styleSheet.replaceSync(msg.text);
         return;
       }
       case MType.AdoptedSsAddOwner: {

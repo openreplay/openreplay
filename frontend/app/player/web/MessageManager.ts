@@ -126,7 +126,6 @@ export default class MessageManager {
   private tabsAmount = 0;
 
   private tabChangeEvents: TabChangeEvent[] = [];
-
   private activeTab = '';
 
   constructor(
@@ -143,6 +142,12 @@ export default class MessageManager {
       this.session.duration.milliseconds,
     ); // only if not-live
   }
+
+  private virtualMode = false;
+  public setVirtualMode = (virtualMode: boolean) => {
+    this.virtualMode = virtualMode;
+    Object.values(this.tabs).forEach((tab) => tab.setVirtualMode(virtualMode));
+  };
 
   public getListsFullState = () => {
     const fullState: Record<string, any> = {};
@@ -394,6 +399,9 @@ export default class MessageManager {
         this.sessionStart,
         this.initialLists,
       );
+      if (this.virtualMode) {
+        this.tabs[msg.tabId].setVirtualMode(this.virtualMode);
+      }
     }
 
     const lastMessageTime = Math.max(msg.time, this.lastMessageTime);
