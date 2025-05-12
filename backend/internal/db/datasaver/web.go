@@ -2,8 +2,6 @@ package datasaver
 
 import (
 	"context"
-	"encoding/json"
-
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/messages"
@@ -64,14 +62,6 @@ func (s *saverImpl) handleWebMessage(sessCtx context.Context, session *sessions.
 		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERANONYMOUSID", m.ID)
 		return nil
 	case *messages.CustomEvent:
-		// Try to parse custom event payload to JSON and extract or_payload field
-		type CustomEventPayload struct {
-			CustomTimestamp uint64 `json:"or_timestamp"`
-		}
-		customPayload := &CustomEventPayload{}
-		if err := json.Unmarshal([]byte(m.Payload), customPayload); err == nil {
-			m.Timestamp = customPayload.CustomTimestamp
-		}
 		if err := s.pg.InsertWebCustomEvent(session, m); err != nil {
 			return err
 		}
