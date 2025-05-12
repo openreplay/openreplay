@@ -725,7 +725,6 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 
 func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.CustomEvent) error {
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"name":             msg.Name,
 		"payload":          msg.Payload,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
@@ -739,11 +738,11 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
-		"CUSTOM",
+		msg.Name,
 		eventTime,
 		eventTime.Unix(),
 		session.UserUUID,
-		true,
+		false,
 		session.Platform,
 		session.UserOSVersion,
 		session.UserOS,
