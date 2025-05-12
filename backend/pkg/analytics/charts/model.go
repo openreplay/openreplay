@@ -60,22 +60,23 @@ const (
 )
 
 type MetricPayload struct {
-	StartTimestamp int64      `json:"startTimestamp"`
-	EndTimestamp   int64      `json:"endTimestamp"`
-	Density        int        `json:"density"`
-	MetricOf       string     `json:"metricOf"`
-	MetricType     MetricType `json:"metricType"`
-	MetricValue    []string   `json:"metricValue"`
-	MetricFormat   string     `json:"metricFormat"`
-	ViewType       string     `json:"viewType"`
-	Name           string     `json:"name"`
-	Series         []Series   `json:"series"`
-	Limit          int        `json:"limit"`
-	Page           int        `json:"page"`
-	StartPoint     []Filter   `json:"startPoint"`
-	Exclude        []Filter   `json:"exclude"`
-	Rows           uint64     `json:"rows"`
-	Columns        uint64     `json:"columns"`
+	StartTimestamp  int64      `json:"startTimestamp"`
+	EndTimestamp    int64      `json:"endTimestamp"`
+	Density         int        `json:"density"`
+	MetricOf        string     `json:"metricOf"`
+	MetricType      MetricType `json:"metricType"`
+	MetricValue     []string   `json:"metricValue"`
+	MetricFormat    string     `json:"metricFormat"`
+	ViewType        string     `json:"viewType"`
+	Name            string     `json:"name"`
+	Series          []Series   `json:"series"`
+	Limit           int        `json:"limit"`
+	Page            int        `json:"page"`
+	StartPoint      []Filter   `json:"startPoint"`
+	Exclude         []Filter   `json:"exclude"`
+	Rows            uint64     `json:"rows"`
+	Columns         uint64     `json:"columns"`
+	PreviousColumns uint64     `json:"previousColumns"`
 }
 
 type MetricOfTable string
