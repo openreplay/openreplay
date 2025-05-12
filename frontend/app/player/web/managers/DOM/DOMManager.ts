@@ -44,48 +44,34 @@ const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/;
 
 export default class DOMManager extends ListWalker<Message> {
   private readonly vTexts: Map<number, VText> = new Map(); // map vs object here?
-
   private readonly vElements: Map<number, VElement> = new Map();
-
   private readonly olVRoots: Map<number, OnloadVRoot> = new Map();
-
   /** required to keep track of iframes, frameId : vnodeId */
   private readonly iframeRoots: Record<number, number> = {};
-
   private shadowRootParentMap: Map<number, number> = new Map();
-
   /** Constructed StyleSheets https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptedStyleSheets
    * as well as <style> tag owned StyleSheets
    */
   private olStyleSheets: Map<number, OnloadStyleSheet> = new Map();
-
   /** @depreacted since tracker 4.0.2 Mapping by nodeID */
   private olStyleSheetsDeprecated: Map<number, OnloadStyleSheet> = new Map();
-
   private upperBodyId: number = -1;
-
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> =
     new Map();
-
   private stylesManager: StylesManager;
-
   private focusManager: FocusManager = new FocusManager(this.vElements);
-
   private selectionManager: SelectionManager;
-
   private readonly screen: Screen;
-
   private readonly isMobile: boolean;
-
   private readonly stringDict: Record<number, string>;
-
   private readonly globalDict: {
     get: (key: string) => string | undefined;
     all: () => Record<string, string>;
   };
-
   public readonly time: number;
   private virtualMode: boolean = false;
+  private hasCustomElements = false;
+  private showVModeBadge?: () => void;
 
   constructor(params: {
     screen: Screen;
@@ -98,6 +84,7 @@ export default class DOMManager extends ListWalker<Message> {
       all: () => Record<string, string>;
     };
     virtualMode?: boolean;
+    showVModeBadge?: () => void;
   }) {
     super();
     this.screen = params.screen;
@@ -108,6 +95,7 @@ export default class DOMManager extends ListWalker<Message> {
     this.selectionManager = new SelectionManager(this.vElements, params.screen);
     this.stylesManager = new StylesManager(params.screen, params.setCssLoading);
     this.virtualMode = params.virtualMode || false;
+    this.showVModeBadge = params.showVModeBadge;
     setupWindowLogging(this.vTexts, this.vElements, this.olVRoots);
   }
 
@@ -453,12 +441,17 @@ export default class DOMManager extends ListWalker<Message> {
           return;
         }
         // shadow DOM for a custom element + SALESFORCE (<slot>)
-        const isCustomElement = vElem.tagName.includes('-') || vElem.tagName === 'SLOT';
-        const isLikelyShadowRoot = isCustomElement;
+        const isCustomElement =
+          vElem.tagName.includes('-') || vElem.tagName === 'SLOT';
 
-        if (isLikelyShadowRoot && !this.virtualMode) {
-          // Store the mapping but don't create the actual shadow root
-          this.shadowRootParentMap.set(msg.id, msg.frameID);
+        if (isCustomElement) {
+          this.hasCustomElements = true;
+          if (this.virtualMode) {
+            // Store the mapping but don't create the actual shadow root
+            this.shadowRootParentMap.set(msg.id, msg.frameID);
+          } else {
+            this.showVModeBadge?.();
+          }
           return;
         }
 
@@ -475,7 +468,11 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.AdoptedSsInsertRule: {
         const styleSheet = this.olStyleSheets.get(msg.sheetID);
         if (!styleSheet) {
-          logger.warn('No stylesheet was created for ', msg, this.olStyleSheets);
+          logger.warn(
+            'No stylesheet was created for ',
+            msg,
+            this.olStyleSheets,
+          );
           return;
         }
         insertRule(styleSheet, msg);

@@ -99,6 +99,7 @@ export default class TabSessionManager {
       tabStates: { [tabId: string]: TabState };
       tabNames: { [tabId: string]: string };
       location?: string;
+      vModeBadge?: boolean;
     }>,
     private readonly screen: Screen,
     private readonly id: string,
@@ -116,6 +117,11 @@ export default class TabSessionManager {
       screen,
       this.session.isMobile,
       this.setCSSLoading,
+      () => {
+        this.state.update({
+          vModeBadge: true,
+        })
+      }
     );
     this.lists = new Lists(initialLists);
     initialLists?.event?.forEach((e: Record<string, string>) => {

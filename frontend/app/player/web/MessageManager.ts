@@ -1,7 +1,7 @@
 // @ts-ignore
 import { Decoder } from 'syncod';
 import logger from 'App/logger';
-
+import { VIRTUAL_MODE_KEY } from '@/constants/storageKeys';
 import type { Store, ILog, SessionFilesInfo } from 'Player';
 import TabSessionManager, { TabState } from 'Player/web/TabManager';
 import ActiveTabManager from 'Player/web/managers/ActiveTabManager';
@@ -69,6 +69,7 @@ export interface State extends ScreenState {
   tabChangeEvents: TabChangeEvent[];
   closedTabs: string[];
   sessionStart: number;
+  vModeBadge: boolean;
 }
 
 export const visualChanges = [
@@ -99,6 +100,7 @@ export default class MessageManager {
     closedTabs: [],
     sessionStart: 0,
     tabNames: {},
+    vModeBadge: false,
   };
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
@@ -141,6 +143,11 @@ export default class MessageManager {
     this.activityManager = new ActivityManager(
       this.session.duration.milliseconds,
     ); // only if not-live
+
+    const vMode = localStorage.getItem(VIRTUAL_MODE_KEY);
+    if (vMode === 'true') {
+      this.setVirtualMode(true);
+    }
   }
 
   private virtualMode = false;

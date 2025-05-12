@@ -38,6 +38,7 @@ function SubHeader(props) {
     projectsStore,
     userStore,
     issueReportingStore,
+    settingsStore
   } = useStore();
   const { t } = useTranslation();
   const { favorite } = sessionStore.current;
@@ -45,7 +46,7 @@ function SubHeader(props) {
   const currentSession = sessionStore.current;
   const projectId = projectsStore.siteId;
   const integrations = integrationsStore.issues.list;
-  const { store } = React.useContext(PlayerContext);
+  const { player, store } = React.useContext(PlayerContext);
   const { location: currentLocation = 'loading...' } = store.get();
   const hasIframe = localStorage.getItem(IFRAME) === 'true';
   const [hideTools, setHideTools] = React.useState(false);
@@ -127,6 +128,13 @@ function SubHeader(props) {
     });
   };
 
+  const showVModeBadge = store.get().vModeBadge;
+  const onVMode = () => {
+    settingsStore.sessionSettings.updateKey('virtualMode', true);
+    player.enableVMode?.();
+    location.reload();
+  }
+
   return (
     <>
       <div
@@ -143,6 +151,8 @@ function SubHeader(props) {
           siteId={projectId!}
           currentLocation={currentLocation}
           version={currentSession?.trackerVersion ?? ''}
+          virtualElsFailed={showVModeBadge}
+          onVMode={onVMode}
         />
 
         <SessionTabs />

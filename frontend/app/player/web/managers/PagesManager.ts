@@ -22,6 +22,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
     private screen: Screen,
     private isMobile: boolean,
     private setCssLoading: (flag: boolean) => void,
+    private showVModeBadge: () => void,
   ) {
     super();
   }
@@ -67,6 +68,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
             all: () => Object.fromEntries(this.globalDictionary),
           },
           virtualMode: this.virtualMode,
+          showVModeBadge: this.showVModeBadge,
         }),
       );
       this.falseOrder = false;

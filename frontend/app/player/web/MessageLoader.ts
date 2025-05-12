@@ -80,26 +80,7 @@ export default class MessageLoader {
 
         let artificialStartTime = Infinity;
         let startTimeSet = false;
-        const customElIds = new Set();
-        const connectedCustomRoots = new Set();
         msgs.forEach((msg, i) => {
-          if (msg.tp === MType.CreateElementNode) {
-            if (msg.tag.includes('-')) {
-              customElIds.add(msg.id);
-            }
-          }
-          if (msg.tp === MType.CreateIFrameDocument) {
-            if (customElIds.has(msg.frameID)) {
-              connectedCustomRoots.add(msg.id);
-            }
-          }
-          if (msg.tp === MType.AdoptedSsAddOwner) {
-            if (connectedCustomRoots.has(msg.id)) {
-              // custom els with styles connected to elements
-              // @ts-ignore
-              // this.messageManager.setVirtualMode(true)
-            }
-          }
           if (msg.tp === MType.Redux || msg.tp === MType.ReduxDeprecated) {
             if ('actionTime' in msg && msg.actionTime) {
               msg.time = msg.actionTime - this.session.startedAt;
