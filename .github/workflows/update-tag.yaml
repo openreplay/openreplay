@@ -27,18 +27,9 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/releases/latest" \
             | jq -r .tag_name)
           
-          GIT_LATEST_TAG=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)
           # Fallback to git command if API doesn't return a tag
           if [ "$LATEST_TAG" == "null" ] || [ -z "$LATEST_TAG" ]; then
             echo "Not found latest tag"
-            exit 100
-          fi
-          if [ "$GIT_LATEST_TAG" == "null" ] || [ -z "$GIT_LATEST_TAG" ]; then
-            echo "Not found git latest tag"
-            exit 100
-          fi
-          if [ "$GIT_LATEST_TAG" != "$LATEST_TAG" ]; then
-            echo "Latest tag in git repo doesn't match latest tag in GitHub. Exiting."
             exit 100
           fi
           
