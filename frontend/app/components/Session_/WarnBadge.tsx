@@ -135,7 +135,7 @@ const WarnBadge = React.memo(
 
             <div
               className="py-1 ml-3 cursor-pointer"
-              onClick={() => closeWarning(2)}
+              onClick={() => closeWarning(1)}
             >
               <Icon name="close" size={16} color="black" />
             </div>
