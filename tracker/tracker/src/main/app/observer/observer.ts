@@ -29,6 +29,40 @@ import { nextID } from "../../modules/constructedStyleSheets.js";
 const iconCache = {}
 const svgUrlCache = {}
 
+function throttleWithTrailing<K, Args extends any[]>(
+  fn: (key: K, ...args: Args) => void,
+  interval: number
+): (key: K, ...args: Args) => void {
+  const lastCalls = new Map<K, number>();
+  const timeouts = new Map<K, ReturnType<typeof setTimeout>>();
+  const lastArgs = new Map<K, Args>();
+
+  return function (key: K, ...args: Args) {
+    const now = Date.now();
+    const lastCall = lastCalls.get(key) ?? 0;
+    const remaining = interval - (now - lastCall);
+
+    lastArgs.set(key, args);
+
+    if (remaining <= 0) {
+      if (timeouts.has(key)) {
+        clearTimeout(timeouts.get(key)!);
+        timeouts.delete(key);
+      }
+      lastCalls.set(key, now);
+      fn(key, ...args);
+    } else if (!timeouts.has(key)) {
+      const timeoutId = setTimeout(() => {
+        lastCalls.set(key, Date.now());
+        timeouts.delete(key);
+        const finalArgs = lastArgs.get(key)!;
+        fn(key, ...finalArgs);
+      }, remaining);
+      timeouts.set(key, timeoutId);
+    }
+  };
+}
+
 async function parseUseEl(
   useElement: SVGUseElement,
   mode: 'inline' | 'dataurl' | 'svgtext',
@@ -413,6 +447,8 @@ export default abstract class Observer {
     this.app.attributeSender.sendSetAttribute(id, name, value)
   }
 
+  private throttledSetNodeData = throttleWithTrailing(this.sendNodeData, 30);
+
   private sendNodeData(id: number, parentElement: Element, data: string): void {
     if (hasTag(parentElement, 'style')) {
       this.app.send(SetCSSDataURLBased(id, data, this.app.getBaseHref()))
@@ -570,7 +606,8 @@ export default abstract class Observer {
       } else if (isTextNode(node)) {
         // for text node id != 0, hence parentID !== undefined and parent is Element
         this.app.send(CreateTextNode(id, parentID as number, index))
-        this.sendNodeData(id, parent as Element, node.data)
+        this.throttledSetNodeData(id, parent as Element, node.data)
+        // this.sendNodeData(id, parent as Element, node.data)
       }
       return true
     }
@@ -591,7 +628,8 @@ export default abstract class Observer {
         throw 'commitNode: node is not a text'
       }
       // for text node id != 0, hence parent is Element
-      this.sendNodeData(id, parent as Element, node.data)
+      this.throttledSetNodeData(id, parent as Element, node.data)
+      // this.sendNodeData(id, parent as Element, node.data)
     }
     return true
   }
