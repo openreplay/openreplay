@@ -79,34 +79,31 @@ func (e *handlersImpl) GetAll() []*api.Description {
 	}
 }
 
-func getSessionTimestamp(req *StartSessionRequest, startTimeMili int64) uint64 {
+func getSessionTimestamp(req *StartSessionRequest, startTimeMili int64) (ts uint64) {
+	ts = uint64(req.Timestamp)
 	if req.IsOffline {
-		return uint64(req.Timestamp)
+		return
 	}
-	ts := uint64(startTimeMili)
-	if req.BufferDiff > 0 && req.BufferDiff < 5*60*1000 {
-		ts -= req.BufferDiff
-	}
-	return ts
-}
-
-func validateTrackerVersion(ver string) error {
-	c, err := semver.NewConstraint(">=6.0.0")
+	c, err := semver.NewConstraint(">=4.1.6")
 	if err != nil {
-		return err
+		return
 	}
+	ver := req.TrackerVersion
 	parts := strings.Split(ver, "-")
 	if len(parts) > 1 {
 		ver = parts[0]
 	}
 	v, err := semver.NewVersion(ver)
 	if err != nil {
-		return err
+		return
 	}
-	if !c.Check(v) {
-		return errors.New("unsupported tracker version")
+	if c.Check(v) {
+		ts = uint64(startTimeMili)
+		if req.BufferDiff > 0 && req.BufferDiff < 5*60*1000 {
+			ts -= req.BufferDiff
+		}
 	}
-	return nil
+	return
 }
 
 func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {

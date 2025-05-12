@@ -125,7 +125,7 @@ export function AutocompleteModal({
       if (index === blocksAmount - 1 && blocksAmount > 1) {
         str += ' and ';
       }
-      str += `"${block.trim()}"`;
+      str += block.trim();
       if (index < blocksAmount - 2) {
         str += ', ';
       }
@@ -188,10 +188,10 @@ export function AutocompleteModal({
             {query.length ? (
               <div className="border-y border-y-gray-light py-2">
                 <div
-                  className="whitespace-normal rounded cursor-pointer text-teal hover:bg-active-blue px-2 py-1"
+                  className="whitespace-nowrap truncate w-full rounded cursor-pointer text-teal hover:bg-active-blue px-2 py-1"
                   onClick={applyQuery}
                 >
-                  {t('Apply')}&nbsp;{queryStr}
+                  {t('Apply')}&nbsp;<span className='font-semibold'>{queryStr}</span>
                 </div>
               </div>
             ) : null}

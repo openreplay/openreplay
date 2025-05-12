@@ -54,6 +54,7 @@ type message struct {
 	Timestamp uint64
 	Index     uint64
 	Url       string
+	PageTitle string
 	batch     *BatchInfo
 }
 
@@ -70,6 +71,7 @@ func (m *message) SetMeta(origin *message) {
 	m.Timestamp = origin.Timestamp
 	m.Index = origin.Index
 	m.Url = origin.Url
+	m.PageTitle = origin.PageTitle
 }
 
 func (m *message) SessionID() uint64 {

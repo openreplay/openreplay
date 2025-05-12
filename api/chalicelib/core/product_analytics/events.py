@@ -7,30 +7,69 @@ from chalicelib.utils.ch_client import ClickHouseClient
 from chalicelib.utils.exp_ch_helper import get_sub_condition
 
 logger = logging.getLogger(__name__)
+PREDEFINED_EVENTS = {
+    "CLICK": "String",
+    "INPUT": "String",
+    "LOCATION": "String",
+    "ERROR": "String",
+    "PERFORMANCE": "String",
+    "REQUEST": "String"
+}
 
 
 def get_events(project_id: int, page: schemas.PaginatedSchema):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
-            """SELECT DISTINCT ON(event_name,auto_captured)
-                            COUNT(1) OVER () AS total,
-                            event_name AS name, display_name, description,
-                            auto_captured
-                      FROM product_analytics.all_events 
-                      WHERE project_id=%(project_id)s
-                      ORDER BY auto_captured,display_name
-                      LIMIT %(limit)s OFFSET %(offset)s;""",
+            """SELECT DISTINCT
+               ON(event_name,auto_captured)
+                   COUNT (1) OVER () AS total,
+                   event_name AS name, display_name, description,
+                   auto_captured
+               FROM product_analytics.all_events
+               WHERE project_id=%(project_id)s
+               ORDER BY auto_captured, display_name
+                   LIMIT %(limit)s
+               OFFSET %(offset)s;""",
             parameters={"project_id": project_id, "limit": page.limit, "offset": (page.page - 1) * page.limit})
         rows = ch_client.execute(r)
     if len(rows) == 0:
-        return {"total": 0, "list": []}
+        return {"total": len(PREDEFINED_EVENTS), "list": [{
+            "name": e,
+            "displayName": "",
+            "description": "",
+            "autoCaptured": True,
+            "id": "event_0",
+            "dataType": "string",
+            "possibleTypes": [
+                "string"
+            ],
+            "_foundInPredefinedList": False
+        } for e in PREDEFINED_EVENTS]}
     total = rows[0]["total"]
+    rows = helper.list_to_camel_case(rows)
     for i, row in enumerate(rows):
         row["id"] = f"event_{i}"
-        row["icon"] = None
+        row["dataType"] = "string"
         row["possibleTypes"] = ["string"]
+        row["_foundInPredefinedList"] = True
         row.pop("total")
-    return {"total": total, "list": helper.list_to_camel_case(rows)}
+    keys = [r["name"] for r in rows]
+    for e in PREDEFINED_EVENTS:
+        if e not in keys:
+            total += 1
+            rows.append({
+                "name": e,
+                "displayName": "",
+                "description": "",
+                "autoCaptured": True,
+                "id": "event_0",
+                "dataType": "string",
+                "possibleTypes": [
+                    "string"
+                ],
+                "_foundInPredefinedList": False
+            })
+    return {"total": total, "list": rows}
 
 
 def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
@@ -109,31 +148,33 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
             parameters=full_args)
         rows = ch_client.execute(query)
         if len(rows) == 0:
-            return {"total": 0, "rows": [], "src": 2}
+            return {"total": 0, "rows": [], "_src": 2}
         total = rows[0]["total"]
         for r in rows:
             r.pop("total")
-        return {"total": total, "rows": rows, "src": 2}
+        return {"total": total, "rows": rows, "_src": 2}
 
 
 def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
-            """SELECT COUNT(1) OVER () AS total,
-                            all_events.event_name AS name,
-                            *
-                      FROM product_analytics.all_events 
-                      WHERE project_id=%(project_id)s
-                      ORDER BY display_name
-                      LIMIT %(limit)s OFFSET %(offset)s;""",
+            """SELECT COUNT(1) OVER () AS total, all_events.event_name AS name,
+                      *
+               FROM product_analytics.all_events
+               WHERE project_id = %(project_id)s
+               ORDER BY display_name
+                   LIMIT %(limit)s
+               OFFSET %(offset)s;""",
             parameters={"project_id": project_id, "limit": page.limit, "offset": (page.page - 1) * page.limit})
         rows = ch_client.execute(r)
     if len(rows) == 0:
         return {"total": 0, "list": []}
     total = rows[0]["total"]
+    rows = helper.list_to_camel_case(rows)
     for i, row in enumerate(rows):
         row["id"] = f"event_{i}"
-        row["icon"] = None
+        row["dataType"] = "string"
         row["possibleTypes"] = ["string"]
+        row["_foundInPredefinedList"] = True
         row.pop("total")
-    return {"total": total, "list": helper.list_to_camel_case(rows)}
+    return {"total": total, "list": rows}

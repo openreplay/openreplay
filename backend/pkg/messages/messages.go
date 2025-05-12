@@ -186,6 +186,27 @@ func (msg *SessionStart) TypeID() int {
 	return 1
 }
 
+type SessionEndDeprecated struct {
+	message
+	Timestamp uint64
+}
+
+func (msg *SessionEndDeprecated) Encode() []byte {
+	buf := make([]byte, 11)
+	buf[0] = 3
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	return buf[:p]
+}
+
+func (msg *SessionEndDeprecated) Decode() Message {
+	return msg
+}
+
+func (msg *SessionEndDeprecated) TypeID() int {
+	return 3
+}
+
 type SetPageLocationDeprecated struct {
 	message
 	URL string
@@ -711,6 +732,31 @@ func (msg *PageRenderTiming) TypeID() int {
 	return 24
 }
 
+type JSExceptionDeprecated struct {
+	message
+	Name    string
+	Message string
+	Payload string
+}
+
+func (msg *JSExceptionDeprecated) Encode() []byte {
+	buf := make([]byte, 31+len(msg.Name)+len(msg.Message)+len(msg.Payload))
+	buf[0] = 25
+	p := 1
+	p = WriteString(msg.Name, buf, p)
+	p = WriteString(msg.Message, buf, p)
+	p = WriteString(msg.Payload, buf, p)
+	return buf[:p]
+}
+
+func (msg *JSExceptionDeprecated) Decode() Message {
+	return msg
+}
+
+func (msg *JSExceptionDeprecated) TypeID() int {
+	return 25
+}
+
 type IntegrationEvent struct {
 	message
 	Timestamp uint64
@@ -1011,6 +1057,87 @@ func (msg *SetNodeAttributeDictGlobal) Decode() Message {
 
 func (msg *SetNodeAttributeDictGlobal) TypeID() int {
 	return 35
+}
+
+type CSSInsertRule struct {
+	message
+	ID    uint64
+	Rule  string
+	Index uint64
+}
+
+func (msg *CSSInsertRule) Encode() []byte {
+	buf := make([]byte, 31+len(msg.Rule))
+	buf[0] = 37
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteString(msg.Rule, buf, p)
+	p = WriteUint(msg.Index, buf, p)
+	return buf[:p]
+}
+
+func (msg *CSSInsertRule) Decode() Message {
+	return msg
+}
+
+func (msg *CSSInsertRule) TypeID() int {
+	return 37
+}
+
+type CSSDeleteRule struct {
+	message
+	ID    uint64
+	Index uint64
+}
+
+func (msg *CSSDeleteRule) Encode() []byte {
+	buf := make([]byte, 21)
+	buf[0] = 38
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteUint(msg.Index, buf, p)
+	return buf[:p]
+}
+
+func (msg *CSSDeleteRule) Decode() Message {
+	return msg
+}
+
+func (msg *CSSDeleteRule) TypeID() int {
+	return 38
+}
+
+type Fetch struct {
+	message
+	Method    string
+	URL       string
+	Request   string
+	Response  string
+	Status    uint64
+	Timestamp uint64
+	Duration  uint64
+}
+
+func (msg *Fetch) Encode() []byte {
+	buf := make([]byte, 71+len(msg.Method)+len(msg.URL)+len(msg.Request)+len(msg.Response))
+	buf[0] = 39
+	p := 1
+	p = WriteString(msg.Method, buf, p)
+	p = WriteString(msg.URL, buf, p)
+	p = WriteString(msg.Request, buf, p)
+	p = WriteString(msg.Response, buf, p)
+	p = WriteUint(msg.Status, buf, p)
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	return buf[:p]
+}
+
+func (msg *Fetch) Decode() Message {
+	return msg
+}
+
+func (msg *Fetch) TypeID() int {
+	return 39
 }
 
 type Profiler struct {
@@ -1506,6 +1633,39 @@ func (msg *SetNodeFocus) TypeID() int {
 	return 58
 }
 
+type LongTask struct {
+	message
+	Timestamp     uint64
+	Duration      uint64
+	Context       uint64
+	ContainerType uint64
+	ContainerSrc  string
+	ContainerId   string
+	ContainerName string
+}
+
+func (msg *LongTask) Encode() []byte {
+	buf := make([]byte, 71+len(msg.ContainerSrc)+len(msg.ContainerId)+len(msg.ContainerName))
+	buf[0] = 59
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	p = WriteUint(msg.Context, buf, p)
+	p = WriteUint(msg.ContainerType, buf, p)
+	p = WriteString(msg.ContainerSrc, buf, p)
+	p = WriteString(msg.ContainerId, buf, p)
+	p = WriteString(msg.ContainerName, buf, p)
+	return buf[:p]
+}
+
+func (msg *LongTask) Decode() Message {
+	return msg
+}
+
+func (msg *LongTask) TypeID() int {
+	return 59
+}
+
 type SetNodeAttributeURLBased struct {
 	message
 	ID uint64
@@ -1556,6 +1716,37 @@ func (msg *SetCSSDataURLBased) Decode() Message {
 
 func (msg *SetCSSDataURLBased) TypeID() int {
 	return 61
+}
+
+type IssueEventDeprecated struct {
+	message
+	MessageID     uint64
+	Timestamp     uint64
+	Type          string
+	ContextString string
+	Context       string
+	Payload       string
+}
+
+func (msg *IssueEventDeprecated) Encode() []byte {
+	buf := make([]byte, 61+len(msg.Type)+len(msg.ContextString)+len(msg.Context)+len(msg.Payload))
+	buf[0] = 62
+	p := 1
+	p = WriteUint(msg.MessageID, buf, p)
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteString(msg.Type, buf, p)
+	p = WriteString(msg.ContextString, buf, p)
+	p = WriteString(msg.Context, buf, p)
+	p = WriteString(msg.Payload, buf, p)
+	return buf[:p]
+}
+
+func (msg *IssueEventDeprecated) Decode() Message {
+	return msg
+}
+
+func (msg *IssueEventDeprecated) TypeID() int {
+	return 62
 }
 
 type TechnicalInfo struct {
@@ -1623,6 +1814,33 @@ func (msg *AssetCache) Decode() Message {
 
 func (msg *AssetCache) TypeID() int {
 	return 66
+}
+
+type CSSInsertRuleURLBased struct {
+	message
+	ID      uint64
+	Rule    string
+	Index   uint64
+	BaseURL string
+}
+
+func (msg *CSSInsertRuleURLBased) Encode() []byte {
+	buf := make([]byte, 41+len(msg.Rule)+len(msg.BaseURL))
+	buf[0] = 67
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteString(msg.Rule, buf, p)
+	p = WriteUint(msg.Index, buf, p)
+	p = WriteString(msg.BaseURL, buf, p)
+	return buf[:p]
+}
+
+func (msg *CSSInsertRuleURLBased) Decode() Message {
+	return msg
+}
+
+func (msg *CSSInsertRuleURLBased) TypeID() int {
+	return 67
 }
 
 type MouseClick struct {
@@ -1923,6 +2141,31 @@ func (msg *Zustand) Decode() Message {
 
 func (msg *Zustand) TypeID() int {
 	return 79
+}
+
+type BatchMeta struct {
+	message
+	PageNo     uint64
+	FirstIndex uint64
+	Timestamp  int64
+}
+
+func (msg *BatchMeta) Encode() []byte {
+	buf := make([]byte, 31)
+	buf[0] = 80
+	p := 1
+	p = WriteUint(msg.PageNo, buf, p)
+	p = WriteUint(msg.FirstIndex, buf, p)
+	p = WriteInt(msg.Timestamp, buf, p)
+	return buf[:p]
+}
+
+func (msg *BatchMeta) Decode() Message {
+	return msg
+}
+
+func (msg *BatchMeta) TypeID() int {
+	return 80
 }
 
 type BatchMetadata struct {

@@ -99,12 +99,13 @@ def simplify_clickhouse_type(ch_type: str) -> str:
         return "int"
 
     # Floats: Float32, Float64
-    if re.match(r'^float(32|64)$', normalized_type):
+    if re.match(r'^float(32|64)|double$', normalized_type):
         return "float"
 
     # Decimal: Decimal(P, S)
     if normalized_type.startswith("decimal"):
-        return "decimal"
+        # return "decimal"
+        return "float"
 
     # Date/DateTime
     if normalized_type.startswith("date"):
@@ -120,11 +121,13 @@ def simplify_clickhouse_type(ch_type: str) -> str:
 
     # UUID
     if normalized_type.startswith("uuid"):
-        return "uuid"
+        # return "uuid"
+        return "string"
 
     # Enums: Enum8(...) or Enum16(...)
     if normalized_type.startswith("enum8") or normalized_type.startswith("enum16"):
-        return "enum"
+        # return "enum"
+        return "string"
 
     # Arrays: Array(T)
     if normalized_type.startswith("array"):

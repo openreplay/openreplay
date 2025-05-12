@@ -43,7 +43,7 @@ function ClickMapRagePicker() {
       <Checkbox onChange={onToggle} label={t('Include rage clicks')} />
 
       <Button size="small" onClick={refreshHeatmapSession}>
-        {t('Get new session')}
+        {t('Get new image')}
       </Button>
     </div>
   );

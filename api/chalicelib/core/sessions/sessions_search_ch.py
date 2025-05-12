@@ -73,7 +73,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
         return {
             'total': 0,
             'sessions': [],
-            'src': 2
+            '_src': 2
         }
     if project.platform == "web":
         full_args, query_part = sessions.search_query_parts_ch(data=data, error_status=error_status,
@@ -216,7 +216,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
     return {
         'total': total,
         'sessions': sessions_list,
-        'src': 2
+        '_src': 2
     }
 
 

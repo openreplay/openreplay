@@ -4,9 +4,10 @@ from fastapi import Body, Depends, Query
 
 import schemas
 from chalicelib.core import metadata
-from chalicelib.core.product_analytics import events, properties
+from chalicelib.core.product_analytics import events, properties, autocomplete
 from or_dependencies import OR_context
 from routers.base import get_routers
+from typing import Optional
 
 public_app, app, app_apikey = get_routers()
 
@@ -53,3 +54,20 @@ def get_all_lexicon_events(projectId: int, filter_query: Annotated[schemas.Pagin
 def get_all_lexicon_properties(projectId: int, filter_query: Annotated[schemas.PaginatedSchema, Query()],
                                context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": properties.get_lexicon(project_id=projectId, page=filter_query)}
+
+
+@app.get('/{projectId}/events/autocomplete', tags=["autocomplete"])
+def autocomplete_events(projectId: int, q: Optional[str] = None,
+                        context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": autocomplete.search_events(project_id=projectId, q=None if not q or len(q) == 0 else q)}
+
+
+@app.get('/{projectId}/properties/autocomplete', tags=["autocomplete"])
+def autocomplete_properties(projectId: int, propertyName: str, eventName: Optional[str] = None,
+                            q: Optional[str] = None, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": autocomplete.search_properties(project_id=projectId,
+                                                   event_name=None if not eventName \
+                                                                      or len(eventName) == 0 else eventName,
+                                                   property_name=None if not propertyName \
+                                                                         or len(propertyName) == 0 else propertyName,
+                                                   q=None if not q or len(q) == 0 else q)}

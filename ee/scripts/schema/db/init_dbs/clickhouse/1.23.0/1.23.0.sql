@@ -1,65 +1,5 @@
 CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.23.0-ee';
 
-SET allow_experimental_json_type = 1;
-SET enable_json_type = 1;
-ALTER TABLE product_analytics.events
-    MODIFY COLUMN `$properties` JSON(
-max_dynamic_paths=0,
-label                          String ,
-hesitation_time                UInt32 ,
-name                           String ,
-payload                        String ,
-level                          Enum8 ('info'=0, 'error'=1),
-source                         Enum8 ('js_exception'=0, 'bugsnag'=1, 'cloudwatch'=2, 'datadog'=3, 'elasticsearch'=4, 'newrelic'=5, 'rollbar'=6, 'sentry'=7, 'stackdriver'=8, 'sumologic'=9),
-message                        String ,
-error_id                       String ,
-duration                       UInt16,
-context                        Enum8('unknown'=0, 'self'=1, 'same-origin-ancestor'=2, 'same-origin-descendant'=3, 'same-origin'=4, 'cross-origin-ancestor'=5, 'cross-origin-descendant'=6, 'cross-origin-unreachable'=7, 'multiple-contexts'=8),
-url_host                       String ,
-url_path                       String ,
-url_hostpath                   String ,
-request_start                  UInt16 ,
-response_start                 UInt16 ,
-response_end                   UInt16 ,
-dom_content_loaded_event_start UInt16 ,
-dom_content_loaded_event_end   UInt16 ,
-load_event_start               UInt16 ,
-load_event_end                 UInt16 ,
-first_paint                    UInt16 ,
-first_contentful_paint_time    UInt16 ,
-speed_index                    UInt16 ,
-visually_complete              UInt16 ,
-time_to_interactive            UInt16,
-ttfb                           UInt16,
-ttlb                           UInt16,
-response_time                  UInt16,
-dom_building_time              UInt16,
-dom_content_loaded_event_time  UInt16,
-load_event_time                UInt16,
-min_fps                        UInt8,
-avg_fps                        UInt8,
-max_fps                        UInt8,
-min_cpu                        UInt8,
-avg_cpu                        UInt8,
-max_cpu                        UInt8,
-min_total_js_heap_size         UInt64,
-avg_total_js_heap_size         UInt64,
-max_total_js_heap_size         UInt64,
-min_used_js_heap_size          UInt64,
-avg_used_js_heap_size          UInt64,
-max_used_js_heap_size          UInt64,
-method                         Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8),
-status                         UInt16,
-success                        UInt8,
-request_body                   String,
-response_body                  String,
-transfer_size                  UInt32,
-selector                       String,
-normalized_x                   Float32,
-normalized_y                   Float32,
-message_id                     UInt64
-) DEFAULT '{}' COMMENT 'these properties belongs to the auto-captured events';
-
 DROP TABLE IF EXISTS product_analytics.all_events;
 CREATE TABLE IF NOT EXISTS product_analytics.all_events
 (
@@ -225,3 +165,92 @@ FROM product_analytics.events
 WHERE randCanonical() < 0.5 -- This randomly skips inserts
   AND value != ''
 LIMIT 2 BY project_id,property_name;
+
+-- Autocomplete
+
+CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_events
+(
+    project_id UInt16,
+    value      String COMMENT 'The $event_name',
+    _timestamp DateTime
+) ENGINE = MergeTree()
+      ORDER BY (project_id, value, _timestamp)
+      TTL _timestamp + INTERVAL 1 MONTH;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_events_mv
+    TO product_analytics.autocomplete_events AS
+SELECT project_id,
+       `$event_name` AS value,
+       _timestamp
+FROM product_analytics.events
+WHERE _timestamp > now() - INTERVAL 1 MONTH;
+
+CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_events_grouped
+(
+    project_id UInt16,
+    value      String COMMENT 'The $event_name',
+    data_count UInt16 COMMENT 'The number of appearance during the past month',
+    _timestamp DateTime
+) ENGINE = ReplacingMergeTree(_timestamp)
+      ORDER BY (project_id, value)
+      TTL _timestamp + INTERVAL 1 MONTH;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_events_grouped_mv
+    REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_events_grouped AS
+SELECT project_id,
+       value,
+       count(1)        AS data_count,
+       max(_timestamp) AS _timestamp
+FROM product_analytics.autocomplete_events
+WHERE autocomplete_events._timestamp > now() - INTERVAL 1 MONTH
+GROUP BY project_id, value;
+
+CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties
+(
+    project_id    UInt16,
+    event_name    String COMMENT 'The $event_name',
+    property_name String,
+    value         String COMMENT 'The property-value as a string',
+    _timestamp    DateTime DEFAULT now()
+) ENGINE = MergeTree()
+      ORDER BY (project_id, event_name, property_name, value, _timestamp)
+      TTL _timestamp + INTERVAL 1 MONTH;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_mv
+    TO product_analytics.autocomplete_event_properties AS
+SELECT project_id,
+       `$event_name`                                             AS event_name,
+       property_name,
+       JSONExtractString(toString(`$properties`), property_name) AS value,
+       _timestamp
+FROM product_analytics.events
+         ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
+WHERE length(value) > 0 AND isNull(toFloat64OrNull(value))
+  AND _timestamp > now() - INTERVAL 1 MONTH;
+
+
+CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped
+(
+    project_id    UInt16,
+    event_name    String COMMENT 'The $event_name',
+    property_name String,
+    value         String COMMENT 'The property-value as a string',
+    data_count    UInt16 COMMENT 'The number of appearance during the past month',
+    _timestamp    DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(_timestamp)
+      ORDER BY (project_id, event_name, property_name, value)
+      TTL _timestamp + INTERVAL 1 MONTH;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped_mv
+    REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_event_properties_grouped AS
+SELECT project_id,
+       event_name,
+       property_name,
+       value,
+       count(1)        AS data_count,
+       max(_timestamp) AS _timestamp
+FROM product_analytics.autocomplete_event_properties
+WHERE length(value) > 0
+  AND autocomplete_event_properties._timestamp > now() - INTERVAL 1 MONTH
+GROUP BY project_id, event_name, property_name, value;
+

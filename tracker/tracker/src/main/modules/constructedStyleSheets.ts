@@ -81,9 +81,9 @@ export default function (app: App | null) {
       }
       adoptedStyleSheetsOwnings.set(nodeID, nowOwning)
     }, 20) // Mysterious bug:
-  /* On the page https://explore.fast.design/components/fast-accordion 
+  /* On the page https://explore.fast.design/components/fast-accordion
     the only rule inside the only adoptedStyleSheet of the iframe-s document
-    gets changed during first milliseconds after the load. 
+    gets changed during first milliseconds after the load.
     However, none of the documented methods (replace, insertRule) is triggered.
     The rule is not substituted (remains the same object), however the text gets changed.
   */

@@ -7,7 +7,7 @@ function Key({ label }: { label: string }) {
   return (
     <div
       style={{ minWidth: 52 }}
-      className="whitespace-nowrap font-normal bg-indigo-50 rounded-lg px-2 py-1 text-figmaColors-text-primary text-center font-mono"
+      className="whitespace-nowrap font-normal bg-active-blue rounded-lg px-2 py-1 text-black text-center font-mono"
     >
       {label}
     </div>

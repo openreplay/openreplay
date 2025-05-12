@@ -128,8 +128,10 @@ const FilterAutoComplete = observer(
     };
 
     const handleFocus = () => {
+      if (!initialFocus) {
+        setOptions(topValues.map((i) => ({ value: i.value, label: i.value })));
+      }
       setInitialFocus(true);
-      setOptions(topValues.map((i) => ({ value: i.value, label: i.value })));
     };
 
     return (

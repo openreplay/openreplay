@@ -40,6 +40,7 @@ import type { Options as TimingOptions } from './modules/timing.js'
 import type { Options as NetworkOptions } from './modules/network.js'
 import type { MouseHandlerOptions } from './modules/mouse.js'
 import type { SessionInfo } from './app/session.js'
+import type { CssRulesOptions } from './modules/cssrules.js'
 
 import type { StartOptions } from './app/index.js'
 //TODO: unique options init
@@ -61,6 +62,7 @@ export type Options = Partial<
   }
   // dev only
   __DISABLE_SECURE_MODE?: boolean
+  css: CssRulesOptions
 }
 
 const DOCS_SETUP = '/en/sdk'
@@ -192,7 +194,7 @@ export default class API {
     Mouse(app, options.mouse)
     // inside iframe, we ignore viewport scroll
     Scroll(app, this.crossdomainMode)
-    CSSRules(app)
+    CSSRules(app, options.css)
     ConstructedStyleSheets(app)
     Console(app, options)
     Exception(app, options)

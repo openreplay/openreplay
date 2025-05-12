@@ -251,6 +251,7 @@ func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *m
 		"hesitation_time":  nullableUint32(uint32(msg.HesitationTime)),
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
+		"page_title ":      msg.PageTitle,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal input event: %s", err)
@@ -298,6 +299,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		"url_hostpath":     hostpath,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
+		"page_title ":      msg.PageTitle,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal issue event: %s", err)
@@ -361,6 +363,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		"url_hostpath":     hostpath,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
+		"page_title ":      msg.PageTitle,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal issue event: %s", err)
@@ -457,6 +460,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		"load_event_time":                loadEventTime,
 		"user_device":                    session.UserDevice,
 		"user_device_type":               session.UserDeviceType,
+		"page_title ":                    msg.PageTitle,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal page event: %s", err)
@@ -523,6 +527,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		"url_hostpath":     hostpath,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
+		"page_title ":      msg.PageTitle,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal click event: %s", err)
@@ -568,6 +573,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 		"message":          msg.Message,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
+		"page_title ":      msg.PageTitle,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal error event: %s", err)
@@ -625,6 +631,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session,
 		"max_used_js_heap_size":  msg.MaxUsedJSHeapSize,
 		"user_device":            session.UserDevice,
 		"user_device_type":       session.UserDeviceType,
+		"page_title ":            msg.PageTitle,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal performance event: %s", err)
@@ -683,6 +690,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		"url_hostpath":     hostpath,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
+		"page_title ":      msg.PageTitle,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal request event: %s", err)
@@ -721,6 +729,7 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 		"payload":          msg.Payload,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
+		"page_title ":      msg.PageTitle,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal custom event: %s", err)
@@ -759,6 +768,7 @@ func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.G
 		"response_body":    nullableString(msg.Response),
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
+		"page_title ":      msg.PageTitle,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal graphql event: %s", err)

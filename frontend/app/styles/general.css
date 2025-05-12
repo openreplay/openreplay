@@ -173,7 +173,7 @@
 }
 
 .border-gray-light {
-  border: solid thin rgb(229 231 235  / var(--tw-text-opacity, 1))
+  border: solid thin var(--color-gray-light)
 }
 
 .btn-disabled {
@@ -423,10 +423,6 @@ p {
   border-radius: 3px;
   resize: none;
   background-color: #ffff;
-}
-
-.ant-menu-light .ant-menu-item-selected, :where(.css-dev-only-do-not-override).ant-menu-light>.ant-menu .ant-menu-item-selected{
-  background-color: #E6E9FA;
 }
 
 .pref-projects-menu .ant-menu-light .ant-menu-item-selected{

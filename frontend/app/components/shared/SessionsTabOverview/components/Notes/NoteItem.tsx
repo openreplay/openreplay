@@ -52,7 +52,7 @@ function NoteItem(props: Props) {
       ? `${props.note.message.slice(0, 150)}...`
       : props.note.message;
   return (
-    <div className="flex items-center px-2 border-b hover:bg-amber-50 justify-between py-2">
+    <div className="flex items-center px-2 border-b hover:bg-amber justify-between py-2">
       <Link
         style={{ width: '90%' }}
         to={
