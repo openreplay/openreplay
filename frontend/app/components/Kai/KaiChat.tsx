@@ -10,7 +10,7 @@ import { kaiService } from 'App/services';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { useHistory, useLocation } from 'react-router-dom'
+import { useHistory, useLocation } from 'react-router-dom';
 
 function KaiChat() {
   const { userStore, projectsStore } = useStore();
@@ -29,11 +29,14 @@ function KaiChat() {
 
   const openChats = () => {
     showModal(
-      <ChatsModal onSelect={(threadId: string, title: string) => {
-        setTitle(title);
-        setThreadId(threadId)
-        hideModal();
-      }} />,
+      <ChatsModal
+        projectId={activeSiteId}
+        onSelect={(threadId: string, title: string) => {
+          setTitle(title);
+          setThreadId(threadId);
+          hideModal();
+        }}
+      />,
       { right: true, width: 300 },
     );
   };
@@ -43,7 +46,7 @@ function KaiChat() {
       setThreadId(threadIdFromUrl);
       setSection('chat');
     }
-  }, [threadIdFromUrl])
+  }, [threadIdFromUrl]);
 
   React.useEffect(() => {
     if (threadId) {
@@ -58,31 +61,35 @@ function KaiChat() {
   if (!userId || !activeSiteId) return null;
 
   const canGoBack = section !== 'intro';
-  const goBack = canGoBack ? () => {
-    if (section === 'chat') {
-      setThreadId(null);
-      setSection('intro')
-    }
-  } : undefined;
+  const goBack = canGoBack
+    ? () => {
+        if (section === 'chat') {
+          setThreadId(null);
+          setSection('intro');
+        }
+      }
+    : undefined;
 
   const onCreate = async (firstMsg?: string) => {
-    //const settings = { projectId: projectId ?? 2325, userId: userId ?? 65 };
-    const settings = { projectId: '2325', userId: '0' };
     if (firstMsg) {
       setInitialMsg(firstMsg);
     }
-    const newThread = await kaiService.createKaiChat(settings.projectId, settings.userId)
+    const newThread = await kaiService.createKaiChat(activeSiteId);
     if (newThread) {
       setThreadId(newThread.toString());
       setSection('chat');
     } else {
       toast.error("Something wen't wrong. Please try again later.");
     }
-  }
+  };
   return (
     <div className="w-full mx-auto" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
       <div className={'w-full rounded-lg overflow-hidden border shadow'}>
-        <ChatHeader chatTitle={chatTitle} openChats={openChats} goBack={goBack} />
+        <ChatHeader
+          chatTitle={chatTitle}
+          openChats={openChats}
+          goBack={goBack}
+        />
         <div
           className={
             'w-full bg-active-blue flex flex-col items-center justify-center py-4 relative'
@@ -112,16 +119,20 @@ function KaiChat() {
   );
 }
 
-function ChatsModal({ onSelect }: { onSelect: (threadId: string, title: string) => void }) {
-  const userId = '0';
-  const projectId = '2325';
+function ChatsModal({
+  onSelect,
+  projectId,
+}: {
+  onSelect: (threadId: string, title: string) => void;
+  projectId: string;
+}) {
   const {
     data = [],
     isPending,
     refetch,
   } = useQuery({
     queryKey: ['kai', 'chats'],
-    queryFn: () => kaiService.getKaiChats(userId, projectId),
+    queryFn: () => kaiService.getKaiChats(projectId),
     staleTime: 1000 * 60,
   });
 
@@ -144,7 +155,10 @@ function ChatsModal({ onSelect }: { onSelect: (threadId: string, title: string) 
       ) : (
         <div className="flex flex-col overflow-y-auto -mx-4 px-4">
           {data.map((chat) => (
-            <div key={chat.thread_id} className="flex items-center relative group min-h-8">
+            <div
+              key={chat.thread_id}
+              className="flex items-center relative group min-h-8"
+            >
               <div
                 style={{ width: 270 - 28 - 4 }}
                 className="rounded-l pl-2 h-full w-full hover:bg-active-blue flex items-center"

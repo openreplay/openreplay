@@ -4,9 +4,9 @@ export class ChatManager {
   socket: ReturnType<typeof io>;
   threadId: string | null = null;
 
-  constructor({ projectId, userId, threadId }: { projectId: string; userId: string; threadId: string }) {
+  constructor({ projectId, threadId, token }: { projectId: string; threadId: string, token: string }) {
     this.threadId = threadId;
-    console.log('Kai socket', projectId, userId, threadId, window.env.KAI_TESTING);
+    console.log('Kai socket', projectId, threadId, token);
     const socket = io(`localhost:8700/kai/chat`, {
       transports: ['websocket'],
       autoConnect: true,
@@ -17,11 +17,12 @@ export class ChatManager {
       withCredentials: true,
       multiplex: true,
       query: {
-        user_id: userId,
-        token: window.env.KAI_TESTING,
         project_id: projectId,
         thread_id: threadId,
       },
+      auth: {
+        token: `Bearer ${token}`,
+      }
     });
     socket.on('connect', () => {
       console.log('Connected to server');

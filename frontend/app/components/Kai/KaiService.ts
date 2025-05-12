@@ -1,7 +1,7 @@
 import AiService from "@/services/AiService";
 
 export default class KaiService extends AiService {
-  getKaiChats = async (userId: string, projectId: string): Promise<{ title: string, threadId: string }[]> => {
+  getKaiChats = async (projectId: string): Promise<{ title: string, threadId: string }[]> => {
     // const r = await this.client.get('/kai/PROJECT_ID/chats');
     const jwt = this.client.getJwt()
     const r = await fetch(`http://localhost:8700/kai/${projectId}/chats`, {
@@ -18,7 +18,7 @@ export default class KaiService extends AiService {
     return data;
   }
 
-  deleteKaiChat = async (projectId: string, userId: string, threadId: string): Promise<boolean> => {
+  deleteKaiChat = async (projectId: string, threadId: string): Promise<boolean> => {
     const jwt = this.client.getJwt()
     const r = await fetch(`http://localhost:8700/kai/${projectId}/chats/${threadId}`, {
       method: 'DELETE',
@@ -34,7 +34,7 @@ export default class KaiService extends AiService {
     return true;
   }
 
-  getKaiChat = async (projectId: string, userId: string, threadId: string): Promise<{ role: string, content: string, message_id: any, duration?: number }[]> => {
+  getKaiChat = async (projectId: string, threadId: string): Promise<{ role: string, content: string, message_id: any, duration?: number }[]> => {
     const jwt = this.client.getJwt()
     const r = await fetch(`http://localhost:8700/kai/${projectId}/chats/${threadId}`, {
       method: 'GET',
@@ -51,7 +51,7 @@ export default class KaiService extends AiService {
     return data;
   }
 
-  createKaiChat = async (projectId: string, userId: string): Promise<number> => {
+  createKaiChat = async (projectId: string): Promise<number> => {
     const jwt = this.client.getJwt()
     const r = await fetch(`http://localhost:8700/kai/${projectId}/chat/new`, {
       method: 'GET',
@@ -68,7 +68,7 @@ export default class KaiService extends AiService {
     return data;
   }
 
-  feedback = async (positive: boolean | null, messageId: string, projectId: string, userId: string) => {
+  feedback = async (positive: boolean | null, messageId: string, projectId: string) => {
     const jwt = this.client.getJwt()
     const r = await fetch(`http://localhost:8700/kai/${projectId}/messages/feedback`, {
       method: 'POST',
@@ -90,7 +90,7 @@ export default class KaiService extends AiService {
     return await r.json()
   }
 
-  cancelGeneration = async (projectId: string, threadId: string, userId: string) => {
+  cancelGeneration = async (projectId: string, threadId: string) => {
     const jwt = this.client.getJwt()
     const r = await fetch(`http://localhost:8700/kai/${projectId}/cancel/${threadId}`, {
       method: 'POST',

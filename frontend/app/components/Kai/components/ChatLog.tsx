@@ -28,10 +28,9 @@ function ChatLog({
   const processingStage = kaiStore.processingStage;
 
   React.useEffect(() => {
-    //const settings = { projectId: projectId ?? 2325, userId: userId ?? 65 };
-    const settings = { projectId: '2325', userId: '0', threadId, };
+    const settings = { projectId, threadId };
     if (threadId && !initialMsg) {
-      void kaiStore.getChat(settings.projectId, settings.userId, threadId)
+      void kaiStore.getChat(settings.projectId, threadId)
     }
     if (threadId) {
       kaiStore.createChatManager(settings, onTitleChange, initialMsg)
@@ -54,7 +53,6 @@ function ChatLog({
   }, [messages.length, processingStage]);
 
   const lastHumanMsgInd: null | number = kaiStore.lastHumanMessage.index;
-  console.log('messages', messages)
   return (
     <Loader loading={loading} className={'w-full h-full'}>
       <div

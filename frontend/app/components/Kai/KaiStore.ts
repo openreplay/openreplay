@@ -87,10 +87,10 @@ class KaiStore {
     })
   }
 
-  getChat = async (projectId: string, userId: string, threadId: string) => {
+  getChat = async (projectId: string, threadId: string) => {
     this.setLoadingChat(true);
     try {
-      const res = await aiService.getKaiChat(projectId, userId, threadId);
+      const res = await aiService.getKaiChat(projectId, threadId);
       if (res && res.length) {
         this.setMessages(
           res.map((m) => {
@@ -113,11 +113,12 @@ class KaiStore {
   };
 
   createChatManager = (
-    settings: { projectId: string; userId: string; threadId: string },
+    settings: { projectId: string; threadId: string },
     setTitle: (title: string) => void,
     initialMsg: string | null,
   ) => {
-    this.chatManager = new ChatManager(settings);
+    const token = kaiService.client.getJwt()
+    this.chatManager = new ChatManager({ ...settings, token });
     this.chatManager.setOnMsgHook({
       msgCallback: (msg) => {
         if ('state' in msg) {
@@ -195,7 +196,6 @@ class KaiStore {
         feedback === 'like',
         messageId,
         settings.projectId,
-        settings.userId,
       )
       .then(() => {
         toast.success('Feedback saved.');
