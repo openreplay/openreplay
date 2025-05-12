@@ -68,6 +68,15 @@ func DecodeSessionStart(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeSessionEndDeprecated(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &SessionEndDeprecated{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeSetPageLocationDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &SetPageLocationDeprecated{}
@@ -381,6 +390,21 @@ func DecodePageRenderTiming(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeJSExceptionDeprecated(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &JSExceptionDeprecated{}
+	if msg.Name, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Message, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Payload, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIntegrationEvent(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IntegrationEvent{}
@@ -604,6 +628,60 @@ func DecodeSetNodeAttributeDictGlobal(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.Value, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeCSSInsertRule(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &CSSInsertRule{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Rule, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Index, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeCSSDeleteRule(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &CSSDeleteRule{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Index, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeFetch(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &Fetch{}
+	if msg.Method, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Request, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Response, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Status, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -921,6 +999,33 @@ func DecodeSetNodeFocus(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeLongTask(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &LongTask{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Context, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.ContainerType, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.ContainerSrc, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.ContainerId, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.ContainerName, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeSetNodeAttributeURLBased(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &SetNodeAttributeURLBased{}
@@ -954,6 +1059,30 @@ func DecodeSetCSSDataURLBased(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeIssueEventDeprecated(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &IssueEventDeprecated{}
+	if msg.MessageID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Type, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.ContextString, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Context, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Payload, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeTechnicalInfo(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &TechnicalInfo{}
@@ -982,6 +1111,24 @@ func DecodeAssetCache(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &AssetCache{}
 	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeCSSInsertRuleURLBased(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &CSSInsertRuleURLBased{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Rule, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Index, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.BaseURL, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1162,6 +1309,21 @@ func DecodeZustand(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.State, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeBatchMeta(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &BatchMeta{}
+	if msg.PageNo, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.FirstIndex, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Timestamp, err = reader.ReadInt(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1926,6 +2088,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeTimestamp(reader)
 	case 1:
 		return DecodeSessionStart(reader)
+	case 3:
+		return DecodeSessionEndDeprecated(reader)
 	case 4:
 		return DecodeSetPageLocationDeprecated(reader)
 	case 5:
@@ -1968,6 +2132,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodePageLoadTiming(reader)
 	case 24:
 		return DecodePageRenderTiming(reader)
+	case 25:
+		return DecodeJSExceptionDeprecated(reader)
 	case 26:
 		return DecodeIntegrationEvent(reader)
 	case 27:
@@ -1988,6 +2154,12 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeStringDictGlobal(reader)
 	case 35:
 		return DecodeSetNodeAttributeDictGlobal(reader)
+	case 37:
+		return DecodeCSSInsertRule(reader)
+	case 38:
+		return DecodeCSSDeleteRule(reader)
+	case 39:
+		return DecodeFetch(reader)
 	case 40:
 		return DecodeProfiler(reader)
 	case 41:
@@ -2026,16 +2198,22 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeLoadFontFace(reader)
 	case 58:
 		return DecodeSetNodeFocus(reader)
+	case 59:
+		return DecodeLongTask(reader)
 	case 60:
 		return DecodeSetNodeAttributeURLBased(reader)
 	case 61:
 		return DecodeSetCSSDataURLBased(reader)
+	case 62:
+		return DecodeIssueEventDeprecated(reader)
 	case 63:
 		return DecodeTechnicalInfo(reader)
 	case 64:
 		return DecodeCustomIssue(reader)
 	case 66:
 		return DecodeAssetCache(reader)
+	case 67:
+		return DecodeCSSInsertRuleURLBased(reader)
 	case 68:
 		return DecodeMouseClick(reader)
 	case 69:
@@ -2060,6 +2238,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeJSException(reader)
 	case 79:
 		return DecodeZustand(reader)
+	case 80:
+		return DecodeBatchMeta(reader)
 	case 81:
 		return DecodeBatchMetadata(reader)
 	case 82:

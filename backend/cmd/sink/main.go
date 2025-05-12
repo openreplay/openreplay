@@ -100,6 +100,7 @@ func main() {
 		// Process assets
 		if msg.TypeID() == messages.MsgSetNodeAttributeURLBased ||
 			msg.TypeID() == messages.MsgSetCSSDataURLBased ||
+			msg.TypeID() == messages.MsgCSSInsertRuleURLBased ||
 			msg.TypeID() == messages.MsgAdoptedSSReplaceURLBased ||
 			msg.TypeID() == messages.MsgAdoptedSSInsertRuleURLBased {
 			m := msg.Decode()
