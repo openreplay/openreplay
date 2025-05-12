@@ -511,6 +511,30 @@ cdef class PageEvent(PyMessage):
         self.web_vitals = web_vitals
 
 
+cdef class StringDictGlobal(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long key
+    cdef public str value
+
+    def __init__(self, unsigned long key, str value):
+        self.__id__ = 34
+        self.key = key
+        self.value = value
+
+
+cdef class SetNodeAttributeDictGlobal(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long id
+    cdef public unsigned long name
+    cdef public unsigned long value
+
+    def __init__(self, unsigned long id, unsigned long name, unsigned long value):
+        self.__id__ = 35
+        self.id = id
+        self.name = name
+        self.value = value
+
+
 cdef class CSSInsertRule(PyMessage):
     cdef public int __id__
     cdef public unsigned long id
