@@ -122,8 +122,7 @@ export default class TabSessionManager {
           this.state.update({
             vModeBadge: true,
           })
-          // easier to spot the warning appearing plus more time to go over all messages
-        }, 1000)
+        }, 0)
       }
     );
     this.lists = new Lists(initialLists);
