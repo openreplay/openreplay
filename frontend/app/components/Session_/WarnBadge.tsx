@@ -2,7 +2,6 @@ import React from 'react';
 import { Alert } from 'antd';
 import { Icon } from 'UI';
 import { useTranslation } from 'react-i18next';
-import { VIRTUAL_MODE_KEY } from '@/player/web/MessageManager';
 
 const localhostWarn = (project: string) => `${project}_localhost_warn`;
 
@@ -48,19 +47,21 @@ const WarnBadge = React.memo(
     const localhostWarnSiteKey = localhostWarn(siteId);
     const defaultLocalhostWarn =
       localStorage.getItem(localhostWarnSiteKey) !== '1';
-    const localhostWarnActive =
+    const localhostWarnActive = Boolean(
       currentLocation &&
       defaultLocalhostWarn &&
-      /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation);
+      /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation)
+    )
     const trackerVersion = window.env.TRACKER_VERSION ?? undefined;
     const trackerVerDiff = compareVersions(version, trackerVersion);
     const trackerWarnActive = trackerVerDiff !== VersionComparison.Same;
 
-    const [warnings, setWarnings] = React.useState([localhostWarnActive, trackerWarnActive, virtualElsFailed])
+    const [warnings, setWarnings] = React.useState<[localhostWarn: boolean, trackerWarn: boolean, virtualElsFailWarn: boolean]>([localhostWarnActive, trackerWarnActive, virtualElsFailed])
 
     React.useEffect(() => {
       setWarnings([localhostWarnActive, trackerWarnActive, virtualElsFailed])
     }, [localhostWarnActive, trackerWarnActive, virtualElsFailed])
+
     const closeWarning = (type: 0 | 1 | 2) => {
       if (type === 1) {
         localStorage.setItem(localhostWarnSiteKey, '1');
@@ -72,11 +73,6 @@ const WarnBadge = React.memo(
       });
     };
 
-    const switchVirtualMode = () => {
-
-    }
-
-    console.log(warnings)
     if (!warnings.some(el => el === true)) return null;
 
     return (
@@ -154,7 +150,7 @@ const WarnBadge = React.memo(
 
             <div
               className="py-1 ml-3 cursor-pointer"
-              onClick={switchVirtualMode}
+              onClick={() => closeWarning(2)}
             >
               <Icon name="close" size={16} color="black" />
             </div>

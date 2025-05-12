@@ -70,7 +70,6 @@ export default class DOMManager extends ListWalker<Message> {
   };
   public readonly time: number;
   private virtualMode: boolean = false;
-  private hasCustomElements = false;
   private showVModeBadge?: () => void;
 
   constructor(params: {
@@ -443,16 +442,16 @@ export default class DOMManager extends ListWalker<Message> {
         // shadow DOM for a custom element + SALESFORCE (<slot>)
         const isCustomElement =
           vElem.tagName.includes('-') || vElem.tagName === 'SLOT';
+        const hasSlots = vElem.tagName === 'SLOT';
 
         if (isCustomElement) {
-          this.hasCustomElements = true;
           if (this.virtualMode) {
             // Store the mapping but don't create the actual shadow root
             this.shadowRootParentMap.set(msg.id, msg.frameID);
-          } else {
+            return;
+          } else if (hasSlots) {
             this.showVModeBadge?.();
           }
-          return;
         }
 
         // Real iframes

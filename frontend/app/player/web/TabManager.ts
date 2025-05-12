@@ -118,9 +118,12 @@ export default class TabSessionManager {
       this.session.isMobile,
       this.setCSSLoading,
       () => {
-        this.state.update({
-          vModeBadge: true,
-        })
+        setTimeout(() => {
+          this.state.update({
+            vModeBadge: true,
+          })
+          // easier to spot the warning appearing plus more time to go over all messages
+        }, 1000)
       }
     );
     this.lists = new Lists(initialLists);
@@ -132,9 +135,7 @@ export default class TabSessionManager {
     });
   }
 
-  private virtualMode = false;
   public setVirtualMode = (virtualMode: boolean) => {
-    this.virtualMode = virtualMode;
     this.pagesManager.setVirtualMode(virtualMode);
   };
 
