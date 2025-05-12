@@ -146,18 +146,8 @@ jobs:
         destination_branch: "main"
         pr_title: "Updated patch build from main ${{ env.HEAD_COMMIT_ID }}"
         pr_body: | 
-          This PR updates the Helm chart version after building the patch from ${{ env.HEAD_COMMIT_ID }}.
-
-    - name: Set Remote with GITHUB_TOKEN
-      run: |
-        git config --unset http.https://github.com/.extraheader
-        git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_COMMMIT_TOKEN }}@github.com/${{ github.repository }}.git
-    - name: Push ${{ secrets.ACTIONS_COMMMIT_TOKEN }} branch to tag
-      run: |
-        git fetch --tags
-        git checkout main
-        echo git push origin $BRANCH_NAME:refs/tags/$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1) --force
-        git push origin $BRANCH_NAME:refs/tags/$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1) --force
+          This PR updates the Helm chart version after building the patch from $HEAD_COMMIT_ID.
+          Once this PR is merged, tag update job will run automatically.
 
     # - name: Debug Job
     #   if: ${{ failure() }}
