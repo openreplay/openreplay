@@ -32,7 +32,7 @@ jobs:
 
       - name: Set Remote with GITHUB_TOKEN
         run: |
-          git config --global --unset http.https://github.com/.extraheader
+          git config --unset http.https://github.com/.extraheader
           git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_COMMMIT_TOKEN }}@github.com/${{ github.repository }}
 
       - name: Push main branch to tag
