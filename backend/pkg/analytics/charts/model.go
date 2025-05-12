@@ -73,7 +73,7 @@ type MetricPayload struct {
 	Limit           int        `json:"limit"`
 	Page            int        `json:"page"`
 	StartPoint      []Filter   `json:"startPoint"`
-	Exclude         []Filter   `json:"exclude"`
+	Exclude         []Filter   `json:"excludes"`
 	Rows            uint64     `json:"rows"`
 	Columns         uint64     `json:"columns"`
 	PreviousColumns uint64     `json:"previousColumns"`

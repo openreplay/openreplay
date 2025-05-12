@@ -510,7 +510,7 @@ func (h UserJourneyQueryBuilder) Execute(p Payload, conn db.Connector) (interfac
 
 	// Reassign IDs to be sequential
 	nodeIDMap := make(map[int]int)
-	var finalNodes []Node
+	var finalNodes []Node = make([]Node, 0, len(filteredNodes))
 
 	for newID, node := range filteredNodes {
 		nodeIDMap[node.ID] = newID
@@ -519,7 +519,7 @@ func (h UserJourneyQueryBuilder) Execute(p Payload, conn db.Connector) (interfac
 	}
 
 	// Update link references
-	var finalLinks []Link
+	var finalLinks []Link = make([]Link, 0, len(links))
 	for _, link := range links {
 		srcID, srcExists := nodeIDMap[link.Source]
 		tgtID, tgtExists := nodeIDMap[link.Target]
@@ -538,6 +538,7 @@ func (h UserJourneyQueryBuilder) Execute(p Payload, conn db.Connector) (interfac
 }
 
 func (h UserJourneyQueryBuilder) buildQuery(p Payload) (string, error) {
+	// prepare event list filter
 	events := p.MetricValue
 	if len(events) == 0 {
 		events = []string{"LOCATION"}
@@ -547,10 +548,34 @@ func (h UserJourneyQueryBuilder) buildQuery(p Payload) (string, error) {
 		vals[i] = fmt.Sprintf("'%s'", v)
 	}
 	laterCond := fmt.Sprintf("e.\"$event_name\" IN (%s)", strings.Join(vals, ","))
+
+	// build start and exclude conditions
 	startConds, _ := buildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"})
 	excludeConds, _ := buildEventConditions(p.Exclude, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"})
 
-	// use first element of StartPoint array for starting event
+	// quote properties column correctly
+	fixProps := func(conds []string) []string {
+		for i, c := range conds {
+			conds[i] = strings.ReplaceAll(c, "e.$properties", "e.\"$properties\"")
+		}
+		return conds
+	}
+	startConds = fixProps(startConds)
+	excludeConds = fixProps(excludeConds)
+
+	// extract global filters from first series
+	s := p.MetricPayload.Series[0]
+	var globalFilters []Filter
+	for _, flt := range s.Filter.Filters {
+		if flt.IsEvent {
+			continue
+		}
+		globalFilters = append(globalFilters, flt)
+	}
+	globalConds, _ := buildEventConditions(globalFilters, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"})
+	globalConds = fixProps(globalConds)
+
+	// determine starting event
 	var startEvent string
 	if len(p.StartPoint) > 0 {
 		startEvent = string(p.StartPoint[0].Type)
@@ -558,9 +583,13 @@ func (h UserJourneyQueryBuilder) buildQuery(p Payload) (string, error) {
 		startEvent = events[0]
 	}
 
+	// assemble first_hits WHERE clause
 	firstBase := []string{fmt.Sprintf("e.\"$event_name\" = '%s'", startEvent)}
 	if len(startConds) > 0 {
 		firstBase = append(firstBase, startConds...)
+	}
+	if len(globalConds) > 0 {
+		firstBase = append(firstBase, globalConds...)
 	}
 	firstBase = append(firstBase,
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
@@ -571,27 +600,33 @@ func (h UserJourneyQueryBuilder) buildQuery(p Payload) (string, error) {
 		),
 	)
 
+	// assemble journey WHERE clause
 	journeyBase := []string{laterCond}
 	if len(excludeConds) > 0 {
-		journeyBase = append(journeyBase, "NOT ("+strings.Join(excludeConds, " AND "))
+		journeyBase = append(journeyBase, "NOT ("+strings.Join(excludeConds, " AND ")+")")
+	}
+	if len(globalConds) > 0 {
+		journeyBase = append(journeyBase, globalConds...)
 	}
 	journeyBase = append(journeyBase,
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
 	)
 
+	// format time bounds
 	startTime := time.Unix(p.StartTimestamp/1000, 0).UTC().Format("2006-01-02 15:04:05")
 	endTime := time.Unix(p.EndTimestamp/1000, 0).UTC().Format("2006-01-02 15:04:05")
 
+	// set column limits
 	previousColumns := p.PreviousColumns
 	if previousColumns <= 0 {
 		previousColumns = 0
 	}
-
 	maxCols := p.Columns
 	if maxCols > 0 {
 		maxCols++
 	}
 
+	// build final query
 	q := fmt.Sprintf(`WITH
   first_hits AS (
     SELECT session_id, MIN(created_at) AS start_time
