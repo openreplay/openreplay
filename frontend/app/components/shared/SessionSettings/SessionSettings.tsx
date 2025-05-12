@@ -5,6 +5,7 @@ import ListingVisibility from './components/ListingVisibility';
 import DefaultPlaying from './components/DefaultPlaying';
 import DefaultTimezone from './components/DefaultTimezone';
 import CaptureRate from './components/CaptureRate';
+
 import { useTranslation } from 'react-i18next';
 
 function SessionSettings() {

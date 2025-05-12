@@ -80,7 +80,6 @@ export default class MessageLoader {
 
         let artificialStartTime = Infinity;
         let startTimeSet = false;
-
         msgs.forEach((msg, i) => {
           if (msg.tp === MType.Redux || msg.tp === MType.ReduxDeprecated) {
             if ('actionTime' in msg && msg.actionTime) {

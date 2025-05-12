@@ -34,38 +34,46 @@ const WarnBadge = React.memo(
     currentLocation,
     version,
     siteId,
+    virtualElsFailed,
+    onVMode,
   }: {
     currentLocation: string;
     version: string;
     siteId: string;
+    virtualElsFailed: boolean;
+    onVMode: () => void;
   }) => {
     const { t } = useTranslation();
     const localhostWarnSiteKey = localhostWarn(siteId);
     const defaultLocalhostWarn =
       localStorage.getItem(localhostWarnSiteKey) !== '1';
-    const localhostWarnActive =
+    const localhostWarnActive = Boolean(
       currentLocation &&
       defaultLocalhostWarn &&
-      /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation);
+      /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation)
+    )
     const trackerVersion = window.env.TRACKER_VERSION ?? undefined;
     const trackerVerDiff = compareVersions(version, trackerVersion);
     const trackerWarnActive = trackerVerDiff !== VersionComparison.Same;
 
-    const [showLocalhostWarn, setLocalhostWarn] =
-      React.useState(localhostWarnActive);
-    const [showTrackerWarn, setTrackerWarn] = React.useState(trackerWarnActive);
+    const [warnings, setWarnings] = React.useState<[localhostWarn: boolean, trackerWarn: boolean, virtualElsFailWarn: boolean]>([localhostWarnActive, trackerWarnActive, virtualElsFailed])
 
-    const closeWarning = (type: 1 | 2) => {
+    React.useEffect(() => {
+      setWarnings([localhostWarnActive, trackerWarnActive, virtualElsFailed])
+    }, [localhostWarnActive, trackerWarnActive, virtualElsFailed])
+
+    const closeWarning = (type: 0 | 1 | 2) => {
       if (type === 1) {
         localStorage.setItem(localhostWarnSiteKey, '1');
-        setLocalhostWarn(false);
       }
-      if (type === 2) {
-        setTrackerWarn(false);
-      }
+      setWarnings((prev) => {
+        const newWarnings = [...prev];
+        newWarnings[type] = false;
+        return newWarnings;
+      });
     };
 
-    if (!showLocalhostWarn && !showTrackerWarn) return null;
+    if (!warnings.some(el => el === true)) return null;
 
     return (
       <div
@@ -79,7 +87,7 @@ const WarnBadge = React.memo(
           fontWeight: 500,
         }}
       >
-        {showLocalhostWarn ? (
+        {warnings[0] ? (
           <div className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between">
             <div>
               <span>{t('Some assets may load incorrectly on localhost.')}</span>
@@ -101,7 +109,7 @@ const WarnBadge = React.memo(
             </div>
           </div>
         ) : null}
-        {showTrackerWarn ? (
+        {warnings[1] ? (
           <div className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between">
             <div>
               <div>
@@ -123,6 +131,21 @@ const WarnBadge = React.memo(
                   {t('Learn More')}
                 </a>
               </div>
+            </div>
+
+            <div
+              className="py-1 ml-3 cursor-pointer"
+              onClick={() => closeWarning(2)}
+            >
+              <Icon name="close" size={16} color="black" />
+            </div>
+          </div>
+        ) : null}
+        {warnings[2] ? (
+          <div className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between">
+            <div className="flex flex-col">
+              <div>{t('If you have issues displaying custom HTML elements (i.e when using LWC), consider turning on Virtual Mode.')}</div>
+              <div className='link' onClick={onVMode}>{t('Enable')}</div>
             </div>
 
             <div
