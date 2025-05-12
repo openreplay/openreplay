@@ -2,7 +2,7 @@ package datasaver
 
 import (
 	"context"
-
+	"encoding/json"
 	"openreplay/backend/internal/config/db"
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres"
@@ -50,10 +50,6 @@ func New(log logger.Logger, cfg *db.Config, pg *postgres.Conn, ch clickhouse.Con
 }
 
 func (s *saverImpl) Handle(msg Message) {
-	if msg.TypeID() == MsgCustomEvent {
-		defer s.Handle(types.WrapCustomEvent(msg.(*CustomEvent)))
-	}
-
 	var (
 		sessCtx = context.WithValue(context.Background(), "sessionID", msg.SessionID())
 		session *sessions.Session
@@ -67,6 +63,23 @@ func (s *saverImpl) Handle(msg Message) {
 	if err != nil || session == nil {
 		s.log.Error(sessCtx, "error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
 		return
+	}
+
+	if msg.TypeID() == MsgCustomEvent {
+		m := msg.(*CustomEvent)
+		// Try to parse custom event payload to JSON and extract or_payload field
+		type CustomEventPayload struct {
+			CustomTimestamp uint64 `json:"or_timestamp"`
+		}
+		customPayload := &CustomEventPayload{}
+		if err := json.Unmarshal([]byte(m.Payload), customPayload); err == nil {
+			if customPayload.CustomTimestamp >= session.Timestamp {
+				s.log.Info(sessCtx, "custom event timestamp received: %v", m.Timestamp)
+				msg.Meta().Timestamp = customPayload.CustomTimestamp
+				s.log.Info(sessCtx, "custom event timestamp updated: %v", m.Timestamp)
+			}
+		}
+		defer s.Handle(types.WrapCustomEvent(m))
 	}
 
 	if IsMobileType(msg.TypeID()) {
