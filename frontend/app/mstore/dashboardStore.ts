@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+import { makeAutoObservable, runInAction, reaction } from 'mobx';
 import { dashboardService, metricService } from 'App/services';
 import { toast } from 'react-toastify';
 import Period, { LAST_24_HOURS, LAST_7_DAYS } from 'Types/app/period';
@@ -6,6 +6,7 @@ import { getRE } from 'App/utils';
 import Filter from './types/filter';
 import Widget from './types/widget';
 import Dashboard from './types/dashboard';
+import { calculateGranularities } from '@/components/Dashboard/components/WidgetDateRange/RangeGranularity';
 
 interface DashboardFilter {
   query?: string;
@@ -36,7 +37,7 @@ export default class DashboardStore {
 
   drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
 
-  selectedDensity: number = 7; // depends on default drilldown, 7 points here!!!;
+  selectedDensity: number = 7;
 
   comparisonPeriods: Record<string, any> = {};
 
@@ -83,10 +84,25 @@ export default class DashboardStore {
     makeAutoObservable(this);
 
     this.resetDrillDownFilter();
+
+    this.createDensity(this.period.getDuration());
+    reaction(
+      () => this.period,
+      (period) => {
+        this.createDensity(period.getDuration());
+      }
+    )
   }
 
-  setDensity = (density: any) => {
-    this.selectedDensity = parseInt(density, 10);
+  createDensity = (duration: number) => {
+    const densityOpts = calculateGranularities(duration);
+    const defaultOption = densityOpts[densityOpts.length - 2];
+
+    this.setDensity(defaultOption.key)
+  }
+
+  setDensity = (density: number) => {
+    this.selectedDensity = density;
   };
 
   get sortedDashboards() {
@@ -529,7 +545,7 @@ export default class DashboardStore {
         const data = await metricService.getMetricChartData(
           metric,
           params,
-          isSaved,
+          isSaved
         );
         resolve(metric.setData(data, period, isComparison, density));
       } catch (error) {

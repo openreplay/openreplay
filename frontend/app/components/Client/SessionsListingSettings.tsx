@@ -6,6 +6,7 @@ import DefaultPlaying from 'Shared/SessionSettings/components/DefaultPlaying';
 import DefaultTimezone from 'Shared/SessionSettings/components/DefaultTimezone';
 import ListingVisibility from 'Shared/SessionSettings/components/ListingVisibility';
 import MouseTrailSettings from 'Shared/SessionSettings/components/MouseTrailSettings';
+import VirtualModeSettings from '../shared/SessionSettings/components/VirtualMode';
 import DebugLog from './DebugLog';
 import { useTranslation } from 'react-i18next';
 
@@ -35,6 +36,7 @@ function SessionsListingSettings() {
         <div className="flex flex-col gap-2">
           <MouseTrailSettings />
           <DebugLog />
+          <VirtualModeSettings />
         </div>
       </div>
     </div>

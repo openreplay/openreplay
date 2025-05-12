@@ -99,6 +99,7 @@ export default class TabSessionManager {
       tabStates: { [tabId: string]: TabState };
       tabNames: { [tabId: string]: string };
       location?: string;
+      vModeBadge?: boolean;
     }>,
     private readonly screen: Screen,
     private readonly id: string,
@@ -116,6 +117,14 @@ export default class TabSessionManager {
       screen,
       this.session.isMobile,
       this.setCSSLoading,
+      () => {
+        setTimeout(() => {
+          this.state.update({
+            vModeBadge: true,
+          })
+          // easier to spot the warning appearing plus more time to go over all messages
+        }, 1000)
+      }
     );
     this.lists = new Lists(initialLists);
     initialLists?.event?.forEach((e: Record<string, string>) => {
@@ -125,6 +134,10 @@ export default class TabSessionManager {
       }
     });
   }
+
+  public setVirtualMode = (virtualMode: boolean) => {
+    this.pagesManager.setVirtualMode(virtualMode);
+  };
 
   setSession = (session: any) => {
     this.session = session;

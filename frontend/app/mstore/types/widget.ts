@@ -163,6 +163,7 @@ export default class Widget {
   fromJson(json: any, period?: any) {
     json.config = json.config || {};
     runInAction(() => {
+      this.dashboardId = json.dashboardId;
       this.metricId = json.metricId;
       this.widgetId = json.widgetId;
       this.metricValue = this.metricValueFromArray(
