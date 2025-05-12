@@ -69,7 +69,8 @@ export default class DOMManager extends ListWalker<Message> {
     all: () => Record<string, string>;
   };
   public readonly time: number;
-  private virtualMode: boolean = false;
+  private virtualMode = false;
+  private hasSlots = false
   private showVModeBadge?: () => void;
 
   constructor(params: {
@@ -297,6 +298,9 @@ export default class DOMManager extends ListWalker<Message> {
         this.insertNode(msg);
         this.removeBodyScroll(msg.id, vElem);
         this.removeAutocomplete(vElem);
+        if (msg.tag === 'SLOT') {
+          this.hasSlots = true;
+        }
         return;
       }
       case MType.MoveNode: {
@@ -442,14 +446,13 @@ export default class DOMManager extends ListWalker<Message> {
         // shadow DOM for a custom element + SALESFORCE (<slot>)
         const isCustomElement =
           vElem.tagName.includes('-') || vElem.tagName === 'SLOT';
-        const hasSlots = vElem.tagName === 'SLOT';
 
         if (isCustomElement) {
           if (this.virtualMode) {
             // Store the mapping but don't create the actual shadow root
             this.shadowRootParentMap.set(msg.id, msg.frameID);
             return;
-          } else if (hasSlots) {
+          } else if (this.hasSlots) {
             this.showVModeBadge?.();
           }
         }
