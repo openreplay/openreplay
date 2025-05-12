@@ -21,15 +21,10 @@ export default class WebPlayer extends Player {
     inspectorMode: false,
     mobsFetched: false,
   };
-
   private inspectorController: InspectorController;
-
   protected screen: Screen;
-
   protected readonly messageManager: MessageManager;
-
   protected readonly messageLoader: MessageLoader;
-
   private targetMarker: TargetMarker;
 
   constructor(
@@ -102,6 +97,10 @@ export default class WebPlayer extends Player {
     window.playerJumpToTime = this.jump.bind(this);
     // @ts-ignore
     window.__OPENREPLAY_DEV_TOOLS__.player = this;
+  }
+
+  enableVMode = () => {
+    this.messageManager.setVirtualMode(true);
   }
 
   preloadFirstFile(data: Uint8Array, fileKey?: string) {

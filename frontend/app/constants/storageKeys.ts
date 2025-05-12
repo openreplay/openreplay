@@ -9,6 +9,7 @@ export const GLOBAL_HAS_NO_RECORDINGS = '__$global-hasNoRecordings$__';
 export const SITE_ID_STORAGE_KEY = '__$user-siteId$__';
 export const GETTING_STARTED = '__$user-gettingStarted$__';
 export const MOUSE_TRAIL = '__$session-mouseTrail$__';
+export const VIRTUAL_MODE_KEY = '__$session-virtualMode$__'
 export const IFRAME = '__$session-iframe$__';
 export const JWT_PARAM = '__$session-jwt-param$__';
 export const MENU_COLLAPSED = '__$global-menuCollapsed$__';
