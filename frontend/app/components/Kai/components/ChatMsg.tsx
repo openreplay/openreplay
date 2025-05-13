@@ -42,11 +42,16 @@ export function ChatMsg({
 
   const onExport = () => {
     setIsProcessing(true);
+    if (!bodyRef.current) {
+      toast.error('Failed to export message');
+      setIsProcessing(false);
+      return;
+    }
     import('jspdf')
       .then(({ jsPDF }) => {
         const doc = new jsPDF();
-
-        doc.html(bodyRef.current, {
+        doc.addImage('/assets/img/logo-img.png', 80, 3, 30, 5);
+        doc.html(bodyRef.current!, {
           callback: function (doc) {
             doc.save('document.pdf');
           },
