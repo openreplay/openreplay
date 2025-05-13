@@ -2,6 +2,7 @@ import React from 'react';
 import { withRouter } from 'react-router-dom';
 import { Switch, Route, Redirect } from 'react-router';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
+import { PANEL_SIZES } from 'App/constants/panelSizes'
 
 import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
 import Modules from 'Components/Client/Modules';
@@ -105,7 +106,7 @@ export default class Client extends React.PureComponent {
       },
     } = this.props;
     return (
-      <div className="w-full mx-auto mb-8" style={{ maxWidth: '1360px' }}>
+      <div className="w-full mx-auto mb-8" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
         {activeTab && this.renderActiveTab()}
       </div>
     );

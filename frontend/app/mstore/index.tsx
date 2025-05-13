@@ -81,63 +81,34 @@ const client = new APIClient();
 
 export class RootStore {
   dashboardStore: DashboardStore;
-
   metricStore: MetricStore;
-
   funnelStore: FunnelStore;
-
   settingsStore: SettingsStore;
-
   userStore: typeof userStore;
-
   roleStore: RoleStore;
-
   auditStore: AuditStore;
-
   errorStore: ErrorStore;
-
   notificationStore: NotificationStore;
-
   sessionStore: SessionStore;
-
   notesStore: NotesStore;
-
   recordingsStore: RecordingsStore;
-
   assistMultiviewStore: AssistMultiviewStore;
-
   weeklyReportStore: WeeklyReportStore;
-
   alertsStore: AlertStore;
-
   featureFlagsStore: FeatureFlagsStore;
-
   uxtestingStore: UxtestingStore;
-
   tagWatchStore: TagWatchStore;
-
   aiSummaryStore: AiSummaryStore;
-
   aiFiltersStore: AiFiltersStore;
-
   spotStore: SpotStore;
-
   loginStore: LoginStore;
-
   filterStore: FilterStore;
-
   uiPlayerStore: UiPlayerStore;
-
   issueReportingStore: IssueReportingStore;
-
   customFieldStore: CustomFieldStore;
-
   searchStore: SearchStore;
-
   searchStoreLive: SearchStoreLive;
-
   integrationsStore: IntegrationsStore;
-
   projectsStore: ProjectsStore;
 
   constructor() {

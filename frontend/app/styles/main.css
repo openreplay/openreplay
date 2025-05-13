@@ -287,3 +287,141 @@ svg {
 .text-black {
     color: $black;
 }
+
+.markdown-body table {
+    table-layout: auto;
+    width: 100%;
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+    display: block;
+    max-width: 960px;
+    overflow-x: scroll;
+}
+
+.markdown-body table::-webkit-scrollbar {
+    height: 4px;
+    background-color: var(--color-gray-lightest);
+}
+
+.markdown-body table::-webkit-scrollbar-thumb {
+    background-color: var(--color-gray-medium);
+    border-radius: 4px;
+    cursor: grab;
+}
+
+.markdown-body table::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-gray-dark);
+}
+
+.markdown-body table::-webkit-scrollbar-thumb:active {
+    background-color: var(--color-gray-darkest);
+}
+
+.markdown-body table::-webkit-scrollbar-track {
+    background-color: var(--color-gray-lightest);
+}
+
+.markdown-body dl dt {
+  padding: 0;
+  margin-top: 16px;
+  font-size: 1em;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.markdown-body dl dd {
+  padding: 0 16px;
+  margin-bottom: 16px;
+}
+
+.markdown-body table th {
+  font-weight: 600;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+  padding: 3px 6px;
+  border: 1px solid $gray-light;
+}
+
+.markdown-body table td>:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body table thead {
+  background-color: var(--color-blueLight);
+}
+
+.markdown-body table tbody tr {
+  background-color: var(--color-offWhite);
+}
+
+.markdown-body table tbody td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 30px;
+    max-width: 300px;
+}
+
+.markdown-body table tr:nth-child(2n) {
+  background-color: var(--color-blueLight);
+}
+
+.markdown-body table img {
+  background-color: transparent;
+}
+
+.markdown-body * {
+    all: revert-layer;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+    font-size: revert;
+    font-weight: revert;
+}
+
+.markdown-body h1 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.markdown-body h2 {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.markdown-body h3 {
+    font-size: 1.125rem;
+    margin: 0;
+}
+
+.markdown-body h4 {
+    font-size: 1rem;
+    margin: 0;
+}
+
+.markdown-body a {
+    color: var(--color-teal);
+    text-decoration: none;
+}
+
+.markdown-body p {
+    margin: 0!important;
+}
+
+.markdown-body ul {
+    margin-top: 4px!important;
+    margin-bottom: 4px!important;
+}
+
+.markdown-body ul {
+  list-style-type: none; /* Remove default bullets */
+}
+.markdown-body ul li:before {
+  content: "•"; /* Use standard bullet character */
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
