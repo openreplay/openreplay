@@ -6,7 +6,7 @@ from chalicelib.core import events, metadata
 from . import performance_event, sessions_legacy
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 from chalicelib.utils import sql_helper as sh
-from chalicelib.utils.exp_ch_helper import get_sub_condition
+from chalicelib.utils.exp_ch_helper import get_sub_condition, get_col_cast
 
 logger = logging.getLogger(__name__)
 
@@ -1264,14 +1264,15 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 for l, property in enumerate(event.properties.filters):
                     a_k = f"{e_k}_att_{l}"
                     full_args = {**full_args,
-                                 **sh.multi_values(property.value, value_key=a_k)}
-
+                                 **sh.multi_values(property.value, value_key=a_k, data_type=property.data_type)}
+                    cast = get_col_cast(data_type=property.data_type, value=property.value)
                     if property.is_predefined:
-                        condition = get_sub_condition(col_name=f"main.{property.name}",
+                        condition = get_sub_condition(col_name=f"accurateCastOrNull(main.`{property.name}`,'{cast}')",
                                                       val_name=a_k, operator=property.operator)
                     else:
-                        condition = get_sub_condition(col_name=f"main.properties.{property.name}",
-                                                      val_name=a_k, operator=property.operator)
+                        condition = get_sub_condition(
+                            col_name=f"accurateCastOrNull(main.properties.`{property.name}`,'{cast}')",
+                            val_name=a_k, operator=property.operator)
                     event_where.append(
                         sh.multi_conditions(condition, property.value, value_key=a_k)
                     )
@@ -1505,7 +1506,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         if c_f.type == schemas.FetchFilterType.FETCH_URL.value:
                             _extra_or_condition.append(
                                 sh.multi_conditions(f"extra_event.url_path {op} %({e_k})s",
-                                                     c_f.value, value_key=e_k))
+                                                    c_f.value, value_key=e_k))
                 else:
                     logging.warning(f"unsupported extra_event type:${c.type}")
             if len(_extra_or_condition) > 0:
@@ -1577,18 +1578,15 @@ def get_user_sessions(project_id, user_id, start_date, end_date):
 def get_session_user(project_id, user_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            """\
-            SELECT
-                user_id,
-                count(*) as session_count,	
-                max(start_ts) as last_seen,
-                min(start_ts) as first_seen
-            FROM
-                "public".sessions
-            WHERE
-                project_id = %(project_id)s
-                AND user_id = %(userId)s
-                AND duration is not null
+            """ \
+            SELECT user_id,
+                   count(*)      as session_count,
+                   max(start_ts) as last_seen,
+                   min(start_ts) as first_seen
+            FROM "public".sessions
+            WHERE project_id = %(project_id)s
+              AND user_id = %(userId)s
+              AND duration is not null
             GROUP BY user_id;
             """,
             {"project_id": project_id, "userId": user_id}
