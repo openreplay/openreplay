@@ -31,7 +31,7 @@ type TrSetViewportScroll = [
 
 type TrCreateDocument = [
   type: 7,
-
+  
 ]
 
 type TrCreateElementNode = [
@@ -184,7 +184,7 @@ type TrSetNodeAttributeDictGlobal = [
   id: number,
   name: number,
   value: number,
-];
+]
 
 type TrCSSInsertRule = [
   type: 37,
@@ -329,7 +329,10 @@ type TrLoadFontFace = [
   descriptors: string,
 ]
 
-type TrSetNodeFocus = [type: 58, id: number];
+type TrSetNodeFocus = [
+  type: 58,
+  id: number,
+]
 
 type TrLongTask = [
   type: 59,
@@ -363,7 +366,11 @@ type TrTechnicalInfo = [
   value: string,
 ]
 
-type TrCustomIssue = [type: 64, name: string, payload: string];
+type TrCustomIssue = [
+  type: 64,
+  name: string,
+  payload: string,
+]
 
 type TrCSSInsertRuleURLBased = [
   type: 67,
@@ -586,18 +593,18 @@ type TrWebVitals = [
 ]
 
 
-export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrStringDictGlobal | TrSetNodeAttributeDictGlobal | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDictDeprecated | TrSetNodeAttributeDictDeprecated | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL | TrWebVitals
+export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrStringDictGlobal | TrSetNodeAttributeDictGlobal | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDictDeprecated | TrSetNodeAttributeDictDeprecated | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrLongAnimationTask | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL | TrWebVitals
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
-
+    
     case 0: {
       return {
         tp: MType.Timestamp,
         timestamp: tMsg[1],
       }
     }
-
+    
     case 4: {
       return {
         tp: MType.SetPageLocationDeprecated,
@@ -606,7 +613,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         navigationStart: tMsg[3],
       }
     }
-
+    
     case 5: {
       return {
         tp: MType.SetViewportSize,
@@ -614,7 +621,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         height: tMsg[2],
       }
     }
-
+    
     case 6: {
       return {
         tp: MType.SetViewportScroll,
@@ -622,14 +629,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         y: tMsg[2],
       }
     }
-
+    
     case 7: {
       return {
         tp: MType.CreateDocument,
-
+        
       }
     }
-
+    
     case 8: {
       return {
         tp: MType.CreateElementNode,
@@ -640,7 +647,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         svg: tMsg[5],
       }
     }
-
+    
     case 9: {
       return {
         tp: MType.CreateTextNode,
@@ -649,7 +656,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         index: tMsg[3],
       }
     }
-
+    
     case 10: {
       return {
         tp: MType.MoveNode,
@@ -658,14 +665,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         index: tMsg[3],
       }
     }
-
+    
     case 11: {
       return {
         tp: MType.RemoveNode,
         id: tMsg[1],
       }
     }
-
+    
     case 12: {
       return {
         tp: MType.SetNodeAttribute,
@@ -674,7 +681,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         value: tMsg[3],
       }
     }
-
+    
     case 13: {
       return {
         tp: MType.RemoveNodeAttribute,
@@ -682,7 +689,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         name: tMsg[2],
       }
     }
-
+    
     case 14: {
       return {
         tp: MType.SetNodeData,
@@ -690,7 +697,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         data: tMsg[2],
       }
     }
-
+    
     case 16: {
       return {
         tp: MType.SetNodeScroll,
@@ -699,7 +706,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         y: tMsg[3],
       }
     }
-
+    
     case 18: {
       return {
         tp: MType.SetInputValue,
@@ -708,7 +715,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         mask: tMsg[3],
       }
     }
-
+    
     case 19: {
       return {
         tp: MType.SetInputChecked,
@@ -716,7 +723,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         checked: tMsg[2],
       }
     }
-
+    
     case 20: {
       return {
         tp: MType.MouseMove,
@@ -724,7 +731,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         y: tMsg[2],
       }
     }
-
+    
     case 21: {
       return {
         tp: MType.NetworkRequestDeprecated,
@@ -738,7 +745,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         duration: tMsg[8],
       }
     }
-
+    
     case 22: {
       return {
         tp: MType.ConsoleLog,
@@ -746,7 +753,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         value: tMsg[2],
       }
     }
-
+    
     case 34: {
       return {
         tp: MType.StringDictGlobal,
@@ -754,16 +761,16 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         value: tMsg[2],
       }
     }
-
+    
     case 35: {
       return {
         tp: MType.SetNodeAttributeDictGlobal,
         id: tMsg[1],
         name: tMsg[2],
         value: tMsg[3],
-      };
+      }
     }
-
+    
     case 37: {
       return {
         tp: MType.CssInsertRule,
@@ -772,7 +779,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         index: tMsg[3],
       }
     }
-
+    
     case 38: {
       return {
         tp: MType.CssDeleteRule,
@@ -780,7 +787,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         index: tMsg[2],
       }
     }
-
+    
     case 39: {
       return {
         tp: MType.Fetch,
@@ -793,7 +800,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         duration: tMsg[7],
       }
     }
-
+    
     case 40: {
       return {
         tp: MType.Profiler,
@@ -803,7 +810,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         result: tMsg[4],
       }
     }
-
+    
     case 41: {
       return {
         tp: MType.OTable,
@@ -811,7 +818,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         value: tMsg[2],
       }
     }
-
+    
     case 44: {
       return {
         tp: MType.ReduxDeprecated,
@@ -820,7 +827,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         duration: tMsg[3],
       }
     }
-
+    
     case 45: {
       return {
         tp: MType.Vuex,
@@ -828,7 +835,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         state: tMsg[2],
       }
     }
-
+    
     case 46: {
       return {
         tp: MType.MobX,
@@ -836,7 +843,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         payload: tMsg[2],
       }
     }
-
+    
     case 47: {
       return {
         tp: MType.NgRx,
@@ -845,7 +852,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         duration: tMsg[3],
       }
     }
-
+    
     case 48: {
       return {
         tp: MType.GraphQlDeprecated,
@@ -856,7 +863,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         duration: tMsg[5],
       }
     }
-
+    
     case 49: {
       return {
         tp: MType.PerformanceTrack,
@@ -866,7 +873,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         usedJSHeapSize: tMsg[4],
       }
     }
-
+    
     case 50: {
       return {
         tp: MType.StringDictDeprecated,
@@ -874,7 +881,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         value: tMsg[2],
       }
     }
-
+    
     case 51: {
       return {
         tp: MType.SetNodeAttributeDictDeprecated,
@@ -883,7 +890,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         valueKey: tMsg[3],
       }
     }
-
+    
     case 43: {
       return {
         tp: MType.StringDict,
@@ -891,7 +898,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         value: tMsg[2],
       }
     }
-
+    
     case 52: {
       return {
         tp: MType.SetNodeAttributeDict,
@@ -900,7 +907,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         value: tMsg[3],
       }
     }
-
+    
     case 53: {
       return {
         tp: MType.ResourceTimingDeprecated,
@@ -914,7 +921,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         initiator: tMsg[8],
       }
     }
-
+    
     case 54: {
       return {
         tp: MType.ConnectionInformation,
@@ -922,14 +929,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         type: tMsg[2],
       }
     }
-
+    
     case 55: {
       return {
         tp: MType.SetPageVisibility,
         hidden: tMsg[1],
       }
     }
-
+    
     case 57: {
       return {
         tp: MType.LoadFontFace,
@@ -939,14 +946,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         descriptors: tMsg[4],
       }
     }
-
+    
     case 58: {
       return {
         tp: MType.SetNodeFocus,
         id: tMsg[1],
-      };
+      }
     }
-
+    
     case 59: {
       return {
         tp: MType.LongTask,
@@ -959,7 +966,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         containerName: tMsg[7],
       }
     }
-
+    
     case 60: {
       return {
         tp: MType.SetNodeAttributeURLBased,
@@ -969,16 +976,16 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         baseURL: tMsg[4],
       }
     }
-
+    
     case 61: {
       return {
         tp: MType.SetCssDataURLBased,
         id: tMsg[1],
         data: tMsg[2],
         baseURL: tMsg[3],
-      };
+      }
     }
-
+    
     case 67: {
       return {
         tp: MType.CssInsertRuleURLBased,
@@ -988,7 +995,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         baseURL: tMsg[4],
       }
     }
-
+    
     case 68: {
       return {
         tp: MType.MouseClick,
@@ -1000,7 +1007,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         normalizedY: tMsg[6],
       }
     }
-
+    
     case 69: {
       return {
         tp: MType.MouseClickDeprecated,
@@ -1010,7 +1017,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         selector: tMsg[4],
       }
     }
-
+    
     case 70: {
       return {
         tp: MType.CreateIFrameDocument,
@@ -1018,7 +1025,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         id: tMsg[2],
       }
     }
-
+    
     case 71: {
       return {
         tp: MType.AdoptedSsReplaceURLBased,
@@ -1027,7 +1034,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         baseURL: tMsg[3],
       }
     }
-
+    
     case 73: {
       return {
         tp: MType.AdoptedSsInsertRuleURLBased,
@@ -1037,7 +1044,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         baseURL: tMsg[4],
       }
     }
-
+    
     case 75: {
       return {
         tp: MType.AdoptedSsDeleteRule,
@@ -1045,7 +1052,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         index: tMsg[2],
       }
     }
-
+    
     case 76: {
       return {
         tp: MType.AdoptedSsAddOwner,
@@ -1053,7 +1060,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         id: tMsg[2],
       }
     }
-
+    
     case 77: {
       return {
         tp: MType.AdoptedSsRemoveOwner,
@@ -1061,7 +1068,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         id: tMsg[2],
       }
     }
-
+    
     case 79: {
       return {
         tp: MType.Zustand,
@@ -1069,7 +1076,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         state: tMsg[2],
       }
     }
-
+    
     case 83: {
       return {
         tp: MType.NetworkRequest,
@@ -1084,7 +1091,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         transferredBodySize: tMsg[9],
       }
     }
-
+    
     case 84: {
       return {
         tp: MType.WsChannel,
@@ -1096,7 +1103,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         messageType: tMsg[6],
       }
     }
-
+    
     case 89: {
       return {
         tp: MType.LongAnimationTask,
@@ -1108,7 +1115,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         scripts: tMsg[6],
       }
     }
-
+    
     case 113: {
       return {
         tp: MType.SelectionChange,
@@ -1117,14 +1124,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         selection: tMsg[3],
       }
     }
-
+    
     case 114: {
       return {
         tp: MType.MouseThrashing,
         timestamp: tMsg[1],
       }
     }
-
+    
     case 116: {
       return {
         tp: MType.ResourceTiming,
@@ -1140,21 +1147,21 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         cached: tMsg[10],
       }
     }
-
+    
     case 117: {
       return {
         tp: MType.TabChange,
         tabId: tMsg[1],
       }
     }
-
+    
     case 118: {
       return {
         tp: MType.TabData,
         tabId: tMsg[1],
       }
     }
-
+    
     case 119: {
       return {
         tp: MType.CanvasNode,
@@ -1162,14 +1169,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         timestamp: tMsg[2],
       }
     }
-
+    
     case 120: {
       return {
         tp: MType.TagTrigger,
         tagId: tMsg[1],
       }
     }
-
+    
     case 121: {
       return {
         tp: MType.Redux,
@@ -1179,7 +1186,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         actionTime: tMsg[4],
       }
     }
-
+    
     case 122: {
       return {
         tp: MType.SetPageLocation,
@@ -1189,7 +1196,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         documentTitle: tMsg[4],
       }
     }
-
+    
     case 123: {
       return {
         tp: MType.GraphQl,
@@ -1200,7 +1207,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         duration: tMsg[5],
       }
     }
-
+    
     default:
       return null
   }

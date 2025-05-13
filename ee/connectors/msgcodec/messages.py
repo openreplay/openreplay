@@ -339,6 +339,23 @@ class PageEvent(Message):
         self.web_vitals = web_vitals
 
 
+class StringDictGlobal(Message):
+    __id__ = 34
+
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
+
+
+class SetNodeAttributeDictGlobal(Message):
+    __id__ = 35
+
+    def __init__(self, id, name, value):
+        self.id = id
+        self.name = name
+        self.value = value
+
+
 class CSSInsertRule(Message):
     __id__ = 37
 
