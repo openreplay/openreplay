@@ -6,7 +6,7 @@
     },
     "tracker": {
       "name": "@openreplay/tracker",
-      "version": "16.1.4",
+      "version": "16.3.0-beta.0",
       "dependencies": {
         "@medv/finder": "^4.0.2",
         "@openreplay/network-proxy": "^1.1.3",
@@ -49,7 +49,6 @@
         "socket.io-client": "^4.8.1",
       },
       "devDependencies": {
-        "@openreplay/tracker": "workspace:*",
         "@typescript-eslint/eslint-plugin": "^8.14.0",
         "@typescript-eslint/parser": "^8.14.0",
         "eslint": "^9.15.0",
