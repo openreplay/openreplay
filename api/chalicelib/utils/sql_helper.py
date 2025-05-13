@@ -52,12 +52,16 @@ def multi_conditions(condition, values, value_key="value", is_not=False):
     return "(" + (" AND " if is_not else " OR ").join(query) + ")"
 
 
-def multi_values(values, value_key="value"):
+def multi_values(values, value_key="value", data_type: schemas.PropertyType | None = None):
     query_values = {}
     if values is not None and isinstance(values, list):
         for i in range(len(values)):
             k = f"{value_key}_{i}"
             query_values[k] = values[i].value if isinstance(values[i], Enum) else values[i]
+            if data_type:
+                if data_type == schemas.PropertyType.STRING:
+                    query_values[k] = str(query_values[k])
+
     return query_values
 
 

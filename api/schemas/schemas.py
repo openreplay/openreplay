@@ -581,11 +581,23 @@ class EventPredefinedPropertyType(str, Enum):
     IMPORT = "$import"
 
 
+class PropertyType(str, Enum):
+    INT = "int"
+    FLOAT = "float"
+    DATETIME = "datetime"
+    STRING = "string"
+    ARRAY = "array"
+    TUPLE = "tuple"
+    MAP = "map"
+    NESTED = "nested"
+
+
 class PropertyFilterSchema(BaseModel):
     is_event: Literal[False] = False
     name: Union[EventPredefinedPropertyType, str] = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     value: List[Union[int, str]] = Field(...)
+    data_type: PropertyType = Field(default=PropertyType.STRING.value)
 
     # property_type: Optional[Literal["string", "number", "date"]] = Field(default=None)
 
