@@ -1,9 +1,10 @@
 package redis
 
 import (
+	"context"
 	"log"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 
 	"openreplay/backend/pkg/queue/types"
 )
@@ -29,9 +30,9 @@ func (c *producerImpl) Produce(topic string, key uint64, value []byte) error {
 			"sessionID": key,
 			"value":     value,
 		},
-		MaxLenApprox: c.client.Cfg.MaxLength,
+		MaxLen: c.client.Cfg.MaxLength,
 	}
-	_, err := c.client.Redis.XAdd(args).Result()
+	_, err := c.client.Redis.XAdd(context.Background(), args).Result()
 	return err
 }
 

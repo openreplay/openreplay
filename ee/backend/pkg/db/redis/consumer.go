@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"

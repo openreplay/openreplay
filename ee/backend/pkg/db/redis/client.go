@@ -4,7 +4,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/go-redis/redis"
+	"github.com/docker/distribution/context"
+	"github.com/redis/go-redis/v9"
 
 	config "openreplay/backend/internal/config/redis"
 )
@@ -33,7 +34,7 @@ func New(cfg *config.Redis) (*Client, error) {
 		return nil, err
 	}
 	client := redis.NewClient(options)
-	if _, err := client.Ping().Result(); err != nil {
+	if _, err := client.Ping(context.Background()).Result(); err != nil {
 		return nil, err
 	}
 	return &Client{

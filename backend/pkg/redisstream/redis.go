@@ -3,7 +3,8 @@ package redisstream
 import (
 	"regexp"
 
-	"github.com/go-redis/redis"
+	"github.com/docker/distribution/context"
+	"github.com/redis/go-redis/v9"
 
 	"openreplay/backend/pkg/env"
 )
@@ -28,7 +29,7 @@ func getRedisClient() (*redis.Client, error) {
 	}
 
 	redisClient = redis.NewClient(options)
-	if _, err := redisClient.Ping().Result(); err != nil {
+	if _, err := redisClient.Ping(context.Background()).Result(); err != nil {
 		return nil, err
 	}
 	return redisClient, nil

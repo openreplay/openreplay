@@ -33,6 +33,7 @@ require (
 	github.com/oschwald/maxminddb-golang v1.13.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.22.0
+	github.com/redis/go-redis/v9 v9.8.0
 	github.com/rs/xid v1.6.0
 	github.com/sethvargo/go-envconfig v1.2.0
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
@@ -47,6 +48,7 @@ require (
 	github.com/DataDog/zstd v1.5.7 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/elastic/elastic-transport-go/v8 v8.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
 	github.com/go-faster/city v1.0.1 // indirect

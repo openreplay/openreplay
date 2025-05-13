@@ -1,6 +1,7 @@
 package redisstream
 
 import (
+	"context"
 	"log"
 	"net"
 	"sort"
@@ -8,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	_redis "github.com/go-redis/redis"
 	"github.com/pkg/errors"
+	_redis "github.com/redis/go-redis/v9"
 
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"
@@ -38,7 +39,7 @@ func NewConsumer(group string, streams []string, messageIterator messages.Messag
 		log.Fatalln(err)
 	}
 	for _, stream := range streams {
-		err := redis.XGroupCreateMkStream(stream, group, "0").Err()
+		err := redis.XGroupCreateMkStream(context.Background(), stream, group, "0").Err()
 		if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
 			log.Fatalln(err)
 		}
@@ -75,7 +76,7 @@ func (c *Consumer) Rebalanced() <-chan *types.PartitionsRebalancedEvent {
 
 func (c *Consumer) ConsumeNext() error {
 	// MBTODO: read in go routine, send messages to channel
-	res, err := c.redis.XReadGroup(&_redis.XReadGroupArgs{
+	res, err := c.redis.XReadGroup(context.Background(), &_redis.XReadGroupArgs{
 		Group:    c.group,
 		Consumer: c.group,
 		Streams:  c.streams,
@@ -115,7 +116,7 @@ func (c *Consumer) ConsumeNext() error {
 			bID := ts<<13 | (idx & 0x1FFF) // Max: 4096 messages/ms for 69 years
 			c.messageIterator.Iterate([]byte(valueString), messages.NewBatchInfo(sessionID, r.Stream, bID, 0, int64(ts)))
 			if c.autoCommit {
-				if err = c.redis.XAck(r.Stream, c.group, m.ID).Err(); err != nil {
+				if err = c.redis.XAck(context.Background(), r.Stream, c.group, m.ID).Err(); err != nil {
 					return errors.Wrapf(err, "Acknoledgment error for messageID %v", m.ID)
 				}
 			} else {
@@ -134,7 +135,7 @@ func (c *Consumer) Commit() error {
 		if len(idsInfo.id) == 0 {
 			continue
 		}
-		if err := c.redis.XAck(stream, c.group, idsInfo.id...).Err(); err != nil {
+		if err := c.redis.XAck(context.Background(), stream, c.group, idsInfo.id...).Err(); err != nil {
 			return errors.Wrapf(err, "Redisstreams: Acknoledgment error on commit %v", err)
 		}
 		c.idsPending[stream].id = nil
@@ -156,7 +157,7 @@ func (c *Consumer) CommitBack(gap int64) error {
 		maxI := sort.Search(len(idsInfo.ts), func(i int) bool {
 			return idsInfo.ts[i] > maxTs
 		})
-		if err := c.redis.XAck(stream, c.group, idsInfo.id[:maxI]...).Err(); err != nil {
+		if err := c.redis.XAck(context.Background(), stream, c.group, idsInfo.id[:maxI]...).Err(); err != nil {
 			return errors.Wrapf(err, "Redisstreams: Acknoledgment error on commit %v", err)
 		}
 		c.idsPending[stream].id = idsInfo.id[maxI:]
