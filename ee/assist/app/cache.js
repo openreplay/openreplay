@@ -32,6 +32,19 @@ const localCache = {
     deletedSessions: new Set()
 };
 
+const sendAssistEvent = async function (payload) {
+    try {
+        if (typeof payload !== "string") {
+            logger.warn("sendAssistEvent received non-string payload. Converting to string.");
+            payload = JSON.stringify(payload);
+        }
+        await redisClient.rpush("assist:stats", payload);
+        logger.debug("Assist event sent to Redis: " + payload);
+    } catch (error) {
+        logger.error(`Failed to send assist event to Redis: ${error}`);
+    }
+};
+
 const addSession = async function (sessionID) {
     await mutex.runExclusive(() => {
         localCache.addedSessions.add(sessionID);
@@ -172,6 +185,7 @@ function startCacheRefresher(io) {
 }
 
 module.exports = {
+    sendAssistEvent,
     addSession,
     updateSession,
     renewSession,

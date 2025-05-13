@@ -14,6 +14,11 @@ const {
 const {
     logger
 } = require('./logger');
+const {
+    startAssist,
+    endAssist,
+    handleEvent
+} = require('./stats');
 const deepMerge = require('@fastify/deepmerge')({all: true});
 
 let io;
@@ -133,6 +138,7 @@ async function onConnect(socket) {
         if (socket.handshake.query.agentInfo !== undefined) {
             socket.handshake.query.agentInfo = JSON.parse(socket.handshake.query.agentInfo);
             socket.handshake.query.agentID = socket.handshake.query.agentInfo.id;
+            startAssist(socket, socket.handshake.query.agentID);
         }
         sendFrom(socket, socket.handshake.query.roomId, EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, socket.handshake.query.agentInfo);
     }
@@ -165,6 +171,7 @@ async function onDisconnect(socket) {
     logger.debug(`${socket.id} disconnected from ${socket.handshake.query.roomId}`);
 
     if (socket.handshake.query.identity === IDENTITIES.agent) {
+        endAssist(socket, socket.handshake.query.agentID);
         sendFrom(socket, socket.handshake.query.roomId, EVENTS_DEFINITION.emit.AGENT_DISCONNECT, socket.id);
     }
     logger.debug("checking for number of connected agents and sessions");
@@ -232,6 +239,7 @@ async function onAny(socket, eventName, ...args) {
         logger.debug(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to room:${socket.handshake.query.roomId}`);
         sendFrom(socket, socket.handshake.query.roomId, eventName, args[0]);
     } else {
+        handleEvent(eventName, socket, args[0]);
         logger.debug(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to session of room:${socket.handshake.query.roomId}`);
         let socketId = await findSessionSocketId(socket.handshake.query.roomId, args[0]?.meta?.tabId);
         if (socketId === null) {
