@@ -4,13 +4,20 @@ export class ChatManager {
   socket: ReturnType<typeof io>;
   threadId: string | null = null;
 
-  constructor({ projectId, threadId, token }: { projectId: string; threadId: string, token: string }) {
+  constructor({
+    projectId,
+    threadId,
+    token,
+  }: {
+    projectId: string;
+    threadId: string;
+    token: string;
+  }) {
     this.threadId = threadId;
     const urlObject = new URL(window.env.API_EDP || window.location.origin);
-    console.log(token, projectId, threadId)
-    const socket = io(urlObject.origin, {
+    const socket = io(`${urlObject.origin}/kai/chat`, {
       transports: ['websocket'],
-      path: '/kai/chat',
+      path: '/kai/chat/socket.io',
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 5,
@@ -23,8 +30,8 @@ export class ChatManager {
         thread_id: threadId,
       },
       auth: {
-        token,
-      }
+        token: `Bearer ${token}`,
+      },
     });
     socket.on('connect', () => {
       console.log('Connected to server');
@@ -34,7 +41,7 @@ export class ChatManager {
     });
     socket.on('error', (err) => {
       console.error('Socket error:', err);
-    })
+    });
     socket.onAny((e) => console.log('event', e));
 
     this.socket = socket;
@@ -55,7 +62,9 @@ export class ChatManager {
     msgCallback,
     titleCallback,
   }: {
-    msgCallback: (msg: BotChunk | { state: string, type: 'state', start_time?: number }) => void;
+    msgCallback: (
+      msg: BotChunk | { state: string; type: 'state'; start_time?: number },
+    ) => void;
     titleCallback: (title: string) => void;
   }) => {
     this.socket.on('chunk', (msg: BotChunk) => {
@@ -66,9 +75,16 @@ export class ChatManager {
       console.log('Received title:', msg);
       titleCallback(msg.content);
     });
-    this.socket.on('state', (state: { message: 'idle' | 'running', start_time: number }) => {
-      msgCallback({ state: state.message, type: 'state', start_time: state.start_time })
-    })
+    this.socket.on(
+      'state',
+      (state: { message: 'idle' | 'running'; start_time: number }) => {
+        msgCallback({
+          state: state.message,
+          type: 'state',
+          start_time: state.start_time,
+        });
+      },
+    );
   };
 
   disconnect = () => {
@@ -90,5 +106,5 @@ export interface Message {
 }
 
 export interface SentMessage extends Message {
-  replace: boolean
+  replace: boolean;
 }
