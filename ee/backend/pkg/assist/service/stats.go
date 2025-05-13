@@ -75,7 +75,11 @@ func (as *assistStatsImpl) loadData() {
 
 	events, err := as.redisClient.LPopCount(ctx, "assist:stats", 1000).Result()
 	if err != nil {
-		as.log.Error(ctx, "Failed to load data from redis: ", err)
+		if errors.Is(err, redis.Nil) {
+			as.log.Debug(ctx, "No data to load from redis")
+		} else {
+			as.log.Error(ctx, "Failed to load data from redis: ", err)
+		}
 		return
 	}
 	if len(events) == 0 {
