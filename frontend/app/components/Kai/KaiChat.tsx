@@ -27,6 +27,13 @@ function KaiChat() {
   const params = new URLSearchParams(location.search);
   const threadIdFromUrl = params.get('threadId');
 
+  React.useEffect(() => {
+    // Reset chat state and clear URL params when project changes
+    setSection('intro');
+    setThreadId(null);
+    history.replace({ search: '' });
+  }, [activeSiteId]);
+
   const openChats = () => {
     showModal(
       <ChatsModal

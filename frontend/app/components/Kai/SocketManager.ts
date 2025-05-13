@@ -42,7 +42,6 @@ export class ChatManager {
     socket.on('error', (err) => {
       console.error('Socket error:', err);
     });
-    socket.onAny((e) => console.log('event', e));
 
     this.socket = socket;
   }
@@ -68,11 +67,9 @@ export class ChatManager {
     titleCallback: (title: string) => void;
   }) => {
     this.socket.on('chunk', (msg: BotChunk) => {
-      console.log('Received message:', msg);
       msgCallback(msg);
     });
     this.socket.on('title', (msg: { content: string }) => {
-      console.log('Received title:', msg);
       titleCallback(msg.content);
     });
     this.socket.on(

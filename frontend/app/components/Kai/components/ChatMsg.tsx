@@ -2,8 +2,15 @@ import React from 'react';
 import { Icon, CopyButton } from 'UI';
 import cn from 'classnames';
 import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm'
-import { Loader, ThumbsUp, ThumbsDown, ListRestart, FileDown, Clock } from 'lucide-react';
+import remarkGfm from 'remark-gfm';
+import {
+  Loader,
+  ThumbsUp,
+  ThumbsDown,
+  ListRestart,
+  FileDown,
+  Clock,
+} from 'lucide-react';
 import { Button, Tooltip } from 'antd';
 import { kaiStore } from '../KaiStore';
 import { toast } from 'react-toastify';
@@ -27,36 +34,37 @@ export function ChatMsg({
   const [isProcessing, setIsProcessing] = React.useState(false);
   const bodyRef = React.useRef<HTMLDivElement>(null);
   const onRetry = () => {
-    kaiStore.editMessage(text)
-  }
+    kaiStore.editMessage(text);
+  };
   const onFeedback = (feedback: 'like' | 'dislike', messageId: string) => {
     kaiStore.sendMsgFeedback(feedback, messageId);
   };
 
   const onExport = () => {
     setIsProcessing(true);
-    import('jspdf').then(({ jsPDF }) => {
-      const doc = new jsPDF();
+    import('jspdf')
+      .then(({ jsPDF }) => {
+        const doc = new jsPDF();
 
-      doc.html(bodyRef.current, {
-        callback: function(doc) {
-          doc.save('document.pdf');
-        },
-        margin: [10, 10, 10, 10],
-        x: 0,
-        y: 0,
-        width: 190, // Target width
-        windowWidth: 675 // Window width for rendering
+        doc.html(bodyRef.current, {
+          callback: function (doc) {
+            doc.save('document.pdf');
+          },
+          margin: [10, 10, 10, 10],
+          x: 0,
+          y: 0,
+          width: 190, // Target width
+          windowWidth: 675, // Window width for rendering
+        });
+      })
+      .catch((e) => {
+        console.error('Error exporting message:', e);
+        toast.error('Failed to export message');
+      })
+      .finally(() => {
+        setIsProcessing(false);
       });
-    })
-    .catch(e => {
-      console.error('Error exporting message:', e);
-      toast.error('Failed to export message');
-    })
-    .finally(() => {
-      setIsProcessing(false);
-    });
-  }
+  };
   return (
     <div
       className={cn(
@@ -82,7 +90,7 @@ export function ChatMsg({
         </div>
       )}
       <div className={'mt-1 flex flex-col'}>
-        <div className='markdown-body' ref={bodyRef}>
+        <div className="markdown-body" ref={bodyRef}>
           <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </div>
         {isUser ? (
@@ -99,18 +107,31 @@ export function ChatMsg({
           ) : null
         ) : (
           <div className={'flex items-center gap-2'}>
-            {duration ? (
-              <MsgDuration duration={duration} />
-            ) : null}
-            <div className='ml-auto' />
-            <IconButton tooltip="Like this answer" onClick={() => onFeedback('like', messageId)}>
+            {duration ? <MsgDuration duration={duration} /> : null}
+            <div className="ml-auto" />
+            <IconButton
+              tooltip="Like this answer"
+              onClick={() => onFeedback('like', messageId)}
+            >
               <ThumbsUp size={16} />
             </IconButton>
-            <IconButton tooltip="Dislike this answer" onClick={() => onFeedback('dislike', messageId)}>
+            <IconButton
+              tooltip="Dislike this answer"
+              onClick={() => onFeedback('dislike', messageId)}
+            >
               <ThumbsDown size={16} />
             </IconButton>
-            <CopyButton getHtml={() => bodyRef.current?.innerHTML} content={text} isIcon format={'text/html'} />
-            <IconButton processing={isProcessing} tooltip="Export as PDF" onClick={onExport}>
+            <CopyButton
+              getHtml={() => bodyRef.current?.innerHTML}
+              content={text}
+              isIcon
+              format={'text/html'}
+            />
+            <IconButton
+              processing={isProcessing}
+              tooltip="Export as PDF"
+              onClick={onExport}
+            >
               <FileDown size={16} />
             </IconButton>
           </div>
@@ -133,23 +154,35 @@ function IconButton({
 }) {
   return (
     <Tooltip title={tooltip}>
-      <Button onClick={onClick} type="text" icon={children} size='small' loading={processing} />
+      <Button
+        onClick={onClick}
+        type="text"
+        icon={children}
+        size="small"
+        loading={processing}
+      />
     </Tooltip>
   );
 }
 
-export function ChatNotice({ content, duration }: { content: string, duration?: number }) {
+export function ChatNotice({
+  content,
+  duration,
+}: {
+  content: string;
+  duration?: number;
+}) {
   const startTime = React.useRef(duration ? Date.now() - duration : Date.now());
   const [activeDuration, setDuration] = React.useState(duration ?? 0);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
-      setDuration(Math.round((Date.now() - startTime.current)));
+      setDuration(Math.round(Date.now() - startTime.current));
     }, 250);
     return () => clearInterval(interval);
   }, []);
   return (
-    <div className='flex flex-col gap-1 items-start p-2 rounded-lg bg-gray-lightest border-gray-light w-fit '>
+    <div className="flex flex-col gap-1 items-start p-2 rounded-lg bg-gray-lightest border-gray-light w-fit ">
       <div className="flex gap-2 items-start">
         <div className={'animate-spin mt-1'}>
           <Loader size={14} />
@@ -165,9 +198,7 @@ function MsgDuration({ duration }: { duration: number }) {
   return (
     <div className="text-disabled-text text-sm flex items-center gap-1">
       <Clock size={14} />
-      <span className="leading-none">
-        {durationFormatted(duration)}
-      </span>
+      <span className="leading-none">{durationFormatted(duration)}</span>
     </div>
-  )
+  );
 }

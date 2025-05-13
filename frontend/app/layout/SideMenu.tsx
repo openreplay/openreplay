@@ -15,7 +15,7 @@ import {
 import { MODULES } from 'Components/Client/Modules';
 import { Icon } from 'UI';
 import SVG from 'UI/SVG';
-import { hasAi } from 'App/utils/split-utils'
+import { hasAi } from 'App/utils/split-utils';
 
 import { useStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
