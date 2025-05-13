@@ -10,6 +10,7 @@ import { Loader } from 'UI';
 import APIClient from './api_client';
 import * as routes from './routes';
 import { debounceCall } from '@/utils';
+import { hasAi } from './utils/split-utils';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -273,12 +274,12 @@ function PrivateRoutes() {
           path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
           component={enhancedComponents.LiveSession}
         />
-        <Route
+        {hasAi ? <Route
           exact
           strict
           path={withSiteId(KAI_PATH, siteIdList)}
           component={enhancedComponents.Kai}
-        />
+        /> : null}
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />
         ))}
