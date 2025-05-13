@@ -1,3 +1,4 @@
+import re
 from typing import Union, Any, Type
 
 from pydantic import ValidationInfo
@@ -56,4 +57,18 @@ def check_alphanumeric(v: str, info: ValidationInfo) -> str:
     if isinstance(v, str):
         is_alphanumeric = v.replace(' ', '').isalnum()
         assert is_alphanumeric, f'{info.field_name} must be alphanumeric'
+    return v
+
+
+def check_regex(v: str) -> str:
+    assert v is not None, "Regex is null"
+    assert isinstance(v, str), "Regex value must be a string"
+    assert len(v) > 0, "Regex is empty"
+    is_valid = None
+    try:
+        re.compile(v)
+    except re.error as exc:
+        is_valid = f"Invalid regex: {exc} (at position {exc.pos})"
+
+    assert is_valid is None, is_valid
     return v
