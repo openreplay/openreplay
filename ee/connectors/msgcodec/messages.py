@@ -339,6 +339,23 @@ class PageEvent(Message):
         self.web_vitals = web_vitals
 
 
+class StringDictGlobal(Message):
+    __id__ = 34
+
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
+
+
+class SetNodeAttributeDictGlobal(Message):
+    __id__ = 35
+
+    def __init__(self, id, name, value):
+        self.id = id
+        self.name = name
+        self.value = value
+
+
 class CSSInsertRule(Message):
     __id__ = 37
 
@@ -787,6 +804,18 @@ class WSChannel(Message):
         self.timestamp = timestamp
         self.dir = dir
         self.message_type = message_type
+
+
+class LongAnimationTask(Message):
+    __id__ = 89
+
+    def __init__(self, name, duration, blocking_duration, first_ui_event_timestamp, start_time, scripts):
+        self.name = name
+        self.duration = duration
+        self.blocking_duration = blocking_duration
+        self.first_ui_event_timestamp = first_ui_event_timestamp
+        self.start_time = start_time
+        self.scripts = scripts
 
 
 class InputChange(Message):

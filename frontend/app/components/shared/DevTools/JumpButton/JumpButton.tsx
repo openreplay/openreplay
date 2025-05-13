@@ -13,6 +13,11 @@ function JumpButton(props: Props) {
   const { tooltip } = props;
   return (
     <div className="absolute right-2 top-0 bottom-0 my-auto flex items-center">
+      {props.time ? (
+        <div className="block mr-2 text-sm">
+          {shortDurationFromMs(props.time)}
+        </div>
+      ) : null}
       <Tooltip title={tooltip} disabled={!tooltip}>
         <Button
           type="default"
@@ -27,11 +32,6 @@ function JumpButton(props: Props) {
         >
           JUMP
         </Button>
-        {props.time ? (
-          <div className="block group-hover:hidden mr-2 text-sm">
-            {shortDurationFromMs(props.time)}
-          </div>
-        ) : null}
       </Tooltip>
     </div>
   );

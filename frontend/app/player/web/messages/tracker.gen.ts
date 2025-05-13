@@ -1,22 +1,38 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
-import type { RawMessage } from './raw.gen';
-import { MType } from './raw.gen';
+import type { RawMessage } from './raw.gen'
+import { MType } from './raw.gen'
 
-type TrTimestamp = [type: 0, timestamp: number];
+
+type TrTimestamp = [
+  type: 0,
+  timestamp: number,
+]
 
 type TrSetPageLocationDeprecated = [
   type: 4,
   url: string,
   referrer: string,
   navigationStart: number,
-];
+]
 
-type TrSetViewportSize = [type: 5, width: number, height: number];
+type TrSetViewportSize = [
+  type: 5,
+  width: number,
+  height: number,
+]
 
-type TrSetViewportScroll = [type: 6, x: number, y: number];
+type TrSetViewportScroll = [
+  type: 6,
+  x: number,
+  y: number,
+]
 
-type TrCreateDocument = [type: 7];
+type TrCreateDocument = [
+  type: 7,
+  
+]
 
 type TrCreateElementNode = [
   type: 8,
@@ -25,29 +41,77 @@ type TrCreateElementNode = [
   index: number,
   tag: string,
   svg: boolean,
-];
+]
 
-type TrCreateTextNode = [type: 9, id: number, parentID: number, index: number];
+type TrCreateTextNode = [
+  type: 9,
+  id: number,
+  parentID: number,
+  index: number,
+]
 
-type TrMoveNode = [type: 10, id: number, parentID: number, index: number];
+type TrMoveNode = [
+  type: 10,
+  id: number,
+  parentID: number,
+  index: number,
+]
 
-type TrRemoveNode = [type: 11, id: number];
+type TrRemoveNode = [
+  type: 11,
+  id: number,
+]
 
-type TrSetNodeAttribute = [type: 12, id: number, name: string, value: string];
+type TrSetNodeAttribute = [
+  type: 12,
+  id: number,
+  name: string,
+  value: string,
+]
 
-type TrRemoveNodeAttribute = [type: 13, id: number, name: string];
+type TrRemoveNodeAttribute = [
+  type: 13,
+  id: number,
+  name: string,
+]
 
-type TrSetNodeData = [type: 14, id: number, data: string];
+type TrSetNodeData = [
+  type: 14,
+  id: number,
+  data: string,
+]
 
-type TrSetNodeScroll = [type: 16, id: number, x: number, y: number];
+type TrSetNodeScroll = [
+  type: 16,
+  id: number,
+  x: number,
+  y: number,
+]
 
-type TrSetInputTarget = [type: 17, id: number, label: string];
+type TrSetInputTarget = [
+  type: 17,
+  id: number,
+  label: string,
+]
 
-type TrSetInputValue = [type: 18, id: number, value: string, mask: number];
+type TrSetInputValue = [
+  type: 18,
+  id: number,
+  value: string,
+  mask: number,
+]
 
-type TrSetInputChecked = [type: 19, id: number, checked: boolean];
+type TrSetInputChecked = [
+  type: 19,
+  id: number,
+  checked: boolean,
+]
 
-type TrMouseMove = [type: 20, x: number, y: number];
+type TrMouseMove = [
+  type: 20,
+  x: number,
+  y: number,
+]
 
 type TrNetworkRequestDeprecated = [
   type: 21,
@@ -59,9 +123,13 @@ type TrNetworkRequestDeprecated = [
   status: number,
   timestamp: number,
   duration: number,
-];
+]
 
-type TrConsoleLog = [type: 22, level: string, value: string];
+type TrConsoleLog = [
+  type: 22,
+  level: string,
+  value: string,
+]
 
 type TrPageLoadTiming = [
   type: 23,
@@ -74,31 +142,49 @@ type TrPageLoadTiming = [
   loadEventEnd: number,
   firstPaint: number,
   firstContentfulPaint: number,
-];
+]
 
 type TrPageRenderTiming = [
   type: 24,
   speedIndex: number,
   visuallyComplete: number,
   timeToInteractive: number,
-];
+]
 
-type TrCustomEvent = [type: 27, name: string, payload: string];
+type TrCustomEvent = [
+  type: 27,
+  name: string,
+  payload: string,
+]
 
-type TrUserID = [type: 28, id: string];
+type TrUserID = [
+  type: 28,
+  id: string,
+]
 
-type TrUserAnonymousID = [type: 29, id: string];
+type TrUserAnonymousID = [
+  type: 29,
+  id: string,
+]
 
-type TrMetadata = [type: 30, key: string, value: string];
+type TrMetadata = [
+  type: 30,
+  key: string,
+  value: string,
+]
 
-type TrStringDictGlobal = [type: 34, key: number, value: string];
+type TrStringDictGlobal = [
+  type: 34,
+  key: number,
+  value: string,
+]
 
 type TrSetNodeAttributeDictGlobal = [
   type: 35,
   id: number,
   name: number,
   value: number,
-];
+]
 
 type TrCSSInsertRule = [
   type: 37,
@@ -130,24 +216,44 @@ type TrProfiler = [
   duration: number,
   args: string,
   result: string,
-];
+]
 
-type TrOTable = [type: 41, key: string, value: string];
+type TrOTable = [
+  type: 41,
+  key: string,
+  value: string,
+]
 
-type TrStateAction = [type: 42, type: string];
+type TrStateAction = [
+  type: 42,
+  type: string,
+]
 
 type TrReduxDeprecated = [
   type: 44,
   action: string,
   state: string,
   duration: number,
-];
+]
 
-type TrVuex = [type: 45, mutation: string, state: string];
+type TrVuex = [
+  type: 45,
+  mutation: string,
+  state: string,
+]
 
-type TrMobX = [type: 46, type: string, payload: string];
+type TrMobX = [
+  type: 46,
+  type: string,
+  payload: string,
+]
 
-type TrNgRx = [type: 47, action: string, state: string, duration: number];
+type TrNgRx = [
+  type: 47,
+  action: string,
+  state: string,
+  duration: number,
+]
 
 type TrGraphQLDeprecated = [
   type: 48,
@@ -156,7 +262,7 @@ type TrGraphQLDeprecated = [
   variables: string,
   response: string,
   duration: number,
-];
+]
 
 type TrPerformanceTrack = [
   type: 49,
@@ -164,25 +270,33 @@ type TrPerformanceTrack = [
   ticks: number,
   totalJSHeapSize: number,
   usedJSHeapSize: number,
-];
+]
 
-type TrStringDictDeprecated = [type: 50, key: number, value: string];
+type TrStringDictDeprecated = [
+  type: 50,
+  key: number,
+  value: string,
+]
 
 type TrSetNodeAttributeDictDeprecated = [
   type: 51,
   id: number,
   nameKey: number,
   valueKey: number,
-];
+]
 
-type TrStringDict = [type: 43, key: string, value: string];
+type TrStringDict = [
+  type: 43,
+  key: string,
+  value: string,
+]
 
 type TrSetNodeAttributeDict = [
   type: 52,
   id: number,
   name: string,
   value: string,
-];
+]
 
 type TrResourceTimingDeprecated = [
   type: 53,
@@ -194,11 +308,18 @@ type TrResourceTimingDeprecated = [
   decodedBodySize: number,
   url: string,
   initiator: string,
-];
+]
 
-type TrConnectionInformation = [type: 54, downlink: number, type: string];
+type TrConnectionInformation = [
+  type: 54,
+  downlink: number,
+  type: string,
+]
 
-type TrSetPageVisibility = [type: 55, hidden: boolean];
+type TrSetPageVisibility = [
+  type: 55,
+  hidden: boolean,
+]
 
 type TrLoadFontFace = [
   type: 57,
@@ -206,9 +327,12 @@ type TrLoadFontFace = [
   family: string,
   source: string,
   descriptors: string,
-];
+]
 
-type TrSetNodeFocus = [type: 58, id: number];
+type TrSetNodeFocus = [
+  type: 58,
+  id: number,
+]
 
 type TrLongTask = [
   type: 59,
@@ -227,18 +351,26 @@ type TrSetNodeAttributeURLBased = [
   name: string,
   value: string,
   baseURL: string,
-];
+]
 
 type TrSetCSSDataURLBased = [
   type: 61,
   id: number,
   data: string,
   baseURL: string,
-];
+]
 
-type TrTechnicalInfo = [type: 63, type: string, value: string];
+type TrTechnicalInfo = [
+  type: 63,
+  type: string,
+  value: string,
+]
 
-type TrCustomIssue = [type: 64, name: string, payload: string];
+type TrCustomIssue = [
+  type: 64,
+  name: string,
+  payload: string,
+]
 
 type TrCSSInsertRuleURLBased = [
   type: 67,
@@ -256,7 +388,7 @@ type TrMouseClick = [
   selector: string,
   normalizedX: number,
   normalizedY: number,
-];
+]
 
 type TrMouseClickDeprecated = [
   type: 69,
@@ -264,16 +396,20 @@ type TrMouseClickDeprecated = [
   hesitationTime: number,
   label: string,
   selector: string,
-];
+]
 
-type TrCreateIFrameDocument = [type: 70, frameID: number, id: number];
+type TrCreateIFrameDocument = [
+  type: 70,
+  frameID: number,
+  id: number,
+]
 
 type TrAdoptedSSReplaceURLBased = [
   type: 71,
   sheetID: number,
   text: string,
   baseURL: string,
-];
+]
 
 type TrAdoptedSSInsertRuleURLBased = [
   type: 73,
@@ -281,13 +417,25 @@ type TrAdoptedSSInsertRuleURLBased = [
   rule: string,
   index: number,
   baseURL: string,
-];
+]
 
-type TrAdoptedSSDeleteRule = [type: 75, sheetID: number, index: number];
+type TrAdoptedSSDeleteRule = [
+  type: 75,
+  sheetID: number,
+  index: number,
+]
 
-type TrAdoptedSSAddOwner = [type: 76, sheetID: number, id: number];
+type TrAdoptedSSAddOwner = [
+  type: 76,
+  sheetID: number,
+  id: number,
+]
 
-type TrAdoptedSSRemoveOwner = [type: 77, sheetID: number, id: number];
+type TrAdoptedSSRemoveOwner = [
+  type: 77,
+  sheetID: number,
+  id: number,
+]
 
 type TrJSException = [
   type: 78,
@@ -295,9 +443,13 @@ type TrJSException = [
   message: string,
   payload: string,
   metadata: string,
-];
+]
 
-type TrZustand = [type: 79, mutation: string, state: string];
+type TrZustand = [
+  type: 79,
+  mutation: string,
+  state: string,
+]
 
 type TrBatchMetadata = [
   type: 81,
@@ -306,9 +458,13 @@ type TrBatchMetadata = [
   firstIndex: number,
   timestamp: number,
   location: string,
-];
+]
 
-type TrPartitionedMessage = [type: 82, partNo: number, partTotal: number];
+type TrPartitionedMessage = [
+  type: 82,
+  partNo: number,
+  partTotal: number,
+]
 
 type TrNetworkRequest = [
   type: 83,
@@ -321,7 +477,7 @@ type TrNetworkRequest = [
   timestamp: number,
   duration: number,
   transferredBodySize: number,
-];
+]
 
 type TrWSChannel = [
   type: 84,
@@ -331,7 +487,17 @@ type TrWSChannel = [
   timestamp: number,
   dir: string,
   messageType: string,
-];
+]
+
+type TrLongAnimationTask = [
+  type: 89,
+  name: string,
+  duration: number,
+  blockingDuration: number,
+  firstUIEventTimestamp: number,
+  startTime: number,
+  scripts: string,
+]
 
 type TrInputChange = [
   type: 112,
@@ -341,18 +507,24 @@ type TrInputChange = [
   label: string,
   hesitationTime: number,
   inputDuration: number,
-];
+]
 
 type TrSelectionChange = [
   type: 113,
   selectionStart: number,
   selectionEnd: number,
   selection: string,
-];
+]
 
-type TrMouseThrashing = [type: 114, timestamp: number];
+type TrMouseThrashing = [
+  type: 114,
+  timestamp: number,
+]
 
-type TrUnbindNodes = [type: 115, totalRemovedPercent: number];
+type TrUnbindNodes = [
+  type: 115,
+  totalRemovedPercent: number,
+]
 
 type TrResourceTiming = [
   type: 116,
@@ -366,15 +538,28 @@ type TrResourceTiming = [
   initiator: string,
   transferredSize: number,
   cached: boolean,
-];
+]
 
-type TrTabChange = [type: 117, tabId: string];
+type TrTabChange = [
+  type: 117,
+  tabId: string,
+]
 
-type TrTabData = [type: 118, tabId: string];
+type TrTabData = [
+  type: 118,
+  tabId: string,
+]
 
-type TrCanvasNode = [type: 119, nodeId: string, timestamp: number];
+type TrCanvasNode = [
+  type: 119,
+  nodeId: string,
+  timestamp: number,
+]
 
-type TrTagTrigger = [type: 120, tagId: number];
+type TrTagTrigger = [
+  type: 120,
+  tagId: number,
+]
 
 type TrRedux = [
   type: 121,
@@ -382,7 +567,7 @@ type TrRedux = [
   state: string,
   duration: number,
   actionTime: number,
-];
+]
 
 type TrSetPageLocation = [
   type: 122,
@@ -390,7 +575,7 @@ type TrSetPageLocation = [
   referrer: string,
   navigationStart: number,
   documentTitle: string,
-];
+]
 
 type TrGraphQL = [
   type: 123,
@@ -399,53 +584,59 @@ type TrGraphQL = [
   variables: string,
   response: string,
   duration: number,
-];
+]
 
-type TrWebVitals = [type: 124, name: string, value: string];
+type TrWebVitals = [
+  type: 124,
+  name: string,
+  value: string,
+]
 
 
-export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrStringDictGlobal | TrSetNodeAttributeDictGlobal | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDictDeprecated | TrSetNodeAttributeDictDeprecated | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL | TrWebVitals
+export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrStringDictGlobal | TrSetNodeAttributeDictGlobal | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDictDeprecated | TrSetNodeAttributeDictDeprecated | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrLongAnimationTask | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL | TrWebVitals
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
-  switch (tMsg[0]) {
+  switch(tMsg[0]) {
+    
     case 0: {
       return {
         tp: MType.Timestamp,
         timestamp: tMsg[1],
-      };
+      }
     }
-
+    
     case 4: {
       return {
         tp: MType.SetPageLocationDeprecated,
         url: tMsg[1],
         referrer: tMsg[2],
         navigationStart: tMsg[3],
-      };
+      }
     }
-
+    
     case 5: {
       return {
         tp: MType.SetViewportSize,
         width: tMsg[1],
         height: tMsg[2],
-      };
+      }
     }
-
+    
     case 6: {
       return {
         tp: MType.SetViewportScroll,
         x: tMsg[1],
         y: tMsg[2],
-      };
+      }
     }
-
+    
     case 7: {
       return {
         tp: MType.CreateDocument,
-      };
+        
+      }
     }
-
+    
     case 8: {
       return {
         tp: MType.CreateElementNode,
@@ -454,93 +645,93 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         index: tMsg[3],
         tag: tMsg[4],
         svg: tMsg[5],
-      };
+      }
     }
-
+    
     case 9: {
       return {
         tp: MType.CreateTextNode,
         id: tMsg[1],
         parentID: tMsg[2],
         index: tMsg[3],
-      };
+      }
     }
-
+    
     case 10: {
       return {
         tp: MType.MoveNode,
         id: tMsg[1],
         parentID: tMsg[2],
         index: tMsg[3],
-      };
+      }
     }
-
+    
     case 11: {
       return {
         tp: MType.RemoveNode,
         id: tMsg[1],
-      };
+      }
     }
-
+    
     case 12: {
       return {
         tp: MType.SetNodeAttribute,
         id: tMsg[1],
         name: tMsg[2],
         value: tMsg[3],
-      };
+      }
     }
-
+    
     case 13: {
       return {
         tp: MType.RemoveNodeAttribute,
         id: tMsg[1],
         name: tMsg[2],
-      };
+      }
     }
-
+    
     case 14: {
       return {
         tp: MType.SetNodeData,
         id: tMsg[1],
         data: tMsg[2],
-      };
+      }
     }
-
+    
     case 16: {
       return {
         tp: MType.SetNodeScroll,
         id: tMsg[1],
         x: tMsg[2],
         y: tMsg[3],
-      };
+      }
     }
-
+    
     case 18: {
       return {
         tp: MType.SetInputValue,
         id: tMsg[1],
         value: tMsg[2],
         mask: tMsg[3],
-      };
+      }
     }
-
+    
     case 19: {
       return {
         tp: MType.SetInputChecked,
         id: tMsg[1],
         checked: tMsg[2],
-      };
+      }
     }
-
+    
     case 20: {
       return {
         tp: MType.MouseMove,
         x: tMsg[1],
         y: tMsg[2],
-      };
+      }
     }
-
+    
     case 21: {
       return {
         tp: MType.NetworkRequestDeprecated,
@@ -552,32 +743,32 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         status: tMsg[6],
         timestamp: tMsg[7],
         duration: tMsg[8],
-      };
+      }
     }
-
+    
     case 22: {
       return {
         tp: MType.ConsoleLog,
         level: tMsg[1],
         value: tMsg[2],
-      };
+      }
     }
-
+    
     case 34: {
       return {
         tp: MType.StringDictGlobal,
         key: tMsg[1],
         value: tMsg[2],
-      };
+      }
     }
-
+    
     case 35: {
       return {
         tp: MType.SetNodeAttributeDictGlobal,
         id: tMsg[1],
         name: tMsg[2],
         value: tMsg[3],
-      };
+      }
     }
     
     case 37: {
@@ -617,51 +808,51 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         duration: tMsg[2],
         args: tMsg[3],
         result: tMsg[4],
-      };
+      }
     }
-
+    
     case 41: {
       return {
         tp: MType.OTable,
         key: tMsg[1],
         value: tMsg[2],
-      };
+      }
     }
-
+    
     case 44: {
       return {
         tp: MType.ReduxDeprecated,
         action: tMsg[1],
         state: tMsg[2],
         duration: tMsg[3],
-      };
+      }
     }
-
+    
     case 45: {
       return {
         tp: MType.Vuex,
         mutation: tMsg[1],
         state: tMsg[2],
-      };
+      }
     }
-
+    
     case 46: {
       return {
         tp: MType.MobX,
         type: tMsg[1],
         payload: tMsg[2],
-      };
+      }
     }
-
+    
     case 47: {
       return {
         tp: MType.NgRx,
         action: tMsg[1],
         state: tMsg[2],
         duration: tMsg[3],
-      };
+      }
     }
-
+    
     case 48: {
       return {
         tp: MType.GraphQlDeprecated,
@@ -670,9 +861,9 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         variables: tMsg[3],
         response: tMsg[4],
         duration: tMsg[5],
-      };
+      }
     }
-
+    
     case 49: {
       return {
         tp: MType.PerformanceTrack,
@@ -680,43 +871,43 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         ticks: tMsg[2],
         totalJSHeapSize: tMsg[3],
         usedJSHeapSize: tMsg[4],
-      };
+      }
     }
-
+    
     case 50: {
       return {
         tp: MType.StringDictDeprecated,
         key: tMsg[1],
         value: tMsg[2],
-      };
+      }
     }
-
+    
     case 51: {
       return {
         tp: MType.SetNodeAttributeDictDeprecated,
         id: tMsg[1],
         nameKey: tMsg[2],
         valueKey: tMsg[3],
-      };
+      }
     }
-
+    
     case 43: {
       return {
         tp: MType.StringDict,
         key: tMsg[1],
         value: tMsg[2],
-      };
+      }
     }
-
+    
     case 52: {
       return {
         tp: MType.SetNodeAttributeDict,
         id: tMsg[1],
         name: tMsg[2],
         value: tMsg[3],
-      };
+      }
     }
-
+    
     case 53: {
       return {
         tp: MType.ResourceTimingDeprecated,
@@ -728,24 +919,24 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         decodedBodySize: tMsg[6],
         url: tMsg[7],
         initiator: tMsg[8],
-      };
+      }
     }
-
+    
     case 54: {
       return {
         tp: MType.ConnectionInformation,
         downlink: tMsg[1],
         type: tMsg[2],
-      };
+      }
     }
-
+    
     case 55: {
       return {
         tp: MType.SetPageVisibility,
         hidden: tMsg[1],
-      };
+      }
     }
-
+    
     case 57: {
       return {
         tp: MType.LoadFontFace,
@@ -753,14 +944,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         family: tMsg[2],
         source: tMsg[3],
         descriptors: tMsg[4],
-      };
+      }
     }
-
+    
     case 58: {
       return {
         tp: MType.SetNodeFocus,
         id: tMsg[1],
-      };
+      }
     }
     
     case 59: {
@@ -783,16 +974,16 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         name: tMsg[2],
         value: tMsg[3],
         baseURL: tMsg[4],
-      };
+      }
     }
-
+    
     case 61: {
       return {
         tp: MType.SetCssDataURLBased,
         id: tMsg[1],
         data: tMsg[2],
         baseURL: tMsg[3],
-      };
+      }
     }
     
     case 67: {
@@ -814,9 +1005,9 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         selector: tMsg[4],
         normalizedX: tMsg[5],
         normalizedY: tMsg[6],
-      };
+      }
     }
-
+    
     case 69: {
       return {
         tp: MType.MouseClickDeprecated,
@@ -824,26 +1015,26 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         hesitationTime: tMsg[2],
         label: tMsg[3],
         selector: tMsg[4],
-      };
+      }
     }
-
+    
     case 70: {
       return {
         tp: MType.CreateIFrameDocument,
         frameID: tMsg[1],
         id: tMsg[2],
-      };
+      }
     }
-
+    
     case 71: {
       return {
         tp: MType.AdoptedSsReplaceURLBased,
         sheetID: tMsg[1],
         text: tMsg[2],
         baseURL: tMsg[3],
-      };
+      }
     }
-
+    
     case 73: {
       return {
         tp: MType.AdoptedSsInsertRuleURLBased,
@@ -851,41 +1042,41 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         rule: tMsg[2],
         index: tMsg[3],
         baseURL: tMsg[4],
-      };
+      }
     }
-
+    
     case 75: {
       return {
         tp: MType.AdoptedSsDeleteRule,
         sheetID: tMsg[1],
         index: tMsg[2],
-      };
+      }
     }
-
+    
     case 76: {
       return {
         tp: MType.AdoptedSsAddOwner,
         sheetID: tMsg[1],
         id: tMsg[2],
-      };
+      }
     }
-
+    
     case 77: {
       return {
         tp: MType.AdoptedSsRemoveOwner,
         sheetID: tMsg[1],
         id: tMsg[2],
-      };
+      }
     }
-
+    
     case 79: {
       return {
         tp: MType.Zustand,
         mutation: tMsg[1],
         state: tMsg[2],
-      };
+      }
     }
-
+    
     case 83: {
       return {
         tp: MType.NetworkRequest,
@@ -898,9 +1089,9 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         timestamp: tMsg[7],
         duration: tMsg[8],
         transferredBodySize: tMsg[9],
-      };
+      }
     }
-
+    
     case 84: {
       return {
         tp: MType.WsChannel,
@@ -910,25 +1101,37 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         timestamp: tMsg[4],
         dir: tMsg[5],
         messageType: tMsg[6],
-      };
+      }
     }
-
+    
+    case 89: {
+      return {
+        tp: MType.LongAnimationTask,
+        name: tMsg[1],
+        duration: tMsg[2],
+        blockingDuration: tMsg[3],
+        firstUIEventTimestamp: tMsg[4],
+        startTime: tMsg[5],
+        scripts: tMsg[6],
+      }
+    }
+    
     case 113: {
       return {
         tp: MType.SelectionChange,
         selectionStart: tMsg[1],
         selectionEnd: tMsg[2],
         selection: tMsg[3],
-      };
+      }
     }
-
+    
     case 114: {
       return {
         tp: MType.MouseThrashing,
         timestamp: tMsg[1],
-      };
+      }
     }
-
+    
     case 116: {
       return {
         tp: MType.ResourceTiming,
@@ -942,38 +1145,38 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         initiator: tMsg[8],
         transferredSize: tMsg[9],
         cached: tMsg[10],
-      };
+      }
     }
-
+    
     case 117: {
       return {
         tp: MType.TabChange,
         tabId: tMsg[1],
-      };
+      }
     }
-
+    
     case 118: {
       return {
         tp: MType.TabData,
         tabId: tMsg[1],
-      };
+      }
     }
-
+    
     case 119: {
       return {
         tp: MType.CanvasNode,
         nodeId: tMsg[1],
         timestamp: tMsg[2],
-      };
+      }
     }
-
+    
     case 120: {
       return {
         tp: MType.TagTrigger,
         tagId: tMsg[1],
-      };
+      }
     }
-
+    
     case 121: {
       return {
         tp: MType.Redux,
@@ -981,9 +1184,9 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         state: tMsg[2],
         duration: tMsg[3],
         actionTime: tMsg[4],
-      };
+      }
     }
-
+    
     case 122: {
       return {
         tp: MType.SetPageLocation,
@@ -991,9 +1194,9 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         referrer: tMsg[2],
         navigationStart: tMsg[3],
         documentTitle: tMsg[4],
-      };
+      }
     }
-
+    
     case 123: {
       return {
         tp: MType.GraphQl,
@@ -1002,10 +1205,11 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         variables: tMsg[3],
         response: tMsg[4],
         duration: tMsg[5],
-      };
+      }
     }
-
+    
     default:
-      return null;
+      return null
   }
+
 }

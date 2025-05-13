@@ -360,6 +360,19 @@ class MessageCodec(Codec):
                 web_vitals=self.read_string(reader)
             )
 
+        if message_id == 34:
+            return StringDictGlobal(
+                key=self.read_uint(reader),
+                value=self.read_string(reader)
+            )
+
+        if message_id == 35:
+            return SetNodeAttributeDictGlobal(
+                id=self.read_uint(reader),
+                name=self.read_uint(reader),
+                value=self.read_uint(reader)
+            )
+
         if message_id == 37:
             return CSSInsertRule(
                 id=self.read_uint(reader),
@@ -714,6 +727,16 @@ class MessageCodec(Codec):
                 timestamp=self.read_uint(reader),
                 dir=self.read_string(reader),
                 message_type=self.read_string(reader)
+            )
+
+        if message_id == 89:
+            return LongAnimationTask(
+                name=self.read_string(reader),
+                duration=self.read_int(reader),
+                blocking_duration=self.read_int(reader),
+                first_ui_event_timestamp=self.read_int(reader),
+                start_time=self.read_int(reader),
+                scripts=self.read_string(reader)
             )
 
         if message_id == 112:

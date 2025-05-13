@@ -511,6 +511,30 @@ cdef class PageEvent(PyMessage):
         self.web_vitals = web_vitals
 
 
+cdef class StringDictGlobal(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long key
+    cdef public str value
+
+    def __init__(self, unsigned long key, str value):
+        self.__id__ = 34
+        self.key = key
+        self.value = value
+
+
+cdef class SetNodeAttributeDictGlobal(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long id
+    cdef public unsigned long name
+    cdef public unsigned long value
+
+    def __init__(self, unsigned long id, unsigned long name, unsigned long value):
+        self.__id__ = 35
+        self.id = id
+        self.name = name
+        self.value = value
+
+
 cdef class CSSInsertRule(PyMessage):
     cdef public int __id__
     cdef public unsigned long id
@@ -1174,6 +1198,25 @@ cdef class WSChannel(PyMessage):
         self.timestamp = timestamp
         self.dir = dir
         self.message_type = message_type
+
+
+cdef class LongAnimationTask(PyMessage):
+    cdef public int __id__
+    cdef public str name
+    cdef public long duration
+    cdef public long blocking_duration
+    cdef public long first_ui_event_timestamp
+    cdef public long start_time
+    cdef public str scripts
+
+    def __init__(self, str name, long duration, long blocking_duration, long first_ui_event_timestamp, long start_time, str scripts):
+        self.__id__ = 89
+        self.name = name
+        self.duration = duration
+        self.blocking_duration = blocking_duration
+        self.first_ui_event_timestamp = first_ui_event_timestamp
+        self.start_time = start_time
+        self.scripts = scripts
 
 
 cdef class InputChange(PyMessage):

@@ -1,21 +1,21 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
-import PrimitiveReader from './PrimitiveReader';
-import { MType } from './raw.gen';
-import type { RawMessage } from './raw.gen';
+import PrimitiveReader from './PrimitiveReader'
+import { MType } from './raw.gen'
+import type { RawMessage } from './raw.gen'
+
 
 export default class RawMessageReader extends PrimitiveReader {
   readMessage(): RawMessage | null {
-    const p = this.p;
+    const p = this.p
     const resetPointer = () => {
-      this.p = p;
-      return null;
-    };
-
-    const tp = this.readUint();
-    if (tp === null) {
-      return resetPointer();
+      this.p = p
+      return null
     }
+
+    const tp = this.readUint()
+    if (tp === null) { return resetPointer() }
 
     switch (tp) {
 
@@ -730,6 +730,24 @@ export default class RawMessageReader extends PrimitiveReader {
         timestamp,
         dir,
         messageType,
+      };
+    }
+
+    case 89: {
+      const name = this.readString(); if (name === null) { return resetPointer() }
+      const duration = this.readInt(); if (duration === null) { return resetPointer() }
+      const blockingDuration = this.readInt(); if (blockingDuration === null) { return resetPointer() }
+      const firstUIEventTimestamp = this.readInt(); if (firstUIEventTimestamp === null) { return resetPointer() }
+      const startTime = this.readInt(); if (startTime === null) { return resetPointer() }
+      const scripts = this.readString(); if (scripts === null) { return resetPointer() }
+      return {
+        tp: MType.LongAnimationTask,
+        name,
+        duration,
+        blockingDuration,
+        firstUIEventTimestamp,
+        startTime,
+        scripts,
       };
     }
 

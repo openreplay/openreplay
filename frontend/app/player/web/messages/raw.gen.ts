@@ -1,4 +1,5 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
 export const enum MType {
   Timestamp = 0,
@@ -59,6 +60,7 @@ export const enum MType {
   Zustand = 79,
   NetworkRequest = 83,
   WsChannel = 84,
+  LongAnimationTask = 89,
   SelectionChange = 113,
   MouseThrashing = 114,
   ResourceTiming = 116,
@@ -81,142 +83,144 @@ export const enum MType {
   MobileIssueEvent = 111,
 }
 
+
 export interface RawTimestamp {
-  tp: MType.Timestamp;
-  timestamp: number;
+  tp: MType.Timestamp,
+  timestamp: number,
 }
 
 export interface RawSetPageLocationDeprecated {
-  tp: MType.SetPageLocationDeprecated;
-  url: string;
-  referrer: string;
-  navigationStart: number;
+  tp: MType.SetPageLocationDeprecated,
+  url: string,
+  referrer: string,
+  navigationStart: number,
 }
 
 export interface RawSetViewportSize {
-  tp: MType.SetViewportSize;
-  width: number;
-  height: number;
+  tp: MType.SetViewportSize,
+  width: number,
+  height: number,
 }
 
 export interface RawSetViewportScroll {
-  tp: MType.SetViewportScroll;
-  x: number;
-  y: number;
+  tp: MType.SetViewportScroll,
+  x: number,
+  y: number,
 }
 
 export interface RawCreateDocument {
-  tp: MType.CreateDocument;
+  tp: MType.CreateDocument,
+
 }
 
 export interface RawCreateElementNode {
-  tp: MType.CreateElementNode;
-  id: number;
-  parentID: number;
-  index: number;
-  tag: string;
-  svg: boolean;
+  tp: MType.CreateElementNode,
+  id: number,
+  parentID: number,
+  index: number,
+  tag: string,
+  svg: boolean,
 }
 
 export interface RawCreateTextNode {
-  tp: MType.CreateTextNode;
-  id: number;
-  parentID: number;
-  index: number;
+  tp: MType.CreateTextNode,
+  id: number,
+  parentID: number,
+  index: number,
 }
 
 export interface RawMoveNode {
-  tp: MType.MoveNode;
-  id: number;
-  parentID: number;
-  index: number;
+  tp: MType.MoveNode,
+  id: number,
+  parentID: number,
+  index: number,
 }
 
 export interface RawRemoveNode {
-  tp: MType.RemoveNode;
-  id: number;
+  tp: MType.RemoveNode,
+  id: number,
 }
 
 export interface RawSetNodeAttribute {
-  tp: MType.SetNodeAttribute;
-  id: number;
-  name: string;
-  value: string;
+  tp: MType.SetNodeAttribute,
+  id: number,
+  name: string,
+  value: string,
 }
 
 export interface RawRemoveNodeAttribute {
-  tp: MType.RemoveNodeAttribute;
-  id: number;
-  name: string;
+  tp: MType.RemoveNodeAttribute,
+  id: number,
+  name: string,
 }
 
 export interface RawSetNodeData {
-  tp: MType.SetNodeData;
-  id: number;
-  data: string;
+  tp: MType.SetNodeData,
+  id: number,
+  data: string,
 }
 
 export interface RawSetCssData {
-  tp: MType.SetCssData;
-  id: number;
-  data: string;
+  tp: MType.SetCssData,
+  id: number,
+  data: string,
 }
 
 export interface RawSetNodeScroll {
-  tp: MType.SetNodeScroll;
-  id: number;
-  x: number;
-  y: number;
+  tp: MType.SetNodeScroll,
+  id: number,
+  x: number,
+  y: number,
 }
 
 export interface RawSetInputValue {
-  tp: MType.SetInputValue;
-  id: number;
-  value: string;
-  mask: number;
+  tp: MType.SetInputValue,
+  id: number,
+  value: string,
+  mask: number,
 }
 
 export interface RawSetInputChecked {
-  tp: MType.SetInputChecked;
-  id: number;
-  checked: boolean;
+  tp: MType.SetInputChecked,
+  id: number,
+  checked: boolean,
 }
 
 export interface RawMouseMove {
-  tp: MType.MouseMove;
-  x: number;
-  y: number;
+  tp: MType.MouseMove,
+  x: number,
+  y: number,
 }
 
 export interface RawNetworkRequestDeprecated {
-  tp: MType.NetworkRequestDeprecated;
-  type: string;
-  method: string;
-  url: string;
-  request: string;
-  response: string;
-  status: number;
-  timestamp: number;
-  duration: number;
+  tp: MType.NetworkRequestDeprecated,
+  type: string,
+  method: string,
+  url: string,
+  request: string,
+  response: string,
+  status: number,
+  timestamp: number,
+  duration: number,
 }
 
 export interface RawConsoleLog {
-  tp: MType.ConsoleLog;
-  level: string;
-  value: string;
+  tp: MType.ConsoleLog,
+  level: string,
+  value: string,
 }
 
 export interface RawStringDictGlobal {
-  tp: MType.StringDictGlobal;
-  key: number;
-  value: string;
+  tp: MType.StringDictGlobal,
+  key: number,
+  value: string,
 }
 
 export interface RawSetNodeAttributeDictGlobal {
-  tp: MType.SetNodeAttributeDictGlobal;
-  id: number;
-  name: number;
-  value: number;
+  tp: MType.SetNodeAttributeDictGlobal,
+  id: number,
+  name: number,
+  value: number,
 }
 
 export interface RawCssInsertRule {
@@ -244,122 +248,122 @@ export interface RawFetch {
 }
 
 export interface RawProfiler {
-  tp: MType.Profiler;
-  name: string;
-  duration: number;
-  args: string;
-  result: string;
+  tp: MType.Profiler,
+  name: string,
+  duration: number,
+  args: string,
+  result: string,
 }
 
 export interface RawOTable {
-  tp: MType.OTable;
-  key: string;
-  value: string;
+  tp: MType.OTable,
+  key: string,
+  value: string,
 }
 
 export interface RawReduxDeprecated {
-  tp: MType.ReduxDeprecated;
-  action: string;
-  state: string;
-  duration: number;
+  tp: MType.ReduxDeprecated,
+  action: string,
+  state: string,
+  duration: number,
 }
 
 export interface RawVuex {
-  tp: MType.Vuex;
-  mutation: string;
-  state: string;
+  tp: MType.Vuex,
+  mutation: string,
+  state: string,
 }
 
 export interface RawMobX {
-  tp: MType.MobX;
-  type: string;
-  payload: string;
+  tp: MType.MobX,
+  type: string,
+  payload: string,
 }
 
 export interface RawNgRx {
-  tp: MType.NgRx;
-  action: string;
-  state: string;
-  duration: number;
+  tp: MType.NgRx,
+  action: string,
+  state: string,
+  duration: number,
 }
 
 export interface RawGraphQlDeprecated {
-  tp: MType.GraphQlDeprecated;
-  operationKind: string;
-  operationName: string;
-  variables: string;
-  response: string;
-  duration: number;
+  tp: MType.GraphQlDeprecated,
+  operationKind: string,
+  operationName: string,
+  variables: string,
+  response: string,
+  duration: number,
 }
 
 export interface RawPerformanceTrack {
-  tp: MType.PerformanceTrack;
-  frames: number;
-  ticks: number;
-  totalJSHeapSize: number;
-  usedJSHeapSize: number;
+  tp: MType.PerformanceTrack,
+  frames: number,
+  ticks: number,
+  totalJSHeapSize: number,
+  usedJSHeapSize: number,
 }
 
 export interface RawStringDictDeprecated {
-  tp: MType.StringDictDeprecated;
-  key: number;
-  value: string;
+  tp: MType.StringDictDeprecated,
+  key: number,
+  value: string,
 }
 
 export interface RawSetNodeAttributeDictDeprecated {
-  tp: MType.SetNodeAttributeDictDeprecated;
-  id: number;
-  nameKey: number;
-  valueKey: number;
+  tp: MType.SetNodeAttributeDictDeprecated,
+  id: number,
+  nameKey: number,
+  valueKey: number,
 }
 
 export interface RawStringDict {
-  tp: MType.StringDict;
-  key: string;
-  value: string;
+  tp: MType.StringDict,
+  key: string,
+  value: string,
 }
 
 export interface RawSetNodeAttributeDict {
-  tp: MType.SetNodeAttributeDict;
-  id: number;
-  name: string;
-  value: string;
+  tp: MType.SetNodeAttributeDict,
+  id: number,
+  name: string,
+  value: string,
 }
 
 export interface RawResourceTimingDeprecated {
-  tp: MType.ResourceTimingDeprecated;
-  timestamp: number;
-  duration: number;
-  ttfb: number;
-  headerSize: number;
-  encodedBodySize: number;
-  decodedBodySize: number;
-  url: string;
-  initiator: string;
+  tp: MType.ResourceTimingDeprecated,
+  timestamp: number,
+  duration: number,
+  ttfb: number,
+  headerSize: number,
+  encodedBodySize: number,
+  decodedBodySize: number,
+  url: string,
+  initiator: string,
 }
 
 export interface RawConnectionInformation {
-  tp: MType.ConnectionInformation;
-  downlink: number;
-  type: string;
+  tp: MType.ConnectionInformation,
+  downlink: number,
+  type: string,
 }
 
 export interface RawSetPageVisibility {
-  tp: MType.SetPageVisibility;
-  hidden: boolean;
+  tp: MType.SetPageVisibility,
+  hidden: boolean,
 }
 
 export interface RawLoadFontFace {
-  tp: MType.LoadFontFace;
-  parentID: number;
-  family: string;
-  source: string;
-  descriptors: string;
+  tp: MType.LoadFontFace,
+  parentID: number,
+  family: string,
+  source: string,
+  descriptors: string,
 }
 
 export interface RawSetNodeFocus {
-  tp: MType.SetNodeFocus;
-  id: number;
+  tp: MType.SetNodeFocus,
+  id: number,
 }
 
 export interface RawLongTask {
@@ -374,18 +378,18 @@ export interface RawLongTask {
 }
 
 export interface RawSetNodeAttributeURLBased {
-  tp: MType.SetNodeAttributeURLBased;
-  id: number;
-  name: string;
-  value: string;
-  baseURL: string;
+  tp: MType.SetNodeAttributeURLBased,
+  id: number,
+  name: string,
+  value: string,
+  baseURL: string,
 }
 
 export interface RawSetCssDataURLBased {
-  tp: MType.SetCssDataURLBased;
-  id: number;
-  data: string;
-  baseURL: string;
+  tp: MType.SetCssDataURLBased,
+  id: number,
+  data: string,
+  baseURL: string,
 }
 
 export interface RawCssInsertRuleURLBased {
@@ -397,266 +401,276 @@ export interface RawCssInsertRuleURLBased {
 }
 
 export interface RawMouseClick {
-  tp: MType.MouseClick;
-  id: number;
-  hesitationTime: number;
-  label: string;
-  selector: string;
-  normalizedX: number;
-  normalizedY: number;
+  tp: MType.MouseClick,
+  id: number,
+  hesitationTime: number,
+  label: string,
+  selector: string,
+  normalizedX: number,
+  normalizedY: number,
 }
 
 export interface RawMouseClickDeprecated {
-  tp: MType.MouseClickDeprecated;
-  id: number;
-  hesitationTime: number;
-  label: string;
-  selector: string;
+  tp: MType.MouseClickDeprecated,
+  id: number,
+  hesitationTime: number,
+  label: string,
+  selector: string,
 }
 
 export interface RawCreateIFrameDocument {
-  tp: MType.CreateIFrameDocument;
-  frameID: number;
-  id: number;
+  tp: MType.CreateIFrameDocument,
+  frameID: number,
+  id: number,
 }
 
 export interface RawAdoptedSsReplaceURLBased {
-  tp: MType.AdoptedSsReplaceURLBased;
-  sheetID: number;
-  text: string;
-  baseURL: string;
+  tp: MType.AdoptedSsReplaceURLBased,
+  sheetID: number,
+  text: string,
+  baseURL: string,
 }
 
 export interface RawAdoptedSsReplace {
-  tp: MType.AdoptedSsReplace;
-  sheetID: number;
-  text: string;
+  tp: MType.AdoptedSsReplace,
+  sheetID: number,
+  text: string,
 }
 
 export interface RawAdoptedSsInsertRuleURLBased {
-  tp: MType.AdoptedSsInsertRuleURLBased;
-  sheetID: number;
-  rule: string;
-  index: number;
-  baseURL: string;
+  tp: MType.AdoptedSsInsertRuleURLBased,
+  sheetID: number,
+  rule: string,
+  index: number,
+  baseURL: string,
 }
 
 export interface RawAdoptedSsInsertRule {
-  tp: MType.AdoptedSsInsertRule;
-  sheetID: number;
-  rule: string;
-  index: number;
+  tp: MType.AdoptedSsInsertRule,
+  sheetID: number,
+  rule: string,
+  index: number,
 }
 
 export interface RawAdoptedSsDeleteRule {
-  tp: MType.AdoptedSsDeleteRule;
-  sheetID: number;
-  index: number;
+  tp: MType.AdoptedSsDeleteRule,
+  sheetID: number,
+  index: number,
 }
 
 export interface RawAdoptedSsAddOwner {
-  tp: MType.AdoptedSsAddOwner;
-  sheetID: number;
-  id: number;
+  tp: MType.AdoptedSsAddOwner,
+  sheetID: number,
+  id: number,
 }
 
 export interface RawAdoptedSsRemoveOwner {
-  tp: MType.AdoptedSsRemoveOwner;
-  sheetID: number;
-  id: number;
+  tp: MType.AdoptedSsRemoveOwner,
+  sheetID: number,
+  id: number,
 }
 
 export interface RawZustand {
-  tp: MType.Zustand;
-  mutation: string;
-  state: string;
+  tp: MType.Zustand,
+  mutation: string,
+  state: string,
 }
 
 export interface RawNetworkRequest {
-  tp: MType.NetworkRequest;
-  type: string;
-  method: string;
-  url: string;
-  request: string;
-  response: string;
-  status: number;
-  timestamp: number;
-  duration: number;
-  transferredBodySize: number;
+  tp: MType.NetworkRequest,
+  type: string,
+  method: string,
+  url: string,
+  request: string,
+  response: string,
+  status: number,
+  timestamp: number,
+  duration: number,
+  transferredBodySize: number,
 }
 
 export interface RawWsChannel {
-  tp: MType.WsChannel;
-  chType: string;
-  channelName: string;
-  data: string;
-  timestamp: number;
-  dir: string;
-  messageType: string;
+  tp: MType.WsChannel,
+  chType: string,
+  channelName: string,
+  data: string,
+  timestamp: number,
+  dir: string,
+  messageType: string,
+}
+
+export interface RawLongAnimationTask {
+  tp: MType.LongAnimationTask,
+  name: string,
+  duration: number,
+  blockingDuration: number,
+  firstUIEventTimestamp: number,
+  startTime: number,
+  scripts: string,
 }
 
 export interface RawSelectionChange {
-  tp: MType.SelectionChange;
-  selectionStart: number;
-  selectionEnd: number;
-  selection: string;
+  tp: MType.SelectionChange,
+  selectionStart: number,
+  selectionEnd: number,
+  selection: string,
 }
 
 export interface RawMouseThrashing {
-  tp: MType.MouseThrashing;
-  timestamp: number;
+  tp: MType.MouseThrashing,
+  timestamp: number,
 }
 
 export interface RawResourceTiming {
-  tp: MType.ResourceTiming;
-  timestamp: number;
-  duration: number;
-  ttfb: number;
-  headerSize: number;
-  encodedBodySize: number;
-  decodedBodySize: number;
-  url: string;
-  initiator: string;
-  transferredSize: number;
-  cached: boolean;
+  tp: MType.ResourceTiming,
+  timestamp: number,
+  duration: number,
+  ttfb: number,
+  headerSize: number,
+  encodedBodySize: number,
+  decodedBodySize: number,
+  url: string,
+  initiator: string,
+  transferredSize: number,
+  cached: boolean,
 }
 
 export interface RawTabChange {
-  tp: MType.TabChange;
-  tabId: string;
+  tp: MType.TabChange,
+  tabId: string,
 }
 
 export interface RawTabData {
-  tp: MType.TabData;
-  tabId: string;
+  tp: MType.TabData,
+  tabId: string,
 }
 
 export interface RawCanvasNode {
-  tp: MType.CanvasNode;
-  nodeId: string;
-  timestamp: number;
+  tp: MType.CanvasNode,
+  nodeId: string,
+  timestamp: number,
 }
 
 export interface RawTagTrigger {
-  tp: MType.TagTrigger;
-  tagId: number;
+  tp: MType.TagTrigger,
+  tagId: number,
 }
 
 export interface RawRedux {
-  tp: MType.Redux;
-  action: string;
-  state: string;
-  duration: number;
-  actionTime: number;
+  tp: MType.Redux,
+  action: string,
+  state: string,
+  duration: number,
+  actionTime: number,
 }
 
 export interface RawSetPageLocation {
-  tp: MType.SetPageLocation;
-  url: string;
-  referrer: string;
-  navigationStart: number;
-  documentTitle: string;
+  tp: MType.SetPageLocation,
+  url: string,
+  referrer: string,
+  navigationStart: number,
+  documentTitle: string,
 }
 
 export interface RawGraphQl {
-  tp: MType.GraphQl;
-  operationKind: string;
-  operationName: string;
-  variables: string;
-  response: string;
-  duration: number;
+  tp: MType.GraphQl,
+  operationKind: string,
+  operationName: string,
+  variables: string,
+  response: string,
+  duration: number,
 }
 
 export interface RawMobileEvent {
-  tp: MType.MobileEvent;
-  timestamp: number;
-  length: number;
-  name: string;
-  payload: string;
+  tp: MType.MobileEvent,
+  timestamp: number,
+  length: number,
+  name: string,
+  payload: string,
 }
 
 export interface RawMobileScreenChanges {
-  tp: MType.MobileScreenChanges;
-  timestamp: number;
-  length: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  tp: MType.MobileScreenChanges,
+  timestamp: number,
+  length: number,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
 }
 
 export interface RawMobileClickEvent {
-  tp: MType.MobileClickEvent;
-  timestamp: number;
-  length: number;
-  label: string;
-  x: number;
-  y: number;
+  tp: MType.MobileClickEvent,
+  timestamp: number,
+  length: number,
+  label: string,
+  x: number,
+  y: number,
 }
 
 export interface RawMobileInputEvent {
-  tp: MType.MobileInputEvent;
-  timestamp: number;
-  length: number;
-  value: string;
-  valueMasked: boolean;
-  label: string;
+  tp: MType.MobileInputEvent,
+  timestamp: number,
+  length: number,
+  value: string,
+  valueMasked: boolean,
+  label: string,
 }
 
 export interface RawMobilePerformanceEvent {
-  tp: MType.MobilePerformanceEvent;
-  timestamp: number;
-  length: number;
-  name: string;
-  value: number;
+  tp: MType.MobilePerformanceEvent,
+  timestamp: number,
+  length: number,
+  name: string,
+  value: number,
 }
 
 export interface RawMobileLog {
-  tp: MType.MobileLog;
-  timestamp: number;
-  length: number;
-  severity: string;
-  content: string;
+  tp: MType.MobileLog,
+  timestamp: number,
+  length: number,
+  severity: string,
+  content: string,
 }
 
 export interface RawMobileInternalError {
-  tp: MType.MobileInternalError;
-  timestamp: number;
-  length: number;
-  content: string;
+  tp: MType.MobileInternalError,
+  timestamp: number,
+  length: number,
+  content: string,
 }
 
 export interface RawMobileNetworkCall {
-  tp: MType.MobileNetworkCall;
-  timestamp: number;
-  length: number;
-  type: string;
-  method: string;
-  url: string;
-  request: string;
-  response: string;
-  status: number;
-  duration: number;
+  tp: MType.MobileNetworkCall,
+  timestamp: number,
+  length: number,
+  type: string,
+  method: string,
+  url: string,
+  request: string,
+  response: string,
+  status: number,
+  duration: number,
 }
 
 export interface RawMobileSwipeEvent {
-  tp: MType.MobileSwipeEvent;
-  timestamp: number;
-  length: number;
-  label: string;
-  x: number;
-  y: number;
-  direction: string;
+  tp: MType.MobileSwipeEvent,
+  timestamp: number,
+  length: number,
+  label: string,
+  x: number,
+  y: number,
+  direction: string,
 }
 
 export interface RawMobileIssueEvent {
-  tp: MType.MobileIssueEvent;
-  timestamp: number;
-  type: string;
-  contextString: string;
-  context: string;
-  payload: string;
+  tp: MType.MobileIssueEvent,
+  timestamp: number,
+  type: string,
+  contextString: string,
+  context: string,
+  payload: string,
 }
 
 
-export type RawMessage = RawTimestamp | RawSetPageLocationDeprecated | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequestDeprecated | RawConsoleLog | RawStringDictGlobal | RawSetNodeAttributeDictGlobal | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawReduxDeprecated | RawVuex | RawMobX | RawNgRx | RawGraphQlDeprecated | RawPerformanceTrack | RawStringDictDeprecated | RawSetNodeAttributeDictDeprecated | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawMouseClickDeprecated | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawNetworkRequest | RawWsChannel | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawTabChange | RawTabData | RawCanvasNode | RawTagTrigger | RawRedux | RawSetPageLocation | RawGraphQl | RawMobileEvent | RawMobileScreenChanges | RawMobileClickEvent | RawMobileInputEvent | RawMobilePerformanceEvent | RawMobileLog | RawMobileInternalError | RawMobileNetworkCall | RawMobileSwipeEvent | RawMobileIssueEvent;
+export type RawMessage = RawTimestamp | RawSetPageLocationDeprecated | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequestDeprecated | RawConsoleLog | RawStringDictGlobal | RawSetNodeAttributeDictGlobal | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawReduxDeprecated | RawVuex | RawMobX | RawNgRx | RawGraphQlDeprecated | RawPerformanceTrack | RawStringDictDeprecated | RawSetNodeAttributeDictDeprecated | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawMouseClickDeprecated | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawNetworkRequest | RawWsChannel | RawLongAnimationTask | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawTabChange | RawTabData | RawCanvasNode | RawTagTrigger | RawRedux | RawSetPageLocation | RawGraphQl | RawMobileEvent | RawMobileScreenChanges | RawMobileClickEvent | RawMobileInputEvent | RawMobilePerformanceEvent | RawMobileLog | RawMobileInternalError | RawMobileNetworkCall | RawMobileSwipeEvent | RawMobileIssueEvent;
