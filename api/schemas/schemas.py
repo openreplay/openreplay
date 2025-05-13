@@ -3,12 +3,13 @@ from typing import Optional, List, Union, Literal
 
 from pydantic import Field, EmailStr, HttpUrl, SecretStr, AnyHttpUrl
 from pydantic import field_validator, model_validator, computed_field
+from pydantic import AfterValidator
 from pydantic.functional_validators import BeforeValidator
 
 from chalicelib.utils.TimeUTC import TimeUTC
 from .overrides import BaseModel, Enum, ORUnion
 from .transformers_validators import transform_email, remove_whitespace, remove_duplicate_values, single_to_list, \
-    force_is_event, NAME_PATTERN, int_to_string, check_alphanumeric
+    force_is_event, NAME_PATTERN, int_to_string, check_alphanumeric, check_regex
 
 
 class _GRecaptcha(BaseModel):
@@ -537,7 +538,7 @@ class GraphqlFilterType(str, Enum):
 class RequestGraphqlFilterSchema(BaseModel):
     type: Union[FetchFilterType, GraphqlFilterType] = Field(...)
     value: List[Union[int, str]] = Field(...)
-    operator: Union[SearchEventOperator, MathOperator] = Field(...)
+    operator: Annotated[Union[SearchEventOperator, MathOperator], AfterValidator(check_regex)] = Field(...)
 
     @model_validator(mode="before")
     @classmethod
@@ -612,6 +613,13 @@ class PropertyFilterSchema(BaseModel):
             self.name = self.name.value
         return self
 
+    @model_validator(mode='after')
+    def _check_regex_value(self):
+        if self.operator == SearchEventOperator.PATTERN:
+            for v in self.value:
+                check_regex(v)
+        return self
+
 
 class EventPropertiesSchema(BaseModel):
     operator: Literal["and", "or"] = Field(...)
@@ -655,6 +663,13 @@ class SessionSearchEventSchema(BaseModel):
         if isinstance(self.operator, ClickEventExtraOperator):
             assert self.type == EventType.CLICK, \
                 f"operator:{self.operator} is only available for event-type: {EventType.CLICK}"
+        return self
+
+    @model_validator(mode='after')
+    def _check_regex_value(self):
+        if self.operator == SearchEventOperator.PATTERN:
+            for v in self.value:
+                check_regex(v)
         return self
 
 
@@ -712,6 +727,13 @@ class SessionSearchFilterSchema(BaseModel):
             else:
                 raise ValueError(f"operator should be of type SearchEventOperator for {self.type} filter")
 
+        return self
+
+    @model_validator(mode='after')
+    def _check_regex_value(self):
+        if self.operator == SearchEventOperator.PATTERN:
+            for v in self.value:
+                check_regex(v)
         return self
 
 
@@ -880,6 +902,13 @@ class PathAnalysisSubFilterSchema(BaseModel):
         values["isEvent"] = True
         return values
 
+    @model_validator(mode='after')
+    def _check_regex_value(self):
+        if self.operator == SearchEventOperator.PATTERN:
+            for v in self.value:
+                check_regex(v)
+        return self
+
 
 class _ProductAnalyticsFilter(BaseModel):
     is_event: Literal[False] = False
@@ -890,6 +919,13 @@ class _ProductAnalyticsFilter(BaseModel):
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
 
+    @model_validator(mode='after')
+    def _check_regex_value(self):
+        if self.operator == SearchEventOperator.PATTERN:
+            for v in self.value:
+                check_regex(v)
+        return self
+
 
 class _ProductAnalyticsEventFilter(BaseModel):
     is_event: Literal[True] = True
@@ -899,6 +935,13 @@ class _ProductAnalyticsEventFilter(BaseModel):
     value: List[Union[IssueType, PlatformType, int, str]] = Field(...)
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
+
+    @model_validator(mode='after')
+    def _check_regex_value(self):
+        if self.operator == SearchEventOperator.PATTERN:
+            for v in self.value:
+                check_regex(v)
+        return self
 
 
 # this type is created to allow mixing events&filters and specifying a discriminator for PathAnalysis series filter
@@ -1342,6 +1385,13 @@ class LiveSessionSearchFilterSchema(BaseModel):
         if self.type is not None and self.type == LiveFilterType.METADATA:
             assert self.source is not None, "source should not be null for METADATA type"
             assert len(self.source) > 0, "source should not be empty for METADATA type"
+        return self
+
+    @model_validator(mode='after')
+    def _check_regex_value(self):
+        if self.operator == SearchEventOperator.PATTERN:
+            for v in self.value:
+                check_regex(v)
         return self
 
 
