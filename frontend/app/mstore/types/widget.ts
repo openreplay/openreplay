@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+import { makeAutoObservable, runInAction, observable } from 'mobx';
 import FilterSeries from './filterSeries';
 import { DateTime } from 'luxon';
 import Session from 'App/mstore/types/session';
@@ -433,12 +433,14 @@ export default class Widget {
     }
 
     if (!isComparison) {
-      runInAction(() => {
-        Object.assign(this.data, _data);
-      });
+      this.setDataValue(_data);
     }
     return _data;
   }
+
+  setDataValue = (data: any) => {
+    this.data = observable({ ...data });
+  };
 
   fetchSessions(metricId: any, filter: any): Promise<any> {
     return new Promise((resolve) => {
