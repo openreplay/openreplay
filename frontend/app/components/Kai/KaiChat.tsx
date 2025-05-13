@@ -24,20 +24,19 @@ function KaiChat() {
   const [initialMsg, setInitialMsg] = React.useState<string | null>(null);
   const { showModal, hideModal } = useModal();
   const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const threadIdFromUrl = params.get('threadId');
 
   React.useEffect(() => {
-    // Reset chat state and clear URL params when project changes
-    setSection('intro');
-    setThreadId(null);
     history.replace({ search: '' });
-  }, [activeSiteId]);
+    setThreadId(null);
+    setSection('intro');
+    setInitialMsg(null);
+    setTitle(null);
+  }, [activeSiteId, history]);
 
   const openChats = () => {
     showModal(
       <ChatsModal
-        projectId={activeSiteId}
+        projectId={activeSiteId!}
         onSelect={(threadId: string, title: string) => {
           setTitle(title);
           setThreadId(threadId);
@@ -49,11 +48,19 @@ function KaiChat() {
   };
 
   React.useEffect(() => {
+    if (
+      activeSiteId &&
+      parseInt(activeSiteId, 10) !== parseInt(location.pathname.split('/')[1], 10)
+    ) {
+      return;
+    }
+    const params = new URLSearchParams(location.search);
+    const threadIdFromUrl = params.get('threadId');
     if (threadIdFromUrl) {
       setThreadId(threadIdFromUrl);
       setSection('chat');
     }
-  }, [threadIdFromUrl]);
+  }, []);
 
   React.useEffect(() => {
     if (threadId) {
@@ -138,14 +145,14 @@ function ChatsModal({
     isPending,
     refetch,
   } = useQuery({
-    queryKey: ['kai', 'chats'],
+    queryKey: ['kai', 'chats', projectId],
     queryFn: () => kaiService.getKaiChats(projectId),
     staleTime: 1000 * 60,
   });
 
   const onDelete = async (id: string) => {
     try {
-      await kaiService.deleteKaiChat(projectId, userId, id);
+      await kaiService.deleteKaiChat(projectId, id);
     } catch (e) {
       toast.error("Something wen't wrong. Please try again later.");
     }
