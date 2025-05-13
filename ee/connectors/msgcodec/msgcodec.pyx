@@ -458,6 +458,19 @@ cdef class MessageCodec:
                 web_vitals=self.read_string(reader)
             )
 
+        if message_id == 34:
+            return StringDictGlobal(
+                key=self.read_uint(reader),
+                value=self.read_string(reader)
+            )
+
+        if message_id == 35:
+            return SetNodeAttributeDictGlobal(
+                id=self.read_uint(reader),
+                name=self.read_uint(reader),
+                value=self.read_uint(reader)
+            )
+
         if message_id == 37:
             return CSSInsertRule(
                 id=self.read_uint(reader),
@@ -817,8 +830,8 @@ cdef class MessageCodec:
         if message_id == 85:
             return Incident(
                 label=self.read_string(reader),
-                start_time=self.read_string(reader),
-                end_time=self.read_string(reader)
+                start_time=self.read_int(reader),
+                end_time=self.read_int(reader)
             )
 
         if message_id == 112:

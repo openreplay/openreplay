@@ -4,6 +4,7 @@ package messages
 const (
     MsgTimestamp = 0
     MsgSessionStart = 1
+    MsgSessionEndDeprecated = 3
     MsgSetPageLocationDeprecated = 4
     MsgSetViewportSize = 5
     MsgSetViewportScroll = 6
@@ -25,6 +26,7 @@ const (
     MsgConsoleLog = 22
     MsgPageLoadTiming = 23
     MsgPageRenderTiming = 24
+    MsgJSExceptionDeprecated = 25
     MsgIntegrationEvent = 26
     MsgCustomEvent = 27
     MsgUserID = 28
@@ -35,6 +37,9 @@ const (
     MsgPageEvent = 33
     MsgStringDictGlobal = 34
     MsgSetNodeAttributeDictGlobal = 35
+    MsgCSSInsertRule = 37
+    MsgCSSDeleteRule = 38
+    MsgFetch = 39
     MsgProfiler = 40
     MsgOTable = 41
     MsgStateAction = 42
@@ -54,11 +59,14 @@ const (
     MsgPerformanceTrackAggr = 56
     MsgLoadFontFace = 57
     MsgSetNodeFocus = 58
+    MsgLongTask = 59
     MsgSetNodeAttributeURLBased = 60
     MsgSetCSSDataURLBased = 61
+    MsgIssueEventDeprecated = 62
     MsgTechnicalInfo = 63
     MsgCustomIssue = 64
     MsgAssetCache = 66
+    MsgCSSInsertRuleURLBased = 67
     MsgMouseClick = 68
     MsgMouseClickDeprecated = 69
     MsgCreateIFrameDocument = 70
@@ -71,6 +79,7 @@ const (
     MsgAdoptedSSRemoveOwner = 77
     MsgJSException = 78
     MsgZustand = 79
+    MsgBatchMeta = 80
     MsgBatchMetadata = 81
     MsgPartitionedMessage = 82
     MsgNetworkRequest = 83
@@ -734,7 +743,7 @@ func (msg *PageRenderTiming) TypeID() int {
 
 type JSExceptionDeprecated struct {
 	message
-	Name    string
+	Name string
 	Message string
 	Payload string
 }
@@ -1061,8 +1070,8 @@ func (msg *SetNodeAttributeDictGlobal) TypeID() int {
 
 type CSSInsertRule struct {
 	message
-	ID    uint64
-	Rule  string
+	ID uint64
+	Rule string
 	Index uint64
 }
 
@@ -1086,7 +1095,7 @@ func (msg *CSSInsertRule) TypeID() int {
 
 type CSSDeleteRule struct {
 	message
-	ID    uint64
+	ID uint64
 	Index uint64
 }
 
@@ -1109,13 +1118,13 @@ func (msg *CSSDeleteRule) TypeID() int {
 
 type Fetch struct {
 	message
-	Method    string
-	URL       string
-	Request   string
-	Response  string
-	Status    uint64
+	Method string
+	URL string
+	Request string
+	Response string
+	Status uint64
 	Timestamp uint64
-	Duration  uint64
+	Duration uint64
 }
 
 func (msg *Fetch) Encode() []byte {
@@ -1635,12 +1644,12 @@ func (msg *SetNodeFocus) TypeID() int {
 
 type LongTask struct {
 	message
-	Timestamp     uint64
-	Duration      uint64
-	Context       uint64
+	Timestamp uint64
+	Duration uint64
+	Context uint64
 	ContainerType uint64
-	ContainerSrc  string
-	ContainerId   string
+	ContainerSrc string
+	ContainerId string
 	ContainerName string
 }
 
@@ -1720,12 +1729,12 @@ func (msg *SetCSSDataURLBased) TypeID() int {
 
 type IssueEventDeprecated struct {
 	message
-	MessageID     uint64
-	Timestamp     uint64
-	Type          string
+	MessageID uint64
+	Timestamp uint64
+	Type string
 	ContextString string
-	Context       string
-	Payload       string
+	Context string
+	Payload string
 }
 
 func (msg *IssueEventDeprecated) Encode() []byte {
@@ -1818,9 +1827,9 @@ func (msg *AssetCache) TypeID() int {
 
 type CSSInsertRuleURLBased struct {
 	message
-	ID      uint64
-	Rule    string
-	Index   uint64
+	ID uint64
+	Rule string
+	Index uint64
 	BaseURL string
 }
 
@@ -2145,9 +2154,9 @@ func (msg *Zustand) TypeID() int {
 
 type BatchMeta struct {
 	message
-	PageNo     uint64
+	PageNo uint64
 	FirstIndex uint64
-	Timestamp  int64
+	Timestamp int64
 }
 
 func (msg *BatchMeta) Encode() []byte {
@@ -2291,17 +2300,17 @@ func (msg *WSChannel) TypeID() int {
 type Incident struct {
 	message
 	Label string
-	StartTime string
-	EndTime string
+	StartTime int64
+	EndTime int64
 }
 
 func (msg *Incident) Encode() []byte {
-	buf := make([]byte, 31+len(msg.Label)+len(msg.StartTime)+len(msg.EndTime))
+	buf := make([]byte, 31+len(msg.Label))
 	buf[0] = 85
 	p := 1
 	p = WriteString(msg.Label, buf, p)
-	p = WriteString(msg.StartTime, buf, p)
-	p = WriteString(msg.EndTime, buf, p)
+	p = WriteInt(msg.StartTime, buf, p)
+	p = WriteInt(msg.EndTime, buf, p)
 	return buf[:p]
 }
 

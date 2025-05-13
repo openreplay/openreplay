@@ -1,7 +1,7 @@
 import { Duration } from 'luxon';
 import { Note } from 'App/services/NotesService';
 import { toJS } from 'mobx';
-import SessionEvent, { TYPES, EventData, InjectedEvent } from './event';
+import SessionEvent, { TYPES, EventData, InjectedEvent, Incident } from './event';
 import StackEvent from './stackEvent';
 import SessionError, { IError } from './error';
 import Issue, { IIssue, types as issueTypes } from './issue';
@@ -281,6 +281,8 @@ export default class Session {
 
   frustrations: Array<IIssue | InjectedEvent>;
 
+  incidents: Array<Incident>
+
   timezone?: ISession['timezone'];
 
   platform: ISession['platform'];
@@ -443,6 +445,7 @@ export default class Session {
     userEvents: any[] = [],
     stackEvents: any[] = [],
     userTestingEvents: any[] = [],
+    incidents: any[] = [],
   ) {
     const exceptions =
       (errors as IError[])?.map((e) => new SessionError(e)) || [];
@@ -503,6 +506,11 @@ export default class Session {
     const frustrationList =
       [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
+    const incidentsList = incidents.sort((a, b) => a.startTime - b.startTime).map((i) => ({ 
+      ...i,
+      time: i.startTime - this.startedAt,
+    })).map((i) => new Incident(i));
+
     const mixedEventsWithIssues = mergeEventLists(
       events,
       frustrationIssues.filter((i) => i.type !== issueTypes.DEAD_CLICK),
@@ -521,6 +529,7 @@ export default class Session {
     this.frustrations = frustrationList;
     this.crashes = crashes || [];
     this.addedEvents = true;
+    this.incidents = incidentsList;
     return this;
   }
 

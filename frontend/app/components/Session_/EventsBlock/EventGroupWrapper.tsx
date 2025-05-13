@@ -1,5 +1,5 @@
 import { TYPES } from 'Types/session/event';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import UxtEvent from 'Components/Session_/EventsBlock/UxtEvent';
@@ -32,6 +32,7 @@ function EventGroupWrapper(props) {
     presentInSearch,
     isNote,
     isTabChange,
+    isIncident,
     filterOutNote,
   } = props;
   const { t } = useTranslation();
@@ -56,6 +57,16 @@ function EventGroupWrapper(props) {
           noEdit={currentUserId !== event.userId}
         />
       );
+    }
+    if (isIncident) {
+      return (
+        <Incident
+          from={event.time}
+          to={event.endTime - event.startTime + event.time}
+          label={event.label}
+          onClick={onEventClick}
+        />
+      )
     }
     if (isLocation) {
       return (
@@ -100,11 +111,19 @@ function EventGroupWrapper(props) {
     );
   };
 
-  const shadowColor = isSearched ? '#F0A930' : props.isPrev
-    ? '#A7BFFF'
-    : props.isCurrent
-      ? '#394EFF'
-      : 'transparent';
+  const shadowColor = useMemo(() => {
+    if (isSearched) {
+      return '#F0A930';
+    }
+    if (props.isPrev) {
+      return '#A7BFFF';
+    }
+    if (props.isCurrent) {
+      return '#394EFF';
+    }
+    return 'transparent';
+  }, [isSearched, props.isPrev, props.isCurrent]);
+  
   return (
     <>
       <div>
@@ -167,6 +186,24 @@ function TabChange({ from, to, activeUrl, onClick }) {
       </div>
       <div className="break-words mt-1 px-4 text-sm font-normal color-gray-medium whitespace-nowrap">
         {activeUrl}
+      </div>
+    </div>
+  );
+};
+
+function Incident({ label, onClick }) {
+  const { t } = useTranslation();
+  return (
+    <div
+      onClick={onClick}
+      className="pr-6 pl-4 py-2 relative user-select-none transition-all duration-200 cursor-pointer rounded-[3px] hover:bg-[var(--color-active-blue)] bg-[var(--color-white)]"
+    >
+      <div className='flex items-center py-2 gap-[10.5px]'>
+        <Icon name="console/warning" size={18} color="gray-dark" />
+        <div className="flex flex-col">
+        <span style={{ fontWeight: 500 }}>{t('Incident')}</span>
+        <span className="text-ellipsis overflow-hidden whitespace-nowrap max-w-full text-sm text-[var(--color-gray-medium)]">{label}</span>
+        </div>
       </div>
     </div>
   );

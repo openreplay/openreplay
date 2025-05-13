@@ -574,8 +574,8 @@ export type WSChannel = [
 export type Incident = [
   /*type:*/ Type.Incident,
   /*label:*/ string,
-  /*startTime:*/ string,
-  /*endTime:*/ string,
+  /*startTime:*/ number,
+  /*endTime:*/ number,
 ]
 
 export type InputChange = [

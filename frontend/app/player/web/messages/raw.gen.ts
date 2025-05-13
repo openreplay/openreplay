@@ -502,8 +502,8 @@ export interface RawWsChannel {
 export interface RawIncident {
   tp: MType.Incident,
   label: string,
-  startTime: string,
-  endTime: string,
+  startTime: number,
+  endTime: number,
 }
 
 export interface RawSelectionChange {

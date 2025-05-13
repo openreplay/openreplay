@@ -35,7 +35,7 @@ function EventsBlock(props: IProps) {
     useStore();
   const session = sessionStore.current;
   const { notesWithEvents } = session;
-  const { uxtVideo } = session;
+  const { uxtVideo, incidents } = session;
   const { filteredEvents } = sessionStore;
   const query = sessionStore.eventsQuery;
   const { eventsIndex } = sessionStore;
@@ -48,8 +48,6 @@ function EventsBlock(props: IProps) {
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
   const { store, player } = React.useContext(PlayerContext);
   const [currentTimeEventIndex, setCurrentTimeEventIndex] = React.useState(0);
-
-  console.log('FILTER', uiPlayerStore.showOnlySearchEvents)
 
   const {
     time,
@@ -88,7 +86,7 @@ function EventsBlock(props: IProps) {
         }
       });
     }
-    const eventsWithMobxNotes = [...notesWithEvents, ...notes].sort(sortEvents);
+    const eventsWithMobxNotes = [...incidents, ...notesWithEvents, ...notes, ].sort(sortEvents);
     const filteredTabEvents = query.length
       ? tabChangeEvents.filter((e) => (e.activeUrl as string).includes(query))
       : tabChangeEvents;
@@ -200,6 +198,7 @@ function EventsBlock(props: IProps) {
     const event = usedEvents[index];
     const isNote = 'noteId' in event;
     const isTabChange = 'type' in event && event.type === 'TABCHANGE';
+    const isIncident = 'type' in event && event.type === 'INCIDENT';
     const isCurrent = index === currentTimeEventIndex;
     const isPrev = index < currentTimeEventIndex;
     const isSearched = event.isHighlighted;
@@ -218,6 +217,7 @@ function EventsBlock(props: IProps) {
         showSelection={!playing}
         isNote={isNote}
         isTabChange={isTabChange}
+        isIncident={isIncident}
         isPrev={isPrev}
         filterOutNote={filterOutNote}
         setActiveTab={setActiveTab}

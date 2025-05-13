@@ -1,6 +1,6 @@
 import { issues_types, types } from 'Types/session/issue';
 import { Grid, Segmented } from 'antd';
-import { Angry, CircleAlert, Skull, WifiOff, ChevronDown } from 'lucide-react';
+import { Angry, CircleAlert, Skull, WifiOff, ChevronDown, MessageCircleWarning } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from 'App/mstore';
@@ -15,6 +15,7 @@ const tagIcons = {
   [types.CLICK_RAGE]: <Angry size={14} />,
   [types.CRASH]: <Skull size={14} />,
   [types.TAP_RAGE]: <Angry size={14} />,
+  [types.INCIDENTS]: <MessageCircleWarning size={14} />,
 } as Record<string, any>;
 
 function SessionTags() {

@@ -69,12 +69,12 @@ func DecodeSessionStart(reader BytesReader) (Message, error) {
 }
 
 func DecodeSessionEndDeprecated(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &SessionEndDeprecated{}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
+    var err error = nil
+    msg := &SessionEndDeprecated{}
+    	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+            return nil, err
+        }
+        return msg, err
 }
 
 func DecodeSetPageLocationDeprecated(reader BytesReader) (Message, error) {
@@ -391,18 +391,18 @@ func DecodePageRenderTiming(reader BytesReader) (Message, error) {
 }
 
 func DecodeJSExceptionDeprecated(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &JSExceptionDeprecated{}
-	if msg.Name, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+    var err error = nil
+    msg := &JSExceptionDeprecated{}
+    	if msg.Name, err = reader.ReadString(); err != nil {
+            return nil, err
+        }
 	if msg.Message, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Payload, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	return msg, err
+            return nil, err
+        }
+        return msg, err
 }
 
 func DecodeIntegrationEvent(reader BytesReader) (Message, error) {
@@ -634,57 +634,57 @@ func DecodeSetNodeAttributeDictGlobal(reader BytesReader) (Message, error) {
 }
 
 func DecodeCSSInsertRule(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &CSSInsertRule{}
-	if msg.ID, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+    var err error = nil
+    msg := &CSSInsertRule{}
+    	if msg.ID, err = reader.ReadUint(); err != nil {
+            return nil, err
+        }
 	if msg.Rule, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Index, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
+            return nil, err
+        }
+        return msg, err
 }
 
 func DecodeCSSDeleteRule(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &CSSDeleteRule{}
-	if msg.ID, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+    var err error = nil
+    msg := &CSSDeleteRule{}
+    	if msg.ID, err = reader.ReadUint(); err != nil {
+            return nil, err
+        }
 	if msg.Index, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
+            return nil, err
+        }
+        return msg, err
 }
 
 func DecodeFetch(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &Fetch{}
-	if msg.Method, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+    var err error = nil
+    msg := &Fetch{}
+    	if msg.Method, err = reader.ReadString(); err != nil {
+            return nil, err
+        }
 	if msg.URL, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Request, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Response, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Status, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Duration, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
+            return nil, err
+        }
+        return msg, err
 }
 
 func DecodeProfiler(reader BytesReader) (Message, error) {
@@ -1000,30 +1000,30 @@ func DecodeSetNodeFocus(reader BytesReader) (Message, error) {
 }
 
 func DecodeLongTask(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &LongTask{}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+    var err error = nil
+    msg := &LongTask{}
+    	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+            return nil, err
+        }
 	if msg.Duration, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Context, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.ContainerType, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.ContainerSrc, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.ContainerId, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.ContainerName, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	return msg, err
+            return nil, err
+        }
+        return msg, err
 }
 
 func DecodeSetNodeAttributeURLBased(reader BytesReader) (Message, error) {
@@ -1060,27 +1060,27 @@ func DecodeSetCSSDataURLBased(reader BytesReader) (Message, error) {
 }
 
 func DecodeIssueEventDeprecated(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &IssueEventDeprecated{}
-	if msg.MessageID, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+    var err error = nil
+    msg := &IssueEventDeprecated{}
+    	if msg.MessageID, err = reader.ReadUint(); err != nil {
+            return nil, err
+        }
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Type, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.ContextString, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Context, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Payload, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	return msg, err
+            return nil, err
+        }
+        return msg, err
 }
 
 func DecodeTechnicalInfo(reader BytesReader) (Message, error) {
@@ -1117,21 +1117,21 @@ func DecodeAssetCache(reader BytesReader) (Message, error) {
 }
 
 func DecodeCSSInsertRuleURLBased(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &CSSInsertRuleURLBased{}
-	if msg.ID, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+    var err error = nil
+    msg := &CSSInsertRuleURLBased{}
+    	if msg.ID, err = reader.ReadUint(); err != nil {
+            return nil, err
+        }
 	if msg.Rule, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Index, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.BaseURL, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	return msg, err
+            return nil, err
+        }
+        return msg, err
 }
 
 func DecodeMouseClick(reader BytesReader) (Message, error) {
@@ -1315,18 +1315,18 @@ func DecodeZustand(reader BytesReader) (Message, error) {
 }
 
 func DecodeBatchMeta(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &BatchMeta{}
-	if msg.PageNo, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+    var err error = nil
+    msg := &BatchMeta{}
+    	if msg.PageNo, err = reader.ReadUint(); err != nil {
+            return nil, err
+        }
 	if msg.FirstIndex, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
+            return nil, err
+        }
 	if msg.Timestamp, err = reader.ReadInt(); err != nil {
-		return nil, err
-	}
-	return msg, err
+            return nil, err
+        }
+        return msg, err
 }
 
 func DecodeBatchMetadata(reader BytesReader) (Message, error) {
@@ -1425,10 +1425,10 @@ func DecodeIncident(reader BytesReader) (Message, error) {
     	if msg.Label, err = reader.ReadString(); err != nil {
             return nil, err
         }
-	if msg.StartTime, err = reader.ReadString(); err != nil {
+	if msg.StartTime, err = reader.ReadInt(); err != nil {
             return nil, err
         }
-	if msg.EndTime, err = reader.ReadString(); err != nil {
+	if msg.EndTime, err = reader.ReadInt(); err != nil {
             return nil, err
         }
         return msg, err

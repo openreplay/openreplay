@@ -907,8 +907,8 @@ export function WSChannel(
 
 export function Incident(
   label: string,
-  startTime: string,
-  endTime: string,
+  startTime: number,
+  endTime: number,
 ): Messages.Incident {
   return [
     Messages.Type.Incident,

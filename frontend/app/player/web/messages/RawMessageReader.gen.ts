@@ -735,8 +735,8 @@ export default class RawMessageReader extends PrimitiveReader {
 
     case 85: {
       const label = this.readString(); if (label === null) { return resetPointer() }
-      const startTime = this.readString(); if (startTime === null) { return resetPointer() }
-      const endTime = this.readString(); if (endTime === null) { return resetPointer() }
+      const startTime = this.readInt(); if (startTime === null) { return resetPointer() }
+      const endTime = this.readInt(); if (endTime === null) { return resetPointer() }
       return {
         tp: MType.Incident,
         label,

@@ -522,8 +522,8 @@ end
 
 message 85, 'Incident', :replayer => :devtools do
   string 'Label'
-  string 'StartTime'
-  string 'EndTime'
+  int 'StartTime'
+  int 'EndTime'
 end
 
 # 90-111 reserved iOS

@@ -19,19 +19,6 @@ import { searchStore, searchStoreLive } from './index';
 import { checkEventWithFilters } from '@/components/Session_/Player/Controls/checkEventWithFilters';
 const range = getDateRangeFromValue(LAST_7_DAYS);
 
-const mockIncidents = [
-  {
-    label: 'Inciden 1',
-    startTime: 1746629916704,
-    endTime: 1746629916704,
-  },
-  {
-    label: 'Incident 2',
-    startTime: 1746629916704,
-    endTime: 1746629916704,
-  },
-]
-
 const defaultDateFilters = {
   url: '',
   rangeValue: LAST_7_DAYS,
@@ -357,9 +344,8 @@ export default class SessionStore {
           events: evData.events.map((e) => ({
             ...e,
             isHighlighted: checkEventWithFilters(e, searchStore.instance.filters) 
-          })).concat(mockIncidents)
+          })),
         });
-        console.log('!!!!', eventsData)
       } catch (e) {
         console.error('Failed to fetch events', e);
       }
@@ -373,6 +359,7 @@ export default class SessionStore {
         stackEvents = [],
         userEvents = [],
         userTesting = [],
+        incidents = [],
       } = eventsData;
 
       const filterEvents = filter.events as Record<string, any>[];
@@ -413,6 +400,7 @@ export default class SessionStore {
           userEvents,
           stackEvents,
           userTesting,
+          incidents,
         );
         this.current = session;
         this.eventsIndex = matching;

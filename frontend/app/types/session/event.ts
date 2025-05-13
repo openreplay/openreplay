@@ -295,8 +295,7 @@ export class Incident extends Event {
     Object.assign(this, {
       ...evt,
       label: evt.label || 'User signaled an incident',
-      startTime: evt.startTime,
-      endTime: evt.startTime || evt.endTime,
+      type: 'INCIDENT',
     });
   }
 }
@@ -312,7 +311,6 @@ export type InjectedEvent =
   | Incident;
 
 export default function (event: EventData) {
-  console.log('DEETECT EVENT', event);
   if ('allow_typing' in event) {
     return new UxtEvent(event);
   }

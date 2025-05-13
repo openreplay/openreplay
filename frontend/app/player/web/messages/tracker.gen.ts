@@ -492,8 +492,8 @@ type TrWSChannel = [
 type TrIncident = [
   type: 85,
   label: string,
-  startTime: string,
-  endTime: string,
+  startTime: number,
+  endTime: number,
 ]
 
 type TrInputChange = [
