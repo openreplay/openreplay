@@ -1,3 +1,5 @@
+import logging
+
 import schemas
 from chalicelib.core import metadata
 from chalicelib.core.errors import errors_legacy
@@ -6,6 +8,8 @@ from chalicelib.core.errors.modules import sessions
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import helper, metrics_helper
 from chalicelib.utils.TimeUTC import TimeUTC
+
+logger = logging.getLogger(__name__)
 
 
 def _multiple_values(values, value_key="value"):
@@ -378,9 +382,9 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
                             ORDER BY timestamp) AS sub_table
                             GROUP BY error_id) AS chart_details ON details.error_id=chart_details.error_id;"""
 
-        # print("------------")
-        # print(ch.format(main_ch_query, params))
-        # print("------------")
+        logger.debug("------------")
+        logger.debug(ch.format(main_ch_query, params))
+        logger.debug("------------")
         query = ch.format(query=main_ch_query, parameters=params)
 
         rows = ch.execute(query=query)
