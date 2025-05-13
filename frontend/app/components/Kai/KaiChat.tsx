@@ -50,7 +50,8 @@ function KaiChat() {
   React.useEffect(() => {
     if (
       activeSiteId &&
-      parseInt(activeSiteId, 10) !== parseInt(location.pathname.split('/')[1], 10)
+      parseInt(activeSiteId, 10) !==
+        parseInt(location.pathname.split('/')[1], 10)
     ) {
       return;
     }
@@ -120,7 +121,6 @@ function KaiChat() {
             <ChatLog
               threadId={threadId}
               projectId={activeSiteId}
-              userId={userId}
               userLetter={userLetter}
               onTitleChange={setTitle}
               initialMsg={initialMsg}

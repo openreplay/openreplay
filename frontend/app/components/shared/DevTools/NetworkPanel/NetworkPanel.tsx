@@ -11,7 +11,7 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import i18n from 'App/i18n'
+import i18n from 'App/i18n';
 
 import { useModal } from 'App/components/Modal';
 import {
@@ -23,10 +23,7 @@ import { useStore } from 'App/mstore';
 import { formatBytes, debounceCall } from 'App/utils';
 import { Icon, NoContent, Tabs } from 'UI';
 import { Tooltip, Input, Switch, Form } from 'antd';
-import {
-  SearchOutlined,
-  InfoCircleOutlined,
-} from '@ant-design/icons';
+import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
 
@@ -37,7 +34,7 @@ import TimeTable from '../TimeTable';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import WSPanel from './WSPanel';
 import { useTranslation } from 'react-i18next';
-import { mergeListsWithZoom, processInChunks } from './utils'
+import { mergeListsWithZoom, processInChunks } from './utils';
 
 // Constants remain the same
 const INDEX_KEY = 'network';
@@ -84,9 +81,22 @@ export function renderType(r: any) {
 }
 
 export function renderName(r: any) {
+  const maxTtipUrlLength = 800;
+  const tooltipUrl =
+    r.url && r.url.length > maxTtipUrlLength
+      ? `${r.url.slice(0, maxTtipUrlLength / 2)}......${r.url.slice(-maxTtipUrlLength / 2)}`
+      : r.url;
+
   return (
-    <Tooltip style={{ width: '100%' }} title={<div>{r.url}</div>}>
-      <div>{r.name}</div>
+    <Tooltip
+      style={{ width: '100%', maxWidth: 1024 }}
+      title={<div>{tooltipUrl}</div>}
+    >
+      <div
+        style={{ maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis' }}
+      >
+        {r.name}
+      </div>
     </Tooltip>
   );
 }
@@ -94,7 +104,7 @@ export function renderName(r: any) {
 function renderSize(r: any) {
   const t = i18n.t;
   const notCaptured = t('Not captured');
-  const resSizeStr = t('Resource size')
+  const resSizeStr = t('Resource size');
   let triggerText;
   let content;
   if (r.responseBodySize) {
@@ -184,7 +194,6 @@ function renderStatus({
     </>
   );
 }
-
 
 // Main component for Network Panel
 function NetworkPanelCont({ panelHeight }: { panelHeight: number }) {
@@ -433,11 +442,11 @@ export const NetworkPanelComp = observer(
 
       // Heaviest operation here, will create a final merged network list
       const processData = async () => {
-        const fetchUrlMap: Record<string, number[]> = {}
+        const fetchUrlMap: Record<string, number[]> = {};
         const len = fetchList.length;
         for (let i = 0; i < len; i++) {
           const ft = fetchList[i] as any;
-          const key = `${ft.name}-${Math.round(ft.time / 10)}-${Math.round(ft.duration / 10)}`
+          const key = `${ft.name}-${Math.round(ft.time / 10)}-${Math.round(ft.duration / 10)}`;
           if (fetchUrlMap[key]) {
             fetchUrlMap[key].push(i);
           }
@@ -445,21 +454,23 @@ export const NetworkPanelComp = observer(
         }
 
         // We want to get resources that aren't in fetch list
-        const filteredResources = await processInChunks(resourceList, (chunk) => {
-          const clearChunk = [];
-          for (const res of chunk) {
-            const key = `${res.name}-${Math.floor(res.time / 10)}-${Math.floor(res.duration / 10)}`;
-            const possibleRequests = fetchUrlMap[key]
-            if (possibleRequests && possibleRequests.length) {
-              for (const i of possibleRequests) {
-                fetchList[i].timings = res.timings;
+        const filteredResources = await processInChunks(
+          resourceList,
+          (chunk) => {
+            const clearChunk = [];
+            for (const res of chunk) {
+              const key = `${res.name}-${Math.floor(res.time / 10)}-${Math.floor(res.duration / 10)}`;
+              const possibleRequests = fetchUrlMap[key];
+              if (possibleRequests && possibleRequests.length) {
+                for (const i of possibleRequests) {
+                  fetchList[i].timings = res.timings;
+                }
+                fetchUrlMap[key] = [];
+              } else {
+                clearChunk.push(res);
               }
-              fetchUrlMap[key] = [];
-            } else {
-              clearChunk.push(res);
             }
-          }
-          return clearChunk;
+            return clearChunk;
           },
           // chunk.filter((res: any) => {
           //   const key = `${res.name}-${Math.floor(res.time / 100)}-${Math.floor(res.duration / 100)}`;
@@ -484,8 +495,12 @@ export const NetworkPanelComp = observer(
           filteredResources as Timed[],
           fetchList,
           processedSockets as Timed[],
-          { enabled: Boolean(zoomEnabled), start: zoomStartTs ?? 0, end: zoomEndTs ?? 0 }
-        )
+          {
+            enabled: Boolean(zoomEnabled),
+            start: zoomStartTs ?? 0,
+            end: zoomEndTs ?? 0,
+          },
+        );
 
         originalListRef.current = mergedList;
         setTotalItems(mergedList.length);
@@ -509,19 +524,21 @@ export const NetworkPanelComp = observer(
 
     const calculateResourceStats = (resourceList: Record<string, any>) => {
       setTimeout(() => {
-        let resourcesSize = 0
-        let transferredSize = 0
-        resourceList.forEach(({ decodedBodySize, headerSize, encodedBodySize }: any) => {
-          resourcesSize += decodedBodySize || 0
-          transferredSize += (headerSize || 0) + (encodedBodySize || 0)
-        })
+        let resourcesSize = 0;
+        let transferredSize = 0;
+        resourceList.forEach(
+          ({ decodedBodySize, headerSize, encodedBodySize }: any) => {
+            resourcesSize += decodedBodySize || 0;
+            transferredSize += (headerSize || 0) + (encodedBodySize || 0);
+          },
+        );
 
         setSummaryStats({
           resourcesSize,
           transferredSize,
         });
       }, 0);
-    }
+    };
 
     useEffect(() => {
       if (originalListRef.current.length === 0) return;
@@ -530,27 +547,33 @@ export const NetworkPanelComp = observer(
         let filteredItems: any[] = originalListRef.current;
 
         filteredItems = await processInChunks(filteredItems, (chunk) =>
-          chunk.filter(
-            (it) => {
-              let valid = true;
-              if (showOnlyErrors) {
-                valid = parseInt(it.status) >= 400 || !it.success || it.error
+          chunk.filter((it) => {
+            let valid = true;
+            if (showOnlyErrors) {
+              valid = parseInt(it.status) >= 400 || !it.success || it.error;
+            }
+            if (filter) {
+              try {
+                const regex = new RegExp(filter, 'i');
+                valid =
+                  (valid && regex.test(it.status)) ||
+                  regex.test(it.name) ||
+                  regex.test(it.type) ||
+                  regex.test(it.method);
+              } catch (e) {
+                valid =
+                  (valid && String(it.status).includes(filter)) ||
+                  it.name.includes(filter) ||
+                  it.type.includes(filter) ||
+                  (it.method && it.method.includes(filter));
               }
-              if (filter) {
-                try {
-                  const regex = new RegExp(filter, 'i');
-                  valid = valid && regex.test(it.status) || regex.test(it.name) || regex.test(it.type) || regex.test(it.method);
-                } catch (e) {
-                  valid = valid && String(it.status).includes(filter) || it.name.includes(filter) || it.type.includes(filter) || (it.method && it.method.includes(filter));
-                }
-              }
-              if (activeTab !== ALL) {
-                valid = valid && TYPE_TO_TAB[it.type] === activeTab;
-              }
+            }
+            if (activeTab !== ALL) {
+              valid = valid && TYPE_TO_TAB[it.type] === activeTab;
+            }
 
-              return valid;
-            },
-          ),
+            return valid;
+          }),
         );
 
         // Update displayed items
@@ -587,7 +610,7 @@ export const NetworkPanelComp = observer(
     };
 
     const onFilterChange = ({ target: { value } }) => {
-      setInputFilterValue(value)
+      setInputFilterValue(value);
       debouncedFilter(value);
     };
 
@@ -855,11 +878,11 @@ export const NetworkPanelComp = observer(
                     ref={loadingRef}
                     className="flex justify-center items-center text-xs text-gray-500"
                   >
-                      <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                        Loading more data ({totalItems - displayedItems.length}{' '}
-                        remaining)
-                      </div>
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                      Loading more data ({totalItems - displayedItems.length}{' '}
+                      remaining)
+                    </div>
                   </div>
                 )}
               </div>

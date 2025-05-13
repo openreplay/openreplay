@@ -100,6 +100,7 @@ export interface Message {
   isUser: boolean;
   messageId: string;
   duration?: number;
+  feedback: boolean | null;
 }
 
 export interface SentMessage extends Message {

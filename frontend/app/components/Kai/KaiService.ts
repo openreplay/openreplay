@@ -3,7 +3,7 @@ import AiService from '@/services/AiService';
 export default class KaiService extends AiService {
   getKaiChats = async (
     projectId: string,
-  ): Promise<{ title: string; threadId: string }[]> => {
+  ): Promise<{ title: string; thread_id: string }[]> => {
     const r = await this.client.get(`/kai/${projectId}/chats`);
     if (!r.ok) {
       throw new Error('Failed to fetch chats');
@@ -27,7 +27,13 @@ export default class KaiService extends AiService {
     projectId: string,
     threadId: string,
   ): Promise<
-    { role: string; content: string; message_id: any; duration?: number }[]
+    {
+      role: string;
+      content: string;
+      message_id: any;
+      duration?: number;
+      feedback: boolean | null;
+    }[]
   > => {
     const r = await this.client.get(`/kai/${projectId}/chats/${threadId}`);
     if (!r.ok) {

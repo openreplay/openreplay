@@ -23,6 +23,8 @@ export function ChatMsg({
   messageId,
   isLast,
   duration,
+  feedback,
+  siteId,
 }: {
   text: string;
   isUser: boolean;
@@ -30,6 +32,8 @@ export function ChatMsg({
   userName?: string;
   isLast?: boolean;
   duration?: number;
+  feedback: boolean | null;
+  siteId: string;
 }) {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const bodyRef = React.useRef<HTMLDivElement>(null);
@@ -37,7 +41,7 @@ export function ChatMsg({
     kaiStore.editMessage(text);
   };
   const onFeedback = (feedback: 'like' | 'dislike', messageId: string) => {
-    kaiStore.sendMsgFeedback(feedback, messageId);
+    kaiStore.sendMsgFeedback(feedback, messageId, siteId);
   };
 
   const onExport = () => {
@@ -115,12 +119,14 @@ export function ChatMsg({
             {duration ? <MsgDuration duration={duration} /> : null}
             <div className="ml-auto" />
             <IconButton
+              active={feedback === true}
               tooltip="Like this answer"
               onClick={() => onFeedback('like', messageId)}
             >
               <ThumbsUp size={16} />
             </IconButton>
             <IconButton
+              active={feedback === false}
               tooltip="Dislike this answer"
               onClick={() => onFeedback('dislike', messageId)}
             >
@@ -151,17 +157,19 @@ function IconButton({
   onClick,
   tooltip,
   processing,
+  active,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   tooltip?: string;
   processing?: boolean;
+  active?: boolean;
 }) {
   return (
     <Tooltip title={tooltip}>
       <Button
         onClick={onClick}
-        type="text"
+        type={active ? 'primary' : 'text'}
         icon={children}
         size="small"
         loading={processing}

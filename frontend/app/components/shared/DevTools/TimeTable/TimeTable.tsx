@@ -355,7 +355,7 @@ function RowRenderer({
   );
 }
 
-const RowColumns = React.memo(({ columns, row }: any) => {
+const RowColumns = ({ columns, row }: any) => {
   const { t } = useTranslation();
 
   return columns.map(({ dataKey, render, width, label }: any) => (
@@ -371,6 +371,6 @@ const RowColumns = React.memo(({ columns, row }: any) => {
           )}
     </div>
   ));
-});
+};
 
 export default observer(TimeTable);

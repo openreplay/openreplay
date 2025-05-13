@@ -2,12 +2,11 @@ import React from 'react';
 import ChatInput from './ChatInput';
 import { ChatMsg, ChatNotice } from './ChatMsg';
 import { Loader } from 'UI';
-import { kaiStore } from '../KaiStore'
+import { kaiStore } from '../KaiStore';
 import { observer } from 'mobx-react-lite';
 
 function ChatLog({
   projectId,
-  userId,
   threadId,
   userLetter,
   onTitleChange,
@@ -15,7 +14,6 @@ function ChatLog({
   setInitialMsg,
 }: {
   projectId: string;
-  userId: string;
   threadId: any;
   userLetter: string;
   onTitleChange: (title: string | null) => void;
@@ -30,10 +28,10 @@ function ChatLog({
   React.useEffect(() => {
     const settings = { projectId, threadId };
     if (threadId && !initialMsg) {
-      void kaiStore.getChat(settings.projectId, threadId)
+      void kaiStore.getChat(settings.projectId, threadId);
     }
     if (threadId) {
-      kaiStore.createChatManager(settings, onTitleChange, initialMsg)
+      kaiStore.createChatManager(settings, onTitleChange, initialMsg);
     }
     return () => {
       kaiStore.clearChat();
@@ -42,7 +40,7 @@ function ChatLog({
   }, [threadId]);
 
   const onSubmit = (text: string) => {
-    kaiStore.sendMessage(text)
+    kaiStore.sendMessage(text);
   };
 
   React.useEffect(() => {
@@ -71,10 +69,15 @@ function ChatLog({
               messageId={msg.messageId}
               isLast={index === lastHumanMsgInd}
               duration={msg.duration}
+              feedback={msg.feedback}
+              siteId={projectId}
             />
           ))}
           {processingStage ? (
-            <ChatNotice content={processingStage.content} duration={processingStage.duration} />
+            <ChatNotice
+              content={processingStage.content}
+              duration={processingStage.duration}
+            />
           ) : null}
         </div>
         <div className={'sticky bottom-0 pt-6 w-2/3'}>

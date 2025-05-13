@@ -81,11 +81,10 @@ class KaiStore {
   deleteAtIndex = (indexes: number[]) => {
     if (!indexes.length) return;
     const messages = this.messages.filter((_, i) => !indexes.includes(i));
-    console.log(messages, indexes)
     runInAction(() => {
       this.messages = messages;
-    })
-  }
+    });
+  };
 
   getChat = async (projectId: string, threadId: string) => {
     this.setLoadingChat(true);
@@ -100,6 +99,7 @@ class KaiStore {
               isUser: isUser,
               messageId: m.message_id,
               duration: m.duration,
+              feedback: m.feedback,
             };
           }),
         );
@@ -117,7 +117,11 @@ class KaiStore {
     setTitle: (title: string) => void,
     initialMsg: string | null,
   ) => {
-    const token = kaiService.client.getJwt()
+    const token = kaiService.client.getJwt();
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
     this.chatManager = new ChatManager({ ...settings, token });
     this.chatManager.setOnMsgHook({
       msgCallback: (msg) => {
@@ -127,10 +131,10 @@ class KaiStore {
               content: 'Processing your request...',
               stage: 'chart',
               messageId: Date.now().toPrecision(),
-              duration: msg.start_time ? Date.now() - msg.start_time : 0
-            })
+              duration: msg.start_time ? Date.now() - msg.start_time : 0,
+            });
           } else {
-            this.setProcessingStage(null)
+            this.setProcessingStage(null);
           }
         } else {
           if (msg.stage === 'start') {
@@ -147,8 +151,9 @@ class KaiStore {
               text: msg.content,
               isUser: false,
               messageId: msg.messageId,
-              duration: msg.duration
-            }
+              duration: msg.duration,
+              feedback: null,
+            };
             this.addMessage(msgObj);
             this.setProcessingStage(null);
           }
@@ -171,32 +176,46 @@ class KaiStore {
       this.chatManager.sendMessage(message, this.replacing);
     }
     if (this.replacing) {
-      console.log(this.lastHumanMessage, this.lastKaiMessage, 'replacing these two')
-      const deleting = []
+      console.log(
+        this.lastHumanMessage,
+        this.lastKaiMessage,
+        'replacing these two',
+      );
+      const deleting = [];
       if (this.lastHumanMessage.index !== null) {
         deleting.push(this.lastHumanMessage.index);
       }
       if (this.lastKaiMessage.index !== null) {
-        deleting.push(this.lastKaiMessage.index)
+        deleting.push(this.lastKaiMessage.index);
       }
       this.deleteAtIndex(deleting);
-      this.setReplacing(false)
+      this.setReplacing(false);
     }
     this.addMessage({
       text: message,
       isUser: true,
       messageId: Date.now().toString(),
+      feedback: null,
+      duration: 0,
     });
   };
 
-  sendMsgFeedback = (feedback: string, messageId: string) => {
-    const settings = { projectId: '2325', userId: '0' };
+  sendMsgFeedback = (
+    feedback: string,
+    messageId: string,
+    projectId: string,
+  ) => {
+    this.messages = this.messages.map((msg) => {
+      if (msg.messageId === messageId) {
+        return {
+          ...msg,
+          feedback: feedback === 'like' ? true : false,
+        };
+      }
+      return msg;
+    });
     aiService
-      .feedback(
-        feedback === 'like',
-        messageId,
-        settings.projectId,
-      )
+      .feedback(feedback === 'like', messageId, projectId)
       .then(() => {
         toast.success('Feedback saved.');
       })
@@ -206,15 +225,21 @@ class KaiStore {
       });
   };
 
-  cancelGeneration = async (settings: { projectId: string; userId: string; threadId: string }) => {
+  cancelGeneration = async (settings: {
+    projectId: string;
+    userId: string;
+    threadId: string;
+  }) => {
     try {
-      await kaiService.cancelGeneration(settings.projectId, settings.threadId, settings.userId)
-      this.setProcessingStage(null)
+      await kaiService.cancelGeneration(settings.projectId, settings.threadId);
+      this.setProcessingStage(null);
     } catch (e) {
-      console.error(e)
-      toast.error('Failed to cancel the response generation, please try again later.')
+      console.error(e);
+      toast.error(
+        'Failed to cancel the response generation, please try again later.',
+      );
     }
-  }
+  };
 
   clearChat = () => {
     this.setMessages([]);

@@ -13,6 +13,11 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
   const _duration = parseInt(resource.duration);
   const { t } = useTranslation();
 
+  const maxUrlLength = 800;
+  const displayUrl =
+    resource.url && resource.url.length > maxUrlLength
+      ? `${resource.url.slice(0, maxUrlLength / 2)}......${resource.url.slice(-maxUrlLength / 2)}`
+      : resource.url;
   return (
     <div>
       <div className="flex items-start py-1">
@@ -22,7 +27,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
           bordered={false}
           style={{ maxWidth: '300px' }}
         >
-          <div>{resource.url}</div>
+          <div>{displayUrl}</div>
         </Tag>
       </div>
 
