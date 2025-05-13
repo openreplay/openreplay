@@ -46,5 +46,6 @@ func (s *chartsImpl) GetData(projectId int, userID uint64, req *MetricPayload) (
 		return nil, fmt.Errorf("error executing query: %v", err)
 	}
 
-	return resp, nil
+	//return resp, nil
+	return map[string]interface{}{"data": resp}, nil
 }

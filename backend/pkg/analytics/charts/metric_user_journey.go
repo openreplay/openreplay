@@ -532,10 +532,10 @@ func (h UserJourneyQueryBuilder) Execute(p Payload, conn db.Connector) (interfac
 		}
 	}
 
-	return JourneyResponse{Data: JourneyData{
+	return JourneyData{
 		Nodes: finalNodes,
 		Links: finalLinks,
-	}}, nil
+	}, nil
 }
 
 func (h UserJourneyQueryBuilder) buildQuery(p Payload) (string, error) {

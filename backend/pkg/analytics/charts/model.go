@@ -48,7 +48,7 @@ const (
 	MetricTypeTimeseries MetricType = "timeseries"
 	MetricTypeTable      MetricType = "table"
 	MetricTypeFunnel     MetricType = "funnel"
-	MetricTypeHeatmap    MetricType = "heatmaps"
+	MetricTypeHeatmap    MetricType = "heatMap"
 	MetricTypeSession    MetricType = "heatmaps_session"
 	MetricUserJourney    MetricType = "pathAnalysis"
 )
