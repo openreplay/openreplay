@@ -171,6 +171,8 @@ def get_sub_condition(col_name: str, val_name: str,
 def get_col_cast(data_type: schemas.PropertyType, value: Any) -> str:
     if value is None or len(value) == 0:
         return ""
+    if isinstance(value, list):
+        value = value[0]
     if data_type in (schemas.PropertyType.INT, schemas.PropertyType.FLOAT):
         return best_clickhouse_type(value)
     return data_type.capitalize()
@@ -193,14 +195,6 @@ def best_clickhouse_type(value):
     """
     Return the most compact ClickHouse numeric type that can store *value* loss-lessly.
 
-    >>> best_clickhouse_type(42)
-    'UInt8'
-    >>> best_clickhouse_type(-42)
-    'Int8'
-    >>> best_clickhouse_type(1.5)
-    'Float32'
-    >>> best_clickhouse_type(1e308)
-    'Float64'
     """
     # Treat bool like tiny int
     if isinstance(value, bool):
@@ -212,7 +206,7 @@ def best_clickhouse_type(value):
             if lo <= value <= hi:
                 return name
         # Beyond UInt64: ClickHouse offers Int128 / Int256 or Decimal
-        return "Int128 (or Decimal)"
+        return "Int128"
 
     # --- Decimal.Decimal (exact) ---
     if isinstance(value, Decimal):
