@@ -1,6 +1,7 @@
 package projects
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -40,10 +41,10 @@ func (c *cacheImpl) Set(project *Project) error {
 	if err != nil {
 		return err
 	}
-	if _, err = c.db.Redis.Set(fmt.Sprintf("project:id:%d", project.ProjectID), projectBytes, time.Minute*10).Result(); err != nil {
+	if _, err = c.db.Redis.Set(context.Background(), fmt.Sprintf("project:id:%d", project.ProjectID), projectBytes, time.Minute*10).Result(); err != nil {
 		return err
 	}
-	if _, err = c.db.Redis.Set(fmt.Sprintf("project:key:%s", project.ProjectKey), projectBytes, time.Minute*10).Result(); err != nil {
+	if _, err = c.db.Redis.Set(context.Background(), fmt.Sprintf("project:key:%s", project.ProjectKey), projectBytes, time.Minute*10).Result(); err != nil {
 		return err
 	}
 	c.metrics.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "set", "project")
@@ -56,7 +57,7 @@ func (c *cacheImpl) GetByID(projectID uint32) (*Project, error) {
 		return nil, ErrDisabledCache
 	}
 	start := time.Now()
-	result, err := c.db.Redis.Get(fmt.Sprintf("project:id:%d", projectID)).Result()
+	result, err := c.db.Redis.Get(context.Background(), fmt.Sprintf("project:id:%d", projectID)).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +75,7 @@ func (c *cacheImpl) GetByKey(projectKey string) (*Project, error) {
 		return nil, ErrDisabledCache
 	}
 	start := time.Now()
-	result, err := c.db.Redis.Get(fmt.Sprintf("project:key:%s", projectKey)).Result()
+	result, err := c.db.Redis.Get(context.Background(), fmt.Sprintf("project:key:%s", projectKey)).Result()
 	if err != nil {
 		return nil, err
 	}
