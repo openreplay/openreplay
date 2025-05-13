@@ -20,6 +20,7 @@ import (
 type ServicesBuilder struct {
 	RateLimiter *limiter.UserRateLimiter
 	AssistAPI   api.Handlers
+	AssistStats service.AssistStats
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *assist.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, redis *redis.Client) (*ServicesBuilder, error) {
@@ -29,6 +30,10 @@ func NewServiceBuilder(log logger.Logger, cfg *assist.Config, webMetrics web.Web
 		return nil, err
 	}
 	sessManager.Start()
+	assistStats, err := service.NewAssistStats(log, pgconn, redis.Redis)
+	if err != nil {
+		return nil, err
+	}
 	assistManager := service.NewAssist(log, pgconn, projectsManager, sessManager)
 	responser := api.NewResponser(webMetrics)
 	handlers, err := assistAPI.NewHandlers(log, cfg, responser, assistManager)
@@ -38,5 +43,6 @@ func NewServiceBuilder(log logger.Logger, cfg *assist.Config, webMetrics web.Web
 	return &ServicesBuilder{
 		RateLimiter: limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
 		AssistAPI:   handlers,
+		AssistStats: assistStats,
 	}, nil
 }
