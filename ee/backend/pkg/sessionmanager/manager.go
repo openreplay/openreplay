@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 
 	"openreplay/backend/internal/config/assist"
 	"openreplay/backend/pkg/logger"
@@ -119,7 +119,7 @@ func (sm *sessionManagerImpl) getNodeIDs() ([]string, error) {
 	var cursor uint64 = 0
 
 	for {
-		keys, nextCursor, err := sm.client.Scan(cursor, NodeKeyPattern, 100).Result()
+		keys, nextCursor, err := sm.client.Scan(sm.ctx, cursor, NodeKeyPattern, 100).Result()
 		if err != nil {
 			return nil, fmt.Errorf("scan failed: %v", err)
 		}
@@ -144,7 +144,7 @@ func (sm *sessionManagerImpl) getAllNodeSessions(nodeIDs []string) map[string]st
 		go func(id string) {
 			defer wg.Done()
 
-			sessionListJSON, err := sm.client.Get(id).Result()
+			sessionListJSON, err := sm.client.Get(sm.ctx, id).Result()
 			if err != nil {
 				if errors.Is(err, redis.Nil) {
 					return
@@ -198,7 +198,7 @@ func (sm *sessionManagerImpl) getSessionData(sessionIDs []string) map[string]*Se
 			keys[j] = ActiveSessionPrefix + id
 		}
 
-		results, err := sm.client.MGet(keys...).Result()
+		results, err := sm.client.MGet(sm.ctx, keys...).Result()
 		if err != nil {
 			sm.log.Debug(sm.ctx, "Error in MGET operation: %v", err)
 			continue // TODO: Handle the error
@@ -294,7 +294,7 @@ func (sm *sessionManagerImpl) getAllRecentlyUpdatedSessions() (map[string]struct
 	)
 
 	for {
-		batchIDs, cursor, err = sm.client.SScan(RecentlyUpdatedSessions, cursor, "*", sm.scanSize).Result()
+		batchIDs, cursor, err = sm.client.SScan(sm.ctx, RecentlyUpdatedSessions, cursor, "*", sm.scanSize).Result()
 		if err != nil {
 			sm.log.Debug(sm.ctx, "Error scanning updated session IDs: %v", err)
 			return nil, err
@@ -316,7 +316,7 @@ func (sm *sessionManagerImpl) getAllRecentlyUpdatedSessions() (map[string]struct
 	for id := range allIDs {
 		sessionIDsSlice = append(sessionIDsSlice, id)
 	}
-	removed := sm.client.SRem(RecentlyUpdatedSessions, sessionIDsSlice...).Val()
+	removed := sm.client.SRem(sm.ctx, RecentlyUpdatedSessions, sessionIDsSlice...).Val()
 	sm.log.Debug(sm.ctx, "Fetched and removed %d session IDs from updated_session_set", removed)
 
 	return allIDs, nil

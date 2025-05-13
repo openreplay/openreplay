@@ -45,6 +45,9 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
+	defer func() {
+		builder.AssistStats.Stop()
+	}()
 
 	router, err := api.NewRouter(&cfg.HTTP, log)
 	if err != nil {
