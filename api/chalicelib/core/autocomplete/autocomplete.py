@@ -85,7 +85,8 @@ def __generic_query(typename, value_length=None):
                       ORDER BY value"""
 
     if value_length is None or value_length > 2:
-        return f"""(SELECT DISTINCT value, type
+        return f"""SELECT DISTINCT ON(value,type) value, type
+                   ((SELECT DISTINCT value, type
                     FROM {TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -101,7 +102,7 @@ def __generic_query(typename, value_length=None):
                       AND type='{typename.upper()}'
                       AND value ILIKE %(value)s
                       ORDER BY value
-                    LIMIT 5);"""
+                    LIMIT 5)) AS raw;"""
     return f"""SELECT DISTINCT value, type
                 FROM {TABLE}
                 WHERE
@@ -326,7 +327,7 @@ def __search_metadata(project_id, value, key=None, source=None):
                                 AND {colname} ILIKE %(svalue)s LIMIT 5)""")
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""\
-                    SELECT key, value, 'METADATA' AS TYPE
+                    SELECT DISTINCT ON(key, value) key, value, 'METADATA' AS TYPE
                     FROM({" UNION ALL ".join(sub_from)}) AS all_metas
                     LIMIT 5;""", {"project_id": project_id, "value": helper.string_to_sql_like(value),
                                   "svalue": helper.string_to_sql_like("^" + value)}))
