@@ -241,14 +241,13 @@ def create_card(project: schemas.ProjectContext, user_id, data: schemas.CardSche
         params["card_info"] = json.dumps(params["card_info"])
 
         query = """INSERT INTO metrics (project_id, user_id, name, is_public,
-                            view_type, metric_type, metric_of, metric_value,
-                            metric_format, default_config, thumbnail, data,
-                            card_info)
-                   VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
-                              %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, 
-                              %(metric_format)s, %(default_config)s, %(thumbnail)s, %(session_data)s,
-                              %(card_info)s)
-                   RETURNING metric_id"""
+                                        view_type, metric_type, metric_of, metric_value,
+                                        metric_format, default_config, thumbnail, data,
+                                        card_info)
+                   VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s,
+                           %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s,
+                           %(metric_format)s, %(default_config)s, %(thumbnail)s, %(session_data)s,
+                           %(card_info)s) RETURNING metric_id"""
         if len(data.series) > 0:
             query = f"""WITH m AS ({query})
                         INSERT INTO metric_series(metric_id, index, name, filter)
@@ -525,13 +524,13 @@ def get_all(project_id, user_id):
 def delete_card(project_id, metric_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-            UPDATE public.metrics 
-            SET deleted_at = timezone('utc'::text, now()), edited_at = timezone('utc'::text, now()) 
-            WHERE project_id = %(project_id)s
-              AND metric_id = %(metric_id)s
-              AND (user_id = %(user_id)s OR is_public)
-            RETURNING data;""",
+            cur.mogrify(""" \
+                        UPDATE public.metrics
+                        SET deleted_at = timezone('utc'::text, now()),
+                            edited_at  = timezone('utc'::text, now())
+                        WHERE project_id = %(project_id)s
+                          AND metric_id = %(metric_id)s
+                          AND (user_id = %(user_id)s OR is_public) RETURNING data;""",
                         {"metric_id": metric_id, "project_id": project_id, "user_id": user_id})
         )
 
@@ -615,13 +614,14 @@ def get_series_for_alert(project_id, user_id):
                        FALSE AS predefined,
                        metric_id,
                        series_id
-                    FROM metric_series
-                             INNER JOIN metrics USING (metric_id)
-                    WHERE metrics.deleted_at ISNULL
-                      AND metrics.project_id = %(project_id)s
-                      AND metrics.metric_type = 'timeseries'
-                      AND (user_id = %(user_id)s OR is_public)
-                    ORDER BY name;""",
+                   FROM metric_series
+                       INNER JOIN metrics USING (metric_id)
+                   WHERE metrics.deleted_at ISNULL
+                     AND metrics.project_id = %(project_id)s
+                     AND metrics.metric_type = 'timeseries'
+                     AND (user_id = %(user_id)s
+                      OR is_public)
+                   ORDER BY name;""",
                 {"project_id": project_id, "user_id": user_id}
             )
         )
@@ -632,11 +632,11 @@ def get_series_for_alert(project_id, user_id):
 def change_state(project_id, metric_id, user_id, status):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-            UPDATE public.metrics 
-            SET active = %(status)s 
-            WHERE metric_id = %(metric_id)s
-              AND (user_id = %(user_id)s OR is_public);""",
+            cur.mogrify(""" \
+                        UPDATE public.metrics
+                        SET active = %(status)s
+                        WHERE metric_id = %(metric_id)s
+                          AND (user_id = %(user_id)s OR is_public);""",
                         {"metric_id": metric_id, "status": status, "user_id": user_id})
         )
     return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
@@ -674,7 +674,8 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                 "issue": issue}
 
 
-def make_chart_from_card(project: schemas.ProjectContext, user_id, metric_id, data: schemas.CardSessionsSchema):
+def make_chart_from_card(project: schemas.ProjectContext, user_id, metric_id,
+                         data: schemas.CardSessionsSchema, for_dashboard: bool = False):
     raw_metric: dict = get_card(metric_id=metric_id, project_id=project.project_id, user_id=user_id, include_data=True)
 
     if raw_metric is None:
@@ -693,7 +694,8 @@ def make_chart_from_card(project: schemas.ProjectContext, user_id, metric_id, da
             return heatmaps.search_short_session(project_id=project.project_id,
                                                  data=schemas.HeatMapSessionsSearch(**metric.model_dump()),
                                                  user_id=user_id)
-
+    elif metric.metric_type == schemas.MetricType.PATH_ANALYSIS and for_dashboard:
+        metric.hide_excess = True
     return get_chart(project=project, data=metric, user_id=user_id)
 
 
