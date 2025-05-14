@@ -3,6 +3,7 @@ from datetime import datetime
 from psycopg2.extensions import AsIs
 
 from chalicelib.utils import pg_client
+from routers.scim import helpers
 from routers.scim.resource_config import (
     ProviderResource,
     ClientResource,
@@ -21,8 +22,6 @@ def convert_client_resource_update_input_to_provider_resource_update_input(
     if "members" in client_input:
         members = client_input["members"] or []
         result["user_ids"] = [int(member["value"]) for member in members]
-    if "projectKeys" in client_input:
-        result["project_keys"] = [item["value"] for item in client_input["projectKeys"]]
     return result
 
 
@@ -49,9 +48,6 @@ def convert_provider_resource_to_client_resource(
                 "type": "User",
             }
             for member in members
-        ],
-        "projectKeys": [
-            {"value": project_key} for project_key in provider_resource["project_keys"]
         ],
     }
 
@@ -141,7 +137,6 @@ def convert_client_resource_creation_input_to_provider_resource_creation_input(
         "user_ids": [
             int(member["value"]) for member in client_input.get("members", [])
         ],
-        "project_keys": [item["value"] for item in client_input.get("projectKeys", [])],
     }
 
 
@@ -153,7 +148,6 @@ def convert_client_resource_rewrite_input_to_provider_resource_rewrite_input(
         "user_ids": [
             int(member["value"]) for member in client_input.get("members", [])
         ],
-        "project_keys": [item["value"] for item in client_input.get("projectKeys", [])],
     }
 
 
@@ -161,7 +155,6 @@ def create_provider_resource(
     name: str,
     tenant_id: int,
     user_ids: list[str] | None = None,
-    project_keys: list[str] | None = None,
     **kwargs: dict[str, Any],
 ) -> ProviderResource:
     with pg_client.PostgresClient() as cur:
@@ -175,17 +168,7 @@ def create_provider_resource(
             cur.mogrify("%s", (v,)).decode("utf-8") for v in kwargs.values()
         ]
         value_clause = ", ".join(value_fragments)
-        user_ids = user_ids or []
-        user_id_fragments = [
-            cur.mogrify("%s", (user_id,)).decode("utf-8") for user_id in user_ids
-        ]
-        user_id_clause = f"ARRAY[{', '.join(user_id_fragments)}]::int[]"
-        project_keys = project_keys or []
-        project_key_fragments = [
-            cur.mogrify("%s", (project_key,)).decode("utf-8")
-            for project_key in project_keys
-        ]
-        project_key_clause = f"ARRAY[{', '.join(project_key_fragments)}]::varchar[]"
+        user_id_clause = helpers.safe_mogrify_array(user_ids, "int", cur)
         cur.execute(
             f"""
             INSERT INTO public.roles ({column_clause})
@@ -203,18 +186,6 @@ def create_provider_resource(
             WHERE users.user_id = ANY({user_id_clause})
             """
         )
-        cur.execute(
-            f"""
-            WITH ps AS (
-                SELECT *
-                FROM public.projects
-                WHERE projects.project_key = ANY({project_key_clause})
-            )
-            INSERT INTO public.roles_projects (role_id, project_id)
-            SELECT {role_id}, ps.project_id
-            FROM ps
-            """
-        )
         cur.execute(f"{_main_select_query(tenant_id, role_id)} LIMIT 1")
         return cur.fetchone()
 
@@ -223,7 +194,6 @@ def _update_resource_sql(
     resource_id: int,
     tenant_id: int,
     user_ids: list[int] | None = None,
-    project_keys: list[str] | None = None,
     **kwargs: dict[str, Any],
 ) -> dict[str, Any]:
     with pg_client.PostgresClient() as cur:
@@ -233,17 +203,7 @@ def _update_resource_sql(
             for k, v in kwargs.items()
         ]
         set_clause = ", ".join(set_fragments)
-        user_ids = user_ids or []
-        user_id_fragments = [
-            cur.mogrify("%s", (user_id,)).decode("utf-8") for user_id in user_ids
-        ]
-        user_id_clause = f"ARRAY[{', '.join(user_id_fragments)}]::int[]"
-        project_keys = project_keys or []
-        project_key_fragments = [
-            cur.mogrify("%s", (project_key,)).decode("utf-8")
-            for project_key in project_keys
-        ]
-        project_key_clause = f"ARRAY[{', '.join(project_key_fragments)}]::varchar[]"
+        user_id_clause = helpers.safe_mogrify_array(user_ids, "int", cur)
         cur.execute(
             f"""
             UPDATE public.users
@@ -266,27 +226,6 @@ def _update_resource_sql(
                 (users.role_id != {resource_id} OR users.role_id IS NULL)
                 AND users.user_id = ANY({user_id_clause})
             RETURNING *
-            """
-        )
-        cur.execute(
-            f"""
-            DELETE FROM public.roles_projects
-            USING public.projects
-            WHERE
-                projects.project_id = roles_projects.project_id
-                AND roles_projects.role_id = {resource_id}
-                AND projects.project_key != ALL({project_key_clause})
-            """
-        )
-        cur.execute(
-            f"""
-            INSERT INTO public.roles_projects (role_id, project_id)
-            SELECT {resource_id}, projects.project_id
-            FROM public.projects
-            LEFT JOIN public.roles_projects USING (project_id)
-            WHERE
-                projects.project_key = ANY({project_key_clause})
-                AND roles_projects.role_id IS NULL
             """
         )
         cur.execute(

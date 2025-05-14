@@ -1,6 +1,18 @@
-from typing import Any
+from typing import Any, Literal
 from copy import deepcopy
 import re
+from chalicelib.utils import pg_client
+
+
+def safe_mogrify_array(
+    items: list[Any] | None,
+    array_type: Literal["varchar", "int"],
+    cursor: pg_client.PostgresClient,
+) -> str:
+    items = items or []
+    fragments = [cursor.mogrify("%s", (item,)).decode("utf-8") for item in items]
+    result = f"ARRAY[{', '.join(fragments)}]::{array_type}[]"
+    return result
 
 
 def convert_query_str_to_list(query_str: str | None) -> list[str]:

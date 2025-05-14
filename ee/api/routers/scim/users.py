@@ -1,6 +1,7 @@
 from typing import Any
 from datetime import datetime
 from psycopg2.extensions import AsIs
+from routers.scim import helpers
 
 from chalicelib.utils import pg_client
 from routers.scim.resource_config import (
@@ -10,6 +11,11 @@ from routers.scim.resource_config import (
     ClientInput,
     ProviderInput,
 )
+from schemas.schemas_ee import ValidIdentityProviderPermissions
+
+
+def _is_valid_permission_for_identity_provider(permission: str) -> bool:
+    return ValidIdentityProviderPermissions.has_value(permission)
 
 
 def convert_client_resource_update_input_to_provider_resource_update_input(
@@ -28,6 +34,14 @@ def convert_client_resource_update_input_to_provider_resource_update_input(
         result["internal_id"] = client_input["externalId"]
     if "active" in client_input:
         result["deleted_at"] = None if client_input["active"] else datetime.now()
+    if "projectKeys" in client_input:
+        result["project_keys"] = [item["value"] for item in client_input["projectKeys"]]
+    if "entitlements" in client_input:
+        result["permissions"] = [
+            item
+            for item in client_input["entitlements"]
+            if _is_valid_permission_for_identity_provider(item)
+        ]
     return result
 
 
@@ -53,6 +67,12 @@ def convert_client_resource_rewrite_input_to_provider_resource_rewrite_input(
         "email": client_input["userName"],
         "internal_id": client_input.get("externalId"),
         "name": name,
+        "project_keys": [item for item in client_input.get("projectKeys", [])],
+        "permissions": [
+            item
+            for item in client_input.get("entitlements", [])
+            if _is_valid_permission_for_identity_provider(item)
+        ],
     }
     result = {k: v for k, v in result.items() if v is not None}
     return result
@@ -80,6 +100,12 @@ def convert_client_resource_creation_input_to_provider_resource_creation_input(
         "email": client_input["userName"],
         "internal_id": client_input.get("externalId"),
         "name": name,
+        "project_keys": [item["value"] for item in client_input.get("projectKeys", [])],
+        "permissions": [
+            item
+            for item in client_input.get("entitlements", [])
+            if _is_valid_permission_for_identity_provider(item)
+        ],
     }
     result = {k: v for k, v in result.items() if v is not None}
     return result
@@ -223,11 +249,57 @@ def get_provider_resource(
         return cur.fetchone()
 
 
+def _update_role_projects_and_permissions(
+    role_id: int | None,
+    project_keys: list[str] | None,
+    permissions: list[str] | None,
+    cur: pg_client.PostgresClient,
+) -> None:
+    all_projects = "true" if not project_keys else "false"
+    project_key_clause = helpers.safe_mogrify_array(project_keys, "varchar", cur)
+    permission_clause = helpers.safe_mogrify_array(permissions, "varchar", cur)
+    cur.execute(
+        f"""
+        UPDATE public.roles
+        SET
+            updated_at = now(),
+            all_projects = {all_projects},
+            permissions = {permission_clause}
+        WHERE role_id = {role_id}
+        RETURNING *
+        """
+    )
+    cur.execute(
+        f"""
+        DELETE FROM public.roles_projects
+        USING public.projects
+        WHERE
+            projects.project_id = roles_projects.project_id
+            AND roles_projects.role_id = {role_id}
+            AND projects.project_key != ALL({project_key_clause})
+        """
+    )
+    cur.execute(
+        f"""
+        INSERT INTO public.roles_projects (role_id, project_id)
+        SELECT {role_id}, projects.project_id
+        FROM public.projects
+        LEFT JOIN public.roles_projects USING (project_id)
+        WHERE
+            projects.project_key = ANY({project_key_clause})
+            AND roles_projects.role_id IS NULL
+        RETURNING *
+        """
+    )
+
+
 def create_provider_resource(
     email: str,
     tenant_id: int,
     name: str = "",
     internal_id: str | None = None,
+    project_keys: list[str] | None = None,
+    permissions: list[str] | None = None,
 ) -> ProviderResource:
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -259,7 +331,11 @@ def create_provider_resource(
                 },
             )
         )
-        return cur.fetchone()
+        user = cur.fetchone()
+        _update_role_projects_and_permissions(
+            user["role_id"], project_keys, permissions, cur
+        )
+        return user
 
 
 def restore_provider_resource(
@@ -267,6 +343,8 @@ def restore_provider_resource(
     email: str,
     name: str = "",
     internal_id: str | None = None,
+    project_keys: list[str] | None = None,
+    permissions: list[str] | None = None,
     **kwargs: dict[str, Any],
 ) -> ProviderResource:
     with pg_client.PostgresClient() as cur:
@@ -300,7 +378,42 @@ def restore_provider_resource(
                 },
             )
         )
-        return cur.fetchone()
+        user = cur.fetchone()
+        _update_role_projects_and_permissions(
+            user["role_id"], project_keys, permissions, cur
+        )
+        return user
+
+
+def _update_resource_sql(
+    resource_id: int,
+    tenant_id: int,
+    project_keys: list[str] | None = None,
+    permissions: list[str] | None = None,
+    **kwargs: dict[str, Any],
+) -> dict[str, Any]:
+    with pg_client.PostgresClient() as cur:
+        kwargs["updated_at"] = datetime.now()
+        set_fragments = [
+            cur.mogrify("%s = %s", (AsIs(k), v)).decode("utf-8")
+            for k, v in kwargs.items()
+        ]
+        set_clause = ", ".join(set_fragments)
+        cur.execute(
+            f"""
+            UPDATE public.users
+            SET {set_clause}
+            WHERE
+                users.user_id = {resource_id}
+                AND users.tenant_id = {tenant_id}
+                AND users.deleted_at IS NULL
+            RETURNING *
+            """
+        )
+        user = cur.fetchone()
+        role_id = user["role_id"]
+        _update_role_projects_and_permissions(role_id, project_keys, permissions, cur)
+        return user
 
 
 def rewrite_provider_resource(
@@ -309,37 +422,18 @@ def rewrite_provider_resource(
     email: str,
     name: str = "",
     internal_id: str | None = None,
-):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                WITH u AS (
-                    UPDATE public.users
-                    SET
-                        email = %(email)s,
-                        name = %(name)s,
-                        internal_id = %(internal_id)s,
-                        updated_at = now()
-                    WHERE
-                        users.user_id = %(user_id)s
-                        AND users.tenant_id = %(tenant_id)s
-                        AND users.deleted_at IS NULL
-                    RETURNING *
-                )
-                SELECT *
-                FROM u
-                """,
-                {
-                    "tenant_id": tenant_id,
-                    "user_id": resource_id,
-                    "email": email,
-                    "name": name,
-                    "internal_id": internal_id,
-                },
-            )
-        )
-        return cur.fetchone()
+    project_keys: list[str] | None = None,
+    permissions: list[str] | None = None,
+) -> dict[str, Any]:
+    return _update_resource_sql(
+        resource_id,
+        tenant_id,
+        email=email,
+        name=name,
+        internal_id=internal_id,
+        project_keys=project_keys,
+        permissions=permissions,
+    )
 
 
 def update_provider_resource(
@@ -347,29 +441,4 @@ def update_provider_resource(
     tenant_id: int,
     **kwargs,
 ):
-    with pg_client.PostgresClient() as cur:
-        set_fragments = []
-        kwargs["updated_at"] = datetime.now()
-        for k, v in kwargs.items():
-            fragment = cur.mogrify(
-                "%s = %s",
-                (AsIs(k), v),
-            ).decode("utf-8")
-            set_fragments.append(fragment)
-        set_clause = ", ".join(set_fragments)
-        cur.execute(
-            f"""
-            WITH u AS (
-                UPDATE public.users
-                SET {set_clause}
-                WHERE
-                    users.user_id = {resource_id}
-                    AND users.tenant_id = {tenant_id}
-                    AND users.deleted_at IS NULL
-                RETURNING *
-            )
-            SELECT *
-            FROM u
-            """
-        )
-        return cur.fetchone()
+    return _update_resource_sql(resource_id, tenant_id, **kwargs)
