@@ -104,11 +104,11 @@ cdef class SetViewportScroll(PyMessage):
 
 cdef class CreateDocument(PyMessage):
     cdef public int __id__
-
+    
 
     def __init__(self, ):
         self.__id__ = 7
-
+        
 
 
 cdef class CreateElementNode(PyMessage):
@@ -1200,6 +1200,47 @@ cdef class WSChannel(PyMessage):
         self.message_type = message_type
 
 
+cdef class ResourceTiming(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long timestamp
+    cdef public unsigned long duration
+    cdef public unsigned long ttfb
+    cdef public unsigned long header_size
+    cdef public unsigned long encoded_body_size
+    cdef public unsigned long decoded_body_size
+    cdef public str url
+    cdef public str initiator
+    cdef public unsigned long transferred_size
+    cdef public bint cached
+    cdef public unsigned long queueing
+    cdef public unsigned long dns_lookup
+    cdef public unsigned long initial_connection
+    cdef public unsigned long ssl
+    cdef public unsigned long content_download
+    cdef public unsigned long total
+    cdef public unsigned long stalled
+
+    def __init__(self, unsigned long timestamp, unsigned long duration, unsigned long ttfb, unsigned long header_size, unsigned long encoded_body_size, unsigned long decoded_body_size, str url, str initiator, unsigned long transferred_size, bint cached, unsigned long queueing, unsigned long dns_lookup, unsigned long initial_connection, unsigned long ssl, unsigned long content_download, unsigned long total, unsigned long stalled):
+        self.__id__ = 85
+        self.timestamp = timestamp
+        self.duration = duration
+        self.ttfb = ttfb
+        self.header_size = header_size
+        self.encoded_body_size = encoded_body_size
+        self.decoded_body_size = decoded_body_size
+        self.url = url
+        self.initiator = initiator
+        self.transferred_size = transferred_size
+        self.cached = cached
+        self.queueing = queueing
+        self.dns_lookup = dns_lookup
+        self.initial_connection = initial_connection
+        self.ssl = ssl
+        self.content_download = content_download
+        self.total = total
+        self.stalled = stalled
+
+
 cdef class LongAnimationTask(PyMessage):
     cdef public int __id__
     cdef public str name
@@ -1764,3 +1805,5 @@ cdef class MobileIssueEvent(PyMessage):
         self.context_string = context_string
         self.context = context
         self.payload = payload
+
+

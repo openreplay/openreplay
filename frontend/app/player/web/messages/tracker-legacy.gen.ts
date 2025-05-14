@@ -61,6 +61,7 @@ export const TP_MAP = {
   79: MType.Zustand,
   83: MType.NetworkRequest,
   84: MType.WsChannel,
+  85: MType.ResourceTiming,
   89: MType.LongAnimationTask,
   113: MType.SelectionChange,
   114: MType.MouseThrashing,

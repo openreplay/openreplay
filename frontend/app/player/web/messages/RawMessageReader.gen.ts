@@ -733,6 +733,46 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 85: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const ttfb = this.readUint(); if (ttfb === null) { return resetPointer() }
+      const headerSize = this.readUint(); if (headerSize === null) { return resetPointer() }
+      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { return resetPointer() }
+      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { return resetPointer() }
+      const url = this.readString(); if (url === null) { return resetPointer() }
+      const initiator = this.readString(); if (initiator === null) { return resetPointer() }
+      const transferredSize = this.readUint(); if (transferredSize === null) { return resetPointer() }
+      const cached = this.readBoolean(); if (cached === null) { return resetPointer() }
+      const queueing = this.readUint(); if (queueing === null) { return resetPointer() }
+      const dnsLookup = this.readUint(); if (dnsLookup === null) { return resetPointer() }
+      const initialConnection = this.readUint(); if (initialConnection === null) { return resetPointer() }
+      const ssl = this.readUint(); if (ssl === null) { return resetPointer() }
+      const contentDownload = this.readUint(); if (contentDownload === null) { return resetPointer() }
+      const total = this.readUint(); if (total === null) { return resetPointer() }
+      const stalled = this.readUint(); if (stalled === null) { return resetPointer() }
+      return {
+        tp: MType.ResourceTiming,
+        timestamp,
+        duration,
+        ttfb,
+        headerSize,
+        encodedBodySize,
+        decodedBodySize,
+        url,
+        initiator,
+        transferredSize,
+        cached,
+        queueing,
+        dnsLookup,
+        initialConnection,
+        ssl,
+        contentDownload,
+        total,
+        stalled,
+      };
+    }
+
     case 89: {
       const name = this.readString(); if (name === null) { return resetPointer() }
       const duration = this.readInt(); if (duration === null) { return resetPointer() }

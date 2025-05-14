@@ -27,7 +27,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
     break
 
     case Messages.Type.CreateDocument:
-      return  true
+      return  true 
     break
 
     case Messages.Type.CreateElementNode:
@@ -280,6 +280,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
 
     case Messages.Type.WSChannel:
       return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.uint(msg[4]) && this.string(msg[5]) && this.string(msg[6])
+    break
+
+    case Messages.Type.ResourceTiming:
+      return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.uint(msg[4]) && this.uint(msg[5]) && this.uint(msg[6]) && this.string(msg[7]) && this.string(msg[8]) && this.uint(msg[9]) && this.boolean(msg[10]) && this.uint(msg[11]) && this.uint(msg[12]) && this.uint(msg[13]) && this.uint(msg[14]) && this.uint(msg[15]) && this.uint(msg[16]) && this.uint(msg[17])
     break
 
     case Messages.Type.LongAnimationTask:

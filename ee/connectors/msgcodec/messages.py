@@ -71,7 +71,7 @@ class CreateDocument(Message):
     __id__ = 7
 
     def __init__(self, ):
-
+        
 
 
 class CreateElementNode(Message):
@@ -806,6 +806,29 @@ class WSChannel(Message):
         self.message_type = message_type
 
 
+class ResourceTiming(Message):
+    __id__ = 85
+
+    def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator, transferred_size, cached, queueing, dns_lookup, initial_connection, ssl, content_download, total, stalled):
+        self.timestamp = timestamp
+        self.duration = duration
+        self.ttfb = ttfb
+        self.header_size = header_size
+        self.encoded_body_size = encoded_body_size
+        self.decoded_body_size = decoded_body_size
+        self.url = url
+        self.initiator = initiator
+        self.transferred_size = transferred_size
+        self.cached = cached
+        self.queueing = queueing
+        self.dns_lookup = dns_lookup
+        self.initial_connection = initial_connection
+        self.ssl = ssl
+        self.content_download = content_download
+        self.total = total
+        self.stalled = stalled
+
+
 class LongAnimationTask(Message):
     __id__ = 89
 
@@ -1177,3 +1200,5 @@ class MobileIssueEvent(Message):
         self.context_string = context_string
         self.context = context
         self.payload = payload
+
+

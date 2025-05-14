@@ -50,11 +50,11 @@ export function SetViewportScroll(
 }
 
 export function CreateDocument(
-
+  
 ): Messages.CreateDocument {
   return [
     Messages.Type.CreateDocument,
-
+    
   ]
 }
 
@@ -905,6 +905,47 @@ export function WSChannel(
   ]
 }
 
+export function ResourceTiming(
+  timestamp: number,
+  duration: number,
+  ttfb: number,
+  headerSize: number,
+  encodedBodySize: number,
+  decodedBodySize: number,
+  url: string,
+  initiator: string,
+  transferredSize: number,
+  cached: boolean,
+  queueing: number,
+  dnsLookup: number,
+  initialConnection: number,
+  ssl: number,
+  contentDownload: number,
+  total: number,
+  stalled: number,
+): Messages.ResourceTiming {
+  return [
+    Messages.Type.ResourceTiming,
+    timestamp,
+    duration,
+    ttfb,
+    headerSize,
+    encodedBodySize,
+    decodedBodySize,
+    url,
+    initiator,
+    transferredSize,
+    cached,
+    queueing,
+    dnsLookup,
+    initialConnection,
+    ssl,
+    contentDownload,
+    total,
+    stalled,
+  ]
+}
+
 export function LongAnimationTask(
   name: string,
   duration: number,
@@ -1096,3 +1137,4 @@ export function WebVitals(
     value,
   ]
 }
+

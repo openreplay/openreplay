@@ -1419,6 +1419,63 @@ func DecodeWSChannel(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeResourceTiming(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &ResourceTiming{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.TTFB, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.HeaderSize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.EncodedBodySize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.DecodedBodySize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Initiator, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.TransferredSize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Cached, err = reader.ReadBoolean(); err != nil {
+		return nil, err
+	}
+	if msg.Queueing, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.DnsLookup, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.InitialConnection, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.SSL, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.ContentDownload, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Total, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Stalled, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeLongAnimationTask(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &LongAnimationTask{}
@@ -1438,9 +1495,6 @@ func DecodeLongAnimationTask(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.Scripts, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Stalled, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -2275,6 +2329,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeNetworkRequest(reader)
 	case 84:
 		return DecodeWSChannel(reader)
+	case 85:
+		return DecodeResourceTiming(reader)
 	case 89:
 		return DecodeLongAnimationTask(reader)
 	case 112:

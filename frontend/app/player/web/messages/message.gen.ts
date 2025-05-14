@@ -62,6 +62,7 @@ import type {
   RawZustand,
   RawNetworkRequest,
   RawWsChannel,
+  RawResourceTiming,
   RawLongAnimationTask,
   RawSelectionChange,
   RawMouseThrashing,
@@ -160,7 +161,7 @@ export type StringDict = RawStringDict & Timed
 
 export type SetNodeAttributeDict = RawSetNodeAttributeDict & Timed
 
-export type ResourceTimingDeprecated = RawResourceTimingDeprecated & Timed
+export type ResourceTimingDeprecatedDeprecated = RawResourceTimingDeprecatedDeprecated & Timed
 
 export type ConnectionInformation = RawConnectionInformation & Timed
 
@@ -204,13 +205,15 @@ export type NetworkRequest = RawNetworkRequest & Timed
 
 export type WsChannel = RawWsChannel & Timed
 
+export type ResourceTiming = RawResourceTiming & Timed
+
 export type LongAnimationTask = RawLongAnimationTask & Timed
 
 export type SelectionChange = RawSelectionChange & Timed
 
 export type MouseThrashing = RawMouseThrashing & Timed
 
-export type ResourceTiming = RawResourceTiming & Timed
+export type ResourceTimingDeprecated = RawResourceTimingDeprecated & Timed
 
 export type TabChange = RawTabChange & Timed
 
@@ -245,3 +248,4 @@ export type MobileNetworkCall = RawMobileNetworkCall & Timed
 export type MobileSwipeEvent = RawMobileSwipeEvent & Timed
 
 export type MobileIssueEvent = RawMobileIssueEvent & Timed
+
