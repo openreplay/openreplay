@@ -1,12 +1,12 @@
-import { Card, Col, Modal, Row, Typography } from 'antd';
+import { Col, Modal, Row, Typography } from 'antd';
 import { GalleryVertical, Plus } from 'lucide-react';
 import React from 'react';
 
 import { useStore } from 'App/mstore';
 import NewDashboardModal from 'Components/Dashboard/components/DashboardList/NewDashModal';
 
-import AiQuery from './DashboardView/AiQuery';
 import { useTranslation } from 'react-i18next';
+import AiQuerySection, { panelSize } from './AiQuerySection';
 
 interface Props {
   open: boolean;
@@ -32,8 +32,6 @@ function AddCardSelectionModal(props: Props) {
     setOpen(true);
   };
 
-  const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /app\.openreplay\.com/.test(originStr);
   return (
     <>
       <Modal
@@ -42,8 +40,9 @@ function AddCardSelectionModal(props: Props) {
         footer={null}
         onCancel={props.onClose}
         className="addCard"
-        width={isSaas ? 900 : undefined}
+        width={panelSize}
       >
+        <AiQuerySection />
         <Row gutter={16} justify="center" className="py-5">
           <Col span={12}>
             <div
