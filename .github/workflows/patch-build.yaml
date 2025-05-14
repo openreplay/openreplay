@@ -2,7 +2,6 @@
 
 on:
   workflow_dispatch:
-    description: 'This workflow will build for patches for latest tag, and will Always use commit from main branch.'
     inputs:
       services:
         description: 'Comma separated names of services to build(in small letters).'
@@ -21,11 +20,10 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-      with:
-        fetch-depth: 1
     - name: Rebase with main branch, to make sure the code has latest main changes
       run: |
-        git pull --rebase origin main
+        git fetch origin main
+        git rebase origin/main
 
     - name: Downloading yq
       run: |
