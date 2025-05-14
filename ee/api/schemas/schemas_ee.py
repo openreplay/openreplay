@@ -28,6 +28,14 @@ class ServicePermissions(str, Enum):
     READ_NOTES = "SERVICE_READ_NOTES"
 
 
+class ValidIdentityProviderPermissions(str, Enum):
+    SESSION_REPLAY = "SESSION_REPLAY"
+    METRICS = "METRICS"
+    ASSIST_LIVE = "ASSIST_LIVE"
+    ASSIST_CALL = "ASSIST_CALL"
+    SPOT_PUBLIC = "SPOT_PUBLIC"
+
+
 class CurrentContext(schemas.CurrentContext):
     permissions: List[Union[Permissions, ServicePermissions]] = Field(...)
     service_account: bool = Field(default=False)
