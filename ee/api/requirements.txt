@@ -1,6 +1,6 @@
 urllib3==2.4.0
 requests==2.32.3
-boto3==1.38.10
+boto3==1.38.16
 pyjwt==2.10.1
 psycopg2-binary==2.9.10
 psycopg[pool,binary]==3.2.7
@@ -21,6 +21,6 @@ apscheduler==3.11.0
 python3-saml==1.16.0 --no-binary=lxml
 python-multipart==0.0.20
 
-redis==6.0.0
+redis==6.1.0
 #confluent-kafka==2.1.0
 azure-storage-blob==12.25.1
