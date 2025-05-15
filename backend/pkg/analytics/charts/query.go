@@ -25,6 +25,9 @@ func NewQueryBuilder(p Payload) (QueryBuilder, error) {
 	case MetricTypeFunnel:
 		return FunnelQueryBuilder{}, nil
 	case MetricTypeTable:
+		if p.MetricOf == "jsException" {
+			return TableErrorsQueryBuilder{}, nil
+		}
 		return TableQueryBuilder{}, nil
 	case MetricTypeHeatmap:
 		return HeatmapQueryBuilder{}, nil
