@@ -28,6 +28,7 @@ export class ChatManager {
       query: {
         project_id: projectId,
         thread_id: threadId,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       },
       auth: {
         token: `Bearer ${token}`,
@@ -46,15 +47,26 @@ export class ChatManager {
     this.socket = socket;
   }
 
+  reconnect = () => {
+    this.socket.connect();
+  };
+
   sendMessage = (message: string, isReplace = false) => {
-    this.socket.emit(
-      'message',
-      JSON.stringify({
-        message,
-        threadId: this.threadId,
-        replace: isReplace,
-      }),
-    );
+    if (!this.socket.connected) {
+      this.reconnect();
+      setTimeout(() => {
+        this.sendMessage(message, isReplace);
+      }, 500);
+    } else {
+      this.socket.emit(
+        'message',
+        JSON.stringify({
+          message,
+          threadId: this.threadId,
+          replace: isReplace,
+        }),
+      );
+    }
   };
 
   setOnMsgHook = ({
