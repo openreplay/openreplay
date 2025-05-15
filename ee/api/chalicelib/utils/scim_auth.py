@@ -13,23 +13,8 @@ REFRESH_SECRET_KEY = config("SCIM_REFRESH_SECRET_KEY")
 ALGORITHM = config("SCIM_JWT_ALGORITHM")
 ACCESS_TOKEN_EXPIRE_SECONDS = int(config("SCIM_ACCESS_TOKEN_EXPIRE_SECONDS"))
 REFRESH_TOKEN_EXPIRE_SECONDS = int(config("SCIM_REFRESH_TOKEN_EXPIRE_SECONDS"))
-AUDIENCE = "okta_client"
+AUDIENCE = config("SCIM_AUDIENCE")
 ISSUER = (config("JWT_ISSUER"),)
-
-# Simulated Okta Client Credentials
-# OKTA_CLIENT_ID = "okta-client"
-# OKTA_CLIENT_SECRET = "okta-secret"
-
-# class TokenRequest(BaseModel):
-#     client_id: str
-#     client_secret: str
-
-# async def authenticate_client(token_request: TokenRequest):
-#     """Validate Okta Client Credentials and issue JWT"""
-#     if token_request.client_id != OKTA_CLIENT_ID or token_request.client_secret != OKTA_CLIENT_SECRET:
-#         raise HTTPException(status_code=401, detail="Invalid client credentials")
-
-#     return {"access_token": create_jwt(), "token_type": "bearer"}
 
 
 def create_tokens(tenant_id):
@@ -48,7 +33,7 @@ def create_tokens(tenant_id):
     refresh_payload.update({"exp": curr_time + REFRESH_TOKEN_EXPIRE_SECONDS})
     refresh_token = jwt.encode(refresh_payload, REFRESH_SECRET_KEY, algorithm=ALGORITHM)
 
-    return access_token, refresh_token
+    return access_token, refresh_token, ACCESS_TOKEN_EXPIRE_SECONDS
 
 
 def verify_access_token(token: str):
