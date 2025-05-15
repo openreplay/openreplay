@@ -255,6 +255,8 @@ def _update_role_projects_and_permissions(
     permissions: list[str] | None,
     cur: pg_client.PostgresClient,
 ) -> None:
+    if role_id is None:
+        return
     all_projects = "true" if not project_keys else "false"
     project_key_clause = helpers.safe_mogrify_array(project_keys, "varchar", cur)
     permission_clause = helpers.safe_mogrify_array(permissions, "varchar", cur)
