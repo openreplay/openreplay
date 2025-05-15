@@ -398,7 +398,6 @@ class SearchStore {
     force: boolean = false,
     bookmarked: boolean = false,
   ): Promise<void> => {
-    console.log(this.searchInProgress)
     if (this.searchInProgress) return;
     const filter = this.instance.toSearch();
 

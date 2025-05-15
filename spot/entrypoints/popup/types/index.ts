@@ -4,7 +4,6 @@ export type AudioDevice = {
 };
 
 export enum AppState {
-  EMPTY = "empty",
   LOGIN = "login",
   READY = "ready",
   STARTING = "starting",

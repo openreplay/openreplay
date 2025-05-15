@@ -4,7 +4,7 @@ import schemas
 from chalicelib.utils import helper
 from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.ch_client import ClickHouseClient
-from chalicelib.utils.exp_ch_helper import get_sub_condition
+from chalicelib.utils.exp_ch_helper import get_sub_condition, get_col_cast
 
 logger = logging.getLogger(__name__)
 PREDEFINED_EVENTS = {
@@ -111,11 +111,13 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
                 sub_conditions = []
                 for j, ef in enumerate(f.properties.filters):
                     p_k = f"e_{i}_p_{j}"
-                    full_args = {**full_args, **sh.multi_values(ef.value, value_key=p_k)}
+                    full_args = {**full_args, **sh.multi_values(ef.value, value_key=p_k, data_type=ef.data_type)}
+                    cast = get_col_cast(data_type=ef.data_type, value=ef.value)
                     if ef.is_predefined:
-                        sub_condition = get_sub_condition(col_name=ef.name, val_name=p_k, operator=ef.operator)
+                        sub_condition = get_sub_condition(col_name=f"accurateCastOrNull(`{ef.name}`,'{cast}')",
+                                                          val_name=p_k, operator=ef.operator)
                     else:
-                        sub_condition = get_sub_condition(col_name=f"properties.{ef.name}",
+                        sub_condition = get_sub_condition(col_name=f"accurateCastOrNull(properties.`{ef.name}`,{cast})",
                                                           val_name=p_k, operator=ef.operator)
                     sub_conditions.append(sh.multi_conditions(sub_condition, ef.value, value_key=p_k))
                 if len(sub_conditions) > 0:

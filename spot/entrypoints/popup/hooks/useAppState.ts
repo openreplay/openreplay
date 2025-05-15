@@ -2,7 +2,7 @@ import { createSignal, onMount } from "solid-js";
 import { AppState, RecordingArea } from "../types";
 
 export function useAppState() {
-  const [state, setState] = createSignal<AppState>(AppState.EMPTY);
+  const [state, setState] = createSignal<AppState>(AppState.LOGIN);
   const [isSettingsOpen, setIsSettingsOpen] = createSignal(false);
 
   onMount(() => {

@@ -46,6 +46,12 @@ module.exports = {
   transparent: 'transparent',
   cyan: '#EBF4F5',
   amber: 'oklch(98.7% 0.022 95.277)',
+  glassWhite: 'rgba(255, 255, 255, 0.5)',
+  glassMint: 'rgba(248, 255, 254, 0.5)',
+  glassLavander: 'rgba(243, 241, 255, 0.5)',
+  blueLight: 'rgba(235, 235, 255, 1)',
+  offWhite: 'rgba(250, 250, 255, 1)',
+  'disabled-text': 'rgba(0,0,0, 0.38)',
 
   figmaColors: {
     'accent-secondary': 'rgba(62, 170, 175, 1)',
@@ -95,6 +101,12 @@ module.exports = {
 
     'light-blue-bg': 'oklch(39.8% 0.07 227.392)',
     'disabled-text': 'rgba(255, 255, 255, 0.38)',
+
+    glassWhite: 'rgba(30, 30, 30, 0.5)',
+    glassMint: 'rgba(20, 27, 28, 0.5)',
+    glassLavander: 'rgba(25, 23, 37, 0.5)',
+    blueLight: '#343460',
+    offWhite: 'rgba(30, 30, 50, 1)',
 
     figmaColors: {
       'accent-secondary': 'rgba(82, 190, 195, 1)',

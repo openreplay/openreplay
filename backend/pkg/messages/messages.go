@@ -1466,7 +1466,7 @@ func (msg *SetNodeAttributeDict) TypeID() int {
 	return 52
 }
 
-type ResourceTimingDeprecated struct {
+type ResourceTimingDeprecatedDeprecated struct {
 	message
 	Timestamp       uint64
 	Duration        uint64
@@ -1478,7 +1478,7 @@ type ResourceTimingDeprecated struct {
 	Initiator       string
 }
 
-func (msg *ResourceTimingDeprecated) Encode() []byte {
+func (msg *ResourceTimingDeprecatedDeprecated) Encode() []byte {
 	buf := make([]byte, 81+len(msg.URL)+len(msg.Initiator))
 	buf[0] = 53
 	p := 1
@@ -1493,11 +1493,11 @@ func (msg *ResourceTimingDeprecated) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *ResourceTimingDeprecated) Decode() Message {
+func (msg *ResourceTimingDeprecatedDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *ResourceTimingDeprecated) TypeID() int {
+func (msg *ResourceTimingDeprecatedDeprecated) TypeID() int {
 	return 53
 }
 
@@ -2320,6 +2320,90 @@ func (msg *Incident) TypeID() int {
 	return 85
 }
 
+type ResourceTiming struct {
+	message
+	Timestamp         uint64
+	Duration          uint64
+	TTFB              uint64
+	HeaderSize        uint64
+	EncodedBodySize   uint64
+	DecodedBodySize   uint64
+	URL               string
+	Initiator         string
+	TransferredSize   uint64
+	Cached            bool
+	Queueing          uint64
+	DnsLookup         uint64
+	InitialConnection uint64
+	SSL               uint64
+	ContentDownload   uint64
+	Total             uint64
+	Stalled           uint64
+}
+
+func (msg *ResourceTiming) Encode() []byte {
+	buf := make([]byte, 171+len(msg.URL)+len(msg.Initiator))
+	buf[0] = 85
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	p = WriteUint(msg.TTFB, buf, p)
+	p = WriteUint(msg.HeaderSize, buf, p)
+	p = WriteUint(msg.EncodedBodySize, buf, p)
+	p = WriteUint(msg.DecodedBodySize, buf, p)
+	p = WriteString(msg.URL, buf, p)
+	p = WriteString(msg.Initiator, buf, p)
+	p = WriteUint(msg.TransferredSize, buf, p)
+	p = WriteBoolean(msg.Cached, buf, p)
+	p = WriteUint(msg.Queueing, buf, p)
+	p = WriteUint(msg.DnsLookup, buf, p)
+	p = WriteUint(msg.InitialConnection, buf, p)
+	p = WriteUint(msg.SSL, buf, p)
+	p = WriteUint(msg.ContentDownload, buf, p)
+	p = WriteUint(msg.Total, buf, p)
+	p = WriteUint(msg.Stalled, buf, p)
+	return buf[:p]
+}
+
+func (msg *ResourceTiming) Decode() Message {
+	return msg
+}
+
+func (msg *ResourceTiming) TypeID() int {
+	return 85
+}
+
+type LongAnimationTask struct {
+	message
+	Name                  string
+	Duration              int64
+	BlockingDuration      int64
+	FirstUIEventTimestamp int64
+	StartTime             int64
+	Scripts               string
+}
+
+func (msg *LongAnimationTask) Encode() []byte {
+	buf := make([]byte, 61+len(msg.Name)+len(msg.Scripts))
+	buf[0] = 89
+	p := 1
+	p = WriteString(msg.Name, buf, p)
+	p = WriteInt(msg.Duration, buf, p)
+	p = WriteInt(msg.BlockingDuration, buf, p)
+	p = WriteInt(msg.FirstUIEventTimestamp, buf, p)
+	p = WriteInt(msg.StartTime, buf, p)
+	p = WriteString(msg.Scripts, buf, p)
+	return buf[:p]
+}
+
+func (msg *LongAnimationTask) Decode() Message {
+	return msg
+}
+
+func (msg *LongAnimationTask) TypeID() int {
+	return 89
+}
+
 type InputChange struct {
 	message
 	ID             uint64
@@ -2418,7 +2502,7 @@ func (msg *UnbindNodes) TypeID() int {
 	return 115
 }
 
-type ResourceTiming struct {
+type ResourceTimingDeprecated struct {
 	message
 	Timestamp       uint64
 	Duration        uint64
@@ -2432,7 +2516,7 @@ type ResourceTiming struct {
 	Cached          bool
 }
 
-func (msg *ResourceTiming) Encode() []byte {
+func (msg *ResourceTimingDeprecated) Encode() []byte {
 	buf := make([]byte, 101+len(msg.URL)+len(msg.Initiator))
 	buf[0] = 116
 	p := 1
@@ -2449,11 +2533,11 @@ func (msg *ResourceTiming) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *ResourceTiming) Decode() Message {
+func (msg *ResourceTimingDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *ResourceTiming) TypeID() int {
+func (msg *ResourceTimingDeprecated) TypeID() int {
 	return 116
 }
 

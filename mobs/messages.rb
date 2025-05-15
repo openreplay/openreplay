@@ -309,7 +309,9 @@ message 52, 'SetNodeAttributeDict' do
     string 'Name'
     string 'Value'
 end
-message 53, 'ResourceTimingDeprecated', :replayer => :devtools do
+
+# deprecated during 1.16.0 release
+message 53, 'ResourceTimingDeprecatedDeprecated', :replayer => :devtools do
   uint 'Timestamp'
   uint 'Duration'
   uint 'TTFB'
@@ -344,7 +346,7 @@ message 56, 'PerformanceTrackAggr', :tracker => false, :replayer => false do
 end
 
 # Since 4.1.7 / 1.9.0
-message 57, 'LoadFontFace' do 
+message 57, 'LoadFontFace' do
   uint 'ParentID'
   string 'Family'
   string 'Source'
@@ -520,10 +522,39 @@ message 84, 'WSChannel', :replayer => :devtools do
     string 'MessageType'
 end
 
-message 85, 'Incident', :replayer => :devtools do
+message 85, 'ResourceTiming', :replayer => :devtools do
+  uint 'Timestamp'
+  uint 'Duration'
+  uint 'TTFB'
+  uint 'HeaderSize'
+  uint 'EncodedBodySize'
+  uint 'DecodedBodySize'
+  string 'URL'
+  string 'Initiator'
+  uint 'TransferredSize'
+  boolean 'Cached'
+  uint 'Queueing'
+  uint 'DnsLookup'
+  uint 'InitialConnection'
+  uint 'SSL'
+  uint 'ContentDownload'
+  uint 'Total'
+  uint 'Stalled'
+end
+
+message 87, 'Incident', :replayer => :devtools do
   string 'Label'
   int 'StartTime'
   int 'EndTime'
+end
+
+message 89, 'LongAnimationTask', :replayer => :devtools do
+    string 'Name'
+    int 'Duration'
+    int 'BlockingDuration'
+    int 'FirstUIEventTimestamp'
+    int 'StartTime'
+    string 'Scripts'
 end
 
 # 90-111 reserved iOS
@@ -551,7 +582,8 @@ message 115, 'UnbindNodes', :replayer => false do
     uint 'TotalRemovedPercent'
 end
 
-message 116, 'ResourceTiming', :replayer => :devtools do
+#deprecated during 1.23.0 release
+message 116, 'ResourceTimingDeprecated', :replayer => :devtools do
   uint 'Timestamp'
   uint 'Duration'
   uint 'TTFB'
@@ -627,4 +659,4 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Partition'
 end
 
-# FREE 2, 34, 35, 36, 65, 86, 87, 88, 89
+# FREE 2, 35, 36, 65, 87, 88, 89

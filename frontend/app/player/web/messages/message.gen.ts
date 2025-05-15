@@ -40,7 +40,7 @@ import type {
   RawSetNodeAttributeDictDeprecated,
   RawStringDict,
   RawSetNodeAttributeDict,
-  RawResourceTimingDeprecated,
+  RawResourceTimingDeprecatedDeprecated,
   RawConnectionInformation,
   RawSetPageVisibility,
   RawLoadFontFace,
@@ -62,10 +62,11 @@ import type {
   RawZustand,
   RawNetworkRequest,
   RawWsChannel,
-  RawIncident,
+  RawResourceTiming,
+  RawLongAnimationTask,
   RawSelectionChange,
   RawMouseThrashing,
-  RawResourceTiming,
+  RawResourceTimingDeprecated,
   RawTabChange,
   RawTabData,
   RawCanvasNode,
@@ -160,7 +161,7 @@ export type StringDict = RawStringDict & Timed
 
 export type SetNodeAttributeDict = RawSetNodeAttributeDict & Timed
 
-export type ResourceTimingDeprecated = RawResourceTimingDeprecated & Timed
+export type ResourceTimingDeprecatedDeprecated = RawResourceTimingDeprecatedDeprecated & Timed
 
 export type ConnectionInformation = RawConnectionInformation & Timed
 
@@ -204,13 +205,15 @@ export type NetworkRequest = RawNetworkRequest & Timed
 
 export type WsChannel = RawWsChannel & Timed
 
-export type Incident = RawIncident & Timed
+export type ResourceTiming = RawResourceTiming & Timed
+
+export type LongAnimationTask = RawLongAnimationTask & Timed
 
 export type SelectionChange = RawSelectionChange & Timed
 
 export type MouseThrashing = RawMouseThrashing & Timed
 
-export type ResourceTiming = RawResourceTiming & Timed
+export type ResourceTimingDeprecated = RawResourceTimingDeprecated & Timed
 
 export type TabChange = RawTabChange & Timed
 

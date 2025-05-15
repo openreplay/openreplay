@@ -18,6 +18,7 @@ export const EXCEPTIONS = 9;
 export const INSPECTOR = 11;
 export const OVERVIEW = 12;
 export const BACKENDLOGS = 13;
+export const LONG_TASK = 14;
 
 export const blocks = {
   none: NONE,
@@ -33,6 +34,7 @@ export const blocks = {
   inspector: INSPECTOR,
   overview: OVERVIEW,
   backendLogs: BACKENDLOGS,
+  longTask: LONG_TASK,
 } as const;
 
 export const blockValues = [
@@ -49,6 +51,7 @@ export const blockValues = [
   INSPECTOR,
   OVERVIEW,
   BACKENDLOGS,
+  LONG_TASK
 ] as const;
 
 export default class UiPlayerStore {

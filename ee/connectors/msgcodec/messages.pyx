@@ -743,7 +743,7 @@ cdef class SetNodeAttributeDict(PyMessage):
         self.value = value
 
 
-cdef class ResourceTimingDeprecated(PyMessage):
+cdef class ResourceTimingDeprecatedDeprecated(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long duration
@@ -1200,17 +1200,64 @@ cdef class WSChannel(PyMessage):
         self.message_type = message_type
 
 
-cdef class Incident(PyMessage):
+cdef class ResourceTiming(PyMessage):
     cdef public int __id__
-    cdef public str label
-    cdef public long start_time
-    cdef public long end_time
+    cdef public unsigned long timestamp
+    cdef public unsigned long duration
+    cdef public unsigned long ttfb
+    cdef public unsigned long header_size
+    cdef public unsigned long encoded_body_size
+    cdef public unsigned long decoded_body_size
+    cdef public str url
+    cdef public str initiator
+    cdef public unsigned long transferred_size
+    cdef public bint cached
+    cdef public unsigned long queueing
+    cdef public unsigned long dns_lookup
+    cdef public unsigned long initial_connection
+    cdef public unsigned long ssl
+    cdef public unsigned long content_download
+    cdef public unsigned long total
+    cdef public unsigned long stalled
 
-    def __init__(self, str label, long start_time, long end_time):
+    def __init__(self, unsigned long timestamp, unsigned long duration, unsigned long ttfb, unsigned long header_size, unsigned long encoded_body_size, unsigned long decoded_body_size, str url, str initiator, unsigned long transferred_size, bint cached, unsigned long queueing, unsigned long dns_lookup, unsigned long initial_connection, unsigned long ssl, unsigned long content_download, unsigned long total, unsigned long stalled):
         self.__id__ = 85
-        self.label = label
+        self.timestamp = timestamp
+        self.duration = duration
+        self.ttfb = ttfb
+        self.header_size = header_size
+        self.encoded_body_size = encoded_body_size
+        self.decoded_body_size = decoded_body_size
+        self.url = url
+        self.initiator = initiator
+        self.transferred_size = transferred_size
+        self.cached = cached
+        self.queueing = queueing
+        self.dns_lookup = dns_lookup
+        self.initial_connection = initial_connection
+        self.ssl = ssl
+        self.content_download = content_download
+        self.total = total
+        self.stalled = stalled
+
+
+cdef class LongAnimationTask(PyMessage):
+    cdef public int __id__
+    cdef public str name
+    cdef public long duration
+    cdef public long blocking_duration
+    cdef public long first_ui_event_timestamp
+    cdef public long start_time
+    cdef public str scripts
+
+    def __init__(self, str name, long duration, long blocking_duration, long first_ui_event_timestamp, long start_time, str scripts):
+        self.__id__ = 89
+        self.name = name
+        self.duration = duration
+        self.blocking_duration = blocking_duration
+        self.first_ui_event_timestamp = first_ui_event_timestamp
         self.start_time = start_time
-        self.end_time = end_time
+        self.scripts = scripts
 
 
 cdef class InputChange(PyMessage):
@@ -1263,7 +1310,7 @@ cdef class UnbindNodes(PyMessage):
         self.total_removed_percent = total_removed_percent
 
 
-cdef class ResourceTiming(PyMessage):
+cdef class ResourceTimingDeprecated(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long duration

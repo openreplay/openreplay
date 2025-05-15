@@ -1,3 +1,8 @@
+## 17.0.0
+
+- support for Long Animation Task tracking
+- support for timing information in resource tracking
+
 ## 16.3.0
 
 - optional dynamic css scanning for better emotionjs support

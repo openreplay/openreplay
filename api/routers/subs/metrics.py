@@ -219,6 +219,17 @@ def get_card_chart(projectId: int, metric_id: int, data: schemas.CardSessionsSch
     return {"data": data}
 
 
+@app.post("/{projectId}/dashboards/{dashboardId}/cards/{metric_id}/chart", tags=["card"])
+@app.post("/{projectId}/dashboards/{dashboardId}/cards/{metric_id}", tags=["card"])
+def get_card_chart_for_dashboard(projectId: int, dashboardId: int, metric_id: int,
+                                 data: schemas.CardSessionsSchema = Body(...),
+                                 context: schemas.CurrentContext = Depends(OR_context)):
+    data = custom_metrics.make_chart_from_card(
+        project=context.project, user_id=context.user_id, metric_id=metric_id, data=data, for_dashboard=True
+    )
+    return {"data": data}
+
+
 @app.post("/{projectId}/cards/{metric_id}", tags=["dashboard"])
 def update_card(projectId: int, metric_id: int, data: schemas.CardSchema = Body(...),
                 context: schemas.CurrentContext = Depends(OR_context)):

@@ -27,7 +27,6 @@ export default defineConfig({
       "unlimitedStorage",
       "webNavigation",
       "webRequest",
-      "<all_urls>",
       "debugger",
     ],
   },

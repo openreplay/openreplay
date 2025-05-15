@@ -200,6 +200,8 @@ export const scopeSetup = (): string => '/scope-setup';
 
 export const highlights = (): string => '/highlights';
 
+export const kai = (): string => '/kai';
+
 const REQUIRED_SITE_ID_ROUTES = [
   liveSession(''),
   session(''),
@@ -240,6 +242,8 @@ const REQUIRED_SITE_ID_ROUTES = [
   usabilityTestingView(''),
 
   highlights(),
+
+  kai(),
 ];
 const routeNeedsSiteId = (path: string): boolean =>
   REQUIRED_SITE_ID_ROUTES.some((r) => path.startsWith(r));

@@ -45,7 +45,7 @@ export declare const enum Type {
   SetNodeAttributeDictDeprecated = 51,
   StringDict = 43,
   SetNodeAttributeDict = 52,
-  ResourceTimingDeprecated = 53,
+  ResourceTimingDeprecatedDeprecated = 53,
   ConnectionInformation = 54,
   SetPageVisibility = 55,
   LoadFontFace = 57,
@@ -70,12 +70,13 @@ export declare const enum Type {
   PartitionedMessage = 82,
   NetworkRequest = 83,
   WSChannel = 84,
-  Incident = 85,
+  ResourceTiming = 85,
+  LongAnimationTask = 89,
   InputChange = 112,
   SelectionChange = 113,
   MouseThrashing = 114,
   UnbindNodes = 115,
-  ResourceTiming = 116,
+  ResourceTimingDeprecated = 116,
   TabChange = 117,
   TabData = 118,
   CanvasNode = 119,
@@ -380,8 +381,8 @@ export type SetNodeAttributeDict = [
   /*value:*/ string,
 ]
 
-export type ResourceTimingDeprecated = [
-  /*type:*/ Type.ResourceTimingDeprecated,
+export type ResourceTimingDeprecatedDeprecated = [
+  /*type:*/ Type.ResourceTimingDeprecatedDeprecated,
   /*timestamp:*/ number,
   /*duration:*/ number,
   /*ttfb:*/ number,
@@ -571,11 +572,35 @@ export type WSChannel = [
   /*messageType:*/ string,
 ]
 
-export type Incident = [
-  /*type:*/ Type.Incident,
-  /*label:*/ string,
+export type ResourceTiming = [
+  /*type:*/ Type.ResourceTiming,
+  /*timestamp:*/ number,
+  /*duration:*/ number,
+  /*ttfb:*/ number,
+  /*headerSize:*/ number,
+  /*encodedBodySize:*/ number,
+  /*decodedBodySize:*/ number,
+  /*url:*/ string,
+  /*initiator:*/ string,
+  /*transferredSize:*/ number,
+  /*cached:*/ boolean,
+  /*queueing:*/ number,
+  /*dnsLookup:*/ number,
+  /*initialConnection:*/ number,
+  /*ssl:*/ number,
+  /*contentDownload:*/ number,
+  /*total:*/ number,
+  /*stalled:*/ number,
+]
+
+export type LongAnimationTask = [
+  /*type:*/ Type.LongAnimationTask,
+  /*name:*/ string,
+  /*duration:*/ number,
+  /*blockingDuration:*/ number,
+  /*firstUIEventTimestamp:*/ number,
   /*startTime:*/ number,
-  /*endTime:*/ number,
+  /*scripts:*/ string,
 ]
 
 export type InputChange = [
@@ -605,8 +630,8 @@ export type UnbindNodes = [
   /*totalRemovedPercent:*/ number,
 ]
 
-export type ResourceTiming = [
-  /*type:*/ Type.ResourceTiming,
+export type ResourceTimingDeprecated = [
+  /*type:*/ Type.ResourceTimingDeprecated,
   /*timestamp:*/ number,
   /*duration:*/ number,
   /*ttfb:*/ number,
@@ -672,5 +697,5 @@ export type WebVitals = [
 ]
 
 
-type Message =  Timestamp | SetPageLocationDeprecated | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequestDeprecated | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | StringDictGlobal | SetNodeAttributeDictGlobal | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | ReduxDeprecated | Vuex | MobX | NgRx | GraphQLDeprecated | PerformanceTrack | StringDictDeprecated | SetNodeAttributeDictDeprecated | StringDict | SetNodeAttributeDict | ResourceTimingDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | MouseClickDeprecated | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | PartitionedMessage | NetworkRequest | WSChannel | Incident | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTiming | TabChange | TabData | CanvasNode | TagTrigger | Redux | SetPageLocation | GraphQL | WebVitals
+type Message =  Timestamp | SetPageLocationDeprecated | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequestDeprecated | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | StringDictGlobal | SetNodeAttributeDictGlobal | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | ReduxDeprecated | Vuex | MobX | NgRx | GraphQLDeprecated | PerformanceTrack | StringDictDeprecated | SetNodeAttributeDictDeprecated | StringDict | SetNodeAttributeDict | ResourceTimingDeprecatedDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | MouseClickDeprecated | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | PartitionedMessage | NetworkRequest | WSChannel | ResourceTiming | LongAnimationTask | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTimingDeprecated | TabChange | TabData | CanvasNode | TagTrigger | Redux | SetPageLocation | GraphQL | WebVitals
 export default Message

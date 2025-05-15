@@ -29,11 +29,12 @@ import {
   STACKEVENTS,
   STORAGE,
   BACKENDLOGS,
-} from 'App/mstore/uiPlayerStore';
+  LONG_TASK
+} from "App/mstore/uiPlayerStore";
 import { Icon } from 'UI';
 import LogsButton from 'App/components/Session/Player/SharedComponents/BackendLogs/LogsButton';
 import { CodeOutlined, DashboardOutlined, ClusterOutlined } from '@ant-design/icons';
-import { ArrowDownUp, ListCollapse, Merge, Waypoints } from 'lucide-react'
+import { ArrowDownUp, ListCollapse, Merge, Waypoints, Timer } from 'lucide-react'
 
 import ControlButton from './ControlButton';
 import Timeline from './Timeline';
@@ -293,7 +294,11 @@ const DevtoolsButtons = observer(
       graphql: {
         icon: <Merge size={14} strokeWidth={2} />,
         label: 'Graphql',
-      }
+      },
+      longTask: {
+        icon: <Timer size={14} strokeWidth={2} />,
+        label: t('Long Tasks'),
+      },
     }
     // @ts-ignore
     const getLabel = (block: string) => labels[block][showIcons ? 'icon' : 'label']
@@ -357,6 +362,14 @@ const DevtoolsButtons = observer(
           onClick={() => toggleBottomTools(PERFORMANCE)}
           active={bottomBlock === PERFORMANCE && !inspectorMode}
           label={getLabel('performance')}
+        />
+
+        <ControlButton
+          customKey="longTask"
+          disabled={disableButtons}
+          onClick={() => toggleBottomTools(LONG_TASK)}
+          active={bottomBlock === LONG_TASK && !inspectorMode}
+          label={getLabel('longTask')}
         />
 
         {showGraphql && (

@@ -298,7 +298,7 @@ type TrSetNodeAttributeDict = [
   value: string,
 ]
 
-type TrResourceTimingDeprecated = [
+type TrResourceTimingDeprecatedDeprecated = [
   type: 53,
   timestamp: number,
   duration: number,
@@ -489,11 +489,35 @@ type TrWSChannel = [
   messageType: string,
 ]
 
-type TrIncident = [
+type TrResourceTiming = [
   type: 85,
-  label: string,
+  timestamp: number,
+  duration: number,
+  ttfb: number,
+  headerSize: number,
+  encodedBodySize: number,
+  decodedBodySize: number,
+  url: string,
+  initiator: string,
+  transferredSize: number,
+  cached: boolean,
+  queueing: number,
+  dnsLookup: number,
+  initialConnection: number,
+  ssl: number,
+  contentDownload: number,
+  total: number,
+  stalled: number,
+]
+
+type TrLongAnimationTask = [
+  type: 89,
+  name: string,
+  duration: number,
+  blockingDuration: number,
+  firstUIEventTimestamp: number,
   startTime: number,
-  endTime: number,
+  scripts: string,
 ]
 
 type TrInputChange = [
@@ -523,7 +547,7 @@ type TrUnbindNodes = [
   totalRemovedPercent: number,
 ]
 
-type TrResourceTiming = [
+type TrResourceTimingDeprecated = [
   type: 116,
   timestamp: number,
   duration: number,
@@ -590,7 +614,7 @@ type TrWebVitals = [
 ]
 
 
-export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrStringDictGlobal | TrSetNodeAttributeDictGlobal | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDictDeprecated | TrSetNodeAttributeDictDeprecated | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrIncident | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL | TrWebVitals
+export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrStringDictGlobal | TrSetNodeAttributeDictGlobal | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDictDeprecated | TrSetNodeAttributeDictDeprecated | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecatedDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrResourceTiming | TrLongAnimationTask | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTimingDeprecated | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL | TrWebVitals
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
@@ -907,7 +931,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 53: {
       return {
-        tp: MType.ResourceTimingDeprecated,
+        tp: MType.ResourceTimingDeprecatedDeprecated,
         timestamp: tMsg[1],
         duration: tMsg[2],
         ttfb: tMsg[3],
@@ -1103,10 +1127,36 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 85: {
       return {
-        tp: MType.Incident,
-        label: tMsg[1],
-        startTime: tMsg[2],
-        endTime: tMsg[3],
+        tp: MType.ResourceTiming,
+        timestamp: tMsg[1],
+        duration: tMsg[2],
+        ttfb: tMsg[3],
+        headerSize: tMsg[4],
+        encodedBodySize: tMsg[5],
+        decodedBodySize: tMsg[6],
+        url: tMsg[7],
+        initiator: tMsg[8],
+        transferredSize: tMsg[9],
+        cached: tMsg[10],
+        queueing: tMsg[11],
+        dnsLookup: tMsg[12],
+        initialConnection: tMsg[13],
+        ssl: tMsg[14],
+        contentDownload: tMsg[15],
+        total: tMsg[16],
+        stalled: tMsg[17],
+      }
+    }
+    
+    case 89: {
+      return {
+        tp: MType.LongAnimationTask,
+        name: tMsg[1],
+        duration: tMsg[2],
+        blockingDuration: tMsg[3],
+        firstUIEventTimestamp: tMsg[4],
+        startTime: tMsg[5],
+        scripts: tMsg[6],
       }
     }
     
@@ -1128,7 +1178,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 116: {
       return {
-        tp: MType.ResourceTiming,
+        tp: MType.ResourceTimingDeprecated,
         timestamp: tMsg[1],
         duration: tMsg[2],
         ttfb: tMsg[3],

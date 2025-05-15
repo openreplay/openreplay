@@ -1,10 +1,13 @@
 import logging
 import re
-from typing import Union
+from typing import Union, Any
 
 import schemas
 from chalicelib.utils import sql_helper as sh
 from schemas import SearchEventOperator
+import math
+import struct
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
@@ -158,8 +161,73 @@ def simplify_clickhouse_types(ch_types: list[str]) -> list[str]:
 
 
 def get_sub_condition(col_name: str, val_name: str,
-                      operator: Union[schemas.SearchEventOperator, schemas.MathOperator]):
+                      operator: Union[schemas.SearchEventOperator, schemas.MathOperator]) -> str:
     if operator == SearchEventOperator.PATTERN:
         return f"match({col_name}, %({val_name})s)"
     op = sh.get_sql_operator(operator)
     return f"{col_name} {op} %({val_name})s"
+
+
+def get_col_cast(data_type: schemas.PropertyType, value: Any) -> str:
+    if value is None or len(value) == 0:
+        return ""
+    if isinstance(value, list):
+        value = value[0]
+    if data_type in (schemas.PropertyType.INT, schemas.PropertyType.FLOAT):
+        return best_clickhouse_type(value)
+    return data_type.capitalize()
+
+
+# (type_name, minimum, maximum) – ordered by increasing size
+_INT_RANGES = [
+    ("Int8", -128, 127),
+    ("UInt8", 0, 255),
+    ("Int16", -32_768, 32_767),
+    ("UInt16", 0, 65_535),
+    ("Int32", -2_147_483_648, 2_147_483_647),
+    ("UInt32", 0, 4_294_967_295),
+    ("Int64", -9_223_372_036_854_775_808, 9_223_372_036_854_775_807),
+    ("UInt64", 0, 18_446_744_073_709_551_615),
+]
+
+
+def best_clickhouse_type(value):
+    """
+    Return the most compact ClickHouse numeric type that can store *value* loss-lessly.
+
+    """
+    # Treat bool like tiny int
+    if isinstance(value, bool):
+        value = int(value)
+
+    # --- Integers ---
+    if isinstance(value, int):
+        for name, lo, hi in _INT_RANGES:
+            if lo <= value <= hi:
+                return name
+        # Beyond UInt64: ClickHouse offers Int128 / Int256 or Decimal
+        return "Int128"
+
+    # --- Decimal.Decimal (exact) ---
+    if isinstance(value, Decimal):
+        # ClickHouse Decimal32/64/128 have 9 / 18 / 38 significant digits.
+        digits = len(value.as_tuple().digits)
+        if digits <= 9:
+            return "Decimal32"
+        elif digits <= 18:
+            return "Decimal64"
+        else:
+            return "Decimal128"
+
+    # --- Floats ---
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            return "Float64"  # inf / nan → always Float64
+
+        # Check if a round-trip through 32-bit float preserves the bit pattern
+        packed = struct.pack("f", value)
+        if struct.unpack("f", packed)[0] == value:
+            return "Float32"
+        return "Float64"
+
+    raise TypeError(f"Unsupported type: {type(value).__name__}")

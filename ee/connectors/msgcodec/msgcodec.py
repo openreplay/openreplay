@@ -486,7 +486,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 53:
-            return ResourceTimingDeprecated(
+            return ResourceTimingDeprecatedDeprecated(
                 timestamp=self.read_uint(reader),
                 duration=self.read_uint(reader),
                 ttfb=self.read_uint(reader),
@@ -730,10 +730,34 @@ class MessageCodec(Codec):
             )
 
         if message_id == 85:
-            return Incident(
-                label=self.read_string(reader),
+            return ResourceTiming(
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader),
+                ttfb=self.read_uint(reader),
+                header_size=self.read_uint(reader),
+                encoded_body_size=self.read_uint(reader),
+                decoded_body_size=self.read_uint(reader),
+                url=self.read_string(reader),
+                initiator=self.read_string(reader),
+                transferred_size=self.read_uint(reader),
+                cached=self.read_boolean(reader),
+                queueing=self.read_uint(reader),
+                dns_lookup=self.read_uint(reader),
+                initial_connection=self.read_uint(reader),
+                ssl=self.read_uint(reader),
+                content_download=self.read_uint(reader),
+                total=self.read_uint(reader),
+                stalled=self.read_uint(reader)
+            )
+
+        if message_id == 89:
+            return LongAnimationTask(
+                name=self.read_string(reader),
+                duration=self.read_int(reader),
+                blocking_duration=self.read_int(reader),
+                first_ui_event_timestamp=self.read_int(reader),
                 start_time=self.read_int(reader),
-                end_time=self.read_int(reader)
+                scripts=self.read_string(reader)
             )
 
         if message_id == 112:
@@ -764,7 +788,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 116:
-            return ResourceTiming(
+            return ResourceTimingDeprecated(
                 timestamp=self.read_uint(reader),
                 duration=self.read_uint(reader),
                 ttfb=self.read_uint(reader),

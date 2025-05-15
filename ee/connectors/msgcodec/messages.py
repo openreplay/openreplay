@@ -500,7 +500,7 @@ class SetNodeAttributeDict(Message):
         self.value = value
 
 
-class ResourceTimingDeprecated(Message):
+class ResourceTimingDeprecatedDeprecated(Message):
     __id__ = 53
 
     def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator):
@@ -806,13 +806,39 @@ class WSChannel(Message):
         self.message_type = message_type
 
 
-class Incident(Message):
+class ResourceTiming(Message):
     __id__ = 85
 
-    def __init__(self, label, start_time, end_time):
-        self.label = label
+    def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator, transferred_size, cached, queueing, dns_lookup, initial_connection, ssl, content_download, total, stalled):
+        self.timestamp = timestamp
+        self.duration = duration
+        self.ttfb = ttfb
+        self.header_size = header_size
+        self.encoded_body_size = encoded_body_size
+        self.decoded_body_size = decoded_body_size
+        self.url = url
+        self.initiator = initiator
+        self.transferred_size = transferred_size
+        self.cached = cached
+        self.queueing = queueing
+        self.dns_lookup = dns_lookup
+        self.initial_connection = initial_connection
+        self.ssl = ssl
+        self.content_download = content_download
+        self.total = total
+        self.stalled = stalled
+
+
+class LongAnimationTask(Message):
+    __id__ = 89
+
+    def __init__(self, name, duration, blocking_duration, first_ui_event_timestamp, start_time, scripts):
+        self.name = name
+        self.duration = duration
+        self.blocking_duration = blocking_duration
+        self.first_ui_event_timestamp = first_ui_event_timestamp
         self.start_time = start_time
-        self.end_time = end_time
+        self.scripts = scripts
 
 
 class InputChange(Message):
@@ -850,7 +876,7 @@ class UnbindNodes(Message):
         self.total_removed_percent = total_removed_percent
 
 
-class ResourceTiming(Message):
+class ResourceTimingDeprecated(Message):
     __id__ = 116
 
     def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator, transferred_size, cached):

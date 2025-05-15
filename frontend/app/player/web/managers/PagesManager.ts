@@ -22,6 +22,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
     private screen: Screen,
     private isMobile: boolean,
     private setCssLoading: (flag: boolean) => void,
+    private showVModeBadge: () => void,
   ) {
     super();
   }
@@ -30,6 +31,10 @@ export default class PagesManager extends ListWalker<DOMManager> {
 		Assumed that messages added in a correct time sequence.
 	*/
   falseOrder = false;
+  virtualMode = false;
+  setVirtualMode = (virtualMode: boolean) => {
+    this.virtualMode = virtualMode;
+  };
 
   appendMessage(m: Message): void {
     if ([MType.StringDict, MType.StringDictGlobal].includes(m.tp)) {
@@ -62,6 +67,8 @@ export default class PagesManager extends ListWalker<DOMManager> {
             get: (key: string) => this.globalDictionary.get(key),
             all: () => Object.fromEntries(this.globalDictionary),
           },
+          virtualMode: this.virtualMode,
+          showVModeBadge: this.showVModeBadge,
         }),
       );
       this.falseOrder = false;

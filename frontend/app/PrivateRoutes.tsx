@@ -10,6 +10,7 @@ import { Loader } from 'UI';
 import APIClient from './api_client';
 import * as routes from './routes';
 import { debounceCall } from '@/utils';
+import { hasAi } from './utils/split-utils';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -32,7 +33,8 @@ const components: any = {
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   ScopeSetup: lazy(() => import('Components/ScopeForm')),
-  HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList'))
+  HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
+  KaiPure: lazy(() => import('Components/Kai/KaiChat')),
 };
 
 const enhancedComponents: any = {
@@ -52,7 +54,8 @@ const enhancedComponents: any = {
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
   ScopeSetup: components.ScopeSetup,
-  Highlights: withSiteIdUpdater(components.HighlightsPure)
+  Highlights: withSiteIdUpdater(components.HighlightsPure),
+  Kai: withSiteIdUpdater(components.KaiPure),
 };
 
 const { withSiteId } = routes;
@@ -97,9 +100,11 @@ const SPOT_PATH = routes.spot();
 const SCOPE_SETUP = routes.scopeSetup();
 
 const HIGHLIGHTS_PATH = routes.highlights();
+const KAI_PATH = routes.kai();
 
 function PrivateRoutes() {
-  const { projectsStore, userStore, integrationsStore, searchStore } = useStore();
+  const { projectsStore, userStore, integrationsStore, searchStore } =
+    useStore();
   const onboarding = userStore.onboarding;
   const scope = userStore.scopeState;
   const { tenantId } = userStore.account;
@@ -123,8 +128,12 @@ function PrivateRoutes() {
 
   React.useEffect(() => {
     if (!searchStore.urlParsed) return;
-    debounceCall(() => searchStore.fetchSessions(true), 250)()
-  }, [searchStore.urlParsed, searchStore.instance.filters, searchStore.instance.eventsOrder]);
+    debounceCall(() => searchStore.fetchSessions(true), 250)();
+  }, [
+    searchStore.urlParsed,
+    searchStore.instance.filters,
+    searchStore.instance.eventsOrder,
+  ]);
 
   return (
     <Suspense fallback={<Loader loading className="flex-1" />}>
@@ -162,13 +171,13 @@ function PrivateRoutes() {
               case '/integrations/slack':
                 client.post('integrations/slack/add', {
                   code: location.search.split('=')[1],
-                  state: tenantId
+                  state: tenantId,
                 });
                 break;
               case '/integrations/msteams':
                 client.post('integrations/msteams/add', {
                   code: location.search.split('=')[1],
-                  state: tenantId
+                  state: tenantId,
                 });
                 break;
             }
@@ -193,7 +202,7 @@ function PrivateRoutes() {
             withSiteId(DASHBOARD_PATH, siteIdList),
             withSiteId(DASHBOARD_SELECT_PATH, siteIdList),
             withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList),
-            withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList)
+            withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList),
           ]}
           component={enhancedComponents.Dashboard}
         />
@@ -254,7 +263,7 @@ function PrivateRoutes() {
             withSiteId(FFLAG_READ_PATH, siteIdList),
             withSiteId(FFLAG_CREATE_PATH, siteIdList),
             withSiteId(NOTES_PATH, siteIdList),
-            withSiteId(BOOKMARKS_PATH, siteIdList)
+            withSiteId(BOOKMARKS_PATH, siteIdList),
           ]}
           component={enhancedComponents.SessionsOverview}
         />
@@ -270,6 +279,14 @@ function PrivateRoutes() {
           path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
           component={enhancedComponents.LiveSession}
         />
+        {hasAi ? (
+          <Route
+            exact
+            strict
+            path={withSiteId(KAI_PATH, siteIdList)}
+            component={enhancedComponents.Kai}
+          />
+        ) : null}
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />
         ))}

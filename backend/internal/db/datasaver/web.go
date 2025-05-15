@@ -2,7 +2,6 @@ package datasaver
 
 import (
 	"context"
-
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/messages"
