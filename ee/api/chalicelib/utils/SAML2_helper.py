@@ -156,7 +156,8 @@ def get_landing_URL(query_params: dict = None, redirect_to_link2=False):
         else:
             return config("sso_landing_override") + query_params
 
-    return config("SITE_URL") + config("sso_landing", default="/login") + query_params
+    base_url = config("SITE_URLx") if config("LOCAL_DEV") else config("SITE_URL")
+    return base_url + config("sso_landing", default="/login") + query_params
 
 
 environ["hastSAML2"] = str(is_saml2_available())
