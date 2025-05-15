@@ -19,7 +19,7 @@ $fn_def$, :'next_version')
 
 --
 
-
+DROP SCHEMA IF EXISTS or_cache CASCADE;
 
 COMMIT;
 

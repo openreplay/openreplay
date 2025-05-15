@@ -17,6 +17,18 @@ $$ LANGUAGE sql IMMUTABLE;
 $fn_def$, :'next_version')
 \gexec
 
+CREATE SCHEMA IF NOT EXISTS or_cache;
+
+CREATE TABLE IF NOT EXISTS or_cache.autocomplete_top_values
+(
+    project_id     integer                                        NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
+    event_type     text                                           NOT NULL,
+    event_key      text                                           NULL,
+    result         jsonb                                          NULL,
+    execution_time integer                                        NULL,
+    created_at     timestamp DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE NULLS NOT DISTINCT (project_id, event_type, event_key)
+);
 
 COMMIT;
 
