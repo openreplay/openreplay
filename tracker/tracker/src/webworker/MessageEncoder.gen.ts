@@ -286,6 +286,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.uint(msg[4]) && this.uint(msg[5]) && this.uint(msg[6]) && this.string(msg[7]) && this.string(msg[8]) && this.uint(msg[9]) && this.boolean(msg[10]) && this.uint(msg[11]) && this.uint(msg[12]) && this.uint(msg[13]) && this.uint(msg[14]) && this.uint(msg[15]) && this.uint(msg[16]) && this.uint(msg[17])
     break
 
+    case Messages.Type.Incident:
+      return  this.string(msg[1]) && this.int(msg[2]) && this.int(msg[3])
+    break
+
     case Messages.Type.LongAnimationTask:
       return  this.string(msg[1]) && this.int(msg[2]) && this.int(msg[3]) && this.int(msg[4]) && this.int(msg[5]) && this.string(msg[6])
     break

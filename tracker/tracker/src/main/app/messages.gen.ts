@@ -946,6 +946,19 @@ export function ResourceTiming(
   ]
 }
 
+export function Incident(
+  label: string,
+  startTime: number,
+  endTime: number,
+): Messages.Incident {
+  return [
+    Messages.Type.Incident,
+    label,
+    startTime,
+    endTime,
+  ]
+}
+
 export function LongAnimationTask(
   name: string,
   duration: number,
