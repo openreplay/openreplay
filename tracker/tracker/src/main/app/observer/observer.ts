@@ -1,4 +1,4 @@
-import { createMutationObserver } from '../../utils.js'
+import { createMutationObserver, throttleWithTrailing } from '../../utils.js'
 import {
   RemoveNodeAttribute,
   SetNodeAttributeURLBased,
@@ -413,6 +413,11 @@ export default abstract class Observer {
     this.app.attributeSender.sendSetAttribute(id, name, value)
   }
 
+  private throttledSetNodeData = throttleWithTrailing<number, [Element, string]>(
+    (id, parentElement, data) => this.sendNodeData(id, parentElement, data),
+    30
+  );
+
   private sendNodeData(id: number, parentElement: Element, data: string): void {
     if (hasTag(parentElement, 'style')) {
       this.app.send(SetCSSDataURLBased(id, data, this.app.getBaseHref()))
@@ -570,7 +575,7 @@ export default abstract class Observer {
       } else if (isTextNode(node)) {
         // for text node id != 0, hence parentID !== undefined and parent is Element
         this.app.send(CreateTextNode(id, parentID as number, index))
-        this.sendNodeData(id, parent as Element, node.data)
+        this.throttledSetNodeData(id, parent as Element, node.data)
       }
       return true
     }
@@ -591,7 +596,7 @@ export default abstract class Observer {
         throw 'commitNode: node is not a text'
       }
       // for text node id != 0, hence parent is Element
-      this.sendNodeData(id, parent as Element, node.data)
+      this.throttledSetNodeData(id, parent as Element, node.data)
     }
     return true
   }
@@ -640,5 +645,6 @@ export default abstract class Observer {
   disconnect(): void {
     this.observer.disconnect()
     this.clear()
+    this.throttledSetNodeData.clear()
   }
 }
