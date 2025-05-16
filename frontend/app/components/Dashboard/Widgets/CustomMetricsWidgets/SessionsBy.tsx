@@ -7,6 +7,7 @@ import { useModal } from 'Components/ModalContext';
 import Widget from '@/mstore/types/widget';
 import { useTranslation } from 'react-i18next';
 import { FilterKey } from 'Types/filter/filterType';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
   metric?: any;
@@ -128,4 +129,4 @@ function SessionsBy(props: Props) {
   );
 }
 
-export default SessionsBy;
+export default observer(SessionsBy);
