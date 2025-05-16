@@ -2,7 +2,8 @@ import logging
 from typing import List, Union
 
 import schemas
-from chalicelib.core import events, metadata
+from chalicelib.core import metadata
+from chalicelib.core.events import events
 from . import performance_event, sessions_legacy
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 from chalicelib.utils import sql_helper as sh
@@ -521,7 +522,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append(
                         sh.multi_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                             value_key=f_k))
-            elif filter_type == events.EventType.METADATA.ui_type:
+            elif filter_type == schemas.EventType.METADATA:
                 # get metadata list only if you need it
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
@@ -668,10 +669,10 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                          **sh.multi_values(event.source, value_key=s_k),
                          e_k: event.value[0] if len(event.value) > 0 else event.value}
 
-            if event_type == events.EventType.CLICK.ui_type:
+            if event_type == schemas.EventType.CLICK:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 if platform == "web":
-                    _column = events.EventType.CLICK.column
+                    _column = "label"
                     event_where.append(
                         f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
@@ -718,7 +719,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                 )
                                 events_conditions[-1]["condition"] = event_where[-1]
                 else:
-                    _column = events.EventType.CLICK_MOBILE.column
+                    _column = "label"
                     event_where.append(
                         f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
@@ -737,10 +738,10 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             )
                             events_conditions[-1]["condition"] = event_where[-1]
 
-            elif event_type == events.EventType.INPUT.ui_type:
+            elif event_type == schemas.EventType.INPUT:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 if platform == "web":
-                    _column = events.EventType.INPUT.column
+                    _column = "label"
                     event_where.append(
                         f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
@@ -765,7 +766,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
 
                         full_args = {**full_args, **sh.multi_values(event.source, value_key=f"custom{i}")}
                 else:
-                    _column = events.EventType.INPUT_MOBILE.column
+                    _column = "label"
                     event_where.append(
                         f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
@@ -785,7 +786,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
 
                             events_conditions[-1]["condition"] = event_where[-1]
 
-            elif event_type == events.EventType.LOCATION.ui_type:
+            elif event_type == schemas.EventType.LOCATION:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 if platform == "web":
                     _column = 'url_path'
@@ -807,7 +808,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             )
                             events_conditions[-1]["condition"] = event_where[-1]
                 else:
-                    _column = events.EventType.VIEW_MOBILE.column
+                    _column = "name"
                     event_where.append(
                         f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
@@ -824,9 +825,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s",
                                                                    event.value, value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
-            elif event_type == events.EventType.CUSTOM.ui_type:
+            elif event_type == schemas.EventType.CUSTOM:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                _column = events.EventType.CUSTOM.column
+                _column = "name"
                 event_where.append(
                     f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
@@ -844,7 +845,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             "main", "$properties", _column, op, event.value, e_k
                         ))
                         events_conditions[-1]["condition"] = event_where[-1]
-            elif event_type == events.EventType.REQUEST.ui_type:
+            elif event_type == schemas.EventType.REQUEST:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = 'url_path'
                 event_where.append(
@@ -865,9 +866,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         ))
                         events_conditions[-1]["condition"] = event_where[-1]
 
-            elif event_type == events.EventType.STATEACTION.ui_type:
+            elif event_type == schemas.EventType.STATE_ACTION:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                _column = events.EventType.STATEACTION.column
+                _column = "name"
                 event_where.append(
                     f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
@@ -886,7 +887,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         ))
                         events_conditions[-1]["condition"] = event_where[-1]
             # TODO: isNot for ERROR
-            elif event_type == events.EventType.ERROR.ui_type:
+            elif event_type == schemas.EventType.ERROR:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main"
                 events_extra_join = f"SELECT * FROM {MAIN_EVENTS_TABLE} AS main1 WHERE main1.project_id=%(project_id)s"
                 event_where.append(
@@ -911,8 +912,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
 
             # ----- Mobile
-            elif event_type == events.EventType.CLICK_MOBILE.ui_type:
-                _column = events.EventType.CLICK_MOBILE.column
+            elif event_type == schemas.EventType.CLICK_MOBILE:
+                _column = "label"
                 event_where.append(
                     f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
@@ -930,8 +931,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             "main", "$properties", _column, op, event.value, e_k
                         ))
                         events_conditions[-1]["condition"] = event_where[-1]
-            elif event_type == events.EventType.INPUT_MOBILE.ui_type:
-                _column = events.EventType.INPUT_MOBILE.column
+            elif event_type == schemas.EventType.INPUT_MOBILE:
+                _column = "label"
                 event_where.append(
                     f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
@@ -949,8 +950,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             "main", "$properties", _column, op, event.value, e_k
                         ))
                         events_conditions[-1]["condition"] = event_where[-1]
-            elif event_type == events.EventType.VIEW_MOBILE.ui_type:
-                _column = events.EventType.VIEW_MOBILE.column
+            elif event_type == schemas.EventType.VIEW_MOBILE:
+                _column = "name"
                 event_where.append(
                     f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
@@ -968,8 +969,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             "main", "$properties", _column, op, event.value, e_k
                         ))
                         events_conditions[-1]["condition"] = event_where[-1]
-            elif event_type == events.EventType.CUSTOM_MOBILE.ui_type:
-                _column = events.EventType.CUSTOM_MOBILE.column
+            elif event_type == schemas.EventType.CUSTOM_MOBILE:
+                _column = "name"
                 event_where.append(
                     f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
@@ -988,7 +989,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         ))
 
                         events_conditions[-1]["condition"] = event_where[-1]
-            elif event_type == events.EventType.REQUEST_MOBILE.ui_type:
+            elif event_type == schemas.EventType.REQUEST_MOBILE:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = 'url_path'
                 event_where.append(
@@ -1008,8 +1009,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             "main", "$properties", _column, op, event.value, e_k
                         ))
                         events_conditions[-1]["condition"] = event_where[-1]
-            elif event_type == events.EventType.CRASH_MOBILE.ui_type:
-                _column = events.EventType.CRASH_MOBILE.column
+            elif event_type == schemas.EventType.ERROR_MOBILE:
+                _column = "name"
                 event_where.append(
                     f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
@@ -1028,8 +1029,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             "main", "$properties", _column, op, event.value, e_k
                         ))
                         events_conditions[-1]["condition"] = event_where[-1]
-            elif event_type == events.EventType.SWIPE_MOBILE.ui_type and platform != "web":
-                _column = events.EventType.SWIPE_MOBILE.column
+            elif event_type == schemas.EventType.SWIPE_MOBILE and platform != "web":
+                _column = "label"
                 event_where.append(
                     f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
@@ -1230,7 +1231,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.GraphqlFilterType.GRAPHQL_NAME:
                         event_where.append(json_condition(
-                            "main", "$properties", events.EventType.GRAPHQL.column, op, f.value, e_k_f
+                            "main", "$properties", "name", op, f.value, e_k_f
                         ))
                         events_conditions[-1]["condition"].append(event_where[-1])
                     elif f.type == schemas.GraphqlFilterType.GRAPHQL_METHOD:
@@ -1253,7 +1254,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
             elif event_type == schemas.EventType.EVENT:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                _column = events.EventType.CLICK.column
+                _column = "label"
                 event_where.append(f"main.`$event_name`=%({e_k})s AND main.session_id>0")
                 events_conditions.append({"type": event_where[-1], "condition": ""})
 
