@@ -1,13 +1,16 @@
+import logging
 from functools import cache
 from typing import Optional
 
 import schemas
-from chalicelib.core.issues import issues
 from chalicelib.core.autocomplete import autocomplete
+from chalicelib.core.issues import issues
 from chalicelib.core.sessions import sessions_metas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.event_filter_definition import SupportedFilter
+
+logger = logging.getLogger(__name__)
 
 
 def get_customs_by_session_id(session_id, project_id):
@@ -21,7 +24,7 @@ def get_customs_by_session_id(session_id, project_id):
                                 {"project_id": project_id, "session_id": session_id})
                     )
         rows = cur.fetchall()
-    return helper.dict_to_camel_case(rows)
+    return helper.list_to_camel_case(rows)
 
 
 def __merge_cells(rows, start, count, replacement):
@@ -177,6 +180,11 @@ def get_errors_by_session_id(session_id, project_id):
         for e in errors:
             e["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(e["stacktrace_parsed_at"])
         return helper.list_to_camel_case(errors)
+
+
+def get_incidents_by_session_id(session_id, project_id):
+    logger.warning("INCIDENTS not supported in PG")
+    return []
 
 
 def search(text, event_type, project_id, source, key):
