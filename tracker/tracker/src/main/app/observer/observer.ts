@@ -274,7 +274,6 @@ export default abstract class Observer {
     this.indexes.length = 1
     this.attributesMap.clear()
     this.textSet.clear()
-    this.throttledSetNodeData.clear();
   }
 
   /**
