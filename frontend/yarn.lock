@@ -2618,12 +2618,12 @@ __metadata:
   linkType: hard
 
 "@modelcontextprotocol/sdk@npm:^1.8.0":
-  version: 1.11.2
-  resolution: "@modelcontextprotocol/sdk@npm:1.11.2"
+  version: 1.11.3
+  resolution: "@modelcontextprotocol/sdk@npm:1.11.3"
   dependencies:
     content-type: "npm:^1.0.5"
     cors: "npm:^2.8.5"
-    cross-spawn: "npm:^7.0.3"
+    cross-spawn: "npm:^7.0.5"
     eventsource: "npm:^3.0.2"
     express: "npm:^5.0.1"
     express-rate-limit: "npm:^7.5.0"
@@ -2631,7 +2631,7 @@ __metadata:
     raw-body: "npm:^3.0.0"
     zod: "npm:^3.23.8"
     zod-to-json-schema: "npm:^3.24.1"
-  checksum: 10c1/4ad0ebe128c0d75c24bef6867c9f90eb8b605fc29b2c535350b249ffac20c331bec087fa48f280f617c99f3bd8ac06cde09750fddc190e89558e89794f62fe78
+  checksum: 10c1/054f51274162a462eb4d25d014eef44c18d83471a2cd562ab7ffa94746531098d800ea92bfd27c5610457b53bccf60a7c534bb0c903f73cd86bca9b925e953ee
   languageName: node
   linkType: hard
 
@@ -4413,7 +4413,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"acorn@npm:^8.1.0, acorn@npm:^8.11.0, acorn@npm:^8.14.0, acorn@npm:^8.4.1, acorn@npm:^8.8.1, acorn@npm:^8.8.2":
+"acorn@npm:^8.1.0, acorn@npm:^8.11.0, acorn@npm:^8.14.0, acorn@npm:^8.4.1, acorn@npm:^8.8.1":
   version: 8.14.1
   resolution: "acorn@npm:8.14.1"
   bin:
@@ -6307,7 +6307,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cross-spawn@npm:^7.0.0, cross-spawn@npm:^7.0.3, cross-spawn@npm:^7.0.6":
+"cross-spawn@npm:^7.0.0, cross-spawn@npm:^7.0.3, cross-spawn@npm:^7.0.5, cross-spawn@npm:^7.0.6":
   version: 7.0.6
   resolution: "cross-spawn@npm:7.0.6"
   dependencies:
@@ -7268,9 +7268,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.5.149":
-  version: 1.5.154
-  resolution: "electron-to-chromium@npm:1.5.154"
-  checksum: 10c1/1e1bce965f61f18f759401e99b6ad4c7935de6bb61aa700b6f5fd968e6fb930d29c5e8219e773cb2a2ae84af8f44303efbacaf35dbbcc52c37ccdcc78a8a3812
+  version: 1.5.155
+  resolution: "electron-to-chromium@npm:1.5.155"
+  checksum: 10c1/9c11698f48a6f95b31751c2ddb7222a477c3d87679743b99a2fb12ba7f85d50affbdc678a56b3142ade5fe869bfc4721782673aab7d276fd9124513823116675
   languageName: node
   linkType: hard
 
@@ -11898,14 +11898,14 @@ __metadata:
   linkType: hard
 
 "memfs@npm:^4.6.0":
-  version: 4.17.1
-  resolution: "memfs@npm:4.17.1"
+  version: 4.17.2
+  resolution: "memfs@npm:4.17.2"
   dependencies:
     "@jsonjoy.com/json-pack": "npm:^1.0.3"
     "@jsonjoy.com/util": "npm:^1.3.0"
     tree-dump: "npm:^1.0.1"
     tslib: "npm:^2.0.0"
-  checksum: 10c1/d2a1ea438f6ba2c7e61150164c9be14b19438cf223dec923e6cc9987222a15c056fd69798d819a9607017619445267ac00411e3b21bba6b2ea8411c019039e40
+  checksum: 10c1/428470c127af0536324717aca383777433cf2a13a4a3fa6a90d2bfb6220873126ad5c4ba141b7f262ee7d30a15abd61d861a479ac779271b8d8250bf6e16154c
   languageName: node
   linkType: hard
 
@@ -14793,8 +14793,8 @@ __metadata:
   linkType: hard
 
 "rc-select@npm:~14.16.2, rc-select@npm:~14.16.7":
-  version: 14.16.7
-  resolution: "rc-select@npm:14.16.7"
+  version: 14.16.8
+  resolution: "rc-select@npm:14.16.8"
   dependencies:
     "@babel/runtime": "npm:^7.10.1"
     "@rc-component/trigger": "npm:^2.1.1"
@@ -14806,7 +14806,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 10c1/626c5549f56db82b6b8b6f718229ccdc6fdab8902e789eacacbe1003da83db3f14e85f790ab82a555d83eca5b7793a87ec30c376339bc4105d51860b3cb3b4cd
+  checksum: 10c1/50009ab34dd9fa049244000fd45de2f6e7c77714e645012b26b06f5b616e6add58606e4236726b00488237cb08a8d02331e9e8dea493764b581b3ed88b23ebc2
   languageName: node
   linkType: hard
 
@@ -15968,8 +15968,8 @@ __metadata:
   linkType: hard
 
 "sass@npm:^1.88.0":
-  version: 1.88.0
-  resolution: "sass@npm:1.88.0"
+  version: 1.89.0
+  resolution: "sass@npm:1.89.0"
   dependencies:
     "@parcel/watcher": "npm:^2.4.1"
     chokidar: "npm:^4.0.0"
@@ -15980,7 +15980,7 @@ __metadata:
       optional: true
   bin:
     sass: sass.js
-  checksum: 10c1/84c9c5ab59003c2c339d000c3a193b7115ce921825b69b1e7330313e0e91f2919e6c86313e8024832b8d4fbfcc6a0e2d71b8ed839bfa24cdd85d05ab82d810e1
+  checksum: 10c1/bc198abe125f1a342c2331a02ef73ea634cb91d2a7c5acfa81ef8008edaa9b49022063390ccbc10c322b680e876e84cbe2657d9fd66d6dc9f55004d96f88e132
   languageName: node
   linkType: hard
 
@@ -17189,16 +17189,16 @@ __metadata:
   linkType: hard
 
 "terser@npm:^5.10.0, terser@npm:^5.31.1":
-  version: 5.39.1
-  resolution: "terser@npm:5.39.1"
+  version: 5.39.2
+  resolution: "terser@npm:5.39.2"
   dependencies:
     "@jridgewell/source-map": "npm:^0.3.3"
-    acorn: "npm:^8.8.2"
+    acorn: "npm:^8.14.0"
     commander: "npm:^2.20.0"
     source-map-support: "npm:~0.5.20"
   bin:
     terser: bin/terser
-  checksum: 10c1/2a908dca18c3c3bf9c66dabe5f290c5a07bb06f453a8e6a0b9148d2b7cc12dd6b7a2e38533e73743c624990cc4d706f30f649c19de24d987c20343e3798f8c72
+  checksum: 10c1/240551e990fa29de945e88ebb0b7d05459ed322c9317d8c01f2a7a0f4e147ee0922b747281c14ff18543d559c4d31838f38482a88c95f9b3114ebf004b845367
   languageName: node
   linkType: hard
 
@@ -18187,8 +18187,8 @@ __metadata:
   linkType: hard
 
 "virtua@npm:^0.41.0":
-  version: 0.41.0
-  resolution: "virtua@npm:0.41.0"
+  version: 0.41.2
+  resolution: "virtua@npm:0.41.2"
   peerDependencies:
     react: ">=16.14.0"
     react-dom: ">=16.14.0"
@@ -18206,7 +18206,7 @@ __metadata:
       optional: true
     vue:
       optional: true
-  checksum: 10c1/d6490cf456492314d2c90a32d9d18988a544e5a5627ccc2481ae935fb1796b6f31d6ba6b721c18b9513eafb4c06b3195bb1e6580e3820e35dd37dc161955bf97
+  checksum: 10c1/ecd69064ed93c714b5af43ecbe2625918fee107b195d52e96c3afc2f0e62f1090369e2c6330f9c0e11330b9250d9349a21c472dbc26680fec9dc5c00c3dfcf7c
   languageName: node
   linkType: hard
 
@@ -18773,11 +18773,11 @@ __metadata:
   linkType: hard
 
 "yaml@npm:^2.3.4":
-  version: 2.7.1
-  resolution: "yaml@npm:2.7.1"
+  version: 2.8.0
+  resolution: "yaml@npm:2.8.0"
   bin:
     yaml: bin.mjs
-  checksum: 10c1/a0fcede408703c6a338b07689e8ccf36875accbb4c4e9f1eea815eb1ff74e7cd9238038e6cad3214b4c7cdbe53d2f8b8e153e6c9c392fb6773f00245d1d29c9d
+  checksum: 10c1/c0d4f23bd974f6fdb67ac650f523c3934410cb19668d8d5a9a67866ef389c842c74a6e42cb173dc776024c167f7de50c9935ae705d5c40b2c447028a50429340
   languageName: node
   linkType: hard
 

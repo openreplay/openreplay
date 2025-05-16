@@ -111,7 +111,7 @@ const WarnBadge = React.memo(
       transform: 'translate(-50%, 80%)',
       fontWeight: 500,
     };
-    const defaultContainerClass = 'flex flex-col gap-2';
+    const defaultContainerClass = 'flex flex-col';
     const defaultWarnClass =
       'px-3 py-.5 border border-gray-lighter shadow-sm rounded bg-active-blue flex items-center justify-between';
 
@@ -208,27 +208,6 @@ const WarnBadge = React.memo(
             <div
               className="py-1 ml-3 cursor-pointer"
               onClick={() => closeWarning(1)}
-            >
-              <X size={18} strokeWidth={1.5} />
-            </div>
-          </div>
-        ) : null}
-        {warnings[2] ? (
-          <div className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between">
-            <div className="flex flex-col">
-              <div>
-                {t(
-                  'If you have issues displaying custom HTML elements (i.e when using LWC), consider turning on Virtual Mode.',
-                )}
-              </div>
-              <div className="link" onClick={onVMode}>
-                {t('Enable')}
-              </div>
-            </div>
-
-            <div
-              className="py-1 ml-3 cursor-pointer"
-              onClick={() => closeWarning(2)}
             >
               <X size={18} strokeWidth={1.5} />
             </div>

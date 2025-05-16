@@ -137,13 +137,15 @@ function SubHeader(props) {
 
   return (
     <>
-   <WarnBadge
-      siteId={projectId!}
-      currentLocation={currentLocation}
-      version={currentSession?.trackerVersion ?? ''}
-      containerStyle={{ position: 'relative', left: 0, top: 0, transform: 'none', zIndex: 10 }}
-      trackerWarnStyle={{ backgroundColor: '#fffbeb' }}
-    />
+    <WarnBadge
+        siteId={projectId!}
+        currentLocation={currentLocation}
+        version={currentSession?.trackerVersion ?? ''}
+        containerStyle={{ position: 'relative', left: 0, top: 0, transform: 'none', zIndex: 10 }}
+        trackerWarnStyle={{ backgroundColor: 'var(--color-yellow)' }}
+        virtualElsFailed={showVModeBadge}
+        onVMode={onVMode}
+      />
       <div
         className="w-full px-4 flex items-center border-b relative"
         style={{
@@ -154,13 +156,6 @@ function SubHeader(props) {
             : undefined,
         }}
       >
-        <WarnBadge
-          siteId={projectId!}
-          currentLocation={currentLocation}
-          version={currentSession?.trackerVersion ?? ''}
-          virtualElsFailed={showVModeBadge}
-          onVMode={onVMode}
-        />
 
         <SessionTabs />
 
