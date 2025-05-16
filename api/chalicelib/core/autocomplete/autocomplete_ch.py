@@ -1,9 +1,9 @@
 import logging
+
 import schemas
-from chalicelib.core import countries, events, metadata
+from chalicelib.core import countries, metadata
 from chalicelib.utils import ch_client
 from chalicelib.utils import helper, exp_ch_helper
-from chalicelib.utils.event_filter_definition import Event
 
 logger = logging.getLogger(__name__)
 TABLE = "experimental.autocomplete"
@@ -113,7 +113,7 @@ def __generic_query(typename, value_length=None):
                 LIMIT 10;"""
 
 
-def __generic_autocomplete(event: Event):
+def __generic_autocomplete(event: str):
     def f(project_id, value, key=None, source=None):
         with ch_client.ClickHouseClient() as cur:
             query = __generic_query(event.ui_type, value_length=len(value))
@@ -149,7 +149,7 @@ def __pg_errors_query(source=None, value_length=None):
         return f"""((SELECT DISTINCT ON(message)
                         message AS value,
                         source,
-                        '{events.EventType.ERROR.ui_type}' AS type
+                        '{schemas.EventType.ERROR}' AS type
                     FROM {MAIN_TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -161,7 +161,7 @@ def __pg_errors_query(source=None, value_length=None):
                     (SELECT DISTINCT ON(name)
                         name AS value,
                         source,
-                        '{events.EventType.ERROR.ui_type}' AS type
+                        '{schemas.EventType.ERROR}' AS type
                     FROM {MAIN_TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -172,7 +172,7 @@ def __pg_errors_query(source=None, value_length=None):
                     (SELECT DISTINCT ON(message)
                         message AS value,
                         source,
-                        '{events.EventType.ERROR.ui_type}' AS type
+                        '{schemas.EventType.ERROR}' AS type
                     FROM {MAIN_TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -183,7 +183,7 @@ def __pg_errors_query(source=None, value_length=None):
                     (SELECT DISTINCT ON(name)
                         name AS value,
                         source,
-                        '{events.EventType.ERROR.ui_type}' AS type
+                        '{schemas.EventType.ERROR}' AS type
                     FROM {MAIN_TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -193,7 +193,7 @@ def __pg_errors_query(source=None, value_length=None):
     return f"""((SELECT DISTINCT ON(message)
                     message AS value,
                     source,
-                    '{events.EventType.ERROR.ui_type}' AS type
+                    '{schemas.EventType.ERROR}' AS type
                 FROM {MAIN_TABLE}
                 WHERE
                   project_id = %(project_id)s
@@ -204,7 +204,7 @@ def __pg_errors_query(source=None, value_length=None):
                 (SELECT DISTINCT ON(name)
                     name AS value,
                     source,
-                    '{events.EventType.ERROR.ui_type}' AS type
+                    '{schemas.EventType.ERROR}' AS type
                 FROM {MAIN_TABLE}
                 WHERE
                   project_id = %(project_id)s

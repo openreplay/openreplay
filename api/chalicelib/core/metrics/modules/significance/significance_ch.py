@@ -8,7 +8,7 @@ from chalicelib.utils import ch_client
 from chalicelib.utils import exp_ch_helper
 from chalicelib.utils import helper
 from chalicelib.utils import sql_helper as sh
-from chalicelib.core import events
+from chalicelib.core.events import events
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
             elif filter_type == schemas.FilterType.REFERRER:
                 constraints.append(
                     sh.multi_conditions(f"s.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
-            elif filter_type == events.EventType.METADATA.ui_type:
+            elif filter_type == schemas.FilterType.METADATA:
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project.project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
@@ -125,29 +125,29 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
         e_k = f"e_value{i}"
         event_type = s.type
         next_event_type = exp_ch_helper.get_event_type(event_type, platform=platform)
-        if event_type == events.EventType.CLICK.ui_type:
+        if event_type == schemas.EventType.CLICK:
             if platform == "web":
-                next_col_name = events.EventType.CLICK.column
+                next_col_name = "label"
                 if not is_any:
                     if schemas.ClickEventExtraOperator.has_value(s.operator):
                         specific_condition = sh.multi_conditions(f"selector {op} %({e_k})s", s.value, value_key=e_k)
             else:
-                next_col_name = events.EventType.CLICK_MOBILE.column
-        elif event_type == events.EventType.INPUT.ui_type:
-            next_col_name = events.EventType.INPUT.column
-        elif event_type == events.EventType.LOCATION.ui_type:
+                next_col_name = "label"
+        elif event_type == schemas.EventType.INPUT:
+            next_col_name = "label"
+        elif event_type == schemas.EventType.LOCATION:
             next_col_name = 'url_path'
-        elif event_type == events.EventType.CUSTOM.ui_type:
-            next_col_name = events.EventType.CUSTOM.column
+        elif event_type == schemas.EventType.CUSTOM:
+            next_col_name = "name"
         #     IOS --------------
-        elif event_type == events.EventType.CLICK_MOBILE.ui_type:
-            next_col_name = events.EventType.CLICK_MOBILE.column
-        elif event_type == events.EventType.INPUT_MOBILE.ui_type:
-            next_col_name = events.EventType.INPUT_MOBILE.column
-        elif event_type == events.EventType.VIEW_MOBILE.ui_type:
-            next_col_name = events.EventType.VIEW_MOBILE.column
-        elif event_type == events.EventType.CUSTOM_MOBILE.ui_type:
-            next_col_name = events.EventType.CUSTOM_MOBILE.column
+        elif event_type == schemas.EventType.CLICK_MOBILE:
+            next_col_name = "label"
+        elif event_type == schemas.EventType.INPUT_MOBILE:
+            next_col_name = "label"
+        elif event_type == schemas.EventType.VIEW_MOBILE:
+            next_col_name = "name"
+        elif event_type == schemas.EventType.CUSTOM_MOBILE:
+            next_col_name = "name"
         else:
             logger.warning(f"=================UNDEFINED:{event_type}")
             continue

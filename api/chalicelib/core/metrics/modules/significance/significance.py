@@ -7,7 +7,8 @@ from typing import List
 from psycopg2.extras import RealDictRow
 
 import schemas
-from chalicelib.core import events, metadata
+from chalicelib.core import metadata
+from chalicelib.core.events import events
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils import sql_helper as sh
 
@@ -76,10 +77,10 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
                     values["maxDuration"] = f.value[1]
             elif filter_type == schemas.FilterType.REFERRER:
                 # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
-                filter_extra_from = [f"INNER JOIN {events.EventType.LOCATION.table} AS p USING(session_id)"]
+                filter_extra_from = [f"INNER JOIN {"events.pages"} AS p USING(session_id)"]
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
-            elif filter_type == events.EventType.METADATA.ui_type:
+            elif filter_type == schemas.FilterType.METADATA:
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
@@ -121,31 +122,31 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
         op = sh.get_sql_operator(s.operator)
         # event_type = s["type"].upper()
         event_type = s.type
-        if event_type == events.EventType.CLICK.ui_type:
-            next_table = events.EventType.CLICK.table
-            next_col_name = events.EventType.CLICK.column
-        elif event_type == events.EventType.INPUT.ui_type:
-            next_table = events.EventType.INPUT.table
-            next_col_name = events.EventType.INPUT.column
-        elif event_type == events.EventType.LOCATION.ui_type:
-            next_table = events.EventType.LOCATION.table
-            next_col_name = events.EventType.LOCATION.column
-        elif event_type == events.EventType.CUSTOM.ui_type:
-            next_table = events.EventType.CUSTOM.table
-            next_col_name = events.EventType.CUSTOM.column
+        if event_type == schemas.EventType.CLICK:
+            next_table = "events.clicks"
+            next_col_name = "label"
+        elif event_type == schemas.EventType.INPUT:
+            next_table = "events.inputs"
+            next_col_name = "label"
+        elif event_type == schemas.EventType.LOCATION:
+            next_table = "events.pages"
+            next_col_name = "path"
+        elif event_type == schemas.EventType.CUSTOM:
+            next_table = "events_common.customs"
+            next_col_name = "name"
         #     IOS --------------
-        elif event_type == events.EventType.CLICK_MOBILE.ui_type:
-            next_table = events.EventType.CLICK_MOBILE.table
-            next_col_name = events.EventType.CLICK_MOBILE.column
-        elif event_type == events.EventType.INPUT_MOBILE.ui_type:
-            next_table = events.EventType.INPUT_MOBILE.table
-            next_col_name = events.EventType.INPUT_MOBILE.column
-        elif event_type == events.EventType.VIEW_MOBILE.ui_type:
-            next_table = events.EventType.VIEW_MOBILE.table
-            next_col_name = events.EventType.VIEW_MOBILE.column
-        elif event_type == events.EventType.CUSTOM_MOBILE.ui_type:
-            next_table = events.EventType.CUSTOM_MOBILE.table
-            next_col_name = events.EventType.CUSTOM_MOBILE.column
+        elif event_type == schemas.EventType.CLICK_MOBILE:
+            next_table = "events_ios.taps"
+            next_col_name = "label"
+        elif event_type == schemas.EventType.INPUT_MOBILE:
+            next_table = "events_ios.inputs"
+            next_col_name = "label"
+        elif event_type == schemas.EventType.VIEW_MOBILE:
+            next_table = "events_ios.views"
+            next_col_name = "name"
+        elif event_type == schemas.EventType.CUSTOM_MOBILE:
+            next_table = "events_common.customs"
+            next_col_name = "name"
         else:
             logger.warning(f"=================UNDEFINED:{event_type}")
             continue
@@ -297,10 +298,10 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
                     values["maxDuration"] = f.value[1]
             elif filter_type == schemas.FilterType.REFERRER:
                 # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
-                filter_extra_from = [f"INNER JOIN {events.EventType.LOCATION.table} AS p USING(session_id)"]
+                filter_extra_from = [f"INNER JOIN {"events.pages"} AS p USING(session_id)"]
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
-            elif filter_type == events.EventType.METADATA.ui_type:
+            elif filter_type == schemas.FilterType.METADATA:
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project.project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
@@ -342,31 +343,31 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
         op = sh.get_sql_operator(s.operator)
         # event_type = s["type"].upper()
         event_type = s.type
-        if event_type == events.EventType.CLICK.ui_type:
-            next_table = events.EventType.CLICK.table
-            next_col_name = events.EventType.CLICK.column
-        elif event_type == events.EventType.INPUT.ui_type:
-            next_table = events.EventType.INPUT.table
-            next_col_name = events.EventType.INPUT.column
-        elif event_type == events.EventType.LOCATION.ui_type:
-            next_table = events.EventType.LOCATION.table
-            next_col_name = events.EventType.LOCATION.column
-        elif event_type == events.EventType.CUSTOM.ui_type:
-            next_table = events.EventType.CUSTOM.table
-            next_col_name = events.EventType.CUSTOM.column
+        if event_type == schemas.EventType.CLICK:
+            next_table = "events.clicks"
+            next_col_name = "label"
+        elif event_type == schemas.EventType.INPUT:
+            next_table = "events.inputs"
+            next_col_name = "label"
+        elif event_type == schemas.EventType.LOCATION:
+            next_table = "events.pages"
+            next_col_name = "path"
+        elif event_type == schemas.EventType.CUSTOM:
+            next_table = "events_common.customs"
+            next_col_name = "name"
         #     IOS --------------
-        elif event_type == events.EventType.CLICK_MOBILE.ui_type:
-            next_table = events.EventType.CLICK_MOBILE.table
-            next_col_name = events.EventType.CLICK_MOBILE.column
-        elif event_type == events.EventType.INPUT_MOBILE.ui_type:
-            next_table = events.EventType.INPUT_MOBILE.table
-            next_col_name = events.EventType.INPUT_MOBILE.column
-        elif event_type == events.EventType.VIEW_MOBILE.ui_type:
-            next_table = events.EventType.VIEW_MOBILE.table
-            next_col_name = events.EventType.VIEW_MOBILE.column
-        elif event_type == events.EventType.CUSTOM_MOBILE.ui_type:
-            next_table = events.EventType.CUSTOM_MOBILE.table
-            next_col_name = events.EventType.CUSTOM_MOBILE.column
+        elif event_type == schemas.EventType.CLICK_MOBILE:
+            next_table = "events_ios.taps"
+            next_col_name = "label"
+        elif event_type == schemas.EventType.INPUT_MOBILE:
+            next_table = "events_ios.inputs"
+            next_col_name = "label"
+        elif event_type == schemas.EventType.VIEW_MOBILE:
+            next_table = "events_ios.views"
+            next_col_name = "name"
+        elif event_type == schemas.EventType.CUSTOM_MOBILE:
+            next_table = "events_common.customs"
+            next_col_name = "name"
         else:
             logger.warning(f"=================UNDEFINED:{event_type}")
             continue

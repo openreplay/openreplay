@@ -3,7 +3,7 @@ import logging
 from decouple import config
 
 import schemas
-from chalicelib.core import events
+from chalicelib.core.events import events
 from chalicelib.core.metrics.modules import sessions, sessions_mobs
 from chalicelib.utils import sql_helper as sh
 

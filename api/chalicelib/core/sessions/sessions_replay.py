@@ -1,6 +1,6 @@
 import schemas
-from chalicelib.core import events, metadata, events_mobile, \
-    issues, assist, canvas, user_testing
+from chalicelib.core import metadata, issues, assist, canvas, user_testing
+from chalicelib.core.events import events, events_mobile
 from . import sessions_mobs, sessions_devtool
 from chalicelib.core.errors.modules import errors_helper
 from chalicelib.utils import pg_client, helper
