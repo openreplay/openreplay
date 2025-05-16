@@ -4,12 +4,11 @@ from chalicelib.utils import pg_client, helper
 def get(project_id, issue_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            """\
-            SELECT
-                *
+            """ \
+            SELECT *
             FROM public.issues
             WHERE project_id = %(project_id)s
-                AND issue_id = %(issue_id)s;""",
+              AND issue_id = %(issue_id)s;""",
             {"project_id": project_id, "issue_id": issue_id}
         )
         cur.execute(query=query)
@@ -33,6 +32,29 @@ def get_by_session_id(session_id, project_id, issue_type=None):
                         {"session_id": session_id, "project_id": project_id, "type": issue_type})
         )
         return helper.list_to_camel_case(cur.fetchall())
+
+
+# To reduce the number of issues in the replay;
+# will be removed once we agree on how to show issues
+def reduce_issues(issues_list):
+    if issues_list is None:
+        return None
+    i = 0
+    # remove same-type issues if the time between them is <2s
+    while i < len(issues_list) - 1:
+        for j in range(i + 1, len(issues_list)):
+            if issues_list[i]["type"] == issues_list[j]["type"]:
+                break
+        else:
+            i += 1
+            break
+
+        if issues_list[i]["timestamp"] - issues_list[j]["timestamp"] < 2000:
+            issues_list.pop(j)
+        else:
+            i += 1
+
+    return issues_list
 
 
 def get_all_types():

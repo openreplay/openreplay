@@ -406,6 +406,7 @@ class EventType(str, Enum):
     ERROR_MOBILE = "errorMobile"
     SWIPE_MOBILE = "swipeMobile"
     EVENT = "event"
+    INCIDENT = "incident"
 
 
 class PerformanceEventType(str, Enum):
