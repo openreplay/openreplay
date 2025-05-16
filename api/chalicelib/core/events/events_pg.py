@@ -2,7 +2,7 @@ from functools import cache
 from typing import Optional
 
 import schemas
-from chalicelib.core import issues
+from chalicelib.core.issues import issues
 from chalicelib.core.autocomplete import autocomplete
 from chalicelib.core.sessions import sessions_metas
 from chalicelib.utils import pg_client, helper
