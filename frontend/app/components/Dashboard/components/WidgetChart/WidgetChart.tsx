@@ -55,7 +55,7 @@ function WidgetChart(props: Props) {
   const { isSaved = false, metric, isTemplate } = props;
   const { dashboardStore, metricStore } = useStore();
   const _metric: any = props.isPreview ? metricStore.instance : props.metric;
-  const { data } = _metric;
+  const data = _metric.data;
   const { period } = dashboardStore;
   const { drillDownPeriod } = dashboardStore;
   const { drillDownFilter } = dashboardStore;
@@ -66,6 +66,7 @@ function WidgetChart(props: Props) {
   const metricParams = _metric.params;
   const prevMetricRef = useRef<any>();
   const isMounted = useIsMounted();
+  const [metricData, setMetricData] = useState<any>(data);
   const [compData, setCompData] = useState<any>(null);
   const [enabledRows, setEnabledRows] = useState<string[]>(
     _metric.series.map((s) => s.name),
@@ -157,9 +158,16 @@ function WidgetChart(props: Props) {
       setStale(true);
     }, 4000);
     dashboardStore
-      .fetchMetricChartData(metric, payload, isSaved, period, isComparison)
-      .then((res: any) => {
+      .fetchMetricChartData(
+        metric,
+        payload,
+        isSaved,
+        period,
+        isComparison
+      )
+      .then((res) => {
         if (isComparison) setCompData(res);
+        else setMetricData(res);
         clearTimeout(tm);
         setStale(false);
       })
@@ -252,7 +260,7 @@ function WidgetChart(props: Props) {
   const renderChart = React.useCallback(() => {
     const { metricType, metricOf } = _metric;
     const { viewType } = _metric;
-    const metricWithData = { ..._metric, data };
+    const metricWithData = { ..._metric, data: metricData };
 
     if (metricType === FUNNEL) {
       if (viewType === 'table') {
@@ -266,7 +274,7 @@ function WidgetChart(props: Props) {
           valueLabel?: string;
         }[] = [
           {
-            value: data.funnel.totalConversionsPercentage,
+            value: metricData.funnel.totalConversionsPercentage,
             compData: compData
               ? compData.funnel.totalConversionsPercentage
               : undefined,
@@ -290,7 +298,7 @@ function WidgetChart(props: Props) {
       return (
         <FunnelWidget
           metric={_metric}
-          data={data}
+          data={metricData}
           compData={compData}
           isWidget={isSaved || isTemplate}
         />
@@ -306,14 +314,14 @@ function WidgetChart(props: Props) {
         <WidgetPredefinedChart
           isTemplate={isTemplate}
           metric={defaultMetric}
-          data={data}
+          data={metricData}
           predefinedKey={_metric.metricOf}
         />
       );
     }
 
     if (metricType === TIMESERIES) {
-      const chartData = { ...data };
+      const chartData = { ...metricData };
       chartData.namesMap = Array.isArray(chartData.namesMap)
         ? chartData.namesMap.map((n) => (enabledRows.includes(n) ? n : null))
         : chartData.namesMap;
@@ -411,7 +419,7 @@ function WidgetChart(props: Props) {
         return (
           <CustomMetricPercentage
             inGrid={!props.isPreview}
-            data={data[0]}
+            data={metricData[0]}
             colors={colors}
             params={params}
             label={
@@ -428,14 +436,14 @@ function WidgetChart(props: Props) {
       if (viewType === 'metric') {
         const values: { value: number; compData?: number; series: string }[] =
           [];
-        for (let i = 0; i < data.namesMap.length; i++) {
-          if (!data.namesMap[i]) {
+        for (let i = 0; i < metricData.namesMap.length; i++) {
+          if (!metricData.namesMap[i]) {
             continue;
           }
 
           values.push({
-            value: data.chart.reduce(
-              (acc, curr) => acc + curr[data.namesMap[i]],
+            value: metricData.chart.reduce(
+              (acc, curr) => acc + curr[metricData.namesMap[i]],
               0,
             ),
             compData: compData
@@ -444,7 +452,7 @@ function WidgetChart(props: Props) {
                   0,
                 )
               : undefined,
-            series: data.namesMap[i],
+            series: metricData.namesMap[i],
           });
         }
 
@@ -469,7 +477,7 @@ function WidgetChart(props: Props) {
         return (
           <CustomMetricTableSessions
             metric={_metric}
-            data={data}
+            data={metricData}
             isTemplate={isTemplate}
             isEdit={!isSaved && !isTemplate}
           />
@@ -479,7 +487,7 @@ function WidgetChart(props: Props) {
         return (
           <CustomMetricTableErrors
             metric={_metric}
-            data={data}
+            data={metricData}
             // isTemplate={isTemplate}
             isEdit={!isSaved && !isTemplate}
           />
@@ -489,7 +497,7 @@ function WidgetChart(props: Props) {
         return (
           <SessionsBy
             metric={_metric}
-            data={data}
+            data={metricData}
             onClick={onChartClick}
             isTemplate={isTemplate}
           />
@@ -522,10 +530,10 @@ function WidgetChart(props: Props) {
     }
 
     if (metricType === INSIGHTS) {
-      return <InsightsCard data={data} />;
+      return <InsightsCard data={metricData} />;
     }
 
-    if (metricType === USER_PATH && data && data.links) {
+    if (metricType === USER_PATH && metricData && metricData.links) {
       const isUngrouped = props.isPreview
         ? !(_metric.hideExcess ?? true)
         : false;
@@ -533,7 +541,7 @@ function WidgetChart(props: Props) {
       return (
         <SankeyChart
           height={height}
-          data={data}
+          data={metricData}
           inGrid={!props.isPreview}
           onChartClick={(filters: any) => {
             dashboardStore.drillDownFilter.merge({ filters, page: 1 });
@@ -548,7 +556,7 @@ function WidgetChart(props: Props) {
       if (viewType === 'trend') {
         return (
           <LineChart
-            data={data}
+            data={metricData}
             colors={colors}
             params={params}
             onClick={onChartClick}
@@ -561,7 +569,7 @@ function WidgetChart(props: Props) {
     }
     console.log('Unknown metric type', metricType);
     return <div>{t('Unknown metric type')}</div>;
-  }, [data, compData, enabledRows, _metric]);
+  }, [data, compData, enabledRows, _metric, metricData]);
 
   const showTable =
     _metric.metricType === TIMESERIES &&
