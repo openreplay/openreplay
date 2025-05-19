@@ -277,7 +277,7 @@ export function GridItem({
           <div>
             <UserOutlined />
           </div>
-          <TextEllipsis text={user} className="capitalize" />
+          <TextEllipsis text={user} />
           <div className="ml-auto">
             <ClockCircleOutlined />
           </div>

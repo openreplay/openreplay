@@ -13,45 +13,25 @@ import i18next, { TFunction } from 'i18next';
 
 class UserStore {
   t: TFunction;
-
   list: User[] = [];
-
   instance: User | null = null;
-
   page: number = 1;
-
   pageSize: number = 10;
-
   searchQuery: string = '';
-
   modifiedCount: number = 0;
-
   loading: boolean = false;
-
   saving: boolean = false;
-
   limits: any = {};
-
   initialDataFetched: boolean = false;
-
   account = new Account();
-
   siteId: string | null = null;
-
   passwordRequestError: boolean = false;
-
   passwordErrors: string[] = [];
-
   tenants: any[] = [];
-
   onboarding: boolean = false;
-
   sites: any[] = [];
-
   jwt: string | null = null;
-
   spotJwt: string | null = null;
-
   errors: any[] = [];
 
   loginRequest = {
@@ -119,7 +99,11 @@ class UserStore {
   }
 
   get isSSOSupported() {
-    return this.isEnterprise || this.account?.edition === 'msaas' || this.authStore.authDetails?.edition === 'msaas';
+    return (
+      this.isEnterprise ||
+      this.account?.edition === 'msaas' ||
+      this.authStore.authDetails?.edition === 'msaas'
+    );
   }
 
   get isLoggedIn() {
@@ -242,7 +226,7 @@ class UserStore {
           resolve(response);
         })
         .catch(async (e) => {
-          toast.error(e.message || this.t("Failed to save user's data.")); 
+          toast.error(e.message || this.t("Failed to save user's data."));
           reject(e);
         })
         .finally(() => {
@@ -383,8 +367,12 @@ class UserStore {
       });
     } catch (error) {
       const inUse = error.message.includes('already in use');
-      const inUseMsg = this.t('An account with this email already exists. Please log in or use a different email address.')
-      const genericMsg = this.t('Error signing up; please check your data and try again')
+      const inUseMsg = this.t(
+        'An account with this email already exists. Please log in or use a different email address.',
+      );
+      const genericMsg = this.t(
+        'Error signing up; please check your data and try again',
+      );
       runInAction(() => {
         this.signUpRequest = {
           loading: false,
@@ -411,7 +399,9 @@ class UserStore {
         this.spotJwt = data.spotJwt;
       });
     } catch (e) {
-      toast.error(e.message || this.t('Error resetting your password; please try again'));
+      toast.error(
+        e.message || this.t('Error resetting your password; please try again'),
+      );
       throw e;
     } finally {
       runInAction(() => {

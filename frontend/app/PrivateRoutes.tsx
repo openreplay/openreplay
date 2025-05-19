@@ -32,7 +32,6 @@ const components: any = {
   ),
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
-  ScopeSetup: lazy(() => import('Components/ScopeForm')),
   HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
   KaiPure: lazy(() => import('Components/Kai/KaiChat')),
 };
@@ -111,7 +110,6 @@ function PrivateRoutes() {
   const sites = projectsStore.list;
   const { siteId } = projectsStore;
   const hasRecordings = sites.some((s) => s.recorded);
-  const redirectToSetup = scope === 0;
   const redirectToOnboarding =
     !onboarding &&
     (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' ||
@@ -138,13 +136,6 @@ function PrivateRoutes() {
   return (
     <Suspense fallback={<Loader loading className="flex-1" />}>
       <Switch key="content">
-        <Route
-          exact
-          strict
-          path={SCOPE_SETUP}
-          component={enhancedComponents.ScopeSetup}
-        />
-        {redirectToSetup ? <Redirect to={SCOPE_SETUP} /> : null}
         <Route path={CLIENT_PATH} component={enhancedComponents.Client} />
         <Route
           path={withSiteId(ONBOARDING_PATH, siteIdList)}
