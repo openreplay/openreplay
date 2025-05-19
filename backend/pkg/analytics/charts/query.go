@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"openreplay/backend/pkg/analytics/db"
+	"strconv"
 	"strings"
 )
 
@@ -48,6 +49,7 @@ type BuildConditionsOptions struct {
 
 var propertyKeyMap = map[string]filterConfig{
 	"LOCATION":        {LogicalProperty: "url_path"},
+	"FETCH":           {LogicalProperty: "url_path"},
 	"CLICK":           {LogicalProperty: "label"},
 	"INPUT":           {LogicalProperty: "label"},
 	"fetchUrl":        {LogicalProperty: "url_path"},
@@ -120,6 +122,10 @@ func buildEventConditions(filters []Filter, options ...BuildConditionsOptions) (
 		}
 	}
 	for _, f := range filters {
+		if f.Type == FilterDuration {
+			continue
+		}
+
 		fConds, fNames := addFilter(f, opts)
 		if len(fConds) > 0 {
 			conds = append(conds, fConds...)
@@ -414,4 +420,49 @@ func reverseLookup(m map[string]string, value string) string {
 		}
 	}
 	return ""
+}
+
+func eventNameCondition(table, metricOf string) string {
+	if table == "" {
+		table = "main"
+	}
+	switch metricOf {
+	case string(MetricOfTableFetch):
+		return fmt.Sprintf("%s.`$event_name` = 'REQUEST'", table)
+	case string(MetricOfTableLocation):
+		return fmt.Sprintf("%s.`$event_name` = 'LOCATION'", table)
+	default:
+		return ""
+	}
+}
+
+func buildDurationWhere(filters []Filter) ([]string, []Filter) {
+	var conds []string
+	var rest []Filter
+	for _, f := range filters {
+		if string(f.Type) == "duration" {
+			v := f.Value
+			if len(v) == 1 {
+				if v[0] != "" {
+					if d, err := strconv.ParseInt(v[0], 10, 64); err == nil {
+						conds = append(conds, fmt.Sprintf("sessions.duration >= %d", d))
+					}
+				}
+			} else if len(v) >= 2 {
+				if v[0] != "" {
+					if d, err := strconv.ParseInt(v[0], 10, 64); err == nil {
+						conds = append(conds, fmt.Sprintf("sessions.duration >= %d", d))
+					}
+				}
+				if v[1] != "" {
+					if d, err := strconv.ParseInt(v[1], 10, 64); err == nil {
+						conds = append(conds, fmt.Sprintf("sessions.duration <= %d", d))
+					}
+				}
+			}
+		} else {
+			rest = append(rest, f)
+		}
+	}
+	return conds, rest
 }

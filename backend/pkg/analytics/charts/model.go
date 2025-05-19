@@ -82,12 +82,12 @@ type MetricPayload struct {
 type MetricOfTable string
 
 const (
-	MetricOfTableLocation MetricOfTable = "url_path" // TOP Pages
-	MetricOfTableBrowser  MetricOfTable = "user_browser"
+	MetricOfTableLocation MetricOfTable = "location" // TOP Pages
+	MetricOfTableBrowser  MetricOfTable = "userBrowser"
 	MetricOfTableReferrer MetricOfTable = "referrer"
-	MetricOfTableUserId   MetricOfTable = "user_id"
-	MetricOfTableCountry  MetricOfTable = "user_country"
-	MetricOfTableDevice   MetricOfTable = "user_device"
+	MetricOfTableUserId   MetricOfTable = "userId"
+	MetricOfTableCountry  MetricOfTable = "userCountry"
+	MetricOfTableDevice   MetricOfTable = "userDevice"
 	MetricOfTableFetch    MetricOfTable = "fetch"
 
 	//MetricOfTableIssues   MetricOfTable = "issues"
@@ -136,9 +136,9 @@ const (
 
 // Event filters
 const (
-	FilterClick           FilterType = "click"
-	FilterInput           FilterType = "input"
-	FilterLocation        FilterType = "location"
+	FilterClick           FilterType = "CLICK"
+	FilterInput           FilterType = "INPUT"
+	FilterLocation        FilterType = "LOCATION"
 	FilterTag             FilterType = "tag"
 	FilterCustom          FilterType = "customEvent"
 	FilterFetch           FilterType = "fetch"

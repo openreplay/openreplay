@@ -37,18 +37,20 @@ const (
 )
 
 var propertySelectorMap = map[string]string{
-	string(MetricOfTableBrowser):  "main.$browser AS metric_value",
-	string(MetricOfTableDevice):   "main.$device AS metric_value",
-	string(MetricOfTableCountry):  "main.$country AS metric_value",
+	string(MetricOfTableLocation): "JSONExtractString(toString(main.$properties), 'url_path') AS metric_value",
+	//string(MetricOfTableUserId):   "if(empty(sessions.user_id), 'Anonymous', sessions.user_id) AS metric_value",
+	string(MetricOfTableUserId):  "if(empty(sessions.user_id) OR sessions.user_id IS NULL, 'Anonymous', sessions.user_id) AS metric_value",
+	string(MetricOfTableBrowser): "main.$browser AS metric_value",
+	//string(MetricOfTableDevice):  "sessions.user_device AS metric_value",
+	string(MetricOfTableDevice):   "if(empty(sessions.user_device) OR sessions.user_device IS NULL, 'Undefined', sessions.user_device) AS metric_value",
+	string(MetricOfTableCountry):  "toString(sessions.user_country) AS metric_value",
 	string(MetricOfTableReferrer): "main.$referrer AS metric_value",
+	string(MetricOfTableFetch):    "JSONExtractString(toString(main.$properties), 'url_path') AS metric_value",
 }
 
 var mainColumns = map[string]string{
 	"userBrowser": "$browser",
-	"userDevice":  "$device_type",
-	"userCountry": "$country",
 	"referrer":    "$referrer",
-	// TODO add more columns if needed
 }
 
 func (t TableQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
@@ -77,12 +79,17 @@ func (t TableQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, e
 	}
 	defer rows.Close()
 
-	var (
-		overallTotalMetricValues uint64
-		overallCount             uint64
-		values                   []TableValue
-		firstRow                 = true
-	)
+	var overallTotalMetricValues uint64
+	var overallCount uint64
+	values := make([]TableValue, 0)
+	firstRow := true
+
+	//var (
+	//	overallTotalMetricValues uint64
+	//	overallCount             uint64
+	//	values                   []TableValue
+	//	firstRow                 = true
+	//)
 
 	for rows.Next() {
 		var (
@@ -127,20 +134,32 @@ func (t TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, e
 	originalMetricOf := r.MetricOf
 	propertyName = originalMetricOf
 
-	eventFilters := s.Filter.Filters
+	durationConds, eventFilters := buildDurationWhere(s.Filter.Filters)
 	eventConds, eventNames := buildEventConditions(eventFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 	})
-
 	baseWhereConditions := []string{
 		fmt.Sprintf("main.created_at >= toDateTime(%d/1000)", r.StartTimestamp),
 		fmt.Sprintf("main.created_at <= toDateTime(%d/1000)", r.EndTimestamp),
-		"sessions.duration > 0",
+		fmt.Sprintf("main.project_id = %d", r.ProjectId),
+	}
+	baseWhereConditions = append(baseWhereConditions, durationConds...)
+
+	if cond := eventNameCondition("", r.MetricOf); cond != "" {
+		baseWhereConditions = append(baseWhereConditions, cond)
 	}
 
-	if r.ProjectId > 0 {
-		baseWhereConditions = append(baseWhereConditions, fmt.Sprintf("main.project_id = %d", r.ProjectId))
-	}
+	//baseWhereConditions := []string{
+	//	fmt.Sprintf("main.created_at >= toDateTime(%d/1000)", r.StartTimestamp),
+	//	fmt.Sprintf("main.created_at <= toDateTime(%d/1000)", r.EndTimestamp),
+	//	"sessions.duration > 0",
+	//}
+	//
+
+	//
+	//if r.ProjectId > 0 {
+	//	baseWhereConditions = append(baseWhereConditions, fmt.Sprintf("main.project_id = %d", r.ProjectId))
+	//}
 
 	var aggregationExpression string
 	var aggregationAlias = "aggregation_id"
@@ -154,9 +173,7 @@ func (t TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, e
 		aggregationExpression = "main.session_id"
 	}
 
-	var propertySelector string
-	var ok bool
-	propertySelector, ok = propertySelectorMap[originalMetricOf]
+	propertySelector, ok := propertySelectorMap[originalMetricOf]
 	if !ok {
 		propertySelector = fmt.Sprintf("JSONExtractString(toString(main.$properties), '%s') AS metric_value", propertyName)
 	}
@@ -196,7 +213,7 @@ func (t TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, e
 				metric_value AS name,
 				countDistinct(%s) AS value_count
 			FROM filtered_data
-			WHERE name IS NOT NULL AND name != ''
+			-- WHERE name IS NOT NULL AND name != ''
 			GROUP BY name
 		)
 		SELECT
