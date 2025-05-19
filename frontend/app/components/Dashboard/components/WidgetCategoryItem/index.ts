@@ -1,0 +1,1 @@
+export { WidgetCategoryItem } from './WidgetCategoryItem';
