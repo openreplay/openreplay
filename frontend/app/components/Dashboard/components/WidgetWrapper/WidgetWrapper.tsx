@@ -1,13 +1,12 @@
 import React, { useRef, lazy } from 'react';
 import cn from 'classnames';
-import { ItemMenu, TextEllipsis } from 'UI';
+import { TextEllipsis } from 'UI';
 import { useDrag, useDrop } from 'react-dnd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, dashboardMetricDetails } from 'App/routes';
 import { FilterKey } from 'App/types/filter/filterType';
-import { TIMESERIES } from 'App/constants/card';
 import TemplateOverlay from './TemplateOverlay';
 
 const WidgetChart = lazy(
@@ -45,7 +44,6 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
     isGridView = false,
   } = props;
   const { widget } = props;
-  const isTimeSeries = widget.metricType === TIMESERIES;
   const isPredefined = widget.metricType === 'predefined';
   const dashboard = dashboardStore.selectedDashboard;
 
@@ -72,13 +70,6 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
       canDrop: monitor.canDrop(),
     }),
   });
-
-  const onDelete = async () => {
-    dashboardStore.deleteDashboardWidget(
-      dashboard?.dashboardId!,
-      widget.widgetId,
-    );
-  };
 
   const onChartClick = () => {
     if (!isSaved || isPredefined) return;

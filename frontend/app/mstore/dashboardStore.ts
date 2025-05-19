@@ -14,70 +14,39 @@ interface DashboardFilter {
 }
 export default class DashboardStore {
   siteId: any = null;
-
   dashboards: Dashboard[] = [];
-
   selectedDashboard: Dashboard | null = null;
-
   dashboardInstance: Dashboard = new Dashboard();
-
   selectedWidgets: Widget[] = [];
-
   currentWidget: Widget = new Widget();
-
   widgetCategories: any[] = [];
-
   widgets: Widget[] = [];
-
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
-
   drillDownFilter: Filter = new Filter();
-
   comparisonFilter: Filter = new Filter();
-
   drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
-
   selectedDensity: number = 7;
-
   comparisonPeriods: Record<string, any> = {};
-
   startTimestamp: number = 0;
-
   endTimestamp: number = 0;
-
   pendingRequests: number = 0;
-
   filter: DashboardFilter = { showMine: false, query: '' };
-
   // Metrics
   metricsPage: number = 1;
-
   metricsPageSize: number = 10;
-
   metricsSearch: string = '';
-
   // Loading states
   isLoading: boolean = false;
-
   isSaving: boolean = false;
-
   isDeleting: boolean = false;
-
   loadingTemplates: boolean = false;
-
   fetchingDashboard: boolean = false;
-
   sessionsLoading: boolean = false;
-
   showAlertModal: boolean = false;
-
   // Pagination
   page: number = 1;
-
   pageSize: number = 10;
-
   dashboardsSearch: string = '';
-
   sort: any = { by: 'desc' };
 
   constructor() {
@@ -92,6 +61,10 @@ export default class DashboardStore {
         this.createDensity(period.getDuration());
       }
     )
+  }
+
+  resetDensity = () => {
+    this.createDensity(this.period.getDuration());
   }
 
   createDensity = (duration: number) => {
@@ -212,6 +185,7 @@ export default class DashboardStore {
     this.currentWidget.update(widget);
   }
 
+  listFetched = false;
   fetchList(): Promise<any> {
     this.isLoading = true;
 
@@ -226,6 +200,7 @@ export default class DashboardStore {
       })
       .finally(() => {
         runInAction(() => {
+          this.listFetched = true;
           this.isLoading = false;
         });
       });
@@ -388,7 +363,24 @@ export default class DashboardStore {
       new Dashboard();
   };
 
-  getDashboardById = (dashboardId: string) => {
+  getDashboardById = async (dashboardId: string) => {
+    if (!this.listFetched) {
+      const maxWait = (5*1000)/250;
+      let count = 0;
+      await new Promise((resolve) => {
+        const interval = setInterval(() => {
+          if (this.listFetched) {
+            clearInterval(interval);
+            resolve(true);
+          }
+          if (count >= maxWait) {
+            clearInterval(interval);
+            resolve(false);
+          }
+          count++;
+        }, 250);
+      })
+    }
     const dashboard = this.dashboards.find((d) => d.dashboardId == dashboardId);
 
     if (dashboard) {
@@ -546,6 +538,7 @@ export default class DashboardStore {
           params,
           isSaved
         );
+        console.log('db store', params)
         const res = metric.setData(data, period, isComparison, data.density)
         resolve(res);
       } catch (error) {
