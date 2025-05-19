@@ -334,14 +334,18 @@
     },
     {
       "name": "entitlements",
-      "type": "string",
+      "type": "complex",
       "multiValued": true,
       "description": "Entitlements granted to the user.",
       "required": false,
-      "caseExact": true,
-      "canonicalValues": ["SESSION_REPLAY", "METRICS", "ASSIST_LIVE", "ASSIST_CALL", "SPOT_PUBLIC"],
       "mutability": "readWrite",
-      "returned": "default"
+      "returned": "default",
+      "subAttributes": [
+        { "name": "value",   "type": "string",  "multiValued": false, "description": "Entitlement value.",      "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "display", "type": "string",  "multiValued": false, "description": "Display name.",           "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "type",    "type": "string",  "multiValued": false, "description": "Type label.",             "required": false, "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
+        { "name": "primary", "type": "boolean", "multiValued": false, "description": "Primary flag; one per list.", "required": false, "mutability": "readWrite", "returned": "default" }
+      ]
     },
     {
       "name": "roles",
@@ -372,17 +376,7 @@
         { "name": "type",    "type": "string",  "multiValued": false, "description": "Type label.",             "required": false, "caseExact": false, "canonicalValues": [], "mutability": "readWrite", "returned": "default", "uniqueness": "none" },
         { "name": "primary", "type": "boolean", "multiValued": false, "description": "Primary flag; one per list.", "required": false, "mutability": "readWrite", "returned": "default" }
       ]
-    },
-    {
-      "name": "projectKeys",
-      "type": "string",
-      "multiValued": true,
-      "description": "A list of project keys associated with the group.",
-      "required": false,
-      "caseExact": false,
-      "mutability": "readWrite",
-      "returned": "default"
-    }      
+    }
   ],
   "meta": {
     "resourceType": "Schema",

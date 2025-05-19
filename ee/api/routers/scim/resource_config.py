@@ -3,6 +3,7 @@ from typing import Any, Callable
 
 from routers.scim.constants import (
     SCHEMA_IDS_TO_SCHEMA_DETAILS,
+    RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS,
 )
 from routers.scim import helpers
 
@@ -17,7 +18,7 @@ ProviderInput = dict[str, Any]
 
 @dataclass
 class ResourceConfig:
-    schema_id: str
+    resource_type_id: str
     max_chunk_size: int
     get_active_resource_count: Callable[[int], int]
     convert_provider_resource_to_client_resource: Callable[
@@ -44,7 +45,19 @@ class ResourceConfig:
 
 
 def get_schema(config: ResourceConfig) -> Schema:
-    return SCHEMA_IDS_TO_SCHEMA_DETAILS[config.schema_id]
+    resource_type_id = config.resource_type_id
+    resource_type = RESOURCE_TYPE_IDS_TO_RESOURCE_TYPE_DETAILS[resource_type_id]
+    main_schema_id = resource_type["schema"]
+    schema_extension_ids = [
+        item["schema"] for item in resource_type["schemaExtensions"]
+    ]
+    result = SCHEMA_IDS_TO_SCHEMA_DETAILS[main_schema_id]
+    for schema_id in schema_extension_ids:
+        result["attributes"].extend(
+            SCHEMA_IDS_TO_SCHEMA_DETAILS[schema_id]["attributes"]
+        )
+    result["schemas"] = [main_schema_id, *schema_extension_ids]
+    return result
 
 
 def convert_provider_resource_to_client_resource(
