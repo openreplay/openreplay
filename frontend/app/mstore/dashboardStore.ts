@@ -538,7 +538,6 @@ export default class DashboardStore {
           params,
           isSaved
         );
-        console.log('db store', params)
         const res = metric.setData(data, period, isComparison, data.density)
         resolve(res);
       } catch (error) {
