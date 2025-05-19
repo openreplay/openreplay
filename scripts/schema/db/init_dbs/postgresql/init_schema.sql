@@ -103,7 +103,7 @@ CREATE TABLE public.tenants
     t_users        integer                     NOT NULL DEFAULT 1,
     t_integrations integer                     NOT NULL DEFAULT 0,
     last_telemetry bigint                      NOT NULL DEFAULT CAST(EXTRACT(epoch FROM date_trunc('day', now())) * 1000 AS BIGINT),
-    scope_state    smallint                    NOT NULL DEFAULT 0,
+    scope_state    smallint                    NOT NULL DEFAULT 2,
     CONSTRAINT onerow_uni CHECK (tenant_id = 1)
 );
 

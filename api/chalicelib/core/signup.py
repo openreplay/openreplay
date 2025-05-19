@@ -87,7 +87,7 @@ async def create_tenant(data: schemas.UserSignupSchema):
         "spotRefreshToken": r.pop("spotRefreshToken"),
         "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge"),
         'data': {
-            "scopeState": 0,
+            "scopeState": 2,
             "user": r
         }
     }
