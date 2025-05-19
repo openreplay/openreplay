@@ -6,7 +6,6 @@ import { Space } from 'antd';
 import { CUSTOM_RANGE, DATE_RANGE_COMPARISON_OPTIONS } from 'App/dateRange';
 import Period from 'Types/app/period';
 import RangeGranularity from './RangeGranularity';
-import { useTranslation } from 'react-i18next';
 
 function WidgetDateRange({
   label = 'Time Range',
