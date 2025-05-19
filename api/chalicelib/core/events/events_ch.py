@@ -83,7 +83,6 @@ def get_incidents_by_session_id(session_id, project_id):
         query = cur.format(query=""" \
                                  SELECT created_at,
                                         `$properties`,
-                                        `properties`,
                                         `$event_name` AS type
                                  FROM product_analytics.events
                                  WHERE session_id = %(session_id)s
@@ -92,6 +91,7 @@ def get_incidents_by_session_id(session_id, project_id):
                                  ORDER BY created_at;""",
                            parameters={"project_id": project_id, "session_id": session_id})
         rows = cur.execute(query)
+        rows = __explode_properties(rows)
         rows = helper.list_to_camel_case(rows)
         rows = sorted(rows, key=lambda k: k["createdAt"])
     return rows
