@@ -31,8 +31,10 @@ export default class KaiService extends AiService {
       role: string;
       content: string;
       message_id: any;
-      duration?: number;
+      duration: number;
       feedback: boolean | null;
+      supports_visualization: boolean;
+      chart: string;
     }[]
   > => {
     const r = await this.client.get(`/kai/${projectId}/chats/${threadId}`);

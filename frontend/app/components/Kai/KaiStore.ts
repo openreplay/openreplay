@@ -1,12 +1,25 @@
 import { makeAutoObservable, runInAction } from 'mobx';
-import { BotChunk, ChatManager, Message } from './SocketManager';
+import { BotChunk, ChatManager } from './SocketManager';
 import { kaiService as aiService, kaiService } from 'App/services';
 import { toast } from 'react-toastify';
+
+export interface Message {
+  text: string;
+  isUser: boolean;
+  messageId: string;
+  chart: string;
+  supports_visualization: boolean;
+  feedback: boolean | null;
+  duration: number;
+}
+export interface SentMessage extends Omit<Message, 'duration' | 'feedback' | 'chart' | 'supports_visualization'> {
+  replace: boolean;
+}
 
 class KaiStore {
   chatManager: ChatManager | null = null;
   processingStage: BotChunk | null = null;
-  messages: Message[] = [];
+  messages: Array<Message> = [];
   queryText = '';
   loadingChat = false;
   replacing = false;
@@ -100,6 +113,8 @@ class KaiStore {
               messageId: m.message_id,
               duration: m.duration,
               feedback: m.feedback,
+              chart: m.chart,
+              supports_visualization: m.supports_visualization,
             };
           }),
         );
@@ -125,18 +140,21 @@ class KaiStore {
     this.chatManager = new ChatManager({ ...settings, token });
     this.chatManager.setOnMsgHook({
       msgCallback: (msg) => {
-        if ('state' in msg) {
+        if (msg.type === 'state') {
           if (msg.state === 'running') {
             this.setProcessingStage({
               content: 'Processing your request...',
               stage: 'chart',
               messageId: Date.now().toPrecision(),
               duration: msg.start_time ? Date.now() - msg.start_time : 0,
+              type: 'chunk',
+              supports_visualization: false,
             });
           } else {
             this.setProcessingStage(null);
           }
-        } else {
+        }
+        if (msg.type === 'chunk') {
           if (msg.stage === 'start') {
             this.setProcessingStage({
               ...msg,
@@ -153,6 +171,8 @@ class KaiStore {
               messageId: msg.messageId,
               duration: msg.duration,
               feedback: null,
+              chart: '',
+              supports_visualization: msg.supports_visualization,
             };
             this.addMessage(msgObj);
             this.setProcessingStage(null);
@@ -197,6 +217,8 @@ class KaiStore {
       messageId: Date.now().toString(),
       feedback: null,
       duration: 0,
+      supports_visualization: false,
+      chart: '',
     });
   };
 

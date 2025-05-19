@@ -74,12 +74,12 @@ export class ChatManager {
     titleCallback,
   }: {
     msgCallback: (
-      msg: BotChunk | { state: string; type: 'state'; start_time?: number },
+      msg: StateEvent | BotChunk,
     ) => void;
     titleCallback: (title: string) => void;
   }) => {
     this.socket.on('chunk', (msg: BotChunk) => {
-      msgCallback(msg);
+      msgCallback({ ...msg, type: 'chunk' });
     });
     this.socket.on('title', (msg: { content: string }) => {
       titleCallback(msg.content);
@@ -105,16 +105,13 @@ export interface BotChunk {
   stage: 'start' | 'chart' | 'final' | 'title';
   content: string;
   messageId: string;
-  duration?: number;
-}
-export interface Message {
-  text: string;
-  isUser: boolean;
-  messageId: string;
-  duration?: number;
-  feedback: boolean | null;
+  duration: number;
+  supports_visualization: boolean;
+  type: 'chunk'
 }
 
-export interface SentMessage extends Message {
-  replace: boolean;
+interface StateEvent {
+  state: string;
+  start_time?: number;
+  type: 'state';
 }
