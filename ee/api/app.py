@@ -26,7 +26,7 @@ from routers.subs import v1_api_ee
 
 if config("ENABLE_SSO", cast=bool, default=True):
     from routers import saml
-    from routers import scim
+    from routers.scim import api as scim
 
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
