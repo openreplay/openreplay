@@ -14,7 +14,12 @@
             "lastModified": "2025-04-16T08:37:00Z",
             "location": "ResourceType/User"
         },
-        "schemaExtensions": []
+        "schemaExtensions": [
+	    {
+		"schema": "urn:ietf:params:scim:schemas:extensions:openreplay:2.0:User",
+		"required": true
+	    }
+	]
     },
     {
         "schemas": [
