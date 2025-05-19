@@ -292,7 +292,7 @@ async def get_schema(schema_id: str, tenant_id=Depends(auth_required)):
 
 
 user_config = ResourceConfig(
-    schema_id="urn:ietf:params:scim:schemas:core:2.0:User",
+    resource_type_id="User",
     max_chunk_size=10,
     get_active_resource_count=users.get_active_resource_count,
     convert_provider_resource_to_client_resource=users.convert_provider_resource_to_client_resource,
@@ -310,7 +310,7 @@ user_config = ResourceConfig(
     filter_attribute_mapping=users.filter_attribute_mapping,
 )
 group_config = ResourceConfig(
-    schema_id="urn:ietf:params:scim:schemas:core:2.0:Group",
+    resource_type_id="Group",
     max_chunk_size=10,
     get_active_resource_count=groups.get_active_resource_count,
     convert_provider_resource_to_client_resource=groups.convert_provider_resource_to_client_resource,

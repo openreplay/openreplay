@@ -11,11 +11,21 @@ from routers.scim.resource_config import (
     ClientInput,
     ProviderInput,
 )
-from schemas.schemas_ee import ValidIdentityProviderPermissions
+from schemas.schemas_ee import Permissions
 
 
 def _is_valid_permission_for_identity_provider(permission: str) -> bool:
-    return ValidIdentityProviderPermissions.has_value(permission)
+    permission_display_to_value_mapping = {
+        "Session Replay": Permissions.SESSION_REPLAY,
+        "Developer Tools": Permissions.DEV_TOOLS,
+        "Dashboard": Permissions.METRICS,
+        "Assist (Live)": Permissions.ASSIST_LIVE,
+        "Assist (Call)": Permissions.ASSIST_CALL,
+        "Spots": Permissions.SPOT,
+        "Change Spot Visibility": Permissions.SPOT_PUBLIC,
+    }
+    value = permission_display_to_value_mapping.get(permission)
+    return Permissions.has_value(value)
 
 
 def convert_client_resource_update_input_to_provider_resource_update_input(
@@ -163,7 +173,10 @@ def convert_provider_resource_to_client_resource(
         )
     return {
         "id": str(provider_resource["user_id"]),
-        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+        "schemas": [
+            "urn:ietf:params:scim:schemas:core:2.0:User",
+            "urn:ietf:params:scim:schemas:extensions:openreplay:2.0:User",
+        ],
         "meta": {
             "resourceType": "User",
             "created": provider_resource["created_at"].strftime("%Y-%m-%dT%H:%M:%SZ"),

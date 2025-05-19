@@ -10,6 +10,9 @@ SCHEMAS = sorted(
         json.load(open("routers/scim/fixtures/schema_schema.json", "r")),
         json.load(open("routers/scim/fixtures/user_schema.json", "r")),
         json.load(open("routers/scim/fixtures/group_schema.json", "r")),
+        json.load(
+            open("routers/scim/fixtures/open_replay_user_extension_schema.json", "r")
+        ),
     ],
     key=lambda x: x["id"],
 )
