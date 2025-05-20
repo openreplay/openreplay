@@ -682,7 +682,7 @@ export const NetworkPanelComp = observer(
         });
       }
       return cols;
-    }, [showSingleTab, activeTab, t, getTabName, getTabNum, isSpot]);
+    }, [showSingleTab, activeTab, getTabName, getTabNum, isSpot]);
 
     return (
       <BottomBlock
@@ -797,7 +797,7 @@ export const NetworkPanelComp = observer(
               title={
                 <div className="capitalize flex items-center gap-2">
                   <InfoCircleOutlined size={18} />
-                  {t('No Data')}
+                  {'No Data'}
                 </div>
               }
               size="small"
