@@ -50,10 +50,12 @@ type BuildConditionsOptions struct {
 var propertyKeyMap = map[string]filterConfig{
 	"LOCATION":        {LogicalProperty: "url_path"},
 	"FETCH":           {LogicalProperty: "url_path"},
+	"REQUEST":         {LogicalProperty: "url_path"},
 	"CLICK":           {LogicalProperty: "label"},
 	"INPUT":           {LogicalProperty: "label"},
 	"fetchUrl":        {LogicalProperty: "url_path"},
 	"fetchStatusCode": {LogicalProperty: "status", IsNumeric: true},
+	//"ISSUE":           {LogicalProperty: "issue_type"},
 	// TODO add more mappings as needed
 }
 
@@ -465,4 +467,19 @@ func buildDurationWhere(filters []Filter) ([]string, []Filter) {
 		}
 	}
 	return conds, rest
+}
+
+func filterOutTypes(filters []Filter, typesToRemove []FilterType) (kept []Filter, removed []Filter) {
+	removeMap := make(map[FilterType]struct{}, len(typesToRemove))
+	for _, t := range typesToRemove {
+		removeMap[t] = struct{}{}
+	}
+	for _, f := range filters {
+		if _, ok := removeMap[f.Type]; ok {
+			removed = append(removed, f)
+		} else {
+			kept = append(kept, f)
+		}
+	}
+	return
 }

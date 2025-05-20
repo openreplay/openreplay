@@ -51,6 +51,7 @@ var propertySelectorMap = map[string]string{
 var mainColumns = map[string]string{
 	"userBrowser": "$browser",
 	"referrer":    "$referrer",
+	"ISSUE":       "issue_type",
 }
 
 func (t TableQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
@@ -134,9 +135,20 @@ func (t TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, e
 	originalMetricOf := r.MetricOf
 	propertyName = originalMetricOf
 
-	durationConds, eventFilters := buildDurationWhere(s.Filter.Filters)
+	durationConds, _ := buildDurationWhere(s.Filter.Filters)
+	eventFilters, _ := filterOutTypes(s.Filter.Filters, []FilterType{FilterDuration, FilterUserId})
+	_, sessionFilters := filterOutTypes(s.Filter.Filters, []FilterType{FilterUserId, FilterUserAnonymousId})
+
+	sessionConds, _ := buildEventConditions(sessionFilters, BuildConditionsOptions{
+		DefinedColumns: map[string]string{
+			"userId": "user_id",
+		},
+		MainTableAlias: "sessions",
+	})
+
 	eventConds, eventNames := buildEventConditions(eventFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
+		MainTableAlias: "main",
 	})
 	baseWhereConditions := []string{
 		fmt.Sprintf("main.created_at >= toDateTime(%d/1000)", r.StartTimestamp),
@@ -149,17 +161,7 @@ func (t TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, e
 		baseWhereConditions = append(baseWhereConditions, cond)
 	}
 
-	//baseWhereConditions := []string{
-	//	fmt.Sprintf("main.created_at >= toDateTime(%d/1000)", r.StartTimestamp),
-	//	fmt.Sprintf("main.created_at <= toDateTime(%d/1000)", r.EndTimestamp),
-	//	"sessions.duration > 0",
-	//}
-	//
-
-	//
-	//if r.ProjectId > 0 {
-	//	baseWhereConditions = append(baseWhereConditions, fmt.Sprintf("main.project_id = %d", r.ProjectId))
-	//}
+	baseWhereConditions = append(baseWhereConditions, sessionConds...)
 
 	var aggregationExpression string
 	var aggregationAlias = "aggregation_id"
