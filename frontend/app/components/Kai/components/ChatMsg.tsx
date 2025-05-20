@@ -99,7 +99,7 @@ export function ChatMsg({
         </div>
       )}
       <div className={'mt-1 flex flex-col'}>
-        <div className="markdown-body" ref={bodyRef}>
+        <div className="markdown-body" data-openreplay-obscured ref={bodyRef}>
           <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </div>
         {isUser ? (
