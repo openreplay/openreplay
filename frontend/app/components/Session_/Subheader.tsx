@@ -142,7 +142,7 @@ function SubHeader(props) {
         currentLocation={currentLocation}
         version={currentSession?.trackerVersion ?? ''}
         containerStyle={{ position: 'relative', left: 0, top: 0, transform: 'none', zIndex: 10 }}
-        trackerWarnStyle={{ backgroundColor: 'var(--color-yellow)' }}
+        trackerWarnStyle={{ backgroundColor: 'var(--color-yellow)', color: 'black' }}
         virtualElsFailed={showVModeBadge}
         onVMode={onVMode}
       />

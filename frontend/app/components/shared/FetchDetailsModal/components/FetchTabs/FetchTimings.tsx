@@ -128,7 +128,7 @@ function FetchTimings({ timings }: { timings: Record<string, number> }) {
                     key={index}
                     className="grid grid-cols-12 items-center gap-2 space-y-2"
                   >
-                    <div className="col-span-4 text-sm text-neutral-950 font-medium flex items-center gap-2">
+                    <div className="col-span-4 text-sm text-black font-medium flex items-center gap-2">
                       <Tooltip title={phase.description}>
                         <HelpCircle size={12} />
                       </Tooltip>
@@ -160,11 +160,11 @@ function FetchTimings({ timings }: { timings: Record<string, number> }) {
           ))}
 
           <div className="grid grid-cols-12 items-center gap-2 pt-2 border-t border-t-gray-light mt-2">
-            <div className="col-span-3 text-sm text-neutral-950 font-semibold">
+            <div className="col-span-3 text-sm text-black font-semibold">
               Total:
             </div>
             <div className="col-span-7"></div>
-            <div className="col-span-2 text-right font-mono text-sm text-neutral-950 font-semibold">
+            <div className="col-span-2 text-right font-mono text-sm text-black font-semibold">
               {formatTime(total)}{' '}
               {isAdjusted ? (
                 <span className="ml-1 text-xs text-yellow">

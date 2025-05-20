@@ -13,6 +13,7 @@ export function LoadingFetch({ provider }: { provider: string }) {
       <LoadingOutlined size={32} />
       <div>
         {t('Fetching logs from')}
+        &nbsp;
         {provider}
         ...
       </div>

@@ -199,6 +199,8 @@ function BottomBlock({ panelHeight, block }: { panelHeight: number; block: numbe
       return <BackendLogsPanel />;
     case LONG_TASK:
       return <LongTaskPanel />;
+    case OVERVIEW:
+      return <OverviewPanel />;
     default:
       return null;
   }

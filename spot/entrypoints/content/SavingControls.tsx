@@ -380,7 +380,7 @@ function SavingControls({
               ) : null}
               <div class={"flex items-center gap-2"}>
                 <div
-                  class={`${playing() ? "" : "bg-indigo-100"} cursor-pointer btn btn-ghost btn-circle btn-sm hover:bg-indigo-50 border border-slate-100`}
+                  class={`${playing() ? "" : "bg-indigo-100"} cursor-pointer btn btn-ghost btn-circle btn-sm hover:bg-indigo-lightest border border-slate-100`}
                 >
                   {playing() ? (
                     <div
