@@ -8,7 +8,11 @@ on:
         required: true
         default: 'chalice,frontend'
       tag:
-        description: 'Tag to build patches from.'
+        description: 'Tag to update.'
+        required: true
+        type: string
+      branch:
+        description: 'Branch to build patches from. Make sure the branch is uptodate with tag. Else itll cause missing commits.'
         required: true
         type: string
 
@@ -73,7 +77,7 @@ jobs:
     - name: Get HEAD Commit ID
       run: echo "HEAD_COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
     - name: Define Branch Name
-      run: echo "BRANCH_NAME=patch/main/${HEAD_COMMIT_ID}" >> $GITHUB_ENV
+      run: echo "BRANCH_NAME=${{inputs.branch}}" >> $GITHUB_ENV
 
     - name: Build
       id: build-image
