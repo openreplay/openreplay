@@ -148,14 +148,14 @@ function SpotListItem({
           <div className="absolute left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
             <Tooltip title={tooltipText} className="capitalize">
               <div
-                className="bg-black/70 text-white p-1 px-2 text-xs rounded-lg transition-transform transform translate-y-14 group-hover:translate-y-0 "
+                className="bg-gray-dark text-white p-1 px-2 text-xs rounded-lg transition-transform transform translate-y-14 group-hover:translate-y-0 "
                 onClick={copyToClipboard}
                 style={{ cursor: 'pointer' }}
               >
                 <Link2 size={16} strokeWidth={1} />
               </div>
             </Tooltip>
-            <div className="bg-black/70 text-white p-1 px-2 text-xs rounded-lg flex items-center cursor-normal">
+            <div className="bg-gray-dark text-white p-1 px-2 text-xs rounded-lg flex items-center cursor-normal">
               {spot.duration}
             </div>
           </div>
@@ -213,7 +213,7 @@ export function GridItem({
   return (
     <div
       className={`bg-white rounded-lg overflow-hidden shadow-sm border ${
-        isSelected ? 'border-teal/30' : 'border-transparent'
+        isSelected ? 'border-teal/30' : ''
       } transition flex flex-col items-start hover:border-teal`}
     >
       <div
