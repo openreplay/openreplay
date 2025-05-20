@@ -35,6 +35,7 @@ export default class KaiService extends AiService {
       feedback: boolean | null;
       supports_visualization: boolean;
       chart: string;
+      chart_data: string;
     }[]
   > => {
     const r = await this.client.get(`/kai/${projectId}/chats/${threadId}`);

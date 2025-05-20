@@ -61,17 +61,14 @@ function ChatLog({
       >
         <div className={'flex flex-col gap-4 w-2/3 min-h-max'}>
           {messages.map((msg, index) => (
-            <ChatMsg
-              key={index}
-              text={msg.text}
-              isUser={msg.isUser}
-              userName={userLetter}
-              messageId={msg.messageId}
-              duration={msg.duration}
-              feedback={msg.feedback}
-              siteId={projectId}
-              canEdit={processingStage === null && msg.isUser && index === lastHumanMsgInd}
-            />
+            <React.Fragment key={msg.messageId ?? index}>
+              <ChatMsg
+                userName={userLetter}
+                siteId={projectId}
+                message={msg}
+                canEdit={processingStage === null && msg.isUser && index === lastHumanMsgInd}
+              />
+            </React.Fragment>
           ))}
           {processingStage ? (
             <ChatNotice

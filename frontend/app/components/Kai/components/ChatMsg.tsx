@@ -10,31 +10,26 @@ import {
   ListRestart,
   FileDown,
   Clock,
+  ChartLine,
 } from 'lucide-react';
 import { Button, Tooltip } from 'antd';
-import { kaiStore } from '../KaiStore';
+import { kaiStore, Message } from '../KaiStore';
 import { toast } from 'react-toastify';
 import { durationFormatted } from 'App/date';
 
 export function ChatMsg({
-  text,
-  isUser,
   userName,
-  messageId,
-  duration,
-  feedback,
   siteId,
   canEdit,
+  message,
 }: {
-  text: string;
-  isUser: boolean;
-  messageId: string;
+  message: Message;
   userName?: string;
-  duration?: number;
-  feedback: boolean | null;
-  siteId: string;
   canEdit?: boolean;
+  siteId: string;
 }) {
+  const [loadingChart, setLoadingChart] = React.useState(false);
+  const { text, isUser, messageId, duration, feedback, supports_visualization, chart_data } = message;
   const [isProcessing, setIsProcessing] = React.useState(false);
   const bodyRef = React.useRef<HTMLDivElement>(null);
   const onRetry = () => {
@@ -74,6 +69,12 @@ export function ChatMsg({
         setIsProcessing(false);
       });
   };
+
+  const getChart = () => {
+    setLoadingChart(true);
+    kaiStore.getMessageChart(messageId, siteId)
+    setLoadingChart(false);
+  }
   return (
     <div
       className={cn(
@@ -131,6 +132,13 @@ export function ChatMsg({
               onClick={() => onFeedback('dislike', messageId)}
             >
               <ThumbsDown size={16} />
+            </IconButton>
+            <IconButton
+              tooltip="Visualize this answer"
+              onClick={getChart}
+              processing={loadingChart}
+            >
+              <ChartLine size={16}/>
             </IconButton>
             <CopyButton
               getHtml={() => bodyRef.current?.innerHTML}

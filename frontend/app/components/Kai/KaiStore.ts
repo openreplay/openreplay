@@ -7,7 +7,10 @@ export interface Message {
   text: string;
   isUser: boolean;
   messageId: string;
+  /** filters to get chart */
   chart: string;
+  /** chart data */
+  chart_data: string;
   supports_visualization: boolean;
   feedback: boolean | null;
   duration: number;
@@ -115,6 +118,7 @@ class KaiStore {
               feedback: m.feedback,
               chart: m.chart,
               supports_visualization: m.supports_visualization,
+              chart_data: m.chart_data,
             };
           }),
         );
@@ -173,6 +177,7 @@ class KaiStore {
               feedback: null,
               chart: '',
               supports_visualization: msg.supports_visualization,
+              chart_data: '',
             };
             this.addMessage(msgObj);
             this.setProcessingStage(null);
@@ -219,6 +224,7 @@ class KaiStore {
       duration: 0,
       supports_visualization: false,
       chart: '',
+      chart_data: '',
     });
   };
 
@@ -273,6 +279,8 @@ class KaiStore {
       this.chatManager = null;
     }
   };
+
+  getMessageChart = (msgId: string, projectId: string) => { }
 }
 
 export const kaiStore = new KaiStore();
