@@ -1,6 +1,6 @@
 import React from 'react';
 import ChatInput from './ChatInput';
-import { ChatMsg, ChatNotice } from './ChatMsg';
+import ChatMsg, { ChatNotice } from './ChatMsg';
 import { Loader } from 'UI';
 import { kaiStore } from '../KaiStore';
 import { observer } from 'mobx-react-lite';

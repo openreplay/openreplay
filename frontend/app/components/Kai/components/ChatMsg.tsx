@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon, CopyButton } from 'UI';
+import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -16,8 +17,11 @@ import { Button, Tooltip } from 'antd';
 import { kaiStore, Message } from '../KaiStore';
 import { toast } from 'react-toastify';
 import { durationFormatted } from 'App/date';
+import WidgetChart from '@/components/Dashboard/components/WidgetChart';
+import Widget from 'App/mstore/types/widget';
+import cn from 'classnames';
 
-export function ChatMsg({
+function ChatMsg({
   userName,
   siteId,
   canEdit,
@@ -28,12 +32,22 @@ export function ChatMsg({
   canEdit?: boolean;
   siteId: string;
 }) {
+  const [metric, setMetric] = React.useState<Widget | null>(null);
   const [loadingChart, setLoadingChart] = React.useState(false);
-  const { text, isUser, messageId, duration, feedback, supports_visualization, chart_data } = message;
+  const {
+    text,
+    isUser,
+    messageId,
+    duration,
+    feedback,
+    supports_visualization,
+    chart_data,
+  } = message;
+  const isEditing = kaiStore.replacing && messageId === kaiStore.replacing;
   const [isProcessing, setIsProcessing] = React.useState(false);
   const bodyRef = React.useRef<HTMLDivElement>(null);
   const onRetry = () => {
-    kaiStore.editMessage(text);
+    kaiStore.editMessage(text, messageId);
   };
   const onFeedback = (feedback: 'like' | 'dislike', messageId: string) => {
     kaiStore.sendMsgFeedback(feedback, messageId, siteId);
@@ -70,11 +84,24 @@ export function ChatMsg({
       });
   };
 
-  const getChart = () => {
-    setLoadingChart(true);
-    kaiStore.getMessageChart(messageId, siteId)
-    setLoadingChart(false);
-  }
+  React.useEffect(() => {
+    if (chart_data) {
+      const metric = kaiStore.getParsedChart(chart_data);
+      setMetric(metric);
+    }
+  }, [chart_data]);
+
+  const getChart = async () => {
+    try {
+      setLoadingChart(true);
+      const metric = await kaiStore.getMessageChart(messageId, siteId);
+      setMetric(metric);
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setLoadingChart(false);
+    }
+  };
   return (
     <div
       className={cn(
@@ -85,7 +112,7 @@ export function ChatMsg({
       {isUser ? (
         <div
           className={
-            'rounded-full bg-main text-white min-w-8 min-h-8 flex items-center justify-center sticky top-0'
+            'rounded-full bg-main text-white min-w-8 min-h-8 flex items-center justify-center sticky top-0 shadow'
           }
         >
           <span className={'font-semibold'}>{userName}</span>
@@ -93,16 +120,28 @@ export function ChatMsg({
       ) : (
         <div
           className={
-            'rounded-full bg-white shadow min-w-8 min-h-8 flex items-center justify-center sticky top-0'
+            'rounded-full bg-gray-lightest shadow min-w-8 min-h-8 flex items-center justify-center sticky top-0'
           }
         >
           <Icon name={'kai_colored'} size={18} />
         </div>
       )}
       <div className={'mt-1 flex flex-col'}>
-        <div className="markdown-body" data-openreplay-obscured ref={bodyRef}>
+        <div
+          className={cn(
+            'markdown-body',
+            isEditing ? 'border-l border-l-main pl-2' : '',
+          )}
+          data-openreplay-obscured
+          ref={bodyRef}
+        >
           <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </div>
+        {metric ? (
+          <div className="p-2 border-gray-light rounded-lg shadow">
+            <WidgetChart metric={metric} isPreview />
+          </div>
+        ) : null}
         {isUser ? (
           canEdit ? (
             <div
@@ -133,13 +172,15 @@ export function ChatMsg({
             >
               <ThumbsDown size={16} />
             </IconButton>
-            <IconButton
-              tooltip="Visualize this answer"
-              onClick={getChart}
-              processing={loadingChart}
-            >
-              <ChartLine size={16}/>
-            </IconButton>
+            {supports_visualization ? (
+              <IconButton
+                tooltip="Visualize this answer"
+                onClick={getChart}
+                processing={loadingChart}
+              >
+                <ChartLine size={16} />
+              </IconButton>
+            ) : null}
             <CopyButton
               getHtml={() => bodyRef.current?.innerHTML}
               content={text}
@@ -223,3 +264,5 @@ function MsgDuration({ duration }: { duration: number }) {
     </div>
   );
 }
+
+export default observer(ChatMsg);

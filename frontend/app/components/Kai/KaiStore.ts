@@ -2,6 +2,7 @@ import { makeAutoObservable, runInAction } from 'mobx';
 import { BotChunk, ChatManager } from './SocketManager';
 import { kaiService as aiService, kaiService } from 'App/services';
 import { toast } from 'react-toastify';
+import Widget from 'App/mstore/types/widget';
 
 export interface Message {
   text: string;
@@ -15,7 +16,11 @@ export interface Message {
   feedback: boolean | null;
   duration: number;
 }
-export interface SentMessage extends Omit<Message, 'duration' | 'feedback' | 'chart' | 'supports_visualization'> {
+export interface SentMessage
+  extends Omit<
+    Message,
+    'duration' | 'feedback' | 'chart' | 'supports_visualization'
+  > {
   replace: boolean;
 }
 
@@ -25,7 +30,7 @@ class KaiStore {
   messages: Array<Message> = [];
   queryText = '';
   loadingChat = false;
-  replacing = false;
+  replacing: string | null = null;
 
   constructor() {
     makeAutoObservable(this);
@@ -83,9 +88,9 @@ class KaiStore {
     this.messages.push(message);
   };
 
-  editMessage = (text: string) => {
+  editMessage = (text: string, messageId: string) => {
     this.setQueryText(text);
-    this.setReplacing(true);
+    this.setReplacing(messageId);
   };
 
   replaceAtIndex = (message: Message, index: number) => {
@@ -192,13 +197,13 @@ class KaiStore {
     }
   };
 
-  setReplacing = (replacing: boolean) => {
+  setReplacing = (replacing: string | null) => {
     this.replacing = replacing;
   };
 
   sendMessage = (message: string) => {
     if (this.chatManager) {
-      this.chatManager.sendMessage(message, this.replacing);
+      this.chatManager.sendMessage(message, !!this.replacing);
     }
     if (this.replacing) {
       console.log(
@@ -280,7 +285,50 @@ class KaiStore {
     }
   };
 
-  getMessageChart = (msgId: string, projectId: string) => { }
+  getMessageChart = async (msgId: string, projectId: string) => {
+    this.setProcessingStage({
+      content: 'Generating visualization...',
+      stage: 'chart',
+      messageId: msgId,
+      duration: 0,
+      type: 'chunk',
+      supports_visualization: false,
+    });
+    try {
+      const filters = await kaiService.getMsgChart(msgId, projectId);
+      const data = {
+        metricId: undefined,
+        dashboardId: undefined,
+        widgetId: undefined,
+        metricOf: undefined,
+        metricType: undefined,
+        metricFormat: undefined,
+        viewType: undefined,
+        name: 'Kai Visualization',
+        series: [
+          {
+            name: 'Kai Visualization',
+            filter: {
+              eventsOrder: filters.eventsOrder,
+              filters: filters.filters,
+            },
+          },
+        ],
+      };
+      const metric = new Widget().fromJson(data);
+      return metric;
+    } catch (e) {
+      console.error(e);
+      throw new Error('Failed to generate visualization');
+    } finally {
+      this.setProcessingStage(null);
+    }
+  };
+
+  getParsedChart = (data: string) => {
+    const parsedData = JSON.parse(data);
+    return new Widget().fromJson(parsedData);
+  };
 }
 
 export const kaiStore = new KaiStore();
