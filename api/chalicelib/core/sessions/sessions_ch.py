@@ -379,6 +379,34 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     events_conditions_where = ["main.project_id = %(projectId)s",
                                "main.created_at >= toDateTime(%(startDate)s/1000)",
                                "main.created_at <= toDateTime(%(endDate)s/1000)"]
+    any_incident = False
+    for i, e in enumerate(data.events):
+        if e.type == schemas.EventType.INCIDENT and e.operator == schemas.SearchEventOperator.IS_ANY:
+            any_incident = True
+            data.events.pop(i)
+            # don't stop here because we could have multiple filters looking for any incident
+
+    if any_incident:
+        any_incident = False
+        for f in data.filters:
+            if f.type == schemas.FilterType.ISSUE:
+                any_incident = True
+                if f.value.index(schemas.IssueType.INCIDENT) < 0:
+                    f.value.append(schemas.IssueType.INCIDENT)
+                    if f.operator == schemas.SearchEventOperator.IS_ANY:
+                        f.operator = schemas.SearchEventOperator.IS
+                break
+
+        if not any_incident:
+            data.filters.append(schemas.SessionSearchFilterSchema(**{
+                "type": "issue",
+                "isEvent": False,
+                "value": [
+                    "incident"
+                ],
+                "operator": "is"
+            }))
+
     if len(data.filters) > 0:
         meta_keys = None
         # to reduce include a sub-query of sessions inside events query, in order to reduce the selected data
@@ -522,7 +550,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append(
                         sh.multi_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                             value_key=f_k))
-            elif filter_type == schemas.EventType.METADATA:
+            elif filter_type == schemas.FilterType.METADATA:
                 # get metadata list only if you need it
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
@@ -1257,6 +1285,39 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 _column = "label"
                 event_where.append(f"main.`$event_name`=%({e_k})s AND main.session_id>0")
                 events_conditions.append({"type": event_where[-1], "condition": ""})
+            elif event_type == schemas.EventType.INCIDENT:
+                event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
+                _column = "label"
+                event_where.append(
+                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                events_conditions.append({"type": event_where[-1]})
+
+                if is_not:
+                    # event_where.append(json_condition(
+                    #     "sub", "$properties", _column, op, event.value, e_k
+                    # ))
+                    event_where.append(
+                        sh.multi_conditions(
+                            get_sub_condition(col_name=f"sub.`$properties`.{_column}",
+                                              val_name=e_k, operator=event.operator),
+                            event.value, value_key=e_k)
+                    )
+                    events_conditions_not.append(
+                        {
+                            "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"
+                        }
+                    )
+                    events_conditions_not[-1]["condition"] = event_where[-1]
+                else:
+
+                    event_where.append(
+                        sh.multi_conditions(
+                            get_sub_condition(col_name=f"main.`$properties`.{_column}",
+                                              val_name=e_k, operator=event.operator),
+                            event.value, value_key=e_k)
+                    )
+                    events_conditions[-1]["condition"] = event_where[-1]
+
 
             else:
                 continue

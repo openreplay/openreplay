@@ -440,7 +440,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     extra_constraints.append(
                         sh.multi_conditions(f"s.base_referrer {op} %({f_k})s", f.value, is_not=is_not,
                                             value_key=f_k))
-            elif filter_type == schemas.EventType.METADATA:
+            elif filter_type == schemas.FilterType.METADATA:
                 # get metadata list only if you need it
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
