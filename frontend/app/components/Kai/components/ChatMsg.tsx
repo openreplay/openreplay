@@ -21,19 +21,19 @@ export function ChatMsg({
   isUser,
   userName,
   messageId,
-  isLast,
   duration,
   feedback,
   siteId,
+  canEdit,
 }: {
   text: string;
   isUser: boolean;
   messageId: string;
   userName?: string;
-  isLast?: boolean;
   duration?: number;
   feedback: boolean | null;
   siteId: string;
+  canEdit?: boolean;
 }) {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const bodyRef = React.useRef<HTMLDivElement>(null);
@@ -103,7 +103,7 @@ export function ChatMsg({
           <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </div>
         {isUser ? (
-          isLast ? (
+          canEdit ? (
             <div
               onClick={onRetry}
               className={

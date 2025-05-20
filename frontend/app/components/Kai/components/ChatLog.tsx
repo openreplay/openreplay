@@ -67,10 +67,10 @@ function ChatLog({
               isUser={msg.isUser}
               userName={userLetter}
               messageId={msg.messageId}
-              isLast={index === lastHumanMsgInd}
               duration={msg.duration}
               feedback={msg.feedback}
               siteId={projectId}
+              canEdit={processingStage === null && msg.isUser && index === lastHumanMsgInd}
             />
           ))}
           {processingStage ? (
