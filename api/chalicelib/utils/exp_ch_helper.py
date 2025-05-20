@@ -56,7 +56,8 @@ def get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEvent
         schemas.EventType.ERROR: "ERROR",
         schemas.PerformanceEventType.LOCATION_AVG_CPU_LOAD: 'PERFORMANCE',
         schemas.PerformanceEventType.LOCATION_AVG_MEMORY_USAGE: 'PERFORMANCE',
-        schemas.FetchFilterType.FETCH_URL: 'REQUEST'
+        schemas.FetchFilterType.FETCH_URL: 'REQUEST',
+        schemas.EventType.INCIDENT: "INCIDENT",
     }
     defs_mobile = {
         schemas.EventType.CLICK_MOBILE: "TAP",
@@ -65,7 +66,8 @@ def get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEvent
         schemas.EventType.REQUEST_MOBILE: "REQUEST",
         schemas.EventType.ERROR_MOBILE: "CRASH",
         schemas.EventType.VIEW_MOBILE: "VIEW",
-        schemas.EventType.SWIPE_MOBILE: "SWIPE"
+        schemas.EventType.SWIPE_MOBILE: "SWIPE",
+        schemas.EventType.INCIDENT: "INCIDENT"
     }
     if platform != "web" and event_type in defs_mobile:
         return defs_mobile.get(event_type)
