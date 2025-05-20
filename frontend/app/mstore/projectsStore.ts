@@ -4,7 +4,6 @@ import {
   SITE_ID_STORAGE_KEY,
 } from 'App/constants/storageKeys';
 import { projectsService } from 'App/services';
-import { toast } from '.store/react-toastify-virtual-9dd0f3eae1/package';
 import GDPR from './types/gdpr';
 import Project from './types/project';
 

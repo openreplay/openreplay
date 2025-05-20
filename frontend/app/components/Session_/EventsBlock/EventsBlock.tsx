@@ -13,8 +13,8 @@ import EventGroupWrapper from './EventGroupWrapper';
 import EventSearch from './EventSearch/EventSearch';
 import styles from './eventsBlock.module.css';
 import { useTranslation } from 'react-i18next';
-import { CloseOutlined } from ".store/@ant-design-icons-virtual-42686020c5/package";
-import { Tooltip } from ".store/antd-virtual-9dbfadb7f6/package";
+import { CloseOutlined } from "@ant-design/icons";
+import { Tooltip } from "antd";
 import { getDefaultFramework, frameworkIcons } from "../UnitStepsModal";
 
 interface IProps {
