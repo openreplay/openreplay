@@ -1,6 +1,5 @@
 import { makeAutoObservable } from 'mobx';
 import { issueReportsService } from 'App/services';
-import { makePersistable } from '.store/mobx-persist-store-virtual-858ce4d906/package';
 import ReportedIssue from '../types/session/assignment';
 
 export default class IssueReportingStore {
