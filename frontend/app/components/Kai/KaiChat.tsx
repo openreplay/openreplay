@@ -98,7 +98,9 @@ function KaiChat() {
   };
   return (
     <div className="w-full mx-auto" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
-      <div className={'w-full rounded-lg overflow-hidden border shadow'}>
+      <div
+        className={'w-full rounded-lg overflow-hidden border shadow relative'}
+      >
         <ChatHeader
           chatTitle={chatTitle}
           openChats={openChats}

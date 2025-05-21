@@ -31,9 +31,15 @@ class KaiStore {
   queryText = '';
   loadingChat = false;
   replacing: string | null = null;
+  usage = {
+    total: 0,
+    used: 0,
+    percent: 0,
+  };
 
   constructor() {
     makeAutoObservable(this);
+    this.checkUsage();
   }
 
   get lastHumanMessage() {
@@ -146,6 +152,7 @@ class KaiStore {
       console.error('No token found');
       return;
     }
+    this.checkUsage();
     this.chatManager = new ChatManager({ ...settings, token });
     this.chatManager.setOnMsgHook({
       msgCallback: (msg) => {
@@ -184,6 +191,7 @@ class KaiStore {
               supports_visualization: msg.supports_visualization,
               chart_data: '',
             };
+            this.bumpUsage();
             this.addMessage(msgObj);
             this.setProcessingStage(null);
           }
@@ -199,6 +207,11 @@ class KaiStore {
 
   setReplacing = (replacing: string | null) => {
     this.replacing = replacing;
+  };
+
+  bumpUsage = () => {
+    this.usage.used += 1;
+    this.usage.percent = (this.usage.used / this.usage.total) * 100;
   };
 
   sendMessage = (message: string) => {
@@ -328,6 +341,19 @@ class KaiStore {
   getParsedChart = (data: string) => {
     const parsedData = JSON.parse(data);
     return new Widget().fromJson(parsedData);
+  };
+
+  checkUsage = async () => {
+    try {
+      const { total, used } = await kaiService.checkUsage();
+      this.usage = {
+        total,
+        used,
+        percent: (used / total) * 100,
+      };
+    } catch (e) {
+      console.error(e);
+    }
   };
 }
 

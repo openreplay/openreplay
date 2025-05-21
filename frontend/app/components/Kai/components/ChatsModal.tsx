@@ -5,6 +5,8 @@ import { MessagesSquare, Trash } from 'lucide-react';
 import { kaiService } from 'App/services';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+import { kaiStore } from '../KaiStore';
+import { observer } from 'mobx-react-lite';
 
 function ChatsModal({
   onSelect,
@@ -14,6 +16,7 @@ function ChatsModal({
   projectId: string;
 }) {
   const { t } = useTranslation();
+  const { usage } = kaiStore;
   const {
     data = [],
     isPending,
@@ -23,6 +26,10 @@ function ChatsModal({
     queryFn: () => kaiService.getKaiChats(projectId),
     staleTime: 1000 * 60,
   });
+
+  React.useEffect(() => {
+    kaiStore.checkUsage();
+  }, []);
 
   const datedCollections = React.useMemo(() => {
     return data.length ? splitByDate(data) : [];
@@ -42,6 +49,14 @@ function ChatsModal({
         <MessagesSquare size={16} />
         <span>{t('Chats')}</span>
       </div>
+      {usage.percent > 80 ? (
+        <div className="text-red text-sm">
+          {t('You have used {{used}} out of {{total}} daily requests', {
+            used: usage.used,
+            total: usage.total,
+          })}
+        </div>
+      ) : null}
       {isPending ? (
         <div className="animate-pulse text-disabled-text">{t('Loading chats')}...</div>
       ) : (
@@ -118,4 +133,4 @@ function ChatsList({
   );
 }
 
-export default ChatsModal;
+export default observer(ChatsModal);

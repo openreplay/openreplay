@@ -19,7 +19,7 @@ import { toast } from 'react-toastify';
 import { durationFormatted } from 'App/date';
 import WidgetChart from '@/components/Dashboard/components/WidgetChart';
 import Widget from 'App/mstore/types/widget';
-import cn from 'classnames';
+import { useTranslation } from 'react-i18next';
 
 function ChatMsg({
   userName,
@@ -32,6 +32,7 @@ function ChatMsg({
   canEdit?: boolean;
   siteId: string;
 }) {
+  const { t } = useTranslation();
   const [metric, setMetric] = React.useState<Widget | null>(null);
   const [loadingChart, setLoadingChart] = React.useState(false);
   const {
@@ -46,9 +47,13 @@ function ChatMsg({
   const isEditing = kaiStore.replacing && messageId === kaiStore.replacing;
   const [isProcessing, setIsProcessing] = React.useState(false);
   const bodyRef = React.useRef<HTMLDivElement>(null);
-  const onRetry = () => {
+  const onEdit = () => {
     kaiStore.editMessage(text, messageId);
   };
+  const onCancelEdit = () => {
+    kaiStore.setQueryText('');
+    kaiStore.setReplacing(null);
+  }
   const onFeedback = (feedback: 'like' | 'dislike', messageId: string) => {
     kaiStore.sendMsgFeedback(feedback, messageId, siteId);
   };
@@ -143,17 +148,31 @@ function ChatMsg({
           </div>
         ) : null}
         {isUser ? (
-          canEdit ? (
+          <>
             <div
-              onClick={onRetry}
-              className={
-                'ml-auto flex items-center gap-2 px-2 rounded-lg border border-gray-medium text-sm cursor-pointer hover:border-main hover:text-main w-fit'
-              }
+              onClick={onEdit}
+              className={cn(
+                'ml-auto flex items-center gap-2 px-2',
+                'rounded-lg border border-gray-medium text-sm cursor-pointer',
+                'hover:border-main hover:text-main w-fit',
+                canEdit && !isEditing ? '' : 'hidden',
+              )}
             >
               <ListRestart size={16} />
-              <div>Edit</div>
+              <div>{t('Edit')}</div>
             </div>
-          ) : null
+            <div
+              onClick={onCancelEdit}
+              className={cn(
+                'ml-auto flex items-center gap-2 px-2',
+                'rounded-lg border border-gray-medium text-sm cursor-pointer',
+                'hover:border-main hover:text-main w-fit',
+                isEditing ? '' : 'hidden',
+              )}
+            >
+              <div>{t('Cancel')}</div>
+            </div>
+          </>
         ) : (
           <div className={'flex items-center gap-2'}>
             {duration ? <MsgDuration duration={duration} /> : null}
