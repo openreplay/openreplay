@@ -37,8 +37,9 @@ func main() {
 	redisClient, err := redis.New(&cfg.Redis)
 	if err != nil {
 		log.Info(ctx, "no redis cache: %s", err)
+	} else {
+		defer redisClient.Close()
 	}
-	defer redisClient.Close()
 
 	builder, err := services.New(log, cfg, webMetrics, dbMetric, producer, pgConn, redisClient)
 	if err != nil {
