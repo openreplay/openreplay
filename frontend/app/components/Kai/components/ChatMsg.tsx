@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon, CopyButton } from 'UI';
+import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -10,36 +11,49 @@ import {
   ListRestart,
   FileDown,
   Clock,
+  ChartLine,
 } from 'lucide-react';
 import { Button, Tooltip } from 'antd';
-import { kaiStore } from '../KaiStore';
+import { kaiStore, Message } from '../KaiStore';
 import { toast } from 'react-toastify';
 import { durationFormatted } from 'App/date';
+import WidgetChart from '@/components/Dashboard/components/WidgetChart';
+import Widget from 'App/mstore/types/widget';
+import { useTranslation } from 'react-i18next';
 
-export function ChatMsg({
-  text,
-  isUser,
+function ChatMsg({
   userName,
-  messageId,
-  duration,
-  feedback,
   siteId,
   canEdit,
+  message,
 }: {
-  text: string;
-  isUser: boolean;
-  messageId: string;
+  message: Message;
   userName?: string;
-  duration?: number;
-  feedback: boolean | null;
-  siteId: string;
   canEdit?: boolean;
+  siteId: string;
 }) {
+  const { t } = useTranslation();
+  const [metric, setMetric] = React.useState<Widget | null>(null);
+  const [loadingChart, setLoadingChart] = React.useState(false);
+  const {
+    text,
+    isUser,
+    messageId,
+    duration,
+    feedback,
+    supports_visualization,
+    chart_data,
+  } = message;
+  const isEditing = kaiStore.replacing && messageId === kaiStore.replacing;
   const [isProcessing, setIsProcessing] = React.useState(false);
   const bodyRef = React.useRef<HTMLDivElement>(null);
-  const onRetry = () => {
-    kaiStore.editMessage(text);
+  const onEdit = () => {
+    kaiStore.editMessage(text, messageId);
   };
+  const onCancelEdit = () => {
+    kaiStore.setQueryText('');
+    kaiStore.setReplacing(null);
+  }
   const onFeedback = (feedback: 'like' | 'dislike', messageId: string) => {
     kaiStore.sendMsgFeedback(feedback, messageId, siteId);
   };
@@ -74,6 +88,25 @@ export function ChatMsg({
         setIsProcessing(false);
       });
   };
+
+  React.useEffect(() => {
+    if (chart_data) {
+      const metric = kaiStore.getParsedChart(chart_data);
+      setMetric(metric);
+    }
+  }, [chart_data]);
+
+  const getChart = async () => {
+    try {
+      setLoadingChart(true);
+      const metric = await kaiStore.getMessageChart(messageId, siteId);
+      setMetric(metric);
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setLoadingChart(false);
+    }
+  };
   return (
     <div
       className={cn(
@@ -84,7 +117,7 @@ export function ChatMsg({
       {isUser ? (
         <div
           className={
-            'rounded-full bg-main text-white min-w-8 min-h-8 flex items-center justify-center sticky top-0'
+            'rounded-full bg-main text-white min-w-8 min-h-8 flex items-center justify-center sticky top-0 shadow'
           }
         >
           <span className={'font-semibold'}>{userName}</span>
@@ -92,28 +125,54 @@ export function ChatMsg({
       ) : (
         <div
           className={
-            'rounded-full bg-white shadow min-w-8 min-h-8 flex items-center justify-center sticky top-0'
+            'rounded-full bg-gray-lightest shadow min-w-8 min-h-8 flex items-center justify-center sticky top-0'
           }
         >
           <Icon name={'kai_colored'} size={18} />
         </div>
       )}
       <div className={'mt-1 flex flex-col'}>
-        <div className="markdown-body" data-openreplay-obscured ref={bodyRef}>
+        <div
+          className={cn(
+            'markdown-body',
+            isEditing ? 'border-l border-l-main pl-2' : '',
+          )}
+          data-openreplay-obscured
+          ref={bodyRef}
+        >
           <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </div>
+        {metric ? (
+          <div className="p-2 border-gray-light rounded-lg shadow">
+            <WidgetChart metric={metric} isPreview />
+          </div>
+        ) : null}
         {isUser ? (
-          canEdit ? (
+          <>
             <div
-              onClick={onRetry}
-              className={
-                'ml-auto flex items-center gap-2 px-2 rounded-lg border border-gray-medium text-sm cursor-pointer hover:border-main hover:text-main w-fit'
-              }
+              onClick={onEdit}
+              className={cn(
+                'ml-auto flex items-center gap-2 px-2',
+                'rounded-lg border border-gray-medium text-sm cursor-pointer',
+                'hover:border-main hover:text-main w-fit',
+                canEdit && !isEditing ? '' : 'hidden',
+              )}
             >
               <ListRestart size={16} />
-              <div>Edit</div>
+              <div>{t('Edit')}</div>
             </div>
-          ) : null
+            <div
+              onClick={onCancelEdit}
+              className={cn(
+                'ml-auto flex items-center gap-2 px-2',
+                'rounded-lg border border-gray-medium text-sm cursor-pointer',
+                'hover:border-main hover:text-main w-fit',
+                isEditing ? '' : 'hidden',
+              )}
+            >
+              <div>{t('Cancel')}</div>
+            </div>
+          </>
         ) : (
           <div className={'flex items-center gap-2'}>
             {duration ? <MsgDuration duration={duration} /> : null}
@@ -132,6 +191,15 @@ export function ChatMsg({
             >
               <ThumbsDown size={16} />
             </IconButton>
+            {supports_visualization ? (
+              <IconButton
+                tooltip="Visualize this answer"
+                onClick={getChart}
+                processing={loadingChart}
+              >
+                <ChartLine size={16} />
+              </IconButton>
+            ) : null}
             <CopyButton
               getHtml={() => bodyRef.current?.innerHTML}
               content={text}
@@ -215,3 +283,5 @@ function MsgDuration({ duration }: { duration: number }) {
     </div>
   );
 }
+
+export default observer(ChatMsg);

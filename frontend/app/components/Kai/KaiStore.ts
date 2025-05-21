@@ -2,17 +2,25 @@ import { makeAutoObservable, runInAction } from 'mobx';
 import { BotChunk, ChatManager } from './SocketManager';
 import { kaiService as aiService, kaiService } from 'App/services';
 import { toast } from 'react-toastify';
+import Widget from 'App/mstore/types/widget';
 
 export interface Message {
   text: string;
   isUser: boolean;
   messageId: string;
+  /** filters to get chart */
   chart: string;
+  /** chart data */
+  chart_data: string;
   supports_visualization: boolean;
   feedback: boolean | null;
   duration: number;
 }
-export interface SentMessage extends Omit<Message, 'duration' | 'feedback' | 'chart' | 'supports_visualization'> {
+export interface SentMessage
+  extends Omit<
+    Message,
+    'duration' | 'feedback' | 'chart' | 'supports_visualization'
+  > {
   replace: boolean;
 }
 
@@ -22,10 +30,16 @@ class KaiStore {
   messages: Array<Message> = [];
   queryText = '';
   loadingChat = false;
-  replacing = false;
+  replacing: string | null = null;
+  usage = {
+    total: 0,
+    used: 0,
+    percent: 0,
+  };
 
   constructor() {
     makeAutoObservable(this);
+    this.checkUsage();
   }
 
   get lastHumanMessage() {
@@ -80,9 +94,9 @@ class KaiStore {
     this.messages.push(message);
   };
 
-  editMessage = (text: string) => {
+  editMessage = (text: string, messageId: string) => {
     this.setQueryText(text);
-    this.setReplacing(true);
+    this.setReplacing(messageId);
   };
 
   replaceAtIndex = (message: Message, index: number) => {
@@ -115,6 +129,7 @@ class KaiStore {
               feedback: m.feedback,
               chart: m.chart,
               supports_visualization: m.supports_visualization,
+              chart_data: m.chart_data,
             };
           }),
         );
@@ -137,6 +152,7 @@ class KaiStore {
       console.error('No token found');
       return;
     }
+    this.checkUsage();
     this.chatManager = new ChatManager({ ...settings, token });
     this.chatManager.setOnMsgHook({
       msgCallback: (msg) => {
@@ -173,7 +189,9 @@ class KaiStore {
               feedback: null,
               chart: '',
               supports_visualization: msg.supports_visualization,
+              chart_data: '',
             };
+            this.bumpUsage();
             this.addMessage(msgObj);
             this.setProcessingStage(null);
           }
@@ -187,13 +205,18 @@ class KaiStore {
     }
   };
 
-  setReplacing = (replacing: boolean) => {
+  setReplacing = (replacing: string | null) => {
     this.replacing = replacing;
+  };
+
+  bumpUsage = () => {
+    this.usage.used += 1;
+    this.usage.percent = (this.usage.used / this.usage.total) * 100;
   };
 
   sendMessage = (message: string) => {
     if (this.chatManager) {
-      this.chatManager.sendMessage(message, this.replacing);
+      this.chatManager.sendMessage(message, !!this.replacing);
     }
     if (this.replacing) {
       console.log(
@@ -219,6 +242,7 @@ class KaiStore {
       duration: 0,
       supports_visualization: false,
       chart: '',
+      chart_data: '',
     });
   };
 
@@ -271,6 +295,64 @@ class KaiStore {
     if (this.chatManager) {
       this.chatManager.disconnect();
       this.chatManager = null;
+    }
+  };
+
+  getMessageChart = async (msgId: string, projectId: string) => {
+    this.setProcessingStage({
+      content: 'Generating visualization...',
+      stage: 'chart',
+      messageId: msgId,
+      duration: 0,
+      type: 'chunk',
+      supports_visualization: false,
+    });
+    try {
+      const filters = await kaiService.getMsgChart(msgId, projectId);
+      const data = {
+        metricId: undefined,
+        dashboardId: undefined,
+        widgetId: undefined,
+        metricOf: undefined,
+        metricType: undefined,
+        metricFormat: undefined,
+        viewType: undefined,
+        name: 'Kai Visualization',
+        series: [
+          {
+            name: 'Kai Visualization',
+            filter: {
+              eventsOrder: filters.eventsOrder,
+              filters: filters.filters,
+            },
+          },
+        ],
+      };
+      const metric = new Widget().fromJson(data);
+      return metric;
+    } catch (e) {
+      console.error(e);
+      throw new Error('Failed to generate visualization');
+    } finally {
+      this.setProcessingStage(null);
+    }
+  };
+
+  getParsedChart = (data: string) => {
+    const parsedData = JSON.parse(data);
+    return new Widget().fromJson(parsedData);
+  };
+
+  checkUsage = async () => {
+    try {
+      const { total, used } = await kaiService.checkUsage();
+      this.usage = {
+        total,
+        used,
+        percent: (used / total) * 100,
+      };
+    } catch (e) {
+      console.error(e);
     }
   };
 }

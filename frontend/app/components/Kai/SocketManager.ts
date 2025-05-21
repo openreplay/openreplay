@@ -1,4 +1,5 @@
 import io from 'socket.io-client';
+import { toast } from 'react-toastify';
 
 export class ChatManager {
   socket: ReturnType<typeof io>;
@@ -41,6 +42,9 @@ export class ChatManager {
       console.log('Disconnected from server');
     });
     socket.on('error', (err) => {
+      if (err.message) {
+        toast.error(err.message);
+      }
       console.error('Socket error:', err);
     });
 
