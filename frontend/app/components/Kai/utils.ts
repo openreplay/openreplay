@@ -32,5 +32,5 @@ export function splitByDate(entries: { datetime: string }[]) {
     }
   });
 
-  return result;
+  return result.filter((r) => r.entries.length > 0);
 }
