@@ -57,6 +57,7 @@ module.exports = {
   'indigo-lightest': 'oklch(96.2% 0.018 272.314)',
   'indigo': 'oklch(58.5% 0.233 277.117)',
 
+  /** DEPRECATED */
   figmaColors: {
     'accent-secondary': 'rgba(62, 170, 175, 1)',
     main: 'rgba(57, 78, 255, 1)',

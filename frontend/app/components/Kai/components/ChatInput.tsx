@@ -61,8 +61,13 @@ function ChatInput({
           }
         }}
         ref={inputRef}
-        placeholder={'Ask anything about your product and users...'}
+        placeholder={
+          limited
+            ? `You've reached the daily limit for queries, come again tomorrow!`
+            : 'Ask anything about your product and users...'
+        }
         size={'large'}
+        disabled={limited}
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         suffix={
