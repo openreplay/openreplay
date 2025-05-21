@@ -408,12 +408,13 @@ svg {
 }
 
 .markdown-body p {
-    margin: 0!important;
+    margin-top: 6px!important;
+    margin-bottom: 6px!important;
 }
 
-.markdown-body ul {
-    margin-top: 4px!important;
-    margin-bottom: 4px!important;
+.markdown-body ul, .markdown-body ol {
+    margin-top: 6px!important;
+    margin-bottom: 6px!important;
 }
 
 .markdown-body ul {
