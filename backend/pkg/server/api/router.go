@@ -33,14 +33,6 @@ func NewRouter(cfg *common.HTTP, log logger.Logger, rateLimiter, authenticator, 
 		return nil, fmt.Errorf("config is empty")
 	case log == nil:
 		return nil, fmt.Errorf("logger is empty")
-	case rateLimiter == nil:
-		rateLimiter = NewDefaultMiddleware()
-	case authenticator == nil:
-		authenticator = NewDefaultMiddleware()
-	case permissions == nil:
-		permissions = NewDefaultMiddleware()
-	case tracer == nil:
-		tracer = NewDefaultMiddleware()
 	}
 	e := &routerImpl{
 		log:       log,
@@ -52,10 +44,18 @@ func NewRouter(cfg *common.HTTP, log logger.Logger, rateLimiter, authenticator, 
 	// Add all middlewares
 	e.router.Use(e.healthMiddleware)
 	e.router.Use(e.corsMiddleware)
-	e.router.Use(rateLimiter.Middleware)
-	e.router.Use(authenticator.Middleware)
-	e.router.Use(permissions.Middleware)
-	e.router.Use(tracer.Middleware)
+	if rateLimiter != nil {
+		e.router.Use(rateLimiter.Middleware)
+	}
+	if authenticator != nil {
+		e.router.Use(authenticator.Middleware)
+	}
+	if permissions != nil {
+		e.router.Use(permissions.Middleware)
+	}
+	if tracer != nil {
+		e.router.Use(tracer.Middleware)
+	}
 	return e, nil
 }
 
