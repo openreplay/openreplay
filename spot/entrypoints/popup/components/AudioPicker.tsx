@@ -19,7 +19,7 @@ const AudioPicker: Component<AudioPickerProps> = (props) => {
   return (
     <div class="inline-flex items-center gap-1 text-xs">
       <div
-        class="p-1 cursor-pointer btn btn-xs bg-white hover:bg-indigo-50 pointer-events-auto tooltip tooltip-right text-sm font-normal"
+        class="p-1 cursor-pointer btn btn-xs bg-white hover:bg-indigo-lightest pointer-events-auto tooltip tooltip-right text-sm font-normal"
         data-tip={props.mic() ? "Switch Off Mic" : "Switch On Mic"}
         onClick={props.onMicToggle}
       >

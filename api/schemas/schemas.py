@@ -406,6 +406,7 @@ class EventType(str, Enum):
     ERROR_MOBILE = "errorMobile"
     SWIPE_MOBILE = "swipeMobile"
     EVENT = "event"
+    INCIDENT = "incident"
 
 
 class PerformanceEventType(str, Enum):
@@ -506,8 +507,8 @@ class IssueType(str, Enum):
     CUSTOM = 'custom'
     JS_EXCEPTION = 'js_exception'
     MOUSE_THRASHING = 'mouse_thrashing'
-    # IOS
-    TAP_RAGE = 'tap_rage'
+    TAP_RAGE = 'tap_rage'  # IOS
+    INCIDENT = 'incident'
 
 
 class MetricFormatType(str, Enum):

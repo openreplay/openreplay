@@ -29,23 +29,23 @@
 
 
 .info.info.info.info.info { /* BAD HACK >:) */
-  background-color: rgba(242, 248, 255, 0.6);
+  background-color: var(--color-glassMint);
   &:hover {
-    background-color: rgba(242, 248, 255, 1);
+    background-color: var(--color-indigo-lightest);
   }
 }
 
 .warn.warn.warn.warn {
-  background-color: rgba(253, 248, 240, 0.6);
+  background-color: var(--color-amber);
   &:hover {
-    background-color: rgba(253, 248, 240, 1);
+    background-color: var(--color-amber-medium);
   }
 }
 
 .error.error.error.error {
-  background-color:  rgba(252, 242, 242, 0.6);
+  background-color:  var(--color-red-light);
   &:hover {
-    background-color:  rgba(252, 242, 242, 1);
+    background-color:  var(--color-red-lightest);
   }
 }
 

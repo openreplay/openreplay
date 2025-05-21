@@ -38,7 +38,7 @@ interface Props {
   isSaved?: boolean;
 }
 
-function WidgetWrapperNew(props: Props & RouteComponentProps) {
+function WidgetWrapperDashboard(props: Props & RouteComponentProps) {
   const { dashboardStore, metricStore } = useStore();
   const {
     isWidget = false,
@@ -178,4 +178,4 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
   );
 }
 
-export default withRouter(observer(WidgetWrapperNew));
+export default withRouter(observer(WidgetWrapperDashboard));

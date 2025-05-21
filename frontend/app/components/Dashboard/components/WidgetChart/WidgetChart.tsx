@@ -54,8 +54,8 @@ function WidgetChart(props: Props) {
   });
   const { isSaved = false, metric, isTemplate } = props;
   const { dashboardStore, metricStore } = useStore();
-  const _metric: any = props.isPreview ? metricStore.instance : props.metric;
-  const { data } = _metric;
+  const _metric: any = props.metric;
+  const data = _metric.data;
   const { period } = dashboardStore;
   const { drillDownPeriod } = dashboardStore;
   const { drillDownFilter } = dashboardStore;
@@ -158,7 +158,7 @@ function WidgetChart(props: Props) {
     }, 4000);
     dashboardStore
       .fetchMetricChartData(metric, payload, isSaved, period, isComparison)
-      .then((res: any) => {
+      .then((res) => {
         if (isComparison) setCompData(res);
         clearTimeout(tm);
         setStale(false);
@@ -181,10 +181,10 @@ function WidgetChart(props: Props) {
     }
     prevMetricRef.current = _metric;
     const timestmaps = drillDownPeriod.toTimestamps();
-    const density = props.isPreview ? metric.density : dashboardStore.selectedDensity
+    const density = dashboardStore.selectedDensity;
     const payload = isSaved
-      ? { ...metricParams, density }
-      : { ...params, ...timestmaps, ..._metric.toJson(), density };
+    ? { ...metricParams, density }
+    : { ...params, ...timestmaps, ..._metric.toJson(), density };
     debounceRequest(
       _metric,
       payload,
@@ -561,7 +561,7 @@ function WidgetChart(props: Props) {
     }
     console.log('Unknown metric type', metricType);
     return <div>{t('Unknown metric type')}</div>;
-  }, [data, compData, enabledRows, _metric]);
+  }, [data, compData, enabledRows, _metric, data]);
 
   const showTable =
     _metric.metricType === TIMESERIES &&

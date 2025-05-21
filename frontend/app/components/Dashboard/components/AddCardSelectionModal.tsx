@@ -47,7 +47,7 @@ function AddCardSelectionModal(props: Props) {
         <Row gutter={16} justify="center" className="py-5">
           <Col span={12}>
             <div
-              className="flex flex-col items-center justify-center hover:bg-indigo-50 border rounded-lg shadow-sm cursor-pointer gap-3"
+              className="flex flex-col items-center justify-center hover:bg-indigo-lightest border rounded-lg shadow-sm cursor-pointer gap-3"
               style={{ height: '80px' }}
               onClick={() => onClick(true)}
             >
@@ -57,7 +57,7 @@ function AddCardSelectionModal(props: Props) {
           </Col>
           <Col span={12}>
             <div
-              className="flex flex-col items-center justify-center hover:bg-indigo-50 border rounded-lg shadow-sm cursor-pointer gap-3"
+              className="flex flex-col items-center justify-center hover:bg-indigo-lightest border rounded-lg shadow-sm cursor-pointer gap-3"
               style={{ height: '80px' }}
               onClick={() => onClick(false)}
             >

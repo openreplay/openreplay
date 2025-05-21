@@ -1,5 +1,5 @@
 from chalicelib.utils import pg_client, helper
-from chalicelib.core import events
+from . import events
 
 
 def get_customs_by_session_id(session_id, project_id):
@@ -58,7 +58,7 @@ def get_crashes_by_session_id(session_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""
                     SELECT cr.*,uc.*, cr.timestamp - s.start_ts AS time
-                    FROM {events.EventType.CRASH_MOBILE.table} AS cr 
+                    FROM events_common.crashes AS cr 
                         INNER JOIN public.crashes_ios AS uc USING (crash_ios_id) 
                         INNER JOIN public.sessions AS s USING (session_id)
                     WHERE

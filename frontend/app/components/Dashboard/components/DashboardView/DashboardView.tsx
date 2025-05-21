@@ -11,7 +11,6 @@ import withPageTitle from 'HOCs/withPageTitle';
 import withReport from 'App/components/hocs/withReport';
 import { useHistory } from 'react-router';
 import DashboardHeader from '../DashboardHeader';
-import DashboardModal from '../DashboardModal';
 import DashboardWidgetGrid from '../DashboardWidgetGrid';
 import AiQuery from './AiQuery';
 import { PANEL_SIZES } from 'App/constants/panelSizes'
@@ -69,33 +68,24 @@ function DashboardView(props: Props) {
       onAddWidgets();
       trimQuery();
     }
+    dashboardStore.resetDensity();
 
     return () => dashboardStore.resetSelectedDashboard();
   }, []);
 
   useEffect(() => {
-    const isExists = dashboardStore.getDashboardById(dashboardId);
-    if (!isExists) {
-      history.push(withSiteId('/dashboard', siteId));
-    }
+    const isExists = async () => dashboardStore.getDashboardById(dashboardId);
+    isExists().then((res) => {
+      if (!res) {
+        history.push(withSiteId('/dashboard', siteId));
+      }
+    })
   }, [dashboardId]);
 
   useEffect(() => {
     if (!dashboard || !dashboard.dashboardId) return;
     dashboardStore.fetch(dashboard.dashboardId);
   }, [dashboard]);
-
-  const onAddWidgets = () => {
-    dashboardStore.initDashboard(dashboard);
-    showModal(
-      <DashboardModal
-        siteId={siteId}
-        onMetricAdd={pushQuery}
-        dashboardId={dashboardId}
-      />,
-      { right: true },
-    );
-  };
 
   if (!dashboard) return null;
 
@@ -117,7 +107,6 @@ function DashboardView(props: Props) {
         <DashboardWidgetGrid
           siteId={siteId}
           dashboardId={dashboardId}
-          onEditHandler={onAddWidgets}
           id="report"
         />
       </div>

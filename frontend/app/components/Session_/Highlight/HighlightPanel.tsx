@@ -206,7 +206,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
           <Tag
             onClick={() => addTag(tag)}
             key={tag}
-            className="cursor-pointer rounded-lg hover:bg-indigo-50 mr-0"
+            className="cursor-pointer rounded-lg hover:bg-indigo-lightest mr-0"
             color={tagProps[tag]}
             bordered={false}
           >
