@@ -8,6 +8,7 @@ from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Re
 
 import schemas
 from chalicelib.core import assist, signup, feature_flags
+from chalicelib.core import notes
 from chalicelib.core import scope
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
@@ -510,8 +511,8 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str,
 @app.get('/{projectId}/notes/{noteId}', tags=["sessions", "notes"],
          dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def get_note_by_id(projectId: int, noteId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_notes.get_note(tenant_id=context.tenant_id, project_id=projectId, note_id=noteId,
-                                   user_id=context.user_id)
+    data = notes.get_note(tenant_id=context.tenant_id, project_id=projectId, note_id=noteId,
+                          user_id=context.user_id)
     if "errors" in data:
         return data
     return {
@@ -525,8 +526,8 @@ def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema 
                 context: schemas.CurrentContext = Depends(OR_context)):
     if not sessions.session_exists(project_id=projectId, session_id=sessionId):
         return {"errors": ["Session not found"]}
-    data = sessions_notes.create(tenant_id=context.tenant_id, project_id=projectId,
-                                 session_id=sessionId, user_id=context.user_id, data=data)
+    data = notes.create(tenant_id=context.tenant_id, project_id=projectId,
+                        session_id=sessionId, user_id=context.user_id, data=data)
     if "errors" in data.keys():
         return data
     return {
@@ -537,8 +538,8 @@ def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema 
 @app.get('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"],
          dependencies=[OR_scope(Permissions.SESSION_REPLAY, ServicePermissions.READ_NOTES)])
 def get_session_notes(projectId: int, sessionId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_notes.get_session_notes(tenant_id=context.tenant_id, project_id=projectId,
-                                            session_id=sessionId, user_id=context.user_id)
+    data = notes.get_session_notes(tenant_id=context.tenant_id, project_id=projectId,
+                                   session_id=sessionId, user_id=context.user_id)
     if "errors" in data:
         return data
     return {
@@ -550,8 +551,8 @@ def get_session_notes(projectId: int, sessionId: int, context: schemas.CurrentCo
           dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNoteSchema = Body(...),
               context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_notes.edit(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
-                               note_id=noteId, data=data)
+    data = notes.edit(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+                      note_id=noteId, data=data)
     if "errors" in data.keys():
         return data
     return {
@@ -562,7 +563,7 @@ def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNoteSchema
 @app.delete('/{projectId}/notes/{noteId}', tags=["sessions", "notes"],
             dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def delete_note(projectId: int, noteId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_notes.delete(project_id=projectId, note_id=noteId)
+    data = notes.delete(project_id=projectId, note_id=noteId)
     return data
 
 
@@ -570,22 +571,22 @@ def delete_note(projectId: int, noteId: int, _=Body(None), context: schemas.Curr
          dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def share_note_to_slack(projectId: int, noteId: int, webhookId: int,
                         context: schemas.CurrentContext = Depends(OR_context)):
-    return sessions_notes.share_to_slack(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
-                                         note_id=noteId, webhook_id=webhookId)
+    return notes.share_to_slack(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+                                note_id=noteId, webhook_id=webhookId)
 
 
 @app.get('/{projectId}/notes/{noteId}/msteams/{webhookId}', tags=["sessions", "notes"])
 def share_note_to_msteams(projectId: int, noteId: int, webhookId: int,
                           context: schemas.CurrentContext = Depends(OR_context)):
-    return sessions_notes.share_to_msteams(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
-                                           note_id=noteId, webhook_id=webhookId)
+    return notes.share_to_msteams(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+                                  note_id=noteId, webhook_id=webhookId)
 
 
 @app.post('/{projectId}/notes', tags=["sessions", "notes"], dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_notes.get_all_notes_by_project_id(tenant_id=context.tenant_id, project_id=projectId,
-                                                      user_id=context.user_id, data=data)
+    data = notes.get_all_notes_by_project_id(tenant_id=context.tenant_id, project_id=projectId,
+                                             user_id=context.user_id, data=data)
     if "errors" in data:
         return data
     return {'data': data}
