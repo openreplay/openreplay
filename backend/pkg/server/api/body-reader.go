@@ -13,8 +13,6 @@ import (
 func ReadBody(log logger.Logger, w http.ResponseWriter, r *http.Request, limit int64) ([]byte, error) {
 	body := http.MaxBytesReader(w, r.Body, limit)
 	bodyBytes, err := io.ReadAll(body)
-
-	// Close body
 	if closeErr := body.Close(); closeErr != nil {
 		log.Warn(r.Context(), "error while closing request body: %s", closeErr)
 	}
@@ -47,8 +45,6 @@ func ReadCompressedBody(log logger.Logger, w http.ResponseWriter, r *http.Reques
 	} else {
 		bodyBytes, err = io.ReadAll(body)
 	}
-
-	// Close body
 	if closeErr := body.Close(); closeErr != nil {
 		log.Warn(r.Context(), "error while closing request body: %s", closeErr)
 	}

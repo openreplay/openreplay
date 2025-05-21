@@ -47,18 +47,18 @@ func NewHandlers(log logger.Logger, cfg *spotConfig.Config, responser *api.Respo
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/spots", e.createSpot, "POST"},
-		{"/v1/spots/{id}", e.getSpot, "GET"},
-		{"/v1/spots/{id}", e.updateSpot, "PATCH"},
-		{"/v1/spots", e.getSpots, "GET"},
-		{"/v1/spots", e.deleteSpots, "DELETE"},
-		{"/v1/spots/{id}/comment", e.addComment, "POST"},
-		{"/v1/spots/{id}/uploaded", e.uploadedSpot, "POST"},
-		{"/v1/spots/{id}/video", e.getSpotVideo, "GET"},
-		{"/v1/spots/{id}/public-key", e.getPublicKey, "GET"},
-		{"/v1/spots/{id}/public-key", e.updatePublicKey, "PATCH"},
-		{"/v1/spots/{id}/status", e.spotStatus, "GET"},
-		{"/v1/ping", e.ping, "GET"},
+		{"POST", "/v1/spots", e.createSpot, api.NoPermissions, "createSpot"},
+		{"GET", "/v1/spots/{id}", e.getSpot, api.NoPermissions, "getSpot"},
+		{"PATCH", "/v1/spots/{id}", e.updateSpot, api.NoPermissions, "updateSpot"},
+		{"GET", "/v1/spots", e.getSpots, api.NoPermissions, api.DoNotTrack},
+		{"DELETE", "/v1/spots", e.deleteSpots, api.NoPermissions, "deleteSpots"},
+		{"POST", "/v1/spots/{id}/comment", e.addComment, api.NoPermissions, "addComment"},
+		{"POST", "/v1/spots/{id}/uploaded", e.uploadedSpot, api.NoPermissions, api.DoNotTrack},
+		{"GET", "/v1/spots/{id}/video", e.getSpotVideo, api.NoPermissions, "getSpotVideo"},
+		{"GET", "/v1/spots/{id}/public-key", e.getPublicKey, api.NoPermissions, api.DoNotTrack},
+		{"PATCH", "/v1/spots/{id}/public-key", e.updatePublicKey, api.NoPermissions, "updatePublicKey"},
+		{"GET", "/v1/spots/{id}/status", e.spotStatus, api.NoPermissions, api.DoNotTrack},
+		{"GET", "/v1/ping", e.ping, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

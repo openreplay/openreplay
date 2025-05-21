@@ -73,9 +73,9 @@ func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser *api.Response
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/web/start", e.startSessionHandlerWeb, "POST"},
-		{"/v1/web/i", e.pushMessagesHandlerWeb, "POST"},
-		{"/v1/web/images", e.imagesUploaderHandlerWeb, "POST"},
+		{"POST", "/v1/web/start", e.startSessionHandlerWeb, api.NoPermissions, api.DoNotTrack},
+		{"POST", "/v1/web/i", e.pushMessagesHandlerWeb, api.NoPermissions, api.DoNotTrack},
+		{"POST", "/v1/web/images", e.imagesUploaderHandlerWeb, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

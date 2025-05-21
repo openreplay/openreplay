@@ -34,11 +34,11 @@ func NewHandlers(log logger.Logger, cfg *integrationsCfg.Config, responser *api.
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/integrations/{name}/{project}", e.createIntegration, "POST"},
-		{"/v1/integrations/{name}/{project}", e.getIntegration, "GET"},
-		{"/v1/integrations/{name}/{project}", e.updateIntegration, "PATCH"},
-		{"/v1/integrations/{name}/{project}", e.deleteIntegration, "DELETE"},
-		{"/v1/integrations/{name}/{project}/data/{session}", e.getIntegrationData, "GET"},
+		{"POST", "/v1/integrations/{name}/{project}", e.createIntegration, api.NoPermissions, api.DoNotTrack},
+		{"GET", "/v1/integrations/{name}/{project}", e.getIntegration, api.NoPermissions, api.DoNotTrack},
+		{"PATCH", "/v1/integrations/{name}/{project}", e.updateIntegration, api.NoPermissions, api.DoNotTrack},
+		{"DELETE", "/v1/integrations/{name}/{project}", e.deleteIntegration, api.NoPermissions, api.DoNotTrack},
+		{"GET", "/v1/integrations/{name}/{project}/data/{session}", e.getIntegrationData, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

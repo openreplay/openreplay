@@ -10,7 +10,7 @@ import (
 
 func (e *authImpl) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, err := e.IsAuthorized(r.Header.Get("Authorization"), getPermissions(r.URL.Path), e.isExtensionRequest(r))
+		user, err := e.IsAuthorized(r.Header.Get("Authorization"), e.isExtensionRequest(r))
 		if err != nil {
 			if !e.isSpotWithKeyRequest(r) {
 				e.log.Warn(r.Context(), "Unauthorized request, wrong jwt token: %s", err)

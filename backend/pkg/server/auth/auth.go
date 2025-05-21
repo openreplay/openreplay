@@ -14,7 +14,7 @@ import (
 )
 
 type Auth interface {
-	IsAuthorized(authHeader string, permissions []string, isExtension bool) (*user.User, error)
+	IsAuthorized(authHeader string, isExtension bool) (*user.User, error)
 	Middleware(next http.Handler) http.Handler
 }
 

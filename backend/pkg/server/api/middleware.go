@@ -7,6 +7,22 @@ import (
 	"openreplay/backend/internal/http/util"
 )
 
+type RouterMiddleware interface {
+	Middleware(next http.Handler) http.Handler
+}
+
+type defaultMiddleware struct{}
+
+func NewDefaultMiddleware() RouterMiddleware {
+	return &defaultMiddleware{}
+}
+
+func (d *defaultMiddleware) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (e *routerImpl) health(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }

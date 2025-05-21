@@ -3,11 +3,16 @@ package api
 import "net/http"
 
 type Description struct {
-	Path    string
-	Handler http.HandlerFunc
-	Method  string
+	Path        string
+	Method      string
+	Handler     http.HandlerFunc
+	Permissions []string
+	TrackName   string
 }
 
 type Handlers interface {
 	GetAll() []*Description
 }
+
+var NoPermissions []string
+var DoNotTrack string

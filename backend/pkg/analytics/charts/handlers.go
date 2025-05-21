@@ -41,8 +41,8 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/analytics/{projectId}/cards/{id}/chart", e.getCardChartData, "POST"},
-		{"/v1/analytics/{projectId}/cards/{id}/try", e.getCardChartData, "POST"},
+		{"/v1/analytics/{projectId}/cards/{id}/chart", "POST", e.getCardChartData, api.NoPermissions, api.DoNotTrack},
+		{"/v1/analytics/{projectId}/cards/{id}/try", "POST", e.getCardChartData, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

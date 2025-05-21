@@ -24,8 +24,8 @@ func NewHandlers(log logger.Logger, responser *api.Responser, tokenizer *token.T
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/web/conditions/{project}", e.getConditions, "GET"},
-		{"/v1/mobile/conditions/{project}", e.getConditions, "GET"},
+		{"GET", "/v1/web/conditions/{project}", e.getConditions, api.NoPermissions, api.DoNotTrack},
+		{"GET", "/v1/mobile/conditions/{project}", e.getConditions, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

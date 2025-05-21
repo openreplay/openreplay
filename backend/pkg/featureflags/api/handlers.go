@@ -38,7 +38,7 @@ func NewHandlers(log logger.Logger, responser *api.Responser, jsonSizeLimit int6
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/web/feature-flags", e.featureFlagsHandlerWeb, "POST"},
+		{"POST", "/v1/web/feature-flags", e.featureFlagsHandlerWeb, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

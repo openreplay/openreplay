@@ -2,7 +2,7 @@ package auth
 
 import "openreplay/backend/pkg/server/user"
 
-func (a *authImpl) IsAuthorized(authHeader string, permissions []string, isExtension bool) (*user.User, error) {
+func (a *authImpl) IsAuthorized(authHeader string, isExtension bool) (*user.User, error) {
 	secret := a.secret
 	if isExtension {
 		secret = a.spotSecret

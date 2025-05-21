@@ -43,10 +43,10 @@ func NewHandlers(log logger.Logger, responser *api.Responser, jsonSizeLimit int6
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/web/uxt/signals/test", e.sendUXTestSignal, "POST"},
-		{"/v1/web/uxt/signals/task", e.sendUXTaskSignal, "POST"},
-		{"/v1/web/uxt/test/{id}", e.getUXTestInfo, "GET"},
-		{"/v1/web/uxt/upload-url", e.getUXUploadUrl, "GET"},
+		{"POST", "/v1/web/uxt/signals/test", e.sendUXTestSignal, api.NoPermissions, api.DoNotTrack},
+		{"POST", "/v1/web/uxt/signals/task", e.sendUXTaskSignal, api.NoPermissions, api.DoNotTrack},
+		{"GET", "/v1/web/uxt/test/{id}", e.getUXTestInfo, api.NoPermissions, api.DoNotTrack},
+		{"GET", "/v1/web/uxt/upload-url", e.getUXUploadUrl, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

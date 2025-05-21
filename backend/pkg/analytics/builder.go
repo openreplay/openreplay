@@ -1,27 +1,28 @@
 package analytics
 
 import (
-	"github.com/go-playground/validator/v10"
-	"openreplay/backend/pkg/analytics/charts"
-	"openreplay/backend/pkg/metrics/database"
 	"time"
+
+	"github.com/go-playground/validator/v10"
 
 	"openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics/cards"
+	"openreplay/backend/pkg/analytics/charts"
 	"openreplay/backend/pkg/analytics/dashboards"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/server/auth"
+	"openreplay/backend/pkg/server/auth/jwt"
 	"openreplay/backend/pkg/server/limiter"
 	"openreplay/backend/pkg/server/tracer"
 )
 
 type ServicesBuilder struct {
-	Auth          auth.Auth
-	RateLimiter   *limiter.UserRateLimiter
-	AuditTrail    tracer.Tracer
+	Auth          api.RouterMiddleware
+	RateLimiter   api.RouterMiddleware
+	AuditTrail    api.RouterMiddleware
 	CardsAPI      api.Handlers
 	DashboardsAPI api.Handlers
 	ChartsAPI     api.Handlers
@@ -59,7 +60,7 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		return nil, err
 	}
 	return &ServicesBuilder{
-		Auth:          auth.NewAuth(log, cfg.JWTSecret, cfg.JWTSpotSecret, pgconn, nil, api.NoPrefix),
+		Auth:          jwt.NewAuth(log, cfg.JWTSecret, pgconn),
 		RateLimiter:   limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
 		AuditTrail:    audiTrail,
 		CardsAPI:      cardsHandlers,

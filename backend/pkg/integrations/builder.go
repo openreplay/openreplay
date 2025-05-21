@@ -1,26 +1,26 @@
 package integrations
 
 import (
-	"openreplay/backend/pkg/integrations/service"
-	"openreplay/backend/pkg/metrics/database"
-	"openreplay/backend/pkg/metrics/web"
-	"openreplay/backend/pkg/server/tracer"
 	"time"
 
 	"openreplay/backend/internal/config/integrations"
 	"openreplay/backend/pkg/db/postgres/pool"
 	integrationsAPI "openreplay/backend/pkg/integrations/api"
+	"openreplay/backend/pkg/integrations/service"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/server/auth"
+	"openreplay/backend/pkg/server/auth/jwt"
 	"openreplay/backend/pkg/server/limiter"
+	"openreplay/backend/pkg/server/tracer"
 )
 
 type ServiceBuilder struct {
-	Auth            auth.Auth
-	RateLimiter     *limiter.UserRateLimiter
-	AuditTrail      tracer.Tracer
+	Auth            api.RouterMiddleware
+	RateLimiter     api.RouterMiddleware
+	AuditTrail      api.RouterMiddleware
 	IntegrationsAPI api.Handlers
 }
 
@@ -43,7 +43,7 @@ func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, webMetrics w
 		return nil, err
 	}
 	builder := &ServiceBuilder{
-		Auth:            auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix),
+		Auth:            jwt.NewAuth(log, cfg.JWTSecret, pgconn),
 		RateLimiter:     limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
 		AuditTrail:      auditrail,
 		IntegrationsAPI: handlers,

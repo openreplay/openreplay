@@ -41,11 +41,11 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/analytics/{projectId}/cards", e.createCard, "POST"},
-		{"/v1/analytics/{projectId}/cards", e.getCardsPaginated, "GET"},
-		{"/v1/analytics/{projectId}/cards/{id}", e.getCard, "GET"},
-		{"/v1/analytics/{projectId}/cards/{id}", e.updateCard, "PUT"},
-		{"/v1/analytics/{projectId}/cards/{id}", e.deleteCard, "DELETE"},
+		{"/v1/analytics/{projectId}/cards", "POST", e.createCard, api.NoPermissions, api.DoNotTrack},
+		{"/v1/analytics/{projectId}/cards", "GET", e.getCardsPaginated, api.NoPermissions, api.DoNotTrack},
+		{"/v1/analytics/{projectId}/cards/{id}", "GET", e.getCard, api.NoPermissions, api.DoNotTrack},
+		{"/v1/analytics/{projectId}/cards/{id}", "PUT", e.updateCard, api.NoPermissions, api.DoNotTrack},
+		{"/v1/analytics/{projectId}/cards/{id}", "DELETE", e.deleteCard, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

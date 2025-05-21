@@ -45,7 +45,7 @@ func main() {
 		log.Fatal(ctx, "failed while creating services: %s", err)
 	}
 
-	router, err := api.NewRouter(&cfg.HTTP, log)
+	router, err := api.NewRouter(&cfg.HTTP, log, nil, nil, nil, nil)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}

@@ -5,7 +5,7 @@ import (
 	"openreplay/backend/pkg/server/user"
 )
 
-func (rl *UserRateLimiter) Middleware(next http.Handler) http.Handler {
+func (url *userRateLimiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userContext := r.Context().Value("userData")
 		if userContext == nil {
@@ -13,7 +13,7 @@ func (rl *UserRateLimiter) Middleware(next http.Handler) http.Handler {
 			return
 		}
 		authUser := userContext.(*user.User)
-		rl := rl.GetRateLimiter(authUser.ID)
+		rl := url.getRateLimiter(authUser.ID)
 
 		if !rl.Allow() {
 			http.Error(w, "Too Many Requests", http.StatusTooManyRequests)

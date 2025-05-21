@@ -1,6 +1,7 @@
 package limiter
 
 import (
+	"net/http"
 	"sync"
 	"time"
 )
@@ -46,7 +47,7 @@ func (rl *RateLimiter) Allow() bool {
 	return false
 }
 
-type UserRateLimiter struct {
+type userRateLimiter struct {
 	rateLimiters    sync.Map
 	rate            int
 	burst           int
@@ -54,8 +55,12 @@ type UserRateLimiter struct {
 	maxIdleTime     time.Duration
 }
 
-func NewUserRateLimiter(rate int, burst int, cleanupInterval time.Duration, maxIdleTime time.Duration) *UserRateLimiter {
-	url := &UserRateLimiter{
+type UserRateLimiter interface {
+	Middleware(next http.Handler) http.Handler
+}
+
+func NewUserRateLimiter(rate int, burst int, cleanupInterval time.Duration, maxIdleTime time.Duration) UserRateLimiter {
+	url := &userRateLimiter{
 		rate:            rate,
 		burst:           burst,
 		cleanupInterval: cleanupInterval,
@@ -65,12 +70,12 @@ func NewUserRateLimiter(rate int, burst int, cleanupInterval time.Duration, maxI
 	return url
 }
 
-func (url *UserRateLimiter) GetRateLimiter(user uint64) *RateLimiter {
+func (url *userRateLimiter) getRateLimiter(user uint64) *RateLimiter {
 	value, _ := url.rateLimiters.LoadOrStore(user, NewRateLimiter(url.rate, url.burst))
 	return value.(*RateLimiter)
 }
 
-func (url *UserRateLimiter) cleanup() {
+func (url *userRateLimiter) cleanup() {
 	for {
 		time.Sleep(url.cleanupInterval)
 		now := time.Now()
