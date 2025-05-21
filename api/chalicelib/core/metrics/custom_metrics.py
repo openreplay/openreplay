@@ -61,6 +61,9 @@ def get_heat_map_chart(project: schemas.ProjectContext, user_id, data: schemas.C
         return None
     data.series[0].filter.filters += data.series[0].filter.events
     data.series[0].filter.events = []
+    print(">>>>>>>>>>>>>>>>>>>>>>>>><")
+    print(data.series[0].filter.model_dump())
+    print(">>>>>>>>>>>>>>>>>>>>>>>>><")
     return heatmaps.search_short_session(project_id=project.project_id, user_id=user_id,
                                          data=schemas.HeatMapSessionsSearch(
                                              **data.series[0].filter.model_dump()),

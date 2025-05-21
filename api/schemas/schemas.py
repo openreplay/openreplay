@@ -407,6 +407,7 @@ class EventType(str, Enum):
     SWIPE_MOBILE = "swipeMobile"
     EVENT = "event"
     INCIDENT = "incident"
+    CLICK_COORDINATES = "clickCoordinates"
 
 
 class PerformanceEventType(str, Enum):
@@ -660,6 +661,10 @@ class SessionSearchEventSchema(BaseModel):
         elif self.type == EventType.GRAPHQL:
             assert isinstance(self.filters, List) and len(self.filters) > 0, \
                 f"filters should be defined for {EventType.GRAPHQL}"
+        elif self.type == EventType.CLICK_COORDINATES:
+            assert isinstance(self.value, List) \
+                   and (len(self.value) == 0 or len(self.value) == 2 or len(self.value) == 4), \
+                f"value should be [x,y] or [x1,x2,y1,y2] for {EventType.CLICK_COORDINATES}"
 
         if isinstance(self.operator, ClickEventExtraOperator):
             assert self.type == EventType.CLICK, \
@@ -1521,7 +1526,7 @@ class MetricSearchSchema(_PaginatedSchema):
 
 
 class _HeatMapSearchEventRaw(SessionSearchEventSchema):
-    type: Literal[EventType.LOCATION] = Field(...)
+    type: Literal[EventType.LOCATION, EventType.CLICK_COORDINATES] = Field(...)
 
 
 class HeatMapSessionsSearch(SessionsSearchPayloadSchema):
