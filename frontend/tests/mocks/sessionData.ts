@@ -1,3 +1,5 @@
+import { ISession,  } from '@/types/session/session';
+
 export const issues = [
   {
     issueId: '9158adad14bcb1e0db18384c778a18f5ef2',
@@ -84,7 +86,8 @@ export const events = [
   },
   {
     time: 13146,
-    label: 'Search sessions using any captured event (click, input, page, error...)',
+    label:
+      'Search sessions using any captured event (click, input, page, error...)',
     key: 3,
     target: { path: undefined, label: undefined },
     type: 'CLICK',
@@ -145,7 +148,8 @@ export const events = [
   },
   {
     time: 15166,
-    label: 'Search sessions using any captured event (click, input, page, error...)',
+    label:
+      'Search sessions using any captured event (click, input, page, error...)',
     key: 7,
     target: { path: undefined, label: undefined },
     type: 'CLICK',
@@ -155,7 +159,8 @@ export const events = [
   },
   {
     time: 15726,
-    label: 'Search sessions using any captured event (click, input, page, error...)',
+    label:
+      'Search sessions using any captured event (click, input, page, error...)',
     key: 8,
     target: { path: undefined, label: undefined },
     type: 'INPUT',
@@ -173,3 +178,32 @@ export const events = [
     count: undefined,
   },
 ];
+
+export const mockSession: (props: { duration?: number,  projectId?: string, sessionId?: string, favorite?: boolean }) => ISession = ({
+  duration = 2122, projectId = '5095', sessionId = '3315944703327552482', favorite = false,
+}) => ({
+  duration,
+  errorsCount: 0,
+  eventsCount: 0,
+  issueScore: 1747645706,
+  issueTypes: [],
+  metadata: {userId: null, demo: null},
+  pagesCount: 0,
+  platform: 'web',
+  projectId,
+  sessionId,
+  startTs: 1747645706000,
+  timezone: 'UTC+08:00',
+  userAnonymousId: 'null',
+  userBrowser: 'Chrome',
+  userCity: 'Singapore',
+  userCountry: 'SG',
+  userDevice: 'null',
+  userDeviceType: 'desktop',
+  userId: '',
+  userOs: 'Mac OS X',
+  userState: '',
+  userUuid: 'b8268c1d-9c5d-4b47-9893-5c0a040adc8f',
+  viewed: false,
+  favorite,
+});

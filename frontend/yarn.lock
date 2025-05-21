@@ -3571,6 +3571,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/jest@npm:^29.5.14":
+  version: 29.5.14
+  resolution: "@types/jest@npm:29.5.14"
+  dependencies:
+    expect: "npm:^29.0.0"
+    pretty-format: "npm:^29.0.0"
+  checksum: 10c1/645f1559cff204d5942980ecceca5d1eaaa2c6cb6c784bc60525bc195b5e7dd7342496740130d845b4227fa51c83ef2638a479eb06464b725c688d7254874133
+  languageName: node
+  linkType: hard
+
 "@types/jsdom@npm:^20.0.0":
   version: 20.0.1
   resolution: "@types/jsdom@npm:20.0.1"
@@ -8243,7 +8253,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expect@npm:^29.7.0":
+"expect@npm:^29.0.0, expect@npm:^29.7.0":
   version: 29.7.0
   resolution: "expect@npm:29.7.0"
   dependencies:
@@ -10900,7 +10910,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest@npm:^29.5.0":
+"jest@npm:^29.7.0":
   version: 29.7.0
   resolution: "jest@npm:29.7.0"
   dependencies:
@@ -13071,6 +13081,7 @@ __metadata:
     "@tanstack/react-query": "npm:^5.76.0"
     "@trivago/prettier-plugin-sort-imports": "npm:^4.3.0"
     "@types/eslint-plugin-jsx-a11y": "npm:^6"
+    "@types/jest": "npm:^29.5.14"
     "@types/luxon": "npm:^3.4.2"
     "@types/node": "npm:^22.7.8"
     "@types/prismjs": "npm:^1"
@@ -13123,7 +13134,7 @@ __metadata:
     i18next: "npm:^24.2.2"
     i18next-browser-languagedetector: "npm:^8.1.0"
     immutable: "npm:^4.3.7"
-    jest: "npm:^29.5.0"
+    jest: "npm:^29.7.0"
     jest-environment-jsdom: "npm:^29.5.0"
     js-untar: "npm:^2.0.0"
     jspdf: "npm:^3.0.1"
@@ -13173,7 +13184,7 @@ __metadata:
     tailwindcss: "npm:^3.4.17"
     thread-loader: "npm:^4.0.4"
     ts-api-utils: "npm:^2.1.0"
-    ts-jest: "npm:^29.0.5"
+    ts-jest: "npm:^29.3.3"
     ts-node: "npm:^10.7.0"
     typescript: "npm:^4.9.5"
     typescript-eslint: "npm:^8.32.1"
@@ -14204,7 +14215,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pretty-format@npm:^29.7.0":
+"pretty-format@npm:^29.0.0, pretty-format@npm:^29.7.0":
   version: 29.7.0
   resolution: "pretty-format@npm:29.7.0"
   dependencies:
@@ -17464,7 +17475,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-jest@npm:^29.0.5":
+"ts-jest@npm:^29.3.3":
   version: 29.3.3
   resolution: "ts-jest@npm:29.3.3"
   dependencies:
