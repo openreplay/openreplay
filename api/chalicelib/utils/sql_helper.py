@@ -44,7 +44,7 @@ def reverse_sql_operator(op):
     return "=" if op == "!=" else "!=" if op == "=" else "ILIKE" if op == "NOT ILIKE" else "NOT ILIKE"
 
 
-def multi_conditions(condition, values, value_key="value", is_not=False):
+def multi_conditions(condition, values, value_key="value", is_not=False) -> str:
     query = []
     for i in range(len(values)):
         k = f"{value_key}_{i}"
@@ -79,3 +79,30 @@ def single_value(values):
             if isinstance(v, Enum):
                 values[i] = v.value
     return values
+
+
+def coordinate_conditions(condition_x, condition_y, values, value_key="value", is_not=False):
+    query = []
+    if len(values) == 2:
+        # if 2 values are provided, it means x=v[0] and y=v[1]
+        for i in range(len(values)):
+            k = f"{value_key}_{i}"
+            if i == 0:
+                query.append(f"{condition_x}=%({k})s")
+            elif i == 1:
+                query.append(f"{condition_y}=%({k})s")
+
+    elif len(values) == 4:
+        # if 4 values are provided, it means v[0]<=x<=v[1] and v[2]<=y<=v[3]
+        for i in range(len(values)):
+            k = f"{value_key}_{i}"
+            if i == 0:
+                query.append(f"{condition_x}>=%({k})s")
+            elif i == 1:
+                query.append(f"{condition_x}<=%({k})s")
+            elif i == 2:
+                query.append(f"{condition_y}>=%({k})s")
+            elif i == 3:
+                query.append(f"{condition_y}<=%({k})s")
+
+    return "(" + (" AND " if is_not else " OR ").join(query) + ")"

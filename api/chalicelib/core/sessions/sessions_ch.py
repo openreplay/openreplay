@@ -1293,9 +1293,6 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions.append({"type": event_where[-1]})
 
                 if is_not:
-                    # event_where.append(json_condition(
-                    #     "sub", "$properties", _column, op, event.value, e_k
-                    # ))
                     event_where.append(
                         sh.multi_conditions(
                             get_sub_condition(col_name=f"sub.`$properties`.{_column}",
@@ -1317,7 +1314,33 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             event.value, value_key=e_k)
                     )
                     events_conditions[-1]["condition"] = event_where[-1]
+            elif event_type == schemas.EventType.CLICK_COORDINATES:
+                event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
+                event_where.append(
+                    f"main.`$event_name`='{exp_ch_helper.get_event_type(schemas.EventType.CLICK, platform=platform)}'")
+                events_conditions.append({"type": event_where[-1]})
 
+                if is_not:
+                    event_where.append(
+                        sh.coordinate_conditions(
+                            condition_x=f"sub.`$properties`.normalized_x",
+                            condition_y=f"sub.`$properties`.normalized_y",
+                            values=event.value, value_key=e_k, is_not=True)
+                    )
+                    events_conditions_not.append(
+                        {
+                            "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(schemas.EventType.CLICK, platform=platform)}'"
+                        }
+                    )
+                    events_conditions_not[-1]["condition"] = event_where[-1]
+                else:
+                    event_where.append(
+                        sh.coordinate_conditions(
+                            condition_x=f"main.`$properties`.normalized_x",
+                            condition_y=f"main.`$properties`.normalized_y",
+                            values=event.value, value_key=e_k, is_not=True)
+                    )
+                    events_conditions[-1]["condition"] = event_where[-1]
 
             else:
                 continue
