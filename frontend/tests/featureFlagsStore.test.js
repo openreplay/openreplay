@@ -1,6 +1,6 @@
 import { describe, expect, jest, test } from '@jest/globals';
 
-import FeatureFlagsStore from 'App/mstore/FeatureFlagsStore';
+import FeatureFlagsStore from 'App/mstore/featureFlagsStore';
 import FeatureFlag from 'App/mstore/types/FeatureFlag';
 
 const mockFlags = [{ featureFlagId: 1 }, { featureFlagId: 2 }];
