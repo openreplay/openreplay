@@ -49,9 +49,10 @@ var propertySelectorMap = map[string]string{
 }
 
 var mainColumns = map[string]string{
-	"userBrowser": "$browser",
-	"referrer":    "$referrer",
-	"ISSUE":       "issue_type",
+	"userBrowser": "main.$browser",
+	"userDevice":  "sessions.user_device",
+	"referrer":    "main.$referrer",
+	"ISSUE":       "main.issue_type",
 }
 
 func (t TableQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
@@ -84,13 +85,6 @@ func (t TableQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, e
 	var overallCount uint64
 	values := make([]TableValue, 0)
 	firstRow := true
-
-	//var (
-	//	overallTotalMetricValues uint64
-	//	overallCount             uint64
-	//	values                   []TableValue
-	//	firstRow                 = true
-	//)
 
 	for rows.Next() {
 		var (
@@ -128,112 +122,119 @@ func (t TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, e
 	}
 	s := r.Series[0]
 
-	var propertyName string
-	if r.MetricOf == "" {
-		return "", fmt.Errorf("MetricOf is empty")
+	// sessions_data WHERE conditions
+	durConds, _ := buildDurationWhere(s.Filter.Filters)
+	sessFilters, _ := filterOutTypes(s.Filter.Filters, []FilterType{FilterDuration, FilterUserAnonymousId})
+	sessConds, evtNames := buildEventConditions(sessFilters, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "main"})
+	sessionDataConds := append(durConds, sessConds...)
+	// date range for sessions_data
+	sessionDataConds = append(sessionDataConds,
+		fmt.Sprintf("main.created_at BETWEEN toDateTime(%d/1000) AND toDateTime(%d/1000)", r.StartTimestamp, r.EndTimestamp),
+	)
+	// clean empty
+	var sdClean []string
+	for _, c := range sessionDataConds {
+		if strings.TrimSpace(c) != "" {
+			sdClean = append(sdClean, c)
+		}
 	}
-	originalMetricOf := r.MetricOf
-	propertyName = originalMetricOf
-
-	durationConds, _ := buildDurationWhere(s.Filter.Filters)
-	eventFilters, _ := filterOutTypes(s.Filter.Filters, []FilterType{FilterDuration, FilterUserId})
-	_, sessionFilters := filterOutTypes(s.Filter.Filters, []FilterType{FilterUserId, FilterUserAnonymousId})
-
-	sessionConds, _ := buildEventConditions(sessionFilters, BuildConditionsOptions{
-		DefinedColumns: map[string]string{
-			"userId": "user_id",
-		},
-		MainTableAlias: "sessions",
-	})
-
-	eventConds, eventNames := buildEventConditions(eventFilters, BuildConditionsOptions{
-		DefinedColumns: mainColumns,
-		MainTableAlias: "main",
-	})
-	baseWhereConditions := []string{
-		fmt.Sprintf("main.created_at >= toDateTime(%d/1000)", r.StartTimestamp),
-		fmt.Sprintf("main.created_at <= toDateTime(%d/1000)", r.EndTimestamp),
-		fmt.Sprintf("main.project_id = %d", r.ProjectId),
+	sessionDataWhere := ""
+	if len(sdClean) > 0 {
+		sessionDataWhere = "WHERE " + strings.Join(sdClean, " AND ")
 	}
-	baseWhereConditions = append(baseWhereConditions, durationConds...)
-
-	if cond := eventNameCondition("", r.MetricOf); cond != "" {
-		baseWhereConditions = append(baseWhereConditions, cond)
+	if len(evtNames) > 0 {
+		sessionDataWhere += fmt.Sprintf(" AND main.$event_name IN ('%s')", strings.Join(evtNames, "','"))
 	}
 
-	baseWhereConditions = append(baseWhereConditions, sessionConds...)
-
-	var aggregationExpression string
-	var aggregationAlias = "aggregation_id"
-	var specificWhereConditions []string
-
-	if metricFormat == MetricFormatUserCount {
-		aggregationExpression = fmt.Sprintf("if(empty(sessions.user_id), toString(sessions.user_uuid), sessions.user_id)")
-		userExclusionCondition := fmt.Sprintf("NOT (empty(sessions.user_id) AND (sessions.user_uuid IS NULL OR sessions.user_uuid = '%s'))", nilUUIDString)
-		specificWhereConditions = append(specificWhereConditions, userExclusionCondition)
-	} else {
-		aggregationExpression = "main.session_id"
-	}
-
-	propertySelector, ok := propertySelectorMap[originalMetricOf]
+	// filtered_data WHERE conditions
+	propSel, ok := propertySelectorMap[r.MetricOf]
 	if !ok {
-		propertySelector = fmt.Sprintf("JSONExtractString(toString(main.$properties), '%s') AS metric_value", propertyName)
+		propSel = fmt.Sprintf("JSONExtractString(toString(main.$properties), '%s') AS metric_value", r.MetricOf)
+	}
+	parts := strings.SplitN(propSel, " AS ", 2)
+	propertyExpr := parts[0]
+
+	tAgg := "main.session_id"
+	specConds := []string{}
+	if metricFormat == MetricFormatUserCount {
+		tAgg = "if(empty(sessions.user_id), toString(sessions.user_uuid), sessions.user_id)"
+		specConds = append(specConds,
+			fmt.Sprintf("NOT (empty(sessions.user_id) AND (sessions.user_uuid IS NULL OR sessions.user_uuid = '%s'))", nilUUIDString),
+		)
 	}
 
-	allWhereConditions := baseWhereConditions
-	if len(eventConds) > 0 {
-		allWhereConditions = append(allWhereConditions, eventConds...)
+	// metric-specific filter
+	_, mFilt := filterOutTypes(s.Filter.Filters, []FilterType{FilterType(r.MetricOf)})
+	metricCond := eventNameCondition("", r.MetricOf)
+	if len(mFilt) > 0 {
+		//conds, _ := buildEventConditions(mFilt, BuildConditionsOptions{DefinedColumns: map[string]string{"userId": "user_id"}, MainTableAlias: "main"})
+		//metricCond = strings.Join(conds, " AND ")
 	}
-	if len(eventNames) > 0 {
-		allWhereConditions = append(allWhereConditions, "main.`$event_name` IN ("+buildInClause(eventNames)+")")
+
+	filteredConds := []string{
+		fmt.Sprintf("main.project_id = %d", r.ProjectId),
+		metricCond,
+		fmt.Sprintf("main.created_at BETWEEN toDateTime(%d/1000) AND toDateTime(%d/1000)", r.StartTimestamp, r.EndTimestamp),
 	}
-	allWhereConditions = append(allWhereConditions, specificWhereConditions...)
-	whereClause := strings.Join(allWhereConditions, " AND ")
+	filteredConds = append(filteredConds, specConds...)
+	// clean empty
+	var fClean []string
+	for _, c := range filteredConds {
+		if strings.TrimSpace(c) != "" {
+			fClean = append(fClean, c)
+		}
+	}
+	filteredWhere := ""
+	if len(fClean) > 0 {
+		filteredWhere = "WHERE " + strings.Join(fClean, " AND ")
+	}
 
 	limit := r.Limit
 	if limit <= 0 {
 		limit = 10
 	}
-	page := r.Page
-	if page <= 0 {
-		page = 1
-	}
-	offset := (page - 1) * limit
-	limitClause := fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset)
+	offset := (r.Page - 1) * limit
 
 	query := fmt.Sprintf(`
-		WITH filtered_data AS (
-			SELECT DISTINCT
-				%s,
-				%s AS %s
-			FROM product_analytics.events AS main
-			INNER JOIN experimental.sessions AS sessions ON main.session_id = sessions.session_id
-			WHERE %s
-		),
-		grouped_values AS (
-			SELECT
-				metric_value AS name,
-				countDistinct(%s) AS value_count
-			FROM filtered_data
-			-- WHERE name IS NOT NULL AND name != ''
-			GROUP BY name
-		)
-		SELECT
-			(SELECT count() FROM grouped_values) AS overall_total_metric_values,
-			name,
-			value_count,
-			(SELECT countDistinct(%s) FROM filtered_data) AS overall_total_count
-		FROM grouped_values
-		ORDER BY value_count DESC
-		%s
-		`,
-		propertySelector,
-		aggregationExpression,
-		aggregationAlias,
-		whereClause,
-		aggregationAlias,
-		aggregationAlias,
-		limitClause)
-
+WITH sessions_data AS (
+    SELECT session_id
+    FROM product_analytics.events AS main
+	JOIN experimental.sessions AS sessions USING (session_id)
+    %s
+    GROUP BY session_id
+),
+filtered_data AS (
+    SELECT %s AS name, %s AS session_id
+    FROM product_analytics.events AS main
+    JOIN sessions_data USING (session_id)
+	JOIN experimental.sessions AS sessions USING (session_id)
+    %s
+),
+totals AS (
+    SELECT count() AS overall_total_metric_values,
+           countDistinct(session_id) AS overall_total_count
+    FROM filtered_data
+),
+grouped_values AS (
+    SELECT name,
+           countDistinct(session_id) AS value_count
+    FROM filtered_data
+    GROUP BY name
+)
+SELECT t.overall_total_metric_values,
+       g.name,
+       g.value_count,
+       t.overall_total_count
+FROM grouped_values AS g
+CROSS JOIN totals AS t
+ORDER BY g.value_count DESC
+LIMIT %d OFFSET %d;`,
+		sessionDataWhere,
+		propertyExpr,
+		tAgg,
+		filteredWhere,
+		limit,
+		offset,
+	)
 	return query, nil
 }

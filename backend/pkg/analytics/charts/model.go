@@ -82,13 +82,13 @@ type MetricPayload struct {
 type MetricOfTable string
 
 const (
-	MetricOfTableLocation MetricOfTable = "location" // TOP Pages
+	MetricOfTableLocation MetricOfTable = "LOCATION" // TOP Pages
 	MetricOfTableBrowser  MetricOfTable = "userBrowser"
 	MetricOfTableReferrer MetricOfTable = "referrer"
 	MetricOfTableUserId   MetricOfTable = "userId"
 	MetricOfTableCountry  MetricOfTable = "userCountry"
 	MetricOfTableDevice   MetricOfTable = "userDevice"
-	MetricOfTableFetch    MetricOfTable = "fetch"
+	MetricOfTableFetch    MetricOfTable = "FETCH"
 
 	//MetricOfTableIssues   MetricOfTable = "issues"
 	//MetricOfTableSessions MetricOfTable = "sessions"

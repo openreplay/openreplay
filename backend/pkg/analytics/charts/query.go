@@ -65,7 +65,6 @@ type filterConfig struct {
 	IsNumeric       bool
 }
 
-// getColumnAccessor returns the column name for a logical property
 func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptions) string {
 	// helper: wrap names starting with $ in quotes
 	quote := func(name string) string {
@@ -79,7 +78,8 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 	if col, ok := opts.DefinedColumns[logical]; ok {
 		col = quote(col)
 		if opts.MainTableAlias != "" {
-			return fmt.Sprintf("%s.%s", opts.MainTableAlias, col)
+			//return fmt.Sprintf("%s.%s", opts.MainTableAlias, col)
+			return fmt.Sprintf("%s", col)
 		}
 		return col
 	}
