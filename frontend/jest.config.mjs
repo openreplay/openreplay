@@ -5,6 +5,14 @@ export default {
     '^Types/(.+)$': '<rootDir>/app/types/$1',
     '^App/(.+)$': '<rootDir>/app/$1',
     "\\.(css|less)$": "<rootDir>/tests/mocks/style.mock.js",
+    '^@/(.*)$': '<rootDir>/app/$1',
+    '^Player/(.+)$': '<rootDir>/app/player/$1',
+    '^Player$': '<rootDir>/app/player',
+    '^UI/(.+)$': '<rootDir>/app/components/ui/$1',
+    '^UI$': '<rootDir>/app/components/ui',
+    '^Shared/(.+)$': '<rootDir>/app/components/shared/$1',
+    '\\.svg$': '<rootDir>/tests/mocks/svgMock.js',
+    '^Components/(.+)$': '<rootDir>/app/components/$1',
   },
   collectCoverage: true,
   verbose: true,
@@ -23,4 +31,5 @@ export default {
   transformIgnorePatterns: [
     '/node_modules/(?!syncod)',
   ],
+  setupFiles: ['<rootDir>/tests/jest.setup.ts'],
 };
