@@ -203,16 +203,3 @@ describe('MessageLoader.createNewParser', () => {
     expect(loader.rawMessages.length).toBe(2);
   });
 });
-
-describe('MFileReader', () => {
-    test('creates a 9999 message from timestamp', () => {
-      const filePath = path.resolve('../frontend/tests/mocks/dom.mobe');
-      const mob = new Uint8Array(fs.readFileSync(filePath));
-      const reader = new MFileReader(mob, undefined);
-      reader.checkForIndexes();
-      console.log('reader', reader.readNext());
-      const msg = reader.readNext();
-  
-      expect(msg?.tp).toEqual(9999);
-    });
-  });

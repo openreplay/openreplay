@@ -12,7 +12,7 @@ const strings = [
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;700;900&display=swap');
 #login-required {
   color: #fff;
-}`,
+};`,
   `@import url("style.css") screen and (max-width: 600px);`
 ];
 const testStrings = [

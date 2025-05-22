@@ -180,7 +180,7 @@ export const events = [
 ];
 
 export const mockSession: (props: { duration?: number,  projectId?: string, sessionId?: string, favorite?: boolean }) => ISession = ({
-  duration = 2122, projectId = '5095', sessionId = '3315944703327552482', favorite = false,
+  duration = 34490, projectId = '5095', sessionId = '3315944703327552482', favorite = false,
 }) => ({
   duration,
   errorsCount: 0,
@@ -192,7 +192,7 @@ export const mockSession: (props: { duration?: number,  projectId?: string, sess
   platform: 'web',
   projectId,
   sessionId,
-  startTs: 1747645706000,
+  startTs: 1747829271755,
   timezone: 'UTC+08:00',
   userAnonymousId: 'null',
   userBrowser: 'Chrome',

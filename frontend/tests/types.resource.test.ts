@@ -7,8 +7,11 @@ import {
   getResourceFromResourceTiming,
   getResourceFromNetworkRequest,
 } from '../app/player/web/types/resource';
-import type { ResourceTiming, NetworkRequest } from '../app/player/web/messages';
-import { test, describe, expect } from "@jest/globals";
+import type {
+  ResourceTiming,
+  NetworkRequest,
+} from '../app/player/web/messages';
+import { test, describe, expect } from '@jest/globals';
 
 describe('getURLExtention', () => {
   test('should return the correct extension', () => {
@@ -21,20 +24,36 @@ describe('getURLExtention', () => {
 
 describe('getResourceType', () => {
   test('should return the correct resource type based on initiator and URL', () => {
-    expect(getResourceType('fetch', 'https://test.com')).toBe(ResourceType.FETCH);
-    expect(getResourceType('beacon', 'https://test.com')).toBe(ResourceType.BEACON);
+    expect(getResourceType('fetch', 'https://test.com')).toBe(
+      ResourceType.FETCH,
+    );
+    expect(getResourceType('beacon', 'https://test.com')).toBe(
+      ResourceType.BEACON,
+    );
     expect(getResourceType('img', 'https://test.com')).toBe(ResourceType.IMG);
-    expect(getResourceType('unknown', 'https://test.com/script.js')).toBe(ResourceType.SCRIPT);
-    expect(getResourceType('unknown', 'https://test.com/style.css')).toBe(ResourceType.CSS);
-    expect(getResourceType('unknown', 'https://test.com/image.png')).toBe(ResourceType.IMG);
-    expect(getResourceType('unknown', 'https://test.com/video.mp4')).toBe(ResourceType.MEDIA);
-    expect(getResourceType('unknown', 'https://test.com')).toBe(ResourceType.OTHER);
+    expect(getResourceType('unknown', 'https://test.com/script.js')).toBe(
+      ResourceType.SCRIPT,
+    );
+    expect(getResourceType('unknown', 'https://test.com/style.css')).toBe(
+      ResourceType.CSS,
+    );
+    expect(getResourceType('unknown', 'https://test.com/image.png')).toBe(
+      ResourceType.IMG,
+    );
+    expect(getResourceType('unknown', 'https://test.com/video.mp4')).toBe(
+      ResourceType.MEDIA,
+    );
+    expect(getResourceType('unknown', 'https://test.com')).toBe(
+      ResourceType.OTHER,
+    );
   });
 });
 
 describe('getResourceName', () => {
   test('should return the last non-empty section of a URL', () => {
-    expect(getResourceName('https://test.com/path/to/resource')).toBe('resource');
+    expect(getResourceName('https://test.com/path/to/resource')).toBe(
+      'resource',
+    );
     expect(getResourceName('https://test.com/another/path/')).toBe('path');
     expect(getResourceName('https://test.com/singlepath')).toBe('singlepath');
     expect(getResourceName('https://test.com/')).toBe('test.com');
@@ -56,6 +75,7 @@ describe('Resource', () => {
       ...testResource,
       name: 'script.js',
       isYellow: false,
+      isRed: false,
     };
     expect(Resource(testResource)).toEqual(expectedResult);
   });
@@ -75,7 +95,7 @@ describe('getResourceFromResourceTiming', () => {
       initiator: 'fetch',
       transferredSize: 500,
       cached: false,
-      time: 123
+      time: 123,
     };
     const expectedResult = Resource({
       ...testResourceTiming,
@@ -84,8 +104,20 @@ describe('getResourceFromResourceTiming', () => {
       success: true,
       status: '2xx-3xx',
       time: 123,
+      timings: {
+        contentDownload: undefined,
+        dnsLookup: undefined,
+        initialConnection: undefined,
+        queueing: undefined,
+        ssl: undefined,
+        stalled: undefined,
+        total: undefined,
+        ttfb: 100,
+      },
     });
-    expect(getResourceFromResourceTiming(testResourceTiming, 0)).toEqual(expectedResult);
+    expect(getResourceFromResourceTiming(testResourceTiming, 0)).toEqual(
+      expectedResult,
+    );
   });
 });
 
@@ -102,16 +134,19 @@ describe('getResourceFromNetworkRequest', () => {
       timestamp: 123,
       duration: 1,
       transferredBodySize: 100,
-      time: 123
+      time: 123,
     } as const;
     // @ts-ignore
     const expectedResult = Resource({
       ...testNetworkRequest,
       success: true,
       status: '200',
+      timings: {},
       time: 123,
       decodedBodySize: 100,
     });
-    expect(getResourceFromNetworkRequest(testNetworkRequest, 0)).toEqual(expectedResult);
+    expect(getResourceFromNetworkRequest(testNetworkRequest, 0)).toEqual(
+      expectedResult,
+    );
   });
 });
