@@ -28,6 +28,7 @@ export function stopDebugger(tabId?: string | number) {
     potentialActiveTabs.forEach((tabId) => {
       chrome.debugger.detach({ tabId });
     });
+    chrome.debugger.onEvent.removeListener(handleRequestIntercept);
     potentialActiveTabs.length = 0;
   }
 }

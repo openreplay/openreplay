@@ -41,10 +41,10 @@ function getRecordingSettings(qualityValue) {
     audio: true,
     video: {
       width: {
-        exact: width,
+        ideal: width,
       },
       height: {
-        exact: height,
+        ideal: height,
       },
     },
   };
@@ -195,7 +195,7 @@ class ScreenRecorder {
   }
 
   async _getStream(type, streamId, useMicrophone = false, audioId) {
-    const constraints = this.settings;
+    const constraints = this.settings.constrains;
     this.videoStream = null;
     let microphoneStream = null;
     try {
@@ -296,7 +296,7 @@ class ScreenRecorder {
           return resolve({ blob: null, mtype: null });
         }
         setTimeout(() => {
-          resolve(this.getVideoData(iteration++));
+          resolve(this.getVideoData(iteration + 1));
         }, 100);
       }
     });

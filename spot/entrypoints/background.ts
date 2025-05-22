@@ -19,7 +19,7 @@ let checkBusy = false;
 export default defineBackground(() => {
   const CHECK_INT = 60 * 1000;
   const PING_INT = 30 * 1000;
-  const VER = "1.0.14";
+  const VER = "1.0.21";
 
   interface SpotObj {
     name: string;
