@@ -965,13 +965,11 @@ export default defineBackground(() => {
       (c: { contextType: string }) => c.contextType === "OFFSCREEN_DOCUMENT",
     );
     if (offscreenDocument) {
-      return;
-      // TODO: check manifestv3 for reloading context
-      // try {
-      //   await browser.offscreen.closeDocument();
-      // } catch (e) {
-      //   console.trace(e)
-      // }
+      try {
+        await browser.offscreen.closeDocument();
+      } catch (e) {
+        console.error("Spot: error closing old offscreen document", e);
+      }
     }
 
     try {
