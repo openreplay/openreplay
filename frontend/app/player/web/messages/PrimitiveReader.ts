@@ -1,5 +1,3 @@
-import { TextDecoder } from 'util';
-
 export default class PrimitiveReader {
   /** pointer for curent position in the buffer */
   protected p: number = 0;
