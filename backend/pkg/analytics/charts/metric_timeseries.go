@@ -82,7 +82,12 @@ func (t TimeSeriesQueryBuilder) buildQuery(p Payload, s Series) (string, error) 
 }
 
 func (TimeSeriesQueryBuilder) buildSessionCountQuery(p Payload, s Series) string {
-	eventConds, eventNames := buildEventConditions(s.Filter.Filters)
+	//eventConds, eventNames := buildEventConditions(s.Filter.Filters)
+	eventConds, eventNames := buildEventConditions(s.Filter.Filters, BuildConditionsOptions{
+		DefinedColumns:       mainColumns,
+		MainTableAlias:       "main",
+		PropertiesColumnName: "$properties",
+	})
 	sessionConds := buildSessionConditions(s.Filter.Filters)
 	staticEvt := buildStaticEventWhere(p)
 	sessWhere, sessJoin := buildStaticSessionWhere(p, sessionConds)
@@ -92,7 +97,11 @@ func (TimeSeriesQueryBuilder) buildSessionCountQuery(p Payload, s Series) string
 }
 
 func (TimeSeriesQueryBuilder) buildUserCountQuery(p Payload, s Series) string {
-	eventConds, eventNames := buildEventConditions(s.Filter.Filters)
+	eventConds, eventNames := buildEventConditions(s.Filter.Filters, BuildConditionsOptions{
+		DefinedColumns:       mainColumns,
+		MainTableAlias:       "main",
+		PropertiesColumnName: "$properties",
+	})
 	sessionConds := buildSessionConditions(s.Filter.Filters)
 	staticEvt := buildStaticEventWhere(p)
 	sessWhere, sessJoin := buildStaticSessionWhere(p, sessionConds)
@@ -134,6 +143,7 @@ func buildEventsSubQuery(metric string, eventConds, eventNames []string, staticE
 
 func buildMainQuery(p Payload, subQuery, metric string) string {
 	step := int(getStepSize(p.StartTimestamp, p.EndTimestamp, p.Density, false, 1000))
+	step = step * 1000
 	if metric == "sessionCount" {
 		return fmt.Sprintf(sessionMainQueryTpl, p.StartTimestamp, p.EndTimestamp, step, subQuery, step)
 	}
@@ -205,6 +215,7 @@ var sessionNoFiltersSubQueryTpl = `
 SELECT s.session_id AS session_id,
        s.datetime AS datetime
 FROM experimental.sessions AS s
+
 WHERE %s
 `
 
