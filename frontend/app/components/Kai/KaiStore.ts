@@ -211,7 +211,13 @@ class KaiStore {
 
   bumpUsage = () => {
     this.usage.used += 1;
-    this.usage.percent = (this.usage.used / this.usage.total) * 100;
+    this.usage.percent = Math.max(
+      (this.usage.used / this.usage.total) * 100,
+      100,
+    );
+    if (this.usage.used >= this.usage.total) {
+      toast.error('You have reached the daily limit for queries.');
+    }
   };
 
   sendMessage = (message: string) => {

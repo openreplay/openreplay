@@ -53,7 +53,7 @@ function ChatMsg({
   const onCancelEdit = () => {
     kaiStore.setQueryText('');
     kaiStore.setReplacing(null);
-  }
+  };
   const onFeedback = (feedback: 'like' | 'dislike', messageId: string) => {
     kaiStore.sendMsgFeedback(feedback, messageId, siteId);
   };
@@ -108,16 +108,11 @@ function ChatMsg({
     }
   };
   return (
-    <div
-      className={cn(
-        'flex items-start gap-2',
-        isUser ? 'flex-row-reverse' : 'flex-row',
-      )}
-    >
+    <div className={cn('flex gap-2', isUser ? 'flex-row-reverse' : 'flex-row')}>
       {isUser ? (
         <div
           className={
-            'rounded-full bg-main text-white min-w-8 min-h-8 flex items-center justify-center sticky top-0 shadow'
+            'rounded-full bg-main text-white min-w-8 min-h-8 max-h-8 max-w-8 flex items-center justify-center sticky top-0 mt-2 shadow'
           }
         >
           <span className={'font-semibold'}>{userName}</span>
@@ -125,7 +120,7 @@ function ChatMsg({
       ) : (
         <div
           className={
-            'rounded-full bg-gray-lightest shadow min-w-8 min-h-8 flex items-center justify-center sticky top-0'
+            'rounded-full bg-gray-lightest shadow min-w-8 min-h-8 max-h-8 max-w-8 flex items-center justify-center sticky top-0 mt-2'
           }
         >
           <Icon name={'kai_colored'} size={18} />

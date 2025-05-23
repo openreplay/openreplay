@@ -7,8 +7,7 @@ const getUsageColor = (percent: number) => {
 };
 
 function Usage() {
-  const { usage } = kaiStore;
-  const color = getUsageColor(usage.percent);
+  const usage = kaiStore.usage;
 
   if (usage.total === 0) {
     return null;
