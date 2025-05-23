@@ -41,8 +41,9 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/analytics/{projectId}/cards/{id}/chart", e.getCardChartData, "POST"},
+		{"/v1/analytics/{projectId}/cards/{id}/chart", e.getCardChartData, "POST"}, // for dashboards
 		{"/v1/analytics/{projectId}/cards/{id}/try", e.getCardChartData, "POST"},
+		{"/v1/analytics/{projectId}/cards/try", e.getCardChartData, "POST"}, // for cards itself
 	}
 }
 
@@ -73,7 +74,7 @@ func (e *handlersImpl) getCardChartData(w http.ResponseWriter, r *http.Request) 
 	}
 	bodySize = len(bodyBytes)
 
-	req := &GetCardChartDataRequest{}
+	req := &MetricPayload{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
