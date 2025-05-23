@@ -26,7 +26,7 @@
         },
         {
           "name": "___$or_spotToken$___",
-          "value": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4MDA2MTI2LCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODAwNTUyNiwiYXVkIjoic3BvdDpPcGVuUmVwbGF5In0.lwg8ylwBnEdpNxD0-795pwDcPubJRm2z9-_P8LBnI-KtFx8nCBpY5sIvcOwPPh0HYfRKXhHcdA0iu_1oAHB8JQ"
+          "value": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4MDEwODYxLCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODAxMDI2MSwiYXVkIjoic3BvdDpPcGVuUmVwbGF5In0.bsy2jTsazqZ3g5y1sHS0UwXn6lTi2B6eO-LufIhNwCa9F9-XaJdbfavFxq47Eprq222vGw73MGdS8Ii0Et0htQ"
         },
         {
           "name": "__$session-timezone$__",
@@ -38,7 +38,7 @@
         },
         {
           "name": "__openreplay_health_status",
-          "value": "1748005536080"
+          "value": "1748010271110"
         },
         {
           "name": "__$user-siteId$__",
@@ -50,11 +50,11 @@
         },
         {
           "name": "AuthStore",
-          "value": "{\"authDetails\":\"{\\\"tenants\\\":true,\\\"sso\\\":null,\\\"ssoProvider\\\":null,\\\"enforceSSO\\\":null,\\\"edition\\\":\\\"foss\\\"}\",\"__mps__\":{\"expireInTimestamp\":1748009134445}}"
+          "value": "{\"authDetails\":\"{\\\"tenants\\\":true,\\\"sso\\\":null,\\\"ssoProvider\\\":null,\\\"enforceSSO\\\":null,\\\"edition\\\":\\\"foss\\\"}\",\"__mps__\":{\"expireInTimestamp\":1748013869571}}"
         },
         {
           "name": "UserStore",
-          "value": "{\"siteId\":null,\"tenants\":[],\"jwt\":\"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4MDkxOTI2LCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODAwNTUyNiwiYXVkIjoiZnJvbnQ6T3BlblJlcGxheSJ9.p11bS55aedM9jfVHtBpFEalCpClac337KQNNvDF04WeSUrryLb99n76gyzfi8_gyeUu5UZ6h_eA0Gll5GxITcw\",\"spotJwt\":\"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4MDA2MTI2LCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODAwNTUyNiwiYXVkIjoic3BvdDpPcGVuUmVwbGF5In0.lwg8ylwBnEdpNxD0-795pwDcPubJRm2z9-_P8LBnI-KtFx8nCBpY5sIvcOwPPh0HYfRKXhHcdA0iu_1oAHB8JQ\",\"scopeState\":2,\"onboarding\":false,\"account\":\"{\\\"id\\\":58,\\\"email\\\":\\\"andrei@openreplay.com\\\",\\\"smtp\\\":false,\\\"expirationDate\\\":-1,\\\"permissions\\\":[],\\\"settings\\\":{\\\"modules\\\":[\\\"usability-tests\\\",\\\"feature-flags\\\"]},\\\"iceServers\\\":[],\\\"hasPassword\\\":true,\\\"apiKey\\\":\\\"48Vph82zUEWHmfPSUbgG\\\",\\\"edition\\\":\\\"foss\\\",\\\"optOut\\\":false,\\\"versionNumber\\\":\\\"1.17.0\\\",\\\"name\\\":\\\"Andrei\\\",\\\"createdAt\\\":1652690354756,\\\"admin\\\":true,\\\"superAdmin\\\":false}\"}"
+          "value": "{\"siteId\":null,\"tenants\":[],\"jwt\":\"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4MDk2NjYxLCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODAxMDI2MSwiYXVkIjoiZnJvbnQ6T3BlblJlcGxheSJ9.OySkuNZoEbekRhm6D5zr1cN6NUCuditF_wy5docowyGT5Q4uUDfBoRLIKgIpOmHxhBuszyPQiDJBGJiNfo6Vlw\",\"spotJwt\":\"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4MDEwODYxLCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODAxMDI2MSwiYXVkIjoic3BvdDpPcGVuUmVwbGF5In0.bsy2jTsazqZ3g5y1sHS0UwXn6lTi2B6eO-LufIhNwCa9F9-XaJdbfavFxq47Eprq222vGw73MGdS8Ii0Et0htQ\",\"scopeState\":2,\"onboarding\":false,\"account\":\"{\\\"id\\\":58,\\\"email\\\":\\\"andrei@openreplay.com\\\",\\\"smtp\\\":false,\\\"expirationDate\\\":-1,\\\"permissions\\\":[],\\\"settings\\\":{\\\"modules\\\":[\\\"usability-tests\\\",\\\"feature-flags\\\"]},\\\"iceServers\\\":[],\\\"hasPassword\\\":true,\\\"apiKey\\\":\\\"48Vph82zUEWHmfPSUbgG\\\",\\\"edition\\\":\\\"foss\\\",\\\"optOut\\\":false,\\\"versionNumber\\\":\\\"1.17.0\\\",\\\"name\\\":\\\"Andrei\\\",\\\"createdAt\\\":1652690354756,\\\"admin\\\":true,\\\"superAdmin\\\":false}\"}"
         },
         {
           "name": "__openreplay_health_response",
