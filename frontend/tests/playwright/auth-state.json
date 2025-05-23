@@ -1,0 +1,42 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:3333",
+      "localStorage": [
+        {
+          "name": "__$session-timezone$_local__",
+          "value": "true"
+        },
+        {
+          "name": "i18nextLng",
+          "value": "en"
+        },
+        {
+          "name": "theme",
+          "value": "light"
+        },
+        {
+          "name": "__$global-destinationPath$__",
+          "value": "/"
+        },
+        {
+          "name": "__$session-timezone$__",
+          "value": "{\"label\":\"UTC +02:00\",\"value\":\"UTC+02\"}"
+        },
+        {
+          "name": "__$session-mouseTrail$__",
+          "value": "true"
+        },
+        {
+          "name": "AuthStore",
+          "value": "{\"authDetails\":\"{\\\"tenants\\\":true,\\\"sso\\\":null,\\\"ssoProvider\\\":null,\\\"enforceSSO\\\":null,\\\"edition\\\":\\\"foss\\\"}\",\"__mps__\":{\"expireInTimestamp\":1748009041183}}"
+        },
+        {
+          "name": "UserStore",
+          "value": "{\"siteId\":null,\"tenants\":[],\"jwt\":null,\"spotJwt\":null,\"scopeState\":null,\"onboarding\":false,\"account\":\"{}\"}"
+        }
+      ]
+    }
+  ]
+}

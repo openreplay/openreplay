@@ -1,0 +1,66 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:3333",
+      "localStorage": [
+        {
+          "name": "__$session-timezone$_local__",
+          "value": "true"
+        },
+        {
+          "name": "i18nextLng",
+          "value": "en"
+        },
+        {
+          "name": "theme",
+          "value": "light"
+        },
+        {
+          "name": "__$user-gettingStarted$__",
+          "value": "{\"steps\":[{\"title\":\"🛠️ Install OpenReplay\",\"status\":\"completed\"},{\"title\":\"🕵️ Identify Users\",\"status\":\"completed\"},{\"title\":\"🧑‍💻 Invite Team Members\",\"status\":\"completed\"},{\"title\":\"🔌 Integrations\",\"status\":\"completed\"}],\"status\":\"completed\"}"
+        },
+        {
+          "name": "__$global-destinationPath$__",
+          "value": "/"
+        },
+        {
+          "name": "___$or_spotToken$___",
+          "value": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4MDA2MTI2LCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODAwNTUyNiwiYXVkIjoic3BvdDpPcGVuUmVwbGF5In0.lwg8ylwBnEdpNxD0-795pwDcPubJRm2z9-_P8LBnI-KtFx8nCBpY5sIvcOwPPh0HYfRKXhHcdA0iu_1oAHB8JQ"
+        },
+        {
+          "name": "__$session-timezone$__",
+          "value": "{\"label\":\"UTC +02:00\",\"value\":\"UTC+02\"}"
+        },
+        {
+          "name": "__$session-mouseTrail$__",
+          "value": "true"
+        },
+        {
+          "name": "__openreplay_health_status",
+          "value": "1748005536080"
+        },
+        {
+          "name": "__$user-siteId$__",
+          "value": "109"
+        },
+        {
+          "name": "__or__langBannerClosed",
+          "value": "0"
+        },
+        {
+          "name": "AuthStore",
+          "value": "{\"authDetails\":\"{\\\"tenants\\\":true,\\\"sso\\\":null,\\\"ssoProvider\\\":null,\\\"enforceSSO\\\":null,\\\"edition\\\":\\\"foss\\\"}\",\"__mps__\":{\"expireInTimestamp\":1748009134445}}"
+        },
+        {
+          "name": "UserStore",
+          "value": "{\"siteId\":null,\"tenants\":[],\"jwt\":\"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4MDkxOTI2LCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODAwNTUyNiwiYXVkIjoiZnJvbnQ6T3BlblJlcGxheSJ9.p11bS55aedM9jfVHtBpFEalCpClac337KQNNvDF04WeSUrryLb99n76gyzfi8_gyeUu5UZ6h_eA0Gll5GxITcw\",\"spotJwt\":\"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4MDA2MTI2LCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODAwNTUyNiwiYXVkIjoic3BvdDpPcGVuUmVwbGF5In0.lwg8ylwBnEdpNxD0-795pwDcPubJRm2z9-_P8LBnI-KtFx8nCBpY5sIvcOwPPh0HYfRKXhHcdA0iu_1oAHB8JQ\",\"scopeState\":2,\"onboarding\":false,\"account\":\"{\\\"id\\\":58,\\\"email\\\":\\\"andrei@openreplay.com\\\",\\\"smtp\\\":false,\\\"expirationDate\\\":-1,\\\"permissions\\\":[],\\\"settings\\\":{\\\"modules\\\":[\\\"usability-tests\\\",\\\"feature-flags\\\"]},\\\"iceServers\\\":[],\\\"hasPassword\\\":true,\\\"apiKey\\\":\\\"48Vph82zUEWHmfPSUbgG\\\",\\\"edition\\\":\\\"foss\\\",\\\"optOut\\\":false,\\\"versionNumber\\\":\\\"1.17.0\\\",\\\"name\\\":\\\"Andrei\\\",\\\"createdAt\\\":1652690354756,\\\"admin\\\":true,\\\"superAdmin\\\":false}\"}"
+        },
+        {
+          "name": "__openreplay_health_response",
+          "value": "{\"overallHealth\":true,\"healthMap\":{\"databases\":{\"name\":\"Databases\",\"healthOk\":true,\"subservices\":{\"postgres\":{\"health\":true,\"details\":{}}},\"serviceName\":\"databases\"},\"ingestionPipeline\":{\"name\":\"Ingestion Pipeline\",\"healthOk\":true,\"subservices\":{\"redis\":{\"health\":true,\"details\":{}}},\"serviceName\":\"ingestionPipeline\"},\"backendServices\":{\"name\":\"Backend Services\",\"healthOk\":true,\"subservices\":{\"alerts\":{\"health\":true,\"details\":{}},\"assets\":{\"health\":true,\"details\":{}},\"assist\":{\"health\":true,\"details\":{}},\"chalice\":{\"health\":true,\"details\":{}},\"db\":{\"health\":true,\"details\":{}},\"ender\":{\"health\":true,\"details\":{}},\"frontend\":{\"health\":true,\"details\":{}},\"heuristics\":{\"health\":true,\"details\":{}},\"http\":{\"health\":true,\"details\":{}},\"ingress-nginx\":{\"health\":true,\"details\":{}},\"integrations\":{\"health\":true,\"details\":{}},\"sink\":{\"health\":true,\"details\":{}},\"sourcemapreader\":{\"health\":true,\"details\":{}},\"storage\":{\"health\":true,\"details\":{}}},\"serviceName\":\"backendServices\"}},\"details\":{\"numberOfSessionsCaptured\":214690,\"numberOfEventCaptured\":1816886}}"
+        }
+      ]
+    }
+  ]
+}

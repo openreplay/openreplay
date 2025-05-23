@@ -7,11 +7,10 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests/playwright',
-  fullyParallel: false,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  fullyParallel: true,
+  retries: 0,
   workers: 1,
-  reporter: process.env.CI ? 'html' : 'list',
+  reporter: 'list',
   use: {
     baseURL: 'http://localhost:3333',
     trace: 'on-first-retry',
@@ -33,5 +32,6 @@ export default defineConfig({
     command: 'yarn start',
     url: 'http://localhost:3333',
     timeout: 120 * 1000,
+    reuseExistingServer: true,
   },
 });

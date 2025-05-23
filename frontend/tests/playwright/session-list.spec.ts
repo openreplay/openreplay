@@ -10,4 +10,5 @@ test('test', async ({ page }) => {
   await page.getByRole('button', { name: 'Android caret-down' }).click();
   await page.getByText('OpenReplay Documentation Site').click();
   await page.locator('#session-item').first().click();
+  await expect(page.locator('#session-item')).toBeVisible();
 });

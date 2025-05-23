@@ -3,7 +3,7 @@ import { exists } from "i18next";
 import { dirname } from "path";
 import { test } from "@playwright/test";
 
-export const authStateFile =  'node_modules/playwright/auth-state.json';
+export const authStateFile =  'tests/playwright/auth-state.json';
 
 mkdirSync(dirname(authStateFile), { recursive: true });
 

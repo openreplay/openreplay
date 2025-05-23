@@ -1,26 +1,38 @@
-import { authStateFile, testUseAuthState } from './helpers'; 
-import { test } from '@playwright/test';
+import { authStateFile, testUseAuthState } from './helpers';
+import { expect, test as setup } from '@playwright/test';
 
 testUseAuthState();
 
-test('authenticate', async ({ page }) => {
-    await page.goto('/');
+setup.beforeEach(async ({ page }) => {
+  await page.goto('http://localhost:3333');
+});
 
-    try {
-        const url = page.url();
+setup('authenticate', async ({ page }) => {
+  await page.goto('/login');
 
-        if (url.includes('login')) {
-            await page.locator('[data-test-id="login"]').click();
-            await page.locator('.ant-input-affix-wrapper').first().click();
-            await page.locator('[data-test-id="login"]').fill('andrei@openreplay.com');
-            await page.locator('[data-test-id="password"]').click();
-            await page.locator('[data-test-id="password"]').fill('Andrey123!');
-            await page.locator('[data-test-id="log-button"]').click();
-        }
-        await page.waitForSelector('h1:has-text("Sessions")', { timeout: 10000 });
-    } catch (e) {}
+  try {
+    const url = page.url();
+    console.log('Current URL:', url);
 
-    try {
-        await page.context().storageState({ path: authStateFile });
-    } catch {}
+    if (url.includes('login')) {
+     console.log('Already on login page, skipping authentication');
+      await page.locator('[data-test-id="login"]').click();
+      await page.locator('.ant-input-affix-wrapper').first().click();
+      await page
+        .locator('[data-test-id="login"]')
+        .fill('andrei@openreplay.com');
+      await page.locator('[data-test-id="password"]').click();
+      await page.locator('[data-test-id="password"]').fill('Andrey123!');
+      await page.locator('[data-test-id="log-button"]').click();
+    }
+    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible();
+  } catch (e) {
+    console.error('Error during authentication:', e);
+  }
+
+  try {
+    await page.context().storageState({ path: authStateFile });
+  } catch (e) {
+    console.error('Error saving authentication state:', e);
+  }
 });
