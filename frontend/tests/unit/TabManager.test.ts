@@ -1,20 +1,24 @@
 import { it, expect, beforeEach, jest } from '@jest/globals';
-import TabSessionManager from '../app/player/web/TabManager';
-import SimpleStore from '../app/player/common/SimpleStore';
-import { TYPES as EVENT_TYPES } from '../app/types/session/event';
-import { MType } from '../app/player/web/messages/raw.gen';
+import TabSessionManager from '../../app/player/web/TabManager';
+import SimpleStore from '../../app/player/common/SimpleStore';
+import { TYPES as EVENT_TYPES } from '../../app/types/session/event';
+import { MType } from '../../app/player/web/messages/raw.gen';
 
-jest.mock('@medv/finder', () => ({ default: jest.fn(() => 'mocked network-proxy content') }));
+jest.mock('@medv/finder', () => ({
+  default: jest.fn(() => 'mocked network-proxy content'),
+}));
 jest.mock('syncod', () => {
   return {
-    Decoder: jest.fn().mockImplementation(() => ({ decode: jest.fn(), set: jest.fn() })),
+    Decoder: jest
+      .fn()
+      .mockImplementation(() => ({ decode: jest.fn(), set: jest.fn() })),
   };
 });
 
 jest.mock('js-untar', () => ({
-    __esModule: true,
-    default: jest.fn(),
-  }));
+  __esModule: true,
+  default: jest.fn(),
+}));
 
 class FakeScreen {
   displayFrame = jest.fn();
@@ -35,7 +39,14 @@ beforeEach(() => {
     tabNames: {},
     eventCount: 0,
   });
-  manager = new TabSessionManager(session, store as any, new FakeScreen() as any, 'tab1', setSize, 0);
+  manager = new TabSessionManager(
+    session,
+    store as any,
+    new FakeScreen() as any,
+    'tab1',
+    setSize,
+    0,
+  );
   jest.runOnlyPendingTimers();
   jest.useRealTimers();
 });
@@ -65,14 +76,21 @@ it('resetMessageManagers should clear managers', () => {
 });
 
 it('onFileReadSuccess should update store with lists and performance data', () => {
-  (manager as any).performanceTrackManager['chart'] = [{ time: 1, usedHeap: 0, totalHeap: 0, fps: null, cpu: null, nodesCount: 0 }];
+  (manager as any).performanceTrackManager['chart'] = [
+    { time: 1, usedHeap: 0, totalHeap: 0, fps: null, cpu: null, nodesCount: 0 },
+  ];
   (manager as any).performanceTrackManager['cpuAvailable'] = true;
   (manager as any).performanceTrackManager['fpsAvailable'] = true;
   manager.locationManager.append({ time: 2, url: 'http://example.com' } as any);
   manager.onFileReadSuccess();
   const state = store.get().tabStates['tab1'];
   expect(state.performanceChartData.length).toBe(1);
-  expect(state.performanceAvailability).toEqual({ cpu: true, fps: true, heap: false, nodes: true });
+  expect(state.performanceAvailability).toEqual({
+    cpu: true,
+    fps: true,
+    heap: false,
+    nodes: true,
+  });
   expect(state.urlsList[0].url).toBe('http://example.com');
 });
 

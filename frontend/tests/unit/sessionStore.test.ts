@@ -1,20 +1,20 @@
-import { sessionService } from '../app/services';
-import Session from '../app/types/session'
+import { sessionService } from '../../app/services';
+import Session from '../../app/types/session';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import SessionStore from '../app/mstore/sessionStore';
-import { searchStore } from '../app/mstore/index';
-import { checkEventWithFilters } from '../app/components/Session_/Player/Controls/checkEventWithFilters';
-import { mockSession } from './mocks/sessionData';
+import SessionStore from '../../app/mstore/sessionStore';
+import { searchStore } from '../../app/mstore/index';
+import { checkEventWithFilters } from '../../app/components/Session_/Player/Controls/checkEventWithFilters';
+import { mockSession } from '../mocks/sessionData';
 
-jest.mock('../app/player', () => ({
+jest.mock('../../app/player', () => ({
   createWebPlayer: jest.fn(),
   createIOSPlayer: jest.fn(),
   createClickMapPlayer: jest.fn(),
   createLiveWebPlayer: jest.fn(),
-  createClipPlayer: jest.fn()
+  createClipPlayer: jest.fn(),
 }));
 
-jest.mock('../app/services', () => ({
+jest.mock('../../app/services', () => ({
   sessionService: {
     getSessions: jest.fn(),
     getLiveSessions: jest.fn(),
@@ -41,7 +41,7 @@ jest.mock(
   }),
 );
 
-jest.mock('../app/mstore/index', () => ({
+jest.mock('../../app/mstore/index', () => ({
   searchStore: {
     instance: {
       filters: [],

@@ -2,7 +2,7 @@ import { jest, beforeEach, describe, expect, it } from '@jest/globals';
 
 import spotPlayerStore, {
   PANELS,
-} from '../app/components/Spots/SpotPlayer/spotPlayerStore';
+} from '../../app/components/Spots/SpotPlayer/spotPlayerStore';
 
 jest.mock('App/player', () => ({
   getResourceFromNetworkRequest: jest.fn(),

@@ -37,9 +37,27 @@ jest.mock('Types/filter/newFilter', () => {
   const { FilterKey, FilterCategory } = require('Types/filter/filterType');
   return {
     filtersMap: {
-      [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterKey.USERID, category: FilterCategory.USER, operator: 'is', value: [''] },
-      [FilterKey.DURATION]: { key: FilterKey.DURATION, type: FilterKey.DURATION, category: FilterCategory.SESSION, operator: 'is', value: [0, 0] },
-      [FilterKey.ISSUE]: { key: FilterKey.ISSUE, type: FilterKey.ISSUE, category: FilterCategory.ISSUE, operator: 'is', value: [] },
+      [FilterKey.USERID]: {
+        key: FilterKey.USERID,
+        type: FilterKey.USERID,
+        category: FilterCategory.USER,
+        operator: 'is',
+        value: [''],
+      },
+      [FilterKey.DURATION]: {
+        key: FilterKey.DURATION,
+        type: FilterKey.DURATION,
+        category: FilterCategory.SESSION,
+        operator: 'is',
+        value: [0, 0],
+      },
+      [FilterKey.ISSUE]: {
+        key: FilterKey.ISSUE,
+        type: FilterKey.ISSUE,
+        category: FilterCategory.ISSUE,
+        operator: 'is',
+        value: [],
+      },
     },
     conditionalFiltersMap: {},
     generateFilterOptions: jest.fn(() => []),
@@ -51,27 +69,31 @@ jest.mock('Types/filter/newFilter', () => {
 const mockSessionFetch = jest.fn().mockResolvedValue({});
 
 const mockSessionStore = {
-    fetchSessions: mockSessionFetch,
-    total: 0,
-    clearList: jest.fn(),
-  };
-  const mockSettingsStore = {
-    sessionSettings: { durationFilter: { count: 0 } },
-  };
+  fetchSessions: mockSessionFetch,
+  total: 0,
+  clearList: jest.fn(),
+};
+const mockSettingsStore = {
+  sessionSettings: { durationFilter: { count: 0 } },
+};
 
 jest.mock('App/services', () => ({
   searchService: { fetchSavedSearch: jest.fn() },
-  sessionService: { getSessions: jest.fn().mockResolvedValue({ sessions: [], total: 0 }) },
+  sessionService: {
+    getSessions: jest.fn().mockResolvedValue({ sessions: [], total: 0 }),
+  },
 }));
 jest.mock('App/mstore', () => ({
   sessionStore: mockSessionStore,
   settingsStore: mockSettingsStore,
 }));
 
-import SearchStore, { checkValues, filterMap } from '../app/mstore/searchStore';
-import SavedSearch from '../app/mstore/types/savedSearch';
-import { FilterCategory, FilterKey } from '../app/types/filter/filterType';
-
+import SearchStore, {
+  checkValues,
+  filterMap,
+} from '../../app/mstore/searchStore';
+import SavedSearch from '../../app/mstore/types/savedSearch';
+import { FilterCategory, FilterKey } from '../../app/types/filter/filterType';
 
 describe('searchStore utilities', () => {
   it('checkValues handles duration', () => {
@@ -113,7 +135,9 @@ describe('SearchStore class', () => {
   it('applySavedSearch sets filters', () => {
     const saved = new SavedSearch({
       name: 'test',
-      filter: { filters: [{ key: FilterKey.USERID, value: ['123'], operator: 'is' }] },
+      filter: {
+        filters: [{ key: FilterKey.USERID, value: ['123'], operator: 'is' }],
+      },
     });
     store.applySavedSearch(saved);
     expect(store.savedSearch).toBe(saved);
@@ -129,10 +153,16 @@ describe('SearchStore class', () => {
   });
 
   it('fetchSessions applies duration filter from settings', async () => {
-    mockSettingsStore.sessionSettings.durationFilter = { operator: '<', count: 1, countType: 'sec' };
+    mockSettingsStore.sessionSettings.durationFilter = {
+      operator: '<',
+      count: 1,
+      countType: 'sec',
+    };
     await store.fetchSessions();
     const call = mockSessionFetch.mock.calls[0][0];
-    const duration = call.filters.find((f: any) => f.type === FilterKey.DURATION);
+    const duration = call.filters.find(
+      (f: any) => f.type === FilterKey.DURATION,
+    );
     expect(duration).toBeTruthy();
     expect(duration.value).toEqual([1000, 0]);
   });

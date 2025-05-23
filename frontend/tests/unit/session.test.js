@@ -1,10 +1,10 @@
 import { describe, expect, test } from '@jest/globals';
 
-import Session from '../app/types/session';
-import { Click, Location } from '../app/types/session/event';
-import Issue from '../app/types/session/issue';
-import { session } from './mocks/sessionResponse';
-import { issues, events } from "./mocks/sessionData";
+import Session from '../../app/types/session';
+import { Click, Location } from '../../app/types/session/event';
+import Issue from '../../app/types/session/issue';
+import { session } from '../mocks/sessionResponse';
+import { issues, events } from '../mocks/sessionData';
 
 describe('Testing Session class', () => {
   const sessionInfo = new Session(session.data);
@@ -27,6 +27,6 @@ describe('Testing Session class', () => {
     expect([...sessionInfo.issues]).toMatchObject(issues);
   });
   test('checking events mapping', () => {
-    expect([...sessionInfo.events.slice(0, 10)]).toMatchObject(events)
-  })
+    expect([...sessionInfo.events.slice(0, 10)]).toMatchObject(events);
+  });
 });
