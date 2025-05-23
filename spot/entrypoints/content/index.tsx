@@ -22,6 +22,7 @@ export default defineContentScript({
     }
     const ui = await createShadowRootUi(ctx, {
       name: "spot-ui",
+      inheritStyles: true,
       position: "inline",
       anchor: "body",
       append: "first",
