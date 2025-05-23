@@ -84,7 +84,7 @@ export default class KaiService extends AiService {
   getMsgChart = async (
     messageId: string,
     projectId: string,
-  ): Promise<{ filters: any[]; chart: string; eventsOrder: string }> => {
+  ): Promise<string> => {
     const r = await this.client.get(
       `/kai/${projectId}/chats/data/${messageId}`,
     );

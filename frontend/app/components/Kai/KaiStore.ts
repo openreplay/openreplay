@@ -211,7 +211,7 @@ class KaiStore {
 
   bumpUsage = () => {
     this.usage.used += 1;
-    this.usage.percent = Math.max(
+    this.usage.percent = Math.min(
       (this.usage.used / this.usage.total) * 100,
       100,
     );
@@ -314,27 +314,13 @@ class KaiStore {
       supports_visualization: false,
     });
     try {
-      const filters = await kaiService.getMsgChart(msgId, projectId);
+      const filtersStr = await kaiService.getMsgChart(msgId, projectId);
+      const filters = JSON.parse(filtersStr);
       const data = {
-        metricId: undefined,
-        dashboardId: undefined,
-        widgetId: undefined,
-        metricOf: undefined,
-        metricType: undefined,
-        metricFormat: undefined,
-        viewType: undefined,
-        name: 'Kai Visualization',
-        series: [
-          {
-            name: 'Kai Visualization',
-            filter: {
-              eventsOrder: filters.eventsOrder,
-              filters: filters.filters,
-            },
-          },
-        ],
+        ...filters,
       };
       const metric = new Widget().fromJson(data);
+      kaiService.saveChartData(msgId, projectId, data);
       return metric;
     } catch (e) {
       console.error(e);
@@ -355,7 +341,7 @@ class KaiStore {
       this.usage = {
         total,
         used,
-        percent: (used / total) * 100,
+        percent: Math.round((used / total) * 100),
       };
     } catch (e) {
       console.error(e);

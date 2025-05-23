@@ -138,8 +138,8 @@ function ChatMsg({
           <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </div>
         {metric ? (
-          <div className="p-2 border-gray-light rounded-lg shadow">
-            <WidgetChart metric={metric} isPreview />
+          <div className="p-2 border-gray-light rounded-lg shadow bg-glassWhite mb-2">
+            <WidgetChart metric={metric} isPreview height={360} />
           </div>
         ) : null}
         {isUser ? (
