@@ -41,6 +41,7 @@ import Timeline from './Timeline';
 import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
 import { useTranslation } from 'react-i18next';
+import SummaryButton from './SummaryButton';
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -231,11 +232,6 @@ const DevtoolsButtons = observer(
     const { t } = useTranslation();
     const { aiSummaryStore, integrationsStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
-
-    // @ts-ignore
-    const originStr = window.env.ORIGIN || window.location.origin;
-    const isSaas = /app\.openreplay\.com/.test(originStr);
-
     const { inspectorMode, currentTab, tabStates } = store.get();
 
     const disableButtons = disabled;
@@ -304,7 +300,7 @@ const DevtoolsButtons = observer(
     const getLabel = (block: string) => labels[block][showIcons ? 'icon' : 'label']
     return (
       <>
-        {isSaas ? <SummaryButton onClick={showSummary} /> : null}
+        <SummaryButton onClick={showSummary} />
         <ControlButton
           popover={
             <div className="flex items-center gap-2">
@@ -435,37 +431,6 @@ const DevtoolsButtons = observer(
   },
 );
 
-export function SummaryButton({
-  onClick,
-  withToggle,
-  onToggle,
-  toggleValue,
-}: {
-  onClick?: () => void;
-  withToggle?: boolean;
-  onToggle?: () => void;
-  toggleValue?: boolean;
-}) {
-  const { t } = useTranslation();
-  const [isHovered, setHovered] = React.useState(false);
-
-  return (
-    <div style={gradientButton} onClick={onClick}>
-      <div
-        style={isHovered ? onHoverFillStyle : fillStyle}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        {withToggle ? (
-          <Switch size="small" checked={toggleValue} onChange={onToggle} />
-        ) : null}
-        <Icon name="sparkles" size={16} />
-        <div className="font-semibold text-main">{t('Summary AI')}</div>
-      </div>
-    </div>
-  );
-}
-
 export const gradientButton = {
   border: 'double 1px transparent',
   borderRadius: '60px',
@@ -479,7 +444,7 @@ export const gradientButton = {
   alignItems: 'center',
   justifyContent: 'center',
 };
-const onHoverFillStyle = {
+export const onHoverFillStyle = {
   width: '100%',
   height: '100%',
   display: 'flex',
@@ -489,7 +454,7 @@ const onHoverFillStyle = {
   padding: '1px 8px',
   background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)',
 };
-const fillStyle = {
+export const fillStyle = {
   width: '100%',
   height: '100%',
   display: 'flex',
