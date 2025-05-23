@@ -55,6 +55,7 @@ var propertyKeyMap = map[string]filterConfig{
 	"INPUT":           {LogicalProperty: "label"},
 	"fetchUrl":        {LogicalProperty: "url_path"},
 	"fetchStatusCode": {LogicalProperty: "status", IsNumeric: true},
+	//"fetchDuration":   {LogicalProperty: "duration", IsNumeric: true},
 	//"ISSUE":           {LogicalProperty: "issue_type"},
 	// TODO add more mappings as needed
 }
@@ -68,6 +69,13 @@ type filterConfig struct {
 func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptions) string {
 	// helper: wrap names starting with $ in quotes
 	quote := func(name string) string {
+		prefix := opts.MainTableAlias + "."
+		if strings.HasPrefix(name, prefix) {
+			suffix := strings.TrimPrefix(name, prefix)
+			if strings.HasPrefix(suffix, "$") {
+				return fmt.Sprintf("%s.\"%s\"", opts.MainTableAlias, suffix)
+			}
+		}
 		if strings.HasPrefix(name, "$") {
 			return fmt.Sprintf("\"%s\"", name)
 		}
@@ -101,7 +109,7 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 
 	// JSON extraction
 	if isNumeric {
-		return fmt.Sprintf("toFloat64(JSONExtractString(toString(%s), '%s'))", colName, propKey)
+		return fmt.Sprintf("JSONExtractFloat(toString(%s), '%s')", colName, propKey)
 	}
 	return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, propKey)
 }
@@ -231,6 +239,8 @@ func buildCond(expr string, values []string, operator string, isNumeric bool) st
 	case "in", "notIn":
 		neg := operator == "notIn"
 		return inClause(expr, values, neg, isNumeric)
+	case ">=", ">", "<=", "<":
+		return multiValCond(expr, values, "%s "+operator+" %s", isNumeric)
 	default:
 		if op, ok := compOps[operator]; ok {
 			tmpl := "%s " + op + " %s"
