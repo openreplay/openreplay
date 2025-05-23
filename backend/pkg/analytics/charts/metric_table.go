@@ -49,10 +49,10 @@ var propertySelectorMap = map[string]string{
 }
 
 var mainColumns = map[string]string{
-	"userBrowser": "main.$browser",
+	"userBrowser": "$browser",
 	"userDevice":  "sessions.user_device",
-	"referrer":    "main.$referrer",
-	"ISSUE":       "main.issue_type",
+	"referrer":    "$referrer",
+	"ISSUE":       "issue_type",
 }
 
 func (t TableQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {

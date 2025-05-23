@@ -78,8 +78,10 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 	if col, ok := opts.DefinedColumns[logical]; ok {
 		col = quote(col)
 		if opts.MainTableAlias != "" {
-			//return fmt.Sprintf("%s.%s", opts.MainTableAlias, col)
-			return fmt.Sprintf("%s", col)
+			if strings.Contains(col, ".") {
+				return fmt.Sprintf("%s", col)
+			}
+			return fmt.Sprintf("%s.%s", opts.MainTableAlias, col)
 		}
 		return col
 	}
