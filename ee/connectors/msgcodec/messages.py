@@ -829,6 +829,15 @@ class ResourceTiming(Message):
         self.stalled = stalled
 
 
+class Incident(Message):
+    __id__ = 87
+
+    def __init__(self, label, start_time, end_time):
+        self.label = label
+        self.start_time = start_time
+        self.end_time = end_time
+
+
 class LongAnimationTask(Message):
     __id__ = 89
 

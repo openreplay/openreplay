@@ -2,7 +2,7 @@ import App from './app/index.js'
 
 export { default as App } from './app/index.js'
 
-import { UserAnonymousID, CustomEvent, CustomIssue } from './app/messages.gen.js'
+import { UserAnonymousID, CustomEvent, CustomIssue, Incident } from './app/messages.gen.js'
 import * as _Messages from './app/messages.gen.js'
 
 export const Messages = _Messages
@@ -538,5 +538,16 @@ export default class API {
         this.app.send(msg)
       }
     }
+  }
+
+  incident = (options: {
+    label?: string;
+    startTime: number;
+    endTime?: number;
+  }) => {
+    if (this.app === null) {
+      return
+    }
+    this.app.send(Incident(options.label ?? '', options.startTime, options.endTime ?? options.startTime))
   }
 }
