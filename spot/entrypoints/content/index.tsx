@@ -28,7 +28,6 @@ export default defineContentScript({
       append: "first",
       onMount: (container, s, host) => {
         Object.assign(host.style, { visibility: "visible", display: "block" });
-
         return render(
           () => (
             <ControlsBox
@@ -55,7 +54,9 @@ export default defineContentScript({
         unmount?.();
       },
     });
-
+    ctx.onInvalidated(() => {
+      ui.remove();
+    });
     let micResponse: boolean | null = null;
     const getMicStatus = async () => {
       return new Promise((res) => {
