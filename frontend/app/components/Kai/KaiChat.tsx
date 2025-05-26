@@ -119,7 +119,7 @@ function KaiChat() {
           }}
         >
           {section === 'intro' ? (
-            <IntroSection onAsk={onCreate} />
+              <IntroSection onAsk={onCreate} projectId={activeSiteId} />
           ) : (
             <ChatLog
               threadId={threadId}

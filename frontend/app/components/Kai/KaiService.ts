@@ -123,4 +123,15 @@ export default class KaiService extends AiService {
     const data = await r.json();
     return data;
   };
+
+  getPromptSuggestions = async (
+    projectId: string,
+  ): Promise<string[]> => {
+    const r = await this.client.get(`/kai/${projectId}/prompt-suggestions`);
+    if (!r.ok) {
+      throw new Error('Failed to fetch prompt suggestions');
+    }
+    const data = await r.json();
+    return data;
+  };
 }
