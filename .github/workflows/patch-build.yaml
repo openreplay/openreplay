@@ -108,7 +108,7 @@ jobs:
           else
             cd $MSAAS_REPO_FOLDER/openreplay/$service
           fi
-          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push --platform linux/amd64" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash $BUILD_SCRIPT_NAME >> /tmp/managed_${service}.txt 2>&1 || { echo "Build failed for $service"; cat /tmp/managed_${service}.txt; exit 1; }
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash $BUILD_SCRIPT_NAME >> /tmp/managed_${service}.txt 2>&1 || { echo "Build failed for $service"; cat /tmp/managed_${service}.txt; exit 1; }
         }
         # Checking for backend images
         ls backend/cmd >> /tmp/backend.txt
