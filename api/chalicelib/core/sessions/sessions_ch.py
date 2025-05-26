@@ -240,8 +240,10 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                 main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                      {main_col} AS name,
                                      count(DISTINCT session_id) AS total,
-                                     COALESCE(SUM(count(DISTINCT session_id)) OVER (), 0) AS total_count
-                                FROM (SELECT s.session_id AS session_id {extra_col}
+                                     any(total_count) as total_count
+                                FROM (SELECT s.session_id AS session_id,
+                                             count(DISTINCT s.session_id) OVER () AS total_count
+                                             {extra_col}
                                 {query_part}) AS filtred_sessions
                                 {extra_where}
                                 GROUP BY {main_col}
@@ -251,8 +253,10 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                 main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                      {main_col} AS name,
                                      count(DISTINCT user_id) AS total,
-                                     COALESCE(SUM(count(DISTINCT user_id)) OVER (), 0) AS total_count
-                                FROM (SELECT s.user_id AS user_id {extra_col}
+                                     any(total_count) AS total_count
+                                FROM (SELECT s.user_id AS user_id,
+                                             count(DISTINCT s.user_id) OVER () AS total_count
+                                             {extra_col}
                                 {query_part}
                                 WHERE isNotNull(user_id)
                                     AND notEmpty(user_id)) AS filtred_sessions
