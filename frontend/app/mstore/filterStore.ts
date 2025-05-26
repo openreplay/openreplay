@@ -36,7 +36,7 @@ export default class FilterStore {
   setTopValues = (key: string, values: Record<string, any> | TopValue[]) => {
     const vals = Array.isArray(values) ? values : values.data;
     this.topValues[key] = vals?.filter(
-      (value: any) => value !== null && value.value !== ''
+      (value: any) => value !== null && value.value !== '',
     );
   };
 
@@ -50,14 +50,16 @@ export default class FilterStore {
     if (this.topValues[valKey] && this.topValues[valKey].length) {
       return Promise.resolve(this.topValues[valKey]);
     }
-    const filter = this.filters[siteId]?.find(i => i.id === id);
+    const filter = this.filters[siteId]?.find((i) => i.id === id);
     if (!filter) {
       console.error('Filter not found in store:', id);
       return Promise.resolve([]);
     }
-    return filterService.fetchTopValues(filter.name?.toLowerCase(), source).then((response: []) => {
-      this.setTopValues(valKey, response);
-    });
+    return filterService
+      .fetchTopValues(filter.name?.toLowerCase(), source)
+      .then((response: []) => {
+        this.setTopValues(valKey, response);
+      });
   };
 
   setFilters = (projectId: string, filters: Filter[]) => {
@@ -78,23 +80,29 @@ export default class FilterStore {
   };
 
   processFilters = (filters: Filter[], category?: string): Filter[] => {
-    return filters.map(filter => ({
+    return filters.map((filter) => ({
       ...filter,
-      possibleTypes: filter.possibleTypes?.map(type => type.toLowerCase()) || [],
+      possibleTypes:
+        filter.possibleTypes?.map((type) => type.toLowerCase()) || [],
       type: filter.possibleTypes?.[0].toLowerCase() || 'string',
       category: category || 'custom',
-      subCategory: category === 'events' ? (filter.autoCaptured ? 'autocapture' : 'user') : category,
+      subCategory:
+        category === 'events'
+          ? filter.autoCaptured
+            ? 'autocapture'
+            : 'user'
+          : category,
       displayName: filter.displayName || filter.name,
       icon: FilterKey.LOCATION, // TODO - use actual icons
       isEvent: category === 'events',
       value: filter.value || [],
       propertyOrder: 'and',
-      operator: filter.operator || 'is'
+      operator: filter.operator || 'is',
     }));
   };
 
   addOperatorsToFilters = (filters: Filter[]): Filter[] => {
-    return filters.map(filter => ({
+    return filters.map((filter) => ({
       ...filter,
     }));
   };
@@ -114,7 +122,10 @@ export default class FilterStore {
       const processedFilters: Filter[] = [];
 
       Object.keys(response.data).forEach((category: string) => {
-        const { list, total } = response.data[category] || { list: [], total: 0 };
+        const { list, total } = response.data[category] || {
+          list: [],
+          total: 0,
+        };
         const filters = this.processFilters(list, category);
         processedFilters.push(...filters);
       });
@@ -156,7 +167,8 @@ export default class FilterStore {
     }
 
     try {
-      this.pendingFetches[cacheKey] = this.fetchAndProcessPropertyFilters(eventName);
+      this.pendingFetches[cacheKey] =
+        this.fetchAndProcessPropertyFilters(eventName);
       const filters = await this.pendingFetches[cacheKey];
 
       runInAction(() => {
@@ -171,12 +183,17 @@ export default class FilterStore {
     }
   };
 
-  private fetchAndProcessPropertyFilters = async (eventName: string): Promise<Filter[]> => {
+  private fetchAndProcessPropertyFilters = async (
+    eventName: string,
+  ): Promise<Filter[]> => {
     const resp = await filterService.fetchProperties(eventName);
-    const names = resp.data.map((i: any) => i['allProperties.PropertyName']);
+    const names = resp.data.map((i: any) => i['name']);
 
     const activeSiteId = projectStore.activeSiteId + '';
-    return this.filters[activeSiteId]?.filter((i: any) => names.includes(i.name)) || [];
+    return (
+      this.filters[activeSiteId]?.filter((i: any) => names.includes(i.name)) ||
+      []
+    );
   };
 
   setCommonFilters = (filters: Filter[]) => {
