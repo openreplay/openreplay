@@ -7,23 +7,26 @@ import { useTranslation } from 'react-i18next';
 function Ideas({ onClick, projectId }: { onClick: (query: string) => void, projectId: string }) {
   const { t } = useTranslation();
   const {
-      data: promptIdeas = [],
+      data: suggestedPromptIdeas = [],
       isPending,
   } = useQuery({
       queryKey: ['kai', 'prompt-suggestions', projectId],
       queryFn: () => kaiService.getPromptSuggestions(projectId),
       staleTime: 1000 * 60,
   });
-  const defaultPromptIdeas = [
-      'Top user journeys',
-      'Where do users drop off',
-      'Failed network requests today',
-  ];
-  const targetLength = 3;
-  let defaultPromptIdeasIndex = 0;
-  while (promptIdeas.length < targetLength && defaultPromptIdeasIndex < defaultPromptIdeas.length) {
-      promptIdeas.push(defaultPromptIdeas[defaultPromptIdeasIndex++]);
-  }
+  const ideas = React.useMemo(() => {
+      const defaultPromptIdeas = [
+          'Top user journeys',
+          'Where do users drop off',
+          'Failed network requests today',
+      ];
+      const result = suggestedPromptIdeas;
+      const targetSize = 3;
+      while (result.length < targetSize && defaultPromptIdeas.length) {
+          result.push(defaultPromptIdeas.pop())
+      }
+    return result;
+  }, [suggestedPromptIdeas.length]);
   return (
     <>
       <div className={'flex items-center gap-2 mb-1 text-gray-dark'}>
@@ -33,7 +36,7 @@ function Ideas({ onClick, projectId }: { onClick: (query: string) => void, proje
       {
           isPending ?
               (<div className="animate-pulse text-disabled-text">{t('Generating ideas')}...</div>) :
-              (<div>{promptIdeas.map(title => (<IdeaItem key={title} onClick={onClick} title={title} />))}</div>)
+              (<div>{ideas.map(title => (<IdeaItem key={title} onClick={onClick} title={title} />))}</div>)
       }
     </>
   );
