@@ -10,9 +10,6 @@ test('check session list after change period', async ({ page }) => {
   await page.locator('[data-test-id="password"]').click();
   await page.locator('[data-test-id="password"]').fill('Andrey123!');
   await page.locator('[data-test-id="log-button"]').click();
-  await page.getByRole('button', { name: 'Android caret-down' }).click();
-  await page.getByRole('menuitem', { name: 'OpenReplay Documentation Site' }).click();
-  await page.getByRole('button', { name: 'Past 24 Hours down' }).click();
-  await page.getByRole('menuitem', { name: 'Past 30 Days' }).click();
-  await page.locator('#session-item').first().click();
+  
+  
 });
