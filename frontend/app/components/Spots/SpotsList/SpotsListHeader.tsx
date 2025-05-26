@@ -64,10 +64,11 @@ const SpotsListHeader = observer(
                     type="text"
                     onClick={onClearSelection}
                     className="mr-2 px-3"
+                    size='small'
                   >
                     {t('Clear')}
                   </Button>
-                  <Button onClick={onDelete} type="primary" ghost>
+                  <Button onClick={onDelete} type="primary" ghost size='small'>
                     {t('Delete')} ({selectedCount})
                   </Button>
                 </>

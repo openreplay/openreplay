@@ -56,7 +56,7 @@ function ExcludeFilters(props: Props) {
           ))}
         </div>
       ) : (
-        <Button type="link" onClick={addPageFilter}>
+        <Button type="link" onClick={addPageFilter} className="!text-black">
           {t('Add Exclusion')}
         </Button>
       )}

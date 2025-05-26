@@ -320,3 +320,48 @@ export function simpleMerge<T>(defaultObj: T, givenObj: Partial<T>): T {
 
   return result
 }
+
+export function throttleWithTrailing<K, Args extends any[]>(
+  fn: (key: K, ...args: Args) => void,
+  interval: number
+): ((key: K, ...args: Args) => void) & { clear: () => void } {
+  const lastCalls = new Map<K, number>();
+  const timeouts = new Map<K, ReturnType<typeof setTimeout>>();
+  const lastArgs = new Map<K, Args>();
+
+  const throttled = function (key: K, ...args: Args) {
+    const now = Date.now();
+    const lastCall = lastCalls.get(key) ?? 0;
+    const remaining = interval - (now - lastCall);
+
+    lastArgs.set(key, args);
+
+    if (remaining <= 0) {
+      if (timeouts.has(key)) {
+        clearTimeout(timeouts.get(key)!);
+        timeouts.delete(key);
+      }
+      lastCalls.set(key, now);
+      fn(key, ...args);
+    } else if (!timeouts.has(key)) {
+      const timeoutId = setTimeout(() => {
+        lastCalls.set(key, Date.now());
+        timeouts.delete(key);
+        const finalArgs = lastArgs.get(key)!;
+        fn(key, ...finalArgs);
+      }, remaining);
+      timeouts.set(key, timeoutId);
+    }
+  };
+
+  throttled.clear = () => {
+    for (const timeout of timeouts.values()) {
+      clearTimeout(timeout);
+    }
+    timeouts.clear();
+    lastArgs.clear();
+    lastCalls.clear();
+  };
+
+  return throttled;
+}

@@ -1,4 +1,5 @@
 import { defineConfig } from "wxt";
+import tailwindcss from "@tailwindcss/vite";
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -30,7 +31,12 @@ export default defineConfig({
       "debugger",
     ],
   },
-  runner: {
+  webExt: {
     chromiumArgs: ['--user-data-dir=./.wxt/chrome-data'],
-  }
+  },
+  vite: (env) => ({
+    plugins: [tailwindcss()],
+    resolve: {
+      conditions: ['development', 'browser', 'module', 'default'],
+    }}),
 });

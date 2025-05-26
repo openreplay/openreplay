@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from 'UI';
 import { MessagesSquare, ArrowLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 function ChatHeader({
   openChats = () => {},
@@ -11,6 +12,7 @@ function ChatHeader({
   openChats?: () => void;
   chatTitle: string | null;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={
@@ -20,17 +22,21 @@ function ChatHeader({
       <div className={'flex-1'}>
         {goBack ? (
           <div
-            className={'flex items-center gap-2 font-semibold cursor-pointer'}
+            className={
+              'w-fit flex items-center gap-2 font-semibold cursor-pointer'
+            }
             onClick={goBack}
           >
             <ArrowLeft size={14} />
-            <div>Back</div>
+            <div>{t('Back')}</div>
           </div>
         ) : null}
       </div>
       <div className={'flex items-center gap-2 mx-auto max-w-[80%]'}>
         {chatTitle ? (
-          <div className="font-semibold text-xl whitespace-nowrap truncate">{chatTitle}</div>
+          <div className="font-semibold text-xl whitespace-nowrap truncate">
+            {chatTitle}
+          </div>
         ) : (
           <>
             <Icon name={'kai_colored'} size={18} />
@@ -38,14 +44,14 @@ function ChatHeader({
           </>
         )}
       </div>
-      <div
-        className={
-          'font-semibold cursor-pointer flex items-center gap-2 flex-1 justify-end'
-        }
-        onClick={openChats}
-      >
-        <MessagesSquare size={14} />
-        <div>Chats</div>
+      <div className={'flex-1 justify-end flex items-center gap-2'}>
+        <div
+          className="font-semibold w-fit cursor-pointer flex items-center gap-2"
+          onClick={openChats}
+        >
+          <MessagesSquare size={14} />
+          <div>{t('Chats')}</div>
+        </div>
       </div>
     </div>
   );

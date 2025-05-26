@@ -4,7 +4,7 @@ import logging
 from fastapi import HTTPException, status
 
 import schemas
-from chalicelib.core import issues
+from chalicelib.core.issues import issues
 from chalicelib.core.errors import errors
 from chalicelib.core.metrics import heatmaps, product_analytics, funnels
 from chalicelib.core.sessions import sessions, sessions_search
@@ -61,6 +61,9 @@ def get_heat_map_chart(project: schemas.ProjectContext, user_id, data: schemas.C
         return None
     data.series[0].filter.filters += data.series[0].filter.events
     data.series[0].filter.events = []
+    print(">>>>>>>>>>>>>>>>>>>>>>>>><")
+    print(data.series[0].filter.model_dump())
+    print(">>>>>>>>>>>>>>>>>>>>>>>>><")
     return heatmaps.search_short_session(project_id=project.project_id, user_id=user_id,
                                          data=schemas.HeatMapSessionsSearch(
                                              **data.series[0].filter.model_dump()),
@@ -169,7 +172,8 @@ def get_sessions_by_card_id(project: schemas.ProjectContext, user_id, metric_id,
     results = []
     for s in data.series:
         results.append({"seriesId": s.series_id, "seriesName": s.name,
-                        **sessions_search.search_sessions(data=s.filter, project=project, user_id=user_id)})
+                        **sessions_search.search_sessions(data=s.filter, project=project, user_id=user_id,
+                                                          metric_of=data.metric_of)})
 
     return results
 
@@ -184,7 +188,8 @@ def get_sessions(project: schemas.ProjectContext, user_id, data: schemas.CardSes
             s.filter = schemas.SessionsSearchPayloadSchema(**s.filter.model_dump(by_alias=True))
 
         results.append({"seriesId": None, "seriesName": s.name,
-                        **sessions_search.search_sessions(data=s.filter, project=project, user_id=user_id)})
+                        **sessions_search.search_sessions(data=s.filter, project=project, user_id=user_id,
+                                                          metric_of=data.metric_of)})
 
     return results
 

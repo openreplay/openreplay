@@ -406,6 +406,8 @@ class EventType(str, Enum):
     ERROR_MOBILE = "errorMobile"
     SWIPE_MOBILE = "swipeMobile"
     EVENT = "event"
+    INCIDENT = "incident"
+    CLICK_COORDINATES = "clickCoordinates"
 
 
 class PerformanceEventType(str, Enum):
@@ -506,8 +508,8 @@ class IssueType(str, Enum):
     CUSTOM = 'custom'
     JS_EXCEPTION = 'js_exception'
     MOUSE_THRASHING = 'mouse_thrashing'
-    # IOS
-    TAP_RAGE = 'tap_rage'
+    TAP_RAGE = 'tap_rage'  # IOS
+    INCIDENT = 'incident'
 
 
 class MetricFormatType(str, Enum):
@@ -659,6 +661,10 @@ class SessionSearchEventSchema(BaseModel):
         elif self.type == EventType.GRAPHQL:
             assert isinstance(self.filters, List) and len(self.filters) > 0, \
                 f"filters should be defined for {EventType.GRAPHQL}"
+        elif self.type == EventType.CLICK_COORDINATES:
+            assert isinstance(self.value, List) \
+                   and (len(self.value) == 0 or len(self.value) == 2 or len(self.value) == 4), \
+                f"value should be [x,y] or [x1,x2,y1,y2] for {EventType.CLICK_COORDINATES}"
 
         if isinstance(self.operator, ClickEventExtraOperator):
             assert self.type == EventType.CLICK, \
@@ -1037,11 +1043,16 @@ class MetricOfPathAnalysis(str, Enum):
     session_count = MetricOfTimeseries.SESSION_COUNT.value
 
 
-# class CardSessionsSchema(SessionsSearchPayloadSchema):
 class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
     endTimestamp: int = Field(default=TimeUTC.now())
     density: int = Field(default=7, ge=1, le=200)
+    # we need metric_type&metric_of in the payload of sessions search
+    # because the API will retrun all sessions if the card is not identified
+    # example: table of requests contains only sessions that have a request,
+    # but drill-down doesn't take that into consideration
+    metric_type: MetricType = Field(...)
+    metric_of: Any
     series: List[CardSeriesSchema] = Field(default_factory=list)
 
     # events: List[SessionSearchEventSchema2] = Field(default_factory=list, doc_hidden=True)
@@ -1119,8 +1130,6 @@ class __CardSchema(CardSessionsSchema):
     thumbnail: Optional[str] = Field(default=None)
     metric_format: Optional[MetricFormatType] = Field(default=None)
     view_type: Any
-    metric_type: MetricType = Field(...)
-    metric_of: Any
     metric_value: List[IssueType] = Field(default_factory=list)
     # This is used to save the selected session for heatmaps
     session_id: Optional[int] = Field(default=None)
@@ -1520,7 +1529,7 @@ class MetricSearchSchema(_PaginatedSchema):
 
 
 class _HeatMapSearchEventRaw(SessionSearchEventSchema):
-    type: Literal[EventType.LOCATION] = Field(...)
+    type: Literal[EventType.LOCATION, EventType.CLICK_COORDINATES] = Field(...)
 
 
 class HeatMapSessionsSearch(SessionsSearchPayloadSchema):

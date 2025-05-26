@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon, CopyButton } from 'UI';
+import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -10,35 +11,51 @@ import {
   ListRestart,
   FileDown,
   Clock,
+  ChartLine,
 } from 'lucide-react';
 import { Button, Tooltip } from 'antd';
-import { kaiStore } from '../KaiStore';
+import { kaiStore, Message } from '../KaiStore';
 import { toast } from 'react-toastify';
 import { durationFormatted } from 'App/date';
+import WidgetChart from '@/components/Dashboard/components/WidgetChart';
+import Widget from 'App/mstore/types/widget';
+import { useTranslation } from 'react-i18next';
 
-export function ChatMsg({
-  text,
-  isUser,
+function ChatMsg({
   userName,
-  messageId,
-  isLast,
-  duration,
-  feedback,
   siteId,
+  canEdit,
+  message,
+  chatTitle,
 }: {
-  text: string;
-  isUser: boolean;
-  messageId: string;
+  message: Message;
   userName?: string;
-  isLast?: boolean;
-  duration?: number;
-  feedback: boolean | null;
+  canEdit?: boolean;
   siteId: string;
+  chatTitle: string | null;
 }) {
+  const { t } = useTranslation();
+  const [metric, setMetric] = React.useState<Widget | null>(null);
+  const [loadingChart, setLoadingChart] = React.useState(false);
+  const {
+    text,
+    isUser,
+    messageId,
+    duration,
+    feedback,
+    supports_visualization,
+    chart_data,
+  } = message;
+  const isEditing = kaiStore.replacing && messageId === kaiStore.replacing;
   const [isProcessing, setIsProcessing] = React.useState(false);
   const bodyRef = React.useRef<HTMLDivElement>(null);
-  const onRetry = () => {
-    kaiStore.editMessage(text);
+  const chartRef = React.useRef<HTMLDivElement>(null);
+  const onEdit = () => {
+    kaiStore.editMessage(text, messageId);
+  };
+  const onCancelEdit = () => {
+    kaiStore.setQueryText('');
+    kaiStore.setReplacing(null);
   };
   const onFeedback = (feedback: 'like' | 'dislike', messageId: string) => {
     kaiStore.sendMsgFeedback(feedback, messageId, siteId);
@@ -51,19 +68,68 @@ export function ChatMsg({
       setIsProcessing(false);
       return;
     }
+    const userPrompt = kaiStore.getPreviousMessage(message.messageId);
     import('jspdf')
-      .then(({ jsPDF }) => {
+      .then(async ({ jsPDF }) => {
         const doc = new jsPDF();
-        doc.addImage('/assets/img/logo-img.png', 80, 3, 30, 5);
-        doc.html(bodyRef.current!, {
+        const blockWidth = 170; // mm
+        doc.addImage('/assets/img/logo-img.png', 20, 15, 30, 5);
+        const content = bodyRef.current!.cloneNode(true) as HTMLElement;
+        if (userPrompt) {
+          const titleHeader = document.createElement('h2');
+          titleHeader.textContent = userPrompt.text;
+          titleHeader.style.marginBottom = '10px';
+          content.prepend(titleHeader);
+        }
+        content.querySelectorAll('ul').forEach((ul) => {
+          const frag = document.createDocumentFragment();
+          ul.querySelectorAll('li').forEach((li) => {
+            const div = document.createElement('div');
+            div.textContent = '• ' + li.textContent;
+            frag.appendChild(div);
+          });
+          ul.replaceWith(frag);
+        });
+        content.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach((el) => {
+          (el as HTMLElement).style.letterSpacing = '0.5px';
+        });
+        content.querySelectorAll('*').forEach((node) => {
+          node.childNodes.forEach((child) => {
+            if (child.nodeType === Node.TEXT_NODE) {
+              const txt = child.textContent || '';
+              const replaced = txt.replace(/-/g, '–');
+              if (replaced !== txt) child.textContent = replaced;
+            }
+          });
+        });
+        if (metric && chartRef.current) {
+          const { default: html2canvas } = await import('html2canvas');
+          const metricContainer = chartRef.current;
+          const image = await html2canvas(metricContainer, {
+            backgroundColor: null,
+            scale: 2,
+          });
+          const imgData = image.toDataURL('image/png');
+          const imgHeight = (image.height * blockWidth) / image.width;
+          content.appendChild(
+            Object.assign(document.createElement('img'), {
+              src: imgData,
+              style: `width: ${blockWidth}mm; height: ${imgHeight}mm; margin-top: 10px;`,
+            }),
+          );
+        }
+        doc.html(content, {
           callback: function (doc) {
-            doc.save('document.pdf');
+            doc.save((chatTitle ?? 'document') + '.pdf');
           },
-          margin: [10, 10, 10, 10],
+          // top, bottom, ?, left
+          margin: [5, 10, 20, 20],
           x: 0,
-          y: 0,
-          width: 190, // Target width
-          windowWidth: 675, // Window width for rendering
+          y: 15,
+          // Target width
+          width: blockWidth,
+          // Window width for rendering
+          windowWidth: 675,
         });
       })
       .catch((e) => {
@@ -74,17 +140,38 @@ export function ChatMsg({
         setIsProcessing(false);
       });
   };
+
+  React.useEffect(() => {
+    if (chart_data) {
+      const metric = kaiStore.getParsedChart(chart_data);
+      setMetric(metric);
+    }
+  }, [chart_data]);
+
+  const getChart = async () => {
+    try {
+      setLoadingChart(true);
+      const metric = await kaiStore.getMessageChart(messageId, siteId);
+      setMetric(metric);
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setLoadingChart(false);
+    }
+  };
+
+  const metricData = metric?.data;
+  React.useEffect(() => {
+    if (!chart_data && metricData && metricData.values.length > 0) {
+      kaiStore.saveLatestChart(messageId, siteId);
+    }
+  }, [metricData, chart_data]);
   return (
-    <div
-      className={cn(
-        'flex items-start gap-2',
-        isUser ? 'flex-row-reverse' : 'flex-row',
-      )}
-    >
+    <div className={cn('flex gap-2', isUser ? 'flex-row-reverse' : 'flex-row')}>
       {isUser ? (
         <div
           className={
-            'rounded-full bg-main text-white min-w-8 min-h-8 flex items-center justify-center sticky top-0'
+            'rounded-full bg-main text-white min-w-8 min-h-8 max-h-8 max-w-8 flex items-center justify-center sticky top-0 mt-2 shadow'
           }
         >
           <span className={'font-semibold'}>{userName}</span>
@@ -92,28 +179,57 @@ export function ChatMsg({
       ) : (
         <div
           className={
-            'rounded-full bg-white shadow min-w-8 min-h-8 flex items-center justify-center sticky top-0'
+            'rounded-full bg-gray-lightest shadow min-w-8 min-h-8 max-h-8 max-w-8 flex items-center justify-center sticky top-0 mt-2'
           }
         >
           <Icon name={'kai_colored'} size={18} />
         </div>
       )}
       <div className={'mt-1 flex flex-col'}>
-        <div className="markdown-body" ref={bodyRef}>
+        <div
+          className={cn(
+            'markdown-body',
+            isEditing ? 'border-l border-l-main pl-2' : '',
+          )}
+          data-openreplay-obscured
+          ref={bodyRef}
+        >
           <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </div>
+        {metric ? (
+          <div
+            ref={chartRef}
+            className="p-2 border-gray-light rounded-lg shadow bg-glassWhite mb-2"
+          >
+            <WidgetChart metric={metric} isPreview height={360} />
+          </div>
+        ) : null}
         {isUser ? (
-          isLast ? (
+          <>
             <div
-              onClick={onRetry}
-              className={
-                'ml-auto flex items-center gap-2 px-2 rounded-lg border border-gray-medium text-sm cursor-pointer hover:border-main hover:text-main w-fit'
-              }
+              onClick={onEdit}
+              className={cn(
+                'ml-auto flex items-center gap-2 px-2',
+                'rounded-lg border border-gray-medium text-sm cursor-pointer',
+                'hover:border-main hover:text-main w-fit',
+                canEdit && !isEditing ? '' : 'hidden',
+              )}
             >
               <ListRestart size={16} />
-              <div>Edit</div>
+              <div>{t('Edit')}</div>
             </div>
-          ) : null
+            <div
+              onClick={onCancelEdit}
+              className={cn(
+                'ml-auto flex items-center gap-2 px-2',
+                'rounded-lg border border-gray-medium text-sm cursor-pointer',
+                'hover:border-main hover:text-main w-fit',
+                isEditing ? '' : 'hidden',
+              )}
+            >
+              <div>{t('Cancel')}</div>
+            </div>
+          </>
         ) : (
           <div className={'flex items-center gap-2'}>
             {duration ? <MsgDuration duration={duration} /> : null}
@@ -132,6 +248,15 @@ export function ChatMsg({
             >
               <ThumbsDown size={16} />
             </IconButton>
+            {supports_visualization ? (
+              <IconButton
+                tooltip="Visualize this answer"
+                onClick={getChart}
+                processing={loadingChart}
+              >
+                <ChartLine size={16} />
+              </IconButton>
+            ) : null}
             <CopyButton
               getHtml={() => bodyRef.current?.innerHTML}
               content={text}
@@ -215,3 +340,5 @@ function MsgDuration({ duration }: { duration: number }) {
     </div>
   );
 }
+
+export default observer(ChatMsg);

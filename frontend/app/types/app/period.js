@@ -1,6 +1,5 @@
 import { DateTime, Interval, Settings } from 'luxon';
 import Record from 'Types/Record';
-import { roundToNextMinutes } from '@/utils';
 
 export const LAST_30_MINUTES = 'LAST_30_MINUTES';
 export const TODAY = 'TODAY';

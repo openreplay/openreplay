@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 interface Props {
   siteId: string;
   dashboardId: string;
-  onEditHandler: () => void;
   id?: string;
 }
 

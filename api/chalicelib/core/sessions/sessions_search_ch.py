@@ -64,8 +64,7 @@ def __parse_metadata(metadata_map):
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.ProjectContext,
                     user_id, errors_only=False, error_status=schemas.ErrorStatus.ALL,
-                    count_only=False, issue=None, ids_only=False):
-    platform = project.platform
+                    count_only=False, issue=None, ids_only=False, metric_of: schemas.MetricOfTable = None):
     if data.bookmarked:
         data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project.project_id, user_id)
     if data.startTimestamp is None:
@@ -75,18 +74,78 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
             'sessions': [],
             '_src': 2
         }
+    # ---------------------- extra filter in order to only select sessions that has been used in the card-table
+    extra_event = None
+    # extra_deduplication = []
+    extra_conditions = None
+    if metric_of == schemas.MetricOfTable.VISITED_URL:
+        extra_event = f"""SELECT DISTINCT ev.session_id, 
+                                 JSONExtractString(toString(ev.`$properties`), 'url_path') AS url_path
+                      FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
+                      WHERE ev.created_at >= toDateTime(%(startDate)s / 1000)
+                        AND ev.created_at <= toDateTime(%(endDate)s / 1000)
+                        AND ev.project_id = %(project_id)s
+                        AND ev.`$event_name` = 'LOCATION'"""
+        # extra_deduplication.append("url_path")
+        extra_conditions = {}
+        for e in data.events:
+            if e.type == schemas.EventType.LOCATION:
+                if e.operator not in extra_conditions:
+                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema(**{
+                        "type": e.type,
+                        "isEvent": True,
+                        "value": [],
+                        "operator": e.operator,
+                        "filters": e.filters
+                    })
+                for v in e.value:
+                    if v not in extra_conditions[e.operator].value:
+                        extra_conditions[e.operator].value.append(v)
+        extra_conditions = list(extra_conditions.values())
+    elif metric_of == schemas.MetricOfTable.FETCH:
+        extra_event = f"""SELECT DISTINCT ev.session_id 
+                          FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
+                          WHERE ev.created_at >= toDateTime(%(startDate)s / 1000)
+                            AND ev.created_at <= toDateTime(%(endDate)s / 1000)
+                            AND ev.project_id = %(project_id)s
+                            AND ev.`$event_name` = 'REQUEST'"""
+
+        # extra_deduplication.append("url_path")
+        extra_conditions = {}
+        for e in data.events:
+            if e.type == schemas.EventType.REQUEST_DETAILS:
+                if e.operator not in extra_conditions:
+                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema(**{
+                        "type": e.type,
+                        "isEvent": True,
+                        "value": [],
+                        "operator": e.operator,
+                        "filters": e.filters
+                    })
+                for v in e.value:
+                    if v not in extra_conditions[e.operator].value:
+                        extra_conditions[e.operator].value.append(v)
+        extra_conditions = list(extra_conditions.values())
+
+    # elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
+    #     data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
+    #                                                           operator=schemas.SearchEventOperator.IS))
+    # ----------------------
     if project.platform == "web":
         full_args, query_part = sessions.search_query_parts_ch(data=data, error_status=error_status,
                                                                errors_only=errors_only,
                                                                favorite_only=data.bookmarked, issue=issue,
                                                                project_id=project.project_id,
-                                                               user_id=user_id, platform=platform)
+                                                               user_id=user_id, platform=project.platform,
+                                                               extra_event=extra_event,
+                                                               # extra_deduplication=extra_deduplication,
+                                                               extra_conditions=extra_conditions)
     else:
         full_args, query_part = sessions_legacy_mobil.search_query_parts_ch(data=data, error_status=error_status,
                                                                             errors_only=errors_only,
                                                                             favorite_only=data.bookmarked, issue=issue,
                                                                             project_id=project.project_id,
-                                                                            user_id=user_id, platform=platform)
+                                                                            user_id=user_id, platform=project.platform)
     if data.sort == "startTs":
         data.sort = "datetime"
     if data.limit is not None and data.page is not None:

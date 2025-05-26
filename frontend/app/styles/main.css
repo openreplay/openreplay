@@ -408,22 +408,13 @@ svg {
 }
 
 .markdown-body p {
-    margin: 0!important;
+    margin-top: 6px!important;
+    margin-bottom: 6px!important;
 }
 
-.markdown-body ul {
-    margin-top: 4px!important;
-    margin-bottom: 4px!important;
-}
-
-.markdown-body ul {
-  list-style-type: none; /* Remove default bullets */
-}
-.markdown-body ul li:before {
-  content: "•"; /* Use standard bullet character */
-  display: inline-block;
-  width: 1em;
-  margin-left: -1em;
+.markdown-body ul, .markdown-body ol {
+    margin-top: 6px!important;
+    margin-bottom: 6px!important;
 }
 
 .ant-tooltip {

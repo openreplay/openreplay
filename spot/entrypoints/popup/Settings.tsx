@@ -109,7 +109,7 @@ function Settings({ goBack }: { goBack: () => void }) {
     <div class={"flex flex-col"}>
       <div class={"flex gap-2 items-center justify-between p-4"}>
         <button
-          class="btn btn-xs btn-circle bg-white hover:bg-indigo-50"
+          class="btn btn-xs btn-circle bg-white hover:bg-indigo-lightest"
           onClick={goBack}
         >
           <img src={arrowLeft} alt={"Go back"} />
@@ -124,7 +124,7 @@ function Settings({ goBack }: { goBack: () => void }) {
       </div>
 
       <div class="flex flex-col">
-        <div class="p-4 border-b border-slate-300 hover:bg-indigo-50">
+        <div class="p-4 border-b border-slate-300 hover:bg-indigo-lightest">
           <div class="flex flex-row justify-between items-center">
             <p class="font-semibold mb-1 flex items-center">View Recording</p>
 
@@ -142,7 +142,7 @@ function Settings({ goBack }: { goBack: () => void }) {
           </p>
         </div>
 
-        <div class="flex flex-col border-b border-slate-300 cursor-default justify-between p-4 hover:bg-indigo-50">
+        <div class="flex flex-col border-b border-slate-300 cursor-default justify-between p-4 hover:bg-indigo-lightest">
           <div class="flex flex-row justify-between items-center">
             <p class="font-semibold mb-1 flex items-center">
               <span>Include DevTools</span>
@@ -164,7 +164,7 @@ function Settings({ goBack }: { goBack: () => void }) {
           </p>
         </div>
 
-        <div class="p-4 border-b border-slate-300 hover:bg-indigo-50 cursor-default">
+        <div class="p-4 border-b border-slate-300 hover:bg-indigo-lightest cursor-default">
           <div class="flex flex-row justify-between items-center">
             <p class="font-semibold mb-1 flex items-center">
               <span>Use Debugger</span>
@@ -185,7 +185,7 @@ function Settings({ goBack }: { goBack: () => void }) {
           </p>
         </div>
 
-        <div class="p-4 hover:bg-indigo-50 cursor-default">
+        <div class="p-4 hover:bg-indigo-lightest cursor-default">
           <div class="flex flex-row justify-between">
             <p class="font-semibold mb-1">Ingest Point</p>
             <div>

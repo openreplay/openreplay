@@ -1,6 +1,7 @@
 import schemas
-from chalicelib.core import events, metadata, events_mobile, \
-    issues, assist, canvas, user_testing
+from chalicelib.core import metadata, assist, canvas, user_testing
+from chalicelib.core.issues import issues
+from chalicelib.core.events import events, events_mobile
 from . import sessions_mobs, sessions_devtool
 from chalicelib.core.errors.modules import errors_helper
 from chalicelib.utils import pg_client, helper
@@ -128,30 +129,8 @@ def get_events(project_id, session_id):
                 data['userTesting'] = user_testing.get_test_signals(session_id=session_id, project_id=project_id)
 
             data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
-            data['issues'] = reduce_issues(data['issues'])
+            data['issues'] = issues.reduce_issues(data['issues'])
+            data['incidents'] = events.get_incidents_by_session_id(session_id=session_id, project_id=project_id)
             return data
         else:
             return None
-
-
-# To reduce the number of issues in the replay;
-# will be removed once we agree on how to show issues
-def reduce_issues(issues_list):
-    if issues_list is None:
-        return None
-    i = 0
-    # remove same-type issues if the time between them is <2s
-    while i < len(issues_list) - 1:
-        for j in range(i + 1, len(issues_list)):
-            if issues_list[i]["type"] == issues_list[j]["type"]:
-                break
-        else:
-            i += 1
-            break
-
-        if issues_list[i]["timestamp"] - issues_list[j]["timestamp"] < 2000:
-            issues_list.pop(j)
-        else:
-            i += 1
-
-    return issues_list

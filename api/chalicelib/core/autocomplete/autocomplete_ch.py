@@ -1,10 +1,9 @@
 import logging
+
 import schemas
-from chalicelib.core import countries, events, metadata
+from chalicelib.core import countries, metadata
 from chalicelib.utils import ch_client
 from chalicelib.utils import helper, exp_ch_helper
-from chalicelib.utils.event_filter_definition import Event
-from chalicelib.utils.or_cache import CachedResponse
 
 logger = logging.getLogger(__name__)
 TABLE = "experimental.autocomplete"
@@ -114,7 +113,7 @@ def __generic_query(typename, value_length=None):
                 LIMIT 10;"""
 
 
-def __generic_autocomplete(event: Event):
+def __generic_autocomplete(event: str):
     def f(project_id, value, key=None, source=None):
         with ch_client.ClickHouseClient() as cur:
             query = __generic_query(event.ui_type, value_length=len(value))
@@ -150,7 +149,7 @@ def __pg_errors_query(source=None, value_length=None):
         return f"""((SELECT DISTINCT ON(message)
                         message AS value,
                         source,
-                        '{events.EventType.ERROR.ui_type}' AS type
+                        '{schemas.EventType.ERROR}' AS type
                     FROM {MAIN_TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -162,7 +161,7 @@ def __pg_errors_query(source=None, value_length=None):
                     (SELECT DISTINCT ON(name)
                         name AS value,
                         source,
-                        '{events.EventType.ERROR.ui_type}' AS type
+                        '{schemas.EventType.ERROR}' AS type
                     FROM {MAIN_TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -173,7 +172,7 @@ def __pg_errors_query(source=None, value_length=None):
                     (SELECT DISTINCT ON(message)
                         message AS value,
                         source,
-                        '{events.EventType.ERROR.ui_type}' AS type
+                        '{schemas.EventType.ERROR}' AS type
                     FROM {MAIN_TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -184,7 +183,7 @@ def __pg_errors_query(source=None, value_length=None):
                     (SELECT DISTINCT ON(name)
                         name AS value,
                         source,
-                        '{events.EventType.ERROR.ui_type}' AS type
+                        '{schemas.EventType.ERROR}' AS type
                     FROM {MAIN_TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -194,7 +193,7 @@ def __pg_errors_query(source=None, value_length=None):
     return f"""((SELECT DISTINCT ON(message)
                     message AS value,
                     source,
-                    '{events.EventType.ERROR.ui_type}' AS type
+                    '{schemas.EventType.ERROR}' AS type
                 FROM {MAIN_TABLE}
                 WHERE
                   project_id = %(project_id)s
@@ -205,7 +204,7 @@ def __pg_errors_query(source=None, value_length=None):
                 (SELECT DISTINCT ON(name)
                     name AS value,
                     source,
-                    '{events.EventType.ERROR.ui_type}' AS type
+                    '{schemas.EventType.ERROR}' AS type
                 FROM {MAIN_TABLE}
                 WHERE
                   project_id = %(project_id)s
@@ -260,8 +259,9 @@ def __search_metadata(project_id, value, key=None, source=None):
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(query=f"""SELECT DISTINCT ON(key, value) key, value, 'METADATA' AS TYPE
                                 FROM({" UNION ALL ".join(sub_from)}) AS all_metas
-                                LIMIT 5;""", parameters={"project_id": project_id, "value": helper.string_to_sql_like(value),
-                                              "svalue": helper.string_to_sql_like("^" + value)})
+                                LIMIT 5;""",
+                           parameters={"project_id": project_id, "value": helper.string_to_sql_like(value),
+                                       "svalue": helper.string_to_sql_like("^" + value)})
         results = cur.execute(query)
     return helper.list_to_camel_case(results)
 
@@ -298,7 +298,6 @@ def is_top_supported(event_type):
     return TYPE_TO_COLUMN.get(event_type, False)
 
 
-@CachedResponse(table="or_cache.autocomplete_top_values", ttl=5 * 60)
 def get_top_values(project_id, event_type, event_key=None):
     with ch_client.ClickHouseClient() as cur:
         if schemas.FilterType.has_value(event_type):

@@ -408,7 +408,7 @@ const TaskSummary = observer(() => {
         <Typography.Title level={5}>{t('Task Summary')}</Typography.Title>
 
         {uxtestingStore.taskStats.length ? (
-          <div className="p-2 rounded-lg bg-indigo-50  flex items-center gap-1 px-4">
+          <div className="p-2 rounded-lg bg-indigo-lightest  flex items-center gap-1 px-4">
             <ClockCircleOutlined rev={undefined} />
             <Typography.Text>
               {t('Average completion time of all tasks:')}

@@ -21,8 +21,7 @@ rm -rf ./chalicelib/core/metrics/dashboards.py
 rm -rf ./chalicelib/core/metrics/heatmaps
 rm -rf ./chalicelib/core/metrics/product_analytics
 rm -rf ./chalicelib/core/metrics/product_anaytics2.py
-rm -rf ./chalicelib/core/events.py
-rm -rf ./chalicelib/core/events_mobile.py
+rm -rf ./chalicelib/core/events
 rm -rf ./chalicelib/core/feature_flags.py
 rm -rf ./chalicelib/core/issue_tracking
 rm -rf ./chalicelib/core/integrations_manager.py
@@ -33,7 +32,7 @@ rm -rf ./chalicelib/core/metadata.py
 rm -rf ./chalicelib/core/mobile.py
 rm -rf ./chalicelib/core/saved_search.py
 rm -rf ./chalicelib/core/sessions/*.py
-rm -rf ./chalicelib/core/sessions/sessions_viewed/sessions_viewed.py
+rm -rf ./chalicelib/core/sessions/sessions_viewed
 rm -rf ./chalicelib/core/metrics/modules
 rm -rf ./chalicelib/core/socket_ios.py
 rm -rf ./chalicelib/core/sourcemaps

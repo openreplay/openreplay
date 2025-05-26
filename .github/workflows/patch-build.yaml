@@ -20,12 +20,20 @@ jobs:
       DEPOT_PROJECT_ID: ${{ secrets.DEPOT_PROJECT_ID }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
-        fetch-depth: 1
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
     - name: Rebase with main branch, to make sure the code has latest main changes
+      if: github.ref != 'refs/heads/main'
       run: |
-        git pull --rebase origin main
+        git remote -v
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Action"
+        git config --global rebase.autoStash true
+        git fetch origin main:main
+        git rebase main
+        git log -3
 
     - name: Downloading yq
       run: |
@@ -48,6 +56,8 @@ jobs:
         aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.RELEASE_OSS_REGISTRY }}
 
     - uses: depot/setup-action@v1
+      env:
+        DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
     - name: Get HEAD Commit ID
       run: echo "HEAD_COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
     - name: Define Branch Name
@@ -100,7 +110,7 @@ jobs:
           else
             cd $MSAAS_REPO_FOLDER/openreplay/$service
           fi
-          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/arm.txt
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash $BUILD_SCRIPT_NAME >> /tmp/managed_${service}.txt 2>&1 || { echo "Build failed for $service"; cat /tmp/managed_${service}.txt; exit 1; }
         }
         # Checking for backend images
         ls backend/cmd >> /tmp/backend.txt

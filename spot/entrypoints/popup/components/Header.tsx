@@ -35,7 +35,7 @@ const Header: Component<HeaderProps> = (props) => {
       <div class="ml-auto flex items-center gap-2">
         <div class="text-sm tooltip tooltip-bottom" data-tip="My Spots">
           <div onClick={openHomePage}>
-            <div class="cursor-pointer p-2 hover:bg-indigo-50 rounded-full">
+            <div class="cursor-pointer p-2 hover:bg-indigo-lightest rounded-full">
               <HomePageSvg />
             </div>
           </div>
@@ -50,7 +50,7 @@ const Header: Component<HeaderProps> = (props) => {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <div class="cursor-pointer p-2 hover:bg-indigo-50 rounded-full">
+            <div class="cursor-pointer p-2 hover:bg-indigo-lightest rounded-full">
               <SlackSvg />
             </div>
           </a>
@@ -61,7 +61,7 @@ const Header: Component<HeaderProps> = (props) => {
           data-tip="Settings"
           onClick={props.openSettings}
         >
-          <div class="cursor-pointer p-2 hover:bg-indigo-50 rounded-full">
+          <div class="cursor-pointer p-2 hover:bg-indigo-lightest rounded-full">
             <SettingsSvg />
           </div>
         </div>

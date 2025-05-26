@@ -3,7 +3,7 @@ import AiService from '@/services/AiService';
 export default class KaiService extends AiService {
   getKaiChats = async (
     projectId: string,
-  ): Promise<{ title: string; thread_id: string }[]> => {
+  ): Promise<{ title: string; thread_id: string; datetime: string }[]> => {
     const r = await this.client.get(`/kai/${projectId}/chats`);
     if (!r.ok) {
       throw new Error('Failed to fetch chats');
@@ -26,15 +26,19 @@ export default class KaiService extends AiService {
   getKaiChat = async (
     projectId: string,
     threadId: string,
-  ): Promise<
-    {
+  ): Promise<{
+    messages: {
       role: string;
       content: string;
       message_id: any;
-      duration?: number;
+      duration: number;
       feedback: boolean | null;
-    }[]
-  > => {
+      supports_visualization: boolean;
+      chart: string;
+      chart_data: string;
+    }[];
+    title: string;
+  }> => {
     const r = await this.client.get(`/kai/${projectId}/chats/${threadId}`);
     if (!r.ok) {
       throw new Error('Failed to fetch chat');
@@ -74,6 +78,48 @@ export default class KaiService extends AiService {
       throw new Error('Failed to cancel generation');
     }
 
+    const data = await r.json();
+    return data;
+  };
+
+  getMsgChart = async (
+    messageId: string,
+    projectId: string,
+  ): Promise<string> => {
+    const r = await this.client.get(
+      `/kai/${projectId}/chats/data/${messageId}`,
+    );
+    if (!r.ok) {
+      throw new Error('Failed to fetch chart data');
+    }
+    const data = await r.json();
+    return data;
+  };
+
+  saveChartData = async (
+    messageId: string,
+    projectId: string,
+    chartData: any,
+  ) => {
+    const r = await this.client.post(
+      `/kai/${projectId}/chats/data/${messageId}`,
+      {
+        chart_data: JSON.stringify(chartData),
+      },
+    );
+    if (!r.ok) {
+      throw new Error('Failed to save chart data');
+    }
+
+    const data = await r.json();
+    return data;
+  };
+
+  checkUsage = async (): Promise<{ total: number; used: number }> => {
+    const r = await this.client.get(`/kai/usage`);
+    if (!r.ok) {
+      throw new Error('Failed to fetch usage');
+    }
     const data = await r.json();
     return data;
   };

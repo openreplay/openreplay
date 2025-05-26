@@ -1,6 +1,6 @@
 import React from 'react';
 import ChatInput from './ChatInput';
-import { ChatMsg, ChatNotice } from './ChatMsg';
+import ChatMsg, { ChatNotice } from './ChatMsg';
 import { Loader } from 'UI';
 import { kaiStore } from '../KaiStore';
 import { observer } from 'mobx-react-lite';
@@ -9,16 +9,16 @@ function ChatLog({
   projectId,
   threadId,
   userLetter,
-  onTitleChange,
   initialMsg,
+  chatTitle,
   setInitialMsg,
 }: {
   projectId: string;
   threadId: any;
   userLetter: string;
-  onTitleChange: (title: string | null) => void;
   initialMsg: string | null;
   setInitialMsg: (msg: string | null) => void;
+  chatTitle: string | null;
 }) {
   const messages = kaiStore.messages;
   const loading = kaiStore.loadingChat;
@@ -31,7 +31,7 @@ function ChatLog({
       void kaiStore.getChat(settings.projectId, threadId);
     }
     if (threadId) {
-      kaiStore.createChatManager(settings, onTitleChange, initialMsg);
+      kaiStore.createChatManager(settings, initialMsg);
     }
     return () => {
       kaiStore.clearChat();
@@ -61,17 +61,19 @@ function ChatLog({
       >
         <div className={'flex flex-col gap-4 w-2/3 min-h-max'}>
           {messages.map((msg, index) => (
-            <ChatMsg
-              key={index}
-              text={msg.text}
-              isUser={msg.isUser}
-              userName={userLetter}
-              messageId={msg.messageId}
-              isLast={index === lastHumanMsgInd}
-              duration={msg.duration}
-              feedback={msg.feedback}
-              siteId={projectId}
-            />
+            <React.Fragment key={msg.messageId ?? index}>
+              <ChatMsg
+                userName={userLetter}
+                siteId={projectId}
+                message={msg}
+                chatTitle={chatTitle}
+                canEdit={
+                  processingStage === null &&
+                  msg.isUser &&
+                  index === lastHumanMsgInd
+                }
+              />
+            </React.Fragment>
           ))}
           {processingStage ? (
             <ChatNotice

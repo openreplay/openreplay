@@ -44,6 +44,7 @@ interface Props {
   isSaved?: boolean;
   isTemplate?: boolean;
   isPreview?: boolean;
+  height?: number;
 }
 
 function WidgetChart(props: Props) {
@@ -52,10 +53,10 @@ function WidgetChart(props: Props) {
     triggerOnce: true,
     rootMargin: '200px 0px',
   });
-  const { isSaved = false, metric, isTemplate } = props;
+  const { isSaved = false, metric, isTemplate, height } = props;
   const { dashboardStore, metricStore } = useStore();
-  const _metric: any = props.isPreview ? metricStore.instance : props.metric;
-  const { data } = _metric;
+  const _metric: any = props.metric;
+  const data = _metric.data;
   const { period } = dashboardStore;
   const { drillDownPeriod } = dashboardStore;
   const { drillDownFilter } = dashboardStore;
@@ -158,7 +159,7 @@ function WidgetChart(props: Props) {
     }, 4000);
     dashboardStore
       .fetchMetricChartData(metric, payload, isSaved, period, isComparison)
-      .then((res: any) => {
+      .then((res) => {
         if (isComparison) setCompData(res);
         clearTimeout(tm);
         setStale(false);
@@ -181,10 +182,10 @@ function WidgetChart(props: Props) {
     }
     prevMetricRef.current = _metric;
     const timestmaps = drillDownPeriod.toTimestamps();
-    const density = props.isPreview ? metric.density : dashboardStore.selectedDensity
+    const density = dashboardStore.selectedDensity;
     const payload = isSaved
-      ? { ...metricParams, density }
-      : { ...params, ...timestmaps, ..._metric.toJson(), density };
+    ? { ...metricParams, density }
+    : { ...params, ...timestmaps, ..._metric.toJson(), density };
     debounceRequest(
       _metric,
       payload,
@@ -283,6 +284,7 @@ function WidgetChart(props: Props) {
             hideLegend
             onClick={onChartClick}
             label={t('Conversion')}
+            height={height}
           />
         );
       }
@@ -293,6 +295,7 @@ function WidgetChart(props: Props) {
           data={data}
           compData={compData}
           isWidget={isSaved || isTemplate}
+          height={height}
         />
       );
     }
@@ -308,6 +311,7 @@ function WidgetChart(props: Props) {
           metric={defaultMetric}
           data={data}
           predefinedKey={_metric.metricOf}
+          height={height}
         />
       );
     }
@@ -331,6 +335,7 @@ function WidgetChart(props: Props) {
             compData={compDataCopy}
             onSeriesFocus={onFocus}
             onClick={onChartClick}
+            height={height}
             label={
               _metric.metricOf === 'sessionCount'
                 ? t('Number of Sessions')
@@ -360,6 +365,7 @@ function WidgetChart(props: Props) {
         return (
           <BarChart
             inGrid={!props.isPreview}
+            height={height}
             data={chartData}
             compData={compDataCopy}
             params={params}
@@ -378,6 +384,7 @@ function WidgetChart(props: Props) {
       if (viewType === 'progressChart') {
         return (
           <ColumnChart
+            height={height}
             inGrid={!props.isPreview}
             horizontal
             data={chartData}
@@ -396,6 +403,7 @@ function WidgetChart(props: Props) {
       if (viewType === 'pieChart') {
         return (
           <PieChart
+            height={height}
             inGrid={!props.isPreview}
             data={chartData}
             onSeriesFocus={onFocus}
@@ -412,6 +420,7 @@ function WidgetChart(props: Props) {
           <CustomMetricPercentage
             inGrid={!props.isPreview}
             data={data[0]}
+            height={height}
             colors={colors}
             params={params}
             label={
@@ -451,6 +460,7 @@ function WidgetChart(props: Props) {
         return (
           <BugNumChart
             values={values}
+            height={height}
             inGrid={!props.isPreview}
             colors={colors}
             onSeriesFocus={onFocus}
@@ -470,6 +480,7 @@ function WidgetChart(props: Props) {
           <CustomMetricTableSessions
             metric={_metric}
             data={data}
+            height={height}
             isTemplate={isTemplate}
             isEdit={!isSaved && !isTemplate}
           />
@@ -480,6 +491,7 @@ function WidgetChart(props: Props) {
           <CustomMetricTableErrors
             metric={_metric}
             data={data}
+            height={height}
             // isTemplate={isTemplate}
             isEdit={!isSaved && !isTemplate}
           />
@@ -490,6 +502,7 @@ function WidgetChart(props: Props) {
           <SessionsBy
             metric={_metric}
             data={data}
+            height={height}
             onClick={onChartClick}
             isTemplate={isTemplate}
           />
@@ -518,18 +531,18 @@ function WidgetChart(props: Props) {
           </div>
         );
       }
-      return <ClickMapCard />;
+      return <ClickMapCard height={height} />;
     }
 
     if (metricType === INSIGHTS) {
-      return <InsightsCard data={data} />;
+      return <InsightsCard height={height} data={data} />;
     }
 
     if (metricType === USER_PATH && data && data.links) {
       const isUngrouped = props.isPreview
         ? !(_metric.hideExcess ?? true)
         : false;
-      const height = props.isPreview ? 550 : 240;
+      const height = props.height ? props.height : props.isPreview ? 550 : 240;
       return (
         <SankeyChart
           height={height}
@@ -548,6 +561,7 @@ function WidgetChart(props: Props) {
       if (viewType === 'trend') {
         return (
           <LineChart
+            height={height}
             data={data}
             colors={colors}
             params={params}
@@ -561,7 +575,7 @@ function WidgetChart(props: Props) {
     }
     console.log('Unknown metric type', metricType);
     return <div>{t('Unknown metric type')}</div>;
-  }, [data, compData, enabledRows, _metric]);
+  }, [data, compData, enabledRows, _metric, data]);
 
   const showTable =
     _metric.metricType === TIMESERIES &&

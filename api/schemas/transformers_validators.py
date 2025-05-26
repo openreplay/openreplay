@@ -5,7 +5,7 @@ from pydantic import ValidationInfo
 
 from .overrides import Enum
 
-NAME_PATTERN = r"^[a-z,A-Z,0-9,\-,é,è,à,ç, ,|,&,\/,\\,_,.,#]*$"
+NAME_PATTERN = r"^[a-z,A-Z,0-9,\-,é,è,à,ç, ,|,&,\/,\\,_,.,#,']*$"
 
 
 def transform_email(email: str) -> str:

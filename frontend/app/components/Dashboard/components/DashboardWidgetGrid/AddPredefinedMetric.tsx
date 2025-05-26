@@ -7,7 +7,7 @@ import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
 import { dashboardMetricCreate, withSiteId } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { WidgetCategoryItem } from 'App/components/Dashboard/components/DashboardMetricSelection/DashboardMetricSelection';
+import { WidgetCategoryItem } from 'App/components/Dashboard/components/WidgetCategoryItem';
 import { useTranslation } from 'react-i18next';
 
 interface IProps extends RouteComponentProps {

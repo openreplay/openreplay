@@ -65,41 +65,34 @@ function SavingControls({
   });
 
   createEffect(() => {
-    const stopEvents = (e: Event) => {
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-    };
-    if (nameInputRef) {
-      nameInputRef.addEventListener('keydown', stopEvents, true);
-      nameInputRef.addEventListener('keyup', stopEvents, true);
-      nameInputRef.addEventListener('keypress', stopEvents, true);
-      nameInputRef.addEventListener('input', stopEvents, true);
-      nameInputRef.addEventListener('change', stopEvents, true);
+  const stopEvents = (e: Event) => {
+    e.stopPropagation();
+  };
 
-      onCleanup(() => {
-        nameInputRef.removeEventListener('keydown', stopEvents, true);
-        nameInputRef.removeEventListener('keyup', stopEvents, true);
-        nameInputRef.removeEventListener('keypress', stopEvents, true);
-        nameInputRef.removeEventListener('input', stopEvents, true);
-        nameInputRef.removeEventListener('change', stopEvents, true);
-      });
-    }
-    if (descriptionInputRef) {
-      descriptionInputRef.addEventListener('keydown', stopEvents, true);
-      descriptionInputRef.addEventListener('keyup', stopEvents, true);
-      descriptionInputRef.addEventListener('keypress', stopEvents, true);
-      descriptionInputRef.addEventListener('input', stopEvents, true);
-      descriptionInputRef.addEventListener('change', stopEvents, true);
+  if (nameInputRef) {
+    nameInputRef.addEventListener('keydown', stopEvents);
+    nameInputRef.addEventListener('keyup',   stopEvents);
+    nameInputRef.addEventListener('keypress',stopEvents);
 
-      onCleanup(() => {
-        descriptionInputRef.removeEventListener('keydown', stopEvents, true);
-        descriptionInputRef.removeEventListener('keyup', stopEvents, true);
-        descriptionInputRef.removeEventListener('keypress', stopEvents, true);
-        descriptionInputRef.removeEventListener('input', stopEvents, true);
-        descriptionInputRef.removeEventListener('change', stopEvents, true);
-      });
-    }
-  });
+    onCleanup(() => {
+      nameInputRef.removeEventListener('keydown', stopEvents);
+      nameInputRef.removeEventListener('keyup',   stopEvents);
+      nameInputRef.removeEventListener('keypress',stopEvents);
+    });
+  }
+
+  if (descriptionInputRef) {
+    descriptionInputRef.addEventListener('keydown', stopEvents);
+    descriptionInputRef.addEventListener('keyup',   stopEvents);
+    descriptionInputRef.addEventListener('keypress',stopEvents);
+
+    onCleanup(() => {
+      descriptionInputRef.removeEventListener('keydown', stopEvents);
+      descriptionInputRef.removeEventListener('keyup',   stopEvents);
+      descriptionInputRef.removeEventListener('keypress',stopEvents);
+    });
+  }
+});
 
   const spacePressed = (e: KeyboardEvent) => {
     if (
@@ -380,7 +373,7 @@ function SavingControls({
               ) : null}
               <div class={"flex items-center gap-2"}>
                 <div
-                  class={`${playing() ? "" : "bg-indigo-100"} cursor-pointer btn btn-ghost btn-circle btn-sm hover:bg-indigo-50 border border-slate-100`}
+                  class={`${playing() ? "" : "bg-indigo-100"} cursor-pointer btn btn-ghost btn-circle btn-sm hover:bg-indigo-lightest border border-slate-100`}
                 >
                   {playing() ? (
                     <div

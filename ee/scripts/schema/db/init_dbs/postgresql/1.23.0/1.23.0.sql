@@ -19,7 +19,9 @@ $fn_def$, :'next_version')
 
 --
 
-
+DROP SCHEMA IF EXISTS or_cache CASCADE;
+ALTER TABLE public.tenants
+    ALTER COLUMN scope_state SET DEFAULT 2;
 
 COMMIT;
 

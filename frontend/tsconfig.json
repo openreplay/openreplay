@@ -16,6 +16,7 @@
     "moduleResolution": "node",
     "noEmit": true,
     "jsx": "react",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],
       "App/*": ["./app/*"],
@@ -27,7 +28,7 @@
       "Shared/*": ["./app/components/shared/*"],
       "Player/*": ["./app/player/*"],
       "Player": ["./app/player"],
-      "HOCs/*": ["./app/components/hocs/*"],
+      "HOCs/*": ["./app/components/hocs/*"]
     }
   },
   "include": [
@@ -36,6 +37,8 @@
     "app/**/*.tsx",
     "app/**/*.js",
     "app/**/*.jsx",
-    "window.d.ts"
+    "window.d.ts",
+    "cypress/snapshots/sessionStore.test.ts",
+    "tests/create.test.ts"
   ]
 }

@@ -21,7 +21,7 @@ function FunnelIssuesSelectedFilters(props: Props) {
           key={index}
           closable
           onClose={() => removeSelectedValue(option.value)}
-          className="select-none rounded-lg text-base gap-1 bg-indigo-50 flex items-center"
+          className="select-none rounded-lg text-base gap-1 bg-indigo-lightest flex items-center"
         >
           {option.label}
         </Tag>

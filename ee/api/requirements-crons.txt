@@ -1,6 +1,6 @@
-urllib3==2.3.0
+urllib3==2.4.0
 requests==2.32.3
-boto3==1.37.21
+boto3==1.38.16
 pyjwt==2.10.1
 psycopg2-binary==2.9.10
 psycopg[pool,binary]==3.2.7
@@ -14,5 +14,5 @@ python-decouple==3.8
 pydantic[email]==2.11.4
 apscheduler==3.11.0
 
-redis==6.0.0
+redis==6.1.0
 azure-storage-blob==12.25.1
