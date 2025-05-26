@@ -6,24 +6,24 @@ import { useTranslation } from 'react-i18next';
 
 function Ideas({ onClick, projectId }: { onClick: (query: string) => void, projectId: string }) {
   const { t } = useTranslation();
-    const {
-        data: suggestedPromptIdeas = [],
-        isPending,
-    } = useQuery({
-        queryKey: ['kai', 'prompt-suggestions', projectId],
-        queryFn: () => kaiService.getPromptSuggestions(projectId),
-        staleTime: 1000 * 60,
-    });
-    const defaultPromptIdeas = [
-        'Top user journeys',
-        'Where do users drop off',
-        'Failed network requests today',
-    ];
-    const maxPromptIdeas = defaultPromptIdeas.length;
-    const promptIdeas = [
-        ...suggestedPromptIdeas,
-        ...defaultPromptIdeas,
-    ].slice(0, maxPromptIdeas);
+  const {
+      data: promptIdeas = [],
+      isPending,
+  } = useQuery({
+      queryKey: ['kai', 'prompt-suggestions', projectId],
+      queryFn: () => kaiService.getPromptSuggestions(projectId),
+      staleTime: 1000 * 60,
+  });
+  const defaultPromptIdeas = [
+      'Top user journeys',
+      'Where do users drop off',
+      'Failed network requests today',
+  ];
+  const targetLength = 3;
+  let defaultPromptIdeasIndex = 0;
+  while (promptIdeas.length < targetLength && defaultPromptIdeasIndex < defaultPromptIdeas.length) {
+      promptIdeas.push(defaultPromptIdeas[defaultPromptIdeasIndex++]);
+  }
   return (
     <>
       <div className={'flex items-center gap-2 mb-1 text-gray-dark'}>
