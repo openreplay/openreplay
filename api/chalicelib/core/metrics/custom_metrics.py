@@ -172,7 +172,8 @@ def get_sessions_by_card_id(project: schemas.ProjectContext, user_id, metric_id,
     results = []
     for s in data.series:
         results.append({"seriesId": s.series_id, "seriesName": s.name,
-                        **sessions_search.search_sessions(data=s.filter, project=project, user_id=user_id)})
+                        **sessions_search.search_sessions(data=s.filter, project=project, user_id=user_id,
+                                                          metric_of=data.metric_of)})
 
     return results
 
@@ -187,7 +188,8 @@ def get_sessions(project: schemas.ProjectContext, user_id, data: schemas.CardSes
             s.filter = schemas.SessionsSearchPayloadSchema(**s.filter.model_dump(by_alias=True))
 
         results.append({"seriesId": None, "seriesName": s.name,
-                        **sessions_search.search_sessions(data=s.filter, project=project, user_id=user_id)})
+                        **sessions_search.search_sessions(data=s.filter, project=project, user_id=user_id,
+                                                          metric_of=data.metric_of)})
 
     return results
 

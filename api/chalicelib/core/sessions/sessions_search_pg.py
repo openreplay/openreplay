@@ -40,7 +40,7 @@ COALESCE((SELECT TRUE
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.ProjectContext,
                     user_id, errors_only=False, error_status=schemas.ErrorStatus.ALL,
-                    count_only=False, issue=None, ids_only=False):
+                    count_only=False, issue=None, ids_only=False, metric_of: schemas.MetricOfTable = None):
     platform = project.platform
     if data.bookmarked:
         data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project.project_id, user_id)
