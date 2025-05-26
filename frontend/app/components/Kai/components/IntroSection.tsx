@@ -2,7 +2,7 @@ import React from 'react';
 import ChatInput from './ChatInput';
 import Ideas from './Ideas';
 
-function IntroSection({ onAsk }: { onAsk: (query: string) => void }) {
+function IntroSection({ onAsk, projectId }: { onAsk: (query: string) => void, projectId: string }) {
   const isLoading = false;
   return (
     <>
@@ -14,7 +14,7 @@ function IntroSection({ onAsk }: { onAsk: (query: string) => void }) {
         {/*<GradientBorderInput placeholder={'Ask anything about your product and users...'} onButtonClick={() => null} />*/}
         <ChatInput isLoading={isLoading} onSubmit={onAsk} />
         <div className={'absolute top-full flex flex-col gap-2 mt-4'}>
-          <Ideas onClick={(query) => onAsk(query)} />
+          <Ideas onClick={(query) => onAsk(query)} projectId={projectId} />
         </div>
       </div>
       <div className={'text-disabled-text absolute bottom-4'}>
