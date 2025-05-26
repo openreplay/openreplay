@@ -141,6 +141,9 @@ func (s *saverImpl) handleWebMessage(sessCtx context.Context, session *sessions.
 		}
 		return s.ch.InsertWebPerformanceTrackAggr(session, m)
 	case *messages.Incident:
+		if err := s.pg.InsertIncident(session, m); err != nil {
+			return err
+		}
 		return s.ch.InsertIncident(session, m)
 	}
 	return nil
