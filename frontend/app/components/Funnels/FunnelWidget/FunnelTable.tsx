@@ -1,10 +1,10 @@
 import React from 'react';
-import { Table, Tooltip, Dropdown } from 'antd';
+import { Table, Dropdown } from 'antd';
 import type { TableProps } from 'antd';
 import Widget from 'App/mstore/types/widget';
 import Funnel from 'App/mstore/types/funnel';
 import { EllipsisVertical } from 'lucide-react';
-import { exportAntCsv } from '../../../utils';
+import { exportAntCsv } from 'App/utils';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
