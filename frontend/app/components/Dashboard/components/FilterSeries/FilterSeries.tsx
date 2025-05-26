@@ -8,7 +8,7 @@ import SeriesName from './SeriesName';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import { Filter } from '@/mstore/types/filterConstants';
-import { Plus } from '.store/lucide-react-virtual-9282d60eb0/package';
+import { Plus } from 'lucide-react';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
 import { useStore } from '@/mstore';
 

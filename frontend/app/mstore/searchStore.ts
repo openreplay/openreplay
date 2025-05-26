@@ -442,7 +442,7 @@ class SearchStore {
   async fetchSessions(
     force: boolean = false,
     bookmarked: boolean = false
-  ): Promise<void> => {
+  ): Promise<void> {
     if (this.searchInProgress) return;
     const filter = this.instance.toSearch();
 

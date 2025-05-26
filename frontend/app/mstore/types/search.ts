@@ -165,7 +165,7 @@ export default class Search {
   private getDateRange(
     rangeName: string,
     customStartDate: number,
-    customEndDate: number
+    customEndDate: number,
     roundMinutes?: number,
   ): { startDate: number; endDate: number } {
     let endDate = new Date().getTime();
