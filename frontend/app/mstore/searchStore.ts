@@ -5,7 +5,7 @@ import {
   filtersMap,
   generateFilterOptions,
   liveFiltersMap,
-  mobileConditionalFiltersMap
+  mobileConditionalFiltersMap,
 } from 'Types/filter/newFilter';
 import { List } from 'immutable';
 import { makeAutoObservable, runInAction } from 'mobx';
@@ -29,18 +29,18 @@ export const checkValues = (key: any, value: any) => {
 };
 
 export const filterMap = ({
-                            category,
-                            value,
-                            key,
-                            operator,
-                            sourceOperator,
-                            source,
-                            custom,
-                            isEvent,
-                            filters,
-                            sort,
-                            order
-                          }: any) => ({
+  category,
+  value,
+  key,
+  operator,
+  sourceOperator,
+  source,
+  custom,
+  isEvent,
+  filters,
+  sort,
+  order,
+}: any) => ({
   value: checkValues(key, value),
   custom,
   type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
@@ -48,7 +48,7 @@ export const filterMap = ({
   source: category === FilterCategory.METADATA ? key.replace(/^_/, '') : source,
   sourceOperator,
   isEvent,
-  filters: filters ? filters.map(filterMap) : []
+  filters: filters ? filters.map(filterMap) : [],
 });
 
 export const TAB_MAP: any = {
@@ -56,7 +56,7 @@ export const TAB_MAP: any = {
   sessions: { name: 'Sessions', type: 'sessions' },
   bookmarks: { name: 'Bookmarks', type: 'bookmarks' },
   notes: { name: 'Notes', type: 'notes' },
-  recommendations: { name: 'Recommendations', type: 'recommendations' }
+  recommendations: { name: 'Recommendations', type: 'recommendations' },
 };
 
 class SearchStore {
@@ -69,42 +69,42 @@ class SearchStore {
     startDate: Date.now() - 24 * 60 * 60 * 1000,
     endDate: Date.now(),
     filters: [
-      {
-        id: Math.random().toString(36).substring(7),
-        name: 'CLICK',
-        category: 'events',
-        type: 'string',
-        value: ['/client/account'],
-        operator: 'is',
-        isEvent: true,
-        filters: [
-          {
-            id: Math.random().toString(36).substring(7),
-            name: 'select',
-            category: 'filters',
-            type: 'bool',
-            value: ['true'],
-            operator: 'is'
-          },
-          {
-            id: Math.random().toString(36).substring(7),
-            name: 'label',
-            category: 'filters',
-            type: 'double',
-            value: [1],
-            operator: 'is'
-          }
-        ]
-      },
-      {
-        id: Math.random().toString(36).substring(7),
-        name: 'Browser',
-        category: 'filters',
-        type: 'string',
-        value: ['/client/account'],
-        operator: 'is',
-        isEvent: false
-      }
+      // {
+      //   id: Math.random().toString(36).substring(7),
+      //   name: 'CLICK',
+      //   category: 'events',
+      //   type: 'string',
+      //   value: ['/client/account'],
+      //   operator: 'is',
+      //   isEvent: true,
+      //   filters: [
+      //     {
+      //       id: Math.random().toString(36).substring(7),
+      //       name: 'select',
+      //       category: 'filters',
+      //       type: 'bool',
+      //       value: ['true'],
+      //       operator: 'is'
+      //     },
+      //     {
+      //       id: Math.random().toString(36).substring(7),
+      //       name: 'label',
+      //       category: 'filters',
+      //       type: 'double',
+      //       value: [1],
+      //       operator: 'is'
+      //     }
+      //   ]
+      // },
+      // {
+      //   id: Math.random().toString(36).substring(7),
+      //   name: 'Browser',
+      //   category: 'filters',
+      //   type: 'string',
+      //   value: ['/client/account'],
+      //   operator: 'is',
+      //   isEvent: false
+      // }
     ],
     groupByUser: false,
     sort: 'start',
@@ -114,7 +114,7 @@ class SearchStore {
     suspicious: false,
     consoleLevel: '',
     strict: true,
-    eventsOrder: 'start'
+    eventsOrder: 'start',
   });
   savedSearch: ISavedSearch = new SavedSearch();
   filterSearchList: any = {};
@@ -164,9 +164,9 @@ class SearchStore {
     this.edit({
       filters: savedSearch.filter
         ? savedSearch.filter.filters.map((i: FilterItem) =>
-          new FilterItem().fromJson(i)
-        )
-        : []
+            new FilterItem().fromJson(i),
+          )
+        : [],
     });
     this.currentPage = 1;
   }
@@ -183,7 +183,7 @@ class SearchStore {
 
   editSavedSearch(instance: Partial<SavedSearch>) {
     this.savedSearch = new SavedSearch(
-      Object.assign(this.savedSearch.toData(), instance)
+      Object.assign(this.savedSearch.toData(), instance),
     );
   }
 
@@ -209,14 +209,14 @@ class SearchStore {
         this.filterSearchList = response.reduce(
           (
             acc: Record<string, { projectId: number; value: string }[]>,
-            item: any
+            item: any,
           ) => {
             const { projectId, type, value } = item;
             if (!acc[type]) acc[type] = [];
             acc[type].push({ projectId, value });
             return acc;
           },
-          {}
+          {},
         );
       })
       .catch((error: any) => {
@@ -289,8 +289,8 @@ class SearchStore {
         rangeValue: instance.rangeValue,
         startDate: instance.startDate,
         endDate: instance.endDate,
-        filters: []
-      })
+        filters: [],
+      }),
     );
 
     this.savedSearch = new SavedSearch({});
@@ -307,7 +307,7 @@ class SearchStore {
         const period = Period({
           rangeName: CUSTOM_RANGE,
           start: this.latestRequestTime,
-          end: Date.now()
+          end: Date.now(),
         });
         const timeRange: any = period.toJSON();
         filter.startDate = timeRange.startDate;
@@ -335,24 +335,22 @@ class SearchStore {
   addFilter(filter: any) {
     const index = filter.isEvent
       ? -1
-      : this.instance.filters.findIndex(
-        (i: Filter) => i.id === filter.id
-      );
+      : this.instance.filters.findIndex((i: Filter) => i.id === filter.id);
 
     filter.value = checkFilterValue(filter.value);
     filter.operator = 'is';
     filter.filters = filter.filters
       ? filter.filters.map((subFilter: any) => ({
-        ...subFilter,
-        value: checkFilterValue(subFilter.value)
-      }))
+          ...subFilter,
+          value: checkFilterValue(subFilter.value),
+        }))
       : null;
 
     if (index > -1) {
       const oldFilter = new FilterItem(this.instance.filters[index]);
       const updatedFilter = {
         ...oldFilter,
-        value: oldFilter.value.concat(filter.value)
+        value: oldFilter.value.concat(filter.value),
       };
       oldFilter.merge(updatedFilter);
       this.updateFilter(index, updatedFilter);
@@ -360,7 +358,7 @@ class SearchStore {
       // filter.key = Math.random().toString(36).substring(7);
       this.instance.filters.push(filter);
       this.instance = new Search({
-        ...this.instance.toData()
+        ...this.instance.toData(),
       });
     }
 
@@ -378,7 +376,7 @@ class SearchStore {
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters
+      filters: newFilters,
     });
   }
 
@@ -387,7 +385,7 @@ class SearchStore {
     value: any,
     operator?: string,
     sourceOperator?: string,
-    source?: string
+    source?: string,
   ) {
     const defaultFilter = { ...filtersMap[key] };
     defaultFilter.value = value;
@@ -412,7 +410,7 @@ class SearchStore {
       if (f.id === id) {
         return {
           ...f,
-          ...search
+          ...search,
         };
       }
       return f;
@@ -420,18 +418,16 @@ class SearchStore {
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters
+      filters: newFilters,
     });
   };
 
   removeFilter = (id: string) => {
-    const newFilters = this.instance.filters.filter(
-      (f: any) => f.id !== id
-    );
+    const newFilters = this.instance.filters.filter((f: any) => f.id !== id);
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters
+      filters: newFilters,
     });
   };
 
@@ -441,7 +437,7 @@ class SearchStore {
 
   async fetchSessions(
     force: boolean = false,
-    bookmarked: boolean = false
+    bookmarked: boolean = false,
   ): Promise<void> {
     if (this.searchInProgress) return;
     const filter = this.instance.toSearch();
@@ -450,7 +446,7 @@ class SearchStore {
       const tagFilter = filtersMap[FilterKey.ISSUE];
       tagFilter.type = tagFilter.type.toLowerCase();
       tagFilter.value = [
-        issues_types.find((i: any) => i.type === this.activeTags[0])?.type
+        issues_types.find((i: any) => i.type === this.activeTags[0])?.type,
       ];
       delete tagFilter.operatorOptions;
       delete tagFilter.options;
@@ -471,7 +467,7 @@ class SearchStore {
         filter.filters.push({
           type: FilterKey.DURATION,
           value,
-          operator: 'is'
+          operator: 'is',
         });
       }
     }
@@ -479,18 +475,20 @@ class SearchStore {
     this.latestRequestTime = filter.startDate;
     this.latestList = List();
     this.searchInProgress = true;
-    await sessionStore.fetchSessions(
-      {
-        ...filter,
-        page: this.currentPage,
-        perPage: this.pageSize,
-        tab: this.activeTab.type,
-        bookmarked: bookmarked ? true : undefined
-      },
-      force
-    ).finally(() => {
-      this.searchInProgress = false;
-    });
+    await sessionStore
+      .fetchSessions(
+        {
+          ...filter,
+          page: this.currentPage,
+          perPage: this.pageSize,
+          tab: this.activeTab.type,
+          bookmarked: bookmarked ? true : undefined,
+        },
+        force,
+      )
+      .finally(() => {
+        this.searchInProgress = false;
+      });
   }
 }
 
