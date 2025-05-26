@@ -159,6 +159,13 @@ function ChatMsg({
       setLoadingChart(false);
     }
   };
+
+  const metricData = metric?.data;
+  React.useEffect(() => {
+    if (!chart_data && metricData && metricData.values.length > 0) {
+      kaiStore.saveLatestChart(messageId, siteId);
+    }
+  }, [metricData, chart_data]);
   return (
     <div className={cn('flex gap-2', isUser ? 'flex-row-reverse' : 'flex-row')}>
       {isUser ? (

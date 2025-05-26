@@ -58,16 +58,20 @@ function ChatsModal({
         </div>
       ) : null}
       {isPending ? (
-        <div className="animate-pulse text-disabled-text">{t('Loading chats')}...</div>
+        <div className="animate-pulse text-disabled-text">
+          {t('Loading chats')}...
+        </div>
       ) : (
         <div className="overflow-y-auto flex flex-col gap-2">
-          {datedCollections.map((col) => (
-            <ChatCollection
-              data={col.entries}
-              date={col.date}
-              onSelect={onSelect}
-              onDelete={onDelete}
-            />
+          {datedCollections.map((col, i) => (
+            <React.Fragment key={`${i}_${col.date}`}>
+              <ChatCollection
+                data={col.entries}
+                date={col.date}
+                onSelect={onSelect}
+                onDelete={onDelete}
+              />
+            </React.Fragment>
           ))}
         </div>
       )}

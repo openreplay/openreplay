@@ -334,6 +334,7 @@ class KaiStore {
     }
   };
 
+  charts = new Map<string, Record<string, any>>();
   getMessageChart = async (msgId: string, projectId: string) => {
     this.setProcessingStage({
       content: 'Generating visualization...',
@@ -353,7 +354,7 @@ class KaiStore {
         ...filters,
       };
       const metric = new Widget().fromJson(data);
-      kaiService.saveChartData(msgId, projectId, data);
+      this.charts.set(msgId, data);
       return metric;
     } catch (e) {
       console.error(e);
@@ -363,19 +364,31 @@ class KaiStore {
     }
   };
 
+  saveLatestChart = async (msgId: string, projectId: string) => {
+    const data = this.charts.get(msgId);
+    if (data) {
+      try {
+        await kaiService.saveChartData(msgId, projectId, data);
+        this.charts.delete(msgId);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
   getParsedChart = (data: string) => {
     const parsedData = JSON.parse(data);
     return new Widget().fromJson(parsedData);
   };
 
+  setUsage = (usage: { total: number; used: number; percent: number }) => {
+    this.usage = usage;
+  };
+
   checkUsage = async () => {
     try {
       const { total, used } = await kaiService.checkUsage();
-      this.usage = {
-        total,
-        used,
-        percent: Math.round((used / total) * 100),
-      };
+      this.setUsage({ total, used, percent: Math.round((used / total) * 100) });
     } catch (e) {
       console.error(e);
     }
