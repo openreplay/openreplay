@@ -1043,11 +1043,16 @@ class MetricOfPathAnalysis(str, Enum):
     session_count = MetricOfTimeseries.SESSION_COUNT.value
 
 
-# class CardSessionsSchema(SessionsSearchPayloadSchema):
 class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
     endTimestamp: int = Field(default=TimeUTC.now())
     density: int = Field(default=7, ge=1, le=200)
+    # we need metric_type&metric_of in the payload of sessions search
+    # because the API will retrun all sessions if the card is not identified
+    # example: table of requests contains only sessions that have a request,
+    # but drill-down doesn't take that into consideration
+    metric_type: MetricType = Field(...)
+    metric_of: Any
     series: List[CardSeriesSchema] = Field(default_factory=list)
 
     # events: List[SessionSearchEventSchema2] = Field(default_factory=list, doc_hidden=True)
@@ -1125,8 +1130,6 @@ class __CardSchema(CardSessionsSchema):
     thumbnail: Optional[str] = Field(default=None)
     metric_format: Optional[MetricFormatType] = Field(default=None)
     view_type: Any
-    metric_type: MetricType = Field(...)
-    metric_of: Any
     metric_value: List[IssueType] = Field(default_factory=list)
     # This is used to save the selected session for heatmaps
     session_id: Optional[int] = Field(default=None)
