@@ -10,11 +10,13 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { useHistory, useLocation } from 'react-router-dom';
 import ChatsModal from './components/ChatsModal';
+import { kaiStore } from './KaiStore';
 
 function KaiChat() {
   const { userStore, projectsStore } = useStore();
   const history = useHistory();
-  const [chatTitle, setTitle] = React.useState<string | null>(null);
+  const chatTitle = kaiStore.chatTitle;
+  const setTitle = kaiStore.setTitle;
   const userId = userStore.account.id;
   const userLetter = userStore.account.name[0].toUpperCase();
   const { activeSiteId } = projectsStore;
@@ -123,7 +125,7 @@ function KaiChat() {
               threadId={threadId}
               projectId={activeSiteId}
               userLetter={userLetter}
-              onTitleChange={setTitle}
+              chatTitle={chatTitle}
               initialMsg={initialMsg}
               setInitialMsg={setInitialMsg}
             />

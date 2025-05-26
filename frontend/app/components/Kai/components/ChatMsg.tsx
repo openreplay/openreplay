@@ -26,11 +26,13 @@ function ChatMsg({
   siteId,
   canEdit,
   message,
+  chatTitle,
 }: {
   message: Message;
   userName?: string;
   canEdit?: boolean;
   siteId: string;
+  chatTitle: string | null;
 }) {
   const { t } = useTranslation();
   const [metric, setMetric] = React.useState<Widget | null>(null);
@@ -47,6 +49,7 @@ function ChatMsg({
   const isEditing = kaiStore.replacing && messageId === kaiStore.replacing;
   const [isProcessing, setIsProcessing] = React.useState(false);
   const bodyRef = React.useRef<HTMLDivElement>(null);
+  const chartRef = React.useRef<HTMLDivElement>(null);
   const onEdit = () => {
     kaiStore.editMessage(text, messageId);
   };
@@ -65,19 +68,68 @@ function ChatMsg({
       setIsProcessing(false);
       return;
     }
+    const userPrompt = kaiStore.getPreviousMessage(message.messageId);
     import('jspdf')
-      .then(({ jsPDF }) => {
+      .then(async ({ jsPDF }) => {
         const doc = new jsPDF();
-        doc.addImage('/assets/img/logo-img.png', 80, 3, 30, 5);
-        doc.html(bodyRef.current!, {
+        const blockWidth = 170; // mm
+        doc.addImage('/assets/img/logo-img.png', 20, 15, 30, 5);
+        const content = bodyRef.current!.cloneNode(true) as HTMLElement;
+        if (userPrompt) {
+          const titleHeader = document.createElement('h2');
+          titleHeader.textContent = userPrompt.text;
+          titleHeader.style.marginBottom = '10px';
+          content.prepend(titleHeader);
+        }
+        content.querySelectorAll('ul').forEach((ul) => {
+          const frag = document.createDocumentFragment();
+          ul.querySelectorAll('li').forEach((li) => {
+            const div = document.createElement('div');
+            div.textContent = '• ' + li.textContent;
+            frag.appendChild(div);
+          });
+          ul.replaceWith(frag);
+        });
+        content.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach((el) => {
+          (el as HTMLElement).style.letterSpacing = '0.5px';
+        });
+        content.querySelectorAll('*').forEach((node) => {
+          node.childNodes.forEach((child) => {
+            if (child.nodeType === Node.TEXT_NODE) {
+              const txt = child.textContent || '';
+              const replaced = txt.replace(/-/g, '–');
+              if (replaced !== txt) child.textContent = replaced;
+            }
+          });
+        });
+        if (metric && chartRef.current) {
+          const { default: html2canvas } = await import('html2canvas');
+          const metricContainer = chartRef.current;
+          const image = await html2canvas(metricContainer, {
+            backgroundColor: null,
+            scale: 2,
+          });
+          const imgData = image.toDataURL('image/png');
+          const imgHeight = (image.height * blockWidth) / image.width;
+          content.appendChild(
+            Object.assign(document.createElement('img'), {
+              src: imgData,
+              style: `width: ${blockWidth}mm; height: ${imgHeight}mm; margin-top: 10px;`,
+            }),
+          );
+        }
+        doc.html(content, {
           callback: function (doc) {
-            doc.save('document.pdf');
+            doc.save((chatTitle ?? 'document') + '.pdf');
           },
-          margin: [10, 10, 10, 10],
+          // top, bottom, ?, left
+          margin: [5, 10, 20, 20],
           x: 0,
-          y: 0,
-          width: 190, // Target width
-          windowWidth: 675, // Window width for rendering
+          y: 15,
+          // Target width
+          width: blockWidth,
+          // Window width for rendering
+          windowWidth: 675,
         });
       })
       .catch((e) => {
@@ -138,7 +190,10 @@ function ChatMsg({
           <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </div>
         {metric ? (
-          <div className="p-2 border-gray-light rounded-lg shadow bg-glassWhite mb-2">
+          <div
+            ref={chartRef}
+            className="p-2 border-gray-light rounded-lg shadow bg-glassWhite mb-2"
+          >
             <WidgetChart metric={metric} isPreview height={360} />
           </div>
         ) : null}

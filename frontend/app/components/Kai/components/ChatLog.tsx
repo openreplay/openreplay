@@ -9,16 +9,16 @@ function ChatLog({
   projectId,
   threadId,
   userLetter,
-  onTitleChange,
   initialMsg,
+  chatTitle,
   setInitialMsg,
 }: {
   projectId: string;
   threadId: any;
   userLetter: string;
-  onTitleChange: (title: string | null) => void;
   initialMsg: string | null;
   setInitialMsg: (msg: string | null) => void;
+  chatTitle: string | null;
 }) {
   const messages = kaiStore.messages;
   const loading = kaiStore.loadingChat;
@@ -31,7 +31,7 @@ function ChatLog({
       void kaiStore.getChat(settings.projectId, threadId);
     }
     if (threadId) {
-      kaiStore.createChatManager(settings, onTitleChange, initialMsg);
+      kaiStore.createChatManager(settings, initialMsg);
     }
     return () => {
       kaiStore.clearChat();
@@ -66,7 +66,12 @@ function ChatLog({
                 userName={userLetter}
                 siteId={projectId}
                 message={msg}
-                canEdit={processingStage === null && msg.isUser && index === lastHumanMsgInd}
+                chatTitle={chatTitle}
+                canEdit={
+                  processingStage === null &&
+                  msg.isUser &&
+                  index === lastHumanMsgInd
+                }
               />
             </React.Fragment>
           ))}

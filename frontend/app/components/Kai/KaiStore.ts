@@ -29,6 +29,7 @@ class KaiStore {
   processingStage: BotChunk | null = null;
   messages: Array<Message> = [];
   queryText = '';
+  chatTitle: string | null = null;
   loadingChat = false;
   replacing: string | null = null;
   usage = {
@@ -56,6 +57,20 @@ class KaiStore {
     return { msg, index };
   }
 
+  get firstHumanMessage() {
+    let msg = null;
+    let index = null;
+    for (let i = 0; i < this.messages.length; i++) {
+      const message = this.messages[i];
+      if (message.isUser) {
+        msg = message;
+        index = i;
+        break;
+      }
+    }
+    return { msg, index };
+  }
+
   get lastKaiMessage() {
     let msg = null;
     let index = null;
@@ -69,6 +84,14 @@ class KaiStore {
     }
     return { msg, index };
   }
+
+  getPreviousMessage = (messageId: string) => {
+    const index = this.messages.findIndex((msg) => msg.messageId === messageId);
+    if (index > 0) {
+      return this.messages[index - 1];
+    }
+    return null;
+  };
 
   setQueryText = (text: string) => {
     this.queryText = text;
@@ -113,13 +136,21 @@ class KaiStore {
     });
   };
 
+  setTitle = (title: string | null) => {
+    this.chatTitle = title;
+  };
+
   getChat = async (projectId: string, threadId: string) => {
     this.setLoadingChat(true);
     try {
-      const res = await aiService.getKaiChat(projectId, threadId);
-      if (res && res.length) {
+      const { messages, title } = await aiService.getKaiChat(
+        projectId,
+        threadId,
+      );
+      if (messages && messages.length) {
+        this.setTitle(title);
         this.setMessages(
-          res.map((m) => {
+          messages.map((m) => {
             const isUser = m.role === 'human';
             return {
               text: m.content,
@@ -144,7 +175,6 @@ class KaiStore {
 
   createChatManager = (
     settings: { projectId: string; threadId: string },
-    setTitle: (title: string) => void,
     initialMsg: string | null,
   ) => {
     const token = kaiService.client.getJwt();
@@ -197,7 +227,7 @@ class KaiStore {
           }
         }
       },
-      titleCallback: setTitle,
+      titleCallback: this.setTitle,
     });
 
     if (initialMsg) {
@@ -315,6 +345,9 @@ class KaiStore {
     });
     try {
       const filtersStr = await kaiService.getMsgChart(msgId, projectId);
+      if (!filtersStr.length) {
+        throw new Error('No filters found for the message');
+      }
       const filters = JSON.parse(filtersStr);
       const data = {
         ...filters,
