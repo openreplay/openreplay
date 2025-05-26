@@ -25,6 +25,7 @@ jobs:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
     - name: Rebase with main branch, to make sure the code has latest main changes
+      if: github.ref != 'refs/heads/main'
       run: |
         git remote -v
         git config --global user.email "action@github.com"
