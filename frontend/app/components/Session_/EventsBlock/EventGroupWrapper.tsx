@@ -61,8 +61,7 @@ function EventGroupWrapper(props) {
     if (isIncident) {
       return (
         <Incident
-          from={event.time}
-          to={event.endTime - event.startTime + event.time}
+          isCurrent={isCurrent}
           label={event.label}
           onClick={onEventClick}
         />
@@ -191,7 +190,7 @@ function TabChange({ from, to, activeUrl, onClick }) {
   );
 };
 
-function Incident({ label, onClick }) {
+function Incident({ label, onClick, isCurrent }: { label: string; onClick: () => void; isCurrent?: boolean }) {
   const { t } = useTranslation();
   return (
     <div

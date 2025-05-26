@@ -142,6 +142,7 @@ export interface ISession {
   isMobileNative?: boolean;
   audio?: string;
   assistOnly?: boolean;
+  incidents?: Array<Incident>;
 }
 
 const emptyValues = {
@@ -328,6 +329,7 @@ export default class Session {
       canvasURL = [],
       uxtVideo = [],
       videoURL = [],
+      incidents = [],
       ...session
     } = sessionData;
     const duration = Duration.fromMillis(
@@ -447,6 +449,7 @@ export default class Session {
     userTestingEvents: any[] = [],
     incidents: any[] = [],
   ) {
+    console.log('ADD EVENTS', errors, issues, sessionEvents, incidents);
     const exceptions =
       (errors as IError[])?.map((e) => new SessionError(e)) || [];
     const issuesList =
@@ -517,10 +520,12 @@ export default class Session {
     );
 
     this.events = events;
+    console.log('notesWithEvents 0', this.notesWithEvents, mixedEventsWithIssues);
     // @ts-ignore
     this.notesWithEvents = [
       ...this.notesWithEvents,
       ...mixedEventsWithIssues,
+      ...incidentsList,
     ].sort(sortEvents);
     this.errors = exceptions;
     this.issues = issuesList;
@@ -530,6 +535,7 @@ export default class Session {
     this.crashes = crashes || [];
     this.addedEvents = true;
     this.incidents = incidentsList;
+    console.log('notesWithEvents', this.notesWithEvents, mixedEventsWithIssues);
     return this;
   }
 

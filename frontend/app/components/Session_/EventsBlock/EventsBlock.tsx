@@ -34,8 +34,9 @@ function EventsBlock(props: IProps) {
   const { notesStore, uxtestingStore, uiPlayerStore, sessionStore } =
     useStore();
   const session = sessionStore.current;
-  const { notesWithEvents } = session;
-  const { uxtVideo, incidents } = session;
+  const notesWithEvents = session.notesWithEvents;
+  const incidents = session.incidents;
+  const uxtVideo = session.uxtVideo;
   const { filteredEvents } = sessionStore;
   const query = sessionStore.eventsQuery;
   const { eventsIndex } = sessionStore;
@@ -117,6 +118,7 @@ function EventsBlock(props: IProps) {
     zoomStartTs,
     zoomEndTs,
     uiPlayerStore.showOnlySearchEvents,
+    incidents,
   ]);
 
   const findLastFitting = React.useCallback(
