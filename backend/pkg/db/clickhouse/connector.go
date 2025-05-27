@@ -739,7 +739,6 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 			"payload": msg.Payload,
 		}
 	}
-	log.Printf("custom event's payload: %s", customPayload)
 
 	eventTime := datetime(msg.Timestamp)
 	if err := c.batches["custom"].Append(
