@@ -732,13 +732,14 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 	if err != nil {
 		return fmt.Errorf("can't marshal custom event: %s", err)
 	}
-	var customPayload interface{}
+	customPayload := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(msg.Payload), &customPayload); err != nil {
 		log.Printf("can't unmarshal custom event payload into object: %s", err)
 		customPayload = map[string]interface{}{
 			"payload": msg.Payload,
 		}
 	}
+	log.Printf("custom event's payload: %s", customPayload)
 
 	eventTime := datetime(msg.Timestamp)
 	if err := c.batches["custom"].Append(
