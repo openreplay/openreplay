@@ -131,7 +131,7 @@ def supported_types():
                                                    query=autocomplete.__generic_query(
                                                        typename=schemas.EventType.GRAPHQL)),
         schemas.EventType.STATE_ACTION: SupportedFilter(
-            get=autocomplete.__generic_autocomplete(schemas.EventType.STATEACTION),
+            get=autocomplete.__generic_autocomplete(schemas.EventType.STATE_ACTION),
             query=autocomplete.__generic_query(
                 typename=schemas.EventType.STATE_ACTION)),
         schemas.EventType.TAG: SupportedFilter(get=_search_tags, query=None),
