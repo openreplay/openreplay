@@ -9,17 +9,17 @@ import { observer } from 'mobx-react-lite';
 function ChatLog({
   projectId,
   threadId,
-  userLetter,
   initialMsg,
   chatTitle,
   setInitialMsg,
+  onCancel,
 }: {
   projectId: string;
   threadId: any;
-  userLetter: string;
   initialMsg: string | null;
   setInitialMsg: (msg: string | null) => void;
   chatTitle: string | null;
+  onCancel: () => void;
 }) {
   const messages = kaiStore.messages;
   const loading = kaiStore.loadingChat;
@@ -56,6 +56,7 @@ function ChatLog({
     <Loader loading={loading} className={'w-full h-full'}>
       <div
         ref={chatRef}
+        style={{ maxHeight: 'calc(100svh - 165px)' }}
         className={
           'overflow-y-auto relative flex flex-col items-center justify-between w-full h-full'
         }
@@ -64,7 +65,6 @@ function ChatLog({
           {messages.map((msg, index) => (
             <React.Fragment key={msg.messageId ?? index}>
               <ChatMsg
-                userName={userLetter}
                 siteId={projectId}
                 message={msg}
                 chatTitle={chatTitle}
@@ -84,8 +84,8 @@ function ChatLog({
           ) : null}
       {(!processingStage && lastHumanMsgInd && messages.length == lastHumanMsgInd + 2) ? <Ideas onClick={(query) => onSubmit(query)} projectId={projectId} threadId={threadId}/> : null}
         </div>
-        <div className={'sticky bottom-0 pt-6 w-2/3'}>
-          <ChatInput onSubmit={onSubmit} threadId={threadId} />
+        <div className={'sticky bottom-0 pt-6 w-2/3 z-50'}>
+          <ChatInput onCancel={onCancel} onSubmit={onSubmit} />
         </div>
       </div>
     </Loader>

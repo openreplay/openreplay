@@ -7,14 +7,17 @@ function ChatHeader({
   openChats = () => {},
   goBack,
   chatTitle,
+  onCreate,
 }: {
   goBack?: () => void;
   openChats?: () => void;
   chatTitle: string | null;
+  onCreate: () => void;
 }) {
   const { t } = useTranslation();
+  //absolute top-0 left-0 right-0 z-10
   return (
-    <div className="p-4">
+    <div className="p-4 pb-0 w-full">
       <div
         className={'px-4 py-2 flex items-center bg-gray-lightest rounded-lg'}
       >
@@ -22,7 +25,7 @@ function ChatHeader({
           {goBack ? (
             <div
               className={
-                'w-fit flex items-center gap-2 font-semibold cursor-pointer'
+                'w-fit flex items-center gap-2 font-semibold cursor-pointer hover:text-main'
               }
               onClick={goBack}
             >
@@ -31,7 +34,7 @@ function ChatHeader({
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Icon name={'kai_colored'} size={18} />
+              <Icon name={'kai-mono'} size={18} />
               <div className={'font-semibold text-xl'}>Kai</div>
             </div>
           )}
@@ -43,15 +46,18 @@ function ChatHeader({
             </div>
           ) : null}
         </div>
-        <div className={'flex-1 justify-end flex items-center gap-2'}>
+        <div className={'flex-1 justify-end flex items-center gap-4'}>
           {goBack ? (
-            <div className="font-semibold w-fit cursor-pointer flex items-center gap-2">
+            <div
+              onClick={onCreate}
+              className="font-semibold w-fit cursor-pointer hover:text-main flex items-center gap-2"
+            >
               <SquarePen size={14} />
               <div>{t('New Chat')}</div>
             </div>
           ) : null}
           <div
-            className="font-semibold w-fit cursor-pointer flex items-center gap-2"
+            className="font-semibold w-fit cursor-pointer hover:text-main flex items-center gap-2"
             onClick={openChats}
           >
             <MessagesSquare size={14} />

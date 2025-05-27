@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, CopyButton } from 'UI';
+import { CopyButton } from 'UI';
 import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
 import Markdown from 'react-markdown';
@@ -8,7 +8,7 @@ import {
   Loader,
   ThumbsUp,
   ThumbsDown,
-  ListRestart,
+  SquarePen,
   FileDown,
   Clock,
   ChartLine,
@@ -20,6 +20,7 @@ import { durationFormatted } from 'App/date';
 import WidgetChart from '@/components/Dashboard/components/WidgetChart';
 import Widget from 'App/mstore/types/widget';
 import { useTranslation } from 'react-i18next';
+import SessionItem from 'Shared/SessionItem';
 
 function ChatMsg({
   userName,
@@ -168,28 +169,12 @@ function ChatMsg({
   }, [metricData, chart_data]);
   return (
     <div className={cn('flex gap-2', isUser ? 'flex-row-reverse' : 'flex-row')}>
-      {isUser ? (
-        <div
-          className={
-            'rounded-full bg-main text-white min-w-8 min-h-8 max-h-8 max-w-8 flex items-center justify-center sticky top-0 mt-2 shadow'
-          }
-        >
-          <span className={'font-semibold'}>{userName}</span>
-        </div>
-      ) : (
-        <div
-          className={
-            'rounded-full bg-gray-lightest shadow min-w-8 min-h-8 max-h-8 max-w-8 flex items-center justify-center sticky top-0 mt-2'
-          }
-        >
-          <Icon name={'kai_colored'} size={18} />
-        </div>
-      )}
-      <div className={'mt-1 flex flex-col'}>
+      <div className={'mt-1 flex flex-col group/actions'}>
         <div
           className={cn(
             'markdown-body',
-            isEditing ? 'border-l border-l-main pl-2' : '',
+            isUser ? 'bg-gray-lighter px-4 rounded-full' : '',
+            isEditing ? '!bg-active-blue' : '',
           )}
           data-openreplay-obscured
           ref={bodyRef}
@@ -204,32 +189,42 @@ function ChatMsg({
             <WidgetChart metric={metric} isPreview height={360} />
           </div>
         ) : null}
+        {message.sessions ? (
+          <div className="flex flex-col">
+            {message.sessions.map((session) => (
+              <div className="shadow border rounded-xl overflow-hidden mb-2">
+                <SessionItem key={session.sessionId} session={session} slim />
+              </div>
+            ))}
+          </div>
+        ) : null}
         {isUser ? (
-          <>
-            <div
-              onClick={onEdit}
-              className={cn(
-                'ml-auto flex items-center gap-2 px-2',
-                'rounded-lg border border-gray-medium text-sm cursor-pointer',
-                'hover:border-main hover:text-main w-fit',
-                canEdit && !isEditing ? '' : 'hidden',
-              )}
-            >
-              <ListRestart size={16} />
-              <div>{t('Edit')}</div>
-            </div>
+          <div className="invisible group-hover/actions:visible mt-2">
+            <Tooltip title={t('Edit')}>
+              <div
+                onClick={onEdit}
+                className={cn(
+                  'ml-auto flex items-center gap-2 px-2',
+                  'rounded-lg cursor-pointer',
+                  'hover:text-main w-fit',
+                  canEdit && !isEditing ? '' : 'hidden',
+                )}
+              >
+                <SquarePen size={16} />
+              </div>
+            </Tooltip>
             <div
               onClick={onCancelEdit}
               className={cn(
                 'ml-auto flex items-center gap-2 px-2',
-                'rounded-lg border border-gray-medium text-sm cursor-pointer',
+                'rounded-lg border border-gray-medium text-xs cursor-pointer',
                 'hover:border-main hover:text-main w-fit',
                 isEditing ? '' : 'hidden',
               )}
             >
               <div>{t('Cancel')}</div>
             </div>
-          </>
+          </div>
         ) : (
           <div className={'flex items-center gap-2'}>
             {duration ? <MsgDuration duration={duration} /> : null}

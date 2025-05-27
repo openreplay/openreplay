@@ -36,6 +36,7 @@ export default class KaiService extends AiService {
       supports_visualization: boolean;
       chart: string;
       chart_data: string;
+      sessions?: Record<string, any>[];
     }[];
     title: string;
   }> => {
