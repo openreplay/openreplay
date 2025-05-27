@@ -356,6 +356,7 @@ import {
   Integrations_vuejs,
   Integrations_zustand,
   Journal_code,
+  Kai_mono,
   Kai,
   Kai_colored,
   Key,
@@ -1564,6 +1565,9 @@ const SVG = (props: Props) => {
   
     // case 'journal-code':
     case 'journal-code': return <Journal_code width={ width } height={ height } fill={ fill } />;
+  
+    // case 'kai-mono':
+    case 'kai-mono': return <Kai_mono width={ width } height={ height } fill={ fill } />;
   
     
     case 'kai': return <Kai width={ width } height={ height } fill={ fill } />;

@@ -1,5 +1,5 @@
 apiVersion: v2
-name: openreplay
+name: assist-api
 description: A Helm chart for Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.
@@ -8,36 +8,17 @@ description: A Helm chart for Kubernetes
 # to be deployed.
 #
 # Library charts provide useful utilities or functions for the chart developer. They're included as
-# a dependency of application charts to inject those utilities and functions into the rendering
+# a dependency of application charts to inject those utilities and functions into the rassist-apiing
 # pipeline. Library charts do not define any templates and therefore cannot be deployed.
 type: application
 
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.1.0
+version: 0.1.1
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-# Ref: https://github.com/helm/helm/issues/7858#issuecomment-608114589
 AppVersion: "v1.22.0"
-
-dependencies:
-  - name: ingress-nginx
-    version: "4.x.x"
-    repository: "https://kubernetes.github.io/ingress-nginx"
-    condition: ingress-nginx.enabled
-  - name: quickwit
-    version: "0.3.1"
-    repository: "file://charts/quickwit"
-    condition: quickwit.enabled
-  - name: connector
-    repository: file://charts/connector
-    version: 0.1.1
-    condition: connector.enabled
-  - name: assist-api
-    repository: file://charts/assist-api
-    version: 0.1.1
-    condition: assist-api.enabled

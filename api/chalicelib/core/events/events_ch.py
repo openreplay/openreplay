@@ -1,18 +1,13 @@
 from chalicelib.utils import ch_client
 from .events_pg import *
-
-
-def __explode_properties(rows):
-    for i in range(len(rows)):
-        rows[i] = {**rows[i], **rows[i]["$properties"]}
-        rows[i].pop("$properties")
-    return rows
+from chalicelib.utils.exp_ch_helper import explode_dproperties, add_timestamp
 
 
 def get_customs_by_session_id(session_id, project_id):
     with ch_client.ClickHouseClient() as cur:
         rows = cur.execute(""" \
                            SELECT `$properties`,
+                                  properties,
                                   created_at,
                                   'CUSTOM' AS type
                            FROM product_analytics.events
@@ -21,8 +16,10 @@ def get_customs_by_session_id(session_id, project_id):
                              AND `$event_name`!='INCIDENT'
                            ORDER BY created_at;""",
                            {"project_id": project_id, "session_id": session_id})
-    rows = __explode_properties(rows)
-    return helper.list_to_camel_case(rows)
+    rows = helper.list_to_camel_case(rows, ignore_keys=["properties"])
+    rows = explode_dproperties(rows)
+    rows = add_timestamp(rows)
+    return rows
 
 
 def __merge_cells(rows, start, count, replacement):
@@ -69,12 +66,13 @@ def get_by_session_id(session_id, project_id, group_clickrage=False, event_type:
                            parameters={"project_id": project_id, "session_id": session_id,
                                        "select_events": select_events})
         rows = cur.execute(query)
-        rows = __explode_properties(rows)
+        rows = explode_dproperties(rows)
         if group_clickrage and 'CLICK' in select_events:
             rows = __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
 
         rows = helper.list_to_camel_case(rows)
         rows = sorted(rows, key=lambda k: k["createdAt"])
+    rows = add_timestamp(rows)
     return rows
 
 
@@ -91,7 +89,7 @@ def get_incidents_by_session_id(session_id, project_id):
                                  ORDER BY created_at;""",
                            parameters={"project_id": project_id, "session_id": session_id})
         rows = cur.execute(query)
-        rows = __explode_properties(rows)
+        rows = explode_dproperties(rows)
         rows = helper.list_to_camel_case(rows)
         rows = sorted(rows, key=lambda k: k["createdAt"])
     return rows

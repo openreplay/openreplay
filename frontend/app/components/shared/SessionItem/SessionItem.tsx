@@ -71,6 +71,7 @@ interface Props {
   bookmarked?: boolean;
   toggleFavorite?: (sessionId: string) => void;
   query?: string;
+  slim?: boolean;
 }
 
 const PREFETCH_STATE = {
@@ -99,6 +100,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     isDisabled,
     live: propsLive,
     isAdd,
+    slim,
   } = props;
 
   const {
@@ -261,7 +263,7 @@ function SessionItem(props: RouteComponentProps & Props) {
       }
     >
       <div
-        className={cn(stl.sessionItem, 'flex flex-col p-4')}
+        className={cn(stl.sessionItem, 'flex flex-col', slim ? 'px-4 py-2' : 'p-4')}
         id="session-item"
         onClick={(e) => e.stopPropagation()}
         onMouseEnter={handleHover}
@@ -343,7 +345,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                           : 'Event'}
                       </span>
                     </div>
-                    <Icon name="circle-fill" size={3} className="mx-4" />
+                    <Icon name="circle-fill" size={3} className="mx-2" />
                   </>
                 )}
                 <div>
@@ -373,7 +375,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </span>
                 )}
                 {userOs && userBrowser && (
-                  <Icon name="circle-fill" size={3} className="mx-4" />
+                  <Icon name="circle-fill" size={3} className="mx-2" />
                 )}
                 {userOs && (
                   <span
@@ -387,7 +389,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </span>
                 )}
                 {userOs && (
-                  <Icon name="circle-fill" size={3} className="mx-4" />
+                  <Icon name="circle-fill" size={3} className="mx-2" />
                 )}
                 <span className="capitalize" style={{ maxWidth: '70px' }}>
                   <TextEllipsis

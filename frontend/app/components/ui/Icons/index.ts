@@ -354,6 +354,7 @@ export { default as Integrations_teams } from './integrations_teams';
 export { default as Integrations_vuejs } from './integrations_vuejs';
 export { default as Integrations_zustand } from './integrations_zustand';
 export { default as Journal_code } from './journal_code';
+export { default as Kai_mono } from './kai_mono';
 export { default as Kai } from './kai';
 export { default as Kai_colored } from './kai_colored';
 export { default as Key } from './key';

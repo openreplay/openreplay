@@ -15,11 +15,11 @@ def random_string(length=36):
     return "".join(random.choices(string.hexdigits, k=length))
 
 
-def list_to_camel_case(items: list[dict], flatten: bool = False) -> list[dict]:
+def list_to_camel_case(items: list[dict], flatten: bool = False, ignore_keys=[]) -> list[dict]:
     for i in range(len(items)):
         if flatten:
             items[i] = flatten_nested_dicts(items[i])
-        items[i] = dict_to_camel_case(items[i])
+        items[i] = dict_to_camel_case(items[i], ignore_keys=[])
 
     return items
 

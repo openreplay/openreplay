@@ -3,6 +3,7 @@ import { BotChunk, ChatManager } from './SocketManager';
 import { kaiService as aiService, kaiService } from 'App/services';
 import { toast } from 'react-toastify';
 import Widget from 'App/mstore/types/widget';
+import Session, { ISession } from '@/types/session/session';
 
 export interface Message {
   text: string;
@@ -15,6 +16,7 @@ export interface Message {
   supports_visualization: boolean;
   feedback: boolean | null;
   duration: number;
+  sessions?: Session[];
 }
 export interface SentMessage
   extends Omit<
@@ -161,6 +163,9 @@ class KaiStore {
               chart: m.chart,
               supports_visualization: m.supports_visualization,
               chart_data: m.chart_data,
+              sessions: m.sessions
+                ? m.sessions.map((s) => new Session(s))
+                : undefined,
             };
           }),
         );
@@ -220,6 +225,9 @@ class KaiStore {
               chart: '',
               supports_visualization: msg.supports_visualization,
               chart_data: '',
+              sessions: msg.sessions
+                ? msg.sessions.map((s) => new Session(s))
+                : undefined,
             };
             this.bumpUsage();
             this.addMessage(msgObj);
@@ -268,7 +276,7 @@ class KaiStore {
         deleting.push(this.lastKaiMessage.index);
       }
       this.deleteAtIndex(deleting);
-      this.setReplacing(false);
+      this.setReplacing(null);
     }
     this.addMessage({
       text: message,
@@ -309,7 +317,6 @@ class KaiStore {
 
   cancelGeneration = async (settings: {
     projectId: string;
-    userId: string;
     threadId: string;
   }) => {
     try {
