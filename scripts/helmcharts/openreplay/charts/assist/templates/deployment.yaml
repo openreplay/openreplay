@@ -50,7 +50,17 @@ spec:
             - name: AWS_DEFAULT_REGION
               value: "{{ .Values.global.s3.region }}"
             - name: REDIS_URL
-              value: {{ .Values.global.redis.redisHost }}
+              value: {{ default .Values.global.redis.redisHost .Values.redis.redisHost }}
+            {{- if .Values.global.enterpriseEditionLicense }}
+            - name: COMPRESSION
+              value: "true"
+            - name: port
+              value: "9000"
+            - name: CACHE_REFRESH_INTERVAL_SECONDS
+              value: '5'
+            - name: debug
+              value: '0'
+            {{- end}}
             {{- range $key, $val := .Values.global.env }}
             - name: {{ $key }}
               value: '{{ $val }}'
