@@ -10,17 +10,14 @@ function Ideas({
   threadId = null,
 }: {
   onClick: (query: string) => void;
-  projectId: string,
+  projectId: string;
   threadId?: string | null;
 }) {
   const { t } = useTranslation();
-  const {
-      data: suggestedPromptIdeas = [],
-      isPending,
-  } = useQuery({
-      queryKey: ['kai', projectId, 'chats', threadId, 'prompt-suggestions'],
-      queryFn: () => kaiService.getPromptSuggestions(projectId, threadId),
-      staleTime: 1000 * 60,
+  const { data: suggestedPromptIdeas = [], isPending } = useQuery({
+    queryKey: ['kai', projectId, 'chats', threadId, 'prompt-suggestions'],
+    queryFn: () => kaiService.getPromptSuggestions(projectId, threadId),
+    staleTime: 1000 * 60,
   });
   const ideas = React.useMemo(() => {
     const defaultPromptIdeas = [
@@ -36,7 +33,7 @@ function Ideas({
     return result;
   }, [suggestedPromptIdeas.length]);
   return (
-    <>
+    <div>
       <div className={'flex items-center gap-2 mb-1 text-gray-dark'}>
         <b>Suggested Ideas:</b>
       </div>
@@ -45,13 +42,13 @@ function Ideas({
           {t('Generating ideas')}...
         </div>
       ) : (
-        <div className="flex gap-4 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
           {ideas.map((title) => (
             <IdeaItem key={title} onClick={onClick} title={title} />
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 }
 

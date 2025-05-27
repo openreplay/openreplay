@@ -129,7 +129,9 @@ export default class KaiService extends AiService {
     projectId: string,
     threadId?: string | null,
   ): Promise<string[]> => {
-      const endpoint = (threadId) ? `/kai/${projectId}/chats/${threadId}/prompt-suggestions` : `/kai/${projectId}/prompt-suggestions`;
+    const endpoint = threadId
+      ? `/kai/${projectId}/chats/${threadId}/prompt-suggestions`
+      : `/kai/${projectId}/prompt-suggestions`;
     const r = await this.client.get(endpoint);
     if (!r.ok) {
       throw new Error('Failed to fetch prompt suggestions');
