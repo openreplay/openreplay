@@ -44,10 +44,13 @@ function ChatsModal({
     refetch();
   };
   return (
-    <div className={'h-screen w-full flex flex-col gap-2 p-4'}>
+    <div
+      className={'flex flex-col gap-2 p-4 mr-1 rounded-lg bg-white my-auto'}
+      style={{ height: '95svh', width: 310 }}
+    >
       <div className={'flex items-center font-semibold text-lg gap-2'}>
         <MessagesSquare size={16} />
-        <span>{t('Chats')}</span>
+        <span>{t('Previous Chats')}</span>
       </div>
       {usage.percent > 80 ? (
         <div className="text-red text-sm">

@@ -18,7 +18,7 @@ function KaiChat() {
   const chatTitle = kaiStore.chatTitle;
   const setTitle = kaiStore.setTitle;
   const userId = userStore.account.id;
-  const userLetter = userStore.account.name[0].toUpperCase();
+  const userName = userStore.account.name;
   const { activeSiteId } = projectsStore;
   const [section, setSection] = React.useState<'intro' | 'chat'>('intro');
   const [threadId, setThreadId] = React.useState<string | null>(null);
@@ -44,7 +44,11 @@ function KaiChat() {
           hideModal();
         }}
       />,
-      { right: true, width: 300 },
+      {
+        right: true,
+        width: 320,
+        className: 'bg-none flex items-center h-screen',
+      },
     );
   };
 
@@ -93,44 +97,70 @@ function KaiChat() {
     const newThread = await kaiService.createKaiChat(activeSiteId);
     if (newThread) {
       setThreadId(newThread.toString());
+      kaiStore.setTitle(null);
       setSection('chat');
     } else {
       toast.error("Something wen't wrong. Please try again later.");
     }
   };
+
+  const onCancel = () => {
+    if (!threadId) return;
+    void kaiStore.cancelGeneration({
+      projectId: activeSiteId,
+      threadId,
+    });
+  };
+
   return (
-    <div className="w-full mx-auto" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
+    <div
+      className="w-full mx-auto h-full"
+      style={{ maxWidth: PANEL_SIZES.maxWidth }}
+    >
       <div
-        className={'w-full rounded-lg overflow-hidden border shadow relative'}
+        className={'w-full rounded-lg overflow-hidden bg-white relative h-full'}
       >
         <ChatHeader
           chatTitle={chatTitle}
           openChats={openChats}
           goBack={goBack}
+          onCreate={onCreate}
         />
-        <div
-          className={
-            'w-full bg-active-blue flex flex-col items-center justify-center py-4 relative'
-          }
-          style={{
-            height: '70svh',
-            background:
-              'radial-gradient(50% 50% at 50% 50%, var(--color-glassWhite) 0%, var(--color-glassMint) 46%, var(--color-glassLavander) 100%)',
-          }}
-        >
-          {section === 'intro' ? (
-              <IntroSection onAsk={onCreate} projectId={activeSiteId} />
-          ) : (
-            <ChatLog
-              threadId={threadId}
-              projectId={activeSiteId}
-              userLetter={userLetter}
-              chatTitle={chatTitle}
-              initialMsg={initialMsg}
-              setInitialMsg={setInitialMsg}
-            />
-          )}
-        </div>
+        {section === 'intro' ? (
+          <>
+            <div
+              className={
+                'flex flex-col items-center justify-center py-4 relative'
+              }
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: 0,
+                width: '100%',
+                transform: 'translateY(-50%)',
+              }}
+            >
+              <IntroSection
+                onCancel={onCancel}
+                onAsk={onCreate}
+                projectId={activeSiteId}
+                userName={userName}
+              />
+            </div>
+            <div className={'text-disabled-text absolute bottom-4 left-0 right-0 text-center text-sm'}>
+              OpenReplay AI can make mistakes. Verify its outputs.
+            </div>
+          </>
+        ) : (
+          <ChatLog
+            threadId={threadId}
+            projectId={activeSiteId}
+            chatTitle={chatTitle}
+            initialMsg={initialMsg}
+            setInitialMsg={setInitialMsg}
+            onCancel={onCancel}
+          />
+        )}
       </div>
     </div>
   );

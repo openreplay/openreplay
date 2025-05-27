@@ -1,5 +1,6 @@
 import io from 'socket.io-client';
 import { toast } from 'react-toastify';
+import { ISession } from '@/types/session/session';
 
 export class ChatManager {
   socket: ReturnType<typeof io>;
@@ -77,9 +78,7 @@ export class ChatManager {
     msgCallback,
     titleCallback,
   }: {
-    msgCallback: (
-      msg: StateEvent | BotChunk,
-    ) => void;
+    msgCallback: (msg: StateEvent | BotChunk) => void;
     titleCallback: (title: string) => void;
   }) => {
     this.socket.on('chunk', (msg: BotChunk) => {
@@ -111,7 +110,8 @@ export interface BotChunk {
   messageId: string;
   duration: number;
   supports_visualization: boolean;
-  type: 'chunk'
+  sessions?: ISession[];
+  type: 'chunk';
 }
 
 interface StateEvent {
