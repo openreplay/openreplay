@@ -163,13 +163,17 @@ function ChatMsg({
 
   const metricData = metric?.data;
   React.useEffect(() => {
-    if (!chart_data && metricData && metricData.values.length > 0) {
-      kaiStore.saveLatestChart(messageId, siteId);
+    if (!chart_data && metricData) {
+      const hasValues =
+        metricData.values?.length > 0 || metricData.chart?.length > 0;
+      if (hasValues) {
+        kaiStore.saveLatestChart(messageId, siteId);
+      }
     }
   }, [metricData, chart_data]);
   return (
     <div className={cn('flex gap-2', isUser ? 'flex-row-reverse' : 'flex-row')}>
-      <div className={'mt-1 flex flex-col group/actions'}>
+      <div className={'mt-1 flex flex-col group/actions max-w-[880px]'}>
         <div
           className={cn(
             'markdown-body',
