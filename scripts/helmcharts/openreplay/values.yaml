@@ -47,6 +47,8 @@ vault: &vault
       {{- with secret "database/creds/db-app" -}}
       POSTGRES_STRING=postgres://{{.Data.username}}:{{.Data.password}}@postgresql.db.svc.cluster.local:5432/postgres
       {{- end -}}
+assist-api:
+  enabled: false
 
 minio:
   # Force initialize minio, even if the instance is not provisioned by OR
