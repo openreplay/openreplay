@@ -1,6 +1,7 @@
 import React from 'react';
 import ChatInput from './ChatInput';
 import ChatMsg, { ChatNotice } from './ChatMsg';
+import Ideas from "./Ideas";
 import { Loader } from 'UI';
 import { kaiStore } from '../KaiStore';
 import { observer } from 'mobx-react-lite';
@@ -81,6 +82,7 @@ function ChatLog({
               duration={processingStage.duration}
             />
           ) : null}
+      {(!processingStage && lastHumanMsgInd && messages.length == lastHumanMsgInd + 2) ? <Ideas onClick={(query) => onSubmit(query)} projectId={projectId} threadId={threadId}/> : null}
         </div>
         <div className={'sticky bottom-0 pt-6 w-2/3'}>
           <ChatInput onSubmit={onSubmit} threadId={threadId} />
