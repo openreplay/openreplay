@@ -118,16 +118,16 @@ function EventsBlock(props: IProps) {
     zoomStartTs,
     zoomEndTs,
     uiPlayerStore.showOnlySearchEvents,
-    incidents,
   ]);
 
   const findLastFitting = React.useCallback(
     (time: number) => {
-      if (!usedEvents.length) return 0;
-      let i = usedEvents.length - 1;
+      const allEvents = usedEvents.concat(incidents);
+      if (!allEvents.length) return 0;
+      let i = allEvents.length - 1;
       if (time > endTime / 2) {
-        while (i >= 0) {
-          const event = usedEvents[i];
+        while (i > 0) {
+          const event = allEvents[i];
           if ('time' in event && event.time <= time) break;
           i--;
         }
@@ -135,18 +135,18 @@ function EventsBlock(props: IProps) {
       }
       let l = 0;
       while (l < i) {
-        const event = usedEvents[l];
+        const event = allEvents[l];
         if ('time' in event && event.time >= time) break;
         l++;
       }
       return l;
     },
-    [usedEvents, time, endTime],
+    [usedEvents, incidents, time, endTime],
   );
 
   useEffect(() => {
     setCurrentTimeEventIndex(findLastFitting(time));
-  }, []);
+  }, [time]);
 
   const write = ({
     target: { value },

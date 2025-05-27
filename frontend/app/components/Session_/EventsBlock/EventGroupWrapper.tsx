@@ -190,7 +190,7 @@ function TabChange({ from, to, activeUrl, onClick }) {
   );
 };
 
-function Incident({ label, onClick, isCurrent }: { label: string; onClick: () => void; isCurrent?: boolean }) {
+function Incident({ label, onClick }: { label: string; onClick: () => void }) {
   const { t } = useTranslation();
   return (
     <div
