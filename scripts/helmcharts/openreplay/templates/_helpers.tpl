@@ -164,8 +164,8 @@ Create the volume mount config for redis TLS certificates
 
 {{- define "openreplay.assist_url"}}
 {{- if .Values.global.enterpriseEditionLicense }}
-{{- printf "http://assist-api-openreplay.%s.%s:9001/assist/%s" .Release.Namespace  .Values.global.clusterDomain }}
+{{- printf "http://assist-api-openreplay.%s.%s:9001/assist/%%s" .Release.Namespace  .Values.global.clusterDomain }}
 {{- else}}
-{{- printf "http://assist-openreplay.%s.%s:9001/assist/%s" .Release.Namespace .Values.global.clusterDomain }}
+{{- printf "http://assist-openreplay.%s.%s:9001/assist/%%s" .Release.Namespace .Values.global.clusterDomain }}
 {{- end}}
 {{- end}}
