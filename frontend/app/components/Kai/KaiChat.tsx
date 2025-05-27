@@ -100,9 +100,7 @@ function KaiChat() {
   };
   return (
     <div className="w-full mx-auto" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
-      <div
-        className={'w-full rounded-lg overflow-hidden border shadow relative'}
-      >
+      <div className={'w-full rounded-lg overflow-hidden bg-white relative'}>
         <ChatHeader
           chatTitle={chatTitle}
           openChats={openChats}
@@ -110,12 +108,10 @@ function KaiChat() {
         />
         <div
           className={
-            'w-full bg-active-blue flex flex-col items-center justify-center py-4 relative'
+            'w-full flex flex-col items-center justify-center py-4 relative'
           }
           style={{
             height: '70svh',
-            background:
-              'radial-gradient(50% 50% at 50% 50%, var(--color-glassWhite) 0%, var(--color-glassMint) 46%, var(--color-glassLavander) 100%)',
           }}
         >
           {section === 'intro' ? (

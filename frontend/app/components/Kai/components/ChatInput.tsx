@@ -9,10 +9,12 @@ function ChatInput({
   isLoading,
   onSubmit,
   threadId,
+  isArea,
 }: {
   isLoading?: boolean;
   onSubmit: (str: string) => void;
   threadId: string;
+  isArea?: boolean;
 }) {
   const inputRef = React.useRef<typeof Input>(null);
   const usage = kaiStore.usage;
@@ -50,7 +52,42 @@ function ChatInput({
   }, [inputValue]);
 
   const isReplacing = kaiStore.replacing !== null;
-
+  const placeholder = limited
+    ? `You've reached the daily limit for queries, come again tomorrow!`
+    : 'Ask anything about your product and users...';
+  if (isArea) {
+    return (
+      <Input.TextArea
+        rows={3}
+        onPressEnter={submit}
+        ref={inputRef}
+        placeholder={placeholder}
+        size={'large'}
+        disabled={limited}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        suffix={
+          <Tooltip title={'Send message'}>
+            <Button
+              loading={isLoading}
+              onClick={submit}
+              disabled={limited}
+              icon={
+                isProcessing ? (
+                  <OctagonX size={16} />
+                ) : (
+                  <SendHorizonal size={16} />
+                )
+              }
+              type={'text'}
+              size={'small'}
+              shape={'circle'}
+            />
+          </Tooltip>
+        }
+      />
+    );
+  }
   return (
     <div className="relative">
       <Input
@@ -61,11 +98,7 @@ function ChatInput({
           }
         }}
         ref={inputRef}
-        placeholder={
-          limited
-            ? `You've reached the daily limit for queries, come again tomorrow!`
-            : 'Ask anything about your product and users...'
-        }
+        placeholder={placeholder}
         size={'large'}
         disabled={limited}
         value={inputValue}

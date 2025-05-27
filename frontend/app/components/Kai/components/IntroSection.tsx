@@ -6,13 +6,11 @@ function IntroSection({ onAsk, projectId }: { onAsk: (query: string) => void, pr
   const isLoading = false;
   return (
     <>
-      <div className={'text-disabled-text text-xl absolute top-4'}>
-        Kai is your AI assistant, delivering smart insights in response to your
-        queries.
-      </div>
-      <div className={'relative w-2/3'} style={{ height: 44 }}>
-        {/*<GradientBorderInput placeholder={'Ask anything about your product and users...'} onButtonClick={() => null} />*/}
-        <ChatInput isLoading={isLoading} onSubmit={onAsk} />
+      <div className={'relative w-2/3'}>
+        <div className="font-semibold text-lg">
+          Hey userName, how can I help you?
+        </div>
+        <ChatInput isLoading={isLoading} onSubmit={onAsk} isArea />
         <div className={'absolute top-full flex flex-col gap-2 mt-4'}>
           <Ideas onClick={(query) => onAsk(query)} projectId={projectId} />
         </div>

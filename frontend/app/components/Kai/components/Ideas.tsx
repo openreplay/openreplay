@@ -30,8 +30,7 @@ function Ideas({ onClick, projectId, threadId = null }: { onClick: (query: strin
   return (
     <>
       <div className={'flex items-center gap-2 mb-1 text-gray-dark'}>
-        <Lightbulb size={16} />
-        <b>Ideas:</b>
+        <b>Suggested Ideas:</b>
       </div>
       {
           isPending ?
