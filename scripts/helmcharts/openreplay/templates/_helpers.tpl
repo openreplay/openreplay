@@ -161,3 +161,11 @@ Create the volume mount config for redis TLS certificates
 {{- printf "postgres://%s:$(pg_password)@%s:%s/%s" .Values.global.postgresql.postgresqlUser .Values.global.postgresql.postgresqlHost .Values.global.postgresql.postgresqlPort .Values.global.postgresql.postgresqlDatabase -}}
 {{- end -}}
 {{- end}}
+
+{{- define "openreplay.assist_url"}}
+{{- if .Values.global.enterpriseEditionLicense }}
+assist-api-openreplay:8080
+{{- else}}
+assist-openreplay:8080
+{{- end}}
+{{- end}}
