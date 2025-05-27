@@ -50,7 +50,7 @@ spec:
             - name: AWS_DEFAULT_REGION
               value: "{{ .Values.global.s3.region }}"
             - name: REDIS_URL
-              value: {{ default .Values.global.redis.redisHost .Values.redis.redisHost }}
+              value: {{ default .Values.global.redis.redisHost .Values.redisHost }}
             {{- if .Values.global.enterpriseEditionLicense }}
             - name: COMPRESSION
               value: "true"

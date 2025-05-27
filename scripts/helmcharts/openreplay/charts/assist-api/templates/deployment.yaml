@@ -59,7 +59,7 @@ spec:
             - name: POSTGRES_STRING
               value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:$(pg_password)@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
             - name: REDIS_CACHE_ENABLED
-              value: {{- if .Values.global.enterpriseEditionLicense }}true{{- else }}false{{- end }}
+              value: {{ if .Values.global.enterpriseEditionLicense }}"true"{{ else }}"false"{{ end }}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             {{- range $key, $val := .Values.global.env }}
             - name: {{ $key }}

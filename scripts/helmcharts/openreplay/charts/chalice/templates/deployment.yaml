@@ -59,7 +59,7 @@ spec:
             - name: sourcemaps_reader
               value: "http://sourcemapreader-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9000/%s/sourcemaps"
             - name: ASSIST_URL
-              value: {{- include "openreplay.assist_url" . }}
+              value: {{ include "openreplay.assist_url" . }}
             - name: ASSIST_JWT_SECRET
               value: {{ .Values.global.assistJWTSecret }}
             - name: JWT_SECRET
