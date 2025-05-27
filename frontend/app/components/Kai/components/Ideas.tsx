@@ -4,14 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 import { kaiService } from 'App/services';
 import { useTranslation } from 'react-i18next';
 
-function Ideas({ onClick, projectId }: { onClick: (query: string) => void, projectId: string }) {
+function Ideas({ onClick, projectId, threadId = null }: { onClick: (query: string) => void, projectId: string, threadId?: string | null }) {
   const { t } = useTranslation();
   const {
       data: suggestedPromptIdeas = [],
       isPending,
   } = useQuery({
-      queryKey: ['kai', 'prompt-suggestions', projectId],
-      queryFn: () => kaiService.getPromptSuggestions(projectId),
+      queryKey: ['kai', projectId, 'chats', threadId, 'prompt-suggestions'],
+      queryFn: () => kaiService.getPromptSuggestions(projectId, threadId),
       staleTime: 1000 * 60,
   });
   const ideas = React.useMemo(() => {
