@@ -76,7 +76,7 @@ function ChatsModal({
           {t('Loading chats')}...
         </div>
       ) : (
-        <div className="overflow-y-auto flex flex-col gap-4">
+        <div className="overflow-y-auto flex flex-col gap-2">
           {datedCollections.map((col, i) => (
             <React.Fragment key={`${i}_${col.date}`}>
               <ChatCollection
@@ -105,7 +105,7 @@ function ChatCollection({
   date: string;
 }) {
   return (
-    <div className="border-b border-b-gray-lighter">
+    <div className="border-b border-b-gray-lighter py-2">
       <div className="font-semibold">{date}</div>
       <ChatsList data={data} onSelect={onSelect} onDelete={onDelete} />
     </div>
