@@ -4,8 +4,9 @@ from decouple import config
 from fastapi import Depends, Body, BackgroundTasks
 
 import schemas
-from chalicelib.core import events, projects, metadata, reset_password, log_tools, \
+from chalicelib.core import projects, metadata, reset_password, log_tools, \
     announcements, weekly_report, assist, mobile, tenants, boarding, notifications, webhook, users, saved_search, tags
+from chalicelib.core.events import events
 from chalicelib.core.issues import issues
 from chalicelib.core.sourcemaps import sourcemaps
 from chalicelib.core.metrics import custom_metrics

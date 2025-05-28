@@ -61,10 +61,10 @@ function ChatLog({
         ref={chatRef}
         style={{ maxHeight: 'calc(100svh - 165px)' }}
         className={
-          'overflow-y-auto relative flex flex-col items-center justify-between w-full h-full'
+          'overflow-y-auto relative flex flex-col items-center justify-between w-full h-full pt-4'
         }
       >
-        <div className={'flex flex-col gap-4 w-2/3 min-h-max'}>
+        <div className={'flex flex-col gap-2 w-2/3 min-h-max'}>
           {messages.map((msg, index) => (
             <React.Fragment key={msg.messageId ?? index}>
               <ChatMsg
@@ -90,6 +90,7 @@ function ChatLog({
               onClick={(query) => onSubmit(query)}
               projectId={projectId}
               threadId={threadId}
+              inChat
             />
           ) : null}
         </div>

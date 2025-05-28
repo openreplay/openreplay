@@ -49,7 +49,7 @@ function ChatHeader({
         <div className={'flex-1 justify-end flex items-center gap-4'}>
           {goBack ? (
             <div
-              onClick={onCreate}
+              onClick={() => onCreate()}
               className="font-semibold w-fit cursor-pointer hover:text-main flex items-center gap-2"
             >
               <SquarePen size={14} />

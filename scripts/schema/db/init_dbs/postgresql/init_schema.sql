@@ -314,7 +314,8 @@ CREATE TYPE issue_type AS ENUM (
     'custom',
     'js_exception',
     'mouse_thrashing',
-    'app_crash'
+    'app_crash',
+    'incident'
     );
 
 CREATE TABLE public.issues

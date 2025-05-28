@@ -791,7 +791,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.property_values_samples
     ENGINE = ReplacingMergeTree(_timestamp)
         ORDER BY (project_id, property_name, is_event_property);
 -- Incremental materialized view to get random examples of property values using $properties & properties
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_values_sampler_mvREFRESHEVERY30HOURTOproduct_analytics.property_values_samples AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_values_sampler_mv
+    REFRESH EVERY 30 HOUR TO product_analytics.property_values_samples AS
 SELECT project_id,
        property_name,
        TRUE                                                      AS is_event_property,

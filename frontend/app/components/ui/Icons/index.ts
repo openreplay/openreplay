@@ -211,6 +211,7 @@ export { default as Exclamation_circle_fill } from './exclamation_circle_fill';
 export { default as Exclamation_circle } from './exclamation_circle';
 export { default as Exclamation_triangle } from './exclamation_triangle';
 export { default as Explosion } from './explosion';
+export { default as Export_pdf } from './export_pdf';
 export { default as External_link_alt } from './external_link_alt';
 export { default as Eye_slash_fill } from './eye_slash_fill';
 export { default as Eye_slash } from './eye_slash';

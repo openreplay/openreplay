@@ -101,7 +101,7 @@ function ChatInput({
               <Tooltip title={'Cancel Editing'}>
                 <Button
                   onClick={cancelReplace}
-                  icon={<X size={16} />}
+                  icon={<X className="reset" size={16} />}
                   size={'small'}
                   shape={'circle'}
                   disabled={limited}
@@ -143,10 +143,10 @@ function SendButton({
         disabled={limited}
         icon={
           isProcessing ? (
-            <X size={16} strokeWidth={2} />
+            <X size={16} strokeWidth={2} className="reset" />
           ) : (
             <div className="bg-[#fff] text-main rounded-full">
-              <ArrowUp size={14} strokeWidth={2} />
+              <ArrowUp size={14} strokeWidth={2} className="reset" />
             </div>
           )
         }

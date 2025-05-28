@@ -168,7 +168,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.property_values_samples
     ENGINE = ReplacingMergeTree(_timestamp)
         ORDER BY (project_id, property_name, is_event_property);
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_values_sampler_mvREFRESHEVERY30HOURTOproduct_analytics.property_values_samples AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_values_sampler_mv
+    REFRESH EVERY 30 HOUR TO product_analytics.property_values_samples AS
 SELECT project_id,
        property_name,
        TRUE                                                      AS is_event_property,
@@ -219,7 +220,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_events_grouped
       ORDER BY (project_id, value)
       TTL _timestamp + INTERVAL 1 MONTH;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_events_grouped_mvREFRESHEVERY30MINUTETOproduct_analytics.autocomplete_events_grouped AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_events_grouped_mv
+    REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_events_grouped AS
 SELECT project_id,
        value,
        count(1)        AS data_count,
@@ -265,7 +267,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties_group
       ORDER BY (project_id, event_name, property_name, value)
       TTL _timestamp + INTERVAL 1 MONTH;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped_mvREFRESHEVERY30MINUTETOproduct_analytics.autocomplete_event_properties_grouped AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped_mv
+    REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_event_properties_grouped AS
 SELECT project_id,
        event_name,
        property_name,
