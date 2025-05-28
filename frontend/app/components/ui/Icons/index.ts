@@ -289,6 +289,7 @@ export { default as Funnel_hdd_fill } from './funnel_hdd_fill';
 export { default as Funnel_hourglass_top } from './funnel_hourglass_top';
 export { default as Funnel_image_fill } from './funnel_image_fill';
 export { default as Funnel_image } from './funnel_image';
+export { default as Funnel_message_circle_warning } from './funnel_message_circle_warning';
 export { default as Funnel_microchip } from './funnel_microchip';
 export { default as Funnel_mouse } from './funnel_mouse';
 export { default as Funnel_patch_exclamation_fill } from './funnel_patch_exclamation_fill';

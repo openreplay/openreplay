@@ -270,3 +270,15 @@ func (conn *Conn) InsertWebStatsPerformance(p *messages.PerformanceTrackAggr) er
 	)
 	return nil
 }
+
+func (conn *Conn) InsertIncident(sess *sessions.Session, e *messages.Incident) error {
+	sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
+	issueID := hashid.MobileIncidentID(sess.ProjectID, sess.SessionID, e.Timestamp)
+	if err := conn.bulks.Get("webIssues").Append(sess.ProjectID, issueID, "incident", e.Url); err != nil {
+		conn.log.Error(sessCtx, "insert incident issue err: %s", err)
+	}
+	if err := conn.bulks.Get("webIssueEvents").Append(sess.SessionID, issueID, e.Timestamp, truncSqIdx(e.MsgID()), nil); err != nil {
+		conn.log.Error(sessCtx, "insert incident issue event err: %s", err)
+	}
+	return nil
+}

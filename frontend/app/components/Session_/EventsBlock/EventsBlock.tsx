@@ -34,8 +34,9 @@ function EventsBlock(props: IProps) {
   const { notesStore, uxtestingStore, uiPlayerStore, sessionStore } =
     useStore();
   const session = sessionStore.current;
-  const { notesWithEvents } = session;
-  const { uxtVideo } = session;
+  const notesWithEvents = session.notesWithEvents;
+  const incidents = session.incidents;
+  const uxtVideo = session.uxtVideo;
   const { filteredEvents } = sessionStore;
   const query = sessionStore.eventsQuery;
   const { eventsIndex } = sessionStore;
@@ -86,26 +87,28 @@ function EventsBlock(props: IProps) {
         }
       });
     }
-    const eventsWithMobxNotes = [...notesWithEvents, ...notes]
-      .sort(sortEvents);
+    const eventsWithMobxNotes = [...incidents, ...notesWithEvents, ...notes, ].sort(sortEvents);
     const filteredTabEvents = query.length
-                              ? tabChangeEvents
-                                .filter((e => (e.activeUrl as string).includes(query)))
-                              : tabChangeEvents;
-    const list = mergeEventLists(
-      query.length > 0 ? filteredEvents : eventsWithMobxNotes,
-      filteredTabEvents
+      ? tabChangeEvents.filter((e) => (e.activeUrl as string).includes(query))
+      : tabChangeEvents;
+    return mergeEventLists(
+      filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
+      tabChangeEvents,
     )
-    if (zoomEnabled) {
-      return list.filter((e) =>
+      .filter((e) =>
         zoomEnabled
-        ? 'time' in e
-          ? e.time >= zoomStartTs && e.time <= zoomEndTs
-          : false
-        : true
-      ).filter((e: any) => !e.noteId && e.type !== 'TABCHANGE' && uiPlayerStore.showOnlySearchEvents ? e.isHighlighted : true);
-    }
-    return list;
+          ? 'time' in e
+            ? e.time >= zoomStartTs && e.time <= zoomEndTs
+            : false
+          : true,
+      )
+      .filter((e: any) =>
+        !e.noteId &&
+        e.type !== 'TABCHANGE' &&
+        uiPlayerStore.showOnlySearchEvents
+          ? e.isHighlighted
+          : true,
+      );
   }, [
     filteredLength,
     query,
@@ -114,15 +117,17 @@ function EventsBlock(props: IProps) {
     zoomEnabled,
     zoomStartTs,
     zoomEndTs,
-    uiPlayerStore.showOnlySearchEvents
+    uiPlayerStore.showOnlySearchEvents,
   ]);
+
   const findLastFitting = React.useCallback(
     (time: number) => {
-      if (!usedEvents.length) return 0;
-      let i = usedEvents.length - 1;
+      const allEvents = usedEvents.concat(incidents);
+      if (!allEvents.length) return 0;
+      let i = allEvents.length - 1;
       if (time > endTime / 2) {
-        while (i >= 0) {
-          const event = usedEvents[i];
+        while (i > 0) {
+          const event = allEvents[i];
           if ('time' in event && event.time <= time) break;
           i--;
         }
@@ -130,18 +135,18 @@ function EventsBlock(props: IProps) {
       }
       let l = 0;
       while (l < i) {
-        const event = usedEvents[l];
+        const event = allEvents[l];
         if ('time' in event && event.time >= time) break;
         l++;
       }
       return l;
     },
-    [usedEvents, time, endTime],
+    [usedEvents, incidents, time, endTime],
   );
 
   useEffect(() => {
     setCurrentTimeEventIndex(findLastFitting(time));
-  }, [])
+  }, [time]);
 
   const write = ({
     target: { value },
@@ -195,9 +200,10 @@ function EventsBlock(props: IProps) {
     const event = usedEvents[index];
     const isNote = 'noteId' in event;
     const isTabChange = 'type' in event && event.type === 'TABCHANGE';
+    const isIncident = 'type' in event && event.type === 'INCIDENT';
     const isCurrent = index === currentTimeEventIndex;
     const isPrev = index < currentTimeEventIndex;
-    const isSearched = event.isHighlighted
+    const isSearched = event.isHighlighted;
 
     return (
       <EventGroupWrapper
@@ -213,6 +219,7 @@ function EventsBlock(props: IProps) {
         showSelection={!playing}
         isNote={isNote}
         isTabChange={isTabChange}
+        isIncident={isIncident}
         isPrev={isPrev}
         filterOutNote={filterOutNote}
         setActiveTab={setActiveTab}

@@ -750,6 +750,13 @@ class MessageCodec(Codec):
                 stalled=self.read_uint(reader)
             )
 
+        if message_id == 87:
+            return Incident(
+                label=self.read_string(reader),
+                start_time=self.read_int(reader),
+                end_time=self.read_int(reader)
+            )
+
         if message_id == 89:
             return LongAnimationTask(
                 name=self.read_string(reader),

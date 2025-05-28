@@ -291,6 +291,7 @@ import {
   Funnel_hourglass_top,
   Funnel_image_fill,
   Funnel_image,
+  Funnel_message_circle_warning,
   Funnel_microchip,
   Funnel_mouse,
   Funnel_patch_exclamation_fill,
@@ -1370,6 +1371,9 @@ const SVG = (props: Props) => {
   
     // case 'funnel/image':
     case 'funnel/image': return <Funnel_image width={ width } height={ height } fill={ fill } />;
+  
+    // case 'funnel/message-circle-warning':
+    case 'funnel/message-circle-warning': return <Funnel_message_circle_warning width={ width } height={ height } fill={ fill } />;
   
     // case 'funnel/microchip':
     case 'funnel/microchip': return <Funnel_microchip width={ width } height={ height } fill={ fill } />;

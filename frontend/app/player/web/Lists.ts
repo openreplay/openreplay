@@ -62,6 +62,7 @@ const SIMPLE_LIST_NAMES = [
   'exceptions',
   'profiles',
   'frustrations',
+  'incidents',
 ] as const;
 const MARKED_LIST_NAMES = [
   'log',
