@@ -26,10 +26,11 @@ interface Props {
   autoplay: boolean;
   onClose?: () => void;
   isHighlight?: boolean;
+  isFull?: boolean;
 }
 
 function ClipsPlayer(props: Props) {
-  const { clip, currentIndex, isCurrent, onClose, isHighlight } = props;
+  const { clip, currentIndex, isCurrent, onClose, isHighlight, isFull } = props;
   const { sessionStore } = useStore();
   const { prefetched } = sessionStore;
   const [windowActive, setWindowActive] = useState(!document.hidden);
@@ -146,6 +147,7 @@ function ClipsPlayer(props: Props) {
             onClose={onClose}
             range={clip.range}
             session={session!}
+            isFull={isFull}
           />
           <ClipPlayerContent
             message={clip.message}
@@ -153,6 +155,7 @@ function ClipsPlayer(props: Props) {
             autoplay={props.autoplay}
             range={clip.range}
             session={session!}
+            isFull={isFull}
           />
         </>
       ) : (

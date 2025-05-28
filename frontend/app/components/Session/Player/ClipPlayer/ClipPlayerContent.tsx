@@ -19,13 +19,14 @@ interface Props {
   isHighlight?: boolean;
   message?: string;
   isMobile?: boolean;
+  isFull?: boolean;
 }
 
 function ClipPlayerContent(props: Props) {
   const playerContext = React.useContext<IPlayerContext>(PlayerContext);
   const screenWrapper = React.useRef<HTMLDivElement>(null);
   const { time } = playerContext.store.get();
-  const { range } = props;
+  const { range, isFull } = props;
 
   React.useEffect(() => {
     if (!playerContext.player) return;
@@ -90,7 +91,7 @@ function ClipPlayerContent(props: Props) {
             <div className="leading-none font-medium">{props.message}</div>
           </div>
         ) : null}
-        <ClipPlayerControls session={props.session} range={props.range} />
+        <ClipPlayerControls isFull={isFull} session={props.session} range={props.range} />
       </div>
     </div>
   );

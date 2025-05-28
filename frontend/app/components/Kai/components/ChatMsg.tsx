@@ -27,12 +27,14 @@ function ChatMsg({
   canEdit,
   message,
   chatTitle,
+  onReplay,
 }: {
   message: Message;
   userName?: string;
   canEdit?: boolean;
   siteId: string;
   chatTitle: string | null;
+  onReplay: (session: any) => void;
 }) {
   const { t } = useTranslation();
   const [metric, setMetric] = React.useState<Widget | null>(null);
@@ -73,7 +75,6 @@ function ChatMsg({
       .then(async ({ jsPDF }) => {
         const doc = new jsPDF();
         const blockWidth = 170; // mm
-        doc.addImage('/assets/img/logo-img.png', 20, 15, 30, 5);
         const content = bodyRef.current!.cloneNode(true) as HTMLElement;
         if (userPrompt) {
           const titleHeader = document.createElement('h2');
@@ -81,6 +82,18 @@ function ChatMsg({
           titleHeader.style.marginBottom = '10px';
           content.prepend(titleHeader);
         }
+        // insert logo  /assets/img/logo-img.png
+        const logo = new Image();
+        logo.src = '/assets/img/logo-img.png';
+        logo.style.width = '130px';
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        container.style.marginBottom = '10mm';
+        container.style.width = `${blockWidth}mm`;
+        container.appendChild(logo);
+        content.prepend(container);
         content.querySelectorAll('ul').forEach((ul) => {
           const frag = document.createDocumentFragment();
           ul.querySelectorAll('li').forEach((li) => {
@@ -123,9 +136,9 @@ function ChatMsg({
             doc.save((chatTitle ?? 'document') + '.pdf');
           },
           // top, bottom, ?, left
-          margin: [5, 10, 20, 20],
+          margin: [10, 10, 20, 20],
           x: 0,
-          y: 15,
+          y: 0,
           // Target width
           width: blockWidth,
           // Window width for rendering
@@ -172,7 +185,7 @@ function ChatMsg({
   }, [metricData, chart_data]);
   return (
     <div className={cn('flex gap-2', isUser ? 'flex-row-reverse' : 'flex-row')}>
-      <div className={'mt-1 flex flex-col group/actions max-w-[880px]'}>
+      <div className={'mt-1 flex flex-col group/actions max-w-[60svw]'}>
         <div
           className={cn(
             'markdown-body',
@@ -195,8 +208,18 @@ function ChatMsg({
         {message.sessions ? (
           <div className="flex flex-col">
             {message.sessions.map((session) => (
-              <div className="shadow border rounded-xl overflow-hidden mb-2">
-                <SessionItem key={session.sessionId} session={session} slim />
+              <div className="shadow border rounded-2xl overflow-hidden mb-2">
+                <SessionItem
+                  disableUser
+                  key={session.sessionId}
+                  session={session}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onReplay(session);
+                  }}
+                  slim
+                />
               </div>
             ))}
           </div>

@@ -5,6 +5,7 @@ import Ideas from './Ideas';
 import { Loader } from 'UI';
 import { kaiStore } from '../KaiStore';
 import { observer } from 'mobx-react-lite';
+import EmbedPlayer from './EmbedPlayer';
 
 function ChatLog({
   projectId,
@@ -21,6 +22,7 @@ function ChatLog({
   chatTitle: string | null;
   onCancel: () => void;
 }) {
+  const [embedSession, setEmbedSession] = React.useState<any>(null);
   const messages = kaiStore.messages;
   const loading = kaiStore.loadingChat;
   const chatRef = React.useRef<HTMLDivElement>(null);
@@ -64,6 +66,12 @@ function ChatLog({
           'overflow-y-auto relative flex flex-col items-center justify-between w-full h-full pt-4'
         }
       >
+        {embedSession ? (
+          <EmbedPlayer
+            session={embedSession}
+            onClose={() => setEmbedSession(null)}
+          />
+        ) : null}
         <div className={'flex flex-col gap-2 w-2/3 min-h-max'}>
           {messages.map((msg, index) => (
             <React.Fragment key={msg.messageId ?? index}>
@@ -71,6 +79,7 @@ function ChatLog({
                 siteId={projectId}
                 message={msg}
                 chatTitle={chatTitle}
+                onReplay={(session) => setEmbedSession(session)}
                 canEdit={
                   processingStage === null &&
                   msg.isUser &&

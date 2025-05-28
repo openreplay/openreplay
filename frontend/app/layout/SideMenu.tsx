@@ -29,6 +29,7 @@ import {
   spotOnlyCats,
 } from './data';
 import { useTranslation } from 'react-i18next';
+import { tag } from '@/components/Session_/Inspector/inspector.css';
 
 const { Text } = Typography;
 
@@ -104,7 +105,7 @@ function SideMenu(props: Props) {
                 modules.includes(MODULES.USABILITY_TESTS),
               item.isAdmin && !isAdmin,
               item.isEnterprise && !isEnterprise,
-              item.key === MENU.KAI && !hasAi
+              item.key === MENU.KAI && !hasAi,
             ].some((cond) => cond);
 
             return { ...item, hidden: isHidden };
@@ -118,7 +119,15 @@ function SideMenu(props: Props) {
           hidden: allItemsHidden,
         };
       });
-  }, [isAdmin, isEnterprise, isPreferencesActive, modules, spotOnly, siteId, i18n.language]);
+  }, [
+    isAdmin,
+    isEnterprise,
+    isPreferencesActive,
+    modules,
+    spotOnly,
+    siteId,
+    i18n.language,
+  ]);
 
   const menuRoutes: any = {
     [MENU.EXIT]: () =>
@@ -216,7 +225,10 @@ function SideMenu(props: Props) {
                               color={isActive ? 'teal' : 'black'}
                             />
                           }
-                          className={cn('!rounded-lg hover-fill-teal', isActive ? 'color-main' : 'color-black')}
+                          className={cn(
+                            '!rounded-lg hover-fill-teal',
+                            isActive ? 'color-main' : 'color-black',
+                          )}
                         >
                           {item.label}
                         </Menu.Item>
@@ -235,7 +247,10 @@ function SideMenu(props: Props) {
                             />
                           }
                           style={{ paddingLeft: '20px' }}
-                          className={cn('!rounded-lg !pe-0', isActive ? 'color-main' : 'color-black')}
+                          className={cn(
+                            '!rounded-lg !pe-0',
+                            isActive ? 'color-main' : 'color-black',
+                          )}
                           itemIcon={
                             item.leading ? (
                               <Icon
@@ -255,13 +270,6 @@ function SideMenu(props: Props) {
                             }}
                           >
                             {item.label}
-                            <Tag
-                              color="cyan"
-                              bordered={false}
-                              className="text-xs ml-2"
-                            >
-                              {t('Beta')}
-                            </Tag>
                           </div>
                         </Menu.Item>
                       );
@@ -285,7 +293,20 @@ function SideMenu(props: Props) {
                             })}
                             key={child.key}
                           >
-                            {child.label}
+                            <div className="flex items-center justify-between">
+                              <span>{child.label}</span>
+                              {child.tag ? (
+                                <div className="ml-auto">
+                                  <Tag
+                                    color={child.tag.color}
+                                    bordered={child.tag.border}
+                                    className="text-xs ml-2"
+                                  >
+                                    {child.tag.label}
+                                  </Tag>
+                                </div>
+                              ) : null}
+                            </div>
                           </Menu.Item>
                         ))}
                       </Menu.SubMenu>
@@ -301,7 +322,10 @@ function SideMenu(props: Props) {
                           />
                         }
                         style={{ paddingLeft: '20px' }}
-                        className={cn('!rounded-lg hover-fill-teal', isActive ? 'color-main' : 'color-black')}
+                        className={cn(
+                          '!rounded-lg hover-fill-teal',
+                          isActive ? 'color-main' : 'color-black',
+                        )}
                         itemIcon={
                           item.leading ? (
                             <Icon
@@ -312,7 +336,20 @@ function SideMenu(props: Props) {
                           ) : null
                         }
                       >
-                        {item.label}
+                        <div className="flex items-center justify-between">
+                          <span>{item.label}</span>
+                          {item.tag ? (
+                            <div className="ml-auto">
+                              <Tag
+                                color={item.tag.color}
+                                bordered={item.tag.border}
+                                className="text-xs ml-2"
+                              >
+                                {item.tag.label}
+                              </Tag>
+                            </div>
+                          ) : null}
+                        </div>
                       </Menu.Item>
                     );
                   })}
