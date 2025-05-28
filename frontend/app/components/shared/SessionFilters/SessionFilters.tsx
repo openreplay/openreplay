@@ -35,14 +35,11 @@ function SessionFilters() {
 
   useEffect(() => {
     // Add default location/screen filter if no filters are present
-    if (searchStore.instance.filters.length === 0) {
-      searchStore.addFilterByKeyAndValue(
-        activeProject?.platform === 'web'
-          ? FilterKey.LOCATION
-          : FilterKey.VIEW_MOBILE,
-        '',
-        'isAny',
-      );
+    if (
+      searchStore.instance.filters.length === 0 &&
+      activeProject?.platform === 'web'
+    ) {
+      searchStore.addFilterByKeyAndValue(FilterKey.LOCATION, '', 'isAny');
     }
     void reloadTags();
   }, [projectsStore.activeSiteId, activeProject]);
@@ -65,7 +62,7 @@ function SessionFilters() {
   };
 
   const onFilterMove = (newFilters: any) => {
-    searchStore.updateSearch({ ...appliedFilter, filters: newFilters});
+    searchStore.updateSearch({ ...appliedFilter, filters: newFilters });
     // debounceFetch();
   };
 
