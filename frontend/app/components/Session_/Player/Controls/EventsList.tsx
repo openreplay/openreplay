@@ -45,7 +45,7 @@ function EventsList() {
           style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
         />
       ))}
-      {incidents.map((i) => {
+      {incidents?.map((i) => {
         const width = getTimelineEventWidth(endTime, (i as any).time, (i as any).endTime - sessionStart);
         return (
           <Tooltip title={i.label} key={(i as any).startTime}>
