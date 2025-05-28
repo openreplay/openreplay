@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import copy from 'copy-to-clipboard';
 import { Button, Tooltip } from 'antd';
-import { ClipboardCopy, ClipboardCheck } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 
 interface Props {
   content: string;
@@ -30,10 +30,10 @@ function CopyButton({
     setTimeout(() => {
       setCopied(false);
     }, 1000);
-  }
+  };
   const copyHandler = () => {
     setCopied(true);
-    const contentIsGetter = !!getHtml
+    const contentIsGetter = !!getHtml;
     const textContent = contentIsGetter ? getHtml() : content;
     const isHttps = window.location.protocol === 'https:';
     if (!isHttps) {
@@ -43,15 +43,16 @@ function CopyButton({
     }
     const blob = new Blob([textContent], { type: format });
     const cbItem = new ClipboardItem({
-      [format]: blob
-    })
-    navigator.clipboard.write([cbItem])
-      .catch(e => {
+      [format]: blob,
+    });
+    navigator.clipboard
+      .write([cbItem])
+      .catch((e) => {
         copy(textContent);
       })
       .finally(() => {
-        reset()
-      })
+        reset();
+      });
   };
 
   if (isIcon) {
@@ -62,7 +63,11 @@ function CopyButton({
           onClick={copyHandler}
           size={size}
           icon={
-            copied ? <ClipboardCheck size={16} /> : <ClipboardCopy size={16} />
+            copied ? (
+              <Check strokeWidth={2} size={16} />
+            ) : (
+              <Copy strokeWidth={2} size={16} />
+            )
           }
         />
       </Tooltip>

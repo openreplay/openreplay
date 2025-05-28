@@ -25,6 +25,11 @@ img {
   stroke-width: 1.5px;
 }
 
+.reset .lucide {
+  stroke-width: revert-layer;
+}
+
+
 .ant-pagination-simple-pager input {
   min-width: 80px;
 }

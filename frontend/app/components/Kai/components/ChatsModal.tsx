@@ -1,7 +1,7 @@
 import React from 'react';
 import { splitByDate } from '../utils';
 import { useQuery } from '@tanstack/react-query';
-import { MessagesSquare, Trash } from 'lucide-react';
+import { MessagesSquare, Trash, X } from 'lucide-react';
 import { kaiService } from 'App/services';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
@@ -11,9 +11,11 @@ import { observer } from 'mobx-react-lite';
 function ChatsModal({
   onSelect,
   projectId,
+  onHide,
 }: {
   onSelect: (threadId: string, title: string) => void;
   projectId: string;
+  onHide: () => void;
 }) {
   const { t } = useTranslation();
   const { usage } = kaiStore;
@@ -45,12 +47,21 @@ function ChatsModal({
   };
   return (
     <div
-      className={'flex flex-col gap-2 p-4 mr-1 rounded-lg bg-white my-auto'}
-      style={{ height: '95svh', width: 310 }}
+      className={'flex flex-col gap-2 p-4 mr-1 rounded-lg bg-white'}
+      style={{ height: 'calc(-100px + 100svh)', marginTop: 60, width: 310 }}
     >
       <div className={'flex items-center font-semibold text-lg gap-2'}>
         <MessagesSquare size={16} />
         <span>{t('Previous Chats')}</span>
+        <div className="ml-auto" />
+        <div>
+          <X
+            size={16}
+            strokeWidth={2}
+            className="cursor-pointer hover:text-main"
+            onClick={onHide}
+          />
+        </div>
       </div>
       {usage.percent > 80 ? (
         <div className="text-red text-sm">
@@ -65,7 +76,7 @@ function ChatsModal({
           {t('Loading chats')}...
         </div>
       ) : (
-        <div className="overflow-y-auto flex flex-col gap-2">
+        <div className="overflow-y-auto flex flex-col gap-4">
           {datedCollections.map((col, i) => (
             <React.Fragment key={`${i}_${col.date}`}>
               <ChatCollection
@@ -94,8 +105,8 @@ function ChatCollection({
   date: string;
 }) {
   return (
-    <div>
-      <div className="text-disabled-text">{date}</div>
+    <div className="border-b border-b-gray-lighter">
+      <div className="font-semibold">{date}</div>
       <ChatsList data={data} onSelect={onSelect} onDelete={onDelete} />
     </div>
   );

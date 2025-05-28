@@ -38,6 +38,7 @@ function KaiChat() {
     showModal(
       <ChatsModal
         projectId={activeSiteId!}
+        onHide={hideModal}
         onSelect={(threadId: string, title: string) => {
           setTitle(title);
           setThreadId(threadId);
@@ -118,7 +119,9 @@ function KaiChat() {
       style={{ maxWidth: PANEL_SIZES.maxWidth }}
     >
       <div
-        className={'w-full rounded-lg overflow-hidden bg-white relative h-full'}
+        className={
+          'w-full rounded-lg overflow-hidden bg-white relative h-full reset'
+        }
       >
         <ChatHeader
           chatTitle={chatTitle}
@@ -147,7 +150,11 @@ function KaiChat() {
                 userName={userName}
               />
             </div>
-            <div className={'text-disabled-text absolute bottom-4 left-0 right-0 text-center text-sm'}>
+            <div
+              className={
+                'text-disabled-text absolute bottom-4 left-0 right-0 text-center text-sm'
+              }
+            >
               OpenReplay AI can make mistakes. Verify its outputs.
             </div>
           </>

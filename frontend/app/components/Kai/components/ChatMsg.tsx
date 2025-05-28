@@ -1,5 +1,5 @@
 import React from 'react';
-import { CopyButton } from 'UI';
+import { CopyButton, Icon } from 'UI';
 import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
 import Markdown from 'react-markdown';
@@ -9,7 +9,6 @@ import {
   ThumbsUp,
   ThumbsDown,
   SquarePen,
-  FileDown,
   Clock,
   ChartLine,
 } from 'lucide-react';
@@ -203,31 +202,28 @@ function ChatMsg({
           </div>
         ) : null}
         {isUser ? (
-          <div className="invisible group-hover/actions:visible mt-2">
-            <Tooltip title={t('Edit')}>
-              <div
-                onClick={onEdit}
-                className={cn(
-                  'ml-auto flex items-center gap-2 px-2',
-                  'rounded-lg cursor-pointer',
-                  'hover:text-main w-fit',
-                  canEdit && !isEditing ? '' : 'hidden',
-                )}
-              >
+          <div className="invisible group-hover/actions:visible mt-1 ml-auto flex gap-2 items-center">
+            {canEdit && !isEditing ? (
+              <IconButton onClick={onEdit} tooltip={t('Edit')}>
                 <SquarePen size={16} />
-              </div>
-            </Tooltip>
-            <div
-              onClick={onCancelEdit}
-              className={cn(
-                'ml-auto flex items-center gap-2 px-2',
-                'rounded-lg border border-gray-medium text-xs cursor-pointer',
-                'hover:border-main hover:text-main w-fit',
-                isEditing ? '' : 'hidden',
-              )}
-            >
-              <div>{t('Cancel')}</div>
-            </div>
+              </IconButton>
+            ) : null}
+            {isEditing ? (
+              <Button
+                onClick={onCancelEdit}
+                type="text"
+                size="small"
+                className={'text-xs'}
+              >
+                {t('Cancel')}
+              </Button>
+            ) : null}
+            <CopyButton
+              getHtml={() => bodyRef.current?.innerHTML}
+              content={text}
+              isIcon
+              format={'text/html'}
+            />
           </div>
         ) : (
           <div className={'flex items-center gap-2'}>
@@ -238,14 +234,14 @@ function ChatMsg({
               tooltip="Like this answer"
               onClick={() => onFeedback('like', messageId)}
             >
-              <ThumbsUp size={16} />
+              <ThumbsUp strokeWidth={2} size={16} />
             </IconButton>
             <IconButton
               active={feedback === false}
               tooltip="Dislike this answer"
               onClick={() => onFeedback('dislike', messageId)}
             >
-              <ThumbsDown size={16} />
+              <ThumbsDown strokeWidth={2} size={16} />
             </IconButton>
             {supports_visualization ? (
               <IconButton
@@ -253,7 +249,7 @@ function ChatMsg({
                 onClick={getChart}
                 processing={loadingChart}
               >
-                <ChartLine size={16} />
+                <ChartLine strokeWidth={2} size={16} />
               </IconButton>
             ) : null}
             <CopyButton
@@ -267,7 +263,7 @@ function ChatMsg({
               tooltip="Export as PDF"
               onClick={onExport}
             >
-              <FileDown size={16} />
+              <Icon name="export-pdf" size={16} />
             </IconButton>
           </div>
         )}

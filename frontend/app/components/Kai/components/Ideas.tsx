@@ -8,10 +8,12 @@ function Ideas({
   onClick,
   projectId,
   threadId = null,
+  inChat,
 }: {
   onClick: (query: string) => void;
   projectId: string;
   threadId?: string | null;
+  inChat?: boolean;
 }) {
   const { t } = useTranslation();
   const { data: suggestedPromptIdeas = [], isPending } = useQuery({
@@ -35,7 +37,7 @@ function Ideas({
   return (
     <div>
       <div className={'flex items-center gap-2 mb-1 text-gray-dark'}>
-        <b>Suggested Ideas:</b>
+        <b>{inChat ? 'Suggested Follow-up Questions' : 'Suggested Ideas:'}</b>
       </div>
       {isPending ? (
         <div className="animate-pulse text-disabled-text">
