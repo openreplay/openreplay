@@ -71,6 +71,7 @@ function WidgetView({
       const params = new URLSearchParams(location.search);
       const mk = params.get('mk');
       if (mk) {
+        metricStore.init();
         const selectedCard = CARD_LIST(t).find((c) => c.key === mk) as CardType;
         if (selectedCard) {
           const cardData: any = {
