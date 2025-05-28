@@ -15,7 +15,7 @@ const tagIcons = {
   [types.CLICK_RAGE]: <Angry size={14} />,
   [types.CRASH]: <Skull size={14} />,
   [types.TAP_RAGE]: <Angry size={14} />,
-  [types.INCIDENTS]: <MessageCircleWarning size={14} />,
+  [types.INCIDENT]: <MessageCircleWarning size={14} />,
 } as Record<string, any>;
 
 function SessionTags() {

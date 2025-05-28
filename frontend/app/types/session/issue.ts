@@ -9,7 +9,7 @@ export const types = {
   MOUSE_THRASHING: 'mouse_thrashing',
   TAP_RAGE: 'tap_rage',
   DEAD_CLICK: 'dead_click',
-  INCIDENTS: 'incidents',
+  INCIDENT: 'incident',
 } as const;
 
 type TypeKeys = keyof typeof types;
@@ -76,11 +76,12 @@ export const issues_types = [
     icon: 'cursor-trash',
   },
   {
-    type: types.INCIDENTS,
+    type: types.INCIDENT,
     visible: true,
     order: 7,
     name: 'Incidents',
     icon: 'funnel/message-circle-warning',
+    // isEvent: false,
   }
   // { 'type': 'memory', 'visible': true, 'order': 4, 'name': 'High Memory', 'icon': 'funnel/sd-card' },
   // { 'type': 'vault', 'visible': true, 'order': 5, 'name': 'Vault', 'icon': 'safe' },
