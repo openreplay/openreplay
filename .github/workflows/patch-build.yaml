@@ -119,7 +119,6 @@ jobs:
         build_managed() {
             local service=$1
             local version=$2
-            local log_file="/tmp/managed_${service}.txt"
 
             echo "Building managed service: $service"
             clone_msaas
@@ -132,9 +131,9 @@ jobs:
 
             local build_cmd="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh"
 
-            if ! eval "$build_cmd" >>"$log_file" 2>&1; then
+            echo "Executing: $build_cmd"
+            if ! eval "$build_cmd" 2>&1; then
                 echo "Build failed for $service"
-                cat "$log_file"
                 exit 1
             fi
         }
@@ -157,12 +156,13 @@ jobs:
             local version=$2
             local chart_path="$WORKING_DIR/scripts/helmcharts/openreplay/charts/$service/Chart.yaml"
 
+            # Ensure we're in the original working directory/repository
             cd "$WORKING_DIR"
             yq eval ".AppVersion = \"$version\"" -i "$chart_path"
-            cd -
             git add "$chart_path"
             git commit -m "Increment $service chart version to $version"
             git push --set-upstream origin "$BRANCH_NAME"
+            cd -
         }
 
         # Main execution
