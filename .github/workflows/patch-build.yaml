@@ -74,78 +74,168 @@ jobs:
         MSAAS_REPO_CLONE_TOKEN: ${{ secrets.MSAAS_REPO_CLONE_TOKEN }}
         MSAAS_REPO_URL: ${{ secrets.MSAAS_REPO_URL }}
         MSAAS_REPO_FOLDER: /tmp/msaas
+        SERVICES_INPUT: ${{ github.event.inputs.services }}
       run: |
-        set -exo pipefail
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git checkout -b $BRANCH_NAME
-        working_dir=$(pwd)
-        function image_version(){
-          local service=$1
-          chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$service/Chart.yaml"
-          current_version=$(yq eval '.AppVersion' $chart_path)
-          new_version=$(echo $current_version | awk -F. '{$NF += 1 ; print $1"."$2"."$3}')
-          echo $new_version
-          # yq eval ".AppVersion = \"$new_version\"" -i $chart_path
+        #!/bin/bash
+        set -euo pipefail
+
+        # Configuration
+        readonly WORKING_DIR=$(pwd)
+        readonly BUILD_SCRIPT_NAME="build.sh"
+        readonly BACKEND_SERVICES_FILE="/tmp/backend.txt"
+
+        # Initialize git configuration
+        setup_git() {
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git checkout -b "$BRANCH_NAME"
         }
-        function clone_msaas() {
-          [ -d $MSAAS_REPO_FOLDER ] || {
-          git clone -b dev --recursive https://x-access-token:$MSAAS_REPO_CLONE_TOKEN@$MSAAS_REPO_URL $MSAAS_REPO_FOLDER
-          cd $MSAAS_REPO_FOLDER
-          cd openreplay && git fetch origin && git checkout main # This have to be changed to specific tag
-          git log -1
-          cd $MSAAS_REPO_FOLDER
-          bash git-init.sh
-          git checkout
-          }
+
+        # Get and increment image version
+        image_version() {
+            local service=$1
+            local chart_path="$WORKING_DIR/scripts/helmcharts/openreplay/charts/$service/Chart.yaml"
+            local current_version new_version
+
+            current_version=$(yq eval '.AppVersion' "$chart_path")
+            new_version=$(echo "$current_version" | awk -F. '{$NF += 1; print $1"."$2"."$3}')
+            echo "$new_version"
         }
-        function build_managed() {
-          local service=$1
-          local version=$2
-          echo building managed
-          clone_msaas
-          if [[ $service == 'chalice' ]]; then
-            cd $MSAAS_REPO_FOLDER/openreplay/api
-          else
-            cd $MSAAS_REPO_FOLDER/openreplay/$service
-          fi
-          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/managed_${service}.txt 2>&1 || { echo "Build failed for $service"; cat /tmp/managed_${service}.txt; exit 1; }
+
+        # Clone MSAAS repository if not exists
+        clone_msaas() {
+            if [[ ! -d "$MSAAS_REPO_FOLDER" ]]; then
+                git clone -b dev --recursive "https://x-access-token:${MSAAS_REPO_CLONE_TOKEN}@${MSAAS_REPO_URL}" "$MSAAS_REPO_FOLDER"
+                cd "$MSAAS_REPO_FOLDER"
+                cd openreplay && git fetch origin && git checkout main
+                git log -1
+                cd "$MSAAS_REPO_FOLDER"
+                bash git-init.sh
+                git checkout
+            fi
         }
-        # Checking for backend images
-        ls backend/cmd >> /tmp/backend.txt
-        echo Services: "${{ github.event.inputs.services }}"
-        IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}" 
-        BUILD_SCRIPT_NAME="build.sh"
-        # Build FOSS
-        for SERVICE in "${SERVICES[@]}"; do
-          # Check if service is backend
-          if grep -q $SERVICE /tmp/backend.txt; then 
-            cd backend 
-            foss_build_args="nil $SERVICE"
-            ee_build_args="ee $SERVICE"
-          else 
-            [[ $SERVICE == 'chalice' || $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && cd $working_dir/api || cd $SERVICE
-            [[ $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && BUILD_SCRIPT_NAME="build_${SERVICE}.sh"
-            ee_build_args="ee"
-          fi  
-          version=$(image_version $SERVICE)
-          echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
-          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
-          echo IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
-          IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
-          if [[ "$SERVICE" != "chalice" && "$SERVICE" != "frontend" ]]; then
-            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
-            echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
-          else
-            build_managed $SERVICE $version
-          fi
-          cd $working_dir
-          chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$SERVICE/Chart.yaml"
-          yq eval ".AppVersion = \"$version\"" -i $chart_path
-          git add $chart_path
-          git commit -m "Increment $SERVICE chart version"
-          git push --set-upstream origin $BRANCH_NAME
-        done
+
+        # Build managed services
+        build_managed() {
+            local service=$1
+            local version=$2
+            local log_file="/tmp/managed_${service}.txt"
+
+            echo "Building managed service: $service"
+            clone_msaas
+
+            if [[ $service == 'chalice' ]]; then
+                cd "$MSAAS_REPO_FOLDER/openreplay/api"
+            else
+                cd "$MSAAS_REPO_FOLDER/openreplay/$service"
+            fi
+
+            local build_cmd="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh"
+
+            if ! eval "$build_cmd" >>"$log_file" 2>&1; then
+                echo "Build failed for $service"
+                cat "$log_file"
+                exit 1
+            fi
+        }
+
+        # Build service with given arguments
+        build_service() {
+            local service=$1
+            local version=$2
+            local build_args=$3
+            local build_script=${4:-$BUILD_SCRIPT_NAME}
+
+            local command="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash $build_script $build_args"
+            echo "Executing: $command"
+            eval "$command"
+        }
+
+        # Update chart version and commit changes
+        update_chart_version() {
+            local service=$1
+            local version=$2
+            local chart_path="$WORKING_DIR/scripts/helmcharts/openreplay/charts/$service/Chart.yaml"
+
+            cd "$WORKING_DIR"
+            yq eval ".AppVersion = \"$version\"" -i "$chart_path"
+            cd -
+            git add "$chart_path"
+            git commit -m "Increment $service chart version to $version"
+            git push --set-upstream origin "$BRANCH_NAME"
+        }
+
+        # Main execution
+        main() {
+            setup_git
+
+            # Get backend services list
+            ls backend/cmd >"$BACKEND_SERVICES_FILE"
+
+            # Parse services input (fix for GitHub Actions syntax)
+            echo "Services: ${SERVICES_INPUT:-$1}"
+            IFS=',' read -ra services <<<"${SERVICES_INPUT:-$1}"
+
+            # Process each service
+            for service in "${services[@]}"; do
+                echo "Processing service: $service"
+                cd "$WORKING_DIR"
+
+                local foss_build_args="" ee_build_args="" build_script="$BUILD_SCRIPT_NAME"
+
+                # Determine build configuration based on service type
+                if grep -q "$service" "$BACKEND_SERVICES_FILE"; then
+                    # Backend service
+                    cd backend
+                    foss_build_args="nil $service"
+                    ee_build_args="ee $service"
+                else
+                    # Non-backend service
+                    case "$service" in
+                    chalice | alerts | crons)
+                        cd "$WORKING_DIR/api"
+                        ;;
+                    *)
+                        cd "$service"
+                        ;;
+                    esac
+
+                    # Special build scripts for alerts/crons
+                    if [[ $service == 'alerts' || $service == 'crons' ]]; then
+                        build_script="build_${service}.sh"
+                    fi
+
+                    ee_build_args="ee"
+                fi
+
+                # Get version and build
+                local version
+                version=$(image_version "$service")
+
+                # Build FOSS and EE versions
+                build_service "$service" "$version" "$foss_build_args"
+                build_service "$service" "$version" "$ee_build_args"
+
+                # Build managed version for specific services
+                if [[ "$service" != "chalice" && "$service" != "frontend" ]]; then
+                    echo "Nothing to build in managed for service $service"
+                else
+                    build_managed "$service" "$version"
+                fi
+
+                # Update chart and commit
+                update_chart_version "$service" "$version"
+            done
+            cd "$WORKING_DIR"
+
+            # Cleanup
+            rm -f "$BACKEND_SERVICES_FILE"
+        }
+
+        echo "Working directory: $WORKING_DIR"
+        # Run main function with all arguments
+        main "$SERVICES_INPUT"
+        
 
     - name: Create Pull Request
       uses: repo-sync/pull-request@v2
