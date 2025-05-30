@@ -50,8 +50,8 @@ class JIRAIntegration(base.BaseIntegration):
             cur.execute(
                 cur.mogrify(
                     """SELECT username, token, url
-                        FROM public.jira_cloud 
-                        WHERE user_id=%(user_id)s;""",
+                       FROM public.jira_cloud
+                       WHERE user_id = %(user_id)s;""",
                     {"user_id": self._user_id})
             )
             data = helper.dict_to_camel_case(cur.fetchone())
@@ -95,10 +95,9 @@ class JIRAIntegration(base.BaseIntegration):
     def add(self, username, token, url, obfuscate=False):
         with pg_client.PostgresClient() as cur:
             cur.execute(
-                cur.mogrify("""\
-                        INSERT INTO public.jira_cloud(username, token, user_id,url)
-                        VALUES (%(username)s, %(token)s, %(user_id)s,%(url)s)
-                        RETURNING  username, token, url;""",
+                cur.mogrify(""" \
+                            INSERT INTO public.jira_cloud(username, token, user_id, url)
+                            VALUES (%(username)s, %(token)s, %(user_id)s, %(url)s) RETURNING  username, token, url;""",
                             {"user_id": self._user_id, "username": username,
                              "token": token, "url": url})
             )
@@ -112,9 +111,10 @@ class JIRAIntegration(base.BaseIntegration):
     def delete(self):
         with pg_client.PostgresClient() as cur:
             cur.execute(
-                cur.mogrify("""\
-                        DELETE FROM public.jira_cloud
-                        WHERE user_id=%(user_id)s;""",
+                cur.mogrify(""" \
+                            DELETE
+                            FROM public.jira_cloud
+                            WHERE user_id = %(user_id)s;""",
                             {"user_id": self._user_id})
             )
             return {"state": "success"}
@@ -125,7 +125,7 @@ class JIRAIntegration(base.BaseIntegration):
                 changes={
                     "username": data.username,
                     "token": data.token if len(data.token) > 0 and data.token.find("***") == -1 \
-                        else self.integration.token,
+                        else self.integration["token"],
                     "url": str(data.url)
                 },
                 obfuscate=True
