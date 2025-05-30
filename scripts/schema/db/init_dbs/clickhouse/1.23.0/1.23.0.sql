@@ -75,16 +75,14 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_properties_extrac
 SELECT project_id,
        `$event_name`                                                    AS event_name,
        property_name,
-       JSONType(JSONExtractRaw(toString(`$properties`), property_name)) AS value_type
+       toString(JSONType(JSONExtractRaw(toString(`$properties`), property_name))) AS value_type
 FROM product_analytics.events
-         ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_cproperties_extractor
-    TO product_analytics.event_properties AS
+         ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
+UNION DISTINCT
 SELECT project_id,
        `$event_name`                                                   AS event_name,
        property_name,
-       JSONType(JSONExtractRaw(toString(`properties`), property_name)) AS value_type
+       toString(JSONType(JSONExtractRaw(toString(`properties`), property_name))) AS value_type
 FROM product_analytics.events
          ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name;
 
@@ -129,10 +127,8 @@ FROM product_analytics.events
                     WHERE (all_properties.display_name != ''
                         OR all_properties.description != '')
                       AND is_event_property) AS old_data
-                   ON (events.project_id = old_data.project_id AND property_name = old_data.property_name);
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.all_cproperties_extractor_mv
-    TO product_analytics.all_properties AS
+                   ON (events.project_id = old_data.project_id AND property_name = old_data.property_name)
+UNION DISTINCT
 SELECT project_id,
        property_name,
        TRUE AS is_event_property,
@@ -179,7 +175,7 @@ FROM product_analytics.events
 WHERE randCanonical() < 0.5 -- This randomly skips inserts
   AND value != ''
 LIMIT 2 BY project_id,property_name
-UNION ALL
+UNION DISTINCT
 SELECT project_id,
        property_name,
        TRUE                                                     AS is_event_property,
@@ -250,8 +246,17 @@ SELECT project_id,
        _timestamp
 FROM product_analytics.events
          ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
-WHERE length(value) > 0
-  AND isNull(toFloat64OrNull(value))
+WHERE length(value) > 0 AND isNull(toFloat64OrNull(value))
+  AND _timestamp > now() - INTERVAL 1 MONTH
+UNION DISTINCT
+SELECT project_id,
+       `$event_name`                                             AS event_name,
+       property_name,
+       JSONExtractString(toString(`properties`), property_name) AS value,
+       _timestamp
+FROM product_analytics.events
+         ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name
+WHERE length(value) > 0 AND isNull(toFloat64OrNull(value))
   AND _timestamp > now() - INTERVAL 1 MONTH;
 
 

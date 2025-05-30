@@ -682,23 +682,20 @@ CREATE TABLE IF NOT EXISTS product_analytics.event_properties
       ORDER BY (project_id, event_name, property_name, value_type);
 
 -- ----------------- This is experimental, if it doesn't work, we need to do it in db worker -------------
--- Incremental materialized view to fill event_properties using $properties
+-- Incremental materialized view to fill event_properties using $properties & properties
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_properties_extractor_mv
     TO product_analytics.event_properties AS
 SELECT project_id,
        `$event_name`                                                    AS event_name,
        property_name,
-       JSONType(JSONExtractRaw(toString(`$properties`), property_name)) AS value_type
+       toString(JSONType(JSONExtractRaw(toString(`$properties`), property_name))) AS value_type
 FROM product_analytics.events
-         ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name;
-
--- Incremental materialized view to fill event_properties using properties
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_cproperties_extractor
-    TO product_analytics.event_properties AS
+         ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
+UNION DISTINCT
 SELECT project_id,
        `$event_name`                                                   AS event_name,
        property_name,
-       JSONType(JSONExtractRaw(toString(`properties`), property_name)) AS value_type
+       toString(JSONType(JSONExtractRaw(toString(`properties`), property_name))) AS value_type
 FROM product_analytics.events
          ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name;
 -- -------- END ---------
@@ -724,7 +721,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.all_properties
 
 
 -- ----------------- This is experimental, if it doesn't work, we need to do it in db worker -------------
--- Incremental materialized view to fill all_properties using $properties
+-- Incremental materialized view to fill all_properties using $properties and properties
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.all_properties_extractor_mv
     TO product_analytics.all_properties AS
 SELECT project_id,
@@ -748,11 +745,8 @@ FROM product_analytics.events
                     WHERE (all_properties.display_name != ''
                         OR all_properties.description != '')
                       AND is_event_property) AS old_data
-                   ON (events.project_id = old_data.project_id AND property_name = old_data.property_name);
-
--- Incremental materialized view to fill all_properties using properties
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.all_cproperties_extractor_mv
-    TO product_analytics.all_properties AS
+                   ON (events.project_id = old_data.project_id AND property_name = old_data.property_name)
+UNION DISTINCT
 SELECT project_id,
        property_name,
        TRUE AS is_event_property,
@@ -802,7 +796,7 @@ FROM product_analytics.events
 WHERE randCanonical() < 0.5 -- This randomly skips inserts
   AND value != ''
 LIMIT 2 BY project_id,property_name
-UNION ALL
+UNION DISTINCT
 -- using union because each table should be the target of 1 single refreshable MV
 SELECT project_id,
        property_name,
@@ -843,7 +837,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_events_grouped
       ORDER BY (project_id, value)
       TTL _timestamp + INTERVAL 1 MONTH;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_events_grouped_mvREFRESHEVERY30MINUTETOproduct_analytics.autocomplete_events_grouped AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_events_grouped_mv
+    REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_events_grouped AS
 SELECT project_id,
        value,
        count(1)        AS data_count,
@@ -872,8 +867,17 @@ SELECT project_id,
        _timestamp
 FROM product_analytics.events
          ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
-WHERE length(value) > 0
-  AND isNull(toFloat64OrNull(value))
+WHERE length(value) > 0 AND isNull(toFloat64OrNull(value))
+  AND _timestamp > now() - INTERVAL 1 MONTH
+UNION DISTINCT
+SELECT project_id,
+       `$event_name`                                             AS event_name,
+       property_name,
+       JSONExtractString(toString(`properties`), property_name) AS value,
+       _timestamp
+FROM product_analytics.events
+         ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name
+WHERE length(value) > 0 AND isNull(toFloat64OrNull(value))
   AND _timestamp > now() - INTERVAL 1 MONTH;
 
 
@@ -889,7 +893,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties_group
       ORDER BY (project_id, event_name, property_name, value)
       TTL _timestamp + INTERVAL 1 MONTH;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped_mvREFRESHEVERY30MINUTETOproduct_analytics.autocomplete_event_properties_grouped AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped_mv
+    REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_event_properties_grouped AS
 SELECT project_id,
        event_name,
        property_name,
