@@ -1,7 +1,7 @@
 export const WATCHED_TAGS_KEY = '__or__watched_tags__'
 
 class TagWatcher {
-  intervals: Record<string, ReturnType<typeof setInterval>> = {}
+  interval: ReturnType<typeof setInterval> | null = null
   tags: { id: number; selector: string }[] = []
   observer: IntersectionObserver
   private readonly sessionStorage: Storage
@@ -57,9 +57,12 @@ class TagWatcher {
 
   setTags(tags: { id: number; selector: string }[]) {
     this.tags = tags
-    this.intervals = {}
-    tags.forEach((tag) => {
-      this.intervals[tag.id] = setInterval(() => {
+    if (this.interval) {
+      clearInterval(this.interval)
+      this.interval = null
+    }
+    this.interval = setInterval(() => {
+      this.tags.forEach((tag) => {
         const possibleEls = document.querySelectorAll(tag.selector)
         if (possibleEls.length > 0) {
           const el = possibleEls[0]
@@ -67,23 +70,23 @@ class TagWatcher {
           el.__or_watcher_tagname = tag.id
           this.observer.observe(el)
         }
-      }, 500)
-    })
+      })
+    }, 500)
   }
 
   onTagRendered(tagId: number) {
-    if (this.intervals[tagId]) {
-      clearInterval(this.intervals[tagId])
+    if (this.tags.findIndex(t => t.id === tagId)) {
+      this.tags = this.tags.filter((tag) => tag.id !== tagId)
     }
     this.onTag(tagId)
   }
 
   clear() {
-    this.tags.forEach((tag) => {
-      clearInterval(this.intervals[tag.id])
-    })
     this.tags = []
-    this.intervals = {}
+    if (this.interval) {
+      clearInterval(this.interval)
+      this.interval = null
+    }
     this.observer.disconnect()
   }
 }

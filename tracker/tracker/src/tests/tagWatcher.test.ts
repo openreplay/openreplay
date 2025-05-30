@@ -52,8 +52,7 @@ describe('TagWatcher', () => {
       { id: 1, selector: 'div' },
       { id: 2, selector: 'span' },
     ])
-    expect(watcher.intervals).toHaveProperty('1')
-    expect(watcher.intervals).toHaveProperty('2')
+    expect(watcher.interval).not.toBeNull()
   })
 
   test('fetchTags sets tags and updates sessionStorage', async () => {
@@ -85,7 +84,7 @@ describe('TagWatcher', () => {
     )
   })
 
-  test('setTags sets intervals for each tag', () => {
+  test('setTags sets interval', () => {
     const watcher = new TagWatcher({
       sessionStorage: sessionStorageMock, errLog: errLogMock, onTag
     })
@@ -93,8 +92,7 @@ describe('TagWatcher', () => {
       { id: 1, selector: 'div' },
       { id: 2, selector: 'p' },
     ])
-    expect(watcher.intervals).toHaveProperty('1')
-    expect(watcher.intervals).toHaveProperty('2')
+    expect(watcher.interval).not.toBeNull();
     expect(mockObserve).not.toHaveBeenCalled() // No elements to observe initially
   })
 
@@ -121,7 +119,7 @@ describe('TagWatcher', () => {
     ])
     watcher.clear()
     expect(watcher.tags).toEqual([])
-    expect(watcher.intervals).toEqual({})
+    expect(watcher.interval).toBeNull()
     expect(watcher.observer.disconnect).toHaveBeenCalled()
   })
 })
