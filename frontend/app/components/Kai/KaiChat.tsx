@@ -19,6 +19,7 @@ function KaiChat() {
   const setTitle = kaiStore.setTitle;
   const userId = userStore.account.id;
   const userName = userStore.account.name;
+  const limited = kaiStore.usage.percent >= 100;
   const { activeSiteId } = projectsStore;
   const [section, setSection] = React.useState<'intro' | 'chat'>('intro');
   const [threadId, setThreadId] = React.useState<string | null>(null);
@@ -148,6 +149,7 @@ function KaiChat() {
                 onAsk={onCreate}
                 projectId={activeSiteId}
                 userName={userName}
+                limited={limited}
               />
             </div>
             <div

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lightbulb, MoveRight } from 'lucide-react';
+import cn from 'classnames';
 import { useQuery } from '@tanstack/react-query';
 import { kaiService } from 'App/services';
 import { useTranslation } from 'react-i18next';
@@ -9,11 +9,13 @@ function Ideas({
   projectId,
   threadId = null,
   inChat,
+  limited,
 }: {
   onClick: (query: string) => void;
   projectId: string;
   threadId?: string | null;
   inChat?: boolean;
+  limited?: boolean;
 }) {
   const { t } = useTranslation();
   const { data: suggestedPromptIdeas = [], isPending } = useQuery({
@@ -46,7 +48,12 @@ function Ideas({
       ) : (
         <div className="flex gap-2 flex-wrap">
           {ideas.map((title) => (
-            <IdeaItem key={title} onClick={onClick} title={title} />
+            <IdeaItem
+              limited={limited}
+              key={title}
+              onClick={onClick}
+              title={title}
+            />
           ))}
         </div>
       )}
@@ -57,16 +64,19 @@ function Ideas({
 function IdeaItem({
   title,
   onClick,
+  limited,
 }: {
   title: string;
   onClick: (query: string) => void;
+  limited?: boolean;
 }) {
   return (
     <div
-      onClick={() => onClick(title)}
-      className={
-        'cursor-pointer text-gray-dark hover:text-black rounded-full px-4 py-2 shadow border'
-      }
+      onClick={() => (limited ? null : onClick(title))}
+      className={cn(
+        'cursor-pointer text-gray-dark hover:text-black rounded-full px-4 py-2 shadow border',
+        limited ? 'bg-gray-lightest cursor-not-allowed' : 'bg-white',
+      )}
     >
       {title}
     </div>

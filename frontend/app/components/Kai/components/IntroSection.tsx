@@ -7,11 +7,13 @@ function IntroSection({
   onCancel,
   userName,
   projectId,
+  limited,
 }: {
   onAsk: (query: string) => void;
   projectId: string;
   onCancel: () => void;
   userName: string;
+  limited?: boolean;
 }) {
   const isLoading = false;
   return (
@@ -27,7 +29,7 @@ function IntroSection({
           isArea
         />
         <div className={'absolute top-full flex flex-col gap-2 mt-4'}>
-          <Ideas onClick={(query) => onAsk(query)} projectId={projectId} />
+          <Ideas limited={limited} onClick={(query) => onAsk(query)} projectId={projectId} />
         </div>
       </div>
     </>
