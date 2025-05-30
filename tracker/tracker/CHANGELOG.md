@@ -6,8 +6,8 @@
 ```js
 import { tracker } from '@openreplay/tracker'
 
-// call incident function and pass label, startTime, and endTime (all fields are optional)
-tracker.incident({ label: 'incidedent', startTime: Date.now() })
+// call incident function and pass label, startTime, and endTime (label and endTime are optional)
+tracker.incident({ label: 'incident', startTime: Date.now() })
 
 ```
 
