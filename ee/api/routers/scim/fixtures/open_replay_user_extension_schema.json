@@ -1,0 +1,35 @@
+{
+  "id": "urn:ietf:params:scim:schemas:extensions:openreplay:2.0:User",
+  "name": "User",
+  "description": "User Account Extension",
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Schema"],
+  "attributes": [
+    {
+      "name": "permissions",
+      "type": "string",
+      "multiValued": true,
+      "description": "Permissions granted to the users of the group.",
+      "required": false,
+      "caseExact": true,
+      "canonicalValues": ["Session Replay", "Developer Tools", "Dashboard", "Assist (Live)", "Assist (Call)", "Spots", "Change Spot Visibility"],
+      "mutability": "readWrite",
+      "returned": "default"
+    },
+    {
+      "name": "projectKeys",
+      "type": "string",
+      "multiValued": true,
+      "description": "A list of project keys associated with the group.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default"
+    }
+  ],
+  "meta": {
+    "resourceType": "Schema",
+    "location": "/v2/Schemas/urn:ietf:params:scim:schemas:extensions:openreplay:2.0:User",
+    "created": "2025-04-17T15:48:00Z",
+    "lastModified": "2025-04-17T15:48:00Z"
+  }
+}
