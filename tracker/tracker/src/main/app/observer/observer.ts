@@ -43,6 +43,15 @@ async function parseUseEl(
 
     let [url, symbolId] = href.split('#')
 
+    if (!url && !symbolId) {
+      console.warn('Openreplay: Invalid xlink:href or href found on <use>.')
+      return
+    }
+
+    if (iconCache[symbolId]) {
+      return iconCache[symbolId]
+    }
+
     // happens if svg spritemap is local, fastest case for us
     if (!url && symbolId) {
       const symbol = document.querySelector(href)
@@ -61,16 +70,6 @@ async function parseUseEl(
         return
       }
     }
-
-    if (!url && !symbolId) {
-      console.warn('Openreplay: Invalid xlink:href or href found on <use>.')
-      return
-    }
-
-    if (iconCache[symbolId]) {
-      return iconCache[symbolId]
-    }
-
     let svgDoc: Document
     if (svgUrlCache[url]) {
       if (svgUrlCache[url] === 1) {
