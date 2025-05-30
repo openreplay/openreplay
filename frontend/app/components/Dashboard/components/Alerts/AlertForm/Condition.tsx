@@ -90,6 +90,7 @@ function Condition({
         <label className="w-1/6 flex-shrink-0 font-normal">{t('is')}</label>
         <div className="w-2/6 flex items-center">
           <Select
+            popupMatchSelectWidth={false}
             placeholder={t('Select Condition')}
             options={localizedConditions}
             name="operator"

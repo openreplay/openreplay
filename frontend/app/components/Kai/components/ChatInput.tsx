@@ -25,7 +25,9 @@ function ChatInput({
     kaiStore.setQueryText(text);
   };
 
-  const submit = () => {
+  const submit = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (limited) {
       return;
     }
@@ -80,7 +82,7 @@ function ChatInput({
     );
   }
   return (
-    <div className="relative">
+    <div className="relative bg-white">
       <Input
         onPressEnter={submit}
         onKeyDown={(e) => {

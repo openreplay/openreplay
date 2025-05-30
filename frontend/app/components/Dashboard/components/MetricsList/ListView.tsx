@@ -7,19 +7,18 @@ import {
   Button,
   Dropdown,
   Modal as AntdModal,
-  Avatar, TableColumnType, Spin
+  Avatar,
+  TableColumnType,
+  Spin,
 } from 'antd';
-import {
-  EditOutlined,
-  DeleteOutlined,
-} from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { EllipsisVertical } from 'lucide-react';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
 import { useHistory } from 'react-router';
 import { withSiteId } from 'App/routes';
-import { Icon } from 'UI';
+import { Icon, confirm } from 'UI';
 import cn from 'classnames';
 import { TYPE_ICONS, TYPE_NAMES } from 'App/constants/card';
 import Widget from 'App/mstore/types/widget';
@@ -45,7 +44,7 @@ const ListView: React.FC<Props> = ({
   toggleSelection,
   disableSelection = false,
   inLibrary = false,
-  loading = false
+  loading = false,
 }) => {
   const { t } = useTranslation();
   const [editingMetricId, setEditingMetricId] = useState<number | null>(null);
@@ -63,7 +62,7 @@ const ListView: React.FC<Props> = ({
       <Text strong>
         {Math.min(
           (metricStore.pageSize || 10) * (metricStore.page || 1),
-          list.length
+          list.length,
         )}
       </Text>{' '}
       {t('of')}&nbsp;<Text strong>{list.length}</Text>&nbsp;{t('cards')}
@@ -124,15 +123,17 @@ const ListView: React.FC<Props> = ({
 
   const onMenuClick = async (metric: Widget, { key }: { key: string }) => {
     if (key === 'delete') {
-      AntdModal.confirm({
-        title: t('Confirm'),
-        content: t('Are you sure you want to permanently delete this card?'),
-        okText: t('Yes, delete'),
-        cancelText: t('No'),
-        onOk: async () => {
-          await metricStore.delete(metric);
-        }
-      });
+      if (
+        await confirm({
+          header: t('Delete Card'),
+          confirmButton: t('Delete'),
+          confirmation: t(
+            'Are you sure you want to permanently delete this card? This action cannot be undone.',
+          ),
+        })
+      ) {
+        await metricStore.delete(metric);
+      }
     }
     if (key === 'rename') {
       setEditingMetricId(metric.metricId);
@@ -155,7 +156,7 @@ const ListView: React.FC<Props> = ({
 
   const menuItems = [
     { key: 'rename', icon: <EditOutlined />, label: t('Rename') },
-    { key: 'delete', icon: <DeleteOutlined />, label: t('Delete') }
+    { key: 'delete', icon: <DeleteOutlined />, label: t('Delete') },
   ];
 
   const renderTitle = (_text: string, metric: Widget) => (
@@ -201,9 +202,10 @@ const ListView: React.FC<Props> = ({
       key: 'title',
       className: 'cap-first pl-4',
       sorter: true,
-      sortOrder: metricStore.sort.field === 'name' ? metricStore.sort.order : undefined,
+      sortOrder:
+        metricStore.sort.field === 'name' ? metricStore.sort.order : undefined,
       width: inLibrary ? '31%' : '25%',
-      render: renderTitle
+      render: renderTitle,
     },
     {
       title: t('Owner'),
@@ -211,19 +213,25 @@ const ListView: React.FC<Props> = ({
       key: 'owner',
       className: 'capitalize',
       sorter: true,
-      sortOrder: metricStore.sort.field === 'owner_email' ? metricStore.sort.order : undefined,
+      sortOrder:
+        metricStore.sort.field === 'owner_email'
+          ? metricStore.sort.order
+          : undefined,
       width: inLibrary ? '31%' : '25%',
-      render: renderOwner
+      render: renderOwner,
     },
     {
       title: t('Last Modified'),
       dataIndex: 'edited_at',
       key: 'lastModified',
       sorter: true,
-      sortOrder: metricStore.sort.field === 'edited_at' ? metricStore.sort.order : undefined,
+      sortOrder:
+        metricStore.sort.field === 'edited_at'
+          ? metricStore.sort.order
+          : undefined,
       width: inLibrary ? '31%' : '25%',
-      render: renderLastModified
-    }
+      render: renderLastModified,
+    },
   ];
 
   if (!inLibrary) {
@@ -232,14 +240,14 @@ const ListView: React.FC<Props> = ({
       key: 'options',
       className: 'text-right',
       width: '5%',
-      render: renderOptions
+      render: renderOptions,
     });
   }
 
   const handleTableChange = (
     pag: TablePaginationConfig,
     _filters: Record<string, (string | number | boolean)[] | null>,
-    sorterParam: SorterResult<Widget> | SorterResult<Widget>[]
+    sorterParam: SorterResult<Widget> | SorterResult<Widget>[],
   ) => {
     const sorter = Array.isArray(sorterParam) ? sorterParam[0] : sorterParam;
     let order = sorter.order;
@@ -268,19 +276,19 @@ const ListView: React.FC<Props> = ({
         onRow={
           inLibrary
             ? (record) => ({
-              onClick: () => {
-                if (!disableSelection) toggleSelection?.(record?.metricId);
-              }
-            })
+                onClick: () => {
+                  if (!disableSelection) toggleSelection?.(record?.metricId);
+                },
+              })
             : undefined
         }
         rowSelection={
           !disableSelection
             ? {
-              selectedRowKeys: selectedList,
-              onChange: (keys) => toggleSelection && toggleSelection(keys),
-              columnWidth: 16
-            }
+                selectedRowKeys: selectedList,
+                onChange: (keys) => toggleSelection && toggleSelection(keys),
+                columnWidth: 16,
+              }
             : undefined
         }
         pagination={{
@@ -292,7 +300,7 @@ const ListView: React.FC<Props> = ({
           showLessItems: true,
           showTotal: () => totalMessage,
           size: 'small',
-          simple: true
+          simple: true,
         }}
       />
       <AntdModal
