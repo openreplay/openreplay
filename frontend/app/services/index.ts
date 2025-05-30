@@ -18,6 +18,7 @@ import SessionService from './SessionService';
 import UserService from './UserService';
 import UxtestingService from './UxtestingService';
 import WebhookService from './WebhookService';
+
 import SpotService from './spotService';
 import LoginService from './loginService';
 import FilterService from './FilterService';
@@ -26,6 +27,8 @@ import CustomFieldService from './CustomFieldService';
 import IntegrationsService from './IntegrationsService';
 import ProjectsService from './ProjectsService';
 import KaiService from '@/components/Kai/KaiService';
+import SignalService from './SignalService';
+import BillingService from '@/services/BillingService';
 
 export const dashboardService = new DashboardService();
 export const metricService = new MetricService();
@@ -39,6 +42,8 @@ export const recordingsService = new RecordingsService();
 export const configService = new ConfigService();
 export const alertsService = new AlertsService();
 export const webhookService = new WebhookService();
+export const signalService = new SignalService();
+
 export const healthService = new HealthService();
 export const fflagsService = new FFlagsService();
 export const assistStatsService = new AssistStatsService();
@@ -54,6 +59,7 @@ export const integrationsService = new IntegrationsService();
 export const searchService = new SearchService();
 export const projectsService = new ProjectsService();
 export const kaiService = new KaiService();
+export const billingService = new BillingService();
 
 export const services = [
   projectsService,
@@ -69,6 +75,7 @@ export const services = [
   configService,
   alertsService,
   webhookService,
+  signalService,
   healthService,
   fflagsService,
   assistStatsService,
@@ -83,4 +90,5 @@ export const services = [
   integrationsService,
   searchService,
   kaiService,
+  billingService,
 ];
