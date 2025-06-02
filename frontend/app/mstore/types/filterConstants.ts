@@ -34,6 +34,7 @@ export interface Filter {
   value?: string[];
   propertyOrder?: string;
   filters?: Filter[];
+  autoOpen?: boolean;
 }
 
 export const OPERATORS = {

@@ -9,10 +9,10 @@ interface UnifiedFilterListProps {
   filters: Filter[];
   header?: React.ReactNode;
   filterSelection?: React.ReactNode;
-  handleRemove: (key: string) => void;
-  handleUpdate: (key: string, updatedFilter: any) => void;
+  handleRemove: (index: string) => void;
+  handleUpdate: (index: string, updatedFilter: Filter) => void;
   handleAdd: (newFilter: Filter) => void;
-  handleMove: (draggedIndex: number, newPosition: number) => void;
+  handleMove?: (draggedIndex: number, newPosition: number) => void;
   isDraggable?: boolean;
   showIndices?: boolean;
   readonly?: boolean;
@@ -141,7 +141,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
         !(dragInd === hoverIndex && hoverPosition === 'top') &&
         !(dragInd === hoverIndex - 1 && hoverPosition === 'bottom')
       ) {
-        handleMove(dragInd, newPosition);
+        handleMove?.(dragInd, newPosition);
       }
 
       setHoveredItem({ i: null, position: null });

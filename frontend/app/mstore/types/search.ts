@@ -1,13 +1,13 @@
 import {
   CUSTOM_RANGE,
   DATE_RANGE_VALUES,
-  getDateRangeFromValue
+  getDateRangeFromValue,
 } from 'App/dateRange';
 import FilterItem from 'App/mstore/types/filterItem';
 import { makeAutoObservable, observable } from 'mobx';
 import { LAST_24_HOURS, LAST_30_DAYS, LAST_7_DAYS } from 'Types/app/period';
 import { roundToNextMinutes } from '@/utils';
-// import { Filter } from '@/mstore/types/filterConstants';
+import { Filter } from '@/mstore/types/filterConstants';
 
 // @ts-ignore
 const rangeValue = DATE_RANGE_VALUES.LAST_24_HOURS;
@@ -75,7 +75,7 @@ export default class Search {
 
   constructor(initialData?: Partial<ISearch>) {
     makeAutoObservable(this, {
-      filters: observable
+      filters: observable,
     });
     Object.assign(this, {
       name: '',
@@ -105,7 +105,7 @@ export default class Search {
       strict: false,
       eventsOrder: 'then',
       limit: 10,
-      ...initialData
+      ...initialData,
     });
   }
 
@@ -145,7 +145,7 @@ export default class Search {
   toSearch() {
     const js: any = { ...this };
     js.filters = this.filters.map((filter: any) =>
-      new FilterItem(filter).toJson()
+      new FilterItem(filter).toJson(),
     );
 
     const { startDate, endDate } = this.getDateRange(
@@ -182,7 +182,7 @@ export default class Search {
       case CUSTOM_RANGE:
         if (!customStartDate || !customEndDate) {
           throw new Error(
-            'Start date and end date must be provided for CUSTOM_RANGE.'
+            'Start date and end date must be provided for CUSTOM_RANGE.',
           );
         }
         startDate = customStartDate;
