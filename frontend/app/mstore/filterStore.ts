@@ -54,7 +54,6 @@ export default class FilterStore {
     this.initCommonFilters();
   }
 
-  // Fixed typo: sietId -> siteId
   getEventOptions = (siteId: string): FilterOption[] => {
     return this.getFilters(siteId)
       .filter((filter: Filter) => filter.isEvent)
