@@ -65,24 +65,27 @@ CREATE TABLE IF NOT EXISTS product_analytics.event_properties
     event_name    String,
     property_name String,
     value_type    String,
+    auto_captured BOOL,
 
     _timestamp    DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
-      ORDER BY (project_id, event_name, property_name, value_type);
+      ORDER BY (project_id, event_name, property_name, value_type, auto_captured);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_properties_extractor_mv
     TO product_analytics.event_properties AS
 SELECT project_id,
        `$event_name`                                                    AS event_name,
        property_name,
-       toString(JSONType(JSONExtractRaw(toString(`$properties`), property_name))) AS value_type
+       toString(JSONType(JSONExtractRaw(toString(`$properties`), property_name))) AS value_type,
+       `$auto_captured` AS auto_captured
 FROM product_analytics.events
          ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
 UNION DISTINCT
 SELECT project_id,
        `$event_name`                                                   AS event_name,
        property_name,
-       toString(JSONType(JSONExtractRaw(toString(`properties`), property_name))) AS value_type
+       toString(JSONType(JSONExtractRaw(toString(`properties`), property_name))) AS value_type,
+       `$auto_captured` AS auto_captured
 FROM product_analytics.events
          ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name;
 
