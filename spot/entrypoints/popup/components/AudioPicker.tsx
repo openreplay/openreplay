@@ -1,4 +1,4 @@
-import { Component, For } from "solid-js";
+import { Component } from "solid-js";
 import micOff from "~/assets/mic-off-red.svg";
 import micOn from "~/assets/mic-on-dark.svg";
 import Dropdown from "~/entrypoints/popup/Dropdown";

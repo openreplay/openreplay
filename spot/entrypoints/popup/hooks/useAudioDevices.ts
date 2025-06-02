@@ -51,7 +51,7 @@ export function useAudioDevices() {
           void checkAudioDevices();
         }
       });
-    } else if (audioDevices.length > 0) {
+    } else if (audioDevices.length > 0 && selectedAudioDevice() === "") {
       chrome.storage.local.set({ audioPerm: granted });
       setAudioDevices(audioDevices);
       setSelectedAudioDevice(audioDevices[0]?.id || "");
