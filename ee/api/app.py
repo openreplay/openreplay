@@ -9,6 +9,7 @@ from decouple import config
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.wsgi import WSGIMiddleware
 from psycopg import AsyncConnection
 from psycopg.rows import dict_row
 from starlette import status
@@ -21,7 +22,15 @@ from chalicelib.utils import pg_client, ch_client
 from crons import core_crons, ee_crons, core_dynamic_crons
 from routers import core, core_dynamic
 from routers import ee
-from routers.subs import insights, metrics, v1_api, health, usability_tests, spot, product_analytics
+from routers.subs import (
+    insights,
+    metrics,
+    v1_api,
+    health,
+    usability_tests,
+    spot,
+    product_analytics,
+)
 from routers.subs import v1_api_ee
 
 if config("ENABLE_SSO", cast=bool, default=True):
@@ -34,7 +43,6 @@ logging.basicConfig(level=loglevel)
 
 
 class ORPYAsyncConnection(AsyncConnection):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, row_factory=dict_row, **kwargs)
 
@@ -43,7 +51,7 @@ class ORPYAsyncConnection(AsyncConnection):
 async def lifespan(app: FastAPI):
     # Startup
     logging.info(">>>>> starting up <<<<<")
-    ap_logger = logging.getLogger('apscheduler')
+    ap_logger = logging.getLogger("apscheduler")
     ap_logger.setLevel(loglevel)
 
     app.schedule = AsyncIOScheduler()
@@ -53,12 +61,23 @@ async def lifespan(app: FastAPI):
     await events_queue.init()
     app.schedule.start()
 
-    for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs + traces.cron_jobs + ee_crons.ee_cron_jobs:
+    for job in (
+        core_crons.cron_jobs
+        + core_dynamic_crons.cron_jobs
+        + traces.cron_jobs
+        + ee_crons.ee_cron_jobs
+    ):
         app.schedule.add_job(id=job["func"].__name__, **job)
 
     ap_logger.info(">Scheduled jobs:")
     for job in app.schedule.get_jobs():
-        ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
+        ap_logger.info(
+            {
+                "Name": str(job.id),
+                "Run Frequency": str(job.trigger),
+                "Next Run": str(job.next_run_time),
+            }
+        )
 
     database = {
         "host": config("pg_host", default="localhost"),
@@ -69,9 +88,12 @@ async def lifespan(app: FastAPI):
         "application_name": "AIO" + config("APP_NAME", default="PY"),
     }
 
-    database = psycopg_pool.AsyncConnectionPool(kwargs=database, connection_class=ORPYAsyncConnection,
-                                                min_size=config("PG_AIO_MINCONN", cast=int, default=1),
-                                                max_size=config("PG_AIO_MAXCONN", cast=int, default=5), )
+    database = psycopg_pool.AsyncConnectionPool(
+        kwargs=database,
+        connection_class=ORPYAsyncConnection,
+        min_size=config("PG_AIO_MINCONN", cast=int, default=1),
+        max_size=config("PG_AIO_MAXCONN", cast=int, default=5),
+    )
     app.state.postgresql = database
 
     # App listening
@@ -86,16 +108,24 @@ async def lifespan(app: FastAPI):
     await pg_client.terminate()
 
 
-app = FastAPI(root_path=config("root_path", default="/api"), docs_url=config("docs_url", default=""),
-              redoc_url=config("redoc_url", default=""), lifespan=lifespan)
+app = FastAPI(
+    root_path=config("root_path", default="/api"),
+    docs_url=config("docs_url", default=""),
+    redoc_url=config("redoc_url", default=""),
+    lifespan=lifespan,
+)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
-@app.middleware('http')
+@app.middleware("http")
 async def or_middleware(request: Request, call_next):
     from chalicelib.core import unlock
+
     if not unlock.is_valid():
-        return JSONResponse(content={"errors": ["expired license"]}, status_code=status.HTTP_403_FORBIDDEN)
+        return JSONResponse(
+            content={"errors": ["expired license"]},
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
 
     if helper.TRACK_TIME:
         now = time.time()
@@ -110,8 +140,10 @@ async def or_middleware(request: Request, call_next):
         now = time.time() - now
         if now > 2:
             now = round(now, 2)
-            logging.warning(f"Execution time: {now} s for {request.method}: {request.url.path}")
-    response.headers["x-robots-tag"] = 'noindex, nofollow'
+            logging.warning(
+                f"Execution time: {now} s for {request.method}: {request.url.path}"
+            )
+    response.headers["x-robots-tag"] = "noindex, nofollow"
     return response
 
 
@@ -162,3 +194,4 @@ if config("ENABLE_SSO", cast=bool, default=True):
     app.include_router(scim.public_app)
     app.include_router(scim.app)
     app.include_router(scim.app_apikey)
+    app.mount("/sso/scim/v2", WSGIMiddleware(scim.scim_app))

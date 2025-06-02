@@ -4,30 +4,14 @@ from psycopg2.extensions import AsIs
 
 from chalicelib.utils import pg_client
 from routers.scim import helpers
-from routers.scim.resource_config import (
-    ProviderResource,
-    ClientResource,
-    ResourceId,
-    ClientInput,
-    ProviderInput,
-)
 
-
-def convert_client_resource_update_input_to_provider_resource_update_input(
-    tenant_id: int, client_input: ClientInput
-) -> ProviderInput:
-    result = {}
-    if "displayName" in client_input:
-        result["name"] = client_input["displayName"]
-    if "members" in client_input:
-        members = client_input["members"] or []
-        result["user_ids"] = [int(member["value"]) for member in members]
-    return result
+from scim2_models import Error, Resource
+from scim2_server.utils import SCIMException
 
 
 def convert_provider_resource_to_client_resource(
-    provider_resource: ProviderResource,
-) -> ClientResource:
+    provider_resource: dict,
+) -> dict:
     members = provider_resource["users"] or []
     return {
         "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
@@ -38,7 +22,6 @@ def convert_provider_resource_to_client_resource(
             "lastModified": provider_resource["updated_at"].strftime(
                 "%Y-%m-%dT%H:%M:%SZ"
             ),
-            "location": f"Groups/{provider_resource['role_id']}",
         },
         "displayName": provider_resource["name"],
         "members": [
@@ -52,36 +35,97 @@ def convert_provider_resource_to_client_resource(
     }
 
 
-def get_active_resource_count(tenant_id: int, filter_clause: str | None = None) -> int:
-    where_and_clauses = [
-        f"roles.tenant_id = {tenant_id}",
-        "roles.deleted_at IS NULL",
-    ]
-    if filter_clause is not None:
-        where_and_clauses.append(filter_clause)
-    where_clause = " AND ".join(where_and_clauses)
+def query_resources(tenant_id: int) -> list[dict]:
+    query = _main_select_query(tenant_id)
     with pg_client.PostgresClient() as cur:
+        cur.execute(query)
+        items = cur.fetchall()
+        return [convert_provider_resource_to_client_resource(item) for item in items]
+
+
+def get_resource(resource_id: str, tenant_id: int) -> dict | None:
+    query = _main_select_query(tenant_id, resource_id)
+    with pg_client.PostgresClient() as cur:
+        cur.execute(query)
+        item = cur.fetchone()
+        if item:
+            return convert_provider_resource_to_client_resource(item)
+        return None
+
+
+def delete_resource(resource_id: str, tenant_id: int) -> None:
+    _update_resource_sql(
+        resource_id=resource_id,
+        tenant_id=tenant_id,
+        deleted_at=datetime.now(),
+    )
+
+
+def search_existing(tenant_id: int, resource: Resource) -> dict | None:
+    return None
+
+
+def create_resource(tenant_id: int, resource: Resource) -> dict:
+    with pg_client.PostgresClient() as cur:
+        user_ids = (
+            [int(x.value) for x in resource.members] if resource.members else None
+        )
+        user_id_clause = helpers.safe_mogrify_array(user_ids, "int", cur)
+        try:
+            cur.execute(
+                cur.mogrify(
+                    """
+                    INSERT INTO public.roles (
+                        name,
+                        tenant_id
+                    )
+                    VALUES (
+                        %(name)s,
+                        %(tenant_id)s
+                    )
+                    RETURNING role_id
+                    """,
+                    {
+                        "name": resource.display_name,
+                        "tenant_id": tenant_id,
+                    },
+                )
+            )
+        except Exception:
+            raise SCIMException(Error.make_invalid_value_error())
+        role_id = cur.fetchone()["role_id"]
         cur.execute(
             f"""
-            SELECT COUNT(*)
-            FROM public.roles
-            WHERE {where_clause}
+            UPDATE public.users
+            SET
+                updated_at = now(),
+                role_id = {role_id}
+            WHERE users.user_id = ANY({user_id_clause})
             """
         )
-        return cur.fetchone()["count"]
+        cur.execute(f"{_main_select_query(tenant_id, role_id)} LIMIT 1")
+        item = cur.fetchone()
+        return convert_provider_resource_to_client_resource(item)
 
 
-def _main_select_query(
-    tenant_id: int, resource_id: int | None = None, filter_clause: str | None = None
-) -> str:
+def update_resource(tenant_id: int, resource: Resource) -> dict | None:
+    item = _update_resource_sql(
+        resource_id=resource.id,
+        tenant_id=tenant_id,
+        name=resource.display_name,
+        user_ids=[int(x.value) for x in resource.members],
+        deleted_at=None,
+    )
+    return convert_provider_resource_to_client_resource(item)
+
+
+def _main_select_query(tenant_id: int, resource_id: str | None = None) -> str:
     where_and_clauses = [
         f"roles.tenant_id = {tenant_id}",
         "roles.deleted_at IS NULL",
     ]
     if resource_id is not None:
         where_and_clauses.append(f"roles.role_id = {resource_id}")
-    if filter_clause is not None:
-        where_and_clauses.append(filter_clause)
     where_clause = " AND ".join(where_and_clauses)
     return f"""
         SELECT
@@ -106,88 +150,6 @@ def _main_select_query(
         FROM public.roles
         WHERE {where_clause}
         """
-
-
-def get_provider_resource_chunk(
-    offset: int, tenant_id: int, limit: int, filter_clause: str | None = None
-) -> list[ProviderResource]:
-    query = _main_select_query(tenant_id, filter_clause=filter_clause)
-    with pg_client.PostgresClient() as cur:
-        cur.execute(f"{query} LIMIT {limit} OFFSET {offset}")
-        return cur.fetchall()
-
-
-def filter_attribute_mapping() -> dict[str, str]:
-    return {"displayName": "roles.name"}
-
-
-def get_provider_resource(
-    resource_id: ResourceId, tenant_id: int
-) -> ProviderResource | None:
-    with pg_client.PostgresClient() as cur:
-        cur.execute(f"{_main_select_query(tenant_id, resource_id)} LIMIT 1")
-        return cur.fetchone()
-
-
-def convert_client_resource_creation_input_to_provider_resource_creation_input(
-    tenant_id: int, client_input: ClientInput
-) -> ProviderInput:
-    return {
-        "name": client_input["displayName"],
-        "user_ids": [
-            int(member["value"]) for member in client_input.get("members", [])
-        ],
-    }
-
-
-def convert_client_resource_rewrite_input_to_provider_resource_rewrite_input(
-    tenant_id: int, client_input: ClientInput
-) -> ProviderInput:
-    return {
-        "name": client_input["displayName"],
-        "user_ids": [
-            int(member["value"]) for member in client_input.get("members", [])
-        ],
-    }
-
-
-def create_provider_resource(
-    name: str,
-    tenant_id: int,
-    user_ids: list[str] | None = None,
-    **kwargs: dict[str, Any],
-) -> ProviderResource:
-    with pg_client.PostgresClient() as cur:
-        kwargs["name"] = name
-        kwargs["tenant_id"] = tenant_id
-        column_fragments = [
-            cur.mogrify("%s", (AsIs(k),)).decode("utf-8") for k in kwargs.keys()
-        ]
-        column_clause = ", ".join(column_fragments)
-        value_fragments = [
-            cur.mogrify("%s", (v,)).decode("utf-8") for v in kwargs.values()
-        ]
-        value_clause = ", ".join(value_fragments)
-        user_id_clause = helpers.safe_mogrify_array(user_ids, "int", cur)
-        cur.execute(
-            f"""
-            INSERT INTO public.roles ({column_clause})
-            VALUES ({value_clause})
-            RETURNING role_id
-            """
-        )
-        role_id = cur.fetchone()["role_id"]
-        cur.execute(
-            f"""
-            UPDATE public.users
-            SET
-                updated_at = now(),
-                role_id = {role_id}
-            WHERE users.user_id = ANY({user_id_clause})
-            """
-        )
-        cur.execute(f"{_main_select_query(tenant_id, role_id)} LIMIT 1")
-        return cur.fetchone()
 
 
 def _update_resource_sql(
@@ -235,42 +197,7 @@ def _update_resource_sql(
             WHERE
                 roles.role_id = {resource_id}
                 AND roles.tenant_id = {tenant_id}
-                AND roles.deleted_at IS NULL
             """
         )
         cur.execute(f"{_main_select_query(tenant_id, resource_id)} LIMIT 1")
         return cur.fetchone()
-
-
-def delete_provider_resource(resource_id: ResourceId, tenant_id: int) -> None:
-    _update_resource_sql(
-        resource_id=resource_id,
-        tenant_id=tenant_id,
-        deleted_at=datetime.now(),
-    )
-
-
-def rewrite_provider_resource(
-    resource_id: int,
-    tenant_id: int,
-    name: str,
-    **kwargs: dict[str, Any],
-) -> dict[str, Any]:
-    return _update_resource_sql(
-        resource_id=resource_id,
-        tenant_id=tenant_id,
-        name=name,
-        **kwargs,
-    )
-
-
-def update_provider_resource(
-    resource_id: int,
-    tenant_id: int,
-    **kwargs: dict[str, Any],
-):
-    return _update_resource_sql(
-        resource_id=resource_id,
-        tenant_id=tenant_id,
-        **kwargs,
-    )
