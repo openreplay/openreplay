@@ -58,6 +58,14 @@ PREDEFINED_PROPERTIES = {
     "message_id": "UInt64"
 }
 
+EVENT_DEFAULT_PROPERTIES = {
+    "CLICK": "label",
+    "INPUT": "label",
+    "LOCATION": "url_path",
+    "ERROR": "name",
+    "REQUEST": "url_path"
+}
+
 
 def get_all_properties(project_id: int, page: schemas.PaginatedSchema):
     with ClickHouseClient() as ch_client:
@@ -104,7 +112,7 @@ def get_all_properties(project_id: int, page: schemas.PaginatedSchema):
         return {"total": total, "list": properties}
 
 
-def get_event_properties(project_id: int, event_name):
+def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
             """SELECT all_properties.property_name                    AS name,
@@ -115,9 +123,10 @@ def get_event_properties(project_id: int, event_name):
                WHERE event_properties.project_id = %(project_id)s
                  AND all_properties.project_id = %(project_id)s
                  AND event_properties.event_name = %(event_name)s
+                 AND event_properties.auto_captured = %(auto_captured)s
                GROUP BY ALL
                ORDER BY 1;""",
-            parameters={"project_id": project_id, "event_name": event_name})
+            parameters={"project_id": project_id, "event_name": event_name, "auto_captured": auto_captured})
         properties = ch_client.execute(r)
         properties = helper.list_to_camel_case(properties)
         for i, p in enumerate(properties):
@@ -127,6 +136,8 @@ def get_event_properties(project_id: int, event_name):
                 p["dataType"] = exp_ch_helper.simplify_clickhouse_type(PREDEFINED_PROPERTIES[p["name"]])
                 p["_foundInPredefinedList"] = True
             p["possibleTypes"] = list(set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"])))
+            p["defaultProperty"] = auto_captured and event_name in EVENT_DEFAULT_PROPERTIES \
+                                   and p["name"] == EVENT_DEFAULT_PROPERTIES[event_name]
 
         return properties
 

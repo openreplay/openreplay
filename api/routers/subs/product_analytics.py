@@ -34,11 +34,12 @@ def get_all_events(projectId: int, filter_query: Annotated[schemas.PaginatedSche
 
 
 @app.get('/{projectId}/properties/search', tags=["product_analytics"])
-def get_event_properties(projectId: int, event_name: str = None,
+def get_event_properties(projectId: int, en: str = Query(default=None, description="event name"),
+                         ac: bool = Query(description="auto captured"),
                          context: schemas.CurrentContext = Depends(OR_context)):
-    if not event_name or len(event_name) == 0:
+    if not en or len(en) == 0:
         return {"data": []}
-    return {"data": properties.get_event_properties(project_id=projectId, event_name=event_name)}
+    return {"data": properties.get_event_properties(project_id=projectId, event_name=en, auto_captured=ac)}
 
 
 @app.post('/{projectId}/events/search', tags=["product_analytics"])
