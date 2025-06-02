@@ -416,12 +416,12 @@ export default class Widget {
     } else if (this.metricType === FUNNEL) {
       _data.funnel = new Funnel().fromJSON(data);
     } else if (this.metricType === TABLE) {
-      const count = data[0]['count'];
-      const vals = data[0]['values'].map((s: any) =>
+      const count = data['count'];
+      const vals = data['values'].map((s: any) =>
         new SessionsByRow().fromJson(s, count, this.metricOf),
       );
       _data['values'] = vals;
-      _data['total'] = data[0]['total'];
+      _data['total'] = data['total'];
     } else {
       if (data.hasOwnProperty('chart')) {
         _data['value'] = data.value;

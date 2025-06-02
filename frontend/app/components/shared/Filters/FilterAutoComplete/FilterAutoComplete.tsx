@@ -1,9 +1,19 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import { debounce } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { searchService } from 'App/services';
-import { AutoCompleteContainer, AutocompleteModal, Props } from './AutocompleteModal';
+import {
+  AutoCompleteContainer,
+  AutocompleteModal,
+  Props,
+} from './AutocompleteModal';
 import { TopValue } from '@/mstore/filterStore';
 
 interface FilterParams {
@@ -37,15 +47,14 @@ function processMetadataValues(input: FilterParams): FilterParams {
   return result as FilterParams; // Cast back if confident, or adjust logic
 }
 
-
 const FilterAutoComplete = observer(
   ({
-     params, // Expect FilterParams type here
-     values,
-     onClose,
-     onApply,
-     placeholder
-   }: {
+    params, // Expect FilterParams type here
+    values,
+    onClose,
+    onApply,
+    placeholder,
+  }: {
     params: FilterParams;
     values: string[];
     onClose: () => void;
@@ -73,7 +82,10 @@ const FilterAutoComplete = observer(
       if (projectsStore.siteId && params.id) {
         setLoading(true);
         try {
-          await filterStore.fetchTopValues(params.id, projectsStore.siteId);
+          await filterStore.fetchTopValues({
+            id: params.id,
+            siteId: projectsStore.siteId,
+          });
         } catch (error) {
           console.error('Failed to load top values', error);
           // Handle error state if needed
@@ -93,38 +105,43 @@ const FilterAutoComplete = observer(
       setOptions(mappedTopValues);
     }, [mappedTopValues]);
 
-
-    const loadOptions = useCallback(async (inputValue: string) => {
-      if (!inputValue.length) {
-        setOptions(mappedTopValues);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const searchType = params.name?.toLowerCase();
-        if (!searchType) {
-          console.warn('Search type (params.name) is missing.');
-          setOptions([]);
+    const loadOptions = useCallback(
+      async (inputValue: string) => {
+        if (!inputValue.length) {
+          setOptions(mappedTopValues);
           return;
         }
 
-        const data: { value: string }[] = await searchService.fetchAutoCompleteValues({
-          type: searchType,
-          q: inputValue
-        });
-        const _options = data.map((i) => ({ value: i.value, label: i.value })) || [];
-        setOptions(_options);
-      } catch (e) {
-        console.error('Failed to fetch autocomplete values:', e);
-        setOptions(mappedTopValues);
-      } finally {
-        setLoading(false);
-      }
-    }, [mappedTopValues, params.name, searchService.fetchAutoCompleteValues]);
+        setLoading(true);
+        try {
+          const searchType = params.name?.toLowerCase();
+          if (!searchType) {
+            console.warn('Search type (params.name) is missing.');
+            setOptions([]);
+            return;
+          }
 
+          const data: { value: string }[] =
+            await searchService.fetchAutoCompleteValues({
+              type: searchType,
+              q: inputValue,
+            });
+          const _options =
+            data.map((i) => ({ value: i.value, label: i.value })) || [];
+          setOptions(_options);
+        } catch (e) {
+          console.error('Failed to fetch autocomplete values:', e);
+          setOptions(mappedTopValues);
+        } finally {
+          setLoading(false);
+        }
+      },
+      [mappedTopValues, params.name, searchService.fetchAutoCompleteValues],
+    );
 
-    const debouncedLoadOptions = useCallback(debounce(loadOptions, 500), [loadOptions]);
+    const debouncedLoadOptions = useCallback(debounce(loadOptions, 500), [
+      loadOptions,
+    ]);
 
     const handleInputChange = (newValue: string) => {
       debouncedLoadOptions(newValue);
@@ -149,7 +166,7 @@ const FilterAutoComplete = observer(
         placeholder={placeholder}
       />
     );
-  }
+  },
 );
 
 function AutoCompleteController(props: Props) {

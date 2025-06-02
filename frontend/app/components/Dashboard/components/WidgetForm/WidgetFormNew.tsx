@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, Space, Button, Alert, Form, Select, Tooltip } from 'antd';
-import { useStore } from 'App/mstore';
+import { projectStore, useStore } from 'App/mstore';
 import { eventKeys } from 'Types/filter/newFilter';
 import {
   HEATMAP,
@@ -204,12 +204,17 @@ const FilterSection = observer(
 
 const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   const { t } = useTranslation();
-  const metricValueOptions = [
-    { value: 'location', label: t('Pages') },
-    { value: 'click', label: t('Clicks') },
-    { value: 'input', label: t('Input') },
-    { value: 'custom', label: t('Custom Events') },
-  ];
+  // const metricValueOptions = [
+  //   { value: 'location', label: t('Pages') },
+  //   { value: 'click', label: t('Clicks') },
+  //   { value: 'input', label: t('Input') },
+  //   { value: 'custom', label: t('Custom Events') },
+  // ];
+  //
+  const { filterStore } = useStore();
+  const metricValueOptions = useMemo(() => {
+    return filterStore.getEventOptions(projectStore?.activeSiteId + '');
+  }, []);
 
   const onPointChange = (value: any) => {
     writeOption({ name: 'startType', value: { value } });
@@ -261,12 +266,12 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
               <FilterItem
                 hideDelete
                 filter={metric.startPoint}
-                allowedFilterKeys={[
-                  FilterKey.LOCATION,
-                  FilterKey.CLICK,
-                  FilterKey.INPUT,
-                  FilterKey.CUSTOM,
-                ]}
+                // allowedFilterKeys={[
+                //   FilterKey.LOCATION,
+                //   FilterKey.CLICK,
+                //   FilterKey.INPUT,
+                //   FilterKey.CUSTOM,
+                // ]}
                 onUpdate={(val) => metric.updateStartPoint(val)}
                 onRemoveFilter={() => {}}
               />

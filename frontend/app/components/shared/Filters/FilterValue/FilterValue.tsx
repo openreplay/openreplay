@@ -55,26 +55,31 @@ function BaseDropDown(props: any) {
   );
 }
 
-
 function FilterValue(props: Props) {
   const { filter, onUpdate, isConditional } = props; // Destructure props early
   const isAutoOpen = filter.autoOpen; // Assume parent now controls this correctly
 
   const [durationValues, setDurationValues] = useState(() => ({
     minDuration: filter.value?.[0],
-    maxDuration: filter.value?.length > 1 ? filter.value[1] : filter.value?.[0]
+    maxDuration: filter.value?.length > 1 ? filter.value[1] : filter.value?.[0],
   }));
 
   useEffect(() => {
     if (filter.type === FilterType.DURATION) {
       const incomingMin = filter.value?.[0];
-      const incomingMax = filter.value?.length > 1 ? filter.value[1] : filter.value?.[0];
-      if (durationValues.minDuration !== incomingMin || durationValues.maxDuration !== incomingMax) {
-        setDurationValues({ minDuration: incomingMin, maxDuration: incomingMax });
+      const incomingMax =
+        filter.value?.length > 1 ? filter.value[1] : filter.value?.[0];
+      if (
+        durationValues.minDuration !== incomingMin ||
+        durationValues.maxDuration !== incomingMax
+      ) {
+        setDurationValues({
+          minDuration: incomingMin,
+          maxDuration: incomingMax,
+        });
       }
     }
   }, [filter.value, filter.type]);
-
 
   const showCloseButton = filter.value.length > 1;
   const showOrButton = filter.value.length > 1;
@@ -84,54 +89,88 @@ function FilterValue(props: Props) {
     onUpdate({ ...filter, value: newValue });
   }, [filter, onUpdate]);
 
-  const onApplyValues = useCallback((values: string[]) => {
-    onUpdate({ ...filter, value: values });
-  }, [filter, onUpdate]);
+  const onApplyValues = useCallback(
+    (values: string[]) => {
+      onUpdate({ ...filter, value: values });
+    },
+    [filter, onUpdate],
+  );
 
-  const onRemoveValue = useCallback((valueIndex: any) => {
-    const newValue = filter.value.filter(
-      (_: any, index: any) => index !== valueIndex
-    );
-    onUpdate({ ...filter, value: newValue });
-  }, [filter, onUpdate]);
+  const onRemoveValue = useCallback(
+    (valueIndex: any) => {
+      const newValue = filter.value.filter(
+        (_: any, index: any) => index !== valueIndex,
+      );
+      onUpdate({ ...filter, value: newValue });
+    },
+    [filter, onUpdate],
+  );
 
-  const stableOnChange = useCallback((e: any, item: any, valueIndex: any) => {
-    const newValues = filter.value.map((val: any, _index: any) => {
-      if (_index === valueIndex) {
-        return item;
-      }
-      return val;
-    });
-    onUpdate({ ...filter, value: newValues });
-  }, [filter, onUpdate]);
+  const stableOnChange = useCallback(
+    (e: any, item: any, valueIndex: any) => {
+      const newValues = filter.value.map((val: any, _index: any) => {
+        if (_index === valueIndex) {
+          return item;
+        }
+        return val;
+      });
+      onUpdate({ ...filter, value: newValues });
+    },
+    [filter, onUpdate],
+  );
 
-  const debounceOnSelect = useCallback(debounce(stableOnChange, 500), [stableOnChange]);
+  const debounceOnSelect = useCallback(debounce(stableOnChange, 500), [
+    stableOnChange,
+  ]);
 
   const onDurationChange = useCallback((newValues: any) => {
-    setDurationValues(current => ({ ...current, ...newValues }));
+    setDurationValues((current) => ({ ...current, ...newValues }));
   }, []);
 
   const handleBlur = useCallback(() => {
     if (filter.type === FilterType.DURATION) {
       const currentMinInProp = filter.value?.[0];
-      const currentMaxInProp = filter.value?.length > 1 ? filter.value[1] : filter.value?.[0];
+      const currentMaxInProp =
+        filter.value?.length > 1 ? filter.value[1] : filter.value?.[0];
 
-      if (durationValues.minDuration !== currentMinInProp || durationValues.maxDuration !== currentMaxInProp) {
+      if (
+        durationValues.minDuration !== currentMinInProp ||
+        durationValues.maxDuration !== currentMaxInProp
+      ) {
         onUpdate({
           ...filter,
-          value: [durationValues.minDuration, durationValues.maxDuration]
+          value: [durationValues.minDuration, durationValues.maxDuration],
         });
       }
     }
-  }, [filter, onUpdate, filter.value, durationValues.minDuration, durationValues.maxDuration]); // Add durationValues dependency
+  }, [
+    filter,
+    onUpdate,
+    filter.value,
+    durationValues.minDuration,
+    durationValues.maxDuration,
+  ]); // Add durationValues dependency
 
   const params = useMemo(() => {
     let baseParams: any = {
       type: filter.key,
       name: filter.name,
       isEvent: filter.isEvent,
-      id: filter.id
+      id: filter.id,
+      // propertyName: filter.propertyName,
+      // eventName: filter.name,
     };
+    if (filter.isEvent) {
+      baseParams.eventName = filter.name;
+    }
+    if (!filter.isEvent) {
+      baseParams.propertyName = filter.name;
+
+      if (filter.eventName) {
+        baseParams.eventName = filter.eventName;
+      }
+    }
+
     if (filter.category === FilterCategory.METADATA) {
       baseParams = { type: FilterKey.METADATA, key: filter.key };
     }
@@ -143,7 +182,17 @@ function FilterValue(props: Props) {
 
   const value = filter.value;
 
-  switch (filter.type) {
+  switch (filter.dataType) {
+    case FilterType.STRING:
+      return (
+        <ValueAutoComplete
+          initialValues={value}
+          isAutoOpen={isAutoOpen}
+          onApplyValues={onApplyValues}
+          params={params}
+          commaQuery={true}
+        />
+      );
     case FilterType.DOUBLE:
       return (
         <Input
@@ -170,7 +219,7 @@ function FilterValue(props: Props) {
           placeholder={filter.placeholder}
           options={[
             { label: 'True', value: true },
-            { label: 'False', value: false }
+            { label: 'False', value: false },
           ]}
         />
       );
@@ -191,6 +240,7 @@ function FilterValue(props: Props) {
         />
       );
     case FilterType.NUMBER:
+    case FilterType.INTEGER:
       return (
         <BaseFilterLocalAutoComplete
           value={value}
@@ -207,22 +257,16 @@ function FilterValue(props: Props) {
           isMultiple={false}
         />
       );
-    case FilterType.STRING:
-      return <ValueAutoComplete
-        initialValues={value}
-        isAutoOpen={isAutoOpen}
-        onApplyValues={onApplyValues}
-        params={params}
-        commaQuery={true}
-      />;
     case FilterType.DROPDOWN:
-      return <BaseDropDown
-        value={value}
-        isAutoOpen={isAutoOpen}
-        placeholder={filter.placeholder}
-        options={filter.options}
-        onApplyValues={onApplyValues}
-      />;
+      return (
+        <BaseDropDown
+          value={value}
+          isAutoOpen={isAutoOpen}
+          placeholder={filter.placeholder}
+          options={filter.options}
+          onApplyValues={onApplyValues}
+        />
+      );
     case FilterType.ISSUE:
     case FilterType.MULTIPLE_DROPDOWN:
       return (

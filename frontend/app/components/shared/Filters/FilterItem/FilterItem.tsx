@@ -50,7 +50,7 @@ function FilterItem(props: Props) {
     onPropertyOrderChange,
     parentEventFilterOptions,
     isDragging,
-    isFirst = false // Default to false
+    isFirst = false, // Default to false
   } = props;
 
   const [eventFilterOptions, setEventFilterOptions] = useState<Filter[]>([]);
@@ -58,7 +58,9 @@ function FilterItem(props: Props) {
 
   const { filterStore } = useStore();
   const allFilters = filterStore.getCurrentProjectFilters();
-  const eventSelections = allFilters.filter((i) => i.isEvent === filter.isEvent);
+  const eventSelections = allFilters.filter(
+    (i) => i.isEvent === filter.isEvent,
+  );
 
   const filterSelections = useMemo(() => {
     if (isSubItem) {
@@ -67,7 +69,7 @@ function FilterItem(props: Props) {
     return eventSelections;
   }, [isSubItem, parentEventFilterOptions, eventSelections]);
 
-  const operatorOptions = getOperatorsByType(filter.type);
+  const operatorOptions = getOperatorsByType(filter.dataType);
 
   useEffect(() => {
     let isMounted = true; // Mounted flag
@@ -81,10 +83,18 @@ function FilterItem(props: Props) {
           // Only set loading if not already loading for this specific fetch
           if (isMounted) setEventFiltersLoading(true);
 
-          const options = await filterStore.getEventFilters(fetchName);
+          const options = await filterStore.getEventFilters(
+            fetchName,
+            filter.autoCaptured,
+          );
 
           // Check mount status AND if the relevant dependencies are still the same
-          if (isMounted && filter.name === fetchName && !isSubItem && filter.isEvent) {
+          if (
+            isMounted &&
+            filter.name === fetchName &&
+            !isSubItem &&
+            filter.isEvent
+          ) {
             // Avoid setting state if options haven't actually changed (optional optimization)
             // This requires comparing options, which might be complex/costly.
             // Sticking to setting state is usually fine if dependencies are stable.
@@ -92,11 +102,21 @@ function FilterItem(props: Props) {
           }
         } catch (error) {
           console.error('Failed to load event filters:', error);
-          if (isMounted && filter.name === fetchName && !isSubItem && filter.isEvent) {
+          if (
+            isMounted &&
+            filter.name === fetchName &&
+            !isSubItem &&
+            filter.isEvent
+          ) {
             setEventFilterOptions([]);
           }
         } finally {
-          if (isMounted && filter.name === fetchName && !isSubItem && filter.isEvent) {
+          if (
+            isMounted &&
+            filter.name === fetchName &&
+            !isSubItem &&
+            filter.isEvent
+          ) {
             setEventFiltersLoading(false);
           }
         }
@@ -124,6 +144,13 @@ function FilterItem(props: Props) {
     // that determine *if* and *what* to fetch.
   }, [filter.name, filter.isEvent, isSubItem, filterStore]); //
 
+  console.log('filter...', filter);
+
+  const isUserEvent = useMemo(
+    () => filter.isEvent && !filter.autoCaptured,
+    [filter.isEvent, filter.autoCaptured],
+  );
+
   const canShowValues = useMemo(
     () =>
       !(
@@ -131,10 +158,13 @@ function FilterItem(props: Props) {
         filter.operator === 'onAny' ||
         filter.operator === 'isUndefined'
       ),
-    [filter.operator]
+    [filter.operator],
   );
 
-  const isReversed = useMemo(() => filter.key === FilterKey.TAGGED_ELEMENT, [filter.key]);
+  const isReversed = useMemo(
+    () => filter.key === FilterKey.TAGGED_ELEMENT,
+    [filter.key],
+  );
 
   const replaceFilter = useCallback(
     (selectedFilter: any) => {
@@ -144,56 +174,59 @@ function FilterItem(props: Props) {
         filters: selectedFilter.filters
           ? selectedFilter.filters.map((i: any) => ({ ...i, value: [''] }))
           : [],
-        operator: selectedFilter.operator // Ensure operator is carried over or reset if needed
+        operator: selectedFilter.operator, // Ensure operator is carried over or reset if needed
       });
     },
-    [onUpdate]
+    [onUpdate],
   );
 
   const handleOperatorChange = useCallback(
     (e: any, { value }: any) => {
       onUpdate({ ...filter, operator: value });
     },
-    [filter, onUpdate]
+    [filter, onUpdate],
   );
 
   const handleSourceOperatorChange = useCallback(
     (e: any, { value }: any) => {
       onUpdate({ ...filter, sourceOperator: value });
     },
-    [filter, onUpdate]
+    [filter, onUpdate],
   );
 
   const handleUpdateSubFilter = useCallback(
     (subFilter: any, index: number) => {
       onUpdate({
         ...filter,
-        filters: filter.filters.map((i: any, idx: number) => (idx === index ? subFilter : i))
+        filters: filter.filters.map((i: any, idx: number) =>
+          idx === index ? subFilter : i,
+        ),
       });
     },
-    [filter, onUpdate]
+    [filter, onUpdate],
   );
 
   const handleRemoveSubFilter = useCallback(
     (index: number) => {
       onUpdate({
         ...filter,
-        filters: filter.filters.filter((_: any, idx: number) => idx !== index)
+        filters: filter.filters.filter((_: any, idx: number) => idx !== index),
       });
     },
-    [filter, onUpdate]
+    [filter, onUpdate],
   );
 
   const filteredSubFilters = useMemo(
     () =>
       filter.filters
         ? filter.filters.filter(
-          (i: any) =>
-            (i.key !== FilterKey.FETCH_REQUEST_BODY && i.key !== FilterKey.FETCH_RESPONSE_BODY) ||
-            saveRequestPayloads
-        )
+            (i: any) =>
+              (i.key !== FilterKey.FETCH_REQUEST_BODY &&
+                i.key !== FilterKey.FETCH_RESPONSE_BODY) ||
+              saveRequestPayloads,
+          )
         : [],
-    [filter.filters, saveRequestPayloads]
+    [filter.filters, saveRequestPayloads],
   );
 
   const addSubFilter = useCallback(
@@ -201,21 +234,25 @@ function FilterItem(props: Props) {
       const newSubFilter = {
         ...selectedFilter,
         value: selectedFilter.value || [''],
-        operator: selectedFilter.operator || 'is'
+        operator: selectedFilter.operator || 'is',
       };
       onUpdate({
         ...filter,
-        filters: [...(filter.filters || []), newSubFilter]
+        filters: [...(filter.filters || []), newSubFilter],
       });
     },
-    [filter, onUpdate]
+    [filter, onUpdate],
   );
 
   const parentShowsIndex = !hideIndex;
-  const subFilterMarginLeftClass = parentShowsIndex ? 'ml-[1.75rem]' : 'ml-[0.75rem]';
+  const subFilterMarginLeftClass = parentShowsIndex
+    ? 'ml-[1.75rem]'
+    : 'ml-[0.75rem]';
   const subFilterPaddingLeftClass = parentShowsIndex ? 'pl-11' : 'pl-7';
 
-  const categoryPart = filter?.subCategory ? filter.subCategory : filter?.category;
+  const categoryPart = filter?.subCategory
+    ? filter.subCategory
+    : filter?.category;
   const namePart = filter?.displayName || filter?.name;
   const hasCategory = Boolean(categoryPart);
   const hasName = Boolean(namePart);
@@ -224,30 +261,34 @@ function FilterItem(props: Props) {
 
   return (
     <div className={cn('w-full', isDragging ? 'opacity-50' : '')}>
-      <div className="flex items-start w-full gap-x-2"> {/* Use items-start */}
-        {!isSubItem && !hideIndex && filterIndex !== undefined && filterIndex >= 0 && (
-          <div
-            className="flex-shrink-0 w-6 h-6 mt-[2px] text-xs flex items-center justify-center rounded-full bg-gray-lightest text-gray-600 font-medium"> {/* Align index top */}
-            <span>{filterIndex + 1}</span>
-          </div>
-        )}
-
+      <div className="flex items-start w-full gap-x-2">
+        {' '}
+        {/* Use items-start */}
+        {!isSubItem &&
+          !hideIndex &&
+          filterIndex !== undefined &&
+          filterIndex >= 0 && (
+            <div className="flex-shrink-0 w-6 h-6 mt-[2px] text-xs flex items-center justify-center rounded-full bg-gray-lightest text-gray-600 font-medium">
+              {' '}
+              {/* Align index top */}
+              <span>{filterIndex + 1}</span>
+            </div>
+          )}
         {isSubItem && (
-          <div
-            className="flex-shrink-0 w-14 text-right text-neutral-500/90 pr-2">
+          <div className="flex-shrink-0 w-14 text-right text-neutral-500/90 pr-2">
             {subFilterIndex === 0 && (
-              <Typography.Text className="text-inherit">
-                where
-              </Typography.Text>
+              <Typography.Text className="text-inherit">where</Typography.Text>
             )}
             {subFilterIndex !== 0 && propertyOrder && onPropertyOrderChange && (
               <Typography.Text
                 className={cn(
                   'text-inherit',
-                  !readonly && 'cursor-pointer hover:text-main transition-colors'
+                  !readonly &&
+                    'cursor-pointer hover:text-main transition-colors',
                 )}
                 onClick={() =>
-                  !readonly && onPropertyOrderChange(propertyOrder === 'and' ? 'or' : 'and')
+                  !readonly &&
+                  onPropertyOrderChange(propertyOrder === 'and' ? 'or' : 'and')
                 }
               >
                 {propertyOrder}
@@ -255,10 +296,8 @@ function FilterItem(props: Props) {
             )}
           </div>
         )}
-
         {/* Main content area */}
-        <div
-          className="flex flex-grow flex-wrap gap-x-2 items-center">
+        <div className="flex flex-grow flex-wrap gap-x-2 items-center">
           <FilterSelection
             filters={filterSelections}
             onFilterClick={replaceFilter}
@@ -272,7 +311,7 @@ function FilterItem(props: Props) {
               // onClick={onClick} // Pass onClick handler
               style={{
                 maxWidth: '20rem',
-                flexShrink: 0
+                flexShrink: 0,
               }}
             >
               <Space size={4} align="center">
@@ -280,22 +319,21 @@ function FilterItem(props: Props) {
                 {filter && (
                   <span className="text-gray-600 flex-shrink-0">
                     {getIconForFilter(filter)}
-                    </span>
+                  </span>
                 )}
 
                 {/* Category/SubCategory */}
                 {hasCategory && (
                   <span className="text-neutral-500/90 capitalize truncate">
-                        {categoryPart}
-                    </span>
+                    {categoryPart}
+                  </span>
                 )}
 
-                {showSeparator && (
-                  <span className="text-neutral-400">•</span>
-                )}
+                {showSeparator && <span className="text-neutral-400">•</span>}
 
                 <span className="text-black truncate">
-                    {hasName ? namePart : (hasCategory ? '' : defaultText)} {/* Show name or placeholder */}
+                  {hasName ? namePart : hasCategory ? '' : defaultText}{' '}
+                  {/* Show name or placeholder */}
                 </span>
               </Space>
             </Button>
@@ -320,7 +358,7 @@ function FilterItem(props: Props) {
             </>
           )}
 
-          {operatorOptions.length > 0 && filter.type && (
+          {operatorOptions.length > 0 && filter.dataType && !isUserEvent && (
             <>
               <FilterOperator
                 options={operatorOptions}
@@ -336,14 +374,22 @@ function FilterItem(props: Props) {
                     title={filter.value.join(', ')}
                   >
                     {filter.value
-                      .map((val: string) =>
-                        filter.options?.find((i: any) => i.value === val)?.label ?? val
+                      .map(
+                        (val: string) =>
+                          filter.options?.find((i: any) => i.value === val)
+                            ?.label ?? val,
                       )
                       .join(', ')}
                   </div>
                 ) : (
-                  <div className="inline-flex"> {/* Wrap FilterValue */}
-                    <FilterValue isConditional={isConditional} filter={filter} onUpdate={onUpdate} />
+                  <div className="inline-flex">
+                    {' '}
+                    {/* Wrap FilterValue */}
+                    <FilterValue
+                      isConditional={isConditional}
+                      filter={filter}
+                      onUpdate={onUpdate}
+                    />
                   </div>
                 ))}
             </>
@@ -368,11 +414,15 @@ function FilterItem(props: Props) {
           )}
           {/*</div>*/}
         </div>
-
         {/* Action Buttons */}
         {!readonly && !hideDelete && (
-          <div className="flex flex-shrink-0 gap-1 items-center self-start"> {/* Align top */}
-            <Tooltip title={isSubItem ? 'Remove filter condition' : 'Remove filter'} mouseEnterDelay={1}>
+          <div className="flex flex-shrink-0 gap-1 items-center self-start">
+            {' '}
+            {/* Align top */}
+            <Tooltip
+              title={isSubItem ? 'Remove filter condition' : 'Remove filter'}
+              mouseEnterDelay={1}
+            >
               <Button
                 type="text"
                 icon={<CircleMinus size={14} />}
@@ -388,17 +438,16 @@ function FilterItem(props: Props) {
 
       {/* Sub-Filter Rendering */}
       {filteredSubFilters.length > 0 && (
-        <div
-          className={cn(
-            'relative w-full mt-3 mb-2 flex flex-col gap-2'
-          )}
-        >
+        <div className={cn('relative w-full mt-3 mb-2 flex flex-col gap-2')}>
           {/* Dashed line */}
-          <div className={cn(
-            'absolute top-0 bottom-0 left-1 w-px',
-            'border-l border-dashed border-gray-300',
-            subFilterMarginLeftClass
-          )} style={{ height: 'calc(100% - 4px)' }} />
+          <div
+            className={cn(
+              'absolute top-0 bottom-0 left-1 w-px',
+              'border-l border-dashed border-gray-300',
+              subFilterMarginLeftClass,
+            )}
+            style={{ height: 'calc(100% - 4px)' }}
+          />
 
           {filteredSubFilters.map((subFilter: any, index: number) => (
             <div
@@ -408,7 +457,9 @@ function FilterItem(props: Props) {
               <FilterItem
                 filter={subFilter}
                 subFilterIndex={index}
-                onUpdate={(updatedSubFilter) => handleUpdateSubFilter(updatedSubFilter, index)}
+                onUpdate={(updatedSubFilter) =>
+                  handleUpdateSubFilter(updatedSubFilter, index)
+                }
                 onRemoveFilter={() => handleRemoveSubFilter(index)}
                 saveRequestPayloads={saveRequestPayloads}
                 disableDelete={disableDelete}
@@ -419,7 +470,9 @@ function FilterItem(props: Props) {
                 isSubItem={true}
                 propertyOrder={filter.propertyOrder || 'and'}
                 onPropertyOrderChange={onPropertyOrderChange}
-                parentEventFilterOptions={isSubItem ? parentEventFilterOptions : eventFilterOptions}
+                parentEventFilterOptions={
+                  isSubItem ? parentEventFilterOptions : eventFilterOptions
+                }
                 isFirst={index === 0}
               />
             </div>
