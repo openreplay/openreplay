@@ -260,6 +260,5 @@ def get_for_filters(project_id):
                                     "name": k,
                                     "displayName": metas[k],
                                     "possibleTypes": ["String"],
-                                    "autoCaptured": False,
-                                    "icon": None})
+                                    "autoCaptured": False})
         return {"total": len(results), "list": results}
