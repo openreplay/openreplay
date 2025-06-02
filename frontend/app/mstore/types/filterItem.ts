@@ -4,6 +4,32 @@ import { FilterProperty, Operator } from '@/mstore/types/filterConstants';
 
 type JsonData = Record<string, any>;
 
+// Define a proper interface for initialization data
+interface FilterItemData {
+  id?: string;
+  name?: string;
+  displayName?: string;
+  description?: string;
+  possibleTypes?: string[];
+  autoCaptured?: boolean;
+  metadataName?: string;
+  category?: string;
+  subCategory?: string;
+  type?: string;
+  icon?: string;
+  properties?: FilterProperty[];
+  operator?: string;
+  operators?: Operator[];
+  isEvent?: boolean;
+  value?: string[];
+  propertyOrder?: string;
+  filters?: FilterItemData[];
+  autoOpen?: boolean;
+}
+
+// Define valid keys that can be updated
+type FilterItemKeys = keyof FilterItemData;
+
 export default class FilterItem {
   id: string = '';
   name: string = '';
@@ -12,9 +38,9 @@ export default class FilterItem {
   possibleTypes?: string[];
   autoCaptured?: boolean;
   metadataName?: string;
-  category: string; // 'event' | 'filter' | 'action' | etc.
+  category: string = '';
   subCategory?: string;
-  type?: string; // 'number' | 'string' | 'boolean' | etc.
+  type?: string;
   icon?: string;
   properties?: FilterProperty[];
   operator?: string;
@@ -25,67 +51,108 @@ export default class FilterItem {
   filters?: FilterItem[];
   autoOpen?: boolean;
 
-  constructor(data: any = {}) {
+  constructor(data: FilterItemData = {}) {
     makeAutoObservable(this);
+    this.initializeFromData(data);
+  }
 
+  private initializeFromData(data: FilterItemData): void {
+    // Set default operator if not provided
+    const processedData = {
+      ...data,
+      operator: data.operator || 'is',
+    };
+
+    // Handle filters array transformation
     if (Array.isArray(data.filters)) {
-      data.filters = data.filters.map(
-        (i: Record<string, any>) => new FilterItem(i),
+      processedData.filters = data.filters.map(
+        (filterData: FilterItemData) => new FilterItem(filterData),
       );
     }
-    data.operator = data.operator || 'is';
 
-    this.merge(data);
+    this.merge(processedData);
   }
 
-  updateKey(key: string, value: any) {
-    // @ts-ignore
-    this[key] = value;
+  updateKey<K extends FilterItemKeys>(key: K, value: FilterItemData[K]): void {
+    if (key in this) {
+      (this as any)[key] = value;
+    } else {
+      console.warn(`Attempted to update invalid key: ${key}`);
+    }
   }
 
-  merge(data: any) {
-    Object.keys(data).forEach((key) => {
-      // @ts-ignore
-      this[key] = data[key];
+  merge(data: FilterItemData): void {
+    Object.entries(data).forEach(([key, value]) => {
+      if (key in this && value !== undefined) {
+        (this as any)[key] = value;
+      }
     });
   }
 
-  fromData(data: any) {
+  fromData(data: FilterItemData): FilterItem {
+    if (!data) {
+      console.warn('fromData called with null/undefined data');
+      return this;
+    }
+
     Object.assign(this, data);
     this.type = 'string';
-    this.name = data.type;
-    this.category = data.category;
+    this.name = data.name || '';
+    this.category = data.category || '';
     this.subCategory = data.subCategory;
     this.operator = data.operator;
-    this.filters = data.filters.map((i: JsonData) => new FilterItem(i));
+
+    // Safely handle filters array
+    if (Array.isArray(data.filters)) {
+      this.filters = data.filters.map(
+        (filterData: FilterItemData) => new FilterItem(filterData),
+      );
+    } else {
+      this.filters = [];
+    }
 
     return this;
   }
 
-  fromJson(data: JsonData) {
+  fromJson(data: JsonData): FilterItem {
+    if (!data) {
+      console.warn('fromJson called with null/undefined data');
+      return this;
+    }
+
     this.type = 'string';
-    this.name = data.type;
-    this.category = data.category;
+    this.name = data.type || '';
+    this.category = data.category || '';
     this.subCategory = data.subCategory;
     this.operator = data.operator;
-    this.value = data.value || [''];
-    this.filters = data.filters.map((i: JsonData) => new FilterItem(i));
+    this.value = Array.isArray(data.value) ? data.value : [''];
+
+    // Safely handle filters array
+    if (Array.isArray(data.filters)) {
+      this.filters = data.filters.map(
+        (filterData: JsonData) => new FilterItem(filterData),
+      );
+    } else {
+      this.filters = [];
+    }
 
     return this;
   }
 
-  toJson(): any {
-    const json: any = {
+  toJson(): JsonData {
+    const json: JsonData = {
       type: this.name,
       isEvent: Boolean(this.isEvent),
-      value: this.value?.map((i: any) => (i ? i.toString() : '')) || [],
+      value:
+        this.value?.map((item: any) => (item ? item.toString() : '')) || [],
       operator: this.operator,
       source: this.name,
       filters: Array.isArray(this.filters)
-        ? this.filters.map((i) => i.toJson())
+        ? this.filters.map((filter) => filter.toJson())
         : [],
     };
 
+    // Handle metadata category
     const isMetadata = this.category === FilterCategory.METADATA;
     if (isMetadata) {
       json.type = FilterKey.METADATA;
@@ -93,10 +160,28 @@ export default class FilterItem {
       json.sourceOperator = this.operator;
     }
 
+    // Handle duration type
     if (this.type === FilterKey.DURATION) {
-      json.value = this.value?.map((i: any) => (!i ? 0 : i));
+      json.value = this.value?.map((item: any) => (item ? Number(item) : 0));
     }
 
     return json;
+  }
+
+  // Additional utility methods
+  isValid(): boolean {
+    return Boolean(this.name && this.category);
+  }
+
+  clone(): FilterItem {
+    return new FilterItem(JSON.parse(JSON.stringify(this.toJson())));
+  }
+
+  reset(): void {
+    this.value = [''];
+    this.operator = 'is';
+    if (this.filters) {
+      this.filters.forEach((filter) => filter.reset());
+    }
   }
 }
