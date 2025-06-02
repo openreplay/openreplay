@@ -15,7 +15,6 @@ function ChatHeader({
   onCreate: () => void;
 }) {
   const { t } = useTranslation();
-  //absolute top-0 left-0 right-0 z-10
   return (
     <div className="p-4 pb-0 w-full">
       <div
@@ -29,8 +28,8 @@ function ChatHeader({
               }
               onClick={goBack}
             >
-              <ArrowLeft size={14} />
-              <div>{t('Back')}</div>
+              <SquarePen size={14} />
+              <div>{t('New Chat')}</div>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -46,16 +45,7 @@ function ChatHeader({
             </div>
           ) : null}
         </div>
-        <div className={'flex-1 justify-end flex items-center gap-4'}>
-          {goBack ? (
-            <div
-              onClick={() => onCreate()}
-              className="font-semibold w-fit cursor-pointer hover:text-main flex items-center gap-2"
-            >
-              <SquarePen size={14} />
-              <div>{t('New Chat')}</div>
-            </div>
-          ) : null}
+        <div className={'flex-1 justify-end flex items-center'}>
           <div
             className="font-semibold w-fit cursor-pointer hover:text-main flex items-center gap-2"
             onClick={openChats}
