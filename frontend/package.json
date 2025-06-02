@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.2.5",
+    "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@babel/plugin-transform-private-methods": "^7.27.1",
     "@codewonders/html2canvas": "^1.0.2",
     "@eslint/js": "^9.26.0",

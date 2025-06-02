@@ -1,6 +1,7 @@
 import './styles/index.css';
 import './styles/global.css';
 import React from 'react';
+import '@ant-design/v5-patch-for-react-19';
 import { createRoot } from 'react-dom/client';
 import './init';
 import { HTML5Backend } from 'react-dnd-html5-backend';

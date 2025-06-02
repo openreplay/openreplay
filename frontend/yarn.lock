@@ -110,6 +110,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ant-design/v5-patch-for-react-19@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "@ant-design/v5-patch-for-react-19@npm:1.0.3"
+  peerDependencies:
+    antd: ">=5.22.6"
+    react: ">=19.0.0"
+    react-dom: ">=19.0.0"
+  checksum: 10c1/68854c78dc29085858988c94cb0d67319516403bf3903a362e7006b331b46b4bdf598f0f7d27984164763aea46bb01808699990f39b3ec0969eec6e6dff75a53
+  languageName: node
+  linkType: hard
+
 "@babel/cli@npm:^7.27.2":
   version: 7.27.2
   resolution: "@babel/cli@npm:7.27.2"
@@ -12864,6 +12875,7 @@ __metadata:
   resolution: "openreplay@workspace:."
   dependencies:
     "@ant-design/icons": "npm:^5.2.5"
+    "@ant-design/v5-patch-for-react-19": "npm:^1.0.3"
     "@babel/cli": "npm:^7.27.2"
     "@babel/core": "npm:^7.27.1"
     "@babel/node": "npm:^7.27.1"
