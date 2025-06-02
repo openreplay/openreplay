@@ -1,5 +1,5 @@
 import { makeAutoObservable, runInAction } from 'mobx';
-import { filterService } from 'App/services';
+import { filterService, searchService } from 'App/services';
 import { Filter, COMMON_FILTERS } from './types/filterConstants';
 import { FilterKey } from 'Types/filter/filterType';
 import { projectStore } from '@/mstore/index';
@@ -18,6 +18,14 @@ interface ProjectFilters {
   [projectId: string]: Filter[];
 }
 
+interface TopValuesParams {
+  id?: string;
+  siteId?: string;
+  source?: string;
+  isAutoCapture?: boolean;
+  isEvent?: boolean;
+}
+
 export default class FilterStore {
   topValues: TopValues = {};
   filters: ProjectFilters = {};
@@ -33,6 +41,17 @@ export default class FilterStore {
     this.initCommonFilters();
   }
 
+  getEventOptions = (sietId: string) => {
+    return this.getFilters(sietId)
+      .filter((i: Filter) => i.isEvent)
+      .map((i: Filter) => {
+        return {
+          label: i.displayName || i.name,
+          value: i.name,
+        };
+      });
+  };
+
   setTopValues = (key: string, values: Record<string, any> | TopValue[]) => {
     const vals = Array.isArray(values) ? values : values.data;
     this.topValues[key] = vals?.filter(
@@ -44,19 +63,24 @@ export default class FilterStore {
     this.topValues = {};
   };
 
-  fetchTopValues = async (id: string, siteId: string, source?: string) => {
-    const valKey = `${siteId}_${id}${source || ''}`;
+  fetchTopValues = async (params: TopValuesParams) => {
+    const valKey = `${params.siteId}_${params.id}${params.source || ''}`;
 
     if (this.topValues[valKey] && this.topValues[valKey].length) {
       return Promise.resolve(this.topValues[valKey]);
     }
-    const filter = this.filters[siteId]?.find((i) => i.id === id);
+    const filter = this.filters[params.siteId + '']?.find(
+      (i) => i.id === params.id,
+    );
     if (!filter) {
-      console.error('Filter not found in store:', id);
+      console.error('Filter not found in store:', valKey);
       return Promise.resolve([]);
     }
-    return filterService
-      .fetchTopValues(filter.name?.toLowerCase(), source)
+
+    return searchService
+      .fetchTopValues({
+        [params.isEvent ? 'eventName' : 'propertyName']: filter.name,
+      })
       .then((response: []) => {
         this.setTopValues(valKey, response);
       });
@@ -84,7 +108,7 @@ export default class FilterStore {
       ...filter,
       possibleTypes:
         filter.possibleTypes?.map((type) => type.toLowerCase()) || [],
-      type: filter.possibleTypes?.[0].toLowerCase() || 'string',
+      dataType: filter.dataType || 'string',
       category: category || 'custom',
       subCategory:
         category === 'events'
@@ -157,7 +181,6 @@ export default class FilterStore {
 
   getEventFilters = async (eventName: string): Promise<Filter[]> => {
     const cacheKey = `${projectStore.activeSiteId}_${eventName}`;
-    console.log('cacheKey store', cacheKey);
     if (this.filterCache[cacheKey]) {
       return this.filterCache[cacheKey];
     }
@@ -170,6 +193,7 @@ export default class FilterStore {
       this.pendingFetches[cacheKey] =
         this.fetchAndProcessPropertyFilters(eventName);
       const filters = await this.pendingFetches[cacheKey];
+      console.log('filters', filters);
 
       runInAction(() => {
         this.filterCache[cacheKey] = filters;
@@ -185,14 +209,19 @@ export default class FilterStore {
 
   private fetchAndProcessPropertyFilters = async (
     eventName: string,
+    isAutoCapture?: boolean,
   ): Promise<Filter[]> => {
-    const resp = await filterService.fetchProperties(eventName);
+    const resp = await filterService.fetchProperties(eventName, isAutoCapture);
     const names = resp.data.map((i: any) => i['name']);
 
     const activeSiteId = projectStore.activeSiteId + '';
     return (
-      this.filters[activeSiteId]?.filter((i: any) => names.includes(i.name)) ||
-      []
+      this.filters[activeSiteId]
+        ?.filter((i: any) => names.includes(i.name))
+        .map((f: any) => ({
+          ...f,
+          eventName,
+        })) || []
     );
   };
 

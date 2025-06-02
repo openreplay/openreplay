@@ -23,13 +23,14 @@ export default class FilterItem {
   value?: string[];
   propertyOrder?: string;
   filters?: FilterItem[];
+  autoOpen?: boolean;
 
   constructor(data: any = {}) {
     makeAutoObservable(this);
 
     if (Array.isArray(data.filters)) {
       data.filters = data.filters.map(
-        (i: Record<string, any>) => new FilterItem(i)
+        (i: Record<string, any>) => new FilterItem(i),
       );
     }
     data.operator = data.operator || 'is';
@@ -82,7 +83,7 @@ export default class FilterItem {
       source: this.name,
       filters: Array.isArray(this.filters)
         ? this.filters.map((i) => i.toJson())
-        : []
+        : [],
     };
 
     const isMetadata = this.category === FilterCategory.METADATA;

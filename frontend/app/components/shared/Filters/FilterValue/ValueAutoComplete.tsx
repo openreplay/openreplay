@@ -1,9 +1,26 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import { debounce } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { searchService } from 'App/services';
-import { Button, Checkbox, Input, Tooltip, Popover, Spin, Typography, List, Divider, Space } from 'antd';
+import {
+  Button,
+  Checkbox,
+  Input,
+  Tooltip,
+  Popover,
+  Spin,
+  Typography,
+  List,
+  Divider,
+  Space,
+} from 'antd';
 import { RedoOutlined, CloseCircleFilled } from '@ant-design/icons';
 import cn from 'classnames';
 import { useTranslation } from 'react-i18next';
@@ -20,8 +37,8 @@ interface FilterParams {
 }
 
 interface OptionType {
-  value: string;
-  label: string;
+  value?: string;
+  label?: string;
 }
 
 interface Props {
@@ -37,15 +54,15 @@ interface Props {
 
 const ValueAutoComplete = observer(
   ({
-     initialValues,
-     params,
-     onApplyValues,
-     placeholder = 'Select value(s)',
-     mapValues,
-     isAutoOpen = false,
-     commaQuery = false,
-     isDisabled = false
-   }: Props) => {
+    initialValues,
+    params,
+    onApplyValues,
+    placeholder = 'Select value(s)',
+    mapValues,
+    isAutoOpen = false,
+    commaQuery = false,
+    isDisabled = false,
+  }: Props) => {
     const { t } = useTranslation();
     const { filterStore, projectsStore } = useStore();
     const [showValueModal, setShowValueModal] = useState(false);
@@ -62,22 +79,32 @@ const ValueAutoComplete = observer(
       return `${projectsStore.siteId}_${params.id}`;
     }, [projectsStore.siteId, params.id]);
 
-    const topValues: TopValue[] = filterKey ? filterStore.topValues[filterKey] || [] : [];
+    const topValues: TopValue[] = filterKey
+      ? filterStore.topValues[filterKey] || []
+      : [];
 
-    const mappedTopValues = useMemo(() => {
-      return topValues.map((i) => ({ value: i.value, label: i.value }));
+    const mappedTopValues: OptionType[] = useMemo(() => {
+      return (
+        topValues
+          // .filter((i): i is { value: string } => typeof i.value === 'string')
+          .map((i) => ({ value: i.value, label: i.value }))
+      );
     }, [topValues]);
 
     useEffect(() => {
       setSelectedValues(initialValues.filter((i) => i && i.length > 0));
     }, [initialValues]);
 
-
     useEffect(() => {
       if (filterKey && !filterStore.topValues[filterKey]) {
         setLoadingTopValues(true);
-        filterStore.fetchTopValues(params.id, projectsStore.siteId)
-          .catch(error => console.error('Failed to load top values', error))
+        filterStore
+          .fetchTopValues({
+            id: params.id,
+            siteId: projectsStore.siteId + '',
+            isEvent: params.isEvent || false,
+          })
+          .catch((error) => console.error('Failed to load top values', error))
           .finally(() => setLoadingTopValues(false));
       }
     }, [filterKey, params.id, projectsStore.siteId, filterStore]);
@@ -87,7 +114,6 @@ const ValueAutoComplete = observer(
         setShowValueModal(true);
       }
     }, [isAutoOpen, isDisabled]);
-
 
     useEffect(() => {
       if (loadingTopValues) return;
@@ -99,39 +125,57 @@ const ValueAutoComplete = observer(
       }
     }, [showValueModal, loadingTopValues]);
 
-    const loadOptions = useCallback(async (inputValue: string) => {
-      const trimmedQuery = inputValue.trim();
-      if (!trimmedQuery.length) {
-        setOptions(mappedTopValues);
-        setLoadingSearch(false);
-        return;
-      }
-
-      setLoadingSearch(true);
-      try {
-        const searchType = params.name?.toLowerCase();
-        if (!searchType) {
-          console.warn('Search type (params.name) is missing.');
-          setOptions([]);
+    const loadOptions = useCallback(
+      async (inputValue: string) => {
+        const trimmedQuery = inputValue.trim();
+        if (!trimmedQuery.length) {
+          setOptions(mappedTopValues);
+          setLoadingSearch(false);
           return;
         }
 
-        const data: { value: string }[] = await searchService.fetchAutoCompleteValues({
-          type: searchType,
-          q: trimmedQuery
-        });
-        const _options = data.map((i) => ({ value: i.value, label: i.value })) || [];
-        setOptions(_options);
-      } catch (e) {
-        console.error('Failed to fetch autocomplete values:', e);
-        setOptions(mappedTopValues);
-      } finally {
-        setLoadingSearch(false);
-      }
-    }, [mappedTopValues, params.name, searchService]);
+        setLoadingSearch(true);
+        try {
+          const searchType = params.name;
+          if (!searchType) {
+            console.warn('Search type (params.name) is missing.');
+            setOptions([]);
+            return;
+          }
 
+          const autoCompleteParams: any = {
+            q: trimmedQuery,
+          };
 
-    const debouncedLoadOptions = useCallback(debounce(loadOptions, 500), [loadOptions]);
+          if (params.propertyName) {
+            autoCompleteParams.propertyName = params.propertyName;
+          }
+
+          if (params.eventName) {
+            autoCompleteParams.eventName = params.eventName;
+          }
+
+          const data: { values: any[] }[] =
+            await searchService.fetchAutoCompleteValues(autoCompleteParams);
+          const _options =
+            data.values?.map((i: any) => ({
+              value: i.value,
+              label: i.value,
+            })) || [];
+          setOptions(_options);
+        } catch (e) {
+          console.error('Failed to fetch autocomplete values:', e);
+          setOptions(mappedTopValues);
+        } finally {
+          setLoadingSearch(false);
+        }
+      },
+      [mappedTopValues, params.name, searchService],
+    );
+
+    const debouncedLoadOptions = useCallback(debounce(loadOptions, 500), [
+      loadOptions,
+    ]);
 
     const handleInputChange = (value: string) => {
       setQuery(value);
@@ -147,7 +191,8 @@ const ValueAutoComplete = observer(
       }
     };
 
-    const isSelected = (item: OptionType) => selectedValues.includes(item.value);
+    const isSelected = (item: OptionType) =>
+      selectedValues.includes(item.value);
 
     const applySelectedValues = () => {
       onApplyValues(selectedValues);
@@ -155,7 +200,12 @@ const ValueAutoComplete = observer(
     };
 
     const applyQuery = () => {
-      const vals = commaQuery ? query.split(',').map((i) => i.trim()).filter(Boolean) : [query.trim()].filter(Boolean);
+      const vals = commaQuery
+        ? query
+            .split(',')
+            .map((i) => i.trim())
+            .filter(Boolean)
+        : [query.trim()].filter(Boolean);
       if (vals.length > 0) {
         const merged = Array.from(new Set([...selectedValues, ...vals]));
         onApplyValues(merged);
@@ -187,12 +237,18 @@ const ValueAutoComplete = observer(
       return currentOptionsWithValue;
     }, [options, selectedValues]);
 
-    const queryBlocks = commaQuery ? query.split(',').map(s => s.trim()).filter(Boolean) : [query.trim()].filter(Boolean);
+    const queryBlocks = commaQuery
+      ? query
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [query.trim()].filter(Boolean);
     const blocksAmount = queryBlocks.length;
     const queryStr = useMemo(() => {
-      return queryBlocks.map(block => `"${block}"`).join(blocksAmount > 1 ? ', ' : '');
+      return queryBlocks
+        .map((block) => `"${block}"`)
+        .join(blocksAmount > 1 ? ', ' : '');
     }, [queryBlocks]);
-
 
     const onClearClick = (event: React.MouseEvent | React.KeyboardEvent) => {
       event.stopPropagation(); // Prevent popover toggle
@@ -208,10 +264,7 @@ const ValueAutoComplete = observer(
     const isEmpty = initialValues[0] === '' || initialValues.length === 0;
 
     const popoverContent = (
-      <div
-        style={{ width: 360 }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div style={{ width: 360 }} onClick={(e) => e.stopPropagation()}>
         <Input.Search
           value={query}
           loading={loadingSearch}
@@ -226,18 +279,21 @@ const ValueAutoComplete = observer(
             size="small"
             locale={{
               emptyText: t(
-                (loadingSearch || loadingTopValues) ? 'Loading...' :
-                  (query.length > 0 ? 'No results found' : 'No options available')
-              )
+                loadingSearch || loadingTopValues
+                  ? 'Loading...'
+                  : query.length > 0
+                    ? 'No results found'
+                    : 'No options available',
+              ),
             }}
             dataSource={sortedOptions}
-            renderItem={item => (
+            renderItem={(item) => (
               <List.Item
                 key={item.value}
                 onClick={() => onSelectOption(item)}
                 className={cn(
                   'cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2',
-                  { 'bg-active-blue-faded': isSelected(item) }
+                  { 'bg-active-blue-faded': isSelected(item) },
                 )}
                 role="option"
                 aria-selected={isSelected(item)}
@@ -245,8 +301,16 @@ const ValueAutoComplete = observer(
               >
                 <Space>
                   <Checkbox checked={isSelected(item)} readOnly tabIndex={-1} />
-                  <Text ellipsis={{ tooltip: { title: item.label, placement: 'topLeft', mouseEnterDelay: 0.5 } }}
-                        style={{ maxWidth: 'calc(360px - 80px)' }}>
+                  <Text
+                    ellipsis={{
+                      tooltip: {
+                        title: item.label,
+                        placement: 'topLeft',
+                        mouseEnterDelay: 0.5,
+                      },
+                    }}
+                    style={{ maxWidth: 'calc(360px - 80px)' }}
+                  >
                     {item.label}
                   </Text>
                 </Space>
@@ -255,16 +319,23 @@ const ValueAutoComplete = observer(
             style={{
               maxHeight: 200,
               overflowY: 'auto',
-              marginBottom: (query.trim().length > 0 && !loadingSearch) ? 8 : 0
+              marginBottom: query.trim().length > 0 && !loadingSearch ? 8 : 0,
             }}
           />
-          {(query.trim().length > 0 && !loadingSearch && sortedOptions.length > 0) ? (
+          {query.trim().length > 0 &&
+          // sortedOptions.length > 0 &&
+          !loadingSearch ? (
             <>
               <Divider style={{ margin: '8px 0' }} />
               <Button
                 type="link"
                 onClick={applyQuery}
-                style={{ paddingLeft: 8, whiteSpace: 'normal', height: 'auto', lineHeight: 'inherit' }}
+                style={{
+                  paddingLeft: 8,
+                  whiteSpace: 'normal',
+                  height: 'auto',
+                  lineHeight: 'inherit',
+                }}
               >
                 {t('Apply search')}: {queryStr}
               </Button>
@@ -301,7 +372,7 @@ const ValueAutoComplete = observer(
         onOpenChange={handleOpenChange}
         placement="bottomLeft"
         arrow={false}
-        getPopupContainer={triggerNode => triggerNode || document.body}
+        getPopupContainer={(triggerNode) => triggerNode || document.body}
       >
         <Button
           className="pr-8"
@@ -314,26 +385,40 @@ const ValueAutoComplete = observer(
           <Space size={4} wrap className="w-full overflow-hidden">
             {!isEmpty ? (
               <>
-                <Text ellipsis={{
-                  tooltip: {
-                    title: mapValues ? mapValues(initialValues[0]) : initialValues[0],
-                    placement: 'topLeft',
-                    mouseEnterDelay: 0.5
-                  }
-                }} style={{ maxWidth: '8rem' }}>
+                <Text
+                  ellipsis={{
+                    tooltip: {
+                      title: mapValues
+                        ? mapValues(initialValues[0])
+                        : initialValues[0],
+                      placement: 'topLeft',
+                      mouseEnterDelay: 0.5,
+                    },
+                  }}
+                  style={{ maxWidth: '8rem' }}
+                >
                   {mapValues ? mapValues(initialValues[0]) : initialValues[0]}
                 </Text>
                 {initialValues.length > 1 && (
                   <>
-                    <Text type="secondary" className="flex-shrink-0">{t('or')}</Text>
-                    <Text ellipsis={{
-                      tooltip: {
-                        title: mapValues ? mapValues(initialValues[1]) : initialValues[1],
-                        placement: 'topLeft',
-                        mouseEnterDelay: 0.5
-                      }
-                    }} style={{ maxWidth: '8rem' }}>
-                      {mapValues ? mapValues(initialValues[1]) : initialValues[1]}
+                    <Text type="secondary" className="flex-shrink-0">
+                      {t('or')}
+                    </Text>
+                    <Text
+                      ellipsis={{
+                        tooltip: {
+                          title: mapValues
+                            ? mapValues(initialValues[1])
+                            : initialValues[1],
+                          placement: 'topLeft',
+                          mouseEnterDelay: 0.5,
+                        },
+                      }}
+                      style={{ maxWidth: '8rem' }}
+                    >
+                      {mapValues
+                        ? mapValues(initialValues[1])
+                        : initialValues[1]}
                     </Text>
                     {initialValues.length > 2 && (
                       <Text type="secondary" className="flex-shrink-0">
@@ -344,7 +429,10 @@ const ValueAutoComplete = observer(
                 )}
               </>
             ) : (
-              <Text type={'secondary'} className={cn({ 'text-disabled': isDisabled })}>
+              <Text
+                type={'secondary'}
+                className={cn({ 'text-disabled': isDisabled })}
+              >
                 {placeholder}
               </Text>
             )}
@@ -368,17 +456,16 @@ const ValueAutoComplete = observer(
                 height: '100%',
                 cursor: 'pointer',
                 zIndex: 1,
-                padding: '0 4px'
+                padding: '0 4px',
               }}
             >
               <CloseCircleFilled />
             </span>
           )}
-
         </Button>
       </Popover>
     );
-  }
+  },
 );
 
 export default ValueAutoComplete;

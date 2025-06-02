@@ -24,8 +24,12 @@ export default class FilterService {
     return await response.json();
   };
 
-  fetchProperties = async (name: string) => {
-    let path = `/pa/PROJECT_ID/properties/search?event_name=${name}`;
+  fetchProperties = async (
+    eventName: string,
+    isAutoCapture: boolean = false,
+  ) => {
+    // en = eventName, ac = isAutoCapture
+    let path = `/pa/PROJECT_ID/properties/search?en=${eventName}&ac=${isAutoCapture}`;
     const response = await this.client.get(path);
     return await response.json();
   };
