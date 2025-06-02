@@ -95,8 +95,10 @@ export default class FilterStore {
         [params.isEvent ? 'eventName' : 'propertyName']: filter.name,
       });
 
+      console.log('response', response.events);
+
       runInAction(() => {
-        this.setTopValues(valKey, response);
+        this.setTopValues(valKey, response.events);
       });
 
       return this.topValues[valKey] || [];
@@ -221,7 +223,10 @@ export default class FilterStore {
     return this.getAllFilters(String(projectStore.activeSiteId));
   };
 
-  getEventFilters = async (eventName: string): Promise<Filter[]> => {
+  getEventFilters = async (
+    eventName: string,
+    isAutoCapture: boolean,
+  ): Promise<Filter[]> => {
     const cacheKey = `${projectStore.activeSiteId}_${eventName}`;
 
     // Check cache with TTL
@@ -236,8 +241,10 @@ export default class FilterStore {
     }
 
     try {
-      this.pendingFetches[cacheKey] =
-        this.fetchAndProcessPropertyFilters(eventName);
+      this.pendingFetches[cacheKey] = this.fetchAndProcessPropertyFilters(
+        eventName,
+        isAutoCapture,
+      );
       const filters = await this.pendingFetches[cacheKey];
 
       runInAction(() => {

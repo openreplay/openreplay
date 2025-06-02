@@ -2,7 +2,21 @@ import { makeAutoObservable, observable, action } from 'mobx';
 import FilterStore from './filter';
 import { JsonData } from '@/mstore/types/filterConstants';
 
-export default class FilterSeries {
+export interface IFilterSeries {
+  seriesId?: any;
+  name: string;
+  filter: FilterStore;
+  update(key: any, value: any): void;
+  fromJson(json: JsonData, isHeatmap?: boolean): this;
+  fromData(data: any): this;
+  toJson(): {
+    seriesId?: any;
+    name: string;
+    filter: ReturnType<FilterStore['toJson']>;
+  };
+}
+
+export default class FilterSeries implements IFilterSeries {
   public static get ID_KEY(): string {
     return 'seriesId';
   }
@@ -16,7 +30,7 @@ export default class FilterSeries {
       name: observable,
       filter: observable.shallow,
 
-      update: action
+      update: action,
     });
   }
 
@@ -30,7 +44,7 @@ export default class FilterSeries {
     this.name = json.name;
     this.filter = new FilterStore().fromJson(
       json.filter || { filters: [] },
-      isHeatmap
+      isHeatmap,
     );
     return this;
   }
@@ -46,7 +60,7 @@ export default class FilterSeries {
     return {
       seriesId: this.seriesId,
       name: this.name,
-      filter: this.filter.toJson()
+      filter: this.filter.toJson(),
     };
   }
 }

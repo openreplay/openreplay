@@ -43,7 +43,7 @@ const FilterCountLabels = observer(
         </Space>
       </div>
     );
-  }
+  },
 );
 
 const FilterSeriesHeader = observer(
@@ -67,8 +67,8 @@ const FilterSeriesHeader = observer(
           'px-4 ps-2  h-12 flex items-center relative bg-white border-gray-lighter border-t border-l border-r rounded-t-xl',
           {
             hidden: props.hidden,
-            'rounded-b-xl': !props.expanded
-          }
+            'rounded-b-xl': !props.expanded,
+          },
         )}
       >
         <Space className="mr-auto" size={30}>
@@ -111,7 +111,7 @@ const FilterSeriesHeader = observer(
         </Space>
       </div>
     );
-  }
+  },
 );
 
 interface Props {
@@ -135,20 +135,19 @@ interface Props {
 
 function FilterSeries(props: Props) {
   const {
-    observeChanges = () => {
-    },
+    observeChanges = () => {},
     canDelete,
     hideHeader = false,
-    emptyMessage = 'Add an event or filter step to define the series.',
-    supportsEmpty = true,
-    excludeFilterKeys = [],
+    // emptyMessage = 'Add an event or filter step to define the series.',
+    // supportsEmpty = true,
+    // excludeFilterKeys = [],
     canExclude = false,
     expandable = false,
     isHeatmap,
     removeEvents,
     collapseState,
     onToggleCollapse,
-    excludeCategory
+    // excludeCategory,
   } = props;
   const { filterStore } = useStore();
   const expanded = isHeatmap || !collapseState;
@@ -159,13 +158,18 @@ function FilterSeries(props: Props) {
   const eventOptions: Filter[] = allFilterOptions.filter((i) => i.isEvent);
   const propertyOptions: Filter[] = allFilterOptions.filter((i) => !i.isEvent);
 
-  const onUpdateFilter = (filterIndex: any, filter: any) => {
+  const onUpdateFilter = (filterIndex: number, filter: Filter) => {
     series.filter.updateFilter(filterIndex, filter);
     observeChanges();
   };
 
-  const onFilterMove = (newFilters: any) => {
-    series.filter.replaceFilters(newFilters);
+  // const onFilterMove = (newFilters: Filter[]) => {
+  //   series.filter.replaceFilters(newFilters);
+  //   observeChanges();
+  // };
+  //
+  const onFilterMove = (draggedIndex: number, newPosition: number) => {
+    series.filter.moveFilter(draggedIndex, newPosition);
     observeChanges();
   };
 
@@ -174,18 +178,18 @@ function FilterSeries(props: Props) {
     observeChanges();
   };
 
-  const onRemoveFilter = (filterIndex: any) => {
+  const onRemoveFilter = (filterIndex: number) => {
     series.filter.removeFilter(filterIndex);
     observeChanges();
   };
 
-  const onAddFilter = (filter: any) => {
+  const onAddFilter = (filter: Filter) => {
     filter.autoOpen = true;
     series.filter.addFilter(filter);
     observeChanges();
   };
 
-  console.log('series.filter.filters', series.filter.filters);
+  console.log('series', series);
 
   return (
     <div>
@@ -232,10 +236,12 @@ function FilterSeries(props: Props) {
             <div className="bg-white rounded-b-xl border p-4">
               <FilterListHeader
                 title={'Events'}
-                showEventsOrder={series.filter.filters.filter((f: any) => f.isEvent).length > 0}
+                showEventsOrder={
+                  series.filter.filters.filter((f: any) => f.isEvent).length > 0
+                }
                 orderProps={{
                   eventsOrder: series.filter.eventsOrder,
-                  eventsOrderSupport: ['then', 'and', 'or']
+                  eventsOrderSupport: ['then', 'and', 'or'],
                 }}
                 onChangeOrder={onChangeEventsOrder}
                 filterSelection={
@@ -271,7 +277,9 @@ function FilterSeries(props: Props) {
 
               <FilterListHeader
                 title={'Filters'}
-                showEventsOrder={series.filter.filters.map((f: any) => !f.isEvent).length > 0}
+                showEventsOrder={
+                  series.filter.filters.map((f: any) => !f.isEvent).length > 0
+                }
                 filterSelection={
                   <FilterSelection
                     filters={propertyOptions}
@@ -290,7 +298,7 @@ function FilterSeries(props: Props) {
               />
 
               <UnifiedFilterList
-                title="Events"
+                title="Filters"
                 filters={series.filter.filters.filter((f: any) => !f.isEvent)}
                 isDraggable={false}
                 showIndices={false}

@@ -11,6 +11,7 @@ type FilterData = Partial<FilterItem> & {
   sourceOperator?: string;
   source?: any;
   filters?: FilterData[];
+  isEvent?: boolean;
 };
 
 export const checkFilterValue = (value: unknown): string[] => {
@@ -170,6 +171,18 @@ export default class FilterStore implements IFilterStore {
   updateKey(key: string, value: any) {
     // @ts-ignore
     this[key] = value;
+  }
+
+  moveFilter(index: number, newIndex: number) {
+    if (
+      index >= 0 &&
+      index < this.filters.length &&
+      newIndex >= 0 &&
+      newIndex < this.filters.length
+    ) {
+      const [removed] = this.filters.splice(index, 1);
+      this.filters.splice(newIndex, 0, removed);
+    }
   }
 
   private createFilterItemFromData(filterData: FilterData): FilterItem {

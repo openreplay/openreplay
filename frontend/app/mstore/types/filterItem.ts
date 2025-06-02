@@ -4,13 +4,13 @@ import { FilterProperty, Operator } from '@/mstore/types/filterConstants';
 
 type JsonData = Record<string, any>;
 
-// Define a proper interface for initialization data
-interface FilterItemData {
+export interface IFilter {
   id?: string;
   name?: string;
   displayName?: string;
   description?: string;
   possibleTypes?: string[];
+  dataType?: string;
   autoCaptured?: boolean;
   metadataName?: string;
   category?: string;
@@ -23,57 +23,55 @@ interface FilterItemData {
   isEvent?: boolean;
   value?: string[];
   propertyOrder?: string;
-  filters?: FilterItemData[];
+  filters?: IFilter[];
   autoOpen?: boolean;
 }
 
-// Define valid keys that can be updated
-type FilterItemKeys = keyof FilterItemData;
+type FilterItemKeys = keyof IFilter;
 
 export default class FilterItem {
   id: string = '';
   name: string = '';
-  displayName?: string;
-  description?: string;
-  possibleTypes?: string[];
-  autoCaptured?: boolean;
-  metadataName?: string;
+  displayName?: string = '';
+  description?: string = '';
+  possibleTypes?: string[] = [];
+  dataType?: string = '';
+  autoCaptured?: boolean = false;
+  // metadataName?: string = '';
   category: string = '';
-  subCategory?: string;
-  type?: string;
-  icon?: string;
-  properties?: FilterProperty[];
-  operator?: string;
-  operators?: Operator[];
-  isEvent?: boolean;
-  value?: string[];
-  propertyOrder?: string;
-  filters?: FilterItem[];
-  autoOpen?: boolean;
+  subCategory?: string = '';
+  type?: string = '';
+  icon?: string = '';
+  properties?: FilterProperty[] = [];
+  operator?: string = '';
+  operators?: Operator[] = [];
+  isEvent?: boolean = false;
+  value?: string[] = [''];
+  propertyOrder?: string = '';
+  filters?: FilterItem[] = [];
+  autoOpen?: boolean = false;
 
-  constructor(data: FilterItemData = {}) {
+  constructor(data: IFilter = {}) {
     makeAutoObservable(this);
     this.initializeFromData(data);
   }
 
-  private initializeFromData(data: FilterItemData): void {
-    // Set default operator if not provided
+  private initializeFromData(data: IFilter): void {
     const processedData = {
       ...data,
       operator: data.operator || 'is',
     };
 
-    // Handle filters array transformation
     if (Array.isArray(data.filters)) {
       processedData.filters = data.filters.map(
-        (filterData: FilterItemData) => new FilterItem(filterData),
+        (filterData: IFilter) => new FilterItem(filterData),
       );
     }
 
     this.merge(processedData);
   }
 
-  updateKey<K extends FilterItemKeys>(key: K, value: FilterItemData[K]): void {
+  updateKey<K extends FilterItemKeys>(key: K, value: IFilter[K]): void {
     if (key in this) {
       (this as any)[key] = value;
     } else {
@@ -81,7 +79,8 @@ export default class FilterItem {
     }
   }
 
-  merge(data: FilterItemData): void {
+  merge(data: IFilter): void {
+    console.log('Object.entries(data)', Object.entries(data));
     Object.entries(data).forEach(([key, value]) => {
       if (key in this && value !== undefined) {
         (this as any)[key] = value;
@@ -89,7 +88,7 @@ export default class FilterItem {
     });
   }
 
-  fromData(data: FilterItemData): FilterItem {
+  fromData(data: IFilter): FilterItem {
     if (!data) {
       console.warn('fromData called with null/undefined data');
       return this;
@@ -98,14 +97,15 @@ export default class FilterItem {
     Object.assign(this, data);
     this.type = 'string';
     this.name = data.name || '';
+    this.dataType = data.dataType || '';
     this.category = data.category || '';
     this.subCategory = data.subCategory;
     this.operator = data.operator;
+    this.isEvent = Boolean(data.isEvent);
 
-    // Safely handle filters array
     if (Array.isArray(data.filters)) {
       this.filters = data.filters.map(
-        (filterData: FilterItemData) => new FilterItem(filterData),
+        (filterData: IFilter) => new FilterItem(filterData),
       );
     } else {
       this.filters = [];
@@ -121,13 +121,16 @@ export default class FilterItem {
     }
 
     this.type = 'string';
-    this.name = data.type || '';
     this.category = data.category || '';
     this.subCategory = data.subCategory;
     this.operator = data.operator;
     this.value = Array.isArray(data.value) ? data.value : [''];
 
-    // Safely handle filters array
+    this.name = data.name || '';
+    this.isEvent = Boolean(data.isEvent);
+    this.autoCaptured = Boolean(data.autoCaptured);
+    this.dataType = data.dataType || '';
+
     if (Array.isArray(data.filters)) {
       this.filters = data.filters.map(
         (filterData: JsonData) => new FilterItem(filterData),
@@ -142,7 +145,6 @@ export default class FilterItem {
   toJson(): JsonData {
     const json: JsonData = {
       type: this.name,
-      isEvent: Boolean(this.isEvent),
       value:
         this.value?.map((item: any) => (item ? item.toString() : '')) || [],
       operator: this.operator,
@@ -150,9 +152,14 @@ export default class FilterItem {
       filters: Array.isArray(this.filters)
         ? this.filters.map((filter) => filter.toJson())
         : [],
+
+      // these props are required to get the source filter later
+      isEvent: Boolean(this.isEvent),
+      name: this.name,
+      autoCaptured: this.autoCaptured,
+      dataType: this.dataType,
     };
 
-    // Handle metadata category
     const isMetadata = this.category === FilterCategory.METADATA;
     if (isMetadata) {
       json.type = FilterKey.METADATA;
@@ -160,7 +167,6 @@ export default class FilterItem {
       json.sourceOperator = this.operator;
     }
 
-    // Handle duration type
     if (this.type === FilterKey.DURATION) {
       json.value = this.value?.map((item: any) => (item ? Number(item) : 0));
     }
@@ -168,7 +174,6 @@ export default class FilterItem {
     return json;
   }
 
-  // Additional utility methods
   isValid(): boolean {
     return Boolean(this.name && this.category);
   }

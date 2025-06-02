@@ -8,7 +8,6 @@ import { Plus } from 'lucide-react';
 import { Filter } from '@/mstore/types/filterConstants';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 
-
 function SessionFilters() {
   const { searchStore, filterStore } = useStore();
   const searchInstance = searchStore.instance;
@@ -23,11 +22,18 @@ function SessionFilters() {
 
   const onChangeEventsOrder = (
     _e: React.MouseEvent<HTMLButtonElement>,
-    { value }: { value: string }
+    { value }: { value: string },
   ) => {
     searchStore.edit({
-      eventsOrder: value
+      eventsOrder: value,
     });
+  };
+
+  const moveFilter = (index: number, newIndex: number) => {
+    const updatedFilters = [...searchInstance.filters];
+    const filterToMove = updatedFilters.splice(index, 1)[0];
+    updatedFilters.splice(newIndex, 0, filterToMove);
+    searchStore.edit({ filters: updatedFilters });
   };
 
   const eventFilters = searchInstance.filters.filter((i) => i.isEvent);
@@ -66,7 +72,7 @@ function SessionFilters() {
         handleRemove={searchStore.removeFilter}
         handleUpdate={searchStore.updateFilter}
         handleAdd={searchStore.addFilter}
-        handleMove={searchStore.moveFilter}
+        handleMove={moveFilter}
       />
 
       <Divider className="my-3" />
@@ -99,7 +105,7 @@ function SessionFilters() {
         handleRemove={searchStore.removeFilter}
         handleUpdate={searchStore.updateFilter}
         handleAdd={searchStore.addFilter}
-        handleMove={searchStore.moveFilter}
+        // handleMove={moveFilter}
       />
     </Card>
   );

@@ -10,10 +10,11 @@ import FilterSource from '../FilterSource';
 import { useStore } from '@/mstore';
 import { getIconForFilter } from 'Shared/Filters/FilterModal/FilterModal';
 import { Filter, getOperatorsByType } from '@/mstore/types/filterConstants';
+import { FilterItemData } from '@/mstore/types/filterItem';
 
 interface Props {
   filterIndex?: number;
-  filter: any;
+  filter: FilterItemData;
   onUpdate: (filter: any) => void;
   onRemoveFilter: () => void;
   isFilter?: boolean;
@@ -358,7 +359,7 @@ function FilterItem(props: Props) {
             </>
           )}
 
-          {operatorOptions.length > 0 && filter.dataType && !isUserEvent && (
+          {operatorOptions.length > 0 && filter.dataType && !filter.isEvent && (
             <>
               <FilterOperator
                 options={operatorOptions}

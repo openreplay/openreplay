@@ -405,7 +405,7 @@ class SearchStore {
     this.instance = Object.assign(this.instance, search);
   };
 
-  updateFilter = (id: string, search: Partial<FilterItem>) => {
+  updateFilter = (id: string, search: Partial<Filter>) => {
     const newFilters = this.instance.filters.map((f: any) => {
       if (f.id === id) {
         return {

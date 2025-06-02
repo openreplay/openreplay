@@ -96,7 +96,7 @@ const ValueAutoComplete = observer(
     }, [initialValues]);
 
     useEffect(() => {
-      if (filterKey && !filterStore.topValues[filterKey]) {
+      if (!params.isEvent && filterKey && !filterStore.topValues[filterKey]) {
         setLoadingTopValues(true);
         filterStore
           .fetchTopValues({
@@ -155,10 +155,10 @@ const ValueAutoComplete = observer(
             autoCompleteParams.eventName = params.eventName;
           }
 
-          const data: { values: any[] }[] =
+          const data: { events: any[] }[] =
             await searchService.fetchAutoCompleteValues(autoCompleteParams);
           const _options =
-            data.values?.map((i: any) => ({
+            data.events?.map((i: any) => ({
               value: i.value,
               label: i.value,
             })) || [];

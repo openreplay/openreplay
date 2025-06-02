@@ -9,17 +9,16 @@ import { observer } from 'mobx-react-lite';
 
 interface Props {
   series: any;
-  excludeFilterKeys: Array<string>;
 }
 
-function AddStepButton({ series, excludeFilterKeys }: Props) {
+function AddStepButton({ series }: Props) {
   const { t } = useTranslation();
   const { metricStore, filterStore } = useStore();
   const metric: any = metricStore.instance;
   const filters: Filter[] = filterStore.getCurrentProjectFilters();
-  // console.log('filters', filters)
 
-  const onAddFilter = (filter: any) => {
+  const onAddFilter = (filter: Filter) => {
+    console.log('Add Step Button', filter);
     series.filter.addFilter(filter);
     metric.updateKey('hasChanged', true);
   };
@@ -27,7 +26,7 @@ function AddStepButton({ series, excludeFilterKeys }: Props) {
     <FilterSelection
       filters={filters}
       onFilterClick={onAddFilter}
-      mode={'filters'}      // excludeFilterKeys={excludeFilterKeys}
+      // mode={'filters'} // excludeFilterKeys={excludeFilterKeys}
     >
       <Button
         type="text"
