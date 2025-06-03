@@ -67,7 +67,7 @@ EVENT_DEFAULT_PROPERTIES = {
 }
 
 
-def get_all_properties(project_id: int, page: schemas.PaginatedSchema):
+def get_all_properties(project_id: int):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
             """SELECT COUNT(1)                                           OVER () AS total, property_name AS name,
@@ -77,12 +77,8 @@ def get_all_properties(project_id: int, page: schemas.PaginatedSchema):
                         LEFT JOIN product_analytics.event_properties USING (project_id, property_name)
                WHERE all_properties.project_id = %(project_id)s
                GROUP BY property_name, display_name
-               ORDER BY display_name
-                   LIMIT %(limit)s
-               OFFSET %(offset)s;""",
-            parameters={"project_id": project_id,
-                        "limit": page.limit,
-                        "offset": (page.page - 1) * page.limit})
+               ORDER BY display_name, property_name;""",
+            parameters={"project_id": project_id})
         properties = ch_client.execute(r)
         if len(properties) == 0:
             return {"total": 0, "list": []}
