@@ -25,11 +25,13 @@ export interface IFilter {
   propertyOrder?: string;
   filters?: IFilter[];
   autoOpen?: boolean;
+
+  [key: string]: any;
 }
 
 type FilterItemKeys = keyof IFilter;
 
-export default class FilterItem {
+export default class FilterItem implements IFilter {
   id: string = '';
   name: string = '';
   displayName?: string = '';
@@ -80,7 +82,6 @@ export default class FilterItem {
   }
 
   merge(data: IFilter): void {
-    console.log('Object.entries(data)', Object.entries(data));
     Object.entries(data).forEach(([key, value]) => {
       if (key in this && value !== undefined) {
         (this as any)[key] = value;

@@ -189,8 +189,6 @@ function FilterSeries(props: Props) {
     observeChanges();
   };
 
-  console.log('series', series);
-
   return (
     <div>
       {canExclude && <ExcludeFilters filter={series.filter} />}
