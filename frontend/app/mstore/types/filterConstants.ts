@@ -255,7 +255,7 @@ export const OPERATORS = {
 
 export const COMMON_FILTERS: Filter[] = [];
 
-export const getOperatorsByType = (type: string): Operator[] => {
+export const getOperatorsByType = (type?: string): Operator[] => {
   let operators: Operator[] = [];
 
   switch (type?.toLowerCase()) {

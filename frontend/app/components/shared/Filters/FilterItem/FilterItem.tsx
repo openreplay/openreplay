@@ -10,11 +10,11 @@ import FilterSource from '../FilterSource';
 import { useStore } from '@/mstore';
 import { getIconForFilter } from 'Shared/Filters/FilterModal/FilterModal';
 import { Filter, getOperatorsByType } from '@/mstore/types/filterConstants';
-import { FilterItemData } from '@/mstore/types/filterItem';
+import { IFilter } from '@/mstore/types/filterItem';
 
 interface Props {
   filterIndex?: number;
-  filter: FilterItemData;
+  filter: IFilter;
   onUpdate: (filter: any) => void;
   onRemoveFilter: () => void;
   isFilter?: boolean;
@@ -141,16 +141,12 @@ function FilterItem(props: Props) {
     return () => {
       isMounted = false; // Cleanup on unmount
     };
-    // Dependencies should be the minimal primitive values or stable references
-    // that determine *if* and *what* to fetch.
   }, [filter.name, filter.isEvent, isSubItem, filterStore]); //
 
-  console.log('filter...', filter);
-
-  const isUserEvent = useMemo(
-    () => filter.isEvent && !filter.autoCaptured,
-    [filter.isEvent, filter.autoCaptured],
-  );
+  // const isUserEvent = useMemo(
+  //   () => filter.isEvent && !filter.autoCaptured,
+  //   [filter.isEvent, filter.autoCaptured],
+  // );
 
   const canShowValues = useMemo(
     () =>
