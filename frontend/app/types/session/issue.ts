@@ -1,4 +1,3 @@
-import i18next, { TFunction } from 'i18next';
 import Record from 'Types/Record';
 
 export const types = {
@@ -10,6 +9,7 @@ export const types = {
   MOUSE_THRASHING: 'mouse_thrashing',
   TAP_RAGE: 'tap_rage',
   DEAD_CLICK: 'dead_click',
+  INCIDENT: 'incident',
 } as const;
 
 type TypeKeys = keyof typeof types;
@@ -75,6 +75,14 @@ export const issues_types = [
     name: 'Mouse Thrashing',
     icon: 'cursor-trash',
   },
+  {
+    type: types.INCIDENT,
+    visible: true,
+    order: 7,
+    name: 'Incidents',
+    icon: 'funnel/message-circle-warning',
+    // isEvent: false,
+  }
   // { 'type': 'memory', 'visible': true, 'order': 4, 'name': 'High Memory', 'icon': 'funnel/sd-card' },
   // { 'type': 'vault', 'visible': true, 'order': 5, 'name': 'Vault', 'icon': 'safe' },
   // { 'type': 'bookmark', 'visible': true, 'order': 5, 'name': 'Bookmarks', 'icon': 'safe' },

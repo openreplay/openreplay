@@ -1,7 +1,7 @@
 import React from 'react';
 import { splitByDate } from '../utils';
 import { useQuery } from '@tanstack/react-query';
-import { MessagesSquare, Trash } from 'lucide-react';
+import { MessagesSquare, Trash, X } from 'lucide-react';
 import { kaiService } from 'App/services';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
@@ -11,9 +11,11 @@ import { observer } from 'mobx-react-lite';
 function ChatsModal({
   onSelect,
   projectId,
+  onHide,
 }: {
   onSelect: (threadId: string, title: string) => void;
   projectId: string;
+  onHide: () => void;
 }) {
   const { t } = useTranslation();
   const { usage } = kaiStore;
@@ -44,10 +46,22 @@ function ChatsModal({
     refetch();
   };
   return (
-    <div className={'h-screen w-full flex flex-col gap-2 p-4'}>
+    <div
+      className={'flex flex-col gap-2 p-4 mr-1 rounded-lg bg-white'}
+      style={{ height: 'calc(-100px + 100svh)', marginTop: 60, width: 310 }}
+    >
       <div className={'flex items-center font-semibold text-lg gap-2'}>
         <MessagesSquare size={16} />
-        <span>{t('Chats')}</span>
+        <span>{t('Previous Chats')}</span>
+        <div className="ml-auto" />
+        <div>
+          <X
+            size={16}
+            strokeWidth={2}
+            className="cursor-pointer hover:text-main"
+            onClick={onHide}
+          />
+        </div>
       </div>
       {usage.percent > 80 ? (
         <div className="text-red text-sm">
@@ -58,16 +72,20 @@ function ChatsModal({
         </div>
       ) : null}
       {isPending ? (
-        <div className="animate-pulse text-disabled-text">{t('Loading chats')}...</div>
+        <div className="animate-pulse text-disabled-text">
+          {t('Loading chats')}...
+        </div>
       ) : (
         <div className="overflow-y-auto flex flex-col gap-2">
-          {datedCollections.map((col) => (
-            <ChatCollection
-              data={col.entries}
-              date={col.date}
-              onSelect={onSelect}
-              onDelete={onDelete}
-            />
+          {datedCollections.map((col, i) => (
+            <React.Fragment key={`${i}_${col.date}`}>
+              <ChatCollection
+                data={col.entries}
+                date={col.date}
+                onSelect={onSelect}
+                onDelete={onDelete}
+              />
+            </React.Fragment>
           ))}
         </div>
       )}
@@ -87,8 +105,8 @@ function ChatCollection({
   date: string;
 }) {
   return (
-    <div>
-      <div className="text-disabled-text">{date}</div>
+    <div className="border-b border-b-gray-lighter py-2">
+      <div className="font-semibold">{date}</div>
       <ChatsList data={data} onSelect={onSelect} onDelete={onDelete} />
     </div>
   );

@@ -14,7 +14,7 @@ export enum InlineCssMode {
   Disabled = 0,
   /** will attempt to record the linked css file as AdoptedStyleSheet object */
   Inline = 1,
-  /** will fetch the file, then simulated AdoptedStyleSheets behavior programmaticaly for the replay */
+  /** will fetch the file, then simulate AdoptedStyleSheets behavior programmaticaly for the replay */
   InlineFetched = 2,
   /** will fetch the file, then save it as plain css inside <style> node */
   PlainFetched = 3,

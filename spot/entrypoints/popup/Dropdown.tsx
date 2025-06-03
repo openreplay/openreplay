@@ -30,8 +30,8 @@ function Dropdown(props: {
       </div>
       <Show when={isOpen()}>
         <div
-          style="width:260px"
-          class="absolute z-10 w-full bg-white border shadow-sm rounded-lg bottom-full mb-2 -left-4 text-start font-normal"
+          style="width:260px;max-height:120px;overflow:scroll;"
+          class="absolute z-10 w-full bg-white border shadow-sm rounded-lg mb-2 -left-4 text-start font-normal bottom-full"
         >
           <For each={props.options}>
             {(option) => (

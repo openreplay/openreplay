@@ -1,5 +1,5 @@
 import { TFunction } from 'i18next';
-import { IconNames } from "../components/ui/SVG";
+import { IconNames } from '../components/ui/SVG';
 import React from 'react';
 
 export interface MenuItem {
@@ -99,7 +99,15 @@ export const categories: (t: TFunction) => Category[] = (t) => [
     title: '',
     key: 'kai',
     items: [
-      { label: t('Kai'), key: MENU.KAI, icon: 'kai' },
+      {
+        label: t('Kai'),
+        key: MENU.KAI,
+        icon: 'kai-mono',
+        tag: {
+          label: t('New'),
+          color: '#394DFE',
+        },
+      },
     ],
   },
   {

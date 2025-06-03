@@ -63,6 +63,7 @@ import type {
   RawNetworkRequest,
   RawWsChannel,
   RawResourceTiming,
+  RawIncident,
   RawLongAnimationTask,
   RawSelectionChange,
   RawMouseThrashing,
@@ -206,6 +207,8 @@ export type NetworkRequest = RawNetworkRequest & Timed
 export type WsChannel = RawWsChannel & Timed
 
 export type ResourceTiming = RawResourceTiming & Timed
+
+export type Incident = RawIncident & Timed
 
 export type LongAnimationTask = RawLongAnimationTask & Timed
 

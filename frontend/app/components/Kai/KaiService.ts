@@ -26,8 +26,8 @@ export default class KaiService extends AiService {
   getKaiChat = async (
     projectId: string,
     threadId: string,
-  ): Promise<
-    {
+  ): Promise<{
+    messages: {
       role: string;
       content: string;
       message_id: any;
@@ -36,8 +36,10 @@ export default class KaiService extends AiService {
       supports_visualization: boolean;
       chart: string;
       chart_data: string;
-    }[]
-  > => {
+      sessions?: Record<string, any>[];
+    }[];
+    title: string;
+  }> => {
     const r = await this.client.get(`/kai/${projectId}/chats/${threadId}`);
     if (!r.ok) {
       throw new Error('Failed to fetch chat');
@@ -84,7 +86,7 @@ export default class KaiService extends AiService {
   getMsgChart = async (
     messageId: string,
     projectId: string,
-  ): Promise<{ filters: any[]; chart: string; eventsOrder: string }> => {
+  ): Promise<string> => {
     const r = await this.client.get(
       `/kai/${projectId}/chats/data/${messageId}`,
     );
@@ -118,6 +120,21 @@ export default class KaiService extends AiService {
     const r = await this.client.get(`/kai/usage`);
     if (!r.ok) {
       throw new Error('Failed to fetch usage');
+    }
+    const data = await r.json();
+    return data;
+  };
+
+  getPromptSuggestions = async (
+    projectId: string,
+    threadId?: string | null,
+  ): Promise<string[]> => {
+    const endpoint = threadId
+      ? `/kai/${projectId}/chats/${threadId}/prompt-suggestions`
+      : `/kai/${projectId}/prompt-suggestions`;
+    const r = await this.client.get(endpoint);
+    if (!r.ok) {
+      throw new Error('Failed to fetch prompt suggestions');
     }
     const data = await r.json();
     return data;

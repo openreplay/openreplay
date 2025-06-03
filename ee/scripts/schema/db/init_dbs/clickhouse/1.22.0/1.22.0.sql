@@ -1,3 +1,16 @@
+SELECT 1
+FROM (SELECT throwIf(platform = 'ios', 'IOS sessions found')
+      FROM experimental.sessions) AS raw
+LIMIT 1;
+
+SELECT 1
+FROM (SELECT throwIf(platform = 'android', 'Android sessions found')
+      FROM experimental.sessions) AS raw
+LIMIT 1;
+
+ALTER TABLE experimental.sessions
+    MODIFY COLUMN platform Enum8('web'=1,'mobile'=2) DEFAULT 'web';
+
 CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.22.0-ee';
 
 SET allow_experimental_json_type = 1;

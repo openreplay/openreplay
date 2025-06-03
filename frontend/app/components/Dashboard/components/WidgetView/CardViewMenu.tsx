@@ -1,7 +1,7 @@
 import { useHistory } from 'react-router';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { Button, Dropdown, MenuProps, Modal } from 'antd';
+import { Button, Dropdown, MenuProps } from 'antd';
 import {
   BellIcon,
   EllipsisVertical,
@@ -14,6 +14,7 @@ import { useModal } from 'Components/ModalContext';
 import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
 import { showAddToDashboardModal } from 'Components/Dashboard/components/AddToDashboardButton';
 import { useTranslation } from 'react-i18next';
+import { confirm } from 'UI';
 
 function CardViewMenu() {
   const { t } = useTranslation();
@@ -51,29 +52,25 @@ function CardViewMenu() {
       label: t('Delete'),
       icon: <TrashIcon size={15} />,
       disabled: !widget.exists(),
-      onClick: () => {
-        Modal.confirm({
-          title: t('Confirm Card Deletion'),
-          icon: null,
-          content:
-            t('Are you sure you want to remove this card? This action is permanent and cannot be undone.'),
-          footer: (_, { OkBtn, CancelBtn }) => (
-            <>
-              <CancelBtn />
-              <OkBtn />
-            </>
-          ),
-          onOk: () => {
-            metricStore
-              .delete(widget)
-              .then(() => {
-                history.goBack();
-              })
-              .catch(() => {
-                toast.error(t('Failed to remove card'));
-              });
-          },
-        });
+      onClick: async () => {
+        if (
+          await confirm({
+            header: t('Remove Card'),
+            confirmButton: t('Remove'),
+            confirmation: t(
+              'Are you sure you want to remove this card? This action is permanent and cannot be undone.',
+            ),
+          })
+        ) {
+          metricStore
+            .delete(widget)
+            .then(() => {
+              history.goBack();
+            })
+            .catch(() => {
+              toast.error(t('Failed to remove card'));
+            });
+        }
       },
     },
   ];

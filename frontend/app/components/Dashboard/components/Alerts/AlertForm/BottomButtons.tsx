@@ -23,6 +23,7 @@ function BottomButtons({
         <Button
           loading={loading}
           type="primary"
+          htmlType="submit"
           disabled={loading || !instance.validate()}
           id="submit-button"
         >

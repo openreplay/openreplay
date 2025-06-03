@@ -1241,6 +1241,19 @@ cdef class ResourceTiming(PyMessage):
         self.stalled = stalled
 
 
+cdef class Incident(PyMessage):
+    cdef public int __id__
+    cdef public str label
+    cdef public long start_time
+    cdef public long end_time
+
+    def __init__(self, str label, long start_time, long end_time):
+        self.__id__ = 87
+        self.label = label
+        self.start_time = start_time
+        self.end_time = end_time
+
+
 cdef class LongAnimationTask(PyMessage):
     cdef public int __id__
     cdef public str name

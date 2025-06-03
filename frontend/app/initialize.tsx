@@ -1,6 +1,7 @@
 import './styles/index.css';
 import './styles/global.css';
 import React from 'react';
+import '@ant-design/v5-patch-for-react-19';
 import { createRoot } from 'react-dom/client';
 import './init';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -98,8 +99,9 @@ const ThemedApp: React.FC = () => {
         colorBorderSecondary: cssVar('gray-light'),
         headerBg: cssVar('gray-lightest'),
         rowHoverBg: cssVar('gray-lightest'),
-        headerSortHoverBg: cssVar('gray-lighter'),
-        headerSortActiveBg: cssVar('gray-lighter')
+        headerSortHoverBg: cssVar('gray-light'),
+        headerSortActiveBg: cssVar('gray-light'),
+        fixedHeaderSortActiveBg: cssVar('gray-light'),
       },
       Modal: {
         colorBgElevated: cssVar('white'),
@@ -120,8 +122,8 @@ const ThemedApp: React.FC = () => {
       },
       Tag: {
         defaultBg: cssVar('gray-lightest'),
-        defaultColor: cssVar('gray-darkest')
-      }
+        defaultColor: cssVar('gray-darkest'),
+      },
     },
     token: {
       colorPrimary: cssVar('main'),
@@ -143,7 +145,7 @@ const ThemedApp: React.FC = () => {
       fontSize: 14,
       fontFamily: "'Roboto', 'ArialMT', 'Arial'",
       fontWeightStrong: 400,
-      colorSplit: cssVar('gray-light')
+      colorSplit: cssVar('gray-light'),
     },
   };
 

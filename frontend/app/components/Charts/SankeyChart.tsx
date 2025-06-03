@@ -195,7 +195,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
               header: {
                 fontWeight: '600',
                 fontSize: 12,
-                color: '#333',
+                color: 'var(--color-gray-darkest)',
                 overflow: 'truncate',
                 paddingBottom: '.5rem',
                 paddingLeft: '14px',
@@ -203,16 +203,16 @@ const EChartsSankey: React.FC<Props> = (props) => {
               },
               body: {
                 fontSize: 12,
-                color: '#000',
+                color: 'var(--color-black)',
               },
               percentage: {
                 fontSize: 12,
-                color: '#454545',
+                color: 'var(--color-gray-dark)',
               },
               sessions: {
                 fontSize: 12,
                 fontFamily: "mono, 'monospace', sans-serif",
-                color: '#999999',
+                color: 'var(--color-gray-dark)',
               },
               clickIcon: {
                 backgroundColor: {
@@ -266,6 +266,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
           },
           tooltip: {
             formatter: sankeyTooltip(echartNodes, nodeValues),
+            backgroundColor: 'var(--color-white)',
           },
           nodeAlign: 'left',
           nodeWidth: 40,

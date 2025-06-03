@@ -7,14 +7,13 @@ from chalicelib.utils.ch_client import ClickHouseClient
 from chalicelib.utils.exp_ch_helper import get_sub_condition, get_col_cast
 
 logger = logging.getLogger(__name__)
-PREDEFINED_EVENTS = {
-    "CLICK": "String",
-    "INPUT": "String",
-    "LOCATION": "String",
-    "ERROR": "String",
-    "PERFORMANCE": "String",
-    "REQUEST": "String"
-}
+PREDEFINED_EVENTS = [
+    "CLICK",
+    "INPUT",
+    "LOCATION",
+    "ERROR",
+    "REQUEST"
+]
 
 
 def get_events(project_id: int, page: schemas.PaginatedSchema):

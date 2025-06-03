@@ -1,10 +1,10 @@
 import React from 'react';
-import { Button, Form, Input, Space, Modal } from 'antd';
+import { Button, Form, Input, Space } from 'antd';
 import { Trash } from 'UI/Icons';
 import { useStore } from '@/mstore';
 import { useModal } from 'Components/ModalContext';
 import { useTranslation } from 'react-i18next';
-
+import { confirm } from 'UI';
 interface Props {
   tag: any;
   projectId: number;
@@ -23,14 +23,16 @@ function TagForm(props: Props) {
   };
 
   const onDelete = async () => {
-    Modal.confirm({
-      title: t('Tag'),
-      content: t('Are you sure you want to remove?'),
-      onOk: async () => {
-        await tagWatchStore.deleteTag(tag.tagId, projectId);
-        closeModal();
-      },
-    });
+    if (
+      await confirm({
+        header: t('Remove Tag'),
+        confirmButton: t('Remove'),
+        confirmation: t('Are you sure you want to remove this tag?'),
+      })
+    ) {
+      await tagWatchStore.deleteTag(tag.tagId, projectId);
+      closeModal();
+    }
   };
 
   const onSave = async () => {

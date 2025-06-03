@@ -1,4 +1,4 @@
-import { createEffect, onMount } from "solid-js";
+import { onMount } from "solid-js";
 import Login from "~/entrypoints/popup/Login";
 import Settings from "~/entrypoints/popup/Settings";
 import Header from "./components/Header";

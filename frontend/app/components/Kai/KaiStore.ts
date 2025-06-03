@@ -3,6 +3,7 @@ import { BotChunk, ChatManager } from './SocketManager';
 import { kaiService as aiService, kaiService } from 'App/services';
 import { toast } from 'react-toastify';
 import Widget from 'App/mstore/types/widget';
+import Session, { ISession } from '@/types/session/session';
 
 export interface Message {
   text: string;
@@ -15,6 +16,7 @@ export interface Message {
   supports_visualization: boolean;
   feedback: boolean | null;
   duration: number;
+  sessions?: Session[];
 }
 export interface SentMessage
   extends Omit<
@@ -29,6 +31,7 @@ class KaiStore {
   processingStage: BotChunk | null = null;
   messages: Array<Message> = [];
   queryText = '';
+  chatTitle: string | null = null;
   loadingChat = false;
   replacing: string | null = null;
   usage = {
@@ -56,6 +59,20 @@ class KaiStore {
     return { msg, index };
   }
 
+  get firstHumanMessage() {
+    let msg = null;
+    let index = null;
+    for (let i = 0; i < this.messages.length; i++) {
+      const message = this.messages[i];
+      if (message.isUser) {
+        msg = message;
+        index = i;
+        break;
+      }
+    }
+    return { msg, index };
+  }
+
   get lastKaiMessage() {
     let msg = null;
     let index = null;
@@ -69,6 +86,14 @@ class KaiStore {
     }
     return { msg, index };
   }
+
+  getPreviousMessage = (messageId: string) => {
+    const index = this.messages.findIndex((msg) => msg.messageId === messageId);
+    if (index > 0) {
+      return this.messages[index - 1];
+    }
+    return null;
+  };
 
   setQueryText = (text: string) => {
     this.queryText = text;
@@ -113,13 +138,21 @@ class KaiStore {
     });
   };
 
+  setTitle = (title: string | null) => {
+    this.chatTitle = title;
+  };
+
   getChat = async (projectId: string, threadId: string) => {
     this.setLoadingChat(true);
     try {
-      const res = await aiService.getKaiChat(projectId, threadId);
-      if (res && res.length) {
+      const { messages, title } = await aiService.getKaiChat(
+        projectId,
+        threadId,
+      );
+      if (messages && messages.length) {
+        this.setTitle(title);
         this.setMessages(
-          res.map((m) => {
+          messages.map((m) => {
             const isUser = m.role === 'human';
             return {
               text: m.content,
@@ -130,6 +163,9 @@ class KaiStore {
               chart: m.chart,
               supports_visualization: m.supports_visualization,
               chart_data: m.chart_data,
+              sessions: m.sessions
+                ? m.sessions.map((s) => new Session(s))
+                : undefined,
             };
           }),
         );
@@ -144,7 +180,6 @@ class KaiStore {
 
   createChatManager = (
     settings: { projectId: string; threadId: string },
-    setTitle: (title: string) => void,
     initialMsg: string | null,
   ) => {
     const token = kaiService.client.getJwt();
@@ -190,6 +225,9 @@ class KaiStore {
               chart: '',
               supports_visualization: msg.supports_visualization,
               chart_data: '',
+              sessions: msg.sessions
+                ? msg.sessions.map((s) => new Session(s))
+                : undefined,
             };
             this.bumpUsage();
             this.addMessage(msgObj);
@@ -197,7 +235,7 @@ class KaiStore {
           }
         }
       },
-      titleCallback: setTitle,
+      titleCallback: this.setTitle,
     });
 
     if (initialMsg) {
@@ -211,7 +249,13 @@ class KaiStore {
 
   bumpUsage = () => {
     this.usage.used += 1;
-    this.usage.percent = (this.usage.used / this.usage.total) * 100;
+    this.usage.percent = Math.min(
+      (this.usage.used / this.usage.total) * 100,
+      100,
+    );
+    if (this.usage.used >= this.usage.total) {
+      toast.error('You have reached the daily limit for queries.');
+    }
   };
 
   sendMessage = (message: string) => {
@@ -232,7 +276,7 @@ class KaiStore {
         deleting.push(this.lastKaiMessage.index);
       }
       this.deleteAtIndex(deleting);
-      this.setReplacing(false);
+      this.setReplacing(null);
     }
     this.addMessage({
       text: message,
@@ -273,7 +317,6 @@ class KaiStore {
 
   cancelGeneration = async (settings: {
     projectId: string;
-    userId: string;
     threadId: string;
   }) => {
     try {
@@ -298,6 +341,7 @@ class KaiStore {
     }
   };
 
+  charts = new Map<string, Record<string, any>>();
   getMessageChart = async (msgId: string, projectId: string) => {
     this.setProcessingStage({
       content: 'Generating visualization...',
@@ -308,27 +352,16 @@ class KaiStore {
       supports_visualization: false,
     });
     try {
-      const filters = await kaiService.getMsgChart(msgId, projectId);
+      const filtersStr = await kaiService.getMsgChart(msgId, projectId);
+      if (!filtersStr.length) {
+        throw new Error('No filters found for the message');
+      }
+      const filters = JSON.parse(filtersStr);
       const data = {
-        metricId: undefined,
-        dashboardId: undefined,
-        widgetId: undefined,
-        metricOf: undefined,
-        metricType: undefined,
-        metricFormat: undefined,
-        viewType: undefined,
-        name: 'Kai Visualization',
-        series: [
-          {
-            name: 'Kai Visualization',
-            filter: {
-              eventsOrder: filters.eventsOrder,
-              filters: filters.filters,
-            },
-          },
-        ],
+        ...filters,
       };
       const metric = new Widget().fromJson(data);
+      this.charts.set(msgId, data);
       return metric;
     } catch (e) {
       console.error(e);
@@ -338,19 +371,31 @@ class KaiStore {
     }
   };
 
+  saveLatestChart = async (msgId: string, projectId: string) => {
+    const data = this.charts.get(msgId);
+    if (data) {
+      try {
+        await kaiService.saveChartData(msgId, projectId, data);
+        this.charts.delete(msgId);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
   getParsedChart = (data: string) => {
     const parsedData = JSON.parse(data);
     return new Widget().fromJson(parsedData);
   };
 
+  setUsage = (usage: { total: number; used: number; percent: number }) => {
+    this.usage = usage;
+  };
+
   checkUsage = async () => {
     try {
       const { total, used } = await kaiService.checkUsage();
-      this.usage = {
-        total,
-        used,
-        percent: (used / total) * 100,
-      };
+      this.setUsage({ total, used, percent: Math.round((used / total) * 100) });
     } catch (e) {
       console.error(e);
     }

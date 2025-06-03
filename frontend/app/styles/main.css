@@ -417,16 +417,6 @@ svg {
     margin-bottom: 6px!important;
 }
 
-.markdown-body ul {
-  list-style-type: none; /* Remove default bullets */
-}
-.markdown-body ul li:before {
-  content: "•"; /* Use standard bullet character */
-  display: inline-block;
-  width: 1em;
-  margin-left: -1em;
-}
-
 .ant-tooltip {
     max-width: 640px;
 }

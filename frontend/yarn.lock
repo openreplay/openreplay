@@ -110,6 +110,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ant-design/v5-patch-for-react-19@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "@ant-design/v5-patch-for-react-19@npm:1.0.3"
+  peerDependencies:
+    antd: ">=5.22.6"
+    react: ">=19.0.0"
+    react-dom: ">=19.0.0"
+  checksum: 10c1/68854c78dc29085858988c94cb0d67319516403bf3903a362e7006b331b46b4bdf598f0f7d27984164763aea46bb01808699990f39b3ec0969eec6e6dff75a53
+  languageName: node
+  linkType: hard
+
 "@babel/cli@npm:^7.27.2":
   version: 7.27.2
   resolution: "@babel/cli@npm:7.27.2"
@@ -3153,21 +3164,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/query-core@npm:5.76.0":
-  version: 5.76.0
-  resolution: "@tanstack/query-core@npm:5.76.0"
-  checksum: 10c1/597ce43f09380e6d638b277de668967a4d3429ceb0bf7b51203ff0c21eaef8cc8006d190a49e3b69129d1484f920ebbe9ad7f04d2e4161c718b331d6e1a4c236
+"@tanstack/query-core@npm:5.76.2":
+  version: 5.76.2
+  resolution: "@tanstack/query-core@npm:5.76.2"
+  checksum: 10c1/b20f5c581e556b0f6319889f38226608c40a0cacdcf8aff14c78c508804a20686552a70d928df76a633e7ea237f2c514ce2c4792cd8e3d430d531c91547d74cd
   languageName: node
   linkType: hard
 
 "@tanstack/react-query@npm:^5.76.0":
-  version: 5.76.1
-  resolution: "@tanstack/react-query@npm:5.76.1"
+  version: 5.76.2
+  resolution: "@tanstack/react-query@npm:5.76.2"
   dependencies:
-    "@tanstack/query-core": "npm:5.76.0"
+    "@tanstack/query-core": "npm:5.76.2"
   peerDependencies:
     react: ^18 || ^19
-  checksum: 10c1/899d86cbab243f90056394dd96aef87a73d0faf976c5dac4bed85746aea278b433cd7d767c4caeafa089a0a02920d2a48b62018f2e1dacac85dffa5f6bb2e316
+  checksum: 10c1/cc994355e1c934305e69d98d45cb9e4c3faaaf99e290ac5d89913c60916c1e314be7a59cc19673868cf4c6f3907a8d5dc5239d0be7889362351627884ce7078b
   languageName: node
   linkType: hard
 
@@ -7211,9 +7222,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.5.149":
-  version: 1.5.155
-  resolution: "electron-to-chromium@npm:1.5.155"
-  checksum: 10c1/9c11698f48a6f95b31751c2ddb7222a477c3d87679743b99a2fb12ba7f85d50affbdc678a56b3142ade5fe869bfc4721782673aab7d276fd9124513823116675
+  version: 1.5.157
+  resolution: "electron-to-chromium@npm:1.5.157"
+  checksum: 10c1/5d5f36b2b53b95cba41deff68e73df2d2756f6ec74c3dad691e11af20f8de58944ab04e31e64a27d2bd18176ca0ce885c72e32836ac8c8bf4a1f91f798e83af4
   languageName: node
   linkType: hard
 
@@ -7371,25 +7382,25 @@ __metadata:
   linkType: hard
 
 "es-abstract@npm:^1.17.5, es-abstract@npm:^1.23.2, es-abstract@npm:^1.23.3, es-abstract@npm:^1.23.5, es-abstract@npm:^1.23.6, es-abstract@npm:^1.23.9":
-  version: 1.23.9
-  resolution: "es-abstract@npm:1.23.9"
+  version: 1.23.10
+  resolution: "es-abstract@npm:1.23.10"
   dependencies:
     array-buffer-byte-length: "npm:^1.0.2"
     arraybuffer.prototype.slice: "npm:^1.0.4"
     available-typed-arrays: "npm:^1.0.7"
     call-bind: "npm:^1.0.8"
-    call-bound: "npm:^1.0.3"
+    call-bound: "npm:^1.0.4"
     data-view-buffer: "npm:^1.0.2"
     data-view-byte-length: "npm:^1.0.2"
     data-view-byte-offset: "npm:^1.0.1"
     es-define-property: "npm:^1.0.1"
     es-errors: "npm:^1.3.0"
-    es-object-atoms: "npm:^1.0.0"
+    es-object-atoms: "npm:^1.1.1"
     es-set-tostringtag: "npm:^2.1.0"
     es-to-primitive: "npm:^1.3.0"
     function.prototype.name: "npm:^1.1.8"
-    get-intrinsic: "npm:^1.2.7"
-    get-proto: "npm:^1.0.0"
+    get-intrinsic: "npm:^1.3.0"
+    get-proto: "npm:^1.0.1"
     get-symbol-description: "npm:^1.1.0"
     globalthis: "npm:^1.0.4"
     gopd: "npm:^1.2.0"
@@ -7405,13 +7416,13 @@ __metadata:
     is-shared-array-buffer: "npm:^1.0.4"
     is-string: "npm:^1.1.1"
     is-typed-array: "npm:^1.1.15"
-    is-weakref: "npm:^1.1.0"
+    is-weakref: "npm:^1.1.1"
     math-intrinsics: "npm:^1.1.0"
-    object-inspect: "npm:^1.13.3"
+    object-inspect: "npm:^1.13.4"
     object-keys: "npm:^1.1.1"
     object.assign: "npm:^4.1.7"
     own-keys: "npm:^1.0.1"
-    regexp.prototype.flags: "npm:^1.5.3"
+    regexp.prototype.flags: "npm:^1.5.4"
     safe-array-concat: "npm:^1.1.3"
     safe-push-apply: "npm:^1.0.0"
     safe-regex-test: "npm:^1.1.0"
@@ -7424,8 +7435,8 @@ __metadata:
     typed-array-byte-offset: "npm:^1.0.4"
     typed-array-length: "npm:^1.0.7"
     unbox-primitive: "npm:^1.1.0"
-    which-typed-array: "npm:^1.1.18"
-  checksum: 10c1/15eb33c9296cc13c10ed8a3d417f1c41d30a82b01721330de04cff03d67c0b8b0777ecc1c7fac1931b4c49ee4d85aff6d8cf73bf5354b30d166f43ed03b0cc96
+    which-typed-array: "npm:^1.1.19"
+  checksum: 10c1/43c8e3dce404a5c371178bf5791b8e806df4177e394b29576e7dd91ef8e8560e7c84acb741708917ad5a8f5077cbae79758bbcedc9d504baa4635f476b257cf7
   languageName: node
   linkType: hard
 
@@ -10101,7 +10112,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-weakref@npm:^1.0.2, is-weakref@npm:^1.1.0":
+"is-weakref@npm:^1.0.2, is-weakref@npm:^1.1.1":
   version: 1.1.1
   resolution: "is-weakref@npm:1.1.1"
   dependencies:
@@ -11352,9 +11363,9 @@ __metadata:
   linkType: hard
 
 "lottie-web@npm:^5.10.2":
-  version: 5.12.2
-  resolution: "lottie-web@npm:5.12.2"
-  checksum: 10c1/3c87c49202b35c77081c82ea842286b252fff7ff6470028633693c16457abb062a5d4ddfa270c599aa383f41106f20a54a221bfd1aee77163b8a7309f2bfa2a1
+  version: 5.13.0
+  resolution: "lottie-web@npm:5.13.0"
+  checksum: 10c1/93eb84f936d9d65681b3466b4c5ef0f74ec7cea7d80cdc25739204d1226d3422bdbe90a0bfa72cbc2bfd9ea3e4f3c9c8897f0eed8e2ea48132338121ca30015b
   languageName: node
   linkType: hard
 
@@ -12746,7 +12757,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"object-inspect@npm:^1.13.3":
+"object-inspect@npm:^1.13.3, object-inspect@npm:^1.13.4":
   version: 1.13.4
   resolution: "object-inspect@npm:1.13.4"
   checksum: 10c1/e8aa027ddd771b884e64eff9c02112c047709a96af507997437e3085ef097739c584d274828df22ae3fee51645687d0e98a50daa3546092d0aaffca1a57d7790
@@ -12894,6 +12905,7 @@ __metadata:
   resolution: "openreplay@workspace:."
   dependencies:
     "@ant-design/icons": "npm:^5.2.5"
+    "@ant-design/v5-patch-for-react-19": "npm:^1.0.3"
     "@babel/cli": "npm:^7.27.2"
     "@babel/core": "npm:^7.27.1"
     "@babel/node": "npm:^7.27.1"
@@ -15024,8 +15036,8 @@ __metadata:
   linkType: hard
 
 "react-i18next@npm:^15.5.1":
-  version: 15.5.1
-  resolution: "react-i18next@npm:15.5.1"
+  version: 15.5.2
+  resolution: "react-i18next@npm:15.5.2"
   dependencies:
     "@babel/runtime": "npm:^7.25.0"
     html-parse-stringify: "npm:^3.0.1"
@@ -15040,7 +15052,7 @@ __metadata:
       optional: true
     typescript:
       optional: true
-  checksum: 10c1/9b160c9d89fc13499af7738bfaf275f7affd247675636124a4984035405f835fe23e0d7965308237aef1c8a17c729dd07ddc0432e2bf5c095771d5ca272c3b4a
+  checksum: 10c1/02ba24aacebe320817e4d4936d15f347a3293363ecb9adb40e1dcaff288cb4e14f2a1e9420e4fb85d36abfba65aeacb384fcaabed0d7977129bf6ecce97ba174
   languageName: node
   linkType: hard
 
@@ -15377,7 +15389,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"regexp.prototype.flags@npm:^1.5.3":
+"regexp.prototype.flags@npm:^1.5.3, regexp.prototype.flags@npm:^1.5.4":
   version: 1.5.4
   resolution: "regexp.prototype.flags@npm:1.5.4"
   dependencies:
@@ -18328,7 +18340,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"which-typed-array@npm:^1.1.16, which-typed-array@npm:^1.1.18, which-typed-array@npm:^1.1.2":
+"which-typed-array@npm:^1.1.16, which-typed-array@npm:^1.1.19, which-typed-array@npm:^1.1.2":
   version: 1.1.19
   resolution: "which-typed-array@npm:1.1.19"
   dependencies:

@@ -1,7 +1,7 @@
 import { createSignal, onCleanup, createEffect } from "solid-js";
 import { STATES, formatMsToTime } from "~/entrypoints/content/utils";
 import micOn from "~/assets/mic-on.svg";
-import { createDraggable } from "@neodrag/solid";
+import { createDraggable } from '@neodrag/solid';
 
 interface IRControls {
   pause: () => void;
@@ -144,7 +144,7 @@ function RecordingControls({
           {recording() ? (
             <button
               class={
-                "btn btn-sm btn-ghost btn-circle tooltip tooltip-top flex items-center bg-black/20 hover:bg-black/70"
+                "btn btn-sm btn-ghost btn-circle tooltip tooltip-top flex items-center bg-black/20 hover:text-white hover:bg-black/70"
               }
               data-tip="Pause Recording"
               onClick={onPause}
@@ -168,7 +168,7 @@ function RecordingControls({
           ) : (
             <button
               class={
-                "btn btn-sm btn-ghost btn-circle tooltip tooltip-top flex items-center bg-black/70 hover:bg-black"
+                "btn btn-sm btn-ghost btn-circle tooltip tooltip-top flex items-center bg-black/70 hover:text-white hover:bg-black"
               }
               data-tip="Resume Recording"
               onClick={onResume}
@@ -199,7 +199,7 @@ function RecordingControls({
           </div>
 
           <button
-            class={`btn btn-sm btn-circle btn-ghost tooltip tooltip-top flex items-center ${
+            class={`btn btn-sm btn-circle btn-ghost tooltip hover:text-white tooltip-top flex items-center ${
               mic() ? "bg-black/20" : "bg-black"
             }`}
             data-tip={
@@ -263,7 +263,7 @@ function RecordingControls({
 
           <button
             class={
-              "btn btn-sm btn-ghost btn-circle tooltip tooltip-top flex items-center bg-black/20 hover:bg-black/70"
+              "btn btn-sm btn-ghost btn-circle tooltip tooltip-top flex items-center hover:text-white bg-black/20 hover:bg-black/70"
             }
             data-tip="Restart Recording"
             onClick={onRestartEv}

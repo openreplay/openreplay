@@ -71,6 +71,7 @@ interface Props {
   bookmarked?: boolean;
   toggleFavorite?: (sessionId: string) => void;
   query?: string;
+  slim?: boolean;
 }
 
 const PREFETCH_STATE = {
@@ -81,7 +82,8 @@ const PREFETCH_STATE = {
 
 function SessionItem(props: RouteComponentProps & Props) {
   const { location } = useHistory();
-  const { settingsStore, sessionStore, searchStore, searchStoreLive } = useStore();
+  const { settingsStore, sessionStore, searchStore, searchStoreLive } =
+    useStore();
   const { timezone, shownTimezone } = settingsStore.sessionSettings;
   const { t } = useTranslation();
   const [prefetchState, setPrefetched] = useState(PREFETCH_STATE.none);
@@ -99,6 +101,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     isDisabled,
     live: propsLive,
     isAdd,
+    slim,
   } = props;
 
   const {
@@ -176,7 +179,7 @@ function SessionItem(props: RouteComponentProps & Props) {
       await sessionStore.getFirstMob(sessionId);
       setPrefetched(PREFETCH_STATE.fetched);
     } catch (e) {
-      setPrefetched(PREFETCH_STATE.none)
+      setPrefetched(PREFETCH_STATE.none);
       console.error('Error while prefetching first mob', e);
     }
   }, [prefetchState, live, isAssist, isMobile, sessionStore, sessionId]);
@@ -245,13 +248,13 @@ function SessionItem(props: RouteComponentProps & Props) {
     );
   }, [startedAt, timezone, userTimezone]);
 
-  const onMetaClick = (meta: { name: string, value: string }) => {
+  const onMetaClick = (meta: { name: string; value: string }) => {
     if (isAssist) {
-      searchStoreLive.addFilterByKeyAndValue(meta.name, meta.value)
+      searchStoreLive.addFilterByKeyAndValue(meta.name, meta.value);
     } else {
       searchStore.addFilterByKeyAndValue(meta.name, meta.value);
     }
-  }
+  };
   return (
     <Tooltip
       title={
@@ -261,7 +264,11 @@ function SessionItem(props: RouteComponentProps & Props) {
       }
     >
       <div
-        className={cn(stl.sessionItem, 'flex flex-col p-4')}
+        className={cn(
+          stl.sessionItem,
+          'flex flex-col',
+          slim ? 'px-4 py-2 text-sm' : 'p-4',
+        )}
         id="session-item"
         onClick={(e) => e.stopPropagation()}
         onMouseEnter={handleHover}
@@ -291,13 +298,16 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </div>
                   <div className="overflow-hidden color-gray-medium ml-3 justify-between items-center shrink-0">
                     <div
-                      className={cn('text-lg', {
-                        'color-teal cursor-pointer':
-                          !disableUser && hasUserId && !isDisabled,
-                        [stl.userName]:
-                          !disableUser && hasUserId && !isDisabled,
-                        'color-gray-medium': disableUser || !hasUserId,
-                      })}
+                      className={cn(
+                        {
+                          'color-teal cursor-pointer':
+                            !disableUser && hasUserId && !isDisabled,
+                          [stl.userName]:
+                            !disableUser && hasUserId && !isDisabled,
+                          'color-gray-medium': disableUser || !hasUserId,
+                        },
+                        slim ? 'text-base' : 'text-lg',
+                      )}
                       onClick={handleUserClick}
                     >
                       <TextEllipsis
@@ -308,15 +318,20 @@ function SessionItem(props: RouteComponentProps & Props) {
                     </div>
                   </div>
                 </div>
-                {_metaList.length > 0 && (
-                  <SessionMetaList onMetaClick={onMetaClick} maxLength={3} metaList={_metaList} />
+                {!slim && _metaList.length > 0 && (
+                  <SessionMetaList
+                    onMetaClick={onMetaClick}
+                    maxLength={3}
+                    metaList={_metaList}
+                  />
                 )}
               </div>
             )}
             <div
               className={cn(
-                'px-2 flex flex-col justify-between gap-2 mt-3 lg:mt-0',
+                'px-2 flex flex-col justify-between lg:mt-0',
                 compact ? 'w-[40%]' : 'lg:w-1/5',
+                slim ? 'gap-1 mt-1' : 'gap-2 mt-3',
               )}
             >
               <div>
@@ -343,7 +358,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                           : 'Event'}
                       </span>
                     </div>
-                    <Icon name="circle-fill" size={3} className="mx-4" />
+                    <Icon name="circle-fill" size={3} className="mx-2" />
                   </>
                 )}
                 <div>
@@ -353,9 +368,12 @@ function SessionItem(props: RouteComponentProps & Props) {
             </div>
             <div
               style={{ width: '30%' }}
-              className="px-2 flex flex-col justify-between gap-2"
+              className={cn(
+                'px-2 flex flex-col justify-between',
+                slim ? 'gap-1' : 'gap-2',
+              )}
             >
-              <div style={{ height: '21px' }}>
+              <div style={{ height: slim ? undefined : '21px' }}>
                 <CountryFlag
                   userCity={userCity}
                   userState={userState}
@@ -373,7 +391,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </span>
                 )}
                 {userOs && userBrowser && (
-                  <Icon name="circle-fill" size={3} className="mx-4" />
+                  <Icon name="circle-fill" size={3} className="mx-2" />
                 )}
                 {userOs && (
                   <span
@@ -387,7 +405,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </span>
                 )}
                 {userOs && (
-                  <Icon name="circle-fill" size={3} className="mx-4" />
+                  <Icon name="circle-fill" size={3} className="mx-2" />
                 )}
                 <span className="capitalize" style={{ maxWidth: '70px' }}>
                   <TextEllipsis
@@ -452,7 +470,9 @@ function SessionItem(props: RouteComponentProps & Props) {
                   onClick={onClick}
                   queryParams={queryParams}
                   query={query}
-                  beforeOpen={live || isAssist ? undefined : populateData}
+                  beforeOpen={
+                    slim || live || isAssist ? undefined : populateData
+                  }
                 />
               )}
             </div>

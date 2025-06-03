@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { Component, createContext } from 'react';
 import Modal from './Modal';
+import { className } from '@medv/finder';
 
 const ModalContext = createContext({
   component: null,
@@ -29,6 +30,7 @@ export class ModalProvider extends Component {
     this.setState({
       component,
       props,
+      className: props.className || undefined,
     });
     document.addEventListener('keydown', this.handleKeyDown);
     document.querySelector('body').style.overflow = 'hidden';

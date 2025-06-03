@@ -275,8 +275,7 @@ def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
 def search_sessions(projectId: int, data: schemas.SessionsSearchPayloadSchema = \
         Depends(contextual_validators.validate_contextual_payload),
                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_search.search_sessions(data=data, project=context.project, user_id=context.user_id,
-                                           platform=context.project.platform)
+    data = sessions_search.search_sessions(data=data, project=context.project, user_id=context.user_id)
     return {'data': data}
 
 
@@ -285,8 +284,7 @@ def search_sessions(projectId: int, data: schemas.SessionsSearchPayloadSchema = 
 def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = \
         Depends(contextual_validators.validate_contextual_payload),
                        context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_search.search_sessions(data=data, project=context.project, user_id=context.user_id, ids_only=True,
-                                           platform=context.project.platform)
+    data = sessions_search.search_sessions(data=data, project=context.project, user_id=context.user_id, ids_only=True)
     return {'data': data}
 
 

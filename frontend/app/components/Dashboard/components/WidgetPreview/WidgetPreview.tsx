@@ -29,6 +29,12 @@ function WidgetPreview(props: Props) {
       metric.viewType,
     );
   // [rangeStart, rangeEnd] or [period_name] -- have to check options
+
+  React.useEffect(() => {
+    // otherwise data obj change won't be registered if you get data -> change page -> go back
+    return () => metricStore.init();
+  }, []);
+
   const presetComparison = metric.compareTo;
   return (
     <div className={cn(className, 'bg-white rounded-xl border shadow-sm mt-0')}>

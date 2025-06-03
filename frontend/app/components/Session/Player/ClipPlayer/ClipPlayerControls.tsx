@@ -15,9 +15,11 @@ import { useTranslation } from 'react-i18next';
 function ClipPlayerControls({
   session,
   range,
+  isFull,
 }: {
   session: Session;
   range: [number, number];
+  isFull?: boolean;
 }) {
   const { t } = useTranslation();
   const { projectsStore } = useStore();
@@ -47,7 +49,7 @@ function ClipPlayerControls({
       <PlayButton state={state} togglePlay={togglePlay} iconSize={30} />
       <Timeline range={range} />
       <Button size="small" type="primary" onClick={showFullSession}>
-        {t('Play Full Session')}
+        {isFull ? t('Open Session') : t('Play Full Session')}
         <CirclePlay size={16} style={{ marginLeft: '0px'}} />
       </Button>
     </div>

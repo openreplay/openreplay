@@ -10,7 +10,7 @@ import { Icon, Link } from 'UI';
 import { useStore } from 'App/mstore';
 
 const PLAY_ICON_NAMES = {
-  notPlayed: 'play-fill',
+  notPlayed: 'play-v2',
   played: 'play-circle-light',
 } as const;
 
@@ -76,10 +76,14 @@ function PlayLink(props: Props) {
       rel={props.newTab ? 'noopener noreferrer' : undefined}
     >
       <div className="group-hover:block hidden">
-        <Icon name="play-hover" size={38} color={isAssist ? 'tealx' : 'teal'} />
+        <Icon name={`play-fill-v2${isAssist ? '-assist' : ''}`} size={38} />
       </div>
       <div className="group-hover:hidden block">
-        <Icon name={iconName} size={38} color={isAssist ? 'tealx' : 'teal'} />
+        <Icon
+          name={`${iconName}${isAssist ? '-assist' : ''}`}
+          size={38}
+          color="teal"
+        />
       </div>
     </Link>
   );

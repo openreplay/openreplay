@@ -102,18 +102,18 @@ export function customTooltipFormatter(uuid: string) {
         <div class="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
           <div class="flex gap-2 items-center">
             <div style="
-              border-radius: 99px; 
-              background: ${params.color}; 
-              width: 1rem; 
+              border-radius: 99px;
+              background: ${params.color};
+              width: 1rem;
               height: 1rem;">
             </div>
             <div class="font-medium text-black">${fullname}</div>
           </div>
-    
+
           <div style="border-left: 2px solid ${
             params.color
           };" class="flex flex-col px-2 ml-2">
-            <div class="text-neutral-600 text-sm"> 
+            <div class="text-neutral-600 text-sm">
               Total:
             </div>
             <div class="flex items-center gap-1">
@@ -127,7 +127,7 @@ export function customTooltipFormatter(uuid: string) {
           (window as any).__seriesColorMap?.[uuid]?.[partnerName] || '#999';
         str += `
       <div style="border-left: 2px dashed ${partnerColor};" class="flex flex-col px-2 ml-2">
-        <div class="text-neutral-600 text-sm"> 
+        <div class="text-neutral-600 text-sm">
           ${isPrevious ? 'Current' : 'Previous'} Total:
         </div>
         <div class="flex items-center gap-1">
@@ -168,9 +168,9 @@ export function customTooltipFormatter(uuid: string) {
     <div class="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
       <div class="flex gap-2 items-center">
         <div style="
-          border-radius: 99px; 
-          background: ${params.color}; 
-          width: 1rem; 
+          border-radius: 99px;
+          background: ${params.color};
+          width: 1rem;
           height: 1rem;">
         </div>
         <div class="font-medium text-black">${seriesName}</div>
@@ -179,7 +179,7 @@ export function customTooltipFormatter(uuid: string) {
       <div style="border-left: 2px solid ${
         params.color
       };" class="flex flex-col px-2 ml-2">
-        <div class="text-neutral-600 text-sm"> 
+        <div class="text-neutral-600 text-sm">
           ${firstTs ? formatTimeOrDate(firstTs) : categoryLabel}
         </div>
         <div class="flex items-center gap-1">
@@ -194,7 +194,7 @@ export function customTooltipFormatter(uuid: string) {
         (window as any).__seriesColorMap?.[uuid]?.[partnerName] || '#999';
       tooltipContent += `
       <div style="border-left: 2px dashed ${partnerColor};" class="flex flex-col px-2 ml-2">
-        <div class="text-neutral-600 text-sm"> 
+        <div class="text-neutral-600 text-sm">
           ${secondTs ? formatTimeOrDate(secondTs) : categoryLabel}
         </div>
         <div class="flex items-center gap-1">
@@ -229,13 +229,13 @@ function buildCompareTag(val: number, prevVal: number): string {
 
   return `
     <div style="
-      display: inline-flex; 
-      align-items: center; 
-      gap: 4px; 
-      background: ${tagColor}; 
-      color: ${arrowColor}; 
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: ${tagColor};
+      color: ${arrowColor};
       padding: 2px 6px;
-      border-radius: 4px; 
+      border-radius: 4px;
       font-size: 0.75rem;">
       <span>${arrow}</span>
       <span>${absDelta}</span>
@@ -290,7 +290,7 @@ export function createSeries(
       datasetId,
       encode: { x: 'idx', y: fullName },
       lineStyle: dashed ? { type: 'dashed' } : undefined,
-      showSymbol: false,
+      showSymbol: data.chart.length === 1,
       // custom flag to hide prev data from legend
       _hideInLegend: hideFromLegend,
       itemStyle: { opacity: 1 },

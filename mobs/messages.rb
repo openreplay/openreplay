@@ -542,6 +542,12 @@ message 85, 'ResourceTiming', :replayer => :devtools do
   uint 'Stalled'
 end
 
+message 87, 'Incident', :replayer => :devtools do
+  string 'Label'
+  int 'StartTime'
+  int 'EndTime'
+end
+
 message 89, 'LongAnimationTask', :replayer => :devtools do
     string 'Name'
     int 'Duration'
@@ -653,4 +659,4 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Partition'
 end
 
-# FREE 2, 35, 36, 65, 85, 86, 87, 88, 89
+# FREE 2, 35, 36, 65, 87, 88, 89

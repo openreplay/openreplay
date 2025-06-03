@@ -2,6 +2,14 @@
 
 - support for Long Animation Task tracking
 - support for timing information in resource tracking
+- add incident events for tracker
+```js
+import { tracker } from '@openreplay/tracker'
+
+// call incident function and pass label, startTime, and endTime (label and endTime are optional)
+tracker.incident({ label: 'incident', startTime: Date.now() })
+
+```
 
 ## 16.3.0
 

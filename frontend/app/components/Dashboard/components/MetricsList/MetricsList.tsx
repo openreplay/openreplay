@@ -10,10 +10,10 @@ import AddCardSection from '../AddCardSection/AddCardSection';
 import { useTranslation } from 'react-i18next';
 
 function MetricsList({
-    siteId,
-    onSelectionChange,
-    inLibrary
-  }: {
+  siteId,
+  onSelectionChange,
+  inLibrary,
+}: {
   siteId: string;
   onSelectionChange?: (selected: any[]) => void;
   inLibrary?: boolean;
@@ -26,16 +26,16 @@ function MetricsList({
   const dashboard = dashboardStore.selectedDashboard;
   const existingCardIds = useMemo(
     () => dashboard?.widgets?.map((i) => parseInt(i.metricId)),
-    [dashboard]
+    [dashboard],
   );
   const cards = useMemo(
     () =>
       onSelectionChange
         ? metricStore.filteredCards.filter(
-          (i) => !existingCardIds?.includes(parseInt(i.metricId))
-        )
+            (i) => !existingCardIds?.includes(parseInt(i.metricId)),
+          )
         : metricStore.filteredCards,
-    [metricStore.filteredCards, existingCardIds, onSelectionChange]
+    [metricStore.filteredCards, existingCardIds, onSelectionChange],
   );
   const loading = metricStore.isLoading;
 
@@ -66,7 +66,8 @@ function MetricsList({
     metricStore.updateKey('sessionsPage', 1);
   }, [metricStore]);
 
-  const isFiltered = metricStore.filter.query !== '' || metricStore.filter.type !== '';
+  const isFiltered =
+    metricStore.filter.query !== '' || metricStore.filter.type !== '';
 
   const searchImageDimensions = { width: 60, height: 'auto' };
   const defaultImageDimensions = { width: 600, height: 'auto' };
@@ -93,7 +94,9 @@ function MetricsList({
         ) : (
           <div className="flex flex-col items-center">
             <div>
-              {t('Create and customize cards to analyze trends and user behavior effectively.')}
+              {t(
+                'Create and customize cards to analyze trends and user behavior effectively.',
+              )}
             </div>
             <Popover
               arrow={false}

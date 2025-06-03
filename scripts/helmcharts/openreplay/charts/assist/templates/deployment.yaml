@@ -49,32 +49,18 @@ spec:
               value: {{ .Values.global.assistKey }}
             - name: AWS_DEFAULT_REGION
               value: "{{ .Values.global.s3.region }}"
-            - name: S3_HOST
-              {{- if contains "minio" .Values.global.s3.endpoint }}
-              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}'
-              {{- else}}
-              value: '{{ .Values.global.s3.endpoint }}'
-              {{- end}}
-            - name: S3_KEY
-              {{- if .Values.global.s3.existingSecret }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.s3.existingSecret }}
-                  key: access-key
-              {{- else }}
-              value: {{ .Values.global.s3.accessKey }}
-              {{- end }}
-            - name: S3_SECRET
-              {{- if .Values.global.s3.existingSecret }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.s3.existingSecret }}
-                  key: secret-key
-              {{- else }}
-              value: {{ .Values.global.s3.secretKey }}
-              {{- end }}
             - name: REDIS_URL
-              value: {{ .Values.global.redis.redisHost }}
+              value: {{ default .Values.global.redis.redisHost .Values.redisHost }}
+            {{- if .Values.global.enterpriseEditionLicense }}
+            - name: COMPRESSION
+              value: "true"
+            - name: port
+              value: "9000"
+            - name: CACHE_REFRESH_INTERVAL_SECONDS
+              value: '5'
+            - name: debug
+              value: '0'
+            {{- end}}
             {{- range $key, $val := .Values.global.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

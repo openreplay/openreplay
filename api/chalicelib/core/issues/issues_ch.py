@@ -1,6 +1,6 @@
 from chalicelib.utils import ch_client, helper
 import datetime
-from .issues_pg import get_all_types
+from chalicelib.utils.exp_ch_helper import explode_dproperties, add_timestamp
 
 
 def get(project_id, issue_id):
@@ -21,7 +21,7 @@ def get(project_id, issue_id):
 def get_by_session_id(session_id, project_id, issue_type=None):
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(query=f"""\
-                            SELECT *
+                            SELECT created_at, `$properties`
                             FROM product_analytics.events
                             WHERE session_id = %(session_id)s 
                                 AND project_id= %(project_id)s
@@ -29,8 +29,11 @@ def get_by_session_id(session_id, project_id, issue_type=None):
                                 {"AND issue_type = %(type)s" if issue_type is not None else ""}
                             ORDER BY created_at;""",
                            parameters={"session_id": session_id, "project_id": project_id, "type": issue_type})
-        data = cur.execute(query)
-        return helper.list_to_camel_case(data)
+        rows = cur.execute(query)
+        rows = explode_dproperties(rows)
+        rows = helper.list_to_camel_case(rows)
+        rows = add_timestamp(rows)
+    return rows
 
 
 # To reduce the number of issues in the replay;

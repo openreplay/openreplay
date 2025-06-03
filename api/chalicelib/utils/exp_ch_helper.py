@@ -1,13 +1,14 @@
 import logging
+import math
 import re
+import struct
+from decimal import Decimal
 from typing import Union, Any
 
 import schemas
 from chalicelib.utils import sql_helper as sh
+from chalicelib.utils.TimeUTC import TimeUTC
 from schemas import SearchEventOperator
-import math
-import struct
-from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
@@ -233,3 +234,16 @@ def best_clickhouse_type(value):
         return "Float64"
 
     raise TypeError(f"Unsupported type: {type(value).__name__}")
+
+
+def explode_dproperties(rows):
+    for i in range(len(rows)):
+        rows[i] = {**rows[i], **rows[i]["$properties"]}
+        rows[i].pop("$properties")
+    return rows
+
+
+def add_timestamp(rows):
+    for row in rows:
+        row["timestamp"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
+    return rows

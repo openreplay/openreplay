@@ -16,12 +16,13 @@ interface Props {
   range: [number, number];
   onClose?: () => void;
   isHighlight?: boolean;
+  isFull?: boolean;
 }
 
 function ClipPlayerHeader(props: Props) {
   const { t } = useTranslation();
   const { projectsStore } = useStore();
-  const { session, range, onClose, isHighlight } = props;
+  const { session, range, onClose, isHighlight, isFull } = props;
   const { siteId } = projectsStore;
   const { message } = App.useApp();
 
@@ -33,7 +34,7 @@ function ClipPlayerHeader(props: Props) {
   };
   return (
     <div className="bg-white p-3 flex justify-between items-center border-b relative">
-      {isHighlight ? <PartialSessionBadge /> : null}
+      {isHighlight && !isFull ? <PartialSessionBadge /> : null}
       <UserCard session={props.session} />
 
       <Space>

@@ -943,7 +943,7 @@ export default defineBackground(() => {
       });
     }
     for (const tab of await chrome.tabs.query({})) {
-      if (tab.url?.match(/(chrome|chrome-extension):\/\//gi)) {
+      if (tab.url?.match(/(chrome|chrome-extension):\/\//gi) || !tab.id) {
         continue;
       }
       const res = await browser.scripting.executeScript({
@@ -953,6 +953,7 @@ export default defineBackground(() => {
       console.log('restoring content at', res)
     }
     await checkTokenValidity();
+    void initializeOffscreenDocument();
   });
   void initializeOffscreenDocument();
 
@@ -965,13 +966,11 @@ export default defineBackground(() => {
       (c: { contextType: string }) => c.contextType === "OFFSCREEN_DOCUMENT",
     );
     if (offscreenDocument) {
-      return;
-      // TODO: check manifestv3 for reloading context
-      // try {
-      //   await browser.offscreen.closeDocument();
-      // } catch (e) {
-      //   console.trace(e)
-      // }
+      try {
+        await browser.offscreen.closeDocument();
+      } catch (e) {
+        console.error("Spot: error closing old offscreen document", e);
+      }
     }
 
     try {

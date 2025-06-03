@@ -28,32 +28,32 @@ def search_events(project_id: int, q: Optional[str] = None):
 def search_properties(project_id: int, property_name: Optional[str] = None, event_name: Optional[str] = None,
                       q: Optional[str] = None):
     with ClickHouseClient() as ch_client:
-        select = "value"
+        select = "value, data_count"
+        grouping = ""
         full_args = {"project_id": project_id, "limit": 20,
-                     "event_name": event_name, "property_name": property_name, "q": q,
-                     "property_name_l": helper.string_to_sql_like(property_name),
+                     "event_name": event_name, "property_name": property_name,
                      "q_l": helper.string_to_sql_like(q)}
 
         constraints = ["project_id = %(project_id)s",
-                       "_timestamp >= now()-INTERVAL 1 MONTH"]
+                       "_timestamp >= now()-INTERVAL 1 MONTH",
+                       "property_name = %(property_name)s"]
         if event_name:
             constraints += ["event_name = %(event_name)s"]
-
-        if property_name and q:
-            constraints += ["property_name = %(property_name)s"]
-        elif property_name:
-            select = "DISTINCT ON(property_name) property_name AS value"
-            constraints += ["property_name ILIKE %(property_name_l)s"]
+        else:
+            select = "value, sum(aepg.data_count) AS data_count"
+            grouping = "GROUP BY 1"
 
         if q:
             constraints += ["value ILIKE %(q_l)s"]
+
         query = ch_client.format(
-            f"""SELECT {select},data_count
-                      FROM product_analytics.autocomplete_event_properties_grouped 
-                      WHERE {" AND ".join(constraints)} 
-                      ORDER BY data_count DESC 
+            f"""SELECT {select}
+                      FROM product_analytics.autocomplete_event_properties_grouped AS aepg 
+                      WHERE {" AND ".join(constraints)}
+                      {grouping} 
+                      ORDER BY data_count DESC
                       LIMIT %(limit)s;""",
             parameters=full_args)
         rows = ch_client.execute(query)
 
-        return {"values": helper.list_to_camel_case(rows), "_src": 2}
+        return {"events": helper.list_to_camel_case(rows), "_src": 2}
