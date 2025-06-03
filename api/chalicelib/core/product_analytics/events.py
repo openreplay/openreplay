@@ -16,20 +16,19 @@ PREDEFINED_EVENTS = [
 ]
 
 
-def get_events(project_id: int, page: schemas.PaginatedSchema):
+def get_events(project_id: int):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
-            """SELECT DISTINCT
-               ON(event_name,auto_captured)
-                   COUNT (1) OVER () AS total,
-                   event_name AS name, display_name, description,
-                   auto_captured
-               FROM product_analytics.all_events
-               WHERE project_id=%(project_id)s
-               ORDER BY auto_captured, display_name
-                   LIMIT %(limit)s
-               OFFSET %(offset)s;""",
-            parameters={"project_id": project_id, "limit": page.limit, "offset": (page.page - 1) * page.limit})
+            """ \
+            SELECT DISTINCT
+            ON(event_name,auto_captured)
+                COUNT (1) OVER () AS total,
+                event_name AS name, display_name, description,
+                auto_captured
+            FROM product_analytics.all_events
+            WHERE project_id=%(project_id)s
+            ORDER BY auto_captured, display_name, event_name;""",
+            parameters={"project_id": project_id})
         rows = ch_client.execute(r)
     if len(rows) == 0:
         return {"total": len(PREDEFINED_EVENTS), "list": [{
