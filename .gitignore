@@ -8,3 +8,4 @@ node_modules
 .idea
 *.mob*
 install-state.gz
+frontend/tests/playwright/auth-state.json
