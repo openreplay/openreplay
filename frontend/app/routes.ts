@@ -1,4 +1,7 @@
 import { CLIENT_TABS } from './utils/routeUtils'
+import { routeIdRequired, changeAvailable } from './extraRoutes';
+
+export * from './extraRoutes';
 
 const hashed = (path: string, hash?: string | number): string => {
   if ((typeof hash === 'string' && hash !== '') || typeof hash === 'number') {
@@ -191,6 +194,7 @@ export const highlights = (): string => '/highlights';
 export const kai = (): string => '/kai';
 
 const REQUIRED_SITE_ID_ROUTES = [
+  ...routeIdRequired,
   liveSession(''),
   session(''),
   sessions(),
@@ -263,6 +267,7 @@ export function isRoute(route: string, path: string): boolean {
 }
 
 const SITE_CHANGE_AVAILABLE_ROUTES = [
+  ...changeAvailable,
   sessions(),
   notes(),
   bookmarks(),

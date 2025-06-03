@@ -38,6 +38,7 @@ export function debounceCall(func, wait) {
   };
 }
 
+
 export function randomInt(a, b) {
   const min = (b ? a : 0) - 0.5;
   const max = b || a || Number.MAX_SAFE_INTEGER;
@@ -622,6 +623,152 @@ export function exportAntCsv(tableColumns, tableData, filename = 'table.csv') {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   saveAsFile(blob, filename);
 }
+
+export const numFormatter = (num: any) => {
+  if (num > 999 && num < 1000000) {
+      return num / 1000 + 'K';
+  } else if (num >= 1000000) {
+      return num / 1000000 + 'M';
+  } else if (num < 900) {
+      return num;
+  }
+};
+
+export const loadStripe = (callback: any) => {
+  loadDynamicScript('stripeTag', 'https://js.stripe.com/v3/', callback);
+};
+
+export const loadDynamicScript = (tag: string, path: string, callback: any) => {
+  const scriptExists = document.getElementById(tag)
+  if (scriptExists) return callback();
+
+  const scriptJs = document.createElement('script');
+  scriptJs.src = path;
+  scriptJs.async = true;
+  scriptJs.id = tag;
+  scriptJs.onload = () => {
+      setTimeout(callback, 10);
+  };
+  document.body && document.body.appendChild(scriptJs);
+}
+
+export const getDeviceType = () => {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isTablet = /iPad|Android/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    return 2;
+  } else if (isTablet) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+export const sensitiveParams = new Set([
+  'password',
+  'pass',
+  'pwd',
+  'mdp',
+  'token',
+  'bearer',
+  'jwt',
+  'api_key',
+  'api-key',
+  'apiKey',
+  'key',
+  'secret',
+  'id',
+  'user',
+  'userId',
+  'email',
+  'ssn',
+  'name',
+  'firstname',
+  'lastname',
+  'birthdate',
+  'dob',
+  'address',
+  'zip',
+  'zipcode',
+  'x-api-key',
+  'www-authenticate',
+  'x-csrf-token',
+  'x-requested-with',
+  'x-forwarded-for',
+  'x-real-ip',
+  'cookie',
+  'authorization',
+  'auth',
+  'proxy-authorization',
+  'set-cookie',
+  'account_key',
+])
+
+export function filterHeaders(headers: Record<string, string> | { name: string; value: string }[]) {
+  const filteredHeaders: Record<string, string> = {}
+  if (Array.isArray(headers)) {
+    headers.forEach(({ name, value }) => {
+      if (sensitiveParams.has(name.toLowerCase())) {
+        filteredHeaders[name] = '******'
+      } else {
+        filteredHeaders[name] = value
+      }
+    })
+  } else {
+    for (const [key, value] of Object.entries(headers)) {
+      if (sensitiveParams.has(key.toLowerCase())) {
+        filteredHeaders[key] = '******'
+      } else {
+        filteredHeaders[key] = value
+      }
+    }
+  }
+  return filteredHeaders
+}
+
+export function filterBody<T extends Record<string, any>>(body: T): T {
+  if (!body) {
+    return body
+  }
+
+  obscureSensitiveData(body)
+  return body
+}
+
+export function obscureSensitiveData(obj: Record<string, any> | any[]) {
+  if (Array.isArray(obj)) {
+    obj.forEach(obscureSensitiveData)
+  } else if (obj && typeof obj === 'object') {
+    for (const key in obj) {
+      if (Object.hasOwn(obj, key)) {
+        if (sensitiveParams.has(key.toLowerCase())) {
+          obj[key] = '******'
+        } else if (obj[key] !== null && typeof obj[key] === 'object') {
+          obscureSensitiveData(obj[key])
+        }
+      }
+    }
+  }
+}
+
+export function tryFilterUrl(url: string) {
+  if (!url) return ''
+  try {
+    const urlObj = new URL(url)
+    if (urlObj.searchParams) {
+      for (const key of urlObj.searchParams.keys()) {
+        if (sensitiveParams.has(key.toLowerCase())) {
+          urlObj.searchParams.set(key, '******')
+        }
+      }
+    }
+    return urlObj.toString()
+  } catch (e) {
+    return url
+  }
+}
+
 
 export function roundToNextMinutes(timestamp: number, minutes: number): number {
   const date = new Date(timestamp);

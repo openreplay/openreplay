@@ -45,12 +45,52 @@ export default class SettingsService {
       .catch((e) => Promise.reject(e));
   }
 
-  getFirstMobUrl(sessionId: string): Promise<{ domURL: string[], fileKey?: string }> {
+  getFirstMobUrl(
+    sessionId: string,
+  ): Promise<{ domURL: string[]; fileKey?: string }> {
     return this.client
       .get(`/sessions/${sessionId}/first-mob`)
       .then((r) => r.json())
       .then((j) => j.data || {})
       .catch(console.error);
+  }
+
+  getRecommendedSessions(sort?: any): Promise<{
+    sessions: ISession[];
+    total: number;
+  }> {
+    return this.client
+      .post('/sessions-recommendations', sort)
+      .then((r) => r.json())
+      .then((response) => response || [])
+      .catch((e) => Promise.reject(e));
+  }
+
+  getFinetuneSessions(): Promise<{ sessions: string[] }> {
+    return this.client
+      .get('/PROJECT_ID/finetuning/sessions')
+      .then((r) => r.json())
+      .catch(Promise.reject);
+  }
+
+  sendFeedback(data: any): Promise<any> {
+    return this.client
+      .post(`/session-feedback`, data)
+      .then((r) => r.json())
+      .then((j) => j.data || [])
+      .catch(Promise.reject);
+  }
+
+  signalFinetune() {
+    return this.client.get('/PROJECT_ID/finetune');
+  }
+
+  checkFeedback(sessionId: string): Promise<any> {
+    return this.client
+      .get(`/session-feedback/${sessionId}`)
+      .then((r) => r.json())
+      .then((j) => j.data || false)
+      .catch(Promise.reject);
   }
 
   getSessionInfo(sessionId: string, isLive?: boolean): Promise<ISession> {
@@ -129,11 +169,49 @@ export default class SettingsService {
       .catch(Promise.reject);
   }
 
+  async fetchSimilarSessions(
+    sessionId: string,
+    params: any,
+  ): Promise<{ sessions: ISession[] }> {
+    try {
+      const r = await this.client.post(
+        `/PROJECT_ID/similar-sessions/${sessionId}`,
+        params,
+      );
+      const j = await r.json();
+      return j.sessions || [];
+    } catch (reason) {
+      return Promise.reject(reason);
+    }
+  }
+
   async getAssistCredentials(): Promise<any> {
     try {
       const r = await this.client.get('/config/assist/credentials');
       const j = await r.json();
       return j.data || null;
+    } catch (reason) {
+      return Promise.reject(reason);
+    }
+  }
+
+  generateShorts(projectId: string) {
+    try {
+      void this.client.post(`/${projectId}/generate/shorts`, {});
+    } catch (reason) {
+      console.error('Error generating shorts:', reason);
+    }
+  }
+
+  async fetchSessionClips(): Promise<{ clips: any[] }> {
+    try {
+      const r = await this.client.get('/PROJECT_ID/shorts-recommendations', {
+        sortBy: 'startTs',
+        sortOrder: 'desc',
+      });
+      // .get('/PROJECT_ID/shorts-recommendations');
+      const j = await r.json();
+      return j || {};
     } catch (reason) {
       return Promise.reject(reason);
     }
