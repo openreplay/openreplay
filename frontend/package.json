@@ -132,7 +132,7 @@
     "cssnano": "^7.0.7",
     "cypress": "13.17.0",
     "cypress-image-snapshot": "^4.0.1",
-    "dotenv": "^6.2.0",
+    "dotenv": "^16.5.0",
     "esbuild-loader": "^4.3.0",
     "eslint": "^9.21.0",
     "eslint-import-resolver-typescript": "^3.8.3",

@@ -1,5 +1,7 @@
 import { authStateFile, testUseAuthState } from './helpers';
 import { expect, test as setup } from '@playwright/test';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 testUseAuthState();
 
@@ -8,6 +10,9 @@ setup.beforeEach(async ({ page }) => {
 });
 
 setup('authenticate', async ({ page }) => {
+  const LOGIN = process.env.TEST_FOSS_LOGIN || '';
+  const PASSWORD = process.env.TEST_FOSS_PASSWORD || '';
+
   await page.goto('/login');
 
   try {
@@ -15,14 +20,9 @@ setup('authenticate', async ({ page }) => {
     console.log('Current URL:', url);
 
     if (url.includes('login')) {
-     console.log('Already on login page, skipping authentication');
-      await page.locator('[data-test-id="login"]').click();
-      await page.locator('.ant-input-affix-wrapper').first().click();
-      await page
-        .locator('[data-test-id="login"]')
-        .fill('andrei@openreplay.com');
-      await page.locator('[data-test-id="password"]').click();
-      await page.locator('[data-test-id="password"]').fill('Andrey123!');
+      console.log('On login page, authenticating...');
+      await page.locator('[data-test-id="login"]').fill(LOGIN);
+      await page.locator('[data-test-id="password"]').fill(PASSWORD);
       await page.locator('[data-test-id="log-button"]').click();
     }
     await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible();

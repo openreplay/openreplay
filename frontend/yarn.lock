@@ -7158,10 +7158,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^6.2.0":
-  version: 6.2.0
-  resolution: "dotenv@npm:6.2.0"
-  checksum: 10c1/a7e8bf58954d8d46dfd5c3accb8643b5b9d2e683da66515cd0abd8ff60735d4d21e4f11debbdbc19fa6243c85fb938eb4b590d5563c53a269ade81125444a292
+"dotenv@npm:^16.5.0":
+  version: 16.5.0
+  resolution: "dotenv@npm:16.5.0"
+  checksum: 10c1/95956f0c08c33c134ada7323006fd4db047294689b4a6d7714ebd2cbeb12a4888b2d70a7ac89fdd68c39bceb95f600e74eebb0671c6f31bab87ec9a221f980ba
   languageName: node
   linkType: hard
 
@@ -12961,7 +12961,7 @@ __metadata:
     cssnano: "npm:^7.0.7"
     cypress: "npm:13.17.0"
     cypress-image-snapshot: "npm:^4.0.1"
-    dotenv: "npm:^6.2.0"
+    dotenv: "npm:^16.5.0"
     echarts: "npm:^5.6.0"
     esbuild-loader: "npm:^4.3.0"
     eslint: "npm:^9.21.0"

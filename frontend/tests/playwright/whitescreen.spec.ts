@@ -1,12 +1,19 @@
 import { test, expect } from '@playwright/test';
 
-test('The freshest session from openreplay website doesnt have white screen', async ({ page }) => {
+test('The freshest session from openreplay website doesnt have white screen', async ({
+  page,
+}) => {
+  const LOGIN = process.env.TEST_FOSS_LOGIN || '';
+  const PASSWORD = process.env.TEST_FOSS_PASSWORD || '';
   await page.goto('http://localhost:3333/login');
-  await page.locator('[data-test-id="login"]').fill('andrei@openreplay.com');
-  await page.locator('[data-test-id="password"]').fill('Andrey123!');
+  await page.locator('[data-test-id="login"]').fill(LOGIN);
+  await page.locator('[data-test-id="password"]').fill(PASSWORD);
   await page.locator('[data-test-id="log-button"]').click();
   await page.waitForTimeout(1000);
-  await page.locator('[data-test-id="session-list-header"]').locator('[data-test-id="widget-select-date-range"]').click();
+  await page
+    .locator('[data-test-id="session-list-header"]')
+    .locator('[data-test-id="widget-select-date-range"]')
+    .click();
   await page.getByText('Past 30 Days').click();
   await page.locator('[data-test-id="project-dropdown"]').click();
   await page.getByRole('button', { name: 'Android caret-down' }).click();
@@ -17,7 +24,7 @@ test('The freshest session from openreplay website doesnt have white screen', as
   if (borderBlocks.length >= 2) {
     const secondBlock = borderBlocks[1];
     const playButton = await secondBlock.$('#play-button');
-  
+
     if (playButton) {
       const link = await playButton.$('a');
       if (link) {
