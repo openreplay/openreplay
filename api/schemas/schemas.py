@@ -1117,6 +1117,11 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
         return self
 
 
+class SavedCardSchema(CardSessionsSchema):
+    metric_type: Optional[MetricType] = Field(default=None)
+    metric_of: Optional[Any] = Field(default=None)
+
+
 class CardConfigSchema(BaseModel):
     col: Optional[int] = Field(default=None)
     row: Optional[int] = Field(default=2)
