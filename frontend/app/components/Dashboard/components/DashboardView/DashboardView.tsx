@@ -64,6 +64,7 @@ function DashboardView(props: Props) {
   };
 
   useEffect(() => {
+    dashboardStore.resetPeriod();
     if (queryParams.has('modal')) {
       onAddWidgets();
       trimQuery();
