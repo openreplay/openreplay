@@ -22,7 +22,7 @@ class BaseModel(_BaseModel):
     model_config = ConfigDict(alias_generator=attribute_to_camel_case,
                               use_enum_values=True,
                               json_schema_extra=schema_extra,
-                              # extra='forbid'
+                              extra='forbid'
                               )
 
 
