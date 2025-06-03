@@ -27,7 +27,7 @@ function SessionHeader() {
   };
 
   return (
-    <div className="flex items-center px-4 py-3 justify-between w-full">
+    <div className="flex items-center px-4 py-3 justify-between w-full" data-test-id="session-list-header">
       <div
         className={`flex w-full flex-wrap gap-2 ${screens.md ? 'justify-between' : 'justify-start'}`}
       >

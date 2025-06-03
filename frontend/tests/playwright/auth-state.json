@@ -21,8 +21,12 @@
           "value": "{\"steps\":[{\"title\":\"🛠️ Install OpenReplay\",\"status\":\"completed\"},{\"title\":\"🕵️ Identify Users\",\"status\":\"completed\"},{\"title\":\"🧑‍💻 Invite Team Members\",\"status\":\"completed\"},{\"title\":\"🔌 Integrations\",\"status\":\"completed\"}],\"status\":\"completed\"}"
         },
         {
+          "name": "__$global-destinationPath$__",
+          "value": "/"
+        },
+        {
           "name": "___$or_spotToken$___",
-          "value": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4MDEzOTg2LCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODAxMzM4NiwiYXVkIjoic3BvdDpPcGVuUmVwbGF5In0.8HHG8bNovaBgLZz1iIZpD-WHR8ke-ue6VukID5vxW0IuvySL21sPu8D-sFFZSn-ON_EIMW14Pu_qYVJoib5lMQ"
+          "value": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4ODc2MzkyLCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODg3NTc5MiwiYXVkIjoic3BvdDpPcGVuUmVwbGF5In0.5Xuboo2h30P6mTYHEtzoaJTBZvZGwEMs8ywookDsY0Xp0Ah9m9K-s3WF2x-M_7LCfDOp7nBFa8j9AyKz09V0oA"
         },
         {
           "name": "__$session-timezone$__",
@@ -34,11 +38,11 @@
         },
         {
           "name": "__openreplay_health_status",
-          "value": "1748013396460"
+          "value": "1748875801944"
         },
         {
           "name": "__$user-siteId$__",
-          "value": "65"
+          "value": "109"
         },
         {
           "name": "__or__langBannerClosed",
@@ -46,19 +50,19 @@
         },
         {
           "name": "AuthStore",
-          "value": "{\"authDetails\":\"{\\\"tenants\\\":true,\\\"sso\\\":null,\\\"ssoProvider\\\":null,\\\"enforceSSO\\\":null,\\\"edition\\\":\\\"foss\\\"}\",\"__mps__\":{\"expireInTimestamp\":1748016995020}}"
+          "value": "{\"authDetails\":\"{\\\"tenants\\\":true,\\\"sso\\\":null,\\\"ssoProvider\\\":null,\\\"enforceSSO\\\":null,\\\"edition\\\":\\\"foss\\\"}\",\"__mps__\":{\"expireInTimestamp\":1748879400231}}"
         },
         {
           "name": "UserStore",
-          "value": "{\"siteId\":null,\"tenants\":[],\"jwt\":\"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4MDk5Nzg2LCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODAxMzM4NiwiYXVkIjoiZnJvbnQ6T3BlblJlcGxheSJ9.614ybiDIepo4OHWWMb-yDGBI6rAHb0UMr5Hxbi0lgvhnxmIQwC32KDyE1E39y47nQaqgkrr-GarIlBmCF_A0Ow\",\"spotJwt\":\"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4MDEzOTg2LCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODAxMzM4NiwiYXVkIjoic3BvdDpPcGVuUmVwbGF5In0.8HHG8bNovaBgLZz1iIZpD-WHR8ke-ue6VukID5vxW0IuvySL21sPu8D-sFFZSn-ON_EIMW14Pu_qYVJoib5lMQ\",\"scopeState\":2,\"onboarding\":false,\"account\":\"{\\\"id\\\":58,\\\"email\\\":\\\"andrei@openreplay.com\\\",\\\"smtp\\\":false,\\\"expirationDate\\\":-1,\\\"permissions\\\":[],\\\"settings\\\":{\\\"modules\\\":[\\\"usability-tests\\\",\\\"feature-flags\\\"]},\\\"iceServers\\\":[],\\\"hasPassword\\\":true,\\\"apiKey\\\":\\\"48Vph82zUEWHmfPSUbgG\\\",\\\"edition\\\":\\\"foss\\\",\\\"optOut\\\":false,\\\"versionNumber\\\":\\\"1.17.0\\\",\\\"name\\\":\\\"Andrei\\\",\\\"createdAt\\\":1652690354756,\\\"admin\\\":true,\\\"superAdmin\\\":false}\"}"
+          "value": "{\"siteId\":null,\"tenants\":[],\"jwt\":\"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4OTYyMTkyLCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODg3NTc5MiwiYXVkIjoiZnJvbnQ6T3BlblJlcGxheSJ9.bfMw80k15BIwHkR_JQsY_DFqDJwERZcpYLOBRbcPcm2OT_WPozDal6HS8rs5YeyW0m98HRJa1ShGoMiyQhxMJA\",\"spotJwt\":\"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU4LCJ0ZW5hbnRJZCI6MSwiZXhwIjoxNzQ4ODc2MzkyLCJpc3MiOiJPcGVuUmVwbGF5LW9zcyIsImlhdCI6MTc0ODg3NTc5MiwiYXVkIjoic3BvdDpPcGVuUmVwbGF5In0.5Xuboo2h30P6mTYHEtzoaJTBZvZGwEMs8ywookDsY0Xp0Ah9m9K-s3WF2x-M_7LCfDOp7nBFa8j9AyKz09V0oA\",\"scopeState\":2,\"onboarding\":false,\"account\":\"{\\\"id\\\":58,\\\"email\\\":\\\"andrei@openreplay.com\\\",\\\"smtp\\\":false,\\\"expirationDate\\\":-1,\\\"permissions\\\":[],\\\"settings\\\":{\\\"modules\\\":[\\\"usability-tests\\\",\\\"feature-flags\\\"]},\\\"iceServers\\\":[],\\\"hasPassword\\\":true,\\\"apiKey\\\":\\\"48Vph82zUEWHmfPSUbgG\\\",\\\"edition\\\":\\\"foss\\\",\\\"optOut\\\":false,\\\"versionNumber\\\":\\\"1.17.0\\\",\\\"name\\\":\\\"Andrei\\\",\\\"createdAt\\\":1652690354756,\\\"admin\\\":true,\\\"superAdmin\\\":false}\"}"
         },
         {
           "name": "__openreplay_health_response",
-          "value": "{\"overallHealth\":true,\"healthMap\":{\"databases\":{\"name\":\"Databases\",\"healthOk\":true,\"subservices\":{\"postgres\":{\"health\":true,\"details\":{}}},\"serviceName\":\"databases\"},\"ingestionPipeline\":{\"name\":\"Ingestion Pipeline\",\"healthOk\":true,\"subservices\":{\"redis\":{\"health\":true,\"details\":{}}},\"serviceName\":\"ingestionPipeline\"},\"backendServices\":{\"name\":\"Backend Services\",\"healthOk\":true,\"subservices\":{\"alerts\":{\"health\":true,\"details\":{}},\"assets\":{\"health\":true,\"details\":{}},\"assist\":{\"health\":true,\"details\":{}},\"chalice\":{\"health\":true,\"details\":{}},\"db\":{\"health\":true,\"details\":{}},\"ender\":{\"health\":true,\"details\":{}},\"frontend\":{\"health\":true,\"details\":{}},\"heuristics\":{\"health\":true,\"details\":{}},\"http\":{\"health\":true,\"details\":{}},\"ingress-nginx\":{\"health\":true,\"details\":{}},\"integrations\":{\"health\":true,\"details\":{}},\"sink\":{\"health\":true,\"details\":{}},\"sourcemapreader\":{\"health\":true,\"details\":{}},\"storage\":{\"health\":true,\"details\":{}}},\"serviceName\":\"backendServices\"}},\"details\":{\"numberOfSessionsCaptured\":214690,\"numberOfEventCaptured\":1816886}}"
+          "value": "{\"overallHealth\":true,\"healthMap\":{\"databases\":{\"name\":\"Databases\",\"healthOk\":true,\"subservices\":{\"postgres\":{\"health\":true,\"details\":{}}},\"serviceName\":\"databases\"},\"ingestionPipeline\":{\"name\":\"Ingestion Pipeline\",\"healthOk\":true,\"subservices\":{\"redis\":{\"health\":true,\"details\":{}}},\"serviceName\":\"ingestionPipeline\"},\"backendServices\":{\"name\":\"Backend Services\",\"healthOk\":true,\"subservices\":{\"alerts\":{\"health\":true,\"details\":{}},\"assets\":{\"health\":true,\"details\":{}},\"assist\":{\"health\":true,\"details\":{}},\"chalice\":{\"health\":true,\"details\":{}},\"db\":{\"health\":true,\"details\":{}},\"ender\":{\"health\":true,\"details\":{}},\"frontend\":{\"health\":true,\"details\":{}},\"heuristics\":{\"health\":true,\"details\":{}},\"http\":{\"health\":true,\"details\":{}},\"ingress-nginx\":{\"health\":true,\"details\":{}},\"integrations\":{\"health\":true,\"details\":{}},\"sink\":{\"health\":true,\"details\":{}},\"sourcemapreader\":{\"health\":true,\"details\":{}},\"storage\":{\"health\":true,\"details\":{}}},\"serviceName\":\"backendServices\"}},\"details\":{\"numberOfSessionsCaptured\":216638,\"numberOfEventCaptured\":1840149}}"
         },
         {
           "name": "__$session-filter$__",
-          "value": "{\"name\":\"\",\"events\":[],\"custom\":{},\"rangeValue\":\"LAST_30_DAYS\",\"startDate\":1745422200000,\"endDate\":1748014200000,\"groupByUser\":false,\"sort\":\"startTs\",\"order\":\"desc\",\"strict\":false,\"eventsOrder\":\"then\",\"limit\":10,\"rangeName\":\"LAST_30_DAYS\",\"page\":1,\"perPage\":10,\"tab\":\"sessions\",\"filters\":[{\"type\":\"location\",\"isEvent\":true,\"value\":[\"\"],\"operator\":\"isAny\",\"source\":\"\",\"sourceOperator\":\"\",\"filters\":[]}]}"
+          "value": "{\"name\":\"\",\"events\":[],\"custom\":{},\"rangeValue\":\"LAST_24_HOURS\",\"startDate\":1748790000000,\"endDate\":1748876400000,\"groupByUser\":false,\"sort\":\"startTs\",\"order\":\"desc\",\"strict\":false,\"eventsOrder\":\"then\",\"limit\":10,\"page\":1,\"perPage\":10,\"tab\":\"sessions\",\"filters\":[]}"
         }
       ]
     }

@@ -143,6 +143,7 @@ function SelectDateRange(props: Props) {
         isUSLocale={isUSLocale}
         useButtonStyle={useButtonStyle}
         isTileDisabled={isTileDisabled}
+        data-test-id="widget-select-date-range"
       />
     );
   }
@@ -164,6 +165,7 @@ function SelectDateRange(props: Props) {
         period={period}
         right
         style={{ width: '100%' }}
+        data-test-id="widget-select-date-range"
       />
       {isCustom && (
         <OutsideClickDetectingDiv
@@ -272,6 +274,7 @@ function AndDateRange({
             size="small"
             className="flex items-center btn-card-period-range"
             icon={useButtonStyle ? <Calendar size={16} /> : null}
+            data-test-id="widget-select-date-range"
           >
             {isCustomRange ? customRange : selectedValue?.label}
             <DownOutlined />

@@ -32,4 +32,8 @@ export default {
     '/node_modules/(?!syncod)',
   ],
   setupFiles: ['<rootDir>/tests/unit/jest.setup.ts'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/tests/playwright/'
+  ],
 };
