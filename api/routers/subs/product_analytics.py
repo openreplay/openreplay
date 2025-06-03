@@ -37,7 +37,8 @@ def get_event_properties(projectId: int, en: str = Query(default=None, descripti
                          context: schemas.CurrentContext = Depends(OR_context)):
     if not en or len(en) == 0:
         return {"data": []}
-    return {"data": properties.get_event_properties(project_id=projectId, event_name=en, auto_captured=ac)}
+    return {"data": properties.get_event_properties(project_id=projectId, event_name=en, auto_captured=ac) \
+                    + filters.get_global_filters(project_id=projectId)}
 
 
 @app.post('/{projectId}/events/search', tags=["product_analytics"])

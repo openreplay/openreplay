@@ -146,3 +146,11 @@ def get_users_filters(project_id: int):
                     "autoCaptured": False
                 }
             ]}
+
+
+def get_global_filters(project_id: int):
+    r = get_sessions_filters(project_id)
+    r = r["list"]
+    for f in r:
+        f["defaultProperty"] = False
+    return r
