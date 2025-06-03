@@ -32,9 +32,9 @@ type CardBase struct {
 	Config        map[string]any   `json:"config"`
 	Thumbnail     *string          `json:"thumbnail" validate:"omitempty,url"`
 	MetricType    string           `json:"metricType" validate:"required,oneof=timeseries table funnel"`
-	MetricOf      string           `json:"metricOf" validate:"required,oneof=session_count user_count"`
-	MetricFormat  string           `json:"metricFormat" validate:"required,oneof=default percentage"`
-	ViewType      string           `json:"viewType" validate:"required,oneof=line_chart table_view"`
+	MetricOf      string           `json:"metricOf" validate:"required,oneof=sessionCount userCount"`
+	MetricFormat  string           `json:"metricFormat" validate:"required,oneof=default sessionCount percentage"`
+	ViewType      string           `json:"viewType" validate:"required,oneof=lineChart tableView"`
 	MetricValue   []string         `json:"metricValue" validate:"omitempty"`
 	SessionID     *int64           `json:"sessionId" validate:"omitempty"`
 	Series        []CardSeriesBase `json:"series" validate:"required,dive"`
@@ -45,7 +45,7 @@ type Card struct {
 	CardBase
 	ProjectID int64      `json:"projectId" validate:"required"`
 	UserID    int64      `json:"userId" validate:"required"`
-	CardID    int64      `json:"cardId"`
+	CardID    int64      `json:"metricId"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
@@ -56,7 +56,7 @@ type CardSeriesBase struct {
 	Name      string       `json:"name" validate:"required"`
 	CreatedAt time.Time    `json:"createdAt" validate:"omitempty"`
 	DeletedAt *time.Time   `json:"deletedAt" validate:"omitempty"`
-	Index     int64        `json:"index" validate:"required"`
+	Index     *int64       `json:"index" validate:"omitempty"`
 	Filter    SeriesFilter `json:"filter"`
 }
 
@@ -67,17 +67,19 @@ type CardSeries struct {
 }
 
 type SeriesFilter struct {
-	EventsOrder string       `json:"eventsOrder" validate:"required,oneof=then or and"`
-	Filters     []FilterItem `json:"filters"`
+	EventsOrder string   `json:"eventsOrder" validate:"required,oneof=then or and"`
+	Filters     []Filter `json:"filters"`
 }
 
-type FilterItem struct {
-	Type           string   `json:"type" validate:"required"`
-	Operator       string   `json:"operator" validate:"required"`
-	Source         string   `json:"source" validate:"required"`
-	SourceOperator string   `json:"sourceOperator" validate:"required"`
-	Value          []string `json:"value" validate:"required,dive,required"`
-	IsEvent        bool     `json:"isEvent"`
+type Filter struct {
+	Name          string   `json:"name" validate:"required"`
+	Operator      string   `json:"operator" validate:"required"`
+	PropertyOrder string   `json:"propertyOrder" validate:"required,oneof=then or and"`
+	Value         []string `json:"value" validate:"required,dive,required"`
+	IsEvent       bool     `json:"isEvent"`
+	DataType      string   `json:"dataType" validate:"required,oneof=string number boolean integer"`
+	AutoCaptured  bool     `json:"autoCaptured"`      // Indicates if the filter is auto-captured
+	Filters       []Filter `json:"filters,omitempty"` // Nested filters for complex conditions
 }
 
 // CardCreateRequest Fields required for creating a card (from the frontend)
@@ -99,7 +101,7 @@ type GetCardsResponse struct {
 }
 
 type GetCardsResponsePaginated struct {
-	Cards []Card `json:"cards"`
+	Cards []Card `json:"list"`
 	Total int    `json:"total"`
 }
 
@@ -234,10 +236,10 @@ class IssueType(str, Enum):
 */
 type IssueType string
 type ChartData struct {
-	StartTs     uint64       `json:"startTs"`
-	EndTs       uint64       `json:"endTs"`
-	Density     uint64       `json:"density"`
-	Filters     []FilterItem `json:"filter"`
-	MetricOf    string       `json:"metricOf"`
-	MetricValue []IssueType  `json:"metricValue"`
+	StartTs     uint64      `json:"startTs"`
+	EndTs       uint64      `json:"endTs"`
+	Density     uint64      `json:"density"`
+	Filters     []Filter    `json:"filter"`
+	MetricOf    string      `json:"metricOf"`
+	MetricValue []IssueType `json:"metricValue"`
 }

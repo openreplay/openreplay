@@ -45,6 +45,7 @@ func (e *handlersImpl) GetAll() []*api.Description {
 		{"/v1/analytics/{projectId}/cards", e.getCardsPaginated, "GET"},
 		{"/v1/analytics/{projectId}/cards/{id}", e.getCard, "GET"},
 		{"/v1/analytics/{projectId}/cards/{id}", e.updateCard, "PUT"},
+		{"/v1/analytics/{projectId}/cards/{id}", e.updateCard, "POST"},
 		{"/v1/analytics/{projectId}/cards/{id}", e.deleteCard, "DELETE"},
 		{"/v1/analytics/{projectId}/cards/{id}/sessions", e.getCardSessions, "POST"},
 	}
@@ -95,7 +96,7 @@ func (e *handlersImpl) createCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
 // getCard
@@ -121,7 +122,7 @@ func (e *handlersImpl) getCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) getCards(w http.ResponseWriter, r *http.Request) {
@@ -225,7 +226,7 @@ func (e *handlersImpl) getCardsPaginated(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Respond with JSON
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
@@ -269,7 +270,7 @@ func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) deleteCard(w http.ResponseWriter, r *http.Request) {

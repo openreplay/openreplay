@@ -58,7 +58,7 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	if err != nil {
 		return nil, err
 	}
-	chartsHandlers, err := charts.NewHandlers(log, cfg, responser, chartsService, reqValidator)
+	chartsHandlers, err := charts.NewHandlers(log, cfg, responser, chartsService, cardsService, reqValidator)
 	if err != nil {
 		return nil, err
 	}

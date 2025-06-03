@@ -7,42 +7,42 @@ type FilterType string
 type EventType string
 type EventOrder string
 
-const (
-	TableEvents   Table = "product_analytics.events"
-	TableSessions Table = "experimental.sessions"
-)
-
-const (
-	ColEventTime       Column = "main.created_at"
-	ColEventName       Column = "main.`$event_name`"
-	ColEventProjectID  Column = "main.project_id"
-	ColEventProperties Column = "main.`$properties`"
-	ColEventSessionID  Column = "main.session_id"
-	ColEventURLPath    Column = "main.url_path"
-	ColEventStatus     Column = "main.status"
-)
-
-const (
-	ColSessionID        Column = "s.session_id"
-	ColDuration         Column = "s.duration"
-	ColUserCountry      Column = "s.user_country"
-	ColUserCity         Column = "s.user_city"
-	ColUserState        Column = "s.user_state"
-	ColUserID           Column = "s.user_id"
-	ColUserAnonymousID  Column = "s.user_anonymous_id"
-	ColUserOS           Column = "s.user_os"
-	ColUserBrowser      Column = "s.user_browser"
-	ColUserDevice       Column = "s.user_device"
-	ColUserDeviceType   Column = "s.user_device_type"
-	ColRevID            Column = "s.rev_id"
-	ColBaseReferrer     Column = "s.base_referrer"
-	ColUtmSource        Column = "s.utm_source"
-	ColUtmMedium        Column = "s.utm_medium"
-	ColUtmCampaign      Column = "s.utm_campaign"
-	ColMetadata1        Column = "s.metadata_1"
-	ColSessionProjectID Column = "s.project_id"
-	ColSessionIsNotNull Column = "isNotNull(s.duration)"
-)
+//const (
+//	TableEvents   Table = "product_analytics.events"
+//	TableSessions Table = "experimental.sessions"
+//)
+//
+//const (
+//	ColEventTime       Column = "main.created_at"
+//	ColEventName       Column = "main.`$event_name`"
+//	ColEventProjectID  Column = "main.project_id"
+//	ColEventProperties Column = "main.`$properties`"
+//	ColEventSessionID  Column = "main.session_id"
+//	ColEventURLPath    Column = "main.url_path"
+//	ColEventStatus     Column = "main.status"
+//)
+//
+//const (
+//	ColSessionID        Column = "s.session_id"
+//	ColDuration         Column = "s.duration"
+//	ColUserCountry      Column = "s.user_country"
+//	ColUserCity         Column = "s.user_city"
+//	ColUserState        Column = "s.user_state"
+//	ColUserID           Column = "s.user_id"
+//	ColUserAnonymousID  Column = "s.user_anonymous_id"
+//	ColUserOS           Column = "s.user_os"
+//	ColUserBrowser      Column = "s.user_browser"
+//	ColUserDevice       Column = "s.user_device"
+//	ColUserDeviceType   Column = "s.user_device_type"
+//	ColRevID            Column = "s.rev_id"
+//	ColBaseReferrer     Column = "s.base_referrer"
+//	ColUtmSource        Column = "s.utm_source"
+//	ColUtmMedium        Column = "s.utm_medium"
+//	ColUtmCampaign      Column = "s.utm_campaign"
+//	ColMetadata1        Column = "s.metadata_1"
+//	ColSessionProjectID Column = "s.project_id"
+//	ColSessionIsNotNull Column = "isNotNull(s.duration)"
+//)
 
 const (
 	MetricTypeTimeseries MetricType = "timeseries"
@@ -53,11 +53,11 @@ const (
 	MetricUserJourney    MetricType = "pathAnalysis"
 )
 
-const (
-	EventOrderThen EventOrder = "then"
-	EventOrderOr   EventOrder = "or"
-	EventOrderAnd  EventOrder = "and"
-)
+//const (
+//	EventOrderThen EventOrder = "then"
+//	EventOrderOr   EventOrder = "or"
+//	EventOrderAnd  EventOrder = "and"
+//)
 
 type MetricPayload struct {
 	StartTimestamp  int64      `json:"startTimestamp"`
@@ -135,44 +135,44 @@ const (
 )
 
 // Event filters
-const (
-	FilterClick           FilterType = "CLICK"
-	FilterInput           FilterType = "INPUT"
-	FilterLocation        FilterType = "LOCATION"
-	FilterTag             FilterType = "tag"
-	FilterCustom          FilterType = "customEvent"
-	FilterFetch           FilterType = "fetch"
-	FilterFetchStatusCode FilterType = "fetchStatusCode" // Subfilter
-	FilterGraphQLRequest  FilterType = "graphql"
-	FilterStateAction     FilterType = "stateAction"
-	FilterError           FilterType = "error"
-	FilterAvgCpuLoad      FilterType = "avgCpuLoad"
-	FilterAvgMemoryUsage  FilterType = "avgMemoryUsage"
-)
-
-// MOBILE FILTERS
-const (
-	FilterUserOsIos          FilterType = "userOsIos"
-	FilterUserDeviceIos      FilterType = "userDeviceIos"
-	FilterUserCountryIos     FilterType = "userCountryIos"
-	FilterUserIdIos          FilterType = "userIdIos"
-	FilterUserAnonymousIdIos FilterType = "userAnonymousIdIos"
-	FilterRevIdIos           FilterType = "revIdIos"
-)
-
-const (
-	OperatorStringIs          = "is"
-	OperatorStringIsAny       = "isAny"
-	OperatorStringOn          = "on"
-	OperatorStringOnAny       = "onAny"
-	OperatorStringIsNot       = "isNot"
-	OperatorStringIsUndefined = "isUndefined"
-	OperatorStringNotOn       = "notOn"
-	OperatorContains          = "contains"
-	OperatorStringNotContains = "notContains"
-	OperatorStringStartsWith  = "startsWith"
-	OperatorStringEndsWith    = "endsWith"
-)
+//const (
+//	FilterClick           FilterType = "CLICK"
+//	FilterInput           FilterType = "INPUT"
+//	FilterLocation        FilterType = "LOCATION"
+//	FilterTag             FilterType = "tag"
+//	FilterCustom          FilterType = "customEvent"
+//	FilterFetch           FilterType = "fetch"
+//	FilterFetchStatusCode FilterType = "fetchStatusCode" // Subfilter
+//	FilterGraphQLRequest  FilterType = "graphql"
+//	FilterStateAction     FilterType = "stateAction"
+//	FilterError           FilterType = "error"
+//	FilterAvgCpuLoad      FilterType = "avgCpuLoad"
+//	FilterAvgMemoryUsage  FilterType = "avgMemoryUsage"
+//)
+//
+//// MOBILE FILTERS
+//const (
+//	FilterUserOsIos          FilterType = "userOsIos"
+//	FilterUserDeviceIos      FilterType = "userDeviceIos"
+//	FilterUserCountryIos     FilterType = "userCountryIos"
+//	FilterUserIdIos          FilterType = "userIdIos"
+//	FilterUserAnonymousIdIos FilterType = "userAnonymousIdIos"
+//	FilterRevIdIos           FilterType = "revIdIos"
+//)
+//
+//const (
+//	OperatorStringIs          = "is"
+//	OperatorStringIsAny       = "isAny"
+//	OperatorStringOn          = "on"
+//	OperatorStringOnAny       = "onAny"
+//	OperatorStringIsNot       = "isNot"
+//	OperatorStringIsUndefined = "isUndefined"
+//	OperatorStringNotOn       = "notOn"
+//	OperatorContains          = "contains"
+//	OperatorStringNotContains = "notContains"
+//	OperatorStringStartsWith  = "startsWith"
+//	OperatorStringEndsWith    = "endsWith"
+//)
 
 type DataPoint struct {
 	Timestamp uint64 `json:"timestamp"`

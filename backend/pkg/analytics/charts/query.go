@@ -159,6 +159,20 @@ func addFilter(f Filter, opts BuildConditionsOptions) (conds []string, names []s
 	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
 
 	// operator-based conditions
+	//switch f.Operator {
+	//case "isAny", "onAny":
+	//	if f.IsEvent {
+	//		names = append(names, ftype)
+	//	}
+	//default:
+	//	if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric); c != "" {
+	//		conds = append(conds, c)
+	//		if f.IsEvent {
+	//			names = append(names, ftype)
+	//		}
+	//	}
+	//}
+
 	switch f.Operator {
 	case "isAny", "onAny":
 		if f.IsEvent {
@@ -167,9 +181,9 @@ func addFilter(f Filter, opts BuildConditionsOptions) (conds []string, names []s
 	default:
 		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric); c != "" {
 			conds = append(conds, c)
-			if f.IsEvent {
-				names = append(names, ftype)
-			}
+		}
+		if f.IsEvent {
+			names = append(names, ftype)
 		}
 	}
 

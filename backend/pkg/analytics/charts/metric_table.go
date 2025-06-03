@@ -143,8 +143,10 @@ func (t TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, e
 	if len(sdClean) > 0 {
 		sessionDataWhere = "WHERE " + strings.Join(sdClean, " AND ")
 	}
+
 	if len(evtNames) > 0 {
-		sessionDataWhere += fmt.Sprintf(" AND main.$event_name IN ('%s')", strings.Join(evtNames, "','"))
+		//sessionDataWhere += fmt.Sprintf(" AND main.$event_name IN ('%s')", strings.Join(evtNames, "','"))
+		// TODO - check if this is needed
 	}
 
 	// filtered_data WHERE conditions
