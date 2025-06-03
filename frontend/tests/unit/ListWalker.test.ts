@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, jest } from '@jest/globals';
-import ListWalker from '../app/player/common/ListWalker';
-import type { Timed } from '../app/player/common/types';
+import ListWalker from '../../app/player/common/ListWalker';
+import type { Timed } from '../../app/player/common/types';
 
 interface Item extends Timed {
   value?: string;
@@ -17,24 +17,24 @@ describe('ListWalker', () => {
   test('append maintains order and prevents out of order inserts', () => {
     walker.append({ time: 1 });
     walker.append({ time: 3 });
-    expect(walker.list.map(i => i.time)).toEqual([1, 3]);
+    expect(walker.list.map((i) => i.time)).toEqual([1, 3]);
 
     walker.append({ time: 2 });
-    expect(walker.list.map(i => i.time)).toEqual([1, 3]);
+    expect(walker.list.map((i) => i.time)).toEqual([1, 3]);
     expect((console.error as jest.Mock).mock.calls.length).toBe(1);
   });
 
   test('unshift prepends items', () => {
     walker.append({ time: 2 });
     walker.unshift({ time: 1 });
-    expect(walker.list.map(i => i.time)).toEqual([1, 2]);
+    expect(walker.list.map((i) => i.time)).toEqual([1, 2]);
   });
 
   test('insert places item according to time', () => {
     walker.append({ time: 1 });
     walker.append({ time: 3 });
     walker.insert({ time: 2 });
-    expect(walker.list.map(i => i.time)).toEqual([1, 2, 3]);
+    expect(walker.list.map((i) => i.time)).toEqual([1, 2, 3]);
   });
 
   test('moveGetLast advances pointer and returns item', () => {

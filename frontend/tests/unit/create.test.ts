@@ -33,17 +33,17 @@ class MockWebLivePlayer {
   ) {}
 }
 
-jest.mock('../app/player/mobile/IOSPlayer', () => ({
+jest.mock('../../app/player/mobile/IOSPlayer', () => ({
   __esModule: true,
   default: MockIOSPlayer,
 }));
 
-jest.mock('../app/player/web/WebPlayer', () => ({
+jest.mock('../../app/player/web/WebPlayer', () => ({
   __esModule: true,
   default: MockWebPlayer,
 }));
 
-jest.mock('../app/player/web/WebLivePlayer', () => ({
+jest.mock('../../app/player/web/WebLivePlayer', () => ({
   __esModule: true,
   default: MockWebLivePlayer,
 }));
@@ -54,7 +54,7 @@ import {
   createClickMapPlayer,
   createLiveWebPlayer,
   createClipPlayer,
-} from '../app/player/create';
+} from '../../app/player/create';
 
 const session = { id: 1 } as any;
 const errorHandler = { error: jest.fn() };

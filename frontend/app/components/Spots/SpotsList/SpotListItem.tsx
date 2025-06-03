@@ -215,6 +215,7 @@ export function GridItem({
       className={`bg-white rounded-lg overflow-hidden shadow-sm border ${
         isSelected ? 'border-teal/30' : ''
       } transition flex flex-col items-start hover:border-teal`}
+      data-test-id="spot-list-item"
     >
       <div
         className="relative group overflow-hidden"

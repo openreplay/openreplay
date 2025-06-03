@@ -39,6 +39,6 @@
     "app/**/*.jsx",
     "window.d.ts",
     "cypress/snapshots/sessionStore.test.ts",
-    "tests/create.test.ts"
+    "tests/unit/create.test.ts"
   ]
 }

@@ -110,7 +110,7 @@ function ProjectDropdown(props: { location: any }) {
       }}
       placement="bottomLeft"
     >
-      <Button>
+      <Button data-test-id="project-dropdown" >
         <Space>
           <Text className="font-medium capitalize">
             {showCurrent && activeSite ? (

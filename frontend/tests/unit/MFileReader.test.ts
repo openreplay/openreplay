@@ -1,6 +1,6 @@
 import { describe, test, expect } from '@jest/globals';
-import MFileReader from '../app/player/web/messages/MFileReader';
-import { MType } from '../app/player/web/messages/raw.gen';
+import MFileReader from '../../app/player/web/messages/MFileReader';
+import { MType } from '../../app/player/web/messages/raw.gen';
 
 function encodeUint(value: number): Uint8Array {
   const bytes: number[] = [];

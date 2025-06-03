@@ -1,13 +1,13 @@
 import { describe, expect, test, jest, beforeEach } from '@jest/globals';
-import MessageLoader from '../app/player/web/MessageLoader';
-import { MType } from '../app/player/web/messages';
+import MessageLoader from '../../app/player/web/MessageLoader';
+import { MType } from '../../app/player/web/messages';
 import fs from 'fs';
 import path from 'path';
 import { TextDecoder } from 'util';
 
 const loadFilesMock = jest.fn(async () => {});
 
-jest.mock('../app/player/web/network/loadFiles', () => ({
+jest.mock('../../app/player/web/network/loadFiles', () => ({
   __esModule: true,
   loadFiles: jest.fn(async () => {}),
   requestTarball: jest.fn(),
@@ -17,7 +17,7 @@ jest.mock('../app/player/web/network/loadFiles', () => ({
 
 const decryptSessionBytesMock = jest.fn((b: Uint8Array) => Promise.resolve(b));
 
-jest.mock('../app/player/web/network/crypto', () => ({
+jest.mock('../../app/player/web/network/crypto', () => ({
   __esModule: true,
   decryptSessionBytes: jest.fn((b: Uint8Array) => Promise.resolve(b)),
 }));
@@ -32,11 +32,11 @@ jest.mock('Player/common/tarball', () => ({
   default: jest.fn((b: Uint8Array) => b),
 }));
 
-import MFileReader from '../app/player/web/messages/MFileReader';
+import MFileReader from '../../app/player/web/messages/MFileReader';
 
 const readNextMock = jest.fn();
 
-jest.mock('../app/player/web/messages/MFileReader', () => {
+jest.mock('../../app/player/web/messages/MFileReader', () => {
   return {
     __esModule: true,
     default: jest.fn().mockImplementation(() => {
@@ -49,7 +49,7 @@ jest.mock('../app/player/web/messages/MFileReader', () => {
   };
 });
 
-import { mockSession } from './mocks/sessionData';
+import { mockSession } from '../mocks/sessionData';
 
 const createStore = () => {
   const state: Record<string, any> = {};

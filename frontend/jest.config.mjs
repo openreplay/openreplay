@@ -31,5 +31,9 @@ export default {
   transformIgnorePatterns: [
     '/node_modules/(?!syncod)',
   ],
-  setupFiles: ['<rootDir>/tests/jest.setup.ts'],
+  setupFiles: ['<rootDir>/tests/unit/jest.setup.ts'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/tests/playwright/'
+  ],
 };

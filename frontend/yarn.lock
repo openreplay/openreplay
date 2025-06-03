@@ -2900,6 +2900,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@playwright/test@npm:^1.52.0":
+  version: 1.52.0
+  resolution: "@playwright/test@npm:1.52.0"
+  dependencies:
+    playwright: "npm:1.52.0"
+  bin:
+    playwright: cli.js
+  checksum: 10c1/b7a57ce045e246d927cc8cd2091864313be6e778cc6e9f2484e6273ce091fd6eb8a68c177cf6cbd484dda68a4fa85dfaa8109ae2618475c0f07f6447b3988379
+  languageName: node
+  linkType: hard
+
 "@rc-component/async-validator@npm:^5.0.3":
   version: 5.0.4
   resolution: "@rc-component/async-validator@npm:5.0.4"
@@ -8680,12 +8691,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fsevents@npm:2.3.2":
+  version: 2.3.2
+  resolution: "fsevents@npm:2.3.2"
+  dependencies:
+    node-gyp: "npm:latest"
+  checksum: 10c1/39f892d6e26b3d01f7e18fac9dd334d2c2a250ac2d534066e033dc5081c669b6c8b9e61f8ceb396fd9aafc210a2a3f56d8c9064768db1c1d2f34ad985c6d5b02
+  conditions: os=darwin
+  languageName: node
+  linkType: hard
+
 "fsevents@npm:^2.3.2, fsevents@npm:~2.3.2":
   version: 2.3.3
   resolution: "fsevents@npm:2.3.3"
   dependencies:
     node-gyp: "npm:latest"
   checksum: 10c1/d17e2daf5c8792c44148e8e33c03ca01f63a952c18cf45a1ff3f52345d04402a9ae1228946c0fdf314a898c0f66cfec40cf28b4369674d954f350243bb5ca16a
+  conditions: os=darwin
+  languageName: node
+  linkType: hard
+
+"fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>":
+  version: 2.3.2
+  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>::version=2.3.2&hash=df0bf1"
+  dependencies:
+    node-gyp: "npm:latest"
   conditions: os=darwin
   languageName: node
   linkType: hard
@@ -12897,6 +12927,7 @@ __metadata:
     "@medv/finder": "npm:^4.0.2"
     "@neodrag/react": "npm:^2.3.0"
     "@openreplay/sourcemap-uploader": "npm:^3.0.10"
+    "@playwright/test": "npm:^1.52.0"
     "@sentry/browser": "npm:^9.18.0"
     "@svg-maps/world": "npm:^1.0.1"
     "@tanstack/react-query": "npm:^5.76.0"
@@ -12969,6 +13000,7 @@ __metadata:
     mobx-persist-store: "npm:^1.1.8"
     mobx-react-lite: "npm:^4.1.0"
     node-gyp: "npm:^9.0.0"
+    playwright: "npm:^1.52.0"
     postcss: "npm:^8.5.3"
     postcss-import: "npm:^16.1.0"
     postcss-loader: "npm:^8.1.1"
@@ -13425,6 +13457,30 @@ __metadata:
   dependencies:
     find-up: "npm:^6.3.0"
   checksum: 10c1/667d0e81ea18076943b0449a3755e83e01fa98743fc4d59634f74978d17131718603ec89e2f7d7d5188e2948e1843cb2a698c537028aee6047807b4d806280fd
+  languageName: node
+  linkType: hard
+
+"playwright-core@npm:1.52.0":
+  version: 1.52.0
+  resolution: "playwright-core@npm:1.52.0"
+  bin:
+    playwright-core: cli.js
+  checksum: 10c1/86d3a13d6a5e426757bfd620f87f52696cec42f1e6e39e40d595b8cbab602447d1e309ad67f51e03ced147677de7824518abb9587254fb14c8b4252b7b1bae2a
+  languageName: node
+  linkType: hard
+
+"playwright@npm:1.52.0, playwright@npm:^1.52.0":
+  version: 1.52.0
+  resolution: "playwright@npm:1.52.0"
+  dependencies:
+    fsevents: "npm:2.3.2"
+    playwright-core: "npm:1.52.0"
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    playwright: cli.js
+  checksum: 10c1/58f5fa976f733fd64fba716f2e605cfd1fcdffc9f874f4baa657330ff9c4e9f8b1d49c02d33fbcea48c40472cc5ed07dec8d0291dac38cc2ed579449c0053ee5
   languageName: node
   linkType: hard
 

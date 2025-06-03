@@ -1,28 +1,30 @@
-import FeatureFlag, { Conditions, Variant } from '../app/mstore/types/FeatureFlag';
+import FeatureFlag, {
+  Conditions,
+  Variant,
+} from '../../app/mstore/types/FeatureFlag';
 import { jest, test, expect, describe } from '@jest/globals';
 
-
 jest.mock('App/mstore/types/filter', () => {
-  let filterData = { filters: [] }
+  let filterData = { filters: [] };
 
   class MockFilter {
-    ID_KEY =  "filterId"
-    filterId = ''
-    name = ''
-    filters = []
-    eventsOrder = 'then'
-    eventsOrderSupport = ['then', 'or', 'and']
-    startTimestamp = 0
-    endTimestamp = 0
+    ID_KEY = 'filterId';
+    filterId = '';
+    name = '';
+    filters = [];
+    eventsOrder = 'then';
+    eventsOrderSupport = ['then', 'or', 'and'];
+    startTimestamp = 0;
+    endTimestamp = 0;
     fromJson(json) {
-      this.name = json.name
-      this.filters = json.filters.map((i) => i)
-      this.eventsOrder = json.eventsOrder
-      return this
+      this.name = json.name;
+      this.filters = json.filters.map((i) => i);
+      this.eventsOrder = json.eventsOrder;
+      return this;
     }
   }
-    return MockFilter
-})
+  return MockFilter;
+});
 
 describe('Feature flag type test', () => {
   // Test cases for Conditions class
