@@ -16,6 +16,7 @@ import {
 import stl from './timeline.module.css'
 import TooltipContainer from './components/TooltipContainer';
 import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
+import { signalService } from 'App/services';
 
 function Timeline({ isMobile }: { isMobile: boolean }) {
   const { player, store } = useContext(PlayerContext);
@@ -32,6 +33,7 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
   const highlightEnabled = uiPlayerStore.highlightSelection.enabled;
   const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } =
     store.get();
+  const sessionId = sessionStore.current.sessionId;
 
   const progressRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -67,6 +69,10 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
     const time = Math.max(Math.round(p * endTime), 0);
     debouncedJump(time);
     hideTimeTooltip();
+    signalService.send({
+      source: 'jump',
+      value: time,
+    }, sessionId)
     if (playing) {
       setWasPlaying(true);
       player.pause();

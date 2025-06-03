@@ -27,6 +27,7 @@ import QueueControls from './QueueControls';
 import HighlightButton from './Highlight/HighlightButton';
 import ShareModal from '../shared/SharePopup/SharePopup';
 import { useTranslation } from 'react-i18next';
+import SimilarSessionsButton from './SimilarSessions/SimilarSessionsButton';
 
 const disableDevtools = 'or_devtools_uxt_toggle';
 
@@ -167,6 +168,7 @@ function SubHeader(props) {
             )}
             style={{ width: 'max-content' }}
           >
+            <SimilarSessionsButton />
             <Tooltip title={t('Share Session')} placement="bottom">
               <AntButton
                 size="small"

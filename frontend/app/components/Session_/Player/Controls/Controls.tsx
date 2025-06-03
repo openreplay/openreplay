@@ -18,6 +18,7 @@ import {
   LaunchStateShortcut,
   LaunchXRaShortcut,
 } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
+import { signalService } from 'App/services';
 import {
   CONSOLE,
   GRAPHQL,
@@ -29,19 +30,21 @@ import {
   STACKEVENTS,
   STORAGE,
   BACKENDLOGS,
-  LONG_TASK
-} from "App/mstore/uiPlayerStore";
+} from 'App/mstore/uiPlayerStore';
 import { Icon } from 'UI';
 import LogsButton from 'App/components/Session/Player/SharedComponents/BackendLogs/LogsButton';
-import { CodeOutlined, DashboardOutlined, ClusterOutlined } from '@ant-design/icons';
-import { ArrowDownUp, ListCollapse, Merge, Waypoints, Timer } from 'lucide-react'
+import {
+  CodeOutlined,
+  DashboardOutlined,
+  ClusterOutlined,
+} from '@ant-design/icons';
+import { ArrowDownUp, ListCollapse, Merge, Waypoints } from 'lucide-react';
 
 import ControlButton from './ControlButton';
 import Timeline from './Timeline';
 import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
 import { useTranslation } from 'react-i18next';
-import SummaryButton from './SummaryButton';
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -56,15 +59,30 @@ export const SKIP_INTERVALS = {
 function getStorageName(type: any) {
   switch (type) {
     case STORAGE_TYPES.REDUX:
-      return { name: 'Redux', icon: <Icon name='integrations/redux' size={14} /> };
+      return {
+        name: 'Redux',
+        icon: <Icon name="integrations/redux" size={14} />,
+      };
     case STORAGE_TYPES.MOBX:
-      return { name: 'Mobx', icon: <Icon name='integrations/mobx' size={14} /> };
+      return {
+        name: 'Mobx',
+        icon: <Icon name="integrations/mobx" size={14} />,
+      };
     case STORAGE_TYPES.VUEX:
-      return { name: 'Vuex', icon: <Icon name='integrations/vuejs' size={14} /> };
+      return {
+        name: 'Vuex',
+        icon: <Icon name="integrations/vuejs" size={14} />,
+      };
     case STORAGE_TYPES.NGRX:
-      return { name: 'NgRx', icon: <Icon name='integrations/ngrx' size={14} /> };
+      return {
+        name: 'NgRx',
+        icon: <Icon name="integrations/ngrx" size={14} />,
+      };
     case STORAGE_TYPES.ZUSTAND:
-      return { name: 'Zustand', icon: <Icon name='integrations/zustand' size={14} /> };
+      return {
+        name: 'Zustand',
+        icon: <Icon name="integrations/zustand" size={14} />,
+      };
     case STORAGE_TYPES.NONE:
       return { name: 'State', icon: <ClusterOutlined size={14} /> };
     default:
@@ -81,6 +99,7 @@ function Controls({ setActiveTab, activeTab }: any) {
     sessionStore,
     userStore,
   } = useStore();
+  const [mounted, setMounted] = React.useState(false);
   const permissions = userStore.account.permissions || [];
   const disableDevtools =
     userStore.isEnterprise &&
@@ -115,6 +134,7 @@ function Controls({ setActiveTab, activeTab }: any) {
   const disabled =
     disableDevtools || messagesLoading || inspectorMode || markedTargets;
   const sessionTz = session?.timezone;
+  const sessionId = session?.sessionId;
 
   const nextHandler = () => {
     history.push(withSiteId(sessionRoute(nextSessionId), siteId));
@@ -135,19 +155,63 @@ function Controls({ setActiveTab, activeTab }: any) {
     disableDevtools,
   });
 
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (mounted) {
+      signalService.send(
+        {
+          source: 'speed',
+          value: speed,
+        },
+        sessionId,
+      );
+    }
+  }, [speed]);
+
   const forthTenSeconds = () => {
     // @ts-ignore
     player.jumpInterval(SKIP_INTERVALS[skipInterval]);
+    signalService.send(
+      {
+        source: 'fast_forward',
+      },
+      sessionId,
+    );
   };
 
   const backTenSeconds = () => {
     // @ts-ignore
     player.jumpInterval(-SKIP_INTERVALS[skipInterval]);
+    signalService.send(
+      {
+        source: 'rewind',
+      },
+      sessionId,
+    );
   };
 
   const toggleBottomTools = (blockName: number) => {
     player.toggleInspectorMode(false);
     toggleBottomBlock(blockName);
+    signalService.send(
+      {
+        source: getBlockLabel(blockName)!,
+      },
+      sessionId,
+    );
+  };
+
+  const togglePlay = () => {
+    player.togglePlay();
+    signalService.send(
+      {
+        source: playing ? 'pause' : 'play',
+      },
+      sessionId,
+    );
   };
 
   const state = completed
@@ -175,7 +239,7 @@ function Controls({ setActiveTab, activeTab }: any) {
               playButton={
                 <PlayButton
                   state={state}
-                  togglePlay={player.togglePlay}
+                  togglePlay={togglePlay}
                   iconSize={36}
                 />
               }
@@ -295,9 +359,10 @@ const DevtoolsButtons = observer(
         icon: <Timer size={14} strokeWidth={2} />,
         label: t('Long Tasks'),
       },
-    }
+    };
     // @ts-ignore
-    const getLabel = (block: string) => labels[block][showIcons ? 'icon' : 'label']
+    const getLabel = (block: string) =>
+      labels[block][showIcons ? 'icon' : 'label'];
     return (
       <>
         <SummaryButton onClick={showSummary} />
@@ -358,14 +423,6 @@ const DevtoolsButtons = observer(
           onClick={() => toggleBottomTools(PERFORMANCE)}
           active={bottomBlock === PERFORMANCE && !inspectorMode}
           label={getLabel('performance')}
-        />
-
-        <ControlButton
-          customKey="longTask"
-          disabled={disableButtons}
-          onClick={() => toggleBottomTools(LONG_TASK)}
-          active={bottomBlock === LONG_TASK && !inspectorMode}
-          label={getLabel('longTask')}
         />
 
         {showGraphql && (
@@ -430,6 +487,37 @@ const DevtoolsButtons = observer(
     );
   },
 );
+
+export function SummaryButton({
+  onClick,
+  withToggle,
+  onToggle,
+  toggleValue,
+}: {
+  onClick?: () => void;
+  withToggle?: boolean;
+  onToggle?: () => void;
+  toggleValue?: boolean;
+}) {
+  const { t } = useTranslation();
+  const [isHovered, setHovered] = React.useState(false);
+
+  return (
+    <div style={gradientButton} onClick={onClick}>
+      <div
+        style={isHovered ? onHoverFillStyle : fillStyle}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        {withToggle ? (
+          <Switch size="small" checked={toggleValue} onChange={onToggle} />
+        ) : null}
+        <Icon name="sparkles" size={16} />
+        <div className="font-semibold text-main">{t('Summary AI')}</div>
+      </div>
+    </div>
+  );
+}
 
 export const gradientButton = {
   border: 'double 1px transparent',
