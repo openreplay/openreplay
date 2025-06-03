@@ -100,7 +100,11 @@ export default class MetricService {
     ) {
       return Promise.resolve({});
     }
-    const path = isSaved ? `/dashboards/${metric.dashboardId}/cards/${metric.metricId}` : '/cards/try';
+    let metricId = metric.metricId;
+    if (metricId.endsWith('/chart')) {
+      metricId = metricId.split('/')[0];
+    }
+    const path = isSaved ? `/dashboards/${metric.dashboardId}/cards/${metricId}` : '/cards/try';
     if (metric.metricType === USER_PATH) {
       data.density = 5;
       data.metricOf = 'sessionCount';
