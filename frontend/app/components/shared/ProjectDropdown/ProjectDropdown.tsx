@@ -17,7 +17,7 @@ const { Text } = Typography;
 function ProjectDropdown(props: { location: any }) {
   const mstore = useStore();
   const { t } = useTranslation();
-  const { projectsStore, searchStore, searchStoreLive, userStore } = mstore;
+  const { projectsStore, searchStore, searchStoreLive, userStore, aiFiltersStore } = mstore;
   const { account } = userStore;
   const sites = projectsStore.list;
   const { siteId } = projectsStore;
@@ -32,6 +32,7 @@ function ProjectDropdown(props: { location: any }) {
 
   const handleSiteChange = async (newSiteId: string) => {
     mstore.initClient();
+    aiFiltersStore.clearFilters();
     setSiteId(newSiteId);
     searchStore.clearSearch();
     searchStore.clearList();

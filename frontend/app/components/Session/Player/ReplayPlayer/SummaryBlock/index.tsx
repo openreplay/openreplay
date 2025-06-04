@@ -7,14 +7,9 @@ import { debounce } from 'App/utils';
 import { IResourceRequest, IResourceTiming } from 'App/player';
 import { WsChannel } from 'App/player/web/messages';
 import { PlayerContext } from 'App/components/Session/playerContext';
+import MDRenderer from 'Shared/MDRenderer/MDRenderer';
 
 let debounceUpdate: any = () => {};
-
-const boldLine = /\*\*(.*?)\*\*/i;
-
-function isTitleLine(line: string): boolean {
-  return boldLine.test(line);
-}
 
 function SummaryBlock({ sessionId }: { sessionId: string }) {
   const { store } = React.useContext(PlayerContext);
@@ -24,7 +19,7 @@ function SummaryBlock({ sessionId }: { sessionId: string }) {
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
-  const { zoomTab } = uiPlayerStore;
+  const zoomTab = uiPlayerStore.zoomTab;
 
   React.useEffect(() => {
     debounceUpdate = debounce(
@@ -76,31 +71,13 @@ function SummaryBlock({ sessionId }: { sessionId: string }) {
     }
   }, [zoomTab]);
 
-  const formattedText = aiSummaryStore.text.split('\n').map((line) => {
-    if (isTitleLine(line)) {
-      return (
-        <div className="font-semibold mt-2">{line.replace(/\*/g, '')}</div>
-      );
-    }
-    if (line.startsWith('*')) {
-      return (
-        <li className="ml-1 marker:mr-1 flex items-center gap-1">
-          <CodeStringFormatter text={line.replace(/\*/g, '')} />
-        </li>
-      );
-    }
-    return (
-      <div className="flex items-center gap-1">
-        <CodeStringFormatter text={line} />
-      </div>
-    );
-  });
-
   return (
     <div style={summaryBlockStyle}>
       {aiSummaryStore.text ? (
-        <div className="rounded p-4 bg-white whitespace-pre-wrap flex flex-col">
-          {formattedText.map((v) => v)}
+        <div
+          className={'rounded p-4 bg-white whitespace-pre-wrap flex flex-col'}
+        >
+          <MDRenderer content={aiSummaryStore.text} />
         </div>
       ) : (
         <TextPlaceholder />
@@ -111,42 +88,29 @@ function SummaryBlock({ sessionId }: { sessionId: string }) {
 
 function TextPlaceholder() {
   return (
-    <div className="animate-pulse rounded p-4 bg-white whitespace-pre-wrap flex flex-col gap-2">
-      <div className="h-2 bg-gray-medium rounded" />
-      <div className="h-2 bg-gray-medium rounded" />
-      <div className="grid grid-cols-3 gap-2">
-        <div className="h-2 bg-gray-medium rounded col-span-2" />
-        <div className="h-2 bg-gray-medium rounded col-span-1" />
+    <div
+      className={
+        'animate-pulse rounded p-4 bg-white whitespace-pre-wrap flex flex-col gap-2'
+      }
+    >
+      <div className={'h-2 bg-gray-medium rounded'} />
+      <div className={'h-2 bg-gray-medium rounded'} />
+      <div className={'grid grid-cols-3 gap-2'}>
+        <div className={'h-2 bg-gray-medium rounded col-span-2'} />
+        <div className={'h-2 bg-gray-medium rounded col-span-1'} />
       </div>
 
-      <div className="grid grid-cols-4 gap-2 mt-3">
-        <div className="h-2 bg-gray-medium rounded col-span-1" />
-        <div className="h-2 bg-gray-medium rounded col-span-1" />
-        <div className="h-2 bg-gray-medium rounded col-span-2" />
+      <div className={'grid grid-cols-4 gap-2 mt-3'}>
+        <div className={'h-2 bg-gray-medium rounded col-span-1'} />
+        <div className={'h-2 bg-gray-medium rounded col-span-1'} />
+        <div className={'h-2 bg-gray-medium rounded col-span-2'} />
       </div>
-      <div className="grid grid-cols-4 gap-2">
-        <div className="h-2 bg-gray-medium rounded col-span-2" />
-        <div className="h-2 bg-transparent rounded col-span-2" />
+      <div className={'grid grid-cols-4 gap-2'}>
+        <div className={'h-2 bg-gray-medium rounded col-span-2'} />
+        <div className={'h-2 bg-transparent rounded col-span-2'} />
       </div>
     </div>
   );
-}
-
-function CodeStringFormatter({ text }: { text: string }) {
-  const parts = text.split(/(`[^`]*`)/).map((part, index) =>
-    part.startsWith('`') && part.endsWith('`') ? (
-      <div
-        key={index}
-        className="whitespace-nowrap bg-gray-lightest font-mono mx-1 px-1 border"
-      >
-        {part.substring(1, part.length - 1)}
-      </div>
-    ) : (
-      <span key={index}>{part}</span>
-    ),
-  );
-
-  return <>{parts}</>;
 }
 
 const summaryBlockStyle: React.CSSProperties = {

@@ -35,7 +35,7 @@ function ClipPlayerHeader(props: Props) {
   return (
     <div className="bg-white p-3 flex justify-between items-center border-b relative">
       {isHighlight && !isFull ? <PartialSessionBadge /> : null}
-      <UserCard session={props.session} />
+      {props.session ? <UserCard session={props.session} /> : null}
 
       <Space>
         <Tooltip title={t('Copy link to clipboard')} placement="bottom">

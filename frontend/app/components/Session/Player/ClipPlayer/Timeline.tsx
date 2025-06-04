@@ -132,17 +132,7 @@ function Timeline({ range }: any) {
   // };
 
   return (
-    <div
-      className="flex items-center w-full"
-      style={
-        {
-          // top: '-4px',
-          // zIndex: 100,
-          // maxWidth: 'calc(100% - 5rem)',
-          // left: '3.5rem',
-        }
-      }
-    >
+    <div className="flex items-center w-full">
       <div
         className={stl.progress}
         onClick={ready ? jumpToTime : undefined}
