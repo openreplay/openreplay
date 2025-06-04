@@ -265,11 +265,11 @@ const DevtoolsButtons = observer(
       aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary);
     };
 
-    const possibleAudio = events.filter((e) => e.name.includes('media/audio'));
+    const possibleAudio = events.filter((e) => e.name?.includes('media/audio'));
     const integratedServices =
       integrationsStore.integrations.backendLogIntegrations;
 
-    const showIcons = activeTab === 'EXPORT'
+    const showIcons = activeTab === 'EXPORT';
     const labels = {
       console: {
         icon: <CodeOutlined size={14} />,
