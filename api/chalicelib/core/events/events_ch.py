@@ -9,7 +9,8 @@ def get_customs_by_session_id(session_id, project_id):
                            SELECT `$properties`,
                                   properties,
                                   created_at,
-                                  'CUSTOM' AS type
+                                  'CUSTOM' AS type,
+                                  `$event_name` AS name   
                            FROM product_analytics.events
                            WHERE session_id = %(session_id)s
                              AND NOT `$auto_captured`
