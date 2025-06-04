@@ -69,7 +69,9 @@ export default class DashboardStore {
   };
 
   createDensity = (duration: number) => {
-    const densityOpts = calculateGranularities(duration);
+    const densityOpts = calculateGranularities(duration).filter(
+      (opt) => !opt.disabled,
+    );
     const defaultOption = densityOpts[densityOpts.length - 2];
 
     this.setDensity(defaultOption.key);
