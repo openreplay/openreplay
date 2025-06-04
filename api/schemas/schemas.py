@@ -682,12 +682,19 @@ class SessionSearchEventSchema(BaseModel):
 class SessionSearchFilterSchema(BaseModel):
     is_event: Literal[False] = False
     value: List[Union[IssueType, PlatformType, int, str]] = Field(default_factory=list)
-    type: FilterType = Field(...)
+    type: Union[FilterType, str] = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[Union[ErrorSource, str]] = Field(default=None)
+    # used for global-properties
+    data_type: Optional[PropertyType] = Field(default=PropertyType.STRING.value)
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
     _single_to_list_values = field_validator('value', mode='before')(single_to_list)
+
+    @computed_field
+    @property
+    def is_predefined(self) -> bool:
+        return FilterType.has_value(self.type)
 
     @model_validator(mode="before")
     @classmethod

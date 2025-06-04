@@ -410,7 +410,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 ],
                 "operator": "is"
             }))
-
+    global_properties = []
+    global_properties_negative = []
     if len(data.filters) > 0:
         meta_keys = None
         # to reduce include a sub-query of sessions inside events query, in order to reduce the selected data
@@ -429,6 +430,23 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             is_not = False
             if sh.is_negation_operator(f.operator):
                 is_not = True
+            if not f.is_predefined:
+                cast = get_col_cast(data_type=f.data_type, value=f.value)
+                if is_any:
+                    global_properties.append(f'isNotNull(e.properties.`{f.type}`)')
+                else:
+                    if is_not:
+                        op = sh.reverse_sql_operator(op)
+                        global_properties_negative.append(sh.multi_conditions(get_sub_condition(
+                            col_name=f"accurateCastOrNull(e.properties.`{f.type}`,'{cast}')",
+                            val_name=f_k, operator=op), f.value, is_not=False, value_key=f_k))
+                    else:
+                        global_properties.append(sh.multi_conditions(get_sub_condition(
+                            col_name=f"accurateCastOrNull(e.properties.`{f.type}`,'{cast}')",
+                            val_name=f_k, operator=f.operator), f.value, is_not=False, value_key=f_k))
+
+                continue
+
             if filter_type == schemas.FilterType.USER_BROWSER:
                 if is_any:
                     extra_constraints.append('isNotNull(s.user_browser)')
@@ -658,6 +676,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             events_conditions_where.append(f"""main.session_id IN (SELECT s.session_id 
                                                 FROM {MAIN_SESSIONS_TABLE} AS s
                                                 WHERE {" AND ".join(extra_constraints)})""")
+
+        if len(global_properties) > 0:
+            global_properties += ["e.project_id=%(project_id)s",
+                                  "e.created_at >= toDateTime(%(startDate)s/1000)",
+                                  "e.created_at <= toDateTime(%(endDate)s/1000)"]
     # ---------------------------------------------------------------------------
     events_extra_join = ""
     if len(data.events) > 0:
@@ -1612,6 +1635,18 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                     ORDER BY _timestamp DESC) AS s ON(s.session_id=f.session_id)"""
         else:
             deduplication_keys = ["session_id"] + extra_deduplication
+            if len(global_properties) > 0:
+                extra_join += f""" INNER JOIN (SELECT DISTINCT session_id 
+                                               FROM {MAIN_EVENTS_TABLE} AS e
+                                               WHERE {" AND ".join(global_properties)}) AS global_filters USING(session_id)"""
+            if len(global_properties_negative) > 0:
+                extra_join += f""" LEFT JOIN (SELECT DISTINCT session_id
+                                               FROM {MAIN_EVENTS_TABLE} AS e
+                                               WHERE project_id=%(project_id)s
+                                                    AND created_at >= toDateTime(%(startDate)s/1000)
+                                                    AND created_at <= toDateTime(%(endDate)s/1000)
+                                                    AND ({" OR ".join(global_properties_negative)})) AS negative_global_filters USING(session_id)"""
+                extra_constraints.append("isNull(negative_global_filters.session_id)")
             extra_join = f"""(SELECT * 
                                 FROM {MAIN_SESSIONS_TABLE} AS s {extra_join} {extra_event}
                                 WHERE {" AND ".join(extra_constraints)}
