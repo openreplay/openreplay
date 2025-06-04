@@ -8,15 +8,14 @@ interface Props {
   onClick: any;
   time?: number;
   tooltip?: string;
+  extra?: React.ReactNode;
 }
 function JumpButton(props: Props) {
   const { tooltip } = props;
   return (
-    <div className="absolute right-2 top-0 bottom-0 my-auto flex items-center">
-      {props.time ? (
-        <div className="block mr-2 text-sm">
-          {shortDurationFromMs(props.time)}
-        </div>
+    <div className="absolute right-2 top-0 bottom-0 my-auto flex items-center gap-2">
+      {props.extra ? (
+        <div className={'hidden group-hover:block'}>{props.extra}</div>
       ) : null}
       <Tooltip title={tooltip} disabled={!tooltip}>
         <Button
@@ -32,6 +31,11 @@ function JumpButton(props: Props) {
         >
           JUMP
         </Button>
+        {props.time ? (
+          <div className="block group-hover:hidden mr-2 text-sm">
+            {shortDurationFromMs(props.time)}
+          </div>
+        ) : null}
       </Tooltip>
     </div>
   );

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import cn from 'classnames';
+import ExplainButton from 'Shared/DevTools/ExplainButton';
 import { Icon } from 'UI';
 import JumpButton from 'Shared/DevTools/JumpButton';
 import TabTag from '../TabTag';
@@ -13,6 +14,7 @@ interface Props {
   onClick?: () => void;
   getTabNum?: (tab: string) => number;
   showSingleTab: boolean;
+  sessionId: string;
 }
 function ConsoleRow(props: Props) {
   const { log, iconProps, jump, renderWithNL, style } = props;
@@ -106,7 +108,21 @@ function ConsoleRow(props: Props) {
             </div>
           ))}
       </div>
-      <JumpButton time={log.time} onClick={() => jump(log.time)} />
+      <JumpButton
+        extra={
+          <ExplainButton
+            sessionId={props.sessionId}
+            log={{
+              level: log.level,
+              message: log.message ? `${log.value} ${log.message}` : log.value,
+            }}
+          />
+        }
+        time={log.time}
+        onClick={() => {
+          jump(log.time);
+        }}
+      />
     </div>
   );
 }
