@@ -214,7 +214,7 @@ jobs:
 
                 # Build FOSS and EE versions
                 build_service "$service" "$version" "$foss_build_args"
-                build_service "$service" "$version" "$ee_build_args"
+                build_service "$service" "${version}-ee" "$ee_build_args"
 
                 # Build managed version for specific services
                 if [[ "$service" != "chalice" && "$service" != "frontend" ]]; then
