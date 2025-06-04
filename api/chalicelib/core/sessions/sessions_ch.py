@@ -430,7 +430,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             is_not = False
             if sh.is_negation_operator(f.operator):
                 is_not = True
-            if not f.is_predefined:
+            if f.is_property:
                 cast = get_col_cast(data_type=f.data_type, value=f.value)
                 if is_any:
                     global_properties.append(f'isNotNull(e.properties.`{f.type}`)')
@@ -573,6 +573,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         sh.multi_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                             value_key=f_k))
             elif filter_type == schemas.FilterType.METADATA:
+                # to support old metadata-filter structure
                 # get metadata list only if you need it
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
@@ -593,6 +594,23 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             sh.multi_conditions(
                                 f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
                                 f.value, is_not=is_not, value_key=f_k))
+            elif filter_type.startswith(schemas.FilterType.METADATA):
+                # to support new metadata-filter structure
+
+                if is_any:
+                    extra_constraints.append(f"isNotNull(s.{filter_type})")
+                    ss_constraints.append(f"isNotNull(ms.{filter_type})")
+                elif is_undefined:
+                    extra_constraints.append(f"isNull(s.{filter_type})")
+                    ss_constraints.append(f"isNull(ms.{filter_type})")
+                else:
+                    extra_constraints.append(
+                        sh.multi_conditions(f"s.{filter_type} {op} toString(%({f_k})s)",
+                                            f.value, is_not=is_not, value_key=f_k))
+                    ss_constraints.append(
+                        sh.multi_conditions(f"ms.{filter_type} {op} toString(%({f_k})s)",
+                                            f.value, is_not=is_not, value_key=f_k))
+
             elif filter_type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.user_id)')
