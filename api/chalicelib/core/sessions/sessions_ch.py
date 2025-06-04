@@ -430,7 +430,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             is_not = False
             if sh.is_negation_operator(f.operator):
                 is_not = True
-            if f.is_property:
+            if not f.auto_captured:
                 cast = get_col_cast(data_type=f.data_type, value=f.value)
                 if is_any:
                     global_properties.append(f'isNotNull(e.properties.`{f.type}`)')
