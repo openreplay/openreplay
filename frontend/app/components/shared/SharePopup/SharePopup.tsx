@@ -7,6 +7,7 @@ import { useStore } from 'App/mstore';
 import SessionCopyLink from './SessionCopyLink';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 import { useTranslation } from 'react-i18next';
+import { signalService } from 'App/services';
 
 interface Channel {
   webhookId: string;
@@ -126,7 +127,19 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
   );
 
   const sendMsg = async () => {
-    shareTo === 'slack' ? await shareToSlack() : await shareToMSTeams();
+    if (shareTo === 'slack') {
+      await shareToSlack();
+    } else {
+      await shareToMSTeams();
+    }
+
+    signalService.send(
+      {
+        source: 'share',
+        value: shareTo,
+      },
+      sessionId,
+    );
   };
 
   const hasBoth = slackOptions.length > 0 && msTeamsOptions.length > 0;

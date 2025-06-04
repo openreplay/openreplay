@@ -49,6 +49,11 @@ export default class AiFiltersStore {
     console.log(r);
   };
 
+  clearFilters = (): void => {
+    this.filters = { filters: [] };
+    this.filtersSetKey = 0;
+  };
+
   setLoading = (loading: boolean): void => {
     this.isLoading = loading;
   };

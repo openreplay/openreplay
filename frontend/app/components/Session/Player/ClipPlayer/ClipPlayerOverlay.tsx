@@ -8,9 +8,10 @@ import AutoplayTimer from 'Components/Session/Player/ClipPlayer/AutoPlayTimer';
 
 interface Props {
   autoplay: boolean;
+  isHighlight?: boolean;
 }
 
-function Overlay({ autoplay }: Props) {
+function Overlay({ autoplay, isHighlight }: Props) {
   const { player, store } = React.useContext(PlayerContext);
   const togglePlay = () => player.togglePlay();
 
@@ -19,9 +20,11 @@ function Overlay({ autoplay }: Props) {
   return (
     <>
       {messagesLoading ? <Loader /> : null}
-      {/* <div className="hidden group-hover:block"> */}
-      {/*    <ClipFeedback/> */}
-      {/* </div> */}
+      {isHighlight ? null : (
+        <div className="hidden group-hover:block">
+          <ClipFeedback />
+        </div>
+      )}
       <PlayIconLayer playing={playing} togglePlay={togglePlay} />
       {completed && autoplay && <AutoplayTimer />}
     </>

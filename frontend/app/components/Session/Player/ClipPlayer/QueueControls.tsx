@@ -12,7 +12,7 @@ interface Props {}
 
 function QueueControls(props: Props) {
   const { t } = useTranslation();
-  const { clipStore, projectsStore, sessionStore, searchStore } = useStore();
+  const { clipStore } = useStore();
   const previousId = clipStore.prevId;
   const { nextId } = clipStore;
 
