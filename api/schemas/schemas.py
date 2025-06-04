@@ -689,7 +689,7 @@ class SessionSearchFilterSchema(BaseModel):
     data_type: Optional[PropertyType] = Field(default=PropertyType.STRING.value)
     # used to tell if the current filter is predefined or user-property having the same name
     # used in case the user sends a property with the same name aas a predefined property
-    is_property: Optional[bool] = Field(default=False)
+    auto_captured: Optional[bool] = Field(default=True)
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
     _single_to_list_values = field_validator('value', mode='before')(single_to_list)
