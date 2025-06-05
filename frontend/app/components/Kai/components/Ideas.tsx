@@ -25,9 +25,9 @@ function Ideas({
   });
   const ideas = React.useMemo(() => {
     const defaultPromptIdeas = [
-      'Top user journeys',
-      'Where do users drop off',
-      'Failed network requests today',
+      t('Top user journeys'),
+      t('Where do users drop off'),
+      t('Failed network requests today'),
     ];
     const result = suggestedPromptIdeas;
     const targetSize = 3;
@@ -39,7 +39,7 @@ function Ideas({
   return (
     <div>
       <div className={'flex items-center gap-2 mb-1 text-gray-dark'}>
-        <b>{inChat ? 'Suggested Follow-up Questions' : 'Suggested Ideas:'}</b>
+        <b>{inChat ? t('Suggested Follow-up Questions') : t('Suggested Ideas:')}</b>
       </div>
       {isPending ? (
         <div className="animate-pulse text-disabled-text">

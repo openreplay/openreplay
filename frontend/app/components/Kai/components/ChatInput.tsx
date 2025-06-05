@@ -4,6 +4,7 @@ import { X, ArrowUp } from 'lucide-react';
 import { kaiStore } from '../KaiStore';
 import { observer } from 'mobx-react-lite';
 import Usage from './Usage';
+import { useTranslation } from 'react-i18next';
 
 function ChatInput({
   isLoading,
@@ -16,6 +17,7 @@ function ChatInput({
   onCancel: () => void;
   isArea?: boolean;
 }) {
+  const { t } = useTranslation();
   const inputRef = React.useRef<typeof Input>(null);
   const usage = kaiStore.usage;
   const limited = usage.percent >= 100;
@@ -54,8 +56,8 @@ function ChatInput({
 
   const isReplacing = kaiStore.replacing !== null;
   const placeholder = limited
-    ? `You've reached the daily limit for queries, come again tomorrow!`
-    : 'Ask anything about your product and users...';
+    ? t(`You've reached the daily limit for queries, come again tomorrow!`)
+    : t('Ask anything about your product and users...');
   if (isArea) {
     return (
       <div className="relative">
@@ -100,7 +102,7 @@ function ChatInput({
         suffix={
           <>
             {isReplacing ? (
-              <Tooltip title={'Cancel Editing'}>
+              <Tooltip title={t('Cancel Editing')}>
                 <Button
                   onClick={cancelReplace}
                   icon={<X className="reset" size={16} />}
@@ -137,8 +139,9 @@ function SendButton({
   limited: boolean;
   isProcessing?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
-    <Tooltip title={isProcessing ? 'Cancel processing' : 'Send message'}>
+    <Tooltip title={isProcessing ? t('Cancel processing') : t('Send message')}>
       <Button
         loading={isLoading}
         onClick={submit}
@@ -158,7 +161,7 @@ function SendButton({
         iconPosition={'end'}
         className="font-semibold text-[#fff]"
       >
-        {isProcessing ? null : 'Ask'}
+        {isProcessing ? null : t('Ask')}
       </Button>
     </Tooltip>
   );

@@ -1501,5 +1501,19 @@
   "Include rage clicks": "Incluir clics de ira",
   "Interface Language": "Idioma de la interfaz",
   "Select the language in which OpenReplay will appear.": "Selecciona el idioma en el que aparecerá OpenReplay.",
-  "Language": "Idioma"
+  "Language": "Idioma",
+  "Top user journeys": "Principales recorridos de usuario",
+  "Where do users drop off": "Dónde abandonan los usuarios",
+  "Failed network requests today": "Solicitudes de red fallidas hoy",
+  "Suggested Follow-up Questions": "Preguntas de seguimiento sugeridas",
+  "Suggested Ideas:": "Ideas sugeridas:",
+  "Generating ideas": "Generando ideas",
+  "You've reached the daily limit for queries, come again tomorrow!": "Has alcanzado el límite diario de consultas, ¡vuelve mañana!",
+  "Ask anything about your product and users...": "Pregunta cualquier cosa sobre tu producto y usuarios...",
+  "Cancel Editing": "Cancelar edición",
+  "Cancel processing": "Cancelar procesamiento",
+  "Send message": "Enviar mensaje",
+  "Hey": "¿Hola",
+  "how can I help you?": "cómo puedo ayudarte?",
+  "Ask": "Preguntar"
 }

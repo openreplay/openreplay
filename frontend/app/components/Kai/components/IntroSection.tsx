@@ -1,6 +1,7 @@
 import React from 'react';
 import ChatInput from './ChatInput';
 import Ideas from './Ideas';
+import { useTranslation } from 'react-i18next';
 
 function IntroSection({
   onAsk,
@@ -15,12 +16,13 @@ function IntroSection({
   userName: string;
   limited?: boolean;
 }) {
+  const { t } = useTranslation();
   const isLoading = false;
   return (
     <>
       <div className={'relative w-2/3 flex flex-col gap-4'}>
         <div className="font-semibold text-lg">
-          Hey {userName}, how can I help you?
+          {`${t('Hey')} ${userName}, ${t('how can I help you?')}`}
         </div>
         <ChatInput
           onCancel={onCancel}

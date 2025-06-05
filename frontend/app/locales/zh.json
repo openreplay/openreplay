@@ -1501,5 +1501,19 @@
   "Include rage clicks": "包括点击狂怒",
   "Interface Language": "界面语言",
   "Select the language in which OpenReplay will appear.": "选择 OpenReplay 将显示的语言。",
-  "Language": "语言"
+  "Language": "语言",
+  "Top user journeys": "用户主要路径",
+  "Where do users drop off": "用户在哪些环节流失",
+  "Failed network requests today": "今日网络请求失败次数",
+  "Suggested Follow-up Questions": "建议的后续问题",
+  "Suggested Ideas:": "建议的想法：",
+  "Generating ideas": "正在生成想法",
+  "You've reached the daily limit for queries, come again tomorrow!": "您已达到今日查询次数上限，请明天再来！",
+  "Ask anything about your product and users...": "询问有关您的产品和用户的任何问题...",
+  "Cancel Editing": "取消编辑",
+  "Cancel processing": "取消处理",
+  "Send message": "发送消息",
+  "Hey": "你好",
+  "how can I help you?": "我能帮您做些什么",
+  "Ask": "询问"
 }
