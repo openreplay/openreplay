@@ -110,7 +110,7 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
     /* Inserting */
     this.mountChildren();
     if (this.notMontedChildren.size !== 0) {
-      console.error('VParent: Something went wrong with children insertion');
+      console.error('VParent: Something went wrong with children insertion', this.notMontedChildren);
     }
     /* Removing in-between */
     const { node } = this;
@@ -151,62 +151,6 @@ export class VDocument extends VParent<Document> {
     const htmlNode = child.node;
     if (htmlNode.parentNode !== this.node) {
       this.node.replaceChild(htmlNode, this.node.documentElement);
-    }
-  }
-}
-
-export class VSlot extends VElement {
-  assignedNodes: VChild[] = [];
-
-  addAssigned(child: VChild) {
-    if (this.assignedNodes.indexOf(child) === -1) {
-      this.assignedNodes.push(child);
-      this.notMontedChildren.add(child);
-    }
-  }
-
-  removeAssigned(child: VChild) {
-    this.assignedNodes = this.assignedNodes.filter((c) => c !== child);
-    this.notMontedChildren.delete(child);
-  }
-
-  private mountAssigned() {
-    let nextMounted: VChild | null = null;
-    for (let i = this.assignedNodes.length - 1; i >= 0; i--) {
-      const child = this.assignedNodes[i];
-      if (this.notMontedChildren.has(child)) {
-        this.node.insertBefore(
-          child.node,
-          nextMounted ? nextMounted.node : null,
-        );
-        this.notMontedChildren.delete(child);
-      }
-      if (!this.notMontedChildren.has(child)) {
-        nextMounted = child;
-      }
-    }
-  }
-
-  applyChanges() {
-    if (this.assignedNodes.length > 0) {
-      this.assignedNodes.forEach((c) => c.applyChanges());
-      this.mountAssigned();
-      const { node } = this;
-      const realChildren = node.childNodes;
-      if (realChildren.length > 0) {
-        for (let j = 0; j < this.assignedNodes.length; j++) {
-          while (realChildren[j] !== this.assignedNodes[j].node) {
-            if (isNode(realChildren[j])) {
-              node.removeChild(realChildren[j]);
-            }
-          }
-        }
-      }
-      while (realChildren.length > this.assignedNodes.length) {
-        node.removeChild(node.lastChild as Node);
-      }
-    } else {
-      super.applyChanges();
     }
   }
 }
@@ -350,6 +294,62 @@ export class VElement extends VParent<Element> {
       }
     });
     this.mountChildren((child) => child instanceof VText || child.prioritized);
+  }
+}
+
+export class VSlot extends VElement {
+  assignedNodes: VChild[] = [];
+
+  addAssigned(child: VChild) {
+    if (this.assignedNodes.indexOf(child) === -1) {
+      this.assignedNodes.push(child);
+      this.notMontedChildren.add(child);
+    }
+  }
+
+  removeAssigned(child: VChild) {
+    this.assignedNodes = this.assignedNodes.filter((c) => c !== child);
+    this.notMontedChildren.delete(child);
+  }
+
+  private mountAssigned() {
+    let nextMounted: VChild | null = null;
+    for (let i = this.assignedNodes.length - 1; i >= 0; i--) {
+      const child = this.assignedNodes[i];
+      if (this.notMontedChildren.has(child)) {
+        this.node.insertBefore(
+          child.node,
+          nextMounted ? nextMounted.node : null,
+        );
+        this.notMontedChildren.delete(child);
+      }
+      if (!this.notMontedChildren.has(child)) {
+        nextMounted = child;
+      }
+    }
+  }
+
+  applyChanges() {
+    if (this.assignedNodes.length > 0) {
+      this.assignedNodes.forEach((c) => c.applyChanges());
+      this.mountAssigned();
+      const { node } = this;
+      const realChildren = node.childNodes;
+      if (realChildren.length > 0) {
+        for (let j = 0; j < this.assignedNodes.length; j++) {
+          while (realChildren[j] !== this.assignedNodes[j].node) {
+            if (isNode(realChildren[j])) {
+              node.removeChild(realChildren[j]);
+            }
+          }
+        }
+      }
+      while (realChildren.length > this.assignedNodes.length) {
+        node.removeChild(node.lastChild as Node);
+      }
+    } else {
+      super.applyChanges();
+    }
   }
 }
 
