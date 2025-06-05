@@ -1501,5 +1501,19 @@
   "Include rage clicks": "Включить невыносимые клики",
   "Interface Language": "Язык интерфейса",
   "Select the language in which OpenReplay will appear.": "Выберите язык, на котором будет отображаться OpenReplay.",
-  "Language": "Язык"
+  "Language": "Язык",
+  "Top user journeys": "Основные пользовательские сценарии",
+  "Where do users drop off": "Где пользователи покидают процесс",
+  "Failed network requests today": "Неудачные сетевые запросы сегодня",
+  "Suggested Follow-up Questions": "Рекомендуемые дополнительные вопросы",
+  "Suggested Ideas:": "Предложенные идеи:",
+  "Generating ideas": "Генерация идей",
+  "You've reached the daily limit for queries, come again tomorrow!": "Вы достигли дневного лимита запросов, приходите завтра!",
+  "Ask anything about your product and users...": "Спросите что угодно о вашем продукте и пользователях...",
+  "Cancel Editing": "Отменить редактирование",
+  "Cancel processing": "Отменить обработку",
+  "Send message": "Отправить сообщение",
+  "Hey": "Привет",
+  "how can I help you?": "чем могу помочь?",
+  "Ask": "Спросить"
 }
