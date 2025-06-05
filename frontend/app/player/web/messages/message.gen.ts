@@ -48,6 +48,7 @@ import type {
   RawLongTask,
   RawSetNodeAttributeURLBased,
   RawSetCssDataURLBased,
+  RawSetNodeSlot,
   RawCssInsertRuleURLBased,
   RawMouseClick,
   RawMouseClickDeprecated,
@@ -177,6 +178,8 @@ export type LongTask = RawLongTask & Timed
 export type SetNodeAttributeURLBased = RawSetNodeAttributeURLBased & Timed
 
 export type SetCssDataURLBased = RawSetCssDataURLBased & Timed
+
+export type SetNodeSlot = RawSetNodeSlot & Timed
 
 export type CssInsertRuleURLBased = RawCssInsertRuleURLBased & Timed
 

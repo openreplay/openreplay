@@ -685,6 +685,12 @@ cdef class MessageCodec:
                 payload=self.read_string(reader)
             )
 
+        if message_id == 65:
+            return SetNodeSlot(
+                id=self.read_uint(reader),
+                slot_id=self.read_uint(reader)
+            )
+
         if message_id == 66:
             return AssetCache(
                 url=self.read_string(reader)

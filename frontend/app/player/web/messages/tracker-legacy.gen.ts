@@ -47,6 +47,7 @@ export const TP_MAP = {
   59: MType.LongTask,
   60: MType.SetNodeAttributeURLBased,
   61: MType.SetCssDataURLBased,
+  65: MType.SetNodeSlot,
   67: MType.CssInsertRuleURLBased,
   68: MType.MouseClick,
   69: MType.MouseClickDeprecated,

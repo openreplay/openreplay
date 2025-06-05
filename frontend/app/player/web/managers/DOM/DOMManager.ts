@@ -17,6 +17,7 @@ import {
   VShadowRoot,
   VText,
   OnloadVRoot,
+  VSlot,
 } from './VirtualDOM';
 import { deleteRule, insertRule } from './safeCSSRules';
 
@@ -61,6 +62,7 @@ export default class DOMManager extends ListWalker<Message> {
   private stylesManager: StylesManager;
   private focusManager: FocusManager = new FocusManager(this.vElements);
   private selectionManager: SelectionManager;
+  private nodeSlots: Map<number, { slotID: number; host: any }> = new Map();
   private readonly screen: Screen;
   private readonly isMobile: boolean;
   private readonly stringDict: Record<number, string>;
@@ -278,6 +280,51 @@ export default class DOMManager extends ListWalker<Message> {
         this.stylesManager.reset();
         return;
       }
+      case MType.SetNodeSlot: {
+        const vChild = this.vElements.get(msg.id) || this.vTexts.get(msg.id);
+        if (!vChild) {
+          logger.error('SetNodeSlot: Node not found', msg);
+          return;
+        }
+        if (msg.slotID > 0) {
+          const slotElem = this.vElements.get(msg.slotID);
+          if (!(slotElem instanceof VSlot)) {
+            logger.error('SetNodeSlot: Slot not found', msg);
+            return;
+          }
+          const host = vChild.parentNode;
+          if (host && (vChild as any).assignedSlot !== slotElem) {
+            if (vChild.node.parentNode === (host as any).node) {
+              host.node.removeChild(vChild.node);
+            }
+            slotElem.addAssigned(vChild);
+            (vChild as any).assignedSlot = slotElem;
+            this.nodeSlots.set(msg.id, { slotID: msg.slotID, host });
+          }
+        } else {
+          if (vChild.assignedSlot) {
+            const slotElem = vChild.assignedSlot as VSlot;
+            slotElem.removeAssigned(vChild);
+            if (vChild.parentNode) {
+              const host = vChild.parentNode;
+              const siblings = host['children'] as any[];
+              const index = siblings.indexOf(vChild);
+              let next: Node | null = null;
+              for (let i = index + 1; i < siblings.length; i++) {
+                const sib = siblings[i];
+                if (!sib.assignedSlot) {
+                  next = sib.node;
+                  break;
+                }
+              }
+              host.node.insertBefore(vChild.node, next);
+            }
+            vChild.assignedSlot = null;
+            this.nodeSlots.delete(msg.id);
+          }
+        }
+        return;
+      }
       case MType.CreateTextNode: {
         const vText = new VText();
         this.vTexts.set(msg.id, vText);
@@ -286,7 +333,10 @@ export default class DOMManager extends ListWalker<Message> {
       }
       case MType.CreateElementNode: {
         // if (msg.tag.toLowerCase() === 'canvas') msg.tag = 'video'
-        const vElem = new VElement(msg.tag, msg.svg, msg.index, msg.id);
+        const vElem =
+          msg.tag === 'SLOT'
+            ? new VSlot(msg.tag, msg.svg, msg.index, msg.id)
+            : new VElement(msg.tag, msg.svg, msg.index, msg.id);
         if (['STYLE', 'style', 'LINK'].includes(msg.tag)) {
           vElem.prioritized = true;
         }

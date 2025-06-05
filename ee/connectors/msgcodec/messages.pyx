@@ -935,6 +935,17 @@ cdef class CustomIssue(PyMessage):
         self.payload = payload
 
 
+cdef class SetNodeSlot(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long id
+    cdef public unsigned long slot_id
+
+    def __init__(self, unsigned long id, unsigned long slot_id):
+        self.__id__ = 65
+        self.id = id
+        self.slot_id = slot_id
+
+
 cdef class AssetCache(PyMessage):
     cdef public int __id__
     cdef public str url

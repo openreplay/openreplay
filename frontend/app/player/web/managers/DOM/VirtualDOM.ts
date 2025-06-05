@@ -16,7 +16,7 @@ type Callback<T> = (o: T) => void;
  */
 export abstract class VNode<T extends Node = Node> {
   protected abstract createNode(): T;
-
+  assignedSlot: VSlot | null = null;
   private _node: T | null;
 
   /**
@@ -64,7 +64,7 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
    */
   protected children: VChild[] = [];
 
-  private notMontedChildren: Set<VChild> = new Set();
+  protected notMontedChildren: Set<VChild> = new Set();
 
   insertChildAt(child: VChild, index: number) {
     if (child.parentNode) {
@@ -85,6 +85,9 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
     let nextMounted: VChild | null = null;
     for (let i = this.children.length - 1; i >= 0; i--) {
       const child = this.children[i];
+      if (child.assignedSlot) {
+        continue;
+      }
       if (
         this.notMontedChildren.has(child) &&
         (!shouldInsert || shouldInsert(child)) // is there a better way of not-knowing about subclass logic on prioritized insertion?
@@ -112,9 +115,10 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
     /* Removing in-between */
     const { node } = this;
     const realChildren = node.childNodes;
-    if (realChildren.length > 0 && this.children.length > 0) {
-      for (let j = 0; j < this.children.length; j++) {
-        while (realChildren[j] !== this.children[j].node) {
+    const expected = this.children.filter((c) => !c.assignedSlot);
+    if (realChildren.length > 0 && expected.length > 0) {
+      for (let j = 0; j < expected.length; j++) {
+        while (realChildren[j] !== expected[j].node) {
           if (isNode(realChildren[j])) {
             node.removeChild(realChildren[j]);
           }
@@ -122,7 +126,7 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
       }
     }
     /* Removing tail */
-    while (realChildren.length > this.children.length) {
+    while (realChildren.length > expected.length) {
       node.removeChild(
         node.lastChild as Node,
       ); /* realChildren.length > this.children.length >= 0 so it is not null */
@@ -147,6 +151,62 @@ export class VDocument extends VParent<Document> {
     const htmlNode = child.node;
     if (htmlNode.parentNode !== this.node) {
       this.node.replaceChild(htmlNode, this.node.documentElement);
+    }
+  }
+}
+
+export class VSlot extends VElement {
+  assignedNodes: VChild[] = [];
+
+  addAssigned(child: VChild) {
+    if (this.assignedNodes.indexOf(child) === -1) {
+      this.assignedNodes.push(child);
+      this.notMontedChildren.add(child);
+    }
+  }
+
+  removeAssigned(child: VChild) {
+    this.assignedNodes = this.assignedNodes.filter((c) => c !== child);
+    this.notMontedChildren.delete(child);
+  }
+
+  private mountAssigned() {
+    let nextMounted: VChild | null = null;
+    for (let i = this.assignedNodes.length - 1; i >= 0; i--) {
+      const child = this.assignedNodes[i];
+      if (this.notMontedChildren.has(child)) {
+        this.node.insertBefore(
+          child.node,
+          nextMounted ? nextMounted.node : null,
+        );
+        this.notMontedChildren.delete(child);
+      }
+      if (!this.notMontedChildren.has(child)) {
+        nextMounted = child;
+      }
+    }
+  }
+
+  applyChanges() {
+    if (this.assignedNodes.length > 0) {
+      this.assignedNodes.forEach((c) => c.applyChanges());
+      this.mountAssigned();
+      const { node } = this;
+      const realChildren = node.childNodes;
+      if (realChildren.length > 0) {
+        for (let j = 0; j < this.assignedNodes.length; j++) {
+          while (realChildren[j] !== this.assignedNodes[j].node) {
+            if (isNode(realChildren[j])) {
+              node.removeChild(realChildren[j]);
+            }
+          }
+        }
+      }
+      while (realChildren.length > this.assignedNodes.length) {
+        node.removeChild(node.lastChild as Node);
+      }
+    } else {
+      super.applyChanges();
     }
   }
 }

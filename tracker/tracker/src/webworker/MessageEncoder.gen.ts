@@ -222,6 +222,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1]) && this.string(msg[2])
     break
 
+    case Messages.Type.SetNodeSlot:
+      return  this.uint(msg[1]) && this.uint(msg[2])
+    break
+
     case Messages.Type.CSSInsertRuleURLBased:
       return  this.uint(msg[1]) && this.string(msg[2]) && this.uint(msg[3]) && this.string(msg[4])
     break
