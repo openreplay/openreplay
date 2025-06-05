@@ -686,6 +686,17 @@ export function CustomIssue(
   ]
 }
 
+export function SetNodeSlot(
+  id: number,
+  slotID: number,
+): Messages.SetNodeSlot {
+  return [
+    Messages.Type.SetNodeSlot,
+    id,
+    slotID,
+  ]
+}
+
 export function CSSInsertRuleURLBased(
   id: number,
   rule: string,

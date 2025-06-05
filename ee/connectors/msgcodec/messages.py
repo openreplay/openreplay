@@ -626,6 +626,14 @@ class CustomIssue(Message):
         self.payload = payload
 
 
+class SetNodeSlot(Message):
+    __id__ = 65
+
+    def __init__(self, id, slot_id):
+        self.id = id
+        self.slot_id = slot_id
+
+
 class AssetCache(Message):
     __id__ = 66
 
