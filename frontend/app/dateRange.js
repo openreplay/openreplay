@@ -17,6 +17,12 @@ const DATE_RANGE_LABELS = {
   [CUSTOM_RANGE]: 'Custom Range',
 };
 
+const LONG_RANGE_LABELS = {
+  LAST_3_MONTHS: 'Last 3 Months',
+  LAST_YEAR: 'Last Year',
+  CUSTOM_RANGE: 'Custom Range',
+}
+
 const COMPARISON_DATE_RANGE_LABELS = {
   PREV_24_HOURS: 'Previous Day',
   PREV_7_DAYS: 'Previous Week',
@@ -26,18 +32,28 @@ const COMPARISON_DATE_RANGE_LABELS = {
 };
 
 const DATE_RANGE_VALUES = {};
+const LONG_RANGE_VALUES = {};
 Object.keys(DATE_RANGE_LABELS).forEach((key) => {
   DATE_RANGE_VALUES[key] = key;
 });
+Object.keys(LONG_RANGE_LABELS).forEach((key) => {
+  LONG_RANGE_VALUES[key] = key;
+});
 
-export { DATE_RANGE_VALUES };
+export { DATE_RANGE_VALUES, LONG_RANGE_LABELS };
 export const dateRangeValues = Object.keys(DATE_RANGE_VALUES);
 
-export const DATE_RANGE_OPTIONS = 
+export const DATE_RANGE_OPTIONS =
   Object.keys(DATE_RANGE_LABELS).map((key) => ({
     label: DATE_RANGE_LABELS[key],
     value: key,
   }));
+export const LONG_DATE_RANGE_OPTIONS =
+  Object.keys(LONG_RANGE_LABELS).map((key) => ({
+    label: LONG_RANGE_LABELS[key],
+    value: key,
+  }));
+
 export const DATE_RANGE_COMPARISON_OPTIONS =
   Object.keys(COMPARISON_DATE_RANGE_LABELS).map((key) => ({
     label: COMPARISON_DATE_RANGE_LABELS[key],
@@ -45,8 +61,10 @@ export const DATE_RANGE_COMPARISON_OPTIONS =
   }));
 
 export function getDateRangeLabel(value, t) {
-  return t(DATE_RANGE_LABELS[value]);
+  const string = DATE_RANGE_LABELS[value] ?? LONG_RANGE_LABELS[value];
+  return t(string);
 }
+
 
 export function getDateRangeFromValue(value) {
   const tz = JSON.parse(localStorage.getItem(TIMEZONE));
@@ -106,6 +124,14 @@ export function getDateRangeFromValue(value) {
     //   return Interval.fromDateTimes(now.startOf('year'), now.endOf('year'));
     // case DATE_RANGE_VALUES.CUSTOM_RANGE:
     //   return Interval.fromDateTimes(now, now);
+    case LONG_RANGE_VALUES.LAST_YEAR:
+      const lastYear = now.minus({ years: 1 });
+      return Interval.fromDateTimes(lastYear.startOf('year'), lastYear.endOf('year'));
+    case LONG_RANGE_VALUES.LAST_3_MONTHS:
+      return Interval.fromDateTimes(
+        now.minus({ months: 3 }).startOf('month'),
+        now.endOf('month'),
+      );
     default:
       throw new Error('Invalid date range value');
   }

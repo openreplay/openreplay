@@ -13,7 +13,7 @@ function Modules() {
   const { userStore } = useStore();
   const { updateModule } = userStore;
   const modules = userStore.account.settings?.modules ?? [];
-  const isEnterprise = userStore.account.edition === 'ee';
+  const isEnterprise = userStore.isEnterprise;
   const [modulesState, setModulesState] = React.useState<any[]>([]);
 
   const onToggle = async (module: any) => {

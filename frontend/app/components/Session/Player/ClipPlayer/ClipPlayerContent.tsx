@@ -11,6 +11,7 @@ import styles from 'Components/Session_/playerBlock.module.css';
 import ClipPlayerOverlay from 'Components/Session/Player/ClipPlayer/ClipPlayerOverlay';
 import { observer } from 'mobx-react-lite';
 import { Icon } from 'UI';
+import { Empty } from 'antd';
 
 interface Props {
   session: Session;
@@ -25,8 +26,8 @@ interface Props {
 function ClipPlayerContent(props: Props) {
   const playerContext = React.useContext<IPlayerContext>(PlayerContext);
   const screenWrapper = React.useRef<HTMLDivElement>(null);
-  const { time } = playerContext.store.get();
-  const { range, isFull } = props;
+  const { time, error } = playerContext.store.get();
+  const { range, isFull, isHighlight } = props;
 
   React.useEffect(() => {
     if (!playerContext.player) return;
@@ -57,7 +58,16 @@ function ClipPlayerContent(props: Props) {
 
   const outerHeight = props.isHighlight ? 556 + 39 : 556;
   const innerHeight = props.isHighlight ? 504 + 39 : 504;
-  return (
+  return error ? (
+    <div
+      className="inset-0 flex items-center justify-center absolute"
+      style={{ height: 'auto' }}
+    >
+      <div className="flex flex-col items-center">
+        <Empty description="Session not found." />
+      </div>
+    </div>
+  ) : (
     <div
       className={cn(
         styles.playerBlock,
@@ -73,7 +83,10 @@ function ClipPlayerContent(props: Props) {
       >
         <div className={cn(stl.playerBody, 'flex flex-1 flex-col relative')}>
           <div className="relative flex-1 overflow-hidden group">
-            <ClipPlayerOverlay autoplay={props.autoplay} />
+            <ClipPlayerOverlay
+              isHighlight={isHighlight}
+              autoplay={props.autoplay}
+            />
             <div
               className={cn(stl.screenWrapper, stl.checkers)}
               ref={screenWrapper}
@@ -91,7 +104,11 @@ function ClipPlayerContent(props: Props) {
             <div className="leading-none font-medium">{props.message}</div>
           </div>
         ) : null}
-        <ClipPlayerControls isFull={isFull} session={props.session} range={props.range} />
+        <ClipPlayerControls
+          isFull={isFull}
+          session={props.session}
+          range={props.range}
+        />
       </div>
     </div>
   );

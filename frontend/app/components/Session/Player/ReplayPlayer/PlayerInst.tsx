@@ -143,6 +143,7 @@ function Player(props: IProps) {
             isInspMode ? stl.solidBg : stl.checkers,
           )}
           ref={screenWrapper}
+          data-openreplay-obscured
         />
       </div>
       {!fullscreen && !!bottomBlock && (

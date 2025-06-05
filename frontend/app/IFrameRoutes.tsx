@@ -10,6 +10,7 @@ import PublicRoutes from 'App/PublicRoutes';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import * as routes from './routes';
+import Tracker from 'App/Tracker';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -43,6 +44,7 @@ function IFrameRoutes(props: Props) {
       <ModalProvider>
         <Layout hideHeader>
           <Loader loading={!!loading} className="flex-1">
+            <Tracker />
             <Suspense fallback={<Loader loading className="flex-1" />}>
               <Switch key="content">
                 <Route

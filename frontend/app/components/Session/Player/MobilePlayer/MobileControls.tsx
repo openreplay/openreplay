@@ -27,7 +27,7 @@ import {
 } from 'App/mstore/uiPlayerStore';
 import { useStore } from 'App/mstore';
 import { session as sessionRoute, withSiteId } from 'App/routes';
-import { SummaryButton } from 'Components/Session_/Player/Controls/Controls';
+import SummaryButton from 'Components/Session_/Player/Controls/SummaryButton';
 import useShortcuts from '../ReplayPlayer/useShortcuts';
 import { useTranslation } from 'react-i18next';
 
@@ -184,9 +184,6 @@ const DevtoolsButtons = observer(
     } = store.get();
 
     const showExceptions = exceptionsList.length > 0;
-    // @ts-ignore
-    const originStr = window.env.ORIGIN || window.location.origin;
-    const isSaas = /app\.openreplay\.com/.test(originStr);
 
     const showSummary = () => {
       player.pause();
@@ -197,13 +194,11 @@ const DevtoolsButtons = observer(
     };
     return (
       <>
-        {isSaas ? (
-          <SummaryButton
-            onClick={showSummary}
-            withToggle={bottomBlock === OVERVIEW}
-            toggleValue={aiSummaryStore.toggleSummary}
-          />
-        ) : null}
+        <SummaryButton
+          onClick={showSummary}
+          withToggle={bottomBlock === OVERVIEW}
+          toggleValue={aiSummaryStore.toggleSummary}
+        />
         <ControlButton
           popover={
             <div className="flex items-center gap-2">

@@ -5,7 +5,6 @@ import React from 'react';
 import { Link2 } from 'lucide-react';
 import copy from 'copy-to-clipboard';
 import { toast } from 'react-toastify';
-
 import { PlayerContext } from 'App/components/Session/playerContext';
 import {
   CONSOLE,
