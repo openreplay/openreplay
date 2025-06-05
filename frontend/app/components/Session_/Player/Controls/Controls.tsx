@@ -38,7 +38,7 @@ import {
   DashboardOutlined,
   ClusterOutlined,
 } from '@ant-design/icons';
-import { ArrowDownUp, ListCollapse, Merge, Waypoints } from 'lucide-react';
+import { ArrowDownUp, ListCollapse, Merge, Timer } from 'lucide-react';
 
 import ControlButton from './ControlButton';
 import Timeline from './Timeline';
