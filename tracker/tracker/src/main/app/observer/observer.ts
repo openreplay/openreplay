@@ -11,7 +11,8 @@ import {
   UnbindNodes,
   SetNodeAttribute,
   AdoptedSSInsertRuleURLBased,
-  AdoptedSSAddOwner
+  AdoptedSSAddOwner,
+  SetNodeSlot,
 } from '../messages.gen.js'
 import App from '../index.js'
 import {
@@ -199,6 +200,7 @@ export default abstract class Observer {
   private readonly indexes: Array<number> = []
   private readonly attributesMap: Map<number, Set<string>> = new Map()
   private readonly textSet: Set<number> = new Set()
+  private readonly slotMap: Map<number, number | undefined> = new Map()
   private readonly disableSprites: boolean = false
   /**
    * this option means that, instead of using link element with href to load css,
@@ -428,6 +430,18 @@ export default abstract class Observer {
 
   private bindNode(node: Node): void {
     const [id, isNew] = this.app.nodes.registerNode(node)
+    if (isElementNode(node) && hasTag(node, 'slot')) {
+      this.app.nodes.attachNodeListener(node, 'slotchange', () => {
+        const sl = node as HTMLSlotElement
+        sl.assignedNodes({ flatten: true }).forEach((n) => {
+          const nid = this.app.nodes.getID(n)
+          if (nid !== undefined) {
+            this.recents.set(nid, RecentsType.Removed)
+            this.commitNode(nid)
+          }
+        })
+      })
+    }
     if (isNew) {
       this.recents.set(id, RecentsType.New)
     } else if (this.recents.get(id) !== RecentsType.New) {
@@ -463,6 +477,9 @@ export default abstract class Observer {
 
   private unbindTree(node: Node) {
     const id = this.app.nodes.unregisterNode(node)
+    if (id !== undefined) {
+      this.slotMap.delete(id)
+    }
     if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       // Sending RemoveNode only for parent to maintain
       this.app.send(RemoveNode(id))
@@ -501,8 +518,8 @@ export default abstract class Observer {
     if (isRootNode(node)) {
       return true
     }
-    // @ts-ignore SALESFORCE
-    const parent = node.assignedSlot ? node.assignedSlot : node.parentNode
+    const slot = (node as any).assignedSlot as HTMLSlotElement | null
+    const parent = node.parentNode
     let parentID: number | undefined
 
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
@@ -576,10 +593,29 @@ export default abstract class Observer {
         this.app.send(CreateTextNode(id, parentID as number, index))
         this.throttledSetNodeData(id, parent as Element, node.data)
       }
+      if (slot) {
+        const slotID = this.app.nodes.getID(slot)
+        console.log('Openreplay: slotID', slotID, 'for node', id, node, 'slot', slot)
+        if (slotID !== undefined) {
+          this.slotMap.set(id, slotID)
+          this.app.send(SetNodeSlot(id, slotID))
+        }
+      }
       return true
     }
     if (recentsType === RecentsType.Removed && parentID !== undefined) {
       this.app.send(MoveNode(id, parentID, index))
+      console.log('RM Openreplay', id, node, 'slot', slot)
+      if (slot) {
+        const slotID = this.app.nodes.getID(slot)
+        if (slotID !== undefined && this.slotMap.get(id) !== slotID) {
+          this.slotMap.set(id, slotID)
+          this.app.send(SetNodeSlot(id, slotID))
+        }
+      } else if (this.slotMap.has(id)) {
+        this.slotMap.delete(id)
+        this.app.send(SetNodeSlot(id, 0))
+      }
     }
     const attr = this.attributesMap.get(id)
     if (attr !== undefined) {
