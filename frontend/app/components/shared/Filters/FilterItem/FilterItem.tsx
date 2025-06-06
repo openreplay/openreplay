@@ -89,8 +89,6 @@ function FilterItem(props: Props) {
             filter.autoCaptured,
           );
 
-          console.log('filter', filter);
-
           if (!filter.filters || filter.filters?.length === 0) {
             const defaultOption = options?.find(
               (option) => option?.defaultProperty,
