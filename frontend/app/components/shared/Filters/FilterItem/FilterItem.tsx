@@ -89,15 +89,19 @@ function FilterItem(props: Props) {
             filter.autoCaptured,
           );
 
-          const defaultOption = options?.find(
-            (option) => option?.defaultProperty,
-          );
+          console.log('filter', filter);
 
-          if (defaultOption) {
-            const subFilter = {
-              ...defaultOption,
-            };
-            addSubFilter(subFilter);
+          if (!filter.filters || filter.filters?.length === 0) {
+            const defaultOption = options?.find(
+              (option) => option?.defaultProperty,
+            );
+
+            if (defaultOption) {
+              const subFilter = {
+                ...defaultOption,
+              };
+              addSubFilter(subFilter);
+            }
           }
 
           if (

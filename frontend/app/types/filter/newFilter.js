@@ -453,7 +453,7 @@ export const filters = [
     sourcePlaceholder: 'E.g. 12',
     sourceUnit: 'ms',
     sourceType: FilterType.NUMBER,
-    sourceOperatorOptions: filterOptions.customOperators
+    sourceOperatorOptions: filterOptions.customOperators,
   },
   {
     key: FilterKey.LARGEST_CONTENTFUL_PAINT_TIME,
@@ -471,7 +471,7 @@ export const filters = [
     sourcePlaceholder: 'E.g. 12',
     sourceUnit: 'ms',
     sourceType: FilterType.NUMBER,
-    sourceOperatorOptions: filterOptions.customOperators
+    sourceOperatorOptions: filterOptions.customOperators,
   },
   {
     key: FilterKey.TTFB,
@@ -489,7 +489,7 @@ export const filters = [
     sourceUnit: 'ms',
     sourceType: FilterType.NUMBER,
     sourceOperatorOptions: filterOptions.customOperators,
-    sourcePlaceholder: 'E.g. 12'
+    sourcePlaceholder: 'E.g. 12',
   },
   {
     key: FilterKey.AVG_MEMORY_USAGE,

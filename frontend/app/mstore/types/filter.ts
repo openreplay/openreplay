@@ -374,6 +374,7 @@ export default class FilterStore implements IFilterStore {
             operator: 'isAny',
             isEvent: false,
             autoCaptured: true,
+            dataType: 'string',
           },
         ],
       });
@@ -391,6 +392,7 @@ export default class FilterStore implements IFilterStore {
             operator: 'isAny',
             isEvent: false,
             autoCaptured: true,
+            dataType: 'string',
           },
         ],
       });
