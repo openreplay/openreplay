@@ -9,7 +9,6 @@ import FocusManager from './FocusManager';
 import SelectionManager from './SelectionManager';
 import {
   StyleElement,
-  VSpriteMap,
   OnloadStyleSheet,
   VDocument,
   VElement,
@@ -55,14 +54,12 @@ export default class DOMManager extends ListWalker<Message> {
    */
   private olStyleSheets: Map<number, OnloadStyleSheet> = new Map();
   /** @depreacted since tracker 4.0.2 Mapping by nodeID */
-  private olStyleSheetsDeprecated: Map<number, OnloadStyleSheet> = new Map();
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> =
     new Map();
   private stylesManager: StylesManager;
   private focusManager: FocusManager = new FocusManager(this.vElements);
   private selectionManager: SelectionManager;
-  private nodeSlots: Map<number, { slotID: number; host: any }> = new Map();
   private readonly screen: Screen;
   private readonly isMobile: boolean;
   private readonly stringDict: Record<number, string>;
@@ -72,7 +69,7 @@ export default class DOMManager extends ListWalker<Message> {
   };
   public readonly time: number;
   private virtualMode = false;
-  private hasSlots = false
+  private hasSlots = false;
   private showVModeBadge?: () => void;
 
   constructor(params: {
@@ -286,42 +283,26 @@ export default class DOMManager extends ListWalker<Message> {
           logger.error('SetNodeSlot: Node not found', msg);
           return;
         }
+
         if (msg.slotID > 0) {
           const slotElem = this.vElements.get(msg.slotID);
           if (!(slotElem instanceof VSlot)) {
             logger.error('SetNodeSlot: Slot not found', msg);
             return;
           }
-          const host = vChild.parentNode;
-          if (host && (vChild as any).assignedSlot !== slotElem) {
-            if (vChild.node.parentNode === (host as any).node) {
-              host.node.removeChild(vChild.node);
+
+          if (vChild instanceof VElement) {
+            const slotName = (slotElem.node as HTMLSlotElement).name;
+            if (slotName && slotName !== 'default') {
+              vChild.setAttribute('slot', slotName);
+            } else {
+              // if el goes to default slot, we don't need attr
+              vChild.removeAttribute('slot');
             }
-            (host as any).notMontedChildren?.delete(vChild);
-            slotElem.addAssigned(vChild);
-            (vChild as any).assignedSlot = slotElem;
-            this.nodeSlots.set(msg.id, { slotID: msg.slotID, host });
           }
         } else {
-          if (vChild.assignedSlot) {
-            const slotElem = vChild.assignedSlot as VSlot;
-            slotElem.removeAssigned(vChild);
-            if (vChild.parentNode) {
-              const host = vChild.parentNode;
-              const siblings = host['children'] as any[];
-              const index = siblings.indexOf(vChild);
-              let next: Node | null = null;
-              for (let i = index + 1; i < siblings.length; i++) {
-                const sib = siblings[i];
-                if (!sib.assignedSlot) {
-                  next = sib.node;
-                  break;
-                }
-              }
-              host.node.insertBefore(vChild.node, next);
-            }
-            vChild.assignedSlot = null;
-            this.nodeSlots.delete(msg.id);
+          if (vChild instanceof VElement) {
+            vChild.removeAttribute('slot');
           }
         }
         return;
