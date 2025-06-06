@@ -10,7 +10,7 @@ import {
   HEATMAP,
   USER_PATH,
   RETENTION,
-  CATEGORIES
+  CATEGORIES,
 } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
 import { getRE } from 'App/utils';
@@ -31,7 +31,7 @@ const handleTypeFilter = (card: Widget, filterType?: string) => {
         FilterKey.ERRORS,
         FilterKey.FETCH,
         `${TIMESERIES}_4xx_requests`,
-        `${TIMESERIES}_slow_network_requests`
+        `${TIMESERIES}_slow_network_requests`,
       ].includes(metricOf);
     }
     if (filterType === CATEGORIES.web_analytics) {
@@ -41,7 +41,7 @@ const handleTypeFilter = (card: Widget, filterType?: string) => {
         FilterKey.REFERRER,
         FilterKey.USERID,
         FilterKey.LOCATION,
-        FilterKey.USER_DEVICE
+        FilterKey.USER_DEVICE,
       ].includes(metricOf);
     }
   } else {
@@ -117,21 +117,21 @@ export default class MetricStore {
     const dbIds = this.filter.dashboard
       ? this.filter.dashboard.map((i: any) => i.value)
       : [];
-    return this.metrics
-      .filter(
-        (card) =>
-          (this.filter.showMine
-            ? card.owner === JSON.parse(localStorage.getItem('user')!).account.email
-            : true) &&
-          handleTypeFilter(card, this.filter.type) &&
-          (!dbIds.length ||
-            card.dashboards
-              .map((i) => i.dashboardId)
-              .some((id) => dbIds.includes(id))) &&
-          // @ts-ignore
-          (!filterRE ||
-            ['name', 'owner'].some((key) => filterRE.test(card[key])))
-      );
+    return this.metrics.filter(
+      (card) =>
+        (this.filter.showMine
+          ? card.owner ===
+            JSON.parse(localStorage.getItem('user')!).account.email
+          : true) &&
+        handleTypeFilter(card, this.filter.type) &&
+        (!dbIds.length ||
+          card.dashboards
+            .map((i) => i.dashboardId)
+            .some((id) => dbIds.includes(id))) &&
+        // @ts-ignore
+        (!filterRE ||
+          ['name', 'owner'].some((key) => filterRE.test(card[key]))),
+    );
     // .sort((a, b) =>
     //   this.sort.by === 'desc'
     //     ? b.lastModified - a.lastModified
@@ -190,7 +190,7 @@ export default class MetricStore {
         this.instance.series[i].filter.eventsOrderSupport = [
           'then',
           'or',
-          'and'
+          'and',
         ];
       });
       if (type === HEATMAP && 'series' in obj) {
@@ -237,7 +237,7 @@ export default class MetricStore {
       namesMap: {},
       avg: 0,
       percentiles: [],
-      values: []
+      values: [],
     };
     const obj: any = { metricType: value, data: defaultData };
     obj.series = this.instance.series;
@@ -292,10 +292,25 @@ export default class MetricStore {
       }
 
       if (obj.series[0] && obj.series[0].filter.filters.length < 1) {
-        obj.series[0].filter.addFilter({
-          ...clickmapFilter,
-          value: ['']
-        });
+        const clickMapFilter = {
+          name: FilterKey.LOCATION,
+          autoCaptured: true,
+          displayName: 'Visited URL',
+          placeholder: 'Enter URL or path',
+          operator: 'startWith',
+          isEvent: true,
+          dataType: 'string',
+          filters: [
+            {
+              name: 'url',
+              dataType: 'string',
+              operator: 'startsWith',
+              value: [''],
+            },
+          ],
+        };
+
+        obj.series[0].filter.addFilter(clickMapFilter);
       }
     }
 
@@ -324,7 +339,7 @@ export default class MetricStore {
   updateInList(metric: Widget) {
     // @ts-ignore
     const index = this.metrics.findIndex(
-      (m: Widget) => m[Widget.ID_KEY] === metric[Widget.ID_KEY]
+      (m: Widget) => m[Widget.ID_KEY] === metric[Widget.ID_KEY],
     );
     if (index >= 0) {
       this.metrics[index] = metric;
@@ -376,19 +391,18 @@ export default class MetricStore {
   async fetchList() {
     this.setLoading(true);
     try {
-      const resp = await metricService
-        .getMetricsPaginated({
-          page: this.page,
-          limit: this.pageSize,
-          sort: {
-            field: this.sort.field,
-            order: this.sort.order === 'ascend' ? 'asc' : 'desc'
-          },
-          filter: {
-            query: this.filter.query,
-            type: this.filter.type === 'all' ? '' : this.filter.type,
-          }
-        });
+      const resp = await metricService.getMetricsPaginated({
+        page: this.page,
+        limit: this.pageSize,
+        sort: {
+          field: this.sort.field,
+          order: this.sort.order === 'ascend' ? 'asc' : 'desc',
+        },
+        filter: {
+          query: this.filter.query,
+          type: this.filter.type === 'all' ? '' : this.filter.type,
+        },
+      });
       this.total = resp.total;
       this.setMetrics(resp.list.map((m) => new Widget().fromJson(m)));
     } finally {
