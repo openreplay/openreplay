@@ -24,6 +24,7 @@ export const TP_MAP = {
   22: MType.ConsoleLog,
   34: MType.StringDictGlobal,
   35: MType.SetNodeAttributeDictGlobal,
+  36: MType.NodeAnimationResult,
   37: MType.CssInsertRule,
   38: MType.CssDeleteRule,
   39: MType.Fetch,

@@ -356,6 +356,14 @@ class SetNodeAttributeDictGlobal(Message):
         self.value = value
 
 
+class NodeAnimationResult(Message):
+    __id__ = 36
+
+    def __init__(self, id, styles):
+        self.id = id
+        self.styles = styles
+
+
 class CSSInsertRule(Message):
     __id__ = 37
 

@@ -37,6 +37,7 @@ const (
 	MsgPageEvent                          = 33
 	MsgStringDictGlobal                   = 34
 	MsgSetNodeAttributeDictGlobal         = 35
+	MsgNodeAnimationResult                = 36
 	MsgCSSInsertRule                      = 37
 	MsgCSSDeleteRule                      = 38
 	MsgFetch                              = 39
@@ -1067,6 +1068,29 @@ func (msg *SetNodeAttributeDictGlobal) Decode() Message {
 
 func (msg *SetNodeAttributeDictGlobal) TypeID() int {
 	return 35
+}
+
+type NodeAnimationResult struct {
+	message
+	ID     uint64
+	Styles string
+}
+
+func (msg *NodeAnimationResult) Encode() []byte {
+	buf := make([]byte, 21+len(msg.Styles))
+	buf[0] = 36
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteString(msg.Styles, buf, p)
+	return buf[:p]
+}
+
+func (msg *NodeAnimationResult) Decode() Message {
+	return msg
+}
+
+func (msg *NodeAnimationResult) TypeID() int {
+	return 36
 }
 
 type CSSInsertRule struct {

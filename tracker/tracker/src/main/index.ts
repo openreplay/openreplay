@@ -29,9 +29,11 @@ import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
 import Selection from './modules/selection.js'
 import Tabs from './modules/tabs.js'
 import LongAnimationTask from "./modules/longAnimationTask.js";
+import FeatureFlags, { IFeatureFlag } from './modules/featureFlags.js'
+import WebAnimations from './modules/webAnimations.js'
 
 import { IN_BROWSER, deprecationWarn, DOCS_HOST, inIframe } from './utils.js'
-import FeatureFlags, { IFeatureFlag } from './modules/featureFlags.js'
+
 import type { Options as AppOptions } from './app/index.js'
 import type { Options as ConsoleOptions } from './modules/console.js'
 import type { Options as ExceptionOptions } from './modules/exception.js'
@@ -43,6 +45,7 @@ import type { MouseHandlerOptions } from './modules/mouse.js'
 import type { SessionInfo } from './app/session.js'
 import type { CssRulesOptions } from './modules/cssrules.js'
 import type { LATOptions } from './modules/longAnimationTask.js'
+import type { Options as WapOptions } from './modules/webAnimations.js'
 
 import type { StartOptions } from './app/index.js'
 //TODO: unique options init
@@ -71,6 +74,7 @@ export type Options = Partial<
   // dev only
   __DISABLE_SECURE_MODE?: boolean
   css: CssRulesOptions
+  webAnimations?: WapOptions
 }
 
 const DOCS_SETUP = '/en/sdk'
@@ -217,6 +221,7 @@ export default class API {
       Network(app, options.network)
     }
     Selection(app)
+    WebAnimations(app, options.webAnimations)
     ;(window as any).__OPENREPLAY__ = this
 
     if (options.flags && options.flags.onFlagsLoad) {

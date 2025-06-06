@@ -633,6 +633,18 @@ func DecodeSetNodeAttributeDictGlobal(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeNodeAnimationResult(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &NodeAnimationResult{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Styles, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeCSSInsertRule(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &CSSInsertRule{}
@@ -2262,6 +2274,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeStringDictGlobal(reader)
 	case 35:
 		return DecodeSetNodeAttributeDictGlobal(reader)
+	case 36:
+		return DecodeNodeAnimationResult(reader)
 	case 37:
 		return DecodeCSSInsertRule(reader)
 	case 38:

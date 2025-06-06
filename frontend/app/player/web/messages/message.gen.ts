@@ -25,6 +25,7 @@ import type {
   RawConsoleLog,
   RawStringDictGlobal,
   RawSetNodeAttributeDictGlobal,
+  RawNodeAnimationResult,
   RawCssInsertRule,
   RawCssDeleteRule,
   RawFetch,
@@ -132,6 +133,8 @@ export type ConsoleLog = RawConsoleLog & Timed
 export type StringDictGlobal = RawStringDictGlobal & Timed
 
 export type SetNodeAttributeDictGlobal = RawSetNodeAttributeDictGlobal & Timed
+
+export type NodeAnimationResult = RawNodeAnimationResult & Timed
 
 export type CssInsertRule = RawCssInsertRule & Timed
 
