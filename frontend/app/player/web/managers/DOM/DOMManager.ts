@@ -9,7 +9,6 @@ import FocusManager from './FocusManager';
 import SelectionManager from './SelectionManager';
 import {
   StyleElement,
-  VSpriteMap,
   OnloadStyleSheet,
   VDocument,
   VElement,
@@ -17,6 +16,7 @@ import {
   VShadowRoot,
   VText,
   OnloadVRoot,
+  VSlot,
 } from './VirtualDOM';
 import { deleteRule, insertRule } from './safeCSSRules';
 
@@ -54,7 +54,6 @@ export default class DOMManager extends ListWalker<Message> {
    */
   private olStyleSheets: Map<number, OnloadStyleSheet> = new Map();
   /** @depreacted since tracker 4.0.2 Mapping by nodeID */
-  private olStyleSheetsDeprecated: Map<number, OnloadStyleSheet> = new Map();
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> =
     new Map();
@@ -70,7 +69,7 @@ export default class DOMManager extends ListWalker<Message> {
   };
   public readonly time: number;
   private virtualMode = false;
-  private hasSlots = false
+  private hasSlots = false;
   private showVModeBadge?: () => void;
 
   constructor(params: {
@@ -278,6 +277,36 @@ export default class DOMManager extends ListWalker<Message> {
         this.stylesManager.reset();
         return;
       }
+      case MType.SetNodeSlot: {
+        const vChild = this.vElements.get(msg.id) || this.vTexts.get(msg.id);
+        if (!vChild) {
+          logger.error('SetNodeSlot: Node not found', msg);
+          return;
+        }
+
+        if (msg.slotID > 0) {
+          const slotElem = this.vElements.get(msg.slotID);
+          if (!(slotElem instanceof VSlot)) {
+            logger.error('SetNodeSlot: Slot not found', msg);
+            return;
+          }
+
+          if (vChild instanceof VElement) {
+            const slotName = (slotElem.node as HTMLSlotElement).name;
+            if (slotName && slotName !== 'default') {
+              vChild.setAttribute('slot', slotName);
+            } else {
+              // if el goes to default slot, we don't need attr
+              vChild.removeAttribute('slot');
+            }
+          }
+        } else {
+          if (vChild instanceof VElement) {
+            vChild.removeAttribute('slot');
+          }
+        }
+        return;
+      }
       case MType.CreateTextNode: {
         const vText = new VText();
         this.vTexts.set(msg.id, vText);
@@ -286,7 +315,10 @@ export default class DOMManager extends ListWalker<Message> {
       }
       case MType.CreateElementNode: {
         // if (msg.tag.toLowerCase() === 'canvas') msg.tag = 'video'
-        const vElem = new VElement(msg.tag, msg.svg, msg.index, msg.id);
+        const vElem =
+          msg.tag === 'SLOT'
+            ? new VSlot(msg.tag, msg.svg, msg.index, msg.id)
+            : new VElement(msg.tag, msg.svg, msg.index, msg.id);
         if (['STYLE', 'style', 'LINK'].includes(msg.tag)) {
           vElem.prioritized = true;
         }

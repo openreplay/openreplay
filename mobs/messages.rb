@@ -220,6 +220,11 @@ message 35, 'SetNodeAttributeDictGlobal' do
     uint 'Value'
 end
 
+message 36, 'NodeAnimationResult' do
+  uint 'ID'
+  string 'Styles'
+end
+
 # DEPRECATED since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
 message 37, 'CSSInsertRule' do
   uint 'ID'
@@ -396,7 +401,10 @@ message 64, 'CustomIssue', :replayer => false do
   string 'Name'
   string 'Payload'
 end
-
+message 65, 'SetNodeSlot' do
+  uint 'ID'
+  uint 'SlotID'
+end
 message 66, 'AssetCache', :replayer => false, :tracker => false do
   string 'URL'
 end
@@ -659,4 +667,4 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Partition'
 end
 
-# FREE 2, 35, 36, 65, 87, 88, 89
+# FREE 2, 87, 88, 89

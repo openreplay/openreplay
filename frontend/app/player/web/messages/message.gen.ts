@@ -25,6 +25,7 @@ import type {
   RawConsoleLog,
   RawStringDictGlobal,
   RawSetNodeAttributeDictGlobal,
+  RawNodeAnimationResult,
   RawCssInsertRule,
   RawCssDeleteRule,
   RawFetch,
@@ -48,6 +49,7 @@ import type {
   RawLongTask,
   RawSetNodeAttributeURLBased,
   RawSetCssDataURLBased,
+  RawSetNodeSlot,
   RawCssInsertRuleURLBased,
   RawMouseClick,
   RawMouseClickDeprecated,
@@ -132,6 +134,8 @@ export type StringDictGlobal = RawStringDictGlobal & Timed
 
 export type SetNodeAttributeDictGlobal = RawSetNodeAttributeDictGlobal & Timed
 
+export type NodeAnimationResult = RawNodeAnimationResult & Timed
+
 export type CssInsertRule = RawCssInsertRule & Timed
 
 export type CssDeleteRule = RawCssDeleteRule & Timed
@@ -177,6 +181,8 @@ export type LongTask = RawLongTask & Timed
 export type SetNodeAttributeURLBased = RawSetNodeAttributeURLBased & Timed
 
 export type SetCssDataURLBased = RawSetCssDataURLBased & Timed
+
+export type SetNodeSlot = RawSetNodeSlot & Timed
 
 export type CssInsertRuleURLBased = RawCssInsertRuleURLBased & Timed
 

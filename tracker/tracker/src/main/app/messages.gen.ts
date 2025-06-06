@@ -340,6 +340,17 @@ export function SetNodeAttributeDictGlobal(
   ]
 }
 
+export function NodeAnimationResult(
+  id: number,
+  styles: string,
+): Messages.NodeAnimationResult {
+  return [
+    Messages.Type.NodeAnimationResult,
+    id,
+    styles,
+  ]
+}
+
 export function CSSInsertRule(
   id: number,
   rule: string,
@@ -683,6 +694,17 @@ export function CustomIssue(
     Messages.Type.CustomIssue,
     name,
     payload,
+  ]
+}
+
+export function SetNodeSlot(
+  id: number,
+  slotID: number,
+): Messages.SetNodeSlot {
+  return [
+    Messages.Type.SetNodeSlot,
+    id,
+    slotID,
   ]
 }
 
