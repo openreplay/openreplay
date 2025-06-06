@@ -203,7 +203,7 @@ export default class APIClient {
       (path.includes('/spot') && !path.includes('/login'));
     let edp = window.env.API_EDP || window.location.origin + '/api';
 
-    if (path.includes('/cards')) {
+    if (path.includes('/cards') || path.includes('/dashboards')) {
       // TODO - Remove this condition
       edp = 'http://localhost:8080/v1/analytics';
     }

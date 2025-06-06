@@ -7,13 +7,6 @@ export interface Operator {
   description?: string;
 }
 
-export interface FilterProperty {
-  name: string;
-  displayName: string;
-  description: string;
-  type: string; // 'number' | 'string' | 'boolean' | etc.
-}
-
 export interface Filter {
   id: string;
   name: string;
@@ -27,7 +20,6 @@ export interface Filter {
   subCategory?: string;
   type?: string; // 'number' | 'string' | 'boolean' | etc.
   icon?: string;
-  properties?: FilterProperty[];
   operator?: string;
   operators?: Operator[];
   isEvent?: boolean;
@@ -35,11 +27,18 @@ export interface Filter {
   propertyOrder?: string;
   filters?: Filter[];
   autoOpen?: boolean;
+  defaultProperty?: boolean;
 }
 
 export const OPERATORS = {
   string: [
     { value: 'is', label: 'is', displayName: 'Is', description: 'Exact match' },
+    {
+      value: 'isAny',
+      label: 'is any',
+      displayName: 'Is any',
+      description: 'Any of the values',
+    },
     {
       value: 'isNot',
       label: 'is not',
@@ -81,6 +80,45 @@ export const OPERATORS = {
       label: 'is not blank',
       displayName: 'Is not blank',
       description: 'Is not empty or null',
+    },
+  ],
+
+  int: [
+    {
+      value: '=',
+      label: 'equals',
+      displayName: 'Equals',
+      description: 'Exactly equals the value',
+    },
+    {
+      value: '!=',
+      label: 'not equals',
+      displayName: 'Not equals',
+      description: 'Not equals the value',
+    },
+    {
+      value: '>',
+      label: 'greater than',
+      displayName: 'Greater than',
+      description: 'Greater than the value',
+    },
+    {
+      value: '<',
+      label: 'less than',
+      displayName: 'Less than',
+      description: 'Less than the value',
+    },
+    {
+      value: '>=',
+      label: 'greater than or equals',
+      displayName: 'Greater than or equals',
+      description: 'Greater than or equals the value',
+    },
+    {
+      value: '<=',
+      label: 'less than or equals',
+      displayName: 'Less than or equals',
+      description: 'Less than or equals the value',
     },
   ],
 
@@ -264,6 +302,7 @@ export const getOperatorsByType = (type?: string): Operator[] => {
       break;
     case 'number':
     case 'integer':
+    case 'int':
     case 'float':
     case 'decimal':
       operators = OPERATORS.number;
@@ -288,52 +327,3 @@ export const getOperatorsByType = (type?: string): Operator[] => {
 
   return operators;
 };
-
-// export const getOperatorsByType = (types: string[]): Operator[] => {
-//   const operatorSet = new Set<Operator>();
-//
-//   if (!types || types.length === 0) {
-//     return [...OPERATORS.string];
-//   }
-//
-//   // Process each type in the array
-//   types.forEach(type => {
-//     let operators: Operator[] = [];
-//
-//     switch (type.toLowerCase()) {
-//       case 'string':
-//         operators = OPERATORS.string;
-//         break;
-//       case 'number':
-//       case 'integer':
-//       case 'float':
-//       case 'decimal':
-//         operators = OPERATORS.number;
-//         break;
-//       case 'boolean':
-//         operators = OPERATORS.boolean;
-//         break;
-//       case 'date':
-//       case 'datetime':
-//       case 'timestamp':
-//         operators = OPERATORS.date;
-//         break;
-//       case 'array':
-//       case 'list':
-//         operators = OPERATORS.array;
-//         break;
-//       default:
-//         // Default to string operators if type is unknown
-//         operators = OPERATORS.string;
-//         break;
-//     }
-//
-//     // Add operators to the set
-//     operators.forEach(operator => {
-//       operatorSet.add(operator);
-//     });
-//   });
-//
-//   // Convert Set back to Array and return
-//   return Array.from(operatorSet);
-// };

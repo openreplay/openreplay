@@ -148,11 +148,13 @@ export default class FilterStore {
       category: category || 'custom',
       subCategory: this.determineSubCategory(category, filter),
       displayName: filter.displayName || filter.name,
-      icon: FilterKey.LOCATION, // TODO - use actual icons
+      // icon: FilterKey.LOCATION, // TODO - use actual icons
       isEvent: category === 'events',
       value: filter.value || [],
       propertyOrder: 'and',
       operator: filter.operator || 'is',
+      defaultProperty: Boolean(filter.defaultProperty) || false,
+      autoCaptured: filter.autoCaptured || false,
     }));
   };
 
@@ -286,17 +288,19 @@ export default class FilterStore {
         eventName,
         isAutoCapture,
       );
-      const propertyNames = response.data.map((item: any) => item.name);
 
-      const activeSiteId = String(projectStore.activeSiteId);
-      const siteFilters = this.filters[activeSiteId] || [];
+      return this.processFilters(response.data);
+      // const propertyNames = response.data.map((item: any) => item.name);
 
-      return siteFilters
-        .filter((filter: Filter) => propertyNames.includes(filter.name))
-        .map((filter: Filter) => ({
-          ...filter,
-          eventName,
-        }));
+      // const activeSiteId = String(projectStore.activeSiteId);
+      // const siteFilters = this.filters[activeSiteId] || [];
+
+      // return siteFilters
+      //   .filter((filter: Filter) => propertyNames.includes(filter.name))
+      //   .map((filter: Filter) => ({
+      //     ...filter,
+      //     eventName,
+      //   }));
     } catch (error) {
       console.error('Failed to fetch property filters:', error);
       return [];
