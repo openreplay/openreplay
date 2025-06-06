@@ -25,6 +25,7 @@ export interface IFilter {
   propertyOrder?: string;
   filters?: IFilter[];
   autoOpen?: boolean;
+  defaultProperty?: boolean;
 
   [key: string]: any;
 }
@@ -52,6 +53,7 @@ export default class FilterItem implements IFilter {
   propertyOrder?: string = '';
   filters?: FilterItem[] = [];
   autoOpen?: boolean = false;
+  defaultProperty?: boolean = false;
 
   constructor(data: IFilter = {}) {
     makeAutoObservable(this);
@@ -103,6 +105,7 @@ export default class FilterItem implements IFilter {
     this.subCategory = data.subCategory;
     this.operator = data.operator;
     this.isEvent = Boolean(data.isEvent);
+    this.defaultProperty = Boolean(data.defaultProperty);
 
     if (Array.isArray(data.filters)) {
       this.filters = data.filters.map(
@@ -127,6 +130,7 @@ export default class FilterItem implements IFilter {
     this.operator = data.operator;
     this.value = Array.isArray(data.value) ? data.value : [''];
     this.propertyOrder = data.propertyOrder;
+    this.defaultProperty = Boolean(data.defaultProperty);
 
     this.name = data.name || '';
     this.isEvent = Boolean(data.isEvent);

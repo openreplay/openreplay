@@ -89,16 +89,23 @@ function FilterItem(props: Props) {
             filter.autoCaptured,
           );
 
-          // Check mount status AND if the relevant dependencies are still the same
+          const defaultOption = options?.find(
+            (option) => option?.defaultProperty,
+          );
+
+          if (defaultOption) {
+            const subFilter = {
+              ...defaultOption,
+            };
+            addSubFilter(subFilter);
+          }
+
           if (
             isMounted &&
             filter.name === fetchName &&
             !isSubItem &&
             filter.isEvent
           ) {
-            // Avoid setting state if options haven't actually changed (optional optimization)
-            // This requires comparing options, which might be complex/costly.
-            // Sticking to setting state is usually fine if dependencies are stable.
             setEventFilterOptions(options);
           }
         } catch (error) {
@@ -122,13 +129,10 @@ function FilterItem(props: Props) {
           }
         }
       } else {
-        // Reset state only if necessary and component is mounted
         if (isMounted) {
-          // Avoid calling setState if already in the desired state
           if (eventFilterOptions.length > 0) {
             setEventFilterOptions([]);
           }
-          // Might need to check loading state too if it could be stuck true
           if (eventFiltersLoading) {
             setEventFiltersLoading(false);
           }
