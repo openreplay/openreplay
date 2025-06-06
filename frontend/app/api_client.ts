@@ -203,10 +203,11 @@ export default class APIClient {
       (path.includes('/spot') && !path.includes('/login'));
     let edp = window.env.API_EDP || window.location.origin + '/api';
 
-    if (path.includes('/cards/try')) {
+    if (path.includes('/cards')) {
       // TODO - Remove this condition
       edp = 'http://localhost:8080/v1/analytics';
     }
+
     if (noChalice && !edp.includes('api.openreplay.com')) {
       edp = edp.replace('/api', '');
     }

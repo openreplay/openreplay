@@ -16,7 +16,7 @@ import { issueCategories } from 'App/constants/filterOptions';
 import { PlusIcon, ChevronUp } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import FilterItem from 'Shared/Filters/FilterItem';
-import { FilterKey, FilterCategory } from 'Types/filter/filterType';
+import { FilterCategory } from 'Types/filter/filterType';
 import { useTranslation } from 'react-i18next';
 
 const getExcludedKeys = (metricType: string) => {

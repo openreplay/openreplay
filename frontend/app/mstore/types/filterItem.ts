@@ -126,6 +126,7 @@ export default class FilterItem implements IFilter {
     this.subCategory = data.subCategory;
     this.operator = data.operator;
     this.value = Array.isArray(data.value) ? data.value : [''];
+    this.propertyOrder = data.propertyOrder;
 
     this.name = data.name || '';
     this.isEvent = Boolean(data.isEvent);
@@ -150,6 +151,7 @@ export default class FilterItem implements IFilter {
         this.value?.map((item: any) => (item ? item.toString() : '')) || [],
       operator: this.operator,
       source: this.name,
+      propertyOrder: this.propertyOrder,
       filters: Array.isArray(this.filters)
         ? this.filters.map((filter) => filter.toJson())
         : [],
