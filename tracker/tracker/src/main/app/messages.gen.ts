@@ -340,6 +340,17 @@ export function SetNodeAttributeDictGlobal(
   ]
 }
 
+export function NodeAnimationResult(
+  id: number,
+  styles: string,
+): Messages.NodeAnimationResult {
+  return [
+    Messages.Type.NodeAnimationResult,
+    id,
+    styles,
+  ]
+}
+
 export function CSSInsertRule(
   id: number,
   rule: string,
