@@ -297,6 +297,7 @@ export default class DOMManager extends ListWalker<Message> {
             if (vChild.node.parentNode === (host as any).node) {
               host.node.removeChild(vChild.node);
             }
+            (host as any).notMontedChildren?.delete(vChild);
             slotElem.addAssigned(vChild);
             (vChild as any).assignedSlot = slotElem;
             this.nodeSlots.set(msg.id, { slotID: msg.slotID, host });

@@ -595,7 +595,6 @@ export default abstract class Observer {
       }
       if (slot) {
         const slotID = this.app.nodes.getID(slot)
-        console.log('Openreplay: slotID', slotID, 'for node', id, node, 'slot', slot)
         if (slotID !== undefined) {
           this.slotMap.set(id, slotID)
           this.app.send(SetNodeSlot(id, slotID))
@@ -605,7 +604,6 @@ export default abstract class Observer {
     }
     if (recentsType === RecentsType.Removed && parentID !== undefined) {
       this.app.send(MoveNode(id, parentID, index))
-      console.log('RM Openreplay', id, node, 'slot', slot)
       if (slot) {
         const slotID = this.app.nodes.getID(slot)
         if (slotID !== undefined && this.slotMap.get(id) !== slotID) {
