@@ -50,6 +50,7 @@ function MetricsList({
   }, [selectedMetrics, onSelectionChange]);
 
   const toggleMetricSelection = (id: any) => {
+    console.log(id)
     if (Array.isArray(id)) {
       setSelectedMetrics(id);
       return;
