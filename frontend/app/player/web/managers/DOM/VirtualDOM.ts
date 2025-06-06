@@ -58,7 +58,7 @@ export abstract class VNode<T extends Node = Node> {
   public abstract applyChanges(): void;
 }
 
-type VChild = VElement | VText | VSpriteMap;
+type VChild = VElement | VText;
 abstract class VParent<T extends Node = Node> extends VNode<T> {
   /**
    */
@@ -163,46 +163,6 @@ export class VShadowRoot extends VParent<ShadowRoot> {
 
 export type VRoot = VDocument | VShadowRoot;
 
-export class VSpriteMap extends VParent<Element> {
-  parentNode: VParent | null =
-    null; /** Should be modified only by he parent itself */
-
-  private newAttributes: Map<string, string | false> = new Map();
-
-  constructor(
-    readonly tagName: string,
-    readonly isSVG = true,
-    public readonly index: number,
-    private readonly nodeId: number,
-  ) {
-    super();
-    this.createNode();
-  }
-
-  protected createNode() {
-    try {
-      const element = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        this.tagName,
-      );
-      element.dataset.openreplayId = this.nodeId.toString();
-      return element;
-    } catch (e) {
-      console.error(
-        'Openreplay: Player received invalid html tag',
-        this.tagName,
-        e,
-      );
-      return document.createElement(this.tagName.replace(/[^a-z]/gi, ''));
-    }
-  }
-
-  applyChanges() {
-    // this is a hack to prevent the sprite map from being removed from the DOM
-    return null;
-  }
-}
-
 export class VElement extends VParent<Element> {
   parentNode: VParent | null =
     null; /** Should be modified only by he parent itself */
@@ -298,58 +258,14 @@ export class VElement extends VParent<Element> {
 }
 
 export class VSlot extends VElement {
-  assignedNodes: VChild[] = [];
-
-  addAssigned(child: VChild) {
-    if (this.assignedNodes.indexOf(child) === -1) {
-      this.assignedNodes.push(child);
-      this.notMontedChildren.add(child);
-    }
-  }
-
-  removeAssigned(child: VChild) {
-    this.assignedNodes = this.assignedNodes.filter((c) => c !== child);
-    this.notMontedChildren.delete(child);
-  }
-
-  private mountAssigned() {
-    let nextMounted: VChild | null = null;
-    for (let i = this.assignedNodes.length - 1; i >= 0; i--) {
-      const child = this.assignedNodes[i];
-      if (this.notMontedChildren.has(child)) {
-        this.node.insertBefore(
-          child.node,
-          nextMounted ? nextMounted.node : null,
-        );
-        this.notMontedChildren.delete(child);
-      }
-      if (!this.notMontedChildren.has(child)) {
-        nextMounted = child;
-      }
-    }
+  protected createNode() {
+    const element = super.createNode() as HTMLSlotElement;
+    return element;
   }
 
   applyChanges() {
-    if (this.assignedNodes.length > 0) {
-      this.assignedNodes.forEach((c) => c.applyChanges());
-      this.mountAssigned();
-      const { node } = this;
-      const realChildren = node.childNodes;
-      if (realChildren.length > 0) {
-        for (let j = 0; j < this.assignedNodes.length; j++) {
-          while (realChildren[j] !== this.assignedNodes[j].node) {
-            if (isNode(realChildren[j])) {
-              node.removeChild(realChildren[j]);
-            }
-          }
-        }
-      }
-      while (realChildren.length > this.assignedNodes.length) {
-        node.removeChild(node.lastChild as Node);
-      }
-    } else {
-      super.applyChanges();
-    }
+    super.applyChanges();
+    // todo safety checks here ?
   }
 }
 
