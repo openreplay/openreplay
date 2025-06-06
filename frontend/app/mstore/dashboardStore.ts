@@ -457,7 +457,7 @@ export default class DashboardStore {
     this.isSaving = true;
     try {
       try {
-        const response = await dashboardService.addWidget(dashboard, metricIds);
+        await dashboardService.addWidget(dashboard, metricIds);
         toast.success('Card added to dashboard.');
       } catch {
         toast.error('Card could not be added.');

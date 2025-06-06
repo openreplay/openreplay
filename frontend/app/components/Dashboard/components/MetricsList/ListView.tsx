@@ -116,8 +116,6 @@ const ListView: React.FC<Props> = ({
     if (disableSelection) {
       const path = withSiteId(`/metrics/${metric.metricId}`, siteId);
       history.push(path);
-    } else {
-      toggleSelection?.(metric.metricId);
     }
   };
 
