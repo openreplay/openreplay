@@ -199,6 +199,21 @@ export class VElement extends VParent<Element> {
     this.newAttributes.set(name, value);
   }
 
+  applyStyleChanges(styles: [prop: string, value: string][]) {
+    let existingStyles = this.node.getAttribute('style') || '';
+    let newStyles = existingStyles;
+    styles.forEach(([prop, value]) => {
+      if (existingStyles.includes(prop)) {
+        const regex = new RegExp(`(${prop}:[^;]+;?)`, 'g');
+        const newStyle = `${prop}:${value};`;
+        newStyles = newStyles.replace(regex, newStyle);
+      } else {
+        newStyles += `${prop}:${value};`;
+      }
+    });
+    this.newAttributes.set('style', newStyles);
+  }
+
   removeAttribute(name: string) {
     this.newAttributes.set(name, false);
   }

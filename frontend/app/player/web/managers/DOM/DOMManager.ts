@@ -1,7 +1,11 @@
 import logger from 'App/logger';
 
 import type Screen from '../../Screen/Screen';
-import type { Message, SetNodeScroll } from '../../messages';
+import type {
+  Message,
+  NodeAnimationResult,
+  SetNodeScroll,
+} from '../../messages';
 import { MType } from '../../messages';
 import ListWalker from '../../../common/ListWalker';
 import StylesManager from './StylesManager';
@@ -277,36 +281,6 @@ export default class DOMManager extends ListWalker<Message> {
         this.stylesManager.reset();
         return;
       }
-      case MType.SetNodeSlot: {
-        const vChild = this.vElements.get(msg.id) || this.vTexts.get(msg.id);
-        if (!vChild) {
-          logger.error('SetNodeSlot: Node not found', msg);
-          return;
-        }
-
-        if (msg.slotID > 0) {
-          const slotElem = this.vElements.get(msg.slotID);
-          if (!(slotElem instanceof VSlot)) {
-            logger.error('SetNodeSlot: Slot not found', msg);
-            return;
-          }
-
-          if (vChild instanceof VElement) {
-            const slotName = (slotElem.node as HTMLSlotElement).name;
-            if (slotName && slotName !== 'default') {
-              vChild.setAttribute('slot', slotName);
-            } else {
-              // if el goes to default slot, we don't need attr
-              vChild.removeAttribute('slot');
-            }
-          }
-        } else {
-          if (vChild instanceof VElement) {
-            vChild.removeAttribute('slot');
-          }
-        }
-        return;
-      }
       case MType.CreateTextNode: {
         const vText = new VText();
         this.vTexts.set(msg.id, vText);
@@ -475,7 +449,7 @@ export default class DOMManager extends ListWalker<Message> {
           logger.error('CreateIFrameDocument: Node not found', msg);
           return;
         }
-        // shadow DOM for a custom element + SALESFORCE (<slot>)
+        // shadow DOM for a custom element + SALESFORCE (<slot> without shadow root)
         const isCustomElement =
           vElem.tagName.includes('-') || vElem.tagName === 'SLOT';
 
@@ -486,6 +460,8 @@ export default class DOMManager extends ListWalker<Message> {
             return;
           } else if (this.hasSlots) {
             this.showVModeBadge?.();
+            // once
+            this.showVModeBadge = undefined;
           }
         }
 
@@ -527,7 +503,7 @@ export default class DOMManager extends ListWalker<Message> {
           logger.warn('No stylesheet was created for ', msg);
           return;
         }
-        // @ts-ignore (configure ts with recent WebaAPI)
+        // @ts-ignore (configure ts with recent WebAPI)
         styleSheet.replaceSync(msg.text);
         return;
       }
@@ -612,6 +588,48 @@ export default class DOMManager extends ListWalker<Message> {
           vNode.node.fonts.add(ff);
           void ff.load();
         });
+        return;
+      }
+      case MType.SetNodeSlot: {
+        const vChild = this.vElements.get(msg.id) || this.vTexts.get(msg.id);
+        if (!vChild) {
+          logger.error('SetNodeSlot: Node not found', msg);
+          return;
+        }
+
+        if (msg.slotID > 0) {
+          const slotElem = this.vElements.get(msg.slotID);
+          if (!(slotElem instanceof VSlot)) {
+            logger.error('SetNodeSlot: Slot not found', msg);
+            return;
+          }
+
+          if (vChild instanceof VElement) {
+            const slotName = (slotElem.node as HTMLSlotElement).name;
+            if (slotName && slotName !== 'default') {
+              vChild.setAttribute('slot', slotName);
+            } else {
+              // if el goes to default slot, we don't need attr
+              vChild.removeAttribute('slot');
+            }
+          }
+        } else {
+          if (vChild instanceof VElement) {
+            vChild.removeAttribute('slot');
+          }
+        }
+        return;
+      }
+      case MType.NodeAnimationResult: {
+        const vElem = this.vElements.get(msg.id);
+        const styles: Record<string, string> = msg.styles
+          ? JSON.parse(msg.styles)
+          : {};
+        if (!vElem) {
+          logger.error('NodeAnimationResult: Node not found', msg);
+          return;
+        }
+        vElem.applyStyleChanges(Object.entries(styles));
       }
     }
   };

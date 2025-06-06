@@ -55,7 +55,9 @@ function webAnimations(app: App, options: Options = {}) {
   const origAnimate = Element.prototype.animate
   Element.prototype.animate = function (...args) {
     const anim = origAnimate.apply(this, args)
-    wire(anim, this)
+    const id = app.nodes.getID(this)
+    if (!id) return anim;
+    wire(anim, this, id)
     return anim
   }
 

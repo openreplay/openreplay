@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowUpRight, X } from 'lucide-react';
 
 const localhostWarn = (project: string) => `${project}_localhost_warn`;
+const vModeWarn = (project: string) => `${project}_v_mode_warn`;
 
 const VersionComparison = {
   Lower: -1,
@@ -40,6 +41,12 @@ interface WarnBadgeExtraProps {
   trackerWarnClassName?: string;
 }
 
+const WARNINGS = {
+  LOCALHOST: 0,
+  TRACKER_VERSION: 1,
+  VIRTUAL_ELS_FAIL: 2,
+} as const;
+
 type Warns = [
   localhostWarn: boolean,
   trackerWarn: boolean,
@@ -68,6 +75,9 @@ const WarnBadge = React.memo(
   } & WarnBadgeExtraProps) => {
     const { t } = useTranslation();
     const localhostWarnSiteKey = localhostWarn(siteId);
+    const vModeWarnSiteKey = vModeWarn(siteId);
+    const vModeWarnActive =
+      localStorage.getItem(vModeWarnSiteKey) !== '1' && virtualElsFailed;
     const defaultLocalhostWarn =
       localStorage.getItem(localhostWarnSiteKey) !== '1';
     const localhostWarnActive = Boolean(
@@ -82,7 +92,7 @@ const WarnBadge = React.memo(
     const [warnings, setWarnings] = React.useState<Warns>([
       localhostWarnActive,
       trackerWarnActive,
-      virtualElsFailed,
+      vModeWarnActive,
     ]);
 
     React.useEffect(() => {
@@ -90,8 +100,11 @@ const WarnBadge = React.memo(
     }, [localhostWarnActive, trackerWarnActive, virtualElsFailed]);
 
     const closeWarning = (type: 0 | 1 | 2) => {
-      if (type === 1) {
+      if (type === WARNINGS.LOCALHOST) {
         localStorage.setItem(localhostWarnSiteKey, '1');
+      }
+      if (type === WARNINGS.VIRTUAL_ELS_FAIL) {
+        localStorage.setItem(vModeWarnSiteKey, '1');
       }
       setWarnings((prev: Warns) => {
         const newWarnings = [...prev];
@@ -102,7 +115,6 @@ const WarnBadge = React.memo(
 
     if (!warnings.some((el) => el === true)) return null;
 
-    // Default container styles and classes
     const defaultContainerStyle: React.CSSProperties = {
       zIndex: 999,
       position: 'absolute',
@@ -115,7 +127,6 @@ const WarnBadge = React.memo(
     const defaultWarnClass =
       'px-3 py-.5 border border-gray-lighter shadow-sm rounded bg-active-blue flex items-center justify-between';
 
-    // Merge defaults with any overrides
     const mergedContainerStyle = {
       ...defaultContainerStyle,
       ...containerStyle,
@@ -132,7 +143,7 @@ const WarnBadge = React.memo(
 
     return (
       <div className={mergedContainerClassName} style={mergedContainerStyle}>
-        {warnings[0] ? (
+        {warnings[WARNINGS.LOCALHOST] ? (
           <div
             className={mergedLocalhostWarnClassName}
             style={localhostWarnStyle}
@@ -151,13 +162,13 @@ const WarnBadge = React.memo(
 
             <div
               className="py-1 ml-3 cursor-pointer"
-              onClick={() => closeWarning(1)}
+              onClick={() => closeWarning(WARNINGS.LOCALHOST)}
             >
               <Icon name="close" size={16} color="black" />
             </div>
           </div>
         ) : null}
-        {warnings[1] ? (
+        {warnings[WARNINGS.TRACKER_VERSION] ? (
           <div className={mergedTrackerWarnClassName} style={trackerWarnStyle}>
             <div className="flex gap-x-2 flex-wrap">
               <div className="font-normal">
@@ -186,13 +197,13 @@ const WarnBadge = React.memo(
 
             <div
               className="py-1 ml-3 cursor-pointer"
-              onClick={() => closeWarning(1)}
+              onClick={() => closeWarning(WARNINGS.TRACKER_VERSION)}
             >
               <Icon name="close" size={16} color="#000000" />
             </div>
           </div>
         ) : null}
-        {warnings[2] ? (
+        {warnings[WARNINGS.VIRTUAL_ELS_FAIL] ? (
           <div className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between">
             <div className="flex flex-col">
               <div>
@@ -207,7 +218,7 @@ const WarnBadge = React.memo(
 
             <div
               className="py-1 ml-3 cursor-pointer"
-              onClick={() => closeWarning(1)}
+              onClick={() => closeWarning(WARNINGS.VIRTUAL_ELS_FAIL)}
             >
               <X size={18} strokeWidth={1.5} />
             </div>
