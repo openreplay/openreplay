@@ -110,6 +110,15 @@ func (tx *Tx) TxExec(sql string, args ...interface{}) error {
 	return err
 }
 
+func (tx *Tx) TxQuery(sql string, args ...interface{}) (pgx.Rows, error) {
+	start := time.Now()
+	res, err := tx.origTx.Query(getTimeoutContext(), sql, args...)
+	method, table := methodName(sql)
+	tx.metrics.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
+	tx.metrics.IncreaseTotalRequests(method, table)
+	return res, err
+}
+
 func (tx *Tx) TxQueryRow(sql string, args ...interface{}) pgx.Row {
 	start := time.Now()
 	res := tx.origTx.QueryRow(context.Background(), sql, args...)
