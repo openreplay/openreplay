@@ -6,7 +6,6 @@ import {
   SHOWN_TIMEZONE,
   DURATION_FILTER,
   MOUSE_TRAIL,
-  VIRTUAL_MODE_KEY,
 } from 'App/constants/storageKeys';
 import { DateTime, Settings } from 'luxon';
 
@@ -72,19 +71,27 @@ export const generateGMTZones = (): Timezone[] => {
 
 export default class SessionSettings {
   defaultTimezones = [...generateGMTZones()];
+
   skipToIssue: boolean = localStorage.getItem(SKIP_TO_ISSUE) === 'true';
+
   timezone: Timezone;
+
   durationFilter: any = JSON.parse(
     localStorage.getItem(DURATION_FILTER) ||
       JSON.stringify(defaultDurationFilter),
   );
+
   captureRate: string = '0';
+
   conditionalCapture: boolean = false;
+
   captureConditions: { name: string; captureRate: number; filters: any[] }[] =
     [];
+
   mouseTrail: boolean = localStorage.getItem(MOUSE_TRAIL) !== 'false';
+
   shownTimezone: 'user' | 'local';
-  virtualMode: boolean = localStorage.getItem(VIRTUAL_MODE_KEY) === 'true';
+
   usingLocal: boolean = false;
 
   constructor() {

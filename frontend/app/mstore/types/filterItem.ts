@@ -10,39 +10,22 @@ import { pageUrlOperators } from '../../constants/filterOptions';
 
 export default class FilterItem {
   type: string = '';
-
   category: FilterCategory = FilterCategory.METADATA;
-
   subCategory: string = '';
-
   key: string = '';
-
   label: string = '';
-
   value: any = [''];
-
   isEvent: boolean = false;
-
   operator: string = '';
-
   hasSource: boolean = false;
-
   source: string = '';
-
   sourceOperator: string = '';
-
   sourceOperatorOptions: any = [];
-
   filters: FilterItem[] = [];
-
   operatorOptions: any[] = [];
-
   options: any[] = [];
-
   isActive: boolean = true;
-
   completed: number = 0;
-
   dropped: number = 0;
 
   constructor(

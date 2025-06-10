@@ -1,7 +1,8 @@
-import { CLIENT_TABS } from './utils/routeUtils'
+import { CLIENT_TABS } from './utils/routeUtils';
 import { routeIdRequired, changeAvailable } from './extraRoutes';
 
 export * from './extraRoutes';
+export * from './utils/routeUtils';
 
 const hashed = (path: string, hash?: string | number): string => {
   if ((typeof hash === 'string' && hash !== '') || typeof hash === 'number') {

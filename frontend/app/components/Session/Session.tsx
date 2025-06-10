@@ -10,6 +10,7 @@ import { Link, Loader, NoContent } from 'UI';
 import { observer } from 'mobx-react-lite';
 import WebPlayer from './WebPlayer';
 import { useTranslation } from 'react-i18next';
+import { trackerInstance } from '@/init/openreplay';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -30,6 +31,7 @@ function Session({
 
   useEffect(() => {
     if (sessionId != null) {
+      trackerInstance.event('session_opened', { sessionId });
       void fetchV2(sessionId);
     } else {
       console.error('No sessionID in route.');

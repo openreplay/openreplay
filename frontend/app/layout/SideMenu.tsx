@@ -29,7 +29,7 @@ import {
   spotOnlyCats,
 } from './data';
 import { useTranslation } from 'react-i18next';
-import { tag } from '@/components/Session_/Inspector/inspector.css';
+import { extraRoutes } from './menuRoutes';
 
 const { Text } = Typography;
 
@@ -157,6 +157,7 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
     [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
     [MENU.KAI]: () => withSiteId(routes.kai(), siteId),
+    ...extraRoutes(siteId),
   };
 
   const handleClick = (item: any) => {

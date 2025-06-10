@@ -5,6 +5,7 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import FilterModal from '../FilterModal';
 import { getNewIcon } from '../FilterModal/FilterModal';
+import { trackerInstance } from '@/init/openreplay';
 
 const ASSIST_ROUTE = assistRoute();
 
@@ -40,6 +41,10 @@ function FilterSelection(props: Props) {
   const modalRef = React.useRef<HTMLDivElement>(null);
 
   const onAddFilter = (filter: any) => {
+    trackerInstance.event(`${mode}_dropdown`, {
+      selected_category: filter.category,
+      selected_item: filter.key,
+    });
     onFilterClick(filter);
     setShowModal(false);
   };

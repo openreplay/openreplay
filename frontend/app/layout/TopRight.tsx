@@ -10,6 +10,7 @@ import ProjectDropdown from 'Shared/ProjectDropdown';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import ThemeToggle from 'Components/ThemeToggle';
+import { hasHealth } from '@/utils/split-utils';
 
 function TopRight() {
   const { userStore } = useStore();
@@ -25,7 +26,7 @@ function TopRight() {
 
           <Notifications />
 
-          {account.name ? <HealthStatus /> : null}
+          {hasHealth && account.name ? <HealthStatus /> : null}
         </>
       )}
       <ThemeToggle />
