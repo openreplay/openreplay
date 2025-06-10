@@ -31,17 +31,21 @@ interface Props {
   noClick?: boolean;
   fetchPresented?: boolean;
   isGrouped?: boolean;
+  jump?: (time: number) => void;
+  isSpot: boolean;
 }
 const TimelinePointer = React.memo((props: Props) => {
-  const { pointer, type, isGrouped } = props;
-  const { player } = React.useContext(PlayerContext);
+  const { pointer, type, isGrouped, isSpot, jump } = props;
+  const { player } = isSpot
+    ? { player: { jump } }
+    : React.useContext(PlayerContext);
   const item = isGrouped ? pointer : pointer[0];
 
   const { showModal } = useModal();
   const createEventClickHandler = (pointer: any, type: any) => (e: any) => {
     if (props.noClick) return;
     e.stopPropagation();
-    player.jump(pointer.time);
+    player.jump!(pointer.time);
     if (!type) {
       return;
     }

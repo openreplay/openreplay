@@ -257,6 +257,7 @@ export function SpotOverviewPanelCont({
   spotTime,
   spotEndTime,
   onClose,
+  jump,
 }: any) {
   const selectedFeatures = ['ERRORS', 'NETWORK'];
   const fetchPresented = false; // TODO
@@ -276,6 +277,7 @@ export function SpotOverviewPanelCont({
       spotTime={spotTime}
       spotEndTime={spotEndTime}
       onClose={onClose}
+      jump={jump}
     />
   );
 }
@@ -299,6 +301,7 @@ function PanelComponent({
   spotEndTime,
   onClose,
   showSingleTab,
+  jump,
 }: any) {
   const { t } = useTranslation();
   return (
@@ -396,6 +399,8 @@ function PanelComponent({
                         type={feature}
                         isGrouped={isGrouped}
                         fetchPresented={fetchPresented}
+                        jump={jump}
+                        isSpot={isSpot}
                       />
                     )}
                     endTime={isSpot ? spotEndTime : endTime}
