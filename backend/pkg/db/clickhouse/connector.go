@@ -245,6 +245,14 @@ func (c *connectorImpl) InsertAutocomplete(session *sessions.Session, msgType, m
 	return nil
 }
 
+func msToSeconds(ms uint64) uint16 {
+	ms = (ms + 500) / 1000
+	if ms > uint64(^uint16(0)) {
+		return ^uint16(0) // ms exceeds uint16 limit
+	}
+	return uint16(ms)
+}
+
 func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *messages.InputChange) error {
 	if msg.Label == "" {
 		return nil
@@ -278,7 +286,7 @@ func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *m
 		session.UserState,
 		session.UserCity,
 		cropString(msg.Url),
-		nullableUint16(uint16(msg.InputDuration)),
+		nullableUint16(msToSeconds(uint64(msg.InputDuration))),
 		jsonString,
 	); err != nil {
 		c.checkError("inputs", err)
@@ -717,7 +725,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		session.UserState,
 		session.UserCity,
 		cropString(msg.URL),
-		nullableUint16(uint16(msg.Duration)),
+		nullableUint16(msToSeconds(msg.Duration)),
 		jsonString,
 	); err != nil {
 		c.checkError("requests", err)
