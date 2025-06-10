@@ -1,6 +1,6 @@
 import React from 'react';
 import { CopyButton, CodeBlock } from 'UI';
-import { trackerUrl } from 'App/routes';
+import { trackerUrl } from './url';
 
 const inputModeOptions = [
   { label: 'Record all inputs', value: 'plain' },
