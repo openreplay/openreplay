@@ -12,7 +12,6 @@ import {
   RETENTION,
   CATEGORIES,
 } from 'App/constants/card';
-import { clickmapFilter } from 'App/types/filter/newFilter';
 import { getRE } from 'App/utils';
 import { FilterKey } from 'Types/filter/filterType';
 import { ErrorInfo } from './types/error';
@@ -306,6 +305,8 @@ export default class MetricStore {
               dataType: 'string',
               operator: 'startsWith',
               value: [''],
+              eventName: FilterKey.LOCATION,
+              autoCaptured: true,
             },
           ],
         };
