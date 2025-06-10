@@ -1,5 +1,5 @@
 import { CLIENT_TABS } from './utils/routeUtils';
-import { routeIdRequired, changeAvailable } from './extraRoutes';
+import { routeIdRequired, changeAvailable, queried } from './extraRoutes';
 
 export * from './extraRoutes';
 export * from './utils/routeUtils';
@@ -7,21 +7,6 @@ export * from './utils/routeUtils';
 const hashed = (path: string, hash?: string | number): string => {
   if ((typeof hash === 'string' && hash !== '') || typeof hash === 'number') {
     return `${path}#${hash}`;
-  }
-  return path;
-};
-
-export const queried = (path: string, params?: Record<string, any>): string => {
-  const keys =
-    typeof params === 'object' &&
-    params !== null &&
-    Object.keys(params).filter((key) =>
-      /string|number|boolean/.test(typeof params[key]),
-    );
-  if (keys && keys.length > 0) {
-    return `${path}?${keys
-      .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
-      .join('&')}`;
   }
   return path;
 };
