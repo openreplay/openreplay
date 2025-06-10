@@ -201,7 +201,7 @@ export default class Widget {
       this.owner = json.ownerName;
       this.lastModified =
         json.editedAt || json.createdAt
-          ? DateTime.fromMillis(json.editedAt || json.createdAt)
+          ? DateTime.fromISO(json.editedAt || json.createdAt)
           : null;
       this.config = json.config;
       this.position = json.config.position;
