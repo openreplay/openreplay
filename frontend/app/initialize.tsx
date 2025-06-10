@@ -103,6 +103,7 @@ const ThemedApp: React.FC = () => {
         headerSortHoverBg: cssVar('gray-light'),
         headerSortActiveBg: cssVar('gray-light'),
         fixedHeaderSortActiveBg: cssVar('gray-light'),
+        bodySortBg: cssVar('gray-lightest'),
       },
       Modal: {
         colorBgElevated: cssVar('white'),
