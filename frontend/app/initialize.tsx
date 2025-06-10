@@ -86,6 +86,7 @@ const ThemedApp: React.FC = () => {
         colorTextPlaceholder: cssVar('gray-medium'),
         activeBorderColor: cssVar('main'),
         hoverBorderColor: cssVar('main'),
+        addonBg: cssVar('gray-lightest'),
       },
       Checkbox: {
         colorPrimary: cssVar('main'),
@@ -118,12 +119,12 @@ const ThemedApp: React.FC = () => {
       Tabs: {
         itemActiveColor: cssVar('main'),
         inkBarColor: cssVar('main'),
-        itemSelectedColor: cssVar('main')
+        itemSelectedColor: cssVar('main'),
       },
       Tag: {
         defaultBg: cssVar('gray-lightest'),
         defaultColor: cssVar('gray-darkest'),
-      },
+      }
     },
     token: {
       colorPrimary: cssVar('main'),
