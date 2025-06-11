@@ -1,22 +1,25 @@
+from urllib.parse import urlparse
+
 from chalicelib.utils import ch_client
-from .events_pg import *
 from chalicelib.utils.exp_ch_helper import explode_dproperties, add_timestamp
+from .events_pg import *
 
 
 def get_customs_by_session_id(session_id, project_id):
     with ch_client.ClickHouseClient() as cur:
-        rows = cur.execute(""" \
-                           SELECT `$properties`,
-                                  properties,
-                                  created_at,
-                                  'CUSTOM' AS type,
-                                  `$event_name` AS name   
-                           FROM product_analytics.events
-                           WHERE session_id = %(session_id)s
-                             AND NOT `$auto_captured`
-                             AND `$event_name`!='INCIDENT'
-                           ORDER BY created_at;""",
-                           {"project_id": project_id, "session_id": session_id})
+        query = cur.format(query=""" \
+                                 SELECT `$properties`,
+                                        properties,
+                                        created_at,
+                                        'CUSTOM'      AS type,
+                                        `$event_name` AS name
+                                 FROM product_analytics.events
+                                 WHERE session_id = %(session_id)s
+                                   AND NOT `$auto_captured`
+                                   AND `$event_name`!='INCIDENT'
+                                 ORDER BY created_at;""",
+                           parameters={"project_id": project_id, "session_id": session_id})
+        rows = cur.execute(query)
     rows = helper.list_to_camel_case(rows, ignore_keys=["properties"])
     rows = explode_dproperties(rows)
     rows = add_timestamp(rows)
@@ -50,6 +53,43 @@ def __get_grouped_clickrage(rows, session_id, project_id):
     return rows
 
 
+def extract_required_values(rows):
+    for row in rows:
+        props = row.pop("$properties")
+        row["label"] = props.get("label")
+        # To remove extra attributes
+        if row["type"] != "INPUT":
+            row.pop("duration")
+        if row["type"] != "LOCATION":
+            row.pop("url")
+            row.pop("referrer")
+
+        # To extract/transform required attributes
+        if row["type"] == "CLICK":
+            row["hesitation"] = props.get("hesitation_time")
+            row["selector"] = props.get("selector")
+        elif row["type"] == "INPUT":
+            row["value"] = props.get("value")
+            row["hesitation"] = props.get("hesitation_time")
+            row["duration"] *= 1000
+        elif row["type"] == "LOCATION":
+            parsed_url = urlparse(row["url"])
+            row["host"] = parsed_url.hostname
+            row["pageLoad"] = None  # TODO: find how to compute this value
+            row["fcpTime"] = props.get("first_contentful_paint_time")
+            row["loadTime"] = props["load_event_end"] - props["load_event_start"] \
+                if "load_event_end" in props else None
+            row["domContentLoadedTime"] = (props["dom_content_loaded_event_end"]
+                                           - props["dom_content_loaded_event_start"]) \
+                if "dom_content_loaded_event_end" in props else None
+            row["domBuildingTime"] = props.get("dom_building_time")
+            row["speedIndex"] = props.get("speed_index")
+            row["visuallyComplete"] = props.get("visually_complete")
+            row["timeToInteractive"] = props.get("time_to_interactive")
+            row["firstContentfulPaintTime"] = props.get("first_contentful_paint_time")
+            row["firstPaintTime"] = props.get("first_paint")
+
+
 def get_by_session_id(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
     with ch_client.ClickHouseClient() as cur:
         select_events = ('CLICK', 'INPUT', 'LOCATION')
@@ -58,7 +98,10 @@ def get_by_session_id(session_id, project_id, group_clickrage=False, event_type:
         query = cur.format(query=""" \
                                  SELECT created_at,
                                         `$properties`,
-                                        `$event_name` AS type
+                                        `$event_name`  AS type,
+                                        `$duration_s`  AS duration,
+                                        `$current_url` AS url,
+                                        `$referrer`    AS referrer
                                  FROM product_analytics.events
                                  WHERE session_id = %(session_id)s
                                    AND `$event_name` IN %(select_events)s
@@ -67,7 +110,8 @@ def get_by_session_id(session_id, project_id, group_clickrage=False, event_type:
                            parameters={"project_id": project_id, "session_id": session_id,
                                        "select_events": select_events})
         rows = cur.execute(query)
-        rows = explode_dproperties(rows)
+        # rows = explode_dproperties(rows)
+        extract_required_values(rows)
         if group_clickrage and 'CLICK' in select_events:
             rows = __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
 
@@ -81,7 +125,9 @@ def get_incidents_by_session_id(session_id, project_id):
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(query=""" \
                                  SELECT created_at,
-                                        `$properties`,
+                                        `$properties`.end_time AS end_time,
+                                        `$properties`.label AS label,
+                                        `$properties`.start_time AS start_time,
                                         `$event_name` AS type
                                  FROM product_analytics.events
                                  WHERE session_id = %(session_id)s
@@ -90,7 +136,7 @@ def get_incidents_by_session_id(session_id, project_id):
                                  ORDER BY created_at;""",
                            parameters={"project_id": project_id, "session_id": session_id})
         rows = cur.execute(query)
-        rows = explode_dproperties(rows)
+        # rows = explode_dproperties(rows)
         rows = helper.list_to_camel_case(rows)
         rows = sorted(rows, key=lambda k: k["createdAt"])
     return rows
