@@ -16,6 +16,7 @@ interface Props {
   filter: any;
   onUpdate: (filter: any) => void;
   isConditional?: boolean;
+  eventName?: string;
 }
 
 function BaseFilterLocalAutoComplete(props: any) {
@@ -56,7 +57,7 @@ function BaseDropDown(props: any) {
 }
 
 function FilterValue(props: Props) {
-  const { filter, onUpdate, isConditional } = props; // Destructure props early
+  const { filter, onUpdate, isConditional, eventName } = props; // Destructure props early
   const isAutoOpen = filter.autoOpen; // Assume parent now controls this correctly
 
   const [durationValues, setDurationValues] = useState(() => ({
@@ -160,8 +161,8 @@ function FilterValue(props: Props) {
       // propertyName: filter.propertyName,
       // eventName: filter.name,
     };
-    if (filter.isEvent) {
-      baseParams.eventName = filter.name;
+    if (filter.isEvent || eventName != '') {
+      baseParams.eventName = eventName;
     }
     if (!filter.isEvent) {
       baseParams.propertyName = filter.name;

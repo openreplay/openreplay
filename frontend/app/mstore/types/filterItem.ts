@@ -17,7 +17,7 @@ export interface IFilter {
   subCategory?: string;
   type?: string;
   icon?: string;
-  properties?: FilterProperty[];
+  // properties?: FilterProperty[];
   operator?: string;
   operators?: Operator[];
   isEvent?: boolean;
@@ -45,7 +45,7 @@ export default class FilterItem implements IFilter {
   subCategory?: string = '';
   type?: string = '';
   icon?: string = '';
-  properties?: FilterProperty[] = [];
+  // properties?: FilterProperty[] = [];
   operator?: string = '';
   operators?: Operator[] = [];
   isEvent?: boolean = false;
@@ -64,6 +64,7 @@ export default class FilterItem implements IFilter {
     const processedData = {
       ...data,
       operator: data.operator || 'is',
+      // id: Math.random().toString(36).substring(2, 9),
     };
 
     if (Array.isArray(data.filters)) {

@@ -184,7 +184,9 @@ function FilterSeries(props: Props) {
   };
 
   const onAddFilter = (filter: Filter) => {
+    console.log('adding filter', filter);
     filter.autoOpen = true;
+    filter.filters = [];
     series.filter.addFilter(filter);
     observeChanges();
   };

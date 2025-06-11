@@ -1,8 +1,8 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { filterService, searchService } from 'App/services';
 import { Filter, COMMON_FILTERS } from './types/filterConstants';
-import { FilterKey } from 'Types/filter/filterType';
 import { projectStore } from '@/mstore/index';
+import FilterItem from './types/filterItem';
 
 export interface TopValue {
   rowCount?: number;
@@ -76,32 +76,35 @@ export default class FilterStore {
     this.topValues = {};
   };
 
-  fetchTopValues = async (params: TopValuesParams): Promise<TopValue[]> => {
-    const valKey = this.createTopValuesKey(params);
-
-    // Return cached values if available
-    if (this.topValues[valKey]?.length) {
-      return this.topValues[valKey];
+  fetchTopValues = async (id: string): Promise<TopValue[]> => {
+    if (this.topValues[id]?.length) {
+      return this.topValues[id];
     }
 
-    const filter = this.findFilterById(params.siteId || '', params.id || '');
+    const filter = this.findFilterById(id);
     if (!filter) {
-      console.warn(`Filter not found for key: ${valKey}`);
+      console.warn(`Filter not found for ID: ${id}`);
       return [];
     }
 
     try {
-      const response = await searchService.fetchTopValues({
-        [params.isEvent ? 'eventName' : 'propertyName']: filter.name,
-      });
+      const params: Record<string, any> = {};
 
-      console.log('response', response.events);
+      if (filter.eventName) {
+        params.eventName = filter.eventName;
+      }
+
+      if (!filter.isEvent) {
+        params.propertyName = filter.name;
+      }
+
+      const response = await searchService.fetchTopValues(params);
 
       runInAction(() => {
-        this.setTopValues(valKey, response.events);
+        this.setTopValues(id, response.events);
       });
 
-      return this.topValues[valKey] || [];
+      return response.events || [];
     } catch (error) {
       console.error('Failed to fetch top values:', error);
       return [];
@@ -112,8 +115,36 @@ export default class FilterStore {
     return `${params.siteId}_${params.id}${params.source || ''}`;
   };
 
-  private findFilterById = (siteId: string, id: string): Filter | undefined => {
-    return this.filters[siteId]?.find((filter) => filter.id === id);
+  private findFilterById = (id: string): Filter | undefined => {
+    const siteId = projectStore.activeSiteId + '';
+    const search = (filtersToSearch: Filter[]): Filter | undefined => {
+      for (const filter of filtersToSearch) {
+        if (filter.id === id) {
+          return filter;
+        }
+
+        if (filter.filters && filter.filters.length > 0) {
+          console.log('searching nested filters');
+          const foundInNested = search(filter.filters);
+          if (foundInNested) {
+            foundInNested.eventName = filter.name;
+            return foundInNested;
+          }
+        }
+      }
+
+      // // If not found in current level, continue searching in this.filterCache which is stored with event level id
+      // const foundInCache = this.filterCache[siteId]?.find((f) => f.id === id);
+      // if (foundInCache) {
+      //   return foundInCache;
+      // }
+
+      return undefined;
+    };
+
+    const topLevelFilters = this.filters[siteId];
+
+    return topLevelFilters ? search(topLevelFilters) : undefined;
   };
 
   setFilters = (projectId: string, filters: Filter[]): void => {
@@ -139,9 +170,10 @@ export default class FilterStore {
     this.pendingFetches = {};
   };
 
-  processFilters = (filters: Filter[], category?: string): Filter[] => {
+  processFilters = (filters: any[], category?: string): Filter[] => {
     return filters.map((filter) => ({
       ...filter,
+      id: Math.random().toString(36).substring(2, 9),
       possibleTypes:
         filter.possibleTypes?.map((type) => type.toLowerCase()) || [],
       dataType: filter.dataType || 'string',
@@ -156,6 +188,31 @@ export default class FilterStore {
       defaultProperty: Boolean(filter.defaultProperty) || false,
       autoCaptured: filter.autoCaptured || false,
     }));
+  };
+
+  processFiltersFromData = (data: any[]): FilterItem[] => {
+    const projectId = projectStore.activeSiteId + '';
+    const filters = this.filters[projectId] || [];
+
+    return data.map((f) => {
+      const source = filters.find(
+        (filter) =>
+          filter.name === f.name &&
+          Boolean(filter.autoCaptured) === Boolean(f.autoCaptured) &&
+          Boolean(filter.isEvent) === Boolean(f.isEvent),
+      );
+
+      if (!source) return new FilterItem(f);
+
+      const cloned = JSON.parse(JSON.stringify(source));
+      cloned.value = f.value ?? [];
+
+      if (Array.isArray(f.filters)) {
+        cloned.filters = this.processFiltersFromData(f.filters);
+      }
+
+      return new FilterItem(cloned);
+    });
   };
 
   private determineSubCategory = (
@@ -222,20 +279,41 @@ export default class FilterStore {
   };
 
   getCurrentProjectFilters = (): Filter[] => {
-    return this.getAllFilters(String(projectStore.activeSiteId));
+    return this.getAllFilters(String(projectStore.activeSiteId)).map(
+      (filter) => {
+        filter.filters = [];
+        return filter;
+      },
+    );
   };
 
-  getEventFilters = async (
-    eventName: string,
-    isAutoCapture: boolean,
-  ): Promise<Filter[]> => {
-    const cacheKey = `${projectStore.activeSiteId}_${eventName}`;
+  setEventFilters = async (
+    eventId: string,
+    filters: Filter[],
+  ): Promise<void> => {
+    const event = this.findFilterById(eventId);
+    if (!event) {
+      throw new Error(`Event with ID ${eventId} not found`);
+    }
+
+    runInAction(() => {
+      event.filters = filters;
+    });
+  };
+
+  getEventFilters = async (eventId: string): Promise<Filter[]> => {
+    const event = this.findFilterById(eventId);
+    if (!event) {
+      throw new Error(`Event with ID ${eventId} not found`);
+    }
+
+    const cacheKey = event?.id;
 
     // Check cache with TTL
-    const cachedEntry = this.filterCache[cacheKey];
-    if (cachedEntry && this.isCacheValid(cachedEntry)) {
-      return cachedEntry.data;
-    }
+    // const cachedEntry = this.filterCache[cacheKey];
+    // if (cachedEntry && this.isCacheValid(cachedEntry)) {
+    //   return cachedEntry.data;
+    // }
 
     // Return pending fetch if in progress
     if (this.pendingFetches[cacheKey]) {
@@ -244,10 +322,12 @@ export default class FilterStore {
 
     try {
       this.pendingFetches[cacheKey] = this.fetchAndProcessPropertyFilters(
-        eventName,
-        isAutoCapture,
+        event.name,
+        event.autoCaptured,
       );
+
       const filters = await this.pendingFetches[cacheKey];
+      this.setEventFilters(eventId, filters);
 
       runInAction(() => {
         this.setCacheEntry(cacheKey, filters);

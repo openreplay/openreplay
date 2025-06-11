@@ -82,10 +82,7 @@ const FilterAutoComplete = observer(
       if (projectsStore.siteId && params.id) {
         setLoading(true);
         try {
-          await filterStore.fetchTopValues({
-            id: params.id,
-            siteId: projectsStore.siteId,
-          });
+          await filterStore.fetchTopValues(params.id);
         } catch (error) {
           console.error('Failed to load top values', error);
           // Handle error state if needed

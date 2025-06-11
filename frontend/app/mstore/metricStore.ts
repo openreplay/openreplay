@@ -411,23 +411,21 @@ export default class MetricStore {
     }
   }
 
-  fetch(id: string, period?: any) {
+  async fetch(id: string, period?: any) {
     this.setLoading(true);
-    return metricService
-      .getMetric(id)
-      .then((metric: any) => {
-        const inst = new Widget().fromJson(metric, period);
-        runInAction(() => {
-          this.instance = inst;
-          const type =
-            inst.metricType === 'table' ? inst.metricOf : inst.metricType;
-          this.cardCategory = cardToCategory(type);
-        });
-        return inst;
-      })
-      .finally(() => {
-        this.setLoading(false);
+    try {
+      const metric = await metricService.getMetric(id);
+      const inst = new Widget().fromJson(metric, period);
+      runInAction(() => {
+        this.instance = inst;
+        const type =
+          inst.metricType === 'table' ? inst.metricOf : inst.metricType;
+        this.cardCategory = cardToCategory(type);
       });
+      return inst;
+    } finally {
+      this.setLoading(false);
+    }
   }
 
   delete(metric: Widget) {
