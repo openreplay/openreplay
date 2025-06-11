@@ -7,13 +7,18 @@ from chalicelib.utils.ch_client import ClickHouseClient
 from chalicelib.utils.exp_ch_helper import get_sub_condition, get_col_cast
 
 logger = logging.getLogger(__name__)
-PREDEFINED_EVENTS = [
-    "CLICK",
-    "INPUT",
-    "LOCATION",
-    "ERROR",
-    "REQUEST"
-]
+PREDEFINED_EVENTS = {
+    "CLICK": {"displayName": "Click",
+              "description": "Represents a user click on a webpage element. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"CLICK\".\n\nContains element selector, text content, …, timestamp."},
+    "INPUT": {"displayName": "Input",
+              "description": "Represents text input by a user in form fields or editable elements. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"INPUT\".\n\nContains the element selector, ….. and timestamp (actual text content may be masked for privacy)."},
+    "LOCATION": {"displayName": "Visited URL",
+                 "description": "Represents a page navigation or URL change within your application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"LOCATION\".\n\nContains the full URL, …. referrer information, UTM parameters and timestamp."},
+    "ERROR": {"displayName": "Error",
+              "description": "Represents JavaScript errors and console error messages captured from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"error\".\n\nContains error message,…., and timestamp."},
+    "REQUEST": {"displayName": "Request",
+                "description": "Represents HTTP/HTTPS network activity from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"fetch\".\n\nContains URL, method, status code, duration, and timestamp"},
+}
 
 
 def get_events(project_id: int):
@@ -33,8 +38,8 @@ def get_events(project_id: int):
     if len(rows) == 0:
         return {"total": len(PREDEFINED_EVENTS), "list": [{
             "name": e,
-            "displayName": "",
-            "description": "",
+            "displayName": PREDEFINED_EVENTS[e]["displayName"],
+            "description": PREDEFINED_EVENTS[e]["description"],
             "autoCaptured": True,
             "id": "event_0",
             "dataType": "string",
@@ -57,8 +62,8 @@ def get_events(project_id: int):
             total += 1
             rows.append({
                 "name": e,
-                "displayName": "",
-                "description": "",
+                "displayName": PREDEFINED_EVENTS[e]["displayName"],
+                "description": PREDEFINED_EVENTS[e]["description"],
                 "autoCaptured": True,
                 "id": "event_0",
                 "dataType": "string",
