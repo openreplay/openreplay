@@ -3,6 +3,7 @@ import { conditionalFiltersMap, filtersMap } from 'Types/filter/newFilter';
 import { FilterKey } from 'Types/filter/filterType';
 import FilterItem from './filterItem';
 import { JsonData } from '@/mstore/types/filterConstants';
+import { filterStore } from '@/mstore/index';
 
 type FilterData = Partial<FilterItem> & {
   key?: FilterKey | string;
@@ -245,15 +246,16 @@ export default class FilterStore implements IFilterStore {
   fromJson(json: JsonData, isHeatmap?: boolean): this {
     runInAction(() => {
       this.name = json.name ?? '';
+      // this.filters = Array.isArray(json.filters)
+      //   ? json.filters.map((filterJson: JsonData) =>
+      //       this.createFilterItemFromData(filterJson),
+      //     )
+      //   : [];
       this.filters = Array.isArray(json.filters)
-        ? json.filters.map((filterJson: JsonData) =>
-            new FilterItem().fromJson(filterJson),
-          )
+        ? filterStore.processFiltersFromData(json.filters)
         : [];
       this.excludes = Array.isArray(json.excludes)
-        ? json.excludes.map((filterJson: JsonData) =>
-            new FilterItem().fromJson(filterJson),
-          )
+        ? filterStore.processFiltersFromData(json.excludes)
         : [];
       this.eventsOrder = json.eventsOrder ?? 'then';
       this.startTimestamp = json.startTimestamp ?? 0;
@@ -270,11 +272,14 @@ export default class FilterStore implements IFilterStore {
   fromData(data: JsonData): this {
     runInAction(() => {
       this.name = data.name ?? '';
+      // this.filters = Array.isArray(data.filters)
+      //   ? data.filters.map(
+      //       (filterData: JsonData) => this.createFilterItemFromData(filterData),
+      //       // new FilterItem(undefined, this.isConditional, this.isMobile).fromData(filterData)
+      //     )
+      //   : [];
       this.filters = Array.isArray(data.filters)
-        ? data.filters.map(
-            (filterData: JsonData) => this.createFilterItemFromData(filterData),
-            // new FilterItem(undefined, this.isConditional, this.isMobile).fromData(filterData)
-          )
+        ? filterStore.processFilters(data.filters)
         : [];
       this.excludes = Array.isArray(data.excludes)
         ? data.excludes.map(

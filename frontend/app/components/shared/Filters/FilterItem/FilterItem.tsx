@@ -30,6 +30,7 @@ interface Props {
   onPropertyOrderChange?: (newOp: string) => void;
   parentEventFilterOptions?: Filter[];
   isDragging?: boolean;
+  eventName?: string;
   isFirst?: boolean;
 }
 
@@ -51,6 +52,7 @@ function FilterItem(props: Props) {
     onPropertyOrderChange,
     parentEventFilterOptions,
     isDragging,
+    eventName,
     isFirst = false, // Default to false
   } = props;
 
@@ -84,10 +86,7 @@ function FilterItem(props: Props) {
           // Only set loading if not already loading for this specific fetch
           if (isMounted) setEventFiltersLoading(true);
 
-          const options = await filterStore.getEventFilters(
-            fetchName,
-            filter.autoCaptured,
-          );
+          const options = await filterStore.getEventFilters(filter.id);
 
           if (!filter.filters || filter.filters?.length === 0) {
             const defaultOption = options?.find(
@@ -174,9 +173,10 @@ function FilterItem(props: Props) {
       onUpdate({
         ...selectedFilter,
         value: selectedFilter.value || [''],
-        filters: selectedFilter.filters
-          ? selectedFilter.filters.map((i: any) => ({ ...i, value: [''] }))
-          : [],
+        filters: [],
+        // filters: selectedFilter.filters
+        //   ? selectedFilter.filters.map((i: any) => ({ ...i, value: [''] }))
+        //   : [],
         operator: selectedFilter.operator, // Ensure operator is carried over or reset if needed
       });
     },
@@ -392,6 +392,7 @@ function FilterItem(props: Props) {
                       isConditional={isConditional}
                       filter={filter}
                       onUpdate={onUpdate}
+                      eventName={eventName}
                     />
                   </div>
                 ))}
@@ -459,6 +460,7 @@ function FilterItem(props: Props) {
             >
               <FilterItem
                 filter={subFilter}
+                eventName={filter.name}
                 subFilterIndex={index}
                 onUpdate={(updatedSubFilter) =>
                   handleUpdateSubFilter(updatedSubFilter, index)

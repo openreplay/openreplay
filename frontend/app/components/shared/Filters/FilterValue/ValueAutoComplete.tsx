@@ -79,9 +79,7 @@ const ValueAutoComplete = observer(
       return `${projectsStore.siteId}_${params.id}`;
     }, [projectsStore.siteId, params.id]);
 
-    const topValues: TopValue[] = filterKey
-      ? filterStore.topValues[filterKey] || []
-      : [];
+    const topValues: TopValue[] = filterStore.topValues[params.id] || [];
 
     const mappedTopValues: OptionType[] = useMemo(() => {
       return (
@@ -96,14 +94,11 @@ const ValueAutoComplete = observer(
     }, [initialValues]);
 
     useEffect(() => {
+      console.log('params', params);
       if (!params.isEvent && filterKey && !filterStore.topValues[filterKey]) {
         setLoadingTopValues(true);
         filterStore
-          .fetchTopValues({
-            id: params.id,
-            siteId: projectsStore.siteId + '',
-            isEvent: params.isEvent || false,
-          })
+          .fetchTopValues(params.id)
           .catch((error) => console.error('Failed to load top values', error))
           .finally(() => setLoadingTopValues(false));
       }

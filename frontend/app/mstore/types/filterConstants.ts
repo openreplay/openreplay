@@ -16,6 +16,7 @@ export interface Filter {
   dataType?: string;
   autoCaptured?: boolean;
   metadataName?: string;
+  eventName?: string;
   category: string; // 'event' | 'filter' | 'action' | etc.
   subCategory?: string;
   type?: string; // 'number' | 'string' | 'boolean' | etc.

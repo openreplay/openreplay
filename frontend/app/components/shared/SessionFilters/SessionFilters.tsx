@@ -71,7 +71,10 @@ function SessionFilters() {
         className="mt-2"
         handleRemove={searchStore.removeFilter}
         handleUpdate={searchStore.updateFilter}
-        handleAdd={searchStore.addFilter}
+        handleAdd={(filter) => {
+          filter.filters = [];
+          searchStore.addFilter(filter);
+        }}
         handleMove={moveFilter}
       />
 
