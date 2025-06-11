@@ -69,6 +69,7 @@ export interface Options {
    * @default InlineCssMode.None = 0
    * */
   inlineCss: InlineCssMode;
+  disableThrottling?: boolean;
 }
 
 type Context = Window & typeof globalThis
@@ -92,6 +93,7 @@ export default class TopObserver extends Observer {
     )
     const observerOptions = {
       disableSprites: opts.disableSprites,
+      disableThrottling: opts.disableThrottling,
       ...getInlineOptions(opts.inlineCss)
     }
     super(params.app, true, observerOptions)

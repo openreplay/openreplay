@@ -535,6 +535,17 @@ cdef class SetNodeAttributeDictGlobal(PyMessage):
         self.value = value
 
 
+cdef class NodeAnimationResult(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long id
+    cdef public str styles
+
+    def __init__(self, unsigned long id, str styles):
+        self.__id__ = 36
+        self.id = id
+        self.styles = styles
+
+
 cdef class CSSInsertRule(PyMessage):
     cdef public int __id__
     cdef public unsigned long id
@@ -933,6 +944,17 @@ cdef class CustomIssue(PyMessage):
         self.__id__ = 64
         self.name = name
         self.payload = payload
+
+
+cdef class SetNodeSlot(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long id
+    cdef public unsigned long slot_id
+
+    def __init__(self, unsigned long id, unsigned long slot_id):
+        self.__id__ = 65
+        self.id = id
+        self.slot_id = slot_id
 
 
 cdef class AssetCache(PyMessage):
