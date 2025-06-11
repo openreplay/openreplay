@@ -314,6 +314,7 @@ export default class App {
       forceNgOff: false,
       inlineCss: 0,
       disableSprites: false,
+      disableThrottling: false,
     }
     this.options = simpleMerge(defaultOptions, options)
 
