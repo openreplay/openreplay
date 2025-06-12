@@ -1,10 +1,7 @@
-## 16.4.0
-
-- improve CSS selector generation speed (drop findr library in favor of custom solution)
-
 ## 16.3.0
 
 - optional dynamic css scanning for better emotionjs support
+- improve CSS selector generation speed (drop findr library in favor of custom solution)
 
 ```
 new Tracker({
