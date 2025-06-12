@@ -23,6 +23,7 @@ tracker.incident({ label: 'incident', startTime: Date.now() })
 ## 16.3.0
 
 - optional dynamic css scanning for better emotionjs support
+- improve CSS selector generation speed (drop findr library in favor of custom solution)
 
 ```ts
 new Tracker({
