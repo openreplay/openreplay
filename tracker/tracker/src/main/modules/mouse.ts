@@ -3,17 +3,14 @@ import { hasTag, isSVGElement, isDocument } from '../app/guards.js'
 import { normSpaces, hasOpenreplayAttribute, getLabelAttribute, now } from '../utils.js'
 import { MouseMove, MouseClick, MouseThrashing } from '../app/messages.gen.js'
 import { getInputLabel } from './input.js'
-import { finder } from '@medv/finder'
+
+
+const cssEscape = (typeof CSS !== 'undefined' && CSS.escape) || ((t) => t);
+const docClassCache = new WeakMap();
 
 function _getSelector(target: Element, document: Document, options?: MouseHandlerOptions): string {
-  const selector = finder(target, {
-    root: document.body,
-    seedMinLength: 3,
-    optimizedMinLength: options?.minSelectorDepth || 2,
-    maxNumberOfPathChecks: options?.maxOptimiseTries || 10_000,
-  })
-
-  return selector
+  const selector = getCSSPath(target)
+  return selector || ''
 }
 
 function isClickable(element: Element): boolean {
@@ -263,4 +260,93 @@ export default function (app: App, options?: MouseHandlerOptions): void {
  * */
 function roundNumber(num: number) {
   return Math.round(num * 1e4)
+}
+
+function isDocUniqueClass(cls: string, doc: Document): boolean {
+    let cache = docClassCache.get(doc);
+    if (!cache) {
+        cache = Object.create(null);
+        docClassCache.set(doc, cache);
+    }
+    if (cls in cache) return cache[cls];
+    const unique = doc.querySelectorAll(`.${cssEscape(cls)}`).length === 1;
+    cache[cls] = unique;
+    return unique;
+};
+
+function wordLike(name: string): boolean {
+    if (/^[a-z\-]{3,}$/i.test(name)) {
+        const words = name.split(/-|[A-Z]/)
+        for (const word of words) {
+            if (word.length <= 2) {
+                return false
+            }
+            if (/[^aeiou]{4,}/i.test(word)) {
+                return false
+            }
+        }
+        return true
+    }
+    return false
+}
+
+export function getCSSPath(el) {
+    if (!el || el.nodeType !== 1) return false;
+
+    if (el.id) return `#${cssEscape(el.id)}`;
+
+    const parts: string[] = [];
+
+    while (el && el.nodeType === 1 && el !== el.ownerDocument) {
+        if (el.id) {
+            parts.unshift(`#${cssEscape(el.id)}`);
+            break;
+        }
+
+        const tag = el.tagName.toLowerCase();
+
+        if (el.classList?.length) {
+            for (const cls of el.classList) {
+                if (wordLike(cls) && isDocUniqueClass(cls, el.ownerDocument) ) {
+                    parts.unshift(`${tag}.${cssEscape(cls)}`);
+                    return parts.join(' > ');
+                }
+            }
+        }
+
+        const sibCls = getUniqueSiblingClass(el);
+        if (sibCls) {
+            parts.unshift(`${tag}.${cssEscape(sibCls)}`);
+        } else if (
+            el === el.ownerDocument.body ||
+            el === el.ownerDocument.documentElement
+        ) {
+            parts.unshift(tag);
+        } else {
+            let idx = 1;
+            for (let sib = el.previousElementSibling; sib; sib = sib.previousElementSibling) {
+                if (sib.tagName.toLowerCase() === tag) idx++;
+            }
+            parts.unshift(`${tag}:nth-of-type(${idx})`);
+        }
+
+        el = el.parentNode;
+    }
+
+    return parts.join(' > ');
+};
+
+function getUniqueSiblingClass(el) {
+    if (!el.classList?.length || !el.parentNode) return null;
+
+    const sibs = el.parentNode.children;
+
+    outer: for (const cls of el.classList) {
+        if (!wordLike(cls) || !isDocUniqueClass(cls, el.ownerDocument)) continue;
+        for (const sib of sibs) {
+            if (sib !== el && sib.classList?.contains(cls)) continue outer;
+        }
+        return cls;
+    }
+    return null;
 }
