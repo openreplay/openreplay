@@ -4,10 +4,11 @@ import { normSpaces, hasOpenreplayAttribute, getLabelAttribute, now } from '../u
 import { MouseMove, MouseClick, MouseThrashing } from '../app/messages.gen.js'
 import { getInputLabel } from './input.js'
 
+
 const cssEscape = (typeof CSS !== 'undefined' && CSS.escape) || ((t) => t);
 const docClassCache = new WeakMap();
 
-function _getSelector(target: Element): string {
+function _getSelector(target: Element, document: Document, options?: MouseHandlerOptions): string {
   const selector = getCSSPath(target)
   return selector || ''
 }
