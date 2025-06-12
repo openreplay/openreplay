@@ -28,9 +28,7 @@ export default class JsonViewer extends React.PureComponent {
         )}
         {typeof data === 'string' && (
           <>
-            <div className="-ml-2 text-disabled-text">
-              {t('Payload:')}&nbsp;
-            </div>
+            <div className="-ml-2 text-disabled-text">Payload:</div>
             <div className="mx-2">{data}</div>
           </>
         )}
