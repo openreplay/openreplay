@@ -186,7 +186,7 @@ const Event: React.FC<Props> = ({
                 </div>
                 {isLocation && event.speedIndex != null && (
                   <div className="color-gray-medium flex font-medium items-center leading-none justify-end">
-                    <div className="font-size-10 pr-2">${t('Speed Index')}</div>
+                    <div className="font-size-10 pr-2">{t('Speed Index')}</div>
                     <div>{numberWithCommas(event.speedIndex || 0)}</div>
                   </div>
                 )}
