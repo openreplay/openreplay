@@ -35,6 +35,8 @@ import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import WSPanel from './WSPanel';
 import { useTranslation } from 'react-i18next';
 import { mergeListsWithZoom, processInChunks } from './utils';
+import check from './hasExplainAi';
+import ExplainButton from '../ExplainButton';
 
 // Constants remain the same
 const INDEX_KEY = 'network';
@@ -734,6 +736,10 @@ export const NetworkPanelComp = observer(
       return cols;
     }, [showSingleTab, activeTab, t, getTabName, getTabNum, isSpot]);
 
+    const hasExplainAi = (reqType: string) => {
+      // @ts-ignore
+      return check && [ResourceType.XHR, ResourceType.FETCH].includes(reqType);
+    };
     return (
       <BottomBlock
         style={{ height: '100%' }}
@@ -869,6 +875,19 @@ export const NetworkPanelComp = observer(
                     player.jump(row.time);
                   }}
                   activeIndex={activeIndex}
+                  extra={(row) =>
+                    hasExplainAi(row.type) ? (
+                      <ExplainButton
+                        sessionId={sessionId}
+                        request={{
+                          url: row.url,
+                          status: parseInt(row.status),
+                          payload: row.request,
+                          response: row.response,
+                        }}
+                      />
+                    ) : null
+                  }
                 >
                   {tableCols}
                 </TimeTable>

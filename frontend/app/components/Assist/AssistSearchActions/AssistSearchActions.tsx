@@ -6,8 +6,8 @@ import { MODULES } from 'Components/Client/Modules';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import AssistStats from '../../AssistStats';
-import Recordings from '../RecordingsList/Recordings';
 import { useTranslation } from 'react-i18next';
+import TrainingVideosBtn from './TrainingVideosBtn';
 
 function AssistSearchActions() {
   const { t } = useTranslation();
@@ -23,12 +23,6 @@ function AssistSearchActions() {
   const showStats = () => {
     showModal(<AssistStats />, { right: true, width: 960 });
   };
-  const showRecords = () => {
-    showModal(<Recordings />, { right: true, width: 960 });
-  };
-
-  const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /app\.openreplay\.com/.test(originStr);
   return (
     <div className="flex items-center w-full gap-2">
       <h3 className="text-2xl capitalize mr-2">
@@ -44,9 +38,7 @@ function AssistSearchActions() {
           {t('Clear')}
         </Button>
       </Tooltip>
-      {!isSaas && isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS)
-       ? <Button size={'small'} onClick={showRecords}>{t('Training Videos')}</Button> : null
-      }
+      <TrainingVideosBtn />
       {isEnterprise && userStore.account?.admin && (
         <Button size={'small'} onClick={showStats}
                 disabled={modules.includes(MODULES.ASSIST_STATS) || modules.includes(MODULES.ASSIST)}>

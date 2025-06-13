@@ -94,7 +94,8 @@ class UserStore {
   get isEnterprise() {
     return (
       this.account?.edition === 'ee' ||
-      this.authStore.authDetails?.edition === 'ee'
+      this.authStore.authDetails?.edition === 'ee' ||
+      this.account?.plan?.type === 'enterprise'
     );
   }
 

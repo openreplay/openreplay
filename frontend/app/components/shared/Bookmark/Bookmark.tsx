@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { signalService } from 'App/services';
 
 interface Props {
   sessionId: any;
@@ -35,6 +36,14 @@ function Bookmark({ sessionId }: Props) {
     onToggleFavorite(sessionId).then(() => {
       toast.success(isFavorite ? REMOVED_MESSAGE : ADDED_MESSAGE);
       setIsFavorite(!isFavorite);
+
+      signalService.send(
+        {
+          source: 'vault',
+          value: !isFavorite,
+        },
+        sessionId,
+      );
     });
   };
 

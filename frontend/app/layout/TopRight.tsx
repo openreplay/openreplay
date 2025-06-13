@@ -4,13 +4,13 @@ import { getInitials } from 'App/utils';
 import Notifications from 'Components/Alerts/Notifications/Notifications';
 import HealthStatus from 'Components/Header/HealthStatus';
 import UserMenu from 'Components/Header/UserMenu/UserMenu';
-import LanguageSwitcher from 'Components/LanguageSwitcher/LanguageSwitcher';
-
+import SaasHeaderMenuItems from 'Components/Header/SaasHeaderMenuItems/SaasHeaderMenuItems';
 import GettingStartedProgress from 'Shared/GettingStarted/GettingStartedProgress';
 import ProjectDropdown from 'Shared/ProjectDropdown';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import ThemeToggle from 'Components/ThemeToggle';
+import { hasHealth } from '@/utils/split-utils';
 
 function TopRight() {
   const { userStore } = useStore();
@@ -20,12 +20,13 @@ function TopRight() {
     <Space style={{ lineHeight: '0' }}>
       {spotOnly ? null : (
         <>
+          <SaasHeaderMenuItems />
           <ProjectDropdown />
           <GettingStartedProgress />
 
           <Notifications />
 
-          {account.name ? <HealthStatus /> : null}
+          {hasHealth && account.name ? <HealthStatus /> : null}
         </>
       )}
       <ThemeToggle />

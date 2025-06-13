@@ -8,6 +8,7 @@ import { SquareArrowOutUpRight } from 'lucide-react';
 import { useHistory } from 'react-router';
 import * as routes from '../../../routes';
 import { useTranslation } from 'react-i18next';
+import { trackerInstance } from '@/init/openreplay';
 
 const { withSiteId } = routes;
 
@@ -20,6 +21,13 @@ function NoSessionsMessage() {
   const showNoSessions = !!activeSite && !activeSite.recorded;
   const onboardingPath = withSiteId(onboardingRoute('installing'), siteId);
 
+  const openTroubleshoot = () => {
+    trackerInstance.event('troubleshoot_clicked');
+    window.open(
+      'https://docs.openreplay.com/en/troubleshooting/session-recordings/',
+      '_blank',
+    );
+  };
   return (
     <>
       {showNoSessions && (
@@ -37,12 +45,7 @@ function NoSessionsMessage() {
                   <Button
                     type="link"
                     size="small"
-                    onClick={() =>
-                      window.open(
-                        'https://docs.openreplay.com/en/troubleshooting/session-recordings/',
-                        '_blank',
-                      )
-                    }
+                    onClick={openTroubleshoot}
                     icon={<SquareArrowOutUpRight size={16} />}
                   >
                     {t('Troubleshoot')}

@@ -1,9 +1,8 @@
 import React from 'react';
-import cn from 'classnames';
 import { Icon } from 'UI';
-import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { pathNavigate, extraAdminItems } from './utils';
 
 interface Props {
   history: any;
@@ -17,26 +16,7 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
   const isAdmin = account.admin || account.superAdmin;
   const isEnterprise = account.edition === 'ee';
   const navigateTo = (path: any) => {
-    switch (path) {
-      case 'sessions-listing':
-        return history.push(clientRoute(CLIENT_TABS.SESSIONS_LISTING));
-      case 'projects':
-        return history.push(clientRoute(CLIENT_TABS.SITES));
-      case 'team':
-        return history.push(clientRoute(CLIENT_TABS.MANAGE_USERS));
-      case 'metadata':
-        return history.push(clientRoute(CLIENT_TABS.CUSTOM_FIELDS));
-      case 'webhooks':
-        return history.push(clientRoute(CLIENT_TABS.WEBHOOKS));
-      case 'integrations':
-        return history.push(clientRoute(CLIENT_TABS.INTEGRATIONS));
-      case 'notifications':
-        return history.push(clientRoute(CLIENT_TABS.NOTIFICATIONS));
-      case 'roles':
-        return history.push(clientRoute(CLIENT_TABS.MANAGE_ROLES));
-      case 'audit':
-        return history.push(clientRoute(CLIENT_TABS.AUDIT));
-    }
+    pathNavigate(history, path);
   };
   return (
     <div>
@@ -84,6 +64,14 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
             label={t('Audit')}
             icon="list-ul"
           />
+          {extraAdminItems.map((item: any) => (
+            <MenuItem
+              key={item.label}
+              onClick={() => navigateTo(item.path)}
+              label={t(item.label)}
+              icon={item.icon}
+            />
+          ))}
         </>
       )}
       <MenuItem

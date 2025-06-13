@@ -17,7 +17,7 @@ export default class AiService extends BaseService {
       },
     );
 
-    return r.json();
+    return r.text();
   }
 
   async getDetailedSummary(
@@ -37,7 +37,7 @@ export default class AiService extends BaseService {
       },
     );
 
-    return r.json();
+    return r.text();
   }
 
   async getSearchFilters(query: string): Promise<Record<string, any>> {

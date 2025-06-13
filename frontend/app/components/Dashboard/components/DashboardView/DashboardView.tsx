@@ -4,7 +4,7 @@ import { useStore } from 'App/mstore';
 import { Loader } from 'UI';
 import { withSiteId } from 'App/routes';
 import withModal from 'App/components/Modal/withModal';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps } from 'react-router-dom';
 import { useModal } from 'App/components/Modal';
 import AlertFormModal from 'App/components/Alerts/AlertFormModal';
 import withPageTitle from 'HOCs/withPageTitle';
@@ -89,9 +89,6 @@ function DashboardView(props: Props) {
   }, [dashboard]);
 
   if (!dashboard) return null;
-
-  const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /app\.openreplay\.com/.test(originStr);
   return (
     <Loader loading={loading}>
       <div
@@ -104,7 +101,6 @@ function DashboardView(props: Props) {
           siteId={siteId}
           dashboardId={dashboardId}
         />
-        {isSaas ? <AiQuery /> : null}
         <DashboardWidgetGrid
           siteId={siteId}
           dashboardId={dashboardId}

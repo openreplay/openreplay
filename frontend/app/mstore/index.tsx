@@ -34,6 +34,8 @@ import userStore from './userStore';
 import UxtestingStore from './uxtestingStore';
 import WeeklyReportStore from './weeklyReportConfigStore';
 import logger from '@/logger';
+import BillingStore from "@/mstore/billingStore";
+import ClipStore from "@/mstore/clipStore";
 
 const projectStore = new ProjectsStore();
 const sessionStore = new SessionStore();
@@ -110,6 +112,8 @@ export class RootStore {
   searchStoreLive: SearchStoreLive;
   integrationsStore: IntegrationsStore;
   projectsStore: ProjectsStore;
+  billingStore: BillingStore;
+  clipStore: ClipStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -142,6 +146,8 @@ export class RootStore {
     this.searchStore = searchStore;
     this.searchStoreLive = searchStoreLive;
     this.integrationsStore = new IntegrationsStore();
+    this.billingStore = new BillingStore();
+    this.clipStore = new ClipStore();
   }
 
   initClient() {

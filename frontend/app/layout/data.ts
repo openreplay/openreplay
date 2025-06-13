@@ -1,6 +1,7 @@
 import { TFunction } from 'i18next';
 import { IconNames } from '../components/ui/SVG';
 import React from 'react';
+import { menuHidden } from 'App/utils/split-utils';
 
 export interface MenuItem {
   label: React.ReactNode;
@@ -38,6 +39,7 @@ export const enum PREFERENCES_MENU {
 
 export const enum MENU {
   SESSIONS = 'sessions',
+  CLIPS = 'clips',
   RECOMMENDATIONS = 'recommendations',
   VAULT = 'vault',
   BOOKMARKS = 'bookmarks',
@@ -70,12 +72,23 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         hidden: true,
       },
       {
+        label: t('Clips'),
+        key: MENU.CLIPS,
+        icon: 'tv-minimal-play',
+        hidden: menuHidden.clips,
+      },
+      {
         label: t('Vault'),
         key: MENU.VAULT,
         icon: 'safe',
-        hidden: true,
+        hidden: menuHidden.vault,
       },
-      { label: t('Bookmarks'), key: MENU.BOOKMARKS, icon: 'bookmark' },
+      {
+        label: t('Bookmarks'),
+        key: MENU.BOOKMARKS,
+        icon: 'bookmark',
+        hidden: menuHidden.bookmarks,
+      },
       {
         label: t('Highlights'),
         key: MENU.HIGHLIGHTS,
@@ -98,6 +111,7 @@ export const categories: (t: TFunction) => Category[] = (t) => [
   {
     title: '',
     key: 'kai',
+    hidden: menuHidden.kai,
     items: [
       {
         label: t('Kai'),
@@ -212,7 +226,7 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         label: t('Billing'),
         key: PREFERENCES_MENU.BILLING,
         icon: 'credit-card-2-back',
-        hidden: true,
+        hidden: menuHidden.billing,
       },
     ],
   },

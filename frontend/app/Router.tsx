@@ -18,6 +18,7 @@ import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
 import { Loader } from 'UI';
 import { observer } from 'mobx-react-lite';
 import * as routes from './routes';
+import Tracker from 'App/Tracker';
 
 interface RouterProps extends RouteComponentProps {
   match: {
@@ -213,6 +214,7 @@ const Router: React.FC<RouterProps> = (props) => {
     <NewModalProvider>
       <ModalProvider>
         <Loader loading={loading} className="flex-1">
+          <Tracker />
           <Layout hideHeader={hideHeader}>
             <PrivateRoutes />
           </Layout>

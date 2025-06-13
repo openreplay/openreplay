@@ -11,6 +11,7 @@ import APIClient from './api_client';
 import * as routes from './routes';
 import { debounceCall } from '@/utils';
 import { hasAi } from './utils/split-utils';
+import { saasRoutes } from './saasComponents';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -52,7 +53,6 @@ const enhancedComponents: any = {
   ),
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
-  ScopeSetup: components.ScopeSetup,
   Highlights: withSiteIdUpdater(components.HighlightsPure),
   Kai: withSiteIdUpdater(components.KaiPure),
 };
@@ -96,7 +96,6 @@ const USABILITY_TESTING_VIEW_PATH = routes.usabilityTestingView();
 
 const SPOTS_LIST_PATH = routes.spotsList();
 const SPOT_PATH = routes.spot();
-const SCOPE_SETUP = routes.scopeSetup();
 
 const HIGHLIGHTS_PATH = routes.highlights();
 const KAI_PATH = routes.kai();
@@ -105,7 +104,7 @@ function PrivateRoutes() {
   const { projectsStore, userStore, integrationsStore, searchStore } =
     useStore();
   const onboarding = userStore.onboarding;
-  const scope = userStore.scopeState;
+  const scope = userStore.scopeState ?? 2;
   const { tenantId } = userStore.account;
   const sites = projectsStore.list;
   const { siteId } = projectsStore;
@@ -280,6 +279,15 @@ function PrivateRoutes() {
         ) : null}
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />
+        ))}
+        {saasRoutes.map((route) => (
+          <Route
+            key={route.path}
+            exact
+            strict
+            path={withSiteId(route.path, siteIdList)}
+            component={route.component}
+          />
         ))}
         <Route path={'*'}>
           <Redirect to={withSiteId(routes.sessions(), siteId)} />

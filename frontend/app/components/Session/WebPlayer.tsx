@@ -18,6 +18,7 @@ import {
   PlayerContext,
   defaultContextValue,
 } from './playerContext';
+import { signalService } from 'App/services';
 
 const TABS = {
   EVENTS: 'Activity',
@@ -32,8 +33,12 @@ const UXTTABS = {
 let playerInst: IPlayerContext['player'] | undefined;
 
 const isDefaultEventsFilterSearch = (filters: FilterItem[]) => {
-  return filters.length === 1 && filters[0].key === 'location' && filters[0].value[0] === '';
-}
+  return (
+    filters.length === 1 &&
+    filters[0].key === 'location' &&
+    filters[0].value[0] === ''
+  );
+};
 
 function WebPlayer(props: any) {
   const {
@@ -44,7 +49,7 @@ function WebPlayer(props: any) {
     integrationsStore,
     searchStore,
   } = useStore();
-  const devTools = sessionStore.devTools
+  const devTools = sessionStore.devTools;
   const session = sessionStore.current;
   const { prefetched } = sessionStore;
   const startedAt = sessionStore.current.startedAt || 0;
@@ -60,9 +65,13 @@ function WebPlayer(props: any) {
     useState<IPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
   const [fullView, setFullView] = useState(false);
+  const openedAt = React.useRef<number>(null);
 
   React.useEffect(() => {
-    if (searchStore.instance.filters?.length && !isDefaultEventsFilterSearch(searchStore.instance.filters)) {
+    if (
+      searchStore.instance.filters?.length &&
+      !isDefaultEventsFilterSearch(searchStore.instance.filters)
+    ) {
       uiPlayerStore.setSearchEventsSwitchButton(true);
       uiPlayerStore.setShowOnlySearchEvents(true);
     } else {
@@ -72,6 +81,7 @@ function WebPlayer(props: any) {
   }, [searchStore.instance.filters]);
 
   React.useEffect(() => {
+    openedAt.current = Date.now();
     const handleActivation = () => {
       if (!document.hidden) {
         setWindowActive(true);
@@ -81,9 +91,17 @@ function WebPlayer(props: any) {
     document.addEventListener('visibilitychange', handleActivation);
 
     return () => {
+      const durWatching = Date.now() - (openedAt.current || performance.now());
+      signalService.send(
+        {
+          source: 'duration',
+          value: durWatching,
+        },
+        session.sessionId,
+      );
       devTools.update('network', { activeTab: 'ALL' });
       document.removeEventListener('visibilitychange', handleActivation);
-    }
+    };
   }, []);
 
   useEffect(() => {
@@ -124,6 +142,12 @@ function WebPlayer(props: any) {
     if (freeze) {
       void WebPlayerInst.freeze();
     }
+    signalService.send(
+      {
+        source: 'replay',
+      },
+      session.sessionId,
+    );
   }, [session.sessionId]);
 
   const domFiles = session?.domURL?.length ?? 0;

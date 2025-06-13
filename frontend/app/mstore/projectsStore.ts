@@ -4,7 +4,6 @@ import {
   SITE_ID_STORAGE_KEY,
 } from 'App/constants/storageKeys';
 import { projectsService } from 'App/services';
-import { toast } from '.store/react-toastify-virtual-9dd0f3eae1/package';
 import GDPR from './types/gdpr';
 import Project from './types/project';
 
@@ -14,18 +13,13 @@ interface Config {
   tab: string;
 }
 
-export default class ProjectsStore {
+export default class BaseProjectsStore {
   list: Project[] = [];
-
   instance: Project | null = null;
-
   siteId: string | null = null;
   previousSiteid: string | null = null;
-
   active: Project | null = null;
-
   sitesLoading = true;
-
   loading = false;
 
   config: Config = {
@@ -45,8 +39,8 @@ export default class ProjectsStore {
         if (prevId) {
           this.previousSiteid = prevId;
         }
-      }
-    )
+      },
+    );
   }
 
   get isMobile() {
