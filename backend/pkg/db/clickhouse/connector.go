@@ -446,7 +446,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 	if msg.LoadEventEnd >= msg.LoadEventStart {
 		loadEventTime = nullableUint16(uint16(msg.LoadEventEnd - msg.LoadEventStart))
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	payload := map[string]interface{}{
 		"request_start":                  nullableUint16(uint16(msg.RequestStart)),
 		"response_start":                 nullableUint16(uint16(msg.ResponseStart)),
 		"response_end":                   nullableUint16(uint16(msg.ResponseEnd)),
@@ -471,8 +471,17 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		"load_event_time":                loadEventTime,
 		"user_device":                    session.UserDevice,
 		"user_device_type":               session.UserDeviceType,
-		"page_title ":                    msg.PageTitle,
-	})
+		"page_title":                     msg.PageTitle,
+	}
+	if len(msg.WebVitals) > 0 {
+		webVitals := map[string]interface{}{}
+		if err := json.Unmarshal([]byte(msg.WebVitals), &webVitals); err == nil {
+			for key, value := range webVitals {
+				payload[key] = value
+			}
+		}
+	}
+	jsonString, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("can't marshal page event: %s", err)
 	}
