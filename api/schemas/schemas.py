@@ -1021,6 +1021,7 @@ class MetricType(str, Enum):
     RETENTION = "retention"
     STICKINESS = "stickiness"
     HEAT_MAP = "heatMap"
+    WEB_VITAL = "webVital"
 
 
 class MetricOfTable(str, Enum):
@@ -1051,6 +1052,10 @@ class MetricOfHeatMap(str, Enum):
 
 class MetricOfPathAnalysis(str, Enum):
     session_count = MetricOfTimeseries.SESSION_COUNT.value
+
+
+class MetricOfWebVital(str, Enum):
+    WEB_VITAL_URL = "webVitalUrl"
 
 
 class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
@@ -1317,9 +1322,25 @@ class CardPathAnalysis(__CardSchema):
         return self
 
 
+class CardWebVital(__CardSchema):
+    metric_type: Literal[MetricType.WEB_VITAL]
+    metric_of: MetricOfWebVital = Field(default=MetricOfWebVital.WEB_VITAL_URL)
+    view_type: MetricOtherViewType = Field(...)
+
+    @model_validator(mode="before")
+    @classmethod
+    def __enforce_default(cls, values):
+        return values
+
+    @model_validator(mode="after")
+    def __transform(self):
+        self.metric_of = MetricOfWebVital(self.metric_of)
+        return self
+
+
 # Union of cards-schemas that doesn't change between FOSS and EE
 __cards_union_base = Union[
-    CardTimeSeries, CardTable, CardFunnel, CardHeatMap, CardPathAnalysis]
+    CardTimeSeries, CardTable, CardFunnel, CardHeatMap, CardPathAnalysis, CardWebVital]
 CardSchema = ORUnion(__cards_union_base, discriminator='metric_type')
 
 

@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 import schemas
 from chalicelib.core.issues import issues
 from chalicelib.core.errors import errors
-from chalicelib.core.metrics import heatmaps, product_analytics, funnels
+from chalicelib.core.metrics import heatmaps, product_analytics, funnels, web_vitals
 from chalicelib.core.sessions import sessions, sessions_search
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -61,9 +61,6 @@ def get_heat_map_chart(project: schemas.ProjectContext, user_id, data: schemas.C
         return None
     data.series[0].filter.filters += data.series[0].filter.events
     data.series[0].filter.events = []
-    print(">>>>>>>>>>>>>>>>>>>>>>>>><")
-    print(data.series[0].filter.model_dump())
-    print(">>>>>>>>>>>>>>>>>>>>>>>>><")
     return heatmaps.search_short_session(project_id=project.project_id, user_id=user_id,
                                          data=schemas.HeatMapSessionsSearch(
                                              **data.series[0].filter.model_dump()),
@@ -139,6 +136,12 @@ def __get_table_of_requests(project: schemas.ProjectContext, data: schemas.CardT
     return __get_table_of_series(project_id=project.project_id, data=data)
 
 
+def __get_web_vital_chart(project: schemas.ProjectContext, data: schemas.CardWebVital, user_id: int = None):
+    if len(data.series) == 0:
+        return {}
+    return web_vitals.get_web_vitals(data=data.series[0].filter, project_id=project.project_id, user_id=user_id)
+
+
 def __get_table_chart(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int):
     supported = {
         schemas.MetricOfTable.SESSIONS: __get_table_of_sessions,
@@ -161,7 +164,8 @@ def get_chart(project: schemas.ProjectContext, data: schemas.CardSchema, user_id
         schemas.MetricType.TABLE: __get_table_chart,
         schemas.MetricType.HEAT_MAP: get_heat_map_chart,
         schemas.MetricType.FUNNEL: __get_funnel_chart,
-        schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_chart
+        schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_chart,
+        schemas.MetricType.WEB_VITAL: __get_web_vital_chart,
     }
     return supported.get(data.metric_type, not_supported)(project=project, data=data, user_id=user_id)
 
