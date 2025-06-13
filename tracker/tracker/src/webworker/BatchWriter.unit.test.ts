@@ -74,6 +74,17 @@ describe('BatchWriter', () => {
     expect(batchWriter['writeWithSize']).toHaveBeenCalledWith(message)
   })
 
+  test('finaliseUrgentBatch flushes and returns batch within limit', () => {
+    const flushSpy = jest
+      .spyOn(batchWriter['encoder'], 'flush')
+      .mockReturnValue(new Uint8Array(100))
+    batchWriter['isEmpty'] = false
+    const result = batchWriter['finaliseUrgentBatch'](50)
+    expect(flushSpy).toHaveBeenCalled()
+    expect(result).not.toBeNull()
+    expect((result as Uint8Array).byteLength).toBeLessThanOrEqual(50)
+  })
+
   test('finaliseBatch flushes the encoder and calls onBatch', () => {
     const flushSpy = jest.spyOn(batchWriter['encoder'], 'flush')
     batchWriter['isEmpty'] = false

@@ -726,16 +726,32 @@ export default class App {
         this.handleWorkerMsg(data)
       }
 
+      let flushing = false;
       const alertWorker = () => {
+        if (flushing) {
+          return
+        }
+        flushing = true
+        setTimeout(() => {
+          flushing = false
+        }, 500)
+
         if (this.worker) {
-          this.worker.postMessage(null)
+          try {
+            if (this.messages.length) {
+              this.worker.postMessage(this.messages)
+              this.messages.length = 0
+            }
+            this.worker.postMessage('urgentFlushBatch')
+          } catch (e) {
+            this._debug('worker_commit', e)
+          }
         }
       }
-      // keep better tactics, discard others?
-      this.attachEventListener(window, 'beforeunload', alertWorker, false)
       this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false)
+      this.attachEventListener(window, 'pagehide', alertWorker, false, false)
       // TODO: stop session after inactivity timeout (make configurable)
-      this.attachEventListener(document, 'visibilitychange', alertWorker, false)
+      this.attachEventListener(document, 'visibilitychange', (e) => document.visibilityState === 'hidden' && alertWorker(), false)
     } catch (e) {
       this._debug('worker_start', e)
     }

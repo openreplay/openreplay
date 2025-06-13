@@ -135,6 +135,51 @@ export default class BatchWriter {
     this.prepare()
   }
 
+  finaliseUrgentBatch(limit: number): Uint8Array | null {
+    if (this.isEmpty) {
+      return null
+    }
+    const batch = this.encoder.flush()
+    this.prepare()
+    if (batch.byteLength <= limit) {
+      return batch
+    }
+
+    let offset = 0
+    let lastOffset = 0
+    const length = batch.byteLength
+
+    while (offset < length) {
+      let value = 0
+      let shift = 0
+      let b = 0
+      do {
+        if (offset >= length) {
+          return lastOffset ? batch.subarray(0, lastOffset) : null
+        }
+        b = batch[offset++]
+        value |= (b & 0x7f) << shift
+        shift += 7
+      } while (b & 0x80)
+
+      if (offset + SIZE_BYTES > length) {
+        break
+      }
+
+      const size =
+        batch[offset] | (batch[offset + 1] << 8) | (batch[offset + 2] << 16)
+      offset += SIZE_BYTES + size
+
+      if (offset <= limit) {
+        lastOffset = offset
+      } else {
+        break
+      }
+    }
+
+    return lastOffset ? batch.subarray(0, lastOffset) : null
+  }
+
   clean() {
     this.encoder.reset()
   }
