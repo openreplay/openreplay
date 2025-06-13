@@ -11,7 +11,7 @@ import APIClient from './api_client';
 import * as routes from './routes';
 import { debounceCall } from '@/utils';
 import { hasAi } from './utils/split-utils';
-import { saasRoutes } from './saas';
+import { saasRoutes } from './saasComponents';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
