@@ -4,11 +4,10 @@ import { normSpaces, hasOpenreplayAttribute, getLabelAttribute, now } from '../u
 import { MouseMove, MouseClick, MouseThrashing } from '../app/messages.gen.js'
 import { getInputLabel } from './input.js'
 
-
 const cssEscape = (typeof CSS !== 'undefined' && CSS.escape) || ((t) => t);
 const docClassCache = new WeakMap();
 
-function _getSelector(target: Element, document: Document, options?: MouseHandlerOptions): string {
+function _getSelector(target: Element): string {
   const selector = getCSSPath(target)
   return selector || ''
 }
@@ -71,30 +70,11 @@ function _getTarget(target: Element, document: Document): Element | null {
 
 export interface MouseHandlerOptions {
   disableClickmaps?: boolean
-  /** minimum length of an optimised selector.
-   *
-   * body > div > div > p => body > p for example
-   *
-   * default 2
-   * */
-  minSelectorDepth?: number
-  /** how many selectors to try before falling back to nth-child selectors
-   * performance expensive operation
-   *
-   * default 1000
-   * */
-  nthThreshold?: number
-  /**
-   * how many tries to optimise and shorten the selector
-   *
-   * default 10_000
-   * */
-  maxOptimiseTries?: number
   /**
    * how many ticks to wait before capturing mouse position
    * (can affect performance)
    * 1 tick = 30ms
-   * default 7
+   * default 7 = 210ms
    * */
   trackingOffset?: number
 }
@@ -177,8 +157,8 @@ export default function (app: App, options?: MouseHandlerOptions): void {
   }
 
   const patchDocument = (document: Document, topframe = false) => {
-    function getSelector(id: number, target: Element, options?: MouseHandlerOptions): string {
-      return (selectorMap[id] = selectorMap[id] || _getSelector(target, document, options))
+    function getSelector(id: number, target: Element): string {
+      return (selectorMap[id] = selectorMap[id] || _getSelector(target))
     }
 
     const attachListener = topframe
@@ -233,7 +213,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
             id,
             mouseTarget === target ? Math.round(performance.now() - mouseTargetTime) : 0,
             app.sanitizer.privateMode ? label.replaceAll(/./g, '*') : label,
-            isClickable(target) && !disableClickmaps ? getSelector(id, target, options) : '',
+            isClickable(target) && !disableClickmaps ? getSelector(id, target) : '',
             normalizedX,
             normalizedY,
           ),
