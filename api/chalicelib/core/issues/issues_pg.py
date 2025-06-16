@@ -63,48 +63,83 @@ def get_all_types():
             "type": "js_exception",
             "visible": True,
             "order": 0,
-            "name": "Errors"
+            "name": "Errors",
+            "autoCaptured": True
         },
         {
             "type": "bad_request",
             "visible": True,
             "order": 1,
-            "name": "Bad Requests"
+            "name": "Bad Requests",
+            "autoCaptured": True
         },
         {
             "type": "missing_resource",
             "visible": True,
             "order": 2,
-            "name": "Missing Images"
+            "name": "Missing Images",
+            "autoCaptured": True
         },
         {
             "type": "click_rage",
             "visible": True,
             "order": 3,
-            "name": "Click Rage"
+            "name": "Click Rage",
+            "autoCaptured": True
         },
         {
             "type": "dead_click",
             "visible": True,
             "order": 4,
-            "name": "Dead Clicks"
+            "name": "Dead Clicks",
+            "autoCaptured": True
         },
         {
             "type": "memory",
             "visible": True,
             "order": 5,
-            "name": "High Memory"
+            "name": "High Memory",
+            "autoCaptured": True
         },
         {
             "type": "cpu",
             "visible": True,
             "order": 6,
-            "name": "High CPU"
+            "name": "High CPU",
+            "autoCaptured": True
         },
         {
             "type": "crash",
             "visible": True,
             "order": 7,
-            "name": "Crashes"
+            "name": "Crashes",
+            "autoCaptured": True
+        },
+        {
+            "type": "incident",
+            "visible": True,
+            "order": 8,
+            "name": "Incident",
+            "autoCaptured": False
         }
     ]
+
+
+def get_issues_categories():
+    issues = get_all_types()
+    response = []
+    for i, issue in enumerate(issues):
+        response.append({
+            "id": f"issue_{i}",
+            "name": issue["type"],
+            "displayName": issue["name"],
+            "possibleTypes": [
+                "String"
+            ],
+            "autoCaptured": issue["autoCaptured"]
+        })
+    return {
+        "total": len(response),
+        "displayName": "Issues",
+        "list": response
+    }
