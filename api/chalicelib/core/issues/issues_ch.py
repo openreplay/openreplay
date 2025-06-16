@@ -1,6 +1,7 @@
 from chalicelib.utils import ch_client, helper
 import datetime
 from chalicelib.utils.exp_ch_helper import explode_dproperties, add_timestamp
+from .issues_pg import get_issues_categories as _get_issues_categories
 
 
 def get(project_id, issue_id):
@@ -62,3 +63,7 @@ def reduce_issues(issues_list):
             i += 1
 
     return issues_list
+
+
+def get_issues_categories():
+    return _get_issues_categories()

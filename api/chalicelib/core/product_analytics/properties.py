@@ -105,7 +105,11 @@ def get_all_properties(project_id: int):
                     "_foundInPredefinedList": False,
                     "dataType": PREDEFINED_PROPERTIES[p]["type"],
                 })
-        return {"total": total, "list": properties}
+        return {
+            "total": total,
+            "displayName": "Event Properties",
+            "list": properties
+        }
 
 
 def get_event_properties(project_id: int, event_name: str, auto_captured: bool):

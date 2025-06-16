@@ -72,7 +72,11 @@ def get_events(project_id: int):
                 ],
                 "_foundInPredefinedList": False
             })
-    return {"total": total, "list": rows}
+    return {
+        "total": total,
+        "displayName": "Events",
+        "list": rows
+    }
 
 
 def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
