@@ -726,26 +726,18 @@ export default class App {
         this.handleWorkerMsg(data)
       }
 
-      let flushing = false;
+      let closing = false;
       const alertWorker = () => {
-        if (flushing) {
+        if (closing) {
           return
         }
-        flushing = true
+        closing = true
         setTimeout(() => {
-          flushing = false
+          closing = false
         }, 500)
 
         if (this.worker) {
-          try {
-            if (this.messages.length) {
-              this.worker.postMessage(this.messages)
-              this.messages.length = 0
-            }
-            this.worker.postMessage('urgentFlushBatch')
-          } catch (e) {
-            this._debug('worker_commit', e)
-          }
+          this.worker.postMessage('closing')
         }
       }
       this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false)

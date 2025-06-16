@@ -11,6 +11,7 @@ export default class BatchWriter {
   private encoder = new MessageEncoder(this.beaconSize)
   private readonly sizeBuffer = new Uint8Array(SIZE_BYTES)
   private isEmpty = true
+  private checkpoints: number[] = []
 
   constructor(
     private readonly pageNo: number,
@@ -41,6 +42,8 @@ export default class BatchWriter {
     if (!this.encoder.isEmpty) {
       return
     }
+
+    this.checkpoints.length = 0
 
     // MBTODO: move service-messages creation methods to webworker
     const batchMetadata: Messages.BatchMetadata = [
@@ -81,6 +84,7 @@ export default class BatchWriter {
       this.writeSizeAt(size, startOffset - SIZE_BYTES)
 
       e.checkpoint()
+      this.checkpoints.push(e.getCurrentOffset())
       this.isEmpty = this.isEmpty && message[0] === Messages.Type.Timestamp
       this.nextIndex++
     }
@@ -135,52 +139,24 @@ export default class BatchWriter {
     this.prepare()
   }
 
-  finaliseUrgentBatch(limit: number): Uint8Array | null {
+  finaliseLimitedBatch(limit: number): Uint8Array | null {
     if (this.isEmpty) {
       return null
     }
     const batch = this.encoder.flush()
+    let cutoff = batch.length
+    for (let i = this.checkpoints.length - 1; i >= 0; i--) {
+      if (this.checkpoints[i] <= limit) {
+        cutoff = this.checkpoints[i]
+        break
+      }
+    }
     this.prepare()
-    if (batch.byteLength <= limit) {
-      return batch
-    }
-
-    let offset = 0
-    let lastOffset = 0
-    const length = batch.byteLength
-
-    while (offset < length) {
-      let value = 0
-      let shift = 0
-      let b = 0
-      do {
-        if (offset >= length) {
-          return lastOffset ? batch.subarray(0, lastOffset) : null
-        }
-        b = batch[offset++]
-        value |= (b & 0x7f) << shift
-        shift += 7
-      } while (b & 0x80)
-
-      if (offset + SIZE_BYTES > length) {
-        break
-      }
-
-      const size =
-        batch[offset] | (batch[offset + 1] << 8) | (batch[offset + 2] << 16)
-      offset += SIZE_BYTES + size
-
-      if (offset <= limit) {
-        lastOffset = offset
-      } else {
-        break
-      }
-    }
-
-    return lastOffset ? batch.subarray(0, lastOffset) : null
+    return batch.slice(0, cutoff)
   }
 
   clean() {
     this.encoder.reset()
+    this.checkpoints.length = 0
   }
 }

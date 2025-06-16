@@ -17,23 +17,14 @@ enum WorkerStatus {
   Stopped,
 }
 
-const AUTO_SEND_INTERVAL = 10 * 1000
-const URGENT_BYTES_LIMIT = Math.floor((64 << 10) * 0.8)
+const AUTO_SEND_INTERVAL = 30 * 1000
+const KEEPALIVE_SAFE_RANGE = Math.floor((64 << 10) * 0.8)
 
 let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let workerStatus: WorkerStatus = WorkerStatus.NotActive
 
-function urgentSend(): void {
-  if (!writer || !sender) {
-    return
-  }
-  const batch = writer.finaliseUrgentBatch(URGENT_BYTES_LIMIT)
-  if (batch) {
-    sender.sendUncompressed(batch)
-  }
-}
 function finalize(): void {
   if (!writer) {
     return
@@ -110,8 +101,13 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
     finalize()
     return
   }
-  if (data === 'urgentFlushBatch') {
-    urgentSend()
+  if (data === 'closing') {
+    if (writer && sender) {
+      const batch = writer.finaliseLimitedBatch(KEEPALIVE_SAFE_RANGE)
+      if (batch && batch.length > 0) {
+        sender.sendUncompressed(batch)
+      }
+    }
     return
   }
   if (Array.isArray(data)) {
