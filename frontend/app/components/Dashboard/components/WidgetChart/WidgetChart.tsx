@@ -165,7 +165,6 @@ function WidgetChart(props: Props) {
         setStale(false);
       })
       .finally(() => {
-        if (metric.metricId === 1014) return;
         setLoading(false);
       });
   };
