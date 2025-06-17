@@ -18,6 +18,7 @@ tracker.incident({ label: 'incident', startTime: Date.now() })
 ## 16.4.0
 
 - improve CSS selector generation speed (drop findr library in favor of custom solution)
+- improve urgent flushing on page close event
 
 ## 16.3.0
 
