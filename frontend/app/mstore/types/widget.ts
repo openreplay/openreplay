@@ -101,7 +101,7 @@ export default class Widget {
   startType: string = 'start';
   startPoint: FilterItem = new FilterItem(filtersMap[FilterKey.LOCATION]);
   excludes: FilterItem[] = [];
-  hideExcess?: boolean = false;
+  hideExcess?: boolean = true;
   compareTo: [startDate?: string, endDate?: string] | null = null;
 
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
