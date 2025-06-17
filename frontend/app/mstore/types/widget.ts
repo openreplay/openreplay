@@ -99,7 +99,23 @@ export default class Widget {
   thumbnail?: string;
   params: any = { density: 35 };
   startType: string = 'start';
-  startPoint: FilterItem = new FilterItem(filtersMap[FilterKey.LOCATION]);
+  stepsBefore: number = 0; // specific to user journey
+  stepsAfter: number = 5; // specific to user journey
+  rows: number = 5;
+  columns: number = 4;
+  startPoint: FilterItem = new FilterItem({
+    name: 'REQUEST',
+    isEvent: true,
+    autoCaptured: true,
+    filters: [
+      {
+        name: 'url',
+        value: [''],
+        operator: 'isAny',
+        dataType: 'string',
+      },
+    ],
+  });
   excludes: FilterItem[] = [];
   hideExcess?: boolean = false;
   compareTo: [startDate?: string, endDate?: string] | null = null;
@@ -186,7 +202,7 @@ export default class Widget {
       this.owner = json.ownerName;
       this.lastModified =
         json.editedAt || json.createdAt
-          ? DateTime.fromMillis(json.editedAt || json.createdAt)
+          ? DateTime.fromISO(json.editedAt || json.createdAt)
           : null;
       this.config = json.config;
       this.position = json.config.position;
@@ -204,10 +220,14 @@ export default class Widget {
       if (this.metricType === USER_PATH) {
         this.hideExcess = json.hideExcess;
         this.startType = json.startType;
+        this.rows = json.rows;
+        this.stepsBefore = json.stepsBefore;
+        this.stepsAfter = json.stepsAfter;
+        this.columns = json.columns;
         this.metricValue =
           json.metricValue && json.metricValue.length > 0
             ? json.metricValue
-            : ['location'];
+            : ['LOCATION'];
         if (json.startPoint) {
           if (Array.isArray(json.startPoint) && json.startPoint.length > 0) {
             this.startPoint = new FilterItem().fromJson(json.startPoint[0]);
@@ -257,6 +277,10 @@ export default class Widget {
       thumbnail: this.thumbnail,
       sessionId: this.data.sessionId,
       page: this.page,
+      rows: this.rows,
+      stepsBefore: this.stepsBefore,
+      stepsAfter: this.stepsAfter,
+      columns: 4,
       limit: this.limit,
       compareTo: this.compareTo,
       config: {
@@ -395,12 +419,12 @@ export default class Widget {
     } else if (this.metricType === FUNNEL) {
       _data.funnel = new Funnel().fromJSON(data);
     } else if (this.metricType === TABLE) {
-      const count = data[0]['count'];
-      const vals = data[0]['values'].map((s: any) =>
+      const count = data['count'];
+      const vals = data['values'].map((s: any) =>
         new SessionsByRow().fromJson(s, count, this.metricOf),
       );
-      _data['values'] = vals
-      _data['total'] = data[0]['total'];
+      _data['values'] = vals;
+      _data['total'] = data['total'];
     } else {
       if (data.hasOwnProperty('chart')) {
         _data['value'] = data.value;

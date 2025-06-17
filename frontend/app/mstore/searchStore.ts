@@ -5,7 +5,7 @@ import {
   filtersMap,
   generateFilterOptions,
   liveFiltersMap,
-  mobileConditionalFiltersMap
+  mobileConditionalFiltersMap,
 } from 'Types/filter/newFilter';
 import { List } from 'immutable';
 import { makeAutoObservable, runInAction } from 'mobx';
@@ -17,6 +17,7 @@ import { sessionStore, settingsStore } from 'App/mstore';
 import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
 import { iTag } from '@/services/NotesService';
 import { issues_types } from 'Types/session/issue';
+import { Filter } from '@/mstore/types/filterConstants';
 
 const PER_PAGE = 10;
 
@@ -38,7 +39,7 @@ export const filterMap = ({
   isEvent,
   filters,
   sort,
-  order
+  order,
 }: any) => ({
   value: checkValues(key, value),
   custom,
@@ -47,7 +48,7 @@ export const filterMap = ({
   source: category === FilterCategory.METADATA ? key.replace(/^_/, '') : source,
   sourceOperator,
   isEvent,
-  filters: filters ? filters.map(filterMap) : []
+  filters: filters ? filters.map(filterMap) : [],
 });
 
 export const TAB_MAP: any = {
@@ -55,42 +56,78 @@ export const TAB_MAP: any = {
   sessions: { name: 'Sessions', type: 'sessions' },
   bookmarks: { name: 'Bookmarks', type: 'bookmarks' },
   notes: { name: 'Notes', type: 'notes' },
-  recommendations: { name: 'Recommendations', type: 'recommendations' }
+  recommendations: { name: 'Recommendations', type: 'recommendations' },
 };
 
 class SearchStore {
   list: SavedSearch[] = [];
-
   latestRequestTime: number | null = null;
-
   latestList = List();
-
   alertMetricId: number | null = null;
-
-  instance = new Search();
-
+  instance = new Search({
+    // rangeValue: LAST_24_HOURS,
+    startDate: Date.now() - 24 * 60 * 60 * 1000,
+    endDate: Date.now(),
+    filters: [
+      // {
+      //   id: Math.random().toString(36).substring(7),
+      //   name: 'CLICK',
+      //   category: 'events',
+      //   type: 'string',
+      //   value: ['/client/account'],
+      //   operator: 'is',
+      //   isEvent: true,
+      //   filters: [
+      //     {
+      //       id: Math.random().toString(36).substring(7),
+      //       name: 'select',
+      //       category: 'filters',
+      //       type: 'bool',
+      //       value: ['true'],
+      //       operator: 'is'
+      //     },
+      //     {
+      //       id: Math.random().toString(36).substring(7),
+      //       name: 'label',
+      //       category: 'filters',
+      //       type: 'double',
+      //       value: [1],
+      //       operator: 'is'
+      //     }
+      //   ]
+      // },
+      // {
+      //   id: Math.random().toString(36).substring(7),
+      //   name: 'Browser',
+      //   category: 'filters',
+      //   type: 'string',
+      //   value: ['/client/account'],
+      //   operator: 'is',
+      //   isEvent: false
+      // }
+    ],
+    groupByUser: false,
+    sort: 'start',
+    order: 'desc',
+    viewed: false,
+    eventsCount: 0,
+    suspicious: false,
+    consoleLevel: '',
+    strict: true,
+    eventsOrder: 'then',
+  });
   savedSearch: ISavedSearch = new SavedSearch();
-
   filterSearchList: any = {};
-
   currentPage = 1;
-
   pageSize = PER_PAGE;
-
   activeTab = { name: 'All', type: 'all' };
-
   scrollY = 0;
-
   sessions = List();
-
   total: number = 0;
   latestSessionCount: number = 0;
   loadingFilterSearch = false;
-
   isSaving: boolean = false;
-
   activeTags: any[] = [];
-
   urlParsed: boolean = false;
   searchInProgress = false;
 
@@ -127,9 +164,9 @@ class SearchStore {
     this.edit({
       filters: savedSearch.filter
         ? savedSearch.filter.filters.map((i: FilterItem) =>
-          new FilterItem().fromJson(i)
-        )
-        : []
+            new FilterItem().fromJson(i),
+          )
+        : [],
     });
     this.currentPage = 1;
   }
@@ -207,7 +244,7 @@ class SearchStore {
 
   resetTags = () => {
     this.activeTags = ['all'];
-  }
+  };
 
   toggleTag(tag?: iTag) {
     if (!tag) {
@@ -252,8 +289,8 @@ class SearchStore {
         rangeValue: instance.rangeValue,
         startDate: instance.startDate,
         endDate: instance.endDate,
-        filters: []
-      })
+        filters: [],
+      }),
     );
 
     this.savedSearch = new SavedSearch({});
@@ -270,7 +307,7 @@ class SearchStore {
         const period = Period({
           rangeName: CUSTOM_RANGE,
           start: this.latestRequestTime,
-          end: Date.now()
+          end: Date.now(),
         });
         const timeRange: any = period.toJSON();
         filter.startDate = timeRange.startDate;
@@ -298,30 +335,30 @@ class SearchStore {
   addFilter(filter: any) {
     const index = filter.isEvent
       ? -1
-      : this.instance.filters.findIndex(
-        (i: FilterItem) => i.key === filter.key
-      );
+      : this.instance.filters.findIndex((i: Filter) => i.id === filter.id);
 
     filter.value = checkFilterValue(filter.value);
+    filter.operator = 'is';
     filter.filters = filter.filters
       ? filter.filters.map((subFilter: any) => ({
-        ...subFilter,
-        value: checkFilterValue(subFilter.value)
-      }))
+          ...subFilter,
+          value: checkFilterValue(subFilter.value),
+        }))
       : null;
 
     if (index > -1) {
       const oldFilter = new FilterItem(this.instance.filters[index]);
       const updatedFilter = {
         ...oldFilter,
-        value: oldFilter.value.concat(filter.value)
+        value: oldFilter.value.concat(filter.value),
       };
       oldFilter.merge(updatedFilter);
       this.updateFilter(index, updatedFilter);
     } else {
+      // filter.key = Math.random().toString(36).substring(7);
       this.instance.filters.push(filter);
       this.instance = new Search({
-        ...this.instance.toData()
+        ...this.instance.toData(),
       });
     }
 
@@ -330,6 +367,17 @@ class SearchStore {
     if (filter.value && filter.value[0] && filter.value[0] !== '') {
       void this.fetchSessions();
     }
+  }
+
+  moveFilter(draggedIndex: number, newPosition: number) {
+    const newFilters = this.instance.filters.slice();
+    const [removed] = newFilters.splice(draggedIndex, 1);
+    newFilters.splice(newPosition, 0, removed);
+
+    this.instance = new Search({
+      ...this.instance.toData(),
+      filters: newFilters,
+    });
   }
 
   addFilterByKeyAndValue(
@@ -353,36 +401,33 @@ class SearchStore {
     this.addFilter(defaultFilter);
   }
 
-  refreshFilterOptions() {
-    // TODO
-  }
-
   updateSearch = (search: Partial<Search>) => {
     this.instance = Object.assign(this.instance, search);
   };
 
-  updateFilter = (index: number, search: Partial<FilterItem>) => {
-    const newFilters = this.instance.filters.map((_filter: any, i: any) => {
-      if (i === index) {
-        return search;
+  updateFilter = (id: string, search: Partial<Filter>) => {
+    const newFilters = this.instance.filters.map((f: any) => {
+      if (f.id === id) {
+        return {
+          ...f,
+          ...search,
+        };
       }
-      return _filter;
+      return f;
     });
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters
+      filters: newFilters,
     });
   };
 
-  removeFilter = (index: number) => {
-    const newFilters = this.instance.filters.filter(
-      (_filter: any, i: any) => i !== index,
-    );
+  removeFilter = (id: string) => {
+    const newFilters = this.instance.filters.filter((f: any) => f.id !== id);
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters
+      filters: newFilters,
     });
   };
 
@@ -390,14 +435,10 @@ class SearchStore {
     this.scrollY = y;
   };
 
-  async fetchAutoplaySessions(page: number): Promise<void> {
-    // TODO
-  }
-
-  fetchSessions = async (
+  async fetchSessions(
     force: boolean = false,
     bookmarked: boolean = false,
-  ): Promise<void> => {
+  ): Promise<void> {
     if (this.searchInProgress) return;
     const filter = this.instance.toSearch();
 
@@ -405,7 +446,7 @@ class SearchStore {
       const tagFilter = filtersMap[FilterKey.ISSUE];
       tagFilter.type = tagFilter.type.toLowerCase();
       tagFilter.value = [
-        issues_types.find((i: any) => i.type === this.activeTags[0])?.type
+        issues_types.find((i: any) => i.type === this.activeTags[0])?.type,
       ];
       delete tagFilter.operatorOptions;
       delete tagFilter.options;
@@ -426,7 +467,7 @@ class SearchStore {
         filter.filters.push({
           type: FilterKey.DURATION,
           value,
-          operator: 'is'
+          operator: 'is',
         });
       }
     }
@@ -434,18 +475,20 @@ class SearchStore {
     this.latestRequestTime = filter.startDate;
     this.latestList = List();
     this.searchInProgress = true;
-    await sessionStore.fetchSessions(
-      {
-        ...filter,
-        page: this.currentPage,
-        perPage: this.pageSize,
-        tab: this.activeTab.type,
-        bookmarked: bookmarked ? true : undefined
-      },
-      force
-    ).finally(() => {
-      this.searchInProgress = false;
-    });
+    await sessionStore
+      .fetchSessions(
+        {
+          ...filter,
+          page: this.currentPage,
+          limit: this.pageSize,
+          tab: this.activeTab.type,
+          bookmarked: bookmarked ? true : undefined,
+        },
+        force,
+      )
+      .finally(() => {
+        this.searchInProgress = false;
+      });
   }
 }
 

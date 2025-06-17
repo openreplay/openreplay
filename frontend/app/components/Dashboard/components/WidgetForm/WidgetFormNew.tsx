@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, Space, Button, Alert, Form, Select, Tooltip } from 'antd';
-import { useStore } from 'App/mstore';
+import { projectStore, useStore } from 'App/mstore';
 import { eventKeys } from 'Types/filter/newFilter';
 import {
   HEATMAP,
@@ -16,7 +16,7 @@ import { issueCategories } from 'App/constants/filterOptions';
 import { PlusIcon, ChevronUp } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import FilterItem from 'Shared/Filters/FilterItem';
-import { FilterKey, FilterCategory } from 'Types/filter/filterType';
+import { FilterCategory } from 'Types/filter/filterType';
 import { useTranslation } from 'react-i18next';
 
 const getExcludedKeys = (metricType: string) => {
@@ -204,12 +204,17 @@ const FilterSection = observer(
 
 const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   const { t } = useTranslation();
-  const metricValueOptions = [
-    { value: 'location', label: t('Pages') },
-    { value: 'click', label: t('Clicks') },
-    { value: 'input', label: t('Input') },
-    { value: 'custom', label: t('Custom Events') },
-  ];
+  // const metricValueOptions = [
+  //   { value: 'location', label: t('Pages') },
+  //   { value: 'click', label: t('Clicks') },
+  //   { value: 'input', label: t('Input') },
+  //   { value: 'custom', label: t('Custom Events') },
+  // ];
+  //
+  const { filterStore } = useStore();
+  const metricValueOptions = useMemo(() => {
+    return filterStore.getEventOptions(projectStore?.activeSiteId + '');
+  }, []);
 
   const onPointChange = (value: any) => {
     writeOption({ name: 'startType', value: { value } });
@@ -219,9 +224,9 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
       <div className="flex flex-col justify-start gap-2 flex-wrap">
         <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-1 pt-2">
           <div className="flex flex-wrap gap-2 items-center justify-start">
-            <span className="font-medium">{t('Journeys With')}</span>
+            {/* <span className="font-medium">{t('Journeys With')}</span> */}
             <div className="flex gap-2 items-center">
-              <Select
+              {/* <Select
                 className="w-36 rounded-lg"
                 name="startType"
                 options={[
@@ -231,9 +236,9 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
                 defaultValue={metric.startType || 'start'}
                 onChange={onPointChange}
                 placeholder={t('Select Start Type')}
-              />
+              /> */}
 
-              <span className="">{t('showing')}</span>
+              <span className="font-medium">{t('Showing')}</span>
 
               <Select
                 mode="multiple"
@@ -252,21 +257,22 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
             </div>
           </div>
         </Form.Item>
-        <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4  pb-2 pt-1">
-          <div className="flex flex-wrap items-center justify-start">
+        <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-2 pt-1">
+          <div className="flex flex-wrap items-start justify-start">
             <span className="font-medium mr-2">
-              {metric.startType === 'start' ? t('Start Point') : t('End Point')}
+              {t('Start Point')}
+              {/* {metric.startType === 'start' ? t('Start Point') : t('End Point')} */}
             </span>
             <span className="font-normal">
               <FilterItem
                 hideDelete
                 filter={metric.startPoint}
-                allowedFilterKeys={[
-                  FilterKey.LOCATION,
-                  FilterKey.CLICK,
-                  FilterKey.INPUT,
-                  FilterKey.CUSTOM,
-                ]}
+                // allowedFilterKeys={[
+                //   FilterKey.LOCATION,
+                //   FilterKey.CLICK,
+                //   FilterKey.INPUT,
+                //   FilterKey.CUSTOM,
+                // ]}
                 onUpdate={(val) => metric.updateStartPoint(val)}
                 onRemoveFilter={() => {}}
               />

@@ -3,11 +3,11 @@ import {
   DATE_RANGE_VALUES,
   getDateRangeFromValue,
 } from 'App/dateRange';
-import Filter, { IFilter } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
 import { makeAutoObservable, observable } from 'mobx';
 import { LAST_24_HOURS, LAST_30_DAYS, LAST_7_DAYS } from 'Types/app/period';
 import { roundToNextMinutes } from '@/utils';
+import { Filter } from '@/mstore/types/filterConstants';
 
 // @ts-ignore
 const rangeValue = DATE_RANGE_VALUES.LAST_24_HOURS;
@@ -25,7 +25,7 @@ interface ISearch {
   userDevice?: string;
   fid0?: string;
   events: Event[];
-  filters: IFilter[];
+  filters: Filter[];
   minDuration?: number;
   maxDuration?: number;
   custom: Record<string, any>;
@@ -46,57 +46,31 @@ interface ISearch {
 
 export default class Search {
   name: string;
-
   searchId?: number;
-
   referrer?: string;
-
   userBrowser?: string;
-
   userOs?: string;
-
   userCountry?: string;
-
   userDevice?: string;
-
   fid0?: string;
-
   events: Event[];
-
-  filters: FilterItem[];
-
+  filters: Filter[];
   minDuration?: number;
-
   maxDuration?: number;
-
   custom: Record<string, any>;
-
   rangeValue: string;
-
   startDate: number;
-
   endDate: number;
-
   groupByUser: boolean;
-
   sort: string;
-
   order: string;
-
   viewed?: boolean;
-
   consoleLogCount?: number;
-
   eventsCount?: number;
-
   suspicious?: boolean;
-
   consoleLevel?: string;
-
   strict: boolean;
-
   eventsOrder: string;
-
   limit: number;
 
   constructor(initialData?: Partial<ISearch>) {
@@ -207,7 +181,9 @@ export default class Search {
         break;
       case CUSTOM_RANGE:
         if (!customStartDate || !customEndDate) {
-          throw new Error('Start date and end date must be provided for CUSTOM_RANGE.');
+          throw new Error(
+            'Start date and end date must be provided for CUSTOM_RANGE.',
+          );
         }
         startDate = customStartDate;
         endDate = customEndDate;
@@ -244,16 +220,17 @@ export default class Search {
       eventsOrder,
       startDate,
       endDate,
+      filters,
       // events: events.map((event: any) => new Event(event)),
-      filters: filters.map((i: any) => {
-        const filter = new Filter(i).toData();
-        if (Array.isArray(i.filters)) {
-          filter.filters = i.filters.map((f: any) =>
-            new Filter({ ...f, subFilter: i.type }).toData(),
-          );
-        }
-        return filter;
-      }),
+      // filters: filters.map((i: any) => {
+      //   const filter = new Filter(i).toData();
+      //   if (Array.isArray(i.filters)) {
+      //     filter.filters = i.filters.map((f: any) =>
+      //       new Filter({ ...f, subFilter: i.type }).toData()
+      //     );
+      //   }
+      //   return filter;
+      // })
     });
   }
 }

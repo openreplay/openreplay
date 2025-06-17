@@ -4,26 +4,29 @@ import { PlusIcon } from 'lucide-react';
 import { Button } from 'antd';
 import { useStore } from 'App/mstore';
 import { useTranslation } from 'react-i18next';
+import { Filter } from '@/mstore/types/filterConstants';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
   series: any;
-  excludeFilterKeys: Array<string>;
 }
 
-function AddStepButton({ series, excludeFilterKeys }: Props) {
+function AddStepButton({ series }: Props) {
   const { t } = useTranslation();
-  const { metricStore } = useStore();
+  const { metricStore, filterStore } = useStore();
   const metric: any = metricStore.instance;
+  const filters: Filter[] = filterStore.getCurrentProjectFilters();
 
-  const onAddFilter = (filter: any) => {
+  const onAddFilter = (filter: Filter) => {
+    console.log('Add Step Button', filter);
     series.filter.addFilter(filter);
     metric.updateKey('hasChanged', true);
   };
   return (
     <FilterSelection
-      filter={undefined}
+      filters={filters}
       onFilterClick={onAddFilter}
-      excludeFilterKeys={excludeFilterKeys}
+      // mode={'filters'} // excludeFilterKeys={excludeFilterKeys}
     >
       <Button
         type="text"
@@ -37,4 +40,4 @@ function AddStepButton({ series, excludeFilterKeys }: Props) {
   );
 }
 
-export default AddStepButton;
+export default observer(AddStepButton);

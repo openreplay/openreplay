@@ -8,6 +8,8 @@ import Widget from './types/widget';
 import Dashboard from './types/dashboard';
 import { calculateGranularities } from '@/components/Dashboard/components/WidgetDateRange/RangeGranularity';
 import { CUSTOM_RANGE } from '@/dateRange';
+import { HEATMAP } from '@/constants/card';
+import { sessionStore } from 'App/mstore';
 
 interface DashboardFilter {
   query?: string;
@@ -552,6 +554,14 @@ export default class DashboardStore {
           params,
           isSaved,
         );
+        if (metric.metricType === HEATMAP && data.sessionId) {
+          const sessionResp = await sessionStore.fetchSessionInfo(
+            data.sessionId,
+          );
+          data.domURL = sessionResp?.domURL || [];
+          data.events = [];
+        }
+
         const res = metric.setData(data, period, isComparison, data.density);
         resolve(res);
       } catch (error) {

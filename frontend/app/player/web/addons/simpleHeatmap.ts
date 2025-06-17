@@ -129,9 +129,7 @@ class SimpleHeatmap {
     if (!this.grad) this.setGradient(this.defaultGradient);
 
     const { ctx } = this;
-    if (!ctx) {
-      throw new Error('Canvas 2d context is not supported');
-    }
+    if (!ctx || this.width === 0 || this.height === 0) return this;
 
     ctx.clearRect(0, 0, this.width, this.height);
 
@@ -145,11 +143,10 @@ class SimpleHeatmap {
       this.colorize(colored.data, this.grad);
       ctx.putImageData(colored, 0, 0);
     } catch (e) {
-      // usually happens if session is corrupted ?
       console.error('Error while colorizing heatmap:', e);
-    } finally {
-      return this;
     }
+
+    return this;
   }
 
   private colorize(

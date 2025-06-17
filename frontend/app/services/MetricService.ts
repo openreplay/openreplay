@@ -30,7 +30,7 @@ export default class MetricService {
    */
   getMetricsPaginated(params: any): Promise<any> {
     return this.client
-      .post('/cards/search', params)
+      .get('/cards', params)
       .then((response: { json: () => any }) => response.json())
       .then((response: { data: any }) => response.data || []);
   }
@@ -100,7 +100,10 @@ export default class MetricService {
     ) {
       return Promise.resolve({});
     }
-    const path = isSaved ? `/dashboards/${metric.dashboardId}/cards/${metric.metricId}/chart` : '/cards/try';
+    const path = isSaved
+      ? // ? `/dashboards/${metric.dashboardId}/cards/${metric.metricId}/chart`
+        `/PROJECT_ID/cards/${metric.metricId}/chart`
+      : '/PROJECT_ID/cards/try';
     if (metric.metricType === USER_PATH) {
       data.density = 5;
       data.metricOf = 'sessionCount';
