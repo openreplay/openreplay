@@ -124,7 +124,6 @@ export default class FilterStore {
         }
 
         if (filter.filters && filter.filters.length > 0) {
-          console.log('searching nested filters');
           const foundInNested = search(filter.filters);
           if (foundInNested) {
             foundInNested.eventName = filter.name;
@@ -220,7 +219,7 @@ export default class FilterStore {
     filter: Filter,
   ): string | undefined => {
     if (category === 'events') {
-      return filter.autoCaptured ? 'autocapture' : 'user';
+      return filter.autoCaptured ? 'autocapture' : 'event';
     }
     return category;
   };

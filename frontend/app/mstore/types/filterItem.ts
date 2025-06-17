@@ -155,7 +155,7 @@ export default class FilterItem implements IFilter {
       value:
         this.value?.map((item: any) => (item ? item.toString() : '')) || [],
       operator: this.operator,
-      source: this.name,
+      // source: this.name,
       propertyOrder: this.propertyOrder,
       filters: Array.isArray(this.filters)
         ? this.filters.map((filter) => filter.toJson())
@@ -168,14 +168,14 @@ export default class FilterItem implements IFilter {
       dataType: this.dataType,
     };
 
-    const isMetadata = this.category === FilterCategory.METADATA;
-    if (isMetadata) {
-      json.type = FilterKey.METADATA;
-      json.source = this.name;
-      json.sourceOperator = this.operator;
-    }
+    // const isMetadata = this.category === FilterCategory.METADATA;
+    // if (isMetadata) {
+    //   json.type = FilterKey.METADATA;
+    //   json.source = this.name;
+    //   json.sourceOperator = this.operator;
+    // }
 
-    if (this.type === FilterKey.DURATION) {
+    if (this.name === FilterKey.DURATION) {
       json.value = this.value?.map((item: any) => (item ? Number(item) : 0));
     }
 

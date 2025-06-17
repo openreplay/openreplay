@@ -224,9 +224,9 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
       <div className="flex flex-col justify-start gap-2 flex-wrap">
         <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-1 pt-2">
           <div className="flex flex-wrap gap-2 items-center justify-start">
-            <span className="font-medium">{t('Journeys With')}</span>
+            {/* <span className="font-medium">{t('Journeys With')}</span> */}
             <div className="flex gap-2 items-center">
-              <Select
+              {/* <Select
                 className="w-36 rounded-lg"
                 name="startType"
                 options={[
@@ -236,9 +236,9 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
                 defaultValue={metric.startType || 'start'}
                 onChange={onPointChange}
                 placeholder={t('Select Start Type')}
-              />
+              /> */}
 
-              <span className="">{t('showing')}</span>
+              <span className="font-medium">{t('Showing')}</span>
 
               <Select
                 mode="multiple"
@@ -257,10 +257,11 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
             </div>
           </div>
         </Form.Item>
-        <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4  pb-2 pt-1">
-          <div className="flex flex-wrap items-center justify-start">
+        <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-2 pt-1">
+          <div className="flex flex-wrap items-start justify-start">
             <span className="font-medium mr-2">
-              {metric.startType === 'start' ? t('Start Point') : t('End Point')}
+              {t('Start Point')}
+              {/* {metric.startType === 'start' ? t('Start Point') : t('End Point')} */}
             </span>
             <span className="font-normal">
               <FilterItem

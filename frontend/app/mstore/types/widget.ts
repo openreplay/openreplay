@@ -100,6 +100,8 @@ export default class Widget {
   thumbnail?: string;
   params: any = { density: 35 };
   startType: string = 'start';
+  stepsBefore: number = 0; // specific to user journey
+  stepsAfter: number = 5; // specific to user journey
   rows: number = 5;
   columns: number = 4;
   startPoint: FilterItem = new FilterItem({
@@ -220,6 +222,8 @@ export default class Widget {
         this.hideExcess = json.hideExcess;
         this.startType = json.startType;
         this.rows = json.rows;
+        this.stepsBefore = json.stepsBefore;
+        this.stepsAfter = json.stepsAfter;
         this.columns = json.columns;
         this.metricValue =
           json.metricValue && json.metricValue.length > 0
@@ -274,7 +278,9 @@ export default class Widget {
       thumbnail: this.thumbnail,
       sessionId: this.data.sessionId,
       page: this.page,
-      rows: 5,
+      rows: this.rows,
+      stepsBefore: this.stepsBefore,
+      stepsAfter: this.stepsAfter,
       columns: 4,
       limit: this.limit,
       compareTo: this.compareTo,

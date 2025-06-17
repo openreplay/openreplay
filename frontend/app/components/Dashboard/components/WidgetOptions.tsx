@@ -26,6 +26,7 @@ import {
   ChartBarBig,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Form, InputNumber } from 'antd/lib';
 
 function WidgetOptions() {
   const { t } = useTranslation();
@@ -42,21 +43,57 @@ function WidgetOptions() {
   return (
     <div className="flex items-center gap-2">
       {metric.metricType === USER_PATH && (
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            metric.update({ hideExcess: !metric.hideExcess });
-            // metric.updateKey('hasChanged', true);
-          }}
-        >
-          <Space>
-            <Switch checked={metric.hideExcess} size="small" />
-            <span className="mr-4 color-gray-medium">
-              {t('Group Minor Paths')}
-            </span>
-          </Space>
-        </a>
+        <>
+          <Form layout="horizontal">
+            <div className="flex space-x-8 items-center">
+              <Form.Item label="Steps Before" className="mb-0 flex-1">
+                <InputNumber
+                  defaultValue={metric.stepsBefore}
+                  className="w-16"
+                  onChange={(value) => {
+                    metric.update({ stepsBefore: value });
+                    metric.updateKey('hasChanged', true);
+                  }}
+                />
+              </Form.Item>
+              <Form.Item label="Steps After" className="mb-0 flex-1">
+                <InputNumber
+                  defaultValue={metric.stepsAfter}
+                  className="w-16"
+                  onChange={(value) => {
+                    metric.update({ stepsAfter: value });
+                    metric.updateKey('hasChanged', true);
+                  }}
+                />
+              </Form.Item>
+              <Form.Item label="Rows" className="mb-0 flex-1">
+                <InputNumber
+                  defaultValue={metric.rows}
+                  className="w-16"
+                  onChange={(value) => {
+                    metric.update({ rows: value });
+                    metric.updateKey('hasChanged', true);
+                  }}
+                />
+              </Form.Item>
+            </div>
+          </Form>
+          {/* <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              metric.update({ hideExcess: !metric.hideExcess });
+              // metric.updateKey('hasChanged', true);
+            }}
+          >
+            <Space>
+              <Switch checked={metric.hideExcess} size="small" />
+              <span className="mr-4 color-gray-medium">
+                {t('Group Minor Paths')}
+              </span>
+            </Space>
+          </a> */}
+        </>
       )}
 
       {metric.metricType === TIMESERIES && (

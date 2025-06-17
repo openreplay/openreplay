@@ -231,9 +231,9 @@ function FilterSeries(props: Props) {
       )}
 
       {expanded ? (
-        <>
+        <div className="bg-white rounded-xl border p-4">
           {removeEvents ? null : (
-            <div className="bg-white rounded-b-xl border p-4">
+            <>
               <FilterListHeader
                 title={'Events'}
                 showEventsOrder={
@@ -274,43 +274,43 @@ function FilterSeries(props: Props) {
               />
 
               <Divider className="my-2" />
-
-              <FilterListHeader
-                title={'Filters'}
-                showEventsOrder={
-                  series.filter.filters.map((f: any) => !f.isEvent).length > 0
-                }
-                filterSelection={
-                  <FilterSelection
-                    filters={propertyOptions}
-                    onFilterClick={(newFilter: Filter) => {
-                      onAddFilter(newFilter);
-                    }}
-                  >
-                    <Button type="default" size="small">
-                      <div className="flex items-center gap-1">
-                        <Plus size={16} strokeWidth={1} />
-                        <span>Add</span>
-                      </div>
-                    </Button>
-                  </FilterSelection>
-                }
-              />
-
-              <UnifiedFilterList
-                title="Filters"
-                filters={series.filter.filters.filter((f: any) => !f.isEvent)}
-                isDraggable={false}
-                showIndices={false}
-                className="mt-2"
-                handleRemove={onRemoveFilter}
-                handleUpdate={onUpdateFilter}
-                handleAdd={onAddFilter}
-                handleMove={onFilterMove}
-              />
-            </div>
+            </>
           )}
-        </>
+
+          <FilterListHeader
+            title={'Filters'}
+            showEventsOrder={
+              series.filter.filters.map((f: any) => !f.isEvent).length > 0
+            }
+            filterSelection={
+              <FilterSelection
+                filters={propertyOptions}
+                onFilterClick={(newFilter: Filter) => {
+                  onAddFilter(newFilter);
+                }}
+              >
+                <Button type="default" size="small">
+                  <div className="flex items-center gap-1">
+                    <Plus size={16} strokeWidth={1} />
+                    <span>Add</span>
+                  </div>
+                </Button>
+              </FilterSelection>
+            }
+          />
+
+          <UnifiedFilterList
+            title="Filters"
+            filters={series.filter.filters.filter((f: any) => !f.isEvent)}
+            isDraggable={false}
+            showIndices={false}
+            className="mt-2"
+            handleRemove={onRemoveFilter}
+            handleUpdate={onUpdateFilter}
+            handleAdd={onAddFilter}
+            handleMove={onFilterMove}
+          />
+        </div>
       ) : null}
     </div>
   );
