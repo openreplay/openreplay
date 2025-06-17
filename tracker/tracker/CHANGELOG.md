@@ -1,3 +1,7 @@
+## 16.4.0
+
+- better urgent flushing for pageclose events
+
 ## 16.3.0
 
 - optional dynamic css scanning for better emotionjs support
