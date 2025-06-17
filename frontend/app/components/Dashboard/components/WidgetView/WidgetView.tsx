@@ -14,6 +14,7 @@ import {
   INSIGHTS,
   USER_PATH,
   RETENTION,
+  WEBVITALS,
 } from 'App/constants/card';
 import WidgetViewHeader from 'Components/Dashboard/components/WidgetView/WidgetViewHeader';
 import WidgetFormNew from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
@@ -250,6 +251,7 @@ function WidgetView({
                   INSIGHTS,
                   FUNNEL,
                   USER_PATH,
+                  WEBVITALS,
                 ].includes(widget.metricType) ? (
                   <WidgetSessions />
                 ) : null)}

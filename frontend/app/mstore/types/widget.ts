@@ -20,6 +20,7 @@ import {
   TABLE,
   TIMESERIES,
   USER_PATH,
+  WEBVITALS,
 } from 'App/constants/card';
 import { ErrorInfo } from '../types/error';
 import { getChartFormatter } from 'Types/dashboard/helper';
@@ -368,6 +369,26 @@ export default class Widget {
       return data;
     }
 
+    if (this.metricType === WEBVITALS) {
+      const keys = ['P50', 'P75', 'P90', 'Avg', 'Min', 'Max'];
+      const categories = [
+        'domBuildingTime',
+        'firstContentfulPaintTime',
+        'speedIndex',
+        'ttfb',
+      ];
+      const result: any = { raw: data };
+      categories.forEach((category) => {
+        result[category] = {};
+        keys.forEach((key) => {
+          result[category][key] = data[`${category}${key}`];
+          result[category][`${key}Status`] = data[`${category}${key}Status`];
+        });
+      });
+      this.data = result;
+      return result;
+    }
+
     if (this.metricType === USER_PATH) {
       const _data = processData(data);
       Object.assign(this.data, _data);
@@ -399,7 +420,7 @@ export default class Widget {
       const vals = data[0]['values'].map((s: any) =>
         new SessionsByRow().fromJson(s, count, this.metricOf),
       );
-      _data['values'] = vals
+      _data['values'] = vals;
       _data['total'] = data[0]['total'];
     } else {
       if (data.hasOwnProperty('chart')) {
