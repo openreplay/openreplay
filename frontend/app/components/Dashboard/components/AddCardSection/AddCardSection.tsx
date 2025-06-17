@@ -13,6 +13,7 @@ import {
   Users,
   Globe,
   MonitorSmartphone,
+  Activity,
 } from 'lucide-react';
 import { Icon } from 'UI';
 import { useModal } from 'App/components/Modal';
@@ -23,6 +24,7 @@ import {
   TIMESERIES,
   USER_PATH,
   CATEGORIES,
+  WEBVITALS,
 } from 'App/constants/card';
 import { useHistory } from 'react-router-dom';
 import { dashboardMetricCreate, withSiteId, metricCreate } from 'App/routes';
@@ -90,6 +92,12 @@ export const tabItems: (t: TFunction) => Record<string, TabItem[]> = (t) => ({
       title: t('Slow Network Requests'),
       type: `${TIMESERIES}_slow_network_requests`,
       description: t('Pinpoint the slowest network requests causing delays.'),
+    },
+    {
+      icon: <Activity width={16} />,
+      title: t('Web Vitals'),
+      type: WEBVITALS,
+      description: t('Monitor key web performance metrics.'),
     },
   ],
   [CATEGORIES.web_analytics]: [
