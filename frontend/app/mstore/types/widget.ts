@@ -365,7 +365,7 @@ export default class Widget {
         this.data = defaults;
       }
       Object.assign(this.data, data);
-      return;
+      return data;
     }
 
     if (this.metricType === USER_PATH) {

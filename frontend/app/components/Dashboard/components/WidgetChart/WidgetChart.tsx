@@ -55,7 +55,7 @@ function WidgetChart(props: Props) {
   const { isSaved = false, metric, isTemplate } = props;
   const { dashboardStore, metricStore } = useStore();
   const _metric: any = props.isPreview ? metricStore.instance : props.metric;
-  const { data } = _metric;
+  const [data, setData] = useState(_metric.data ?? { chart: [] });
   const { period } = dashboardStore;
   const { drillDownPeriod } = dashboardStore;
   const { drillDownFilter } = dashboardStore;
@@ -158,8 +158,12 @@ function WidgetChart(props: Props) {
     }, 4000);
     dashboardStore
       .fetchMetricChartData(metric, payload, isSaved, period, isComparison)
-      .then((res: any) => {
-        if (isComparison) setCompData(res);
+      .then((res) => {
+        if (isComparison) {
+          setCompData(res);
+        } else {
+          setData(res);
+        }
         clearTimeout(tm);
         setStale(false);
       })
