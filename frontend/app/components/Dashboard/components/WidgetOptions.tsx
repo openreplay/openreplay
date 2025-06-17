@@ -47,31 +47,51 @@ function WidgetOptions() {
           <Form layout="horizontal">
             <div className="flex space-x-8 items-center">
               <Form.Item label="Steps Before" className="mb-0 flex-1">
-                <InputNumber
-                  defaultValue={metric.stepsBefore}
-                  className="w-16"
-                  onChange={(value) => {
-                    metric.update({ stepsBefore: value });
+                <Select
+                  value={metric.stepsBefore}
+                  style={{ width: 64 }}
+                  onChange={(before) => {
+                    let after = metric.stepsAfter;
+                    if (before + after > 5) after = 5 - before;
+                    metric.update({ stepsBefore: before, stepsAfter: after });
                     metric.updateKey('hasChanged', true);
                   }}
-                />
+                >
+                  {[0, 1, 2, 3, 4, 5].map((n) => (
+                    <Select.Option key={n} value={n}>
+                      {n}
+                    </Select.Option>
+                  ))}
+                </Select>
               </Form.Item>
+
               <Form.Item label="Steps After" className="mb-0 flex-1">
-                <InputNumber
-                  defaultValue={metric.stepsAfter}
-                  className="w-16"
-                  onChange={(value) => {
-                    metric.update({ stepsAfter: value });
+                <Select
+                  value={metric.stepsAfter}
+                  style={{ width: 64 }}
+                  onChange={(after) => {
+                    let before = metric.stepsBefore;
+                    if (before + after > 5) before = 5 - after;
+                    metric.update({ stepsBefore: before, stepsAfter: after });
                     metric.updateKey('hasChanged', true);
                   }}
-                />
+                >
+                  {[0, 1, 2, 3, 4, 5].map((n) => (
+                    <Select.Option key={n} value={n}>
+                      {n}
+                    </Select.Option>
+                  ))}
+                </Select>
               </Form.Item>
+
               <Form.Item label="Rows" className="mb-0 flex-1">
                 <InputNumber
                   defaultValue={metric.rows}
                   className="w-16"
-                  onChange={(value) => {
-                    metric.update({ rows: value });
+                  min={2}
+                  max={60}
+                  onChange={(rows) => {
+                    metric.update({ rows });
                     metric.updateKey('hasChanged', true);
                   }}
                 />

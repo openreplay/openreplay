@@ -146,12 +146,7 @@ function FilterItem(props: Props) {
     return () => {
       isMounted = false; // Cleanup on unmount
     };
-  }, [filter.name, filter.isEvent, isSubItem, filterStore]); //
-
-  // const isUserEvent = useMemo(
-  //   () => filter.isEvent && !filter.autoCaptured,
-  //   [filter.isEvent, filter.autoCaptured],
-  // );
+  }, [filter.name, filter.isEvent, isSubItem, filterStore]);
 
   const canShowValues = useMemo(
     () =>
