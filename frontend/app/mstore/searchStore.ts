@@ -114,7 +114,7 @@ class SearchStore {
     suspicious: false,
     consoleLevel: '',
     strict: true,
-    eventsOrder: 'start',
+    eventsOrder: 'then',
   });
   savedSearch: ISavedSearch = new SavedSearch();
   filterSearchList: any = {};
@@ -480,7 +480,7 @@ class SearchStore {
         {
           ...filter,
           page: this.currentPage,
-          perPage: this.pageSize,
+          limit: this.pageSize,
           tab: this.activeTab.type,
           bookmarked: bookmarked ? true : undefined,
         },

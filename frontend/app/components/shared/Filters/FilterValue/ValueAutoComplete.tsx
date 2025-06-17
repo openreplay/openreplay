@@ -94,7 +94,6 @@ const ValueAutoComplete = observer(
     }, [initialValues]);
 
     useEffect(() => {
-      console.log('params', params);
       if (!params.isEvent && filterKey && !filterStore.topValues[filterKey]) {
         setLoadingTopValues(true);
         filterStore

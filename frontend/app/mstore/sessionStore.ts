@@ -17,6 +17,7 @@ import { filterMap } from 'App/mstore/searchStore';
 import { getDateRangeFromValue } from 'App/dateRange';
 import { searchStore, searchStoreLive } from './index';
 import { checkEventWithFilters } from '@/components/Session_/Player/Controls/checkEventWithFilters';
+import { metricService } from 'App/services';
 const range = getDateRangeFromValue(LAST_7_DAYS);
 
 const defaultDateFilters = {
@@ -201,8 +202,10 @@ export default class SessionStore {
 
   userTimezone = '';
 
-  prefetchedMobUrls: Record<string, { data: Uint8Array; entryNum: number, fileKey?: string }> =
-    {};
+  prefetchedMobUrls: Record<
+    string,
+    { data: Uint8Array; entryNum: number; fileKey?: string }
+  > = {};
 
   prefetched: boolean = false;
 
@@ -237,7 +240,11 @@ export default class SessionStore {
     );
   };
 
-  setPrefetchedMobUrl = (sessionId: string, fileData: Uint8Array, fileKey?: string) => {
+  setPrefetchedMobUrl = (
+    sessionId: string,
+    fileData: Uint8Array,
+    fileKey?: string,
+  ) => {
     const keys = Object.keys(this.prefetchedMobUrls);
     const toLimit = 10 - keys.length;
     if (toLimit < 0) {
@@ -333,6 +340,21 @@ export default class SessionStore {
     this.clearCurrentSession();
   };
 
+  fetchSessionInfo = async (sessionId: string) => {
+    this.loadingSessions = true;
+    try {
+      const data = await sessionService.getSessionInfo(sessionId);
+      return data;
+    } catch (e) {
+      console.error(e);
+      return Promise.reject(e);
+    } finally {
+      runInAction(() => {
+        this.loadingSessions = false;
+      });
+    }
+  };
+
   fetchSessionData = async (sessionId: string, isLive = false) => {
     try {
       const filter = isLive ? searchStoreLive.instance : searchStore.instance;
@@ -345,7 +367,10 @@ export default class SessionStore {
           ...evData,
           events: evData.events.map((e) => ({
             ...e,
-            isHighlighted: checkEventWithFilters(e, searchStore.instance.filters)
+            isHighlighted: checkEventWithFilters(
+              e,
+              searchStore.instance.filters,
+            ),
           })),
         });
       } catch (e) {
@@ -535,9 +560,14 @@ export default class SessionStore {
     this.timezone = tz;
   };
 
-  fetchInsights = async (params = {}) => {
+  fetchInsights = async (metric, params = {}, isSaved = false) => {
     try {
-      const data = await sessionService.getClickMap(params);
+      // const data = await sessionService.getClickMap(params);
+      const data = await metricService.getMetricChartData(
+        metric,
+        params,
+        isSaved,
+      );
       this.insights = data.sort((a: any, b: any) => b.count - a.count);
     } catch (e) {
       console.error(e);

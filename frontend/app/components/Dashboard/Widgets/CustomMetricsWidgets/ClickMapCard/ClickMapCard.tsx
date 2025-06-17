@@ -18,9 +18,9 @@ function ClickMapCard() {
 
   const { sessionId } = metricStore.instance.data;
   const url = metricStore.instance.data.path;
-  const operator = metricStore.instance.series[0]?.filter.filters[0]?.operator
-    ? metricStore.instance.series[0].filter.filters[0].operator
-    : 'startsWith';
+  // const operator = metricStore.instance.series[0]?.filter.filters[0]?.operator
+  //   ? metricStore.instance.series[0].filter.filters[0].operator
+  //   : 'startsWith';
 
   React.useEffect(() => () => setCustomSession(null), []);
 
@@ -38,21 +38,19 @@ function ClickMapCard() {
   }, [metricStore.instance, sessionId]);
 
   React.useEffect(() => {
-    if (!url || !sessionId) return;
-    const { rangeValue } = dashboardStore.drillDownPeriod;
-    const startDate = dashboardStore.drillDownPeriod.start;
-    const endDate = dashboardStore.drillDownPeriod.end;
-    void fetchInsights({
-      url: url || '/',
-      startDate,
-      endDate,
-      rangeValue,
-      clickRage: metricStore.clickMapFilter,
-      operator,
-    });
+    if (!sessionId) return;
+
+    const metric = metricStore.instance;
+    const payload = {
+      ...metric.toJson(),
+      ...dashboardStore.period.toTimestamps(),
+      metricType: 'heatmaps_session',
+      limit: 1000,
+    };
+
+    void fetchInsights(metric, payload);
   }, [
     sessionId,
-    url,
     dashboardStore.drillDownPeriod.start,
     dashboardStore.drillDownPeriod.end,
     dashboardStore.drillDownPeriod.rangeValue,
@@ -80,12 +78,12 @@ function ClickMapCard() {
     return <div className="py-2">{t('Loading session')}</div>;
   }
 
-  const jumpToEvent = metricStore.instance.data.events.find(
-    (evt: Record<string, any>) => {
-      if (url) return evt.path.includes(url);
-      return evt;
-    },
-  ) || { timestamp: metricStore.instance.data.startTs };
+  const jumpToEvent = {
+    timestamp:
+      metricStore.instance.data.eventTimestamp ||
+      metricStore.instance.data.startTs,
+    domBuildingTime: metricStore.instance.data.domBuildingTime || 0,
+  };
   const ts = jumpToEvent.timestamp ?? metricStore.instance.data.startTs;
   const domTime = jumpToEvent.domBuildingTime ?? 0;
   const jumpTimestamp = ts - metricStore.instance.data.startTs + domTime + 99; // 99ms safety margin to give some time for the DOM to load
