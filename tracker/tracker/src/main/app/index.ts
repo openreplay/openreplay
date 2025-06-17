@@ -726,16 +726,24 @@ export default class App {
         this.handleWorkerMsg(data)
       }
 
+      let closing = false;
       const alertWorker = () => {
+        if (closing) {
+          return
+        }
+        closing = true
+        setTimeout(() => {
+          closing = false
+        }, 500)
+
         if (this.worker) {
-          this.worker.postMessage(null)
+          this.worker.postMessage('closing')
         }
       }
-      // keep better tactics, discard others?
-      this.attachEventListener(window, 'beforeunload', alertWorker, false)
       this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false)
+      this.attachEventListener(window, 'pagehide', alertWorker, false, false)
       // TODO: stop session after inactivity timeout (make configurable)
-      this.attachEventListener(document, 'visibilitychange', alertWorker, false)
+      this.attachEventListener(document, 'visibilitychange', (e) => document.visibilityState === 'hidden' && alertWorker(), false)
     } catch (e) {
       this._debug('worker_start', e)
     }
