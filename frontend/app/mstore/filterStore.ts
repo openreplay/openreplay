@@ -54,12 +54,24 @@ export default class FilterStore {
     this.initCommonFilters();
   }
 
-  getEventOptions = (siteId: string): FilterOption[] => {
+  // getEventOptions = (siteId: string): FilterOption[] => {
+  //   return this.getFilters(siteId)
+  //     .filter((filter: Filter) => filter.isEvent)
+  //     .map((filter: Filter) => ({
+  //       label: filter.displayName || filter.name,
+  //       value: filter.name,
+  //     }));
+  // };
+
+  getEventOptions = (
+    siteId: string,
+    filterFn?: (filter: Filter) => boolean,
+  ): FilterOption[] => {
     return this.getFilters(siteId)
-      .filter((filter: Filter) => filter.isEvent)
-      .map((filter: Filter) => ({
-        label: filter.displayName || filter.name,
-        value: filter.name,
+      .filter((f) => f.isEvent && (!filterFn || filterFn(f)))
+      .map((f) => ({
+        label: f.displayName || f.name,
+        value: f.name,
       }));
   };
 
