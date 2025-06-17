@@ -29,6 +29,7 @@ export type ToWorkerData =
   | { type: 'compressed'; batch: Uint8Array }
   | { type: 'uncompressed'; batch: Uint8Array }
   | 'forceFlushBatch'
+  | 'closing'
   | 'check_queue'
 
 type Failure = {

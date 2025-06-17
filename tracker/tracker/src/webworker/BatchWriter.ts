@@ -11,6 +11,7 @@ export default class BatchWriter {
   private encoder = new MessageEncoder(this.beaconSize)
   private readonly sizeBuffer = new Uint8Array(SIZE_BYTES)
   private isEmpty = true
+  private checkpoints: number[] = []
 
   constructor(
     private readonly pageNo: number,
@@ -41,6 +42,8 @@ export default class BatchWriter {
     if (!this.encoder.isEmpty) {
       return
     }
+
+    this.checkpoints.length = 0
 
     // MBTODO: move service-messages creation methods to webworker
     const batchMetadata: Messages.BatchMetadata = [
@@ -81,6 +84,7 @@ export default class BatchWriter {
       this.writeSizeAt(size, startOffset - SIZE_BYTES)
 
       e.checkpoint()
+      this.checkpoints.push(e.getCurrentOffset())
       this.isEmpty = this.isEmpty && message[0] === Messages.Type.Timestamp
       this.nextIndex++
     }
@@ -135,7 +139,24 @@ export default class BatchWriter {
     this.prepare()
   }
 
+  finaliseLimitedBatch(limit: number): Uint8Array | null {
+    if (this.isEmpty) {
+      return null
+    }
+    const batch = this.encoder.flush()
+    let cutoff = batch.length
+    for (let i = this.checkpoints.length - 1; i >= 0; i--) {
+      if (this.checkpoints[i] <= limit) {
+        cutoff = this.checkpoints[i]
+        break
+      }
+    }
+    this.prepare()
+    return batch.slice(0, cutoff)
+  }
+
   clean() {
     this.encoder.reset()
+    this.checkpoints.length = 0
   }
 }
