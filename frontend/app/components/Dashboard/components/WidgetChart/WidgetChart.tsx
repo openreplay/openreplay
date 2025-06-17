@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import LineChart from 'App/components/Charts/LineChart';
-import BarChart from 'App/components/Charts/BarChart';
-import PieChart from 'App/components/Charts/PieChart';
+import LineChart from 'Components/Charts/LineChart';
+import BarChart from 'Components/Charts/BarChart';
+import PieChart from 'Components/Charts/PieChart';
 import SankeyChart from 'Components/Charts/SankeyChart';
+import ColumnChart from 'Components/Charts/ColumnChart';
 
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
