@@ -213,7 +213,10 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   //
   const { filterStore } = useStore();
   const metricValueOptions = useMemo(() => {
-    return filterStore.getEventOptions(projectStore?.activeSiteId + '');
+    return filterStore.getEventOptions(
+      projectStore?.activeSiteId + '',
+      (f) => f.autoCaptured && f.name !== 'PERFORMANCE',
+    );
   }, []);
 
   const onPointChange = (value: any) => {
