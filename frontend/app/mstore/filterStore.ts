@@ -127,6 +127,32 @@ export default class FilterStore {
     return `${params.siteId}_${params.id}${params.source || ''}`;
   };
 
+  findEvent = (data: Partial<Filter>) => {
+    const siteId = projectStore.activeSiteId?.toString();
+    const filter = this.filters[siteId].find((filter: Filter) =>
+      Object.entries(data).every(([key, value]) => {
+        const prop = filter[key as keyof Filter];
+        if (typeof prop === 'boolean' && typeof value === 'string') {
+          return prop === (value.toLowerCase() === 'true');
+        }
+        if (typeof prop === 'number' && typeof value === 'string') {
+          return prop === Number(value);
+        }
+        return prop === value;
+      }),
+    );
+
+    filter.filters =
+      filter.filters?.filter((f: any) => f.defaultProperty) || [];
+
+    return new FilterItem(filter);
+  };
+
+  // findDefaultProperty = (filterId: string): Filter | undefined => {
+  //   // const options = await filterStore.getEventFilters(filter.id);
+
+  // };
+
   private findFilterById = (id: string): Filter | undefined => {
     const siteId = projectStore.activeSiteId + '';
     const search = (filtersToSearch: Filter[]): Filter | undefined => {
@@ -181,7 +207,7 @@ export default class FilterStore {
     this.pendingFetches = {};
   };
 
-  processFilters = (filters: any[], category?: string): Filter[] => {
+  processFilters = (filters: any[], category?: string): FilterItem[] => {
     return filters.map((filter) => ({
       ...filter,
       id: Math.random().toString(36).substring(2, 9),

@@ -18,6 +18,7 @@ import { observer } from 'mobx-react-lite';
 import FilterItem from 'Shared/Filters/FilterItem';
 import { FilterCategory } from 'Types/filter/filterType';
 import { useTranslation } from 'react-i18next';
+import ExcludeFilters from '../FilterSeries/ExcludeFilters';
 
 const getExcludedKeys = (metricType: string) => {
   switch (metricType) {
@@ -122,6 +123,8 @@ const FilterSection = observer(
     const allCollapsed = Object.values(seriesCollapseState).every((v) => v);
     return (
       <>
+        {isPathAnalysis && <ExcludeFilters metric={metric} />}
+
         {metric.series.length > 0 &&
           metric.series
             .slice(0, isSingleSeries ? 1 : metric.series.length)
@@ -260,28 +263,31 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
             </div>
           </div>
         </Form.Item>
-        <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-2 pt-1">
-          <div className="flex flex-wrap items-start justify-start">
-            <span className="font-medium mr-2">
-              {t('Start Point')}
-              {/* {metric.startType === 'start' ? t('Start Point') : t('End Point')} */}
-            </span>
-            <span className="font-normal">
-              <FilterItem
-                hideDelete
-                filter={metric.startPoint}
-                // allowedFilterKeys={[
-                //   FilterKey.LOCATION,
-                //   FilterKey.CLICK,
-                //   FilterKey.INPUT,
-                //   FilterKey.CUSTOM,
-                // ]}
-                onUpdate={(val) => metric.updateStartPoint(val)}
-                onRemoveFilter={() => {}}
-              />
-            </span>
-          </div>
-        </Form.Item>
+
+        {metric.startPoint && (
+          <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-2 pt-1">
+            <div className="flex flex-wrap items-start justify-start">
+              <span className="font-medium mr-2">
+                {t('Start Point')}
+                {/* {metric.startType === 'start' ? t('Start Point') : t('End Point')} */}
+              </span>
+              <span className="font-normal">
+                <FilterItem
+                  hideDelete
+                  filter={metric.startPoint}
+                  // allowedFilterKeys={[
+                  //   FilterKey.LOCATION,
+                  //   FilterKey.CLICK,
+                  //   FilterKey.INPUT,
+                  //   FilterKey.CUSTOM,
+                  // ]}
+                  onUpdate={(val) => metric.updateStartPoint(val)}
+                  onRemoveFilter={() => {}}
+                />
+              </span>
+            </div>
+          </Form.Item>
+        )}
       </div>
     </div>
   );

@@ -163,12 +163,12 @@ function WidgetSessions(props: Props) {
       }
       if (widget.metricType === USER_PATH) {
         if (
-          seriesJson[0].filter.filters[0].value[0] === '' &&
+          seriesJson[0].filter.filters[0]?.value[0] === '' &&
           widget.data.nodes?.length
         ) {
           seriesJson[0].filter.filters[0].value = widget.data.nodes[0].name;
         } else if (
-          seriesJson[0].filter.filters[0].value[0] === '' &&
+          seriesJson[0].filter.filters[0]?.value[0] === '' &&
           !widget.data.nodes?.length
         ) {
           // no point requesting if we don't have starting point picked by api

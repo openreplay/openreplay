@@ -53,7 +53,8 @@ function WidgetView({
 }: Props) {
   const { t } = useTranslation();
   const [layout, setLayout] = useState(getDefaultState);
-  const { metricStore, dashboardStore, settingsStore } = useStore();
+  const { metricStore, dashboardStore, settingsStore, filterStore } =
+    useStore();
   const widget = metricStore.instance;
   const loading = metricStore.isLoading;
   const [expanded] = useState(!metricId || metricId === 'create');
@@ -102,6 +103,17 @@ function WidgetView({
             cardData.series[0].filter.addFunnelDefaultFilters();
             cardData.series[0].filter.eventsOrder = 'then';
             cardData.series[0].filter.eventsOrderSupport = ['then'];
+          }
+
+          if (selectedCard.cardType === USER_PATH) {
+            // cardData.excludes = [];
+
+            const f = filterStore.findEvent({
+              name: FilterKey.LOCATION,
+              autoCaptured: true,
+            });
+
+            cardData.startPoint = f;
           }
           metricStore.merge(cardData);
         }

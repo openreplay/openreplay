@@ -29,6 +29,7 @@ import { filtersMap } from 'Types/filter/newFilter';
 import Issue from '../types/issue';
 import { durationFormatted } from 'App/date';
 import { SessionsByRow } from './sessionsCardData';
+import { filterStore } from 'App/mstore';
 
 export class InsightIssue {
   icon: string;
@@ -104,19 +105,7 @@ export default class Widget {
   stepsAfter: number = 5; // specific to user journey
   rows: number = 5;
   columns: number = 4;
-  startPoint: FilterItem = new FilterItem({
-    name: 'REQUEST',
-    isEvent: true,
-    autoCaptured: true,
-    filters: [
-      {
-        name: 'url',
-        value: [''],
-        operator: 'isAny',
-        dataType: 'string',
-      },
-    ],
-  });
+  startPoint: FilterItem | null = null;
   excludes: FilterItem[] = [];
   hideExcess?: boolean = true;
   compareTo: [startDate?: string, endDate?: string] | null = null;
@@ -146,6 +135,15 @@ export default class Widget {
 
     const filterSeries = new FilterSeries();
     this.series.push(filterSeries);
+
+    // if (this.metricType === USER_PATH) {
+    //   const f = filterStore.findEvent({
+    //     name: FilterKey.LOCATION,
+    //     autoCaptured: true,
+    //   });
+
+    //   this.updateStartPoint(f);
+    // }
   }
 
   updateKey(key: string, value: any) {
@@ -239,12 +237,17 @@ export default class Widget {
           }
         }
 
+        this.excludes =
+          Array.isArray(json.excludes) && json.excludes.length > 0
+            ? [new FilterItem().fromJson(json.excludes[0])]
+            : [];
+
         // TODO change this to excludes after the api change
-        if (json.exclude) {
-          this.series[0].filter.excludes = json.exclude.map((i: any) =>
-            new FilterItem().fromJson(i),
-          );
-        }
+        // if (json.excludes) {
+        //   this.series[0].filter.excludes = json.excludes.map((i: any) =>
+        //     new FilterItem().fromJson(i),
+        //   );
+        // }
       }
 
       if (period) {
@@ -302,7 +305,7 @@ export default class Widget {
     if (this.metricType === USER_PATH) {
       data.hideExcess = this.hideExcess;
       data.startType = this.startType;
-      data.startPoint = [this.startPoint.toJson()];
+      data.startPoint = this.startPoint ? [this.startPoint.toJson()] : [];
       data.excludes = this.series[0].filter.excludes.map((i: any) =>
         i.toJson(),
       );
@@ -314,6 +317,27 @@ export default class Widget {
   updateStartPoint(startPoint: any) {
     runInAction(() => {
       this.startPoint = new FilterItem(startPoint);
+      this.hasChanged = true;
+    });
+  }
+
+  updateExcludes(excludes: any[]) {
+    runInAction(() => {
+      this.excludes = excludes.map((i: any) => new FilterItem(i));
+      this.hasChanged = true;
+    });
+  }
+
+  updateExcludeByIndex(index: number, exclude: any) {
+    runInAction(() => {
+      this.excludes[index] = new FilterItem(exclude);
+      this.hasChanged = true;
+    });
+  }
+
+  removeExcludeByIndex(index: number) {
+    runInAction(() => {
+      this.excludes.splice(index, 1);
       this.hasChanged = true;
     });
   }
