@@ -1,6 +1,8 @@
 import React from 'react';
 import cn from 'classnames';
 import { Select } from 'antd';
+import Filter from 'App/mstore/types/filter';
+import { FilterKey } from '@/types/filter/filterType';
 
 interface Stats {
   Min: number;
@@ -22,6 +24,7 @@ interface WVData {
   ttfb: Stats;
   speedIndex: Stats;
   firstContentfulPaintTime: Stats;
+  raw?: any;
 }
 
 const defaultStats = {
@@ -45,11 +48,17 @@ const defaults = {
   firstContentfulPaintTime: defaultStats,
 } as const;
 
-function WebVitals({ data }: { data?: Partial<WVData> | null }) {
+function WebVitals({
+  data,
+  onFocus,
+}: {
+  data?: Partial<WVData> | null;
+  onFocus?: (filters: any[]) => void;
+}) {
   const [mode, setMode] = React.useState<'P50' | 'P75' | 'Min' | 'Avg' | 'Max'>(
     'P50',
   );
-  console.log(data, defaults);
+
   const webVitalsData: WVData = {
     domBuildingTime: {
       ...defaults.domBuildingTime,
@@ -94,6 +103,36 @@ function WebVitals({ data }: { data?: Partial<WVData> | null }) {
       status: webVitalsData.firstContentfulPaintTime[`${mode}Status`],
     },
   ];
+
+  const onMetricClick = (
+    metricName:
+      | 'domBuildingTime'
+      | 'ttfb'
+      | 'speedIndex'
+      | 'firstContentfulPaintTime',
+    status: 'good' | 'medium' | 'bad',
+  ) => {
+    if (!data) return;
+    const filterKeys = {
+      domBuildingTime: FilterKey.DOM_COMPLETE,
+      ttfb: FilterKey.TTFB,
+      speedIndex: FilterKey.SPEED_LOCATION, // !
+      firstContentfulPaintTime: FilterKey.AVG_DOM_CONTENT_LOADED, // !
+    };
+    const fInst = new Filter();
+    const upCaseStatus = status.charAt(0).toUpperCase() + status.slice(1);
+    const filters = [];
+    console.log(data);
+    const keys = data.raw[`${metricName}${upCaseStatus}`]; // [start, end?];
+    keys.forEach((key: string, i: number) => {
+      const operator = i > 0 ? '<=' : '>=';
+      fInst.addFilterByKeyAndValue(filterKeys[metricName], key, operator);
+    });
+    filters.push(...fInst.filters);
+
+    console.log(filters);
+    // onFocus?.(filters);
+  };
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-between items-center">
@@ -122,6 +161,7 @@ function WebVitals({ data }: { data?: Partial<WVData> | null }) {
             value={metric.value}
             description={metric.description}
             status={metric.status}
+            onClick={onMetricClick}
           />
         ))}
       </div>
@@ -140,11 +180,13 @@ function WebVitalsCard({
   value,
   description,
   status,
+  onClick,
 }: {
   name: string;
   value: number;
   description: string;
   status: 'good' | 'medium' | 'bad';
+  onClick: (metricName: string, status: 'good' | 'medium' | 'bad') => void;
 }) {
   const bg = colors[status];
   const valueFormatted =
@@ -153,8 +195,9 @@ function WebVitalsCard({
     <div
       className={cn(
         'flex justify-between items-start gap-2 p-4 border rounded-lg shadow-sm',
-        `bg-${bg}`,
+        `bg-${bg} cursor-pointer`,
       )}
+      onClick={() => onClick(name, status)}
     >
       <div>
         <div className="text-lg font-semibold">{name}</div>

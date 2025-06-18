@@ -235,9 +235,9 @@ export default class Filter implements IFilter {
   addFilterByKeyAndValue(
     key: any,
     value: any,
-    operator: undefined,
-    sourceOperator: undefined,
-    source: undefined,
+    operator?: string,
+    sourceOperator?: string,
+    source?: any,
   ) {
     let defaultFilter = { ...filtersMap[key] };
     if (defaultFilter) {

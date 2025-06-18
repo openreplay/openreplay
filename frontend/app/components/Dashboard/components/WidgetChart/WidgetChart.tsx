@@ -112,7 +112,7 @@ function WidgetChart(props: Props) {
   const onChartClick = (event: any) => {
     metricStore.setDrillDown(true);
     if (event) {
-      if (isTableWidget || isPieChart) {
+      if (Array.isArray(event)) {
         // get the filter of clicked row
         const periodTimestamps = drillDownPeriod.toTimestamps();
         drillDownFilter.merge({
@@ -579,7 +579,7 @@ function WidgetChart(props: Props) {
       }
     }
     if (metricType === WEBVITALS) {
-      return <WebVitalsChart data={data} />;
+      return <WebVitalsChart data={data} onFocus={onChartClick} />;
     }
     console.log('Unknown metric type', metricType);
     return <div>{t('Unknown metric type')}</div>;
