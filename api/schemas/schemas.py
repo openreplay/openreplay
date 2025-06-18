@@ -740,8 +740,10 @@ class SessionSearchFilterSchema(BaseModel):
         else:
             if SearchEventOperator.has_value(self.operator):
                 self.operator = SearchEventOperator(self.operator)
+            elif MathOperator.has_value(self.operator):
+                self.operator = MathOperator(self.operator)
             else:
-                raise ValueError(f"operator should be of type SearchEventOperator for {self.type} filter")
+                raise ValueError(f"operator should be of type SearchEventOperator or MathOperator for {self.type} filter")
 
         return self
 
