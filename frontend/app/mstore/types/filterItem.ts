@@ -105,6 +105,22 @@ export default class FilterItem {
       // @ts-ignore
       _filter = subFilterMap[json.type];
     }
+    if (!_filter) {
+      console.warn(
+        `Filter ${JSON.stringify(json)} not found in filtersMap. Using default filter.`,
+      );
+      _filter = {
+        type: json.type,
+        key: json.type,
+        label: json.type,
+        operatorOptions: [],
+        hasSource: false,
+        value: json.value ?? [''],
+        category: FilterCategory.METADATA,
+        subCategory: '',
+        sourceOperatorOptions: [],
+      };
+    }
     this.type = _filter.type;
     this.key = _filter.key;
     this.label = _filter.label;
