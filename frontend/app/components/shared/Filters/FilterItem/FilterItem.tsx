@@ -158,10 +158,10 @@ function FilterItem(props: Props) {
     [filter.operator],
   );
 
-  const isReversed = useMemo(
-    () => filter.key === FilterKey.TAGGED_ELEMENT,
-    [filter.key],
-  );
+  // const isReversed = useMemo(
+  //   () => filter.key === FilterKey.TAGGED_ELEMENT,
+  //   [filter.key],
+  // );
 
   const replaceFilter = useCallback(
     (selectedFilter: any) => {

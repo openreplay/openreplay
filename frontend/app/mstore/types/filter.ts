@@ -61,7 +61,7 @@ export interface IFilterStore {
 
   toJson(): JsonData;
 
-  addExcludeFilter(filterData: FilterData): void;
+  addExcludeFilter(filterData: FilterItem): void;
 
   updateExcludeFilter(filterId: string, filterData: FilterData): void;
 
@@ -282,10 +282,7 @@ export default class FilterStore implements IFilterStore {
         ? filterStore.processFilters(data.filters)
         : [];
       this.excludes = Array.isArray(data.excludes)
-        ? data.excludes.map(
-            (filterData: JsonData) => this.createFilterItemFromData(filterData),
-            // new FilterItem(undefined, this.isConditional, this.isMobile).fromData(filterData)
-          )
+        ? filterStore.processFilters(data.excludes)
         : [];
       this.eventsOrder = data.eventsOrder ?? 'then';
       this.startTimestamp = data.startTimestamp ?? 0;
@@ -334,9 +331,34 @@ export default class FilterStore implements IFilterStore {
     };
   }
 
-  addExcludeFilter(filterData: FilterData) {
-    const newExclude = this.createFilterItemFromData(filterData);
-    this.excludes.push(newExclude);
+  addExcludeFilter(filterData: FilterItem) {
+    // const filter = filterStore.findEvent({
+    //   name: FilterKey.LOCATION,
+    //   autoCaptured: true,
+    // });
+
+    // if (!filter) {
+    //   console.error('FilterStore.addExcludeFilter: Location filter not found.');
+    //   return;
+    // }
+
+    // console.log('f', filter);
+    // // const newExclude = this.createFilterItemFromData(filterData);
+    // this.excludes.push(
+    //   new FilterItem({
+    //     ...filter,
+    //     filters: [
+    //       {
+    //         name: 'label',
+    //         value: [''],
+    //         operator: 'is',
+    //         dataType: 'string',
+    //       },
+    //     ],
+    //   }),
+    // );
+    //
+    this.excludes = [filterData];
   }
 
   updateExcludeFilter(filterId: string, filterData: FilterData) {
@@ -353,14 +375,15 @@ export default class FilterStore implements IFilterStore {
   }
 
   removeExcludeFilter(filterId: string) {
-    const index = this.excludes.findIndex((f) => f.id === filterId);
-    if (index > -1) {
-      this.excludes.splice(index, 1);
-    } else {
-      console.warn(
-        `FilterStore.removeExcludeFilter: Exclude filter with id ${filterId} not found.`,
-      );
-    }
+    this.excludes = [];
+    // const index = this.excludes.findIndex((f) => f.id === filterId);
+    // if (index > -1) {
+    //   this.excludes.splice(index, 1);
+    // } else {
+    //   console.warn(
+    //     `FilterStore.removeExcludeFilter: Exclude filter with id ${filterId} not found.`,
+    //   );
+    // }
   }
 
   addFunnelDefaultFilters() {

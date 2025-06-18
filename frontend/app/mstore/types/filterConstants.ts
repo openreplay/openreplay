@@ -29,6 +29,8 @@ export interface Filter {
   filters?: Filter[];
   autoOpen?: boolean;
   defaultProperty?: boolean;
+
+  toJSON(): JsonData;
 }
 
 export const OPERATORS = {
