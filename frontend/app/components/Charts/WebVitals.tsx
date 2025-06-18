@@ -1,8 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { Select } from 'antd';
-import Filter from 'App/mstore/types/filter';
-import { FilterKey } from '@/types/filter/filterType';
+import { X } from 'lucide-react';
 
 interface Stats {
   Min: number;
@@ -55,6 +54,7 @@ function WebVitals({
   data?: Partial<WVData> | null;
   onFocus?: (filters: any[]) => void;
 }) {
+  const [selectedCard, setSelectedCard] = React.useState<string | null>(null);
   const [mode, setMode] = React.useState<'P50' | 'P75' | 'Min' | 'Avg' | 'Max'>(
     'P50',
   );
@@ -80,24 +80,28 @@ function WebVitals({
   const metrics = [
     {
       name: 'DOM',
+      metricKey: 'domBuildingTime',
       value: webVitalsData.domBuildingTime[mode],
       description: 'DOM Complete',
       status: webVitalsData.domBuildingTime[`${mode}Status`],
     },
     {
       name: 'TTFB',
+      metricKey: 'ttfb',
       value: webVitalsData.ttfb[mode],
       description: 'Time to First Byte',
       status: webVitalsData.ttfb[`${mode}Status`],
     },
     {
       name: 'SI',
+      metricKey: 'speedIndex',
       value: webVitalsData.speedIndex[mode],
       description: 'Speed Index',
       status: webVitalsData.speedIndex[`${mode}Status`],
     },
     {
       name: 'FCP',
+      metricKey: 'firstContentfulPaintTime',
       value: webVitalsData.firstContentfulPaintTime[mode],
       description: 'First Contentful Paint',
       status: webVitalsData.firstContentfulPaintTime[`${mode}Status`],
@@ -109,34 +113,58 @@ function WebVitals({
       | 'domBuildingTime'
       | 'ttfb'
       | 'speedIndex'
-      | 'firstContentfulPaintTime',
+      | 'firstContentfulPaintTime'
+      | null,
     status: 'good' | 'medium' | 'bad',
   ) => {
     if (!data) return;
-    const filterKeys = {
-      domBuildingTime: FilterKey.DOM_COMPLETE,
-      ttfb: FilterKey.TTFB,
-      speedIndex: FilterKey.SPEED_LOCATION, // !
-      firstContentfulPaintTime: FilterKey.AVG_DOM_CONTENT_LOADED, // !
-    };
-    const fInst = new Filter();
+    if (metricName === selectedCard || metricName === null) {
+      setSelectedCard(null);
+      onFocus?.([]);
+      return;
+    }
     const upCaseStatus = status.charAt(0).toUpperCase() + status.slice(1);
-    const filters = [];
-    console.log(data);
+    const filters: any[] = [];
     const keys = data.raw[`${metricName}${upCaseStatus}`]; // [start, end?];
+    const filterKey = data.raw[`${metricName}Key`];
     keys.forEach((key: string, i: number) => {
       const operator = i > 0 ? '<=' : '>=';
-      fInst.addFilterByKeyAndValue(filterKeys[metricName], key, operator);
+      const fValue = [key];
+      let filter = {
+        autoCaptured: true,
+        type: filterKey,
+        operator: operator,
+        isEvent: false,
+        hasSource: true,
+        sourceOperator: operator,
+        value: fValue,
+      };
+      filters.push(filter);
     });
-    filters.push(...fInst.filters);
-
-    console.log(filters);
-    // onFocus?.(filters);
+    onFocus?.(filters);
+    setSelectedCard(metricName);
   };
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-between items-center">
-        <div className="font-semibold">Web Vitals</div>
+        <div className="flex items-center gap-2">
+          <div className="font-semibold">Web Vitals</div>
+          {selectedCard ? (
+            <div
+              className={cn(
+                'cursor-pointer text-sm text-black opacity-60',
+                'flex items-center gap-1 hover:opacity-100',
+              )}
+              onClick={() => onMetricClick(null, 'good')}
+            >
+              <div>
+                {metrics.find((m) => m.metricKey === selectedCard)
+                  ?.description ?? 'unknown metric'}
+              </div>
+              <X size={12} />
+            </div>
+          ) : null}
+        </div>
         <div>
           <Select
             value={mode}
@@ -157,10 +185,12 @@ function WebVitals({
         {metrics.map((metric) => (
           <WebVitalsCard
             key={metric.name}
+            metricKey={metric.metricKey}
             name={metric.name}
             value={metric.value}
             description={metric.description}
             status={metric.status}
+            isSelected={selectedCard === metric.metricKey}
             onClick={onMetricClick}
           />
         ))}
@@ -181,23 +211,31 @@ function WebVitalsCard({
   description,
   status,
   onClick,
+  metricKey,
+  isSelected,
 }: {
   name: string;
   value: number;
   description: string;
+  metricKey: string;
   status: 'good' | 'medium' | 'bad';
   onClick: (metricName: string, status: 'good' | 'medium' | 'bad') => void;
+  isSelected: boolean;
 }) {
   const bg = colors[status];
-  const valueFormatted =
-    value > 1000 ? `${(value / 1000).toFixed(2)}s` : `${value}ms`;
+  const valueFormatted = value
+    ? value > 1000
+      ? `${(value / 1000).toFixed(2)}s`
+      : `${Math.round(value)}ms`
+    : 'N/A';
   return (
     <div
       className={cn(
         'flex justify-between items-start gap-2 p-4 border rounded-lg shadow-sm',
         `bg-${bg} cursor-pointer`,
+        isSelected ? 'border-main' : 'border-transparent',
       )}
-      onClick={() => onClick(name, status)}
+      onClick={() => onClick(metricKey, status)}
     >
       <div>
         <div className="text-lg font-semibold">{name}</div>

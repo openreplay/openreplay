@@ -189,8 +189,8 @@ function WidgetChart(props: Props) {
     const timestmaps = drillDownPeriod.toTimestamps();
     const density = dashboardStore.selectedDensity;
     const payload = isSaved
-    ? { ...metricParams, density }
-    : { ...params, ...timestmaps, ..._metric.toJson(), density };
+      ? { ...metricParams, density }
+      : { ...params, ...timestmaps, ..._metric.toJson(), density };
     debounceRequest(
       _metric,
       payload,
