@@ -96,6 +96,62 @@ def __transform_journey(rows, reverse_path=False):
             "links": sorted(links, key=lambda x: (x["source"], x["target"]), reverse=False)}
 
 
+def __get_all_from_current_level(element, levels):
+    result = []
+    for l in levels:
+        if element["depth"] == l["depth"] and element["name"] == l["name"] and element["type"] == l["type"]:
+            result.append(l)
+    return result
+
+
+def __transform_sunburst(rows, reverse_path=False):
+    response = []
+    levels = []
+    depth = 1
+    for r in rows:
+        if r["event_number_in_session"] > 2:
+            break
+        children = response
+        current_element = {"name": r["e_value"],
+                           "type": r["event_type"],
+                           "depth": r["event_number_in_session"],
+                           "value": 0,
+                           "children": []}
+
+        if r["event_number_in_session"] > depth:
+            depth += 1
+
+        saved_elements = __get_all_from_current_level(current_element, levels)
+        if len(saved_elements) == 0:
+            children.append(current_element)
+            children = [current_element]
+            levels.append(children[0])
+        else:
+            children = saved_elements
+
+        depth += 1
+        current_element = {"name": r["next_value"],
+                           "type": r["next_type"],
+                           "depth": r["event_number_in_session"] + 1,
+                           "value": r["sessions_count"],
+                           "children": []}
+        for c in children:
+            # c["value"]+=r["sessions_count"]
+            # saved_elements = __get_all_from_current_level(current_element, levels)
+            saved_elements = __get_all_from_current_level(current_element, c["children"])
+            if len(saved_elements) == 0:
+                c["children"].append(current_element)
+                levels.append(c["children"][-1])
+            else:
+                for sc in saved_elements:
+                    sc["value"] += r["sessions_count"]
+        depth -= 1
+    # Count the value of the initial nodes
+    for r in response:
+        r["value"] = sum([c["value"] for c in r["children"]])
+    return response
+
+
 JOURNEY_TYPES = {
     schemas.ProductAnalyticsSelectedEventType.LOCATION: {"table": "events.pages", "column": "path"},
     schemas.ProductAnalyticsSelectedEventType.CLICK: {"table": "events.clicks", "column": "label"},
