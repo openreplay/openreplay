@@ -26,7 +26,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                             AND ev.project_id = %(project_id)s
                             AND ev.`$event_name` = 'LOCATION'"""
     elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
-        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, name=schemas.FilterType.ISSUE,
                                                               operator=schemas.SearchEventOperator.IS))
     full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
                                                   favorite_only=False, issue=None, project_id=project_id,
@@ -148,10 +148,10 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         extra_deduplication.append("url_path")
         extra_conditions = {}
         for e in data.events:
-            if e.type == schemas.EventType.LOCATION:
+            if e.name == schemas.EventType.LOCATION:
                 if e.operator not in extra_conditions:
                     extra_conditions[e.operator] = schemas.SessionSearchEventSchema(**{
-                        "type": e.type,
+                        "type": e.name,
                         "isEvent": True,
                         "value": [],
                         "operator": e.operator,
@@ -173,10 +173,10 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         extra_deduplication.append("url_path")
         extra_conditions = {}
         for e in data.events:
-            if e.type == schemas.EventType.REQUEST_DETAILS:
+            if e.name == schemas.EventType.REQUEST_DETAILS:
                 if e.operator not in extra_conditions:
                     extra_conditions[e.operator] = schemas.SessionSearchEventSchema(**{
-                        "type": e.type,
+                        "type": e.name,
                         "isEvent": True,
                         "value": [],
                         "operator": e.operator,
@@ -188,7 +188,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         extra_conditions = list(extra_conditions.values())
 
     elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
-        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, name=schemas.FilterType.ISSUE,
                                                               operator=schemas.SearchEventOperator.IS))
     full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
                                                   favorite_only=False, issue=None, project_id=project_id,
@@ -284,15 +284,15 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
 
 
 def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema):
-    return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.REQUEST_DETAILS,
+    return not (not is_any and len(event.value) == 0 and event.name not in [schemas.EventType.REQUEST_DETAILS,
                                                                             schemas.EventType.GRAPHQL] \
-                or event.type in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
+                or event.name in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
                                   schemas.PerformanceEventType.LOCATION_LARGEST_CONTENTFUL_PAINT_TIME,
                                   schemas.PerformanceEventType.LOCATION_TTFB,
                                   schemas.PerformanceEventType.LOCATION_AVG_CPU_LOAD,
                                   schemas.PerformanceEventType.LOCATION_AVG_MEMORY_USAGE
                                   ] and (event.source is None or len(event.source) == 0) \
-                or event.type in [schemas.EventType.REQUEST_DETAILS, schemas.EventType.GRAPHQL] and (
+                or event.name in [schemas.EventType.REQUEST_DETAILS, schemas.EventType.GRAPHQL] and (
                         event.filters is None or len(event.filters) == 0))
 
 
@@ -354,7 +354,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     if issue:
         data.filters.append(
             schemas.SessionSearchFilterSchema(value=[issue['type']],
-                                              type=schemas.FilterType.ISSUE.value,
+                                              name=schemas.FilterType.ISSUE.value,
                                               operator=schemas.SearchEventOperator.IS.value)
         )
     ss_constraints = []
@@ -385,7 +385,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                "main.created_at <= toDateTime(%(endDate)s/1000)"]
     any_incident = False
     for i, e in enumerate(data.events):
-        if e.type == schemas.EventType.INCIDENT and e.operator == schemas.SearchEventOperator.IS_ANY:
+        if e.name == schemas.EventType.INCIDENT and e.operator == schemas.SearchEventOperator.IS_ANY:
             any_incident = True
             data.events.pop(i)
             # don't stop here because we could have multiple filters looking for any incident
@@ -393,7 +393,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     if any_incident:
         any_incident = False
         for f in data.filters:
-            if f.type == schemas.FilterType.ISSUE:
+            if f.name == schemas.FilterType.ISSUE:
                 any_incident = True
                 if f.value.index(schemas.IssueType.INCIDENT) < 0:
                     f.value.append(schemas.IssueType.INCIDENT)
@@ -417,7 +417,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         # to reduce include a sub-query of sessions inside events query, in order to reduce the selected data
         include_in_events = False
         for i, f in enumerate(data.filters):
-            filter_type = f.type
+            filter_type = f.name
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
             full_args = {**full_args, f_k: sh.single_value(f.value), **sh.multi_values(f.value, value_key=f_k)}
@@ -435,16 +435,16 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 # global custom property
                 cast = get_col_cast(data_type=f.data_type, value=f.value)
                 if is_any:
-                    global_properties.append(f'isNotNull(e.properties.`{f.type}`)')
+                    global_properties.append(f'isNotNull(e.properties.`{f.name}`)')
                 else:
                     if is_not:
                         op = sh.reverse_sql_operator(op)
                         global_properties_negative.append(sh.multi_conditions(get_sub_condition(
-                            col_name=f"accurateCastOrNull(e.properties.`{f.type}`,'{cast}')",
+                            col_name=f"accurateCastOrNull(e.properties.`{f.name}`,'{cast}')",
                             val_name=f_k, operator=op), f.value, is_not=False, value_key=f_k))
                     else:
                         global_properties.append(sh.multi_conditions(get_sub_condition(
-                            col_name=f"accurateCastOrNull(e.properties.`{f.type}`,'{cast}')",
+                            col_name=f"accurateCastOrNull(e.properties.`{f.name}`,'{cast}')",
                             val_name=f_k, operator=f.operator), f.value, is_not=False, value_key=f_k))
 
                 continue
@@ -692,16 +692,16 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     #global auto-captured property
                     cast = get_col_cast(data_type=f.data_type, value=f.value)
                     if is_any:
-                        global_properties.append(f'isNotNull(e.`$properties`.`{f.type}`)')
+                        global_properties.append(f'isNotNull(e.`$properties`.`{f.name}`)')
                     else:
                         if is_not:
                             op = sh.reverse_sql_operator(op)
                             global_properties_negative.append(sh.multi_conditions(get_sub_condition(
-                                col_name=f"accurateCastOrNull(e.`$properties`.`{f.type}`,'{cast}')",
+                                col_name=f"accurateCastOrNull(e.`$properties`.`{f.name}`,'{cast}')",
                                 val_name=f_k, operator=op), f.value, is_not=False, value_key=f_k))
                         else:
                             global_properties.append(sh.multi_conditions(get_sub_condition(
-                                col_name=f"accurateCastOrNull(e.`$properties`.`{f.type}`,'{cast}')",
+                                col_name=f"accurateCastOrNull(e.`$properties`.`{f.name}`,'{cast}')",
                                 val_name=f_k, operator=f.operator), f.value, is_not=False, value_key=f_k))
 
                     continue
@@ -732,7 +732,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         event_index = 0
         or_events = data.events_order == schemas.SearchEventOrder.OR
         for i, event in enumerate(data.events):
-            event_type = event.type
+            event_type = event.name
             is_any = sh.isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
@@ -1630,18 +1630,18 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         if extra_conditions and len(extra_conditions) > 0:
             _extra_or_condition = []
             for i, c in enumerate(extra_conditions):
-                if sh.isAny_opreator(c.operator) and c.type != schemas.EventType.REQUEST_DETAILS.value:
+                if sh.isAny_opreator(c.operator) and c.name != schemas.EventType.REQUEST_DETAILS.value:
                     continue
                 e_k = f"ec_value{i}"
                 op = sh.get_sql_operator(c.operator)
                 c.value = helper.values_for_operator(value=c.value, op=c.operator)
                 full_args = {**full_args,
                              **sh.multi_values(c.value, value_key=e_k)}
-                if c.type in (schemas.EventType.LOCATION.value, schemas.EventType.REQUEST.value):
+                if c.name in (schemas.EventType.LOCATION.value, schemas.EventType.REQUEST.value):
                     _extra_or_condition.append(
                         sh.multi_conditions(f"extra_event.url_path {op} %({e_k})s",
                                             c.value, value_key=e_k))
-                elif c.type == schemas.EventType.REQUEST_DETAILS.value:
+                elif c.name == schemas.EventType.REQUEST_DETAILS.value:
                     for j, c_f in enumerate(c.filters):
                         if sh.isAny_opreator(c_f.operator) or len(c_f.value) == 0:
                             continue
@@ -1650,12 +1650,12 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         c_f.value = helper.values_for_operator(value=c_f.value, op=c_f.operator)
                         full_args = {**full_args,
                                      **sh.multi_values(c_f.value, value_key=e_k)}
-                        if c_f.type == schemas.FetchFilterType.FETCH_URL.value:
+                        if c_f.name == schemas.FetchFilterType.FETCH_URL.value:
                             _extra_or_condition.append(
                                 sh.multi_conditions(f"extra_event.url_path {op} %({e_k})s",
                                                     c_f.value, value_key=e_k))
                 else:
-                    logging.warning(f"unsupported extra_event type:${c.type}")
+                    logging.warning(f"unsupported extra_event type:${c.name}")
             if len(_extra_or_condition) > 0:
                 extra_constraints.append("(" + " OR ".join(_extra_or_condition) + ")")
     else:

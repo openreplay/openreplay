@@ -220,7 +220,7 @@ def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_i
     location_condition = None
     no_click = True
     for f in data.filters:
-        if f.type == schemas.FilterType.PLATFORM:
+        if f.name == schemas.FilterType.PLATFORM:
             no_platform = False
             break
     for f in data.events:
@@ -236,19 +236,19 @@ def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_i
             break
 
     if no_platform:
-        data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.PLATFORM,
+        data.filters.append(schemas.SessionSearchFilterSchema(name=schemas.FilterType.PLATFORM,
                                                               value=[schemas.PlatformType.DESKTOP],
                                                               operator=schemas.SearchEventOperator.IS))
     if not location_condition:
-        data.events.append(schemas.SessionSearchEventSchema(type=schemas.EventType.LOCATION,
+        data.events.append(schemas.SessionSearchEventSchema(name=schemas.EventType.LOCATION,
                                                             value=[],
                                                             operator=schemas.SearchEventOperator.IS_ANY))
     if no_click:
-        data.events.append(schemas.SessionSearchEventSchema(type=schemas.EventType.CLICK,
+        data.events.append(schemas.SessionSearchEventSchema(name=schemas.EventType.CLICK,
                                                             value=[],
                                                             operator=schemas.SearchEventOperator.IS_ANY))
 
-    data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.EVENTS_COUNT,
+    data.filters.append(schemas.SessionSearchFilterSchema(name=schemas.FilterType.EVENTS_COUNT,
                                                           value=[0],
                                                           operator=schemas.MathOperator.GREATER))
 

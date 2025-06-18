@@ -68,7 +68,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
 
     platform = None
     for f in data.filters:
-        if f.type == schemas.FilterType.PLATFORM and len(f.value) > 0:
+        if f.name == schemas.FilterType.PLATFORM and len(f.value) > 0:
             platform = f.value[0]
     pg_sub_query = errors_helper.__get_basic_constraints(platform, project_key="sessions.project_id")
     pg_sub_query += ["sessions.start_ts>=%(startDate)s", "sessions.start_ts<%(endDate)s", "source ='js_exception'",
