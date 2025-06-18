@@ -1013,6 +1013,7 @@ class MetricOtherViewType(str, Enum):
     METRIC_CHART = "metric"
     TABLE_CHART = "table"
     LIST_CHART = "list"
+    SUNBURST_CHART = "sunburst"
 
 
 class MetricType(str, Enum):
@@ -1285,7 +1286,8 @@ class CardPathAnalysis(__CardSchema):
     @model_validator(mode="before")
     @classmethod
     def __enforce_default(cls, values):
-        values["viewType"] = MetricOtherViewType.OTHER_CHART.value
+        if values["viewType"] not in [MetricOtherViewType.OTHER_CHART.value, MetricOtherViewType.SUNBURST_CHART.value]:
+            values["viewType"] = MetricOtherViewType.OTHER_CHART.value
         if values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
         return values
