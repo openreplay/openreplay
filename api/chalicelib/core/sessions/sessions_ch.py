@@ -430,7 +430,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             is_not = False
             if sh.is_negation_operator(f.operator):
                 is_not = True
+
             if not f.auto_captured:
+                # global custom property
                 cast = get_col_cast(data_type=f.data_type, value=f.value)
                 if is_any:
                     global_properties.append(f'isNotNull(e.properties.`{f.type}`)')
@@ -446,249 +448,264 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             val_name=f_k, operator=f.operator), f.value, is_not=False, value_key=f_k))
 
                 continue
-
-            if filter_type == schemas.FilterType.USER_BROWSER:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_browser)')
-                    ss_constraints.append('isNotNull(ms.user_browser)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not,
-                                            value_key=f_k))
-
-            elif filter_type in [schemas.FilterType.USER_OS, schemas.FilterType.USER_OS_MOBILE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_os)')
-                    ss_constraints.append('isNotNull(ms.user_os)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-
-            elif filter_type in [schemas.FilterType.USER_DEVICE, schemas.FilterType.USER_DEVICE_MOBILE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_device)')
-                    ss_constraints.append('isNotNull(ms.user_device)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-
-            elif filter_type in [schemas.FilterType.USER_COUNTRY, schemas.FilterType.USER_COUNTRY_MOBILE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_country)')
-                    ss_constraints.append('isNotNull(ms.user_country)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not,
-                                            value_key=f_k))
-
-            elif filter_type in schemas.FilterType.USER_CITY:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_city)')
-                    ss_constraints.append('isNotNull(ms.user_city)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-
-            elif filter_type in schemas.FilterType.USER_STATE:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_state)')
-                    ss_constraints.append('isNotNull(ms.user_state)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-
-            elif filter_type in [schemas.FilterType.UTM_SOURCE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.utm_source)')
-                    ss_constraints.append('isNotNull(ms.utm_source)')
-                elif is_undefined:
-                    extra_constraints.append('isNull(s.utm_source)')
-                    ss_constraints.append('isNull(ms.utm_source)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
-            elif filter_type in [schemas.FilterType.UTM_MEDIUM]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.utm_medium)')
-                    ss_constraints.append('isNotNull(ms.utm_medium)')
-                elif is_undefined:
-                    extra_constraints.append('isNull(s.utm_medium)')
-                    ss_constraints.append('isNull(ms.utm_medium')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
-            elif filter_type in [schemas.FilterType.UTM_CAMPAIGN]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.utm_campaign)')
-                    ss_constraints.append('isNotNull(ms.utm_campaign)')
-                elif is_undefined:
-                    extra_constraints.append('isNull(s.utm_campaign)')
-                    ss_constraints.append('isNull(ms.utm_campaign)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
-
-            elif filter_type == schemas.FilterType.DURATION:
-                if len(f.value) > 0 and f.value[0] is not None:
-                    extra_constraints.append("s.duration >= %(minDuration)s")
-                    ss_constraints.append("ms.duration >= %(minDuration)s")
-                    full_args["minDuration"] = f.value[0]
-                if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
-                    extra_constraints.append("s.duration <= %(maxDuration)s")
-                    ss_constraints.append("ms.duration <= %(maxDuration)s")
-                    full_args["maxDuration"] = f.value[1]
-            elif filter_type == schemas.FilterType.REFERRER:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.base_referrer)')
-                    ss_constraints.append('isNotNull(ms.base_referrer)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f"s.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-            elif filter_type == schemas.FilterType.METADATA:
-                # to support old metadata-filter structure
-                # get metadata list only if you need it
-                if meta_keys is None:
-                    meta_keys = metadata.get(project_id=project_id)
-                    meta_keys = {m["key"]: m["index"] for m in meta_keys}
-                if f.source in meta_keys.keys():
+            if f.auto_captured:
+                if filter_type == schemas.FilterType.USER_BROWSER:
                     if is_any:
-                        extra_constraints.append(f"isNotNull(s.{metadata.index_to_colname(meta_keys[f.source])})")
-                        ss_constraints.append(f"isNotNull(ms.{metadata.index_to_colname(meta_keys[f.source])})")
-                    elif is_undefined:
-                        extra_constraints.append(f"isNull(s.{metadata.index_to_colname(meta_keys[f.source])})")
-                        ss_constraints.append(f"isNull(ms.{metadata.index_to_colname(meta_keys[f.source])})")
+                        extra_constraints.append('isNotNull(s.user_browser)')
+                        ss_constraints.append('isNotNull(ms.user_browser)')
                     else:
                         extra_constraints.append(
-                            sh.multi_conditions(
-                                f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
-                                f.value, is_not=is_not, value_key=f_k))
+                            sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                         ss_constraints.append(
-                            sh.multi_conditions(
-                                f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
-                                f.value, is_not=is_not, value_key=f_k))
-            elif filter_type.startswith(schemas.FilterType.METADATA):
-                # to support new metadata-filter structure
+                            sh.multi_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not,
+                                                value_key=f_k))
 
-                if is_any:
-                    extra_constraints.append(f"isNotNull(s.{filter_type})")
-                    ss_constraints.append(f"isNotNull(ms.{filter_type})")
-                elif is_undefined:
-                    extra_constraints.append(f"isNull(s.{filter_type})")
-                    ss_constraints.append(f"isNull(ms.{filter_type})")
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f"s.{filter_type} {op} toString(%({f_k})s)",
-                                            f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f"ms.{filter_type} {op} toString(%({f_k})s)",
-                                            f.value, is_not=is_not, value_key=f_k))
+                elif filter_type in [schemas.FilterType.USER_OS, schemas.FilterType.USER_OS_MOBILE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_os)')
+                        ss_constraints.append('isNotNull(ms.user_os)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_id)')
-                    ss_constraints.append('isNotNull(ms.user_id)')
-                elif is_undefined:
-                    extra_constraints.append('isNull(s.user_id)')
-                    ss_constraints.append('isNull(ms.user_id)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f"s.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f"ms.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-            elif filter_type in [schemas.FilterType.USER_ANONYMOUS_ID,
-                                 schemas.FilterType.USER_ANONYMOUS_ID_MOBILE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_anonymous_id)')
-                    ss_constraints.append('isNotNull(ms.user_anonymous_id)')
-                elif is_undefined:
-                    extra_constraints.append('isNull(s.user_anonymous_id)')
-                    ss_constraints.append('isNull(ms.user_anonymous_id)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f"s.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f"ms.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-            elif filter_type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.rev_id)')
-                    ss_constraints.append('isNotNull(ms.rev_id)')
-                elif is_undefined:
-                    extra_constraints.append('isNull(s.rev_id)')
-                    ss_constraints.append('isNull(ms.rev_id)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f"s.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f"ms.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-            elif filter_type == schemas.FilterType.PLATFORM:
-                # op = sh.get_sql_operator(f.operator)
-                extra_constraints.append(
-                    sh.multi_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
-                                        value_key=f_k))
-                ss_constraints.append(
-                    sh.multi_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
-                                        value_key=f_k))
-            elif filter_type == schemas.FilterType.ISSUE:
-                if is_any:
-                    extra_constraints.append("notEmpty(s.issue_types)")
-                    ss_constraints.append("notEmpty(ms.issue_types)")
-                else:
-                    if f.source:
-                        issues.append(f)
+                elif filter_type in [schemas.FilterType.USER_DEVICE, schemas.FilterType.USER_DEVICE_MOBILE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_device)')
+                        ss_constraints.append('isNotNull(ms.user_device)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-                    extra_constraints.append(f"hasAny(s.issue_types,%({f_k})s)")
-                    # sh.multi_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
-                    #                      value_key=f_k))
-                    ss_constraints.append(f"hasAny(ms.issue_types,%({f_k})s)")
-                    #     sh.multi_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
-                    #                          value_key=f_k))
-                    if is_not:
-                        extra_constraints[-1] = f"not({extra_constraints[-1]})"
-                        ss_constraints[-1] = f"not({ss_constraints[-1]})"
-            elif filter_type == schemas.FilterType.EVENTS_COUNT:
-                extra_constraints.append(
-                    sh.multi_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
-                                        value_key=f_k))
-                ss_constraints.append(
-                    sh.multi_conditions(f"ms.events_count {op} %({f_k})s", f.value, is_not=is_not,
-                                        value_key=f_k))
-            else:
-                continue
-            include_in_events = True
+                elif filter_type in [schemas.FilterType.USER_COUNTRY, schemas.FilterType.USER_COUNTRY_MOBILE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_country)')
+                        ss_constraints.append('isNotNull(ms.user_country)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not,
+                                                value_key=f_k))
+
+                elif filter_type in schemas.FilterType.USER_CITY:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_city)')
+                        ss_constraints.append('isNotNull(ms.user_city)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+                elif filter_type in schemas.FilterType.USER_STATE:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_state)')
+                        ss_constraints.append('isNotNull(ms.user_state)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+                elif filter_type in [schemas.FilterType.UTM_SOURCE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.utm_source)')
+                        ss_constraints.append('isNotNull(ms.utm_source)')
+                    elif is_undefined:
+                        extra_constraints.append('isNull(s.utm_source)')
+                        ss_constraints.append('isNull(ms.utm_source)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                                value_key=f_k))
+                elif filter_type in [schemas.FilterType.UTM_MEDIUM]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.utm_medium)')
+                        ss_constraints.append('isNotNull(ms.utm_medium)')
+                    elif is_undefined:
+                        extra_constraints.append('isNull(s.utm_medium)')
+                        ss_constraints.append('isNull(ms.utm_medium')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                                value_key=f_k))
+                elif filter_type in [schemas.FilterType.UTM_CAMPAIGN]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.utm_campaign)')
+                        ss_constraints.append('isNotNull(ms.utm_campaign)')
+                    elif is_undefined:
+                        extra_constraints.append('isNull(s.utm_campaign)')
+                        ss_constraints.append('isNull(ms.utm_campaign)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                                value_key=f_k))
+
+                elif filter_type == schemas.FilterType.DURATION:
+                    if len(f.value) > 0 and f.value[0] is not None:
+                        extra_constraints.append("s.duration >= %(minDuration)s")
+                        ss_constraints.append("ms.duration >= %(minDuration)s")
+                        full_args["minDuration"] = f.value[0]
+                    if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
+                        extra_constraints.append("s.duration <= %(maxDuration)s")
+                        ss_constraints.append("ms.duration <= %(maxDuration)s")
+                        full_args["maxDuration"] = f.value[1]
+                elif filter_type == schemas.FilterType.REFERRER:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.base_referrer)')
+                        ss_constraints.append('isNotNull(ms.base_referrer)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f"s.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                elif filter_type == schemas.FilterType.METADATA:
+                    # to support old metadata-filter structure
+                    # get metadata list only if you need it
+                    if meta_keys is None:
+                        meta_keys = metadata.get(project_id=project_id)
+                        meta_keys = {m["key"]: m["index"] for m in meta_keys}
+                    if f.source in meta_keys.keys():
+                        if is_any:
+                            extra_constraints.append(f"isNotNull(s.{metadata.index_to_colname(meta_keys[f.source])})")
+                            ss_constraints.append(f"isNotNull(ms.{metadata.index_to_colname(meta_keys[f.source])})")
+                        elif is_undefined:
+                            extra_constraints.append(f"isNull(s.{metadata.index_to_colname(meta_keys[f.source])})")
+                            ss_constraints.append(f"isNull(ms.{metadata.index_to_colname(meta_keys[f.source])})")
+                        else:
+                            extra_constraints.append(
+                                sh.multi_conditions(
+                                    f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
+                                    f.value, is_not=is_not, value_key=f_k))
+                            ss_constraints.append(
+                                sh.multi_conditions(
+                                    f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
+                                    f.value, is_not=is_not, value_key=f_k))
+                elif filter_type.startswith(schemas.FilterType.METADATA):
+                    # to support new metadata-filter structure
+
+                    if is_any:
+                        extra_constraints.append(f"isNotNull(s.{filter_type})")
+                        ss_constraints.append(f"isNotNull(ms.{filter_type})")
+                    elif is_undefined:
+                        extra_constraints.append(f"isNull(s.{filter_type})")
+                        ss_constraints.append(f"isNull(ms.{filter_type})")
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f"s.{filter_type} {op} toString(%({f_k})s)",
+                                                f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f"ms.{filter_type} {op} toString(%({f_k})s)",
+                                                f.value, is_not=is_not, value_key=f_k))
+
+                elif filter_type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_id)')
+                        ss_constraints.append('isNotNull(ms.user_id)')
+                    elif is_undefined:
+                        extra_constraints.append('isNull(s.user_id)')
+                        ss_constraints.append('isNull(ms.user_id)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f"s.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f"ms.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                elif filter_type in [schemas.FilterType.USER_ANONYMOUS_ID,
+                                     schemas.FilterType.USER_ANONYMOUS_ID_MOBILE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_anonymous_id)')
+                        ss_constraints.append('isNotNull(ms.user_anonymous_id)')
+                    elif is_undefined:
+                        extra_constraints.append('isNull(s.user_anonymous_id)')
+                        ss_constraints.append('isNull(ms.user_anonymous_id)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f"s.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f"ms.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                elif filter_type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.rev_id)')
+                        ss_constraints.append('isNotNull(ms.rev_id)')
+                    elif is_undefined:
+                        extra_constraints.append('isNull(s.rev_id)')
+                        ss_constraints.append('isNull(ms.rev_id)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f"s.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f"ms.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                elif filter_type == schemas.FilterType.PLATFORM:
+                    # op = sh.get_sql_operator(f.operator)
+                    extra_constraints.append(
+                        sh.multi_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                            value_key=f_k))
+                    ss_constraints.append(
+                        sh.multi_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                            value_key=f_k))
+                elif filter_type == schemas.FilterType.ISSUE:
+                    if is_any:
+                        extra_constraints.append("notEmpty(s.issue_types)")
+                        ss_constraints.append("notEmpty(ms.issue_types)")
+                    else:
+                        if f.source:
+                            issues.append(f)
+
+                        extra_constraints.append(f"hasAny(s.issue_types,%({f_k})s)")
+                        # sh.multi_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
+                        #                      value_key=f_k))
+                        ss_constraints.append(f"hasAny(ms.issue_types,%({f_k})s)")
+                        #     sh.multi_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
+                        #                          value_key=f_k))
+                        if is_not:
+                            extra_constraints[-1] = f"not({extra_constraints[-1]})"
+                            ss_constraints[-1] = f"not({ss_constraints[-1]})"
+                elif filter_type == schemas.FilterType.EVENTS_COUNT:
+                    extra_constraints.append(
+                        sh.multi_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                            value_key=f_k))
+                    ss_constraints.append(
+                        sh.multi_conditions(f"ms.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                            value_key=f_k))
+                else:
+                    #global auto-captured property
+                    cast = get_col_cast(data_type=f.data_type, value=f.value)
+                    if is_any:
+                        global_properties.append(f'isNotNull(e.`$properties`.`{f.type}`)')
+                    else:
+                        if is_not:
+                            op = sh.reverse_sql_operator(op)
+                            global_properties_negative.append(sh.multi_conditions(get_sub_condition(
+                                col_name=f"accurateCastOrNull(e.`$properties`.`{f.type}`,'{cast}')",
+                                val_name=f_k, operator=op), f.value, is_not=False, value_key=f_k))
+                        else:
+                            global_properties.append(sh.multi_conditions(get_sub_condition(
+                                col_name=f"accurateCastOrNull(e.`$properties`.`{f.type}`,'{cast}')",
+                                val_name=f_k, operator=f.operator), f.value, is_not=False, value_key=f_k))
+
+                    continue
+                include_in_events = True
 
         if include_in_events:
             events_conditions_where.append(f"""main.session_id IN (SELECT s.session_id 
