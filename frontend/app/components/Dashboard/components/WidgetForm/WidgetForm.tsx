@@ -255,12 +255,12 @@ function WidgetForm(props: Props) {
           <FilterItem
             hideDelete
             filter={metric.startPoint}
-            allowedFilterKeys={[
-              FilterKey.LOCATION,
-              FilterKey.CLICK,
-              FilterKey.INPUT,
-              FilterKey.CUSTOM,
-            ]}
+            // allowedFilterKeys={[
+            //   FilterKey.LOCATION,
+            //   FilterKey.CLICK,
+            //   FilterKey.INPUT,
+            //   FilterKey.CUSTOM,
+            // ]}
             onUpdate={(val) => {
               metric.updateStartPoint(val);
             }}
@@ -325,6 +325,27 @@ function WidgetForm(props: Props) {
                 </Button>
               )}
           </div>
+
+          {isPathAnalysis && metric.excludes && metric.excludes.length > 0 && (
+            <div className="form-group flex flex-col">
+              {/* {metric.startType === 'start' ? 'Start Point' : 'End Point'} */}
+
+              <FilterItem
+                hideDelete
+                filter={metric.excludes[0]}
+                // allowedFilterKeys={[
+                //   FilterKey.LOCATION,
+                //   FilterKey.CLICK,
+                //   FilterKey.INPUT,
+                //   FilterKey.CUSTOM,
+                // ]}
+                onUpdate={(val) => {
+                  metric.updateStartPoint(val);
+                }}
+                onRemoveFilter={() => {}}
+              />
+            </div>
+          )}
 
           {metric.series.length > 0 &&
             metric.series

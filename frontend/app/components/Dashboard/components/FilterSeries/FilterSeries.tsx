@@ -193,7 +193,7 @@ function FilterSeries(props: Props) {
 
   return (
     <div>
-      {canExclude && <ExcludeFilters filter={series.filter} />}
+      {/* {canExclude && <ExcludeFilters filter={series.filter} />} */}
 
       {!hideHeader && (
         <FilterSeriesHeader

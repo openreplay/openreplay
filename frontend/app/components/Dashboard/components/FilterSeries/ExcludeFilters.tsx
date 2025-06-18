@@ -7,36 +7,44 @@ import cn from 'classnames';
 
 import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useStore } from '@/mstore';
 
 interface Props {
-  filter: Filter;
+  metric: any;
 }
 function ExcludeFilters(props: Props) {
+  const { filterStore } = useStore();
   const { t } = useTranslation();
-  const { filter } = props;
-  const hasExcludes = filter.excludes.length > 0;
+  const { metric } = props;
 
   const addPageFilter = () => {
-    const filterItem = filter.createFilterBykey(FilterKey.LOCATION);
-    filter.addExcludeFilter(filterItem);
+    const f = filterStore.findEvent({
+      name: FilterKey.LOCATION,
+      autoCaptured: true,
+    });
+    if (!f) {
+      console.error('Failed to find location filter');
+      return;
+    }
+    metric.updateExcludes([f]);
   };
 
   const onUpdateFilter = (filterIndex: any, filterItem: any) => {
-    filter.updateExcludeFilter(filterIndex, filterItem);
+    metric.updateExcludeByIndex(filterIndex, filterItem);
   };
 
   const onRemoveFilter = (filterIndex: any) => {
-    filter.removeExcludeFilter(filterIndex);
+    metric.removeExcludeByIndex(filterIndex);
   };
 
   return (
-    <div className={cn('flex items-center mb-2')}>
-      {filter.excludes.length > 0 ? (
-        <div className="flex items-center mb-2 bg-white rounded-xl flex-col px-4 py-2 w-full">
+    <div className="mb-2 rounded-xl">
+      {metric.excludes.length > 0 ? (
+        <div className="bg-white rounded-xl border p-4">
           <div className="text-sm color-gray-medium mr-auto mb-2">
             {t('EXCLUDES')}
           </div>
-          {filter.excludes.map((f: any, index: number) => (
+          {metric.excludes.map((f: any, index: number) => (
             <FilterItem
               hideIndex
               filterIndex={index}
@@ -47,7 +55,7 @@ function ExcludeFilters(props: Props) {
               //   FilterKey.CUSTOM,
               // ]}
               filter={f}
-              onUpdate={(f) => onUpdateFilter(index, f)}
+              onUpdate={(f) => onUpdateFilter(f.id, f)}
               onRemoveFilter={() => onRemoveFilter(index)}
               // saveRequestPayloads={saveRequestPayloads}
               disableDelete={false}
