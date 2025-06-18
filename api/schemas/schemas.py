@@ -631,7 +631,7 @@ class EventPropertiesSchema(BaseModel):
 class SessionSearchEventSchema(BaseModel):
     is_event: Literal[True] = True
     value: List[Union[str, int]] = Field(...)
-    type: Union[EventType, PerformanceEventType] = Field(...)
+    name: Union[EventType, PerformanceEventType] = Field(...)
     operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(default=None)
     sourceOperator: Optional[MathOperator] = Field(default=None)
@@ -643,31 +643,31 @@ class SessionSearchEventSchema(BaseModel):
 
     @model_validator(mode="after")
     def event_validator(self):
-        if isinstance(self.type, PerformanceEventType):
-            if self.type == PerformanceEventType.FETCH_FAILED:
+        if isinstance(self.name, PerformanceEventType):
+            if self.name == PerformanceEventType.FETCH_FAILED:
                 return self
 
             assert self.sourceOperator is not None, \
                 "sourceOperator should not be null for PerformanceEventType"
-            assert self.source is not None, f"source is required for {self.type}"
-            assert isinstance(self.source, list), f"source of type list is required for {self.type}"
+            assert self.source is not None, f"source is required for {self.name}"
+            assert isinstance(self.source, list), f"source of type list is required for {self.name}"
             for c in self.source:
-                assert isinstance(c, int), f"source value should be of type int for {self.type}"
-        elif self.type == EventType.ERROR and self.source is None:
+                assert isinstance(c, int), f"source value should be of type int for {self.name}"
+        elif self.name == EventType.ERROR and self.source is None:
             self.source = [ErrorSource.JS_EXCEPTION]
-        elif self.type == EventType.REQUEST_DETAILS:
+        elif self.name == EventType.REQUEST_DETAILS:
             assert isinstance(self.filters, List) and len(self.filters) > 0, \
                 f"filters should be defined for {EventType.REQUEST_DETAILS}"
-        elif self.type == EventType.GRAPHQL:
+        elif self.name == EventType.GRAPHQL:
             assert isinstance(self.filters, List) and len(self.filters) > 0, \
                 f"filters should be defined for {EventType.GRAPHQL}"
-        elif self.type == EventType.CLICK_COORDINATES:
+        elif self.name == EventType.CLICK_COORDINATES:
             assert isinstance(self.value, List) \
                    and (len(self.value) == 0 or len(self.value) == 2 or len(self.value) == 4), \
                 f"value should be [x,y] or [x1,x2,y1,y2] for {EventType.CLICK_COORDINATES}"
 
         if isinstance(self.operator, ClickEventExtraOperator):
-            assert self.type == EventType.CLICK, \
+            assert self.name == EventType.CLICK, \
                 f"operator:{self.operator} is only available for event-type: {EventType.CLICK}"
         return self
 
@@ -682,7 +682,7 @@ class SessionSearchEventSchema(BaseModel):
 class SessionSearchFilterSchema(BaseModel):
     is_event: Literal[False] = False
     value: List[Union[IssueType, PlatformType, int, str]] = Field(default_factory=list)
-    type: Union[FilterType, str] = Field(...)
+    name: Union[FilterType, str] = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[Union[ErrorSource, str]] = Field(default=None)
     # used for global-properties
@@ -697,7 +697,7 @@ class SessionSearchFilterSchema(BaseModel):
     @computed_field
     @property
     def is_predefined(self) -> bool:
-        return FilterType.has_value(self.type)
+        return FilterType.has_value(self.name)
 
     @model_validator(mode="before")
     @classmethod
@@ -714,36 +714,37 @@ class SessionSearchFilterSchema(BaseModel):
 
     @model_validator(mode="after")
     def filter_validator(self):
-        if self.type == FilterType.METADATA:
+        if self.name == FilterType.METADATA:
             assert self.source is not None and len(self.source) > 0, \
                 "must specify a valid 'source' for metadata filter"
-        elif self.type == FilterType.ISSUE:
+        elif self.name == FilterType.ISSUE:
             for i, v in enumerate(self.value):
                 if IssueType.has_value(v):
                     self.value[i] = IssueType(v)
                 else:
-                    raise ValueError(f"value should be of type IssueType for {self.type} filter")
-        elif self.type == FilterType.PLATFORM:
+                    raise ValueError(f"value should be of type IssueType for {self.name} filter")
+        elif self.name == FilterType.PLATFORM:
             for i, v in enumerate(self.value):
                 if PlatformType.has_value(v):
                     self.value[i] = PlatformType(v)
                 else:
-                    raise ValueError(f"value should be of type PlatformType for {self.type} filter")
-        elif self.type == FilterType.EVENTS_COUNT:
+                    raise ValueError(f"value should be of type PlatformType for {self.name} filter")
+        elif self.name == FilterType.EVENTS_COUNT:
             if MathOperator.has_value(self.operator):
                 self.operator = MathOperator(self.operator)
             else:
-                raise ValueError(f"operator should be of type MathOperator for {self.type} filter")
+                raise ValueError(f"operator should be of type MathOperator for {self.name} filter")
 
             for v in self.value:
-                assert isinstance(v, int), f"value should be of type int for {self.type} filter"
+                assert isinstance(v, int), f"value should be of type int for {self.name} filter"
         else:
             if SearchEventOperator.has_value(self.operator):
                 self.operator = SearchEventOperator(self.operator)
             elif MathOperator.has_value(self.operator):
                 self.operator = MathOperator(self.operator)
             else:
-                raise ValueError(f"operator should be of type SearchEventOperator or MathOperator for {self.type} filter")
+                raise ValueError(
+                    f"operator should be of type SearchEventOperator or MathOperator for {self.name} filter")
 
         return self
 
@@ -834,7 +835,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
     @model_validator(mode="after")
     def check_pa_event_filter(self):
         for v in self.filters + self.events:
-            if v.type == EventType.EVENT:
+            if v.name == EventType.EVENT:
                 assert v.operator in (SearchEventOperator.IS, MathOperator.EQUAL), \
                     "operator must be {SearchEventOperator.IS} or {MathOperator.EQUAL} for EVENT type"
                 assert len(v.value) == 1, "value must have 1 single value for EVENT type"
@@ -859,16 +860,16 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         # ignore 'issue' type as it could be used for step-filters and tab-filters at the same time
         i = 0
         while i < len(values):
-            if values[i].is_event or values[i].type == FilterType.ISSUE:
-                if values[i].type == FilterType.ISSUE:
+            if values[i].is_event or values[i].name == FilterType.ISSUE:
+                if values[i].name == FilterType.ISSUE:
                     values[i] = remove_duplicate_values(values[i])
                 i += 1
                 continue
             j = i + 1
             while j < len(values):
-                if values[i].type == values[j].type \
+                if values[i].name == values[j].name \
                         and values[i].operator == values[j].operator \
-                        and (values[i].type != FilterType.METADATA or values[i].source == values[j].source):
+                        and (values[i].name != FilterType.METADATA or values[i].source == values[j].source):
                     values[i].value += values[j].value
                     del values[j]
                 else:
@@ -1569,7 +1570,7 @@ class MetricSearchSchema(_PaginatedSchema):
 
 
 class _HeatMapSearchEventRaw(SessionSearchEventSchema):
-    type: Literal[EventType.LOCATION, EventType.CLICK_COORDINATES] = Field(...)
+    name: Literal[EventType.LOCATION, EventType.CLICK_COORDINATES] = Field(...)
 
 
 class HeatMapSessionsSearch(SessionsSearchPayloadSchema):

@@ -100,7 +100,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
 
     platform = None
     for f in data.filters:
-        if f.type == schemas.FilterType.PLATFORM and len(f.value) > 0:
+        if f.name == schemas.FilterType.PLATFORM and len(f.value) > 0:
             platform = f.value[0]
     ch_sessions_sub_query = errors_helper.__get_basic_constraints_ch(platform, type_condition=False)
     # ignore platform for errors table
@@ -121,7 +121,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
     if len(data.events) > 0:
         errors_condition_count = 0
         for i, e in enumerate(data.events):
-            if e.type == schemas.EventType.ERROR:
+            if e.name == schemas.EventType.ERROR:
                 errors_condition_count += 1
                 is_any = _isAny_opreator(e.operator)
                 op = __get_sql_operator(e.operator)
@@ -146,7 +146,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
         for i, f in enumerate(data.filters):
             if not isinstance(f.value, list):
                 f.value = [f.value]
-            filter_type = f.type
+            filter_type = f.name
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
             params = {**params, f_k: f.value, **_multiple_values(f.value, value_key=f_k)}

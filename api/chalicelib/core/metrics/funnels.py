@@ -11,7 +11,7 @@ def filter_stages(stages: List[schemas.SessionSearchEventSchema]):
                    schemas.EventType.LOCATION, schemas.EventType.CUSTOM,
                    schemas.EventType.CLICK_MOBILE, schemas.EventType.INPUT_MOBILE,
                    schemas.EventType.VIEW_MOBILE, schemas.EventType.CUSTOM_MOBILE, ]
-    return [s for s in stages if s.type in ALLOW_TYPES and s.value is not None]
+    return [s for s in stages if s.name in ALLOW_TYPES and s.value is not None]
 
 
 def __parse_events(f_events: List[dict]):
