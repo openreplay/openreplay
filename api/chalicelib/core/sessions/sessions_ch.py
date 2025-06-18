@@ -695,10 +695,10 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                                 FROM {MAIN_SESSIONS_TABLE} AS s
                                                 WHERE {" AND ".join(extra_constraints)})""")
 
-        if len(global_properties) > 0:
-            global_properties += ["e.project_id=%(project_id)s",
-                                  "e.created_at >= toDateTime(%(startDate)s/1000)",
-                                  "e.created_at <= toDateTime(%(endDate)s/1000)"]
+    if len(global_properties) > 0:
+        global_properties += ["e.project_id=%(project_id)s",
+                              "e.created_at >= toDateTime(%(startDate)s/1000)",
+                              "e.created_at <= toDateTime(%(endDate)s/1000)"]
     # ---------------------------------------------------------------------------
     events_extra_join = ""
     if len(data.events) > 0:
@@ -1647,6 +1647,18 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         query_part = f"""{f"({events_query_part}) AS f" if len(events_query_part) > 0 else ""}"""
     else:
         if len(events_query_part) > 0:
+            if len(global_properties) > 0:
+                extra_join += f""" INNER JOIN (SELECT DISTINCT session_id 
+                                               FROM {MAIN_EVENTS_TABLE} AS e
+                                               WHERE {" AND ".join(global_properties)}) AS global_filters USING(session_id)"""
+            if len(global_properties_negative) > 0:
+                extra_join += f""" LEFT JOIN (SELECT DISTINCT session_id
+                                               FROM {MAIN_EVENTS_TABLE} AS e
+                                               WHERE project_id=%(project_id)s
+                                                    AND created_at >= toDateTime(%(startDate)s/1000)
+                                                    AND created_at <= toDateTime(%(endDate)s/1000)
+                                                    AND ({" OR ".join(global_properties_negative)})) AS negative_global_filters USING(session_id)"""
+                extra_constraints.append("isNull(negative_global_filters.session_id)")
             extra_join += f"""INNER JOIN (SELECT DISTINCT ON (session_id) * 
                                     FROM {MAIN_SESSIONS_TABLE} AS s {extra_event}
                                     WHERE {" AND ".join(extra_constraints)}
