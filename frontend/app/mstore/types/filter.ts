@@ -4,6 +4,8 @@ import { FilterKey } from 'Types/filter/filterType';
 import FilterItem from './filterItem';
 import { JsonData } from '@/mstore/types/filterConstants';
 import { filterStore } from '@/mstore/index';
+import { FUNNEL, HEATMAP } from '@/constants/card';
+import FilterSeries from '@/mstore/types/filterSeries';
 
 type FilterData = Partial<FilterItem> & {
   key?: FilterKey | string;
@@ -399,6 +401,20 @@ export default class FilterStore implements IFilterStore {
     runInAction(() => {
       this.filters = []; // Clear existing filters
       this.addFilter(clickFilter);
+      this.addFilter(locationFilter);
+    });
+  }
+
+  addHeatmapDefaultFilters() {
+    const locationFilter = filterStore.findEvent({
+      name: FilterKey.LOCATION,
+      autoCaptured: true,
+    });
+
+    console.log('locationFilter', locationFilter);
+
+    runInAction(() => {
+      this.filters = []; // Clear existing filters
       this.addFilter(locationFilter);
     });
   }
