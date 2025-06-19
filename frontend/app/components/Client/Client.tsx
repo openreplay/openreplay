@@ -39,7 +39,7 @@ export default class Client extends React.PureComponent {
       <Route
         exact
         strict
-        path={clientRoute(CLIENT_TABS.SESSIONS_LISTING)}
+        path={clientRoute(CLIENT_TABS.SESSION_SETTINGS)}
         component={SessionsListingSettings}
       />
       <Route

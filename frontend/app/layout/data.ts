@@ -25,7 +25,7 @@ interface Category {
 
 export const enum PREFERENCES_MENU {
   ACCOUNT = 'account',
-  SESSION_LISTING = 'session-listing',
+  SESSION_SETTINGS = 'sessions-settings',
   INTEGRATIONS = 'integrations',
   WEBHOOKS = 'webhooks',
   MODULES = 'modules',
@@ -180,8 +180,8 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
     items: [
       { label: t('Account'), key: PREFERENCES_MENU.ACCOUNT, icon: 'person' },
       {
-        label: t('Sessions Listing'),
-        key: PREFERENCES_MENU.SESSION_LISTING,
+        label: t('Session Settings'),
+        key: PREFERENCES_MENU.SESSION_SETTINGS,
         icon: 'card-list',
       },
       {

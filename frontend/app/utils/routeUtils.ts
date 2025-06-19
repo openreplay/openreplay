@@ -1,7 +1,7 @@
 export const CLIENT_TABS = {
   INTEGRATIONS: 'integrations',
   PROFILE: 'account',
-  SESSIONS_LISTING: 'sessions-listing',
+  SESSION_SETTINGS: 'sessions',
   MANAGE_USERS: 'team',
   MANAGE_ROLES: 'roles',
   SITES: 'projects',
