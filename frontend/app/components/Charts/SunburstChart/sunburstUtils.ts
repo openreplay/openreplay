@@ -1,5 +1,4 @@
 import { colors } from '../utils';
-import type { Data } from '../SankeyChart';
 
 export interface SunburstChild {
   name: string;
@@ -9,132 +8,96 @@ export interface SunburstChild {
   dataIndex: number;
 }
 
+interface DataNode {
+  children?: DataNode[];
+  depth: number;
+  name: string;
+  type: string;
+  value: number;
+}
+
 const colorMap = new Map();
 
-export function convertSankeyToSunburst(data: Data): {
+let globalIndex = 0;
+
+export const typeToNameMap = {
+  DROP: 'Dropped',
+  OTHER: 'Others',
+};
+
+export function convertSankeyToSunburst(data: DataNode): {
   tree: SunburstChild;
   colors: Map<string, string>;
-  dropsByUrl: Record<string, { drop: number, ids: any[] }>;
+  dropsByUrl: Record<string, { drop: number; ids: number[] }>;
+  legendMap: Record<string, { color: string; ids: number[] }>;
 } {
-  const dataLinks = data.links.filter((link) => {
-    const sourceNode = data.nodes.find((node) => node.id === link.source);
-    const targetNode = data.nodes.find((node) => node.id === link.target);
-    return (
-      sourceNode &&
-      targetNode &&
-      ![sourceNode.eventType, targetNode.eventType].includes('OTHER')
-    );
-  });
-  const dataNodes = data.nodes.filter((node) => node.eventType !== 'OTHER');
+  const dropsByUrl: Record<string, { drop: number; ids: number[] }> = {};
+  const legendMap: Record<string, { color: string; ids: number[] }> = {};
 
-  const nodesCopy: any = dataNodes.map((node) => ({
-    ...node,
-    children: [],
-    childrenIds: new Set(),
-    value: 0,
-  }));
+  function buildSunburstNode(
+    node: DataNode,
+    parentName?: string,
+    parentId?: number,
+  ): SunburstChild | null {
+    const nodeId = globalIndex++;
 
-  const nodesById: Record<number, (typeof nodesCopy)[number]> = {};
-  const dropsByUrl: Record<string, { drop: number, ids: any[] }> = {};
-  dataLinks.forEach((link) => {
-    const targetNode = nodesCopy.find((node) => node.id === link.target);
-    const sourceNode = nodesCopy.find((node) => node.id === link.source);
-    if (!targetNode || !sourceNode) return;
-
-    const isDrop = targetNode.eventType === 'DROP';
-    if (!isDrop) return;
-
-    const sourceUrl = sourceNode.name;
-    if (sourceUrl) {
-      if (dropsByUrl[sourceUrl]) {
-        dropsByUrl[sourceUrl].drop = dropsByUrl[sourceUrl].drop + link.sessionsCount;
+    if (
+      node.type === 'DROP' &&
+      parentName !== undefined &&
+      parentId !== undefined
+    ) {
+      if (!dropsByUrl[parentName]) {
+        dropsByUrl[parentName] = { drop: node.value, ids: [parentId] };
       } else {
-        dropsByUrl[sourceUrl] = { drop: link.sessionsCount, ids: [] };
+        dropsByUrl[parentName].drop += node.value;
+        if (!dropsByUrl[parentName].ids.includes(parentId)) {
+          dropsByUrl[parentName].ids.push(parentId);
+        }
       }
     }
-  });
-  nodesCopy.forEach((node) => {
-    nodesById[node.id as number] = { ...node, dataIndex: node.id };
-  });
 
-  dataLinks.forEach((link) => {
-    const sourceNode = nodesById[link.source as number];
-    const targetNode = nodesById[link.target as number];
-    if (link.source === 0) {
-      if (sourceNode.value) {
-        sourceNode.value += link.sessionsCount;
-      } else {
-        sourceNode.value = link.sessionsCount;
-      }
-    }
-    if (sourceNode && targetNode) {
-      if (
-        targetNode.depth === sourceNode.depth + 1 &&
-        !sourceNode.childrenIds.has(targetNode.id)
-      ) {
-        const specificId = `${link.source}_${link.target}`;
-        const fakeNode = {
-          ...targetNode,
-          id: specificId,
-          value: link.sessionsCount,
-        };
-        sourceNode.children.push(fakeNode);
-        sourceNode.childrenIds.add(specificId);
-      }
-    }
-  });
-
-  const rootNode = nodesById[0];
-  const nameCount: Record<string, number> = {};
-  function buildSunburstNode(node: SunburstChild): SunburstChild | null {
-    if (!node) return null;
-    // eventType === DROP
-    if (!node.name) {
-      // node.name = `DROP`
-      // colorMap.set('DROP', 'black')
-      return null;
-    }
+    // @ts-ignore
+    if (!node.name) node.name = typeToNameMap[node.type] ?? node.type;
 
     let color = colorMap.get(node.name);
     if (!color) {
-      color = randomColor(colorMap.size);
+      if (node.type === 'DROP') {
+        color = '#999797';
+      } else {
+        color = randomColor(colorMap.size);
+      }
       colorMap.set(node.name, color);
     }
-    let nodeName;
-    if (node.name.includes('feature/sess')) {
-      console.log(node)
-    }
-    if (nameCount[node.name]) {
-      nodeName = `${node.name}_OPENREPLAY_NODE_${nameCount[node.name]++}`;
+
+    if (legendMap[node.name]) {
+      legendMap[node.name].ids.push(nodeId);
     } else {
-      nodeName = node.name;
-      nameCount[node.name] = 1;
+      legendMap[node.name] = { color, ids: [nodeId] };
     }
-    if (dropsByUrl[node.name]) {
-      dropsByUrl[node.name].ids.push(node.dataIndex);
-    }
+
     const result: SunburstChild = {
-      name: nodeName,
-      value: node.value || 0,
-      dataIndex: node.dataIndex,
-      itemStyle: {
-        color,
-      },
+      ...node,
+      dataIndex: nodeId,
+      itemStyle: { color },
     };
 
     if (node.children && node.children.length > 0) {
-      result.children = node.children
-        .map((child) => buildSunburstNode(child))
+      const childNodes = node.children
+        .map((child) => buildSunburstNode(child, node.name, nodeId))
         .filter(Boolean) as SunburstChild[];
+      if (childNodes.length > 0) {
+        result.children = childNodes;
+      }
     }
 
     return result;
   }
 
   return {
-    tree: buildSunburstNode(rootNode) as SunburstChild,
+    tree: buildSunburstNode(data)!,
     colors: colorMap,
     dropsByUrl,
+    legendMap,
   };
 }
 
@@ -164,4 +127,35 @@ export function sunburstTooltip(colorMap: Map<string, string>) {
       `;
     }
   };
+}
+
+export function grayOutTree(
+  root: SunburstChild,
+  allowedIds: number[],
+  gray = '#d3d3d3',
+): SunburstChild {
+  const rootCopy = { ...root };
+  const keep = new Set<number>(allowedIds);
+  const walk = (node: SunburstChild) => {
+    if (!keep.has(node.dataIndex)) {
+      node.itemStyle = { ...(node.itemStyle ?? {}), color: gray };
+    }
+    node.children?.forEach(walk);
+  };
+  walk(rootCopy);
+  return rootCopy;
+}
+
+export function applyColorMap(
+  root: SunburstChild,
+  map: Map<string, string>,
+): SunburstChild {
+  const walk = (node: SunburstChild) => {
+    const baseName = node.name?.split('_OPENREPLAY_NODE_')[0];
+    const clr = map.get(baseName);
+    if (clr) node.itemStyle = { ...(node.itemStyle ?? {}), color: clr };
+    node.children?.forEach(walk);
+  };
+  walk(root);
+  return root;
 }

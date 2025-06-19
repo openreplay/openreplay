@@ -1,43 +1,43 @@
 import React from 'react';
 import { SunburstChart } from 'echarts/charts';
 import { echarts, defaultOptions } from '../init';
-import type { Data } from '../SankeyChart';
 import DroppedSessionsList from './DroppedSessions';
-import { convertSankeyToSunburst, sunburstTooltip } from './sunburstUtils';
+import {
+  convertSankeyToSunburst,
+  sunburstTooltip,
+  grayOutTree,
+  applyColorMap,
+} from './sunburstUtils';
 
 echarts.use([SunburstChart]);
 
 interface Props {
-  data: Data;
+  data: Record<string, any>;
   height?: number;
 }
 
 const EChartsSunburst = (props: Props) => {
   const { data, height = 240 } = props;
   const chartRef = React.useRef<HTMLDListElement>(null);
-  const [colors, setColors] = React.useState<Map<string, string>>(new Map());
-  const [chartInst, setChartInst] = React.useState<echarts.ECharts | null>(null);
+  const [chartColors, setColors] = React.useState<Map<string, string>>(
+    new Map(),
+  );
+  const [chartInst, setChartInst] = React.useState<echarts.ECharts | null>(
+    null,
+  );
   const [dropsByUrl, setDropsByUrl] = React.useState<any>(null);
+  const [chartData, setChartData] = React.useState<Record<string, any>>(null);
+  const [legend, setLegend] = React.useState<Record<string, any>>({});
 
   React.useEffect(() => {
-    if (!chartRef.current || data.nodes.length === 0 || data.links.length === 0)
-      return;
+    if (!chartRef.current || !Array.isArray(data) || data.length === 0) return;
+    const { tree, colors, dropsByUrl, legendMap } = convertSankeyToSunburst(data[0]);
 
-    const chart = echarts.init(chartRef.current);
-    const { tree, colors, dropsByUrl } = convertSankeyToSunburst(data);
-    const singleRoot =
-      data.nodes.reduce((acc, node) => {
-        if (node.depth === 0) {
-          acc++;
-        }
-        return acc;
-      }, 0) === 1;
-    const finalData = singleRoot ? tree.children : [tree]
     const options = {
       ...defaultOptions,
       series: {
         type: 'sunburst',
-        data: finalData,
+        data: [tree],
         radius: [30, '90%'],
         itemStyle: {
           borderRadius: 6,
@@ -53,20 +53,30 @@ const EChartsSunburst = (props: Props) => {
         },
       },
     };
-    console.log(finalData)
-    chart.setOption(options);
+    setColors(colors);
+    setDropsByUrl(dropsByUrl);
+    setChartData(options);
+    setLegend(legendMap);
+
+    return () => {
+      setDropsByUrl(null);
+    };
+  }, [data, height]);
+
+  React.useEffect(() => {
+    if (!chartRef.current || !chartData) return;
+    const chart = echarts.init(chartRef.current);
+    chart.setOption(chartData);
     const ro = new ResizeObserver(() => chart.resize());
     ro.observe(chartRef.current);
-    setColors(colors);
     setChartInst(chart);
-    setDropsByUrl(dropsByUrl);
+
     return () => {
       chart.dispose();
       ro.disconnect();
       setChartInst(null);
-      setDropsByUrl(null);
     };
-  }, [data, height]);
+  }, [chartData]);
 
   const containerStyle = {
     width: '100%',
@@ -75,16 +85,30 @@ const EChartsSunburst = (props: Props) => {
   };
 
   const onHover = (dataIndex: any[]) => {
-    chartInst?.dispatchAction({
-      type: 'highlight',
-      dataIndex,
-    })
-  }
+    // traverse tree and change colors to highlight node
+    if (!chartInst || !dataIndex || dataIndex.length === 0) return;
+    const grayedTree = grayOutTree(chartData.series.data[0], dataIndex);
+    chartInst.setOption({
+      ...chartData,
+      series: {
+        ...chartData.series,
+        data: [grayedTree],
+      },
+    });
+    chartInst?.resize();
+  };
+
   const onLeave = () => {
-    chartInst?.dispatchAction({
-      type: 'downplay',
-    })
-  }
+    const coloredTree = applyColorMap(chartData.series.data[0], chartColors);
+    chartInst?.setOption({
+      ...chartData,
+      series: {
+        ...chartData.series,
+        data: [coloredTree],
+      },
+    });
+    chartInst?.resize();
+  };
 
   return (
     <div
@@ -103,7 +127,13 @@ const EChartsSunburst = (props: Props) => {
         style={containerStyle}
         className="min-w-[600px] relative"
       />
-      <DroppedSessionsList dropsByUrl={dropsByUrl} onHover={onHover} onLeave={onLeave} colorMap={colors} data={data} />
+      <DroppedSessionsList
+        dropsByUrl={dropsByUrl}
+        onHover={onHover}
+        onLeave={onLeave}
+        colorMap={chartColors}
+        legend={legend}
+      />
     </div>
   );
 };
