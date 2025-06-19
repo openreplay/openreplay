@@ -3,13 +3,20 @@ from typing import List, Union
 
 import schemas
 from chalicelib.core import metadata
-from chalicelib.core.events import events
-from . import performance_event, sessions_legacy
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.exp_ch_helper import get_sub_condition, get_col_cast
+from . import performance_event, sessions_legacy
 
 logger = logging.getLogger(__name__)
+
+RESOLUTION_RANGES = [
+    (800, 600),
+    (1280, 720),
+    (1920, 1080),
+    (2560, 1440),
+    (3840, 2160),
+]
 
 
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
@@ -235,6 +242,19 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             elif metric_of == schemas.MetricOfTable.FETCH:
                 main_col = "url_path"
                 extra_col = ", s.url_path"
+            elif metric_of == schemas.MetricOfTable.SCREEN_RESOLUTION:
+                main_col = "resolution_group"
+                extra_col = [
+                    f"WHEN screen_width * screen_height < {width * height} THEN '<{width}x{height}'"
+                    if i == 0
+                    else f"WHEN screen_width * screen_height < {width * height} THEN '{RESOLUTION_RANGES[i - 1][0]}x{RESOLUTION_RANGES[i - 1][1]}-{width}x{height}'"
+                    for i, (width, height) in enumerate(RESOLUTION_RANGES)
+                ]
+                extra_col = "CASE " + " ".join([
+                    "WHEN isNull(screen_width * screen_height) OR screen_width * screen_height = 0 THEN 'Unknown'",
+                    *extra_col,
+                    f"ELSE '>{RESOLUTION_RANGES[-1][0]}x{RESOLUTION_RANGES[-1][1]}'"
+                ]) + " END AS resolution_group"
 
             if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
                 main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
@@ -455,7 +475,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         ss_constraints.append('isNotNull(ms.user_browser)')
                     else:
                         extra_constraints.append(
-                            sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                            sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not,
+                                                value_key=f_k))
                         ss_constraints.append(
                             sh.multi_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not,
                                                 value_key=f_k))
@@ -478,7 +499,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         extra_constraints.append(
                             sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                         ss_constraints.append(
-                            sh.multi_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                            sh.multi_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not,
+                                                value_key=f_k))
 
                 elif filter_type in [schemas.FilterType.USER_COUNTRY, schemas.FilterType.USER_COUNTRY_MOBILE]:
                     if is_any:
@@ -486,7 +508,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         ss_constraints.append('isNotNull(ms.user_country)')
                     else:
                         extra_constraints.append(
-                            sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                            sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not,
+                                                value_key=f_k))
                         ss_constraints.append(
                             sh.multi_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not,
                                                 value_key=f_k))
@@ -640,7 +663,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             sh.multi_conditions(f"s.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                                 value_key=f_k))
                         ss_constraints.append(
-                            sh.multi_conditions(f"ms.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                            sh.multi_conditions(f"ms.user_anonymous_id {op} toString(%({f_k})s)", f.value,
+                                                is_not=is_not,
                                                 value_key=f_k))
                 elif filter_type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
                     if is_any:
@@ -689,7 +713,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         sh.multi_conditions(f"ms.events_count {op} %({f_k})s", f.value, is_not=is_not,
                                             value_key=f_k))
                 else:
-                    #global auto-captured property
+                    # global auto-captured property
                     cast = get_col_cast(data_type=f.data_type, value=f.value)
                     if is_any:
                         global_properties.append(f'isNotNull(e.`$properties`.`{f.name}`)')
