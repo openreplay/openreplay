@@ -387,71 +387,19 @@ export default class FilterStore implements IFilterStore {
   }
 
   addFunnelDefaultFilters() {
+    const clickFilter = filterStore.findEvent({
+      name: FilterKey.CLICK,
+      autoCaptured: true,
+    });
+    const locationFilter = filterStore.findEvent({
+      name: FilterKey.LOCATION,
+      autoCaptured: true,
+    });
+
     runInAction(() => {
       this.filters = []; // Clear existing filters
-      this.addFilter({
-        name: 'CLICK',
-        value: [''],
-        operator: 'isAny',
-        isEvent: true,
-        autoCaptured: true,
-        filters: [
-          {
-            name: 'label',
-            value: [''],
-            operator: 'isAny',
-            isEvent: false,
-            autoCaptured: true,
-            dataType: 'string',
-          },
-        ],
-      });
-
-      this.addFilter({
-        name: 'LOCATION',
-        value: [''],
-        operator: 'isAny',
-        isEvent: true,
-        autoCaptured: true,
-        filters: [
-          {
-            name: 'label',
-            value: [''],
-            operator: 'isAny',
-            isEvent: false,
-            autoCaptured: true,
-            dataType: 'string',
-          },
-        ],
-      });
-
-      // const locationFilterData = filtersMap[FilterKey.LOCATION];
-      // if (locationFilterData) {
-      //   this.addFilter({
-      //     ...locationFilterData,
-      //     value: [''],
-      //     operator: 'isAny',
-      //     isEvent: true,
-      //     autoCaptured: true,
-      //   });
-      // } else {
-      //   console.warn(
-      //     `FilterStore.addFunnelDefaultFilters: Default filter not found for key ${FilterKey.LOCATION}`,
-      //   );
-      // }
-
-      // const clickFilterData = filtersMap[FilterKey.CLICK];
-      // if (clickFilterData) {
-      //   this.addFilter({
-      //     ...clickFilterData,
-      //     value: [''],
-      //     operator: 'onAny',
-      //   });
-      // } else {
-      //   console.warn(
-      //     `FilterStore.addFunnelDefaultFilters: Default filter not found for key ${FilterKey.CLICK}`,
-      //   );
-      // }
+      this.addFilter(clickFilter);
+      this.addFilter(locationFilter);
     });
   }
 
