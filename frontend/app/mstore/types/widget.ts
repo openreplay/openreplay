@@ -446,10 +446,17 @@ export default class Widget {
       return result;
     }
 
+    // sunburst data is a tree-like structure,
+    // flowchart is linked flat arrays
     if (this.metricType === USER_PATH) {
-      const _data = processData(data);
-      Object.assign(this.data, _data);
-      return _data;
+      if (this.viewType === 'sunburst') {
+        Object.assign(this.data, data);
+        return data;
+      } else {
+        const _data = processData(data);
+        Object.assign(this.data, _data);
+        return _data;
+      }
     }
 
     if (this.metricOf === FilterKey.ERRORS) {
