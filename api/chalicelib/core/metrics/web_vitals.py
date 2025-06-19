@@ -107,7 +107,7 @@ def get_web_vitals(data: schemas.HeatMapSessionsSearch, project_id, user_id):
         return {}
 
     for k in list(results[0].keys()):
-        results[0][k[:-4] + "_key"] = k[:-5]
+        results[0][k[:-4] + "_key"] = k[:-4]
         if math.isnan(results[0][k]):
             results[0][k] = None
             continue
