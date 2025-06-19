@@ -371,6 +371,7 @@ export { default as Link_45deg } from './link_45deg';
 export { default as List_alt } from './list_alt';
 export { default as List_ul } from './list_ul';
 export { default as List } from './list';
+export { default as Logo_small_white } from './logo_small_white';
 export { default as Logo_small } from './logo_small';
 export { default as Low_disc_space } from './low_disc_space';
 export { default as Magic } from './magic';
