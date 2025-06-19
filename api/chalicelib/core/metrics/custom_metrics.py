@@ -136,6 +136,10 @@ def __get_table_of_requests(project: schemas.ProjectContext, data: schemas.CardT
     return __get_table_of_series(project_id=project.project_id, data=data)
 
 
+def __get_table_of_screen_resolution(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
+
+
 def __get_web_vital_chart(project: schemas.ProjectContext, data: schemas.CardWebVital, user_id: int = None):
     if len(data.series) == 0:
         return {}
@@ -153,7 +157,8 @@ def __get_table_chart(project: schemas.ProjectContext, data: schemas.CardTable, 
         schemas.MetricOfTable.USER_COUNTRY: __get_table_of_countries,
         schemas.MetricOfTable.VISITED_URL: __get_table_of_urls,
         schemas.MetricOfTable.REFERRER: __get_table_of_referrers,
-        schemas.MetricOfTable.FETCH: __get_table_of_requests
+        schemas.MetricOfTable.FETCH: __get_table_of_requests,
+        schemas.MetricOfTable.SCREEN_RESOLUTION: __get_table_of_screen_resolution
     }
     return supported.get(data.metric_of, not_supported)(project=project, data=data, user_id=user_id)
 

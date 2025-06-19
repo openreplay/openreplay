@@ -1039,6 +1039,7 @@ class MetricOfTable(str, Enum):
     ERRORS = "jsException"
     REFERRER = "referrer"
     FETCH = EventType.REQUEST_DETAILS.value
+    SCREEN_RESOLUTION = "screenResolution"
 
 
 class MetricOfTimeseries(str, Enum):
