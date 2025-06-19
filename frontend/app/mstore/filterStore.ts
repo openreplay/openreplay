@@ -142,6 +142,15 @@ export default class FilterStore {
       }),
     );
 
+    if (!filter) {
+      console.error('Filter not found');
+      return new FilterItem({
+        name: data.name,
+        isEvent: data.isEvent,
+        autoCaptured: data.autoCaptured,
+      });
+    }
+
     filter.filters =
       filter.filters?.filter((f: any) => f.defaultProperty) || [];
 

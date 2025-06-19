@@ -88,16 +88,32 @@ function WidgetView({
                 : 'lineChart',
           };
           if (selectedCard.filters) {
+            const filters = [];
+
+            // iterate selectedCard.filters
+            selectedCard.filters.forEach((filter: any) => {
+              const f = filterStore.findEvent({
+                name: filter.name,
+                autoCaptured: filter.autoCaptured,
+              });
+
+              if (filter.filters && filter.filters.length > 0) {
+                f.filters = filter.filters;
+              }
+              filters.push(f);
+            });
+
             cardData.series = [
               new FilterSeries().fromJson({
                 name: 'Series 1',
-                filter: { filters: selectedCard.filters },
+                filter: { filters: filters },
               }),
             ];
           } else if (selectedCard.cardType === TABLE) {
             cardData.series = [new FilterSeries()];
             cardData.series[0].filter.eventsOrder = 'and';
           }
+
           if (selectedCard.cardType === FUNNEL) {
             cardData.series = [new FilterSeries()];
             cardData.series[0].filter.addFunnelDefaultFilters();
@@ -106,15 +122,19 @@ function WidgetView({
           }
 
           if (selectedCard.cardType === USER_PATH) {
-            // cardData.excludes = [];
-
-            const f = filterStore.findEvent({
+            const event = filterStore.findEvent({
               name: FilterKey.LOCATION,
               autoCaptured: true,
             });
 
-            cardData.startPoint = f;
+            cardData.startPoint = event;
           }
+
+          if (selectedCard.cardType === HEATMAP) {
+            cardData.series = [new FilterSeries()];
+            cardData.series[0].filter.addHeatmapDefaultFilters();
+          }
+
           metricStore.merge(cardData);
         }
       }
