@@ -94,7 +94,7 @@ export const tabItems: (t: TFunction) => Record<string, TabItem[]> = (t) => ({
       description: t('Pinpoint the slowest network requests causing delays.'),
     },
     {
-      icon: <Activity width={16} />,
+      icon: <Icon name="pulse" color="inherit" size={16} />,
       title: t('Web Vitals'),
       type: WEBVITALS,
       description: t('Monitor key web performance metrics.'),
