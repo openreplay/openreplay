@@ -192,9 +192,9 @@ export default class MetricStore {
           'and',
         ];
       });
-      if (type === HEATMAP && 'series' in obj) {
-        delete obj.series;
-      }
+      // if (type === HEATMAP && 'series' in obj) {
+      //   delete obj.series;
+      // }
       this.changeType(type);
     }
 
@@ -206,10 +206,10 @@ export default class MetricStore {
         obj.viewType = 'table';
       }
 
-      if (this.instance.metricType === USER_PATH) {
-        this.instance.series[0].filter.eventsHeader =
-          obj.metricOf === 'start-point' ? 'START POINT' : 'END POINT';
-      }
+      // if (this.instance.metricType === USER_PATH) {
+      //   this.instance.series[0].filter.eventsHeader =
+      //     obj.metricOf === 'start-point' ? 'START POINT' : 'END POINT';
+      // }
     }
 
     // handle metricValue change
@@ -285,34 +285,32 @@ export default class MetricStore {
     }
 
     if (value === HEATMAP) {
-      obj.series = obj.series.slice(0, 1);
-      if (this.instance.metricType !== HEATMAP) {
-        obj.series[0].filter.removeFilter(0);
-      }
-
-      if (obj.series[0] && obj.series[0].filter.filters.length < 1) {
-        const clickMapFilter = {
-          name: FilterKey.LOCATION,
-          autoCaptured: true,
-          displayName: 'Visited URL',
-          placeholder: 'Enter URL or path',
-          operator: 'startWith',
-          isEvent: true,
-          dataType: 'string',
-          filters: [
-            {
-              name: 'url',
-              dataType: 'string',
-              operator: 'startsWith',
-              value: [''],
-              eventName: FilterKey.LOCATION,
-              autoCaptured: true,
-            },
-          ],
-        };
-
-        obj.series[0].filter.addFilter(clickMapFilter);
-      }
+      // obj.series = obj.series.slice(0, 1);
+      // if (this.instance.metricType !== HEATMAP) {
+      //   obj.series[0].filter.removeFilter(0);
+      // }
+      // if (obj.series[0] && obj.series[0].filter.filters.length < 1) {
+      // const clickMapFilter = {
+      //   name: FilterKey.LOCATION,
+      //   autoCaptured: true,
+      //   displayName: 'Visited URL',
+      //   placeholder: 'Enter URL or path',
+      //   operator: 'startWith',
+      //   isEvent: true,
+      //   dataType: 'string',
+      //   filters: [
+      //     {
+      //       name: 'url',
+      //       dataType: 'string',
+      //       operator: 'startsWith',
+      //       value: [''],
+      //       eventName: FilterKey.LOCATION,
+      //       autoCaptured: true,
+      //     },
+      //   ],
+      // };
+      // obj.series[0].filter.addFilter(clickMapFilter);
+      // }
     }
 
     if (metricOf) {
