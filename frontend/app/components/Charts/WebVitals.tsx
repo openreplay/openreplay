@@ -222,7 +222,7 @@ function WebVitalsCard({
   onClick: (metricName: string, status: 'good' | 'medium' | 'bad') => void;
   isSelected: boolean;
 }) {
-  const bg = colors[status];
+  const bg = colors[status] ?? '#cccccc';
   const valueFormatted = value
     ? value > 1000
       ? `${(value / 1000).toFixed(2)}s`
