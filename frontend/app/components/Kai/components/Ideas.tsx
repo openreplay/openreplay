@@ -8,18 +8,20 @@ function Ideas({
   onClick,
   projectId,
   threadId = null,
+  messageId = null,
   inChat,
   limited,
 }: {
   onClick: (query: string) => void;
   projectId: string;
   threadId?: string | null;
+  messageId: string | null,
   inChat?: boolean;
   limited?: boolean;
 }) {
   const { t } = useTranslation();
   const { data: suggestedPromptIdeas = [], isPending } = useQuery({
-    queryKey: ['kai', projectId, 'chats', threadId, 'prompt-suggestions'],
+    queryKey: ['kai', projectId, 'chats', threadId, 'prompt-suggestions', messageId],
     queryFn: () => kaiService.getPromptSuggestions(projectId, threadId),
     staleTime: 1000 * 60,
   });
