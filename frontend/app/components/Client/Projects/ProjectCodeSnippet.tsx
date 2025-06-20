@@ -162,7 +162,7 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
               <span>{t('Install SDK')}</span>
             </div>
 
-            <div className="ml-8 flex gap-2 items-center">
+            <div className="ml-8 flex gap-1 items-center">
               <div>
                 {t('Paste this snippet')}&nbsp;
                 <span>{t('before the')}&nbsp;</span>
@@ -172,8 +172,7 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
                 bordered={false}
                 className="rounded-lg text-base mr-0"
               >
-                {' '}
-                {'</head>'}{' '}
+                {'</head>'}
               </Tag>
               <span>&nbsp;{t('tag of your page.')}&nbsp;</span>
             </div>
