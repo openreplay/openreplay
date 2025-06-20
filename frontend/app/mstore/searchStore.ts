@@ -405,16 +405,12 @@ class SearchStore {
     this.instance = Object.assign(this.instance, search);
   };
 
-  updateFilter = (id: string, search: Partial<Filter>) => {
-    const newFilters = this.instance.filters.map((f: any) => {
-      if (f.id === id) {
-        return {
-          ...f,
-          ...search,
-        };
-      }
-      return f;
-    });
+  updateFilter = (index: number, search: Partial<Filter>) => {
+    const newFilters = [...this.instance.filters];
+    newFilters[index] = {
+      ...newFilters[index],
+      ...search,
+    };
 
     this.instance = new Search({
       ...this.instance.toData(),
@@ -422,8 +418,10 @@ class SearchStore {
     });
   };
 
-  removeFilter = (id: string) => {
-    const newFilters = this.instance.filters.filter((f: any) => f.id !== id);
+  removeFilter = (index: number) => {
+    console.log('removeFilter', index);
+    const newFilters = [...this.instance.filters];
+    newFilters.splice(index, 1);
 
     this.instance = new Search({
       ...this.instance.toData(),

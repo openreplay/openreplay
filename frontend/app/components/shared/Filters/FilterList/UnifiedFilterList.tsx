@@ -9,8 +9,8 @@ interface UnifiedFilterListProps {
   filters: Filter[];
   header?: React.ReactNode;
   filterSelection?: React.ReactNode;
-  handleRemove: (index: string) => void;
-  handleUpdate: (index: string, updatedFilter: Filter) => void;
+  handleRemove: (index: number) => void;
+  handleUpdate: (index: number, updatedFilter: Filter) => void;
   handleAdd: (newFilter: Filter) => void;
   handleMove?: (draggedIndex: number, newPosition: number) => void;
   isDraggable?: boolean;
@@ -57,15 +57,15 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
   const cannotDelete = !supportsEmpty && filters.length <= 1;
 
   const updateFilter = useCallback(
-    (key: string, updatedFilter: any) => {
-      handleUpdate(key, updatedFilter);
+    (index: number, updatedFilter: any) => {
+      handleUpdate(index, updatedFilter);
     },
     [handleUpdate],
   );
 
   const removeFilter = useCallback(
-    (key: string) => {
-      handleRemove(key);
+    (index: number) => {
+      handleRemove(index);
     },
     [handleRemove],
   );
@@ -163,7 +163,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
     <div className={cn('flex flex-col', className)} style={style}>
       {filters.map((filterItem: Filter, filterIndex: number) => (
         <div
-          key={`filter-${filterItem.id || filterIndex}`}
+          key={`filter-${filterItem.id + filterIndex}`}
           className={cn(
             'flex gap-2 py-2 items-start hover:bg-active-blue -mx-5 px-5 pe-3 transition-colors duration-100 relative',
             {
@@ -181,7 +181,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
                 hoveredItem.position === 'bottom',
             },
           )}
-          id={`filter-${filterItem.id || filterIndex}`}
+          id={`filter-${filterItem.id + filterIndex}`}
           draggable={isDraggable && filters.length > 1} // Only draggable if enabled and more than one item
           onDragStart={
             isDraggable && filters.length > 1
@@ -219,9 +219,9 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
             filterIndex={showIndices ? filterIndex : undefined}
             filter={filterItem}
             onUpdate={(updatedFilter) =>
-              updateFilter(filterItem.id, updatedFilter)
+              updateFilter(filterIndex, updatedFilter)
             }
-            onRemoveFilter={() => removeFilter(filterItem.id)}
+            onRemoveFilter={() => removeFilter(filterIndex)}
             saveRequestPayloads={saveRequestPayloads}
             disableDelete={cannotDelete}
             readonly={readonly}

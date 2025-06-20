@@ -151,15 +151,27 @@ export default class FilterStore {
       });
     }
 
-    filter.filters =
-      filter.filters?.filter((f: any) => f.defaultProperty) || [];
+    // filter.filters =
+    //   filter.filters?.filter((f: any) => f.defaultProperty) || [];
+    filter.filters = [];
 
     return new FilterItem(filter);
   };
 
-  // findDefaultProperty = (filterId: string): Filter | undefined => {
-  //   // const options = await filterStore.getEventFilters(filter.id);
+  // findEventProperty = (
+  //   eventId: string,
+  //   data: Partial<Filter>,
+  // ): Filter | undefined => {
+  //   const filter = this.findFilterById(eventId);
+  //   if (!filter) {
+  //     console.error('Filter not found');
+  //     return undefined;
+  //   }
 
+  //   filter.filters =
+  //     filter.filters?.filter((f: any) => f.defaultProperty) || [];
+
+  //   return new FilterItem(filter);
   // };
 
   private findFilterById = (id: string): Filter | undefined => {

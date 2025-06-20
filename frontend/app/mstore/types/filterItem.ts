@@ -176,7 +176,7 @@ export default class FilterItem implements IFilter {
     // }
 
     if (this.name === FilterKey.DURATION) {
-      json.value = this.value?.map((item: any) => (item ? Number(item) : 0));
+      json.value = this.value?.map((item: any) => (item ? item + '' : 0));
     }
 
     return json;
