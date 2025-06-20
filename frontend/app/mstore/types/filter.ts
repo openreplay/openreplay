@@ -49,9 +49,9 @@ export interface IFilterStore {
 
   replaceFilters(newFilters: FilterItem[]): void;
 
-  updateFilter(filterId: string, filterData: FilterData): void;
+  updateFilter(index: number, filterData: FilterData): void;
 
-  removeFilter(filterId: string): void;
+  removeFilter(index: number): void;
 
   fromJson(json: JsonData, isHeatmap?: boolean): this;
 
@@ -210,7 +210,7 @@ export default class FilterStore implements IFilterStore {
     this.filters = newFilters.map((f) => f);
   }
 
-  private updateFilterByIndex(index: number, filterData: FilterData) {
+  private updateFilterByIndex(index: number, filterData: FilterItem) {
     if (index >= 0 && index < this.filters.length) {
       const originalId = this.filters[index].id;
       const updatedFilter = this.createFilterItemFromData(filterData);
@@ -221,29 +221,27 @@ export default class FilterStore implements IFilterStore {
     }
   }
 
-  updateFilter(filterId: string, filterData: FilterData) {
-    const index = this.filters.findIndex((f) => f.id === filterId);
-    if (index > -1) {
+  updateFilter = (index: number, filterData: FilterItem) => {
+    if (index >= 0 && index < this.filters.length) {
       const updatedFilter = this.createFilterItemFromData(filterData);
-      updatedFilter.id = filterId; // Ensure the ID remains the same
+      updatedFilter.id = this.filters[index].id;
       this.filters[index] = updatedFilter;
     } else {
       console.warn(
-        `FilterStore.updateFilter: Filter with id ${filterId} not found.`,
+        `FilterStore.updateFilter: Filter at index ${index} not found.`,
       );
     }
-  }
+  };
 
-  removeFilter(filterId: string) {
-    const index = this.filters.findIndex((f) => f.id === filterId);
-    if (index > -1) {
+  removeFilter = (index: number) => {
+    if (index >= 0 && index < this.filters.length) {
       this.filters.splice(index, 1);
     } else {
       console.warn(
-        `FilterStore.removeFilter: Filter with id ${filterId} not found.`,
+        `FilterStore.removeFilter: Filter at index ${index} not found.`,
       );
     }
-  }
+  };
 
   fromJson(json: JsonData, isHeatmap?: boolean): this {
     runInAction(() => {

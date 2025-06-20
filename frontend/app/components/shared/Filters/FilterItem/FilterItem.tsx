@@ -450,7 +450,7 @@ function FilterItem(props: Props) {
 
           {filteredSubFilters.map((subFilter: any, index: number) => (
             <div
-              key={`subfilter-wrapper-${filter.id || filterIndex}-${subFilter.key || index}`}
+              key={`subfilter-wrapper-${filter.id || filterIndex}-${subFilter.id || index}`}
               className={cn('relative', subFilterPaddingLeftClass)}
             >
               <FilterItem

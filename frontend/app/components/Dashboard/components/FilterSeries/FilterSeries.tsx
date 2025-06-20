@@ -11,6 +11,8 @@ import { Filter } from '@/mstore/types/filterConstants';
 import { Plus } from 'lucide-react';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
 import { useStore } from '@/mstore';
+import FilterSeries from '@/mstore/types/filterSeries';
+import FilterItem from '@/mstore/types/filterItem';
 
 const FilterCountLabels = observer(
   (props: { filters: any; toggleExpand: any }) => {
@@ -116,7 +118,7 @@ const FilterSeriesHeader = observer(
 
 interface Props {
   seriesIndex: number;
-  series: any;
+  series: FilterSeries;
   onRemoveSeries: (seriesIndex: any) => void;
   canDelete?: boolean;
   supportsEmpty?: boolean;
@@ -158,7 +160,7 @@ function FilterSeries(props: Props) {
   const eventOptions: Filter[] = allFilterOptions.filter((i) => i.isEvent);
   const propertyOptions: Filter[] = allFilterOptions.filter((i) => !i.isEvent);
 
-  const onUpdateFilter = (filterIndex: number, filter: Filter) => {
+  const onUpdateFilter = (filterIndex: number, filter: FilterItem) => {
     series.filter.updateFilter(filterIndex, filter);
     observeChanges();
   };
