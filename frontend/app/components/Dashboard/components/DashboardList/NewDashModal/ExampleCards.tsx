@@ -159,6 +159,15 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
     example: ByBrowser,
     viewType: 'table',
   },
+  {
+    title: 'Untitled Top Resolutions',
+    key: FilterKey.RESOLUTIONS,
+    cardType: TABLE,
+    metricOf: FilterKey.RESOLUTIONS,
+    category: CARD_CATEGORIES(t)[1].key,
+    example: BySystem,
+    viewType: 'table',
+  },
   // {
   //     title: 'Sessions by System',
   //     key: TYPE.SESSIONS_BY_SYSTEM,

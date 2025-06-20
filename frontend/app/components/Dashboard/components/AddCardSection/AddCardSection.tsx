@@ -14,6 +14,7 @@ import {
   Globe,
   MonitorSmartphone,
   Activity,
+  Proportions,
 } from 'lucide-react';
 import { Icon } from 'UI';
 import { useModal } from 'App/components/Modal';
@@ -112,6 +113,14 @@ export const tabItems: (t: TFunction) => Record<string, TabItem[]> = (t) => ({
       title: t('Top Browsers'),
       type: FilterKey.USER_BROWSER,
       description: t('Analyze the browsers your visitors are using the most.'),
+    },
+    {
+      icon: <Proportions width={16} />,
+      title: t('Top Resolutions'),
+      type: FilterKey.RESOLUTIONS,
+      description: t(
+        'Analyze what resolutions are most used amongs your users.',
+      ),
     },
     {
       icon: <Combine width={16} />,
