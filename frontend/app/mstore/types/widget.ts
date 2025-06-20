@@ -229,7 +229,14 @@ export default class Widget {
             : ['LOCATION'];
         if (json.startPoint) {
           if (Array.isArray(json.startPoint) && json.startPoint.length > 0) {
-            this.startPoint = new FilterItem().fromJson(json.startPoint[0]);
+            const sp = json.startPoint[0];
+            const event = filterStore.findEvent({
+              name: sp.name,
+              autoCaptured: sp.autoCaptured,
+            });
+
+            event.filters = sp.filters;
+            this.startPoint = new FilterItem().fromJson(event);
           }
 
           if (json.startPoint == typeof Object) {
