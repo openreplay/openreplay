@@ -242,10 +242,25 @@ export default class FilterStore {
       isEvent: category === 'events',
       value: filter.value || [],
       propertyOrder: 'and',
-      operator: filter.operator || 'is',
+      operator:
+        filter.operator || this.getDefaultFilterOperator(filter.dataType),
       defaultProperty: Boolean(filter.defaultProperty) || false,
       autoCaptured: filter.autoCaptured || false,
     }));
+  };
+
+  getDefaultFilterOperator = (dataType: string): string => {
+    switch (dataType) {
+      case 'string':
+        return 'is';
+      case 'number':
+      case 'int':
+        return 'equals';
+      case 'boolean':
+        return 'true';
+      default:
+        return 'is';
+    }
   };
 
   processFiltersFromData = (data: any[]): FilterItem[] => {
@@ -354,6 +369,8 @@ export default class FilterStore {
       throw new Error(`Event with ID ${eventId} not found`);
     }
 
+    console.log('settings filters for', event, filters);
+
     runInAction(() => {
       event.filters = filters;
     });
@@ -361,43 +378,32 @@ export default class FilterStore {
 
   getEventFilters = async (eventId: string): Promise<Filter[]> => {
     const event = this.findFilterById(eventId);
-    if (!event) {
-      throw new Error(`Event with ID ${eventId} not found`);
+    if (!event) throw new Error(`Event with ID ${eventId} not found`);
+    const key = event.id;
+
+    // return cached if valid
+    const cached = this.filterCache[key];
+    if (cached && this.isCacheValid(cached)) {
+      return cached.data;
     }
 
-    const cacheKey = event?.id;
-
-    // Check cache with TTL
-    // const cachedEntry = this.filterCache[cacheKey];
-    // if (cachedEntry && this.isCacheValid(cachedEntry)) {
-    //   return cachedEntry.data;
-    // }
-
-    // Return pending fetch if in progress
-    if (this.pendingFetches[cacheKey]) {
-      return this.pendingFetches[cacheKey];
-    }
-
-    try {
-      this.pendingFetches[cacheKey] = this.fetchAndProcessPropertyFilters(
+    // only start one fetch per key
+    if (!this.pendingFetches[key]) {
+      this.pendingFetches[key] = this.fetchAndProcessPropertyFilters(
         event.name,
         event.autoCaptured,
-      );
-
-      const filters = await this.pendingFetches[cacheKey];
-      this.setEventFilters(eventId, filters);
-
-      runInAction(() => {
-        this.setCacheEntry(cacheKey, filters);
-      });
-
-      return filters;
-    } catch (error) {
-      console.error('Failed to fetch event filters:', error);
-      throw error;
-    } finally {
-      delete this.pendingFetches[cacheKey];
+      )
+        .then((filters) => {
+          this.setEventFilters(eventId, filters);
+          runInAction(() => this.setCacheEntry(key, filters));
+          return filters;
+        })
+        .finally(() => {
+          delete this.pendingFetches[key];
+        });
     }
+
+    return this.pendingFetches[key]!;
   };
 
   private isCacheValid = (entry: CacheEntry): boolean => {

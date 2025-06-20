@@ -202,6 +202,7 @@ export default class FilterStore implements IFilterStore {
   }
 
   addFilter(filterData: FilterData) {
+    console.log('addFilter', filterData);
     const newFilter = this.createFilterItemFromData(filterData);
     this.filters.push(newFilter);
   }
