@@ -61,6 +61,14 @@ function FilterItem(props: Props) {
 
   const { filterStore } = useStore();
   const allFilters = filterStore.getCurrentProjectFilters();
+
+  useMemo(() => {
+    if (isSubItem) return;
+    filterStore.getEventFilters(filter?.id + '').then((filters) => {
+      setEventFilterOptions(filters);
+    });
+  }, []);
+
   const eventSelections = allFilters.filter(
     (i) => i.isEvent === filter.isEvent,
   );
@@ -74,79 +82,79 @@ function FilterItem(props: Props) {
 
   const operatorOptions = getOperatorsByType(filter.dataType);
 
-  useEffect(() => {
-    let isMounted = true; // Mounted flag
+  // useEffect(() => {
+  //   let isMounted = true; // Mounted flag
 
-    async function loadFilters() {
-      const shouldFetch = !isSubItem && filter.isEvent && filter.name;
-      const fetchName = filter.name; // Capture value at effect start
+  //   async function loadFilters() {
+  //     const shouldFetch = !isSubItem && filter.isEvent && filter.name;
+  //     const fetchName = filter.name; // Capture value at effect start
 
-      if (shouldFetch) {
-        try {
-          // Only set loading if not already loading for this specific fetch
-          if (isMounted) setEventFiltersLoading(true);
+  //     if (shouldFetch) {
+  //       try {
+  //         // Only set loading if not already loading for this specific fetch
+  //         if (isMounted) setEventFiltersLoading(true);
 
-          const options = await filterStore.getEventFilters(filter.id);
+  //         const options = await filterStore.getEventFilters(filter.id);
 
-          if (!filter.filters || filter.filters?.length === 0) {
-            const defaultOption = options?.find(
-              (option) => option?.defaultProperty,
-            );
+  //         if (!filter.filters || filter.filters?.length === 0) {
+  //           const defaultOption = options?.find(
+  //             (option) => option?.defaultProperty,
+  //           );
 
-            if (defaultOption) {
-              const subFilter = {
-                ...defaultOption,
-              };
-              addSubFilter(subFilter);
-            }
-          }
+  //           if (defaultOption) {
+  //             const subFilter = {
+  //               ...defaultOption,
+  //             };
+  //             addSubFilter(subFilter);
+  //           }
+  //         }
 
-          if (
-            isMounted &&
-            filter.name === fetchName &&
-            !isSubItem &&
-            filter.isEvent
-          ) {
-            setEventFilterOptions(options);
-          }
-        } catch (error) {
-          console.error('Failed to load event filters:', error);
-          if (
-            isMounted &&
-            filter.name === fetchName &&
-            !isSubItem &&
-            filter.isEvent
-          ) {
-            setEventFilterOptions([]);
-          }
-        } finally {
-          if (
-            isMounted &&
-            filter.name === fetchName &&
-            !isSubItem &&
-            filter.isEvent
-          ) {
-            setEventFiltersLoading(false);
-          }
-        }
-      } else {
-        if (isMounted) {
-          if (eventFilterOptions.length > 0) {
-            setEventFilterOptions([]);
-          }
-          if (eventFiltersLoading) {
-            setEventFiltersLoading(false);
-          }
-        }
-      }
-    }
+  //         if (
+  //           isMounted &&
+  //           filter.name === fetchName &&
+  //           !isSubItem &&
+  //           filter.isEvent
+  //         ) {
+  //           setEventFilterOptions(options);
+  //         }
+  //       } catch (error) {
+  //         console.error('Failed to load event filters:', error);
+  //         if (
+  //           isMounted &&
+  //           filter.name === fetchName &&
+  //           !isSubItem &&
+  //           filter.isEvent
+  //         ) {
+  //           setEventFilterOptions([]);
+  //         }
+  //       } finally {
+  //         if (
+  //           isMounted &&
+  //           filter.name === fetchName &&
+  //           !isSubItem &&
+  //           filter.isEvent
+  //         ) {
+  //           setEventFiltersLoading(false);
+  //         }
+  //       }
+  //     } else {
+  //       if (isMounted) {
+  //         if (eventFilterOptions.length > 0) {
+  //           setEventFilterOptions([]);
+  //         }
+  //         if (eventFiltersLoading) {
+  //           setEventFiltersLoading(false);
+  //         }
+  //       }
+  //     }
+  //   }
 
-    void loadFilters();
+  //   void loadFilters();
 
-    return () => {
-      isMounted = false; // Cleanup on unmount
-    };
-  }, [filter.name, filter.isEvent, isSubItem, filterStore]);
+  //   return () => {
+  //     isMounted = false; // Cleanup on unmount
+  //   };
+  // }, []);
 
   const canShowValues = useMemo(
     () =>
@@ -165,6 +173,7 @@ function FilterItem(props: Props) {
 
   const replaceFilter = useCallback(
     (selectedFilter: any) => {
+      console.log('replaceFilter', selectedFilter);
       onUpdate({
         ...selectedFilter,
         value: selectedFilter.value || [''],
@@ -196,7 +205,7 @@ function FilterItem(props: Props) {
     (subFilter: any, index: number) => {
       onUpdate({
         ...filter,
-        filters: filter.filters.map((i: any, idx: number) =>
+        filters: filter.filters?.map((i: any, idx: number) =>
           idx === index ? subFilter : i,
         ),
       });
