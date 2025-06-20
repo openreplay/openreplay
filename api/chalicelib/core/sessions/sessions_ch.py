@@ -250,7 +250,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                     else f"WHEN screen_width * screen_height < {width * height} THEN '{RESOLUTION_RANGES[i - 1][0]}x{RESOLUTION_RANGES[i - 1][1]}-{width}x{height}'"
                     for i, (width, height) in enumerate(RESOLUTION_RANGES)
                 ]
-                extra_col = "CASE " + " ".join([
+                extra_col = ",CASE " + " ".join([
                     "WHEN isNull(screen_width * screen_height) OR screen_width * screen_height = 0 THEN 'Unknown'",
                     *extra_col,
                     f"ELSE '>{RESOLUTION_RANGES[-1][0]}x{RESOLUTION_RANGES[-1][1]}'"
