@@ -66,6 +66,17 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                 AND processed_sessions.datetime < toDateTime((timestamp + %(step_size)s) / 1000)
                             GROUP BY timestamp
                             ORDER BY timestamp;"""
+            elif metric_of == schemas.MetricOfTimeseries.EVENT_COUNT:
+                query = f"""SELECT gs.generate_series AS timestamp,
+                                   COALESCE(COUNT(processed_sessions.events_count),0) AS count
+                            FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS gs
+                                LEFT JOIN (SELECT s.events_count AS events_count,
+                                                s.datetime AS datetime
+                                            {query_part}) AS processed_sessions ON(TRUE)
+                            WHERE processed_sessions.datetime >= toDateTime(timestamp / 1000)
+                                AND processed_sessions.datetime < toDateTime((timestamp + %(step_size)s) / 1000)
+                            GROUP BY timestamp
+                            ORDER BY timestamp;"""
             else:
                 raise Exception(f"Unsupported metricOf:{metric_of}")
             main_query = cur.format(query=query, parameters=full_args)
