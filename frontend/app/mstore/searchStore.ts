@@ -13,7 +13,7 @@ import { searchService, sessionService } from 'App/services';
 import Search from 'App/mstore/types/search';
 import { checkFilterValue } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
-import { sessionStore, settingsStore } from 'App/mstore';
+import { filterStore, sessionStore, settingsStore } from 'App/mstore';
 import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
 import { iTag } from '@/services/NotesService';
 import { issues_types } from 'Types/session/issue';
@@ -333,12 +333,18 @@ class SearchStore {
   }
 
   addFilter(filter: any) {
-    const index = filter.isEvent
-      ? -1
-      : this.instance.filters.findIndex((i: Filter) => i.id === filter.id);
+    console.log('SearchStore: Add Filter', filter);
+
+    if (filter.isEvent && filter.filters) {
+      const props = filterStore.getEventFilters(filter.id).then((props) => {
+        // const defaultProp = props?.find((prop) => prop.defaultProperty);
+        // console.log('defaultProp', defaultProp);
+        filter.filters = props?.filter((prop) => prop.defaultProperty);
+      });
+    }
 
     filter.value = checkFilterValue(filter.value);
-    filter.operator = 'is';
+    filter.operator = filter.operator || 'is';
     filter.filters = filter.filters
       ? filter.filters.map((subFilter: any) => ({
           ...subFilter,
@@ -346,21 +352,26 @@ class SearchStore {
         }))
       : null;
 
-    if (index > -1) {
-      const oldFilter = new FilterItem(this.instance.filters[index]);
-      const updatedFilter = {
-        ...oldFilter,
-        value: oldFilter.value.concat(filter.value),
-      };
-      oldFilter.merge(updatedFilter);
-      this.updateFilter(index, updatedFilter);
-    } else {
-      // filter.key = Math.random().toString(36).substring(7);
-      this.instance.filters.push(filter);
-      this.instance = new Search({
-        ...this.instance.toData(),
-      });
-    }
+    this.instance.filters.push(filter);
+    this.instance = new Search({
+      ...this.instance.toData(),
+    });
+
+    // if (index > -1) {
+    //   const oldFilter = new FilterItem(this.instance.filters[index]);
+    //   const updatedFilter = {
+    //     ...oldFilter,
+    //     value: oldFilter.value.concat(filter.value),
+    //   };
+    //   oldFilter.merge(updatedFilter);
+    //   this.updateFilter(index, updatedFilter);
+    // } else {
+    //   // filter.key = Math.random().toString(36).substring(7);
+    //   this.instance.filters.push(filter);
+    //   this.instance = new Search({
+    //     ...this.instance.toData(),
+    //   });
+    // }
 
     this.currentPage = 1;
 
@@ -406,6 +417,7 @@ class SearchStore {
   };
 
   updateFilter = (index: number, search: Partial<Filter>) => {
+    console.log('SearchStore: updateFilter', index, search);
     const newFilters = [...this.instance.filters];
     newFilters[index] = {
       ...newFilters[index],
