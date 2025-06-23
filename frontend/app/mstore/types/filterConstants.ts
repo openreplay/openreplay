@@ -292,6 +292,10 @@ export const OPERATORS = {
       description: 'Array is not empty',
     },
   ],
+
+  duration: [
+    { value: 'is', label: 'is', displayName: 'Is', description: 'Exact match' },
+  ],
 };
 
 export const COMMON_FILTERS: Filter[] = [];
@@ -321,6 +325,9 @@ export const getOperatorsByType = (type?: string): Operator[] => {
     case 'array':
     case 'list':
       operators = OPERATORS.array;
+      break;
+    case 'duration':
+      operators = OPERATORS.duration;
       break;
     default:
       // Default to string operators if type is unknown
