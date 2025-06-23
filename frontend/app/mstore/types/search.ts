@@ -148,6 +148,8 @@ export default class Search {
       new FilterItem(filter).toJson(),
     );
 
+    this.handleProperties(js); // TODO this is temproray to support PYTHON api where it has different structure for nested filters
+
     const { startDate, endDate } = this.getDateRange(
       js.rangeValue,
       js.startDate,
@@ -160,6 +162,20 @@ export default class Search {
     delete js.createdAt;
     delete js.key;
     return js;
+  }
+
+  handleProperties(data: any) {
+    data.filters = data.filters.map((filter: any) => {
+      if (filter.isEvent && Array.isArray(filter.filters)) {
+        const nested = filter.filters;
+        delete filter.filters;
+        filter.properties = {
+          filters: nested,
+        };
+      }
+      return filter;
+    });
+    return data;
   }
 
   private getDateRange(
