@@ -11,8 +11,22 @@ export default () => (next) => (action) => {
   next({ ...rest, type: REQUEST });
   const client = new APIClient();
 
-  return call(client)
+  // ----- TIMEOUT handling ----------------------------------------------
+  const REQUEST_TIMEOUT_MS = 30_000;
+  let timeoutId;
+
+  // Promise.race(): whichever (real call vs timer) settles first wins
+  const networkPromise = call(client);
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(
+      () => reject({ name: 'TimeoutError', message: 'API request timed out' }),
+      REQUEST_TIMEOUT_MS
+    );
+  });
+
+  return Promise.race([networkPromise, timeoutPromise])
     .then(async (response) => {
+      clearTimeout(timeoutId);
       // if (response.status === 403) {
       //   next({ type: FETCH_ACCOUNT.FAILURE });
       // }
@@ -34,6 +48,7 @@ export default () => (next) => (action) => {
       }
     })
     .catch(async (e) => {
+      clearTimeout(timeoutId);
       if (e.response?.status === 403) {
         next({ type: FETCH_ACCOUNT.FAILURE });
       }
