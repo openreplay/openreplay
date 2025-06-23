@@ -107,7 +107,7 @@ class SearchStore {
       // }
     ],
     groupByUser: false,
-    sort: 'start',
+    sort: 'startTs',
     order: 'desc',
     viewed: false,
     eventsCount: 0,

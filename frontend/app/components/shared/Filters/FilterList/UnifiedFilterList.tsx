@@ -228,11 +228,12 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
             isConditional={isConditional}
             hideIndex={!showIndices}
             isDragging={draggedInd === filterIndex}
+            propertyOrder={filterItem.propertyOrder}
             onPropertyOrderChange={
               filterItem.isEvent
                 ? (order: string) => {
                     const newFilter = { ...filterItem, propertyOrder: order };
-                    updateFilter(filterItem.id, newFilter);
+                    updateFilter(filterIndex, newFilter);
                   }
                 : undefined
             }
