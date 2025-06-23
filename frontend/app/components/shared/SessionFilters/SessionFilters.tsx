@@ -29,15 +29,77 @@ function SessionFilters() {
     });
   };
 
-  const moveFilter = (index: number, newIndex: number) => {
-    const updatedFilters = [...searchInstance.filters];
-    const filterToMove = updatedFilters.splice(index, 1)[0];
-    updatedFilters.splice(newIndex, 0, filterToMove);
-    searchStore.edit({ filters: updatedFilters });
+  // Create filtered arrays with original indices
+  const eventFiltersWithIndices = searchInstance.filters
+    .map((filter, originalIndex) => ({ filter, originalIndex }))
+    .filter(({ filter }) => filter.isEvent);
+
+  const attributeFiltersWithIndices = searchInstance.filters
+    .map((filter, originalIndex) => ({ filter, originalIndex }))
+    .filter(({ filter }) => !filter.isEvent);
+
+  const eventFilters = eventFiltersWithIndices.map(({ filter }) => filter);
+  const attributeFilters = attributeFiltersWithIndices.map(
+    ({ filter }) => filter,
+  );
+
+  // Create index mapping functions
+  const getOriginalEventIndex = (filteredIndex: number) => {
+    return eventFiltersWithIndices[filteredIndex]?.originalIndex ?? -1;
   };
 
-  const eventFilters = searchInstance.filters.filter((i) => i.isEvent);
-  const attributeFilters = searchInstance.filters.filter((i) => !i.isEvent);
+  const getOriginalAttributeIndex = (filteredIndex: number) => {
+    return attributeFiltersWithIndices[filteredIndex]?.originalIndex ?? -1;
+  };
+
+  // Wrapper functions for event operations
+  const handleEventRemove = (filteredIndex: number) => {
+    const originalIndex = getOriginalEventIndex(filteredIndex);
+    if (originalIndex !== -1) {
+      searchStore.removeFilter(originalIndex);
+    }
+  };
+
+  const handleEventUpdate = (filteredIndex: number, updatedFilter: Filter) => {
+    const originalIndex = getOriginalEventIndex(filteredIndex);
+    if (originalIndex !== -1) {
+      searchStore.updateFilter(originalIndex, updatedFilter);
+    }
+  };
+
+  // Wrapper functions for attribute operations
+  const handleAttributeRemove = (filteredIndex: number) => {
+    const originalIndex = getOriginalAttributeIndex(filteredIndex);
+    if (originalIndex !== -1) {
+      searchStore.removeFilter(originalIndex);
+    }
+  };
+
+  const handleAttributeUpdate = (
+    filteredIndex: number,
+    updatedFilter: Filter,
+  ) => {
+    const originalIndex = getOriginalAttributeIndex(filteredIndex);
+    if (originalIndex !== -1) {
+      searchStore.updateFilter(originalIndex, updatedFilter);
+    }
+  };
+
+  // Move function for events only (since only events are draggable)
+  const moveEventFilter = (
+    fromFilteredIndex: number,
+    toFilteredIndex: number,
+  ) => {
+    const fromOriginalIndex = getOriginalEventIndex(fromFilteredIndex);
+    const toOriginalIndex = getOriginalEventIndex(toFilteredIndex);
+
+    if (fromOriginalIndex !== -1 && toOriginalIndex !== -1) {
+      const updatedFilters = [...searchInstance.filters];
+      const filterToMove = updatedFilters.splice(fromOriginalIndex, 1)[0];
+      updatedFilters.splice(toOriginalIndex, 0, filterToMove);
+      searchStore.edit({ filters: updatedFilters });
+    }
+  };
 
   return (
     <Card className="rounded-lg" classNames={{ body: '!p-4' }}>
@@ -69,13 +131,13 @@ function SessionFilters() {
         isDraggable={true}
         showIndices={true}
         className="mt-2"
-        handleRemove={searchStore.removeFilter}
-        handleUpdate={searchStore.updateFilter}
+        handleRemove={handleEventRemove}
+        handleUpdate={handleEventUpdate}
         handleAdd={(filter) => {
           filter.filters = [];
           searchStore.addFilter(filter);
         }}
-        handleMove={moveFilter}
+        handleMove={moveEventFilter}
       />
 
       <Divider className="my-3" />
@@ -105,10 +167,9 @@ function SessionFilters() {
         className="mt-2"
         isDraggable={false}
         showIndices={false}
-        handleRemove={searchStore.removeFilter}
-        handleUpdate={searchStore.updateFilter}
+        handleRemove={handleAttributeRemove}
+        handleUpdate={handleAttributeUpdate}
         handleAdd={searchStore.addFilter}
-        // handleMove={moveFilter}
       />
     </Card>
   );
