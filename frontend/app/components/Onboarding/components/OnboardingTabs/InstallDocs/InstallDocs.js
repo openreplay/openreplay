@@ -22,7 +22,7 @@ function InstallDocs({ site }) {
           <span>{t('Install the npm package.')}</span>
         </div>
         <div className={cn(stl.snippetWrapper, 'ml-8')}>
-          <div className="absolute mt-1 mr-2 right-0">
+          <div className="absolute mt-1 mr-2 right-0 z-10">
             <CopyButton content={installationCommand} />
           </div>
           <CodeBlock code={installationCommand} language="bash" />
@@ -56,7 +56,7 @@ function InstallDocs({ site }) {
                   {t('use the below code:')}
                 </div>
                 <div className={cn(stl.snippetWrapper)}>
-                  <div className="absolute mt-1 mr-2 right-0">
+                  <div className="absolute mt-1 mr-2 right-0 z-10">
                     <CopyButton content={_usageCode} />
                   </div>
                   <CodeBlock code={_usageCode} language="js" />
@@ -97,7 +97,7 @@ function InstallDocs({ site }) {
             <div>
               <div className="-mb-2">{t('Install the plugin via npm:')}</div>
               <div className={cn(stl.snippetWrapper)}>
-                <div className="absolute mt-1 mr-2 right-0">
+                <div className="absolute mt-1 mr-2 right-0 z-10">
                   <CopyButton content="npm i @openreplay/tracker-assist" />
                 </div>
                 <CodeBlock
@@ -111,7 +111,7 @@ function InstallDocs({ site }) {
                 {t('Then enable it with your tracker:')}
               </div>
               <div className={cn(stl.snippetWrapper)}>
-                <div className="absolute mt-1 mr-2 right-0">
+                <div className="absolute mt-1 mr-2 right-0 z-10">
                   <CopyButton content="tracker.use(trackerAssist(options));" />
                 </div>
                 <CodeBlock
