@@ -888,13 +888,14 @@ class ErrorStatus(str, Enum):
 
 
 class ErrorSort(str, Enum):
-    OCCURRENCE = 'occurrence'
+    LAST_OCCURRENCE = 'lastOccurrence'
+    FIRST_OCCURRENCE = 'firstOccurrence'
     USERS_COUNT = 'users'
     SESSIONS_COUNT = 'sessions'
 
 
 class SearchErrorsSchema(SessionsSearchPayloadSchema):
-    sort: ErrorSort = Field(default=ErrorSort.OCCURRENCE)
+    sort: ErrorSort = Field(default=ErrorSort.LAST_OCCURRENCE)
     density: Optional[int] = Field(default=7)
     status: Optional[ErrorStatus] = Field(default=ErrorStatus.ALL)
     query: Optional[str] = Field(default=None)
@@ -1161,6 +1162,8 @@ class __CardSchema(CardSessionsSchema):
     session_id: Optional[int] = Field(default=None)
     # This is used to specify the number of top values for PathAnalysis
     rows: int = Field(default=3, ge=1, le=10)
+    sort: Optional[str] = Field(default=None)
+    order: SortOrderType = Field(default=SortOrderType.DESC.value)
 
 
 class CardTimeSeries(__CardSchema):
@@ -1185,6 +1188,7 @@ class CardTable(__CardSchema):
     metric_of: MetricOfTable = Field(default=MetricOfTable.USER_ID)
     view_type: MetricTableViewType = Field(...)
     metric_format: MetricExtendedFormatType = Field(default=MetricExtendedFormatType.SESSION_COUNT)
+    sort: Optional[ErrorSort] = Field(default=None)
 
     @model_validator(mode="before")
     @classmethod
@@ -1206,6 +1210,12 @@ class CardTable(__CardSchema):
     @model_validator(mode="after")
     def __transform(self):
         self.metric_of = MetricOfTable(self.metric_of)
+        if self.sort is not None:
+            for s in self.series:
+                s.filter.sort = self.sort
+                if self.order is not None:
+                    s.filter.order = self.order
+
         return self
 
     @model_validator(mode="after")

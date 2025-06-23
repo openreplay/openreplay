@@ -54,7 +54,7 @@ def get_batch(error_ids):
 
 def __get_sort_key(key):
     return {
-        schemas.ErrorSort.OCCURRENCE: "max_datetime",
+        schemas.ErrorSort.LAST_OCCURRENCE: "max_datetime",
         schemas.ErrorSort.USERS_COUNT: "users",
         schemas.ErrorSort.SESSIONS_COUNT: "sessions"
     }.get(key, 'max_datetime')
