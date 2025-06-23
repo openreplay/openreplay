@@ -451,7 +451,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             filter_type = f.name
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
-            full_args = {**full_args, f_k: sh.single_value(f.value), **sh.multi_values(f.value, value_key=f_k)}
+            full_args |= {f_k: sh.single_value(f.value)} | sh.multi_values(f.value, value_key=f_k)
             op = sh.get_sql_operator(f.operator) \
                 if filter_type not in [schemas.FilterType.EVENTS_COUNT] else f.operator.value
             is_any = sh.isAny_opreator(f.operator)
@@ -789,12 +789,17 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             s_k = e_k + "_source"
 
             event.value = helper.values_for_operator(value=event.value, op=event.operator)
-            full_args = {**full_args,
-                         **sh.multi_values(event.value, value_key=e_k),
-                         **sh.multi_values(event.source, value_key=s_k),
-                         e_k: event.value[0] if len(event.value) > 0 else event.value}
+            full_args |= sh.multi_values(event.value, value_key=e_k) \
+                         | sh.multi_values(event.source, value_key=s_k) \
+                         | {e_k: event.value[0] if len(event.value) > 0 else event.value}
 
-            if event_type == schemas.EventType.CLICK:
+            if not event.auto_captured:
+                event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
+                event_where.append(f"main.`$event_name`=%({e_k})s")
+                events_conditions.append({"type": event_where[-1]})
+                full_args[e_k] = event.name
+                # events_conditions[-1]["condition"] = event_where[-1]
+            elif event_type == schemas.EventType.CLICK:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 if platform == "web":
                     _column = "label"
@@ -889,7 +894,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             json_condition("main", "$properties", "value", "ILIKE", event.source, f"custom{i}")
                         )
 
-                        full_args = {**full_args, **sh.multi_values(event.source, value_key=f"custom{i}")}
+                        full_args |= sh.multi_values(event.source, value_key=f"custom{i}")
                 else:
                     _column = "label"
                     event_where.append(
@@ -1218,7 +1223,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ))
                     events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
-                full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
+                full_args |= sh.multi_values(event.source, value_key=e_k)
 
                 event_where.append(json_condition(
                     tname, "$properties", colname, event.sourceOperator, event.source, e_k, True, True)
@@ -1243,7 +1248,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ))
                     events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
-                full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
+                full_args |= sh.multi_values(event.source, value_key=e_k)
 
                 event_where.append(json_condition(
                     tname, "$properties", colname, event.sourceOperator, event.source, e_k, True, True)
@@ -1270,7 +1275,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_negative_operator:
                         r_op = sh.reverse_sql_operator(op)
                     e_k_f = e_k + f"_fetch{j}"
-                    full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
+                    full_args |= sh.multi_values(f.value, value_key=e_k_f)
                     if f.type == schemas.FetchFilterType.FETCH_URL:
                         event_where.append(json_condition(
                             "main", "$properties", 'url_path', op, f.value, e_k_f
@@ -1353,7 +1358,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
                     op = sh.get_sql_operator(f.operator)
                     e_k_f = e_k + f"_graphql{j}"
-                    full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
+                    full_args |= sh.multi_values(f.value, value_key=e_k_f)
                     if f.type == schemas.GraphqlFilterType.GRAPHQL_NAME:
                         event_where.append(json_condition(
                             "main", "$properties", "name", op, f.value, e_k_f
@@ -1445,12 +1450,16 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 sub_conditions = []
                 for l, property in enumerate(event.properties.filters):
                     a_k = f"{e_k}_att_{l}"
-                    full_args = {**full_args,
-                                 **sh.multi_values(property.value, value_key=a_k, data_type=property.data_type)}
+                    property.value = helper.values_for_operator(value=property.value, op=property.operator)
+                    full_args |= sh.multi_values(property.value, value_key=a_k, data_type=property.data_type)
                     cast = get_col_cast(data_type=property.data_type, value=property.value)
-                    if property.is_predefined:
+                    if property.auto_captured and property.is_predefined:
                         condition = get_sub_condition(col_name=f"accurateCastOrNull(main.`{property.name}`,'{cast}')",
                                                       val_name=a_k, operator=property.operator)
+                    elif property.auto_captured:
+                        condition = get_sub_condition(
+                            col_name=f"accurateCastOrNull(main.`$properties`.`{property.name}`,'{cast}')",
+                            val_name=a_k, operator=property.operator)
                     else:
                         condition = get_sub_condition(
                             col_name=f"accurateCastOrNull(main.properties.`{property.name}`,'{cast}')",
@@ -1461,8 +1470,12 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     sub_conditions.append(event_where[-1])
                 if len(sub_conditions) > 0:
                     sub_conditions = (" " + event.properties.operator + " ").join(sub_conditions)
-                    events_conditions[-1]["condition"] += " AND " if len(events_conditions[-1]["condition"]) > 0 else ""
-                    events_conditions[-1]["condition"] += "(" + sub_conditions + ")"
+                    if "condition" in events_conditions[-1]:
+                        events_conditions[-1]["condition"] += \
+                            " AND " if len(events_conditions[-1]["condition"]) > 0 else ""
+                        events_conditions[-1]["condition"] += "(" + sub_conditions + ")"
+                    else:
+                        events_conditions[-1]["condition"] = "(" + sub_conditions + ")"
             if event_index == 0 or or_events:
                 event_where += ss_constraints
             if is_not:
@@ -1646,7 +1659,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         for i, f in enumerate(issues):
             f_k_v = f"f_issue_v{i}"
             f_k_s = f_k_v + "_source"
-            full_args = {**full_args, **sh.multi_values(f.value, value_key=f_k_v), f_k_s: f.source}
+            full_args |= sh.multi_values(f.value, value_key=f_k_v) | {f_k_s: f.source}
             issues_conditions.append(sh.multi_conditions(f"issues.type=%({f_k_v})s", f.value,
                                                          value_key=f_k_v))
             issues_conditions[-1] = f"({issues_conditions[-1]} AND issues.context_string=%({f_k_s})s)"
@@ -1670,8 +1683,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 e_k = f"ec_value{i}"
                 op = sh.get_sql_operator(c.operator)
                 c.value = helper.values_for_operator(value=c.value, op=c.operator)
-                full_args = {**full_args,
-                             **sh.multi_values(c.value, value_key=e_k)}
+                full_args |= sh.multi_values(c.value, value_key=e_k)
                 if c.name in (schemas.EventType.LOCATION.value, schemas.EventType.REQUEST.value):
                     _extra_or_condition.append(
                         sh.multi_conditions(f"extra_event.url_path {op} %({e_k})s",
@@ -1683,8 +1695,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         e_k += f"_{j}"
                         op = sh.get_sql_operator(c_f.operator)
                         c_f.value = helper.values_for_operator(value=c_f.value, op=c_f.operator)
-                        full_args = {**full_args,
-                                     **sh.multi_values(c_f.value, value_key=e_k)}
+                        full_args |= sh.multi_values(c_f.value, value_key=e_k)
                         if c_f.name == schemas.FetchFilterType.FETCH_URL.value:
                             _extra_or_condition.append(
                                 sh.multi_conditions(f"extra_event.url_path {op} %({e_k})s",

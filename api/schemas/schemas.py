@@ -601,6 +601,7 @@ class PropertyFilterSchema(BaseModel):
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     value: List[Union[int, str]] = Field(...)
     data_type: PropertyType = Field(default=PropertyType.STRING.value)
+    auto_captured: Optional[bool] = Field(default=True)
 
     # property_type: Optional[Literal["string", "number", "date"]] = Field(default=None)
 
@@ -631,10 +632,11 @@ class EventPropertiesSchema(BaseModel):
 class SessionSearchEventSchema(BaseModel):
     is_event: Literal[True] = True
     value: List[Union[str, int]] = Field(...)
-    name: Union[EventType, PerformanceEventType] = Field(...)
+    name: Union[EventType, PerformanceEventType, str] = Field(...)
     operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(default=None)
     sourceOperator: Optional[MathOperator] = Field(default=None)
+    auto_captured: Optional[bool] = Field(default=True)
     filters: Optional[List[RequestGraphqlFilterSchema]] = Field(default_factory=list)
     properties: Optional[EventPropertiesSchema] = Field(default=None)
 
