@@ -229,29 +229,36 @@ export default class FilterStore {
   };
 
   processFilters = (filters: any[], category?: string): FilterItem[] => {
-    return filters.map((filter) => ({
-      ...filter,
-      id: Math.random().toString(36).substring(2, 9),
-      possibleTypes:
-        filter.possibleTypes?.map((type) => type.toLowerCase()) || [],
-      dataType: filter.dataType || 'string',
-      category: category || 'custom',
-      subCategory: this.determineSubCategory(category, filter),
-      displayName: filter.displayName || filter.name,
-      // icon: FilterKey.LOCATION, // TODO - use actual icons
-      isEvent: category === 'events',
-      value: filter.value || [],
-      propertyOrder: 'and',
-      operator:
-        filter.operator || this.getDefaultFilterOperator(filter.dataType),
-      defaultProperty: Boolean(filter.defaultProperty) || false,
-      autoCaptured: filter.autoCaptured || false,
-    }));
+    return filters.map((filter) => {
+      let dataType = filter.dataType || 'string';
+      if (filter.name === 'duration' && filter.autoCaptured) {
+        dataType = 'duration';
+      }
+      return {
+        ...filter,
+        id: Math.random().toString(36).substring(2, 9),
+        possibleTypes:
+          filter.possibleTypes?.map((type: any) => type.toLowerCase()) || [],
+        dataType: dataType,
+        category: category || 'custom',
+        subCategory: this.determineSubCategory(category, filter),
+        displayName: filter.displayName || filter.name,
+        // icon: FilterKey.LOCATION, // TODO - use actual icons
+        isEvent: category === 'events',
+        value: filter.value || [],
+        propertyOrder: 'and',
+        operator:
+          filter.operator || this.getDefaultFilterOperator(filter.dataType),
+        defaultProperty: Boolean(filter.defaultProperty) || false,
+        autoCaptured: filter.autoCaptured || false,
+      };
+    });
   };
 
   getDefaultFilterOperator = (dataType: string): string => {
     switch (dataType) {
       case 'string':
+      case 'duration':
         return 'is';
       case 'number':
       case 'int':
