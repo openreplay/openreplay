@@ -31,7 +31,7 @@ function BaseFilterLocalAutoComplete(props: any) {
       placeholder={props.placeholder}
       isAutoOpen={props.isAutoOpen}
       modalProps={props.modalProps}
-      type={props.type}
+      type={props.name}
       allowDecimals={props.allowDecimals}
       isMultiple={props.isMultiple}
     />
@@ -66,7 +66,7 @@ function FilterValue(props: Props) {
   }));
 
   useEffect(() => {
-    if (filter.type === FilterType.DURATION) {
+    if (filter.name === FilterType.DURATION) {
       const incomingMin = filter.value?.[0];
       const incomingMax =
         filter.value?.length > 1 ? filter.value[1] : filter.value?.[0];
@@ -80,7 +80,7 @@ function FilterValue(props: Props) {
         });
       }
     }
-  }, [filter.value, filter.type]);
+  }, [filter.value, filter.name]);
 
   const showCloseButton = filter.value.length > 1;
   const showOrButton = filter.value.length > 1;
@@ -125,11 +125,12 @@ function FilterValue(props: Props) {
   ]);
 
   const onDurationChange = useCallback((newValues: any) => {
+    console.log('newValues', newValues);
     setDurationValues((current) => ({ ...current, ...newValues }));
   }, []);
 
   const handleBlur = useCallback(() => {
-    if (filter.type === FilterType.DURATION) {
+    if (filter.name === FilterType.DURATION) {
       const currentMinInProp = filter.value?.[0];
       const currentMaxInProp =
         filter.value?.length > 1 ? filter.value[1] : filter.value?.[0];
@@ -194,6 +195,44 @@ function FilterValue(props: Props) {
           commaQuery={true}
         />
       );
+    case FilterType.DURATION:
+      return (
+        <FilterDuration
+          onChange={onDurationChange}
+          onBlur={handleBlur}
+          minDuration={durationValues.minDuration}
+          maxDuration={durationValues.maxDuration}
+          isConditional={isConditional}
+        />
+      );
+    case FilterType.NUMBER:
+    case FilterType.INTEGER:
+      return (
+        <BaseFilterLocalAutoComplete
+          value={value}
+          showCloseButton={showCloseButton}
+          onApplyValues={onApplyValues}
+          onRemoveValue={onRemoveValue}
+          onSelect={debounceOnSelect}
+          icon={filter.icon}
+          placeholder={filter.placeholder}
+          isAutoOpen={isAutoOpen}
+          modalProps={{ placeholder: '' }}
+          type="number"
+          allowDecimals={false}
+          isMultiple={false}
+        />
+      );
+    case FilterType.DROPDOWN:
+      return (
+        <BaseDropDown
+          value={value}
+          isAutoOpen={isAutoOpen}
+          placeholder={filter.placeholder}
+          options={filter.options}
+          onApplyValues={onApplyValues}
+        />
+      );
     case FilterType.DOUBLE:
       return (
         <Input
@@ -240,34 +279,6 @@ function FilterValue(props: Props) {
           isMultiple={true}
         />
       );
-    case FilterType.NUMBER:
-    case FilterType.INTEGER:
-      return (
-        <BaseFilterLocalAutoComplete
-          value={value}
-          showCloseButton={showCloseButton}
-          onApplyValues={onApplyValues}
-          onRemoveValue={onRemoveValue}
-          onSelect={debounceOnSelect}
-          icon={filter.icon}
-          placeholder={filter.placeholder}
-          isAutoOpen={isAutoOpen}
-          modalProps={{ placeholder: '' }}
-          type="number"
-          allowDecimals={false}
-          isMultiple={false}
-        />
-      );
-    case FilterType.DROPDOWN:
-      return (
-        <BaseDropDown
-          value={value}
-          isAutoOpen={isAutoOpen}
-          placeholder={filter.placeholder}
-          options={filter.options}
-          onApplyValues={onApplyValues}
-        />
-      );
     case FilterType.ISSUE:
     case FilterType.MULTIPLE_DROPDOWN:
       return (
@@ -282,16 +293,6 @@ function FilterValue(props: Props) {
           onRemoveValue={onRemoveValue}
           showCloseButton={showCloseButton}
           showOrButton={showOrButton}
-        />
-      );
-    case FilterType.DURATION:
-      return (
-        <FilterDuration
-          onChange={onDurationChange}
-          onBlur={handleBlur}
-          minDuration={durationValues.minDuration}
-          maxDuration={durationValues.maxDuration}
-          isConditional={isConditional}
         />
       );
     case FilterType.MULTIPLE:
@@ -314,7 +315,7 @@ function FilterValue(props: Props) {
         />
       );
     default:
-      console.warn('Unsupported filter type in FilterValue:', filter.type);
+      console.warn('Unsupported filter type in FilterValue:', filter.name);
       return null;
   }
 }

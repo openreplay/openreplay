@@ -175,9 +175,9 @@ export default class FilterItem implements IFilter {
     //   json.sourceOperator = this.operator;
     // }
 
-    if (this.name === FilterKey.DURATION) {
-      json.value = this.value?.map((item: any) => (item ? item + '' : 0));
-    }
+    // if (this.name === FilterKey.DURATION) {
+    //   json.value = this.value?.map((item: any) => (item ? item + '' : 0));
+    // }
 
     return json;
   }
