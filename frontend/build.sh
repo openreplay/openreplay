@@ -9,6 +9,12 @@
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh
 
 ARCH=${ARCH:-amd64}
+# To keep backward compatibility with existing scripts
+if [[ $ARCH == 'amd64' ]]; then
+    ARCH='linux/amd64'
+elif [[ $ARCH = 'arm64' ]]; then
+    ARCH='linux/arm64'
+fi
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 source $GIT_ROOT/scripts/lib/_docker.sh
@@ -57,7 +63,7 @@ update_helm_release() {
 export DOCKER_BUILDKIT=1
 function build() {
     # Run docker as the same user, else we'll run in to permission issues.
-    docker build -t ${DOCKER_REPO:-'local'}/frontend:${image_tag} --platform linux/${ARCH} --build-arg GIT_SHA=$git_sha .
+    docker build -t ${DOCKER_REPO:-'local'}/frontend:${image_tag} --platform ${ARCH} --build-arg GIT_SHA=$git_sha .
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/frontend:${image_tag}
     }

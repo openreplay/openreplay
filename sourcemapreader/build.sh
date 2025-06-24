@@ -10,6 +10,13 @@ set -e
 
 image_name="sourcemapreader"
 
+# To keep backward compatibility with existing scripts
+if [[ $ARCH == 'amd64' ]]; then
+    ARCH='linux/amd64'
+elif [[ $ARCH = 'arm64' ]]; then
+    ARCH='linux/arm64'
+fi
+
 git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-git_sha}
 envarg="default-foss"
@@ -61,7 +68,7 @@ function build_api() {
         envarg="default-ee"
         tag="ee-"
     }
-    docker build -f ./Dockerfile --platform linux/${ARCH:-"amd64"} --build-arg GIT_SHA=$git_sha --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/${image_name}:${image_tag} .
+    docker build -f ./Dockerfile --platform ${ARCH:-"amd64"} --build-arg GIT_SHA=$git_sha --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/${image_name}:${image_tag} .
     cd ../sourcemapreader
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
