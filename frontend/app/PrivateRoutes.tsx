@@ -101,8 +101,13 @@ const HIGHLIGHTS_PATH = routes.highlights();
 const KAI_PATH = routes.kai();
 
 function PrivateRoutes() {
-  const { projectsStore, userStore, integrationsStore, searchStore, filterStore } =
-    useStore();
+  const {
+    projectsStore,
+    userStore,
+    integrationsStore,
+    searchStore,
+    filterStore,
+  } = useStore();
   const onboarding = userStore.onboarding;
   const scope = userStore.scopeState ?? 2;
   const { tenantId } = userStore.account;
@@ -120,7 +125,8 @@ function PrivateRoutes() {
     if (siteId && integrationsStore.integrations.siteId !== siteId) {
       integrationsStore.integrations.setSiteId(siteId);
       void integrationsStore.integrations.fetchIntegrations(siteId);
-      void filterStore.fetchFilters(siteId)
+      void filterStore.fetchFilters(siteId);
+      void searchStore.fetchSessions(true);
     }
   }, [siteId]);
 

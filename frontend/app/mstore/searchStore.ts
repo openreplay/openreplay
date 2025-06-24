@@ -450,37 +450,10 @@ class SearchStore {
     bookmarked: boolean = false,
   ): Promise<void> {
     if (this.searchInProgress) return;
-    const filter = this.instance.toSearch();
 
-    if (this.activeTags[0] && this.activeTags[0] !== 'all') {
-      const tagFilter = filtersMap[FilterKey.ISSUE];
-      tagFilter.type = tagFilter.type.toLowerCase();
-      tagFilter.value = [
-        issues_types.find((i: any) => i.type === this.activeTags[0])?.type,
-      ];
-      delete tagFilter.operatorOptions;
-      delete tagFilter.options;
-      delete tagFilter.placeholder;
-      delete tagFilter.label;
-      delete tagFilter.icon;
-      filter.filters = filter.filters.concat(tagFilter);
-    }
-
-    if (!filter.filters.some((f: any) => f.type === FilterKey.DURATION)) {
-      const { durationFilter } = settingsStore.sessionSettings;
-      if (durationFilter?.count > 0) {
-        const multiplier = durationFilter.countType === 'sec' ? 1000 : 60000;
-        const amount = durationFilter.count * multiplier;
-        const value =
-          durationFilter.operator === '<' ? [amount, 0] : [0, amount];
-
-        filter.filters.push({
-          type: FilterKey.DURATION,
-          value,
-          operator: 'is',
-        });
-      }
-    }
+    let filter = this.instance.toSearch();
+    filter = this.applyTagFilter(filter, this.activeTags);
+    filter = this.applyDurationFilter(filter);
 
     this.latestRequestTime = filter.startDate;
     this.latestList = List();
@@ -499,6 +472,78 @@ class SearchStore {
       .finally(() => {
         this.searchInProgress = false;
       });
+  }
+
+  private applyTagFilter(filter: any, activeTags: string[]): any {
+    if (!activeTags?.length || activeTags[0] === 'all') {
+      return filter;
+    }
+
+    const tagFilter = filterStore.findEvent({
+      name: FilterKey.ISSUE,
+      autoCaptured: true,
+    });
+
+    if (!tagFilter) {
+      console.error('Tag filter not found');
+      return filter;
+    }
+
+    const issueFilter = {
+      isEvent: true,
+      name: FilterKey.ISSUE,
+      autoCaptured: true,
+      value: [],
+      operator: 'is',
+      properties: {
+        propertyOrder: 'and',
+        operator: 'and', // TODO remove this line once the API is updated to use propertyOrder
+        filters: [
+          {
+            isEvent: false,
+            name: 'issue_type',
+            autoCaptured: true,
+            dataType: 'string',
+            operator: 'is',
+            value: [activeTags[0]],
+          },
+        ],
+      },
+    };
+
+    return {
+      ...filter,
+      filters: [...filter.filters, issueFilter],
+    };
+  }
+
+  private applyDurationFilter(filter: any): any {
+    if (filter.filters.some((f: any) => f.type === FilterKey.DURATION)) {
+      return filter;
+    }
+
+    const { durationFilter } = settingsStore.sessionSettings;
+
+    if (!durationFilter?.count || durationFilter.count <= 0) {
+      return filter;
+    }
+
+    const multiplier = durationFilter.countType === 'sec' ? 1000 : 60000;
+    const amount = durationFilter.count * multiplier;
+    const value = durationFilter.operator === '<' ? [amount, 0] : [0, amount];
+
+    const durationFilterConfig = {
+      autoCaptured: false,
+      dataType: 'int',
+      name: FilterKey.DURATION,
+      value,
+      operator: 'is',
+    };
+
+    return {
+      ...filter,
+      filters: [...filter.filters, durationFilterConfig],
+    };
   }
 }
 
