@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"openreplay/backend/pkg/analytics/cards"
+	"openreplay/backend/pkg/analytics/model"
 	"strconv"
 	"time"
 
@@ -80,7 +81,7 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 	//currentUser := r.Context().Value("userData").(*user.User)
 
 	// get the card from db
-	card, err := e.cards.GetWithSeries(projectID, cardID)
+	card, err := e.cards.GetWithSeries(projectID, int64(cardID))
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -98,11 +99,11 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 	}
 
 	bodySize = len(bodyBytes)
-	req := &MetricPayload{
+	req := &model.MetricPayload{
 		MetricOf:     card.MetricOf,
-		MetricType:   MetricType(card.MetricType),
+		MetricType:   model.MetricType(card.MetricType),
 		MetricFormat: card.MetricFormat,
-		//Series:   series,
+		Series:       card.Series,
 		//MetricType: card.MetricType,
 	}
 
@@ -143,7 +144,7 @@ func (e *handlersImpl) getCardChartData(w http.ResponseWriter, r *http.Request) 
 	}
 	bodySize = len(bodyBytes)
 
-	req := &MetricPayload{}
+	req := &model.MetricPayload{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return

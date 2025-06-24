@@ -1,9 +1,12 @@
 package charts
 
+import "openreplay/backend/pkg/analytics/model"
+
 type Table string
 type Column string
-type MetricType string
-type FilterType string
+
+// type MetricType string
+// type FilterType string
 type EventType string
 type EventOrder string
 
@@ -45,12 +48,12 @@ type EventOrder string
 //)
 
 const (
-	MetricTypeTimeseries MetricType = "timeseries"
-	MetricTypeTable      MetricType = "table"
-	MetricTypeFunnel     MetricType = "funnel"
-	MetricTypeHeatmap    MetricType = "heatMap"
-	MetricTypeSession    MetricType = "heatmaps_session"
-	MetricUserJourney    MetricType = "pathAnalysis"
+	MetricTypeTimeseries model.MetricType = "timeseries"
+	MetricTypeTable      model.MetricType = "table"
+	MetricTypeFunnel     model.MetricType = "funnel"
+	MetricTypeHeatmap    model.MetricType = "heatMap"
+	MetricTypeSession    model.MetricType = "heatmaps_session"
+	MetricUserJourney    model.MetricType = "pathAnalysis"
 )
 
 //const (
@@ -59,25 +62,25 @@ const (
 //	EventOrderAnd  EventOrder = "and"
 //)
 
-type MetricPayload struct {
-	StartTimestamp  int64      `json:"startTimestamp"`
-	EndTimestamp    int64      `json:"endTimestamp"`
-	Density         int        `json:"density"`
-	MetricOf        string     `json:"metricOf"`
-	MetricType      MetricType `json:"metricType"`
-	MetricValue     []string   `json:"metricValue"`
-	MetricFormat    string     `json:"metricFormat"`
-	ViewType        string     `json:"viewType"`
-	Name            string     `json:"name"`
-	Series          []Series   `json:"series"`
-	Limit           int        `json:"limit"`
-	Page            int        `json:"page"`
-	StartPoint      []Filter   `json:"startPoint"`
-	Exclude         []Filter   `json:"excludes"`
-	Rows            uint64     `json:"rows"`
-	Columns         uint64     `json:"columns"`
-	PreviousColumns uint64     `json:"previousColumns"`
-}
+//type MetricPayload struct {
+//	StartTimestamp  int64      `json:"startTimestamp"`
+//	EndTimestamp    int64      `json:"endTimestamp"`
+//	Density         int        `json:"density"`
+//	MetricOf        string     `json:"metricOf"`
+//	MetricType      MetricType `json:"metricType"`
+//	MetricValue     []string   `json:"metricValue"`
+//	MetricFormat    string     `json:"metricFormat"`
+//	ViewType        string     `json:"viewType"`
+//	Name            string     `json:"name"`
+//	Series          []Series   `json:"series"`
+//	Limit           int        `json:"limit"`
+//	Page            int        `json:"page"`
+//	StartPoint      []Filter   `json:"startPoint"`
+//	Exclude         []Filter   `json:"excludes"`
+//	Rows            uint64     `json:"rows"`
+//	Columns         uint64     `json:"columns"`
+//	PreviousColumns uint64     `json:"previousColumns"`
+//}
 
 type MetricOfTable string
 
@@ -95,43 +98,43 @@ const (
 	//MetricOfTableErrors   MetricOfTable = "errors"
 )
 
-type FilterGroup struct {
-	Filters     []Filter   `json:"filters"`
-	EventsOrder EventOrder `json:"eventsOrder"`
-}
-
-type Series struct {
-	Name   string      `json:"name"`
-	Filter FilterGroup `json:"filter"`
-}
-
-type Filter struct {
-	Type     FilterType `json:"type"`
-	IsEvent  bool       `json:"isEvent"`
-	Value    []string   `json:"value"`
-	Operator string     `json:"operator"`
-	Source   string     `json:"source,omitempty"`
-	Filters  []Filter   `json:"filters"`
-}
+//type FilterGroup struct {
+//	Filters     []Filter   `json:"filters"`
+//	EventsOrder EventOrder `json:"eventsOrder"`
+//}
+//
+//type Series struct {
+//	Name   string      `json:"name"`
+//	Filter FilterGroup `json:"filter"`
+//}
+//
+//type Filter struct {
+//	Type     FilterType `json:"type"`
+//	IsEvent  bool       `json:"isEvent"`
+//	Value    []string   `json:"value"`
+//	Operator string     `json:"operator"`
+//	Source   string     `json:"source,omitempty"`
+//	Filters  []Filter   `json:"filters"`
+//}
 
 const (
-	FilterUserId          FilterType = "userId"
-	FilterUserAnonymousId FilterType = "userAnonymousId"
-	FilterReferrer        FilterType = "referrer"
-	FilterDuration        FilterType = "duration"
-	FilterUtmSource       FilterType = "utmSource"
-	FilterUtmMedium       FilterType = "utmMedium"
-	FilterUtmCampaign     FilterType = "utmCampaign"
-	FilterUserCountry     FilterType = "userCountry"
-	FilterUserCity        FilterType = "userCity"
-	FilterUserState       FilterType = "userState"
-	FilterUserOs          FilterType = "userOs"
-	FilterUserBrowser     FilterType = "userBrowser"
-	FilterUserDevice      FilterType = "userDevice"
-	FilterPlatform        FilterType = "platform"
-	FilterRevId           FilterType = "revId"
-	FilterIssue           FilterType = "issue"
-	FilterMetadata        FilterType = "metadata"
+	FilterUserId          model.FilterType = "userId"
+	FilterUserAnonymousId model.FilterType = "userAnonymousId"
+	FilterReferrer        model.FilterType = "referrer"
+	FilterDuration        model.FilterType = "duration"
+	FilterUtmSource       model.FilterType = "utmSource"
+	FilterUtmMedium       model.FilterType = "utmMedium"
+	FilterUtmCampaign     model.FilterType = "utmCampaign"
+	FilterUserCountry     model.FilterType = "userCountry"
+	FilterUserCity        model.FilterType = "userCity"
+	FilterUserState       model.FilterType = "userState"
+	FilterUserOs          model.FilterType = "userOs"
+	FilterUserBrowser     model.FilterType = "userBrowser"
+	FilterUserDevice      model.FilterType = "userDevice"
+	FilterPlatform        model.FilterType = "platform"
+	FilterRevId           model.FilterType = "revId"
+	FilterIssue           model.FilterType = "issue"
+	FilterMetadata        model.FilterType = "metadata"
 )
 
 // Event filters

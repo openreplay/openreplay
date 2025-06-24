@@ -3,14 +3,15 @@ package charts
 import (
 	"fmt"
 	"openreplay/backend/pkg/analytics/db"
+	"openreplay/backend/pkg/analytics/model"
 	"strings"
 )
 
 type HeatmapSessionResponse struct {
-	SessionID      uint64 `json:"session_id"`
-	StartTs        uint64 `json:"start_ts"`
+	SessionID      string `json:"sessionId"`
+	StartTs        uint64 `json:"startTs"`
 	Duration       uint32 `json:"duration"`
-	EventTimestamp uint64 `json:"event_timestamp"`
+	EventTimestamp uint64 `json:"eventTimestamp"`
 }
 
 type HeatmapSessionQueryBuilder struct{}
@@ -20,7 +21,7 @@ func (h HeatmapSessionQueryBuilder) Execute(p Payload, conn db.Connector) (inter
 	if err != nil {
 		return nil, err
 	}
-	var sid uint64
+	var sid string
 	var startTs uint64
 	var duration uint32
 	var eventTs uint64
@@ -49,7 +50,7 @@ func (h HeatmapSessionQueryBuilder) buildQuery(p Payload) (string, error) {
 	}
 	s := p.MetricPayload.Series[0]
 
-	var globalFilters, eventFilters []Filter
+	var globalFilters, eventFilters []model.Filter
 	for _, flt := range s.Filter.Filters {
 		if flt.IsEvent {
 			eventFilters = append(eventFilters, flt)
@@ -82,7 +83,7 @@ func (h HeatmapSessionQueryBuilder) buildQuery(p Payload) (string, error) {
 
 	q := fmt.Sprintf(`
 		SELECT
-			s.session_id,
+			toString(s.session_id) AS session_id,
 			toUnixTimestamp(s.datetime) * 1000 as startTs,
 			s.duration,
 			toUnixTimestamp(e.created_at) * 1000 as eventTs

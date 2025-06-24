@@ -12,7 +12,7 @@ type Dashboard struct {
 	IsPinned    bool             `json:"isPinned"`
 	OwnerEmail  string           `json:"ownerEmail"`
 	OwnerName   string           `json:"ownerName"`
-	Metrics     []cards.CardBase `json:"cards"`
+	Metrics     []cards.CardBase `json:"widgets"`
 }
 
 type CreateDashboardResponse struct {

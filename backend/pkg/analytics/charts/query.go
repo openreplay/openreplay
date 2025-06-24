@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"log"
 	"openreplay/backend/pkg/analytics/db"
+	"openreplay/backend/pkg/analytics/model"
 	"strconv"
 	"strings"
 )
 
 type Payload struct {
-	*MetricPayload
+	*model.MetricPayload
 	GroupByColumn string // TODO remove this field
 	ProjectId     int
 	UserId        uint64
@@ -31,9 +32,9 @@ func NewQueryBuilder(p Payload) (QueryBuilder, error) {
 		}
 		return TableQueryBuilder{}, nil
 	case MetricTypeHeatmap:
-		return HeatmapQueryBuilder{}, nil
-	case MetricTypeSession:
 		return HeatmapSessionQueryBuilder{}, nil
+	case MetricTypeSession:
+		return HeatmapQueryBuilder{}, nil
 	case MetricUserJourney:
 		return UserJourneyQueryBuilder{}, nil
 	default:
@@ -115,7 +116,7 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 }
 
 // buildEventConditions builds SQL conditions and names from filters
-func buildEventConditions(filters []Filter, options ...BuildConditionsOptions) (conds, names []string) {
+func buildEventConditions(filters []model.Filter, options ...BuildConditionsOptions) (conds, names []string) {
 	opts := BuildConditionsOptions{
 		MainTableAlias:       "",
 		PropertiesColumnName: "$properties",
@@ -148,7 +149,7 @@ func buildEventConditions(filters []Filter, options ...BuildConditionsOptions) (
 }
 
 // addFilter processes a single Filter and returns its SQL conditions and associated event names
-func addFilter(f Filter, opts BuildConditionsOptions) (conds []string, names []string) {
+func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, names []string) {
 	var ftype = string(f.Type)
 	// resolve filter configuration, default if missing
 	cfg, ok := propertyKeyMap[ftype]
@@ -313,7 +314,7 @@ func inClause(expr string, values []string, negate, isNumeric bool) string {
 	return fmt.Sprintf("%s %s (%s)", expr, op, strings.Join(quoted, ", "))
 }
 
-func buildSessionConditions(filters []Filter) []string {
+func buildSessionConditions(filters []model.Filter) []string {
 	var conds []string
 
 	return conds
@@ -411,7 +412,7 @@ func FillMissingDataPoints(
 	return results
 }
 
-func partitionFilters(filters []Filter) (sessionFilters []Filter, eventFilters []Filter) {
+func partitionFilters(filters []model.Filter) (sessionFilters []model.Filter, eventFilters []model.Filter) {
 	for _, f := range filters {
 		if f.IsEvent {
 			eventFilters = append(eventFilters, f)
@@ -464,9 +465,9 @@ func eventNameCondition(table, metricOf string) string {
 	}
 }
 
-func buildDurationWhere(filters []Filter) ([]string, []Filter) {
+func buildDurationWhere(filters []model.Filter) ([]string, []model.Filter) {
 	var conds []string
-	var rest []Filter
+	var rest []model.Filter
 	for _, f := range filters {
 		if string(f.Type) == "duration" {
 			v := f.Value
@@ -495,8 +496,8 @@ func buildDurationWhere(filters []Filter) ([]string, []Filter) {
 	return conds, rest
 }
 
-func filterOutTypes(filters []Filter, typesToRemove []FilterType) (kept []Filter, removed []Filter) {
-	removeMap := make(map[FilterType]struct{}, len(typesToRemove))
+func filterOutTypes(filters []model.Filter, typesToRemove []model.FilterType) (kept []model.Filter, removed []model.Filter) {
+	removeMap := make(map[model.FilterType]struct{}, len(typesToRemove))
 	for _, t := range typesToRemove {
 		removeMap[t] = struct{}{}
 	}

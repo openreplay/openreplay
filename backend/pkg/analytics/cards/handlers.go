@@ -116,7 +116,7 @@ func (e *handlersImpl) getCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := e.cards.GetWithSeries(projectID, id)
+	resp, err := e.cards.GetWithSeries(projectID, int64(id))
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return

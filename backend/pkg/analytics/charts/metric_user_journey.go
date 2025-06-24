@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"openreplay/backend/pkg/analytics/db"
+	"openreplay/backend/pkg/analytics/model"
 	"sort"
 	"strconv"
 	"strings"
@@ -283,7 +284,7 @@ func (h UserJourneyQueryBuilder) Execute(p Payload, conn db.Connector) (interfac
 				nodes = append(nodes, Node{
 					ID:           nodeID,
 					Depth:        displayDepth,
-					Name:         "other",
+					Name:         "Other",
 					EventType:    "OTHER",
 					StartingNode: stage == startingStage,
 				})
@@ -436,7 +437,7 @@ func (h UserJourneyQueryBuilder) Execute(p Payload, conn db.Connector) (interfac
 		nodes = append(nodes, Node{
 			ID:        nodeID,
 			Depth:     dropDepth,
-			Name:      "drop",
+			Name:      "Drop",
 			EventType: "DROP",
 		})
 
@@ -569,7 +570,7 @@ func (h UserJourneyQueryBuilder) buildQuery(p Payload) (string, error) {
 	var durationMin, durationMax int64
 	var okMin, okMax bool
 	var err error
-	var globalFilters []Filter
+	var globalFilters []model.Filter
 	for _, flt := range s.Filter.Filters {
 		if flt.Type == "duration" {
 			if len(flt.Value) > 0 && flt.Value[0] != "" {

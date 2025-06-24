@@ -80,13 +80,13 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 			COALESCE(json_agg(
 				json_build_object(
 					'config', dw.config,
-					'metric_id', m.metric_id,
+					'metricId', m.metric_id,
 					'name', m.name,
-					'metric_type', m.metric_type,
-					'view_type', m.view_type,
-					'metric_of', m.metric_of,
-					'metric_value', m.metric_value,
-					'metric_format', m.metric_format,
+					'metricType', m.metric_type,
+					'metricFormat', m.metric_format,
+					'viewType', m.view_type,
+					'metricOf', m.metric_of,
+					'metricValue', m.metric_value,
 					'series', s.series
 				)
 			) FILTER (WHERE m.metric_id IS NOT NULL), '[]') AS metrics

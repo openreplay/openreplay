@@ -3,12 +3,13 @@ package charts
 import (
 	"fmt"
 	"openreplay/backend/pkg/analytics/db"
+	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 )
 
 type Charts interface {
-	GetData(projectId int, userId uint64, req *MetricPayload) (interface{}, error)
+	GetData(projectId int, userId uint64, req *model.MetricPayload) (interface{}, error)
 }
 
 type chartsImpl struct {
@@ -26,7 +27,7 @@ func New(log logger.Logger, conn pool.Pool, chConn db.Connector) (Charts, error)
 }
 
 // GetData def get_chart()
-func (s *chartsImpl) GetData(projectId int, userID uint64, req *MetricPayload) (interface{}, error) {
+func (s *chartsImpl) GetData(projectId int, userID uint64, req *model.MetricPayload) (interface{}, error) {
 	if req == nil {
 		return nil, fmt.Errorf("request is empty")
 	}

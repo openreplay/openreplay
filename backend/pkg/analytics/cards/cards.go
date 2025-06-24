@@ -6,20 +6,21 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lib/pq"
-
+	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+
+	"github.com/lib/pq"
 )
 
 type Cards interface {
-	Create(projectId int, userId uint64, req *CardCreateRequest) (*CardGetResponse, error)
-	Get(projectId int, cardId int) (*CardGetResponse, error)
-	GetWithSeries(projectId int, cardId int) (*CardGetResponse, error)
-	GetAll(projectId int) (*GetCardsResponse, error)
-	GetAllPaginated(projectId int, filters CardListFilter, sort CardListSort, limit int, offset int) (*GetCardsResponsePaginated, error)
-	Update(projectId int, cardId int64, userId uint64, req *CardUpdateRequest) (*CardGetResponse, error)
-	Delete(projectId int, cardId int64, userId uint64) error
+	Create(projectID int, userID uint64, req *CardCreateRequest) (*CardGetResponse, error)
+	Get(projectID int, cardID int64) (*CardGetResponse, error)
+	GetWithSeries(projectID int, cardID int64) (*CardGetResponse, error)
+	GetAll(projectID int) (*GetCardsResponse, error)
+	GetAllPaginated(projectID int, filters CardListFilter, sort CardListSort, limit, offset int) (*GetCardsResponsePaginated, error)
+	Update(projectID int, cardID int64, userID uint64, req *CardUpdateRequest) (*CardGetResponse, error)
+	Delete(projectID int, cardID int64, userID uint64) error
 }
 
 type cardsImpl struct {
@@ -27,401 +28,330 @@ type cardsImpl struct {
 	pgconn pool.Pool
 }
 
-func New(log logger.Logger, conn pool.Pool) (Cards, error) {
-	return &cardsImpl{
-		log:    log,
-		pgconn: conn,
-	}, nil
+func New(log logger.Logger, conn pool.Pool) Cards {
+	return &cardsImpl{log: log, pgconn: conn}
 }
 
-func (s *cardsImpl) Create(projectId int, userID uint64, req *CardCreateRequest) (*CardGetResponse, error) {
+type rowScanner interface {
+	Scan(dest ...interface{}) error
+}
+
+func (s *cardsImpl) scanCard(r rowScanner) (*CardGetResponse, error) {
+	c := &CardGetResponse{}
+	var rawInfo []byte
+	err := r.Scan(
+		&c.CardID,
+		&c.ProjectID,
+		&c.UserID,
+		&c.Name,
+		&c.MetricType,
+		&c.ViewType,
+		&c.MetricOf,
+		&c.MetricValue,
+		&c.MetricFormat,
+		&c.IsPublic,
+		&c.CreatedAt,
+		&c.EditedAt,
+		&rawInfo,
+	)
+	if err != nil {
+		return nil, err
+	}
+	var info CardInfo
+	if json.Unmarshal(rawInfo, &info) == nil {
+		c.Rows = info.Rows
+		c.StepsBefore = info.StepsBefore
+		c.StepsAfter = info.StepsAfter
+		c.StartPoint = info.StartPoint
+		c.Excludes = info.Excludes
+	}
+	return c, nil
+}
+
+func (s *cardsImpl) createSeries(ctx context.Context, tx *pool.Tx, metricID int64, series []model.Series) ([]model.Series, error) {
+	if len(series) == 0 {
+		return nil, nil
+	}
+	placeholders := make([]string, len(series))
+	args := make([]interface{}, 0, len(series)*4)
+	for i, ser := range series {
+		data, err := json.Marshal(ser.Filter)
+		if err != nil {
+			s.log.Error(ctx, "marshal series filter: %v", err)
+			return nil, err
+		}
+		idx := i*4 + 1
+		placeholders[i] = fmt.Sprintf("($%d,$%d,$%d,$%d)", idx, idx+1, idx+2, idx+3)
+		args = append(args, metricID, ser.Name, i, string(data))
+	}
+	query := fmt.Sprintf(
+		`INSERT INTO public.metric_series (metric_id,name,index,filter) VALUES %s RETURNING series_id,metric_id,name,index,filter`,
+		strings.Join(placeholders, ","),
+	)
+	r, err := tx.TxQuery(query, args...)
+	if err != nil {
+		s.log.Error(ctx, "insert series: %v", err)
+		return nil, err
+	}
+	defer r.Close()
+	var out []model.Series
+	for r.Next() {
+		var srs model.Series
+		if err := r.Scan(&srs.SeriesID, &srs.MetricID, &srs.Name, &srs.Index, &srs.Filter); err != nil {
+			s.log.Error(ctx, "scan series: %v", err)
+			continue
+		}
+		out = append(out, srs)
+	}
+	return out, nil
+}
+
+func (s *cardsImpl) fetchSeries(metricID int64) ([]model.Series, error) {
+	const q = `SELECT series_id,metric_id,name,index,filter FROM public.metric_series WHERE metric_id=$1 ORDER BY index`
+	rows, err := s.pgconn.Query(q, metricID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []model.Series
+	for rows.Next() {
+		var srs model.Series
+		if err := rows.Scan(&srs.SeriesID, &srs.MetricID, &srs.Name, &srs.Index, &srs.Filter); err != nil {
+			s.log.Error(context.Background(), "scan series: %v", err)
+			continue
+		}
+		list = append(list, srs)
+	}
+	return list, nil
+}
+
+func (s *cardsImpl) Create(projectID int, userID uint64, req *CardCreateRequest) (*CardGetResponse, error) {
 	if req.MetricValue == nil {
 		req.MetricValue = []string{}
 	}
-
-	tx, err := s.pgconn.Begin() // Start transaction
+	infoData, err := json.Marshal(CardInfo{
+		Rows:        req.Rows,
+		StepsBefore: req.StepsBefore,
+		StepsAfter:  req.StepsAfter,
+		StartPoint:  req.StartPoint,
+		Excludes:    req.Excludes,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to start transaction: %w", err)
+		return nil, fmt.Errorf("marshal card info: %w", err)
 	}
-
+	tx, err := s.pgconn.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("begin tx: %w", err)
+	}
 	ctx := context.Background()
 	defer func() {
 		if err != nil {
-			err := tx.TxRollback()
-			if err != nil {
-				return
-			}
+			tx.TxRollback()
 		} else {
-			err := tx.TxCommit()
-			if err != nil {
-				return
-			}
+			tx.TxCommit()
 		}
 	}()
-
-	// Insert the card
-	sql := `
-		INSERT INTO public.metrics (project_id, user_id, name, metric_type, view_type, metric_of, metric_value, metric_format, is_public)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		RETURNING metric_id, project_id, user_id, name, metric_type, view_type, metric_of, metric_value, metric_format, is_public, created_at, edited_at`
-
-	card := &CardGetResponse{}
-	err = tx.TxQueryRow(
-		sql,
-		projectId, userID, req.Name, req.MetricType, req.ViewType, req.MetricOf, req.MetricValue, req.MetricFormat, req.IsPublic,
-	).Scan(
-		&card.CardID,
-		&card.ProjectID,
-		&card.UserID,
-		&card.Name,
-		&card.MetricType,
-		&card.ViewType,
-		&card.MetricOf,
-		&card.MetricValue,
-		&card.MetricFormat,
-		&card.IsPublic,
-		&card.CreatedAt,
-		&card.EditedAt,
-	)
+	const ins = `INSERT INTO public.metrics (
+		project_id,user_id,name,metric_type,view_type,
+		metric_of,metric_value,metric_format,is_public,card_info
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+	RETURNING metric_id,project_id,user_id,name,metric_type,view_type,metric_of,metric_value,metric_format,is_public,created_at,edited_at,card_info`
+	row := tx.TxQueryRow(ins, projectID, userID, req.Name, req.MetricType, req.ViewType, req.MetricOf, req.MetricValue, req.MetricFormat, req.IsPublic, infoData)
+	card, err := s.scanCard(row)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create card: %w", err)
+		return nil, fmt.Errorf("create card: %w", err)
 	}
-
-	// Create series for the card
-	seriesList := s.CreateSeries(ctx, tx, card.CardID, req.Series)
-	if len(seriesList) != len(req.Series) {
-		return nil, fmt.Errorf("not all series were created successfully")
+	series, err := s.createSeries(ctx, tx, card.CardID, req.Series)
+	if err != nil || len(series) != len(req.Series) {
+		return nil, fmt.Errorf("create series: %w", err)
 	}
-
-	card.Series = seriesList
+	card.Series = series
 	return card, nil
 }
 
-func (s *cardsImpl) CreateSeries(ctx context.Context, tx *pool.Tx, metricId int64, series []CardSeriesBase) []CardSeries {
-	if len(series) == 0 {
-		return nil // No series to create
-	}
+func (s *cardsImpl) Get(projectID int, cardID int64) (*CardGetResponse, error) {
+	const q = `SELECT metric_id,project_id,user_id,name,metric_type,view_type,metric_of,metric_value,metric_format,is_public,created_at,edited_at,card_info FROM public.metrics WHERE metric_id=$1 AND project_id=$2 AND deleted_at IS NULL`
+	return s.scanCard(s.pgconn.QueryRow(q, cardID, projectID))
+}
 
-	// Batch insert for better performance
-	sql := `
-		INSERT INTO public.metric_series (metric_id, name, index, filter) VALUES %s
-		RETURNING series_id, metric_id, name, index, filter`
-
-	// Generate the VALUES placeholders dynamically
-	var values []string
-	var args []interface{}
-	for i, ser := range series {
-		values = append(values, fmt.Sprintf("($%d, $%d, $%d, $%d)", i*4+1, i*4+2, i*4+3, i*4+4))
-
-		filterJSON, err := json.Marshal(ser.Filter) // Convert struct to JSON
-		if err != nil {
-			s.log.Error(ctx, "failed to serialize filter to JSON: %v", err)
-			return nil
-		}
-		fmt.Println(string(filterJSON))
-		args = append(args, metricId, ser.Name, i, string(filterJSON))
-	}
-
-	query := fmt.Sprintf(sql, strings.Join(values, ","))
-	s.log.Info(ctx, "Executing query: %s with args: %v", query, args)
-
-	rows, err := tx.TxQuery(query, args...)
+func (s *cardsImpl) GetWithSeries(projectID int, cardID int64) (*CardGetResponse, error) {
+	card, err := s.Get(projectID, cardID)
 	if err != nil {
-		s.log.Error(ctx, "failed to execute batch insert for series: %v", err)
-		return nil
+		return nil, err
+	}
+	series, err := s.fetchSeries(card.CardID)
+	if err != nil {
+		return nil, err
+	}
+	card.Series = series
+	return card, nil
+}
+
+func (s *cardsImpl) GetAll(projectID int) (*GetCardsResponse, error) {
+	const q = `SELECT metric_id,project_id,user_id,name,metric_type,view_type,metric_of,metric_value,metric_format,is_public,created_at,edited_at FROM public.metrics WHERE project_id=$1 AND deleted_at IS NULL`
+	rows, err := s.pgconn.Query(q, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("get all cards: %w", err)
 	}
 	defer rows.Close()
-
-	if rows.Err() != nil {
-		s.log.Error(ctx, "Query returned an error: %v", rows.Err())
-		return nil
-	}
-
-	// Collect inserted series
-	var seriesList []CardSeries
+	resp := &GetCardsResponse{}
 	for rows.Next() {
-		cardSeries := CardSeries{}
-		if err := rows.Scan(&cardSeries.SeriesID, &cardSeries.MetricID, &cardSeries.Name, &cardSeries.Index, &cardSeries.Filter); err != nil {
-			s.log.Error(ctx, "failed to scan series: %v", err)
-			continue
+		var c Card
+		if err := rows.Scan(&c.CardID, &c.ProjectID, &c.UserID, &c.Name, &c.MetricType, &c.ViewType, &c.MetricOf, &c.MetricValue, &c.MetricFormat, &c.IsPublic, &c.CreatedAt, &c.EditedAt); err != nil {
+			return nil, err
 		}
-		seriesList = append(seriesList, cardSeries)
+		resp.Cards = append(resp.Cards, c)
 	}
-
-	return seriesList
+	return resp, nil
 }
 
-func (s *cardsImpl) Get(projectId int, cardID int) (*CardGetResponse, error) {
-	sql :=
-		`SELECT metric_id, project_id, user_id, name, metric_type, view_type, metric_of, metric_value, metric_format, is_public, created_at, edited_at
-	FROM public.metrics
-	WHERE metric_id = $1 AND project_id = $2 AND deleted_at IS NULL`
-
-	card := &CardGetResponse{}
-	err := s.pgconn.QueryRow(sql, cardID, projectId).Scan(
-		&card.CardID, &card.ProjectID, &card.UserID, &card.Name, &card.MetricType, &card.ViewType, &card.MetricOf, &card.MetricValue, &card.MetricFormat, &card.IsPublic, &card.CreatedAt, &card.EditedAt,
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to get card: %w", err)
-	}
-
-	return card, nil
-}
-
-func (s *cardsImpl) GetWithSeries(projectId int, cardID int) (*CardGetResponse, error) {
-	sql := `
-        SELECT m.metric_id, m.project_id, m.user_id, m.name, m.metric_type, m.view_type, m.metric_of, 
-               m.metric_value, m.metric_format, m.is_public, m.created_at, m.edited_at,
-               COALESCE(
-                 json_agg(
-                   json_build_object(
-                     'seriesId', ms.series_id,
-                     'index', ms.index,
-                     'name', ms.name,
-                     'filter', ms.filter
-                   )
-                 ) FILTER (WHERE ms.series_id IS NOT NULL), '[]'
-               ) AS series
-        FROM public.metrics m
-        LEFT JOIN public.metric_series ms ON m.metric_id = ms.metric_id
-        WHERE m.metric_id = $1 AND m.project_id = $2 AND m.deleted_at IS NULL
-        GROUP BY m.metric_id, m.project_id, m.user_id, m.name, m.metric_type, m.view_type, 
-                 m.metric_of, m.metric_value, m.metric_format, m.is_public, m.created_at, m.edited_at
-    `
-
-	card := &CardGetResponse{}
-	var seriesJSON []byte
-	err := s.pgconn.QueryRow(sql, cardID, projectId).Scan(
-		&card.CardID, &card.ProjectID, &card.UserID, &card.Name, &card.MetricType, &card.ViewType, &card.MetricOf,
-		&card.MetricValue, &card.MetricFormat, &card.IsPublic, &card.CreatedAt, &card.EditedAt, &seriesJSON,
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to get card: %w", err)
-	}
-
-	if err := json.Unmarshal(seriesJSON, &card.Series); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal series: %w", err)
-	}
-
-	return card, nil
-}
-
-func (s *cardsImpl) GetAll(projectId int) (*GetCardsResponse, error) {
-	sql := `
-		SELECT metric_id, project_id, user_id, name, metric_type, view_type, metric_of, metric_value, metric_format, is_public, created_at, edited_at
-		FROM public.metrics
-		WHERE project_id = $1 AND deleted_at IS NULL`
-
-	rows, err := s.pgconn.Query(sql, projectId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get cards: %w", err)
-	}
-	defer rows.Close()
-
-	cards := make([]Card, 0)
-	for rows.Next() {
-		card := Card{}
-		if err := rows.Scan(
-			&card.CardID, &card.ProjectID, &card.UserID, &card.Name, &card.MetricType, &card.ViewType, &card.MetricOf,
-			&card.MetricValue, &card.MetricFormat, &card.IsPublic, &card.CreatedAt, &card.EditedAt,
-		); err != nil {
-			return nil, fmt.Errorf("failed to scan card: %w", err)
-		}
-		cards = append(cards, card)
-	}
-
-	return &GetCardsResponse{Cards: cards}, nil
-}
-
-func (s *cardsImpl) GetAllPaginated(
-	projectId int,
-	filters CardListFilter,
-	sort CardListSort,
-	limit,
-	offset int,
-) (*GetCardsResponsePaginated, error) {
-	// Validate inputs
+func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort CardListSort, limit, offset int) (*GetCardsResponsePaginated, error) {
 	if err := ValidateStruct(filters); err != nil {
 		return nil, fmt.Errorf("invalid filters: %w", err)
 	}
 	if err := ValidateStruct(sort); err != nil {
 		return nil, fmt.Errorf("invalid sort: %w", err)
 	}
-
-	var (
-		conditions []string
-		params     []interface{}
-		paramIndex = 1
-	)
-
-	// Project ID is mandatory
-	conditions = append(conditions, fmt.Sprintf("m.project_id = $%d", paramIndex))
-	params = append(params, projectId)
-	paramIndex++
-
-	// Apply filters
-	if nameFilter := filters.GetNameFilter(); nameFilter != nil {
-		conditions = append(conditions, fmt.Sprintf("m.name ILIKE $%d", paramIndex))
-		params = append(params, "%"+*nameFilter+"%")
-		paramIndex++
+	conds := []string{fmt.Sprintf("m.project_id=$1")}
+	params := []interface{}{projectID}
+	idx := 2
+	if name := filters.GetNameFilter(); name != nil {
+		conds = append(conds, fmt.Sprintf("m.name ILIKE $%d", idx))
+		params = append(params, "%"+*name+"%")
+		idx++
 	}
-
-	if typeFilter := filters.GetMetricTypeFilter(); typeFilter != nil {
-		conditions = append(conditions, fmt.Sprintf("m.metric_type = $%d", paramIndex))
-		params = append(params, *typeFilter)
-		paramIndex++
+	if t := filters.GetMetricTypeFilter(); t != nil {
+		conds = append(conds, fmt.Sprintf("m.metric_type=$%d", idx))
+		params = append(params, *t)
+		idx++
 	}
-
-	var joinClause string
-	if dashboardIDs := filters.GetDashboardIDs(); len(dashboardIDs) > 0 {
-		joinClause = "LEFT JOIN public.dashboard_widgets dw ON m.metric_id = dw.metric_id"
-		conditions = append(conditions, fmt.Sprintf("dw.dashboard_id = ANY($%d)", paramIndex))
-		params = append(params, pq.Array(dashboardIDs))
-		paramIndex++
+	joinClause := "JOIN public.users u ON m.user_id = u.user_id"
+	if ids := filters.GetDashboardIDs(); len(ids) > 0 {
+		joinClause += " LEFT JOIN public.dashboard_widgets dw ON m.metric_id=dw.metric_id"
+		conds = append(conds, fmt.Sprintf("dw.dashboard_id=ANY($%d)", idx))
+		params = append(params, pq.Array(ids))
+		idx++
 	}
-
-	// Exclude deleted
-	conditions = append(conditions, "m.deleted_at IS NULL")
-
-	whereClause := "WHERE " + strings.Join(conditions, " AND ")
-
-	orderClause := fmt.Sprintf("ORDER BY %s %s", sort.GetSQLField(), sort.GetSQLOrder())
-	limitClause := fmt.Sprintf("LIMIT $%d", paramIndex)
+	conds = append(conds, "m.deleted_at IS NULL")
+	where := "WHERE " + strings.Join(conds, " AND ")
+	order := fmt.Sprintf("ORDER BY %s %s", sort.GetSQLField(), sort.GetSQLOrder())
 	params = append(params, limit)
-	paramIndex++
-	offsetClause := fmt.Sprintf("OFFSET $%d", paramIndex)
+	limitIdx := idx
+	idx++
 	params = append(params, offset)
-	paramIndex++
+	offsetIdx := idx
 
-	// Main query
-	query := fmt.Sprintf(`
-		SELECT m.metric_id, m.project_id, m.user_id, m.name, m.metric_type, m.view_type, m.metric_of,
-			   m.metric_value, m.metric_format, m.is_public, m.created_at, m.edited_at
-		FROM public.metrics m
-		%s
-		%s
-		%s
-		%s
-		%s
-	`, joinClause, whereClause, orderClause, limitClause, offsetClause)
-
+	query := fmt.Sprintf(
+		`SELECT
+			m.metric_id,
+			m.project_id,
+			m.user_id,
+			u.email,
+			u.name   AS user_name,
+			m.name,
+			m.metric_type,
+			m.view_type,
+			m.metric_of,
+			m.metric_value,
+			m.metric_format,
+			m.is_public,
+			m.created_at,
+			m.edited_at
+		 FROM public.metrics m
+		 %s
+		 %s
+		 %s
+		 LIMIT $%d
+		 OFFSET $%d`,
+		joinClause, where, order, limitIdx, offsetIdx,
+	)
 	rows, err := s.pgconn.Query(query, params...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get cards: %w", err)
+		return nil, fmt.Errorf("get paginated: %w", err)
 	}
 	defer rows.Close()
 
 	var cards []Card
 	for rows.Next() {
-		var card Card
+		var c Card
 		if err := rows.Scan(
-			&card.CardID, &card.ProjectID, &card.UserID, &card.Name, &card.MetricType, &card.ViewType, &card.MetricOf,
-			&card.MetricValue, &card.MetricFormat, &card.IsPublic, &card.CreatedAt, &card.EditedAt,
+			&c.CardID,
+			&c.ProjectID,
+			&c.UserID,
+			&c.OwnerEmail,
+			&c.OwnerName,
+			&c.Name,
+			&c.MetricType,
+			&c.ViewType,
+			&c.MetricOf,
+			&c.MetricValue,
+			&c.MetricFormat,
+			&c.IsPublic,
+			&c.CreatedAt,
+			&c.EditedAt,
 		); err != nil {
-			return nil, fmt.Errorf("failed to scan card: %w", err)
+			return nil, fmt.Errorf("scan paginated card: %w", err)
 		}
-		cards = append(cards, card)
+		cards = append(cards, c)
 	}
 
-	// Count total (exclude limit, offset, order)
-	countParams := params[0 : len(params)-2] // all filter params without limit/offset
-	countQuery := fmt.Sprintf(`
-		SELECT COUNT(*) 
-		FROM public.metrics m
-		%s
-		%s
-	`, joinClause, whereClause)
-
+	countParams := params[:len(params)-2]
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM public.metrics m %s %s", joinClause, where)
 	var total int
 	if err := s.pgconn.QueryRow(countQuery, countParams...).Scan(&total); err != nil {
-		return nil, fmt.Errorf("failed to get total count: %w", err)
+		return nil, fmt.Errorf("count cards: %w", err)
 	}
-
-	return &GetCardsResponsePaginated{
-		Cards: cards,
-		Total: total,
-	}, nil
+	return &GetCardsResponsePaginated{Cards: cards, Total: total}, nil
 }
 
-func (s *cardsImpl) Update(projectId int, cardID int64, userID uint64, req *CardUpdateRequest) (*CardGetResponse, error) {
+func (s *cardsImpl) Update(projectID int, cardID int64, userID uint64, req *CardUpdateRequest) (*CardGetResponse, error) {
 	if req.MetricValue == nil {
 		req.MetricValue = []string{}
 	}
-
-	tx, err := s.pgconn.Begin() // Start transaction
+	infoData, err := json.Marshal(CardInfo{
+		Rows:        req.Rows,
+		StepsBefore: req.StepsBefore,
+		StepsAfter:  req.StepsAfter,
+		StartPoint:  req.StartPoint,
+		Excludes:    req.Excludes,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to start transaction: %w", err)
+		return nil, fmt.Errorf("marshal card info: %w", err)
 	}
-
+	tx, err := s.pgconn.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("begin tx: %w", err)
+	}
 	ctx := context.Background()
 	defer func() {
 		if err != nil {
-			err := tx.TxRollback()
-			if err != nil {
-				return
-			}
+			tx.TxRollback()
 		} else {
-			err := tx.TxCommit()
-			if err != nil {
-				return
-			}
+			tx.TxCommit()
 		}
 	}()
-
-	// Update the card
-	sql := `
-		UPDATE public.metrics
-		SET name = $1, metric_type = $2, view_type = $3, metric_of = $4, metric_value = $5, metric_format = $6, is_public = $7
-		WHERE metric_id = $8 AND project_id = $9 AND deleted_at IS NULL
-		RETURNING metric_id, project_id, user_id, name, metric_type, view_type, metric_of, metric_value, metric_format, is_public, created_at, edited_at`
-
-	card := &CardGetResponse{}
-	err = tx.TxQueryRow(sql,
-		req.Name, req.MetricType, req.ViewType, req.MetricOf, req.MetricValue, req.MetricFormat, req.IsPublic, cardID, projectId,
-	).Scan(
-		&card.CardID, &card.ProjectID, &card.UserID, &card.Name, &card.MetricType, &card.ViewType, &card.MetricOf,
-		&card.MetricValue, &card.MetricFormat, &card.IsPublic, &card.CreatedAt, &card.EditedAt,
-	)
-
+	const upd = `UPDATE public.metrics SET name=$1,metric_type=$2,view_type=$3,metric_of=$4,metric_value=$5,metric_format=$6,is_public=$7,card_info=$8 WHERE metric_id=$9 AND project_id=$10 AND deleted_at IS NULL RETURNING metric_id,project_id,user_id,name,metric_type,view_type,metric_of,metric_value,metric_format,is_public,created_at,edited_at,card_info`
+	row := tx.TxQueryRow(upd, req.Name, req.MetricType, req.ViewType, req.MetricOf, req.MetricValue, req.MetricFormat, req.IsPublic, infoData, cardID, projectID)
+	card, err := s.scanCard(row)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update card: %w", err)
+		return nil, fmt.Errorf("update card: %w", err)
 	}
-
-	// delete all series for the card and create new ones
-	err = s.DeleteCardSeries(card.CardID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to delete series: %w", err)
+	// remove old series
+	if err := s.pgconn.Exec("DELETE FROM public.metric_series WHERE metric_id=$1", card.CardID); err != nil {
+		return nil, fmt.Errorf("delete series: %w", err)
 	}
-
-	seriesList := s.CreateSeries(ctx, tx, card.CardID, req.Series)
-	if len(seriesList) != len(req.Series) {
-		return nil, fmt.Errorf("not all series were created successfully")
+	series, err := s.createSeries(ctx, tx, card.CardID, req.Series)
+	if err != nil || len(series) != len(req.Series) {
+		return nil, fmt.Errorf("create series: %w", err)
 	}
-
-	card.Series = seriesList
+	card.Series = series
 	return card, nil
 }
 
-func (s *cardsImpl) DeleteCardSeries(cardId int64) error {
-	sql := `DELETE FROM public.metric_series WHERE metric_id = $1`
-	err := s.pgconn.Exec(sql, cardId)
-	if err != nil {
-		return fmt.Errorf("failed to delete series: %w", err)
-	}
-	return nil
-}
-
-func (s *cardsImpl) Delete(projectId int, cardID int64, userID uint64) error {
-	sql := `
-		UPDATE public.metrics
-		SET deleted_at = now()
-		WHERE metric_id = $1 AND project_id = $2 AND user_id = $3 AND deleted_at IS NULL`
-
-	err := s.pgconn.Exec(sql, cardID, projectId, userID)
-	if err != nil {
-		return fmt.Errorf("failed to delete card: %w", err)
+func (s *cardsImpl) Delete(projectID int, cardID int64, userID uint64) error {
+	const del = `UPDATE public.metrics SET deleted_at = now() WHERE metric_id=$1 AND project_id=$2 AND user_id=$3 AND deleted_at IS NULL`
+	if err := s.pgconn.Exec(del, cardID, projectID, userID); err != nil {
+		return fmt.Errorf("delete card: %w", err)
 	}
 	return nil
 }

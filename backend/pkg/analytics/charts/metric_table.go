@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"openreplay/backend/pkg/analytics/db"
+	"openreplay/backend/pkg/analytics/model"
 	"strings"
 )
 
@@ -125,7 +126,7 @@ func (t TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, e
 
 	// sessions_data WHERE conditions
 	durConds, _ := buildDurationWhere(s.Filter.Filters)
-	sessFilters, _ := filterOutTypes(s.Filter.Filters, []FilterType{FilterDuration, FilterUserAnonymousId})
+	sessFilters, _ := filterOutTypes(s.Filter.Filters, []model.FilterType{FilterDuration, FilterUserAnonymousId})
 	sessConds, evtNames := buildEventConditions(sessFilters, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "main"})
 	sessionDataConds := append(durConds, sessConds...)
 	// date range for sessions_data
@@ -167,7 +168,7 @@ func (t TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, e
 	}
 
 	// metric-specific filter
-	_, mFilt := filterOutTypes(s.Filter.Filters, []FilterType{FilterType(r.MetricOf)})
+	_, mFilt := filterOutTypes(s.Filter.Filters, []model.FilterType{model.FilterType(r.MetricOf)})
 	metricCond := eventNameCondition("", r.MetricOf)
 	if len(mFilt) > 0 {
 		//conds, _ := buildEventConditions(mFilt, BuildConditionsOptions{DefinedColumns: map[string]string{"userId": "user_id"}, MainTableAlias: "main"})

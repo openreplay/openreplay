@@ -3,6 +3,7 @@ package charts
 import (
 	"fmt"
 	"openreplay/backend/pkg/analytics/db"
+	"openreplay/backend/pkg/analytics/model"
 	"strings"
 )
 
@@ -34,7 +35,7 @@ func (f FunnelQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, 
 
 	// extract step filters
 	s := p.MetricPayload.Series[0]
-	var stepFilters []Filter
+	var stepFilters []model.Filter
 	for _, flt := range s.Filter.Filters {
 		if flt.IsEvent {
 			stepFilters = append(stepFilters, flt)
@@ -81,9 +82,9 @@ func (f FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 	metricFormat := p.MetricPayload.MetricFormat
 
 	var (
-		globalFilters         []Filter
-		stepFilters           []Filter
-		sessionDurationFilter *Filter
+		globalFilters         []model.Filter
+		stepFilters           []model.Filter
+		sessionDurationFilter *model.Filter
 	)
 	for _, flt := range s.Filter.Filters {
 		if flt.IsEvent {
@@ -96,8 +97,8 @@ func (f FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 	}
 
 	requiredColumns := make(map[string]struct{})
-	var collectColumns func([]Filter)
-	collectColumns = func(filters []Filter) {
+	var collectColumns func([]model.Filter)
+	collectColumns = func(filters []model.Filter) {
 		for _, flt := range filters {
 			if col, ok := mainColumns[string(flt.Type)]; ok {
 				requiredColumns[col] = struct{}{}
@@ -154,7 +155,7 @@ func (f FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 	)
 	for i, flt := range stepFilters {
 		stepNames = append(stepNames, fmt.Sprintf("'%s'", flt.Type))
-		conds, _ := buildEventConditions([]Filter{flt}, BuildConditionsOptions{
+		conds, _ := buildEventConditions([]model.Filter{flt}, BuildConditionsOptions{
 			DefinedColumns:       cteColumnAliases(),
 			PropertiesColumnName: "properties",
 			MainTableAlias:       "",

@@ -36,10 +36,10 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	}
 	reqValidator := validator.New()
 
-	cardsService, err := cards.New(log, pgconn)
-	if err != nil {
-		return nil, err
-	}
+	cardsService := cards.New(log, pgconn)
+	//if err != nil {
+	//	return nil, err
+	//}
 	cardsHandlers, err := cards.NewHandlers(log, cfg, responser, cardsService, reqValidator)
 	if err != nil {
 		return nil, err

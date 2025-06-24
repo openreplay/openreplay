@@ -3,6 +3,7 @@ package charts
 import (
 	"fmt"
 	"openreplay/backend/pkg/analytics/db"
+	"openreplay/backend/pkg/analytics/model"
 	"strings"
 )
 
@@ -37,9 +38,7 @@ func (h HeatmapQueryBuilder) Execute(p Payload, conn db.Connector) (interface{},
 		pts = append(pts, HeatmapPoint{x, y})
 	}
 
-	return HeatmapResponse{
-		Points: pts,
-	}, nil
+	return pts, nil
 }
 
 func (h HeatmapQueryBuilder) buildQuery(p Payload) (string, error) {
@@ -48,7 +47,7 @@ func (h HeatmapQueryBuilder) buildQuery(p Payload) (string, error) {
 	}
 	s := p.MetricPayload.Series[0]
 
-	var globalFilters, eventFilters []Filter
+	var globalFilters, eventFilters []model.Filter
 	for _, flt := range s.Filter.Filters {
 		if flt.IsEvent {
 			eventFilters = append(eventFilters, flt)
