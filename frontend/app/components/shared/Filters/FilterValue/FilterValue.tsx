@@ -148,6 +148,11 @@ function FilterValue(props: Props) {
           value: [durationValues.minDuration, durationValues.maxDuration],
         });
       }
+    } else {
+      onUpdate({
+        ...filter,
+        value: filter.value[0],
+      });
     }
   }, [
     filter,
@@ -214,16 +219,19 @@ function FilterValue(props: Props) {
       return (
         <Input
           type="number"
-          value={value}
+          defaultValue={value}
           size="small"
           className="rounded-lg"
           style={{ width: '80px' }}
-          onChange={(e) => {
+          // onChange={(e) => {
+          //   const newValue = e.target.value;
+          //   onUpdate({ ...filter, value: [newValue] });
+          // }}
+          placeholder={filter.placeholder}
+          onBlur={(e) => {
             const newValue = e.target.value;
             onUpdate({ ...filter, value: [newValue] });
           }}
-          placeholder={filter.placeholder}
-          onBlur={handleBlur}
         />
         // <BaseFilterLocalAutoComplete
         //   value={value}
