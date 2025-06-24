@@ -479,15 +479,15 @@ class SearchStore {
       return filter;
     }
 
-    const tagFilter = filterStore.findEvent({
-      name: FilterKey.ISSUE,
-      autoCaptured: true,
-    });
+    // const tagFilter = filterStore.findEvent({
+    //   name: FilterKey.ISSUE,
+    //   autoCaptured: true,
+    // });
 
-    if (!tagFilter) {
-      console.error('Tag filter not found');
-      return filter;
-    }
+    // if (!tagFilter) {
+    //   console.error('Tag filter not found');
+    //   return filter;
+    // }
 
     const issueFilter = {
       isEvent: true,
