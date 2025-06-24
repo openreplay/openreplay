@@ -233,7 +233,7 @@ function DashboardList() {
         showSorterTooltip={false}
         pagination={{
           showTotal: (total, range) =>
-            `${t('Showing')} ${range[0]}-${range[1]} ${t('of')} ${total} ${t('items')}`,
+            `${t('Showing')} ${range[0]} to ${range[1]} ${t('of')} ${total} ${t('dashboards')}`,
           size: 'small',
           simple: 'true',
           className: 'px-4 pr-8 mb-0',
