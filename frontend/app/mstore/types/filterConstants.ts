@@ -127,53 +127,53 @@ export const OPERATORS = {
 
   number: [
     {
-      value: 'equals',
+      value: '=',
       label: 'equals',
       displayName: 'Equals',
       description: 'Exactly equals the value',
     },
     {
-      value: 'doesNotEqual',
+      value: '!=',
       label: 'does not equal', // Fixed: added space
       displayName: 'Does not equal',
       description: 'Does not equal the value',
     },
     {
-      value: 'greaterThan',
+      value: '>',
       label: 'greater than',
       displayName: 'Greater than',
       description: 'Greater than the value',
     },
     {
-      value: 'lessThan',
+      value: '<',
       label: 'less than', // Fixed: added space and lowercased
       displayName: 'Less than',
       description: 'Less than the value',
     },
     {
-      value: 'greaterThanOrEquals',
+      value: '>=',
       label: 'greater than or equals', // Fixed: added spaces and lowercased
       displayName: 'Greater than or equals',
       description: 'Greater than or equal to the value',
     },
     {
-      value: 'lessThanOrEquals',
+      value: '<=',
       label: 'less than or equals', // Fixed: added spaces and lowercased
       displayName: 'Less than or equals',
       description: 'Less than or equal to the value',
     },
-    {
-      value: 'isBlank',
-      label: 'is blank', // Fixed: added space and lowercased
-      displayName: 'Is blank',
-      description: 'Is empty or null',
-    },
-    {
-      value: 'isNotBlank',
-      label: 'is not blank', // Fixed: added spaces and lowercased
-      displayName: 'Is not blank',
-      description: 'Is not empty or null',
-    },
+    // {
+    //   value: 'isBlank',
+    //   label: 'is blank', // Fixed: added space and lowercased
+    //   displayName: 'Is blank',
+    //   description: 'Is empty or null',
+    // },
+    // {
+    //   value: 'isNotBlank',
+    //   label: 'is not blank', // Fixed: added spaces and lowercased
+    //   displayName: 'Is not blank',
+    //   description: 'Is not empty or null',
+    // },
   ],
 
   boolean: [

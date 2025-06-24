@@ -212,20 +212,33 @@ function FilterValue(props: Props) {
     case FilterType.NUMBER:
     case FilterType.INTEGER:
       return (
-        <BaseFilterLocalAutoComplete
-          value={value}
-          showCloseButton={showCloseButton}
-          onApplyValues={onApplyValues}
-          onRemoveValue={onRemoveValue}
-          onSelect={debounceOnSelect}
-          icon={filter.icon}
-          placeholder={filter.placeholder}
-          isAutoOpen={isAutoOpen}
-          modalProps={{ placeholder: '' }}
+        <Input
           type="number"
-          allowDecimals={false}
-          isMultiple={false}
+          value={value}
+          size="small"
+          className="rounded-lg"
+          style={{ width: '80px' }}
+          onChange={(e) => {
+            const newValue = e.target.value;
+            onUpdate({ ...filter, value: [newValue] });
+          }}
+          placeholder={filter.placeholder}
+          onBlur={handleBlur}
         />
+        // <BaseFilterLocalAutoComplete
+        //   value={value}
+        //   showCloseButton={showCloseButton}
+        //   onApplyValues={onApplyValues}
+        //   onRemoveValue={onRemoveValue}
+        //   onSelect={debounceOnSelect}
+        //   icon={filter.icon}
+        //   placeholder={filter.placeholder}
+        //   isAutoOpen={isAutoOpen}
+        //   modalProps={{ placeholder: '' }}
+        //   type="number"
+        //   allowDecimals={false}
+        //   isMultiple={false}
+        // />
       );
     case FilterType.DROPDOWN:
       return (

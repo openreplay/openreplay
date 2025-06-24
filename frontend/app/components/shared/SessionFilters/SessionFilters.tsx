@@ -67,6 +67,7 @@ function SessionFilters() {
     const originalIndex = getOriginalEventIndex(filteredIndex);
     if (originalIndex !== -1) {
       searchStore.updateFilter(originalIndex, updatedFilter);
+      void searchStore.fetchSessions();
     }
   };
 
@@ -75,6 +76,7 @@ function SessionFilters() {
     const originalIndex = getOriginalAttributeIndex(filteredIndex);
     if (originalIndex !== -1) {
       searchStore.removeFilter(originalIndex);
+      void searchStore.fetchSessions();
     }
   };
 
@@ -85,6 +87,7 @@ function SessionFilters() {
     const originalIndex = getOriginalAttributeIndex(filteredIndex);
     if (originalIndex !== -1) {
       searchStore.updateFilter(originalIndex, updatedFilter);
+      void searchStore.fetchSessions();
     }
   };
 
