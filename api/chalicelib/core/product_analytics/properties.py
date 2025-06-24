@@ -72,11 +72,12 @@ def get_all_properties(project_id: int):
         r = ch_client.format(
             """SELECT COUNT(1)                                           OVER () AS total, property_name AS name,
                       display_name,
+                      event_properties.auto_captured,
                       array_agg(DISTINCT event_properties.value_type) AS possible_types
                FROM product_analytics.all_properties
                         LEFT JOIN product_analytics.event_properties USING (project_id, property_name)
                WHERE all_properties.project_id = %(project_id)s
-               GROUP BY property_name, display_name
+               GROUP BY ALL
                ORDER BY display_name, property_name;""",
             parameters={"project_id": project_id})
         properties = ch_client.execute(r)
@@ -104,6 +105,7 @@ def get_all_properties(project_id: int):
                     "id": f"prop_{len(properties) + 1}",
                     "_foundInPredefinedList": False,
                     "dataType": PREDEFINED_PROPERTIES[p]["type"],
+                    "autoCaptured": True
                 })
         return {
             "total": total,
@@ -117,6 +119,7 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
         r = ch_client.format(
             """SELECT all_properties.property_name                    AS name,
                       all_properties.display_name,
+                      event_properties.auto_captured,
                       array_agg(DISTINCT event_properties.value_type) AS possible_types
                FROM product_analytics.event_properties
                         INNER JOIN product_analytics.all_properties USING (property_name)
