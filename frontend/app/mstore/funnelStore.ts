@@ -3,14 +3,14 @@ import { funnelService } from "App/services"
 import Funnel, { IFunnel } from "./types/funnel";
 import Session from './types/session';
 import FunnelIssue from './types/funnelIssue';
-import Period, { LAST_30_DAYS } from 'Types/app/period';
+import Period, { LAST_24_HOURS } from 'Types/app/period';
 
 export default class FunnelStore {
     isLoading: boolean = false
     isSaving: boolean = false
     list: IFunnel[] = []
     instance: IFunnel | null = null
-    period: Period = Period({ rangeName: LAST_30_DAYS })
+    period: Period = Period({ rangeName: LAST_24_HOURS })
     search: string = ''
 
     page: number = 1

@@ -6,7 +6,7 @@ import { fetchListType, fetchType, saveType, editType, initType, removeType } fr
 import { createItemInListUpdater, mergeReducers, success, array } from './funcTools/tools';
 import { createRequestReducer } from './funcTools/request';
 import { getDateRangeFromValue } from 'App/dateRange';
-import { LAST_30_DAYS } from 'Types/app/period';
+import { LAST_24_HOURS } from 'Types/app/period';
 import { filterMap, checkFilterValue, hasFilterApplied } from './search';
 
 const name = 'funnel';
@@ -50,9 +50,9 @@ const SAVE_SUCCESS = success(SAVE);
 const UPDATE_SUCCESS = success(UPDATE);
 const REMOVE_SUCCESS = success(REMOVE);
 
-const range = getDateRangeFromValue(LAST_30_DAYS);
+const range = getDateRangeFromValue(LAST_24_HOURS);
 const defaultDateFilters = {
-  rangeValue: LAST_30_DAYS,
+  rangeValue: LAST_24_HOURS,
   startDate: range.start.unix() * 1000,
   endDate: range.end.unix() * 1000
 }
