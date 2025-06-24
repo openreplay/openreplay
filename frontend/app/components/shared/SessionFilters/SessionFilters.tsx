@@ -18,6 +18,7 @@ function SessionFilters() {
 
   const onAddFilter = (filter: Filter) => {
     searchStore.addFilter({ ...filter, autoOpen: true });
+    void searchStore.fetchSessions();
   };
 
   const onChangeEventsOrder = (
@@ -57,6 +58,8 @@ function SessionFilters() {
     const originalIndex = getOriginalEventIndex(filteredIndex);
     if (originalIndex !== -1) {
       searchStore.removeFilter(originalIndex);
+
+      void searchStore.fetchSessions();
     }
   };
 

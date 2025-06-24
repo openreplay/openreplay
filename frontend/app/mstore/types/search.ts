@@ -144,9 +144,15 @@ export default class Search {
 
   toSearch() {
     const js: any = { ...this };
-    js.filters = this.filters.map((filter: any) =>
-      new FilterItem(filter).toJson(),
-    );
+    js.filters = this.filters.map((filter: any) => {
+      const js = new FilterItem(filter).toJson();
+      delete js.type;
+      if (js.isEvent || Boolean(js.isEvent)) {
+        delete js.dataType;
+        // delete js.propertyOrder;
+      }
+      return js;
+    });
 
     this.handleProperties(js); // TODO this is temproray to support PYTHON api where it has different structure for nested filters
 
@@ -167,12 +173,22 @@ export default class Search {
   handleProperties(data: any) {
     data.filters = data.filters.map((filter: any) => {
       if (filter.isEvent && Array.isArray(filter.filters)) {
-        const nested = filter.filters;
+        const nested = filter.filters.map((nestedFilter: any) => {
+          const js = new FilterItem(nestedFilter).toJson();
+          delete js.type;
+          delete js.propertyOrder;
+          return js;
+        });
+
         delete filter.filters;
         filter.properties = {
+          propertyOrder: filter.propertyOrder,
+          operator: filter.propertyOrder, // TODO remove this and use the propertyOrder once the API is fixed.
           filters: nested,
         };
       }
+
+      delete filter.propertyOrder;
       return filter;
     });
     return data;

@@ -206,13 +206,16 @@ export enum FilterKey {
   ERROR_MOBILE = 'errorMobile',
   SWIPE_MOBILE = 'swipeMobile',
 
+  CLICK = 'CLICK',
+  INPUT = 'INPUT',
+  LOCATION = 'LOCATION',
+  ISSUE = 'ISSUE',
+
   ERROR = 'error',
   MISSING_RESOURCE = 'missingResource',
   SLOW_SESSION = 'slowSession',
   CLICK_RAGE = 'clickRage',
-  CLICK = 'CLICK',
-  INPUT = 'INPUT',
-  LOCATION = 'LOCATION',
+
   VIEW = 'view',
   CONSOLE = 'console',
   METADATA = 'metadata',
@@ -234,7 +237,7 @@ export enum FilterKey {
   REVID = 'revId',
   USERANONYMOUSID = 'userAnonymousId',
   USERID = 'userId',
-  ISSUE = 'issue',
+
   EVENTS_COUNT = 'eventsCount',
   UTM_SOURCE = 'utmSource',
   UTM_MEDIUM = 'utmMedium',

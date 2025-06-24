@@ -9,6 +9,7 @@ import FilterAutoCompleteLocal from '../FilterAutoCompleteLocal';
 import FilterAutoComplete from '../FilterAutoComplete';
 import ValueAutoComplete from 'Shared/Filters/FilterValue/ValueAutoComplete';
 import { Input, Select } from 'antd';
+import { useStore } from '@/mstore';
 
 const ASSIST_ROUTE = assistRoute();
 
@@ -59,6 +60,7 @@ function BaseDropDown(props: any) {
 function FilterValue(props: Props) {
   const { filter, onUpdate, isConditional, eventName } = props; // Destructure props early
   const isAutoOpen = filter.autoOpen; // Assume parent now controls this correctly
+  const { searchStore } = useStore();
 
   const [durationValues, setDurationValues] = useState(() => ({
     minDuration: filter.value?.[0],
@@ -93,6 +95,8 @@ function FilterValue(props: Props) {
   const onApplyValues = useCallback(
     (values: string[]) => {
       onUpdate({ ...filter, value: values });
+
+      void searchStore.fetchSessions();
     },
     [filter, onUpdate],
   );
