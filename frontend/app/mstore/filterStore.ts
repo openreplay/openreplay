@@ -262,7 +262,8 @@ export default class FilterStore {
         return 'is';
       case 'number':
       case 'int':
-        return 'equals';
+        // return 'equals';
+        return '=';
       case 'boolean':
         return 'true';
       default:

@@ -16,7 +16,6 @@ import FilterItem from 'App/mstore/types/filterItem';
 import { filterStore, sessionStore, settingsStore } from 'App/mstore';
 import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
 import { iTag } from '@/services/NotesService';
-import { issues_types } from 'Types/session/issue';
 import { Filter } from '@/mstore/types/filterConstants';
 
 const PER_PAGE = 10;
@@ -68,44 +67,7 @@ class SearchStore {
     // rangeValue: LAST_24_HOURS,
     startDate: Date.now() - 24 * 60 * 60 * 1000,
     endDate: Date.now(),
-    filters: [
-      // {
-      //   id: Math.random().toString(36).substring(7),
-      //   name: 'CLICK',
-      //   category: 'events',
-      //   type: 'string',
-      //   value: ['/client/account'],
-      //   operator: 'is',
-      //   isEvent: true,
-      //   filters: [
-      //     {
-      //       id: Math.random().toString(36).substring(7),
-      //       name: 'select',
-      //       category: 'filters',
-      //       type: 'bool',
-      //       value: ['true'],
-      //       operator: 'is'
-      //     },
-      //     {
-      //       id: Math.random().toString(36).substring(7),
-      //       name: 'label',
-      //       category: 'filters',
-      //       type: 'double',
-      //       value: [1],
-      //       operator: 'is'
-      //     }
-      //   ]
-      // },
-      // {
-      //   id: Math.random().toString(36).substring(7),
-      //   name: 'Browser',
-      //   category: 'filters',
-      //   type: 'string',
-      //   value: ['/client/account'],
-      //   operator: 'is',
-      //   isEvent: false
-      // }
-    ],
+    filters: [],
     groupByUser: false,
     sort: 'startTs',
     order: 'desc',
@@ -336,9 +298,7 @@ class SearchStore {
     console.log('SearchStore: Add Filter', filter);
 
     if (filter.isEvent && filter.filters) {
-      const props = filterStore.getEventFilters(filter.id).then((props) => {
-        // const defaultProp = props?.find((prop) => prop.defaultProperty);
-        // console.log('defaultProp', defaultProp);
+      filterStore.getEventFilters(filter.id).then((props) => {
         filter.filters = props?.filter((prop) => prop.defaultProperty);
       });
     }
@@ -356,22 +316,6 @@ class SearchStore {
     this.instance = new Search({
       ...this.instance.toData(),
     });
-
-    // if (index > -1) {
-    //   const oldFilter = new FilterItem(this.instance.filters[index]);
-    //   const updatedFilter = {
-    //     ...oldFilter,
-    //     value: oldFilter.value.concat(filter.value),
-    //   };
-    //   oldFilter.merge(updatedFilter);
-    //   this.updateFilter(index, updatedFilter);
-    // } else {
-    //   // filter.key = Math.random().toString(36).substring(7);
-    //   this.instance.filters.push(filter);
-    //   this.instance = new Search({
-    //     ...this.instance.toData(),
-    //   });
-    // }
 
     this.currentPage = 1;
 
