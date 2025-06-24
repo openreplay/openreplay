@@ -55,17 +55,12 @@ const SET_ACTIVE_TAB = 'sessions/SET_ACTIVE_TAB';
 
 const CLEAR_CURRENT_SESSION = 'sessions/CLEAR_CURRENT_SESSION';
 
-const range = getDateRangeFromValue(LAST_30_DAYS);
 const range = getDateRangeFromValue(LAST_24_HOURS);
 const defaultDateFilters = {
   url: '',
-  rangeValue: LAST_30_DAYS,
+  rangeValue: LAST_24_HOURS,
   startDate: range.start.unix() * 1000,
   endDate: range.end.unix() * 1000,
-    url: '',
-    rangeValue: LAST_24_HOURS,
-    startDate: range.start.unix() * 1000,
-    endDate: range.end.unix() * 1000,
 };
 
 const initObj = {
