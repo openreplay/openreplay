@@ -3,6 +3,13 @@
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 
 ARCH=${ARCH:-amd64}
+# To keep backward compatibility with existing scripts
+if [[ $ARCH == 'amd64' ]]; then
+    ARCH='linux/amd64'
+elif [[ $ARCH = 'arm64' ]]; then
+    ARCH='linux/arm64'
+fi
+
 git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-git_sha}
 check_prereq() {
@@ -39,7 +46,7 @@ function build_api() {
     cd ../${destination} || exit 1
     cp -rf ../ee/assist-server/* ./
 
-    docker build -f ./Dockerfile --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/assist-server:${image_tag} .
+    docker build -f ./Dockerfile --platform ${ARCH} --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/assist-server:${image_tag} .
 
     cd ../assist-server || exit 1
     rm -rf ../${destination}
