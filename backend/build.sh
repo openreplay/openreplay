@@ -15,6 +15,13 @@ source $GIT_ROOT/scripts/lib/_docker.sh
 git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-$git_sha}
 ee="false"
+# To keep backward compatibility with existing scripts
+if [[ $ARCH == 'amd64' ]]; then
+    ARCH='linux/amd64'
+elif [[ $ARCH = 'arm64' ]]; then
+    ARCH='linux/arm64'
+fi
+
 # Possible values: amd64, arm64
 arch="${ARCH:-"amd64"}"
 check_prereq() {
@@ -48,7 +55,7 @@ update_helm_release() {
 function build_service() {
     image="$1"
     echo "BUILDING $image"
-    docker build -t ${DOCKER_REPO:-'local'}/$image:${image_tag} --platform linux/$arch --build-arg ARCH=$arch --build-arg SERVICE_NAME=$image --build-arg GIT_SHA=$git_sha .
+    docker build -t ${DOCKER_REPO:-'local'}/$image:${image_tag} --platform $arch --build-arg ARCH=$arch --build-arg SERVICE_NAME=$image --build-arg GIT_SHA=$git_sha .
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/$image:${image_tag}
     }
