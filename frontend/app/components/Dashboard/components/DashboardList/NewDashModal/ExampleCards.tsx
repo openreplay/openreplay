@@ -5,6 +5,7 @@ import {
   TABLE,
   TIMESERIES,
   USER_PATH,
+  WEBVITALS,
 } from 'App/constants/card';
 import { FilterKey } from 'Types/filter/filterType';
 import { BarChart, TrendingUp, SearchSlash } from 'lucide-react';
@@ -165,6 +166,15 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
     example: ByBrowser,
     viewType: 'table',
   },
+  {
+    title: 'Untitled Top Resolutions',
+    key: FilterKey.RESOLUTIONS,
+    cardType: TABLE,
+    metricOf: FilterKey.RESOLUTIONS,
+    category: CARD_CATEGORIES(t)[1].key,
+    example: BySystem,
+    viewType: 'table',
+  },
   // {
   //     title: 'Sessions by System',
   //     key: TYPE.SESSIONS_BY_SYSTEM,
@@ -298,6 +308,25 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
             filters: [],
           },
         ],
+      },
+    ],
+    example: ExampleTrend,
+  },
+  {
+    title: 'Untitled Web Vitals',
+    key: WEBVITALS,
+    cardType: WEBVITALS,
+    metricOf: 'webVitalUrl',
+    category: CARD_CATEGORY.WEB_ANALYTICS,
+    data: {},
+    viewType: 'chart',
+    filters: [
+      {
+        type: 'location',
+        isEvent: true,
+        value: [''],
+        operator: 'startsWith',
+        filters: [],
       },
     ],
     example: ExampleTrend,

@@ -2,6 +2,7 @@ import { Avatar, Icon } from 'UI';
 import React from 'react';
 import * as Flags from 'country-flag-icons/react/3x2';
 import { hashString } from 'Types/session/session';
+import { Tablet, Smartphone, Laptop, Monitor } from 'lucide-react';
 
 interface IconProvider {
   getIcon(obj: any): React.ReactNode;
@@ -137,6 +138,32 @@ class FetchIconProvider implements IconProvider {
   }
 }
 
+class ResolutionProvider implements IconProvider {
+  getIcon(obj: any): React.ReactNode {
+    const name = obj.name ?? '';
+    const firstPart = name.split('x')[0];
+    const size = 21;
+    let icon = <Monitor size={size} />;
+    if (firstPart.includes('<800')) {
+      icon = <Smartphone size={size} />;
+    }
+    if (firstPart.includes('800')) {
+      icon = <Tablet size={size} />;
+    }
+    if (firstPart.includes('1280')) {
+      icon = <Laptop size={size} />;
+    }
+    if (firstPart.includes('1920')) {
+      icon = <Monitor size={size} />;
+    }
+    return (
+      <div className="w-full h-full rounded-full bg-gray-lighter text-black flex items-center justify-center">
+        {icon}
+      </div>
+    );
+  }
+}
+
 export {
   BrowserIconProvider,
   CountryIconProvider,
@@ -147,5 +174,6 @@ export {
   UserIconProvider,
   ReferrerIconProvider,
   FetchIconProvider,
+  ResolutionProvider,
 };
 export type { IconProvider };

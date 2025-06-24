@@ -25,6 +25,7 @@
 .fill-orange-dark { fill: var(--color-orange-dark) }
 .fill-green { fill: var(--color-green) }
 .fill-green2 { fill: var(--color-green2) }
+.fill-green-light { fill: var(--color-green-light) }
 .fill-green-dark { fill: var(--color-green-dark) }
 .fill-red { fill: var(--color-red) }
 .fill-red2 { fill: var(--color-red2) }
@@ -90,6 +91,7 @@
 .hover-fill-orange-dark:hover svg { fill: var(--color-orange-dark) }
 .hover-fill-green:hover svg { fill: var(--color-green) }
 .hover-fill-green2:hover svg { fill: var(--color-green2) }
+.hover-fill-green-light:hover svg { fill: var(--color-green-light) }
 .hover-fill-green-dark:hover svg { fill: var(--color-green-dark) }
 .hover-fill-red:hover svg { fill: var(--color-red) }
 .hover-fill-red2:hover svg { fill: var(--color-red2) }
@@ -157,6 +159,7 @@
 .color-orange-dark { color: var(--color-orange-dark) }
 .color-green { color: var(--color-green) }
 .color-green2 { color: var(--color-green2) }
+.color-green-light { color: var(--color-green-light) }
 .color-green-dark { color: var(--color-green-dark) }
 .color-red { color: var(--color-red) }
 .color-red2 { color: var(--color-red2) }
@@ -224,6 +227,7 @@
 .hover-orange-dark:hover { color: var(--color-orange-dark) }
 .hover-green:hover { color: var(--color-green) }
 .hover-green2:hover { color: var(--color-green2) }
+.hover-green-light:hover { color: var(--color-green-light) }
 .hover-green-dark:hover { color: var(--color-green-dark) }
 .hover-red:hover { color: var(--color-red) }
 .hover-red2:hover { color: var(--color-red2) }
@@ -291,6 +295,7 @@
 .border-orange-dark { border-color: var(--color-orange-dark) }
 .border-green { border-color: var(--color-green) }
 .border-green2 { border-color: var(--color-green2) }
+.border-green-light { border-color: var(--color-green-light) }
 .border-green-dark { border-color: var(--color-green-dark) }
 .border-red { border-color: var(--color-red) }
 .border-red2 { border-color: var(--color-red2) }
@@ -358,6 +363,7 @@
 .bg-orange-dark { background-color: var(--color-orange-dark) }
 .bg-green { background-color: var(--color-green) }
 .bg-green2 { background-color: var(--color-green2) }
+.bg-green-light { background-color: var(--color-green-light) }
 .bg-green-dark { background-color: var(--color-green-dark) }
 .bg-red { background-color: var(--color-red) }
 .bg-red2 { background-color: var(--color-red2) }

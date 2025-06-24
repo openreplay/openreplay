@@ -220,15 +220,15 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 
 
 def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema):
-    return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.REQUEST_DETAILS,
+    return not (not is_any and len(event.value) == 0 and event.name not in [schemas.EventType.REQUEST_DETAILS,
                                                                             schemas.EventType.GRAPHQL] \
-                or event.type in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
+                or event.name in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
                                   schemas.PerformanceEventType.LOCATION_LARGEST_CONTENTFUL_PAINT_TIME,
                                   schemas.PerformanceEventType.LOCATION_TTFB,
                                   schemas.PerformanceEventType.LOCATION_AVG_CPU_LOAD,
                                   schemas.PerformanceEventType.LOCATION_AVG_MEMORY_USAGE
                                   ] and (event.source is None or len(event.source) == 0) \
-                or event.type in [schemas.EventType.REQUEST_DETAILS, schemas.EventType.GRAPHQL] and (
+                or event.name in [schemas.EventType.REQUEST_DETAILS, schemas.EventType.GRAPHQL] and (
                         event.filters is None or len(event.filters) == 0))
 
 
@@ -239,7 +239,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     if issue:
         data.filters.append(
             schemas.SessionSearchFilterSchema(value=[issue['type']],
-                                              type=schemas.FilterType.ISSUE.value,
+                                              name=schemas.FilterType.ISSUE.value,
                                               operator='is')
         )
     ss_constraints = []
@@ -275,7 +275,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         for i, f in enumerate(data.filters):
             if not isinstance(f.value, list):
                 f.value = [f.value]
-            filter_type = f.type
+            filter_type = f.name
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
             full_args = {**full_args, f_k: f.value, **_multiple_values(f.value, value_key=f_k)}
@@ -531,7 +531,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         event_index = 0
         or_events = data.events_order == schemas.SearchEventOrder.OR
         for i, event in enumerate(data.events):
-            event_type = event.type
+            event_type = event.name
             is_any = _isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
@@ -1222,12 +1222,12 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 c.value = helper.values_for_operator(value=c.value, op=c.operator)
                 full_args = {**full_args,
                              **_multiple_values(c.value, value_key=e_k)}
-                if c.type == schemas.EventType.LOCATION:
+                if c.name == schemas.EventType.LOCATION:
                     _extra_or_condition.append(
                         _multiple_conditions(f"extra_event.url_path {op} %({e_k})s",
                                              c.value, value_key=e_k))
                 else:
-                    logging.warning(f"unsupported extra_event type:${c.type}")
+                    logging.warning(f"unsupported extra_event type:${c.name}")
             if len(_extra_or_condition) > 0:
                 extra_constraints.append("(" + " OR ".join(_extra_or_condition) + ")")
     else:

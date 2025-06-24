@@ -60,10 +60,10 @@ function CodeSnippet(props: Props) {
 
   return (
     <div className="relative">
-      <div className="absolute top-0 right-0 mt-2 mr-2">
+      <div className="absolute top-0 right-0 mt-2 mr-2 z-10">
         <CopyButton content={codeSnippet} className="uppercase" />
       </div>
-      <CodeBlock code={codeSnippet} language="js" />
+      <CodeBlock code={codeSnippet} language="html" />
     </div>
   );
 }

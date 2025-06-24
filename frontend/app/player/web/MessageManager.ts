@@ -6,6 +6,7 @@ import type { Store, ILog, SessionFilesInfo } from 'Player';
 import TabSessionManager, { TabState } from 'Player/web/TabManager';
 import ActiveTabManager from 'Player/web/managers/ActiveTabManager';
 import ListWalker from '../common/ListWalker';
+import { inactivitySettingKey } from 'Shared/SessionSettings/components/InactivitySettings';
 
 import MouseMoveManager from './managers/MouseMoveManager';
 
@@ -74,10 +75,21 @@ export interface State extends ScreenState {
 
 export const visualChanges = [
   MType.MouseMove,
+  MType.MouseClickDeprecated,
   MType.MouseClick,
   MType.CreateElementNode,
   MType.SetInputValue,
   MType.SetInputChecked,
+  MType.SetViewportSize,
+  MType.SetViewportScroll,
+];
+
+export const userOnlyChanges = [
+  MType.MouseClick,
+  MType.MouseClickDeprecated,
+  MType.MouseMove,
+  MType.SetInputChecked,
+  MType.SetInputValue,
   MType.SetViewportSize,
   MType.SetViewportScroll,
 ];
@@ -129,6 +141,7 @@ export default class MessageManager {
 
   private tabChangeEvents: TabChangeEvent[] = [];
   private activeTab = '';
+  private ignoreDomOnInactivity = false;
 
   constructor(
     private session: SessionFilesInfo,
@@ -147,6 +160,11 @@ export default class MessageManager {
     const vMode = localStorage.getItem(VIRTUAL_MODE_KEY);
     if (vMode === 'true') {
       this.setVirtualMode(true);
+    }
+
+    const inactivitySetting = localStorage.getItem(inactivitySettingKey);
+    if (inactivitySetting === 'true') {
+      this.ignoreDomOnInactivity = true;
     }
   }
 
@@ -221,7 +239,7 @@ export default class MessageManager {
     if (this.spriteMapSvg) {
       this.injectSpriteMap(this.spriteMapSvg);
     }
-  }
+  };
 
   public onFileReadFailed = (...e: any[]) => {
     logger.error(e);
@@ -257,8 +275,8 @@ export default class MessageManager {
     lastMsgArr
       .sort((a, b) => a[1] - b[1])
       .forEach(([tabId, lastMessageTs]) => {
-      this.tabCloseManager.append({ tabId, time: lastMessageTs });
-    });
+        this.tabCloseManager.append({ tabId, time: lastMessageTs });
+      });
   };
 
   public startLoading = () => {
@@ -308,7 +326,7 @@ export default class MessageManager {
       }
 
       if (tabId) {
-        const stateUpdate: { currentTab?: string, tabs?: Set<string> } = {}
+        const stateUpdate: { currentTab?: string; tabs?: Set<string> } = {};
         if (this.activeTab !== tabId) {
           stateUpdate['currentTab'] = tabId;
           this.activeTab = tabId;
@@ -318,7 +336,7 @@ export default class MessageManager {
         if (activeTabs.size !== this.activeTabManager.tabInstances.size) {
           stateUpdate['tabs'] = this.activeTabManager.tabInstances;
         }
-        this.state.update(stateUpdate)
+        this.state.update(stateUpdate);
       }
 
       if (this.tabs[this.activeTab]) {
@@ -414,7 +432,10 @@ export default class MessageManager {
     const lastMessageTime = Math.max(msg.time, this.lastMessageTime);
     this.lastMessageTime = lastMessageTime;
     this.state.update({ lastMessageTime });
-    if (visualChanges.includes(msg.tp)) {
+    const activityMessages = this.ignoreDomOnInactivity
+      ? userOnlyChanges
+      : visualChanges;
+    if (activityMessages.includes(msg.tp)) {
       this.activityManager?.updateAcctivity(msg.time);
     }
     switch (msg.tp) {

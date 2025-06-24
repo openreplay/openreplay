@@ -178,6 +178,8 @@ function WidgetSessions(props: Props) {
       debounceRequest(widget.metricId, {
         ...filter,
         series: seriesJson,
+        metricType: widget.metricType,
+        metricOf: widget.metricOf,
         page: metricStore.sessionsPage,
         limit: metricStore.sessionsPageSize,
       });

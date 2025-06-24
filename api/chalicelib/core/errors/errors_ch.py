@@ -79,16 +79,13 @@ def __get_basic_constraints_events(platform=None, time_constraint=True, startTim
     if time_constraint:
         ch_sub_query += [f"{table_name}created_at >= toDateTime(%({startTime_arg_name})s/1000)",
                          f"{table_name}created_at < toDateTime(%({endTime_arg_name})s/1000)"]
-    # if platform == schemas.PlatformType.MOBILE:
-    #     ch_sub_query.append("user_device_type = 'mobile'")
-    # elif platform == schemas.PlatformType.DESKTOP:
-    #     ch_sub_query.append("user_device_type = 'desktop'")
     return ch_sub_query
 
 
 def __get_sort_key(key):
     return {
-        schemas.ErrorSort.OCCURRENCE: "max_datetime",
+        schemas.ErrorSort.LAST_OCCURRENCE: "max_datetime",
+        schemas.ErrorSort.FIRST_OCCURRENCE: "min_datetime",
         schemas.ErrorSort.USERS_COUNT: "users",
         schemas.ErrorSort.SESSIONS_COUNT: "sessions"
     }.get(key, 'max_datetime')
@@ -100,7 +97,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
 
     platform = None
     for f in data.filters:
-        if f.type == schemas.FilterType.PLATFORM and len(f.value) > 0:
+        if f.name == schemas.FilterType.PLATFORM and len(f.value) > 0:
             platform = f.value[0]
     ch_sessions_sub_query = errors_helper.__get_basic_constraints_ch(platform, type_condition=False)
     # ignore platform for errors table
@@ -121,7 +118,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
     if len(data.events) > 0:
         errors_condition_count = 0
         for i, e in enumerate(data.events):
-            if e.type == schemas.EventType.ERROR:
+            if e.name == schemas.EventType.ERROR:
                 errors_condition_count += 1
                 is_any = _isAny_opreator(e.operator)
                 op = __get_sql_operator(e.operator)
@@ -146,7 +143,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
         for i, f in enumerate(data.filters):
             if not isinstance(f.value, list):
                 f.value = [f.value]
-            filter_type = f.type
+            filter_type = f.name
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
             params = {**params, f_k: f.value, **_multiple_values(f.value, value_key=f_k)}
@@ -282,21 +279,9 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
                                              value_key=f_k))
 
             elif filter_type == schemas.FilterType.PLATFORM:
-                # op = __get_sql_operator(f.operator)
                 ch_sessions_sub_query.append(
                     _multiple_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
                                          value_key=f_k))
-            # elif filter_type == schemas.FilterType.issue:
-            #     if is_any:
-            #         ch_sessions_sub_query.append("notEmpty(s.issue_types)")
-            #     else:
-            #         ch_sessions_sub_query.append(f"hasAny(s.issue_types,%({f_k})s)")
-            #         # _multiple_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
-            #         #                      value_key=f_k))
-            #
-            #         if is_not:
-            #             extra_constraints[-1] = f"not({extra_constraints[-1]})"
-            #             ss_constraints[-1] = f"not({ss_constraints[-1]})"
             elif filter_type == schemas.FilterType.EVENTS_COUNT:
                 ch_sessions_sub_query.append(
                     _multiple_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
@@ -323,16 +308,6 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
         else:
             params["errors_offset"] = 0
             params["errors_limit"] = 200
-        # if data.bookmarked:
-        #     cur.execute(cur.mogrify(f"""SELECT error_id
-        #                                FROM public.user_favorite_errors
-        #                                WHERE user_id = %(userId)s
-        #                                {"" if error_ids is None else "AND error_id IN %(error_ids)s"}""",
-        #                             {"userId": user_id, "error_ids": tuple(error_ids or [])}))
-        #     error_ids = cur.fetchall()
-        #     if len(error_ids) == 0:
-        #         return empty_response
-        #     error_ids = [e["error_id"] for e in error_ids]
 
         if error_ids is not None:
             params["error_ids"] = tuple(error_ids)

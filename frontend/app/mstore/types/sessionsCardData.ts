@@ -15,6 +15,7 @@ import {
   UrlIconProvider,
   UserIconProvider,
   FetchIconProvider,
+  ResolutionProvider,
 } from './IconProvider';
 
 interface NameFormatter {
@@ -90,7 +91,7 @@ export class SessionsByRow {
     this.displayName = nameFormatter.format(json.name) || 'Unidentified';
     this.sessionCount = numberWithCommas(json.total);
     this.progress = Math.round((json.total / totalSessions) * 100);
-    this.icon = iconProvider.getIcon(json);
+    this.icon = iconProvider.getIcon(json, metricType);
     return this;
   }
 
@@ -143,6 +144,11 @@ export class SessionsByRow {
         return {
           nameFormatter: new DefaultFormatter(),
           iconProvider: new FetchIconProvider(),
+        };
+      case FilterKey.RESOLUTIONS:
+        return {
+          nameFormatter: new DefaultFormatter(),
+          iconProvider: new ResolutionProvider(),
         };
       default:
         return {

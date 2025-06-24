@@ -4,6 +4,7 @@ import BarChart from 'Components/Charts/BarChart';
 import PieChart from 'Components/Charts/PieChart';
 import SankeyChart from 'Components/Charts/SankeyChart';
 import ColumnChart from 'Components/Charts/ColumnChart';
+import WebVitalsChart from 'Components/Charts/WebVitals'
 
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
@@ -23,6 +24,7 @@ import {
   INSIGHTS,
   USER_PATH,
   RETENTION,
+  WEBVITALS,
 } from 'App/constants/card';
 import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
@@ -110,7 +112,7 @@ function WidgetChart(props: Props) {
   const onChartClick = (event: any) => {
     metricStore.setDrillDown(true);
     if (event) {
-      if (isTableWidget || isPieChart) {
+      if (Array.isArray(event)) {
         // get the filter of clicked row
         const periodTimestamps = drillDownPeriod.toTimestamps();
         drillDownFilter.merge({
@@ -578,6 +580,9 @@ function WidgetChart(props: Props) {
       if (viewType === 'cohort') {
         return <CohortCard data={data[0]} />;
       }
+    }
+    if (metricType === WEBVITALS) {
+      return <WebVitalsChart data={data} onFocus={onChartClick} />;
     }
     console.log('Unknown metric type', metricType);
     return <div>{t('Unknown metric type')}</div>;

@@ -65,7 +65,7 @@ const ListView: React.FC<Props> = ({
           list.length,
         )}
       </Text>{' '}
-      {t('of')}&nbsp;<Text strong>{list.length}</Text>&nbsp;{t('cards')}
+      {t('of')}&nbsp;<Text strong>{metricStore.total}</Text>&nbsp;{t('cards')}
     </>
   );
 

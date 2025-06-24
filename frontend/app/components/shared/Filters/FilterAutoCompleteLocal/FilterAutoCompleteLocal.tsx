@@ -40,7 +40,7 @@ function FilterAutoCompleteLocal(props: {
   } = props;
   const [options, setOptions] = useState<{ value: string; label: string }[]>(
     values
-      .filter((val) => val.length)
+      .filter((val) => val?.length)
       .map((value) => ({ value, label: value })),
   );
 

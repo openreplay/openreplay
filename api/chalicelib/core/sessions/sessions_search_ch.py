@@ -89,10 +89,10 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
         # extra_deduplication.append("url_path")
         extra_conditions = {}
         for e in data.events:
-            if e.type == schemas.EventType.LOCATION:
+            if e.name == schemas.EventType.LOCATION:
                 if e.operator not in extra_conditions:
                     extra_conditions[e.operator] = schemas.SessionSearchEventSchema(**{
-                        "type": e.type,
+                        "type": e.name,
                         "isEvent": True,
                         "value": [],
                         "operator": e.operator,
@@ -113,10 +113,10 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
         # extra_deduplication.append("url_path")
         extra_conditions = {}
         for e in data.events:
-            if e.type == schemas.EventType.REQUEST_DETAILS:
+            if e.name == schemas.EventType.REQUEST_DETAILS:
                 if e.operator not in extra_conditions:
                     extra_conditions[e.operator] = schemas.SessionSearchEventSchema(**{
-                        "type": e.type,
+                        "type": e.name,
                         "isEvent": True,
                         "value": [],
                         "operator": e.operator,

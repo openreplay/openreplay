@@ -17,12 +17,7 @@ interface Props {
 }
 
 function SessionsBy(props: Props) {
-  const {
-    metric = {},
-    data = { values: [] },
-    onClick = () => null,
-    isTemplate,
-  } = props;
+  const { metric = {}, data = { values: [] }, onClick = () => null } = props;
   const { t } = useTranslation();
   const [selected, setSelected] = React.useState<any>(null);
   const { total } = data;
@@ -47,7 +42,7 @@ function SessionsBy(props: Props) {
           operator: 'is',
           value: [data.name],
           type: FilterKey.FETCH_URL,
-        }
+        },
       ];
     }
 
@@ -86,6 +81,8 @@ function SessionsBy(props: Props) {
     );
   };
 
+  const numFmt = new Intl.NumberFormat('en-US');
+  const moreMetrics = total > 3 ? numFmt.format(total - 3) : 0;
   return (
     <div>
       {data.values && data.values.length === 0 ? (
@@ -116,8 +113,8 @@ function SessionsBy(props: Props) {
           {total > 3 && (
             <div className="flex">
               <Button type="link" onClick={showMore}>
-                <Space className="flex font-medium gap-1">
-                  {total - 3}&nbsp;{t('More')}
+                <Space className="flex font-medium gap-1 text-black hover:text-main">
+                  {moreMetrics}&nbsp;{t('More')}
                   <ArrowRight size={16} />
                 </Space>
               </Button>

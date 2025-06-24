@@ -22,6 +22,7 @@ module.exports = {
   'orange-dark': '#C26822',
   green: '#42AE5E',
   green2: '#00dc69',
+  'green-light': 'oklch(92.5% 0.084 155.995)',
   'green-dark': '#2C9848',
   red: '#cc0000',
   red2: '#F5A623',
@@ -117,6 +118,8 @@ module.exports = {
     glassLavander: 'rgba(25, 23, 37, 0.5)',
     blueLight: '#343460',
     offWhite: 'rgba(30, 30, 50, 1)',
+    'green-light': 'oklch(26.6% 0.065 152.934)',
+    yellow: 'oklch(28.6% 0.066 53.813)',
 
     figmaColors: {
       'accent-secondary': 'rgba(82, 190, 195, 1)',

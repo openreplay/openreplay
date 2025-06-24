@@ -49,7 +49,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
 
             op = sh.get_sql_operator(f.operator)
 
-            filter_type = f.type
+            filter_type = f.name
             f_k = f"f_value{i}"
             values = {**values,
                       **sh.multi_values(f.value, value_key=f_k)}
@@ -123,7 +123,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
 
         specific_condition = None
         e_k = f"e_value{i}"
-        event_type = s.type
+        event_type = s.name
         next_event_type = exp_ch_helper.get_event_type(event_type, platform=platform)
         if event_type == schemas.EventType.CLICK:
             if platform == "web":
@@ -266,7 +266,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
 
         stages_list.append(
             {"value": stage.value,
-             "type": stage.type,
+             "type": stage.name,
              "operator": stage.operator,
              "dropPct": drop,
              "count": count

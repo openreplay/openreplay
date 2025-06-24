@@ -13,6 +13,8 @@ import {
   Users,
   Globe,
   MonitorSmartphone,
+  Activity,
+  Proportions,
 } from 'lucide-react';
 import { Icon } from 'UI';
 import { useModal } from 'App/components/Modal';
@@ -23,6 +25,7 @@ import {
   TIMESERIES,
   USER_PATH,
   CATEGORIES,
+  WEBVITALS,
 } from 'App/constants/card';
 import { useHistory } from 'react-router-dom';
 import { dashboardMetricCreate, withSiteId, metricCreate } from 'App/routes';
@@ -91,6 +94,12 @@ export const tabItems: (t: TFunction) => Record<string, TabItem[]> = (t) => ({
       type: `${TIMESERIES}_slow_network_requests`,
       description: t('Pinpoint the slowest network requests causing delays.'),
     },
+    {
+      icon: <Icon name="pulse" color="inherit" size={16} />,
+      title: t('Web Vitals'),
+      type: WEBVITALS,
+      description: t('Monitor key web performance metrics.'),
+    },
   ],
   [CATEGORIES.web_analytics]: [
     {
@@ -104,6 +113,14 @@ export const tabItems: (t: TFunction) => Record<string, TabItem[]> = (t) => ({
       title: t('Top Browsers'),
       type: FilterKey.USER_BROWSER,
       description: t('Analyze the browsers your visitors are using the most.'),
+    },
+    {
+      icon: <Proportions width={16} />,
+      title: t('Top Resolutions'),
+      type: FilterKey.RESOLUTIONS,
+      description: t(
+        'Analyze what resolutions are most used amongs your users.',
+      ),
     },
     {
       icon: <Combine width={16} />,

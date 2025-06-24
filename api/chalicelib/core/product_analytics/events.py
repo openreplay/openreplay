@@ -96,10 +96,12 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
                 is_any = sh.isAny_opreator(f.operator)
                 is_undefined = sh.isUndefined_operator(f.operator)
                 full_args = {**full_args, f_k: sh.single_value(f.value), **sh.multi_values(f.value, value_key=f_k)}
-                if f.is_predefined:
+                if f.auto_captured and f.is_predefined:
                     column = f.name
+                elif f.auto_captured:
+                    column = f"`$properties`.`{f.name}`"
                 else:
-                    column = f"properties.{f.name}"
+                    column = f"properties.`{f.name}`"
 
                 if is_any:
                     condition = f"notEmpty{column})"
@@ -120,8 +122,11 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
                     p_k = f"e_{i}_p_{j}"
                     full_args = {**full_args, **sh.multi_values(ef.value, value_key=p_k, data_type=ef.data_type)}
                     cast = get_col_cast(data_type=ef.data_type, value=ef.value)
-                    if ef.is_predefined:
+                    if ef.auto_captured and ef.is_predefined:
                         sub_condition = get_sub_condition(col_name=f"accurateCastOrNull(`{ef.name}`,'{cast}')",
+                                                          val_name=p_k, operator=ef.operator)
+                    elif ef.auto_captured:
+                        sub_condition = get_sub_condition(col_name=f"accurateCastOrNull(`$properties`.`{ef.name}`,{cast})",
                                                           val_name=p_k, operator=ef.operator)
                     else:
                         sub_condition = get_sub_condition(col_name=f"accurateCastOrNull(properties.`{ef.name}`,{cast})",

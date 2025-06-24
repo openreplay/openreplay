@@ -21,7 +21,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
     if metric_of == schemas.MetricOfTable.VISITED_URL:
         extra_event = "events.pages"
     elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
-        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, name=schemas.FilterType.ISSUE,
                                                               operator=schemas.SearchEventOperator.IS))
     full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
                                                favorite_only=False, issue=None, project_id=project_id,
@@ -142,10 +142,10 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         extra_event = "events.pages"
         extra_conditions = {}
         for e in data.events:
-            if e.type == schemas.EventType.LOCATION:
+            if e.name == schemas.EventType.LOCATION:
                 if e.operator not in extra_conditions:
                     extra_conditions[e.operator] = schemas.SessionSearchEventSchema.model_validate({
-                        "type": e.type,
+                        "type": e.name,
                         "isEvent": True,
                         "value": [],
                         "operator": e.operator,
@@ -159,10 +159,10 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         extra_event = "events_common.requests"
         extra_conditions = {}
         for e in data.events:
-            if e.type == schemas.EventType.REQUEST_DETAILS:
+            if e.name == schemas.EventType.REQUEST_DETAILS:
                 if e.operator not in extra_conditions:
                     extra_conditions[e.operator] = schemas.SessionSearchEventSchema.model_validate({
-                        "type": e.type,
+                        "type": e.name,
                         "isEvent": True,
                         "value": [],
                         "operator": e.operator,
@@ -173,10 +173,10 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                         extra_conditions[e.operator].value.append(v)
         extra_conditions = list(extra_conditions.values())
     elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
-        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, name=schemas.FilterType.ISSUE,
                                                               operator=schemas.SearchEventOperator.IS))
     elif metric_of == schemas.MetricOfTable.REFERRER:
-        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.REFERRER,
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, name=schemas.FilterType.REFERRER,
                                                               operator=schemas.SearchEventOperator.IS_ANY))
 
     full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
@@ -275,15 +275,15 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
 
 
 def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema):
-    return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.REQUEST_DETAILS,
+    return not (not is_any and len(event.value) == 0 and event.name not in [schemas.EventType.REQUEST_DETAILS,
                                                                             schemas.EventType.GRAPHQL] \
-                or event.type in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
+                or event.name in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
                                   schemas.PerformanceEventType.LOCATION_LARGEST_CONTENTFUL_PAINT_TIME,
                                   schemas.PerformanceEventType.LOCATION_TTFB,
                                   schemas.PerformanceEventType.LOCATION_AVG_CPU_LOAD,
                                   schemas.PerformanceEventType.LOCATION_AVG_MEMORY_USAGE
                                   ] and (event.source is None or len(event.source) == 0) \
-                or event.type in [schemas.EventType.REQUEST_DETAILS, schemas.EventType.GRAPHQL] and (
+                or event.name in [schemas.EventType.REQUEST_DETAILS, schemas.EventType.GRAPHQL] and (
                         event.filters is None or len(event.filters) == 0))
 
 
@@ -303,7 +303,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
     if len(data.filters) > 0:
         meta_keys = None
         for i, f in enumerate(data.filters):
-            filter_type = f.type
+            filter_type = f.name
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
             full_args = {**full_args, **sh.multi_values(f.value, value_key=f_k)}
@@ -548,7 +548,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
         # events_joiner = " FULL JOIN " if or_events else " INNER JOIN LATERAL "
         events_joiner = " UNION " if or_events else " INNER JOIN LATERAL "
         for i, event in enumerate(data.events):
-            event_type = event.type
+            event_type = event.name
             is_any = sh.isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
@@ -985,12 +985,12 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                 c.value = helper.values_for_operator(value=c.value, op=c.operator)
                 full_args = {**full_args,
                              **sh.multi_values(c.value, value_key=e_k)}
-                if c.type == schemas.EventType.LOCATION:
+                if c.name == schemas.EventType.LOCATION:
                     _extra_or_condition.append(
                         sh.multi_conditions(f"ev.path {op} %({e_k})s",
                                             c.value, value_key=e_k))
                 else:
-                    logger.warning(f"unsupported extra_event type:${c.type}")
+                    logger.warning(f"unsupported extra_event type:${c.name}")
             if len(_extra_or_condition) > 0:
                 extra_constraints.append("(" + " OR ".join(_extra_or_condition) + ")")
     query_part = f"""\

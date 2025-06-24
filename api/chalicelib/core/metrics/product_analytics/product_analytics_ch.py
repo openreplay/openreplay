@@ -3,7 +3,7 @@ from time import time
 
 import schemas
 from chalicelib.core import metadata
-from .product_analytics import __transform_journey
+from .product_analytics import __transform_journey, __transform_sunburst
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import helper
 from chalicelib.utils import sql_helper as sh
@@ -186,49 +186,49 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
             continue
 
         # ---- meta-filters
-        if f.type == schemas.FilterType.USER_BROWSER:
+        if f.name == schemas.FilterType.USER_BROWSER:
             if is_any:
                 sessions_conditions.append('isNotNull(user_browser)')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.USER_OS]:
+        elif f.name in [schemas.FilterType.USER_OS]:
             if is_any:
                 sessions_conditions.append('isNotNull(user_os)')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.USER_DEVICE]:
+        elif f.name in [schemas.FilterType.USER_DEVICE]:
             if is_any:
                 sessions_conditions.append('isNotNull(user_device)')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.USER_COUNTRY]:
+        elif f.name in [schemas.FilterType.USER_COUNTRY]:
             if is_any:
                 sessions_conditions.append('isNotNull(user_country)')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type == schemas.FilterType.USER_CITY:
+        elif f.name == schemas.FilterType.USER_CITY:
             if is_any:
                 sessions_conditions.append('isNotNull(user_city)')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type == schemas.FilterType.USER_STATE:
+        elif f.name == schemas.FilterType.USER_STATE:
             if is_any:
                 sessions_conditions.append('isNotNull(user_state)')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.UTM_SOURCE]:
+        elif f.name in [schemas.FilterType.UTM_SOURCE]:
             if is_any:
                 sessions_conditions.append('isNotNull(utm_source)')
             elif is_undefined:
@@ -238,7 +238,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f'utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.UTM_MEDIUM]:
+        elif f.name in [schemas.FilterType.UTM_MEDIUM]:
             if is_any:
                 sessions_conditions.append('isNotNull(utm_medium)')
             elif is_undefined:
@@ -248,7 +248,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f'utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.UTM_CAMPAIGN]:
+        elif f.name in [schemas.FilterType.UTM_CAMPAIGN]:
             if is_any:
                 sessions_conditions.append('isNotNull(utm_campaign)')
             elif is_undefined:
@@ -258,14 +258,14 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f'utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type == schemas.FilterType.DURATION:
+        elif f.name == schemas.FilterType.DURATION:
             if len(f.value) > 0 and f.value[0] is not None:
                 sessions_conditions.append("duration >= %(minDuration)s")
                 extra_values["minDuration"] = f.value[0]
             if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
                 sessions_conditions.append("duration <= %(maxDuration)s")
                 extra_values["maxDuration"] = f.value[1]
-        elif f.type == schemas.FilterType.REFERRER:
+        elif f.name == schemas.FilterType.REFERRER:
             # extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
             if is_any:
                 sessions_conditions.append('isNotNull(base_referrer)')
@@ -273,7 +273,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append(
                     sh.multi_conditions(f"base_referrer {op} %({f_k})s", f.value, is_not=is_not,
                                         value_key=f_k))
-        elif f.type == schemas.FilterType.METADATA:
+        elif f.name == schemas.FilterType.METADATA:
             # get metadata list only if you need it
             if meta_keys is None:
                 meta_keys = metadata.get(project_id=project_id)
@@ -289,7 +289,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                             f"{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
                             f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
+        elif f.name in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
             if is_any:
                 sessions_conditions.append('isNotNull(user_id)')
             elif is_undefined:
@@ -299,7 +299,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f"user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.USER_ANONYMOUS_ID,
+        elif f.name in [schemas.FilterType.USER_ANONYMOUS_ID,
                         schemas.FilterType.USER_ANONYMOUS_ID_MOBILE]:
             if is_any:
                 sessions_conditions.append('isNotNull(user_anonymous_id)')
@@ -310,7 +310,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f"user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
+        elif f.name in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
             if is_any:
                 sessions_conditions.append('isNotNull(rev_id)')
             elif is_undefined:
@@ -319,13 +319,13 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append(
                     sh.multi_conditions(f"rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type == schemas.FilterType.PLATFORM:
+        elif f.name == schemas.FilterType.PLATFORM:
             # op = __ sh.get_sql_operator(f.operator)
             sessions_conditions.append(
                 sh.multi_conditions(f"user_device_type {op} %({f_k})s", f.value, is_not=is_not,
                                     value_key=f_k))
 
-        elif f.type == schemas.FilterType.ISSUE:
+        elif f.name == schemas.FilterType.ISSUE:
             if is_any:
                 sessions_conditions.append("array_length(issue_types, 1) > 0")
             else:
@@ -333,7 +333,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f"has(issue_types,%({f_k})s)", f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type == schemas.FilterType.EVENTS_COUNT:
+        elif f.name == schemas.FilterType.EVENTS_COUNT:
             sessions_conditions.append(
                 sh.multi_conditions(f"events_count {op} %({f_k})s", f.value, is_not=is_not,
                                     value_key=f_k))
@@ -370,16 +370,16 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
 
     if len(start_points_conditions) == 0:
         step_0_subquery = """SELECT DISTINCT session_id
-                                   FROM (SELECT `$event_name`, e_value
-                                         FROM pre_ranked_events
-                                         WHERE event_number_in_session = 1
-                                         GROUP BY `$event_name`, e_value
-                                         ORDER BY count(1) DESC
-                                         LIMIT 1) AS top_start_events
-                                            INNER JOIN pre_ranked_events
-                                                       ON (top_start_events.`$event_name` = pre_ranked_events.`$event_name` AND
-                                                           top_start_events.e_value = pre_ranked_events.e_value)
-                                   WHERE pre_ranked_events.event_number_in_session = 1"""
+                             FROM (SELECT `$event_name`, e_value
+                                   FROM pre_ranked_events
+                                   WHERE event_number_in_session = 1
+                                   GROUP BY `$event_name`, e_value
+                                   ORDER BY count(1) DESC LIMIT 1) AS top_start_events
+                                      INNER JOIN pre_ranked_events
+                                                 ON (top_start_events.`$event_name` =
+                                                     pre_ranked_events.`$event_name` AND
+                                                     top_start_events.e_value = pre_ranked_events.e_value)
+                             WHERE pre_ranked_events.event_number_in_session = 1"""
         initial_event_cte = ""
     else:
         step_0_subquery = f"""SELECT DISTINCT session_id
@@ -526,87 +526,93 @@ FROM ranked_events
     top_n AS ({" UNION ALL ".join(top_query)}),
     top_n_with_next AS ({" UNION ALL ".join(top_with_next_query)}),
     others_n AS ({" UNION ALL ".join(other_query)})"""
-            projection_query = """\
-                             -- Top to Top: valid
-                             SELECT top_n_with_next.*
-                             FROM top_n_with_next
-                                      INNER JOIN top_n
-                                             ON (top_n_with_next.event_number_in_session + 1 = top_n.event_number_in_session
-                                                 AND top_n_with_next.next_type = top_n.`$event_name`
-                                                 AND top_n_with_next.next_value = top_n.e_value)
-                             UNION ALL
-                             -- Top to Others: valid
-                             SELECT top_n_with_next.event_number_in_session,
-                                    top_n_with_next.`$event_name`,
-                                    top_n_with_next.e_value,
-                                    'OTHER'                             AS next_type,
-                                    NULL                                AS next_value,
-                                    SUM(top_n_with_next.sessions_count) AS sessions_count
-                             FROM top_n_with_next
-                             WHERE (top_n_with_next.event_number_in_session + 1, top_n_with_next.next_type, top_n_with_next.next_value) IN
-                                   (SELECT others_n.event_number_in_session, others_n.`$event_name`, others_n.e_value FROM others_n)
-                             GROUP BY top_n_with_next.event_number_in_session, top_n_with_next.`$event_name`, top_n_with_next.e_value
-                             UNION ALL
-                             -- Top go to Drop: valid
-                             SELECT drop_n.event_number_in_session,
-                                    drop_n.`$event_name`,
-                                    drop_n.e_value,
-                                    drop_n.next_type,
-                                    drop_n.next_value,
-                                    drop_n.sessions_count
-                             FROM drop_n
-                                      INNER JOIN top_n ON (drop_n.event_number_in_session = top_n.event_number_in_session
-                                 AND drop_n.`$event_name` = top_n.`$event_name`
-                                 AND drop_n.e_value = top_n.e_value)
-                             ORDER BY drop_n.event_number_in_session
-                             UNION ALL
-                             -- Others got to Drop: valid
-                             SELECT others_n.event_number_in_session,
-                                    'OTHER'                      AS `$event_name`,
-                                    NULL                         AS e_value,
-                                    'DROP'                       AS next_type,
-                                    NULL                         AS next_value,
-                                    SUM(others_n.sessions_count) AS sessions_count
-                             FROM others_n
-                             WHERE isNull(others_n.next_type)
-                               AND others_n.event_number_in_session < 3
-                             GROUP BY others_n.event_number_in_session, next_type, next_value
-                             UNION ALL
-                             -- Others got to Top:valid
-                             SELECT others_n.event_number_in_session,
-                                    'OTHER'                      AS `$event_name`,
-                                    NULL                         AS e_value,
-                                    others_n.next_type,
-                                    others_n.next_value,
-                                    SUM(others_n.sessions_count) AS sessions_count
-                             FROM others_n
-                             WHERE isNotNull(others_n.next_type)
-                               AND (others_n.event_number_in_session + 1, others_n.next_type, others_n.next_value) IN
-                                   (SELECT top_n.event_number_in_session, top_n.`$event_name`, top_n.e_value FROM top_n)
-                             GROUP BY others_n.event_number_in_session, others_n.next_type, others_n.next_value
-                             UNION ALL
-                             -- Others got to Others
-                             SELECT others_n.event_number_in_session,
-                                    'OTHER'             AS `$event_name`,
-                                    NULL                AS e_value,
-                                    'OTHER'             AS next_type,
-                                    NULL                AS next_value,
-                                    SUM(others_n.sessions_count) AS sessions_count
-                             FROM others_n
-                             WHERE isNotNull(others_n.next_type)
-                               AND others_n.event_number_in_session < %(density)s
-                               AND (others_n.event_number_in_session + 1, others_n.next_type, others_n.next_value) NOT IN
-                                   (SELECT event_number_in_session, `$event_name`, e_value FROM top_n)
-                             GROUP BY others_n.event_number_in_session"""
+            projection_query = """ \
+                               -- Top to Top: valid
+                               SELECT top_n_with_next.*
+                               FROM top_n_with_next
+                                        INNER JOIN top_n
+                                                   ON (top_n_with_next.event_number_in_session + 1 =
+                                                       top_n.event_number_in_session
+                                                       AND top_n_with_next.next_type = top_n.`$event_name`
+                                                       AND top_n_with_next.next_value = top_n.e_value)
+                               UNION ALL
+                               -- Top to Others: valid
+                               SELECT top_n_with_next.event_number_in_session,
+                                      top_n_with_next.`$event_name`,
+                                      top_n_with_next.e_value,
+                                      'OTHER'                             AS next_type,
+                                      NULL                                AS next_value,
+                                      SUM(top_n_with_next.sessions_count) AS sessions_count
+                               FROM top_n_with_next
+                               WHERE (top_n_with_next.event_number_in_session + 1, top_n_with_next.next_type,
+                                      top_n_with_next.next_value) IN
+                                     (SELECT others_n.event_number_in_session, others_n.`$event_name`, others_n.e_value
+                                      FROM others_n)
+                               GROUP BY top_n_with_next.event_number_in_session, top_n_with_next.`$event_name`,
+                                        top_n_with_next.e_value
+                               UNION ALL
+                               -- Top go to Drop: valid
+                               SELECT drop_n.event_number_in_session,
+                                      drop_n.`$event_name`,
+                                      drop_n.e_value,
+                                      drop_n.next_type,
+                                      drop_n.next_value,
+                                      drop_n.sessions_count
+                               FROM drop_n
+                                        INNER JOIN top_n
+                                                   ON (drop_n.event_number_in_session = top_n.event_number_in_session
+                                                       AND drop_n.`$event_name` = top_n.`$event_name`
+                                                       AND drop_n.e_value = top_n.e_value)
+                               ORDER BY drop_n.event_number_in_session UNION ALL
+                               -- Others got to Drop: valid
+                               SELECT others_n.event_number_in_session,
+                                      'OTHER'                      AS `$event_name`,
+                                      NULL                         AS e_value,
+                                      'DROP'                       AS next_type,
+                                      NULL                         AS next_value,
+                                      SUM(others_n.sessions_count) AS sessions_count
+                               FROM others_n
+                               WHERE isNull(others_n.next_type)
+                                 AND others_n.event_number_in_session < 3
+                               GROUP BY others_n.event_number_in_session, next_type, next_value
+                               UNION ALL
+                               -- Others got to Top:valid
+                               SELECT others_n.event_number_in_session,
+                                      'OTHER'                      AS `$event_name`,
+                                      NULL                         AS e_value,
+                                      others_n.next_type,
+                                      others_n.next_value,
+                                      SUM(others_n.sessions_count) AS sessions_count
+                               FROM others_n
+                               WHERE isNotNull(others_n.next_type)
+                                 AND (others_n.event_number_in_session + 1, others_n.next_type, others_n.next_value) IN
+                                     (SELECT top_n.event_number_in_session, top_n.`$event_name`, top_n.e_value
+                                      FROM top_n)
+                               GROUP BY others_n.event_number_in_session, others_n.next_type, others_n.next_value
+                               UNION ALL
+                               -- Others got to Others
+                               SELECT others_n.event_number_in_session,
+                                      'OTHER'                      AS `$event_name`,
+                                      NULL                         AS e_value,
+                                      'OTHER'                      AS next_type,
+                                      NULL                         AS next_value,
+                                      SUM(others_n.sessions_count) AS sessions_count
+                               FROM others_n
+                               WHERE isNotNull(others_n.next_type)
+                                 AND others_n.event_number_in_session < %(density)s
+                                 AND (others_n.event_number_in_session + 1, others_n.next_type,
+                                      others_n.next_value) NOT IN
+                                     (SELECT event_number_in_session, `$event_name`, e_value FROM top_n)
+                               GROUP BY others_n.event_number_in_session"""
         else:
-            projection_query.append("""\
-                            SELECT event_number_in_session,
-                                   `$event_name`,
-                                   e_value,
-                                   next_type,
-                                   next_value,
-                                   sessions_count
-                            FROM drop_n""")
+            projection_query.append(""" \
+                                    SELECT event_number_in_session,
+                                           `$event_name`,
+                                           e_value,
+                                           next_type,
+                                           next_value,
+                                           sessions_count
+                                    FROM drop_n""")
             projection_query = " UNION ALL ".join(projection_query)
 
         ch_query3 = f"""\
@@ -633,6 +639,8 @@ FROM ranked_events
             logger.warning(str.encode(ch_query3))
             logger.warning("----------------------")
 
+    if data.view_type == schemas.MetricOtherViewType.SUNBURST_CHART:
+        return __transform_sunburst(rows=rows, reverse_path=True)
     return __transform_journey(rows=rows, reverse_path=reverse)
 
 #
