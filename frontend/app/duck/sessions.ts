@@ -12,7 +12,7 @@ import {
   compareJsonObjects,
   cleanSessionFilters,
 } from 'App/utils';
-import { LAST_30_DAYS } from 'Types/app/period';
+import { LAST_24_HOURS } from 'Types/app/period';
 import { getDateRangeFromValue } from 'App/dateRange';
 import APIClient from 'App/api_client';
 import { FETCH_ACCOUNT, UPDATE_JWT } from 'Duck/user';
@@ -56,11 +56,16 @@ const SET_ACTIVE_TAB = 'sessions/SET_ACTIVE_TAB';
 const CLEAR_CURRENT_SESSION = 'sessions/CLEAR_CURRENT_SESSION';
 
 const range = getDateRangeFromValue(LAST_30_DAYS);
+const range = getDateRangeFromValue(LAST_24_HOURS);
 const defaultDateFilters = {
   url: '',
   rangeValue: LAST_30_DAYS,
   startDate: range.start.unix() * 1000,
   endDate: range.end.unix() * 1000,
+    url: '',
+    rangeValue: LAST_24_HOURS,
+    startDate: range.start.unix() * 1000,
+    endDate: range.end.unix() * 1000,
 };
 
 const initObj = {
