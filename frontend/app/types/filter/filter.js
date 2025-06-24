@@ -11,7 +11,7 @@ import Event from './event';
 // import CustomFilter from './customFilter';
 import NewFilter from './newFilter';
 
-const rangeValue = DATE_RANGE_VALUES.LAST_30_DAYS;
+const rangeValue = DATE_RANGE_VALUES.LAST_24_HOURS;
 const range = getDateRangeFromValue(rangeValue);
 const startDate = range.start.unix() * 1000;
 const endDate = range.end.unix() * 1000;

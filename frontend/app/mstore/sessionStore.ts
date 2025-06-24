@@ -2,7 +2,7 @@ import { makeAutoObservable, observable, action } from 'mobx';
 import { sessionService } from 'App/services';
 import { filterMap } from 'Duck/search';
 import Session from 'Types/session';
-import Record, { LAST_30_DAYS } from 'Types/app/period';
+import Record, { LAST_24_HOURS } from 'Types/app/period';
 import Watchdog from 'Types/watchdog';
 import ErrorStack from 'Types/session/errorStack';
 import { Location, InjectedEvent } from 'Types/session/event';
@@ -20,11 +20,11 @@ import { Note } from 'App/services/NotesService';
 class UserFilter {
   endDate: number = new Date().getTime();
   startDate: number = new Date().getTime() - 24 * 60 * 60 * 1000;
-  rangeName: string = LAST_30_DAYS;
+  rangeName: string = LAST_24_HOURS;
   filters: any = [];
   page: number = 1;
   limit: number = 10;
-  period: any = Record({ rangeName: LAST_30_DAYS });
+  period: any = Record({ rangeName: LAST_24_HOURS });
 
   constructor() {
     makeAutoObservable(this, {
@@ -89,10 +89,10 @@ class DevTools {
   }
 }
 
-const range = getDateRangeFromValue(LAST_30_DAYS);
+const range = getDateRangeFromValue(LAST_24_HOURS);
 const defaultDateFilters = {
   url: '',
-  rangeValue: LAST_30_DAYS,
+  rangeValue: LAST_24_HOURS,
   startDate: range.start.unix() * 1000,
   endDate: range.end.unix() * 1000,
 };
