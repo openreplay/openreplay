@@ -27,6 +27,7 @@ interface UnifiedFilterListProps {
   style?: React.CSSProperties;
   actions?: React.ReactNode[];
   orderProps?: any;
+  max?: number;
 }
 
 const UnifiedFilterList = (props: UnifiedFilterListProps) => {

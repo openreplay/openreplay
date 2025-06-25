@@ -1,4 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import { NoContent, Loader, Pagination } from 'UI';
 import { Button, Tag, Tooltip, Dropdown, message } from 'antd';
 import { UndoOutlined, DownOutlined } from '@ant-design/icons';
@@ -13,169 +19,163 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { HEATMAP, USER_PATH, FUNNEL } from 'App/constants/card';
 import { useTranslation } from 'react-i18next';
 
-interface Props {
-  className?: string;
-}
+const getListSessionsBySeries = (data, seriesId) => {
+  const result = data.reduce(
+    (acc, { sessions, total, seriesId: id }) => {
+      const ids = new Set(acc.sessions.map((s) => s.sessionId));
+      const newSessions = sessions.filter((s) => !ids.has(s.sessionId));
+      if (seriesId === 'all' || id === seriesId) {
+        acc.sessions.push(...newSessions);
+        if (id === seriesId)
+          acc.total = total - (sessions.length - newSessions.length);
+      }
+      return acc;
+    },
+    { sessions: [], total: 0 },
+  );
+  if (seriesId === 'all')
+    result.total = Math.max(...data.map((d) => d.total), 0);
+  return result;
+};
 
-function WidgetSessions(props: Props) {
+function WidgetSessions({ className = '' }) {
   const { t } = useTranslation();
-  const listRef = React.useRef<HTMLDivElement>(null);
-  const { className = '' } = props;
-  const [activeSeries, setActiveSeries] = useState('all');
-  const [data, setData] = useState<any>([]);
-  const isMounted = useIsMounted();
-  const [loading, setLoading] = useState(false);
-  // all filtering done through series now
-  const filteredSessions = getListSessionsBySeries(data, 'all');
   const { dashboardStore, metricStore, sessionStore, customFieldStore } =
     useStore();
-  const focusedSeries = metricStore.focusedSeriesName;
+  const isMounted = useIsMounted();
+  const listRef = useRef(null);
+
+  const [activeSeries, setActiveSeries] = useState('all');
+  const [seriesOptions, setSeriesOptions] = useState([
+    { label: t('All'), value: 'all' },
+  ]);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const filter = dashboardStore.drillDownFilter;
   const widget = metricStore.instance;
+  const focused = metricStore.focusedSeriesName;
+
   const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat(
     'LLL dd, yyyy HH:mm',
   );
   const endTime = DateTime.fromMillis(filter.endTimestamp).toFormat(
     'LLL dd, yyyy HH:mm',
   );
-  const [seriesOptions, setSeriesOptions] = useState([
-    { label: t('All'), value: 'all' },
-  ]);
+
   const hasFilters =
     filter.filters.length > 0 ||
     filter.startTimestamp !== dashboardStore.drillDownPeriod.start ||
     filter.endTimestamp !== dashboardStore.drillDownPeriod.end;
-  const filterText = filter.filters.length > 0 ? filter.filters[0].value : '';
-  const metaList = customFieldStore.list.map((i: any) => i.key);
-
-  const seriesDropdownItems = seriesOptions.map((option) => ({
-    key: option.value,
-    label: (
-      <div onClick={() => setActiveSeries(option.value)}>{option.label}</div>
-    ),
-  }));
+  const filterText = filter.filters[0]?.value || '';
+  const metaList = customFieldStore.list.map((i) => i.key);
 
   useEffect(() => {
-    if (!widget.series) return;
-    const seriesOptions = widget.series.map((item: any) => ({
-      label: item.name,
-      value: item.seriesId ?? item.name,
-    }));
-    setSeriesOptions([{ label: t('All'), value: 'all' }, ...seriesOptions]);
-  }, [widget.series.length]);
+    if (widget.series) {
+      const opts = widget.series.map((item) => ({
+        label: item.name,
+        value: item.seriesId ?? item.name,
+      }));
+      setSeriesOptions([{ label: t('All'), value: 'all' }, ...opts]);
+    }
+  }, [widget.series, t]);
 
-  const fetchSessions = (metricId: any, filter: any) => {
-    if (!isMounted()) return;
+  const filteredSessions = useMemo(
+    () => getListSessionsBySeries(data, activeSeries),
+    [data, activeSeries],
+  );
 
-    if (widget.metricType === FUNNEL) {
-      if (filter.series[0].filter.filters.length === 0) {
+  const fetchSessions = useCallback(
+    (metricId, flt) => {
+      if (!isMounted()) return;
+      if (
+        widget.metricType === FUNNEL &&
+        flt.series[0].filter.filters.length === 0
+      ) {
         setLoading(false);
         return setData([]);
       }
-    }
 
-    setLoading(true);
-    const filterCopy = { ...filter };
-    delete filterCopy.eventsOrderSupport;
-
-    try {
-      // Handle filters properly with null checks
-      if (filterCopy.filters && filterCopy.filters.length > 0) {
-        // Ensure the nested path exists before pushing
-        if (filterCopy.series?.[0]?.filter) {
-          if (!filterCopy.series[0].filter.filters) {
-            filterCopy.series[0].filter.filters = [];
-          }
-          filterCopy.series[0].filter.filters.push(...filterCopy.filters);
-        }
-        filterCopy.filters = [];
+      setLoading(true);
+      const params = { ...flt, filters: [] };
+      if (flt.filters?.length && params.series?.[0]?.filter) {
+        params.series[0].filter.filters = [
+          ...(flt.series[0].filter.filters || []),
+          ...flt.filters,
+        ];
       }
-    } catch (e) {
-      // do nothing
-    }
-    widget
-      .fetchSessions(metricId, filterCopy)
-      .then((res: any) => {
-        setData(res);
-        if (metricStore.drillDown) {
-          setTimeout(() => {
+
+      widget
+        .fetchSessions(metricId, params)
+        .then((res) => {
+          setData(res);
+          if (metricStore.drillDown) {
             message.info(t('Sessions Refreshed!'));
             listRef.current?.scrollIntoView({ behavior: 'smooth' });
             metricStore.setDrillDown(false);
-          }, 0);
-        }
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
-  const fetchClickmapSessions = (customFilters: Record<string, any>) => {
-    sessionStore.getSessions(customFilters).then((data) => {
-      setData([{ ...data, seriesId: 1, seriesName: 'Clicks' }]);
-    });
-  };
-  const debounceRequest: any = React.useCallback(
-    debounce(fetchSessions, 1000),
-    [],
-  );
-  const debounceClickMapSearch = React.useCallback(
-    debounce(fetchClickmapSessions, 1000),
-    [],
+          }
+        })
+        .finally(() => setLoading(false));
+    },
+    [isMounted, widget, metricStore, t],
   );
 
-  const depsString = JSON.stringify(widget.series);
+  const fetchClickmapSessions = useCallback(
+    (customFilters) => {
+      sessionStore
+        .getSessions(customFilters)
+        .then((res) =>
+          setData([{ ...res, seriesId: 1, seriesName: 'Clicks' }]),
+        );
+    },
+    [sessionStore],
+  );
 
-  const loadData = () => {
+  const debounceSessions = useMemo(
+    () => debounce(fetchSessions, 1000),
+    [fetchSessions],
+  );
+  const debounceClicks = useMemo(
+    () => debounce(fetchClickmapSessions, 1000),
+    [fetchClickmapSessions],
+  );
+
+  const loadData = useCallback(() => {
     if (widget.metricType === HEATMAP && metricStore.clickMapSearch) {
       const clickFilter = {
         value: [metricStore.clickMapSearch],
-        type: 'CLICK',
+        name: 'CLICK',
         operator: 'onSelector',
         isEvent: true,
-        // @ts-ignore
         filters: [],
       };
-      const timeRange = {
-        rangeValue: dashboardStore.drillDownPeriod.rangeValue,
-        startDate: dashboardStore.drillDownPeriod.start,
-        endDate: dashboardStore.drillDownPeriod.end,
-      };
-      const customFilter = {
+      const { rangeValue, start, end } = dashboardStore.drillDownPeriod;
+      debounceClicks({
         ...filter,
-        ...timeRange,
+        rangeValue,
+        startDate: start,
+        endDate: end,
         filters: [...sessionStore.userFilter.filters, clickFilter],
-      };
-      debounceClickMapSearch(customFilter);
+      });
     } else {
-      const hasStartPoint =
-        !!widget.startPoint && widget.metricType === USER_PATH;
-      const onlyFocused = focusedSeries
-        ? widget.series.filter((s) => s.name === focusedSeries)
+      const baseSeries = focused
+        ? widget.series.filter((s) => s.name === focused)
         : widget.series;
-      const activeSeries = metricStore.disabledSeries.length
-        ? onlyFocused.filter(
-            (s) => !metricStore.disabledSeries.includes(s.name),
-          )
-        : onlyFocused;
-      const seriesJson = activeSeries.map((s) => s.toJson());
-      if (hasStartPoint) {
-        seriesJson[0].filter.filters.push(widget.startPoint.toJson());
-      }
+      const active = metricStore.disabledSeries.length
+        ? baseSeries.filter((s) => !metricStore.disabledSeries.includes(s.name))
+        : baseSeries;
+      const seriesJson = active.map((s) => s.toJson());
+
       if (widget.metricType === USER_PATH) {
         if (
-          seriesJson[0].filter.filters[0]?.value[0] === '' &&
-          widget.data.nodes?.length
+          !seriesJson[0].filter.filters[0]?.value[0] &&
+          widget.data.nodes?.[0]
         ) {
-          seriesJson[0].filter.filters[0].value = widget.data.nodes[0].name;
-        } else if (
-          seriesJson[0].filter.filters[0]?.value[0] === '' &&
-          !widget.data.nodes?.length
-        ) {
-          // no point requesting if we don't have starting point picked by api
-          return;
+          seriesJson[0].filter.filters[0].value = [widget.data.nodes[0].name];
         }
       }
-      debounceRequest(widget.metricId, {
+
+      debounceSessions(widget.metricId, {
         ...filter,
         series: seriesJson,
         metricType: widget.metricType,
@@ -184,7 +184,17 @@ function WidgetSessions(props: Props) {
         limit: metricStore.sessionsPageSize,
       });
     }
-  };
+  }, [
+    widget,
+    metricStore,
+    dashboardStore,
+    sessionStore,
+    filter,
+    focused,
+    debounceSessions,
+    debounceClicks,
+  ]);
+
   useEffect(() => {
     metricStore.updateKey('sessionsPage', 1);
     loadData();
@@ -192,39 +202,38 @@ function WidgetSessions(props: Props) {
     filter.startTimestamp,
     filter.endTimestamp,
     filter.filters,
-    depsString,
+    widget.series,
     metricStore.clickMapSearch,
-    focusedSeries,
+    focused,
     widget.startPoint,
-    widget.data?.nodes,
+    widget.data.nodes,
     metricStore.disabledSeries.length,
+    loadData,
   ]);
-  useEffect(loadData, [metricStore.sessionsPage]);
+  useEffect(() => loadData(), [metricStore.sessionsPage, loadData]);
   useEffect(() => {
-    if (activeSeries === 'all') {
-      metricStore.setFocusedSeriesName(null);
-    } else {
-      metricStore.setFocusedSeriesName(
-        seriesOptions.find((option) => option.value === activeSeries)?.label,
-        false,
-      );
-    }
-  }, [activeSeries]);
+    metricStore.setFocusedSeriesName(
+      activeSeries === 'all'
+        ? null
+        : seriesOptions.find((o) => o.value === activeSeries)?.label,
+      false,
+    );
+  }, [activeSeries, metricStore, seriesOptions]);
   useEffect(() => {
-    if (focusedSeries) {
-      setActiveSeries(
-        seriesOptions.find((option) => option.label === focusedSeries)?.value ||
-          'all',
-      );
-    } else {
-      setActiveSeries('all');
-    }
-  }, [focusedSeries]);
+    setActiveSeries(
+      focused ? seriesOptions.find((o) => o.label === focused)?.value : 'all',
+    );
+  }, [focused, seriesOptions]);
 
   const clearFilters = () => {
     metricStore.updateKey('sessionsPage', 1);
     dashboardStore.resetDrillDownFilter();
   };
+
+  const seriesDropdownItems = seriesOptions.map((opt) => ({
+    key: opt.value,
+    label: <div onClick={() => setActiveSeries(opt.value)}>{opt.label}</div>,
+  }));
 
   return (
     <div
@@ -240,42 +249,35 @@ function WidgetSessions(props: Props) {
               {metricStore.clickMapSearch ? t('Clicks') : t('Sessions')}
             </h2>
             <div className="ml-2 color-gray-medium">
-              {metricStore.clickMapLabel
-                ? `on "${metricStore.clickMapLabel}" `
-                : null}
+              {metricStore.clickMapLabel &&
+                `on \"${metricStore.clickMapLabel}\" `}
               {t('between')}{' '}
               <span className="font-medium color-gray-darkest">
                 {startTime}
               </span>{' '}
               {t('and')}{' '}
-              <span className="font-medium color-gray-darkest">
-                {endTime}
-              </span>{' '}
+              <span className="font-medium color-gray-darkest">{endTime}</span>
             </div>
             {hasFilters && (
-              <Tooltip title={t('Clear Drilldown')} placement="top">
+              <Tooltip title={t('Clear Drilldown')}>
                 <Button type="text" size="small" onClick={clearFilters}>
                   <UndoOutlined />
                 </Button>
               </Tooltip>
             )}
           </div>
-
           {hasFilters && widget.metricType === 'table' && (
-            <div className="py-2">
-              <Tag
-                closable
-                onClose={clearFilters}
-                className="truncate max-w-44 rounded-lg"
-              >
-                {filterText}
-              </Tag>
-            </div>
+            <Tag
+              closable
+              onClose={clearFilters}
+              className="truncate max-w-44 rounded-lg"
+            >
+              {filterText}
+            </Tag>
           )}
         </div>
-
         <div className="flex items-center gap-4">
-          {widget.metricType !== 'table' && widget.metricType !== HEATMAP && (
+          {['table', HEATMAP].includes(widget.metricType) || (
             <div className="flex items-center ml-6">
               <span className="mr-2 color-gray-medium">
                 {t('Filter by Series')}
@@ -289,8 +291,8 @@ function WidgetSessions(props: Props) {
                 trigger={['click']}
               >
                 <Button type="text" size="small">
-                  {seriesOptions.find((option) => option.value === activeSeries)
-                    ?.label || t('Select Series')}
+                  {seriesOptions.find((o) => o.value === activeSeries)?.label ||
+                    t('Select Series')}
                   <DownOutlined />
                 </Button>
               </Dropdown>
@@ -298,32 +300,25 @@ function WidgetSessions(props: Props) {
           )}
         </div>
       </div>
-
       <div className="mt-3">
         <Loader loading={loading}>
           <NoContent
+            show={filteredSessions.sessions.length === 0}
             title={
-              <div className="flex items-center justify-center flex-col">
+              <div className="flex flex-col items-center">
                 <AnimatedSVG name={ICONS.NO_SESSIONS} size={60} />
-                <div className="mt-4" />
-                <div className="text-center">
+                <div className="mt-4 text-center">
                   {t('No relevant sessions found for the selected time period')}
                 </div>
               </div>
             }
-            show={filteredSessions.sessions.length === 0}
           >
-            {filteredSessions.sessions.map((session: any) => (
-              <React.Fragment key={session.sessionId}>
-                <SessionItem
-                  disableUser
-                  session={session}
-                  metaList={metaList}
-                />
+            {filteredSessions.sessions.map((s) => (
+              <React.Fragment key={s.sessionId}>
+                <SessionItem disableUser session={s} metaList={metaList} />
                 <div className="border-b" />
               </React.Fragment>
             ))}
-
             <div
               className="flex items-center justify-between p-5"
               ref={listRef}
@@ -350,9 +345,7 @@ function WidgetSessions(props: Props) {
               <Pagination
                 page={metricStore.sessionsPage}
                 total={filteredSessions.total}
-                onPageChange={(page: any) =>
-                  metricStore.updateKey('sessionsPage', page)
-                }
+                onPageChange={(p) => metricStore.updateKey('sessionsPage', p)}
                 limit={metricStore.sessionsPageSize}
                 debounceRequest={500}
               />
@@ -363,34 +356,5 @@ function WidgetSessions(props: Props) {
     </div>
   );
 }
-
-const getListSessionsBySeries = (data: any, seriesId: any) => {
-  const arr = data.reduce(
-    (arr: any, element: any) => {
-      if (seriesId === 'all') {
-        const sessionIds = arr.sessions.map((i: any) => i.sessionId);
-        const sessions = element.sessions.filter(
-          (i: any) => !sessionIds.includes(i.sessionId),
-        );
-        arr.sessions.push(...sessions);
-      } else if (element.seriesId === seriesId) {
-        const sessionIds = arr.sessions.map((i: any) => i.sessionId);
-        const sessions = element.sessions.filter(
-          (i: any) => !sessionIds.includes(i.sessionId),
-        );
-        const duplicates = element.sessions.length - sessions.length;
-        arr.sessions.push(...sessions);
-        arr.total = element.total - duplicates;
-      }
-      return arr;
-    },
-    { sessions: [] },
-  );
-  arr.total =
-    seriesId === 'all'
-      ? Math.max(...data.map((i: any) => i.total))
-      : data.find((i: any) => i.seriesId === seriesId).total;
-  return arr;
-};
 
 export default observer(WidgetSessions);
