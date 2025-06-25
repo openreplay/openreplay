@@ -16,8 +16,6 @@ export default defineConfig({
     baseURL: 'http://localhost:3333',
     trace: 'on-first-retry',
   },
-
-  /* Configure projects for major browsers */
   projects: [
     { name: 'setup', testMatch: /.*\.setup\.ts/ },
 
@@ -28,7 +26,6 @@ export default defineConfig({
     },
   ],
 
-  /* Run your local dev server before starting the tests */
   webServer: {
     command: 'yarn start',
     url: 'http://localhost:3333',

@@ -22,3 +22,4 @@ cypress.env.json
 *.diff.png
 cypress/videos/
 coverage
+test-results/*

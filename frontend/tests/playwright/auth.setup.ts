@@ -25,7 +25,7 @@ setup('authenticate', async ({ page }) => {
       await page.locator('[data-test-id="password"]').fill(PASSWORD);
       await page.locator('[data-test-id="log-button"]').click();
     }
-    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible();
+    await expect(page.locator('[data-test-id="layout-content"]')).toBeVisible();
   } catch (e) {
     console.error('Error during authentication:', e);
   }

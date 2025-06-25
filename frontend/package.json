@@ -15,6 +15,7 @@
     "gen:static": "yarn gen:icons && yarn gen:colors",
     "test:ci": "jest --maxWorkers=1 --no-cache --coverage",
     "test": "jest --watch",
+    "test:pwr": "npx playwright test",
     "cy:open": "cypress open",
     "cy:test": "cypress install && cypress run --browser chrome",
     "cy:test-firefox": "cypress install && cypress run --browser firefox",

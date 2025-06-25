@@ -62,6 +62,7 @@ function Layout(props: Props) {
           </Sider>
         ) : null}
         <Content
+          data-test-id="layout-content"
           style={{
             padding: isPlayer ? '0' : '20px',
             minHeight: 'calc(100vh - 60px)',

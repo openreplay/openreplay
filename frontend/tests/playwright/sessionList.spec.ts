@@ -11,7 +11,8 @@ test('check session list after change period', async ({ page }) => {
   await page
     .locator('[data-test-id="password"]')
     .fill(PASSWORD);
-  await page.locator('[data-test-id="log-button"]').click();
+    await page.locator('[data-test-id="log-button"]').click();
+  await page.locator('[data-test-id="layout-content"]').isVisible();
   await page.getByRole('button', { name: 'Android caret-down' }).click();
   await page
     .getByRole('menuitem', { name: 'OpenReplay Documentation Site' })
