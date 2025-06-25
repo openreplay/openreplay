@@ -11,7 +11,7 @@ import { Filter } from '@/mstore/types/filterConstants';
 import { Plus } from 'lucide-react';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
 import { useStore } from '@/mstore';
-import FilterSeries from '@/mstore/types/filterSeries';
+import IFilterSeries from '@/mstore/types/filterSeries';
 import FilterItem from '@/mstore/types/filterItem';
 
 const FilterCountLabels = observer(
@@ -118,7 +118,7 @@ const FilterSeriesHeader = observer(
 
 interface Props {
   seriesIndex: number;
-  series: FilterSeries;
+  series: IFilterSeries;
   onRemoveSeries: (seriesIndex: any) => void;
   canDelete?: boolean;
   supportsEmpty?: boolean;
@@ -156,9 +156,13 @@ function FilterSeries(props: Props) {
   const setExpanded = onToggleCollapse;
   const { series, seriesIndex } = props;
 
+  const actualEvents = series.filter.filters.filter((f: any) => f.isEvent);
+  const actualProperties = series.filter.filters.filter((f: any) => !f.isEvent);
+
   const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
   const eventOptions: Filter[] = allFilterOptions.filter((i) => i.isEvent);
   const propertyOptions: Filter[] = allFilterOptions.filter((i) => !i.isEvent);
+  const maxEvents = 1;
 
   const onUpdateFilter = (filterIndex: number, filter: FilterItem) => {
     series.filter.updateFilter(filterIndex, filter);
@@ -248,6 +252,9 @@ function FilterSeries(props: Props) {
                 onChangeOrder={onChangeEventsOrder}
                 filterSelection={
                   <FilterSelection
+                    disabled={
+                      maxEvents ? actualEvents.length >= maxEvents : false
+                    }
                     filters={eventOptions}
                     onFilterClick={(newFilter: Filter) => {
                       onAddFilter(newFilter);
@@ -265,7 +272,7 @@ function FilterSeries(props: Props) {
 
               <UnifiedFilterList
                 title="Events"
-                filters={series.filter.filters.filter((f: any) => f.isEvent)}
+                filters={actualEvents}
                 isDraggable={true}
                 showIndices={true}
                 className="mt-2"
@@ -273,6 +280,7 @@ function FilterSeries(props: Props) {
                 handleUpdate={onUpdateFilter}
                 handleAdd={onAddFilter}
                 handleMove={onFilterMove}
+                max={1}
               />
 
               <Divider className="my-2" />
@@ -303,7 +311,7 @@ function FilterSeries(props: Props) {
 
           <UnifiedFilterList
             title="Filters"
-            filters={series.filter.filters.filter((f: any) => !f.isEvent)}
+            filters={actualProperties}
             isDraggable={false}
             showIndices={false}
             className="mt-2"

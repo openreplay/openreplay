@@ -322,11 +322,9 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
     viewType: 'chart',
     filters: [
       {
-        type: 'location',
+        name: 'LOCATION',
+        autoCaptured: true,
         isEvent: true,
-        value: [''],
-        operator: 'startsWith',
-        filters: [],
       },
     ],
     example: ExampleTrend,

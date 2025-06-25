@@ -70,75 +70,76 @@ function WidgetView({
   const isClickMap = widget.metricType === HEATMAP;
 
   useEffect(() => {
-    if (!metricId || metricId === 'create') {
-      const params = new URLSearchParams(location.search);
-      const mk = params.get('mk');
-      if (mk) {
+    const sync = async () => {
+      if (!metricId || metricId === 'create') {
+        const params = new URLSearchParams(location.search);
+        const mk = params.get('mk');
+        if (!mk) return;
         const selectedCard = CARD_LIST(t).find((c) => c.key === mk) as CardType;
-        if (selectedCard) {
-          const cardData: any = {
-            metricType: selectedCard.cardType,
-            name: selectedCard.title,
-            metricOf: selectedCard.metricOf,
-            category: mk,
-            viewType: selectedCard.viewType
-              ? selectedCard.viewType
-              : selectedCard.cardType === FUNNEL
-                ? 'chart'
-                : 'lineChart',
-          };
-          if (selectedCard.filters) {
-            const filters = [];
+        if (!selectedCard) return;
 
-            // iterate selectedCard.filters
-            selectedCard.filters.forEach((filter: any) => {
+        const cardData: any = {
+          metricType: selectedCard.cardType,
+          name: selectedCard.title,
+          metricOf: selectedCard.metricOf,
+          category: mk,
+          viewType: selectedCard.viewType
+            ? selectedCard.viewType
+            : selectedCard.cardType === FUNNEL
+              ? 'chart'
+              : 'lineChart',
+        };
+
+        if (selectedCard.filters) {
+          const filters = await Promise.all(
+            selectedCard.filters.map(async (filter) => {
               const f = filterStore.findEvent({
                 name: filter.name,
                 autoCaptured: filter.autoCaptured,
               });
-
-              if (filter.filters && filter.filters.length > 0) {
+              if (filter.filters?.length) {
                 f.filters = filter.filters;
+              } else if (f.isEvent) {
+                const props = await filterStore.getEventFilters(f.id);
+                f.filters = props?.filter((p) => p.defaultProperty) || [];
               }
-              filters.push(f);
-            });
-
-            cardData.series = [
-              new FilterSeries().fromJson({
-                name: 'Series 1',
-                filter: { filters: filters },
-              }),
-            ];
-          } else if (selectedCard.cardType === TABLE) {
-            cardData.series = [new FilterSeries()];
-            cardData.series[0].filter.eventsOrder = 'and';
-          }
-
-          if (selectedCard.cardType === FUNNEL) {
-            cardData.series = [new FilterSeries()];
-            cardData.series[0].filter.addFunnelDefaultFilters();
-            cardData.series[0].filter.eventsOrder = 'then';
-            cardData.series[0].filter.eventsOrderSupport = ['then'];
-          }
-
-          if (selectedCard.cardType === USER_PATH) {
-            const event = filterStore.findEvent({
-              name: FilterKey.LOCATION,
-              autoCaptured: true,
-            });
-
-            cardData.startPoint = event;
-          }
-
-          if (selectedCard.cardType === HEATMAP) {
-            cardData.series = [new FilterSeries()];
-            cardData.series[0].filter.addHeatmapDefaultFilters();
-          }
-
-          metricStore.merge(cardData);
+              return f;
+            }),
+          );
+          cardData.series = [
+            new FilterSeries().fromJson({
+              name: 'Series 1',
+              filter: { filters },
+            }),
+          ];
+        } else if (selectedCard.cardType === TABLE) {
+          cardData.series = [new FilterSeries()];
+          cardData.series[0].filter.eventsOrder = 'and';
         }
+
+        if (selectedCard.cardType === FUNNEL) {
+          cardData.series = [new FilterSeries()];
+          cardData.series[0].filter.addFunnelDefaultFilters();
+          cardData.series[0].filter.eventsOrder = 'then';
+          cardData.series[0].filter.eventsOrderSupport = ['then'];
+        }
+
+        if (selectedCard.cardType === USER_PATH) {
+          cardData.startPoint = filterStore.findEvent({
+            name: FilterKey.LOCATION,
+            autoCaptured: true,
+          });
+        }
+
+        if (selectedCard.cardType === HEATMAP) {
+          cardData.series = [new FilterSeries()];
+          cardData.series[0].filter.addHeatmapDefaultFilters();
+        }
+
+        metricStore.merge(cardData);
       }
-    }
+    };
+    sync();
   }, [metricId, location.search, metricStore]);
 
   useEffect(() => {

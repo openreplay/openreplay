@@ -520,18 +520,97 @@ export default class Widget {
   };
 
   fetchSessions(metricId: any, filter: any): Promise<any> {
+    const newFilter = this.applyProperties(filter);
     return new Promise((resolve) => {
-      metricService.fetchSessions(metricId, filter).then((response: any[]) => {
-        resolve(
-          response.map((cat: { sessions: any[] }) => {
-            return {
-              ...cat,
-              sessions: cat.sessions.map((s: any) => new Session().fromJson(s)),
-            };
-          }),
-        );
-      });
+      metricService
+        .fetchSessions(metricId, newFilter)
+        .then((response: any[]) => {
+          resolve(
+            response.map((cat: { sessions: any[] }) => {
+              return {
+                ...cat,
+                sessions: cat.sessions.map((s: any) =>
+                  new Session().fromJson(s),
+                ),
+              };
+            }),
+          );
+        });
     });
+  }
+
+  // TODO this is a temporary solution until the API is fixed.
+  // // {
+  //   "eventsOrderSupport": [
+  //     "then",
+  //     "or",
+  //     "and"
+  //   ],
+  //   "isConditional": false,
+  //   "isMobile": false,
+  //   "autoOpen": false,
+  //   "filters": [],
+  //   "excludes": [],
+  //   "eventsOrder": "then",
+  //   "startTimestamp": 1750778100000,
+  //   "endTimestamp": 1750864500000,
+  //   "eventsHeader": "EVENTS",
+  //   "page": 1,
+  //   "limit": 10,
+  //   "series": [
+  //     {
+  //       "seriesId": 840,
+  //       "name": "Series 1",
+  //       "filter": {
+  //         "autoOpen": false,
+  //         "filters": [
+  //           {
+  //             "type": "userDevice",
+  //             "operator": "is",
+  //             "value": [
+  //               "iPhone"
+  //             ],
+  //             "filters": []
+  //           }
+  //         ],
+  //         "excludes": [],
+  //         "eventsOrder": "and",
+  //         "startTimestamp": 0,
+  //         "endTimestamp": 0,
+  //         "eventsHeader": "EVENTS",
+  //         "page": 1,
+  //         "limit": 10
+  //       }
+  //     }
+  //   ],
+  //   "metricType": "table",
+  //   "metricOf": "userDevice"
+  // }
+  applyProperties(data: any) {
+    const updatedSeries =
+      data.series?.map((series: any) => {
+        const filter = { ...series.filter };
+
+        if (filter.isEvent && Array.isArray(filter.filters)) {
+          const nested = filter.filters.map((nestedFilter: any) => {
+            const js = new FilterItem(nestedFilter).toJson();
+            delete js.type;
+            delete js.propertyOrder;
+            return js;
+          });
+          delete filter.filters;
+          filter.properties = {
+            propertyOrder: filter.propertyOrder,
+            operator: filter.propertyOrder,
+            filters: nested,
+          };
+        }
+
+        delete filter.propertyOrder;
+        return { ...series, filter };
+      }) || [];
+
+    return { ...data, series: updatedSeries };
   }
 
   async fetchIssues(card: any): Promise<any> {
