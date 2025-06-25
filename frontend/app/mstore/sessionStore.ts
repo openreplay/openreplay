@@ -66,6 +66,8 @@ class UserFilter {
     return {
       endDate: this.period.end,
       startDate: this.period.start,
+      startTimestamp: this.startDate,
+      endTimestamp: this.endDate,
       filters: this.filters.map(filterMap),
       page: this.page,
       limit: this.limit,
@@ -343,7 +345,7 @@ export default class SessionStore {
           ...evData,
           events: evData.events.map((e) => ({
             ...e,
-            isHighlighted: checkEventWithFilters(e, searchStore.instance.filters) 
+            isHighlighted: checkEventWithFilters(e, searchStore.instance.filters)
           })),
         });
       } catch (e) {

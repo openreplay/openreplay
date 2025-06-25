@@ -1,7 +1,11 @@
 ## 17.0.0
 
-- support for Long Animation Task tracking
+- support for Long Animation Task API tracking
 - support for timing information in resource tracking
+- Ionic and Web Component compatibility improvements:
+  - better support for `<slot>` components
+  - initial support for web animation API  (end frame state for now)
+
 - add incident events for tracker
 ```js
 import { tracker } from '@openreplay/tracker'
@@ -11,11 +15,16 @@ tracker.incident({ label: 'incident', startTime: Date.now() })
 
 ```
 
+## 16.4.0
+
+- improve CSS selector generation speed (drop findr library in favor of custom solution)
+- improve urgent flushing on page close event
+
 ## 16.3.0
 
 - optional dynamic css scanning for better emotionjs support
 
-```
+```ts
 new Tracker({
 ...css: cssScanOptions
 })
@@ -41,7 +50,7 @@ interface cssScanOptions {
 ## 16.2.1
 
 - easier inliner options:
-```
+```ts
 inlineCss: InlineCssMode
 
 enum InlineCssMode {
@@ -60,7 +69,7 @@ enum InlineCssMode {
 
 - css batching and inlining via (!plain mode will cause fake text nodes in style tags occupying 99*10^6 id space, can conflict with crossdomain iframes!)
 
-```
+```ts
 inlineRemoteCss: boolean
   inlinerOptions?: {
     forceFetch?: boolean,

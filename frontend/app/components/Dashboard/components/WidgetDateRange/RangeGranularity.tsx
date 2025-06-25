@@ -35,7 +35,7 @@ function RangeGranularity({
 
   React.useEffect(() => {
     if (granularityOptions.length === 0) return;
-    const defaultOption = Math.max(granularityOptions.length - 2, 0);
+    const defaultOption = Math.max(granularityOptions.filter(opt => !opt.disabled).length - 2, 0);
     onDensityChange(granularityOptions[defaultOption].key);
   }, [period, granularityOptions.length]);
 
@@ -54,29 +54,26 @@ function RangeGranularity({
   );
 }
 
-const PAST_24_HR_MS = 24 * 60 * 60 * 1000;
 export function calculateGranularities(periodDurationMs: number) {
   const granularities = [
-    { label: 'Hourly', durationMs: 60 * 60 * 1000 },
-    { label: 'Daily', durationMs: 24 * 60 * 60 * 1000 },
-    { label: 'Weekly', durationMs: 7 * 24 * 60 * 60 * 1000 },
-    { label: 'Monthly', durationMs: 30 * 24 * 60 * 60 * 1000 },
-    { label: 'Quarterly', durationMs: 3 * 30 * 24 * 60 * 60 * 1000 },
+    { label: 'Hourly', durationMs: 60 * 60 * 1000, disabled: false },
+    { label: 'Daily', durationMs: 24 * 60 * 60 * 1000, disabled: false },
+    { label: 'Weekly', durationMs: 7 * 24 * 60 * 60 * 1000, disabled: false },
+    { label: 'Monthly', durationMs: 30 * 24 * 60 * 60 * 1000, disabled: false },
+    {
+      label: 'Quarterly',
+      durationMs: 3 * 30 * 24 * 60 * 60 * 1000,
+      disabled: false,
+    },
   ];
 
   const result = [];
-  if (periodDurationMs === PAST_24_HR_MS) {
-    // if showing for 1 day, show by minute split as well
-    granularities.unshift({ label: 'By minute', durationMs: 60 * 1000 });
-  }
-
   for (const granularity of granularities) {
-    if (periodDurationMs >= granularity.durationMs) {
-      const density = Math.floor(
-        Number(BigInt(periodDurationMs) / BigInt(granularity.durationMs)),
-      );
-      result.push({ label: granularity.label, key: density });
-    }
+    const density = Math.floor(
+      Number(BigInt(periodDurationMs) / BigInt(granularity.durationMs)),
+    );
+    const disabled = periodDurationMs >= granularity.durationMs ? false : true;
+    result.push({ label: granularity.label, key: density, disabled });
   }
 
   return result;

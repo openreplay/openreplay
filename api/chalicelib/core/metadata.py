@@ -261,4 +261,8 @@ def get_for_filters(project_id):
                                     "displayName": metas[k],
                                     "possibleTypes": ["String"],
                                     "autoCaptured": False})
-        return {"total": len(results), "list": results}
+        return {
+            "total": len(results),
+            "displayName": "Metadata",
+            "list": results
+        }

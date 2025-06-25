@@ -1,18 +1,9 @@
 import { TFunction } from 'i18next';
+import extraModules, { MODULES } from './extra';
+export * from './extra';
 
 export { default } from './Modules';
 
-export const enum MODULES {
-  ASSIST = 'assist',
-  HIGHLIGHTS = 'notes',
-  BUG_REPORTS = 'bug-reports',
-  OFFLINE_RECORDINGS = 'offline-recordings',
-  ALERTS = 'alerts',
-  ASSIST_STATS = 'assist-stats',
-  FEATURE_FLAGS = 'feature-flags',
-  RECOMMENDATIONS = 'recommendations',
-  USABILITY_TESTS = 'usability-tests',
-}
 
 export interface Module {
   label: string;
@@ -74,15 +65,6 @@ export const modules = (t: TFunction) => [
     icon: 'toggles',
   },
   {
-    label: t('Recommendations'),
-    description: t(
-      'Get personalized recommendations for sessions to watch, based on your replay history and search preferences.',
-    ),
-    key: MODULES.RECOMMENDATIONS,
-    icon: 'magic',
-    hidden: true,
-  },
-  {
     label: t('Usability Tests'),
     description: t(
       'Get feedback from your users by creating usability tests and sharing them with your team.',
@@ -90,4 +72,5 @@ export const modules = (t: TFunction) => [
     key: MODULES.USABILITY_TESTS,
     icon: 'clipboard-check',
   },
+  ...extraModules(t),
 ];

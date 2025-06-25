@@ -53,7 +53,7 @@ function ChatLog({
     });
   }, [messages.length, processingStage]);
 
-  const lastKaiMessageInd: null | number = kaiStore.lastKaiMessage.index;
+  const lastKaiMessageInd: number | null = kaiStore.lastKaiMessage.index;
   const lastHumanMsgInd: number | null = kaiStore.lastHumanMessage.index;
   const showIdeas =
     !processingStage && lastKaiMessageInd === messages.length - 1;
@@ -99,6 +99,7 @@ function ChatLog({
               onClick={(query) => onSubmit(query)}
               projectId={projectId}
               threadId={threadId}
+              messageId={kaiStore.lastKaiMessage.msg?.messageId ?? null}
               inChat
             />
           ) : null}

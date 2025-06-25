@@ -8,10 +8,8 @@ test('check session list after change period', async ({ page }) => {
   const PASSWORD = process.env.TEST_FOSS_PASSWORD || '';
   await page.goto('http://localhost:3333/login');
   await page.locator('[data-test-id="login"]').fill(LOGIN);
-  await page
-    .locator('[data-test-id="password"]')
-    .fill(PASSWORD);
-    await page.locator('[data-test-id="log-button"]').click();
+  await page.locator('[data-test-id="password"]').fill(PASSWORD);
+  await page.locator('[data-test-id="log-button"]').click();
   await page.locator('[data-test-id="layout-content"]').isVisible();
   await page.getByRole('button', { name: 'Android caret-down' }).click();
   await page

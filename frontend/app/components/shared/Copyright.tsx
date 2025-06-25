@@ -9,7 +9,7 @@ const Copyright = React.memo(() => {
       {`© ${currentYear} ${t('OpenReplay. All rights reserved')}. `}
       <a
         className="underline hover:text-gray-700"
-        href="https://openreplay.com/privacy.html"
+        href="https://openreplay.com/legal/privacy"
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -18,7 +18,7 @@ const Copyright = React.memo(() => {
       &nbsp;{t('and')}&nbsp;
       <a
         className="underline hover:text-gray-700"
-        href="https://openreplay.com/terms.html"
+        href="https://openreplay.com/legal/terms"
         target="_blank"
         rel="noopener noreferrer"
       >

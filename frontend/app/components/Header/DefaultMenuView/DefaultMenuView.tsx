@@ -13,6 +13,8 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import SiteDropdown from '../SiteDropdown';
 import styles from '../header.module.css';
 import { useTranslation } from 'react-i18next';
+import Survey from 'App/components/Survey';
+import Version from './Version';
 
 const DASHBOARD_PATH = dashboard();
 const METRICS_PATH = metrics();
@@ -28,17 +30,13 @@ function DefaultMenuView(props: Props) {
   const { siteId } = props;
   return (
     <div className="flex items-center">
+      <Survey />
       <NavLink to={withSiteId(SESSIONS_PATH, props.siteId)}>
         <div className="relative select-none">
           <div className="px-4 py-2">
             <AnimatedSVG name={ICONS.LOGO_SMALL} size="30" />
           </div>
-          <div
-            className="absolute bottom-0"
-            style={{ fontSize: '7px', right: '5px' }}
-          >
-            v{window.env.VERSION}
-          </div>
+          <Version />
         </div>
       </NavLink>
       <SiteDropdown />

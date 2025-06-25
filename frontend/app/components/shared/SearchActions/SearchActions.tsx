@@ -3,7 +3,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { Button, Tooltip } from 'antd';
-import AiSessionSearchField from 'Shared/SessionFilters/AiSessionSearchField';
+import AiSearchSection from './AiSearchSection';
 import { useTranslation } from 'react-i18next';
 import SavedSearch from '../SavedSearch/SavedSearch';
 
@@ -30,13 +30,11 @@ function SearchActions() {
     return t('Sessions');
   }, [activeTab?.type, isEnterprise, i18n.language]);
 
-  // @ts-ignore
-  const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /app\.openreplay\.com/.test(originStr);
-  const showAiField = isSaas && activeTab?.type === 'sessions';
+  const showAiField = activeTab?.type === 'sessions';
   const showPanel = hasEvents || hasFilters || aiFiltersStore.isLoading;
   return !metaLoading ? (
     <div className="mb-2">
+      {/* mobile */}
       <div className={'flex flex-col lg:hidden items-start  gap-2 w-full'}>
         <div className='flex items-center justify-between w-full'>
           <h2 className="text-2xl capitalize mr-4 inline">{title}</h2>
@@ -54,12 +52,13 @@ function SearchActions() {
             </Tooltip>
           </div>
         </div>
-        {isSaas ? <AiSessionSearchField/> : null}
+        <AiSearchSection />
       </div>
 
+      {/* desktop */}
       <div className={'hidden lg:flex items-center gap-2 w-full '}>
         <h2 className="text-2xl capitalize mr-4">{title}</h2>
-        {isSaas && showAiField ? <AiSessionSearchField /> : null}
+        {showAiField ? <AiSearchSection /> : null}
         <div className="ml-auto" />
         <SavedSearch />
         <Tooltip title={t('Clear Search Filters')}>

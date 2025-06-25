@@ -235,11 +235,11 @@ function SignupForm() {
             <div className="my-6">
               <div className="text-sm">
                 {t('By signing up, you agree to our')}{' '}
-                <a href="https://openreplay.com/terms.html" className="link">
+                <a href="https://openreplay.com/legal/terms" className="link">
                   {t('terms of service')}
                 </a>{' '}
                 {t('and')}{' '}
-                <a href="https://openreplay.com/privacy.html" className="link">
+                <a href="https://openreplay.com/legal/privacy" className="link">
                   {t('privacy policy')}
                 </a>
                 .

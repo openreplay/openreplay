@@ -22,6 +22,7 @@ export const USER_PATH = 'pathAnalysis';
 export const RETENTION = 'retention';
 export const INSIGHTS = 'insights'; // SaaS and EE
 export const PERFORMANCE = 'performance';
+export const WEBVITALS = 'webVital';
 
 export const CATEGORIES = {
   product_analytics: 'product_analytics',
@@ -45,6 +46,7 @@ export const TYPE_ICONS = {
   [FUNNEL]: 'funnel',
   [ERRORS]: 'exclamation-circle',
   [USER_PATH]: 'user-journey',
+  [WEBVITALS]: 'pulse',
 } as const;
 export const TYPE_NAMES = (t: TFunction) =>
   ({
@@ -58,6 +60,7 @@ export const TYPE_NAMES = (t: TFunction) =>
     [RETENTION]: t('Retention'),
     [INSIGHTS]: t('Insights'),
     [PERFORMANCE]: t('Performance'),
+    [WEBVITALS]: t('Web Vitals'),
   }) as const;
 
 export const TYPES: (t: TFunction) => CardType[] = (t) => [

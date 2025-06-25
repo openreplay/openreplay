@@ -1,5 +1,6 @@
 import React from 'react';
 import { CopyButton, CodeBlock } from 'UI';
+import { trackerUrl } from './url';
 
 const inputModeOptions = [
   { label: 'Record all inputs', value: 'plain' },
@@ -54,15 +55,15 @@ function CodeSnippet(props: Props) {
     r.issue=function(k,p){r.push([6,k,p])};
     r.isActive=function(){return false};
     r.getSessionToken=function(){};
-  })("${window.env.TRACKER_HOST || '//static.openreplay.com'}/${window.env.TRACKER_VERSION}/openreplay${isAssistEnabled ? '-assist.js' : '.js'}",1,0,initOpts,startOpts);
+  })("${trackerUrl(isAssistEnabled)}",1,0,initOpts,startOpts);
 </script>`;
 
   return (
     <div className="relative">
-      <div className="absolute top-0 right-0 mt-2 mr-2">
+      <div className="absolute top-0 right-0 mt-2 mr-2 z-10">
         <CopyButton content={codeSnippet} className="uppercase" />
       </div>
-      <CodeBlock code={codeSnippet} language="js" />
+      <CodeBlock code={codeSnippet} language="html" />
     </div>
   );
 }

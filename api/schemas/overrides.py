@@ -3,6 +3,7 @@ from enum import Enum as _Enum
 from pydantic import BaseModel as _BaseModel
 from pydantic import ConfigDict, TypeAdapter, Field
 from pydantic.types import AnyType
+from decouple import config, Choices
 
 
 def attribute_to_camel_case(snake_str: str) -> str:
@@ -22,8 +23,8 @@ class BaseModel(_BaseModel):
     model_config = ConfigDict(alias_generator=attribute_to_camel_case,
                               use_enum_values=True,
                               json_schema_extra=schema_extra,
-                              # extra='forbid'
-                              )
+                              extra=config("EXTRA_PAYLOAD_ATTRIBUTES", default="ignore",
+                                           cast=Choices(["ignore", "forbid", "allow"])))
 
 
 class Enum(_Enum):

@@ -253,7 +253,7 @@ function SpotPlayer() {
                     />
                   ) : null}
                   {spotPlayerStore.activePanel === PANELS.OVERVIEW ? (
-                    <SpotOverviewConnector />
+                    <SpotOverviewConnector jump={spotPlayerStore.setTime} />
                   ) : null}
                 </div>
               ) : null}
@@ -272,7 +272,7 @@ function SpotPlayer() {
   );
 }
 
-const SpotOverviewConnector = observer(() => {
+const SpotOverviewConnector = observer(({ jump }: { jump: (time: number) => null }) => {
   const endTime = spotPlayerStore.duration * 1000;
   const time = spotPlayerStore.time * 1000;
   const resourceList = spotPlayerStore.network
@@ -292,6 +292,7 @@ const SpotOverviewConnector = observer(() => {
       spotTime={time}
       spotEndTime={endTime}
       onClose={onClose}
+      time={time}
     />
   );
 });

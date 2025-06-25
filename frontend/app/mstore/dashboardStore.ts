@@ -69,7 +69,9 @@ export default class DashboardStore {
   };
 
   createDensity = (duration: number) => {
-    const densityOpts = calculateGranularities(duration);
+    const densityOpts = calculateGranularities(duration).filter(
+      (opt) => !opt.disabled,
+    );
     const defaultOption = densityOpts[densityOpts.length - 2];
 
     this.setDensity(defaultOption.key);
@@ -455,7 +457,7 @@ export default class DashboardStore {
     this.isSaving = true;
     try {
       try {
-        const response = await dashboardService.addWidget(dashboard, metricIds);
+        await dashboardService.addWidget(dashboard, metricIds);
         toast.success('Card added to dashboard.');
       } catch {
         toast.error('Card could not be added.');

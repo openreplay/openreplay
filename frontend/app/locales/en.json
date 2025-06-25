@@ -1501,5 +1501,19 @@
   "Include rage clicks": "Include rage clicks",
   "Interface Language": "Interface Language",
   "Select the language in which OpenReplay will appear.": "Select the language in which OpenReplay will appear.",
-  "Language": "Language"
+  "Language": "Language",
+  "Top user journeys": "Top user journeys",
+  "Where do users drop off": "Where do users drop off",
+  "Failed network requests today": "Failed network requests today",
+  "Suggested Follow-up Questions": "Suggested Follow-up Questions",
+  "Suggested Ideas:": "Suggested Ideas:",
+  "Generating ideas": "Generating ideas",
+  "You've reached the daily limit for queries, come again tomorrow!": "You've reached the daily limit for queries, come again tomorrow!",
+  "Ask anything about your product and users...": "Ask anything about your product and users...",
+  "Cancel Editing": "Cancel Editing",
+  "Cancel processing": "Cancel processing",
+  "Send message": "Send message",
+  "Hey": "Hey",
+  "how can I help you?": "how can I help you?",
+  "Ask": "Ask"
 }

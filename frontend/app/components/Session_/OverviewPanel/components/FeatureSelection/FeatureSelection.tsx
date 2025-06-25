@@ -1,10 +1,9 @@
 import React from 'react';
 import { Popover, Checkbox, Button } from 'antd';
 import { EyeInvisibleOutlined } from '@ant-design/icons';
-import { Icon } from 'UI';
-import Funnel from '@/types/funnel';
 import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
+import { signalService } from 'App/services';
 
 const NETWORK = 'NETWORK';
 const ERRORS = 'ERRORS';
@@ -25,6 +24,7 @@ export const HELP_MESSAGE: any = (t: TFunction) => ({
 interface Props {
   list: any[];
   updateList: any;
+  sessionId: string;
 }
 
 const sortPriority = {
@@ -43,11 +43,14 @@ const featLabels = (t: TFunction) => ({
 });
 
 function FeatureSelection(props: Props) {
+  const { sessionId } = props;
   const features = [NETWORK, ERRORS, EVENTS, PERFORMANCE, FRUSTRATIONS];
   const { t } = useTranslation();
 
   const toggleFeatureInList = (feat: string) => {
+    let checked = false;
     if (props.list.includes(feat)) {
+      checked = true;
       props.updateList(props.list.filter((f) => f !== feat));
     } else {
       // @ts-ignore
@@ -55,6 +58,13 @@ function FeatureSelection(props: Props) {
         [...props.list, feat].sort((a, b) => sortPriority[a] - sortPriority[b]),
       );
     }
+    void signalService.send(
+      {
+        source: 'xray_' + feat.toLowerCase(),
+        value: !checked,
+      },
+      sessionId,
+    );
   };
   const toggleAllFeatures = () => {
     if (props.list.length === features.length) {

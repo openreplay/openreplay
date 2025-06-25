@@ -3,13 +3,20 @@ from typing import List, Union
 
 import schemas
 from chalicelib.core import metadata
-from chalicelib.core.events import events
-from . import performance_event, sessions_legacy
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.exp_ch_helper import get_sub_condition, get_col_cast
+from . import performance_event, sessions_legacy
 
 logger = logging.getLogger(__name__)
+
+RESOLUTION_RANGES = [
+    (800, 600),
+    (1280, 720),
+    (1920, 1080),
+    (2560, 1440),
+    (3840, 2160),
+]
 
 
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
@@ -26,7 +33,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                             AND ev.project_id = %(project_id)s
                             AND ev.`$event_name` = 'LOCATION'"""
     elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
-        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, name=schemas.FilterType.ISSUE,
                                                               operator=schemas.SearchEventOperator.IS))
     full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
                                                   favorite_only=False, issue=None, project_id=project_id,
@@ -53,6 +60,17 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                 LEFT JOIN (SELECT multiIf(isNotNull(s.user_id) AND notEmpty(s.user_id), s.user_id,
                                                          isNotNull(s.user_anonymous_id) AND notEmpty(s.user_anonymous_id), 
                                                          s.user_anonymous_id, toString(s.user_uuid)) AS user_id,
+                                                s.datetime AS datetime
+                                            {query_part}) AS processed_sessions ON(TRUE)
+                            WHERE processed_sessions.datetime >= toDateTime(timestamp / 1000)
+                                AND processed_sessions.datetime < toDateTime((timestamp + %(step_size)s) / 1000)
+                            GROUP BY timestamp
+                            ORDER BY timestamp;"""
+            elif metric_of == schemas.MetricOfTimeseries.EVENT_COUNT:
+                query = f"""SELECT gs.generate_series AS timestamp,
+                                   COALESCE(COUNT(processed_sessions.events_count),0) AS count
+                            FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS gs
+                                LEFT JOIN (SELECT s.events_count AS events_count,
                                                 s.datetime AS datetime
                                             {query_part}) AS processed_sessions ON(TRUE)
                             WHERE processed_sessions.datetime >= toDateTime(timestamp / 1000)
@@ -148,10 +166,10 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         extra_deduplication.append("url_path")
         extra_conditions = {}
         for e in data.events:
-            if e.type == schemas.EventType.LOCATION:
+            if e.name == schemas.EventType.LOCATION:
                 if e.operator not in extra_conditions:
                     extra_conditions[e.operator] = schemas.SessionSearchEventSchema(**{
-                        "type": e.type,
+                        "type": e.name,
                         "isEvent": True,
                         "value": [],
                         "operator": e.operator,
@@ -173,10 +191,10 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         extra_deduplication.append("url_path")
         extra_conditions = {}
         for e in data.events:
-            if e.type == schemas.EventType.REQUEST_DETAILS:
+            if e.name == schemas.EventType.REQUEST_DETAILS:
                 if e.operator not in extra_conditions:
                     extra_conditions[e.operator] = schemas.SessionSearchEventSchema(**{
-                        "type": e.type,
+                        "type": e.name,
                         "isEvent": True,
                         "value": [],
                         "operator": e.operator,
@@ -188,7 +206,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         extra_conditions = list(extra_conditions.values())
 
     elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
-        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, name=schemas.FilterType.ISSUE,
                                                               operator=schemas.SearchEventOperator.IS))
     full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
                                                   favorite_only=False, issue=None, project_id=project_id,
@@ -235,6 +253,19 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             elif metric_of == schemas.MetricOfTable.FETCH:
                 main_col = "url_path"
                 extra_col = ", s.url_path"
+            elif metric_of == schemas.MetricOfTable.SCREEN_RESOLUTION:
+                main_col = "resolution_group"
+                extra_col = [
+                    f"WHEN screen_width * screen_height < {width * height} THEN '<{width}x{height}'"
+                    if i == 0
+                    else f"WHEN screen_width * screen_height < {width * height} THEN '{RESOLUTION_RANGES[i - 1][0]}x{RESOLUTION_RANGES[i - 1][1]}-{width}x{height}'"
+                    for i, (width, height) in enumerate(RESOLUTION_RANGES)
+                ]
+                extra_col = ",CASE " + " ".join([
+                    "WHEN isNull(screen_width * screen_height) OR screen_width * screen_height = 0 THEN 'Unknown'",
+                    *extra_col,
+                    f"ELSE '>{RESOLUTION_RANGES[-1][0]}x{RESOLUTION_RANGES[-1][1]}'"
+                ]) + " END AS resolution_group"
 
             if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
                 main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
@@ -284,15 +315,15 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
 
 
 def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema):
-    return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.REQUEST_DETAILS,
+    return not (not is_any and len(event.value) == 0 and event.name not in [schemas.EventType.REQUEST_DETAILS,
                                                                             schemas.EventType.GRAPHQL] \
-                or event.type in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
+                or event.name in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
                                   schemas.PerformanceEventType.LOCATION_LARGEST_CONTENTFUL_PAINT_TIME,
                                   schemas.PerformanceEventType.LOCATION_TTFB,
                                   schemas.PerformanceEventType.LOCATION_AVG_CPU_LOAD,
                                   schemas.PerformanceEventType.LOCATION_AVG_MEMORY_USAGE
                                   ] and (event.source is None or len(event.source) == 0) \
-                or event.type in [schemas.EventType.REQUEST_DETAILS, schemas.EventType.GRAPHQL] and (
+                or event.name in [schemas.EventType.REQUEST_DETAILS, schemas.EventType.GRAPHQL] and (
                         event.filters is None or len(event.filters) == 0))
 
 
@@ -354,7 +385,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     if issue:
         data.filters.append(
             schemas.SessionSearchFilterSchema(value=[issue['type']],
-                                              type=schemas.FilterType.ISSUE.value,
+                                              name=schemas.FilterType.ISSUE.value,
                                               operator=schemas.SearchEventOperator.IS.value)
         )
     ss_constraints = []
@@ -385,7 +416,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                "main.created_at <= toDateTime(%(endDate)s/1000)"]
     any_incident = False
     for i, e in enumerate(data.events):
-        if e.type == schemas.EventType.INCIDENT and e.operator == schemas.SearchEventOperator.IS_ANY:
+        if e.name == schemas.EventType.INCIDENT and e.operator == schemas.SearchEventOperator.IS_ANY:
             any_incident = True
             data.events.pop(i)
             # don't stop here because we could have multiple filters looking for any incident
@@ -393,7 +424,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     if any_incident:
         any_incident = False
         for f in data.filters:
-            if f.type == schemas.FilterType.ISSUE:
+            if f.name == schemas.FilterType.ISSUE:
                 any_incident = True
                 if f.value.index(schemas.IssueType.INCIDENT) < 0:
                     f.value.append(schemas.IssueType.INCIDENT)
@@ -410,16 +441,17 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 ],
                 "operator": "is"
             }))
-
+    global_properties = []
+    global_properties_negative = []
     if len(data.filters) > 0:
         meta_keys = None
         # to reduce include a sub-query of sessions inside events query, in order to reduce the selected data
         include_in_events = False
         for i, f in enumerate(data.filters):
-            filter_type = f.type
+            filter_type = f.name
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
-            full_args = {**full_args, f_k: sh.single_value(f.value), **sh.multi_values(f.value, value_key=f_k)}
+            full_args |= {f_k: sh.single_value(f.value)} | sh.multi_values(f.value, value_key=f_k)
             op = sh.get_sql_operator(f.operator) \
                 if filter_type not in [schemas.FilterType.EVENTS_COUNT] else f.operator.value
             is_any = sh.isAny_opreator(f.operator)
@@ -429,235 +461,296 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             is_not = False
             if sh.is_negation_operator(f.operator):
                 is_not = True
-            if filter_type == schemas.FilterType.USER_BROWSER:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_browser)')
-                    ss_constraints.append('isNotNull(ms.user_browser)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not,
-                                            value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.USER_OS, schemas.FilterType.USER_OS_MOBILE]:
+            if not f.auto_captured:
+                # global custom property
+                cast = get_col_cast(data_type=f.data_type, value=f.value)
                 if is_any:
-                    extra_constraints.append('isNotNull(s.user_os)')
-                    ss_constraints.append('isNotNull(ms.user_os)')
+                    global_properties.append(f'isNotNull(e.properties.`{f.name}`)')
                 else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                    if is_not:
+                        op = sh.reverse_sql_operator(op)
+                        global_properties_negative.append(sh.multi_conditions(get_sub_condition(
+                            col_name=f"accurateCastOrNull(e.properties.`{f.name}`,'{cast}')",
+                            val_name=f_k, operator=op), f.value, is_not=False, value_key=f_k))
+                    else:
+                        global_properties.append(sh.multi_conditions(get_sub_condition(
+                            col_name=f"accurateCastOrNull(e.properties.`{f.name}`,'{cast}')",
+                            val_name=f_k, operator=f.operator), f.value, is_not=False, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.USER_DEVICE, schemas.FilterType.USER_DEVICE_MOBILE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_device)')
-                    ss_constraints.append('isNotNull(ms.user_device)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-
-            elif filter_type in [schemas.FilterType.USER_COUNTRY, schemas.FilterType.USER_COUNTRY_MOBILE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_country)')
-                    ss_constraints.append('isNotNull(ms.user_country)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not,
-                                            value_key=f_k))
-
-            elif filter_type in schemas.FilterType.USER_CITY:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_city)')
-                    ss_constraints.append('isNotNull(ms.user_city)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-
-            elif filter_type in schemas.FilterType.USER_STATE:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_state)')
-                    ss_constraints.append('isNotNull(ms.user_state)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-
-            elif filter_type in [schemas.FilterType.UTM_SOURCE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.utm_source)')
-                    ss_constraints.append('isNotNull(ms.utm_source)')
-                elif is_undefined:
-                    extra_constraints.append('isNull(s.utm_source)')
-                    ss_constraints.append('isNull(ms.utm_source)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
-            elif filter_type in [schemas.FilterType.UTM_MEDIUM]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.utm_medium)')
-                    ss_constraints.append('isNotNull(ms.utm_medium)')
-                elif is_undefined:
-                    extra_constraints.append('isNull(s.utm_medium)')
-                    ss_constraints.append('isNull(ms.utm_medium')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
-            elif filter_type in [schemas.FilterType.UTM_CAMPAIGN]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.utm_campaign)')
-                    ss_constraints.append('isNotNull(ms.utm_campaign)')
-                elif is_undefined:
-                    extra_constraints.append('isNull(s.utm_campaign)')
-                    ss_constraints.append('isNull(ms.utm_campaign)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f's.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f'ms.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
-
-            elif filter_type == schemas.FilterType.DURATION:
-                if len(f.value) > 0 and f.value[0] is not None:
-                    extra_constraints.append("s.duration >= %(minDuration)s")
-                    ss_constraints.append("ms.duration >= %(minDuration)s")
-                    full_args["minDuration"] = f.value[0]
-                if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
-                    extra_constraints.append("s.duration <= %(maxDuration)s")
-                    ss_constraints.append("ms.duration <= %(maxDuration)s")
-                    full_args["maxDuration"] = f.value[1]
-            elif filter_type == schemas.FilterType.REFERRER:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.base_referrer)')
-                    ss_constraints.append('isNotNull(ms.base_referrer)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f"s.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-            elif filter_type == schemas.FilterType.METADATA:
-                # get metadata list only if you need it
-                if meta_keys is None:
-                    meta_keys = metadata.get(project_id=project_id)
-                    meta_keys = {m["key"]: m["index"] for m in meta_keys}
-                if f.source in meta_keys.keys():
+                continue
+            if f.auto_captured:
+                if filter_type == schemas.FilterType.USER_BROWSER:
                     if is_any:
-                        extra_constraints.append(f"isNotNull(s.{metadata.index_to_colname(meta_keys[f.source])})")
-                        ss_constraints.append(f"isNotNull(ms.{metadata.index_to_colname(meta_keys[f.source])})")
-                    elif is_undefined:
-                        extra_constraints.append(f"isNull(s.{metadata.index_to_colname(meta_keys[f.source])})")
-                        ss_constraints.append(f"isNull(ms.{metadata.index_to_colname(meta_keys[f.source])})")
+                        extra_constraints.append('isNotNull(s.user_browser)')
+                        ss_constraints.append('isNotNull(ms.user_browser)')
                     else:
                         extra_constraints.append(
-                            sh.multi_conditions(
-                                f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
-                                f.value, is_not=is_not, value_key=f_k))
+                            sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not,
+                                                value_key=f_k))
                         ss_constraints.append(
-                            sh.multi_conditions(
-                                f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
-                                f.value, is_not=is_not, value_key=f_k))
-            elif filter_type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_id)')
-                    ss_constraints.append('isNotNull(ms.user_id)')
-                elif is_undefined:
-                    extra_constraints.append('isNull(s.user_id)')
-                    ss_constraints.append('isNull(ms.user_id)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f"s.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f"ms.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-            elif filter_type in [schemas.FilterType.USER_ANONYMOUS_ID,
-                                 schemas.FilterType.USER_ANONYMOUS_ID_MOBILE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.user_anonymous_id)')
-                    ss_constraints.append('isNotNull(ms.user_anonymous_id)')
-                elif is_undefined:
-                    extra_constraints.append('isNull(s.user_anonymous_id)')
-                    ss_constraints.append('isNull(ms.user_anonymous_id)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f"s.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f"ms.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-            elif filter_type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
-                if is_any:
-                    extra_constraints.append('isNotNull(s.rev_id)')
-                    ss_constraints.append('isNotNull(ms.rev_id)')
-                elif is_undefined:
-                    extra_constraints.append('isNull(s.rev_id)')
-                    ss_constraints.append('isNull(ms.rev_id)')
-                else:
-                    extra_constraints.append(
-                        sh.multi_conditions(f"s.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-                    ss_constraints.append(
-                        sh.multi_conditions(f"ms.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
-            elif filter_type == schemas.FilterType.PLATFORM:
-                # op = sh.get_sql_operator(f.operator)
-                extra_constraints.append(
-                    sh.multi_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
-                                        value_key=f_k))
-                ss_constraints.append(
-                    sh.multi_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
-                                        value_key=f_k))
-            elif filter_type == schemas.FilterType.ISSUE:
-                if is_any:
-                    extra_constraints.append("notEmpty(s.issue_types)")
-                    ss_constraints.append("notEmpty(ms.issue_types)")
-                else:
-                    if f.source:
-                        issues.append(f)
+                            sh.multi_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not,
+                                                value_key=f_k))
 
-                    extra_constraints.append(f"hasAny(s.issue_types,%({f_k})s)")
-                    # sh.multi_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
-                    #                      value_key=f_k))
-                    ss_constraints.append(f"hasAny(ms.issue_types,%({f_k})s)")
-                    #     sh.multi_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
-                    #                          value_key=f_k))
-                    if is_not:
-                        extra_constraints[-1] = f"not({extra_constraints[-1]})"
-                        ss_constraints[-1] = f"not({ss_constraints[-1]})"
-            elif filter_type == schemas.FilterType.EVENTS_COUNT:
-                extra_constraints.append(
-                    sh.multi_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
-                                        value_key=f_k))
-                ss_constraints.append(
-                    sh.multi_conditions(f"ms.events_count {op} %({f_k})s", f.value, is_not=is_not,
-                                        value_key=f_k))
-            else:
-                continue
-            include_in_events = True
+                elif filter_type in [schemas.FilterType.USER_OS, schemas.FilterType.USER_OS_MOBILE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_os)')
+                        ss_constraints.append('isNotNull(ms.user_os)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+                elif filter_type in [schemas.FilterType.USER_DEVICE, schemas.FilterType.USER_DEVICE_MOBILE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_device)')
+                        ss_constraints.append('isNotNull(ms.user_device)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not,
+                                                value_key=f_k))
+
+                elif filter_type in [schemas.FilterType.USER_COUNTRY, schemas.FilterType.USER_COUNTRY_MOBILE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_country)')
+                        ss_constraints.append('isNotNull(ms.user_country)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not,
+                                                value_key=f_k))
+
+                elif filter_type in schemas.FilterType.USER_CITY:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_city)')
+                        ss_constraints.append('isNotNull(ms.user_city)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+                elif filter_type in schemas.FilterType.USER_STATE:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_state)')
+                        ss_constraints.append('isNotNull(ms.user_state)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+                elif filter_type in [schemas.FilterType.UTM_SOURCE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.utm_source)')
+                        ss_constraints.append('isNotNull(ms.utm_source)')
+                    elif is_undefined:
+                        extra_constraints.append('isNull(s.utm_source)')
+                        ss_constraints.append('isNull(ms.utm_source)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                                value_key=f_k))
+                elif filter_type in [schemas.FilterType.UTM_MEDIUM]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.utm_medium)')
+                        ss_constraints.append('isNotNull(ms.utm_medium)')
+                    elif is_undefined:
+                        extra_constraints.append('isNull(s.utm_medium)')
+                        ss_constraints.append('isNull(ms.utm_medium')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                                value_key=f_k))
+                elif filter_type in [schemas.FilterType.UTM_CAMPAIGN]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.utm_campaign)')
+                        ss_constraints.append('isNotNull(ms.utm_campaign)')
+                    elif is_undefined:
+                        extra_constraints.append('isNull(s.utm_campaign)')
+                        ss_constraints.append('isNull(ms.utm_campaign)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f's.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f'ms.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                                value_key=f_k))
+
+                elif filter_type == schemas.FilterType.DURATION:
+                    if len(f.value) > 0 and f.value[0] is not None:
+                        extra_constraints.append("s.duration >= %(minDuration)s")
+                        ss_constraints.append("ms.duration >= %(minDuration)s")
+                        full_args["minDuration"] = f.value[0]
+                    if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
+                        extra_constraints.append("s.duration <= %(maxDuration)s")
+                        ss_constraints.append("ms.duration <= %(maxDuration)s")
+                        full_args["maxDuration"] = f.value[1]
+                elif filter_type == schemas.FilterType.REFERRER:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.base_referrer)')
+                        ss_constraints.append('isNotNull(ms.base_referrer)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f"s.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                elif filter_type == schemas.FilterType.METADATA:
+                    # to support old metadata-filter structure
+                    # get metadata list only if you need it
+                    if meta_keys is None:
+                        meta_keys = metadata.get(project_id=project_id)
+                        meta_keys = {m["key"]: m["index"] for m in meta_keys}
+                    if f.source in meta_keys.keys():
+                        if is_any:
+                            extra_constraints.append(f"isNotNull(s.{metadata.index_to_colname(meta_keys[f.source])})")
+                            ss_constraints.append(f"isNotNull(ms.{metadata.index_to_colname(meta_keys[f.source])})")
+                        elif is_undefined:
+                            extra_constraints.append(f"isNull(s.{metadata.index_to_colname(meta_keys[f.source])})")
+                            ss_constraints.append(f"isNull(ms.{metadata.index_to_colname(meta_keys[f.source])})")
+                        else:
+                            extra_constraints.append(
+                                sh.multi_conditions(
+                                    f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
+                                    f.value, is_not=is_not, value_key=f_k))
+                            ss_constraints.append(
+                                sh.multi_conditions(
+                                    f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
+                                    f.value, is_not=is_not, value_key=f_k))
+                elif filter_type.startswith(schemas.FilterType.METADATA):
+                    # to support new metadata-filter structure
+
+                    if is_any:
+                        extra_constraints.append(f"isNotNull(s.{filter_type})")
+                        ss_constraints.append(f"isNotNull(ms.{filter_type})")
+                    elif is_undefined:
+                        extra_constraints.append(f"isNull(s.{filter_type})")
+                        ss_constraints.append(f"isNull(ms.{filter_type})")
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f"s.{filter_type} {op} toString(%({f_k})s)",
+                                                f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f"ms.{filter_type} {op} toString(%({f_k})s)",
+                                                f.value, is_not=is_not, value_key=f_k))
+
+                elif filter_type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_id)')
+                        ss_constraints.append('isNotNull(ms.user_id)')
+                    elif is_undefined:
+                        extra_constraints.append('isNull(s.user_id)')
+                        ss_constraints.append('isNull(ms.user_id)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f"s.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f"ms.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                elif filter_type in [schemas.FilterType.USER_ANONYMOUS_ID,
+                                     schemas.FilterType.USER_ANONYMOUS_ID_MOBILE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.user_anonymous_id)')
+                        ss_constraints.append('isNotNull(ms.user_anonymous_id)')
+                    elif is_undefined:
+                        extra_constraints.append('isNull(s.user_anonymous_id)')
+                        ss_constraints.append('isNull(ms.user_anonymous_id)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f"s.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f"ms.user_anonymous_id {op} toString(%({f_k})s)", f.value,
+                                                is_not=is_not,
+                                                value_key=f_k))
+                elif filter_type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
+                    if is_any:
+                        extra_constraints.append('isNotNull(s.rev_id)')
+                        ss_constraints.append('isNotNull(ms.rev_id)')
+                    elif is_undefined:
+                        extra_constraints.append('isNull(s.rev_id)')
+                        ss_constraints.append('isNull(ms.rev_id)')
+                    else:
+                        extra_constraints.append(
+                            sh.multi_conditions(f"s.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                        ss_constraints.append(
+                            sh.multi_conditions(f"ms.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                                value_key=f_k))
+                elif filter_type == schemas.FilterType.PLATFORM:
+                    # op = sh.get_sql_operator(f.operator)
+                    extra_constraints.append(
+                        sh.multi_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                            value_key=f_k))
+                    ss_constraints.append(
+                        sh.multi_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                            value_key=f_k))
+                elif filter_type == schemas.FilterType.ISSUE:
+                    if is_any:
+                        extra_constraints.append("notEmpty(s.issue_types)")
+                        ss_constraints.append("notEmpty(ms.issue_types)")
+                    else:
+                        if f.source:
+                            issues.append(f)
+
+                        extra_constraints.append(f"hasAny(s.issue_types,%({f_k})s)")
+                        # sh.multi_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
+                        #                      value_key=f_k))
+                        ss_constraints.append(f"hasAny(ms.issue_types,%({f_k})s)")
+                        #     sh.multi_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
+                        #                          value_key=f_k))
+                        if is_not:
+                            extra_constraints[-1] = f"not({extra_constraints[-1]})"
+                            ss_constraints[-1] = f"not({ss_constraints[-1]})"
+                elif filter_type == schemas.FilterType.EVENTS_COUNT:
+                    extra_constraints.append(
+                        sh.multi_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                            value_key=f_k))
+                    ss_constraints.append(
+                        sh.multi_conditions(f"ms.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                            value_key=f_k))
+                else:
+                    # global auto-captured property
+                    cast = get_col_cast(data_type=f.data_type, value=f.value)
+                    if is_any:
+                        global_properties.append(f'isNotNull(e.`$properties`.`{f.name}`)')
+                    else:
+                        if is_not:
+                            op = sh.reverse_sql_operator(op)
+                            global_properties_negative.append(sh.multi_conditions(get_sub_condition(
+                                col_name=f"accurateCastOrNull(e.`$properties`.`{f.name}`,'{cast}')",
+                                val_name=f_k, operator=op), f.value, is_not=False, value_key=f_k))
+                        else:
+                            global_properties.append(sh.multi_conditions(get_sub_condition(
+                                col_name=f"accurateCastOrNull(e.`$properties`.`{f.name}`,'{cast}')",
+                                val_name=f_k, operator=f.operator), f.value, is_not=False, value_key=f_k))
+
+                    continue
+                include_in_events = True
 
         if include_in_events:
             events_conditions_where.append(f"""main.session_id IN (SELECT s.session_id 
                                                 FROM {MAIN_SESSIONS_TABLE} AS s
                                                 WHERE {" AND ".join(extra_constraints)})""")
+
+    if len(global_properties) > 0:
+        global_properties += ["e.project_id=%(project_id)s",
+                              "e.created_at >= toDateTime(%(startDate)s/1000)",
+                              "e.created_at <= toDateTime(%(endDate)s/1000)"]
     # ---------------------------------------------------------------------------
     events_extra_join = ""
     if len(data.events) > 0:
@@ -674,7 +767,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         event_index = 0
         or_events = data.events_order == schemas.SearchEventOrder.OR
         for i, event in enumerate(data.events):
-            event_type = event.type
+            event_type = event.name
             is_any = sh.isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
@@ -696,12 +789,17 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             s_k = e_k + "_source"
 
             event.value = helper.values_for_operator(value=event.value, op=event.operator)
-            full_args = {**full_args,
-                         **sh.multi_values(event.value, value_key=e_k),
-                         **sh.multi_values(event.source, value_key=s_k),
-                         e_k: event.value[0] if len(event.value) > 0 else event.value}
+            full_args |= sh.multi_values(event.value, value_key=e_k) \
+                         | sh.multi_values(event.source, value_key=s_k) \
+                         | {e_k: event.value[0] if len(event.value) > 0 else event.value}
 
-            if event_type == schemas.EventType.CLICK:
+            if not event.auto_captured:
+                event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
+                event_where.append(f"main.`$event_name`=%({e_k})s")
+                events_conditions.append({"type": event_where[-1]})
+                full_args[e_k] = event.name
+                # events_conditions[-1]["condition"] = event_where[-1]
+            elif event_type == schemas.EventType.CLICK:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 if platform == "web":
                     _column = "label"
@@ -796,7 +894,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             json_condition("main", "$properties", "value", "ILIKE", event.source, f"custom{i}")
                         )
 
-                        full_args = {**full_args, **sh.multi_values(event.source, value_key=f"custom{i}")}
+                        full_args |= sh.multi_values(event.source, value_key=f"custom{i}")
                 else:
                     _column = "label"
                     event_where.append(
@@ -1125,7 +1223,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ))
                     events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
-                full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
+                full_args |= sh.multi_values(event.source, value_key=e_k)
 
                 event_where.append(json_condition(
                     tname, "$properties", colname, event.sourceOperator, event.source, e_k, True, True)
@@ -1150,7 +1248,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ))
                     events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
-                full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
+                full_args |= sh.multi_values(event.source, value_key=e_k)
 
                 event_where.append(json_condition(
                     tname, "$properties", colname, event.sourceOperator, event.source, e_k, True, True)
@@ -1177,7 +1275,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_negative_operator:
                         r_op = sh.reverse_sql_operator(op)
                     e_k_f = e_k + f"_fetch{j}"
-                    full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
+                    full_args |= sh.multi_values(f.value, value_key=e_k_f)
                     if f.type == schemas.FetchFilterType.FETCH_URL:
                         event_where.append(json_condition(
                             "main", "$properties", 'url_path', op, f.value, e_k_f
@@ -1260,7 +1358,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
                     op = sh.get_sql_operator(f.operator)
                     e_k_f = e_k + f"_graphql{j}"
-                    full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
+                    full_args |= sh.multi_values(f.value, value_key=e_k_f)
                     if f.type == schemas.GraphqlFilterType.GRAPHQL_NAME:
                         event_where.append(json_condition(
                             "main", "$properties", "name", op, f.value, e_k_f
@@ -1352,12 +1450,16 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 sub_conditions = []
                 for l, property in enumerate(event.properties.filters):
                     a_k = f"{e_k}_att_{l}"
-                    full_args = {**full_args,
-                                 **sh.multi_values(property.value, value_key=a_k, data_type=property.data_type)}
+                    property.value = helper.values_for_operator(value=property.value, op=property.operator)
+                    full_args |= sh.multi_values(property.value, value_key=a_k, data_type=property.data_type)
                     cast = get_col_cast(data_type=property.data_type, value=property.value)
-                    if property.is_predefined:
+                    if property.auto_captured and property.is_predefined:
                         condition = get_sub_condition(col_name=f"accurateCastOrNull(main.`{property.name}`,'{cast}')",
                                                       val_name=a_k, operator=property.operator)
+                    elif property.auto_captured:
+                        condition = get_sub_condition(
+                            col_name=f"accurateCastOrNull(main.`$properties`.`{property.name}`,'{cast}')",
+                            val_name=a_k, operator=property.operator)
                     else:
                         condition = get_sub_condition(
                             col_name=f"accurateCastOrNull(main.properties.`{property.name}`,'{cast}')",
@@ -1368,8 +1470,12 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     sub_conditions.append(event_where[-1])
                 if len(sub_conditions) > 0:
                     sub_conditions = (" " + event.properties.operator + " ").join(sub_conditions)
-                    events_conditions[-1]["condition"] += " AND " if len(events_conditions[-1]["condition"]) > 0 else ""
-                    events_conditions[-1]["condition"] += "(" + sub_conditions + ")"
+                    if "condition" in events_conditions[-1]:
+                        events_conditions[-1]["condition"] += \
+                            " AND " if len(events_conditions[-1]["condition"]) > 0 else ""
+                        events_conditions[-1]["condition"] += "(" + sub_conditions + ")"
+                    else:
+                        events_conditions[-1]["condition"] = "(" + sub_conditions + ")"
             if event_index == 0 or or_events:
                 event_where += ss_constraints
             if is_not:
@@ -1553,7 +1659,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         for i, f in enumerate(issues):
             f_k_v = f"f_issue_v{i}"
             f_k_s = f_k_v + "_source"
-            full_args = {**full_args, **sh.multi_values(f.value, value_key=f_k_v), f_k_s: f.source}
+            full_args |= sh.multi_values(f.value, value_key=f_k_v) | {f_k_s: f.source}
             issues_conditions.append(sh.multi_conditions(f"issues.type=%({f_k_v})s", f.value,
                                                          value_key=f_k_v))
             issues_conditions[-1] = f"({issues_conditions[-1]} AND issues.context_string=%({f_k_s})s)"
@@ -1572,32 +1678,30 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         if extra_conditions and len(extra_conditions) > 0:
             _extra_or_condition = []
             for i, c in enumerate(extra_conditions):
-                if sh.isAny_opreator(c.operator) and c.type != schemas.EventType.REQUEST_DETAILS.value:
+                if sh.isAny_opreator(c.operator) and c.name != schemas.EventType.REQUEST_DETAILS.value:
                     continue
                 e_k = f"ec_value{i}"
                 op = sh.get_sql_operator(c.operator)
                 c.value = helper.values_for_operator(value=c.value, op=c.operator)
-                full_args = {**full_args,
-                             **sh.multi_values(c.value, value_key=e_k)}
-                if c.type in (schemas.EventType.LOCATION.value, schemas.EventType.REQUEST.value):
+                full_args |= sh.multi_values(c.value, value_key=e_k)
+                if c.name in (schemas.EventType.LOCATION.value, schemas.EventType.REQUEST.value):
                     _extra_or_condition.append(
                         sh.multi_conditions(f"extra_event.url_path {op} %({e_k})s",
                                             c.value, value_key=e_k))
-                elif c.type == schemas.EventType.REQUEST_DETAILS.value:
+                elif c.name == schemas.EventType.REQUEST_DETAILS.value:
                     for j, c_f in enumerate(c.filters):
                         if sh.isAny_opreator(c_f.operator) or len(c_f.value) == 0:
                             continue
                         e_k += f"_{j}"
                         op = sh.get_sql_operator(c_f.operator)
                         c_f.value = helper.values_for_operator(value=c_f.value, op=c_f.operator)
-                        full_args = {**full_args,
-                                     **sh.multi_values(c_f.value, value_key=e_k)}
-                        if c_f.type == schemas.FetchFilterType.FETCH_URL.value:
+                        full_args |= sh.multi_values(c_f.value, value_key=e_k)
+                        if c_f.name == schemas.FetchFilterType.FETCH_URL.value:
                             _extra_or_condition.append(
                                 sh.multi_conditions(f"extra_event.url_path {op} %({e_k})s",
                                                     c_f.value, value_key=e_k))
                 else:
-                    logging.warning(f"unsupported extra_event type:${c.type}")
+                    logging.warning(f"unsupported extra_event type:${c.name}")
             if len(_extra_or_condition) > 0:
                 extra_constraints.append("(" + " OR ".join(_extra_or_condition) + ")")
     else:
@@ -1606,12 +1710,36 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         query_part = f"""{f"({events_query_part}) AS f" if len(events_query_part) > 0 else ""}"""
     else:
         if len(events_query_part) > 0:
+            if len(global_properties) > 0:
+                extra_join += f""" INNER JOIN (SELECT DISTINCT session_id 
+                                               FROM {MAIN_EVENTS_TABLE} AS e
+                                               WHERE {" AND ".join(global_properties)}) AS global_filters USING(session_id)"""
+            if len(global_properties_negative) > 0:
+                extra_join += f""" LEFT JOIN (SELECT DISTINCT session_id
+                                               FROM {MAIN_EVENTS_TABLE} AS e
+                                               WHERE project_id=%(project_id)s
+                                                    AND created_at >= toDateTime(%(startDate)s/1000)
+                                                    AND created_at <= toDateTime(%(endDate)s/1000)
+                                                    AND ({" OR ".join(global_properties_negative)})) AS negative_global_filters USING(session_id)"""
+                extra_constraints.append("isNull(negative_global_filters.session_id)")
             extra_join += f"""INNER JOIN (SELECT DISTINCT ON (session_id) * 
                                     FROM {MAIN_SESSIONS_TABLE} AS s {extra_event}
                                     WHERE {" AND ".join(extra_constraints)}
                                     ORDER BY _timestamp DESC) AS s ON(s.session_id=f.session_id)"""
         else:
             deduplication_keys = ["session_id"] + extra_deduplication
+            if len(global_properties) > 0:
+                extra_join += f""" INNER JOIN (SELECT DISTINCT session_id 
+                                               FROM {MAIN_EVENTS_TABLE} AS e
+                                               WHERE {" AND ".join(global_properties)}) AS global_filters USING(session_id)"""
+            if len(global_properties_negative) > 0:
+                extra_join += f""" LEFT JOIN (SELECT DISTINCT session_id
+                                               FROM {MAIN_EVENTS_TABLE} AS e
+                                               WHERE project_id=%(project_id)s
+                                                    AND created_at >= toDateTime(%(startDate)s/1000)
+                                                    AND created_at <= toDateTime(%(endDate)s/1000)
+                                                    AND ({" OR ".join(global_properties_negative)})) AS negative_global_filters USING(session_id)"""
+                extra_constraints.append("isNull(negative_global_filters.session_id)")
             extra_join = f"""(SELECT * 
                                 FROM {MAIN_SESSIONS_TABLE} AS s {extra_join} {extra_event}
                                 WHERE {" AND ".join(extra_constraints)}

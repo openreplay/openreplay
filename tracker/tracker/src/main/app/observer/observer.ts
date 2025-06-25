@@ -11,7 +11,8 @@ import {
   UnbindNodes,
   SetNodeAttribute,
   AdoptedSSInsertRuleURLBased,
-  AdoptedSSAddOwner
+  AdoptedSSAddOwner,
+  SetNodeSlot,
 } from '../messages.gen.js'
 import App from '../index.js'
 import {
@@ -24,7 +25,7 @@ import {
   isCommentNode,
 } from '../guards.js'
 import { inlineRemoteCss } from './cssInliner.js'
-import { nextID } from "../../modules/constructedStyleSheets.js";
+import { nextID } from '../../modules/constructedStyleSheets.js'
 
 const iconCache = {}
 const svgUrlCache = {}
@@ -184,11 +185,12 @@ enum RecentsType {
 }
 
 interface Options {
-  disableSprites?: boolean,
-  inlineRemoteCss?: boolean,
+  disableSprites?: boolean
+  disableThrottling?: boolean
+  inlineRemoteCss?: boolean
   inlinerOptions?: {
-    forceFetch?: boolean,
-    forcePlain?: boolean,
+    forceFetch?: boolean
+    forcePlain?: boolean
   }
 }
 
@@ -199,6 +201,7 @@ export default abstract class Observer {
   private readonly indexes: Array<number> = []
   private readonly attributesMap: Map<number, Set<string>> = new Map()
   private readonly textSet: Set<number> = new Set()
+  private readonly slotMap: Map<number, number | undefined> = new Map()
   private readonly disableSprites: boolean = false
   /**
    * this option means that, instead of using link element with href to load css,
@@ -213,6 +216,7 @@ export default abstract class Observer {
     protected readonly isTopContext: boolean = false,
     options: Options = {},
   ) {
+    this.throttling = !Boolean(options.disableThrottling)
     this.disableSprites = Boolean(options.disableSprites)
     this.inlineRemoteCss = Boolean(options.inlineRemoteCss)
     this.inlinerOptions = options.inlinerOptions
@@ -301,8 +305,8 @@ export default abstract class Observer {
         let removed = 0
         const totalBeforeRemove = this.app.nodes.getNodeCount()
 
-        const contentDocument = iframe.contentDocument;
-        const nodesUnregister = this.app.nodes.unregisterNode.bind(this.app.nodes);
+        const contentDocument = iframe.contentDocument
+        const nodesUnregister = this.app.nodes.unregisterNode.bind(this.app.nodes)
         while (walker.nextNode()) {
           if (!contentDocument.contains(walker.currentNode)) {
             removed += 1
@@ -395,7 +399,7 @@ export default abstract class Observer {
               setTimeout(() => {
                 this.app.send(SetCSSDataURLBased(fakeTextId, cssText, this.app.getBaseHref()))
               }, 10)
-            }
+            },
           )
         }, 0)
         return
@@ -412,10 +416,11 @@ export default abstract class Observer {
     this.app.attributeSender.sendSetAttribute(id, name, value)
   }
 
+  throttling = true
   private throttledSetNodeData = throttleWithTrailing<number, [Element, string]>(
     (id, parentElement, data) => this.sendNodeData(id, parentElement, data),
-    30
-  );
+    30,
+  )
 
   private sendNodeData(id: number, parentElement: Element, data: string): void {
     if (hasTag(parentElement, 'style')) {
@@ -428,6 +433,18 @@ export default abstract class Observer {
 
   private bindNode(node: Node): void {
     const [id, isNew] = this.app.nodes.registerNode(node)
+    if (isElementNode(node) && hasTag(node, 'slot')) {
+      this.app.nodes.attachNodeListener(node, 'slotchange', () => {
+        const sl = node as HTMLSlotElement
+        sl.assignedNodes({ flatten: true }).forEach((n) => {
+          const nid = this.app.nodes.getID(n)
+          if (nid !== undefined) {
+            this.recents.set(nid, RecentsType.Removed)
+            this.commitNode(nid)
+          }
+        })
+      })
+    }
     if (isNew) {
       this.recents.set(id, RecentsType.New)
     } else if (this.recents.get(id) !== RecentsType.New) {
@@ -463,6 +480,9 @@ export default abstract class Observer {
 
   private unbindTree(node: Node) {
     const id = this.app.nodes.unregisterNode(node)
+    if (id !== undefined) {
+      this.slotMap.delete(id)
+    }
     if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       // Sending RemoveNode only for parent to maintain
       this.app.send(RemoveNode(id))
@@ -501,8 +521,15 @@ export default abstract class Observer {
     if (isRootNode(node)) {
       return true
     }
-    // @ts-ignore SALESFORCE
-    const parent = node.assignedSlot ? node.assignedSlot : node.parentNode
+    let slot = (node as any).assignedSlot as HTMLSlotElement | null
+    let isLightDom = false
+    if (slot) {
+      // Check if the node is in light DOM (not in shadow DOM)
+      // This is a workaround for the issue with shadow DOM and slots
+      // where the slot is not assigned to the node in shadow DOM.
+      isLightDom = node.getRootNode() instanceof ShadowRoot
+    }
+    const parent = node.parentNode
     let parentID: number | undefined
 
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
@@ -515,7 +542,14 @@ export default abstract class Observer {
         this.unbindTree(node)
         return false
       }
-      parentID = this.app.nodes.getID(parent)
+      if (isLightDom && slot) {
+        parentID = this.app.nodes.getID(slot)
+        // in light dom, we don't "slot" the node,
+        // but rather use the slot as a parent
+        slot = null
+      } else {
+        parentID = this.app.nodes.getID(parent)
+      }
       if (parentID === undefined) {
         this.unbindTree(node)
         return false
@@ -574,12 +608,33 @@ export default abstract class Observer {
       } else if (isTextNode(node)) {
         // for text node id != 0, hence parentID !== undefined and parent is Element
         this.app.send(CreateTextNode(id, parentID as number, index))
-        this.throttledSetNodeData(id, parent as Element, node.data)
+        if (this.throttling) {
+          this.throttledSetNodeData(id, parent as Element, node.data)
+        } else {
+          this.sendNodeData(id, parent as Element, node.data)
+        }
+      }
+      if (slot) {
+        const slotID = this.app.nodes.getID(slot)
+        if (slotID !== undefined) {
+          this.slotMap.set(id, slotID)
+          this.app.send(SetNodeSlot(id, slotID))
+        }
       }
       return true
     }
     if (recentsType === RecentsType.Removed && parentID !== undefined) {
       this.app.send(MoveNode(id, parentID, index))
+      if (slot) {
+        const slotID = this.app.nodes.getID(slot)
+        if (slotID !== undefined && this.slotMap.get(id) !== slotID) {
+          this.slotMap.set(id, slotID)
+          this.app.send(SetNodeSlot(id, slotID))
+        }
+      } else if (this.slotMap.has(id)) {
+        this.slotMap.delete(id)
+        this.app.send(SetNodeSlot(id, 0))
+      }
     }
     const attr = this.attributesMap.get(id)
     if (attr !== undefined) {
@@ -595,7 +650,11 @@ export default abstract class Observer {
         throw 'commitNode: node is not a text'
       }
       // for text node id != 0, hence parent is Element
-      this.throttledSetNodeData(id, parent as Element, node.data)
+      if (this.throttling) {
+        this.throttledSetNodeData(id, parent as Element, node.data)
+      } else {
+        this.sendNodeData(id, parent as Element, node.data)
+      }
     }
     return true
   }

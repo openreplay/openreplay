@@ -20,15 +20,15 @@ dependencies: [
 export const usageCode = `// AppDelegate.swift
 import OpenReplay
 
-//... 
+//...
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
-    
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // not required if you're using our SaaS version
         OpenReplay.shared.serverURL = "INGEST_POINT"
         OpenReplay.shared.start(projectKey: "PROJECT_KEY", options: .defaults)
-        
+
         // ...
         return true
     }
@@ -49,7 +49,7 @@ import OpenReplay
             .environmentObject(TodoStore())
 
         if let windowScene = scene as? UIWindowScene {
-            let window = TouchTrackingWindow(windowScene: windowScene) // <<<< here 
+            let window = TouchTrackingWindow(windowScene: windowScene) // <<<< here
             window.rootViewController = UIHostingController(rootView: contentView)
             self.window = window
             window.makeKeyAndVisible()
@@ -62,7 +62,7 @@ const sensitive = `import OpenReplay
 // swiftUI
 Text("Very important sensitive text")
     .sensitive()
-    
+
 // UIKit
 OpenReplay.shared.addIgnoredView(view)`;
 
@@ -87,7 +87,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
           <span>{t('Install the Swift Package')}</span>
         </div>
         <div className={cn(stl.snippetWrapper, 'ml-8')}>
-          <div className="absolute mt-1 mr-2 right-0">
+          <div className="absolute mt-1 mr-2 right-0 z-10">
             <CopyButton content={installationCommand} />
           </div>
           <CodeBlock code={installationCommand} language="bash" />
@@ -102,7 +102,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
         <div className="flex ml-8">
           <div className="w-full">
             <div className={cn(stl.snippetWrapper)}>
-              <div className="absolute mt-1 mr-2 right-0">
+              <div className="absolute mt-1 mr-2 right-0 z-10">
                 <CopyButton content={_usageCode} />
               </div>
               <CodeBlock code={_usageCode} language="swift" />
@@ -139,7 +139,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
         <div className="flex ml-8">
           <div className="w-full">
             <div className={cn(stl.snippetWrapper)}>
-              <div className="absolute mt-1 mr-2 right-0">
+              <div className="absolute mt-1 mr-2 right-0 z-10">
                 <CopyButton content={touches} />
               </div>
               <CodeBlock code={touches} language="swift" />
@@ -156,7 +156,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
         <div className="flex ml-8">
           <div className="w-full">
             <div className={cn(stl.snippetWrapper)}>
-              <div className="absolute mt-1 mr-2 right-0">
+              <div className="absolute mt-1 mr-2 right-0 z-10">
                 <CopyButton content={sensitive} />
               </div>
               <CodeBlock code={sensitive} language="swift" />
@@ -173,7 +173,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
         <div className="flex ml-8">
           <div className="w-full">
             <div className={cn(stl.snippetWrapper)}>
-              <div className="absolute mt-1 mr-2 right-0">
+              <div className="absolute mt-1 mr-2 right-0 z-10">
                 <CopyButton content={inputs} />
               </div>
               <CodeBlock code={inputs} language="swift" />

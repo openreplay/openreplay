@@ -20,6 +20,7 @@ import {
   TABLE,
   TIMESERIES,
   USER_PATH,
+  WEBVITALS,
 } from 'App/constants/card';
 import { ErrorInfo } from '../types/error';
 import { getChartFormatter } from 'Types/dashboard/helper';
@@ -101,7 +102,7 @@ export default class Widget {
   startType: string = 'start';
   startPoint: FilterItem = new FilterItem(filtersMap[FilterKey.LOCATION]);
   excludes: FilterItem[] = [];
-  hideExcess?: boolean = false;
+  hideExcess?: boolean = true;
   compareTo: [startDate?: string, endDate?: string] | null = null;
 
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
@@ -365,7 +366,27 @@ export default class Widget {
         this.data = defaults;
       }
       Object.assign(this.data, data);
-      return;
+      return data;
+    }
+
+    if (this.metricType === WEBVITALS) {
+      const keys = ['P50', 'P75', 'P90', 'Avg', 'Min', 'Max'];
+      const categories = [
+        'domBuildingTime',
+        'firstContentfulPaintTime',
+        'speedIndex',
+        'ttfb',
+      ];
+      const result: any = { raw: data };
+      categories.forEach((category) => {
+        result[category] = {};
+        keys.forEach((key) => {
+          result[category][key] = data[`${category}${key}`];
+          result[category][`${key}Status`] = data[`${category}${key}Status`];
+        });
+      });
+      this.data = result;
+      return result;
     }
 
     if (this.metricType === USER_PATH) {
@@ -399,7 +420,7 @@ export default class Widget {
       const vals = data[0]['values'].map((s: any) =>
         new SessionsByRow().fromJson(s, count, this.metricOf),
       );
-      _data['values'] = vals
+      _data['values'] = vals;
       _data['total'] = data[0]['total'];
     } else {
       if (data.hasOwnProperty('chart')) {

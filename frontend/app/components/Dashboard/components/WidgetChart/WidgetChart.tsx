@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import LineChart from 'App/components/Charts/LineChart';
-import BarChart from 'App/components/Charts/BarChart';
-import PieChart from 'App/components/Charts/PieChart';
-import ColumnChart from 'App/components/Charts/ColumnChart';
+import LineChart from 'Components/Charts/LineChart';
+import BarChart from 'Components/Charts/BarChart';
+import PieChart from 'Components/Charts/PieChart';
 import SankeyChart from 'Components/Charts/SankeyChart';
+import ColumnChart from 'Components/Charts/ColumnChart';
+import WebVitalsChart from 'Components/Charts/WebVitals'
 
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
@@ -23,6 +24,7 @@ import {
   INSIGHTS,
   USER_PATH,
   RETENTION,
+  WEBVITALS,
 } from 'App/constants/card';
 import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
@@ -56,7 +58,7 @@ function WidgetChart(props: Props) {
   const { isSaved = false, metric, isTemplate, height } = props;
   const { dashboardStore, metricStore } = useStore();
   const _metric: any = props.metric;
-  const data = _metric.data;
+  const [data, setData] = useState(_metric.data ?? { chart: [] });
   const { period } = dashboardStore;
   const { drillDownPeriod } = dashboardStore;
   const { drillDownFilter } = dashboardStore;
@@ -110,7 +112,7 @@ function WidgetChart(props: Props) {
   const onChartClick = (event: any) => {
     metricStore.setDrillDown(true);
     if (event) {
-      if (isTableWidget || isPieChart) {
+      if (Array.isArray(event)) {
         // get the filter of clicked row
         const periodTimestamps = drillDownPeriod.toTimestamps();
         drillDownFilter.merge({
@@ -160,12 +162,15 @@ function WidgetChart(props: Props) {
     dashboardStore
       .fetchMetricChartData(metric, payload, isSaved, period, isComparison)
       .then((res) => {
-        if (isComparison) setCompData(res);
+        if (isComparison) {
+          setCompData(res);
+        } else {
+          setData(res);
+        }
         clearTimeout(tm);
         setStale(false);
       })
       .finally(() => {
-        if (metric.metricId === 1014) return;
         setLoading(false);
       });
   };
@@ -184,8 +189,8 @@ function WidgetChart(props: Props) {
     const timestmaps = drillDownPeriod.toTimestamps();
     const density = dashboardStore.selectedDensity;
     const payload = isSaved
-    ? { ...metricParams, density }
-    : { ...params, ...timestmaps, ..._metric.toJson(), density };
+      ? { ...metricParams, density }
+      : { ...params, ...timestmaps, ..._metric.toJson(), density };
     debounceRequest(
       _metric,
       payload,
@@ -572,6 +577,9 @@ function WidgetChart(props: Props) {
       if (viewType === 'cohort') {
         return <CohortCard data={data[0]} />;
       }
+    }
+    if (metricType === WEBVITALS) {
+      return <WebVitalsChart data={data} onFocus={onChartClick} />;
     }
     console.log('Unknown metric type', metricType);
     return <div>{t('Unknown metric type')}</div>;

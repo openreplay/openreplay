@@ -17,7 +17,8 @@ enum WorkerStatus {
   Stopped,
 }
 
-const AUTO_SEND_INTERVAL = 10 * 1000
+const AUTO_SEND_INTERVAL = 30 * 1000
+const KEEPALIVE_SAFE_RANGE = Math.floor((64 << 10) * 0.8)
 
 let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
@@ -100,7 +101,15 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
     finalize()
     return
   }
-
+  if (data === 'closing') {
+    if (writer && sender) {
+      const batch = writer.finaliseLimitedBatch(KEEPALIVE_SAFE_RANGE)
+      if (batch && batch.length > 0) {
+        sender.sendUncompressed(batch)
+      }
+    }
+    return
+  }
   if (Array.isArray(data)) {
     if (writer) {
       const w = writer

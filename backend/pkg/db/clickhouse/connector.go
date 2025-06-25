@@ -245,6 +245,14 @@ func (c *connectorImpl) InsertAutocomplete(session *sessions.Session, msgType, m
 	return nil
 }
 
+func msToSeconds(ms uint64) uint16 {
+	ms = (ms + 500) / 1000
+	if ms > uint64(^uint16(0)) {
+		return ^uint16(0) // ms exceeds uint16 limit
+	}
+	return uint16(ms)
+}
+
 func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *messages.InputChange) error {
 	if msg.Label == "" {
 		return nil
@@ -278,7 +286,7 @@ func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *m
 		session.UserState,
 		session.UserCity,
 		cropString(msg.Url),
-		nullableUint16(uint16(msg.InputDuration)),
+		nullableUint16(msToSeconds(uint64(msg.InputDuration))),
 		jsonString,
 	); err != nil {
 		c.checkError("inputs", err)
@@ -438,7 +446,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 	if msg.LoadEventEnd >= msg.LoadEventStart {
 		loadEventTime = nullableUint16(uint16(msg.LoadEventEnd - msg.LoadEventStart))
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	payload := map[string]interface{}{
 		"request_start":                  nullableUint16(uint16(msg.RequestStart)),
 		"response_start":                 nullableUint16(uint16(msg.ResponseStart)),
 		"response_end":                   nullableUint16(uint16(msg.ResponseEnd)),
@@ -463,8 +471,17 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		"load_event_time":                loadEventTime,
 		"user_device":                    session.UserDevice,
 		"user_device_type":               session.UserDeviceType,
-		"page_title ":                    msg.PageTitle,
-	})
+		"page_title":                     msg.PageTitle,
+	}
+	if len(msg.WebVitals) > 0 {
+		webVitals := map[string]interface{}{}
+		if err := json.Unmarshal([]byte(msg.WebVitals), &webVitals); err == nil {
+			for key, value := range webVitals {
+				payload[key] = value
+			}
+		}
+	}
+	jsonString, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("can't marshal page event: %s", err)
 	}
@@ -717,7 +734,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		session.UserState,
 		session.UserCity,
 		cropString(msg.URL),
-		nullableUint16(uint16(msg.Duration)),
+		nullableUint16(msToSeconds(msg.Duration)),
 		jsonString,
 	); err != nil {
 		c.checkError("requests", err)

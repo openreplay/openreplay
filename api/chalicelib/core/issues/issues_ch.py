@@ -1,6 +1,7 @@
 from chalicelib.utils import ch_client, helper
 import datetime
 from chalicelib.utils.exp_ch_helper import explode_dproperties, add_timestamp
+from .issues_pg import get_issues_categories as _get_issues_categories
 
 
 def get(project_id, issue_id):
@@ -21,16 +22,21 @@ def get(project_id, issue_id):
 def get_by_session_id(session_id, project_id, issue_type=None):
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(query=f"""\
-                            SELECT created_at, `$properties`
+                            SELECT DISTINCT ON (events.created_at, issue_id) events.created_at,
+                                                 issue_id,
+                                                 issue_type,
+                                                 context_string
                             FROM product_analytics.events
+                                    INNER JOIN experimental.issues ON (events.issue_id = issues.issue_id)
                             WHERE session_id = %(session_id)s 
-                                AND project_id= %(project_id)s
+                                AND events.project_id= %(project_id)s
+                                AND issues.project_id= %(project_id)s
                                 AND `$event_name`='ISSUE'
-                                {"AND issue_type = %(type)s" if issue_type is not None else ""}
+                                {"AND events.issue_type = %(type)s AND issues.type = %(type)s" if issue_type is not None else ""}
                             ORDER BY created_at;""",
                            parameters={"session_id": session_id, "project_id": project_id, "type": issue_type})
         rows = cur.execute(query)
-        rows = explode_dproperties(rows)
+        # rows = explode_dproperties(rows)
         rows = helper.list_to_camel_case(rows)
         rows = add_timestamp(rows)
     return rows
@@ -57,3 +63,7 @@ def reduce_issues(issues_list):
             i += 1
 
     return issues_list
+
+
+def get_issues_categories():
+    return _get_issues_categories()

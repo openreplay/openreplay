@@ -70,6 +70,7 @@ type Props = {
   hoverable?: boolean;
   onRowClick?: (row: any, index: number) => void;
   onJump?: (obj: { time: number }) => void;
+  extra?: (row: Record<string, any>) => React.ReactNode;
 };
 
 type TimeLineInfo = {
@@ -145,7 +146,10 @@ function TimeTable(props: Props) {
   ]);
   React.useEffect(() => {
     if (props.activeIndex && props.activeIndex >= 0 && scroller.current) {
-      scroller.current.scrollToIndex(props.activeIndex, { align: 'center', smooth: false });
+      scroller.current.scrollToIndex(props.activeIndex, {
+        align: 'center',
+        smooth: false,
+      });
       setFirstVisibleRowIndex(props.activeIndex ?? 0);
     }
   }, [props.activeIndex]);
@@ -296,6 +300,7 @@ function TimeTable(props: Props) {
                 onRowClick={onRowClick}
                 activeIndex={activeIndex}
                 onJump={onJump}
+                extra={props.extra}
               />
             )}
           </VList>
@@ -316,6 +321,7 @@ function RowRenderer({
   onRowClick,
   activeIndex,
   onJump,
+  extra,
 }: any) {
   if (!row) return;
   return (
@@ -350,7 +356,10 @@ function RowRenderer({
           popup={renderPopup}
         />
       </div>
-      <JumpButton onClick={() => onJump(index)} />
+      <JumpButton
+        extra={extra ? extra(row) : null}
+        onClick={() => onJump(index)}
+      />
     </div>
   );
 }

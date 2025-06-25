@@ -46,7 +46,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
 
             op = sh.get_sql_operator(f.operator)
 
-            filter_type = f.type
+            filter_type = f.name
             f_k = f"f_value{i}"
             values = {**values,
                       **sh.multi_values(f.value, value_key=f_k)}
@@ -121,7 +121,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
             extra_from = []
         op = sh.get_sql_operator(s.operator)
         # event_type = s["type"].upper()
-        event_type = s.type
+        event_type = s.name
         if event_type == schemas.EventType.CLICK:
             next_table = "events.clicks"
             next_col_name = "label"
@@ -267,7 +267,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
 
             op = sh.get_sql_operator(f.operator)
 
-            filter_type = f.type
+            filter_type = f.name
             f_k = f"f_value{i}"
             values = {**values,
                       **sh.multi_values(f.value, value_key=f_k)}
@@ -342,7 +342,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
             extra_from = []
         op = sh.get_sql_operator(s.operator)
         # event_type = s["type"].upper()
-        event_type = s.type
+        event_type = s.name
         if event_type == schemas.EventType.CLICK:
             next_table = "events.clicks"
             next_col_name = "label"
@@ -445,7 +445,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
 
         stages_list.append(
             {"value": stage.value,
-             "type": stage.type,
+             "type": stage.name,
              "operator": stage.operator,
              "dropPct": drop,
              "count": count
@@ -668,7 +668,7 @@ def get_stages(stages, rows,
 
         stages_list.append(
             {"value": stage.value,
-             "type": stage.type,
+             "type": stage.name,
              "operator": stage.operator,
              "drop_pct": drop,
              "dropDueToIssues": 0

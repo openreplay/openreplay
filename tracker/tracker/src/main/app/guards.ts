@@ -45,6 +45,7 @@ type TagTypeMap = {
   style: HTMLStyleElement | SVGStyleElement
   link: HTMLLinkElement
   canvas: HTMLCanvasElement
+  slot: HTMLSlotElement
 }
 export function hasTag<T extends keyof TagTypeMap>(
   el: Node,

@@ -7,10 +7,14 @@ import SearchActions from '../SearchActions';
 import SessionList from './components/SessionList';
 import SessionHeader from './components/SessionHeader';
 import LatestSessionsMessage from './components/LatestSessionsMessage';
+import { trackerInstance } from '@/init/openreplay';
 
 function SessionsTabOverview() {
   usePageTitle('Sessions - OpenReplay');
 
+  React.useEffect(() => {
+    trackerInstance.event('session_list_viewed');
+  }, []);
   return (
     <>
       <NoSessionsMessage />

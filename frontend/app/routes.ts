@@ -1,21 +1,12 @@
+import { CLIENT_TABS } from './utils/routeUtils';
+import { routeIdRequired, changeAvailable, queried } from './extraRoutes';
+
+export * from './extraRoutes';
+export * from './utils/routeUtils';
+
 const hashed = (path: string, hash?: string | number): string => {
   if ((typeof hash === 'string' && hash !== '') || typeof hash === 'number') {
     return `${path}#${hash}`;
-  }
-  return path;
-};
-
-export const queried = (path: string, params?: Record<string, any>): string => {
-  const keys =
-    typeof params === 'object' &&
-    params !== null &&
-    Object.keys(params).filter((key) =>
-      /string|number|boolean/.test(typeof params[key]),
-    );
-  if (keys && keys.length > 0) {
-    return `${path}?${keys
-      .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
-      .join('&')}`;
   }
   return path;
 };
@@ -77,20 +68,6 @@ export const signup = (): string => '/signup';
 
 export const forgotPassword = (): string => '/reset-password';
 
-export const CLIENT_TABS = {
-  INTEGRATIONS: 'integrations',
-  PROFILE: 'account',
-  SESSIONS_LISTING: 'sessions-listing',
-  MANAGE_USERS: 'team',
-  MANAGE_ROLES: 'roles',
-  SITES: 'projects',
-  CUSTOM_FIELDS: 'metadata',
-  WEBHOOKS: 'webhooks',
-  NOTIFICATIONS: 'notifications',
-  AUDIT: 'audit',
-  BILLING: 'billing',
-  MODULES: 'modules',
-};
 export const CLIENT_DEFAULT_TAB = CLIENT_TABS.PROFILE;
 const routerClientTabString = `:activeTab(${Object.values(CLIENT_TABS).join('|')})`;
 export const client = (tab = routerClientTabString): string => `/client/${tab}`;
@@ -203,6 +180,7 @@ export const highlights = (): string => '/highlights';
 export const kai = (): string => '/kai';
 
 const REQUIRED_SITE_ID_ROUTES = [
+  ...routeIdRequired,
   liveSession(''),
   session(''),
   sessions(),
@@ -275,6 +253,7 @@ export function isRoute(route: string, path: string): boolean {
 }
 
 const SITE_CHANGE_AVAILABLE_ROUTES = [
+  ...changeAvailable,
   sessions(),
   notes(),
   bookmarks(),

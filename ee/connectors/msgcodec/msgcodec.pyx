@@ -471,6 +471,12 @@ cdef class MessageCodec:
                 value=self.read_uint(reader)
             )
 
+        if message_id == 36:
+            return NodeAnimationResult(
+                id=self.read_uint(reader),
+                styles=self.read_string(reader)
+            )
+
         if message_id == 37:
             return CSSInsertRule(
                 id=self.read_uint(reader),
@@ -683,6 +689,12 @@ cdef class MessageCodec:
             return CustomIssue(
                 name=self.read_string(reader),
                 payload=self.read_string(reader)
+            )
+
+        if message_id == 65:
+            return SetNodeSlot(
+                id=self.read_uint(reader),
+                slot_id=self.read_uint(reader)
             )
 
         if message_id == 66:

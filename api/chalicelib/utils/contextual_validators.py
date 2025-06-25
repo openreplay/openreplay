@@ -9,7 +9,7 @@ def validate_contextual_payload(
 ) -> schemas.SessionsSearchPayloadSchema:
     if context.project.platform == "web":
         for e in item.events:
-            if e.type in [schemas.EventType.CLICK_MOBILE,
+            if e.name in [schemas.EventType.CLICK_MOBILE,
                           schemas.EventType.INPUT_MOBILE,
                           schemas.EventType.VIEW_MOBILE,
                           schemas.EventType.CUSTOM_MOBILE,
@@ -17,10 +17,10 @@ def validate_contextual_payload(
                           schemas.EventType.ERROR_MOBILE,
                           schemas.EventType.SWIPE_MOBILE]:
                 raise HTTPException(status_code=422,
-                                    detail=f"Mobile event '{e.type}' not supported for web project")
+                                    detail=f"Mobile event '{e.name}' not supported for web project")
     else:
         for e in item.events:
-            if e.type in [schemas.EventType.CLICK,
+            if e.name in [schemas.EventType.CLICK,
                           schemas.EventType.INPUT,
                           schemas.EventType.LOCATION,
                           schemas.EventType.CUSTOM,
@@ -31,6 +31,6 @@ def validate_contextual_payload(
                           schemas.EventType.ERROR,
                           schemas.EventType.TAG]:
                 raise HTTPException(status_code=422,
-                                    detail=f"Web event '{e.type}' not supported for mobile project")
+                                    detail=f"Web event '{e.name}' not supported for mobile project")
 
     return item

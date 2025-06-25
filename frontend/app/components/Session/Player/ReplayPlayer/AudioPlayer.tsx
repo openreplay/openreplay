@@ -42,7 +42,7 @@ function DropdownAudioPlayer({
         return {
           url: data.url,
           timestamp: data.timestamp,
-          start: startTs,
+          start: Math.max(0, startTs),
         };
       }),
     [audioEvents.length, sessionStart],

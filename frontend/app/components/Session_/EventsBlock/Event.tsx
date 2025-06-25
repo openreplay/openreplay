@@ -9,7 +9,8 @@ import {
   Pointer,
   TextCursorInput,
 } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import React from 'react';
+import { Dropdown } from 'antd';
 
 import { prorata, numberWithCommas } from 'App/utils';
 import withOverlay from 'Components/hocs/withOverlay';
@@ -57,22 +58,12 @@ const Event: React.FC<Props> = ({
   whiteBg,
 }) => {
   const { t } = useTranslation();
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
   const isLocation = event.type === TYPES.LOCATION;
+  const disableMenu = ![TYPES.CLICK, TYPES.LOCATION].includes(event.type);
 
-  const onContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setMenuOpen(true);
-  };
-
-  const onMouseLeave = () => setMenuOpen(false);
-
-  const copyHandler = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    const path = event.getIn(['target', 'path']) || event.url || '';
+  const copyHandler = () => {
+    const path = event.selector || event.target.path || event.url || '';
     copy(path);
-    setMenuOpen(false);
   };
 
   const renderBody = () => {
@@ -186,7 +177,7 @@ const Event: React.FC<Props> = ({
                 </div>
                 {isLocation && event.speedIndex != null && (
                   <div className="color-gray-medium flex font-medium items-center leading-none justify-end">
-                    <div className="font-size-10 pr-2">${t('Speed Index')}</div>
+                    <div className="font-size-10 pr-2">{t('Speed Index')}</div>
                     <div>{numberWithCommas(event.speedIndex || 0)}</div>
                   </div>
                 )}
@@ -213,59 +204,67 @@ const Event: React.FC<Props> = ({
 
   const mobileTypes = [TYPES.TOUCH, TYPES.SWIPE, TYPES.TAPRAGE];
   return (
-    <div
-      ref={wrapperRef}
-      onMouseLeave={onMouseLeave}
-      data-openreplay-label="Event"
-      data-type={event.type}
-      className={cn(cls.event, {
-        [cls.menuClosed]: !menuOpen,
-        [cls.highlighted]: showSelection ? selected : isCurrent,
-        [cls.selected]: selected,
-        [cls.showSelection]: showSelection,
-        [cls.red]: isRed,
-        [cls.clickType]:
-          event.type === TYPES.CLICK || event.type === TYPES.SWIPE,
-        [cls.inputType]: event.type === TYPES.INPUT,
-        [cls.frustration]: isFrustration,
-        [cls.highlight]: presentInSearch,
-        [cls.lastInGroup]: whiteBg,
-        'pl-4 pr-6 py-2': event.type !== TYPES.LOCATION,
-        'border-0 border-l-0 ml-0': mobileTypes.includes(event.type),
-      })}
-      onClick={onClick}
-      onContextMenu={onContextMenu}
+    <Dropdown
+      trigger={['contextMenu']}
+      disabled={disableMenu}
+      menu={{
+        items: [
+          {
+            key: 'copy',
+            label:
+              event.type === TYPES.CLICK ? t('Copy selector') : t('Copy URL'),
+          },
+        ],
+        onClick: () => {
+          copyHandler();
+        },
+      }}
     >
-      {menuOpen && (
-        <button onClick={copyHandler} className={cls.contextMenu}>
-          {event.target ? t('Copy CSS') : t('Copy URL')}
-        </button>
-      )}
-      <div className={cn(cls.topBlock, cls.firstLine, 'w-full')}>
-        {renderBody()}
+      <div
+        data-openreplay-label="Event"
+        data-type={event.type}
+        className={cn(cls.event, {
+          [cls.highlighted]: showSelection ? selected : isCurrent,
+          [cls.selected]: selected,
+          [cls.showSelection]: showSelection,
+          [cls.red]: isRed,
+          [cls.clickType]:
+            event.type === TYPES.CLICK || event.type === TYPES.SWIPE,
+          [cls.inputType]: event.type === TYPES.INPUT,
+          [cls.frustration]: isFrustration,
+          [cls.highlight]: presentInSearch,
+          [cls.lastInGroup]: whiteBg,
+          'pl-4 pr-6 py-2': event.type !== TYPES.LOCATION,
+          'border-0 border-l-0 ml-0': mobileTypes.includes(event.type),
+        })}
+        onClick={onClick}
+      >
+        <div className={cn(cls.topBlock, cls.firstLine, 'w-full')}>
+          {renderBody()}
+        </div>
+        {isLocation &&
+        (event.fcpTime ||
+          event.visuallyComplete ||
+          event.timeToInteractive ||
+          event.webvitals) ? (
+          <LoadInfo
+            onClick={toggleLoadInfo}
+            event={event}
+            webvitals={event.webvitals}
+            prorata={prorata({
+              parts: 100,
+              elements: {
+                a: event.fcpTime,
+                b: event.visuallyComplete,
+                c: event.timeToInteractive,
+              },
+              startDivisorFn: (elements) => elements / 1.2,
+              divisorFn: (elements, parts) => elements / (2 * parts + 1),
+            })}
+          />
+        ) : null}
       </div>
-      {isLocation &&
-      (event.fcpTime ||
-        event.visuallyComplete ||
-        event.timeToInteractive ||
-        event.webvitals) ? (
-        <LoadInfo
-          onClick={toggleLoadInfo}
-          event={event}
-          webvitals={event.webvitals}
-          prorata={prorata({
-            parts: 100,
-            elements: {
-              a: event.fcpTime,
-              b: event.visuallyComplete,
-              c: event.timeToInteractive,
-            },
-            startDivisorFn: (elements) => elements / 1.2,
-            divisorFn: (elements, parts) => elements / (2 * parts + 1),
-          })}
-        />
-      ) : null}
-    </div>
+    </Dropdown>
   );
 };
 

@@ -2,6 +2,7 @@
 import chroma from 'chroma-js';
 import * as htmlToImage from 'html-to-image';
 import { SESSION_FILTER } from 'App/constants/storageKeys';
+export * from './extraUtils';
 
 export const HOUR_SECS = 60 * 60;
 export const DAY_SECS = 24 * HOUR_SECS;
@@ -37,6 +38,7 @@ export function debounceCall(func, wait) {
     timeout = setTimeout(() => func.apply(context, args), wait);
   };
 }
+
 
 export function randomInt(a, b) {
   const min = (b ? a : 0) - 0.5;

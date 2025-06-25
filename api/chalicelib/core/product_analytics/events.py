@@ -7,35 +7,39 @@ from chalicelib.utils.ch_client import ClickHouseClient
 from chalicelib.utils.exp_ch_helper import get_sub_condition, get_col_cast
 
 logger = logging.getLogger(__name__)
-PREDEFINED_EVENTS = [
-    "CLICK",
-    "INPUT",
-    "LOCATION",
-    "ERROR",
-    "REQUEST"
-]
+PREDEFINED_EVENTS = {
+    "CLICK": {"displayName": "Click",
+              "description": "Represents a user click on a webpage element. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"CLICK\".\n\nContains element selector, text content, …, timestamp."},
+    "INPUT": {"displayName": "Input",
+              "description": "Represents text input by a user in form fields or editable elements. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"INPUT\".\n\nContains the element selector, ….. and timestamp (actual text content may be masked for privacy)."},
+    "LOCATION": {"displayName": "Visited URL",
+                 "description": "Represents a page navigation or URL change within your application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"LOCATION\".\n\nContains the full URL, …. referrer information, UTM parameters and timestamp."},
+    "ERROR": {"displayName": "Error",
+              "description": "Represents JavaScript errors and console error messages captured from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"error\".\n\nContains error message,…., and timestamp."},
+    "REQUEST": {"displayName": "Request",
+                "description": "Represents HTTP/HTTPS network activity from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"fetch\".\n\nContains URL, method, status code, duration, and timestamp"},
+}
 
 
-def get_events(project_id: int, page: schemas.PaginatedSchema):
+def get_events(project_id: int):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
-            """SELECT DISTINCT
-               ON(event_name,auto_captured)
-                   COUNT (1) OVER () AS total,
-                   event_name AS name, display_name, description,
-                   auto_captured
-               FROM product_analytics.all_events
-               WHERE project_id=%(project_id)s
-               ORDER BY auto_captured, display_name
-                   LIMIT %(limit)s
-               OFFSET %(offset)s;""",
-            parameters={"project_id": project_id, "limit": page.limit, "offset": (page.page - 1) * page.limit})
+            """ \
+            SELECT DISTINCT
+            ON(event_name,auto_captured)
+                COUNT (1) OVER () AS total,
+                event_name AS name, display_name, description,
+                auto_captured
+            FROM product_analytics.all_events
+            WHERE project_id=%(project_id)s
+            ORDER BY auto_captured, display_name, event_name;""",
+            parameters={"project_id": project_id})
         rows = ch_client.execute(r)
     if len(rows) == 0:
         return {"total": len(PREDEFINED_EVENTS), "list": [{
             "name": e,
-            "displayName": "",
-            "description": "",
+            "displayName": PREDEFINED_EVENTS[e]["displayName"],
+            "description": PREDEFINED_EVENTS[e]["description"],
             "autoCaptured": True,
             "id": "event_0",
             "dataType": "string",
@@ -58,8 +62,8 @@ def get_events(project_id: int, page: schemas.PaginatedSchema):
             total += 1
             rows.append({
                 "name": e,
-                "displayName": "",
-                "description": "",
+                "displayName": PREDEFINED_EVENTS[e]["displayName"],
+                "description": PREDEFINED_EVENTS[e]["description"],
                 "autoCaptured": True,
                 "id": "event_0",
                 "dataType": "string",
@@ -68,7 +72,11 @@ def get_events(project_id: int, page: schemas.PaginatedSchema):
                 ],
                 "_foundInPredefinedList": False
             })
-    return {"total": total, "list": rows}
+    return {
+        "total": total,
+        "displayName": "Events",
+        "list": rows
+    }
 
 
 def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
@@ -88,10 +96,12 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
                 is_any = sh.isAny_opreator(f.operator)
                 is_undefined = sh.isUndefined_operator(f.operator)
                 full_args = {**full_args, f_k: sh.single_value(f.value), **sh.multi_values(f.value, value_key=f_k)}
-                if f.is_predefined:
+                if f.auto_captured and f.is_predefined:
                     column = f.name
+                elif f.auto_captured:
+                    column = f"`$properties`.`{f.name}`"
                 else:
-                    column = f"properties.{f.name}"
+                    column = f"properties.`{f.name}`"
 
                 if is_any:
                     condition = f"notEmpty{column})"
@@ -112,8 +122,11 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
                     p_k = f"e_{i}_p_{j}"
                     full_args = {**full_args, **sh.multi_values(ef.value, value_key=p_k, data_type=ef.data_type)}
                     cast = get_col_cast(data_type=ef.data_type, value=ef.value)
-                    if ef.is_predefined:
+                    if ef.auto_captured and ef.is_predefined:
                         sub_condition = get_sub_condition(col_name=f"accurateCastOrNull(`{ef.name}`,'{cast}')",
+                                                          val_name=p_k, operator=ef.operator)
+                    elif ef.auto_captured:
+                        sub_condition = get_sub_condition(col_name=f"accurateCastOrNull(`$properties`.`{ef.name}`,{cast})",
                                                           val_name=p_k, operator=ef.operator)
                     else:
                         sub_condition = get_sub_condition(col_name=f"accurateCastOrNull(properties.`{ef.name}`,{cast})",

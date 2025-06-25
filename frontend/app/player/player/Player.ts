@@ -118,7 +118,7 @@ export default class Player extends Animator {
   }
 
   // toggle range (start, end)
-  toggleRange(start: number, end: number) {
+  toggleRange = (start: number, end: number) => {
     this.pState.update({ range: [start, end] });
   }
 

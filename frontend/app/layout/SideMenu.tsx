@@ -29,7 +29,7 @@ import {
   spotOnlyCats,
 } from './data';
 import { useTranslation } from 'react-i18next';
-import { tag } from '@/components/Session_/Inspector/inspector.css';
+import { extraRoutes } from './menuRoutes';
 
 const { Text } = Typography;
 
@@ -144,8 +144,8 @@ function SideMenu(props: Props) {
     [MENU.USABILITY_TESTS]: () => withSiteId(routes.usabilityTesting(), siteId),
     [MENU.SPOTS]: () => withSiteId(routes.spotsList(), siteId),
     [PREFERENCES_MENU.ACCOUNT]: () => client(CLIENT_TABS.PROFILE),
-    [PREFERENCES_MENU.SESSION_LISTING]: () =>
-      client(CLIENT_TABS.SESSIONS_LISTING),
+    [PREFERENCES_MENU.SESSION_SETTINGS]: () =>
+      client(CLIENT_TABS.SESSION_SETTINGS),
     [PREFERENCES_MENU.INTEGRATIONS]: () => client(CLIENT_TABS.INTEGRATIONS),
     [PREFERENCES_MENU.WEBHOOKS]: () => client(CLIENT_TABS.WEBHOOKS),
     [PREFERENCES_MENU.PROJECTS]: () => client(CLIENT_TABS.SITES),
@@ -157,6 +157,7 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
     [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
     [MENU.KAI]: () => withSiteId(routes.kai(), siteId),
+    ...extraRoutes(siteId),
   };
 
   const handleClick = (item: any) => {

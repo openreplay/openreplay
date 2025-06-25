@@ -16,7 +16,7 @@ type Callback<T> = (o: T) => void;
  */
 export abstract class VNode<T extends Node = Node> {
   protected abstract createNode(): T;
-
+  assignedSlot: VSlot | null = null;
   private _node: T | null;
 
   /**
@@ -58,13 +58,13 @@ export abstract class VNode<T extends Node = Node> {
   public abstract applyChanges(): void;
 }
 
-type VChild = VElement | VText | VSpriteMap;
+type VChild = VElement | VText;
 abstract class VParent<T extends Node = Node> extends VNode<T> {
   /**
    */
   protected children: VChild[] = [];
 
-  private notMontedChildren: Set<VChild> = new Set();
+  protected notMontedChildren: Set<VChild> = new Set();
 
   insertChildAt(child: VChild, index: number) {
     if (child.parentNode) {
@@ -85,6 +85,9 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
     let nextMounted: VChild | null = null;
     for (let i = this.children.length - 1; i >= 0; i--) {
       const child = this.children[i];
+      if (child.assignedSlot) {
+        continue;
+      }
       if (
         this.notMontedChildren.has(child) &&
         (!shouldInsert || shouldInsert(child)) // is there a better way of not-knowing about subclass logic on prioritized insertion?
@@ -107,14 +110,15 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
     /* Inserting */
     this.mountChildren();
     if (this.notMontedChildren.size !== 0) {
-      console.error('VParent: Something went wrong with children insertion');
+      console.error('VParent: Something went wrong with children insertion', this.notMontedChildren);
     }
     /* Removing in-between */
     const { node } = this;
     const realChildren = node.childNodes;
-    if (realChildren.length > 0 && this.children.length > 0) {
-      for (let j = 0; j < this.children.length; j++) {
-        while (realChildren[j] !== this.children[j].node) {
+    const expected = this.children.filter((c) => !c.assignedSlot);
+    if (realChildren.length > 0 && expected.length > 0) {
+      for (let j = 0; j < expected.length; j++) {
+        while (realChildren[j] !== expected[j].node) {
           if (isNode(realChildren[j])) {
             node.removeChild(realChildren[j]);
           }
@@ -122,7 +126,7 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
       }
     }
     /* Removing tail */
-    while (realChildren.length > this.children.length) {
+    while (realChildren.length > expected.length) {
       node.removeChild(
         node.lastChild as Node,
       ); /* realChildren.length > this.children.length >= 0 so it is not null */
@@ -159,46 +163,6 @@ export class VShadowRoot extends VParent<ShadowRoot> {
 
 export type VRoot = VDocument | VShadowRoot;
 
-export class VSpriteMap extends VParent<Element> {
-  parentNode: VParent | null =
-    null; /** Should be modified only by he parent itself */
-
-  private newAttributes: Map<string, string | false> = new Map();
-
-  constructor(
-    readonly tagName: string,
-    readonly isSVG = true,
-    public readonly index: number,
-    private readonly nodeId: number,
-  ) {
-    super();
-    this.createNode();
-  }
-
-  protected createNode() {
-    try {
-      const element = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        this.tagName,
-      );
-      element.dataset.openreplayId = this.nodeId.toString();
-      return element;
-    } catch (e) {
-      console.error(
-        'Openreplay: Player received invalid html tag',
-        this.tagName,
-        e,
-      );
-      return document.createElement(this.tagName.replace(/[^a-z]/gi, ''));
-    }
-  }
-
-  applyChanges() {
-    // this is a hack to prevent the sprite map from being removed from the DOM
-    return null;
-  }
-}
-
 export class VElement extends VParent<Element> {
   parentNode: VParent | null =
     null; /** Should be modified only by he parent itself */
@@ -233,6 +197,21 @@ export class VElement extends VParent<Element> {
 
   setAttribute(name: string, value: string) {
     this.newAttributes.set(name, value);
+  }
+
+  applyStyleChanges(styles: [prop: string, value: string][]) {
+    let existingStyles = this.node.getAttribute('style') || '';
+    let newStyles = existingStyles;
+    styles.forEach(([prop, value]) => {
+      if (existingStyles.includes(prop)) {
+        const regex = new RegExp(`(${prop}:[^;]+;?)`, 'g');
+        const newStyle = `${prop}:${value};`;
+        newStyles = newStyles.replace(regex, newStyle);
+      } else {
+        newStyles += `${prop}:${value};`;
+      }
+    });
+    this.newAttributes.set('style', newStyles);
   }
 
   removeAttribute(name: string) {
@@ -290,6 +269,18 @@ export class VElement extends VParent<Element> {
       }
     });
     this.mountChildren((child) => child instanceof VText || child.prioritized);
+  }
+}
+
+export class VSlot extends VElement {
+  protected createNode() {
+    const element = super.createNode() as HTMLSlotElement;
+    return element;
+  }
+
+  applyChanges() {
+    super.applyChanges();
+    // todo safety checks here ?
   }
 }
 

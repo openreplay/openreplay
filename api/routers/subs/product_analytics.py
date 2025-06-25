@@ -4,7 +4,8 @@ from fastapi import Body, Depends, Query
 
 import schemas
 from chalicelib.core import metadata
-from chalicelib.core.product_analytics import events, properties, autocomplete
+from chalicelib.core.product_analytics import events, properties, autocomplete, filters
+from chalicelib.core.issues import issues
 from or_dependencies import OR_context
 from routers.base import get_routers
 from typing import Optional
@@ -13,16 +14,15 @@ public_app, app, app_apikey = get_routers()
 
 
 @app.get('/{projectId}/filters', tags=["product_analytics"])
-def get_all_filters(projectId: int, filter_query: Annotated[schemas.PaginatedSchema, Query()],
-                    context: schemas.CurrentContext = Depends(OR_context)):
-    # TODO: fix total attribute to return the total count instead of the total number of pages
-    # TODO: no pagination, return everything
-    # TODO: remove icon
+def get_all_filters(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {
         "data": {
-            "events": events.get_events(project_id=projectId, page=filter_query),
-            "filters": properties.get_all_properties(project_id=projectId, page=filter_query),
-            "metadata": metadata.get_for_filters(project_id=projectId)
+            "events": events.get_events(project_id=projectId),
+            "event": properties.get_all_properties(project_id=projectId),
+            "session": filters.get_sessions_filters(project_id=projectId),
+            "user": filters.get_users_filters(project_id=projectId),
+            "metadata": metadata.get_for_filters(project_id=projectId),
+            "issues": issues.get_issues_categories()
         }
     }
 
@@ -30,7 +30,7 @@ def get_all_filters(projectId: int, filter_query: Annotated[schemas.PaginatedSch
 @app.get('/{projectId}/events/names', tags=["product_analytics"])
 def get_all_events(projectId: int, filter_query: Annotated[schemas.PaginatedSchema, Query()],
                    context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": events.get_events(project_id=projectId, page=filter_query)}
+    return {"data": events.get_events(project_id=projectId)}
 
 
 @app.get('/{projectId}/properties/search', tags=["product_analytics"])
@@ -39,7 +39,8 @@ def get_event_properties(projectId: int, en: str = Query(default=None, descripti
                          context: schemas.CurrentContext = Depends(OR_context)):
     if not en or len(en) == 0:
         return {"data": []}
-    return {"data": properties.get_event_properties(project_id=projectId, event_name=en, auto_captured=ac)}
+    return {"data": properties.get_event_properties(project_id=projectId, event_name=en, auto_captured=ac) \
+                    + filters.get_global_filters(project_id=projectId)}
 
 
 @app.post('/{projectId}/events/search', tags=["product_analytics"])

@@ -96,6 +96,62 @@ def __transform_journey(rows, reverse_path=False):
             "links": sorted(links, key=lambda x: (x["source"], x["target"]), reverse=False)}
 
 
+def __get_all_from_current_level(element, levels):
+    result = []
+    for l in levels:
+        if element["depth"] == l["depth"] and element["name"] == l["name"] and element["type"] == l["type"]:
+            result.append(l)
+    return result
+
+
+def __transform_sunburst(rows, reverse_path=False):
+    response = []
+    levels = []
+    depth = 1
+    for r in rows:
+        if r["event_number_in_session"] > 2:
+            break
+        children = response
+        current_element = {"name": r["e_value"],
+                           "type": r["event_type"],
+                           "depth": r["event_number_in_session"],
+                           "value": 0,
+                           "children": []}
+
+        if r["event_number_in_session"] > depth:
+            depth += 1
+
+        saved_elements = __get_all_from_current_level(current_element, levels)
+        if len(saved_elements) == 0:
+            children.append(current_element)
+            children = [current_element]
+            levels.append(children[0])
+        else:
+            children = saved_elements
+
+        depth += 1
+        current_element = {"name": r["next_value"],
+                           "type": r["next_type"],
+                           "depth": r["event_number_in_session"] + 1,
+                           "value": r["sessions_count"],
+                           "children": []}
+        for c in children:
+            # c["value"]+=r["sessions_count"]
+            # saved_elements = __get_all_from_current_level(current_element, levels)
+            saved_elements = __get_all_from_current_level(current_element, c["children"])
+            if len(saved_elements) == 0:
+                c["children"].append(current_element)
+                levels.append(c["children"][-1])
+            else:
+                for sc in saved_elements:
+                    sc["value"] += r["sessions_count"]
+        depth -= 1
+    # Count the value of the initial nodes
+    for r in response:
+        r["value"] = sum([c["value"] for c in r["children"]])
+    return response
+
+
 JOURNEY_TYPES = {
     schemas.ProductAnalyticsSelectedEventType.LOCATION: {"table": "events.pages", "column": "path"},
     schemas.ProductAnalyticsSelectedEventType.CLICK: {"table": "events.clicks", "column": "label"},
@@ -176,49 +232,49 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
             continue
 
         # ---- meta-filters
-        if f.type == schemas.FilterType.USER_BROWSER:
+        if f.name == schemas.FilterType.USER_BROWSER:
             if is_any:
                 sessions_conditions.append('user_browser IS NOT NULL')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.USER_OS]:
+        elif f.name in [schemas.FilterType.USER_OS]:
             if is_any:
                 sessions_conditions.append('user_os IS NOT NULL')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.USER_DEVICE]:
+        elif f.name in [schemas.FilterType.USER_DEVICE]:
             if is_any:
                 sessions_conditions.append('user_device IS NOT NULL')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.USER_COUNTRY]:
+        elif f.name in [schemas.FilterType.USER_COUNTRY]:
             if is_any:
                 sessions_conditions.append('user_country IS NOT NULL')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type == schemas.FilterType.USER_CITY:
+        elif f.name == schemas.FilterType.USER_CITY:
             if is_any:
                 sessions_conditions.append('user_city IS NOT NULL')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type == schemas.FilterType.USER_STATE:
+        elif f.name == schemas.FilterType.USER_STATE:
             if is_any:
                 sessions_conditions.append('user_state IS NOT NULL')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.UTM_SOURCE]:
+        elif f.name in [schemas.FilterType.UTM_SOURCE]:
             if is_any:
                 sessions_conditions.append('utm_source IS NOT NULL')
             elif is_undefined:
@@ -228,7 +284,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f'utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.UTM_MEDIUM]:
+        elif f.name in [schemas.FilterType.UTM_MEDIUM]:
             if is_any:
                 sessions_conditions.append('utm_medium IS NOT NULL')
             elif is_undefined:
@@ -238,7 +294,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f'utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.UTM_CAMPAIGN]:
+        elif f.name in [schemas.FilterType.UTM_CAMPAIGN]:
             if is_any:
                 sessions_conditions.append('utm_campaign IS NOT NULL')
             elif is_undefined:
@@ -248,14 +304,14 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f'utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type == schemas.FilterType.DURATION:
+        elif f.name == schemas.FilterType.DURATION:
             if len(f.value) > 0 and f.value[0] is not None:
                 sessions_conditions.append("duration >= %(minDuration)s")
                 extra_values["minDuration"] = f.value[0]
             if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
                 sessions_conditions.append("duration <= %(maxDuration)s")
                 extra_values["maxDuration"] = f.value[1]
-        elif f.type == schemas.FilterType.REFERRER:
+        elif f.name == schemas.FilterType.REFERRER:
             # extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
             if is_any:
                 sessions_conditions.append('base_referrer IS NOT NULL')
@@ -263,7 +319,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append(
                     sh.multi_conditions(f"base_referrer {op} %({f_k})s", f.value, is_not=is_not,
                                         value_key=f_k))
-        elif f.type == schemas.FilterType.METADATA:
+        elif f.name == schemas.FilterType.METADATA:
             # get metadata list only if you need it
             if meta_keys is None:
                 meta_keys = metadata.get(project_id=project_id)
@@ -279,7 +335,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                             f"{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
                             f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
+        elif f.name in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
             if is_any:
                 sessions_conditions.append('user_id IS NOT NULL')
             elif is_undefined:
@@ -289,7 +345,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f"user_id {op} %({f_k})s::text", f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.USER_ANONYMOUS_ID,
+        elif f.name in [schemas.FilterType.USER_ANONYMOUS_ID,
                         schemas.FilterType.USER_ANONYMOUS_ID_MOBILE]:
             if is_any:
                 sessions_conditions.append('user_anonymous_id IS NOT NULL')
@@ -300,7 +356,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f"user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
+        elif f.name in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
             if is_any:
                 sessions_conditions.append('rev_id IS NOT NULL')
             elif is_undefined:
@@ -309,13 +365,13 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append(
                     sh.multi_conditions(f"rev_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type == schemas.FilterType.PLATFORM:
+        elif f.name == schemas.FilterType.PLATFORM:
             # op = __ sh.get_sql_operator(f.operator)
             sessions_conditions.append(
                 sh.multi_conditions(f"user_device_type {op} %({f_k})s", f.value, is_not=is_not,
                                     value_key=f_k))
 
-        elif f.type == schemas.FilterType.ISSUE:
+        elif f.name == schemas.FilterType.ISSUE:
             if is_any:
                 sessions_conditions.append("array_length(issue_types, 1) > 0")
             else:
@@ -323,7 +379,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f"%({f_k})s {op} ANY (issue_types)", f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type == schemas.FilterType.EVENTS_COUNT:
+        elif f.name == schemas.FilterType.EVENTS_COUNT:
             sessions_conditions.append(
                 sh.multi_conditions(f"events_count {op} %({f_k})s", f.value, is_not=is_not,
                                     value_key=f_k))

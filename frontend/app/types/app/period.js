@@ -15,6 +15,7 @@ export const PREV_24_HOURS = 'PREV_24_HOURS';
 export const PREV_7_DAYS = 'PREV_7_DAYS';
 export const PREV_30_DAYS = 'PREV_30_DAYS';
 export const PREV_QUARTER = 'PREV_QUARTER';
+export const LAST_3_MONTHS = 'LAST_3_MONTHS';
 
 function getRange(rangeName, offset) {
   const now = DateTime.now().setZone(offset);
@@ -31,7 +32,9 @@ function getRange(rangeName, offset) {
       );
     case LAST_24_HOURS:
       const mod = now.minute % 15;
-      const next = now.plus({ minutes: mod === 0 ? 15 : 15 - mod }).startOf('minute');
+      const next = now
+        .plus({ minutes: mod === 0 ? 15 : 15 - mod })
+        .startOf('minute');
       return Interval.fromDateTimes(next.minus({ hours: 24 }), next);
     case LAST_30_MINUTES:
       return Interval.fromDateTimes(
@@ -72,6 +75,11 @@ function getRange(rangeName, offset) {
       return Interval.fromDateTimes(
         now.minus({ days: 59 }).startOf('day'),
         now.minus({ days: 29 }).startOf('day'),
+      );
+    case LAST_3_MONTHS:
+      return Interval.fromDateTimes(
+        now.minus({ months: 3 }).startOf('month'),
+        now.endOf('month'),
       );
     default:
       return Interval.fromDateTimes(now, now);

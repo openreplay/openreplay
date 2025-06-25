@@ -5,30 +5,9 @@ import { Switch } from 'antd';
 import CircleNumber from '../../CircleNumber';
 import stl from './installDocs.module.css';
 import { useTranslation } from 'react-i18next';
+import { usageCode, usageCodeSST } from './code';
 
 const installationCommand = 'npm i @openreplay/tracker';
-const usageCode = `import { tracker } from '@openreplay/tracker';
-
-tracker.configure({
-  projectKey: "PROJECT_KEY",
-  ingestPoint: "https://${window.location.hostname}/ingest",
-});
-tracker.start()`;
-const usageCodeSST = `import { tracker } from '@openreplay/tracker/cjs';
-// alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
-
-tracker.configure({
-  projectKey: "PROJECT_KEY",
-  ingestPoint: "https://${window.location.hostname}/ingest",
-});
-
-function MyApp() {
-  useEffect(() => { // use componentDidMount in case of React Class Component
-    tracker.start()
-  }, []);
-  
-  //...
-}`;
 
 function InstallDocs({ site }) {
   const { t } = useTranslation();
@@ -43,7 +22,7 @@ function InstallDocs({ site }) {
           <span>{t('Install the npm package.')}</span>
         </div>
         <div className={cn(stl.snippetWrapper, 'ml-8')}>
-          <div className="absolute mt-1 mr-2 right-0">
+          <div className="absolute mt-1 mr-2 right-0 z-10">
             <CopyButton content={installationCommand} />
           </div>
           <CodeBlock code={installationCommand} language="bash" />
@@ -77,7 +56,7 @@ function InstallDocs({ site }) {
                   {t('use the below code:')}
                 </div>
                 <div className={cn(stl.snippetWrapper)}>
-                  <div className="absolute mt-1 mr-2 right-0">
+                  <div className="absolute mt-1 mr-2 right-0 z-10">
                     <CopyButton content={_usageCode} />
                   </div>
                   <CodeBlock code={_usageCode} language="js" />
@@ -118,7 +97,7 @@ function InstallDocs({ site }) {
             <div>
               <div className="-mb-2">{t('Install the plugin via npm:')}</div>
               <div className={cn(stl.snippetWrapper)}>
-                <div className="absolute mt-1 mr-2 right-0">
+                <div className="absolute mt-1 mr-2 right-0 z-10">
                   <CopyButton content="npm i @openreplay/tracker-assist" />
                 </div>
                 <CodeBlock
@@ -132,7 +111,7 @@ function InstallDocs({ site }) {
                 {t('Then enable it with your tracker:')}
               </div>
               <div className={cn(stl.snippetWrapper)}>
-                <div className="absolute mt-1 mr-2 right-0">
+                <div className="absolute mt-1 mr-2 right-0 z-10">
                   <CopyButton content="tracker.use(trackerAssist(options));" />
                 </div>
                 <CodeBlock
