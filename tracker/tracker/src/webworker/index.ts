@@ -25,11 +25,11 @@ let writer: BatchWriter | null = null
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let workerStatus: WorkerStatus = WorkerStatus.NotActive
 
-function finalize(): void {
+function finalize(skipCompression?: boolean): void {
   if (!writer) {
     return
   }
-  writer.finaliseBatch() // TODO: force sendAll?
+  writer.finaliseBatch(skipCompression) // TODO: force sendAll?
 }
 
 function resetWriter(): void {
@@ -85,10 +85,6 @@ let restartTimeoutID: ReturnType<typeof setTimeout>
 
 // @ts-ignore
 self.onmessage = ({ data }: { data: ToWorkerData }): any => {
-  if (data == null) {
-    finalize()
-    return
-  }
   if (data === 'stop') {
     finalize()
     // eslint-disable-next-line
@@ -102,12 +98,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
     return
   }
   if (data === 'closing') {
-    if (writer && sender) {
-      const batch = writer.finaliseLimitedBatch(KEEPALIVE_SAFE_RANGE)
-      if (batch && batch.length > 0) {
-        sender.sendUncompressed(batch)
-      }
-    }
+    finalize(true)
     return
   }
   if (Array.isArray(data)) {
@@ -163,7 +154,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       data.connAttemptCount,
       data.connAttemptGap,
       (batch) => {
-        postMessage({ type: 'compress', batch }, [batch.buffer])
+          postMessage({ type: 'compress', batch }, [batch.buffer])
       },
       data.pageNo,
     )
@@ -171,8 +162,13 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       data.pageNo,
       data.timestamp,
       data.url,
-      (batch) => {
-        sender && sender.push(batch)
+      (batch, skipCompression) => {
+        if (!sender) return;
+        if (skipCompression) {
+          sender.sendUncompressed(batch)
+        } else {
+          sender.push(batch)
+        }
       },
       data.tabId,
       () => postMessage({ type: 'queue_empty' }),
