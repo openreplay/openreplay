@@ -41,13 +41,13 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/analytics/{projectId}/cards", e.createCard, "POST"},
-		{"/v1/analytics/{projectId}/cards", e.getCardsPaginated, "GET"},
-		{"/v1/analytics/{projectId}/cards/{id}", e.getCard, "GET"},
-		{"/v1/analytics/{projectId}/cards/{id}", e.updateCard, "PUT"},
-		{"/v1/analytics/{projectId}/cards/{id}", e.updateCard, "POST"},
-		{"/v1/analytics/{projectId}/cards/{id}", e.deleteCard, "DELETE"},
-		{"/v1/analytics/{projectId}/cards/{id}/sessions", e.getCardSessions, "POST"},
+		{"/analytics/v1/{projectId}/cards", e.createCard, "POST"},
+		{"/analytics/v1/{projectId}/cards", e.getCardsPaginated, "GET"},
+		{"/analytics/v1/{projectId}/cards/{id}", e.getCard, "GET"},
+		{"/analytics/v1/{projectId}/cards/{id}", e.updateCard, "PUT"},
+		{"/analytics/v1/{projectId}/cards/{id}", e.updateCard, "POST"},
+		{"/analytics/v1/{projectId}/cards/{id}", e.deleteCard, "DELETE"},
+		{"/analytics/v1/{projectId}/cards/{id}/sessions", e.getCardSessions, "POST"},
 	}
 }
 

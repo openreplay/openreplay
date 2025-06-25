@@ -41,13 +41,13 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/analytics/{projectId}/dashboards", e.createDashboard, "POST"},
-		{"/v1/analytics/{projectId}/dashboards", e.getDashboards, "GET"},
-		{"/v1/analytics/{projectId}/dashboards/{id}", e.getDashboard, "GET"},
-		{"/v1/analytics/{projectId}/dashboards/{id}", e.updateDashboard, "PUT"},
-		{"/v1/analytics/{projectId}/dashboards/{id}", e.deleteDashboard, "DELETE"},
-		{"/v1/analytics/{projectId}/dashboards/{id}/cards", e.addCardToDashboard, "POST"},
-		{"/v1/analytics/{projectId}/dashboards/{id}/cards/{cardId}", e.removeCardFromDashboard, "DELETE"},
+		{"/analytics/v1/{projectId}/dashboards", e.createDashboard, "POST"},
+		{"/analytics/v1/{projectId}/dashboards", e.getDashboards, "GET"},
+		{"/analytics/v1/{projectId}/dashboards/{id}", e.getDashboard, "GET"},
+		{"/analytics/v1/{projectId}/dashboards/{id}", e.updateDashboard, "PUT"},
+		{"/analytics/v1/{projectId}/dashboards/{id}", e.deleteDashboard, "DELETE"},
+		{"/analytics/v1/{projectId}/dashboards/{id}/cards", e.addCardToDashboard, "POST"},
+		{"/analytics/v1/{projectId}/dashboards/{id}/cards/{cardId}", e.removeCardFromDashboard, "DELETE"},
 	}
 }
 
