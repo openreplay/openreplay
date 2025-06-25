@@ -17,7 +17,7 @@ export default class BatchWriter {
     private readonly pageNo: number,
     private timestamp: number,
     private url: string,
-    private readonly onBatch: (batch: Uint8Array) => void,
+    private readonly onBatch: (batch: Uint8Array, skipCompression?: boolean) => void,
     private tabId: string,
     private readonly onOfflineEnd: () => void,
   ) {
@@ -130,30 +130,15 @@ export default class BatchWriter {
     this.prepare()
   }
 
-  finaliseBatch() {
+  finaliseBatch(skipCompression = false) {
     if (this.isEmpty) {
       return
     }
     const batch = this.encoder.flush()
-    this.onBatch(batch)
+    this.onBatch(batch, skipCompression)
     this.prepare()
   }
 
-  finaliseLimitedBatch(limit: number): Uint8Array | null {
-    if (this.isEmpty) {
-      return null
-    }
-    const batch = this.encoder.flush()
-    let cutoff = batch.length
-    for (let i = this.checkpoints.length - 1; i >= 0; i--) {
-      if (this.checkpoints[i] <= limit) {
-        cutoff = this.checkpoints[i]
-        break
-      }
-    }
-    this.prepare()
-    return batch.slice(0, cutoff)
-  }
 
   clean() {
     this.encoder.reset()
