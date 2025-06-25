@@ -27,6 +27,7 @@ export default class FilterItem {
   isActive: boolean = true;
   completed: number = 0;
   dropped: number = 0;
+  name = '';
 
   constructor(
     data: any = {},
@@ -76,6 +77,7 @@ export default class FilterItem {
     this.completed = data.completed;
     this.dropped = data.dropped;
     this.options = data.options;
+    this.name = data.name ?? data.type;
     return this;
   }
 
@@ -111,6 +113,7 @@ export default class FilterItem {
       );
       _filter = {
         type: json.type,
+        name: json.name || json.type,
         key: json.type,
         label: json.type,
         operatorOptions: [],
@@ -121,6 +124,7 @@ export default class FilterItem {
         sourceOperatorOptions: [],
       };
     }
+    this.name = _filter.name || _filter.type;
     this.type = _filter.type;
     this.key = _filter.key;
     this.label = _filter.label;
@@ -153,8 +157,10 @@ export default class FilterItem {
 
   toJson(): any {
     const isMetadata = this.category === FilterCategory.METADATA;
+    const type = isMetadata ? FilterKey.METADATA : this.key
     const json = {
-      type: isMetadata ? FilterKey.METADATA : this.key,
+      type,
+      name: this.name ?? type,
       isEvent: Boolean(this.isEvent),
       value: this.value?.map((i: any) => (i ? i.toString() : '')) || [],
       operator: this.operator,

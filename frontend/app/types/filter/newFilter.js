@@ -993,6 +993,7 @@ const mapFilters = (list) =>
         ? filter.value
         : [filter.value]
       : [''];
+    filter.name = filter.type;
     acc[filter.key] = filter;
     return acc;
   }, {});
@@ -1016,6 +1017,7 @@ const liveFilterKeys = [
 const mapLiveFilters = (list) => {
   const obj = {};
   list.forEach((filter) => {
+    filter.name = filter.type;
     if (
       filter.category !== FilterCategory.EVENTS &&
       filter.category !== FilterCategory.DEVTOOLS &&
