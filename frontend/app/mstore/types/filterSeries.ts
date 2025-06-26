@@ -9,6 +9,7 @@ export interface IFilterSeries {
   update(key: any, value: any): void;
   fromJson(json: JsonData, isHeatmap?: boolean): this;
   fromData(data: any): this;
+  maxEvents?: number;
   toJson(): {
     seriesId?: any;
     name: string;
@@ -23,6 +24,7 @@ export default class FilterSeries implements IFilterSeries {
 
   seriesId?: any = undefined;
   name: string = 'Series 1';
+  maxEvents?: number = 0;
   filter: FilterStore = new FilterStore();
 
   constructor() {

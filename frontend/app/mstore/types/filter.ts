@@ -201,10 +201,25 @@ export default class FilterStore implements IFilterStore {
     return new FilterItem(dataWithValue);
   }
 
-  addFilter(filterData: FilterData) {
-    console.log('addFilter', filterData);
-    const newFilter = this.createFilterItemFromData(filterData);
-    this.filters.push(newFilter);
+  addFilter(data: any) {
+    console.debug('Adding widget fitler:', data);
+    const filter = this.createFilterItemFromData(data);
+
+    if (filter.isEvent && filter.filters) {
+      filterStore.getEventFilters(filter.id).then((props) => {
+        filter.filters = props
+          ?.filter((prop) => prop.defaultProperty)
+          .map((prop) => {
+            const nestedFilter = this.createFilterItemFromData(prop);
+            nestedFilter.id = prop.id;
+            return nestedFilter;
+          });
+      });
+    }
+
+    console.log('filter', filter);
+
+    this.filters.push(filter);
   }
 
   replaceFilters(newFilters: FilterItem[]) {

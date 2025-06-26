@@ -162,7 +162,6 @@ function FilterSeries(props: Props) {
   const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
   const eventOptions: Filter[] = allFilterOptions.filter((i) => i.isEvent);
   const propertyOptions: Filter[] = allFilterOptions.filter((i) => !i.isEvent);
-  const maxEvents = 1;
 
   const onUpdateFilter = (filterIndex: number, filter: FilterItem) => {
     series.filter.updateFilter(filterIndex, filter);
@@ -253,7 +252,9 @@ function FilterSeries(props: Props) {
                 filterSelection={
                   <FilterSelection
                     disabled={
-                      maxEvents ? actualEvents.length >= maxEvents : false
+                      series.maxEvents
+                        ? actualEvents.length >= series.maxEvents
+                        : false
                     }
                     filters={eventOptions}
                     onFilterClick={(newFilter: Filter) => {
