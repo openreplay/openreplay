@@ -64,13 +64,9 @@ const FilterSeriesHeader = observer(
     };
     return (
       <div
-        className={cn(
-          'px-4 ps-2  h-12 flex items-center relative bg-white border-gray-lighter border-t border-l border-r rounded-t-xl',
-          {
-            hidden: props.hidden,
-            'rounded-b-xl': !props.expanded,
-          },
-        )}
+        className={cn('flex items-center relative bg-white', {
+          hidden: props.hidden,
+        })}
       >
         <Space className="mr-auto" size={30}>
           <SeriesName
@@ -198,44 +194,53 @@ function FilterSeries(props: Props) {
     : false;
 
   return (
-    <div>
-      {!hideHeader && (
-        <FilterSeriesHeader
-          hidden={hideHeader}
-          seriesIndex={seriesIndex}
-          onChange={observeChanges}
-          series={series}
-          onRemove={onRemoveSeries}
-          canDelete={canDelete}
-          expanded={expanded}
-          toggleExpand={() => setExpanded(!expanded)}
-        />
-      )}
-
-      {!hideHeader && expandable && (
-        <Space
-          className="justify-between w-full py-2 cursor-pointer"
-          onClick={() => setExpanded(!expanded)}
-        >
-          <div>
-            {!expanded && (
-              <FilterCountLabels
-                filters={series.filter.filters}
-                toggleExpand={() => setExpanded(!expanded)}
-              />
-            )}
-          </div>
-          <Button
-            size="small"
-            icon={
-              expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />
-            }
+    <Card
+      size="small"
+      className="rounded-lg"
+      classNames={{
+        body: `${expanded ? '!p-4' : '!p-0'}`,
+        header: '!px-4 !py-2',
+      }}
+      extra={
+        !hideHeader && expandable ? (
+          <Space
+            className="justify-between w-full py-2 cursor-pointer"
+            onClick={() => setExpanded(!expanded)}
+          >
+            <div>
+              {!expanded && (
+                <FilterCountLabels
+                  filters={series.filter.filters}
+                  toggleExpand={() => setExpanded(!expanded)}
+                />
+              )}
+            </div>
+            <Button
+              size="small"
+              icon={
+                expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />
+              }
+            />
+          </Space>
+        ) : null
+      }
+      title={
+        !hideHeader ? (
+          <FilterSeriesHeader
+            hidden={hideHeader}
+            seriesIndex={seriesIndex}
+            onChange={observeChanges}
+            series={series}
+            onRemove={onRemoveSeries}
+            canDelete={canDelete}
+            expanded={expanded}
+            toggleExpand={() => setExpanded(!expanded)}
           />
-        </Space>
-      )}
-
+        ) : null
+      }
+    >
       {expanded && (
-        <Card className="rounded-lg" classNames={{ body: '!p-4' }}>
+        <>
           {removeEvents ? null : (
             <>
               <FilterListHeader
@@ -321,9 +326,9 @@ function FilterSeries(props: Props) {
             handleAdd={onAddFilter}
             handleMove={onFilterMove}
           />
-        </Card>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
 
