@@ -17,6 +17,13 @@ export default class FocusManager extends ListWalker<SetNodeFocus> {
       return;
     }
     this.focused?.classList.remove(FOCUS_CLASSNAME);
+    const oldParent = this.focused?.parentElement;
+    if (
+      oldParent &&
+      oldParent.classList.contains(`${FOCUS_CLASSNAME}-within`)
+    ) {
+      oldParent.classList.remove(`${FOCUS_CLASSNAME}-within`);
+    }
     if (msg.id === -1) {
       this.focused = null;
       return;
@@ -28,5 +35,9 @@ export default class FocusManager extends ListWalker<SetNodeFocus> {
     }
     this.focused = vn.node;
     this.focused.classList.add(FOCUS_CLASSNAME);
+    const currParent = this.focused.parentElement;
+    if (currParent) {
+      currParent.classList.add(`${FOCUS_CLASSNAME}-within`);
+    }
   }
 }
