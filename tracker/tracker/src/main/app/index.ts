@@ -88,6 +88,7 @@ type UnsuccessfulStart = {
 type RickRoll = {
   source: string
   context: string
+  projectKey: string
 } & (
   | {
       line: 'never-gonna-give-you-up'
@@ -401,12 +402,13 @@ export default class App {
         line: proto.ask,
         source: thisTab,
         context: this.contextId,
+        projectKey: this.projectKey,
       })
       this.startTimeout = setTimeout(() => {
         this.allowAppStart()
       }, 250)
       this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
-        if (ev.data.context === this.contextId) {
+        if (ev.data.context === this.contextId || this.projectKey !== ev.data.projectKey) {
           return
         }
         this.debug.log(ev)
@@ -429,6 +431,7 @@ export default class App {
               token,
               source: thisTab,
               context: this.contextId,
+              projectKey: this.projectKey,
             })
           }
         }
