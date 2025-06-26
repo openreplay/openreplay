@@ -295,7 +295,7 @@ class SearchStore {
   }
 
   addFilter(filter: any) {
-    console.log('SearchStore: Add Filter', filter);
+    console.debug('SearchStore: Add Filter', filter);
 
     if (filter.isEvent && filter.filters) {
       filterStore.getEventFilters(filter.id).then((props) => {
