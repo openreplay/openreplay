@@ -3,15 +3,16 @@ package charts
 import (
 	"fmt"
 	"log"
-	"openreplay/backend/pkg/analytics/db"
-	"openreplay/backend/pkg/analytics/model"
 	"sort"
 	"strings"
+
+	"openreplay/backend/pkg/analytics/db"
+	"openreplay/backend/pkg/analytics/model"
 )
 
 type TimeSeriesQueryBuilder struct{}
 
-func (t TimeSeriesQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
+func (t *TimeSeriesQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
 	data := make(map[uint64]map[string]uint64)
 	for _, series := range p.Series {
 		query, err := t.buildQuery(p, series)
@@ -61,7 +62,7 @@ func (t TimeSeriesQueryBuilder) Execute(p Payload, conn db.Connector) (interface
 	return result, nil
 }
 
-func (t TimeSeriesQueryBuilder) buildQuery(p Payload, s model.Series) (string, error) {
+func (t *TimeSeriesQueryBuilder) buildQuery(p Payload, s model.Series) (string, error) {
 	switch p.MetricOf {
 	case "sessionCount":
 		return t.buildTimeSeriesQuery(p, s, "sessionCount", "session_id"), nil
@@ -72,7 +73,7 @@ func (t TimeSeriesQueryBuilder) buildQuery(p Payload, s model.Series) (string, e
 	}
 }
 
-func (t TimeSeriesQueryBuilder) buildTimeSeriesQuery(p Payload, s model.Series, metric, idField string) string {
+func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p Payload, s model.Series, metric, idField string) string {
 	sub := t.buildSubQuery(p, s, metric)
 	step := int(getStepSize(p.StartTimestamp, p.EndTimestamp, p.Density, false, 1000)) * 1000
 
@@ -86,7 +87,7 @@ func (t TimeSeriesQueryBuilder) buildTimeSeriesQuery(p Payload, s model.Series, 
 	)
 }
 
-func (t TimeSeriesQueryBuilder) buildSubQuery(p Payload, s model.Series, metric string) string {
+func (t *TimeSeriesQueryBuilder) buildSubQuery(p Payload, s model.Series, metric string) string {
 	evConds, evNames := buildEventConditions(s.Filter.Filters, BuildConditionsOptions{
 		DefinedColumns:       mainColumns,
 		MainTableAlias:       "main",

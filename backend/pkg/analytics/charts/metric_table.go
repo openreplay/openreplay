@@ -3,9 +3,10 @@ package charts
 import (
 	"fmt"
 	"log"
+	"strings"
+
 	"openreplay/backend/pkg/analytics/db"
 	"openreplay/backend/pkg/analytics/model"
-	"strings"
 )
 
 var validMetricOfValues = map[MetricOfTable]struct{}{
@@ -57,7 +58,7 @@ var mainColumns = map[string]string{
 	"ISSUE":         "issue_type",
 }
 
-func (t TableQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
+func (t *TableQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
 	if p.MetricOf == "" {
 		return nil, fmt.Errorf("MetricOf is empty")
 	}
@@ -118,7 +119,7 @@ func (t TableQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, e
 	}, nil
 }
 
-func (t TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, error) {
+func (t *TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, error) {
 	if len(r.Series) == 0 {
 		return "", fmt.Errorf("payload Series cannot be empty")
 	}

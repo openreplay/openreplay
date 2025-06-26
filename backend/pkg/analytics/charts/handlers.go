@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"openreplay/backend/pkg/analytics/cards"
-	"openreplay/backend/pkg/analytics/model"
 	"strconv"
 	"time"
 
@@ -13,6 +11,8 @@ import (
 	"github.com/gorilla/mux"
 
 	config "openreplay/backend/internal/config/analytics"
+	"openreplay/backend/pkg/analytics/cards"
+	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/user"
@@ -71,24 +71,9 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	cardIDStr := mux.Vars(r)["id"]
-	cardID, err := strconv.Atoi(cardIDStr)
+	cardID, err := getIDFromRequest(r, "id")
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("invalid card ID format"), startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	//currentUser := r.Context().Value("userData").(*user.User)
-
-	// get the card from db
-	card, err := e.cards.GetWithSeries(projectID, int64(cardID))
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	if card == nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, fmt.Errorf("card not found"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -97,20 +82,24 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-
 	bodySize = len(bodyBytes)
-	req := &model.MetricPayload{
-		MetricOf:     card.MetricOf,
-		MetricType:   model.MetricType(card.MetricType),
-		MetricFormat: card.MetricFormat,
-		Series:       card.Series,
-		//MetricType: card.MetricType,
-	}
 
+	req := &model.MetricPayload{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+
+	card, err := e.cards.GetWithSeries(projectID, int64(cardID))
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	req.MetricOf = card.MetricOf
+	req.MetricType = model.MetricType(card.MetricType)
+	req.MetricFormat = card.MetricFormat
+	req.Series = card.Series
 
 	if err = e.validator.Struct(req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)

@@ -2,14 +2,13 @@ package main
 
 import (
 	"context"
+
 	analyticsConfig "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics"
 	"openreplay/backend/pkg/analytics/db"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
-	//analyticsMetrics "openreplay/backend/pkg/metrics/analytics"
-	//databaseMetrics "openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server"
@@ -34,7 +33,7 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init clickhouse connection: %s", err)
 	}
-	defer chConn.Stop()
+	defer chConn.Close()
 
 	builder, err := analytics.NewServiceBuilder(log, cfg, webMetrics, dbMetrics, pgConn, chConn)
 	if err != nil {

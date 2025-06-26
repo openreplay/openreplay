@@ -3,12 +3,13 @@ package charts
 import (
 	"fmt"
 	"math"
-	"openreplay/backend/pkg/analytics/db"
-	"openreplay/backend/pkg/analytics/model"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"openreplay/backend/pkg/analytics/db"
+	"openreplay/backend/pkg/analytics/model"
 )
 
 // Node represents a point in the journey diagram.
@@ -40,10 +41,9 @@ type JourneyResponse struct {
 	Data JourneyData `json:"data"`
 }
 
-// UserJourneyQueryBuilder builds and executes the journey query.
 type UserJourneyQueryBuilder struct{}
 
-func (h UserJourneyQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
+func (h *UserJourneyQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
 	q, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -539,7 +539,7 @@ func (h UserJourneyQueryBuilder) Execute(p Payload, conn db.Connector) (interfac
 	}, nil
 }
 
-func (h UserJourneyQueryBuilder) buildQuery(p Payload) (string, error) {
+func (h *UserJourneyQueryBuilder) buildQuery(p Payload) (string, error) {
 	// prepare event list filter
 	events := p.MetricValue
 	if len(events) == 0 {

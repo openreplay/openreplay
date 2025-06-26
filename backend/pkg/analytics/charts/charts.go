@@ -2,6 +2,7 @@ package charts
 
 import (
 	"fmt"
+
 	"openreplay/backend/pkg/analytics/db"
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/db/postgres/pool"
@@ -46,7 +47,5 @@ func (s *chartsImpl) GetData(projectId int, userID uint64, req *model.MetricPayl
 	if err != nil {
 		return nil, fmt.Errorf("error executing query: %v", err)
 	}
-
-	//return resp, nil
 	return map[string]interface{}{"data": resp}, nil
 }

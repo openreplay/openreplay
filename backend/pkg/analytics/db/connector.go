@@ -2,10 +2,12 @@ package db
 
 import (
 	"context"
+	"time"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
 	"openreplay/backend/internal/config/common"
-	"time"
 )
 
 type TableValue struct {
@@ -20,10 +22,10 @@ type TableResponse struct {
 }
 
 type Connector interface {
-	Stop() error
 	Query(query string) (driver.Rows, error)
 	QueryRow(query string) (driver.Row, error)
 	QueryArgs(query string, args map[string]interface{}) (driver.Rows, error)
+	Close() error
 }
 
 type connectorImpl struct {
@@ -51,7 +53,7 @@ func NewConnector(cfg common.Clickhouse) (Connector, error) {
 	return &connectorImpl{conn: conn}, nil
 }
 
-func (c *connectorImpl) Stop() error {
+func (c *connectorImpl) Close() error {
 	return c.conn.Close()
 }
 
@@ -60,7 +62,6 @@ func (c *connectorImpl) Query(query string) (driver.Rows, error) {
 	if err != nil {
 		return nil, err
 	}
-	//defer rows.Close()
 
 	return rows, nil
 }
@@ -70,7 +71,6 @@ func (c *connectorImpl) QueryRow(query string) (driver.Row, error) {
 	if err := row.Err(); err != nil {
 		return nil, err
 	}
-	//defer row.Close()
 
 	return row, nil
 }
@@ -80,7 +80,6 @@ func (c *connectorImpl) QueryArgs(query string, args map[string]interface{}) (dr
 	if err != nil {
 		return nil, err
 	}
-	//defer rows.Close()
 
 	return rows, nil
 }

@@ -3,17 +3,17 @@ package charts
 import (
 	"fmt"
 	"log"
-	"openreplay/backend/pkg/analytics/db"
-	"openreplay/backend/pkg/analytics/model"
 	"strconv"
 	"strings"
+
+	"openreplay/backend/pkg/analytics/db"
+	"openreplay/backend/pkg/analytics/model"
 )
 
 type Payload struct {
 	*model.MetricPayload
-	GroupByColumn string // TODO remove this field
-	ProjectId     int
-	UserId        uint64
+	ProjectId int
+	UserId    uint64
 }
 
 type QueryBuilder interface {
@@ -23,20 +23,20 @@ type QueryBuilder interface {
 func NewQueryBuilder(p Payload) (QueryBuilder, error) {
 	switch p.MetricType {
 	case MetricTypeTimeseries:
-		return TimeSeriesQueryBuilder{}, nil
+		return &TimeSeriesQueryBuilder{}, nil
 	case MetricTypeFunnel:
-		return FunnelQueryBuilder{}, nil
+		return &FunnelQueryBuilder{}, nil
 	case MetricTypeTable:
 		if p.MetricOf == "jsException" {
-			return TableErrorsQueryBuilder{}, nil
+			return &TableErrorsQueryBuilder{}, nil
 		}
-		return TableQueryBuilder{}, nil
+		return &TableQueryBuilder{}, nil
 	case MetricTypeHeatmap:
-		return HeatmapSessionQueryBuilder{}, nil
+		return &HeatmapSessionQueryBuilder{}, nil
 	case MetricTypeSession:
-		return HeatmapQueryBuilder{}, nil
+		return &HeatmapQueryBuilder{}, nil
 	case MetricUserJourney:
-		return UserJourneyQueryBuilder{}, nil
+		return &UserJourneyQueryBuilder{}, nil
 	default:
 		return nil, fmt.Errorf("unknown metric type: %s", p.MetricType)
 	}
@@ -158,21 +158,6 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, nam
 		log.Printf("using default config for type: %v", f.Type)
 	}
 	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
-
-	// operator-based conditions
-	//switch f.Operator {
-	//case "isAny", "onAny":
-	//	if f.IsEvent {
-	//		names = append(names, ftype)
-	//	}
-	//default:
-	//	if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric); c != "" {
-	//		conds = append(conds, c)
-	//		if f.IsEvent {
-	//			names = append(names, ftype)
-	//		}
-	//	}
-	//}
 
 	switch f.Operator {
 	case "isAny", "onAny":

@@ -1,17 +1,18 @@
 package analytics
 
 import (
-	"github.com/go-playground/validator/v10"
-	"openreplay/backend/pkg/analytics/charts"
-	"openreplay/backend/pkg/analytics/db"
-	"openreplay/backend/pkg/metrics/database"
 	"time"
+
+	"github.com/go-playground/validator/v10"
 
 	"openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics/cards"
+	"openreplay/backend/pkg/analytics/charts"
 	"openreplay/backend/pkg/analytics/dashboards"
+	"openreplay/backend/pkg/analytics/db"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/auth"
@@ -37,9 +38,6 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	reqValidator := validator.New()
 
 	cardsService := cards.New(log, pgconn)
-	//if err != nil {
-	//	return nil, err
-	//}
 	cardsHandlers, err := cards.NewHandlers(log, cfg, responser, cardsService, reqValidator)
 	if err != nil {
 		return nil, err

@@ -2,9 +2,10 @@ package charts
 
 import (
 	"fmt"
+	"strings"
+
 	"openreplay/backend/pkg/analytics/db"
 	"openreplay/backend/pkg/analytics/model"
-	"strings"
 )
 
 type HeatmapSessionResponse struct {
@@ -16,7 +17,7 @@ type HeatmapSessionResponse struct {
 
 type HeatmapSessionQueryBuilder struct{}
 
-func (h HeatmapSessionQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
+func (h *HeatmapSessionQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
 	shortestQ, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -44,7 +45,7 @@ func (h HeatmapSessionQueryBuilder) Execute(p Payload, conn db.Connector) (inter
 	}, nil
 }
 
-func (h HeatmapSessionQueryBuilder) buildQuery(p Payload) (string, error) {
+func (h *HeatmapSessionQueryBuilder) buildQuery(p Payload) (string, error) {
 	if len(p.MetricPayload.Series) == 0 {
 		return "", fmt.Errorf("series empty")
 	}
