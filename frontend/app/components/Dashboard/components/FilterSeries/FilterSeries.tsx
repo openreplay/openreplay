@@ -3,7 +3,6 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { Button, Divider, Space } from 'antd';
 import { ChevronDown, ChevronUp, Trash } from 'lucide-react';
-import ExcludeFilters from './ExcludeFilters';
 import SeriesName from './SeriesName';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import FilterSelection from 'Shared/Filters/FilterSelection';
@@ -140,24 +139,28 @@ function FilterSeries(props: Props) {
     observeChanges = () => {},
     canDelete,
     hideHeader = false,
-    // emptyMessage = 'Add an event or filter step to define the series.',
-    // supportsEmpty = true,
-    // excludeFilterKeys = [],
     canExclude = false,
     expandable = false,
     isHeatmap,
     removeEvents,
     collapseState,
     onToggleCollapse,
-    // excludeCategory,
+    series,
+    seriesIndex,
+    onRemoveSeries,
   } = props;
+
   const { filterStore } = useStore();
   const expanded = isHeatmap || !collapseState;
   const setExpanded = onToggleCollapse;
-  const { series, seriesIndex } = props;
 
-  const actualEvents = series.filter.filters.filter((f: any) => f.isEvent);
-  const actualProperties = series.filter.filters.filter((f: any) => !f.isEvent);
+  // preserve original indices
+  const indexedFilters = series.filter.filters.map((f, i) => ({
+    ...f,
+    originalIndex: i,
+  }));
+  const actualEvents = indexedFilters.filter((f) => f.isEvent);
+  const actualProperties = indexedFilters.filter((f) => !f.isEvent);
 
   const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
   const eventOptions: Filter[] = allFilterOptions.filter((i) => i.isEvent);
@@ -168,11 +171,6 @@ function FilterSeries(props: Props) {
     observeChanges();
   };
 
-  // const onFilterMove = (newFilters: Filter[]) => {
-  //   series.filter.replaceFilters(newFilters);
-  //   observeChanges();
-  // };
-  //
   const onFilterMove = (draggedIndex: number, newPosition: number) => {
     series.filter.moveFilter(draggedIndex, newPosition);
     observeChanges();
@@ -189,24 +187,25 @@ function FilterSeries(props: Props) {
   };
 
   const onAddFilter = (filter: Filter) => {
-    console.log('adding filter', filter);
     filter.autoOpen = true;
     filter.filters = [];
     series.filter.addFilter(filter);
     observeChanges();
   };
 
+  const disableEvents = series.maxEvents
+    ? actualEvents.length >= series.maxEvents
+    : false;
+
   return (
     <div>
-      {/* {canExclude && <ExcludeFilters filter={series.filter} />} */}
-
       {!hideHeader && (
         <FilterSeriesHeader
           hidden={hideHeader}
           seriesIndex={seriesIndex}
           onChange={observeChanges}
           series={series}
-          onRemove={props.onRemoveSeries}
+          onRemove={onRemoveSeries}
           canDelete={canDelete}
           expanded={expanded}
           toggleExpand={() => setExpanded(!expanded)}
@@ -235,15 +234,13 @@ function FilterSeries(props: Props) {
         </Space>
       )}
 
-      {expanded ? (
+      {expanded && (
         <div className="bg-white rounded-xl border p-4">
           {removeEvents ? null : (
             <>
               <FilterListHeader
-                title={'Events'}
-                showEventsOrder={
-                  series.filter.filters.filter((f: any) => f.isEvent).length > 0
-                }
+                title="Events"
+                showEventsOrder={actualEvents.length > 0}
                 orderProps={{
                   eventsOrder: series.filter.eventsOrder,
                   eventsOrderSupport: ['then', 'and', 'or'],
@@ -251,15 +248,9 @@ function FilterSeries(props: Props) {
                 onChangeOrder={onChangeEventsOrder}
                 filterSelection={
                   <FilterSelection
-                    disabled={
-                      series.maxEvents
-                        ? actualEvents.length >= series.maxEvents
-                        : false
-                    }
+                    disabled={disableEvents}
                     filters={eventOptions}
-                    onFilterClick={(newFilter: Filter) => {
-                      onAddFilter(newFilter);
-                    }}
+                    onFilterClick={onAddFilter}
                   >
                     <Button type="default" size="small">
                       <div className="flex items-center gap-1">
@@ -277,10 +268,20 @@ function FilterSeries(props: Props) {
                 isDraggable={true}
                 showIndices={true}
                 className="mt-2"
-                handleRemove={onRemoveFilter}
-                handleUpdate={onUpdateFilter}
+                handleRemove={
+                  disableEvents
+                    ? undefined
+                    : (idx) => onRemoveFilter(actualEvents[idx].originalIndex)
+                }
+                handleUpdate={(idx, filter) =>
+                  onUpdateFilter(actualEvents[idx].originalIndex, filter)
+                }
                 handleAdd={onAddFilter}
-                handleMove={onFilterMove}
+                handleMove={(draggedIdx, newPos) => {
+                  const dragged = actualEvents[draggedIdx];
+                  const target = actualEvents[newPos];
+                  onFilterMove(dragged.originalIndex, target.originalIndex);
+                }}
                 max={1}
               />
 
@@ -289,16 +290,12 @@ function FilterSeries(props: Props) {
           )}
 
           <FilterListHeader
-            title={'Filters'}
-            showEventsOrder={
-              series.filter.filters.map((f: any) => !f.isEvent).length > 0
-            }
+            title="Filters"
+            showEventsOrder={actualProperties.length > 0}
             filterSelection={
               <FilterSelection
                 filters={propertyOptions}
-                onFilterClick={(newFilter: Filter) => {
-                  onAddFilter(newFilter);
-                }}
+                onFilterClick={onAddFilter}
               >
                 <Button type="default" size="small">
                   <div className="flex items-center gap-1">
@@ -316,13 +313,17 @@ function FilterSeries(props: Props) {
             isDraggable={false}
             showIndices={false}
             className="mt-2"
-            handleRemove={onRemoveFilter}
-            handleUpdate={onUpdateFilter}
+            handleRemove={(idx) =>
+              onRemoveFilter(actualProperties[idx].originalIndex)
+            }
+            handleUpdate={(idx, filter) =>
+              onUpdateFilter(actualProperties[idx].originalIndex, filter)
+            }
             handleAdd={onAddFilter}
             handleMove={onFilterMove}
           />
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

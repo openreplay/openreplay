@@ -540,52 +540,6 @@ export default class Widget {
   }
 
   // TODO this is a temporary solution until the API is fixed.
-  // // {
-  //   "eventsOrderSupport": [
-  //     "then",
-  //     "or",
-  //     "and"
-  //   ],
-  //   "isConditional": false,
-  //   "isMobile": false,
-  //   "autoOpen": false,
-  //   "filters": [],
-  //   "excludes": [],
-  //   "eventsOrder": "then",
-  //   "startTimestamp": 1750778100000,
-  //   "endTimestamp": 1750864500000,
-  //   "eventsHeader": "EVENTS",
-  //   "page": 1,
-  //   "limit": 10,
-  //   "series": [
-  //     {
-  //       "seriesId": 840,
-  //       "name": "Series 1",
-  //       "filter": {
-  //         "autoOpen": false,
-  //         "filters": [
-  //           {
-  //             "type": "userDevice",
-  //             "operator": "is",
-  //             "value": [
-  //               "iPhone"
-  //             ],
-  //             "filters": []
-  //           }
-  //         ],
-  //         "excludes": [],
-  //         "eventsOrder": "and",
-  //         "startTimestamp": 0,
-  //         "endTimestamp": 0,
-  //         "eventsHeader": "EVENTS",
-  //         "page": 1,
-  //         "limit": 10
-  //       }
-  //     }
-  //   ],
-  //   "metricType": "table",
-  //   "metricOf": "userDevice"
-  // }
   applyProperties(data: any) {
     const updatedSeries =
       data.series?.map((series: any) => {

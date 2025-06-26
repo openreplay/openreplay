@@ -10,6 +10,7 @@ import {
   RETENTION,
   TABLE,
   USER_PATH,
+  WEBVITALS,
 } from 'App/constants/card';
 import FilterSeries from 'Components/Dashboard/components/FilterSeries/FilterSeries';
 import { issueCategories } from 'App/constants/filterOptions';
@@ -73,6 +74,7 @@ const FilterSection = observer(
     const isInsights = metric.metricType === INSIGHTS;
     const isPathAnalysis = metric.metricType === USER_PATH;
     const isRetention = metric.metricType === RETENTION;
+    const isWebVitals = metric.metricType === WEBVITALS;
     const canAddSeries = metric.series.length < 3;
 
     const isSingleSeries =
@@ -81,7 +83,8 @@ const FilterSection = observer(
       isHeatMap ||
       isInsights ||
       isRetention ||
-      isPathAnalysis;
+      isPathAnalysis ||
+      isWebVitals;
     const { t } = useTranslation();
     const allOpen = isSingleSeries || layout.startsWith('flex-row');
     const defaultClosed = React.useRef(!allOpen && metric.exists());
@@ -143,7 +146,8 @@ const FilterSection = observer(
                     isHeatMap ||
                     isInsights ||
                     isPathAnalysis ||
-                    isFunnel
+                    isFunnel ||
+                    isWebVitals
                   }
                   seriesIndex={index}
                   series={series}

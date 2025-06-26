@@ -9,7 +9,7 @@ interface UnifiedFilterListProps {
   filters: Filter[];
   header?: React.ReactNode;
   filterSelection?: React.ReactNode;
-  handleRemove: (index: number) => void;
+  handleRemove?: (index: number) => void;
   handleUpdate: (index: number, updatedFilter: Filter) => void;
   handleAdd: (newFilter: Filter) => void;
   handleMove?: (draggedIndex: number, newPosition: number) => void;
@@ -27,13 +27,12 @@ interface UnifiedFilterListProps {
   style?: React.CSSProperties;
   actions?: React.ReactNode[];
   orderProps?: any;
-  max?: number;
 }
 
 const UnifiedFilterList = (props: UnifiedFilterListProps) => {
   const {
     filters,
-    handleRemove,
+    handleRemove = null,
     handleUpdate,
     handleMove,
     isDraggable = false,
@@ -53,9 +52,10 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
     i: null,
     position: null,
   });
+
   const [draggedInd, setDraggedItem] = useState<number | null>(null);
 
-  const cannotDelete = !supportsEmpty && filters.length <= 1;
+  const cannotDelete = (!supportsEmpty && filters.length <= 1) || !handleRemove;
 
   const updateFilter = useCallback(
     (index: number, updatedFilter: any) => {
