@@ -1,4 +1,3 @@
-{{- if .Values.configOverride.serverConfig }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -9,7 +8,6 @@ data:
   {{ $filename }}: |-
 {{ $content | indent 4 }}
   {{- end }}
-{{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap
