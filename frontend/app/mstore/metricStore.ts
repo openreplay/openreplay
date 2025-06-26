@@ -11,6 +11,7 @@ import {
   USER_PATH,
   RETENTION,
   CATEGORIES,
+  WEBVITALS,
 } from 'App/constants/card';
 import { getRE } from 'App/utils';
 import { FilterKey } from 'Types/filter/filterType';
@@ -282,6 +283,10 @@ export default class MetricStore {
 
     if (value === USER_PATH) {
       // obj['startType'] = 'start';
+    }
+
+    if (value === WEBVITALS) {
+      obj.series[0].maxEvents = 1;
     }
 
     if (value === HEATMAP) {
