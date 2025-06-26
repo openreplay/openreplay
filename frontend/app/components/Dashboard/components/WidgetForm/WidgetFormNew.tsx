@@ -132,7 +132,7 @@ const FilterSection = observer(
           metric.series
             .slice(0, isSingleSeries ? 1 : metric.series.length)
             .map((series: any, index: number) => (
-              <div className="mb-2 rounded-xl" key={series.name}>
+              <div className="mb-2" key={series.name}>
                 <FilterSeries
                   isHeatmap={isHeatMap}
                   canExclude={isPathAnalysis}

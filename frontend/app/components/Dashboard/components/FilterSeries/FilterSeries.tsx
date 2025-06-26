@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import { Button, Divider, Space } from 'antd';
+import { Button, Divider, Space, Card } from 'antd';
 import { ChevronDown, ChevronUp, Trash } from 'lucide-react';
 import SeriesName from './SeriesName';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
@@ -235,7 +235,7 @@ function FilterSeries(props: Props) {
       )}
 
       {expanded && (
-        <div className="bg-white rounded-xl border p-4">
+        <Card className="rounded-lg" classNames={{ body: '!p-4' }}>
           {removeEvents ? null : (
             <>
               <FilterListHeader
@@ -282,7 +282,6 @@ function FilterSeries(props: Props) {
                   const target = actualEvents[newPos];
                   onFilterMove(dragged.originalIndex, target.originalIndex);
                 }}
-                max={1}
               />
 
               <Divider className="my-2" />
@@ -322,7 +321,7 @@ function FilterSeries(props: Props) {
             handleAdd={onAddFilter}
             handleMove={onFilterMove}
           />
-        </div>
+        </Card>
       )}
     </div>
   );
