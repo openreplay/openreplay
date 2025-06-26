@@ -171,7 +171,9 @@ function WidgetSessions({ className = '' }) {
           !seriesJson[0].filter.filters[0]?.value[0] &&
           widget.data.nodes?.[0]
         ) {
-          seriesJson[0].filter.filters[0].value = [widget.data.nodes[0].name];
+          if (seriesJson[0].filter.filters[0]) {
+            seriesJson[0].filter.filters[0].value = [widget.data.nodes[0].name];
+          }
         }
       }
 
