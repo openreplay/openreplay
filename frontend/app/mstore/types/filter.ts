@@ -425,7 +425,17 @@ export default class FilterStore implements IFilterStore {
       autoCaptured: true,
     });
 
-    console.log('locationFilter', locationFilter);
+    runInAction(() => {
+      this.filters = []; // Clear existing filters
+      this.addFilter(locationFilter);
+    });
+  }
+
+  addWebvitalsDefaultFilters() {
+    const locationFilter = filterStore.findEvent({
+      name: FilterKey.LOCATION,
+      autoCaptured: true,
+    });
 
     runInAction(() => {
       this.filters = []; // Clear existing filters

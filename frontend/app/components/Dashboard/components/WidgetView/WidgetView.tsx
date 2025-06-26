@@ -33,6 +33,7 @@ import WidgetSessions from '../WidgetSessions';
 import WidgetPreview from '../WidgetPreview';
 import { useTranslation } from 'react-i18next';
 import { PANEL_SIZES } from 'App/constants/panelSizes';
+import FilterItem from '@/mstore/types/filterItem';
 
 interface Props {
   history: any;
@@ -125,15 +126,42 @@ function WidgetView({
         }
 
         if (selectedCard.cardType === USER_PATH) {
-          cardData.startPoint = filterStore.findEvent({
+          const startPoint = filterStore.findEvent({
             name: FilterKey.LOCATION,
             autoCaptured: true,
           });
+
+          if (!startPoint) {
+            console.error('Start point not found');
+            return;
+          }
+
+          filterStore.getEventFilters(startPoint.id).then((props) => {
+            const defaultProperty = props
+              ?.filter((prop) => prop.defaultProperty)
+              .map((prop) => {
+                const nestedFilter = new FilterItem(prop);
+                nestedFilter.id = prop.id;
+                return nestedFilter;
+              });
+
+            startPoint.filters = defaultProperty;
+          });
+
+          console.log('startPoint', startPoint);
+
+          cardData.startPoint = startPoint;
         }
 
         if (selectedCard.cardType === HEATMAP) {
           cardData.series = [new FilterSeries()];
           cardData.series[0].filter.addHeatmapDefaultFilters();
+        }
+
+        if (selectedCard.cardType === WEBVITALS) {
+          cardData.series = [new FilterSeries()];
+          cardData.series[0].maxEvents = 1;
+          cardData.series[0].filter.addWebvitalsDefaultFilters();
         }
 
         metricStore.merge(cardData);
