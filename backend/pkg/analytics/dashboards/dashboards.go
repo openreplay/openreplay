@@ -1,7 +1,6 @@
 package dashboards
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -81,13 +80,13 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 			COALESCE(json_agg(
 				json_build_object(
 					'config', dw.config,
-					'metric_id', m.metric_id,
+					'metricId', m.metric_id,
 					'name', m.name,
-					'metric_type', m.metric_type,
-					'view_type', m.view_type,
-					'metric_of', m.metric_of,
-					'metric_value', m.metric_value,
-					'metric_format', m.metric_format,
+					'metricType', m.metric_type,
+					'metricFormat', m.metric_format,
+					'viewType', m.view_type,
+					'metricOf', m.metric_of,
+					'metricValue', m.metric_value,
 					'series', s.series
 				)
 			) FILTER (WHERE m.metric_id IS NOT NULL), '[]') AS metrics
@@ -336,15 +335,14 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
 
-	ctx := context.Background()
 	defer func() {
 		if err != nil {
-			tx.Rollback(ctx)
+			err := tx.TxRollback()
 			if err != nil {
 				return
 			}
 		} else {
-			err := tx.Commit(ctx)
+			err := tx.TxCommit()
 			if err != nil {
 				return
 			}
@@ -356,7 +354,7 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 	for _, metricID := range req.MetricIDs {
 		// Check if the widget already exists
 		var exists bool
-		err := tx.QueryRow(ctx, `
+		err := tx.TxQueryRow(`
 			SELECT EXISTS (
 				SELECT 1 FROM public.dashboard_widgets
 				WHERE dashboard_id = $1 AND metric_id = $2
@@ -371,10 +369,9 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 		}
 
 		// Insert new widget
-		_, err = tx.Exec(ctx, `
-			INSERT INTO public.dashboard_widgets (dashboard_id, metric_id, user_id, config)
-			VALUES ($1, $2, $3, $4)
-		`, dashboardId, metricID, userId, req.Config)
+		query := `INSERT INTO public.dashboard_widgets (dashboard_id, metric_id, user_id, config)
+			VALUES ($1, $2, $3, $4)`
+		err = tx.TxExec(query, dashboardId, metricID, userId, req.Config)
 		if err != nil {
 			return fmt.Errorf("failed to insert widget: %w", err)
 		}
@@ -382,7 +379,7 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 	}
 
 	// Commit transaction
-	if err := tx.Commit(ctx); err != nil {
+	if err := tx.TxCommit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 

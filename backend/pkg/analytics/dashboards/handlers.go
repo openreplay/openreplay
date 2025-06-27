@@ -41,13 +41,13 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/analytics/{projectId}/dashboards", e.createDashboard, "POST"},
-		{"/v1/analytics/{projectId}/dashboards", e.getDashboards, "GET"},
-		{"/v1/analytics/{projectId}/dashboards/{id}", e.getDashboard, "GET"},
-		{"/v1/analytics/{projectId}/dashboards/{id}", e.updateDashboard, "PUT"},
-		{"/v1/analytics/{projectId}/dashboards/{id}", e.deleteDashboard, "DELETE"},
-		{"/v1/analytics/{projectId}/dashboards/{id}/cards", e.addCardToDashboard, "POST"},
-		{"/v1/analytics/{projectId}/dashboards/{id}/cards/{cardId}", e.removeCardFromDashboard, "DELETE"},
+		{"/v1/{projectId}/dashboards", e.createDashboard, "POST"},
+		{"/v1/{projectId}/dashboards", e.getDashboards, "GET"},
+		{"/v1/{projectId}/dashboards/{id}", e.getDashboard, "GET"},
+		{"/v1/{projectId}/dashboards/{id}", e.updateDashboard, "PUT"},
+		{"/v1/{projectId}/dashboards/{id}", e.deleteDashboard, "DELETE"},
+		{"/v1/{projectId}/dashboards/{id}/cards", e.addCardToDashboard, "POST"},
+		{"/v1/{projectId}/dashboards/{id}/cards/{cardId}", e.removeCardFromDashboard, "DELETE"},
 	}
 }
 
@@ -92,7 +92,7 @@ func (e *handlersImpl) createDashboard(w http.ResponseWriter, r *http.Request) {
 	currentUser := r.Context().Value("userData").(*user.User)
 	resp, err := e.dashboards.Create(projectID, currentUser.ID, req)
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
 // getDashboards
@@ -113,7 +113,7 @@ func (e *handlersImpl) getDashboards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp.Dashboards}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) getDashboard(w http.ResponseWriter, r *http.Request) {
@@ -133,7 +133,7 @@ func (e *handlersImpl) getDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := r.Context().Value("userData").(*user.User)
-	res, err := e.dashboards.Get(projectID, dashboardID, u.ID)
+	resp, err := e.dashboards.Get(projectID, dashboardID, u.ID)
 	if err != nil {
 		// Map errors to appropriate HTTP status codes
 		if err.Error() == "not_found: dashboard not found" {
@@ -146,7 +146,7 @@ func (e *handlersImpl) getDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, res, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
@@ -195,7 +195,7 @@ func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
 	currentUser := r.Context().Value("userData").(*user.User)
 	resp, err := e.dashboards.Update(projectID, dashboardID, currentUser.ID, req)
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) deleteDashboard(w http.ResponseWriter, r *http.Request) {

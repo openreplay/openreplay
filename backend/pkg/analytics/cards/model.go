@@ -2,44 +2,76 @@ package cards
 
 import (
 	"github.com/go-playground/validator/v10"
+	"openreplay/backend/pkg/analytics/model"
 	"strings"
 	"time"
 )
 
+type MetricType string
+type MetricOfTimeseries string
+type MetricOfTable string
+
+const (
+	MetricTypeTimeseries MetricType = "TIMESERIES"
+	MetricTypeTable      MetricType = "TABLE"
+
+	MetricOfTimeseriesSessionCount MetricOfTimeseries = "SESSION_COUNT"
+	MetricOfTimeseriesUserCount    MetricOfTimeseries = "USER_COUNT"
+
+	MetricOfTableVisitedURL  MetricOfTable = "VISITED_URL"
+	MetricOfTableIssues      MetricOfTable = "ISSUES"
+	MetricOfTableUserCountry MetricOfTable = "USER_COUNTRY"
+	MetricOfTableUserDevice  MetricOfTable = "USER_DEVICE"
+	MetricOfTableUserBrowser MetricOfTable = "USER_BROWSER"
+)
+
 // CardBase Common fields for the Card entity
 type CardBase struct {
-	Name          string           `json:"name" validate:"required"`
-	IsPublic      bool             `json:"isPublic" validate:"omitempty"`
-	DefaultConfig map[string]any   `json:"defaultConfig"`
-	Config        map[string]any   `json:"config"`
-	Thumbnail     *string          `json:"thumbnail" validate:"omitempty,url"`
-	MetricType    string           `json:"metricType" validate:"required,oneof=timeseries table funnel"`
-	MetricOf      string           `json:"metricOf" validate:"required,oneof=session_count user_count"`
-	MetricFormat  string           `json:"metricFormat" validate:"required,oneof=default percentage"`
-	ViewType      string           `json:"viewType" validate:"required,oneof=line_chart table_view"`
-	MetricValue   []string         `json:"metricValue" validate:"omitempty"`
-	SessionID     *int64           `json:"sessionId" validate:"omitempty"`
-	Series        []CardSeriesBase `json:"series" validate:"required,dive"`
+	MetricId      int64          `json:"metricId" validate:"omitempty"`
+	Name          string         `json:"name" validate:"required"`
+	IsPublic      bool           `json:"isPublic" validate:"omitempty"`
+	DefaultConfig map[string]any `json:"defaultConfig"`
+	Config        map[string]any `json:"config"`
+	Thumbnail     *string        `json:"thumbnail" validate:"omitempty,url"`
+	MetricType    string         `json:"metricType" validate:"required,oneof=timeseries table funnel pathAnalysis heatMap"`
+	//MetricOf      string         `json:"metricOf" validate:"required,oneof=sessionCount userCount LOCATION"`
+	MetricOf     string   `json:"metricOf" validate:"required"`
+	MetricFormat string   `json:"metricFormat" validate:"required,oneof=default sessionCount percentage"`
+	ViewType     string   `json:"viewType" validate:"required,oneof=lineChart tableView table chart"`
+	MetricValue  []string `json:"metricValue" validate:"omitempty"`
+	//SessionID    *int64         `json:"sessionId" validate:"omitempty"`
+	Series []model.Series `json:"series" validate:"required,dive"`
+	CardInfo
+}
+
+type CardInfo struct {
+	Rows        *int64         `json:"rows"`
+	StepsBefore *int64         `json:"stepsBefore"`
+	StepsAfter  *int64         `json:"stepsAfter"`
+	StartPoint  []model.Filter `json:"startPoint"`
+	Excludes    []model.Filter `json:"excludes"`
 }
 
 // Card Fields specific to database operations
 type Card struct {
 	CardBase
-	ProjectID int64      `json:"projectId" validate:"required"`
-	UserID    int64      `json:"userId" validate:"required"`
-	CardID    int64      `json:"cardId"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	DeletedAt *time.Time `json:"deleted_at,omitempty"`
-	EditedAt  *time.Time `json:"edited_at,omitempty"`
+	ProjectID int64     `json:"projectId" validate:"required"`
+	UserID    int64     `json:"userId" validate:"required"`
+	CardID    int64     `json:"metricId"`
+	CreatedAt time.Time `json:"createdAt"`
+	//UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt  *time.Time `json:"deletedAt,omitempty"`
+	EditedAt   *time.Time `json:"updatedAt,omitempty"`
+	OwnerEmail *string    `json:"ownerEmail,omitempty"` // Email of the user who created the card
+	OwnerName  *string    `json:"ownerName,omitempty"`  // Name of the user who created the card
 }
 
 type CardSeriesBase struct {
-	Name      string       `json:"name" validate:"required"`
-	CreatedAt time.Time    `json:"createdAt" validate:"omitempty"`
-	DeletedAt *time.Time   `json:"deletedAt" validate:"omitempty"`
-	Index     int64        `json:"index" validate:"required"`
-	Filter    SeriesFilter `json:"filter"`
+	Name      string             `json:"name" validate:"required"`
+	CreatedAt time.Time          `json:"createdAt" validate:"omitempty"`
+	DeletedAt *time.Time         `json:"deletedAt" validate:"omitempty"`
+	Index     *int64             `json:"index" validate:"omitempty"`
+	Filter    model.SeriesFilter `json:"filter"`
 }
 
 type CardSeries struct {
@@ -48,19 +80,21 @@ type CardSeries struct {
 	CardSeriesBase
 }
 
-type SeriesFilter struct {
-	EventOrder string       `json:"eventOrder" validate:"required,oneof=then or and"`
-	Filters    []FilterItem `json:"filters"`
-}
+//type SeriesFilter struct {
+//	EventsOrder string   `json:"eventsOrder" validate:"required,oneof=then or and"`
+//	Filters     []Filter `json:"filters"`
+//}
 
-type FilterItem struct {
-	Type           string   `json:"type" validate:"required"`
-	Operator       string   `json:"operator" validate:"required"`
-	Source         string   `json:"source" validate:"required"`
-	SourceOperator string   `json:"sourceOperator" validate:"required"`
-	Value          []string `json:"value" validate:"required,dive,required"`
-	IsEvent        bool     `json:"isEvent"`
-}
+//type Filter struct {
+//	Name          string   `json:"name" validate:"required"`
+//	Operator      string   `json:"operator" validate:"required"`
+//	PropertyOrder string   `json:"propertyOrder" validate:"required,oneof=then or and"`
+//	Value         []string `json:"value" validate:"required,dive,required"`
+//	IsEvent       bool     `json:"isEvent"`
+//	DataType      string   `json:"dataType" validate:"required,oneof=string number boolean integer"`
+//	AutoCaptured  bool     `json:"autoCaptured"`      // Indicates if the filter is auto-captured
+//	Filters       []Filter `json:"filters,omitempty"` // Nested filters for complex conditions
+//}
 
 // CardCreateRequest Fields required for creating a card (from the frontend)
 type CardCreateRequest struct {
@@ -69,7 +103,7 @@ type CardCreateRequest struct {
 
 type CardGetResponse struct {
 	Card
-	Series []CardSeries `json:"series"`
+	Series []model.Series `json:"series"`
 }
 
 type CardUpdateRequest struct {
@@ -81,7 +115,7 @@ type GetCardsResponse struct {
 }
 
 type GetCardsResponsePaginated struct {
-	Cards []Card `json:"cards"`
+	Cards []Card `json:"list"`
 	Total int    `json:"total"`
 }
 
@@ -192,3 +226,35 @@ func (s *CardListSort) GetSQLField() string {
 func (s *CardListSort) GetSQLOrder() string {
 	return strings.ToUpper(s.Order)
 }
+
+// ---
+
+/*
+class IssueType(str, Enum):
+
+	CLICK_RAGE = 'click_rage'
+	DEAD_CLICK = 'dead_click'
+	EXCESSIVE_SCROLLING = 'excessive_scrolling'
+	BAD_REQUEST = 'bad_request'
+	MISSING_RESOURCE = 'missing_resource'
+	MEMORY = 'memory'
+	CPU = 'cpu'
+	SLOW_RESOURCE = 'slow_resource'
+	SLOW_PAGE_LOAD = 'slow_page_load'
+	CRASH = 'crash'
+	CUSTOM = 'custom'
+	JS_EXCEPTION = 'js_exception'
+	MOUSE_THRASHING = 'mouse_thrashing'
+	# IOS
+	TAP_RAGE = 'tap_rage'
+*/
+//type IssueType string
+
+//type ChartData struct {
+//	StartTs     uint64      `json:"startTs"`
+//	EndTs       uint64      `json:"endTs"`
+//	Density     uint64      `json:"density"`
+//	Filters     []Filter    `json:"filter"`
+//	MetricOf    string      `json:"metricOf"`
+//	MetricValue []IssueType `json:"metricValue"`
+//}
