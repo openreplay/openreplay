@@ -56,6 +56,20 @@ def get_by_api_key(api_key):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
+def get_by_name(name):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""SELECT tenants.tenant_id,
+                                       tenants.name,
+                                       tenants.created_at                        
+                                FROM public.tenants
+                                WHERE tenants.name = %(name)s 
+                                    AND tenants.deleted_at ISNULL
+                                LIMIT 1;""",
+                            {"name": name})
+        cur.execute(query=query)
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
 def generate_new_api_key(tenant_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.tenants
