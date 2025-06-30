@@ -8,13 +8,11 @@ import (
 	"hash/fnv"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/google/uuid"
 
-	"openreplay/backend/internal/config/common"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
@@ -65,25 +63,10 @@ type connectorImpl struct {
 	finished   chan struct{}
 }
 
-func NewConnector(cfg common.Clickhouse, metrics database.Database) Connector {
-	conn, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{cfg.GetTrimmedURL()},
-		Auth: clickhouse.Auth{
-			Database: cfg.Database,
-			Username: cfg.LegacyUserName,
-			Password: cfg.LegacyPassword,
-		},
-		MaxOpenConns:    20,
-		MaxIdleConns:    15,
-		ConnMaxLifetime: 3 * time.Minute,
-		Compression: &clickhouse.Compression{
-			Method: clickhouse.CompressionLZ4,
-		},
-	})
-	if err != nil {
-		log.Fatal(err)
+func NewConnector(conn driver.Conn, metrics database.Database) Connector {
+	if conn == nil {
+		log.Fatal("clickhouse connection is empty")
 	}
-
 	c := &connectorImpl{
 		conn:       conn,
 		metrics:    metrics,

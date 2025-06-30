@@ -6,7 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"openreplay/backend/pkg/analytics/db"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
 	"openreplay/backend/pkg/analytics/model"
 )
 
@@ -17,7 +18,7 @@ type Payload struct {
 }
 
 type QueryBuilder interface {
-	Execute(p Payload, conn db.Connector) (interface{}, error)
+	Execute(p Payload, conn driver.Conn) (interface{}, error)
 }
 
 func NewQueryBuilder(p Payload) (QueryBuilder, error) {
@@ -357,6 +358,21 @@ func contains(slice []string, s string) bool {
 		}
 	}
 	return false
+}
+
+func getStepSize(startTimestamp, endTimestamp int64, density int, decimal bool, factor int) float64 {
+	factorInt64 := int64(factor)
+	stepSize := (endTimestamp / factorInt64) - (startTimestamp / factorInt64)
+
+	if density <= 1 {
+		return float64(stepSize)
+	}
+
+	if decimal {
+		return float64(stepSize) / float64(density)
+	}
+
+	return float64(stepSize / int64(density-1))
 }
 
 func FillMissingDataPoints(

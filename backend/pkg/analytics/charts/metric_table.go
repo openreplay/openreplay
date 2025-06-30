@@ -1,11 +1,13 @@
 package charts
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 
-	"openreplay/backend/pkg/analytics/db"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
 	"openreplay/backend/pkg/analytics/model"
 )
 
@@ -56,7 +58,7 @@ var mainColumns = map[string]string{
 	"ISSUE":         "issue_type",
 }
 
-func (t *TableQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
+func (t *TableQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
 	if p.MetricOf == "" {
 		return nil, fmt.Errorf("MetricOf is empty")
 	}
@@ -75,7 +77,7 @@ func (t *TableQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, 
 		return nil, fmt.Errorf("error building query: %w", err)
 	}
 
-	rows, err := conn.Query(query)
+	rows, err := conn.Query(context.Background(), query)
 	if err != nil {
 		log.Printf("Error executing query: %s\nQuery: %s", err, query)
 		return nil, fmt.Errorf("error executing query: %w", err)

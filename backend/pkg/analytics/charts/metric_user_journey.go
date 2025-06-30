@@ -1,6 +1,7 @@
 package charts
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"sort"
@@ -8,7 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"openreplay/backend/pkg/analytics/db"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
 	"openreplay/backend/pkg/analytics/model"
 )
 
@@ -43,12 +45,12 @@ type JourneyResponse struct {
 
 type UserJourneyQueryBuilder struct{}
 
-func (h *UserJourneyQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
+func (h *UserJourneyQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
 	q, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := conn.Query(q)
+	rows, err := conn.Query(context.Background(), q)
 	if err != nil {
 		return nil, err
 	}

@@ -1,11 +1,12 @@
 package charts
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 
-	"openreplay/backend/pkg/analytics/db"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
 type TableErrorsQueryBuilder struct{}
@@ -32,12 +33,12 @@ type TableErrorsResponse struct {
 	Errors []ErrorItem `json:"errors"`
 }
 
-func (t *TableErrorsQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
+func (t *TableErrorsQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
 	query, err := t.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := conn.Query(query)
+	rows, err := conn.Query(context.Background(), query)
 	if err != nil {
 		log.Printf("Error executing query: %s\nQuery: %s", err, query)
 		return nil, err

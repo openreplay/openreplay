@@ -1,18 +1,20 @@
 package charts
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sort"
 	"strings"
 
-	"openreplay/backend/pkg/analytics/db"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
 	"openreplay/backend/pkg/analytics/model"
 )
 
 type TimeSeriesQueryBuilder struct{}
 
-func (t *TimeSeriesQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
+func (t *TimeSeriesQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
 	data := make(map[uint64]map[string]uint64)
 	for _, series := range p.Series {
 		query, err := t.buildQuery(p, series)
@@ -20,7 +22,7 @@ func (t *TimeSeriesQueryBuilder) Execute(p Payload, conn db.Connector) (interfac
 			log.Printf("buildQuery %s: %v", series.Name, err)
 			return nil, fmt.Errorf("series %s: %v", series.Name, err)
 		}
-		rows, err := conn.Query(query)
+		rows, err := conn.Query(context.Background(), query)
 		if err != nil {
 			log.Printf("exec %s: %v", series.Name, err)
 			return nil, fmt.Errorf("series %s: %v", series.Name, err)

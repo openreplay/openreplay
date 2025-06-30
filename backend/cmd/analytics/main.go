@@ -5,7 +5,7 @@ import (
 
 	analyticsConfig "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics"
-	"openreplay/backend/pkg/analytics/db"
+	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
@@ -29,7 +29,7 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	chConn, err := db.NewConnector(cfg.Clickhouse)
+	chConn, err := clickhouse.NewConnection(cfg.Clickhouse)
 	if err != nil {
 		log.Fatal(ctx, "can't init clickhouse connection: %s", err)
 	}

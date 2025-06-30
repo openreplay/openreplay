@@ -3,13 +3,13 @@ package analytics
 import (
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/go-playground/validator/v10"
 
 	"openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics/cards"
 	"openreplay/backend/pkg/analytics/charts"
 	"openreplay/backend/pkg/analytics/dashboards"
-	"openreplay/backend/pkg/analytics/db"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/database"
@@ -29,7 +29,7 @@ type ServicesBuilder struct {
 	ChartsAPI     api.Handlers
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chConn db.Connector) (*ServicesBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chConn driver.Conn) (*ServicesBuilder, error) {
 	responser := api.NewResponser(webMetrics)
 	audiTrail, err := tracer.NewTracer(log, pgconn, dbMetrics)
 	if err != nil {

@@ -1,10 +1,12 @@
 package charts
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"openreplay/backend/pkg/analytics/db"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
 	"openreplay/backend/pkg/analytics/model"
 )
 
@@ -19,12 +21,12 @@ type HeatmapResponse struct {
 
 type HeatmapQueryBuilder struct{}
 
-func (h *HeatmapQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
+func (h *HeatmapQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
 	q, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := conn.Query(q)
+	rows, err := conn.Query(context.Background(), q)
 	if err != nil {
 		return nil, err
 	}

@@ -1,10 +1,13 @@
 package charts
 
 import (
+	"context"
 	"fmt"
-	"openreplay/backend/pkg/analytics/db"
-	"openreplay/backend/pkg/analytics/model"
 	"strings"
+
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
+	"openreplay/backend/pkg/analytics/model"
 )
 
 type WebVitalsMetric struct {
@@ -36,12 +39,12 @@ type WebVitalsResponse struct {
 
 type WebVitalsQueryBuilder struct{}
 
-func (h WebVitalsQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
+func (h WebVitalsQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
 	query, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := conn.Query(query)
+	rows, err := conn.Query(context.Background(), query)
 	if err != nil {
 		return nil, err
 	}

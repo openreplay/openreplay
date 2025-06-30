@@ -1,10 +1,12 @@
 package charts
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"openreplay/backend/pkg/analytics/db"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
 	"openreplay/backend/pkg/analytics/model"
 )
 
@@ -17,7 +19,7 @@ type HeatmapSessionResponse struct {
 
 type HeatmapSessionQueryBuilder struct{}
 
-func (h *HeatmapSessionQueryBuilder) Execute(p Payload, conn db.Connector) (interface{}, error) {
+func (h *HeatmapSessionQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
 	shortestQ, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -26,8 +28,8 @@ func (h *HeatmapSessionQueryBuilder) Execute(p Payload, conn db.Connector) (inte
 	var startTs uint64
 	var duration uint32
 	var eventTs uint64
-	row, err := conn.QueryRow(shortestQ)
-	if err != nil {
+	row := conn.QueryRow(context.Background(), shortestQ)
+	if err := row.Err(); err != nil {
 		return nil, err
 	}
 
