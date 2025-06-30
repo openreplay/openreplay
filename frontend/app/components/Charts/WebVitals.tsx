@@ -23,6 +23,8 @@ interface WVData {
   ttfb: Stats;
   speedIndex: Stats;
   firstContentfulPaintTime: Stats;
+  lcp: Stats;
+  cls: Stats;
   raw?: any;
 }
 
@@ -45,6 +47,8 @@ const defaults = {
   ttfb: defaultStats,
   speedIndex: defaultStats,
   firstContentfulPaintTime: defaultStats,
+  lcp: defaultStats,
+  cls: defaultStats,
 } as const;
 
 function WebVitals({
@@ -76,6 +80,14 @@ function WebVitals({
       ...defaults.firstContentfulPaintTime,
       ...data?.firstContentfulPaintTime,
     },
+    lcp: {
+      ...defaults.lcp,
+      ...data?.lcp,
+    },
+    cls: {
+      ...defaults.cls,
+      ...data?.cls,
+    },
   };
   const metrics = [
     {
@@ -106,6 +118,20 @@ function WebVitals({
       description: 'First Contentful Paint',
       status: webVitalsData.firstContentfulPaintTime[`${mode}Status`],
     },
+    {
+      name: 'LCP',
+      metricKey: 'lcp',
+      value: webVitalsData.lcp[mode],
+      description: 'Largest Contentful Paint',
+      status: webVitalsData.lcp[`${mode}Status`],
+    },
+    {
+      name: 'CLS',
+      metricKey: 'cls',
+      value: webVitalsData.cls[mode],
+      description: 'Cumulative Layout Shift',
+      status: webVitalsData.cls[`${mode}Status`],
+    },
   ];
 
   const onMetricClick = (
@@ -114,6 +140,8 @@ function WebVitals({
       | 'ttfb'
       | 'speedIndex'
       | 'firstContentfulPaintTime'
+      | 'lcp'
+      | 'cls'
       | null,
     status: 'good' | 'medium' | 'bad',
   ) => {
