@@ -257,6 +257,14 @@ export default class Widget {
         // }
       }
 
+      if (this.metricType === HEATMAP) {
+        this.series[0].maxEvents = 1;
+      }
+
+      if (this.metricType === WEBVITALS) {
+        this.series[0].maxEvents = 1;
+      }
+
       if (period) {
         this.period = period;
       }

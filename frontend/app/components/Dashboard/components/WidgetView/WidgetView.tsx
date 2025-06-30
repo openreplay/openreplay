@@ -155,6 +155,7 @@ function WidgetView({
 
         if (selectedCard.cardType === HEATMAP) {
           cardData.series = [new FilterSeries()];
+          cardData.series[0].maxEvents = 1;
           cardData.series[0].filter.addHeatmapDefaultFilters();
         }
 
