@@ -9,6 +9,7 @@ const (
 	MetricTypeHeatmap    model.MetricType = "heatMap"
 	MetricTypeSession    model.MetricType = "heatmaps_session"
 	MetricUserJourney    model.MetricType = "pathAnalysis"
+	MetricWebVitals      model.MetricType = "webVital"
 )
 
 type MetricOfTable string
