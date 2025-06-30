@@ -17,7 +17,7 @@ type CardBase struct {
 	DefaultConfig map[string]any `json:"defaultConfig"`
 	Config        map[string]any `json:"config"`
 	Thumbnail     *string        `json:"thumbnail" validate:"omitempty,url"`
-	MetricType    string         `json:"metricType" validate:"required,oneof=timeseries table funnel pathAnalysis heatMap"`
+	MetricType    string         `json:"metricType" validate:"required,oneof=timeseries table funnel pathAnalysis heatMap webVital"`
 	MetricOf      string         `json:"metricOf" validate:"required"`
 	MetricFormat  string         `json:"metricFormat" validate:"required,oneof=default sessionCount percentage"`
 	ViewType      string         `json:"viewType" validate:"required,oneof=lineChart tableView table chart"`
