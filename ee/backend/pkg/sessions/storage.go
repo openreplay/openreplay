@@ -121,7 +121,15 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 
 // For the ender service only
 func (s *storageImpl) GetMany(sessionIDs []uint64) ([]*Session, error) {
-	rows, err := s.db.Query("SELECT session_id, COALESCE( duration, 0 ), start_ts FROM sessions WHERE session_id = ANY($1)", pq.Array(sessionIDs))
+	rows, err := s.db.Query(`SELECT 
+		session_id, 
+		CASE 
+			WHEN duration IS NULL OR duration < 0 THEN 0 
+			ELSE duration 
+		END, 
+		start_ts 
+	FROM sessions 
+	WHERE session_id = ANY($1)`, pq.Array(sessionIDs))
 	if err != nil {
 		return nil, err
 	}
