@@ -433,21 +433,7 @@ export default class Widget {
     }
 
     if (this.metricType === WEBVITALS) {
-      const keys = ['P50', 'P75', 'P90', 'Avg', 'Min', 'Max'];
-      const categories = [
-        'domBuildingTime',
-        'firstContentfulPaintTime',
-        'speedIndex',
-        'ttfb',
-      ];
-      const result: any = { raw: data };
-      categories.forEach((category) => {
-        result[category] = {};
-        keys.forEach((key) => {
-          result[category][key] = data[`${category}${key}`];
-          result[category][`${key}Status`] = data[`${category}${key}Status`];
-        });
-      });
+      const result: any = { ...data, raw: data };
       this.data = result;
       return result;
     }
