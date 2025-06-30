@@ -73,7 +73,7 @@ export default class MetricService {
     return this.client
       .delete(`/cards/${metricId}`)
       .then((response: { json: () => any }) => response.json())
-      .then((response: { data: any }) => response.data);
+      .then((response: { data: any }) => response?.data || {});
   }
 
   /**
