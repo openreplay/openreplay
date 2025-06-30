@@ -75,15 +75,6 @@ func (h *HeatmapQueryBuilder) buildQuery(p Payload) (string, error) {
 		"e.`$event_name` = 'CLICK'",
 	}
 	base = append(base, globalConds...)
-
-	//if len(globalNames) > 0 {
-	//	base = append(base, "e.`$event_name` IN ("+buildInClause(globalNames)+")")
-	//}
-
-	//if len(eventNames) > 0 {
-	//	base = append(base, "e.`$event_name` IN ("+buildInClause(eventNames)+")")
-	//}
-
 	base = append(base, eventConds...)
 
 	where := strings.Join(base, " AND ")

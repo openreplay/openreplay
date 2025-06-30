@@ -40,10 +40,8 @@ const (
 
 var propertySelectorMap = map[string]string{
 	string(MetricOfTableLocation): "JSONExtractString(toString(main.$properties), 'url_path') AS metric_value",
-	//string(MetricOfTableUserId):   "if(empty(sessions.user_id), 'Anonymous', sessions.user_id) AS metric_value",
-	string(MetricOfTableUserId):  "if(empty(sessions.user_id) OR sessions.user_id IS NULL, 'Anonymous', sessions.user_id) AS metric_value",
-	string(MetricOfTableBrowser): "main.$browser AS metric_value",
-	//string(MetricOfTableDevice):  "sessions.user_device AS metric_value",
+	string(MetricOfTableUserId):   "if(empty(sessions.user_id) OR sessions.user_id IS NULL, 'Anonymous', sessions.user_id) AS metric_value",
+	string(MetricOfTableBrowser):  "main.$browser AS metric_value",
 	string(MetricOfTableDevice):   "if(empty(sessions.user_device) OR sessions.user_device IS NULL, 'Undefined', sessions.user_device) AS metric_value",
 	string(MetricOfTableCountry):  "toString(sessions.user_country) AS metric_value",
 	string(MetricOfTableReferrer): "main.$referrer AS metric_value",

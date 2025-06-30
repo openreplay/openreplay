@@ -56,9 +56,6 @@ var propertyKeyMap = map[string]filterConfig{
 	"INPUT":           {LogicalProperty: "label"},
 	"fetchUrl":        {LogicalProperty: "url_path"},
 	"fetchStatusCode": {LogicalProperty: "status", IsNumeric: true},
-	//"fetchDuration":   {LogicalProperty: "duration", IsNumeric: true},
-	//"ISSUE":           {LogicalProperty: "issue_type"},
-	// TODO add more mappings as needed
 }
 
 // filterConfig holds configuration for a filter type

@@ -1,28 +1,12 @@
 package cards
 
 import (
-	"github.com/go-playground/validator/v10"
-	"openreplay/backend/pkg/analytics/model"
 	"strings"
 	"time"
-)
 
-type MetricType string
-type MetricOfTimeseries string
-type MetricOfTable string
+	"github.com/go-playground/validator/v10"
 
-const (
-	MetricTypeTimeseries MetricType = "TIMESERIES"
-	MetricTypeTable      MetricType = "TABLE"
-
-	MetricOfTimeseriesSessionCount MetricOfTimeseries = "SESSION_COUNT"
-	MetricOfTimeseriesUserCount    MetricOfTimeseries = "USER_COUNT"
-
-	MetricOfTableVisitedURL  MetricOfTable = "VISITED_URL"
-	MetricOfTableIssues      MetricOfTable = "ISSUES"
-	MetricOfTableUserCountry MetricOfTable = "USER_COUNTRY"
-	MetricOfTableUserDevice  MetricOfTable = "USER_DEVICE"
-	MetricOfTableUserBrowser MetricOfTable = "USER_BROWSER"
+	"openreplay/backend/pkg/analytics/model"
 )
 
 // CardBase Common fields for the Card entity
@@ -34,13 +18,11 @@ type CardBase struct {
 	Config        map[string]any `json:"config"`
 	Thumbnail     *string        `json:"thumbnail" validate:"omitempty,url"`
 	MetricType    string         `json:"metricType" validate:"required,oneof=timeseries table funnel pathAnalysis heatMap"`
-	//MetricOf      string         `json:"metricOf" validate:"required,oneof=sessionCount userCount LOCATION"`
-	MetricOf     string   `json:"metricOf" validate:"required"`
-	MetricFormat string   `json:"metricFormat" validate:"required,oneof=default sessionCount percentage"`
-	ViewType     string   `json:"viewType" validate:"required,oneof=lineChart tableView table chart"`
-	MetricValue  []string `json:"metricValue" validate:"omitempty"`
-	//SessionID    *int64         `json:"sessionId" validate:"omitempty"`
-	Series []model.Series `json:"series" validate:"required,dive"`
+	MetricOf      string         `json:"metricOf" validate:"required"`
+	MetricFormat  string         `json:"metricFormat" validate:"required,oneof=default sessionCount percentage"`
+	ViewType      string         `json:"viewType" validate:"required,oneof=lineChart tableView table chart"`
+	MetricValue   []string       `json:"metricValue" validate:"omitempty"`
+	Series        []model.Series `json:"series" validate:"required,dive"`
 	CardInfo
 }
 
@@ -55,11 +37,10 @@ type CardInfo struct {
 // Card Fields specific to database operations
 type Card struct {
 	CardBase
-	ProjectID int64     `json:"projectId" validate:"required"`
-	UserID    int64     `json:"userId" validate:"required"`
-	CardID    int64     `json:"metricId"`
-	CreatedAt time.Time `json:"createdAt"`
-	//UpdatedAt time.Time  `json:"updatedAt"`
+	ProjectID  int64      `json:"projectId" validate:"required"`
+	UserID     int64      `json:"userId" validate:"required"`
+	CardID     int64      `json:"metricId"`
+	CreatedAt  time.Time  `json:"createdAt"`
 	DeletedAt  *time.Time `json:"deletedAt,omitempty"`
 	EditedAt   *time.Time `json:"updatedAt,omitempty"`
 	OwnerEmail *string    `json:"ownerEmail,omitempty"` // Email of the user who created the card
@@ -79,22 +60,6 @@ type CardSeries struct {
 	MetricID int64 `json:"metricId" validate:"omitempty"`
 	CardSeriesBase
 }
-
-//type SeriesFilter struct {
-//	EventsOrder string   `json:"eventsOrder" validate:"required,oneof=then or and"`
-//	Filters     []Filter `json:"filters"`
-//}
-
-//type Filter struct {
-//	Name          string   `json:"name" validate:"required"`
-//	Operator      string   `json:"operator" validate:"required"`
-//	PropertyOrder string   `json:"propertyOrder" validate:"required,oneof=then or and"`
-//	Value         []string `json:"value" validate:"required,dive,required"`
-//	IsEvent       bool     `json:"isEvent"`
-//	DataType      string   `json:"dataType" validate:"required,oneof=string number boolean integer"`
-//	AutoCaptured  bool     `json:"autoCaptured"`      // Indicates if the filter is auto-captured
-//	Filters       []Filter `json:"filters,omitempty"` // Nested filters for complex conditions
-//}
 
 // CardCreateRequest Fields required for creating a card (from the frontend)
 type CardCreateRequest struct {
@@ -143,7 +108,6 @@ var (
 
 // CardListFilter holds filtering criteria for listing cards.
 type CardListFilter struct {
-	// Keys: "name" (string), "metric_type" (string), "dashboard_ids" ([]int)
 	Filters map[string]interface{} `validate:"supportedFilters"`
 }
 
@@ -226,35 +190,3 @@ func (s *CardListSort) GetSQLField() string {
 func (s *CardListSort) GetSQLOrder() string {
 	return strings.ToUpper(s.Order)
 }
-
-// ---
-
-/*
-class IssueType(str, Enum):
-
-	CLICK_RAGE = 'click_rage'
-	DEAD_CLICK = 'dead_click'
-	EXCESSIVE_SCROLLING = 'excessive_scrolling'
-	BAD_REQUEST = 'bad_request'
-	MISSING_RESOURCE = 'missing_resource'
-	MEMORY = 'memory'
-	CPU = 'cpu'
-	SLOW_RESOURCE = 'slow_resource'
-	SLOW_PAGE_LOAD = 'slow_page_load'
-	CRASH = 'crash'
-	CUSTOM = 'custom'
-	JS_EXCEPTION = 'js_exception'
-	MOUSE_THRASHING = 'mouse_thrashing'
-	# IOS
-	TAP_RAGE = 'tap_rage'
-*/
-//type IssueType string
-
-//type ChartData struct {
-//	StartTs     uint64      `json:"startTs"`
-//	EndTs       uint64      `json:"endTs"`
-//	Density     uint64      `json:"density"`
-//	Filters     []Filter    `json:"filter"`
-//	MetricOf    string      `json:"metricOf"`
-//	MetricValue []IssueType `json:"metricValue"`
-//}
