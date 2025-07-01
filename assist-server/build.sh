@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# Script to build api module
-# flags to accept:
-# Default will be OSS build.
-
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 
 ARCH=${ARCH:-amd64}
@@ -24,12 +20,9 @@ check_prereq() {
 }
 source ../scripts/lib/_docker.sh
 
-[[ $1 == ee ]] && ee=true
 [[ $PATCH -eq 1 ]] && {
     image_tag="$(grep -ER ^.ppVersion ../scripts/helmcharts/openreplay/charts/$chart | xargs | awk '{print $2}' | awk -F. -v OFS=. '{$NF += 1 ; print}')"
-    [[ $ee == "true" ]] && {
-        image_tag="${image_tag}-ee"
-    }
+    image_tag="${image_tag}-ee"
 }
 update_helm_release() {
     chart=$1
@@ -44,38 +37,32 @@ update_helm_release() {
 }
 
 function build_api() {
-    destination="_assist"
-    [[ $1 == "ee" ]] && {
-        destination="_assist_ee"
-    }
+    destination="_assist-server_ee"
     [[ -d ../${destination} ]] && {
         echo "Removing previous build cache"
         rm -rf ../${destination}
     }
-    cp -R ../assist ../${destination}
-    cd ../${destination}
+    cp -R ../assist-server ../${destination}
+    cd ../${destination} || exit 1
+    cp -rf ../ee/assist-server/* ./
 
-    # Copy enterprise code
-    [[ $1 == "ee" ]] && {
-        cp -rf ../ee/assist/* ./
-    }
-    docker build -f ./Dockerfile --platform "${ARCH:-'amd64'}" --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/assist:${image_tag} .
+    docker build -f ./Dockerfile --platform ${ARCH} --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/assist-server:${image_tag} .
 
-    cd ../assist
+    cd ../assist-server || exit 1
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
-        docker push ${DOCKER_REPO:-'local'}/assist:${image_tag}
-        docker tag ${DOCKER_REPO:-'local'}/assist:${image_tag} ${DOCKER_REPO:-'local'}/assist:latest
-        docker push ${DOCKER_REPO:-'local'}/assist:latest
+        docker push ${DOCKER_REPO:-'local'}/assist-server:${image_tag}
+        docker tag ${DOCKER_REPO:-'local'}/assist-server:${image_tag} ${DOCKER_REPO:-'local'}/assist-server:latest
+        docker push ${DOCKER_REPO:-'local'}/assist-server:latest
     }
     [[ $SIGN_IMAGE -eq 1 ]] && {
-        cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/assist:${image_tag}
+        cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/assist-server:${image_tag}
     }
-    echo "build completed for assist"
+    echo "build completed for assist-server"
 }
 
 check_prereq
 build_api $1
 if [[ $PATCH -eq 1 ]]; then
-    update_helm_release assist
+    update_helm_release assist-server
 fi

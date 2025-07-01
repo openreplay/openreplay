@@ -119,6 +119,7 @@ jobs:
         build_managed() {
             local service=$1
             local version=$2
+            local arch='linux/amd64,linux/arm64'
 
             echo "Building managed service: $service"
             clone_msaas
@@ -129,7 +130,7 @@ jobs:
                 cd "$MSAAS_REPO_FOLDER/openreplay/$service"
             fi
 
-            local build_cmd="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh"
+            local build_cmd="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=$arch DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh"
 
             echo "Executing: $build_cmd"
             if ! eval "$build_cmd" 2>&1; then
