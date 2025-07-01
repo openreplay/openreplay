@@ -6,8 +6,6 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/analytics/model"
-	"openreplay/backend/pkg/db/postgres/pool"
-	"openreplay/backend/pkg/logger"
 )
 
 type Charts interface {
@@ -15,15 +13,11 @@ type Charts interface {
 }
 
 type chartsImpl struct {
-	log    logger.Logger
-	pgconn pool.Pool
 	chConn driver.Conn
 }
 
-func New(log logger.Logger, conn pool.Pool, chConn driver.Conn) (Charts, error) {
+func New(chConn driver.Conn) (Charts, error) {
 	return &chartsImpl{
-		log:    log,
-		pgconn: conn,
 		chConn: chConn,
 	}, nil
 }

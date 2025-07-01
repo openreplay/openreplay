@@ -52,7 +52,7 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		return nil, err
 	}
 
-	chartsService, err := charts.New(log, pgconn, chConn)
+	chartsService, err := charts.New(chConn)
 	if err != nil {
 		return nil, err
 	}
