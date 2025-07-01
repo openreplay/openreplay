@@ -114,7 +114,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 
 	selectCols := []string{
 		`e.created_at`,
-		`e."$event_name" AS event_name`,
+		`e."$event_name" AS $event_name`,
 		`e."$properties" AS properties`,
 	}
 	for col, logical := range requiredColumns {
@@ -163,7 +163,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 			MainTableAlias:       "",
 		})
 		var exprParts []string
-		exprParts = append(exprParts, fmt.Sprintf("event_name = funnel_steps[%d]", i+1))
+		exprParts = append(exprParts, fmt.Sprintf("$event_name = funnel_steps[%d]", i+1))
 		if flt.Type == "CLICK" {
 			clickCount++
 			exprParts = append(exprParts, fmt.Sprintf("click_idx = %d", clickCount))
@@ -193,7 +193,7 @@ WITH
             created_at,
             row_number() OVER (PARTITION BY entity_id ORDER BY created_at) AS click_idx
         FROM events_for_funnel
-        WHERE event_name = 'CLICK'
+        WHERE $event_name = 'CLICK'
     ),
     funnel_levels_reached AS (
         SELECT
