@@ -28,7 +28,7 @@ func (s *chartsImpl) GetData(projectId int, userID uint64, req *model.MetricPayl
 		return nil, fmt.Errorf("request is empty")
 	}
 
-	payload := Payload{
+	payload := &Payload{
 		ProjectId:     projectId,
 		UserId:        userID,
 		MetricPayload: req,

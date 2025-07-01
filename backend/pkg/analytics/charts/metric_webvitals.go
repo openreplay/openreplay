@@ -39,7 +39,7 @@ type WebVitalsResponse struct {
 
 type WebVitalsQueryBuilder struct{}
 
-func (h WebVitalsQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
+func (h WebVitalsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	query, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func buildMetric(min, avg, max, p50, p75, p90 float64, r struct{ good, medium, b
 	}
 }
 
-func (h WebVitalsQueryBuilder) buildQuery(p Payload) (string, error) {
+func (h WebVitalsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if len(p.MetricPayload.Series) == 0 {
 		return "", fmt.Errorf("series empty")
 	}

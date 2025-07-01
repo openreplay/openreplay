@@ -33,7 +33,7 @@ type TableErrorsResponse struct {
 	Errors []ErrorItem `json:"errors"`
 }
 
-func (t *TableErrorsQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
+func (t *TableErrorsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	query, err := t.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (t *TableErrorsQueryBuilder) Execute(p Payload, conn driver.Conn) (interfac
 	return resp, nil
 }
 
-func (t *TableErrorsQueryBuilder) buildQuery(p Payload) (string, error) {
+func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if len(p.Series) == 0 {
 		return "", fmt.Errorf("payload Series cannot be empty")
 	}

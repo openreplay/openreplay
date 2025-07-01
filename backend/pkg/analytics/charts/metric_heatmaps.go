@@ -21,7 +21,7 @@ type HeatmapResponse struct {
 
 type HeatmapQueryBuilder struct{}
 
-func (h *HeatmapQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
+func (h *HeatmapQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	q, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (h *HeatmapQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{},
 	return pts, nil
 }
 
-func (h *HeatmapQueryBuilder) buildQuery(p Payload) (string, error) {
+func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if len(p.MetricPayload.Series) == 0 {
 		return "", fmt.Errorf("series empty")
 	}

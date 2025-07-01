@@ -63,7 +63,7 @@ var mainColumns = map[string]string{
 	"ISSUE":         "issue_type",
 }
 
-func (t *TableQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
+func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	if p.MetricOf == "" {
 		return nil, fmt.Errorf("MetricOf is empty")
 	}
@@ -122,7 +122,7 @@ func (t *TableQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, e
 	return &TableResponse{Total: overallTotal, Count: overallCount, Values: grouped}, nil
 }
 
-func (t *TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, error) {
+func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string, error) {
 	if len(r.Series) == 0 {
 		return "", fmt.Errorf("payload Series cannot be empty")
 	}

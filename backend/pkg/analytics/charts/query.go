@@ -18,10 +18,10 @@ type Payload struct {
 }
 
 type QueryBuilder interface {
-	Execute(p Payload, conn driver.Conn) (interface{}, error)
+	Execute(p *Payload, conn driver.Conn) (interface{}, error)
 }
 
-func NewQueryBuilder(p Payload) (QueryBuilder, error) {
+func NewQueryBuilder(p *Payload) (QueryBuilder, error) {
 	switch p.MetricType {
 	case MetricTypeTimeseries:
 		return &TimeSeriesQueryBuilder{}, nil
@@ -402,7 +402,7 @@ func buildInClause(values []string) string {
 	return strings.Join(quoted, ",")
 }
 
-func buildStaticEventWhere(p Payload) string {
+func buildStaticEventWhere(p *Payload) string {
 	return strings.Join([]string{
 		fmt.Sprintf("main.project_id = %d", p.ProjectId),
 		fmt.Sprintf("main.created_at >= toDateTime(%d / 1000)", p.StartTimestamp),
@@ -410,7 +410,7 @@ func buildStaticEventWhere(p Payload) string {
 	}, " AND ")
 }
 
-func buildStaticSessionWhere(p Payload, sessionConds []string) (string, string) {
+func buildStaticSessionWhere(p *Payload, sessionConds []string) (string, string) {
 	static := []string{fmt.Sprintf("s.project_id = %d", p.ProjectId)}
 	sessWhere := strings.Join(static, " AND ")
 	if len(sessionConds) > 0 {

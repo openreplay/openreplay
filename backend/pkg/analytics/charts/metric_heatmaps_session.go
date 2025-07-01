@@ -19,7 +19,7 @@ type HeatmapSessionResponse struct {
 
 type HeatmapSessionQueryBuilder struct{}
 
-func (h *HeatmapSessionQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
+func (h *HeatmapSessionQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	shortestQ, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (h *HeatmapSessionQueryBuilder) Execute(p Payload, conn driver.Conn) (inter
 	}, nil
 }
 
-func (h *HeatmapSessionQueryBuilder) buildQuery(p Payload) (string, error) {
+func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if len(p.MetricPayload.Series) == 0 {
 		return "", fmt.Errorf("series empty")
 	}

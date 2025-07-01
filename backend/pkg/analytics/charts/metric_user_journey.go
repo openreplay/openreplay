@@ -45,7 +45,7 @@ type JourneyResponse struct {
 
 type UserJourneyQueryBuilder struct{}
 
-func (h *UserJourneyQueryBuilder) Execute(p Payload, conn driver.Conn) (interface{}, error) {
+func (h *UserJourneyQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	q, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -541,7 +541,7 @@ func (h *UserJourneyQueryBuilder) Execute(p Payload, conn driver.Conn) (interfac
 	}, nil
 }
 
-func (h *UserJourneyQueryBuilder) buildQuery(p Payload) (string, error) {
+func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) (string, error) {
 	// prepare event list filter
 	events := p.MetricValue
 	if len(events) == 0 {
