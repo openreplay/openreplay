@@ -1,14 +1,15 @@
 from typing import Annotated
+from typing import Optional
 
 from fastapi import Body, Depends, Query
 
 import schemas
 from chalicelib.core import metadata
-from chalicelib.core.product_analytics import events, properties, autocomplete, filters
+from chalicelib.core.autocomplete import autocomplete as sessions_autocomplete
 from chalicelib.core.issues import issues
+from chalicelib.core.product_analytics import events, properties, autocomplete, filters
 from or_dependencies import OR_context
 from routers.base import get_routers
-from typing import Optional
 
 public_app, app, app_apikey = get_routers()
 
@@ -69,9 +70,17 @@ def autocomplete_events(projectId: int, q: Optional[str] = None,
 
 @app.get('/{projectId}/properties/autocomplete', tags=["autocomplete"])
 def autocomplete_properties(projectId: int, propertyName: str, eventName: Optional[str] = None,
-                            q: Optional[str] = None, context: schemas.CurrentContext = Depends(OR_context)):
+                            q: Optional[str] = None, ac: bool = Query(description="auto captured"),
+                            context: schemas.CurrentContext = Depends(OR_context)):
     # Specify propertyName to get top values of that property
     # Specify eventName&propertyName to get top values of that property for the selected event
+    if ac:
+        if not q or len(q) == 0:
+            return {"data": sessions_autocomplete.get_top_values(project_id=projectId, event_type=propertyName)}
+        else:
+            return {"data": sessions_autocomplete.search_autocomplete(text=q, event_type=propertyName,
+                                                                      project_id=projectId)}
+
     return {"data": autocomplete.search_properties(project_id=projectId,
                                                    event_name=None if not eventName \
                                                                       or len(eventName) == 0 else eventName,

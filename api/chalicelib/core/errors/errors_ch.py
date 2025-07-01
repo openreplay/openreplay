@@ -1,11 +1,13 @@
+import json
 import logging
+from typing import List
 
 import schemas
 from chalicelib.core import metadata
-from chalicelib.core.errors import errors_legacy
+from chalicelib.core.sourcemaps import sourcemaps
 from chalicelib.core.errors.modules import errors_helper
 from chalicelib.core.errors.modules import sessions
-from chalicelib.utils import ch_client, exp_ch_helper
+from chalicelib.utils import ch_client, exp_ch_helper, pg_client
 from chalicelib.utils import helper, metrics_helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -58,12 +60,46 @@ def _multiple_conditions(condition, values, value_key="value", is_not=False):
     return "(" + (" AND " if is_not else " OR ").join(query) + ")"
 
 
-def get(error_id, family=False):
-    return errors_legacy.get(error_id=error_id, family=family)
+def get(error_id, family=False) -> dict | List[dict]:
+    if family:
+        return get_batch([error_id])
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """SELECT *
+               FROM public.errors
+               WHERE error_id = %(error_id)s LIMIT 1;""",
+            {"error_id": error_id})
+        cur.execute(query=query)
+        result = cur.fetchone()
+        if result is not None:
+            result["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(result["stacktrace_parsed_at"])
+        return helper.dict_to_camel_case(result)
 
 
 def get_batch(error_ids):
-    return errors_legacy.get_batch(error_ids=error_ids)
+    if len(error_ids) == 0:
+        return []
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """
+            WITH RECURSIVE error_family AS (SELECT *
+                                            FROM public.errors
+                                            WHERE error_id IN %(error_ids)s
+                                            UNION
+                                            SELECT child_errors.*
+                                            FROM public.errors AS child_errors
+                                                     INNER JOIN error_family ON error_family.error_id =
+                                                                                child_errors.parent_error_id OR
+                                                                                error_family.parent_error_id =
+                                                                                child_errors.error_id)
+            SELECT *
+            FROM error_family;""",
+            {"error_ids": tuple(error_ids)})
+        cur.execute(query=query)
+        errors = cur.fetchall()
+        for e in errors:
+            e["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(e["stacktrace_parsed_at"])
+        return helper.list_to_camel_case(errors)
 
 
 def __get_basic_constraints_events(platform=None, time_constraint=True, startTime_arg_name="startDate",
@@ -376,13 +412,90 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
     }
 
 
+def __save_stacktrace(error_id, data):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """UPDATE public.errors
+               SET stacktrace=%(data)s::jsonb, stacktrace_parsed_at=timezone('utc'::text, now())
+               WHERE error_id = %(error_id)s;""",
+            {"error_id": error_id, "data": json.dumps(data)})
+        cur.execute(query=query)
+
+
 def get_trace(project_id, error_id):
-    return errors_legacy.get_trace(project_id=project_id, error_id=error_id)
+    error = get(error_id=error_id, family=False)
+    if error is None:
+        return {"errors": ["error not found"]}
+    if error.get("source", "") != "js_exception":
+        return {"errors": ["this source of errors doesn't have a sourcemap"]}
+    if error.get("payload") is None:
+        return {"errors": ["null payload"]}
+    if error.get("stacktrace") is not None:
+        return {"sourcemapUploaded": True,
+                "trace": error.get("stacktrace"),
+                "preparsed": True}
+    trace, all_exists = sourcemaps.get_traces_group(project_id=project_id, payload=error["payload"])
+    if all_exists:
+        __save_stacktrace(error_id=error_id, data=trace)
+    return {"sourcemapUploaded": all_exists,
+            "trace": trace,
+            "preparsed": False}
 
 
 def get_sessions(start_date, end_date, project_id, user_id, error_id):
-    return errors_legacy.get_sessions(start_date=start_date,
-                                      end_date=end_date,
-                                      project_id=project_id,
-                                      user_id=user_id,
-                                      error_id=error_id)
+    extra_constraints = ["s.project_id = %(project_id)s",
+                         "s.start_ts >= %(startDate)s",
+                         "s.start_ts <= %(endDate)s",
+                         "e.error_id = %(error_id)s"]
+    if start_date is None:
+        start_date = TimeUTC.now(-7)
+    if end_date is None:
+        end_date = TimeUTC.now()
+
+    params = {
+        "startDate": start_date,
+        "endDate": end_date,
+        "project_id": project_id,
+        "userId": user_id,
+        "error_id": error_id}
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            f"""SELECT s.project_id,
+                       s.session_id::text AS session_id,
+                       s.user_uuid,
+                       s.user_id,
+                       s.user_agent,
+                       s.user_os,
+                       s.user_browser,
+                       s.user_device,
+                       s.user_country,
+                       s.start_ts,
+                       s.duration,
+                       s.events_count,
+                       s.pages_count,
+                       s.errors_count,
+                       s.issue_types,
+                        COALESCE((SELECT TRUE
+                         FROM public.user_favorite_sessions AS fs
+                         WHERE s.session_id = fs.session_id
+                           AND fs.user_id = %(userId)s LIMIT 1), FALSE) AS favorite,
+                        COALESCE((SELECT TRUE
+                         FROM public.user_viewed_sessions AS fs
+                         WHERE s.session_id = fs.session_id
+                           AND fs.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
+                FROM public.sessions AS s INNER JOIN events.errors AS e USING (session_id)
+                WHERE {" AND ".join(extra_constraints)}
+                ORDER BY s.start_ts DESC;""",
+            params)
+        cur.execute(query=query)
+        sessions_list = []
+        total = cur.rowcount
+        row = cur.fetchone()
+        while row is not None and len(sessions_list) < 100:
+            sessions_list.append(row)
+            row = cur.fetchone()
+
+    return {
+        'total': total,
+        'sessions': helper.list_to_camel_case(sessions_list)
+    }

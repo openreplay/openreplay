@@ -1,8 +1,12 @@
+from typing import Optional
 from urllib.parse import urlparse
 
-from chalicelib.utils import ch_client
+import schemas
+from chalicelib.core.issues import issues
+from chalicelib.utils import ch_client, pg_client
+from chalicelib.utils import helper
+from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.exp_ch_helper import explode_dproperties, add_timestamp
-from .events_pg import *
 
 
 def get_customs_by_session_id(session_id, project_id):
@@ -121,14 +125,27 @@ def get_by_session_id(session_id, project_id, group_clickrage=False, event_type:
     return rows
 
 
+def get_errors_by_session_id(session_id, project_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(cur.mogrify(f"""\
+                    SELECT er.*,ur.*, er.timestamp - s.start_ts AS time
+                    FROM events.errors AS er INNER JOIN public.errors AS ur USING (error_id) INNER JOIN public.sessions AS s USING (session_id)
+                    WHERE er.session_id = %(session_id)s AND s.project_id=%(project_id)s
+                    ORDER BY timestamp;""", {"session_id": session_id, "project_id": project_id}))
+        errors = cur.fetchall()
+        for e in errors:
+            e["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(e["stacktrace_parsed_at"])
+        return helper.list_to_camel_case(errors)
+
+
 def get_incidents_by_session_id(session_id, project_id):
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(query=""" \
                                  SELECT created_at,
-                                        `$properties`.end_time AS end_time,
-                                        `$properties`.label AS label,
+                                        `$properties`.end_time   AS end_time,
+                                        `$properties`.label      AS label,
                                         `$properties`.start_time AS start_time,
-                                        `$event_name` AS type
+                                        `$event_name`            AS type
                                  FROM product_analytics.events
                                  WHERE session_id = %(session_id)s
                                    AND `$event_name` = 'INCIDENT'
