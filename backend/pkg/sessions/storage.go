@@ -77,7 +77,7 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 			user_browser, user_browser_version, issue_score,
 			metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
 			metadata_6, metadata_7, metadata_8, metadata_9, metadata_10,
-			utm_source, utm_medium, utm_campaign
+			utm_source, utm_medium, utm_campaign, screen_width, screen_height
 		FROM sessions
 		WHERE session_id=$1 
 	`,
@@ -92,7 +92,7 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 		&userBrowser, &userBrowserVersion, &sess.IssueScore,
 		&sess.Metadata1, &sess.Metadata2, &sess.Metadata3, &sess.Metadata4, &sess.Metadata5,
 		&sess.Metadata6, &sess.Metadata7, &sess.Metadata8, &sess.Metadata9, &sess.Metadata10,
-		&sess.UtmSource, &sess.UtmMedium, &sess.UtmCampaign); err != nil {
+		&sess.UtmSource, &sess.UtmMedium, &sess.UtmCampaign, &sess.ScreenWidth, &sess.ScreenHeight); err != nil {
 		return nil, err
 	}
 	if userOSVersion != nil {
