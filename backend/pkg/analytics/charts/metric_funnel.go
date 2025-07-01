@@ -81,15 +81,15 @@ func (f *FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 	if len(p.MetricPayload.Series) == 0 {
 		return "", fmt.Errorf("series empty")
 	}
-	s := p.MetricPayload.Series[0]
-	metricFormat := p.MetricPayload.MetricFormat
 
 	var (
 		globalFilters         []model.Filter
 		stepFilters           []model.Filter
 		sessionDurationFilter *model.Filter
+		requiredColumns       = make(map[string]string)
 	)
-	for _, flt := range s.Filter.Filters {
+
+	for _, flt := range p.MetricPayload.Series[0].Filter.Filters {
 		if flt.IsEvent {
 			stepFilters = append(stepFilters, flt)
 		} else if flt.Type == "duration" {
@@ -99,12 +99,12 @@ func (f *FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 		}
 	}
 
-	requiredColumns := make(map[string]struct{})
 	var collectColumns func([]model.Filter)
 	collectColumns = func(filters []model.Filter) {
 		for _, flt := range filters {
-			if col, ok := mainColumns[string(flt.Type)]; ok {
-				requiredColumns[col] = struct{}{}
+			filterType := string(flt.Type)
+			if col, ok := mainColumns[filterType]; ok {
+				requiredColumns[col] = filterType
 			}
 			collectColumns(flt.Filters)
 		}
@@ -117,15 +117,14 @@ func (f *FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 		`e."$event_name" AS event_name`,
 		`e."$properties" AS properties`,
 	}
-	for col := range requiredColumns {
-		logical := reverseLookup(mainColumns, col)
+	for col, logical := range requiredColumns {
 		selectCols = append(selectCols, fmt.Sprintf(`e."%s" AS %s`, col, logical))
 	}
 	selectCols = append(selectCols,
 		`e.session_id`,
 		`e.distinct_id`,
 		`s.user_id AS session_user_id`,
-		fmt.Sprintf("if('%s' = 'sessionCount', toString(e.session_id), coalesce(nullif(s.user_id,''),e.distinct_id)) AS entity_id", metricFormat),
+		fmt.Sprintf("if('%s' = 'sessionCount', toString(e.session_id), coalesce(nullif(s.user_id,''),e.distinct_id)) AS entity_id", p.MetricPayload.MetricFormat),
 	)
 
 	globalConds, _ := buildEventConditions(globalFilters, BuildConditionsOptions{
@@ -135,8 +134,8 @@ func (f *FunnelQueryBuilder) buildQuery(p Payload) (string, error) {
 	})
 
 	base := []string{
-		fmt.Sprintf("e.created_at >= toDateTime(%d/1000)", p.MetricPayload.StartTimestamp),
-		fmt.Sprintf("e.created_at < toDateTime(%d/1000)", p.MetricPayload.EndTimestamp+86400000),
+		fmt.Sprintf("e.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
+		fmt.Sprintf("e.created_at < toDateTime(%d)", (p.MetricPayload.EndTimestamp+86400000)/1000),
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
 	}
 	base = append(base, globalConds...)

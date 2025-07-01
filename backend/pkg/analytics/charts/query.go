@@ -530,16 +530,6 @@ func cteSourceColumns() map[string]string {
 	return cols
 }
 
-// Helper for reverse lookup (used for dynamic SELECT)
-func reverseLookup(m map[string]string, value string) string {
-	for k, v := range m {
-		if v == value {
-			return k
-		}
-	}
-	return ""
-}
-
 func eventNameCondition(table, metricOf string) string {
 	if table == "" {
 		table = "main"
