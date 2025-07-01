@@ -15,10 +15,6 @@ type HeatmapPoint struct {
 	NormalizedY float64 `json:"normalizedY"`
 }
 
-type HeatmapResponse struct {
-	Points []HeatmapPoint `json:"data"`
-}
-
 type HeatmapQueryBuilder struct{}
 
 func (h *HeatmapQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
@@ -35,7 +31,7 @@ func (h *HeatmapQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}
 	var pts []HeatmapPoint
 	for rows.Next() {
 		var x, y float64
-		if err := rows.Scan(&x, &y); err != nil {
+		if err = rows.Scan(&x, &y); err != nil {
 			return nil, err
 		}
 		pts = append(pts, HeatmapPoint{x, y})
@@ -48,10 +44,9 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if len(p.MetricPayload.Series) == 0 {
 		return "", fmt.Errorf("series empty")
 	}
-	s := p.MetricPayload.Series[0]
 
 	var globalFilters, eventFilters []model.Filter
-	for _, flt := range s.Filter.Filters {
+	for _, flt := range p.MetricPayload.Series[0].Filter.Filters {
 		if flt.IsEvent {
 			eventFilters = append(eventFilters, flt)
 		} else {
@@ -70,8 +65,8 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 	})
 
 	base := []string{
-		fmt.Sprintf("e.created_at >= toDateTime(%d/1000)", p.MetricPayload.StartTimestamp),
-		fmt.Sprintf("e.created_at < toDateTime(%d/1000)", p.MetricPayload.EndTimestamp),
+		fmt.Sprintf("e.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
+		fmt.Sprintf("e.created_at < toDateTime(%d)", p.MetricPayload.EndTimestamp/1000),
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
 		"e.session_id IS NOT NULL",
 		"e.`$event_name` = 'CLICK'",
