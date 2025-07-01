@@ -96,5 +96,6 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p Payload) (string, error) {
 		ORDER BY e.created_at ASC, s.duration ASC
 		LIMIT 1;`, where)
 
+	logQuery(fmt.Sprintf("HeatmapSessionQueryBuilder.buildQuery: %s", q))
 	return q, nil
 }

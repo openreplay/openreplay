@@ -228,5 +228,7 @@ WHERE %s
     OR isNotNull(events."$properties".CLS)
   )
 `, where)
+
+	logQuery(fmt.Sprintf("WebVitalsQueryBuilder.buildQuery: %s", query))
 	return query, nil
 }

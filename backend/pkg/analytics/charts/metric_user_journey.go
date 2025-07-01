@@ -763,5 +763,7 @@ ORDER BY stage, COUNT(DISTINCT session_id) DESC;`,
 		maxCols,
 		previousColumns,
 	)
+
+	logQuery(fmt.Sprintf("UserJourneyQueryBuilder.buildQuery: %s", q))
 	return q, nil
 }

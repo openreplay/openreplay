@@ -79,7 +79,7 @@ func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p Payload, s model.Series,
 	sub := t.buildSubQuery(p, s, metric)
 	step := int(getStepSize(p.StartTimestamp, p.EndTimestamp, p.Density, false, 1000)) * 1000
 
-	return fmt.Sprintf(
+	query := fmt.Sprintf(
 		"SELECT gs.generate_series AS timestamp, COALESCE(COUNT(DISTINCT ps.%s),0) AS count "+
 			"FROM generate_series(%d,%d,%d) AS gs "+
 			"LEFT JOIN (%s) AS ps ON TRUE "+
@@ -87,6 +87,9 @@ func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p Payload, s model.Series,
 			"GROUP BY timestamp ORDER BY timestamp;",
 		idField, p.StartTimestamp, p.EndTimestamp, step, sub, step,
 	)
+
+	logQuery(fmt.Sprintf("TimeSeriesQueryBuilder.buildQuery: %s", query))
+	return query
 }
 
 func (t *TimeSeriesQueryBuilder) buildSubQuery(p Payload, s model.Series, metric string) string {

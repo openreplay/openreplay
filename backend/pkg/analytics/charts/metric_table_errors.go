@@ -185,5 +185,6 @@ LIMIT %d OFFSET %d;`,
 		limit, offset,
 	)
 
+	logQuery(fmt.Sprintf("TableErrorsQueryBuilder.buildQuery: %s", sql))
 	return sql, nil
 }

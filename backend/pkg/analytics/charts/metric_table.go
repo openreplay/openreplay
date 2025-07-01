@@ -246,7 +246,8 @@ LIMIT %d OFFSET %d;`,
 		limit,
 		offset,
 	)
-	logQuery(query)
+
+	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
 	return query, nil
 }
 

@@ -236,5 +236,6 @@ ORDER BY s.level_number;`,
 		windowArgs,
 	)
 
+	logQuery(fmt.Sprintf("FunnelQueryBuilder.buildQuery: %s", q))
 	return q, nil
 }
