@@ -15,13 +15,14 @@ const (
 type MetricOfTable string
 
 const (
-	MetricOfTableLocation MetricOfTable = "LOCATION" // TOP Pages
-	MetricOfTableBrowser  MetricOfTable = "userBrowser"
-	MetricOfTableReferrer MetricOfTable = "referrer"
-	MetricOfTableUserId   MetricOfTable = "userId"
-	MetricOfTableCountry  MetricOfTable = "userCountry"
-	MetricOfTableDevice   MetricOfTable = "userDevice"
-	MetricOfTableFetch    MetricOfTable = "FETCH"
+	MetricOfTableLocation   MetricOfTable = "LOCATION" // TOP Pages
+	MetricOfTableBrowser    MetricOfTable = "userBrowser"
+	MetricOfTableReferrer   MetricOfTable = "referrer"
+	MetricOfTableUserId     MetricOfTable = "userId"
+	MetricOfTableCountry    MetricOfTable = "userCountry"
+	MetricOfTableDevice     MetricOfTable = "userDevice"
+	MetricOfTableFetch      MetricOfTable = "FETCH"
+	MetricOfTableResolution MetricOfTable = "screenResolution"
 )
 
 const (
