@@ -76,7 +76,7 @@ def __get_autocomplete_table(value, project_id):
 
 def __generic_query(typename, value_length=None):
     if typename == schemas.FilterType.USER_COUNTRY:
-        return f"""SELECT DISTINCT value, type
+        return f"""SELECT DISTINCT value
                     FROM {TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -86,7 +86,7 @@ def __generic_query(typename, value_length=None):
 
     if value_length is None or value_length > 2:
         return f"""SELECT DISTINCT ON(value, type) value, type
-                   FROM ((SELECT DISTINCT value, type
+                   FROM ((SELECT DISTINCT value
                     FROM {TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -95,7 +95,7 @@ def __generic_query(typename, value_length=None):
                       ORDER BY value
                     LIMIT 5)
                     UNION DISTINCT
-                    (SELECT DISTINCT value, type
+                    (SELECT DISTINCT value
                     FROM {TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -103,7 +103,7 @@ def __generic_query(typename, value_length=None):
                       AND value ILIKE %(value)s
                       ORDER BY value
                     LIMIT 5)) AS raw;"""
-    return f"""SELECT DISTINCT value, type
+    return f"""SELECT DISTINCT value
                 FROM {TABLE}
                 WHERE
                   project_id = %(project_id)s
@@ -111,18 +111,6 @@ def __generic_query(typename, value_length=None):
                   AND value ILIKE %(svalue)s
                   ORDER BY value
                 LIMIT 10;"""
-
-
-def __generic_autocomplete(event: str):
-    def f(project_id, value, key=None, source=None):
-        with ch_client.ClickHouseClient() as cur:
-            query = __generic_query(event.ui_type, value_length=len(value))
-            params = {"project_id": project_id, "value": helper.string_to_sql_like(value),
-                      "svalue": helper.string_to_sql_like("^" + value)}
-            results = cur.execute(query=query, parameters=params)
-            return helper.list_to_camel_case(results)
-
-    return f
 
 
 def generic_autocomplete_metas(typename):
@@ -300,40 +288,79 @@ def is_top_supported(event_type):
 
 def get_top_values(project_id, event_type, event_key=None):
     with ch_client.ClickHouseClient() as cur:
-        if schemas.FilterType.has_value(event_type):
-            if event_type == schemas.FilterType.METADATA \
-                    and (event_key is None \
-                         or (colname := metadata.get_colname_by_key(project_id=project_id, key=event_key)) is None) \
-                    or event_type != schemas.FilterType.METADATA \
-                    and (colname := TYPE_TO_COLUMN.get(event_type)) is None:
-                return []
+        if event_type.startswith("metadata_"):
+            colname = event_type
 
-            query = f"""WITH raw AS (SELECT DISTINCT {colname} AS c_value,
-                                                     COUNT(1) OVER (PARTITION BY {colname}) AS row_count,
-                                                     COUNT(1) OVER () AS total_count
-                                     FROM experimental.sessions
-                                     WHERE project_id = %(project_id)s
-                                       AND isNotNull(c_value)
-                                       AND notEmpty(c_value)
-                                     ORDER BY row_count DESC
-                                     LIMIT 10)
-                        SELECT c_value AS value, row_count, truncate(row_count * 100 / total_count, 2) AS row_percentage
-                        FROM raw;"""
-        else:
-            colname = TYPE_TO_COLUMN.get(event_type)
-            event_type = exp_ch_helper.get_event_type(event_type)
-            query = f"""WITH raw AS (SELECT DISTINCT {colname} AS c_value,
-                                                     COUNT(1) OVER (PARTITION BY c_value) AS row_count,
-                                                     COUNT(1) OVER ()                   AS total_count
-                                     FROM product_analytics.events
-                                     WHERE project_id = %(project_id)s
-                                       AND `$event_name` = '{event_type}'
-                                       AND isNotNull(c_value)
-                                       AND notEmpty(c_value)
-                                     ORDER BY row_count DESC
-                                     LIMIT 10)
-                        SELECT c_value AS value, row_count, truncate(row_count * 100 / total_count,2) AS row_percentage
-                        FROM raw;"""
+        elif schemas.FilterType.has_value(event_type) and (colname := TYPE_TO_COLUMN.get(event_type)) is None:
+            return []
+        query = f"""WITH raw AS (SELECT DISTINCT {colname} AS c_value,
+                                                 COUNT(1) OVER (PARTITION BY {colname}) AS row_count,
+                                                 COUNT(1) OVER () AS total_count
+                                 FROM experimental.sessions
+                                 WHERE project_id = %(project_id)s
+                                   AND isNotNull(c_value)
+                                   AND notEmpty(c_value)
+                                 ORDER BY row_count DESC
+                                 LIMIT 10)
+                    SELECT c_value AS value, row_count, truncate(row_count * 100 / total_count, 2) AS row_percentage
+                    FROM raw;"""
+
         params = {"project_id": project_id}
         results = cur.execute(query=query, parameters=params)
         return helper.list_to_camel_case(results)
+
+
+def __search_metadata_by_key(project_id, value, key):
+    colname = key
+    if len(value) > 2:
+        # if value has more than 2 characters, we look for "startsWith" and "contains"
+        sub_from = [f"""((SELECT DISTINCT {colname} AS value 
+                        FROM {exp_ch_helper.get_main_sessions_table()} 
+                        WHERE project_id = %(project_id)s 
+                        AND {colname} ILIKE %(svalue)s LIMIT 5)
+                        UNION DISTINCT
+                        (SELECT DISTINCT {colname} AS value 
+                        FROM {exp_ch_helper.get_main_sessions_table()} 
+                        WHERE project_id = %(project_id)s 
+                        AND {colname} ILIKE %(value)s LIMIT 5))"""]
+    else:
+        # if value has less than 2 characters, we look for "startsWith"
+        sub_from = [f"""(SELECT DISTINCT {colname} AS value 
+                        FROM {exp_ch_helper.get_main_sessions_table()} 
+                        WHERE project_id = %(project_id)s
+                        AND {colname} ILIKE %(svalue)s LIMIT 5)"""]
+    with ch_client.ClickHouseClient() as cur:
+        query = cur.format(query=f"""SELECT DISTINCT value
+                                FROM({" UNION ALL ".join(sub_from)}) AS all_metas
+                                LIMIT 5;""",
+                           parameters={"project_id": project_id, "value": helper.string_to_sql_like(value),
+                                       "svalue": helper.string_to_sql_like("^" + value)})
+        results = cur.execute(query)
+    return helper.list_to_camel_case(results)
+
+
+def supported_types():
+    return {
+        schemas.FilterType.USER_OS: generic_autocomplete_metas(typename=schemas.FilterType.USER_OS),
+        schemas.FilterType.USER_BROWSER: generic_autocomplete_metas(typename=schemas.FilterType.USER_BROWSER),
+        schemas.FilterType.USER_DEVICE: generic_autocomplete_metas(typename=schemas.FilterType.USER_DEVICE),
+        schemas.FilterType.USER_COUNTRY: generic_autocomplete_metas(typename=schemas.FilterType.USER_COUNTRY),
+        schemas.FilterType.USER_CITY: generic_autocomplete_metas(typename=schemas.FilterType.USER_CITY),
+        schemas.FilterType.USER_STATE: generic_autocomplete_metas(typename=schemas.FilterType.USER_STATE),
+        schemas.FilterType.USER_ID: generic_autocomplete_metas(typename=schemas.FilterType.USER_ID),
+        schemas.FilterType.USER_ANONYMOUS_ID: generic_autocomplete_metas(typename=schemas.FilterType.USER_ANONYMOUS_ID),
+        schemas.FilterType.REV_ID: generic_autocomplete_metas(typename=schemas.FilterType.REV_ID),
+        schemas.FilterType.REFERRER: generic_autocomplete_metas(typename=schemas.FilterType.REFERRER),
+        schemas.FilterType.UTM_CAMPAIGN: generic_autocomplete_metas(typename=schemas.FilterType.UTM_CAMPAIGN),
+        schemas.FilterType.UTM_MEDIUM: generic_autocomplete_metas(typename=schemas.FilterType.UTM_MEDIUM),
+        schemas.FilterType.UTM_SOURCE: generic_autocomplete_metas(typename=schemas.FilterType.UTM_SOURCE),
+    }
+
+
+def search_autocomplete(text, event_type, project_id):
+    if event_type.startswith("metadata_"):
+        return __search_metadata_by_key(project_id=project_id, value=text, key=event_type)
+    elif event_type in supported_types().keys():
+        return supported_types()[event_type](text=text, project_id=project_id)
+
+    return []
