@@ -165,7 +165,7 @@ func (t *TableQueryBuilder) buildQuery(r Payload, metricFormat string) (string, 
 	propertyExpr := parts[0]
 
 	tAgg := "main.session_id"
-	specConds := []string{}
+	var specConds []string
 	if metricFormat == MetricFormatUserCount {
 		tAgg = "if(empty(sessions.user_id), toString(sessions.user_uuid), sessions.user_id)"
 		specConds = append(specConds,
@@ -246,6 +246,7 @@ LIMIT %d OFFSET %d;`,
 		limit,
 		offset,
 	)
+	logQuery(query)
 	return query, nil
 }
 
@@ -255,6 +256,7 @@ func (t *TableQueryBuilder) groupResolutionClusters(raw []TableValue, page, limi
 		total                  uint64
 	}
 	var clusters []cluster
+	var rangePercent = 0.10 // 10% range for width and height
 
 	for _, v := range raw {
 		if v.Name == "Unknown" {
@@ -285,7 +287,7 @@ func (t *TableQueryBuilder) groupResolutionClusters(raw []TableValue, page, limi
 		for i := range clusters {
 			c := &clusters[i]
 			if !(c.minW == 0 && c.minH == 0 && c.maxW == 0 && c.maxH == 0) {
-				if math.Abs(float64(w-c.minW))/float64(c.minW) <= 0.05 && math.Abs(float64(h-c.minH))/float64(c.minH) <= 0.05 {
+				if math.Abs(float64(w-c.minW))/float64(c.minW) <= rangePercent && math.Abs(float64(h-c.minH))/float64(c.minH) <= rangePercent {
 					if w < c.minW {
 						c.minW = w
 					}
@@ -315,10 +317,8 @@ func (t *TableQueryBuilder) groupResolutionClusters(raw []TableValue, page, limi
 		var name string
 		if c.minW == 0 && c.minH == 0 && c.maxW == 0 && c.maxH == 0 {
 			name = "Unknown"
-		} else if c.minW == c.maxW && c.minH == c.maxH {
-			name = fmt.Sprintf("%dx%d", c.minW, c.minH)
 		} else {
-			name = fmt.Sprintf("%dx%d-%dx%d", c.minW, c.minH, c.maxW, c.maxH)
+			name = fmt.Sprintf("%dx%d", c.maxW, c.maxH)
 		}
 		result = append(result, TableValue{Name: name, Total: c.total})
 	}

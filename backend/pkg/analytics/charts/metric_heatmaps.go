@@ -89,5 +89,6 @@ FROM product_analytics.events AS e
 -- JOIN experimental.sessions AS s USING(session_id)
 WHERE %s LIMIT 500;`, where)
 
+	//logQuery("HeatmapQueryBuilder %s", q)
 	return q, nil
 }
