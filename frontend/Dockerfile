@@ -2,6 +2,8 @@ from node:18-slim AS builder
 workdir /work
 COPY . .
 RUN cp .env.sample .env
+ARG NODE_OPTIONS="--max-old-space-size=10240"
+ENV NODE_OPTIONS=$NODE_OPTIONS
 RUN yarn 
 RUN yarn build
 
