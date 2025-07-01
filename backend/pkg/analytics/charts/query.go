@@ -194,7 +194,7 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, nam
 		subConds, subNames := buildEventConditions(f.Filters, opts)
 		if len(subConds) > 0 {
 			// wrap event name + sub-conditions
-			cond := fmt.Sprintf("(%s$event_name = '%s' AND %s)", alias, ftype, strings.Join(subConds, " AND "))
+			cond := fmt.Sprintf("(%s`$event_name` = '%s' AND %s)", alias, ftype, strings.Join(subConds, " AND "))
 			conds = append(conds, cond)
 			names = append(names, ftype)
 			names = append(names, subNames...)
