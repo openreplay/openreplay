@@ -24,20 +24,21 @@ func (h *HeatmapSessionQueryBuilder) Execute(p *Payload, conn driver.Conn) (inte
 	if err != nil {
 		return nil, err
 	}
-	var sid string
-	var startTs uint64
-	var duration uint32
-	var eventTs uint64
+
 	row := conn.QueryRow(context.Background(), shortestQ)
-	if err := row.Err(); err != nil {
+	if err = row.Err(); err != nil {
 		return nil, err
 	}
 
-	if err := row.Scan(&sid, &startTs, &duration, &eventTs); err != nil {
+	var (
+		sid      string
+		startTs  uint64
+		duration uint32
+		eventTs  uint64
+	)
+	if err = row.Scan(&sid, &startTs, &duration, &eventTs); err != nil {
 		return nil, err
 	}
-
-	// TODO get mob urls
 
 	return HeatmapSessionResponse{
 		SessionID:      sid,
@@ -48,9 +49,6 @@ func (h *HeatmapSessionQueryBuilder) Execute(p *Payload, conn driver.Conn) (inte
 }
 
 func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
-	if len(p.MetricPayload.Series) == 0 {
-		return "", fmt.Errorf("series empty")
-	}
 	s := p.MetricPayload.Series[0]
 
 	var globalFilters, eventFilters []model.Filter
@@ -73,8 +71,8 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 	})
 
 	base := []string{
-		fmt.Sprintf("e.created_at >= toDateTime(%d/1000)", p.MetricPayload.StartTimestamp),
-		fmt.Sprintf("e.created_at < toDateTime(%d/1000)", p.MetricPayload.EndTimestamp+86400000),
+		fmt.Sprintf("e.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
+		fmt.Sprintf("e.created_at < toDateTime(%d)", (p.MetricPayload.EndTimestamp+86400000)/1000),
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
 		"s.duration > 500",
 		"e.`$event_name` = 'LOCATION'",

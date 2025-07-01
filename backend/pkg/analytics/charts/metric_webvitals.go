@@ -153,12 +153,8 @@ func buildMetric(min, avg, max, p50, p75, p90 float64, r struct{ good, medium, b
 }
 
 func (h WebVitalsQueryBuilder) buildQuery(p *Payload) (string, error) {
-	if len(p.MetricPayload.Series) == 0 {
-		return "", fmt.Errorf("series empty")
-	}
-	s := p.MetricPayload.Series[0]
 	var globalFilters, eventFilters []model.Filter
-	for _, flt := range s.Filter.Filters {
+	for _, flt := range p.MetricPayload.Series[0].Filter.Filters {
 		if flt.IsEvent {
 			eventFilters = append(eventFilters, flt)
 		} else {

@@ -68,10 +68,6 @@ func (t *TableErrorsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfa
 }
 
 func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
-	if len(p.Series) == 0 {
-		return "", fmt.Errorf("payload Series cannot be empty")
-	}
-
 	density := p.Density
 	if density < 2 {
 		density = 7

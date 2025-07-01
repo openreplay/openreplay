@@ -45,10 +45,6 @@ func (h *HeatmapQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}
 }
 
 func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
-	if len(p.MetricPayload.Series) == 0 {
-		return "", fmt.Errorf("series empty")
-	}
-
 	var globalFilters, eventFilters []model.Filter
 	for _, flt := range p.MetricPayload.Series[0].Filter.Filters {
 		if flt.IsEvent {

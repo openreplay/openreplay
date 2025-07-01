@@ -55,14 +55,6 @@ var propertySelectorMap = map[string]string{
 	string(MetricOfTableResolution): "if(sessions.screen_width = 0 AND sessions.screen_height = 0, 'Unknown', concat(toString(sessions.screen_width), 'x', toString(sessions.screen_height))) AS metric_value",
 }
 
-var mainColumns = map[string]string{
-	"userBrowser":   "$browser",
-	"userDevice":    "sessions.user_device",
-	"referrer":      "$referrer",
-	"fetchDuration": "$duration_s",
-	"ISSUE":         "issue_type",
-}
-
 func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	if p.MetricOf == "" {
 		return nil, fmt.Errorf("MetricOf is empty")
@@ -123,9 +115,6 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 }
 
 func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string, error) {
-	if len(r.Series) == 0 {
-		return "", fmt.Errorf("payload Series cannot be empty")
-	}
 	s := r.Series[0]
 
 	// sessions_data WHERE conditions

@@ -38,6 +38,9 @@ func (s *chartsImpl) GetData(projectId int, userID uint64, req *model.MetricPayl
 		return nil, fmt.Errorf("error creating query builder: %v", err)
 	}
 
+	if len(payload.MetricPayload.Series) == 0 {
+		return "", fmt.Errorf("series empty")
+	}
 	resp, err := qb.Execute(payload, s.chConn)
 	if err != nil {
 		return nil, fmt.Errorf("error executing query: %v", err)

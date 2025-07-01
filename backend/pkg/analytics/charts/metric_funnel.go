@@ -78,10 +78,6 @@ func (f *FunnelQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{},
 }
 
 func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
-	if len(p.MetricPayload.Series) == 0 {
-		return "", fmt.Errorf("series empty")
-	}
-
 	var (
 		globalFilters         []model.Filter
 		stepFilters           []model.Filter

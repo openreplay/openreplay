@@ -49,3 +49,11 @@ type DataPoint struct {
 	Timestamp uint64 `json:"timestamp"`
 	Count     uint64 `json:"count"`
 }
+
+var mainColumns = map[string]string{
+	"userBrowser":   "$browser",
+	"userDevice":    "sessions.user_device",
+	"referrer":      "$referrer",
+	"fetchDuration": "$duration_s",
+	"ISSUE":         "issue_type",
+}
