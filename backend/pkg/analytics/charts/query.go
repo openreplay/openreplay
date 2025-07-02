@@ -148,39 +148,6 @@ func buildEventConditions(filters []model.Filter, options ...BuildConditionsOpti
 	return
 }
 
-// buildEventConditions builds SQL conditions and names from filters
-func buildEventConditionsX(filters []model.Filter, options ...BuildConditionsOptions) (conds, names []string) {
-	opts := BuildConditionsOptions{
-		MainTableAlias:       "",
-		PropertiesColumnName: "$properties",
-		DefinedColumns:       make(map[string]string),
-	}
-	if len(options) > 0 {
-		opt := options[0]
-		if opt.MainTableAlias != "" {
-			opts.MainTableAlias = opt.MainTableAlias
-		}
-		if opt.PropertiesColumnName != "" {
-			opts.PropertiesColumnName = opt.PropertiesColumnName
-		}
-		if opt.DefinedColumns != nil {
-			opts.DefinedColumns = opt.DefinedColumns
-		}
-	}
-	for _, f := range filters {
-		if f.Type == FilterDuration {
-			continue
-		}
-
-		fConds, fNames := addFilter(f, opts)
-		if len(fConds) > 0 {
-			conds = append(conds, fConds...)
-			names = append(names, fNames...)
-		}
-	}
-	return
-}
-
 func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, names []string) {
 	alias := opts.MainTableAlias
 	if alias != "" && !strings.HasSuffix(alias, ".") {
@@ -226,43 +193,6 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, nam
 	}
 
 	// nested sub-filters for non-event or without grouping
-	if len(f.Filters) > 0 {
-		subConds, subNames := buildEventConditions(f.Filters, opts)
-		if len(subConds) > 0 {
-			conds = append(conds, strings.Join(subConds, " AND "))
-			names = append(names, subNames...)
-		}
-	}
-
-	return
-}
-
-// addFilter processes a single Filter and returns its SQL conditions and associated event names
-func addFilterX(f model.Filter, opts BuildConditionsOptions) (conds []string, names []string) {
-	var ftype = string(f.Type)
-	// resolve filter configuration, default if missing
-	cfg, ok := propertyKeyMap[ftype]
-	if !ok {
-		cfg = filterConfig{LogicalProperty: ftype, IsNumeric: false}
-		log.Printf("using default config for type: %v", f.Type)
-	}
-	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
-
-	switch f.Operator {
-	case "isAny", "onAny":
-		if f.IsEvent {
-			names = append(names, ftype)
-		}
-	default:
-		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric); c != "" {
-			conds = append(conds, c)
-		}
-		if f.IsEvent {
-			names = append(names, ftype)
-		}
-	}
-
-	// nested sub-filters
 	if len(f.Filters) > 0 {
 		subConds, subNames := buildEventConditions(f.Filters, opts)
 		if len(subConds) > 0 {
