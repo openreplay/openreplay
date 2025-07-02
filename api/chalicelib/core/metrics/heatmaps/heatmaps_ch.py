@@ -74,8 +74,8 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
     #                    LEFT JOIN experimental.issues AS mis ON (issues_t.issue_id=mis.issue_id)"""
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(query=f"""SELECT 
-                                JSON_VALUE(CAST(`$properties` AS String), '$.normalized_x') AS normalized_x, 
-                                JSON_VALUE(CAST(`$properties` AS String), '$.normalized_y') AS normalized_y
+                                accurateCastOrNull(`$properties`.`normalized_x`,'Float64') AS normalized_x, 
+                                accurateCastOrNull(`$properties`.`normalized_y`,'Float64') AS normalized_y
                              FROM {query_from}
                              WHERE {" AND ".join(constraints)}
                              LIMIT 500;""",
