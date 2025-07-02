@@ -57,12 +57,16 @@ type Redshift struct {
 // Clickhouse config
 
 type Clickhouse struct {
-	URL            string `env:"CLICKHOUSE_STRING"`
-	Database       string `env:"CLICKHOUSE_DATABASE,default=default"`
-	UserName       string `env:"CLICKHOUSE_USERNAME,default=default"`
-	Password       string `env:"CLICKHOUSE_PASSWORD,default="`
-	LegacyUserName string `env:"CH_USERNAME,default=default"`
-	LegacyPassword string `env:"CH_PASSWORD,default="`
+	URL             string        `env:"CLICKHOUSE_STRING"`
+	Database        string        `env:"CLICKHOUSE_DATABASE,default=default"`
+	UserName        string        `env:"CLICKHOUSE_USERNAME,default=default"`
+	Password        string        `env:"CLICKHOUSE_PASSWORD,default="`
+	LegacyUserName  string        `env:"CH_USERNAME,default=default"`
+	LegacyPassword  string        `env:"CH_PASSWORD,default="`
+	MaxOpenConns    int           `env:"CH_MAX_OPEN_CONNS,default=20"`
+	MaxIdleConns    int           `env:"CH_MAX_IDLE_CONNS,default=15"`
+	ConnMaxLifetime time.Duration `env:"CH_CONN_MAX_LIFETIME,default=3m"`
+	CompressionAlgo string        `env:"CH_COMPRESSION_ALGO,default=lz4"` // lz4, none
 }
 
 func (cfg *Clickhouse) GetTrimmedURL() string {

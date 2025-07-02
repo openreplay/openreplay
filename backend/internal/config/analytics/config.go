@@ -14,6 +14,7 @@ import (
 type Config struct {
 	common.Config
 	common.Postgres
+	common.Clickhouse
 	redis.Redis
 	objectstorage.ObjectsConfig
 	common.HTTP

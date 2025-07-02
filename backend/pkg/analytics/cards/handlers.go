@@ -41,11 +41,13 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/analytics/{projectId}/cards", e.createCard, "POST"},
-		{"/v1/analytics/{projectId}/cards", e.getCardsPaginated, "GET"},
-		{"/v1/analytics/{projectId}/cards/{id}", e.getCard, "GET"},
-		{"/v1/analytics/{projectId}/cards/{id}", e.updateCard, "PUT"},
-		{"/v1/analytics/{projectId}/cards/{id}", e.deleteCard, "DELETE"},
+		{"/v1/{projectId}/cards", e.createCard, "POST"},
+		{"/v1/{projectId}/cards", e.getCardsPaginated, "GET"},
+		{"/v1/{projectId}/cards/{id}", e.getCard, "GET"},
+		{"/v1/{projectId}/cards/{id}", e.updateCard, "PUT"},
+		{"/v1/{projectId}/cards/{id}", e.updateCard, "POST"},
+		{"/v1/{projectId}/cards/{id}", e.deleteCard, "DELETE"},
+		{"/v1/{projectId}/cards/{id}/sessions", e.getCardSessions, "POST"},
 	}
 }
 
@@ -94,7 +96,7 @@ func (e *handlersImpl) createCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
 // getCard
@@ -114,13 +116,13 @@ func (e *handlersImpl) getCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := e.cards.GetWithSeries(projectID, id)
+	resp, err := e.cards.GetWithSeries(projectID, int64(id))
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) getCards(w http.ResponseWriter, r *http.Request) {
@@ -224,7 +226,7 @@ func (e *handlersImpl) getCardsPaginated(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Respond with JSON
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
@@ -268,7 +270,7 @@ func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) deleteCard(w http.ResponseWriter, r *http.Request) {
@@ -295,4 +297,9 @@ func (e *handlersImpl) deleteCard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, nil, startTime, r.URL.Path, bodySize)
+}
+
+func (e *handlersImpl) getCardSessions(w http.ResponseWriter, r *http.Request) {
+	// TODO: implement this
+	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotImplemented, fmt.Errorf("not implemented"), time.Now(), r.URL.Path, 0)
 }

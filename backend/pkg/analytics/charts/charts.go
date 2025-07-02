@@ -1,50 +1,49 @@
 package charts
 
 import (
-	"encoding/json"
 	"fmt"
 
-	"openreplay/backend/pkg/db/postgres/pool"
-	"openreplay/backend/pkg/logger"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
+	"openreplay/backend/pkg/analytics/model"
 )
 
 type Charts interface {
-	GetData(projectId int, userId uint64, req *GetCardChartDataRequest) ([]DataPoint, error)
+	GetData(projectId int, userId uint64, req *model.MetricPayload) (interface{}, error)
 }
 
 type chartsImpl struct {
-	log    logger.Logger
-	pgconn pool.Pool
+	chConn driver.Conn
 }
 
-func New(log logger.Logger, conn pool.Pool) (Charts, error) {
+func New(chConn driver.Conn) (Charts, error) {
 	return &chartsImpl{
-		log:    log,
-		pgconn: conn,
+		chConn: chConn,
 	}, nil
 }
 
-func (s *chartsImpl) GetData(projectId int, userID uint64, req *GetCardChartDataRequest) ([]DataPoint, error) {
-	jsonInput := `
-    {
-        "data": [
-            {
-                "timestamp": 1733934939000,
-                "Series A": 100,
-                "Series B": 200
-            },
-            {
-                "timestamp": 1733935939000,
-                "Series A": 150,
-                "Series B": 250
-            }
-        ]
-    }`
-
-	var resp GetCardChartDataResponse
-	if err := json.Unmarshal([]byte(jsonInput), &resp); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+// GetData def get_chart()
+func (s *chartsImpl) GetData(projectId int, userID uint64, req *model.MetricPayload) (interface{}, error) {
+	if req == nil {
+		return nil, fmt.Errorf("request is empty")
 	}
 
-	return resp.Data, nil
+	payload := &Payload{
+		ProjectId:     projectId,
+		UserId:        userID,
+		MetricPayload: req,
+	}
+	qb, err := NewQueryBuilder(payload)
+	if err != nil {
+		return nil, fmt.Errorf("error creating query builder: %v", err)
+	}
+
+	if len(payload.MetricPayload.Series) == 0 {
+		return "", fmt.Errorf("series empty")
+	}
+	resp, err := qb.Execute(payload, s.chConn)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	return map[string]interface{}{"data": resp}, nil
 }

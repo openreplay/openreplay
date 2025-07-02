@@ -36,14 +36,19 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	chConn := clickhouse.NewConnector(cfg.Clickhouse, dbMetric)
-	if err := chConn.Prepare(); err != nil {
+	chConn, err := clickhouse.NewConnection(cfg.Clickhouse)
+	if err != nil {
+		log.Fatal(ctx, "can't init clickhouse connection: %s", err)
+	}
+
+	chConnector := clickhouse.NewConnector(chConn, dbMetric)
+	if err := chConnector.Prepare(); err != nil {
 		log.Fatal(ctx, "can't prepare clickhouse: %s", err)
 	}
-	defer chConn.Stop()
+	defer chConnector.Stop()
 
 	// Init db proxy module (postgres + clickhouse + batches)
-	dbProxy := postgres.NewConn(log, pgConn, chConn, dbMetric)
+	dbProxy := postgres.NewConn(log, pgConn, chConnector, dbMetric)
 	defer dbProxy.Close()
 
 	// Init redis connection
@@ -58,7 +63,7 @@ func main() {
 	tagsManager := tags.New(log, pgConn)
 
 	// Init data saver
-	saver := datasaver.New(log, cfg, dbProxy, chConn, sessManager, tagsManager)
+	saver := datasaver.New(log, cfg, dbProxy, chConnector, sessManager, tagsManager)
 
 	// Message filter
 	msgFilter := []int{
