@@ -52,6 +52,7 @@ func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage
 		tasks:      NewTasks(conn),
 		streams:    NewStreams(log, conn, objStorage),
 		spots:      spots,
+		metrics:    metrics,
 	}
 	tnsc.prepareWorkers = workers.NewPool(2, 4, tnsc.prepare)
 	tnsc.transcodeWorkers = workers.NewPool(2, 4, tnsc.transcode)
@@ -116,7 +117,6 @@ func (t *transcoderImpl) doneTask(task *Task) {
 
 func (t *transcoderImpl) process(task *Task) {
 	t.metrics.IncreaseVideosTotal()
-	//spotID := task.SpotID
 	t.log.Info(context.Background(), "Processing spot %s", task.SpotID)
 
 	// Prepare path for spot video
