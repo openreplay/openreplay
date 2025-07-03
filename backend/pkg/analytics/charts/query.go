@@ -49,6 +49,7 @@ type BuildConditionsOptions struct {
 	MainTableAlias       string
 	PropertiesColumnName string
 	DefinedColumns       map[string]string
+	EventsOrder          string
 }
 
 var propertyKeyMap = map[string]filterConfig{
@@ -58,6 +59,7 @@ var propertyKeyMap = map[string]filterConfig{
 	"CLICK":           {LogicalProperty: "label"},
 	"INPUT":           {LogicalProperty: "label"},
 	"fetchUrl":        {LogicalProperty: "url_path"},
+	"userDevice":      {LogicalProperty: "user_device"},
 	"fetchStatusCode": {LogicalProperty: "status", IsNumeric: true},
 }
 
@@ -115,11 +117,12 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 	return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, propKey)
 }
 
-func buildEventConditions(filters []model.Filter, options ...BuildConditionsOptions) (conds, names []string) {
+func BuildEventConditions(filters []model.Filter, options ...BuildConditionsOptions) (conds, names []string) {
 	opts := BuildConditionsOptions{
 		MainTableAlias:       "",
 		PropertiesColumnName: "$properties",
 		DefinedColumns:       make(map[string]string),
+		EventsOrder:          "then",
 	}
 	if len(options) > 0 {
 		opt := options[0]
@@ -153,17 +156,17 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, nam
 	if alias != "" && !strings.HasSuffix(alias, ".") {
 		alias += "."
 	}
-	ftype := string(f.Type)
+	fName := f.Name
 
 	// nested filters handling for event grouping
 	if f.IsEvent && len(f.Filters) > 0 {
 		// build sub-conditions for nested filters
-		subConds, subNames := buildEventConditions(f.Filters, opts)
+		subConds, subNames := BuildEventConditions(f.Filters, opts)
 		if len(subConds) > 0 {
 			// wrap event name + sub-conditions
-			cond := fmt.Sprintf("(%s`$event_name` = '%s' AND %s)", alias, ftype, strings.Join(subConds, " AND "))
+			cond := fmt.Sprintf("(%s`$event_name` = '%s' AND %s)", alias, fName, strings.Join(subConds, " AND "))
 			conds = append(conds, cond)
-			names = append(names, ftype)
+			names = append(names, fName)
 			names = append(names, subNames...)
 		}
 		return
@@ -171,9 +174,9 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, nam
 
 	// standard filter processing
 	// resolve column accessor
-	cfg, ok := propertyKeyMap[ftype]
+	cfg, ok := propertyKeyMap[fName]
 	if !ok {
-		cfg = filterConfig{LogicalProperty: ftype, IsNumeric: false}
+		cfg = filterConfig{LogicalProperty: fName, IsNumeric: false}
 		log.Printf("using default config for type: %v", f.Type)
 	}
 	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
@@ -181,20 +184,20 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, nam
 	switch f.Operator {
 	case "isAny", "onAny":
 		if f.IsEvent {
-			names = append(names, ftype)
+			names = append(names, fName)
 		}
 	default:
 		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric); c != "" {
 			conds = append(conds, c)
 		}
 		if f.IsEvent {
-			names = append(names, ftype)
+			names = append(names, fName)
 		}
 	}
 
 	// nested sub-filters for non-event or without grouping
 	if len(f.Filters) > 0 {
-		subConds, subNames := buildEventConditions(f.Filters, opts)
+		subConds, subNames := BuildEventConditions(f.Filters, opts)
 		if len(subConds) > 0 {
 			conds = append(conds, strings.Join(subConds, " AND "))
 			names = append(names, subNames...)
@@ -219,6 +222,20 @@ func buildCond(expr string, values []string, operator string, isNumeric bool) st
 		return ""
 	}
 	switch operator {
+	case "isNot", "not":
+		if len(values) == 1 {
+			return formatCondition(expr, "%s <> %s", values[0], isNumeric)
+		}
+		wrapped := make([]string, len(values))
+		for i, v := range values {
+			if isNumeric {
+				wrapped[i] = v
+			} else {
+				wrapped[i] = fmt.Sprintf("'%s'", v)
+			}
+		}
+		// build NOT IN clause
+		return fmt.Sprintf("%s NOT IN (%s)", expr, strings.Join(wrapped, ", "))
 	case "contains":
 		// wrap values with % on both sides
 		wrapped := make([]string, len(values))
@@ -226,7 +243,7 @@ func buildCond(expr string, values []string, operator string, isNumeric bool) st
 			wrapped[i] = fmt.Sprintf("%%%s%%", v)
 		}
 		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
-	case "notContains":
+	case "notContains", "doesNotContain":
 		wrapped := make([]string, len(values))
 		for i, v := range values {
 			wrapped[i] = fmt.Sprintf("%%%s%%", v)
@@ -318,6 +335,7 @@ func inClause(expr string, values []string, negate, isNumeric bool) string {
 	return fmt.Sprintf("%s %s (%s)", expr, op, strings.Join(quoted, ", "))
 }
 
+// TODO check this and remove if not needed to implement
 func buildSessionConditions(filters []model.Filter) []string {
 	var conds []string
 
@@ -474,11 +492,11 @@ func eventNameCondition(table, metricOf string) string {
 	}
 }
 
-func buildDurationWhere(filters []model.Filter) ([]string, []model.Filter) {
+func BuildDurationWhere(filters []model.Filter) ([]string, []model.Filter) {
 	var conds []string
 	var rest []model.Filter
 	for _, f := range filters {
-		if string(f.Type) == "duration" {
+		if string(f.Name) == "duration" {
 			v := f.Value
 			if len(v) == 1 {
 				if v[0] != "" {
@@ -505,7 +523,7 @@ func buildDurationWhere(filters []model.Filter) ([]string, []model.Filter) {
 	return conds, rest
 }
 
-func filterOutTypes(filters []model.Filter, typesToRemove []model.FilterType) (kept []model.Filter, removed []model.Filter) {
+func FilterOutTypes(filters []model.Filter, typesToRemove []model.FilterType) (kept []model.Filter, removed []model.Filter) {
 	removeMap := make(map[model.FilterType]struct{}, len(typesToRemove))
 	for _, t := range typesToRemove {
 		removeMap[t] = struct{}{}

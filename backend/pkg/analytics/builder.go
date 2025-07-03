@@ -1,6 +1,7 @@
 package analytics
 
 import (
+	"openreplay/backend/pkg/analytics/search"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -27,6 +28,7 @@ type ServicesBuilder struct {
 	CardsAPI      api.Handlers
 	DashboardsAPI api.Handlers
 	ChartsAPI     api.Handlers
+	SearchAPI     api.Handlers
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chConn driver.Conn) (*ServicesBuilder, error) {
@@ -36,6 +38,15 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		return nil, err
 	}
 	reqValidator := validator.New()
+
+	searchService, err := search.New(chConn)
+	if err != nil {
+		return nil, err
+	}
+	searchHandlers, err := search.NewHandlers(log, cfg, responser, searchService, reqValidator)
+	if err != nil {
+		return nil, err
+	}
 
 	cardsService := cards.New(log, pgconn)
 	cardsHandlers, err := cards.NewHandlers(log, cfg, responser, cardsService, reqValidator)
@@ -68,5 +79,6 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		CardsAPI:      cardsHandlers,
 		DashboardsAPI: dashboardsHandlers,
 		ChartsAPI:     chartsHandlers,
+		SearchAPI:     searchHandlers,
 	}, nil
 }

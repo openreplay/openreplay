@@ -118,9 +118,9 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	s := r.Series[0]
 
 	// sessions_data WHERE conditions
-	durConds, _ := buildDurationWhere(s.Filter.Filters)
-	sessFilters, _ := filterOutTypes(s.Filter.Filters, []model.FilterType{FilterDuration, FilterUserAnonymousId})
-	sessConds, evtNames := buildEventConditions(sessFilters, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "main"})
+	durConds, _ := BuildDurationWhere(s.Filter.Filters)
+	sessFilters, _ := FilterOutTypes(s.Filter.Filters, []model.FilterType{FilterDuration, FilterUserAnonymousId})
+	sessConds, evtNames := BuildEventConditions(sessFilters, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "main"})
 	sessionDataConds := append(durConds, sessConds...)
 	// add project_id condition
 	sessionDataConds = append(sessionDataConds, fmt.Sprintf("main.project_id = %d", r.ProjectId))
@@ -163,10 +163,10 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	}
 
 	// metric-specific filter
-	_, mFilt := filterOutTypes(s.Filter.Filters, []model.FilterType{model.FilterType(r.MetricOf)})
+	_, mFilt := FilterOutTypes(s.Filter.Filters, []model.FilterType{model.FilterType(r.MetricOf)})
 	metricCond := eventNameCondition("", r.MetricOf)
 	if len(mFilt) > 0 {
-		//conds, _ := buildEventConditions(mFilt, BuildConditionsOptions{DefinedColumns: map[string]string{"userId": "user_id"}, MainTableAlias: "main"})
+		//conds, _ := BuildEventConditions(mFilt, BuildConditionsOptions{DefinedColumns: map[string]string{"userId": "user_id"}, MainTableAlias: "main"})
 		//metricCond = strings.Join(conds, " AND ")
 	}
 

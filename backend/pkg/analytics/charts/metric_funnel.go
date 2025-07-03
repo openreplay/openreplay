@@ -123,7 +123,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		fmt.Sprintf("if('%s' = 'sessionCount', toString(e.session_id), coalesce(nullif(s.user_id,''),e.distinct_id)) AS entity_id", p.MetricPayload.MetricFormat),
 	)
 
-	globalConds, _ := buildEventConditions(globalFilters, BuildConditionsOptions{
+	globalConds, _ := BuildEventConditions(globalFilters, BuildConditionsOptions{
 		DefinedColumns:       mainColumns,
 		MainTableAlias:       "e",
 		PropertiesColumnName: "$properties",
@@ -153,7 +153,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	)
 	for i, flt := range stepFilters {
 		stepNames = append(stepNames, fmt.Sprintf("'%s'", flt.Type))
-		conds, _ := buildEventConditions([]model.Filter{flt}, BuildConditionsOptions{
+		conds, _ := BuildEventConditions([]model.Filter{flt}, BuildConditionsOptions{
 			DefinedColumns:       cteColumnAliases(),
 			PropertiesColumnName: "properties",
 			MainTableAlias:       "",
