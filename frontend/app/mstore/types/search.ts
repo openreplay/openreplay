@@ -154,7 +154,7 @@ export default class Search {
       return js;
     });
 
-    this.handleProperties(js); // TODO this is temproray to support PYTHON api where it has different structure for nested filters
+    // this.handleProperties(js); // TODO this is temproray to support PYTHON api where it has different structure for nested filters
 
     const { startDate, endDate } = this.getDateRange(
       js.rangeValue,

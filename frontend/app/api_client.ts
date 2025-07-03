@@ -53,6 +53,8 @@ export const clean = (
   return retObj;
 };
 
+const isDev = window.env.NODE_ENV === 'development';
+
 export default class APIClient {
   private init: RequestInit;
 
@@ -208,15 +210,15 @@ export default class APIClient {
       !path.includes('/sessions') &&
       (path.includes('/cards') || path.includes('/dashboards'))
     ) {
-      edp = edp.replace('/api', '/analytics/v1');
-      // edp = 'http://localhost:8080/v1';
+      edp = isDev
+        ? 'http://localhost:8080/v1'
+        : edp.replace('/api', '/analytics/v1');
+    }
 
-      // if (params && params.metricType === 'webVitalX') {
-      //   // TODO this is a temporary fix should be removed after the actial API is implemented
-      // } else {
-      //   // edp = edp.replace('/api', '/analytics/v1');
-      //   edp = 'http://localhost:8080/v1';
-      // }
+    if (path.includes('/sessions/search')) {
+      edp = isDev
+        ? 'http://localhost:8080/v1'
+        : edp.replace('/api', '/analytics/v1');
     }
 
     if (noChalice && !edp.includes('api.openreplay.com')) {

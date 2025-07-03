@@ -439,20 +439,17 @@ class SearchStore {
       autoCaptured: true,
       value: [],
       operator: 'is',
-      properties: {
-        propertyOrder: 'and',
-        operator: 'and', // TODO remove this line once the API is updated to use propertyOrder
-        filters: [
-          {
-            isEvent: false,
-            name: 'issue_type',
-            autoCaptured: true,
-            dataType: 'string',
-            operator: 'is',
-            value: [activeTags[0]],
-          },
-        ],
-      },
+      propertyOrder: 'and',
+      filters: [
+        {
+          isEvent: false,
+          name: 'issue_type',
+          autoCaptured: true,
+          dataType: 'string',
+          operator: 'is',
+          value: [activeTags[0]],
+        },
+      ],
     };
 
     return {
