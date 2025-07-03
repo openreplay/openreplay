@@ -93,7 +93,7 @@ func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p *Payload, s model.Series
 }
 
 func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metric string) string {
-	evConds, evNames := buildEventConditions(s.Filter.Filters, BuildConditionsOptions{
+	evConds, evNames := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
 		DefinedColumns:       mainColumns,
 		MainTableAlias:       "main",
 		PropertiesColumnName: "$properties",

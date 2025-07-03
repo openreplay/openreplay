@@ -62,3 +62,45 @@ type MetricPayload struct {
 	Columns         uint64     `json:"stepsAfter"`
 	PreviousColumns uint64     `json:"stepsBefore"`
 }
+
+type Session struct {
+	Duration        uint32            `json:"duration"`
+	ErrorsCount     int               `json:"errorsCount"`
+	EventsCount     uint16            `json:"eventsCount"`
+	IssueScore      int64             `json:"issueScore"`
+	IssueTypes      []string          `json:"issueTypes"`
+	Metadata        map[string]string `json:"metadata"`
+	PagesCount      int               `json:"pagesCount"`
+	Platform        string            `json:"platform"`
+	ProjectId       uint16            `json:"projectId"`
+	SessionId       string            `json:"sessionId"`
+	StartTs         uint64            `json:"startTs"`
+	Timezone        string            `json:"timezone"`
+	UserAnonymousId *string           `json:"userAnonymousId"`
+	UserBrowser     string            `json:"userBrowser"`
+	UserCity        string            `json:"userCity"`
+	UserCountry     string            `json:"userCountry"`
+	UserDevice      *string           `json:"userDevice"`
+	UserDeviceType  string            `json:"userDeviceType"`
+	UserId          string            `json:"userId"`
+	UserOs          string            `json:"userOs"`
+	UserState       string            `json:"userState"`
+	UserUuid        string            `json:"userUuid"`
+	Viewed          bool              `json:"viewed"`
+}
+
+type SessionsSearchRequest struct {
+	Filters     []Filter `json:"filters"`
+	StartDate   int64    `json:"startDate"`
+	EndDate     int64    `json:"endDate"`
+	Sort        string   `json:"sort"`
+	Order       string   `json:"order"`
+	EventsOrder string   `json:"eventsOrder"`
+	Limit       int      `json:"limit"`
+	Page        int      `json:"page"`
+}
+
+type GetSessionsResponse struct {
+	Total    uint64    `json:"total"`
+	Sessions []Session `json:"sessions"`
+}

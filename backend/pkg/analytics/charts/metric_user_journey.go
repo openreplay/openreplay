@@ -554,8 +554,8 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) (string, error) {
 	laterCond := fmt.Sprintf("e.\"$event_name\" IN (%s)", strings.Join(vals, ","))
 
 	// build start and exclude conditions
-	startConds, _ := buildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"})
-	excludeConds, _ := buildEventConditions(p.Exclude, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"})
+	startConds, _ := BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"})
+	excludeConds, _ := BuildEventConditions(p.Exclude, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"})
 
 	// quote properties column correctly
 	fixProps := func(conds []string) []string {
@@ -596,7 +596,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) (string, error) {
 		}
 		globalFilters = append(globalFilters, flt)
 	}
-	globalConds, _ := buildEventConditions(globalFilters, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"})
+	globalConds, _ := BuildEventConditions(globalFilters, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"})
 	globalConds = fixProps(globalConds)
 
 	// assemble duration condition

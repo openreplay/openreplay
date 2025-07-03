@@ -87,7 +87,7 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	}
 	offset := (page - 1) * limit
 
-	ef, en := buildEventConditions(
+	ef, en := BuildEventConditions(
 		p.Series[0].Filter.Filters,
 		BuildConditionsOptions{DefinedColumns: mainColumns},
 	)
