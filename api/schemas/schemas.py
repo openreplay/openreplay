@@ -670,7 +670,7 @@ class SessionSearchEventSchema(BaseModel):
 
         if isinstance(self.operator, ClickEventExtraOperator):
             assert self.name == EventType.CLICK, \
-                f"operator:{self.operator} is only available for event-type: {EventType.CLICK}"
+                f"operator:{self.operator} is only available for event-name: {EventType.CLICK}"
         return self
 
     @model_validator(mode='after')
@@ -770,9 +770,9 @@ class SortOrderType(str, Enum):
 
 def add_missing_is_event(values: dict):
     if values.get("isEvent") is None:
-        values["isEvent"] = (EventType.has_value(values["type"])
-                             or PerformanceEventType.has_value(values["type"])
-                             or ProductAnalyticsSelectedEventType.has_value(values["type"]))
+        values["isEvent"] = (EventType.has_value(values["name"])
+                             or PerformanceEventType.has_value(values["name"])
+                             or ProductAnalyticsSelectedEventType.has_value(values["name"]))
     return values
 
 
@@ -807,11 +807,11 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
     def add_missing_attributes(cls, values):
         # in case isEvent is wrong:
         for f in values.get("filters") or []:
-            if f.get("type") is None:
+            if f.get("name") is None:
                 continue
-            if EventType.has_value(f["type"]) and not f.get("isEvent"):
+            if EventType.has_value(f["name"]) and not f.get("isEvent"):
                 f["isEvent"] = True
-            elif FilterType.has_value(f["type"]) and f.get("isEvent"):
+            elif FilterType.has_value(f["name"]) and f.get("isEvent"):
                 f["isEvent"] = False
 
         # in case the old search payload was passed
@@ -826,9 +826,9 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         for f in values.get("filters", []):
             vals = []
             for v in f.get("value", []):
-                if f.get("type", "") == FilterType.DURATION.value and v is None:
+                if f.get("name", "") == FilterType.DURATION.value and v is None:
                     v = 0
-                if v is not None and (f.get("type", "") != FilterType.DURATION.value
+                if v is not None and (f.get("name", "") != FilterType.DURATION.value
                                       or str(v).isnumeric()):
                     vals.append(v)
             f["value"] = vals
@@ -934,7 +934,7 @@ class PathAnalysisSubFilterSchema(BaseModel):
 
 class _ProductAnalyticsFilter(BaseModel):
     is_event: Literal[False] = False
-    type: FilterType
+    type: FilterType = Field(...)
     operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
     value: List[Union[IssueType, PlatformType, int, str]] = Field(...)
     source: Optional[str] = Field(default=None)
@@ -951,7 +951,7 @@ class _ProductAnalyticsFilter(BaseModel):
 
 class _ProductAnalyticsEventFilter(BaseModel):
     is_event: Literal[True] = True
-    type: ProductAnalyticsSelectedEventType
+    type: ProductAnalyticsSelectedEventType = Field(...)
     operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
     # TODO: support session metadata filters
     value: List[Union[IssueType, PlatformType, int, str]] = Field(...)
@@ -1439,14 +1439,14 @@ class LiveFilterType(str, Enum):
 
 class LiveSessionSearchFilterSchema(BaseModel):
     value: Union[List[str], str] = Field(...)
-    type: LiveFilterType = Field(...)
+    name: LiveFilterType = Field(...)
     source: Optional[str] = Field(default=None)
     operator: Literal[SearchEventOperator.IS, SearchEventOperator.CONTAINS] \
         = Field(default=SearchEventOperator.CONTAINS)
 
     @model_validator(mode="after")
     def __validator(self):
-        if self.type is not None and self.type == LiveFilterType.METADATA:
+        if self.name is not None and self.name == LiveFilterType.METADATA:
             assert self.source is not None, "source should not be null for METADATA type"
             assert len(self.source) > 0, "source should not be empty for METADATA type"
         return self
@@ -1477,8 +1477,8 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
                 else:
                     i += 1
             for i in values["filters"]:
-                if i.get("type") == LiveFilterType.PLATFORM:
-                    i["type"] = LiveFilterType.USER_DEVICE_TYPE
+                if i.get("name") == LiveFilterType.PLATFORM:
+                    i["name"] = LiveFilterType.USER_DEVICE_TYPE
         if values.get("sort") is not None:
             if values["sort"].lower() == "startts":
                 values["sort"] = "TIMESTAMP"
@@ -1595,17 +1595,17 @@ class HeatMapSessionsSearch(SessionsSearchPayloadSchema):
     @classmethod
     def __transform(cls, values):
         for f in values.get("filters", []):
-            if f.get("type") == FilterType.DURATION:
+            if f.get("name") == FilterType.DURATION:
                 return values
         values["filters"] = values.get("filters", [])
-        values["filters"].append({"value": [5000], "type": FilterType.DURATION,
+        values["filters"].append({"value": [5000], "name": FilterType.DURATION,
                                   "operator": SearchEventOperator.IS, "filters": []})
         return values
 
 
 class HeatMapFilterSchema(BaseModel):
     value: List[Literal[IssueType.CLICK_RAGE, IssueType.DEAD_CLICK]] = Field(default_factory=list)
-    type: Literal[FilterType.ISSUE] = Field(...)
+    name: Literal[FilterType.ISSUE] = Field(...)
     operator: Literal[SearchEventOperator.IS, MathOperator.EQUAL] = Field(...)
 
 
