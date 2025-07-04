@@ -27,8 +27,7 @@ def events_search(projectId: int, q: Optional[str] = None,
                   context: schemas.CurrentContext = Depends(OR_context)):
     if type and (not q or len(q) == 0) \
             and (autocomplete.is_top_supported(type)):
-        # return autocomplete.get_top_values(project_id=projectId, event_type=type, event_key=key)
-        return autocomplete.get_top_values(projectId, type, event_key=key)
+        return autocomplete.get_top_values(projectId, type, event_key=source)
     elif not q or len(q) == 0:
         return {"data": []}
 

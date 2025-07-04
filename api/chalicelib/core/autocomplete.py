@@ -373,7 +373,7 @@ TYPE_TO_TABLE = {
 
 
 def is_top_supported(event_type):
-    return TYPE_TO_COLUMN.get(event_type, False)
+    return TYPE_TO_COLUMN.get(event_type, False) or event_type == schemas.FilterType.METADATA
 
 
 @CachedResponse(table="or_cache.autocomplete_top_values", ttl=5 * 60)
