@@ -14,6 +14,7 @@ import (
 	config "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/user"
 )
 
 func getIDFromRequest(r *http.Request, key string) (int, error) {
@@ -83,8 +84,8 @@ func (e *handlersImpl) getSessions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.search.GetAll(projectID, req)
+	currentUser := r.Context().Value("userData").(*user.User)
+	resp, err := e.search.GetAll(projectID, currentUser.ID, req)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
