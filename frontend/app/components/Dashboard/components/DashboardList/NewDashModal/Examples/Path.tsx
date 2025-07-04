@@ -4,7 +4,6 @@ import { ResponsiveContainer, Sankey } from 'recharts';
 import CustomLink from 'App/components/shared/Insights/SankeyChart/CustomLink';
 import CustomNode from 'App/components/shared/Insights/SankeyChart/CustomNode';
 
-import { USER_PATH } from 'App/constants/card';
 import ExCard from './ExCard';
 
 function ExamplePath(props: any) {
