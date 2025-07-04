@@ -32,6 +32,7 @@ interface FilterParams {
   id: string;
   type: string;
   name?: string;
+  autoCaptured?: boolean;
 
   [key: string]: any;
 }
@@ -139,6 +140,7 @@ const ValueAutoComplete = observer(
 
           const autoCompleteParams: any = {
             q: trimmedQuery,
+            ac: params.autoCaptured,
           };
 
           if (params.propertyName) {
