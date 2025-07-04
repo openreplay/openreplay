@@ -31,7 +31,7 @@ var mainColumns = map[string]string{
 }
 
 type Search interface {
-	GetAll(projectId int, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error)
+	GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error)
 }
 
 type searchImpl struct {
@@ -54,55 +54,17 @@ var sortOptions = map[string]string{
 	"eventsCount": "s.events_count",
 }
 
-func (s *searchImpl) scanCard(r rowScanner) (*model.Session, error) {
-	c := &model.Session{}
-	var rawInfo []byte
-	err := r.Scan(
-		&c.Duration,
-		&c.ErrorsCount,
-		&c.EventsCount,
-		&c.IssueScore,
-		&c.IssueTypes,
-		&c.Metadata,
-		&c.PagesCount,
-		&c.Platform,
-		&c.ProjectId,
-		&c.SessionId,
-		&c.StartTs,
-		&c.Timezone,
-		&c.UserAnonymousId,
-		&c.UserBrowser,
-		&c.UserCity,
-		&c.UserCountry,
-		&c.UserDevice,
-		&c.UserDeviceType,
-		&c.UserId,
-		&c.UserOs,
-		&c.UserState,
-		&c.UserUuid,
-		&c.Viewed,
-		&rawInfo,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
-}
-
-func (s *searchImpl) GetAll(projectId int, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
-	// filter out duration & anonymous-id filters
+func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
 	sessFilters, _ := charts.FilterOutTypes(req.Filters, []model.FilterType{
 		charts.FilterDuration,
 		charts.FilterUserAnonymousId,
 	})
-	// build event & other conditions, using req.EventsOrder
 	eventConds, otherConds := charts.BuildEventConditions(sessFilters, charts.BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
 		EventsOrder:    req.EventsOrder,
 	})
 
-	// build PREWHERE clauses
 	prewhereParts := []string{}
 	if req.EventsOrder == "then" && len(eventConds) == 1 {
 		prewhereParts = append(prewhereParts, eventConds[0])
@@ -114,7 +76,6 @@ func (s *searchImpl) GetAll(projectId int, req *model.SessionsSearchRequest) (*m
 	)
 	prewhere := "PREWHERE " + strings.Join(prewhereParts, " AND ")
 
-	// build GROUP BY / HAVING based on EventsOrder
 	joinClause := ""
 	switch req.EventsOrder {
 	case "then":
@@ -145,7 +106,6 @@ func (s *searchImpl) GetAll(projectId int, req *model.SessionsSearchRequest) (*m
 		}
 	}
 
-	// count query
 	countQ := fmt.Sprintf(`
 SELECT count()
 FROM experimental.sessions AS s
@@ -165,7 +125,6 @@ WHERE s.duration IS NOT NULL
 		return nil, err
 	}
 
-	// build ORDER BY
 	field, ok := sortOptions[req.Sort]
 	if !ok {
 		field = sortOptions["datetime"]
@@ -176,7 +135,6 @@ WHERE s.duration IS NOT NULL
 	}
 	sortClause := fmt.Sprintf("ORDER BY %s %s", field, order)
 
-	// data query
 	dataQ := fmt.Sprintf(`
 SELECT
     toString(s.session_id)                    AS session_id,
@@ -195,7 +153,8 @@ SELECT
     s.user_device_type,
     s.user_os,
     s.user_state,
-    s.events_count
+    s.events_count,
+    toUInt8(viewed_sessions.session_id > 0)  AS viewed
 FROM experimental.sessions AS s
 ANY INNER JOIN (
     SELECT DISTINCT session_id
@@ -203,12 +162,20 @@ ANY INNER JOIN (
     %s
     %s
 ) AS fs USING (session_id)
+ANY LEFT JOIN (
+    SELECT DISTINCT session_id
+    FROM experimental.user_viewed_sessions
+    WHERE user_id    = %d
+      AND project_id = %d
+      AND _timestamp >= toDateTime(%d)
+) AS viewed_sessions USING (session_id)
 WHERE s.duration IS NOT NULL
 %s
 LIMIT %d OFFSET %d
-`, prewhere, joinClause, sortClause, req.Limit, req.Page)
+`, prewhere, joinClause, userId, projectId, req.StartDate/1000, sortClause, req.Limit, req.Page)
 
 	log.Printf("Data Query: %s\n", dataQ)
+
 	rows, err := s.chConn.Query(context.Background(), dataQ)
 	if err != nil {
 		return nil, err
@@ -239,6 +206,7 @@ LIMIT %d OFFSET %d
 			&sess.UserOs,
 			&sess.UserState,
 			&sess.EventsCount,
+			&sess.Viewed,
 		); err != nil {
 			return nil, err
 		}
