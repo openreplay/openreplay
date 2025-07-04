@@ -21,8 +21,9 @@ const createSocketIOServer = function (server, prefix) {
     if (io) {
         return io;
     }
+    let bufferSize = (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6
     io = _io(server, {
-        maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
+        maxHttpBufferSize: bufferSize,
         cors: {
             origin: "*",
             methods: ["GET", "POST", "PUT"]
@@ -30,6 +31,7 @@ const createSocketIOServer = function (server, prefix) {
         path: (prefix ? prefix : '') + '/socket',
         ...getCompressionConfig()
     });
+    console.log('The maximum http buffer size:', bufferSize);
     return io;
 }
 
