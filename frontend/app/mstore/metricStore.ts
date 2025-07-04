@@ -10,9 +10,9 @@ import {
   HEATMAP,
   USER_PATH,
   RETENTION,
-  CATEGORIES
+  CATEGORIES,
+  WEBVITALS,
 } from 'App/constants/card';
-import { clickmapFilter } from 'App/types/filter/newFilter';
 import { getRE } from 'App/utils';
 import { FilterKey } from 'Types/filter/filterType';
 import { ErrorInfo } from './types/error';
@@ -31,7 +31,7 @@ const handleTypeFilter = (card: Widget, filterType?: string) => {
         FilterKey.ERRORS,
         FilterKey.FETCH,
         `${TIMESERIES}_4xx_requests`,
-        `${TIMESERIES}_slow_network_requests`
+        `${TIMESERIES}_slow_network_requests`,
       ].includes(metricOf);
     }
     if (filterType === CATEGORIES.web_analytics) {
@@ -41,7 +41,7 @@ const handleTypeFilter = (card: Widget, filterType?: string) => {
         FilterKey.REFERRER,
         FilterKey.USERID,
         FilterKey.LOCATION,
-        FilterKey.USER_DEVICE
+        FilterKey.USER_DEVICE,
       ].includes(metricOf);
     }
   } else {
@@ -117,21 +117,21 @@ export default class MetricStore {
     const dbIds = this.filter.dashboard
       ? this.filter.dashboard.map((i: any) => i.value)
       : [];
-    return this.metrics
-      .filter(
-        (card) =>
-          (this.filter.showMine
-            ? card.owner === JSON.parse(localStorage.getItem('user')!).account.email
-            : true) &&
-          handleTypeFilter(card, this.filter.type) &&
-          (!dbIds.length ||
-            card.dashboards
-              .map((i) => i.dashboardId)
-              .some((id) => dbIds.includes(id))) &&
-          // @ts-ignore
-          (!filterRE ||
-            ['name', 'owner'].some((key) => filterRE.test(card[key])))
-      );
+    return this.metrics.filter(
+      (card) =>
+        (this.filter.showMine
+          ? card.owner ===
+            JSON.parse(localStorage.getItem('user')!).account.email
+          : true) &&
+        handleTypeFilter(card, this.filter.type) &&
+        (!dbIds.length ||
+          card.dashboards
+            .map((i) => i.dashboardId)
+            .some((id) => dbIds.includes(id))) &&
+        // @ts-ignore
+        (!filterRE ||
+          ['name', 'owner'].some((key) => filterRE.test(card[key]))),
+    );
     // .sort((a, b) =>
     //   this.sort.by === 'desc'
     //     ? b.lastModified - a.lastModified
@@ -190,12 +190,12 @@ export default class MetricStore {
         this.instance.series[i].filter.eventsOrderSupport = [
           'then',
           'or',
-          'and'
+          'and',
         ];
       });
-      if (type === HEATMAP && 'series' in obj) {
-        delete obj.series;
-      }
+      // if (type === HEATMAP && 'series' in obj) {
+      //   delete obj.series;
+      // }
       this.changeType(type);
     }
 
@@ -207,10 +207,10 @@ export default class MetricStore {
         obj.viewType = 'table';
       }
 
-      if (this.instance.metricType === USER_PATH) {
-        this.instance.series[0].filter.eventsHeader =
-          obj.metricOf === 'start-point' ? 'START POINT' : 'END POINT';
-      }
+      // if (this.instance.metricType === USER_PATH) {
+      //   this.instance.series[0].filter.eventsHeader =
+      //     obj.metricOf === 'start-point' ? 'START POINT' : 'END POINT';
+      // }
     }
 
     // handle metricValue change
@@ -237,7 +237,7 @@ export default class MetricStore {
       namesMap: {},
       avg: 0,
       percentiles: [],
-      values: []
+      values: [],
     };
     const obj: any = { metricType: value, data: defaultData };
     obj.series = this.instance.series;
@@ -285,18 +285,37 @@ export default class MetricStore {
       // obj['startType'] = 'start';
     }
 
-    if (value === HEATMAP) {
-      obj.series = obj.series.slice(0, 1);
-      if (this.instance.metricType !== HEATMAP) {
-        obj.series[0].filter.removeFilter(0);
-      }
+    if (value === WEBVITALS) {
+      obj.series[0].maxEvents = 1;
+    }
 
-      if (obj.series[0] && obj.series[0].filter.filters.length < 1) {
-        obj.series[0].filter.addFilter({
-          ...clickmapFilter,
-          value: ['']
-        });
-      }
+    if (value === HEATMAP) {
+      // obj.series = obj.series.slice(0, 1);
+      // if (this.instance.metricType !== HEATMAP) {
+      //   obj.series[0].filter.removeFilter(0);
+      // }
+      // if (obj.series[0] && obj.series[0].filter.filters.length < 1) {
+      // const clickMapFilter = {
+      //   name: FilterKey.LOCATION,
+      //   autoCaptured: true,
+      //   displayName: 'Visited URL',
+      //   placeholder: 'Enter URL or path',
+      //   operator: 'startWith',
+      //   isEvent: true,
+      //   dataType: 'string',
+      //   filters: [
+      //     {
+      //       name: 'url',
+      //       dataType: 'string',
+      //       operator: 'startsWith',
+      //       value: [''],
+      //       eventName: FilterKey.LOCATION,
+      //       autoCaptured: true,
+      //     },
+      //   ],
+      // };
+      // obj.series[0].filter.addFilter(clickMapFilter);
+      // }
     }
 
     if (metricOf) {
@@ -324,7 +343,7 @@ export default class MetricStore {
   updateInList(metric: Widget) {
     // @ts-ignore
     const index = this.metrics.findIndex(
-      (m: Widget) => m[Widget.ID_KEY] === metric[Widget.ID_KEY]
+      (m: Widget) => m[Widget.ID_KEY] === metric[Widget.ID_KEY],
     );
     if (index >= 0) {
       this.metrics[index] = metric;
@@ -376,19 +395,18 @@ export default class MetricStore {
   async fetchList() {
     this.setLoading(true);
     try {
-      const resp = await metricService
-        .getMetricsPaginated({
-          page: this.page,
-          limit: this.pageSize,
-          sort: {
-            field: this.sort.field,
-            order: this.sort.order === 'ascend' ? 'asc' : 'desc'
-          },
-          filter: {
-            query: this.filter.query,
-            type: this.filter.type === 'all' ? '' : this.filter.type,
-          }
-        });
+      const resp = await metricService.getMetricsPaginated({
+        page: this.page,
+        limit: this.pageSize,
+        sort: {
+          field: this.sort.field,
+          order: this.sort.order === 'ascend' ? 'asc' : 'desc',
+        },
+        filter: {
+          query: this.filter.query,
+          type: this.filter.type === 'all' ? '' : this.filter.type,
+        },
+      });
       this.total = resp.total;
       this.setMetrics(resp.list.map((m) => new Widget().fromJson(m)));
     } finally {
@@ -396,23 +414,21 @@ export default class MetricStore {
     }
   }
 
-  fetch(id: string, period?: any) {
+  async fetch(id: string, period?: any) {
     this.setLoading(true);
-    return metricService
-      .getMetric(id)
-      .then((metric: any) => {
-        const inst = new Widget().fromJson(metric, period);
-        runInAction(() => {
-          this.instance = inst;
-          const type =
-            inst.metricType === 'table' ? inst.metricOf : inst.metricType;
-          this.cardCategory = cardToCategory(type);
-        });
-        return inst;
-      })
-      .finally(() => {
-        this.setLoading(false);
+    try {
+      const metric = await metricService.getMetric(id);
+      const inst = new Widget().fromJson(metric, period);
+      runInAction(() => {
+        this.instance = inst;
+        const type =
+          inst.metricType === 'table' ? inst.metricOf : inst.metricType;
+        this.cardCategory = cardToCategory(type);
       });
+      return inst;
+    } finally {
+      this.setLoading(false);
+    }
   }
 
   delete(metric: Widget) {

@@ -181,12 +181,14 @@ export enum IssueCategory {
 }
 
 export enum FilterType {
-  STRING = 'STRING',
+  STRING = 'string',
+  NUMBER = 'number',
+  DOUBLE = 'double',
+  INTEGER = 'int',
   ISSUE = 'ISSUE',
-  BOOLEAN = 'BOOLEAN',
-  NUMBER = 'NUMBER',
+  BOOLEAN = 'bool',
   NUMBER_MULTIPLE = 'NUMBER_MULTIPLE',
-  DURATION = 'DURATION',
+  DURATION = 'duration',
   MULTIPLE = 'MULTIPLE',
   SUB_FILTERS = 'SUB_FILTERS',
   COUNTRY = 'COUNTRY',
@@ -204,13 +206,16 @@ export enum FilterKey {
   ERROR_MOBILE = 'errorMobile',
   SWIPE_MOBILE = 'swipeMobile',
 
+  CLICK = 'CLICK',
+  INPUT = 'INPUT',
+  LOCATION = 'LOCATION',
+  ISSUE = 'ISSUE',
+
   ERROR = 'error',
   MISSING_RESOURCE = 'missingResource',
   SLOW_SESSION = 'slowSession',
   CLICK_RAGE = 'clickRage',
-  CLICK = 'click',
-  INPUT = 'input',
-  LOCATION = 'location',
+
   VIEW = 'view',
   CONSOLE = 'console',
   METADATA = 'metadata',
@@ -232,7 +237,7 @@ export enum FilterKey {
   REVID = 'revId',
   USERANONYMOUSID = 'userAnonymousId',
   USERID = 'userId',
-  ISSUE = 'issue',
+
   EVENTS_COUNT = 'eventsCount',
   UTM_SOURCE = 'utmSource',
   UTM_MEDIUM = 'utmMedium',
@@ -247,7 +252,7 @@ export enum FilterKey {
   AVG_MEMORY_USAGE = 'avgMemoryUsage',
   FETCH_FAILED = 'fetchFailed',
 
-  FETCH = 'fetch',
+  FETCH = 'REQUEST',
   FETCH_URL = 'fetchUrl',
   FETCH_STATUS_CODE = 'fetchStatusCode',
   FETCH_METHOD = 'fetchMethod',
@@ -278,11 +283,7 @@ export enum FilterKey {
   AVG_REQUEST_LOADT_IME = 'avgRequestLoadTime',
   AVG_RESPONSE_TIME = 'avgResponseTime',
   AVG_SESSION_DURATION = 'avgSessionDuration',
-  AVG_TILL_FIRST_BYTE = 'avgTillFirstByte',
-  AVG_TIME_TO_INTERACTIVE = 'avgTimeToInteractive',
-  AVG_TIME_TO_RENDER = 'avgTimeToRender',
-  AVG_USED_JS_HEAP_SIZE = 'avgUsedJsHeapSize',
-  AVG_VISITED_PAGES = 'avgVisitedPages',
+
   COUNT_REQUESTS = 'countRequests',
   COUNT_SESSIONS = 'countSessions',
 
@@ -304,10 +305,6 @@ export enum FilterKey {
   PAGES_RESPONSE_TIME = 'pagesResponseTime',
   PAGES_RESPONSE_TIME_DISTRIBUTION = 'pagesResponseTimeDistribution',
   SESSIONS_PER_BROWSER = 'sessionsPerBrowser',
-  SLOWEST_DOMAINS = 'slowestDomains',
-  SPEED_LOCATION = 'speedLocation',
-  TIME_TO_RENDER = 'timeToRender',
-  IMPACTED_SESSIONS_BY_SLOW_PAGES = 'impactedSessionsBySlowPages',
 
   CLICKMAP_URL = 'clickMapUrl',
   FEATURE_FLAG = 'featureFlag',

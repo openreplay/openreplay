@@ -29,6 +29,7 @@ import { filtersMap } from 'Types/filter/newFilter';
 import Issue from '../types/issue';
 import { durationFormatted } from 'App/date';
 import { SessionsByRow } from './sessionsCardData';
+import { filterStore } from 'App/mstore';
 
 export class InsightIssue {
   icon: string;
@@ -100,7 +101,11 @@ export default class Widget {
   thumbnail?: string;
   params: any = { density: 35 };
   startType: string = 'start';
-  startPoint: FilterItem = new FilterItem(filtersMap[FilterKey.LOCATION]);
+  stepsBefore: number = 0; // specific to user journey
+  stepsAfter: number = 5; // specific to user journey
+  rows: number = 5;
+  columns: number = 4;
+  startPoint: FilterItem | null = null;
   excludes: FilterItem[] = [];
   hideExcess?: boolean = true;
   compareTo: [startDate?: string, endDate?: string] | null = null;
@@ -130,6 +135,15 @@ export default class Widget {
 
     const filterSeries = new FilterSeries();
     this.series.push(filterSeries);
+
+    // if (this.metricType === USER_PATH) {
+    //   const f = filterStore.findEvent({
+    //     name: FilterKey.LOCATION,
+    //     autoCaptured: true,
+    //   });
+
+    //   this.updateStartPoint(f);
+    // }
   }
 
   updateKey(key: string, value: any) {
@@ -187,7 +201,7 @@ export default class Widget {
       this.owner = json.ownerName;
       this.lastModified =
         json.editedAt || json.createdAt
-          ? DateTime.fromMillis(json.editedAt || json.createdAt)
+          ? DateTime.fromISO(json.editedAt || json.createdAt)
           : null;
       this.config = json.config;
       this.position = json.config.position;
@@ -205,13 +219,24 @@ export default class Widget {
       if (this.metricType === USER_PATH) {
         this.hideExcess = json.hideExcess;
         this.startType = json.startType;
+        this.rows = json.rows;
+        this.stepsBefore = json.stepsBefore;
+        this.stepsAfter = json.stepsAfter;
+        this.columns = json.columns;
         this.metricValue =
           json.metricValue && json.metricValue.length > 0
             ? json.metricValue
-            : ['location'];
+            : ['LOCATION'];
         if (json.startPoint) {
           if (Array.isArray(json.startPoint) && json.startPoint.length > 0) {
-            this.startPoint = new FilterItem().fromJson(json.startPoint[0]);
+            const sp = json.startPoint[0];
+            const event = filterStore.findEvent({
+              name: sp.name,
+              autoCaptured: sp.autoCaptured,
+            });
+
+            event.filters = sp.filters;
+            this.startPoint = new FilterItem().fromJson(event);
           }
 
           if (json.startPoint == typeof Object) {
@@ -219,12 +244,25 @@ export default class Widget {
           }
         }
 
+        this.excludes =
+          Array.isArray(json.excludes) && json.excludes.length > 0
+            ? [new FilterItem().fromJson(json.excludes[0])]
+            : [];
+
         // TODO change this to excludes after the api change
-        if (json.exclude) {
-          this.series[0].filter.excludes = json.exclude.map((i: any) =>
-            new FilterItem().fromJson(i),
-          );
-        }
+        // if (json.excludes) {
+        //   this.series[0].filter.excludes = json.excludes.map((i: any) =>
+        //     new FilterItem().fromJson(i),
+        //   );
+        // }
+      }
+
+      if (this.metricType === HEATMAP) {
+        this.series[0].maxEvents = 1;
+      }
+
+      if (this.metricType === WEBVITALS) {
+        this.series[0].maxEvents = 1;
       }
 
       if (period) {
@@ -258,6 +296,10 @@ export default class Widget {
       thumbnail: this.thumbnail,
       sessionId: this.data.sessionId,
       page: this.page,
+      rows: this.rows,
+      stepsBefore: this.stepsBefore,
+      stepsAfter: this.stepsAfter,
+      columns: 4,
       limit: this.limit,
       compareTo: this.compareTo,
       config: {
@@ -278,7 +320,7 @@ export default class Widget {
     if (this.metricType === USER_PATH) {
       data.hideExcess = this.hideExcess;
       data.startType = this.startType;
-      data.startPoint = [this.startPoint.toJson()];
+      data.startPoint = this.startPoint ? [this.startPoint.toJson()] : [];
       data.excludes = this.series[0].filter.excludes.map((i: any) =>
         i.toJson(),
       );
@@ -290,6 +332,27 @@ export default class Widget {
   updateStartPoint(startPoint: any) {
     runInAction(() => {
       this.startPoint = new FilterItem(startPoint);
+      this.hasChanged = true;
+    });
+  }
+
+  updateExcludes(excludes: any[]) {
+    runInAction(() => {
+      this.excludes = excludes.map((i: any) => new FilterItem(i));
+      this.hasChanged = true;
+    });
+  }
+
+  updateExcludeByIndex(index: number, exclude: any) {
+    runInAction(() => {
+      this.excludes[index] = new FilterItem(exclude);
+      this.hasChanged = true;
+    });
+  }
+
+  removeExcludeByIndex(index: number) {
+    runInAction(() => {
+      this.excludes.splice(index, 1);
       this.hasChanged = true;
     });
   }
@@ -370,21 +433,7 @@ export default class Widget {
     }
 
     if (this.metricType === WEBVITALS) {
-      const keys = ['P50', 'P75', 'P90', 'Avg', 'Min', 'Max'];
-      const categories = [
-        'domBuildingTime',
-        'firstContentfulPaintTime',
-        'speedIndex',
-        'ttfb',
-      ];
-      const result: any = { raw: data };
-      categories.forEach((category) => {
-        result[category] = {};
-        keys.forEach((key) => {
-          result[category][key] = data[`${category}${key}`];
-          result[category][`${key}Status`] = data[`${category}${key}Status`];
-        });
-      });
+      const result: any = { ...data, raw: data };
       this.data = result;
       return result;
     }
@@ -416,12 +465,12 @@ export default class Widget {
     } else if (this.metricType === FUNNEL) {
       _data.funnel = new Funnel().fromJSON(data);
     } else if (this.metricType === TABLE) {
-      const count = data[0]['count'];
-      const vals = data[0]['values'].map((s: any) =>
+      const count = data['count'];
+      const vals = data['values'].map((s: any) =>
         new SessionsByRow().fromJson(s, count, this.metricOf),
       );
       _data['values'] = vals;
-      _data['total'] = data[0]['total'];
+      _data['total'] = data['total'];
     } else {
       if (data.hasOwnProperty('chart')) {
         _data['value'] = data.value;
@@ -465,18 +514,51 @@ export default class Widget {
   };
 
   fetchSessions(metricId: any, filter: any): Promise<any> {
+    const newFilter = this.applyProperties(filter);
     return new Promise((resolve) => {
-      metricService.fetchSessions(metricId, filter).then((response: any[]) => {
-        resolve(
-          response.map((cat: { sessions: any[] }) => {
-            return {
-              ...cat,
-              sessions: cat.sessions.map((s: any) => new Session().fromJson(s)),
-            };
-          }),
-        );
-      });
+      metricService
+        .fetchSessions(metricId, newFilter)
+        .then((response: any[]) => {
+          resolve(
+            response.map((cat: { sessions: any[] }) => {
+              return {
+                ...cat,
+                sessions: cat.sessions.map((s: any) =>
+                  new Session().fromJson(s),
+                ),
+              };
+            }),
+          );
+        });
     });
+  }
+
+  // TODO this is a temporary solution until the API is fixed.
+  applyProperties(data: any) {
+    const updatedSeries =
+      data.series?.map((series: any) => {
+        const filter = { ...series.filter };
+
+        if (filter.isEvent && Array.isArray(filter.filters)) {
+          const nested = filter.filters.map((nestedFilter: any) => {
+            const js = new FilterItem(nestedFilter).toJson();
+            delete js.type;
+            delete js.propertyOrder;
+            return js;
+          });
+          delete filter.filters;
+          filter.properties = {
+            propertyOrder: filter.propertyOrder,
+            operator: filter.propertyOrder,
+            filters: nested,
+          };
+        }
+
+        delete filter.propertyOrder;
+        return { ...series, filter };
+      }) || [];
+
+    return { ...data, series: updatedSeries };
   }
 
   async fetchIssues(card: any): Promise<any> {

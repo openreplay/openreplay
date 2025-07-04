@@ -5,7 +5,7 @@ import {
   filtersMap,
   generateFilterOptions,
   liveFiltersMap,
-  mobileConditionalFiltersMap
+  mobileConditionalFiltersMap,
 } from 'Types/filter/newFilter';
 import { List } from 'immutable';
 import { makeAutoObservable, runInAction } from 'mobx';
@@ -13,10 +13,10 @@ import { searchService, sessionService } from 'App/services';
 import Search from 'App/mstore/types/search';
 import { checkFilterValue } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
-import { sessionStore, settingsStore } from 'App/mstore';
+import { filterStore, sessionStore, settingsStore } from 'App/mstore';
 import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
 import { iTag } from '@/services/NotesService';
-import { issues_types } from 'Types/session/issue';
+import { Filter } from '@/mstore/types/filterConstants';
 
 const PER_PAGE = 10;
 
@@ -38,7 +38,7 @@ export const filterMap = ({
   isEvent,
   filters,
   sort,
-  order
+  order,
 }: any) => ({
   value: checkValues(key, value),
   custom,
@@ -47,7 +47,7 @@ export const filterMap = ({
   source: category === FilterCategory.METADATA ? key.replace(/^_/, '') : source,
   sourceOperator,
   isEvent,
-  filters: filters ? filters.map(filterMap) : []
+  filters: filters ? filters.map(filterMap) : [],
 });
 
 export const TAB_MAP: any = {
@@ -55,42 +55,41 @@ export const TAB_MAP: any = {
   sessions: { name: 'Sessions', type: 'sessions' },
   bookmarks: { name: 'Bookmarks', type: 'bookmarks' },
   notes: { name: 'Notes', type: 'notes' },
-  recommendations: { name: 'Recommendations', type: 'recommendations' }
+  recommendations: { name: 'Recommendations', type: 'recommendations' },
 };
 
 class SearchStore {
   list: SavedSearch[] = [];
-
   latestRequestTime: number | null = null;
-
   latestList = List();
-
   alertMetricId: number | null = null;
-
-  instance = new Search();
-
+  instance = new Search({
+    // rangeValue: LAST_24_HOURS,
+    startDate: Date.now() - 24 * 60 * 60 * 1000,
+    endDate: Date.now(),
+    filters: [],
+    groupByUser: false,
+    sort: 'startTs',
+    order: 'desc',
+    viewed: false,
+    eventsCount: 0,
+    suspicious: false,
+    consoleLevel: '',
+    strict: true,
+    eventsOrder: 'then',
+  });
   savedSearch: ISavedSearch = new SavedSearch();
-
   filterSearchList: any = {};
-
   currentPage = 1;
-
   pageSize = PER_PAGE;
-
   activeTab = { name: 'All', type: 'all' };
-
   scrollY = 0;
-
   sessions = List();
-
   total: number = 0;
   latestSessionCount: number = 0;
   loadingFilterSearch = false;
-
   isSaving: boolean = false;
-
   activeTags: any[] = [];
-
   urlParsed: boolean = false;
   searchInProgress = false;
 
@@ -127,9 +126,9 @@ class SearchStore {
     this.edit({
       filters: savedSearch.filter
         ? savedSearch.filter.filters.map((i: FilterItem) =>
-          new FilterItem().fromJson(i)
-        )
-        : []
+            new FilterItem().fromJson(i),
+          )
+        : [],
     });
     this.currentPage = 1;
   }
@@ -207,7 +206,7 @@ class SearchStore {
 
   resetTags = () => {
     this.activeTags = ['all'];
-  }
+  };
 
   toggleTag(tag?: iTag) {
     if (!tag) {
@@ -252,8 +251,8 @@ class SearchStore {
         rangeValue: instance.rangeValue,
         startDate: instance.startDate,
         endDate: instance.endDate,
-        filters: []
-      })
+        filters: [],
+      }),
     );
 
     this.savedSearch = new SavedSearch({});
@@ -270,7 +269,7 @@ class SearchStore {
         const period = Period({
           rangeName: CUSTOM_RANGE,
           start: this.latestRequestTime,
-          end: Date.now()
+          end: Date.now(),
         });
         const timeRange: any = period.toJSON();
         filter.startDate = timeRange.startDate;
@@ -296,40 +295,44 @@ class SearchStore {
   }
 
   addFilter(filter: any) {
-    const index = filter.isEvent
-      ? -1
-      : this.instance.filters.findIndex(
-        (i: FilterItem) => i.key === filter.key
-      );
+    console.debug('SearchStore: Add Filter', filter);
 
-    filter.value = checkFilterValue(filter.value);
-    filter.filters = filter.filters
-      ? filter.filters.map((subFilter: any) => ({
-        ...subFilter,
-        value: checkFilterValue(subFilter.value)
-      }))
-      : null;
-
-    if (index > -1) {
-      const oldFilter = new FilterItem(this.instance.filters[index]);
-      const updatedFilter = {
-        ...oldFilter,
-        value: oldFilter.value.concat(filter.value)
-      };
-      oldFilter.merge(updatedFilter);
-      this.updateFilter(index, updatedFilter);
-    } else {
-      this.instance.filters.push(filter);
-      this.instance = new Search({
-        ...this.instance.toData()
+    if (filter.isEvent && filter.filters) {
+      filterStore.getEventFilters(filter.id).then((props) => {
+        filter.filters = props?.filter((prop) => prop.defaultProperty);
       });
     }
+
+    filter.value = checkFilterValue(filter.value);
+    filter.operator = filter.operator || 'is';
+    filter.filters = filter.filters
+      ? filter.filters.map((subFilter: any) => ({
+          ...subFilter,
+          value: checkFilterValue(subFilter.value),
+        }))
+      : null;
+
+    this.instance.filters.push(filter);
+    this.instance = new Search({
+      ...this.instance.toData(),
+    });
 
     this.currentPage = 1;
 
     if (filter.value && filter.value[0] && filter.value[0] !== '') {
       void this.fetchSessions();
     }
+  }
+
+  moveFilter(draggedIndex: number, newPosition: number) {
+    const newFilters = this.instance.filters.slice();
+    const [removed] = newFilters.splice(draggedIndex, 1);
+    newFilters.splice(newPosition, 0, removed);
+
+    this.instance = new Search({
+      ...this.instance.toData(),
+      filters: newFilters,
+    });
   }
 
   addFilterByKeyAndValue(
@@ -353,36 +356,32 @@ class SearchStore {
     this.addFilter(defaultFilter);
   }
 
-  refreshFilterOptions() {
-    // TODO
-  }
-
   updateSearch = (search: Partial<Search>) => {
     this.instance = Object.assign(this.instance, search);
   };
 
-  updateFilter = (index: number, search: Partial<FilterItem>) => {
-    const newFilters = this.instance.filters.map((_filter: any, i: any) => {
-      if (i === index) {
-        return search;
-      }
-      return _filter;
-    });
+  updateFilter = (index: number, search: Partial<Filter>) => {
+    console.log('SearchStore: updateFilter', index, search);
+    const newFilters = [...this.instance.filters];
+    newFilters[index] = {
+      ...newFilters[index],
+      ...search,
+    };
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters
+      filters: newFilters,
     });
   };
 
   removeFilter = (index: number) => {
-    const newFilters = this.instance.filters.filter(
-      (_filter: any, i: any) => i !== index,
-    );
+    console.log('removeFilter', index);
+    const newFilters = [...this.instance.filters];
+    newFilters.splice(index, 1);
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters
+      filters: newFilters,
     });
   };
 
@@ -390,62 +389,102 @@ class SearchStore {
     this.scrollY = y;
   };
 
-  async fetchAutoplaySessions(page: number): Promise<void> {
-    // TODO
-  }
-
-  fetchSessions = async (
+  async fetchSessions(
     force: boolean = false,
     bookmarked: boolean = false,
-  ): Promise<void> => {
+  ): Promise<void> {
     if (this.searchInProgress) return;
-    const filter = this.instance.toSearch();
 
-    if (this.activeTags[0] && this.activeTags[0] !== 'all') {
-      const tagFilter = filtersMap[FilterKey.ISSUE];
-      tagFilter.type = tagFilter.type.toLowerCase();
-      tagFilter.value = [
-        issues_types.find((i: any) => i.type === this.activeTags[0])?.type
-      ];
-      delete tagFilter.operatorOptions;
-      delete tagFilter.options;
-      delete tagFilter.placeholder;
-      delete tagFilter.label;
-      delete tagFilter.icon;
-      filter.filters = filter.filters.concat(tagFilter);
-    }
-
-    if (!filter.filters.some((f: any) => f.type === FilterKey.DURATION)) {
-      const { durationFilter } = settingsStore.sessionSettings;
-      if (durationFilter?.count > 0) {
-        const multiplier = durationFilter.countType === 'sec' ? 1000 : 60000;
-        const amount = durationFilter.count * multiplier;
-        const value =
-          durationFilter.operator === '<' ? [amount, 0] : [0, amount];
-
-        filter.filters.push({
-          type: FilterKey.DURATION,
-          value,
-          operator: 'is'
-        });
-      }
-    }
+    let filter = this.instance.toSearch();
+    filter = this.applyTagFilter(filter, this.activeTags);
+    filter = this.applyDurationFilter(filter);
 
     this.latestRequestTime = filter.startDate;
     this.latestList = List();
     this.searchInProgress = true;
-    await sessionStore.fetchSessions(
-      {
-        ...filter,
-        page: this.currentPage,
-        perPage: this.pageSize,
-        tab: this.activeTab.type,
-        bookmarked: bookmarked ? true : undefined
-      },
-      force
-    ).finally(() => {
-      this.searchInProgress = false;
-    });
+    await sessionStore
+      .fetchSessions(
+        {
+          ...filter,
+          page: this.currentPage,
+          limit: this.pageSize,
+          tab: this.activeTab.type,
+          bookmarked: bookmarked ? true : undefined,
+        },
+        force,
+      )
+      .finally(() => {
+        this.searchInProgress = false;
+      });
+  }
+
+  private applyTagFilter(filter: any, activeTags: string[]): any {
+    if (!activeTags?.length || activeTags[0] === 'all') {
+      return filter;
+    }
+
+    // const tagFilter = filterStore.findEvent({
+    //   name: FilterKey.ISSUE,
+    //   autoCaptured: true,
+    // });
+
+    // if (!tagFilter) {
+    //   console.error('Tag filter not found');
+    //   return filter;
+    // }
+
+    const issueFilter = {
+      isEvent: true,
+      name: FilterKey.ISSUE,
+      autoCaptured: true,
+      value: [],
+      operator: 'is',
+      propertyOrder: 'and',
+      filters: [
+        {
+          isEvent: false,
+          name: 'issue_type',
+          autoCaptured: true,
+          dataType: 'string',
+          operator: 'is',
+          value: [activeTags[0]],
+        },
+      ],
+    };
+
+    return {
+      ...filter,
+      filters: [...filter.filters, issueFilter],
+    };
+  }
+
+  private applyDurationFilter(filter: any): any {
+    if (filter.filters.some((f: any) => f.type === FilterKey.DURATION)) {
+      return filter;
+    }
+
+    const { durationFilter } = settingsStore.sessionSettings;
+
+    if (!durationFilter?.count || durationFilter.count <= 0) {
+      return filter;
+    }
+
+    const multiplier = durationFilter.countType === 'sec' ? 1000 : 60000;
+    const amount = durationFilter.count * multiplier;
+    const value = durationFilter.operator === '<' ? [amount, 0] : [0, amount];
+
+    const durationFilterConfig = {
+      autoCaptured: false,
+      dataType: 'int',
+      name: FilterKey.DURATION,
+      value,
+      operator: 'is',
+    };
+
+    return {
+      ...filter,
+      filters: [...filter.filters, durationFilterConfig],
+    };
   }
 }
 

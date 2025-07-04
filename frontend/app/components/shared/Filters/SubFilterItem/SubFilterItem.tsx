@@ -9,6 +9,7 @@ interface Props {
   onRemoveFilter: () => void;
   isFilter?: boolean;
 }
+
 export default function SubFilterItem(props: Props) {
   const { isFilter = false, filterIndex, filter } = props;
   const canShowValues = !(

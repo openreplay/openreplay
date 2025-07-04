@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { FilterKey, FilterCategory, FilterType } from 'Types/filter/filterType';
-import { debounce } from 'App/utils';
 import { assist as assistRoute, isRoute } from 'App/routes';
-import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import FilterDuration from '../FilterDuration';
-import FilterValueDropdown from '../FilterValueDropdown';
-import FilterAutoCompleteLocal from '../FilterAutoCompleteLocal';
-import FilterAutoComplete from '../FilterAutoComplete';
+import ValueAutoComplete from 'Shared/Filters/FilterValue/ValueAutoComplete';
+import { Input, Select } from 'antd';
+import { useStore } from '@/mstore';
 
 const ASSIST_ROUTE = assistRoute();
 
@@ -15,193 +13,189 @@ interface Props {
   filter: any;
   onUpdate: (filter: any) => void;
   isConditional?: boolean;
+  eventName?: string;
 }
+
 function FilterValue(props: Props) {
-  const { filter } = props;
+  const { filter, onUpdate, isConditional, eventName = '' } = props;
   const isAutoOpen = filter.autoOpen;
+  const { searchStore } = useStore();
 
-  React.useEffect(() => {
-    if (isAutoOpen) {
-      setTimeout(() => {
-        filter.autoOpen = false;
-      }, 250);
-    }
-  }, [isAutoOpen]);
-  const [durationValues, setDurationValues] = useState({
+  const [durationValues, setDurationValues] = useState(() => ({
     minDuration: filter.value?.[0],
-    maxDuration: filter.value.length > 1 ? filter.value[1] : filter.value[0],
-  });
-  const showCloseButton = filter.value.length > 1;
+    maxDuration: filter.value?.length > 1 ? filter.value[1] : filter.value?.[0],
+  }));
 
-  const onAddValue = () => {
-    const newValue = filter.value.concat('');
-    props.onUpdate({ ...filter, value: newValue });
-  };
+  // Update duration values when filter changes
+  useEffect(() => {
+    if (filter.name === FilterType.DURATION) {
+      const incomingMin = filter.value?.[0];
+      const incomingMax =
+        filter.value?.length > 1 ? filter.value[1] : filter.value?.[0];
 
-  const onApplyValues = (values: string[]) => {
-    props.onUpdate({ ...filter, value: values });
-  };
-
-  const onRemoveValue = (valueIndex: any) => {
-    const newValue = filter.value.filter(
-      (_: any, index: any) => index !== valueIndex,
-    );
-    props.onUpdate({ ...filter, value: newValue });
-  };
-
-  const onChange = (e: any, item: any, valueIndex: any) => {
-    const newValues = filter.value.map((_: any, _index: any) => {
-      if (_index === valueIndex) {
-        return item;
+      if (
+        durationValues.minDuration !== incomingMin ||
+        durationValues.maxDuration !== incomingMax
+      ) {
+        setDurationValues({
+          minDuration: incomingMin,
+          maxDuration: incomingMax,
+        });
       }
-      return _;
-    });
-    props.onUpdate({ ...filter, value: newValues });
-  };
-
-  const debounceOnSelect = React.useCallback(debounce(onChange, 500), [
-    onChange,
+    }
+  }, [
+    filter.value,
+    filter.name,
+    durationValues.minDuration,
+    durationValues.maxDuration,
   ]);
 
-  const onDurationChange = (newValues: any) => {
-    setDurationValues({ ...durationValues, ...newValues });
-  };
+  const onApplyValues = useCallback(
+    (values: string[]) => {
+      onUpdate({ ...filter, value: values });
+      void searchStore.fetchSessions();
+    },
+    [filter, onUpdate, searchStore],
+  );
 
-  const handleBlur = () => {
-    if (filter.type === FilterType.DURATION) {
-      const { maxDuration, minDuration } = filter;
-      if (maxDuration || minDuration) return;
+  const onDurationChange = useCallback((newValues: any) => {
+    setDurationValues((current) => ({ ...current, ...newValues }));
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    if (filter.name === FilterType.DURATION) {
+      const currentMinInProp = filter.value?.[0];
+      const currentMaxInProp =
+        filter.value?.length > 1 ? filter.value[1] : filter.value?.[0];
+
       if (
-        maxDuration !== durationValues.maxDuration ||
-        minDuration !== durationValues.minDuration
+        durationValues.minDuration !== currentMinInProp ||
+        durationValues.maxDuration !== currentMaxInProp
       ) {
-        props.onUpdate({
+        onUpdate({
           ...filter,
           value: [durationValues.minDuration, durationValues.maxDuration],
         });
       }
     }
-  };
+  }, [
+    filter,
+    onUpdate,
+    durationValues.minDuration,
+    durationValues.maxDuration,
+  ]);
 
-  const getParms = (key: any) => {
-    let params: any = { type: filter.key };
-    switch (filter.category) {
-      case FilterCategory.METADATA:
-        params = { type: FilterKey.METADATA, key };
+  const params = useMemo(() => {
+    let baseParams: any = {
+      type: filter.key,
+      name: filter.name,
+      isEvent: filter.isEvent,
+      id: filter.id,
+    };
+
+    if (filter.isEvent || eventName) {
+      baseParams.eventName = eventName;
+    }
+
+    if (!filter.isEvent) {
+      baseParams.propertyName = filter.name;
+      if (filter.eventName) {
+        baseParams.eventName = filter.eventName;
+      }
+    }
+
+    if (filter.category === FilterCategory.METADATA) {
+      baseParams = { type: FilterKey.METADATA, key: filter.key };
     }
 
     if (isRoute(ASSIST_ROUTE, window.location.pathname)) {
-      params = { ...params, live: true };
+      baseParams = { ...baseParams, live: true };
     }
 
-    return params;
-  };
+    return baseParams;
+  }, [
+    filter.key,
+    filter.name,
+    filter.isEvent,
+    filter.id,
+    filter.category,
+    filter.eventName,
+    eventName,
+  ]);
 
-  const renderValueFiled = (value: any[]) => {
-    const showOrButton = filter.value.length > 1;
-    function BaseFilterLocalAutoComplete(props) {
-      return (
-        <FilterAutoCompleteLocal
-          value={value}
-          showCloseButton={showCloseButton}
-          onApplyValues={onApplyValues}
-          onRemoveValue={(index) => onRemoveValue(index)}
-          onSelect={(e, item, index) => debounceOnSelect(e, item, index)}
-          icon={filter.icon}
-          placeholder={filter.placeholder}
-          isAutoOpen={isAutoOpen}
-          modalProps={{ placeholder: '' }}
-          {...props}
-        />
-      );
-    }
-    function BaseDropDown(props) {
-      return (
-        <FilterValueDropdown
-          value={value}
-          isAutoOpen={isAutoOpen}
-          placeholder={filter.placeholder}
-          options={filter.options}
-          onApplyValues={onApplyValues}
-          {...props}
-        />
-      );
-    }
-    switch (filter.type) {
-      case FilterType.NUMBER_MULTIPLE:
-        return (
-          <BaseFilterLocalAutoComplete
-            type="number"
-            placeholder={filter.placeholder}
-          />
-        );
-      case FilterType.NUMBER:
-        return (
-          <BaseFilterLocalAutoComplete
-            type="number"
-            allowDecimals={false}
-            isMultiple={false}
-            placeholder={filter.placeholder}
-          />
-        );
-      case FilterType.STRING:
-        return <BaseFilterLocalAutoComplete placeholder={filter.placeholder} />;
-      case FilterType.DROPDOWN:
-        return <BaseDropDown />;
-      case FilterType.ISSUE:
-      case FilterType.MULTIPLE_DROPDOWN:
-        return (
-          <BaseDropDown
-            search
-            onAddValue={onAddValue}
-            onRemoveValue={(ind) => onRemoveValue(ind)}
-            showCloseButton={showCloseButton}
-            showOrButton={showOrButton}
-            placeholder={filter.placeholder}
-          />
-        );
-      case FilterType.DURATION:
-        return (
-          <FilterDuration
-            onChange={onDurationChange}
-            onBlur={handleBlur}
-            minDuration={durationValues.minDuration}
-            maxDuration={durationValues.maxDuration}
-            isConditional={props.isConditional}
-          />
-        );
-      case FilterType.MULTIPLE:
-        return (
-          <FilterAutoComplete
-            value={value}
-            isAutoOpen={isAutoOpen}
-            showCloseButton={showCloseButton}
-            showOrButton={showOrButton}
-            onApplyValues={onApplyValues}
-            onRemoveValue={(index) => onRemoveValue(index)}
-            method="GET"
-            endpoint="/PROJECT_ID/events/search"
-            params={getParms(filter.key)}
-            headerText=""
-            placeholder={filter.placeholder}
-            onSelect={(e, item, index) => onChange(e, item, index)}
-            icon={filter.icon}
-            modalProps={{ placeholder: 'Search' }}
-          />
-        );
-    }
-  };
-
-  return (
-    <div
-      id="ignore-outside"
-      className={cn('grid gap-3 w-fit flex-wrap my-1.5', {
-        'grid-cols-2': filter.hasSource,
-      })}
-    >
-      {renderValueFiled(filter.value)}
-    </div>
+  const handleNumberInputBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      onUpdate({ ...filter, value: [newValue] });
+    },
+    [filter, onUpdate],
   );
+
+  const handleBooleanChange = useCallback(
+    (value: boolean) => {
+      onUpdate({ ...filter, value });
+    },
+    [filter, onUpdate],
+  );
+
+  // Render different input types based on filter data type
+  switch (filter.dataType) {
+    case FilterType.STRING:
+      return (
+        <ValueAutoComplete
+          initialValues={filter.value}
+          isAutoOpen={isAutoOpen}
+          onApplyValues={onApplyValues}
+          params={params}
+          commaQuery={true}
+        />
+      );
+
+    case FilterType.DURATION:
+      return (
+        <FilterDuration
+          onChange={onDurationChange}
+          onBlur={handleBlur}
+          minDuration={durationValues.minDuration}
+          maxDuration={durationValues.maxDuration}
+          isConditional={isConditional}
+        />
+      );
+
+    case FilterType.NUMBER:
+    case FilterType.INTEGER:
+    case FilterType.DOUBLE:
+      return (
+        <Input
+          type="number"
+          defaultValue={filter.value}
+          size="small"
+          className="rounded-lg"
+          style={{ width: '80px' }}
+          placeholder={filter.placeholder}
+          onBlur={handleNumberInputBlur}
+        />
+      );
+
+    case FilterType.BOOLEAN:
+      return (
+        <Select
+          value={filter.value}
+          size="small"
+          style={{ width: '80px' }}
+          onChange={handleBooleanChange}
+          placeholder={filter.placeholder}
+          options={[
+            { label: 'True', value: true },
+            { label: 'False', value: false },
+          ]}
+        />
+      );
+
+    default:
+      console.warn('Unsupported filter type in FilterValue:', filter.dataType);
+      return null;
+  }
 }
 
 export default observer(FilterValue);

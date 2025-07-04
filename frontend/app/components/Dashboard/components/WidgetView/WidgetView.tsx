@@ -33,6 +33,7 @@ import WidgetSessions from '../WidgetSessions';
 import WidgetPreview from '../WidgetPreview';
 import { useTranslation } from 'react-i18next';
 import { PANEL_SIZES } from 'App/constants/panelSizes';
+import FilterItem from '@/mstore/types/filterItem';
 
 interface Props {
   history: any;
@@ -53,7 +54,8 @@ function WidgetView({
 }: Props) {
   const { t } = useTranslation();
   const [layout, setLayout] = useState(getDefaultState);
-  const { metricStore, dashboardStore, settingsStore } = useStore();
+  const { metricStore, dashboardStore, settingsStore, filterStore } =
+    useStore();
   const widget = metricStore.instance;
   const loading = metricStore.isLoading;
   const [expanded] = useState(!metricId || metricId === 'create');
@@ -69,44 +71,104 @@ function WidgetView({
   const isClickMap = widget.metricType === HEATMAP;
 
   useEffect(() => {
-    if (!metricId || metricId === 'create') {
-      const params = new URLSearchParams(location.search);
-      const mk = params.get('mk');
-      if (mk) {
+    const sync = async () => {
+      if (!metricId || metricId === 'create') {
+        const params = new URLSearchParams(location.search);
+        const mk = params.get('mk');
+        if (!mk) return;
         const selectedCard = CARD_LIST(t).find((c) => c.key === mk) as CardType;
-        if (selectedCard) {
-          const cardData: any = {
-            metricType: selectedCard.cardType,
-            name: selectedCard.title,
-            metricOf: selectedCard.metricOf,
-            category: mk,
-            viewType: selectedCard.viewType
-              ? selectedCard.viewType
-              : selectedCard.cardType === FUNNEL
-                ? 'chart'
-                : 'lineChart',
-          };
-          if (selectedCard.filters) {
-            cardData.series = [
-              new FilterSeries().fromJson({
-                name: 'Series 1',
-                filter: { filters: selectedCard.filters },
-              }),
-            ];
-          } else if (selectedCard.cardType === TABLE) {
-            cardData.series = [new FilterSeries()];
-            cardData.series[0].filter.eventsOrder = 'and';
-          }
-          if (selectedCard.cardType === FUNNEL) {
-            cardData.series = [new FilterSeries()];
-            cardData.series[0].filter.addFunnelDefaultFilters();
-            cardData.series[0].filter.eventsOrder = 'then';
-            cardData.series[0].filter.eventsOrderSupport = ['then'];
-          }
-          metricStore.merge(cardData);
+        if (!selectedCard) return;
+
+        const cardData: any = {
+          metricType: selectedCard.cardType,
+          name: selectedCard.title,
+          metricOf: selectedCard.metricOf,
+          category: mk,
+          viewType: selectedCard.viewType
+            ? selectedCard.viewType
+            : selectedCard.cardType === FUNNEL
+              ? 'chart'
+              : 'lineChart',
+        };
+
+        if (selectedCard.filters) {
+          const filters = await Promise.all(
+            selectedCard.filters.map(async (filter) => {
+              const f = filterStore.findEvent({
+                name: filter.name,
+                autoCaptured: filter.autoCaptured,
+              });
+              if (filter.filters?.length) {
+                f.filters = filter.filters;
+              } else if (f.isEvent) {
+                const props = await filterStore.getEventFilters(f.id);
+                f.filters = props?.filter((p) => p.defaultProperty) || [];
+              }
+              return f;
+            }),
+          );
+          cardData.series = [
+            new FilterSeries().fromJson({
+              name: 'Series 1',
+              filter: { filters },
+            }),
+          ];
+        } else if (selectedCard.cardType === TABLE) {
+          cardData.series = [new FilterSeries()];
+          cardData.series[0].filter.eventsOrder = 'and';
         }
+
+        if (selectedCard.cardType === FUNNEL) {
+          cardData.series = [new FilterSeries()];
+          cardData.series[0].filter.addFunnelDefaultFilters();
+          cardData.series[0].filter.eventsOrder = 'then';
+          cardData.series[0].filter.eventsOrderSupport = ['then'];
+        }
+
+        if (selectedCard.cardType === USER_PATH) {
+          const startPoint = filterStore.findEvent({
+            name: FilterKey.LOCATION,
+            autoCaptured: true,
+          });
+
+          if (!startPoint) {
+            console.error('Start point not found');
+            return;
+          }
+
+          filterStore.getEventFilters(startPoint.id).then((props) => {
+            const defaultProperty = props
+              ?.filter((prop) => prop.defaultProperty)
+              .map((prop) => {
+                const nestedFilter = new FilterItem(prop);
+                nestedFilter.id = prop.id;
+                return nestedFilter;
+              });
+
+            startPoint.filters = defaultProperty;
+          });
+
+          console.log('startPoint', startPoint);
+
+          cardData.startPoint = startPoint;
+        }
+
+        if (selectedCard.cardType === HEATMAP) {
+          cardData.series = [new FilterSeries()];
+          cardData.series[0].maxEvents = 1;
+          cardData.series[0].filter.addHeatmapDefaultFilters();
+        }
+
+        if (selectedCard.cardType === WEBVITALS) {
+          cardData.series = [new FilterSeries()];
+          cardData.series[0].maxEvents = 1;
+          cardData.series[0].filter.addWebvitalsDefaultFilters();
+        }
+
+        metricStore.merge(cardData);
       }
-    }
+    };
+    sync();
   }, [metricId, location.search, metricStore]);
 
   useEffect(() => {
