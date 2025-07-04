@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-
 	"openreplay/backend/pkg/analytics/model"
 )
 
@@ -22,6 +21,7 @@ func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfac
 			log.Printf("buildQuery %s: %v", series.Name, err)
 			return nil, fmt.Errorf("series %s: %v", series.Name, err)
 		}
+
 		rows, err := conn.Query(context.Background(), query)
 		if err != nil {
 			log.Printf("exec %s: %v", series.Name, err)
@@ -93,62 +93,76 @@ func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p *Payload, s model.Series
 }
 
 func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metric string) string {
-	evConds, evNames := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
-		DefinedColumns:       mainColumns,
-		MainTableAlias:       "main",
-		PropertiesColumnName: "$properties",
-	})
-	sessConds := buildSessionConditions(s.Filter.Filters)
+	eo := string(s.Filter.EventsOrder)
+	eventConds, otherConds := BuildEventConditions(
+		s.Filter.Filters,
+		BuildConditionsOptions{
+			DefinedColumns:       mainColumns,
+			MainTableAlias:       "main",
+			PropertiesColumnName: "$properties",
+			EventsOrder:          eo,
+		},
+	)
 	staticEvt := buildStaticEventWhere(p)
-	sessWhere, sessJoin := buildStaticSessionWhere(p, sessConds)
 
-	if len(evConds) == 0 && len(evNames) == 0 {
-		if metric == "sessionCount" {
-			return fmt.Sprintf(
-				"SELECT s.session_id AS session_id, s.datetime AS datetime "+
-					"FROM experimental.sessions AS s WHERE %s",
-				sessJoin,
-			)
+	// combine static + non-event filters
+	whereParts := []string{staticEvt}
+	if len(otherConds) > 0 {
+		whereParts = append(whereParts, strings.Join(otherConds, " AND "))
+	}
+	whereClause := strings.Join(whereParts, " AND ")
+
+	// build subquery with GROUP BY always
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf(
+		"SELECT main.session_id, MIN(main.created_at) AS first_event_ts, MAX(main.created_at) AS last_event_ts "+
+			"FROM product_analytics.events AS main "+
+			"WHERE %s\n",
+		whereClause,
+	))
+	sb.WriteString("GROUP BY main.session_id\n")
+
+	// append HAVING based on EventsOrder
+	switch eo {
+	case "then":
+		if len(eventConds) > 1 {
+			var pat strings.Builder
+			for i := range eventConds {
+				pat.WriteString(fmt.Sprintf("(?%d)", i+1))
+			}
+			sb.WriteString(fmt.Sprintf(
+				"HAVING sequenceMatch('%s')(\n    toDateTime(main.created_at),\n    %s\n)",
+				pat.String(),
+				strings.Join(eventConds, ",\n    "),
+			))
 		}
-		return fmt.Sprintf(
-			"SELECT multiIf(s.user_id!='',s.user_id,s.user_anonymous_id!='',s.user_anonymous_id,toString(s.user_uuid)) AS user_id, s.datetime AS datetime "+
-				"FROM experimental.sessions AS s WHERE %s",
-			sessJoin,
-		)
-	}
-
-	uniq := make([]string, 0, len(evNames))
-	for _, name := range evNames {
-		if !contains(uniq, name) {
-			uniq = append(uniq, name)
+	case "and":
+		if len(eventConds) > 0 {
+			parts := make([]string, len(eventConds))
+			for i, c := range eventConds {
+				parts[i] = fmt.Sprintf("countIf(%s, 1) > 0", c)
+			}
+			sb.WriteString("HAVING " + strings.Join(parts, " AND "))
+		}
+	case "or":
+		if len(eventConds) > 0 {
+			parts := make([]string, len(eventConds))
+			for i, c := range eventConds {
+				parts[i] = fmt.Sprintf("countIf(%s, 1) > 0", c)
+			}
+			sb.WriteString("HAVING " + strings.Join(parts, " OR "))
 		}
 	}
-	nameClause := ""
-	if len(uniq) > 0 {
-		nameClause = fmt.Sprintf("AND main.`$event_name` IN (%s) ", buildInClause(uniq))
-	}
 
-	having := ""
-	if len(evConds) > 0 {
-		having = buildHavingClause(evConds)
-	}
-
-	whereEvt := staticEvt
-	if len(evConds) > 0 {
-		whereEvt += " AND " + strings.Join(evConds, " AND ")
-	}
-
+	sub := sb.String()
 	proj := map[string]string{
-		"sessionCount": "s.session_id AS session_id",
+		"sessionCount": "evt.session_id AS session_id",
 		"userCount":    "multiIf(s.user_id!='',s.user_id,s.user_anonymous_id!='',s.user_anonymous_id,toString(s.user_uuid)) AS user_id",
 	}[metric] + ", s.datetime AS datetime"
 
 	return fmt.Sprintf(
-		"SELECT %s FROM (SELECT main.session_id, MIN(main.created_at) AS first_event_ts, MAX(main.created_at) AS last_event_ts "+
-			"FROM product_analytics.events AS main "+
-			"WHERE %s AND main.session_id IN (SELECT s.session_id FROM experimental.sessions AS s WHERE %s) %s "+
-			"GROUP BY main.session_id %s "+
-			"INNER JOIN (SELECT * FROM experimental.sessions AS s WHERE %s) AS s ON s.session_id=f.session_id",
-		proj, whereEvt, sessWhere, nameClause, having, sessJoin,
+		"SELECT %s FROM (\n%s\n) AS evt "+
+			"INNER JOIN experimental.sessions AS s ON s.session_id = evt.session_id",
+		proj, sub,
 	)
 }
