@@ -26,6 +26,7 @@ import {
   ChartBarBig,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Form, InputNumber } from 'antd/lib';
 
 function WidgetOptions() {
   const { t } = useTranslation();
@@ -42,21 +43,77 @@ function WidgetOptions() {
   return (
     <div className="flex items-center gap-2">
       {metric.metricType === USER_PATH && (
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            metric.update({ hideExcess: !metric.hideExcess });
-            // metric.updateKey('hasChanged', true);
-          }}
-        >
-          <Space>
-            <Switch checked={metric.hideExcess} size="small" />
-            <span className="mr-4 color-gray-medium">
-              {t('Group Minor Paths')}
-            </span>
-          </Space>
-        </a>
+        <>
+          <Form layout="horizontal">
+            <div className="flex space-x-8 items-center">
+              <Form.Item label="Steps Before" className="mb-0 flex-1">
+                <Select
+                  value={metric.stepsBefore}
+                  style={{ width: 64 }}
+                  onChange={(before) => {
+                    let after = metric.stepsAfter;
+                    if (before + after > 5) after = 5 - before;
+                    metric.update({ stepsBefore: before, stepsAfter: after });
+                    metric.updateKey('hasChanged', true);
+                  }}
+                >
+                  {[0, 1, 2, 3, 4, 5].map((n) => (
+                    <Select.Option key={n} value={n}>
+                      {n}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item label="Steps After" className="mb-0 flex-1">
+                <Select
+                  value={metric.stepsAfter}
+                  style={{ width: 64 }}
+                  onChange={(after) => {
+                    let before = metric.stepsBefore;
+                    if (before + after > 5) before = 5 - after;
+                    metric.update({ stepsBefore: before, stepsAfter: after });
+                    metric.updateKey('hasChanged', true);
+                  }}
+                >
+                  {[0, 1, 2, 3, 4, 5].map((n) => (
+                    <Select.Option key={n} value={n}>
+                      {n}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item label="Rows" className="mb-0 flex-1">
+                <InputNumber
+                  defaultValue={metric.rows}
+                  className="w-16"
+                  min={2}
+                  max={60}
+                  onChange={(rows) => {
+                    metric.update({ rows });
+                    metric.updateKey('hasChanged', true);
+                  }}
+                />
+              </Form.Item>
+            </div>
+          </Form>
+          {/* <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              metric.update({ hideExcess: !metric.hideExcess });
+              // metric.updateKey('hasChanged', true);
+            }}
+          >
+            <Space>
+              <Switch checked={metric.hideExcess} size="small" />
+              <span className="mr-4 color-gray-medium">
+                {t('Group Minor Paths')}
+              </span>
+            </Space>
+          </a> */}
+        </>
       )}
 
       {metric.metricType === TIMESERIES && (

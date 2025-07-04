@@ -28,10 +28,11 @@ function SessionsBy(props: Props) {
   );
 
   const onClickHandler = (event: any, data: any) => {
+    console.log('data', data);
     const baseFilter = {
       ...filtersMap[metric.metricOf],
       value: [data.name],
-      type: filtersMap[metric.metricOf].key,
+      name: filtersMap[metric.metricOf].key,
       filters: [],
     };
 
@@ -41,7 +42,7 @@ function SessionsBy(props: Props) {
           key: FilterKey.FETCH_URL,
           operator: 'is',
           value: [data.name],
-          type: FilterKey.FETCH_URL,
+          name: FilterKey.FETCH_URL,
         },
       ];
     }

@@ -246,6 +246,9 @@ function WidgetChart(props: Props) {
     _metric.metricValue,
     _metric.startType,
     _metric.metricFormat,
+    _metric.rows,
+    _metric.stepsBefore,
+    _metric.stepsAfter,
     inView,
   ]);
   useEffect(loadPage, [_metric.page]);

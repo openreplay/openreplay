@@ -74,22 +74,29 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
     example: ExampleFunnel,
     width: 4,
     height: 300,
+    metricOf: 'sessionCount',
     data: {
       stages: [
         {
           value: ['/sessions'],
-          type: 'location',
+          name: 'LOCATION',
+          isEvent: true,
+          autoCaptured: true,
           operator: 'contains',
           count: 1586,
           dropPct: null,
+          filters: [],
           dropDueToIssues: 0,
         },
         {
           value: [],
-          type: 'click',
+          name: 'CLICK',
+          isEvent: true,
+          autoCaptured: true,
           operator: 'onAny',
           count: 1292,
           dropPct: 18,
+          filters: [],
           dropDueToIssues: 294,
         },
       ],
@@ -254,16 +261,18 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
     },
     filters: [
       {
-        type: 'fetch',
+        name: 'REQUEST',
         isEvent: true,
+        autoCaptured: true,
         value: [],
         operator: 'is',
         filters: [
           {
-            type: 'fetchStatusCode',
+            name: 'url',
+            dataType: 'int',
             isEvent: false,
             value: ['400'],
-            operator: '>=',
+            operator: 'greaterThanOrEquals',
             filters: [],
           },
         ],
@@ -284,16 +293,18 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
     },
     filters: [
       {
-        type: 'fetch',
+        name: 'REQUEST',
         isEvent: true,
         value: [],
         operator: 'is',
+        autoCaptured: true,
         filters: [
           {
-            type: 'fetchDuration',
+            name: 'duration',
+            dataType: 'int',
             isEvent: false,
             value: ['5000'],
-            operator: '>=',
+            operator: 'greaterThanOrEquals',
             filters: [],
           },
         ],
@@ -311,11 +322,9 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
     viewType: 'chart',
     filters: [
       {
-        type: 'location',
+        name: 'LOCATION',
+        autoCaptured: true,
         isEvent: true,
-        value: [''],
-        operator: 'startsWith',
-        filters: [],
       },
     ],
     example: ExampleTrend,

@@ -1,108 +1,183 @@
-import React, { useEffect } from 'react';
-import { debounce } from 'App/utils';
-import { FilterList, EventsList } from 'Shared/Filters/FilterList';
-
+import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import useSessionSearchQueryHandler from 'App/hooks/useSessionSearchQueryHandler';
-import { FilterKey } from 'App/types/filter/filterType';
-import { addOptionsToFilter } from 'App/types/filter/newFilter';
+import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
+import FilterSelection from 'Shared/Filters/FilterSelection';
+import { Button, Divider, Card } from 'antd';
+import { Plus } from 'lucide-react';
+import { Filter } from '@/mstore/types/filterConstants';
+import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 
-let debounceFetch: any = () => {};
 function SessionFilters() {
-  const { searchStore, projectsStore, customFieldStore, tagWatchStore } =
-    useStore();
+  const { searchStore, filterStore } = useStore();
+  const searchInstance = searchStore.instance;
 
-  const appliedFilter = searchStore.instance;
-  const metaLoading = customFieldStore.isLoading;
-  const saveRequestPayloads =
-    projectsStore.instance?.saveRequestPayloads ?? false;
-  const activeProject = projectsStore.active;
+  const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
+  const eventOptions = allFilterOptions.filter((i) => i.isEvent);
+  const propertyOptions = allFilterOptions.filter((i) => !i.isEvent);
 
-  const reloadTags = async () => {
-    const tags = await tagWatchStore.getTags();
-    if (tags) {
-      addOptionsToFilter(
-        FilterKey.TAGGED_ELEMENT,
-        tags.map((tag) => ({
-          label: tag.name,
-          value: tag.tagId.toString(),
-        })),
-      );
-      searchStore.refreshFilterOptions();
-    }
+  const onAddFilter = (filter: Filter) => {
+    searchStore.addFilter({ ...filter, autoOpen: true });
+    void searchStore.fetchSessions();
   };
 
-  useEffect(() => {
-    // Add default location/screen filter if no filters are present
-    if (
-      searchStore.instance.filters.length === 0 &&
-      activeProject?.platform === 'web'
-    ) {
-      searchStore.addFilterByKeyAndValue(FilterKey.LOCATION, '', 'isAny');
-    }
-    void reloadTags();
-  }, [projectsStore.activeSiteId, activeProject]);
-
-  useSessionSearchQueryHandler({
-    appliedFilter,
-    loading: metaLoading,
-    onBeforeLoad: async () => {
-      await reloadTags();
-    },
-  });
-
-  const onAddFilter = (filter: any) => {
-    filter.autoOpen = true;
-    searchStore.addFilter(filter);
-  };
-
-  const onUpdateFilter = (filterIndex: any, filter: any) => {
-    searchStore.updateFilter(filterIndex, filter);
-  };
-
-  const onFilterMove = (newFilters: any) => {
-    searchStore.updateSearch({ ...appliedFilter, filters: newFilters });
-    // debounceFetch();
-  };
-
-  const onRemoveFilter = (filterIndex: any) => {
-    searchStore.removeFilter(filterIndex);
-
-    // debounceFetch();
-  };
-
-  const onChangeEventsOrder = (e: any, { value }: any) => {
+  const onChangeEventsOrder = (
+    _e: React.MouseEvent<HTMLButtonElement>,
+    { value }: { value: string },
+  ) => {
     searchStore.edit({
       eventsOrder: value,
     });
+  };
 
-    // debounceFetch();
+  // Create filtered arrays with original indices
+  const eventFiltersWithIndices = searchInstance.filters
+    .map((filter, originalIndex) => ({ filter, originalIndex }))
+    .filter(({ filter }) => filter.isEvent);
+
+  const attributeFiltersWithIndices = searchInstance.filters
+    .map((filter, originalIndex) => ({ filter, originalIndex }))
+    .filter(({ filter }) => !filter.isEvent);
+
+  const eventFilters = eventFiltersWithIndices.map(({ filter }) => filter);
+  const attributeFilters = attributeFiltersWithIndices.map(
+    ({ filter }) => filter,
+  );
+
+  // Create index mapping functions
+  const getOriginalEventIndex = (filteredIndex: number) => {
+    return eventFiltersWithIndices[filteredIndex]?.originalIndex ?? -1;
+  };
+
+  const getOriginalAttributeIndex = (filteredIndex: number) => {
+    return attributeFiltersWithIndices[filteredIndex]?.originalIndex ?? -1;
+  };
+
+  // Wrapper functions for event operations
+  const handleEventRemove = (filteredIndex: number) => {
+    const originalIndex = getOriginalEventIndex(filteredIndex);
+    if (originalIndex !== -1) {
+      searchStore.removeFilter(originalIndex);
+
+      void searchStore.fetchSessions();
+    }
+  };
+
+  const handleEventUpdate = (filteredIndex: number, updatedFilter: Filter) => {
+    const originalIndex = getOriginalEventIndex(filteredIndex);
+    if (originalIndex !== -1) {
+      searchStore.updateFilter(originalIndex, updatedFilter);
+      void searchStore.fetchSessions();
+    }
+  };
+
+  // Wrapper functions for attribute operations
+  const handleAttributeRemove = (filteredIndex: number) => {
+    const originalIndex = getOriginalAttributeIndex(filteredIndex);
+    if (originalIndex !== -1) {
+      searchStore.removeFilter(originalIndex);
+      void searchStore.fetchSessions();
+    }
+  };
+
+  const handleAttributeUpdate = (
+    filteredIndex: number,
+    updatedFilter: Filter,
+  ) => {
+    const originalIndex = getOriginalAttributeIndex(filteredIndex);
+    if (originalIndex !== -1) {
+      searchStore.updateFilter(originalIndex, updatedFilter);
+      void searchStore.fetchSessions();
+    }
+  };
+
+  // Move function for events only (since only events are draggable)
+  const moveEventFilter = (
+    fromFilteredIndex: number,
+    toFilteredIndex: number,
+  ) => {
+    const fromOriginalIndex = getOriginalEventIndex(fromFilteredIndex);
+    const toOriginalIndex = getOriginalEventIndex(toFilteredIndex);
+
+    if (fromOriginalIndex !== -1 && toOriginalIndex !== -1) {
+      const updatedFilters = [...searchInstance.filters];
+      const filterToMove = updatedFilters.splice(fromOriginalIndex, 1)[0];
+      updatedFilters.splice(toOriginalIndex, 0, filterToMove);
+      searchStore.edit({ filters: updatedFilters });
+    }
   };
 
   return (
-    <div className="relative">
-      <EventsList
-        filter={appliedFilter}
-        onAddFilter={onAddFilter}
-        onUpdateFilter={onUpdateFilter}
-        onRemoveFilter={onRemoveFilter}
-        onChangeEventsOrder={onChangeEventsOrder}
-        saveRequestPayloads={saveRequestPayloads}
-        onFilterMove={onFilterMove}
-        mergeDown
+    <Card className="rounded-lg" classNames={{ body: '!p-4' }}>
+      <FilterListHeader
+        title={'Events'}
+        showEventsOrder={eventFilters.length > 0}
+        orderProps={searchInstance}
+        onChangeOrder={onChangeEventsOrder}
+        filterSelection={
+          <FilterSelection
+            filters={eventOptions}
+            onFilterClick={(newFilter: Filter) => {
+              onAddFilter(newFilter);
+            }}
+          >
+            <Button type="default" size="small">
+              <div className="flex items-center gap-1">
+                <Plus size={16} strokeWidth={1} />
+                <span>Add</span>
+              </div>
+            </Button>
+          </FilterSelection>
+        }
       />
-      <FilterList
-        mergeUp
-        filter={appliedFilter}
-        onAddFilter={onAddFilter}
-        onUpdateFilter={onUpdateFilter}
-        onRemoveFilter={onRemoveFilter}
-        onChangeEventsOrder={onChangeEventsOrder}
-        saveRequestPayloads={saveRequestPayloads}
-        onFilterMove={onFilterMove}
+
+      <UnifiedFilterList
+        title="Events"
+        filters={eventFilters}
+        isDraggable={true}
+        showIndices={true}
+        className="mt-2"
+        handleRemove={handleEventRemove}
+        handleUpdate={handleEventUpdate}
+        handleAdd={(filter) => {
+          filter.filters = [];
+          searchStore.addFilter(filter);
+        }}
+        handleMove={moveEventFilter}
       />
-    </div>
+
+      <Divider className="my-3" />
+
+      <FilterListHeader
+        title={'Filters'}
+        filterSelection={
+          <FilterSelection
+            filters={propertyOptions}
+            onFilterClick={(newFilter: Filter) => {
+              onAddFilter(newFilter);
+            }}
+          >
+            <Button type="default" size="small">
+              <div className="flex items-center gap-1">
+                <Plus size={16} strokeWidth={1} />
+                <span>Add</span>
+              </div>
+            </Button>
+          </FilterSelection>
+        }
+      />
+
+      <UnifiedFilterList
+        title="Filters"
+        filters={attributeFilters}
+        className="mt-2"
+        isDraggable={false}
+        showIndices={false}
+        handleRemove={handleAttributeRemove}
+        handleUpdate={handleAttributeUpdate}
+        handleAdd={searchStore.addFilter}
+      />
+    </Card>
   );
 }
 

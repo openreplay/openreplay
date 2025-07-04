@@ -46,8 +46,20 @@ export default class SearchService extends BaseService {
     return j.data;
   }
 
+  async fetchTopValues(params: {}): Promise<any> {
+    const r = await this.client.get(
+      '/pa/PROJECT_ID/properties/autocomplete',
+      params,
+    );
+    const j = await r.json();
+    return j.data;
+  }
+
   async fetchAutoCompleteValues(params: {}): Promise<any> {
-    const r = await this.client.get('/PROJECT_ID/events/search', params);
+    const r = await this.client.get(
+      '/pa/PROJECT_ID/properties/autocomplete',
+      params,
+    );
     const j = await r.json();
     return j.data;
   }

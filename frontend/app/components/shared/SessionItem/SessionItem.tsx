@@ -420,7 +420,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                 style={{ width: '10%' }}
                 className="self-center px-2 flex items-center"
               >
-                <ErrorBars count={issueTypes.length} />
+                <ErrorBars count={issueTypes?.length} />
               </div>
             )}
           </div>

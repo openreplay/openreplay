@@ -131,6 +131,7 @@ const ListView: React.FC<Props> = ({
         })
       ) {
         await metricStore.delete(metric);
+        metricStore.fetchList();
       }
     }
     if (key === 'rename') {

@@ -53,6 +53,8 @@ export const clean = (
   return retObj;
 };
 
+const isDev = window.env.NODE_ENV === 'development';
+
 export default class APIClient {
   private init: RequestInit;
 
@@ -103,8 +105,8 @@ export default class APIClient {
     // Always fetch the latest JWT from the store
     const jwt = this.getJwt();
     const headers = new Headers({
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
     });
 
     if (reqHeaders) {
@@ -121,7 +123,7 @@ export default class APIClient {
     const init: RequestInit = {
       method,
       headers,
-      body: params ? JSON.stringify(params) : undefined
+      body: params ? JSON.stringify(params) : undefined,
     };
 
     if (method === 'GET') {
@@ -185,20 +187,40 @@ export default class APIClient {
       delete init.body;
     }
 
-    if ((
-      path.includes('login')
-      || path.includes('refresh')
-      || path.includes('logout')
-      || path.includes('reset')
-    ) && window.env.NODE_ENV !== 'development'
+    if (
+      (path.includes('login') ||
+        path.includes('refresh') ||
+        path.includes('logout') ||
+        path.includes('reset')) &&
+      window.env.NODE_ENV !== 'development'
     ) {
       init.credentials = 'include';
     } else {
       delete init.credentials;
     }
 
-    const noChalice = path.includes('/kai') || path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login');
+    const noChalice =
+      path.includes('/kai') ||
+      path.includes('v1/integrations') ||
+      (path.includes('/spot') && !path.includes('/login'));
     let edp = window.env.API_EDP || window.location.origin + '/api';
+
+    // using product analytics api for cards and dashboards (excluding sessions)
+    if (
+      !path.includes('/sessions') &&
+      (path.includes('/cards') || path.includes('/dashboards'))
+    ) {
+      edp = isDev
+        ? 'http://localhost:8080/v1'
+        : edp.replace('/api', '/analytics/v1');
+    }
+
+    if (path.includes('/sessions/search')) {
+      edp = isDev
+        ? 'http://localhost:8080/v1'
+        : edp.replace('/api', '/analytics/v1');
+    }
+
     if (noChalice && !edp.includes('api.openreplay.com')) {
       edp = edp.replace('/api', '');
     }
@@ -227,8 +249,7 @@ export default class APIClient {
     try {
       const errorData = await response.json();
       errorMsg = errorData.errors?.[0] || errorMsg;
-    } catch {
-    }
+    } catch {}
     throw new Error(errorMsg);
   }
 
