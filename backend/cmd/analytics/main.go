@@ -44,7 +44,7 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
-	router.AddHandlers(api.NoPrefix, builder.ChartsAPI, builder.CardsAPI, builder.DashboardsAPI)
+	router.AddHandlers(api.NoPrefix, builder.ChartsAPI, builder.CardsAPI, builder.DashboardsAPI, builder.SearchAPI)
 	router.AddMiddlewares(builder.Auth.Middleware, builder.RateLimiter.Middleware, builder.AuditTrail.Middleware)
 
 	server.Run(ctx, log, &cfg.HTTP, router)

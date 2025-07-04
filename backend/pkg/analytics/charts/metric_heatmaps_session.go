@@ -60,12 +60,12 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 		}
 	}
 
-	globalConds, _ := buildEventConditions(globalFilters, BuildConditionsOptions{
+	globalConds, _ := BuildEventConditions(globalFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
 	})
 
-	eventConds, _ := buildEventConditions(eventFilters, BuildConditionsOptions{
+	eventConds, _ := BuildEventConditions(eventFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
 	})

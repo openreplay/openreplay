@@ -54,14 +54,14 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 		}
 	}
 
-	globalConds, _ := buildEventConditions(globalFilters, BuildConditionsOptions{
+	globalConds, _ := BuildEventConditions(globalFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
 	})
 
 	var joinClause string
 	if len(eventFilters) > 0 {
-		eventConds, _ := buildEventConditions(eventFilters, BuildConditionsOptions{
+		eventConds, _ := BuildEventConditions(eventFilters, BuildConditionsOptions{
 			DefinedColumns: mainColumns,
 			MainTableAlias: "l",
 		})

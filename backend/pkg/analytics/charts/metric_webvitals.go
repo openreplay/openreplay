@@ -161,8 +161,8 @@ func (h WebVitalsQueryBuilder) buildQuery(p *Payload) (string, error) {
 			globalFilters = append(globalFilters, flt)
 		}
 	}
-	globalConds, _ := buildEventConditions(globalFilters, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "events"})
-	eventConds, _ := buildEventConditions(eventFilters, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "events"})
+	globalConds, _ := BuildEventConditions(globalFilters, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "events"})
+	eventConds, _ := BuildEventConditions(eventFilters, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "events"})
 
 	conds := []string{
 		fmt.Sprintf("events.project_id = %d", p.ProjectId),
