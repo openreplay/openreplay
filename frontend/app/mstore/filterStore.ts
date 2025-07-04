@@ -109,11 +109,14 @@ export default class FilterStore {
       if (!filter.isEvent) {
         params.propertyName = filter.name;
       }
+      params.ac = filter.autoCaptured;
 
       const response = await searchService.fetchTopValues(params);
 
       runInAction(() => {
-        this.setTopValues(id, response.events);
+        // TODO somehow the API response is changed for this confirm and use the proper response.
+        // this.setTopValues(id, response.events);
+        this.setTopValues(id, response);
       });
 
       return response.events || [];

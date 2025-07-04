@@ -91,6 +91,7 @@ function FilterValue(props: Props) {
       name: filter.name,
       isEvent: filter.isEvent,
       id: filter.id,
+      autoCaptured: filter.autoCaptured,
     };
 
     if (filter.isEvent || eventName) {
