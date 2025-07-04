@@ -5,6 +5,7 @@ from typing import Optional
 
 from decouple import config
 from fastapi import BackgroundTasks, HTTPException
+from psycopg2.extras import Json
 from pydantic import BaseModel, model_validator
 from starlette import status
 
@@ -24,12 +25,15 @@ def __generate_invitation_token():
     return secrets.token_urlsafe(64)
 
 
-def create_new_member(tenant_id, email, invitation_token, admin, name, owner=False, role_id=None):
+def create_new_member(
+    tenant_id, email, invitation_token, admin, name, owner=False, role_id=None
+):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""\
+        query = cur.mogrify(
+            """\
                     WITH u AS (
                         INSERT INTO public.users (tenant_id, email, role, name, data, role_id)
-                            VALUES (%(tenant_id)s, %(email)s, %(role)s, %(name)s, %(data)s, 
+                            VALUES (%(tenant_id)s, %(email)s, %(role)s, %(name)s, %(data)s,
                                             (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))))
@@ -52,10 +56,16 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                            roles.name AS role_name,
                            TRUE AS has_password
                     FROM au,u LEFT JOIN roles USING(tenant_id) WHERE roles.role_id IS NULL OR roles.role_id =  (SELECT u.role_id FROM u);""",
-                            {"tenant_id": tenant_id, "email": email,
-                             "role": "owner" if owner else "admin" if admin else "member", "name": name,
-                             "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
-                             "invitation_token": invitation_token, "role_id": role_id})
+            {
+                "tenant_id": tenant_id,
+                "email": email,
+                "role": "owner" if owner else "admin" if admin else "member",
+                "name": name,
+                "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
+                "invitation_token": invitation_token,
+                "role_id": role_id,
+            },
+        )
         cur.execute(query)
         row = helper.dict_to_camel_case(cur.fetchone())
         if row:
@@ -63,9 +73,12 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
         return row
 
 
-def restore_member(tenant_id, user_id, email, invitation_token, admin, name, owner=False, role_id=None):
+def restore_member(
+    tenant_id, user_id, email, invitation_token, admin, name, owner=False, role_id=None
+):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""\
+        query = cur.mogrify(
+            """\
                     WITH u AS (UPDATE public.users
                                SET name= %(name)s,
                                    role = %(role)s,
@@ -77,7 +90,7 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
                                                            (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
                                                            (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1)))
                                WHERE user_id=%(user_id)s
-                               RETURNING 
+                               RETURNING
                                    tenant_id,
                                    user_id,
                                    email,
@@ -103,11 +116,18 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
                            u.role_id,
                            roles.name AS role_name,
                            TRUE AS has_password
-                    FROM au,u LEFT JOIN roles USING(tenant_id) 
+                    FROM au,u LEFT JOIN roles USING(tenant_id)
                     WHERE roles.role_id IS NULL OR roles.role_id = (SELECT u.role_id FROM u);""",
-                            {"tenant_id": tenant_id, "user_id": user_id, "email": email,
-                             "role": "owner" if owner else "admin" if admin else "member", "name": name,
-                             "role_id": role_id, "invitation_token": invitation_token})
+            {
+                "tenant_id": tenant_id,
+                "user_id": user_id,
+                "email": email,
+                "role": "owner" if owner else "admin" if admin else "member",
+                "name": name,
+                "role_id": role_id,
+                "invitation_token": invitation_token,
+            },
+        )
         cur.execute(query)
         result = cur.fetchone()
         result["created_at"] = TimeUTC.datetime_to_timestamp(result["created_at"])
@@ -117,7 +137,8 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
 def generate_new_invitation(user_id):
     invitation_token = __generate_invitation_token()
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""\
+        query = cur.mogrify(
+            """\
                         UPDATE public.basic_authentication
                         SET invitation_token = %(invitation_token)s,
                             invited_at = timezone('utc'::text, now()),
@@ -125,10 +146,9 @@ def generate_new_invitation(user_id):
                             change_pwd_token = NULL
                         WHERE user_id=%(user_id)s
                         RETURNING invitation_token;""",
-                            {"user_id": user_id, "invitation_token": invitation_token})
-        cur.execute(
-            query
+            {"user_id": user_id, "invitation_token": invitation_token},
         )
+        cur.execute(query)
         return __get_invitation_link(cur.fetchone().pop("invitation_token"))
 
 
@@ -143,7 +163,13 @@ def reset_member(tenant_id, editor_id, user_id_to_update):
 
 
 def update(tenant_id, user_id, changes, output=True):
-    AUTH_KEYS = ["password", "invitationToken", "invitedAt", "changePwdExpireAt", "changePwdToken"]
+    AUTH_KEYS = [
+        "password",
+        "invitationToken",
+        "invitedAt",
+        "changePwdExpireAt",
+        "changePwdToken",
+    ]
     if len(changes.keys()) == 0:
         return None
 
@@ -152,7 +178,9 @@ def update(tenant_id, user_id, changes, output=True):
     for key in changes.keys():
         if key in AUTH_KEYS:
             if key == "password":
-                sub_query_bauth.append("password = crypt(%(password)s, gen_salt('bf', 12))")
+                sub_query_bauth.append(
+                    "password = crypt(%(password)s, gen_salt('bf', 12))"
+                )
                 sub_query_bauth.append("changed_at = timezone('utc'::text, now())")
             else:
                 sub_query_bauth.append(f"{helper.key_to_snake_case(key)} = %({key})s")
@@ -161,31 +189,46 @@ def update(tenant_id, user_id, changes, output=True):
                 sub_query_users.append("""role_id=(SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1)))""")
+            elif (
+                key == "data"
+            ):  # this is hardcoded, maybe a generic solution would be better
+                sub_query_users.append(f"data = data || %({(key)})s")
             else:
                 sub_query_users.append(f"{helper.key_to_snake_case(key)} = %({key})s")
     changes["role_id"] = changes.get("roleId", changes.get("role_id"))
+    if "data" in changes:
+        changes["data"] = Json(changes["data"])
     with pg_client.PostgresClient() as cur:
         if len(sub_query_users) > 0:
-            query = cur.mogrify(f"""\
+            query = cur.mogrify(
+                f"""\
                             UPDATE public.users
                             SET {" ,".join(sub_query_users)}
                             WHERE users.user_id = %(user_id)s
                               AND users.tenant_id = %(tenant_id)s;""",
-                                {"tenant_id": tenant_id, "user_id": user_id, **changes})
+                {"tenant_id": tenant_id, "user_id": user_id, **changes},
+            )
             cur.execute(query)
         if len(sub_query_bauth) > 0:
-            query = cur.mogrify(f"""\
+            query = cur.mogrify(
+                f"""\
                             UPDATE public.basic_authentication
                             SET {" ,".join(sub_query_bauth)}
                             WHERE basic_authentication.user_id = %(user_id)s;""",
-                                {"tenant_id": tenant_id, "user_id": user_id, **changes})
+                {"tenant_id": tenant_id, "user_id": user_id, **changes},
+            )
             cur.execute(query)
     if not output:
         return None
     return get(user_id=user_id, tenant_id=tenant_id)
 
 
-def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, background_tasks: BackgroundTasks):
+def create_member(
+    tenant_id,
+    user_id,
+    data: schemas.CreateMemberSchema,
+    background_tasks: BackgroundTasks,
+):
     admin = get(tenant_id=tenant_id, user_id=user_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
@@ -199,7 +242,9 @@ def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, backgrou
         data.name = data.email
     role_id = data.roleId
     if role_id is None:
-        role_id = roles.get_role_by_name(tenant_id=tenant_id, name="member").get("roleId")
+        role_id = roles.get_role_by_name(tenant_id=tenant_id, name="member").get(
+            "roleId"
+        )
     else:
         role = roles.get_role(tenant_id=tenant_id, role_id=role_id)
         if role is None:
@@ -209,22 +254,46 @@ def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, backgrou
     invitation_token = __generate_invitation_token()
     user = get_deleted_user_by_email(email=data.email)
     if user is not None and user["tenantId"] == tenant_id:
-        new_member = restore_member(tenant_id=tenant_id, email=data.email, invitation_token=invitation_token,
-                                    admin=data.admin, name=data.name, user_id=user["userId"], role_id=role_id)
+        new_member = restore_member(
+            tenant_id=tenant_id,
+            email=data.email,
+            invitation_token=invitation_token,
+            admin=data.admin,
+            name=data.name,
+            user_id=user["userId"],
+            role_id=role_id,
+        )
     elif user is not None:
         __hard_delete_user(user_id=user["userId"])
-        new_member = create_new_member(tenant_id=tenant_id, email=data.email, invitation_token=invitation_token,
-                                       admin=data.admin, name=data.name, role_id=role_id)
+        new_member = create_new_member(
+            tenant_id=tenant_id,
+            email=data.email,
+            invitation_token=invitation_token,
+            admin=data.admin,
+            name=data.name,
+            role_id=role_id,
+        )
     else:
-        new_member = create_new_member(tenant_id=tenant_id, email=data.email, invitation_token=invitation_token,
-                                       admin=data.admin, name=data.name, role_id=role_id)
-    new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
-    background_tasks.add_task(email_helper.send_team_invitation, **{
-        "recipient": data.email,
-        "invitation_link": new_member["invitationLink"],
-        "client_id": tenants.get_by_tenant_id(tenant_id)["name"],
-        "sender_name": admin["name"]
-    })
+        new_member = create_new_member(
+            tenant_id=tenant_id,
+            email=data.email,
+            invitation_token=invitation_token,
+            admin=data.admin,
+            name=data.name,
+            role_id=role_id,
+        )
+    new_member["invitationLink"] = __get_invitation_link(
+        new_member.pop("invitationToken")
+    )
+    background_tasks.add_task(
+        email_helper.send_team_invitation,
+        **{
+            "recipient": data.email,
+            "invitation_link": new_member["invitationLink"],
+            "client_id": tenants.get_by_tenant_id(tenant_id)["name"],
+            "sender_name": admin["name"],
+        },
+    )
     return {"data": new_member}
 
 
@@ -235,14 +304,14 @@ def __get_invitation_link(invitation_token):
 def allow_password_change(user_id, delta_min=10):
     pass_token = secrets.token_urlsafe(8)
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""UPDATE public.basic_authentication 
+        query = cur.mogrify(
+            """UPDATE public.basic_authentication
                                 SET change_pwd_expire_at =  timezone('utc'::text, now()+INTERVAL '%(delta)s MINUTES'),
                                     change_pwd_token = %(pass_token)s
                                 WHERE user_id = %(user_id)s""",
-                            {"user_id": user_id, "delta": delta_min, "pass_token": pass_token})
-        cur.execute(
-            query
+            {"user_id": user_id, "delta": delta_min, "pass_token": pass_token},
         )
+        cur.execute(query)
     return pass_token
 
 
@@ -250,11 +319,11 @@ def get(user_id, tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""SELECT 
+                """SELECT
                         users.user_id,
                         users.tenant_id,
-                        email, 
-                        role, 
+                        email,
+                        role,
                         users.name,
                         (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
@@ -272,9 +341,10 @@ def get(user_id, tenant_id):
                      users.user_id = %(userId)s
                      AND users.tenant_id = %(tenant_id)s
                      AND users.deleted_at IS NULL
-                     AND (roles.role_id IS NULL OR roles.deleted_at IS NULL AND roles.tenant_id = %(tenant_id)s) 
+                     AND (roles.role_id IS NULL OR roles.deleted_at IS NULL AND roles.tenant_id = %(tenant_id)s)
                     LIMIT 1;""",
-                {"userId": user_id, "tenant_id": tenant_id})
+                {"userId": user_id, "tenant_id": tenant_id},
+            )
         )
         r = cur.fetchone()
         return helper.dict_to_camel_case(r)
@@ -284,12 +354,13 @@ def generate_new_api_key(user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""UPDATE public.users
+                """UPDATE public.users
                     SET api_key=generate_api_key(20)
                     WHERE users.user_id = %(userId)s
                             AND deleted_at IS NULL
                     RETURNING api_key;""",
-                {"userId": user_id})
+                {"userId": user_id},
+            )
         )
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)
@@ -299,22 +370,27 @@ def __get_account_info(tenant_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""SELECT users.name, 
-                           tenants.name AS tenant_name, 
+                """SELECT users.name,
+                           tenants.name AS tenant_name,
                            tenants.opt_out
                     FROM public.users INNER JOIN public.tenants USING (tenant_id)
                     WHERE users.user_id = %(userId)s
                         AND tenants.tenant_id= %(tenantId)s
                         AND tenants.deleted_at IS NULL
                         AND users.deleted_at IS NULL;""",
-                {"tenantId": tenant_id, "userId": user_id})
+                {"tenantId": tenant_id, "userId": user_id},
+            )
         )
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)
 
 
 def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
-    if changes.opt_out is not None or changes.tenantName is not None and len(changes.tenantName) > 0:
+    if (
+        changes.opt_out is not None
+        or changes.tenantName is not None
+        and len(changes.tenantName) > 0
+    ):
         user = get(user_id=user_id, tenant_id=tenant_id)
         if not user["superAdmin"] and not user["admin"]:
             return {"errors": ["unauthorized"]}
@@ -334,7 +410,9 @@ def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
     return {"data": __get_account_info(tenant_id=tenant_id, user_id=user_id)}
 
 
-def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema, editor_id):
+def edit_member(
+    user_id_to_update, tenant_id, changes: schemas.EditMemberSchema, editor_id
+):
     user = get_member(user_id=user_id_to_update, tenant_id=tenant_id)
     _changes = {}
     if editor_id != user_id_to_update:
@@ -372,7 +450,12 @@ def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema,
                 return {"errors": ["invalid role"]}
 
     if len(_changes.keys()) > 0:
-        update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes, output=False)
+        update(
+            tenant_id=tenant_id,
+            user_id=user_id_to_update,
+            changes=_changes,
+            output=False,
+        )
         return {"data": get_member(user_id=user_id_to_update, tenant_id=tenant_id)}
     return {"data": user}
 
@@ -381,11 +464,11 @@ def get_by_email_only(email):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""SELECT 
+                """SELECT
                         users.user_id,
                         users.tenant_id,
-                        users.email, 
-                        users.role, 
+                        users.email,
+                        users.role,
                         users.name,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
@@ -397,10 +480,11 @@ def get_by_email_only(email):
                         roles.name AS role_name
                     FROM public.users LEFT JOIN public.basic_authentication USING(user_id)
                                       INNER JOIN public.roles USING(role_id)
-                    WHERE users.email = %(email)s                     
+                    WHERE users.email = %(email)s
                      AND users.deleted_at IS NULL
                     LIMIT 1;""",
-                {"email": email})
+                {"email": email},
+            )
         )
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)
@@ -410,11 +494,11 @@ def get_member(tenant_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""SELECT 
+                """SELECT
                         users.user_id,
-                        users.email, 
-                        users.role, 
-                        users.name, 
+                        users.email,
+                        users.role,
+                        users.name,
                         users.created_at,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
@@ -425,12 +509,13 @@ def get_member(tenant_id, user_id):
                         invitation_token,
                         role_id,
                         roles.name AS role_name
-                    FROM public.users 
+                    FROM public.users
                         LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                         LEFT JOIN public.roles USING (role_id)
                     WHERE users.tenant_id = %(tenant_id)s AND users.deleted_at IS NULL AND users.user_id = %(user_id)s
                     ORDER BY name, user_id""",
-                {"tenant_id": tenant_id, "user_id": user_id})
+                {"tenant_id": tenant_id, "user_id": user_id},
+            )
         )
         u = helper.dict_to_camel_case(cur.fetchone())
         if u:
@@ -447,11 +532,11 @@ def get_members(tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""SELECT 
+                """SELECT
                         users.user_id,
-                        users.email, 
-                        users.role, 
-                        users.name, 
+                        users.email,
+                        users.role,
+                        users.name,
                         users.created_at,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
@@ -462,14 +547,15 @@ def get_members(tenant_id):
                         invitation_token,
                         role_id,
                         roles.name AS role_name
-                    FROM public.users 
+                    FROM public.users
                         LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                         LEFT JOIN public.roles USING (role_id)
-                    WHERE users.tenant_id = %(tenant_id)s 
+                    WHERE users.tenant_id = %(tenant_id)s
                         AND users.deleted_at IS NULL
                         AND NOT users.service_account
                     ORDER BY name, user_id""",
-                {"tenant_id": tenant_id})
+                {"tenant_id": tenant_id},
+            )
         )
         r = cur.fetchall()
         if len(r):
@@ -477,7 +563,9 @@ def get_members(tenant_id):
             for u in r:
                 u["createdAt"] = TimeUTC.datetime_to_timestamp(u["createdAt"])
                 if u["invitationToken"]:
-                    u["invitationLink"] = __get_invitation_link(u.pop("invitationToken"))
+                    u["invitationLink"] = __get_invitation_link(
+                        u.pop("invitationToken")
+                    )
                 else:
                     u["invitationLink"] = None
             return r
@@ -502,20 +590,26 @@ def delete_member(user_id, tenant_id, id_to_delete):
 
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(f"""UPDATE public.users
+            cur.mogrify(
+                """UPDATE public.users
                            SET deleted_at = timezone('utc'::text, now()),
-                                jwt_iat= NULL, jwt_refresh_jti= NULL, 
+                                jwt_iat= NULL, jwt_refresh_jti= NULL,
                                 jwt_refresh_iat= NULL,
                                 role_id=NULL
                            WHERE user_id=%(user_id)s AND tenant_id=%(tenant_id)s;""",
-                        {"user_id": id_to_delete, "tenant_id": tenant_id}))
+                {"user_id": id_to_delete, "tenant_id": tenant_id},
+            )
+        )
         cur.execute(
-            cur.mogrify(f"""UPDATE public.basic_authentication
+            cur.mogrify(
+                """UPDATE public.basic_authentication
                            SET password= NULL, invitation_token= NULL,
                                 invited_at= NULL, changed_at= NULL,
                                 change_pwd_expire_at= NULL, change_pwd_token= NULL
                            WHERE user_id=%(user_id)s;""",
-                        {"user_id": id_to_delete, "tenant_id": tenant_id}))
+                {"user_id": id_to_delete, "tenant_id": tenant_id},
+            )
+        )
     return {"data": get_members(tenant_id=tenant_id)}
 
 
@@ -523,11 +617,21 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     item = get(tenant_id=tenant_id, user_id=user_id)
     if item is None:
         return {"errors": ["access denied"]}
-    if item["origin"] is not None and config("enforce_SSO", cast=bool, default=False) \
-            and not item["superAdmin"] and helper.is_saml2_available():
-        return {"errors": ["Please use your SSO to change your password, enforced by admin"]}
+    if (
+        item["origin"] is not None
+        and config("enforce_SSO", cast=bool, default=False)
+        and not item["superAdmin"]
+        and helper.is_saml2_available()
+    ):
+        return {
+            "errors": ["Please use your SSO to change your password, enforced by admin"]
+        }
     if item["origin"] is not None and item["hasPassword"] is False:
-        return {"errors": ["cannot change your password because you are logged-in from an SSO service"]}
+        return {
+            "errors": [
+                "cannot change your password because you are logged-in from an SSO service"
+            ]
+        }
     if old_password == new_password:
         return {"errors": ["old and new password are the same"]}
     auth = authenticate(email, old_password, for_change_password=True)
@@ -535,23 +639,7 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
         return {"errors": ["wrong password"]}
     changes = {"password": new_password}
     user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
-    r = authenticate(user['email'], new_password)
-
-    return {
-        "jwt": r.pop("jwt"),
-        "refreshToken": r.pop("refreshToken"),
-        "refreshTokenMaxAge": r.pop("refreshTokenMaxAge"),
-        "spotJwt": r.pop("spotJwt"),
-        "spotRefreshToken": r.pop("spotRefreshToken"),
-        "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge"),
-        "tenantId": tenant_id
-    }
-
-
-def set_password_invitation(tenant_id, user_id, new_password):
-    changes = {"password": new_password}
-    user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
-    r = authenticate(user['email'], new_password)
+    r = authenticate(user["email"], new_password)
 
     return {
         "jwt": r.pop("jwt"),
@@ -561,7 +649,23 @@ def set_password_invitation(tenant_id, user_id, new_password):
         "spotRefreshToken": r.pop("spotRefreshToken"),
         "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge"),
         "tenantId": tenant_id,
-        **r
+    }
+
+
+def set_password_invitation(tenant_id, user_id, new_password):
+    changes = {"password": new_password}
+    user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
+    r = authenticate(user["email"], new_password)
+
+    return {
+        "jwt": r.pop("jwt"),
+        "refreshToken": r.pop("refreshToken"),
+        "refreshTokenMaxAge": r.pop("refreshTokenMaxAge"),
+        "spotJwt": r.pop("spotJwt"),
+        "spotRefreshToken": r.pop("spotRefreshToken"),
+        "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge"),
+        "tenantId": tenant_id,
+        **r,
     }
 
 
@@ -569,14 +673,15 @@ def email_exists(email):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""SELECT 
-                        count(user_id)                        
+                """SELECT
+                        count(user_id)
                     FROM public.users
                     WHERE
                      email = %(email)s
                      AND deleted_at IS NULL
                     LIMIT 1;""",
-                {"email": email})
+                {"email": email},
+            )
         )
         r = cur.fetchone()
     return r["count"] > 0
@@ -586,14 +691,15 @@ def get_deleted_user_by_email(email):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""SELECT 
-                        *                        
+                """SELECT
+                        *
                     FROM public.users
                     WHERE
                      email = %(email)s
                      AND deleted_at NOTNULL
                     LIMIT 1;""",
-                {"email": email})
+                {"email": email},
+            )
         )
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)
@@ -603,7 +709,7 @@ def get_by_invitation_token(token, pass_token=None):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""SELECT 
+                """SELECT
                         *,
                         DATE_PART('day',timezone('utc'::text, now()) \
                             - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
@@ -612,7 +718,8 @@ def get_by_invitation_token(token, pass_token=None):
                     FROM public.users INNER JOIN public.basic_authentication USING(user_id)
                     WHERE invitation_token = %(token)s {"AND change_pwd_token = %(pass_token)s" if pass_token else ""}
                     LIMIT 1;""",
-                {"token": token, "pass_token": pass_token})
+                {"token": token, "pass_token": pass_token},
+            )
         )
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)
@@ -622,37 +729,42 @@ def auth_exists(user_id, tenant_id, jwt_iat) -> bool:
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""SELECT user_id,
-                           EXTRACT(epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
+                """SELECT user_id,
+                           EXTRACT(epoch FROM jwt_iat)::BIGINT AS jwt_iat,
                            changed_at,
                            service_account,
                            basic_authentication.user_id IS NOT NULL AS has_basic_auth
-                    FROM public.users 
-                        LEFT JOIN public.basic_authentication USING(user_id) 
-                    WHERE user_id = %(userId)s 
-                        AND tenant_id = %(tenant_id)s 
-                        AND deleted_at IS NULL 
+                    FROM public.users
+                        LEFT JOIN public.basic_authentication USING(user_id)
+                    WHERE user_id = %(userId)s
+                        AND tenant_id = %(tenant_id)s
+                        AND deleted_at IS NULL
                     LIMIT 1;""",
-                {"userId": user_id, "tenant_id": tenant_id})
+                {"userId": user_id, "tenant_id": tenant_id},
+            )
         )
         r = cur.fetchone()
-    return r is not None \
-        and (r["service_account"] and not r["has_basic_auth"]
-             or r.get("jwt_iat") is not None \
-             and (abs(jwt_iat - r["jwt_iat"]) <= 1))
+    return r is not None and (
+        r["service_account"]
+        and not r["has_basic_auth"]
+        or r.get("jwt_iat") is not None
+        and (abs(jwt_iat - r["jwt_iat"]) <= 1)
+    )
 
 
 def refresh_auth_exists(user_id, tenant_id, jwt_jti=None):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(f"""SELECT user_id 
-                            FROM public.users  
-                            WHERE user_id = %(userId)s 
+            cur.mogrify(
+                """SELECT user_id
+                            FROM public.users
+                            WHERE user_id = %(userId)s
                                 AND tenant_id= %(tenant_id)s
                                 AND deleted_at IS NULL
                                 AND jwt_refresh_jti = %(jwt_jti)s
                             LIMIT 1;""",
-                        {"userId": user_id, "tenant_id": tenant_id, "jwt_jti": jwt_jti})
+                {"userId": user_id, "tenant_id": tenant_id, "jwt_jti": jwt_jti},
+            )
         )
         r = cur.fetchone()
     return r is not None
@@ -690,21 +802,23 @@ class RefreshSpotJWTs(FullLoginJWTs):
 
 def change_jwt_iat_jti(user_id):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""UPDATE public.users
+        query = cur.mogrify(
+            """UPDATE public.users
                                 SET jwt_iat = timezone('utc'::text, now()-INTERVAL '10s'),
-                                    jwt_refresh_jti = 0, 
+                                    jwt_refresh_jti = 0,
                                     jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '10s'),
                                     spot_jwt_iat = timezone('utc'::text, now()-INTERVAL '10s'),
-                                    spot_jwt_refresh_jti = 0, 
-                                    spot_jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '10s') 
-                                WHERE user_id = %(user_id)s 
-                                RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
-                                          jwt_refresh_jti, 
+                                    spot_jwt_refresh_jti = 0,
+                                    spot_jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '10s')
+                                WHERE user_id = %(user_id)s
+                                RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat,
+                                          jwt_refresh_jti,
                                           EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat,
-                                          EXTRACT (epoch FROM spot_jwt_iat)::BIGINT AS spot_jwt_iat, 
-                                          spot_jwt_refresh_jti, 
+                                          EXTRACT (epoch FROM spot_jwt_iat)::BIGINT AS spot_jwt_iat,
+                                          spot_jwt_refresh_jti,
                                           EXTRACT (epoch FROM spot_jwt_refresh_iat)::BIGINT AS spot_jwt_refresh_iat;""",
-                            {"user_id": user_id})
+            {"user_id": user_id},
+        )
         cur.execute(query)
         row = cur.fetchone()
         return FullLoginJWTs(**row)
@@ -712,14 +826,16 @@ def change_jwt_iat_jti(user_id):
 
 def refresh_jwt_iat_jti(user_id):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""UPDATE public.users
+        query = cur.mogrify(
+            """UPDATE public.users
                                 SET jwt_iat = timezone('utc'::text, now()-INTERVAL '10s'),
-                                    jwt_refresh_jti = jwt_refresh_jti + 1 
-                                WHERE user_id = %(user_id)s 
-                                RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
-                                          jwt_refresh_jti, 
+                                    jwt_refresh_jti = jwt_refresh_jti + 1
+                                WHERE user_id = %(user_id)s
+                                RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat,
+                                          jwt_refresh_jti,
                                           EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat;""",
-                            {"user_id": user_id})
+            {"user_id": user_id},
+        )
         cur.execute(query)
         row = cur.fetchone()
         return RefreshLoginJWTs(**row)
@@ -730,7 +846,7 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
         return {"errors": ["must sign-in with SSO, enforced by admin"]}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            f"""SELECT 
+            """SELECT
                     users.user_id,
                     users.tenant_id,
                     users.role,
@@ -745,24 +861,26 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
                     users.service_account
                 FROM public.users AS users INNER JOIN public.basic_authentication USING(user_id)
                     LEFT JOIN public.roles ON (roles.role_id = users.role_id AND roles.tenant_id = users.tenant_id)
-                WHERE users.email = %(email)s 
+                WHERE users.email = %(email)s
                     AND basic_authentication.password = crypt(%(password)s, basic_authentication.password)
                     AND basic_authentication.user_id = (SELECT su.user_id FROM public.users AS su WHERE su.email=%(email)s AND su.deleted_at IS NULL LIMIT 1)
                     AND (roles.role_id IS NULL OR roles.deleted_at IS NULL)
                 LIMIT 1;""",
-            {"email": email, "password": password})
+            {"email": email, "password": password},
+        )
 
         cur.execute(query)
         r = cur.fetchone()
         if r is None and helper.is_saml2_available():
             query = cur.mogrify(
-                f"""SELECT 1
+                """SELECT 1
                     FROM public.users
-                    WHERE users.email = %(email)s 
+                    WHERE users.email = %(email)s
                         AND users.deleted_at IS NULL
                         AND users.origin IS NOT NULL
                     LIMIT 1;""",
-                {"email": email})
+                {"email": email},
+            )
             cur.execute(query)
             if cur.fetchone() is not None:
                 return {"errors": ["must sign-in with SSO"]}
@@ -772,33 +890,51 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
             return True
         r = helper.dict_to_camel_case(r)
         if r["serviceAccount"]:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                detail="service account is not authorized to login")
-        elif config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="service account is not authorized to login",
+            )
+        elif (
+            config("enforce_SSO", cast=bool, default=False)
+            and helper.is_saml2_available()
+        ):
             return {"errors": ["must sign-in with SSO, enforced by admin"]}
 
-        j_r = change_jwt_iat_jti(user_id=r['userId'])
+        j_r = change_jwt_iat_jti(user_id=r["userId"])
         response = {
-            "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=j_r.jwt_iat,
-                                            aud=AUDIENCE),
-            "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'],
-                                                             tenant_id=r['tenantId'],
-                                                             iat=j_r.jwt_refresh_iat,
-                                                             aud=AUDIENCE,
-                                                             jwt_jti=j_r.jwt_refresh_jti,
-                                                             for_spot=False),
+            "jwt": authorizers.generate_jwt(
+                user_id=r["userId"],
+                tenant_id=r["tenantId"],
+                iat=j_r.jwt_iat,
+                aud=AUDIENCE,
+            ),
+            "refreshToken": authorizers.generate_jwt_refresh(
+                user_id=r["userId"],
+                tenant_id=r["tenantId"],
+                iat=j_r.jwt_refresh_iat,
+                aud=AUDIENCE,
+                jwt_jti=j_r.jwt_refresh_jti,
+                for_spot=False,
+            ),
             "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
             "email": email,
-            "spotJwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                iat=j_r.spot_jwt_iat, aud=spot.AUDIENCE, for_spot=True),
-            "spotRefreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'],
-                                                                 tenant_id=r['tenantId'],
-                                                                 iat=j_r.spot_jwt_refresh_iat,
-                                                                 aud=spot.AUDIENCE,
-                                                                 jwt_jti=j_r.spot_jwt_refresh_jti,
-                                                                 for_spot=True),
+            "spotJwt": authorizers.generate_jwt(
+                user_id=r["userId"],
+                tenant_id=r["tenantId"],
+                iat=j_r.spot_jwt_iat,
+                aud=spot.AUDIENCE,
+                for_spot=True,
+            ),
+            "spotRefreshToken": authorizers.generate_jwt_refresh(
+                user_id=r["userId"],
+                tenant_id=r["tenantId"],
+                iat=j_r.spot_jwt_refresh_iat,
+                aud=spot.AUDIENCE,
+                jwt_jti=j_r.spot_jwt_refresh_jti,
+                for_spot=True,
+            ),
             "spotRefreshTokenMaxAge": config("JWT_SPOT_REFRESH_EXPIRATION", cast=int),
-            **r
+            **r,
         }
         return response
 
@@ -809,31 +945,33 @@ def get_user_role(tenant_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""SELECT 
+                """SELECT
                         users.user_id,
-                        users.email, 
-                        users.role, 
-                        users.name, 
+                        users.email,
+                        users.role,
+                        users.name,
                         users.created_at,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
-                    FROM public.users 
-                    WHERE users.deleted_at IS NULL 
+                    FROM public.users
+                    WHERE users.deleted_at IS NULL
                         AND users.user_id=%(user_id)s
                         AND users.tenant_id=%(tenant_id)s
                     LIMIT 1""",
-                {"tenant_id": tenant_id, "user_id": user_id})
+                {"tenant_id": tenant_id, "user_id": user_id},
+            )
         )
         return helper.dict_to_camel_case(cur.fetchone())
 
 
 def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=None):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""\
+        query = cur.mogrify(
+            """\
                     WITH u AS (
                         INSERT INTO public.users (tenant_id, email, role, name, data, origin, internal_id, role_id)
-                            VALUES (%(tenant_id)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s, 
+                            VALUES (%(tenant_id)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s,
                                             (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))))
@@ -852,21 +990,28 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                            origin
                     FROM u;""",
-                            {"tenant_id": tenant_id, "email": email, "internal_id": internal_id,
-                             "role": "admin" if admin else "member", "name": name, "origin": origin,
-                             "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now()})})
-        cur.execute(
-            query
+            {
+                "tenant_id": tenant_id,
+                "email": email,
+                "internal_id": internal_id,
+                "role": "admin" if admin else "member",
+                "name": name,
+                "origin": origin,
+                "role_id": role_id,
+                "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
+            },
         )
+        cur.execute(query)
         return helper.dict_to_camel_case(cur.fetchone())
 
 
 def __hard_delete_user(user_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            f"""DELETE FROM public.users
+            """DELETE FROM public.users
                 WHERE users.user_id = %(user_id)s AND users.deleted_at IS NOT NULL ;""",
-            {"user_id": user_id})
+            {"user_id": user_id},
+        )
         cur.execute(query)
 
 
@@ -877,25 +1022,33 @@ def logout(user_id: int):
                SET jwt_iat = NULL, jwt_refresh_jti = NULL, jwt_refresh_iat = NULL,
                    spot_jwt_iat = NULL, spot_jwt_refresh_jti = NULL, spot_jwt_refresh_iat = NULL
                WHERE user_id = %(user_id)s;""",
-            {"user_id": user_id})
+            {"user_id": user_id},
+        )
         cur.execute(query)
 
 
 def refresh(user_id: int, tenant_id: int = -1) -> dict:
     j = refresh_jwt_iat_jti(user_id=user_id)
     return {
-        "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=j.jwt_iat,
-                                        aud=AUDIENCE),
-        "refreshToken": authorizers.generate_jwt_refresh(user_id=user_id, tenant_id=tenant_id, iat=j.jwt_refresh_iat,
-                                                         aud=AUDIENCE, jwt_jti=j.jwt_refresh_jti),
-        "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int) - (j.jwt_iat - j.jwt_refresh_iat),
+        "jwt": authorizers.generate_jwt(
+            user_id=user_id, tenant_id=tenant_id, iat=j.jwt_iat, aud=AUDIENCE
+        ),
+        "refreshToken": authorizers.generate_jwt_refresh(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            iat=j.jwt_refresh_iat,
+            aud=AUDIENCE,
+            jwt_jti=j.jwt_refresh_jti,
+        ),
+        "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int)
+        - (j.jwt_iat - j.jwt_refresh_iat),
     }
 
 
 def authenticate_sso(email: str, internal_id: str):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            f"""SELECT 
+            """SELECT
                     users.user_id,
                     users.tenant_id,
                     users.role,
@@ -908,7 +1061,8 @@ def authenticate_sso(email: str, internal_id: str):
                     service_account
                 FROM public.users AS users
                 WHERE users.email = %(email)s AND internal_id = %(internal_id)s;""",
-            {"email": email, "internal_id": internal_id})
+            {"email": email, "internal_id": internal_id},
+        )
 
         cur.execute(query)
         r = cur.fetchone()
@@ -916,41 +1070,64 @@ def authenticate_sso(email: str, internal_id: str):
     if r is not None:
         r = helper.dict_to_camel_case(r)
         if r["serviceAccount"]:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                detail="service account is not authorized to login")
-        j_r = change_jwt_iat_jti(user_id=r['userId'])
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="service account is not authorized to login",
+            )
+        j_r = change_jwt_iat_jti(user_id=r["userId"])
         response = {
-            "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=j_r.jwt_iat,
-                                            aud=AUDIENCE),
-            "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                             iat=j_r.jwt_refresh_iat,
-                                                             aud=AUDIENCE, jwt_jti=j_r.jwt_refresh_jti),
+            "jwt": authorizers.generate_jwt(
+                user_id=r["userId"],
+                tenant_id=r["tenantId"],
+                iat=j_r.jwt_iat,
+                aud=AUDIENCE,
+            ),
+            "refreshToken": authorizers.generate_jwt_refresh(
+                user_id=r["userId"],
+                tenant_id=r["tenantId"],
+                iat=j_r.jwt_refresh_iat,
+                aud=AUDIENCE,
+                jwt_jti=j_r.jwt_refresh_jti,
+            ),
             "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
-            "spotJwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                iat=j_r.spot_jwt_iat, aud=spot.AUDIENCE, for_spot=True),
-            "spotRefreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'],
-                                                                 tenant_id=r['tenantId'],
-                                                                 iat=j_r.spot_jwt_refresh_iat,
-                                                                 aud=spot.AUDIENCE,
-                                                                 jwt_jti=j_r.spot_jwt_refresh_jti, for_spot=True),
-            "spotRefreshTokenMaxAge": config("JWT_SPOT_REFRESH_EXPIRATION", cast=int)
+            "spotJwt": authorizers.generate_jwt(
+                user_id=r["userId"],
+                tenant_id=r["tenantId"],
+                iat=j_r.spot_jwt_iat,
+                aud=spot.AUDIENCE,
+                for_spot=True,
+            ),
+            "spotRefreshToken": authorizers.generate_jwt_refresh(
+                user_id=r["userId"],
+                tenant_id=r["tenantId"],
+                iat=j_r.spot_jwt_refresh_iat,
+                aud=spot.AUDIENCE,
+                jwt_jti=j_r.spot_jwt_refresh_jti,
+                for_spot=True,
+            ),
+            "spotRefreshTokenMaxAge": config("JWT_SPOT_REFRESH_EXPIRATION", cast=int),
         }
         return response
-    logger.warning(f"SSO user not found with email: {email} and internal_id: {internal_id}")
+    logger.warning(
+        f"SSO user not found with email: {email} and internal_id: {internal_id}"
+    )
     return None
 
 
-def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, internal_id=None):
+def restore_sso_user(
+    user_id, tenant_id, email, admin, name, origin, role_id, internal_id=None
+):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""\
+        query = cur.mogrify(
+            """\
                     WITH u AS (
-                        UPDATE public.users 
+                        UPDATE public.users
                         SET tenant_id= %(tenant_id)s,
-                         role= %(role)s, 
+                         role= %(role)s,
                          name= %(name)s,
-                         data= %(data)s, 
-                         origin= %(origin)s, 
-                         internal_id= %(internal_id)s, 
+                         data= %(data)s,
+                         origin= %(origin)s,
+                         internal_id= %(internal_id)s,
                          role_id= (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))),
@@ -969,7 +1146,7 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
                             invited_at= default,
                             change_pwd_token= default,
                             change_pwd_expire_at= default,
-                            changed_at= NULL  
+                            changed_at= NULL
                         WHERE user_id = %(user_id)s
                         RETURNING user_id
                     )
@@ -982,13 +1159,19 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                            origin
                     FROM u;""",
-                            {"tenant_id": tenant_id, "email": email, "internal_id": internal_id,
-                             "role": "admin" if admin else "member", "name": name, "origin": origin,
-                             "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
-                             "user_id": user_id})
-        cur.execute(
-            query
+            {
+                "tenant_id": tenant_id,
+                "email": email,
+                "internal_id": internal_id,
+                "role": "admin" if admin else "member",
+                "name": name,
+                "origin": origin,
+                "role_id": role_id,
+                "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
+                "user_id": user_id,
+            },
         )
+        cur.execute(query)
         return helper.dict_to_camel_case(cur.fetchone())
 
 
@@ -997,13 +1180,14 @@ def get_user_settings(user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""SELECT 
+                """SELECT
                         settings
-                    FROM public.users 
-                    WHERE users.deleted_at IS NULL 
+                    FROM public.users
+                    WHERE users.deleted_at IS NULL
                         AND users.user_id=%(user_id)s
                     LIMIT 1""",
-                {"user_id": user_id})
+                {"user_id": user_id},
+            )
         )
         return helper.dict_to_camel_case(cur.fetchone())
 
@@ -1035,11 +1219,12 @@ def update_user_settings(user_id, settings):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""UPDATE public.users
+                """UPDATE public.users
                     SET settings = %(settings)s
                     WHERE users.user_id = %(user_id)s
                             AND deleted_at IS NULL
                     RETURNING settings;""",
-                {"user_id": user_id, "settings": json.dumps(settings)})
+                {"user_id": user_id, "settings": json.dumps(settings)},
+            )
         )
         return helper.dict_to_camel_case(cur.fetchone())
