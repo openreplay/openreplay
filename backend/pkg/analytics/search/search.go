@@ -90,93 +90,135 @@ func (s *searchImpl) scanCard(r rowScanner) (*model.Session, error) {
 }
 
 func (s *searchImpl) GetAll(projectId int, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
-	durConds, _ := charts.BuildDurationWhere(req.Filters)
-	sessFilters, _ := charts.FilterOutTypes(req.Filters, []model.FilterType{charts.FilterDuration, charts.FilterUserAnonymousId})
-	sessConds, _ := charts.BuildEventConditions(sessFilters, charts.BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"})
+	// filter out duration & anonymous-id filters
+	sessFilters, _ := charts.FilterOutTypes(req.Filters, []model.FilterType{
+		charts.FilterDuration,
+		charts.FilterUserAnonymousId,
+	})
+	// build event & other conditions, using req.EventsOrder
+	eventConds, otherConds := charts.BuildEventConditions(sessFilters, charts.BuildConditionsOptions{
+		DefinedColumns: mainColumns,
+		MainTableAlias: "e",
+		EventsOrder:    req.EventsOrder,
+	})
 
-	// event-level PREWHERE
-	eventPrewhereConds := append(sessConds,
+	// build PREWHERE clauses
+	prewhereParts := []string{}
+	if req.EventsOrder == "then" && len(eventConds) == 1 {
+		prewhereParts = append(prewhereParts, eventConds[0])
+	}
+	prewhereParts = append(prewhereParts, otherConds...)
+	prewhereParts = append(prewhereParts,
 		fmt.Sprintf("e.project_id = %d", projectId),
 		fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", req.StartDate/1000, req.EndDate/1000),
 	)
-	prewhere := "PREWHERE " + strings.Join(eventPrewhereConds, " AND ")
+	prewhere := "PREWHERE " + strings.Join(prewhereParts, " AND ")
 
-	// session-level WHERE
-	sessionWhereConds := append(durConds, "s.duration IS NOT NULL")
-	where := ""
-	if len(sessionWhereConds) > 0 {
-		where = "WHERE " + strings.Join(sessionWhereConds, " AND ")
+	// build GROUP BY / HAVING based on EventsOrder
+	joinClause := ""
+	switch req.EventsOrder {
+	case "then":
+		if len(eventConds) > 1 {
+			var pat strings.Builder
+			for i := range eventConds {
+				pat.WriteString(fmt.Sprintf("(?%d)", i+1))
+			}
+			joinClause = fmt.Sprintf(
+				"GROUP BY e.session_id\nHAVING sequenceMatch('%s')(\n    toDateTime(e.created_at),\n    %s\n)",
+				pat.String(),
+				strings.Join(eventConds, ",\n    "),
+			)
+		}
+	case "and":
+		if len(eventConds) > 0 {
+			joinClause = fmt.Sprintf(
+				"GROUP BY e.session_id\nHAVING %s",
+				strings.Join(eventConds, " AND "),
+			)
+		}
+	case "or":
+		if len(eventConds) > 0 {
+			joinClause = fmt.Sprintf(
+				"GROUP BY e.session_id\nHAVING %s",
+				strings.Join(eventConds, " OR "),
+			)
+		}
 	}
 
-	// total count
-	var total uint64
+	// count query
 	countQ := fmt.Sprintf(`
-		SELECT count()
-		  FROM experimental.sessions AS s
-		  ANY INNER JOIN (
-		    SELECT DISTINCT session_id
-		      FROM product_analytics.events AS e
-		      %s
-		  ) AS fs USING (session_id)
-		%s
-	`, prewhere, where)
+SELECT count()
+FROM experimental.sessions AS s
+ANY INNER JOIN (
+    SELECT DISTINCT session_id
+    FROM product_analytics.events AS e
+    %s
+    %s
+) AS fs USING (session_id)
+WHERE s.duration IS NOT NULL
+`, prewhere, joinClause)
 
-	log.Printf("Count Query: %s", countQ)
+	log.Printf("Count Query: %s\n", countQ)
+
+	var total uint64
 	if err := s.chConn.QueryRow(context.Background(), countQ).Scan(&total); err != nil {
 		return nil, err
 	}
 
-	// sorting
+	// build ORDER BY
 	field, ok := sortOptions[req.Sort]
 	if !ok {
 		field = sortOptions["datetime"]
 	}
-
 	order := "DESC"
-	if strings.ToUpper(req.Order) == "ASC" {
+	if strings.EqualFold(req.Order, "ASC") {
 		order = "ASC"
 	}
-
 	sortClause := fmt.Sprintf("ORDER BY %s %s", field, order)
 
 	// data query
 	dataQ := fmt.Sprintf(`
-		SELECT
-		  toString(s.session_id)                    AS session_id,
-		  s.project_id,
-		  toUInt64(toUnixTimestamp(s.datetime)*1000) AS start_ts,
-		  s.duration,
-		  s.platform,
-		  s.timezone,
-		  s.user_id,
-		  s.user_uuid,
-		  s.user_anonymous_id,
-		  s.user_browser,
-		  s.user_city,
-		  s.user_country,
-		  s.user_device,
-		  s.user_device_type,
-		  s.user_os,
-		  s.user_state,
-		  s.events_count
-		FROM experimental.sessions AS s
-		ANY INNER JOIN (
-		  SELECT DISTINCT session_id
-		    FROM product_analytics.events AS e
-		    %s
-		) AS fs USING (session_id)
-		%s
-		%s
-		LIMIT %d OFFSET %d
-	`, prewhere, where, sortClause, req.Limit, req.Page)
+SELECT
+    toString(s.session_id)                    AS session_id,
+    s.project_id,
+    toUInt64(toUnixTimestamp(s.datetime)*1000) AS start_ts,
+    s.duration,
+    s.platform,
+    s.timezone,
+    s.user_id,
+    s.user_uuid,
+    s.user_anonymous_id,
+    s.user_browser,
+    s.user_city,
+    s.user_country,
+    s.user_device,
+    s.user_device_type,
+    s.user_os,
+    s.user_state,
+    s.events_count
+FROM experimental.sessions AS s
+ANY INNER JOIN (
+    SELECT DISTINCT session_id
+    FROM product_analytics.events AS e
+    %s
+    %s
+) AS fs USING (session_id)
+WHERE s.duration IS NOT NULL
+%s
+LIMIT %d OFFSET %d
+`, prewhere, joinClause, sortClause, req.Limit, req.Page)
 
+	log.Printf("Data Query: %s\n", dataQ)
 	rows, err := s.chConn.Query(context.Background(), dataQ)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	resp := &model.GetSessionsResponse{Total: total, Sessions: make([]model.Session, 0, req.Limit)}
+	resp := &model.GetSessionsResponse{
+		Total:    total,
+		Sessions: make([]model.Session, 0, req.Limit),
+	}
 	for rows.Next() {
 		var sess model.Session
 		if err := rows.Scan(

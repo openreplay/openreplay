@@ -117,9 +117,9 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 	return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, propKey)
 }
 
-func BuildEventConditions(filters []model.Filter, options ...BuildConditionsOptions) (conds, names []string) {
+func BuildEventConditions(filters []model.Filter, options ...BuildConditionsOptions) (eventConds, otherConds []string) {
 	opts := BuildConditionsOptions{
-		MainTableAlias:       "",
+		MainTableAlias:       "e",
 		PropertiesColumnName: "$properties",
 		DefinedColumns:       make(map[string]string),
 		EventsOrder:          "then",
@@ -135,17 +135,20 @@ func BuildEventConditions(filters []model.Filter, options ...BuildConditionsOpti
 		if opt.DefinedColumns != nil {
 			opts.DefinedColumns = opt.DefinedColumns
 		}
+		if opt.EventsOrder != "" {
+			opts.EventsOrder = opt.EventsOrder
+		}
 	}
 
 	for _, f := range filters {
 		if f.Type == FilterDuration {
 			continue
 		}
-
-		fConds, fNames := addFilter(f, opts)
-		if len(fConds) > 0 {
-			conds = append(conds, fConds...)
-			names = append(names, fNames...)
+		conds, _ := addFilter(f, opts)
+		if f.IsEvent {
+			eventConds = append(eventConds, conds...)
+		} else {
+			otherConds = append(otherConds, conds...)
 		}
 	}
 	return
@@ -156,51 +159,34 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, nam
 	if alias != "" && !strings.HasSuffix(alias, ".") {
 		alias += "."
 	}
-	fName := f.Name
 
-	// nested filters handling for event grouping
 	if f.IsEvent && len(f.Filters) > 0 {
-		// build sub-conditions for nested filters
-		subConds, subNames := BuildEventConditions(f.Filters, opts)
-		if len(subConds) > 0 {
-			// wrap event name + sub-conditions
-			cond := fmt.Sprintf("(%s`$event_name` = '%s' AND %s)", alias, fName, strings.Join(subConds, " AND "))
-			conds = append(conds, cond)
-			names = append(names, fName)
-			names = append(names, subNames...)
+		var parts []string
+		parts = append(parts, fmt.Sprintf("%s`$event_name` = '%s'", alias, f.Name))
+		for _, sub := range f.Filters {
+			subConds, _ := addFilter(sub, opts)
+			if len(subConds) > 0 {
+				parts = append(parts, "("+strings.Join(subConds, " AND ")+")")
+			}
 		}
+		conds = []string{"(" + strings.Join(parts, " AND ") + ")"}
 		return
 	}
 
-	// standard filter processing
-	// resolve column accessor
-	cfg, ok := propertyKeyMap[fName]
+	cfg, ok := propertyKeyMap[f.Name]
 	if !ok {
-		cfg = filterConfig{LogicalProperty: fName, IsNumeric: false}
-		log.Printf("using default config for type: %v", f.Type)
+		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: false}
 	}
 	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
 
 	switch f.Operator {
 	case "isAny", "onAny":
 		if f.IsEvent {
-			names = append(names, fName)
+			conds = append(conds, fmt.Sprintf("%s`$event_name` = '%s'", alias, f.Name))
 		}
 	default:
 		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric); c != "" {
 			conds = append(conds, c)
-		}
-		if f.IsEvent {
-			names = append(names, fName)
-		}
-	}
-
-	// nested sub-filters for non-event or without grouping
-	if len(f.Filters) > 0 {
-		subConds, subNames := BuildEventConditions(f.Filters, opts)
-		if len(subConds) > 0 {
-			conds = append(conds, strings.Join(subConds, " AND "))
-			names = append(names, subNames...)
 		}
 	}
 
