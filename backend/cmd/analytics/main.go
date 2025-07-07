@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"github.com/joho/godotenv"
+	"log"
 
 	analyticsConfig "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics"
@@ -16,6 +18,10 @@ import (
 )
 
 func main() {
+	err := godotenv.Load("../../.env")
+	if err != nil {
+		log.Printf("Error loading .env file")
+	}
 	ctx := context.Background()
 	log := logger.New()
 	cfg := analyticsConfig.New(log)
