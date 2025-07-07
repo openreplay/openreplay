@@ -941,7 +941,7 @@ export default defineBackground(() => {
     // Also fired on update and browser_update
     if (reason === "install") {
       await browser.tabs.create({
-        url: "https://www.openreplay.com/spot/welcome?ref=extension",
+        url: "https://www.openreplay.com/platform/spot?ref=extension",
         active: true,
       });
     }
