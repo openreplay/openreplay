@@ -87,11 +87,13 @@ def get_all_properties(project_id: int):
         properties = helper.list_to_camel_case(properties)
         for i, p in enumerate(properties):
             p["id"] = f"prop_{i}"
-            p["_foundInPredefinedList"] = False
-            if p["name"] in PREDEFINED_PROPERTIES:
-                p["dataType"] = exp_ch_helper.simplify_clickhouse_type(PREDEFINED_PROPERTIES[p["name"]]["type"])
-                p["_foundInPredefinedList"] = True
             p["possibleTypes"] = list(set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"])))
+            p["_foundInPredefinedList"] = p["name"] in PREDEFINED_PROPERTIES
+            if p["_foundInPredefinedList"]:
+                p["dataType"] = exp_ch_helper.simplify_clickhouse_type(PREDEFINED_PROPERTIES[p["name"]]["type"])
+            else:
+                p["dataType"] = p["possibleTypes"][0]
+
             p.pop("total")
         keys = [p["name"] for p in properties]
         for p in PREDEFINED_PROPERTIES:
@@ -100,9 +102,8 @@ def get_all_properties(project_id: int):
                 properties.append({
                     "name": p,
                     "displayName": PREDEFINED_PROPERTIES[p]["displayName"],
-                    "possibleTypes": [
-                    ],
-                    "id": f"prop_{len(properties) + 1}",
+                    "possibleTypes": [PREDEFINED_PROPERTIES[p]["type"]],
+                    "id": f"prop_{total}",
                     "_foundInPredefinedList": False,
                     "dataType": PREDEFINED_PROPERTIES[p]["type"],
                     "autoCaptured": True

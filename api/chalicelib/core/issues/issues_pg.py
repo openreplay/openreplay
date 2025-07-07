@@ -133,9 +133,8 @@ def get_issues_categories():
             "id": f"issue_{i}",
             "name": issue["type"],
             "displayName": issue["name"],
-            "possibleTypes": [
-                "String"
-            ],
+            "possibleTypes": ["string"],
+            "dataType": "string",
             "autoCaptured": issue["autoCaptured"]
         })
     return {

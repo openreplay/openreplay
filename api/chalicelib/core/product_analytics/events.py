@@ -41,13 +41,11 @@ def get_events(project_id: int):
             "displayName": PREDEFINED_EVENTS[e]["displayName"],
             "description": PREDEFINED_EVENTS[e]["description"],
             "autoCaptured": True,
-            "id": "event_0",
+            "id": f"event_{i}",
             "dataType": "string",
-            "possibleTypes": [
-                "string"
-            ],
+            "possibleTypes": ["string"],
             "_foundInPredefinedList": False
-        } for e in PREDEFINED_EVENTS]}
+        } for i, e in enumerate(PREDEFINED_EVENTS)]}
     total = rows[0]["total"]
     rows = helper.list_to_camel_case(rows)
     for i, row in enumerate(rows):
@@ -65,11 +63,9 @@ def get_events(project_id: int):
                 "displayName": PREDEFINED_EVENTS[e]["displayName"],
                 "description": PREDEFINED_EVENTS[e]["description"],
                 "autoCaptured": True,
-                "id": "event_0",
+                "id": f"event_{total}",
                 "dataType": "string",
-                "possibleTypes": [
-                    "string"
-                ],
+                "possibleTypes": ["string"],
                 "_foundInPredefinedList": False
             })
     return {
@@ -126,8 +122,9 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
                         sub_condition = get_sub_condition(col_name=f"accurateCastOrNull(`{ef.name}`,'{cast}')",
                                                           val_name=p_k, operator=ef.operator)
                     elif ef.auto_captured:
-                        sub_condition = get_sub_condition(col_name=f"accurateCastOrNull(`$properties`.`{ef.name}`,{cast})",
-                                                          val_name=p_k, operator=ef.operator)
+                        sub_condition = get_sub_condition(
+                            col_name=f"accurateCastOrNull(`$properties`.`{ef.name}`,{cast})",
+                            val_name=p_k, operator=ef.operator)
                     else:
                         sub_condition = get_sub_condition(col_name=f"accurateCastOrNull(properties.`{ef.name}`,{cast})",
                                                           val_name=p_k, operator=ef.operator)
