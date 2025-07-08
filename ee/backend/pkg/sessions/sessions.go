@@ -28,7 +28,6 @@ type Sessions interface {
 	UpdateUTM(sessionID uint64, url string) error
 	UpdateMetadata(sessionID uint64, key, value string) error
 	UpdateEventsStats(sessionID uint64, events, pages int) error
-	UpdateIssuesStats(sessionID uint64, errors, issueScore int) error
 	Commit()
 }
 
@@ -274,11 +273,6 @@ func (s *sessionsImpl) UpdateMetadata(sessionID uint64, key, value string) error
 
 func (s *sessionsImpl) UpdateEventsStats(sessionID uint64, events, pages int) error {
 	s.updates.AddEvents(sessionID, events, pages)
-	return nil
-}
-
-func (s *sessionsImpl) UpdateIssuesStats(sessionID uint64, errors, issueScore int) error {
-	s.updates.AddIssues(sessionID, errors, issueScore)
 	return nil
 }
 
