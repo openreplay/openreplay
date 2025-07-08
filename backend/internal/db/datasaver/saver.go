@@ -23,24 +23,19 @@ type Saver interface {
 type saverImpl struct {
 	log      logger.Logger
 	cfg      *db.Config
-	pg       *postgres.Conn
 	sessions sessions.Sessions
 	ch       clickhouse.Connector
 	producer queue.Producer
 	tags     tags.Tags
 }
 
-func New(log logger.Logger, cfg *db.Config, pg *postgres.Conn, ch clickhouse.Connector, session sessions.Sessions, tags tags.Tags) Saver {
-	switch {
-	case pg == nil:
-		log.Fatal(context.Background(), "pg pool is empty")
-	case ch == nil:
+func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session sessions.Sessions, tags tags.Tags) Saver {
+	if ch == nil {
 		log.Fatal(context.Background(), "ch pool is empty")
 	}
 	s := &saverImpl{
 		log:      log,
 		cfg:      cfg,
-		pg:       pg,
 		ch:       ch,
 		sessions: session,
 		tags:     tags,
@@ -83,14 +78,14 @@ func (s *saverImpl) Handle(msg Message) {
 	}
 
 	if IsMobileType(msg.TypeID()) {
-		if err := s.handleMobileMessage(sessCtx, session, msg); err != nil {
+		if err := s.handleMobileMessage(session, msg); err != nil {
 			if !postgres.IsPkeyViolation(err) {
 				s.log.Error(sessCtx, "mobile message insertion error, msg: %+v, err: %.200s", msg, err)
 			}
 			return
 		}
 	} else {
-		if err := s.handleWebMessage(sessCtx, session, msg); err != nil {
+		if err := s.handleWebMessage(session, msg); err != nil {
 			if !postgres.IsPkeyViolation(err) {
 				s.log.Error(sessCtx, "web message insertion error, msg: %+v, err: %.200s", msg, err)
 			}
@@ -103,15 +98,10 @@ func (s *saverImpl) Handle(msg Message) {
 }
 
 func (s *saverImpl) Commit() error {
-	s.pg.Commit()
-	s.ch.Commit()
-	return nil
+	return s.ch.Commit()
 }
 
 func (s *saverImpl) Close() error {
-	if err := s.pg.Close(); err != nil {
-		s.log.Error(context.Background(), "pg.Close error: %s", err)
-	}
 	if err := s.ch.Stop(); err != nil {
 		s.log.Error(context.Background(), "ch.Close error: %s", err)
 	}
