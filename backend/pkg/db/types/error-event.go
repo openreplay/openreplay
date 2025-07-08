@@ -28,7 +28,7 @@ type ErrorEvent struct {
 	PageTitle  string
 }
 
-func WrapJSException(m *JSException) (*ErrorEvent, error) {
+func WrapJSException(m *JSException) *ErrorEvent {
 	return &ErrorEvent{
 		MessageID:  m.Meta().Index,
 		Timestamp:  m.Meta().Timestamp,
@@ -39,7 +39,7 @@ func WrapJSException(m *JSException) (*ErrorEvent, error) {
 		OriginType: m.TypeID(),
 		Url:        m.Url,
 		PageTitle:  m.PageTitle,
-	}, nil
+	}
 }
 
 func WrapIntegrationEvent(m *IntegrationEvent) *ErrorEvent {

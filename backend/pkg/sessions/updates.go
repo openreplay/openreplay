@@ -19,7 +19,6 @@ type Updates interface {
 	SetMetadata(sessionID uint64, keyNo uint, value string)
 	SetUTM(sessionID uint64, utmSource, utmMedium, utmCampaign string)
 	AddEvents(sessionID uint64, events, pages int)
-	AddIssues(sessionID uint64, errors, issues int)
 	Commit()
 }
 
@@ -79,13 +78,6 @@ func (u *updatesImpl) AddEvents(sessionID uint64, events, pages int) {
 		u.updates[sessionID] = NewSessionUpdate(sessionID)
 	}
 	u.updates[sessionID].addEvents(events, pages)
-}
-
-func (u *updatesImpl) AddIssues(sessionID uint64, errors, issues int) {
-	if u.updates[sessionID] == nil {
-		u.updates[sessionID] = NewSessionUpdate(sessionID)
-	}
-	u.updates[sessionID].addIssues(errors, issues)
 }
 
 func (u *updatesImpl) Commit() {
