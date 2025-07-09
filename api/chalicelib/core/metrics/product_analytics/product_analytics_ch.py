@@ -487,6 +487,7 @@ SELECT *
 FROM pre_ranked_events;"""
         logger.debug("---------Q1-----------")
         ch_query1 = ch.format(query=ch_query1, parameters=params)
+        logger.debug(ch_query1)
         ch.execute(query=ch_query1)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
@@ -513,6 +514,7 @@ FROM ranked_events
 {q2_extra_condition if q2_extra_condition else ""};"""
         logger.debug("---------Q2-----------")
         ch_query2 = ch.format(query=ch_query2, parameters=params)
+        logger.debug(ch_query2)
         ch.execute(query=ch_query2)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
@@ -633,6 +635,7 @@ FROM ranked_events
                 ORDER BY event_number_in_session, sessions_count DESC;"""
         logger.debug("---------Q3-----------")
         ch_query3 = ch.format(query=ch_query3, parameters=params)
+        logger.debug(ch_query3)
         rows = ch.execute(query=ch_query3)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
