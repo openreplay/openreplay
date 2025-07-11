@@ -74,7 +74,7 @@ def autocomplete_properties(projectId: int, propertyName: str, eventName: Option
                             context: schemas.CurrentContext = Depends(OR_context)):
     # Specify propertyName to get top values of that property
     # Specify eventName&propertyName to get top values of that property for the selected event
-    if ac:
+    if ac and (schemas.FilterType.has_value(propertyName) or propertyName.startswith("metadata_")):
         if not q or len(q) == 0:
             return {"data": sessions_autocomplete.get_top_values(project_id=projectId, event_type=propertyName)}
         else:
