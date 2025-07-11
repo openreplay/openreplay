@@ -32,16 +32,13 @@ EVENTS_DEFINITION.emit = {
 const BASE_sessionInfo = {
     "pageTitle": "Page",
     "active": false,
-    "live": true,
     "sessionID": "0",
     "metadata": {},
     "userID": "",
     "userUUID": "",
     "projectKey": "",
-    "revID": "",
     "timestamp": 0,
     "trackerVersion": "",
-    "isSnippet": true,
     "userOs": "",
     "userBrowser": "",
     "userBrowserVersion": "",
@@ -49,8 +46,7 @@ const BASE_sessionInfo = {
     "userDeviceType": "",
     "userCountry": "",
     "userState": "",
-    "userCity": "",
-    "projectId": 0
+    "userCity": ""
 };
 
 const extractPeerId = (peerId) => {

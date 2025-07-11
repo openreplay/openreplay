@@ -26,7 +26,11 @@ func New() Logger {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000")
 	jsonEncoder := zapcore.NewJSONEncoder(encoderConfig)
-	core := zapcore.NewCore(jsonEncoder, zapcore.AddSync(os.Stdout), zap.InfoLevel)
+	logLevel := zap.InfoLevel
+	if os.Getenv("DEBUG") == "true" {
+		logLevel = zap.DebugLevel
+	}
+	core := zapcore.NewCore(jsonEncoder, zapcore.AddSync(os.Stdout), logLevel)
 	baseLogger := zap.New(core, zap.AddCaller())
 	logger := baseLogger.WithOptions(zap.AddCallerSkip(1))
 	customLogger := &loggerImpl{l: logger}

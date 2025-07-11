@@ -1,6 +1,5 @@
-const statsHost = process.env.STATS_HOST || 'http://assist-stats-openreplay.app.svc.cluster.local:8000/events';
-const authToken = process.env.STATS_AUTH_TOKEN || '';
 const {logger} = require('./logger');
+const {sendAssistEvent} = require('./cache');
 
 class InMemoryCache {
     constructor() {
@@ -26,32 +25,10 @@ class InMemoryCache {
 
 const cache = new InMemoryCache();
 
-async function postData(payload) {
-    let headers = {
-        'Content-Type': 'application/json'
-    };
-    if (authToken && authToken.trim() !== '') {
-        headers['Authorization'] = 'Bearer ' + authToken;
-    }
-    const options = {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: headers,
-    }
-
-    try {
-        const response = await fetch(statsHost, options)
-        const jsonResponse = await response.json();
-        logger.debug('JSON response', JSON.stringify(jsonResponse, null, 4))
-    } catch(err) {
-        logger.debug('ERROR', err);
-    }
-}
-
 function startAssist(socket, agentID) {
     const tsNow = +new Date();
     const eventID = `${socket.handshake.query.sessId}_${agentID}_assist_${tsNow}`;
-    void postData({
+    void sendAssistEvent({
         "project_id": socket.handshake.query.projectId,
         "session_id": socket.handshake.query.sessId,
         "agent_id": agentID,
@@ -72,7 +49,7 @@ function endAssist(socket, agentID) {
         logger.debug(`have to skip assist_ended, no eventID in the cache, agentID: ${socket.handshake.query.agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}`);
         return
     }
-    void postData({
+    void sendAssistEvent({
         "project_id": socket.handshake.query.projectId,
         "session_id": socket.handshake.query.sessId,
         "agent_id": agentID,
@@ -90,7 +67,7 @@ function endAssist(socket, agentID) {
 function startCall(socket, agentID) {
     const tsNow = +new Date();
     const eventID = `${socket.handshake.query.sessId}_${agentID}_call_${tsNow}`;
-    void postData({
+    void sendAssistEvent({
         "project_id": socket.handshake.query.projectId,
         "session_id": socket.handshake.query.sessId,
         "agent_id": agentID,
@@ -112,7 +89,7 @@ function endCall(socket, agentID) {
         logger.debug(`have to skip s_call_ended, no eventID in the cache, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${tsNow}`);
         return
     }
-    void postData({
+    void sendAssistEvent({
         "project_id": socket.handshake.query.projectId,
         "session_id": socket.handshake.query.sessId,
         "agent_id": agentID,
@@ -129,7 +106,7 @@ function endCall(socket, agentID) {
 function startControl(socket, agentID) {
     const tsNow = +new Date();
     const eventID = `${socket.handshake.query.sessId}_${agentID}_control_${tsNow}`;
-    void postData({
+    void sendAssistEvent({
         "project_id": socket.handshake.query.projectId,
         "session_id": socket.handshake.query.sessId,
         "agent_id": agentID,
@@ -150,7 +127,7 @@ function endControl(socket, agentID) {
         logger.debug(`have to skip s_control_ended, no eventID in the cache, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${tsNow}`);
         return
     }
-    void postData({
+    void sendAssistEvent({
         "project_id": socket.handshake.query.projectId,
         "session_id": socket.handshake.query.sessId,
         "agent_id": agentID,
@@ -167,7 +144,7 @@ function endControl(socket, agentID) {
 function startRecord(socket, agentID) {
     const tsNow = +new Date();
     const eventID = `${socket.handshake.query.sessId}_${agentID}_record_${tsNow}`;
-    void postData({
+    void sendAssistEvent({
         "project_id": socket.handshake.query.projectId,
         "session_id": socket.handshake.query.sessId,
         "agent_id": agentID,
@@ -184,7 +161,7 @@ function startRecord(socket, agentID) {
 function endRecord(socket, agentID) {
     const tsNow = +new Date();
     const eventID = cache.get(`${socket.sessId}_record`);
-    void postData({
+    void sendAssistEvent({
         "project_id": socket.handshake.query.projectId,
         "session_id": socket.handshake.query.sessId,
         "agent_id": agentID,

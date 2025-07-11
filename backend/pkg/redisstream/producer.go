@@ -1,8 +1,10 @@
 package redisstream
 
 import (
-	"github.com/go-redis/redis"
+	"context"
 	"log"
+
+	"github.com/redis/go-redis/v9"
 
 	"openreplay/backend/pkg/env"
 )
@@ -30,10 +32,11 @@ func (p *Producer) Produce(topic string, key uint64, value []byte) error {
 			"sessionID": key,
 			"value":     value,
 		},
+		MaxLen: p.maxLenApprox,
 	}
-	args.MaxLenApprox = p.maxLenApprox
+	args.MaxLen = p.maxLenApprox
 
-	_, err := p.redis.XAdd(args).Result()
+	_, err := p.redis.XAdd(context.Background(), args).Result()
 	if err != nil {
 		return err
 	}

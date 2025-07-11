@@ -1,119 +1,64 @@
-const dumps = require('./utils/HeapSnapshot');
-const {request_logger} = require('./utils/helper');
-const express = require('express');
-const health = require("./utils/health");
-const assert = require('assert').strict;
-const register = require('./utils/metrics').register;
-let socket;
-if (process.env.redis === "true") {
-    socket = require("./servers/websocket-cluster");
-} else {
-    socket = require("./servers/websocket");
-}
-const {logger} = require('./utils/logger');
+const { App } = require('uWebSockets.js');
+const { Server } = require('socket.io');
+const { logger } = require("./app/logger");
+const { authorizer } = require("./app/assist");
+const { onConnect, setSocketIOServer } = require("./app/socket");
+const { startCacheRefresher } = require("./app/cache");
 
-health.healthApp.get('/metrics', async (req, res) => {
-    try {
-        res.set('Content-Type', register.contentType);
-        res.end(await register.metrics());
-    } catch (ex) {
-        res.status(500).end(ex);
+const app = App();
+const pingInterval = parseInt(process.env.PING_INTERVAL) || 25000;
+
+const getCompressionConfig = function () {
+    // WS: The theoretical overhead per socket is 19KB (11KB for compressor and 8KB for decompressor)
+    let perMessageDeflate = false;
+    if (process.env.COMPRESSION === "true") {
+        logger.info(`WS compression: enabled`);
+        perMessageDeflate = {
+            zlibDeflateOptions: {
+                windowBits: 10,
+                memLevel: 1
+            },
+            zlibInflateOptions: {
+                windowBits: 10
+            }
+        }
+    } else {
+        logger.info(`WS compression: disabled`);
     }
+    return {
+        perMessageDeflate: perMessageDeflate,
+        clientNoContextTakeover: true
+    };
+}
+
+const io = new Server({
+    maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
+    pingInterval: pingInterval, // Will use it for cache invalidation
+    cors: {
+        origin: "*", // Allow connections from any origin (for development)
+        methods: ["GET", "POST"],
+        credentials: true
+    },
+    path: '/socket',
+    ...getCompressionConfig()
 });
 
+io.use(async (socket, next) => await authorizer.check(socket, next));
+io.on('connection', (socket) => onConnect(socket));
+io.attachApp(app);
+setSocketIOServer(io);
+
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';
-const PORT = process.env.LISTEN_PORT || 9001;
-assert.ok(process.env.ASSIST_KEY, 'The "ASSIST_KEY" environment variable is required');
-const P_KEY = process.env.ASSIST_KEY;
-const PREFIX = process.env.PREFIX || process.env.prefix || `/assist`;
-
-const heapdump = process.env.heapdump === "1";
-
-if (process.env.uws !== "true") {
-    let wsapp = express();
-    wsapp.use(express.json());
-    wsapp.use(express.urlencoded({extended: true}));
-    wsapp.use(request_logger("[wsapp]"));
-    wsapp.get(['/', PREFIX, `${PREFIX}/`, `${PREFIX}/${P_KEY}`, `${PREFIX}/${P_KEY}/`], (req, res) => {
-            res.statusCode = 200;
-            res.end("ok!");
-        }
-    );
-    heapdump && wsapp.use(`${PREFIX}/${P_KEY}/heapdump`, dumps.router);
-    wsapp.use(`${PREFIX}/${P_KEY}`, socket.wsRouter);
-
-    wsapp.enable('trust proxy');
-    const wsserver = wsapp.listen(PORT, HOST, () => {
-        logger.info(`WS App listening on http://${HOST}:${PORT}`);
-        health.healthApp.listen(health.PORT, HOST, health.listen_cb);
-    });
-
-    socket.start(wsserver);
-    module.exports = {wsserver};
-} else {
-    logger.info("Using uWebSocket");
-    const {App} = require("uWebSockets.js");
-
-
-    const uapp = new App();
-
-    const healthFn = (res, req) => {
-        res.writeStatus('200 OK').end('ok!');
+const PORT = parseInt(process.env.PORT) || 9001;
+app.listen(PORT, (token) => {
+    if (token) {
+        console.log(`Server running at http://${HOST}:${PORT}`);
+    } else {
+        console.log(`Failed to listen on port ${PORT}`);
     }
-    uapp.get('/', healthFn);
-    uapp.get(PREFIX, healthFn);
-    uapp.get(`${PREFIX}/`, healthFn);
-    uapp.get(`${PREFIX}/${P_KEY}`, healthFn);
-    uapp.get(`${PREFIX}/${P_KEY}/`, healthFn);
+});
+startCacheRefresher(io);
 
-
-    /* Either onAborted or simply finished request */
-    const onAbortedOrFinishedResponse = function (res) {
-
-        if (res.id === -1) {
-            logger.debug("ERROR! onAbortedOrFinishedResponse called twice for the same res!");
-        } else {
-            logger.debug('Stream was closed');
-        }
-
-        /* Mark this response already accounted for */
-        res.id = -1;
-    }
-
-    const uWrapper = function (fn) {
-        return (res, req) => {
-            res.id = 1;
-            res.aborted = false;
-            req.startTs = performance.now(); // track request's start timestamp
-            req.method = req.getMethod();
-            res.onAborted(() => {
-                res.aborted = true;
-                onAbortedOrFinishedResponse(res);
-            });
-            return fn(req, res);
-        }
-    }
-
-    uapp.get(`${PREFIX}/${P_KEY}/sockets-list/:projectKey/autocomplete`, uWrapper(socket.handlers.autocomplete));
-    uapp.get(`${PREFIX}/${P_KEY}/sockets-list/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsListByProject));
-    uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey/autocomplete`, uWrapper(socket.handlers.autocomplete));
-    uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
-    uapp.post(`${PREFIX}/${P_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
-    uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsLiveBySession));
-
-    socket.start(uapp);
-
-    uapp.listen(HOST, PORT, (token) => {
-        if (!token) {
-            logger.error("port already in use");
-        }
-        logger.info(`WS App listening on http://${HOST}:${PORT}`);
-        health.healthApp.listen(health.PORT, HOST, health.listen_cb);
-    });
-
-
-    process.on('uncaughtException', err => {
-        logger.error(`Uncaught Exception: ${err}`);
-    });
-    module.exports = {uapp};
-}
+process.on('uncaughtException', err => {
+    logger.error(`Uncaught Exception: ${err}`);
+});
