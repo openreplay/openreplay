@@ -124,6 +124,7 @@ function Player(props: IProps) {
         fullscreen && 'pb-2',
       )}
       data-bottom-block={bottomBlockIsActive}
+      data-testid="player-inst"
     >
       {fullscreen && <EscapeButton onClose={fullscreenOff} />}
       <div
@@ -163,17 +164,16 @@ function Player(props: IProps) {
           <BottomBlock block={bottomBlock} panelHeight={panelHeight} />
         </div>
       )}
-      {!fullView ? (
-        <Controls
-          setActiveTab={(tab: string) =>
-            activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)
-          }
-          activeTab={activeTab}
-          speedDown={playerContext.player.speedDown}
-          speedUp={playerContext.player.speedUp}
-          jump={playerContext.player.jump}
-        />
-      ) : null}
+      <Controls
+        fullView={fullView}
+        setActiveTab={(tab: string) =>
+          activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)
+        }
+        activeTab={activeTab}
+        speedDown={playerContext.player.speedDown}
+        speedUp={playerContext.player.speedUp}
+        jump={playerContext.player.jump}
+      />
     </div>
   );
 }
