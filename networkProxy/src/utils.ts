@@ -67,40 +67,43 @@ export const genStringBody = (body?: BodyInit) => {
     return null
   }
   let result: string
-
-  if (typeof body === 'string') {
-    if (body[0] === '{' || body[0] === '[') {
-      result = body
-    }
-    // 'a=1&b=2' => try to parse as query
-    const arr = body.split('&')
-    if (arr.length === 1) {
-      // not a query, parse as original string
-      result = body
-    } else {
-      // 'a=1&b=2&c' => parse as query
+  try {
+    if (typeof body === 'string') {
+      if (body[0] === '{' || body[0] === '[') {
+        result = body
+      }
+      // 'a=1&b=2' => try to parse as query
+      const arr = body.split('&')
+      if (arr.length === 1) {
+        // not a query, parse as original string
+        result = body
+      } else {
+        // 'a=1&b=2&c' => parse as query
+        result = arr.join(',')
+      }
+    } else if (isIterable(body)) {
+      // FormData or URLSearchParams or Array
+      const arr = []
+      for (const [key, value] of <FormData | URLSearchParams>body) {
+        arr.push(`${key}=${typeof value === 'string' ? value : '[object Object]'}`)
+      }
       result = arr.join(',')
+    } else if (
+      body instanceof Blob ||
+      body instanceof ReadableStream ||
+      body instanceof ArrayBuffer
+    ) {
+      result = 'byte data'
+    } else if (isPureObject(body)) {
+      // overriding ArrayBufferView which is not convertable to string
+      result = <any>body
+    } else {
+      result = `can't parse body ${typeof body}`
     }
-  } else if (isIterable(body)) {
-    // FormData or URLSearchParams or Array
-    const arr = []
-    for (const [key, value] of <FormData | URLSearchParams>body) {
-      arr.push(`${key}=${typeof value === 'string' ? value : '[object Object]'}`)
-    }
-    result = arr.join(',')
-  } else if (
-    body instanceof Blob ||
-    body instanceof ReadableStream ||
-    body instanceof ArrayBuffer
-  ) {
-    result = 'byte data'
-  } else if (isPureObject(body)) {
-    // overriding ArrayBufferView which is not convertable to string
-    result = <any>body
-  } else {
-    result = `can't parse body ${typeof body}`
+    return result
+  } catch (_) {
+    return "can't parse body"
   }
-  return result
 }
 
 export const genGetDataByUrl = (url: string, getData: Record<string, any> = {}) => {
