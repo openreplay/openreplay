@@ -123,7 +123,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
 
         specific_condition = None
         e_k = f"e_value{i}"
-        event_type = s.name
+        event_type = s.name.lower()
         next_event_type = exp_ch_helper.get_event_type(event_type, platform=platform)
         if event_type == schemas.EventType.CLICK:
             if platform == "web":

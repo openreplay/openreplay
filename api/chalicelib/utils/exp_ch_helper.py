@@ -72,9 +72,9 @@ def get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEvent
     }
     if platform != "web" and event_type in defs_mobile:
         return defs_mobile.get(event_type)
-    if event_type not in defs:
+    if event_type.lower() not in defs:
         raise Exception(f"unsupported EventType:{event_type}")
-    return defs.get(event_type)
+    return defs.get(event_type.lower())
 
 
 # AI generated
