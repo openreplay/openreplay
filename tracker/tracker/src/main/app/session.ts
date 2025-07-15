@@ -110,14 +110,22 @@ export default class Session {
     return pageNo
   }
 
-  getSessionToken(): string | undefined {
+  getSessionToken(projectKey?: string): string | undefined {
     const token = this.token || this.app.sessionStorage.getItem(this.options.session_token_key)
+    if (projectKey && token) {
+      const savedProject = token.split('_&_')[1]
+      if (!savedProject || savedProject !== projectKey) {
+        this.app.sessionStorage.removeItem(this.options.session_token_key)
+        this.token = undefined
+        return undefined
+      }
+    }
     return token || undefined
   }
 
-  setSessionToken(token: string): void {
+  setSessionToken(token: string, projectKey: string): void {
     this.token = token
-    this.app.sessionStorage.setItem(this.options.session_token_key, token)
+    this.app.sessionStorage.setItem(this.options.session_token_key, `${token}_&_${projectKey}`)
   }
 
   applySessionHash(hash: string) {

@@ -132,10 +132,10 @@ describe('Session', () => {
 
   // Test for setSessionToken
   test('sets session token correctly', () => {
-    session.setSessionToken('token_1')
+    session.setSessionToken('token_1', 'project_1')
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
       mockOptions.session_token_key,
-      'token_1',
+      'token_1_&_project_1',
     )
   })
 

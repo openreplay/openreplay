@@ -413,17 +413,17 @@ export default class App {
         this.debug.log(ev)
         if (ev.data.line === proto.resp) {
           const sessionToken = ev.data.token
-          this.session.setSessionToken(sessionToken)
+          this.session.setSessionToken(sessionToken, this.projectKey)
           this.allowAppStart()
         }
         if (ev.data.line === proto.reg) {
           const sessionToken = ev.data.token
           this.session.regenerateTabId()
-          this.session.setSessionToken(sessionToken)
+          this.session.setSessionToken(sessionToken, this.projectKey)
           this.allowAppStart()
         }
         if (ev.data.line === proto.ask) {
-          const token = this.session.getSessionToken()
+          const token = this.session.getSessionToken(this.projectKey)
           if (token && this.bc) {
             this.bc.postMessage({
               line: ev.data.source === thisTab ? proto.reg : proto.resp,
@@ -461,7 +461,7 @@ export default class App {
     if (data.line === proto.iframeId) {
       this.parentActive = true
       this.rootId = data.id
-      this.session.setSessionToken(data.token as string)
+      this.session.setSessionToken(data.token as string, this.projectKey)
       this.frameOderNumber = data.frameOrderNumber
       this.debug.log('starting iframe tracking', data)
       this.allowAppStart()
@@ -501,7 +501,7 @@ export default class App {
             this.trackedFrames.push(data.context)
           }
           await this.waitStarted()
-          const token = this.session.getSessionToken()
+          const token = this.session.getSessionToken(this.projectKey)
           const order = this.trackedFrames.findIndex((f) => f === data.context) + 1
           if (order === 0) {
             this.debug.error(
@@ -1016,7 +1016,7 @@ export default class App {
   }
 
   getSessionToken(): string | undefined {
-    return this.session.getSessionToken()
+    return this.session.getSessionToken(this.projectKey)
   }
 
   getSessionID(): string | undefined {
@@ -1099,7 +1099,7 @@ export default class App {
   private checkSessionToken(forceNew?: boolean) {
     const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
     const needNewSessionID = forceNew || lsReset
-    const sessionToken = this.session.getSessionToken()
+    const sessionToken = this.session.getSessionToken(this.projectKey)
 
     return needNewSessionID || !sessionToken
   }
@@ -1409,7 +1409,7 @@ export default class App {
       tabId: this.session.getTabId(),
     })
 
-    const sessionToken = this.session.getSessionToken()
+    const sessionToken = this.session.getSessionToken(this.projectKey)
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
     this.sessionStorage.removeItem(this.options.session_reset_key)
 
@@ -1487,7 +1487,7 @@ export default class App {
       }
 
       this.delay = delay
-      this.session.setSessionToken(token)
+      this.session.setSessionToken(token, this.projectKey)
       this.session.setUserInfo({
         userBrowser,
         userCity,
