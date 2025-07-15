@@ -2,12 +2,69 @@ import React from 'react';
 import { Icon } from 'UI';
 import { Popover } from 'antd';
 import cn from 'classnames';
-import { IconMap } from '../../Filters/FilterModal/FilterModal';
+import { FilterKey } from 'Types/filter/filterType';
+import {
+  AppWindow,
+  ArrowUpDown,
+  Chrome,
+  CircleAlert,
+  Clock2,
+  Code,
+  ContactRound,
+  Cpu,
+  Earth,
+  FileStack,
+  MapPin,
+  MemoryStick,
+  MonitorSmartphone,
+  Navigation,
+  Network,
+  OctagonAlert,
+  Pin,
+  Pointer,
+  RectangleEllipsis,
+  SquareMousePointer,
+  SquareUser,
+  Timer,
+  VenetianMask,
+  Workflow,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
   payload: any;
 }
+const IconMap = {
+  [FilterKey.CLICK]: <Pointer size={14} />,
+  [FilterKey.LOCATION]: <Navigation size={14} />,
+  [FilterKey.INPUT]: <RectangleEllipsis size={14} />,
+  [FilterKey.CUSTOM]: <Code size={14} />,
+  [FilterKey.FETCH]: <ArrowUpDown size={14} />,
+  [FilterKey.GRAPHQL]: <Network size={14} />,
+  [FilterKey.STATEACTION]: <RectangleEllipsis size={14} />,
+  [FilterKey.ERROR]: <OctagonAlert size={14} />,
+  [FilterKey.ISSUE]: <CircleAlert size={14} />,
+  [FilterKey.FETCH_FAILED]: <Code size={14} />,
+  [FilterKey.DOM_COMPLETE]: <ArrowUpDown size={14} />,
+  [FilterKey.LARGEST_CONTENTFUL_PAINT_TIME]: <Network size={14} />,
+  [FilterKey.TTFB]: <Timer size={14} />,
+  [FilterKey.AVG_CPU_LOAD]: <Cpu size={14} />,
+  [FilterKey.AVG_MEMORY_USAGE]: <MemoryStick size={14} />,
+  [FilterKey.USERID]: <SquareUser size={14} />,
+  [FilterKey.USERANONYMOUSID]: <VenetianMask size={14} />,
+  [FilterKey.USER_CITY]: <Pin size={14} />,
+  [FilterKey.USER_STATE]: <MapPin size={14} />,
+  [FilterKey.USER_COUNTRY]: <Earth size={14} />,
+  [FilterKey.USER_DEVICE]: <Code size={14} />,
+  [FilterKey.USER_OS]: <AppWindow size={14} />,
+  [FilterKey.USER_BROWSER]: <Chrome size={14} />,
+  [FilterKey.PLATFORM]: <MonitorSmartphone size={14} />,
+  [FilterKey.REVID]: <FileStack size={14} />,
+  [FilterKey.REFERRER]: <Workflow size={14} />,
+  [FilterKey.DURATION]: <Clock2 size={14} />,
+  [FilterKey.TAGGED_ELEMENT]: <SquareMousePointer size={14} />,
+  [FilterKey.METADATA]: <ContactRound size={14} />,
+};
 
 function NodeButton(props: Props) {
   const { payload } = props;
@@ -21,6 +78,7 @@ function NodeButton(props: Props) {
       ? `${payloadStr.slice(0, 25)}...${payloadStr.slice(-25)}`
       : payloadStr;
 
+  // @ts-ignore
   const eventIcon = IconMap[payload.eventType.toLowerCase()] ?? (
     <Icon name="link-45deg" size={18} />
   );

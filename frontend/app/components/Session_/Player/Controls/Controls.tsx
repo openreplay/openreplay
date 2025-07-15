@@ -39,6 +39,7 @@ import {
   ClusterOutlined,
 } from '@ant-design/icons';
 import { ArrowDownUp, ListCollapse, Merge, Timer } from 'lucide-react';
+import { ReduxTime } from 'Components/Session_/Player/Controls/Time';
 
 import ControlButton from './ControlButton';
 import Timeline from './Timeline';
@@ -90,7 +91,7 @@ function getStorageName(type: any) {
   }
 }
 
-function Controls({ setActiveTab, activeTab }: any) {
+function Controls({ setActiveTab, activeTab, fullView }: any) {
   const { player, store } = React.useContext(PlayerContext);
   const {
     uxtestingStore,
@@ -221,6 +222,17 @@ function Controls({ setActiveTab, activeTab }: any) {
       : PlayingState.Paused;
 
   const events = session.stackEvents ?? [];
+
+  if (fullView) {
+    return (
+      <div className="absolute bottom-1 left-1 z-50 flex items-center font-semibold">
+        <ReduxTime isCustom name="time" format="mm:ss" />
+        <span className="px-1">/</span>
+        <ReduxTime isCustom name="endTime" format="mm:ss" />
+      </div>
+    );
+  }
+
   return (
     <div className={styles.controls}>
       <Timeline />

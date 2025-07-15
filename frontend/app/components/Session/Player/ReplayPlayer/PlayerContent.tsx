@@ -24,7 +24,13 @@ function PlayerContent({
   const { store } = React.useContext(PlayerContext);
   const [fullView, setFullView] = React.useState(false);
 
-  const { error } = store.get();
+  const { error, completed } = store.get();
+
+  React.useEffect(() => {
+    if (completed) {
+      console.log('PING:SESSION_ENDED');
+    }
+  }, [completed]);
 
   const hasError = !!error;
 
