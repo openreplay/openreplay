@@ -3,6 +3,8 @@ package limiter
 import (
 	"sync"
 	"time"
+
+	"openreplay/backend/internal/config/common"
 )
 
 type RateLimiter struct {
@@ -54,12 +56,12 @@ type UserRateLimiter struct {
 	maxIdleTime     time.Duration
 }
 
-func NewUserRateLimiter(rate int, burst int, cleanupInterval time.Duration, maxIdleTime time.Duration) *UserRateLimiter {
+func NewUserRateLimiter(cfg *common.RateLimiter) *UserRateLimiter {
 	url := &UserRateLimiter{
-		rate:            rate,
-		burst:           burst,
-		cleanupInterval: cleanupInterval,
-		maxIdleTime:     maxIdleTime,
+		rate:            cfg.Rate,
+		burst:           cfg.Burst,
+		cleanupInterval: cfg.CleanupInterval,
+		maxIdleTime:     cfg.MaxIdleTime,
 	}
 	go url.cleanup()
 	return url

@@ -17,6 +17,7 @@ type Config struct {
 	redis.Redis
 	objectstorage.ObjectsConfig
 	common.HTTP
+	common.RateLimiter
 	ProjectExpiration time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	WorkerID          uint16
 }

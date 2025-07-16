@@ -16,6 +16,7 @@ type Config struct {
 	common.Clickhouse
 	redis.Redis
 	common.HTTP
+	common.RateLimiter
 	FSDir             string        `env:"FS_DIR,required"`
 	ProjectExpiration time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	WorkerID          uint16

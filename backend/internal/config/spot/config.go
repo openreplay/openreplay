@@ -17,6 +17,7 @@ type Config struct {
 	redis.Redis
 	objectstorage.ObjectsConfig
 	common.HTTP
+	common.RateLimiter
 	FSDir                 string        `env:"FS_DIR,required"`
 	SpotsDir              string        `env:"SPOTS_DIR,default=spots"`
 	ProjectExpiration     time.Duration `env:"PROJECT_EXPIRATION,default=10m"`

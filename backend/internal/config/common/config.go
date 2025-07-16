@@ -22,8 +22,6 @@ func (c *Config) GetConfigPath() string {
 	return c.ConfigFilePath
 }
 
-// Postgres config
-
 type Postgres struct {
 	Postgres        string `env:"POSTGRES_STRING,required"`
 	ApplicationName string `env:"SERVICE_NAME,default='worker'"`
@@ -42,8 +40,6 @@ func (cfg *Postgres) String() string {
 	return str
 }
 
-// Redshift config
-
 type Redshift struct {
 	ConnectionString string `env:"REDSHIFT_STRING"`
 	Host             string `env:"REDSHIFT_HOST"`
@@ -53,8 +49,6 @@ type Redshift struct {
 	Database         string `env:"REDSHIFT_DATABASE"`
 	Bucket           string `env:"REDSHIFT_BUCKET,default=rdshftbucket"`
 }
-
-// Clickhouse config
 
 type Clickhouse struct {
 	URL             string        `env:"CLICKHOUSE_STRING"`
@@ -75,8 +69,6 @@ func (cfg *Clickhouse) GetTrimmedURL() string {
 	return chUrl
 }
 
-// ElasticSearch config
-
 type ElasticSearch struct {
 	URLs   string `env:"ELASTICSEARCH_URLS"`
 	UseAWS bool   `env:"ELASTICSEARCH_IN_AWS,default=false"`
@@ -94,4 +86,11 @@ type HTTP struct {
 	UseAccessControlHeaders bool          `env:"USE_CORS,default=false"`
 	JWTSecret               string        `env:"JWT_SECRET"`
 	JWTSpotSecret           string        `env:"JWT_SPOT_SECRET"`
+}
+
+type RateLimiter struct {
+	Rate            int           `env:"RT_RATE,default=10"`             // number of tokens added per second
+	Burst           int           `env:"RT_BURST,default=30"`            // maximum number of tokens in the bucket
+	CleanupInterval time.Duration `env:"RT_CLEANUP_INTERVAL,default=1m"` // interval for cleaning up unused limiters
+	MaxIdleTime     time.Duration `env:"RT_MAX_IDLE_TIME,default=5m"`    // how long a limiter can remain unused before being removed
 }

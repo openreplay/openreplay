@@ -1,8 +1,6 @@
 package analytics
 
 import (
-	"time"
-
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/go-playground/validator/v10"
 
@@ -73,8 +71,8 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	}
 
 	return &ServicesBuilder{
-		Auth:          auth.NewAuth(log, cfg.JWTSecret, cfg.JWTSpotSecret, pgconn, nil, api.NoPrefix),
-		RateLimiter:   limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
+		Auth:          auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix),
+		RateLimiter:   limiter.NewUserRateLimiter(&cfg.RateLimiter),
 		AuditTrail:    audiTrail,
 		CardsAPI:      cardsHandlers,
 		DashboardsAPI: dashboardsHandlers,

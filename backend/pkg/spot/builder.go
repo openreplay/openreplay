@@ -1,13 +1,11 @@
 package spot
 
 import (
-	"openreplay/backend/pkg/metrics/database"
-	"time"
-
 	"openreplay/backend/internal/config/spot"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/database"
 	spotMetrics "openreplay/backend/pkg/metrics/spot"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/objectstorage/store"
@@ -22,9 +20,9 @@ import (
 )
 
 type ServicesBuilder struct {
-	Auth        auth.Auth
-	RateLimiter *limiter.UserRateLimiter
-	AuditTrail  tracer.Tracer
+	Auth        api.RouterMiddleware
+	RateLimiter api.RouterMiddleware
+	AuditTrail  api.RouterMiddleware
 	SpotsAPI    api.Handlers
 }
 
@@ -48,7 +46,7 @@ func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, 
 	}
 	return &ServicesBuilder{
 		Auth:        auth.NewAuth(log, cfg.JWTSecret, cfg.JWTSpotSecret, pgconn, keys, prefix),
-		RateLimiter: limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
+		RateLimiter: limiter.NewUserRateLimiter(&cfg.RateLimiter),
 		AuditTrail:  auditrail,
 		SpotsAPI:    handlers,
 	}, nil
