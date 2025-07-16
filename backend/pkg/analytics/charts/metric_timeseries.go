@@ -67,14 +67,15 @@ func (t *TimeSeriesQueryBuilder) buildQuery(p *Payload, s model.Series) (string,
 
 func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p *Payload, s model.Series, metric, idField string) string {
 	sub := t.buildSubQuery(p, s, metric)
-	step := int(getStepSize(p.StartTimestamp, p.EndTimestamp, p.Density, false, 1000)) * 1000
+	step := getStepSize(p.StartTimestamp, p.EndTimestamp, p.Density, 1)
 
 	query := fmt.Sprintf(
-		"SELECT gs.generate_series AS timestamp, COALESCE(COUNT(DISTINCT ps.%s),0) AS count "+
-			"FROM generate_series(%d,%d,%d) AS gs "+
-			"LEFT JOIN (%s) AS ps ON TRUE "+
-			"WHERE ps.datetime >= toDateTime(timestamp/1000) AND ps.datetime < toDateTime((timestamp+%d)/1000) "+
-			"GROUP BY timestamp ORDER BY timestamp;",
+		`SELECT gs.generate_series AS timestamp, COALESCE(COUNT(DISTINCT ps.%s),0) AS count
+				FROM generate_series(%d,%d,%d) AS gs
+						LEFT JOIN (%s) AS ps ON TRUE
+				WHERE ps.datetime >= toDateTime(timestamp/1000) 
+					AND ps.datetime < toDateTime((timestamp+%d)/1000)
+				GROUP BY timestamp ORDER BY timestamp;`,
 		idField, p.StartTimestamp, p.EndTimestamp, step, sub, step,
 	)
 
@@ -105,9 +106,11 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 	// build subquery with GROUP BY always
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf(
-		"SELECT main.session_id, MIN(main.created_at) AS first_event_ts, MAX(main.created_at) AS last_event_ts "+
-			"FROM product_analytics.events AS main "+
-			"WHERE %s\n",
+		`SELECT main.session_id, 
+					   MIN(main.created_at) AS first_event_ts, 
+					   MAX(main.created_at) AS last_event_ts
+				FROM product_analytics.events AS main
+				WHERE %s`,
 		whereClause,
 	))
 	sb.WriteString("GROUP BY main.session_id\n")
