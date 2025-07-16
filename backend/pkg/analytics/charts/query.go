@@ -383,19 +383,15 @@ func contains(slice []string, s string) bool {
 	return false
 }
 
-func getStepSize(startTimestamp, endTimestamp int64, density int, decimal bool, factor int) float64 {
+func getStepSize(startTimestamp int64, endTimestamp int64, density int, factor int) uint64 {
 	factorInt64 := int64(factor)
 	stepSize := (endTimestamp / factorInt64) - (startTimestamp / factorInt64)
 
 	if density <= 1 {
-		return float64(stepSize)
+		return uint64(stepSize)
 	}
 
-	if decimal {
-		return float64(stepSize) / float64(density)
-	}
-
-	return float64(stepSize / int64(density-1))
+	return uint64(stepSize) / uint64(density)
 }
 
 func FillMissingDataPoints(
@@ -409,7 +405,7 @@ func FillMissingDataPoints(
 		return rows
 	}
 
-	stepSize := uint64(getStepSize(startTime, endTime, density, false, 1000))
+	stepSize := getStepSize(startTime, endTime, density, 1000)
 	bucketSize := stepSize * uint64(timeCoefficient)
 
 	lookup := make(map[uint64]DataPoint)
