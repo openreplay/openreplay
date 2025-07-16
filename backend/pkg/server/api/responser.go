@@ -46,6 +46,8 @@ func (r *Responser) ResponseWithError(log logger.Logger, ctx context.Context, w 
 	body, err := json.Marshal(&response{err.Error()})
 	if err != nil {
 		log.Error(ctx, "can't marshal response: %s", err)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
 	}
 	w.WriteHeader(code)
 	w.Write(body)

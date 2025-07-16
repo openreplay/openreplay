@@ -3,7 +3,9 @@ package charts
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -117,6 +119,14 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 }
 
 func (e *handlersImpl) getCardChartData(w http.ResponseWriter, r *http.Request) {
+	// To show stack trace and handle panics gracefully
+	defer func() {
+		if rec := recover(); rec != nil {
+			log.Printf("Panic:%v\n", rec)
+			log.Println("Stack trace:\n" + string(debug.Stack()))
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, fmt.Errorf("panic occurred: %v", rec), time.Now(), r.URL.Path, 0)
+		}
+	}()
 	startTime := time.Now()
 	bodySize := 0
 

@@ -46,8 +46,8 @@ const (
 )
 
 type DataPoint struct {
-	Timestamp uint64 `json:"timestamp"`
-	Count     uint64 `json:"count"`
+	Timestamp uint64 `json:"timestamp" ch:"timestamp"`
+	Count     uint64 `json:"count" ch:"count"`
 }
 
 var mainColumns = map[string]string{
