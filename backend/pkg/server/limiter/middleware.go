@@ -13,7 +13,7 @@ func (rl *UserRateLimiter) Middleware(next http.Handler) http.Handler {
 			return
 		}
 		authUser := userContext.(*user.User)
-		rl := rl.GetRateLimiter(authUser.ID)
+		rl := rl.getRateLimiter(authUser.ID)
 
 		if !rl.Allow() {
 			http.Error(w, "Too Many Requests", http.StatusTooManyRequests)

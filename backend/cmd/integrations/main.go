@@ -34,12 +34,11 @@ func main() {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
 
-	router, err := api.NewRouter(&cfg.HTTP, log)
+	router, err := api.NewRouter(&cfg.HTTP, log, builder.RateLimiter, builder.Auth, builder.AuditTrail)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
 	router.AddHandlers(api.NoPrefix, builder.IntegrationsAPI)
-	router.AddMiddlewares(builder.Auth.Middleware, builder.RateLimiter.Middleware, builder.AuditTrail.Middleware)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
 }

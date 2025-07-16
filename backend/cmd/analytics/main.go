@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/joho/godotenv"
-	"log"
-
 	analyticsConfig "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics"
 	"openreplay/backend/pkg/db/clickhouse"
@@ -18,13 +15,10 @@ import (
 )
 
 func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Printf("Error loading .env file")
-	}
 	ctx := context.Background()
 	log := logger.New()
 	cfg := analyticsConfig.New(log)
+	// Observability
 	webMetrics := web.New("analytics")
 	dbMetrics := database.New("analytics")
 	metrics.New(log, append(webMetrics.List(), dbMetrics.List()...))
@@ -46,12 +40,11 @@ func main() {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
 
-	router, err := api.NewRouter(&cfg.HTTP, log)
+	router, err := api.NewRouter(&cfg.HTTP, log, builder.RateLimiter, builder.Auth, builder.AuditTrail)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
 	router.AddHandlers(api.NoPrefix, builder.ChartsAPI, builder.CardsAPI, builder.DashboardsAPI, builder.SearchAPI)
-	router.AddMiddlewares(builder.Auth.Middleware, builder.RateLimiter.Middleware, builder.AuditTrail.Middleware)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
 }

@@ -88,10 +88,10 @@ func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser *api.Response
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/mobile/start", e.startMobileSessionHandler, "POST"},
-		{"/v1/mobile/i", e.pushMobileMessagesHandler, "POST"},
-		{"/v1/mobile/late", e.pushMobileLateMessagesHandler, "POST"},
-		{"/v1/mobile/images", e.mobileImagesUploadHandler, "POST"},
+		{"/v1/mobile/start", "POST", e.startMobileSessionHandler, api.NoPermissions, api.DoNotTrack},
+		{"/v1/mobile/i", "POST", e.pushMobileMessagesHandler, api.NoPermissions, api.DoNotTrack},
+		{"/v1/mobile/late", "POST", e.pushMobileLateMessagesHandler, api.NoPermissions, api.DoNotTrack},
+		{"/v1/mobile/images", "POST", e.mobileImagesUploadHandler, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

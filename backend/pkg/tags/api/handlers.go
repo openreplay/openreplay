@@ -33,7 +33,7 @@ func NewHandlers(log logger.Logger, responser *api.Responser, tokenizer *token.T
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/web/tags", e.getTags, "GET"},
+		{"/v1/web/tags", "GET", e.getTags, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

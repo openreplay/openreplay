@@ -65,7 +65,7 @@ func NewUserRateLimiter(rate int, burst int, cleanupInterval time.Duration, maxI
 	return url
 }
 
-func (url *UserRateLimiter) GetRateLimiter(user uint64) *RateLimiter {
+func (url *UserRateLimiter) getRateLimiter(user uint64) *RateLimiter {
 	value, _ := url.rateLimiters.LoadOrStore(user, NewRateLimiter(url.rate, url.burst))
 	return value.(*RateLimiter)
 }

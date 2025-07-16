@@ -41,13 +41,13 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/{projectId}/dashboards", e.createDashboard, "POST"},
-		{"/v1/{projectId}/dashboards", e.getDashboards, "GET"},
-		{"/v1/{projectId}/dashboards/{id}", e.getDashboard, "GET"},
-		{"/v1/{projectId}/dashboards/{id}", e.updateDashboard, "PUT"},
-		{"/v1/{projectId}/dashboards/{id}", e.deleteDashboard, "DELETE"},
-		{"/v1/{projectId}/dashboards/{id}/cards", e.addCardToDashboard, "POST"},
-		{"/v1/{projectId}/dashboards/{id}/cards/{cardId}", e.removeCardFromDashboard, "DELETE"},
+		{"/v1/{projectId}/dashboards", "POST", e.createDashboard, api.NoPermissions, api.DoNotTrack},
+		{"/v1/{projectId}/dashboards", "GET", e.getDashboards, api.NoPermissions, api.DoNotTrack},
+		{"/v1/{projectId}/dashboards/{id}", "GET", e.getDashboard, api.NoPermissions, api.DoNotTrack},
+		{"/v1/{projectId}/dashboards/{id}", "PUT", e.updateDashboard, api.NoPermissions, api.DoNotTrack},
+		{"/v1/{projectId}/dashboards/{id}", "DELETE", e.deleteDashboard, api.NoPermissions, api.DoNotTrack},
+		{"/v1/{projectId}/dashboards/{id}/cards", "POST", e.addCardToDashboard, api.NoPermissions, api.DoNotTrack},
+		{"/v1/{projectId}/dashboards/{id}/cards/{cardId}", "DELETE", e.removeCardFromDashboard, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

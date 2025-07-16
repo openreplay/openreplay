@@ -42,7 +42,7 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/{projectId}/sessions/search", e.getSessions, "POST"},
+		{"/v1/{projectId}/sessions/search", "POST", e.getSessions, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

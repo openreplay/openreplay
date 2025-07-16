@@ -11,6 +11,10 @@ func (e *routerImpl) health(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+type RouterMiddleware interface {
+	Middleware(next http.Handler) http.Handler
+}
+
 func (e *routerImpl) healthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" || r.URL.Path == "/health" {
@@ -23,11 +27,11 @@ func (e *routerImpl) healthMiddleware(next http.Handler) http.Handler {
 
 func (e *routerImpl) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if origin := r.Header.Get("Origin"); origin == "http://localhost:3333" {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
+		if e.cfg.UseAccessControlHeaders {
+			// Prepare headers for preflight requests
+			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, PATCH, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Encoding")
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,Content-Encoding")
 		}
 		if r.Method == http.MethodOptions {
 			w.Header().Set("Cache-Control", "max-age=86400")

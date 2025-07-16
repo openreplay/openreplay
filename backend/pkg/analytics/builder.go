@@ -1,7 +1,6 @@
 package analytics
 
 import (
-	"openreplay/backend/pkg/analytics/search"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -11,6 +10,7 @@ import (
 	"openreplay/backend/pkg/analytics/cards"
 	"openreplay/backend/pkg/analytics/charts"
 	"openreplay/backend/pkg/analytics/dashboards"
+	"openreplay/backend/pkg/analytics/search"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/database"
@@ -22,9 +22,9 @@ import (
 )
 
 type ServicesBuilder struct {
-	Auth          auth.Auth
-	RateLimiter   *limiter.UserRateLimiter
-	AuditTrail    tracer.Tracer
+	Auth          api.RouterMiddleware
+	RateLimiter   api.RouterMiddleware
+	AuditTrail    api.RouterMiddleware
 	CardsAPI      api.Handlers
 	DashboardsAPI api.Handlers
 	ChartsAPI     api.Handlers

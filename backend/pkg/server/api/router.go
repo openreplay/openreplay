@@ -12,7 +12,6 @@ import (
 
 type Router interface {
 	AddHandlers(prefix string, handlers ...Handlers)
-	AddMiddlewares(middlewares ...func(http.Handler) http.Handler)
 	Get() http.Handler
 }
 
@@ -22,7 +21,7 @@ type routerImpl struct {
 	router *mux.Router
 }
 
-func NewRouter(cfg *common.HTTP, log logger.Logger) (Router, error) {
+func NewRouter(cfg *common.HTTP, log logger.Logger, middlewares ...RouterMiddleware) (Router, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
@@ -34,15 +33,15 @@ func NewRouter(cfg *common.HTTP, log logger.Logger) (Router, error) {
 		cfg:    cfg,
 		router: mux.NewRouter(),
 	}
-	e.initRouter()
-	return e, nil
-}
-
-func (e *routerImpl) initRouter() {
 	e.router.HandleFunc("/", e.health)
-	// Default middlewares
 	e.router.Use(e.healthMiddleware)
 	e.router.Use(e.corsMiddleware)
+	for _, m := range middlewares {
+		if m != nil {
+			e.router.Use(m.Middleware)
+		}
+	}
+	return e, nil
 }
 
 const NoPrefix = ""
@@ -55,12 +54,6 @@ func (e *routerImpl) AddHandlers(prefix string, handlers ...Handlers) {
 				e.router.HandleFunc(prefix+handler.Path, handler.Handler).Methods(handler.Method, "OPTIONS")
 			}
 		}
-	}
-}
-
-func (e *routerImpl) AddMiddlewares(middlewares ...func(http.Handler) http.Handler) {
-	for _, middleware := range middlewares {
-		e.router.Use(middleware)
 	}
 }
 
