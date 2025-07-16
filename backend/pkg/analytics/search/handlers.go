@@ -2,9 +2,9 @@ package search
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
-	"openreplay/backend/pkg/analytics/model"
 	"strconv"
 	"time"
 
@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 
 	config "openreplay/backend/internal/config/analytics"
+	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/user"
@@ -42,7 +43,8 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/{projectId}/sessions/search", "POST", e.getSessions, api.NoPermissions, api.DoNotTrack},
+		{"/v1/{projectId}/sessions/search", "POST", e.getSessions, []string{"SESSION_REPLAY"}, api.DoNotTrack},
+		{"/v1/{project}/sessions/search/ids", "POST", e.getSessionIDs, []string{"SESSION_REPLAY"}, api.DoNotTrack},
 	}
 }
 
@@ -92,4 +94,10 @@ func (e *handlersImpl) getSessions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
+}
+
+// TODO: to implement
+func (e *handlersImpl) getSessionIDs(w http.ResponseWriter, r *http.Request) {
+	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotImplemented, errors.New("not implemented"), time.Now(), r.URL.Path, 0)
+	return
 }

@@ -1,6 +1,9 @@
 package user
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"fmt"
+	"github.com/golang-jwt/jwt/v5"
+)
 
 type JWTClaims struct {
 	UserId   int `json:"userId"`
@@ -24,4 +27,8 @@ func (u *User) HasPermission(perm string) bool {
 	}
 	_, ok := u.Permissions[perm]
 	return ok
+}
+
+func (u *User) GetIDAsString() string {
+	return fmt.Sprintf("%d", u.ID)
 }
