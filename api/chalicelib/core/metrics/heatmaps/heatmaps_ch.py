@@ -142,9 +142,9 @@ def get_selectors_by_url_and_session_id(project_id, session_id, data: schemas.Ge
                    "main_events.`$event_name`='CLICK'"]
 
     if data.operator == schemas.SearchEventOperator.IS:
-        constraints.append("JSON_VALUE(CAST(main_events.`$properties` AS String), '$.url_path') = %(url)s")
+        constraints.append("main_events.`$current_url` = %(url)s")
     else:
-        constraints.append("JSON_VALUE(CAST(main_events.`$properties` AS String), '$.url_path') ILIKE %(url)s")
+        constraints.append("main_events.`$current_url` ILIKE %(url)s")
         args["url"] = helper.values_for_operator(data.url, data.operator)
 
     query_from = f"{exp_ch_helper.get_main_events_table(0)} AS main_events"
