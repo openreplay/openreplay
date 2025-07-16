@@ -1,6 +1,7 @@
 package sessions
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,7 +37,7 @@ func (c *cacheImpl) SetCache(sessID uint64, data map[string]string) error {
 	if err != nil {
 		return err
 	}
-	if _, err = c.db.Redis.Set(fmt.Sprintf("session:cache:id:%d", sessID), sessionBytes, time.Minute*120).Result(); err != nil {
+	if _, err = c.db.Redis.Set(context.Background(), fmt.Sprintf("session:cache:id:%d", sessID), sessionBytes, time.Minute*120).Result(); err != nil {
 		return err
 	}
 	c.metrics.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "setCache", "session")
@@ -52,7 +53,7 @@ func (c *cacheImpl) GetCache(sessID uint64) (map[string]string, error) {
 		return nil, errors.New("session id is 0")
 	}
 	start := time.Now()
-	result, err := c.db.Redis.Get(fmt.Sprintf("session:cache:id:%d", sessID)).Result()
+	result, err := c.db.Redis.Get(context.Background(), fmt.Sprintf("session:cache:id:%d", sessID)).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +81,7 @@ func (c *cacheImpl) Set(session *Session) error {
 	if err != nil {
 		return err
 	}
-	if _, err = c.db.Redis.Set(fmt.Sprintf("session:id:%d", session.SessionID), sessionBytes, time.Minute*60).Result(); err != nil {
+	if _, err = c.db.Redis.Set(context.Background(), fmt.Sprintf("session:id:%d", session.SessionID), sessionBytes, time.Minute*60).Result(); err != nil {
 		return err
 	}
 	c.metrics.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "set", "session")
@@ -96,7 +97,7 @@ func (c *cacheImpl) Get(sessionID uint64) (*Session, error) {
 		return nil, errors.New("session id is 0")
 	}
 	start := time.Now()
-	result, err := c.db.Redis.Get(fmt.Sprintf("session:id:%d", sessionID)).Result()
+	result, err := c.db.Redis.Get(context.Background(), fmt.Sprintf("session:id:%d", sessionID)).Result()
 	if err != nil {
 		return nil, err
 	}
