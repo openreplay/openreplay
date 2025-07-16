@@ -22,21 +22,11 @@ func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfac
 			return nil, fmt.Errorf("series %s: %v", series.Name, err)
 		}
 
-		rows, err := conn.Query(context.Background(), query)
-		if err != nil {
-			log.Printf("exec %s: %v", series.Name, err)
-			return nil, fmt.Errorf("series %s: %v", series.Name, err)
-		}
 		var pts []DataPoint
-		for rows.Next() {
-			var dp DataPoint
-			if err := rows.Scan(&dp.Timestamp, &dp.Count); err != nil {
-				rows.Close()
-				return nil, err
-			}
-			pts = append(pts, dp)
+		if err = conn.Select(context.Background(), &pts, query); err != nil {
+			log.Panicf("exec %s: %v", series.Name, err)
+			return nil, err
 		}
-		rows.Close()
 
 		filled := FillMissingDataPoints(p.StartTimestamp, p.EndTimestamp, p.Density, DataPoint{}, pts, 1000)
 		for _, dp := range filled {
