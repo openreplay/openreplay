@@ -304,7 +304,6 @@ export default class MessageManager {
   }
 
   move(t: number): any {
-    void this.hookManager.moveReady(t);
     // usually means waiting for messages from live session
     if (Object.keys(this.tabs).length === 0) return;
     this.activeTabManager.moveReady(t).then(async (tabId) => {
@@ -362,6 +361,7 @@ export default class MessageManager {
         );
       }
     });
+    void this.hookManager.moveReady(t);
     if (
       this.waitingForFiles ||
       (this.lastMessageTime <= t && t < this.session.durationMs)
