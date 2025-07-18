@@ -14,6 +14,10 @@ import { tracker } from '@openreplay/tracker'
 tracker.incident({ label: 'incident', startTime: Date.now() })
 
 ```
+## 16.4.2
+
+- fixing for multitab capture on different project ids
+- CSS.escape around sprite parsing
 
 ## 16.4.0
 
