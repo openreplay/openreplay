@@ -29,7 +29,7 @@ import { nextID } from "../../modules/constructedStyleSheets.js";
 const iconCache = {}
 const svgUrlCache = {}
 
-async function parseUseEl(
+export async function parseUseEl(
   useElement: SVGUseElement,
   mode: 'inline' | 'dataurl' | 'svgtext',
   domParser: DOMParser,
@@ -45,7 +45,7 @@ async function parseUseEl(
 
     // happens if svg spritemap is local, fastest case for us
     if (!url && symbolId) {
-      const symbol = document.querySelector(href)
+      const symbol = document.querySelector(CSS.escape(href))
       if (symbol) {
         const inlineSvg = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
