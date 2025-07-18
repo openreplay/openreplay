@@ -236,6 +236,7 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
             ? 'p-1 rounded-lg border-2 border-black bg-red text-white'
             : '',
         )}
+        data-test-id="timer"
       >
         <ReduxTime isCustom name="time" format="mm:ss" />
         <span className="px-1">/</span>
