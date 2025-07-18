@@ -88,6 +88,7 @@ export default class Screen {
     const overlay = document.createElement('div');
     overlay.className = styles.overlay;
     this.overlay = overlay;
+    this.overlay.dataset['testId'] = 'player-overlay';
 
     const screen = document.createElement('div');
 
