@@ -45,7 +45,15 @@ export async function parseUseEl(
 
     // happens if svg spritemap is local, fastest case for us
     if (!url && symbolId) {
-      const symbol = document.querySelector(CSS.escape(href))
+      const hasHashtag = href.startsWith('#')
+      let escapedURL;
+      if (hasHashtag) {
+        escapedURL = `#${CSS.escape(href.substring(1))}`
+      } else {
+        escapedURL = CSS.escape(href)
+      }
+
+      const symbol = document.querySelector(escapedURL)
       if (symbol) {
         const inlineSvg = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
