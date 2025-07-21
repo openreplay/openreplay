@@ -1,0 +1,24 @@
+{{- if .Values.configOverride.serverConfig }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-server-override
+data:
+  {{- range $filename, $content := .Values.configOverride.serverConfig }}
+  {{ $filename }}: |+
+{{ $content | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- if .Values.configOverride.userConfig }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-user-override
+data:
+  {{- range $filename, $content := .Values.configOverride.userConfig }}
+  {{ $filename }}: |+
+{{ $content | nindent 4 }}
+  {{- end }}
+{{- end }}
