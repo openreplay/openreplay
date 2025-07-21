@@ -6,7 +6,7 @@ metadata:
   name: clickhouse-server-override
 data:
   {{- range $filename, $content := .Values.configOverride.serverConfig }}
-  {{ $filename }}: |-
+  {{ $filename }}: |+
 {{ $content | nindent 4 }}
   {{- end }}
 {{- end }}
@@ -18,7 +18,7 @@ metadata:
   name: clickhouse-user-override
 data:
   {{- range $filename, $content := .Values.configOverride.userConfig }}
-  {{ $filename }}: |-
+  {{ $filename }}: |+
 {{ $content | nindent 4 }}
   {{- end }}
 {{- end }}
