@@ -8,7 +8,7 @@ import { getInputLabel } from './input.js'
 const cssEscape = (typeof CSS !== 'undefined' && CSS.escape) || ((t) => t);
 const docClassCache = new WeakMap();
 
-function _getSelector(target: Element, document: Document, options?: MouseHandlerOptions): string {
+function _getSelector(target: Element): string {
   const selector = getCSSPath(target)
   return selector || ''
 }
