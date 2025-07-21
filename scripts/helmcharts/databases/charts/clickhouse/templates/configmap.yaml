@@ -7,7 +7,7 @@ metadata:
 data:
   {{- range $filename, $content := .Values.configOverride.serverConfig }}
   {{ $filename }}: |-
-{{ $content | indent 4 }}
+{{ $content | nindent 4 }}
   {{- end }}
 {{- end }}
 {{- if .Values.configOverride.userConfig }}
@@ -19,6 +19,6 @@ metadata:
 data:
   {{- range $filename, $content := .Values.configOverride.userConfig }}
   {{ $filename }}: |-
-{{ $content | indent 4 }}
+{{ $content | nindent 4 }}
   {{- end }}
 {{- end }}
