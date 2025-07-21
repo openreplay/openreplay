@@ -10,6 +10,7 @@ data:
 {{ $content | indent 4 }}
   {{- end }}
 {{- end }}
+{{- if .Values.configOverride.userConfig }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -20,3 +21,4 @@ data:
   {{ $filename }}: |-
 {{ $content | indent 4 }}
   {{- end }}
+{{- end }}
