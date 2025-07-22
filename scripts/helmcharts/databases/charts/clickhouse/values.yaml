@@ -86,7 +86,7 @@ storageSize: 100Gi
 
 configOverride:
   serverConfig:
-    zz-server-override.xml: |-
+    00-server-override.xml: |-
       <clickhouse>
         <logger>
             <level>information</level>
@@ -109,7 +109,7 @@ configOverride:
         # <mmap_cache_size>26214</mmap_cache_size>
     #   </clickhouse>
   userConfig:
-    zz-user-override.xml: |-
+    00-user-override.xml: |-
       <clickhouse>
         <profiles>
           <default>
