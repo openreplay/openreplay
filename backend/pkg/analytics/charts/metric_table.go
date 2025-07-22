@@ -161,7 +161,6 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 
 	if len(otherConds) > 0 {
 		prewhereParts = append(prewhereParts, otherConds...)
-		eventConditions = append(eventConditions, otherConds...)
 	}
 
 	// Build join clause based on events order with proper error handling
