@@ -3,11 +3,12 @@ package search
 import (
 	"context"
 	"fmt"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
 	"openreplay/backend/pkg/analytics/charts"
 	"openreplay/backend/pkg/analytics/model"
 	"strings"
+
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
 // TODO - check all attributes and map the columns to the correct names
@@ -55,6 +56,7 @@ var sortOptions = map[string]string{
 }
 
 func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
+	offset := (req.Page - 1) * req.Limit
 	sessFilters, _ := charts.FilterOutTypes(req.Filters, []model.FilterType{
 		charts.FilterDuration,
 		charts.FilterUserAnonymousId,
@@ -172,7 +174,7 @@ ANY LEFT JOIN (
 WHERE s.duration IS NOT NULL
 %s
 LIMIT %d OFFSET %d
-`, prewhere, joinClause, userId, projectId, req.StartDate/1000, sortClause, req.Limit, req.Page)
+`, prewhere, joinClause, userId, projectId, req.StartDate/1000, sortClause, req.Limit, offset)
 
 	log.Printf("Data Query: %s\n", dataQ)
 
