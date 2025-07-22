@@ -1,4 +1,5 @@
 import { queried } from './routes';
+import diff from 'microdiff';
 
 const siteIdRequiredPaths: string[] = [
   '/dashboard',
@@ -239,6 +240,7 @@ export default class APIClient {
       this.onUpdateJwt({ jwt: undefined });
     }
     if (response.ok) {
+      void this.duplicate(fullUrl, init, response);
       return response;
     }
     let errorMsg = 'Something went wrong.';
@@ -248,6 +250,33 @@ export default class APIClient {
     } catch {}
     throw new Error(errorMsg);
   }
+
+  duplicate = async (url, init, response) => {
+    const respClone = response.clone();
+    // /api/path -> /newapi/path
+    try {
+      const newUrl = url.replace('/api', '/newapi');
+      const newResp = await window.fetch(newUrl, init);
+      if (newResp.ok) {
+        const oldJson = await respClone.json();
+        const newJson = await newResp.json();
+        const diffingRes = diff(oldJson, newJson);
+        if (diffingRes.length > 0) {
+          console.warn(
+            `>>>>> ${url} \n params ${init} \n DIFF ${diffingRes} \n ${oldJson} old; ${newJson} new`,
+          );
+        }
+      } else {
+        console.warn(
+          `>>>>> ${url} \n params ${init} \n ERROR: ${newResp.status} ${newResp.statusText}`,
+        );
+      }
+    } catch (e) {
+      return console.warn(
+        `>>>>> ${url} \n params ${init} \n ERROR: ${e.toString()}`,
+      );
+    }
+  };
 
   async refreshToken(): Promise<string> {
     try {
