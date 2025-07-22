@@ -295,12 +295,22 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	// Build subquery select parts
 	subquerySelectParts := []string{
 		"f.session_id AS session_id",
-		"s.user_id AS user_id",
-		"s.user_uuid AS user_uuid",
-		"s.screen_width AS screen_width",
-		"s.screen_height AS screen_height",
-		"s.user_device AS user_device",
-		"s.user_country AS user_country",
+	}
+
+	if r.MetricOf == string(MetricOfTableUserId) {
+		subquerySelectParts = append([]string{"s.user_id AS user_id", "s.user_uuid AS user_uuid"}, subquerySelectParts...)
+	}
+
+	if r.MetricOf == string(MetricOfTableResolution) {
+		subquerySelectParts = append([]string{"s.screen_width AS screen_width", "s.screen_height AS screen_height"}, subquerySelectParts...)
+	}
+
+	if r.MetricOf == string(MetricOfTableDevice) {
+		subquerySelectParts = append([]string{"s.user_device AS user_device"}, subquerySelectParts...)
+	}
+
+	if r.MetricOf == string(MetricOfTableCountry) {
+		subquerySelectParts = append([]string{"s.user_country AS user_country"}, subquerySelectParts...)
 	}
 
 	var innerSelectParts []string
