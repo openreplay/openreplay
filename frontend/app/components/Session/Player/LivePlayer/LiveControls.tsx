@@ -2,7 +2,7 @@ import React from 'react';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 
-import { CONSOLE } from 'App/mstore/uiPlayerStore';
+import { CONSOLE, NETWORK } from 'App/mstore/uiPlayerStore';
 import {
   PlayerContext,
   ILivePlayerContext,
@@ -121,6 +121,11 @@ function Controls(props: any) {
               active={bottomBlock === CONSOLE}
               label="Console"
               hasErrors={logRedCount > 0 || showExceptions}
+            />
+            <ControlButton
+              onClick={() => toggleBottomTools(NETWORK)}
+              active={bottomBlock === NETWORK}
+              label="Network"
             />
           </div>
         </div>

@@ -7,7 +7,7 @@ import {
   PlayerContext,
 } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
-import { CONSOLE } from 'App/mstore/uiPlayerStore';
+import { CONSOLE, NETWORK } from 'App/mstore/uiPlayerStore';
 import {
   debounceUpdate,
   getDefaultPanelHeight,
@@ -15,6 +15,7 @@ import {
 import stl from 'Components/Session_/Player/player.module.css';
 
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
+import { WebNetworkPanel } from '@/components/shared/DevTools/NetworkPanel';
 
 import LiveControls from './LiveControls';
 import Overlay from './Overlay';
@@ -39,7 +40,7 @@ function Player({ fullView, isMultiview }: IProps) {
 
   React.useEffect(() => {
     if (!closedLive || isMultiview) {
-      const parentElement = screenWrapper.current // TODO: good architecture
+      const parentElement = screenWrapper.current; // TODO: good architecture
       if (parentElement) {
         playerContext.player.attach(parentElement);
         playerContext.player.play();
@@ -88,7 +89,7 @@ function Player({ fullView, isMultiview }: IProps) {
           ref={screenWrapper}
         />
       </div>
-      {bottomBlock === CONSOLE ? (
+      {bottomBlock ? (
         <div
           style={{
             maxWidth,
@@ -102,7 +103,10 @@ function Player({ fullView, isMultiview }: IProps) {
             onMouseDown={handleResize}
             className="w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20"
           />
-          <ConsolePanel isLive />
+          {bottomBlock === CONSOLE ? <ConsolePanel isLive /> : null}
+          {bottomBlock === NETWORK ? (
+            <WebNetworkPanel isLive panelHeight={panelHeight} />
+          ) : null}
         </div>
       ) : null}
       {!fullView && !isMultiview ? (
