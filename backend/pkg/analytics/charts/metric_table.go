@@ -2,6 +2,7 @@ package charts
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -46,10 +47,10 @@ const (
 
 var propertySelectorMap = map[string]string{
 	string(MetricOfTableLocation):   "JSONExtractString(toString(main.`$properties`), 'url_path')",
-	string(MetricOfTableUserId):     "if(empty(s.user_id) OR s.user_id IS NULL, 'Anonymous', s.user_id)",
+	string(MetricOfTableUserId):     "if(empty(user_id) OR user_id IS NULL, 'Anonymous', user_id)",
 	string(MetricOfTableBrowser):    "main.`$browser`",
-	string(MetricOfTableDevice):     "if(empty(s.user_device) OR s.user_device IS NULL, 'Undefined', s.user_device)",
-	string(MetricOfTableCountry):    "toString(s.user_country)",
+	string(MetricOfTableDevice):     "if(empty(user_device) OR user_device IS NULL, 'Undefined', user_device)",
+	string(MetricOfTableCountry):    "toString(user_country)",
 	string(MetricOfTableReferrer):   "main.`$referrer`",
 	string(MetricOfTableFetch):      "JSONExtractString(toString(main.`$properties`), 'url_path')",
 	string(MetricOfTableResolution): "if(screen_width = 0 AND screen_height = 0, 'Unknown', concat(toString(screen_width), 'x', toString(screen_height)))",
@@ -115,74 +116,102 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 }
 
 func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string, error) {
+	if r == nil {
+		return "", errors.New("payload is nil")
+	}
+	if len(r.Series) == 0 {
+		return "", errors.New("no series provided")
+	}
+	if r.ProjectId <= 0 {
+		return "", errors.New("invalid project ID")
+	}
+	if r.StartTimestamp <= 0 || r.EndTimestamp <= 0 {
+		return "", errors.New("invalid timestamps")
+	}
+	if r.StartTimestamp >= r.EndTimestamp {
+		return "", errors.New("start timestamp must be before end timestamp")
+	}
+	if r.Page <= 0 {
+		return "", errors.New("page must be positive")
+	}
+
 	s := r.Series[0]
 
-	// Build event filter conditions
+	// Build event filter conditions with error handling
 	durConds, _ := BuildDurationWhere(s.Filter.Filters)
 	sessFilters, _ := FilterOutTypes(s.Filter.Filters, []model.FilterType{FilterDuration, FilterUserAnonymousId})
+
 	eventConditions, otherConds := BuildEventConditions(sessFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "main",
 		EventsOrder:    string(s.Filter.EventsOrder),
 	})
 
-	prewhereParts := []string{}
+	prewhereParts := make([]string, 0, 5+len(otherConds))
+
+	// Add single event condition for 'then' order
 	if s.Filter.EventsOrder == "then" && len(eventConditions) == 1 {
 		prewhereParts = append(prewhereParts, eventConditions[0])
 	}
+
+	// Add safe parameterized conditions - sanitize integers to prevent injection
 	prewhereParts = append(prewhereParts, fmt.Sprintf("main.project_id = %d", r.ProjectId))
 	prewhereParts = append(prewhereParts, fmt.Sprintf("main.created_at >= toDateTime(%d/1000)", r.StartTimestamp))
 	prewhereParts = append(prewhereParts, fmt.Sprintf("main.created_at <= toDateTime(%d/1000)", r.EndTimestamp))
-	prewhereParts = append(prewhereParts, otherConds...)
 
 	if len(otherConds) > 0 {
-		eventConditions = append(eventConditions, strings.Join(otherConds, "','"))
+		prewhereParts = append(prewhereParts, otherConds...)
+		eventConditions = append(eventConditions, otherConds...)
 	}
 
+	// Build join clause based on events order with proper error handling
 	joinClause := ""
 	switch s.Filter.EventsOrder {
 	case "then":
 		if len(eventConditions) > 1 {
-			var pat strings.Builder
+			var patBuilder strings.Builder
+			patBuilder.Grow(len(eventConditions) * 6) // Pre-allocate capacity
 			for i := range eventConditions {
-				pat.WriteString(fmt.Sprintf("(?%d)", i+1))
+				patBuilder.WriteString(fmt.Sprintf("(?%d)", i+1))
 			}
 			joinClause = fmt.Sprintf(
 				"HAVING sequenceMatch('%s')(\n    toDateTime(main.created_at),\n    %s\n)",
-				pat.String(),
+				patBuilder.String(),
 				strings.Join(eventConditions, ",\n    "),
 			)
 		}
 	case "and":
-		var countConds []string
-		for _, c := range eventConditions {
-			countConds = append(countConds, fmt.Sprintf("countIf(%s) > 0", c))
+		if len(eventConditions) > 0 {
+			countConds := make([]string, len(eventConditions))
+			for i, c := range eventConditions {
+				countConds[i] = fmt.Sprintf("countIf(%s) > 0", c)
+			}
+			joinClause = fmt.Sprintf("HAVING %s", strings.Join(countConds, " AND "))
 		}
-		joinClause = fmt.Sprintf(
-			"HAVING %s",
-			strings.Join(countConds, " AND "),
-		)
 	case "or":
-		var countConds []string
-		for _, c := range eventConditions {
-			countConds = append(countConds, fmt.Sprintf("countIf(%s) > 0", c))
+		if len(eventConditions) > 0 {
+			countConds := make([]string, len(eventConditions))
+			for i, c := range eventConditions {
+				countConds[i] = fmt.Sprintf("countIf(%s) > 0", c)
+			}
+			joinClause = fmt.Sprintf("HAVING %s", strings.Join(countConds, " OR "))
 		}
-		joinClause = fmt.Sprintf(
-			"HAVING %s",
-			strings.Join(countConds, " OR "),
-		)
+	case "":
+		break
+	default:
+		return "", fmt.Errorf("unknown events order: %s", s.Filter.EventsOrder)
 	}
 
-	// Build sessions conditions
-	var sessionConditions []string
+	// Build sessions conditions with pre-allocated slice
+	sessionConditions := make([]string, 0, 6+len(durConds))
 	sessionConditions = append(sessionConditions, fmt.Sprintf("s.project_id = %d", r.ProjectId))
 	sessionConditions = append(sessionConditions, "isNotNull(s.duration)")
 	sessionConditions = append(sessionConditions, fmt.Sprintf("s.datetime >= toDateTime(%d/1000)", r.StartTimestamp))
 	sessionConditions = append(sessionConditions, fmt.Sprintf("s.datetime <= toDateTime(%d/1000)", r.EndTimestamp))
 
 	// Add duration conditions to sessions
-	if len(durConds) > 0 {
-		for _, durCond := range durConds {
+	for _, durCond := range durConds {
+		if durCond != "" { // Avoid empty conditions
 			sessionDurCond := strings.ReplaceAll(durCond, "main.duration", "s.duration")
 			sessionConditions = append(sessionConditions, sessionDurCond)
 		}
@@ -197,7 +226,9 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	// Get property selector and determine if it's from events or sessions
 	propSel, ok := propertySelectorMap[r.MetricOf]
 	if !ok {
-		propSel = fmt.Sprintf("JSONExtractString(toString(main.`$properties`), '%s')", r.MetricOf)
+		// Sanitize property name to prevent injection
+		safePropName := strings.ReplaceAll(r.MetricOf, "'", "\\'")
+		propSel = fmt.Sprintf("JSONExtractString(toString(main.`$properties`), '%s')", safePropName)
 	}
 
 	// Determine if property comes from events table (main) or sessions table (s)
@@ -214,7 +245,13 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		groupByClause = "main.session_id"
 	}
 
-	joinClause = "GROUP BY " + groupByClause + "\n" + joinClause + "\n"
+	// Build final join clause
+	var finalJoinClause string
+	if joinClause != "" {
+		finalJoinClause = fmt.Sprintf("GROUP BY %s\n%s\n", groupByClause, joinClause)
+	} else {
+		finalJoinClause = fmt.Sprintf("GROUP BY %s\n", groupByClause)
+	}
 
 	// Determine aggregation column
 	distinctColumn := "session_id"
@@ -230,65 +267,70 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		finalPropertySelector = propSel
 	}
 
+	// Calculate limit and offset with bounds checking
+	const DefaultLimit = 10
+	const MaxLimit = 1000
+
 	limit := r.Limit
 	if limit <= 0 {
-		limit = 10
+		limit = DefaultLimit
 	}
-	offset := (r.Page - 1) * limit
+	if limit > MaxLimit {
+		limit = MaxLimit
+	}
 
+	offset := 0
+	if r.Page > 1 {
+		offset = (r.Page - 1) * limit
+	}
+
+	// Build the final query with proper string formatting
 	var query string
+	baseSelectParts := []string{
+		fmt.Sprintf("COUNT(DISTINCT %s) OVER () AS main_count", finalPropertySelector),
+		fmt.Sprintf("%s AS name", finalPropertySelector),
+		fmt.Sprintf("count(DISTINCT %s) AS total", distinctColumn),
+		fmt.Sprintf("COALESCE(SUM(count(DISTINCT %s)) OVER (), 0) AS total_count", distinctColumn),
+	}
+
+	// Build subquery select parts
+	subquerySelectParts := []string{
+		"f.session_id AS session_id",
+		"s.user_id AS user_id",
+		"s.user_uuid AS user_uuid",
+		"s.screen_width AS screen_width",
+		"s.screen_height AS screen_height",
+		"s.user_device AS user_device",
+		"s.user_country AS user_country",
+	}
+
+	var innerSelectParts []string
+	var groupByField string
+
 	if isFromEvents {
 		// Property from events table
-		query = fmt.Sprintf(`
-SELECT COUNT(DISTINCT %s) OVER () AS main_count,
-       %s AS name,
-       count(DISTINCT %s) AS total,
-       COALESCE(SUM(count(DISTINCT %s)) OVER (), 0) AS total_count
-FROM (SELECT f.session_id AS session_id,
-             f.metric_value AS metric_value,
-             s.user_id AS user_id,
-             s.user_uuid AS user_uuid,
-             s.screen_width AS screen_width,
-             s.screen_height AS screen_height
-      FROM (SELECT %s,
-                   MIN(main.created_at) AS first_event_ts,
-                   MAX(main.created_at) AS last_event_ts
-            FROM product_analytics.events AS main
-            WHERE %s %s) AS f
-      INNER JOIN (SELECT DISTINCT ON (session_id) *
-                  FROM experimental.sessions AS s
-                  WHERE %s
-                  ORDER BY _timestamp DESC) AS s ON(s.session_id=f.session_id)
-      ) AS filtred_sessions
-GROUP BY %s
-ORDER BY total DESC
-LIMIT %d OFFSET %d`,
-			finalPropertySelector,                    // for COUNT(DISTINCT ...) OVER ()
-			finalPropertySelector,                    // AS name
-			distinctColumn,                           // for count(DISTINCT ...)
-			distinctColumn,                           // for SUM(count(DISTINCT ...)) OVER ()
-			eventsSelect,                             // SELECT in events subquery
-			strings.Join(prewhereParts, " AND "),     // Prewhere filter
-			joinClause,                               // WHERE for events
-			strings.Join(sessionConditions, " AND "), // WHERE for sessions
-			finalPropertySelector,                    // GROUP BY in outer query
-			limit,
-			offset,
-		)
+		subquerySelectParts = append([]string{"f.session_id AS session_id", "f.metric_value AS metric_value"}, subquerySelectParts[1:]...)
+		innerSelectParts = []string{
+			eventsSelect,
+			"MIN(main.created_at) AS first_event_ts",
+			"MAX(main.created_at) AS last_event_ts",
+		}
+		groupByField = finalPropertySelector
 	} else {
 		// Property from sessions table
-		query = fmt.Sprintf(`
-SELECT COUNT(DISTINCT %s) OVER () AS main_count,
-       %s AS name,
-       count(DISTINCT %s) AS total,
-       COALESCE(SUM(count(DISTINCT %s)) OVER (), 0) AS total_count
-FROM (SELECT f.session_id AS session_id,
-             s.user_uuid AS user_uuid,
-             s.screen_width AS screen_width,
-             s.screen_height AS screen_height
-      FROM (SELECT %s,
-                   MIN(main.created_at) AS first_event_ts,
-                   MAX(main.created_at) AS last_event_ts
+		innerSelectParts = []string{
+			eventsSelect,
+			"MIN(main.created_at) AS first_event_ts",
+			"MAX(main.created_at) AS last_event_ts",
+		}
+		groupByField = propSel
+	}
+
+	// Construct the complete query
+	query = fmt.Sprintf(`
+SELECT %s
+FROM (SELECT %s
+      FROM (SELECT %s
             FROM product_analytics.events AS main
             WHERE %s %s) AS f
       INNER JOIN (SELECT DISTINCT ON (session_id) *
@@ -299,21 +341,19 @@ FROM (SELECT f.session_id AS session_id,
 GROUP BY %s
 ORDER BY total DESC
 LIMIT %d OFFSET %d`,
-			propSel,                                  // for COUNT(DISTINCT ...) OVER ()
-			propSel,                                  // AS name
-			distinctColumn,                           // for count(DISTINCT ...)
-			distinctColumn,                           // for SUM(count(DISTINCT ...)) OVER ()
-			eventsSelect,                             // SELECT in events subquery
-			strings.Join(prewhereParts, " AND "),     // prewhere filter
-			joinClause,                               // WHERE for events
-			strings.Join(sessionConditions, " AND "), // WHERE for sessions
-			propSel,                                  // GROUP BY in outer query
-			limit,
-			offset,
-		)
-	}
+		strings.Join(baseSelectParts, ",\n       "),              // Main SELECT
+		strings.Join(subquerySelectParts, ",\n             "),    // Subquery SELECT
+		strings.Join(innerSelectParts, ",\n                   "), // Inner SELECT
+		strings.Join(prewhereParts, " AND "),                     // WHERE conditions
+		finalJoinClause,                                          // GROUP BY + HAVING
+		strings.Join(sessionConditions, " AND "),                 // Sessions WHERE
+		groupByField,                                             // Final GROUP BY
+		limit,
+		offset,
+	)
 
 	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
+
 	return query, nil
 }
 
