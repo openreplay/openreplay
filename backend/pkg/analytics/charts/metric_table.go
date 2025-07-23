@@ -299,7 +299,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 
 	if isFromEvents {
 		// Property from events table
-		subquerySelectParts = append([]string{"f.session_id AS session_id", "f.metric_value AS metric_value"}, subquerySelectParts[1:]...)
+		subquerySelectParts = append([]string{"f.metric_value AS metric_value"}, subquerySelectParts...)
 		innerSelectParts = []string{
 			eventsSelect,
 			"MIN(main.created_at) AS first_event_ts",
@@ -352,7 +352,7 @@ func (*TableQueryBuilder) subquerySelects(r *Payload) []string {
 		"f.session_id AS session_id",
 	}
 
-	if r.MetricOf == string(MetricOfTableUserId) {
+	if r.MetricOf == string(MetricOfTableUserId) || r.MetricFormat == MetricFormatUserCount {
 		subquerySelectParts = append([]string{"s.user_id AS user_id", "s.user_uuid AS user_uuid"}, subquerySelectParts...)
 	}
 
