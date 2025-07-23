@@ -104,3 +104,8 @@ type GetSessionsResponse struct {
 	Total    uint64    `json:"total"`
 	Sessions []Session `json:"sessions"`
 }
+
+type PaginationParams struct {
+	Limit  int
+	Offset int
+}

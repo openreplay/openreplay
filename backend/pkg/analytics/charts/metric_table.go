@@ -43,6 +43,10 @@ const (
 	MetricFormatSessionCount = "sessionCount"
 	MetricFormatUserCount    = "userCount"
 	nilUUIDString            = "00000000-0000-0000-0000-000000000000"
+
+	// Pagination constants
+	DefaultLimit = 10
+	MaxLimit     = 1000
 )
 
 var propertySelectorMap = map[string]string{
@@ -119,9 +123,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	if r == nil {
 		return "", errors.New("payload is nil")
 	}
-	if len(r.Series) == 0 {
-		return "", errors.New("no series provided")
-	}
+
 	if r.ProjectId <= 0 {
 		return "", errors.New("invalid project ID")
 	}
@@ -130,9 +132,6 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	}
 	if r.StartTimestamp >= r.EndTimestamp {
 		return "", errors.New("start timestamp must be before end timestamp")
-	}
-	if r.Page <= 0 {
-		return "", errors.New("page must be positive")
 	}
 
 	s := r.Series[0]
@@ -199,22 +198,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		finalPropertySelector = propSel
 	}
 
-	// Calculate limit and offset with bounds checking
-	const DefaultLimit = 10
-	const MaxLimit = 1000
-
-	limit := r.Limit
-	if limit <= 0 {
-		limit = DefaultLimit
-	}
-	if limit > MaxLimit {
-		limit = MaxLimit
-	}
-
-	offset := 0
-	if r.Page > 1 {
-		offset = (r.Page - 1) * limit
-	}
+	pagination := t.calculatePagination(r.Page, r.Limit)
 
 	// Build the final query with proper string formatting
 	var query string
@@ -271,8 +255,8 @@ LIMIT %d OFFSET %d`,
 		finalJoinClause,                                          // GROUP BY + HAVING
 		strings.Join(sessionConditions, " AND "),                 // Sessions WHERE
 		groupByField,                                             // Final GROUP BY
-		limit,
-		offset,
+		pagination.Limit,
+		pagination.Offset,
 	)
 
 	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
@@ -389,6 +373,25 @@ func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string, projectI
 	return conditions
 }
 
+func (t *TableQueryBuilder) calculatePagination(page, limit int) model.PaginationParams {
+	if limit <= 0 {
+		limit = DefaultLimit
+	}
+	if limit > MaxLimit {
+		limit = MaxLimit
+	}
+
+	offset := 0
+	if page > 1 {
+		offset = (page - 1) * limit
+	}
+
+	return model.PaginationParams{
+		Limit:  limit,
+		Offset: offset,
+	}
+}
+
 func (*TableQueryBuilder) subquerySelects(r *Payload) []string {
 	subquerySelectParts := []string{
 		"f.session_id AS session_id",
@@ -413,6 +416,8 @@ func (*TableQueryBuilder) subquerySelects(r *Payload) []string {
 }
 
 func (t *TableQueryBuilder) groupResolutionClusters(raw []TableValue, page, limit int) ([]TableValue, uint64) {
+	// Use centralized pagination logic
+	pagination := t.calculatePagination(page, limit)
 	type cluster struct {
 		minW, minH, maxW, maxH int
 		total                  uint64
@@ -486,14 +491,14 @@ func (t *TableQueryBuilder) groupResolutionClusters(raw []TableValue, page, limi
 	}
 
 	overall := uint64(len(clusters))
-	// apply pagination
-	offset := (page - 1) * limit
-	tEnd := offset + limit
-	if offset >= len(result) {
+	// apply pagination using centralized logic
+	if pagination.Offset >= len(result) {
 		return []TableValue{}, overall
 	}
-	if tEnd > len(result) {
-		tEnd = len(result)
+
+	end := pagination.Offset + pagination.Limit
+	if end > len(result) {
+		end = len(result)
 	}
-	return result[offset:tEnd], overall
+	return result[pagination.Offset:end], overall
 }
