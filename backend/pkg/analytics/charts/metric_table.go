@@ -292,26 +292,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		fmt.Sprintf("COALESCE(SUM(count(DISTINCT %s)) OVER (), 0) AS total_count", distinctColumn),
 	}
 
-	// Build subquery select parts
-	subquerySelectParts := []string{
-		"f.session_id AS session_id",
-	}
-
-	if r.MetricOf == string(MetricOfTableUserId) {
-		subquerySelectParts = append([]string{"s.user_id AS user_id", "s.user_uuid AS user_uuid"}, subquerySelectParts...)
-	}
-
-	if r.MetricOf == string(MetricOfTableResolution) {
-		subquerySelectParts = append([]string{"s.screen_width AS screen_width", "s.screen_height AS screen_height"}, subquerySelectParts...)
-	}
-
-	if r.MetricOf == string(MetricOfTableDevice) {
-		subquerySelectParts = append([]string{"s.user_device AS user_device"}, subquerySelectParts...)
-	}
-
-	if r.MetricOf == string(MetricOfTableCountry) {
-		subquerySelectParts = append([]string{"s.user_country AS user_country"}, subquerySelectParts...)
-	}
+	subquerySelectParts := t.subquerySelects(r)
 
 	var innerSelectParts []string
 	var groupByField string
@@ -364,6 +345,29 @@ LIMIT %d OFFSET %d`,
 	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
 
 	return query, nil
+}
+
+func (*TableQueryBuilder) subquerySelects(r *Payload) []string {
+	subquerySelectParts := []string{
+		"f.session_id AS session_id",
+	}
+
+	if r.MetricOf == string(MetricOfTableUserId) {
+		subquerySelectParts = append([]string{"s.user_id AS user_id", "s.user_uuid AS user_uuid"}, subquerySelectParts...)
+	}
+
+	if r.MetricOf == string(MetricOfTableResolution) {
+		subquerySelectParts = append([]string{"s.screen_width AS screen_width", "s.screen_height AS screen_height"}, subquerySelectParts...)
+	}
+
+	if r.MetricOf == string(MetricOfTableDevice) {
+		subquerySelectParts = append([]string{"s.user_device AS user_device"}, subquerySelectParts...)
+	}
+
+	if r.MetricOf == string(MetricOfTableCountry) {
+		subquerySelectParts = append([]string{"s.user_country AS user_country"}, subquerySelectParts...)
+	}
+	return subquerySelectParts
 }
 
 func (t *TableQueryBuilder) groupResolutionClusters(raw []TableValue, page, limit int) ([]TableValue, uint64) {
