@@ -147,46 +147,12 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		EventsOrder:    string(s.Filter.EventsOrder),
 	})
 
-	prewhereParts := make([]string, 0, 5+len(otherConds))
-
-	// Add single event condition for 'then' order
-	if s.Filter.EventsOrder == "then" && len(eventConditions) == 1 {
-		prewhereParts = append(prewhereParts, eventConditions[0])
-	}
-
-	// Add safe parameterized conditions - sanitize integers to prevent injection
-	prewhereParts = append(prewhereParts, fmt.Sprintf("main.project_id = %d", r.ProjectId))
-	prewhereParts = append(prewhereParts, fmt.Sprintf("main.created_at >= toDateTime(%d/1000)", r.StartTimestamp))
-	prewhereParts = append(prewhereParts, fmt.Sprintf("main.created_at <= toDateTime(%d/1000)", r.EndTimestamp))
-
-	if len(otherConds) > 0 {
-		prewhereParts = append(prewhereParts, otherConds...)
-	}
+	prewhereParts := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, otherConds)
+	sessionConditions := t.buildSessionConditions(r, metricFormat, durConds)
 
 	joinClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
 		return "", err
-	}
-
-	// Build sessions conditions with pre-allocated slice
-	sessionConditions := make([]string, 0, 6+len(durConds))
-	sessionConditions = append(sessionConditions, fmt.Sprintf("s.project_id = %d", r.ProjectId))
-	sessionConditions = append(sessionConditions, "isNotNull(s.duration)")
-	sessionConditions = append(sessionConditions, fmt.Sprintf("s.datetime >= toDateTime(%d/1000)", r.StartTimestamp))
-	sessionConditions = append(sessionConditions, fmt.Sprintf("s.datetime <= toDateTime(%d/1000)", r.EndTimestamp))
-
-	// Add duration conditions to sessions
-	for _, durCond := range durConds {
-		if durCond != "" { // Avoid empty conditions
-			sessionDurCond := strings.ReplaceAll(durCond, "main.duration", "s.duration")
-			sessionConditions = append(sessionConditions, sessionDurCond)
-		}
-	}
-
-	// Handle user count specific conditions
-	if metricFormat == MetricFormatUserCount {
-		sessionConditions = append(sessionConditions,
-			fmt.Sprintf("NOT (empty(s.user_id) AND (s.user_uuid IS NULL OR s.user_uuid = '%s'))", nilUUIDString))
 	}
 
 	// Get property selector and determine if it's from events or sessions
@@ -314,7 +280,6 @@ LIMIT %d OFFSET %d`,
 	return query, nil
 }
 
-// buildJoinClause constructs the appropriate join clause based on events order
 func (t *TableQueryBuilder) buildJoinClause(eventsOrder model.EventOrder, eventConditions []string) (string, error) {
 	switch eventsOrder {
 	case "then":
@@ -359,6 +324,69 @@ func (t *TableQueryBuilder) buildCountJoinClause(eventConditions []string, opera
 	}
 
 	return fmt.Sprintf("HAVING %s", strings.Join(countConds, fmt.Sprintf(" %s ", operator)))
+}
+
+// buildPrewhereConditions constructs the prewhere conditions for the main events query
+func (t *TableQueryBuilder) buildPrewhereConditions(r *Payload, eventsOrder model.EventOrder, eventConditions, otherConds []string) []string {
+	prewhereParts := make([]string, 0, 5+len(otherConds))
+
+	// Add single event condition for 'then' order
+	if eventsOrder == "then" && len(eventConditions) == 1 {
+		prewhereParts = append(prewhereParts, eventConditions[0])
+	}
+
+	// Add core conditions
+	prewhereParts = append(prewhereParts, t.buildTimeRangeConditions("main", r.ProjectId, r.StartTimestamp, r.EndTimestamp)...)
+
+	// Add additional conditions
+	if len(otherConds) > 0 {
+		prewhereParts = append(prewhereParts, otherConds...)
+	}
+
+	return prewhereParts
+}
+
+// buildSessionConditions constructs the session conditions for the sessions query
+func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat string, durConds []string) []string {
+	sessionConditions := make([]string, 0, 6+len(durConds))
+
+	// Add core session conditions
+	sessionConditions = append(sessionConditions, t.buildTimeRangeConditions("s", r.ProjectId, r.StartTimestamp, r.EndTimestamp)...)
+	sessionConditions = append(sessionConditions, "isNotNull(s.duration)")
+
+	// Add duration conditions
+	for _, durCond := range durConds {
+		if durCond != "" { // Avoid empty conditions
+			sessionDurCond := strings.ReplaceAll(durCond, "main.duration", "s.duration")
+			sessionConditions = append(sessionConditions, sessionDurCond)
+		}
+	}
+
+	// Handle user count specific conditions
+	if metricFormat == MetricFormatUserCount {
+		sessionConditions = append(sessionConditions,
+			fmt.Sprintf("NOT (empty(s.user_id) AND (s.user_uuid IS NULL OR s.user_uuid = '%s'))", nilUUIDString))
+	}
+
+	return sessionConditions
+}
+
+func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string, projectId int, startTimestamp, endTimestamp int64) []string {
+	conditions := []string{
+		fmt.Sprintf("%s.project_id = %d", tableAlias, projectId),
+	}
+
+	timestampColumn := "created_at"
+	if tableAlias == "s" {
+		timestampColumn = "datetime"
+	}
+
+	conditions = append(conditions,
+		fmt.Sprintf("%s.%s >= toDateTime(%d/1000)", tableAlias, timestampColumn, startTimestamp),
+		fmt.Sprintf("%s.%s <= toDateTime(%d/1000)", tableAlias, timestampColumn, endTimestamp),
+	)
+
+	return conditions
 }
 
 func (*TableQueryBuilder) subquerySelects(r *Payload) []string {
