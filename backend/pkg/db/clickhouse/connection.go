@@ -19,6 +19,15 @@ func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
 		MaxOpenConns:    cfg.MaxOpenConns,
 		MaxIdleConns:    cfg.MaxIdleConns,
 		ConnMaxLifetime: cfg.ConnMaxLifetime,
+		Debug:           cfg.DEBUG,
+		Debugf: func(format string, v ...any) {
+			fmt.Print("------ ClickHouse Debug ---\n")
+			fmt.Printf(format+"\n", v...)
+			fmt.Print("------ ---------- ----- ---\n")
+		},
+		Settings: clickhouse.Settings{
+			"max_execution_time": cfg.MaxExecutionTime,
+		},
 	}
 	switch cfg.CompressionAlgo {
 	case "lz4":
