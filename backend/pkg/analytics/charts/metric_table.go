@@ -163,42 +163,9 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		prewhereParts = append(prewhereParts, otherConds...)
 	}
 
-	// Build join clause based on events order with proper error handling
-	joinClause := ""
-	switch s.Filter.EventsOrder {
-	case "then":
-		if len(eventConditions) > 1 {
-			var patBuilder strings.Builder
-			patBuilder.Grow(len(eventConditions) * 6) // Pre-allocate capacity
-			for i := range eventConditions {
-				patBuilder.WriteString(fmt.Sprintf("(?%d)", i+1))
-			}
-			joinClause = fmt.Sprintf(
-				"HAVING sequenceMatch('%s')(\n    toDateTime(main.created_at),\n    %s\n)",
-				patBuilder.String(),
-				strings.Join(eventConditions, ",\n    "),
-			)
-		}
-	case "and":
-		if len(eventConditions) > 0 {
-			countConds := make([]string, len(eventConditions))
-			for i, c := range eventConditions {
-				countConds[i] = fmt.Sprintf("countIf(%s) > 0", c)
-			}
-			joinClause = fmt.Sprintf("HAVING %s", strings.Join(countConds, " AND "))
-		}
-	case "or":
-		if len(eventConditions) > 0 {
-			countConds := make([]string, len(eventConditions))
-			for i, c := range eventConditions {
-				countConds[i] = fmt.Sprintf("countIf(%s) > 0", c)
-			}
-			joinClause = fmt.Sprintf("HAVING %s", strings.Join(countConds, " OR "))
-		}
-	case "":
-		break
-	default:
-		return "", fmt.Errorf("unknown events order: %s", s.Filter.EventsOrder)
+	joinClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
+	if err != nil {
+		return "", err
 	}
 
 	// Build sessions conditions with pre-allocated slice
@@ -345,6 +312,53 @@ LIMIT %d OFFSET %d`,
 	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
 
 	return query, nil
+}
+
+// buildJoinClause constructs the appropriate join clause based on events order
+func (t *TableQueryBuilder) buildJoinClause(eventsOrder model.EventOrder, eventConditions []string) (string, error) {
+	switch eventsOrder {
+	case "then":
+		return t.buildSequenceJoinClause(eventConditions), nil
+	case "and":
+		return t.buildCountJoinClause(eventConditions, "AND"), nil
+	case "or":
+		return t.buildCountJoinClause(eventConditions, "OR"), nil
+	case "":
+		return "", nil
+	default:
+		return "", fmt.Errorf("unknown events order: %s", eventsOrder)
+	}
+}
+
+func (t *TableQueryBuilder) buildSequenceJoinClause(eventConditions []string) string {
+	if len(eventConditions) <= 1 {
+		return ""
+	}
+
+	var patBuilder strings.Builder
+	patBuilder.Grow(len(eventConditions) * 6) // Pre-allocate capacity
+	for i := range eventConditions {
+		patBuilder.WriteString(fmt.Sprintf("(?%d)", i+1))
+	}
+
+	return fmt.Sprintf(
+		"HAVING sequenceMatch('%s')(\n    toDateTime(main.created_at),\n    %s\n)",
+		patBuilder.String(),
+		strings.Join(eventConditions, ",\n    "),
+	)
+}
+
+func (t *TableQueryBuilder) buildCountJoinClause(eventConditions []string, operator string) string {
+	if len(eventConditions) == 0 {
+		return ""
+	}
+
+	countConds := make([]string, len(eventConditions))
+	for i, condition := range eventConditions {
+		countConds[i] = fmt.Sprintf("countIf(%s) > 0", condition)
+	}
+
+	return fmt.Sprintf("HAVING %s", strings.Join(countConds, fmt.Sprintf(" %s ", operator)))
 }
 
 func (*TableQueryBuilder) subquerySelects(r *Payload) []string {
