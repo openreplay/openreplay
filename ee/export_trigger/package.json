@@ -1,0 +1,17 @@
+{
+  "name": "export_trigger",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-batch": "^3.848.0",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0"
+  }
+}
