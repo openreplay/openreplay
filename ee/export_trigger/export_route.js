@@ -24,4 +24,8 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+router.get('/ping', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 export default router;
