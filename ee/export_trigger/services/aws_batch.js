@@ -17,7 +17,7 @@ const activeStates = [
 const jobName = (proj, sess) =>
   `${process.env.JOB_BASE_NAME}_${proj}-${sess}`;
 
-export async function isRunning(projectId, sessionId) {
+export async function isAWSRunning(projectId, sessionId) {
   const name = jobName(projectId, sessionId);
   for (const status of activeStates) {
     const { jobSummaryList = [] } = await client.send(
@@ -32,7 +32,7 @@ export async function isRunning(projectId, sessionId) {
   return false;
 }
 
-export async function launch(projectId, sessionId, jwt) {
+export async function createAWSJob(projectId, sessionId, jwt) {
   const cmd = new SubmitJobCommand({
     jobName: jobName(projectId, sessionId),
     jobQueue: process.env.JOB_QUEUE,

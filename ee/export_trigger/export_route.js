@@ -1,5 +1,5 @@
 import express from 'express';
-import { isRunning, launch } from './services/aws_batch.js';
+import { isAWSRunning, createAWSJob } from './services/aws_batch.js';
 const router = express.Router();
 
 router.post('/', async (req, res, next) => {
@@ -10,7 +10,9 @@ router.post('/', async (req, res, next) => {
       : authHeader;
     const { projectId, sessionId } = req.body;
     if (!projectId || !sessionId) return res.status(400).json({ error: 'missing ids' });
-
+    // since we're only supporting AWS for now;
+    const isRunning = isAWSRunning;
+    const launch = createAWSJob;
     if (await isRunning(projectId, sessionId)) {
       return res.status(200).json({ status: 'in_progress' });
     }
