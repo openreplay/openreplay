@@ -3,11 +3,10 @@ package charts
 import (
 	"context"
 	"fmt"
+	"openreplay/backend/pkg/analytics/model"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-
-	"openreplay/backend/pkg/analytics/model"
 )
 
 type HeatmapPoint struct {
@@ -45,40 +44,74 @@ func (h *HeatmapQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}
 }
 
 func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
-	var globalFilters, eventFilters []model.Filter
-	for _, flt := range p.MetricPayload.Series[0].Filter.Filters {
-		if flt.IsEvent {
-			eventFilters = append(eventFilters, flt)
+	base := []string{
+		fmt.Sprintf("e.project_id = %d", p.ProjectId),
+		fmt.Sprintf("e.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
+		fmt.Sprintf("e.created_at < toDateTime(%d)", p.MetricPayload.EndTimestamp/1000),
+		"e.session_id IS NOT NULL",
+		"e.`$event_name` = 'CLICK'",
+		"JSONExtractFloat(toString(e.\"$properties\"), 'normalized_x') IS NOT NULL",
+		"JSONExtractFloat(toString(e.\"$properties\"), 'normalized_y') IS NOT NULL",
+	}
+
+	var nonSessionFilters []model.Filter
+	var sessionTableFilters []model.Filter
+	var hasSessionFilters bool
+
+	for _, filter := range p.MetricPayload.Series[0].Filter.Filters {
+		if _, exists := sessionColumns[filter.Name]; exists {
+			sessionTableFilters = append(sessionTableFilters, filter)
+			hasSessionFilters = true
 		} else {
-			globalFilters = append(globalFilters, flt)
+			nonSessionFilters = append(nonSessionFilters, filter)
 		}
 	}
 
-	globalConds, _ := BuildEventConditions(globalFilters, BuildConditionsOptions{
+	eventFilters, otherFilters := BuildEventConditions(nonSessionFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
-		MainTableAlias: "e",
+		MainTableAlias: "l",
 	})
 
-	var joinClause string
-	if len(eventFilters) > 0 {
-		eventConds, _ := BuildEventConditions(eventFilters, BuildConditionsOptions{
-			DefinedColumns: mainColumns,
-			MainTableAlias: "l",
-		})
-		joinClause = fmt.Sprintf(
-			"JOIN product_analytics.events AS l ON l.session_id = e.session_id AND %s",
-			strings.Join(eventConds, " AND "),
-		)
+	// filters that uses the sessions table
+	_, sessionFilters := BuildEventConditions(sessionTableFilters, BuildConditionsOptions{
+		DefinedColumns: sessionColumns,
+		MainTableAlias: "ls",
+	})
+
+	var joinClause string // This will remain empty; we're using subquery instead of JOIN
+
+	subBase := []string{
+		fmt.Sprintf("l.project_id = %d", p.ProjectId),
+		fmt.Sprintf("l.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
+		fmt.Sprintf("l.created_at < toDateTime(%d)", p.MetricPayload.EndTimestamp/1000),
+		"l.session_id IS NOT NULL",
+	}
+	subBase = append(subBase, otherFilters...)
+	subBase = append(subBase, eventFilters...)
+
+	var subJoin string
+	if hasSessionFilters {
+		subJoin = "JOIN experimental.sessions AS ls ON l.session_id = ls.session_id"
+		subBase = append(subBase, sessionFilters...)
 	}
 
-	base := []string{
-		fmt.Sprintf("e.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
-		fmt.Sprintf("e.created_at < toDateTime(%d)", p.MetricPayload.EndTimestamp/1000),
-		fmt.Sprintf("e.project_id = %d", p.ProjectId),
-		"e.session_id IS NOT NULL",
-		"e.`$event_name` = 'CLICK'",
+	subWhere := strings.Join(subBase, " AND ")
+
+	var subqueryClause string
+	if subJoin != "" {
+		subqueryClause = fmt.Sprintf(
+			"e.session_id IN (SELECT l.session_id FROM product_analytics.events AS l %s WHERE %s GROUP BY l.session_id)",
+			subJoin,
+			subWhere,
+		)
+	} else {
+		subqueryClause = fmt.Sprintf(
+			"e.session_id IN (SELECT l.session_id FROM product_analytics.events AS l WHERE %s GROUP BY l.session_id)",
+			subWhere,
+		)
 	}
-	base = append(base, globalConds...)
+	base = append(base, subqueryClause)
+
 	where := strings.Join(base, " AND ")
 
 	q := fmt.Sprintf(`

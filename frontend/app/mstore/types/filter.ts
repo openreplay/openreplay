@@ -217,8 +217,6 @@ export default class FilterStore implements IFilterStore {
       });
     }
 
-    console.log('filter', filter);
-
     this.filters.push(filter);
   }
 

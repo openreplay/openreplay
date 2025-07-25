@@ -380,8 +380,6 @@ export default class FilterStore {
       throw new Error(`Event with ID ${eventId} not found`);
     }
 
-    console.log('settings filters for', event, filters);
-
     runInAction(() => {
       event.filters = filters;
     });
