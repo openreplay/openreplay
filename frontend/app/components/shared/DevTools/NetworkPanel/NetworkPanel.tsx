@@ -197,37 +197,6 @@ function MobileNetworkPanelCont({ panelHeight }: { panelHeight: number }) {
   );
 }
 
-const useInfiniteScroll = (loadMoreCallback: () => void, hasMore: boolean) => {
-  const observerRef = useRef<IntersectionObserver>(null);
-  const loadingRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && hasMore) {
-          loadMoreCallback();
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    if (loadingRef.current) {
-      observer.observe(loadingRef.current);
-    }
-
-    // @ts-ignore
-    observerRef.current = observer;
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [loadMoreCallback, hasMore, loadingRef]);
-
-  return loadingRef;
-};
-
 const WebNetworkPanel = observer(NetworkPanelCont);
 const MobileNetworkPanel = observer(MobileNetworkPanelCont);
 

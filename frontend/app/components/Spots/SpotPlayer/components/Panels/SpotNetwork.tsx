@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
-import { NetworkPanelComp } from 'Components/shared/DevTools/NetworkPanel/NetworkPanel';
+import { NetworkPanelComp } from 'Components/shared/DevTools/NetworkPanel/NetworkPanelComp';
 
 import spotPlayerStore from '../../spotPlayerStore';
 

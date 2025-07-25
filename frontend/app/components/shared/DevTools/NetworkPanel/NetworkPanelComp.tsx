@@ -69,6 +69,37 @@ const LOAD_TIME_COLOR = 'red';
 const BATCH_SIZE = 2500;
 const INITIAL_LOAD_SIZE = 5000;
 
+const useInfiniteScroll = (loadMoreCallback: () => void, hasMore: boolean) => {
+  const observerRef = useRef<IntersectionObserver>(null);
+  const loadingRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore) {
+          loadMoreCallback();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    if (loadingRef.current) {
+      observer.observe(loadingRef.current);
+    }
+
+    // @ts-ignore
+    observerRef.current = observer;
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [loadMoreCallback, hasMore, loadingRef]);
+
+  return loadingRef;
+};
+
 export function renderType(r: any) {
   return (
     <Tooltip style={{ width: '100%' }} title={<div>{r.type}</div>}>
