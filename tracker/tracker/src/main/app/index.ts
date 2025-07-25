@@ -1109,7 +1109,7 @@ export default class App {
    * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger,
    * and we will then send buffered batch, so it won't get lost
    * */
-  public async coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
+  public coldStart = async (startOpts: StartOptions = {}, conditional?: boolean) => {
     this.singleBuffer = false
     const second = 1000
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
@@ -1155,7 +1155,7 @@ export default class App {
     cycle()
   }
 
-  private async setupConditionalStart(startOpts: StartOptions) {
+  private setupConditionalStart = async (startOpts: StartOptions) => {
     this.conditionsManager = new ConditionsManager(this, startOpts)
     const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
       method: 'POST',
@@ -1218,7 +1218,7 @@ export default class App {
    * @param {Object} startOpts - options for session start, same as .start()
    * @param {Function} onSessionSent - callback that will be called once session is fully sent
    * */
-  public offlineRecording(startOpts: StartOptions = {}, onSessionSent: () => void) {
+  public offlineRecording = (startOpts: StartOptions = {}, onSessionSent: () => void) => {
     this.onSessionSent = onSessionSent
     this.singleBuffer = true
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
@@ -1266,21 +1266,21 @@ export default class App {
    *
    * Keeping the size of local storage reasonable is up to the end users of this library
    * */
-  public saveBuffer() {
+  public saveBuffer = () => {
     this.localStorage.setItem(bufferStorageKey, JSON.stringify(this.bufferedMessages1))
   }
 
   /**
    * @returns buffer with stored messages for offline recording
    * */
-  public getBuffer() {
+  public getBuffer = () => {
     return this.bufferedMessages1
   }
 
   /**
    * Used to set a buffer with messages array
    * */
-  public setBuffer(buffer: Message[]) {
+  public setBuffer = (buffer: Message[]) => {
     this.bufferedMessages1 = buffer
   }
 
