@@ -234,13 +234,20 @@ export default class APIClient {
     }
 
     const fullUrl = edp + _path;
+    const t1 = performance.now();
     const response = await window.fetch(fullUrl, init);
+    const t2 = performance.now();
     if (response.status === 403) {
       console.warn('API returned 403. Clearing JWT token.');
       this.onUpdateJwt({ jwt: undefined });
     }
     if (response.ok) {
-      void this.duplicate(fullUrl, init, response);
+      const timings = {
+        t1,
+        t2,
+        diff: t2 - t1,
+      };
+      void this.duplicate(fullUrl, init, response, timings);
       return response;
     }
     let errorMsg = 'Something went wrong.';
@@ -251,29 +258,34 @@ export default class APIClient {
     throw new Error(errorMsg);
   }
 
-  duplicate = async (url, init, response) => {
+  duplicate = async (url, init, response, timings) => {
     const respClone = response.clone();
     // /api/path -> /newapi/path
     try {
       const newUrl = url.replace('/api', '/newapi');
+      const t1 = performance.now();
       const newResp = await window.fetch(newUrl, init);
+      const t2 = performance.now();
       if (newResp.ok) {
         const oldJson = await respClone.json();
         const newJson = await newResp.json();
         const diffingRes = diff(oldJson, newJson);
         if (diffingRes.length > 0) {
           console.warn(
-            `>>>>> ${url} \n params ${init} \n DIFF ${diffingRes} \n ${oldJson} old; ${newJson} new`,
+            `>>>>> ${url} \n params ${JSON.stringify(init)} \n DIFF ${JSON.stringify(diffingRes)} \n ${JSON.stringify(oldJson)} old; ${JSON.stringify(newJson)} new`,
+          );
+          console.warn(
+            `>>> timings: \n old: ${timings.diff / 1000}s \n new: ${(t2 - t1) / 1000}s`,
           );
         }
       } else {
         console.warn(
-          `>>>>> ${url} \n params ${init} \n ERROR: ${newResp.status} ${newResp.statusText}`,
+          `>>>>> ${url} \n params ${JSON.stringify(init)} \n ERROR: ${newResp.status} ${newResp.statusText}`,
         );
       }
     } catch (e) {
       return console.warn(
-        `>>>>> ${url} \n params ${init} \n ERROR: ${e.toString()}`,
+        `>>>>> ${url} \n params ${JSON.stringify(init)} \n ERROR: ${e.toString()}`,
       );
     }
   };
