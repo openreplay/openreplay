@@ -43,11 +43,6 @@ func (h *HeatmapQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}
 	return pts, nil
 }
 
-var sessionColumns = map[string]string{
-	"userDevice": "user_device",
-	// TODO Add any missing session columns to be considered.
-}
-
 func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 	base := []string{
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
@@ -60,12 +55,12 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 	}
 
 	var nonSessionFilters []model.Filter
-	var sessionFilters []string
+	var sessionTableFilters []model.Filter
 	var hasSessionFilters bool
 
 	for _, filter := range p.MetricPayload.Series[0].Filter.Filters {
-		if sessionColumn, exists := sessionColumns[filter.Name]; exists {
-			sessionFilters = append(sessionFilters, fmt.Sprintf("ls.%s = '%s'", sessionColumn, filter.Value))
+		if _, exists := sessionColumns[filter.Name]; exists {
+			sessionTableFilters = append(sessionTableFilters, filter)
 			hasSessionFilters = true
 		} else {
 			nonSessionFilters = append(nonSessionFilters, filter)
@@ -75,6 +70,12 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 	eventFilters, otherFilters := BuildEventConditions(nonSessionFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "l",
+	})
+
+	// filters that uses the sessions table
+	_, sessionFilters := BuildEventConditions(sessionTableFilters, BuildConditionsOptions{
+		DefinedColumns: sessionColumns,
+		MainTableAlias: "ls",
 	})
 
 	var joinClause string // This will remain empty; we're using subquery instead of JOIN

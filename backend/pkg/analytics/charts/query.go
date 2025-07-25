@@ -60,7 +60,7 @@ var propertyKeyMap = map[string]filterConfig{
 	"INPUT":           {LogicalProperty: "label"},
 	"fetchUrl":        {LogicalProperty: "url_path"},
 	"fetchStatusCode": {LogicalProperty: "status", IsNumeric: true},
-	"userDevice":      {LogicalProperty: "user_device"},
+	// "userDevice":      {LogicalProperty: "user_device"},
 }
 
 // filterConfig holds configuration for a filter type
@@ -321,13 +321,6 @@ func inClause(expr string, values []string, negate, isNumeric bool) string {
 	return fmt.Sprintf("%s %s (%s)", expr, op, strings.Join(quoted, ", "))
 }
 
-// TODO check this and remove if not needed to implement
-func buildSessionConditions(filters []model.Filter) []string {
-	var conds []string
-
-	return conds
-}
-
 func buildInClause(values []string) string {
 	var quoted []string
 	for _, v := range values {
@@ -525,4 +518,9 @@ func logQuery(query string, args ...interface{}) {
 		query = fmt.Sprintf(query, args...)
 	}
 	log.Printf(">>>>>>>>>>>>>>>>>>>>>>>>>>> Executing query:\n%s\n<<<<<<<<<<<<<<<<<<<<<<<<<<", query)
+}
+
+var sessionColumns = map[string]string{
+	"userDevice": "user_device",
+	// TODO Add any missing session columns to be considered.
 }
