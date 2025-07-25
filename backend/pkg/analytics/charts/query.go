@@ -59,8 +59,8 @@ var propertyKeyMap = map[string]filterConfig{
 	"CLICK":           {LogicalProperty: "label"},
 	"INPUT":           {LogicalProperty: "label"},
 	"fetchUrl":        {LogicalProperty: "url_path"},
-	"userDevice":      {LogicalProperty: "user_device"},
 	"fetchStatusCode": {LogicalProperty: "status", IsNumeric: true},
+	"userDevice":      {LogicalProperty: "user_device"},
 }
 
 // filterConfig holds configuration for a filter type
