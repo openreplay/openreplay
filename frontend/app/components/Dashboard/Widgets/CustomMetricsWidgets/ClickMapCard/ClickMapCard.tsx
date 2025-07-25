@@ -48,6 +48,22 @@ function ClickMapCard() {
       limit: 1000,
     };
 
+    if (payload && !hasLocationFilter(payload)) {
+      payload.series[0].filter.filters = payload.series[0].filter.filters.map(
+        (filter: any) => {
+          if (filter.name === 'LOCATION') {
+            filter.filters = filter.filters.map((filter: any) => {
+              if (filter.name === 'url_path' && !!metric.data.urlPath) {
+                filter.value = [metric.data.urlPath];
+              }
+              return filter;
+            });
+          }
+          return filter;
+        },
+      );
+    }
+
     void fetchInsights(metric, payload);
   }, [
     sessionId,
@@ -56,6 +72,20 @@ function ClickMapCard() {
     dashboardStore.drillDownPeriod.rangeValue,
     metricStore.clickMapFilter,
   ]);
+
+  const hasLocationFilter = (payload: any) => {
+    return payload.series[0]?.filter?.filters?.some((filter: any) => {
+      return (
+        filter.name === 'LOCATION' &&
+        filter.filters.some(
+          (filter: any) =>
+            filter.name === 'url_path' &&
+            filter.value.length > 0 &&
+            filter.value[0].length > 0,
+        )
+      );
+    });
+  };
 
   if (!metricStore.instance.data.domURL || insights.length === 0) {
     return (

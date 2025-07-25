@@ -554,6 +554,7 @@ export default class DashboardStore {
           params,
           isSaved,
         );
+
         if (metric.metricType === HEATMAP && data.sessionId) {
           const sessionResp = await sessionStore.fetchSessionInfo(
             data.sessionId,
