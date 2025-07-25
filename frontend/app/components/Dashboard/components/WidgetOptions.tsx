@@ -6,7 +6,7 @@ import {
   TIMESERIES,
   USER_PATH,
 } from 'App/constants/card';
-import { Space, Switch, Dropdown, Button } from 'antd';
+import { Space, Select, Dropdown, Button } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore';
 import ClickMapRagePicker from 'Components/Dashboard/components/ClickMapRagePicker/ClickMapRagePicker';
