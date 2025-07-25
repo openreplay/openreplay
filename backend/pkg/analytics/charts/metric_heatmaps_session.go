@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-
-	"openreplay/backend/pkg/analytics/model"
 )
 
 type HeatmapSessionResponse struct {
@@ -15,6 +13,7 @@ type HeatmapSessionResponse struct {
 	StartTs        uint64 `json:"startTs"`
 	Duration       uint32 `json:"duration"`
 	EventTimestamp uint64 `json:"eventTimestamp"`
+	UrlPath        string `json:"urlPath"`
 }
 
 type HeatmapSessionQueryBuilder struct{}
@@ -35,8 +34,9 @@ func (h *HeatmapSessionQueryBuilder) Execute(p *Payload, conn driver.Conn) (inte
 		startTs  uint64
 		duration uint32
 		eventTs  uint64
+		urlPath  string
 	)
-	if err = row.Scan(&sid, &startTs, &duration, &eventTs); err != nil {
+	if err = row.Scan(&sid, &startTs, &duration, &eventTs, &urlPath); err != nil {
 		return nil, err
 	}
 
@@ -45,54 +45,77 @@ func (h *HeatmapSessionQueryBuilder) Execute(p *Payload, conn driver.Conn) (inte
 		StartTs:        startTs,
 		Duration:       duration,
 		EventTimestamp: eventTs,
+		UrlPath:        urlPath,
 	}, nil
 }
 
 func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 	s := p.MetricPayload.Series[0]
 
-	var globalFilters, eventFilters []model.Filter
-	for _, flt := range s.Filter.Filters {
-		if flt.IsEvent {
-			eventFilters = append(eventFilters, flt)
-		} else {
-			globalFilters = append(globalFilters, flt)
-		}
-	}
+	startSec := p.MetricPayload.StartTimestamp / 1000
+	endSec := (p.MetricPayload.EndTimestamp + 86400000) / 1000
+	projectId := p.ProjectId
 
-	globalConds, _ := BuildEventConditions(globalFilters, BuildConditionsOptions{
+	// Build event conditions for CTE (alias: e2)
+	_, cteEventConds := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
-		MainTableAlias: "e",
+		MainTableAlias: "e2",
 	})
 
-	eventConds, _ := BuildEventConditions(eventFilters, BuildConditionsOptions{
+	cteBase := []string{
+		fmt.Sprintf("e2.created_at >= toDateTime(%d)", startSec),
+		fmt.Sprintf("e2.created_at < toDateTime(%d)", endSec),
+		fmt.Sprintf("e2.project_id = %d", projectId),
+		"e2.`$event_name` = 'CLICK'",
+	}
+	cteBase = append(cteBase, cteEventConds...)
+	cteWhere := strings.Join(cteBase, " AND ")
+
+	// Build event conditions for subquery (alias: e)
+	_, subEventConds := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
-		MainTableAlias: "e",
+		MainTableAlias: "ev",
 	})
 
-	base := []string{
-		fmt.Sprintf("e.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
-		fmt.Sprintf("e.created_at < toDateTime(%d)", (p.MetricPayload.EndTimestamp+86400000)/1000),
-		fmt.Sprintf("e.project_id = %d", p.ProjectId),
-		"s.duration > 500",
-		"e.`$event_name` = 'LOCATION'",
+	subBase := []string{
+		fmt.Sprintf("created_at >= toDateTime(%d)", startSec),
+		fmt.Sprintf("created_at < toDateTime(%d)", endSec),
+		fmt.Sprintf("project_id = %d", projectId),
+		"`$event_name` = 'CLICK'",
 	}
-	base = append(base, eventConds...)
-	base = append(base, globalConds...)
-
-	where := strings.Join(base, " AND ")
+	subBase = append(subBase, subEventConds...)
+	subBase = append(subBase, "JSONExtractString(toString(`$properties`), 'url_path') = (SELECT url_path FROM top_url_path)")
+	subWhere := strings.Join(subBase, " AND ")
 
 	q := fmt.Sprintf(`
-		SELECT
-			toString(s.session_id) AS session_id,
-			toUnixTimestamp(s.datetime) * 1000 as startTs,
-			s.duration,
-			toUnixTimestamp(e.created_at) * 1000 as eventTs
-		FROM product_analytics.events AS e
-		JOIN experimental.sessions AS s USING(session_id)
-		WHERE %s
-		ORDER BY e.created_at ASC, s.duration ASC
-		LIMIT 1;`, where)
+WITH top_url_path AS (
+    SELECT
+        JSONExtractString(toString(e2."$properties"), 'url_path') AS url_path,
+        COUNT(*) AS cnt
+    FROM product_analytics.events AS e2
+    WHERE %s
+    GROUP BY url_path
+    ORDER BY cnt DESC
+    LIMIT 1
+)
+
+SELECT
+    toString(s.session_id) AS session_id,
+    toUnixTimestamp(s.datetime) * 1000 AS startTs,
+    s.duration,
+    toUnixTimestamp(e.created_at) * 1000 AS eventTs,
+    e.url_path
+FROM (
+    SELECT
+        *,
+        JSONExtractString(toString(ev."$properties"), 'url_path') AS url_path
+    FROM product_analytics.events ev
+    WHERE %s
+) AS e
+INNER JOIN experimental.sessions AS s USING (session_id)
+WHERE s.duration > 500
+ORDER BY e.created_at ASC, s.duration ASC
+LIMIT 1;`, cteWhere, subWhere)
 
 	logQuery(fmt.Sprintf("HeatmapSessionQueryBuilder.buildQuery: %s", q))
 	return q, nil
