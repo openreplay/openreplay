@@ -15,14 +15,22 @@ import (
 	"openreplay/backend/pkg/server/tracer"
 )
 
-type ServiceBuilder struct {
-	Auth            api.RouterMiddleware
-	RateLimiter     api.RouterMiddleware
-	AuditTrail      api.RouterMiddleware
-	IntegrationsAPI api.Handlers
+type serviceBuilder struct {
+	auth            api.RouterMiddleware
+	rateLimiter     api.RouterMiddleware
+	auditTrail      api.RouterMiddleware
+	integrationsAPI api.Handlers
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool) (*ServiceBuilder, error) {
+func (b *serviceBuilder) Middlewares() []api.RouterMiddleware {
+	return []api.RouterMiddleware{b.rateLimiter, b.auth, b.auditTrail}
+}
+
+func (b *serviceBuilder) Handlers() []api.Handlers {
+	return []api.Handlers{b.integrationsAPI}
+}
+
+func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool) (api.ServiceBuilder, error) {
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		return nil, err
@@ -40,11 +48,11 @@ func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, webMetrics w
 	if err != nil {
 		return nil, err
 	}
-	builder := &ServiceBuilder{
-		Auth:            auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix),
-		RateLimiter:     limiter.NewUserRateLimiter(&cfg.RateLimiter),
-		AuditTrail:      auditrail,
-		IntegrationsAPI: handlers,
+	builder := &serviceBuilder{
+		auth:            auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix),
+		rateLimiter:     limiter.NewUserRateLimiter(&cfg.RateLimiter),
+		auditTrail:      auditrail,
+		integrationsAPI: handlers,
 	}
 	return builder, nil
 }

@@ -19,14 +19,22 @@ import (
 	"openreplay/backend/pkg/spot/transcoder"
 )
 
-type ServicesBuilder struct {
-	Auth        api.RouterMiddleware
-	RateLimiter api.RouterMiddleware
-	AuditTrail  api.RouterMiddleware
-	SpotsAPI    api.Handlers
+type serviceBuilder struct {
+	auth        api.RouterMiddleware
+	rateLimiter api.RouterMiddleware
+	auditTrail  api.RouterMiddleware
+	spotsAPI    api.Handlers
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, spotMetrics spotMetrics.Spot, dbMetrics database.Database, pgconn pool.Pool, prefix string) (*ServicesBuilder, error) {
+func (b *serviceBuilder) Middlewares() []api.RouterMiddleware {
+	return []api.RouterMiddleware{b.rateLimiter, b.auth, b.auditTrail}
+}
+
+func (b *serviceBuilder) Handlers() []api.Handlers {
+	return []api.Handlers{b.spotsAPI}
+}
+
+func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, spotMetrics spotMetrics.Spot, dbMetrics database.Database, pgconn pool.Pool, prefix string) (api.ServiceBuilder, error) {
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		return nil, err
@@ -44,10 +52,10 @@ func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, 
 	if err != nil {
 		return nil, err
 	}
-	return &ServicesBuilder{
-		Auth:        auth.NewAuth(log, cfg.JWTSecret, cfg.JWTSpotSecret, pgconn, keys, prefix),
-		RateLimiter: limiter.NewUserRateLimiter(&cfg.RateLimiter),
-		AuditTrail:  auditrail,
-		SpotsAPI:    handlers,
+	return &serviceBuilder{
+		auth:        auth.NewAuth(log, cfg.JWTSecret, cfg.JWTSpotSecret, pgconn, keys, prefix),
+		rateLimiter: limiter.NewUserRateLimiter(&cfg.RateLimiter),
+		auditTrail:  auditrail,
+		spotsAPI:    handlers,
 	}, nil
 }

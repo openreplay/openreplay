@@ -31,7 +31,7 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := ender.New(log)
-	// Observability
+
 	dbMetric := database.New("ender")
 	enderMetric := enderMetrics.New("ender")
 	metrics.New(log, append(enderMetric.List(), dbMetric.List()...))

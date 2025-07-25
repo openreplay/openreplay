@@ -18,7 +18,7 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
-	// Observability
+
 	webMetrics := web.New("integrations")
 	dbMetric := database.New("integrations")
 	metrics.New(log, append(webMetrics.List(), dbMetric.List()...))
@@ -34,11 +34,10 @@ func main() {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
 
-	router, err := api.NewRouter(&cfg.HTTP, log, builder.RateLimiter, builder.Auth, builder.AuditTrail)
+	router, err := api.NewRouter(&cfg.HTTP, log, api.NoPrefix, builder)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
-	router.AddHandlers(api.NoPrefix, builder.IntegrationsAPI)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
 }

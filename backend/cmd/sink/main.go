@@ -25,7 +25,7 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
-	// Observability
+
 	sinkMetrics := sink.New("sink")
 	metrics.New(log, sinkMetrics.List())
 

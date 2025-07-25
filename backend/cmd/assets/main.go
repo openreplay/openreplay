@@ -22,7 +22,7 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
-	// Observability
+
 	assetMetrics := assetsMetrics.New("assets")
 	metrics.New(log, assetMetrics.List())
 

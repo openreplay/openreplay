@@ -20,7 +20,7 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := http.New(log)
-	// Observability
+
 	webMetrics := web.New("http")
 	dbMetric := database.New("http")
 	metrics.New(log, append(webMetrics.List(), dbMetric.List()...))
@@ -45,12 +45,10 @@ func main() {
 		log.Fatal(ctx, "failed while creating services: %s", err)
 	}
 
-	router, err := api.NewRouter(&cfg.HTTP, log)
+	router, err := api.NewRouter(&cfg.HTTP, log, api.NoPrefix, builder)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
-	router.AddHandlers(api.NoPrefix, builder.WebAPI, builder.MobileAPI, builder.ConditionsAPI, builder.FeatureFlagsAPI,
-		builder.TagsAPI, builder.UxTestsAPI)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
 }

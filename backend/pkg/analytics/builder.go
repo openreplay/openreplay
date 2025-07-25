@@ -19,17 +19,25 @@ import (
 	"openreplay/backend/pkg/server/tracer"
 )
 
-type ServicesBuilder struct {
-	Auth          api.RouterMiddleware
-	RateLimiter   api.RouterMiddleware
-	AuditTrail    api.RouterMiddleware
-	CardsAPI      api.Handlers
-	DashboardsAPI api.Handlers
-	ChartsAPI     api.Handlers
-	SearchAPI     api.Handlers
+type serviceBuilder struct {
+	auth          api.RouterMiddleware
+	rateLimiter   api.RouterMiddleware
+	auditTrail    api.RouterMiddleware
+	cardsAPI      api.Handlers
+	dashboardsAPI api.Handlers
+	chartsAPI     api.Handlers
+	searchAPI     api.Handlers
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chConn driver.Conn) (*ServicesBuilder, error) {
+func (b *serviceBuilder) Middlewares() []api.RouterMiddleware {
+	return []api.RouterMiddleware{b.rateLimiter, b.auth, b.auditTrail}
+}
+
+func (b *serviceBuilder) Handlers() []api.Handlers {
+	return []api.Handlers{b.chartsAPI, b.cardsAPI, b.dashboardsAPI, b.searchAPI}
+}
+
+func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chConn driver.Conn) (api.ServiceBuilder, error) {
 	responser := api.NewResponser(webMetrics)
 	audiTrail, err := tracer.NewTracer(log, pgconn, dbMetrics)
 	if err != nil {
@@ -70,13 +78,13 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		return nil, err
 	}
 
-	return &ServicesBuilder{
-		Auth:          auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix),
-		RateLimiter:   limiter.NewUserRateLimiter(&cfg.RateLimiter),
-		AuditTrail:    audiTrail,
-		CardsAPI:      cardsHandlers,
-		DashboardsAPI: dashboardsHandlers,
-		ChartsAPI:     chartsHandlers,
-		SearchAPI:     searchHandlers,
+	return &serviceBuilder{
+		auth:          auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix),
+		rateLimiter:   limiter.NewUserRateLimiter(&cfg.RateLimiter),
+		auditTrail:    audiTrail,
+		cardsAPI:      cardsHandlers,
+		dashboardsAPI: dashboardsHandlers,
+		chartsAPI:     chartsHandlers,
+		searchAPI:     searchHandlers,
 	}, nil
 }

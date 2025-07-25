@@ -19,7 +19,7 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := spotConfig.New(log)
-	// Observability
+
 	webMetrics := web.New("spot")
 	spotMetric := spotMetrics.New("spot")
 	dbMetric := databaseMetrics.New("spot")
@@ -37,11 +37,10 @@ func main() {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
 
-	router, err := api.NewRouter(&cfg.HTTP, log, builder.RateLimiter, builder.Auth, builder.AuditTrail)
+	router, err := api.NewRouter(&cfg.HTTP, log, prefix, builder)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
-	router.AddHandlers(prefix, builder.SpotsAPI)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
 }

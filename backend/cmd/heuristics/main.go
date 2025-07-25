@@ -23,7 +23,7 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
-	// Observability
+
 	heuristicsMetric := heuristicsMetrics.New("heuristics")
 	metrics.New(log, heuristicsMetric.List())
 

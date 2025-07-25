@@ -10,8 +10,9 @@ import (
 	"openreplay/backend/pkg/logger"
 )
 
+const NoPrefix = ""
+
 type Router interface {
-	AddHandlers(prefix string, handlers ...Handlers)
 	Get() http.Handler
 }
 
@@ -21,7 +22,7 @@ type routerImpl struct {
 	router *mux.Router
 }
 
-func NewRouter(cfg *common.HTTP, log logger.Logger, middlewares ...RouterMiddleware) (Router, error) {
+func NewRouter(cfg *common.HTTP, log logger.Logger, prefix string, builder ServiceBuilder) (Router, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
@@ -36,17 +37,16 @@ func NewRouter(cfg *common.HTTP, log logger.Logger, middlewares ...RouterMiddlew
 	e.router.HandleFunc("/", e.health)
 	e.router.Use(e.healthMiddleware)
 	e.router.Use(e.corsMiddleware)
-	for _, m := range middlewares {
+	for _, m := range builder.Middlewares() {
 		if m != nil {
 			e.router.Use(m.Middleware)
 		}
 	}
+	e.addHandlers(prefix, builder.Handlers()...)
 	return e, nil
 }
 
-const NoPrefix = ""
-
-func (e *routerImpl) AddHandlers(prefix string, handlers ...Handlers) {
+func (e *routerImpl) addHandlers(prefix string, handlers ...Handlers) {
 	for _, handlersSet := range handlers {
 		for _, handler := range handlersSet.GetAll() {
 			e.router.HandleFunc(handler.Path, handler.Handler).Methods(handler.Method, "OPTIONS")

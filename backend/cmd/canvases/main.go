@@ -22,7 +22,7 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
-	// Observability
+
 	canvasMetrics := canvasesMetrics.New("canvases")
 	metrics.New(log, canvasMetrics.List())
 
