@@ -57,11 +57,10 @@ function WidgetDatatable(props: Props) {
         return newItem;
       });
       const blank = new Array(dataObj.namesMap.length * 2).fill('');
-      dataObj.namesMap = blank.map((_, i) =>
-        i % 2 !== 0
-          ? `Previous ${dataObj.namesMap[i / 2]}`
-          : dataObj.namesMap[i / 2],
-      );
+      const compNamesMap = dataObj.namesMap.map((name) => `Previous ${name}`);
+      dataObj.namesMap = dataObj.namesMap
+        .map((name, i) => [name, compNamesMap[i]])
+        .flat();
     }
     return dataObj;
   }, [props.data, props.compData]);
