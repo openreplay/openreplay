@@ -1,0 +1,21 @@
+{
+  "name": "recorder",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.844.0",
+    "@confluentinc/kafka-javascript": "^1.4.0",
+    "commander": "^14.0.0",
+    "dotenv": "^17.2.0",
+    "execa": "^9.6.0",
+    "ffmpeg-static": "^5.2.0",
+    "playwright": "^1.52.0"
+  }
+}
