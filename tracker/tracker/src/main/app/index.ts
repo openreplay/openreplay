@@ -1350,7 +1350,7 @@ export default class App {
     while (this.bufferedMessages1.length > 0) {
       await this.flushBuffer(this.bufferedMessages1)
     }
-    this.postToWorker([['q_end']] as unknown as Message[])
+    this.postToWorker([[-1]] as unknown as Message[])
     this.clearBuffers()
   }
 

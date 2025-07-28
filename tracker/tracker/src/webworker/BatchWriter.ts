@@ -99,7 +99,7 @@ export default class BatchWriter {
 
   writeMessage(message: Message) {
     // @ts-ignore
-    if (message[0] === 'q_end') {
+    if (message[0] === -1) {
       this.finaliseBatch()
       return this.onOfflineEnd()
     }
