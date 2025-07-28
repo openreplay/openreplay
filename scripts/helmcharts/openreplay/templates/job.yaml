@@ -335,9 +335,23 @@ spec:
           - name: CHART_APP_VERSION
             value: "{{ .Chart.AppVersion }}"
           - name: MINIO_ACCESS_KEY
-            value: "{{ .Values.minio.global.minio.accessKey }}"
+            {{- if .Values.global.s3.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.s3.existingSecret }}
+                key: access-key
+            {{- else }}
+            value: {{ .Values.global.s3.accessKey }}
+            {{- end }}
           - name: MINIO_SECRET_KEY
-            value: "{{ .Values.minio.global.minio.secretKey }}"
+            {{- if .Values.global.s3.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.s3.existingSecret }}
+                key: secret-key
+            {{- else }}
+            value: {{ .Values.global.s3.secretKey }}
+            {{- end }}
           - name: MINIO_HOST
             value: "{{ .Values.global.s3.endpoint }}"
         command: 
