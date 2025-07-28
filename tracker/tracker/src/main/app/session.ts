@@ -111,15 +111,16 @@ export default class Session {
   }
 
   getSessionToken(projectKey?: string): string | undefined {
-    const token = this.token || this.app.sessionStorage.getItem(this.options.session_token_key)
-    if (projectKey && token) {
-      const savedProject = token.split('_&_')[1]
+    const tokenWithProject = this.token || this.app.sessionStorage.getItem(this.options.session_token_key)
+    if (projectKey && tokenWithProject) {
+      const savedProject = tokenWithProject.split('_&_')[1]
       if (!savedProject || savedProject !== projectKey) {
         this.app.sessionStorage.removeItem(this.options.session_token_key)
         this.token = undefined
         return undefined
       }
     }
+    const token = tokenWithProject ? tokenWithProject.split('_&_')[0] : null
     return token || undefined
   }
 
