@@ -87,22 +87,22 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	}
 	offset := (page - 1) * limit
 
-	ef, en := BuildEventConditions(
+	ef, _ := BuildEventConditions(
 		p.Series[0].Filter.Filters,
 		BuildConditionsOptions{DefinedColumns: mainColumns},
 	)
 	conds := []string{
 		"`$event_name` = 'ERROR'",
-		fmt.Sprintf("project_id = %d", p.ProjectId),
-		fmt.Sprintf("created_at >= toDateTime(%d/1000)", startMs),
-		fmt.Sprintf("created_at <= toDateTime(%d/1000)", endMs),
+		fmt.Sprintf("e.project_id = %d", p.ProjectId),
+		fmt.Sprintf("e.created_at >= toDateTime(%d/1000)", startMs),
+		fmt.Sprintf("e.created_at <= toDateTime(%d/1000)", endMs),
+		fmt.Sprintf("JSONExtractString(toString(e.`$properties`), 'source') = '%s'", "js_exception"),
+		fmt.Sprintf("JSONExtractString(toString(e.`$properties`), 'message') != '%s'", "Script error."),
 	}
 	if len(ef) > 0 {
 		conds = append(conds, ef...)
 	}
-	if len(en) > 0 {
-		conds = append(conds, "`$event_name` IN ("+buildInClause(en)+")")
-	}
+
 	whereClause := strings.Join(conds, " AND ")
 
 	sql := fmt.Sprintf(`WITH
@@ -114,7 +114,7 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
             distinct_id,
             session_id,
             created_at
-        FROM product_analytics.events
+        FROM product_analytics.events as e
         WHERE %s
     ),
     sessions_per_interval AS (
