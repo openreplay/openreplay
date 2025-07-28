@@ -138,13 +138,19 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 
 	// Build event filter conditions with error handling
 	durConds, _ := BuildDurationWhere(s.Filter.Filters)
-	sessFilters, _ := FilterOutTypes(s.Filter.Filters, []model.FilterType{FilterDuration, FilterUserAnonymousId})
 
-	eventConditions, otherConds := BuildEventConditions(sessFilters, BuildConditionsOptions{
+	eventConditions, otherConds := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "main",
 		EventsOrder:    string(s.Filter.EventsOrder),
 	})
+
+	// Check if we should skip events table
+	skipEventsTable := r.MetricOf == string(MetricOfTableUserId) && len(eventConditions) == 0 && len(otherConds) == 0
+
+	if skipEventsTable {
+		return t.buildSimplifiedQuery(r, metricFormat, durConds)
+	}
 
 	prewhereParts := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, otherConds)
 	sessionConditions := t.buildSessionConditions(r, metricFormat, durConds)
@@ -264,6 +270,57 @@ LIMIT %d OFFSET %d`,
 	return query, nil
 }
 
+func (t *TableQueryBuilder) buildSimplifiedQuery(r *Payload, metricFormat string, durConds []string) (string, error) {
+	// Get property selector for user_id
+	propSel, ok := propertySelectorMap[r.MetricOf]
+	if !ok {
+		// Fallback for MetricOfTableUserId - should typically be available in propertySelectorMap
+		propSel = "user_id"
+	}
+
+	// Remove "main." prefix if present since we're querying sessions table directly
+	propSel = strings.ReplaceAll(propSel, "main.", "")
+
+	// Build session conditions without duration conditions for now (you may need to adapt this)
+	sessionConditions := t.buildSessionConditions(r, metricFormat, durConds)
+
+	// Determine aggregation column
+	distinctColumn := "session_id"
+	if metricFormat == MetricFormatUserCount {
+		distinctColumn = "if(empty(user_id), toString(user_uuid), user_id)"
+	}
+
+	pagination := t.calculatePagination(r.Page, r.Limit)
+
+	// Build simplified query that only uses sessions table
+	baseSelectParts := []string{
+		fmt.Sprintf("COUNT(DISTINCT %s) OVER () AS main_count", propSel),
+		fmt.Sprintf("%s AS name", propSel),
+		fmt.Sprintf("count(DISTINCT %s) AS total", distinctColumn),
+		fmt.Sprintf("COALESCE(SUM(count(DISTINCT %s)) OVER (), 0) AS total_count", distinctColumn),
+	}
+
+	query := fmt.Sprintf(`
+SELECT %s
+FROM (SELECT DISTINCT ON (session_id) *
+      FROM experimental.sessions AS s
+      WHERE %s
+      ORDER BY _timestamp DESC) AS sessions
+GROUP BY %s
+ORDER BY total DESC
+LIMIT %d OFFSET %d`,
+		strings.Join(baseSelectParts, ",\n       "),
+		strings.Join(sessionConditions, " AND "),
+		propSel,
+		pagination.Limit,
+		pagination.Offset,
+	)
+
+	logQuery(fmt.Sprintf("TableQueryBuilder.buildSimplifiedQuery: %s", query))
+
+	return query, nil
+}
+
 func (t *TableQueryBuilder) buildJoinClause(eventsOrder model.EventOrder, eventConditions []string) (string, error) {
 	switch eventsOrder {
 	case "then":
@@ -333,8 +390,6 @@ func (t *TableQueryBuilder) buildPrewhereConditions(r *Payload, eventsOrder mode
 // buildSessionConditions constructs the session conditions for the sessions query
 func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat string, durConds []string) []string {
 	sessionConditions := make([]string, 0, 6+len(durConds))
-
-	// Add core session conditions
 	sessionConditions = append(sessionConditions, t.buildTimeRangeConditions("s", r.ProjectId, r.StartTimestamp, r.EndTimestamp)...)
 	sessionConditions = append(sessionConditions, "isNotNull(s.duration)")
 

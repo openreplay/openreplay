@@ -141,7 +141,8 @@ func BuildEventConditions(filters []model.Filter, options ...BuildConditionsOpti
 	}
 
 	for _, f := range filters {
-		if f.Type == FilterDuration {
+		// skip session table filters from BuildEventConditions
+		if f.Type == FilterDuration || f.Type == FilterUserAnonymousId || f.Type == FilterUserDevice {
 			continue
 		}
 		conds, _ := addFilter(f, opts)
@@ -163,12 +164,31 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, nam
 	if f.IsEvent && len(f.Filters) > 0 {
 		var parts []string
 		parts = append(parts, fmt.Sprintf("%s`$event_name` = '%s'", alias, f.Name))
+
+		// Collect all sub-conditions
+		var subConditions []string
 		for _, sub := range f.Filters {
 			subConds, _ := addFilter(sub, opts)
 			if len(subConds) > 0 {
-				parts = append(parts, "("+strings.Join(subConds, " AND ")+")")
+				subConditions = append(subConditions, strings.Join(subConds, " AND "))
 			}
 		}
+
+		// Join sub-conditions based on PropertyOrder
+		if len(subConditions) > 0 {
+			operator := "AND" // default
+			if f.PropertyOrder == "or" {
+				operator = "OR"
+			}
+
+			if len(subConditions) == 1 {
+				parts = append(parts, "("+subConditions[0]+")")
+			} else {
+				joinedSubConditions := strings.Join(subConditions, " "+operator+" ")
+				parts = append(parts, "("+joinedSubConditions+")")
+			}
+		}
+
 		conds = []string{"(" + strings.Join(parts, " AND ") + ")"}
 		return
 	}
@@ -177,6 +197,7 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, nam
 	if !ok {
 		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: false}
 	}
+
 	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
 
 	switch f.Operator {
