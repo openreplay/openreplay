@@ -35,4 +35,8 @@ i18n.on('languageChanged', (lng) => {
   localStorage.setItem('i18nextLng', lng);
 });
 
+i18n.on('missingKey', (_lngs, ns, key) => {
+  console.warn(`⚠️  ${ns}:${key} is missing`);
+});
+
 export default i18n;
