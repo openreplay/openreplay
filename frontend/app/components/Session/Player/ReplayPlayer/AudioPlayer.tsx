@@ -11,14 +11,19 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useTranslation } from 'react-i18next';
+import { canAutoplay } from './utils';
 
 function DropdownAudioPlayer({
   audioEvents,
 }: {
-  audioEvents: { payload: Record<any, any>; timestamp: number }[];
+  audioEvents: {
+    payload: { url: string; timestamp: number };
+    timestamp: number;
+  }[];
 }) {
+  const [hasInteractionError, setHasInteractionError] = useState(false);
   const { t } = useTranslation();
-  const { store } = useContext(PlayerContext);
+  const { store, player } = useContext(PlayerContext);
   const [isVisible, setIsVisible] = useState(false);
   const [volume, setVolume] = useState(35);
   const [delta, setDelta] = useState(0);
@@ -49,6 +54,11 @@ function DropdownAudioPlayer({
   );
 
   React.useEffect(() => {
+    canAutoplay().then((canPlay) => {
+      if (!canPlay) {
+        setHasInteractionError(true);
+      }
+    });
     Object.entries(audioRefs.current).forEach(([url, audio]) => {
       if (audio) {
         audio.loop = false;
@@ -149,7 +159,15 @@ function DropdownAudioPlayer({
           }
           if (time >= file.start) {
             if (audio.paused && playing) {
-              audio.play();
+              audio
+                .play()
+                .then(() => {
+                  return; // all good
+                })
+                .catch((e) => {
+                  setHasInteractionError(true);
+                  console.error('Has to interact error', e);
+                });
             }
           } else {
             audio.pause();
@@ -159,6 +177,12 @@ function DropdownAudioPlayer({
     });
     lastPlayerTime.current = time + deltaMs;
   }, [time, delta]);
+
+  useEffect(() => {
+    if (hasInteractionError) {
+      player.pause();
+    }
+  }, [hasInteractionError, time]);
 
   useEffect(() => {
     Object.values(audioRefs.current).forEach((audio) => {
@@ -193,10 +217,28 @@ function DropdownAudioPlayer({
     setVolume(isMuted ? 0 : volume);
   }, [playing]);
 
+  const onInteract = () => {
+    if (hasInteractionError) {
+      setHasInteractionError(false);
+      player.jump(0);
+      player.play();
+    }
+  };
+
   const buttonIcon =
     'px-2 cursor-pointer border border-gray-light hover:border-main hover:text-main hover:z-10 h-fit';
   return (
     <div className="relative">
+      {hasInteractionError ? (
+        <div
+          className="fixed h-screen w-screen bottom-0 left-0 z-50 bg-gray-lighter opacity-70 cursor-pointer"
+          onClick={onInteract}
+        >
+          <div className="flex items-center justify-center h-full">
+            <div className="text-black">{t('Click to resume replay.')}</div>
+          </div>
+        </div>
+      ) : null}
       <div className="flex items-center" style={{ height: 24 }}>
         <Popover
           trigger="click"
