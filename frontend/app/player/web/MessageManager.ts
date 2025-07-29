@@ -24,6 +24,8 @@ import Screen, {
 import type { InitialLists } from './Lists';
 import type { SkipInterval } from './managers/ActivityManager';
 
+import HookManager from './managers/HookManager';
+
 interface RawList {
   event: Record<string, any>[] & { tabId: string | null };
   frustrations: Record<string, any>[] & { tabId: string | null };
@@ -143,6 +145,8 @@ export default class MessageManager {
   private activeTab = '';
   private ignoreDomOnInactivity = false;
 
+  private hookManager = new HookManager();
+
   constructor(
     private session: SessionFilesInfo,
     private readonly state: Store<State & { time: number }>,
@@ -166,6 +170,11 @@ export default class MessageManager {
     if (inactivitySetting === 'true') {
       this.ignoreDomOnInactivity = true;
     }
+
+    this.hookManager.setTypes([
+      { tp: MType.SetPageLocation, name: 'LOCATION', attrKey: 'url' },
+      { tp: MType.SetPageLocationDeprecated, name: 'LOCATION', attrKey: 'url' },
+    ]);
   }
 
   private virtualMode = false;
@@ -352,6 +361,7 @@ export default class MessageManager {
         );
       }
     });
+    void this.hookManager.moveReady(t);
     if (
       this.waitingForFiles ||
       (this.lastMessageTime <= t && t < this.session.durationMs)
@@ -393,6 +403,7 @@ export default class MessageManager {
   distributeMessage = (msg: Message & { tabId: string }): void => {
     // @ts-ignore placeholder msg for timestamps
     if (msg.tp === 9999) return;
+    this.hookManager.append(msg);
     if (msg.tp === MType.SetNodeAttribute) {
       if (msg.value.includes('_$OPENREPLAY_SPRITE$_')) {
         this.createSpriteMap();

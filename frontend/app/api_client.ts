@@ -210,15 +210,11 @@ export default class APIClient {
       !path.includes('/sessions') &&
       (path.includes('/cards') || path.includes('/dashboards'))
     ) {
-      edp = isDev
-        ? 'http://localhost:8080/v1'
-        : edp.replace('/api', '/analytics/v1');
+      edp = edp.replace('/api', '/analytics/v1');
     }
 
     if (path.includes('/sessions/search')) {
-      edp = isDev
-        ? 'http://localhost:8080/v1'
-        : edp.replace('/api', '/analytics/v1');
+      edp = edp.replace('/api', '/analytics/v1');
     }
 
     if (noChalice && !edp.includes('api.openreplay.com')) {

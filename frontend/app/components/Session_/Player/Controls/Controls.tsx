@@ -224,8 +224,20 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
   const events = session.stackEvents ?? [];
 
   if (fullView) {
+    const highlightTimer = new URLSearchParams(window.location.search).get(
+      'timer',
+    );
+
     return (
-      <div className="absolute bottom-1 left-1 z-50 flex items-center font-semibold">
+      <div
+        className={cn(
+          'absolute bottom-1 left-1 z-50 flex items-center font-semibold',
+          highlightTimer
+            ? 'p-1 rounded-lg border-2 border-black bg-red text-white'
+            : '',
+        )}
+        data-test-id="timer"
+      >
         <ReduxTime isCustom name="time" format="mm:ss" />
         <span className="px-1">/</span>
         <ReduxTime isCustom name="endTime" format="mm:ss" />
