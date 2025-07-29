@@ -1566,14 +1566,13 @@ export default class App {
         this.clearBuffers()
         this.commit()
         /** --------------- COLD START BUFFER ------------------*/
-      } else {
-        if (this.insideIframe && this.rootId) {
-          this.observer.crossdomainObserve(this.rootId, this.frameOderNumber)
-        } else {
-          this.observer.observe()
-        }
-        this.ticker.start()
       }
+      if (this.insideIframe && this.rootId) {
+        this.observer.crossdomainObserve(this.rootId, this.frameOderNumber)
+      } else {
+        this.observer.observe()
+      }
+      this.ticker.start()
       this.canvasRecorder?.startTracking()
 
       if (this.features['usability-test'] && !this.insideIframe) {
