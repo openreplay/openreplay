@@ -190,6 +190,7 @@ function DropdownAudioPlayer({
         audio.muted = isMuted;
       }
     });
+    setVolume(isMuted ? 0 : volume);
   }, [isMuted]);
 
   useEffect(() => {
@@ -214,7 +215,6 @@ function DropdownAudioPlayer({
         }
       }
     });
-    setVolume(isMuted ? 0 : volume);
   }, [playing]);
 
   const onInteract = () => {
