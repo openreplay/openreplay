@@ -142,9 +142,10 @@ func BuildEventConditions(filters []model.Filter, options ...BuildConditionsOpti
 
 	for _, f := range filters {
 		// skip session table filters from BuildEventConditions
-		if f.Type == FilterDuration || f.Type == FilterUserAnonymousId || f.Type == FilterUserDevice {
+		if f.Type == FilterDuration || f.Type == FilterUserAnonymousId {
 			continue
 		}
+
 		conds, _ := addFilter(f, opts)
 		if f.IsEvent {
 			eventConds = append(eventConds, conds...)
@@ -488,7 +489,12 @@ func eventNameCondition(table, metricOf string) string {
 	}
 }
 
-func BuildDurationWhere(filters []model.Filter) ([]string, []model.Filter) {
+func BuildDurationWhere(filters []model.Filter, tableAlias ...string) ([]string, []model.Filter) {
+	alias := "sessions"
+	if len(tableAlias) > 0 && tableAlias[0] != "" {
+		alias = tableAlias[0]
+	}
+
 	var conds []string
 	var rest []model.Filter
 	for _, f := range filters {
@@ -497,18 +503,18 @@ func BuildDurationWhere(filters []model.Filter) ([]string, []model.Filter) {
 			if len(v) == 1 {
 				if v[0] != "" {
 					if d, err := strconv.ParseInt(v[0], 10, 64); err == nil {
-						conds = append(conds, fmt.Sprintf("sessions.duration >= %d", d))
+						conds = append(conds, fmt.Sprintf("%s.duration >= %d", alias, d))
 					}
 				}
 			} else if len(v) >= 2 {
 				if v[0] != "" {
 					if d, err := strconv.ParseInt(v[0], 10, 64); err == nil {
-						conds = append(conds, fmt.Sprintf("sessions.duration >= %d", d))
+						conds = append(conds, fmt.Sprintf("%s.duration >= %d", alias, d))
 					}
 				}
 				if v[1] != "" {
 					if d, err := strconv.ParseInt(v[1], 10, 64); err == nil {
-						conds = append(conds, fmt.Sprintf("sessions.duration <= %d", d))
+						conds = append(conds, fmt.Sprintf("%s.duration <= %d", alias, d))
 					}
 				}
 			}
