@@ -21,6 +21,7 @@ apscheduler==3.11.0
 #--no-binary is used to avoid libxml2 library version incompatibilities between xmlsec and lxml
 python3-saml==1.16.0
 --no-binary=lxml
+--no-binary=xmlsec
 python-multipart==0.0.20
 
 redis==5.2.1
