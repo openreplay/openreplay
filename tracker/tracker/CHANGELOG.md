@@ -1,3 +1,7 @@
+## 16.4.3
+
+- fixing token parser in session.ts
+
 ## 16.4.2
 
 - fixing for multitab capture on different project ids
