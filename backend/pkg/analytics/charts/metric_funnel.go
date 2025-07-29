@@ -140,27 +140,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		stageColumns[i] = fmt.Sprintf("coalesce(SUM(S%d), 0) AS stage%d", i+1, i+1)
 	}
 
-	tColumns := make([]string, len(stages))
-
-	stage1Condition := findEventConditionForStage(eventConditions, stages[0])
-	tColumns[0] = fmt.Sprintf("anyIf(1, %s) AS S1", stage1Condition)
-
-	for i := 1; i < len(stages); i++ {
-		patternParts := make([]string, i+1)
-		for j := 0; j <= i; j++ {
-			patternParts[j] = fmt.Sprintf("(?%d)", j+1)
-		}
-		pattern := fmt.Sprintf("'%s'", strings.Join(patternParts, ""))
-
-		var sequenceConditions []string
-		for j := 0; j <= i; j++ {
-			stageCondition := findEventConditionForStage(eventConditions, stages[j])
-			sequenceConditions = append(sequenceConditions, stageCondition)
-		}
-
-		tColumns[i] = fmt.Sprintf("sequenceMatch(%s)(toDateTime(e.created_at), %s) AS S%d",
-			pattern, strings.Join(sequenceConditions, ", "), i+1)
-	}
+	tColumns := buildTColumns(stages, eventConditions)
 
 	baseWhere := []string{
 		fmt.Sprintf("e.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
@@ -223,6 +203,41 @@ func findEventConditionForStage(eventConditions []string, stageName string) stri
 		}
 	}
 	return fmt.Sprintf("`$event_name` = '%s'", stageName)
+}
+
+func buildTColumns(stages []string, eventConditions []string) []string {
+	tColumns := make([]string, len(stages))
+
+	// First stage uses anyIf
+	stage1Condition := findEventConditionForStage(eventConditions, stages[0])
+	tColumns[0] = fmt.Sprintf("anyIf(1, %s) AS S1", stage1Condition)
+
+	// Subsequent stages use sequenceMatch
+	for i := 1; i < len(stages); i++ {
+		pattern := buildSequencePattern(i + 1)
+		sequenceConditions := buildSequenceConditions(stages[:i+1], eventConditions)
+
+		tColumns[i] = fmt.Sprintf("sequenceMatch(%s)(toDateTime(e.created_at), %s) AS S%d",
+			pattern, strings.Join(sequenceConditions, ", "), i+1)
+	}
+
+	return tColumns
+}
+
+func buildSequencePattern(stageCount int) string {
+	patternParts := make([]string, stageCount)
+	for i := 0; i < stageCount; i++ {
+		patternParts[i] = fmt.Sprintf("(?%d)", i+1)
+	}
+	return fmt.Sprintf("'%s'", strings.Join(patternParts, ""))
+}
+
+func buildSequenceConditions(stages []string, eventConditions []string) []string {
+	sequenceConditions := make([]string, len(stages))
+	for i, stage := range stages {
+		sequenceConditions[i] = findEventConditionForStage(eventConditions, stage)
+	}
+	return sequenceConditions
 }
 
 func formatEventNames(stages []string) string {
