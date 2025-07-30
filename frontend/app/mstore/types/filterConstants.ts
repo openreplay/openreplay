@@ -84,6 +84,12 @@ export const OPERATORS = {
       displayName: 'Is not blank',
       description: 'Is not empty or null',
     },
+    {
+      value: 'regex',
+      label: 'regex',
+      displayName: 'Regex',
+      description: 'Matches the regex pattern',
+    },
   ],
 
   int: [
