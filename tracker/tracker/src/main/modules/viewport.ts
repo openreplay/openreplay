@@ -2,16 +2,24 @@ import type App from '../app/index.js'
 import { getTimeOrigin } from '../utils.js'
 import { SetPageLocation, SetViewportSize, SetPageVisibility } from '../app/messages.gen.js'
 
-export default function (app: App): void {
+export interface Options {
+  urlSanitizer?: (url: string) => string
+  titleSanitizer?: (title: string) => string
+}
+
+export default function (app: App, options?: Options): void {
   let url: string | null, width: number, height: number
   let navigationStart: number
   let referrer = document.referrer
+  const urlSanitizer = options?.urlSanitizer || ((u) => u)
+  const titleSanitizer = options?.titleSanitizer || ((t) => t)
 
   const sendSetPageLocation = app.safe(() => {
     const { URL } = document
     if (URL !== url) {
-      url = URL
-      app.send(SetPageLocation(url, referrer, navigationStart, document.title))
+      url = urlSanitizer(URL)
+      const title = titleSanitizer(document.title)
+      app.send(SetPageLocation(url, referrer, navigationStart, title))
       navigationStart = 0
       referrer = url
     }
