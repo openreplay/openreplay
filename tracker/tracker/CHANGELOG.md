@@ -6,12 +6,17 @@
   - better support for `<slot>` components
   - initial support for web animation API  (end frame state for now)
 
-- add incident events for tracker
+- add incident events for
+
 ```js
 import { tracker } from '@openreplay/tracker'
 
 // call incident function and pass label, startTime, and endTime (label and endTime are optional)
 tracker.incident({ label: 'incident', startTime: Date.now() })
+
+## 16.4.3
+
+- fixing token parser
 
 ```
 ## 16.4.2
