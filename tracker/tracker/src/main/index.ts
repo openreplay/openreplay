@@ -46,6 +46,7 @@ import type { SessionInfo } from './app/session.js'
 import type { CssRulesOptions } from './modules/cssrules.js'
 import type { LATOptions } from './modules/longAnimationTask.js'
 import type { Options as WapOptions } from './modules/webAnimations.js'
+import type { Options as ViewportOptions } from './modules/viewport.js'
 
 import type { StartOptions } from './app/index.js'
 //TODO: unique options init
@@ -75,6 +76,7 @@ export type Options = Partial<
   __DISABLE_SECURE_MODE?: boolean
   css: CssRulesOptions
   webAnimations?: WapOptions
+  urls?: Partial<ViewportOptions>
 }
 
 const DOCS_SETUP = '/en/sdk'
@@ -195,7 +197,7 @@ export default class API {
     this.app = app
     if (!this.crossdomainMode) {
       // no need to send iframe viewport data since its a node for us
-      Viewport(app)
+      Viewport(app, options.urls)
       // calculated in main window
       Connection(app)
       // while we can calculate it here, trying to compute it for all parts is hard
