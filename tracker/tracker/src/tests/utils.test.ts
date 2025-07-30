@@ -14,7 +14,108 @@ import {
   ngSafeBrowserMethod,
   requestIdleCb,
   inIframe,
+  canAccessTarget,
+  createEventListener,
+  deleteEventListener,
+  simpleMerge,
+  throttleWithTrailing,
 } from '../main/utils.js'
+
+afterEach(() => {
+  jest.useRealTimers()
+})
+
+describe('canAccessTarget', () => {
+  test('returns false when access throws SecurityError', () => {
+    const iframe = document.createElement('iframe')
+    Object.defineProperty(iframe, 'contentDocument', {
+      get: () => {
+        throw new DOMException('denied', 'SecurityError')
+      },
+    })
+    expect(canAccessTarget(iframe)).toBe(false)
+  })
+
+  test('returns true when target is accessible', () => {
+    const iframe = document.createElement('iframe')
+    Object.defineProperty(iframe, 'contentDocument', {
+      get: () => document,
+    })
+    expect(canAccessTarget(iframe)).toBe(true)
+  })
+})
+
+describe('createEventListener/deleteEventListener', () => {
+  test('attaches and detaches listener', () => {
+    const div = document.createElement('div')
+    const handler = jest.fn()
+
+    createEventListener(div, 'click', handler)
+    div.dispatchEvent(new Event('click'))
+    expect(handler).toHaveBeenCalledTimes(1)
+
+    deleteEventListener(div, 'click', handler)
+    div.dispatchEvent(new Event('click'))
+    expect(handler).toHaveBeenCalledTimes(1)
+  })
+
+  test('does nothing if target cannot be accessed', () => {
+    const iframe = document.createElement('iframe')
+    Object.defineProperty(iframe, 'contentDocument', {
+      get: () => {
+        throw new DOMException('blocked', 'SecurityError')
+      },
+    })
+    const spy = jest.spyOn(iframe, 'addEventListener')
+    createEventListener(iframe, 'load', jest.fn())
+    expect(spy).not.toHaveBeenCalled()
+  })
+})
+
+describe('simpleMerge', () => {
+  test('merges objects recursively without mutating defaults', () => {
+    const defaults = { a: 1, b: { c: 2, d: 3 } }
+    const given = { b: { c: 5 }, e: 6 } as any
+
+    const result = simpleMerge(defaults, given)
+
+    expect(result).toEqual({ a: 1, b: { c: 5, d: 3 }, e: 6 })
+    expect(defaults).toEqual({ a: 1, b: { c: 2, d: 3 } })
+  })
+})
+
+describe('throttleWithTrailing', () => {
+  test('executes trailing call with last arguments', () => {
+    jest.useFakeTimers()
+    const fn = jest.fn()
+    const throttled = throttleWithTrailing<string, [number]>(fn, 50)
+
+    throttled('a', 1)
+    throttled('a', 2)
+
+    expect(fn).toHaveBeenCalledTimes(1)
+    expect(fn).toHaveBeenCalledWith('a', 1)
+
+    jest.advanceTimersByTime(60)
+
+    expect(fn).toHaveBeenCalledTimes(2)
+    expect(fn).toHaveBeenLastCalledWith('a', 2)
+  })
+
+  test('clear prevents pending trailing call', () => {
+    jest.useFakeTimers()
+    const fn = jest.fn()
+    const throttled = throttleWithTrailing(fn, 50)
+
+    throttled('a')
+    throttled('a')
+
+    throttled.clear()
+    jest.advanceTimersByTime(60)
+
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
+})
 
 describe('adjustTimeOrigin', () => {
   test('adjusts the time origin based on performance.now', () => {
