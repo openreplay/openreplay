@@ -41,6 +41,7 @@ import type { Options as NetworkOptions } from './modules/network.js'
 import type { MouseHandlerOptions } from './modules/mouse.js'
 import type { SessionInfo } from './app/session.js'
 import type { CssRulesOptions } from './modules/cssrules.js'
+import type { Options as ViewportOptions } from './modules/viewport.js'
 
 import type { StartOptions } from './app/index.js'
 //TODO: unique options init
@@ -63,6 +64,7 @@ export type Options = Partial<
   // dev only
   __DISABLE_SECURE_MODE?: boolean
   css: CssRulesOptions
+  urls?: Partial<ViewportOptions>
 }
 
 const DOCS_SETUP = '/en/sdk'
@@ -183,7 +185,7 @@ export default class API {
     this.app = app
     if (!this.crossdomainMode) {
       // no need to send iframe viewport data since its a node for us
-      Viewport(app)
+      Viewport(app, options.urls)
       // calculated in main window
       Connection(app)
       // while we can calculate it here, trying to compute it for all parts is hard

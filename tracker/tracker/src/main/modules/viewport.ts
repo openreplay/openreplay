@@ -3,19 +3,27 @@ import { getTimeOrigin } from '../utils.js'
 import { SetPageLocation, SetViewportSize, SetPageVisibility } from '../app/messages.gen.js'
 import { stringWiper } from '../app/sanitizer.js'
 
-export default function (app: App): void {
+export interface Options {
+  urlSanitizer?: (url: string) => string
+  titleSanitizer?: (title: string) => string
+}
+
+export default function (app: App, options?: Options): void {
   let url: string | null, width: number, height: number
   let navigationStart: number
   let referrer = document.referrer
+  const urlSanitizer = options?.urlSanitizer || ((u) => u)
+  const titleSanitizer = options?.titleSanitizer || ((t) => t)
 
   const sendSetPageLocation = app.safe(() => {
     const { URL } = document
     if (URL !== url) {
-      url = URL
-      const safeTitle = app.sanitizer.privateMode ? stringWiper(document.title) : document.title
+      url = urlSanitizer(URL)
+      const safeTitle = app.sanitizer.privateMode ? stringWiper(document.title) : titleSanitizer(document.title)
       const safeUrl = app.sanitizer.privateMode ? stringWiper(url) : url
       const safeReferrer = app.sanitizer.privateMode ? stringWiper(referrer) : referrer
       app.send(SetPageLocation(safeUrl, safeReferrer, navigationStart, safeTitle))
+
       navigationStart = 0
       referrer = url
     }
