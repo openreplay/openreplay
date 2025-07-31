@@ -6,7 +6,7 @@
     },
     "tracker": {
       "name": "@openreplay/tracker",
-      "version": "16.4.2",
+      "version": "16.4.3",
       "dependencies": {
         "@openreplay/network-proxy": "^1.2.0",
         "error-stack-parser": "^2.1.4",

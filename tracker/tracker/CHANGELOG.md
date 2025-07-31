@@ -14,6 +14,11 @@ import { tracker } from '@openreplay/tracker'
 // call incident function and pass label, startTime, and endTime (label and endTime are optional)
 tracker.incident({ label: 'incident', startTime: Date.now() })
 
+## 16.4.4
+
+- fixing network duplication
+- new `urls` field for constructor to sanitize recorded page urls and titles
+
 ## 16.4.3
 
 - fixing token parser
