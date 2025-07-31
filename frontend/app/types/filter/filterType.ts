@@ -184,6 +184,7 @@ export enum FilterType {
   STRING = 'string',
   NUMBER = 'number',
   DOUBLE = 'double',
+  FLOAT = 'float',
   INTEGER = 'int',
   ISSUE = 'ISSUE',
   BOOLEAN = 'bool',

@@ -139,6 +139,8 @@ function FilterValue(props: Props) {
     [filter, onUpdate],
   );
 
+  console.log('filter.dataType', filter.dataType);
+
   // Render different input types based on filter data type
   switch (filter.dataType) {
     case FilterType.STRING:
@@ -166,6 +168,7 @@ function FilterValue(props: Props) {
     case FilterType.NUMBER:
     case FilterType.INTEGER:
     case FilterType.DOUBLE:
+    case FilterType.FLOAT:
       return (
         <Input
           type="number"
