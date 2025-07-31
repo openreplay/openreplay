@@ -139,12 +139,12 @@ export function getResourceFromResourceTiming(
   sessStart: number,
 ) {
   // duration might be duration=0 when cached
-  const failed =
-    msg.duration === 0 &&
-    msg.ttfb === 0 &&
-    msg.headerSize === 0 &&
-    msg.encodedBodySize === 0 &&
-    msg.transferredSize === 0;
+  (msg.transferredSize === 0 && msg.duration > 0) ||
+    (msg.duration === 0 &&
+      msg.ttfb === 0 &&
+      msg.headerSize === 0 &&
+      msg.encodedBodySize === 0 &&
+      msg.transferredSize === 0);
   const type = getResourceType(msg.initiator, msg.url);
   return Resource({
     ...msg,
