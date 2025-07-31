@@ -11,10 +11,20 @@ export {
   RequestResponseData,
 };
 
-const getWarning = (api: string) => {
+const warn = (api: string) => {
   const str = `Openreplay: Can't find ${api} in global context.`;
   console.warn(str);
 };
+
+const OR_FLAG   = Symbol('OpenReplayProxyOriginal')
+const isProxied = (fn: any): fn is Function & { [OR_FLAG]: Function } =>
+  !!fn && fn[OR_FLAG] !== undefined
+const unwrap    = <T extends Function>(fn: T) =>
+  isProxied(fn) ? (fn as any)[OR_FLAG] as T : fn
+const wrap      = <T extends Function>(proxy: T, orig: Function) => {
+  (proxy as any)[OR_FLAG] = orig
+  return proxy
+}
 
 /**
  * Creates network proxies for XMLHttpRequest, fetch, and sendBeacon to intercept and monitor network requests and
@@ -56,44 +66,52 @@ export default function createNetworkProxy(
 ): void {
   if (!context) return;
   if (modules.xhr) {
-    if (context.XMLHttpRequest) {
-      context.XMLHttpRequest = XHRProxy.create(
-        ignoredHeaders,
-        setSessionTokenHeader,
-        sanitize,
-        sendMessage,
-        isServiceUrl,
-        tokenUrlMatcher,
-      );
-    } else {
-      getWarning("XMLHttpRequest");
+    const original = unwrap(context.XMLHttpRequest)
+    if (!original) warn('XMLHttpRequest')
+    else {
+      context.XMLHttpRequest = wrap(
+        XHRProxy.create(
+          ignoredHeaders,
+          setSessionTokenHeader,
+          sanitize,
+          sendMessage,
+          isServiceUrl,
+          tokenUrlMatcher,
+        ),
+        original,
+      )
     }
   }
   if (modules.fetch) {
-    if (context.fetch) {
-      context.fetch = FetchProxy.create(
-        ignoredHeaders,
-        setSessionTokenHeader,
-        sanitize,
-        sendMessage,
-        isServiceUrl,
-        tokenUrlMatcher,
-      );
-    } else {
-      getWarning("fetch");
+    const original = unwrap(context.fetch)
+    if (!original) warn('fetch')
+    else {
+      context.fetch = wrap(
+        FetchProxy.create(
+          ignoredHeaders,
+          setSessionTokenHeader,
+          sanitize,
+          sendMessage,
+          isServiceUrl,
+          tokenUrlMatcher,
+        ) as typeof context.fetch,
+        original,
+      )
     }
   }
-  if (modules.beacon) {
-    if (context.navigator?.sendBeacon) {
-      const origBeacon = context.navigator.sendBeacon
-      context.navigator.sendBeacon = BeaconProxy.create(
-        origBeacon,
+
+  if (modules.beacon && context.navigator?.sendBeacon) {
+    const original = unwrap(context.navigator.sendBeacon)
+    context.navigator.sendBeacon = wrap(
+      BeaconProxy.create(
+        original,
         ignoredHeaders,
         setSessionTokenHeader,
         sanitize,
         sendMessage,
         isServiceUrl,
-      );
-    }
+      ),
+      original,
+    )
   }
 }

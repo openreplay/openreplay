@@ -121,24 +121,7 @@ export default function (app: App, opts: Partial<Options>): void {
     if (shouldSkip) {
       return
     }
-    const failed = entry.responseEnd === 0
-                   || (entry.transferSize === 0 && entry.decodedBodySize === 0)
-    if (failed) {
-      app.send(
-        ResourceTiming(
-          entry.startTime + getTimeOrigin(),
-          0,
-          0,
-          0,
-          0,
-          0,
-          entry.name,
-          entry.initiatorType,
-          0,
-          true,
-        ),
-      )
-    }
+
     app.send(
       ResourceTiming(
         entry.startTime + getTimeOrigin(),
@@ -167,11 +150,9 @@ export default function (app: App, opts: Partial<Options>): void {
   let prevSessionID: string | undefined
   app.attachStartCallback(function ({ sessionID }) {
     if (sessionID !== prevSessionID) {
-      // Send past page resources on a newly started session
-      performance.getEntriesByType('resource').forEach(resourceTiming)
       prevSessionID = sessionID
     }
-    observer.observe({ entryTypes: ['resource'] })
+    observer.observe({ entryTypes: ['resource'], buffered: true })
     // browser support:
     // onCLS(): Chromium
     // onFCP(): Chromium, Firefox, Safari
