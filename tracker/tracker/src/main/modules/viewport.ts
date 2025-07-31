@@ -18,9 +18,10 @@ export default function (app: App, options?: Options): void {
   const sendSetPageLocation = app.safe(() => {
     const { URL } = document
     if (URL !== url) {
-      url = urlSanitizer(URL)
+      url = URL
+      const sanitized = urlSanitizer(url)
       const safeTitle = app.sanitizer.privateMode ? stringWiper(document.title) : titleSanitizer(document.title)
-      const safeUrl = app.sanitizer.privateMode ? stringWiper(url) : url
+      const safeUrl = app.sanitizer.privateMode ? stringWiper(sanitized) : sanitized
       const safeReferrer = app.sanitizer.privateMode ? stringWiper(referrer) : referrer
       app.send(SetPageLocation(safeUrl, safeReferrer, navigationStart, safeTitle))
 
