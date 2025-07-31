@@ -195,8 +195,9 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, nam
 	}
 
 	cfg, ok := propertyKeyMap[f.Name]
+	isNumeric := cfg.IsNumeric || f.DataType == "float" || f.DataType == "number" || f.DataType == "integer"
 	if !ok {
-		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: false}
+		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: isNumeric}
 	}
 
 	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
