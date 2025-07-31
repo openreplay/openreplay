@@ -122,9 +122,9 @@ export default class TabSessionManager {
         setTimeout(() => {
           this.state.update({
             vModeBadge: true,
-          })
-        }, 0)
-      }
+          });
+        }, 0);
+      },
     );
     this.lists = new Lists(initialLists);
     initialLists?.event?.forEach((e: Record<string, string>) => {
@@ -223,6 +223,8 @@ export default class TabSessionManager {
   }
 
   firstTitleSet = false;
+  private resourceIdx = new Map<string, any>();
+  private makeResKey = (url: string, ts: number) => `${url}|${ts}`;
 
   distributeMessage(msg: Message): void {
     if (this.lastMessageTs < msg.time) {
@@ -312,18 +314,30 @@ export default class TabSessionManager {
           msg.initiator !== ResourceType.FETCH &&
           msg.initiator !== ResourceType.XHR
         ) {
-          this.lists.lists.resource.insert(
-            getResourceFromResourceTiming(
-              msg as ResourceTiming,
-              this.sessionStart,
-            ),
+          const res = getResourceFromResourceTiming(
+            msg as ResourceTiming,
+            this.sessionStart,
           );
+          const key = this.makeResKey(res.url, res.timestamp || res.time);
+          if (this.resourceIdx.has(key)) return;
+          this.lists.lists.resource.insert(res);
+          this.resourceIdx.set(key, res);
         }
         break;
       case MType.NetworkRequest:
-        this.lists.lists.fetch.insert(
-          getResourceFromNetworkRequest(msg, this.sessionStart),
-        );
+        const req = getResourceFromNetworkRequest(msg, this.sessionStart);
+        const key = this.makeResKey(req.url, req.timestamp || req.time);
+        const twin = this.resourceIdx.get(key);
+        if (twin) {
+          const twinId = this.lists.lists.resource.list.findIndex(
+            (r) => r.url === twin.url && r.time === twin.time,
+          );
+          if (twinId !== -1) {
+            this.lists.lists.resource.list.splice(twinId, 1);
+          }
+          this.resourceIdx.delete(key);
+        }
+        this.lists.lists.fetch.insert(req);
         break;
       case MType.WsChannel:
         this.lists.lists.websocket.insert(msg);

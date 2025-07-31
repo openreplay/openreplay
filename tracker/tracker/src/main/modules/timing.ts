@@ -121,56 +121,33 @@ export default function (app: App, opts: Partial<Options>): void {
     if (shouldSkip) {
       return
     }
-    const failed = entry.initiatorType !== 'fetch'
-      ? entry.responseEnd === 0
-        || (entry.transferSize === 0 && entry.decodedBodySize === 0)
-        || (entry.responseStatus && entry.responseStatus >= 400)
-      : entry.responseStatus && entry.responseStatus >= 400
+    const failed =
+      entry.initiatorType !== 'fetch'
+        ? entry.responseEnd === 0 ||
+          (entry.transferSize === 0 && entry.decodedBodySize === 0) ||
+          (entry.responseStatus && entry.responseStatus >= 400)
+        : entry.responseStatus && entry.responseStatus >= 400
 
     // will probably require custom header added to responses for tracked fetch/xhr requests:
     // Timing-Allow-Origin: *
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Timing-Allow-Origin
-    let stalled = 0;
+    let stalled = 0
     if (entry.connectEnd && entry.connectEnd > entry.domainLookupEnd) {
       // Usual case stalled is time between connection establishment and request start
-      stalled = Math.max(0, entry.requestStart - entry.connectEnd);
+      stalled = Math.max(0, entry.requestStart - entry.connectEnd)
     } else {
       // Connection reuse case - stalled is time between domain lookup and request start
-      stalled = Math.max(0, entry.requestStart - entry.domainLookupEnd);
+      stalled = Math.max(0, entry.requestStart - entry.domainLookupEnd)
     }
     const timings = {
       queueing: entry.requestStart - entry.fetchStart,
       dnsLookup: entry.domainLookupEnd - entry.domainLookupStart,
       initialConnection: entry.connectEnd - entry.connectStart,
-      ssl: entry.secureConnectionStart > 0
-          ? entry.connectEnd - entry.secureConnectionStart : 0,
+      ssl: entry.secureConnectionStart > 0 ? entry.connectEnd - entry.secureConnectionStart : 0,
       ttfb: entry.responseStart - entry.requestStart,
       contentDownload: entry.responseEnd - entry.responseStart,
-      total: entry.duration ?? (entry.responseEnd - entry.startTime),
+      total: entry.duration ?? entry.responseEnd - entry.startTime,
       stalled,
-    };
-    if (failed) {
-      app.send(
-        ResourceTiming(
-          entry.startTime + getTimeOrigin(),
-          0,
-          timings.ttfb,
-          0,
-          0,
-          0,
-          entry.name,
-          entry.initiatorType,
-          0,
-          false,
-          timings.queueing,
-          timings.dnsLookup,
-          timings.initialConnection,
-          timings.ssl,
-          timings.contentDownload,
-          timings.total,
-          timings.stalled,
-        ),
-      )
     }
     app.send(
       ResourceTiming(
@@ -190,7 +167,7 @@ export default function (app: App, opts: Partial<Options>): void {
         timings.ssl,
         timings.contentDownload,
         timings.total,
-        timings.stalled
+        timings.stalled,
       ),
     )
   }
@@ -206,11 +183,9 @@ export default function (app: App, opts: Partial<Options>): void {
   let prevSessionID: string | undefined
   app.attachStartCallback(function ({ sessionID }) {
     if (sessionID !== prevSessionID) {
-      // Send past page resources on a newly started session
-      performance.getEntriesByType('resource').forEach(resourceTiming)
       prevSessionID = sessionID
     }
-    observer.observe({ entryTypes: ['resource'] })
+    observer.observe({ entryTypes: ['resource'], buffered: true })
     // browser support:
     // onCLS(): Chromium
     // onFCP(): Chromium, Firefox, Safari

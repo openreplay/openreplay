@@ -331,44 +331,6 @@ export const NetworkPanelComp = observer(
 
       // Heaviest operation here, will create a final merged network list
       const processData = async () => {
-        const fetchUrlMap: Record<string, number[]> = {};
-        const len = usedFetchList.length;
-        for (let i = 0; i < len; i++) {
-          const ft = usedFetchList[i] as any;
-          const key = `${ft.name}-${Math.round(ft.time / 10)}-${Math.round(ft.duration / 10)}`;
-          if (fetchUrlMap[key]) {
-            fetchUrlMap[key].push(i);
-          }
-          fetchUrlMap[key] = [i];
-        }
-
-        // We want to get resources that aren't in fetch list
-        const filteredResources = await processInChunks(
-          usedResourceList,
-          (chunk) => {
-            const clearChunk = [];
-            for (const res of chunk) {
-              const key = `${res.name}-${Math.floor(res.time / 10)}-${Math.floor(res.duration / 10)}`;
-              const possibleRequests = fetchUrlMap[key];
-              if (possibleRequests && possibleRequests.length) {
-                for (const i of possibleRequests) {
-                  usedFetchList[i].timings = res.timings;
-                }
-                fetchUrlMap[key] = [];
-              } else {
-                clearChunk.push(res);
-              }
-            }
-            return clearChunk;
-          },
-          // chunk.filter((res: any) => {
-          //   const key = `${res.name}-${Math.floor(res.time / 100)}-${Math.floor(res.duration / 100)}`;
-          //   return !fetchUrls.has(key);
-          // }),
-          BATCH_SIZE,
-          25,
-        );
-
         const processedSockets = socketListRef.current.map((ws: any) => ({
           ...ws,
           type: 'websocket',
@@ -381,7 +343,7 @@ export const NetworkPanelComp = observer(
         }));
 
         const mergedList: Timed[] = mergeListsWithZoom(
-          filteredResources as Timed[],
+          usedResourceList as Timed[],
           usedFetchList,
           processedSockets as Timed[],
           {
