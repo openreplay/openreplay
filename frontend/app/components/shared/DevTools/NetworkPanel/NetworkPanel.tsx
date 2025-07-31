@@ -433,22 +433,6 @@ export const NetworkPanelComp = observer(
 
       // Heaviest operation here, will create a final merged network list
       const processData = async () => {
-        const fetchUrls = new Set(
-          fetchList.map((ft) => {
-            return `${ft.name}-${Math.floor(ft.time / 100)}-${Math.floor(ft.duration / 100)}`;
-          }),
-        );
-
-        // We want to get resources that aren't in fetch list
-        const filteredResources = await processInChunks(resourceList, (chunk) =>
-          chunk.filter((res: any) => {
-            const key = `${res.name}-${Math.floor(res.time / 100)}-${Math.floor(res.duration / 100)}`;
-            return !fetchUrls.has(key);
-          }),
-          BATCH_SIZE,
-          25,
-        );
-
         const processedSockets = socketListRef.current.map((ws: any) => ({
           ...ws,
           type: 'websocket',
@@ -461,7 +445,7 @@ export const NetworkPanelComp = observer(
         }));
 
         const mergedList: Timed[] = mergeListsWithZoom(
-          filteredResources as Timed[],
+          resourceList as Timed[],
           fetchList,
           processedSockets as Timed[],
           { enabled: Boolean(zoomEnabled), start: zoomStartTs ?? 0, end: zoomEndTs ?? 0 }
