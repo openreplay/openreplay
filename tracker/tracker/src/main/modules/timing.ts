@@ -152,7 +152,7 @@ export default function (app: App, opts: Partial<Options>): void {
     if (sessionID !== prevSessionID) {
       prevSessionID = sessionID
     }
-    observer.observe({ entryTypes: ['resource'], buffered: true })
+    observer.observe({ type: 'resource', buffered: true })
     // browser support:
     // onCLS(): Chromium
     // onFCP(): Chromium, Firefox, Safari

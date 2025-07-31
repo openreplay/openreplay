@@ -1,3 +1,7 @@
+## 16.4.4
+
+- fixing network duplication
+
 ## 16.4.3
 
 - fixing token parser in session.ts
