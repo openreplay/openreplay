@@ -17,9 +17,10 @@ export default function (app: App, options?: Options): void {
   const sendSetPageLocation = app.safe(() => {
     const { URL } = document
     if (URL !== url) {
-      url = urlSanitizer(URL)
+      url = URL
+      const sanitizedURL = urlSanitizer(url)
       const title = titleSanitizer(document.title)
-      app.send(SetPageLocation(url, referrer, navigationStart, title))
+      app.send(SetPageLocation(sanitizedURL, referrer, navigationStart, title))
       navigationStart = 0
       referrer = url
     }
