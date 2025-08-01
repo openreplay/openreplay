@@ -67,7 +67,7 @@ export type Options = Partial<
   urls?: Partial<ViewportOptions>
 }
 
-const DOCS_SETUP = '/en/sdk'
+const DOCS_SETUP = '/en/sdk/constructor'
 
 function processOptions(obj: any): obj is Options {
   if (obj == null) {
