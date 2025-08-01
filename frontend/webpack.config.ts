@@ -7,8 +7,8 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CompressionPlugin from "compression-webpack-plugin";
 import { EsbuildPlugin } from 'esbuild-loader';
+import dotenv from 'dotenv'
 
-const dotenv = require('dotenv')
 const stylesHandler = MiniCssExtractPlugin.loader;
 import pathAlias from './path-alias';
 
@@ -19,7 +19,8 @@ interface Configuration extends WebpackConfiguration {
 export default function build({ production }: { production?: boolean }) {
   const isDevelopment = process.env.NODE_ENV !== 'production' && !production;
   dotenv.config({ path: __dirname + (isDevelopment ? '/.env' : '/.env.production') });
-  const ENV_VARIABLES = JSON.stringify(dotenv.parsed);
+
+  const ENV_VARIABLES = JSON.stringify(process.env);
   const finalEnv = isDevelopment ? 'development' : 'production'
   console.log('running in', finalEnv);
 
@@ -127,9 +128,6 @@ export default function build({ production }: { production?: boolean }) {
     },
   },
   plugins: [
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify(finalEnv),
-    }),
     new webpack.ProgressPlugin(),
     (isDevelopment ? false : new CompressionPlugin({
       test: /\.(js|css|html|svg)$/,
@@ -139,6 +137,7 @@ export default function build({ production }: { production?: boolean }) {
     new webpack.DefinePlugin({
       // 'process.env': ENV_VARIABLES,
       'window.env': ENV_VARIABLES,
+      'window.env.NODE_ENV': JSON.stringify(finalEnv),
       'window.env.PRODUCTION': isDevelopment ? false : true,
     }),
     new HtmlWebpackPlugin({
