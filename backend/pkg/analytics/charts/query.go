@@ -548,7 +548,8 @@ func logQuery(query string, args ...interface{}) {
 	log.Printf(">>>>>>>>>>>>>>>>>>>>>>>>>>> Executing query:\n%s\n<<<<<<<<<<<<<<<<<<<<<<<<<<", query)
 }
 
-var sessionColumns = map[string]string{
+var SessionColumns = map[string]string{
 	"userDevice": "user_device",
+	"platform":   "user_device_type",
 	// TODO Add any missing session columns to be considered.
 }

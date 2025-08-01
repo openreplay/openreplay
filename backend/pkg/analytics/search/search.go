@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"openreplay/backend/pkg/analytics/charts"
-	"openreplay/backend/pkg/analytics/model"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
+	"openreplay/backend/pkg/analytics/charts"
+	"openreplay/backend/pkg/analytics/model"
 )
 
 // TODO - check all attributes and map the columns to the correct names
@@ -57,26 +58,43 @@ var sortOptions = map[string]string{
 
 func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
 	offset := (req.Page - 1) * req.Limit
-	sessFilters, _ := charts.FilterOutTypes(req.Filters, []model.FilterType{
+	eventsWhere := []string{}
+	sessionsWhere := []string{
+		"s.duration IS NOT NULL",
+	}
+
+	eventFilters, sessionFilters := charts.FilterOutTypes(req.Filters, []model.FilterType{
 		charts.FilterDuration,
 		charts.FilterUserAnonymousId,
+		charts.FilterUserDevice,
+		charts.FilterUserId,
+		charts.FilterPlatform,
 	})
-	eventConds, otherConds := charts.BuildEventConditions(sessFilters, charts.BuildConditionsOptions{
+
+	eventConds, otherConds := charts.BuildEventConditions(eventFilters, charts.BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
 		EventsOrder:    req.EventsOrder,
 	})
 
-	prewhereParts := []string{}
+	_, sessionConds := charts.BuildEventConditions(sessionFilters, charts.BuildConditionsOptions{
+		DefinedColumns: charts.SessionColumns,
+		MainTableAlias: "s",
+	})
+
+	durConds, _ := charts.BuildDurationWhere(req.Filters, "s")
+	sessionsWhere = append(sessionsWhere, durConds...)
+	sessionsWhere = append(sessionsWhere, sessionConds...)
+
 	if req.EventsOrder == "then" && len(eventConds) == 1 {
-		prewhereParts = append(prewhereParts, eventConds[0])
+		eventsWhere = append(eventsWhere, eventConds[0])
 	}
-	prewhereParts = append(prewhereParts, otherConds...)
-	prewhereParts = append(prewhereParts,
+	eventsWhere = append(eventsWhere, otherConds...)
+	eventsWhere = append(eventsWhere,
 		fmt.Sprintf("e.project_id = %d", projectId),
 		fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", req.StartDate/1000, req.EndDate/1000),
 	)
-	prewhere := "PREWHERE " + strings.Join(prewhereParts, " AND ")
+	prewhere := "PREWHERE " + strings.Join(eventsWhere, " AND ")
 
 	joinClause := ""
 	switch req.EventsOrder {
@@ -117,8 +135,8 @@ ANY INNER JOIN (
     %s
     %s
 ) AS fs USING (session_id)
-WHERE s.duration IS NOT NULL
-`, prewhere, joinClause)
+WHERE %s
+`, prewhere, joinClause, strings.Join(sessionsWhere, " AND "))
 
 	log.Printf("Count Query: %s\n", countQ)
 
@@ -135,7 +153,6 @@ WHERE s.duration IS NOT NULL
 	if strings.EqualFold(req.Order, "ASC") {
 		order = "ASC"
 	}
-	sortClause := fmt.Sprintf("ORDER BY %s %s", field, order)
 
 	dataQ := fmt.Sprintf(`
 SELECT
@@ -171,10 +188,20 @@ ANY LEFT JOIN (
       AND project_id = %d
       AND _timestamp >= toDateTime(%d)
 ) AS viewed_sessions USING (session_id)
-WHERE s.duration IS NOT NULL
+WHERE
+	%s
 %s
 LIMIT %d OFFSET %d
-`, prewhere, joinClause, userId, projectId, req.StartDate/1000, sortClause, req.Limit, offset)
+`,
+		prewhere,
+		joinClause,
+		userId,
+		projectId,
+		req.StartDate/1000,
+		strings.Join(sessionsWhere, " AND \n"),
+		fmt.Sprintf("ORDER BY %s %s", field, order),
+		req.Limit,
+		offset)
 
 	log.Printf("Data Query: %s\n", dataQ)
 

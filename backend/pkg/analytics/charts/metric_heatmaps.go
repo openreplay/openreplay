@@ -59,7 +59,7 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 	var hasSessionFilters bool
 
 	for _, filter := range p.MetricPayload.Series[0].Filter.Filters {
-		if _, exists := sessionColumns[filter.Name]; exists {
+		if _, exists := SessionColumns[filter.Name]; exists {
 			sessionTableFilters = append(sessionTableFilters, filter)
 			hasSessionFilters = true
 		} else {
@@ -74,7 +74,7 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 
 	// filters that uses the sessions table
 	_, sessionFilters := BuildEventConditions(sessionTableFilters, BuildConditionsOptions{
-		DefinedColumns: sessionColumns,
+		DefinedColumns: SessionColumns,
 		MainTableAlias: "ls",
 	})
 

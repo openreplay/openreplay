@@ -109,7 +109,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	)
 
 	for _, filter := range allFilters {
-		if _, exists := sessionColumns[filter.Name]; exists {
+		if _, exists := SessionColumns[filter.Name]; exists {
 			sessionFilters = append(sessionFilters, filter)
 		} else {
 			eventFilters = append(eventFilters, filter)
@@ -126,7 +126,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	})
 
 	_, sessionConditions := BuildEventConditions(sessionFilters, BuildConditionsOptions{
-		DefinedColumns: sessionColumns,
+		DefinedColumns: SessionColumns,
 		MainTableAlias: "s",
 	})
 
