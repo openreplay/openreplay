@@ -7,19 +7,26 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CompressionPlugin from "compression-webpack-plugin";
 import { EsbuildPlugin } from 'esbuild-loader';
+// @ts-ignore
+import dotenv from 'dotenv'
 
-const isDevelopment = process.env.NODE_ENV !== 'production'
-const dotenv = require('dotenv').config({ path: __dirname + (isDevelopment ? '/.env' : '/.env.production') });
 const stylesHandler = MiniCssExtractPlugin.loader;
-const ENV_VARIABLES = JSON.stringify(dotenv.parsed);
 import pathAlias from './path-alias';
 
 interface Configuration extends WebpackConfiguration {
   devServer?: WebpackDevServerConfiguration
 }
-console.log('running in', isDevelopment ? 'development' : 'production');
-const config: Configuration = {
-  mode: isDevelopment ? "development" : "production",
+
+export default function build({ production }: { production?: boolean }) {
+  const isDevelopment = process.env.NODE_ENV !== 'production' && !production;
+  dotenv.config({ path: __dirname + (isDevelopment ? '/.env' : '/.env.production') });
+
+  const ENV_VARIABLES = JSON.stringify(process.env);
+  const finalEnv = isDevelopment ? 'development' : 'production'
+  console.log('running in', finalEnv);
+
+  const config: Configuration = {
+  mode: finalEnv,
   output: {
     publicPath: "/",
     filename: 'app-[contenthash:7].js',
@@ -131,6 +138,7 @@ const config: Configuration = {
     new webpack.DefinePlugin({
       // 'process.env': ENV_VARIABLES,
       'window.env': ENV_VARIABLES,
+      'window.env.NODE_ENV': JSON.stringify(finalEnv),
       'window.env.PRODUCTION': isDevelopment ? false : true,
     }),
     new HtmlWebpackPlugin({
@@ -169,5 +177,5 @@ const config: Configuration = {
       },
   },
 };
-
-export default config;
+  return config
+}

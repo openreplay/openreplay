@@ -6,7 +6,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { IWebhook } from 'Types/webhook';
 import { App, List, Button, Typography, Space } from 'antd';
-import { PencilIcon } from '.store/lucide-react-virtual-b029c146a4/package';
+import { PencilIcon } from 'lucide-react';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useModal } from 'Components/ModalContext';
 import WebhookForm from './WebhookForm';
