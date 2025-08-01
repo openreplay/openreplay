@@ -85,6 +85,7 @@ export interface Options {
   capturePageLoadTimings: boolean
   capturePageRenderTimings: boolean
   excludedResourceUrls?: Array<string>
+  resourceNameSanitizer?: (url: string) => string
 }
 
 export default function (app: App, opts: Partial<Options>): void {
@@ -121,12 +122,6 @@ export default function (app: App, opts: Partial<Options>): void {
     if (shouldSkip) {
       return
     }
-    const failed =
-      entry.initiatorType !== 'fetch'
-        ? entry.responseEnd === 0 ||
-          (entry.transferSize === 0 && entry.decodedBodySize === 0) ||
-          (entry.responseStatus && entry.responseStatus >= 400)
-        : entry.responseStatus && entry.responseStatus >= 400
 
     // will probably require custom header added to responses for tracked fetch/xhr requests:
     // Timing-Allow-Origin: *
@@ -149,6 +144,9 @@ export default function (app: App, opts: Partial<Options>): void {
       total: entry.duration ?? entry.responseEnd - entry.startTime,
       stalled,
     }
+    const entryName = options.resourceNameSanitizer
+      ? options.resourceNameSanitizer(entry.name)
+      : entry.name
     app.send(
       ResourceTiming(
         entry.startTime + getTimeOrigin(),
@@ -157,7 +155,7 @@ export default function (app: App, opts: Partial<Options>): void {
         entry.transferSize > entry.encodedBodySize ? entry.transferSize - entry.encodedBodySize : 0,
         entry.encodedBodySize || 0,
         entry.decodedBodySize || 0,
-        app.sanitizer.privateMode ? entry.name.replaceAll(/./g, '*') : entry.name,
+        app.sanitizer.privateMode ? entry.name.replaceAll(/./g, '*') : entryName,
         entry.initiatorType,
         entry.transferSize,
         (entry.responseStatus && entry.responseStatus === 304) || entry.transferSize === 0,
