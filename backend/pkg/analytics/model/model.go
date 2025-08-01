@@ -61,6 +61,8 @@ type MetricPayload struct {
 	Rows            uint64     `json:"rows"`
 	Columns         uint64     `json:"stepsAfter"`
 	PreviousColumns uint64     `json:"stepsBefore"`
+	SortBy          string     `json:"sortBy"`
+	SortOrder       string     `json:"sortOrder"`
 }
 
 type Session struct {
