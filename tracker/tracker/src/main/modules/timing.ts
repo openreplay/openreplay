@@ -85,6 +85,7 @@ export interface Options {
   capturePageLoadTimings: boolean
   capturePageRenderTimings: boolean
   excludedResourceUrls?: Array<string>
+  resourceNameSanitizer?: (url: string) => string
 }
 
 export default function (app: App, opts: Partial<Options>): void {
@@ -139,6 +140,9 @@ export default function (app: App, opts: Partial<Options>): void {
         ),
       )
     }
+    const entryName = options.resourceNameSanitizer
+      ? options.resourceNameSanitizer(entry.name)
+      : entry.name
     app.send(
       ResourceTiming(
         entry.startTime + getTimeOrigin(),
@@ -147,7 +151,7 @@ export default function (app: App, opts: Partial<Options>): void {
         entry.transferSize > entry.encodedBodySize ? entry.transferSize - entry.encodedBodySize : 0,
         entry.encodedBodySize || 0,
         entry.decodedBodySize || 0,
-        entry.name,
+        entryName,
         entry.initiatorType,
         entry.transferSize,
         // @ts-ignore
