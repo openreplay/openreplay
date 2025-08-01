@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   FUNNEL,
   HEATMAP,
@@ -24,9 +24,15 @@ import {
   Library,
   ChartColumnBig,
   ChartBarBig,
+  ArrowDown01,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Form, InputNumber } from 'antd/lib';
+
+interface Option {
+  key: string;
+  label: string;
+}
 
 function WidgetOptions() {
   const { t } = useTranslation();
@@ -37,6 +43,20 @@ function WidgetOptions() {
     metric.update({ metricFormat: value });
     metric.updateKey('hasChanged', true);
   };
+
+  const handleSortChange = (value: any) => {
+    metric.update({ sortBy: value });
+    metric.updateKey('hasChanged', true);
+  };
+
+  const errorSortOptions: Option[] = useMemo(
+    () => [
+      { key: 'time', label: t('Latest') },
+      { key: 'sessions', label: t('Sessions') },
+      { key: 'users', label: t('Users') },
+    ],
+    [],
+  );
 
   // const hasSeriesTypes = [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
   const hasViewTypes = [TIMESERIES, FUNNEL].includes(metric.metricType);
@@ -119,6 +139,28 @@ function WidgetOptions() {
       {metric.metricType === TIMESERIES && (
         <SeriesTypeOptions metric={metric} />
       )}
+
+      {metric.metricType === TABLE && metric.metricOf === FilterKey.ERRORS && (
+        <Dropdown
+          trigger={['click']}
+          menu={{
+            selectable: true,
+            items: errorSortOptions,
+            onClick: (info: { key: string }) => handleSortChange(info.key),
+          }}
+        >
+          <Button type="text" variant="text" size="small">
+            <ArrowDown01 size={16} />
+            {metric.sortBy
+              ? errorSortOptions.find(
+                  (option: Option) => option.key === metric.sortBy,
+                )?.label
+              : t('Sort')}
+            <DownOutlined className="text-sm" />
+          </Button>
+        </Dropdown>
+      )}
+
       {(metric.metricType === FUNNEL || metric.metricType === TABLE) &&
         metric.metricOf !== FilterKey.USERID &&
         metric.metricOf !== FilterKey.ERRORS && (

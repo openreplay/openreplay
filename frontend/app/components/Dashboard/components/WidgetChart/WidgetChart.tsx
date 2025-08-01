@@ -4,7 +4,7 @@ import BarChart from 'Components/Charts/BarChart';
 import PieChart from 'Components/Charts/PieChart';
 import SankeyChart from 'Components/Charts/SankeyChart';
 import ColumnChart from 'Components/Charts/ColumnChart';
-import WebVitalsChart from 'Components/Charts/WebVitals'
+import WebVitalsChart from 'Components/Charts/WebVitals';
 
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
@@ -246,6 +246,7 @@ function WidgetChart(props: Props) {
     _metric.metricValue,
     _metric.startType,
     _metric.metricFormat,
+    _metric.sortBy,
     _metric.rows,
     _metric.stepsBefore,
     _metric.stepsAfter,

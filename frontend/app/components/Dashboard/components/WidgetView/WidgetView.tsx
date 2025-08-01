@@ -84,6 +84,8 @@ function WidgetView({
           name: selectedCard.title,
           metricOf: selectedCard.metricOf,
           category: mk,
+          sortBy: selectedCard.sortBy,
+          sortOrder: selectedCard.sortOrder,
           viewType: selectedCard.viewType
             ? selectedCard.viewType
             : selectedCard.cardType === FUNNEL
@@ -147,8 +149,6 @@ function WidgetView({
 
             startPoint.filters = defaultProperty;
           });
-
-          console.log('startPoint', startPoint);
 
           cardData.startPoint = startPoint;
         }
