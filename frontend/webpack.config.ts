@@ -20,11 +20,11 @@ export default function build({ production }: { production?: boolean }) {
   const isDevelopment = process.env.NODE_ENV !== 'production' && !production;
   dotenv.config({ path: __dirname + (isDevelopment ? '/.env' : '/.env.production') });
   const ENV_VARIABLES = JSON.stringify(dotenv.parsed);
-
-  console.log('running in', isDevelopment ? 'development' : 'production');
+  const finalEnv = isDevelopment ? 'development' : 'production'
+  console.log('running in', finalEnv);
 
   const config: Configuration = {
-  mode: isDevelopment ? "development" : "production",
+  mode: finalEnv,
   output: {
     publicPath: "/",
     filename: 'app-[contenthash:7].js',
@@ -127,6 +127,9 @@ export default function build({ production }: { production?: boolean }) {
     },
   },
   plugins: [
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify(finalEnv),
+    }),
     new webpack.ProgressPlugin(),
     (isDevelopment ? false : new CompressionPlugin({
       test: /\.(js|css|html|svg)$/,
