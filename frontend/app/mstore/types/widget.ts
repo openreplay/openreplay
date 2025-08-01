@@ -109,6 +109,8 @@ export default class Widget {
   excludes: FilterItem[] = [];
   hideExcess?: boolean = true;
   compareTo: [startDate?: string, endDate?: string] | null = null;
+  sortBy?: string = '';
+  sortOrder?: string = 'desc';
 
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
   hasChanged: boolean = false;
@@ -210,6 +212,8 @@ export default class Widget {
       this.thumbnail = json.thumbnail;
       this.data.sessionId = json.sessionId;
       this.isPublic = json.isPublic;
+      this.sortBy = json.sortBy || '';
+      this.sortOrder = json.sortOrder || 'desc';
 
       if (this.metricType === FUNNEL) {
         this.series[0].filter.eventsOrder = 'then';
@@ -302,6 +306,8 @@ export default class Widget {
       columns: 4,
       limit: this.limit,
       compareTo: this.compareTo,
+      sortBy: this.sortBy,
+      sortOrder: this.sortOrder,
       config: {
         ...this.config,
         col:

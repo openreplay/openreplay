@@ -63,6 +63,8 @@ export interface CardType {
   isEnterprise?: boolean;
   filters?: any;
   viewType?: string;
+  sortBy?: string;
+  sortOrder?: string;
 }
 
 export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
@@ -238,6 +240,8 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
     height: 336,
     example: TableOfErrors,
     viewType: 'table',
+    sortBy: 'time',
+    sortOrder: 'desc',
   },
   {
     title: 'Untitled Top Network Requests',
