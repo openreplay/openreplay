@@ -105,6 +105,8 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 
 	whereClause := strings.Join(conds, " AND ")
 
+	orderColumn, orderDirection := t.getSortDetails(p.SortBy)
+
 	sql := fmt.Sprintf(`WITH
     events AS (
         SELECT
@@ -173,14 +175,37 @@ SELECT
 FROM error_meta AS m
 LEFT JOIN error_chart AS ec
     ON m.error_id = ec.error_id
-ORDER BY m.last_occurrence DESC
+ORDER BY %s %s
 LIMIT %d OFFSET %d;`,
 		whereClause,
 		startMs, startMs, stepMs, stepMs, // New formula parameters
 		startMs, endMs, stepMs,
+		orderColumn, orderDirection,
 		limit, offset,
 	)
 
 	logQuery(fmt.Sprintf("TableErrorsQueryBuilder.buildQuery: %s", sql))
 	return sql, nil
+}
+
+func (t *TableErrorsQueryBuilder) getSortDetails(sortBy string) (column string, direction string) {
+	column = "m.last_occurrence"
+	direction = "DESC"
+
+	switch strings.ToLower(sortBy) {
+	case "time":
+		column = "m.last_occurrence"
+		direction = "DESC"
+	case "sessions":
+		column = "m.sessions"
+		direction = "DESC"
+	case "users":
+		column = "m.users"
+		direction = "DESC"
+	default:
+		column = "m.last_occurrence"
+		direction = "DESC"
+	}
+
+	return
 }
