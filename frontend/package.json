@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "start": "webpack serve",
-    "build": "yarn gen:icons && yarn gen:colors && rm -rf public && webpack",
+    "build": "yarn gen:icons && yarn gen:colors && rm -rf public && webpack --env production",
     "upload:minio": "node ./scripts/upload-minio.js",
     "deploy:minio": "yarn build:minio && yarn upload:minio",
     "lint": "eslint --fix app; exit 0",
