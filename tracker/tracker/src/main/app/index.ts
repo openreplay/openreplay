@@ -880,8 +880,6 @@ export default class App {
     }
 
     this.emptyBatchCounter = 0
-    console.log('messages', this.messages.join(', '))
-
     try {
       requestIdleCb(() => {
         this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))

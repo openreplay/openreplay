@@ -1,3 +1,7 @@
+## 15.3.0
+
+- resource name sanitizer
+
 ## 15.1.1
 
 - fix for attributeSender dictionary keys
@@ -29,7 +33,7 @@ tracker.start()
 ## 15.0.5
 
 - update medv/finder to 4.0.2 for better support of css-in-js libs
-- fixes for single tab recording 
+- fixes for single tab recording
 - add option to disable network completely `{ network: { disabled: true } }`
 - fix for batching during offline recording syncs
 
