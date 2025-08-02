@@ -8,7 +8,7 @@ const langs = [
   { code: 'fr', label: 'Français' },
   { code: 'es', label: 'Español' },
   { code: 'ru', label: 'Русский' },
-  { code: 'zh', label: '中國人' },
+  { code: 'zh', label: '中文' },
 ];
 const langLabels = {
   en: 'English',
