@@ -1,6 +1,7 @@
 import React from 'react';
 import { CopyButton, CodeBlock } from 'UI';
 import { trackerUrl } from './url';
+import { observer } from 'mobx-react-lite';
 
 const inputModeOptions = [
   { label: 'Record all inputs', value: 'plain' },
@@ -32,6 +33,7 @@ function CodeSnippet(props: Props) {
     obscureTextEmails,
     isAssistEnabled,
   } = props;
+
   const codeSnippet = `<!-- OpenReplay Tracking Code for ${host} -->
 <script>
   var initOpts = {
@@ -68,4 +70,4 @@ function CodeSnippet(props: Props) {
   );
 }
 
-export default CodeSnippet;
+export default observer(CodeSnippet);

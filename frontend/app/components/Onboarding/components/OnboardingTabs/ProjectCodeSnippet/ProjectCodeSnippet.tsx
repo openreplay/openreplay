@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { Checkbox, Loader } from 'UI';
-import { Switch } from 'antd';
+import { Switch, Checkbox } from 'antd';
 import cn from 'classnames';
 import Select from 'Shared/Select';
 import CodeSnippet from 'Shared/CodeSnippet';
@@ -24,14 +23,13 @@ function ProjectCodeSnippet() {
   const { projectsStore } = useStore();
   const { siteId } = projectsStore;
   const site = projectsStore.instance;
-  const { gdpr } = site;
+  const gdpr = site?.gdpr;
   const sites = projectsStore.list;
-  const { editGDPR } = projectsStore;
+  const editGDPR = projectsStore.editGDPR;
   const onSaveGDPR = projectsStore.saveGDPR;
   const init = projectsStore.initProject;
   const [changed, setChanged] = useState(false);
   const [isAssistEnabled, setAssistEnabled] = useState(false);
-  const [showLoader, setShowLoader] = useState(false);
 
   useEffect(() => {
     const site = sites.find((s) => s.id === siteId);
@@ -45,23 +43,19 @@ function ProjectCodeSnippet() {
     void onSaveGDPR(site.id);
   };
 
-  const onChangeSelect = ({ name, value }) => {
+  const onChangeSelect = ({ name, value }: any) => {
     editGDPR({ [name]: value });
     saveGDPR();
   };
 
-  const onChangeOption = ({ target: { name, checked } }) => {
+  const onChangeOption = ({ target: { name, checked } }: any) => {
     editGDPR({ [name]: checked });
     saveGDPR();
   };
 
-  useEffect(() => {
-    // show loader for 500 milliseconds
-    setShowLoader(true);
-    setTimeout(() => {
-      setShowLoader(false);
-    }, 200);
-  }, [isAssistEnabled]);
+  if (!site || !gdpr) {
+    return null;
+  }
 
   return (
     <div>
@@ -91,8 +85,9 @@ function ProjectCodeSnippet() {
             checked={gdpr.maskNumbers}
             onChange={onChangeOption}
             className="mr-2"
-            label={t('Do not record any numeric text')}
-          />
+          >
+            {t('Do not record any numeric text')}
+          </Checkbox>
 
           <div className="mx-4" />
 
@@ -102,8 +97,9 @@ function ProjectCodeSnippet() {
             checked={gdpr.maskEmails}
             onChange={onChangeOption}
             className="mr-2"
-            label={t('Do not record email addresses')}
-          />
+          >
+            {t('Do not record email addresses')}
+          </Checkbox>
         </div>
       </div>
       <div
@@ -151,21 +147,15 @@ function ProjectCodeSnippet() {
         <span>&nbsp;{t('tag of your page.')}</span>
       </div>
       <div className={cn(stl.snippetsWrapper, 'ml-10')}>
-        {showLoader ? (
-          <div style={{ height: '474px' }}>
-            <Loader loading />
-          </div>
-        ) : (
-          <CodeSnippet
-            isAssistEnabled={isAssistEnabled}
-            host={site && site.host}
-            projectKey={site && site.projectKey}
-            ingestPoint={`"https://${window.location.hostname}/ingest"`}
-            defaultInputMode={gdpr.defaultInputMode}
-            obscureTextNumbers={gdpr.maskNumbers}
-            obscureTextEmails={gdpr.maskEmails}
-          />
-        )}
+        <CodeSnippet
+          isAssistEnabled={isAssistEnabled}
+          host={site && site.host}
+          projectKey={site && site.projectKey}
+          ingestPoint={`"https://${window.location.hostname}/ingest"`}
+          defaultInputMode={gdpr.defaultInputMode}
+          obscureTextNumbers={gdpr.maskNumbers}
+          obscureTextEmails={gdpr.maskEmails}
+        />
       </div>
     </div>
   );
