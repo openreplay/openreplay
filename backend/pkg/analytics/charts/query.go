@@ -501,6 +501,73 @@ func eventNameCondition(table, metricOf string) string {
 	}
 }
 
+func BuildWhere(req *model.SessionsSearchRequest, eventsAlias, sessionsAlias string) (events, eventFilters, sessionFilters []string) {
+	events = make([]string, 0, len(req.Filters))
+	eventFilters = make([]string, 0, len(req.Filters))
+	sessionFilters = make([]string, 0, len(req.Filters)+1)
+	sessionFilters = append(sessionFilters, fmt.Sprintf("%s.duration IS NOT NULL", sessionsAlias))
+
+	var sessionFiltersList, eventFiltersList []model.Filter
+	for _, f := range req.Filters {
+		if _, ok := SessionColumns[f.Name]; ok {
+			sessionFiltersList = append(sessionFiltersList, f)
+		} else {
+			eventFiltersList = append(eventFiltersList, f)
+		}
+	}
+
+	evConds, misc := BuildEventConditions(eventFiltersList, BuildConditionsOptions{
+		DefinedColumns: mainColumns,
+		MainTableAlias: eventsAlias,
+		EventsOrder:    req.EventsOrder,
+	})
+	events = append(events, evConds...)
+	eventFilters = append(eventFilters, misc...)
+
+	_, sConds := BuildEventConditions(sessionFiltersList, BuildConditionsOptions{
+		DefinedColumns: SessionColumns,
+		MainTableAlias: sessionsAlias,
+	})
+	durConds, _ := BuildDurationWhere(req.Filters, sessionsAlias)
+	sessionFilters = append(sessionFilters, durConds...)
+	sessionFilters = append(sessionFilters, sConds...)
+
+	return
+}
+
+func BuildJoinClause(order string, eventsWhere []string, tableAlias ...string) string {
+	ta := "e"
+	if len(tableAlias) > 0 && tableAlias[0] != "" {
+		ta = tableAlias[0]
+	}
+
+	switch order {
+	case "then":
+		if len(eventsWhere) > 1 {
+			var pat strings.Builder
+			for i := range eventsWhere {
+				pat.WriteString(fmt.Sprintf("(?%d)", i+1))
+			}
+			return fmt.Sprintf(
+				"GROUP BY %s.session_id\nHAVING sequenceMatch('%s')(\n    toDateTime(%s.created_at),\n    %s\n)",
+				ta,
+				pat.String(),
+				ta,
+				strings.Join(eventsWhere, ",\n    "),
+			)
+		}
+	case "and":
+		if len(eventsWhere) > 0 {
+			return fmt.Sprintf("HAVING %s", strings.Join(eventsWhere, " AND "))
+		}
+	case "or":
+		if len(eventsWhere) > 0 {
+			return fmt.Sprintf("HAVING %s", strings.Join(eventsWhere, " OR "))
+		}
+	}
+	return ""
+}
+
 func BuildDurationWhere(filters []model.Filter, tableAlias ...string) ([]string, []model.Filter) {
 	alias := "sessions"
 	if len(tableAlias) > 0 && tableAlias[0] != "" {
