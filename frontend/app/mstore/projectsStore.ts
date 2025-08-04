@@ -80,7 +80,11 @@ export default class ProjectsStore {
 
   editGDPR = (gdprData: Partial<GDPR>) => {
     if (this.instance) {
-      this.instance.gdpr.edit(gdprData);
+      const oldInstance = this.instance.gdpr;
+      this.instance.gdpr = new GDPR({
+        ...oldInstance.toData(),
+        ...gdprData,
+      });
     }
   };
 
