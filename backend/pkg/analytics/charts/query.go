@@ -549,10 +549,13 @@ func logQuery(query string, args ...interface{}) {
 }
 
 var SessionColumns = map[string]string{
-	"userDevice":      "user_device",
-	"platform":        "user_device_type",
-	"userId":          "user_id",
-	"userAnonymousId": "user_anonymous_id",
-	"referrer":        "referrer",
+	"userDevice":         "user_device",
+	"platform":           "user_device_type",
+	"userId":             "user_id",
+	"userAnonymousId":    "user_anonymous_id",
+	"referrer":           "referrer",
+	"userDeviceIos":      "user_device",
+	"userIdIos":          "user_id",
+	"userAnonymousIdIos": "user_anonymous_id",
 	// TODO Add any missing session columns to be considered.
 }
