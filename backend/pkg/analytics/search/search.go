@@ -96,7 +96,7 @@ LIMIT %d OFFSET %d
 
 func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
 	offset := (req.Page - 1) * req.Limit
-	eventsWhere, filtersWhere, sessionsWhere := charts.BuildWhere(req, "e", "s")
+	eventsWhere, filtersWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s")
 	sessionsWhere = append([]string{fmt.Sprintf("s.project_id = %d", projectId),
 		fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", req.StartDate/1000, req.EndDate/1000),
 	}, sessionsWhere...)

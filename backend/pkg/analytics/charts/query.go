@@ -427,14 +427,14 @@ func FillMissingDataPoints(
 	return results
 }
 
-func BuildWhere(req *model.SessionsSearchRequest, eventsAlias, sessionsAlias string) (events, eventFilters, sessionFilters []string) {
-	events = make([]string, 0, len(req.Filters))
-	eventFilters = make([]string, 0, len(req.Filters))
-	sessionFilters = make([]string, 0, len(req.Filters)+1)
+func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, sessionsAlias string) (events, eventFilters, sessionFilters []string) {
+	events = make([]string, 0, len(filters))
+	eventFilters = make([]string, 0, len(filters))
+	sessionFilters = make([]string, 0, len(filters)+1)
 	sessionFilters = append(sessionFilters, fmt.Sprintf("%s.duration IS NOT NULL", sessionsAlias))
 
 	var sessionFiltersList, eventFiltersList []model.Filter
-	for _, f := range req.Filters {
+	for _, f := range filters {
 		if _, ok := SessionColumns[f.Name]; ok {
 			sessionFiltersList = append(sessionFiltersList, f)
 		} else {
@@ -445,7 +445,7 @@ func BuildWhere(req *model.SessionsSearchRequest, eventsAlias, sessionsAlias str
 	evConds, misc := BuildEventConditions(eventFiltersList, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: eventsAlias,
-		EventsOrder:    req.EventsOrder,
+		EventsOrder:    eventsOrder,
 	})
 	events = append(events, evConds...)
 	eventFilters = append(eventFilters, misc...)
@@ -454,7 +454,7 @@ func BuildWhere(req *model.SessionsSearchRequest, eventsAlias, sessionsAlias str
 		DefinedColumns: SessionColumns,
 		MainTableAlias: sessionsAlias,
 	})
-	durConds, _ := BuildDurationWhere(req.Filters, sessionsAlias)
+	durConds, _ := BuildDurationWhere(filters, sessionsAlias)
 	sessionFilters = append(sessionFilters, durConds...)
 	sessionFilters = append(sessionFilters, sConds...)
 
