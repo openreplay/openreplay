@@ -360,6 +360,17 @@ func buildStaticEventWhere(p *Payload) string {
 	}, " AND ")
 }
 
+func buildDefaultWhere(p *Payload, tableAlias string, timeColumn ...string) []string {
+	col := "created_at"
+	if len(timeColumn) > 0 && timeColumn[0] != "" {
+		col = timeColumn[0]
+	}
+	return []string{
+		fmt.Sprintf("%s.project_id = %d", tableAlias, p.ProjectId),
+		fmt.Sprintf("%s.%s BETWEEN toDateTime(%d) AND toDateTime(%d)", tableAlias, col, p.StartTimestamp/1000, p.EndTimestamp/1000),
+	}
+}
+
 func buildStaticSessionWhere(p *Payload, sessionConds []string) (string, string) {
 	static := []string{fmt.Sprintf("s.project_id = %d", p.ProjectId)}
 	sessWhere := strings.Join(static, " AND ")
@@ -549,6 +560,7 @@ func logQuery(query string, args ...interface{}) {
 }
 
 var SessionColumns = map[string]string{
+	"userBrowser":        "user_browser",
 	"userDevice":         "user_device",
 	"platform":           "user_device_type",
 	"userId":             "user_id",
