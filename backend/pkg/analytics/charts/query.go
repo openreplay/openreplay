@@ -117,31 +117,30 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 	return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, propKey)
 }
 
-func BuildEventConditions(filters []model.Filter, options ...BuildConditionsOptions) (eventConds, otherConds []string) {
+func BuildEventConditions(filters []model.Filter, options BuildConditionsOptions) (eventConds, otherConds []string) {
 	opts := BuildConditionsOptions{
 		MainTableAlias:       "e",
 		PropertiesColumnName: "$properties",
 		DefinedColumns:       make(map[string]string),
 		EventsOrder:          "then",
 	}
-	if len(options) > 0 {
-		opt := options[0]
-		if opt.MainTableAlias != "" {
-			opts.MainTableAlias = opt.MainTableAlias
-		}
-		if opt.PropertiesColumnName != "" {
-			opts.PropertiesColumnName = opt.PropertiesColumnName
-		}
-		if opt.DefinedColumns != nil {
-			opts.DefinedColumns = opt.DefinedColumns
-		}
-		if opt.EventsOrder != "" {
-			opts.EventsOrder = opt.EventsOrder
-		}
+
+	if options.MainTableAlias != "" {
+		opts.MainTableAlias = options.MainTableAlias
+	}
+	if options.PropertiesColumnName != "" {
+		opts.PropertiesColumnName = options.PropertiesColumnName
+	}
+	if options.DefinedColumns != nil {
+		opts.DefinedColumns = options.DefinedColumns
+	}
+	if options.EventsOrder != "" {
+		opts.EventsOrder = options.EventsOrder
 	}
 
 	for _, f := range filters {
 		// skip session table filters from BuildEventConditions
+		// TODO: remove this and make sure to pass only valid events/filters when used
 		if f.Type == FilterDuration || f.Type == FilterUserAnonymousId {
 			continue
 		}
@@ -360,7 +359,7 @@ func buildStaticEventWhere(p *Payload) string {
 	}, " AND ")
 }
 
-func buildDefaultWhere(p *Payload, tableAlias string, timeColumn ...string) []string {
+func BuildDefaultWhere(p *Payload, tableAlias string, timeColumn ...string) []string {
 	col := "created_at"
 	if len(timeColumn) > 0 && timeColumn[0] != "" {
 		col = timeColumn[0]
@@ -369,36 +368,6 @@ func buildDefaultWhere(p *Payload, tableAlias string, timeColumn ...string) []st
 		fmt.Sprintf("%s.project_id = %d", tableAlias, p.ProjectId),
 		fmt.Sprintf("%s.%s BETWEEN toDateTime(%d) AND toDateTime(%d)", tableAlias, col, p.StartTimestamp/1000, p.EndTimestamp/1000),
 	}
-}
-
-func buildStaticSessionWhere(p *Payload, sessionConds []string) (string, string) {
-	static := []string{fmt.Sprintf("s.project_id = %d", p.ProjectId)}
-	sessWhere := strings.Join(static, " AND ")
-	if len(sessionConds) > 0 {
-		sessWhere += " AND " + strings.Join(sessionConds, " AND ")
-	}
-	sessJoin := strings.Join(append(static, append(sessionConds,
-		fmt.Sprintf("s.datetime >= toDateTime(%d / 1000)", p.StartTimestamp),
-		fmt.Sprintf("s.datetime <= toDateTime(%d / 1000)", p.EndTimestamp))...), " AND ")
-	return sessWhere, sessJoin
-}
-
-func buildHavingClause(conds []string) string {
-	seqConds := append([]string{}, conds...)
-	if len(seqConds) == 1 {
-		seqConds = append(seqConds, "1")
-	}
-	if len(seqConds) == 0 {
-		return ""
-	}
-	var parts []string
-	for i := range seqConds {
-		parts = append(parts, fmt.Sprintf("(?%d)", i+1))
-	}
-	pattern := strings.Join(parts, "")
-	args := []string{"toDateTime(main.created_at)"}
-	args = append(args, seqConds...)
-	return fmt.Sprintf("HAVING sequenceMatch('%s')(%s)) AS f", pattern, strings.Join(args, ",\n         "))
 }
 
 func contains(slice []string, s string) bool {
@@ -456,49 +425,6 @@ func FillMissingDataPoints(
 		}
 	}
 	return results
-}
-
-func partitionFilters(filters []model.Filter) (sessionFilters []model.Filter, eventFilters []model.Filter) {
-	for _, f := range filters {
-		if f.IsEvent {
-			eventFilters = append(eventFilters, f)
-		} else {
-			sessionFilters = append(sessionFilters, f)
-		}
-	}
-	return
-}
-
-// Returns a map: logical property -> CTE alias (e.g., "userBrowser" -> "userBrowser")
-func cteColumnAliases() map[string]string {
-	aliases := make(map[string]string)
-	for logical := range mainColumns {
-		aliases[logical] = logical
-	}
-	return aliases
-}
-
-// Returns a map: logical property -> source column (e.g., "userBrowser" -> "$browser")
-func cteSourceColumns() map[string]string {
-	cols := make(map[string]string)
-	for logical, col := range mainColumns {
-		cols[logical] = col
-	}
-	return cols
-}
-
-func eventNameCondition(table, metricOf string) string {
-	if table == "" {
-		table = "main"
-	}
-	switch metricOf {
-	case string(MetricOfTableFetch):
-		return fmt.Sprintf("%s.`$event_name` = 'REQUEST'", table)
-	case string(MetricOfTableLocation):
-		return fmt.Sprintf("%s.`$event_name` = 'LOCATION'", table)
-	default:
-		return ""
-	}
 }
 
 func BuildWhere(req *model.SessionsSearchRequest, eventsAlias, sessionsAlias string) (events, eventFilters, sessionFilters []string) {
@@ -602,21 +528,6 @@ func BuildDurationWhere(filters []model.Filter, tableAlias ...string) ([]string,
 		}
 	}
 	return conds, rest
-}
-
-func FilterOutTypes(filters []model.Filter, typesToRemove []model.FilterType) (kept []model.Filter, removed []model.Filter) {
-	removeMap := make(map[model.FilterType]struct{}, len(typesToRemove))
-	for _, t := range typesToRemove {
-		removeMap[t] = struct{}{}
-	}
-	for _, f := range filters {
-		if _, ok := removeMap[f.Type]; ok {
-			removed = append(removed, f)
-		} else {
-			kept = append(kept, f)
-		}
-	}
-	return
 }
 
 func logQuery(query string, args ...interface{}) {
