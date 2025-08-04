@@ -38,7 +38,7 @@ function DropdownAudioPlayer({
     () =>
       audioEvents.map((pa) => {
         const data = pa.payload;
-        const nativeTs = sessionStart - 9000; //data.timestamp;
+        const nativeTs = data.timestamp;
         let startTs = 0;
         if (nativeTs) {
           // our sessions are below 2 hrs, so we can assume this is a unix timestamp if its like 10 hrs long
