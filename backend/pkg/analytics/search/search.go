@@ -58,73 +58,22 @@ var sortOptions = map[string]string{
 
 func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
 	offset := (req.Page - 1) * req.Limit
-	eventsWhere := []string{}
-	sessionsWhere := []string{
-		"s.duration IS NOT NULL",
-	}
+	conds := []string{}
+	eventsWhere, filtersWhere := buildEventsWhere(req)
+	sessionsWhere := buildSessionsWhere(req)
 
-	eventFilters, sessionFilters := charts.FilterOutTypes(req.Filters, []model.FilterType{
-		charts.FilterDuration,
-		charts.FilterUserAnonymousId,
-		charts.FilterUserDevice,
-		charts.FilterUserId,
-		charts.FilterPlatform,
-	})
-
-	eventConds, otherConds := charts.BuildEventConditions(eventFilters, charts.BuildConditionsOptions{
-		DefinedColumns: mainColumns,
-		MainTableAlias: "e",
-		EventsOrder:    req.EventsOrder,
-	})
-
-	_, sessionConds := charts.BuildEventConditions(sessionFilters, charts.BuildConditionsOptions{
-		DefinedColumns: charts.SessionColumns,
-		MainTableAlias: "s",
-	})
-
-	durConds, _ := charts.BuildDurationWhere(req.Filters, "s")
-	sessionsWhere = append(sessionsWhere, durConds...)
-	sessionsWhere = append(sessionsWhere, sessionConds...)
-
-	if req.EventsOrder == "then" && len(eventConds) == 1 {
-		eventsWhere = append(eventsWhere, eventConds[0])
-	}
-	eventsWhere = append(eventsWhere, otherConds...)
-	eventsWhere = append(eventsWhere,
+	conds = append(conds,
 		fmt.Sprintf("e.project_id = %d", projectId),
 		fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", req.StartDate/1000, req.EndDate/1000),
 	)
-	prewhere := "PREWHERE " + strings.Join(eventsWhere, " AND ")
 
-	joinClause := ""
-	switch req.EventsOrder {
-	case "then":
-		if len(eventConds) > 1 {
-			var pat strings.Builder
-			for i := range eventConds {
-				pat.WriteString(fmt.Sprintf("(?%d)", i+1))
-			}
-			joinClause = fmt.Sprintf(
-				"GROUP BY e.session_id\nHAVING sequenceMatch('%s')(\n    toDateTime(e.created_at),\n    %s\n)",
-				pat.String(),
-				strings.Join(eventConds, ",\n    "),
-			)
-		}
-	case "and":
-		if len(eventConds) > 0 {
-			joinClause = fmt.Sprintf(
-				"GROUP BY e.session_id\nHAVING %s",
-				strings.Join(eventConds, " AND "),
-			)
-		}
-	case "or":
-		if len(eventConds) > 0 {
-			joinClause = fmt.Sprintf(
-				"GROUP BY e.session_id\nHAVING %s",
-				strings.Join(eventConds, " OR "),
-			)
-		}
+	if req.EventsOrder == "then" && len(eventsWhere) == 1 {
+		conds = append(conds, eventsWhere[0])
 	}
+	conds = append(conds, filtersWhere...)
+	prewhere := "PREWHERE " + strings.Join(conds, " AND ")
+
+	joinClause := buildJoinClause(req.EventsOrder, eventsWhere)
 
 	countQ := fmt.Sprintf(`
 SELECT count()
@@ -243,4 +192,75 @@ LIMIT %d OFFSET %d
 	}
 
 	return resp, nil
+}
+
+func buildEventsWhere(req *model.SessionsSearchRequest) ([]string, []string) {
+	events := []string{}
+	filters := []string{}
+	sessOrder := req.EventsOrder
+
+	eventFilters, _ := charts.FilterOutTypes(req.Filters, []model.FilterType{
+		charts.FilterDuration,
+		charts.FilterUserAnonymousId,
+		charts.FilterUserDevice,
+		charts.FilterUserId,
+		charts.FilterPlatform,
+	})
+
+	eConds, otherConds := charts.BuildEventConditions(eventFilters, charts.BuildConditionsOptions{
+		DefinedColumns: mainColumns,
+		MainTableAlias: "e",
+		EventsOrder:    sessOrder,
+	})
+
+	events = append(events, eConds...)
+	filters = append(filters, otherConds...)
+	return events, filters
+}
+
+func buildSessionsWhere(req *model.SessionsSearchRequest) []string {
+	s := []string{"s.duration IS NOT NULL"}
+
+	_, sessionFilters := charts.FilterOutTypes(req.Filters, []model.FilterType{
+		charts.FilterDuration,
+		charts.FilterUserAnonymousId,
+		charts.FilterUserDevice,
+		charts.FilterUserId,
+		charts.FilterPlatform,
+	})
+
+	_, sConds := charts.BuildEventConditions(sessionFilters, charts.BuildConditionsOptions{
+		DefinedColumns: charts.SessionColumns,
+		MainTableAlias: "s",
+	})
+	durConds, _ := charts.BuildDurationWhere(req.Filters, "s")
+	s = append(s, durConds...)
+	s = append(s, sConds...)
+	return s
+}
+
+func buildJoinClause(order string, eventsWhere []string) string {
+	switch order {
+	case "then":
+		if len(eventsWhere) > 1 {
+			var pat strings.Builder
+			for i := range eventsWhere {
+				pat.WriteString(fmt.Sprintf("(?%d)", i+1))
+			}
+			return fmt.Sprintf(
+				"GROUP BY e.session_id\nHAVING sequenceMatch('%s')(\n    toDateTime(e.created_at),\n    %s\n)",
+				pat.String(),
+				strings.Join(eventsWhere, ",\n    "),
+			)
+		}
+	case "and":
+		if len(eventsWhere) > 0 {
+			return fmt.Sprintf("GROUP BY e.session_id\nHAVING %s", strings.Join(eventsWhere, " AND "))
+		}
+	case "or":
+		if len(eventsWhere) > 0 {
+			return fmt.Sprintf("GROUP BY e.session_id\nHAVING %s", strings.Join(eventsWhere, " OR "))
+		}
+	}
+	return ""
 }
