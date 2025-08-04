@@ -55,6 +55,7 @@ export interface IStackEvent {
   source: any;
   level: string;
   messageId: number;
+  properties?: any;
 
   isRed: boolean;
 }
@@ -80,7 +81,7 @@ export default class StackEvent {
     const event = {
       ...evt,
       source: evt.source || OPENREPLAY,
-      payload: evt.payload || {},
+      payload: evt.payload || evt.properties || {},
     };
     Object.assign(this, {
       ...event,
