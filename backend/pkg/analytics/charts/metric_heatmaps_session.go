@@ -37,7 +37,7 @@ func (h *HeatmapSessionQueryBuilder) Execute(p *Payload, conn driver.Conn) (inte
 		urlPath  string
 	)
 	if err = row.Scan(&sid, &startTs, &duration, &eventTs, &urlPath); err != nil {
-		return nil, err
+		return HeatmapSessionResponse{}, nil
 	}
 
 	return HeatmapSessionResponse{
