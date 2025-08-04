@@ -139,7 +139,7 @@ export function getResourceFromResourceTiming(
   sessStart: number,
 ) {
   // duration might be duration=0 when cached
-  (msg.transferredSize === 0 && msg.duration > 0) ||
+  const failed = (msg.transferredSize === 0 && msg.duration > 0) ||
     (msg.duration === 0 &&
       msg.ttfb === 0 &&
       msg.headerSize === 0 &&
