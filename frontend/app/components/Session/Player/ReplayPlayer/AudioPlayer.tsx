@@ -38,16 +38,31 @@ function DropdownAudioPlayer({
     () =>
       audioEvents.map((pa) => {
         const data = pa.payload;
-        const nativeTs = data.timestamp;
-        const startTs = nativeTs
-          ? nativeTs > sessionStart
-            ? nativeTs - sessionStart
-            : nativeTs
-          : pa.timestamp - sessionStart;
+        const nativeTs = sessionStart - 9000; //data.timestamp;
+        let startTs = 0;
+        if (nativeTs) {
+          // our sessions are below 2 hrs, so we can assume this is a unix timestamp if its like 10 hrs long
+          const isUnixTs = nativeTs > (10 * 60 * 60 * 1000);
+          startTs = isUnixTs ? nativeTs - sessionStart : nativeTs;
+        } else {
+          startTs = pa.timestamp - sessionStart;
+        }
+
+        if (startTs < 0) {
+          const delta = Math.abs(startTs / 1000);
+          startTs = 0;
+          setDelta(delta);
+          setDeltaInputValue(delta);
+          console.log(
+            'Audio file start time is before session start, adding delta:',
+            delta,
+            'seconds'
+          );
+        }
         return {
           url: data.url,
           timestamp: data.timestamp,
-          start: Math.max(0, startTs),
+          start: startTs,
         };
       }),
     [audioEvents.length, sessionStart],
@@ -320,6 +335,7 @@ function DropdownAudioPlayer({
             key={file.url}
             ref={(el) => (audioRefs.current[file.url] = el)}
             controls
+            preload="auto"
             muted={isMuted}
             className="w-full"
             style={{ height: 32 }}
