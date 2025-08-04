@@ -576,4 +576,29 @@ export const fillStyle = {
   padding: '1px 8px',
 };
 
+function getBlockLabel(blockName: number): string {
+  switch (blockName) {
+    case OVERVIEW:
+      return 'Overview';
+    case CONSOLE:
+      return 'Console';
+    case NETWORK:
+      return 'Network';
+    case PERFORMANCE:
+      return 'Performance';
+    case GRAPHQL:
+      return 'GraphQL';
+    case STORAGE:
+      return 'State';
+    case STACKEVENTS:
+      return 'Events';
+    case PROFILER:
+      return 'Profiler';
+    case BACKENDLOGS:
+      return 'Backend Logs';
+    default:
+      return 'Unknown';
+  }
+}
+
 export default observer(Controls);
