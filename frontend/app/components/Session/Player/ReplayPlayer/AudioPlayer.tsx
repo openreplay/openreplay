@@ -220,7 +220,6 @@ function DropdownAudioPlayer({
   const onInteract = () => {
     if (hasInteractionError) {
       setHasInteractionError(false);
-      player.jump(0);
       player.play();
     }
   };
