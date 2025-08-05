@@ -535,6 +535,21 @@ func BuildDurationWhere(filters []model.Filter, tableAlias ...string) ([]string,
 	return conds, rest
 }
 
+func FilterOutTypes(filters []model.Filter, typesToRemove []model.FilterType) (kept []model.Filter, removed []model.Filter) {
+	removeMap := make(map[model.FilterType]struct{}, len(typesToRemove))
+	for _, t := range typesToRemove {
+		removeMap[t] = struct{}{}
+	}
+	for _, f := range filters {
+		if _, ok := removeMap[f.Type]; ok {
+			removed = append(removed, f)
+		} else {
+			kept = append(kept, f)
+		}
+	}
+	return
+}
+
 func logQuery(query string, args ...interface{}) {
 	if len(args) > 0 {
 		query = fmt.Sprintf(query, args...)
