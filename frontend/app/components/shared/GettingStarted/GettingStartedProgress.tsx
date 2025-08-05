@@ -35,7 +35,7 @@ function GettingStartedProgress() {
           label={gettingStarted.label}
           percentage={gettingStarted.percentageCompleted}
         />
-        <div className="ml-2">
+        <div className="hidden sm:block ml-2">
           <div className="text-lg color-teal" style={{ lineHeight: '15px' }}>
             {t('Setup')}
           </div>

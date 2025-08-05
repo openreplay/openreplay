@@ -11,11 +11,14 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import ThemeToggle from 'Components/ThemeToggle';
 import { hasHealth } from '@/utils/split-utils';
+import { isMobile } from 'App/utils/isMobile';
 
 function TopRight() {
   const { userStore } = useStore();
   const spotOnly = userStore.scopeState === 1;
   const { account } = userStore;
+
+  const mobile = isMobile()
   return (
     <Space style={{ lineHeight: '0' }}>
       {spotOnly ? null : (
@@ -29,7 +32,7 @@ function TopRight() {
           {hasHealth && account.name ? <HealthStatus /> : null}
         </>
       )}
-      <ThemeToggle />
+      {mobile ? null : <ThemeToggle />}
 
       <Popover content={<UserMenu />} placement="topRight">
         <div className="flex items-center cursor-pointer">

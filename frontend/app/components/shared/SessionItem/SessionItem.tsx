@@ -276,7 +276,7 @@ function SessionItem(props: RouteComponentProps & Props) {
         <div className="flex items-start ">
           <div
             className={cn(
-              'flex flex-col items-start lg:flex-row lg:items-center w-full',
+              'flex flex-col items-start gap-2 md:gap-0 lg:flex-row lg:items-center w-full',
             )}
           >
             {!compact && (
@@ -329,9 +329,9 @@ function SessionItem(props: RouteComponentProps & Props) {
             )}
             <div
               className={cn(
-                'px-2 flex flex-col justify-between lg:mt-0',
+                'md:px-2 flex flex-row items-center md:items-baseline md:flex-col justify-between lg:mt-0',
                 compact ? 'w-[40%]' : 'lg:w-1/5',
-                slim ? 'gap-1 mt-1' : 'gap-2 mt-3',
+                slim ? 'gap-1 mt-1' : 'gap-2 md:mt-3',
               )}
             >
               <div>
@@ -347,7 +347,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   />
                 </Tooltip>
               </div>
-              <div className="flex items-center text-sm text-neutral-500">
+              <div className="flex items-center md:text-sm text-neutral-500">
                 {!isAssist && (
                   <>
                     <div className="">
@@ -369,7 +369,7 @@ function SessionItem(props: RouteComponentProps & Props) {
             <div
               style={{ width: '30%' }}
               className={cn(
-                'px-2 flex flex-col justify-between',
+                'md:px-2 flex flex-col justify-between',
                 slim ? 'gap-1' : 'gap-2',
               )}
             >
@@ -418,7 +418,7 @@ function SessionItem(props: RouteComponentProps & Props) {
             {isSessions && (
               <div
                 style={{ width: '10%' }}
-                className="self-center px-2 flex items-center"
+                className="md:self-center md:px-2 flex items-center"
               >
                 <ErrorBars count={issueTypes?.length} />
               </div>

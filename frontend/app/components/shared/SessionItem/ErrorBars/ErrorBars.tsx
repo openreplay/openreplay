@@ -32,7 +32,7 @@ export default function ErrorBars(props: Props) {
   return isGood ? (
     <></>
   ) : (
-    <div>
+    <div className={"flex flex-col-reverse md:flex-col gap-1"}>
       <div className="relative" style={{ width: '100px' }}>
         <div
           className="grid grid-cols-3 gap-1 absolute inset-0"
@@ -52,7 +52,7 @@ export default function ErrorBars(props: Props) {
           {/* <div className={cn("rounded-tr rounded-br", bgColor, stl.bar)}></div> */}
         </div>
       </div>
-      <div className="mt-1 color-gray-medium text-sm truncate">{t(state)}</div>
+      <div className="color-gray-medium text-sm truncate">{t(state)}</div>
     </div>
   );
 }
