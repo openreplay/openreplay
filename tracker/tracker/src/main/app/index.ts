@@ -525,6 +525,12 @@ export default class App {
         }
       }
       void signalId()
+      if (this.active()) {
+        // @ts-ignore
+        event.source?.postMessage({ line: proto.startIframe }, '*')
+      } else {
+        this.addCommand(proto.startIframe)
+      }
     }
     /**
      * proxying messages from iframe to main body, so they can be in one batch (same indexes, etc)
@@ -728,7 +734,7 @@ export default class App {
         this.handleWorkerMsg(data)
       }
 
-      let closing = false;
+      let closing = false
       const alertWorker = () => {
         if (closing) {
           return
@@ -745,7 +751,12 @@ export default class App {
       this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false)
       this.attachEventListener(window, 'pagehide', alertWorker, false, false)
       // TODO: stop session after inactivity timeout (make configurable)
-      this.attachEventListener(document, 'visibilitychange', (e) => document.visibilityState === 'hidden' && alertWorker(), false)
+      this.attachEventListener(
+        document,
+        'visibilitychange',
+        (e) => document.visibilityState === 'hidden' && alertWorker(),
+        false,
+      )
     } catch (e) {
       this._debug('worker_start', e)
     }
@@ -863,8 +874,8 @@ export default class App {
     if (!this.messages.length) {
       // Release empty batches every 30 secs (1000 * 30ms)
       if (this.emptyBatchCounter < 1000) {
-        this.emptyBatchCounter++;
-        return;
+        this.emptyBatchCounter++
+        return
       }
     }
 
