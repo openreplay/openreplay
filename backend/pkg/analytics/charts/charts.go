@@ -2,9 +2,9 @@ package charts
 
 import (
 	"fmt"
-
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
+	"github.com/go-playground/validator/v10"
 	"openreplay/backend/pkg/analytics/model"
 )
 
@@ -32,6 +32,12 @@ func (s *chartsImpl) GetData(projectId int, userID uint64, req *model.MetricPayl
 		ProjectId:     projectId,
 		UserId:        userID,
 		MetricPayload: req,
+	}
+	var validate *validator.Validate = validator.New()
+	var err error
+	if err = validate.Struct(payload); err != nil {
+		return nil, fmt.Errorf("error validating payload: %v", err)
+
 	}
 	qb, err := NewQueryBuilder(payload)
 	if err != nil {

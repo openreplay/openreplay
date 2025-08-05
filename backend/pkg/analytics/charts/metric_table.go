@@ -5,10 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math"
-	"sort"
-	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
@@ -29,14 +27,28 @@ var validMetricOfValues = map[MetricOfTable]struct{}{
 type TableQueryBuilder struct{}
 
 type TableValue struct {
-	Name  string `json:"name"`
-	Total uint64 `json:"total"`
+	Name       string `json:"name" ch:"name"`
+	Total      uint64 `json:"mainCount" ch:"main_count" default:"0"`
+	TotalCount uint64 `json:"totalCount" ch:"total_count" default:"0"`
+	Count      uint64 `json:"total" ch:"total" default:"0"`
+	CountAll   uint64 `json:"countAll" ch:"count_all" default:"0"`
+}
+type ResolutionTableValue struct {
+	NumberOfRows uint64 `json:"-" ch:"number_of_rows" default:"0"`
+	CenterWidth  uint64 `json:"centerWidth" ch:"center_width"`
+	CenterHeight uint64 `json:"centerHeight" ch:"center_height"`
+	MaxWidth     uint64 `json:"maxWidth" ch:"max_width"`
+	MaxHeight    uint64 `json:"maxHeight" ch:"max_height"`
+	MinWidth     uint64 `json:"minWidth" ch:"min_width"`
+	MinHeight    uint64 `json:"minHeight" ch:"min_height"`
+	TotalInGroup uint64 `json:"totalInGroup" ch:"total_in_group" default:"0"`
+	FullCount    uint64 `json:"-" ch:"full_count" default:"0"`
 }
 
 type TableResponse struct {
-	Total  uint64       `json:"total"`
-	Count  uint64       `json:"count"`
-	Values []TableValue `json:"values"`
+	Total  uint64      `json:"total"`
+	Count  uint64      `json:"count"`
+	Values interface{} `json:"values"`
 }
 
 const (
@@ -51,9 +63,9 @@ const (
 
 var propertySelectorMap = map[string]string{
 	string(MetricOfTableLocation):   "JSONExtractString(toString(main.`$properties`), 'url_path')",
-	string(MetricOfTableUserId):     "if(empty(user_id) OR user_id IS NULL, 'Anonymous', user_id)",
+	string(MetricOfTableUserId):     "if(notEmpty(user_id), user_id, 'Anonymous')",
 	string(MetricOfTableBrowser):    "main.`$browser`",
-	string(MetricOfTableDevice):     "if(empty(user_device) OR user_device IS NULL, 'Undefined', user_device)",
+	string(MetricOfTableDevice):     "if(notEmpty(user_device), user_device, 'Undefined')",
 	string(MetricOfTableCountry):    "toString(user_country)",
 	string(MetricOfTableReferrer):   "main.`$referrer`",
 	string(MetricOfTableFetch):      "JSONExtractString(toString(main.`$properties`), 'url_path')",
@@ -71,52 +83,65 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 	if metricFormat != MetricFormatSessionCount && metricFormat != MetricFormatUserCount {
 		metricFormat = MetricFormatSessionCount
 	}
+	if p.MetricOf == "screenResolution" {
+		return t.executeForTableOfResolutions(p, conn)
+	}
+
 	query, err := t.buildQuery(p, metricFormat)
 	if err != nil {
 		return nil, fmt.Errorf("error building query: %w", err)
 	}
-	rows, err := conn.Query(context.Background(), query)
-	if err != nil {
+	var rawValues []TableValue
+	if err = conn.Select(context.Background(), &rawValues, query); err != nil {
 		log.Printf("Error executing query: %s\nQuery: %s", err, query)
-		return nil, fmt.Errorf("error executing query: %w", err)
+		return nil, err
 	}
-	defer rows.Close()
+
+	var result []interface{}
+	var overallTotal uint64
+	var overallCount uint64
+	if len(rawValues) > 0 {
+		overallCount = rawValues[0].CountAll
+		overallTotal = uint64(len(rawValues))
+	}
+	for _, v := range rawValues {
+		result = append(result, TableValue{Name: v.Name, Total: v.Total})
+	}
+
+	overallTotal = uint64(len(rawValues))
+
+	return &TableResponse{Total: overallTotal, Count: overallCount, Values: result}, nil
+}
+func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload, conn driver.Conn) (interface{}, error) {
+	metricFormat := p.MetricFormat
+	if metricFormat != MetricFormatSessionCount && metricFormat != MetricFormatUserCount {
+		metricFormat = MetricFormatSessionCount
+	}
+
+	tmpQuery, query, params, err := t.buildTableOfResolutionsQuery(p, metricFormat)
+	if err != nil {
+		return nil, fmt.Errorf("error building screenResolution queries: %w", err)
+	}
+	queryParams := convertParams(params)
+	err = conn.Exec(context.Background(), tmpQuery, queryParams...)
+	if err != nil {
+		return nil, fmt.Errorf("error executing tmp query for screenResolution: %w", err)
+	}
+	var rawValues []ResolutionTableValue
+	if err = conn.Select(context.Background(), &rawValues, query, queryParams...); err != nil {
+		log.Printf("Error executing Table Of Resolutions query: %s\nQuery: %s", err, query)
+		return nil, err
+	}
 
 	var overallTotal uint64
 	var overallCount uint64
-	var rawValues []TableValue
-	first := true
-	for rows.Next() {
-		var name string
-		var count uint64
-		var total uint64
-		var countAll uint64
-		if err := rows.Scan(&total, &name, &count, &countAll); err != nil {
-			return nil, fmt.Errorf("error scanning row: %w", err)
-		}
-		if first {
-			overallCount = countAll
-			first = false
-		}
-		rawValues = append(rawValues, TableValue{Name: name, Total: count})
+	i := 1
+	for i < len(rawValues) && overallCount == 0 {
+		overallCount = rawValues[i].NumberOfRows
+		overallTotal = rawValues[i].FullCount
+		i++
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating rows: %w", err)
-	}
-
-	var grouped []TableValue
-	if p.MetricOf == string(MetricOfTableResolution) {
-		grouped, overallTotal = t.groupResolutionClusters(rawValues, p.Page, p.Limit)
-	} else {
-		overallTotal = uint64(len(rawValues))
-		grouped = rawValues
-	}
-
-	if grouped == nil {
-		grouped = []TableValue{}
-	}
-
-	return &TableResponse{Total: overallTotal, Count: overallCount, Values: grouped}, nil
+	return &TableResponse{Total: overallTotal, Count: overallCount, Values: rawValues}, nil
 }
 
 func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string, error) {
@@ -124,18 +149,15 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		return "", errors.New("payload is nil")
 	}
 
-	if r.ProjectId <= 0 {
-		return "", errors.New("invalid project ID")
-	}
-	if r.StartTimestamp <= 0 || r.EndTimestamp <= 0 {
-		return "", errors.New("invalid timestamps")
-	}
 	if r.StartTimestamp >= r.EndTimestamp {
 		return "", errors.New("start timestamp must be before end timestamp")
 	}
 
 	s := r.Series[0]
-
+	log.Printf("MetricOf: %s, MetricFormat: %s", r.MetricOf, metricFormat)
+	if r.MetricOf == "screenResolution" {
+		return "", fmt.Errorf("Should call buildTableOfResolutionsQuery instead of buildQuery for screenResolution metric")
+	}
 	// Build event filter conditions with error handling
 	durConds, _ := BuildDurationWhere(s.Filter.Filters)
 
@@ -153,9 +175,11 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	}
 
 	prewhereParts := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, otherConds)
+	log.Printf("prewhereParts: %v", prewhereParts)
 	sessionConditions := t.buildSessionConditions(r, metricFormat, durConds)
-
-	joinClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
+	log.Printf("sessionConditions: %v", sessionConditions)
+	joinClause, _, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
+	log.Printf("joinClause: %v", joinClause)
 	if err != nil {
 		return "", err
 	}
@@ -321,24 +345,160 @@ LIMIT %d OFFSET %d`,
 	return query, nil
 }
 
-func (t *TableQueryBuilder) buildJoinClause(eventsOrder model.EventOrder, eventConditions []string) (string, error) {
-	switch eventsOrder {
-	case "then":
-		return t.buildSequenceJoinClause(eventConditions), nil
-	case "and":
-		return t.buildCountJoinClause(eventConditions, "AND"), nil
-	case "or":
-		return t.buildCountJoinClause(eventConditions, "OR"), nil
-	case "":
-		return "", nil
-	default:
-		return "", fmt.Errorf("unknown events order: %s", eventsOrder)
+
+func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload, metricFormat string) (string, string, map[string]any, error) {
+	s := r.Series[0]
+	// Build event filter conditions with error handling
+	durConds, _ := BuildDurationWhere(s.Filter.Filters)
+	sessFilters, _ := FilterOutTypes(s.Filter.Filters, []model.FilterType{FilterDuration, FilterUserAnonymousId})
+	log.Printf(">>sessFilters: %v", sessFilters)
+	eventConditions, otherConds := BuildEventConditions(sessFilters, BuildConditionsOptions{
+		DefinedColumns: mainColumns,
+		MainTableAlias: "main",
+		EventsOrder:    string(s.Filter.EventsOrder),
+	})
+	log.Printf(">>eventConditions: %v", eventConditions)
+	log.Printf(">>otherCodifitons: %v", otherConds)
+	prewhereParts := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, otherConds)
+	log.Printf(">>prewhereParts: %v", prewhereParts)
+	queryConditions := t.buildSessionConditions(r, metricFormat, durConds)
+	log.Printf(">>queryConditions: %v", queryConditions)
+	joinClause, extraWhere, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
+	log.Printf(">>joinClause: %v", joinClause)
+	if err != nil {
+		return "", "", nil, err
 	}
+	queryConditions = append(queryConditions, extraWhere...)
+
+	//Determine aggregation column
+	main_column := "session_id"
+	if metricFormat == MetricFormatUserCount {
+		main_column = "user_id"
+	}
+
+	joinEvents := ""
+	if len(joinClause) > 0 || len(extraWhere) > 0 {
+		joinEvents = "INNER JOIN product_analytics.events AS main ON (main.session_id = s.session_id) "
+		queryConditions = append(queryConditions, prewhereParts...)
+	}
+	// Surround each condition-group with parentheses
+	for i, condition := range queryConditions {
+		queryConditions[i] = fmt.Sprintf("(%s)", condition)
+	}
+
+	pagination := t.calculatePagination(r.Page, r.Limit)
+	tableKey := fmt.Sprintf("%d", time.Now().UnixMilli())
+	return fmt.Sprintf(`
+CREATE TEMPORARY TABLE base_%[1]v AS (
+			SELECT screen_width,
+				   screen_height,
+				   pixels,
+				   count(DISTINCT %[2]v) AS freq,
+				   any(full_count) AS full_count
+			FROM (SELECT screen_width,
+						 screen_height,
+						 screen_width * screen_height       AS pixels,
+						 %[2]v,
+						 count(DISTINCT %[2]v) OVER () AS full_count
+				  FROM experimental.sessions AS s
+       					%[5]v
+				  WHERE %[3]v
+				  GROUP BY screen_width, screen_height, %[2]v
+       			  %[4]v) AS raw
+			GROUP BY ALL);`,
+			tableKey, main_column, strings.Join(queryConditions, " AND "), joinClause, joinEvents),
+		fmt.Sprintf(`
+SELECT CAST(full_count AS UInt64) AS full_count,
+       CAST(number_of_rows AS UInt64)       AS number_of_rows,
+       CAST(center_width AS UInt64)         AS center_width,
+       CAST(center_height AS UInt64)        AS center_height,
+       CAST(max_width AS UInt64)            AS max_width,
+       CAST(max_height AS UInt64)           AS max_height,
+       CAST(min_width AS UInt64)            AS min_width,
+       CAST(min_height AS UInt64)           AS min_height,
+       CAST(total_in_group AS UInt64)       AS total_in_group
+FROM (SELECT any(full_count)               AS full_count,
+             COUNT(1) OVER ()               AS number_of_rows,
+             base_center.screen_width       AS center_width,
+             base_center.screen_height      AS center_height,
+             max(base_center.screen_width)  AS max_width,
+             max(base_center.screen_height) AS max_height,
+             min(base_center.screen_width)  AS min_width,
+             min(base_center.screen_height) AS min_height,
+             sum(base_match.freq)           AS total_in_group
+      FROM base_%[1]v AS base_center
+               JOIN base_%[1]v AS base_match
+                    ON base_match.pixels BETWEEN base_center.pixels * 0.95 AND base_center.pixels * 1.05
+      GROUP BY center_width, center_height
+      ORDER BY total_in_group DESC
+      LIMIT @limit OFFSET @offset) AS raw
+	  ORDER BY center_width,center_height;`, tableKey),
+		map[string]any{
+			"startTimestamp": r.StartTimestamp,
+			"endTimestamp":   r.EndTimestamp,
+			"projectId":      r.ProjectId,
+			"limit":          pagination.Limit - 1,
+			"offset":         max(0, pagination.Offset-1),
+		}, nil
+
+	// Build the final query with proper string formatting
+	//	var query string
+	//	baseSelectParts := []string{
+	//		fmt.Sprintf("COUNT(DISTINCT %s) OVER () AS main_count", finalPropertySelector),
+	//		fmt.Sprintf("%s AS name", finalPropertySelector),
+	//		fmt.Sprintf("count(DISTINCT %s) AS total", distinctColumn),
+	//		fmt.Sprintf("COALESCE(SUM(count(DISTINCT %s)) OVER (), 0) AS total_count", distinctColumn),
+	//	}
+	//
+	//	subquerySelectParts := t.subquerySelects(r)
+	//
+	//	var innerSelectParts []string
+	//	var groupByField string
+	//
+	//	if isFromEvents {
+	//		// Property from events table
+	//		subquerySelectParts = append([]string{"f.metric_value AS metric_value"}, subquerySelectParts...)
+	//		innerSelectParts = []string{
+	//			eventsSelect,
+	//			"MIN(main.created_at) AS first_event_ts",
+	//			"MAX(main.created_at) AS last_event_ts",
+	//		}
+	//		groupByField = finalPropertySelector
+	//	} else {
+	//		// Property from sessions table
+	//		innerSelectParts = []string{
+	//			eventsSelect,
+	//			"MIN(main.created_at) AS first_event_ts",
+	//			"MAX(main.created_at) AS last_event_ts",
+	//		}
+	//		groupByField = propSel
+	//	}
+	//
 }
 
-func (t *TableQueryBuilder) buildSequenceJoinClause(eventConditions []string) string {
+
+func (t *TableQueryBuilder) buildJoinClause(eventsOrder model.EventOrder, eventConditions []string) (string, []string, error) {
+	var havingClause string
+	var whereClause []string
+	switch eventsOrder {
+	case "then":
+		havingClause, whereClause = t.buildSequenceJoinClause(eventConditions)
+	case "and":
+		havingClause, whereClause = t.buildCountJoinClause(eventConditions, "AND")
+	case "or":
+		havingClause, whereClause = t.buildCountJoinClause(eventConditions, "OR")
+	case "":
+		return "", make([]string, 0), nil
+	default:
+		return "", make([]string, 0), fmt.Errorf("unknown events order: %s", eventsOrder)
+	}
+	return havingClause, whereClause, nil
+}
+
+
+func (t *TableQueryBuilder) buildSequenceJoinClause(eventConditions []string) (string, []string) {
 	if len(eventConditions) <= 1 {
-		return ""
+		return "", make([]string, 0)
 	}
 
 	var patBuilder strings.Builder
@@ -351,20 +511,25 @@ func (t *TableQueryBuilder) buildSequenceJoinClause(eventConditions []string) st
 		"HAVING sequenceMatch('%s')(\n    toDateTime(main.created_at),\n    %s\n)",
 		patBuilder.String(),
 		strings.Join(eventConditions, ",\n    "),
-	)
+	), make([]string, 0)
 }
 
-func (t *TableQueryBuilder) buildCountJoinClause(eventConditions []string, operator string) string {
+func (t *TableQueryBuilder) buildCountJoinClause(eventConditions []string, operator string) (string, []string) {
 	if len(eventConditions) == 0 {
-		return ""
+		return "", make([]string, 0)
 	}
-
-	countConds := make([]string, len(eventConditions))
-	for i, condition := range eventConditions {
-		countConds[i] = fmt.Sprintf("countIf(%s) > 0", condition)
+	var havingClause string
+	var whereClause []string
+	if operator == "OR" {
+		whereClause = append(whereClause, strings.Join(eventConditions, " OR "))
+	} else {
+		countConds := make([]string, len(eventConditions))
+		for i, condition := range eventConditions {
+			countConds[i] = fmt.Sprintf("countIf(%s) > 0", condition)
+		}
+		havingClause = fmt.Sprintf("HAVING %s", strings.Join(countConds, fmt.Sprintf(" %s ", operator)))
 	}
-
-	return fmt.Sprintf("HAVING %s", strings.Join(countConds, fmt.Sprintf(" %s ", operator)))
+	return havingClause, whereClause
 }
 
 // buildPrewhereConditions constructs the prewhere conditions for the main events query
@@ -387,9 +552,40 @@ func (t *TableQueryBuilder) buildPrewhereConditions(r *Payload, eventsOrder mode
 	return prewhereParts
 }
 
+// The list of session properties and its column names
+var sessionProperties = map[string]string{
+	"userOs":          "user_os",
+	"userBrowser":     "user_browser",
+	"userDevice":      "user_device",
+	"userCountry":     "user_country",
+	"userCity":        "user_city",
+	"userState":       "user_state",
+	"userId":          "user_id",
+	"userAnonymousId": "user_anonymous_id",
+	"referrer":        "referrer",
+	"revId":           "rev_id",
+	"duration":        "duration",
+	"platform":        "platform",
+	"metadata":        "metadata",
+	"issue":           "issues",
+	"eventsCount":     "events_count",
+	"utmSource":       "utm_source",
+	"utmMedium":       "utm_medium",
+	"utmCampaign":     "utm_campaign",
+	//	IOS
+	"userOsIos":          "user_os",
+	"userDeviceIos":      "user_device",
+	"userCountryIos":     "user_country",
+	"userIdIos":          "user_id",
+	"userAnonymousIdIos": "user_anonymous_id",
+	"revIdIos":           "rev_id",
+}
+
 // buildSessionConditions constructs the session conditions for the sessions query
 func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat string, durConds []string) []string {
-	sessionConditions := make([]string, 0, 6+len(durConds))
+	var sessionConditions []string
+
+	// Add core session conditions
 	sessionConditions = append(sessionConditions, t.buildTimeRangeConditions("s", r.ProjectId, r.StartTimestamp, r.EndTimestamp)...)
 	sessionConditions = append(sessionConditions, "isNotNull(s.duration)")
 
@@ -401,12 +597,25 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 		}
 	}
 
-	// Handle user count specific conditions
-	if metricFormat == MetricFormatUserCount {
-		sessionConditions = append(sessionConditions,
-			fmt.Sprintf("NOT (empty(s.user_id) AND (s.user_uuid IS NULL OR s.user_uuid = '%s'))", nilUUIDString))
-	}
+	//// Handle user count specific conditions
+	//if metricFormat == MetricFormatUserCount {
+	//	sessionConditions = append(sessionConditions,
+	//		fmt.Sprintf("NOT (empty(s.user_id) AND (s.user_uuid IS NULL OR s.user_uuid = '%s'))", nilUUIDString))
+	//}
 
+	// To add session's specific filters (like user_os, user_browser, etc...)
+	for _, f := range r.Series[0].Filter.Filters {
+		if !f.IsEvent && f.AutoCaptured {
+			if column, ok := sessionProperties[f.Name]; ok {
+				var subCondition []string
+				for _, value := range f.Value {
+					subCondition = append(subCondition, fmt.Sprintf("%s='%s'", column, value))
+				}
+
+				sessionConditions = append(sessionConditions, fmt.Sprintf("(%s)", strings.Join(subCondition, " OR ")))
+			}
+		}
+	}
 	return sessionConditions
 }
 
@@ -468,92 +677,4 @@ func (*TableQueryBuilder) subquerySelects(r *Payload) []string {
 		subquerySelectParts = append([]string{"s.user_country AS user_country"}, subquerySelectParts...)
 	}
 	return subquerySelectParts
-}
-
-func (t *TableQueryBuilder) groupResolutionClusters(raw []TableValue, page, limit int) ([]TableValue, uint64) {
-	// Use centralized pagination logic
-	pagination := t.calculatePagination(page, limit)
-	type cluster struct {
-		minW, minH, maxW, maxH int
-		total                  uint64
-	}
-	var clusters []cluster
-	var rangePercent = 0.10 // 10% range for width and height
-
-	for _, v := range raw {
-		if v.Name == "Unknown" {
-			hit := false
-			for i := range clusters {
-				c := &clusters[i]
-				if c.minW == 0 && c.minH == 0 && c.maxW == 0 && c.maxH == 0 {
-					c.total += v.Total
-					hit = true
-					break
-				}
-			}
-			if !hit {
-				clusters = append(clusters, cluster{0, 0, 0, 0, v.Total})
-			}
-			continue
-		}
-		parts := strings.Split(v.Name, "x")
-		if len(parts) != 2 {
-			continue
-		}
-		w, err1 := strconv.Atoi(parts[0])
-		h, err2 := strconv.Atoi(parts[1])
-		if err1 != nil || err2 != nil {
-			continue
-		}
-		switched := false
-		for i := range clusters {
-			c := &clusters[i]
-			if !(c.minW == 0 && c.minH == 0 && c.maxW == 0 && c.maxH == 0) {
-				if math.Abs(float64(w-c.minW))/float64(c.minW) <= rangePercent && math.Abs(float64(h-c.minH))/float64(c.minH) <= rangePercent {
-					if w < c.minW {
-						c.minW = w
-					}
-					if h < c.minH {
-						c.minH = h
-					}
-					if w > c.maxW {
-						c.maxW = w
-					}
-					if h > c.maxH {
-						c.maxH = h
-					}
-					c.total += v.Total
-					switched = true
-					break
-				}
-			}
-		}
-		if !switched {
-			clusters = append(clusters, cluster{w, h, w, h, v.Total})
-		}
-	}
-
-	sort.Slice(clusters, func(i, j int) bool { return clusters[i].total > clusters[j].total })
-	var result []TableValue
-	for _, c := range clusters {
-		var name string
-		if c.minW == 0 && c.minH == 0 && c.maxW == 0 && c.maxH == 0 {
-			name = "Unknown"
-		} else {
-			name = fmt.Sprintf("%dx%d", c.maxW, c.maxH)
-		}
-		result = append(result, TableValue{Name: name, Total: c.total})
-	}
-
-	overall := uint64(len(clusters))
-	// apply pagination using centralized logic
-	if pagination.Offset >= len(result) {
-		return []TableValue{}, overall
-	}
-
-	end := pagination.Offset + pagination.Limit
-	if end > len(result) {
-		end = len(result)
-	}
-	return result[pagination.Offset:end], overall
 }

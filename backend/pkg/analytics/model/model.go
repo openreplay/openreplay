@@ -43,19 +43,20 @@ type Filter struct {
 	Filters       []Filter   `json:"filters,omitempty"` // Nested filters for complex conditions
 }
 
+// TODO: add validation using github.com/go-playground/validator (you can follow the previous structure for guidance)
 type MetricPayload struct {
-	StartTimestamp  int64      `json:"startTimestamp"`
-	EndTimestamp    int64      `json:"endTimestamp"`
-	Density         int        `json:"density"`
-	MetricOf        string     `json:"metricOf"`
+	StartTimestamp  int64      `json:"startTimestamp" validate:"required,min=946684800000"`
+	EndTimestamp    int64      `json:"endTimestamp" validate:"required,min=946684800000"`
+	Density         int        `json:"density" validate:"required,min=1,max=500"`
+	MetricOf        string     `json:"metricOf" validate:"required,oneof=sessionCount userCount screenResolution"`
 	MetricType      MetricType `json:"metricType"`
 	MetricValue     []string   `json:"metricValue"`
 	MetricFormat    string     `json:"metricFormat"`
 	ViewType        string     `json:"viewType"`
 	Name            string     `json:"name"`
 	Series          []Series   `json:"series"`
-	Limit           int        `json:"limit"`
-	Page            int        `json:"page"`
+	Limit           int        `json:"limit" validate:"required,min=1,max=200"`
+	Page            int        `json:"page" validate:"required,min=1"`
 	StartPoint      []Filter   `json:"startPoint"`
 	Exclude         []Filter   `json:"excludes"`
 	Rows            uint64     `json:"rows"`
