@@ -2,11 +2,12 @@ package charts
 
 import (
 	"fmt"
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"log"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/ClickHouse/clickhouse-go/v2"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
@@ -489,12 +490,31 @@ func BuildJoinClause(order string, eventsWhere []string, tableAlias ...string) s
 			)
 		}
 	case "and":
-		if len(eventsWhere) > 0 {
-			return fmt.Sprintf("HAVING %s", strings.Join(eventsWhere, " AND "))
+		if len(eventsWhere) > 1 {
+			// Build each condition: countIf(col, 1) > 0
+			parts := make([]string, len(eventsWhere))
+			for i, col := range eventsWhere {
+				parts[i] = fmt.Sprintf("countIf(%s) > 0", col)
+			}
+			// Concise join in one go
+			return fmt.Sprintf(
+				"GROUP BY %s.session_id\nHAVING %s",
+				ta,
+				strings.Join(parts, " AND "),
+			)
 		}
 	case "or":
-		if len(eventsWhere) > 0 {
-			return fmt.Sprintf("HAVING %s", strings.Join(eventsWhere, " OR "))
+		if len(eventsWhere) > 1 {
+			parts := make([]string, len(eventsWhere))
+			for i, col := range eventsWhere {
+				parts[i] = fmt.Sprintf("countIf(%s) > 0", col)
+			}
+			// Concise join in one go
+			return fmt.Sprintf(
+				"GROUP BY %s.session_id\nHAVING %s",
+				ta,
+				strings.Join(parts, " OR "),
+			)
 		}
 	}
 	return ""

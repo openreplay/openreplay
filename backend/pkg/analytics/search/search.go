@@ -102,16 +102,19 @@ func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSea
 	}, sessionsWhere...)
 
 	var eventsInnerJoin string
+
 	conds := make([]string, 0, len(req.Filters)+2)
-	if req.EventsOrder == "then" && len(eventsWhere) == 1 {
-		conds = append(conds, eventsWhere[0])
-	}
+
 	if len(eventsWhere) > 0 || len(filtersWhere) > 0 {
 		conds = append([]string{
 			fmt.Sprintf("e.project_id = %d", projectId),
 			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", req.StartDate/1000, req.EndDate/1000),
 		}, conds...)
 		conds = append(conds, filtersWhere...)
+
+		if len(eventsWhere) == 1 {
+			conds = append(conds, eventsWhere[0])
+		}
 
 		joinClause := charts.BuildJoinClause(req.EventsOrder, eventsWhere)
 		eventsInnerJoin = fmt.Sprintf(`ANY INNER JOIN (
