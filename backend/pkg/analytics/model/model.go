@@ -48,10 +48,10 @@ type MetricPayload struct {
 	StartTimestamp  int64      `json:"startTimestamp" validate:"required,min=946684800000"`
 	EndTimestamp    int64      `json:"endTimestamp" validate:"required,min=946684800000"`
 	Density         int        `json:"density" validate:"required,min=1,max=500"`
-	MetricOf        string     `json:"metricOf" validate:"required,oneof=sessionCount userCount screenResolution"`
+	MetricOf        string     `json:"metricOf" validate:"required"`
 	MetricType      MetricType `json:"metricType"`
 	MetricValue     []string   `json:"metricValue"`
-	MetricFormat    string     `json:"metricFormat"`
+	MetricFormat    string     `json:"metricFormat,oneof=sessionCount userCount screenResolution"`
 	ViewType        string     `json:"viewType"`
 	Name            string     `json:"name"`
 	Series          []Series   `json:"series"`
