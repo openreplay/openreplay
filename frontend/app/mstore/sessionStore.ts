@@ -699,4 +699,24 @@ export default class SessionStore {
     this.bookmarks.page = page;
     void this.fetchBookmarkedSessions();
   }
+
+  pingExporter = async () => {
+    try {
+      const response = await sessionService.pingExporter();
+      return response.status === 'ok';
+    } catch (e) {
+      console.error('Failed to ping exporter', e);
+      return false;
+    }
+  };
+
+  exportSession = async (sessionId: string, projectId: string) => {
+    try {
+      const response = await sessionService.exportSession(projectId, sessionId);
+      return response;
+    } catch (e) {
+      console.error('Failed to export session', e);
+      return { status: 'error', error: e.message };
+    }
+  };
 }

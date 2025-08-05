@@ -216,4 +216,27 @@ export default class SettingsService {
       return Promise.reject(reason);
     }
   }
+
+  async pingExporter(): Promise<{ status: string }> {
+    try {
+      const r = await this.client.get('/export/ping');
+      const j = await r.json();
+      return j || {};
+    } catch (reason) {
+      return Promise.reject(reason);
+    }
+  }
+
+  async exportSession(
+    projectId: string,
+    sessionId: string,
+  ): Promise<{ status: string; jobId?: string }> {
+    try {
+      const r = await this.client.post('/export', { projectId, sessionId });
+      const j = await r.json();
+      return j || {};
+    } catch (reason) {
+      return Promise.reject(reason);
+    }
+  }
 }

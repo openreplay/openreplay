@@ -4,7 +4,7 @@ import cn from 'classnames';
 import {
   Link2,
   Keyboard,
-  Bot,
+  FileArchive,
   Bookmark as BookmarkIcn,
   BookmarkCheck,
   Vault,
@@ -31,7 +31,10 @@ import SimilarSessionsButton from './SimilarSessions/SimilarSessionsButton';
 
 const disableDevtools = 'or_devtools_uxt_toggle';
 
-function SubHeader(props) {
+function SubHeader(props: {
+  live?: boolean;
+  setActiveTab: (tab: string) => void;
+}) {
   const {
     uxtestingStore,
     integrationsStore,
@@ -39,7 +42,7 @@ function SubHeader(props) {
     projectsStore,
     userStore,
     issueReportingStore,
-    settingsStore
+    settingsStore,
   } = useStore();
   const { t } = useTranslation();
   const { favorite } = sessionStore.current;
@@ -134,16 +137,96 @@ function SubHeader(props) {
     settingsStore.sessionSettings.updateKey('virtualMode', true);
     player.enableVMode?.();
     location.reload();
-  }
+  };
+
+  const dropdownItems = [
+    {
+      key: '2',
+      label: (
+        <div className="flex items-center gap-2">
+          {vaultIcon}
+          <span>{isEnterprise ? t('Vault') : t('Bookmark')}</span>
+        </div>
+      ),
+      onClick: toggleFavorite,
+    },
+    {
+      key: '4',
+      label: (
+        <div className="flex items-center gap-2">
+          <Icon name={`integrations/${reportingProvider || 'github'}`} />
+          <span>{t('Issues')}</span>
+        </div>
+      ),
+      disabled: !enabledIntegration,
+      onClick: handleOpenIssueModal,
+    },
+    {
+      key: '1',
+      label: (
+        <div className="flex items-center gap-2">
+          <Keyboard size={16} strokeWidth={1} />
+          <span>{t('Keyboard Shortcuts')}</span>
+        </div>
+      ),
+      onClick: showKbHelp,
+    },
+  ];
+
+  const exportSession = async () => {
+    if (!isEnterprise) {
+      return;
+    }
+
+    const resp = await sessionStore.exportSession(
+      currentSession.sessionId,
+      projectId!,
+    );
+    if (resp.status === 'in_progress') {
+      toast.info(t('Export is already in progress'));
+    } else if (resp.status === 'queued') {
+      toast.success(t('Export queued successfully'));
+    } else {
+      toast.error(t('Failed to export session'));
+    }
+  };
+
+  React.useEffect(() => {
+    if (isEnterprise) {
+      sessionStore.pingExporter().then((canExport) => {
+        if (canExport) {
+          dropdownItems.push({
+            key: '3',
+            label: (
+              <div className="flex items-center gap-2">
+                <FileArchive size={16} strokeWidth={1} />
+                <span>{t('Export Session')}</span>
+              </div>
+            ),
+            onClick: exportSession,
+          });
+        }
+      });
+    }
+  }, []);
 
   return (
     <>
-    <WarnBadge
+      <WarnBadge
         siteId={projectId!}
         currentLocation={currentLocation}
         version={currentSession?.trackerVersion ?? ''}
-        containerStyle={{ position: 'relative', left: 0, top: 0, transform: 'none', zIndex: 10 }}
-        trackerWarnStyle={{ backgroundColor: 'var(--color-yellow)', color: 'black' }}
+        containerStyle={{
+          position: 'relative',
+          left: 0,
+          top: 0,
+          transform: 'none',
+          zIndex: 10,
+        }}
+        trackerWarnStyle={{
+          backgroundColor: 'var(--color-yellow)',
+          color: 'black',
+        }}
         virtualElsFailed={showVModeBadge}
         onVMode={onVMode}
       />
@@ -157,7 +240,6 @@ function SubHeader(props) {
             : undefined,
         }}
       >
-
         <SessionTabs />
 
         {!hideTools && (
@@ -190,41 +272,7 @@ function SubHeader(props) {
             <HighlightButton onClick={() => props.setActiveTab('HIGHLIGHT')} />
             <Dropdown
               menu={{
-                items: [
-                  {
-                    key: '2',
-                    label: (
-                      <div className="flex items-center gap-2">
-                        {vaultIcon}
-                        <span>{isEnterprise ? t('Vault') : t('Bookmark')}</span>
-                      </div>
-                    ),
-                    onClick: toggleFavorite,
-                  },
-                  {
-                    key: '4',
-                    label: (
-                      <div className="flex items-center gap-2">
-                        <Icon
-                          name={`integrations/${reportingProvider || 'github'}`}
-                        />
-                        <span>{t('Issues')}</span>
-                      </div>
-                    ),
-                    disabled: !enabledIntegration,
-                    onClick: handleOpenIssueModal,
-                  },
-                  {
-                    key: '1',
-                    label: (
-                      <div className="flex items-center gap-2">
-                        <Keyboard size={16} strokeWidth={1} />
-                        <span>{t('Keyboard Shortcuts')}</span>
-                      </div>
-                    ),
-                    onClick: showKbHelp,
-                  },
-                ]
+                items: dropdownItems,
               }}
             >
               <AntButton size="small">
