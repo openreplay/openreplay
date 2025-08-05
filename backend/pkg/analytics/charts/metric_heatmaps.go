@@ -3,7 +3,6 @@ package charts
 import (
 	"context"
 	"fmt"
-	"openreplay/backend/pkg/analytics/model"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -44,58 +43,34 @@ func (h *HeatmapQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}
 }
 
 func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
+	filter := p.MetricPayload.Series[0].Filter
+
 	base := []string{
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
-		fmt.Sprintf("e.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
-		fmt.Sprintf("e.created_at < toDateTime(%d)", p.MetricPayload.EndTimestamp/1000),
+		fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", p.MetricPayload.StartTimestamp/1000, p.MetricPayload.EndTimestamp/1000),
 		"e.session_id IS NOT NULL",
 		"e.`$event_name` = 'CLICK'",
 		"JSONExtractFloat(toString(e.\"$properties\"), 'normalized_x') IS NOT NULL",
 		"JSONExtractFloat(toString(e.\"$properties\"), 'normalized_y') IS NOT NULL",
 	}
 
-	var nonSessionFilters []model.Filter
-	var sessionTableFilters []model.Filter
-	var hasSessionFilters bool
-
-	for _, filter := range p.MetricPayload.Series[0].Filter.Filters {
-		if _, exists := SessionColumns[filter.Name]; exists {
-			sessionTableFilters = append(sessionTableFilters, filter)
-			hasSessionFilters = true
-		} else {
-			nonSessionFilters = append(nonSessionFilters, filter)
-		}
-	}
-
-	eventFilters, otherFilters := BuildEventConditions(nonSessionFilters, BuildConditionsOptions{
-		DefinedColumns: mainColumns,
-		MainTableAlias: "l",
-	})
-
-	// filters that uses the sessions table
-	_, sessionFilters := BuildEventConditions(sessionTableFilters, BuildConditionsOptions{
-		DefinedColumns: SessionColumns,
-		MainTableAlias: "ls",
-	})
-
-	var joinClause string // This will remain empty; we're using subquery instead of JOIN
+	eventsWhere, filtersWhere, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls")
 
 	subBase := []string{
 		fmt.Sprintf("l.project_id = %d", p.ProjectId),
-		fmt.Sprintf("l.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
-		fmt.Sprintf("l.created_at < toDateTime(%d)", p.MetricPayload.EndTimestamp/1000),
+		fmt.Sprintf("l.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", p.MetricPayload.StartTimestamp/1000, p.MetricPayload.EndTimestamp/1000),
 		"l.session_id IS NOT NULL",
 	}
-	subBase = append(subBase, otherFilters...)
-	subBase = append(subBase, eventFilters...)
+	subBase = append(subBase, eventsWhere...)
+	subBase = append(subBase, filtersWhere...)
 
 	var subJoin string
-	if hasSessionFilters {
+	if len(sessionsWhere) > 0 {
 		subJoin = "JOIN experimental.sessions AS ls ON l.session_id = ls.session_id"
-		subBase = append(subBase, sessionFilters...)
+		subBase = append(subBase, sessionsWhere...)
 	}
 
-	subWhere := strings.Join(subBase, " AND ")
+	subWhere := strings.Join(subBase, "\n\tAND ")
 
 	var subqueryClause string
 	if subJoin != "" {
@@ -112,16 +87,15 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 	}
 	base = append(base, subqueryClause)
 
-	where := strings.Join(base, " AND ")
+	where := strings.Join(base, "\n\tAND ")
 
 	q := fmt.Sprintf(`
 SELECT
 	JSONExtractFloat(toString(e."$properties"), 'normalized_x') AS normalized_x,
 	JSONExtractFloat(toString(e."$properties"), 'normalized_y') AS normalized_y
 FROM product_analytics.events AS e
-%s
 WHERE %s
-LIMIT 500;`, joinClause, where)
+LIMIT 500;`, where)
 
 	logQuery(fmt.Sprintf("HeatmapQueryBuilder.buildQuery: %s", q))
 	return q, nil
