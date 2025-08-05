@@ -4,8 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-urllib3 = "==2.3.0"
-requests = "==2.32.3"
+urllib3 = "==2.5.0"
+requests = "==2.32.4"
 boto3 = "==1.36.12"
 pyjwt = "==2.10.1"
 psycopg2-binary = "==2.9.10"
@@ -19,7 +19,7 @@ fastapi = "==0.115.8"
 uvicorn = {extras = ["standard"], version = "==0.34.0"}
 gunicorn = "==23.0.0"
 python-decouple = "==3.8"
-pydantic = {extras = ["email"], version = "==2.10.6"}
+pydantic = {extras = ["email"], version = "==2.11.7"}
 apscheduler = "==3.11.0"
 python3-saml = "==1.16.0"
 python-multipart = "==0.0.20"
