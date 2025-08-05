@@ -123,7 +123,7 @@ export default function (app: App, opts: Partial<Options>): void {
       return
     }
 
-    // will probably require custom header added to responses for tracked fetch/xhr requests:
+    // will probably require custom header added to responses for tracked requests:
     // Timing-Allow-Origin: *
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Timing-Allow-Origin
     let stalled = 0
@@ -147,6 +147,14 @@ export default function (app: App, opts: Partial<Options>): void {
     const entryName = options.resourceNameSanitizer
       ? options.resourceNameSanitizer(entry.name)
       : entry.name
+
+    const cached: boolean =
+      (entry.responseStatus && entry.responseStatus === 304) ||
+      (entry.deliveryType && entry.deliveryType === 'cache') ||
+      (entry.transferSize === 0 && entry.decodedBodySize > 0)
+
+    const requestFailed = entry.responseStatus && entry.responseStatus >= 400
+    const decodedBodySize = requestFailed ? -111 : entry.decodedBodySize || 0
     app.send(
       ResourceTiming(
         entry.startTime + getTimeOrigin(),
@@ -154,11 +162,11 @@ export default function (app: App, opts: Partial<Options>): void {
         timings.ttfb,
         entry.transferSize > entry.encodedBodySize ? entry.transferSize - entry.encodedBodySize : 0,
         entry.encodedBodySize || 0,
-        entry.decodedBodySize || 0,
+        decodedBodySize,
         app.sanitizer.privateMode ? entry.name.replaceAll(/./g, '*') : entryName,
         entry.initiatorType,
         entry.transferSize,
-        (entry.responseStatus && entry.responseStatus === 304) || entry.transferSize === 0,
+        cached,
         timings.queueing,
         timings.dnsLookup,
         timings.initialConnection,

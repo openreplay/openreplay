@@ -95,7 +95,7 @@ export interface IResourceTiming extends IResource {
   type: ResourceType;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | '..';
   success: boolean;
-  status: '2xx-3xx' | '4xx-5xx';
+  status: '2xx-3xx' | '4xx-5xx' | 'no-info';
   time: number;
   timings: {
     queueing: number;
@@ -154,21 +154,30 @@ export function getResourceFromResourceTiming(
   msg: ResourceTiming,
   sessStart: number,
 ) {
-  // duration might be duration=0 when cached
-  const failed =
-    (msg.transferredSize === 0 && msg.duration > 0) ||
-    (msg.duration === 0 &&
-      msg.ttfb === 0 &&
-      msg.headerSize === 0 &&
-      msg.encodedBodySize === 0 &&
-      msg.transferredSize === 0);
+  const failed =msg.decodedBodySize === -111;
+  const timingDataBlocked =
+    msg.duration === 0 &&
+    msg.ttfb === 0 &&
+    msg.headerSize === 0 &&
+    msg.encodedBodySize === 0 &&
+    msg.transferredSize === 0;
   const type = getResourceType(msg.initiator, msg.url);
+  let status;
+  let success;
+  if (timingDataBlocked) {
+    status = 'no-info';
+    // we don't know if it failed or not, so we assume success or cache
+    success = true;
+  } else {
+    status = failed ? '4xx-5xx' : '2xx-3xx';
+    success = !failed;
+  }
   return Resource({
     ...msg,
     type,
     method: type === ResourceType.FETCH ? '..' : 'GET', // should be GET for all non-XHR/Fetch resources, right?
-    success: !failed,
-    status: !failed ? '2xx-3xx' : '4xx-5xx',
+    success,
+    status,
     time: Math.max(0, msg.timestamp - sessStart),
     timings: {
       queueing: msg.queueing,
