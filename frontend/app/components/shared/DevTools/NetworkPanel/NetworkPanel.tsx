@@ -160,28 +160,33 @@ function renderStatus({
   error?: string;
 }) {
   const { t } = useTranslation();
-  const displayedStatus = error ? (
-    <Tooltip title={error}>
-      <div style={{ width: 90 }} className="overflow-hidden overflow-ellipsis">
-        {error}
+  const noInfoReq = status === 'no-info'
+  const hasTooltip = cached || noInfoReq;
+  let tooltipTitle = undefined;
+  let icon = null;
+  if (hasTooltip) {
+    if (noInfoReq) {
+      tooltipTitle = t('No timing information reported about this request by the browser.');
+      icon = <Icon name="info-circle" size={16} />
+    } else if (cached) {
+      tooltipTitle = t('Served from cache')
+      icon = <Icon name="wifi" size={16} />
+    }
+  }
+  if (error) {
+    tooltipTitle = error;
+    icon = null;
+  }
+  return (
+    <Tooltip title={tooltipTitle} placement="top">
+      <div
+        className="flex items-center gap-1 overflow-hidden overflow-ellipsis"
+        style={{ width: 90 }}
+      >
+        <span className="mr-1">{status}</span>
+        {icon}
       </div>
     </Tooltip>
-  ) : (
-    status
-  );
-  return (
-    <>
-      {cached ? (
-        <Tooltip title={t('Served from cache')} placement="top">
-          <div className="flex items-center">
-            <span className="mr-1">{displayedStatus}</span>
-            <Icon name="wifi" size={16} />
-          </div>
-        </Tooltip>
-      ) : (
-        displayedStatus
-      )}
-    </>
   );
 }
 
