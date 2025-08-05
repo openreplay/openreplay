@@ -4,6 +4,7 @@ import SideMenu from 'App/layout/SideMenu';
 import TopHeader from 'App/layout/TopHeader';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { isMobile } from 'App/utils/isMobile';
 
 const { Sider, Content } = AntLayout;
 
@@ -20,11 +21,11 @@ function Layout(props: Props) {
   const { settingsStore, projectsStore } = useStore();
   const [collapsed, setCollapsed] = React.useState(false);
   const { siteId } = projectsStore;
+  const mobileDevice = isMobile();
 
   useEffect(() => {
     const handleResize = () => {
-      const isMobile = window.innerWidth < 1280;
-      if (isMobile) {
+      if (mobileDevice) {
         setCollapsed(true);
       } else {
         setCollapsed(false);
@@ -39,11 +40,12 @@ function Layout(props: Props) {
     };
   }, []);
 
+
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
       {!hideHeader && <TopHeader />}
       <AntLayout>
-        {!hideHeader && !window.location.pathname.includes('/onboarding/') ? (
+        {!mobileDevice && !hideHeader && !window.location.pathname.includes('/onboarding/') ? (
           <Sider
             style={{
               position: 'sticky',
@@ -63,7 +65,7 @@ function Layout(props: Props) {
         ) : null}
         <Content
           style={{
-            padding: isPlayer ? '0' : '20px',
+            padding: isPlayer ? '0' : mobileDevice ? '8px' : '20px',
             minHeight: 'calc(100vh - 60px)',
           }}
         >

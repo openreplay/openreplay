@@ -1,17 +1,13 @@
 import React from 'react';
 import Period from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange';
-import { Grid, Space } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import SessionSort from '../SessionSort';
 import SessionTags from '../SessionTags';
 
-const { useBreakpoint } = Grid;
-
 function SessionHeader() {
   const { searchStore } = useStore();
-  const screens = useBreakpoint();
   const { startDate, endDate, rangeValue } = searchStore.instance;
 
   const period = Period({
@@ -29,12 +25,11 @@ function SessionHeader() {
   return (
     <div className="flex items-center px-4 py-3 justify-between w-full" data-test-id="session-list-header">
       <div
-        className={`flex w-full flex-wrap gap-2 ${screens.md ? 'justify-between' : 'justify-start'}`}
+        className={`flex w-full flex-wrap gap-2 justify-between`}
       >
         <SessionTags />
         <div
-          style={{ flexDirection: screens.md ? 'row' : 'column' }}
-          className={'flex items-start'}
+          className={'flex items-start flex-row'}
         >
           <SelectDateRange
             isAnt
