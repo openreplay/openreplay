@@ -5,14 +5,13 @@
 - Ionic and Web Component compatibility improvements:
   - better support for `<slot>` components
   - initial support for web animation API  (end frame state for now)
-
 - add incident events for
-
 ```js
 import { tracker } from '@openreplay/tracker'
 
 // call incident function and pass label, startTime, and endTime (label and endTime are optional)
 tracker.incident({ label: 'incident', startTime: Date.now() })
+```
 
 ## 16.4.6
 
@@ -31,7 +30,6 @@ tracker.incident({ label: 'incident', startTime: Date.now() })
 
 - fixing token parser
 
-```
 ## 16.4.2
 
 - fixing for multitab capture on different project ids
@@ -49,7 +47,7 @@ tracker.incident({ label: 'incident', startTime: Date.now() })
 
 ```ts
 new Tracker({
-...css: cssScanOptions
+  css: cssScanOptions
 })
 
 interface cssScanOptions {
@@ -93,11 +91,13 @@ enum InlineCssMode {
 - css batching and inlining via (!plain mode will cause fake text nodes in style tags occupying 99*10^6 id space, can conflict with crossdomain iframes!)
 
 ```ts
-inlineRemoteCss: boolean
+{
+  inlineRemoteCss: boolean
   inlinerOptions?: {
     forceFetch?: boolean,
     forcePlain?: boolean,
   }
+}
 ```
 
 ## 16.1.4
