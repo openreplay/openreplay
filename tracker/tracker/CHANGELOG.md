@@ -1,3 +1,8 @@
+## 16.4.8 & .7
+
+- some improvements for iframe capture
+- better handling of resource timing information
+
 ## 16.4.6
 
 - Moving 15.3.0 change (resource sanitizer) to current ver

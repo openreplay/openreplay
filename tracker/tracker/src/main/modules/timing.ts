@@ -126,6 +126,15 @@ export default function (app: App, opts: Partial<Options>): void {
       ? options.resourceNameSanitizer(entry.name)
       : entry.name
 
+    const cached: boolean =
+      // @ts-ignore
+      (entry.responseStatus && entry.responseStatus === 304) ||
+      // @ts-ignore
+      (entry.deliveryType && entry.deliveryType === 'cache') ||
+      (entry.transferSize === 0 && entry.decodedBodySize > 0)
+
+    const requestFailed = entry.responseStatus && entry.responseStatus >= 400
+    const decodedBodySize = requestFailed ? -111 : entry.decodedBodySize || 0
     app.send(
       ResourceTiming(
         entry.startTime + getTimeOrigin(),
@@ -133,12 +142,11 @@ export default function (app: App, opts: Partial<Options>): void {
         entry.responseStart && entry.startTime ? entry.responseStart - entry.startTime : 0,
         entry.transferSize > entry.encodedBodySize ? entry.transferSize - entry.encodedBodySize : 0,
         entry.encodedBodySize || 0,
-        entry.decodedBodySize || 0,
+        decodedBodySize,
         app.sanitizer.privateMode ? entry.name.replaceAll(/./g, '*') : entryName,
         entry.initiatorType,
         entry.transferSize,
-        // @ts-ignore
-        (entry.responseStatus && entry.responseStatus === 304) || entry.transferSize === 0,
+        cached,
       ),
     )
   }
