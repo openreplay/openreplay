@@ -51,9 +51,15 @@ type DataPoint struct {
 }
 
 var mainColumns = map[string]string{
-	"userBrowser":   "$browser",
-	"userCountry":   "$country",
-	"referrer":      "$referrer",
-	"fetchDuration": "$duration_s",
-	"ISSUE":         "issue_type",
+	"userDevice":         "sessions.user_device",
+	"referrer":           "$referrer",
+	"fetchDuration":      "$duration_s",
+	"ISSUE":              "issue_type",
+	"userCountry":        "$country",
+	"userCity":           "$city",
+	"userState":          "$state",
+	"userOs":             "$os",
+	"userOsVersion":      "$os_version",
+	"userBrowser":        "$browser",
+	"userBrowserVersion": "$browser_version",
 }

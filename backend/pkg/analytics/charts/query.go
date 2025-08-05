@@ -2,7 +2,9 @@ package charts
 
 import (
 	"fmt"
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"log"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -13,8 +15,8 @@ import (
 
 type Payload struct {
 	*model.MetricPayload
-	ProjectId int
-	UserId    uint64
+	ProjectId int    `validate:"required,min=1"`
+	UserId    uint64 `validate:"required,min=1"`
 }
 
 type QueryBuilder interface {
@@ -58,9 +60,9 @@ var propertyKeyMap = map[string]filterConfig{
 	"REQUEST":         {LogicalProperty: "url_path"},
 	"CLICK":           {LogicalProperty: "label"},
 	"INPUT":           {LogicalProperty: "label"},
-	"fetchUrl":        {LogicalProperty: "url_path"},
-	"fetchStatusCode": {LogicalProperty: "status", IsNumeric: true},
-	// "userDevice":      {LogicalProperty: "user_device"},
+	"FETCHURL":        {LogicalProperty: "url_path"},
+	"USERDEVICE":      {LogicalProperty: "user_device"},
+	"FETCHSTATUSCODE": {LogicalProperty: "status", IsNumeric: true},
 }
 
 // filterConfig holds configuration for a filter type
@@ -99,7 +101,7 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 
 	// determine property key
 	propKey := logical
-	if cfg, ok := propertyKeyMap[logical]; ok {
+	if cfg, ok := propertyKeyMap[strings.ToUpper(logical)]; ok {
 		propKey = cfg.LogicalProperty
 	}
 
@@ -117,7 +119,7 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 	return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, propKey)
 }
 
-func BuildEventConditions(filters []model.Filter, options BuildConditionsOptions) (eventConds, otherConds []string) {
+func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions) ([]string, []string) {
 	opts := BuildConditionsOptions{
 		MainTableAlias:       "e",
 		PropertiesColumnName: "$properties",
@@ -125,94 +127,97 @@ func BuildEventConditions(filters []model.Filter, options BuildConditionsOptions
 		EventsOrder:          "then",
 	}
 
-	if options.MainTableAlias != "" {
-		opts.MainTableAlias = options.MainTableAlias
+	if option.MainTableAlias != "" {
+		opts.MainTableAlias = option.MainTableAlias
 	}
-	if options.PropertiesColumnName != "" {
-		opts.PropertiesColumnName = options.PropertiesColumnName
+	if option.PropertiesColumnName != "" {
+		opts.PropertiesColumnName = option.PropertiesColumnName
 	}
-	if options.DefinedColumns != nil {
-		opts.DefinedColumns = options.DefinedColumns
+	if option.DefinedColumns != nil {
+		opts.DefinedColumns = option.DefinedColumns
 	}
-	if options.EventsOrder != "" {
-		opts.EventsOrder = options.EventsOrder
+	if option.EventsOrder != "" {
+		opts.EventsOrder = option.EventsOrder
 	}
-
+	// A map so it can be used to ensure unique conditions
+	var eventConds map[string]any = make(map[string]any)
+	var otherConds map[string]any = make(map[string]any)
 	for _, f := range filters {
 		// skip session table filters from BuildEventConditions
 		// TODO: remove this and make sure to pass only valid events/filters when used
 		if f.Type == FilterDuration || f.Type == FilterUserAnonymousId {
 			continue
 		}
-
-		conds, _ := addFilter(f, opts)
+		conds := addFilter(f, opts)
 		if f.IsEvent {
-			eventConds = append(eventConds, conds...)
+			//eventConds = append(eventConds, conds...)
+			for _, c := range conds {
+				eventConds[c] = 0
+			}
 		} else {
-			otherConds = append(otherConds, conds...)
+			//otherConds = append(otherConds, conds...)
+			for _, c := range conds {
+				otherConds[c] = 0
+			}
 		}
 	}
-	return
+	var eventConditions, otherConditions []string
+	for k := range eventConds {
+		eventConditions = append(eventConditions, k)
+	}
+
+	for k := range otherConds {
+		otherConditions = append(otherConditions, k)
+	}
+	return eventConditions, otherConditions
 }
 
-func addFilter(f model.Filter, opts BuildConditionsOptions) (conds []string, names []string) {
+func addFilter(f model.Filter, opts BuildConditionsOptions) []string {
 	alias := opts.MainTableAlias
 	if alias != "" && !strings.HasSuffix(alias, ".") {
 		alias += "."
 	}
-
-	if f.IsEvent && len(f.Filters) > 0 {
+	// TODO: find why this is not returning sub-conditions anymore
+	log.Printf(">>>>>>>>>>>>>>000000000")
+	log.Printf(">> filters: %v", f.Filters)
+	log.Printf(">>>>>>>>>>>>>>000000000")
+	if f.IsEvent {
 		var parts []string
 		parts = append(parts, fmt.Sprintf("%s`$event_name` = '%s'", alias, f.Name))
-
-		// Collect all sub-conditions
-		var subConditions []string
+		log.Printf(">>>>>>>>>>>>>>000000000>>> Is event")
+		log.Printf(">> parts: %v", parts)
+		log.Printf(">>>>>>>>>>>>>>000000000>>>")
 		for _, sub := range f.Filters {
-			subConds, _ := addFilter(sub, opts)
+
+			subConds := addFilter(sub, opts)
 			if len(subConds) > 0 {
-				subConditions = append(subConditions, strings.Join(subConds, " AND "))
+				log.Printf(">>>>>>>>>>>>>>000000000>>>")
+				log.Printf(">> subConds: %v", subConds)
+				log.Printf(">>>>>>>>>>>>>>000000000>>>")
+				parts = append(parts, "("+strings.Join(subConds, " AND ")+")")
 			}
 		}
-
-		// Join sub-conditions based on PropertyOrder
-		if len(subConditions) > 0 {
-			operator := "AND" // default
-			if f.PropertyOrder == "or" {
-				operator = "OR"
-			}
-
-			if len(subConditions) == 1 {
-				parts = append(parts, "("+subConditions[0]+")")
-			} else {
-				joinedSubConditions := strings.Join(subConditions, " "+operator+" ")
-				parts = append(parts, "("+joinedSubConditions+")")
-			}
-		}
-
-		conds = []string{"(" + strings.Join(parts, " AND ") + ")"}
-		return
+		return []string{"(" + strings.Join(parts, " AND ") + ")"}
 	}
 
-	cfg, ok := propertyKeyMap[f.Name]
+	cfg, ok := propertyKeyMap[strings.ToUpper(f.Name)]
 	isNumeric := cfg.IsNumeric || f.DataType == "float" || f.DataType == "number" || f.DataType == "integer"
 	if !ok {
 		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: isNumeric}
 	}
-
 	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
 
 	switch f.Operator {
 	case "isAny", "onAny":
 		if f.IsEvent {
-			conds = append(conds, fmt.Sprintf("%s`$event_name` = '%s'", alias, f.Name))
+			return []string{fmt.Sprintf("%s`$event_name` = '%s'", alias, f.Name)}
 		}
 	default:
 		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric); c != "" {
-			conds = append(conds, c)
+			return []string{c}
 		}
 	}
-
-	return
+	return []string{}
 }
 
 var compOps = map[string]string{
@@ -535,6 +540,28 @@ func logQuery(query string, args ...interface{}) {
 		query = fmt.Sprintf(query, args...)
 	}
 	log.Printf(">>>>>>>>>>>>>>>>>>>>>>>>>>> Executing query:\n%s\n<<<<<<<<<<<<<<<<<<<<<<<<<<", query)
+}
+func isSlice(v interface{}) bool {
+	return reflect.TypeOf(v).Kind() == reflect.Slice
+}
+func convertParams(params map[string]any) []interface{} {
+	chParams := make([]interface{}, 0, len(params))
+	for k, v := range params {
+		//if isSlice(v) {
+		//	stringSlice := v.([]string)
+		//	if len(stringSlice) == 0 {
+		//		v = 0
+		//		continue
+		//	}
+		//	v = "['" + strings.Join(stringSlice, "', '") + "']"
+		//} else {
+		//	v = fmt.Sprintf("%v", v) // Convert non-slice values to string
+		//}
+		//chParams = append(chParams, clickhouse.Named(k, v.(string)))
+		chParams = append(chParams, clickhouse.Named(k, v))
+	}
+	return chParams
+
 }
 
 var SessionColumns = map[string]string{

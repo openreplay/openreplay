@@ -7,34 +7,8 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
 	"openreplay/backend/pkg/analytics/model"
-	"reflect"
-	//"sort"
-	//"database/sql"
 	"strings"
 )
-
-func isSlice(v interface{}) bool {
-	return reflect.TypeOf(v).Kind() == reflect.Slice
-}
-func convertParams(params map[string]any) []interface{} {
-	chParams := make([]interface{}, 0, len(params))
-	for k, v := range params {
-		//if isSlice(v) {
-		//	stringSlice := v.([]string)
-		//	if len(stringSlice) == 0 {
-		//		v = 0
-		//		continue
-		//	}
-		//	v = "['" + strings.Join(stringSlice, "', '") + "']"
-		//} else {
-		//	v = fmt.Sprintf("%v", v) // Convert non-slice values to string
-		//}
-		//chParams = append(chParams, clickhouse.Named(k, v.(string)))
-		chParams = append(chParams, clickhouse.Named(k, v))
-	}
-	return chParams
-
-}
 
 type TimeSeriesQueryBuilder struct {
 	conn *clickhouse.Conn
@@ -50,7 +24,6 @@ func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfac
 		}
 
 		var pts []DataPoint
-		//if err = conn.Select(context.Background(), &pts, query, convertParams(params)...); err != nil {
 		if err = conn.Select(context.Background(), &pts, query, convertParams(params)...); err != nil {
 			log.Panicf("exec %s: %v", series.Name, err)
 			return nil, err
@@ -64,7 +37,6 @@ func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfac
 			data[dp.Timestamp][series.Name] = dp.Count
 		}
 	}
-	log.Printf("---- %+v", data)
 
 	var timestamps []uint64
 	for ts := range data {
