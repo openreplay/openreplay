@@ -432,15 +432,16 @@ func FillMissingDataPoints(
 	return results
 }
 
-func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, sessionsAlias string) (events, eventFilters, sessionFilters []string) {
+func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, sessionsAlias string, isSessionJoin ...bool) (events, eventFilters, sessionFilters []string) {
 	events = make([]string, 0, len(filters))
 	eventFilters = make([]string, 0, len(filters))
 	sessionFilters = make([]string, 0, len(filters)+1)
 	sessionFilters = append(sessionFilters, fmt.Sprintf("%s.duration IS NOT NULL", sessionsAlias))
+	sessionColumns := GetSessionColumns(len(isSessionJoin) > 0 && isSessionJoin[0])
 
 	var sessionFiltersList, eventFiltersList []model.Filter
 	for _, f := range filters {
-		if _, ok := SessionColumns[f.Name]; ok {
+		if _, ok := sessionColumns[f.Name]; ok {
 			sessionFiltersList = append(sessionFiltersList, f)
 		} else {
 			eventFiltersList = append(eventFiltersList, f)
@@ -577,6 +578,18 @@ func convertParams(params map[string]any) []interface{} {
 	}
 	return chParams
 
+}
+
+func GetSessionColumns(join ...bool) map[string]string {
+	if len(join) > 0 && join[0] {
+		keys := []string{"userId", "userAnonymousId", "userDevice", "platform"}
+		out := make(map[string]string, len(keys))
+		for _, k := range keys {
+			out[k] = SessionColumns[k]
+		}
+		return out
+	}
+	return SessionColumns
 }
 
 var SessionColumns = map[string]string{

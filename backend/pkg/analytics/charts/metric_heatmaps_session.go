@@ -3,6 +3,7 @@ package charts
 import (
 	"context"
 	"fmt"
+	"openreplay/backend/pkg/analytics/model"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -49,50 +50,30 @@ func (h *HeatmapSessionQueryBuilder) Execute(p *Payload, conn driver.Conn) (inte
 	}, nil
 }
 
-func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
-	s := p.MetricPayload.Series[0]
-
-	startSec := p.MetricPayload.StartTimestamp / 1000
-	endSec := (p.MetricPayload.EndTimestamp + 86400000) / 1000
-	projectId := p.ProjectId
-
-	// Build event conditions for CTE (alias: e2)
-	_, cteEventConds := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
-		DefinedColumns: mainColumns,
-		MainTableAlias: "e2",
-	})
-
-	cteBase := []string{
-		fmt.Sprintf("e2.created_at >= toDateTime(%d)", startSec),
-		fmt.Sprintf("e2.created_at < toDateTime(%d)", endSec),
-		fmt.Sprintf("e2.project_id = %d", projectId),
-		"e2.`$event_name` = 'CLICK'",
-	}
-	cteBase = append(cteBase, cteEventConds...)
-	cteWhere := strings.Join(cteBase, " AND ")
-
-	// Build event conditions for subquery (alias: e)
-	_, subEventConds := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
-		DefinedColumns: mainColumns,
-		MainTableAlias: "ev",
-	})
-
-	subBase := []string{
-		fmt.Sprintf("created_at >= toDateTime(%d)", startSec),
-		fmt.Sprintf("created_at < toDateTime(%d)", endSec),
-		fmt.Sprintf("project_id = %d", projectId),
-		"`$event_name` = 'CLICK'",
-	}
-	subBase = append(subBase, subEventConds...)
-	subBase = append(subBase, "JSONExtractString(toString(`$properties`), 'url_path') = (SELECT url_path FROM top_url_path)")
-	subWhere := strings.Join(subBase, " AND ")
-
-	q := fmt.Sprintf(`
-WITH top_url_path AS (
+const (
+	sqlWithLocationTemplate = `SELECT
+    toString(s.session_id) AS session_id,
+    toUnixTimestamp(s.datetime) * 1000 AS startTs,
+    s.duration,
+    toUnixTimestamp(e.created_at) * 1000 AS eventTs,
+    e.url_path
+FROM (
     SELECT
-        JSONExtractString(toString(e2."$properties"), 'url_path') AS url_path,
+        *,
+        JSONExtractString(toString(e."$properties"), 'url_path') AS url_path
+    FROM product_analytics.events AS e
+    WHERE %s
+) AS e
+INNER JOIN experimental.sessions AS s USING (session_id)
+WHERE %s
+ORDER BY s.duration ASC, e.created_at ASC
+LIMIT 1;`
+
+	sqlWithoutLocationTemplate = `WITH top_url_path AS (
+    SELECT
+        JSONExtractString(toString(e."$properties"), 'url_path') AS url_path,
         COUNT(*) AS cnt
-    FROM product_analytics.events AS e2
+    FROM product_analytics.events AS e
     WHERE %s
     GROUP BY url_path
     ORDER BY cnt DESC
@@ -108,15 +89,89 @@ SELECT
 FROM (
     SELECT
         *,
-        JSONExtractString(toString(ev."$properties"), 'url_path') AS url_path
-    FROM product_analytics.events ev
+        JSONExtractString(toString(e."$properties"), 'url_path') AS url_path
+    FROM product_analytics.events AS e
     WHERE %s
 ) AS e
 INNER JOIN experimental.sessions AS s USING (session_id)
-WHERE s.duration > 500
+WHERE %s
 ORDER BY e.created_at ASC, s.duration ASC
-LIMIT 1;`, cteWhere, subWhere)
+LIMIT 1;`
+)
 
-	logQuery(fmt.Sprintf("HeatmapSessionQueryBuilder.buildQuery: %s", q))
-	return q, nil
+func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
+	projectId := p.ProjectId
+	startSec := p.MetricPayload.StartTimestamp / 1000
+	endSec := (p.MetricPayload.EndTimestamp + 86400000) / 1000
+	series := p.MetricPayload.Series[0]
+
+	filters := []model.Filter{}
+	hasLocationFilter := false
+	var urlPath string
+
+	for _, filter := range series.Filter.Filters {
+		if filter.Name == "LOCATION" {
+			for _, nested := range filter.Filters {
+				if nested.Name == "url_path" && len(nested.Value) > 0 && nested.Value[0] != "" {
+					hasLocationFilter = true
+					urlPath = nested.Value[0]
+					filters = append(filters, filter)
+				}
+			}
+		}
+		filters = append(filters, filter)
+	}
+
+	// Common session WHERE clauses
+	sessionsWhere := []string{
+		fmt.Sprintf("s.project_id = %d", projectId),
+		fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+		"s.duration > 500",
+	}
+	_, filtersWhere, extraSessions := BuildWhere(filters, string(series.Filter.EventsOrder), "e", "s", true)
+	sessionsWhere = append(sessionsWhere, extraSessions...)
+
+	fmt.Println("filtersWhere", filtersWhere)
+	fmt.Println("extraSessions", extraSessions)
+
+	var query string
+	if hasLocationFilter {
+		eventsWhere := []string{
+			fmt.Sprintf("e.project_id = %d", projectId),
+			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+			"e.`$event_name` = 'CLICK'",
+			fmt.Sprintf("JSONExtractString(toString(e.`$properties`), 'url_path') = '%s'", urlPath),
+		}
+		eventsWhere = append(eventsWhere, filtersWhere...)
+
+		query = fmt.Sprintf(
+			sqlWithLocationTemplate,
+			strings.Join(eventsWhere, " AND "),
+			strings.Join(sessionsWhere, " AND "),
+		)
+	} else {
+		// Use CTE to find top URL path
+		eventsWhere := []string{
+			fmt.Sprintf("e.project_id = %d", projectId),
+			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+			"e.`$event_name` = 'CLICK'",
+		}
+		eventsWhere = append(eventsWhere, filtersWhere...)
+		cteWhere := strings.Join(eventsWhere, " AND ")
+
+		subWhere := fmt.Sprintf(
+			"created_at BETWEEN toDateTime(%d) AND toDateTime(%d) AND project_id = %d AND `$event_name` = 'CLICK' AND JSONExtractString(toString(`$properties`), 'url_path') = (SELECT url_path FROM top_url_path)",
+			startSec, endSec, projectId,
+		)
+
+		query = fmt.Sprintf(
+			sqlWithoutLocationTemplate,
+			cteWhere,
+			subWhere,
+			strings.Join(sessionsWhere, " AND "),
+		)
+	}
+
+	logQuery(fmt.Sprintf("HeatmapSessionQueryBuilder.buildQuery: %s", query))
+	return query, nil
 }
