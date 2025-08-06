@@ -19,7 +19,7 @@ interface Configuration extends WebpackConfiguration {
 
 export default function build({ production }: { production?: boolean }) {
   const isDevelopment = process.env.NODE_ENV !== 'production' && !production;
-  dotenv.config({ path: __dirname + (isDevelopment ? '/.env' : '/.env.production') });
+  dotenv.config({ path: __dirname + '/.env' });
 
   const ENV_VARIABLES = JSON.stringify(process.env);
   const finalEnv = isDevelopment ? 'development' : 'production'
