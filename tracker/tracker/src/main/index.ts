@@ -506,6 +506,15 @@ export default class API {
         return this.issue(key, payload)
       } else {
         try {
+          if ('or_timestamp' in payload) {
+            const startTs = this.getSessionInfo()?.timestamp ?? 0
+            const diff = payload.or_timestamp - startTs
+            if (diff < 0) {
+              console.error(
+                `OpenReplay: event ${key} has or_timestamp (${payload.or_timestamp}) before session start (${startTs}). It will be ignored.`,
+              )
+            }
+          }
           payload = JSON.stringify(payload)
         } catch (e) {
           return
