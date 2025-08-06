@@ -73,6 +73,7 @@ spec:
       {{- if .Values.master.schedulerName }}
       schedulerName: {{ .Values.master.schedulerName }}
       {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.master.terminationGracePeriodSeconds | default 60 }}
       containers:
         - name: {{ template "redis.name" . }}
           image: {{ template "redis.image" . }}
@@ -171,6 +172,25 @@ spec:
           {{- else if .Values.master.customReadinessProbe }}
           readinessProbe: {{- toYaml .Values.master.customReadinessProbe | nindent 12 }}
           {{- end }}
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/bash
+                  - -c
+                  - |
+                    # Fix AOF files if they exist
+                    for aof_file in /data/appendonlydir/appendonly.aof.*.incr.aof; do
+                      if [ -f "$aof_file" ]; then
+                        redis-check-aof --fix "$aof_file" > /dev/null 2>&1 || rm "$aof_file"
+                      fi
+                    done
+            preStop:
+              exec:
+                command:
+                  - /bin/bash
+                  - -c
+                  - redis-cli -h 127.0.0.1 -p {{ .Values.redisPort }} {{- if .Values.usePassword }} -a $REDIS_PASSWORD{{- end }} shutdown save
           resources: {{- toYaml .Values.master.resources | nindent 12 }}
           volumeMounts:
             - name: start-scripts
