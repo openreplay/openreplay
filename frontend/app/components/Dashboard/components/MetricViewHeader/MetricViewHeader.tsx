@@ -9,6 +9,7 @@ import MetricsSearch from '../MetricsSearch';
 import AddCardSection from '../AddCardSection/AddCardSection';
 import { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
+import { isMobile } from 'App/utils/isMobile';
 
 const options = (t: TFunction) => [
   {
@@ -57,46 +58,47 @@ function MetricViewHeader() {
     </Menu>
   );
 
+  const mobileScreen = isMobile();
   return (
     <div>
       <div className="flex items-center justify-between pr-4">
-        <div className="flex items-center gap-2 ps-4">
+        <div className="flex flex-col md:flex-row md:items-center gap-2 ps-4 w-full">
           <PageTitle title={t('Cards')} className="cursor-default" />
 
-          {showHeader && (
-            <Space>
+          <div className="flex items-center gap-2 w-full">
+            {showHeader && (
               <Dropdown overlay={menu} trigger={['click']}>
-                <Button type="text" size="small" className="mt-1">
+                <Button type="text" size="small" className="mt-1 !pl-0 md:pl-unset">
                   {options(t).find((opt) => opt.key === filter.type)?.label ||
                     t('Select Type')}
                   <DownOutlined />
                 </Button>
               </Dropdown>
-            </Space>
-          )}
-        </div>
+            )}
 
-        {showHeader && (
-          <div className="ml-auto flex items-center gap-3">
-            <Popover
-              arrow={false}
-              overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
-              content={<AddCardSection fit inCards />}
-              trigger="click"
-            >
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                className="btn-create-card"
-              >
-                {t('Create Card')}
-              </Button>
-            </Popover>
-            <Space>
-              <MetricsSearch />
-            </Space>
+            {showHeader && (
+              <div className="flex items-center gap-3 md:ml-auto">
+                <Popover
+                  arrow={false}
+                  overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
+                  content={<AddCardSection fit inCards />}
+                  trigger="click"
+                >
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    className="btn-create-card"
+                  >
+                    {mobileScreen ? undefined : t('Create Card')}
+                  </Button>
+                </Popover>
+                <Space>
+                  <MetricsSearch />
+                </Space>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

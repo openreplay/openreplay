@@ -54,9 +54,9 @@ function AlertsList({ siteId }: Props) {
       >
         <div className="mt-3 border-b">
           <div className="grid grid-cols-12 py-2 font-medium px-6">
-            <div className="col-span-8">{t('Title')}</div>
-            <div className="col-span-2">{t('Type')}</div>
-            <div className="col-span-2 text-right">{t('Modified')}</div>
+            <div className="col-span-4 md:col-span-8">{t('Title')}</div>
+            <div className="col-span-3 md:col-span-2">{t('Type')}</div>
+            <div className="col-span-5 md:col-span-2 text-right">{t('Modified')}</div>
           </div>
 
           {sliceListPerPage(list, page - 1, pageSize).map((alert: any) => (

@@ -116,7 +116,7 @@ function Condition({
           )}
           {!unit && (
             <Input
-              wrapperClassName="ml-2"
+              wrapperClassName="ml-2 min-w-[60px]"
               name="right"
               value={instance.query.right}
               onChange={writeQuery}

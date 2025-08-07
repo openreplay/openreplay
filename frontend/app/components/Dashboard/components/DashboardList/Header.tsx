@@ -22,7 +22,7 @@ function Header() {
         <div className="ml-auto flex items-center">
           <CreateDashboardButton />
           <div className="mx-2" />
-          <div className="w-1/4" style={{ minWidth: 300 }}>
+          <div className="w-full md:w-1/4 min-w-[160px] md:min-w-[300px]">
             <DashboardSearch />
           </div>
         </div>
