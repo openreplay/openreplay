@@ -25,7 +25,7 @@ function OptOut() {
   };
 
   return (
-    <div>
+    <div className="px-4 pb-4 md:p-0">
       <Checkbox
         name="isPublic"
         type="checkbox"

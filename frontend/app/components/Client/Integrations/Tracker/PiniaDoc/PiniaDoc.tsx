@@ -65,10 +65,7 @@ piniaStorePlugin(examplePiniaStore)
 // (destructure values or return it as a whole etc)
 }`;
   return (
-    <div
-      className="bg-white h-screen overflow-y-auto"
-      style={{ width: '500px' }}
-    >
+    <div className="bg-white h-screen overflow-y-auto w-full">
       <h3 className="p-5 text-2xl">{t('Pinia')}</h3>
       <div className="p-5">
         <div>

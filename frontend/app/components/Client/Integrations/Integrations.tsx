@@ -30,6 +30,7 @@ import VueDoc from './Tracker/VueDoc';
 import ZustandDoc from './Tracker/ZustandDoc';
 import { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
+import { isMobile } from 'App/utils/isMobile';
 
 interface Props {
   siteId: string;
@@ -63,7 +64,9 @@ function Integrations(props: Props) {
     }
   }, [siteId]);
 
+  const mobileScreen = isMobile();
   const onClick = (integration: any, width: number) => {
+    const modalWidth = mobileScreen ? '100vw' : width;
     if (
       integration.slug &&
       integration.slug !== 'slack' &&
@@ -90,7 +93,7 @@ function Integrations(props: Props) {
         siteId,
         onClose: hideModal,
       }),
-      { right: true, width },
+      { right: true, modalWidth },
     );
   };
 
@@ -124,7 +127,7 @@ function Integrations(props: Props) {
   return (
     <>
       <div className="bg-white rounded-lg border shadow-sm p-5 mb-4">
-        <div className="flex items-center gap-4 mb-2">
+        <div className="flex gap-2 md:gap-2 mb-2 items-center flex-row">
           {!hideHeader && <PageTitle title={<div>{t('Integrations')}</div>} />}
           <SiteDropdown value={siteId} onChange={onChangeSelect} />
         </div>

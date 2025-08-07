@@ -231,7 +231,7 @@ function FilterModal({
   }, []);
 
   return (
-    <div className="w-[490px] max-h-[380px] grid grid-rows-[auto_1fr] overflow-hidden bg-white">
+    <div className="w-[90vw] mx-[2vw] md:mx-0 md:w-[490px] max-h-[380px] grid grid-rows-[auto_1fr] overflow-hidden bg-white">
       <div>
         <Input
           placeholder={t('Search')}
@@ -257,7 +257,7 @@ function FilterModal({
           </div>
         ) : (
           <div className="flex gap-2 h-full">
-            <div className="w-36 flex-shrink-0 border-r border-gray-200 pr-2 h-full overflow-y-auto">
+            <div className="w-24 md:w-36 flex-shrink-0 border-r border-gray-200 pr-2 h-full overflow-y-auto">
               <CategoryList
                 categories={matchingCategories}
                 activeCategory={category}

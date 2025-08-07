@@ -40,32 +40,42 @@ function Layout(props: Props) {
     };
   }, []);
 
-
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
       {!hideHeader && <TopHeader />}
       <AntLayout>
-        {!mobileDevice && !hideHeader && !window.location.pathname.includes('/onboarding/') ? (
-          <Sider
-            style={{
-              position: 'sticky',
-              top: 70, // Height of the Header
-              // backgroundColor: '#f6f6f6',
-              height: 'calc(100vh - 70px)', // Adjust the height to accommodate the Header
-              overflow: 'auto', // Enable scrolling for the Sider content if needed
-            }}
-            collapsed={settingsStore.menuCollapsed || collapsed}
-            width={250}
-          >
+        {!hideHeader && !window.location.pathname.includes('/onboarding/') ? (
+          mobileDevice ? (
             <SideMenu
               siteId={siteId!}
               isCollapsed={settingsStore.menuCollapsed || collapsed}
             />
-          </Sider>
+          ) : (
+            <Sider
+              style={{
+                position: 'sticky',
+                top: 70, // Height of the Header
+                // backgroundColor: '#f6f6f6',
+                height: 'calc(100vh - 70px)', // Adjust the height to accommodate the Header
+                overflow: 'auto', // Enable scrolling for the Sider content if needed
+              }}
+              collapsed={settingsStore.menuCollapsed || collapsed}
+              width={250}
+            >
+              <SideMenu
+                siteId={siteId!}
+                isCollapsed={settingsStore.menuCollapsed || collapsed}
+              />
+            </Sider>
+          )
         ) : null}
         <Content
           style={{
-            padding: isPlayer ? '0' : mobileDevice ? '8px' : '20px',
+            padding: isPlayer
+              ? '0'
+              : mobileDevice
+                ? '8px 8px 20px 8px'
+                : '20px',
             minHeight: 'calc(100vh - 60px)',
           }}
         >

@@ -10,7 +10,7 @@ function ApiKeySettings() {
 
   const { apiKey } = userStore.account;
   return (
-    <Form.Field>
+    <div className="px-4 py-2 md:p-0">
       <label htmlFor="apiKey">{t('Organization API Key')}</label>
       <Input
         name="apiKey"
@@ -21,7 +21,7 @@ function ApiKeySettings() {
         className="!w-72"
         leadingButton={<CopyButton content={apiKey} />}
       />
-    </Form.Field>
+    </div>
   );
 }
 

@@ -35,10 +35,7 @@ function AssistDoc() {
   };
 
   return (
-    <div
-      className="bg-white h-screen overflow-y-auto"
-      style={{ width: '500px' }}
-    >
+    <div className="bg-white h-screen overflow-y-auto w-full">
       <h3 className="p-5 text-2xl">{t('Assist')}</h3>
       <div className="p-5">
         <div>

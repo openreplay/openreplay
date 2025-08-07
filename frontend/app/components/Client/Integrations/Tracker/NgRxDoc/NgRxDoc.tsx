@@ -53,10 +53,7 @@ const metaReducers = [tracker.use(trackerNgRx(<options>))]; // check list of ava
   export class AppModule {}
 }`;
   return (
-    <div
-      className="bg-white h-screen overflow-y-auto"
-      style={{ width: '500px' }}
-    >
+    <div className="bg-white h-screen overflow-y-auto w-full">
       <h3 className="p-5 text-2xl">{t('NgRx')}</h3>
       <div className="p-5">
         <div>
