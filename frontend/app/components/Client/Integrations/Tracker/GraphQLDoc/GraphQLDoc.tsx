@@ -40,8 +40,7 @@ function SomeFunctionalComponent() {
 export const recordGraphQL = tracker.use(trackerGraphQL());`;
   return (
     <div
-      className="bg-white h-screen overflow-y-auto"
-      style={{ width: '500px' }}
+      className="bg-white h-screen overflow-y-auto w-full"
     >
       <h3 className="p-5 text-2xl">{t('GraphQL')}</h3>
       <div className="p-5">
