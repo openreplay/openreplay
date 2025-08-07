@@ -109,7 +109,7 @@ function SpotsList() {
                 </div>
               }
             >
-              <div className="py-2 border-gray-lighter grid grid-cols-3 gap-6">
+              <div className="py-2 border-gray-lighter grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-6">
                 {spotStore.spots.map((spot) => (
                   <SpotListItem
                     key={spot.spotId}

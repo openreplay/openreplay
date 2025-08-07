@@ -4,6 +4,7 @@ import { Button } from 'antd';
 import { useStore } from 'App/mstore';
 import { useHistory } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { isMobile } from '@/utils/isMobile';
 
 interface Props {
   disabled?: boolean;
@@ -29,6 +30,7 @@ function CreateDashboardButton({ disabled }: Props) {
         setDashboardCreating(false);
       });
   };
+  const mobileDevice = isMobile();
   return (
     <Button
       loading={dashboardCreating}
@@ -37,7 +39,7 @@ function CreateDashboardButton({ disabled }: Props) {
       type="primary"
       onClick={createNewDashboard}
     >
-      {t('Create Dashboard')}
+      {mobileDevice ? undefined : t('Create Dashboard')}
     </Button>
   );
 }

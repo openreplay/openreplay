@@ -49,53 +49,63 @@ const SpotsListHeader = observer(
     };
 
     return (
-      <div className="flex items-center justify-between w-full">
+      <div className="flex flex-col gap-2 md:gap-0 md:flex-row md:items-center md:justify-between w-full">
         <div className="flex gap-1 items-center">
           <h1 className={'text-2xl capitalize mr-2'}>{t('Spots')}</h1>
-          <ReloadButton buttonSize={'small'} onClick={onRefresh} iconSize={14} />
+          <ReloadButton
+            buttonSize={'small'}
+            onClick={onRefresh}
+            iconSize={14}
+          />
         </div>
-
         {tenantHasSpots ? (
-          <div className="flex gap-2 items-center">
-            <div className="ml-auto">
-              {selectedCount > 0 && (
-                <>
-                  <Button
-                    type="text"
-                    onClick={onClearSelection}
-                    className="mr-2 px-3"
-                    size='small'
-                  >
-                    {t('Clear')}
-                  </Button>
-                  <Button onClick={onDelete} type="primary" ghost size='small'>
-                    {t('Delete')} ({selectedCount})
-                  </Button>
-                </>
-              )}
-            </div>
+          <div className="flex items-center gap-2 md:gap-0 md:justify-between w-full">
+            <div className="flex gap-2 items-center">
+              <div className="hidden md:block ml-auto">
+                {selectedCount > 0 && (
+                  <>
+                    <Button
+                      type="text"
+                      onClick={onClearSelection}
+                      className="mr-2 px-3"
+                      size="small"
+                    >
+                      {t('Clear')}
+                    </Button>
+                    <Button
+                      onClick={onDelete}
+                      type="primary"
+                      ghost
+                      size="small"
+                    >
+                      {t('Delete')} ({selectedCount})
+                    </Button>
+                  </>
+                )}
+              </div>
 
-            <Segmented
-              options={[t('All Spots'), t('My Spots')]}
-              value={
-                spotStore.filter === 'all' ? t('All Spots') : t('My Spots')
-              }
-              onChange={handleSegmentChange}
-              className="mr-4 lg:hidden xl:flex"
-              size="small"
-            />
-
-            <div className="w-56">
-              <Input.Search
-                value={spotStore.query}
-                allowClear
-                name="spot-search"
-                placeholder={t('Filter by title')}
-                onChange={handleInputChange}
-                onSearch={onSearch}
-                className="rounded-lg"
+              <Segmented
+                options={[t('All Spots'), t('My Spots')]}
+                value={
+                  spotStore.filter === 'all' ? t('All Spots') : t('My Spots')
+                }
+                onChange={handleSegmentChange}
+                className="mr-4 lg:hidden xl:flex"
                 size="small"
               />
+
+              <div className="w-42 md:w-56">
+                <Input.Search
+                  value={spotStore.query}
+                  allowClear
+                  name="spot-search"
+                  placeholder={t('Filter by title')}
+                  onChange={handleInputChange}
+                  onSearch={onSearch}
+                  className="rounded-lg"
+                  size="small"
+                />
+              </div>
             </div>
           </div>
         ) : null}

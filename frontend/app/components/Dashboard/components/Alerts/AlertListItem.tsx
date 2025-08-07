@@ -112,7 +112,7 @@ function AlertListItem(props: Props) {
       onClick={onItemClick}
     >
       <div className="grid grid-cols-12 py-4 select-none items-center">
-        <div className="col-span-8 flex items-start">
+        <div className="col-span-4 md:col-span-8 flex items-start">
           <div className="flex items-center capitalize-first">
             <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
               <Icon name="bell" size="16" color="tealx" />
@@ -120,7 +120,7 @@ function AlertListItem(props: Props) {
             <div className="link capitalize-first">{alert.name}</div>
           </div>
         </div>
-        <div className="col-span-2">
+        <div className="col-span-3 md:col-span-2">
           <div className="flex items-center">
             <Tag
               className="rounded-full bg-indigo-lightest cap-first text-base"
@@ -130,7 +130,7 @@ function AlertListItem(props: Props) {
             </Tag>
           </div>
         </div>
-        <div className="col-span-2 text-right">
+        <div className="col-span-5 md:col-span-2 text-right">
           {demo
             ? DateTime.fromMillis(+new Date()).toFormat('LLL dd, yyyy, hh:mm a')
             : checkForRecent(
@@ -139,7 +139,7 @@ function AlertListItem(props: Props) {
               )}
         </div>
       </div>
-      <div className="text-sm w-2/3 px-2 pb-2 ">
+      <div className="text-sm w-full md:w-2/3 px-2 pb-2 ">
         {'When the '}
         <span className="font-medium font-mono">{alert.detectionMethod}</span>
         {' of '}

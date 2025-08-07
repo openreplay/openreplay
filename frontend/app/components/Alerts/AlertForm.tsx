@@ -259,7 +259,7 @@ function AlertForm(props) {
                   )}
                   {!unit && (
                     <Input
-                      wrapperClassName="ml-2"
+                      wrapperClassName="ml-2 min-w-[60px]"
                       // className="pl-4"
                       name="right"
                       value={instance.query.right}
