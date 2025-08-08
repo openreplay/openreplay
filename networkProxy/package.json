@@ -17,10 +17,9 @@
   "author": "Nikita <nikita@openreplay.com>",
   "license": "MIT",
   "devDependencies": {
-    "@vitest/coverage-istanbul": "^3.1.1",
+    "@vitest/coverage-istanbul": "^3.2.4",
     "jsdom": "^26.1.0",
-    "typescript": "^5.8.3",
-    "vitest": "^3.1.1"
-  },
-  "packageManager": "yarn@4.7.0"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
 }
