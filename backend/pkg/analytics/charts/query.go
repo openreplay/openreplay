@@ -144,8 +144,6 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 	var eventConds map[string]any = make(map[string]any)
 	var otherConds map[string]any = make(map[string]any)
 	for _, f := range filters {
-		// skip session table filters from BuildEventConditions
-		// TODO: remove this and make sure to pass only valid events/filters when used
 		if f.Type == FilterDuration || f.Type == FilterUserAnonymousId {
 			continue
 		}
@@ -178,23 +176,13 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) []string {
 	if alias != "" && !strings.HasSuffix(alias, ".") {
 		alias += "."
 	}
-	// TODO: find why this is not returning sub-conditions anymore
-	log.Printf(">>>>>>>>>>>>>>000000000")
-	log.Printf(">> filters: %v", f.Filters)
-	log.Printf(">>>>>>>>>>>>>>000000000")
 	if f.IsEvent {
 		var parts []string
 		parts = append(parts, fmt.Sprintf("%s`$event_name` = '%s'", alias, f.Name))
-		log.Printf(">>>>>>>>>>>>>>000000000>>> Is event")
-		log.Printf(">> parts: %v", parts)
-		log.Printf(">>>>>>>>>>>>>>000000000>>>")
 		for _, sub := range f.Filters {
 
 			subConds := addFilter(sub, opts)
 			if len(subConds) > 0 {
-				log.Printf(">>>>>>>>>>>>>>000000000>>>")
-				log.Printf(">> subConds: %v", subConds)
-				log.Printf(">>>>>>>>>>>>>>000000000>>>")
 				parts = append(parts, "("+strings.Join(subConds, " AND ")+")")
 			}
 		}
@@ -230,7 +218,6 @@ var compOps = map[string]string{
 	"lessThanOrEqual": "<=", "lte": "<=",
 }
 
-// buildCond constructs a condition string based on operator and values
 func buildCond(expr string, values []string, operator string, isNumeric bool) string {
 	if len(values) == 0 {
 		return ""
@@ -248,7 +235,6 @@ func buildCond(expr string, values []string, operator string, isNumeric bool) st
 				wrapped[i] = fmt.Sprintf("'%s'", v)
 			}
 		}
-		// build NOT IN clause
 		return fmt.Sprintf("%s NOT IN (%s)", expr, strings.Join(wrapped, ", "))
 	case "contains":
 		// wrap values with % on both sides
@@ -277,7 +263,6 @@ func buildCond(expr string, values []string, operator string, isNumeric bool) st
 		}
 		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
 	case "regex":
-		// build match expressions
 		var parts []string
 		for _, v := range values {
 			parts = append(parts, fmt.Sprintf("match(%s, '%s')", expr, v))
