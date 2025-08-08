@@ -114,7 +114,7 @@ export default class FilterStore {
       const response = await searchService.fetchTopValues(params);
 
       runInAction(() => {
-        this.setTopValues(id, response.events || []);
+        this.setTopValues(id, response.events || response || []);
       });
 
       return response.events || [];
