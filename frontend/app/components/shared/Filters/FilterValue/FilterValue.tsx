@@ -26,30 +26,6 @@ function FilterValue(props: Props) {
     maxDuration: filter.value?.length > 1 ? filter.value[1] : filter.value?.[0],
   }));
 
-  // Update duration values when filter changes
-  useEffect(() => {
-    if (filter.name === FilterType.DURATION) {
-      const incomingMin = filter.value?.[0];
-      const incomingMax =
-        filter.value?.length > 1 ? filter.value[1] : filter.value?.[0];
-
-      if (
-        durationValues.minDuration !== incomingMin ||
-        durationValues.maxDuration !== incomingMax
-      ) {
-        setDurationValues({
-          minDuration: incomingMin,
-          maxDuration: incomingMax,
-        });
-      }
-    }
-  }, [
-    filter.value,
-    filter.name,
-    durationValues.minDuration,
-    durationValues.maxDuration,
-  ]);
-
   const onApplyValues = useCallback(
     (values: string[]) => {
       onUpdate({ ...filter, value: values });
@@ -59,6 +35,7 @@ function FilterValue(props: Props) {
   );
 
   const onDurationChange = useCallback((newValues: any) => {
+    console.log('onDurationChange', newValues);
     setDurationValues((current) => ({ ...current, ...newValues }));
   }, []);
 
@@ -138,8 +115,6 @@ function FilterValue(props: Props) {
     },
     [filter, onUpdate],
   );
-
-  console.log('filter.dataType', filter.dataType);
 
   // Render different input types based on filter data type
   switch (filter.dataType) {
