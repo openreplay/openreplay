@@ -25,6 +25,7 @@ import {
   ChartColumnBig,
   ChartBarBig,
   ArrowDown01,
+  SquareActivity,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Form, InputNumber } from 'antd/lib';
@@ -171,6 +172,7 @@ function WidgetOptions() {
               items: [
                 { key: 'sessionCount', label: t('All Sessions') },
                 { key: 'userCount', label: t('Unique Users') },
+                { key: 'eventCounts', label: t('Total Events') },
               ],
               onClick: (info: { key: string }) => handleChange(info.key),
             }}
@@ -194,10 +196,12 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
   const items = {
     sessionCount: t('Total Sessions'),
     userCount: 'Unique Users',
+    eventCount: 'Total Events',
   };
   const chartIcons = {
     sessionCount: <Library size={16} strokeWidth={1} />,
     userCount: <Users size={16} strokeWidth={1} />,
+    eventCount: <SquareActivity size={16} strokeWidth={1} />,
   } as const;
 
   return (
