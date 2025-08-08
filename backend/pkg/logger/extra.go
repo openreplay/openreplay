@@ -5,13 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/getsentry/sentry-go"
 	"net/http"
-	"openreplay/backend/pkg/env"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/getsentry/sentry-go"
+
+	"openreplay/backend/pkg/env"
 )
 
 type extraLogger struct {
@@ -117,38 +118,49 @@ func (el *extraLogger) Log(ctx context.Context, msg string) {
 		}
 		sendLog(el.elasticLogger, esMsg)
 	}
-	if el.dataDogAPIKey != "" {
-		url := "https://http-intake.logs.datadoghq.com/v1/input"
-
-		logMessage := `{
-        "message": "` + msg + `",
-        "ddsource": "go",
-        "service": "myservice",
-        "hostname": "myhost",
-        "ddtags": "env:development"
-    }`
-
-		req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(logMessage)))
-		if err != nil {
-			fmt.Println("Failed to create request:", err)
-			return
-		}
-
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("DD-API-KEY", el.dataDogAPIKey)
-
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Failed to send log to DataDog:", err)
-			return
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			fmt.Println("Failed to send log to DataDog, status code:", resp.StatusCode)
-		} else {
-			fmt.Println("Log sent to DataDog successfully!")
-		}
+	if el.dataDogAPIKey == "" {
+		return
 	}
+	url := "https://http-intake.logs.datadoghq.com/v1/input"
+
+	type ddLog struct {
+		Message  string `json:"message"`
+		DDSource string `json:"ddsource"`
+		Service  string `json:"service"`
+		Hostname string `json:"hostname"`
+		DDTags   string `json:"ddtags"`
+	}
+
+	payload := ddLog{
+		Message:  msg,
+		DDSource: "go",
+		Service:  "myservice",
+		Hostname: "myhost",
+		DDTags:   "env:development",
+	}
+	b, _ := json.Marshal(payload)
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(b))
+	if err != nil {
+		fmt.Println("Failed to create request:", err)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("DD-API-KEY", el.dataDogAPIKey)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Failed to send log to DataDog:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Failed to send log to DataDog, status code:", resp.StatusCode)
+	} else {
+		fmt.Println("Log sent to DataDog successfully!")
+	}
+
 }
