@@ -114,9 +114,7 @@ export default class FilterStore {
       const response = await searchService.fetchTopValues(params);
 
       runInAction(() => {
-        // TODO somehow the API response is changed for this confirm and use the proper response.
-        // this.setTopValues(id, response.events);
-        this.setTopValues(id, response);
+        this.setTopValues(id, response.events || []);
       });
 
       return response.events || [];
