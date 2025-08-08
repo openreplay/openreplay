@@ -21,7 +21,7 @@ const (
 	MetricOfTableUserId     MetricOfTable = "userId"
 	MetricOfTableCountry    MetricOfTable = "userCountry"
 	MetricOfTableDevice     MetricOfTable = "userDevice"
-	MetricOfTableFetch      MetricOfTable = "FETCH"
+	MetricOfTableFetch      MetricOfTable = "REQUEST"
 	MetricOfTableResolution MetricOfTable = "screenResolution"
 )
 
