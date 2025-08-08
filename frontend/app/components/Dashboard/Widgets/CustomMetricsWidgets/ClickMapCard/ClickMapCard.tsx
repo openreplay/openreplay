@@ -45,7 +45,8 @@ function ClickMapCard() {
       ...metric.toJson(),
       ...dashboardStore.period.toTimestamps(),
       metricType: 'heatmaps_session',
-      limit: 1000,
+      limit: 200,
+      density: 200,
     };
 
     if (payload && !hasLocationFilter(payload)) {
