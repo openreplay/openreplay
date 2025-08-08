@@ -74,7 +74,7 @@ function UserListItem(props: Props) {
         )}
       </div>
       {!isOnboarding && (
-        <div className="col-span-2">
+        <div className="col-span-4 md:col-span-2">
           <span>
             {user.createdAt &&
               checkForRecent(user.createdAt, 'LLL dd, yyyy, hh:mm a')}
@@ -83,7 +83,7 @@ function UserListItem(props: Props) {
       )}
 
       <div
-        className={cn('justify-self-end invisible group-hover:visible', {
+        className={cn('hidden md:block justify-self-end invisible group-hover:visible', {
           'col-span-2': !isOnboarding,
           'col-span-4': isOnboarding,
         })}

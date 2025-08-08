@@ -1,16 +1,17 @@
 import React from 'react';
-import { App, Button, Card, Layout, Space, Tooltip, Typography } from 'antd';
+import { App, Button, Card, Layout, Dropdown, Tooltip, Typography } from 'antd';
 import ProjectList from 'Components/Client/Projects/ProjectList';
 import ProjectTabs from 'Components/Client/Projects/ProjectTabs';
 import { useHistory } from 'react-router-dom';
 import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
-import { PlusOutlined, KeyOutlined } from '@ant-design/icons';
+import { PlusOutlined, KeyOutlined, DownOutlined } from '@ant-design/icons';
 import ProjectTabContent from 'Components/Client/Projects/ProjectTabContent';
 import { useModal } from 'Components/ModalContext';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import Project from '@/mstore/types/project';
 import { useTranslation } from 'react-i18next';
+import { isMobile } from 'App/utils/isMobile';
 
 function Projects() {
   const { t } = useTranslation();
@@ -49,6 +50,21 @@ function Projects() {
     });
   };
 
+  const mobileScreen = isMobile();
+  const projects = projectsStore.list;
+
+  const onSelect = (key: number) => {
+    console.log('Selected project ID:', key);
+    projectsStore.setConfigProject(key);
+  };
+
+  const dropItems = projects.map((project) => ({
+    key: project.id?.toString() ?? '0',
+    label: project.name,
+    onClick: () => onSelect(parseInt(project.id as unknown as string, 10)),
+  }));
+
+  console.log('Project:', project, pid);
   return (
     <Card
       style={{ height: 'calc(100vh - 130px)' }}
@@ -74,22 +90,42 @@ function Projects() {
       }
     >
       <Layout>
-        <Layout.Sider width={260} trigger={null} className="!bg-white border-r">
+        <Layout.Sider
+          width={260}
+          trigger={null}
+          className="hidden md:block !bg-white border-r"
+        >
           <ProjectList />
         </Layout.Sider>
 
         <Layout>
-          <Layout.Header
-            className="flex justify-between items-center p-4 !bg-white border-b"
-            style={{ height: 46 }}
-          >
+          <Layout.Header className="flex flex-col md:flex-row md:gap-0 justify-between md:items-center p-4 !bg-white border-b h-[92px] md:h-[46px]">
             <div className="flex items-center gap-4">
-              <Typography.Title
-                level={5}
-                className="capitalize !m-0 whitespace-nowrap truncate !font-medium"
-              >
-                {project?.name}
-              </Typography.Title>
+              {mobileScreen ? (
+                <Dropdown
+                  className="w-fit"
+                  menu={{
+                    items: dropItems,
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Typography.Title
+                      level={5}
+                      className="capitalize !m-0 whitespace-nowrap truncate !font-medium"
+                    >
+                      {project?.name}
+                    </Typography.Title>
+                    <DownOutlined />
+                  </div>
+                </Dropdown>
+              ) : (
+                <Typography.Title
+                  level={5}
+                  className="capitalize !m-0 whitespace-nowrap truncate !font-medium"
+                >
+                  {project?.name}
+                </Typography.Title>
+              )}
               <ProjectKeyButton project={project} />
             </div>
             <ProjectTabs />

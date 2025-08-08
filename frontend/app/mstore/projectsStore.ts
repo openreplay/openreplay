@@ -253,8 +253,12 @@ export default class BaseProjectsStore {
       // set the first project as active
       this.setConfigProject();
     } else {
-      this.config.pid = project?.projectId ?? undefined;
-      this.config.project = project ?? null;
+      const newConfig = {
+        pid: project.projectId,
+        project: project,
+        tab: this.config.tab,
+      };
+      this.config = newConfig;
     }
   };
 

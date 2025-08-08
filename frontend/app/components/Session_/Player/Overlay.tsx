@@ -98,7 +98,6 @@ function Overlay({ nextId, isClickmap }: Props) {
     activeTargetIndex,
     tabStates,
   } = store.get();
-  const { showModal, hideModal } = useModal();
   const cssLoading = Object.values(tabStates).some(
     ({ cssLoading }) => cssLoading,
   );
@@ -161,7 +160,11 @@ function Overlay({ nextId, isClickmap }: Props) {
       <Dropdown menu={{ items: menuItems, onClick }} trigger={['contextMenu']}>
         <div>
           {showPlayIconLayer && (
-            <PlayIconLayer playing={playing} togglePlay={togglePlay} />
+            <PlayIconLayer
+              jumpInterval={player.jumpInterval}
+              playing={playing}
+              togglePlay={togglePlay}
+            />
           )}
         </div>
       </Dropdown>

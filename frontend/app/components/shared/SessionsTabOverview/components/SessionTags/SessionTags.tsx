@@ -68,12 +68,14 @@ const SessionTagsSelect = observer(() => {
     searchStore.resetTags();
   }, [projectsStore.activeSiteId]);
 
-  const relevantTags = issues_types.filter((tag) =>
-    tag.type !== 'mouse_thrashing' &&
-    (platform === 'web'
-     ? tag.type !== types.TAP_RAGE
-     : tag.type !== types.CLICK_RAGE))
-  const tagNames: any = {}
+  const relevantTags = issues_types.filter(
+    (tag) =>
+      tag.type !== 'mouse_thrashing' &&
+      (platform === 'web'
+        ? tag.type !== types.TAP_RAGE
+        : tag.type !== types.CLICK_RAGE),
+  );
+  const tagNames: any = {};
   relevantTags.forEach((tag) => {
     tagNames[tag.type] = t(tag.name);
   });
@@ -81,12 +83,15 @@ const SessionTagsSelect = observer(() => {
     <Dropdown
       className="w-fit"
       menu={{
-        items: relevantTags
-          .map((tag: any) => ({
-            value: tag.type,
-            label: <div className={'flex gap-2 items-center'}>{tagIcons[tag.type]} {t(tag.name)}</div>,
-            onClick: () => searchStore.toggleTag(tag.type),
-          })),
+        items: relevantTags.map((tag: any) => ({
+          value: tag.type,
+          label: (
+            <div className={'flex gap-2 items-center'}>
+              {tagIcons[tag.type]} {t(tag.name)}
+            </div>
+          ),
+          onClick: () => searchStore.toggleTag(tag.type),
+        })),
       }}
     >
       <div className="cursor-pointer flex items-center justify-end gap-2">

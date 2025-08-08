@@ -31,9 +31,10 @@ interface Props {
   left: number;
   live?: boolean;
   onDrop?: () => void;
+  paused?: boolean;
 }
 
-const DraggableCircle: FC<Props> = memo(({ left, live, onDrop }) => {
+const DraggableCircle: FC<Props> = memo(({ left, live, onDrop, paused }) => {
   const [{ isDragging }, dragRef, preview] = useDrag(
     () => ({
       type: ItemTypes.BOX,
@@ -53,7 +54,7 @@ const DraggableCircle: FC<Props> = memo(({ left, live, onDrop }) => {
 
   return (
     <div ref={dragRef} style={getStyles(left, isDragging)} role="DraggableBox">
-      <ProgressCircle isGreen={left > 99 && live} />
+      <ProgressCircle paused={paused} isGreen={left > 99 && live} />
     </div>
   );
 });
