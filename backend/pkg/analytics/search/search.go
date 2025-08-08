@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -95,10 +96,23 @@ LIMIT %d OFFSET %d
 )
 
 func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
+	if req == nil {
+		return nil, errors.New("nil request")
+	}
+	if req.Page < 1 {
+		req.Page = 1
+	}
+	if req.Limit <= 0 || req.Limit > 1000 {
+		req.Limit = 100
+	}
+
+	startSec := req.StartDate / 1000
+	endSec := req.EndDate / 1000
 	offset := (req.Page - 1) * req.Limit
+
 	eventsWhere, filtersWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s")
 	sessionsWhere = append([]string{fmt.Sprintf("s.project_id = %d", projectId),
-		fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", req.StartDate/1000, req.EndDate/1000),
+		fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
 	}, sessionsWhere...)
 
 	var eventsInnerJoin string
@@ -108,7 +122,7 @@ func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSea
 	if len(eventsWhere) > 0 || len(filtersWhere) > 0 {
 		conds = append([]string{
 			fmt.Sprintf("e.project_id = %d", projectId),
-			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", req.StartDate/1000, req.EndDate/1000),
+			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
 		}, conds...)
 		conds = append(conds, filtersWhere...)
 
@@ -135,7 +149,7 @@ func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSea
 		sortOrder = "ASC"
 	}
 
-	viewedJoin := fmt.Sprintf(viewedSessionsJoinTemplate, userId, projectId, req.StartDate/1000)
+	viewedJoin := fmt.Sprintf(viewedSessionsJoinTemplate, userId, projectId, startSec)
 
 	query := fmt.Sprintf(sessionsQuery,
 		eventsInnerJoin,
