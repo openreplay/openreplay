@@ -33,6 +33,7 @@ import { TABS, Tab } from '../consts';
 import AccessModal from './AccessModal';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify'
+import { isMobile } from 'App/utils/isMobile';
 
 const spotLink = spotsList();
 
@@ -104,6 +105,7 @@ function SpotPlayerHeader({
     }
   };
 
+  const mobileScreen = isMobile();
   return (
     <div className="flex items-center gap-1 p-2 py-1 w-full bg-white border-b">
       <div>
@@ -172,7 +174,7 @@ function SpotPlayerHeader({
         </div>
       </div>
       <div className="ml-auto" />
-      {isLoggedIn ? (
+      {!mobileScreen && isLoggedIn ? (
         <>
           <Button
             size="small"

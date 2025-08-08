@@ -221,7 +221,7 @@ export default class Animator {
     }
   };
 
-  jumpInterval(interval: number) {
+  jumpInterval = (interval: number) => {
     const { endTime, time } = this.store.get();
 
     if (interval > 0) {

@@ -11,6 +11,7 @@ import { observer } from 'mobx-react-lite';
 import WebPlayer from './WebPlayer';
 import { useTranslation } from 'react-i18next';
 import { trackerInstance } from '@/init/openreplay';
+import PhoneHorizontalWarn from './Player/SharedComponents/PhoneHorizontal';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -60,8 +61,11 @@ function Session({
         </span>
       }
     >
+      <PhoneHorizontalWarn />
       <Loader className="flex-1" loading={!session.sessionId}>
-        {player}
+        <div className="w-screen h-screen overflow-hidden relative">
+          {player}
+        </div>
       </Loader>
     </NoContent>
   );

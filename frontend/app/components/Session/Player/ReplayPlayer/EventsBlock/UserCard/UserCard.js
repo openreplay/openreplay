@@ -84,13 +84,15 @@ function UserCard({ className, width, height }) {
   return (
     <div className={cn('bg-white flex items-center w-full', className)}>
       <div className="flex items-center">
-        <Avatar
-          iconSize="23"
-          width={avatarbgSize}
-          height={avatarbgSize}
-          seed={userNumericHash}
-        />
-        <div className="ml-3 overflow-hidden leading-tight">
+        <div className="hidden lg:block">
+          <Avatar
+            iconSize="23"
+            width={avatarbgSize}
+            height={avatarbgSize}
+            seed={userNumericHash}
+          />
+        </div>
+        <div className="ml-3 overflow-hidden leading-tight flex items-center gap-2">
           <TextEllipsis
             noHint
             className={cn('font-medium', {

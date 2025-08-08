@@ -30,8 +30,6 @@ const ProjectList: React.FC = () => {
     project.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const handleSearch = (value: string) => setSearch(value);
-
   const onClick: MenuProps['onClick'] = (e) => {
     const pid = parseInt(e.key as string);
     projectsStore.setConfigProject(pid);

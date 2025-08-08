@@ -46,6 +46,7 @@ import Timeline from './Timeline';
 import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
 import { useTranslation } from 'react-i18next';
+import { isMobile } from 'App/utils/isMobile';
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -245,10 +246,11 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
     );
   }
 
+  const mobileScreen = isMobile();
   return (
     <div className={styles.controls}>
       <Timeline />
-      {!fullscreen && (
+      {!fullscreen && !mobileScreen && (
         <div className={cn(styles.buttons, '!px-2')}>
           <div className="flex items-center">
             <PlayerControls

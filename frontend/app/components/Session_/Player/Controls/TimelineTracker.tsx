@@ -13,11 +13,15 @@ function TimelineTracker({
 }) {
   const { store } = useContext(PlayerContext);
 
-  const { time } = store.get();
+  const { time, playing } = store.get();
 
   return (
     <>
-      <DraggableCircle left={time * scale} onDrop={onDragEnd} />
+      <DraggableCircle
+        paused={!playing}
+        left={time * scale}
+        onDrop={onDragEnd}
+      />
       <TimeTracker scale={scale} left={time * scale} />
     </>
   );

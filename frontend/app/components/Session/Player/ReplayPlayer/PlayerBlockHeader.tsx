@@ -84,7 +84,10 @@ function PlayerBlockHeader(props: any) {
 
   return (
     <div
-      className={cn(stl.header, 'flex justify-between', { hidden: fullscreen })}
+      className={cn(
+        'bg-white border-b-gray-lighter lg:h-[50px] lg:pb-0 flex justify-between',
+        { hidden: fullscreen },
+      )}
     >
       <div className="flex w-full items-center">
         {!hideBack && (
@@ -94,7 +97,9 @@ function PlayerBlockHeader(props: any) {
           >
             {/* @ts-ignore TODO */}
             <BackLink label={t('Back')} className="h-full ml-2" />
-            <div className={stl.divider} />
+            <div
+              className={'w-[1px] h-full lg:h-[50px] mx-2 bg-gray-lighter'}
+            />
           </div>
         )}
         <UserCard width={width} height={height} />
@@ -116,11 +121,7 @@ function PlayerBlockHeader(props: any) {
           )}
 
           {_metaList.length > 0 && (
-            <SessionMetaList
-              horizontal
-              metaList={_metaList}
-              maxLength={2}
-            />
+            <SessionMetaList horizontal metaList={_metaList} maxLength={2} />
           )}
         </div>
         {uiPlayerStore.showSearchEventsSwitchButton ? (
@@ -141,7 +142,7 @@ function PlayerBlockHeader(props: any) {
         ) : null}
       </div>
       <div
-        className="px-2 relative"
+        className="px-2 relative hidden lg:block"
         style={{ minWidth: activeTab === 'EXPORT' ? '360px' : '270px' }}
       >
         <Tabs

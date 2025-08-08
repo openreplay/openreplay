@@ -54,7 +54,7 @@ function SpotPlayerControls() {
   };
 
   return (
-    <div className="w-full p-4 flex items-center gap-4 bg-white">
+    <div className="hidden lg:flex w-full p-4 items-center gap-4 bg-white">
       <PlayButton togglePlay={togglePlay} state={playState} iconSize={36} />
 
       <div className="px-2 py-1 bg-white rounded font-semibold flex items-center gap-2">
