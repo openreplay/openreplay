@@ -71,14 +71,14 @@ func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p *Payload, s model.Series
 	sub := t.buildSubQuery(p, s, metric)
 	step := getStepSize(p.StartTimestamp, p.EndTimestamp, p.Density, 1)
 	query := fmt.Sprintf(`SELECT gs.generate_series AS timestamp, COALESCE(COUNT(DISTINCT ps.%s),0) AS count
-				FROM generate_series(@startTimestamp,@endTimestamp,@step) AS gs
-						LEFT JOIN (%s) AS ps ON TRUE
-				WHERE ps.datetime >= toDateTime(timestamp)
-					AND ps.datetime < toDateTime((timestamp+@step))
-				GROUP BY timestamp ORDER BY timestamp;`, idField, sub)
+					FROM generate_series(@startTimestamp,@endTimestamp,@step) AS gs
+							LEFT JOIN (%s) AS ps ON TRUE
+					WHERE ps.datetime >= toDateTime(timestamp/1000)
+						AND ps.datetime < toDateTime((timestamp+@step)/1000)
+					GROUP BY timestamp ORDER BY timestamp;`, idField, sub)
 	params := map[string]any{
-		"startTimestamp": p.StartTimestamp / 1000,
-		"endTimestamp":   p.EndTimestamp / 1000,
+		"startTimestamp": p.StartTimestamp,
+		"endTimestamp":   p.EndTimestamp,
 		"step":           step,
 		"project_id":     p.ProjectId,
 	}
@@ -158,8 +158,8 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 			user_anonymous_id
 		FROM experimental.sessions
 		WHERE project_id=@project_id
-		  AND datetime >= toDateTime(@startTimestamp)
-		  AND datetime <= toDateTime(@endTimestamp)
+		  AND datetime >= toDateTime(@startTimestamp/1000)
+		  AND datetime <= toDateTime(@endTimestamp/1000)
 	`
 
 	var proj string
@@ -167,12 +167,7 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 	case "sessionCount":
 		proj = "evt.session_id AS session_id, s.datetime AS datetime"
 	case "userCount":
-		proj = `multiIf(
-					s.user_id != '', s.user_id,
-					s.user_anonymous_id != '', s.user_anonymous_id,
-					toString(s.user_uuid)
-				) AS user_id, s.datetime AS datetime,
-				s.user_id AS __raw_user_id, s.user_uuid AS __raw_user_uuid`
+		proj = `s.user_id != '' AS user_id, s.datetime AS datetime`
 	case "eventCount":
 		proj = "e.event_id AS event_id, s.datetime AS datetime"
 	default:
