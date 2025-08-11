@@ -190,7 +190,7 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) []string {
 	}
 
 	cfg, ok := propertyKeyMap[strings.ToUpper(f.Name)]
-	isNumeric := cfg.IsNumeric || f.DataType == "float" || f.DataType == "number" || f.DataType == "integer"
+	isNumeric := cfg.IsNumeric || f.DataType == "float" || f.DataType == "number" || f.DataType == "int"
 	if !ok {
 		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: isNumeric}
 	}
