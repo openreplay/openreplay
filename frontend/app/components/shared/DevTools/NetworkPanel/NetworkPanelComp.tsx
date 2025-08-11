@@ -404,32 +404,29 @@ export const NetworkPanelComp = observer(
 
         filteredItems = await processInChunks(filteredItems, (chunk) =>
           chunk.filter((it) => {
-            let valid = true;
-            if (showOnlyErrors) {
-              valid = parseInt(it.status) >= 400 || !it.success || it.error;
-            }
-            if (filter) {
-              try {
-                const regex = new RegExp(filter, 'i');
-                valid =
-                  (valid && regex.test(it.status)) ||
-                  regex.test(it.name) ||
-                  regex.test(it.type) ||
-                  regex.test(it.method);
-              } catch (e) {
-                valid =
-                  (valid && String(it.status).includes(filter)) ||
-                  it.name.includes(filter) ||
-                  it.type.includes(filter) ||
-                  (it.method && it.method.includes(filter));
+              if (showOnlyErrors) {
+                const validStatus = parseInt(it.status) >= 400 || !it.success || it.error
+                if (!validStatus) return false;
               }
-            }
-            if (activeTab !== ALL) {
-              valid = valid && TYPE_TO_TAB[it.type] === activeTab;
-            }
 
-            return valid;
-          }),
+              if (filter) {
+                let validQuery = true;
+                try {
+                  const regex = new RegExp(filter, 'i');
+                  validQuery = regex.test(it.status) || regex.test(it.name) || regex.test(it.type) || regex.test(it.method);
+                } catch (e) {
+                  validQuery = String(it.status).includes(filter) || it.name.includes(filter) || it.type.includes(filter) || (it.method && it.method.includes(filter));
+                }
+                if (!validQuery) return false;
+              }
+
+              if (activeTab !== ALL) {
+                const validTab = TYPE_TO_TAB[it.type] === activeTab;
+                if (!validTab) return false;
+              }
+
+              return true;
+            }),
         );
 
         // Update displayed items
