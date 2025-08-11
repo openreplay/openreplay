@@ -179,8 +179,12 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) []string {
 	if f.IsEvent {
 		var parts []string
 		parts = append(parts, fmt.Sprintf("%s`$event_name` = '%s'", alias, f.Name))
-		for _, sub := range f.Filters {
 
+		if f.AutoCaptured {
+			parts = append(parts, fmt.Sprintf("%s`$auto_captured` = 1", alias))
+		}
+
+		for _, sub := range f.Filters {
 			subConds := addFilter(sub, opts)
 			if len(subConds) > 0 {
 				parts = append(parts, "("+strings.Join(subConds, " AND ")+")")
