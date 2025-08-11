@@ -24,6 +24,7 @@ import SpotVideoContainer from './components/SpotVideoContainer';
 // import VideoJS from "./components/Vjs"; backup player
 import { Tab } from './consts';
 import spotPlayerStore, { PANELS } from './spotPlayerStore';
+import PhoneHorizontalWarn from 'Components/Session/Player/SharedComponents/PhoneHorizontal';
 
 function SpotPlayer() {
   const defaultHeight = getDefaultPanelHeight();
@@ -200,6 +201,7 @@ function SpotPlayer() {
         isFullScreen ? 'relative' : '',
       )}
     >
+      <PhoneHorizontalWarn />
       {isFullScreen ? (
         <EscapeButton onClose={() => spotPlayerStore.setIsFullScreen(false)} />
       ) : null}
@@ -213,7 +215,7 @@ function SpotPlayer() {
         platform={spotPlayerStore.platform}
         browserVersion={spotPlayerStore.browserVersion}
       />
-      <div className="w-full h-full flex">
+      <div className="w-full h-full flex relative">
         <div className="w-full h-full flex flex-col justify-between">
           <SpotLocation />
           <div className={cn('w-full h-full', isFullScreen ? '' : 'relative')}>
