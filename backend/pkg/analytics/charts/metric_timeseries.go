@@ -112,7 +112,7 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 				MAX(main.created_at) AS last_event_ts
 		  FROM product_analytics.events AS main
 		 WHERE %s
-		 GROUP BY main.session_id`,
+		 GROUP BY main.session_id `,
 		strings.Join(whereParts, " AND "),
 	))
 
