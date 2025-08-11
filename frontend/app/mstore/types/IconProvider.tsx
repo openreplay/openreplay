@@ -141,20 +141,20 @@ class FetchIconProvider implements IconProvider {
 class ResolutionProvider implements IconProvider {
   getIcon(obj: any): React.ReactNode {
     const name = obj.name ?? '';
-    const firstPart = name.split('x')[0];
+    const firstPart = parseInt(name.split('x')[0], 10)
     const size = 21;
     let icon = <Monitor size={size} />;
-    if (firstPart.includes('<800')) {
-      icon = <Smartphone size={size} />;
+    if (firstPart >=1920) {
+      icon = <Monitor size={size} />;
     }
-    if (firstPart.includes('800')) {
-      icon = <Tablet size={size} />;
-    }
-    if (firstPart.includes('1280')) {
+    if (firstPart >= 1280) {
       icon = <Laptop size={size} />;
     }
-    if (firstPart.includes('1920')) {
-      icon = <Monitor size={size} />;
+    if (firstPart >= 800) {
+      icon = <Tablet size={size} />;
+    }
+    if (firstPart < 800) {
+      icon = <Smartphone size={size} />;
     }
     return (
       <div className="w-full h-full rounded-full bg-gray-lighter text-black flex items-center justify-center">

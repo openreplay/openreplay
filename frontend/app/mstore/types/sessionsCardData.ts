@@ -87,11 +87,15 @@ export class SessionsByRow {
 
   fromJson(json: any, totalSessions: number, metricType: string) {
     const { nameFormatter, iconProvider } = this.getFormatters(metricType);
+    if (metricType === FilterKey.RESOLUTIONS) {
+      json.name = `${json.centerWidth}x${json.centerHeight}`;
+      json.total = json.totalInGroup || json.total || 0;
+    }
     this.name = json.name;
     this.displayName = nameFormatter.format(json.name) || 'Unidentified';
     this.sessionCount = numberWithCommas(json.total);
     this.progress = Math.round((json.total / totalSessions) * 100);
-    this.icon = iconProvider.getIcon(json, metricType);
+    this.icon = iconProvider.getIcon(json);
     return this;
   }
 
