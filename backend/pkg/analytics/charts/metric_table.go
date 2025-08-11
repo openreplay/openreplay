@@ -54,6 +54,7 @@ type TableResponse struct {
 const (
 	MetricFormatSessionCount = "sessionCount"
 	MetricFormatUserCount    = "userCount"
+	MetricFormatEventCount   = "eventCount"
 	nilUUIDString            = "00000000-0000-0000-0000-000000000000"
 
 	// Pagination constants
@@ -345,7 +346,6 @@ LIMIT %d OFFSET %d`,
 	return query, nil
 }
 
-
 func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload, metricFormat string) (string, string, map[string]any, error) {
 	s := r.Series[0]
 	// Build event filter conditions with error handling
@@ -476,7 +476,6 @@ FROM (SELECT any(full_count)               AS full_count,
 	//
 }
 
-
 func (t *TableQueryBuilder) buildJoinClause(eventsOrder model.EventOrder, eventConditions []string) (string, []string, error) {
 	var havingClause string
 	var whereClause []string
@@ -494,7 +493,6 @@ func (t *TableQueryBuilder) buildJoinClause(eventsOrder model.EventOrder, eventC
 	}
 	return havingClause, whereClause, nil
 }
-
 
 func (t *TableQueryBuilder) buildSequenceJoinClause(eventConditions []string) (string, []string) {
 	if len(eventConditions) <= 1 {

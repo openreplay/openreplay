@@ -140,7 +140,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		stageColumns[i] = fmt.Sprintf("coalesce(SUM(S%d), 0) AS stage%d", i+1, i+1)
 	}
 
-	tColumns := buildTColumns(stages, eventConditions)
+	tColumns := buildTColumns(stages, eventConditions, p.MetricFormat)
 
 	baseWhere := []string{
 		fmt.Sprintf("e.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
@@ -164,9 +164,9 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		baseWhere = append(baseWhere, fmt.Sprintf("%s", strings.Join(sessionConditions, " AND ")))
 	}
 
-	groupColumn := fmt.Sprintf("e.session_id")
+	groupColumn := fmt.Sprintf("GROUP BY e.session_id")
 	if p.MetricFormat == MetricFormatUserCount {
-		groupColumn = fmt.Sprintf("s.user_id")
+		groupColumn = fmt.Sprintf("GROUP BY s.user_id")
 	}
 
 	subQuery := fmt.Sprintf(`
@@ -178,7 +178,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
             (e.session_id = s.session_id)
         WHERE
             %s
-        GROUP BY %s`,
+        %s`,
 		strings.Join(tColumns, ",\n            "),
 		strings.Join(baseWhere, "\n            AND "),
 		groupColumn)
@@ -205,22 +205,32 @@ func findEventConditionForStage(eventConditions []string, stageName string) stri
 	return fmt.Sprintf("`$event_name` = '%s'", stageName)
 }
 
-func buildTColumns(stages []string, eventConditions []string) []string {
+func buildTColumns(stages []string, eventConditions []string, metricFormat string) []string {
+	if len(stages) == 0 {
+		return nil
+	}
 	tColumns := make([]string, len(stages))
 
-	// First stage uses anyIf
-	stage1Condition := findEventConditionForStage(eventConditions, stages[0])
-	tColumns[0] = fmt.Sprintf("anyIf(1, %s) AS S1", stage1Condition)
-
-	// Subsequent stages use sequenceMatch
-	for i := 1; i < len(stages); i++ {
-		pattern := buildSequencePattern(i + 1)
-		sequenceConditions := buildSequenceConditions(stages[:i+1], eventConditions)
-
-		tColumns[i] = fmt.Sprintf("sequenceMatch(%s)(toDateTime(e.created_at), %s) AS S%d",
-			pattern, strings.Join(sequenceConditions, ", "), i+1)
+	// S1
+	stage1Cond := findEventConditionForStage(eventConditions, stages[0])
+	if metricFormat == MetricFormatEventCount {
+		tColumns[0] = fmt.Sprintf("countIf(%s) AS S1", stage1Cond)
+	} else {
+		tColumns[0] = fmt.Sprintf("anyIf(1, %s) AS S1", stage1Cond) // 0/1 per group (session)
 	}
 
+	// S2...Sn
+	for i := 1; i < len(stages); i++ {
+		pattern := buildSequencePattern(i + 1)
+		conds := buildSequenceConditions(stages[:i+1], eventConditions)
+
+		fn := "sequenceMatch"
+		if metricFormat == MetricFormatEventCount {
+			fn = "sequenceCount"
+		}
+		tColumns[i] = fmt.Sprintf("%s(%s)(toDateTime(e.created_at), %s) AS S%d",
+			fn, pattern, strings.Join(conds, ", "), i+1)
+	}
 	return tColumns
 }
 
