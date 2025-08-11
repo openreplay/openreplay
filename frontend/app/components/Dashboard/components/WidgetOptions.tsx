@@ -29,16 +29,19 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Form, InputNumber } from 'antd/lib';
+import Widget from '@/mstore/types/widget';
 
 interface Option {
   key: string;
   label: string;
 }
 
+type MetricFormat = 'sessionCount' | 'eventCount' | 'userCount';
+
 function WidgetOptions() {
   const { t } = useTranslation();
   const { metricStore } = useStore();
-  const metric: any = metricStore.instance;
+  const metric: Widget = metricStore.instance;
 
   const handleChange = (value: any) => {
     metric.update({ metricFormat: value });
@@ -58,6 +61,19 @@ function WidgetOptions() {
     ],
     [],
   );
+
+  const metricFormatLabel = ((mf: MetricFormat | undefined) => {
+    switch (mf) {
+      case 'sessionCount':
+        return t('All Sessions');
+      case 'eventCount':
+        return t('Event Count');
+      case 'userCount':
+        return t('Unique Users');
+      default:
+        return t('Unique Users'); // fallback
+    }
+  })(metric.metricFormat as MetricFormat);
 
   // const hasSeriesTypes = [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
   const hasViewTypes = [TIMESERIES, FUNNEL].includes(metric.metricType);
@@ -172,15 +188,13 @@ function WidgetOptions() {
               items: [
                 { key: 'sessionCount', label: t('All Sessions') },
                 { key: 'userCount', label: t('Unique Users') },
-                { key: 'eventCounts', label: t('Total Events') },
+                { key: 'eventCount', label: t('Total Events') },
               ],
               onClick: (info: { key: string }) => handleChange(info.key),
             }}
           >
             <Button type="text" variant="text" size="small">
-              {metric.metricFormat === 'sessionCount'
-                ? t('All Sessions')
-                : t('Unique Users')}
+              {metricFormatLabel}
               <DownOutlined className="text-sm" />
             </Button>
           </Dropdown>
