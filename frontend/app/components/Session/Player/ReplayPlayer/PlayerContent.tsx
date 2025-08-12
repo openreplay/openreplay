@@ -45,7 +45,7 @@ function PlayerContent({
       className="inset-0 flex items-center justify-center absolute"
       style={{
         // background: '#f6f6f6',
-        height: 'calc(100svh - 50px)',
+        height: 'calc(100dvh - 50px)',
         zIndex: '999',
       }}
     >
@@ -69,7 +69,7 @@ function PlayerContent({
         'pointer-events-none': hasError,
       })}
       style={{
-        height: `calc(100svh - ${mobileScreen ? '26px' : '50px'})`,
+        height: `calc(100dvh - ${mobileScreen ? '26px' : '50px'})`,
       }}
     >
       <div

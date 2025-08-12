@@ -28,7 +28,7 @@ function CommentsSection({ onClose }: { onClose?: () => void }) {
       </div>
       <div
         className="overflow-y-auto flex flex-col gap-4 mt-2"
-        style={{ height: 'calc(100svh - 132px)' }}
+        style={{ height: 'calc(100dvh - 132px)' }}
       >
         {comments.map((comment) => (
           <div
