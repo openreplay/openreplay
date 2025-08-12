@@ -41,7 +41,7 @@ function Layout(props: Props) {
   }, []);
 
   return (
-    <AntLayout style={{ minHeight: '100vh' }}>
+    <AntLayout style={{ height: '100vh' }}>
       {!hideHeader && <TopHeader />}
       <AntLayout>
         {!hideHeader && !window.location.pathname.includes('/onboarding/') ? (
