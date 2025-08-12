@@ -63,9 +63,7 @@ function Session({
     >
       <PhoneHorizontalWarn />
       <Loader className="flex-1" loading={!session.sessionId}>
-        <div className="w-screen h-screen overflow-hidden relative">
-          {player}
-        </div>
+        <div className="w-screen h-dvh overflow-hidden relative">{player}</div>
       </Loader>
     </NoContent>
   );
