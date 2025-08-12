@@ -123,7 +123,7 @@ const WarnBadge = React.memo(
       transform: 'translate(-50%, 80%)',
       fontWeight: 500,
     };
-    const defaultContainerClass = 'flex flex-col text-sm lg:text-base';
+    const defaultContainerClass = 'lg:flex flex-col hidden';
     const defaultWarnClass =
       'px-3 py-.5 border border-gray-lighter shadow-sm rounded bg-active-blue flex items-center justify-between';
 

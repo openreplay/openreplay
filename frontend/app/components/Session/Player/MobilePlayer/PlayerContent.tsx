@@ -38,7 +38,7 @@ function PlayerContent({
         <div
           className="inset-0 flex items-center justify-center absolute"
           style={{
-            height: 'calc(100vh - 50px)',
+            height: 'calc(100svh - 50px)',
             zIndex: '999',
           }}
         >

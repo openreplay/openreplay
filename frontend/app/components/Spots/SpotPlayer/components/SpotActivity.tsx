@@ -42,7 +42,7 @@ function SpotActivity({ onClose }: { onClose: () => void }) {
       </div>
       <div
         className="overflow-y-auto"
-        style={{ maxHeight: 'calc(100vh - 128px)' }}
+        style={{ maxHeight: 'calc(100svh - 128px)' }}
       >
         {mixedEvents.map((event, i) => (
           <div

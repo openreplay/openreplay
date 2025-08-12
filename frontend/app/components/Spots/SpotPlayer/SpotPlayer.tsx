@@ -206,7 +206,7 @@ function SpotPlayer() {
   return (
     <div
       className={cn(
-        'w-screen h-screen flex flex-col overflow-hidden',
+        'w-screen h-svh flex flex-col overflow-hidden',
         isFullScreen ? 'relative' : '',
       )}
     >

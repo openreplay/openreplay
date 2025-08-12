@@ -76,7 +76,7 @@ function Layout(props: Props) {
               : mobileDevice
                 ? '8px 8px 60px 8px'
                 : '20px',
-            minHeight: 'calc(100vh - 60px)',
+            minHeight: 'calc(100svh - 60px)',
           }}
         >
           {props.children}
