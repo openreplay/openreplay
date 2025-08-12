@@ -571,13 +571,13 @@ def get_alerts_triggers(projectId: int, context: schemas.CurrentContext = Depend
 
 @app.get('/{projectId}/alerts/{alertId}', tags=["alerts"])
 def get_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": alerts.get(id=alertId)}
+    return {"data": alerts.get(project_id=projectId, id=alertId)}
 
 
 @app.post('/{projectId}/alerts/{alertId}', tags=["alerts"])
 def update_alert(projectId: int, alertId: int, data: schemas.AlertSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return alerts.update(id=alertId, data=data)
+    return alerts.update(project_id=projectId, id=alertId, data=data)
 
 
 @app.delete('/{projectId}/alerts/{alertId}', tags=["alerts"])
