@@ -4,7 +4,6 @@ import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
-import styles from './profileSettings.module.css';
 import { useTranslation } from 'react-i18next';
 
 function Settings() {
@@ -45,7 +44,7 @@ function Settings() {
   };
 
   return (
-    <Form onSubmit={handleSubmit} className={styles.form}>
+    <Form onSubmit={handleSubmit} className={'md:w-80 px-4 py-2 md:p-5'}>
       <Form.Field>
         <label htmlFor="accountName">{t('Name')}</label>
         <Input

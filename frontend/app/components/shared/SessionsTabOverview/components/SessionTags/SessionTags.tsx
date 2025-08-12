@@ -1,12 +1,18 @@
 import { issues_types, types } from 'Types/session/issue';
-import { Grid, Segmented } from 'antd';
-import { Angry, CircleAlert, Skull, WifiOff, ChevronDown, MessageCircleWarning } from 'lucide-react';
+import { Segmented, Dropdown } from 'antd';
+import {
+  Angry,
+  CircleAlert,
+  Skull,
+  WifiOff,
+  MessageCircleWarning,
+} from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { useStore } from 'App/mstore';
 import { useTranslation } from 'react-i18next';
-
-const { useBreakpoint } = Grid;
+import { mobileScreen } from 'App/utils/isMobile';
+import { DownOutlined } from '@ant-design/icons';
 
 const tagIcons = {
   [types.ALL]: undefined,
@@ -18,21 +24,19 @@ const tagIcons = {
   [types.INCIDENT]: <MessageCircleWarning size={14} />,
 } as Record<string, any>;
 
-function SessionTags() {
+const SegmentedSessionTags = observer(() => {
   const { t } = useTranslation();
-  const screens = useBreakpoint();
   const { projectsStore, searchStore } = useStore();
   const platform = projectsStore.active?.platform || '';
   const activeTab = searchStore.activeTags;
 
   React.useEffect(() => {
     searchStore.resetTags();
-  }, [projectsStore.activeSiteId])
+  }, [projectsStore.activeSiteId]);
 
   return (
     <div className="flex items-center">
       <Segmented
-        vertical={!screens.md}
         options={issues_types
           .filter(
             (tag) =>
@@ -52,6 +56,57 @@ function SessionTags() {
       />
     </div>
   );
+});
+
+const SessionTagsSelect = observer(() => {
+  const { t } = useTranslation();
+  const { projectsStore, searchStore } = useStore();
+  const platform = projectsStore.active?.platform || '';
+  const activeTab = searchStore.activeTags;
+
+  React.useEffect(() => {
+    searchStore.resetTags();
+  }, [projectsStore.activeSiteId]);
+
+  const relevantTags = issues_types.filter(
+    (tag) =>
+      tag.type !== 'mouse_thrashing' &&
+      (platform === 'web'
+        ? tag.type !== types.TAP_RAGE
+        : tag.type !== types.CLICK_RAGE),
+  );
+  const tagNames: any = {};
+  relevantTags.forEach((tag) => {
+    tagNames[tag.type] = t(tag.name);
+  });
+  return (
+    <Dropdown
+      className="w-fit"
+      menu={{
+        items: relevantTags.map((tag: any) => ({
+          value: tag.type,
+          label: (
+            <div className={'flex gap-2 items-center'}>
+              {tagIcons[tag.type]} {t(tag.name)}
+            </div>
+          ),
+          onClick: () => searchStore.toggleTag(tag.type),
+        })),
+      }}
+    >
+      <div className="cursor-pointer flex items-center justify-end gap-2">
+        {tagIcons[activeTab[0]]}
+        {activeTab[0] === 'all' ? <div>{t('All')}</div> : null}
+        <DownOutlined />
+      </div>
+    </Dropdown>
+  );
+});
+
+function SessionTags() {
+  const isMobileDevice = mobileScreen
+
+  return isMobileDevice ? <SessionTagsSelect /> : <SegmentedSessionTags />;
 }
 
-export default observer(SessionTags);
+export default SessionTags;

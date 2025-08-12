@@ -28,6 +28,7 @@ import HighlightButton from './Highlight/HighlightButton';
 import ShareModal from '../shared/SharePopup/SharePopup';
 import { useTranslation } from 'react-i18next';
 import SimilarSessionsButton from './SimilarSessions/SimilarSessionsButton';
+import { mobileScreen } from 'App/utils/isMobile';
 
 const disableDevtools = 'or_devtools_uxt_toggle';
 
@@ -39,7 +40,7 @@ function SubHeader(props) {
     projectsStore,
     userStore,
     issueReportingStore,
-    settingsStore
+    settingsStore,
   } = useStore();
   const { t } = useTranslation();
   const { favorite } = sessionStore.current;
@@ -50,7 +51,7 @@ function SubHeader(props) {
   const { player, store } = React.useContext(PlayerContext);
   const { location: currentLocation = 'loading...' } = store.get();
   const hasIframe = localStorage.getItem(IFRAME) === 'true';
-  const [hideTools, setHideTools] = React.useState(false);
+  const [hideTools, setHideTools] = React.useState(mobileScreen);
   const [isFavorite, setIsFavorite] = React.useState(favorite);
   const { openModal, closeModal } = useModal();
 
@@ -134,16 +135,25 @@ function SubHeader(props) {
     settingsStore.sessionSettings.updateKey('virtualMode', true);
     player.enableVMode?.();
     location.reload();
-  }
+  };
 
   return (
     <>
-    <WarnBadge
+      <WarnBadge
         siteId={projectId!}
         currentLocation={currentLocation}
         version={currentSession?.trackerVersion ?? ''}
-        containerStyle={{ position: 'relative', left: 0, top: 0, transform: 'none', zIndex: 10 }}
-        trackerWarnStyle={{ backgroundColor: 'var(--color-yellow)', color: 'black' }}
+        containerStyle={{
+          position: 'relative',
+          left: 0,
+          top: 0,
+          transform: 'none',
+          zIndex: 10,
+        }}
+        trackerWarnStyle={{
+          backgroundColor: 'var(--color-yellow)',
+          color: 'black',
+        }}
         virtualElsFailed={showVModeBadge}
         onVMode={onVMode}
       />
@@ -157,7 +167,6 @@ function SubHeader(props) {
             : undefined,
         }}
       >
-
         <SessionTabs />
 
         {!hideTools && (
@@ -224,7 +233,7 @@ function SubHeader(props) {
                     ),
                     onClick: showKbHelp,
                   },
-                ]
+                ],
               }}
             >
               <AntButton size="small">

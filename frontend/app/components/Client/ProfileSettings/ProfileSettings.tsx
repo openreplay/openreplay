@@ -6,7 +6,6 @@ import { useStore } from 'App/mstore';
 import LanguageSwitcher from "App/components/LanguageSwitcher";
 import Settings from './Settings';
 import ChangePassword from './ChangePassword';
-import styles from './profileSettings.module.css';
 import Api from './Api';
 import TenantKey from './TenantKey';
 import OptOut from './OptOut';
@@ -19,15 +18,15 @@ function ProfileSettings() {
   const { account } = userStore;
   const { isEnterprise } = userStore;
   return (
-    <div className="bg-white rounded-lg  border shadow-sm p-5">
-      <PageTitle title={<div>{t('Account')}</div>} />
+    <div className="bg-white rounded-lg  border shadow-sm">
+      <PageTitle title={<div className="px-4 pt-4">{t('Account')}</div>} />
       <Section
         title={t('Profile')}
         description={t('Your email address is your identity on OpenReplay and is used to login.')}
         children={<Settings />}
       />
 
-      <div className="border-b my-10" />
+      <div className="border-b my-4 md:my-10" />
 
       {account.hasPassword && (
         <>
@@ -91,10 +90,10 @@ function Section({ title, description, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center">
-      <div className={styles.left}>
-        <h4 className="text-lg mb-4">{title}</h4>
-        <div className={styles.info}>
+    <div className="flex md:items-center flex-col md:flex-row">
+      <div className={'px-4 py-2 md:p-5 w-full md:w-80'}>
+        <h4 className="text-lg mb-0 md:mb-4">{title}</h4>
+        <div className={"text-disabled-text"}>
           {description}
         </div>
       </div>

@@ -40,8 +40,9 @@ function LanguageSwitcher() {
   }));
 
   return (
-    <div className={'flex flex-col gap-2 align-start'}>
+    <div className={'flex flex-col gap-2 align-start p-4 md:p-0'}>
       <div className={'font-semibold'}>{i18n.t('Language')}</div>
+      <div className="flex flex-row gap-2">
       <Dropdown
         menu={{
           items: menuItems,
@@ -64,6 +65,7 @@ function LanguageSwitcher() {
       <Button className={'w-fit'} onClick={handleChangeLanguage}>
         {i18n.t('Update')}
       </Button>
+      </div>
     </div>
   );
 }

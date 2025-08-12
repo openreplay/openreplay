@@ -1,67 +1,48 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState } from 'react';
 import cn from 'classnames';
 import { Icon } from 'UI';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
-import cls from './PlayIconLayer.module.css';
-import clsOv from './overlay.module.css';
+import cls from 'Components/Session_/Player/Overlay/PlayIconLayer.module.css';
+import clsOv from 'Components/Session_/Player/Overlay/overlay.module.css';
 import { FastForward } from 'lucide-react';
-import { SKIP_INTERVALS } from '../Controls/Controls';
 import { debounceCall } from 'App/utils';
 
 interface Props {
-  togglePlay: () => void;
-  jumpInterval: (int: number) => void;
-  playing: boolean;
+  isPlaying: boolean;
+  onPlay: () => void;
+  onStop: () => void;
+  onJumpForward: () => void;
+  onJumpBackward: () => void;
 }
 const DOUBLE_TAP_DELAY = 300;
 
-function PlayIconLayer({ playing, togglePlay, jumpInterval }: Props) {
-  const { sessionStore } = useStore();
-  const notesEdit = sessionStore.createNoteTooltip.isVisible;
+function PlayIconLayer({
+  isPlaying,
+  onPlay,
+  onStop,
+  onJumpForward,
+  onJumpBackward,
+  }: Props) {
   const [showPlayOverlayIcon, setShowPlayOverlayIcon] = useState(false);
 
   const leftLastTap = React.useRef(0);
   const rightLastTap = React.useRef(0);
-
-  useEffect(() => {
-    // TODO Find a better way to do this
-    document.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [notesEdit]);
-
-  const getIsEdit = React.useCallback(() => notesEdit, [notesEdit]);
-
-  const onKeyDown = (e: any) => {
-    if (
-      getIsEdit() ||
-      e.target instanceof HTMLInputElement ||
-      e.target instanceof HTMLTextAreaElement
-    )
-      return;
-    if (e.key === ' ') {
-      togglePlayAnimated();
-    }
-  };
 
   const playAnimation = () => {
     setShowPlayOverlayIcon(true);
     setTimeout(() => setShowPlayOverlayIcon(false), 500);
   };
 
-  const togglePlayAnimated = useCallback(() => {
+  const togglePlayAnimated = () => {
     playAnimation();
-    togglePlay();
-  }, []);
+    isPlaying ? onStop() : onPlay();
+  }
 
   const doubleLeft = () => {
-    jumpInterval(SKIP_INTERVALS[15]);
+    onJumpForward();
   };
   const doubleRight = () => {
-    jumpInterval(SKIP_INTERVALS[15]);
+    onJumpBackward();
   };
 
   const onDoubleClick = (dir: 'left' | 'right') => {
@@ -118,7 +99,7 @@ function PlayIconLayer({ playing, togglePlay, jumpInterval }: Props) {
           [cls.zoomIcon]: showPlayOverlayIcon,
         })}
       >
-        <Icon name={playing ? 'play' : 'pause'} color="gray-medium" size={30} />
+        <Icon name={isPlaying ? 'play' : 'pause'} color="gray-medium" size={30} />
       </div>
     </div>
   );

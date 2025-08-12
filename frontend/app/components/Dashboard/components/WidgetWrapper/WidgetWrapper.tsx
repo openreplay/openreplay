@@ -129,7 +129,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
         </div>
       ) : null}
 
-      <div className="px-4" onClick={onChartClick}>
+      <div className="px-2 md:px-4" onClick={onChartClick}>
         <WidgetChart
           isPreview={isPreview}
           metric={widget}

@@ -144,7 +144,7 @@ function HighlightsList() {
           'py-2 px-4 border-gray-lighter',
           isEmpty
             ? 'h-96 flex items-center justify-center'
-            : ' grid grid-cols-3 gap-6',
+            : ' grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6',
         )}
       >
         <Loader loading={isPending}>

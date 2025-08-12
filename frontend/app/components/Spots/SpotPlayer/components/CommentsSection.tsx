@@ -17,7 +17,7 @@ function CommentsSection({ onClose }: { onClose?: () => void }) {
   const comments = spotStore.currentSpot?.comments ?? [];
   return (
     <div
-      className="h-full p-4 bg-white border-l"
+      className="h-full p-4 bg-white border-l absolute z-50 right-0 top-0 lg:block"
       style={{ minWidth: 320, width: 320 }}
     >
       <div className="flex items-center justify-between mb-2">
@@ -28,7 +28,7 @@ function CommentsSection({ onClose }: { onClose?: () => void }) {
       </div>
       <div
         className="overflow-y-auto flex flex-col gap-4 mt-2"
-        style={{ height: 'calc(100vh - 132px)' }}
+        style={{ height: 'calc(100dvh - 132px)' }}
       >
         {comments.map((comment) => (
           <div

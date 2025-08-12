@@ -32,7 +32,8 @@ import { Avatar, Icon } from 'UI';
 import { TABS, Tab } from '../consts';
 import AccessModal from './AccessModal';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify'
+import { toast } from 'react-toastify';
+import { mobileScreen } from 'App/utils/isMobile';
 
 const spotLink = spotsList();
 
@@ -47,7 +48,7 @@ function SpotPlayerHeader({
   platform,
 }: {
   activeTab: Tab | null;
-  setActiveTab: (tab: Tab) => void;
+  setActiveTab: (tab: Tab | null) => void;
   title: string;
   user: string;
   date: string;
@@ -90,12 +91,12 @@ function SpotPlayerHeader({
 
   const onMenuClick = async ({ key }: { key: string }) => {
     if (key === '1') {
-      const loader = toast.loading('Retrieving Spot video...')
+      const loader = toast.loading('Retrieving Spot video...');
       const { url } = await spotStore.getVideo(spotStore.currentSpot!.spotId);
       await downloadFile(url, `${spotStore.currentSpot!.title}.mp4`);
       setTimeout(() => {
-        toast.dismiss(loader)
-      }, 0)
+        toast.dismiss(loader);
+      }, 0);
     } else if (key === '2') {
       spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
         history.push(spotsList());
@@ -146,14 +147,16 @@ function SpotPlayerHeader({
               {title}
             </div>
           </Tooltip>
-          <div className="flex items-center gap-2 text-black/50 text-sm">
+          <div className="flex items-center gap-1 lg:gap-2 text-black/50 text-sm">
             <div>{user}</div>
             <div>·</div>
-            <div className="capitalize">{date}</div>
+            <div className="capitalize whitespace-nowrap">{date}</div>
             {browserVersion && (
               <>
                 <div>·</div>
-                <div>Chromium v{browserVersion}</div>
+                <div className="whitespace-nowrap">
+                  Chromium v{browserVersion}
+                </div>
               </>
             )}
             {resolution && (
@@ -165,14 +168,14 @@ function SpotPlayerHeader({
             {platform && (
               <>
                 <div>·</div>
-                <div className="capitalize">{platform}</div>
+                <div className="capitalize whitespace-nowrap">{platform}</div>
               </>
             )}
           </div>
         </div>
       </div>
       <div className="ml-auto" />
-      {isLoggedIn ? (
+      {!mobileScreen && isLoggedIn ? (
         <>
           <Button
             size="small"
@@ -205,46 +208,66 @@ function SpotPlayerHeader({
           />
         </>
       ) : null}
-      <Tabs
-        className="!w-fit !border-b-0"
-        tabs={[
-          {
-            key: TABS.ACTIVITY,
-            text: t('Activity'),
-            iconComp: (
-              <div className="mr-1">
-                <UserSwitchOutlined />
-              </div>
-            ),
-          },
-          {
-            key: TABS.COMMENTS,
-            iconComp: (
-              <div className="mr-1">
-                <CommentOutlined />
-              </div>
-            ),
-            text: (
-              <div>
-                {t('Comments')}{' '}
-                {comments.length > 0 && (
-                  <Badge
-                    count={comments.length}
-                    className="mr-2"
-                    style={{ fontSize: '10px' }}
-                    size="small"
-                    color="#454545"
-                  />
-                )}
-              </div>
-            ),
-          },
-        ]}
-        active={activeTab}
-        onClick={(k) =>
-          k === activeTab ? setActiveTab(null) : setActiveTab(k)
-        }
-      />
+      {mobileScreen ? (
+        <Button
+          size="small"
+          onClick={() =>
+            setActiveTab(activeTab === TABS.COMMENTS ? null : TABS.COMMENTS)
+          }
+        >
+          {t('Comments')}{' '}
+          {comments.length > 0 && (
+            <Badge
+              count={comments.length}
+              className="mr-2"
+              style={{ fontSize: '10px' }}
+              size="small"
+              color="#454545"
+            />
+          )}
+        </Button>
+      ) : (
+        <Tabs
+          className="!w-fit !border-b-0"
+          tabs={[
+            {
+              key: TABS.ACTIVITY,
+              text: t('Activity'),
+              iconComp: (
+                <div className="mr-1">
+                  <UserSwitchOutlined />
+                </div>
+              ),
+            },
+            {
+              key: TABS.COMMENTS,
+              iconComp: (
+                <div className="mr-1">
+                  <CommentOutlined />
+                </div>
+              ),
+              text: (
+                <div>
+                  {t('Comments')}{' '}
+                  {comments.length > 0 && (
+                    <Badge
+                      count={comments.length}
+                      className="mr-2"
+                      style={{ fontSize: '10px' }}
+                      size="small"
+                      color="#454545"
+                    />
+                  )}
+                </div>
+              ),
+            },
+          ]}
+          active={activeTab}
+          onClick={(k) =>
+            k === activeTab ? setActiveTab(null) : setActiveTab(k)
+          }
+        />
+      )}
     </div>
   );
 }
@@ -267,7 +290,7 @@ async function downloadFile(url: string, fileName: string) {
     document.body.removeChild(a);
     URL.revokeObjectURL(blobUrl);
   } catch (error) {
-    toast.error('Error downloading file.')
+    toast.error('Error downloading file.');
     console.error('Error downloading file:', error);
   }
 }

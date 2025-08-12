@@ -25,8 +25,8 @@ function SupportModal(props: Props) {
       open={open}
       width={400}
       onClose={onClose}
-      closable={false}
-      className="!bg-stone-50"
+      closable={true}
+      className="bg-gray-lightest"
     >
       <div className="flex flex-col items-center gap-2">
         <div className="p-3 bg-white flex rounded-lg shadow-sm hover:bg-indigo-lightest">

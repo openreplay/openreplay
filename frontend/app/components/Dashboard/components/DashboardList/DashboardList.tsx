@@ -23,6 +23,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import DashboardEditModal from '../DashboardEditModal';
 import { useTranslation } from 'react-i18next';
+import { mobileScreen } from 'App/utils/isMobile';
 
 function DashboardList() {
   const { t } = useTranslation();
@@ -198,7 +199,9 @@ function DashboardList() {
             {t('Create and organize your insights')}
           </Typography.Text>
           <div className="mb-2 text-lg text-gray-500 leading-normal">
-            {t('Build dashboards to track key metrics and monitor performance in one place.')}
+            {t(
+              'Build dashboards to track key metrics and monitor performance in one place.',
+            )}
           </div>
           <div className="my-4 mb-10">
             <CreateDashboardButton />
@@ -231,12 +234,17 @@ function DashboardList() {
         dataSource={list}
         columns={tableConfig}
         showSorterTooltip={false}
+        scroll={{ x: 'max-content' }}
         pagination={{
           showTotal: (total, range) =>
-            `${t('Showing')} ${range[0]} to ${range[1]} ${t('of')} ${total} ${t('dashboards')}`,
+            mobileScreen
+              ? `${range[0]} to ${range[1]} ${t('of')} ${total}`
+              : `${t('Showing')} ${range[0]} to ${range[1]} ${t('of')} ${total} ${t('dashboards')}`,
           size: 'small',
-          simple: 'true',
-          className: 'px-4 pr-8 mb-0',
+          simple: true,
+          responsive: true,
+          rootClassName: 'test',
+          className: 'px-2 pb-6 md:px-4 md:pr-8 md:pb-0 md:mb-0 flex-nowrap',
         }}
         onRow={(record) => ({
           onClick: (e) => {

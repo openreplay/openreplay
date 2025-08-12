@@ -122,7 +122,7 @@ function InstallDocs({ site }) {
               <div className="text-sm">
                 {t('Read more about available options')}
                 <a
-                  className="text-main"
+                  className="text-main ml-1"
                   href="https://github.com/openreplay/openreplay/blob/main/tracker/tracker-assist/README.md"
                 >
                   {t('here')}

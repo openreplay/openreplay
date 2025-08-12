@@ -5,10 +5,11 @@ import {
   TooltipComponent,
   GridComponent,
   LegendComponent,
-  // TransformComponent,
   ToolboxComponent,
+  GraphicComponent,
 } from 'echarts/components';
 import { SVGRenderer } from 'echarts/renderers';
+import { mobileScreen } from 'App/utils/isMobile';
 
 echarts.use([
   DatasetComponent,
@@ -16,9 +17,9 @@ echarts.use([
   TooltipComponent,
   GridComponent,
   LegendComponent,
-  // TransformComponent,
   SVGRenderer,
   ToolboxComponent,
+  GraphicComponent,
 ]);
 
 const defaultOptions = {
@@ -43,10 +44,10 @@ const defaultOptions = {
     },
   },
   grid: {
-    bottom: 20,
-    top: 40,
-    left: 35,
-    right: 15,
+    left: mobileScreen ? 30 : '3%',
+    right: '5%',
+    bottom: '5%',
+    top: '13%',
     containLabel: true,
   },
   toolbox: {
@@ -62,7 +63,7 @@ const defaultOptions = {
   legend: {
     type: 'plain',
     show: true,
-    top: 10,
+    top: 0,
     icon: 'pin',
   },
 };

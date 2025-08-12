@@ -5,6 +5,7 @@ import { observer } from 'mobx-react-lite';
 import FilterModal from '../FilterModal/FilterModal';
 import { Filter } from '@/mstore/types/filterConstants';
 import { trackerInstance } from '@/init/openreplay';
+import { mobileScreen } from 'App/utils/isMobile';
 
 interface FilterSelectionProps {
   filters: Filter[];
@@ -29,11 +30,12 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
     const handleFilterClick = useCallback(
       (selectedFilter: Filter) => {
         if (loading) return;
-        const mode = selectedFilter.isEvent ? 'event' : 'filter'
-    trackerInstance.event(`${mode}_dropdown`, {
-      selected_category: selectedFilter.category,
-      selected_item: selectedFilter.name,
-    });onFilterClick(selectedFilter);
+        const mode = selectedFilter.isEvent ? 'event' : 'filter';
+        trackerInstance.event(`${mode}_dropdown`, {
+          selected_category: selectedFilter.category,
+          selected_item: selectedFilter.name,
+        });
+        onFilterClick(selectedFilter);
         setOpen(false);
       },
       [onFilterClick, loading],
@@ -94,7 +96,7 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
         trigger="click"
         open={open}
         onOpenChange={handleOpenChange}
-        placement="bottomLeft"
+        placement={mobileScreen ? 'bottom' : 'bottomLeft'}
         // Consistent styling class name with your original
         overlayClassName="filter-selection-popover rounded-lg border border-gray-200 shadow-sm shadow-gray-200 overflow-hidden"
         destroyOnHidden={true}

@@ -11,13 +11,20 @@ import { useModal } from 'Components/ModalContext';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import Project from '@/mstore/types/project';
 import { useTranslation } from 'react-i18next';
+import { mobileScreen } from 'App/utils/isMobile';
 
 const { Text } = Typography;
 
 function ProjectDropdown(props: { location: any }) {
   const mstore = useStore();
   const { t } = useTranslation();
-  const { projectsStore, searchStore, searchStoreLive, userStore, aiFiltersStore } = mstore;
+  const {
+    projectsStore,
+    searchStore,
+    searchStoreLive,
+    userStore,
+    aiFiltersStore,
+  } = mstore;
   const { account } = userStore;
   const sites = projectsStore.list;
   const { siteId } = projectsStore;
@@ -91,6 +98,7 @@ function ProjectDropdown(props: { location: any }) {
     );
   }
 
+  const mobile = mobileScreen
   return (
     <Dropdown
       menu={{
@@ -111,18 +119,20 @@ function ProjectDropdown(props: { location: any }) {
       }}
       placement="bottomLeft"
     >
-      <Button data-test-id="project-dropdown" >
+      <Button data-test-id="project-dropdown">
         <Space>
           <Text className="font-medium capitalize">
             {showCurrent && activeSite ? (
-              <div className="flex items-center gap-2">
-                <Icon
-                  name={
-                    activeSite?.platform === 'web'
-                      ? 'browser/browser'
-                      : 'mobile'
-                  }
-                />
+              <div className="text-ellipsis overflow-hidden whitespace-nowrap max-w-32 sm:max-w-full sm:flex sm:items-center sm:gap-2">
+                {mobile ? null : (
+                  <Icon
+                    name={
+                      activeSite?.platform === 'web'
+                        ? 'browser/browser'
+                        : 'mobile'
+                    }
+                  />
+                )}
                 {activeSite.host}
               </div>
             ) : (

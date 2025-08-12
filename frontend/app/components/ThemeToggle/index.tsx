@@ -12,7 +12,7 @@ interface ThemeToggleProps {
 const ThemeToggle: React.FC<ThemeToggleProps> = ({
   className = '',
   style = {},
-  size = 'middle'
+  size = 'middle',
 }) => {
   const { theme, toggleTheme } = useTheme();
 

@@ -59,9 +59,9 @@ function UserList(props: Props) {
             <div className="col-span-5">{t('Name')}</div>
             <div className="col-span-3">{t('Role')}</div>
             {!isOnboarding && (
-              <div className="col-span-2">{t('Created On')}</div>
+              <div className="col-span-4 md:col-span-2">{t('Created On')}</div>
             )}
-            <div className="col-span-2" />
+            <div className="hidden md:block md:col-span-2" />
           </div>
 
           <Divider className="m-0" />

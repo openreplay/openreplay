@@ -13,6 +13,7 @@ import DashboardOptions from '../DashboardOptions';
 import DashboardEditModal from '../DashboardEditModal';
 import AddCardSection from '../AddCardSection/AddCardSection';
 import { useTranslation } from 'react-i18next';
+import { mobileScreen } from 'App/utils/isMobile';
 
 interface IProps {
   siteId: string;
@@ -56,6 +57,7 @@ function DashboardHeader(props: Props) {
       });
     }
   };
+
   return (
     <>
       <DashboardEditModal
@@ -64,26 +66,24 @@ function DashboardHeader(props: Props) {
         focusTitle={focusTitle}
       />
 
-      <div className="flex items-center justify-between px-4 pt-4  bg-white">
+      <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-0 md:justify-between px-4 pt-4  bg-white">
         <div className="flex items-center gap-2" style={{ flex: 3 }}>
           <BackButton siteId={siteId} compact />
 
           <PageTitle
             title={
               <Tooltip title={t('Click to edit')} placement="bottom">
-                <div className="text-2xl h-8 flex items-center p-2 rounded-lg cursor-pointer select-none ps-2 hover:bg-teal/10">
-                  {' '}
+                <div className="text-xl md:text-2xl h-8 flex items-center cursor-pointer select-none hover:bg-teal/10">
                   {dashboard?.name}
                 </div>
               </Tooltip>
             }
             onClick={() => onEdit(true)}
-            className="mr-3 select-none border-b border-b-borderColor-transparent hover:border-dashed hover:border-gray-medium cursor-pointer"
+            className="select-none border-b border-b-borderColor-transparent hover:border-dashed hover:border-gray-medium cursor-pointer"
           />
         </div>
         <div
-          className="flex items-center gap-2"
-          style={{ flex: 1, justifyContent: 'end' }}
+          className="flex items-center gap-2 md:justify-end w-full md:w-auto"
         >
           <Popover
             trigger="click"
@@ -97,6 +97,7 @@ function DashboardHeader(props: Props) {
             </Button>
           </Popover>
 
+          <div className="block md:hidden ml-auto" />
           <SelectDateRange
             style={{ width: '300px' }}
             period={period}

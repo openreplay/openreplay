@@ -14,6 +14,7 @@ function SiteDropdown({ contextName = '', onChange, value }) {
       options={options}
       value={options.find((option) => option.value === value)}
       onChange={onChange}
+      className={'max-w-[220px]'}
     />
   );
 }

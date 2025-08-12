@@ -84,12 +84,7 @@ function ORLineChart(props: Props) {
         data: categories,
       },
       yAxis: {
-        name: props.label ?? 'Number of Sessions',
-        // nameLocation: 'center',
-        // nameGap: 40,
-        nameTextStyle: {
-          padding: [0, 0, 0, 15],
-        },
+        type: 'value',
         minInterval: 1,
       },
       tooltip: {
@@ -103,6 +98,20 @@ function ORLineChart(props: Props) {
       },
       dataset: datasets,
       series,
+      graphic: [
+        {
+          type: 'group',
+          left: 5,
+          top: 'center',
+          rotation: Math.PI / 2,
+          children: [
+            {
+              type: 'text',
+              style: { text: 'Number of Sessions' },
+            },
+          ],
+        },
+      ],
     });
     chart.on('click', (event) => {
       const index = event.dataIndex;

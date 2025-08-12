@@ -1,6 +1,6 @@
-import { Segmented } from 'antd';
-import cn from 'classnames';
+import { Segmented, Dropdown, Button } from 'antd';
 import React from 'react';
+import { mobileScreen } from 'App/utils/isMobile';
 
 import { Icon } from 'UI';
 
@@ -23,11 +23,36 @@ function IntegrationFilters(props: Props) {
       </div>
     ),
   }));
+  const dropdownOptions = segmentItems.map((item) => ({
+    key: item.key,
+    label: (
+      <div className="flex items-center gap-2">
+        {item.icon ? <Icon name={item.icon} color="inherit" /> : null}
+        <div>{item.label}</div>
+      </div>
+    ),
+    onClick: () => props.onChange(item.key),
+  }));
 
   const onChange = (val) => {
     props.onChange(val);
   };
-  return (
+  return mobileScreen ? (
+    <Dropdown
+      menu={{
+        items: dropdownOptions,
+        style: {
+          maxHeight: 500,
+          overflowY: 'auto',
+        },
+      }}
+    >
+      <Button className="flex items-center justify-end gap-2">
+        {segmentItems.find((item) => item.key === props.activeItem)?.label}
+        <Icon name="chevron-down" />
+      </Button>
+    </Dropdown>
+  ) : (
     <div className="flex items-center gap-4">
       <Segmented
         value={props.activeItem}

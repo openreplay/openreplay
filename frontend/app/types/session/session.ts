@@ -398,6 +398,7 @@ export default class Session {
 
     Object.assign(this, {
       ...session,
+      issueTypes: session.issueTypes ?? [],
       isMobileNative: ['ios', 'android'].includes(session.platform),
       errors: exceptions,
       siteId: projectId,
@@ -511,7 +512,7 @@ export default class Session {
     const frustrationList =
       [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
-    const incidentsList = incidents.sort((a, b) => a.startTime - b.startTime).map((i) => ({ 
+    const incidentsList = incidents.sort((a, b) => a.startTime - b.startTime).map((i) => ({
       ...i,
       time: i.startTime - this.startedAt,
     })).map((i) => new Incident(i));

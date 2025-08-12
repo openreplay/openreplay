@@ -123,7 +123,7 @@ const WarnBadge = React.memo(
       transform: 'translate(-50%, 80%)',
       fontWeight: 500,
     };
-    const defaultContainerClass = 'flex flex-col';
+    const defaultContainerClass = 'lg:flex flex-col hidden';
     const defaultWarnClass =
       'px-3 py-.5 border border-gray-lighter shadow-sm rounded bg-active-blue flex items-center justify-between';
 
@@ -176,7 +176,7 @@ const WarnBadge = React.memo(
                 <span className="mx-1 font-semibold">{version}</span>
                 {t('for this recording is')}{' '}
                 {trackerVerDiff === VersionComparison.Lower
-                  ? 'lower than'
+                  ? 'lower than '
                   : 'ahead of '}
                 {t('the current')}
                 <span className="mx-1 font-semibold">{trackerVersion}</span>

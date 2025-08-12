@@ -24,6 +24,7 @@ import { TYPE_ICONS, TYPE_NAMES } from 'App/constants/card';
 import Widget from 'App/mstore/types/widget';
 import { useTranslation } from 'react-i18next';
 import ORLoader from 'Shared/ORLoader';
+import { mobileScreen } from 'App/utils/isMobile';
 
 const { Text } = Typography;
 
@@ -54,11 +55,11 @@ const ListView: React.FC<Props> = ({
 
   const totalMessage = (
     <>
-      {t('Showing')}{' '}
+      {mobileScreen ? undefined : `${t('Showing')} `}
       <Text strong>
         {(metricStore.pageSize || 10) * ((metricStore.page || 1) - 1) + 1}
-      </Text>{' '}
-      {t('to')}{' '}
+      </Text>
+      {` ${t('to')} `}
       <Text strong>
         {Math.min(
           (metricStore.pageSize || 10) * (metricStore.page || 1),
@@ -272,6 +273,7 @@ const ListView: React.FC<Props> = ({
           delay: 0,
           indicator: <Spin indicator={<ORLoader />} />,
         }}
+        scroll={{ x: 'max-content' }}
         onRow={
           inLibrary
             ? (record) => ({
@@ -295,7 +297,7 @@ const ListView: React.FC<Props> = ({
           pageSize: metricStore.pageSize,
           total: metricStore.total,
           showSizeChanger: false,
-          className: 'px-4',
+          className: 'px-4 pb-6 md:pb-0',
           showLessItems: true,
           showTotal: () => totalMessage,
           size: 'small',

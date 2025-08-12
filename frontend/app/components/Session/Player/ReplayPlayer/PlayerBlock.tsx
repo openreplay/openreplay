@@ -24,9 +24,7 @@ function PlayerBlock(props: IProps) {
   const { fullscreen } = uiPlayerStore;
   const shouldShowSubHeader = !fullscreen && !fullView;
   return (
-    <div
-      className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')}
-    >
+    <div className={cn(styles.playerBlock, 'flex flex-col', 'overflow-hidden')}>
       {shouldShowSubHeader ? (
         <SubHeader
           setActiveTab={setActiveTab}
