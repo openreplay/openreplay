@@ -11,21 +11,32 @@ from chalicelib.core.collaborations.collaboration_msteams import MSTeams
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.utils import pg_client, helper, email_helper, smtp
 from chalicelib.utils.TimeUTC import TimeUTC
+from starlette import status
+from starlette.exceptions import HTTPException
 
 logger = logging.getLogger(__name__)
 
 
-def get(id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify("""\
+def get(project_id, id):
+    try:
+        with pg_client.PostgresClient() as cur:
+            cur.execute(
+                cur.mogrify("""\
                     SELECT *
-                    FROM public.alerts 
-                    WHERE alert_id =%(id)s;""",
-                        {"id": id})
-        )
-        a = helper.dict_to_camel_case(cur.fetchone())
-    return helper.custom_alert_to_front(__process_circular(a))
+                    FROM public.alerts
+                    WHERE alert_id =%(id)s AND project_id=%(project_id)s;""",
+                            {"project_id": project_id, "id": id})
+            )
+
+            if cur.rowcount == 0:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found.")
+
+            a = helper.dict_to_camel_case(cur.fetchone())
+
+        return helper.custom_alert_to_front(__process_circular(a))
+    except Exception as e:
+        logger.error(f"Error fetching alert: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found.")
 
 
 def get_all(project_id):
@@ -37,7 +48,7 @@ def get_all(project_id):
                     FROM public.alerts
                          LEFT JOIN metric_series USING (series_id)
                          LEFT JOIN metrics USING (metric_id)
-                    WHERE alerts.project_id =%(project_id)s 
+                    WHERE alerts.project_id =%(project_id)s
                         AND alerts.deleted_at ISNULL
                     ORDER BY alerts.created_at;""",
                             {"project_id": project_id})
@@ -73,28 +84,37 @@ def create(project_id, data: schemas.AlertSchema):
     return {"data": helper.custom_alert_to_front(helper.dict_to_camel_case(__process_circular(a)))}
 
 
-def update(id, data: schemas.AlertSchema):
+def update(project_id: int, id: int, data: schemas.AlertSchema):
     data = data.model_dump()
     data["query"] = json.dumps(data["query"])
     data["options"] = json.dumps(data["options"])
 
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""\
-                    UPDATE public.alerts
-                    SET name = %(name)s,
-                        description = %(description)s,
-                        active = TRUE,
-                        detection_method = %(detection_method)s,
-                        query = %(query)s,
-                        options = %(options)s,
-                        series_id = %(series_id)s,
-                        change = %(change)s
-                    WHERE alert_id =%(id)s AND deleted_at ISNULL
-                    RETURNING *;""",
-                            {"id": id, **data})
-        cur.execute(query=query)
-        a = helper.dict_to_camel_case(cur.fetchone())
-    return {"data": helper.custom_alert_to_front(__process_circular(a))}
+    try:
+        with pg_client.PostgresClient() as cur:
+            query = cur.mogrify("""\
+                        UPDATE public.alerts
+                        SET name = %(name)s,
+                            description = %(description)s,
+                            active = TRUE,
+                            detection_method = %(detection_method)s,
+                            query = %(query)s,
+                            options = %(options)s,
+                            series_id = %(series_id)s,
+                            change = %(change)s
+                        WHERE alert_id =%(id)s AND project_id = %(project_id)s AND deleted_at ISNULL 
+                        RETURNING *;""",
+                                {"project_id": project_id, "id": id, **data})
+            cur.execute(query=query)
+
+            if cur.rowcount == 0:
+                raise ValueError(f"Alert with id {id} not found in project {project_id}.")
+
+            a = helper.dict_to_camel_case(cur.fetchone())
+
+        return {"data": helper.custom_alert_to_front(__process_circular(a))}
+    except Exception as e:
+        logger.error(f"Error updating alert: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to update alert.")
 
 
 def process_notifications(data):
@@ -216,7 +236,7 @@ def send_to_msteams_batch(notifications_list):
 def delete(project_id, alert_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(""" UPDATE public.alerts 
+            cur.mogrify(""" UPDATE public.alerts
                             SET deleted_at = timezone('utc'::text, now()),
                                 active = FALSE
                             WHERE alert_id = %(alert_id)s AND project_id=%(project_id)s;""",
