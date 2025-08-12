@@ -24,7 +24,7 @@ import { TYPE_ICONS, TYPE_NAMES } from 'App/constants/card';
 import Widget from 'App/mstore/types/widget';
 import { useTranslation } from 'react-i18next';
 import ORLoader from 'Shared/ORLoader';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 const { Text } = Typography;
 
@@ -53,7 +53,6 @@ const ListView: React.FC<Props> = ({
   const { metricStore } = useStore();
   const history = useHistory();
 
-  const mobileScreen = isMobile();
   const totalMessage = (
     <>
       {mobileScreen ? undefined : `${t('Showing')} `}

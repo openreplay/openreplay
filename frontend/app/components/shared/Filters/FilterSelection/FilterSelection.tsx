@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import FilterModal from '../FilterModal/FilterModal';
 import { Filter } from '@/mstore/types/filterConstants';
 import { trackerInstance } from '@/init/openreplay';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 interface FilterSelectionProps {
   filters: Filter[];
@@ -89,7 +89,6 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
         })
       : children;
 
-    const mobileScreen = isMobile();
     return (
       // <div className={cn('relative flex-shrink-0')}>
       <Popover

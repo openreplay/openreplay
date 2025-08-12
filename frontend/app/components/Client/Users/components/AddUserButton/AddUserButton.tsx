@@ -5,7 +5,7 @@ import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 import { PlusOutlined } from '@ant-design/icons';
 
 const PERMISSION_WARNING = (t: TFunction) =>
@@ -24,7 +24,6 @@ function AddUserButton({
     () => isAdmin && (limtis.teamMember === -1 || limtis.teamMember > 0),
   );
 
-  const mobileScreen = isMobile();
   return (
     <Tooltip
       title={`${!isAdmin ? PERMISSION_WARNING(t) : !cannAddUser ? LIMIT_WARNING(t) : t('Add team member')}`}

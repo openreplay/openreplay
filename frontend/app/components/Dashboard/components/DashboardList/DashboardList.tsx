@@ -23,7 +23,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import DashboardEditModal from '../DashboardEditModal';
 import { useTranslation } from 'react-i18next';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 function DashboardList() {
   const { t } = useTranslation();
@@ -215,7 +215,6 @@ function DashboardList() {
   const imageDimensions =
     dashboardsSearch !== '' ? searchImageDimensions : defaultImageDimensions;
 
-  const mobileScreen = isMobile();
   return list.length === 0 && !dashboardStore.filter.showMine ? (
     <div className="flex justify-center text-center">
       <Empty

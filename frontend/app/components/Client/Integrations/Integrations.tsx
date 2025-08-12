@@ -30,7 +30,7 @@ import VueDoc from './Tracker/VueDoc';
 import ZustandDoc from './Tracker/ZustandDoc';
 import { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 interface Props {
   siteId: string;
@@ -64,7 +64,6 @@ function Integrations(props: Props) {
     }
   }, [siteId]);
 
-  const mobileScreen = isMobile();
   const onClick = (integration: any, width: number) => {
     const modalWidth = mobileScreen ? '100vw' : width;
     if (

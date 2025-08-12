@@ -1,6 +1,6 @@
 import { Segmented, Dropdown, Button } from 'antd';
 import React from 'react';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 import { Icon } from 'UI';
 
@@ -37,7 +37,6 @@ function IntegrationFilters(props: Props) {
   const onChange = (val) => {
     props.onChange(val);
   };
-  const mobileScreen = isMobile();
   return mobileScreen ? (
     <Dropdown
       menu={{

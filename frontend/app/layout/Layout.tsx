@@ -4,7 +4,7 @@ import SideMenu from 'App/layout/SideMenu';
 import TopHeader from 'App/layout/TopHeader';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 const { Sider, Content } = AntLayout;
 
@@ -21,7 +21,7 @@ function Layout(props: Props) {
   const { settingsStore, projectsStore } = useStore();
   const [collapsed, setCollapsed] = React.useState(false);
   const { siteId } = projectsStore;
-  const mobileDevice = isMobile();
+  const mobileDevice = mobileScreen
 
   useEffect(() => {
     const handleResize = () => {
@@ -74,7 +74,7 @@ function Layout(props: Props) {
             padding: isPlayer
               ? '0'
               : mobileDevice
-                ? '8px 8px 20px 8px'
+                ? '8px 8px 60px 8px'
                 : '20px',
             minHeight: 'calc(100vh - 60px)',
           }}

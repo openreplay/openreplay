@@ -25,6 +25,7 @@ import SpotVideoContainer from './components/SpotVideoContainer';
 import { Tab } from './consts';
 import spotPlayerStore, { PANELS } from './spotPlayerStore';
 import PhoneHorizontalWarn from 'Components/Session/Player/SharedComponents/PhoneHorizontal';
+import MobilePlayerOverlay from './components/MobileControlOverlay';
 
 function SpotPlayer() {
   const defaultHeight = getDefaultPanelHeight();
@@ -52,6 +53,21 @@ function SpotPlayer() {
       }
     }
   }, [loggedIn]);
+
+  const jumpForward = () => {
+    spotPlayerStore.setTime(
+      Math.min(
+        spotPlayerStore.duration,
+        spotPlayerStore.time + spotPlayerStore.skipInterval,
+      ),
+    );
+  };
+
+  const jumpBackward = () => {
+    spotPlayerStore.setTime(
+      Math.max(0, spotPlayerStore.time - spotPlayerStore.skipInterval),
+    );
+  };
 
   const handleResize = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -132,17 +148,10 @@ function SpotPlayer() {
         spotPlayerStore.setPlaybackRate(Math.min(highest, current * 2));
       }
       if (e.key === 'ArrowRight') {
-        spotPlayerStore.setTime(
-          Math.min(
-            spotPlayerStore.duration,
-            spotPlayerStore.time + spotPlayerStore.skipInterval,
-          ),
-        );
+        jumpForward();
       }
       if (e.key === 'ArrowLeft') {
-        spotPlayerStore.setTime(
-          Math.max(0, spotPlayerStore.time - spotPlayerStore.skipInterval),
-        );
+        jumpBackward();
       }
     };
 
@@ -197,7 +206,7 @@ function SpotPlayer() {
   return (
     <div
       className={cn(
-        'w-screen h-screen flex flex-col',
+        'w-screen h-screen flex flex-col overflow-hidden',
         isFullScreen ? 'relative' : '',
       )}
     >
@@ -216,6 +225,13 @@ function SpotPlayer() {
         browserVersion={spotPlayerStore.browserVersion}
       />
       <div className="w-full h-full flex relative">
+        <MobilePlayerOverlay
+          isPlaying={spotPlayerStore.isPlaying}
+          onPlay={() => spotPlayerStore.setIsPlaying(true)}
+          onStop={() => spotPlayerStore.setIsPlaying(false)}
+          onJumpForward={jumpForward}
+          onJumpBackward={jumpBackward}
+        />
         <div className="w-full h-full flex flex-col justify-between">
           <SpotLocation />
           <div className={cn('w-full h-full', isFullScreen ? '' : 'relative')}>
@@ -274,29 +290,33 @@ function SpotPlayer() {
   );
 }
 
-const SpotOverviewConnector = observer(({ jump }: { jump: (time: number) => null }) => {
-  const endTime = spotPlayerStore.duration * 1000;
-  const time = spotPlayerStore.time * 1000;
-  const resourceList = spotPlayerStore.network
-    .filter((r: any) => r.isRed || r.isYellow || (r.status && r.status >= 400))
-    .filter((i: any) => i.type === 'xhr');
-  const exceptionsList = spotPlayerStore.logs.filter(
-    (l) => l.level === 'error',
-  );
+const SpotOverviewConnector = observer(
+  ({ jump }: { jump: (time: number) => null }) => {
+    const endTime = spotPlayerStore.duration * 1000;
+    const time = spotPlayerStore.time * 1000;
+    const resourceList = spotPlayerStore.network
+      .filter(
+        (r: any) => r.isRed || r.isYellow || (r.status && r.status >= 400),
+      )
+      .filter((i: any) => i.type === 'xhr');
+    const exceptionsList = spotPlayerStore.logs.filter(
+      (l) => l.level === 'error',
+    );
 
-  const onClose = () => {
-    spotPlayerStore.setActivePanel(null);
-  };
-  return (
-    <SpotOverviewPanelCont
-      exceptionsList={exceptionsList}
-      resourceList={resourceList}
-      spotTime={time}
-      spotEndTime={endTime}
-      onClose={onClose}
-      time={time}
-    />
-  );
-});
+    const onClose = () => {
+      spotPlayerStore.setActivePanel(null);
+    };
+    return (
+      <SpotOverviewPanelCont
+        exceptionsList={exceptionsList}
+        resourceList={resourceList}
+        spotTime={time}
+        spotEndTime={endTime}
+        onClose={onClose}
+        time={time}
+      />
+    );
+  },
+);
 
 export default withPermissions(['SPOT'])(observer(SpotPlayer));

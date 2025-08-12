@@ -3,7 +3,7 @@ import { iTag, TAGS } from 'App/services/NotesService';
 import { SortDropdown } from 'Components/shared/SessionsTabOverview/components/SessionSort/SessionSort';
 import { Input, Segmented } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 function HighlightsListHeader({
   activeTags,
@@ -23,7 +23,6 @@ function HighlightsListHeader({
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   const { t } = useTranslation();
-  const mobileScreen = isMobile();
   return (
     <div className="flex flex-col md:flex-row p-2 px-4 w-full border-b gap-4 md:items-center">
       <h1 className="text-2xl capitalize mr-2">{t('Highlights')}</h1>

@@ -11,7 +11,7 @@ import { useModal } from 'Components/ModalContext';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import Project from '@/mstore/types/project';
 import { useTranslation } from 'react-i18next';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 function Projects() {
   const { t } = useTranslation();
@@ -50,7 +50,6 @@ function Projects() {
     });
   };
 
-  const mobileScreen = isMobile();
   const projects = projectsStore.list;
 
   const onSelect = (key: number) => {

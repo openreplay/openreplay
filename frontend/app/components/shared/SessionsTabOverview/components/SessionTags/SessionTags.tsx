@@ -11,7 +11,7 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useStore } from 'App/mstore';
 import { useTranslation } from 'react-i18next';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 import { DownOutlined } from '@ant-design/icons';
 
 const tagIcons = {
@@ -104,7 +104,7 @@ const SessionTagsSelect = observer(() => {
 });
 
 function SessionTags() {
-  const isMobileDevice = isMobile();
+  const isMobileDevice = mobileScreen
 
   return isMobileDevice ? <SessionTagsSelect /> : <SegmentedSessionTags />;
 }

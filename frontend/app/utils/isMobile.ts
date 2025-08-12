@@ -1,4 +1,4 @@
-export function isMobile() {
+function isMobile() {
   if (document.location.hostname.includes('localhost')) {
     return window.innerWidth < 1280; // For local development, assume mobile if width is less than 1280px
   }
@@ -16,3 +16,5 @@ export function isMobile() {
     navigator.userAgent,
   );
 }
+
+export const mobileScreen = isMobile();

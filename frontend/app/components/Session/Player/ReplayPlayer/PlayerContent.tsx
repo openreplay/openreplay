@@ -6,7 +6,7 @@ import RightBlock from 'Components/Session/RightBlock';
 import { PlayerContext } from 'Components/Session/playerContext';
 import Session from 'Types/session';
 import PlayerBlock from './PlayerBlock';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 interface IProps {
   fullscreen: boolean;
@@ -40,7 +40,6 @@ function PlayerContent({
   }, [session.sessionId]);
 
   const sessionDays = countDaysFrom(session.startedAt);
-  const mobileScreen = isMobile();
   return hasError ? (
     <div
       className="inset-0 flex items-center justify-center absolute"

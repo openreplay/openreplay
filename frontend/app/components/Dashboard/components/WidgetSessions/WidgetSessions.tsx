@@ -244,13 +244,14 @@ function WidgetSessions({ className = '' }) {
         'bg-white p-3 pb-0 rounded-xl shadow-sm border mt-3',
       )}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between">
         <div>
-          <div className="flex items-baseline gap-2">
+          <div className="flex flex-col md:flex-row items-baseline gap-2">
             <h2 className="text-xl">
               {metricStore.clickMapSearch ? t('Clicks') : t('Sessions')}
             </h2>
-            <div className="ml-2 color-gray-medium">
+            <div>
+            <div className="color-gray-medium">
               {metricStore.clickMapLabel &&
                 `on \"${metricStore.clickMapLabel}\" `}
               {t('between')}{' '}
@@ -267,6 +268,7 @@ function WidgetSessions({ className = '' }) {
                 </Button>
               </Tooltip>
             )}
+            </div>
           </div>
           {hasFilters && widget.metricType === 'table' && (
             <Tag
@@ -280,7 +282,7 @@ function WidgetSessions({ className = '' }) {
         </div>
         <div className="flex items-center gap-4">
           {['table', HEATMAP].includes(widget.metricType) || (
-            <div className="flex items-center ml-6">
+            <div className="flex items-center md:ml-6">
               <span className="mr-2 color-gray-medium">
                 {t('Filter by Series')}
               </span>
@@ -317,7 +319,7 @@ function WidgetSessions({ className = '' }) {
           >
             {filteredSessions.sessions.map((s) => (
               <React.Fragment key={s.sessionId}>
-                <SessionItem disableUser session={s} metaList={metaList} />
+                <SessionItem noWrap disableUser session={s} metaList={metaList} />
                 <div className="border-b" />
               </React.Fragment>
             ))}

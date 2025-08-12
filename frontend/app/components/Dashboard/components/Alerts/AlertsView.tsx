@@ -11,7 +11,7 @@ import AlertsList from './AlertsList';
 import AlertsSearch from './AlertsSearch';
 import { useTranslation } from 'react-i18next';
 import { PANEL_SIZES } from 'App/constants/panelSizes';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 interface IAlertsView {
   siteId: string;
@@ -31,7 +31,6 @@ function AlertsView({ siteId }: IAlertsView) {
     return unmount;
   }, [history]);
 
-  const mobileScreen = isMobile();
   return (
     <div
       style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}

@@ -28,7 +28,7 @@ import HighlightButton from './Highlight/HighlightButton';
 import ShareModal from '../shared/SharePopup/SharePopup';
 import { useTranslation } from 'react-i18next';
 import SimilarSessionsButton from './SimilarSessions/SimilarSessionsButton';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 const disableDevtools = 'or_devtools_uxt_toggle';
 
@@ -42,7 +42,6 @@ function SubHeader(props) {
     issueReportingStore,
     settingsStore,
   } = useStore();
-  const mobileScreen = isMobile();
   const { t } = useTranslation();
   const { favorite } = sessionStore.current;
   const { isEnterprise } = userStore;

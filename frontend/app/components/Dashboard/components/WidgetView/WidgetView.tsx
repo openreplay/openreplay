@@ -34,6 +34,7 @@ import WidgetPreview from '../WidgetPreview';
 import { useTranslation } from 'react-i18next';
 import { PANEL_SIZES } from 'App/constants/panelSizes';
 import FilterItem from '@/mstore/types/filterItem';
+import { mobileScreen } from 'App/utils/isMobile';
 
 interface Props {
   history: any;
@@ -44,6 +45,7 @@ interface Props {
 const LAYOUT_KEY = '$__metric_form__layout__$';
 
 function getDefaultState() {
+  if (mobileScreen) return 'flex-col';
   return localStorage.getItem(LAYOUT_KEY) || 'flex-row';
 }
 
@@ -263,39 +265,41 @@ function WidgetView({
             onSave={onSave}
             undoChanges={undoChanges}
             layoutControl={
-              <Segmented
-                size="small"
-                value={layout}
-                onChange={updateLayout}
-                options={[
-                  {
-                    value: 'flex-row',
-                    icon: (
-                      <Tooltip title={t('Filters on Left')}>
-                        <LayoutPanelLeft size={16} />
-                      </Tooltip>
-                    ),
-                  },
-                  {
-                    value: 'flex-col',
-                    icon: (
-                      <Tooltip title={t('Filters on Top')}>
-                        <LayoutPanelTop size={16} />
-                      </Tooltip>
-                    ),
-                  },
-                  {
-                    value: 'flex-row-reverse',
-                    icon: (
-                      <Tooltip title={t('Filters on Right')}>
-                        <div className="rotate-180">
+              mobileScreen ? null : (
+                <Segmented
+                  size="small"
+                  value={layout}
+                  onChange={updateLayout}
+                  options={[
+                    {
+                      value: 'flex-row',
+                      icon: (
+                        <Tooltip title={t('Filters on Left')}>
                           <LayoutPanelLeft size={16} />
-                        </div>
-                      </Tooltip>
-                    ),
-                  },
-                ]}
-              />
+                        </Tooltip>
+                      ),
+                    },
+                    {
+                      value: 'flex-col',
+                      icon: (
+                        <Tooltip title={t('Filters on Top')}>
+                          <LayoutPanelTop size={16} />
+                        </Tooltip>
+                      ),
+                    },
+                    {
+                      value: 'flex-row-reverse',
+                      icon: (
+                        <Tooltip title={t('Filters on Right')}>
+                          <div className="rotate-180">
+                            <LayoutPanelLeft size={16} />
+                          </div>
+                        </Tooltip>
+                      ),
+                    },
+                  ]}
+                />
+              )
             }
           />
           <div className={cn('flex gap-4', layout)}>

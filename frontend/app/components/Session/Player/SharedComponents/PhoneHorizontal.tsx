@@ -1,6 +1,6 @@
 import React from 'react';
 import { Redo } from 'lucide-react';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 import { useTranslation } from 'react-i18next';
 
 const checkLandscape = () =>
@@ -8,7 +8,6 @@ const checkLandscape = () =>
 
 function PhoneHorizontalWarn() {
   const { t } = useTranslation();
-  const isMobileDevice = isMobile();
   const [isLandscape, setLandscape] = React.useState(checkLandscape);
 
   React.useEffect(() => {
@@ -21,7 +20,7 @@ function PhoneHorizontalWarn() {
       window.removeEventListener('orientationchange', handleOrientationChange);
     };
   }, []);
-  if (!isMobileDevice || isLandscape) {
+  if (!mobileScreen || isLandscape) {
     return null;
   }
 

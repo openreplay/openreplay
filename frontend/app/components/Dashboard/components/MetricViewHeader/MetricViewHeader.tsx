@@ -9,7 +9,7 @@ import MetricsSearch from '../MetricsSearch';
 import AddCardSection from '../AddCardSection/AddCardSection';
 import { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 const options = (t: TFunction) => [
   {
@@ -58,7 +58,6 @@ function MetricViewHeader() {
     </Menu>
   );
 
-  const mobileScreen = isMobile();
   return (
     <div>
       <div className="flex items-center justify-between pr-4">

@@ -47,7 +47,7 @@ function WidgetViewHeader({
   return (
     <div
       className={cn(
-        'flex justify-between items-center bg-white rounded-lg shadow-sm px-4 ps-2 py-2 border border-gray-lighter input-card-title flex-wrap',
+        'flex justify-between md:items-center bg-white rounded-lg shadow-sm px-4 ps-2 py-2 border border-gray-lighter input-card-title flex-wrap flex-col md:flex-row',
       )}
       onClick={onClick}
     >
@@ -60,7 +60,7 @@ function WidgetViewHeader({
           canEdit
         />
       </h1>
-      <Space>
+      <div className="flex items-center gap-2 flex-wrap w-full">
         <Button
           type={
             metricStore.isSaving || (widget.exists() && !widget.hasChanged)
@@ -77,6 +77,7 @@ function WidgetViewHeader({
         >
           {widget.exists() ? t('Update') : t('Create')}
         </Button>
+        <div className="ml-auto lg:hidden" />
 
         {/* <MetricTypeSelector /> */}
 
@@ -91,7 +92,7 @@ function WidgetViewHeader({
         </Tooltip>
         {layoutControl}
         <CardViewMenu />
-      </Space>
+      </div>
     </div>
   );
 }

@@ -17,7 +17,7 @@ import {
 import { MODULES } from 'Components/Client/Modules';
 import { hasAi } from 'App/utils/split-utils';
 // added: util-based mobile detection
-import { isMobile as checkMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 import { useStore } from 'App/mstore';
 import {
   MENU,
@@ -51,7 +51,7 @@ function SideMenu(props: Props) {
   const { isEnterprise } = userStore;
   const { siteId } = projectsStore;
   // added: call util once per render
-  const isMobile = checkMobile();
+  const isMobile = mobileScreen
   const { t, i18n } = useTranslation();
 
   const menu: any[] = React.useMemo(() => {

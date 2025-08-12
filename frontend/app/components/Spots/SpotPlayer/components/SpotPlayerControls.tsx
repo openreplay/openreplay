@@ -54,6 +54,14 @@ function SpotPlayerControls() {
   };
 
   return (
+    <>
+    <div className="absolute block bottom-4 left-1 lg:hidden">
+      <div className="px-1 bg-white rounded font-semibold flex items-center gap-1 text-sm">
+        <PlayTime isCustom time={spotPlayerStore.time * 1000} format="mm:ss" />
+        <span>/</span>
+        <div>{spotPlayerStore.durationString}</div>
+      </div>
+    </div>
     <div className="hidden lg:flex w-full p-4 items-center gap-4 bg-white">
       <PlayButton togglePlay={togglePlay} state={playState} iconSize={36} />
 
@@ -108,6 +116,7 @@ function SpotPlayerControls() {
 
       <FullScreenButton size={18} onClick={toggleFullScreen} />
     </div>
+    </>
   );
 }
 

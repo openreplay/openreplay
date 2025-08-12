@@ -25,7 +25,7 @@ import { RedoOutlined, CloseCircleFilled } from '@ant-design/icons';
 import cn from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { TopValue } from '@/mstore/filterStore';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 const { Text } = Typography;
 
 interface FilterParams {
@@ -360,7 +360,6 @@ const ValueAutoComplete = observer(
       </div>
     );
 
-    const mobileScreen = isMobile();
     return (
       <Popover
         content={popoverContent}

@@ -9,11 +9,11 @@ interface Props {
 function Breadcrumb(props: Props) {
   const { items } = props;
   return (
-    <div className="mb-3 flex items-center text-lg">
+    <div className="mb-3 flex items-center flex-wrap text-lg">
       {items.map((item: any, index: any) => {
         if (index === items.length - 1) {
           return (
-            <span key={index} className="color-gray-medium capitalize-first">
+            <span key={index} className="color-gray-medium capitalize-first whitespace-nowrap">
               {item.label}
             </span>
           );
@@ -24,7 +24,7 @@ function Breadcrumb(props: Props) {
               key={index}
               className="color-gray-darkest hover:text-teal group flex items-center"
             >
-              <span className="color-gray-medium capitalize-first">
+              <span className="color-gray-medium capitalize-first whitespace-nowrap">
                 {item.label}
               </span>
               <span className="mx-2">/</span>
@@ -44,7 +44,7 @@ function Breadcrumb(props: Props) {
                   className="mr-1 group-hover:fill-teal"
                 />
               )}
-              <span className="capitalize-first">{item.label}</span>
+              <span className="capitalize-first whitespace-nowrap">{item.label}</span>
             </Link>
             <span className="mx-2">/</span>
           </div>

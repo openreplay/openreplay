@@ -11,14 +11,14 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import ThemeToggle from 'Components/ThemeToggle';
 import { hasHealth } from '@/utils/split-utils';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 function TopRight() {
   const { userStore } = useStore();
   const spotOnly = userStore.scopeState === 1;
   const { account } = userStore;
 
-  const mobile = isMobile()
+  const mobile = mobileScreen
   return (
     <Space style={{ lineHeight: '0' }}>
       {spotOnly ? null : (

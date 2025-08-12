@@ -72,6 +72,7 @@ interface Props {
   toggleFavorite?: (sessionId: string) => void;
   query?: string;
   slim?: boolean;
+  noWrap?: boolean;
 }
 
 const PREFETCH_STATE = {
@@ -102,6 +103,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     live: propsLive,
     isAdd,
     slim,
+    noWrap,
   } = props;
 
   const {
@@ -268,6 +270,7 @@ function SessionItem(props: RouteComponentProps & Props) {
           stl.sessionItem,
           'flex flex-col',
           slim ? 'px-4 py-2 text-sm' : 'p-4',
+          noWrap ? '!px-0 py-2' : '',
         )}
         id="session-item"
         onClick={(e) => e.stopPropagation()}

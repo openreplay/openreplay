@@ -11,7 +11,7 @@ import { useModal } from 'Components/ModalContext';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import Project from '@/mstore/types/project';
 import { useTranslation } from 'react-i18next';
-import { isMobile } from 'App/utils/isMobile';
+import { mobileScreen } from 'App/utils/isMobile';
 
 const { Text } = Typography;
 
@@ -98,7 +98,7 @@ function ProjectDropdown(props: { location: any }) {
     );
   }
 
-  const mobile = isMobile();
+  const mobile = mobileScreen
   return (
     <Dropdown
       menu={{

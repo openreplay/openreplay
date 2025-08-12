@@ -17,7 +17,7 @@ function CommentsSection({ onClose }: { onClose?: () => void }) {
   const comments = spotStore.currentSpot?.comments ?? [];
   return (
     <div
-      className="h-full p-4 bg-white border-l absolute right-0 top-0 lg:block"
+      className="h-full p-4 bg-white border-l absolute z-50 right-0 top-0 lg:block"
       style={{ minWidth: 320, width: 320 }}
     >
       <div className="flex items-center justify-between mb-2">
