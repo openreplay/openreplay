@@ -119,6 +119,14 @@ log info "Using KUBECONFIG $KUBECONFIG"
 tmp_dir=$(mktemp -d)
 
 function install_packages() {
+    if [ ! "$(command -v curl)" ]; then
+        sudo apt-get update && sudo apt-get install -y curl
+    fi
+
+    if [ ! "$(command -v git)" ]; then
+        sudo apt-get update && sudo apt-get install -y git
+    fi
+
     [[ -e "$OR_DIR/eget" ]] || {
         cd "$tmp_dir" || log err "Not able to cd to tmp dir $tmp_dir"
         curl --version &>/dev/null || log err "curl not found. Please install"
