@@ -15,6 +15,7 @@ import { Filter } from '@/mstore/types/filterConstants';
 import { VList } from 'virtua';
 import { FilterType } from 'Types/filter/filterType';
 import type { ComponentType } from 'react';
+import { useStore } from 'App/mstore';
 
 type IconProps = { size: number; className?: string };
 type FilterIconMap = Record<FilterType, ComponentType<IconProps>>;
@@ -199,6 +200,7 @@ function FilterModal({
   onFilterClick: (f: Filter) => void;
   filters: Filter[];
 }) {
+  const { filterStore } = useStore();
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery);
@@ -233,6 +235,14 @@ function FilterModal({
 
   const handleFilterClick = useCallback(
     (filter: Filter) => {
+      if (filter.subCategory?.startsWith('issue')) {
+        const filters = filterStore.getCurrentProjectFilters();
+        const issueTypeFilter = filters.find((f) => f.name === 'issue_type');
+        if (issueTypeFilter) {
+          const newVal = filter.name;
+          filter = { ...issueTypeFilter, value: [newVal] };
+        }
+      }
       onFilterClick(filter);
     },
     [onFilterClick],
