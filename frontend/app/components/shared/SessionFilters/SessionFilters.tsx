@@ -28,6 +28,10 @@ function SessionFilters() {
     searchStore.edit({
       eventsOrder: value,
     });
+
+    if (eventFilters.length > 1) {
+      void searchStore.fetchSessions();
+    }
   };
 
   // Create filtered arrays with original indices
