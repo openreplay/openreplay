@@ -394,19 +394,20 @@ export default class MetricStore {
 
   async fetchList() {
     this.setLoading(true);
+    const params: Record<string, any> = {
+      page: this.page,
+      limit: this.pageSize,
+      sortField: this.sort.field,
+      sortOrder: this.sort.order === 'ascend' ? 'asc' : 'desc',
+      name: this.filter.query,
+    };
+
+    if (this.filter.type !== 'all') {
+      params.metricType = this.filter.type;
+    }
+
     try {
-      const resp = await metricService.getMetricsPaginated({
-        page: this.page,
-        limit: this.pageSize,
-        sort: {
-          field: this.sort.field,
-          order: this.sort.order === 'ascend' ? 'asc' : 'desc',
-        },
-        filter: {
-          query: this.filter.query,
-          type: this.filter.type === 'all' ? '' : this.filter.type,
-        },
-      });
+      const resp = await metricService.getMetricsPaginated(params);
       this.total = resp.total;
       this.setMetrics(resp.list.map((m) => new Widget().fromJson(m)));
     } finally {
