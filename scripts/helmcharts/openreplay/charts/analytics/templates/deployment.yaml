@@ -62,7 +62,8 @@ spec:
             - name: CH_USERNAME
               value: '{{ .Values.global.clickhouse.username }}'
             - name: CH_PASSWORD
-              value: '{{ .Values.global.clickhouse.password }}'
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.ch_password" . | nindent 18 }}
             - name: CLICKHOUSE_STRING
               value: '{{ .Values.global.clickhouse.chHost }}:{{.Values.global.clickhouse.service.webPort}}/{{.Values.env.ch_db}}'
             - name: pg_password

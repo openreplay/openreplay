@@ -214,7 +214,8 @@ spec:
           - name: CH_USERNAME
             value: "{{.Values.global.clickhouse.username}}"
           - name: CH_PASSWORD
-            value: "{{.Values.global.clickhouse.password}}"
+            valueFrom:
+              secretKeyRef: {{- include "openreplay.ch_password" . | nindent 16 }}
         command:
           - /bin/bash
           - -c
@@ -515,7 +516,8 @@ spec:
           - name: CH_USERNAME
             value: "{{.Values.global.clickhouse.username}}"
           - name: CH_PASSWORD
-            value: "{{.Values.global.clickhouse.password}}"
+            valueFrom:
+              secretKeyRef: {{- include "openreplay.ch_password" . | nindent 16 }}
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
