@@ -64,14 +64,8 @@ spec:
               - name: pg_user
                 value: '{{ .Values.global.postgresql.postgresqlUser }}'
               - name: pg_password
-                {{- if .Values.global.postgresql.existingSecret }}
                 valueFrom:
-                  secretKeyRef:
-                    name: {{ .Values.global.postgresql.existingSecret }}
-                    key: postgresql-postgres-password
-                {{- else }}
-                value: '{{ .Values.global.postgresql.postgresqlPassword }}'
-                {{- end}}
+                  secretKeyRef: {{- include "openreplay.pg_password" . | nindent 20 }}
               - name: SITE_URL
                 value: '{{- include "openreplay.domainURL" . }}'
               - name: S3_HOST

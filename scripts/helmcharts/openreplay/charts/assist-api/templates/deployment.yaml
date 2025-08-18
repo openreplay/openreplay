@@ -48,14 +48,8 @@ spec:
             - name: ASSIST_KEY
               value: {{ .Values.global.assistKey }}
             - name: pg_password
-              {{- if .Values.global.postgresql.existingSecret }}
               valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.postgresql.existingSecret }}
-                  key: postgresql-postgres-password
-              {{- else }}
-              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
-              {{- end}}
+                secretKeyRef: {{- include "openreplay.pg_password" . | nindent 18 }}
             - name: POSTGRES_STRING
               value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:$(pg_password)@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
             - name: REDIS_CACHE_ENABLED
