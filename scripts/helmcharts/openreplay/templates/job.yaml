@@ -166,14 +166,8 @@ spec:
           - name: PGUSER
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
-            {{- if .Values.global.postgresql.existingSecret }}
             valueFrom:
-              secretKeyRef:
-                name: {{ .Values.global.postgresql.existingSecret }}
-                key: postgresql-postgres-password
-            {{- else }}
-            value: '{{ .Values.global.postgresql.postgresqlPassword }}'
-            {{- end}}
+              secretKeyRef: {{- include "openreplay.pg_password" . | nindent 16 }}
         command:
           - /bin/bash
           - -c
@@ -281,14 +275,8 @@ spec:
           - name: PGUSER
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
-            {{- if .Values.global.postgresql.existingSecret }}
             valueFrom:
-              secretKeyRef:
-                name: {{ .Values.global.postgresql.existingSecret }}
-                key: postgresql-postgres-password
-            {{- else }}
-            value: '{{ .Values.global.postgresql.postgresqlPassword }}'
-            {{- end}}
+              secretKeyRef: {{- include "openreplay.pg_password" . | nindent 16 }}
           {{- range $key, $val := .Values.migration.env }}
           - name: {{ $key }}
             value: '{{ $val }}'
@@ -389,7 +377,8 @@ spec:
           - name: PGUSER
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
-            value: "{{ .Values.global.postgresql.postgresqlPassword }}"
+            valueFrom:
+              secretKeyRef: {{- include "openreplay.pg_password" . | nindent 16 }}
           - name: VAULT_ADDR
             value: "{{ .Values.global.vault.vaultHost }}"
         image: hashicorp/vault:1.12.0
