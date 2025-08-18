@@ -224,17 +224,17 @@ function SpotPlayer() {
         platform={spotPlayerStore.platform}
         browserVersion={spotPlayerStore.browserVersion}
       />
-      <div className="w-full h-full flex relative">
-        <MobilePlayerOverlay
-          isPlaying={spotPlayerStore.isPlaying}
-          onPlay={() => spotPlayerStore.setIsPlaying(true)}
-          onStop={() => spotPlayerStore.setIsPlaying(false)}
-          onJumpForward={jumpForward}
-          onJumpBackward={jumpBackward}
-        />
+      <div className="w-full h-full flex">
         <div className="w-full h-full flex flex-col justify-between">
           <SpotLocation />
           <div className={cn('w-full h-full', isFullScreen ? '' : 'relative')}>
+            <MobilePlayerOverlay
+              isPlaying={spotPlayerStore.isPlaying}
+              onPlay={() => spotPlayerStore.setIsPlaying(true)}
+              onStop={() => spotPlayerStore.setIsPlaying(false)}
+              onJumpForward={jumpForward}
+              onJumpBackward={jumpBackward}
+            />
             {/* <VideoJS backup player */}
             {/*  options={videoJsOptions} */}
             {/* /> */}
