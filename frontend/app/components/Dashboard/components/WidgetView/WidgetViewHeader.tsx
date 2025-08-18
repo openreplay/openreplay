@@ -47,7 +47,8 @@ function WidgetViewHeader({
   return (
     <div
       className={cn(
-        'flex justify-between md:items-center bg-white rounded-lg shadow-sm px-4 ps-2 py-2 border border-gray-lighter input-card-title flex-wrap flex-col md:flex-row',
+        'flex justify-between md:items-center bg-white rounded-lg shadow-sm px-4',
+        "ps-2 py-2 border border-gray-lighter input-card-title flex-wrap md:flex-nowrap flex-col md:flex-row",
       )}
       onClick={onClick}
     >
@@ -60,7 +61,7 @@ function WidgetViewHeader({
           canEdit
         />
       </h1>
-      <div className="flex items-center gap-2 flex-wrap w-full">
+      <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
         <Button
           type={
             metricStore.isSaving || (widget.exists() && !widget.hasChanged)
