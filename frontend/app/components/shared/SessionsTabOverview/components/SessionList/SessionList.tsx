@@ -35,6 +35,7 @@ function SessionList() {
     customFieldStore,
     userStore,
     searchStore,
+    filterStore,
   } = useStore();
   const { isEnterprise } = userStore;
   const { isLoggedIn } = userStore;
@@ -154,11 +155,13 @@ function SessionList() {
   }, []);
 
   const onUserClick = (userId: any) => {
-    if (userId) {
-      searchStore.addFilterByKeyAndValue(FilterKey.USERID, userId);
-    } else {
-      searchStore.addFilterByKeyAndValue(FilterKey.USERID, '', 'isUndefined');
+    const filters = filterStore.getCurrentProjectFilters();
+    const userIdFilter = filters.find(f => f.name === FilterKey.USERID);
+    if (!userIdFilter) {
+      return;
     }
+    userIdFilter.value = [userId];
+    searchStore.addFilter(userIdFilter);
   };
 
   const toggleFavorite = (sessionId: string) => {

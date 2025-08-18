@@ -343,6 +343,7 @@ class SearchStore {
     source?: string,
   ) {
     const defaultFilter = { ...filtersMap[key] };
+
     defaultFilter.value = value;
 
     if (operator) {

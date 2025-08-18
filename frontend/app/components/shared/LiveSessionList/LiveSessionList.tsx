@@ -19,7 +19,8 @@ const AUTOREFRESH_INTERVAL = 2 * 60 * 1000;
 const PER_PAGE = 10;
 
 function LiveSessionList() {
-  const { searchStoreLive, sessionStore, customFieldStore, projectsStore } = useStore();
+  const { searchStoreLive, sessionStore, customFieldStore, filterStore } =
+    useStore();
   const filter = searchStoreLive.instance;
   const list = sessionStore.liveSessions;
   const { totalLiveSessions } = sessionStore;
@@ -65,14 +66,13 @@ function LiveSessionList() {
   };
 
   const onUserClick = (userId: string, userAnonymousId: string) => {
-    if (userId) {
-      searchStoreLive.addFilterByKeyAndValue(FilterKey.USERID, userId);
-    } else {
-      searchStoreLive.addFilterByKeyAndValue(
-        FilterKey.USERANONYMOUSID,
-        userAnonymousId,
-      );
+    const filters = filterStore.getCurrentProjectFilters();
+    const userIdFilter = filters.find((f) => f.name === FilterKey.USERID);
+    if (!userIdFilter) {
+      return;
     }
+    userIdFilter.value = [userId ?? userAnonymousId];
+    searchStoreLive.addFilter(userIdFilter);
   };
 
   const onSortChange = ({ value }: any) => {
