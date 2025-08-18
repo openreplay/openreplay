@@ -158,7 +158,7 @@ class SearchStore {
     this.currentPage = 1;
   }
 
-  applyFilter(filter: any, force = false) {
+  applyFilter(filter: any) {
     this.apply(filter, false);
   }
 
