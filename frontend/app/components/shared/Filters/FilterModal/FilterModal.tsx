@@ -6,13 +6,7 @@ import {
   MousePointerClick,
   Search,
 } from 'lucide-react';
-import React, {
-  useState,
-  useRef,
-  useMemo,
-  useCallback,
-  useEffect,
-} from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { Input, Space, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
@@ -104,14 +98,19 @@ const FilterItem = React.memo(
     filter,
     onClick,
     showCategory,
+    disabled = false,
   }: {
     filter: Filter;
     onClick: (f: Filter) => void;
     showCategory?: boolean;
+    disabled?: boolean;
   }) => (
     <div
-      className="flex items-center p-2 cursor-pointer gap-2 rounded-lg hover:bg-active-blue/10 text-sm"
-      onClick={() => onClick(filter)}
+      className={cn(
+        'flex items-center p-2 gap-2 rounded-lg text-sm',
+        disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-blueLight',
+      )}
+      onClick={() => (disabled ? null : onClick(filter))}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -121,11 +120,17 @@ const FilterItem = React.memo(
       {showCategory && filter.category && (
         <div
           // style={{ width: 110 }}
-          className="text-neutral-500 flex items-center justify-between flex-shrink-0 mr-1 text-xs"
+          className={cn(
+            disabled ? 'text-disabled-text' : 'text-neutral-500',
+            'flex items-center justify-between flex-shrink-0 mr-1 text-xs',
+          )}
         >
           <Typography.Text
             ellipsis={{ tooltip: true }}
-            className="capitalize flex-1 text-gray-600"
+            className={cn(
+              'capitalize flex-1',
+              disabled ? 'text-disabled-text' : 'text-gray-600',
+            )}
           >
             {filter.subCategory || filter.category}
           </Typography.Text>
@@ -133,12 +138,17 @@ const FilterItem = React.memo(
         </div>
       )}
       <Space className="flex-grow min-w-0 items-center">
-        <span className="text-neutral-500/90 text-xs flex items-center">
+        <span
+          className={cn(
+            'text-xs flex items-center',
+            disabled ? 'text-disabled-text' : 'text-neutral-500/90',
+          )}
+        >
           {getIconForFilter(filter)}
         </span>
         <Typography.Text
           ellipsis={{ tooltip: filter.displayName || filter.name }}
-          className="flex-1"
+          className={cn('flex-1', disabled ? 'text-disabled-text' : '')}
         >
           {filter.displayName || filter.name}
         </Typography.Text>
@@ -184,6 +194,7 @@ const CategoryList = React.memo(
 function FilterModal({
   onFilterClick = () => null,
   filters = [],
+  activeFilters = [],
 }: {
   onFilterClick: (f: Filter) => void;
   filters: Filter[];
@@ -270,6 +281,7 @@ function FilterModal({
                   <FilterItem
                     key={filter.id || filter.name}
                     filter={filter}
+                    disabled={activeFilters?.includes(filter.name)}
                     onClick={handleFilterClick}
                     showCategory
                   />

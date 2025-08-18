@@ -15,6 +15,7 @@ function SessionFilters() {
   const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
   const eventOptions = allFilterOptions.filter((i) => i.isEvent);
   const propertyOptions = allFilterOptions.filter((i) => !i.isEvent);
+  const activeFilters = searchInstance.filters.map((f) => f.name);
 
   const onAddFilter = (filter: Filter) => {
     searchStore.addFilter({ ...filter, autoOpen: true });
@@ -121,6 +122,7 @@ function SessionFilters() {
         filterSelection={
           <FilterSelection
             filters={eventOptions}
+            activeFilters={activeFilters}
             onFilterClick={(newFilter: Filter) => {
               onAddFilter(newFilter);
             }}
@@ -157,6 +159,7 @@ function SessionFilters() {
         filterSelection={
           <FilterSelection
             filters={propertyOptions}
+            activeFilters={activeFilters}
             onFilterClick={(newFilter: Filter) => {
               onAddFilter(newFilter);
             }}

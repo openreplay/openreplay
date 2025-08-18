@@ -193,6 +193,8 @@ function FilterSeries(props: Props) {
     ? actualEvents.length >= series.maxEvents
     : false;
 
+
+  const activeFilters = indexedFilters.map((f) => f.name);
   return (
     <Card
       size="small"
@@ -254,6 +256,7 @@ function FilterSeries(props: Props) {
                 filterSelection={
                   <FilterSelection
                     disabled={disableEvents}
+                    activeFilters={activeFilters}
                     filters={eventOptions}
                     onFilterClick={onAddFilter}
                   >
@@ -300,6 +303,7 @@ function FilterSeries(props: Props) {
               <FilterSelection
                 filters={propertyOptions}
                 onFilterClick={onAddFilter}
+                activeFilters={activeFilters}
               >
                 <Button type="default" size="small">
                   <div className="flex items-center gap-1">

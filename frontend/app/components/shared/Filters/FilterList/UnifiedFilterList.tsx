@@ -160,6 +160,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
     setHoveredItem({ i: null, position: null });
   }, []);
 
+  const activeFilters = filters.map((f) => f.name);
   return filters.length ? (
     <div className={cn('flex flex-col', className)} style={style}>
       {filters.map((filterItem: Filter, filterIndex: number) => (
@@ -230,6 +231,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
             hideIndex={!showIndices}
             isDragging={draggedInd === filterIndex}
             propertyOrder={filterItem.propertyOrder}
+            activeFilters={activeFilters}
             onPropertyOrderChange={
               filterItem.isEvent
                 ? (order: string) => {

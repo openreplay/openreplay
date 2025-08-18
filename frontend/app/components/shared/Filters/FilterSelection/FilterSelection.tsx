@@ -9,6 +9,7 @@ import { mobileScreen } from 'App/utils/isMobile';
 
 interface FilterSelectionProps {
   filters: Filter[];
+  activeFilters?: string[];
   onFilterClick: (filter: Filter) => void;
   children?: React.ReactNode;
   disabled?: boolean;
@@ -23,7 +24,8 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
     children,
     disabled = false,
     isLive,
-    loading = false, // <-- Initialize loading prop
+    loading = false,
+    activeFilters,
   }) => {
     const [open, setOpen] = useState(false);
 
@@ -52,17 +54,6 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
       [disabled, loading],
     );
 
-    // const content = loading ? (
-    //   <div
-    //     className="p-4 flex justify-center items-center"
-    //     style={{ minHeight: '100px', minWidth: '150px' }}
-    //   >
-    //     <Spin />
-    //   </div>
-    // ) : (
-    //   <FilterModal onFilterClick={handleFilterClick} filters={filters} />
-    // );
-
     const content = useMemo(
       () =>
         loading ? (
@@ -73,7 +64,11 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
             <Spin />
           </div>
         ) : (
-          <FilterModal onFilterClick={handleFilterClick} filters={filters} />
+          <FilterModal
+            activeFilters={activeFilters}
+            onFilterClick={handleFilterClick}
+            filters={filters}
+          />
         ),
       [loading, filters, handleFilterClick],
     );
@@ -97,7 +92,6 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
         open={open}
         onOpenChange={handleOpenChange}
         placement={mobileScreen ? 'bottom' : 'bottomLeft'}
-        // Consistent styling class name with your original
         overlayClassName="filter-selection-popover rounded-lg border border-gray-200 shadow-sm shadow-gray-200 overflow-hidden"
         destroyOnHidden={true}
         arrow={false}

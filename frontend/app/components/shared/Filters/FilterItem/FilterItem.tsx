@@ -32,6 +32,7 @@ interface Props {
   isDragging?: boolean;
   eventName?: string;
   isFirst?: boolean;
+  activeFilters?: string[];
 }
 
 function FilterItem(props: Props) {
@@ -54,6 +55,7 @@ function FilterItem(props: Props) {
     isDragging,
     eventName,
     isFirst = false, // Default to false
+    activeFilters = [],
   } = props;
 
   const [eventFilterOptions, setEventFilterOptions] = useState<Filter[]>([]);
@@ -82,80 +84,6 @@ function FilterItem(props: Props) {
 
   const operatorOptions = getOperatorsByType(filter.dataType);
 
-  // useEffect(() => {
-  //   let isMounted = true; // Mounted flag
-
-  //   async function loadFilters() {
-  //     const shouldFetch = !isSubItem && filter.isEvent && filter.name;
-  //     const fetchName = filter.name; // Capture value at effect start
-
-  //     if (shouldFetch) {
-  //       try {
-  //         // Only set loading if not already loading for this specific fetch
-  //         if (isMounted) setEventFiltersLoading(true);
-
-  //         const options = await filterStore.getEventFilters(filter.id);
-
-  //         if (!filter.filters || filter.filters?.length === 0) {
-  //           const defaultOption = options?.find(
-  //             (option) => option?.defaultProperty,
-  //           );
-
-  //           if (defaultOption) {
-  //             const subFilter = {
-  //               ...defaultOption,
-  //             };
-  //             addSubFilter(subFilter);
-  //           }
-  //         }
-
-  //         if (
-  //           isMounted &&
-  //           filter.name === fetchName &&
-  //           !isSubItem &&
-  //           filter.isEvent
-  //         ) {
-  //           setEventFilterOptions(options);
-  //         }
-  //       } catch (error) {
-  //         console.error('Failed to load event filters:', error);
-  //         if (
-  //           isMounted &&
-  //           filter.name === fetchName &&
-  //           !isSubItem &&
-  //           filter.isEvent
-  //         ) {
-  //           setEventFilterOptions([]);
-  //         }
-  //       } finally {
-  //         if (
-  //           isMounted &&
-  //           filter.name === fetchName &&
-  //           !isSubItem &&
-  //           filter.isEvent
-  //         ) {
-  //           setEventFiltersLoading(false);
-  //         }
-  //       }
-  //     } else {
-  //       if (isMounted) {
-  //         if (eventFilterOptions.length > 0) {
-  //           setEventFilterOptions([]);
-  //         }
-  //         if (eventFiltersLoading) {
-  //           setEventFiltersLoading(false);
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   void loadFilters();
-
-  //   return () => {
-  //     isMounted = false; // Cleanup on unmount
-  //   };
-  // }, []);
-
   const canShowValues = useMemo(
     () =>
       !(
@@ -165,11 +93,6 @@ function FilterItem(props: Props) {
       ),
     [filter.operator],
   );
-
-  // const isReversed = useMemo(
-  //   () => filter.key === FilterKey.TAGGED_ELEMENT,
-  //   [filter.key],
-  // );
 
   const replaceFilter = useCallback(
     (selectedFilter: any) => {
@@ -266,6 +189,7 @@ function FilterItem(props: Props) {
   const showSeparator = hasCategory && hasName;
   const defaultText = 'Select Filter';
 
+  const activeSubFilters = filter.filters?.map((f: any) => f.name) || [];
   return (
     <div className={cn('w-full', isDragging ? 'opacity-50' : '')}>
       <div className="flex items-start w-full gap-x-2">
@@ -307,6 +231,7 @@ function FilterItem(props: Props) {
         <div className="flex flex-grow flex-wrap gap-x-2 items-center">
           <FilterSelection
             filters={filterSelections}
+            activeFilters={activeFilters}
             onFilterClick={replaceFilter}
             disabled={disableDelete || readonly}
             loading={isSubItem ? false : eventFiltersLoading}
@@ -409,6 +334,7 @@ function FilterItem(props: Props) {
               onFilterClick={addSubFilter}
               disabled={disableDelete || readonly || eventFiltersLoading}
               loading={eventFiltersLoading}
+              activeFilters={activeSubFilters}
             >
               <Tooltip title="Add filter condition" mouseEnterDelay={1}>
                 <Button
@@ -469,6 +395,7 @@ function FilterItem(props: Props) {
                 onUpdate={(updatedSubFilter) =>
                   handleUpdateSubFilter(updatedSubFilter, index)
                 }
+                activeFilters={activeFilters}
                 onRemoveFilter={() => handleRemoveSubFilter(index)}
                 saveRequestPayloads={saveRequestPayloads}
                 disableDelete={disableDelete}

@@ -22,10 +22,13 @@ function AddStepButton({ series }: Props) {
     series.filter.addFilter(filter);
     metric.updateKey('hasChanged', true);
   };
+
+  const activeFilters = series.filter.filters.map((f: Filter) => f.name);
   return (
     <FilterSelection
       filters={filters}
       onFilterClick={onAddFilter}
+      activeFilters={activeFilters}
       // mode={'filters'} // excludeFilterKeys={excludeFilterKeys}
     >
       <Button
