@@ -409,7 +409,9 @@ export default class MetricStore {
     try {
       const resp = await metricService.getMetricsPaginated(params);
       this.total = resp.total;
-      this.setMetrics(resp.list.map((m) => new Widget().fromJson(m)));
+      this.setMetrics(
+        resp.list ? resp.list.map((m) => new Widget().fromJson(m)) : [],
+      );
     } finally {
       this.setLoading(false);
     }
