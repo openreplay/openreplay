@@ -98,6 +98,8 @@ var (
 	SupportedSortFields = map[string]string{
 		"name":        "m.name",
 		"created_at":  "m.created_at",
+		"edited_at":   "m.edited_at",
+		"owner_email": "user_name",
 		"metric_type": "m.metric_type",
 	}
 	SupportedSortOrders = map[string]bool{

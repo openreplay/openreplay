@@ -167,7 +167,7 @@ func (e *handlersImpl) getCardsPaginated(w http.ResponseWriter, r *http.Request)
 	if name := query.Get("name"); name != "" {
 		filters.Filters["name"] = name
 	}
-	if metricType := query.Get("metric_type"); metricType != "" {
+	if metricType := query.Get("metricType"); metricType != "" {
 		filters.Filters["metric_type"] = metricType
 	}
 	if dashboardIDs := query["dashboard_ids"]; len(dashboardIDs) > 0 {
@@ -183,8 +183,8 @@ func (e *handlersImpl) getCardsPaginated(w http.ResponseWriter, r *http.Request)
 
 	// Sorting
 	sort := CardListSort{
-		Field: query.Get("sort_field"),
-		Order: query.Get("sort_order"),
+		Field: query.Get("sortField"),
+		Order: query.Get("sortOrder"),
 	}
 	if sort.Field == "" {
 		sort.Field = "created_at" // Default sort field
