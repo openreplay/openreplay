@@ -56,14 +56,8 @@ spec:
             - name: KAFKA_USE_SSL
               value: '{{ .Values.global.kafka.kafkaUseSsl }}'
             - name: pg_password
-              {{- if .Values.global.postgresql.existingSecret }}
               valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.postgresql.existingSecret }}
-                  key: postgresql-postgres-password
-              {{- else }}
-              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
-              {{- end}}
+                secretKeyRef: {{- include "openreplay.pg_password" . | nindent 18 }}
             - name: QUICKWIT_ENABLED
               value: '{{ .Values.global.quickwit.enabled }}'
             - name: POSTGRES_STRING

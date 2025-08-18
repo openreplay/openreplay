@@ -169,3 +169,13 @@ Create the volume mount config for redis TLS certificates
 {{- printf "http://assist-openreplay.%s.%s:9001/assist/%%s" .Release.Namespace .Values.global.clusterDomain }}
 {{- end}}
 {{- end}}
+
+{{- define "openreplay.pg_password" -}}
+name: {{ .Values.global.postgresql.existingSecret | default "or-pg-password" }}
+key: {{ .Values.global.postgresql.existingSecretPasswordKey | default "postgres-password" }}
+{{- end}}
+
+{{- define "openreplay.ch_password" -}}
+name: {{ .Values.global.clickhouse.existingSecret  | default "or-ch-password"}}
+key: {{ .Values.global.clickhouse.existingSecretPasswordKey | default "clickhouse-password" }}
+{{- end}}
