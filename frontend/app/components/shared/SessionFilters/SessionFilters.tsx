@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
@@ -12,10 +12,30 @@ function SessionFilters() {
   const { searchStore, filterStore } = useStore();
   const searchInstance = searchStore.instance;
 
-  const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
+  const allFilterOptions = filterStore.getCurrentProjectFilters();
   const eventOptions = allFilterOptions.filter((i) => i.isEvent);
   const propertyOptions = allFilterOptions.filter((i) => !i.isEvent);
   const activeFilters = searchInstance.filters.map((f) => f.name);
+
+  const eventFiltersWithIndices = searchInstance.filters
+    .map((filter, originalIndex) => ({ filter, originalIndex }))
+    .filter(({ filter }) => filter.isEvent);
+  const attributeFiltersWithIndices = searchInstance.filters
+    .map((filter, originalIndex) => ({ filter, originalIndex }))
+    .filter(({ filter }) => !filter.isEvent);
+
+  const eventFilters = eventFiltersWithIndices.map(({ filter }) => filter);
+  const attributeFilters = attributeFiltersWithIndices.map(
+    ({ filter }) => filter,
+  );
+
+  const getOriginalEventIndex = (filteredIndex: number) => {
+    return eventFiltersWithIndices[filteredIndex]?.originalIndex ?? -1;
+  };
+
+  const getOriginalAttributeIndex = (filteredIndex: number) => {
+    return attributeFiltersWithIndices[filteredIndex]?.originalIndex ?? -1;
+  };
 
   const onAddFilter = (filter: Filter) => {
     searchStore.addFilter({ ...filter, autoOpen: true });
@@ -26,44 +46,16 @@ function SessionFilters() {
     _e: React.MouseEvent<HTMLButtonElement>,
     { value }: { value: string },
   ) => {
-    searchStore.edit({
-      eventsOrder: value,
-    });
-
+    searchStore.edit({ eventsOrder: value });
     if (eventFilters.length > 1) {
       void searchStore.fetchSessions();
     }
   };
 
-  // Create filtered arrays with original indices
-  const eventFiltersWithIndices = searchInstance.filters
-    .map((filter, originalIndex) => ({ filter, originalIndex }))
-    .filter(({ filter }) => filter.isEvent);
-
-  const attributeFiltersWithIndices = searchInstance.filters
-    .map((filter, originalIndex) => ({ filter, originalIndex }))
-    .filter(({ filter }) => !filter.isEvent);
-
-  const eventFilters = eventFiltersWithIndices.map(({ filter }) => filter);
-  const attributeFilters = attributeFiltersWithIndices.map(
-    ({ filter }) => filter,
-  );
-
-  // Create index mapping functions
-  const getOriginalEventIndex = (filteredIndex: number) => {
-    return eventFiltersWithIndices[filteredIndex]?.originalIndex ?? -1;
-  };
-
-  const getOriginalAttributeIndex = (filteredIndex: number) => {
-    return attributeFiltersWithIndices[filteredIndex]?.originalIndex ?? -1;
-  };
-
-  // Wrapper functions for event operations
   const handleEventRemove = (filteredIndex: number) => {
     const originalIndex = getOriginalEventIndex(filteredIndex);
     if (originalIndex !== -1) {
       searchStore.removeFilter(originalIndex);
-
       void searchStore.fetchSessions();
     }
   };
@@ -76,7 +68,6 @@ function SessionFilters() {
     }
   };
 
-  // Wrapper functions for attribute operations
   const handleAttributeRemove = (filteredIndex: number) => {
     const originalIndex = getOriginalAttributeIndex(filteredIndex);
     if (originalIndex !== -1) {
@@ -96,14 +87,12 @@ function SessionFilters() {
     }
   };
 
-  // Move function for events only (since only events are draggable)
   const moveEventFilter = (
     fromFilteredIndex: number,
     toFilteredIndex: number,
   ) => {
     const fromOriginalIndex = getOriginalEventIndex(fromFilteredIndex);
     const toOriginalIndex = getOriginalEventIndex(toFilteredIndex);
-
     if (fromOriginalIndex !== -1 && toOriginalIndex !== -1) {
       const updatedFilters = [...searchInstance.filters];
       const filterToMove = updatedFilters.splice(fromOriginalIndex, 1)[0];
@@ -112,10 +101,15 @@ function SessionFilters() {
     }
   };
 
+  const handleEventAdd = (filter: Filter) => {
+    const newFilter = { ...filter, filters: [] };
+    searchStore.addFilter(newFilter);
+  };
+
   return (
     <Card className="rounded-lg" classNames={{ body: '!p-4' }}>
       <FilterListHeader
-        title={'Events'}
+        title="Events"
         showEventsOrder={eventFilters.length > 0}
         orderProps={searchInstance}
         onChangeOrder={onChangeEventsOrder}
@@ -123,9 +117,7 @@ function SessionFilters() {
           <FilterSelection
             filters={eventOptions}
             activeFilters={activeFilters}
-            onFilterClick={(newFilter: Filter) => {
-              onAddFilter(newFilter);
-            }}
+            onFilterClick={onAddFilter}
           >
             <Button type="default" size="small">
               <div className="flex items-center gap-1">
@@ -145,24 +137,19 @@ function SessionFilters() {
         className="mt-2"
         handleRemove={handleEventRemove}
         handleUpdate={handleEventUpdate}
-        handleAdd={(filter) => {
-          filter.filters = [];
-          searchStore.addFilter(filter);
-        }}
+        handleAdd={handleEventAdd}
         handleMove={moveEventFilter}
       />
 
       <Divider className="my-3" />
 
       <FilterListHeader
-        title={'Filters'}
+        title="Filters"
         filterSelection={
           <FilterSelection
             filters={propertyOptions}
             activeFilters={activeFilters}
-            onFilterClick={(newFilter: Filter) => {
-              onAddFilter(newFilter);
-            }}
+            onFilterClick={onAddFilter}
           >
             <Button type="default" size="small">
               <div className="flex items-center gap-1">
