@@ -60,7 +60,8 @@ spec:
             - name: ch_username
               value: '{{ .Values.global.clickhouse.username }}'
             - name: ch_password
-              value: '{{ .Values.global.clickhouse.passwordk }}'
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.ch_password" . | nindent 18 }}
             - name: pg_user
               value: '{{ .Values.global.postgresql.postgresqlUser }}'
             - name: pg_password
