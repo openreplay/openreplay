@@ -73,6 +73,9 @@ spec:
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "jwt-secret" "ctx" .) | nindent 18 }}
+            - name: ASSIST_KEY
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "assist-key" "ctx" .) | nindent 18 }}
             - name: JWT_SPOT_SECRET
               valueFrom:
                 secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "jwt-spot-secret" "ctx" .) | nindent 18 }}
