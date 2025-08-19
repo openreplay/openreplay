@@ -46,7 +46,8 @@ spec:
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
             - name: ASSIST_KEY
-              value: {{ .Values.global.assistKey }}
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "assist-key" "ctx" .) | nindent 18 }}
             - name: pg_password
               valueFrom:
                 secretKeyRef: {{- include "openreplay.pg_password" . | nindent 18 }}

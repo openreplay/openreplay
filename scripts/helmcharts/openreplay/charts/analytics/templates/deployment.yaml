@@ -58,7 +58,8 @@ spec:
             - name: KAFKA_USE_SSL
               value: '{{ .Values.global.kafka.kafkaUseSsl }}'
             - name: JWT_SECRET
-              value: {{ .Values.global.jwtSecret }}
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "jwt-secret" "ctx" .) | nindent 18 }}
             - name: CH_USERNAME
               value: '{{ .Values.global.clickhouse.username }}'
             - name: CH_PASSWORD

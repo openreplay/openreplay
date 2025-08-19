@@ -165,8 +165,6 @@ global:
 
 chalice:
   env:
-    JWT_REFRESH_SECRET: "{{ randAlphaNum 20}}"
-    JWT_SPOT_REFRESH_SECRET: "{{ randAlphaNum 20}}"
     # captcha_server: ''
     # captcha_key: ''
     # SAML2_MD_URL: ''
