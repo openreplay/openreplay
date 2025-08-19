@@ -55,6 +55,7 @@ minio:
   forceInit: false
 
 global:
+  orAppSecrets: {}
   appLabels: {}
   vault: *vault
   redis: *redis
