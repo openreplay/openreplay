@@ -256,7 +256,8 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 			m.metric_format,
 			m.is_public,
 			m.created_at,
-			m.edited_at
+			m.edited_at,
+			m.deleted_at
 		 FROM public.metrics m
 		 %s
 		 %s
@@ -289,6 +290,7 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 			&c.IsPublic,
 			&c.CreatedAt,
 			&c.EditedAt,
+			&c.DeletedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan paginated card: %w", err)
 		}
@@ -349,8 +351,8 @@ func (s *cardsImpl) Update(projectID int, cardID int64, userID uint64, req *Card
 }
 
 func (s *cardsImpl) Delete(projectID int, cardID int64, userID uint64) error {
-	const del = `UPDATE public.metrics SET deleted_at = now() WHERE metric_id=$1 AND project_id=$2 AND user_id=$3 AND deleted_at IS NULL`
-	if err := s.pgconn.Exec(del, cardID, projectID, userID); err != nil {
+	const del = `UPDATE public.metrics SET deleted_at = now() WHERE metric_id=$1 AND project_id=$2 AND deleted_at IS NULL`
+	if err := s.pgconn.Exec(del, cardID, projectID); err != nil {
 		return fmt.Errorf("delete card: %w", err)
 	}
 	return nil
