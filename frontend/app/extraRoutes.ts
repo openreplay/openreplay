@@ -1,3 +1,5 @@
+import { saasRoutes } from './saasComponents';
+
 export const queried = (path: string, params?: Record<string, any>): string => {
   const keys =
     typeof params === 'object' &&
@@ -13,5 +15,12 @@ export const queried = (path: string, params?: Record<string, any>): string => {
   return path;
 };
 
-export const routeIdRequired = [];
-export const changeAvailable = [];
+const saasIdRequeired = saasRoutes
+  .filter((route) => route.withId)
+  .map((route) => route.path);
+const saasIdChangeAvailable = saasRoutes
+  .filter((route) => route.canChangeId)
+  .map((route) => route.path);
+
+export const routeIdRequired = [...saasIdRequeired];
+export const changeAvailable = [...saasIdChangeAvailable];
