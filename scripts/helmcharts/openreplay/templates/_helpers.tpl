@@ -179,3 +179,8 @@ key: {{ .Values.global.postgresql.existingSecretPasswordKey | default "postgres-
 name: {{ .Values.global.clickhouse.existingSecret  | default "or-secrets"}}
 key: {{ .Values.global.clickhouse.existingSecretPasswordKey | default "clickhouse-password" }}
 {{- end}}
+
+{{- define "openreplay.application_secrets" -}}
+name: {{ .Values.global.orAppSecrets.existingSecret | default "or-secrets" }}
+key: {{ . }}
+{{- end}}
