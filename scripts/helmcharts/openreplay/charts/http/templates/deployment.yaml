@@ -86,11 +86,14 @@ spec:
               value: {{ include "openreplay.pg_connection_string" .}}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             - name: JWT_SECRET
-              value: {{ .Values.global.jwtSecret }}
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "jwt-secret" "ctx" .) | nindent 18 }}
             - name: JWT_SPOT_SECRET
-              value: {{ .Values.global.jwtSpotSecret }}
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "jwt-spot-secret" "ctx" .) | nindent 18 }}
             - name: TOKEN_SECRET
-              value: {{ .Values.global.tokenSecret }}
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "token-secret" "ctx" .) | nindent 18 }}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}

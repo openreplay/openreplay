@@ -68,7 +68,8 @@ spec:
             - name: BUCKET_NAME
               value: {{ .Values.global.s3.recordingsBucket }}
             - name: JWT_SECRET
-              value: '{{ .Values.global.jwtSecret }}'
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "jwt-secret" "ctx" .) | nindent 18 }}
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
             - name: KAFKA_SERVERS

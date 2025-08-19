@@ -180,7 +180,10 @@ name: {{ .Values.global.clickhouse.existingSecret  | default "or-secrets"}}
 key: {{ .Values.global.clickhouse.existingSecretPasswordKey | default "clickhouse-password" }}
 {{- end}}
 
-{{- define "openreplay.application_secrets" -}}
-name: {{ .Values.global.orAppSecrets.existingSecret | default "or-secrets" }}
-key: {{ . }}
+{{- /*
+{{- include "openreplay.app_secrets" (dict "key" "assist-key" "ctx" .) | nindent 4 }}
+*/ -}}
+{{- define "openreplay.app_secrets" -}}
+name: {{ .ctx.Values.global.orAppSecrets.existingSecret | default "or-secrets" }}
+key: {{ .key }}
 {{- end}}
