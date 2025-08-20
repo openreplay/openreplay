@@ -181,6 +181,20 @@ key: {{ .Values.global.clickhouse.existingSecretPasswordKey | default "clickhous
 {{- end}}
 
 {{- /*
+{{- include "openreplay.s3_secrets" (dict "key" "access-key" "ctx" .) | nindent 4 }}
+Accepted input keys:
+  access-key:
+  secret-key:
+*/ -}}
+{{- define "openreplay.s3_secrets" -}}
+{{- if not (or (eq .key "access-key") (eq .key "secret-key")) -}}
+{{- fail (printf "Invalid key '%s' for s3_secrets. Only 'access-key' and 'secret-key' are allowed." .key) -}}
+{{- end -}}
+name: {{ .ctx.Values.global.s3.existingSecret | default "or-secrets" }}
+key: {{ .key }}
+{{- end}}
+
+{{- /*
 {{- include "openreplay.app_secrets" (dict "key" "assist-key" "ctx" .) | nindent 4 }}
 */ -}}
 {{- define "openreplay.app_secrets" -}}
