@@ -223,11 +223,11 @@ func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, r
 	sql := `
 		UPDATE dashboards
 		SET name = $1, description = $2, is_public = $3, is_pinned = $4
-		WHERE dashboard_id = $5 AND project_id = $6 AND user_id = $7 AND deleted_at IS NULL
+		WHERE dashboard_id = $5 AND project_id = $6 AND deleted_at IS NULL
 		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned, created_at`
 
 	dashboard := &GetDashboardResponse{}
-	err := s.pgconn.QueryRow(sql, req.Name, req.Description, req.IsPublic, req.IsPinned, dashboardID, projectId, userID).Scan(
+	err := s.pgconn.QueryRow(sql, req.Name, req.Description, req.IsPublic, req.IsPinned, dashboardID, projectId).Scan(
 		&dashboard.DashboardID,
 		&dashboard.ProjectID,
 		&dashboard.UserID,

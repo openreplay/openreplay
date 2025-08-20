@@ -41,15 +41,15 @@ type GetDashboardsResponse struct {
 type CreateDashboardRequest struct {
 	Name        string `json:"name" validate:"required,min=3,max=150"`
 	Description string `json:"description" validate:"max=500"`
-	IsPublic    bool   `json:"is_public"`
-	IsPinned    bool   `json:"is_pinned"`
+	IsPublic    bool   `json:"isPublic"`
+	IsPinned    bool   `json:"isPinned"`
 	Metrics     []int  `json:"metrics"`
 }
 
 type GetDashboardsRequest struct {
 	Page     uint64 `json:"page"`
 	Limit    uint64 `json:"limit"`
-	IsPublic bool   `json:"is_public"`
+	IsPublic bool   `json:"isPublic"`
 	Order    string `json:"order"`
 	Query    string `json:"query"`
 	OrderBy  string `json:"orderBy"`
@@ -58,13 +58,13 @@ type GetDashboardsRequest struct {
 type UpdateDashboardRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	IsPublic    bool   `json:"is_public"`
-	IsPinned    bool   `json:"is_pinned"`
+	IsPublic    bool   `json:"isPublic"`
+	IsPinned    bool   `json:"isPinned"`
 	Metrics     []int  `json:"metrics"`
 }
 
 type PinDashboardRequest struct {
-	IsPinned bool `json:"is_pinned"`
+	IsPinned bool `json:"isPinned"`
 }
 
 type AddCardToDashboardRequest struct {
