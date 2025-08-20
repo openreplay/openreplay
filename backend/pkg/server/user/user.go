@@ -2,6 +2,9 @@ package user
 
 import (
 	"fmt"
+
+	"openreplay/backend/pkg/db/postgres/pool"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -31,4 +34,27 @@ func (u *User) HasPermission(perm string) bool {
 
 func (u *User) GetIDAsString() string {
 	return fmt.Sprintf("%d", u.ID)
+}
+
+type TokenType string
+
+const (
+	AuthToken TokenType = "jwt_iat"
+	SpotToken TokenType = "spot_jwt_iat"
+)
+
+type Users interface {
+	Get(userID, tenantID int, tokenType TokenType) (*User, error)
+}
+
+type usersImpl struct {
+	conn pool.Pool
+}
+
+func New(pgconn pool.Pool) Users {
+	return &usersImpl{conn: pgconn}
+}
+
+func (u *usersImpl) Get(userID, tenantID int, tokenType TokenType) (*User, error) {
+	return getUserFromDB(u.conn, userID, tenantID, tokenType)
 }
