@@ -48,6 +48,7 @@ func (e *handlersImpl) GetAll() []*api.Description {
 		{"/v1/{projectId}/dashboards/{id}", "DELETE", e.deleteDashboard, api.NoPermissions, api.DoNotTrack},
 		{"/v1/{projectId}/dashboards/{id}/cards", "POST", e.addCardToDashboard, api.NoPermissions, api.DoNotTrack},
 		{"/v1/{projectId}/dashboards/{id}/widgets/{widgetId}", "DELETE", e.removeCardFromDashboard, api.NoPermissions, api.DoNotTrack},
+		{"/v1/{projectId}/dashboards/{id}/widgets/{widgetId}", "PUT", e.updateWidgetPosition, api.NoPermissions, api.DoNotTrack},
 	}
 }
 
@@ -342,6 +343,65 @@ func (e *handlersImpl) removeCardFromDashboard(w http.ResponseWriter, r *http.Re
 
 	u := r.Context().Value("userData").(*user.User)
 	err = e.dashboards.DeleteCard(projectID, dashboardID, u.ID, cardID)
+	if err != nil {
+		if err.Error() == "not_found: widget not found in dashboard" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		} else if err.Error() == "not_found: dashboard not found" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		} else if err.Error() == "access_denied: user does not have access" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+		} else {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
+		return
+	}
+
+	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
+}
+
+func (e *handlersImpl) updateWidgetPosition(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	projectID, err := getIDFromRequest(r, "projectId")
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	dashboardID, err := getIDFromRequest(r, "id")
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	widgetID, err := getIDFromRequest(r, "widgetId")
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	bodySize = len(bodyBytes)
+
+	var req UpdateWidgetPositionRequest
+
+	if err := json.Unmarshal(bodyBytes, &req); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	if err := e.validator.Struct(req); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	u := r.Context().Value("userData").(*user.User)
+	err = e.dashboards.UpdateWidgetPosition(projectID, dashboardID, u.ID, widgetID, req.Config)
 	if err != nil {
 		if err.Error() == "not_found: widget not found in dashboard" {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)

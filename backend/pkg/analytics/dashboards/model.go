@@ -71,3 +71,7 @@ type AddCardToDashboardRequest struct {
 	MetricIDs []int                  `json:"metric_ids" validate:"required,min=1,dive,gt=0"`
 	Config    map[string]interface{} `json:"config"` // Optional
 }
+
+type UpdateWidgetPositionRequest struct {
+	Config map[string]interface{} `json:"config" validate:"required"`
+}

@@ -19,6 +19,7 @@ type Dashboards interface {
 	Delete(projectId int, dashboardId int, userId uint64) error
 	AddCards(projectId int, dashboardId int, userId uint64, req *AddCardToDashboardRequest) error
 	DeleteCard(projectId int, dashboardId int, userId uint64, cardId int) error
+	UpdateWidgetPosition(projectId int, dashboardId int, userId uint64, widgetId int, config map[string]interface{}) error
 }
 
 type dashboardsImpl struct {
@@ -92,7 +93,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 					'metricOf', m.metric_of,
 					'metricValue', m.metric_value,
 					'series', s.series
-				)
+				) ORDER BY COALESCE((dw.config->>'position')::int, 999999) ASC
 			) FILTER (WHERE m.metric_id IS NOT NULL), '[]') AS metrics
 		FROM dashboards d
 		LEFT JOIN dashboard_widgets dw ON d.dashboard_id = dw.dashboard_id
@@ -366,6 +367,16 @@ func (s *dashboardsImpl) GetExistingWidgets(dashboardId int, metricIDs []int) (m
 	return existingWidgets, nil
 }
 
+func (s *dashboardsImpl) GetNextPosition(dashboardId int) (int, error) {
+	sql := `SELECT COALESCE(MAX((config->>'position')::int), 0) + 1 FROM public.dashboard_widgets WHERE dashboard_id = $1`
+	var nextPosition int
+	err := s.pgconn.QueryRow(sql, dashboardId).Scan(&nextPosition)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get next position: %w", err)
+	}
+	return nextPosition, nil
+}
+
 func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64, req *AddCardToDashboardRequest) error {
 	// Verify dashboard exists and user has access
 	_, err := s.Get(projectId, dashboardId, userId)
@@ -421,6 +432,12 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 		}
 	}()
 
+	// Get starting position for new widgets
+	startPosition, err := s.GetNextPosition(dashboardId)
+	if err != nil {
+		return fmt.Errorf("failed to get next position: %w", err)
+	}
+
 	// Bulk insert new widgets
 	if len(newMetricIDs) > 0 {
 
@@ -429,29 +446,37 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 		var values []string
 		var args []interface{}
 		argIndex := 1
+		currentPosition := startPosition
 
 		for _, metricID := range newMetricIDs {
 			// Use provided config or fall back to default config from metric
-			var configToUse json.RawMessage
+			var configMap map[string]interface{}
 			if req.Config != nil && len(req.Config) > 0 {
-				// Convert provided config to JSON
-				configJSON, err := json.Marshal(req.Config)
-				if err != nil {
-					return fmt.Errorf("failed to marshal provided config: %w", err)
-				}
-				configToUse = configJSON
+				configMap = req.Config
 			} else {
 				// Use default config from metrics table
-				configToUse = metricConfigMap[metricID]
-				// Ensure we have valid JSON even if default_config was NULL
-				if len(configToUse) == 0 {
-					configToUse = json.RawMessage("{}")
+				if len(metricConfigMap[metricID]) > 0 {
+					if err := json.Unmarshal(metricConfigMap[metricID], &configMap); err != nil {
+						configMap = make(map[string]interface{})
+					}
+				} else {
+					configMap = make(map[string]interface{})
 				}
 			}
 
+			// Add position to config
+			configMap["position"] = currentPosition
+
+			// Convert back to JSON
+			configJSON, err := json.Marshal(configMap)
+			if err != nil {
+				return fmt.Errorf("failed to marshal config: %w", err)
+			}
+
 			values = append(values, fmt.Sprintf("($%d, $%d, $%d, $%d)", argIndex, argIndex+1, argIndex+2, argIndex+3))
-			args = append(args, dashboardId, metricID, userId, configToUse)
+			args = append(args, dashboardId, metricID, userId, configJSON)
 			argIndex += 4
+			currentPosition++
 		}
 
 		finalQuery := query + strings.Join(values, ", ")
@@ -464,6 +489,46 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 	// Commit transaction
 	if err := tx.TxCommit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (s *dashboardsImpl) UpdateWidgetPosition(projectId int, dashboardId int, userId uint64, widgetId int, config map[string]interface{}) error {
+	// Verify dashboard exists and user has access
+	_, err := s.Get(projectId, dashboardId, userId)
+	if err != nil {
+		return fmt.Errorf("failed to get dashboard: %w", err)
+	}
+
+	// Check if the widget exists
+	var exists bool
+	checkSQL := `SELECT EXISTS (
+		SELECT 1 FROM public.dashboard_widgets
+		WHERE dashboard_id = $1 AND widget_id = $2
+	)`
+	err = s.pgconn.QueryRow(checkSQL, dashboardId, widgetId).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("failed to check widget existence: %w", err)
+	}
+
+	if !exists {
+		return errors.New("not_found: widget not found in dashboard")
+	}
+
+	// Convert config to JSON
+	configJSON, err := json.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("failed to marshal config: %w", err)
+	}
+
+	// Update widget config (position is already included in the config JSON)
+	updateSQL := `UPDATE public.dashboard_widgets SET config = $1 WHERE dashboard_id = $2 AND widget_id = $3`
+	args := []interface{}{configJSON, dashboardId, widgetId}
+
+	err = s.pgconn.Exec(updateSQL, args...)
+	if err != nil {
+		return fmt.Errorf("failed to update widget position: %w", err)
 	}
 
 	return nil
