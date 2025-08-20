@@ -15,13 +15,13 @@ import (
 
 type handlersImpl struct {
 	log       logger.Logger
-	responser *api.Responser
+	responser api.Responser
 	tokenizer *token.Tokenizer
 	sessions  sessions.Sessions
 	tags      tags.Tags
 }
 
-func NewHandlers(log logger.Logger, responser *api.Responser, tokenizer *token.Tokenizer, sessions sessions.Sessions, tags tags.Tags) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, responser api.Responser, tokenizer *token.Tokenizer, sessions sessions.Sessions, tags tags.Tags) (api.Handlers, error) {
 	return &handlersImpl{
 		log:       log,
 		responser: responser,

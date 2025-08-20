@@ -17,14 +17,14 @@ import (
 
 type handlersImpl struct {
 	log           logger.Logger
-	responser     *api.Responser
+	responser     api.Responser
 	jsonSizeLimit int64
 	tokenizer     *token.Tokenizer
 	sessions      sessions.Sessions
 	featureFlags  featureflags.FeatureFlags
 }
 
-func NewHandlers(log logger.Logger, responser *api.Responser, jsonSizeLimit int64, tokenizer *token.Tokenizer, sessions sessions.Sessions,
+func NewHandlers(log logger.Logger, responser api.Responser, jsonSizeLimit int64, tokenizer *token.Tokenizer, sessions sessions.Sessions,
 	featureFlags featureflags.FeatureFlags) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,

@@ -18,12 +18,12 @@ import (
 
 type handlersImpl struct {
 	log           logger.Logger
-	responser     *api.Responser
+	responser     api.Responser
 	integrations  service.Service
 	jsonSizeLimit int64
 }
 
-func NewHandlers(log logger.Logger, cfg *integrationsCfg.Config, responser *api.Responser, integrations service.Service) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *integrationsCfg.Config, responser api.Responser, integrations service.Service) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,

@@ -2,10 +2,11 @@ package tracer
 
 import (
 	"net/http"
-	"openreplay/backend/pkg/metrics/database"
 
 	db "openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/server/api"
 )
 
 type Tracer interface {
@@ -15,7 +16,7 @@ type Tracer interface {
 
 type tracerImpl struct{}
 
-func NewTracer(log logger.Logger, conn db.Pool, metrics database.Database) (Tracer, error) {
+func NewTracer(log logger.Logger, conn db.Pool, metrics database.Database, handlers []api.Handlers) (Tracer, error) {
 	return &tracerImpl{}, nil
 }
 

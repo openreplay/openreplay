@@ -40,12 +40,12 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	builder, err := services.New(log, cfg, webMetrics, dbMetric, producer, pgConn, redisClient)
+	services, err := services.New(log, cfg, webMetrics, dbMetric, producer, pgConn, redisClient)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating services: %s", err)
 	}
 
-	router, err := api.NewRouter(&cfg.HTTP, log, api.NoPrefix, builder)
+	router, err := api.NewRouter(log, &cfg.HTTP, api.NoPrefix, services.Handlers(), nil)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}

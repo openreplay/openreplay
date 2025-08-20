@@ -28,6 +28,7 @@ type Sessions interface {
 	UpdateMetadata(sessionID uint64, key, value string) error
 	UpdateEventsStats(sessionID uint64, events, pages int) error
 	Commit()
+	IsExists(sessionID uint64) (bool, error)
 }
 
 type sessionsImpl struct {
@@ -46,6 +47,10 @@ func New(log logger.Logger, db pool.Pool, proj projects.Projects, redis *redis.C
 		updates:  NewSessionUpdates(log, db, metrics),
 		projects: proj,
 	}
+}
+
+func (s *sessionsImpl) IsExists(sessionID uint64) (bool, error) {
+	return false, nil
 }
 
 // Add usage: /start endpoint in http service

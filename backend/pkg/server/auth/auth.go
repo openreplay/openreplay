@@ -2,40 +2,27 @@ package auth
 
 import (
 	"fmt"
-	"net/http"
+	"openreplay/backend/pkg/server/api"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/server/keys"
 	"openreplay/backend/pkg/server/user"
 )
 
-type Auth interface {
-	IsAuthorized(authHeader string, permissions []string, isExtension bool) (*user.User, error)
-	Middleware(next http.Handler) http.Handler
-}
-
 type authImpl struct {
-	log        logger.Logger
-	secret     string
-	spotSecret string
-	pgconn     pool.Pool
-	keys       keys.Keys
-	prefix     string
+	log    logger.Logger
+	secret string
+	users  user.Users
 }
 
-func NewAuth(log logger.Logger, jwtSecret, jwtSpotSecret string, conn pool.Pool, keys keys.Keys, prefix string) Auth {
+func NewAuth(log logger.Logger, jwtSecret string, users user.Users) (api.RouterMiddleware, error) {
 	return &authImpl{
-		log:        log,
-		secret:     jwtSecret,
-		spotSecret: jwtSpotSecret,
-		pgconn:     conn,
-		keys:       keys,
-		prefix:     prefix,
-	}
+		log:    log,
+		secret: jwtSecret,
+		users:  users,
+	}, nil
 }
 
 func parseJWT(authHeader, secret string) (*user.JWTClaims, error) {

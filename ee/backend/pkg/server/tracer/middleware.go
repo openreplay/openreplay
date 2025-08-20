@@ -45,24 +45,13 @@ func (t *tracerImpl) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-var routeMatch = map[string]string{
-	"POST" + "/spot/v1/spots":                  "createSpot",
-	"GET" + "/spot/v1/spots/{id}":              "getSpot",
-	"PATCH" + "/spot/v1/spots/{id}":            "updateSpot",
-	"GET" + "/spot/v1/spots":                   "getSpots",
-	"DELETE" + "/spot/v1/spots":                "deleteSpots",
-	"POST" + "/spot/v1/spots/{id}/comment":     "addComment",
-	"GET" + "/spot/v1/spots/{id}/video":        "getSpotVideo",
-	"PATCH" + "/spot/v1/spots/{id}/public-key": "updatePublicKey",
-}
-
 func (t *tracerImpl) logRequest(r *http.Request, bodyBytes []byte, statusCode int) {
 	pathTemplate, err := mux.CurrentRoute(r).GetPathTemplate()
 	if err != nil {
 		t.log.Error(r.Context(), "failed to get path template: %s", err)
 	}
 	t.log.Debug(r.Context(), "path template: %s", pathTemplate)
-	if _, ok := routeMatch[r.Method+pathTemplate]; !ok {
+	if _, ok := t.routeMatch[r.Method+pathTemplate]; !ok {
 		t.log.Debug(r.Context(), "no match for route: %s %s", r.Method, pathTemplate)
 		return
 	}
@@ -81,7 +70,7 @@ func (t *tracerImpl) logRequest(r *http.Request, bodyBytes []byte, statusCode in
 		t.log.Error(r.Context(), "failed to marshal query parameters: %s", err)
 	}
 	requestData := &RequestData{
-		Action:     routeMatch[r.Method+pathTemplate],
+		Action:     t.routeMatch[r.Method+pathTemplate],
 		Method:     r.Method,
 		PathFormat: pathTemplate,
 		Endpoint:   r.URL.Path,
@@ -91,6 +80,5 @@ func (t *tracerImpl) logRequest(r *http.Request, bodyBytes []byte, statusCode in
 	}
 	userData := r.Context().Value("userData").(*user.User)
 	t.trace(userData, requestData)
-	// DEBUG
 	t.log.Debug(r.Context(), "request data: %v", requestData)
 }

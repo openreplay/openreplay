@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"openreplay/backend/pkg/metrics/database"
 
 	"openreplay/backend/pkg/db/postgres"
 	db "openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/pool"
+	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/user"
 )
 
@@ -19,14 +20,15 @@ type Tracer interface {
 }
 
 type tracerImpl struct {
-	log     logger.Logger
-	conn    db.Pool
-	traces  postgres.Bulk
-	saver   pool.WorkerPool
-	metrics database.Database
+	log        logger.Logger
+	conn       db.Pool
+	traces     postgres.Bulk
+	saver      pool.WorkerPool
+	metrics    database.Database
+	routeMatch map[string]string
 }
 
-func NewTracer(log logger.Logger, conn db.Pool, metrics database.Database) (Tracer, error) {
+func NewTracer(log logger.Logger, conn db.Pool, metrics database.Database, handlers []api.Handlers) (Tracer, error) {
 	switch {
 	case log == nil:
 		return nil, errors.New("logger is required")
@@ -34,14 +36,20 @@ func NewTracer(log logger.Logger, conn db.Pool, metrics database.Database) (Trac
 		return nil, errors.New("connection is required")
 	}
 	tracer := &tracerImpl{
-		log:     log,
-		conn:    conn,
-		metrics: metrics,
+		log:        log,
+		conn:       conn,
+		metrics:    metrics,
+		routeMatch: make(map[string]string),
 	}
 	if err := tracer.initBulk(); err != nil {
 		return nil, err
 	}
 	tracer.saver = pool.NewPool(1, 200, tracer.sendTraces)
+	for _, subHandlers := range handlers {
+		for _, handler := range subHandlers.GetAll() {
+			tracer.routeMatch[handler.Method+handler.Path] = handler.AuditTrail
+		}
+	}
 	return tracer, nil
 }
 
