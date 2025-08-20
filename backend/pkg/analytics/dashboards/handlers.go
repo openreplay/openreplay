@@ -194,6 +194,24 @@ func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
 
 	currentUser := r.Context().Value("userData").(*user.User)
 	resp, err := e.dashboards.Update(projectID, dashboardID, currentUser.ID, req)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// If the request includes metrics, add them as cards to the dashboard
+	if len(req.Metrics) > 0 {
+		addCardsReq := &AddCardToDashboardRequest{
+			MetricIDs: req.Metrics,
+			Config:    map[string]interface{}{}, // Default empty config
+		}
+
+		err = e.dashboards.AddCards(projectID, dashboardID, currentUser.ID, addCardsReq)
+		if err != nil {
+			// Log the error but don't fail the entire update operation
+			e.log.Error(r.Context(), "Failed to add cards to dashboard during update", "error", err)
+		}
+	}
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
