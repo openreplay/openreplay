@@ -583,7 +583,13 @@ function WidgetChart(props: Props) {
       }
     }
     if (metricType === WEBVITALS) {
-      return <WebVitalsChart data={data} onFocus={onChartClick} />;
+      return (
+        <WebVitalsChart
+          inGrid={!props.isPreview}
+          data={data}
+          onFocus={onChartClick}
+        />
+      );
     }
     console.log('Unknown metric type', metricType);
     return <div>{t('Unknown metric type')}</div>;

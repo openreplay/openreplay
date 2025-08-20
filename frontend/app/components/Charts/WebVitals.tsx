@@ -54,9 +54,11 @@ const defaults = {
 function WebVitals({
   data,
   onFocus,
+  inGrid,
 }: {
   data?: Partial<WVData> | null;
   onFocus?: (filters: any[]) => void;
+  inGrid?: boolean;
 }) {
   const [selectedCard, setSelectedCard] = React.useState<string | null>(null);
   const [mode, setMode] = React.useState<'P50' | 'P75' | 'Min' | 'Avg' | 'Max'>(
@@ -174,42 +176,46 @@ function WebVitals({
   };
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className="font-semibold">Web Vitals</div>
-          {selectedCard ? (
-            <div
-              className={cn(
-                'cursor-pointer text-sm text-black opacity-60',
-                'flex items-center gap-1 hover:opacity-100',
-              )}
-              onClick={() => onMetricClick(null, 'good')}
-            >
-              <div>
-                {metrics.find((m) => m.metricKey === selectedCard)
-                  ?.description ?? 'unknown metric'}
+      {inGrid ? (
+        <div className="mt-2" />
+      ) : (
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="font-semibold">Web Vitals</div>
+            {selectedCard ? (
+              <div
+                className={cn(
+                  'cursor-pointer text-sm text-black opacity-60',
+                  'flex items-center gap-1 hover:opacity-100',
+                )}
+                onClick={() => onMetricClick(null, 'good')}
+              >
+                <div>
+                  {metrics.find((m) => m.metricKey === selectedCard)
+                    ?.description ?? 'unknown metric'}
+                </div>
+                <X size={12} />
               </div>
-              <X size={12} />
-            </div>
-          ) : null}
+            ) : null}
+          </div>
+          <div>
+            <Select
+              value={mode}
+              popupMatchSelectWidth={false}
+              onChange={(value) => setMode(value)}
+              options={[
+                { label: 'Median', value: 'P50' },
+                { label: '75th percentile', value: 'P75' },
+                { label: '90th percentile', value: 'P90' },
+                { label: 'Avg', value: 'Avg' },
+                { label: 'Min', value: 'Min' },
+                { label: 'Max', value: 'Max' },
+              ]}
+            />
+          </div>
         </div>
-        <div>
-          <Select
-            value={mode}
-            popupMatchSelectWidth={false}
-            onChange={(value) => setMode(value)}
-            options={[
-              { label: 'Median', value: 'P50' },
-              { label: '75th percentile', value: 'P75' },
-              { label: '90th percentile', value: 'P90' },
-              { label: 'Avg', value: 'Avg' },
-              { label: 'Min', value: 'Min' },
-              { label: 'Max', value: 'Max' },
-            ]}
-          />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
+      )}
+      <div className={'grid grid-cols-2 gap-4'}>
         {metrics.map((metric) => (
           <WebVitalsCard
             key={metric.name}
@@ -220,6 +226,7 @@ function WebVitals({
             status={metric.status}
             isSelected={selectedCard === metric.metricKey}
             onClick={onMetricClick}
+            inGrid={inGrid}
           />
         ))}
       </div>
@@ -241,6 +248,7 @@ function WebVitalsCard({
   onClick,
   metricKey,
   isSelected,
+  inGrid = false,
 }: {
   name: string;
   value: number;
@@ -249,6 +257,7 @@ function WebVitalsCard({
   status: 'good' | 'medium' | 'bad';
   onClick: (metricName: string, status: 'good' | 'medium' | 'bad') => void;
   isSelected: boolean;
+  inGrid?: boolean;
 }) {
   const bg = colors[status] ?? '#cccccc';
   const valueFormatted = value
@@ -259,7 +268,8 @@ function WebVitalsCard({
   return (
     <div
       className={cn(
-        'flex justify-between items-start gap-2 p-4 border rounded-lg shadow-sm',
+        'flex justify-between items-start gap-2 border rounded-lg shadow-sm',
+        inGrid ? 'p-2' : 'p-4',
         `bg-${bg} cursor-pointer`,
         isSelected ? 'border-main' : 'border-transparent',
       )}
