@@ -167,7 +167,7 @@ spec:
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
             valueFrom:
-              secretKeyRef: {{- include "openreplay.pg_password" . | nindent 16 }}
+              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgres-password" "ctx" .) | nindent 16 }}
         command:
           - /bin/bash
           - -c
@@ -215,7 +215,7 @@ spec:
             value: "{{.Values.global.clickhouse.username}}"
           - name: CH_PASSWORD
             valueFrom:
-              secretKeyRef: {{- include "openreplay.ch_password" . | nindent 16 }}
+              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "clickhouse-password" "ctx" .) | nindent 16 }}
         command:
           - /bin/bash
           - -c
@@ -277,7 +277,7 @@ spec:
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
             valueFrom:
-              secretKeyRef: {{- include "openreplay.pg_password" . | nindent 16 }}
+              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgres-password" "ctx" .) | nindent 16 }}
           {{- range $key, $val := .Values.migration.env }}
           - name: {{ $key }}
             value: '{{ $val }}'
@@ -324,23 +324,11 @@ spec:
           - name: CHART_APP_VERSION
             value: "{{ .Chart.AppVersion }}"
           - name: MINIO_ACCESS_KEY
-            {{- if .Values.global.s3.existingSecret }}
             valueFrom:
-              secretKeyRef:
-                name: {{ .Values.global.s3.existingSecret }}
-                key: access-key
-            {{- else }}
-            value: {{ .Values.global.s3.accessKey }}
-            {{- end }}
+              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "access-key" "ctx" .) | nindent 16 }}
           - name: MINIO_SECRET_KEY
-            {{- if .Values.global.s3.existingSecret }}
             valueFrom:
-              secretKeyRef:
-                name: {{ .Values.global.s3.existingSecret }}
-                key: secret-key
-            {{- else }}
-            value: {{ .Values.global.s3.secretKey }}
-            {{- end }}
+              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "secret-key" "ctx" .) | nindent 16 }}
           - name: MINIO_HOST
             value: "{{ .Values.global.s3.endpoint }}"
         command: 
@@ -379,7 +367,7 @@ spec:
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
             valueFrom:
-              secretKeyRef: {{- include "openreplay.pg_password" . | nindent 16 }}
+              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgres-password" "ctx" .) | nindent 16 }}
           - name: VAULT_ADDR
             value: "{{ .Values.global.vault.vaultHost }}"
         image: hashicorp/vault:1.12.0
@@ -517,7 +505,7 @@ spec:
             value: "{{.Values.global.clickhouse.username}}"
           - name: CH_PASSWORD
             valueFrom:
-              secretKeyRef: {{- include "openreplay.ch_password" . | nindent 16 }}
+              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "clickhouse-password" "ctx" .) | nindent 16 }}
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh

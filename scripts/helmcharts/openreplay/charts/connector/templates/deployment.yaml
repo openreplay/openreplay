@@ -49,7 +49,7 @@ spec:
             {{- end}}
             - name: pg_password
               valueFrom:
-                secretKeyRef: {{- include "openreplay.pg_password" . | nindent 18 }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgres-password" "ctx" .) | nindent 18 }}
             - name: POSTGRES_STRING
               value: {{ include "openreplay.pg_connection_string" .}}
             - name: KAFKA_SERVERS
@@ -59,23 +59,11 @@ spec:
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
             - name: AWS_ACCESS_KEY_ID
-              {{- if .Values.global.s3.existingSecret }}
               valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.s3.existingSecret }}
-                  key: access-key
-              {{- else }}
-              value: {{ .Values.global.s3.accessKey }}
-              {{- end }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "access-key" "ctx" .) | nindent 18 }}
             - name: AWS_SECRET_ACCESS_KEY
-              {{- if .Values.global.s3.existingSecret }}
               valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.s3.existingSecret }}
-                  key: secret-key
-              {{- else }}
-              value: {{ .Values.global.s3.secretKey }}
-              {{- end }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "secret-key" "ctx" .) | nindent 18 }}
             - name: AWS_ENDPOINT
               value: '{{- include "openreplay.s3Endpoint" . }}'
             - name: AWS_REGION

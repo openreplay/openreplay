@@ -177,7 +177,7 @@ Create the volume mount config for redis TLS certificates
 {{- include "openreplay.app_secrets" (dict "key" "secret-key" "ctx" .) | nindent 4 }}
 {{- include "openreplay.app_secrets" (dict "key" "assist-key" "ctx" .) | nindent 4 }}
 */ -}}
-{{- define "openreplay.or_secrets" -}}
+{{- define "openreplay.secrets" -}}
 {{- $secretName := "" -}}
 {{- $secretKey := .key -}}
 {{- if or (eq $secretKey "postgres-password") -}}

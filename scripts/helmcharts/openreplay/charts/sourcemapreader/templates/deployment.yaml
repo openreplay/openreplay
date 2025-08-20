@@ -55,10 +55,10 @@ spec:
               value: {{ .Values.global.s3.endpoint }}
             - name: S3_KEY
               valueFrom:
-                secretKeyRef: {{- include "openreplay." (dict "key" "access-key" "ctx" . )| nindent 18 }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "access-key" "ctx" . )| nindent 18 }}
             - name: S3_SECRET
               valueFrom:
-                secretKeyRef: {{- include "openreplay." (dict "key" "secret-key" "ctx" . )| nindent 18 }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "secret-key" "ctx" . )| nindent 18 }}
             - name: AWS_REGION
               value: '{{ .Values.global.s3.region }}'
             - name: LICENSE_KEY
