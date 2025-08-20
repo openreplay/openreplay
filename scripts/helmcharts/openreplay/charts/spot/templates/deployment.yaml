@@ -52,23 +52,11 @@ spec:
               value: '{{ $val }}'
             {{- end }}
             - name: AWS_ACCESS_KEY_ID
-              {{- if .Values.global.s3.existingSecret }}
               valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.s3.existingSecret }}
-                  key: access-key
-              {{- else }}
-              value: {{ .Values.global.s3.accessKey }}
-              {{- end }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "access-key" "ctx" .) | nindent 18 }}
             - name: AWS_SECRET_ACCESS_KEY
-              {{- if .Values.global.s3.existingSecret }}
               valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.s3.existingSecret }}
-                  key: secret-key
-              {{- else }}
-              value: {{ .Values.global.s3.secretKey }}
-              {{- end }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "secret-key" "ctx" .) | nindent 18 }}
             - name: BUCKET_NAME
               value: '{{ .Values.global.s3.spotsBucket }}'
             - name: AWS_REGION
@@ -83,13 +71,13 @@ spec:
               value: '{{ .Values.global.kafka.kafkaUseSsl }}'
             - name: JWT_SECRET
               valueFrom:
-                secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "jwt-secret" "ctx" .) | nindent 18 }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "jwt-secret" "ctx" .) | nindent 18 }}
             - name: JWT_SPOT_SECRET
               valueFrom:
-                secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "jwt-spot-secret" "ctx" .) | nindent 18 }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "jwt-spot-secret" "ctx" .) | nindent 18 }}
             - name: pg_password
               valueFrom:
-                secretKeyRef: {{- include "openreplay.pg_password" . | nindent 18 }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgres-password" "ctx" .) | nindent 18 }}
             - name: POSTGRES_STRING
               value: {{ include "openreplay.pg_connection_string" .}}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}

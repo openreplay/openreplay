@@ -45,10 +45,10 @@ spec:
           env:
             - name: ASSIST_JWT_SECRET
               valueFrom:
-                secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "assist-jwt-secret" "ctx" .) | nindent 18 }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "assist-jwt-secret" "ctx" .) | nindent 18 }}
             - name: ASSIST_KEY
               valueFrom:
-                secretKeyRef: {{- include "openreplay.app_secrets" (dict "key" "assist-key" "ctx" .) | nindent 18 }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "assist-key" "ctx" .) | nindent 18 }}
             - name: AWS_DEFAULT_REGION
               value: "{{ .Values.global.s3.region }}"
             - name: REDIS_URL

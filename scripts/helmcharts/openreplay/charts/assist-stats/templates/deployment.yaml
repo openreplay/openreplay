@@ -55,14 +55,8 @@ spec:
             - name: pg_user
               value: '{{ .Values.global.postgresql.postgresqlUser }}'
             - name: pg_password
-              {{- if .Values.global.postgresql.existingSecret }}
               valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.postgresql.existingSecret }}
-                  key: postgresql-postgres-password
-              {{- else }}
-              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
-              {{- end}}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgres-password" "ctx" .) | nindent 18 }}
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
