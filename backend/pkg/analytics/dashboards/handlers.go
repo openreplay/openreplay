@@ -140,7 +140,7 @@ func (e *handlersImpl) getDashboard(w http.ResponseWriter, r *http.Request) {
 		if err.Error() == "not_found: dashboard not found" {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else if err.Error() == "access_denied: user does not have access" {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		}
@@ -180,7 +180,7 @@ func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		if err.Error() == "not_found: dashboard not found" {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else if err.Error() == "access_denied: user does not have access" {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		}
@@ -240,7 +240,7 @@ func (e *handlersImpl) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 		if err.Error() == "not_found: dashboard not found" {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else if err.Error() == "access_denied: user does not have access" {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		}
@@ -308,7 +308,7 @@ func (e *handlersImpl) addCardToDashboard(w http.ResponseWriter, r *http.Request
 		if err.Error() == "not_found: dashboard not found" {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else if err.Error() == "access_denied: user does not have access" {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		}
@@ -349,7 +349,7 @@ func (e *handlersImpl) removeCardFromDashboard(w http.ResponseWriter, r *http.Re
 		} else if err.Error() == "not_found: dashboard not found" {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else if err.Error() == "access_denied: user does not have access" {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		}
@@ -408,7 +408,7 @@ func (e *handlersImpl) updateWidgetPosition(w http.ResponseWriter, r *http.Reque
 		} else if err.Error() == "not_found: dashboard not found" {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else if err.Error() == "access_denied: user does not have access" {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		}

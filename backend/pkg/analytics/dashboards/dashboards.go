@@ -220,6 +220,12 @@ func (s *dashboardsImpl) GetAllPaginated(projectId int, userID uint64, req *GetD
 }
 
 func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, req *UpdateDashboardRequest) (*GetDashboardResponse, error) {
+	// First check if the dashboard exists and user has access
+	_, err := s.Get(projectId, dashboardID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get dashboard: %w", err)
+	}
+
 	sql := `
 		UPDATE dashboards
 		SET name = $1, description = $2, is_public = $3, is_pinned = $4
@@ -227,7 +233,7 @@ func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, r
 		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned, created_at`
 
 	dashboard := &GetDashboardResponse{}
-	err := s.pgconn.QueryRow(sql, req.Name, req.Description, req.IsPublic, req.IsPinned, dashboardID, projectId).Scan(
+	err = s.pgconn.QueryRow(sql, req.Name, req.Description, req.IsPublic, req.IsPinned, dashboardID, projectId).Scan(
 		&dashboard.DashboardID,
 		&dashboard.ProjectID,
 		&dashboard.UserID,
