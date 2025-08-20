@@ -247,7 +247,7 @@ async function onAny(socket, eventName, ...args) {
             sendTo(socket.id, EVENTS_DEFINITION.emit.NO_SESSIONS);
         } else {
             logger.debug("message sent");
-            sendTo(socket.id, eventName, socket.id, args[0]);
+            sendTo(socketId, eventName, socket.id, args[0]);
         }
     }
 }
