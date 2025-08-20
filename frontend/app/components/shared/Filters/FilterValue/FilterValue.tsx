@@ -14,11 +14,13 @@ interface Props {
   onUpdate: (filter: any) => void;
   isConditional?: boolean;
   eventName?: string;
+  isLast?: boolean;
 }
 
 function FilterValue(props: Props) {
-  const { filter, onUpdate, isConditional, eventName = '' } = props;
-  const isAutoOpen = filter.autoOpen;
+  const { filter, onUpdate, isConditional, eventName = '', isLast } = props;
+  const isAutoOpen =
+    isLast && (!filter.value?.length || filter.value?.[0] === '');
   const { searchStore } = useStore();
 
   const [durationValues, setDurationValues] = useState(() => ({

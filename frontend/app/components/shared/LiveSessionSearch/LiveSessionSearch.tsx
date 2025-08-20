@@ -45,7 +45,6 @@ function LiveSessionSearch() {
   }, [projectsStore.activeSiteId]);
 
   const onAddFilter = (filter: any) => {
-    filter.autoOpen = true;
     searchStoreLive.addFilter(filter);
   };
 

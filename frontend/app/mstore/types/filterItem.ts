@@ -56,6 +56,7 @@ export default class FilterItem implements IFilter {
   defaultProperty?: boolean = false;
 
   constructor(data: IFilter = {}) {
+    console.log('data', data);
     makeAutoObservable(this);
     this.initializeFromData(data);
   }

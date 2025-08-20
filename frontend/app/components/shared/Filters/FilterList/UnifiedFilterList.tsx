@@ -242,6 +242,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
             }
             // Pass down if this is the first item for potential styling (e.g., no 'and'/'or' toggle)
             isFirst={filterIndex === 0}
+            isLast={filterIndex === filters.length - 1}
           />
         </div>
       ))}

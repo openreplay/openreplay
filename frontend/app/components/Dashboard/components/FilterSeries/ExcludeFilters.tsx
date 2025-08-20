@@ -60,6 +60,7 @@ function ExcludeFilters(props: Props) {
               // saveRequestPayloads={saveRequestPayloads}
               disableDelete={false}
               // excludeFilterKeys={excludeFilterKeys}
+              isLast={index === metric.excludes.length - 1}
             />
           ))}
         </div>

@@ -287,13 +287,14 @@ function FilterModal({
             </div>
             <div className="flex-grow min-w-0 h-full">
               <VList style={{ height: 300 }}>
-                {displayedFilters.map((filter) => (
+                {displayedFilters.map((filter, i) => (
                   <FilterItem
                     key={filter.id || filter.name}
                     filter={filter}
                     disabled={activeFilters?.includes(filter.name)}
                     onClick={handleFilterClick}
                     showCategory
+                    isLast={i === displayedFilters.length - 1}
                   />
                 ))}
               </VList>

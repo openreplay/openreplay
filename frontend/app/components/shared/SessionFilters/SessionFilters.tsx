@@ -38,7 +38,7 @@ function SessionFilters() {
   };
 
   const onAddFilter = (filter: Filter) => {
-    searchStore.addFilter({ ...filter, autoOpen: true });
+    searchStore.addFilter(filter);
     void searchStore.fetchSessions();
   };
 

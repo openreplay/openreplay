@@ -101,6 +101,7 @@ export const FilterList = observer((props: Props) => {
               onRemoveFilter={() => onRemoveFilter(filterIndex)}
               excludeFilterKeys={excludeFilterKeys}
               isConditional={isConditional}
+              isLast={filterIndex === filters.length - 1}
             />
           </div>
         ) : null,
@@ -329,6 +330,7 @@ export const EventsList = observer((props: Props) => {
                 readonly={props.readonly}
                 isConditional={isConditional}
                 // excludeCategory={excludeCategory}
+                isLast={filterIndex === filters.length - 1}
               />
             </div>
           ) : null,

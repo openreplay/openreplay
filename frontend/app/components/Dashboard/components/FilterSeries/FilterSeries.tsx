@@ -183,7 +183,6 @@ function FilterSeries(props: Props) {
   };
 
   const onAddFilter = (filter: Filter) => {
-    filter.autoOpen = true;
     filter.filters = [];
     series.filter.addFilter(filter);
     observeChanges();
