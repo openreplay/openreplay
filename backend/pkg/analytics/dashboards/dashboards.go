@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
@@ -17,7 +18,7 @@ type Dashboards interface {
 	Update(projectId int, dashboardId int, userId uint64, req *UpdateDashboardRequest) (*GetDashboardResponse, error)
 	Delete(projectId int, dashboardId int, userId uint64) error
 	AddCards(projectId int, dashboardId int, userId uint64, req *AddCardToDashboardRequest) error
-	DeleteCard(dashboardId int, cardId int) error
+	DeleteCard(projectId int, dashboardId int, userId uint64, cardId int) error
 }
 
 type dashboardsImpl struct {
@@ -81,6 +82,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 			d.created_at,
 			COALESCE(json_agg(
 				json_build_object(
+					'widgetId', dw.widget_id,
 					'config', dw.config,
 					'metricId', m.metric_id,
 					'name', m.name,
@@ -305,82 +307,158 @@ func getOrder(order string) string {
 	return "ASC"
 }
 
-func (s *dashboardsImpl) CardsExist(projectId int, cardIDs []int) (bool, error) {
+type MetricWithConfig struct {
+	MetricID      int             `json:"metric_id"`
+	DefaultConfig json.RawMessage `json:"default_config"`
+}
+
+func (s *dashboardsImpl) GetMetricsWithConfig(projectId int, metricIDs []int) ([]MetricWithConfig, error) {
 	sql := `
-		SELECT COUNT(*) FROM public.metrics
+		SELECT metric_id, COALESCE(default_config, '{}') as default_config
+		FROM public.metrics
 		WHERE project_id = $1 AND metric_id = ANY($2)
 	`
-	var count int
-	err := s.pgconn.QueryRow(sql, projectId, cardIDs).Scan(&count)
+	rows, err := s.pgconn.Query(sql, projectId, metricIDs)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return count == len(cardIDs), nil
+	defer rows.Close()
+
+	var metrics []MetricWithConfig
+	for rows.Next() {
+		var metric MetricWithConfig
+		err := rows.Scan(&metric.MetricID, &metric.DefaultConfig)
+		if err != nil {
+			return nil, err
+		}
+		metrics = append(metrics, metric)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return metrics, nil
+}
+
+func (s *dashboardsImpl) GetExistingWidgets(dashboardId int, metricIDs []int) (map[int]bool, error) {
+	sql := `
+		SELECT metric_id
+		FROM public.dashboard_widgets
+		WHERE dashboard_id = $1 AND metric_id = ANY($2)
+	`
+	rows, err := s.pgconn.Query(sql, dashboardId, metricIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	existingWidgets := make(map[int]bool)
+	for rows.Next() {
+		var metricID int
+		err := rows.Scan(&metricID)
+		if err != nil {
+			return nil, err
+		}
+		existingWidgets[metricID] = true
+	}
+
+	return existingWidgets, nil
 }
 
 func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64, req *AddCardToDashboardRequest) error {
+	// Verify dashboard exists and user has access
 	_, err := s.Get(projectId, dashboardId, userId)
 	if err != nil {
 		return fmt.Errorf("failed to get dashboard: %w", err)
 	}
 
-	// Check if all cards exist
-	exists, err := s.CardsExist(projectId, req.MetricIDs)
+	// Get all metrics with their default config in bulk
+	metrics, err := s.GetMetricsWithConfig(projectId, req.MetricIDs)
 	if err != nil {
-		return fmt.Errorf("failed to check card existence: %w", err)
+		return fmt.Errorf("failed to get metrics: %w", err)
 	}
 
-	if !exists {
+	// Check if all requested metrics exist
+	if len(metrics) != len(req.MetricIDs) {
 		return errors.New("not_found: one or more cards do not exist")
 	}
 
-	// Begin a transaction
-	tx, err := s.pgconn.Begin() // Start transaction
+	// Create a map for quick lookup of metrics with their config
+	metricConfigMap := make(map[int]json.RawMessage)
+	for _, metric := range metrics {
+		metricConfigMap[metric.MetricID] = metric.DefaultConfig
+	}
+
+	// Check existing widgets in bulk
+	existingWidgets, err := s.GetExistingWidgets(dashboardId, req.MetricIDs)
+	if err != nil {
+		return fmt.Errorf("failed to check existing widgets: %w", err)
+	}
+
+	// Filter out metrics that already have widgets
+	var newMetricIDs []int
+	for _, metricID := range req.MetricIDs {
+		if !existingWidgets[metricID] {
+			newMetricIDs = append(newMetricIDs, metricID)
+		}
+	}
+
+	// If no new widgets to insert, return early
+	if len(newMetricIDs) == 0 {
+		return nil
+	}
+
+	// Begin transaction for bulk insert
+	tx, err := s.pgconn.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
 
 	defer func() {
 		if err != nil {
-			err := tx.TxRollback()
-			if err != nil {
-				return
-			}
-		} else {
-			err := tx.TxCommit()
-			if err != nil {
-				return
-			}
+			tx.TxRollback()
 		}
 	}()
 
-	// Insert metrics into dashboard_widgets
-	insertedWidgets := 0
-	for _, metricID := range req.MetricIDs {
-		// Check if the widget already exists
-		var exists bool
-		err := tx.TxQueryRow(`
-			SELECT EXISTS (
-				SELECT 1 FROM public.dashboard_widgets
-				WHERE dashboard_id = $1 AND metric_id = $2
-			)
-		`, dashboardId, metricID).Scan(&exists)
-		if err != nil {
-			return fmt.Errorf("failed to check existing widget: %w", err)
+	// Bulk insert new widgets
+	if len(newMetricIDs) > 0 {
+
+		// Build bulk insert query
+		query := `INSERT INTO public.dashboard_widgets (dashboard_id, metric_id, user_id, config) VALUES `
+		var values []string
+		var args []interface{}
+		argIndex := 1
+
+		for _, metricID := range newMetricIDs {
+			// Use provided config or fall back to default config from metric
+			var configToUse json.RawMessage
+			if req.Config != nil && len(req.Config) > 0 {
+				// Convert provided config to JSON
+				configJSON, err := json.Marshal(req.Config)
+				if err != nil {
+					return fmt.Errorf("failed to marshal provided config: %w", err)
+				}
+				configToUse = configJSON
+			} else {
+				// Use default config from metrics table
+				configToUse = metricConfigMap[metricID]
+				// Ensure we have valid JSON even if default_config was NULL
+				if len(configToUse) == 0 {
+					configToUse = json.RawMessage("{}")
+				}
+			}
+
+			values = append(values, fmt.Sprintf("($%d, $%d, $%d, $%d)", argIndex, argIndex+1, argIndex+2, argIndex+3))
+			args = append(args, dashboardId, metricID, userId, configToUse)
+			argIndex += 4
 		}
 
-		if exists {
-			continue // Skip duplicates
-		}
-
-		// Insert new widget
-		query := `INSERT INTO public.dashboard_widgets (dashboard_id, metric_id, user_id, config)
-			VALUES ($1, $2, $3, $4)`
-		err = tx.TxExec(query, dashboardId, metricID, userId, req.Config)
+		finalQuery := query + strings.Join(values, ", ")
+		err = tx.TxExec(finalQuery, args...)
 		if err != nil {
-			return fmt.Errorf("failed to insert widget: %w", err)
+			return fmt.Errorf("failed to bulk insert widgets: %w", err)
 		}
-		insertedWidgets++
 	}
 
 	// Commit transaction
@@ -391,9 +469,31 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 	return nil
 }
 
-func (s *dashboardsImpl) DeleteCard(dashboardId int, cardId int) error {
-	sql := `DELETE FROM public.dashboard_widgets WHERE dashboard_id = $1 AND metric_id = $2`
-	err := s.pgconn.Exec(sql, dashboardId, cardId)
+func (s *dashboardsImpl) DeleteCard(projectId int, dashboardId int, userId uint64, cardId int) error {
+	// Verify dashboard exists and user has access
+	_, err := s.Get(projectId, dashboardId, userId)
+	if err != nil {
+		return fmt.Errorf("failed to get dashboard: %w", err)
+	}
+
+	// Check if the widget exists before deletion
+	var exists bool
+	checkSQL := `SELECT EXISTS (
+		SELECT 1 FROM public.dashboard_widgets
+		WHERE dashboard_id = $1 AND widget_id = $2
+	)`
+	err = s.pgconn.QueryRow(checkSQL, dashboardId, cardId).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("failed to check widget existence: %w", err)
+	}
+
+	if !exists {
+		return errors.New("not_found: widget not found in dashboard")
+	}
+
+	// Delete the widget
+	deleteSQL := `DELETE FROM public.dashboard_widgets WHERE dashboard_id = $1 AND widget_id = $2`
+	err = s.pgconn.Exec(deleteSQL, dashboardId, cardId)
 	if err != nil {
 		return fmt.Errorf("failed to delete card from dashboard: %w", err)
 	}

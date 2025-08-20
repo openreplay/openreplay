@@ -3,8 +3,9 @@ package api
 import (
 	"net/http"
 
-	ctxStore "github.com/docker/distribution/context"
 	"openreplay/backend/internal/http/util"
+
+	ctxStore "github.com/docker/distribution/context"
 )
 
 func (e *routerImpl) health(w http.ResponseWriter, r *http.Request) {

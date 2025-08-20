@@ -11,6 +11,7 @@ import (
 
 // CardBase Common fields for the Card entity
 type CardBase struct {
+	WidgetId      *int64         `json:"widgetId,omitempty" validate:"omitempty"`
 	MetricId      int64          `json:"metricId" validate:"omitempty"`
 	Name          string         `json:"name" validate:"required"`
 	IsPublic      bool           `json:"isPublic" validate:"omitempty"`

@@ -34,7 +34,7 @@ func (b *serviceBuilder) Middlewares() []api.RouterMiddleware {
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.chartsAPI, b.cardsAPI, b.dashboardsAPI, b.searchAPI}
+	return []api.Handlers{b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI}
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chConn driver.Conn) (api.ServiceBuilder, error) {
