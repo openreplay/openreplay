@@ -52,6 +52,14 @@ function DashboardWidgetGrid(props: Props) {
   );
 }
 
+// Map col values to Tailwind classes to prevent purging
+const colSpanMap: { [key: number]: string } = {
+  1: 'lg:col-span-1',
+  2: 'lg:col-span-2',
+  3: 'lg:col-span-3',
+  4: 'lg:col-span-4',
+};
+
 function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
   const { t } = useTranslation();
   const [popoverOpen, setPopoverOpen] = React.useState(false);
@@ -63,7 +71,8 @@ function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
     <div
       key={item.widgetId}
       className={cn(
-        `col-span-4 lg:col-span-${item.config.col}`,
+        'col-span-4',
+        colSpanMap[item.config.col] || 'lg:col-span-4',
         'group relative md:p-2 hover:bg-active-blue w-full rounded-xl',
       )}
     >
