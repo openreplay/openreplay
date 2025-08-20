@@ -1,6 +1,9 @@
 package dashboards
 
-import "openreplay/backend/pkg/analytics/cards"
+import (
+	"openreplay/backend/pkg/analytics/cards"
+	"time"
+)
 
 type Dashboard struct {
 	DashboardID int              `json:"dashboardId"`
@@ -12,6 +15,7 @@ type Dashboard struct {
 	IsPinned    bool             `json:"isPinned"`
 	OwnerEmail  string           `json:"ownerEmail"`
 	OwnerName   string           `json:"ownerName"`
+	CreatedAt   time.Time        `json:"createdAt"`
 	Metrics     []cards.CardBase `json:"widgets"`
 }
 

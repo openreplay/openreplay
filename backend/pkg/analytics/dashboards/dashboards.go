@@ -36,7 +36,7 @@ func (s *dashboardsImpl) Create(projectId int, userID uint64, req *CreateDashboa
 	sql := `
 		INSERT INTO dashboards (project_id, user_id, name, description, is_public, is_pinned)
 		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned`
+		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned, created_at`
 
 	dashboard := &GetDashboardResponse{}
 	err := s.pgconn.QueryRow(sql, projectId, userID, req.Name, req.Description, req.IsPublic, req.IsPinned).Scan(
@@ -47,6 +47,7 @@ func (s *dashboardsImpl) Create(projectId int, userID uint64, req *CreateDashboa
 		&dashboard.Description,
 		&dashboard.IsPublic,
 		&dashboard.IsPinned,
+		&dashboard.CreatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dashboard: %w", err)
@@ -57,7 +58,7 @@ func (s *dashboardsImpl) Create(projectId int, userID uint64, req *CreateDashboa
 func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*GetDashboardResponse, error) {
 	sql := `
 		WITH series_agg AS (
-			SELECT 
+			SELECT
 				ms.metric_id,
 				json_agg(
 					json_build_object(
@@ -69,14 +70,15 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 			FROM metric_series ms
 			GROUP BY ms.metric_id
 		)
-		SELECT 
-			d.dashboard_id, 
-			d.project_id, 
-			d.name, 
-			d.description, 
-			d.is_public, 
-			d.is_pinned, 
+		SELECT
+			d.dashboard_id,
+			d.project_id,
+			d.name,
+			d.description,
+			d.is_public,
+			d.is_pinned,
 			d.user_id,
+			d.created_at,
 			COALESCE(json_agg(
 				json_build_object(
 					'config', dw.config,
@@ -95,7 +97,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 		LEFT JOIN metrics m ON dw.metric_id = m.metric_id
 		LEFT JOIN series_agg s ON m.metric_id = s.metric_id
 		WHERE d.dashboard_id = $1 AND d.project_id = $2 AND d.deleted_at IS NULL
-		GROUP BY d.dashboard_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, d.user_id`
+		GROUP BY d.dashboard_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, d.user_id, d.created_at`
 
 	dashboard := &GetDashboardResponse{}
 	var ownerID int
@@ -109,6 +111,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 		&dashboard.IsPublic,
 		&dashboard.IsPinned,
 		&ownerID,
+		&dashboard.CreatedAt,
 		&metricsJSON,
 	)
 
@@ -132,7 +135,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 
 func (s *dashboardsImpl) GetAll(projectId int, userID uint64) (*GetDashboardsResponse, error) {
 	sql := `
-		SELECT d.dashboard_id, d.user_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, u.email AS owner_email, u.name AS owner_name
+		SELECT d.dashboard_id, d.user_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, u.email AS owner_email, u.name AS owner_name, d.created_at
 		FROM dashboards d
 		LEFT JOIN users u ON d.user_id = u.user_id
 		WHERE (d.is_public = true OR d.user_id = $1) AND d.user_id IS NOT NULL AND d.deleted_at IS NULL AND d.project_id = $2
@@ -147,7 +150,7 @@ func (s *dashboardsImpl) GetAll(projectId int, userID uint64) (*GetDashboardsRes
 	for rows.Next() {
 		var dashboard Dashboard
 
-		err := rows.Scan(&dashboard.DashboardID, &dashboard.UserID, &dashboard.ProjectID, &dashboard.Name, &dashboard.Description, &dashboard.IsPublic, &dashboard.IsPinned, &dashboard.OwnerEmail, &dashboard.OwnerName)
+		err := rows.Scan(&dashboard.DashboardID, &dashboard.UserID, &dashboard.ProjectID, &dashboard.Name, &dashboard.Description, &dashboard.IsPublic, &dashboard.IsPinned, &dashboard.OwnerEmail, &dashboard.OwnerName, &dashboard.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -199,6 +202,7 @@ func (s *dashboardsImpl) GetAllPaginated(projectId int, userID uint64, req *GetD
 			&dashboard.IsPinned,
 			&dashboard.OwnerEmail,
 			&dashboard.OwnerName,
+			&dashboard.CreatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning dashboard: %w", err)
@@ -217,7 +221,7 @@ func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, r
 		UPDATE dashboards
 		SET name = $1, description = $2, is_public = $3, is_pinned = $4
 		WHERE dashboard_id = $5 AND project_id = $6 AND user_id = $7 AND deleted_at IS NULL
-		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned`
+		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned, created_at`
 
 	dashboard := &GetDashboardResponse{}
 	err := s.pgconn.QueryRow(sql, req.Name, req.Description, req.IsPublic, req.IsPinned, dashboardID, projectId, userID).Scan(
@@ -228,6 +232,7 @@ func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, r
 		&dashboard.Description,
 		&dashboard.IsPublic,
 		&dashboard.IsPinned,
+		&dashboard.CreatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error updating dashboard: %w", err)
@@ -273,8 +278,8 @@ func buildBaseQuery(projectId int, userID uint64, req *GetDashboardsRequest) (st
 	whereClause := "WHERE " + fmt.Sprint(conditions)
 
 	baseSQL := fmt.Sprintf(`
-		SELECT d.dashboard_id, d.user_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, 
-		       u.email AS owner_email, u.name AS owner_name
+		SELECT d.dashboard_id, d.user_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned,
+		       u.email AS owner_email, u.name AS owner_name, d.created_at
 		FROM dashboards d
 		LEFT JOIN users u ON d.user_id = u.user_id
 		%s`, whereClause)
