@@ -170,34 +170,27 @@ Create the volume mount config for redis TLS certificates
 {{- end}}
 {{- end}}
 
-{{- define "openreplay.pg_password" -}}
-name: {{ .Values.global.postgresql.existingSecret | default "or-secrets" }}
-key: {{ .Values.global.postgresql.existingSecretPasswordKey | default "postgres-password" }}
-{{- end}}
-
-{{- define "openreplay.ch_password" -}}
-name: {{ .Values.global.clickhouse.existingSecret  | default "or-secrets"}}
-key: {{ .Values.global.clickhouse.existingSecretPasswordKey | default "clickhouse-password" }}
-{{- end}}
-
 {{- /*
-{{- include "openreplay.s3_secrets" (dict "key" "access-key" "ctx" .) | nindent 4 }}
-Accepted input keys:
-  access-key:
-  secret-key:
-*/ -}}
-{{- define "openreplay.s3_secrets" -}}
-{{- if not (or (eq .key "access-key") (eq .key "secret-key")) -}}
-{{- fail (printf "Invalid key '%s' for s3_secrets. Only 'access-key' and 'secret-key' are allowed." .key) -}}
-{{- end -}}
-name: {{ .ctx.Values.global.s3.existingSecret | default "or-secrets" }}
-key: {{ .key }}
-{{- end}}
-
-{{- /*
+{{- include "openreplay.app_secrets" (dict "key" "postgres-password" "ctx" .) | nindent 4 }}
+{{- include "openreplay.app_secrets" (dict "key" "clickhouse-password" "ctx" .) | nindent 4 }}
+{{- include "openreplay.app_secrets" (dict "key" "access-key" "ctx" .) | nindent 4 }}
+{{- include "openreplay.app_secrets" (dict "key" "secret-key" "ctx" .) | nindent 4 }}
 {{- include "openreplay.app_secrets" (dict "key" "assist-key" "ctx" .) | nindent 4 }}
 */ -}}
-{{- define "openreplay.app_secrets" -}}
-name: {{ .ctx.Values.global.orAppSecrets.existingSecret | default "or-secrets" }}
-key: {{ .key }}
+{{- define "openreplay.or_secrets" -}}
+{{- $secretName := "" -}}
+{{- $secretKey := .key -}}
+{{- if or (eq $secretKey "postgres-password") -}}
+{{- $secretName = .ctx.Values.global.postgresql.existingSecret | default "or-secrets" -}}
+{{- $secretKey = .ctx.Values.global.postgresql.existingSecretPasswordKey | default "postgres-password" -}}
+{{- else if eq $secretKey "clickhouse-password" -}}
+{{- $secretName = .ctx.Values.global.clickhouse.existingSecret | default "or-secrets" -}}
+{{- $secretKey = .ctx.Values.global.clickhouse.existingSecretPasswordKey | default "clickhouse-password" -}}
+{{- else if or (eq .key "access-key") (eq .key "secret-key") -}}
+{{- $secretName = .ctx.Values.global.s3.existingSecret | default "or-secrets" -}}
+{{- else -}}
+{{- $secretName = .ctx.Values.global.orAppSecrets.existingSecret | default "or-secrets" -}}
+{{- end -}}
+name: {{ $secretName }}
+key: {{ $secretKey }}
 {{- end}}
