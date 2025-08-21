@@ -31,28 +31,66 @@ function CopyButton({
       setCopied(false);
     }, 1000);
   };
+
   const copyHandler = () => {
     setCopied(true);
-    const contentIsGetter = !!getHtml;
-    const textContent = contentIsGetter ? getHtml() : content;
-    const isHttps = window.location.protocol === 'https:';
-    if (!isHttps) {
-      copy(textContent);
+
+    const raw = (getHtml?.() ?? content ?? '') as string;
+
+    const htmlToText = (html: string) => {
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      return div.innerText;
+    };
+
+    const isSecure =
+      window.isSecureContext &&
+      !!navigator.clipboard &&
+      typeof (window as any).ClipboardItem !== 'undefined';
+    if (!isSecure) {
+      copy(content);
       reset();
       return;
     }
-    const blob = new Blob([textContent], { type: format });
-    const cbItem = new ClipboardItem({
-      [format]: blob,
-    });
-    navigator.clipboard
-      .write([cbItem])
-      .catch((e) => {
-        copy(textContent);
-      })
-      .finally(() => {
+
+    try {
+      const items: Record<string, Blob> = {};
+      if (format === 'text/html') {
+        const plain = htmlToText(raw);
+        items['text/html'] = new Blob([raw], { type: 'text/html' });
+        items['text/plain'] = new Blob([plain], { type: 'text/plain' });
+      } else {
+        items[format] = new Blob([raw], { type: format });
+        if (format !== 'text/plain') {
+          items['text/plain'] = new Blob([raw], { type: 'text/plain' });
+        }
+      }
+
+      const cbItem = new (window as any).ClipboardItem(items);
+
+      navigator.clipboard
+        .write([cbItem])
+        .catch((e) => {
+          console.error('Failed to copy:', e);
+          const plain = format === 'text/html' ? htmlToText(raw) : raw;
+          return navigator.clipboard.writeText(plain).catch(() => copy(plain));
+        })
+        .finally(() => {
+          reset();
+        });
+    } catch (e) {
+      console.error('Failed to copy:', e);
+      const plain = format === 'text/html' ? htmlToText(raw) : raw;
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard
+          .writeText(plain)
+          .catch(() => copy(plain))
+          .finally(reset);
+      } else {
+        copy(plain);
         reset();
-      });
+      }
+    }
   };
 
   if (isIcon) {

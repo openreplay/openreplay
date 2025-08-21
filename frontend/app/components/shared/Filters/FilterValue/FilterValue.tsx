@@ -121,6 +121,19 @@ function FilterValue(props: Props) {
   // Render different input types based on filter data type
   switch (filter.dataType) {
     case FilterType.STRING:
+      if (filter.operator === 'regex') {
+        return (
+          <Input
+            type="text"
+            defaultValue={filter.value}
+            size="small"
+            className="rounded-lg"
+            style={{ width: '120px' }}
+            placeholder={`/example/i`}
+            onBlur={handleNumberInputBlur}
+          />
+        );
+      }
       return (
         <ValueAutoComplete
           initialValues={filter.value}
