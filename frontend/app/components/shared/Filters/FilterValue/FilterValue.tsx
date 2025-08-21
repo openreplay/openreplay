@@ -122,10 +122,13 @@ function FilterValue(props: Props) {
   switch (filter.dataType) {
     case FilterType.STRING:
       if (filter.operator === 'regex') {
+        const filterValue = Array.isArray(filter.value)
+          ? filter.value[0]
+          : filter.value;
         return (
           <Input
             type="text"
-            defaultValue={filter.value}
+            defaultValue={filterValue}
             size="small"
             className="rounded-lg"
             style={{ width: '120px' }}
