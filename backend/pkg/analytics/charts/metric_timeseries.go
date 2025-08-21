@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"openreplay/backend/pkg/analytics/model"
+	"sort"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -42,6 +43,11 @@ func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfac
 	for ts := range data {
 		timestamps = append(timestamps, ts)
 	}
+
+	// Sort timestamps to ensure consistent ordering
+	sort.Slice(timestamps, func(i, j int) bool {
+		return timestamps[i] < timestamps[j]
+	})
 
 	var result []map[string]interface{}
 	for _, ts := range timestamps {
