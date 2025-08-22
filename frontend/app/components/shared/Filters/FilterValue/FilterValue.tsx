@@ -37,7 +37,6 @@ function FilterValue(props: Props) {
   );
 
   const onDurationChange = useCallback((newValues: any) => {
-    console.log('onDurationChange', newValues);
     setDurationValues((current) => ({ ...current, ...newValues }));
   }, []);
 

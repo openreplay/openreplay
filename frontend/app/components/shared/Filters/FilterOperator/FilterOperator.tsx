@@ -12,7 +12,7 @@ interface Props {
   value?: string | number;
   onChange: (
     event: unknown,
-    payload: { name: string; value: string | number | undefined }
+    payload: { name: string; value: string | number | undefined },
   ) => void;
   isDisabled?: boolean;
   className?: string;
@@ -32,13 +32,18 @@ function FilterOperator(props: Props) {
     isDisabled = false,
     className = '',
     placeholder = 'select', // Default placeholder
-    allowClear = false,     // Default from original component
-    popupClassName = 'shadow-lg border border-gray-200 rounded-md w-fit' // Default popup class
+    allowClear = false, // Default from original component
+    popupClassName = 'shadow-lg border border-gray-200 rounded-md w-fit', // Default popup class
   } = props;
 
-  const selectedOption = options.find(option => option.value === value);
-  const displayLabel = selectedOption ? selectedOption.label :
-    <Typography.Text className="text-neutral-600">{placeholder}</Typography.Text>;
+  const selectedOption = options.find((option) => option.value === value);
+  const displayLabel = selectedOption ? (
+    selectedOption.label
+  ) : (
+    <Typography.Text className="text-neutral-600">
+      {placeholder}
+    </Typography.Text>
+  );
 
   const handleMenuClick = (e: { key: string }) => {
     let selectedValue: string | number | undefined;
@@ -46,7 +51,9 @@ function FilterOperator(props: Props) {
     if (e.key === CLEAR_VALUE_KEY) {
       selectedValue = undefined;
     } else {
-      const clickedOption = options.find(option => String(option.value) === e.key);
+      const clickedOption = options.find(
+        (option) => String(option.value) === e.key,
+      );
       selectedValue = clickedOption?.value;
     }
 
@@ -54,7 +61,10 @@ function FilterOperator(props: Props) {
   };
 
   const menu = (
-    <Menu onClick={handleMenuClick} selectedKeys={value !== undefined ? [String(value)] : []}>
+    <Menu
+      onClick={handleMenuClick}
+      selectedKeys={value !== undefined ? [String(value)] : []}
+    >
       {allowClear && value !== undefined && (
         <>
           <Menu.Item key={CLEAR_VALUE_KEY} danger>
@@ -64,10 +74,8 @@ function FilterOperator(props: Props) {
         </>
       )}
       {/* Map options to Menu.Item */}
-      {options.map(option => (
-        <Menu.Item key={String(option.value)}>
-          {option.label}
-        </Menu.Item>
+      {options.map((option) => (
+        <Menu.Item key={String(option.value)}>{option.label}</Menu.Item>
       ))}
     </Menu>
   );
@@ -80,7 +88,12 @@ function FilterOperator(props: Props) {
         disabled={isDisabled}
         overlayClassName={popupClassName}
       >
-        <Button type="default" size="small" disabled={isDisabled} className="w-fit">
+        <Button
+          type="default"
+          size="small"
+          disabled={isDisabled}
+          className="w-fit"
+        >
           {displayLabel}
         </Button>
       </Dropdown>

@@ -114,6 +114,11 @@ function FilterItem(props: Props) {
 
   const handleOperatorChange = useCallback(
     (e: any, { value }: any) => {
+      if (value === 'regex') {
+        filter.value = Array.isArray(filter.value)
+          ? [filter.value[0]]
+          : filter.value;
+      }
       onUpdate({ ...filter, operator: value });
     },
     [filter, onUpdate],
@@ -413,7 +418,7 @@ function FilterItem(props: Props) {
                   isSubItem ? parentEventFilterOptions : eventFilterOptions
                 }
                 isFirst={index === 0}
-                isLast={index === filteredSubFilters.length - 1}
+                isLast={isLast && index === filteredSubFilters.length - 1}
               />
             </div>
           ))}
