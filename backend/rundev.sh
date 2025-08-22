@@ -1,13 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-KUBECONFIG_PATH="your_file.yaml"
 DB_NAMESPACE="db"
 APP_NAMESPACE="app"
 STATE_FILE="/tmp/k8s_pf_logs.txt"
 ENV_FILE=".env"
 
-export KUBECONFIG="${KUBECONFIG_PATH}"
+if [[ -n "${KUBECONFIG:-}" ]]; then
+  export KUBECONFIG="$KUBECONFIG"
+else
+  unset KUBECONFIG
+fi
 
 cleanup() {
   if [[ -f "$STATE_FILE" ]]; then
@@ -30,6 +33,7 @@ prepare() {
   SERVICES_LIST=(
     "postgres:5432:5432"
     "clickhouse:9001:9000"
+    "clickhouse:8140:8123"
     "redis:6379:6379"
     "kafka:9092:9092"
     "minio:9002:9000"
@@ -65,25 +69,55 @@ prepare() {
   echo "[ℹ️] Getting env vars for app service: $APP_SVC_NAME"
 
   ENV_OUTPUT=$(kubectl get deployment "$APP_SVC_NAME" -n "$APP_NAMESPACE" -o json)
+
+  get_env_value() {
+    local env_name="$1"
+    local env_data=$(echo "$ENV_OUTPUT" | jq -r --arg name "$env_name" '
+      .spec.template.spec.containers[].env[] |
+      select(.name == $name)
+    ')
+
+    if [[ -z "$env_data" ]]; then
+      echo ""
+      return
+    fi
+
+    local direct_value=$(echo "$env_data" | jq -r '.value // empty')
+    if [[ -n "$direct_value" ]]; then
+      echo "$direct_value"
+      return
+    fi
+
+    local secret_name=$(echo "$env_data" | jq -r '.valueFrom.secretKeyRef.name // empty')
+    local secret_key=$(echo "$env_data" | jq -r '.valueFrom.secretKeyRef.key // empty')
+
+    if [[ -n "$secret_name" && -n "$secret_key" ]]; then
+      kubectl get secret "$secret_name" -n "$APP_NAMESPACE" -o jsonpath="{.data.$secret_key}" 2>/dev/null | base64 -d 2>/dev/null || echo ""
+    else
+      echo ""
+    fi
+  }
+
+  pg_password=$(get_env_value "pg_password")
+  if [[ -z "${pg_password:-}" ]]; then
+    echo "[⚠️] pg_password not found in deployment. Using fallback."
+    pg_password="postgres"
+  fi
+
+  jwt_secret=$(get_env_value "JWT_SECRET")
+  if [[ -z "${jwt_secret:-}" ]]; then
+    echo "[⚠️] JWT_SECRET not found in deployment. Using fallback."
+    jwt_secret="openreplay"
+  fi
+
   ENV_VARS=$(echo "$ENV_OUTPUT" | jq -r '
     .spec.template.spec.containers[].env[] |
     "\(.name)=\(.value // "")"
   ' 2>/dev/null)
 
-  # Extract pg_password value from ENV_VARS
-  pg_password_line=$(echo "$ENV_VARS" | grep '^pg_password=' || true)
-  pg_password=${pg_password_line#pg_password=}
-
-  if [[ -z "${pg_password:-}" ]]; then
-    echo "[⚠️] pg_password not found in deployment. Using fallback."
-    # Using the default password
-    pg_password="postgres"
-  fi
-
   echo "[ℹ️] Writing environment variables to $ENV_FILE"
   : > "$ENV_FILE"
 
-  # shellcheck disable=SC2129
   echo "SERVICE_NAME=\"$SERVICE_SHORTNAME\"" >> "$ENV_FILE"
   echo "HOSTNAME=\"$APP_SVC_NAME\"" >> "$ENV_FILE"
   echo "FS_DIR=/tmp/or/efs/" >> "$ENV_FILE"
@@ -91,7 +125,6 @@ prepare() {
   echo "BEACON_SIZE_LIMIT=1000000" >> "$ENV_FILE"
   echo "UAPARSER_FILE=/tmp/or/extra/regexes.yaml" >> "$ENV_FILE"
   echo "MAXMINDDB_FILE=/tmp/or/extra/geoip.mmdb" >> "$ENV_FILE"
-#  echo "" >> "$ENV_FILE"
   echo "HTTP_PORT=8080" >> "$ENV_FILE"
   echo "LOG_QUEUE_STATS_INTERVAL_SEC=60" >> "$ENV_FILE"
   echo "DB_BATCH_QUEUE_LIMIT=20" >> "$ENV_FILE"
@@ -100,9 +133,7 @@ prepare() {
   echo "PARTITIONS_NUMBER=16" >> "$ENV_FILE"
   echo "FS_ULIMIT=10000" >> "$ENV_FILE"
   echo "CACHE_ASSETS=true" >> "$ENV_FILE"
-  # Redis settings
   echo "REDIS_STREAMS_MAX_LEN=10000" >> "$ENV_FILE"
-  # Topics/consumers settings
   echo "TOPIC_RAW_WEB=raw" >> "$ENV_FILE"
   echo "TOPIC_RAW_IOS=raw-ios" >> "$ENV_FILE"
   echo "TOPIC_RAW_IMAGES=raw-images" >> "$ENV_FILE"
@@ -121,6 +152,8 @@ prepare() {
   echo "GROUP_IMAGE_STORAGE=image-storage" >> "$ENV_FILE"
   echo "GROUP_CANVAS_IMAGE=canvas-image" >> "$ENV_FILE"
   echo "GROUP_CANVAS_VIDEO=canvas-video" >> "$ENV_FILE"
+  echo "JWT_SECRET=\"$jwt_secret\"" >> "$ENV_FILE"
+  echo "USE_CORS=true" >> "$ENV_FILE"
 
   while read -r line; do
     name="${line%%=*}"
@@ -142,6 +175,9 @@ prepare() {
       CLICKHOUSE_STRING)
         value="localhost:9001/default"
         ;;
+      JWT_SECRET)
+        continue
+        ;;
     esac
 
     echo "$name=\"$value\"" >> "$ENV_FILE"
@@ -149,6 +185,7 @@ prepare() {
 
   echo "[✅] .env file ready."
 }
+
 
 run_with_env_file() {
   if [[ ! -f "$ENV_FILE" ]]; then
