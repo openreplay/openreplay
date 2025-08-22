@@ -14,6 +14,12 @@ import (
 	"openreplay/backend/pkg/analytics/model"
 )
 
+const (
+	EventOrderThen = "then"
+	EventOrderAnd  = "and"
+	EventOrderOr   = "or"
+)
+
 type Payload struct {
 	*model.MetricPayload
 	ProjectId int    `validate:"required,min=1"`
@@ -599,6 +605,71 @@ func GetSessionColumns(join ...bool) map[string]string {
 		return out
 	}
 	return SessionColumns
+}
+
+func BuildEventsJoinClause(eventsOrder model.EventOrder, eventConditions []string, tableAlias string) (string, []string, error) {
+	if len(eventConditions) == 0 && eventsOrder != "" {
+		return "", nil, nil
+	}
+
+	switch eventsOrder {
+	case EventOrderThen:
+		havingClause, whereClause := BuildSequenceJoinClause(eventConditions, tableAlias)
+		return havingClause, whereClause, nil
+	case EventOrderAnd:
+		havingClause, whereClause := BuildCountJoinClause(eventConditions, "AND", tableAlias)
+		return havingClause, whereClause, nil
+	case EventOrderOr:
+		havingClause, whereClause := BuildCountJoinClause(eventConditions, "OR", tableAlias)
+		return havingClause, whereClause, nil
+	case "":
+		return "", nil, nil
+	default:
+		return "", nil, fmt.Errorf("unknown events order: %s", eventsOrder)
+	}
+}
+
+func BuildSequenceJoinClause(eventConditions []string, tableAlias string) (string, []string) {
+	if len(eventConditions) == 0 {
+		return "", nil
+	}
+
+	if len(eventConditions) == 1 {
+		return "HAVING countIf(" + eventConditions[0] + ") > 0", nil
+	}
+
+	patterns := make([]string, len(eventConditions))
+	for i := range eventConditions {
+		patterns[i] = fmt.Sprintf("(?%d)", i+1)
+	}
+
+	havingClause := fmt.Sprintf(
+		"HAVING sequenceMatch('%s')(\n    toDateTime(%s.created_at),\n    %s\n)",
+		strings.Join(patterns, ""),
+		tableAlias,
+		strings.Join(eventConditions, ",\n    "),
+	)
+
+	return havingClause, nil
+}
+
+func BuildCountJoinClause(eventConditions []string, operator string, tableAlias string) (string, []string) {
+	if len(eventConditions) == 0 {
+		return "", nil
+	}
+
+	if operator == "OR" {
+		whereClause := []string{strings.Join(eventConditions, " OR ")}
+		return "", whereClause
+	}
+
+	countConds := make([]string, len(eventConditions))
+	for i, condition := range eventConditions {
+		countConds[i] = fmt.Sprintf("countIf(%s) > 0", condition)
+	}
+
+	havingClause := fmt.Sprintf("HAVING %s", strings.Join(countConds, fmt.Sprintf(" %s ", operator)))
+	return havingClause, nil
 }
 
 var SessionColumns = map[string]string{
