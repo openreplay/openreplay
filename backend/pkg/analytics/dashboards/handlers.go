@@ -415,5 +415,5 @@ func (e *handlersImpl) updateWidgetPosition(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"message": "Widget position updated successfully"}, startTime, r.URL.Path, bodySize)
 }
