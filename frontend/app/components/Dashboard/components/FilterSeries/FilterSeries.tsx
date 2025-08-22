@@ -2,16 +2,16 @@ import React from 'react';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { Button, Divider, Space, Card } from 'antd';
-import { ChevronDown, ChevronUp, Trash } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash, Plus } from 'lucide-react';
 import SeriesName from './SeriesName';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import { Filter } from '@/mstore/types/filterConstants';
-import { Plus } from 'lucide-react';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
 import { useStore } from '@/mstore';
 import IFilterSeries from '@/mstore/types/filterSeries';
 import FilterItem from '@/mstore/types/filterItem';
+import { toast } from 'react-toastify';
 
 const FilterCountLabels = observer(
   (props: { filters: any; toggleExpand: any }) => {
@@ -57,10 +57,16 @@ const FilterSeriesHeader = observer(
     canDelete: boolean | undefined;
     toggleExpand: () => void;
     onChange: () => void;
+    seriesNames: string[];
   }) => {
     const onUpdate = (name: any) => {
+      if (props.seriesNames.includes(name)) {
+        toast.warn('Series name must be unique');
+        return false;
+      }
       props.series.update('name', name);
       props.onChange();
+      return true;
     };
     return (
       <div
@@ -128,6 +134,7 @@ interface Props {
   removeEvents?: boolean;
   collapseState: boolean;
   onToggleCollapse: () => void;
+  seriesNames?: string[];
 }
 
 function FilterSeries(props: Props) {
@@ -144,6 +151,7 @@ function FilterSeries(props: Props) {
     series,
     seriesIndex,
     onRemoveSeries,
+    seriesNames = [],
   } = props;
 
   const { filterStore } = useStore();
@@ -234,6 +242,7 @@ function FilterSeries(props: Props) {
             series={series}
             onRemove={onRemoveSeries}
             canDelete={canDelete}
+            seriesNames={seriesNames}
             expanded={expanded}
             toggleExpand={() => setExpanded(!expanded)}
           />

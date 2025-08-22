@@ -151,6 +151,7 @@ const FilterSection = observer(
                   }
                   seriesIndex={index}
                   series={series}
+                  seriesNames={metric.series.map((s: any) => s.name)}
                   onRemoveSeries={() => metric.removeSeries(index)}
                   canDelete={metric.series.length > 1}
                   collapseState={seriesCollapseState[series.seriesId]}
