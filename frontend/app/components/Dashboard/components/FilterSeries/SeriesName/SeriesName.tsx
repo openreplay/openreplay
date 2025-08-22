@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 interface Props {
   name: string;
-  onUpdate: (name: string) => void;
+  onUpdate: (name: string) => boolean;
   onChange: () => void;
   seriesIndex?: number;
 }
@@ -12,8 +12,9 @@ interface Props {
 function SeriesName(props: Props) {
   const { t } = useTranslation();
   const { seriesIndex = 1 } = props;
+  const defaultName = props.name;
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(props.name);
+  const [name, setName] = useState(defaultName);
   const ref = useRef<any>(null);
 
   const write = ({ target: { value } }) => {
@@ -23,13 +24,19 @@ function SeriesName(props: Props) {
 
   const onBlur = () => {
     setEditing(false);
-    props.onUpdate(name);
+    const updated = props.onUpdate(name);
+    if (!updated) {
+      setName(defaultName);
+    }
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       setEditing(false);
-      props.onUpdate(name);
+      const updated = props.onUpdate(name);
+      if (!updated) {
+        setName(defaultName);
+      }
     }
   };
 
