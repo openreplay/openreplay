@@ -16,6 +16,13 @@ type TimeSeriesQueryBuilder struct {
 	conn *clickhouse.Conn
 }
 
+// Supported metrics for time series queries
+const (
+	MetricSessionCount = "sessionCount"
+	MetricUserCount    = "userCount"
+	MetricEventCount   = "eventCount"
+)
+
 func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	data := make(map[uint64]map[string]uint64)
 	for _, series := range p.Series {
@@ -27,8 +34,8 @@ func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfac
 
 		var pts []DataPoint
 		if err = conn.Select(context.Background(), &pts, query, convertParams(params)...); err != nil {
-			log.Panicf("exec %s: %v", series.Name, err)
-			return nil, err
+			log.Printf("exec %s: %v", series.Name, err)
+			return nil, fmt.Errorf("series %s: %v", series.Name, err)
 		}
 
 		for _, dp := range pts {
@@ -61,16 +68,36 @@ func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfac
 }
 
 func (t *TimeSeriesQueryBuilder) buildQuery(p *Payload, s model.Series) (string, map[string]any, error) {
+	if err := t.validatePayload(p); err != nil {
+		return "", nil, fmt.Errorf("invalid payload: %w", err)
+	}
+
 	switch p.MetricOf {
-	case "sessionCount":
-		return t.buildTimeSeriesQuery(p, s, "sessionCount", "session_id")
-	case "userCount":
-		return t.buildTimeSeriesQuery(p, s, "userCount", "user_id")
-	case "eventCount":
-		return t.buildTimeSeriesQuery(p, s, "eventCount", "event_id")
+	case MetricSessionCount:
+		return t.buildTimeSeriesQuery(p, s, MetricSessionCount, "session_id")
+	case MetricUserCount:
+		return t.buildTimeSeriesQuery(p, s, MetricUserCount, "user_id")
+	case MetricEventCount:
+		return t.buildTimeSeriesQuery(p, s, MetricEventCount, "event_id")
 	default:
 		return "", nil, fmt.Errorf("unsupported metric %q", p.MetricOf)
 	}
+}
+
+func (t *TimeSeriesQueryBuilder) validatePayload(p *Payload) error {
+	if p == nil {
+		return fmt.Errorf("payload cannot be nil")
+	}
+	if p.ProjectId == 0 {
+		return fmt.Errorf("project_id is required")
+	}
+	if p.StartTimestamp >= p.EndTimestamp {
+		return fmt.Errorf("start_timestamp must be less than end_timestamp")
+	}
+	if len(p.Series) == 0 {
+		return fmt.Errorf("at least one series is required")
+	}
+	return nil
 }
 
 func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p *Payload, s model.Series, metric, idField string) (string, map[string]any, error) {
@@ -112,13 +139,14 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 		}
 	}
 
-	// Use events table if there are event filters or if metric is eventCount
-	useEventsTable := len(eventFilters) > 0 || metric == "eventCount"
+	// Determine query strategy based on filters and metric type
+	// Use events table when we have event-specific filters or need event-level data
+	requiresEventsTable := len(eventFilters) > 0 || metric == MetricEventCount
 
-	if useEventsTable {
+	if requiresEventsTable {
 		return t.buildEventsBasedSubQuery(p, s, metric, eventFilters, sessionFilters)
 	} else {
-		return t.buildSessionsBasedSubQuery(metric, sessionFilters)
+		return t.buildSessionsOnlySubQuery(p, s, metric, sessionFilters)
 	}
 }
 
@@ -167,37 +195,7 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 
 	subQuery := sb.String()
 
-	_, sessionConditions := BuildEventConditions(sessionFilters, BuildConditionsOptions{
-		DefinedColumns: SessionColumns,
-		MainTableAlias: "s",
-	})
-
-	durConds, _ := BuildDurationWhere(sessionFilters, "s")
-
-	sessionWhereParts := []string{
-		"s.project_id = @project_id",
-		"s.datetime >= toDateTime(@startTimestamp/1000)",
-		"s.datetime <= toDateTime(@endTimestamp/1000)",
-	}
-
-	if len(sessionConditions) > 0 {
-		sessionWhereParts = append(sessionWhereParts, strings.Join(sessionConditions, " AND "))
-	}
-
-	if durConds != nil {
-		sessionWhereParts = append(sessionWhereParts, durConds...)
-	}
-
-	sessionsQuery := fmt.Sprintf(`
-SELECT
-	session_id,
-	datetime,
-	user_id,
-	user_uuid,
-	user_anonymous_id
-FROM experimental.sessions AS s
-WHERE %s`, strings.Join(sessionWhereParts, " AND "))
-
+	sessionsQuery := t.buildSessionsFilterQuery(sessionFilters)
 	projection, joinEvents := t.getProjectionAndJoin(metric)
 
 	return fmt.Sprintf(
@@ -208,7 +206,35 @@ WHERE %s`, strings.Join(sessionWhereParts, " AND "))
 	), nil
 }
 
-func (t *TimeSeriesQueryBuilder) buildSessionsBasedSubQuery(metric string, sessionFilters []model.Filter) (string, error) {
+func (t *TimeSeriesQueryBuilder) buildSessionsOnlySubQuery(p *Payload, s model.Series, metric string, sessionFilters []model.Filter) (string, error) {
+	whereParts := t.buildSessionsFilterConditions(sessionFilters)
+	projection := t.getSessionsOnlyProjection(metric)
+
+	return fmt.Sprintf(
+		`SELECT %s
+		 FROM experimental.sessions AS s
+		 WHERE %s`,
+		projection, strings.Join(whereParts, " AND "),
+	), nil
+}
+
+// buildSessionsFilterQuery builds a complete sessions query with filters applied
+func (t *TimeSeriesQueryBuilder) buildSessionsFilterQuery(sessionFilters []model.Filter) string {
+	whereParts := t.buildSessionsFilterConditions(sessionFilters)
+
+	return fmt.Sprintf(`
+SELECT
+	session_id,
+	datetime,
+	user_id,
+	user_uuid,
+	user_anonymous_id
+FROM experimental.sessions AS s
+WHERE %s`, strings.Join(whereParts, " AND "))
+}
+
+// buildSessionsFilterConditions builds WHERE conditions for sessions table queries
+func (t *TimeSeriesQueryBuilder) buildSessionsFilterConditions(sessionFilters []model.Filter) []string {
 	_, sessionConditions := BuildEventConditions(sessionFilters, BuildConditionsOptions{
 		DefinedColumns: SessionColumns,
 		MainTableAlias: "s",
@@ -230,36 +256,30 @@ func (t *TimeSeriesQueryBuilder) buildSessionsBasedSubQuery(metric string, sessi
 		whereParts = append(whereParts, durConds...)
 	}
 
-	projection := t.getSessionsProjection(metric)
-
-	return fmt.Sprintf(
-		`SELECT %s
-		 FROM experimental.sessions AS s
-		 WHERE %s`,
-		projection, strings.Join(whereParts, " AND "),
-	), nil
+	return whereParts
 }
 
-func (t *TimeSeriesQueryBuilder) getSessionsProjection(metric string) string {
+func (t *TimeSeriesQueryBuilder) getSessionsOnlyProjection(metric string) string {
 	switch metric {
-	case "sessionCount":
+	case MetricSessionCount:
 		return "s.session_id AS session_id, s.datetime AS datetime"
-	case "userCount":
+	case MetricUserCount:
 		return "s.user_id AS user_id, s.datetime AS datetime"
 	default:
+		// Fallback to session_id for unknown metrics
 		return "s.session_id AS session_id, s.datetime AS datetime"
 	}
 }
 
 func (t *TimeSeriesQueryBuilder) getProjectionAndJoin(metric string) (string, string) {
 	switch metric {
-	case "sessionCount":
+	case MetricSessionCount:
 		return "evt.session_id AS session_id, s.datetime AS datetime", ""
 
-	case "userCount":
+	case MetricUserCount:
 		return "s.user_id AS user_id, s.datetime AS datetime", ""
 
-	case "eventCount":
+	case MetricEventCount:
 		projection := "e.event_id AS event_id, s.datetime AS datetime"
 		joinEvents := `
 		LEFT JOIN product_analytics.events AS e
@@ -268,6 +288,7 @@ func (t *TimeSeriesQueryBuilder) getProjectionAndJoin(metric string) (string, st
 		return projection, joinEvents
 
 	default:
+		// Fallback to session_id for unknown metrics
 		return "evt.session_id AS session_id, s.datetime AS datetime", ""
 	}
 }
