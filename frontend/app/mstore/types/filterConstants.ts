@@ -73,18 +73,6 @@ export const OPERATORS = {
       description: 'Ends with the string',
     },
     {
-      value: 'isBlank',
-      label: 'is blank',
-      displayName: 'Is blank',
-      description: 'Is empty or null',
-    },
-    {
-      value: 'isNotBlank',
-      label: 'is not blank',
-      displayName: 'Is not blank',
-      description: 'Is not empty or null',
-    },
-    {
       value: 'regex',
       label: 'regex',
       displayName: 'Regex',
@@ -168,18 +156,6 @@ export const OPERATORS = {
       displayName: 'Less than or equals',
       description: 'Less than or equal to the value',
     },
-    // {
-    //   value: 'isBlank',
-    //   label: 'is blank', // Fixed: added space and lowercased
-    //   displayName: 'Is blank',
-    //   description: 'Is empty or null',
-    // },
-    // {
-    //   value: 'isNotBlank',
-    //   label: 'is not blank', // Fixed: added spaces and lowercased
-    //   displayName: 'Is not blank',
-    //   description: 'Is not empty or null',
-    // },
   ],
 
   boolean: [
