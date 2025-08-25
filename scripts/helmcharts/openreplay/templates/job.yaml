@@ -167,7 +167,7 @@ spec:
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
             valueFrom:
-              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgres-password" "ctx" .) | nindent 16 }}
+              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 16 }}
         command:
           - /bin/bash
           - -c
@@ -277,7 +277,7 @@ spec:
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
             valueFrom:
-              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgres-password" "ctx" .) | nindent 16 }}
+              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 16 }}
           {{- range $key, $val := .Values.migration.env }}
           - name: {{ $key }}
             value: '{{ $val }}'
@@ -367,7 +367,7 @@ spec:
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
             valueFrom:
-              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgres-password" "ctx" .) | nindent 16 }}
+              secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 16 }}
           - name: VAULT_ADDR
             value: "{{ .Values.global.vault.vaultHost }}"
         image: hashicorp/vault:1.12.0

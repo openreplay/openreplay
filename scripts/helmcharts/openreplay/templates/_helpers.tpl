@@ -171,7 +171,7 @@ Create the volume mount config for redis TLS certificates
 {{- end}}
 
 {{- /*
-{{- include "openreplay.app_secrets" (dict "key" "postgres-password" "ctx" .) | nindent 4 }}
+{{- include "openreplay.app_secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 4 }}
 {{- include "openreplay.app_secrets" (dict "key" "clickhouse-password" "ctx" .) | nindent 4 }}
 {{- include "openreplay.app_secrets" (dict "key" "access-key" "ctx" .) | nindent 4 }}
 {{- include "openreplay.app_secrets" (dict "key" "secret-key" "ctx" .) | nindent 4 }}
@@ -180,9 +180,9 @@ Create the volume mount config for redis TLS certificates
 {{- define "openreplay.secrets" -}}
 {{- $secretName := "" -}}
 {{- $secretKey := .key -}}
-{{- if or (eq $secretKey "postgres-password") -}}
+{{- if or (eq $secretKey "postgresql-password") -}}
 {{- $secretName = .ctx.Values.global.postgresql.existingSecret | default "or-secrets" -}}
-{{- $secretKey = .ctx.Values.global.postgresql.existingSecretPasswordKey | default "postgres-password" -}}
+{{- $secretKey = .ctx.Values.global.postgresql.existingSecretPasswordKey | default "postgresql-password" -}}
 {{- else if eq $secretKey "clickhouse-password" -}}
 {{- $secretName = .ctx.Values.global.clickhouse.existingSecret | default "or-secrets" -}}
 {{- $secretKey = .ctx.Values.global.clickhouse.existingSecretPasswordKey | default "clickhouse-password" -}}

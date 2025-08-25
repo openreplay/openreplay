@@ -49,7 +49,7 @@ spec:
             {{- end}}
             - name: pg_password
               valueFrom:
-                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgres-password" "ctx" .) | nindent 18 }}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 18 }}
             - name: POSTGRES_STRING
               value: {{ include "openreplay.pg_connection_string" .}}
             - name: KAFKA_SERVERS
