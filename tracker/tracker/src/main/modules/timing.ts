@@ -150,6 +150,7 @@ export default function (app: App, opts: Partial<Options>): void {
 
     const cached: boolean =
       (entry.responseStatus && entry.responseStatus === 304) ||
+      // @ts-ignore
       (entry.deliveryType && entry.deliveryType === 'cache') ||
       (entry.transferSize === 0 && entry.decodedBodySize > 0)
 
