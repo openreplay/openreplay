@@ -63,3 +63,17 @@ var mainColumns = map[string]string{
 	"userBrowser":        "$browser",
 	"userBrowserVersion": "$browser_version",
 }
+
+var mainSessionsColumns = map[string]string{
+	"userDevice":         "user_device",
+	"referrer":           "referrer",
+	"fetchDuration":      "duration",
+	"ISSUE":              "issue_types",
+	"userCountry":        "user_country",
+	"userCity":           "user_city",
+	"userState":          "user_state",
+	"userOs":             "user_os",
+	"userOsVersion":      "user_os_version",
+	"userBrowser":        "user_browser",
+	"userBrowserVersion": "user_browser_version",
+}
