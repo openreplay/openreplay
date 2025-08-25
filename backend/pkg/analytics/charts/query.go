@@ -682,5 +682,6 @@ var SessionColumns = map[string]string{
 	"userDeviceIos":      "user_device",
 	"userIdIos":          "user_id",
 	"userAnonymousIdIos": "user_anonymous_id",
+	"duration":           "duration",
 	// TODO Add any missing session columns to be considered.
 }

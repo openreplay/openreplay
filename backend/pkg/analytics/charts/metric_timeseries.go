@@ -97,21 +97,43 @@ func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p *Payload, s model.Series
 }
 
 func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metric string) (string, error) {
-	eo := string(s.Filter.EventsOrder)
+	allFilters := s.Filter.Filters
+
+	var (
+		eventFilters   []model.Filter
+		sessionFilters []model.Filter
+	)
+
+	for _, filter := range allFilters {
+		if _, exists := SessionColumns[filter.Name]; exists {
+			sessionFilters = append(sessionFilters, filter)
+		} else {
+			eventFilters = append(eventFilters, filter)
+		}
+	}
+
+	// Use events table if there are event filters or if metric is eventCount
+	useEventsTable := len(eventFilters) > 0 || metric == "eventCount"
+
+	if useEventsTable {
+		return t.buildEventsBasedSubQuery(p, s, metric, eventFilters, sessionFilters)
+	} else {
+		return t.buildSessionsBasedSubQuery(p, s, metric, sessionFilters)
+	}
+}
+
+func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Series, metric string, eventFilters, sessionFilters []model.Filter) (string, error) {
 	eventConds, otherConds := BuildEventConditions(
-		s.Filter.Filters,
+		eventFilters,
 		BuildConditionsOptions{
 			DefinedColumns:       mainColumns,
 			MainTableAlias:       "main",
 			PropertiesColumnName: "$properties",
-			EventsOrder:          eo,
+			EventsOrder:          string(s.Filter.EventsOrder),
 		},
 	)
 
 	staticEvt := buildStaticEventWhere(p)
-	if staticEvt == "" {
-		return "", fmt.Errorf("static event condition is required")
-	}
 
 	whereParts := []string{staticEvt}
 	if len(otherConds) > 0 {
@@ -145,17 +167,36 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 
 	subQuery := sb.String()
 
-	const sessionsQuery = `
+	_, sessionConditions := BuildEventConditions(sessionFilters, BuildConditionsOptions{
+		DefinedColumns: SessionColumns,
+		MainTableAlias: "s",
+	})
+
+	durConds, _ := BuildDurationWhere(sessionFilters, "s")
+
+	sessionWhereParts := []string{
+		"s.project_id = @project_id",
+		"s.datetime >= toDateTime(@startTimestamp/1000)",
+		"s.datetime <= toDateTime(@endTimestamp/1000)",
+	}
+
+	if len(sessionConditions) > 0 {
+		sessionWhereParts = append(sessionWhereParts, strings.Join(sessionConditions, " AND "))
+	}
+
+	if durConds != nil {
+		sessionWhereParts = append(sessionWhereParts, durConds...)
+	}
+
+	sessionsQuery := fmt.Sprintf(`
 SELECT
 	session_id,
 	datetime,
 	user_id,
 	user_uuid,
 	user_anonymous_id
-FROM experimental.sessions
-WHERE project_id = @project_id
-  AND datetime >= toDateTime(@startTimestamp/1000)
-  AND datetime <= toDateTime(@endTimestamp/1000)`
+FROM experimental.sessions AS s
+WHERE %s`, strings.Join(sessionWhereParts, " AND "))
 
 	projection, joinEvents := t.getProjectionAndJoin(metric)
 
@@ -165,6 +206,49 @@ WHERE project_id = @project_id
 		   INNER JOIN (%s) AS s ON s.session_id = evt.session_id%s`,
 		projection, subQuery, sessionsQuery, joinEvents,
 	), nil
+}
+
+func (t *TimeSeriesQueryBuilder) buildSessionsBasedSubQuery(p *Payload, s model.Series, metric string, sessionFilters []model.Filter) (string, error) {
+	_, sessionConditions := BuildEventConditions(sessionFilters, BuildConditionsOptions{
+		DefinedColumns: SessionColumns,
+		MainTableAlias: "s",
+	})
+
+	durConds, _ := BuildDurationWhere(sessionFilters, "s")
+
+	whereParts := []string{
+		"s.project_id = @project_id",
+		"s.datetime >= toDateTime(@startTimestamp/1000)",
+		"s.datetime <= toDateTime(@endTimestamp/1000)",
+	}
+
+	if len(sessionConditions) > 0 {
+		whereParts = append(whereParts, strings.Join(sessionConditions, " AND "))
+	}
+
+	if durConds != nil {
+		whereParts = append(whereParts, durConds...)
+	}
+
+	projection := t.getSessionsProjection(metric)
+
+	return fmt.Sprintf(
+		`SELECT %s
+		 FROM experimental.sessions AS s
+		 WHERE %s`,
+		projection, strings.Join(whereParts, " AND "),
+	), nil
+}
+
+func (t *TimeSeriesQueryBuilder) getSessionsProjection(metric string) string {
+	switch metric {
+	case "sessionCount":
+		return "s.session_id AS session_id, s.datetime AS datetime"
+	case "userCount":
+		return "s.user_id AS user_id, s.datetime AS datetime"
+	default:
+		return "s.session_id AS session_id, s.datetime AS datetime"
+	}
 }
 
 func (t *TimeSeriesQueryBuilder) getProjectionAndJoin(metric string) (string, string) {
