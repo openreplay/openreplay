@@ -129,7 +129,7 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions) ([]string, []string) {
 	opts := BuildConditionsOptions{
 		MainTableAlias:       "e",
-		PropertiesColumnName: "$properties",
+		PropertiesColumnName: "`$properties`",
 		DefinedColumns:       make(map[string]string),
 		EventsOrder:          "then",
 	}
@@ -184,10 +184,10 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) []string {
 	}
 	if f.IsEvent {
 		var parts []string
-		parts = append(parts, fmt.Sprintf("%s`$event_name` = '%s'", alias, f.Name))
+		parts = append(parts, fmt.Sprintf("%s\"$event_name\" = '%s'", alias, f.Name))
 
 		if f.AutoCaptured {
-			parts = append(parts, fmt.Sprintf("%s`$auto_captured` = 1", alias))
+			parts = append(parts, fmt.Sprintf("%s\"$auto_captured\"", alias))
 		}
 
 		for _, sub := range f.Filters {
@@ -205,11 +205,11 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) []string {
 		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: isNumeric}
 	}
 	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
-
 	switch f.Operator {
 	case "isAny", "onAny":
+		//This part is unreachable, because you already have if f.IsEvent&return above
 		if f.IsEvent {
-			return []string{fmt.Sprintf("%s`$event_name` = '%s'", alias, f.Name)}
+			return []string{fmt.Sprintf("%s\"$event_name\" = '%s'", alias, f.Name)}
 		}
 	default:
 		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric); c != "" {
