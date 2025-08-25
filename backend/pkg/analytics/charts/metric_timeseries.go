@@ -118,7 +118,7 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 	if useEventsTable {
 		return t.buildEventsBasedSubQuery(p, s, metric, eventFilters, sessionFilters)
 	} else {
-		return t.buildSessionsBasedSubQuery(p, s, metric, sessionFilters)
+		return t.buildSessionsBasedSubQuery(metric, sessionFilters)
 	}
 }
 
@@ -208,7 +208,7 @@ WHERE %s`, strings.Join(sessionWhereParts, " AND "))
 	), nil
 }
 
-func (t *TimeSeriesQueryBuilder) buildSessionsBasedSubQuery(p *Payload, s model.Series, metric string, sessionFilters []model.Filter) (string, error) {
+func (t *TimeSeriesQueryBuilder) buildSessionsBasedSubQuery(metric string, sessionFilters []model.Filter) (string, error) {
 	_, sessionConditions := BuildEventConditions(sessionFilters, BuildConditionsOptions{
 		DefinedColumns: SessionColumns,
 		MainTableAlias: "s",
