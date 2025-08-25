@@ -94,13 +94,14 @@ type Session struct {
 
 type SessionsSearchRequest struct {
 	Filters     []Filter `json:"filters"`
-	StartDate   int64    `json:"startDate"`
-	EndDate     int64    `json:"endDate"`
+	StartDate   int64    `json:"startTimestamp"`
+	EndDate     int64    `json:"endTimestamp"`
 	Sort        string   `json:"sort"`
 	Order       string   `json:"order"`
 	EventsOrder string   `json:"eventsOrder"`
 	Limit       int      `json:"limit"`
 	Page        int      `json:"page"`
+	Series      []Series `json:"series"`
 }
 
 type GetSessionsResponse struct {
@@ -111,4 +112,17 @@ type GetSessionsResponse struct {
 type PaginationParams struct {
 	Limit  int
 	Offset int
+}
+
+// SeriesSessionsResponse represents grouped sessions response for series queries
+type SeriesSessionsResponse struct {
+	Series []SeriesSessionData `json:"series"`
+}
+
+// SeriesSessionData represents sessions data for a single series
+type SeriesSessionData struct {
+	SeriesId   int64     `json:"seriesId"`
+	Total      uint64    `json:"total"`
+	SeriesName string    `json:"seriesName"`
+	Sessions   []Session `json:"sessions"`
 }

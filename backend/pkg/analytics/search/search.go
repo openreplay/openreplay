@@ -34,7 +34,7 @@ var mainColumns = map[string]string{
 }
 
 type Search interface {
-	GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error)
+	GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
 }
 
 type searchImpl struct {
@@ -95,7 +95,20 @@ LIMIT %d OFFSET %d
 ) AS viewed_sessions USING (session_id)`
 )
 
-func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
+// GetAll retrieves sessions based on the request parameters.
+// Returns different response types based on whether series are requested:
+//
+// Regular request (req.Series is empty):
+//   - Returns *model.GetSessionsResponse with total count and sessions array
+//   - Uses req.Filters and req.EventsOrder for filtering
+//
+// Series request (req.Series has elements):
+//   - Returns *model.SeriesSessionsResponse with grouped sessions by series
+//   - Each series uses its own filters from req.Series[i].Filters
+//   - Each series uses its own events order from req.Series[i].EventsOrder
+//   - Pagination is applied to each series individually
+//   - Response includes series index, total count, and sessions for each series
+func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
 	if req == nil {
 		return nil, errors.New("nil request")
 	}
@@ -106,6 +119,16 @@ func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSea
 		req.Limit = 100
 	}
 
+	// Handle series requests
+	if len(req.Series) > 0 {
+		return s.getSeriesSessions(projectId, userId, req)
+	}
+
+	// Regular single response logic
+	return s.getSingleSessions(projectId, userId, req)
+}
+
+func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
 	startSec := req.StartDate / 1000
 	endSec := req.EndDate / 1000
 	offset := (req.Page - 1) * req.Limit
@@ -204,4 +227,128 @@ func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSea
 	}
 
 	return resp, nil
+}
+
+func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.SeriesSessionsResponse, error) {
+	startSec := req.StartDate / 1000
+	endSec := req.EndDate / 1000
+	offset := (req.Page - 1) * req.Limit
+
+	response := &model.SeriesSessionsResponse{
+		Series: make([]model.SeriesSessionData, 0, len(req.Series)),
+	}
+
+	for i, series := range req.Series {
+		// Create a copy of the request with series-specific filters
+		seriesReq := &model.SessionsSearchRequest{
+			Filters:     series.Filter.Filters,
+			Sort:        req.Sort,
+			Order:       req.Order,
+			EventsOrder: string(series.Filter.EventsOrder),
+			Limit:       req.Limit,
+		}
+
+		eventsWhere, filtersWhere, sessionsWhere := charts.BuildWhere(seriesReq.Filters, seriesReq.EventsOrder, "e", "s")
+		sessionsWhere = append([]string{fmt.Sprintf("s.project_id = %d", projectId),
+			fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+		}, sessionsWhere...)
+
+		var eventsInnerJoin string
+
+		conds := make([]string, 0, len(seriesReq.Filters)+2)
+
+		if len(eventsWhere) > 0 || len(filtersWhere) > 0 {
+			conds = append([]string{
+				fmt.Sprintf("e.project_id = %d", projectId),
+				fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+			}, conds...)
+			conds = append(conds, filtersWhere...)
+
+			if len(eventsWhere) == 1 {
+				conds = append(conds, eventsWhere[0])
+			}
+
+			joinClause := charts.BuildJoinClause(seriesReq.EventsOrder, eventsWhere)
+			eventsInnerJoin = fmt.Sprintf(`ANY INNER JOIN (
+			SELECT DISTINCT session_id
+			FROM product_analytics.events AS e
+			PREWHERE %s
+			%s
+		) AS fs USING (session_id)`,
+				strings.Join(conds, " AND \n"), joinClause)
+		}
+
+		sortField := sortOptions[seriesReq.Sort]
+		if sortField == "" {
+			sortField = sortOptions["datetime"]
+		}
+		sortOrder := "DESC"
+		if strings.EqualFold(seriesReq.Order, "ASC") {
+			sortOrder = "ASC"
+		}
+
+		viewedJoin := fmt.Sprintf(viewedSessionsJoinTemplate, userId, projectId, startSec)
+
+		query := fmt.Sprintf(sessionsQuery,
+			eventsInnerJoin,
+			viewedJoin,
+			strings.Join(sessionsWhere, " AND "),
+			sortField,
+			sortOrder,
+			seriesReq.Limit,
+			offset,
+		)
+
+		log.Printf("Series %d Sessions Search Query: %s", i, query)
+
+		rows, err := s.chConn.Query(context.Background(), query)
+		if err != nil {
+			return nil, fmt.Errorf("series %d query failed: %w", i, err)
+		}
+
+		seriesData := model.SeriesSessionData{
+			SeriesId:   series.SeriesID,
+			SeriesName: series.Name,
+			Sessions:   make([]model.Session, 0, seriesReq.Limit),
+		}
+
+		var total uint64
+		for rows.Next() {
+			var sess model.Session
+			err = rows.Scan(
+				&sess.SessionId,
+				&sess.ProjectId,
+				&sess.StartTs,
+				&sess.Duration,
+				&sess.Platform,
+				&sess.Timezone,
+				&sess.UserId,
+				&sess.UserUuid,
+				&sess.UserAnonymousId,
+				&sess.UserBrowser,
+				&sess.UserCity,
+				&sess.UserCountry,
+				&sess.UserDevice,
+				&sess.UserDeviceType,
+				&sess.UserOs,
+				&sess.UserState,
+				&sess.EventsCount,
+				&sess.Viewed,
+				&total,
+			)
+			if err != nil {
+				rows.Close()
+				return nil, fmt.Errorf("series %d scan failed: %w", i, err)
+			}
+			if seriesData.Total == 0 {
+				seriesData.Total = total
+			}
+			seriesData.Sessions = append(seriesData.Sessions, sess)
+		}
+		rows.Close()
+
+		response.Series = append(response.Series, seriesData)
+	}
+
+	return response, nil
 }
