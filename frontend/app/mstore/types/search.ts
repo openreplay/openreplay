@@ -146,7 +146,7 @@ export default class Search {
     const js: any = { ...this };
     js.filters = this.filters.map((filter: any) => {
       const js = new FilterItem(filter).toJson();
-      delete js.type;
+      // delete js.type;
       if (js.isEvent || Boolean(js.isEvent)) {
         delete js.dataType;
         // delete js.propertyOrder;
@@ -162,8 +162,8 @@ export default class Search {
       js.endDate,
       15,
     );
-    js.startDate = startDate;
-    js.endDate = endDate;
+    js.startTimestamp = startDate;
+    js.endTimestamp = endDate;
 
     delete js.createdAt;
     delete js.key;
