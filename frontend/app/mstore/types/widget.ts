@@ -522,20 +522,16 @@ export default class Widget {
   fetchSessions(metricId: any, filter: any): Promise<any> {
     const newFilter = this.applyProperties(filter);
     return new Promise((resolve) => {
-      metricService
-        .fetchSessions(metricId, newFilter)
-        .then((response: any[]) => {
-          resolve(
-            response.map((cat: { sessions: any[] }) => {
-              return {
-                ...cat,
-                sessions: cat.sessions.map((s: any) =>
-                  new Session().fromJson(s),
-                ),
-              };
-            }),
-          );
-        });
+      metricService.fetchSessions(metricId, newFilter).then((response: any) => {
+        resolve(
+          response.series.map((cat: { sessions: any[] }) => {
+            return {
+              ...cat,
+              sessions: cat.sessions.map((s: any) => new Session().fromJson(s)),
+            };
+          }),
+        );
+      });
     });
   }
 
