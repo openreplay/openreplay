@@ -522,7 +522,7 @@ export default class Widget {
   fetchSessions(metricId: any, filter: any): Promise<any> {
     const newFilter = this.applyProperties(filter);
     return new Promise((resolve) => {
-      metricService.fetchSessions(metricId, newFilter).then((response: any) => {
+      metricService.fetchSessions(newFilter).then((response: any) => {
         resolve(
           response.series.map((cat: { sessions: any[] }) => {
             return {
