@@ -18,8 +18,12 @@ import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { HEATMAP, USER_PATH, FUNNEL } from 'App/constants/card';
 import { useTranslation } from 'react-i18next';
+import Session from 'App/types/session/session';
 
-const getListSessionsBySeries = (data, seriesId) => {
+const getListSessionsBySeries = (
+  data: { sessions: Session[]; total: number; seriesId: string }[],
+  seriesId: string,
+) => {
   const result = data.reduce(
     (acc, { sessions, total, seriesId: id }) => {
       const ids = new Set(acc.sessions.map((s) => s.sessionId));
@@ -31,10 +35,12 @@ const getListSessionsBySeries = (data, seriesId) => {
       }
       return acc;
     },
-    { sessions: [], total: 0 },
+    { sessions: [], total: 0 } as { sessions: Session[]; total: number },
   );
   if (seriesId === 'all')
     result.total = Math.max(...data.map((d) => d.total), 0);
+
+  result.sessions.sort((a, b) => b.startTs - a.startTs);
   return result;
 };
 
@@ -49,7 +55,7 @@ function WidgetSessions({ className = '' }) {
   const [seriesOptions, setSeriesOptions] = useState([
     { label: t('All'), value: 'all' },
   ]);
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<Session[]>([]);
   const [loading, setLoading] = useState(false);
 
   const filter = dashboardStore.drillDownFilter;
@@ -217,19 +223,23 @@ function WidgetSessions({ className = '' }) {
     metricStore.setFocusedSeriesName(
       activeSeries === 'all'
         ? null
-        : seriesOptions.find((o) => o.value === activeSeries)?.label,
+        : (seriesOptions.find((o) => o.value === activeSeries)?.label ?? null),
       false,
     );
   }, [activeSeries, metricStore, seriesOptions]);
   useEffect(() => {
     setActiveSeries(
-      focused ? seriesOptions.find((o) => o.label === focused)?.value : 'all',
+      focused
+        ? (seriesOptions.find((o) => o.label === focused)?.value ?? 'all')
+        : 'all',
     );
   }, [focused, seriesOptions]);
 
   const clearFilters = () => {
     metricStore.updateKey('sessionsPage', 1);
     dashboardStore.resetDrillDownFilter();
+    metricStore.setFocusedSeriesName(null, false);
+    setActiveSeries('all');
   };
 
   const seriesDropdownItems = seriesOptions.map((opt) => ({
@@ -250,24 +260,26 @@ function WidgetSessions({ className = '' }) {
             <h2 className="text-xl">
               {metricStore.clickMapSearch ? t('Clicks') : t('Sessions')}
             </h2>
-            <div>
-            <div className="color-gray-medium">
-              {metricStore.clickMapLabel &&
-                `on \"${metricStore.clickMapLabel}\" `}
-              {t('between')}{' '}
-              <span className="font-medium color-gray-darkest">
-                {startTime}
-              </span>{' '}
-              {t('and')}{' '}
-              <span className="font-medium color-gray-darkest">{endTime}</span>
-            </div>
-            {hasFilters && (
-              <Tooltip title={t('Clear Drilldown')}>
-                <Button type="text" size="small" onClick={clearFilters}>
-                  <UndoOutlined />
-                </Button>
-              </Tooltip>
-            )}
+            <div className="flex items-center gap-1">
+              <div className="color-gray-medium">
+                {metricStore.clickMapLabel &&
+                  `on \"${metricStore.clickMapLabel}\" `}
+                {t('between')}{' '}
+                <span className="font-medium color-gray-darkest">
+                  {startTime}
+                </span>{' '}
+                {t('and')}{' '}
+                <span className="font-medium color-gray-darkest">
+                  {endTime}
+                </span>
+              </div>
+              {hasFilters && (
+                <Tooltip title={t('Clear Drilldown')}>
+                  <Button type="text" size="small" onClick={clearFilters}>
+                    <UndoOutlined />
+                  </Button>
+                </Tooltip>
+              )}
             </div>
           </div>
           {hasFilters && widget.metricType === 'table' && (
@@ -319,7 +331,12 @@ function WidgetSessions({ className = '' }) {
           >
             {filteredSessions.sessions.map((s) => (
               <React.Fragment key={s.sessionId}>
-                <SessionItem noWrap disableUser session={s} metaList={metaList} />
+                <SessionItem
+                  noWrap
+                  disableUser
+                  session={s}
+                  metaList={metaList}
+                />
                 <div className="border-b" />
               </React.Fragment>
             ))}

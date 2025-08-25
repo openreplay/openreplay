@@ -107,7 +107,11 @@ function ORLineChart(props: Props) {
           children: [
             {
               type: 'text',
-              style: { text: 'Number of Sessions' },
+              fill: 'var(--color-black)',
+              style: {
+                text: 'Number of Sessions',
+                fill: 'var(--color-black)',
+              },
             },
           ],
         },

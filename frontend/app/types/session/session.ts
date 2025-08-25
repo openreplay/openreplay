@@ -1,7 +1,12 @@
 import { Duration } from 'luxon';
 import { Note } from 'App/services/NotesService';
 import { toJS } from 'mobx';
-import SessionEvent, { TYPES, EventData, InjectedEvent, Incident } from './event';
+import SessionEvent, {
+  TYPES,
+  EventData,
+  InjectedEvent,
+  Incident,
+} from './event';
 import StackEvent from './stackEvent';
 import SessionError, { IError } from './error';
 import Issue, { IIssue, types as issueTypes } from './issue';
@@ -171,7 +176,6 @@ const emptyValues = {
 
 export default class Session {
   sessionId: ISession['sessionId'];
-
   pageTitle: ISession['pageTitle'];
 
   active: ISession['active'];
@@ -285,7 +289,7 @@ export default class Session {
 
   frustrations: Array<IIssue | InjectedEvent>;
 
-  incidents: Array<Incident>
+  incidents: Array<Incident>;
 
   timezone?: ISession['timezone'];
 
@@ -310,6 +314,8 @@ export default class Session {
   screenHeight?: number;
 
   addedEvents = false;
+
+  startTs: ISession['startTs'];
 
   constructor(plainSession?: ISession) {
     const sessionData = plainSession || (emptyValues as unknown as ISession);
@@ -512,10 +518,13 @@ export default class Session {
     const frustrationList =
       [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
-    const incidentsList = incidents.sort((a, b) => a.startTime - b.startTime).map((i) => ({
-      ...i,
-      time: i.startTime - this.startedAt,
-    })).map((i) => new Incident(i));
+    const incidentsList = incidents
+      .sort((a, b) => a.startTime - b.startTime)
+      .map((i) => ({
+        ...i,
+        time: i.startTime - this.startedAt,
+      }))
+      .map((i) => new Incident(i));
 
     const mixedEventsWithIssues = mergeEventLists(
       events,
