@@ -50,6 +50,7 @@ function FunnelWidget(props: Props) {
       isComp && index > -1
         ? comparisonPeriod.toTimestamps()
         : drillDownPeriod.toTimestamps();
+
     drillDownFilter.merge({
       filters: filter.toJson().filters,
       startTimestamp: periodTimestamps.startTimestamp,

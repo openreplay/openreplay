@@ -334,8 +334,12 @@ export default class FilterStore implements IFilterStore {
       name: this.name,
       filterId: this.filterId,
       autoOpen: this.autoOpen,
-      filters: this.filters.map((filterItem) => filterItem?.toJson()),
-      excludes: this.excludes.map((filterItem) => filterItem?.toJson()),
+      filters: this.filters.map(
+        (filterItem) => filterItem?.toJson?.() ?? filterItem,
+      ),
+      excludes: this.excludes.map(
+        (filterItem) => filterItem?.toJson?.() ?? filterItem,
+      ),
       eventsOrder: this.eventsOrder,
       startTimestamp: this.startTimestamp,
       endTimestamp: this.endTimestamp,
