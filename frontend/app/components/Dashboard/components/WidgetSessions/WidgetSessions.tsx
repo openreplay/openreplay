@@ -293,7 +293,7 @@ function WidgetSessions({ className = '' }) {
           )}
         </div>
         <div className="flex items-center gap-4">
-          {['table', HEATMAP].includes(widget.metricType) || (
+          {['table', HEATMAP, FUNNEL].includes(widget.metricType) ? null : (
             <div className="flex items-center md:ml-6">
               <span className="mr-2 color-gray-medium">
                 {t('Filter by Series')}

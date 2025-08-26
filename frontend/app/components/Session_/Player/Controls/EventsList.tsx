@@ -17,13 +17,14 @@ function EventsList() {
 
   const scale = 100 / endTime;
   const events = React.useMemo(
-    () => Object.values(tabStates)[0]?.eventList.filter((e) => {
-      if (uiPlayerStore.showOnlySearchEvents) {
-        return e.time && (e as any).isHighlighted
-      } else {
-        return e.time
-      }
-  }) || [],
+    () =>
+      Object.values(tabStates)[0]?.eventList.filter((e) => {
+        if (uiPlayerStore.showOnlySearchEvents) {
+          return e.time && (e as any).isHighlighted;
+        } else {
+          return e.time;
+        }
+      }) || [],
     [eventCount, uiPlayerStore.showOnlySearchEvents],
   );
   React.useEffect(() => {
@@ -46,7 +47,11 @@ function EventsList() {
         />
       ))}
       {incidents?.map((i) => {
-        const width = getTimelineEventWidth(endTime, (i as any).time, (i as any).endTime - sessionStart);
+        const width = getTimelineEventWidth(
+          endTime,
+          (i as any).time,
+          (i as any).endTime - sessionStart,
+        );
         return (
           <Tooltip title={i.label} key={(i as any).startTime}>
             <div
@@ -58,7 +63,7 @@ function EventsList() {
               }}
             />
           </Tooltip>
-        )
+        );
       })}
     </>
   );
