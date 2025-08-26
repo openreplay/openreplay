@@ -220,10 +220,10 @@ function DashboardList() {
       <Empty
         image={<AnimatedSVG name={emptyImage} size={imageDimensions.width} />}
         imageStyle={{
-          width: imageDimensions.width,
+          width: mobileScreen ? window.innerWidth - (window.innerWidth/10) : imageDimensions.width,
           height: imageDimensions.height,
           margin: 'auto',
-          padding: '2rem 0',
+          padding: mobileScreen ? 0 : '2rem 0',
         }}
         description={emptyDescription}
       />

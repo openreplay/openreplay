@@ -431,10 +431,9 @@ function SessionItem(props: RouteComponentProps & Props) {
           <div className="flex items-center m-auto w-[15%] justify-end">
             <div
               className={cn(
-                stl.playLink,
                 isDisabled
                   ? 'cursor-not-allowed'
-                  : 'cursor-pointer flex flex-col lg:flex-row',
+                  : 'cursor-pointer flex flex-col items-end lg:items-center lg:flex-row',
               )}
               id="play-button"
               data-viewed={viewed}
@@ -452,7 +451,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                 </div>
               )}
               {isSessions && isLastPlayed && (
-                <Label className="bg-neutral-100 p-1 py-0 text-xs whitespace-nowrap rounded-xl text-neutral-400 ms-auto">
+                <Label className="bg-neutral-100 p-1 py-0 mb-1 -mt-1 lg:mb-0 lg:mt-0 text-xs whitespace-nowrap rounded-xl text-neutral-400 ms-auto">
                   {t('LAST PLAYED')}
                 </Label>
               )}

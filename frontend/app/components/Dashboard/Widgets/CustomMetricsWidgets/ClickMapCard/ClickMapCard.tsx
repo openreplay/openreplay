@@ -17,10 +17,6 @@ function ClickMapCard() {
   };
 
   const { sessionId } = metricStore.instance.data;
-  // const url = metricStore.instance.data.path;
-  // const operator = metricStore.instance.series[0]?.filter.filters[0]?.operator
-  //   ? metricStore.instance.series[0].filter.filters[0].operator
-  //   : 'startsWith';
 
   React.useEffect(() => () => setCustomSession(null), []);
 

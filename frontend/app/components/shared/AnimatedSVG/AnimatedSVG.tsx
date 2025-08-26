@@ -1,4 +1,5 @@
 import React from 'react';
+import { mobileScreen } from 'App/utils/isMobile'
 
 export enum ICONS {
   DASHBOARD_ICON = 'dashboard-icn',
@@ -76,7 +77,7 @@ function AnimatedSVG(props: Props): JSX.Element | null {
   if (!SvgIcon) {
     return null;
   }
-  const style = disableSize ? {} : { width: `${size}px` };
+  const style = disableSize ? {} : { width: `${size}px`, maxWidth: mobileScreen ? window.innerWidth - (window.innerWidth/10) : undefined };
   return <img src={SvgIcon} style={style} className={className} alt={name} />;
 }
 
