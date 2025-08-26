@@ -163,8 +163,8 @@ global:
   enterpriseEditionLicense: ""
   domainName: ""
 
-chalice:
-  env:
+# chalice:
+  # env:
     # captcha_server: ''
     # captcha_key: ''
     # SAML2_MD_URL: ''
