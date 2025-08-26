@@ -291,7 +291,9 @@ function FilterModal({
                   <FilterItem
                     key={filter.id || filter.name}
                     filter={filter}
-                    disabled={activeFilters?.includes(filter.name)}
+                    disabled={
+                      !filter.isEvent && activeFilters?.includes(filter.name)
+                    }
                     onClick={handleFilterClick}
                     showCategory
                     isLast={i === displayedFilters.length - 1}
