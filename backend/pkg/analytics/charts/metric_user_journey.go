@@ -610,7 +610,77 @@ func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (J
 	return JourneyData{Nodes: nodesValues, Links: links}, nil
 }
 
-func (h *UserJourneyQueryBuilder) transformSunburst(rows []UserJourneyRawData) (SunburstData, error) {
-	//TODO: Implement the transformation following the same logic as the original code
-	return SunburstData{}, nil
+func (h *UserJourneyQueryBuilder) transformSunburst(rows []UserJourneyRawData) ([]SunburstData, error) {
+	var getAllFromCurrentLevel = func(element SunburstData, levels []SunburstData) []SunburstData {
+		var result []SunburstData = make([]SunburstData, 0)
+		for _, l := range levels {
+			if element.Depth == l.Depth && element.Name == l.Name && element.Type == l.Type {
+				result = append(result, l)
+			}
+		}
+		return result
+	}
+
+	var sumValues = func(children []SunburstData) uint64 {
+		var result uint64 = 0
+		for _, c := range children {
+			result += c.Value
+		}
+		return result
+	}
+
+	var response []SunburstData = make([]SunburstData, 0)
+	var levels []SunburstData = make([]SunburstData, 0)
+	var depth uint64 = 1
+	for _, r := range rows {
+		if r.EventNumberInSession > 2 {
+			break
+		}
+		var children = &response
+		var currentElement = SunburstData{
+			Name:     r.EValue,
+			Type:     r.EventType,
+			Depth:    uint16(r.EventNumberInSession),
+			Value:    0,
+			Children: &[]SunburstData{}}
+		if r.EventNumberInSession > depth {
+			depth += 1
+		}
+
+		var savedElements []SunburstData = getAllFromCurrentLevel(currentElement, levels)
+		if len(savedElements) == 0 {
+			*children = append(*children, currentElement)
+			children = &[]SunburstData{currentElement}
+			levels = append(levels, (*children)[0])
+		} else {
+			children = &savedElements
+		}
+
+		depth += 1
+		currentElement = SunburstData{
+			Name:     r.NextValue,
+			Type:     r.NextType,
+			Depth:    uint16(r.EventNumberInSession + 1),
+			Value:    r.SessionsCount,
+			Children: &[]SunburstData{},
+		}
+		for _, c := range *children {
+			savedElements = getAllFromCurrentLevel(currentElement, *c.Children)
+			if len(savedElements) == 0 {
+				*c.Children = append(*c.Children, currentElement)
+				levels = append(levels, (*c.Children)[len(*c.Children)-1])
+			} else {
+				for _, sc := range savedElements {
+					sc.Value += r.SessionsCount
+				}
+			}
+		}
+		depth -= 1
+	}
+
+	// Count the value of the initial nodes
+	for _, r := range response {
+		r.Value = sumValues(*r.Children)
+	}
+	return response, nil
 }
