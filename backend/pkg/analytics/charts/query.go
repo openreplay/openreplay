@@ -685,3 +685,18 @@ var SessionColumns = map[string]string{
 	"duration":           "duration",
 	// TODO Add any missing session columns to be considered.
 }
+
+func reverseSqlOperator(op string) string {
+	switch op {
+	case "=":
+		return "!="
+	case "!=":
+		return "="
+	case "ILIKE":
+		return "NOT ILIKE"
+	case "NOT ILIKE":
+		return "ILIKE"
+	default:
+		return op
+	}
+}

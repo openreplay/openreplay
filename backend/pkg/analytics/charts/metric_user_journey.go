@@ -108,12 +108,11 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	var q2ExtraCol string
 	var q2ExtraCondition string
 	var mainColumn string
-	//var extraValues map[string]interface{} = make(map[string]interface{})
+
 	if len(p.MetricValue) == 0 {
 		p.MetricValue = append(p.MetricValue, "LOCATION")
 		subEvents = append(subEvents, map[string]string{"column": "`$current_path`", "eventType": "LOCATION"})
 	} else {
-
 		if len(p.StartPoint) > 0 {
 			var extraMetricValues []string
 			for _, s := range p.StartPoint {
@@ -153,37 +152,9 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		mainColumn = fmt.Sprintf("multiIf(%s,%s)", strings.Join(b, ","), subEvents[len(subEvents)-1]["column"])
 	} else if len(subEvents) == 1 {
 		mainColumn = subEvents[0]["column"]
-		//TODO: what happens if subEvents len is 0;;;if len(subEvents) > 0
 	}
 
 	step0Conditions, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"})
-
-	//for i, sf := range p.StartPoint {
-	//	filterKey := fmt.Sprintf("start_point_%d", i)
-	//	//op := compOps[sf.Operator]
-	//	//        sf.value = helper.values_for_operator(value=sf.value, op=sf.operator)
-	//	//        is_not = sh.is_negation_operator(sf.operator)
-	//	var eventColumn, eventName string
-	//	if _, ok := PredefinedJourneys[sf.Name]; ok {
-	//		eventColumn = PredefinedJourneys[sf.Name]["column"]
-	//		eventName = PredefinedJourneys[sf.Name]["eventName"]
-	//	} else {
-	//		eventName = sf.Name
-	//	}
-	//	//extra_values = {**extra_values, **sh.multi_values(sf.value, value_key=f_k),
-	//	//	                       f"start_event_type_{i}": event_type}
-	//	//TODO: make this support multiple values (of multiple filter-values)
-	//	extraValues[filterKey] = sf.Value
-	//	startPointsConditions = append(startPointsConditions, fmt.Sprintf("`$event_name`='%s'", eventName))
-	//	if eventColumn != "" {
-	//		startPointsConditions[len(startPointsConditions)-1] = fmt.Sprintf("(%s AND %s)", startPointsConditions[len(startPointsConditions)-1],
-	//			"TRUE", // TODO: support multiconditions
-	//			//                                       sh.multi_conditions(f'{event_column} {op} %({f_k})s', sf.value, is_not=is_not,
-	//			//                                                           value_key=f_k)
-	//		)
-	//	}
-	//	step0Conditions = append(step0Conditions, startPointsConditions[len(startPointsConditions)-1])
-	//}
 
 	if len(startPointsConditions) > 0 {
 		startPointsConditions = []string{fmt.Sprintf("(%s)", strings.Join(startPointsConditions, " OR "))}
@@ -200,15 +171,12 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 			continue
 		}
 		if slices.Contains(p.MetricValue, ef.Name) {
-			//fKey := fmt.Sprintf("exclude_%d", i)
-			//            ef.value = helper.values_for_operator(value=ef.value, op=ef.operator)
-			//            op = sh.get_sql_operator(ef.operator)
-			//            op = sh.reverse_sql_operator(op)
-			//            extra_values = {**extra_values, **sh.multi_values(ef.value, value_key=f_k)}
-			exclusions[ef.Name] = []string{fmt.Sprintf("`$event_name` %s '%s'", ef.Operator, ef.Name)}
-			//            exclusions[ef.type] = [
-			//                sh.multi_conditions(f'{JOURNEY_TYPES[ef.type]["column"]} {op} %({f_k})s', ef.value, is_not=True,
-			//                                    value_key=f_k)]
+			op, ok := compOps[ef.Operator]
+			if !ok {
+				return nil, fmt.Errorf("unknown operator: %s", ef.Operator)
+			}
+			op = reverseSqlOperator(op)
+			exclusions[ef.Name] = []string{fmt.Sprintf("`$event_name` %s '%s'", op, ef.Name)}
 		}
 	}
 	_, sessionsConditions := BuildEventConditions(p.Series[0].Filter.Filters, BuildConditionsOptions{DefinedColumns: mainSessionsColumns, MainTableAlias: "sessions"})
