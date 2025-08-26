@@ -111,8 +111,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	//var extraValues map[string]interface{} = make(map[string]interface{})
 	if len(p.MetricValue) == 0 {
 		p.MetricValue = append(p.MetricValue, "LOCATION")
-		//TODO: change "`$properties`.url_path" to url_path
-		subEvents = append(subEvents, map[string]string{"column": "`$properties`.url_path", "eventType": "LOCATION"})
+		subEvents = append(subEvents, map[string]string{"column": "`$current_path`", "eventType": "LOCATION"})
 	} else {
 
 		if len(p.StartPoint) > 0 {

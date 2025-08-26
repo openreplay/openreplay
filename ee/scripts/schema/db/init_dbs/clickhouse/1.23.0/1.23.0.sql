@@ -401,3 +401,8 @@ WHERE length(value) > 0
   AND autocomplete_event_properties._timestamp > now() - INTERVAL 1 MONTH
 GROUP BY project_id, event_name, property_name, value;
 
+ALTER TABLE product_analytics.users
+    ADD COLUMN IF NOT EXISTS "$current_path" String MATERIALIZED path("$current_url");
+
+ALTER TABLE product_analytics.events
+    ADD COLUMN IF NOT EXISTS "$current_path" String MATERIALIZED path("$current_url");
