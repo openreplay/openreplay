@@ -72,7 +72,10 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfa
 	if err != nil {
 		return nil, err
 	}
-	for i := range queries[:len(queries)-1] {
+	if len(queries) == 0 {
+		return nil, fmt.Errorf("No queries to execute for userJourney")
+	}
+	for i := 0; i < len(queries)-1; i++ {
 		err = conn.Exec(context.Background(), queries[i])
 		if err != nil {
 			return nil, fmt.Errorf("error executing tmp query for userJourney: %w", err)
