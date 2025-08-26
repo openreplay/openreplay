@@ -21,7 +21,7 @@ interface Props {
 
 function FunnelWidget(props: Props) {
   const { t } = useTranslation();
-  const { dashboardStore, searchStore } = useStore();
+  const { dashboardStore } = useStore();
   const [focusedFilter, setFocusedFilter] = React.useState<number | null>(null);
   const { isWidget = false, data, metric, compData } = props;
   const funnel = data.funnel || { stages: [] };

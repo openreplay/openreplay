@@ -1,12 +1,13 @@
 import React from 'react';
 import { Checkbox } from 'UI';
-import { Button } from 'antd';
+import { Button, Segmented, Tooltip } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { toJS } from 'mobx';
 import { useTranslation } from 'react-i18next';
+import { Smartphone, Tablet, Monitor, RefreshCcw } from 'lucide-react';
 
 function ClickMapRagePicker() {
+  const [platform, setPlatform] = React.useState<'desktop' | 'mobile' | 'tablet'>('desktop');
   const { t } = useTranslation();
   const { metricStore, dashboardStore } = useStore();
 
@@ -38,13 +39,35 @@ function ClickMapRagePicker() {
     [],
   );
 
+  React.useEffect(() => {
+    const platformId = metricStore.instance.series[0].filter.filters.findIndex(f => f.name === 'platform')
+    if (platformId >= 0) {
+      metricStore.instance.series[0].filter.filters[platformId].value = [platform];
+      metricStore.instance.updateKey('hasChanged', true);
+    }
+  }, [platform])
+
   return (
     <div className="mr-4 flex items-center gap-2 cursor-pointer">
       <Checkbox onChange={onToggle} label={t('Include rage clicks')} />
 
-      <Button size="small" onClick={refreshHeatmapSession}>
-        {t('Get new image')}
-      </Button>
+      <Segmented
+        options={[
+          { label: <Monitor size={14} />, value: 'desktop' },
+          { label: <Tablet size={14} />, value: 'tablet' },
+          { label: <Smartphone size={14} />, value: 'mobile' },
+        ]}
+        value={platform}
+        size="small"
+        onChange={(value) => setPlatform(value as 'desktop' | 'mobile' | 'tablet')}
+      />
+
+
+      <Tooltip title={t('Get new image')}>
+        <Button size="small" onClick={refreshHeatmapSession}>
+          <RefreshCcw size={14} />
+        </Button>
+      </Tooltip>
     </div>
   );
 }

@@ -320,6 +320,7 @@ function FilterSeries(props: Props) {
             isDraggable={false}
             showIndices={false}
             className="mt-2"
+            isHeatmap={isHeatmap}
             handleRemove={(idx) =>
               onRemoveFilter(actualProperties[idx].originalIndex)
             }

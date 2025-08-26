@@ -27,6 +27,7 @@ interface UnifiedFilterListProps {
   style?: React.CSSProperties;
   actions?: React.ReactNode[];
   orderProps?: any;
+  isHeatmap?: boolean;
 }
 
 const UnifiedFilterList = (props: UnifiedFilterListProps) => {
@@ -43,6 +44,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
     supportsEmpty = true,
     style,
     className,
+    isHeatmap,
   } = props;
 
   const [hoveredItem, setHoveredItem] = useState<{
@@ -161,9 +163,10 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
   }, []);
 
   const activeFilters = filters.map((f) => f.name);
-  return filters.length ? (
+  const shownFilters = isHeatmap ? filters.filter(f => f.name !== "platform") : filters;
+  return shownFilters.length ? (
     <div className={cn('flex flex-col', className)} style={style}>
-      {filters.map((filterItem: Filter, filterIndex: number) => (
+      {shownFilters.map((filterItem: Filter, filterIndex: number) => (
         <div
           key={`filter-${filterItem.id + filterIndex}`}
           className={cn(

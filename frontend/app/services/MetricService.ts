@@ -108,6 +108,9 @@ export default class MetricService {
       data.density = 5;
       data.metricOf = 'sessionCount';
     }
+    if (metric.metricType === HEATMAP) {
+      data.density = 20;
+    }
     try {
       const r = await this.client.post(path, data);
       const response = await r.json();
