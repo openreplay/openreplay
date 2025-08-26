@@ -146,7 +146,10 @@ function WidgetSessions({ className = '' }) {
     [fetchClickmapSessions],
   );
 
-  const loadData = useCallback(() => {
+  const filterDeps = widget.series.flatMap((s) =>
+    s.filter.filters.map((f) => JSON.stringify(f)),
+  ).join('$')
+  const loadData = () => {
     if (widget.metricType === HEATMAP && metricStore.clickMapSearch) {
       const clickFilter = {
         value: [metricStore.clickMapSearch],
@@ -192,16 +195,7 @@ function WidgetSessions({ className = '' }) {
         limit: metricStore.sessionsPageSize,
       });
     }
-  }, [
-    widget,
-    metricStore,
-    dashboardStore,
-    sessionStore,
-    filter,
-    focused,
-    debounceSessions,
-    debounceClicks,
-  ]);
+  };
 
   useEffect(() => {
     metricStore.updateKey('sessionsPage', 1);
@@ -211,14 +205,14 @@ function WidgetSessions({ className = '' }) {
     filter.endTimestamp,
     filter.filters,
     widget.series,
+    filterDeps,
     metricStore.clickMapSearch,
     focused,
     widget.startPoint,
     widget.data.nodes,
     metricStore.disabledSeries.length,
-    loadData,
   ]);
-  useEffect(() => loadData(), [metricStore.sessionsPage, loadData]);
+  useEffect(() => loadData(), [metricStore.sessionsPage]);
   useEffect(() => {
     metricStore.setFocusedSeriesName(
       activeSeries === 'all'
