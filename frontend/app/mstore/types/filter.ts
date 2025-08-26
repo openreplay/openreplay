@@ -409,15 +409,16 @@ export default class FilterStore implements IFilterStore {
       name: FilterKey.CLICK,
       autoCaptured: true,
     });
+
     const locationFilter = filterStore.findEvent({
       name: FilterKey.LOCATION,
       autoCaptured: true,
     });
 
     runInAction(() => {
-      this.filters = []; // Clear existing filters
-      this.addFilter(clickFilter);
+      this.filters = [];
       this.addFilter(locationFilter);
+      this.addFilter(clickFilter);
     });
   }
 
