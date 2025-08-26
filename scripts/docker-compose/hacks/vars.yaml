@@ -15,12 +15,12 @@ global:
   tokenSecret: '${COMMON_TOKEN_SECRET}'
   domainName: "${COMMON_DOMAIN_NAME}"
   ORSecureAccess: false
+  jwtRefreshSecret: "${COMMON_JWT_REFRESH_SECRET}"
+  jwtSpotRefreshSecret: "${COMMON_JWT_SPOT_REFRESH_SECRET}"
   s3:
     accessKey: *accessKey
     secretKey: *secretKey
 chalice:
   env:
-    JWT_REFRESH_SECRET: "${COMMON_JWT_REFRESH_SECRET}"
-    JWT_SPOT_REFRESH_SECRET: "${COMMON_JWT_SPOT_REFRESH_SECRET}"
     POD_NAMESPACE: app
     CLUSTER_URL: svc.cluster.local
