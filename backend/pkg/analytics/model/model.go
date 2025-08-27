@@ -65,8 +65,8 @@ var MetricOfPathAnalysis []string = []string{"sessionCount"}
 var MetricOfWebVital []string = []string{"webVitalUrl"}
 
 type MetricPayload struct {
-	StartTimestamp  int64      `json:"startTimestamp" validate:"required,min=946684800000"`
-	EndTimestamp    int64      `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartTimestamp"`
+	StartTimestamp  uint64     `json:"startTimestamp" validate:"required,min=946684800000"`
+	EndTimestamp    uint64     `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartTimestamp"`
 	Density         int        `json:"density" validate:"required,min=1,max=500"`
 	MetricOf        string     `json:"metricOf" validate:"required,oneof=sessionCount userCount eventCount location userBrowser userDevice userCountry userId ISSUE sessions jsException referrer REQUEST screenResolution heatMapUrl webVitalUrl"`
 	MetricType      MetricType `json:"metricType"`

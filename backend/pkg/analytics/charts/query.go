@@ -380,9 +380,9 @@ func contains(slice []string, s string) bool {
 	return false
 }
 
-func getStepSize(startTimestamp int64, endTimestamp int64, density int, factor int) uint64 {
+func getStepSize(startTimestamp uint64, endTimestamp uint64, density int, factor int) uint64 {
 	factorInt64 := int64(factor)
-	stepSize := (endTimestamp / factorInt64) - (startTimestamp / factorInt64)
+	stepSize := (int64(endTimestamp) / factorInt64) - (int64(startTimestamp) / factorInt64)
 
 	if density <= 1 {
 		return uint64(stepSize)
@@ -392,7 +392,7 @@ func getStepSize(startTimestamp int64, endTimestamp int64, density int, factor i
 }
 
 func FillMissingDataPoints(
-	startTime, endTime int64,
+	startTime, endTime uint64,
 	density int,
 	neutral DataPoint,
 	rows []DataPoint,

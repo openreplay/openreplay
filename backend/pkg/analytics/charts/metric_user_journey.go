@@ -37,11 +37,11 @@ type JourneyData struct {
 }
 
 type SunburstData struct {
-	Name     string          `json:"name"`
-	Type     string          `json:"type"`
-	Depth    uint16          `json:"depth"`
-	Value    uint64          `json:"value"`
-	Children *[]SunburstData `json:"children"`
+	Name     string         `json:"name"`
+	Type     string         `json:"type"`
+	Depth    uint16         `json:"depth"`
+	Value    uint64         `json:"value"`
+	Children []SunburstData `json:"children"`
 }
 
 // JourneyResponse is the API response structure.
@@ -197,9 +197,8 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	//    selected_event_type_sub_query = " OR ".join(selected_event_type_sub_query)
 	chSubQuery = append(chSubQuery, fmt.Sprintf("(%s)", strings.Join(selectedEventTypeSubQuery, " OR ")))
 
-	//TODO: find how to pick MV7D for EE
-	mainSessionsTable := "experimental.sessions AS sessions"
-	mainEventsTable := "product_analytics.events AS events"
+	mainSessionsTable := getMainSessionsTable(p.StartTimestamp) + " AS sessions"
+	mainEventsTable := getMainEventsTable(p.StartTimestamp) + " AS events"
 	initialSessionsCte := ""
 	if len(sessionsConditions) > 0 {
 		sessionsConditions = append(sessionsConditions, fmt.Sprintf("sessions.project_id = toUInt16(%d)", p.ProjectId))
@@ -606,24 +605,24 @@ func (h *UserJourneyQueryBuilder) transformSunburst(rows []UserJourneyRawData) (
 		if r.EventNumberInSession > 2 {
 			break
 		}
-		var children = &response
+		var children = response
 		var currentElement = SunburstData{
 			Name:     r.EValue,
 			Type:     r.EventType,
 			Depth:    uint16(r.EventNumberInSession),
 			Value:    0,
-			Children: &[]SunburstData{}}
+			Children: []SunburstData{}}
 		if r.EventNumberInSession > depth {
 			depth += 1
 		}
 
 		var savedElements []SunburstData = getAllFromCurrentLevel(currentElement, levels)
 		if len(savedElements) == 0 {
-			*children = append(*children, currentElement)
-			children = &[]SunburstData{currentElement}
-			levels = append(levels, (*children)[0])
+			children = append(children, currentElement)
+			children = []SunburstData{currentElement}
+			levels = append(levels, (children)[0])
 		} else {
-			children = &savedElements
+			children = savedElements
 		}
 
 		depth += 1
@@ -632,13 +631,13 @@ func (h *UserJourneyQueryBuilder) transformSunburst(rows []UserJourneyRawData) (
 			Type:     r.NextType,
 			Depth:    uint16(r.EventNumberInSession + 1),
 			Value:    r.SessionsCount,
-			Children: &[]SunburstData{},
+			Children: []SunburstData{},
 		}
-		for _, c := range *children {
-			savedElements = getAllFromCurrentLevel(currentElement, *c.Children)
+		for _, c := range children {
+			savedElements = getAllFromCurrentLevel(currentElement, c.Children)
 			if len(savedElements) == 0 {
-				*c.Children = append(*c.Children, currentElement)
-				levels = append(levels, (*c.Children)[len(*c.Children)-1])
+				c.Children = append(c.Children, currentElement)
+				levels = append(levels, (c.Children)[len(c.Children)-1])
 			} else {
 				for _, sc := range savedElements {
 					sc.Value += r.SessionsCount
@@ -650,7 +649,7 @@ func (h *UserJourneyQueryBuilder) transformSunburst(rows []UserJourneyRawData) (
 
 	// Count the value of the initial nodes
 	for _, r := range response {
-		r.Value = sumValues(*r.Children)
+		r.Value = sumValues(r.Children)
 	}
 	return response, nil
 }

@@ -608,7 +608,7 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 	return sessionConditions
 }
 
-func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string, projectId int, startTimestamp, endTimestamp int64) []string {
+func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string, projectId int, startTimestamp, endTimestamp uint64) []string {
 	conditions := []string{
 		fmt.Sprintf("%s.project_id = %d", tableAlias, projectId),
 	}
