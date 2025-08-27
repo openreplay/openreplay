@@ -34,8 +34,12 @@ func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfac
 
 		var pts []DataPoint
 		if err = conn.Select(context.Background(), &pts, query, convertParams(params)...); err != nil {
-			log.Printf("exec %s: %v", series.Name, err)
+			log.Printf("Select timeseries %s error: %v", series.Name, err)
 			return nil, fmt.Errorf("series %s: %v", series.Name, err)
+		}
+
+		if len(pts) == 0 {
+			return []interface{}{}, nil
 		}
 
 		for _, dp := range pts {
