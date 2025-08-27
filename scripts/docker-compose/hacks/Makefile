@@ -15,9 +15,10 @@ helm-template:
 create-yamls: helm-template
 	@awk -v RS='---' 'NR>1{kind=""; name=""; if(match($$0, /kind:[[:space:]]*([a-zA-Z]+)/, k) &&  \
 				match($$0, /name:[[:space:]]*([a-zA-Z0-9_.-]+)/, n)) \
-				{kind=k[1]; name=n[1]; if(kind == "Deployment") print $$0 > "yamls/"name".yaml";}}' yamls/deployment.yaml
+				{kind=k[1]; name=n[1]; if(kind == "Deployment" || (kind == "Secret" && name == "or-secrets")) print $$0 > "yamls/"name".yaml";}}' yamls/deployment.yaml
 	@rm yamls/ingress-nginx.yaml
 	@rm yamls/deployment.yaml
+	@bash process-secrets.sh
 
 .PHONY: create-envs
 create-envs: create-yamls ## Create envs from deployment
@@ -33,6 +34,6 @@ create-envs: create-yamls ## Create envs from deployment
 .PHONY: create-compose
 create-compose: create-envs ## Create docker-compose.yml
 	@echo creating docker-compose yaml
-	$(eval FILES := $(shell find yamls/ -type f -name "*.yaml" -exec basename {} .yaml \; | tr '\n' ',' | sed 's/,$$//'))
+	$(eval FILES := $(shell find yamls/ -type f -name "*-openreplay.yaml" -exec basename {} .yaml \; | tr '\n' ',' | sed 's/,$$//'))
 	@#echo "Files found: $(FILES)"
 	@FILES=$(FILES) templater -i tpls/docker-compose.tpl -f ../../helmcharts/vars.yaml -f vars.yaml > ../docker-compose.yaml
