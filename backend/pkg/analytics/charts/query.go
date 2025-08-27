@@ -432,7 +432,7 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 	events = make([]string, 0, len(filters))
 	eventFilters = make([]string, 0, len(filters))
 	sessionFilters = make([]string, 0, len(filters)+1)
-	sessionFilters = append(sessionFilters, fmt.Sprintf("%s.duration IS NOT NULL", sessionsAlias))
+	sessionFilters = append(sessionFilters, fmt.Sprintf("isNotNull(%s.duration)", sessionsAlias))
 	sessionColumns := GetSessionColumns(len(isSessionJoin) > 0 && isSessionJoin[0])
 
 	var sessionFiltersList, eventFiltersList []model.Filter

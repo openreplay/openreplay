@@ -59,8 +59,9 @@ const (
     e.url_path
 FROM (
     SELECT
-        *,
-        JSONExtractString(toString(e."$properties"), 'url_path') AS url_path
+        session_id,
+        created_at,
+        "$current_path" AS url_path
     FROM product_analytics.events AS e
     WHERE %s
 ) AS e
@@ -71,7 +72,7 @@ LIMIT 1;`
 
 	sqlWithoutLocationTemplate = `WITH top_url_path AS (
     SELECT
-        JSONExtractString(toString(e."$properties"), 'url_path') AS url_path,
+        "$current_path" AS url_path,
         COUNT(*) AS cnt
     FROM product_analytics.events AS e
     WHERE %s
@@ -88,8 +89,9 @@ SELECT
     e.url_path
 FROM (
     SELECT
-        *,
-        JSONExtractString(toString(e."$properties"), 'url_path') AS url_path
+        session_id,
+		created_at,
+        "$current_path" AS url_path
     FROM product_analytics.events AS e
     WHERE %s
 ) AS e
@@ -131,8 +133,8 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 	_, filtersWhere, extraSessions := BuildWhere(filters, string(series.Filter.EventsOrder), "e", "s", true)
 	sessionsWhere = append(sessionsWhere, extraSessions...)
 
-	fmt.Println("filtersWhere", filtersWhere)
-	fmt.Println("extraSessions", extraSessions)
+	//fmt.Println("filtersWhere", filtersWhere)
+	//fmt.Println("extraSessions", extraSessions)
 
 	var query string
 	if hasLocationFilter {
@@ -140,7 +142,7 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 			fmt.Sprintf("e.project_id = %d", projectId),
 			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
 			"e.`$event_name` = 'CLICK'",
-			fmt.Sprintf("JSONExtractString(toString(e.`$properties`), 'url_path') = '%s'", urlPath),
+			fmt.Sprintf("$current_path = '%s'", urlPath),
 		}
 		eventsWhere = append(eventsWhere, filtersWhere...)
 
