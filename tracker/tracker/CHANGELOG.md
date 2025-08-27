@@ -1,4 +1,8 @@
-## 16.4.8 & .7
+## 16.4.8
+
+- fixup for session token storage issue
+
+## 16.4.7
 
 - some improvements for iframe capture
 - better handling of resource timing information

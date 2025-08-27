@@ -110,7 +110,7 @@ export default class Session {
     return pageNo
   }
 
-  getSessionToken(projectKey?: string): string | undefined {
+  getSessionToken = (projectKey?: string): string | undefined => {
     const tokenWithProject = this.token || this.app.sessionStorage.getItem(this.options.session_token_key)
     if (projectKey && tokenWithProject) {
       const savedProject = tokenWithProject.split('_&_')[1]
@@ -124,8 +124,8 @@ export default class Session {
     return token || undefined
   }
 
-  setSessionToken(token: string, projectKey: string): void {
-    this.token = token
+  setSessionToken = (token: string, projectKey: string): void => {
+    this.token = `${token}_&_${projectKey}`
     this.app.sessionStorage.setItem(this.options.session_token_key, `${token}_&_${projectKey}`)
   }
 

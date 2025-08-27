@@ -408,6 +408,7 @@ export default class App {
       }, 250)
       this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
         if (ev.data.context === this.contextId || this.projectKey !== ev.data.projectKey) {
+          this.debug.log('same ctx event', ev)
           return
         }
         this.debug.log(ev)
