@@ -97,14 +97,7 @@ spec:
               value: '{{ .Values.global.email.emailSslCert }}'
             - name: EMAIL_FROM
               value: '{{ .Values.global.email.emailFrom }}'
-            {{- range $key, $val := .Values.global.env }}
-            - name: {{ $key }}
-              value: '{{ $val }}'
-            {{- end }}
-            {{- range $key, $val := .Values.env }}
-            - name: {{ $key }}
-              value: '{{ $val }}'
-            {{- end }}
+            {{- include "openreplay.env" (dict "ctx" .) | nindent 12}}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}
