@@ -13,6 +13,10 @@ import { tracker } from '@openreplay/tracker'
 tracker.incident({ label: 'incident', startTime: Date.now() })
 ```
 
+## 16.4.8
+
+- fixup for session token storage issue
+
 ## 16.4.6
 
 - Moving 15.3.0 change (resource sanitizer) to current ver
