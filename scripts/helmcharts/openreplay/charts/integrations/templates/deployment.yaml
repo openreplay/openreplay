@@ -70,14 +70,7 @@ spec:
             - name: POSTGRES_STRING
               value: {{ include "openreplay.pg_connection_string" .}}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
-            {{- range $key, $val := .Values.global.env }}
-            - name: {{ $key }}
-              value: '{{ $val }}'
-            {{- end }}
-            {{- range $key, $val := .Values.env }}
-            - name: {{ $key }}
-              value: '{{ $val }}'
-            {{- end}}
+            {{- include "openreplay.env" (dict "ctx" .) | nindent 12}}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}
