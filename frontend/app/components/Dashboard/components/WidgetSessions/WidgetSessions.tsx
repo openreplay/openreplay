@@ -203,7 +203,7 @@ function WidgetSessions({ className = '' }) {
   }, [
     filter.startTimestamp,
     filter.endTimestamp,
-    filter.filters,
+    filter.filters.length,
     widget.series,
     filterDeps,
     metricStore.clickMapSearch,

@@ -127,6 +127,10 @@ export default class WebPlayer extends Player {
     void this.messageLoader.preloadFirstFile(data, fileKey);
   }
 
+  setOnCluster = (cb: (coords: any[]) => void) => {
+    this.targetMarker.setOnCluster(cb)
+  }
+
   reinit(session: SessionFilesInfo) {
     if (this.wpState.get().mobsFetched) return; // already initialized
     this.messageLoader.setSession(session);

@@ -145,6 +145,10 @@ export default class Screen {
     }
   }
 
+  addToScreen = (el: HTMLElement) => {
+    this.screen.appendChild(el);
+  }
+
   getParentElement(): HTMLElement | null {
     return this.parentElement;
   }

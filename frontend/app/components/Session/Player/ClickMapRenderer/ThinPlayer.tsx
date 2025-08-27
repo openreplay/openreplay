@@ -11,9 +11,10 @@ import {
   defaultContextValue,
 } from '../../playerContext';
 import PlayerContent from './ThinPlayerContent';
+import { FilterKey } from '@/types/filter/filterType';
 
 function WebPlayer(props: any) {
-  const { sessionStore } = useStore();
+  const { sessionStore, filterStore, dashboardStore } = useStore();
   const { insights } = sessionStore;
   const { session, jumpTimestamp } = props;
   // @ts-ignore
@@ -31,6 +32,40 @@ function WebPlayer(props: any) {
       );
       playerRef.current = WebPlayerInst;
       setContextValue({ player: WebPlayerInst, store: PlayerStore });
+      WebPlayerInst.setOnCluster((coords) => {
+        const click = filterStore.findEvent({ name: FilterKey.CLICK });
+        const normalizedXFilter = filterStore
+          .getCurrentProjectFilters()
+          .find((f) => f.name === 'normalized_x');
+        const normalizedYFilter = filterStore
+          .getCurrentProjectFilters()
+          .find((f) => f.name === 'normalized_y');
+        if (normalizedXFilter && normalizedYFilter) {
+          // [x1, y1], [x2, y2]
+          coords.forEach((set, i) => {
+            click.filters?.push(
+              // @ts-ignore
+              {
+                ...normalizedXFilter,
+                value: [set[0]],
+                operator: i === 0 ? '>' : '<',
+              },
+              {
+                ...normalizedYFilter,
+                value: [set[1]],
+                operator: i === 0 ? '>' : '<',
+              },
+            );
+          });
+        }
+        const existingFilter = dashboardStore.drillDownFilter.filters.findIndex(f => f.name === 'CLICK')
+        if (existingFilter > -1) {
+          dashboardStore.drillDownFilter.removeFilter(existingFilter)
+        }
+        dashboardStore.drillDownFilter.replaceFilters([click]);
+
+        console.log(click, dashboardStore.drillDownFilter.filters);
+      });
     };
 
     if (!playerRef.current) {
