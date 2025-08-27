@@ -194,3 +194,18 @@ Create the volume mount config for redis TLS certificates
 name: {{ $secretName }}
 key: {{ $secretKey }}
 {{- end}}
+
+{{- /*
+{{- include "openreplay.env" (dict "ctx" . "skippedKeys" list("KEY1" "KEY2"))}}
+*/}}
+{{- define "openreplay.env" -}}
+{{- $ctx := .ctx -}}
+{{- $skippedKeys := .skippedKeys | default list -}}
+{{- $mergedEnv := merge $ctx.Values.env $ctx.Values.global.env -}}
+{{- range $key, $val := $mergedEnv }}
+{{- if not (has $key $skippedKeys) }}
+- name: {{ $key }}
+  value: '{{ $val }}'
+{{- end -}}
+{{- end}}
+{{- end}}
