@@ -35,8 +35,6 @@ type Config struct {
 	WorkerID              uint16
 }
 
-// ASSIST_JWT_EXPIRATION (int/seconds), JWT_ISSUER, JWT_ALGORITHM, ASSIST_JWT_SECRET
-
 func New(log logger.Logger) *Config {
 	cfg := &Config{WorkerID: env.WorkerID()}
 	configurator.Process(log, cfg)

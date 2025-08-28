@@ -17,6 +17,7 @@ import (
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/notes"
 	noteAPI "openreplay/backend/pkg/notes/api"
+	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/projects"
 	replayAPI "openreplay/backend/pkg/replays/api"
 	"openreplay/backend/pkg/server/api"
@@ -37,7 +38,7 @@ func (b *serviceBuilder) Handlers() []api.Handlers {
 	return []api.Handlers{b.sessionAPI, b.eventAPI, b.favoriteAPI, b.noteAPI, b.replayAPI}
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chconn clickhouse.Conn) (api.ServiceBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chconn clickhouse.Conn, objStore objectstorage.ObjectStorage) (api.ServiceBuilder, error) {
 	projectService := projects.New(log, pgconn, nil, dbMetrics)
 	responser := api.NewResponser(webMetrics)
 
@@ -51,7 +52,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, fmt.Errorf("failed to create assist proxy: %s", err)
 	}
 
-	sessionService, err := session.NewService(log, pgconn, viewService)
+	sessionService, err := session.NewService(log, pgconn, viewService, objStore)
 	if err != nil {
 		return nil, fmt.Errorf("can't init session service: %s", err)
 	}
