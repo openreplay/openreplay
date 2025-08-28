@@ -260,9 +260,28 @@ export default class APIClient {
 
   duplicate = async (url, init, response, timings) => {
     const respClone = response.clone();
-    // /api/path -> /newapi/path
+    // /v1/{project}/assist/sessions
+    // /v1/{project}/assist/sessions/{session}
+    // /v1/{project}/sessions/{session}/replay
+    // /v1/{project}/sessions/{session}/events
+    // /v1/{project}/sessions/{session}/clickmaps
+    // /v1/{project}/sessions/{session}/favorite
+    // /v1/{project}/sessions/{session}/notes
+    // /v1/{project}/sessions/{session}/notes
+    // /v1/{project}/notes/{note}
+    // /v1/{project}/notes/{note}
+    // /v1/{project}/notes/{note}
+    // /v1/{project}/notes
+    // /v1/{project}/sessions/{session}/first-mob
+    // /v1/{project}/unprocessed/{session}/dom.mob
+    // /v1/{project}/unprocessed/{session}/devtools.mob
+    const trackedUrls = ['assist/sessions', '/sessions/', '/notes', '/unprocessed']
+    // /api/path -> /api-v2/path
+    if (!trackedUrls.some((u) => url.includes(u))) {
+      return;
+    }
     try {
-      const newUrl = url.replace('/api', '/newapi');
+      const newUrl = url.replace('/api', '/newapi/v1');
       const t1 = performance.now();
       const newResp = await window.fetch(newUrl, init);
       const t2 = performance.now();
