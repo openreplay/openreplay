@@ -1,0 +1,62 @@
+import { client } from 'App/mstore';
+import { Data } from './types'
+import Session from 'App/types/session/session';
+
+export async function getTagLabels(projectId: string) {
+  const response = await client.get(`/kai/${projectId}/smart_labels`);
+  const json = await response.json();
+  const options = (json.data ?? []).map((label: string) => ({
+    label,
+    value: label,
+  }));
+  return options;
+}
+
+export async function getIssues(projectId: string, usedLabels?: string[]) {
+  const options = {
+    issues_limit: 40,
+    labels: usedLabels,
+  };
+  const edp = `/kai/${projectId}/smart_alerts`;
+  const response = await client.post(edp, options);
+  const json = await response.json();
+  const data: Data[] = json.data ?? [];
+  const resp: { critical: Data[]; other: Data[] } = {
+    critical: [],
+    other: [],
+  };
+  data.forEach((issue) => {
+    if (issue.labels.find((label) => label.name.toLowerCase() === 'critical')) {
+      resp.critical.push(issue);
+    } else {
+      resp.other.push(issue);
+    }
+  });
+  return resp;
+}
+
+export async function getSessions(projectId: string, params: any) {
+  const sortBy = params.sortBy.includes('startTs') ? 'time' : 'events'
+  const sortDir = params.sortBy.endsWith('desc') ? 'desc' : 'asc'
+  const res = await client.post(`/kai/${projectId}/smart_alerts/search`, {
+    issue: params.issueName,
+    query: params.query || null,
+    labels: params.usedLabels,
+    sortBy,
+    sortDir,
+    range: params.range,
+    limit: params.limit,
+    page: params.page,
+  });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  const json = await res.json();
+
+  const data = json.data.map((s) => {
+    return ({
+        session: new Session(s),
+        issue: s.description,
+        labels: s.labels,
+      })
+  });
+  return data;
+}
