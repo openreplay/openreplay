@@ -129,7 +129,7 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions) ([]string, []string) {
 	opts := BuildConditionsOptions{
 		MainTableAlias:       "e",
-		PropertiesColumnName: "$properties",
+		PropertiesColumnName: "`$properties`",
 		DefinedColumns:       make(map[string]string),
 		EventsOrder:          "then",
 	}
@@ -184,10 +184,10 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) []string {
 	}
 	if f.IsEvent {
 		var parts []string
-		parts = append(parts, fmt.Sprintf("%s`$event_name` = '%s'", alias, f.Name))
+		parts = append(parts, fmt.Sprintf("%s\"$event_name\" = '%s'", alias, f.Name))
 
 		if f.AutoCaptured {
-			parts = append(parts, fmt.Sprintf("%s`$auto_captured` = 1", alias))
+			parts = append(parts, fmt.Sprintf("%s\"$auto_captured\"", alias))
 		}
 
 		for _, sub := range f.Filters {
@@ -205,11 +205,11 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) []string {
 		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: isNumeric}
 	}
 	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
-
 	switch f.Operator {
 	case "isAny", "onAny":
+		//This part is unreachable, because you already have if f.IsEvent&return above
 		if f.IsEvent {
-			return []string{fmt.Sprintf("%s`$event_name` = '%s'", alias, f.Name)}
+			return []string{fmt.Sprintf("%s\"$event_name\" = '%s'", alias, f.Name)}
 		}
 	default:
 		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric); c != "" {
@@ -380,9 +380,9 @@ func contains(slice []string, s string) bool {
 	return false
 }
 
-func getStepSize(startTimestamp int64, endTimestamp int64, density int, factor int) uint64 {
+func getStepSize(startTimestamp uint64, endTimestamp uint64, density int, factor int) uint64 {
 	factorInt64 := int64(factor)
-	stepSize := (endTimestamp / factorInt64) - (startTimestamp / factorInt64)
+	stepSize := (int64(endTimestamp) / factorInt64) - (int64(startTimestamp) / factorInt64)
 
 	if density <= 1 {
 		return uint64(stepSize)
@@ -392,7 +392,7 @@ func getStepSize(startTimestamp int64, endTimestamp int64, density int, factor i
 }
 
 func FillMissingDataPoints(
-	startTime, endTime int64,
+	startTime, endTime uint64,
 	density int,
 	neutral DataPoint,
 	rows []DataPoint,
@@ -432,7 +432,7 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 	events = make([]string, 0, len(filters))
 	eventFilters = make([]string, 0, len(filters))
 	sessionFilters = make([]string, 0, len(filters)+1)
-	sessionFilters = append(sessionFilters, fmt.Sprintf("%s.duration IS NOT NULL", sessionsAlias))
+	sessionFilters = append(sessionFilters, fmt.Sprintf("isNotNull(%s.duration)", sessionsAlias))
 	sessionColumns := GetSessionColumns(len(isSessionJoin) > 0 && isSessionJoin[0])
 
 	var sessionFiltersList, eventFiltersList []model.Filter
@@ -684,4 +684,19 @@ var SessionColumns = map[string]string{
 	"userAnonymousIdIos": "user_anonymous_id",
 	"duration":           "duration",
 	// TODO Add any missing session columns to be considered.
+}
+
+func reverseSqlOperator(op string) string {
+	switch op {
+	case "=":
+		return "!="
+	case "!=":
+		return "="
+	case "ILIKE":
+		return "NOT ILIKE"
+	case "NOT ILIKE":
+		return "ILIKE"
+	default:
+		return op
+	}
 }

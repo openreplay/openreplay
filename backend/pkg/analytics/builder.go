@@ -1,6 +1,8 @@
 package analytics
 
 import (
+	"openreplay/backend/pkg/analytics/model"
+
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/go-playground/validator/v10"
 
@@ -44,6 +46,7 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		return nil, err
 	}
 	reqValidator := validator.New()
+	reqValidator.RegisterStructValidation(model.ValidateMetricFields, model.MetricPayload{})
 
 	searchService, err := search.New(chConn)
 	if err != nil {

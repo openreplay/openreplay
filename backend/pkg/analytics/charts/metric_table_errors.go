@@ -73,7 +73,7 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 		density = 7
 	}
 	durMs := p.EndTimestamp - p.StartTimestamp
-	stepMs := durMs / int64(density-1)
+	stepMs := int64(durMs) / int64(density-1)
 	startMs := (p.StartTimestamp / 1000) * 1000
 	endMs := (p.EndTimestamp / 1000) * 1000
 

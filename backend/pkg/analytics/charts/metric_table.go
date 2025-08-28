@@ -176,11 +176,8 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	}
 
 	prewhereParts := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, otherConds)
-	log.Printf("prewhereParts: %v", prewhereParts)
 	sessionConditions := t.buildSessionConditions(r, metricFormat, durConds)
-	log.Printf("sessionConditions: %v", sessionConditions)
 	joinClause, _, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
-	log.Printf("joinClause: %v", joinClause)
 	if err != nil {
 		return "", err
 	}
@@ -351,20 +348,14 @@ func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload, metricForma
 	// Build event filter conditions with error handling
 	durConds, _ := BuildDurationWhere(s.Filter.Filters)
 	sessFilters, _ := FilterOutTypes(s.Filter.Filters, []model.FilterType{FilterDuration, FilterUserAnonymousId})
-	log.Printf(">>sessFilters: %v", sessFilters)
 	eventConditions, otherConds := BuildEventConditions(sessFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "main",
 		EventsOrder:    string(s.Filter.EventsOrder),
 	})
-	log.Printf(">>eventConditions: %v", eventConditions)
-	log.Printf(">>otherCodifitons: %v", otherConds)
 	prewhereParts := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, otherConds)
-	log.Printf(">>prewhereParts: %v", prewhereParts)
 	queryConditions := t.buildSessionConditions(r, metricFormat, durConds)
-	log.Printf(">>queryConditions: %v", queryConditions)
 	joinClause, extraWhere, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
-	log.Printf(">>joinClause: %v", joinClause)
 	if err != nil {
 		return "", "", nil, err
 	}
@@ -617,7 +608,7 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 	return sessionConditions
 }
 
-func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string, projectId int, startTimestamp, endTimestamp int64) []string {
+func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string, projectId int, startTimestamp, endTimestamp uint64) []string {
 	conditions := []string{
 		fmt.Sprintf("%s.project_id = %d", tableAlias, projectId),
 	}

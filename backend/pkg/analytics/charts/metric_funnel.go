@@ -147,9 +147,6 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		fmt.Sprintf("e.created_at < toDateTime(%d)", (p.MetricPayload.EndTimestamp)/1000),
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
 		fmt.Sprintf("e.`$event_name` IN %s", formatEventNames(stages)),
-		fmt.Sprintf("s.project_id = %d", p.ProjectId),
-		fmt.Sprintf("s.datetime >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
-		fmt.Sprintf("s.datetime < toDateTime(%d)", p.MetricPayload.EndTimestamp/1000),
 	}
 
 	if p.MetricFormat == MetricFormatUserCount {
@@ -159,9 +156,14 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if len(otherConditions) > 0 {
 		baseWhere = append(baseWhere, strings.Join(otherConditions, " AND "))
 	}
-
+	var joinSessions string
 	if len(sessionConditions) > 0 {
+		baseWhere = append(baseWhere, []string{
+			fmt.Sprintf("s.project_id = %d", p.ProjectId),
+			fmt.Sprintf("s.datetime >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
+			fmt.Sprintf("s.datetime < toDateTime(%d)", p.MetricPayload.EndTimestamp/1000)}...)
 		baseWhere = append(baseWhere, fmt.Sprintf("%s", strings.Join(sessionConditions, " AND ")))
+		joinSessions = "INNER JOIN experimental.sessions AS s ON (e.session_id = s.session_id)"
 	}
 
 	groupColumn := fmt.Sprintf("GROUP BY e.session_id")
@@ -172,22 +174,22 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	subQuery := fmt.Sprintf(`
         SELECT
             %s
-        FROM
-            product_analytics.events AS e
-        INNER JOIN experimental.sessions AS s ON
-            (e.session_id = s.session_id)
+        FROM %s AS e
+        		%s
         WHERE
             %s
         %s`,
-		strings.Join(tColumns, ",\n            "),
-		strings.Join(baseWhere, "\n            AND "),
+		strings.Join(tColumns, ",\n"),
+		getMainEventsTable(p.StartTimestamp),
+		joinSessions,
+		strings.Join(baseWhere, " AND "),
 		groupColumn)
 
 	q := fmt.Sprintf(`
         SELECT
             %s
         FROM (%s) AS raw`,
-		strings.Join(stageColumns, ",\n            "),
+		strings.Join(stageColumns, ",\n"),
 		subQuery)
 
 	logQuery(fmt.Sprintf("FunnelQueryBuilder.buildQuery: %s", q))
