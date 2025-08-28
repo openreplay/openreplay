@@ -25,11 +25,12 @@ type serviceImpl struct {
 	views      views.Views
 }
 
-func NewService(log logger.Logger, conn pool.Pool, views views.Views) (Service, error) {
+func NewService(log logger.Logger, conn pool.Pool, views views.Views, objStore objectstorage.ObjectStorage) (Service, error) {
 	return &serviceImpl{
-		log:   log,
-		conn:  conn,
-		views: views,
+		log:        log,
+		conn:       conn,
+		views:      views,
+		objStorage: objStore,
 	}, nil
 }
 

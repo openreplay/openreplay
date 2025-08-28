@@ -11,6 +11,7 @@ import (
 	"openreplay/backend/pkg/metrics"
 	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
+	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/middleware"
@@ -36,7 +37,12 @@ func main() {
 		log.Fatal(ctx, "can't init clickhouse connection: %s", err)
 	}
 
-	services, err := apiService.NewServiceBuilder(log, cfg, webMetrics, dbMetric, pgPool, chConnection)
+	objStore, err := store.NewStore(&cfg.ObjectsConfig)
+	if err != nil {
+		log.Fatal(ctx, "can't init object storage: %s", err)
+	}
+
+	services, err := apiService.NewServiceBuilder(log, cfg, webMetrics, dbMetric, pgPool, chConnection, objStore)
 	if err != nil {
 		log.Fatal(ctx, "can't init services and handlers: %s", err)
 	}
