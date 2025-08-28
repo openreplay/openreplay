@@ -14,6 +14,8 @@ const (
 	MaxMessageLength = 250
 	MaxTagLength     = 10
 	MaxGetLimit      = 100 // Maximum number of notes to return in a single request
+	DefaultLimit     = 9
+	DefaultPage      = 1
 )
 
 type notesImpl struct {
@@ -77,9 +79,9 @@ func (n *notesImpl) Create(tenantID, projectID, userID uint64, note *Note) (*Not
 	}
 
 	sql := `INSERT INTO sessions_notes (message, user_id, tag, session_id, project_id, timestamp, is_public, thumbnail, start_at, end_at) 
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING note_id, created_at, (SELECT name FROM users WHERE users.user_id=$2 AND tenant_id=$11) AS user_name;`
-	err := n.db.QueryRow(sql, note.Message, userID, note.Tag, note.SessionID, projectID, note.Timestamp, note.IsPublic, note.Thumbnail, note.StartAt, note.EndAt, tenantID).
-		Scan(&note.ID, &note.CreatedAt, &note.UserName)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING note_id, created_at, (SELECT name FROM users WHERE users.user_id=$2) AS user_name;` //  AND tenant_id=$11 for EE
+	err := n.db.QueryRow(sql, note.Message, userID, note.Tag, note.SessionID, projectID, note.Timestamp, note.IsPublic, note.Thumbnail, note.StartAt, note.EndAt). //, tenantID).
+																					Scan(&note.ID, &note.CreatedAt, &note.UserName)
 	if err != nil {
 		n.log.Error(context.Background(), "Failed to create note: %v", err)
 		return nil, err
@@ -103,14 +105,14 @@ func (n *notesImpl) GetBySessionID(tenantID, projectID, userID, sessionID uint64
 			FROM sessions_notes
 			INNER JOIN users USING (user_id)
 			WHERE sessions_notes.project_id = $1 AND sessions_notes.deleted_at IS NULL AND sessions_notes.session_id = $2 
-			AND (sessions_notes.user_id = $3 OR sessions_notes.is_public AND tenant_id = $4)
-		ORDER BY created_at DESC;`
-	rows, err := n.db.Query(sql, projectID, sessionID, userID, tenantID)
+			AND (sessions_notes.user_id = $3 OR sessions_notes.is_public)
+		ORDER BY created_at DESC;` //  AND tenant_id = $4 for EE
+	rows, err := n.db.Query(sql, projectID, sessionID, userID) //, tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch notes by session ID: %v", err)
 	}
 	defer rows.Close()
-	var notes []Note
+	notes := make([]Note, 0)
 	for rows.Next() {
 		var note Note
 		if err := rows.Scan(&note.ID, &note.Message, &note.CreatedAt, &note.Tag, &note.SessionID,
@@ -139,10 +141,10 @@ func (n *notesImpl) GetByID(tenantID, projectID, userID, noteID uint64) (*Note, 
 			FROM sessions_notes
 			INNER JOIN users USING (user_id)
 			WHERE sessions_notes.project_id = $1 AND sessions_notes.deleted_at IS NULL AND sessions_notes.note_id = $2 
-			AND (sessions_notes.user_id = $3 OR sessions_notes.is_public AND tenant_id = $4);`
+			AND (sessions_notes.user_id = $3 OR sessions_notes.is_public);` //  AND tenant_id = $4 for EE
 	var note Note
-	err := n.db.QueryRow(sql, projectID, noteID, userID, tenantID).Scan(&note.ID, &note.Message, &note.CreatedAt, &note.Tag, &note.SessionID,
-		&note.Timestamp, &note.IsPublic, &note.Thumbnail, &note.StartAt, &note.EndAt, &note.UserName)
+	err := n.db.QueryRow(sql, projectID, noteID, userID).Scan(&note.ID, &note.Message, &note.CreatedAt, &note.Tag, &note.SessionID,
+		&note.Timestamp, &note.IsPublic, &note.Thumbnail, &note.StartAt, &note.EndAt, &note.UserName) // , tenantID
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch note by ID: %v", err)
 	}
@@ -164,13 +166,13 @@ func (n *notesImpl) getByIDToShare(tenantID, projectID, userID, noteID, shareID 
 	sql := `SELECT sessions_notes.note_id, sessions_notes.message, sessions_notes.created_at, 
 		       sessions_notes.tag, sessions_notes.session_id, sessions_notes.timestamp, sessions_notes.is_public, 
 		       sessions_notes.thumbnail, sessions_notes.start_at, sessions_notes.end_at, users.name AS user_name,
-		       (SELECT name FROM users WHERE tenant_id = $4 AND user_id = $5 AND deleted_at ISNULL) AS share_name
+		       (SELECT name FROM users WHERE user_id = $5 AND deleted_at ISNULL) AS share_name
 			FROM sessions_notes
 			INNER JOIN users USING (user_id)
 			WHERE sessions_notes.project_id = $1 AND sessions_notes.deleted_at IS NULL AND sessions_notes.note_id = $2 
-			AND (sessions_notes.user_id = $3 OR sessions_notes.is_public AND tenant_id = $4);`
+			AND (sessions_notes.user_id = $3 OR sessions_notes.is_public);` // tenant_id = $4 AND for EE
 	var note Note
-	err := n.db.QueryRow(sql, projectID, noteID, userID, tenantID, shareID).Scan(&note.ID, &note.Message, &note.CreatedAt, &note.Tag, &note.SessionID,
+	err := n.db.QueryRow(sql, projectID, noteID, userID, shareID).Scan(&note.ID, &note.Message, &note.CreatedAt, &note.Tag, &note.SessionID,
 		&note.Timestamp, &note.IsPublic, &note.Thumbnail, &note.StartAt, &note.EndAt, &note.UserName, &note.ShareName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch note by ID: %v", err)
@@ -190,19 +192,26 @@ func (n *notesImpl) GetAll(tenantID, projectID, userID uint64, opts *GetOpts) (i
 	if opts.Limit > MaxGetLimit {
 		opts.Limit = MaxGetLimit
 	}
+	if opts.Limit <= 0 {
+		opts.Limit = DefaultLimit
+	}
+	if opts.Page <= 0 {
+		opts.Page = DefaultPage
+	}
 	if opts.Sort != "createdAt" {
 		opts.Sort = "createdAt" // Default sort
 	}
 	if opts.Order != "ASC" && opts.Order != "DESC" {
 		opts.Order = "DESC" // Default order
 	}
-
+	n.log.Info(context.Background(), "%+v", opts)
 	conditionsList := make([]string, 0)
 	conditionsList = append(conditionsList, fmt.Sprintf("sessions_notes.project_id = %d", projectID))
 	conditionsList = append(conditionsList, fmt.Sprintf("sessions_notes.deleted_at IS NULL"))
-	if tenantID != 0 {
-		conditionsList = append(conditionsList, fmt.Sprintf("sessions_notes.tenant_id = %d", tenantID))
-	}
+	// for EE
+	//if tenantID != 0 {
+	//	conditionsList = append(conditionsList, fmt.Sprintf("sessions_notes.tenant_id = %d", tenantID))
+	//}
 	if len(opts.Tags) > 0 {
 		tags := make([]string, len(opts.Tags))
 		for i, tag := range opts.Tags {
@@ -271,7 +280,7 @@ func (n *notesImpl) Update(tenantID, projectID, userID, noteID uint64, note *Not
 		if len(*note.Message) > MaxMessageLength {
 			*note.Message = (*note.Message)[0:MaxMessageLength]
 		}
-		conditionsList = append(conditionsList, fmt.Sprintf("message = '%s'", note.Message))
+		conditionsList = append(conditionsList, fmt.Sprintf("message = '%s'", *note.Message))
 	}
 	if note.Tag != nil && *note.Tag != "" {
 		if len(*note.Tag) > MaxTagLength {
@@ -297,9 +306,9 @@ func (n *notesImpl) Update(tenantID, projectID, userID, noteID uint64, note *Not
         RETURNING sessions_notes.note_id, sessions_notes.message, sessions_notes.created_at, 
 		       sessions_notes.tag, sessions_notes.session_id, sessions_notes.timestamp, sessions_notes.is_public, 
 		       sessions_notes.thumbnail, sessions_notes.start_at, sessions_notes.end_at,
-            (SELECT name FROM users WHERE user_id = $2 AND tenant_id = $4) AS user_name;`, strings.Join(conditionsList, ","))
+            (SELECT name FROM users WHERE user_id = $2) AS user_name;`, strings.Join(conditionsList, ",")) //  AND tenant_id = $4
 	var updatedNote Note
-	err := n.db.QueryRow(sql, projectID, userID, noteID, tenantID).Scan(&updatedNote.ID, &updatedNote.Message, &updatedNote.CreatedAt,
+	err := n.db.QueryRow(sql, projectID, userID, noteID).Scan(&updatedNote.ID, &updatedNote.Message, &updatedNote.CreatedAt,
 		&updatedNote.Tag, &updatedNote.SessionID, &updatedNote.Timestamp, &updatedNote.IsPublic,
 		&updatedNote.Thumbnail, &updatedNote.StartAt, &updatedNote.EndAt, &updatedNote.UserName)
 	if err != nil {
