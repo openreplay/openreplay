@@ -127,7 +127,7 @@ function Issue({
       key={index}
       onClick={() => onIssueClick(issue)}
     >
-      <Tag>{issue.impact}%</Tag>
+      <Tag className="min-w-[56px] text-center">{issue.impact}%</Tag>
       <div className="font-semibold">{issue.issueName}</div>
       <div className="flex items-center flex-wrap">
         {issue.labels.map((label, idx) => (
