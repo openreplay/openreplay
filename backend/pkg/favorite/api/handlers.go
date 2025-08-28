@@ -34,15 +34,18 @@ func (h *handlersImpl) favorite(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	sessID := api.GetSession(r)
+	sessID, err := api.GetSessionID(r)
+	if err != nil {
+
+	}
 	var userID string
 	if user := api.GetUser(r); user != nil {
 		userID = user.GetIDAsString()
 	} else {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, errors.New("no user id"), startTime, r.URL.Path, bodySize)
+		return
 	}
 
-	//
 	if h.favorites.IsExist(sessID, userID) {
 		// If the session is already favorited, remove it
 		if err := h.favorites.Remove(sessID, userID); err != nil {

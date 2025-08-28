@@ -8,9 +8,9 @@ import (
 )
 
 type Favorites interface {
-	Add(sessionID, userID string) error
-	IsExist(sessionID, userID string) bool
-	Remove(sessionID, userID string) error
+	Add(sessionID uint64, userID string) error
+	IsExist(sessionID uint64, userID string) bool
+	Remove(sessionID uint64, userID string) error
 }
 
 type favoritesImpl struct {
@@ -25,9 +25,9 @@ func New(log logger.Logger, conn pool.Pool) (Favorites, error) {
 	}, nil
 }
 
-func (f *favoritesImpl) Add(sessionID, userID string) error {
+func (f *favoritesImpl) Add(sessionID uint64, userID string) error {
 	sql := `INSERT INTO public.user_favorite_sessions(user_id, session_id) VALUES ($1, $2) RETURNING session_id;`
-	var existingSessionID string
+	var existingSessionID uint64
 	if err := f.conn.QueryRow(sql, userID, sessionID).Scan(&existingSessionID); err != nil {
 		if err.Error() == "no rows in result set" {
 			return fmt.Errorf("failed to add favorite: session %s for user %s does not exist", sessionID, userID)
@@ -37,9 +37,9 @@ func (f *favoritesImpl) Add(sessionID, userID string) error {
 	return nil
 }
 
-func (f *favoritesImpl) IsExist(sessionID, userID string) bool {
+func (f *favoritesImpl) IsExist(sessionID uint64, userID string) bool {
 	sql := `SELECT session_id FROM public.user_favorite_sessions WHERE session_id = $1 AND user_id = $2;`
-	var existingSessionID string
+	var existingSessionID uint64
 	if err := f.conn.QueryRow(sql, sessionID, userID).Scan(&existingSessionID); err != nil {
 		if err.Error() == "no rows in result set" {
 			return false // session does not exist in favorites
@@ -53,9 +53,9 @@ func (f *favoritesImpl) IsExist(sessionID, userID string) bool {
 	return false
 }
 
-func (f *favoritesImpl) Remove(sessionID, userID string) error {
+func (f *favoritesImpl) Remove(sessionID uint64, userID string) error {
 	sql := `DELETE FROM public.user_favorite_sessions WHERE user_id = $1 AND session_id = $2 RETURNING session_id;`
-	var existingSessionID string
+	var existingSessionID uint64
 	if err := f.conn.QueryRow(sql, userID, sessionID).Scan(&existingSessionID); err != nil {
 		if err.Error() == "no rows in result set" {
 			return fmt.Errorf("failed to remove favorite: session %s for user %s does not exist", sessionID, userID)
