@@ -88,53 +88,41 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	}
 	offset := (page - 1) * limit
 
-	var eventFilters, sessionFilters []model.Filter
 	var hasErrorEventFilter bool
+	var errorEventFilters []model.Filter
 	var sessionEventFilters []model.Filter
-	var needsSessionJoin bool
+	var regularFilters []model.Filter
+
+	// Separate ERROR event filters from other filters
+	for _, filter := range p.Series[0].Filter.Filters {
+		if filter.IsEvent && filter.Name == "ERROR" {
+			errorEventFilters = append(errorEventFilters, filter)
+			hasErrorEventFilter = true
+		} else if filter.IsEvent {
+			sessionEventFilters = append(sessionEventFilters, filter)
+		} else {
+			regularFilters = append(regularFilters, filter)
+		}
+	}
 
 	// Check if we need to join with sessions table
-	for _, filter := range p.Series[0].Filter.Filters {
-		if !filter.IsEvent {
-			if _, exists := SessionColumns[filter.Name]; exists {
-				needsSessionJoin = true
-			}
+	sessionColumns := GetSessionColumns()
+	needsSessionJoin := false
+	for _, filter := range regularFilters {
+		if _, exists := sessionColumns[filter.Name]; exists {
+			needsSessionJoin = true
+			break
 		}
 	}
 
-	for _, filter := range p.Series[0].Filter.Filters {
-		if filter.IsEvent {
-			if filter.Name == "ERROR" {
-				// ERROR event filters apply directly to the error events
-				eventFilters = append(eventFilters, filter)
-				hasErrorEventFilter = true
-			} else {
-				sessionEventFilters = append(sessionEventFilters, filter)
-			}
-		} else {
-			sessionFilters = append(sessionFilters, filter)
-		}
-	}
+	// Use BuildWhere for proper separation of events, session and duration filters
+	eventsWhere, filtersWhere, sessionsWhere := BuildWhere(regularFilters, string(p.Series[0].Filter.EventsOrder), "e", "s", needsSessionJoin)
 
-	// Build event conditions for ERROR events only
-	ef, _ := BuildEventConditions(
-		eventFilters,
-		BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"},
-	)
-
-	// Build session conditions (non-event filters)
-	var sessionConds []string
-	var durationConds []string
-	if needsSessionJoin {
-		// Use sessions table alias for session filters
-		durationConds, sessionFilters = BuildDurationWhere(sessionFilters, "s")
-		_, sessionConds = BuildEventConditions(
-			sessionFilters,
-			BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "s"},
-		)
-	} else {
-		_, sessionConds = BuildEventConditions(
-			sessionFilters,
+	// Build ERROR event conditions
+	var errorEventConds []string
+	if len(errorEventFilters) > 0 {
+		errorEventConds, _ = BuildEventConditions(
+			errorEventFilters,
 			BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"},
 		)
 	}
@@ -172,24 +160,29 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 		conds = append(conds, fmt.Sprintf("JSONExtractString(toString(e.`$properties`), 'message') != '%s'", "Script error."))
 	}
 
-	// Apply dynamic event filters
-	if len(ef) > 0 {
-		conds = append(conds, ef...)
+	// Apply ERROR event filters
+	if len(errorEventConds) > 0 {
+		conds = append(conds, errorEventConds...)
 	}
 
-	// Apply session-based filters
-	if len(sessionConds) > 0 {
-		conds = append(conds, sessionConds...)
+	// Apply events where conditions
+	if len(eventsWhere) > 0 {
+		conds = append(conds, eventsWhere...)
+	}
+
+	// Apply event filters where conditions
+	if len(filtersWhere) > 0 {
+		conds = append(conds, filtersWhere...)
+	}
+
+	// Apply session filters when session join is needed
+	if needsSessionJoin && len(sessionsWhere) > 0 {
+		conds = append(conds, sessionsWhere...)
 	}
 
 	// Apply session event filters (sessions that had specific events)
 	if len(sessionEventConds) > 0 {
 		conds = append(conds, sessionEventConds...)
-	}
-
-	// Apply duration conditions if we have them
-	if len(durationConds) > 0 {
-		conds = append(conds, durationConds...)
 	}
 
 	whereClause := strings.Join(conds, " AND ")
