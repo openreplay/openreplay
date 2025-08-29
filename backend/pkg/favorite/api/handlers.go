@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"openreplay/backend/pkg/favorite"
@@ -59,6 +60,7 @@ func (h *handlersImpl) favorite(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	res := map[string]interface{}{"data": map[string]interface{}{"sessionId": strconv.Itoa(int(sessID))}}
+	h.responser.ResponseWithJSON(h.log, r.Context(), w, res, startTime, r.URL.Path, bodySize)
 
-	h.responser.ResponseOK(h.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
