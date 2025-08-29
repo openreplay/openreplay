@@ -434,7 +434,7 @@ export default class Assist {
         callUI = null
         annot = null
       } else {
-        callUI?.hideControls()
+        callUI?.remove()
       }
 
       this.emit('UPDATE_SESSION', { agentIds: [], isCallActive: false, })
