@@ -91,6 +91,16 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	var eventFilters, sessionFilters []model.Filter
 	var hasErrorEventFilter bool
 	var sessionEventFilters []model.Filter
+	var needsSessionJoin bool
+
+	// Check if we need to join with sessions table
+	for _, filter := range p.Series[0].Filter.Filters {
+		if !filter.IsEvent {
+			if _, exists := SessionColumns[filter.Name]; exists {
+				needsSessionJoin = true
+			}
+		}
+	}
 
 	for _, filter := range p.Series[0].Filter.Filters {
 		if filter.IsEvent {
@@ -113,10 +123,21 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	)
 
 	// Build session conditions (non-event filters)
-	_, sessionConds := BuildEventConditions(
-		sessionFilters,
-		BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"},
-	)
+	var sessionConds []string
+	var durationConds []string
+	if needsSessionJoin {
+		// Use sessions table alias for session filters
+		durationConds, sessionFilters = BuildDurationWhere(sessionFilters, "s")
+		_, sessionConds = BuildEventConditions(
+			sessionFilters,
+			BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "s"},
+		)
+	} else {
+		_, sessionConds = BuildEventConditions(
+			sessionFilters,
+			BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"},
+		)
+	}
 
 	// Build conditions for session-level event filtering (e.g., sessions that had LOCATION events)
 	var sessionEventConds []string
@@ -166,9 +187,23 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 		conds = append(conds, sessionEventConds...)
 	}
 
+	// Apply duration conditions if we have them
+	if len(durationConds) > 0 {
+		conds = append(conds, durationConds...)
+	}
+
 	whereClause := strings.Join(conds, " AND ")
 
 	orderColumn, orderDirection := t.getSortDetails(p.SortBy)
+
+	// Build the FROM clause with optional session join
+	var fromClause string
+	if needsSessionJoin {
+		fromClause = `product_analytics.events as e
+        INNER JOIN experimental.sessions as s ON e.session_id = s.session_id AND s.project_id = e.project_id`
+	} else {
+		fromClause = `product_analytics.events as e`
+	}
 
 	sql := fmt.Sprintf(`WITH
     events AS (
@@ -192,7 +227,7 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
             distinct_id,
             session_id,
             created_at
-        FROM product_analytics.events as e
+        FROM %s
         WHERE %s
     ),
     sessions_per_interval AS (
@@ -255,6 +290,7 @@ LEFT JOIN error_chart AS ec
     ON m.error_id = ec.error_id
 ORDER BY %s %s
 LIMIT %d OFFSET %d;`,
+		fromClause,
 		whereClause,
 		startMs, startMs, stepMs, stepMs, // New formula parameters
 		startMs, endMs, stepMs,
