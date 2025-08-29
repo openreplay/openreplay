@@ -15,7 +15,6 @@ import (
 )
 
 func main() {
-	initLocal()
 	ctx := context.Background()
 	log := logger.New()
 	cfg := analyticsConfig.New(log)

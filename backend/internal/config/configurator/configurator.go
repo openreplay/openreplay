@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/sethvargo/go-envconfig"
 
 	"openreplay/backend/internal/config/common"
@@ -117,4 +118,14 @@ func Process(log logger.Logger, cfg common.Configer) {
 		log.Fatal(context.Background(), "error while processing env vars, err: %s", err)
 	}
 	parseFile(log, cfg, cfg.GetConfigPath())
+	// Extra logic from Taha, have to discuss it with him later
+	initLocal(log)
+}
+
+func initLocal(log logger.Logger) {
+	log.Debug(context.Background(), "Loading .env file for development environment")
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Debug(context.Background(), "Error loading .env file")
+	}
 }
