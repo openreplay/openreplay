@@ -451,7 +451,9 @@ export default class Widget {
     }
 
     if (this.metricOf === FilterKey.ERRORS) {
-      _data['errors'] = data.errors.map((s: any) => new ErrorInfo(s));
+      _data['errors'] = data.errors
+        ? data.errors.map((s: any) => new ErrorInfo(s))
+        : [];
       _data['total'] = data.total;
     } else if (this.metricType === INSIGHTS) {
       _data['issues'] = data

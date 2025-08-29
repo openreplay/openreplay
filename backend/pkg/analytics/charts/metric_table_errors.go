@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"openreplay/backend/pkg/analytics/model"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -87,20 +88,82 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	}
 	offset := (page - 1) * limit
 
+	var eventFilters, sessionFilters []model.Filter
+	var hasErrorEventFilter bool
+	var sessionEventFilters []model.Filter
+
+	for _, filter := range p.Series[0].Filter.Filters {
+		if filter.IsEvent {
+			if filter.Name == "ERROR" {
+				// ERROR event filters apply directly to the error events
+				eventFilters = append(eventFilters, filter)
+				hasErrorEventFilter = true
+			} else {
+				sessionEventFilters = append(sessionEventFilters, filter)
+			}
+		} else {
+			sessionFilters = append(sessionFilters, filter)
+		}
+	}
+
+	// Build event conditions for ERROR events only
 	ef, _ := BuildEventConditions(
-		p.Series[0].Filter.Filters,
-		BuildConditionsOptions{DefinedColumns: mainColumns},
+		eventFilters,
+		BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"},
 	)
+
+	// Build session conditions (non-event filters)
+	_, sessionConds := BuildEventConditions(
+		sessionFilters,
+		BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"},
+	)
+
+	// Build conditions for session-level event filtering (e.g., sessions that had LOCATION events)
+	var sessionEventConds []string
+	if len(sessionEventFilters) > 0 {
+		sessionEventFilterConds, _ := BuildEventConditions(
+			sessionEventFilters,
+			BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "se"},
+		)
+		if len(sessionEventFilterConds) > 0 {
+			sessionEventConds = []string{fmt.Sprintf(`e.session_id IN (
+				SELECT DISTINCT se.session_id
+				FROM product_analytics.events se
+				WHERE se.project_id = %d
+				AND se.created_at >= toDateTime(%d/1000)
+				AND se.created_at <= toDateTime(%d/1000)
+				AND %s
+			)`, p.ProjectId, (p.StartTimestamp/1000)*1000, (p.EndTimestamp/1000)*1000, strings.Join(sessionEventFilterConds, " AND "))}
+		}
+	}
+
+	// Base conditions that always apply
 	conds := []string{
-		"`$event_name` = 'ERROR'",
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
 		fmt.Sprintf("e.created_at >= toDateTime(%d/1000)", startMs),
 		fmt.Sprintf("e.created_at <= toDateTime(%d/1000)", endMs),
-		fmt.Sprintf("JSONExtractString(toString(e.`$properties`), 'source') = '%s'", "js_exception"),
-		fmt.Sprintf("JSONExtractString(toString(e.`$properties`), 'message') != '%s'", "Script error."),
 	}
+
+	// If no specific ERROR event filter is provided, add the default ERROR event conditions
+	if !hasErrorEventFilter {
+		conds = append(conds, "`$event_name` = 'ERROR'")
+		conds = append(conds, fmt.Sprintf("JSONExtractString(toString(e.`$properties`), 'source') = '%s'", "js_exception"))
+		conds = append(conds, fmt.Sprintf("JSONExtractString(toString(e.`$properties`), 'message') != '%s'", "Script error."))
+	}
+
+	// Apply dynamic event filters
 	if len(ef) > 0 {
 		conds = append(conds, ef...)
+	}
+
+	// Apply session-based filters
+	if len(sessionConds) > 0 {
+		conds = append(conds, sessionConds...)
+	}
+
+	// Apply session event filters (sessions that had specific events)
+	if len(sessionEventConds) > 0 {
+		conds = append(conds, sessionEventConds...)
 	}
 
 	whereClause := strings.Join(conds, " AND ")
@@ -110,9 +173,22 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	sql := fmt.Sprintf(`WITH
     events AS (
         SELECT
-            error_id,
-            JSONExtractString(toString("$properties"), 'name') AS name,
-            JSONExtractString(toString("$properties"), 'message') AS message,
+            COALESCE(
+                error_id,
+                JSONExtractString(toString("$properties"), 'errorId'),
+                concat('err_', toString(sipHash64(
+                    concat(
+                        JSONExtractString(toString("$properties"), 'name'),
+                        JSONExtractString(toString("$properties"), 'message')
+                    )
+                )))
+            ) AS error_id,
+            COALESCE(JSONExtractString(toString("$properties"), 'name'), 'ERROR') AS name,
+            COALESCE(
+                JSONExtractString(toString("$properties"), 'message'),
+                JSONExtractString(toString("$properties"), 'error'),
+                'Unknown error'
+            ) AS message,
             distinct_id,
             session_id,
             created_at
@@ -125,6 +201,7 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
             toUInt64(%d + (toUInt64((toUnixTimestamp64Milli(created_at) - %d) / %d) * %d)) AS bucket_ts,
             countDistinct(session_id) AS session_count
         FROM events
+        WHERE error_id IS NOT NULL AND error_id != ''
         GROUP BY error_id, bucket_ts
     ),
     buckets AS (
@@ -139,22 +216,23 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
     error_meta AS (
         SELECT
             error_id,
-            name,
-            message,
+            any(name) AS name,
+            any(message) AS message,
             countDistinct(distinct_id) AS users,
             count() AS total,
             countDistinct(session_id) AS sessions,
             min(created_at) AS first_occurrence,
             max(created_at) AS last_occurrence
         FROM events
-        GROUP BY error_id, name, message
+        WHERE error_id IS NOT NULL AND error_id != ''
+        GROUP BY error_id
     ),
     error_chart AS (
         SELECT
             e.error_id AS error_id,
             groupArray(b.bucket_ts) AS timestamps,
             groupArray(coalesce(s.session_count, 0)) AS counts
-        FROM (SELECT DISTINCT error_id FROM events) AS e
+        FROM (SELECT DISTINCT error_id FROM events WHERE error_id IS NOT NULL AND error_id != '') AS e
         CROSS JOIN buckets AS b
         LEFT JOIN sessions_per_interval AS s
             ON s.error_id = e.error_id
