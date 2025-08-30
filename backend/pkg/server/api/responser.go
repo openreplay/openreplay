@@ -10,12 +10,18 @@ import (
 	"openreplay/backend/pkg/metrics/web"
 )
 
-type Responser struct {
+type Responser interface {
+	ResponseOK(log logger.Logger, ctx context.Context, w http.ResponseWriter, requestStart time.Time, url string, bodySize int)
+	ResponseWithJSON(log logger.Logger, ctx context.Context, w http.ResponseWriter, res interface{}, requestStart time.Time, url string, bodySize int)
+	ResponseWithError(log logger.Logger, ctx context.Context, w http.ResponseWriter, code int, err error, requestStart time.Time, url string, bodySize int)
+}
+
+type responserImpl struct {
 	metrics web.Web
 }
 
-func NewResponser(webMetrics web.Web) *Responser {
-	return &Responser{
+func NewResponser(webMetrics web.Web) Responser {
+	return &responserImpl{
 		metrics: webMetrics,
 	}
 }
@@ -24,13 +30,13 @@ type response struct {
 	Error string `json:"error"`
 }
 
-func (r *Responser) ResponseOK(log logger.Logger, ctx context.Context, w http.ResponseWriter, requestStart time.Time, url string, bodySize int) {
+func (r *responserImpl) ResponseOK(log logger.Logger, ctx context.Context, w http.ResponseWriter, requestStart time.Time, url string, bodySize int) {
 	w.WriteHeader(http.StatusOK)
 	log.Info(ctx, "response ok")
 	r.recordMetrics(requestStart, url, http.StatusOK, bodySize)
 }
 
-func (r *Responser) ResponseWithJSON(log logger.Logger, ctx context.Context, w http.ResponseWriter, res interface{}, requestStart time.Time, url string, bodySize int) {
+func (r *responserImpl) ResponseWithJSON(log logger.Logger, ctx context.Context, w http.ResponseWriter, res interface{}, requestStart time.Time, url string, bodySize int) {
 	log.Info(ctx, "response ok")
 	body, err := json.Marshal(res)
 	if err != nil {
@@ -41,7 +47,7 @@ func (r *Responser) ResponseWithJSON(log logger.Logger, ctx context.Context, w h
 	r.recordMetrics(requestStart, url, http.StatusOK, bodySize)
 }
 
-func (r *Responser) ResponseWithError(log logger.Logger, ctx context.Context, w http.ResponseWriter, code int, err error, requestStart time.Time, url string, bodySize int) {
+func (r *responserImpl) ResponseWithError(log logger.Logger, ctx context.Context, w http.ResponseWriter, code int, err error, requestStart time.Time, url string, bodySize int) {
 	log.Error(ctx, "response error, code: %d, error: %s", code, err)
 	body, err := json.Marshal(&response{err.Error()})
 	if err != nil {
@@ -54,7 +60,7 @@ func (r *Responser) ResponseWithError(log logger.Logger, ctx context.Context, w 
 	r.recordMetrics(requestStart, url, code, bodySize)
 }
 
-func (r *Responser) recordMetrics(requestStart time.Time, url string, code, bodySize int) {
+func (r *responserImpl) recordMetrics(requestStart time.Time, url string, code, bodySize int) {
 	if bodySize > 0 {
 		r.metrics.RecordRequestSize(float64(bodySize), url, code)
 	}
