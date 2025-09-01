@@ -1,20 +1,18 @@
 package notes
 
-import "time"
-
 type Note struct {
-	ID        uint64    `json:"noteId"`
-	Message   string    `json:"message"`
-	Tag       *string   `json:"tag"`
-	Timestamp int64     `json:"timestamp"`
-	CreatedAt time.Time `json:"createdAt"`
-	SessionID uint64    `json:"sessionId"`
-	IsPublic  bool      `json:"isPublic"`
-	Thumbnail *string   `json:"thumbnail"`
-	StartAt   *uint64   `json:"startAt"`
-	EndAt     *uint64   `json:"endAt"`
-	UserName  string    `json:"userName"`
-	ShareName string    `json:"-"`
+	ID        uint64  `json:"noteId"`
+	Message   string  `json:"message"`
+	Tag       *string `json:"tag"`
+	Timestamp int64   `json:"timestamp"`
+	CreatedAt int64   `json:"createdAt"`
+	SessionID uint64  `json:"sessionId"`
+	IsPublic  bool    `json:"isPublic"`
+	Thumbnail *string `json:"thumbnail"`
+	StartAt   *uint64 `json:"startAt"`
+	EndAt     *uint64 `json:"endAt"`
+	UserName  string  `json:"userName"`
+	ShareName string  `json:"-"`
 }
 
 type NoteUpdate struct {
