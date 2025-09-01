@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	analyticsConfig "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics"
 	"openreplay/backend/pkg/db/clickhouse"
@@ -15,7 +16,6 @@ import (
 )
 
 func main() {
-	initLocal()
 	ctx := context.Background()
 	log := logger.New()
 	cfg := analyticsConfig.New(log)
