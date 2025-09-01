@@ -55,6 +55,8 @@ minio:
   forceInit: false
 
 global:
+  clickhouse:
+    password: ""
   orAppSecrets: {}
   appLabels: {}
   vault: *vault
