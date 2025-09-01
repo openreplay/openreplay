@@ -53,6 +53,7 @@ runs:
             "MINIO_SECRET_KEY:.global.s3.secretKey"
             "PG_PASSWORD:.postgresql.postgresqlPassword"
             "REGISTRY_URL:.global.openReplayContainerRegistry"
+            "CLICKHOUSE_PASSWORD:.global.clickhouse.password"
         )
         for var in "${vars[@]}"; do
             IFS=":" read -r env_var yq_path <<<"$var"
