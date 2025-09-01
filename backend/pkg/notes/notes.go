@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
@@ -77,15 +78,17 @@ func (n *notesImpl) Create(tenantID, projectID, userID uint64, note *Note) (*Not
 	if note.Tag != nil && len(*note.Tag) > MaxTagLength {
 		*note.Tag = (*note.Tag)[0:MaxTagLength]
 	}
+	var createdAt time.Time
 
 	sql := `INSERT INTO sessions_notes (message, user_id, tag, session_id, project_id, timestamp, is_public, thumbnail, start_at, end_at) 
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING note_id, created_at, (SELECT name FROM users WHERE users.user_id=$2) AS user_name;` //  AND tenant_id=$11 for EE
 	err := n.db.QueryRow(sql, note.Message, userID, note.Tag, note.SessionID, projectID, note.Timestamp, note.IsPublic, note.Thumbnail, note.StartAt, note.EndAt). //, tenantID).
-																					Scan(&note.ID, &note.CreatedAt, &note.UserName)
+																					Scan(&note.ID, &createdAt, &note.UserName)
 	if err != nil {
 		n.log.Error(context.Background(), "Failed to create note: %v", err)
 		return nil, err
 	}
+	note.CreatedAt = createdAt.UnixMilli()
 	return note, nil
 }
 
@@ -113,13 +116,15 @@ func (n *notesImpl) GetBySessionID(tenantID, projectID, userID, sessionID uint64
 	}
 	defer rows.Close()
 	notes := make([]Note, 0)
+	var createdAt time.Time
 	for rows.Next() {
 		var note Note
-		if err := rows.Scan(&note.ID, &note.Message, &note.CreatedAt, &note.Tag, &note.SessionID,
+		if err := rows.Scan(&note.ID, &note.Message, &createdAt, &note.Tag, &note.SessionID,
 			&note.Timestamp, &note.IsPublic, &note.Thumbnail, &note.StartAt, &note.EndAt, &note.UserName); err != nil {
 			n.log.Error(context.Background(), "Failed to scan note: %v", err)
 			continue
 		}
+		note.CreatedAt = createdAt.UnixMilli()
 		notes = append(notes, note)
 	}
 	return notes, nil
@@ -142,12 +147,16 @@ func (n *notesImpl) GetByID(tenantID, projectID, userID, noteID uint64) (*Note, 
 			INNER JOIN users USING (user_id)
 			WHERE sessions_notes.project_id = $1 AND sessions_notes.deleted_at IS NULL AND sessions_notes.note_id = $2 
 			AND (sessions_notes.user_id = $3 OR sessions_notes.is_public);` //  AND tenant_id = $4 for EE
-	var note Note
-	err := n.db.QueryRow(sql, projectID, noteID, userID).Scan(&note.ID, &note.Message, &note.CreatedAt, &note.Tag, &note.SessionID,
+	var (
+		note      Note
+		createdAt time.Time
+	)
+	err := n.db.QueryRow(sql, projectID, noteID, userID).Scan(&note.ID, &note.Message, &createdAt, &note.Tag, &note.SessionID,
 		&note.Timestamp, &note.IsPublic, &note.Thumbnail, &note.StartAt, &note.EndAt, &note.UserName) // , tenantID
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch note by ID: %v", err)
 	}
+	note.CreatedAt = createdAt.UnixMilli()
 	return &note, nil
 }
 
@@ -171,12 +180,16 @@ func (n *notesImpl) getByIDToShare(tenantID, projectID, userID, noteID, shareID 
 			INNER JOIN users USING (user_id)
 			WHERE sessions_notes.project_id = $1 AND sessions_notes.deleted_at IS NULL AND sessions_notes.note_id = $2 
 			AND (sessions_notes.user_id = $3 OR sessions_notes.is_public);` // tenant_id = $4 AND for EE
-	var note Note
-	err := n.db.QueryRow(sql, projectID, noteID, userID, shareID).Scan(&note.ID, &note.Message, &note.CreatedAt, &note.Tag, &note.SessionID,
+	var (
+		note      Note
+		createdAt time.Time
+	)
+	err := n.db.QueryRow(sql, projectID, noteID, userID, shareID).Scan(&note.ID, &note.Message, &createdAt, &note.Tag, &note.SessionID,
 		&note.Timestamp, &note.IsPublic, &note.Thumbnail, &note.StartAt, &note.EndAt, &note.UserName, &note.ShareName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch note by ID: %v", err)
 	}
+	note.CreatedAt = createdAt.UnixMilli()
 	return &note, nil
 }
 
@@ -246,15 +259,19 @@ func (n *notesImpl) GetAll(tenantID, projectID, userID uint64, opts *GetOpts) (i
 		return nil, fmt.Errorf("failed to fetch notes: %v", err)
 	}
 	defer rows.Close()
-	var notes []Note
-	var fullCount int
+	var (
+		notes     []Note
+		fullCount int
+		createdAt time.Time
+	)
 	for rows.Next() {
 		var note Note
-		if err := rows.Scan(&fullCount, &note.ID, &note.Message, &note.CreatedAt, &note.Tag, &note.SessionID,
+		if err := rows.Scan(&fullCount, &note.ID, &note.Message, &createdAt, &note.Tag, &note.SessionID,
 			&note.Timestamp, &note.IsPublic, &note.Thumbnail, &note.StartAt, &note.EndAt, &note.UserName); err != nil {
 			n.log.Error(context.Background(), "Failed to scan note: %v", err)
 			continue
 		}
+		note.CreatedAt = createdAt.UnixMilli()
 		notes = append(notes, note)
 	}
 	res := make(map[string]interface{})
@@ -307,17 +324,19 @@ func (n *notesImpl) Update(tenantID, projectID, userID, noteID uint64, note *Not
 		       sessions_notes.tag, sessions_notes.session_id, sessions_notes.timestamp, sessions_notes.is_public, 
 		       sessions_notes.thumbnail, sessions_notes.start_at, sessions_notes.end_at,
             (SELECT name FROM users WHERE user_id = $2) AS user_name;`, strings.Join(conditionsList, ",")) //  AND tenant_id = $4
-	var updatedNote Note
-	err := n.db.QueryRow(sql, projectID, userID, noteID).Scan(&updatedNote.ID, &updatedNote.Message, &updatedNote.CreatedAt,
+	var (
+		updatedNote Note
+		createdAt   time.Time
+	)
+	err := n.db.QueryRow(sql, projectID, userID, noteID).Scan(&updatedNote.ID, &updatedNote.Message, &createdAt,
 		&updatedNote.Tag, &updatedNote.SessionID, &updatedNote.Timestamp, &updatedNote.IsPublic,
 		&updatedNote.Thumbnail, &updatedNote.StartAt, &updatedNote.EndAt, &updatedNote.UserName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update note: %v", err)
 	}
+	updatedNote.CreatedAt = createdAt.UnixMilli()
 	return &updatedNote, nil
 }
-
-// return {"data": {"state": "success"}}
 
 func (n *notesImpl) Delete(projectID, noteID uint64) error {
 	switch {
