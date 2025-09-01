@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -28,10 +29,9 @@ type TableQueryBuilder struct{}
 
 type TableValue struct {
 	Name       string `json:"name" ch:"name"`
-	Total      uint64 `json:"mainCount" ch:"main_count" default:"0"`
-	TotalCount uint64 `json:"totalCount" ch:"total_count" default:"0"`
-	Count      uint64 `json:"total" ch:"total" default:"0"`
-	CountAll   uint64 `json:"countAll" ch:"count_all" default:"0"`
+	MainCount  uint64 `json:"-" ch:"main_count" default:"0"`
+	TotalCount uint64 `json:"-" ch:"total_count" default:"0"`
+	Total      uint64 `json:"total" ch:"total" default:"0"`
 }
 type ResolutionTableValue struct {
 	NumberOfRows uint64 `json:"-" ch:"number_of_rows" default:"0"`
@@ -62,14 +62,16 @@ const (
 	MaxLimit     = 1000
 )
 
+var eventsProperties []string = []string{string(MetricOfTableLocation)}
+
 var propertySelectorMap = map[string]string{
-	string(MetricOfTableLocation):   "JSONExtractString(toString(main.`$properties`), 'url_path')",
+	string(MetricOfTableLocation):   "`$current_path`",
 	string(MetricOfTableUserId):     "if(notEmpty(user_id), user_id, 'Anonymous')",
 	string(MetricOfTableBrowser):    "main.`$browser`",
 	string(MetricOfTableDevice):     "if(notEmpty(user_device), user_device, 'Undefined')",
 	string(MetricOfTableCountry):    "toString(user_country)",
 	string(MetricOfTableReferrer):   "main.`$referrer`",
-	string(MetricOfTableFetch):      "JSONExtractString(toString(main.`$properties`), 'url_path')",
+	string(MetricOfTableFetch):      "`$current_path`",
 	string(MetricOfTableResolution): "if(screen_width = 0 AND screen_height = 0, 'Unknown', concat(toString(screen_width), 'x', toString(screen_height)))",
 }
 
@@ -98,20 +100,14 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 		return nil, err
 	}
 
-	var result []interface{}
-	var overallTotal uint64
+	var valuesCount uint64
 	var overallCount uint64
 	if len(rawValues) > 0 {
-		overallCount = rawValues[0].CountAll
-		overallTotal = uint64(len(rawValues))
-	}
-	for _, v := range rawValues {
-		result = append(result, TableValue{Name: v.Name, Total: v.Total})
+		overallCount = rawValues[0].TotalCount
+		valuesCount = rawValues[0].MainCount
 	}
 
-	overallTotal = uint64(len(rawValues))
-
-	return &TableResponse{Total: overallTotal, Count: overallCount, Values: result}, nil
+	return &TableResponse{Total: valuesCount, Count: overallCount, Values: rawValues}, nil
 }
 func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload, conn driver.Conn) (interface{}, error) {
 	metricFormat := p.MetricFormat
@@ -176,6 +172,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	}
 
 	prewhereParts := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, otherConds)
+	prewhereParts = append(prewhereParts, "notEmpty(metric_value)")
 	sessionConditions := t.buildSessionConditions(r, metricFormat, durConds)
 	joinClause, _, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
@@ -191,7 +188,8 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	}
 
 	// Determine if property comes from events table (main) or sessions table (s)
-	isFromEvents := strings.Contains(propSel, "main.")
+	//isFromEvents := strings.Contains(propSel, "main.")
+	isFromEvents := slices.Contains(eventsProperties, r.MetricOf)
 	var eventsSelect, groupByClause string
 
 	if isFromEvents {
@@ -234,11 +232,11 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		fmt.Sprintf("COUNT(DISTINCT %s) OVER () AS main_count", finalPropertySelector),
 		fmt.Sprintf("%s AS name", finalPropertySelector),
 		fmt.Sprintf("count(DISTINCT %s) AS total", distinctColumn),
-		fmt.Sprintf("COALESCE(SUM(count(DISTINCT %s)) OVER (), 0) AS total_count", distinctColumn),
+		"any(total_count) AS total_count",
 	}
 
 	subquerySelectParts := t.subquerySelects(r)
-
+	subquerySelectParts = append(subquerySelectParts, fmt.Sprintf("count(DISTINCT %s) OVER () AS total_count", distinctColumn))
 	var innerSelectParts []string
 	var groupByField string
 
@@ -248,7 +246,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		innerSelectParts = []string{
 			eventsSelect,
 			"MIN(main.created_at) AS first_event_ts",
-			"MAX(main.created_at) AS last_event_ts",
+			"MAX(main.created_at) AS last_event_ts--TAHAAAAAAAAAA",
 		}
 		groupByField = finalPropertySelector
 	} else {
@@ -261,32 +259,36 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		groupByField = propSel
 	}
 
+	var mainEventsTable = getMainEventsTable(r.StartTimestamp)
+	var mainSessionsTable = getMainSessionsTable(r.StartTimestamp)
 	// Construct the complete query
 	query = fmt.Sprintf(`
 SELECT %s
 FROM (SELECT %s
-      FROM (SELECT %s
-            FROM product_analytics.events AS main
-            WHERE %s %s) AS f
-      INNER JOIN (SELECT DISTINCT ON (session_id) *
-                  FROM experimental.sessions AS s
+      FROM (SELECT DISTINCT session_id
+                  FROM %s AS s
                   WHERE %s
-                  ORDER BY _timestamp DESC) AS s ON(s.session_id=f.session_id)
+                  ) AS s
+      INNER JOIN (SELECT %s
+            FROM %s AS main
+            WHERE %s 
+			%s) AS f ON(s.session_id=f.session_id)
       ) AS filtred_sessions
 GROUP BY %s
 ORDER BY total DESC
 LIMIT %d OFFSET %d`,
-		strings.Join(baseSelectParts, ",\n       "),              // Main SELECT
-		strings.Join(subquerySelectParts, ",\n             "),    // Subquery SELECT
-		strings.Join(innerSelectParts, ",\n                   "), // Inner SELECT
-		strings.Join(prewhereParts, " AND "),                     // WHERE conditions
-		finalJoinClause,                                          // GROUP BY + HAVING
+		strings.Join(baseSelectParts, ",\n       "),           // Main SELECT
+		strings.Join(subquerySelectParts, ",\n             "), // Subquery SELECT
+		mainSessionsTable,
 		strings.Join(sessionConditions, " AND "),                 // Sessions WHERE
-		groupByField,                                             // Final GROUP BY
+		strings.Join(innerSelectParts, ",\n                   "), // Inner SELECT
+		mainEventsTable,
+		strings.Join(prewhereParts, " AND "), // WHERE conditions
+		finalJoinClause,
+		groupByField, // Final GROUP BY
 		pagination.Limit,
 		pagination.Offset,
 	)
-
 	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
 
 	return query, nil
@@ -319,7 +321,7 @@ func (t *TableQueryBuilder) buildSimplifiedQuery(r *Payload, metricFormat string
 		fmt.Sprintf("COUNT(DISTINCT %s) OVER () AS main_count", propSel),
 		fmt.Sprintf("%s AS name", propSel),
 		fmt.Sprintf("count(DISTINCT %s) AS total", distinctColumn),
-		fmt.Sprintf("COALESCE(SUM(count(DISTINCT %s)) OVER (), 0) AS total_count", distinctColumn),
+		fmt.Sprintf("any(total_count) AS total_count", distinctColumn),
 	}
 
 	query := fmt.Sprintf(`
@@ -431,40 +433,6 @@ FROM (SELECT any(full_count)               AS full_count,
 			"limit":          pagination.Limit - 1,
 			"offset":         max(0, pagination.Offset-1),
 		}, nil
-
-	// Build the final query with proper string formatting
-	//	var query string
-	//	baseSelectParts := []string{
-	//		fmt.Sprintf("COUNT(DISTINCT %s) OVER () AS main_count", finalPropertySelector),
-	//		fmt.Sprintf("%s AS name", finalPropertySelector),
-	//		fmt.Sprintf("count(DISTINCT %s) AS total", distinctColumn),
-	//		fmt.Sprintf("COALESCE(SUM(count(DISTINCT %s)) OVER (), 0) AS total_count", distinctColumn),
-	//	}
-	//
-	//	subquerySelectParts := t.subquerySelects(r)
-	//
-	//	var innerSelectParts []string
-	//	var groupByField string
-	//
-	//	if isFromEvents {
-	//		// Property from events table
-	//		subquerySelectParts = append([]string{"f.metric_value AS metric_value"}, subquerySelectParts...)
-	//		innerSelectParts = []string{
-	//			eventsSelect,
-	//			"MIN(main.created_at) AS first_event_ts",
-	//			"MAX(main.created_at) AS last_event_ts",
-	//		}
-	//		groupByField = finalPropertySelector
-	//	} else {
-	//		// Property from sessions table
-	//		innerSelectParts = []string{
-	//			eventsSelect,
-	//			"MIN(main.created_at) AS first_event_ts",
-	//			"MAX(main.created_at) AS last_event_ts",
-	//		}
-	//		groupByField = propSel
-	//	}
-	//
 }
 
 func (t *TableQueryBuilder) buildJoinClause(eventsOrder model.EventOrder, eventConditions []string) (string, []string, error) {
