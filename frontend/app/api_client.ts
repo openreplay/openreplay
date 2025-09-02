@@ -272,7 +272,7 @@ export default class APIClient {
     // /v1/{project}/sessions/{session}/first-mob
     // /v1/{project}/unprocessed/{session}/dom.mob
     // /v1/{project}/unprocessed/{session}/devtools.mob
-    const trackedUrls = ['assist/sessions', '/sessions/', '/notes', '/unprocessed', 'first-mob']
+    const trackedUrls = ['assist/sessions', '/sessions/', '/notes', '/unprocessed', 'first-mob', '/events', '/favorite', '/clickmaps', '/replay']
     // /api/path -> /api-v2/path
     if (!trackedUrls.some((u) => url.includes(u))) {
       return;
