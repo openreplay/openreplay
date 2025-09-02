@@ -208,13 +208,10 @@ export default class APIClient {
 
     // using product analytics api for cards and dashboards (excluding sessions)
     if (
-      !path.includes('/sessions') &&
-      (path.includes('/cards') || path.includes('/dashboards'))
+      path.includes('/cards') ||
+      path.includes('/dashboards') ||
+      path.includes('/sessions/search')
     ) {
-      edp = edp.replace('/api', '/analytics/v1');
-    }
-
-    if (path.includes('/sessions/search')) {
       edp = edp.replace('/api', '/analytics/v1');
     }
 
@@ -275,7 +272,7 @@ export default class APIClient {
     // /v1/{project}/sessions/{session}/first-mob
     // /v1/{project}/unprocessed/{session}/dom.mob
     // /v1/{project}/unprocessed/{session}/devtools.mob
-    const trackedUrls = ['assist/sessions', '/sessions/', '/notes', '/unprocessed']
+    const trackedUrls = ['assist/sessions', '/notes', '/unprocessed'];
     // /api/path -> /api-v2/path
     if (!trackedUrls.some((u) => url.includes(u))) {
       return;
