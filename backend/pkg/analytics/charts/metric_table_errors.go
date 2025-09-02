@@ -51,11 +51,13 @@ func (t *TableErrorsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfa
 		var e ErrorItem
 		var ts []int64
 		var cs []uint64
+		var totalCount uint64
 		if err := rows.Scan(
 			&e.ErrorID, &e.Name, &e.Message,
 			&e.Users, &e.Total, &e.Sessions,
 			&e.FirstOccurrence, &e.LastOccurrence,
 			&ts, &cs,
+			&totalCount,
 		); err != nil {
 			return nil, err
 		}
@@ -63,8 +65,10 @@ func (t *TableErrorsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfa
 			e.Chart = append(e.Chart, ErrorChartPoint{Timestamp: ts[i], Count: cs[i]})
 		}
 		resp.Errors = append(resp.Errors, e)
+		if resp.Total == 0 {
+			resp.Total = totalCount
+		}
 	}
-	resp.Total = uint64(len(resp.Errors))
 	return resp, nil
 }
 
@@ -256,6 +260,11 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
             ON s.error_id = e.error_id
             AND s.bucket_ts = b.bucket_ts
         GROUP BY e.error_id
+    ),
+    total_count AS (
+        SELECT COUNT(*) AS total_errors
+        FROM error_meta
+        WHERE sessions > 0
     )
 SELECT
     m.error_id,
@@ -267,10 +276,12 @@ SELECT
     toUnixTimestamp64Milli(toDateTime64(m.first_occurrence, 3)) AS first_occurrence,
     toUnixTimestamp64Milli(toDateTime64(m.last_occurrence, 3)) AS last_occurrence,
     ec.timestamps,
-    ec.counts
+    ec.counts,
+    tc.total_errors AS total_count
 FROM error_meta AS m
 LEFT JOIN error_chart AS ec
     ON m.error_id = ec.error_id
+CROSS JOIN total_count AS tc
 WHERE m.sessions > 0
 ORDER BY %s %s
 LIMIT %d OFFSET %d;`,
