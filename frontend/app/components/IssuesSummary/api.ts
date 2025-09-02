@@ -40,7 +40,7 @@ export async function getSessions(projectId: string, params: any) {
   const sortDir = params.sortBy.endsWith('desc') ? 'desc' : 'asc'
   const res = await client.post(`/kai/${projectId}/smart_alerts/search`, {
     issue: params.issueName,
-    query: params.query || null,
+    query: params.searchQuery || null,
     issueLabels: params.usedIssueLabels,
     journeyLabels: params.usedJourneyLabels,
     sortBy,
@@ -62,4 +62,15 @@ export async function getSessions(projectId: string, params: any) {
       })
   });
   return data;
+}
+
+export async function hideIssue(projectId: string, issueName: string) {
+  const res = await client.put(`/kai/${projectId}/smart_alerts`, {
+    issue: issueName,
+    operation: {
+      hide: true
+    }
+  })
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res;
 }
