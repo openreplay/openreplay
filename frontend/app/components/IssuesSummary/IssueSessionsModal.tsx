@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select, Input, Tag } from 'antd';
+import { Select, Input, Tag, Radio } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import SessionItem from 'Shared/SessionItem';
@@ -11,14 +11,26 @@ import {
 } from 'Shared/SessionsTabOverview/components/SessionSort/SessionSort';
 import { getSessions } from './api';
 import { Loader } from 'UI';
+import Session from 'Types/session/session';
+import { debounce } from 'App/utils';
+
+interface IssueSession {
+  session: Session;
+  journey: string;
+  journeyLabels: string[];
+  issueDescription: string;
+  issueLabels: string[];
+}
 
 function IssueSessions({
   issueName,
-  labels,
+  issueLabels,
+  journeyLabels,
   projectId,
 }: {
   issueName: string;
-  labels: string[];
+  issueLabels: string[];
+  journeyLabels: string[];
   projectId: string;
 }) {
   const limit = 10;
@@ -28,26 +40,40 @@ function IssueSessions({
     [],
   );
   const [sortBy, setSort] = React.useState(sortValues.timeDesc);
-  const [usedLabels, setUsedLabels] = React.useState<string[]>([]);
+  const [usedIssueLabels, setUsedIssueLabels] = React.useState<string[]>([]);
+  const [usedJourneyLabels, setUsedJourneyLabels] = React.useState<string[]>(
+    [],
+  );
+  const [searchQuery, setSearchQuery] = React.useState('');
   const [query, setQuery] = React.useState('');
   const write = ({ target: { value } }: { target: { value: string } }) => {
     setQuery(value);
   };
   const { t } = useTranslation();
   const handleChange = (value: string[]) => {
-    setUsedLabels(value);
+    setUsedIssueLabels(value);
+  };
+  const handleJourneyTagChange = (value: string[]) => {
+    setUsedJourneyLabels(value);
   };
 
-  const { data = [], isPending } = useQuery({
+  const debouncedUpdate = React.useCallback(debounce(setSearchQuery, 300), []);
+
+  React.useEffect(() => {
+    debouncedUpdate(query);
+  }, [query]);
+
+  const { data = [], isPending } = useQuery<IssueSession[]>({
     queryKey: [
       'smart_alerts/search',
-      { issueName, query, usedLabels, sortBy, range },
+      { issueName, searchQuery, usedIssueLabels, sortBy, range },
     ],
     queryFn: async () =>
       getSessions(projectId, {
         issueName,
-        query,
-        usedLabels,
+        searchQuery,
+        usedIssueLabels,
+        usedJourneyLabels,
         sortBy,
         range,
         limit,
@@ -57,12 +83,6 @@ function IssueSessions({
     retry: (count) => count < 3,
   });
 
-  console.log(
-    labels.map((label) => ({
-      label,
-      value: label,
-    })),
-  );
   return (
     <div className="flex flex-col gap-2 h-screen overflow-y-auto bg-white">
       <div className="w-full flex items-center gap-4 justify-end pt-4 px-4">
@@ -78,10 +98,21 @@ function IssueSessions({
         <Select
           mode="multiple"
           allowClear
-          style={{ width: 300 }}
-          placeholder="Pick issue labels to filter"
+          style={{ width: 200 }}
+          placeholder="Filter by issue tags"
           onChange={handleChange}
-          options={labels.map((label) => ({
+          options={issueLabels.map((label) => ({
+            label,
+            value: label,
+          }))}
+        />
+        <Select
+          mode="multiple"
+          allowClear
+          style={{ width: 200 }}
+          placeholder="Filter by journey tags"
+          onChange={handleJourneyTagChange}
+          options={journeyLabels.map((label) => ({
             label,
             value: label,
           }))}
@@ -98,19 +129,60 @@ function IssueSessions({
           <Loader />
         </div>
       ) : null}
-      {data.map((session, index) => (
-        <div>
-          <SessionItem key={index} session={session.session} />
-          <div className="flex items-center flex-wrap px-4 pb-2">
-            {session.labels.map((l) => (
-              <Tag>{l}</Tag>
-            ))}
-          </div>
-          <div className="text-gray-500 text-sm px-4">
-            {session.issue || 'No issue description available'}
-          </div>
-        </div>
+      {data.map((issueSession, index) => (
+        <SessionWithIssue
+          issueSession={issueSession}
+          key={index}
+          index={index}
+        />
       ))}
+    </div>
+  );
+}
+
+function SessionWithIssue({
+  issueSession,
+  index,
+}: {
+  issueSession: IssueSession;
+  index: number;
+}) {
+  const [displayType, setDisplayType] = React.useState<'issue' | 'journey'>(
+    'issue',
+  );
+
+  if (!issueSession) return null;
+
+  const labels =
+    displayType === 'issue'
+      ? issueSession.issueLabels
+      : issueSession.journeyLabels;
+  const description =
+    displayType === 'issue'
+      ? issueSession.issueDescription
+      : issueSession.journey;
+  return (
+    <div>
+      <SessionItem key={index} session={issueSession.session} />
+      <div className="rounded-lg px-4 py-2 border border-gray-light flex flex-col gap-2 mx-4">
+        <Radio.Group
+          size="small"
+          value={displayType}
+          onChange={(ev) => setDisplayType(ev.target.value)}
+          buttonStyle="solid"
+        >
+          <Radio.Button value="issue">Issue</Radio.Button>
+          <Radio.Button value="journey">Journey</Radio.Button>
+        </Radio.Group>
+        <div className="flex items-center flex-wrap gap-2">
+          {labels.map((l) => (
+            <Tag className="!m-0">{l}</Tag>
+          ))}
+        </div>
+        <div className="text-gray-500 text-sm">
+          {description ? description : 'No description available'}
+        </div>
+      </div>
     </div>
   );
 }
