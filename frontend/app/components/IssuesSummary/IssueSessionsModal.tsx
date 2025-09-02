@@ -66,7 +66,7 @@ function IssueSessions({
   const { data = [], isPending } = useQuery<IssueSession[]>({
     queryKey: [
       'smart_alerts/search',
-      { issueName, searchQuery, usedIssueLabels, sortBy, range },
+      { issueName, searchQuery, usedIssueLabels, sortBy, range, usedJourneyLabels },
     ],
     queryFn: async () =>
       getSessions(projectId, {

@@ -1,13 +1,13 @@
 import React from 'react';
-import { Card, Tag, Select } from 'antd';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { Card, Tag, Select, Tooltip, Button } from 'antd';
+import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { useModal } from '../Modal';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useRouteMatch } from 'react-router-dom';
-import { Data } from './types'
-import { getIssues, getTagLabels } from './api'
-import IssueSessions from './IssueSessionsModal'
+import { Data } from './types';
+import { getIssues, getTagLabels, hideIssue } from './api';
+import IssueSessions from './IssueSessionsModal';
 
 function getTagColor(label: string): string {
   const safeLabel = label.toLowerCase();
@@ -47,8 +47,8 @@ function IssuesSummary() {
     showModal(
       <IssueSessions
         issueName={issue.issueName}
-        issueLabels={issue.issueLabels.map(l => l.name)}
-        journeyLabels={issue.journeyLabels.map(l => l.name)}
+        issueLabels={issue.issueLabels.map((l) => l.name)}
+        journeyLabels={issue.journeyLabels.map((l) => l.name)}
         projectId={projectId}
       />,
       {
@@ -60,6 +60,10 @@ function IssuesSummary() {
 
   const handleChange = (value: string[]) => {
     setUsedLabels(value);
+  };
+
+  const onHide = async (issue: string) => {
+    return hideIssue(projectId, issue)
   };
   return (
     <Card
@@ -88,6 +92,7 @@ function IssuesSummary() {
             issue={issue}
             index={index}
             onIssueClick={onIssueClick}
+            onHide={() => onHide(issue.issueName)}
           />
         ))}
         <div
@@ -106,6 +111,7 @@ function IssuesSummary() {
                 issue={issue}
                 index={index}
                 onIssueClick={onIssueClick}
+                onHide={() => onHide(issue.issueName)}
               />
             ))
           : null}
@@ -118,11 +124,17 @@ function Issue({
   issue,
   index,
   onIssueClick,
+  onHide,
 }: {
   issue: Data;
   index: number;
   onIssueClick: (issue: Data) => void;
+  onHide: () => void;
 }) {
+  const onHideClick = (e) => {
+    e.stopPropagation();
+    onHide();
+  };
   return (
     <div
       className="w-full gap-4 flex items-center p-2 hover:bg-active-blue rounded-lg cursor-pointer"
@@ -138,6 +150,11 @@ function Issue({
           </Tag>
         ))}
       </div>
+      <Tooltip title="Hide this issue">
+        <Button onClick={onHideClick} className="ml-auto" size="small">
+          <Trash2 size={16} />
+        </Button>
+      </Tooltip>
     </div>
   );
 }
