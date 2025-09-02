@@ -41,17 +41,19 @@ function IssuesSummary() {
 
   const onIssueClick = async (issue: {
     issueName: string;
-    labels: { name: string }[];
+    issueLabels: { name: string }[];
+    journeyLabels: { name: string }[];
   }) => {
     showModal(
       <IssueSessions
         issueName={issue.issueName}
-        labels={issue.labels.map(l => l.name)}
+        issueLabels={issue.issueLabels.map(l => l.name)}
+        journeyLabels={issue.journeyLabels.map(l => l.name)}
         projectId={projectId}
       />,
       {
         right: true,
-        width: 720,
+        width: 840,
       },
     );
   };
@@ -130,7 +132,7 @@ function Issue({
       <Tag className="min-w-[56px] text-center">{issue.impact}%</Tag>
       <div className="font-semibold">{issue.issueName}</div>
       <div className="flex items-center flex-wrap">
-        {issue.labels.map((label, idx) => (
+        {issue.issueLabels.map((label, idx) => (
           <Tag key={idx} color={getTagColor(label.name)}>
             {label.name}
           </Tag>

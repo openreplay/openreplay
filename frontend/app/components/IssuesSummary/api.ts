@@ -5,7 +5,7 @@ import Session from 'App/types/session/session';
 export async function getTagLabels(projectId: string) {
   const response = await client.get(`/kai/${projectId}/smart_labels`);
   const json = await response.json();
-  const options = (json.data ?? []).map((label: string) => ({
+  const options = (json.data ?? { issueLabels: [] }).issueLabels.map((label: string) => ({
     label,
     value: label,
   }));
@@ -26,7 +26,7 @@ export async function getIssues(projectId: string, usedLabels?: string[]) {
     other: [],
   };
   data.forEach((issue) => {
-    if (issue.labels.find((label) => label.name.toLowerCase() === 'critical')) {
+    if (issue.issueLabels.find((label) => label.name.toLowerCase() === 'critical')) {
       resp.critical.push(issue);
     } else {
       resp.other.push(issue);
@@ -41,7 +41,8 @@ export async function getSessions(projectId: string, params: any) {
   const res = await client.post(`/kai/${projectId}/smart_alerts/search`, {
     issue: params.issueName,
     query: params.query || null,
-    labels: params.usedLabels,
+    issueLabels: params.usedIssueLabels,
+    journeyLabels: params.usedJourneyLabels,
     sortBy,
     sortDir,
     range: params.range,
@@ -51,11 +52,13 @@ export async function getSessions(projectId: string, params: any) {
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   const json = await res.json();
 
-  const data = json.data.map((s) => {
+  const data = json.data.map((s: any) => {
     return ({
         session: new Session(s),
-        issue: s.description,
-        labels: s.labels,
+        issueDescription: s.description,
+        issueLabels: s.issueLabels,
+        journey: s.journey,
+        journeyLabels: s.journeyLabels,
       })
   });
   return data;

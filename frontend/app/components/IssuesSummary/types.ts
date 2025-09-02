@@ -1,7 +1,11 @@
 export interface Data {
   issueName: string;
   impact: number;
-  labels: {
+  issueLabels: {
+    name: string;
+    ratio: number;
+  }[];
+  journeyLabels: {
     name: string;
     ratio: number;
   }[];
