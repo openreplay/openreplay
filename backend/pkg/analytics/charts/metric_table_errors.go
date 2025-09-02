@@ -51,12 +51,11 @@ func (t *TableErrorsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfa
 		var e ErrorItem
 		var ts []int64
 		var cs []uint64
-		var totalCount uint64
 		if err := rows.Scan(
 			&e.ErrorID, &e.Name, &e.Message,
 			&e.Users, &e.Total, &e.Sessions,
 			&e.FirstOccurrence, &e.LastOccurrence,
-			&ts, &cs, &totalCount,
+			&ts, &cs,
 		); err != nil {
 			return nil, err
 		}
@@ -64,10 +63,8 @@ func (t *TableErrorsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfa
 			e.Chart = append(e.Chart, ErrorChartPoint{Timestamp: ts[i], Count: cs[i]})
 		}
 		resp.Errors = append(resp.Errors, e)
-		if resp.Total == 0 {
-			resp.Total = totalCount
-		}
 	}
+	resp.Total = uint64(len(resp.Errors))
 	return resp, nil
 }
 
@@ -204,27 +201,17 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	sql := fmt.Sprintf(`WITH
     events AS (
         SELECT
-            COALESCE(
-                error_id,
-                JSONExtractString(toString("$properties"), 'errorId'),
-                concat('err_', toString(sipHash64(
-                    concat(
-                        JSONExtractString(toString("$properties"), 'name'),
-                        JSONExtractString(toString("$properties"), 'message')
-                    )
-                )))
-            ) AS error_id,
+            error_id,
             COALESCE(JSONExtractString(toString("$properties"), 'name'), 'ERROR') AS name,
-            COALESCE(
-                JSONExtractString(toString("$properties"), 'message'),
-                JSONExtractString(toString("$properties"), 'error'),
-                'Unknown error'
-            ) AS message,
+            COALESCE(JSONExtractString(toString("$properties"), 'message'),
+                    JSONExtractString(toString("$properties"), 'error'), 'Unknown error') AS message,
             distinct_id,
             session_id,
+            project_id,
             created_at
         FROM %s
         WHERE %s
+        AND created_at IS NOT NULL
     ),
     sessions_per_interval AS (
         SELECT
@@ -232,7 +219,6 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
             toUInt64(%d + (toUInt64((toUnixTimestamp64Milli(created_at) - %d) / %d) * %d)) AS bucket_ts,
             countDistinct(session_id) AS session_count
         FROM events
-        WHERE error_id IS NOT NULL AND error_id != ''
         GROUP BY error_id, bucket_ts
     ),
     buckets AS (
@@ -249,25 +235,22 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
             error_id,
             any(name) AS name,
             any(message) AS message,
-            countDistinct(distinct_id) AS users,
+            countDistinct(CASE WHEN s.user_id IS NOT NULL AND s.user_id != '' THEN s.user_id END) AS users,
             count() AS total,
-            countDistinct(session_id) AS sessions,
-            min(created_at) AS first_occurrence,
-            max(created_at) AS last_occurrence
-        FROM events
-        WHERE error_id IS NOT NULL AND error_id != ''
-        GROUP BY error_id
-    ),
-    total_count AS (
-        SELECT COUNT(*) AS total_errors
-        FROM error_meta
+            countDistinct(e.session_id) AS sessions,
+            min(e.created_at) AS first_occurrence,
+            max(e.created_at) AS last_occurrence
+        FROM events e
+        LEFT JOIN experimental.sessions s ON e.session_id = s.session_id AND e.project_id = s.project_id
+        WHERE e.error_id IS NOT NULL AND e.error_id != ''
+        GROUP BY e.error_id
     ),
     error_chart AS (
         SELECT
             e.error_id AS error_id,
             groupArray(b.bucket_ts) AS timestamps,
             groupArray(coalesce(s.session_count, 0)) AS counts
-        FROM (SELECT DISTINCT error_id FROM events WHERE error_id IS NOT NULL AND error_id != '') AS e
+        FROM (SELECT DISTINCT error_id FROM events) AS e
         CROSS JOIN buckets AS b
         LEFT JOIN sessions_per_interval AS s
             ON s.error_id = e.error_id
@@ -284,12 +267,11 @@ SELECT
     toUnixTimestamp64Milli(toDateTime64(m.first_occurrence, 3)) AS first_occurrence,
     toUnixTimestamp64Milli(toDateTime64(m.last_occurrence, 3)) AS last_occurrence,
     ec.timestamps,
-    ec.counts,
-    tc.total_errors AS total_count
+    ec.counts
 FROM error_meta AS m
 LEFT JOIN error_chart AS ec
     ON m.error_id = ec.error_id
-CROSS JOIN total_count AS tc
+WHERE m.sessions > 0
 ORDER BY %s %s
 LIMIT %d OFFSET %d;`,
 		fromClause,
