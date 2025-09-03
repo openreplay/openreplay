@@ -10,12 +10,21 @@ import (
 	"openreplay/backend/pkg/analytics/model"
 )
 
+type FilterDetail struct {
+	Name          string         `json:"name"`
+	Operator      string         `json:"operator"`
+	PropertyOrder string         `json:"propertyOrder"`
+	Value         []string       `json:"value"`
+	Filters       []FilterDetail `json:"filters,omitempty"`
+}
+
 type FunnelStageResult struct {
-	Value    []string `json:"value"`
-	Type     string   `json:"type"`
-	Operator string   `json:"operator"`
-	DropPct  *float64 `json:"dropPct"`
-	Count    uint64   `json:"count"`
+	Value    []string     `json:"value"`
+	Type     string       `json:"type"`
+	Operator string       `json:"operator"`
+	DropPct  *float64     `json:"dropPct"`
+	Count    uint64       `json:"count"`
+	Filter   FilterDetail `json:"filter"`
 }
 
 type FunnelResponse struct {
@@ -70,6 +79,7 @@ func (f *FunnelQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{},
 				Count:    count,
 				Value:    []string{},
 				Operator: stepFilters[i].Operator,
+				Filter:   convertToFilterDetail(stepFilters[i]),
 			}
 
 			if len(stepFilters[i].Value) > 0 {
@@ -258,4 +268,22 @@ func formatEventNames(stages []string) string {
 		quoted[i] = fmt.Sprintf("'%s'", stage)
 	}
 	return fmt.Sprintf("(%s)", strings.Join(quoted, ", "))
+}
+
+func convertToFilterDetail(filter model.Filter) FilterDetail {
+	detail := FilterDetail{
+		Name:          filter.Name,
+		Operator:      filter.Operator,
+		PropertyOrder: filter.PropertyOrder,
+		Value:         filter.Value,
+	}
+
+	if len(filter.Filters) > 0 {
+		detail.Filters = make([]FilterDetail, len(filter.Filters))
+		for i, nestedFilter := range filter.Filters {
+			detail.Filters[i] = convertToFilterDetail(nestedFilter)
+		}
+	}
+
+	return detail
 }
