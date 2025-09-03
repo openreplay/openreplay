@@ -11,20 +11,19 @@ import (
 )
 
 type FilterDetail struct {
-	Name          string         `json:"name"`
-	Operator      string         `json:"operator"`
-	PropertyOrder string         `json:"propertyOrder"`
-	Value         []string       `json:"value"`
-	Filters       []FilterDetail `json:"filters,omitempty"`
+	Name     string   `json:"name"`
+	Operator string   `json:"operator"`
+	Value    []string `json:"value"`
 }
 
 type FunnelStageResult struct {
-	Value    []string     `json:"value"`
-	Type     string       `json:"type"`
-	Operator string       `json:"operator"`
-	DropPct  *float64     `json:"dropPct"`
-	Count    uint64       `json:"count"`
-	Filter   FilterDetail `json:"filter"`
+	Value         []string       `json:"value"`
+	Type          string         `json:"type"`
+	Operator      string         `json:"operator"`
+	DropPct       *float64       `json:"dropPct"`
+	Count         uint64         `json:"count"`
+	Filters       []FilterDetail `json:"filters,omitempty"`
+	PropertyOrder string         `json:"propertyOrder"`
 }
 
 type FunnelResponse struct {
@@ -75,11 +74,12 @@ func (f *FunnelQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{},
 			count := *stageCountPointers[i]
 
 			stage := FunnelStageResult{
-				Type:     stepFilters[i].Name,
-				Count:    count,
-				Value:    []string{},
-				Operator: stepFilters[i].Operator,
-				Filter:   convertToFilterDetail(stepFilters[i]),
+				Type:          stepFilters[i].Name,
+				Count:         count,
+				Value:         []string{},
+				Operator:      stepFilters[i].Operator,
+				PropertyOrder: stepFilters[i].PropertyOrder,
+				Filters:       convertToFilterDetails(stepFilters[i].Filters), // Include nested filters
 			}
 
 			if len(stepFilters[i].Value) > 0 {
@@ -270,20 +270,19 @@ func formatEventNames(stages []string) string {
 	return fmt.Sprintf("(%s)", strings.Join(quoted, ", "))
 }
 
-func convertToFilterDetail(filter model.Filter) FilterDetail {
-	detail := FilterDetail{
-		Name:          filter.Name,
-		Operator:      filter.Operator,
-		PropertyOrder: filter.PropertyOrder,
-		Value:         filter.Value,
+func convertToFilterDetails(filters []model.Filter) []FilterDetail {
+	if len(filters) == 0 {
+		return nil
 	}
 
-	if len(filter.Filters) > 0 {
-		detail.Filters = make([]FilterDetail, len(filter.Filters))
-		for i, nestedFilter := range filter.Filters {
-			detail.Filters[i] = convertToFilterDetail(nestedFilter)
+	details := make([]FilterDetail, len(filters))
+	for i, filter := range filters {
+		details[i] = FilterDetail{
+			Name:     filter.Name,
+			Operator: filter.Operator,
+			Value:    filter.Value,
 		}
 	}
 
-	return detail
+	return details
 }
