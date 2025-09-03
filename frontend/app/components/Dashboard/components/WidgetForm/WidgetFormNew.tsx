@@ -149,6 +149,7 @@ const FilterSection = observer(
                     isFunnel ||
                     isWebVitals
                   }
+                  excludeEventOrder={isFunnel || isWebVitals || isHeatMap}
                   seriesIndex={index}
                   series={series}
                   onRemoveSeries={() => metric.removeSeries(index)}

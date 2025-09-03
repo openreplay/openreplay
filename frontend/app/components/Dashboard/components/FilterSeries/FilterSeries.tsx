@@ -127,6 +127,7 @@ interface Props {
   isHeatmap?: boolean;
   removeEvents?: boolean;
   collapseState: boolean;
+  excludeEventOrder?: boolean;
   onToggleCollapse: () => void;
 }
 
@@ -144,6 +145,7 @@ function FilterSeries(props: Props) {
     series,
     seriesIndex,
     onRemoveSeries,
+    excludeEventOrder,
   } = props;
 
   const { filterStore } = useStore();
@@ -194,6 +196,8 @@ function FilterSeries(props: Props) {
 
 
   const activeFilters = indexedFilters.map((f) => f.name);
+
+  const showEventsOrder = actualEvents.length > 0 && !excludeEventOrder;
   return (
     <Card
       size="small"
@@ -246,7 +250,7 @@ function FilterSeries(props: Props) {
             <>
               <FilterListHeader
                 title="Events"
-                showEventsOrder={actualEvents.length > 0}
+                showEventsOrder={showEventsOrder}
                 orderProps={{
                   eventsOrder: series.filter.eventsOrder,
                   eventsOrderSupport: ['then', 'and', 'or'],
