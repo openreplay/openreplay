@@ -41,16 +41,36 @@ function FunnelTable(props: Props) {
   const [tableProps, setTableProps] = React.useState(defaultTableProps);
   const [tableData, setTableData] = React.useState(defaultData);
 
+  const joinWithOr = (vals: any[]) =>
+    (vals || []).map((v) => String(v)).join(` ${t('or')} `);
+
+  const buildStageTitle = (st: any) => {
+    const hasSubs = Array.isArray(st.subfilters) && st.subfilters.length > 0;
+    if (hasSubs) {
+      const parts: string[] = [];
+      st.subfilters.forEach((sf: any, idx: number) => {
+        parts.push(`${sf.name} ${sf.operator} ${joinWithOr(sf.value)}`);
+        if (idx < st.subfilters.length - 1) {
+          parts.push(sf.propertyOrder || 'and');
+        }
+      });
+      return `${st.label} where ${parts.join(' ')}`;
+    }
+    return `${st.label} ${st.operator} ${joinWithOr(st.value)}`;
+  };
+
   React.useEffect(() => {
     const { funnel } = props.data;
-    const tablePropsCopy = defaultTableProps;
-    const tableDataCopy = defaultData;
-    funnel.stages.forEach((st, ind) => {
-      const title = `${st.label} ${st.operator} ${st.value.join(' or ')}`;
-      const wrappedTitle =
-        title.length > 40 ? `${title.slice(0, 40)}...` : title;
+    const tablePropsCopy = [...defaultTableProps];
+    const tableDataCopy: any[] = [ { ...defaultData[0] } ];
+
+    const colsAmount = funnel.stages.length + 1;
+    const colSize = Math.round(100 / colsAmount);
+    funnel.stages.forEach((st: any, ind: number) => {
+      const title = buildStageTitle(st);
+      const className = `w-${colSize} max-w-[500px] overflow-hidden text-ellipsis`
       tablePropsCopy.push({
-        title: wrappedTitle,
+        title: <div className={className}>{title}</div>,
         dataIndex: `st_${ind}`,
         key: `st_${ind}`,
         ellipsis: true,
@@ -58,18 +78,19 @@ function FunnelTable(props: Props) {
       });
       tableDataCopy[0][`st_${ind}`] = st.count;
     });
+
     if (props.compData) {
       tableDataCopy.push({
         conversion: props.compData.funnel.totalConversionsPercentage,
       });
       const compFunnel = props.compData.funnel;
-      compFunnel.stages.forEach((st, ind) => {
+      compFunnel.stages.forEach((st: any, ind: number) => {
         tableDataCopy[1][`st_${ind}`] = st.count;
       });
     }
     setTableProps(tablePropsCopy);
     setTableData(tableDataCopy);
-  }, [props.data]);
+  }, [props.data, props.compData, t]);
 
   return (
     <div className="-mx-4 px-2">

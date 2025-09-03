@@ -4,7 +4,6 @@ import { FilterKey } from 'Types/filter/filterType';
 import FilterItem from './filterItem';
 import { JsonData } from '@/mstore/types/filterConstants';
 import { filterStore } from '@/mstore/index';
-import { FUNNEL, HEATMAP } from '@/constants/card';
 import FilterSeries from '@/mstore/types/filterSeries';
 
 type FilterData = Partial<FilterItem> & {
