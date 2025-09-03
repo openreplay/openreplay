@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Tag, Select, Tooltip, Button } from 'antd';
-import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, EyeOff } from 'lucide-react';
 import { useModal } from '../Modal';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -141,7 +141,7 @@ function Issue({
       key={index}
       onClick={() => onIssueClick(issue)}
     >
-      <Tag className="min-w-[56px] text-center">{issue.impact}%</Tag>
+      <Tag className="min-w-[56px] text-center">{Math.round(issue.impact)}%</Tag>
       <div className="font-semibold">{issue.issueName}</div>
       <div className="flex items-center flex-wrap">
         {issue.issueLabels.map((label, idx) => (
@@ -152,7 +152,7 @@ function Issue({
       </div>
       <Tooltip title="Hide this issue">
         <Button onClick={onHideClick} className="ml-auto" size="small">
-          <Trash2 size={16} />
+          <EyeOff size={16} />
         </Button>
       </Tooltip>
     </div>
