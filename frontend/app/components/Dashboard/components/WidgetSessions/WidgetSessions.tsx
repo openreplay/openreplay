@@ -105,10 +105,14 @@ function WidgetSessions({ className = '' }) {
       setLoading(true);
       const params = { ...flt, filters: [] };
       if (flt.filters?.length && params.series?.[0]?.filter) {
-        params.series[0].filter.filters = [
-          ...(flt.series[0].filter.filters || []),
-          ...flt.filters,
-        ];
+        if (widget.metricType === FUNNEL) {
+          params.series[0].filter.filters = [...flt.filters];
+        } else {
+          params.series[0].filter.filters = [
+            ...(flt.series[0].filter.filters || []),
+            ...flt.filters,
+          ];
+        }
       }
 
       widget
@@ -146,9 +150,9 @@ function WidgetSessions({ className = '' }) {
     [fetchClickmapSessions],
   );
 
-  const filterDeps = widget.series.flatMap((s) =>
-    s.filter.filters.map((f) => JSON.stringify(f)),
-  ).join('$')
+  const filterDeps = widget.series
+    .flatMap((s) => s.filter.filters.map((f) => JSON.stringify(f)))
+    .join('$');
   const loadData = () => {
     if (widget.metricType === HEATMAP && metricStore.clickMapSearch) {
       const clickFilter = {
