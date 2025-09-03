@@ -158,9 +158,14 @@ export default class FilterItem implements IFilter {
       // source: this.name,
       propertyOrder: this.propertyOrder,
       filters: Array.isArray(this.filters)
-        ? this.filters.map((filter) => filter.toJson())
-        : [],
-
+            ? this.filters
+                .filter((child) =>
+                  child.isEvent
+                    ? !!(child.filters && child.filters.length > 0)
+                    : Array.isArray(child.value) && child.value.some((v) => v !== '' && v !== null && v !== undefined),
+                )
+                .map((child) => child.toJson())
+            : [],
       // these props are required to get the source filter later
       isEvent: Boolean(this.isEvent),
       name: this.name,

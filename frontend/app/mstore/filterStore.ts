@@ -152,11 +152,9 @@ export default class FilterStore {
       });
     }
 
-    // filter.filters =
-    //   filter.filters?.filter((f: any) => f.defaultProperty) || [];
-    filter.filters = [];
+    const copy = { ...filter, filters: [] as any[] };
 
-    return new FilterItem(filter);
+    return new FilterItem(copy);
   };
 
   // findEventProperty = (
@@ -289,8 +287,13 @@ export default class FilterStore {
       const cloned = JSON.parse(JSON.stringify(source));
       cloned.value = f.value ?? [];
 
+      cloned.operator = f.operator ?? cloned.operator;
+      cloned.propertyOrder = f.propertyOrder ?? cloned.propertyOrder;
+
       if (Array.isArray(f.filters)) {
         cloned.filters = this.processFiltersFromData(f.filters);
+      } else {
+        cloned.filters = [];
       }
 
       return new FilterItem(cloned);
@@ -361,12 +364,7 @@ export default class FilterStore {
   };
 
   getCurrentProjectFilters = (): Filter[] => {
-    return this.getAllFilters(String(projectStore.activeSiteId)).map(
-      (filter) => {
-        filter.filters = [];
-        return filter;
-      },
-    );
+    return this.getAllFilters(String(projectStore.activeSiteId)).map((f) => ({ ...f, filters: [] } as Filter));
   };
 
   setEventFilters = async (
