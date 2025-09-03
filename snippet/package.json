@@ -7,12 +7,10 @@
     "bundle": "rollup -c -i src/$0.js -o dist/$0.js",
     "minify": "echo \"(function(){$(cat dist/$0.js)})()\" | ./node_modules/.bin/uglifyjs --compress --mangle --comments -o dist/$0.min.js",
     "bundle:or": "yarn bundle tracker && yarn minify tracker",
-    "bundle:assist": "yarn bundle tracker-assist && yarn minify tracker-assist",
     "update-version": "node scripts/upd_ver.js"
   },
   "dependencies": {
-    "@openreplay/tracker": "file:../tracker/tracker",
-    "@openreplay/tracker-assist": "file:../tracker/tracker-assist"
+    "@openreplay/tracker": "file:../tracker/tracker"
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",
