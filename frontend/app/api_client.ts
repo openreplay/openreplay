@@ -34,6 +34,24 @@ const siteIdRequiredPaths: string[] = [
   '/intelligent',
 ];
 
+// /v1/{project}/assist/sessions
+// /v1/{project}/assist/sessions/{session}
+// /v1/{project}/sessions/{session}/replay
+// /v1/{project}/sessions/{session}/events
+// /v1/{project}/sessions/{session}/clickmaps
+// /v1/{project}/sessions/{session}/favorite
+// /v1/{project}/sessions/{session}/notes
+// /v1/{project}/sessions/{session}/notes
+// /v1/{project}/notes/{note}
+// /v1/{project}/notes/{note}
+// /v1/{project}/notes/{note}
+// /v1/{project}/notes
+// /v1/{project}/sessions/{session}/first-mob
+// /v1/{project}/unprocessed/{session}/dom.mob
+// /v1/{project}/unprocessed/{session}/devtools.mob
+const newApiUrls = ['assist/sessions', '/sessions/', '/notes', '/unprocessed', 'first-mob', '/events', '/favorite', '/clickmaps', '/replay']
+const useNewApi = localStorage.getItem("__new_api") === "true"
+
 export const clean = (
   obj: any,
   forbiddenValues: any[] = [undefined, ''],
@@ -230,7 +248,12 @@ export default class APIClient {
       _path = _path.replace('PROJECT_ID', `${this.siteId}`);
     }
 
-    const fullUrl = edp + _path;
+    let fullUrl = edp + _path;
+    if (useNewApi) {
+      if (newApiUrls.some((u) => fullUrl.includes(u))) {
+        fullUrl = fullUrl.replace('/api', '/newapi/v1');
+      }
+    }
     const t1 = performance.now();
     const response = await window.fetch(fullUrl, init);
     const t2 = performance.now();
@@ -244,7 +267,9 @@ export default class APIClient {
         t2,
         diff: t2 - t1,
       };
-      void this.duplicate(fullUrl, init, response, timings);
+      if (!useNewApi) {
+        void this.duplicate(fullUrl, init, response, timings);
+      }
       return response;
     }
     let errorMsg = 'Something went wrong.';
@@ -257,24 +282,8 @@ export default class APIClient {
 
   duplicate = async (url, init, response, timings) => {
     const respClone = response.clone();
-    // /v1/{project}/assist/sessions
-    // /v1/{project}/assist/sessions/{session}
-    // /v1/{project}/sessions/{session}/replay
-    // /v1/{project}/sessions/{session}/events
-    // /v1/{project}/sessions/{session}/clickmaps
-    // /v1/{project}/sessions/{session}/favorite
-    // /v1/{project}/sessions/{session}/notes
-    // /v1/{project}/sessions/{session}/notes
-    // /v1/{project}/notes/{note}
-    // /v1/{project}/notes/{note}
-    // /v1/{project}/notes/{note}
-    // /v1/{project}/notes
-    // /v1/{project}/sessions/{session}/first-mob
-    // /v1/{project}/unprocessed/{session}/dom.mob
-    // /v1/{project}/unprocessed/{session}/devtools.mob
-    const trackedUrls = ['assist/sessions', '/sessions/', '/notes', '/unprocessed', 'first-mob', '/events', '/favorite', '/clickmaps', '/replay']
     // /api/path -> /api-v2/path
-    if (!trackedUrls.some((u) => url.includes(u))) {
+    if (!newApiUrls.some((u) => url.includes(u)) || !url.includes('/api')) {
       return;
     }
     try {
