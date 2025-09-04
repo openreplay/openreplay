@@ -36,6 +36,30 @@ type WebVitalsResponse struct {
 	Cls                      WebVitalsMetric `json:"cls"`
 }
 
+var webVitalsRanges = map[string]struct{ good, medium, bad []int }{
+	"dom_building_time":           {good: []int{0, 300}, medium: []int{301, 600}, bad: []int{601}},
+	"ttfb":                        {good: []int{0, 200}, medium: []int{201, 600}, bad: []int{601}},
+	"speed_index":                 {good: []int{0, 3400}, medium: []int{3401, 5800}, bad: []int{5801}},
+	"first_contentful_paint_time": {good: []int{0, 1800}, medium: []int{1801, 3000}, bad: []int{3001}},
+	"largest_contentful_paint":    {good: []int{0, 2500}, medium: []int{2501, 4000}, bad: []int{4001}},
+	"cumulative_layout_shift":     {good: []int{0, 10}, medium: []int{11, 25}, bad: []int{26}},
+}
+
+type scannedValues struct {
+	domMin, domMax                     *int64
+	domAvg, domP50, domP75, domP90     *float64
+	ttfbMin, ttfbMax                   *int64
+	ttfbAvg, ttfbP50, ttfbP75, ttfbP90 *float64
+	siMin, siMax                       *int64
+	siAvg, siP50, siP75, siP90         *float64
+	fcpMin, fcpMax                     *int64
+	fcpAvg, fcpP50, fcpP75, fcpP90     *float64
+	lcpMin, lcpMax                     *float64
+	lcpAvg, lcpP50, lcpP75, lcpP90     *float64
+	clsMin, clsMax                     *float64
+	clsAvg, clsP50, clsP75, clsP90     *float64
+}
+
 type WebVitalsQueryBuilder struct{}
 
 func (h WebVitalsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
@@ -49,87 +73,77 @@ func (h WebVitalsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{
 	}
 	defer rows.Close()
 
-	ranges := map[string]struct{ good, medium, bad []int }{
-		"dom_building_time":           {good: []int{0, 300}, medium: []int{301, 600}, bad: []int{601}},
-		"ttfb":                        {good: []int{0, 200}, medium: []int{201, 600}, bad: []int{601}},
-		"speed_index":                 {good: []int{0, 3400}, medium: []int{3401, 5800}, bad: []int{5801}},
-		"first_contentful_paint_time": {good: []int{0, 1800}, medium: []int{1801, 3000}, bad: []int{3001}},
-		"largest_contentful_paint":    {good: []int{0, 2500}, medium: []int{2501, 4000}, bad: []int{4001}},
-		"cumulative_layout_shift":     {good: []int{0, 10}, medium: []int{11, 25}, bad: []int{26}},
-	}
-
 	resp := WebVitalsResponse{
-		DomBuildingTime:          buildDefaultMetric(ranges["dom_building_time"]),
-		Ttfb:                     buildDefaultMetric(ranges["ttfb"]),
-		SpeedIndex:               buildDefaultMetric(ranges["speed_index"]),
-		FirstContentfulPaintTime: buildDefaultMetric(ranges["first_contentful_paint_time"]),
-		Lcp:                      buildDefaultMetric(ranges["largest_contentful_paint"]),
-		Cls:                      buildDefaultMetric(ranges["cumulative_layout_shift"]),
+		DomBuildingTime:          buildDefaultMetric(webVitalsRanges["dom_building_time"]),
+		Ttfb:                     buildDefaultMetric(webVitalsRanges["ttfb"]),
+		SpeedIndex:               buildDefaultMetric(webVitalsRanges["speed_index"]),
+		FirstContentfulPaintTime: buildDefaultMetric(webVitalsRanges["first_contentful_paint_time"]),
+		Lcp:                      buildDefaultMetric(webVitalsRanges["largest_contentful_paint"]),
+		Cls:                      buildDefaultMetric(webVitalsRanges["cumulative_layout_shift"]),
 	}
 
 	if rows.Next() {
-		var (
-			domMinInt, domMaxInt           *int64
-			domAvg, domP50, domP75, domP90 *float64
-
-			ttfbMinInt, ttfbMaxInt             *int64
-			ttfbAvg, ttfbP50, ttfbP75, ttfbP90 *float64
-
-			siMinInt, siMaxInt         *int64
-			siAvg, siP50, siP75, siP90 *float64
-
-			fcpMinInt, fcpMaxInt           *int64
-			fcpAvg, fcpP50, fcpP75, fcpP90 *float64
-
-			lcpMinInt, lcpMaxInt           *float64
-			lcpAvg, lcpP50, lcpP75, lcpP90 *float64
-
-			clsMin, clsMax                 *float64
-			clsAvg, clsP50, clsP75, clsP90 *float64
-		)
-
+		var vals scannedValues
 		err = rows.Scan(
-			&domMinInt, &domAvg, &domMaxInt, &domP50, &domP75, &domP90,
-			&ttfbMinInt, &ttfbAvg, &ttfbMaxInt, &ttfbP50, &ttfbP75, &ttfbP90,
-			&siMinInt, &siAvg, &siMaxInt, &siP50, &siP75, &siP90,
-			&fcpMinInt, &fcpAvg, &fcpMaxInt, &fcpP50, &fcpP75, &fcpP90,
-			&lcpMinInt, &lcpAvg, &lcpMaxInt, &lcpP50, &lcpP75, &lcpP90,
-			&clsMin, &clsAvg, &clsMax, &clsP50, &clsP75, &clsP90,
+			&vals.domMin, &vals.domAvg, &vals.domMax, &vals.domP50, &vals.domP75, &vals.domP90,
+			&vals.ttfbMin, &vals.ttfbAvg, &vals.ttfbMax, &vals.ttfbP50, &vals.ttfbP75, &vals.ttfbP90,
+			&vals.siMin, &vals.siAvg, &vals.siMax, &vals.siP50, &vals.siP75, &vals.siP90,
+			&vals.fcpMin, &vals.fcpAvg, &vals.fcpMax, &vals.fcpP50, &vals.fcpP75, &vals.fcpP90,
+			&vals.lcpMin, &vals.lcpAvg, &vals.lcpMax, &vals.lcpP50, &vals.lcpP75, &vals.lcpP90,
+			&vals.clsMin, &vals.clsAvg, &vals.clsMax, &vals.clsP50, &vals.clsP75, &vals.clsP90,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		// Check if we have any non-NULL values (indicating real data)
-		if domMinInt != nil || ttfbMinInt != nil || siMinInt != nil || fcpMinInt != nil || lcpMinInt != nil || clsMin != nil {
-			resp.DomBuildingTime = buildMetricFromNullable(
-				domMinInt, domMaxInt, domAvg, domP50, domP75, domP90,
-				ranges["dom_building_time"],
+		if vals.hasData() {
+			resp.DomBuildingTime = buildMetricFromValues(
+				vals.domMin, vals.domMax, vals.domAvg, vals.domP50, vals.domP75, vals.domP90,
+				webVitalsRanges["dom_building_time"],
 			)
-			resp.Ttfb = buildMetricFromNullable(
-				ttfbMinInt, ttfbMaxInt, ttfbAvg, ttfbP50, ttfbP75, ttfbP90,
-				ranges["ttfb"],
+			resp.Ttfb = buildMetricFromValues(
+				vals.ttfbMin, vals.ttfbMax, vals.ttfbAvg, vals.ttfbP50, vals.ttfbP75, vals.ttfbP90,
+				webVitalsRanges["ttfb"],
 			)
-			resp.SpeedIndex = buildMetricFromNullable(
-				siMinInt, siMaxInt, siAvg, siP50, siP75, siP90,
-				ranges["speed_index"],
+			resp.SpeedIndex = buildMetricFromValues(
+				vals.siMin, vals.siMax, vals.siAvg, vals.siP50, vals.siP75, vals.siP90,
+				webVitalsRanges["speed_index"],
 			)
-			resp.FirstContentfulPaintTime = buildMetricFromNullable(
-				fcpMinInt, fcpMaxInt, fcpAvg, fcpP50, fcpP75, fcpP90,
-				ranges["first_contentful_paint_time"],
+			resp.FirstContentfulPaintTime = buildMetricFromValues(
+				vals.fcpMin, vals.fcpMax, vals.fcpAvg, vals.fcpP50, vals.fcpP75, vals.fcpP90,
+				webVitalsRanges["first_contentful_paint_time"],
 			)
-			resp.Lcp = buildMetricFromNullableFloat(
-				lcpMinInt, lcpAvg, lcpMaxInt, lcpP50, lcpP75, lcpP90,
-				ranges["largest_contentful_paint"],
+			resp.Lcp = buildMetricFromValues(
+				vals.lcpMin, vals.lcpMax, vals.lcpAvg, vals.lcpP50, vals.lcpP75, vals.lcpP90,
+				webVitalsRanges["largest_contentful_paint"],
 			)
-			resp.Cls = buildMetricFromNullableFloat(
-				clsMin, clsAvg, clsMax, clsP50, clsP75, clsP90,
-				ranges["cumulative_layout_shift"],
+			resp.Cls = buildMetricFromValues(
+				vals.clsMin, vals.clsMax, vals.clsAvg, vals.clsP50, vals.clsP75, vals.clsP90,
+				webVitalsRanges["cumulative_layout_shift"],
 			)
 		}
 	}
 
 	return resp, nil
+}
+
+func (v *scannedValues) hasData() bool {
+	return v.domMin != nil || v.ttfbMin != nil || v.siMin != nil ||
+		v.fcpMin != nil || v.lcpMin != nil || v.clsMin != nil
+}
+
+func safeFloat64(val interface{}) float64 {
+	switch v := val.(type) {
+	case *int64:
+		if v != nil && !math.IsNaN(float64(*v)) {
+			return float64(*v)
+		}
+	case *float64:
+		if v != nil && !math.IsNaN(*v) {
+			return *v
+		}
+	}
+	return 0
 }
 
 func buildDefaultMetric(r struct{ good, medium, bad []int }) WebVitalsMetric {
@@ -152,54 +166,10 @@ func buildDefaultMetric(r struct{ good, medium, bad []int }) WebVitalsMetric {
 	}
 }
 
-func buildMetricFromNullable(minInt, maxInt *int64, avg, p50, p75, p90 *float64, r struct{ good, medium, bad []int }) WebVitalsMetric {
-	var min, max, avgVal, p50Val, p75Val, p90Val float64
-
-	if minInt != nil && !math.IsNaN(float64(*minInt)) {
-		min = float64(*minInt)
-	}
-	if maxInt != nil && !math.IsNaN(float64(*maxInt)) {
-		max = float64(*maxInt)
-	}
-	if avg != nil && !math.IsNaN(*avg) {
-		avgVal = *avg
-	}
-	if p50 != nil && !math.IsNaN(*p50) {
-		p50Val = *p50
-	}
-	if p75 != nil && !math.IsNaN(*p75) {
-		p75Val = *p75
-	}
-	if p90 != nil && !math.IsNaN(*p90) {
-		p90Val = *p90
-	}
-
-	return buildMetric(min, avgVal, max, p50Val, p75Val, p90Val, r)
-}
-
-func buildMetricFromNullableFloat(min, avg, max, p50, p75, p90 *float64, r struct{ good, medium, bad []int }) WebVitalsMetric {
-	var minVal, avgVal, maxVal, p50Val, p75Val, p90Val float64
-
-	if min != nil && !math.IsNaN(*min) {
-		minVal = *min
-	}
-	if avg != nil && !math.IsNaN(*avg) {
-		avgVal = *avg
-	}
-	if max != nil && !math.IsNaN(*max) {
-		maxVal = *max
-	}
-	if p50 != nil && !math.IsNaN(*p50) {
-		p50Val = *p50
-	}
-	if p75 != nil && !math.IsNaN(*p75) {
-		p75Val = *p75
-	}
-	if p90 != nil && !math.IsNaN(*p90) {
-		p90Val = *p90
-	}
-
-	return buildMetric(minVal, avgVal, maxVal, p50Val, p75Val, p90Val, r)
+func buildMetricFromValues(min, max, avg, p50, p75, p90 interface{}, r struct{ good, medium, bad []int }) WebVitalsMetric {
+	return buildMetric(
+		safeFloat64(min), safeFloat64(avg), safeFloat64(max),
+		safeFloat64(p50), safeFloat64(p75), safeFloat64(p90), r)
 }
 
 func statusFor(v float64, r struct{ good, medium, bad []int }) string {
