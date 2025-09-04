@@ -32,7 +32,7 @@ function IssuesSummary() {
     queryKey: ['issuesSummary', projectId, usedLabels],
     queryFn: () => getIssues(projectId, usedLabels),
   });
-  const { data: labels = [], isPending: isLabelsPending } = useQuery<
+  const { data: labels = [], isPending: isLabelsPending, refetch } = useQuery<
     { label: string; value: string }[]
   >({
     queryKey: ['tagLabels', projectId],
@@ -63,7 +63,8 @@ function IssuesSummary() {
   };
 
   const onHide = async (issue: string) => {
-    return hideIssue(projectId, issue)
+    await hideIssue(projectId, issue)
+    refetch();
   };
   return (
     <Card
