@@ -5,29 +5,19 @@ import Period, { LAST_7_DAYS } from 'Types/app/period';
 
 export default class RecordingsStore {
   recordings: IRecord[] = [];
-
   loading: boolean;
-
   page = 1;
-
   total: number = 0;
-
   pageSize = 5;
-
   order: 'desc' | 'asc' = 'desc';
-
   search = '';
-
-  // later we will add search by user id
-  userId = '0';
-
   startTimestamp = 0;
-
   endTimestamp = 0;
-
   rangeName: string = 'LAST_24_HOURS';
-
   period: any = Period({ rangeName: LAST_7_DAYS });
+
+  exportedVideosList: any = [];
+  currentUser = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -36,10 +26,6 @@ export default class RecordingsStore {
   setRecordings(records: IRecord[], total?: number) {
     this.total = total || 0;
     this.recordings = records;
-  }
-
-  setUserId(userId: string) {
-    this.userId = userId;
   }
 
   updateSearch(val: string) {
@@ -63,7 +49,6 @@ export default class RecordingsStore {
       limit: this.pageSize,
       order: this.order,
       query: this.search,
-      userId: this.userId === '0' ? undefined : this.userId,
       startTimestamp: this.period.start,
       endTimestamp: this.period.end,
     };
@@ -115,5 +100,36 @@ export default class RecordingsStore {
     } finally {
       this.loading = false;
     }
+  }
+
+  triggerExport = async (sessionId: string) => {
+    return true;
+  }
+
+  getRecordings = async () => {
+    const params = {
+      page: this.page,
+      limit: 10,
+      order: this.order,
+      currentUser: this.currentUser,
+      // query: this.search,
+      // startTimestamp: this.period.start,
+      // endTimestamp: this.period.end,
+    };
+  }
+
+  resetValues = () => {
+    this.recordings = [];
+    this.loading = false;
+    this.page = 1;
+    this.total = 0;
+    this.pageSize = 5;
+    this.order = 'desc';
+    this.search = '';
+    this.startTimestamp = 0;
+    this.endTimestamp = 0;
+    this.rangeName = 'LAST_24_HOURS';
+    this.period = Period({ rangeName: LAST_7_DAYS });
+    this.exportedVideosList = [];
   }
 }

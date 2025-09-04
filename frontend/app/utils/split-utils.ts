@@ -4,6 +4,7 @@
 
 export const hasAi = false;
 export const hasHealth = true;
+export const hasExport = false;
 
 export const menuHidden = {
   clips: true,
@@ -11,4 +12,5 @@ export const menuHidden = {
   bookmarks: false,
   kai: true,
   billing: true,
+  videoExport: true,
 };
