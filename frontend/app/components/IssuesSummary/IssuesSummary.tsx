@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Tag, Select, Tooltip, Button } from 'antd';
-import { ChevronDown, ChevronRight, EyeOff } from 'lucide-react';
+import { ChevronDown, ChevronRight, EyeOff, Loader } from 'lucide-react';
 import { useModal } from '../Modal';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -86,6 +86,7 @@ function IssuesSummary() {
         <div className="flex items-center gap-4 px-2">
           <Tag>Impact</Tag>
           <div>Issues</div>
+          {isPending && <Loader className="animate-spin" size={16} />}
         </div>
         {data.critical.map((issue, index) => (
           <Issue
