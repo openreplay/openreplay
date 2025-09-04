@@ -18,6 +18,15 @@ interface Stats {
   P90Status: 'good' | 'medium' | 'bad';
 }
 
+const filterKeys = {
+  domBuildingTime: 'dom_building_time',
+  ttfb: 'ttfb',
+  speedIndex: 'speed_index',
+  firstContentfulPaintTime: 'first_contentful_paint_time',
+  lcp: 'LCP',
+  cls: 'CLS',
+};
+
 interface WVData {
   domBuildingTime: Stats;
   ttfb: Stats;
@@ -153,16 +162,15 @@ function WebVitals({
       onFocus?.([]);
       return;
     }
-    const upCaseStatus = status.charAt(0).toUpperCase() + status.slice(1);
     const filters: any[] = [];
-    const keys = data.raw[`${metricName}${upCaseStatus}`]; // [start, end?];
-    const filterKey = data.raw[`${metricName}Key`];
+    const keys = data.raw[metricName][status]; // [start, end?];
     keys.forEach((key: string, i: number) => {
       const operator = i > 0 ? '<=' : '>=';
-      const fValue = [key];
+      const fValue = [String(key)];
       let filter = {
         autoCaptured: true,
-        type: filterKey,
+        type: filterKeys[metricName],
+        name: filterKeys[metricName],
         operator: operator,
         isEvent: false,
         hasSource: true,
