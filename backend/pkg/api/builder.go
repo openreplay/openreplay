@@ -20,6 +20,7 @@ import (
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/projects"
 	replayAPI "openreplay/backend/pkg/replays/api"
+	"openreplay/backend/pkg/replays/service"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/session"
 	sessionAPI "openreplay/backend/pkg/session/api"
@@ -52,7 +53,12 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, fmt.Errorf("failed to create assist proxy: %s", err)
 	}
 
-	sessionService, err := session.NewService(log, pgconn, viewService, objStore)
+	files, err := service.New(log, pgconn, objStore)
+	if err != nil {
+		return nil, err
+	}
+
+	sessionService, err := session.NewService(log, pgconn, viewService, files)
 	if err != nil {
 		return nil, fmt.Errorf("can't init session service: %s", err)
 	}
@@ -88,7 +94,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	replayHandlers, err := replayAPI.NewHandlers(log, responser, sessionService)
+	replayHandlers, err := replayAPI.NewHandlers(log, responser, sessionService, files)
 	if err != nil {
 		return nil, err
 	}

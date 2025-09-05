@@ -2,13 +2,13 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/replays/service"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/session"
 )
@@ -17,6 +17,7 @@ type handlersImpl struct {
 	log       logger.Logger
 	responser api.Responser
 	sessions  session.Service
+	files     service.Files
 }
 
 func (h *handlersImpl) GetAll() []*api.Description {
@@ -27,11 +28,12 @@ func (h *handlersImpl) GetAll() []*api.Description {
 	}
 }
 
-func NewHandlers(log logger.Logger, responser api.Responser, sessions session.Service) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, responser api.Responser, sessions session.Service, files service.Files) (api.Handlers, error) {
 	return &handlersImpl{
 		log:       log,
 		responser: responser,
 		sessions:  sessions,
+		files:     files,
 	}, nil
 }
 
@@ -45,14 +47,23 @@ func (h *handlersImpl) getFirstMob(w http.ResponseWriter, r *http.Request) {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("wrong project id"), startTime, r.URL.Path, bodySize)
 		return
 	}
-	sessID := api.GetSession(r)
+	sessID, err := api.GetSessionID(r)
+	if err != nil {
+		h.log.Error(r.Context(), "Error getting session ID: %v", err)
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("wrong session id"), startTime, r.URL.Path, bodySize)
+		return
+	}
 
 	h.log.Info(r.Context(), "getFirstMob: sessID: %v, projID: %v", sessID, projID)
 
-	/*
-		return {
-		        'domURL': [sessions_mobs.get_first_url(project_id=project_id, session_id=session_id, check_existence=False)]}
-	*/
+	urls, err := h.files.GetMobStartUrl(sessID)
+	if err != nil {
+		h.log.Error(r.Context(), "Error getting start urls: %v", err)
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("wrong session id"), startTime, r.URL.Path, bodySize)
+		return
+	}
+	res := map[string]interface{}{"domURL": urls}
+	h.responser.ResponseWithJSON(h.log, r.Context(), w, res, startTime, r.URL.Path, bodySize)
 }
 
 func (h *handlersImpl) getUnprocessedMob(w http.ResponseWriter, r *http.Request) {
@@ -83,16 +94,12 @@ func (h *handlersImpl) getUnprocessedMob(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	// TODO: check in assist
-	path, err := getRawMobByID(projID, sessID, "DOM")
+	path, err := h.files.GetUnprocessedMob(sessID)
 	if err != nil {
 		h.responser.ResponseWithJSON(h.log, r.Context(), w, notFoundResponse, startTime, r.URL.Path, bodySize)
 		return
 	}
 	downloadHandler(w, r, path)
-}
-
-func getRawMobByID(projID uint32, sessID uint64, mobType string) (string, error) {
-	return "", fmt.Errorf("not implemented") // TODO: implement this function to get the raw mob file by project ID and session ID
 }
 
 func downloadHandler(w http.ResponseWriter, r *http.Request, filePath string) {
@@ -139,7 +146,7 @@ func (h *handlersImpl) getUnprocessedDevtools(w http.ResponseWriter, r *http.Req
 		return
 	}
 	// TODO: check in assist
-	path, err := getRawMobByID(projID, sessID, "DOM")
+	path, err := h.files.GetUnprocessedDevtools(sessID)
 	if err != nil {
 		h.responser.ResponseWithJSON(h.log, r.Context(), w, notFoundResponse, startTime, r.URL.Path, bodySize)
 		return

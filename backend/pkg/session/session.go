@@ -8,7 +8,7 @@ import (
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/replays/service"
 	"openreplay/backend/pkg/views"
 )
 
@@ -19,18 +19,18 @@ type Service interface {
 }
 
 type serviceImpl struct {
-	log        logger.Logger
-	conn       pool.Pool
-	objStorage objectstorage.ObjectStorage
-	views      views.Views
+	log   logger.Logger
+	conn  pool.Pool
+	files service.Files
+	views views.Views
 }
 
-func NewService(log logger.Logger, conn pool.Pool, views views.Views, objStore objectstorage.ObjectStorage) (Service, error) {
+func NewService(log logger.Logger, conn pool.Pool, views views.Views, files service.Files) (Service, error) {
 	return &serviceImpl{
-		log:        log,
-		conn:       conn,
-		views:      views,
-		objStorage: objStore,
+		log:   log,
+		conn:  conn,
+		views: views,
+		files: files,
 	}, nil
 }
 
@@ -181,16 +181,22 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 	}
 
 	// Get all pre-signed urls
-	domURL, err := s.objStorage.GetPreSignedDownloadUrl(strconv.Itoa(int(sessionID))) // sessions_mobs.get_urls [no existence check]
+	urls, err := s.files.GetMobsUrls(sessionID)
 	if err != nil {
 		return nil, err
 	}
-	si.DomURL = []string{domURL}
+	si.DomURL = urls
 	if si.Platform == "ios" || si.Platform == "android" || si.Platform == "mobile" {
-		si.VideoURL = []string{} // sessions_mobs.get_mobile_videos [no existence check]
+		si.VideoURL, err = s.files.GetMobileReplayUrls(sessionID)
 	} else {
-		si.DevtoolsURL = []string{} // sessions_devtool.get_urls [no existence check]
-		si.CanvasURL = []string{}   // canvas.get_canvas_presigned_urls [with existence check]
+		si.DevtoolsURL, err = s.files.GetDevtoolsUrls(sessionID)
+		if err != nil {
+			return nil, err
+		}
+		si.CanvasURL, err = s.files.GetCanvasUrls(sessionID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err := s.views.AddSessionView(projectID, sessionID, userID); err != nil {
