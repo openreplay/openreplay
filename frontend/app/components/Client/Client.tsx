@@ -3,7 +3,7 @@ import { withRouter } from 'react-router-dom';
 import { Switch, Route, Redirect } from 'react-router';
 import { client as clientRoute } from 'App/routes';
 import { CLIENT_TABS } from 'App/utils/routeUtils';
-import { PANEL_SIZES } from 'App/constants/panelSizes'
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
 import Modules from 'Components/Client/Modules';
@@ -17,6 +17,7 @@ import CustomFields from './CustomFields';
 import Webhooks from './Webhooks';
 import Notifications from './Notifications';
 import Roles from './Roles';
+import ExportedVideosList from './ExportedVideos/ExportedVideosList';
 
 @withRouter
 export default class Client extends React.PureComponent {
@@ -102,6 +103,12 @@ export default class Client extends React.PureComponent {
         path={clientRoute(CLIENT_TABS.MODULES)}
         component={Modules}
       />
+      <Route
+        exact
+        strict
+        path={clientRoute(CLIENT_TABS.VIDEOS)}
+        component={ExportedVideosList}
+      />
       <Redirect to={clientRoute(CLIENT_TABS.PROFILE)} />
     </Switch>
   );
@@ -113,7 +120,10 @@ export default class Client extends React.PureComponent {
       },
     } = this.props;
     return (
-      <div className="w-full mx-auto mb-8" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
+      <div
+        className="w-full mx-auto mb-8"
+        style={{ maxWidth: PANEL_SIZES.maxWidth }}
+      >
         {activeTab && this.renderActiveTab()}
       </div>
     );
