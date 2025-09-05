@@ -5,12 +5,15 @@ import { Loader, Pagination, NoContent } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { useTranslation } from 'react-i18next';
 import { session } from 'App/routes';
+import { formatDateTimeDefault } from 'App/date';
+import { Switch } from 'antd';
 
 function ExportedVideosList() {
   const { t } = useTranslation();
   const { recordingsStore, projectsStore } = useStore();
   const loading = recordingsStore.loading;
   const list = recordingsStore.exportedVideosList;
+  // add later ?
   // const searchQuery = useObserver(() => auditStore.searchQuery);
   // const period =
   const page = recordingsStore.page;
@@ -20,13 +23,17 @@ function ExportedVideosList() {
     recordingsStore.getRecordings();
   }, []);
 
-  const onRecOpen = (fileURL: string) => {
+  const onRecOpen = (videoId: string) => {
+    const fileURL = videoId; // TODO: req to get s3 url
     window.open(fileURL, '_blank');
-  }
+  };
   const onSessionOpen = (sessionId: string) => {
-    const win = window.open(`${projectsStore.activeSiteId}/${session(sessionId)}`, '_blank');
+    const win = window.open(
+      `${projectsStore.activeSiteId}/${session(sessionId)}`,
+      '_blank',
+    );
     win?.focus();
-  }
+  };
 
   return useObserver(() => (
     <Loader loading={loading}>
@@ -45,11 +52,26 @@ function ExportedVideosList() {
           <div className="col-span-3">{t('Date')}</div>
           <div className="col-span-3">{t('User')}</div>
           {/* actions */}
-          <div className="col-span-3" />
+          <div className="col-span-3">
+            <Switch
+              checked={!recordingsStore.currentUser}
+              checkedChildren="Team"
+              unCheckedChildren="Private"
+              className="toggle-team-private"
+              onChange={() =>
+                recordingsStore.setCurrUser(!recordingsStore.currentUser)
+              }
+            />
+          </div>
         </div>
 
         {list.map((item, index) => (
-          <ExportedVideo item={item} key={index} />
+          <ExportedVideo
+            item={item}
+            key={index}
+            onRecOpen={onRecOpen}
+            onSessionOpen={onSessionOpen}
+          />
         ))}
 
         <div className="w-full flex items-center justify-center py-10">
@@ -66,16 +88,42 @@ function ExportedVideosList() {
   ));
 }
 
-function ExportedVideo(props: any) {
+interface VideoRow {
+  sessionId: string;
+  videoId: string;
+  createdAt: number;
+  userName: string;
+}
+
+function ExportedVideo(props: {
+  item: VideoRow;
+  onSessionOpen: (sessionId: string) => void;
+  onRecOpen: (fileURL: string) => void;
+}) {
   return (
     <div className="grid grid-cols-12 py-2 px-4">
-      <div className="col-span-3">{t('Session')}</div>
-      <div className="col-span-3">{t('Date')}</div>
-      <div className="col-span-3">{t('User')}</div>
-      {/* actions */}
-      <div className="col-span-3" />
+      <div className="col-span-3">
+        <div
+          className="link"
+          onClick={() => props.onSessionOpen(props.item.sessionId)}
+        >
+          {props.item.sessionId}
+        </div>
+      </div>
+      <div className="col-span-3">
+        {formatDateTimeDefault(props.item.createdAt)}
+      </div>
+      <div className="col-span-3">{props.item.userName || 'Unknown user'}</div>
+      <div className="col-span-3 flex justify-end">
+        <div
+          className="link"
+          onClick={() => props.onRecOpen(props.item.videoId)}
+        >
+          Open video
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
 export default ExportedVideosList;
