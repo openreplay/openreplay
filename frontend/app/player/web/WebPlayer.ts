@@ -127,6 +127,10 @@ export default class WebPlayer extends Player {
     void this.messageLoader.preloadFirstFile(data, fileKey);
   }
 
+  getMessageTab = ({ time }: { time: number }) => {
+    return this.messageManager.messageTabSourceManager.findTab(time)
+  }
+
   setOnCluster = (cb: (coords: any[]) => void) => {
     this.targetMarker.setOnCluster(cb)
   }

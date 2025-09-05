@@ -31,7 +31,7 @@ const TAB_KEYS = [ALL, ...typeList] as const;
 const TABS = TAB_KEYS.map((tab) => ({ text: tab, key: tab }));
 
 type EventsList = Array<
-  Timed & { name: string; source: string; key: string; payload?: string[] }
+  Timed & { name: string; source: string; key: string; payload?: string[], tabName?: string, tabNum?: number }
 >;
 
 const WebStackEventPanelComp = observer(() => {
@@ -41,15 +41,29 @@ const WebStackEventPanelComp = observer(() => {
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
   const { player, store } = React.useContext(PlayerContext);
   const jump = (t: number) => player.jump(t);
-  const { currentTab, tabStates } = store.get();
+  const { currentTab, tabStates, tabNames } = store.get();
+  const tabsArr = Object.keys(tabStates);
+  const getTabNum = (tab: string) => tabsArr.findIndex((t) => t === tab) + 1;
 
   const { stackList: list = [], stackListNow: listNow = [] } =
     tabStates[currentTab];
 
+  const eventsList = list.map(ev => {
+    const tabId = player.getMessageTab(ev)
+    const tabName = tabId ? tabNames[tabId] : undefined
+    const tabNum = tabId ? getTabNum(tabId) : undefined
+    return ({ ...ev, tabName, tabNum })
+  }) as unknown as EventsList
+  const eventsListNow = listNow.map(ev => {
+    const tabId = player.getMessageTab(ev)
+    const tabName = tabId ? tabNames[tabId] : undefined
+    const tabNum = tabId ? getTabNum(tabId) : undefined
+    return ({ ...ev, tabName, tabNum })
+  }) as unknown as EventsList
   return (
     <EventsPanel
-      list={list as EventsList}
-      listNow={listNow as EventsList}
+      list={eventsList}
+      listNow={eventsListNow}
       jump={jump}
       zoomEnabled={zoomEnabled}
       zoomStartTs={zoomStartTs}

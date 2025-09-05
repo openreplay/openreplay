@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { LogLevel, ILog } from 'Player';
-import { Tabs, Icon, NoContent } from 'UI';
+import { LogLevel } from 'Player';
+import { Tabs, NoContent } from 'UI';
 import { Input } from 'antd';
 import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import cn from 'classnames';

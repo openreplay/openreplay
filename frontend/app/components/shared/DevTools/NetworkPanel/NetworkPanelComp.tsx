@@ -188,6 +188,19 @@ export function renderDuration(r: any) {
   );
 }
 
+export function TabTag({ tabName, tabNum }: { tabName?: string, tabNum?: number }) {
+  return (
+    <Tooltip
+      title={`${tabName ?? `Tab ${tabNum ?? 0}`}`}
+      placement="left"
+    >
+      <div className="bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs cursor-default">
+        {tabNum ?? 0}
+      </div>
+    </Tooltip>
+  )
+}
+
 function renderStatus({
   status,
   cached,
@@ -572,16 +585,14 @@ export const NetworkPanelComp = observer(
         cols.unshift({
           label: t('Source'),
           width: 64,
-          render: (r: Record<string, any>) => (
-            <Tooltip
-              title={`${getTabName?.(r.tabId) ?? `Tab ${getTabNum?.(r.tabId) ?? 0}`}`}
-              placement="left"
-            >
-              <div className="bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs cursor-default">
-                {getTabNum?.(r.tabId) ?? 0}
-              </div>
-            </Tooltip>
-          ),
+          dataKey: 'tabId',
+          render: (r: Record<string, any>) => {
+            const tabName = getTabName?.(r.tabId);
+            const tabNum = getTabNum?.(r.tabId);
+            return (
+              <TabTag r={r} tabName={tabName} tabNum={tabNum} />
+            )
+          },
         });
       }
       return cols;

@@ -12,6 +12,7 @@ import MouseMoveManager from './managers/MouseMoveManager';
 
 import ActivityManager from './managers/ActivityManager';
 import TabClosingManager from './managers/TabClosingManager';
+import MessageTabSourceManager from './managers/MessageTabSourceManager';
 
 import { MouseThrashing, MType } from './messages';
 import type { Message, MouseClick } from './messages';
@@ -118,27 +119,16 @@ export default class MessageManager {
   };
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
-
   private mouseThrashingManager: ListWalker<MouseThrashing> = new ListWalker();
-
   private activityManager: ActivityManager | null = null;
-
   private mouseMoveManager: MouseMoveManager;
-
   private activeTabManager = new ActiveTabManager();
-
   private tabCloseManager = new TabClosingManager();
-
   public readonly decoder = new Decoder();
-
   private sessionStart: number;
-
   private lastMessageTime: number = 0;
-
   private firstVisualEventSet = false;
-
   public readonly tabs: Record<string, TabSessionManager> = {};
-
   private tabsAmount = 0;
 
   private tabChangeEvents: TabChangeEvent[] = [];
@@ -146,6 +136,7 @@ export default class MessageManager {
   private ignoreDomOnInactivity = false;
 
   private hookManager = new HookManager();
+  public messageTabSourceManager = new MessageTabSourceManager();
 
   constructor(
     private session: SessionFilesInfo,

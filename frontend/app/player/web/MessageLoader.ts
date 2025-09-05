@@ -150,8 +150,12 @@ export default class MessageLoader {
     });
   };
 
+  allMessages: any[] = [];
   processMessages = (msgs: PlayerMsg[], file?: string) => {
     msgs.forEach(async (msg) => {
+      if (msg.tabId && file?.includes('dom')) {
+        this.allMessages.push(msg)
+      }
       if (msg.tp === MType.CanvasNode) {
         /**
          * in case of prefetched sessions with canvases,
@@ -251,6 +255,9 @@ export default class MessageLoader {
       }
     } finally {
       this.createTabCloseEvents();
+      if ('messageTabSourceManager' in this.messageManager) {
+        this.messageManager.messageTabSourceManager.processMessages(this.allMessages)
+      }
       this.store.update({ domLoading: false, devtoolsLoading: false });
     }
   }

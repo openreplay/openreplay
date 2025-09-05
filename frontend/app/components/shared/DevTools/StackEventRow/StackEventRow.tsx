@@ -1,8 +1,8 @@
 import React from 'react';
 import { Icon } from 'UI';
 import cn from 'classnames';
-import { OPENREPLAY } from 'Types/session/stackEvent';
 import JumpButton from '../JumpButton';
+import { TabTag } from '../NetworkPanel/NetworkPanelComp';
 
 interface Props {
   event: any;
@@ -24,7 +24,7 @@ function StackEventRow(props: Props) {
     return {
       name: `integrations/${source}`,
       size: 18,
-      marginRight: source === OPENREPLAY ? 11 : 10,
+      className: "mx-3",
     };
   }, [event]);
 
@@ -40,9 +40,10 @@ function StackEventRow(props: Props) {
       )}
     >
       <div className={cn('mr-auto flex items-start')}>
+        <TabTag tabName={event.tabName} tabNum={event.tabNum} />
         <Icon {...iconProps} />
         <div>
-          <div className="capitalize font-medium mb-1">{event.name}</div>
+          <div className="capitalize font-medium mb-1 leading-none">{event.name}</div>
           <div className="code-font text-xs">{message}</div>
         </div>
       </div>
