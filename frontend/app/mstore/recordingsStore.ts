@@ -23,6 +23,11 @@ export default class RecordingsStore {
     makeAutoObservable(this);
   }
 
+  setCurrUser = (val: boolean) => {
+    this.currentUser = val;
+    this.page = 1;
+  }
+
   setRecordings(records: IRecord[], total?: number) {
     this.total = total || 0;
     this.recordings = records;
