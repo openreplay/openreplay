@@ -221,3 +221,15 @@ func (s *storageImpl) GetPreSignedDownloadUrl(key string) (string, error) {
 	}
 	return urlStr, nil
 }
+
+func (s *storageImpl) GetPreSignedDownloadUrlFromBucket(bucket, key string) (string, error) {
+	req, _ := s.svc.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	urlStr, err := req.Presign(15 * time.Minute)
+	if err != nil {
+		return "", err
+	}
+	return urlStr, nil
+}
