@@ -12,14 +12,4 @@ then
   cd ../../
 fi
 
-if git diff --cached --name-only | grep --quiet '^tracker/tracker-assist/'
-then
-  echo "tracker-assist"
-  cd tracker/tracker-assist
-
-  npm run lint-front
-
-  cd ../../
-fi
-
 exit 0

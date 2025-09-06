@@ -96,7 +96,7 @@ function LivePlayerBlockHeader(props: any) {
             </div>
           )}
 
-            <AssistActions userId={userId} isCallActive={isCallActive} agentIds={agentIds} />
+            <AssistActions />
         </div>
       </div>
     </div>
