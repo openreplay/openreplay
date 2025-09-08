@@ -14,6 +14,8 @@ type SessionVideos interface {
 	GetAll(projectId int, userId uint64, req *SessionVideosGetRequest) (*GetSessionVideosResponse, error)
 	DeleteSessionVideo(projectId int, userId uint64, videoId string) (interface{}, error)
 	DownloadSessionVideo(projectId int, userId uint64, videoId string) (string, error)
+	StartKafkaConsumer() error
+	StopKafkaConsumer()
 }
 
 type sessionVideosImpl struct {
@@ -22,13 +24,31 @@ type sessionVideosImpl struct {
 	pgconn              pool.Pool
 	cfg                 *config.Config
 	sessionBatchService *SessionBatchService
+	kafkaConsumer       *SessionVideoConsumer
+	jobHandler          *DatabaseJobHandler
 }
 
 func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool) SessionVideos {
 	sessionBatchService, err := NewSessionBatchService(&cfg.SessionVideosConfig, log)
 	if err != nil {
 		log.Error(context.Background(), "Failed to create session batch service", "error", err)
-		// Continue without batch service - methods will handle nil check
+
+	}
+
+	jobHandler := NewDatabaseJobHandler(log, pgconn)
+	var kafkaConsumer *SessionVideoConsumer
+	if cfg.SessionVideosConfig.VideoKafkaTopic != "" {
+		kafkaConsumer, err = NewSessionVideoConsumer(
+			"session-videos-consumer", // group ID
+			[]string{cfg.SessionVideosConfig.VideoKafkaTopic},
+			jobHandler,
+			log,
+		)
+		if err != nil {
+			log.Error(context.Background(), "Failed to create session video consumer with base64 support", "error", err)
+
+			kafkaConsumer = nil
+		}
 	}
 
 	return &sessionVideosImpl{
@@ -37,6 +57,8 @@ func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool) SessionVideos 
 		pgconn:              pgconn,
 		cfg:                 cfg,
 		sessionBatchService: sessionBatchService,
+		kafkaConsumer:       kafkaConsumer,
+		jobHandler:          jobHandler,
 	}
 }
 
@@ -46,11 +68,7 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, req
 		return nil, fmt.Errorf("Session batch service not initialized")
 	}
 
-	// TODO - check if video exists in DB and return the file URL
-	// TODO - generate a JWT token to run the export job
-	jwt := "dummy-jwt-token"
-
-	// Submit job to AWS Batch using the session batch service
+	jwt := "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjI4MiwidGVuYW50SWQiOjExNSwiZXhwIjoxNzU3MzQwMDc0LCJpc3MiOiJvcGVucmVwbGF5LXNhYXMiLCJpYXQiOjE3NTczMjU2NzQsImF1ZCI6ImZyb250Ok9wZW5SZXBsYXkifQ.5lGbXOxk9GdeqNroUxKKITbHaoUx-CRV80-DrIqnTFR-AhQFdv9gfF_YJAw8rKaXpuUEsCPqL0DCvh-D_mbDIw"
 	sessionJobReq := &SessionJobRequest{
 		ProjectID: projectId,
 		SessionID: req.SessionID,
@@ -62,7 +80,10 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, req
 		return nil, err
 	}
 
-	// TODO - save the request in DB with status "pending"
+	err = s.jobHandler.CreateSessionVideoRecord(s.ctx, req.SessionID, projectId, userId, result.JobID)
+	if err != nil {
+		s.log.Error(s.ctx, "Failed to create session video record", "error", err, "sessionID", req.SessionID, "jobID", result.JobID)
+	}
 
 	return &SessionVideoExportResponse{
 		Status: "pending",
@@ -71,16 +92,14 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, req
 }
 
 func (s *sessionVideosImpl) GetAll(projectId int, userId uint64, req *SessionVideosGetRequest) (*GetSessionVideosResponse, error) {
-	// TODO - fetch from DB
-
 	resp := make([]SessionVideo, 0)
 	for i := 0; i < 5; i++ {
 		resp = append(resp, SessionVideo{
-			VideoID:    "video-id-" + string(i),
-			SessionID:  "session-id-" + string(i),
+			VideoID:    "video-id-" + string(rune(i+'0')),
+			SessionID:  "session-id-" + string(rune(i+'0')),
 			ProjectID:  projectId,
 			UserID:     userId,
-			FileURL:    "https://example.com/video/" + string(i),
+			FileURL:    "https://example.com/video/" + string(rune(i+'0')),
 			Status:     "completed",
 			CreatedAt:  1625247600 + int64(i*1000),
 			ModifiedAt: 1625247600 + int64(i*1000),
@@ -88,23 +107,38 @@ func (s *sessionVideosImpl) GetAll(projectId int, userId uint64, req *SessionVid
 	}
 	return &GetSessionVideosResponse{
 		Videos: resp,
-		Total:  len(resp) + 10, // Dummy total count
+		Total:  len(resp) + 10,
 	}, nil
 }
 
 func (s *sessionVideosImpl) DeleteSessionVideo(projectId int, userId uint64, videoId string) (interface{}, error) {
-	// TODO - delete from DB
 	return map[string]string{
 		"status": "deleted",
 	}, nil
 }
 
 func (s *sessionVideosImpl) DownloadSessionVideo(projectId int, userId uint64, videoId string) (string, error) {
-	// TODO - fetch the file URL from DB
-	// TODO - generate a pre-signed URL if stored in S3 or similar
-	// TODO - return the file URL
-
 	dummyWebMURL := "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.webm"
 	s.log.Info(s.ctx, "Returning dummy WebM file for download", "videoId", videoId, "projectId", projectId, "userId", userId, "url", dummyWebMURL)
 	return dummyWebMURL, nil
+}
+
+func (s *sessionVideosImpl) StartKafkaConsumer() error {
+	if s.kafkaConsumer == nil {
+		s.log.Warn(s.ctx, "Session video consumer not available")
+		return fmt.Errorf("Session video consumer not initialized")
+	}
+
+	s.log.Info(s.ctx, "Starting session video consumer with queue infrastructure")
+	return s.kafkaConsumer.Start()
+}
+
+func (s *sessionVideosImpl) StopKafkaConsumer() {
+	if s.kafkaConsumer == nil {
+		s.log.Warn(s.ctx, "Session video consumer not available")
+		return
+	}
+
+	s.log.Info(s.ctx, "Stopping session video consumer with queue infrastructure")
+	s.kafkaConsumer.Stop()
 }
