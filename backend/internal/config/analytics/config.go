@@ -23,7 +23,8 @@ type Config struct {
 }
 
 func New(log logger.Logger) *Config {
-	cfg := &Config{WorkerID: env.WorkerID()}
+	cfg := &Config{}
 	configurator.Process(log, cfg)
+	cfg.WorkerID = env.WorkerID()
 	return cfg
 }

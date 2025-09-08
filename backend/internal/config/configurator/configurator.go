@@ -114,12 +114,13 @@ func parseFile(log logger.Logger, a interface{}, path string) {
 }
 
 func Process(log logger.Logger, cfg common.Configer) {
-	// Extra logic from Taha, have to discuss it with him later
+	// TEMP: load from .env file
 	initLocal(log)
-	// Main logic
+	// Process config file
 	if err := envconfig.Process(context.Background(), cfg); err != nil {
 		log.Fatal(context.Background(), "error while processing env vars, err: %s", err)
 	}
+	// Extra configuration
 	parseFile(log, cfg, cfg.GetConfigPath())
 }
 
