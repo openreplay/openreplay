@@ -17,47 +17,47 @@ type SessionVideos interface {
 }
 
 type sessionVideosImpl struct {
-	ctx          context.Context
-	log          logger.Logger
-	pgconn       pool.Pool
-	cfg          *config.Config
-	batchService *BatchService
+	ctx                 context.Context
+	log                 logger.Logger
+	pgconn              pool.Pool
+	cfg                 *config.Config
+	sessionBatchService *SessionBatchService
 }
 
 func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool) SessionVideos {
-	batchService, err := NewBatchService(&cfg.SessionVideosConfig, log)
+	sessionBatchService, err := NewSessionBatchService(&cfg.SessionVideosConfig, log)
 	if err != nil {
-		log.Error(context.Background(), "Failed to create AWS Batch service", "error", err)
+		log.Error(context.Background(), "Failed to create session batch service", "error", err)
 		// Continue without batch service - methods will handle nil check
 	}
 
 	return &sessionVideosImpl{
-		ctx:          context.Background(),
-		log:          log,
-		pgconn:       pgconn,
-		cfg:          cfg,
-		batchService: batchService,
+		ctx:                 context.Background(),
+		log:                 log,
+		pgconn:              pgconn,
+		cfg:                 cfg,
+		sessionBatchService: sessionBatchService,
 	}
 }
 
 func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, req *SessionVideoExportRequest) (*SessionVideoExportResponse, error) {
-	if s.batchService == nil {
-		s.log.Error(s.ctx, "AWS Batch service not available")
-		return nil, fmt.Errorf("AWS Batch service not initialized")
+	if s.sessionBatchService == nil {
+		s.log.Error(s.ctx, "Session batch service not available")
+		return nil, fmt.Errorf("Session batch service not initialized")
 	}
 
 	// TODO - check if video exists in DB and return the file URL
 	// TODO - generate a JWT token to run the export job
 	jwt := "dummy-jwt-token"
 
-	// Submit job to AWS Batch using the batch service
-	batchReq := &BatchJobRequest{
+	// Submit job to AWS Batch using the session batch service
+	sessionJobReq := &SessionJobRequest{
 		ProjectID: projectId,
 		SessionID: req.SessionID,
 		JWT:       jwt,
 	}
 
-	result, err := s.batchService.SubmitJob(s.ctx, batchReq)
+	result, err := s.sessionBatchService.SubmitSessionVideoJob(s.ctx, sessionJobReq)
 	if err != nil {
 		return nil, err
 	}
