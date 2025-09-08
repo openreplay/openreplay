@@ -2,6 +2,7 @@ package analytics
 
 import (
 	"openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/analytics/session_videos"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/go-playground/validator/v10"
@@ -19,15 +20,23 @@ import (
 )
 
 type serviceBuilder struct {
-	cardsAPI         api.Handlers
-	dashboardsAPI    api.Handlers
-	chartsAPI        api.Handlers
-	searchAPI        api.Handlers
+	auth          api.RouterMiddleware
+	rateLimiter   api.RouterMiddleware
+	auditTrail    api.RouterMiddleware
+	cardsAPI      api.Handlers
+	dashboardsAPI api.Handlers
+	chartsAPI     api.Handlers
+	searchAPI     api.Handlers
+	videoAPI      api.Handlers
 	savedSearchesAPI api.Handlers
 }
 
+func (b *serviceBuilder) Middlewares() []api.RouterMiddleware {
+	return []api.RouterMiddleware{b.rateLimiter, b.auth, b.auditTrail}
+}
+
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI}
+	return []api.Handlers{b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.videoAPI, b.savedSearchesAPI}
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, pgconn pool.Pool, chConn driver.Conn) (api.ServiceBuilder, error) {
@@ -68,6 +77,11 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		return nil, err
 	}
 
+	videoHandlers, err := session_videos.NewHandlers(log, cfg, responser, session_videos.New(log, cfg, pgconn), reqValidator)
+	if err != nil {
+		return nil, err
+	}
+
 	savedSearchesService := saved_searches.New(log, pgconn)
 	savedSearchesHandlers, err := saved_searches.NewHandlers(log, cfg, responser, savedSearchesService, reqValidator)
 	if err != nil {
@@ -75,10 +89,14 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	}
 
 	return &serviceBuilder{
-		cardsAPI:         cardsHandlers,
-		dashboardsAPI:    dashboardsHandlers,
-		chartsAPI:        chartsHandlers,
-		searchAPI:        searchHandlers,
+		auth:          auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix),
+		rateLimiter:   limiter.NewUserRateLimiter(&cfg.RateLimiter),
+		auditTrail:    audiTrail,
+		cardsAPI:      cardsHandlers,
+		dashboardsAPI: dashboardsHandlers,
+		chartsAPI:     chartsHandlers,
+		searchAPI:     searchHandlers,
+		videoAPI:      videoHandlers,
 		savedSearchesAPI: savedSearchesHandlers,
 	}, nil
 }
