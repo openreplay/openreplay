@@ -246,7 +246,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		innerSelectParts = []string{
 			eventsSelect,
 			"MIN(main.created_at) AS first_event_ts",
-			"MAX(main.created_at) AS last_event_ts--TAHAAAAAAAAAA",
+			"MAX(main.created_at) AS last_event_ts",
 		}
 		groupByField = finalPropertySelector
 	} else {
