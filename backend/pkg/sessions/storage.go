@@ -128,9 +128,14 @@ func (s *storageImpl) GetDuration(sessionID uint64) (uint64, error) {
 func (s *storageImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error) {
 	var dur uint64
 	if err := s.db.QueryRow(`
-		UPDATE sessions SET duration=$2 - start_ts
-		WHERE session_id=$1
-		RETURNING duration
+		UPDATE sessions
+		SET duration = CASE
+    		WHEN $2 - start_ts < 0 THEN 999     -- negative duration becomes 999
+    		WHEN $2 - start_ts = 999 THEN 1000  -- exact 999 becomes 1000
+    		ELSE $2 - start_ts                  -- otherwise use original value
+		END
+		WHERE session_id = $1
+		RETURNING duration;
 	`,
 		sessionID, timestamp,
 	).Scan(&dur); err != nil {
