@@ -2,6 +2,8 @@ package session_videos
 
 import (
 	"context"
+	"fmt"
+
 	config "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
@@ -15,28 +17,56 @@ type SessionVideos interface {
 }
 
 type sessionVideosImpl struct {
-	ctx    context.Context
-	log    logger.Logger
-	pgconn pool.Pool
-	cfg    *config.Config
+	ctx          context.Context
+	log          logger.Logger
+	pgconn       pool.Pool
+	cfg          *config.Config
+	batchService *BatchService
 }
 
 func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool) SessionVideos {
+	batchService, err := NewBatchService(&cfg.SessionVideosConfig, log)
+	if err != nil {
+		log.Error(context.Background(), "Failed to create AWS Batch service", "error", err)
+		// Continue without batch service - methods will handle nil check
+	}
+
 	return &sessionVideosImpl{
-		ctx:    context.Background(),
-		log:    log,
-		pgconn: pgconn,
-		cfg:    cfg,
+		ctx:          context.Background(),
+		log:          log,
+		pgconn:       pgconn,
+		cfg:          cfg,
+		batchService: batchService,
 	}
 }
 
 func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, req *SessionVideoExportRequest) (*SessionVideoExportResponse, error) {
-	// TODO - chek if video exists in DB and return the file URL
+	if s.batchService == nil {
+		s.log.Error(s.ctx, "AWS Batch service not available")
+		return nil, fmt.Errorf("AWS Batch service not initialized")
+	}
+
+	// TODO - check if video exists in DB and return the file URL
 	// TODO - generate a JWT token to run the export job
+	jwt := "dummy-jwt-token"
+
+	// Submit job to AWS Batch using the batch service
+	batchReq := &BatchJobRequest{
+		ProjectID: projectId,
+		SessionID: req.SessionID,
+		JWT:       jwt,
+	}
+
+	result, err := s.batchService.SubmitJob(s.ctx, batchReq)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO - save the request in DB with status "pending"
+
 	return &SessionVideoExportResponse{
 		Status: "pending",
-		JobID:  "job-id",
+		JobID:  result.JobID,
 	}, nil
 }
 
