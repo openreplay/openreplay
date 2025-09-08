@@ -1,14 +1,17 @@
 package session_videos
 
 type SessionVideo struct {
-	VideoID    string `json:"videoId"`
-	SessionID  string `json:"sessionId"`
-	ProjectID  int    `json:"projectId"`
-	UserID     uint64 `json:"userId"`
-	FileURL    string `json:"fileUrl"`
-	Status     string `json:"status"`
-	CreatedAt  int64  `json:"createdAt"`
-	ModifiedAt int64  `json:"modifiedAt"`
+	VideoID      string `json:"videoId"`
+	SessionID    string `json:"sessionId"`
+	ProjectID    int    `json:"projectId"`
+	UserID       uint64 `json:"userId"`
+	FileURL      string `json:"fileUrl"`
+	Status       string `json:"status"`
+	JobID        string `json:"jobId,omitempty"`
+	ErrorMessage string `json:"errorMessage,omitempty"`
+	Screenshots  int    `json:"screenshots,omitempty"`
+	CreatedAt    int64  `json:"createdAt"`
+	ModifiedAt   int64  `json:"modifiedAt"`
 }
 
 type SessionVideoExportRequest struct {
