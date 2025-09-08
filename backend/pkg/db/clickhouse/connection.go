@@ -3,9 +3,10 @@ package clickhouse
 import (
 	"context"
 	"fmt"
+	"openreplay/backend/internal/config/common"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"openreplay/backend/internal/config/common"
 )
 
 func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {

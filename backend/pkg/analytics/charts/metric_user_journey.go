@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
@@ -75,15 +76,21 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfa
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("No queries to execute for userJourney")
 	}
+	ctx := context.Background()
+
+	// Trying to use clickhouseContext in order to keep same session for tmp tables,
+	// otherwise we need to use clickhouse.openDB instead of clickhouse.open in the connexion code
+	sessCtx := clickhouse.Context(ctx)
+
 	for i := 0; i < len(queries)-1; i++ {
-		err = conn.Exec(context.Background(), queries[i])
+		err = conn.Exec(sessCtx, queries[i])
 		if err != nil {
 			return nil, fmt.Errorf("error executing tmp query for userJourney: %w", err)
 		}
 	}
 
 	var rawData []UserJourneyRawData
-	if err = conn.Select(context.Background(), &rawData, queries[len(queries)-1]); err != nil {
+	if err = conn.Select(sessCtx, &rawData, queries[len(queries)-1]); err != nil {
 		log.Printf("Error executing userJourney query: %s\nQuery: %s", err, queries[len(queries)-1])
 		return nil, err
 	}
