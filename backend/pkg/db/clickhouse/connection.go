@@ -7,7 +7,6 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -70,7 +69,9 @@ func NewSqlDBConnection(cfg common.Clickhouse) *sqlx.DB {
 		},
 		Settings: clickhouse.Settings{
 			"max_execution_time": cfg.MaxExecutionTime,
-			"session_id":         uuid.NewString(),
+			//"session_timeout":    60, // seconds
+
+			//"session_id": uuid.NewString(),
 		},
 	}
 	switch cfg.CompressionAlgo {
