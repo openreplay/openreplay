@@ -1,6 +1,7 @@
 package charts
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -13,7 +14,9 @@ import (
 
 	orClickhouse "openreplay/backend/pkg/db/clickhouse"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -84,23 +87,26 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("No queries to execute for userJourney")
 	}
-	//ctx := context.Background()
 
 	// Trying to use clickhouseContext in order to keep same session for tmp tables,
 	// otherwise we need to use clickhouse.openDB instead of clickhouse.open in the connexion code
-	//sessCtx := clickhouse.Context(ctx)
+	ctx := clickhouse.Context(context.Background(),
+		clickhouse.WithSettings(clickhouse.Settings{
+			"session_id":      uuid.NewString(),
+			"session_timeout": 60, // seconds
+		}))
 
 	for i := 0; i < len(queries)-1; i++ {
-		//err = conn.Exec(sessCtx, queries[i])
-		_, err = conn.Exec(queries[i])
+		//err = conn.Exec(ctx, queries[i])
+		_, err = conn.ExecContext(ctx, queries[i])
+
 		if err != nil {
 			return nil, fmt.Errorf("error executing tmp query for userJourney: %w", err)
 		}
 	}
-
 	var rawData []UserJourneyRawData
-	//if err = conn.Select(sessCtx, &rawData, queries[len(queries)-1]); err != nil {
-	if err = conn.Select(&rawData, queries[len(queries)-1]); err != nil {
+	//if err = conn.Select(ctx, &rawData, queries[len(queries)-1]); err != nil {
+	if err = conn.SelectContext(ctx, &rawData, queries[len(queries)-1]); err != nil {
 		log.Printf("Error executing userJourney query: %s\nQuery: %s", err, queries[len(queries)-1])
 		return nil, err
 	}
