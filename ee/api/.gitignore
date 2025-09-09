@@ -275,10 +275,7 @@ Pipfile.lock
 /chalicelib/core/alerts/alerts_processor_ch.py
 /chalicelib/core/alerts/alerts_listener.py
 /chalicelib/core/alerts/modules/helpers.py
-/chalicelib/core/errors/modules/*
-/chalicelib/core/errors/errors_pg.py
-/chalicelib/core/errors/errors_ch.py
-/chalicelib/core/errors/errors_details.py
+/chalicelib/core/errors/
 /chalicelib/core/notes.py
 /chalicelib/utils/contextual_validators.py
 /routers/subs/product_analytics.py

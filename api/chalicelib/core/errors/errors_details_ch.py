@@ -1,6 +1,6 @@
 import logging
 
-from chalicelib.core.errors.modules import errors_helper
+from chalicelib.core.errors import helper as errors_helper
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
