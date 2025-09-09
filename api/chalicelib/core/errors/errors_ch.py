@@ -5,8 +5,8 @@ from typing import List
 import schemas
 from chalicelib.core import metadata
 from chalicelib.core.sourcemaps import sourcemaps
-from chalicelib.core.errors.modules import errors_helper
-from chalicelib.core.errors.modules import sessions
+from chalicelib.core.errors import helper as errors_helper
+from chalicelib.core.sessions import sessions
 from chalicelib.utils import ch_client, exp_ch_helper, pg_client
 from chalicelib.utils import helper, metrics_helper
 from chalicelib.utils.TimeUTC import TimeUTC

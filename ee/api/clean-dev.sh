@@ -94,10 +94,7 @@ rm -rf ./chalicelib/core/alerts/alerts_processor.py
 rm -rf ./chalicelib/core/alerts/alerts_processor_ch.py
 rm -rf ./chalicelib/core/alerts/alerts_listener.py
 rm -rf ./chalicelib/core/alerts/modules/helpers.py
-rm -rf ./chalicelib/core/errors/modules
-rm -rf ./chalicelib/core/errors/errors_pg.py
-rm -rf ./chalicelib/core/errors/errors_ch.py
-rm -rf ./chalicelib/core/errors/errors_details.py
+rm -rf ./chalicelib/core/errors
 rm -rf ./chalicelib/core/notes.py
 rm -rf ./chalicelib/utils/contextual_validators.py
 rm -rf ./routers/subs/product_analytics.py
