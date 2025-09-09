@@ -1822,7 +1822,7 @@ def session_exists(project_id, session_id):
                                      LIMIT 1""",
                            parameters={"project_id": project_id, "session_id": session_id})
         row = cur.execute(query=query)
-    return row is not None
+    return len(row) > 0
 
 
 # TODO: support this for CH
