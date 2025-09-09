@@ -217,13 +217,17 @@ jobs:
                 build_service "$service" "$version" "$foss_build_args"
                 build_service "$service" "${version}-ee" "$ee_build_args"
 
-                # Build managed version for specific services
-                if [[ "$service" != "chalice" && "$service" != "frontend" ]]; then
-                    echo "Nothing to build in managed for service $service"
-                else
+                # Building managed
+                case "$service" in
+                chalice | frontend)
                     build_managed "$service" "$version"
-                fi
-
+                    ;;
+                *)
+                    local command="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=linux/amd64,linux/arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash $build_script $build_args"
+                    echo "Executing: $command"
+                    eval "$command"
+                    ;;
+                esac
                 # Update chart and commit
                 update_chart_version "$service" "$version"
             done
