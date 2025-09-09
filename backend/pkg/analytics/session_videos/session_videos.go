@@ -68,6 +68,39 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, req
 		return nil, fmt.Errorf("Session batch service not initialized")
 	}
 
+	// Check if record already exists by session_id and project_id
+	existingVideo, err := s.jobHandler.GetSessionVideoBySessionAndProject(s.ctx, req.SessionID, projectId)
+	if err != nil {
+		s.log.Error(s.ctx, "Failed to check existing session video", "error", err, "sessionID", req.SessionID, "projectID", projectId)
+		return nil, fmt.Errorf("failed to check existing session video: %w", err)
+	}
+
+	// If record exists and status is not failed, return current details
+	if existingVideo != nil && existingVideo.Status != "failed" {
+		s.log.Info(s.ctx, "Session video already exists with non-failed status",
+			"sessionID", req.SessionID, "projectID", projectId, "status", existingVideo.Status)
+
+		response := &SessionVideoExportResponse{
+			Status: existingVideo.Status,
+			JobID:  existingVideo.JobID,
+		}
+
+		if existingVideo.FileURL != "" {
+			response.FileURL = existingVideo.FileURL
+		}
+
+		return response, nil
+	}
+
+	// Submit new job if no record exists or status is failed
+	if existingVideo != nil && existingVideo.Status == "failed" {
+		s.log.Info(s.ctx, "Resubmitting session video job for failed status",
+			"sessionID", req.SessionID, "projectID", projectId, "previousStatus", existingVideo.Status)
+	} else {
+		s.log.Info(s.ctx, "Submitting new session video job",
+			"sessionID", req.SessionID, "projectID", projectId)
+	}
+
 	jwt := "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjI4MiwidGVuYW50SWQiOjExNSwiZXhwIjoxNzU3MzQwMDc0LCJpc3MiOiJvcGVucmVwbGF5LXNhYXMiLCJpYXQiOjE3NTczMjU2NzQsImF1ZCI6ImZyb250Ok9wZW5SZXBsYXkifQ.5lGbXOxk9GdeqNroUxKKITbHaoUx-CRV80-DrIqnTFR-AhQFdv9gfF_YJAw8rKaXpuUEsCPqL0DCvh-D_mbDIw"
 	sessionJobReq := &SessionJobRequest{
 		ProjectID: projectId,

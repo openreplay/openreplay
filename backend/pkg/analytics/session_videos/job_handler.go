@@ -202,3 +202,54 @@ func (h *DatabaseJobHandler) CreateSessionVideoRecord(ctx context.Context, sessi
 
 	return nil
 }
+
+// GetSessionVideoBySessionAndProject retrieves a session video record by session_id and project_id
+func (h *DatabaseJobHandler) GetSessionVideoBySessionAndProject(ctx context.Context, sessionID string, projectID int) (*SessionVideo, error) {
+	query := `
+		SELECT video_id, session_id, project_id, user_id, file_url, status, job_id, error_message, screenshots, created_at, modified_at
+		FROM session_videos
+		WHERE session_id = $1 AND project_id = $2`
+
+	var video SessionVideo
+	var fileURL sql.NullString
+	var jobID sql.NullString
+	var errorMessage sql.NullString
+	var screenshots sql.NullInt64
+
+	err := h.pgconn.QueryRow(query, sessionID, projectID).Scan(
+		&video.VideoID,
+		&video.SessionID,
+		&video.ProjectID,
+		&video.UserID,
+		&fileURL,
+		&video.Status,
+		&jobID,
+		&errorMessage,
+		&screenshots,
+		&video.CreatedAt,
+		&video.ModifiedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		h.log.Error(ctx, "Failed to get session video by session and project", "error", err, "sessionID", sessionID, "projectID", projectID)
+		return nil, fmt.Errorf("failed to get session video: %w", err)
+	}
+
+	if fileURL.Valid {
+		video.FileURL = fileURL.String
+	}
+	if jobID.Valid {
+		video.JobID = jobID.String
+	}
+	if errorMessage.Valid {
+		video.ErrorMessage = errorMessage.String
+	}
+	if screenshots.Valid {
+		video.Screenshots = int(screenshots.Int64)
+	}
+
+	return &video, nil
+}
