@@ -35,7 +35,7 @@ func getIDFromRequest(r *http.Request, key string) (int, error) {
 
 type handlersImpl struct {
 	log           logger.Logger
-	responser     *api.Responser
+	responser     api.Responser
 	jsonSizeLimit int64
 	search        Search
 	validator     *validator.Validate
@@ -48,7 +48,7 @@ func (e *handlersImpl) GetAll() []*api.Description {
 	}
 }
 
-func NewHandlers(log logger.Logger, cfg *config.Config, responser *api.Responser, search Search, validator *validator.Validate) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *config.Config, responser api.Responser, search Search, validator *validator.Validate) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,

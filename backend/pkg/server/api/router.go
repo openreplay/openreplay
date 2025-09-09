@@ -22,7 +22,7 @@ type routerImpl struct {
 	router *mux.Router
 }
 
-func NewRouter(cfg *common.HTTP, log logger.Logger, prefix string, builder ServiceBuilder) (Router, error) {
+func NewRouter(log logger.Logger, cfg *common.HTTP, prefix string, handlers []Handlers, middlewares []RouterMiddleware) (Router, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
@@ -34,19 +34,17 @@ func NewRouter(cfg *common.HTTP, log logger.Logger, prefix string, builder Servi
 		cfg:    cfg,
 		router: mux.NewRouter(),
 	}
-	e.router.HandleFunc("/", e.health)
-	e.router.Use(e.healthMiddleware)
-	e.router.Use(e.corsMiddleware)
-	for _, m := range builder.Middlewares() {
+	for _, m := range middlewares {
 		if m != nil {
 			e.router.Use(m.Middleware)
 		}
 	}
-	e.addHandlers(prefix, builder.Handlers()...)
+	e.addHandlers(prefix, handlers)
 	return e, nil
 }
 
-func (e *routerImpl) addHandlers(prefix string, handlers ...Handlers) {
+func (e *routerImpl) addHandlers(prefix string, handlers []Handlers) {
+	e.router.HandleFunc("/", e.health)
 	for _, handlersSet := range handlers {
 		for _, handler := range handlersSet.GetAll() {
 			e.router.HandleFunc(handler.Path, handler.Handler).Methods(handler.Method, "OPTIONS")
@@ -59,4 +57,8 @@ func (e *routerImpl) addHandlers(prefix string, handlers ...Handlers) {
 
 func (e *routerImpl) Get() http.Handler {
 	return e.router
+}
+
+func (e *routerImpl) health(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
 }
