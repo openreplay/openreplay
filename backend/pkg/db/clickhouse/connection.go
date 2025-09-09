@@ -7,6 +7,8 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 )
 
 func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
@@ -38,6 +40,7 @@ func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
 	}
 	var conn driver.Conn
 	var err error
+	//TODO: replace with openDB
 	if conn, err = clickhouse.Open(opts); err != nil {
 		return nil, err
 	}
@@ -48,4 +51,42 @@ func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
 		return nil, err
 	}
 	return conn, err
+}
+func NewSqlDBConnection(cfg common.Clickhouse) *sqlx.DB {
+	opts := &clickhouse.Options{
+		Protocol: clickhouse.HTTP,
+		//Addr:     []string{cfg.GetTrimmedURL()},
+		Addr: []string{cfg.GetTrimmedURL_HTTP()},
+		Auth: clickhouse.Auth{
+			Database: cfg.Database,
+			Username: cfg.LegacyUserName,
+			Password: cfg.LegacyPassword,
+		},
+		Debug: cfg.DEBUG,
+		Debugf: func(format string, v ...any) {
+			fmt.Print("------ ClickHouse SQL-DB Debug ---\n")
+			fmt.Printf(format+"\n", v...)
+			fmt.Print("------ ---------- ----- ---\n")
+		},
+		Settings: clickhouse.Settings{
+			"max_execution_time": cfg.MaxExecutionTime,
+			"session_id":         uuid.NewString(),
+		},
+	}
+	switch cfg.CompressionAlgo {
+	case "lz4":
+		opts.Compression = &clickhouse.Compression{
+			Method: clickhouse.CompressionLZ4,
+		}
+	}
+
+	conn := clickhouse.OpenDB(opts)
+
+	if err := conn.Ping(); err != nil {
+		if exception, ok := err.(*clickhouse.Exception); ok {
+			fmt.Printf("Exception SQL-DB [%d] %s \n%s\n", exception.Code, exception.Message, exception.StackTrace)
+		}
+		return nil
+	}
+	return sqlx.NewDb(conn, "clickhouse")
 }
