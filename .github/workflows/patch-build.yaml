@@ -145,8 +145,10 @@ jobs:
             local version=$2
             local build_args=$3
             local build_script=${4:-$BUILD_SCRIPT_NAME}
+            local docker_repo=${5:-$DOCKER_REPO_OSS}
+            local docker_arch=${6:-amd64}
 
-            local command="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash $build_script $build_args"
+            local command="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=$docker_arch DOCKER_REPO=$docker_repo PUSH_IMAGE=0 bash $build_script $build_args"
             echo "Executing: $command"
             eval "$command"
         }
@@ -215,17 +217,13 @@ jobs:
 
                 # Build FOSS and EE versions
                 build_service "$service" "$version" "$foss_build_args"
+                build_service "$service" "$version" "$foss_build_args" "$BUILD_SCRIPT_NAME" "$DOCKER_REPO_ARM" "arm64"
                 build_service "$service" "${version}-ee" "$ee_build_args"
 
                 # Building managed
                 case "$service" in
                 chalice | frontend)
                     build_managed "$service" "$version"
-                    ;;
-                *)
-                    local command="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=linux/amd64,linux/arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash $build_script $build_args"
-                    echo "Executing: $command"
-                    eval "$command"
                     ;;
                 esac
                 # Update chart and commit
