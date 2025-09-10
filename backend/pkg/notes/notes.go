@@ -60,8 +60,6 @@ CREATE TABLE public.sessions_notes
 );
 */
 
-// note_id, message, tag, session_id, timestamp, is_public, thumbnail, start_at, end_at
-
 func (n *notesImpl) Create(tenantID, projectID, userID uint64, note *Note) (*Note, error) {
 	switch {
 	case projectID == 0:
@@ -80,10 +78,7 @@ func (n *notesImpl) Create(tenantID, projectID, userID uint64, note *Note) (*Not
 	}
 	var createdAt time.Time
 
-	sql := `INSERT INTO sessions_notes (message, user_id, tag, session_id, project_id, timestamp, is_public, thumbnail, start_at, end_at) 
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING note_id, created_at, (SELECT name FROM users WHERE users.user_id=$2) AS user_name;` //  AND tenant_id=$11 for EE
-	err := n.db.QueryRow(sql, note.Message, userID, note.Tag, note.SessionID, projectID, note.Timestamp, note.IsPublic, note.Thumbnail, note.StartAt, note.EndAt). //, tenantID).
-																					Scan(&note.ID, &createdAt, &note.UserName)
+	err := insertNote(n.db, note, tenantID, projectID, userID).Scan(&note.ID, &createdAt, &note.UserName)
 	if err != nil {
 		n.log.Error(context.Background(), "Failed to create note: %v", err)
 		return nil, err
@@ -102,15 +97,7 @@ func (n *notesImpl) GetBySessionID(tenantID, projectID, userID, sessionID uint64
 		return nil, errors.New("sessionID is required")
 	}
 
-	sql := `SELECT sessions_notes.note_id, sessions_notes.message, sessions_notes.created_at, 
-		       sessions_notes.tag, sessions_notes.session_id, sessions_notes.timestamp, sessions_notes.is_public, 
-		       sessions_notes.thumbnail, sessions_notes.start_at, sessions_notes.end_at, users.name AS user_name
-			FROM sessions_notes
-			INNER JOIN users USING (user_id)
-			WHERE sessions_notes.project_id = $1 AND sessions_notes.deleted_at IS NULL AND sessions_notes.session_id = $2 
-			AND (sessions_notes.user_id = $3 OR sessions_notes.is_public)
-		ORDER BY created_at DESC;` //  AND tenant_id = $4 for EE
-	rows, err := n.db.Query(sql, projectID, sessionID, userID) //, tenantID)
+	rows, err := selectSessionNotes(n.db, tenantID, projectID, userID, sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch notes by session ID: %v", err)
 	}
@@ -140,19 +127,12 @@ func (n *notesImpl) GetByID(tenantID, projectID, userID, noteID uint64) (*Note, 
 		return nil, errors.New("noteID is required")
 	}
 
-	sql := `SELECT sessions_notes.note_id, sessions_notes.message, sessions_notes.created_at, 
-		       sessions_notes.tag, sessions_notes.session_id, sessions_notes.timestamp, sessions_notes.is_public, 
-		       sessions_notes.thumbnail, sessions_notes.start_at, sessions_notes.end_at, users.name AS user_name
-			FROM sessions_notes
-			INNER JOIN users USING (user_id)
-			WHERE sessions_notes.project_id = $1 AND sessions_notes.deleted_at IS NULL AND sessions_notes.note_id = $2 
-			AND (sessions_notes.user_id = $3 OR sessions_notes.is_public);` //  AND tenant_id = $4 for EE
 	var (
 		note      Note
 		createdAt time.Time
 	)
-	err := n.db.QueryRow(sql, projectID, noteID, userID).Scan(&note.ID, &note.Message, &createdAt, &note.Tag, &note.SessionID,
-		&note.Timestamp, &note.IsPublic, &note.Thumbnail, &note.StartAt, &note.EndAt, &note.UserName) // , tenantID
+	err := selectNote(n.db, tenantID, projectID, userID, noteID).Scan(&note.ID, &note.Message, &createdAt, &note.Tag, &note.SessionID,
+		&note.Timestamp, &note.IsPublic, &note.Thumbnail, &note.StartAt, &note.EndAt, &note.UserName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch note by ID: %v", err)
 	}
@@ -172,19 +152,11 @@ func (n *notesImpl) getByIDToShare(tenantID, projectID, userID, noteID, shareID 
 		return nil, errors.New("shareID is required")
 	}
 
-	sql := `SELECT sessions_notes.note_id, sessions_notes.message, sessions_notes.created_at, 
-		       sessions_notes.tag, sessions_notes.session_id, sessions_notes.timestamp, sessions_notes.is_public, 
-		       sessions_notes.thumbnail, sessions_notes.start_at, sessions_notes.end_at, users.name AS user_name,
-		       (SELECT name FROM users WHERE user_id = $5 AND deleted_at ISNULL) AS share_name
-			FROM sessions_notes
-			INNER JOIN users USING (user_id)
-			WHERE sessions_notes.project_id = $1 AND sessions_notes.deleted_at IS NULL AND sessions_notes.note_id = $2 
-			AND (sessions_notes.user_id = $3 OR sessions_notes.is_public);` // tenant_id = $4 AND for EE
 	var (
 		note      Note
 		createdAt time.Time
 	)
-	err := n.db.QueryRow(sql, projectID, noteID, userID, shareID).Scan(&note.ID, &note.Message, &createdAt, &note.Tag, &note.SessionID,
+	err := selectNoteToShare(n.db, tenantID, projectID, userID, noteID, shareID).Scan(&note.ID, &note.Message, &createdAt, &note.Tag, &note.SessionID,
 		&note.Timestamp, &note.IsPublic, &note.Thumbnail, &note.StartAt, &note.EndAt, &note.UserName, &note.ShareName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch note by ID: %v", err)
@@ -221,10 +193,8 @@ func (n *notesImpl) GetAll(tenantID, projectID, userID uint64, opts *GetOpts) (i
 	conditionsList := make([]string, 0)
 	conditionsList = append(conditionsList, fmt.Sprintf("sessions_notes.project_id = %d", projectID))
 	conditionsList = append(conditionsList, fmt.Sprintf("sessions_notes.deleted_at IS NULL"))
-	// for EE
-	//if tenantID != 0 {
-	//	conditionsList = append(conditionsList, fmt.Sprintf("sessions_notes.tenant_id = %d", tenantID))
-	//}
+	conditionsList = appendExtraCondition(conditionsList, tenantID)
+
 	if len(opts.Tags) > 0 {
 		tags := make([]string, len(opts.Tags))
 		for i, tag := range opts.Tags {
@@ -317,18 +287,11 @@ func (n *notesImpl) Update(tenantID, projectID, userID, noteID uint64, note *Not
 	}
 	conditionsList = append(conditionsList, "updated_at = timezone('utc'::text, now())")
 
-	sql := fmt.Sprintf(`
-		UPDATE sessions_notes SET %s 
-        WHERE project_id = $1 AND user_id = $2 AND note_id = $3 AND deleted_at ISNULL
-        RETURNING sessions_notes.note_id, sessions_notes.message, sessions_notes.created_at, 
-		       sessions_notes.tag, sessions_notes.session_id, sessions_notes.timestamp, sessions_notes.is_public, 
-		       sessions_notes.thumbnail, sessions_notes.start_at, sessions_notes.end_at,
-            (SELECT name FROM users WHERE user_id = $2) AS user_name;`, strings.Join(conditionsList, ",")) //  AND tenant_id = $4
 	var (
 		updatedNote Note
 		createdAt   time.Time
 	)
-	err := n.db.QueryRow(sql, projectID, userID, noteID).Scan(&updatedNote.ID, &updatedNote.Message, &createdAt,
+	err := updateNote(n.db, tenantID, projectID, userID, noteID, conditionsList).Scan(&updatedNote.ID, &updatedNote.Message, &createdAt,
 		&updatedNote.Tag, &updatedNote.SessionID, &updatedNote.Timestamp, &updatedNote.IsPublic,
 		&updatedNote.Thumbnail, &updatedNote.StartAt, &updatedNote.EndAt, &updatedNote.UserName)
 	if err != nil {
