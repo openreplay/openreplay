@@ -914,3 +914,14 @@ FROM product_analytics.autocomplete_event_properties
 WHERE length(value) > 0
   AND autocomplete_event_properties._timestamp > now() - INTERVAL 1 MONTH
 GROUP BY project_id, event_name, property_name, value;
+
+
+CREATE TABLE IF NOT EXISTS experimental.parsed_errors
+(
+    project_id           UInt16,
+    error_id             String,
+    stacktrace           String,
+    stacktrace_parsed_at DateTime DEFAULT now(),
+    is_deleted           UInt8
+) ENGINE = ReplacingMergeTree(stacktrace_parsed_at, is_deleted)
+      ORDER BY (project_id, error_id);

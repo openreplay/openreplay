@@ -406,3 +406,14 @@ ALTER TABLE product_analytics.users
 
 ALTER TABLE product_analytics.events
     ADD COLUMN IF NOT EXISTS "$current_path" String MATERIALIZED path("$current_url");
+
+
+CREATE TABLE IF NOT EXISTS experimental.parsed_errors
+(
+    project_id           UInt16,
+    error_id             String,
+    stacktrace           String,
+    stacktrace_parsed_at DateTime DEFAULT now(),
+    is_deleted           UInt8
+) ENGINE = ReplacingMergeTree(stacktrace_parsed_at, is_deleted)
+      ORDER BY (project_id, error_id);
