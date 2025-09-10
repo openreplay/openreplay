@@ -352,15 +352,14 @@ def errors_get_details_sourcemaps(projectId: int, errorId: str,
     }
 
 
-@app.get('/{projectId}/errors/{errorId}/sessions', tags=["errors"])
-def get_errors_sessions(projectId: int, errorId: str, action: str, startDate: int = TimeUTC.now(-7),
-                        endDate: int = TimeUTC.now(),
+# TODO: delete this if UI is not calling it
+@app.get('/delete_later/{projectId}/errors/{errorId}/sessions', tags=["errors"])
+def get_errors_sessions(projectId: int, errorId: str,
+                        startDate: int = TimeUTC.now(-7), endDate: int = TimeUTC.now(),
                         context: schemas.CurrentContext = Depends(OR_context)):
-    start_date = startDate
-    end_date = endDate
     return {
         "data": errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                                    start_date=start_date, end_date=end_date)}
+                                    start_date=startDate, end_date=endDate)}
 
 
 @app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"])

@@ -5,24 +5,24 @@ name = "pypi"
 
 [packages]
 urllib3 = "==2.5.0"
-requests = "==2.32.4"
-boto3 = "==1.39.2"
+requests = "==2.32.5"
+boto3 = "==1.40.27"
 pyjwt = "==2.10.1"
 psycopg2-binary = "==2.9.10"
-psycopg = {extras = ["pool", "binary"], version = "==3.2.9"}
 clickhouse-connect = "==0.8.18"
-elasticsearch = "==9.0.2"
-jira = "==3.8.0"
-cachetools = "==6.1.0"
-fastapi = "==0.115.14"
-uvicorn = {extras = ["standard"], version = "==0.35.0"}
+elasticsearch = "==9.1.0"
+jira = "==3.10.5"
+cachetools = "==6.2.0"
+fastapi = "==0.116.1"
 python-decouple = "==3.8"
-pydantic = {extras = ["email"], version = "==2.11.7"}
 apscheduler = "==3.11.0"
-redis = "==6.2.0"
+redis = "==6.4.0"
+psycopg = {extras = ["pool", "binary"], version = "==3.2.10"}
+uvicorn = {extras = ["standard"], version = "==0.35.0"}
+pydantic = {extras = ["email"], version = "==2.11.7"}
 
 [dev-packages]
 
 [requires]
-python_version = "3.12"
-python_full_version = "3.12.8"
+python_version = "3.13"
+python_full_version = "3.13.7"

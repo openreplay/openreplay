@@ -7,6 +7,7 @@ from chalicelib.utils import ch_client, pg_client
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.exp_ch_helper import explode_dproperties, add_timestamp
+import json
 
 
 def get_customs_by_session_id(session_id, project_id):
@@ -59,7 +60,8 @@ def __get_grouped_clickrage(rows, session_id, project_id):
 
 def extract_required_values(rows):
     for row in rows:
-        props = row.pop("$properties")
+        # props = row.pop("$properties")
+        props = json.loads(row.pop("p_properties"))
         row["label"] = props.get("label")
         # To remove extra attributes
         if row["type"] != "INPUT":
@@ -101,11 +103,12 @@ def get_by_session_id(session_id, project_id, group_clickrage=False, event_type:
             select_events = (event_type,)
         query = cur.format(query=""" \
                                  SELECT created_at,
-                                        `$properties`,
-                                        `$event_name`  AS type,
-                                        `$duration_s`  AS duration,
-                                        `$current_url` AS url,
-                                        `$referrer`    AS referrer
+                                        -- This is used because of an issue in clickhouse-python driver
+                                        toString(`$properties`) AS p_properties,
+                                        `$event_name`           AS type,
+                                        `$duration_s`           AS duration,
+                                        `$current_url`          AS url,
+                                        `$referrer`             AS referrer
                                  FROM product_analytics.events
                                  WHERE session_id = %(session_id)s
                                    AND `$event_name` IN %(select_events)s

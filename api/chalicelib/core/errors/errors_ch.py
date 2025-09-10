@@ -60,46 +60,24 @@ def _multiple_conditions(condition, values, value_key="value", is_not=False):
     return "(" + (" AND " if is_not else " OR ").join(query) + ")"
 
 
-def get(error_id, family=False) -> dict | List[dict]:
-    if family:
-        return get_batch([error_id])
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            """SELECT *
-               FROM public.errors
-               WHERE error_id = %(error_id)s LIMIT 1;""",
-            {"error_id": error_id})
-        cur.execute(query=query)
-        result = cur.fetchone()
-        if result is not None:
-            result["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(result["stacktrace_parsed_at"])
-        return helper.dict_to_camel_case(result)
-
-
-def get_batch(error_ids):
-    if len(error_ids) == 0:
-        return []
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            """
-            WITH RECURSIVE error_family AS (SELECT *
-                                            FROM public.errors
-                                            WHERE error_id IN %(error_ids)s
-                                            UNION
-                                            SELECT child_errors.*
-                                            FROM public.errors AS child_errors
-                                                     INNER JOIN error_family ON error_family.error_id =
-                                                                                child_errors.parent_error_id OR
-                                                                                error_family.parent_error_id =
-                                                                                child_errors.error_id)
-            SELECT *
-            FROM error_family;""",
-            {"error_ids": tuple(error_ids)})
-        cur.execute(query=query)
-        errors = cur.fetchall()
-        for e in errors:
-            e["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(e["stacktrace_parsed_at"])
-        return helper.list_to_camel_case(errors)
+def get(error_id) -> dict | List[dict]:
+    with ch_client.ClickHouseClient() as cur:
+        query = """SELECT error_id,
+                          project_id,
+                          `$properties`.source  AS source,
+                          'ERROR'               AS name,
+                          `$properties`.message AS message,
+                          `$properties`.payload AS payload,
+                          stacktrace,
+                          stacktrace_parsed_at
+                   FROM product_analytics.events
+                            LEFT JOIN experimental.parsed_errors USING (error_id)
+                   WHERE "$event_name" = 'ERROR'
+                     AND error_id = %(error_id)s LIMIT 1;"""
+        rows = cur.execute(query, {"error_id": error_id})
+        if len(rows) == 0:
+            return None
+    return helper.dict_to_camel_case(rows[0])
 
 
 def __get_basic_constraints_events(platform=None, time_constraint=True, startTime_arg_name="startDate",
@@ -412,14 +390,12 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
     }
 
 
-def __save_stacktrace(error_id, data):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            """UPDATE public.errors
-               SET stacktrace=%(data)s::jsonb, stacktrace_parsed_at=timezone('utc'::text, now())
-               WHERE error_id = %(error_id)s;""",
-            {"error_id": error_id, "data": json.dumps(data)})
-        cur.execute(query=query)
+def __save_stacktrace(project_id, error_id, data):
+    with ch_client.ClickHouseClient() as cur:
+        query = f"""INSERT INTO experimental.parsed_errors(project_id, error_id, stacktrace) 
+                    VALUES (%(project_id)s,%(errorId)s,%(data)s);"""
+        params = {"project_id": project_id, "error_id": error_id, "data": json.dumps(data)}
+        cur.execute(query=query, parameters=params)
 
 
 def get_trace(project_id, error_id):
@@ -436,12 +412,12 @@ def get_trace(project_id, error_id):
                 "preparsed": True}
     trace, all_exists = sourcemaps.get_traces_group(project_id=project_id, payload=error["payload"])
     if all_exists:
-        __save_stacktrace(error_id=error_id, data=trace)
+        __save_stacktrace(project_id=project_id, error_id=error_id, data=trace)
     return {"sourcemapUploaded": all_exists,
             "trace": trace,
             "preparsed": False}
 
-
+# TODO: Delete this if UI is not calling the corresponding endpoint
 def get_sessions(start_date, end_date, project_id, user_id, error_id):
     extra_constraints = ["s.project_id = %(project_id)s",
                          "s.start_ts >= %(startDate)s",
