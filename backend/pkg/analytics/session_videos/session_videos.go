@@ -5,12 +5,14 @@ import (
 	"fmt"
 
 	config "openreplay/backend/internal/config/analytics"
+	"openreplay/backend/pkg/analytics/session_videos/jwt"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/server/auth"
 )
 
 type SessionVideos interface {
-	ExportSessionVideo(projectId int, userId uint64, req *SessionVideoExportRequest) (*SessionVideoExportResponse, error)
+	ExportSessionVideo(projectId int, userId uint64, tenantID uint64, req *SessionVideoExportRequest) (*SessionVideoExportResponse, error)
 	GetAll(projectId int, userId uint64, req *SessionVideosGetRequest) (*GetSessionVideosResponse, error)
 	DeleteSessionVideo(projectId int, userId uint64, videoId string) (interface{}, error)
 	DownloadSessionVideo(projectId int, userId uint64, videoId string) (string, error)
@@ -26,9 +28,11 @@ type sessionVideosImpl struct {
 	sessionBatchService *SessionBatchService
 	kafkaConsumer       *SessionVideoConsumer
 	jobHandler          *DatabaseJobHandler
+	jwtProvider         jwt.ServiceJWTProvider
+	auth                auth.Auth
 }
 
-func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool) SessionVideos {
+func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool, auth auth.Auth) SessionVideos {
 	sessionBatchService, err := NewSessionBatchService(&cfg.SessionVideosConfig, log)
 	if err != nil {
 		log.Error(context.Background(), "Failed to create session batch service", "error", err)
@@ -36,6 +40,8 @@ func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool) SessionVideos 
 	}
 
 	jobHandler := NewDatabaseJobHandler(log, pgconn)
+	jwtProvider := jwt.NewServiceJWTProvider(log, pgconn, cfg)
+
 	var kafkaConsumer *SessionVideoConsumer
 	if cfg.SessionVideosConfig.VideoKafkaTopic != "" {
 		kafkaConsumer, err = NewSessionVideoConsumer(
@@ -59,26 +65,31 @@ func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool) SessionVideos 
 		sessionBatchService: sessionBatchService,
 		kafkaConsumer:       kafkaConsumer,
 		jobHandler:          jobHandler,
+		jwtProvider:         jwtProvider,
+		auth:                auth,
 	}
 }
 
-func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, req *SessionVideoExportRequest) (*SessionVideoExportResponse, error) {
+func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, tenantID uint64, req *SessionVideoExportRequest) (*SessionVideoExportResponse, error) {
 	if s.sessionBatchService == nil {
 		s.log.Error(s.ctx, "Session batch service not available")
 		return nil, fmt.Errorf("Session batch service not initialized")
 	}
 
 	// Check if record already exists by session_id and project_id
-	existingVideo, err := s.jobHandler.GetSessionVideoBySessionAndProject(s.ctx, req.SessionID, projectId)
-	if err != nil {
-		s.log.Error(s.ctx, "Failed to check existing session video", "error", err, "sessionID", req.SessionID, "projectID", projectId)
-		return nil, fmt.Errorf("failed to check existing session video: %w", err)
+	s.log.Debug(s.ctx, "Checking for existing session video record", "sessionID", req.SessionID, "projectID", projectId, "tenantID", tenantID)
+	existingVideo, _ := s.jobHandler.GetSessionVideoBySessionAndProject(s.ctx, req.SessionID, projectId)
+
+	if existingVideo == nil {
+		s.log.Debug(s.ctx, "No existing session video found, will create new job", "sessionID", req.SessionID, "projectID", projectId, "tenantID", tenantID)
+	} else {
+		s.log.Debug(s.ctx, "Found existing session video", "sessionID", req.SessionID, "projectID", projectId, "tenantID", tenantID, "status", existingVideo.Status, "jobID", existingVideo.JobID)
 	}
 
 	// If record exists and status is not failed, return current details
 	if existingVideo != nil && existingVideo.Status != "failed" {
 		s.log.Info(s.ctx, "Session video already exists with non-failed status",
-			"sessionID", req.SessionID, "projectID", projectId, "status", existingVideo.Status)
+			"sessionID", req.SessionID, "projectID", projectId, "tenantID", tenantID, "status", existingVideo.Status)
 
 		response := &SessionVideoExportResponse{
 			Status: existingVideo.Status,
@@ -95,13 +106,18 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, req
 	// Submit new job if no record exists or status is failed
 	if existingVideo != nil && existingVideo.Status == "failed" {
 		s.log.Info(s.ctx, "Resubmitting session video job for failed status",
-			"sessionID", req.SessionID, "projectID", projectId, "previousStatus", existingVideo.Status)
+			"sessionID", req.SessionID, "projectID", projectId, "tenantID", tenantID, "previousStatus", existingVideo.Status)
 	} else {
 		s.log.Info(s.ctx, "Submitting new session video job",
-			"sessionID", req.SessionID, "projectID", projectId)
+			"sessionID", req.SessionID, "projectID", projectId, "tenantID", tenantID)
 	}
 
-	jwt := "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjI4MiwidGVuYW50SWQiOjExNSwiZXhwIjoxNzU3MzQwMDc0LCJpc3MiOiJvcGVucmVwbGF5LXNhYXMiLCJpYXQiOjE3NTczMjU2NzQsImF1ZCI6ImZyb250Ok9wZW5SZXBsYXkifQ.5lGbXOxk9GdeqNroUxKKITbHaoUx-CRV80-DrIqnTFR-AhQFdv9gfF_YJAw8rKaXpuUEsCPqL0DCvh-D_mbDIw"
+	// Generate JWT token for service account
+	jwt, err := s.jwtProvider.GenerateServiceAccountJWT(s.ctx, int(tenantID))
+	if err != nil {
+		s.log.Error(s.ctx, "Failed to generate service account JWT", "error", err, "tenantID", tenantID)
+		return nil, fmt.Errorf("failed to generate service account JWT: %w", err)
+	}
 	sessionJobReq := &SessionJobRequest{
 		ProjectID: projectId,
 		SessionID: req.SessionID,

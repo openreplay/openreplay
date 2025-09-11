@@ -87,7 +87,7 @@ func (e *handlersImpl) exportSessionVideo(w http.ResponseWriter, r *http.Request
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.sessionVideos.ExportSessionVideo(projectID, currentUser.ID, req)
+	resp, err := e.sessionVideos.ExportSessionVideo(projectID, currentUser.ID, currentUser.TenantID, req)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
