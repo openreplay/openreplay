@@ -9,7 +9,6 @@ type SessionVideo struct {
 	Status       string `json:"status"`
 	JobID        string `json:"jobId,omitempty"`
 	ErrorMessage string `json:"errorMessage,omitempty"`
-	Screenshots  int    `json:"screenshots,omitempty"`
 	CreatedAt    int64  `json:"createdAt"`
 	ModifiedAt   int64  `json:"modifiedAt"`
 }
