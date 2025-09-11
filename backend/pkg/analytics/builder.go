@@ -83,13 +83,14 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		return nil, err
 	}
 
-	videoHandlers, err := session_videos.NewHandlers(log, cfg, responser, session_videos.New(log, cfg, pgconn), reqValidator)
+	authService := auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix)
+	videoHandlers, err := session_videos.NewHandlers(log, cfg, responser, session_videos.New(log, cfg, pgconn, authService), reqValidator)
 	if err != nil {
 		return nil, err
 	}
 
 	return &serviceBuilder{
-		auth:          auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix),
+		auth:          authService,
 		rateLimiter:   limiter.NewUserRateLimiter(&cfg.RateLimiter),
 		auditTrail:    audiTrail,
 		cardsAPI:      cardsHandlers,

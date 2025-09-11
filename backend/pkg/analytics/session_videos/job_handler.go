@@ -31,8 +31,7 @@ func (h *DatabaseJobHandler) HandleJobCompletion(sessionID string, message *Sess
 		"sessionID", sessionID,
 		"status", message.Status,
 		"s3Path", message.Name,
-		"error", message.Error,
-		"screenshots", message.Screenshots)
+		"error", message.Error)
 
 	switch message.Status {
 	case "completed":
@@ -48,8 +47,7 @@ func (h *DatabaseJobHandler) HandleJobCompletion(sessionID string, message *Sess
 func (h *DatabaseJobHandler) handleSuccessfulJob(ctx context.Context, sessionID string, message *SessionVideoJobMessage) error {
 	h.log.Info(ctx, "Handling successful session video job",
 		"sessionID", sessionID,
-		"s3Path", message.Name,
-		"screenshots", message.Screenshots)
+		"s3Path", message.Name)
 
 	var exists bool
 	checkQuery := `SELECT EXISTS(SELECT 1 FROM session_videos WHERE session_id = $1)`
@@ -64,12 +62,11 @@ func (h *DatabaseJobHandler) handleSuccessfulJob(ctx context.Context, sessionID 
 			UPDATE session_videos
 			SET status = 'completed',
 				file_url = $2,
-				screenshots = $3,
-				modified_at = $4,
+				modified_at = $3,
 				error_message = NULL
 			WHERE session_id = $1`
 
-		err = h.pgconn.Exec(updateQuery, sessionID, message.Name, message.Screenshots, time.Now().Unix())
+		err = h.pgconn.Exec(updateQuery, sessionID, message.Name, time.Now().Unix())
 		if err != nil {
 			h.log.Error(ctx, "Failed to update session video record", "error", err, "sessionID", sessionID)
 			return fmt.Errorf("failed to update session video record: %w", err)
@@ -78,11 +75,11 @@ func (h *DatabaseJobHandler) handleSuccessfulJob(ctx context.Context, sessionID 
 		h.log.Info(ctx, "Successfully updated session video record", "sessionID", sessionID)
 	} else {
 		insertQuery := `
-			INSERT INTO session_videos (session_id, status, file_url, screenshots, created_at, modified_at)
-			VALUES ($1, 'completed', $2, $3, $4, $4)`
+			INSERT INTO session_videos (session_id, status, file_url, created_at, modified_at)
+			VALUES ($1, 'completed', $2, $3, $3)`
 
 		now := time.Now().Unix()
-		err = h.pgconn.Exec(insertQuery, sessionID, message.Name, message.Screenshots, now)
+		err = h.pgconn.Exec(insertQuery, sessionID, message.Name, now)
 		if err != nil {
 			h.log.Error(ctx, "Failed to insert session video record", "error", err, "sessionID", sessionID)
 			return fmt.Errorf("failed to insert session video record: %w", err)
@@ -205,8 +202,10 @@ func (h *DatabaseJobHandler) CreateSessionVideoRecord(ctx context.Context, sessi
 
 // GetSessionVideoBySessionAndProject retrieves a session video record by session_id and project_id
 func (h *DatabaseJobHandler) GetSessionVideoBySessionAndProject(ctx context.Context, sessionID string, projectID int) (*SessionVideo, error) {
+	h.log.Debug(ctx, "Checking for existing session video", "sessionID", sessionID, "projectID", projectID)
+
 	query := `
-		SELECT video_id, session_id, project_id, user_id, file_url, status, job_id, error_message, screenshots, created_at, modified_at
+		SELECT video_id, session_id, project_id, user_id, file_url, status, job_id, error_message, created_at, modified_at
 		FROM session_videos
 		WHERE session_id = $1 AND project_id = $2`
 
@@ -214,7 +213,6 @@ func (h *DatabaseJobHandler) GetSessionVideoBySessionAndProject(ctx context.Cont
 	var fileURL sql.NullString
 	var jobID sql.NullString
 	var errorMessage sql.NullString
-	var screenshots sql.NullInt64
 
 	err := h.pgconn.QueryRow(query, sessionID, projectID).Scan(
 		&video.VideoID,
@@ -225,18 +223,24 @@ func (h *DatabaseJobHandler) GetSessionVideoBySessionAndProject(ctx context.Cont
 		&video.Status,
 		&jobID,
 		&errorMessage,
-		&screenshots,
 		&video.CreatedAt,
 		&video.ModifiedAt,
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		// Handle any "no rows found" type errors by returning nil (no existing record)
+		if err == sql.ErrNoRows ||
+			err.Error() == "no rows in result set" ||
+			err.Error() == "sql: no rows in result set" {
+			h.log.Debug(ctx, "No existing session video found, proceeding with new job", "sessionID", sessionID, "projectID", projectID)
 			return nil, nil
 		}
-		h.log.Error(ctx, "Failed to get session video by session and project", "error", err, "sessionID", sessionID, "projectID", projectID)
-		return nil, fmt.Errorf("failed to get session video: %w", err)
+		// Log actual database errors but don't fail - continue with new job creation
+		h.log.Warn(ctx, "Database query issue while checking session video, proceeding with new job", "error", err, "sessionID", sessionID, "projectID", projectID)
+		return nil, nil
 	}
+
+	h.log.Debug(ctx, "Found existing session video", "sessionID", sessionID, "projectID", projectID, "status", video.Status)
 
 	if fileURL.Valid {
 		video.FileURL = fileURL.String
@@ -246,9 +250,6 @@ func (h *DatabaseJobHandler) GetSessionVideoBySessionAndProject(ctx context.Cont
 	}
 	if errorMessage.Valid {
 		video.ErrorMessage = errorMessage.String
-	}
-	if screenshots.Valid {
-		video.Screenshots = int(screenshots.Int64)
 	}
 
 	return &video, nil

@@ -18,7 +18,6 @@ type SessionVideoJobMessage struct {
 	Name        string `json:"name"` // s3Path
 	StartOffset int64  `json:"startOffset"`
 	Error       string `json:"error,omitempty"`
-	Screenshots int    `json:"screenshots"`
 }
 
 // SessionVideoJobHandler defines the interface for handling job completion messages
@@ -57,7 +56,6 @@ func (iter *sessionVideoQueueMessageIterator) Iterate(batchData []byte, batchInf
 		"sessionID", sessionID,
 		"status", jobMessage.Status,
 		"s3Path", jobMessage.Name,
-		"screenshots", jobMessage.Screenshots,
 		"batchInfo", batchInfo.Info())
 
 	if err := iter.handler.HandleJobCompletion(sessionID, &jobMessage); err != nil {
