@@ -254,3 +254,115 @@ func (h *DatabaseJobHandler) GetSessionVideoBySessionAndProject(ctx context.Cont
 
 	return &video, nil
 }
+
+// GetAllSessionVideos retrieves session videos with pagination and filtering
+func (h *DatabaseJobHandler) GetAllSessionVideos(ctx context.Context, projectID int, userID uint64, req *SessionVideosGetRequest) (*GetSessionVideosResponse, error) {
+	page := req.Page
+	if page <= 0 {
+		page = 1
+	}
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	whereClause := "WHERE project_id = $1"
+	args := []interface{}{projectID}
+	argIndex := 2
+
+	if req.IsSelf {
+		whereClause += fmt.Sprintf(" AND user_id = $%d", argIndex)
+		args = append(args, userID)
+		argIndex++
+	}
+
+	// Add status filter - default to "completed" if not specified
+	status := req.Status
+	if status == "" {
+		status = "completed"
+	}
+
+	whereClause += fmt.Sprintf(" AND status = $%d", argIndex)
+	args = append(args, status)
+	argIndex++
+
+	// Build ORDER BY clause
+	orderBy := "ORDER BY created_at DESC"
+	if req.SortBy == "datetime" {
+		if req.Asc {
+			orderBy = "ORDER BY created_at ASC"
+		} else {
+			orderBy = "ORDER BY created_at DESC"
+		}
+	}
+
+	query := fmt.Sprintf(`
+		SELECT video_id, session_id, project_id, user_id, file_url, status, job_id, error_message, created_at, modified_at,
+		       COUNT(*) OVER() as total_count
+		FROM session_videos
+		%s
+		%s
+		LIMIT $%d OFFSET $%d`, whereClause, orderBy, argIndex, argIndex+1)
+
+	args = append(args, limit, offset)
+
+	rows, err := h.pgconn.Query(query, args...)
+	if err != nil {
+		h.log.Error(ctx, "Failed to query session videos", "error", err)
+		return nil, fmt.Errorf("failed to query session videos: %w", err)
+	}
+	defer rows.Close()
+
+	var videos []SessionVideo
+	var total int
+
+	for rows.Next() {
+		var video SessionVideo
+		var fileURL sql.NullString
+		var jobID sql.NullString
+		var errorMessage sql.NullString
+
+		err := rows.Scan(
+			&video.VideoID,
+			&video.SessionID,
+			&video.ProjectID,
+			&video.UserID,
+			&fileURL,
+			&video.Status,
+			&jobID,
+			&errorMessage,
+			&video.CreatedAt,
+			&video.ModifiedAt,
+			&total,
+		)
+		if err != nil {
+			h.log.Error(ctx, "Failed to scan session video row", "error", err)
+			return nil, fmt.Errorf("failed to scan session video: %w", err)
+		}
+
+		if fileURL.Valid {
+			video.FileURL = fileURL.String
+		}
+		if jobID.Valid {
+			video.JobID = jobID.String
+		}
+		if errorMessage.Valid {
+			video.ErrorMessage = errorMessage.String
+		}
+
+		videos = append(videos, video)
+	}
+
+	if err = rows.Err(); err != nil {
+		h.log.Error(ctx, "Error iterating session video rows", "error", err)
+		return nil, fmt.Errorf("error iterating session videos: %w", err)
+	}
+
+	h.log.Debug(ctx, "Successfully retrieved session videos", "count", len(videos), "total", total)
+
+	return &GetSessionVideosResponse{
+		Videos: videos,
+		Total:  total,
+	}, nil
+}

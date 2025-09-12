@@ -118,6 +118,7 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, ten
 		s.log.Error(s.ctx, "Failed to generate service account JWT", "error", err, "tenantID", tenantID)
 		return nil, fmt.Errorf("failed to generate service account JWT: %w", err)
 	}
+
 	sessionJobReq := &SessionJobRequest{
 		ProjectID: projectId,
 		SessionID: req.SessionID,
@@ -141,23 +142,7 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, ten
 }
 
 func (s *sessionVideosImpl) GetAll(projectId int, userId uint64, req *SessionVideosGetRequest) (*GetSessionVideosResponse, error) {
-	resp := make([]SessionVideo, 0)
-	for i := 0; i < 5; i++ {
-		resp = append(resp, SessionVideo{
-			VideoID:    "video-id-" + string(rune(i+'0')),
-			SessionID:  "session-id-" + string(rune(i+'0')),
-			ProjectID:  projectId,
-			UserID:     userId,
-			FileURL:    "https://example.com/video/" + string(rune(i+'0')),
-			Status:     "completed",
-			CreatedAt:  1625247600 + int64(i*1000),
-			ModifiedAt: 1625247600 + int64(i*1000),
-		})
-	}
-	return &GetSessionVideosResponse{
-		Videos: resp,
-		Total:  len(resp) + 10,
-	}, nil
+	return s.jobHandler.GetAllSessionVideos(s.ctx, projectId, userId, req)
 }
 
 func (s *sessionVideosImpl) DeleteSessionVideo(projectId int, userId uint64, videoId string) (interface{}, error) {

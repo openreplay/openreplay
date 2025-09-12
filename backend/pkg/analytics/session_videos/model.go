@@ -39,4 +39,5 @@ type SessionVideosGetRequest struct {
 	SortBy string `json:"sortBy" validate:"omitempty,oneof=datetime"`
 	Asc    bool   `json:"asc"`
 	IsSelf bool   `json:"isSelf"`
+	Status string `json:"status" validate:"omitempty,oneof=pending completed failed"`
 }
