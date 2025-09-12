@@ -15,7 +15,6 @@ import (
 
 type ServiceJWTProvider interface {
 	GenerateServiceAccountJWT(ctx context.Context, tenantID int) (string, error)
-	GenerateServiceAccountJWTWithOptions(ctx context.Context, tenantID int, forSpot bool, audience string) (string, error)
 }
 
 type serviceJWTImpl struct {
@@ -66,40 +65,20 @@ func (s *serviceJWTImpl) getServiceAccountUser(ctx context.Context, tenantID int
 }
 
 func (s *serviceJWTImpl) GenerateServiceAccountJWT(ctx context.Context, tenantID int) (string, error) {
-	return s.GenerateServiceAccountJWTWithOptions(ctx, tenantID, false, "front:OpenReplay")
-}
-
-func (s *serviceJWTImpl) GenerateServiceAccountJWTWithOptions(ctx context.Context, tenantID int, forSpot bool, audience string) (string, error) {
-	// Use default tenant ID if not provided
 	if tenantID == 0 {
-		tenantID = 1
+		return "", fmt.Errorf("tenant ID is required")
 	}
 
-	// Find a service account user for the specific tenant
 	serviceAccount, err := s.getServiceAccountUser(ctx, tenantID)
 	if err != nil {
 		return "", err
 	}
 
-	// Create JWT claims with exact format as specified
 	now := time.Now()
 	iat := now.Unix()
-
-	// Determine expiration based on spot or regular JWT
-	var exp int64
-	var secret string
-	if forSpot {
-		exp = iat + int64(s.cfg.HTTP.JWTSpotExpiration)
-		secret = s.cfg.HTTP.JWTSpotSecret
-	} else {
-		exp = iat + int64(s.cfg.HTTP.JWTExpiration)
-		secret = s.cfg.HTTP.JWTSecret
-	}
-
-	// Use default audience if not provided
-	if audience == "" {
-		audience = "front:OpenReplay"
-	}
+	exp := iat + int64(s.cfg.HTTP.JWTExpiration)
+	secret := s.cfg.HTTP.JWTSecret
+	audience := "front:OpenReplay"
 
 	claims := &user.JWTClaims{
 		UserId:   serviceAccount.UserID,
@@ -112,7 +91,6 @@ func (s *serviceJWTImpl) GenerateServiceAccountJWTWithOptions(ctx context.Contex
 		},
 	}
 
-	// Generate the token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
@@ -127,8 +105,7 @@ func (s *serviceJWTImpl) GenerateServiceAccountJWTWithOptions(ctx context.Contex
 		"iat", iat,
 		"exp", exp,
 		"issuer", s.cfg.HTTP.JWTIssuer,
-		"audience", audience,
-		"forSpot", forSpot)
+		"audience", audience)
 
 	return tokenString, nil
 }
