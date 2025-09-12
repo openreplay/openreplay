@@ -3,14 +3,11 @@ package jwt
 import (
 	"context"
 	"fmt"
-	"time"
-
-	"github.com/golang-jwt/jwt/v5"
 
 	config "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/server/user"
+	"openreplay/backend/pkg/server/auth"
 )
 
 type ServiceJWTProvider interface {
@@ -21,13 +18,15 @@ type serviceJWTImpl struct {
 	log    logger.Logger
 	pgconn pool.Pool
 	cfg    *config.Config
+	auth   auth.Auth
 }
 
-func NewServiceJWTProvider(log logger.Logger, pgconn pool.Pool, cfg *config.Config) ServiceJWTProvider {
+func NewServiceJWTProvider(log logger.Logger, pgconn pool.Pool, cfg *config.Config, auth auth.Auth) ServiceJWTProvider {
 	return &serviceJWTImpl{
 		log:    log,
 		pgconn: pgconn,
 		cfg:    cfg,
+		auth:   auth,
 	}
 }
 
@@ -74,38 +73,11 @@ func (s *serviceJWTImpl) GenerateServiceAccountJWT(ctx context.Context, tenantID
 		return "", err
 	}
 
-	now := time.Now()
-	iat := now.Unix()
-	exp := iat + int64(s.cfg.HTTP.JWTExpiration)
-	secret := s.cfg.HTTP.JWTSecret
-	audience := "front:OpenReplay"
-
-	claims := &user.JWTClaims{
-		UserId:   serviceAccount.UserID,
-		TenantID: serviceAccount.TenantID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt:  jwt.NewNumericDate(time.Unix(iat, 0)),
-			ExpiresAt: jwt.NewNumericDate(time.Unix(exp, 0)),
-			Issuer:    s.cfg.HTTP.JWTIssuer,
-			Audience:  []string{audience},
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-	tokenString, err := token.SignedString([]byte(secret))
+	tokenString, err := s.auth.GenerateJWT(serviceAccount.UserID, serviceAccount.TenantID, s.cfg.HTTP.JWTExpiration)
 	if err != nil {
-		s.log.Error(ctx, "Failed to sign JWT token", "error", err, "userID", serviceAccount.UserID)
+		s.log.Error(ctx, "Failed to generate JWT token", "error", err, "userID", serviceAccount.UserID)
 		return "", fmt.Errorf("authentication token generation failed")
 	}
-
-	s.log.Info(ctx, "Generated service account JWT",
-		"userID", serviceAccount.UserID,
-		"tenantID", tenantID,
-		"email", serviceAccount.Email,
-		"iat", iat,
-		"exp", exp,
-		"issuer", s.cfg.HTTP.JWTIssuer,
-		"audience", audience)
 
 	return tokenString, nil
 }

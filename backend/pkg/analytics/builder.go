@@ -17,6 +17,10 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/auth"
+	"openreplay/backend/pkg/server/keys"
+	"openreplay/backend/pkg/server/limiter"
+	"openreplay/backend/pkg/server/tracer"
 )
 
 type serviceBuilder struct {
@@ -77,7 +81,8 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		return nil, err
 	}
 
-	authService := auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix)
+	keysService := keys.NewKeys(log, pgconn)
+	authService := auth.NewAuth(log, cfg.JWTSecret, "", pgconn, keysService, api.NoPrefix)
 	videoHandlers, err := session_videos.NewHandlers(log, cfg, responser, session_videos.New(log, cfg, pgconn, authService), reqValidator)
 	if err != nil {
 		return nil, err
