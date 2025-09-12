@@ -84,7 +84,7 @@ func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool, auth auth.Auth
 func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, tenantID uint64, req *SessionVideoExportRequest) (*SessionVideoExportResponse, error) {
 	if s.sessionBatchService == nil {
 		s.log.Error(s.ctx, "Session batch service not available")
-		return nil, fmt.Errorf("Session batch service not initialized")
+		return nil, fmt.Errorf("session video service is temporarily unavailable")
 	}
 
 	// Check if record already exists by session_id and project_id
@@ -127,7 +127,7 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, ten
 	jwt, err := s.jwtProvider.GenerateServiceAccountJWT(s.ctx, int(tenantID))
 	if err != nil {
 		s.log.Error(s.ctx, "Failed to generate service account JWT", "error", err, "tenantID", tenantID)
-		return nil, fmt.Errorf("failed to generate service account JWT: %w", err)
+		return nil, fmt.Errorf("authentication failed, please try again")
 	}
 
 	sessionJobReq := &SessionJobRequest{
@@ -172,7 +172,7 @@ func (s *sessionVideosImpl) DownloadSessionVideo(projectId int, userId uint64, s
 	video, err := s.jobHandler.GetSessionVideoBySessionAndProject(s.ctx, sessionId, projectId)
 	if err != nil {
 		s.log.Error(s.ctx, "Failed to get session video from database", "error", err, "sessionId", sessionId, "projectId", projectId, "userId", userId)
-		return "", fmt.Errorf("failed to get session video: %w", err)
+		return "", fmt.Errorf("unable to retrieve session video")
 	}
 
 	if video == nil {
@@ -182,25 +182,25 @@ func (s *sessionVideosImpl) DownloadSessionVideo(projectId int, userId uint64, s
 
 	if video.Status != "completed" {
 		s.log.Warn(s.ctx, "Session video is not completed", "sessionId", sessionId, "status", video.Status, "projectId", projectId, "userId", userId)
-		return "", fmt.Errorf("session video is not ready for download (status: %s)", video.Status)
+		return "", fmt.Errorf("session video is not ready for download yet")
 	}
 
 	if video.FileURL == "" {
 		s.log.Warn(s.ctx, "Session video file URL is empty", "sessionId", sessionId, "projectId", projectId, "userId", userId)
-		return "", fmt.Errorf("session video file URL not available")
+		return "", fmt.Errorf("session video file is not available")
 	}
 
 	// Check if object storage is available
 	if s.objStorage == nil {
 		s.log.Error(s.ctx, "Object storage not available", "sessionId", sessionId, "projectId", projectId, "userId", userId)
-		return "", fmt.Errorf("object storage not available")
+		return "", fmt.Errorf("download service is temporarily unavailable")
 	}
 
 	// Generate pre-signed download URL
 	preSignedURL, err := s.objStorage.GetPreSignedDownloadUrl(video.FileURL)
 	if err != nil {
 		s.log.Error(s.ctx, "Failed to generate pre-signed download URL", "error", err, "sessionId", sessionId, "fileURL", video.FileURL)
-		return "", fmt.Errorf("failed to generate download URL: %w", err)
+		return "", fmt.Errorf("unable to generate download link")
 	}
 
 	s.log.Info(s.ctx, "Generated pre-signed download URL for session video", "sessionId", sessionId, "projectId", projectId, "userId", userId, "fileURL", video.FileURL)
@@ -210,7 +210,7 @@ func (s *sessionVideosImpl) DownloadSessionVideo(projectId int, userId uint64, s
 func (s *sessionVideosImpl) StartKafkaConsumer() error {
 	if s.kafkaConsumer == nil {
 		s.log.Warn(s.ctx, "Session video consumer not available")
-		return fmt.Errorf("Session video consumer not initialized")
+		return fmt.Errorf("session video service is not running")
 	}
 
 	s.log.Info(s.ctx, "Starting session video consumer with queue infrastructure")

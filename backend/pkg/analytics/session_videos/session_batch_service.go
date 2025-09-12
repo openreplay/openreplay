@@ -41,7 +41,7 @@ func NewSessionBatchService(cfg *config.SessionVideosConfig, log logger.Logger) 
 	// Create the generic batch service
 	batchService, err := batch.NewService(batchConfig, log)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create batch service: %w", err)
+		return nil, fmt.Errorf("session video export service is temporarily unavailable")
 	}
 
 	return &SessionBatchService{
@@ -138,7 +138,7 @@ func (sbs *SessionBatchService) SubmitSessionVideoJob(ctx context.Context, req *
 			"error", err,
 			"projectId", req.ProjectID,
 			"sessionId", req.SessionID)
-		return nil, fmt.Errorf("failed to submit session video job: %w", err)
+		return nil, fmt.Errorf("unable to start session video export")
 	}
 
 	sbs.log.Info(ctx, "Successfully submitted session video export job",
