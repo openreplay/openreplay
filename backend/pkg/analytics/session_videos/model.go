@@ -22,7 +22,6 @@ type SessionVideo struct {
 
 type SessionVideoExportRequest struct {
 	SessionID string `json:"sessionId" validate:"required"`
-	ProjectID int    `json:"projectId" validate:"required"`
 }
 
 type SessionVideoExportResponse struct {
