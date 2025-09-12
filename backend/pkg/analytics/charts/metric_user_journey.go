@@ -2,15 +2,22 @@ package charts
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
+	analyticsConfig "openreplay/backend/internal/config/analytics"
+	"openreplay/backend/pkg/logger"
 	"slices"
 	"sort"
 	"strings"
 	"time"
 
+	orClickhouse "openreplay/backend/pkg/db/clickhouse"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 )
 
 // Node represents a point in the journey diagram.
@@ -51,13 +58,13 @@ type JourneyResponse struct {
 }
 
 type UserJourneyRawData struct {
-	EventNumberInSession uint64 `ch:"event_number_in_session"`
-	EventType            string `ch:"event_type"`
-	EValue               string `ch:"e_value"`
-	NextType             string `ch:"next_type"`
-	NextValue            string `ch:"next_value"`
-	SessionsCount        uint64 `ch:"sessions_count"`
-	Value                uint64 `omitempty`
+	EventNumberInSession uint64         `ch:"event_number_in_session" db:"event_number_in_session"`
+	EventType            string         `ch:"event_type" db:"event_type"`
+	EValue               sql.NullString `ch:"e_value" db:"e_value"`
+	NextType             string         `ch:"next_type" db:"next_type"`
+	NextValue            sql.NullString `ch:"next_value" db:"next_value"`
+	SessionsCount        uint64         `ch:"sessions_count" db:"sessions_count"`
+	Value                uint64         `omitempty`
 }
 
 var PredefinedJourneys = map[string]map[string]string{
@@ -68,7 +75,11 @@ var PredefinedJourneys = map[string]map[string]string{
 
 type UserJourneyQueryBuilder struct{}
 
-func (h *UserJourneyQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
+func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interface{}, error) {
+	logr := logger.New()
+	cfg := analyticsConfig.New(logr)
+
+	var conn *sqlx.DB = orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
 	queries, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -76,21 +87,26 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfa
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("No queries to execute for userJourney")
 	}
-	ctx := context.Background()
 
 	// Trying to use clickhouseContext in order to keep same session for tmp tables,
 	// otherwise we need to use clickhouse.openDB instead of clickhouse.open in the connexion code
-	sessCtx := clickhouse.Context(ctx)
+	ctx := clickhouse.Context(context.Background(),
+		clickhouse.WithSettings(clickhouse.Settings{
+			"session_id":      uuid.NewString(),
+			"session_timeout": 60, // seconds
+		}))
 
 	for i := 0; i < len(queries)-1; i++ {
-		err = conn.Exec(sessCtx, queries[i])
+		//err = conn.Exec(ctx, queries[i])
+		_, err = conn.ExecContext(ctx, queries[i])
+
 		if err != nil {
 			return nil, fmt.Errorf("error executing tmp query for userJourney: %w", err)
 		}
 	}
-
 	var rawData []UserJourneyRawData
-	if err = conn.Select(sessCtx, &rawData, queries[len(queries)-1]); err != nil {
+	//if err = conn.Select(ctx, &rawData, queries[len(queries)-1]); err != nil {
+	if err = conn.SelectContext(ctx, &rawData, queries[len(queries)-1]); err != nil {
 		log.Printf("Error executing userJourney query: %s\nQuery: %s", err, queries[len(queries)-1])
 		return nil, err
 	}
@@ -488,8 +504,9 @@ func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (J
 		if !contains(nodes, source) {
 			nodes = append(nodes, source)
 			nodesValues = append(nodesValues, Node{
-				Depth:        int(r.EventNumberInSession - 1),
-				Name:         r.EValue,
+				Depth: int(r.EventNumberInSession - 1),
+				//Name:         r.EValue,
+				Name:         r.EValue.String,
 				EventType:    r.EventType,
 				ID:           len(nodesValues),
 				StartingNode: r.EventNumberInSession == 1,
@@ -499,8 +516,9 @@ func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (J
 		if !contains(nodes, target) {
 			nodes = append(nodes, target)
 			nodesValues = append(nodesValues, Node{
-				Depth:        int(r.EventNumberInSession),
-				Name:         r.NextValue,
+				Depth: int(r.EventNumberInSession),
+				//Name:         r.NextValue,
+				Name:         r.NextValue.String,
 				EventType:    r.NextType,
 				ID:           len(nodesValues),
 				StartingNode: false,
@@ -614,7 +632,8 @@ func (h *UserJourneyQueryBuilder) transformSunburst(rows []UserJourneyRawData) (
 		}
 		var children = response
 		var currentElement = SunburstData{
-			Name:     r.EValue,
+			//Name:     r.EValue,
+			Name:     r.EValue.String,
 			Type:     r.EventType,
 			Depth:    uint16(r.EventNumberInSession),
 			Value:    0,
@@ -634,7 +653,8 @@ func (h *UserJourneyQueryBuilder) transformSunburst(rows []UserJourneyRawData) (
 
 		depth += 1
 		currentElement = SunburstData{
-			Name:     r.NextValue,
+			//Name:     r.NextValue,
+			Name:     r.NextValue.String,
 			Type:     r.NextType,
 			Depth:    uint16(r.EventNumberInSession + 1),
 			Value:    r.SessionsCount,

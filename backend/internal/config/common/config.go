@@ -52,6 +52,7 @@ type Redshift struct {
 
 type Clickhouse struct {
 	URL              string        `env:"CLICKHOUSE_STRING"`
+	URL_HTTP         string        `env:"CLICKHOUSE_HTTP_STRING"`
 	Database         string        `env:"CLICKHOUSE_DATABASE,default=default"`
 	UserName         string        `env:"CLICKHOUSE_USERNAME,default=default"`
 	Password         string        `env:"CLICKHOUSE_PASSWORD,default="`
@@ -67,6 +68,12 @@ type Clickhouse struct {
 
 func (cfg *Clickhouse) GetTrimmedURL() string {
 	chUrl := strings.TrimPrefix(cfg.URL, "tcp://")
+	chUrl = strings.TrimSuffix(chUrl, "/default")
+	return chUrl
+}
+
+func (cfg *Clickhouse) GetTrimmedURL_HTTP() string {
+	chUrl := strings.TrimPrefix(cfg.URL_HTTP, "tcp://")
 	chUrl = strings.TrimSuffix(chUrl, "/default")
 	return chUrl
 }
