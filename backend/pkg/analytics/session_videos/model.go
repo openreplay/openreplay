@@ -1,7 +1,6 @@
 package session_videos
 
 type SessionVideo struct {
-	VideoID      string `json:"videoId"`
 	SessionID    string `json:"sessionId"`
 	ProjectID    int    `json:"projectId"`
 	UserID       uint64 `json:"userId"`
