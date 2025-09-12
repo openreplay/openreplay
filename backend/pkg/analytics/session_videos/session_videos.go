@@ -18,8 +18,6 @@ type SessionVideos interface {
 	GetAll(projectId int, userId uint64, req *SessionVideosGetRequest) (*GetSessionVideosResponse, error)
 	DeleteSessionVideo(projectId int, userId uint64, sessionId string) (interface{}, error)
 	DownloadSessionVideo(projectId int, userId uint64, sessionId string) (string, error)
-	StartKafkaConsumer() error
-	StopKafkaConsumer()
 }
 
 type sessionVideosImpl struct {
@@ -205,24 +203,4 @@ func (s *sessionVideosImpl) DownloadSessionVideo(projectId int, userId uint64, s
 
 	s.log.Info(s.ctx, "Generated pre-signed download URL for session video", "sessionId", sessionId, "projectId", projectId, "userId", userId, "fileURL", video.FileURL)
 	return preSignedURL, nil
-}
-
-func (s *sessionVideosImpl) StartKafkaConsumer() error {
-	if s.kafkaConsumer == nil {
-		s.log.Warn(s.ctx, "Session video consumer not available")
-		return fmt.Errorf("session video service is not running")
-	}
-
-	s.log.Info(s.ctx, "Starting session video consumer with queue infrastructure")
-	return s.kafkaConsumer.Start()
-}
-
-func (s *sessionVideosImpl) StopKafkaConsumer() {
-	if s.kafkaConsumer == nil {
-		s.log.Warn(s.ctx, "Session video consumer not available")
-		return
-	}
-
-	s.log.Info(s.ctx, "Stopping session video consumer with queue infrastructure")
-	s.kafkaConsumer.Stop()
 }

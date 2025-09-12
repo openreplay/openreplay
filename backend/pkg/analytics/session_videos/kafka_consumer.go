@@ -2,10 +2,8 @@ package session_videos
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"hash/fnv"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
@@ -132,24 +130,4 @@ func (svc *SessionVideoConsumer) CommitBack(gap int64) error {
 
 func (svc *SessionVideoConsumer) Rebalanced() <-chan *types.PartitionsRebalancedEvent {
 	return svc.consumer.Rebalanced()
-}
-
-func hashSessionIDToUint64(sessionID string) uint64 {
-	h := fnv.New64a()
-	h.Write([]byte(sessionID))
-	hash := h.Sum64()
-
-	if hash == 0 {
-		hash = 1
-	}
-
-	return hash
-}
-
-func decodeBase64SessionID(encodedSessionID string) (string, error) {
-	decoded, err := base64.StdEncoding.DecodeString(encodedSessionID)
-	if err != nil {
-		return "", fmt.Errorf("invalid session identifier format")
-	}
-	return string(decoded), nil
 }
