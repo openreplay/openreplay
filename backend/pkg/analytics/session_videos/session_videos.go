@@ -146,6 +146,11 @@ func (s *sessionVideosImpl) GetAll(projectId int, userId uint64, req *SessionVid
 }
 
 func (s *sessionVideosImpl) DeleteSessionVideo(projectId int, userId uint64, videoId string) (interface{}, error) {
+	err := s.jobHandler.DeleteSessionVideo(s.ctx, projectId, userId, videoId)
+	if err != nil {
+		return nil, err
+	}
+
 	return map[string]string{
 		"status": "deleted",
 	}, nil
