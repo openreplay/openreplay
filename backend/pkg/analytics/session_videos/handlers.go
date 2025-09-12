@@ -128,12 +128,15 @@ func (e *handlersImpl) getSessionVideos(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
+	status := r.URL.Query().Get("status")
+
 	req := &SessionVideosGetRequest{
 		PageInfo: PageInfo{
 			Page:  page,
 			Limit: limit,
 		},
 		IsSelf: isSelf,
+		Status: status,
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
