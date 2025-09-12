@@ -62,7 +62,7 @@ func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool, auth auth.Auth
 	impl.sessionBatchService = impl.initSessionBatchService(log, cfg)
 	impl.kafkaConsumer = impl.initKafkaConsumer(log, cfg, pgconn)
 	impl.jobHandler = NewDatabaseJobHandler(log, pgconn)
-	impl.jwtProvider = jwt.NewServiceJWTProvider(log, pgconn, cfg)
+	impl.jwtProvider = jwt.NewServiceJWTProvider(log, pgconn, cfg, auth)
 	impl.objStorage = impl.initObjectStorage(log, cfg)
 
 	return impl
