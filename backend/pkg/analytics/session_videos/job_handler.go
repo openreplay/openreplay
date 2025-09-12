@@ -48,7 +48,7 @@ func (h *DatabaseJobHandler) handleSuccessfulJob(ctx context.Context, sessionID 
 		"s3Path", message.Name)
 
 	updateQuery := `
-		UPDATE sessions_videos
+		UPDATE public.sessions_videos
 		SET status = $2,
 			file_url = $3,
 			modified_at = $4,
@@ -71,7 +71,7 @@ func (h *DatabaseJobHandler) handleFailedJob(ctx context.Context, sessionID stri
 		"error", message.Error)
 
 	updateQuery := `
-		UPDATE sessions_videos
+		UPDATE public.sessions_videos
 		SET status = $2,
 			error_message = $3,
 			modified_at = $4,
@@ -92,7 +92,7 @@ func (h *DatabaseJobHandler) GetSessionVideoByID(ctx context.Context, sessionID 
 
 	query := `
 		SELECT session_id, project_id, user_id, file_url, status, created_at, modified_at
-		FROM sessions_videos
+		FROM public.sessions_videos
 		WHERE session_id = $1`
 
 	var video SessionVideo
@@ -126,7 +126,7 @@ func (h *DatabaseJobHandler) GetSessionVideoByID(ctx context.Context, sessionID 
 func (h *DatabaseJobHandler) CreateSessionVideoRecord(ctx context.Context, sessionID string, projectID int, userID uint64, jobID string) error {
 
 	insertQuery := `
-		INSERT INTO sessions_videos (session_id, project_id, user_id, status, job_id, created_at, modified_at)
+		INSERT INTO public.sessions_videos (session_id, project_id, user_id, status, job_id, created_at, modified_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $6)
 		ON CONFLICT (session_id) DO UPDATE SET
 			status = $4,
@@ -152,7 +152,7 @@ func (h *DatabaseJobHandler) GetSessionVideoBySessionAndProject(ctx context.Cont
 
 	query := `
 		SELECT session_id, project_id, user_id, file_url, status, job_id, error_message, created_at, modified_at
-		FROM sessions_videos
+		FROM public.sessions_videos
 		WHERE session_id = $1 AND project_id = $2`
 
 	var video SessionVideo
@@ -244,7 +244,7 @@ func (h *DatabaseJobHandler) GetAllSessionVideos(ctx context.Context, projectID 
 	query := fmt.Sprintf(`
 		SELECT session_id, project_id, user_id, file_url, status, job_id, error_message, created_at, modified_at,
 		       COUNT(*) OVER() as total_count
-		FROM sessions_videos
+		FROM public.sessions_videos
 		%s
 		%s
 		LIMIT $%d OFFSET $%d`, whereClause, orderBy, argIndex, argIndex+1)
@@ -314,7 +314,7 @@ func (h *DatabaseJobHandler) DeleteSessionVideo(ctx context.Context, projectID i
 	h.log.Debug(ctx, "Deleting session video", "sessionID", sessionID, "projectID", projectID, "userID", userID)
 
 	deleteQuery := `
-		DELETE FROM sessions_videos
+		DELETE FROM public.sessions_videos
 		WHERE session_id = $1 AND project_id = $2 AND user_id = $3
 		RETURNING session_id`
 
