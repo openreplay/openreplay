@@ -61,7 +61,7 @@ func (sbs *SessionBatchService) getVideoConfigEnvVars() map[string]string {
 	envVars["KAFKA_TOPIC"] = sbs.cfg.VideoKafkaTopic
 
 	if sbs.cfg.KafkaServers != "" {
-		// envVars["KAFKA_SERVERS"] = sbs.cfg.KafkaServers // TODO: Uncomment after local testing
+		envVars["KAFKA_SERVERS"] = sbs.cfg.KafkaServers
 	}
 
 	return envVars
