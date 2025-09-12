@@ -3,13 +3,14 @@ from chalicelib.utils.storage import StorageClient
 from decouple import config
 
 
+# No need to move this to CH because it is related to replay only
 def get_canvas_presigned_urls(session_id, project_id):
     with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("""\
-            SELECT *
-            FROM events.canvas_recordings
-            WHERE session_id = %(session_id)s
-            ORDER BY timestamp;""",
+        cur.execute(cur.mogrify(""" \
+                                SELECT *
+                                FROM events.canvas_recordings
+                                WHERE session_id = %(session_id)s
+                                ORDER BY timestamp;""",
                                 {"project_id": project_id, "session_id": session_id})
                     )
         rows = cur.fetchall()
