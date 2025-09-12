@@ -11,10 +11,9 @@ import (
 )
 
 type SessionVideoJobMessage struct {
-	Status      Status `json:"status"`
-	Name        string `json:"name"` // s3Path
-	StartOffset int64  `json:"startOffset"`
-	Error       string `json:"error,omitempty"`
+	Status Status `json:"status"`
+	Name   string `json:"name"` // s3Path
+	Error  string `json:"error,omitempty"`
 }
 
 type SessionVideoJobHandler interface {
@@ -118,16 +117,4 @@ func (svc *SessionVideoConsumer) consumeLoop() {
 			}
 		}
 	}
-}
-
-func (svc *SessionVideoConsumer) Commit() error {
-	return svc.consumer.Commit()
-}
-
-func (svc *SessionVideoConsumer) CommitBack(gap int64) error {
-	return svc.consumer.CommitBack(gap)
-}
-
-func (svc *SessionVideoConsumer) Rebalanced() <-chan *types.PartitionsRebalancedEvent {
-	return svc.consumer.Rebalanced()
 }

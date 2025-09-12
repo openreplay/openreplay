@@ -88,41 +88,6 @@ func (h *DatabaseJobHandler) handleFailedJob(ctx context.Context, sessionID stri
 	return nil
 }
 
-func (h *DatabaseJobHandler) GetSessionVideoByID(ctx context.Context, sessionID string) (*SessionVideo, error) {
-
-	query := `
-		SELECT session_id, project_id, user_id, file_url, status, created_at, modified_at
-		FROM public.sessions_videos
-		WHERE session_id = $1`
-
-	var video SessionVideo
-	var fileURL sql.NullString
-
-	err := h.pgconn.QueryRow(query, sessionID).Scan(
-		&video.SessionID,
-		&video.ProjectID,
-		&video.UserID,
-		&fileURL,
-		&video.Status,
-		&video.CreatedAt,
-		&video.ModifiedAt,
-	)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		h.log.Error(ctx, "Failed to get session video by ID", "error", err, "sessionID", sessionID)
-		return nil, fmt.Errorf("unable to retrieve session video")
-	}
-
-	if fileURL.Valid {
-		video.FileURL = fileURL.String
-	}
-
-	return &video, nil
-}
-
 func (h *DatabaseJobHandler) CreateSessionVideoRecord(ctx context.Context, sessionID string, projectID int, userID uint64, jobID string) error {
 
 	insertQuery := `
