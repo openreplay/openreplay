@@ -96,6 +96,8 @@ type HTTP struct {
 	UseAccessControlHeaders bool          `env:"USE_CORS,default=false"`
 	JWTSecret               string        `env:"JWT_SECRET"`
 	JWTSpotSecret           string        `env:"JWT_SPOT_SECRET"`
+	JWTExpiration           time.Duration `env:"JWT_EXPIRATION,default=3600s"`
+	JWTIssuer               string        `env:"JWT_ISSUER,default=openreplay"`
 }
 
 type RateLimiter struct {
