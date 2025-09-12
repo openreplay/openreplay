@@ -8,8 +8,6 @@ import (
 	config "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/aws/batch"
 	"openreplay/backend/pkg/logger"
-
-	awsbatch "github.com/aws/aws-sdk-go/service/batch"
 )
 
 type SessionBatchService struct {
@@ -139,16 +137,4 @@ func (sbs *SessionBatchService) SubmitSessionVideoJob(ctx context.Context, req *
 		"sessionId", req.SessionID)
 
 	return result, nil
-}
-
-func (sbs *SessionBatchService) GetJobStatus(ctx context.Context, jobID string) (*awsbatch.JobDetail, error) {
-	return sbs.batchService.GetJobStatus(ctx, jobID)
-}
-
-func (sbs *SessionBatchService) CancelJob(ctx context.Context, jobID string, reason string) error {
-	return sbs.batchService.CancelJob(ctx, jobID, reason)
-}
-
-func (sbs *SessionBatchService) ListJobs(ctx context.Context, jobStatus string) ([]*awsbatch.JobSummary, error) {
-	return sbs.batchService.ListJobs(ctx, sbs.cfg.BatchJobQueue, jobStatus)
 }
