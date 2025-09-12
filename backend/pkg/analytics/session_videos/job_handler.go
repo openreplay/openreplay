@@ -174,6 +174,42 @@ func (h *DatabaseJobHandler) GetSessionVideoByID(ctx context.Context, sessionID 
 	return &video, nil
 }
 
+// GetSessionVideoByVideoID retrieves a session video record by video_id, project_id
+func (h *DatabaseJobHandler) GetSessionVideoByVideoID(ctx context.Context, videoID string, projectID int) (*SessionVideo, error) {
+	query := `
+		SELECT video_id, session_id, project_id, user_id, file_url, status, created_at, modified_at
+		FROM session_videos
+		WHERE video_id = $1 AND project_id = $2`
+
+	var video SessionVideo
+	var fileURL sql.NullString
+
+	err := h.pgconn.QueryRow(query, videoID, projectID).Scan(
+		&video.VideoID,
+		&video.SessionID,
+		&video.ProjectID,
+		&video.UserID,
+		&fileURL,
+		&video.Status,
+		&video.CreatedAt,
+		&video.ModifiedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		h.log.Error(ctx, "Failed to get session video by video ID", "error", err, "videoID", videoID)
+		return nil, fmt.Errorf("failed to get session video: %w", err)
+	}
+
+	if fileURL.Valid {
+		video.FileURL = fileURL.String
+	}
+
+	return &video, nil
+}
+
 func (h *DatabaseJobHandler) CreateSessionVideoRecord(ctx context.Context, sessionID string, projectID int, userID uint64, jobID string) error {
 
 	videoID := fmt.Sprintf("vid_%s_%d", sessionID, time.Now().Unix())

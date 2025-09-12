@@ -8,6 +8,8 @@ import (
 	"openreplay/backend/pkg/analytics/session_videos/jwt"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/server/auth"
 )
 
@@ -30,6 +32,7 @@ type sessionVideosImpl struct {
 	jobHandler          *DatabaseJobHandler
 	jwtProvider         jwt.ServiceJWTProvider
 	auth                auth.Auth
+	objStorage          objectstorage.ObjectStorage
 }
 
 func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool, auth auth.Auth) SessionVideos {
@@ -37,6 +40,13 @@ func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool, auth auth.Auth
 	if err != nil {
 		log.Error(context.Background(), "Failed to create session batch service", "error", err)
 
+	}
+
+	// Initialize object storage
+	objStorage, err := store.NewStore(&cfg.ObjectsConfig)
+	if err != nil {
+		log.Error(context.Background(), "Failed to create object storage", "error", err)
+		objStorage = nil
 	}
 
 	jobHandler := NewDatabaseJobHandler(log, pgconn)
@@ -67,6 +77,7 @@ func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool, auth auth.Auth
 		jobHandler:          jobHandler,
 		jwtProvider:         jwtProvider,
 		auth:                auth,
+		objStorage:          objStorage,
 	}
 }
 
@@ -157,9 +168,43 @@ func (s *sessionVideosImpl) DeleteSessionVideo(projectId int, userId uint64, vid
 }
 
 func (s *sessionVideosImpl) DownloadSessionVideo(projectId int, userId uint64, videoId string) (string, error) {
-	dummyWebMURL := "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.webm"
-	s.log.Info(s.ctx, "Returning dummy WebM file for download", "videoId", videoId, "projectId", projectId, "userId", userId, "url", dummyWebMURL)
-	return dummyWebMURL, nil
+	// Get session video record from database
+	video, err := s.jobHandler.GetSessionVideoByVideoID(s.ctx, videoId, projectId)
+	if err != nil {
+		s.log.Error(s.ctx, "Failed to get session video from database", "error", err, "videoId", videoId, "projectId", projectId, "userId", userId)
+		return "", fmt.Errorf("failed to get session video: %w", err)
+	}
+
+	if video == nil {
+		s.log.Warn(s.ctx, "Session video not found", "videoId", videoId, "projectId", projectId, "userId", userId)
+		return "", fmt.Errorf("session video not found")
+	}
+
+	if video.Status != "completed" {
+		s.log.Warn(s.ctx, "Session video is not completed", "videoId", videoId, "status", video.Status, "projectId", projectId, "userId", userId)
+		return "", fmt.Errorf("session video is not ready for download (status: %s)", video.Status)
+	}
+
+	if video.FileURL == "" {
+		s.log.Warn(s.ctx, "Session video file URL is empty", "videoId", videoId, "projectId", projectId, "userId", userId)
+		return "", fmt.Errorf("session video file URL not available")
+	}
+
+	// Check if object storage is available
+	if s.objStorage == nil {
+		s.log.Error(s.ctx, "Object storage not available", "videoId", videoId, "projectId", projectId, "userId", userId)
+		return "", fmt.Errorf("object storage not available")
+	}
+
+	// Generate pre-signed download URL
+	preSignedURL, err := s.objStorage.GetPreSignedDownloadUrl(video.FileURL)
+	if err != nil {
+		s.log.Error(s.ctx, "Failed to generate pre-signed download URL", "error", err, "videoId", videoId, "fileURL", video.FileURL)
+		return "", fmt.Errorf("failed to generate download URL: %w", err)
+	}
+
+	s.log.Info(s.ctx, "Generated pre-signed download URL for session video", "videoId", videoId, "projectId", projectId, "userId", userId, "fileURL", video.FileURL)
+	return preSignedURL, nil
 }
 
 func (s *sessionVideosImpl) StartKafkaConsumer() error {
