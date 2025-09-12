@@ -96,7 +96,7 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, ten
 	}
 
 	// If record exists and status is not failed, return current details
-	if existingVideo != nil && existingVideo.Status != "failed" {
+	if existingVideo != nil && existingVideo.Status != StatusFailed {
 		s.log.Info(s.ctx, "Session video already exists with non-failed status",
 			"sessionID", req.SessionID, "projectID", projectId, "tenantID", tenantID, "status", existingVideo.Status)
 
@@ -113,7 +113,7 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, ten
 	}
 
 	// Submit new job if no record exists or status is failed
-	if existingVideo != nil && existingVideo.Status == "failed" {
+	if existingVideo != nil && existingVideo.Status == StatusFailed {
 		s.log.Info(s.ctx, "Resubmitting session video job for failed status",
 			"sessionID", req.SessionID, "projectID", projectId, "tenantID", tenantID, "previousStatus", existingVideo.Status)
 	} else {
@@ -145,7 +145,7 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, ten
 	}
 
 	return &SessionVideoExportResponse{
-		Status: "pending",
+		Status: StatusPending,
 		JobID:  result.JobID,
 	}, nil
 }
@@ -178,7 +178,7 @@ func (s *sessionVideosImpl) DownloadSessionVideo(projectId int, userId uint64, s
 		return "", fmt.Errorf("session video not found")
 	}
 
-	if video.Status != "completed" {
+	if video.Status != StatusCompleted {
 		s.log.Warn(s.ctx, "Session video is not completed", "sessionId", sessionId, "status", video.Status, "projectId", projectId, "userId", userId)
 		return "", fmt.Errorf("session video is not ready for download yet")
 	}

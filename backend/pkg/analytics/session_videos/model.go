@@ -1,11 +1,19 @@
 package session_videos
 
+type Status string
+
+const (
+	StatusPending   Status = "pending"
+	StatusFailed    Status = "failed"
+	StatusCompleted Status = "completed"
+)
+
 type SessionVideo struct {
 	SessionID    string `json:"sessionId"`
 	ProjectID    int    `json:"projectId"`
 	UserID       uint64 `json:"userId"`
 	FileURL      string `json:"fileUrl"`
-	Status       string `json:"status"`
+	Status       Status `json:"status"`
 	JobID        string `json:"jobId,omitempty"`
 	ErrorMessage string `json:"errorMessage,omitempty"`
 	CreatedAt    int64  `json:"createdAt"`
@@ -18,7 +26,7 @@ type SessionVideoExportRequest struct {
 }
 
 type SessionVideoExportResponse struct {
-	Status  string `json:"status"`
+	Status  Status `json:"status"`
 	JobID   string `json:"jobId"`
 	FileURL string `json:"fileUrl,omitempty"`
 }
@@ -38,5 +46,5 @@ type SessionVideosGetRequest struct {
 	SortBy string `json:"sortBy" validate:"omitempty,oneof=datetime"`
 	Asc    bool   `json:"asc"`
 	IsSelf bool   `json:"isSelf"`
-	Status string `json:"status" validate:"omitempty,oneof=pending completed failed"`
+	Status Status `json:"status" validate:"omitempty,oneof=pending completed failed"`
 }

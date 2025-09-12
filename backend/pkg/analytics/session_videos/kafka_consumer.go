@@ -11,7 +11,7 @@ import (
 )
 
 type SessionVideoJobMessage struct {
-	Status      string `json:"status"`
+	Status      Status `json:"status"`
 	Name        string `json:"name"` // s3Path
 	StartOffset int64  `json:"startOffset"`
 	Error       string `json:"error,omitempty"`
