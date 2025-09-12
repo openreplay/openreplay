@@ -98,7 +98,7 @@ def extract_required_values(rows):
 
 def get_by_session_id(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
     with ch_client.ClickHouseClient() as cur:
-        select_events = ('CLICK', 'INPUT', 'LOCATION')
+        select_events = ('CLICK', 'INPUT', 'LOCATION', 'TAP')
         if event_type is not None:
             select_events = (event_type,)
         query = cur.format(query=""" \
@@ -160,3 +160,19 @@ def get_incidents_by_session_id(session_id, project_id):
         rows = helper.list_to_camel_case(rows)
         rows = sorted(rows, key=lambda k: k["createdAt"])
     return rows
+
+
+def get_mobile_crashes_by_session_id(session_id):
+    with ch_client.ClickHouseClient() as cur:
+        query = """SELECT `$properties`,
+                          properties,
+                          created_at,
+                          'CRASH'       AS type,
+                          `$event_name` AS name
+                   FROM product_analytics.events
+                   WHERE session_id = %(session_id)s
+                     AND NOT `$auto_captured`
+                     AND `$event_name` = 'CRASH'
+                   ORDER BY created_at;"""
+        rows = cur.execute(query, {"session_id": session_id})
+        return helper.list_to_camel_case(rows)
