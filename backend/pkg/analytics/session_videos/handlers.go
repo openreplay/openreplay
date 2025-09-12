@@ -128,7 +128,13 @@ func (e *handlersImpl) getSessionVideos(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	status := r.URL.Query().Get("status")
+	statusStr := r.URL.Query().Get("status")
+	var status Status
+	if statusStr != "" {
+		status = Status(statusStr)
+	} else {
+		status = StatusCompleted
+	}
 
 	req := &SessionVideosGetRequest{
 		PageInfo: PageInfo{
