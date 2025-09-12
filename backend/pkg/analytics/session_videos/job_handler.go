@@ -10,13 +10,11 @@ import (
 	"openreplay/backend/pkg/logger"
 )
 
-// DatabaseJobHandler handles session video job completion with database integration
 type DatabaseJobHandler struct {
 	log    logger.Logger
 	pgconn pool.Pool
 }
 
-// NewDatabaseJobHandler creates a new database-integrated job handler
 func NewDatabaseJobHandler(log logger.Logger, pgconn pool.Pool) *DatabaseJobHandler {
 	return &DatabaseJobHandler{
 		log:    log,
@@ -149,7 +147,6 @@ func (h *DatabaseJobHandler) CreateSessionVideoRecord(ctx context.Context, sessi
 	return nil
 }
 
-// GetSessionVideoBySessionAndProject retrieves a session video record by session_id and project_id
 func (h *DatabaseJobHandler) GetSessionVideoBySessionAndProject(ctx context.Context, sessionID string, projectID int) (*SessionVideo, error) {
 	h.log.Debug(ctx, "Checking for existing session video", "sessionID", sessionID, "projectID", projectID)
 
@@ -203,7 +200,6 @@ func (h *DatabaseJobHandler) GetSessionVideoBySessionAndProject(ctx context.Cont
 	return &video, nil
 }
 
-// GetAllSessionVideos retrieves session videos with pagination and filtering
 func (h *DatabaseJobHandler) GetAllSessionVideos(ctx context.Context, projectID int, userID uint64, req *SessionVideosGetRequest) (*GetSessionVideosResponse, error) {
 	page := req.Page
 	if page <= 0 {
@@ -314,7 +310,6 @@ func (h *DatabaseJobHandler) GetAllSessionVideos(ctx context.Context, projectID 
 	}, nil
 }
 
-// DeleteSessionVideo deletes a session video record by session ID
 func (h *DatabaseJobHandler) DeleteSessionVideo(ctx context.Context, projectID int, userID uint64, sessionID string) error {
 	h.log.Debug(ctx, "Deleting session video", "sessionID", sessionID, "projectID", projectID, "userID", userID)
 
