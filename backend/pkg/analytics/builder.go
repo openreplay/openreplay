@@ -2,6 +2,7 @@ package analytics
 
 import (
 	"openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/analytics/session_videos"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/go-playground/validator/v10"
@@ -29,6 +30,7 @@ type serviceBuilder struct {
 	dashboardsAPI api.Handlers
 	chartsAPI     api.Handlers
 	searchAPI     api.Handlers
+	videoAPI      api.Handlers
 }
 
 func (b *serviceBuilder) Middlewares() []api.RouterMiddleware {
@@ -36,7 +38,7 @@ func (b *serviceBuilder) Middlewares() []api.RouterMiddleware {
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI}
+	return []api.Handlers{b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.videoAPI}
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chConn driver.Conn) (api.ServiceBuilder, error) {
@@ -81,13 +83,20 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		return nil, err
 	}
 
+	authService := auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix)
+	videoHandlers, err := session_videos.NewHandlers(log, cfg, responser, session_videos.New(log, cfg, pgconn, authService), reqValidator)
+	if err != nil {
+		return nil, err
+	}
+
 	return &serviceBuilder{
-		auth:          auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix),
+		auth:          authService,
 		rateLimiter:   limiter.NewUserRateLimiter(&cfg.RateLimiter),
 		auditTrail:    audiTrail,
 		cardsAPI:      cardsHandlers,
 		dashboardsAPI: dashboardsHandlers,
 		chartsAPI:     chartsHandlers,
 		searchAPI:     searchHandlers,
+		videoAPI:      videoHandlers,
 	}, nil
 }
