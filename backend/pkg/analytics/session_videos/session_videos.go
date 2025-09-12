@@ -129,7 +129,7 @@ func (s *sessionVideosImpl) verifySessionExistsInProject(ctx context.Context, se
 	query := `
 		SELECT 1
 		FROM public.sessions
-		WHERE session_id = $1 AND project_id = $2
+		WHERE session_id = $1 AND project_id = $2 AND duration IS NOT NULL
 		LIMIT 1`
 
 	var exists int
