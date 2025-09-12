@@ -366,3 +366,27 @@ func (h *DatabaseJobHandler) GetAllSessionVideos(ctx context.Context, projectID 
 		Total:  total,
 	}, nil
 }
+
+// DeleteSessionVideo deletes a session video record by video ID
+func (h *DatabaseJobHandler) DeleteSessionVideo(ctx context.Context, projectID int, userID uint64, videoID string) error {
+	h.log.Debug(ctx, "Deleting session video", "videoID", videoID, "projectID", projectID, "userID", userID)
+
+	deleteQuery := `
+		DELETE FROM session_videos
+		WHERE video_id = $1 AND project_id = $2 AND user_id = $3
+		RETURNING video_id`
+
+	var deletedVideoID string
+	err := h.pgconn.QueryRow(deleteQuery, videoID, projectID, userID).Scan(&deletedVideoID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			h.log.Warn(ctx, "Session video not found for deletion", "videoID", videoID, "projectID", projectID, "userID", userID)
+			return fmt.Errorf("session video not found")
+		}
+		h.log.Error(ctx, "Failed to delete session video", "error", err, "videoID", videoID)
+		return fmt.Errorf("failed to delete session video: %w", err)
+	}
+
+	h.log.Info(ctx, "Successfully deleted session video", "videoID", videoID, "projectID", projectID, "userID", userID)
+	return nil
+}
