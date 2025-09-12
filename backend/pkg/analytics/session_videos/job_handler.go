@@ -60,7 +60,7 @@ func (h *DatabaseJobHandler) handleSuccessfulJob(ctx context.Context, sessionID 
 	err := h.pgconn.Exec(updateQuery, sessionID, message.Name, time.Now().Unix())
 	if err != nil {
 		h.log.Error(ctx, "Failed to update session video record", "error", err, "sessionID", sessionID)
-		return fmt.Errorf("failed to update session video record: %w", err)
+		return fmt.Errorf("unable to update session video status")
 	}
 
 	h.log.Info(ctx, "Successfully updated session video record", "sessionID", sessionID)
@@ -83,7 +83,7 @@ func (h *DatabaseJobHandler) handleFailedJob(ctx context.Context, sessionID stri
 	err := h.pgconn.Exec(updateQuery, sessionID, message.Error, time.Now().Unix())
 	if err != nil {
 		h.log.Error(ctx, "Failed to update session video record with failure", "error", err, "sessionID", sessionID)
-		return fmt.Errorf("failed to update session video record: %w", err)
+		return fmt.Errorf("unable to update session video status")
 	}
 
 	h.log.Info(ctx, "Successfully updated session video record with failure status", "sessionID", sessionID)
@@ -115,7 +115,7 @@ func (h *DatabaseJobHandler) GetSessionVideoByID(ctx context.Context, sessionID 
 			return nil, nil
 		}
 		h.log.Error(ctx, "Failed to get session video by ID", "error", err, "sessionID", sessionID)
-		return nil, fmt.Errorf("failed to get session video: %w", err)
+		return nil, fmt.Errorf("unable to retrieve session video")
 	}
 
 	if fileURL.Valid {
@@ -140,7 +140,7 @@ func (h *DatabaseJobHandler) CreateSessionVideoRecord(ctx context.Context, sessi
 	if err != nil {
 		h.log.Error(ctx, "Failed to create session video record", "error", err,
 			"sessionID", sessionID, "projectID", projectID, "userID", userID, "jobID", jobID)
-		return fmt.Errorf("failed to create session video record: %w", err)
+		return fmt.Errorf("unable to create session video record")
 	}
 
 	h.log.Info(ctx, "Successfully created session video record",
@@ -258,7 +258,7 @@ func (h *DatabaseJobHandler) GetAllSessionVideos(ctx context.Context, projectID 
 	rows, err := h.pgconn.Query(query, args...)
 	if err != nil {
 		h.log.Error(ctx, "Failed to query session videos", "error", err)
-		return nil, fmt.Errorf("failed to query session videos: %w", err)
+		return nil, fmt.Errorf("unable to retrieve session videos")
 	}
 	defer rows.Close()
 
@@ -285,7 +285,7 @@ func (h *DatabaseJobHandler) GetAllSessionVideos(ctx context.Context, projectID 
 		)
 		if err != nil {
 			h.log.Error(ctx, "Failed to scan session video row", "error", err)
-			return nil, fmt.Errorf("failed to scan session video: %w", err)
+			return nil, fmt.Errorf("unable to process session videos")
 		}
 
 		if fileURL.Valid {
@@ -303,7 +303,7 @@ func (h *DatabaseJobHandler) GetAllSessionVideos(ctx context.Context, projectID 
 
 	if err = rows.Err(); err != nil {
 		h.log.Error(ctx, "Error iterating session video rows", "error", err)
-		return nil, fmt.Errorf("error iterating session videos: %w", err)
+		return nil, fmt.Errorf("unable to process session videos")
 	}
 
 	h.log.Debug(ctx, "Successfully retrieved session videos", "count", len(videos), "total", total)
@@ -328,10 +328,10 @@ func (h *DatabaseJobHandler) DeleteSessionVideo(ctx context.Context, projectID i
 	if err != nil {
 		if err == sql.ErrNoRows {
 			h.log.Warn(ctx, "Session video not found for deletion", "sessionID", sessionID, "projectID", projectID, "userID", userID)
-			return fmt.Errorf("session video not found")
+			return fmt.Errorf("session video not found or you don't have permission to delete it")
 		}
 		h.log.Error(ctx, "Failed to delete session video", "error", err, "sessionID", sessionID, "projectID", projectID, "userID", userID)
-		return fmt.Errorf("failed to delete session video: %w", err)
+		return fmt.Errorf("unable to delete session video at this time")
 	}
 
 	h.log.Info(ctx, "Successfully deleted session video", "sessionID", deletedSessionID, "projectID", projectID, "userID", userID)

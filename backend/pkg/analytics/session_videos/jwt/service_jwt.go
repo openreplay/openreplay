@@ -61,7 +61,7 @@ func (s *serviceJWTImpl) getServiceAccountUser(ctx context.Context, tenantID int
 
 	if err != nil {
 		s.log.Error(ctx, "Failed to find service account user", "error", err, "tenantID", tenantID)
-		return nil, fmt.Errorf("failed to find service account user for tenant %d: %w", tenantID, err)
+		return nil, fmt.Errorf("authentication service is temporarily unavailable")
 	}
 
 	account.TenantID = tenantID
@@ -122,7 +122,7 @@ func (s *serviceJWTImpl) GenerateServiceAccountJWTWithOptions(ctx context.Contex
 	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
 		s.log.Error(ctx, "Failed to sign JWT token", "error", err, "userID", serviceAccount.UserID)
-		return "", fmt.Errorf("failed to sign JWT token: %w", err)
+		return "", fmt.Errorf("authentication token generation failed")
 	}
 
 	s.log.Info(ctx, "Generated service account JWT",
