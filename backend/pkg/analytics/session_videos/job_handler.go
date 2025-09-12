@@ -32,9 +32,9 @@ func (h *DatabaseJobHandler) HandleJobCompletion(sessionID string, message *Sess
 		"error", message.Error)
 
 	switch message.Status {
-	case "completed":
+	case StatusCompleted:
 		return h.handleSuccessfulJob(ctx, sessionID, message)
-	case "failed":
+	case StatusFailed:
 		return h.handleFailedJob(ctx, sessionID, message)
 	default:
 		h.log.Warn(ctx, "Unknown job status", "sessionID", sessionID, "status", message.Status)
@@ -49,13 +49,13 @@ func (h *DatabaseJobHandler) handleSuccessfulJob(ctx context.Context, sessionID 
 
 	updateQuery := `
 		UPDATE sessions_videos
-		SET status = 'completed',
-			file_url = $2,
-			modified_at = $3,
+		SET status = $2,
+			file_url = $3,
+			modified_at = $4,
 			error_message = NULL
 		WHERE session_id = $1`
 
-	err := h.pgconn.Exec(updateQuery, sessionID, message.Name, time.Now().Unix())
+	err := h.pgconn.Exec(updateQuery, sessionID, StatusCompleted, message.Name, time.Now().Unix())
 	if err != nil {
 		h.log.Error(ctx, "Failed to update session video record", "error", err, "sessionID", sessionID)
 		return fmt.Errorf("unable to update session video status")
@@ -72,13 +72,13 @@ func (h *DatabaseJobHandler) handleFailedJob(ctx context.Context, sessionID stri
 
 	updateQuery := `
 		UPDATE sessions_videos
-		SET status = 'failed',
-			error_message = $2,
-			modified_at = $3,
+		SET status = $2,
+			error_message = $3,
+			modified_at = $4,
 			file_url = NULL
 		WHERE session_id = $1`
 
-	err := h.pgconn.Exec(updateQuery, sessionID, message.Error, time.Now().Unix())
+	err := h.pgconn.Exec(updateQuery, sessionID, StatusFailed, message.Error, time.Now().Unix())
 	if err != nil {
 		h.log.Error(ctx, "Failed to update session video record with failure", "error", err, "sessionID", sessionID)
 		return fmt.Errorf("unable to update session video status")
@@ -127,14 +127,14 @@ func (h *DatabaseJobHandler) CreateSessionVideoRecord(ctx context.Context, sessi
 
 	insertQuery := `
 		INSERT INTO sessions_videos (session_id, project_id, user_id, status, job_id, created_at, modified_at)
-		VALUES ($1, $2, $3, 'pending', $4, $5, $5)
+		VALUES ($1, $2, $3, $4, $5, $6, $6)
 		ON CONFLICT (session_id) DO UPDATE SET
-			status = 'pending',
-			job_id = $4,
-			modified_at = $5`
+			status = $4,
+			job_id = $5,
+			modified_at = $6`
 
 	now := time.Now().Unix()
-	err := h.pgconn.Exec(insertQuery, sessionID, projectID, userID, jobID, now)
+	err := h.pgconn.Exec(insertQuery, sessionID, projectID, userID, StatusPending, jobID, now)
 	if err != nil {
 		h.log.Error(ctx, "Failed to create session video record", "error", err,
 			"sessionID", sessionID, "projectID", projectID, "userID", userID, "jobID", jobID)
@@ -224,7 +224,7 @@ func (h *DatabaseJobHandler) GetAllSessionVideos(ctx context.Context, projectID 
 	// Add status filter - default to "completed" if not specified
 	status := req.Status
 	if status == "" {
-		status = "completed"
+		status = StatusCompleted
 	}
 
 	whereClause += fmt.Sprintf(" AND status = $%d", argIndex)
