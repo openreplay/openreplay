@@ -12,7 +12,6 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
-// SessionVideoJobMessage represents the Kafka message structure
 type SessionVideoJobMessage struct {
 	Status      string `json:"status"`
 	Name        string `json:"name"` // s3Path
@@ -20,12 +19,10 @@ type SessionVideoJobMessage struct {
 	Error       string `json:"error,omitempty"`
 }
 
-// SessionVideoJobHandler defines the interface for handling job completion messages
 type SessionVideoJobHandler interface {
 	HandleJobCompletion(sessionID string, message *SessionVideoJobMessage) error
 }
 
-// SessionVideoConsumer handles Kafka messages for session video job completion using OpenReplay queue infrastructure
 type SessionVideoConsumer struct {
 	consumer types.Consumer
 	log      logger.Logger
@@ -34,13 +31,11 @@ type SessionVideoConsumer struct {
 	cancel   context.CancelFunc
 }
 
-// sessionVideoQueueMessageIterator implements the MessageIterator interface for session video messages
 type sessionVideoQueueMessageIterator struct {
 	log     logger.Logger
 	handler SessionVideoJobHandler
 }
 
-// Iterate processes session video job messages from the queue
 func (iter *sessionVideoQueueMessageIterator) Iterate(batchData []byte, batchInfo *messages.BatchInfo) {
 	ctx := context.WithValue(context.Background(), "sessionID", batchInfo.SessionID)
 
@@ -69,7 +64,6 @@ func (iter *sessionVideoQueueMessageIterator) Iterate(batchData []byte, batchInf
 	iter.log.Debug(ctx, "Successfully processed session video job completion", "sessionID", sessionID)
 }
 
-// NewSessionVideoConsumer creates a new consumer using OpenReplay queue infrastructure
 func NewSessionVideoConsumer(groupID string, topics []string, handler SessionVideoJobHandler, log logger.Logger) (*SessionVideoConsumer, error) {
 	messageIterator := &sessionVideoQueueMessageIterator{
 		log:     log,
@@ -99,14 +93,12 @@ func NewSessionVideoConsumer(groupID string, topics []string, handler SessionVid
 	}, nil
 }
 
-// Start begins consuming messages using OpenReplay queue infrastructure
 func (svc *SessionVideoConsumer) Start() error {
 	svc.log.Info(svc.ctx, "Starting session video consumer with queue infrastructure")
 	go svc.consumeLoop()
 	return nil
 }
 
-// Stop gracefully stops the consumer
 func (svc *SessionVideoConsumer) Stop() {
 	svc.log.Info(svc.ctx, "Stopping session video consumer")
 	svc.cancel()
@@ -116,7 +108,6 @@ func (svc *SessionVideoConsumer) Stop() {
 	}
 }
 
-// consumeLoop is the main consumer loop
 func (svc *SessionVideoConsumer) consumeLoop() {
 	for {
 		select {
@@ -131,22 +122,18 @@ func (svc *SessionVideoConsumer) consumeLoop() {
 	}
 }
 
-// Commit commits the current offset
 func (svc *SessionVideoConsumer) Commit() error {
 	return svc.consumer.Commit()
 }
 
-// CommitBack commits messages up to a certain gap
 func (svc *SessionVideoConsumer) CommitBack(gap int64) error {
 	return svc.consumer.CommitBack(gap)
 }
 
-// Rebalanced returns the rebalance event channel
 func (svc *SessionVideoConsumer) Rebalanced() <-chan *types.PartitionsRebalancedEvent {
 	return svc.consumer.Rebalanced()
 }
 
-// hashSessionIDToUint64 creates a consistent hash from the session ID string for use as uint64 key
 func hashSessionIDToUint64(sessionID string) uint64 {
 	h := fnv.New64a()
 	h.Write([]byte(sessionID))
@@ -159,7 +146,6 @@ func hashSessionIDToUint64(sessionID string) uint64 {
 	return hash
 }
 
-// decodeBase64SessionID decodes a base64-encoded session ID
 func decodeBase64SessionID(encodedSessionID string) (string, error) {
 	decoded, err := base64.StdEncoding.DecodeString(encodedSessionID)
 	if err != nil {

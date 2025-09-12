@@ -32,7 +32,6 @@ func NewServiceJWTProvider(log logger.Logger, pgconn pool.Pool, cfg *config.Conf
 	}
 }
 
-// ServiceAccount represents a service account user
 type ServiceAccount struct {
 	UserID   int    `db:"user_id"`
 	TenantID int    `db:"tenant_id"`
@@ -40,8 +39,6 @@ type ServiceAccount struct {
 	Email    string `db:"email"`
 }
 
-// getServiceAccountUser finds a service account user for the given tenant
-// Note: This assumes the users table has a tenant_id field
 func (s *serviceJWTImpl) getServiceAccountUser(ctx context.Context, tenantID int) (*ServiceAccount, error) {
 	query := `
 		SELECT user_id, name, email
@@ -68,12 +65,10 @@ func (s *serviceJWTImpl) getServiceAccountUser(ctx context.Context, tenantID int
 	return &account, nil
 }
 
-// GenerateServiceAccountJWT creates a JWT token for service account operations
 func (s *serviceJWTImpl) GenerateServiceAccountJWT(ctx context.Context, tenantID int) (string, error) {
 	return s.GenerateServiceAccountJWTWithOptions(ctx, tenantID, false, "front:OpenReplay")
 }
 
-// GenerateServiceAccountJWTWithOptions creates a JWT token with specified options
 func (s *serviceJWTImpl) GenerateServiceAccountJWTWithOptions(ctx context.Context, tenantID int, forSpot bool, audience string) (string, error) {
 	// Use default tenant ID if not provided
 	if tenantID == 0 {
