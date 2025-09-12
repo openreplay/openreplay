@@ -4,15 +4,11 @@ import type { Store } from '../../common/types'
 import type { Message } from '../messages';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader'
-import Call, { CallingState } from './Call';
-import RemoteControl, { RemoteControlStatus } from './RemoteControl'
 import ScreenRecording,  { SessionRecordingStatus } from './ScreenRecording'
 
 
 export {
-  RemoteControlStatus,
   SessionRecordingStatus,
-  CallingState,
 }
 
 export enum ConnectionStatus {
@@ -57,8 +53,6 @@ export default class AssistManager {
   static readonly INITIAL_STATE = {
     peerConnectionStatus: ConnectionStatus.Connecting,
     assistStart: 0,
-    ...Call.INITIAL_STATE,
-    ...RemoteControl.INITIAL_STATE,
     ...ScreenRecording.INITIAL_STATE,
   }
   // TODO: Session type
@@ -75,13 +69,11 @@ export default class AssistManager {
   public getAssistVersion = () => this.assistVersion
 
   private get borderStyle() {
-    const { recordingState, remoteControl } = this.store.get()
+    const { recordingState } = this.store.get()
 
     const isRecordingActive = recordingState === SessionRecordingStatus.Recording
-    const isControlActive = remoteControl === RemoteControlStatus.Enabled
     // recording gets priority here
     if (isRecordingActive) return { border: '2px dashed red' }
-    if (isControlActive) return { border: '2px dashed blue' }
     return { border: 'unset'}
   }
 
@@ -113,10 +105,7 @@ export default class AssistManager {
     this.socketCloseTimeout && clearTimeout(this.socketCloseTimeout)
     if (document.hidden) {
       this.socketCloseTimeout = setTimeout(() => {
-        const state = this.store.get()
-        if (document.hidden &&
-          // TODO: should it be RemoteControlStatus.Disabled? (check)
-          (state.calling === CallingState.NoCall && state.remoteControl === RemoteControlStatus.Enabled)) {
+        if (document.hidden) {
           this.socket?.close()
         }
       }, 30000)
@@ -160,10 +149,6 @@ export default class AssistManager {
         query: {
           peerId: this.peerID,
           identity: "agent",
-          agentInfo: JSON.stringify({
-            ...this.session.agentInfo,
-            query: document.location.search
-          })
         }
       })
       socket.on("connect", () => {
@@ -241,27 +226,9 @@ export default class AssistManager {
         this.setStatus(ConnectionStatus.Error);
       })
 
-      // Maybe  do lazy initialization for all?
-      // TODO: socket proxy (depend on interfaces)
-      this.callManager = new Call(
-        this.store,
-        socket,
-        this.config,
-        this.peerID,
-        this.getAssistVersion
-      )
-      this.remoteControl = new RemoteControl(
-        this.store,
-        socket,
-        this.screen,
-        this.session.agentInfo,
-        () => this.screen.setBorderStyle(this.borderStyle),
-        this.getAssistVersion,
-      )
       this.screenRecording = new ScreenRecording(
         this.store,
         socket,
-        this.session.agentInfo,
         () => this.screen.setBorderStyle(this.borderStyle),
         this.uiErrorHandler,
         this.getAssistVersion,
@@ -281,47 +248,10 @@ export default class AssistManager {
     return this.screenRecording?.stopRecording(...args)
   }
 
-
-  /* ==== RemoteControl ==== */
-  private remoteControl: RemoteControl | null = null
-  requestReleaseRemoteControl = (...args: Parameters<RemoteControl['requestReleaseRemoteControl']>) => {
-    return this.remoteControl?.requestReleaseRemoteControl(...args)
-  }
-  setRemoteControlCallbacks = (...args: Parameters<RemoteControl['setCallbacks']>) => {
-    return this.remoteControl?.setCallbacks(...args)
-  }
-  releaseRemoteControl = (...args: Parameters<RemoteControl['releaseRemoteControl']>) => {
-    return this.remoteControl?.releaseRemoteControl(...args)
-  }
-  toggleAnnotation = (...args: Parameters<RemoteControl['toggleAnnotation']>) => {
-    return this.remoteControl?.toggleAnnotation(...args)
-  }
-
-  /* ==== Call  ==== */
-  private callManager: Call | null = null
-  initiateCallEnd = async (...args: Parameters<Call['initiateCallEnd']>) => {
-    return this.callManager?.initiateCallEnd(...args)
-  }
-  setCallArgs = (...args: Parameters<Call['setCallArgs']>) => {
-    return this.callManager?.setCallArgs(...args)
-  }
-  call = (...args: Parameters<Call['call']>) => {
-    return this.callManager?.call(...args)
-  }
-  toggleVideoLocalStream = (...args: Parameters<Call['toggleVideoLocalStream']>) => {
-    return this.callManager?.toggleVideoLocalStream(...args)
-  }
-  addPeerCall = (...args: Parameters<Call['addPeerCall']>) => {
-    return this.callManager?.addPeerCall(...args)
-  }
-
-
   /* ==== Cleaning ==== */
   private cleaned = false
   clean() {
     this.cleaned = true // sometimes cleaned before modules loaded
-    this.remoteControl?.clean()
-    this.callManager?.clean()
     this.socket?.close()
     this.socket = null
     this.clearDisconnectTimeout()

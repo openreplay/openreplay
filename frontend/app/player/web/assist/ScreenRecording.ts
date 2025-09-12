@@ -22,7 +22,6 @@ export default class ScreenRecording {
 	constructor(
 		private store: Store<State>,
 		private socket: Socket,
-		private agentInfo: Object,
 		private onToggle: (active: boolean) => void,
     public readonly uiErrorHandler: { error: (msg: string) => void } | undefined,
     private getAssistVersion: () => number
@@ -52,7 +51,6 @@ export default class ScreenRecording {
 
     this.store.update({ recordingState: SessionRecordingStatus.Requesting })
     this.emitData("request_recording", JSON.stringify({
-        ...this.agentInfo,
         query: document.location.search,
       })
     )

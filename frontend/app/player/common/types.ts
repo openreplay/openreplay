@@ -41,5 +41,4 @@ export interface SessionFilesInfo {
   stackEvents: Record<string, any>[]
   frustrations: Record<string, any>[]
   errors: Record<string, any>[]
-  agentInfo?: { email: string, name: string }
 }

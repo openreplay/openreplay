@@ -2,9 +2,7 @@ import React from 'react';
 import {
   SessionRecordingStatus,
   getStatusText,
-  CallingState,
   ConnectionStatus,
-  RemoteControlStatus,
 } from 'Player';
 
 import LiveStatusText from './LiveStatusText';
@@ -27,8 +25,6 @@ function Overlay({
     messagesLoading,
     peerConnectionStatus,
     livePlay,
-    calling,
-    remoteControl,
     recordingState,
     tabStates,
     currentTab
@@ -41,18 +37,9 @@ function Overlay({
 
   const showLiveStatusText = livePlay && liveStatusText && !loading;
 
-  const showRequestWindow =
-    (calling === CallingState.Connecting ||
-      remoteControl === RemoteControlStatus.Requesting ||
-      recordingState === SessionRecordingStatus.Requesting);
+  const showRequestWindow = recordingState === SessionRecordingStatus.Requesting;
 
   const getRequestWindowType = () => {
-    if (calling === CallingState.Connecting) {
-      return WindowType.Call
-    }
-    if (remoteControl === RemoteControlStatus.Requesting) {
-      return WindowType.Control
-    }
     if (recordingState === SessionRecordingStatus.Requesting) {
       return WindowType.Record
     }

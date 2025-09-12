@@ -216,14 +216,18 @@ export default class MessageManager {
       if (this.tabs[this.activeTab]) {
         this.tabs[this.activeTab].move(t);
       } else {
-        // should we add ui error here?
-        console.error(
-          'missing tab state',
-          this.tabs,
+        // Create tab if it doesn't exist
+        console.warn('Creating missing tab state for', this.activeTab);
+        this.tabs[this.activeTab] = new TabSessionManager(
+          this.session,
+          this.state,
+          this.screen,
           this.activeTab,
-          tabId,
-          this.activeTabManager.list
+          this.setSize,
+          this.sessionStart,
+          this.initialLists
         );
+        this.tabs[this.activeTab].move(t);
       }
     });
 

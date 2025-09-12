@@ -51,10 +51,6 @@ function LivePlayer({
     console.debug('creating live player for', usedSession.sessionId)
     const sessionWithAgentData = {
       ...usedSession,
-      agentInfo: {
-        email: userEmail,
-        name: userName,
-      },
     };
     if (isEnterprise) {
       new APIClient().get('/config/assist/credentials').then(r => r.json())
