@@ -43,8 +43,8 @@ func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
 		{"/v1/{projectId}/session-videos", "POST", e.exportSessionVideo, []string{"SESSION_EXPORT"}, api.DoNotTrack},
 		{"/v1/{projectId}/session-videos", "GET", e.getSessionVideos, []string{"SESSION_EXPORT"}, api.DoNotTrack},
-		{"/v1/{projectId}/session-videos/{videoId}", "DELETE", e.deleteSessionVideo, []string{"SESSION_EXPORT"}, api.DoNotTrack},
-		{"/v1/{projectId}/session-videos/{videoId}", "GET", e.downloadSessionVideo, []string{"SESSION_EXPORT"}, api.DoNotTrack},
+		{"/v1/{projectId}/session-videos/{sessionId}", "DELETE", e.deleteSessionVideo, []string{"SESSION_EXPORT"}, api.DoNotTrack},
+		{"/v1/{projectId}/session-videos/{sessionId}", "GET", e.downloadSessionVideo, []string{"SESSION_EXPORT"}, api.DoNotTrack},
 	}
 }
 
@@ -158,14 +158,14 @@ func (e *handlersImpl) deleteSessionVideo(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	videoID := mux.Vars(r)["videoId"]
-	if videoID == "" {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("missing videoId in request"), startTime, r.URL.Path, bodySize)
+	sessionID := mux.Vars(r)["sessionId"]
+	if sessionID == "" {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("missing sessionId in request"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.sessionVideos.DeleteSessionVideo(projectID, currentUser.ID, videoID)
+	resp, err := e.sessionVideos.DeleteSessionVideo(projectID, currentUser.ID, sessionID)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -183,14 +183,14 @@ func (e *handlersImpl) downloadSessionVideo(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	videoID := mux.Vars(r)["videoId"]
-	if videoID == "" {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("missing videoId in request"), startTime, r.URL.Path, bodySize)
+	sessionID := mux.Vars(r)["sessionId"]
+	if sessionID == "" {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("missing sessionId in request"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	url, err := e.sessionVideos.DownloadSessionVideo(projectID, currentUser.ID, videoID)
+	url, err := e.sessionVideos.DownloadSessionVideo(projectID, currentUser.ID, sessionID)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
