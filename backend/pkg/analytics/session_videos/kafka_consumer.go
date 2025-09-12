@@ -85,7 +85,7 @@ func NewSessionVideoConsumer(groupID string, topics []string, handler SessionVid
 	)
 
 	if consumer == nil {
-		return nil, fmt.Errorf("failed to create session video consumer using queue infrastructure")
+		return nil, fmt.Errorf("session video processing service is temporarily unavailable")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -163,7 +163,7 @@ func hashSessionIDToUint64(sessionID string) uint64 {
 func decodeBase64SessionID(encodedSessionID string) (string, error) {
 	decoded, err := base64.StdEncoding.DecodeString(encodedSessionID)
 	if err != nil {
-		return "", fmt.Errorf("failed to decode base64 session ID: %w", err)
+		return "", fmt.Errorf("invalid session identifier format")
 	}
 	return string(decoded), nil
 }
