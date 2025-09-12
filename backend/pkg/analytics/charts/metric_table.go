@@ -190,24 +190,20 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	// Determine if property comes from events table (main) or sessions table (s)
 	//isFromEvents := strings.Contains(propSel, "main.")
 	isFromEvents := slices.Contains(eventsProperties, r.MetricOf)
-	var eventsSelect, groupByClause string
+	var eventsSelect string
 
 	if isFromEvents {
 		// Property comes from events table, select it in the events subquery
 		eventsSelect = fmt.Sprintf("main.session_id, %s AS metric_value", propSel)
-		groupByClause = "main.session_id, metric_value"
 	} else {
 		// Property comes from sessions table, select session_id only in events subquery
 		eventsSelect = "main.session_id"
-		groupByClause = "main.session_id"
 	}
 
 	// Build final join clause
-	var finalJoinClause string
+	var finalJoinClause string = "GROUP BY ALL\n"
 	if joinClause != "" {
-		finalJoinClause = fmt.Sprintf("GROUP BY %s\n%s\n", groupByClause, joinClause)
-	} else {
-		finalJoinClause = fmt.Sprintf("GROUP BY %s\n", groupByClause)
+		finalJoinClause = fmt.Sprintf("%s%s\n", finalJoinClause, joinClause)
 	}
 
 	// Determine aggregation column
@@ -229,34 +225,27 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	// Build the final query with proper string formatting
 	var query string
 	baseSelectParts := []string{
-		fmt.Sprintf("COUNT(DISTINCT %s) OVER () AS main_count", finalPropertySelector),
-		fmt.Sprintf("%s AS name", finalPropertySelector),
+		"COUNT(DISTINCT metric_value) OVER () AS main_count",
+		"metric_value AS name",
 		fmt.Sprintf("count(DISTINCT %s) AS total", distinctColumn),
 		"any(total_count) AS total_count",
 	}
 
 	subquerySelectParts := t.subquerySelects(r)
+	subquerySelectParts = append(subquerySelectParts, "metric_value")
 	subquerySelectParts = append(subquerySelectParts, fmt.Sprintf("count(DISTINCT %s) OVER () AS total_count", distinctColumn))
 	var innerSelectParts []string
-	var groupByField string
 
 	if isFromEvents {
 		// Property from events table
 		subquerySelectParts = append([]string{"f.metric_value AS metric_value"}, subquerySelectParts...)
-		innerSelectParts = []string{
-			eventsSelect,
-			"MIN(main.created_at) AS first_event_ts",
-			"MAX(main.created_at) AS last_event_ts",
-		}
-		groupByField = finalPropertySelector
-	} else {
-		// Property from sessions table
-		innerSelectParts = []string{
-			eventsSelect,
-			"MIN(main.created_at) AS first_event_ts",
-			"MAX(main.created_at) AS last_event_ts",
-		}
-		groupByField = propSel
+
+	}
+	innerSelectParts = []string{
+		eventsSelect,
+		fmt.Sprintf("%s AS metric_value", finalPropertySelector),
+		"MIN(main.created_at) AS first_event_ts",
+		"MAX(main.created_at) AS last_event_ts",
 	}
 
 	var mainEventsTable = getMainEventsTable(r.StartTimestamp)
@@ -274,7 +263,7 @@ FROM (SELECT %s
             WHERE %s 
 			%s) AS f ON(s.session_id=f.session_id)
       ) AS filtred_sessions
-GROUP BY %s
+GROUP BY metric_value
 ORDER BY total DESC
 LIMIT %d OFFSET %d`,
 		strings.Join(baseSelectParts, ",\n       "),           // Main SELECT
@@ -285,7 +274,6 @@ LIMIT %d OFFSET %d`,
 		mainEventsTable,
 		strings.Join(prewhereParts, " AND "), // WHERE conditions
 		finalJoinClause,
-		groupByField, // Final GROUP BY
 		pagination.Limit,
 		pagination.Offset,
 	)
