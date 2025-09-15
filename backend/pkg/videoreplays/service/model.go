@@ -1,4 +1,6 @@
-package session_videos
+package service
+
+import "fmt"
 
 type Status string
 
@@ -18,6 +20,17 @@ type SessionVideo struct {
 	ErrorMessage string `json:"errorMessage,omitempty"`
 	CreatedAt    int64  `json:"createdAt"`
 	ModifiedAt   int64  `json:"modifiedAt"`
+}
+
+func (video *SessionVideo) Response() *SessionVideoExportResponse {
+	response := &SessionVideoExportResponse{
+		Status: video.Status,
+		JobID:  video.JobID,
+	}
+	if video.FileURL != "" {
+		response.FileURL = video.FileURL
+	}
+	return response
 }
 
 type SessionVideoExportRequest struct {
@@ -47,3 +60,20 @@ type SessionVideosGetRequest struct {
 	IsSelf bool   `json:"isSelf"`
 	Status Status `json:"status" validate:"omitempty,oneof=pending completed failed"`
 }
+
+type SessionVideoJobMessage struct {
+	Status Status `json:"status"`
+	Name   string `json:"name"` // s3Path
+	Error  string `json:"error,omitempty"`
+}
+
+var (
+	ErrSessionNotFound       = fmt.Errorf("session not found")
+	ErrUnableToVerifySession = fmt.Errorf("unable to verify session")
+	ErrVideoNotFound         = fmt.Errorf("session video not found")
+	ErrVideoNotReady         = fmt.Errorf("session video is not ready for download yet")
+	ErrFileNotAvailable      = fmt.Errorf("session video file is not available")
+	ErrDownloadUnavailable   = fmt.Errorf("download service is temporarily unavailable")
+	ErrUnableToGenerateLink  = fmt.Errorf("unable to generate download link")
+	ErrAuthenticationFailed  = fmt.Errorf("authentication failed, please try again")
+)
