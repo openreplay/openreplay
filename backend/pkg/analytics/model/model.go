@@ -104,7 +104,7 @@ func ValidateMetricFields(sl validator.StructLevel) {
 		if !slices.Contains(MetricOfFunnel, in.MetricOf) {
 			sl.ReportError(in.MetricOf, "MetricOf", "metricOf", fmt.Sprintf("oneof:%s", strings.Join(MetricOfFunnel, ",")), "")
 		}
-	case "heatMap":
+	case "heatMap", "heatmaps_session":
 		if !slices.Contains(MetricOfHeatMap, in.MetricOf) {
 			sl.ReportError(in.MetricOf, "MetricOf", "metricOf", fmt.Sprintf("oneof:%s", strings.Join(MetricOfHeatMap, ",")), "")
 		}
