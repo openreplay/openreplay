@@ -6,7 +6,7 @@ import {
   TIMESERIES,
   USER_PATH,
 } from 'App/constants/card';
-import { Space, Select, Dropdown, Button } from 'antd';
+import { Space, Select, Dropdown, Button, Input } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore';
 import ClickMapRagePicker from 'Components/Dashboard/components/ClickMapRagePicker/ClickMapRagePicker';
@@ -30,7 +30,6 @@ import {
   CircleDashed,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Form, InputNumber } from 'antd/lib';
 import Widget from '@/mstore/types/widget';
 
 interface Option {
@@ -85,9 +84,8 @@ function WidgetOptions() {
     <div className="flex items-center gap-2">
       {metric.metricType === USER_PATH && (
         <>
-          <Form layout="horizontal">
-            <div className="flex space-x-8 items-center">
-              <Form.Item label="Steps Before" className="mb-0 flex-1">
+            <div className="flex space-x-8 items-center gap-2">
+              <div>Steps Before</div>
                 <Select
                   value={metric.stepsBefore}
                   style={{ width: 64 }}
@@ -104,9 +102,8 @@ function WidgetOptions() {
                     </Select.Option>
                   ))}
                 </Select>
-              </Form.Item>
 
-              <Form.Item label="Steps After" className="mb-0 flex-1">
+              <div>Steps After</div>
                 <Select
                   value={metric.stepsAfter}
                   style={{ width: 64 }}
@@ -123,22 +120,20 @@ function WidgetOptions() {
                     </Select.Option>
                   ))}
                 </Select>
-              </Form.Item>
 
-              <Form.Item label="Rows" className="mb-0 flex-1">
-                <InputNumber
+                <div>Rows</div>
+                <Input
+                  type="number"
                   defaultValue={metric.rows}
                   className="w-16"
                   min={2}
                   max={60}
                   onChange={(rows) => {
-                    metric.update({ rows });
+                    metric.update({ rows: rows ?? 5 });
                     metric.updateKey('hasChanged', true);
                   }}
                 />
-              </Form.Item>
             </div>
-          </Form>
           {/* <a
             href="#"
             onClick={(e) => {
