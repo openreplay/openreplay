@@ -2,7 +2,7 @@ package analytics
 
 import (
 	"openreplay/backend/pkg/analytics/model"
-	"openreplay/backend/pkg/analytics/session_videos"
+	"openreplay/backend/pkg/objectstorage"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/go-playground/validator/v10"
@@ -43,7 +43,7 @@ func (b *serviceBuilder) Handlers() []api.Handlers {
 	return []api.Handlers{b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.videoAPI, b.savedSearchesAPI}
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, pgconn pool.Pool, chConn driver.Conn) (api.ServiceBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, pgconn pool.Pool, chConn driver.Conn, objStore objectstorage.ObjectStorage) (api.ServiceBuilder, error) {
 	responser := api.NewResponser(webMetrics)
 	reqValidator := validator.New()
 	reqValidator.RegisterStructValidation(model.ValidateMetricFields, model.MetricPayload{})

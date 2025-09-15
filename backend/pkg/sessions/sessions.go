@@ -27,6 +27,7 @@ type Sessions interface {
 	UpdateUTM(sessionID uint64, url string) error
 	UpdateMetadata(sessionID uint64, key, value string) error
 	UpdateEventsStats(sessionID uint64, events, pages int) error
+	IsExist(projectID int, sessionID string) bool
 	Commit()
 	IsExists(sessionID uint64) (bool, error)
 }
@@ -252,6 +253,11 @@ func (s *sessionsImpl) UpdateMetadata(sessionID uint64, key, value string) error
 func (s *sessionsImpl) UpdateEventsStats(sessionID uint64, events, pages int) error {
 	s.updates.AddEvents(sessionID, events, pages)
 	return nil
+}
+
+func (s *sessionsImpl) IsExist(projectID int, sessionID string) bool {
+	//TODO: implement it please
+	panic("implement me")
 }
 
 func (s *sessionsImpl) Commit() {

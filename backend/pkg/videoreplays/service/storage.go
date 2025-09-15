@@ -1,8 +1,9 @@
-package session_videos
+package service
 
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,19 +11,25 @@ import (
 	"openreplay/backend/pkg/logger"
 )
 
-type DatabaseJobHandler struct {
+type Storage struct {
 	log    logger.Logger
 	pgconn pool.Pool
 }
 
-func NewDatabaseJobHandler(log logger.Logger, pgconn pool.Pool) *DatabaseJobHandler {
-	return &DatabaseJobHandler{
+func NewStorage(log logger.Logger, pgconn pool.Pool) (*Storage, error) {
+	switch {
+	case log == nil:
+		return nil, errors.New("nil logger")
+	case pgconn == nil:
+		return nil, errors.New("nil pg connection")
+	}
+	return &Storage{
 		log:    log,
 		pgconn: pgconn,
-	}
+	}, nil
 }
 
-func (h *DatabaseJobHandler) HandleJobCompletion(sessionID string, message *SessionVideoJobMessage) error {
+func (h *Storage) HandleJobCompletion(sessionID string, message *SessionVideoJobMessage) error {
 	ctx := context.Background()
 
 	h.log.Info(ctx, "Processing session video job completion",
@@ -42,7 +49,7 @@ func (h *DatabaseJobHandler) HandleJobCompletion(sessionID string, message *Sess
 	}
 }
 
-func (h *DatabaseJobHandler) handleSuccessfulJob(ctx context.Context, sessionID string, message *SessionVideoJobMessage) error {
+func (h *Storage) handleSuccessfulJob(ctx context.Context, sessionID string, message *SessionVideoJobMessage) error {
 	h.log.Info(ctx, "Handling successful session video job",
 		"sessionID", sessionID,
 		"s3Path", message.Name)
@@ -65,7 +72,7 @@ func (h *DatabaseJobHandler) handleSuccessfulJob(ctx context.Context, sessionID 
 	return nil
 }
 
-func (h *DatabaseJobHandler) handleFailedJob(ctx context.Context, sessionID string, message *SessionVideoJobMessage) error {
+func (h *Storage) handleFailedJob(ctx context.Context, sessionID string, message *SessionVideoJobMessage) error {
 	h.log.Error(ctx, "Handling failed session video job",
 		"sessionID", sessionID,
 		"error", message.Error)
@@ -88,7 +95,7 @@ func (h *DatabaseJobHandler) handleFailedJob(ctx context.Context, sessionID stri
 	return nil
 }
 
-func (h *DatabaseJobHandler) CreateSessionVideoRecord(ctx context.Context, sessionID string, projectID int, userID uint64, jobID string) error {
+func (h *Storage) CreateSessionVideoRecord(ctx context.Context, sessionID string, projectID int, userID uint64, jobID string) error {
 
 	insertQuery := `
 		INSERT INTO public.sessions_videos (session_id, project_id, user_id, status, job_id, created_at, modified_at)
@@ -112,7 +119,7 @@ func (h *DatabaseJobHandler) CreateSessionVideoRecord(ctx context.Context, sessi
 	return nil
 }
 
-func (h *DatabaseJobHandler) GetSessionVideoBySessionAndProject(ctx context.Context, sessionID string, projectID int) (*SessionVideo, error) {
+func (h *Storage) GetSessionVideoBySessionAndProject(ctx context.Context, sessionID string, projectID int) (*SessionVideo, error) {
 	h.log.Debug(ctx, "Checking for existing session video", "sessionID", sessionID, "projectID", projectID)
 
 	query := `
@@ -143,11 +150,11 @@ func (h *DatabaseJobHandler) GetSessionVideoBySessionAndProject(ctx context.Cont
 			err.Error() == "no rows in result set" ||
 			err.Error() == "sql: no rows in result set" {
 			h.log.Debug(ctx, "No existing session video found, proceeding with new job", "sessionID", sessionID, "projectID", projectID)
-			return nil, nil
+			return nil, nil // !!! antipattern
 		}
 		// Log actual database errors but don't fail - continue with new job creation
 		h.log.Warn(ctx, "Database query issue while checking session video, proceeding with new job", "error", err, "sessionID", sessionID, "projectID", projectID)
-		return nil, nil
+		return nil, nil // !!! antipattern
 	}
 
 	h.log.Debug(ctx, "Found existing session video", "sessionID", sessionID, "projectID", projectID, "status", video.Status)
@@ -165,7 +172,7 @@ func (h *DatabaseJobHandler) GetSessionVideoBySessionAndProject(ctx context.Cont
 	return &video, nil
 }
 
-func (h *DatabaseJobHandler) GetAllSessionVideos(ctx context.Context, projectID int, userID uint64, req *SessionVideosGetRequest) (*GetSessionVideosResponse, error) {
+func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID uint64, req *SessionVideosGetRequest) (*GetSessionVideosResponse, error) {
 	page := req.Page
 	if page <= 0 {
 		page = 1
@@ -275,7 +282,7 @@ func (h *DatabaseJobHandler) GetAllSessionVideos(ctx context.Context, projectID 
 	}, nil
 }
 
-func (h *DatabaseJobHandler) DeleteSessionVideo(ctx context.Context, projectID int, userID uint64, sessionID string) error {
+func (h *Storage) DeleteSessionVideo(ctx context.Context, projectID int, userID uint64, sessionID string) error {
 	h.log.Debug(ctx, "Deleting session video", "sessionID", sessionID, "projectID", projectID, "userID", userID)
 
 	deleteQuery := `
