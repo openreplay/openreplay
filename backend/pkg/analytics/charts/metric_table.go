@@ -212,14 +212,6 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		distinctColumn = "if(empty(user_id), toString(user_uuid), user_id)"
 	}
 
-	// Final property selector for outer query
-	var finalPropertySelector string
-	if isFromEvents {
-		finalPropertySelector = "filtred_sessions.metric_value"
-	} else {
-		finalPropertySelector = propSel
-	}
-
 	pagination := t.calculatePagination(r.Page, r.Limit)
 
 	// Build the final query with proper string formatting
@@ -243,7 +235,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	}
 	innerSelectParts = []string{
 		eventsSelect,
-		fmt.Sprintf("%s AS metric_value", finalPropertySelector),
+		fmt.Sprintf("%s AS metric_value", propSel),
 		"MIN(main.created_at) AS first_event_ts",
 		"MAX(main.created_at) AS last_event_ts",
 	}
