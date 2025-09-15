@@ -59,6 +59,7 @@ export async function getSessions(projectId: string, params: any) {
         issueLabels: s.issueLabels,
         journey: s.journey,
         journeyLabels: s.journeyLabels,
+        issueTimestamp: s.issueTimestamp
       })
   });
   return data;

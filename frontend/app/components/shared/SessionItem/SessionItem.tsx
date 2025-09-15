@@ -73,6 +73,7 @@ interface Props {
   query?: string;
   slim?: boolean;
   noWrap?: boolean;
+  timestamp?: number;
 }
 
 const PREFETCH_STATE = {
