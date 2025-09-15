@@ -165,7 +165,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	})
 
 	// Check if we should skip events table
-	skipEventsTable := slices.Contains([]string{string(MetricOfTableUserId), string(MetricOfTableCountry)}, r.MetricOf) && len(eventConditions) == 0 && len(otherConds) == 0
+	skipEventsTable := slices.Contains([]string{string(MetricOfTableUserId), string(MetricOfTableCountry), string(MetricOfTableDevice)}, r.MetricOf) && len(eventConditions) == 0 && len(otherConds) == 0
 	if skipEventsTable {
 		return t.buildSimplifiedQuery(r, metricFormat, durConds)
 	}
