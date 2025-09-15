@@ -25,14 +25,14 @@ function IssuesSummary() {
   const projectId = match.params.siteId;
   const { showModal } = useModal();
   const { t } = useTranslation();
-  const { data = { critical: [], other: [] }, isPending } = useQuery<{
+  const { data = { critical: [], other: [] }, isPending, refetch } = useQuery<{
     critical: Data[];
     other: Data[];
   }>({
     queryKey: ['issuesSummary', projectId, usedLabels],
     queryFn: () => getIssues(projectId, usedLabels),
   });
-  const { data: labels = [], isPending: isLabelsPending, refetch } = useQuery<
+  const { data: labels = [], isPending: isLabelsPending } = useQuery<
     { label: string; value: string }[]
   >({
     queryKey: ['tagLabels', projectId],
