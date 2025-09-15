@@ -37,6 +37,7 @@ const Router: React.FC<RouterProps> = (props) => {
     sessionStore,
     searchStore,
     userStore,
+    settingsStore,
   } = mstore;
   const { jwt } = userStore;
   const { changePassword } = userStore.account;
@@ -135,6 +136,11 @@ const Router: React.FC<RouterProps> = (props) => {
     checkParams();
     handleJwtFromUrl();
     mstore.initClient();
+
+    const vmodeParam = new URLSearchParams(location.search).get('vmode');
+    if (vmodeParam) {
+      settingsStore.sessionSettings.updateKey('virtualMode', true);
+    }
   }, []);
 
   useEffect(() => {
