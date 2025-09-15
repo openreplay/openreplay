@@ -165,8 +165,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	})
 
 	// Check if we should skip events table
-	skipEventsTable := r.MetricOf == string(MetricOfTableUserId) && len(eventConditions) == 0 && len(otherConds) == 0
-
+	skipEventsTable := slices.Contains([]string{string(MetricOfTableUserId), string(MetricOfTableCountry)}, r.MetricOf) && len(eventConditions) == 0 && len(otherConds) == 0
 	if skipEventsTable {
 		return t.buildSimplifiedQuery(r, metricFormat, durConds)
 	}
@@ -303,10 +302,6 @@ func (t *TableQueryBuilder) buildSimplifiedQuery(r *Payload, metricFormat string
 		"count(DISTINCT metric_name) AS total",
 		"any(total_count) AS total_count",
 	}
-	log.Println(">>>>>>>>>>>>>>>>")
-	log.Printf("propSel: %s", propSel)
-	log.Printf("distinctColumn: %s", distinctColumn)
-	log.Println(">>>>>>>>>>>>>>>>")
 	sessionProjections := []string{propSel,
 		fmt.Sprintf("%s AS metric_name", propSel),
 		"COUNT(DISTINCT metric_name) OVER () AS total_count"}
