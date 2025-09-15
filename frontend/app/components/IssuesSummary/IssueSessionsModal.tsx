@@ -176,7 +176,7 @@ function SessionWithIssue({
         session={issueSession.session}
         query={
           issueSession.issueTimestamp
-            ? `jumpto=${issueSession.issueTimestamp}`
+            ? `?jumpto=${issueSession.issueTimestamp}`
             : undefined
         }
       />
