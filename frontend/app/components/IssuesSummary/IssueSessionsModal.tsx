@@ -20,6 +20,7 @@ interface IssueSession {
   journeyLabels: string[];
   issueDescription: string;
   issueLabels: string[];
+  issueTimestamp: number | null;
 }
 
 function IssueSessions({
@@ -66,7 +67,14 @@ function IssueSessions({
   const { data = [], isPending } = useQuery<IssueSession[]>({
     queryKey: [
       'smart_alerts/search',
-      { issueName, searchQuery, usedIssueLabels, sortBy, range, usedJourneyLabels },
+      {
+        issueName,
+        searchQuery,
+        usedIssueLabels,
+        sortBy,
+        range,
+        usedJourneyLabels,
+      },
     ],
     queryFn: async () =>
       getSessions(projectId, {
@@ -163,7 +171,15 @@ function SessionWithIssue({
       : issueSession.journey;
   return (
     <div>
-      <SessionItem key={index} session={issueSession.session} />
+      <SessionItem
+        key={index}
+        session={issueSession.session}
+        query={
+          issueSession.issueTimestamp
+            ? `jumpto=${issueSession.issueTimestamp}`
+            : undefined
+        }
+      />
       <div className="rounded-lg px-4 py-2 border border-gray-light flex flex-col gap-2 mx-4">
         <Radio.Group
           size="small"
