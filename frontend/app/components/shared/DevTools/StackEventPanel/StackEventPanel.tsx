@@ -30,11 +30,19 @@ const ALL = 'ALL';
 const TAB_KEYS = [ALL, ...typeList] as const;
 const TABS = TAB_KEYS.map((tab) => ({ text: tab, key: tab }));
 
-type EventsList = Array<
-  Timed & { name: string; source: string; key: string; payload?: string[], tabName?: string, tabNum?: number }
->;
+interface Event extends Timed {
+  name: string;
+  source: string;
+  key: string;
+  payload?: string[];
+  tabName?: string;
+  tabNum?: number;
+}
+
+type EventsList = Array<Event>;
 
 const WebStackEventPanelComp = observer(() => {
+  const [source, setSource] = useState<'current' | 'all'>('all');
   const { uiPlayerStore } = useStore();
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
@@ -48,18 +56,36 @@ const WebStackEventPanelComp = observer(() => {
   const { stackList: list = [], stackListNow: listNow = [] } =
     tabStates[currentTab];
 
-  const eventsList = list.map(ev => {
-    const tabId = player.getMessageTab(ev)
-    const tabName = tabId ? tabNames[tabId] : undefined
-    const tabNum = tabId ? getTabNum(tabId) : undefined
-    return ({ ...ev, tabName, tabNum })
-  }) as unknown as EventsList
-  const eventsListNow = listNow.map(ev => {
-    const tabId = player.getMessageTab(ev)
-    const tabName = tabId ? tabNames[tabId] : undefined
-    const tabNum = tabId ? getTabNum(tabId) : undefined
-    return ({ ...ev, tabName, tabNum })
-  }) as unknown as EventsList
+  const eventsList: EventsList = React.useMemo(() => {
+    const evList: EventsList = [];
+    list.forEach((ev) => {
+      const tabId = player.getMessageTab(ev);
+      const tabName = tabId ? tabNames[tabId] : undefined;
+      const tabNum = tabId ? getTabNum(tabId) : undefined;
+      const event = { ...ev, tabName, tabNum } as unknown as Event;
+      if (source === 'all') {
+        evList.push(event);
+      } else if (tabId === currentTab){
+        evList.push(event);
+      }
+    })
+    return evList;
+  }, [source, list.length])
+  const eventsListNow: EventsList = React.useMemo(() => {
+    const evListNow: EventsList = [];
+    listNow.forEach((ev) => {
+      const tabId = player.getMessageTab(ev);
+      const tabName = tabId ? tabNames[tabId] : undefined;
+      const tabNum = tabId ? getTabNum(tabId) : undefined;
+      const event = { ...ev, tabName, tabNum } as unknown as Event;
+      if (source === 'all') {
+        evListNow.push(event);
+      } else if (tabId === currentTab){
+        evListNow.push(event);
+      }
+    })
+    return evListNow;
+  }, [source, listNow.length])
   return (
     <EventsPanel
       list={eventsList}
@@ -68,6 +94,8 @@ const WebStackEventPanelComp = observer(() => {
       zoomEnabled={zoomEnabled}
       zoomStartTs={zoomStartTs}
       zoomEndTs={zoomEndTs}
+      source={source}
+      setSource={setSource}
     />
   );
 });
@@ -107,6 +135,8 @@ const EventsPanel = observer(
     zoomStartTs,
     zoomEndTs,
     isMobile,
+    source,
+    setSource,
   }: {
     list: EventsList;
     listNow: EventsList;
@@ -115,6 +145,8 @@ const EventsPanel = observer(
     zoomStartTs: number;
     zoomEndTs: number;
     isMobile?: boolean;
+    source?: 'current' | 'all';
+    setSource?: (v: 'current' | 'all') => void;
   }) => {
     const { t } = useTranslation();
     const {
@@ -230,14 +262,24 @@ const EventsPanel = observer(
                   { label: 'All Tabs', value: 'all' },
                   {
                     label: (
-                      <Tooltip title={t('Stack Events overview is available only for all tabs combined.')}>
+                      <Tooltip
+                        title={
+                          setSource
+                            ? undefined
+                            : t(
+                                'Stack Events overview is available only for all tabs combined.',
+                              )
+                        }
+                      >
                         <span>{t('Current Tab')}</span>
                       </Tooltip>
                     ),
                     value: 'current',
-                    disabled: true,
+                    disabled: setSource ? false : true,
                   },
                 ]}
+                onChange={(val: 'current' | 'all') => setSource?.(val)}
+                value={source}
                 defaultValue="all"
                 size="small"
                 className="rounded-full font-medium"

@@ -169,7 +169,7 @@ function TimeTable(props: Props) {
       }
     }
     if (scroller.current != null) {
-      scroller.current.scrollToIndex(prevRedIndex);
+      scroller.current.scrollToIndex(prevRedIndex, { align: 'center' });
     }
   };
 
