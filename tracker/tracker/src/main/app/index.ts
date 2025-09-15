@@ -1535,7 +1535,11 @@ export default class App {
         startOpts.startCallback(SuccessfulStart(onStartInfo))
       }
       if (this.features['feature-flags']) {
-        void this.featureFlags.reloadFlags()
+        try {
+          void this.featureFlags.reloadFlags()
+        } catch (e) {
+          this.debug.log("Error getting feature flags", e)
+        }
       }
       await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
       this.activityState = ActivityState.Active
