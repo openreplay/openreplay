@@ -357,6 +357,7 @@ export default class MessageManager {
       this.waitingForFiles ||
       (this.lastMessageTime <= t && t < this.session.durationMs)
     ) {
+      console.log(this.waitingForFiles, this.lastMessageTime, t, this.session.durationMs)
       this.setMessagesLoading(true);
     }
   }
@@ -392,6 +393,9 @@ export default class MessageManager {
   };
 
   distributeMessage = (msg: Message & { tabId: string }): void => {
+    const lastMessageTime = Math.max(msg.time, this.lastMessageTime);
+    this.lastMessageTime = lastMessageTime;
+    this.state.update({ lastMessageTime });
     // @ts-ignore placeholder msg for timestamps
     if (msg.tp === 9999) return;
     this.hookManager.append(msg);
@@ -431,9 +435,6 @@ export default class MessageManager {
       }
     }
 
-    const lastMessageTime = Math.max(msg.time, this.lastMessageTime);
-    this.lastMessageTime = lastMessageTime;
-    this.state.update({ lastMessageTime });
     const activityMessages = this.ignoreDomOnInactivity
       ? userOnlyChanges
       : visualChanges;
