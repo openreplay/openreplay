@@ -223,12 +223,11 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
       : PlayingState.Paused;
 
   const events = session.stackEvents ?? [];
+  const highlightTimer = React.useMemo(() => new URLSearchParams(window.location.search).get(
+    'timer',
+  ), [])
 
   if (fullView) {
-    const highlightTimer = new URLSearchParams(window.location.search).get(
-      'timer',
-    );
-
     return (
       <div
         className={cn(

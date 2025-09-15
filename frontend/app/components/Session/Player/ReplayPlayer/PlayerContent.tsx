@@ -22,9 +22,9 @@ function PlayerContent({
   setActiveTab,
 }: IProps) {
   const { store } = React.useContext(PlayerContext);
-  const [fullView, setFullView] = React.useState(false);
 
   const { error, completed } = store.get();
+  const fullView = React.useMemo(() => new URLSearchParams(location.search).get('fullview') === 'true', []);
 
   React.useEffect(() => {
     if (completed) {
@@ -33,11 +33,6 @@ function PlayerContent({
   }, [completed]);
 
   const hasError = !!error;
-
-  useEffect(() => {
-    const isFullView = new URLSearchParams(location.search).get('fullview');
-    setFullView(isFullView === 'true');
-  }, [session.sessionId]);
 
   const sessionDays = countDaysFrom(session.startedAt);
   return hasError ? (
