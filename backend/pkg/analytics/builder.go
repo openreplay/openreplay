@@ -2,7 +2,7 @@ package analytics
 
 import (
 	"openreplay/backend/pkg/analytics/model"
-	"openreplay/backend/pkg/analytics/session_videos"
+	"openreplay/backend/pkg/objectstorage"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/go-playground/validator/v10"
@@ -42,7 +42,7 @@ func (b *serviceBuilder) Handlers() []api.Handlers {
 	return []api.Handlers{b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.videoAPI}
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chConn driver.Conn) (api.ServiceBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chConn driver.Conn, objStore objectstorage.ObjectStorage) (api.ServiceBuilder, error) {
 	responser := api.NewResponser(webMetrics)
 	audiTrail, err := tracer.NewTracer(log, pgconn, dbMetrics)
 	if err != nil {
@@ -86,10 +86,6 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 
 	keysService := keys.NewKeys(log, pgconn)
 	authService := auth.NewAuth(log, cfg.JWTSecret, "", pgconn, keysService, api.NoPrefix)
-	videoHandlers, err := session_videos.NewHandlers(log, cfg, responser, session_videos.New(log, cfg, pgconn, authService), reqValidator)
-	if err != nil {
-		return nil, err
-	}
 
 	return &serviceBuilder{
 		auth:          authService,
@@ -99,6 +95,5 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		dashboardsAPI: dashboardsHandlers,
 		chartsAPI:     chartsHandlers,
 		searchAPI:     searchHandlers,
-		videoAPI:      videoHandlers,
 	}, nil
 }
