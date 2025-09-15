@@ -298,24 +298,33 @@ func (t *TableQueryBuilder) buildSimplifiedQuery(r *Payload, metricFormat string
 
 	// Build simplified query that only uses sessions table
 	baseSelectParts := []string{
-		fmt.Sprintf("COUNT(DISTINCT %s) OVER () AS main_count", propSel),
-		fmt.Sprintf("%s AS name", propSel),
-		fmt.Sprintf("count(DISTINCT %s) AS total", distinctColumn),
-		fmt.Sprintf("any(total_count) AS total_count", distinctColumn),
+		"COUNT(DISTINCT metric_name) OVER () AS main_count",
+		"metric_name AS name",
+		"count(DISTINCT metric_name) AS total",
+		"any(total_count) AS total_count",
 	}
-
+	log.Println(">>>>>>>>>>>>>>>>")
+	log.Printf("propSel: %s", propSel)
+	log.Printf("distinctColumn: %s", distinctColumn)
+	log.Println(">>>>>>>>>>>>>>>>")
+	sessionProjections := []string{propSel,
+		fmt.Sprintf("%s AS metric_name", propSel),
+		"COUNT(DISTINCT metric_name) OVER () AS total_count"}
+	mainSessionsTable := getMainSessionsTable(r.StartTimestamp)
 	query := fmt.Sprintf(`
 SELECT %s
-FROM (SELECT DISTINCT ON (session_id) *
-      FROM experimental.sessions AS s
+FROM (SELECT DISTINCT ON (%s) %s
+      FROM %s AS s
       WHERE %s
       ORDER BY _timestamp DESC) AS sessions
-GROUP BY %s
+GROUP BY metric_name
 ORDER BY total DESC
 LIMIT %d OFFSET %d`,
 		strings.Join(baseSelectParts, ",\n       "),
+		distinctColumn,
+		strings.Join(sessionProjections, ","),
+		mainSessionsTable,
 		strings.Join(sessionConditions, " AND "),
-		propSel,
 		pagination.Limit,
 		pagination.Offset,
 	)
