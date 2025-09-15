@@ -74,6 +74,14 @@ var propertySelectorMap = map[string]string{
 	string(MetricOfTableFetch):      "`$current_path`",
 	string(MetricOfTableResolution): "if(screen_width = 0 AND screen_height = 0, 'Unknown', concat(toString(screen_width), 'x', toString(screen_height)))",
 }
+var sessionsPorpertySelectorMap = map[string]string{
+	string(MetricOfTableUserId):     "if(notEmpty(user_id), user_id, 'Anonymous')",
+	string(MetricOfTableBrowser):    "user_browser",
+	string(MetricOfTableDevice):     "if(notEmpty(user_device), user_device, 'Undefined')",
+	string(MetricOfTableCountry):    "toString(user_country)",
+	string(MetricOfTableReferrer):   "main.`$referrer`",
+	string(MetricOfTableResolution): "if(screen_width = 0 AND screen_height = 0, 'Unknown', concat(toString(screen_width), 'x', toString(screen_height)))",
+}
 
 func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	if p.MetricOf == "" {
@@ -165,7 +173,10 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	})
 
 	// Check if we should skip events table
-	skipEventsTable := slices.Contains([]string{string(MetricOfTableUserId), string(MetricOfTableCountry), string(MetricOfTableDevice)}, r.MetricOf) && len(eventConditions) == 0 && len(otherConds) == 0
+	skipEventsTable := slices.Contains([]string{
+		string(MetricOfTableUserId), string(MetricOfTableCountry),
+		string(MetricOfTableDevice), string(MetricOfTableBrowser),
+	}, r.MetricOf) && len(eventConditions) == 0 && len(otherConds) == 0
 	if skipEventsTable {
 		return t.buildSimplifiedQuery(r, metricFormat, durConds)
 	}
@@ -274,8 +285,8 @@ LIMIT %d OFFSET %d`,
 }
 
 func (t *TableQueryBuilder) buildSimplifiedQuery(r *Payload, metricFormat string, durConds []string) (string, error) {
-	// Get property selector for user_id
-	propSel, ok := propertySelectorMap[r.MetricOf]
+	// Get property selector for sessions
+	propSel, ok := sessionsPorpertySelectorMap[r.MetricOf]
 	if !ok {
 		// Fallback for MetricOfTableUserId - should typically be available in propertySelectorMap
 		propSel = "user_id"
