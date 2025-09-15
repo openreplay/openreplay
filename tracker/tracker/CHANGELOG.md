@@ -1,3 +1,7 @@
+## 16.4.9
+
+- fix for fflags request call
+
 ## 16.4.8
 
 - fixup for session token storage issue
