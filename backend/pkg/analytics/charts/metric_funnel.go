@@ -166,32 +166,31 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if len(otherConditions) > 0 {
 		baseWhere = append(baseWhere, strings.Join(otherConditions, " AND "))
 	}
-	var joinSessions string
-	if len(sessionConditions) > 0 {
+	var mainTables string = getMainEventsTable(p.StartTimestamp)
+	if len(sessionConditions) > 0 || p.MetricFormat == MetricFormatUserCount {
+		mainTables = fmt.Sprintf("%s AS s INNER JOIN %s AS e USING(session_id)", getMainSessionsTable(p.StartTimestamp), mainTables)
 		baseWhere = append(baseWhere, []string{
 			fmt.Sprintf("s.project_id = %d", p.ProjectId),
 			fmt.Sprintf("s.datetime >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
 			fmt.Sprintf("s.datetime < toDateTime(%d)", p.MetricPayload.EndTimestamp/1000)}...)
-		baseWhere = append(baseWhere, fmt.Sprintf("%s", strings.Join(sessionConditions, " AND ")))
-		joinSessions = "INNER JOIN experimental.sessions AS s ON (e.session_id = s.session_id)"
+		if len(sessionConditions) > 0 {
+			baseWhere = append(baseWhere, fmt.Sprintf("%s", strings.Join(sessionConditions, " AND ")))
+		}
 	}
 
-	groupColumn := fmt.Sprintf("GROUP BY e.session_id")
+	groupColumn := "GROUP BY e.session_id"
 	if p.MetricFormat == MetricFormatUserCount {
-		groupColumn = fmt.Sprintf("GROUP BY s.user_id")
+		groupColumn = "GROUP BY s.user_id"
 	}
-
 	subQuery := fmt.Sprintf(`
         SELECT
             %s
-        FROM %s AS e
-        		%s
+        FROM %s
         WHERE
             %s
         %s`,
 		strings.Join(tColumns, ",\n"),
-		getMainEventsTable(p.StartTimestamp),
-		joinSessions,
+		mainTables,
 		strings.Join(baseWhere, " AND "),
 		groupColumn)
 
@@ -202,7 +201,6 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		strings.Join(stageColumns, ",\n"),
 		subQuery)
 
-	logQuery(fmt.Sprintf("FunnelQueryBuilder.buildQuery: %s", q))
 	return q, nil
 }
 
