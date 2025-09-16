@@ -371,15 +371,6 @@ func BuildDefaultWhere(p *Payload, tableAlias string, timeColumn ...string) []st
 	}
 }
 
-func contains(slice []string, s string) bool {
-	for _, v := range slice {
-		if v == s {
-			return true
-		}
-	}
-	return false
-}
-
 func getStepSize(startTimestamp uint64, endTimestamp uint64, density int, factor int) uint64 {
 	factorInt64 := int64(factor)
 	stepSize := (int64(endTimestamp) / factorInt64) - (int64(startTimestamp) / factorInt64)
