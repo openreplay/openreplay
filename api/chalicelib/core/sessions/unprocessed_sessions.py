@@ -14,10 +14,9 @@ def check_exists(project_id, session_id, not_found_response) -> (int | None, dic
 
     if not sessions.session_exists(project_id=project_id, session_id=session_id):
         logger.warning(f"{project_id}/{session_id} not found in DB.")
-        return session_id, not_found_response
 
-    if not assist.session_exists(project_id=project_id, session_id=session_id):
-        logger.warning(f"{project_id}/{session_id} not found in Assist.")
-        return session_id, not_found_response
+        if not assist.session_exists(project_id=project_id, session_id=session_id):
+            logger.warning(f"{project_id}/{session_id} not found in Assist.")
+            return session_id, not_found_response
 
     return session_id, None
