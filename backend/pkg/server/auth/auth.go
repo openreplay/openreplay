@@ -25,15 +25,22 @@ func NewAuth(log logger.Logger, jwtSecret string, users user.Users) (api.RouterM
 	}, nil
 }
 
-func parseJWT(authHeader, secret string) (*user.JWTClaims, error) {
+func getTokenString(authHeader string) (string, error) {
 	if authHeader == "" {
-		return nil, fmt.Errorf("authorization header missing")
+		return "", fmt.Errorf("authorization header missing")
 	}
 	tokenParts := strings.Split(authHeader, "Bearer ")
 	if len(tokenParts) != 2 {
-		return nil, fmt.Errorf("invalid authorization header")
+		return "", fmt.Errorf("invalid authorization header")
 	}
-	tokenString := tokenParts[1]
+	return tokenParts[1], nil
+}
+
+func parseJWT(authHeader, secret string) (*user.JWTClaims, error) {
+	tokenString, err := getTokenString(authHeader)
+	if err != nil {
+		return nil, err
+	}
 
 	claims := &user.JWTClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,

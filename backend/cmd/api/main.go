@@ -7,14 +7,18 @@ import (
 	apiService "openreplay/backend/pkg/api"
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
 	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/objectstorage/store"
+	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/auth"
 	"openreplay/backend/pkg/server/middleware"
+	"openreplay/backend/pkg/server/tenant"
 )
 
 func main() {
@@ -31,6 +35,12 @@ func main() {
 		log.Fatal(ctx, "can't init postgres connection pool: %s", err)
 	}
 	defer pgPool.Close()
+
+	redisClient, err := redis.New(&cfg.Redis)
+	if err != nil {
+		log.Warn(ctx, "can't init redis connection: %s", err)
+	}
+	defer redisClient.Close()
 
 	chConnection, err := clickhouse.NewConnection(cfg.Clickhouse)
 	if err != nil {
@@ -51,6 +61,23 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init middlewares: %s", err)
 	}
+
+	tenant := tenant.New(pgPool)
+	if err != nil {
+		log.Fatal(ctx, "can't init tenant service: %s", err)
+	}
+
+	projects := projects.New(log, pgPool, redisClient, dbMetric)
+	if err != nil {
+		log.Fatal(ctx, "can't init project service: %s", err)
+	}
+
+	apiAuth, err := auth.NewApiAuth(log, tenant, projects)
+	if err != nil {
+		log.Fatal(ctx, "can't init api auth service: %s", err)
+	}
+
+	middlewares.AddMiddleware(apiAuth)
 
 	router, err := api.NewRouter(log, &cfg.HTTP, api.NoPrefix, services.Handlers(), middlewares.Middlewares())
 	if err != nil {
