@@ -167,6 +167,12 @@ function WidgetChart(props: Props) {
         } else {
           setData(res);
         }
+        if (_metric.metricType === HEATMAP && res.urlPath) {
+          const locationIndex = _metric.series[0].filter.filters.findIndex(f => f.name === "LOCATION")
+          if (locationIndex > -1) {
+            _metric.series[0].filter.filters[locationIndex].filters[0].value = [res.urlPath];
+          }
+        }
         clearTimeout(tm);
         setStale(false);
       })

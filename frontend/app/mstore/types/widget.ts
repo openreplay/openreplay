@@ -126,6 +126,7 @@ export default class Widget {
     namesMap: [],
     avg: 0,
     percentiles: [],
+    urlPath: null,
   };
   isLoading: boolean = false;
   isValid: boolean = false;
@@ -403,7 +404,7 @@ export default class Widget {
   }
 
   setData(
-    data: { timestamp: number; [seriesName: string]: number }[],
+    data: { timestamp: number; [seriesName: string]: number }[] | Record<string, any>,
     period: any,
     isComparison: boolean = false,
     density?: number,
@@ -430,6 +431,7 @@ export default class Widget {
         projectId: 0,
         sessionId: null,
         startTs: 0,
+        urlPath: null,
       };
       if (!data || !data.domURL) {
         this.data = defaults;
