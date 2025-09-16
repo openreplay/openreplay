@@ -2,8 +2,18 @@ import React from 'react';
 import LiveSessionList from 'Shared/LiveSessionList';
 import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import AssistSearchField from './AssistSearchField';
+import { connect } from 'react-redux';
+import { fetchListActive as fetchMetadata } from 'Duck/customField';
 
-function AssistView() {
+interface Props {
+  fetchMetadata: () => void;
+}
+
+function AssistView(props: Props) {
+  React.useEffect(() => {
+    props.fetchMetadata();
+  }, []);
+
   return (
     <div className="w-full mx-auto" style={{ maxWidth: '1300px'}}>
       <AssistSearchField />
@@ -14,4 +24,4 @@ function AssistView() {
   )
 }
 
-export default AssistView;
+export default connect(null, { fetchMetadata })(AssistView);

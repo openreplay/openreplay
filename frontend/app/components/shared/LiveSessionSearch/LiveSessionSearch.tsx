@@ -12,9 +12,10 @@ interface Props {
   addFilter: typeof addFilter;
   saveRequestPayloads: boolean;
   loading?: boolean;
+  metaLoading?: boolean;
 }
 function LiveSessionSearch(props: Props) {
-  const { appliedFilter, saveRequestPayloads = false, loading = false } = props;
+  const { appliedFilter, saveRequestPayloads = false, loading = false, metaLoading = false } = props;
   const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
 
@@ -22,7 +23,7 @@ function LiveSessionSearch(props: Props) {
   useSessionSearchQueryHandler({
     appliedFilter,
     applyFilter: props.edit,
-    loading,
+    loading: loading || metaLoading,
   });
 
   const onAddFilter = (filter: any) => {
@@ -101,4 +102,5 @@ export default connect((state: any) => ({
   saveRequestPayloads: state.getIn(['site', 'active', 'saveRequestPayloads']),
   appliedFilter: state.getIn([ 'liveSearch', 'instance' ]),
   loading: state.getIn(['liveSearch', 'fetchSessionListRequest', 'loading']) || false,
+  metaLoading: state.getIn(['customFields', 'fetchRequestActive', 'loading']) || false,
 }), { edit, addFilter })(LiveSessionSearch);

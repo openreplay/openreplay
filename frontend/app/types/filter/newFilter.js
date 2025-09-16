@@ -161,8 +161,8 @@ export const addElementToLiveFiltersMap = (
   category = FilterCategory.METADATA,
   key,
   type = FilterType.MULTIPLE,
-  operator = 'contains',
-  operatorOptions = containsFilters,
+  operator = 'is',
+  operatorOptions = filterOptions.stringOperators,
   icon = 'filters/metadata'
 ) => {
   liveFiltersMap[key] = {
@@ -170,7 +170,7 @@ export const addElementToLiveFiltersMap = (
       operator: operator,
       operatorOptions,
       icon,
-      operatorDisabled: true,
+      operatorDisabled: false,
       isLive: true
   }
 }
