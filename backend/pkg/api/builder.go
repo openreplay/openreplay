@@ -6,6 +6,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 
 	config "openreplay/backend/internal/config/session"
+	"openreplay/backend/pkg/api_key"
 	"openreplay/backend/pkg/assist/proxy"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/events"
@@ -33,10 +34,11 @@ type serviceBuilder struct {
 	favoriteAPI api.Handlers
 	noteAPI     api.Handlers
 	replayAPI   api.Handlers
+	apiKeyAPI   api.Handlers
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.sessionAPI, b.eventAPI, b.favoriteAPI, b.noteAPI, b.replayAPI}
+	return []api.Handlers{b.sessionAPI, b.eventAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI}
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chconn clickhouse.Conn, objStore objectstorage.ObjectStorage) (api.ServiceBuilder, error) {
@@ -99,11 +101,17 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
+	apiKeyHandlers, err := api_key.NewHandlers(log, &cfg.HTTP, responser, projectService)
+	if err != nil {
+		return nil, err
+	}
+
 	return &serviceBuilder{
 		sessionAPI:  sessionHandlers,
 		eventAPI:    eventHandlers,
 		favoriteAPI: favHandlers,
 		noteAPI:     noteHandlers,
 		replayAPI:   replayHandlers,
+		apiKeyAPI:   apiKeyHandlers,
 	}, nil
 }

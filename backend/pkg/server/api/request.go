@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/klauspost/compress/gzip"
@@ -12,6 +13,8 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/user"
 )
+
+const API_KEY_PREFIX = "/vx/" // TODO: change back to v1 once the other endpoints are removed
 
 func GetProject(r *http.Request) (uint32, error) {
 	vars := mux.Vars(r)
@@ -21,6 +24,15 @@ func GetProject(r *http.Request) (uint32, error) {
 		return 0, err
 	}
 	return uint32(projectID), nil
+}
+
+func GetParam(r *http.Request, param string) (string, error) {
+	vars := mux.Vars(r)
+	value := vars[param]
+	if value == "" {
+		return "", fmt.Errorf("missing %s in request", param)
+	}
+	return value, nil
 }
 
 func GetSession(r *http.Request) string {
@@ -85,4 +97,8 @@ func ReadCompressedBody(log logger.Logger, w http.ResponseWriter, r *http.Reques
 		return nil, err
 	}
 	return bodyBytes, nil
+}
+
+func IsApiKeyRequest(r *http.Request) bool {
+	return strings.HasPrefix(r.URL.Path, API_KEY_PREFIX) && r.Header.Get("Authorization") != ""
 }
