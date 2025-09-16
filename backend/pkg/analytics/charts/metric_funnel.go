@@ -166,7 +166,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if len(otherConditions) > 0 {
 		baseWhere = append(baseWhere, strings.Join(otherConditions, " AND "))
 	}
-	var mainTables string = getMainEventsTable(p.StartTimestamp)
+	var mainTables string = fmt.Sprintf("%s AS e", getMainEventsTable(p.StartTimestamp))
 	if len(sessionConditions) > 0 || p.MetricFormat == MetricFormatUserCount {
 		mainTables = fmt.Sprintf("%s AS s INNER JOIN %s AS e USING(session_id)", getMainSessionsTable(p.StartTimestamp), mainTables)
 		baseWhere = append(baseWhere, []string{
