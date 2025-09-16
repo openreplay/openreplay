@@ -28,37 +28,39 @@ function SessionsBy(props: Props) {
   );
 
   const onClickHandler = (event: any, data: any) => {
-    console.log('data', data);
-    const baseFilter = {
-      ...filtersMap[metric.metricOf],
-      value: [data.name],
-      name: filtersMap[metric.metricOf].key,
-      filters: [],
-    };
+    onClick([]);
+    setTimeout(() => {
+      const baseFilter = {
+        ...filtersMap[metric.metricOf],
+        value: [data.name],
+        name: filtersMap[metric.metricOf].key,
+        filters: [],
+      };
 
-    if (metric.metricOf === FilterKey.FETCH) {
-      baseFilter.filters = [
-        {
-          key: FilterKey.FETCH_URL,
-          operator: 'is',
-          value: [data.name],
-          name: FilterKey.FETCH_URL,
-        },
-      ];
-    }
+      if (metric.metricOf === FilterKey.FETCH) {
+        baseFilter.filters = [
+          {
+            key: FilterKey.FETCH_URL,
+            operator: 'is',
+            value: [data.name],
+            name: FilterKey.FETCH_URL,
+          },
+        ];
+      }
 
-    const {
-      key,
-      operatorOptions,
-      category,
-      icon,
-      label,
-      options,
-      ...finalFilter
-    } = baseFilter;
+      const {
+        key,
+        operatorOptions,
+        category,
+        icon,
+        label,
+        options,
+        ...finalFilter
+      } = baseFilter;
 
-    setSelected(data.name);
-    onClick([finalFilter]);
+      setSelected(data.name);
+      onClick([finalFilter]);
+    }, 0);
   };
 
   const showMore = (e: any) => {

@@ -476,9 +476,9 @@ export default class Widget {
       _data.funnel = new Funnel().fromJSON(data);
     } else if (this.metricType === TABLE) {
       const count = data['count'];
-      const vals = data['values'].map((s: any) =>
+      const vals = data['values'] ? data['values'].map((s: any) =>
         new SessionsByRow().fromJson(s, count, this.metricOf),
-      );
+      ) : [];
       _data['values'] = vals;
       _data['total'] = data['total'];
     } else {
