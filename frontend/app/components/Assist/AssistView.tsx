@@ -7,12 +7,10 @@ import { fetchListActive as fetchMetadata } from 'Duck/customField';
 
 interface Props {
   fetchMetadata: () => void;
-  metaLoading: boolean;
 }
 
 function AssistView(props: Props) {
   React.useEffect(() => {
-    // Ensure custom fields are loaded for metadata filters
     props.fetchMetadata();
   }, []);
 
@@ -26,6 +24,4 @@ function AssistView(props: Props) {
   )
 }
 
-export default connect((state: any) => ({
-  metaLoading: state.getIn(['customFields', 'fetchRequestActive', 'loading']),
-}), { fetchMetadata })(AssistView);
+export default connect(null, { fetchMetadata })(AssistView);
