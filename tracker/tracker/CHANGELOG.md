@@ -1,3 +1,7 @@
+## 16.4.10
+
+- bump networkproxy version to prevent parsing binary responses
+
 ## 16.4.9
 
 - fix for fflags request call
