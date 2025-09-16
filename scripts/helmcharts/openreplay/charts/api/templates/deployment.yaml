@@ -59,6 +59,18 @@ spec:
               value: '{{ .Values.global.kafka.kafkaUseSsl }}'
             - name: JWT_SECRET
               value: {{ .Values.global.jwtSecret }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "access-key" "ctx" .) | nindent 18 }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "secret-key" "ctx" .) | nindent 18 }}
+            - name: AWS_ENDPOINT
+              value: '{{- include "openreplay.s3Endpoint" . }}'
+            - name: AWS_REGION
+              value: '{{ .Values.global.s3.region }}'
+            - name: BUCKET_NAME
+              value: {{ .Values.global.s3.recordingsBucket }}
             - name: CH_USERNAME
               value: '{{ .Values.global.clickhouse.username }}'
             - name: CH_PASSWORD
