@@ -23,7 +23,7 @@ function LiveSessionSearch(props: Props) {
   useSessionSearchQueryHandler({
     appliedFilter,
     applyFilter: props.edit,
-    loading: loading || metaLoading, // Wait for both session loading AND metadata loading
+    loading: loading || metaLoading,
   });
 
   const onAddFilter = (filter: any) => {
