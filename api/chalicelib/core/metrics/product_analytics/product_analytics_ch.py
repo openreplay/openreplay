@@ -13,7 +13,7 @@ from chalicelib.utils.metrics_helper import get_step_size
 logger = logging.getLogger(__name__)
 
 JOURNEY_TYPES = {
-    schemas.ProductAnalyticsSelectedEventType.LOCATION: {"eventType": "LOCATION", "column": "`$properties`.url_path"},
+    schemas.ProductAnalyticsSelectedEventType.LOCATION: {"eventType": "LOCATION", "column": "`$current_path`"},
     schemas.ProductAnalyticsSelectedEventType.CLICK: {"eventType": "CLICK", "column": "`$properties`.label"},
     schemas.ProductAnalyticsSelectedEventType.INPUT: {"eventType": "INPUT", "column": "`$properties`.label"},
     schemas.ProductAnalyticsSelectedEventType.CUSTOM_EVENT: {"eventType": "CUSTOM", "column": "`$properties`.name"}
