@@ -208,6 +208,10 @@ func (e *eventsImpl) GetBySessionID(projID uint32, sessID uint64, doGroupClickRa
 		return nil
 	}
 
+	return e.groupClicksToClickRage(projID, sessID, sessEvents)
+}
+
+func (e *eventsImpl) groupClicksToClickRage(projID uint32, sessID uint64, sessEvents []event) []interface{} {
 	// Get issues by sessID
 	clickRageEvents := e.getIssues(projID, sessID, "click_rage")
 	crPtr, toSkip := -1, 0 // pointer for issues and events lists
@@ -445,18 +449,80 @@ func (e *eventsImpl) GetIncidentsBySessionID(projID uint32, sessID uint64) []int
 }
 
 func (e *eventsImpl) GetMobileBySessionID(projID uint32, sessID uint64) []interface{} {
-	// TODO: there is no CH implementation
-	return nil
+	query := `SELECT created_at,
+              	toString(` + "`$properties`" + `) AS p_properties,
+              	` + "`$event_name`" + ` AS type,
+              	` + "`$duration_s`" + ` AS duration,
+              	` + "`$current_url`" + ` AS url,
+              	` + "`$referrer`" + ` AS referrer
+              FROM product_analytics.events
+              WHERE session_id = ?
+              	AND ` + "`$event_name`" + ` IN ('CLICK', 'INPUT', 'LOCATION', 'TAP')
+				AND ` + "`$auto_captured`" + `
+			  ORDER BY created_at;`
+	sessEvents := make([]event, 0)
+	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID); err != nil {
+		fmt.Println("Error querying events:", err)
+		return nil
+	}
+	return e.groupClicksToClickRage(projID, sessID, sessEvents)
+}
+
+type mobileEvent struct {
+	Type         string    `ch:"type"`
+	Name         string    `ch:"name"`
+	AutoCaptures string    `ch:"auto_captures"`
+	Properties   string    `ch:"properties"`
+	CreatedAt    time.Time `ch:"created_at"`
+	Timestamp    int64     `ch:"timestamp"`
 }
 
 func (e *eventsImpl) GetMobileCrashesBySessionID(sessID uint64) []interface{} {
-	// TODO: there is no CH implementation
-	return nil
+	query := `SELECT ` + "`$properties`" + `AS auto_captures,
+				properties,	
+				created_at,
+				'CRASH' AS type,
+				` + "`$event_name`" + ` AS name
+			  FROM product_analytics.events
+			  WHERE session_id = ?
+				AND NOT ` + "`$auto_captured`" + `
+				AND ` + "`$event_name`" + ` = 'CRASH'
+			  ORDER BY created_at;`
+	sessEvents := make([]mobileEvent, 0)
+	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID); err != nil {
+		fmt.Println("Error querying events:", err)
+		return nil
+	}
+	res := make([]interface{}, 0, len(sessEvents))
+	for _, sessEvent := range sessEvents {
+		sessEvent.Timestamp = sessEvent.CreatedAt.Unix()
+		res = append(res, sessEvent)
+	}
+	return res
 }
 
 func (e *eventsImpl) GetMobileCustomsBySessionID(projID uint32, sessID uint64) []interface{} {
-	// TODO: there is no CH implementation
-	return nil
+	query := `SELECT ` + "`$properties`" + `AS auto_captures,
+				properties,
+				created_at,
+				'CUSTOM' AS type,
+				` + "`$event_name`" + `AS name
+			  FROM product_analytics.events
+			  WHERE session_id = ?
+				AND NOT ` + "`$auto_captured`" + `
+				AND ` + "`$event_name`" + ` != 'INCIDENT'
+			  ORDER BY created_at;`
+	sessEvents := make([]mobileEvent, 0)
+	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID); err != nil {
+		fmt.Println("Error querying events:", err)
+		return nil
+	}
+	res := make([]interface{}, 0, len(sessEvents))
+	for _, sessEvent := range sessEvents {
+		sessEvent.Timestamp = sessEvent.CreatedAt.Unix()
+		res = append(res, sessEvent)
+	}
+	return res
 }
 
 func (e *eventsImpl) GetClickMaps(projID uint32, sessID uint64, url string) ([]interface{}, error) {
