@@ -136,8 +136,8 @@ const transformFilters = function (filter) {
         if (filter[key].operator) {
             debug && console.log(`[WS]where operator=${filter[key].operator}`);
         } else {
-            debug && console.log(`[WS]where operator=DEFAULT-contains`);
-            filter[key].operator = "contains";
+            debug && console.log(`[WS]where operator=DEFAULT-is`);
+            filter[key].operator = "is";
         }
     }
     return filter;
