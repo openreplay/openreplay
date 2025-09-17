@@ -95,7 +95,3 @@ func (b *corsImpl) Middleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-func (b *baseMiddlewareBuilderImpl) AddMiddleware(mw api.RouterMiddleware) {
-	b.middlewares = append(b.middlewares, mw)
-}
