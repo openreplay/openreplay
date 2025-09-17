@@ -113,25 +113,7 @@ export default class MetricStore {
   // }
 
   get filteredCards() {
-    const filterRE = this.filter.query ? getRE(this.filter.query, 'i') : null;
-    const dbIds = this.filter.dashboard
-      ? this.filter.dashboard.map((i: any) => i.value)
-      : [];
-    return this.metrics.filter(
-      (card) =>
-        (this.filter.showMine
-          ? card.owner ===
-            JSON.parse(localStorage.getItem('user')!).account.email
-          : true) &&
-        handleTypeFilter(card, this.filter.type) &&
-        (!dbIds.length ||
-          card.dashboards
-            .map((i) => i.dashboardId)
-            .some((id) => dbIds.includes(id))) &&
-        // @ts-ignore
-        (!filterRE ||
-          ['name', 'owner'].some((key) => filterRE.test(card[key]))),
-    );
+    return this.metrics
     // .sort((a, b) =>
     //   this.sort.by === 'desc'
     //     ? b.lastModified - a.lastModified

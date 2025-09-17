@@ -20,7 +20,6 @@ function MetricsList({
 }) {
   const { t } = useTranslation();
   const { metricStore, dashboardStore } = useStore();
-  const metricsSearch = metricStore.filter.query;
   const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
 
   const dashboard = dashboardStore.selectedDashboard;
