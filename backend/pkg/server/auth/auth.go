@@ -2,26 +2,32 @@ package auth
 
 import (
 	"fmt"
-	"openreplay/backend/pkg/server/api"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/tenant"
 	"openreplay/backend/pkg/server/user"
 )
 
 type authImpl struct {
-	log    logger.Logger
-	secret string
-	users  user.Users
+	log      logger.Logger
+	secret   string
+	users    user.Users
+	projects *projects.Projects
+	tenants  *tenant.Tenants
 }
 
-func NewAuth(log logger.Logger, jwtSecret string, users user.Users) (api.RouterMiddleware, error) {
+func NewAuth(log logger.Logger, jwtSecret string, users user.Users, tenants *tenant.Tenants, projects *projects.Projects) (api.RouterMiddleware, error) {
 	return &authImpl{
-		log:    log,
-		secret: jwtSecret,
-		users:  users,
+		log:      log,
+		secret:   jwtSecret,
+		users:    users,
+		projects: projects,
+		tenants:  tenants,
 	}, nil
 }
 

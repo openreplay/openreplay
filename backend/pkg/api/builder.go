@@ -41,8 +41,7 @@ func (b *serviceBuilder) Handlers() []api.Handlers {
 	return []api.Handlers{b.sessionAPI, b.eventAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI}
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chconn clickhouse.Conn, objStore objectstorage.ObjectStorage) (api.ServiceBuilder, error) {
-	projectService := projects.New(log, pgconn, nil, dbMetrics)
+func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chconn clickhouse.Conn, objStore objectstorage.ObjectStorage, projects projects.Projects) (api.ServiceBuilder, error) {
 	responser := api.NewResponser(webMetrics)
 
 	viewService, err := views.New(pgconn, chconn)
@@ -50,7 +49,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, fmt.Errorf("failed to create view service: %s", err)
 	}
 
-	assistProxy, err := proxy.New(log, cfg, projectService)
+	assistProxy, err := proxy.New(log, cfg, projects)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create assist proxy: %s", err)
 	}
@@ -101,7 +100,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	apiKeyHandlers, err := api_key.NewHandlers(log, &cfg.HTTP, responser, projectService)
+	apiKeyHandlers, err := api_key.NewHandlers(log, &cfg.HTTP, responser, projects)
 	if err != nil {
 		return nil, err
 	}
