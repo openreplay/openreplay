@@ -11,10 +11,12 @@ import (
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/auth"
 	"openreplay/backend/pkg/server/limiter"
 	"openreplay/backend/pkg/server/permissions"
+	"openreplay/backend/pkg/server/tenant"
 	"openreplay/backend/pkg/server/tracer"
 	"openreplay/backend/pkg/server/user"
 )
@@ -27,10 +29,10 @@ func (b *baseMiddlewareBuilderImpl) Middlewares() []api.RouterMiddleware {
 	return b.middlewares
 }
 
-func NewMiddlewareBuilder(log logger.Logger, jwtSecret string, http *common.HTTP, rtc *common.RateLimiter, pgPool pool.Pool, dbMetric database.Database, handlers []api.Handlers) (api.MiddlewareBuilder, error) {
+func NewMiddlewareBuilder(log logger.Logger, jwtSecret string, http *common.HTTP, rtc *common.RateLimiter, pgPool pool.Pool, dbMetric database.Database, handlers []api.Handlers, tenants *tenant.Tenants, projects *projects.Projects) (api.MiddlewareBuilder, error) {
 	healthCheck := NewHealthCheck()
 	corsCheck := NewCors(http.UseAccessControlHeaders)
-	authenticator, err := auth.NewAuth(log, jwtSecret, user.New(pgPool))
+	authenticator, err := auth.NewAuth(log, jwtSecret, user.New(pgPool), tenants, projects)
 	if err != nil {
 		return nil, fmt.Errorf("error creating auth middleware: %s", err)
 	}

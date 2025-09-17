@@ -23,7 +23,6 @@ type ServiceBuilder interface {
 
 type MiddlewareBuilder interface {
 	Middlewares() []RouterMiddleware
-	AddMiddleware(middleware RouterMiddleware)
 }
 
 type RouterMiddleware interface {
