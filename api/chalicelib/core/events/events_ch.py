@@ -58,6 +58,12 @@ def __get_grouped_clickrage(rows, session_id, project_id):
     return rows
 
 
+def _numeric_property_available(props: dict, key: str) -> bool:
+    return key in props \
+        and (isinstance(props[key], str) and props[key].isnumeric() \
+             or isinstance(props[key], int))
+
+
 def extract_required_values(rows):
     for row in rows:
         # props = row.pop("$properties")
@@ -72,28 +78,49 @@ def extract_required_values(rows):
 
         # To extract/transform required attributes
         if row["type"] == "CLICK":
-            row["hesitation"] = props.get("hesitation_time")
+            row["hesitation"] = int(props["hesitation_time"]) \
+                if _numeric_property_available(props, "hesitation_time") else props.get("hesitation_time")
             row["selector"] = props.get("selector")
         elif row["type"] == "INPUT":
             row["value"] = props.get("value")
-            row["hesitation"] = props.get("hesitation_time")
+            row["hesitation"] = int(props["hesitation_time"]) \
+                if _numeric_property_available(props, "hesitation_time") else props.get("hesitation_time")
             row["duration"] *= 1000
         elif row["type"] == "LOCATION":
             parsed_url = urlparse(row["url"])
             row["host"] = parsed_url.hostname
             row["pageLoad"] = None  # TODO: find how to compute this value
-            row["fcpTime"] = props.get("first_contentful_paint_time")
-            row["loadTime"] = props["load_event_end"] - props["load_event_start"] \
-                if "load_event_end" in props else None
-            row["domContentLoadedTime"] = (props["dom_content_loaded_event_end"]
-                                           - props["dom_content_loaded_event_start"]) \
-                if "dom_content_loaded_event_end" in props else None
-            row["domBuildingTime"] = props.get("dom_building_time")
-            row["speedIndex"] = props.get("speed_index")
-            row["visuallyComplete"] = props.get("visually_complete")
-            row["timeToInteractive"] = props.get("time_to_interactive")
-            row["firstContentfulPaintTime"] = props.get("first_contentful_paint_time")
-            row["firstPaintTime"] = props.get("first_paint")
+            row["fcpTime"] = int(props["first_contentful_paint_time"]) \
+                if _numeric_property_available(props, "first_contentful_paint_time") \
+                else props.get("first_contentful_paint_time")
+            row["loadTime"] = int(props["load_event_end"]) - int(props["load_event_start"]) \
+                if _numeric_property_available(props, "load_event_end") \
+                else None
+            row["domContentLoadedTime"] = int(props["dom_content_loaded_event_end"]) \
+                                          - int(props["dom_content_loaded_event_start"]) \
+                if "dom_content_loaded_event_end" in props and \
+                   (isinstance(props["dom_content_loaded_event_end"], str) \
+                    and props["dom_content_loaded_event_end"].isnumeric() \
+                    or isinstance(props["dom_content_loaded_event_end"], int)) \
+                else None
+            row["domBuildingTime"] = int(props["dom_building_time"]) \
+                if _numeric_property_available(props, "dom_building_time") \
+                else props.get("dom_building_time")
+            row["speedIndex"] = int(props["speed_index"]) \
+                if _numeric_property_available(props, "speed_index") \
+                else props.get("speed_index")
+            row["visuallyComplete"] = int(props["visually_complete"]) \
+                if _numeric_property_available(props, "visually_complete") \
+                else props.get("visually_complete")
+            row["timeToInteractive"] = int(props["time_to_interactive"]) \
+                if _numeric_property_available(props, "time_to_interactive") \
+                else props.get("time_to_interactive")
+            row["firstContentfulPaintTime"] = int(props["first_contentful_paint_time"]) \
+                if _numeric_property_available(props, "first_contentful_paint_time") \
+                else props.get("first_contentful_paint_time")
+            row["firstPaintTime"] = props["first_paint"] \
+                if _numeric_property_available(props, "first_paint") \
+                else props.get("first_paint")
 
 
 def get_by_session_id(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
@@ -129,16 +156,27 @@ def get_by_session_id(session_id, project_id, group_clickrage=False, event_type:
 
 
 def get_errors_by_session_id(session_id, project_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(f"""\
-                    SELECT er.*,ur.*, er.timestamp - s.start_ts AS time
-                    FROM events.errors AS er INNER JOIN public.errors AS ur USING (error_id) INNER JOIN public.sessions AS s USING (session_id)
-                    WHERE er.session_id = %(session_id)s AND s.project_id=%(project_id)s
-                    ORDER BY timestamp;""", {"session_id": session_id, "project_id": project_id}))
-        errors = cur.fetchall()
-        for e in errors:
+    with ch_client.ClickHouseClient() as cur:
+        rows = cur.execute(""" \
+                           SELECT error_id,
+                                  project_id,
+                                  `$time` AS time,
+                                `$properties`.source  AS source,
+                                'ERROR'               AS name,
+                                `$properties`.message AS message,
+                                `$properties`.payload AS payload,
+                                stacktrace,
+                                stacktrace_parsed_at
+                           FROM product_analytics.events
+                               LEFT JOIN experimental.parsed_errors USING (error_id)
+                           WHERE "$event_name" = 'ERROR'
+                             AND session_id = %(session_id)s
+                             AND project_id = %(project_id)s
+                           ORDER BY created_at;""",
+                           {"session_id": session_id, "project_id": project_id})
+        for e in rows:
             e["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(e["stacktrace_parsed_at"])
-        return helper.list_to_camel_case(errors)
+        return helper.list_to_camel_case(rows)
 
 
 def get_incidents_by_session_id(session_id, project_id):
