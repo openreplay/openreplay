@@ -110,11 +110,6 @@ def get_events(project_id, session_id):
             }
             if __is_mobile_session(s_data["platform"]):
                 data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id)
-                for e in data['events']:
-                    if e["type"].endswith("_IOS"):
-                        e["type"] = e["type"][:-len("_IOS")]
-                    elif e["type"].endswith("_MOBILE"):
-                        e["type"] = e["type"][:-len("_MOBILE")]
                 data['crashes'] = events.get_mobile_crashes_by_session_id(session_id=session_id)
             else:
                 data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
