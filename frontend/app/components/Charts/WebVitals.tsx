@@ -69,6 +69,7 @@ function WebVitals({
   onFocus?: (filters: any[]) => void;
   inGrid?: boolean;
 }) {
+  const [searchedBy, setSearchedBy] = React.useState<string | null>(null);
   const [selectedCard, setSelectedCard] = React.useState<string | null>(null);
   const [mode, setMode] = React.useState<'P50' | 'P75' | 'Min' | 'Avg' | 'Max'>(
     'P50',
@@ -160,25 +161,46 @@ function WebVitals({
     if (metricName === selectedCard || metricName === null) {
       setSelectedCard(null);
       onFocus?.([]);
+      setSearchedBy(null);
       return;
     }
+    const filterObj = {
+      autoCaptured: true,
+      type: filterKeys[metricName],
+      name: filterKeys[metricName],
+      operator: '',
+      isEvent: false,
+      hasSource: true,
+      sourceOperator: '',
+      value: [],
+    };
     const filters: any[] = [];
-    const keys = data.raw[metricName][status]; // [start, end?];
-    keys.forEach((key: string, i: number) => {
-      const operator = i > 0 ? '<=' : '>=';
-      const fValue = [String(key)];
-      let filter = {
-        autoCaptured: true,
-        type: filterKeys[metricName],
-        name: filterKeys[metricName],
-        operator: operator,
-        isEvent: false,
-        hasSource: true,
-        sourceOperator: operator,
-        value: fValue,
-      };
-      filters.push(filter);
-    });
+    if (['Min', 'Max'].includes(mode)) {
+      filters.push({
+        ...filterObj,
+        operator: '=',
+        sourceOperator: '=',
+        value: [String(data.raw[metricName][mode])],
+      });
+      setSearchedBy(mode);
+    } else {
+      // [startVal, bottomValue]
+      const keys = data.raw[metricName][status];
+      keys.forEach((key: string, i: number) => {
+        const operator = i > 0 ? '<=' : '>=';
+        const fValue = [String(key)];
+        filters.push({
+          operator: operator,
+          sourceOperator: operator,
+          value: fValue,
+        });
+      });
+      const searchStr =
+        keys.length === 2
+          ? `from ${keys[0]}ms to ${keys[1]}ms`
+          : `more than ${keys[0]}ms`;
+      setSearchedBy(searchStr);
+    }
     onFocus?.(filters);
     setSelectedCard(metricName);
   };
@@ -202,6 +224,8 @@ function WebVitals({
                   {metrics.find((m) => m.metricKey === selectedCard)
                     ?.description ?? 'unknown metric'}
                 </div>
+                <div>&mdash;</div>
+                <div className="capitalize">{searchedBy}</div>
                 <X size={12} />
               </div>
             ) : null}
