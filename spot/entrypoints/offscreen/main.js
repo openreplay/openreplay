@@ -60,6 +60,10 @@ function getRecordingSettings(qualityValue) {
 }
 
 class ScreenRecorder {
+  audioCtx = null;
+  mixDest = null;
+  tabSource = null;
+  micSource = null;
   isRecording = false;
   videoBlob = null;
   videoUrl = null;
@@ -77,6 +81,16 @@ class ScreenRecorder {
   }
 
   clearAll() {
+    try {
+      this.tabSource && this.tabSource.disconnect();
+      this.micSource && this.micSource.disconnect();
+      this.mixDest = null;
+      if (this.audioCtx) {
+        this.audioCtx.close();
+        this.audioCtx = null;
+      }
+    } catch (e) {}
+
     this.isRecording = false;
     this.videoBlob = null;
     this.videoUrl = null;
@@ -146,6 +160,15 @@ class ScreenRecorder {
         this.audioTrack.stop();
         this.audioTrack = null;
       }
+      try {
+        this.tabSource && this.tabSource.disconnect();
+        this.micSource && this.micSource.disconnect();
+        this.mixDest = null;
+        if (this.audioCtx) {
+          this.audioCtx.close();
+          this.audioCtx = null;
+        }
+      } catch (e) { }
       this.isRecording = false;
       this.clearDurationInterval();
     };
@@ -238,14 +261,27 @@ class ScreenRecorder {
       this.audioTrack = this.createPlaceholderAudioTrack();
     }
 
+    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    this.mixDest = this.audioCtx.createMediaStreamDestination();
+
     const existingAudioTracks = this.videoStream.getAudioTracks();
     if (existingAudioTracks.length > 0) {
       existingAudioTracks.forEach(track => track.enabled = true);
+      const tabAudioStream = new MediaStream([existingAudioTracks[0]]);
+      this.tabSource = this.audioCtx.createMediaStreamSource(tabAudioStream);
+      this.tabSource.connect(this.mixDest);
+      this.tabSource.connect(this.audioCtx.destination);
+    }
+
+    if (this.audioTrack) {
+      const micStream = new MediaStream([this.audioTrack]);
+      this.micSource = this.audioCtx.createMediaStreamSource(micStream);
+      this.micSource.connect(this.mixDest);
     }
 
     return new MediaStream([
       ...this.videoStream.getVideoTracks(),
-      this.audioTrack,
+      this.mixDest.stream.getAudioTracks()[0],
     ]);
   }
 

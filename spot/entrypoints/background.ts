@@ -976,7 +976,7 @@ export default defineBackground(() => {
     try {
       await browser.offscreen.createDocument({
         url: "offscreen.html",
-        reasons: ["DISPLAY_MEDIA", "USER_MEDIA", "BLOBS"],
+        reasons: ["DISPLAY_MEDIA", "USER_MEDIA", "BLOBS", "AUDIO_PLAYBACK"],
         justification: "Recording from chrome.tabCapture API",
       });
     } catch (e) {
