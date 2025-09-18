@@ -15,6 +15,7 @@ import (
 type Projects interface {
 	GetProject(projectID uint32) (*Project, error)
 	GetProjectByKey(projectKey string) (*Project, error)
+	GetProjectByKeyAndTenant(projectKey string, tenantId int) (*Project, error)
 }
 
 type projectsImpl struct {

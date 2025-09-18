@@ -17,15 +17,15 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/server/keys"
 	"openreplay/backend/pkg/server/user"
+	"openreplay/backend/pkg/spot/keys"
 	"openreplay/backend/pkg/spot/service"
 	"openreplay/backend/pkg/spot/transcoder"
 )
 
 type handlersImpl struct {
 	log           logger.Logger
-	responser     *api.Responser
+	responser     api.Responser
 	jsonSizeLimit int64
 	spots         service.Spots
 	objStorage    objectstorage.ObjectStorage
@@ -33,7 +33,7 @@ type handlersImpl struct {
 	keys          keys.Keys
 }
 
-func NewHandlers(log logger.Logger, cfg *spotConfig.Config, responser *api.Responser, spots service.Spots, objStore objectstorage.ObjectStorage, transcoder transcoder.Transcoder, keys keys.Keys) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *spotConfig.Config, responser api.Responser, spots service.Spots, objStore objectstorage.ObjectStorage, transcoder transcoder.Transcoder, keys keys.Keys) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,
@@ -47,18 +47,18 @@ func NewHandlers(log logger.Logger, cfg *spotConfig.Config, responser *api.Respo
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/spots", "POST", e.createSpot, api.NoPermissions, api.DoNotTrack},
-		{"/v1/spots/{id}", "GET", e.getSpot, api.NoPermissions, api.DoNotTrack},
-		{"/v1/spots/{id}", "PATCH", e.updateSpot, api.NoPermissions, api.DoNotTrack},
-		{"/v1/spots", "GET", e.getSpots, api.NoPermissions, api.DoNotTrack},
-		{"/v1/spots", "DELETE", e.deleteSpots, api.NoPermissions, api.DoNotTrack},
-		{"/v1/spots/{id}/comment", "POST", e.addComment, api.NoPermissions, api.DoNotTrack},
-		{"/v1/spots/{id}/uploaded", "POST", e.uploadedSpot, api.NoPermissions, api.DoNotTrack},
-		{"/v1/spots/{id}/video", "GET", e.getSpotVideo, api.NoPermissions, api.DoNotTrack},
-		{"/v1/spots/{id}/public-key", "GET", e.getPublicKey, api.NoPermissions, api.DoNotTrack},
-		{"/v1/spots/{id}/public-key", "PATCH", e.updatePublicKey, api.NoPermissions, api.DoNotTrack},
-		{"/v1/spots/{id}/status", "GET", e.spotStatus, api.NoPermissions, api.DoNotTrack},
-		{"/v1/ping", "GET", e.ping, api.NoPermissions, api.DoNotTrack},
+		{"/v1/spots", "POST", e.createSpot, []string{"SPOT"}, "createSpot"},
+		{"/v1/spots/{id}", "GET", e.getSpot, []string{"SPOT"}, "getSpot"},
+		{"/v1/spots/{id}", "PATCH", e.updateSpot, []string{"SPOT"}, "updateSpot"},
+		{"/v1/spots", "GET", e.getSpots, []string{"SPOT"}, "getSpots"},
+		{"/v1/spots", "DELETE", e.deleteSpots, []string{"SPOT"}, "deleteSpots"},
+		{"/v1/spots/{id}/comment", "POST", e.addComment, []string{"SPOT"}, "addComment"},
+		{"/v1/spots/{id}/uploaded", "POST", e.uploadedSpot, []string{"SPOT"}, api.DoNotTrack},
+		{"/v1/spots/{id}/video", "GET", e.getSpotVideo, []string{"SPOT"}, "getSpotVideo"},
+		{"/v1/spots/{id}/public-key", "GET", e.getPublicKey, []string{"SPOT", "SPOT_PUBLIC"}, api.DoNotTrack},
+		{"/v1/spots/{id}/public-key", "PATCH", e.updatePublicKey, []string{"SPOT", "SPOT_PUBLIC"}, "updatePublicKey"},
+		{"/v1/spots/{id}/status", "GET", e.spotStatus, []string{"SPOT"}, api.DoNotTrack},
+		{"/v1/ping", "GET", e.ping, []string{"SPOT"}, api.DoNotTrack},
 	}
 }
 

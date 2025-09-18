@@ -33,10 +33,6 @@ type serviceBuilder struct {
 	tagsAPI         api.Handlers
 }
 
-func (b *serviceBuilder) Middlewares() []api.RouterMiddleware {
-	return []api.RouterMiddleware{}
-}
-
 func (b *serviceBuilder) Handlers() []api.Handlers {
 	return []api.Handlers{b.webAPI, b.mobileAPI, b.conditionsAPI, b.featureFlagsAPI, b.tagsAPI}
 }
