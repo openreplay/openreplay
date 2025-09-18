@@ -2,122 +2,129 @@
 package messages
 
 const (
-	MsgTimestamp                      = 0
-	MsgSessionStart                   = 1
-	MsgSessionEndDeprecated           = 3
-	MsgSetPageLocationDeprecated      = 4
-	MsgSetViewportSize                = 5
-	MsgSetViewportScroll              = 6
-	MsgCreateDocument                 = 7
-	MsgCreateElementNode              = 8
-	MsgCreateTextNode                 = 9
-	MsgMoveNode                       = 10
-	MsgRemoveNode                     = 11
-	MsgSetNodeAttribute               = 12
-	MsgRemoveNodeAttribute            = 13
-	MsgSetNodeData                    = 14
-	MsgSetCSSData                     = 15
-	MsgSetNodeScroll                  = 16
-	MsgSetInputTarget                 = 17
-	MsgSetInputValue                  = 18
-	MsgSetInputChecked                = 19
-	MsgMouseMove                      = 20
-	MsgNetworkRequestDeprecated       = 21
-	MsgConsoleLog                     = 22
-	MsgPageLoadTiming                 = 23
-	MsgPageRenderTiming               = 24
-	MsgJSExceptionDeprecated          = 25
-	MsgIntegrationEvent               = 26
-	MsgCustomEvent                    = 27
-	MsgUserID                         = 28
-	MsgUserAnonymousID                = 29
-	MsgMetadata                       = 30
-	MsgPageEventDeprecated            = 31
-	MsgInputEvent                     = 32
-	MsgPageEvent                      = 33
-	MsgCSSInsertRule                  = 37
-	MsgCSSDeleteRule                  = 38
-	MsgFetch                          = 39
-	MsgProfiler                       = 40
-	MsgOTable                         = 41
-	MsgStateAction                    = 42
-	MsgReduxDeprecated                = 44
-	MsgVuex                           = 45
-	MsgMobX                           = 46
-	MsgNgRx                           = 47
-	MsgGraphQLDeprecated              = 48
-	MsgPerformanceTrack               = 49
-	MsgStringDictDeprecated           = 50
-	MsgSetNodeAttributeDictDeprecated = 51
-	MsgStringDict                     = 43
-	MsgSetNodeAttributeDict           = 52
-	MsgResourceTimingDeprecated       = 53
-	MsgConnectionInformation          = 54
-	MsgSetPageVisibility              = 55
-	MsgPerformanceTrackAggr           = 56
-	MsgLoadFontFace                   = 57
-	MsgSetNodeFocus                   = 58
-	MsgLongTask                       = 59
-	MsgSetNodeAttributeURLBased       = 60
-	MsgSetCSSDataURLBased             = 61
-	MsgIssueEventDeprecated           = 62
-	MsgTechnicalInfo                  = 63
-	MsgCustomIssue                    = 64
-	MsgAssetCache                     = 66
-	MsgCSSInsertRuleURLBased          = 67
-	MsgMouseClick                     = 68
-	MsgMouseClickDeprecated           = 69
-	MsgCreateIFrameDocument           = 70
-	MsgAdoptedSSReplaceURLBased       = 71
-	MsgAdoptedSSReplace               = 72
-	MsgAdoptedSSInsertRuleURLBased    = 73
-	MsgAdoptedSSInsertRule            = 74
-	MsgAdoptedSSDeleteRule            = 75
-	MsgAdoptedSSAddOwner              = 76
-	MsgAdoptedSSRemoveOwner           = 77
-	MsgJSException                    = 78
-	MsgZustand                        = 79
-	MsgBatchMeta                      = 80
-	MsgBatchMetadata                  = 81
-	MsgPartitionedMessage             = 82
-	MsgNetworkRequest                 = 83
-	MsgWSChannel                      = 84
-	MsgInputChange                    = 112
-	MsgSelectionChange                = 113
-	MsgMouseThrashing                 = 114
-	MsgUnbindNodes                    = 115
-	MsgResourceTiming                 = 116
-	MsgTabChange                      = 117
-	MsgTabData                        = 118
-	MsgCanvasNode                     = 119
-	MsgTagTrigger                     = 120
-	MsgRedux                          = 121
-	MsgSetPageLocation                = 122
-	MsgGraphQL                        = 123
-	MsgWebVitals                      = 124
-	MsgIssueEvent                     = 125
-	MsgSessionEnd                     = 126
-	MsgSessionSearch                  = 127
-	MsgMobileSessionStart             = 90
-	MsgMobileSessionEnd               = 91
-	MsgMobileMetadata                 = 92
-	MsgMobileEvent                    = 93
-	MsgMobileUserID                   = 94
-	MsgMobileUserAnonymousID          = 95
-	MsgMobileScreenChanges            = 96
-	MsgMobileCrash                    = 97
-	MsgMobileViewComponentEvent       = 98
-	MsgMobileClickEvent               = 100
-	MsgMobileInputEvent               = 101
-	MsgMobilePerformanceEvent         = 102
-	MsgMobileLog                      = 103
-	MsgMobileInternalError            = 104
-	MsgMobileNetworkCall              = 105
-	MsgMobileSwipeEvent               = 106
-	MsgMobileBatchMeta                = 107
-	MsgMobilePerformanceAggregated    = 110
-	MsgMobileIssueEvent               = 111
-	MsgMobileGraphQL                  = 89
+	MsgTimestamp                          = 0
+	MsgSessionStart                       = 1
+	MsgSessionEndDeprecated               = 3
+	MsgSetPageLocationDeprecated          = 4
+	MsgSetViewportSize                    = 5
+	MsgSetViewportScroll                  = 6
+	MsgCreateDocument                     = 7
+	MsgCreateElementNode                  = 8
+	MsgCreateTextNode                     = 9
+	MsgMoveNode                           = 10
+	MsgRemoveNode                         = 11
+	MsgSetNodeAttribute                   = 12
+	MsgRemoveNodeAttribute                = 13
+	MsgSetNodeData                        = 14
+	MsgSetCSSData                         = 15
+	MsgSetNodeScroll                      = 16
+	MsgSetInputTarget                     = 17
+	MsgSetInputValue                      = 18
+	MsgSetInputChecked                    = 19
+	MsgMouseMove                          = 20
+	MsgNetworkRequestDeprecated           = 21
+	MsgConsoleLog                         = 22
+	MsgPageLoadTiming                     = 23
+	MsgPageRenderTiming                   = 24
+	MsgJSExceptionDeprecated              = 25
+	MsgIntegrationEvent                   = 26
+	MsgCustomEvent                        = 27
+	MsgUserID                             = 28
+	MsgUserAnonymousID                    = 29
+	MsgMetadata                           = 30
+	MsgPageEventDeprecated                = 31
+	MsgInputEvent                         = 32
+	MsgPageEvent                          = 33
+	MsgStringDictGlobal                   = 34
+	MsgSetNodeAttributeDictGlobal         = 35
+	MsgNodeAnimationResult                = 36
+	MsgCSSInsertRule                      = 37
+	MsgCSSDeleteRule                      = 38
+	MsgFetch                              = 39
+	MsgProfiler                           = 40
+	MsgOTable                             = 41
+	MsgStateAction                        = 42
+	MsgReduxDeprecated                    = 44
+	MsgVuex                               = 45
+	MsgMobX                               = 46
+	MsgNgRx                               = 47
+	MsgGraphQLDeprecated                  = 48
+	MsgPerformanceTrack                   = 49
+	MsgStringDictDeprecated               = 50
+	MsgSetNodeAttributeDictDeprecated     = 51
+	MsgStringDict                         = 43
+	MsgSetNodeAttributeDict               = 52
+	MsgResourceTimingDeprecatedDeprecated = 53
+	MsgConnectionInformation              = 54
+	MsgSetPageVisibility                  = 55
+	MsgPerformanceTrackAggr               = 56
+	MsgLoadFontFace                       = 57
+	MsgSetNodeFocus                       = 58
+	MsgLongTask                           = 59
+	MsgSetNodeAttributeURLBased           = 60
+	MsgSetCSSDataURLBased                 = 61
+	MsgIssueEventDeprecated               = 62
+	MsgTechnicalInfo                      = 63
+	MsgCustomIssue                        = 64
+	MsgSetNodeSlot                        = 65
+	MsgAssetCache                         = 66
+	MsgCSSInsertRuleURLBased              = 67
+	MsgMouseClick                         = 68
+	MsgMouseClickDeprecated               = 69
+	MsgCreateIFrameDocument               = 70
+	MsgAdoptedSSReplaceURLBased           = 71
+	MsgAdoptedSSReplace                   = 72
+	MsgAdoptedSSInsertRuleURLBased        = 73
+	MsgAdoptedSSInsertRule                = 74
+	MsgAdoptedSSDeleteRule                = 75
+	MsgAdoptedSSAddOwner                  = 76
+	MsgAdoptedSSRemoveOwner               = 77
+	MsgJSException                        = 78
+	MsgZustand                            = 79
+	MsgBatchMeta                          = 80
+	MsgBatchMetadata                      = 81
+	MsgPartitionedMessage                 = 82
+	MsgNetworkRequest                     = 83
+	MsgWSChannel                          = 84
+	MsgResourceTiming                     = 85
+	MsgIncident                           = 87
+	MsgLongAnimationTask                  = 89
+	MsgInputChange                        = 112
+	MsgSelectionChange                    = 113
+	MsgMouseThrashing                     = 114
+	MsgUnbindNodes                        = 115
+	MsgResourceTimingDeprecated           = 116
+	MsgTabChange                          = 117
+	MsgTabData                            = 118
+	MsgCanvasNode                         = 119
+	MsgTagTrigger                         = 120
+	MsgRedux                              = 121
+	MsgSetPageLocation                    = 122
+	MsgGraphQL                            = 123
+	MsgWebVitals                          = 124
+	MsgIssueEvent                         = 125
+	MsgSessionEnd                         = 126
+	MsgSessionSearch                      = 127
+	MsgMobileSessionStart                 = 90
+	MsgMobileSessionEnd                   = 91
+	MsgMobileMetadata                     = 92
+	MsgMobileEvent                        = 93
+	MsgMobileUserID                       = 94
+	MsgMobileUserAnonymousID              = 95
+	MsgMobileScreenChanges                = 96
+	MsgMobileCrash                        = 97
+	MsgMobileViewComponentEvent           = 98
+	MsgMobileClickEvent                   = 100
+	MsgMobileInputEvent                   = 101
+	MsgMobilePerformanceEvent             = 102
+	MsgMobileLog                          = 103
+	MsgMobileInternalError                = 104
+	MsgMobileNetworkCall                  = 105
+	MsgMobileSwipeEvent                   = 106
+	MsgMobileBatchMeta                    = 107
+	MsgMobileGraphQL                      = 109
+	MsgMobilePerformanceAggregated        = 110
+	MsgMobileIssueEvent                   = 111
 )
 
 type Timestamp struct {
@@ -3339,6 +3346,39 @@ func (msg *MobileBatchMeta) TypeID() int {
 	return 107
 }
 
+type MobileGraphQL struct {
+	message
+	Timestamp     uint64
+	Length        uint64
+	OperationKind string
+	OperationName string
+	Variables     string
+	Response      string
+	Duration      uint64
+}
+
+func (msg *MobileGraphQL) Encode() []byte {
+	buf := make([]byte, 71+len(msg.OperationKind)+len(msg.OperationName)+len(msg.Variables)+len(msg.Response))
+	buf[0] = 109
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Length, buf, p)
+	p = WriteString(msg.OperationKind, buf, p)
+	p = WriteString(msg.OperationName, buf, p)
+	p = WriteString(msg.Variables, buf, p)
+	p = WriteString(msg.Response, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	return buf[:p]
+}
+
+func (msg *MobileGraphQL) Decode() Message {
+	return msg
+}
+
+func (msg *MobileGraphQL) TypeID() int {
+	return 109
+}
+
 type MobilePerformanceAggregated struct {
 	message
 	TimestampStart uint64
@@ -3413,37 +3453,4 @@ func (msg *MobileIssueEvent) Decode() Message {
 
 func (msg *MobileIssueEvent) TypeID() int {
 	return 111
-}
-
-type MobileGraphQL struct {
-	message
-	Timestamp     uint64
-	Length        uint64
-	OperationKind string
-	OperationName string
-	Variables     string
-	Response      string
-	Duration      uint64
-}
-
-func (msg *MobileGraphQL) Encode() []byte {
-	buf := make([]byte, 71+len(msg.OperationKind)+len(msg.OperationName)+len(msg.Variables)+len(msg.Response))
-	buf[0] = 89
-	p := 1
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteUint(msg.Length, buf, p)
-	p = WriteString(msg.OperationKind, buf, p)
-	p = WriteString(msg.OperationName, buf, p)
-	p = WriteString(msg.Variables, buf, p)
-	p = WriteString(msg.Response, buf, p)
-	p = WriteUint(msg.Duration, buf, p)
-	return buf[:p]
-}
-
-func (msg *MobileGraphQL) Decode() Message {
-	return msg
-}
-
-func (msg *MobileGraphQL) TypeID() int {
-	return 89
 }

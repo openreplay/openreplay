@@ -144,7 +144,17 @@ message 107, 'MobileBatchMeta' do
     uint 'FirstIndex'
 end
 
-message 110, 'MobilePerformanceAggregated', :swift => false do 
+message 109, 'MobileGraphQL', :replayer => true do
+    uint 'Timestamp'
+    uint 'Length'
+    string 'OperationKind'
+    string 'OperationName'
+    string 'Variables'
+    string 'Response'
+    uint 'Duration'
+end
+
+message 110, 'MobilePerformanceAggregated', :swift => false do
   uint 'TimestampStart'
   uint 'TimestampEnd'
   uint 'MinFPS'
@@ -167,14 +177,4 @@ message 111, 'MobileIssueEvent', :replayer => true do
   string 'ContextString'
   string 'Context'
   string 'Payload'
-end
-
-message 89, 'MobileGraphQL', :replayer => true do
-    uint 'Timestamp'
-    uint 'Length'
-    string 'OperationKind'
-    string 'OperationName'
-    string 'Variables'
-    string 'Response'
-    uint 'Duration'
 end

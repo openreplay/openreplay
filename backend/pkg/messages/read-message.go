@@ -2133,6 +2133,33 @@ func DecodeMobileBatchMeta(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeMobileGraphQL(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &MobileGraphQL{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Length, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.OperationKind, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.OperationName, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Variables, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Response, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeMobilePerformanceAggregated(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &MobilePerformanceAggregated{}
@@ -2197,33 +2224,6 @@ func DecodeMobileIssueEvent(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.Payload, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
-func DecodeMobileGraphQL(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &MobileGraphQL{}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Length, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.OperationKind, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.OperationName, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Variables, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Response, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Duration, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -2471,12 +2471,12 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeMobileSwipeEvent(reader)
 	case 107:
 		return DecodeMobileBatchMeta(reader)
+	case 109:
+		return DecodeMobileGraphQL(reader)
 	case 110:
 		return DecodeMobilePerformanceAggregated(reader)
 	case 111:
 		return DecodeMobileIssueEvent(reader)
-	case 89:
-		return DecodeMobileGraphQL(reader)
 	}
 	return nil, fmt.Errorf("unknown message code: %v", t)
 }

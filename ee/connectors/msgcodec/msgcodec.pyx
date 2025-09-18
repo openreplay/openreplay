@@ -1141,6 +1141,17 @@ cdef class MessageCodec:
                 first_index=self.read_uint(reader)
             )
 
+        if message_id == 109:
+            return MobileGraphQL(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                operation_kind=self.read_string(reader),
+                operation_name=self.read_string(reader),
+                variables=self.read_string(reader),
+                response=self.read_string(reader),
+                duration=self.read_uint(reader)
+            )
+
         if message_id == 110:
             return MobilePerformanceAggregated(
                 timestamp_start=self.read_uint(reader),
@@ -1166,16 +1177,5 @@ cdef class MessageCodec:
                 context_string=self.read_string(reader),
                 context=self.read_string(reader),
                 payload=self.read_string(reader)
-            )
-
-        if message_id == 89:
-            return MobileGraphQL(
-                timestamp=self.read_uint(reader),
-                length=self.read_uint(reader),
-                operation_kind=self.read_string(reader),
-                operation_name=self.read_string(reader),
-                variables=self.read_string(reader),
-                response=self.read_string(reader),
-                duration=self.read_uint(reader)
             )
 

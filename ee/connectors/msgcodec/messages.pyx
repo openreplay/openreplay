@@ -1790,6 +1790,27 @@ cdef class MobileBatchMeta(PyMessage):
         self.first_index = first_index
 
 
+cdef class MobileGraphQL(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long timestamp
+    cdef public unsigned long length
+    cdef public str operation_kind
+    cdef public str operation_name
+    cdef public str variables
+    cdef public str response
+    cdef public unsigned long duration
+
+    def __init__(self, unsigned long timestamp, unsigned long length, str operation_kind, str operation_name, str variables, str response, unsigned long duration):
+        self.__id__ = 109
+        self.timestamp = timestamp
+        self.length = length
+        self.operation_kind = operation_kind
+        self.operation_name = operation_name
+        self.variables = variables
+        self.response = response
+        self.duration = duration
+
+
 cdef class MobilePerformanceAggregated(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp_start
@@ -1840,26 +1861,5 @@ cdef class MobileIssueEvent(PyMessage):
         self.context_string = context_string
         self.context = context
         self.payload = payload
-
-
-cdef class MobileGraphQL(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long timestamp
-    cdef public unsigned long length
-    cdef public str operation_kind
-    cdef public str operation_name
-    cdef public str variables
-    cdef public str response
-    cdef public unsigned long duration
-
-    def __init__(self, unsigned long timestamp, unsigned long length, str operation_kind, str operation_name, str variables, str response, unsigned long duration):
-        self.__id__ = 89
-        self.timestamp = timestamp
-        self.length = length
-        self.operation_kind = operation_kind
-        self.operation_name = operation_name
-        self.variables = variables
-        self.response = response
-        self.duration = duration
 
 

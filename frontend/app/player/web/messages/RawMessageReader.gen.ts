@@ -1093,23 +1093,7 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
-    case 111: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const contextString = this.readString(); if (contextString === null) { return resetPointer() }
-      const context = this.readString(); if (context === null) { return resetPointer() }
-      const payload = this.readString(); if (payload === null) { return resetPointer() }
-      return {
-        tp: MType.MobileIssueEvent,
-        timestamp,
-        type,
-        contextString,
-        context,
-        payload,
-      };
-    }
-
-    case 89: {
+    case 109: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const length = this.readUint(); if (length === null) { return resetPointer() }
       const operationKind = this.readString(); if (operationKind === null) { return resetPointer() }
@@ -1126,6 +1110,22 @@ export default class RawMessageReader extends PrimitiveReader {
         variables,
         response,
         duration,
+      };
+    }
+
+    case 111: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const type = this.readString(); if (type === null) { return resetPointer() }
+      const contextString = this.readString(); if (contextString === null) { return resetPointer() }
+      const context = this.readString(); if (context === null) { return resetPointer() }
+      const payload = this.readString(); if (payload === null) { return resetPointer() }
+      return {
+        tp: MType.MobileIssueEvent,
+        timestamp,
+        type,
+        contextString,
+        context,
+        payload,
       };
     }
 
