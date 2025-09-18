@@ -500,9 +500,7 @@ func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (J
 	var maxDepth int = 0
 	for _, r := range rows {
 		r.Value = r.SessionsCount * 100 / total100p
-		log.Println("e.event_number_in_session:", r.EventNumberInSession-1, " r.EventType:", r.EventType, " r.EValue:", r.EValue.String)
 		source := fmt.Sprintf("%d_%s_%s", r.EventNumberInSession-1, r.EventType, r.EValue.String)
-		log.Println(">> source:", source)
 		if !slices.Contains(nodes, source) {
 			nodes = append(nodes, source)
 			nodesValues = append(nodesValues, Node{
@@ -513,9 +511,7 @@ func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (J
 				StartingNode: r.EventNumberInSession == 1,
 			})
 		}
-		log.Println("e.EventNumberInSession:", r.EventNumberInSession, " r.NextType:", r.NextType, " r.NextValue:", r.NextValue.String)
 		target := fmt.Sprintf("%d_%s_%s", r.EventNumberInSession, r.NextType, r.NextValue.String)
-		log.Println(">> target:", target)
 		if !slices.Contains(nodes, target) {
 			nodes = append(nodes, target)
 			nodesValues = append(nodesValues, Node{
