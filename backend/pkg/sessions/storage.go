@@ -18,6 +18,7 @@ type Storage interface {
 	InsertUserAnonymousID(sessionID uint64, userAnonymousID string) error
 	InsertReferrer(sessionID uint64, referrer, baseReferrer string) error
 	InsertMetadata(sessionID uint64, keyNo uint, value string) error
+	IsExist(projectID int, sessionID uint64) (bool, error)
 }
 
 type storageImpl struct {
@@ -36,16 +37,16 @@ func (s *storageImpl) Add(sess *Session) error {
 			session_id, project_id, start_ts,
 			user_uuid, user_device, user_device_type, user_country,
 			user_os, user_os_version,
-			rev_id, 
+			rev_id,
 			tracker_version, issue_score,
 			platform,
 			user_browser, user_browser_version, user_device_memory_size, user_device_heap_size,
 			user_id, user_state, user_city, timezone, screen_width, screen_height
 		) VALUES (
 			$1, $2, $3,
-			$4, $5, $6, $7, 
+			$4, $5, $6, $7,
 			$8, NULLIF($9, ''),
-			NULLIF($10, ''), 
+			NULLIF($10, ''),
 			$11, $12,
 			$13,
 			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, 0), NULLIF($17, 0::bigint),
@@ -69,7 +70,7 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 	if err := s.db.QueryRow(`
 		SELECT platform,
 			duration, project_id, start_ts, timezone,
-			user_uuid, user_os, user_os_version, 
+			user_uuid, user_os, user_os_version,
 			user_device, user_device_type, user_country, user_state, user_city,
 			rev_id, tracker_version,
 			user_id, user_anonymous_id, referrer,
@@ -79,7 +80,7 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 			metadata_6, metadata_7, metadata_8, metadata_9, metadata_10,
 			utm_source, utm_medium, utm_campaign, screen_width, screen_height
 		FROM sessions
-		WHERE session_id=$1 
+		WHERE session_id=$1
 	`,
 		sessionID,
 	).Scan(&sess.Platform,
@@ -146,40 +147,54 @@ func (s *storageImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint64
 
 func (s *storageImpl) InsertEncryptionKey(sessionID uint64, key []byte) error {
 	sqlRequest := `
-		UPDATE sessions 
-		SET file_key = $2 
+		UPDATE sessions
+		SET file_key = $2
 		WHERE session_id = $1`
 	return s.db.Exec(sqlRequest, sessionID, string(key))
 }
 
 func (s *storageImpl) InsertUserID(sessionID uint64, userID string) error {
 	sqlRequest := `
-		UPDATE sessions 
-		SET user_id = LEFT($1, 8000) 
+		UPDATE sessions
+		SET user_id = LEFT($1, 8000)
 		WHERE session_id = $2`
 	return s.db.Exec(sqlRequest, userID, sessionID)
 }
 
 func (s *storageImpl) InsertUserAnonymousID(sessionID uint64, userAnonymousID string) error {
 	sqlRequest := `
-		UPDATE sessions 
-		SET user_anonymous_id = LEFT($1, 8000) 
+		UPDATE sessions
+		SET user_anonymous_id = LEFT($1, 8000)
 		WHERE session_id = $2`
 	return s.db.Exec(sqlRequest, userAnonymousID, sessionID)
 }
 
 func (s *storageImpl) InsertReferrer(sessionID uint64, referrer, baseReferrer string) error {
 	sqlRequest := `
-		UPDATE sessions 
-		SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000) 
+		UPDATE sessions
+		SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000)
 		WHERE session_id = $3 AND referrer IS NULL`
 	return s.db.Exec(sqlRequest, referrer, baseReferrer, sessionID)
 }
 
 func (s *storageImpl) InsertMetadata(sessionID uint64, keyNo uint, value string) error {
 	sqlRequest := `
-		UPDATE sessions 
-		SET metadata_%v = LEFT($1, 8000) 
+		UPDATE sessions
+		SET metadata_%v = LEFT($1, 8000)
 		WHERE session_id = $2`
 	return s.db.Exec(fmt.Sprintf(sqlRequest, keyNo), value, sessionID)
+}
+
+func (s *storageImpl) IsExist(projectID int, sessionID uint64) (bool, error) {
+	var exists bool
+	err := s.db.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1 FROM sessions
+			WHERE project_id = $1 AND session_id = $2
+		)`, projectID, sessionID,
+	).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }

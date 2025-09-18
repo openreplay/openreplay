@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"openreplay/backend/pkg/metrics/database"
+	"strconv"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
@@ -251,8 +252,15 @@ func (s *sessionsImpl) UpdateEventsStats(sessionID uint64, events, pages int) er
 }
 
 func (s *sessionsImpl) IsExist(projectID int, sessionID string) bool {
-	//TODO: implement it please
-	panic("implement me")
+	sessionIDUint, err := strconv.ParseUint(sessionID, 10, 64)
+	if err != nil {
+		return false
+	}
+	exists, err := s.storage.IsExist(projectID, sessionIDUint)
+	if err != nil {
+		return false
+	}
+	return exists
 }
 
 func (s *sessionsImpl) Commit() {
