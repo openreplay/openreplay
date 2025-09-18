@@ -586,6 +586,7 @@ function WidgetChart(props: Props) {
           ? !(_metric.hideExcess ?? true)
           : false;
         const height = props.isPreview ? 550 : 240;
+        const startUrl = metric.startPoint.filter?.filters.find(f => f.name === "url_path")?.value[0] ?? "unref"
         return (
           <SankeyChart
             height={height}
@@ -595,7 +596,7 @@ function WidgetChart(props: Props) {
               dashboardStore.drillDownFilter.merge({ filters, page: 1 });
             }}
             isUngrouped={isUngrouped}
-            startPoint={metric.startType}
+            startUrl={startUrl}
           />
         );
       }

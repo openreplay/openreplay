@@ -4,7 +4,6 @@ import { NoContent } from 'App/components/ui';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { sankeyTooltip, getEventPriority, getNodeName } from './sankeyUtils';
 import { echarts, defaultOptions } from './init';
-import { useTranslation } from 'react-i18next';
 
 echarts.use([SankeyChart]);
 
@@ -13,6 +12,7 @@ interface SankeyNode {
   eventType?: string;
   depth?: number;
   id?: string | number;
+  startingNode?: boolean;
 }
 
 interface SankeyLink {
@@ -34,18 +34,18 @@ interface Props {
   onChartClick?: (filters: any[]) => void;
   isUngrouped?: boolean;
   inGrid?: boolean;
-  startPoint: 'end' | 'start'
+  startUrl: string;
 }
 
 const EChartsSankey: React.FC<Props> = (props) => {
-  const { t } = useTranslation();
-  const { data, height = 240, onChartClick, isUngrouped, startPoint } = props;
+  const { data, height = 240, onChartClick, isUngrouped, startUrl } = props;
   const chartRef = React.useRef<HTMLDivElement>(null);
 
   const [finalNodeCount, setFinalNodeCount] = React.useState(data.nodes.length);
 
   React.useEffect(() => {
-    if (!chartRef.current || data.nodes.length === 0 || data.links.length === 0) return;
+    if (!chartRef.current || data.nodes.length === 0 || data.links.length === 0)
+      return;
 
     const finalNodes = data.nodes;
     const finalLinks = data.links;
@@ -90,6 +90,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
           id: n.id,
           draggable: false,
           itemStyle: { color: itemColor },
+          startingNode: n.startingNode,
         };
       })
       .sort((a, b) => {
@@ -111,13 +112,11 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
     if (echartNodes.length === 0) return;
 
-    const startDepth = startPoint === 'end' ? Math.max(...echartNodes.map(n => n.depth ?? 0)) : 0;
-    const mainNodeLinks = echartNodes.filter(n => n.depth === startDepth).map(n => echartNodes.findIndex(node => node.id === n.id))
+    const mainNodeLinks = echartNodes
+      .filter((n) => n.startingNode)
+      .map((n) => echartNodes.findIndex((node) => node.id === n.id));
     const startNodeValue = echartLinks
-      .filter((link) => startPoint === 'start'
-        ? mainNodeLinks.includes(link.source)
-        : mainNodeLinks.includes(link.target)
-      )
+      .filter((link) => mainNodeLinks.includes(link.source))
       .reduce((sum, link) => sum + link.value, 0);
 
     Object.keys(nodeValues).forEach((nodeId) => {

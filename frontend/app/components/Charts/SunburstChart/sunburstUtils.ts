@@ -57,7 +57,7 @@ export function convertSankeyToSunburst(data: DataNode): {
     }
 
     // @ts-ignore
-    if (!node.name) node.name = `${typeToNameMap[node.type]}_${nodeId}` ?? node.type;
+    if (!node.name) node.name = typeToNameMap[node.type] ?? node.type;
 
     let color = colorMap.get(node.name);
     if (!color) {
