@@ -21,7 +21,7 @@ type CardBase struct {
 	MetricType    string         `json:"metricType" validate:"required,oneof=timeseries table funnel pathAnalysis heatMap webVital"`
 	MetricOf      string         `json:"metricOf" validate:"required"`
 	MetricFormat  string         `json:"metricFormat" validate:"required,oneof=default sessionCount percentage"`
-	ViewType      string         `json:"viewType" validate:"required,oneof=lineChart areaChart barChart progressChart pieChart metric tableView table chart"`
+	ViewType      string         `json:"viewType" validate:"required,oneof=lineChart areaChart barChart progressChart pieChart metric tableView table chart sunburst"`
 	MetricValue   []string       `json:"metricValue" validate:"omitempty"`
 	Series        []model.Series `json:"series" validate:"required,dive"`
 	CardInfo
