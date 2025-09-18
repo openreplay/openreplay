@@ -38,7 +38,7 @@ func main() {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
 
-	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetric, services.Handlers())
+	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetric, services.Handlers(), nil, nil)
 	if err != nil {
 		log.Fatal(ctx, "can't init middlewares: %s", err)
 	}
