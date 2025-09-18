@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"openreplay/backend/pkg/metrics/database"
+	"strconv"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
@@ -28,6 +29,7 @@ type Sessions interface {
 	UpdateUTM(sessionID uint64, url string) error
 	UpdateMetadata(sessionID uint64, key, value string) error
 	UpdateEventsStats(sessionID uint64, events, pages int) error
+	IsExist(projectID int, sessionID string) bool
 	Commit()
 }
 
@@ -274,6 +276,18 @@ func (s *sessionsImpl) UpdateMetadata(sessionID uint64, key, value string) error
 func (s *sessionsImpl) UpdateEventsStats(sessionID uint64, events, pages int) error {
 	s.updates.AddEvents(sessionID, events, pages)
 	return nil
+}
+
+func (s *sessionsImpl) IsExist(projectID int, sessionID string) bool {
+	sessionIDUint, err := strconv.ParseUint(sessionID, 10, 64)
+	if err != nil {
+		return false
+	}
+	exists, err := s.storage.IsExist(projectID, sessionIDUint)
+	if err != nil {
+		return false
+	}
+	return exists
 }
 
 func (s *sessionsImpl) Commit() {
