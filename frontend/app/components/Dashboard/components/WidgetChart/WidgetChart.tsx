@@ -581,7 +581,7 @@ function WidgetChart(props: Props) {
           />
         );
       }
-      if (viewType === 'chart' && data.links) {
+      if (viewType === 'lineChart' && data.links) {
         const isUngrouped = props.isPreview
           ? !(_metric.hideExcess ?? true)
           : false;

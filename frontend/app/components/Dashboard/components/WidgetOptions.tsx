@@ -271,7 +271,7 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
     table: 'Table',
   };
   const pathTypes = {
-    chart: 'Flow Chart',
+    lineChart: 'Flow Chart',
     sunburst: 'Sunburst',
   };
 
@@ -295,7 +295,7 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
       chart: <ChartBarBig size={16} strokeWidth={1} />,
     },
     [USER_PATH]: {
-      chart: <Split size={16} strokeWidth={1} />,
+      lineChart: <Split size={16} strokeWidth={1} />,
       sunburst: <CircleDashed size={16} strokeWidth={1} />,
     },
   };
@@ -310,7 +310,7 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
       'table',
     ],
     [FUNNEL]: ['chart', 'columnChart', 'metric', 'table'],
-    [USER_PATH]: ['chart', 'sunburst'],
+    [USER_PATH]: ['lineChart', 'sunburst'],
   };
   const metricType = metric.metricType;
   const viewType = metric.viewType;
