@@ -657,8 +657,8 @@ func (h *UserJourneyQueryBuilder) transformSunburst(rows []UserJourneyRawData) (
 	}
 
 	// Count the value of the initial nodes
-	for _, r := range response {
-		r.Value = sumValues(*r.Children)
+	for i, _ := range response {
+		response[i].Value = sumValues(*response[i].Children)
 	}
 	return response, nil
 }
