@@ -221,9 +221,27 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 		idx++
 	}
 	if t := filters.GetMetricTypeFilter(); t != nil {
-		conds = append(conds, fmt.Sprintf("m.metric_type=$%d", idx))
-		params = append(params, *t)
-		idx++
+		if *t == "monitors" {
+			conds = append(conds, fmt.Sprintf("m.metric_type = ANY($%d)", idx))
+			params = append(params, pq.Array([]string{"table", "webVital"}))
+			idx++
+
+			conds = append(conds, fmt.Sprintf("m.metric_of = ANY($%d)", idx))
+			params = append(params, pq.Array([]string{"jsException", "errors", "issues"}))
+			idx++
+		} else if *t == "web_analytics" {
+			conds = append(conds, fmt.Sprintf("m.metric_type=$%d", idx))
+			params = append(params, "table")
+			idx++
+
+			conds = append(conds, fmt.Sprintf("m.metric_of != ALL($%d)", idx))
+			params = append(params, pq.Array([]string{"webVitalUrl", "jsException", "REQUEST"}))
+			idx++
+		} else {
+			conds = append(conds, fmt.Sprintf("m.metric_type=$%d", idx))
+			params = append(params, *t)
+			idx++
+		}
 	}
 	joinClause := "JOIN public.users u ON m.user_id = u.user_id"
 	if ids := filters.GetDashboardIDs(); len(ids) > 0 {

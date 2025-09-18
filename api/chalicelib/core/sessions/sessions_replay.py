@@ -1,9 +1,9 @@
 import schemas
 from chalicelib.core import metadata, assist, canvas, user_testing
 from chalicelib.core.issues import issues
-from chalicelib.core.events import events, events_mobile
+from chalicelib.core.events import events
 from . import sessions_mobs, sessions_devtool
-from chalicelib.core.errors.modules import errors_helper
+from chalicelib.core.errors import helper as errors_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.core.modules import MOB_KEY, get_file_key
 
@@ -103,18 +103,14 @@ def get_events(project_id, session_id):
         s_data = cur.fetchone()
         if s_data is not None:
             s_data = helper.dict_to_camel_case(s_data)
-            data = {}
+            data = {
+                'userEvents': events.get_customs_by_session_id(project_id=project_id,
+                                                               session_id=session_id),
+                'userTesting': []
+            }
             if __is_mobile_session(s_data["platform"]):
-                data['events'] = events_mobile.get_by_sessionId(project_id=project_id, session_id=session_id)
-                for e in data['events']:
-                    if e["type"].endswith("_IOS"):
-                        e["type"] = e["type"][:-len("_IOS")]
-                    elif e["type"].endswith("_MOBILE"):
-                        e["type"] = e["type"][:-len("_MOBILE")]
-                data['crashes'] = events_mobile.get_crashes_by_session_id(session_id=session_id)
-                data['userEvents'] = events_mobile.get_customs_by_session_id(project_id=project_id,
-                                                                             session_id=session_id)
-                data['userTesting'] = []
+                data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id)
+                data['crashes'] = events.get_mobile_crashes_by_session_id(session_id=session_id)
             else:
                 data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                           group_clickrage=True)
@@ -124,8 +120,6 @@ def get_events(project_id, session_id):
                 # limit the number of errors to reduce the response-body size
                 data['errors'] = [errors_helper.format_first_stack_frame(e) for e in all_errors
                                   if e['source'] == "js_exception"][:500]
-                data['userEvents'] = events.get_customs_by_session_id(project_id=project_id,
-                                                                      session_id=session_id)
                 data['userTesting'] = user_testing.get_test_signals(session_id=session_id, project_id=project_id)
 
             data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)

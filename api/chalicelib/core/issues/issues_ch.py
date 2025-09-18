@@ -1,7 +1,6 @@
 from chalicelib.utils import ch_client, helper
 import datetime
-from chalicelib.utils.exp_ch_helper import explode_dproperties, add_timestamp
-from .issues_pg import get_issues_categories as _get_issues_categories
+from chalicelib.utils.exp_ch_helper import add_timestamp
 
 
 def get(project_id, issue_id):
@@ -65,5 +64,88 @@ def reduce_issues(issues_list):
     return issues_list
 
 
+def get_all_types():
+    return [
+        {
+            "type": "js_exception",
+            "visible": True,
+            "order": 0,
+            "name": "Errors",
+            "autoCaptured": True
+        },
+        {
+            "type": "bad_request",
+            "visible": True,
+            "order": 1,
+            "name": "Bad Requests",
+            "autoCaptured": True
+        },
+        {
+            "type": "missing_resource",
+            "visible": True,
+            "order": 2,
+            "name": "Missing Images",
+            "autoCaptured": True
+        },
+        {
+            "type": "click_rage",
+            "visible": True,
+            "order": 3,
+            "name": "Click Rage",
+            "autoCaptured": True
+        },
+        {
+            "type": "dead_click",
+            "visible": True,
+            "order": 4,
+            "name": "Dead Clicks",
+            "autoCaptured": True
+        },
+        {
+            "type": "memory",
+            "visible": True,
+            "order": 5,
+            "name": "High Memory",
+            "autoCaptured": True
+        },
+        {
+            "type": "cpu",
+            "visible": True,
+            "order": 6,
+            "name": "High CPU",
+            "autoCaptured": True
+        },
+        {
+            "type": "crash",
+            "visible": True,
+            "order": 7,
+            "name": "Crashes",
+            "autoCaptured": True
+        },
+        {
+            "type": "incident",
+            "visible": True,
+            "order": 8,
+            "name": "Incident",
+            "autoCaptured": False
+        }
+    ]
+
+
 def get_issues_categories():
-    return _get_issues_categories()
+    issues = get_all_types()
+    response = []
+    for i, issue in enumerate(issues):
+        response.append({
+            "id": f"issue_{i}",
+            "name": issue["type"],
+            "displayName": issue["name"],
+            "possibleTypes": ["string"],
+            "dataType": "string",
+            "autoCaptured": issue["autoCaptured"]
+        })
+    return {
+        "total": len(response),
+        "displayName": "Issues",
+        "list": response
+    }

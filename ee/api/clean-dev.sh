@@ -33,6 +33,8 @@ rm -rf ./chalicelib/core/mobile.py
 rm -rf ./chalicelib/core/saved_search.py
 rm -rf ./chalicelib/core/sessions/*.py
 rm -rf ./chalicelib/core/sessions/sessions_viewed
+rm -rf ./chalicelib/core/sessions/sessions_favorite/sessions_favorite.py
+rm -rf ./chalicelib/core/sessions/sessions_devtool/sessions_devtool.py
 rm -rf ./chalicelib/core/metrics/modules
 rm -rf ./chalicelib/core/socket_ios.py
 rm -rf ./chalicelib/core/sourcemaps
@@ -94,10 +96,7 @@ rm -rf ./chalicelib/core/alerts/alerts_processor.py
 rm -rf ./chalicelib/core/alerts/alerts_processor_ch.py
 rm -rf ./chalicelib/core/alerts/alerts_listener.py
 rm -rf ./chalicelib/core/alerts/modules/helpers.py
-rm -rf ./chalicelib/core/errors/modules
-rm -rf ./chalicelib/core/errors/errors_pg.py
-rm -rf ./chalicelib/core/errors/errors_ch.py
-rm -rf ./chalicelib/core/errors/errors_details.py
+rm -rf ./chalicelib/core/errors
 rm -rf ./chalicelib/core/notes.py
 rm -rf ./chalicelib/utils/contextual_validators.py
 rm -rf ./routers/subs/product_analytics.py
