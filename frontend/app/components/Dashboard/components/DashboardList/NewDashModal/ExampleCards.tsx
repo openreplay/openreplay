@@ -120,6 +120,7 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
     cardType: USER_PATH,
     category: CARD_CATEGORIES(t)[0].key,
     example: ExamplePath,
+    viewType: 'chart',
   },
   {
     title: 'Untitled Trend',

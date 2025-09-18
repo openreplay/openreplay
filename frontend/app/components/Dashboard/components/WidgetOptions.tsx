@@ -6,7 +6,7 @@ import {
   TIMESERIES,
   USER_PATH,
 } from 'App/constants/card';
-import { Select, Space, Switch, Dropdown, Button } from 'antd';
+import { Space, Select, Dropdown, Button, Input } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore';
 import ClickMapRagePicker from 'Components/Dashboard/components/ClickMapRagePicker/ClickMapRagePicker';
@@ -26,9 +26,10 @@ import {
   ChartBarBig,
   ArrowDown01,
   SquareActivity,
+  Split,
+  CircleDashed,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Form, InputNumber } from 'antd/lib';
 import Widget from '@/mstore/types/widget';
 
 interface Option {
@@ -76,14 +77,15 @@ function WidgetOptions() {
   })(metric.metricFormat as MetricFormat);
 
   // const hasSeriesTypes = [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
-  const hasViewTypes = [TIMESERIES, FUNNEL].includes(metric.metricType);
+  const hasViewTypes = [TIMESERIES, FUNNEL, USER_PATH].includes(
+    metric.metricType,
+  );
   return (
     <div className="flex items-center gap-2">
       {metric.metricType === USER_PATH && (
         <>
-          <Form layout="horizontal">
-            <div className="flex space-x-8 items-center">
-              <Form.Item label="Steps Before" className="mb-0 flex-1">
+            <div className="flex space-x-8 items-center gap-2">
+              <div>Steps Before</div>
                 <Select
                   value={metric.stepsBefore}
                   style={{ width: 64 }}
@@ -100,9 +102,8 @@ function WidgetOptions() {
                     </Select.Option>
                   ))}
                 </Select>
-              </Form.Item>
 
-              <Form.Item label="Steps After" className="mb-0 flex-1">
+              <div>Steps After</div>
                 <Select
                   value={metric.stepsAfter}
                   style={{ width: 64 }}
@@ -119,22 +120,20 @@ function WidgetOptions() {
                     </Select.Option>
                   ))}
                 </Select>
-              </Form.Item>
 
-              <Form.Item label="Rows" className="mb-0 flex-1">
-                <InputNumber
+                <div>Rows</div>
+                <Input
+                  type="number"
                   defaultValue={metric.rows}
                   className="w-16"
                   min={2}
                   max={60}
                   onChange={(rows) => {
-                    metric.update({ rows });
+                    metric.update({ rows: rows ?? 5 });
                     metric.updateKey('hasChanged', true);
                   }}
                 />
-              </Form.Item>
             </div>
-          </Form>
           {/* <a
             href="#"
             onClick={(e) => {
@@ -271,19 +270,34 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
     metric: 'Metric',
     table: 'Table',
   };
-  const usedChartTypes =
-    metric.metricType === FUNNEL ? funnelChartTypes : chartTypes;
+  const pathTypes = {
+    lineChart: 'Flow Chart',
+    sunburst: 'Sunburst',
+  };
+
+  const usedChartTypes = {
+    [FUNNEL]: funnelChartTypes,
+    [TIMESERIES]: chartTypes,
+    [USER_PATH]: pathTypes,
+  };
   const chartIcons = {
-    lineChart: <ChartLine size={16} strokeWidth={1} />,
-    barChart: <ChartColumn size={16} strokeWidth={1} />,
-    areaChart: <ChartArea size={16} strokeWidth={1} />,
-    pieChart: <ChartPie size={16} strokeWidth={1} />,
-    progressChart: <ChartBar size={16} strokeWidth={1} />,
-    metric: <Hash size={16} strokeWidth={1} />,
-    table: <Table size={16} strokeWidth={1} />,
-    // funnel specific
-    columnChart: <ChartColumnBig size={16} strokeWidth={1} />,
-    chart: <ChartBarBig size={16} strokeWidth={1} />,
+    [TIMESERIES]: {
+      lineChart: <ChartLine size={16} strokeWidth={1} />,
+      barChart: <ChartColumn size={16} strokeWidth={1} />,
+      areaChart: <ChartArea size={16} strokeWidth={1} />,
+      pieChart: <ChartPie size={16} strokeWidth={1} />,
+      progressChart: <ChartBar size={16} strokeWidth={1} />,
+      metric: <Hash size={16} strokeWidth={1} />,
+      table: <Table size={16} strokeWidth={1} />,
+    },
+    [FUNNEL]: {
+      columnChart: <ChartColumnBig size={16} strokeWidth={1} />,
+      chart: <ChartBarBig size={16} strokeWidth={1} />,
+    },
+    [USER_PATH]: {
+      lineChart: <Split size={16} strokeWidth={1} />,
+      sunburst: <CircleDashed size={16} strokeWidth={1} />,
+    },
   };
   const allowedTypes = {
     [TIMESERIES]: [
@@ -296,18 +310,21 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
       'table',
     ],
     [FUNNEL]: ['chart', 'columnChart', 'metric', 'table'],
+    [USER_PATH]: ['lineChart', 'sunburst'],
   };
+  const metricType = metric.metricType;
+  const viewType = metric.viewType;
   return (
     <Dropdown
       trigger={['click']}
       menu={{
         selectable: true,
-        items: allowedTypes[metric.metricType].map((key) => ({
+        items: allowedTypes[metricType].map((key) => ({
           key,
           label: (
             <div className="flex gap-2 items-center">
-              {chartIcons[key]}
-              <div>{usedChartTypes[key]}</div>
+              {chartIcons[metricType][key]}
+              <div>{usedChartTypes[metricType][key]}</div>
             </div>
           ),
         })),
@@ -324,8 +341,8 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
         className="btn-visualization-type"
       >
         <Space>
-          {chartIcons[metric.viewType]}
-          <div>{usedChartTypes[metric.viewType]}</div>
+          {chartIcons[metricType][viewType]}
+          <div>{usedChartTypes[metricType][viewType]}</div>
           <DownOutlined className="text-sm " />
         </Space>
       </Button>

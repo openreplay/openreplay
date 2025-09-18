@@ -69,7 +69,7 @@ function WidgetDatatable(props: Props) {
   const [tableData, setTableData] = useState([]);
 
   const columnNames = [];
-  const series = !data.chart[0] ? [] : data.namesMap;
+  const series = data ? (!data.chart[0] ? [] : data.namesMap) : [];
 
   React.useEffect(() => {
     if (!data.chart) return;

@@ -37,6 +37,11 @@ const ThemedApp: React.FC = () => {
         itemSelectedBg: theme === 'dark' ? cssVar('gray-darkest') : '#FFFFFF',
         itemSelectedColor: cssVar('main'),
       },
+      Form: {
+        labelColor: cssVar('gray-darkest'),
+        colorText: cssVar('gray-darkest'),
+        colorTextPlaceholder: cssVar('gray-medium'),
+      },
       Menu: {
         colorPrimary: cssVar('teal'),
         colorBgContainer: cssVar('gray-lightest'),
@@ -125,7 +130,7 @@ const ThemedApp: React.FC = () => {
       Tag: {
         defaultBg: cssVar('gray-lightest'),
         defaultColor: cssVar('gray-darkest'),
-      }
+      },
     },
     token: {
       colorPrimary: cssVar('main'),

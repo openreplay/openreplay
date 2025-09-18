@@ -4,7 +4,8 @@ import BarChart from 'Components/Charts/BarChart';
 import PieChart from 'Components/Charts/PieChart';
 import SankeyChart from 'Components/Charts/SankeyChart';
 import ColumnChart from 'Components/Charts/ColumnChart';
-import WebVitalsChart from 'Components/Charts/WebVitals';
+import WebVitalsChart from 'Components/Charts/WebVitals'
+import SunBurstChart from 'Components/Charts/SunburstChart/Sunburst';
 
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
@@ -141,12 +142,21 @@ function WidgetChart(props: Props) {
 
   const loadSample = () => console.log('clicked');
 
-  const depsString = JSON.stringify({
-    ..._metric.series,
-    ..._metric.excludes,
-    ..._metric.startPoint,
-    hideExcess: false,
-  });
+  const depsString =
+    _metric.metricType === USER_PATH
+      ? JSON.stringify({
+          ..._metric.series,
+          ..._metric.excludes,
+          ..._metric.startPoint,
+          viewType: _metric.viewType,
+          hideExcess: false,
+        })
+      : JSON.stringify({
+          ..._metric.series,
+          ..._metric.excludes,
+          ..._metric.startPoint,
+          hideExcess: false,
+        });
   const fetchMetricChartData = (
     metric: any,
     payload: any,
@@ -553,23 +563,43 @@ function WidgetChart(props: Props) {
       return <InsightsCard height={height} data={data} />;
     }
 
-    if (metricType === USER_PATH && data && data.links) {
-      const isUngrouped = props.isPreview
-        ? !(_metric.hideExcess ?? true)
-        : false;
-      const height = props.height ? props.height : props.isPreview ? 550 : 240;
-      return (
-        <SankeyChart
-          height={height}
-          data={data}
-          inGrid={!props.isPreview}
-          onChartClick={(filters: any) => {
-            dashboardStore.drillDownFilter.merge({ filters, page: 1 });
-          }}
-          isUngrouped={isUngrouped}
-          startPoint={metric.startType}
-        />
-      );
+    if (metricType === USER_PATH && data) {
+      if (viewType === 'sunburst' && Array.isArray(data)) {
+        const isUngrouped = props.isPreview
+          ? !(_metric.hideExcess ?? true)
+          : false;
+        const height = props.isPreview ? 550 : 240;
+        return (
+          <SunBurstChart
+            height={height}
+            data={data}
+            inGrid={!props.isPreview}
+            onChartClick={(filters: any) => {
+              dashboardStore.drillDownFilter.merge({ filters, page: 1 });
+            }}
+            isUngrouped={isUngrouped}
+          />
+        );
+      }
+      if (viewType === 'lineChart' && data.links) {
+        const isUngrouped = props.isPreview
+          ? !(_metric.hideExcess ?? true)
+          : false;
+        const height = props.isPreview ? 550 : 240;
+        const startUrl = metric.startPoint.filter?.filters.find(f => f.name === "url_path")?.value[0] ?? "unref"
+        return (
+          <SankeyChart
+            height={height}
+            data={data}
+            inGrid={!props.isPreview}
+            onChartClick={(filters: any) => {
+              dashboardStore.drillDownFilter.merge({ filters, page: 1 });
+            }}
+            isUngrouped={isUngrouped}
+            startUrl={startUrl}
+          />
+        );
+      }
     }
 
     if (metricType === RETENTION) {
@@ -606,6 +636,7 @@ function WidgetChart(props: Props) {
     (props.isPreview || _metric.viewType === TABLE);
   const tableMode =
     _metric.viewType === 'table' && _metric.metricType === TIMESERIES;
+
   return (
     <div ref={ref}>
       {loading ? (
