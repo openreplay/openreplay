@@ -60,7 +60,7 @@ func main() {
 		cfg.MessageSizeLimit,
 	)
 
-	router, err := api.NewRouter(&cfg.HTTP, log, api.NoPrefix, builder)
+	router, err := api.NewRouter(&cfg.HTTP, log, "/replay-exporter", builder)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}

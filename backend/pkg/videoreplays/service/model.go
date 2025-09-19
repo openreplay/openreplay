@@ -6,8 +6,8 @@ type Status string
 
 const (
 	StatusPending   Status = "pending"
-	StatusFailed    Status = "failed"
-	StatusCompleted Status = "completed"
+	StatusFailed    Status = "failure"
+	StatusCompleted Status = "success"
 )
 
 type SessionVideo struct {
