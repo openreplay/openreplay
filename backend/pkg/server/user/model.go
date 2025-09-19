@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
