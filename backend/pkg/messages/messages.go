@@ -122,6 +122,7 @@ const (
 	MsgMobileNetworkCall                  = 105
 	MsgMobileSwipeEvent                   = 106
 	MsgMobileBatchMeta                    = 107
+	MsgMobileGraphQL                      = 109
 	MsgMobilePerformanceAggregated        = 110
 	MsgMobileIssueEvent                   = 111
 )
@@ -3343,6 +3344,39 @@ func (msg *MobileBatchMeta) Decode() Message {
 
 func (msg *MobileBatchMeta) TypeID() int {
 	return 107
+}
+
+type MobileGraphQL struct {
+	message
+	Timestamp     uint64
+	Length        uint64
+	OperationKind string
+	OperationName string
+	Variables     string
+	Response      string
+	Duration      uint64
+}
+
+func (msg *MobileGraphQL) Encode() []byte {
+	buf := make([]byte, 71+len(msg.OperationKind)+len(msg.OperationName)+len(msg.Variables)+len(msg.Response))
+	buf[0] = 109
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Length, buf, p)
+	p = WriteString(msg.OperationKind, buf, p)
+	p = WriteString(msg.OperationName, buf, p)
+	p = WriteString(msg.Variables, buf, p)
+	p = WriteString(msg.Response, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	return buf[:p]
+}
+
+func (msg *MobileGraphQL) Decode() Message {
+	return msg
+}
+
+func (msg *MobileGraphQL) TypeID() int {
+	return 109
 }
 
 type MobilePerformanceAggregated struct {

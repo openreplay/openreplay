@@ -32,6 +32,11 @@ interface IORTrackerConnector {
     optionsDict: Options,
     projectUrl?: string
   ) => void;
+  /**
+   * @param type - type of message (only gql at the moment)
+   * @param msg - JSON string containing message to be sent
+   * */
+  sendMessage: (type: string, msg: string) => void;
   stop: () => void;
   getSessionID: () => Promise<string>;
   setMetadata: (key: string, value: string) => void;
@@ -77,6 +82,30 @@ export function setUserID(userID: string) {
   ORTrackerConnector.setUserID(userID);
 }
 
+/**
+ * Can be used with OR gql (Relay/Apollo) plugin:
+ * ```
+ * const appWrapper = {
+ *   active: () => true,
+ *   send: (gqlMsg) => {
+ *     const type = 'gql';
+ *     const msg = JSON.stringify({
+ *       operationKind: gqlMsg[1],
+ *       operationName: gqlMsg[2],
+ *       variables: gqlMsg[3],
+ *       response: gqlMsg[4],
+ *       duration: gqlMsg[5],
+ *     })
+ *     sendMessage(type, msg);
+ *   }
+ * }
+ * ```
+ * */
+export function sendMessage(type: string, msg: string) {
+  ORTrackerConnector.sendMessage(type, msg);
+}
+
+
 let patched = false;
 const patchNetwork = (
   ctx = global,
@@ -91,6 +120,7 @@ const patchNetwork = (
 
 export default {
   tracker: ORTrackerConnector as IORTrackerConnector,
+  sendCustomMessage: sendMessage,
   patchNetwork: patchNetwork,
   ORTouchTrackingView: RnTrackerTouchTrackingView,
   ORTrackedInput: ORTrackedInput,

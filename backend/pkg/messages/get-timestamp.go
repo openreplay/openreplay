@@ -55,6 +55,9 @@ func GetTimestamp(message Message) uint64 {
 	case *MobileBatchMeta:
 		return msg.Timestamp
 
+	case *MobileGraphQL:
+		return msg.Timestamp
+
 	case *MobileIssueEvent:
 		return msg.Timestamp
 

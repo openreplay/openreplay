@@ -7,12 +7,10 @@ import MobilePlayerSubheader from './MobilePlayerSubheader';
 import Player from './PlayerInst';
 
 interface IProps {
-  fullscreen: boolean;
-  sessionId: string;
+  fullscreen?: boolean;
   activeTab: string;
-  jiraConfig: Record<string, any>;
-  fullView?: boolean;
-  setActiveTab: (tab: string) => void;
+  fullView?: boolean
+  setActiveTab: (tab: string) => void
 }
 
 function PlayerBlock(props: IProps) {

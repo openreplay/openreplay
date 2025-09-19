@@ -24,6 +24,7 @@ import {
   OVERVIEW,
   PERFORMANCE,
   STACKEVENTS,
+  GRAPHQL,
 } from 'App/mstore/uiPlayerStore';
 import { useStore } from 'App/mstore';
 import { session as sessionRoute, withSiteId } from 'App/routes';
@@ -258,6 +259,12 @@ const DevtoolsButtons = observer(
           onClick={() => toggleBottomTools(STACKEVENTS)}
           active={bottomBlock === STACKEVENTS}
           label="Events"
+        />
+        <ControlButton
+          disabled={messagesLoading}
+          onClick={() => toggleBottomTools(GRAPHQL)}
+          active={bottomBlock === GRAPHQL}
+          label="GraphQL"
         />
         <ControlButton
           popover={

@@ -86,6 +86,7 @@ import type {
   RawMobileInternalError,
   RawMobileNetworkCall,
   RawMobileSwipeEvent,
+  RawMobileGraphQl,
   RawMobileIssueEvent,
 } from './raw.gen'
 
@@ -255,6 +256,8 @@ export type MobileInternalError = RawMobileInternalError & Timed
 export type MobileNetworkCall = RawMobileNetworkCall & Timed
 
 export type MobileSwipeEvent = RawMobileSwipeEvent & Timed
+
+export type MobileGraphQl = RawMobileGraphQl & Timed
 
 export type MobileIssueEvent = RawMobileIssueEvent & Timed
 
