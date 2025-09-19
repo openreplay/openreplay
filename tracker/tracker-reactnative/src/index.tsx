@@ -17,8 +17,6 @@ const LINKING_ERROR =
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
 
-console.log(Object.keys(ORTrackerConnector));
-
 interface Options {
   crashes?: boolean;
   analytics?: boolean;
