@@ -26,7 +26,7 @@ import {
   spotOnlyCats
 } from './data';
 import { useStore } from 'App/mstore';
-
+import { useTranslation } from 'react-i18next';
 const { Text } = Typography;
 
 interface Props extends RouteComponentProps {
@@ -38,7 +38,7 @@ function SideMenu(props: Props) {
   const {
     location
   } = props;
-
+  const { t } = useTranslation();
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
   const { searchStore, projectsStore, userStore } = useStore();
@@ -61,7 +61,7 @@ function SideMenu(props: Props) {
   };
 
   let menu: any[] = React.useMemo(() => {
-    const sourceMenu = isPreferencesActive ? preferences : main_menu;
+    const sourceMenu = isPreferencesActive ? preferences(t) : main_menu(t);
 
     return sourceMenu
       .filter((cat) => {
