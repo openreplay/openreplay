@@ -1,4 +1,4 @@
-FROM python:3.12-alpine
+FROM python:3.14.0rc1-alpine
 LABEL maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 WORKDIR /app
 
