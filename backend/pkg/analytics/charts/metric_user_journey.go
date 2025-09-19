@@ -67,10 +67,15 @@ type UserJourneyRawData struct {
 	Value                uint64         `omitempty`
 }
 
-var PredefinedJourneys = map[string]map[string]string{
-	"LOCATION": {"eventName": "LOCATION", "column": "`$properties`.url_path"},
-	"CLICK":    {"eventName": "CLICK", "column": "`$properties`.label"},
-	"INPUT":    {"eventName": "INPUT", "column": "`$properties`.label"},
+type JourneyStep struct {
+	Column    string
+	EventName string
+}
+
+var PredefinedJourneys = map[string]JourneyStep{
+	"LOCATION": {EventName: "LOCATION", Column: "`$current_path`"},
+	"CLICK":    {EventName: "CLICK", Column: "`$properties`.label"},
+	"INPUT":    {EventName: "INPUT", Column: "`$properties`.label"},
 }
 
 type UserJourneyQueryBuilder struct{}
@@ -101,12 +106,21 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 		_, err = conn.ExecContext(ctx, queries[i])
 
 		if err != nil {
+			for j := 0; j <= i; j++ {
+				log.Println("---------------------------------")
+				log.Println(queries[j])
+				log.Println("---------------------------------")
+			}
 			return nil, fmt.Errorf("error executing tmp query for userJourney: %w", err)
 		}
 	}
 	var rawData []UserJourneyRawData
-	//if err = conn.Select(ctx, &rawData, queries[len(queries)-1]); err != nil {
 	if err = conn.SelectContext(ctx, &rawData, queries[len(queries)-1]); err != nil {
+		for j := 0; j < len(queries); j++ {
+			log.Println("---------------------------------")
+			log.Println(queries[j])
+			log.Println("---------------------------------")
+		}
 		log.Printf("Error executing userJourney query: %s\nQuery: %s", err, queries[len(queries)-1])
 		return nil, err
 	}
@@ -124,25 +138,26 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 }
 
 func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
-	var subEvents []map[string]string = make([]map[string]string, 0)
+	var subEvents []JourneyStep = make([]JourneyStep, 0)
 	var startPointsConditions []string = make([]string, 0)
 	var step0Conditions []string = make([]string, 0)
 	var step1PostConditions = []string{fmt.Sprintf("event_number_in_session <= %d", p.Density)}
-	var q2ExtraCol string
-	var q2ExtraCondition string
-	var mainColumn string
+	var q2ExtraCol string = ""
+	var q2ExtraCondition string = ""
+	var mainColumn string = ""
 
 	if len(p.MetricValue) == 0 {
 		p.MetricValue = append(p.MetricValue, "LOCATION")
-		subEvents = append(subEvents, map[string]string{"column": "`$current_path`", "eventType": "LOCATION"})
+		subEvents = append(subEvents, JourneyStep{"`$current_path`", "LOCATION"})
 	} else {
+
 		if len(p.StartPoint) > 0 {
-			var extraMetricValues []string
+			var extraMetricValues []string = make([]string, 0)
 			for _, s := range p.StartPoint {
 				if !slices.Contains(p.MetricValue, s.Name) {
-					subEvents = append(subEvents, map[string]string{"column": PredefinedJourneys[s.Name]["column"], "eventType": PredefinedJourneys[s.Name]["eventName"]})
+					subEvents = append(subEvents, JourneyStep{PredefinedJourneys[s.Name].Column, PredefinedJourneys[s.Name].EventName})
 					step1PostConditions = append(step1PostConditions, fmt.Sprintf("(`$event_name`='%[1]v' AND event_number_in_session = 1 OR `$event_name`!='%[1]v' AND event_number_in_session > 1)",
-						PredefinedJourneys[s.Name]["eventName"]))
+						PredefinedJourneys[s.Name].EventName))
 					extraMetricValues = append(extraMetricValues, s.Name)
 					if q2ExtraCol == "" {
 						// This is used in case start event has different type of the visible event,
@@ -154,31 +169,36 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 						q2ExtraCondition = "WHERE event_number_in_session + 1 = next_event_number_in_session OR isNull(next_event_number_in_session);"
 
 					}
-					p.MetricValue = append(p.MetricValue, extraMetricValues...)
 				}
 			}
-
+			p.MetricValue = append(p.MetricValue, extraMetricValues...)
 		}
+
 		for _, v := range p.MetricValue {
-			if _, ok := PredefinedJourneys[v]; ok {
-				subEvents = append(subEvents, map[string]string{"column": PredefinedJourneys[v]["column"], "eventName": PredefinedJourneys[v]["eventName"]})
+			if selected, ok := PredefinedJourneys[v]; ok {
+				subEvents = append(subEvents, JourneyStep{selected.Column, selected.EventName})
 			}
 		}
 	}
 
-	if len(subEvents) > 1 {
-		var b []string
-		for _, v := range subEvents[:len(subEvents)-1] {
-			b = append(b, fmt.Sprintf("`$event_name`='%s',%s", v["eventType"], v["column"]))
+	if len(subEvents) == 1 {
+		mainColumn = subEvents[0].Column
+	} else {
+		var b []string = make([]string, 0)
+		for i := 0; i < len(subEvents)-1; i++ {
+			b = append(b, fmt.Sprintf("`$event_name`='%s',%s", subEvents[i].EventName, subEvents[i].Column))
 		}
-
-		mainColumn = fmt.Sprintf("multiIf(%s,%s)", strings.Join(b, ","), subEvents[len(subEvents)-1]["column"])
-	} else if len(subEvents) == 1 {
-		mainColumn = subEvents[0]["column"]
+		mainColumn = fmt.Sprintf("multiIf(%s,%s)", strings.Join(b, ","), subEvents[len(subEvents)-1].Column)
 	}
 
-	step0Conditions, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"})
-
+	startPointsConditions, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "events"})
+	for j := 0; j < len(p.StartPoint); j++ {
+		for i := 0; i < len(p.StartPoint[j].Filters); i++ {
+			// In the future, make sure UI sends $auto_captured for predefined events properties
+			p.StartPoint[j].Filters[i].Name = "e_value"
+		}
+	}
+	step0Conditions, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: map[string]string{"e_value": "e_value"}, MainTableAlias: "pre_ranked_events"})
 	if len(startPointsConditions) > 0 {
 		startPointsConditions = []string{fmt.Sprintf("(%s)", strings.Join(startPointsConditions, " OR "))}
 		startPointsConditions = append(startPointsConditions, fmt.Sprintf("events.project_id = toUInt16(%d)", p.ProjectId))
@@ -209,7 +229,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	selectedEventTypeSubQuery := make([]string, 0)
 	for _, s := range p.MetricValue {
 		if _, ok := PredefinedJourneys[s]; ok {
-			selectedEventTypeSubQuery = append(selectedEventTypeSubQuery, fmt.Sprintf("events.`$event_name` = '%s'", PredefinedJourneys[s]["eventName"]))
+			selectedEventTypeSubQuery = append(selectedEventTypeSubQuery, fmt.Sprintf("events.`$event_name` = '%s'", PredefinedJourneys[s].EventName))
 		} else {
 			selectedEventTypeSubQuery = append(selectedEventTypeSubQuery, fmt.Sprintf("events.`$event_name` = '%s'", s))
 		}
@@ -217,7 +237,6 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 			selectedEventTypeSubQuery[len(selectedEventTypeSubQuery)-1] += fmt.Sprintf(" AND (%s)", strings.Join(exclusions[s], " AND "))
 		}
 	}
-	//    selected_event_type_sub_query = " OR ".join(selected_event_type_sub_query)
 	chSubQuery = append(chSubQuery, fmt.Sprintf("(%s)", strings.Join(selectedEventTypeSubQuery, " OR ")))
 
 	mainSessionsTable := getMainSessionsTable(p.StartTimestamp) + " AS sessions"
@@ -331,6 +350,7 @@ WITH %s
 	 pre_ranked_events AS (SELECT *
 						   FROM (SELECT session_id,
 										"$event_name",
+										"$auto_captured",
 										created_at,
 										toString(%s) AS e_value,
 										row_number() OVER (PARTITION BY session_id

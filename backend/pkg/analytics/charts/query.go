@@ -2,7 +2,6 @@ package charts
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -62,23 +61,26 @@ type BuildConditionsOptions struct {
 }
 
 var propertyKeyMap = map[string]filterConfig{
-	"LOCATION":        {LogicalProperty: "url_path"},
-	"FETCH":           {LogicalProperty: "url_path"},
-	"REQUEST":         {LogicalProperty: "url_path"},
-	"CLICK":           {LogicalProperty: "label"},
-	"INPUT":           {LogicalProperty: "label"},
-	"FETCHURL":        {LogicalProperty: "url_path"},
-	"USERDEVICE":      {LogicalProperty: "user_device"},
-	"FETCHSTATUSCODE": {LogicalProperty: "status", IsNumeric: true},
+	"LOCATION":        {LogicalProperty: "$current_path", InDProperties: false},
+	"FETCH":           {LogicalProperty: "$current_path", InDProperties: false},
+	"REQUEST":         {LogicalProperty: "$current_path", InDProperties: false},
+	"CLICK":           {LogicalProperty: "label", InDProperties: true},
+	"INPUT":           {LogicalProperty: "label", InDProperties: true},
+	"FETCHURL":        {LogicalProperty: "$current_path", InDProperties: false},
+	"USERDEVICE":      {LogicalProperty: "user_device", InDProperties: true},
+	"FETCHSTATUSCODE": {LogicalProperty: "status", IsNumeric: true, InDProperties: true},
+	//	For some reason, the code is looking for property-name 'url_path' like event name
+	"URL_PATH": {LogicalProperty: "$current_path", InDProperties: false},
 }
 
 // filterConfig holds configuration for a filter type
 type filterConfig struct {
 	LogicalProperty string
 	IsNumeric       bool
+	InDProperties   bool // in $properties or not
 }
 
-func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptions) string {
+func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts BuildConditionsOptions) string {
 	// helper: wrap names starting with $ in quotes
 	quote := func(name string) string {
 		prefix := opts.MainTableAlias + "."
@@ -107,9 +109,9 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 	}
 
 	// determine property key
-	propKey := logical
+	var propKey filterConfig = filterConfig{logical, isNumeric, inDProperties}
 	if cfg, ok := propertyKeyMap[strings.ToUpper(logical)]; ok {
-		propKey = cfg.LogicalProperty
+		propKey = cfg
 	}
 
 	// build properties column reference
@@ -119,11 +121,15 @@ func getColumnAccessor(logical string, isNumeric bool, opts BuildConditionsOptio
 	}
 	colName = quote(colName)
 
-	// JSON extraction
-	if isNumeric {
-		return fmt.Sprintf("JSONExtractFloat(toString(%s), '%s')", colName, propKey)
+	if propKey.InDProperties {
+		// JSON extraction
+		if isNumeric {
+			return fmt.Sprintf("JSONExtractFloat(toString(%s), '%s')", colName, propKey.LogicalProperty)
+		}
+		return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, propKey.LogicalProperty)
+	} else {
+		return fmt.Sprintf("%s.\"%s\"", opts.MainTableAlias, propKey.LogicalProperty)
 	}
-	return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, propKey)
 }
 
 func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions) ([]string, []string) {
@@ -202,9 +208,9 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) []string {
 	cfg, ok := propertyKeyMap[strings.ToUpper(f.Name)]
 	isNumeric := cfg.IsNumeric || f.DataType == "float" || f.DataType == "number" || f.DataType == "int"
 	if !ok {
-		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: isNumeric}
+		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: isNumeric, InDProperties: true}
 	}
-	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, opts)
+	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, cfg.InDProperties, opts)
 	switch f.Operator {
 	case "isAny", "onAny":
 		//This part is unreachable, because you already have if f.IsEvent&return above
@@ -561,7 +567,6 @@ func logQuery(query string, args ...interface{}) {
 	if len(args) > 0 {
 		query = fmt.Sprintf(query, args...)
 	}
-	log.Printf(">>>>>>>>>>>>>>>>>>>>>>>>>>> Executing query:\n%s\n<<<<<<<<<<<<<<<<<<<<<<<<<<", query)
 }
 func isSlice(v interface{}) bool {
 	return reflect.TypeOf(v).Kind() == reflect.Slice
