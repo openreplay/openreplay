@@ -75,3 +75,14 @@ export async function hideIssue(projectId: string, issueName: string) {
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res;
 }
+
+export async function renameIssue(projectId: string, issueName: string, newName: string) {
+  const res = await client.put(`/kai/${projectId}/smart_alerts`, {
+    issue: issueName,
+    operation: {
+      rename: newName
+    }
+  })
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res;
+}
