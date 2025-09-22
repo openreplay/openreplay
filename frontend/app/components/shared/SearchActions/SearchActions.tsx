@@ -3,7 +3,6 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { Button, Tooltip } from 'antd';
-import AiSearchSection from './AiSearchSection';
 import { useTranslation } from 'react-i18next';
 import SavedSearch from '../SavedSearch/SavedSearch';
 
@@ -52,13 +51,11 @@ function SearchActions() {
             </Tooltip>
           </div>
         </div>
-        <AiSearchSection />
       </div>
 
       {/* desktop */}
       <div className={'hidden lg:flex items-center gap-2 w-full '}>
         <h2 className="text-2xl capitalize mr-4">{title}</h2>
-        {showAiField ? <AiSearchSection /> : null}
         <div className="ml-auto" />
         <SavedSearch />
         <Tooltip title={t('Clear Search Filters')}>
