@@ -52,22 +52,32 @@ func (h *HeatmapSessionQueryBuilder) Execute(p *Payload, conn driver.Conn) (inte
 
 const (
 	sqlWithLocationTemplate = `SELECT
-    toString(s.session_id) AS session_id,
-    toUnixTimestamp(s.datetime) * 1000 AS startTs,
-    s.duration,
-    toUnixTimestamp(e.created_at) * 1000 AS eventTs,
-    e.url_path
+    toString(session_id) AS session_id,
+    startTs,
+    duration,
+    eventTs,
+    url_path
 FROM (
     SELECT
-        session_id,
-        created_at,
-        "$current_path" AS url_path
-    FROM product_analytics.events AS e
+        toString(s.session_id) AS session_id,
+        toUnixTimestamp(s.datetime) * 1000 AS startTs,
+        s.duration,
+        toUnixTimestamp(e.created_at) * 1000 AS eventTs,
+        e.url_path
+    FROM (
+        SELECT
+            session_id,
+            created_at,
+            "$current_path" AS url_path
+        FROM product_analytics.events AS e
+        WHERE %s
+    ) AS e
+    INNER JOIN experimental.sessions AS s USING (session_id)
     WHERE %s
-) AS e
-INNER JOIN experimental.sessions AS s USING (session_id)
-WHERE %s
-ORDER BY s.duration ASC, e.created_at ASC
+    ORDER BY s.duration ASC, e.created_at ASC
+    LIMIT 10
+) AS subquery
+ORDER BY rand()
 LIMIT 1;`
 
 	sqlWithoutLocationTemplate = `WITH top_url_path AS (
@@ -82,22 +92,32 @@ LIMIT 1;`
 )
 
 SELECT
-    toString(s.session_id) AS session_id,
-    toUnixTimestamp(s.datetime) * 1000 AS startTs,
-    s.duration,
-    toUnixTimestamp(e.created_at) * 1000 AS eventTs,
-    e.url_path
+    toString(session_id) AS session_id,
+    startTs,
+    duration,
+    eventTs,
+    url_path
 FROM (
     SELECT
-        session_id,
-		created_at,
-        "$current_path" AS url_path
-    FROM product_analytics.events AS e
+        toString(s.session_id) AS session_id,
+        toUnixTimestamp(s.datetime) * 1000 AS startTs,
+        s.duration,
+        toUnixTimestamp(e.created_at) * 1000 AS eventTs,
+        e.url_path
+    FROM (
+        SELECT
+            session_id,
+            created_at,
+            "$current_path" AS url_path
+        FROM product_analytics.events AS e
+        WHERE %s
+    ) AS e
+    INNER JOIN experimental.sessions AS s USING (session_id)
     WHERE %s
-) AS e
-INNER JOIN experimental.sessions AS s USING (session_id)
-WHERE %s
-ORDER BY e.created_at ASC, s.duration ASC
+    ORDER BY e.created_at ASC, s.duration ASC
+    LIMIT 10
+) AS subquery
+ORDER BY rand()
 LIMIT 1;`
 )
 
