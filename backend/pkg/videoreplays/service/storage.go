@@ -32,12 +32,6 @@ func NewStorage(log logger.Logger, pgconn pool.Pool) (*Storage, error) {
 func (h *Storage) HandleJobCompletion(sessionID string, message *SessionVideoJobMessage) error {
 	ctx := context.Background()
 
-	h.log.Info(ctx, "Processing session video job completion",
-		"sessionID", sessionID,
-		"status", message.Status,
-		"s3Path", message.Name,
-		"error", message.Error)
-
 	switch message.Status {
 	case StatusCompleted:
 		return h.handleSuccessfulJob(ctx, sessionID, message)
@@ -50,10 +44,6 @@ func (h *Storage) HandleJobCompletion(sessionID string, message *SessionVideoJob
 }
 
 func (h *Storage) handleSuccessfulJob(ctx context.Context, sessionID string, message *SessionVideoJobMessage) error {
-	h.log.Info(ctx, "Handling successful session video job",
-		"sessionID", sessionID,
-		"s3Path", message.Name)
-
 	updateQuery := `
 		UPDATE public.sessions_videos
 		SET status = $2,
@@ -68,15 +58,10 @@ func (h *Storage) handleSuccessfulJob(ctx context.Context, sessionID string, mes
 		return fmt.Errorf("unable to update session video status")
 	}
 
-	h.log.Info(ctx, "Successfully updated session video record", "sessionID", sessionID)
 	return nil
 }
 
 func (h *Storage) handleFailedJob(ctx context.Context, sessionID string, message *SessionVideoJobMessage) error {
-	h.log.Error(ctx, "Handling failed session video job",
-		"sessionID", sessionID,
-		"error", message.Error)
-
 	updateQuery := `
 		UPDATE public.sessions_videos
 		SET status = $2,
@@ -91,12 +76,10 @@ func (h *Storage) handleFailedJob(ctx context.Context, sessionID string, message
 		return fmt.Errorf("unable to update session video status")
 	}
 
-	h.log.Info(ctx, "Successfully updated session video record with failure status", "sessionID", sessionID)
 	return nil
 }
 
 func (h *Storage) CreateSessionVideoRecord(ctx context.Context, sessionID string, projectID int, userID uint64, jobID string) error {
-
 	insertQuery := `
 		INSERT INTO public.sessions_videos (session_id, project_id, user_id, status, job_id, created_at, modified_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $6)
@@ -113,15 +96,10 @@ func (h *Storage) CreateSessionVideoRecord(ctx context.Context, sessionID string
 		return fmt.Errorf("unable to create session video record")
 	}
 
-	h.log.Info(ctx, "Successfully created session video record",
-		"sessionID", sessionID, "projectID", projectID, "userID", userID, "jobID", jobID)
-
 	return nil
 }
 
 func (h *Storage) GetSessionVideoBySessionAndProject(ctx context.Context, sessionID string, projectID int) (*SessionVideo, error) {
-	h.log.Debug(ctx, "Checking for existing session video", "sessionID", sessionID, "projectID", projectID)
-
 	query := `
 		SELECT session_id, project_id, user_id, file_url, status, job_id, error_message, created_at, modified_at
 		FROM public.sessions_videos
@@ -145,19 +123,16 @@ func (h *Storage) GetSessionVideoBySessionAndProject(ctx context.Context, sessio
 	)
 
 	if err != nil {
-		// Handle any "no rows found" type errors by returning nil (no existing record)
 		if err == sql.ErrNoRows ||
 			err.Error() == "no rows in result set" ||
 			err.Error() == "sql: no rows in result set" {
 			h.log.Debug(ctx, "No existing session video found, proceeding with new job", "sessionID", sessionID, "projectID", projectID)
 			return nil, nil // !!! antipattern
 		}
-		// Log actual database errors but don't fail - continue with new job creation
+
 		h.log.Warn(ctx, "Database query issue while checking session video, proceeding with new job", "error", err, "sessionID", sessionID, "projectID", projectID)
 		return nil, nil // !!! antipattern
 	}
-
-	h.log.Debug(ctx, "Found existing session video", "sessionID", sessionID, "projectID", projectID, "status", video.Status)
 
 	if fileURL.Valid {
 		video.FileURL = fileURL.String
@@ -183,40 +158,36 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 	}
 	offset := (page - 1) * limit
 
-	whereClause := "WHERE project_id = $1"
+	whereClause := "WHERE sv.project_id = $1"
 	args := []interface{}{projectID}
 	argIndex := 2
 
 	if req.IsSelf {
-		whereClause += fmt.Sprintf(" AND user_id = $%d", argIndex)
+		whereClause += fmt.Sprintf(" AND sv.user_id = $%d", argIndex)
 		args = append(args, userID)
 		argIndex++
 	}
 
-	// Add status filter - default to "completed" if not specified
-	status := req.Status
-	if status == "" {
-		status = StatusCompleted
+	if req.Status != "" {
+		whereClause += fmt.Sprintf(" AND sv.status = $%d", argIndex)
+		args = append(args, req.Status)
+		argIndex++
 	}
 
-	whereClause += fmt.Sprintf(" AND status = $%d", argIndex)
-	args = append(args, status)
-	argIndex++
-
-	// Build ORDER BY clause
-	orderBy := "ORDER BY created_at DESC"
+	orderBy := "ORDER BY sv.created_at DESC"
 	if req.SortBy == "datetime" {
 		if req.Asc {
-			orderBy = "ORDER BY created_at ASC"
+			orderBy = "ORDER BY sv.created_at ASC"
 		} else {
-			orderBy = "ORDER BY created_at DESC"
+			orderBy = "ORDER BY sv.created_at DESC"
 		}
 	}
 
 	query := fmt.Sprintf(`
-		SELECT session_id, project_id, user_id, file_url, status, job_id, error_message, created_at, modified_at,
+		SELECT sv.session_id, sv.project_id, sv.user_id, u.name as user_name, sv.file_url, sv.status, sv.job_id, sv.error_message, sv.created_at, sv.modified_at,
 		       COUNT(*) OVER() as total_count
-		FROM public.sessions_videos
+		FROM public.sessions_videos sv
+		LEFT JOIN public.users u ON sv.user_id = u.user_id
 		%s
 		%s
 		LIMIT $%d OFFSET $%d`, whereClause, orderBy, argIndex, argIndex+1)
@@ -238,11 +209,13 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 		var fileURL sql.NullString
 		var jobID sql.NullString
 		var errorMessage sql.NullString
+		var userName sql.NullString
 
 		err := rows.Scan(
 			&video.SessionID,
 			&video.ProjectID,
 			&video.UserID,
+			&userName,
 			&fileURL,
 			&video.Status,
 			&jobID,
@@ -256,6 +229,9 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 			return nil, fmt.Errorf("unable to process session videos")
 		}
 
+		if userName.Valid {
+			video.UserName = userName.String
+		}
 		if fileURL.Valid {
 			video.FileURL = fileURL.String
 		}
@@ -274,8 +250,6 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 		return nil, fmt.Errorf("unable to process session videos")
 	}
 
-	h.log.Debug(ctx, "Successfully retrieved session videos", "count", len(videos), "total", total)
-
 	return &GetSessionVideosResponse{
 		Videos: videos,
 		Total:  total,
@@ -283,8 +257,6 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 }
 
 func (h *Storage) DeleteSessionVideo(ctx context.Context, projectID int, userID uint64, sessionID string) error {
-	h.log.Debug(ctx, "Deleting session video", "sessionID", sessionID, "projectID", projectID, "userID", userID)
-
 	deleteQuery := `
 		DELETE FROM public.sessions_videos
 		WHERE session_id = $1 AND project_id = $2 AND user_id = $3
@@ -301,6 +273,5 @@ func (h *Storage) DeleteSessionVideo(ctx context.Context, projectID int, userID 
 		return fmt.Errorf("unable to delete session video at this time")
 	}
 
-	h.log.Info(ctx, "Successfully deleted session video", "sessionID", deletedSessionID, "projectID", projectID, "userID", userID)
 	return nil
 }

@@ -171,18 +171,29 @@ func (s *sessionVideosImpl) DownloadSessionVideo(projectId int, userId uint64, s
 }
 
 func (s *sessionVideosImpl) Iterate(batchData []byte, batchInfo *messages.BatchInfo) {
-	ctx := context.WithValue(context.Background(), "sessionID", batchInfo.SessionID)
-
 	var jobMessage SessionVideoJobMessage
 	if err := json.Unmarshal(batchData, &jobMessage); err != nil {
-		s.log.Error(ctx, "Failed to unmarshal session video job message", "error", err, "sessionID", batchInfo.SessionID)
+		s.log.Error(context.Background(), "Failed to unmarshal session video job message", "error", err)
 		return
 	}
 
-	sessionID := fmt.Sprintf("%d", batchInfo.SessionID())
-	if err := s.storage.HandleJobCompletion(sessionID, &jobMessage); err != nil {
-		s.log.Error(ctx, "Failed to handle job completion", "error", err, "sessionID", batchInfo.SessionID)
+	sessionId := jobMessage.SessionId
+	if jobMessage.SessionId == "" {
+		s.log.Error(s.ctx, "Invalid session ID in job message")
+		return
 	}
 
-	s.log.Debug(ctx, "Successfully processed session video job completion", "sessionID", sessionID)
+	ctx := context.WithValue(context.Background(), "sessionID", sessionId)
+
+	s.log.Info(ctx, "Processing video job message",
+		"s3Path", jobMessage.Name,
+		"sessionId", sessionId,
+		"status", jobMessage.Status,
+		"error", jobMessage.Error)
+
+	if err := s.storage.HandleJobCompletion(sessionId, &jobMessage); err != nil {
+		s.log.Error(ctx, "Failed to handle job completion", "error", err, "sessionID", sessionId)
+	}
+
+	s.log.Debug(ctx, "Successfully processed session video job completion", "sessionID", sessionId)
 }
