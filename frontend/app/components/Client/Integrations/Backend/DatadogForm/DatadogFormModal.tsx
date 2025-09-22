@@ -92,7 +92,7 @@ function DatadogFormModal({
         <ol className="list-decimal list-inside">
           <li>{t('Generate Datadog API Key & Application Key')}</li>
           <li>{t('Enter the API key below')}</li>
-          <li>{t('Propagate openReplaySessionToken')}</li>
+          <li>{t('Propagate openReplaySession.id')}</li>
         </ol>
         <DocLink
           className="mt-4"

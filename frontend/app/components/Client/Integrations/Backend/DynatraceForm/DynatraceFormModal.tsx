@@ -103,12 +103,12 @@ function DynatraceFormModal({
           </li>
           <li>
             {t(
-              'Create a custom Log attribute openReplaySessionToken in Dynatrace.',
+              'Create a custom Log attribute openReplaySession.id in Dynatrace.',
             )}
           </li>
           <li>
             {t(
-              "Propagate openReplaySessionToken in your application's backend logs.",
+              "Propagate openReplaySession.id in your application's backend logs.",
             )}
           </li>
         </ol>

@@ -96,7 +96,7 @@ function ElasticsearchForm({
         <ol className="list-decimal list-inside">
           <li>{t('Create a new Elastic API key')}</li>
           <li>{t('Enter the API key below')}</li>
-          <li>{t('Propagate openReplaySessionToken')}</li>
+          <li>{t('Propagate openReplaySession.id')}</li>
         </ol>
         <DocLink
           className="mt-4"

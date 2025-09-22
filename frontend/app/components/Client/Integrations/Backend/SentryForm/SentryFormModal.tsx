@@ -96,7 +96,7 @@ function SentryForm({
         <ol className="list-decimal list-inside">
           <li>{t('Generate Sentry Auth Token')}</li>
           <li>{t('Enter the token below')}</li>
-          <li>{t('Propagate openReplaySessionToken')}</li>
+          <li>{t('Propagate openReplaySession.id')}</li>
         </ol>
         <DocLink
           className="mt-4"
