@@ -39,7 +39,7 @@ function ClickMapCard() {
     const metric = metricStore.instance;
     const payload = {
       ...metric.toJson(),
-      ...dashboardStore.period.toTimestamps(),
+      ...dashboardStore.drillDownPeriod.toTimestamps(),
       metricType: 'heatmaps_session',
       limit: 200,
       density: 200,

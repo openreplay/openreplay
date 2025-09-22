@@ -23,7 +23,7 @@ function ClickMapRagePicker() {
         metricStore.instance,
         oldData,
         false,
-        dashboardStore.period,
+        dashboardStore.drillDownPeriod,
       );
 
       metricStore.instance.updateKey('hasChanged', true);
