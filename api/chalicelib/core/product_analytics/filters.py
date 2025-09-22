@@ -143,4 +143,5 @@ def get_global_filters(project_id: int):
     r = r["list"]
     for f in r:
         f["defaultProperty"] = False
+        f["category"] = "session"
     return r
