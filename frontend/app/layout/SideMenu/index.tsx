@@ -76,6 +76,7 @@ function SideMenu(props: Props) {
           item.isAdmin && !isAdmin,
           item.isEnterprise && !isEnterprise,
           item.key === MENU.KAI && !hasAi,
+          item.key === PREFERENCES_MENU.EXPORTED_VIDEOS && !account.hasVideoExport,
         ].some(Boolean);
 
         return { ...item, hidden: isHidden };
@@ -120,6 +121,7 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
     [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
     [MENU.KAI]: () => withSiteId(routes.kai(), siteId),
+    [PREFERENCES_MENU.EXPORTED_VIDEOS]: () => client(CLIENT_TABS.VIDEOS),
     ...extraRoutes(siteId),
   };
 

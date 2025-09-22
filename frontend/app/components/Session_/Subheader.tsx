@@ -42,10 +42,11 @@ function SubHeader(props) {
     userStore,
     issueReportingStore,
     settingsStore,
+    recordingsStore,
   } = useStore();
   const { t } = useTranslation();
   const { favorite } = sessionStore.current;
-  const { isEnterprise } = userStore;
+  const { isEnterprise, account } = userStore;
   const currentSession = sessionStore.current;
   const projectId = projectsStore.siteId;
   const integrations = integrationsStore.issues.list;
@@ -137,9 +138,17 @@ function SubHeader(props) {
     location.reload();
   };
 
-  const onExport = () => {
-    return;
+  const onExport = async () => {
+    const status = await recordingsStore.triggerExport(currentSession.sessionId)
+    const statusLabels = {
+      pending: 'Sesison export started',
+      success: 'Session already exported',
+      failure: 'Session export failed, please try again later'
+    }
+    // @ts-ignore
+    toast.info(statusLabels[status ?? pending]);
   }
+
   const dropdownItems = [
     {
       key: '2',
@@ -175,7 +184,7 @@ function SubHeader(props) {
       onClick: showKbHelp,
     },
   ]
-  if (hasExport) {
+  if (hasExport && account.hasVideoExport) {
     dropdownItems.push({
       key: '5',
       label: (

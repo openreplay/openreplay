@@ -26,61 +26,33 @@ export interface IAccount extends IMember {
 
 export default class Account {
   changePassword: boolean;
-
   limits: Limit[] = [];
-
   banner: boolean;
-
   email: string;
-
   verifiedEmail: boolean;
-
   id: string;
-
   smtp: false;
-
   license: string;
-
   expirationDate: DateTime;
-
   permissions: string[] = [];
-
   settings: Record<string, any> = {};
-
   iceServers: any[] = [];
-
   hasPassword: boolean;
-
   apiKey: string;
-
   tenantKey: string;
-
   tenantName: string;
-
   edition: string;
-
   optOut: boolean;
-
   versionNumber: string;
-
   tenantId: string;
-
   name: string;
-
   createdAt: DateTime;
-
   admin: boolean;
-
   superAdmin: boolean;
-
   joined: boolean;
-
   expiredInvitation: boolean;
-
   roleId: string;
-
   roleName: string;
-
   invitationLink: string;
 
   constructor(account: Partial<IAccount> = {}) {
@@ -91,6 +63,10 @@ export default class Account {
     });
 
     makeAutoObservable(this);
+  }
+
+  get hasVideoExport() {
+    return this.settings.modules?.includes('replay-export');
   }
 
   toData = () => ({
@@ -118,5 +94,6 @@ export default class Account {
     roleId: this.roleId,
     roleName: this.roleName,
     invitationLink: this.invitationLink,
+    hasVideoExport: this.hasVideoExport,
   });
 }

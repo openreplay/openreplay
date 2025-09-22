@@ -2,6 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import { recordingsService } from 'App/services';
 import { IRecord } from 'App/services/RecordingsService';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
+import { ExportsResponse } from 'App/services/RecordingsService';
 
 export default class RecordingsStore {
   recordings: IRecord[] = [];
@@ -16,7 +17,7 @@ export default class RecordingsStore {
   rangeName: string = 'LAST_24_HOURS';
   period: any = Period({ rangeName: LAST_7_DAYS });
 
-  exportedVideosList: any = [];
+  exportedVideosList: ExportsResponse['data']['videos'] = [];
   currentUser = false;
 
   constructor() {
@@ -108,19 +109,52 @@ export default class RecordingsStore {
   }
 
   triggerExport = async (sessionId: string) => {
-    return true;
+    try {
+      const resp = await recordingsService.triggerExport(sessionId);
+      return resp.data.status
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   getRecordings = async () => {
+    this.loading = true;
     const params = {
       page: this.page,
       limit: 10,
-      order: this.order,
-      currentUser: this.currentUser,
+      // order: this.order,
+      // currentUser: this.currentUser,
       // query: this.search,
       // startTimestamp: this.period.start,
       // endTimestamp: this.period.end,
     };
+
+    try {
+      const resp = await recordingsService.getExports(params);
+      this.exportedVideosList = resp.data.videos ?? [];
+      this.total = resp.data.total;
+    } catch (e) {
+      console.error(e)
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  getRecordingLink = async (sessionId: string) => {
+    try {
+      const resp = await recordingsService.getDownloadLink(sessionId);
+      return resp.data;
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  deleteSessionRecording = async (sessionId: string) => {
+    try {
+      await recordingsService.deleteVideo(sessionId);
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   resetValues = () => {
