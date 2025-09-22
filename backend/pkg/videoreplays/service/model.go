@@ -14,6 +14,7 @@ type SessionVideo struct {
 	SessionID    string `json:"sessionId"`
 	ProjectID    int    `json:"projectId"`
 	UserID       uint64 `json:"userId"`
+	UserName     string `json:"userName"`
 	FileURL      string `json:"fileUrl"`
 	Status       Status `json:"status"`
 	JobID        string `json:"jobId,omitempty"`
@@ -58,13 +59,14 @@ type SessionVideosGetRequest struct {
 	SortBy string `json:"sortBy" validate:"omitempty,oneof=datetime"`
 	Asc    bool   `json:"asc"`
 	IsSelf bool   `json:"isSelf"`
-	Status Status `json:"status" validate:"omitempty,oneof=pending completed failed"`
+	Status Status `json:"status" validate:"omitempty,oneof=pending success failure"`
 }
 
 type SessionVideoJobMessage struct {
-	Status Status `json:"status"`
-	Name   string `json:"name"` // s3Path
-	Error  string `json:"error,omitempty"`
+	Status    Status `json:"status"`
+	Name      string `json:"name"` // s3Path
+	Error     string `json:"error,omitempty"`
+	SessionId string `json:"sessionId"`
 }
 
 var (
