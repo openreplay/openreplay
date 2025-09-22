@@ -63,7 +63,10 @@ EVENT_DEFAULT_PROPERTIES = {
     "INPUT": "label",
     "LOCATION": "url_path",
     "ERROR": "name",
-    "REQUEST": "url_path"
+    "REQUEST": "url_path",
+    "TAG_TRIGGER": "tag_id",
+    "ISSUE": "issue_type",
+    "PERFORMANCE": "avg_cpu"
 }
 
 
@@ -135,6 +138,7 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
         properties = helper.list_to_camel_case(properties)
         for i, p in enumerate(properties):
             p["id"] = f"prop_{i}"
+            p["category"] = "events"
             p["_foundInPredefinedList"] = False
             if p["name"] in PREDEFINED_PROPERTIES:
                 p["dataType"] = exp_ch_helper.simplify_clickhouse_type(PREDEFINED_PROPERTIES[p["name"]]["type"])
