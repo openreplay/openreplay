@@ -15,13 +15,14 @@ type JWTClaims struct {
 }
 
 type User struct {
-	ID          uint64          `json:"id"`
-	Name        string          `json:"name"`
-	Email       string          `json:"email"`
-	TenantID    uint64          `json:"tenantId"`
-	JwtIat      int             `json:"jwtIat"`
-	Permissions map[string]bool `json:"permissions"`
-	AuthMethod  string
+	ID             uint64          `json:"id"`
+	Name           string          `json:"name"`
+	Email          string          `json:"email"`
+	TenantID       uint64          `json:"tenantId"`
+	JwtIat         int             `json:"jwtIat"`
+	Permissions    map[string]bool `json:"permissions"`
+	ServiceAccount bool            `json:"serviceAccount"`
+	AuthMethod     string
 }
 
 func (u *User) HasPermission(perm string) bool {

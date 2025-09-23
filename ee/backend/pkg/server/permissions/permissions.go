@@ -3,6 +3,7 @@ package permissions
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -42,7 +43,21 @@ func (p *permissionsImpl) checkPermissions(r *http.Request) error {
 		p.log.Debug(r.Context(), "no match for route: %s %s", r.Method, pathTemplate)
 		return nil
 	}
+
+	var perms []string
 	for _, perm := range reqPermissions {
+		if user.ServiceAccount {
+			if strings.HasPrefix(perm, "SERVICE_") {
+				perms = append(perms, perm)
+			}
+		} else {
+			if !strings.HasPrefix(perm, "SERVICE_") {
+				perms = append(perms, perm)
+			}
+		}
+	}
+
+	for _, perm := range perms {
 		if _, ok := user.Permissions[perm]; !ok {
 			return fmt.Errorf("unauthorized request, permission %s is required", perm)
 		}
