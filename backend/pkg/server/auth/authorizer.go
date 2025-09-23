@@ -16,7 +16,7 @@ func (a *authImpl) isAuthorized(authHeader string) (*user.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	if dbUser.JwtIat == 0 || math.Abs(int(jwtInfo.IssuedAt.Unix())-dbUser.JwtIat) > 1 {
+	if !dbUser.ServiceAccount && (dbUser.JwtIat == 0 || math.Abs(int(jwtInfo.IssuedAt.Unix())-dbUser.JwtIat) > 1) {
 		return nil, fmt.Errorf("token has been updated")
 	}
 	return dbUser, nil
