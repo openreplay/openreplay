@@ -94,7 +94,7 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 
 	// prepare sql request
 	sqlRequest := `
-	SELECT  
+	SELECT
 	    s.session_id::text AS session_id,
 	    s.project_id,
 	    s.tracker_version,
@@ -138,7 +138,7 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 		  SELECT jsonb_object_agg(key, value)
 		  FROM (
 			SELECT p.metadata_1 AS key, s.metadata_1 AS value WHERE p.metadata_1 IS NOT NULL AND s.metadata_1 IS NOT NULL
-			UNION ALL 
+			UNION ALL
 			SELECT p.metadata_2, s.metadata_2 WHERE p.metadata_2 IS NOT NULL AND s.metadata_2 IS NOT NULL
 			UNION ALL
 			SELECT p.metadata_3, s.metadata_3 WHERE p.metadata_3 IS NOT NULL AND s.metadata_3 IS NOT NULL
@@ -207,8 +207,8 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 }
 
 func (s *serviceImpl) IsExists(projectID uint32, sessionID uint64) (bool, error) {
-	sql := `SELECT 1 FROM public.sessions
-        	WHERE session_id = $1 AND project_id = $2 LIMIT 1;`
+	sql := `SELECT EXISTS(SELECT 1 FROM public.sessions
+        	WHERE session_id = $1 AND project_id = $2);`
 	var exists bool
 	if err := s.conn.QueryRow(sql, sessionID, projectID).Scan(&exists); err != nil {
 		if err.Error() == "no rows in result set" {
