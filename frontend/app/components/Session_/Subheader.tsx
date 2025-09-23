@@ -177,7 +177,7 @@ function SubHeader(props) {
             )}
             style={{ width: 'max-content' }}
           >
-            <SimilarSessionsButton />
+            {/*<SimilarSessionsButton /> UNUSED FOR NOW */}
             <Tooltip title={t('Share Session')} placement="bottom">
               <AntButton
                 size="small"

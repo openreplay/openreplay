@@ -6,170 +6,202 @@
  * in not-so-hacky way
  * */
 
-import NetworkMessage from './networkMessage'
-import { RequestState, INetworkMessage, RequestResponseData } from './types';
-import { genGetDataByUrl, formatByteSize, genStringBody, getStringResponseByType } from './utils'
+import NetworkMessage from "./networkMessage";
+import { RequestState, INetworkMessage, RequestResponseData } from "./types";
+import {
+  genGetDataByUrl,
+  formatByteSize,
+  genStringBody,
+  getStringResponseByType,
+} from "./utils";
 
-export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T> {
-  public XMLReq: XMLHttpRequest
-  public item: NetworkMessage
+export class XHRProxyHandler<T extends XMLHttpRequest>
+  implements ProxyHandler<T>
+{
+  public XMLReq: XMLHttpRequest;
+  public item: NetworkMessage;
 
   constructor(
     XMLReq: XMLHttpRequest,
     private readonly ignoredHeaders: boolean | string[],
-    private readonly setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
-    private readonly sanitize: (data: RequestResponseData) => RequestResponseData | null,
+    private readonly setSessionTokenHeader: (
+      cb: (name: string, value: string) => void,
+    ) => void,
+    private readonly sanitize: (
+      data: RequestResponseData,
+    ) => RequestResponseData | null,
     private readonly sendMessage: (message: INetworkMessage) => void,
     private readonly isServiceUrl: (url: string) => boolean,
     private readonly tokenUrlMatcher?: (url: string) => boolean,
   ) {
-    this.XMLReq = XMLReq
+    this.XMLReq = XMLReq;
     this.XMLReq.onreadystatechange = () => {
-      this.onReadyStateChange()
-    }
+      this.onReadyStateChange();
+    };
     this.XMLReq.onabort = () => {
-      this.onAbort()
-    }
+      this.onAbort();
+    };
     this.XMLReq.ontimeout = () => {
-      this.onTimeout()
-    }
-    this.item = new NetworkMessage(ignoredHeaders, setSessionTokenHeader, sanitize)
-    this.item.requestType = 'xhr'
+      this.onTimeout();
+    };
+    this.item = new NetworkMessage(
+      ignoredHeaders,
+      setSessionTokenHeader,
+      sanitize,
+    );
+    this.item.requestType = "xhr";
   }
 
   public get(target: T, key: string) {
     switch (key) {
-      case 'open':
-        return this.getOpen(target)
-      case 'send':
+      case "open":
+        return this.getOpen(target);
+      case "send":
         this.setSessionTokenHeader((name: string, value: string) => {
           if (this.tokenUrlMatcher !== undefined) {
             if (!this.tokenUrlMatcher(this.item.url)) {
-              return
+              return;
             }
           }
-          target.setRequestHeader(name, value)
-        })
-        return this.getSend(target)
-      case 'setRequestHeader':
-        return this.getSetRequestHeader(target)
+          if (target.readyState === 1) target.setRequestHeader(name, value);
+        });
+        return this.getSend(target);
+      case "setRequestHeader":
+        return this.getSetRequestHeader(target);
       default:
         // eslint-disable-next-line no-case-declarations
-        const value = Reflect.get(target, key)
-        if (typeof value === 'function') {
-          return value.bind(target)
+        const value = Reflect.get(target, key);
+        if (typeof value === "function") {
+          return value.bind(target);
         } else {
-          return value
+          return value;
         }
     }
   }
 
   public set(target: T, key: string, value: (args: any[]) => any) {
     switch (key) {
-      case 'onreadystatechange':
-        return this.setOnReadyStateChange(target, key, value)
-      case 'onabort':
-        return this.setOnAbort(target, key, value)
-      case 'ontimeout':
-        return this.setOnTimeout(target, key, value)
+      case "onreadystatechange":
+        return this.setOnReadyStateChange(target, key, value);
+      case "onabort":
+        return this.setOnAbort(target, key, value);
+      case "ontimeout":
+        return this.setOnTimeout(target, key, value);
       default:
       // not tracked methods
     }
-    return Reflect.set(target, key, value)
+    return Reflect.set(target, key, value);
   }
 
   public onReadyStateChange() {
-    if (this.item.url && this.isServiceUrl(this.item.url)) return
-    this.item.readyState = this.XMLReq.readyState
-    this.item.responseType = this.XMLReq.responseType
-    this.item.endTime = performance.now()
-    this.item.duration = this.item.endTime - this.item.startTime
-    this.updateItemByReadyState()
-    setTimeout(() => {
-      this.item.response = getStringResponseByType(this.item.responseType, this.item.response)
-    }, 0)
+    if (this.item.url && this.isServiceUrl(this.item.url)) return;
+    this.item.readyState = this.XMLReq.readyState;
+    this.item.responseType = this.XMLReq.responseType;
+    this.item.endTime = performance.now();
+    this.item.duration = this.item.endTime - this.item.startTime;
+    this.updateItemByReadyState();
+
+    const rt = this.item.responseType || "";
+    if (rt === "" || rt === "text" || rt === "json") {
+      setTimeout(() => {
+        this.item.response = getStringResponseByType(rt, this.XMLReq.response);
+      }, 0);
+    }
 
     if (this.XMLReq.readyState === RequestState.DONE) {
-      const msg = this.item.getMessage()
+      const msg = this.item.getMessage();
       if (msg) {
-        this.sendMessage(msg)
+        this.sendMessage(msg);
       }
     }
   }
 
   public onAbort() {
-    this.item.cancelState = 1
-    this.item.statusText = 'Abort'
+    this.item.cancelState = 1;
+    this.item.statusText = "Abort";
 
-    const msg = this.item.getMessage()
+    const msg = this.item.getMessage();
     if (msg) {
-      this.sendMessage(msg)
+      this.sendMessage(msg);
     }
   }
 
   public onTimeout() {
-    this.item.cancelState = 3
-    this.item.statusText = 'Timeout'
+    this.item.cancelState = 3;
+    this.item.statusText = "Timeout";
 
-    const msg = this.item.getMessage()
+    const msg = this.item.getMessage();
     if (msg) {
-      this.sendMessage(msg)
+      this.sendMessage(msg);
     }
   }
 
   protected getOpen(target: T) {
-    const targetFunction = Reflect.get(target, 'open')
+    const targetFunction = Reflect.get(target, "open");
     return (...args: any[]) => {
-      const method = args[0]
-      const url = args[1]
-      this.item.method = method ? method.toUpperCase() : 'GET'
-      this.item.url = url.toString?.() || ''
-      this.item.name = this.item.url?.replace(new RegExp('/*$'), '').split('/').pop() ?? ''
-      this.item.getData = genGetDataByUrl(this.item.url, {})
-      return targetFunction.apply(target, args)
-    }
+      const method = args[0];
+      const url = args[1];
+      this.item.method = method ? method.toUpperCase() : "GET";
+      this.item.url = url.toString?.() || "";
+      this.item.name =
+        this.item.url?.replace(new RegExp("/*$"), "").split("/").pop() ?? "";
+      this.item.getData = genGetDataByUrl(this.item.url, {});
+      return targetFunction.apply(target, args);
+    };
   }
 
   protected getSend(target: T) {
-    const targetFunction = Reflect.get(target, 'send')
+    const targetFunction = Reflect.get(target, "send");
     return (...args: any[]) => {
-      const data: XMLHttpRequestBodyInit = args[0]
-      this.item.requestData = genStringBody(data)
-      return targetFunction.apply(target, args)
-    }
+      const data: XMLHttpRequestBodyInit = args[0];
+      this.item.requestData = genStringBody(data);
+      return targetFunction.apply(target, args);
+    };
   }
 
   protected getSetRequestHeader(target: T) {
-    const targetFunction = Reflect.get(target, 'setRequestHeader')
+    const targetFunction = Reflect.get(target, "setRequestHeader");
     return (...args: any[]) => {
       if (!this.item.requestHeader) {
-        this.item.requestHeader = {}
+        this.item.requestHeader = {};
       }
       // @ts-ignore
-      this.item.requestHeader[args[0]] = args[1]
-      return targetFunction.apply(target, args)
-    }
+      this.item.requestHeader[args[0]] = args[1];
+      return targetFunction.apply(target, args);
+    };
   }
 
-  protected setOnReadyStateChange(target: T, key: string, orscFunction: (args: any[]) => any) {
+  protected setOnReadyStateChange(
+    target: T,
+    key: string,
+    orscFunction: (args: any[]) => any,
+  ) {
     return Reflect.set(target, key, (...args: any[]) => {
-      this.onReadyStateChange()
-      orscFunction?.apply(target, args)
-    })
+      this.onReadyStateChange();
+      orscFunction?.apply(target, args);
+    });
   }
 
-  protected setOnAbort(target: T, key: string, oaFunction: (args: any[]) => any) {
+  protected setOnAbort(
+    target: T,
+    key: string,
+    oaFunction: (args: any[]) => any,
+  ) {
     return Reflect.set(target, key, (...args: any[]) => {
-      this.onAbort()
-      oaFunction.apply(target, args)
-    })
+      this.onAbort();
+      oaFunction.apply(target, args);
+    });
   }
 
-  protected setOnTimeout(target: T, key: string, otFunction: (args: any[]) => any) {
+  protected setOnTimeout(
+    target: T,
+    key: string,
+    otFunction: (args: any[]) => any,
+  ) {
     return Reflect.set(target, key, (...args: any[]) => {
-      this.onTimeout()
-      otFunction.apply(target, args)
-    })
+      this.onTimeout();
+      otFunction.apply(target, args);
+    });
   }
 
   /**
@@ -179,56 +211,83 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
     switch (this.XMLReq.readyState) {
       case RequestState.UNSENT:
       case RequestState.OPENED:
-        this.item.status = RequestState.UNSENT
-        this.item.statusText = 'Pending'
+        this.item.status = RequestState.UNSENT;
+        this.item.statusText = "Pending";
         if (!this.item.startTime) {
-          this.item.startTime = performance.now()
+          this.item.startTime = performance.now();
         }
-        break
+        break;
       case RequestState.HEADERS_RECEIVED:
-        this.item.status = this.XMLReq.status
-        this.item.statusText = 'Loading'
-        this.item.header = {}
+        this.item.status = this.XMLReq.status;
+        this.item.statusText = "Loading";
+        this.item.header = {};
         // eslint-disable-next-line no-case-declarations
-        const header = this.XMLReq.getAllResponseHeaders() || '',
-          headerArr = header.split('\n')
+        const header = this.XMLReq.getAllResponseHeaders() || "",
+          headerArr = header.split("\n");
         // extract plain text to key-value format
         for (let i = 0; i < headerArr.length; i++) {
-          const line = headerArr[i]
+          const line = headerArr[i];
           if (!line) {
-            continue
+            continue;
           }
-          const arr = line.split(': ')
-          const key = arr[0]
-          this.item.header[key] = arr.slice(1).join(': ')
+          const arr = line.split(": ");
+          const key = arr[0];
+          this.item.header[key] = arr.slice(1).join(": ");
         }
-        break
+        break;
       case RequestState.LOADING:
-        this.item.status = this.XMLReq.status
-        this.item.statusText = 'Loading'
-        if (!!this.XMLReq.response && this.XMLReq.response.length) {
-          this.item.responseSize = this.XMLReq.response.length
-          this.item.responseSizeText = formatByteSize(this.item.responseSize)
+        this.item.status = this.XMLReq.status;
+        this.item.statusText = "Loading";
+        const response = this.XMLReq.response as any;
+        if (response) {
+          const respSize =
+            typeof response === "string"
+              ? response.length
+              : response instanceof ArrayBuffer
+                ? response.byteLength
+                : typeof Blob !== "undefined" && response instanceof Blob
+                  ? response.size
+                  : 0;
+          if (respSize) {
+            this.item.responseSize = respSize;
+            this.item.responseSizeText = formatByteSize(this.item.responseSize);
+          }
         }
-        break
+        break;
       case RequestState.DONE:
         // `XMLReq.abort()` will change `status` from 200 to 0, so use previous value in this case
-        this.item.status = this.XMLReq.status || this.item.status || 0
+        this.item.status = this.XMLReq.status || this.item.status || 0;
         // show status code when request completed
-        this.item.statusText = String(this.item.status)
-        this.item.endTime = performance.now()
-        this.item.duration = this.item.endTime - (this.item.startTime || this.item.endTime)
-        this.item.response = this.XMLReq.response
+        this.item.statusText = String(this.item.status);
+        this.item.endTime = performance.now();
+        this.item.duration =
+          this.item.endTime - (this.item.startTime || this.item.endTime);
 
-        if (!!this.XMLReq.response && this.XMLReq.response.length) {
-          this.item.responseSize = this.XMLReq.response.length
-          this.item.responseSizeText = formatByteSize(this.item.responseSize)
+        const resp = this.XMLReq.response as any;
+        const respType = this.XMLReq.responseType || "";
+        if (respType === "" || respType === "text" || respType === "json") {
+          this.item.response = resp;
         }
-        break
+
+        if (resp) {
+          const respSize =
+            typeof resp === "string"
+              ? resp.length
+              : resp instanceof ArrayBuffer
+                ? resp.byteLength
+                : typeof Blob !== "undefined" && resp instanceof Blob
+                  ? resp.size
+                  : 0;
+          if (respSize) {
+            this.item.responseSize = respSize;
+            this.item.responseSizeText = formatByteSize(respSize);
+          }
+        }
+        break;
       default:
-        this.item.status = this.XMLReq.status
-        this.item.statusText = 'Unknown'
-        break
+        this.item.status = this.XMLReq.status;
+        this.item.statusText = "Unknown";
+        break;
     }
   }
 }
@@ -244,7 +303,7 @@ export default class XHRProxy {
   ) {
     return new Proxy(XMLHttpRequest, {
       construct(original: any) {
-        const XMLReq = new original()
+        const XMLReq = new original();
         return new Proxy(
           XMLReq,
           new XHRProxyHandler(
@@ -256,8 +315,8 @@ export default class XHRProxy {
             isServiceUrl,
             tokenUrlMatcher,
           ),
-        )
+        );
       },
-    })
+    });
   }
 }
