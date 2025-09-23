@@ -246,3 +246,16 @@ def best_clickhouse_type(value):
         return "Float64"
 
     raise TypeError(f"Unsupported type: {type(value).__name__}")
+
+
+def explode_dproperties(rows):
+    for i in range(len(rows)):
+        rows[i] = {**rows[i], **rows[i]["$properties"]}
+        rows[i].pop("$properties")
+    return rows
+
+
+def add_timestamp(rows):
+    for row in rows:
+        row["timestamp"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
+    return rows
