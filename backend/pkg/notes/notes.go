@@ -97,7 +97,7 @@ func (n *notesImpl) GetBySessionID(tenantID, projectID, userID, sessionID uint64
 		return nil, errors.New("sessionID is required")
 	}
 
-	rows, err := selectSessionNotes(n.db, tenantID, projectID, userID, sessionID)
+	rows, err := selectSessionNotes(n.db, tenantID, projectID, sessionID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch notes by session ID: %v", err)
 	}
@@ -215,9 +215,9 @@ func (n *notesImpl) GetAll(tenantID, projectID, userID uint64, opts *GetOpts) (i
 	}
 
 	sql := fmt.Sprintf(`
-		SELECT COUNT(1) OVER () AS full_count, sessions_notes.note_id, sessions_notes.message, sessions_notes.created_at, 
-		       sessions_notes.tag, sessions_notes.session_id, sessions_notes.timestamp, sessions_notes.is_public, 
-		       sessions_notes.thumbnail, sessions_notes.start_at, sessions_notes.end_at, users.name AS user_name 
+		SELECT COUNT(1) OVER () AS full_count, sessions_notes.note_id, sessions_notes.message, sessions_notes.created_at,
+		       sessions_notes.tag, sessions_notes.session_id, sessions_notes.timestamp, sessions_notes.is_public,
+		       sessions_notes.thumbnail, sessions_notes.start_at, sessions_notes.end_at, users.name AS user_name
 		FROM sessions_notes
 		INNER JOIN users USING (user_id)
 		WHERE %s
@@ -308,7 +308,7 @@ func (n *notesImpl) Delete(projectID, noteID uint64) error {
 	case noteID == 0:
 		return errors.New("noteID is required")
 	}
-	sql := `UPDATE sessions_notes 
+	sql := `UPDATE sessions_notes
 			SET deleted_at = timezone('utc'::text, now())
 			WHERE note_id = $1 AND project_id = $2 AND deleted_at ISNULL;`
 	err := n.db.Exec(sql, noteID, projectID)
