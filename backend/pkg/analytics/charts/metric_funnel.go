@@ -121,11 +121,10 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	for _, filter := range allFilters {
 		if _, exists := SessionColumns[filter.Name]; exists {
 			sessionFilters = append(sessionFilters, filter)
-		} else {
-			eventFilters = append(eventFilters, filter)
 		}
 
 		if filter.IsEvent {
+			eventFilters = append(eventFilters, filter)
 			stages = append(stages, filter.Name)
 		}
 	}
@@ -134,11 +133,14 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
 	})
-
-	_, sessionConditions := BuildEventConditions(sessionFilters, BuildConditionsOptions{
-		DefinedColumns: SessionColumns,
-		MainTableAlias: "s",
-	})
+	//TODO: optmize eventsConditions by extracting common conditions alone (needs to re-write BuildEventConditions)
+	var sessionConditions []string = make([]string, 0)
+	if len(sessionFilters) > 0 {
+		_, sessionConditions = BuildEventConditions(sessionFilters, BuildConditionsOptions{
+			DefinedColumns: SessionColumns,
+			MainTableAlias: "s",
+		})
+	}
 
 	durConds, _ := BuildDurationWhere(allFilters, "s")
 	if durConds != nil {
@@ -183,36 +185,22 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		groupColumn = "GROUP BY s.user_id"
 	}
 	subQuery := fmt.Sprintf(`
-        SELECT
-            %s
+        SELECT %s
         FROM %s
-        WHERE
-            %s
+        WHERE %s
         %s`,
-		strings.Join(tColumns, ",\n"),
+		strings.Join(tColumns, ", "),
 		mainTables,
 		strings.Join(baseWhere, " AND "),
 		groupColumn)
 
 	q := fmt.Sprintf(`
-        SELECT
-            %s
+        SELECT %s
         FROM (%s) AS raw`,
-		strings.Join(stageColumns, ",\n"),
+		strings.Join(stageColumns, ", "),
 		subQuery)
 
 	return q, nil
-}
-
-func findEventConditionForStage(eventConditions []string, stageName string) string {
-	for _, condition := range eventConditions {
-		if strings.Contains(condition, fmt.Sprintf("`$event_name` = '%s'", stageName)) {
-			condition = strings.TrimPrefix(condition, "(")
-			condition = strings.TrimSuffix(condition, ")")
-			return condition
-		}
-	}
-	return fmt.Sprintf("`$event_name` = '%s'", stageName)
 }
 
 func buildTColumns(stages []string, eventConditions []string, metricFormat string) []string {
@@ -222,42 +210,24 @@ func buildTColumns(stages []string, eventConditions []string, metricFormat strin
 	tColumns := make([]string, len(stages))
 
 	// S1
-	stage1Cond := findEventConditionForStage(eventConditions, stages[0])
 	if metricFormat == MetricFormatEventCount {
-		tColumns[0] = fmt.Sprintf("countIf(%s) AS S1", stage1Cond)
+		tColumns[0] = fmt.Sprintf("countIf(%s) AS S1", eventConditions[0])
 	} else {
-		tColumns[0] = fmt.Sprintf("anyIf(1, %s) AS S1", stage1Cond) // 0/1 per group (session)
+		tColumns[0] = fmt.Sprintf("anyIf(1, %s) AS S1", eventConditions[0]) // 0/1 per group (session)
 	}
 
 	// S2...Sn
+	var pattern string = "(?1)"
 	for i := 1; i < len(stages); i++ {
-		pattern := buildSequencePattern(i + 1)
-		conds := buildSequenceConditions(stages[:i+1], eventConditions)
-
+		pattern = fmt.Sprintf("%s(?%d)", pattern, i+1)
 		fn := "sequenceMatch"
 		if metricFormat == MetricFormatEventCount {
 			fn = "sequenceCount"
 		}
-		tColumns[i] = fmt.Sprintf("%s(%s)(toDateTime(e.created_at), %s) AS S%d",
-			fn, pattern, strings.Join(conds, ", "), i+1)
+		tColumns[i] = fmt.Sprintf("%s('%s')(toDateTime(e.created_at), %s) AS S%d",
+			fn, pattern, strings.Join(eventConditions[:i+1], ", "), i+1)
 	}
 	return tColumns
-}
-
-func buildSequencePattern(stageCount int) string {
-	patternParts := make([]string, stageCount)
-	for i := 0; i < stageCount; i++ {
-		patternParts[i] = fmt.Sprintf("(?%d)", i+1)
-	}
-	return fmt.Sprintf("'%s'", strings.Join(patternParts, ""))
-}
-
-func buildSequenceConditions(stages []string, eventConditions []string) []string {
-	sequenceConditions := make([]string, len(stages))
-	for i, stage := range stages {
-		sequenceConditions[i] = findEventConditionForStage(eventConditions, stage)
-	}
-	return sequenceConditions
 }
 
 func formatEventNames(stages []string) string {
