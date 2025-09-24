@@ -31,7 +31,7 @@ function EventsBlock(props: IProps) {
   const defaultFramework = getDefaultFramework();
   const [mode, setMode] = React.useState(MODES.SELECT);
   const { t } = useTranslation();
-  const { notesStore, uxtestingStore, uiPlayerStore, sessionStore } =
+  const { notesStore, uiPlayerStore, sessionStore } =
     useStore();
   const session = sessionStore.current;
   const notesWithEvents = session.notesWithEvents;
@@ -238,28 +238,6 @@ function EventsBlock(props: IProps) {
           'py-4 px-2 bg-gradient-to-t from-transparent to-neutral-gray-lightest h-[57px]',
         )}
       >
-        {uxtestingStore.isUxt() ? (
-          <div style={{ width: 240, height: 130 }} className="relative">
-            <video
-              className="z-20 fixed"
-              muted
-              autoPlay
-              controls
-              src={uxtVideo}
-              width={240}
-            />
-            <div
-              style={{
-                top: '40%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-              }}
-              className="absolute z-10"
-            >
-              {t('No video')}
-            </div>
-          </div>
-        ) : null}
         {mode === MODES.SELECT ? (
           <div className={'flex items-center gap-2'}>
             <Button

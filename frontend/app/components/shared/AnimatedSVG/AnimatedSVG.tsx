@@ -26,7 +26,6 @@ export enum ICONS {
   NO_SEARCH_RESULTS = 'ca-no-search-results',
   NO_DASHBOARDS = 'ca-no-dashboards',
   NO_PROJECTS = 'ca-no-projects',
-  NO_FFLAGS = 'no-fflags',
   PROCESSING = 'ca-processing',
   NO_UXT = 'ca-no-uxt',
 }
@@ -56,7 +55,6 @@ const ICONS_SVGS = {
   [ICONS.NO_SEARCH_RESULTS]: require('../../../svg/ghost.svg').default,
   [ICONS.NO_DASHBOARDS]: require('../../../svg/ca-no-dashboards.svg').default,
   [ICONS.NO_PROJECTS]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_FFLAGS]: require('../../../svg/ghost.svg').default,
   [ICONS.PROCESSING]: require('../../../svg/ca-processing.svg').default,
   [ICONS.NO_UXT]: require('../../../svg/empty-uxt-list.svg').default,
 };

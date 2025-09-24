@@ -1,16 +1,14 @@
 import { makeAutoObservable } from 'mobx';
-import { customFieldService, filterService } from 'App/services';
+import { customFieldService } from 'App/services';
 import {
   addElementToConditionalFiltersMap,
   addElementToMobileConditionalFiltersMap,
   addElementToFiltersMap,
-  addElementToFlagConditionsMap,
   addElementToLiveFiltersMap,
   clearMetaFilters,
 } from 'Types/filter/newFilter';
 import { FilterCategory, FilterType } from 'Types/filter/filterType';
 import CustomField from 'App/mstore/types/customField';
-import filterOptions from 'App/constants';
 
 class CustomFieldStore {
   isLoading: boolean = false;
@@ -58,7 +56,6 @@ class CustomFieldStore {
         const calls = [
           addElementToFiltersMap,
           addElementToLiveFiltersMap,
-          addElementToFlagConditionsMap,
           addElementToConditionalFiltersMap,
           addElementToMobileConditionalFiltersMap,
         ];
@@ -73,7 +70,6 @@ class CustomFieldStore {
       //   response.forEach((item: any) => {
       //     const calls = [
       //       addElementToFiltersMap,
-      //       addElementToFlagConditionsMap,
       //       addElementToConditionalFiltersMap,
       //       addElementToMobileConditionalFiltersMap,
       //     ];

@@ -22,15 +22,6 @@ const components: any = {
   SessionsOverviewPure: lazy(() => import('Components/Overview')),
   DashboardPure: lazy(() => import('Components/Dashboard/NewDashboard')),
   MultiviewPure: lazy(() => import('Components/Session_/Multiview/Multiview')),
-  UsabilityTestingPure: lazy(
-    () => import('Components/UsabilityTesting/UsabilityTesting'),
-  ),
-  UsabilityTestEditPure: lazy(
-    () => import('Components/UsabilityTesting/TestEdit'),
-  ),
-  UsabilityTestOverviewPure: lazy(
-    () => import('Components/UsabilityTesting/TestOverview'),
-  ),
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
@@ -46,11 +37,6 @@ const enhancedComponents: any = {
   Client: withSiteIdUpdater(components.ClientPure),
   Onboarding: withSiteIdUpdater(components.OnboardingPure),
   Multiview: withSiteIdUpdater(components.MultiviewPure),
-  UsabilityTesting: withSiteIdUpdater(components.UsabilityTestingPure),
-  UsabilityTestEdit: withSiteIdUpdater(components.UsabilityTestEditPure),
-  UsabilityTestOverview: withSiteIdUpdater(
-    components.UsabilityTestOverviewPure,
-  ),
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
   Highlights: withSiteIdUpdater(components.HighlightsPure),
@@ -73,10 +59,6 @@ const DASHBOARD_METRIC_CREATE_PATH = routes.dashboardMetricCreate();
 const DASHBOARD_METRIC_DETAILS_PATH = routes.dashboardMetricDetails();
 
 const SESSIONS_PATH = routes.sessions();
-const FFLAGS_PATH = routes.fflags();
-const FFLAG_PATH = routes.fflag();
-const FFLAG_CREATE_PATH = routes.newFFlag();
-const FFLAG_READ_PATH = routes.fflagRead();
 const NOTES_PATH = routes.notes();
 const BOOKMARKS_PATH = routes.bookmarks();
 const RECORDINGS_PATH = routes.recordings();
@@ -89,10 +71,6 @@ const ASSIST_PATH = routes.assist();
 const LIVE_SESSION_PATH = routes.liveSession();
 const MULTIVIEW_PATH = routes.multiview();
 const MULTIVIEW_INDEX_PATH = routes.multiviewIndex();
-
-const USABILITY_TESTING_PATH = routes.usabilityTesting();
-const USABILITY_TESTING_EDIT_PATH = routes.usabilityTestingEdit();
-const USABILITY_TESTING_VIEW_PATH = routes.usabilityTestingView();
 
 const SPOTS_LIST_PATH = routes.spotsList();
 const SPOT_PATH = routes.spot();
@@ -206,25 +184,6 @@ function PrivateRoutes() {
 
         <Route
           exact
-          strict
-          path={withSiteId(USABILITY_TESTING_PATH, siteIdList)}
-          component={enhancedComponents.UsabilityTesting}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(USABILITY_TESTING_EDIT_PATH, siteIdList)}
-          component={enhancedComponents.UsabilityTestEdit}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(USABILITY_TESTING_VIEW_PATH, siteIdList)}
-          component={enhancedComponents.UsabilityTestOverview}
-        />
-
-        <Route
-          exact
           path={withSiteId(MULTIVIEW_INDEX_PATH, siteIdList)}
           component={enhancedComponents.Multiview}
         />
@@ -255,10 +214,6 @@ function PrivateRoutes() {
           strict
           path={[
             withSiteId(SESSIONS_PATH, siteIdList),
-            withSiteId(FFLAGS_PATH, siteIdList),
-            withSiteId(FFLAG_PATH, siteIdList),
-            withSiteId(FFLAG_READ_PATH, siteIdList),
-            withSiteId(FFLAG_CREATE_PATH, siteIdList),
             withSiteId(NOTES_PATH, siteIdList),
             withSiteId(BOOKMARKS_PATH, siteIdList),
           ]}

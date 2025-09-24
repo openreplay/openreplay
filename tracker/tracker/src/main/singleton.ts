@@ -139,54 +139,6 @@ class TrackerSingleton {
     this.instance.handleError(e, metadata)
   }
 
-  isFlagEnabled(flagName: string): boolean {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return false
-    }
-
-    return this.instance.isFlagEnabled(flagName)
-  }
-
-  onFlagsLoad(...args: Parameters<Tracker['onFlagsLoad']>): void {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    this.instance.onFlagsLoad(...args)
-  }
-
-  clearPersistFlags(): void {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    this.instance.clearPersistFlags()
-  }
-
-  reloadFlags(): Promise<void> | undefined {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    return this.instance.reloadFlags()
-  }
-
-  getFeatureFlag(flagName: string) {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    return this.instance.getFeatureFlag(flagName)
-  }
-
-  getAllFeatureFlags() {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    return this.instance.getAllFeatureFlags()
-  }
-
   restartCanvasTracking(): void {
     if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
       return

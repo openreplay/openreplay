@@ -51,7 +51,6 @@ export const enum MENU {
   ERROR_TRACKING = 'error-tracking',
   ALERTS = 'alerts',
   FEATURE_FLAGS = 'feature-flags',
-  USABILITY_TESTS = 'usability-tests',
   PREFERENCES = 'preferences',
   SUPPORT = 'support',
   EXIT = 'exit',
@@ -139,18 +138,6 @@ export const categories: (t: TFunction) => Category[] = (t) => [
       //   ]
       // },
       { label: t('Alerts'), key: MENU.ALERTS, icon: 'bell' },
-    ],
-  },
-  {
-    title: t('Product Optimization'),
-    key: 'product-optimization',
-    items: [
-      { label: t('Feature Flags'), key: MENU.FEATURE_FLAGS, icon: 'toggles' },
-      {
-        label: 'Usability Tests',
-        key: MENU.USABILITY_TESTS,
-        icon: 'clipboard-check',
-      },
     ],
   },
   {

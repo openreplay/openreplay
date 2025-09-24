@@ -95,7 +95,6 @@ function getStorageName(type: any) {
 function Controls({ setActiveTab, activeTab, fullView }: any) {
   const { player, store } = React.useContext(PlayerContext);
   const {
-    uxtestingStore,
     uiPlayerStore,
     projectsStore,
     sessionStore,
@@ -276,17 +275,6 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
           </div>
 
           <div className="flex gap-2 items-center h-full">
-            {uxtestingStore.hideDevtools && uxtestingStore.isUxt() ? null : (
-              <DevtoolsButtons
-                showStorageRedux={showStorageRedux}
-                toggleBottomTools={toggleBottomTools}
-                bottomBlock={bottomBlock}
-                disabled={disabled}
-                events={events}
-                activeTab={activeTab}
-              />
-            )}
-
             <FullScreenButton
               size={16}
               onClick={fullscreenOn}

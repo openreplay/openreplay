@@ -86,13 +86,6 @@ export const onboarding = (tab = routerOBTabString): string =>
 
 export const sessions = (params?: Record<string, any>): string =>
   queried('/sessions', params);
-export const fflags = (params?: Record<string, any>): string =>
-  queried('/feature-flags', params);
-export const newFFlag = (): string => '/feature-flags/create';
-export const fflag = (id = ':fflagId', hash?: string | number): string =>
-  hashed(`/feature-flags/${id}`, hash);
-export const fflagRead = (id = ':fflagId', hash?: string | number): string =>
-  hashed(`/feature-flags/get/${id}`, hash);
 
 export const notes = (params?: Record<string, any>): string =>
   queried('/notes', params);
@@ -159,17 +152,6 @@ export const alertCreate = (): string => '/alert/create';
 export const alertEdit = (id = ':alertId', hash?: string | number): string =>
   hashed(`/alert/${id}`, hash);
 
-export const usabilityTesting = () => '/usability-testing';
-export const usabilityTestingCreate = () => `${usabilityTesting()}/create`;
-export const usabilityTestingEdit = (
-  id = ':testId',
-  hash?: string | number,
-): string => hashed(`/usability-testing/edit/${id}`, hash);
-export const usabilityTestingView = (
-  id = ':testId',
-  hash?: string | number,
-): string => hashed(`/usability-testing/view/${id}`, hash);
-
 export const spotsList = (): string => '/spots';
 export const spot = (id = ':spotId', hash?: string | number): string =>
   hashed(`/view-spot/${id}`, hash);
@@ -184,11 +166,8 @@ const REQUIRED_SITE_ID_ROUTES = [
   liveSession(''),
   session(''),
   sessions(),
-  newFFlag(),
-  fflag(),
   notes(),
   bookmarks(),
-  fflags(),
 
   assist(),
   recordings(),
@@ -213,11 +192,6 @@ const REQUIRED_SITE_ID_ROUTES = [
   error(''),
   errors(),
   onboarding(''),
-
-  usabilityTesting(),
-  usabilityTestingCreate(),
-  usabilityTestingEdit(''),
-  usabilityTestingView(''),
 
   highlights(),
 
@@ -257,7 +231,6 @@ const SITE_CHANGE_AVAILABLE_ROUTES = [
   sessions(),
   notes(),
   bookmarks(),
-  fflags(),
   assist(),
   recordings(),
   dashboard(),
@@ -266,7 +239,6 @@ const SITE_CHANGE_AVAILABLE_ROUTES = [
   alerts(),
   errors(),
   onboarding(''),
-  usabilityTesting(),
 ];
 
 export const siteChangeAvailable = (path: string): boolean =>

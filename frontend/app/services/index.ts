@@ -1,5 +1,4 @@
 import AiService from 'App/services/AiService';
-import FFlagsService from 'App/services/FFlagsService';
 import TagWatchService from 'App/services/TagWatchService';
 
 import SearchService from 'App/services/SearchService';
@@ -16,7 +15,6 @@ import NotesService from './NotesService';
 import RecordingsService from './RecordingsService';
 import SessionService from './SessionService';
 import UserService from './UserService';
-import UxtestingService from './UxtestingService';
 import WebhookService from './WebhookService';
 
 import SpotService from './spotService';
@@ -45,9 +43,7 @@ export const webhookService = new WebhookService();
 export const signalService = new SignalService();
 
 export const healthService = new HealthService();
-export const fflagsService = new FFlagsService();
 export const assistStatsService = new AssistStatsService();
-export const uxtestingService = new UxtestingService();
 export const tagWatchService = new TagWatchService();
 export const aiService = new AiService();
 export const spotService = new SpotService();
@@ -77,9 +73,7 @@ export const services = [
   webhookService,
   signalService,
   healthService,
-  fflagsService,
   assistStatsService,
-  uxtestingService,
   tagWatchService,
   aiService,
   spotService,

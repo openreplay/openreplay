@@ -1,5 +1,6 @@
 ## 17.0.0
 
+- feature flags and user testing functionality is REMOVED.
 - support for Long Animation Task API tracking
 - support for timing information in resource tracking
 - Ionic and Web Component compatibility improvements:

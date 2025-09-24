@@ -44,7 +44,6 @@ function WebPlayer(props: any) {
   const {
     notesStore,
     sessionStore,
-    uxtestingStore,
     uiPlayerStore,
     integrationsStore,
     searchStore,
@@ -234,11 +233,6 @@ function WebPlayer(props: any) {
     [params.sessionId],
   );
 
-  useEffect(() => {
-    if (uxtestingStore.isUxt()) {
-      setActiveTab('EVENTS');
-    }
-  }, [uxtestingStore.isUxt()]);
 
   const onNoteClose = () => {
     setNoteItem(undefined);
@@ -271,7 +265,7 @@ function WebPlayer(props: any) {
           // @ts-ignore TODO?
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          tabs={uxtestingStore.isUxt() ? UXTTABS : TABS}
+          tabs={TABS}
           fullscreen={fullscreen}
         />
       )}

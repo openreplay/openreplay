@@ -7,7 +7,13 @@ import Message, {
   Type,
 } from '../../common/messages.gen.js'
 import App, { StartOptions } from '../app/index.js'
-import { IFeatureFlag } from './featureFlags.js'
+
+export interface IFeatureFlag {
+  key: string
+  is_persist: boolean
+  value: string | boolean
+  payload: string
+}
 
 interface Filter {
   filters: {

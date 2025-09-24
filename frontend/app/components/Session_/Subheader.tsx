@@ -34,7 +34,6 @@ const disableDevtools = 'or_devtools_uxt_toggle';
 
 function SubHeader(props) {
   const {
-    uxtestingStore,
     integrationsStore,
     sessionStore,
     projectsStore,
@@ -101,7 +100,6 @@ function SubHeader(props) {
 
   const toggleDevtools = (enabled) => {
     localStorage.setItem(disableDevtools, enabled ? '0' : '1');
-    uxtestingStore.setHideDevtools(!enabled);
   };
 
   const showKbHelp = () => {
@@ -159,13 +157,6 @@ function SubHeader(props) {
       />
       <div
         className="w-full px-4 flex items-center border-b relative"
-        style={{
-          background: uxtestingStore.isUxt()
-            ? props.live
-              ? '#F6FFED'
-              : '#EBF4F5'
-            : undefined,
-        }}
       >
         <SessionTabs />
 
@@ -241,18 +232,9 @@ function SubHeader(props) {
               </AntButton>
             </Dropdown>
 
-            {uxtestingStore.isUxt() ? (
-              <Switch
-                checkedChildren="DevTools"
-                unCheckedChildren="DevTools"
-                onChange={toggleDevtools}
-                defaultChecked={!uxtestingStore.hideDevtools}
-              />
-            ) : (
               <div>
                 <QueueControls />
               </div>
-            )}
           </div>
         )}
       </div>

@@ -9,7 +9,6 @@ export const enum MODULES {
   ASSIST_STATS = 'assist-stats',
   FEATURE_FLAGS = 'feature-flags',
   RECOMMENDATIONS = 'recommendations',
-  USABILITY_TESTS = 'usability-tests',
 }
 
 export default extra;

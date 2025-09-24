@@ -29,7 +29,6 @@ import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
 import Selection from './modules/selection.js'
 import Tabs from './modules/tabs.js'
 import LongAnimationTask from "./modules/longAnimationTask.js";
-import FeatureFlags, { IFeatureFlag } from './modules/featureFlags.js'
 import WebAnimations from './modules/webAnimations.js'
 
 import { IN_BROWSER, deprecationWarn, DOCS_HOST, inIframe } from './utils.js'
@@ -69,9 +68,6 @@ export type Options = Partial<
   resetTabOnWindowOpen?: boolean
   network?: Partial<NetworkOptions>
   mouse?: Partial<MouseHandlerOptions>
-  flags?: {
-    onFlagsLoad?: (flags: IFeatureFlag[]) => void
-  }
   // dev only
   __DISABLE_SECURE_MODE?: boolean
   css: CssRulesOptions
@@ -120,8 +116,6 @@ const canAccessTop = () => {
 }
 
 export default class API {
-  public featureFlags: FeatureFlags
-
   private readonly app: App | null = null
   private readonly crossdomainMode: boolean = false
 
@@ -272,30 +266,6 @@ export default class API {
         reason: missingApi.length ? `missing api: ${missingApi.join(',')}` : reason,
       }),
     )
-  }
-
-  isFlagEnabled(flagName: string): boolean {
-    return this.featureFlags.isFlagEnabled(flagName)
-  }
-
-  onFlagsLoad(callback: (flags: IFeatureFlag[]) => void): void {
-    this.app?.featureFlags.onFlagsLoad(callback)
-  }
-
-  clearPersistFlags() {
-    this.app?.featureFlags.clearPersistFlags()
-  }
-
-  reloadFlags() {
-    return this.app?.featureFlags.reloadFlags()
-  }
-
-  getFeatureFlag(flagName: string): IFeatureFlag | undefined {
-    return this.app?.featureFlags.getFeatureFlag(flagName)
-  }
-
-  getAllFeatureFlags() {
-    return this.app?.featureFlags.flags
   }
 
   public restartCanvasTracking = () => {

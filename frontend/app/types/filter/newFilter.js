@@ -1043,7 +1043,6 @@ export const filterLabelMap = filters.reduce((acc, filter) => {
 
 export let filtersMap = observable(mapFilters(filters));
 export let liveFiltersMap = observable(mapLiveFilters(filters));
-export const fflagsConditionsMap = observable(mapFilters(flagConditionFilters));
 export const conditionalFiltersMap = observable(mapFilters(conditionalFilters));
 export const mobileConditionalFiltersMap = observable(
   mapFilters(mobileConditionalFilters),
@@ -1096,28 +1095,6 @@ export const addOptionsToFilter = (key, options) => {
 function getMetadataLabel(key) {
   return key.replace(/^_/, '').charAt(0).toUpperCase() + key.slice(2);
 }
-
-export const addElementToFlagConditionsMap = (
-  category = FilterCategory.METADATA,
-  key,
-  type = FilterType.MULTIPLE,
-  operator = 'is',
-  operatorOptions = filterOptions.stringOperators,
-  icon = 'filters/metadata',
-  isEvent = false,
-) => {
-  fflagsConditionsMap[key] = {
-    key,
-    type,
-    category,
-    label: getMetadataLabel(key),
-    operator,
-    operatorOptions,
-    icon,
-    isLive: true,
-    isEvent,
-  };
-};
 
 export const addElementToConditionalFiltersMap = (
   category = FilterCategory.METADATA,

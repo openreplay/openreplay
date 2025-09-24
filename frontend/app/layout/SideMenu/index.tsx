@@ -76,15 +76,11 @@ function SideMenu(props: Props) {
             const isHidden = [
               item.key === MENU.RECOMMENDATIONS &&
                 modules.includes(MODULES.RECOMMENDATIONS),
-              item.key === MENU.FEATURE_FLAGS &&
-                modules.includes(MODULES.FEATURE_FLAGS),
               item.key === MENU.HIGHLIGHTS &&
                 modules.includes(MODULES.HIGHLIGHTS),
               item.key === MENU.LIVE_SESSIONS &&
                 (modules.includes(MODULES.ASSIST) || isMobile),
               item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
-              item.key === MENU.USABILITY_TESTS &&
-                modules.includes(MODULES.USABILITY_TESTS),
               item.isAdmin && !isAdmin,
               item.isEnterprise && !isEnterprise,
               item.key === MENU.KAI && !hasAi,
@@ -117,9 +113,7 @@ function SideMenu(props: Props) {
     [MENU.DASHBOARDS]: () => withSiteId(routes.dashboard(), siteId),
     [MENU.CARDS]: () => withSiteId(routes.metrics(), siteId),
     [MENU.ALERTS]: () => withSiteId(routes.alerts(), siteId),
-    [MENU.FEATURE_FLAGS]: () => withSiteId(routes.fflags(), siteId),
     [MENU.PREFERENCES]: () => client(CLIENT_DEFAULT_TAB),
-    [MENU.USABILITY_TESTS]: () => withSiteId(routes.usabilityTesting(), siteId),
     [MENU.SPOTS]: () => withSiteId(routes.spotsList(), siteId),
     [PREFERENCES_MENU.ACCOUNT]: () => client(CLIENT_TABS.PROFILE),
     [PREFERENCES_MENU.SESSION_SETTINGS]: () =>

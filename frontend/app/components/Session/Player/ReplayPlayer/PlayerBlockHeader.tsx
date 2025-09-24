@@ -25,7 +25,7 @@ function PlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { uiPlayerStore } = useStore();
   const { player, store } = React.useContext(PlayerContext);
-  const { uxtestingStore, customFieldStore, projectsStore, sessionStore } =
+  const { customFieldStore, projectsStore, sessionStore } =
     useStore();
   const session = sessionStore.current;
   const { sessionPath } = sessionStore;
@@ -109,7 +109,7 @@ function PlayerBlockHeader(props: any) {
             hidden: closedLive,
           })}
         >
-          {live && !hideBack && !uxtestingStore.isUxt() && (
+          {live && !hideBack && (
             <>
               <div className={cn(stl.liveSwitchButton, 'pr-4')}>
                 <Link to={withSiteId(liveSessionRoute(sessionId), siteId)}>

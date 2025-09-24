@@ -7,11 +7,9 @@ import type {
 } from '../../common/interaction.js'
 import AttributeSender from '../modules/attributeSender.js'
 import ConditionsManager from '../modules/conditionsManager.js'
-import FeatureFlags from '../modules/featureFlags.js'
 import type { Options as NetworkOptions } from '../modules/network.js'
 import { deviceMemory, jsHeapSizeLimit } from '../modules/performance.js'
 import TagWatcher from '../modules/tagWatcher.js'
-import UserTestManager from '../modules/userTesting/index.js'
 import {
   adjustTimeOrigin,
   createEventListener,
@@ -250,13 +248,11 @@ export default class App {
   private worker?: TypedWorker
 
   public attributeSender: AttributeSender
-  public featureFlags: FeatureFlags
   public socketMode = false
   private compressionThreshold = 24 * 1000
   private readonly bc: BroadcastChannel | null = null
   private readonly contextId: string
   private canvasRecorder: CanvasRecorder | null = null
-  private uxtManager: UserTestManager
   private conditionsManager: ConditionsManager | null = null
   private readonly tagWatcher: TagWatcher
 
@@ -264,10 +260,7 @@ export default class App {
   private rootId: number | null = null
   private pageFrames: HTMLIFrameElement[] = []
   private frameOderNumber = 0
-  private features = {
-    'feature-flags': true,
-    'usability-test': true,
-  }
+  private features = {}
   private emptyBatchCounter = 0
 
   constructor(
@@ -349,7 +342,6 @@ export default class App {
       app: this,
       isDictDisabled: Boolean(this.options.disableStringDict || this.options.crossdomain?.enabled),
     })
-    this.featureFlags = new FeatureFlags(this)
     this.tagWatcher = new TagWatcher({
       sessionStorage: this.sessionStorage,
       errLog: this.debug.error,
@@ -1204,10 +1196,6 @@ export default class App {
     const onStartInfo = { sessionToken: token, userUUID: '', sessionID: '' }
     this.startCallbacks.forEach((cb) => cb(onStartInfo))
     await this.conditionsManager?.fetchConditions(projectID as string, token as string)
-    if (this.features['feature-flags']) {
-      await this.featureFlags.reloadFlags(token as string)
-      this.conditionsManager?.processFlags(this.featureFlags.flags)
-    }
     await this.tagWatcher.fetchTags(this.options.ingestPoint, token as string)
   }
 
@@ -1534,13 +1522,6 @@ export default class App {
       if (startOpts.startCallback) {
         startOpts.startCallback(SuccessfulStart(onStartInfo))
       }
-      if (this.features['feature-flags']) {
-        try {
-          void this.featureFlags.reloadFlags()
-        } catch (e) {
-          this.debug.log("Error getting feature flags", e)
-        }
-      }
       await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
       this.activityState = ActivityState.Active
       if (this.options.crossdomain?.enabled && !this.insideIframe) {
@@ -1579,38 +1560,6 @@ export default class App {
       }
       this.ticker.start()
       this.canvasRecorder?.startTracking()
-
-      if (this.features['usability-test'] && !this.insideIframe) {
-        this.uxtManager = this.uxtManager
-          ? this.uxtManager
-          : new UserTestManager(this, uxtStorageKey)
-        let uxtId: number | undefined
-        const savedUxtTag = this.localStorage.getItem(uxtStorageKey)
-        if (savedUxtTag) {
-          uxtId = parseInt(savedUxtTag, 10)
-        }
-        if (location?.search) {
-          const query = new URLSearchParams(location.search)
-          if (query.has('oruxt')) {
-            const qId = query.get('oruxt')
-            uxtId = qId ? parseInt(qId, 10) : undefined
-          }
-        }
-
-        if (uxtId) {
-          if (!this.uxtManager.isActive) {
-            // eslint-disable-next-line
-            this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag)).then((id) => {
-              if (id) {
-                this.onUxtCb.forEach((cb: (id: number) => void) => cb(id))
-              }
-            })
-          } else {
-            // @ts-ignore
-            this.onUxtCb.forEach((cb: (id: number) => void) => cb(uxtId))
-          }
-        }
-      }
 
       return SuccessfulStart(onStartInfo)
     } catch (reason) {

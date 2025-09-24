@@ -64,13 +64,5 @@ export const modules = (t: TFunction) => [
     key: MODULES.FEATURE_FLAGS,
     icon: 'toggles',
   },
-  {
-    label: t('Usability Tests'),
-    description: t(
-      'Get feedback from your users by creating usability tests and sharing them with your team.',
-    ),
-    key: MODULES.USABILITY_TESTS,
-    icon: 'clipboard-check',
-  },
   ...extraModules(t),
 ];

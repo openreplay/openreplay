@@ -4,12 +4,6 @@ import singleton from "../main/singleton";
 jest.mock('@openreplay/network-proxy', () => ({ default: jest.fn(() => 'mocked network-proxy content') }));
 
 const methods = [
-  'onFlagsLoad',
-  'isFlagEnabled',
-  'clearPersistFlags',
-  'reloadFlags',
-  'getFeatureFlag',
-  'getAllFeatureFlags',
   'restartCanvasTracking',
   'use',
   'isActive',
