@@ -76,6 +76,8 @@ spec:
               value: '{{ .Values.global.postgresql.postgresqlHost }}'
             - name: pg_port
               value: '{{ .Values.global.postgresql.postgresqlPort }}'
+            - name: pg_sslmode
+              value: '{{ .Values.global.postgresql.postgresqlSslmode }}'
             - name: pg_dbname
               value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
             - name: pg_user

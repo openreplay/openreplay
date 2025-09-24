@@ -62,6 +62,7 @@ async def lifespan(app: FastAPI):
     database = {
         "host": config("pg_host", default="localhost"),
         "dbname": config("pg_dbname", default="orpy"),
+        "sslmode": config("pg_sslmode", default="disable"),
         "user": config("pg_user", default="orpy"),
         "password": config("pg_password", default="orpy"),
         "port": config("pg_port", cast=int, default=5432),

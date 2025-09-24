@@ -48,9 +48,10 @@ vault write database/roles/db-app \
 vault write database/config/postgres \
     plugin_name=postgresql-database-plugin \
     allowed_roles="*" \
-    connection_url="postgresql://{{username}}:{{password}}@$PGHOST:$PGPORT/$PGDATABASE" \
+    connection_url="postgresql://{{username}}:{{password}}@$PGHOST:$PGPORT/$PGDATABASE?sslmode={{PGSSLMODE}}" \
     username="${PGUSER}" \
-    password="${PGPASSWORD}"
+    password="${PGPASSWORD}" \
+    sslmode="${PGSSLMODE}"
 
 vault auth enable kubernetes
 

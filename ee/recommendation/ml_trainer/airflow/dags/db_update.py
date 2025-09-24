@@ -28,7 +28,8 @@ port = config('pg_port_ml')
 user = config('pg_user_ml')
 dbname = config('pg_dbname_ml')
 password = config('pg_password_ml')
-tracking_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
+sslmode = config('pg_sslmode_ml')
+tracking_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}?sslmode={sslmode}"
 
 # 1702296756
 def get_today_feedback():

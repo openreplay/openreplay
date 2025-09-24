@@ -43,10 +43,11 @@ class EventQueue:
         host = config('pg_host_ml')
         port = config('pg_port_ml')
         user = config('pg_user_ml')
+        sslmode = config('pg_sslmode_ml')
         dbname = config('pg_dbname_ml')
         password = config('pg_password_ml')
 
-        tracking_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
+        tracking_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}?sslmode={sslmode}"
         self.connection_handler = ConnectionHandler(tracking_uri)
         self.last_flush = time()
         self.max_retention_time = config('max_retention_time', default=60*60)

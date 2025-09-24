@@ -51,6 +51,8 @@ spec:
               value: '{{ .Values.global.postgresql.postgresqlPort }}' 
             - name: pg_dbname
               value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
+            - name: pg_sslmode
+              value: '{{ .Values.global.postgresql.postgresqlSslmode }}'
             - name: ch_host
               value: "{{ .Values.global.clickhouse.chHost }}"
             - name: ch_port

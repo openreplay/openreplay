@@ -22,6 +22,7 @@ conn_str = config('string_connection', default='')
 if conn_str == '':
     pg_host = config("pg_host")
     pg_dbname = config("pg_dbname")
+    pg_sslmode = config("pg_sslmode")
     pg_user = config("pg_user")
     pg_password = config("pg_password")
     pg_port = config("pg_port", cast=int)
@@ -40,7 +41,7 @@ else:
         pg_host, pg_port = host_info.split(':')
         pg_port = int(pg_port)
 
-conn_str = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_dbname}"
+conn_str = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_dbname}?sslmode={pg_sslmode}"
 
 class PostgresClient:
     CONNECTION_STRING: str = conn_str

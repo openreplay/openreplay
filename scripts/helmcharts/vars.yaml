@@ -8,6 +8,7 @@ postgresql: &postgres
   postgresqlPort: "5432"
   postgresqlUser: "postgres"
   postgresqlDatabase: "postgres"
+  postgresqlSslmode: "disable"
   # resources:
   #   requests:
   #     memory: 256Mi

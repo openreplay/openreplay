@@ -118,6 +118,7 @@ services:
       PGHOST: postgresql
       PGPORT: 5432
       PGDATABASE: postgres
+      PGSSLMODE: disabled
       PGUSER: postgres
       PGPASSWORD: {{.Values.global.postgresql.postgresqlPassword}}
     entrypoint:

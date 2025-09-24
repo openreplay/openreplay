@@ -106,6 +106,7 @@ function migrate() {
 		docker run --rm --network docker-compose_opereplay-net \
 			--name pgmigrate -e PGHOST=postgres -e PGPORT=5432 \
 			-e PGDATABASE=postgres -e PGUSER=postgres -e PGPASSWORD=$pgpassword \
+			-e PGSSLMODE=disable \
 			-v $SCHEMA_DIR:/opt/data/ postgres psql -f /opt/data/db/init_dbs/postgresql/$ver/$ver.sql
 	done
 }

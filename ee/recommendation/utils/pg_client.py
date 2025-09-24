@@ -17,6 +17,7 @@ if conn_str == '':
               "user": config("pg_user"),
               "password": config("pg_password"),
               "port": config("pg_port", cast=int),
+              "sslmode": config("pg_sslmode"),
               "application_name": config("APP_NAME", default="PY")}
 else:
     import urllib.parse
@@ -25,6 +26,7 @@ else:
     i = usr_info.find('://')
     pg_user, pg_password = usr_info[i+3:].split(':')
     host_info, pg_dbname = host_info.split('/')
+    pg_sslmode = config("pg_sslmode")
     i = host_info.find(':')
     if i == -1:
         pg_host = host_info
@@ -37,6 +39,7 @@ else:
               "user": pg_user,
               "password": pg_password,
               "port": pg_port,
+              "sslmode": pg_sslmode,
               "application_name": config("APP_NAME", default="PY")}
 
 PG_CONFIG = dict(_PG_CONFIG)
@@ -117,16 +120,19 @@ class PostgresClient:
         if unlimited_query:
             long_config = dict(_PG_CONFIG)
             long_config["application_name"] += "-UNLIMITED"
+            long_config["sslmode"] = config("pg_sslmode")
             self.connection = psycopg2.connect(**long_config)
         elif long_query:
             long_config = dict(_PG_CONFIG)
             long_config["application_name"] += "-LONG"
+            long_config["sslmode"] = config("pg_sslmode")
             long_config["options"] = f"-c statement_timeout=" \
                                      f"{config('pg_long_timeout', cast=int, default=5 * 60) * 1000}"
             self.connection = psycopg2.connect(**long_config)
         elif not use_pool or not config('PG_POOL', cast=bool, default=True):
             single_config = dict(_PG_CONFIG)
             single_config["application_name"] += "-NOPOOL"
+            single_config["sslmode"] = config("pg_sslmode")
             single_config["options"] = f"-c statement_timeout={config('PG_TIMEOUT', cast=int, default=30) * 1000}"
             self.connection = psycopg2.connect(**single_config)
         else:

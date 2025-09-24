@@ -16,8 +16,8 @@ pg_host = config("pg_host")
 pg_password = config("pg_password")
 pg_port = config("pg_port")
 pg_user = config("pg_user")
-
-DATABASE_URL = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_dbname}"
+pg_sslmode = config("pg_sslmode")
+DATABASE_URL = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_dbname}?sslmode={pg_sslmode}"
 
 POOL_SIZE = config("POOL_SIZE", default=20, cast=int)
 MAX_OVERFLOW = config("MAX_OVERFLOW", default=10, cast=int)

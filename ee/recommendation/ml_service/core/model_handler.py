@@ -11,8 +11,8 @@ port = config('pg_port_ml')
 user = config('pg_user_ml')
 dbname = config('pg_dbname_ml')
 password = config('pg_password_ml')
-
-tracking_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
+sslmode = config('pg_sslmode_ml')
+tracking_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}?sslmode={sslmode}"
 mlflow.set_tracking_uri(tracking_uri)
 batch_download_size = config('batch_download_size', default=10, cast=int)
 
