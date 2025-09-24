@@ -204,7 +204,6 @@ Pipfile.lock
 /chalicelib/core/events*
 /chalicelib/core/feature_flags.py
 /chalicelib/core/issue_tracking/*
-/chalicelib/core/issues.py
 /chalicelib/core/issues/
 /chalicelib/core/jobs.py
 /chalicelib/core/log_tools/*

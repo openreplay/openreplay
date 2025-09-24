@@ -25,7 +25,7 @@ rm -rf ./chalicelib/core/events
 rm -rf ./chalicelib/core/feature_flags.py
 rm -rf ./chalicelib/core/issue_tracking
 rm -rf ./chalicelib/core/integrations_manager.py
-rm -rf ./chalicelib/core/issues.py
+rm -rf ./chalicelib/core/issues
 rm -rf ./chalicelib/core/jobs.py
 rm -rf ./chalicelib/core/log_tools
 rm -rf ./chalicelib/core/metadata.py
