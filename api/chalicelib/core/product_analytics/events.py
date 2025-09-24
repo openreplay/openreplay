@@ -31,7 +31,7 @@ def get_events(project_id: int):
                 event_name AS name, display_name, description,
                 auto_captured
             FROM product_analytics.all_events
-            WHERE project_id=%(project_id)s
+            WHERE project_id=%(project_id)s AND event_name != 'CANVAS_NODE'
             ORDER BY auto_captured, display_name, event_name;""",
             parameters={"project_id": project_id})
         rows = ch_client.execute(r)
@@ -172,7 +172,7 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
             """SELECT COUNT(1) OVER () AS total, all_events.event_name AS name,
                       *
                FROM product_analytics.all_events
-               WHERE project_id = %(project_id)s
+               WHERE project_id = %(project_id)s AND event_name != 'CANVAS_NODE'
                ORDER BY display_name
                    LIMIT %(limit)s
                OFFSET %(offset)s;""",
