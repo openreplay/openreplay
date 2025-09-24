@@ -233,14 +233,15 @@ export default class FilterStore {
       if (filter.name === 'duration' && filter.autoCaptured) {
         dataType = 'duration';
       }
+      const filterCategory = category ?? filter.category ?? 'custom'
       return {
         ...filter,
         id: Math.random().toString(36).substring(2, 9),
         possibleTypes:
           filter.possibleTypes?.map((type: any) => type.toLowerCase()) || [],
         dataType: dataType,
-        category: category || 'custom',
-        subCategory: this.determineSubCategory(category, filter),
+        category: filterCategory,
+        subCategory: this.determineSubCategory(filterCategory, filter),
         displayName: filter.displayName || filter.name,
         // icon: FilterKey.LOCATION, // TODO - use actual icons
         isEvent: category === 'events',
