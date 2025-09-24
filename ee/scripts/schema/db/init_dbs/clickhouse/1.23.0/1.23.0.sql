@@ -282,7 +282,9 @@ CREATE TABLE IF NOT EXISTS product_analytics.property_values_samples
         ORDER BY (project_id, property_name, is_event_property);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_values_sampler_mv
+    -- @formatter:off
     REFRESH EVERY 30 HOUR TO product_analytics.property_values_samples AS
+    -- @formatter:on
 SELECT project_id,
        property_name,
        TRUE                                                      AS is_event_property,
@@ -333,7 +335,9 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_events_grouped
       TTL _timestamp + INTERVAL 1 MONTH;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_events_grouped_mv
+    -- @formatter:off
     REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_events_grouped AS
+    -- @formatter:on
 SELECT project_id,
        value,
        count(1)        AS data_count,
@@ -389,7 +393,9 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties_group
       TTL _timestamp + INTERVAL 1 MONTH;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped_mv
+    -- @formatter:off
     REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_event_properties_grouped AS
+    -- @formatter:on
 SELECT project_id,
        event_name,
        property_name,
