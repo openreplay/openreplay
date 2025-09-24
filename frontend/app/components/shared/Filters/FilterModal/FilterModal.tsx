@@ -115,7 +115,7 @@ const FilterItem = React.memo(
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onClick(filter);
+        if (e.key === 'Enter') onClick(filter);
       }}
     >
       {showCategory && filter.category && (
