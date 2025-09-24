@@ -308,5 +308,5 @@ export enum FilterKey {
   SESSIONS_PER_BROWSER = 'sessionsPerBrowser',
 
   CLICKMAP_URL = 'clickMapUrl',
-  TAGGED_ELEMENT = 'tag',
+  TAGGED_ELEMENT = 'tag_trigger',
 }

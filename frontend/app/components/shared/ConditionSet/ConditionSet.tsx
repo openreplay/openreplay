@@ -1,11 +1,20 @@
 import React from 'react';
 import { Icon, Input } from 'UI';
 import cn from 'classnames';
-import { FilterList, EventsList } from 'Shared/Filters/FilterList';
 import { observer } from 'mobx-react-lite';
-import { Typography } from 'antd';
+import { Typography, Button } from 'antd';
 import { BranchesOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { Plus } from 'lucide-react';
+import { useStore } from 'App/mstore';
+import { Filter } from '@/mstore/types/filterConstants';
+import FilterSelection from 'Shared/Filters/FilterSelection';
+import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
+import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
+import {
+  conditionalFilterKeys,
+  mobileConditionalFilterKeys,
+} from '@/types/filter/newFilter';
 
 interface Props {
   set: number;
@@ -21,7 +30,6 @@ interface Props {
   onUpdateFilter: (filterIndex: number, filter: any) => void;
   onRemoveFilter: (filterIndex: number) => void;
   onChangeEventsOrder: (_: any, { name, value }: any) => void;
-  isConditional?: boolean;
   changeName: (name: string) => void;
   isMobile?: boolean;
 }
@@ -35,16 +43,48 @@ function ConditionSetComponent({
   bottomLine1,
   bottomLine2,
   onPercentChange,
-  excludeFilterKeys,
   conditions,
   onUpdateFilter,
   onRemoveFilter,
-  onChangeEventsOrder,
-  isConditional,
   isMobile,
   changeName,
 }: Props) {
+  const { filterStore } = useStore();
   const { t } = useTranslation();
+
+  const indexedFilters = conditions.filter.filters.map((f, i) => ({
+    ...f,
+    originalIndex: i,
+  }));
+  const activeFilters = indexedFilters.map((f) => f.name);
+  const actualEvents = indexedFilters.filter((f) => f.isEvent);
+  const actualProperties = indexedFilters.filter((f) => !f.isEvent);
+
+  const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
+  const excludeFilterKeys = React.useMemo(() => {
+    const res: any = [];
+    allFilterOptions.forEach((f) => {
+      const fKey = f.name.toLowerCase();
+      const isIncluded = isMobile
+        ? mobileConditionalFilterKeys.includes(fKey)
+        : conditionalFilterKeys.includes(fKey);
+      if (!isIncluded) {
+        res.push(f);
+      }
+    });
+    return res;
+  }, [allFilterOptions.length]);
+  const allowedOptions = allFilterOptions.filter(
+    (f) => !excludeFilterKeys.map((i) => i.name).includes(f.name),
+  );
+  const eventOptions: Filter[] = allowedOptions.filter((i) => i.isEvent);
+  const propertyOptions: Filter[] = allowedOptions.filter((i) => !i.isEvent);
+  const disableEvents = false;
+  console.log(allFilterOptions.map(f => f.name),conditionalFilterKeys, allowedOptions, excludeFilterKeys);
+
+  const onFilterMove = (draggedIdx: number, targetIdx: number) => {
+    conditions.filter.moveFilter(draggedIdx, targetIdx);
+  };
   return (
     <div className="border bg-white rounded">
       <div className="flex items-center border-b px-4 py-2 gap-2">
@@ -85,29 +125,82 @@ function ConditionSetComponent({
       </div>
       <div className="p-2">
         <div className={conditions.filter.filters.length > 0 ? 'p-2 mb-2' : ''}>
-          <EventsList
-            filter={conditions.filter}
-            onUpdateFilter={onUpdateFilter}
-            onRemoveFilter={onRemoveFilter}
-            onChangeEventsOrder={onChangeEventsOrder}
-            hideEventsOrder
-            onAddFilter={onAddFilter}
-            excludeFilterKeys={excludeFilterKeys}
-            readonly={readonly}
-            isConditional={isConditional}
-            borderless
+          <FilterListHeader
+            title="Events"
+            showEventsOrder={false}
+            filterSelection={
+              <FilterSelection
+                disabled={disableEvents}
+                activeFilters={activeFilters}
+                filters={eventOptions}
+                onFilterClick={onAddFilter}
+              >
+                <Button type="default" size="small">
+                  <div className="flex items-center gap-1">
+                    <Plus size={16} strokeWidth={1} />
+                    <span>Add</span>
+                  </div>
+                </Button>
+              </FilterSelection>
+            }
           />
-          <FilterList
-            filter={conditions.filter}
-            onUpdateFilter={onUpdateFilter}
-            onRemoveFilter={onRemoveFilter}
-            onChangeEventsOrder={onChangeEventsOrder}
-            hideEventsOrder
-            onAddFilter={onAddFilter}
-            excludeFilterKeys={excludeFilterKeys}
-            readonly={readonly}
-            isConditional={isConditional}
-            borderless
+
+          <UnifiedFilterList
+            title="Events"
+            filters={actualEvents}
+            isDraggable={true}
+            showIndices={true}
+            className="mt-2"
+            handleRemove={
+              disableEvents
+                ? undefined
+                : (idx) => onRemoveFilter(actualEvents[idx].originalIndex)
+            }
+            handleUpdate={(idx, filter) =>
+              onUpdateFilter(actualEvents[idx].originalIndex, filter)
+            }
+            handleAdd={onAddFilter}
+            handleMove={(draggedIdx, newPos) => {
+              const dragged = actualEvents[draggedIdx];
+              const target = actualEvents[newPos];
+              onFilterMove(dragged.originalIndex, target.originalIndex);
+            }}
+          />
+
+          <FilterListHeader
+            title="Filters"
+            showEventsOrder={actualProperties.length > 0}
+            filterSelection={
+              <FilterSelection
+                filters={propertyOptions}
+                onFilterClick={onAddFilter}
+                activeFilters={activeFilters}
+              >
+                <Button type="default" size="small">
+                  <div className="flex items-center gap-1">
+                    <Plus size={16} strokeWidth={1} />
+                    <span>Add</span>
+                  </div>
+                </Button>
+              </FilterSelection>
+            }
+          />
+
+          <UnifiedFilterList
+            title="Filters"
+            filters={actualProperties}
+            isDraggable={false}
+            showIndices={false}
+            className="mt-2"
+            isHeatmap={false}
+            handleRemove={(idx) =>
+              onRemoveFilter(actualProperties[idx].originalIndex)
+            }
+            handleUpdate={(idx, filter) =>
+              onUpdateFilter(actualProperties[idx].originalIndex, filter)
+            }
+            handleAdd={onAddFilter}
+            handleMove={onFilterMove}
           />
           {readonly && !conditions.filter?.filters?.length ? (
             <div className="p-2">{t('No conditions')}</div>

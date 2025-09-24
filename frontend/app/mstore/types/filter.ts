@@ -1,10 +1,9 @@
 import { action, makeAutoObservable, observable, runInAction } from 'mobx';
-import { conditionalFiltersMap, filtersMap } from 'Types/filter/newFilter';
+import { filtersMap } from 'Types/filter/newFilter';
 import { FilterKey } from 'Types/filter/filterType';
 import FilterItem from './filterItem';
 import { JsonData } from '@/mstore/types/filterConstants';
 import { filterStore } from '@/mstore/index';
-import FilterSeries from '@/mstore/types/filterSeries';
 
 type FilterData = Partial<FilterItem> & {
   key?: FilterKey | string;
@@ -466,7 +465,7 @@ export default class FilterStore implements IFilterStore {
     sourceOperator?: string,
     source?: any,
   ) {
-    const sourceMap = this.isConditional ? conditionalFiltersMap : filtersMap;
+    const sourceMap = filtersMap;
     const defaultFilterData = sourceMap[key as FilterKey];
 
     if (defaultFilterData) {

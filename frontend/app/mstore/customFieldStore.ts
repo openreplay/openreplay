@@ -1,8 +1,6 @@
 import { makeAutoObservable } from 'mobx';
 import { customFieldService } from 'App/services';
 import {
-  addElementToConditionalFiltersMap,
-  addElementToMobileConditionalFiltersMap,
   addElementToFiltersMap,
   addElementToLiveFiltersMap,
   clearMetaFilters,
@@ -56,8 +54,6 @@ class CustomFieldStore {
         const calls = [
           addElementToFiltersMap,
           addElementToLiveFiltersMap,
-          addElementToConditionalFiltersMap,
-          addElementToMobileConditionalFiltersMap,
         ];
         calls.forEach((call) => {
           call(FilterCategory.METADATA, `_${item.key}`);

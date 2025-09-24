@@ -1,11 +1,9 @@
 import Period, { CUSTOM_RANGE } from 'Types/app/period';
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import {
-  conditionalFiltersMap,
   filtersMap,
   generateFilterOptions,
   liveFiltersMap,
-  mobileConditionalFiltersMap,
 } from 'Types/filter/newFilter';
 import { List } from 'immutable';
 import { makeAutoObservable, runInAction } from 'mobx';
@@ -111,14 +109,6 @@ class SearchStore {
 
   get filterListLive() {
     return generateFilterOptions(liveFiltersMap);
-  }
-
-  get filterListConditional() {
-    return generateFilterOptions(conditionalFiltersMap);
-  }
-
-  get filterListMobileConditional() {
-    return generateFilterOptions(mobileConditionalFiltersMap);
   }
 
   applySavedSearch(savedSearch: ISavedSearch) {

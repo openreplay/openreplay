@@ -3,7 +3,6 @@ import React from 'react';
 import ConditionSet from 'Shared/ConditionSet';
 import { Icon } from 'UI';
 import { Button } from 'antd';
-import { nonConditionalFlagFilters } from 'Types/filter/newFilter';
 import { useTranslation } from 'react-i18next';
 
 function ConditionalRecordingSettings({
@@ -70,8 +69,6 @@ function ConditionalRecordingSettings({
               bottomLine1={t('Capture')}
               bottomLine2={t('of total session rate matching this condition.')}
               setChanged={setChanged}
-              excludeFilterKeys={nonConditionalFlagFilters}
-              isConditional
               isMobile={isMobile}
             />
             {index !== conditions.length - 1 ? (

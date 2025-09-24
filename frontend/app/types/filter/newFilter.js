@@ -663,315 +663,48 @@ export const flagConditionFilters = [
   return aOrder - bOrder;
 });
 
-export const conditionalFilters = [
-  {
-    key: FilterKey.CLICK,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.EVENTS,
-    subCategory: FilterCategory.AUTOCAPTURE,
-    label: 'Click',
-    operator: 'on',
-    operatorOptions: filterOptions.targetConditional,
-    icon: 'filters/click',
-    isEvent: true,
-  },
-  {
-    key: FilterKey.LOCATION,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.EVENTS,
-    subCategory: FilterCategory.AUTOCAPTURE,
-    label: 'Visited URL',
-    placeholder: 'Enter path',
-    operator: 'is',
-    operatorOptions: filterOptions.stringConditional,
-    icon: 'filters/location',
-    isEvent: true,
-  },
-  {
-    key: FilterKey.CUSTOM,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.DEVTOOLS,
-    label: 'Custom Events',
-    placeholder: 'Enter event key',
-    operator: 'is',
-    operatorOptions: filterOptions.stringConditional,
-    icon: 'filters/custom',
-    isEvent: true,
-  },
-  {
-    key: FilterKey.FETCH,
-    type: FilterType.SUB_FILTERS,
-    category: FilterCategory.DEVTOOLS,
-    operator: 'is',
-    label: 'Network Request',
-    filters: [
-      {
-        key: FilterKey.FETCH_URL,
-        type: FilterType.MULTIPLE,
-        category: FilterCategory.DEVTOOLS,
-        label: 'with URL',
-        placeholder: 'Enter path or URL',
-        operator: 'is',
-        operatorOptions: filterOptions.stringConditional,
-        icon: 'filters/fetch',
-      },
-      {
-        key: FilterKey.FETCH_STATUS_CODE,
-        type: FilterType.NUMBER_MULTIPLE,
-        category: FilterCategory.DEVTOOLS,
-        label: 'with status code',
-        placeholder: 'Enter status code',
-        operator: '=',
-        operatorOptions: filterOptions.customOperators,
-        icon: 'filters/fetch',
-      },
-      {
-        key: FilterKey.FETCH_METHOD,
-        type: FilterType.MULTIPLE_DROPDOWN,
-        category: FilterCategory.DEVTOOLS,
-        label: 'with method',
-        operator: 'is',
-        placeholder: 'Select method type',
-        operatorOptions: filterOptions.stringOperatorsLimited,
-        icon: 'filters/fetch',
-        options: filterOptions.methodOptions,
-      },
-      {
-        key: FilterKey.FETCH_DURATION,
-        type: FilterType.NUMBER,
-        category: FilterCategory.DEVTOOLS,
-        label: 'with duration (ms)',
-        placeholder: 'E.g. 12',
-        operator: '=',
-        operatorOptions: filterOptions.customOperators,
-        icon: 'filters/fetch',
-      },
-    ],
-    icon: 'filters/fetch',
-    isEvent: true,
-  },
-  {
-    key: FilterKey.ERROR,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.DEVTOOLS,
-    label: 'Error Message',
-    placeholder: 'E.g. Uncaught SyntaxError',
-    operator: 'is',
-    operatorOptions: filterOptions.stringConditional,
-    icon: 'filters/error',
-    isEvent: true,
-  },
-  {
-    key: FilterKey.DURATION,
-    type: FilterType.DURATION,
-    category: FilterCategory.SESSION,
-    label: 'Duration',
-    operator: 'is',
-    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: 'filters/duration',
-    isEvent: false,
-  },
-  {
-    key: FilterKey.FEATURE_FLAG,
-    type: FilterType.STRING,
-    category: FilterCategory.METADATA,
-    label: 'Feature Flag',
-    operator: 'is',
-    operatorOptions: filterOptions.stringConditional,
-    isEvent: false,
-  },
-  {
-    key: FilterKey.USERID,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.USER,
-    label: 'User Id',
-    placeholder: 'E.g. Alex, or alex@domain.com, or EMP123',
-    operator: 'is',
-    operatorOptions: filterOptions.stringOperators.concat([
-      { label: 'is undefined', value: 'isUndefined' },
-    ]),
-    icon: 'filters/userid',
-  },
-].sort((a, b) => {
-  const aOrder = filterOrder[a.category] ?? 9;
-  const bOrder = filterOrder[b.category] ?? 9;
-  return aOrder - bOrder;
-});
+export const conditionalFilterKeys = [
+  FilterKey.CLICK,
+  FilterKey.LOCATION,
+  FilterKey.CUSTOM,
+  FilterKey.FETCH,
+  FilterKey.FETCH_URL,
+  FilterKey.FETCH_STATUS_CODE,
+  FilterKey.FETCH_METHOD,
+  FilterKey.FETCH_DURATION,
+  FilterKey.ERROR,
+  FilterKey.DURATION,
+  FilterKey.USERID,
+  FilterKey.TAGGED_ELEMENT,
+  "selector",
+  "name",
+  "label",
+  "url",
+  "url_path",
+  FilterKey.USER_BROWSER,
+  FilterKey.USER_OS,
+  FilterKey.USER_DEVICE,
+  FilterKey.USER_COUNTRY,
+  ].map(k => k.toLocaleLowerCase())
+export const mobileConditionalFilterKeys = [
+  FilterKey.DURATION,
+  FilterKey.FETCH,
+  FilterKey.FETCH_URL,
+  FilterKey.FETCH_STATUS_CODE,
+  FilterKey.FETCH_METHOD,
+  FilterKey.FETCH_DURATION,
+  FilterKey.CUSTOM,
+  FilterKey.USERID,
+  'thermalState',
+  'mainThreadCPU',
+  'viewComponent',
+  'logEvent',
+  'clickEvent',
+  'memoryUsage',
+  ].map(k => k.toLocaleLowerCase())
 
-export const mobileConditionalFilters = [
-  {
-    key: FilterKey.DURATION,
-    type: FilterType.DURATION,
-    category: FilterCategory.SESSION,
-    label: 'Duration',
-    operator: 'is',
-    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: 'filters/duration',
-    isEvent: false,
-  },
-  {
-    key: FilterKey.FETCH,
-    type: FilterType.SUB_FILTERS,
-    category: FilterCategory.DEVTOOLS,
-    operator: 'is',
-    label: 'Network Request',
-    filters: [
-      {
-        key: FilterKey.FETCH_URL,
-        type: FilterType.MULTIPLE,
-        category: FilterCategory.DEVTOOLS,
-        label: 'with URL',
-        placeholder: 'Enter path or URL',
-        operator: 'is',
-        operatorOptions: filterOptions.stringConditional,
-        icon: 'filters/fetch',
-      },
-      {
-        key: FilterKey.FETCH_STATUS_CODE,
-        type: FilterType.NUMBER_MULTIPLE,
-        category: FilterCategory.DEVTOOLS,
-        label: 'with status code',
-        placeholder: 'Enter status code',
-        operator: '=',
-        operatorOptions: filterOptions.customOperators,
-        icon: 'filters/fetch',
-      },
-      {
-        key: FilterKey.FETCH_METHOD,
-        type: FilterType.MULTIPLE_DROPDOWN,
-        category: FilterCategory.DEVTOOLS,
-        label: 'with method',
-        operator: 'is',
-        placeholder: 'Select method type',
-        operatorOptions: filterOptions.stringOperatorsLimited,
-        icon: 'filters/fetch',
-        options: filterOptions.methodOptions,
-      },
-      {
-        key: FilterKey.FETCH_DURATION,
-        type: FilterType.NUMBER,
-        category: FilterCategory.DEVTOOLS,
-        label: 'with duration (ms)',
-        placeholder: 'E.g. 12',
-        operator: '=',
-        operatorOptions: filterOptions.customOperators,
-        icon: 'filters/fetch',
-      },
-    ],
-    icon: 'filters/fetch',
-    isEvent: true,
-  },
-  {
-    key: FilterKey.CUSTOM,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.DEVTOOLS,
-    label: 'Custom Events',
-    placeholder: 'Enter event key',
-    operator: 'is',
-    operatorOptions: filterOptions.stringConditional,
-    icon: 'filters/custom',
-    isEvent: true,
-  },
-  {
-    key: 'thermalState',
-    type: FilterType.MULTIPLE_DROPDOWN,
-    category: FilterCategory.DEVTOOLS,
-    label: 'Device Thermal State',
-    placeholder: 'Pick an option',
-    operator: 'is',
-    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: 'filters/cpu-load',
-    options: [
-      { label: 'nominal', value: '0' },
-      { label: 'warm', value: '1' },
-      { label: 'hot', value: '2' },
-      { label: 'critical', value: '3' },
-    ],
-  },
-  {
-    key: 'mainThreadCPU',
-    type: FilterType.STRING,
-    category: FilterCategory.DEVTOOLS,
-    label: 'Main CPU Load %',
-    placeholder: '0 .. 100',
-    operator: '=',
-    operatorOptions: filterOptions.customOperators,
-    icon: 'filters/cpu-load',
-  },
-  {
-    key: 'viewComponent',
-    type: FilterType.STRING,
-    category: FilterCategory.EVENTS,
-    subCategory: FilterCategory.AUTOCAPTURE,
-    label: 'View on screen',
-    placeholder: 'View Name',
-    operator: 'is',
-    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: 'filters/view',
-  },
-  {
-    key: FilterKey.USERID,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.USER,
-    label: 'User Id',
-    operator: 'isUndefined',
-    operatorOptions: [
-      {
-        key: 'isUndefined',
-        label: 'is undefined',
-        value: 'isUndefined',
-      },
-      {
-        key: 'isAny',
-        label: 'is present',
-        value: 'isAny',
-      },
-    ],
-    icon: 'filters/userid',
-  },
-  {
-    key: 'logEvent',
-    type: FilterType.STRING,
-    category: FilterCategory.DEVTOOLS,
-    label: 'Log in console',
-    placeholder: 'logged value',
-    operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/console',
-  },
-  {
-    key: 'clickEvent',
-    type: FilterType.STRING,
-    category: FilterCategory.EVENTS,
-    subCategory: FilterCategory.AUTOCAPTURE,
-    label: 'Tap on view',
-    placeholder: 'View Name',
-    operator: 'is',
-    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: 'filters/click',
-  },
-  {
-    key: 'memoryUsage',
-    type: FilterType.STRING,
-    category: FilterCategory.DEVTOOLS,
-    label: 'Memory usage %',
-    placeholder: '0 .. 100',
-    operatorOptions: filterOptions.customOperators,
-    icon: 'filters/memory-load',
-  },
-];
-
+console.log(conditionalFilterKeys, mobileConditionalFilterKeys)
 export const eventKeys = filters.filter((i) => i.isEvent).map((i) => i.key);
-export const nonFlagFilters = filters
-  .filter((i) => flagConditionFilters.findIndex((f) => f.key === i.key) === -1)
-  .map((i) => i.key);
-export const nonConditionalFlagFilters = filters
-  .filter(
-    (i) =>
-      conditionalFilters.findIndex((f) => f.key === i.key) === -1 &&
-      mobileConditionalFilters.findIndex((f) => f.key === i.key) === -1,
-  )
-  .map((i) => i.key);
 
 export const clickmapFilter = {
   key: FilterKey.LOCATION,
@@ -1043,10 +776,6 @@ export const filterLabelMap = filters.reduce((acc, filter) => {
 
 export let filtersMap = observable(mapFilters(filters));
 export let liveFiltersMap = observable(mapLiveFilters(filters));
-export const conditionalFiltersMap = observable(mapFilters(conditionalFilters));
-export const mobileConditionalFiltersMap = observable(
-  mapFilters(mobileConditionalFilters),
-);
 
 export const clearMetaFilters = () => {
   filtersMap = mapFilters(filters);
@@ -1095,50 +824,6 @@ export const addOptionsToFilter = (key, options) => {
 function getMetadataLabel(key) {
   return key.replace(/^_/, '').charAt(0).toUpperCase() + key.slice(2);
 }
-
-export const addElementToConditionalFiltersMap = (
-  category = FilterCategory.METADATA,
-  key,
-  type = FilterType.MULTIPLE,
-  operator = 'is',
-  operatorOptions = filterOptions.stringOperators,
-  icon = 'filters/metadata',
-  isEvent = false,
-) => {
-  conditionalFiltersMap[key] = {
-    key,
-    type,
-    category,
-    label: getMetadataLabel(key),
-    operator,
-    operatorOptions,
-    icon,
-    isLive: true,
-    isEvent,
-  };
-};
-
-export const addElementToMobileConditionalFiltersMap = (
-  category = FilterCategory.METADATA,
-  key,
-  type = FilterType.MULTIPLE,
-  operator = 'is',
-  operatorOptions = filterOptions.stringOperators,
-  icon = 'filters/metadata',
-  isEvent = false,
-) => {
-  mobileConditionalFiltersMap[key] = {
-    key,
-    type,
-    category,
-    label: getMetadataLabel(key),
-    operator,
-    operatorOptions,
-    icon,
-    isLive: true,
-    isEvent,
-  };
-};
 
 export const addElementToLiveFiltersMap = (
   category = FilterCategory.METADATA,

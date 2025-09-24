@@ -14,7 +14,6 @@ interface Props {
   bottomLine2: string;
   setChanged?: (changed: boolean) => void;
   excludeFilterKeys?: string[];
-  isConditional?: boolean;
   isMobile?: boolean;
 }
 
@@ -28,18 +27,12 @@ function ConditionSet({
   bottomLine2,
   setChanged,
   excludeFilterKeys,
-  isConditional,
   isMobile,
 }: Props) {
   const [forceRender, forceRerender] = React.useState(false);
 
   const onAddFilter = (filter: Record<string, any> = {}) => {
     setChanged?.(true);
-    if (
-      conditions.filter.filters.findIndex((f) => f.key === filter.key) !== -1
-    ) {
-      return toast.error('Filter already exists');
-    }
     conditions.filter.addFilter(filter);
     forceRerender(!forceRender);
   };
@@ -85,12 +78,10 @@ function ConditionSet({
       bottomLine1={bottomLine1}
       bottomLine2={bottomLine2}
       onPercentChange={onPercentChange}
-      excludeFilterKeys={excludeFilterKeys}
       conditions={conditions}
       onUpdateFilter={onUpdateFilter}
       onRemoveFilter={onRemoveFilter}
       onChangeEventsOrder={onChangeEventsOrder}
-      isConditional={isConditional}
       isMobile={isMobile}
     />
   );
