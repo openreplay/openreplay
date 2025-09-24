@@ -703,7 +703,6 @@ export const mobileConditionalFilterKeys = [
   'memoryUsage',
   ].map(k => k.toLocaleLowerCase())
 
-console.log(conditionalFilterKeys, mobileConditionalFilterKeys)
 export const eventKeys = filters.filter((i) => i.isEvent).map((i) => i.key);
 
 export const clickmapFilter = {

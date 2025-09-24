@@ -158,31 +158,24 @@ export default class FilterItem implements IFilter {
       // source: this.name,
       propertyOrder: this.propertyOrder,
       filters: Array.isArray(this.filters)
-            ? this.filters
-                .filter((child) =>
-                  child.isEvent
-                    ? !!(child.filters && child.filters.length > 0)
-                    : Array.isArray(child.value) && child.value.some((v) => v !== '' && v !== null && v !== undefined),
-                )
-                .map((child) => child.toJson())
-            : [],
+        ? this.filters
+            .filter((child) =>
+              child.isEvent
+                ? !!(child.filters && child.filters.length > 0)
+                : Array.isArray(child.value)
+                  ? child.value.some(
+                      (v) => v !== '' && v !== null && v !== undefined,
+                    ) || child.operator === 'isAny'
+                  : false,
+            )
+            .map((child) => child.toJson())
+        : [],
       // these props are required to get the source filter later
       isEvent: Boolean(this.isEvent),
       name: this.name,
       autoCaptured: this.autoCaptured,
       dataType: this.dataType,
     };
-
-    // const isMetadata = this.category === FilterCategory.METADATA;
-    // if (isMetadata) {
-    //   json.type = FilterKey.METADATA;
-    //   json.source = this.name;
-    //   json.sourceOperator = this.operator;
-    // }
-
-    // if (this.name === FilterKey.DURATION) {
-    //   json.value = this.value?.map((item: any) => (item ? item + '' : 0));
-    // }
 
     return json;
   }

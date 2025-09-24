@@ -53,7 +53,6 @@ function Projects() {
   const projects = projectsStore.list;
 
   const onSelect = (key: number) => {
-    console.log('Selected project ID:', key);
     projectsStore.setConfigProject(key);
   };
 

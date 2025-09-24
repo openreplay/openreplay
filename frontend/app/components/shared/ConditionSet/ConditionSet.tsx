@@ -80,7 +80,6 @@ function ConditionSetComponent({
   const eventOptions: Filter[] = allowedOptions.filter((i) => i.isEvent);
   const propertyOptions: Filter[] = allowedOptions.filter((i) => !i.isEvent);
   const disableEvents = false;
-  console.log(allFilterOptions.map(f => f.name),conditionalFilterKeys, allowedOptions, excludeFilterKeys);
 
   const onFilterMove = (draggedIdx: number, targetIdx: number) => {
     conditions.filter.moveFilter(draggedIdx, targetIdx);
