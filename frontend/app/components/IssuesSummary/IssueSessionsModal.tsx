@@ -197,8 +197,8 @@ function SessionWithIssue({
           <Radio.Button value="journey">Journey</Radio.Button>
         </Radio.Group>
         <div className="flex items-center flex-wrap gap-2">
-          {labels.map((l) => (
-            <Tag className="!m-0">{l}</Tag>
+          {labels.map((l, i) => (
+            <Tag className="!m-0" key={`${l.replace(' ', '.')}_${i}`}>{l}</Tag>
           ))}
         </div>
         <div className="text-gray-500 text-sm">
