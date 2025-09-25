@@ -28,11 +28,13 @@ function IssueSessions({
   issueLabels,
   journeyLabels,
   projectId,
+  hideModal
 }: {
   issueName: string;
   issueLabels: string[];
   journeyLabels: string[];
   projectId: string;
+  hideModal: () => void;
 }) {
   const limit = 10;
   const page = 1;
@@ -142,6 +144,7 @@ function IssueSessions({
           issueSession={issueSession}
           key={index}
           index={index}
+          hideModal={hideModal}
         />
       ))}
     </div>
@@ -151,9 +154,11 @@ function IssueSessions({
 function SessionWithIssue({
   issueSession,
   index,
+  hideModal
 }: {
   issueSession: IssueSession;
   index: number;
+  hideModal: () => void;
 }) {
   const [displayType, setDisplayType] = React.useState<'issue' | 'journey'>(
     'issue',
@@ -179,6 +184,7 @@ function SessionWithIssue({
             ? `?jumpto=${issueSession.issueTimestamp}`
             : undefined
         }
+        onBeforeOpen={hideModal}
       />
       <div className="rounded-lg px-4 py-2 border border-gray-light flex flex-col gap-2 mx-4">
         <Radio.Group

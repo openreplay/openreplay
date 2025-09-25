@@ -33,7 +33,7 @@ function IssuesSummary() {
   const [usedLabels, setUsedLabels] = React.useState<string[]>([]);
   const match = useRouteMatch<{ siteId: string }>();
   const projectId = match.params.siteId;
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
   const { t } = useTranslation();
   const {
     data = { critical: [], other: [] },
@@ -64,6 +64,7 @@ function IssuesSummary() {
         issueLabels={issue.issueLabels.map((l) => l.name)}
         journeyLabels={issue.journeyLabels.map((l) => l.name)}
         projectId={projectId}
+        hideModal={hideModal}
       />,
       {
         right: true,
