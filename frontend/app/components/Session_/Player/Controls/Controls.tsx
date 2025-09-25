@@ -94,12 +94,7 @@ function getStorageName(type: any) {
 
 function Controls({ setActiveTab, activeTab, fullView }: any) {
   const { player, store } = React.useContext(PlayerContext);
-  const {
-    uiPlayerStore,
-    projectsStore,
-    sessionStore,
-    userStore,
-  } = useStore();
+  const { uiPlayerStore, projectsStore, sessionStore, userStore } = useStore();
   const [mounted, setMounted] = React.useState(false);
   const permissions = userStore.account.permissions || [];
   const disableDevtools =
@@ -222,9 +217,10 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
       : PlayingState.Paused;
 
   const events = session.stackEvents ?? [];
-  const highlightTimer = React.useMemo(() => new URLSearchParams(window.location.search).get(
-    'timer',
-  ), [])
+  const highlightTimer = React.useMemo(
+    () => new URLSearchParams(window.location.search).get('timer'),
+    [],
+  );
 
   if (fullView) {
     return (
@@ -275,6 +271,15 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
           </div>
 
           <div className="flex gap-2 items-center h-full">
+            <DevtoolsButtons
+              showStorageRedux={showStorageRedux}
+              toggleBottomTools={toggleBottomTools}
+              bottomBlock={bottomBlock}
+              disabled={disabled}
+              events={events}
+              activeTab={activeTab}
+            />
+
             <FullScreenButton
               size={16}
               onClick={fullscreenOn}
