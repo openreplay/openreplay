@@ -35,7 +35,7 @@ import (
 type handlersImpl struct {
 	log             logger.Logger
 	cfg             *httpCfg.Config
-	responser       *api.Responser
+	responser       api.Responser
 	producer        types.Producer
 	projects        projects.Projects
 	sessions        sessions.Sessions
@@ -48,7 +48,7 @@ type handlersImpl struct {
 	features        map[string]bool
 }
 
-func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser *api.Responser, producer types.Producer, projects projects.Projects,
+func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser, producer types.Producer, projects projects.Projects,
 	sessions sessions.Sessions, uaParser *uaparser.UAParser, geoIP geoip.GeoParser, tokenizer *token.Tokenizer,
 	conditions conditions.Conditions, flaker *flakeid.Flaker) (api.Handlers, error) {
 	return &handlersImpl{

@@ -4,17 +4,59 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/klauspost/compress/gzip"
 
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/server/user"
 )
+
+const API_KEY_PREFIX = "/vx/" // TODO: change back to v1 once the other endpoints are removed
+
+func GetProject(r *http.Request) (uint32, error) {
+	vars := mux.Vars(r)
+	projID := vars["project"]
+	projectID, err := strconv.Atoi(projID)
+	if err != nil {
+		return 0, err
+	}
+	return uint32(projectID), nil
+}
+
+func GetParam(r *http.Request, param string) (string, error) {
+	vars := mux.Vars(r)
+	value := vars[param]
+	if value == "" {
+		return "", fmt.Errorf("missing %s in request", param)
+	}
+	return value, nil
+}
+
+func GetSession(r *http.Request) string {
+	vars := mux.Vars(r)
+	return vars["session"]
+}
+
+func GetSessionID(r *http.Request) (uint64, error) {
+	sess := GetSession(r)
+	sessID, err := strconv.Atoi(sess)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(sessID), nil
+}
+
+func GetUser(r *http.Request) *user.User {
+	return r.Context().Value("userData").(*user.User)
+}
 
 func ReadBody(log logger.Logger, w http.ResponseWriter, r *http.Request, limit int64) ([]byte, error) {
 	body := http.MaxBytesReader(w, r.Body, limit)
 	bodyBytes, err := io.ReadAll(body)
 
-	// Close body
 	if closeErr := body.Close(); closeErr != nil {
 		log.Warn(r.Context(), "error while closing request body: %s", closeErr)
 	}
@@ -48,7 +90,6 @@ func ReadCompressedBody(log logger.Logger, w http.ResponseWriter, r *http.Reques
 		bodyBytes, err = io.ReadAll(body)
 	}
 
-	// Close body
 	if closeErr := body.Close(); closeErr != nil {
 		log.Warn(r.Context(), "error while closing request body: %s", closeErr)
 	}
@@ -56,4 +97,8 @@ func ReadCompressedBody(log logger.Logger, w http.ResponseWriter, r *http.Reques
 		return nil, err
 	}
 	return bodyBytes, nil
+}
+
+func IsApiKeyRequest(r *http.Request) bool {
+	return strings.HasPrefix(r.URL.Path, API_KEY_PREFIX) && r.Header.Get("Authorization") != ""
 }

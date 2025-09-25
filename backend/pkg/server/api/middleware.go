@@ -3,18 +3,10 @@ package api
 import (
 	"net/http"
 
-	"openreplay/backend/internal/http/util"
-
 	ctxStore "github.com/docker/distribution/context"
+
+	"openreplay/backend/internal/http/util"
 )
-
-func (e *routerImpl) health(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-}
-
-type RouterMiddleware interface {
-	Middleware(next http.Handler) http.Handler
-}
 
 func (e *routerImpl) healthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

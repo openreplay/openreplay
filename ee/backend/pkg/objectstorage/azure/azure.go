@@ -5,13 +5,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
 	"io"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
 
 	config "openreplay/backend/internal/config/objectstorage"
 	"openreplay/backend/pkg/objectstorage"
@@ -144,6 +145,10 @@ func (s *storageImpl) GetPreSignedUploadUrl(key string) (string, error) {
 }
 
 func (s *storageImpl) GetPreSignedDownloadUrl(key string) (string, error) {
+	return "", errors.New("not implemented")
+}
+
+func (s *storageImpl) GetPreSignedDownloadUrlFromBucket(bucket, key string) (string, error) {
 	return "", errors.New("not implemented")
 }
 

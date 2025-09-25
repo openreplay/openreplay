@@ -7,7 +7,7 @@ import (
 	"openreplay/backend/internal/config/common"
 )
 
-type RateLimiter struct {
+type rateLimiter struct {
 	rate      int
 	burst     int
 	tokens    int
@@ -16,8 +16,8 @@ type RateLimiter struct {
 	mu        sync.Mutex
 }
 
-func NewRateLimiter(rate int, burst int) *RateLimiter {
-	return &RateLimiter{
+func newRateLimiter(rate int, burst int) *rateLimiter {
+	return &rateLimiter{
 		rate:      rate,
 		burst:     burst,
 		tokens:    burst,
@@ -26,7 +26,7 @@ func NewRateLimiter(rate int, burst int) *RateLimiter {
 	}
 }
 
-func (rl *RateLimiter) Allow() bool {
+func (rl *rateLimiter) Allow() bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 
@@ -56,7 +56,7 @@ type UserRateLimiter struct {
 	maxIdleTime     time.Duration
 }
 
-func NewUserRateLimiter(cfg *common.RateLimiter) *UserRateLimiter {
+func NewUserRateLimiter(cfg *common.RateLimiter) (*UserRateLimiter, error) {
 	url := &UserRateLimiter{
 		rate:            cfg.Rate,
 		burst:           cfg.Burst,
@@ -64,12 +64,12 @@ func NewUserRateLimiter(cfg *common.RateLimiter) *UserRateLimiter {
 		maxIdleTime:     cfg.MaxIdleTime,
 	}
 	go url.cleanup()
-	return url
+	return url, nil
 }
 
-func (url *UserRateLimiter) getRateLimiter(user uint64) *RateLimiter {
-	value, _ := url.rateLimiters.LoadOrStore(user, NewRateLimiter(url.rate, url.burst))
-	return value.(*RateLimiter)
+func (url *UserRateLimiter) getRateLimiter(user uint64) *rateLimiter {
+	value, _ := url.rateLimiters.LoadOrStore(user, newRateLimiter(url.rate, url.burst))
+	return value.(*rateLimiter)
 }
 
 func (url *UserRateLimiter) cleanup() {
@@ -78,7 +78,7 @@ func (url *UserRateLimiter) cleanup() {
 		now := time.Now()
 
 		url.rateLimiters.Range(func(key, value interface{}) bool {
-			rl := value.(*RateLimiter)
+			rl := value.(*rateLimiter)
 			rl.mu.Lock()
 			if now.Sub(rl.lastUsed) > url.maxIdleTime {
 				url.rateLimiters.Delete(key)
