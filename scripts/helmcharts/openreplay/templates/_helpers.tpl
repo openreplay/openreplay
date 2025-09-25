@@ -155,6 +155,11 @@ Create the volume mount config for redis TLS certificates
 {{- if .Values.global.pg_connection_string }}
 {{- .Values.global.pg_connection_string -}}
 {{- else -}}
-{{- printf "postgres://%s:$(pg_password)@%s:%s/%s" .Values.global.postgresql.postgresqlUser .Values.global.postgresql.postgresqlHost .Values.global.postgresql.postgresqlPort .Values.global.postgresql.postgresqlDatabase -}}
+{{- $baseUrl := printf "postgres://%s:$(pg_password)@%s:%s/%s" .Values.global.postgresql.postgresqlUser .Values.global.postgresql.postgresqlHost .Values.global.postgresql.postgresqlPort .Values.global.postgresql.postgresqlDatabase -}}
+{{- if and .Values.global.postgresql.postgresqlSslmode (ne .Values.global.postgresql.postgresqlSslmode "disable") -}}
+{{- printf "%s?sslmode=%s" $baseUrl .Values.global.postgresql.postgresqlSslmode -}}
+{{- else -}}
+{{- $baseUrl -}}
+{{- end -}}
 {{- end -}}
 {{- end}}

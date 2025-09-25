@@ -11,8 +11,18 @@ port = config('pg_port_ml')
 user = config('pg_user_ml')
 dbname = config('pg_dbname_ml')
 password = config('pg_password_ml')
-sslmode = config('pg_sslmode_ml')
-tracking_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}?sslmode={sslmode}"
+sslmode = config('pg_sslmode_ml', default='disable')
+
+from urllib.parse import quote_plus
+user_q = quote_plus(user)
+password_q = quote_plus(password)
+
+# Build base URI with URL-escaped credentials
+tracking_uri = f"postgresql+psycopg2://{user_q}:{password_q}@{host}:{port}/{dbname}"
+
+# Only add sslmode parameter if it's not 'disable' (to avoid unnecessary query params)
+if sslmode and sslmode != 'disable':
+    tracking_uri += f"?sslmode={sslmode}"
 mlflow.set_tracking_uri(tracking_uri)
 batch_download_size = config('batch_download_size', default=10, cast=int)
 

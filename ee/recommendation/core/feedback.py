@@ -43,11 +43,20 @@ class EventQueue:
         host = config('pg_host_ml')
         port = config('pg_port_ml')
         user = config('pg_user_ml')
-        sslmode = config('pg_sslmode_ml')
+        sslmode = config('pg_sslmode_ml', default='disable')
         dbname = config('pg_dbname_ml')
         password = config('pg_password_ml')
 
-        tracking_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}?sslmode={sslmode}"
+        from urllib.parse import quote_plus
+        user_q = quote_plus(user)
+        password_q = quote_plus(password)
+        
+        # Build base URI with URL-escaped credentials
+        tracking_uri = f"postgresql+psycopg2://{user_q}:{password_q}@{host}:{port}/{dbname}"
+        
+        # Only add sslmode parameter if it's not 'disable' (to avoid unnecessary query params)
+        if sslmode and sslmode != 'disable':
+            tracking_uri += f"?sslmode={sslmode}"
         self.connection_handler = ConnectionHandler(tracking_uri)
         self.last_flush = time()
         self.max_retention_time = config('max_retention_time', default=60*60)

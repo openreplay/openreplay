@@ -32,16 +32,16 @@ spec:
         args:
           - |
             # Try to login with the current password
-            if PGPASSWORD=$PGPASSWORD_NEW psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c '\q' -E $PGSSLMODE; then
+            if PGPASSWORD=$PGPASSWORD_NEW psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c '\q' --set sslmode=$PGSSLMODE; then
               echo "Successfully logged in with current password. No update needed."
               exit 0
             else
               echo "Failed to login with current password, trying with old password."
               # Try to login with the old password
-              if PGPASSWORD=$PGPASSWORD_OLD psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c '\q' -E $PGSSLMODE; then
+              if PGPASSWORD=$PGPASSWORD_OLD psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c '\q' --set sslmode=$PGSSLMODE; then
                 echo "Successfully logged in with old password. Updating password to the new one."
                 # Update the password to the new one
-                PGPASSWORD=$PGPASSWORD_OLD psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c "ALTER USER $PGUSER WITH PASSWORD '$PGPASSWORD_NEW';" -E $PGSSLMODE
+                PGPASSWORD=$PGPASSWORD_OLD psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c "ALTER USER $PGUSER WITH PASSWORD '$PGPASSWORD_NEW';" --set sslmode=$PGSSLMODE
                 if [ $? -eq 0 ]; then
                   echo "Password updated successfully."
                   exit 0

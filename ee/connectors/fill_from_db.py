@@ -12,10 +12,6 @@ import logging
 DATABASE = config('CLOUD_SERVICE')
 sessions_table_name = config('SESSIONS_TABLE', default='connector_user_sessions')
 table = sessions_table_name
-sslmode = config('DB_SSLMODE',
-        cast=Choices(['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        default='allow'
-)
 ci = config('cluster_info', default='')
 cluster_info = dict()
 if ci == '':
@@ -38,8 +34,7 @@ class RDSHFT:
                                     host=cluster_info['HOST'],
                                     port=cluster_info['PORT'],
                                     user=cluster_info['USER'],
-                                    password=cluster_info['PASSWORD'],
-                                    sslmode=sslmode)
+                                    password=cluster_info['PASSWORD'])
 
     def restart(self):
         self.close()

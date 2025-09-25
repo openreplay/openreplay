@@ -67,7 +67,7 @@ spec:
             - name: KAFKA_USE_SSL
               value: '{{ .Values.global.kafka.kafkaUseSsl }}'
             - name: POSTGRES_STRING
-              value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}?sslmode={{ .Values.global.postgresql.postgresqlSslmode }}'
+              value: {{ include "openreplay.pg_connection_string" .}}
             # We need to check what is the object store endpoint.
             # There can be 4 options
             # 1. Using minio inside kube clster
