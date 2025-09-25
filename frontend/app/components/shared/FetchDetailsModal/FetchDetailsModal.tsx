@@ -1,15 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { Button } from 'antd';
-import { ArrowRightOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Space } from 'antd';
+import {
+  ArrowRightOutlined,
+  ArrowLeftOutlined,
+  DownOutlined,
+} from '@ant-design/icons';
 import { ResourceType } from 'Player';
 import { useStore } from 'App/mstore';
 import { DateTime } from 'luxon';
 import FetchTabs from './components/FetchTabs/FetchTabs';
 import FetchBasicDetails from './components/FetchBasicDetails';
 import { useTranslation } from 'react-i18next';
+import { toFetch, toCurl, AnyResource } from './utils';
+
+const copyItems = [
+  {
+    key: 'fetch',
+    label: 'JS Fetch',
+  },
+  {
+    key: 'curl',
+    label: 'cURL',
+  },
+];
 
 interface Props {
-  resource: any;
+  resource: AnyResource;
   time?: number;
   rows?: any;
   fetchPresented?: boolean;
@@ -58,12 +74,31 @@ function FetchDetailsModal(props: Props) {
     }
   };
 
+  const onDropdownClick = ({ key }: { key: string }) => {
+    let text = '';
+    if (key === 'curl') {
+      text = toCurl(resource);
+    } else if (key === 'fetch') {
+      text = toFetch(resource);
+    }
+    if (text) {
+      navigator.clipboard.writeText(text);
+    }
+  };
   return (
     <div
       className="bg-white p-5 h-screen overflow-y-auto"
       style={{ width: '500px' }}
     >
-      <h5 className="mb-4 text-2xl ">{t('Network Request')}</h5>
+      <div className="flex items-center gap-4 mb-4 w-full justify-between">
+        <h5 className="text-2xl">{t('Network Request')}</h5>
+        <Dropdown menu={{ items: copyItems, onClick: onDropdownClick }}>
+          <Space className="cursor-pointer hover:text-main">
+            Copy as
+            <DownOutlined />
+          </Space>
+        </Dropdown>
+      </div>
       <FetchBasicDetails
         resource={resource}
         timestamp={
