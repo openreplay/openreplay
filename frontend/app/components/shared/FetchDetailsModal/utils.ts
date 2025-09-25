@@ -112,7 +112,10 @@ function shQuote(s: string): string {
 }
 
 function jsQuote(s: string): string {
-  return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`');
+  return s
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/'/g, "\\'")
 }
 
 function sortHeaders(h: HeadersMap): [string, string][] {
