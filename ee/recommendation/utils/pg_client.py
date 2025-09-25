@@ -17,6 +17,7 @@ if conn_str == '':
               "user": config("pg_user"),
               "password": config("pg_password"),
               "port": config("pg_port", cast=int),
+              "sslmode": config("pg_sslmode"),
               "application_name": config("APP_NAME", default="PY")}
 else:
     import urllib.parse
@@ -25,6 +26,7 @@ else:
     i = usr_info.find('://')
     pg_user, pg_password = usr_info[i+3:].split(':')
     host_info, pg_dbname = host_info.split('/')
+    pg_sslmode = config("pg_sslmode")
     i = host_info.find(':')
     if i == -1:
         pg_host = host_info
@@ -37,6 +39,7 @@ else:
               "user": pg_user,
               "password": pg_password,
               "port": pg_port,
+              "sslmode": pg_sslmode,
               "application_name": config("APP_NAME", default="PY")}
 
 PG_CONFIG = dict(_PG_CONFIG)

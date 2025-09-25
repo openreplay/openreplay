@@ -1,9 +1,7 @@
-
 # vim: ft=yaml
-version: '3'
+version: "3"
 
 services:
-
   postgresql:
     image: bitnami/postgresql:${POSTGRES_VERSION}
     container_name: postgres
@@ -94,13 +92,13 @@ services:
       - /bin/bash
       - -c
       - |
-          apt update && apt install netcat -y
-          # Wait for Minio to be ready
-          until nc -z -v -w30 minio 9000; do
-              echo "Waiting for Minio server to be ready..."
-              sleep 1
-          done
-          bash /tmp/minio.sh init || exit 100
+        apt update && apt install netcat -y
+        # Wait for Minio to be ready
+        until nc -z -v -w30 minio 9000; do
+            echo "Waiting for Minio server to be ready..."
+            sleep 1
+        done
+        bash /tmp/minio.sh init || exit 100
 
   db-migration:
     image: bitnami/postgresql:14.5.0
@@ -120,16 +118,17 @@ services:
       PGDATABASE: postgres
       PGUSER: postgres
       PGPASSWORD: ${COMMON_PG_PASSWORD}
+      PGSSLMODE: "disable"
     entrypoint:
       - /bin/bash
       - -c
       - |
-          until psql -c '\q'; do
-          echo "PostgreSQL is unavailable - sleeping"
-          sleep 1
-          done
-          echo "PostgreSQL is up - executing command"
-          psql -v ON_ERROR_STOP=1 -f /tmp/init_schema.sql
+        until psql -c '\q'; do
+        echo "PostgreSQL is unavailable - sleeping"
+        sleep 1
+        done
+        echo "PostgreSQL is up - executing command"
+        psql -v ON_ERROR_STOP=1 -f /tmp/init_schema.sql
 
   clickhouse-migration:
     image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
@@ -153,16 +152,16 @@ services:
       - /bin/bash
       - -c
       - |
-          # Checking variable is empty. Shell independant method.
-          # Wait for Minio to be ready
-          until nc -z -v -w30 clickhouse-openreplay-clickhouse.db.svc.cluster.local 9000; do
-              echo "Waiting for Minio server to be ready..."
-              sleep 1
-          done
+        # Checking variable is empty. Shell independant method.
+        # Wait for Minio to be ready
+        until nc -z -v -w30 clickhouse-openreplay-clickhouse.db.svc.cluster.local 9000; do
+            echo "Waiting for Minio server to be ready..."
+            sleep 1
+        done
 
-          echo "clickhouse is up - executing command"
-          clickhouse-client -h clickhouse-openreplay-clickhouse.db.svc.cluster.local --user default --port 9000 --multiquery < /tmp/init_schema.sql || true
-  
+        echo "clickhouse is up - executing command"
+        clickhouse-client -h clickhouse-openreplay-clickhouse.db.svc.cluster.local --user default --port 9000 --multiquery < /tmp/init_schema.sql || true
+
   alerts-openreplay:
     image: public.ecr.aws/p1t3u8a3/alerts:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -176,10 +175,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/alerts.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   analytics-openreplay:
     image: public.ecr.aws/p1t3u8a3/analytics:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -193,10 +191,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/analytics.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   http-openreplay:
     image: public.ecr.aws/p1t3u8a3/http:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -210,10 +207,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/http.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   images-openreplay:
     image: public.ecr.aws/p1t3u8a3/images:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -227,10 +223,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/images.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   integrations-openreplay:
     image: public.ecr.aws/p1t3u8a3/integrations:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -244,10 +239,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/integrations.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   sink-openreplay:
     image: public.ecr.aws/p1t3u8a3/sink:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -261,10 +255,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/sink.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   sourcemapreader-openreplay:
     image: public.ecr.aws/p1t3u8a3/sourcemapreader:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -278,10 +271,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/sourcemapreader.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   spot-openreplay:
     image: public.ecr.aws/p1t3u8a3/spot:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -295,10 +287,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/spot.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   storage-openreplay:
     image: public.ecr.aws/p1t3u8a3/storage:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -312,10 +303,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/storage.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   assets-openreplay:
     image: public.ecr.aws/p1t3u8a3/assets:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -329,10 +319,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/assets.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   assist-openreplay:
     image: public.ecr.aws/p1t3u8a3/assist:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -346,10 +335,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/assist.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   canvases-openreplay:
     image: public.ecr.aws/p1t3u8a3/canvases:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -363,10 +351,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/canvases.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   chalice-openreplay:
     image: public.ecr.aws/p1t3u8a3/chalice:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -380,10 +367,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/chalice.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   db-openreplay:
     image: public.ecr.aws/p1t3u8a3/db:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -397,10 +383,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/db.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   ender-openreplay:
     image: public.ecr.aws/p1t3u8a3/ender:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -414,10 +399,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/ender.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   frontend-openreplay:
     image: public.ecr.aws/p1t3u8a3/frontend:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -431,10 +415,9 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/frontend.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
-  
+
   heuristics-openreplay:
     image: public.ecr.aws/p1t3u8a3/heuristics:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -448,9 +431,8 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/heuristics.env
-    environment: {}  # Fallback empty environment if env_file is missing
+    environment: {} # Fallback empty environment if env_file is missing
     restart: unless-stopped
-  
 
   nginx-openreplay:
     image: nginx:latest
@@ -460,7 +442,6 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     restart: unless-stopped
-
 
   caddy:
     image: caddy:latest
@@ -478,7 +459,6 @@ services:
       - ACME_AGREE=true # Agree to Let's Encrypt Subscriber Agreement
       - CADDY_DOMAIN=${CADDY_DOMAIN}
     restart: unless-stopped
-
 
 volumes:
   pgdata:

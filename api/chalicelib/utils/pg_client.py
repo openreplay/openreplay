@@ -14,6 +14,7 @@ _PG_CONFIG = {"host": config("pg_host"),
               "user": config("pg_user"),
               "password": config("pg_password"),
               "port": config("pg_port", cast=int),
+              "sslmode": config("pg_sslmode", default="disable"),  
               "application_name": config("APP_NAME", default="PY")}
 PG_CONFIG = dict(_PG_CONFIG)
 if config("PG_TIMEOUT", cast=int, default=0) > 0:
@@ -76,7 +77,7 @@ def make_pool():
             logger.error("Error while closing all connexions to PostgreSQL", exc_info=error)
     try:
         postgreSQL_pool = ORThreadedConnectionPool(config("PG_MINCONN", cast=int, default=4),
-                                                   config("PG_MAXCONN", cast=int, default=8),
+                                                   config("PG_MAXCONN", cast=int, default=8),                                               
                                                    **PG_CONFIG)
         if postgreSQL_pool is not None:
             logger.info("Connection pool created successfully")
@@ -104,6 +105,7 @@ class PostgresClient:
         if unlimited_query:
             long_config = dict(_PG_CONFIG)
             long_config["application_name"] += "-UNLIMITED"
+            long_config["sslmode"] = config("pg_sslmode")
             self.connection = psycopg2.connect(**long_config)
         elif long_query:
             long_config = dict(_PG_CONFIG)

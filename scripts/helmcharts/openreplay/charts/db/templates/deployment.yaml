@@ -64,6 +64,8 @@ spec:
               {{- else }}
               value: '{{ .Values.global.postgresql.postgresqlPassword }}'
               {{- end}}
+            - name: pg_sslmode
+              value: '{{ .Values.global.postgresql.postgresqlSslmode }}'
             - name: QUICKWIT_ENABLED
               value: '{{ .Values.global.quickwit.enabled }}'
             - name: POSTGRES_STRING
