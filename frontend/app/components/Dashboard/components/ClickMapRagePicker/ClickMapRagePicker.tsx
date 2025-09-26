@@ -5,11 +5,12 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { Smartphone, Tablet, Monitor, RefreshCcw } from 'lucide-react';
+import { FilterKey } from '@/types/filter/filterType';
 
 function ClickMapRagePicker() {
   const [platform, setPlatform] = React.useState<'desktop' | 'mobile' | 'tablet'>('desktop');
   const { t } = useTranslation();
-  const { metricStore, dashboardStore } = useStore();
+  const { metricStore, dashboardStore, filterStore } = useStore();
 
   const onToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
     metricStore.setClickMapsRage(e.target.checked);
@@ -40,10 +41,16 @@ function ClickMapRagePicker() {
   );
 
   React.useEffect(() => {
-    const platformId = metricStore.instance.series[0].filter.filters.findIndex(f => f.name === 'platform')
+    const platformId = metricStore.instance.series[0].filter.filters.findIndex(f => f.name === FilterKey.PLATFORM)
     if (platformId >= 0) {
       metricStore.instance.series[0].filter.filters[platformId].value = [platform];
       metricStore.instance.updateKey('hasChanged', true);
+    } else {
+      const newFilter = filterStore.findEvent({ name: FilterKey.PLATFORM })
+      if (newFilter) {
+        newFilter.value = [platform]
+        metricStore.instance.series[0].filter.addFilter(newFilter)
+      }
     }
   }, [platform])
 
