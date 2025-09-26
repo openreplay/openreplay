@@ -72,7 +72,6 @@ interface OnStartInfo {
 // @ts-ignore
 const workerBodyFn = global.WEBWORKER_BODY
 const CANCELED = 'canceled' as const
-const uxtStorageKey = 'or_uxt_active'
 const bufferStorageKey = 'or_buffer_1'
 
 type SuccessfulStart = OnStartInfo & {
@@ -1613,17 +1612,6 @@ export default class App {
         }
       })
     })
-  }
-
-  onUxtCb = []
-
-  addOnUxtCb(cb: (id: number) => void) {
-    // @ts-ignore
-    this.onUxtCb.push(cb)
-  }
-
-  getUxtId(): number | null {
-    return this.uxtManager?.getTestId()
   }
 
   async waitStart() {

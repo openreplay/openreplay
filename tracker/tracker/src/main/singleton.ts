@@ -289,14 +289,6 @@ class TrackerSingleton {
 
     return this.instance.getTabId()
   }
-
-  getUxId() {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return null
-    }
-
-    return this.instance.getUxId()
-  }
 }
 
 const tracker = new TrackerSingleton()

@@ -220,9 +220,6 @@ export default class API {
     WebAnimations(app, options.webAnimations)
     ;(window as any).__OPENREPLAY__ = this
 
-    if (options.flags && options.flags.onFlagsLoad) {
-      this.onFlagsLoad(options.flags.onFlagsLoad)
-    }
     const wOpen = window.open
     if (options.autoResetOnWindowOpen || options.resetTabOnWindowOpen) {
       app.attachStartCallback(() => {
@@ -416,13 +413,6 @@ export default class API {
       return null
     }
     return this.app.getTabId()
-  }
-
-  getUxId() {
-    if (this.app === null) {
-      return null
-    }
-    return this.app.getUxtId()
   }
 
   sessionID(): string | null | undefined {

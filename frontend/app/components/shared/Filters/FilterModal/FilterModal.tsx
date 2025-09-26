@@ -199,7 +199,9 @@ function FilterModal({
 }: {
   onFilterClick: (f: Filter) => void;
   filters: Filter[];
+  activeFilters?: string[];
 }) {
+  const inputRef = React.useRef(null);
   const { filterStore } = useStore();
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -251,10 +253,19 @@ function FilterModal({
     setCategory(cat);
   }, []);
 
+  React.useEffect(() => {
+    setTimeout(() => {
+      if (inputRef.current) {
+        (inputRef.current as any).focus();
+      }
+    }, 0)
+  }, [])
+
   return (
     <div className="w-[90vw] mx-[2vw] md:mx-0 md:w-[490px] max-h-[380px] grid grid-rows-[auto_1fr] overflow-hidden bg-white">
       <div>
         <Input
+          ref={inputRef}
           placeholder={t('Search')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
