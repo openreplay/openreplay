@@ -73,6 +73,8 @@ interface Props {
   query?: string;
   slim?: boolean;
   noWrap?: boolean;
+  timestamp?: number;
+  onBeforeOpen?: () => void;
 }
 
 const PREFETCH_STATE = {
@@ -104,6 +106,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     isAdd,
     slim,
     noWrap,
+    onBeforeOpen,
   } = props;
 
   const {
@@ -473,7 +476,9 @@ function SessionItem(props: RouteComponentProps & Props) {
                   queryParams={queryParams}
                   query={query}
                   beforeOpen={
-                    slim || live || isAssist ? undefined : populateData
+                    onBeforeOpen
+                    ? onBeforeOpen : slim || live || isAssist
+                      ? undefined : populateData
                   }
                 />
               )}

@@ -248,7 +248,7 @@ function PrivateRoutes() {
             exact
             strict
             path={withSiteId(route.path, siteIdList)}
-            component={route.component}
+            component={withSiteIdUpdater(route.component)}
           />
         ))}
         <Route path={'*'}>

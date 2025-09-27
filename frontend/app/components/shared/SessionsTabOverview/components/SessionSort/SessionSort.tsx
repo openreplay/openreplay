@@ -6,14 +6,21 @@ import { useStore } from 'App/mstore';
 import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
 
-const sortOptionsMap = (t: TFunction) => ({
-  'startTs-desc': t('Newest'),
-  'startTs-asc': t('Oldest'),
-  'eventsCount-asc': t('Events Ascending'),
-  'eventsCount-desc': t('Events Descending'),
+export const sortValues = {
+  timeDesc: 'startTs-desc',
+  timeAsc: 'startTs-asc',
+  eventsAsc: 'eventsCount-asc',
+  eventsDesc: 'eventsCount-desc',
+}
+
+export const sortOptionsMap = (t: TFunction) => ({
+  [sortValues.timeDesc]: t('Newest'),
+  [sortValues.timeAsc]: t('Oldest'),
+  [sortValues.eventsAsc]: t('Events Ascending'),
+  [sortValues.eventsDesc]: t('Events Descending'),
 });
 
-const sortOptions = (t: TFunction) =>
+export const sortOptions = (t: TFunction) =>
   Object.entries(sortOptionsMap(t)).map(([value, label]) => ({
     label,
     key: value,
