@@ -2,7 +2,7 @@ import ListWalker from '../../common/ListWalker';
 import { ConnectionInformation } from '../messages';
 
 export default class ConnectionManager extends ListWalker<ConnectionInformation> {
-  currentQuality = 5;
+  currentQuality = 4;
   currentTime = 0;
 
   moveReady = (t: number): number | null => {
