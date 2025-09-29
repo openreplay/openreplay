@@ -49,8 +49,19 @@ const siteIdRequiredPaths: string[] = [
 // /v1/{project}/sessions/{session}/first-mob
 // /v1/{project}/unprocessed/{session}/dom.mob
 // /v1/{project}/unprocessed/{session}/devtools.mob
-const newApiUrls = ['assist/sessions', '/sessions/', '/notes', '/unprocessed', 'first-mob', '/events', '/favorite', '/clickmaps', '/replay']
-const useNewApi = localStorage.getItem("__new_api") === "true"
+const newApiUrls = [
+  'assist/sessions',
+  '/sessions/',
+  '/notes',
+  '/unprocessed',
+  'first-mob',
+  '/events',
+  '/favorite',
+  '/clickmaps',
+  '/replay',
+  '/conditions',
+];
+const useNewApi = localStorage.getItem('__new_api') === 'true';
 
 export const clean = (
   obj: any,
