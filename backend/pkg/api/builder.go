@@ -109,7 +109,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 	}
 
 	conditions := conditions.New(pgconn)
-	conditionsHandlers, err := conditionsApi.NewHandlers(log, responser, conditions)
+	conditionsHandlers, err := conditionsApi.NewHandlers(log, &cfg.HTTP, responser, conditions)
 	if err != nil {
 		return nil, err
 	}
