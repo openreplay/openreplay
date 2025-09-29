@@ -11,8 +11,9 @@ import (
 
 type Conditions interface {
 	Get(projectID uint32) (*Response, error)
+	GetProjectConditions(projectID uint32) (interface{}, error)
 	GetRate(projectID uint32, condition string, def int) (int, error)
-	UpdateConditions(projectID uint32, sampleRate int, conditionalCapture bool, conditions []ConditionSet) (*Response, error)
+	UpdateConditions(projectID uint32, sampleRate int, conditionalCapture bool, conditions []ConditionSet) (interface{}, error)
 }
 
 type conditionsImpl struct {
@@ -32,6 +33,18 @@ type ConditionSet struct {
 	Name        string         `json:"name"`
 	Filters     []model.Filter `json:"filters" validate:"dive"`
 	Rate        int            `json:"captureRate" validate:"min=0,max=100"`
+}
+
+type ProjectConditionsResponse struct {
+	Rate               int            `json:"rate"`
+	ConditionalCapture bool           `json:"conditionalCapture"`
+	Conditions         []ConditionSet `json:"conditions"`
+}
+
+type PostConditionsRequest struct {
+	SampleRate         int            `json:"rate" validate:"min=0,max=100"`
+	ConditionalCapture bool           `json:"conditionalCapture"`
+	Conditions         []ConditionSet `json:"conditions" validate:"dive"`
 }
 
 type Response struct {
@@ -127,6 +140,32 @@ func (c *conditionsImpl) getConditions(projectID uint32) ([]ConditionSet, error)
 func (c *conditionsImpl) Get(projectID uint32) (*Response, error) {
 	conditions, err := c.getConditions(projectID)
 	return &Response{Conditions: conditions}, err
+}
+
+func (c *conditionsImpl) GetProjectConditions(projectID uint32) (interface{}, error) {
+	var rate int
+	var conditionalCapture bool
+	err := c.db.QueryRow(`
+		SELECT sample_rate, conditional_capture
+		FROM public.projects
+		WHERE project_id = $1 AND deleted_at IS NULL
+	`, projectID).Scan(&rate, &conditionalCapture)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get project data: %w", err)
+	}
+
+	conditions, err := c.getConditions(projectID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get conditions: %w", err)
+	}
+
+	proConditions := ProjectConditionsResponse{
+		Rate:               rate,
+		ConditionalCapture: conditionalCapture,
+		Conditions:         conditions,
+	}
+
+	return proConditions, nil
 }
 
 func (c *conditionsImpl) GetRate(projectID uint32, condition string, def int) (int, error) {
@@ -261,7 +300,7 @@ func (c *conditionsImpl) updateProjectConditions(tx *pool.Tx, projectID uint32, 
 	return nil
 }
 
-func (c *conditionsImpl) UpdateConditions(projectID uint32, sampleRate int, conditionalCapture bool, conditions []ConditionSet) (*Response, error) {
+func (c *conditionsImpl) UpdateConditions(projectID uint32, sampleRate int, conditionalCapture bool, conditions []ConditionSet) (interface{}, error) {
 	for i := range conditions {
 		conditions[i].Name = strings.TrimSpace(conditions[i].Name)
 	}
@@ -318,10 +357,10 @@ func (c *conditionsImpl) UpdateConditions(projectID uint32, sampleRate int, cond
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	updatedConditions, err := c.getConditions(projectID)
+	updatedProConditions, err := c.GetProjectConditions(projectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get updated conditions: %w", err)
 	}
 
-	return &Response{Conditions: updatedConditions}, nil
+	return updatedProConditions, nil
 }
