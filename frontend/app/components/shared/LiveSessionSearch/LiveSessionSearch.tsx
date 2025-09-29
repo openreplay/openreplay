@@ -87,6 +87,7 @@ function LiveSessionSearch() {
         handleRemove={onRemoveFilter}
         saveRequestPayloads={saveRequestPayloads}
         filters={appliedFilter.filters}
+        isLive
       />
     </Card>
   );

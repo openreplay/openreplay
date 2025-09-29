@@ -88,7 +88,7 @@ export default class FilterStore {
     this.topValues = {};
   };
 
-  fetchTopValues = async (id: string): Promise<TopValue[]> => {
+  fetchTopValues = async (id: string, isLive?: boolean): Promise<TopValue[]> => {
     if (this.topValues[id]?.length) {
       return this.topValues[id];
     }
@@ -108,6 +108,9 @@ export default class FilterStore {
 
       if (!filter.isEvent) {
         params.propertyName = filter.name;
+      }
+      if (isLive) {
+        params['live'] = 'true'
       }
       params.ac = filter.autoCaptured;
 

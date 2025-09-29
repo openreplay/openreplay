@@ -28,6 +28,7 @@ interface UnifiedFilterListProps {
   actions?: React.ReactNode[];
   orderProps?: any;
   isHeatmap?: boolean;
+  isLive?: boolean;
 }
 
 const UnifiedFilterList = (props: UnifiedFilterListProps) => {
@@ -45,6 +46,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
     style,
     className,
     isHeatmap,
+    isLive,
   } = props;
 
   const [hoveredItem, setHoveredItem] = useState<{
@@ -246,6 +248,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
             // Pass down if this is the first item for potential styling (e.g., no 'and'/'or' toggle)
             isFirst={filterIndex === 0}
             isLast={filterIndex === filters.length - 1}
+            isLive={isLive}
           />
         </div>
       ))}

@@ -8,6 +8,7 @@ interface Props {
   onUpdate: (filter: any) => void;
   onRemoveFilter: () => void;
   isFilter?: boolean;
+  isLive?: boolean;
 }
 
 export default function SubFilterItem(props: Props) {
@@ -33,7 +34,7 @@ export default function SubFilterItem(props: Props) {
       />
 
       {canShowValues && (
-        <FilterValue filter={filter} onUpdate={props.onUpdate} />
+        <FilterValue isLive={props.isLive} filter={filter} onUpdate={props.onUpdate} />
       )}
     </div>
   );

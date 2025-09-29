@@ -34,6 +34,7 @@ interface Props {
   isFirst?: boolean;
   activeFilters?: string[];
   isLast?: boolean;
+  isLive?: boolean;
 }
 
 function FilterItem(props: Props) {
@@ -58,6 +59,7 @@ function FilterItem(props: Props) {
     isFirst = false, // Default to false
     activeFilters = [],
     isLast = false, // Default to false
+    isLive = false,
   } = props;
 
   const [eventFilterOptions, setEventFilterOptions] = useState<Filter[]>([]);
@@ -330,6 +332,7 @@ function FilterItem(props: Props) {
                       onUpdate={onUpdate}
                       eventName={eventName}
                       isLast={isLast}
+                      isLive={isLive}
                     />
                   </div>
                 ))}

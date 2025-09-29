@@ -51,6 +51,7 @@ interface Props {
   isAutoOpen?: boolean;
   commaQuery?: boolean;
   isDisabled?: boolean;
+  isLive?: boolean;
 }
 
 const ValueAutoComplete = observer(
@@ -63,6 +64,7 @@ const ValueAutoComplete = observer(
     isAutoOpen = false,
     commaQuery = false,
     isDisabled = false,
+    isLive = false,
   }: Props) => {
     const { t } = useTranslation();
     const { filterStore, projectsStore } = useStore();
@@ -98,7 +100,7 @@ const ValueAutoComplete = observer(
       if (!params.isEvent && filterKey && !filterStore.topValues[filterKey]) {
         setLoadingTopValues(true);
         filterStore
-          .fetchTopValues(params.id)
+          .fetchTopValues(params.id, isLive)
           .catch((error) => console.error('Failed to load top values', error))
           .finally(() => setLoadingTopValues(false));
       }

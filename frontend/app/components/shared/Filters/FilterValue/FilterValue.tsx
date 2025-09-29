@@ -15,6 +15,7 @@ interface Props {
   isConditional?: boolean;
   eventName?: string;
   isLast?: boolean;
+  isLive?: boolean;
 }
 
 function FilterValue(props: Props) {
@@ -143,6 +144,7 @@ function FilterValue(props: Props) {
           onApplyValues={onApplyValues}
           params={params}
           commaQuery={true}
+          isLive={props.isLive}
         />
       );
 
