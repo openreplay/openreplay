@@ -535,7 +535,7 @@ var sessionProperties = map[string]string{
 
 // buildSessionConditions constructs the session conditions for the sessions query
 func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat string, durConds []string) []string {
-	var sessionConditions []string
+	var sessionConditions []string = make([]string, 0)
 
 	// Add core session conditions
 	sessionConditions = append(sessionConditions, t.buildTimeRangeConditions("s", r.ProjectId, r.StartTimestamp, r.EndTimestamp)...)
@@ -563,8 +563,9 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 				for _, value := range f.Value {
 					subCondition = append(subCondition, fmt.Sprintf("%s='%s'", column, value))
 				}
-
-				sessionConditions = append(sessionConditions, fmt.Sprintf("(%s)", strings.Join(subCondition, " OR ")))
+				if len(subCondition) > 0 {
+					sessionConditions = append(sessionConditions, fmt.Sprintf("(%s)", strings.Join(subCondition, " OR ")))
+				}
 			}
 		}
 	}
