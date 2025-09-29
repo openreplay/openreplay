@@ -8,6 +8,8 @@ import (
 	config "openreplay/backend/internal/config/session"
 	"openreplay/backend/pkg/api_key"
 	"openreplay/backend/pkg/assist/proxy"
+	"openreplay/backend/pkg/conditions"
+	conditionsApi "openreplay/backend/pkg/conditions/projects_api"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/events"
 	eventAPI "openreplay/backend/pkg/events/api"
@@ -29,16 +31,17 @@ import (
 )
 
 type serviceBuilder struct {
-	sessionAPI  api.Handlers
-	eventAPI    api.Handlers
-	favoriteAPI api.Handlers
-	noteAPI     api.Handlers
-	replayAPI   api.Handlers
-	apiKeyAPI   api.Handlers
+	sessionAPI    api.Handlers
+	eventAPI      api.Handlers
+	favoriteAPI   api.Handlers
+	noteAPI       api.Handlers
+	replayAPI     api.Handlers
+	apiKeyAPI     api.Handlers
+	conditionsAPI api.Handlers
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.sessionAPI, b.eventAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI}
+	return []api.Handlers{b.sessionAPI, b.eventAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI}
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chconn clickhouse.Conn, objStore objectstorage.ObjectStorage, projects projects.Projects) (api.ServiceBuilder, error) {
@@ -105,12 +108,19 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
+	conditions := conditions.New(pgconn)
+	conditionsHandlers, err := conditionsApi.NewHandlers(log, responser, conditions)
+	if err != nil {
+		return nil, err
+	}
+
 	return &serviceBuilder{
-		sessionAPI:  sessionHandlers,
-		eventAPI:    eventHandlers,
-		favoriteAPI: favHandlers,
-		noteAPI:     noteHandlers,
-		replayAPI:   replayHandlers,
-		apiKeyAPI:   apiKeyHandlers,
+		sessionAPI:    sessionHandlers,
+		eventAPI:      eventHandlers,
+		favoriteAPI:   favHandlers,
+		noteAPI:       noteHandlers,
+		replayAPI:     replayHandlers,
+		apiKeyAPI:     apiKeyHandlers,
+		conditionsAPI: conditionsHandlers,
 	}, nil
 }
