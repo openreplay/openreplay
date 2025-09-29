@@ -17,6 +17,7 @@ import stl from './playerBlockHeader.module.css';
 import UserCard from './EventsBlock/UserCard';
 import { useTranslation } from 'react-i18next';
 import { Switch } from 'antd';
+import ConnectionQuality from './ConnectionQuality';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -30,12 +31,11 @@ function PlayerBlockHeader(props: any) {
   const session = sessionStore.current;
   const { sessionPath } = sessionStore;
   const siteId = projectsStore.siteId!;
-  const playerState = store?.get?.() || {
+  const { width = 0, height = 0, showEvents = false, connectionQuality } = store?.get?.() || {
     width: 0,
     height: 0,
     showEvents: false,
   };
-  const { width = 0, height = 0, showEvents = false } = playerState;
   const metaList = customFieldStore.list.map((i: any) => i.key);
 
   const {
@@ -103,6 +103,7 @@ function PlayerBlockHeader(props: any) {
           </div>
         )}
         <UserCard width={width} height={height} />
+        <ConnectionQuality connection={connectionQuality} />
 
         <div
           className={cn('ml-auto flex items-center h-full', {

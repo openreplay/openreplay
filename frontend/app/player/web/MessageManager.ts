@@ -14,8 +14,12 @@ import ActivityManager from './managers/ActivityManager';
 import TabClosingManager from './managers/TabClosingManager';
 import MessageTabSourceManager from './managers/MessageTabSourceManager';
 
-import { MouseThrashing, MType } from './messages';
-import type { Message, MouseClick } from './messages';
+import {
+  MouseThrashing,
+  MType,
+  MouseClick,
+  Message,
+} from './messages';
 
 import Screen, {
   INITIAL_STATE as SCREEN_INITIAL_STATE,
@@ -26,6 +30,7 @@ import type { InitialLists } from './Lists';
 import type { SkipInterval } from './managers/ActivityManager';
 
 import HookManager from './managers/HookManager';
+import ConnectionManager from './managers/ConnectionManager'
 
 interface RawList {
   event: Record<string, any>[] & { tabId: string | null };
@@ -47,9 +52,7 @@ type TabChangeEvent = {
 
 export interface State extends ScreenState {
   skipIntervals: SkipInterval[];
-  connType?: string;
   eventCount: number;
-  connBandwidth?: number;
   location?: string;
   tabStates: {
     [tabId: string]: TabState;
@@ -74,6 +77,8 @@ export interface State extends ScreenState {
   closedTabs: string[];
   sessionStart: number;
   vModeBadge: boolean;
+  /** from 0 to 4 */
+  connectionQuality: number;
 }
 
 export const visualChanges = [
@@ -116,6 +121,7 @@ export default class MessageManager {
     sessionStart: 0,
     tabNames: {},
     vModeBadge: false,
+    connectionQuality: 4,
   };
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
@@ -129,6 +135,7 @@ export default class MessageManager {
   private lastMessageTime: number = 0;
   private firstVisualEventSet = false;
   public readonly tabs: Record<string, TabSessionManager> = {};
+  private connectionInfoManger = new ConnectionManager();
   private tabsAmount = 0;
 
   private tabChangeEvents: TabChangeEvent[] = [];
@@ -290,6 +297,7 @@ export default class MessageManager {
     this.mouseMoveManager = new MouseMoveManager(this.screen);
     this.activityManager = new ActivityManager(this.session.durationMs);
     this.activeTabManager = new ActiveTabManager();
+    this.connectionInfoManger.reset();
 
     Object.values(this.tabs).forEach((tab) => tab.resetMessageManagers());
   }
@@ -298,15 +306,16 @@ export default class MessageManager {
     // usually means waiting for messages from live session
     if (Object.keys(this.tabs).length === 0) return;
     this.activeTabManager.moveReady(t).then(async (tabId) => {
+      const newState: Record<string, any> = {}
       const closeMessage = await this.tabCloseManager.moveReady(t);
       if (closeMessage) {
         const { closedTabs } = this.tabCloseManager;
         if (closedTabs.size === this.tabsAmount) {
           if (this.session.durationMs - t < 250) {
-            this.state.update({ closedTabs: Array.from(closedTabs) });
+            newState['closedTabs'] = Array.from(closedTabs)
           }
         } else {
-          this.state.update({ closedTabs: Array.from(closedTabs) });
+          newState['closedTabs'] = Array.from(closedTabs)
         }
       }
       // Moving mouse and setting :hover classes on ready view
@@ -325,20 +334,22 @@ export default class MessageManager {
           this.state.get().currentTab ?? Object.keys(this.tabs)[0];
       }
 
+      const connectionQuality = this.connectionInfoManger.moveReady(t);
+      if (connectionQuality) {
+        newState['connectionQuality'] = connectionQuality;
+      }
       if (tabId) {
-        const stateUpdate: { currentTab?: string; tabs?: Set<string> } = {};
         if (this.activeTab !== tabId) {
-          stateUpdate['currentTab'] = tabId;
+          newState['currentTab'] = tabId;
           this.activeTab = tabId;
           this.tabs[this.activeTab].clean();
         }
         const activeTabs = this.state.get().tabs;
         if (activeTabs.size !== this.activeTabManager.tabInstances.size) {
-          stateUpdate['tabs'] = this.activeTabManager.tabInstances;
+          newState['tabs'] = this.activeTabManager.tabInstances;
         }
-        this.state.update(stateUpdate);
       }
-
+      this.state.update(newState);
       if (this.tabs[this.activeTab]) {
         this.tabs[this.activeTab].move(t);
       } else {
@@ -357,7 +368,6 @@ export default class MessageManager {
       this.waitingForFiles ||
       (this.lastMessageTime <= t && t < this.session.durationMs)
     ) {
-      console.log(this.waitingForFiles, this.lastMessageTime, t, this.session.durationMs)
       this.setMessagesLoading(true);
     }
   }
@@ -442,6 +452,9 @@ export default class MessageManager {
       this.activityManager?.updateAcctivity(msg.time);
     }
     switch (msg.tp) {
+      case MType.ConnectionInformation:
+        this.connectionInfoManger.append(msg);
+        break;
       case MType.TabChange:
         const prevChange = this.activeTabManager.last;
         if (!prevChange || prevChange.tabId !== msg.tabId) {

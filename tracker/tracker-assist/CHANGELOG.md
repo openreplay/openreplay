@@ -1,3 +1,7 @@
+## 11.0.7
+
+- adapt to new tracker
+
 ## 11.0.6
 
 - fix for canvas assist
