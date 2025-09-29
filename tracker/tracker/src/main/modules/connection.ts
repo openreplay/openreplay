@@ -7,7 +7,6 @@ export default function (app: App): void {
     (navigator as any).mozConnection ||
     (navigator as any).webkitConnection
 
-  console.log(connection)
   if (connection === undefined) {
     return
   }
