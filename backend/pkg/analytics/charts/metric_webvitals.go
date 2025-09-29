@@ -204,8 +204,8 @@ func buildMetric(min, avg, max, p50, p75, p90 float64, r struct{ good, medium, b
 }
 
 func (h WebVitalsQueryBuilder) buildQuery(p *Payload) (string, error) {
-	innerEventsWhere, _, sessionsWhere := BuildWhere(p.MetricPayload.Series[0].Filter.Filters, string(p.MetricPayload.Series[0].Filter.EventsOrder), "main", "s", true)
-	_, outerFiltersWhere, _ := BuildWhere(p.MetricPayload.Series[0].Filter.Filters, string(p.MetricPayload.Series[0].Filter.EventsOrder), "events", "s", true)
+	innerEventsWhere, _, _, sessionsWhere := BuildWhere(p.MetricPayload.Series[0].Filter.Filters, string(p.MetricPayload.Series[0].Filter.EventsOrder), "main", "s", true)
+	_, outerFiltersWhere, _, _ := BuildWhere(p.MetricPayload.Series[0].Filter.Filters, string(p.MetricPayload.Series[0].Filter.EventsOrder), "events", "s", true)
 
 	innerEventsWhereStr := ""
 	if len(innerEventsWhere) > 0 {

@@ -2,6 +2,7 @@ package charts
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -424,23 +425,72 @@ func FillMissingDataPoints(
 	}
 	return results
 }
-
-func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, sessionsAlias string, isSessionJoin ...bool) (events, eventFilters, sessionFilters []string) {
-	events = make([]string, 0, len(filters))
-	eventFilters = make([]string, 0, len(filters))
-	sessionFilters = make([]string, 0, len(filters)+1)
-	sessionFilters = append(sessionFilters, fmt.Sprintf("isNotNull(%s.duration)", sessionsAlias))
-	sessionColumns := GetSessionColumns(len(isSessionJoin) > 0 && isSessionJoin[0])
-
-	var sessionFiltersList, eventFiltersList []model.Filter
-	for _, f := range filters {
-		if _, ok := sessionColumns[f.Name]; ok {
-			sessionFiltersList = append(sessionFiltersList, f)
-		} else {
-			eventFiltersList = append(eventFiltersList, f)
+func isNegativeOperator(op string) bool {
+	return op == "isNot" || op == "not" || op == "notIn" || op == "notContains"
+}
+func isNegativeEventFilter(f model.Filter) bool {
+	// a negative event filter is one that has negative operators for all its properties
+	var count int = 0
+	for _, prop := range f.Filters {
+		log.Printf(">>>> prop:%+v\n", prop)
+		if isNegativeOperator(prop.Operator) {
+			count++
 		}
 	}
+	return count == len(f.Filters) && count > 0
+}
+func reverseOperator(op string) string {
+	switch op {
+	case "and":
+		return "or"
+	case "or":
+		return "and"
+	case "is":
+		return "isNot"
+	case "isNot":
+		return "is"
+	case "on":
+		return "notOn"
+	case "notOn":
+		return "on"
+	case "contains":
+		return "notContains"
+	case "notContains":
+		return "contains"
+	default:
+		return op
+	}
+}
+func reverseNegativeFilter(f model.Filter) model.Filter {
+	// reverse the operators of all properties
+	for i, prop := range f.Filters {
+		f.Filters[i].Operator = reverseOperator(prop.Operator)
+	}
+	return f
+}
+func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, sessionsAlias string, isSessionJoin ...bool) (events, eventFilters, negativeEventFilters, sessionFilters []string) {
+	events = make([]string, 0)
+	eventFilters = make([]string, 0)
+	negativeEventFilters = make([]string, 0)
+	sessionFilters = make([]string, 0)
+	sessionFilters = append(sessionFilters, fmt.Sprintf("isNotNull(%s.duration)", sessionsAlias))
+	//sessionColumns := GetSessionColumns(len(isSessionJoin) > 0 && isSessionJoin[0])
 
+	var sessionFiltersList, eventFiltersList, negativeEvents []model.Filter
+	for _, f := range filters {
+		if !f.IsEvent {
+			sessionFiltersList = append(sessionFiltersList, f)
+		} else {
+			if isNegativeEventFilter(f) {
+				negativeEvents = append(negativeEvents, f)
+			} else {
+				eventFiltersList = append(eventFiltersList, f)
+			}
+		}
+	}
+	for i, f := range negativeEvents {
+		negativeEvents[i] = reverseNegativeFilter(f)
+	}
 	evConds, misc := BuildEventConditions(eventFiltersList, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: eventsAlias,
@@ -449,6 +499,11 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 	events = append(events, evConds...)
 	eventFilters = append(eventFilters, misc...)
 
+	nevConds, _ := BuildEventConditions(negativeEvents, BuildConditionsOptions{
+		DefinedColumns: mainColumns,
+		MainTableAlias: eventsAlias,
+		EventsOrder:    eventsOrder,
+	})
 	_, sConds := BuildEventConditions(sessionFiltersList, BuildConditionsOptions{
 		DefinedColumns: SessionColumns,
 		MainTableAlias: sessionsAlias,
@@ -456,6 +511,7 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 	durConds, _ := BuildDurationWhere(filters, sessionsAlias)
 	sessionFilters = append(sessionFilters, durConds...)
 	sessionFilters = append(sessionFilters, sConds...)
+	negativeEventFilters = append(negativeEventFilters, nevConds...)
 
 	return
 }

@@ -79,7 +79,9 @@ SELECT
 	s.events_count,
 	toUInt8(viewed_sessions.session_id>0)      AS viewed,
 	count() OVER()                            AS total
+-- TODO: add metadata
 FROM experimental.sessions AS s
+	%s
 	%s
 	%s
 WHERE %s
@@ -133,12 +135,13 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 	endSec := req.EndDate / 1000
 	offset := (req.Page - 1) * req.Limit
 
-	eventsWhere, filtersWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s")
+	eventsWhere, filtersWhere, negativeEventsWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s")
 	sessionsWhere = append([]string{fmt.Sprintf("s.project_id = %d", projectId),
 		fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
 	}, sessionsWhere...)
 
 	var eventsInnerJoin string
+	var leftAntiJoin string
 
 	conds := make([]string, 0, len(req.Filters)+2)
 
@@ -157,10 +160,25 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 		eventsInnerJoin = fmt.Sprintf(`ANY INNER JOIN (
 		SELECT DISTINCT session_id
 		FROM product_analytics.events AS e
-		PREWHERE %s
+		WHERE %s
 		%s
 	) AS fs USING (session_id)`,
 			strings.Join(conds, " AND \n"), joinClause)
+	}
+
+	if len(negativeEventsWhere) > 0 {
+		conds = append([]string{
+			fmt.Sprintf("e.project_id = %d", projectId),
+			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+		}, conds...)
+		conds = append(conds, negativeEventsWhere...)
+
+		leftAntiJoin = fmt.Sprintf(`LEFT ANTI JOIN (
+		SELECT DISTINCT session_id
+		FROM product_analytics.events AS e
+		WHERE %s
+	) AS negative_sessions USING (session_id)`,
+			strings.Join(conds, " AND \n"))
 	}
 
 	sortField := sortOptions[req.Sort]
@@ -176,6 +194,7 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 
 	query := fmt.Sprintf(sessionsQuery,
 		eventsInnerJoin,
+		leftAntiJoin,
 		viewedJoin,
 		strings.Join(sessionsWhere, " AND "),
 		sortField,
@@ -191,39 +210,13 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 		return nil, err
 	}
 	defer rows.Close()
-
-	resp := &model.GetSessionsResponse{Sessions: make([]model.Session, 0, req.Limit)}
-	var total uint64
-	for rows.Next() {
-		var sess model.Session
-		err = rows.Scan(
-			&sess.SessionId,
-			&sess.ProjectId,
-			&sess.StartTs,
-			&sess.Duration,
-			&sess.Platform,
-			&sess.Timezone,
-			&sess.UserId,
-			&sess.UserUuid,
-			&sess.UserAnonymousId,
-			&sess.UserBrowser,
-			&sess.UserCity,
-			&sess.UserCountry,
-			&sess.UserDevice,
-			&sess.UserDeviceType,
-			&sess.UserOs,
-			&sess.UserState,
-			&sess.EventsCount,
-			&sess.Viewed,
-			&total,
-		)
-		if err != nil {
-			return nil, err
-		}
-		if resp.Total == 0 {
-			resp.Total = total
-		}
-		resp.Sessions = append(resp.Sessions, sess)
+	resp := &model.GetSessionsResponse{Sessions: make([]model.Session, 0)}
+	if err := s.chConn.Select(context.Background(), &resp.Sessions, query); err != nil {
+		log.Printf("Error executing query: %s\nQuery: %s", err, query)
+		return nil, err
+	}
+	if len(resp.Sessions) > 0 {
+		resp.Total = resp.Sessions[0].Total
 	}
 
 	return resp, nil
@@ -248,7 +241,7 @@ func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.
 			Limit:       req.Limit,
 		}
 
-		eventsWhere, filtersWhere, sessionsWhere := charts.BuildWhere(seriesReq.Filters, seriesReq.EventsOrder, "e", "s")
+		eventsWhere, filtersWhere, _, sessionsWhere := charts.BuildWhere(seriesReq.Filters, seriesReq.EventsOrder, "e", "s")
 		sessionsWhere = append([]string{fmt.Sprintf("s.project_id = %d", projectId),
 			fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
 		}, sessionsWhere...)
@@ -272,7 +265,7 @@ func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.
 			eventsInnerJoin = fmt.Sprintf(`ANY INNER JOIN (
 			SELECT DISTINCT session_id
 			FROM product_analytics.events AS e
-			PREWHERE %s
+			WHERE %s
 			%s
 		) AS fs USING (session_id)`,
 				strings.Join(conds, " AND \n"), joinClause)
@@ -301,51 +294,16 @@ func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.
 
 		log.Printf("Series %d Sessions Search Query: %s", i, query)
 
-		rows, err := s.chConn.Query(context.Background(), query)
-		if err != nil {
-			return nil, fmt.Errorf("series %d query failed: %w", i, err)
-		}
-
 		seriesData := model.SeriesSessionData{
 			SeriesId:   series.SeriesID,
 			SeriesName: series.Name,
 			Sessions:   make([]model.Session, 0, seriesReq.Limit),
 		}
 
-		var total uint64
-		for rows.Next() {
-			var sess model.Session
-			err = rows.Scan(
-				&sess.SessionId,
-				&sess.ProjectId,
-				&sess.StartTs,
-				&sess.Duration,
-				&sess.Platform,
-				&sess.Timezone,
-				&sess.UserId,
-				&sess.UserUuid,
-				&sess.UserAnonymousId,
-				&sess.UserBrowser,
-				&sess.UserCity,
-				&sess.UserCountry,
-				&sess.UserDevice,
-				&sess.UserDeviceType,
-				&sess.UserOs,
-				&sess.UserState,
-				&sess.EventsCount,
-				&sess.Viewed,
-				&total,
-			)
-			if err != nil {
-				rows.Close()
-				return nil, fmt.Errorf("series %d scan failed: %w", i, err)
-			}
-			if seriesData.Total == 0 {
-				seriesData.Total = total
-			}
-			seriesData.Sessions = append(seriesData.Sessions, sess)
+		if err := s.chConn.Select(context.Background(), &seriesData.Sessions, query); err != nil {
+			log.Printf("Error executing query: %s\nQuery: %s", err, query)
+			return nil, err
 		}
-		rows.Close()
 
 		response.Series = append(response.Series, seriesData)
 	}
