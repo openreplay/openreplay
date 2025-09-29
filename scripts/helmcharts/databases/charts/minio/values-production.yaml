@@ -18,7 +18,7 @@ global:
 ##
 image:
   registry: docker.io
-  repository: bitnami/minio
+  repository: bitnamilegacy/minio
   tag: 2020.10.9-debian-10-r6
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -66,7 +66,7 @@ clusterDomain: cluster.local
 ##
 clientImage:
   registry: docker.io
-  repository: bitnami/minio-client
+  repository: bitnamilegacy/minio-client
   tag: 2020.10.3-debian-10-r9
 
 ## Init containers parameters:
@@ -76,7 +76,7 @@ volumePermissions:
   enabled: false
   image:
     registry: docker.io
-    repository: bitnami/minideb
+    repository: bitnamilegacy/minideb
     tag: buster
     pullPolicy: Always
     ## Optionally specify an array of imagePullSecrets.
