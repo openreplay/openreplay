@@ -150,7 +150,7 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 		fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
 		"s.duration > 500",
 	}
-	_, filtersWhere, extraSessions := BuildWhere(filters, string(series.Filter.EventsOrder), "e", "s", true)
+	_, filtersWhere, _, extraSessions := BuildWhere(filters, string(series.Filter.EventsOrder), "e", "s", true)
 	sessionsWhere = append(sessionsWhere, extraSessions...)
 
 	//fmt.Println("filtersWhere", filtersWhere)

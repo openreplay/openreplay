@@ -54,7 +54,7 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 		"JSONExtractFloat(toString(e.\"$properties\"), 'normalized_y') IS NOT NULL",
 	}
 
-	eventsWhere, filtersWhere, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls")
+	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls")
 
 	subBase := []string{
 		fmt.Sprintf("l.project_id = %d", p.ProjectId),
