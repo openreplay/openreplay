@@ -334,7 +334,7 @@ export default class MessageManager {
           this.state.get().currentTab ?? Object.keys(this.tabs)[0];
       }
 
-      const connectionQuality = this.connectionInfoManger.moveGetLast(t);
+      const connectionQuality = this.connectionInfoManger.moveReady(t);
       if (connectionQuality) {
         newState['connectionQuality'] = connectionQuality;
       }
