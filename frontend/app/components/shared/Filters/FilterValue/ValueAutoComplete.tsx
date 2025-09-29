@@ -143,6 +143,7 @@ const ValueAutoComplete = observer(
           const autoCompleteParams: any = {
             q: trimmedQuery,
             ac: params.autoCaptured,
+            live: isLive,
           };
 
           if (params.propertyName) {
