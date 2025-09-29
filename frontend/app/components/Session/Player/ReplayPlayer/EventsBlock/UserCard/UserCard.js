@@ -82,7 +82,7 @@ function UserCard({ className, width, height }) {
     };
   }, [showMore]);
   return (
-    <div className={cn('bg-white flex items-center w-full', className)}>
+    <div className={cn('bg-white flex items-center', className)}>
       <div className="flex items-center">
         <div className="hidden lg:block">
           <Avatar

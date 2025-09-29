@@ -19,7 +19,6 @@ import PerformanceTrackManager from 'Player/web/managers/PerformanceTrackManager
 import WindowNodeCounter from 'Player/web/managers/WindowNodeCounter';
 import {
   CanvasNode,
-  ConnectionInformation,
   MType,
   Message,
   ResourceTiming,
@@ -65,9 +64,6 @@ export default class TabSessionManager {
     new ListWalker();
 
   private loadedLocationManager: ListWalker<SetPageLocation> = new ListWalker();
-
-  private connectionInfoManger: ListWalker<ConnectionInformation> =
-    new ListWalker();
 
   private performanceTrackManager: PerformanceTrackManager =
     new PerformanceTrackManager();
@@ -209,7 +205,6 @@ export default class TabSessionManager {
     this.locationEventManager = new ListWalker();
     this.locationManager = new ListWalker();
     this.loadedLocationManager = new ListWalker();
-    this.connectionInfoManger = new ListWalker();
     this.scrollManager = new ListWalker();
     this.resizeManager = new ListWalker();
 
@@ -292,9 +287,6 @@ export default class TabSessionManager {
         break;
       case MType.SetPageVisibility:
         this.performanceTrackManager.handleVisibility(msg);
-        break;
-      case MType.ConnectionInformation:
-        this.connectionInfoManger.append(msg);
         break;
       case MType.OTable:
         this.decoder.set(msg.key, msg.value);

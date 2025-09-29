@@ -13,6 +13,7 @@ import { tracker } from '@openreplay/tracker'
 // call incident function and pass label, startTime, and endTime (label and endTime are optional)
 tracker.incident({ label: 'incident', startTime: Date.now() })
 ```
+- fixes and improvements for connection quality tracking (which was not working previously)
 
 ## 16.4.10
 

@@ -139,9 +139,6 @@ export default class Assist {
       new MutationObserver(() => {
         this.emit("UPDATE_SESSION", { pageTitle: document.title });
       });
-    app.addOnUxtCb((uxtId: number) => {
-      this.emit("UPDATE_SESSION", { uxtId });
-    });
     app.attachStartCallback(() => {
       if (this.assistDemandedRestart) {
         return;
@@ -265,7 +262,6 @@ export default class Assist {
         identity: "session",
         tabId: this.app.getTabId(),
         sessionInfo: JSON.stringify({
-          uxtId: this.app.getUxtId() ?? undefined,
           pageTitle: document.title,
           active: true,
           assistOnly: this.app.socketMode,
