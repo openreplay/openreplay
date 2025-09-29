@@ -75,7 +75,7 @@ diagnosticMode:
 ##
 image:
   registry: docker.io
-  repository: bitnami/zookeeper
+  repository: bitnamilegacy/zookeeper
   tag: 3.8.0-debian-11-r74
   digest: ""
   ## Specify a imagePullPolicy
@@ -657,7 +657,7 @@ volumePermissions:
   ##
   image:
     registry: docker.io
-    repository: bitnami/bitnami-shell
+    repository: bitnamilegacy/bitnami-shell
     tag: 11-debian-11-r69
     digest: ""
     pullPolicy: IfNotPresent
