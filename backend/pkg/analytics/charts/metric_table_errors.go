@@ -120,7 +120,7 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	}
 
 	// Use BuildWhere for proper separation of events, session and duration filters
-	eventsWhere, filtersWhere, sessionsWhere := BuildWhere(regularFilters, string(p.Series[0].Filter.EventsOrder), "e", "s", needsSessionJoin)
+	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(regularFilters, string(p.Series[0].Filter.EventsOrder), "e", "s", needsSessionJoin)
 
 	// Build ERROR event conditions
 	var errorEventConds []string
