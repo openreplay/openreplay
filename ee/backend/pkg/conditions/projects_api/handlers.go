@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"openreplay/backend/internal/config/common"
 	"openreplay/backend/pkg/conditions"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
@@ -19,18 +20,12 @@ type handlersImpl struct {
 	conditions    conditions.Conditions
 }
 
-type PostConditionsRequest struct {
-	SampleRate         int                       `json:"rate" validate:"min=0,max=100"`
-	ConditionalCapture bool                      `json:"conditionalCapture"`
-	Conditions         []conditions.ConditionSet `json:"conditions" validate:"dive"`
-}
-
-func NewHandlers(log logger.Logger, responser api.Responser, conditions conditions.Conditions) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, conditions conditions.Conditions) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,
 		conditions:    conditions,
-		jsonSizeLimit: 10000, // TODO use config
+		jsonSizeLimit: cfg.JsonSizeLimit, // TODO use config
 	}, nil
 }
 
@@ -51,13 +46,13 @@ func (e *handlersImpl) getConditions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conditions, err := e.conditions.Get(uint32(projectID))
+	proConditions, err := e.conditions.GetProjectConditions(uint32(projectID))
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, conditions, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": proConditions}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) postConditions(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +72,7 @@ func (e *handlersImpl) postConditions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := &PostConditionsRequest{}
+	req := &conditions.PostConditionsRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -89,11 +84,11 @@ func (e *handlersImpl) postConditions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := e.conditions.UpdateConditions(uint32(projectID), req.SampleRate, req.ConditionalCapture, req.Conditions)
+	proConditions, err := e.conditions.UpdateConditions(uint32(projectID), req.SampleRate, req.ConditionalCapture, req.Conditions)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, response, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": proConditions}, startTime, r.URL.Path, bodySize)
 }
