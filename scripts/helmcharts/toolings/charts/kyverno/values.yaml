@@ -304,7 +304,7 @@ webhooksCleanup:
   # -- Create a helm pre-delete hook to cleanup webhooks.
   enabled: false
   # -- `kubectl` image to run commands for deleting webhooks.
-  image: bitnami/kubectl:latest
+  image: bitnamilegacy/kubectl:latest
   # -- Image pull secrets
   imagePullSecrets: []
 
@@ -394,7 +394,7 @@ cleanupJobs:
       # -- (string) Image registry
       registry: ~
       # -- Image repository
-      repository: bitnami/kubectl
+      repository: bitnamilegacy/kubectl
       # -- Image tag
       # Defaults to `latest` if omitted
       tag: '1.26.4'
@@ -437,7 +437,7 @@ cleanupJobs:
       # -- (string) Image registry
       registry: ~
       # -- Image repository
-      repository: bitnami/kubectl
+      repository: bitnamilegacy/kubectl
       # -- Image tag
       # Defaults to `latest` if omitted
       tag: '1.26.4'

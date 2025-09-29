@@ -14,7 +14,7 @@ global:
 ##
 image:
   registry: docker.io
-  repository: bitnami/redis
+  repository: bitnamilegacy/redis
   ## Bitnami Redis(TM) image tag
   ## ref: https://github.com/bitnami/bitnami-docker-redis#supported-tags-and-respective-dockerfile-links
   ##
@@ -59,7 +59,7 @@ sentinel:
   ##
   image:
     registry: docker.io
-    repository: bitnami/redis-sentinel
+    repository: bitnamilegacy/redis-sentinel
     ## Bitnami Redis(TM) image tag
     ## ref: https://github.com/bitnami/bitnami-docker-redis-sentinel#supported-tags-and-respective-dockerfile-links
     ##
@@ -185,7 +185,7 @@ sentinel:
     ##
     image:
       registry: docker.io
-      repository: bitnami/redis-sentinel-exporter
+      repository: bitnamilegacy/redis-sentinel-exporter
       tag: 1.7.1-debian-10-r105
       pullPolicy: IfNotPresent
       ## Optionally specify an array of imagePullSecrets.
@@ -800,7 +800,7 @@ metrics:
 
   image:
     registry: docker.io
-    repository: bitnami/redis-exporter
+    repository: bitnamilegacy/redis-exporter
     tag: 1.20.0-debian-10-r12
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
@@ -932,7 +932,7 @@ volumePermissions:
   enabled: false
   image:
     registry: docker.io
-    repository: bitnami/bitnami-shell
+    repository: bitnamilegacy/bitnami-shell
     tag: "10"
     pullPolicy: Always
     ## Optionally specify an array of imagePullSecrets.
@@ -975,7 +975,7 @@ sysctlImage:
   enabled: false
   command: []
   registry: docker.io
-  repository: bitnami/bitnami-shell
+  repository: bitnamilegacy/bitnami-shell
   tag: "10"
   pullPolicy: Always
   ## Optionally specify an array of imagePullSecrets.
