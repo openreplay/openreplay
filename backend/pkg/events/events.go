@@ -15,7 +15,14 @@ import (
 const GroupClickRage bool = true
 
 type errorEvent struct {
-	Source string `ch:"source"`
+	ErrorID            string     `ch:"error_id" json:"errorID"`
+	ProjectID          uint16     `ch:"project_id" json:"projectID"`
+	Source             string     `ch:"source" json:"source"`
+	Name               string     `ch:"name" json:"name"`
+	Message            string     `ch:"message" json:"message"`
+	Payload            string     `ch:"payload" json:"payload"`
+	Stacktrace         string     `ch:"stacktrace" json:"stacktrace"`
+	StacktraceParsedAt *time.Time `ch:"stacktrace_parsed_at" json:"stacktraceParsedAt"`
 }
 
 func (e *errorEvent) IsNotJsException() bool {
@@ -255,8 +262,25 @@ func (e *eventsImpl) groupClicksToClickRage(projID uint32, sessID uint64, sessEv
 }
 
 func (e *eventsImpl) GetErrorsBySessionID(projID uint32, sessID uint64) []errorEvent {
-	// TODO: there is no CH implementation
-	return nil
+	query := `SELECT error_id,
+					project_id,
+					` + "`$properties`" + `.source AS source,
+					'ERROR' AS name,
+					` + "`$properties`" + `.message AS message,
+					` + "`$properties`" + `.payload AS payload,
+					stacktrace,
+					stacktrace_parsed_at
+			  FROM product_analytics.events
+			  LEFT JOIN experimental.parsed_errors USING (error_id)
+			  WHERE session_id = ?
+				AND ` + "`$event_name`" + ` = 'ERROR'
+			  ORDER BY created_at;`
+	errorEvents := make([]errorEvent, 0)
+	if err := e.chConn.Select(context.Background(), &errorEvents, query, sessID); err != nil {
+		fmt.Println("Error querying error events:", err)
+		return nil
+	}
+	return errorEvents
 }
 
 type customEvent struct {
@@ -308,7 +332,7 @@ func (e *eventsImpl) GetCustomsBySessionID(projID uint32, sessID uint64) []inter
 }
 
 type issueEvent struct {
-	ID        int       `ch:"issue_id"`
+	ID        string    `ch:"issue_id"`
 	Type      string    `ch:"issue_type"`
 	Context   string    `ch:"context_string"`
 	CreatedAt time.Time `ch:"created_at"`
@@ -363,11 +387,11 @@ func reduceIssues(issues []issueEvent, window time.Duration) []issueEvent {
 }
 
 type issue struct {
-	ID        uint32    `ch:"issue_id"`
+	ID        string    `ch:"issue_id"`
 	Type      string    `ch:"issue_type"`
 	Context   string    `ch:"context_string"`
 	Payload   string    `ch:"payload_string"`
-	CreatedAt time.Time `ch:"events.created_at"`
+	CreatedAt time.Time `ch:"created_at"`
 }
 
 func (i *issue) CountFromPayload() int {
@@ -392,13 +416,13 @@ func (i *issue) CountFromPayload() int {
 func (e *eventsImpl) getIssues(projID uint32, sessID uint64, issueType string) []issue {
 	cond := ""
 	if issueType != "" {
-		cond = "AND events.issue_type = " + issueType + " AND issues.type = " + issueType
+		cond = "AND events.issue_type = '" + issueType + "' AND issues.type = '" + issueType + "'"
 	}
 	query := `SELECT DISTINCT ON (events.created_at, issue_id) events.created_at,
 				issue_id,
                 issue_type,
                 context_string,
-                ` + "`$event_name`.payload" + ` AS payload_string
+                ` + "`$properties`.payload" + ` AS payload_string
             FROM product_analytics.events
             INNER JOIN experimental.issues ON (events.issue_id = issues.issue_id)
             WHERE session_id = ?
