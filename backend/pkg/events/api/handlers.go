@@ -68,15 +68,17 @@ func (h *handlersImpl) getEvents(w http.ResponseWriter, r *http.Request) {
 	if platform == "web" {
 		response["events"] = h.events.GetBySessionID(projID, sessID, GroupClickRage)
 		allErrors := h.events.GetErrorsBySessionID(projID, sessID)
-		response["stackEvents"] = make([]interface{}, 0, len(allErrors))
-		response["errors"] = make([]interface{}, 0, len(allErrors))
+		stackEvents := make([]interface{}, 0)
+		errors := make([]interface{}, 0)
 		for _, sessErr := range allErrors {
 			if sessErr.IsNotJsException() {
-				response["stackEvents"] = append(response["stackEvents"].([]interface{}), sessErr)
+				stackEvents = append(stackEvents, sessErr)
 			} else {
-				response["errors"] = append(response["errors"].([]interface{}), sessErr)
+				errors = append(errors, sessErr)
 			}
 		}
+		response["stackEvents"] = stackEvents
+		response["errors"] = errors
 		response["userEvents"] = h.events.GetCustomsBySessionID(projID, sessID)
 	} else {
 		response["events"] = h.events.GetMobileBySessionID(projID, sessID)
