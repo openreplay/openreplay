@@ -260,15 +260,15 @@ func (e *eventsImpl) GetErrorsBySessionID(projID uint32, sessID uint64) []errorE
 }
 
 type customEvent struct {
-	Name                   string    `ch:"name"`
-	Type                   string    `ch:"type"`
-	AutoCapturedProperties string    `ch:"auto_props"`
-	Properties             string    `ch:"properties"`
-	CreatedAt              time.Time `ch:"created_at"`
+	Name                   string                 `ch:"name"`
+	Type                   string                 `ch:"type"`
+	AutoCapturedProperties map[string]interface{} `ch:"auto_props"`
+	Properties             map[string]interface{} `ch:"properties"`
+	CreatedAt              time.Time              `ch:"created_at"`
 }
 
 func (e *eventsImpl) GetCustomsBySessionID(projID uint32, sessID uint64) []interface{} {
-	query := `SELECT ` + "`$properties`" + ` AS auto_props
+	query := `SELECT ` + "`$properties`" + ` AS auto_props,
 				properties,
 				created_at,
 				'CUSTOM' AS type,
@@ -288,14 +288,14 @@ func (e *eventsImpl) GetCustomsBySessionID(projID uint32, sessID uint64) []inter
 	}
 	res := make([]interface{}, 0, len(customEvents))
 	for _, cEvent := range customEvents {
-		if cEvent.AutoCapturedProperties == "" {
+		if len(cEvent.AutoCapturedProperties) == 0 {
 			res = append(res, cEvent)
 			continue
 		}
 		// Extract auto-captured properties
 		fullEvent := make(map[string]interface{})
-		if err := json.Unmarshal([]byte(cEvent.AutoCapturedProperties), &fullEvent); err != nil {
-			fmt.Println("Error unmarshalling custom properties:", err)
+		for key, value := range cEvent.AutoCapturedProperties {
+			fullEvent[key] = value
 		}
 		fullEvent["name"] = cEvent.Name
 		fullEvent["type"] = cEvent.Type
@@ -322,7 +322,7 @@ func (e *eventsImpl) GetIssuesBySessionID(projID uint32, sessID uint64) []interf
 				 	context_string
                 FROM product_analytics.events
 				INNER JOIN experimental.issues ON (events.issue_id = issues.issue_id)
-				WHERE session_id = ? 
+				WHERE session_id = ?
 					AND events.project_id = ?
 					AND issues.project_id = ?
 					AND ` + "`$event_name`" + ` = 'ISSUE'
@@ -401,7 +401,7 @@ func (e *eventsImpl) getIssues(projID uint32, sessID uint64, issueType string) [
                 ` + "`$event_name`.payload" + ` AS payload_string
             FROM product_analytics.events
             INNER JOIN experimental.issues ON (events.issue_id = issues.issue_id)
-            WHERE session_id = ? 
+            WHERE session_id = ?
                 AND events.project_id = ?
                 AND issues.project_id = ?
                 AND ` + "`$event_name`" + ` = 'ISSUE'
@@ -479,7 +479,7 @@ type mobileEvent struct {
 
 func (e *eventsImpl) GetMobileCrashesBySessionID(sessID uint64) []interface{} {
 	query := `SELECT ` + "`$properties`" + `AS auto_captures,
-				properties,	
+				properties,
 				created_at,
 				'CRASH' AS type,
 				` + "`$event_name`" + ` AS name
