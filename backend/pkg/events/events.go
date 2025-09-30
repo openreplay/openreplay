@@ -79,12 +79,12 @@ func getDiffInt64(event *event, start, end string) *int64 {
 }
 
 type event struct {
-	Type       string                 `ch:"type"`
-	Duration   *uint16                `ch:"duration"`
-	Url        *string                `ch:"url"`
-	Referrer   *string                `ch:"referrer"`
-	Properties map[string]interface{} `ch:"props"`
-	CreatedAt  time.Time              `ch:"created_at"`
+	Type       string                 `ch:"type" json:"type"`
+	Duration   *uint16                `ch:"duration" json:"duration"`
+	Url        *string                `ch:"url" json:"url"`
+	Referrer   *string                `ch:"referrer" json:"referrer"`
+	Properties map[string]interface{} `ch:"props" json:"properties"`
+	CreatedAt  time.Time              `ch:"created_at" json:"createdAt"`
 }
 
 type ClickEvent struct {
@@ -284,11 +284,11 @@ func (e *eventsImpl) GetErrorsBySessionID(projID uint32, sessID uint64) []errorE
 }
 
 type customEvent struct {
-	Name                   string                 `ch:"name"`
-	Type                   string                 `ch:"type"`
-	AutoCapturedProperties map[string]interface{} `ch:"auto_props"`
-	Properties             map[string]interface{} `ch:"properties"`
-	CreatedAt              time.Time              `ch:"created_at"`
+	Name                   string                 `ch:"name" json:"name"`
+	Type                   string                 `ch:"type" json:"type"`
+	AutoCapturedProperties map[string]interface{} `ch:"auto_props" json:"autoCapturedProperties"`
+	Properties             map[string]interface{} `ch:"properties" json:"properties"`
+	CreatedAt              time.Time              `ch:"created_at" json:"createdAt"`
 }
 
 func (e *eventsImpl) GetCustomsBySessionID(projID uint32, sessID uint64) []interface{} {
@@ -332,10 +332,10 @@ func (e *eventsImpl) GetCustomsBySessionID(projID uint32, sessID uint64) []inter
 }
 
 type issueEvent struct {
-	ID        string    `ch:"issue_id"`
-	Type      string    `ch:"issue_type"`
-	Context   string    `ch:"context_string"`
-	CreatedAt time.Time `ch:"created_at"`
+	ID        string    `ch:"issue_id" json:"issueId"`
+	Type      string    `ch:"issue_type" json:"issueType"`
+	Context   string    `ch:"context_string" json:"contextString"`
+	CreatedAt time.Time `ch:"created_at" json:"createdAt"`
 	Timestamp int64     `json:"timestamp"`
 }
 
@@ -387,11 +387,11 @@ func reduceIssues(issues []issueEvent, window time.Duration) []issueEvent {
 }
 
 type issue struct {
-	ID        string    `ch:"issue_id"`
-	Type      string    `ch:"issue_type"`
-	Context   string    `ch:"context_string"`
-	Payload   string    `ch:"payload_string"`
-	CreatedAt time.Time `ch:"created_at"`
+	ID        string    `ch:"issue_id" json:"issueId"`
+	Type      string    `ch:"issue_type" json:"issueType"`
+	Context   string    `ch:"context_string" json:"contextString"`
+	Payload   string    `ch:"payload_string" json:"payload"`
+	CreatedAt time.Time `ch:"created_at" json:"createdAt"`
 }
 
 func (i *issue) CountFromPayload() int {
@@ -440,12 +440,12 @@ func (e *eventsImpl) getIssues(projID uint32, sessID uint64, issueType string) [
 }
 
 type incidentEvent struct {
-	Type      string    `ch:"type"`
-	Label     string    `ch:"label"`
-	StartTime int64     `ch:"start_time"`
-	EndTime   int64     `ch:"end_time"`
-	CreatedAt time.Time `ch:"created_at"`
-	Timestamp int64     `ch:"timestamp"`
+	Type      string    `ch:"type" json:"type"`
+	Label     string    `ch:"label" json:"label"`
+	StartTime int64     `ch:"start_time" json:"startTime"`
+	EndTime   int64     `ch:"end_time" json:"endTime"`
+	CreatedAt time.Time `ch:"created_at" json:"createdAt"`
+	Timestamp int64     `ch:"timestamp" json:"timestamp"`
 }
 
 func (e *eventsImpl) GetIncidentsBySessionID(projID uint32, sessID uint64) []interface{} {
@@ -493,12 +493,12 @@ func (e *eventsImpl) GetMobileBySessionID(projID uint32, sessID uint64) []interf
 }
 
 type mobileEvent struct {
-	Type         string    `ch:"type"`
-	Name         string    `ch:"name"`
-	AutoCaptures string    `ch:"auto_captures"`
-	Properties   string    `ch:"properties"`
-	CreatedAt    time.Time `ch:"created_at"`
-	Timestamp    int64     `ch:"timestamp"`
+	Type         string    `ch:"type" json:"type"`
+	Name         string    `ch:"name" json:"name"`
+	AutoCaptures string    `ch:"auto_captures" json:"autoCaptures"`
+	Properties   string    `ch:"properties" json:"properties"`
+	CreatedAt    time.Time `ch:"created_at" json:"createdAt"`
+	Timestamp    int64     `ch:"timestamp" json:"timestamp"`
 }
 
 func (e *eventsImpl) GetMobileCrashesBySessionID(sessID uint64) []interface{} {
