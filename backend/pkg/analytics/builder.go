@@ -2,6 +2,7 @@ package analytics
 
 import (
 	"openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/objectstorage"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/go-playground/validator/v10"
@@ -17,6 +18,7 @@ import (
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/auth"
+	"openreplay/backend/pkg/server/keys"
 	"openreplay/backend/pkg/server/limiter"
 	"openreplay/backend/pkg/server/tracer"
 )
@@ -29,6 +31,7 @@ type serviceBuilder struct {
 	dashboardsAPI api.Handlers
 	chartsAPI     api.Handlers
 	searchAPI     api.Handlers
+	videoAPI      api.Handlers
 }
 
 func (b *serviceBuilder) Middlewares() []api.RouterMiddleware {
@@ -36,10 +39,10 @@ func (b *serviceBuilder) Middlewares() []api.RouterMiddleware {
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI}
+	return []api.Handlers{b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.videoAPI}
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chConn driver.Conn) (api.ServiceBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chConn driver.Conn, objStore objectstorage.ObjectStorage) (api.ServiceBuilder, error) {
 	responser := api.NewResponser(webMetrics)
 	audiTrail, err := tracer.NewTracer(log, pgconn, dbMetrics)
 	if err != nil {
@@ -81,8 +84,11 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		return nil, err
 	}
 
+	keysService := keys.NewKeys(log, pgconn)
+	authService := auth.NewAuth(log, cfg.JWTSecret, "", pgconn, keysService, api.NoPrefix)
+
 	return &serviceBuilder{
-		auth:          auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil, api.NoPrefix),
+		auth:          authService,
 		rateLimiter:   limiter.NewUserRateLimiter(&cfg.RateLimiter),
 		auditTrail:    audiTrail,
 		cardsAPI:      cardsHandlers,
