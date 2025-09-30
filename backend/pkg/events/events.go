@@ -3,7 +3,6 @@ package events
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/url"
 	"time"
 	"unicode"
@@ -190,12 +189,11 @@ func NewLocationEvent(event *event) *LocationEvent {
 }
 
 func getHostFromUrl(fullUrl string) *string {
-	if parsedURL, err := url.Parse(fullUrl); err != nil {
-		fmt.Printf("failed to parse url: %v", err)
+	parsedURL, err := url.Parse(fullUrl)
+	if err != nil {
 		return nil
-	} else {
-		return &parsedURL.Host
 	}
+	return &parsedURL.Host
 }
 
 func (e *eventsImpl) GetBySessionID(projID uint32, sessID uint64, doGroupClickRage bool) []interface{} {
@@ -212,7 +210,7 @@ func (e *eventsImpl) GetBySessionID(projID uint32, sessID uint64, doGroupClickRa
 			ORDER BY created_at;`
 	sessEvents := make([]event, 0)
 	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID); err != nil {
-		fmt.Println("Error querying events:", err)
+		e.log.Error(context.Background(), "Error querying events: %v", err)
 		return nil
 	}
 
@@ -240,13 +238,13 @@ func (e *eventsImpl) groupClicksToClickRage(projID uint32, sessID uint64, sessEv
 				continue
 			}
 			if clickRageEvents[crPtr].CreatedAt.Equal(sessEvent.CreatedAt) {
+				toSkip = clickRageEvents[crPtr].CountFromPayload()
+				res = append(res, NewClickRageEvent(&sessEvent, toSkip))
+				toSkip--
 				crPtr++
 				if crPtr == len(clickRageEvents) {
 					crPtr = -1
 				}
-				toSkip = clickRageEvents[crPtr].CountFromPayload()
-				res = append(res, NewClickRageEvent(&sessEvent, toSkip))
-				toSkip-- // skip the current element
 			}
 		default:
 			if toSkip > 0 {
@@ -278,7 +276,7 @@ func (e *eventsImpl) GetErrorsBySessionID(projID uint32, sessID uint64) []errorE
 			  ORDER BY created_at;`
 	errorEvents := make([]errorEvent, 0)
 	if err := e.chConn.Select(context.Background(), &errorEvents, query, sessID); err != nil {
-		fmt.Println("Error querying error events:", err)
+		e.log.Error(context.Background(), "Error querying error events: %v", err)
 		return nil
 	}
 	return errorEvents
@@ -305,7 +303,7 @@ func (e *eventsImpl) GetCustomsBySessionID(projID uint32, sessID uint64) []inter
 			  ORDER BY created_at;`
 	customEvents := make([]customEvent, 0)
 	if err := e.chConn.Select(context.Background(), &customEvents, query, sessID); err != nil {
-		fmt.Println("Error querying events:", err)
+		e.log.Error(context.Background(), "Error querying custom events: %v", err)
 		return nil
 	}
 	if len(customEvents) == 0 {
@@ -386,7 +384,7 @@ func (e *eventsImpl) GetIssuesBySessionID(projID uint32, sessID uint64) []interf
 				ORDER BY created_at;`
 	issues := make([]issueEvent, 0)
 	if err := e.chConn.Select(context.Background(), &issues, query, sessID, projID, projID); err != nil {
-		fmt.Println("Error querying events:", err)
+		e.log.Error(context.Background(), "Error querying issues: %v", err)
 	}
 	issues = reduceIssues(issues, defaultIssuesWindow)
 	res := make([]interface{}, 0, len(issues))
@@ -437,7 +435,6 @@ func (i *issue) CountFromPayload() int {
 	}
 	payload := &issuePayload{}
 	if err := json.Unmarshal([]byte(i.Payload), payload); err != nil {
-		fmt.Println("Error unmarshaling payload:", err)
 		return count
 	}
 	if payload.Count > count {
@@ -466,7 +463,7 @@ func (e *eventsImpl) getIssues(projID uint32, sessID uint64, issueType string) [
 			ORDER BY created_at;`
 	sessIssues := make([]issue, 0)
 	if err := e.chConn.Select(context.Background(), &sessIssues, query, sessID, projID, projID); err != nil {
-		fmt.Println("Error querying events:", err)
+		e.log.Error(context.Background(), "Error querying issues: %v", err)
 		return nil
 	}
 	return sessIssues
@@ -494,7 +491,7 @@ func (e *eventsImpl) GetIncidentsBySessionID(projID uint32, sessID uint64) []int
 			ORDER BY created_at;`
 	incidents := make([]incidentEvent, 0)
 	if err := e.chConn.Select(context.Background(), &incidents, query, sessID); err != nil {
-		fmt.Println("Error querying events:", err)
+		e.log.Error(context.Background(), "Error querying incidents: %v", err)
 		return nil
 	}
 	res := make([]interface{}, 0, len(incidents))
@@ -519,7 +516,7 @@ func (e *eventsImpl) GetMobileBySessionID(projID uint32, sessID uint64) []interf
 			  ORDER BY created_at;`
 	sessEvents := make([]event, 0)
 	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID); err != nil {
-		fmt.Println("Error querying events:", err)
+		e.log.Error(context.Background(), "Error querying mobile events: %v", err)
 		return nil
 	}
 	return e.groupClicksToClickRage(projID, sessID, sessEvents)
@@ -547,7 +544,7 @@ func (e *eventsImpl) GetMobileCrashesBySessionID(sessID uint64) []interface{} {
 			  ORDER BY created_at;`
 	sessEvents := make([]mobileEvent, 0)
 	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID); err != nil {
-		fmt.Println("Error querying events:", err)
+		e.log.Error(context.Background(), "Error querying mobile crashes: %v", err)
 		return nil
 	}
 	res := make([]interface{}, 0, len(sessEvents))
@@ -571,7 +568,7 @@ func (e *eventsImpl) GetMobileCustomsBySessionID(projID uint32, sessID uint64) [
 			  ORDER BY created_at;`
 	sessEvents := make([]mobileEvent, 0)
 	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID); err != nil {
-		fmt.Println("Error querying events:", err)
+		e.log.Error(context.Background(), "Error querying mobile customs: %v", err)
 		return nil
 	}
 	res := make([]interface{}, 0, len(sessEvents))
@@ -613,5 +610,5 @@ func (e *eventsImpl) GetClickMaps(projID uint32, sessID uint64, url string) ([]i
 		}
 		response = append(response, map[string]interface{}{"selector": selector, "count": count})
 	}
-	return nil, nil
+	return response, nil
 }
