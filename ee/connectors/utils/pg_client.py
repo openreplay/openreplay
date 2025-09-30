@@ -13,15 +13,11 @@ from decouple import config
 logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 logging.getLogger('apscheduler').setLevel(config("LOGLEVEL", default=logging.INFO))
 
-sslmode = _config('DB_SSLMODE',
-        cast=Choices(['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        default='allow'
-)
-
 conn_str = config('string_connection', default='')
 if conn_str == '':
     pg_host = config("pg_host")
     pg_dbname = config("pg_dbname")
+    pg_sslmode = config("pg_sslmode", default='disable')
     pg_user = config("pg_user")
     pg_password = config("pg_password")
     pg_port = config("pg_port", cast=int)
@@ -40,14 +36,14 @@ else:
         pg_host, pg_port = host_info.split(':')
         pg_port = int(pg_port)
 
-conn_str = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_dbname}"
+conn_str = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_dbname}?sslmode={pg_sslmode}"
 
 class PostgresClient:
     CONNECTION_STRING: str = conn_str
     _sessions = sessionmaker()
 
     def __init__(self):
-        self.engine = create_engine(self.CONNECTION_STRING, connect_args={'sslmode': sslmode})
+        self.engine = create_engine(self.CONNECTION_STRING)
 
     @contextmanager
     def get_live_session(self) -> session:
