@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"time"
+	"unicode"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
@@ -284,16 +285,16 @@ func (e *eventsImpl) GetErrorsBySessionID(projID uint32, sessID uint64) []errorE
 }
 
 type customEvent struct {
-	Name                   string                 `ch:"name" json:"name"`
-	Type                   string                 `ch:"type" json:"type"`
-	AutoCapturedProperties map[string]interface{} `ch:"auto_props" json:"autoCapturedProperties"`
-	Properties             map[string]interface{} `ch:"properties" json:"properties"`
-	CreatedAt              time.Time              `ch:"created_at" json:"createdAt"`
+	Name                   string    `ch:"name" json:"name"`
+	Type                   string    `ch:"type" json:"type"`
+	AutoCapturedProperties string    `ch:"auto_props" json:"autoCapturedProperties"`
+	Properties             string    `ch:"properties" json:"properties"`
+	CreatedAt              time.Time `ch:"created_at" json:"createdAt"`
 }
 
 func (e *eventsImpl) GetCustomsBySessionID(projID uint32, sessID uint64) []interface{} {
-	query := `SELECT ` + "`$properties`" + ` AS auto_props,
-				properties,
+	query := `SELECT toString(` + "`$properties`" + `) AS auto_props,
+				toString(properties) AS properties,
 				created_at,
 				'CUSTOM' AS type,
 				` + "`$event_name`" + ` AS name
@@ -312,23 +313,55 @@ func (e *eventsImpl) GetCustomsBySessionID(projID uint32, sessID uint64) []inter
 	}
 	res := make([]interface{}, 0, len(customEvents))
 	for _, cEvent := range customEvents {
-		if len(cEvent.AutoCapturedProperties) == 0 {
-			res = append(res, cEvent)
-			continue
+		event := make(map[string]interface{})
+		event["name"] = cEvent.Name
+		event["type"] = cEvent.Type
+		event["createdAt"] = cEvent.CreatedAt
+		event["timestamp"] = cEvent.CreatedAt.Unix()
+
+		if cEvent.AutoCapturedProperties != "" && cEvent.AutoCapturedProperties != "null" {
+			var autoProps map[string]interface{}
+			if err := json.Unmarshal([]byte(cEvent.AutoCapturedProperties), &autoProps); err == nil {
+				for key, value := range autoProps {
+					event[toCamelCase(key)] = value
+				}
+			}
 		}
-		// Extract auto-captured properties
-		fullEvent := make(map[string]interface{})
-		for key, value := range cEvent.AutoCapturedProperties {
-			fullEvent[key] = value
+
+		var props map[string]interface{}
+		if cEvent.Properties != "" && cEvent.Properties != "null" {
+			if err := json.Unmarshal([]byte(cEvent.Properties), &props); err != nil {
+				props = make(map[string]interface{})
+			}
+		} else {
+			props = make(map[string]interface{})
 		}
-		fullEvent["name"] = cEvent.Name
-		fullEvent["type"] = cEvent.Type
-		fullEvent["properties"] = cEvent.Properties
-		fullEvent["created_at"] = cEvent.CreatedAt
-		fullEvent["timestamp"] = cEvent.CreatedAt.Unix()
-		res = append(res, fullEvent)
+		event["properties"] = props
+
+		res = append(res, event)
 	}
 	return res
+}
+
+func toCamelCase(s string) string {
+	if s == "" {
+		return s
+	}
+	var result []rune
+	capitalize := false
+	for i, r := range s {
+		if r == '_' {
+			capitalize = true
+			continue
+		}
+		if capitalize && i > 0 {
+			result = append(result, unicode.ToUpper(r))
+			capitalize = false
+		} else {
+			result = append(result, r)
+		}
+	}
+	return string(result)
 }
 
 type issueEvent struct {
