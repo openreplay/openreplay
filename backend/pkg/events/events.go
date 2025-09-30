@@ -15,14 +15,14 @@ import (
 const GroupClickRage bool = true
 
 type errorEvent struct {
-	ErrorID            string     `ch:"error_id" json:"errorID"`
-	ProjectID          uint16     `ch:"project_id" json:"projectID"`
-	Source             string     `ch:"source" json:"source"`
-	Name               string     `ch:"name" json:"name"`
-	Message            string     `ch:"message" json:"message"`
-	Payload            string     `ch:"payload" json:"payload"`
-	Stacktrace         string     `ch:"stacktrace" json:"stacktrace"`
-	StacktraceParsedAt *time.Time `ch:"stacktrace_parsed_at" json:"stacktraceParsedAt"`
+	ErrorID            string          `ch:"error_id" json:"errorID"`
+	ProjectID          uint16          `ch:"project_id" json:"projectID"`
+	Source             string          `ch:"source" json:"source"`
+	Name               string          `ch:"name" json:"name"`
+	Message            string          `ch:"message" json:"message"`
+	Payload            json.RawMessage `ch:"payload" json:"stack"`
+	Stacktrace         string          `ch:"stacktrace" json:"stacktrace"`
+	StacktraceParsedAt *time.Time      `ch:"stacktrace_parsed_at" json:"stacktraceParsedAt"`
 }
 
 func (e *errorEvent) IsNotJsException() bool {
