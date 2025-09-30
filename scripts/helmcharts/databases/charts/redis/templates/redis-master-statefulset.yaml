@@ -179,12 +179,15 @@ spec:
                   - /bin/bash
                   - -c
                   - |
-                    # Fix AOF files if they exist
-                    for aof_file in /data/appendonlydir/appendonly.aof.*.incr.aof; do
-                      if [ -f "$aof_file" ]; then
-                        redis-check-aof --fix "$aof_file" > /dev/null 2>&1 || rm "$aof_file"
-                      fi
-                    done
+                     # Fix AOF files if they exist
+                     if [ -f /data/appendonlydir/appendonly.aof ]; then
+                       redis-check-aof --fix /data/appendonlydir/appendonly.aof > /dev/null 2>&1
+                     fi
+                     for aof_file in /data/appendonlydir/appendonly.aof.*.incr.aof; do
+                       if [ -f "$aof_file" ]; then
+                         redis-check-aof --fix "$aof_file" > /dev/null 2>&1
+                       fi
+                     done
             preStop:
               exec:
                 command:
