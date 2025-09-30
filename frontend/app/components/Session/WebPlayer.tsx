@@ -52,7 +52,7 @@ function WebPlayer(props: any) {
   const session = sessionStore.current;
   const { prefetched } = sessionStore;
   const startedAt = sessionStore.current.startedAt || 0;
-  const duration = sessionStore.current.durationMs;
+  const duration = sessionStore.current.durationMs ?? 0;
   const { fullscreen } = uiPlayerStore;
   const { toggleFullscreen } = uiPlayerStore;
   const { closeBottomBlock } = uiPlayerStore;
