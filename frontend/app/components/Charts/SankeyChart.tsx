@@ -4,6 +4,7 @@ import { NoContent } from 'App/components/ui';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { sankeyTooltip, getEventPriority, getNodeName } from './sankeyUtils';
 import { echarts, defaultOptions } from './init';
+import { FilterKey } from '@/types/filter/filterType';
 
 echarts.use([SankeyChart]);
 
@@ -35,10 +36,27 @@ interface Props {
   isUngrouped?: boolean;
   inGrid?: boolean;
   startUrl: string;
+  getFilter: (name: string) => Record<string, any>;
 }
 
+const nodeToFilter = {
+  LOCATION: FilterKey.LOCATION,
+  INPUT: FilterKey.INPUT,
+  CLICK: FilterKey.CLICK,
+  ISSUE: FilterKey.ISSUE,
+  TAG_TRIGGER: FilterKey.TAGGED_ELEMENT,
+};
+
+const subFilters = {
+  INPUT: 'label',
+  CLICK: 'label',
+  LOCATION: 'url_path',
+  ISSUE: 'issue_type',
+  TAG_TRIGGER: 'tag_id',
+};
+
 const EChartsSankey: React.FC<Props> = (props) => {
-  const { data, height = 240, onChartClick, isUngrouped, startUrl } = props;
+  const { data, height = 240, onChartClick, isUngrouped, getFilter } = props;
   const chartRef = React.useRef<HTMLDivElement>(null);
 
   const [finalNodeCount, setFinalNodeCount] = React.useState(data.nodes.length);
@@ -376,56 +394,49 @@ const EChartsSankey: React.FC<Props> = (props) => {
       if (!onChartClick) return;
       const unsupported = ['other', 'drop'];
 
-      if (params.dataType === 'node') {
-        const node = params.data;
-        const filters = [];
-        if (node && node.type) {
+      const constructFilters = (nodes: { type: string; name: string }[]) => {
+        const filters: any = [];
+        nodes.forEach((node) => {
           const type = node.type.toLowerCase();
-          if (unsupported.includes(type)) {
+          const filterName =
+            nodeToFilter[node.type as keyof typeof nodeToFilter];
+          const subFilterName =
+            subFilters[node.type as keyof typeof subFilters];
+          if (unsupported.includes(type) || !filterName || !subFilterName) {
             return;
           }
-          filters.push({
-            operator: 'is',
-            type,
-            value: [node.name],
-            isEvent: true,
-          });
+          const filter = getFilter(filterName);
+          const subFilter = getFilter(subFilterName);
+          if (filter && subFilter) {
+            subFilter.operator = 'is';
+            subFilter.value = [node.name];
+            filter.filters.push(subFilter);
+            filters.push(filter);
+          }
+        });
+        return filters;
+      };
+      if (params.dataType === 'node') {
+        const node = params.data;
+        console.log(node);
+        if (node && node.type) {
+          onChartClick?.(constructFilters([node]));
         }
-        onChartClick?.(filters);
       } else if (params.dataType === 'edge') {
         const linkIndex = params.dataIndex;
         const link = filteredLinks[linkIndex];
 
         const firstNode = data.nodes.find((n) => n.id === link.source);
         const lastNode = data.nodes.find((n) => n.id === link.target);
-        const firstNodeType = firstNode?.eventType?.toLowerCase() ?? 'location';
-        const lastNodeType = lastNode?.eventType?.toLowerCase() ?? 'location';
-        if (
-          unsupported.includes(firstNodeType) ||
-          unsupported.includes(lastNodeType)
-        ) {
-          return;
+        if (firstNode && lastNode) {
+          const filters = constructFilters([
+            // @ts-ignore
+            { ...firstNode, type: firstNode.eventType },
+            // @ts-ignore
+            { ...lastNode, type: lastNode.eventType },
+          ]);
+          onChartClick?.(filters);
         }
-        const filters = [];
-        if (firstNode) {
-          filters.push({
-            operator: 'is',
-            type: firstNodeType,
-            value: [firstNode.name],
-            isEvent: true,
-          });
-        }
-
-        if (lastNode) {
-          filters.push({
-            operator: 'is',
-            type: lastNodeType,
-            value: [lastNode.name],
-            isEvent: true,
-          });
-        }
-
-        onChartClick?.(filters);
       }
     });
 

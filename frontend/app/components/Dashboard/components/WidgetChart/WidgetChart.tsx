@@ -57,7 +57,7 @@ function WidgetChart(props: Props) {
     rootMargin: '200px 0px',
   });
   const { isSaved = false, metric, isTemplate, height } = props;
-  const { dashboardStore, metricStore } = useStore();
+  const { dashboardStore, metricStore, filterStore } = useStore();
   const _metric: any = props.metric;
   const [data, setData] = useState(_metric.data ?? { chart: [] });
   const { period } = dashboardStore;
@@ -587,6 +587,7 @@ function WidgetChart(props: Props) {
           : false;
         const height = props.isPreview ? 550 : 240;
         const startUrl = metric.startPoint.filter?.filters.find(f => f.name === "url_path")?.value[0] ?? "unref"
+        const getFilter = (name: string) => filterStore.findEvent({ name })
         return (
           <SankeyChart
             height={height}
@@ -597,6 +598,7 @@ function WidgetChart(props: Props) {
             }}
             isUngrouped={isUngrouped}
             startUrl={startUrl}
+            getFilter={getFilter}
           />
         );
       }
