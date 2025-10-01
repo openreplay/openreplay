@@ -15,8 +15,8 @@ import (
 const GroupClickRage bool = true
 
 type errorEvent struct {
-	ErrorID            string          `ch:"error_id" json:"errorID"`
-	ProjectID          uint16          `ch:"project_id" json:"projectID"`
+	ErrorID            string          `ch:"error_id" json:"errorId"`
+	ProjectID          uint16          `ch:"project_id" json:"projectId"`
 	Source             string          `ch:"source" json:"source"`
 	Name               string          `ch:"name" json:"name"`
 	Message            string          `ch:"message" json:"message"`
@@ -103,7 +103,7 @@ func NewClickEvent(event *event) *ClickEvent {
 		Hesitation: getInt64(event, "hesitation_time"),
 		Selector:   getString(event, "selector"),
 		CreatedAt:  event.CreatedAt,
-		Timestamp:  event.CreatedAt.Unix(),
+		Timestamp:  event.CreatedAt.UnixMilli(),
 	}
 }
 
@@ -143,7 +143,7 @@ func NewInputEvent(event *event) *InputEvent {
 		Hesitation: getInt64(event, "hesitation_time"),
 		Value:      getString(event, "value"),
 		CreatedAt:  event.CreatedAt,
-		Timestamp:  event.CreatedAt.Unix(),
+		Timestamp:  event.CreatedAt.UnixMilli(),
 	}
 }
 
@@ -184,7 +184,7 @@ func NewLocationEvent(event *event) *LocationEvent {
 		FirstContentfulPaintTime: getInt64(event, "first_contentful_paint_time"),
 		FirstPaintTime:           getInt64(event, "first_paint"),
 		CreatedAt:                event.CreatedAt,
-		Timestamp:                event.CreatedAt.Unix(),
+		Timestamp:                event.CreatedAt.UnixMilli(),
 	}
 }
 
@@ -245,6 +245,8 @@ func (e *eventsImpl) groupClicksToClickRage(projID uint32, sessID uint64, sessEv
 				if crPtr == len(clickRageEvents) {
 					crPtr = -1
 				}
+			} else {
+				res = append(res, NewClickEvent(&sessEvent))
 			}
 		default:
 			if toSkip > 0 {
@@ -315,7 +317,7 @@ func (e *eventsImpl) GetCustomsBySessionID(projID uint32, sessID uint64) []inter
 		event["name"] = cEvent.Name
 		event["type"] = cEvent.Type
 		event["createdAt"] = cEvent.CreatedAt
-		event["timestamp"] = cEvent.CreatedAt.Unix()
+		event["timestamp"] = cEvent.CreatedAt.UnixMilli()
 
 		if cEvent.AutoCapturedProperties != "" && cEvent.AutoCapturedProperties != "null" {
 			var autoProps map[string]interface{}
@@ -389,7 +391,7 @@ func (e *eventsImpl) GetIssuesBySessionID(projID uint32, sessID uint64) []interf
 	issues = reduceIssues(issues, defaultIssuesWindow)
 	res := make([]interface{}, 0, len(issues))
 	for _, issue := range issues {
-		issue.Timestamp = issue.CreatedAt.Unix()
+		issue.Timestamp = issue.CreatedAt.UnixMilli()
 		res = append(res, issue)
 	}
 	return res
@@ -496,7 +498,7 @@ func (e *eventsImpl) GetIncidentsBySessionID(projID uint32, sessID uint64) []int
 	}
 	res := make([]interface{}, 0, len(incidents))
 	for _, incident := range incidents {
-		incident.Timestamp = incident.CreatedAt.Unix()
+		incident.Timestamp = incident.CreatedAt.UnixMilli()
 		res = append(res, incident)
 	}
 	return res
@@ -549,7 +551,7 @@ func (e *eventsImpl) GetMobileCrashesBySessionID(sessID uint64) []interface{} {
 	}
 	res := make([]interface{}, 0, len(sessEvents))
 	for _, sessEvent := range sessEvents {
-		sessEvent.Timestamp = sessEvent.CreatedAt.Unix()
+		sessEvent.Timestamp = sessEvent.CreatedAt.UnixMilli()
 		res = append(res, sessEvent)
 	}
 	return res
@@ -573,7 +575,7 @@ func (e *eventsImpl) GetMobileCustomsBySessionID(projID uint32, sessID uint64) [
 	}
 	res := make([]interface{}, 0, len(sessEvents))
 	for _, sessEvent := range sessEvents {
-		sessEvent.Timestamp = sessEvent.CreatedAt.Unix()
+		sessEvent.Timestamp = sessEvent.CreatedAt.UnixMilli()
 		res = append(res, sessEvent)
 	}
 	return res
