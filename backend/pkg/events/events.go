@@ -15,14 +15,14 @@ import (
 const GroupClickRage bool = true
 
 type errorEvent struct {
-	ErrorID            string          `ch:"error_id" json:"errorId"`
-	ProjectID          uint16          `ch:"project_id" json:"projectId"`
-	Source             string          `ch:"source" json:"source"`
-	Name               string          `ch:"name" json:"name"`
-	Message            string          `ch:"message" json:"message"`
-	Payload            json.RawMessage `ch:"payload" json:"stack"`
-	Stacktrace         string          `ch:"stacktrace" json:"stacktrace"`
-	StacktraceParsedAt *time.Time      `ch:"stacktrace_parsed_at" json:"stacktraceParsedAt"`
+	ErrorID   string          `ch:"error_id" json:"errorId"`
+	ProjectID uint16          `ch:"project_id" json:"projectId"`
+	Source    string          `ch:"source" json:"source"`
+	Name      string          `ch:"name" json:"name"`
+	Message   string          `ch:"message" json:"message"`
+	Payload   json.RawMessage `ch:"payload" json:"stack"`
+	CreatedAt time.Time       `ch:"created_at" json:"createdAt"`
+	Timestamp int64           `json:"timestamp"`
 }
 
 func (e *errorEvent) IsNotJsException() bool {
@@ -269,10 +269,8 @@ func (e *eventsImpl) GetErrorsBySessionID(projID uint32, sessID uint64) []errorE
 					'ERROR' AS name,
 					` + "`$properties`" + `.message AS message,
 					` + "`$properties`" + `.payload AS payload,
-					stacktrace,
-					stacktrace_parsed_at
+					created_at
 			  FROM product_analytics.events
-			  LEFT JOIN experimental.parsed_errors USING (error_id)
 			  WHERE session_id = ?
 				AND ` + "`$event_name`" + ` = 'ERROR'
 			  ORDER BY created_at;`
@@ -280,6 +278,9 @@ func (e *eventsImpl) GetErrorsBySessionID(projID uint32, sessID uint64) []errorE
 	if err := e.chConn.Select(context.Background(), &errorEvents, query, sessID); err != nil {
 		e.log.Error(context.Background(), "Error querying error events: %v", err)
 		return nil
+	}
+	for i := range errorEvents {
+		errorEvents[i].Timestamp = errorEvents[i].CreatedAt.UnixMilli()
 	}
 	return errorEvents
 }
