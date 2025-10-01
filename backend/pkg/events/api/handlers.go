@@ -68,8 +68,8 @@ func (h *handlersImpl) getEvents(w http.ResponseWriter, r *http.Request) {
 	if platform == "web" {
 		response["events"] = h.events.GetBySessionID(projID, sessID, GroupClickRage)
 		allErrors := h.events.GetErrorsBySessionID(projID, sessID)
-		stackEvents := make([]interface{}, 0)
-		errors := make([]interface{}, 0)
+		stackEvents := make([]interface{}, 0, len(allErrors))
+		errors := make([]interface{}, 0, len(allErrors))
 		for _, sessErr := range allErrors {
 			if sessErr.IsNotJsException() {
 				stackEvents = append(stackEvents, sessErr)
