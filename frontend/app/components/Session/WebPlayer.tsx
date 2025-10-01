@@ -52,6 +52,7 @@ function WebPlayer(props: any) {
   const session = sessionStore.current;
   const { prefetched } = sessionStore;
   const startedAt = sessionStore.current.startedAt || 0;
+  const duration = sessionStore.current.durationMs;
   const { fullscreen } = uiPlayerStore;
   const { toggleFullscreen } = uiPlayerStore;
   const { closeBottomBlock } = uiPlayerStore;
@@ -193,8 +194,7 @@ function WebPlayer(props: any) {
 
         if (jumpToTime || shouldAdjustOffset) {
           if (jumpToTime && jumpToTime > visualOffset) {
-            const diff =
-              startedAt < jumpToTime ? jumpToTime - startedAt : jumpToTime;
+            const diff = jumpToTime > duration ? jumpToTime - startedAt : jumpToTime;
             contextValue.player.jump(Math.max(diff, 0));
             setAdjusted(true);
           } else {
