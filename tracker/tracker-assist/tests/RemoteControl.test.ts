@@ -38,7 +38,7 @@ describe('RemoteControl', () => {
       .spyOn(ConfirmWindow.prototype, 'remove')
       .mockImplementation(confirmWindowRemoveMock)
 
-    remoteControl = new RemoteControl(options, onGrand, onRelease, onBusy)
+    remoteControl = new RemoteControl(options, onGrand, onRelease, onBusy, () => null)
   })
 
   afterEach(() => {
