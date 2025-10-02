@@ -29,6 +29,7 @@ import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
+import ConnectionQuality from 'App/components/Session/Player/ReplayPlayer/ConnectionQuality';
 
 const CPU_VISUAL_OFFSET = 10;
 
@@ -455,6 +456,7 @@ function Performance() {
     // connBandwidth,
     tabStates,
     currentTab,
+    connectionQuality,
   } = store.get();
 
   const {
@@ -506,6 +508,7 @@ function Performance() {
                 display
               />
             </InfoLine>
+            <ConnectionQuality connection={connectionQuality} />
           </div>
 
           <div className="flex items-center gap-3">

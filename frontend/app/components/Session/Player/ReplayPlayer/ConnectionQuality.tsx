@@ -31,25 +31,25 @@ const SignalIcons = {
 };
 
 const signalTexts = {
-  [SignalQuality.Lowest]: 'No or very limited connection',
-  [SignalQuality.Low]: 'Poor connection',
-  [SignalQuality.Medium]: 'Average connection',
-  [SignalQuality.High]: 'Good connection',
-  [SignalQuality.Full]: 'Excellent connection',
+  [SignalQuality.Lowest]: 'No or very limited',
+  [SignalQuality.Low]: 'Poor',
+  [SignalQuality.Medium]: 'Average',
+  [SignalQuality.High]: 'Good',
+  [SignalQuality.Full]: 'Excellent',
 };
 
 function ConnectionQuality({ connection }: { connection: number }) {
   return (
-    <div className="mx-2">
-      <Tooltip
-        title={
-          signalTexts[connection as SignalQuality] ||
-          signalTexts[SignalQuality.Full]
-        }
-      >
-        {SignalIcons[connection as SignalQuality] ??
-          SignalIcons[SignalQuality.Full]}
-      </Tooltip>
+    <div className="mx-2 flex items-center">
+      <div className="font-semibold">Connection quality:</div>
+      <div className="mb-1 ml-1">
+      {SignalIcons[connection as SignalQuality] ??
+        SignalIcons[SignalQuality.Full]}
+      </div>
+      <div>
+        {signalTexts[connection as SignalQuality] ||
+          signalTexts[SignalQuality.Full]}
+      </div>
     </div>
   );
 }
