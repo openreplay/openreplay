@@ -10,6 +10,7 @@ import (
 	sessionCfg "openreplay/backend/internal/config/session"
 	"openreplay/backend/pkg/assist/proxy"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/replays/service"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/session"
 )
@@ -20,15 +21,17 @@ type handlersImpl struct {
 	responser     api.Responser
 	sessions      session.Service
 	assist        proxy.Assist
+	files         service.Files
 }
 
-func NewHandlers(log logger.Logger, cfg *sessionCfg.Config, responser api.Responser, sessions session.Service, assist proxy.Assist) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *sessionCfg.Config, responser api.Responser, sessions session.Service, assist proxy.Assist, files service.Files) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		jsonSizeLimit: cfg.JsonSizeLimit,
 		responser:     responser,
 		sessions:      sessions,
 		assist:        assist,
+		files:         files,
 	}, nil
 }
 
@@ -61,6 +64,7 @@ func (e *handlersImpl) getReplay(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{"data": nil}
 
 	data, err := e.sessions.GetReplay(projID, sessID, currUser.GetIDAsString())
+
 	if err != nil {
 		if strings.Contains(err.Error(), session.NoSession) {
 			data, err := e.assist.GetLiveSessionByID(projID, sessID)
@@ -79,8 +83,20 @@ func (e *handlersImpl) getReplay(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			e.log.Error(r.Context(), "Error getting live session: %v", err)
 		}
+
+		fileKey, err := e.files.GetFileKey(sessID)
+		if err != nil {
+			e.log.Error(r.Context(), "Error getting file key: %v", err)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("error retrieving file key"), startTime, r.URL.Path, bodySize)
+			return
+		}
+		if fileKey != nil {
+			data.FileKey = fileKey
+		}
+
 		response["data"] = data
 	}
+
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, response, startTime, r.URL.Path, bodySize)
 }
 

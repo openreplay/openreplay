@@ -66,7 +66,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 	if err != nil {
 		return nil, fmt.Errorf("can't init session service: %s", err)
 	}
-	sessionHandlers, err := sessionAPI.NewHandlers(log, cfg, responser, sessionService, assistProxy)
+	sessionHandlers, err := sessionAPI.NewHandlers(log, cfg, responser, sessionService, assistProxy, files)
 	if err != nil {
 		return nil, err
 	}
