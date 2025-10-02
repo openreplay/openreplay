@@ -215,7 +215,7 @@ func (n *notesImpl) GetAll(tenantID, projectID, userID uint64, opts *GetOpts) (i
 	}
 
 	sql := fmt.Sprintf(`
-		SELECT COUNT(1) OVER () AS full_count, sessions_notes.note_id, sessions_notes.message, sessions_notes.created_at,
+		SELECT COUNT(1) OVER () AS full_count, sessions_notes.note_id, sessions_notes.user_id, sessions_notes.message, sessions_notes.created_at,
 		       sessions_notes.tag, sessions_notes.session_id, sessions_notes.timestamp, sessions_notes.is_public,
 		       sessions_notes.thumbnail, sessions_notes.start_at, sessions_notes.end_at, users.name AS user_name
 		FROM sessions_notes
@@ -236,7 +236,7 @@ func (n *notesImpl) GetAll(tenantID, projectID, userID uint64, opts *GetOpts) (i
 	)
 	for rows.Next() {
 		var note Note
-		if err := rows.Scan(&fullCount, &note.ID, &note.Message, &createdAt, &note.Tag, &note.SessionID,
+		if err := rows.Scan(&fullCount, &note.ID, &note.UserID, &note.Message, &createdAt, &note.Tag, &note.SessionID,
 			&note.Timestamp, &note.IsPublic, &note.Thumbnail, &note.StartAt, &note.EndAt, &note.UserName); err != nil {
 			n.log.Error(context.Background(), "Failed to scan note: %v", err)
 			continue
