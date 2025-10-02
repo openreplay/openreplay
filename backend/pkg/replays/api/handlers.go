@@ -63,7 +63,7 @@ func (h *handlersImpl) getFirstMob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	res := map[string]interface{}{"domURL": urls}
-	h.responser.ResponseWithJSON(h.log, r.Context(), w, res, startTime, r.URL.Path, bodySize)
+	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": res}, startTime, r.URL.Path, bodySize)
 }
 
 func (h *handlersImpl) getUnprocessedMob(w http.ResponseWriter, r *http.Request) {
