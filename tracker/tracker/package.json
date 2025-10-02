@@ -74,7 +74,7 @@
     "typescript": "^5.6.3"
   },
   "dependencies": {
-    "@openreplay/network-proxy": "^1.2.1-beta.0",
+    "@openreplay/network-proxy": "^1.2.1",
     "error-stack-parser": "^2.1.4",
     "error-stack-parser-es": "^0.1.5",
     "fflate": "^0.8.2",

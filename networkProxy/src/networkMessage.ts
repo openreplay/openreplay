@@ -66,8 +66,9 @@ export default class NetworkMessage {
     })
 
     if (!messageInfo) return null;
-
-    const isGraphql = messageInfo.url.includes("/graphql");
+    const gqlHeader = "application/graphql-response"
+    const isGraphql = messageInfo.url.includes("/graphql")
+      || Object.values(messageInfo.request.headers).some(v => v.includes(gqlHeader))
     if (isGraphql && messageInfo.response.body && typeof messageInfo.response.body === 'string') {
       const isError = messageInfo.response.body.includes("errors");
       messageInfo.status = isError ? 400 : 200;
