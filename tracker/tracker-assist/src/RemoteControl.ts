@@ -26,7 +26,9 @@ export default class RemoteControl {
     private readonly options: AssistOptions,
     private readonly onGrand: (id: string) => string | undefined,
     private readonly onRelease: (id?: string | null, isDenied?: boolean) => void,
-    private readonly onBusy: (id?: string) => void) {}
+    private readonly onBusy: (id?: string) => void,
+    private readonly updateState: (activeId?: string) => void,
+  ) {}
 
   reconnect(ids: string[]) {
     const storedID = sessionStorage.getItem(this.options.session_control_peer_key)
@@ -72,7 +74,7 @@ export default class RemoteControl {
       })
   }
 
-  releaseControl = (isDenied?: boolean, keepId?: boolean) => {
+  releaseControl = (isDenied?: boolean, keepId?: boolean, skipUpdate?: boolean) => {
     if (this.confirm) {
       this.confirm.remove()
       this.confirm = null
@@ -84,9 +86,12 @@ export default class RemoteControl {
     }
     this.onRelease(this.agentID, isDenied)
     this.agentID = null
+    if (!skipUpdate) {
+      this.updateState();
+    }
   }
 
-  grantControl = (id: string) => {
+  grantControl = (id: string, skipUpdate?: boolean) => {
     this.agentID = id
     this.status = RCStatus.Enabled
     sessionStorage.setItem(this.options.session_control_peer_key, id)
@@ -94,16 +99,11 @@ export default class RemoteControl {
     if (this.mouse) {
       this.resetMouse()
     }
+    if (!skipUpdate) {
+      this.updateState(id);
+    }
     this.mouse = new Mouse(agentName, this.options.onDragCamera)
     this.mouse.mount()
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) this.releaseControl(false, true)
-      else {
-        if (this.status === RCStatus.Disabled) {
-          this.reconnect([id,])
-        }
-      }
-    })
   }
 
   resetMouse = () => {

@@ -1,3 +1,7 @@
+# 11.0.7
+
+- improve support for multitab browsing during remotecontrol/calls
+
 ## 11.0.6
 
 - fix for canvas assist
