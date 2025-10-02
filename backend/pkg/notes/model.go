@@ -2,11 +2,12 @@ package notes
 
 type Note struct {
 	ID        uint64  `json:"noteId"`
+	UserID    int64   `json:"userId"`
 	Message   string  `json:"message"`
 	Tag       *string `json:"tag"`
 	Timestamp int64   `json:"timestamp"`
 	CreatedAt int64   `json:"createdAt"`
-	SessionID uint64  `json:"sessionId"`
+	SessionID uint64  `json:"sessionId,string"`
 	IsPublic  bool    `json:"isPublic"`
 	Thumbnail *string `json:"thumbnail"`
 	StartAt   *uint64 `json:"startAt"`
