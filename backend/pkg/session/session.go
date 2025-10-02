@@ -74,6 +74,7 @@ type SessionReplay struct {
 	VideoURL           []string               `json:"videoURL"`
 	Metadata           map[string]interface{} `json:"metadata"`
 	Live               bool                   `json:"live"`
+	FileKey            *string                `json:"fileKey"`
 }
 
 var metadataColumns = []string{"metadata_1", "metadata_2", "metadata_3", "metadata_4", "metadata_5",
