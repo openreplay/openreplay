@@ -1,6 +1,10 @@
-## 11.0.7
+## 11.0.8
 
 - adapt to new tracker
+
+# 11.0.7
+
+- improve support for multitab browsing during remotecontrol/calls
 
 ## 11.0.6
 

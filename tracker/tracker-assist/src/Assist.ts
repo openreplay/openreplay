@@ -90,11 +90,17 @@ export default class Assist {
   private readonly options: Options;
   private readonly canvasMap: Map<number, Canvas> = new Map();
   private iceCandidatesBuffer: Map<string, RTCIceCandidateInit[]> = new Map();
+  private tabBus: BroadcastChannel | null = null;
+  private tabState = {
+    rcActive: undefined,
+    isCallActive: false,
+    agentIds: [] as string[],
+  };
 
   constructor(
     private readonly app: App,
     options?: Partial<Options>,
-    private readonly noSecureMode: boolean = false
+    private readonly noSecureMode: boolean = false,
   ) {
     // @ts-ignore
     window.__OR_ASSIST_VERSION = this.version;
@@ -115,7 +121,7 @@ export default class Assist {
         compressionEnabled: false,
         compressionMinBatchSize: 5000,
       },
-      options
+      options,
     );
 
     if (this.app.options.assistSocketHost) {
@@ -130,9 +136,13 @@ export default class Assist {
         "visibilitychange",
         sendActivityState,
         false,
-        false
+        false,
       );
     }
+    this.tabBus =
+      "BroadcastChannel" in window ? new BroadcastChannel("or-assist") : null;
+    this.tabBus?.addEventListener("message", this.handleTabStateMessage);
+
     const titleNode = document.querySelector("title");
     const observer =
       titleNode &&
@@ -144,6 +154,7 @@ export default class Assist {
         return;
       }
       this.onStart();
+      this.publishState({ type: "assist_state_check" })
       observer &&
         observer.observe(titleNode, {
           subtree: true,
@@ -203,7 +214,7 @@ export default class Assist {
       }
     });
     app.session.attachUpdateCallback((sessInfo) =>
-      this.emit("UPDATE_SESSION", sessInfo)
+      this.emit("UPDATE_SESSION", sessInfo),
     );
   }
 
@@ -238,12 +249,11 @@ export default class Assist {
     return "";
   }
 
+  callUI: CallWindow | null = null;
+  annot: AnnotationCanvas | null = null;
   private onStart() {
     const app = this.app;
     const sessionId = app.getSessionID();
-    // Common for all incoming call requests
-    let callUI: CallWindow | null = null;
-    let annot: AnnotationCanvas | null = null;
     // TODO: encapsulate
     let callConfirmWindow: ConfirmWindow | null = null;
     let callConfirmAnswer: Promise<boolean> | null = null;
@@ -292,21 +302,21 @@ export default class Assist {
     });
 
     const onGrand = (id: string) => {
-      if (!callUI) {
-        callUI = new CallWindow(app.debug.error, this.options.callUITemplate);
+      if (!this.callUI) {
+        this.callUI = new CallWindow(app.debug.error, this.options.callUITemplate);
       }
       if (this.remoteControl) {
-        callUI?.showRemoteControl(this.remoteControl.releaseControl);
+        this.callUI?.showRemoteControl(this.remoteControl.releaseControl);
       }
       this.agents[id] = {
         ...this.agents[id],
         onControlReleased: this.options.onRemoteControlStart(
-          this.agents[id]?.agentInfo
+          this.agents[id]?.agentInfo,
         ),
       };
       this.emit("control_granted", id);
-      annot = new AnnotationCanvas();
-      annot.mount();
+      this.annot = new AnnotationCanvas();
+      this.annot.mount();
       return callingAgents.get(id);
     };
     const onRelease = (id?: string | null, isDenied?: boolean) => {
@@ -316,14 +326,14 @@ export default class Assist {
         typeof cb === "function" && cb();
         this.emit("control_rejected", id);
       }
-      if (annot != null) {
-        annot.remove();
-        annot = null;
+      if (this.annot != null) {
+        this.annot.remove();
+        this.annot = null;
       }
-      callUI?.hideRemoteControl();
+      this.callUI?.hideRemoteControl();
       if (this.callingState !== CallingState.True) {
-        callUI?.remove();
-        callUI = null;
+        this.callUI?.remove();
+        this.callUI = null;
       }
       if (isDenied) {
         const info = id ? this.agents[id]?.agentInfo : {};
@@ -334,8 +344,14 @@ export default class Assist {
     this.remoteControl = new RemoteControl(
       this.options,
       onGrand,
-      (id, isDenied) => onRelease(id, isDenied),
-      (id) => this.emit("control_busy", id)
+      onRelease,
+      (id) => this.emit("control_busy", id),
+      (activeId?: string) =>
+        this.publishState({
+          type: "assist_state",
+          update: "rc",
+          rcActive: activeId,
+        }),
     );
 
     const onAcceptRecording = () => {
@@ -347,13 +363,13 @@ export default class Assist {
       this.options.onRecordingDeny?.(agentData || {});
     };
     const recordingState = new ScreenRecordingState(
-      this.options.recordingConfirm
+      this.options.recordingConfirm,
     );
 
     function processEvent(
       agentId: string,
       event: { meta: { tabId: string }; data?: any },
-      callback?: (id: string, data: any) => void
+      callback?: (id: string, data: any) => void,
     ) {
       if (app.getTabId() === event.meta.tabId) {
         return callback?.(agentId, event.data);
@@ -365,26 +381,26 @@ export default class Assist {
       });
       socket.on("release_control", (agentId, dataObj) => {
         processEvent(agentId, dataObj, (_, data) =>
-          this.remoteControl?.releaseControl(data)
+          this.remoteControl?.releaseControl(data),
         );
       });
       socket.on("scroll", (id, event) =>
-        processEvent(id, event, this.remoteControl?.scroll)
+        processEvent(id, event, this.remoteControl?.scroll),
       );
       socket.on("click", (id, event) =>
-        processEvent(id, event, this.remoteControl?.click)
+        processEvent(id, event, this.remoteControl?.click),
       );
       socket.on("move", (id, event) =>
-        processEvent(id, event, this.remoteControl?.move)
+        processEvent(id, event, this.remoteControl?.move),
       );
       socket.on("startDrag", (id, event) =>
-        processEvent(id, event, this.remoteControl?.startDrag)
+        processEvent(id, event, this.remoteControl?.startDrag),
       );
       socket.on("drag", (id, event) =>
-        processEvent(id, event, this.remoteControl?.drag)
+        processEvent(id, event, this.remoteControl?.drag),
       );
       socket.on("stopDrag", (id, event) =>
-        processEvent(id, event, this.remoteControl?.stopDrag)
+        processEvent(id, event, this.remoteControl?.stopDrag),
       );
       socket.on("focus", (id, event) =>
         processEvent(id, event, (clientID, nodeID) => {
@@ -392,32 +408,29 @@ export default class Assist {
           if (el instanceof HTMLElement && this.remoteControl) {
             this.remoteControl.focus(clientID, el);
           }
-        })
+        }),
       );
       socket.on("input", (id, event) =>
-        processEvent(id, event, this.remoteControl?.input)
+        processEvent(id, event, this.remoteControl?.input),
       );
     }
 
     // TODO: restrict by id
     socket.on("moveAnnotation", (id, event) =>
-      processEvent(id, event, (_, d) => annot && annot.move(d))
+      processEvent(id, event, (_, d) => this.annot && this.annot.move(d)),
     );
     socket.on("startAnnotation", (id, event) =>
-      processEvent(id, event, (_, d) => annot?.start(d))
+      processEvent(id, event, (_, d) => this.annot?.start(d)),
     );
     socket.on("stopAnnotation", (id, event) =>
-      processEvent(id, event, annot?.stop)
+      processEvent(id, event, this.annot?.stop),
     );
 
-    socket.on(
-      "WEBRTC_CONFIG",
-      (config: string) => {
-        if (config) {
-          this.config = JSON.parse(config)
-        }
+    socket.on("WEBRTC_CONFIG", (config: string) => {
+      if (config) {
+        this.config = JSON.parse(config);
       }
-    );
+    });
 
     socket.on("NEW_AGENT", (id: string, info: AgentInfo) => {
       this.cleanCanvasConnections();
@@ -538,19 +551,19 @@ export default class Assist {
         } else {
           this.iceCandidatesBuffer.set(
             data.id,
-            this.iceCandidatesBuffer
-              .get(data.id)
-              ?.concat([data.candidate]) || [data.candidate]
+            this.iceCandidatesBuffer.get(data.id)?.concat([data.candidate]) || [
+              data.candidate,
+            ],
           );
         }
-      }
+      },
     );
 
     // If a videofeed arrives, then we show the video in the ui
     socket.on("videofeed", (_, info) => {
       if (app.getTabId() !== info.meta.tabId) return;
       const feedState = info.data;
-      callUI?.toggleVideoStream(feedState);
+      this.callUI?.toggleVideoStream(feedState);
     });
 
     socket.on("request_recording", (id, info) => {
@@ -559,7 +572,7 @@ export default class Assist {
       if (!recordingState.isActive) {
         this.options.onRecordingRequest?.(JSON.parse(agentData));
         recordingState.requestRecording(id, onAcceptRecording, () =>
-          onRejectRecording(agentData)
+          onRejectRecording(agentData),
         );
       } else {
         this.emit("recording_busy");
@@ -578,7 +591,7 @@ export default class Assist {
         if (!this.calls.has(data.from)) {
           await handleIncomingCallOffer(data.from, data.offer);
         }
-      }
+      },
     );
 
     socket.on(
@@ -596,18 +609,18 @@ export default class Assist {
             data.from,
             this.iceCandidatesBuffer
               .get(data.from)
-              ?.concat([data.candidate]) || [data.candidate]
+              ?.concat([data.candidate]) || [data.candidate],
           );
         }
-      }
+      },
     );
 
     const callingAgents: Map<string, string> = new Map(); // !! uses socket.io ID
     // TODO: merge peerId & socket.io id  (simplest way - send peerId with the name)
     const lStreams: Record<string, LocalStream> = {};
 
-    function updateCallerNames() {
-      callUI?.setAssistentName(callingAgents);
+    const updateCallerNames = () => {
+      this.callUI?.setAssistentName(callingAgents);
     }
     function endAgentCall({
       socketId,
@@ -646,18 +659,24 @@ export default class Assist {
       // UI
       closeCallConfirmWindow();
       if (this.remoteControl?.status === RCStatus.Disabled) {
-        callUI?.remove();
-        annot?.remove();
-        callUI = null;
-        annot = null;
+        this.callUI?.remove();
+        this.annot?.remove();
+        this.callUI = null;
+        this.annot = null;
       } else {
-        callUI?.hideControls();
+        this.callUI?.hideControls();
       }
 
       this.emit("UPDATE_SESSION", { agentIds: [], isCallActive: false });
       this.setCallingState(CallingState.False);
       sessionStorage.removeItem(this.options.session_calling_peer_key);
 
+      this.publishState({
+        type: "assist_state",
+        update: "call",
+        isCallActive: false,
+        agentIds: [],
+      });
       callEndCallback?.();
     };
     const closeCallConfirmWindow = () => {
@@ -686,12 +705,12 @@ export default class Assist {
 
     const handleIncomingCallOffer = async (
       from: string,
-      offer: RTCSessionDescriptionInit
+      offer: RTCSessionDescriptionInit,
     ) => {
       app.debug.log("handleIncomingCallOffer", from);
       let confirmAnswer: Promise<boolean>;
       const callingPeerIds = JSON.parse(
-        sessionStorage.getItem(this.options.session_calling_peer_key) || "[]"
+        sessionStorage.getItem(this.options.session_calling_peer_key) || "[]",
       );
       // if the caller is already in the list, then we immediately accept the call without ui
       if (
@@ -732,17 +751,17 @@ export default class Assist {
         });
         this.calls.set(from, pc);
 
-        if (!callUI) {
-          callUI = new CallWindow(app.debug.error, this.options.callUITemplate);
-          callUI.setVideoToggleCallback((args: { enabled: boolean }) => {
+        if (!this.callUI) {
+          this.callUI = new CallWindow(app.debug.error, this.options.callUITemplate);
+          this.callUI.setVideoToggleCallback((args: { enabled: boolean }) => {
             this.emit("videofeed", { streamId: from, enabled: args.enabled });
           });
         }
         // show buttons in the call window
-        callUI.showControls(initiateCallEnd);
-        if (!annot) {
-          annot = new AnnotationCanvas();
-          annot.mount();
+        this.callUI.showControls(initiateCallEnd);
+        if (!this.annot) {
+          this.annot = new AnnotationCanvas();
+          this.annot.mount();
         }
 
         // callUI.setLocalStreams(Object.values(lStreams))
@@ -753,11 +772,11 @@ export default class Assist {
             // request a local stream, and set it to lStreams
             lStreams[from] = await RequestLocalStream(
               pc,
-              renegotiateConnection.bind(null, { pc, from })
+              renegotiateConnection.bind(null, { pc, from }),
             );
           }
           // we pass the received tracks to Call ui
-          callUI.setLocalStreams(Object.values(lStreams));
+          this.callUI.setLocalStreams(Object.values(lStreams));
         } catch (e) {
           app.debug.error("Error requesting local stream", e);
           // if something didn't work out, we terminate the call
@@ -780,10 +799,10 @@ export default class Assist {
         // when we get a remote stream, add it to call ui
         pc.ontrack = (event) => {
           const rStream = event.streams[0];
-          if (rStream && callUI) {
-            callUI.addRemoteStream(rStream, from);
+          if (rStream && this.callUI) {
+            this.callUI.addRemoteStream(rStream, from);
             const onInteraction = () => {
-              callUI?.playRemote();
+              this.callUI?.playRemote();
               document.removeEventListener("click", onInteraction);
             };
             document.addEventListener("click", onInteraction);
@@ -818,11 +837,6 @@ export default class Assist {
           sender.replaceTrack(vTrack);
         });
 
-        // if the user closed the tab or switched, then we end the call
-        document.addEventListener("visibilitychange", () => {
-          initiateCallEnd();
-        });
-
         // when everything is set, we change the state to true
         this.setCallingState(CallingState.True);
         if (!callEndCallback) {
@@ -832,11 +846,17 @@ export default class Assist {
         // in session storage we write down everyone with whom the call is established
         sessionStorage.setItem(
           this.options.session_calling_peer_key,
-          JSON.stringify(callingPeerIdsNow)
+          JSON.stringify(callingPeerIdsNow),
         );
         this.emit("UPDATE_SESSION", {
           agentIds: callingPeerIdsNow,
           isCallActive: true,
+        });
+        this.publishState({
+          type: "assist_state",
+          update: "call",
+          isCallActive: true,
+          agentIds: callingPeerIdsNow,
         });
       } catch (reason) {
         app.debug.log(reason);
@@ -854,8 +874,8 @@ export default class Assist {
           this.options.callConfirm || {
             text: this.options.confirmText,
             style: this.options.confirmStyle,
-          }
-        )
+          },
+        ),
       );
       return (callConfirmAnswer = callConfirmWindow.mount().then((answer) => {
         closeCallConfirmWindow();
@@ -906,7 +926,7 @@ export default class Assist {
           (stream: MediaStream) => {
             startCanvasStream(stream, id);
           },
-          app.debug.error
+          app.debug.error,
         );
         this.canvasMap.set(id, canvasHandler);
         if (this.canvasNodeCheckers.has(id)) {
@@ -978,21 +998,22 @@ export default class Assist {
 
   private stopCanvasStream(id: number) {
     for (const agent of Object.values(this.agents)) {
-        if (!agent.agentInfo) return;
+      if (!agent.agentInfo) return;
 
-        const uniqueId = `${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas-${id}`;
-        this.socket?.emit("webrtc_canvas_stop", { id: uniqueId });
+      const uniqueId = `${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas-${id}`;
+      this.socket?.emit("webrtc_canvas_stop", { id: uniqueId });
 
-        if (this.canvasPeers[uniqueId]) {
-          this.canvasPeers[uniqueId]?.close();
-          delete this.canvasPeers[uniqueId];
+      if (this.canvasPeers[uniqueId]) {
+        this.canvasPeers[uniqueId]?.close();
+        delete this.canvasPeers[uniqueId];
 
-          this.canvasMap.get(id)?.stop();
-          this.canvasMap.delete(id);
-          this.canvasNodeCheckers.get(id) && clearInterval(this.canvasNodeCheckers.get(id));
-          this.canvasNodeCheckers.delete(id);
-        }
+        this.canvasMap.get(id)?.stop();
+        this.canvasMap.delete(id);
+        this.canvasNodeCheckers.get(id) &&
+          clearInterval(this.canvasNodeCheckers.get(id));
+        this.canvasNodeCheckers.delete(id);
       }
+    }
   }
 
   private applyBufferedIceCandidates(from) {
@@ -1004,17 +1025,51 @@ export default class Assist {
       this.iceCandidatesBuffer.delete(from);
     }
   }
-}
 
-/** simple peers impl
- * const slPeer = new SLPeer({ initiator: true, stream: stream, })
- *               // slPeer.on('signal', (data: any) => {
- *               //   this.emit('c_signal', { data, id, })
- *               // })
- *               // this.socket?.on('c_signal', (tab: string, data: any) => {
- *               //   console.log(data)
- *               //   slPeer.signal(data)
- *               // })
- *               // slPeer.on('error', console.error)
- *               // this.emit('canvas_stream', { canvasId, })
- * */
+  private publishState = (state: any) => {
+    Object.assign(this.tabState, state);
+    this.tabBus?.postMessage(state);
+  };
+
+  private handleTabStateMessage = (msg: any) => {
+    if (!msg) return;
+
+    if (msg.data.type === "assist_state_check") {
+      if (this.tabState.isCallActive || this.tabState.rcActive) {
+        this.publishState({ type: "assist_state", ...this.tabState });
+      }
+    }
+
+    if (msg.data.type === "assist_state") {
+      if (msg.data.update === "call") {
+        if (msg.data.isCallActive) {
+          if (!this.callUI) {
+            this.callUI = new CallWindow(this.app.debug.error, this.options.callUITemplate);
+          }
+          const initiateCallEnd = () => {
+            this.emit("call_end");
+          }
+          this.callUI.showControls(initiateCallEnd);
+          if (!this.annot) {
+            this.annot = new AnnotationCanvas();
+            this.annot.mount();
+          }
+        } else {
+          this.annot?.remove();
+          this.annot = null;
+          this.callUI?.hideControls();
+          this.callUI?.remove();
+          this.callUI = null;
+        }
+      }
+      if (msg.data.update === "rc") {
+        if (msg.data.rcActive) {
+          this.remoteControl?.grantControl(msg.data.rcActive, true);
+        } else {
+          this.remoteControl?.releaseControl(false, false, true);
+        }
+      }
+      Object.assign(this.tabState, msg.data);
+    }
+  };
+}
