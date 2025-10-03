@@ -225,11 +225,6 @@ func (su *sessionUpdate) request() (string, []interface{}) {
 		sqlReq += fmt.Sprintf(" errors_count = errors_count + $%d,", varsCounter)
 		sqlArgs = append(sqlArgs, su.errors)
 	}
-	if su.issues > 0 {
-		varsCounter++
-		sqlReq += fmt.Sprintf(" issue_score = issue_score + $%d,", varsCounter)
-		sqlArgs = append(sqlArgs, su.issues)
-	}
 	if su.utmSource != nil {
 		varsCounter++
 		sqlReq += fmt.Sprintf(" utm_source = LEFT($%d, 8000),", varsCounter)
