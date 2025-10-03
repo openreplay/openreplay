@@ -1,15 +1,23 @@
 package auth
 
-import "openreplay/backend/pkg/server/user"
+import (
+	"fmt"
 
-func (a *authImpl) IsAuthorized(authHeader string, permissions []string, isExtension bool) (*user.User, error) {
-	secret := a.secret
-	if isExtension {
-		secret = a.spotSecret
-	}
-	jwtInfo, err := parseJWT(authHeader, secret)
+	"openreplay/backend/pkg/math"
+	"openreplay/backend/pkg/server/user"
+)
+
+func (a *authImpl) isAuthorized(authHeader string) (*user.User, error) {
+	jwtInfo, err := parseJWT(authHeader, a.secret)
 	if err != nil {
 		return nil, err
 	}
-	return authUser(a.pgconn, jwtInfo.UserId, jwtInfo.TenantID, int(jwtInfo.IssuedAt.Unix()), isExtension)
+	dbUser, err := a.users.Get(jwtInfo.UserId, jwtInfo.TenantID, user.AuthToken)
+	if err != nil {
+		return nil, err
+	}
+	if !dbUser.ServiceAccount && (dbUser.JwtIat == 0 || math.Abs(int(jwtInfo.IssuedAt.Unix())-dbUser.JwtIat) > 1) {
+		return nil, fmt.Errorf("token has been updated")
+	}
+	return dbUser, nil
 }
