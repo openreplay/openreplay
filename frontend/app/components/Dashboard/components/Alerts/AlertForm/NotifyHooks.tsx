@@ -128,10 +128,8 @@ function NotifyHooks({
                   rel="noreferrer"
                 >
                   {t('here')}
-                </a>{' '}
-                {t(
-                  'how to set it up). You can still add new users, but you’d have to manually copy then send them the invitation link.',
-                )}
+                </a>
+                {')'}
               </div>
             )}
           </div>
