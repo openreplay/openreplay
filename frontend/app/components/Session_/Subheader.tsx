@@ -8,6 +8,7 @@ import {
   Bookmark as BookmarkIcn,
   BookmarkCheck,
   Vault,
+  File,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
@@ -29,6 +30,7 @@ import ShareModal from '../shared/SharePopup/SharePopup';
 import { useTranslation } from 'react-i18next';
 import SimilarSessionsButton from './SimilarSessions/SimilarSessionsButton';
 import { mobileScreen } from 'App/utils/isMobile';
+import { hasExport } from 'App/utils/split-utils';
 
 const disableDevtools = 'or_devtools_uxt_toggle';
 
@@ -135,6 +137,57 @@ function SubHeader(props) {
     location.reload();
   };
 
+  const onExport = () => {
+    return;
+  }
+  const dropdownItems = [
+    {
+      key: '2',
+      label: (
+        <div className="flex items-center gap-2">
+          {vaultIcon}
+          <span>{isEnterprise ? t('Vault') : t('Bookmark')}</span>
+        </div>
+      ),
+      onClick: toggleFavorite,
+    },
+    {
+      key: '4',
+      label: (
+        <div className="flex items-center gap-2">
+          <Icon
+            name={`integrations/${reportingProvider || 'github'}`}
+          />
+          <span>{t('Issues')}</span>
+        </div>
+      ),
+      disabled: !enabledIntegration,
+      onClick: handleOpenIssueModal,
+    },
+    {
+      key: '1',
+      label: (
+        <div className="flex items-center gap-2">
+          <Keyboard size={16} strokeWidth={1} />
+          <span>{t('Keyboard Shortcuts')}</span>
+        </div>
+      ),
+      onClick: showKbHelp,
+    },
+  ]
+  if (hasExport) {
+    dropdownItems.push({
+      key: '5',
+      label: (
+        <div className="flex items-center gap-2">
+          <File size={16} strokeWidth={1} />
+          <span>{t('Export Video')}</span>
+        </div>
+      ),
+      onClick: onExport,
+    })
+  }
+
   return (
     <>
       <WarnBadge
@@ -190,41 +243,7 @@ function SubHeader(props) {
             <HighlightButton onClick={() => props.setActiveTab('HIGHLIGHT')} />
             <Dropdown
               menu={{
-                items: [
-                  {
-                    key: '2',
-                    label: (
-                      <div className="flex items-center gap-2">
-                        {vaultIcon}
-                        <span>{isEnterprise ? t('Vault') : t('Bookmark')}</span>
-                      </div>
-                    ),
-                    onClick: toggleFavorite,
-                  },
-                  {
-                    key: '4',
-                    label: (
-                      <div className="flex items-center gap-2">
-                        <Icon
-                          name={`integrations/${reportingProvider || 'github'}`}
-                        />
-                        <span>{t('Issues')}</span>
-                      </div>
-                    ),
-                    disabled: !enabledIntegration,
-                    onClick: handleOpenIssueModal,
-                  },
-                  {
-                    key: '1',
-                    label: (
-                      <div className="flex items-center gap-2">
-                        <Keyboard size={16} strokeWidth={1} />
-                        <span>{t('Keyboard Shortcuts')}</span>
-                      </div>
-                    ),
-                    onClick: showKbHelp,
-                  },
-                ],
+                items: dropdownItems,
               }}
             >
               <AntButton size="small">
