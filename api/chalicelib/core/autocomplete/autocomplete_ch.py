@@ -298,8 +298,8 @@ def get_top_values(project_id, event_type, event_key=None):
                                                  COUNT(1) OVER () AS total_count
                                  FROM experimental.sessions
                                  WHERE project_id = %(project_id)s
-                                   AND isNotNull(c_value)
-                                   AND notEmpty(c_value)
+                                   AND isNotNull(toString(c_value))
+                                   AND notEmpty(toString(c_value))
                                  ORDER BY row_count DESC
                                  LIMIT 10)
                     SELECT c_value AS value, row_count, truncate(row_count * 100 / total_count, 2) AS row_percentage
