@@ -268,11 +268,11 @@ FROM (SELECT %s
 GROUP BY metric_value
 ORDER BY total DESC
 LIMIT %d OFFSET %d`,
-		strings.Join(baseSelectParts, ",\n       "),           // Main SELECT
-		strings.Join(subquerySelectParts, ",\n             "), // Subquery SELECT
+		strings.Join(baseSelectParts, ","),     // Main SELECT
+		strings.Join(subquerySelectParts, ","), // Subquery SELECT
 		mainSessionsTable,
-		strings.Join(sessionConditions, " AND "),                 // Sessions WHERE
-		strings.Join(innerSelectParts, ",\n                   "), // Inner SELECT
+		strings.Join(sessionConditions, " AND "), // Sessions WHERE
+		strings.Join(innerSelectParts, ","),      // Inner SELECT
 		mainEventsTable,
 		strings.Join(prewhereParts, " AND "), // WHERE conditions
 		finalJoinClause,
@@ -313,7 +313,7 @@ func (t *TableQueryBuilder) buildSimplifiedQuery(r *Payload, metricFormat string
 		"count(DISTINCT metric_name) AS total",
 		"any(total_count) AS total_count",
 	}
-	sessionProjections := []string{propSel,
+	sessionProjections := []string{
 		fmt.Sprintf("%s AS metric_name", propSel),
 		"COUNT(DISTINCT metric_name) OVER () AS total_count"}
 	mainSessionsTable := getMainSessionsTable(r.StartTimestamp)
