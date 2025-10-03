@@ -25,7 +25,7 @@ import {
 import { ErrorInfo } from '../types/error';
 import { getChartFormatter } from 'Types/dashboard/helper';
 import FilterItem from './filterItem';
-import { filtersMap } from 'Types/filter/newFilter';
+import Filter from './filter'
 import Issue from '../types/issue';
 import { durationFormatted } from 'App/date';
 import { SessionsByRow } from './sessionsCardData';
@@ -251,7 +251,7 @@ export default class Widget {
 
         this.excludes =
           Array.isArray(json.excludes) && json.excludes.length > 0
-            ? [new FilterItem().fromJson(json.excludes[0])]
+          ? new Filter().fromJson({ filters: json.excludes }).filters
             : [];
 
         // TODO change this to excludes after the api change
@@ -328,9 +328,7 @@ export default class Widget {
       data.hideExcess = this.hideExcess;
       data.startType = this.startType;
       data.startPoint = this.startPoint ? [this.startPoint.toJson()] : [];
-      data.excludes = this.series[0].filter.excludes.map((i: any) =>
-        i.toJson(),
-      );
+      data.excludes = this.excludes.map((i: any) => i.toJson());
       data.metricOf = 'sessionCount';
     }
     return data;
@@ -352,7 +350,12 @@ export default class Widget {
 
   updateExcludeByIndex(index: number, exclude: any) {
     runInAction(() => {
-      this.excludes[index] = new FilterItem(exclude);
+      const newExcludes = this.excludes.toSpliced(
+        index,
+        1,
+        new FilterItem(exclude),
+      );
+      this.excludes = newExcludes;
       this.hasChanged = true;
     });
   }
@@ -404,7 +407,9 @@ export default class Widget {
   }
 
   setData(
-    data: { timestamp: number; [seriesName: string]: number }[] | Record<string, any>,
+    data:
+      | { timestamp: number; [seriesName: string]: number }[]
+      | Record<string, any>,
     period: any,
     isComparison: boolean = false,
     density?: number,
@@ -483,9 +488,11 @@ export default class Widget {
       _data.funnel = new Funnel().fromJSON(data);
     } else if (this.metricType === TABLE) {
       const count = data['count'];
-      const vals = data['values'] ? data['values'].map((s: any) =>
-        new SessionsByRow().fromJson(s, count, this.metricOf),
-      ) : [];
+      const vals = data['values']
+        ? data['values'].map((s: any) =>
+            new SessionsByRow().fromJson(s, count, this.metricOf),
+          )
+        : [];
       _data['values'] = vals;
       _data['total'] = data['total'];
     } else {
