@@ -418,9 +418,8 @@ FROM (SELECT any(full_count)               AS full_count,
                JOIN base_%[1]v AS base_match
                     ON base_match.pixels BETWEEN base_center.pixels * 0.95 AND base_center.pixels * 1.05
       GROUP BY center_width, center_height
-      ORDER BY total_in_group DESC
       LIMIT @limit OFFSET @offset) AS raw
-	  ORDER BY center_width,center_height;`, tableKey),
+	  ORDER BY total_in_group DESC;`, tableKey),
 		map[string]any{
 			"startTimestamp": r.StartTimestamp,
 			"endTimestamp":   r.EndTimestamp,
