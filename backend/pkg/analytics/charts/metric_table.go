@@ -200,15 +200,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	// Determine if property comes from events table (main) or sessions table (s)
 	//isFromEvents := strings.Contains(propSel, "main.")
 	isFromEvents := slices.Contains(eventsProperties, r.MetricOf)
-	var eventsSelect string
-
-	if isFromEvents {
-		// Property comes from events table, select it in the events subquery
-		eventsSelect = fmt.Sprintf("main.session_id, %s AS metric_value", propSel)
-	} else {
-		// Property comes from sessions table, select session_id only in events subquery
-		eventsSelect = "main.session_id"
-	}
+	var eventsSelect string = "main.session_id"
 
 	// Build final join clause
 	var finalJoinClause string = "GROUP BY ALL\n"
