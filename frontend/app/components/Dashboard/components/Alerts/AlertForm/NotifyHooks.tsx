@@ -3,6 +3,7 @@ import { Checkbox } from 'UI';
 import { observer } from 'mobx-react-lite';
 import DropdownChips from '../DropdownChips';
 import { useTranslation } from 'react-i18next';
+import cn from 'classnames';
 
 interface INotifyHooks {
   instance: Alert;
@@ -12,6 +13,7 @@ interface INotifyHooks {
   validateEmail: (value: string) => boolean;
   edit: (data: any) => void;
   hooks: Array<any>;
+  isSmtp: boolean;
 }
 
 function NotifyHooks({
@@ -22,6 +24,7 @@ function NotifyHooks({
   msTeamsChannels,
   hooks,
   edit,
+  isSmtp,
 }: INotifyHooks) {
   const { t } = useTranslation();
   return (
@@ -114,6 +117,23 @@ function NotifyHooks({
               // @ts-ignore
               onChange={(selected) => edit({ emailInput: selected })}
             />
+
+            {!isSmtp && (
+              <div className={cn('mb-4 p-2 bg-amber rounded')}>
+                {t('SMTP is not configured (see')}&nbsp;
+                <a
+                  className="link"
+                  href="https://docs.openreplay.com/configuration/configure-smtp"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t('here')}
+                </a>{' '}
+                {t(
+                  'how to set it up). You can still add new users, but you’d have to manually copy then send them the invitation link.',
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

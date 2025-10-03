@@ -16,7 +16,7 @@ import NotifyHooks from './AlertForm/NotifyHooks';
 import AlertListItem from './AlertListItem';
 import Condition from './AlertForm/Condition';
 import { useTranslation } from 'react-i18next';
-import { PANEL_SIZES } from 'App/constants/panelSizes'
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 function Circle({ text }: { text: string }) {
   return (
@@ -71,7 +71,7 @@ interface IProps extends RouteComponentProps {
 
 function NewAlert(props: IProps) {
   const { t } = useTranslation();
-  const { alertsStore, settingsStore } = useStore();
+  const { alertsStore, settingsStore, userStore } = useStore();
   const {
     fetchTriggerOptions,
     init,
@@ -89,6 +89,7 @@ function NewAlert(props: IProps) {
   const { webhooks } = settingsStore;
   const { fetchWebhooks } = settingsStore;
   const { siteId } = props;
+  const isSmtp = userStore.account.smtp;
 
   useEffect(() => {
     init({});
@@ -127,7 +128,9 @@ function NewAlert(props: IProps) {
       await confirm({
         header: t('Confirm'),
         confirmButton: t('Yes, delete'),
-        confirmation: t('Are you sure you want to permanently delete this alert?'),
+        confirmation: t(
+          'Are you sure you want to permanently delete this alert?',
+        ),
       })
     ) {
       remove(instance.alertId)
@@ -250,9 +253,13 @@ function NewAlert(props: IProps) {
                 />
                 <div className="text-sm color-gray-medium">
                   {isThreshold &&
-                    t('Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.')}
+                    t(
+                      'Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.',
+                    )}
                   {!isThreshold &&
-                    t('Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.')}
+                    t(
+                      'Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.',
+                    )}
                 </div>
                 <div className="my-4" />
               </div>
@@ -277,7 +284,9 @@ function NewAlert(props: IProps) {
           <Section
             index="3"
             title={t('Notify Through')}
-            description={t("You'll be noticed in app notifications. Additionally opt in to receive alerts on:")}
+            description={t(
+              "You'll be noticed in app notifications. Additionally opt in to receive alerts on:",
+            )}
             content={
               <NotifyHooks
                 instance={instance}
@@ -287,6 +296,7 @@ function NewAlert(props: IProps) {
                 validateEmail={validateEmail}
                 hooks={hooks}
                 edit={edit}
+                isSmtp={isSmtp}
               />
             }
           />
