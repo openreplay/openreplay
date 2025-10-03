@@ -71,7 +71,7 @@ type MetricPayload struct {
 	MetricOf        string     `json:"metricOf" validate:"required,oneof=sessionCount userCount eventCount LOCATION userBrowser userDevice userCountry userId ISSUE sessions jsException referrer REQUEST screenResolution heatMapUrl webVitalUrl"`
 	MetricType      MetricType `json:"metricType"`
 	MetricValue     []string   `json:"metricValue"`
-	MetricFormat    string     `json:"metricFormat" validate:"oneof=sessionCount userCount screenResolution"`
+	MetricFormat    string     `json:"metricFormat" validate:"oneof=sessionCount userCount screenResolution eventCount"`
 	ViewType        string     `json:"viewType" validate:"oneof=lineChart areaChart barChart progressChart pieChart metric table chart columnChart list sunburst"`
 	Name            string     `json:"name"`
 	Series          []Series   `json:"series" validate:"min=0,max=5,dive"`
