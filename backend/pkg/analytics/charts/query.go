@@ -2,7 +2,6 @@ package charts
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -204,6 +203,9 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) []string {
 			}
 		}
 		return []string{"(" + strings.Join(parts, " AND ") + ")"}
+	}
+	if strings.HasPrefix(f.Name, "metadata_") {
+		return []string{buildCond(f.Name, f.Value, f.Operator, false)}
 	}
 
 	cfg, ok := propertyKeyMap[strings.ToUpper(f.Name)]
@@ -432,7 +434,6 @@ func isNegativeEventFilter(f model.Filter) bool {
 	// a negative event filter is one that has negative operators for all its properties
 	var count int = 0
 	for _, prop := range f.Filters {
-		log.Printf(">>>> prop:%+v\n", prop)
 		if isNegativeOperator(prop.Operator) {
 			count++
 		}
