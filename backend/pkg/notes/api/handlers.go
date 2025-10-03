@@ -47,10 +47,10 @@ type CreateNoteRequest struct {
 	Message   string  `json:"message"`
 	Tag       *string `json:"tag"`
 	Timestamp int64   `json:"timestamp"`
-	IsPublic  bool    `json:"is_public"`
+	IsPublic  bool    `json:"isPublic"`
 	Thumbnail *string `json:"thumbnail"`
-	StartAt   *uint64 `json:"start_at"`
-	EndAt     *uint64 `json:"end_at"`
+	StartAt   *uint64 `json:"startAt"`
+	EndAt     *uint64 `json:"endAt"`
 }
 
 // Notes
