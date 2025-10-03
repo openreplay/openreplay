@@ -21,7 +21,6 @@ type Session struct {
 	EventsCount          int
 	ErrorsCount          int
 	IssueTypes           []string
-	IssueScore           int
 	UserID               *string
 	UserAnonymousID      *string
 	Metadata1            *string
