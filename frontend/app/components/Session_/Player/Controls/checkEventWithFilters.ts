@@ -1,37 +1,44 @@
 import FilterItem from '@/mstore/types/filterItem';
+import { FilterKey } from '@/types/filter/filterType';
 
 export const checkEventWithFilters = (event: Event, filters: FilterItem[]) => {
-  let result = false;
-  filters.forEach((filter) => {
-    if (filter.name.toUpperCase() === event.type.toUpperCase()) {
-      if (filter.operator) {
-        const operator = operators[filter.operator];
-        if (operator) {
-          let usedValue = filter.value;
-          if (filter.name === 'CLICK') {
-            usedValue = handleClick(filter);
-            return !!operator(event.label, usedValue);
-          }
-          if (filter.name === 'LOCATION') {
-            usedValue = handleLocation(filter);
-            const pathname = event.url ? new URL(event.url).pathname : '';
-            return !!operator(pathname, usedValue);
-          }
-          if (filter.name === 'TAG_TRIGGER') {
-            usedValue = handleTag(filter);
-            return !!operator(event.name, usedValue);
-          }
-          if (filter.name === 'INPUT') {
-            usedValue = handleInput(filter);
-            return !!operator(event.label, usedValue);
-          }
-          result = !!operator(event.label, usedValue);
-        }
+  const filter = filters.find(
+    (f) => f.name.toUpperCase() === event.type.toUpperCase(),
+  );
+  if (filter?.operator) {
+    const operator = operators[filter.operator];
+    if (operator) {
+      let usedValue = filter.value ?? [];
+      if (filter.name === FilterKey.CLICK) {
+        usedValue = handleClick(filter);
+        if (isArrayEmpty(usedValue)) return true;
+        return !!operator(event.label, usedValue);
       }
+      if (filter.name === FilterKey.LOCATION) {
+        usedValue = handleLocation(filter);
+        const pathname = event.url ? new URL(event.url).pathname : '';
+        if (isArrayEmpty(usedValue)) return true;
+        return !!operator(pathname, usedValue);
+      }
+      if (filter.name === FilterKey.TAGGED_ELEMENT) {
+        usedValue = handleTag(filter);
+        if (isArrayEmpty(usedValue)) return true;
+        return !!operator(event.name, usedValue);
+      }
+      if (filter.name === FilterKey.INPUT) {
+        usedValue = handleInput(filter);
+        if (isArrayEmpty(usedValue)) return true;
+        return !!operator(event.label, usedValue);
+      }
+      if (isArrayEmpty(usedValue)) return true;
+      return !!operator(event.label, usedValue);
     }
-  });
-  return result;
+  }
+  return false;
 };
+
+const isArrayEmpty = (arr: any[]) =>
+  arr.length === 0 || (arr.length === 1 && arr[0] === '');
 
 const handleClick = (filter: FilterItem) => {
   const value = filter.filters?.find((f) => f.name === 'label')?.value ?? [];

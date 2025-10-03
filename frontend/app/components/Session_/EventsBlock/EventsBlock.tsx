@@ -31,8 +31,7 @@ function EventsBlock(props: IProps) {
   const defaultFramework = getDefaultFramework();
   const [mode, setMode] = React.useState(MODES.SELECT);
   const { t } = useTranslation();
-  const { notesStore, uiPlayerStore, sessionStore } =
-    useStore();
+  const { notesStore, uiPlayerStore, sessionStore } = useStore();
   const session = sessionStore.current;
   const notesWithEvents = session.notesWithEvents;
   const incidents = session.incidents;
@@ -88,9 +87,7 @@ function EventsBlock(props: IProps) {
       });
     }
     const eventsWithMobxNotes = [...incidents, ...notesWithEvents, ...notes, ].sort(sortEvents);
-    const filteredTabEvents = query.length
-      ? tabChangeEvents.filter((e) => (e.activeUrl as string).includes(query))
-      : tabChangeEvents;
+
     return mergeEventLists(
       filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
       tabChangeEvents,

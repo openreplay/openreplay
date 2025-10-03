@@ -367,10 +367,9 @@ export default class SessionStore {
           ...evData,
           events: evData.events.map((e) => ({
             ...e,
-            isHighlighted: checkEventWithFilters(
-              e,
-              searchStore.instance.filters,
-            ),
+            isHighlighted: searchStore.instance.filters.length
+              ? checkEventWithFilters(e, searchStore.instance.filters)
+              : false,
           })),
         });
       } catch (e) {
