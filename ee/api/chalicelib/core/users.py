@@ -709,8 +709,7 @@ def get_by_invitation_token(token, pass_token=None):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                """SELECT
-                        *,
+                f"""SELECT *,
                         DATE_PART('day',timezone('utc'::text, now()) \
                             - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
                         change_pwd_expire_at <= timezone('utc'::text, now()) AS expired_change,
