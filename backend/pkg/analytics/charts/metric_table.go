@@ -155,10 +155,14 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	if r.MetricOf == "screenResolution" {
 		return "", fmt.Errorf("Should call buildTableOfResolutionsQuery instead of buildQuery for screenResolution metric")
 	}
+	// Determine if property comes from events table (main) or sessions table (s)
+	//isFromEvents := strings.Contains(propSel, "main.")
+	isFromEvents := slices.Contains(eventsProperties, r.MetricOf)
+
 	// Build event filter conditions with error handling
 	durConds, _ := BuildDurationWhere(s.Filter.Filters)
 
-	eventConditions, otherConds := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
+	eventConditions, nameConditions, otherConds := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "main",
 		EventsOrder:    string(s.Filter.EventsOrder),
@@ -174,11 +178,17 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	}
 
 	prewhereParts := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, otherConds)
-	prewhereParts = append(prewhereParts, "notEmpty(metric_value)")
+	if isFromEvents {
+		prewhereParts = append(prewhereParts, "notEmpty(metric_value)")
+	}
 	sessionConditions := t.buildSessionConditions(r, metricFormat, durConds)
-	joinClause, _, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
+	joinClause, whereClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
 		return "", err
+	}
+	prewhereParts = append(prewhereParts, whereClause...)
+	if len(nameConditions) > 0 {
+		prewhereParts = append(prewhereParts, fmt.Sprintf("(%s)", strings.Join(nameConditions, " OR ")))
 	}
 
 	// Get property selector and determine if it's from events or sessions
@@ -189,9 +199,6 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		propSel = fmt.Sprintf("JSONExtractString(toString(main.`$properties`), '%s')", safePropName)
 	}
 
-	// Determine if property comes from events table (main) or sessions table (s)
-	//isFromEvents := strings.Contains(propSel, "main.")
-	isFromEvents := slices.Contains(eventsProperties, r.MetricOf)
 	var eventsSelect string = "main.session_id"
 
 	// Build final join clause
@@ -217,21 +224,24 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 		"any(total_count) AS total_count",
 	}
 
+	var sessionsSelect []string = []string{"DISTINCT session_id", "user_id"}
+
 	subquerySelectParts := t.subquerySelects(r)
 	subquerySelectParts = append(subquerySelectParts, "metric_value")
 	subquerySelectParts = append(subquerySelectParts, fmt.Sprintf("count(DISTINCT %s) OVER () AS total_count", distinctColumn))
-	var innerSelectParts []string
+	var innerSelectParts []string = []string{
+		eventsSelect,
+		"MIN(main.created_at) AS first_event_ts",
+		"MAX(main.created_at) AS last_event_ts",
+	}
 
 	if isFromEvents {
 		// Property from events table
 		subquerySelectParts = append([]string{"f.metric_value AS metric_value"}, subquerySelectParts...)
+		innerSelectParts = append(innerSelectParts, fmt.Sprintf("%s AS metric_value", propSel))
 
-	}
-	innerSelectParts = []string{
-		eventsSelect,
-		fmt.Sprintf("%s AS metric_value", propSel),
-		"MIN(main.created_at) AS first_event_ts",
-		"MAX(main.created_at) AS last_event_ts",
+	} else if r.MetricOf == "userId" {
+		sessionsSelect = append(sessionsSelect, "user_id AS metric_value")
 	}
 
 	var mainEventsTable = getMainEventsTable(r.StartTimestamp)
@@ -240,7 +250,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	query = fmt.Sprintf(`
 SELECT %s
 FROM (SELECT %s
-      FROM (SELECT DISTINCT session_id, user_id
+      FROM (SELECT %s
                   FROM %s AS s
                   WHERE %s
                   ) AS s
@@ -254,6 +264,7 @@ ORDER BY total DESC
 LIMIT %d OFFSET %d`,
 		strings.Join(baseSelectParts, ","),     // Main SELECT
 		strings.Join(subquerySelectParts, ","), // Subquery SELECT
+		strings.Join(sessionsSelect, ","),
 		mainSessionsTable,
 		strings.Join(sessionConditions, " AND "), // Sessions WHERE
 		strings.Join(innerSelectParts, ","),      // Inner SELECT
@@ -329,7 +340,7 @@ func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload, metricForma
 	// Build event filter conditions with error handling
 	durConds, _ := BuildDurationWhere(s.Filter.Filters)
 	sessFilters, _ := FilterOutTypes(s.Filter.Filters, []model.FilterType{FilterDuration, FilterUserAnonymousId})
-	eventConditions, otherConds := BuildEventConditions(sessFilters, BuildConditionsOptions{
+	eventConditions, _, otherConds := BuildEventConditions(sessFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "main",
 		EventsOrder:    string(s.Filter.EventsOrder),
@@ -455,7 +466,7 @@ func (t *TableQueryBuilder) buildCountJoinClause(eventConditions []string, opera
 	}
 	var havingClause string
 	var whereClause []string
-	if operator == "OR" {
+	if operator == "OR" || len(eventConditions) == 1 {
 		whereClause = append(whereClause, strings.Join(eventConditions, " OR "))
 	} else {
 		countConds := make([]string, len(eventConditions))

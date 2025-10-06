@@ -3,6 +3,7 @@ package charts
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -132,7 +133,8 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts 
 	}
 }
 
-func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions) ([]string, []string) {
+func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions) ([]string, []string, []string) {
+	//output: []eventConditions, []eventNameConditions, []otherConditions
 	opts := BuildConditionsOptions{
 		MainTableAlias:       "e",
 		PropertiesColumnName: "`$properties`",
@@ -152,6 +154,8 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 	if option.EventsOrder != "" {
 		opts.EventsOrder = option.EventsOrder
 	}
+	var eventNames []string
+
 	// A map so it can be used to ensure unique conditions
 	var eventConds map[string]any = make(map[string]any)
 	var otherConds map[string]any = make(map[string]any)
@@ -159,7 +163,10 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 		if f.Type == FilterDuration || f.Type == FilterUserAnonymousId {
 			continue
 		}
-		conds := addFilter(f, opts)
+		conds, nameCondition := addFilter(f, opts)
+		if !slices.Contains(eventNames, nameCondition) {
+			eventNames = append(eventNames, nameCondition)
+		}
 		if f.IsEvent {
 			//eventConds = append(eventConds, conds...)
 			for _, c := range conds {
@@ -180,32 +187,35 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 	for k := range otherConds {
 		otherConditions = append(otherConditions, k)
 	}
-	return eventConditions, otherConditions
+	return eventConditions, eventNames, otherConditions
 }
 
-func addFilter(f model.Filter, opts BuildConditionsOptions) []string {
+func addFilter(f model.Filter, opts BuildConditionsOptions) ([]string, string) {
+	//output: []conditions, nameCondition
 	alias := opts.MainTableAlias
 	if alias != "" && !strings.HasSuffix(alias, ".") {
 		alias += "."
 	}
+	var nameCondition string = ""
 	if f.IsEvent {
+		nameCondition = fmt.Sprintf("%s\"$event_name\" = '%s'", alias, f.Name)
 		var parts []string
-		parts = append(parts, fmt.Sprintf("%s\"$event_name\" = '%s'", alias, f.Name))
+		parts = append(parts, nameCondition)
 
 		if f.AutoCaptured {
 			parts = append(parts, fmt.Sprintf("%s\"$auto_captured\"", alias))
 		}
 
 		for _, sub := range f.Filters {
-			subConds := addFilter(sub, opts)
+			subConds, _ := addFilter(sub, opts)
 			if len(subConds) > 0 {
 				parts = append(parts, "("+strings.Join(subConds, " AND ")+")")
 			}
 		}
-		return []string{"(" + strings.Join(parts, " AND ") + ")"}
+		return []string{"(" + strings.Join(parts, " AND ") + ")"}, nameCondition
 	}
 	if strings.HasPrefix(f.Name, "metadata_") {
-		return []string{buildCond(f.Name, f.Value, f.Operator, false)}
+		return []string{buildCond(f.Name, f.Value, f.Operator, false)}, ""
 	}
 
 	cfg, ok := propertyKeyMap[strings.ToUpper(f.Name)]
@@ -218,14 +228,14 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) []string {
 	case "isAny", "onAny":
 		//This part is unreachable, because you already have if f.IsEvent&return above
 		if f.IsEvent {
-			return []string{fmt.Sprintf("%s\"$event_name\" = '%s'", alias, f.Name)}
+			return []string{fmt.Sprintf("%s\"$event_name\" = '%s'", alias, f.Name)}, ""
 		}
 	default:
 		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric); c != "" {
-			return []string{c}
+			return []string{c}, ""
 		}
 	}
-	return []string{}
+	return []string{}, ""
 }
 
 var compOps = map[string]string{
@@ -492,7 +502,7 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 	for i, f := range negativeEvents {
 		negativeEvents[i] = reverseNegativeFilter(f)
 	}
-	evConds, misc := BuildEventConditions(eventFiltersList, BuildConditionsOptions{
+	evConds, _, misc := BuildEventConditions(eventFiltersList, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: eventsAlias,
 		EventsOrder:    eventsOrder,
@@ -500,12 +510,12 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 	events = append(events, evConds...)
 	eventFilters = append(eventFilters, misc...)
 
-	nevConds, _ := BuildEventConditions(negativeEvents, BuildConditionsOptions{
+	nevConds, _, _ := BuildEventConditions(negativeEvents, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: eventsAlias,
 		EventsOrder:    eventsOrder,
 	})
-	_, sConds := BuildEventConditions(sessionFiltersList, BuildConditionsOptions{
+	_, _, sConds := BuildEventConditions(sessionFiltersList, BuildConditionsOptions{
 		DefinedColumns: SessionColumns,
 		MainTableAlias: sessionsAlias,
 	})
