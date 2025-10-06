@@ -66,7 +66,7 @@ var eventsProperties []string = []string{string(MetricOfTableLocation)}
 
 var propertySelectorMap = map[string]string{
 	string(MetricOfTableLocation):   "`$current_path`",
-	string(MetricOfTableUserId):     "if(notEmpty(user_id), user_id, 'Anonymous')",
+	string(MetricOfTableUserId):     "user_id",
 	string(MetricOfTableBrowser):    "main.`$browser`",
 	string(MetricOfTableDevice):     "if(notEmpty(user_device), user_device, 'Undefined')",
 	string(MetricOfTableCountry):    "toString(user_country)",
@@ -102,7 +102,7 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 	if err != nil {
 		return nil, fmt.Errorf("error building query: %w", err)
 	}
-	var rawValues []TableValue
+	var rawValues []TableValue = make([]TableValue, 0)
 	if err = conn.Select(context.Background(), &rawValues, query); err != nil {
 		log.Printf("Error executing query: %s\nQuery: %s", err, query)
 		return nil, err
@@ -132,7 +132,7 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload, conn driver
 	if err != nil {
 		return nil, fmt.Errorf("error executing tmp query for screenResolution: %w", err)
 	}
-	var rawValues []ResolutionTableValue
+	var rawValues []ResolutionTableValue = make([]ResolutionTableValue, 0)
 	if err = conn.Select(context.Background(), &rawValues, query, queryParams...); err != nil {
 		log.Printf("Error executing Table Of Resolutions query: %s\nQuery: %s", err, query)
 		return nil, err
@@ -152,10 +152,6 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload, conn driver
 func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string, error) {
 	if r == nil {
 		return "", errors.New("payload is nil")
-	}
-
-	if r.StartTimestamp >= r.EndTimestamp {
-		return "", errors.New("start timestamp must be before end timestamp")
 	}
 
 	s := r.Series[0]
@@ -211,7 +207,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	// Determine aggregation column
 	distinctColumn := "session_id"
 	if metricFormat == MetricFormatUserCount {
-		distinctColumn = "if(empty(user_id), toString(user_uuid), user_id)"
+		distinctColumn = "user_id"
 	}
 
 	pagination := t.calculatePagination(r.Page, r.Limit)
@@ -248,7 +244,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	query = fmt.Sprintf(`
 SELECT %s
 FROM (SELECT %s
-      FROM (SELECT DISTINCT session_id
+      FROM (SELECT DISTINCT session_id, user_id
                   FROM %s AS s
                   WHERE %s
                   ) AS s
@@ -293,7 +289,7 @@ func (t *TableQueryBuilder) buildSimplifiedQuery(r *Payload, metricFormat string
 	// Determine aggregation column
 	distinctColumn := "session_id"
 	if metricFormat == MetricFormatUserCount {
-		distinctColumn = "if(empty(user_id), toString(user_uuid), user_id)"
+		distinctColumn = "user_id"
 	}
 
 	pagination := t.calculatePagination(r.Page, r.Limit)
@@ -606,7 +602,7 @@ func (*TableQueryBuilder) subquerySelects(r *Payload) []string {
 	}
 
 	if r.MetricOf == string(MetricOfTableUserId) || r.MetricFormat == MetricFormatUserCount {
-		subquerySelectParts = append([]string{"s.user_id AS user_id", "s.user_uuid AS user_uuid"}, subquerySelectParts...)
+		subquerySelectParts = append([]string{"s.user_id AS user_id"}, subquerySelectParts...)
 	}
 
 	if r.MetricOf == string(MetricOfTableResolution) {
