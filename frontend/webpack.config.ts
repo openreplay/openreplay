@@ -20,7 +20,30 @@ export default function build({ production }: { production?: boolean }) {
   const isDevelopment = process.env.NODE_ENV !== 'production' && !production;
   dotenv.config({ path: __dirname + '/.env' });
 
-  const ENV_VARIABLES = JSON.stringify(process.env);
+  // this limits the scope of the env loaded into window
+  const ENV_VARIABLES = JSON.stringify({
+    NODE_ENV: process.env.NODE_ENV,
+    SOURCEMAP: process.env.SOURCEMAP,
+    KAI_TESTING: process.env.KAI_TESTING,
+    ORIGIN: process.env.ORIGIN,
+    ASSETS_HOST: process.env.ASSETS_HOST,
+    API_EDP: process.env.API_EDP,
+    SENTRY_ENABLED: process.env.SENTRY_ENABLED,
+    SENTRY_URL: process.env.SENTRY_URL,
+    CAPTCHA_ENABLED: process.env.CAPTCHA_ENABLED,
+    CAPTCHA_SITE_KEY: process.env.CAPTCHA_SITE_KEY,
+    MINIO_ENDPOINT: process.env.MINIO_ENDPOINT,
+    MINIO_POST: process.env.MINIO_PORT,
+    MINIO_USE_SSL: process.env.MINIO_USE_SSL,
+    MINIO_ACCESS_KEY: process.env.MINIO_ACCESS_KEY,
+    MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY,
+    VERSION: process.env.VERSION,
+    TRACKER_VERSION: process.env.TRACKER_VERSION,
+    COMMIT_HASH: process.env.COMMIT_HASH,
+    TRACKER_HOST: process.env.TRACKER_HOST,
+    TEST_FOSS_LOGIN: process.env.TEST_FOSS_LOGIN,
+    TEST_FOSS_PASSWORD: process.env.TEST_FOSS_PASSWORD,
+  });
   const finalEnv = isDevelopment ? 'development' : 'production'
   console.log('running in', finalEnv);
 
