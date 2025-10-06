@@ -125,7 +125,7 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	// Build ERROR event conditions
 	var errorEventConds []string
 	if len(errorEventFilters) > 0 {
-		errorEventConds, _ = BuildEventConditions(
+		errorEventConds, _, _ = BuildEventConditions(
 			errorEventFilters,
 			BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"},
 		)
@@ -134,7 +134,7 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	// Build conditions for session-level event filtering (e.g., sessions that had LOCATION events)
 	var sessionEventConds []string
 	if len(sessionEventFilters) > 0 {
-		sessionEventFilterConds, _ := BuildEventConditions(
+		sessionEventFilterConds, _, _ := BuildEventConditions(
 			sessionEventFilters,
 			BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "se"},
 		)
