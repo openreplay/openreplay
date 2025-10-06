@@ -11660,25 +11660,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lottie-react@npm:^2.4.1":
-  version: 2.4.1
-  resolution: "lottie-react@npm:2.4.1"
-  dependencies:
-    lottie-web: "npm:^5.10.2"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10c1/1b35efb3def9e7f7bf601713a1f0d4fe21727169f5eb20a4735efe13b4484275043e8e6c95b4a07e317b838ef3cbe1dd0e4f75554407a929d565018926252000
-  languageName: node
-  linkType: hard
-
-"lottie-web@npm:^5.10.2":
-  version: 5.13.0
-  resolution: "lottie-web@npm:5.13.0"
-  checksum: 10c1/93eb84f936d9d65681b3466b4c5ef0f74ec7cea7d80cdc25739204d1226d3422bdbe90a0bfa72cbc2bfd9ea3e4f3c9c8897f0eed8e2ea48132338121ca30015b
-  languageName: node
-  linkType: hard
-
 "lower-case@npm:^2.0.2":
   version: 2.0.2
   resolution: "lower-case@npm:2.0.2"
@@ -13306,7 +13287,6 @@ __metadata:
     jest-environment-jsdom: "npm:^29.7.0"
     js-untar: "npm:^2.0.0"
     jspdf: "npm:^3.0.3"
-    lottie-react: "npm:^2.4.1"
     lucide-react: "npm:0.487.0"
     luxon: "npm:^3.7.2"
     microdiff: "npm:^1.5.0"

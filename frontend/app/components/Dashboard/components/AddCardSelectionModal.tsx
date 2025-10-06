@@ -6,7 +6,6 @@ import { useStore } from 'App/mstore';
 import NewDashboardModal from 'Components/Dashboard/components/DashboardList/NewDashModal';
 
 import { useTranslation } from 'react-i18next';
-import AiQuerySection, { panelSize } from './AiQuerySection';
 
 interface Props {
   open: boolean;
@@ -42,7 +41,6 @@ function AddCardSelectionModal(props: Props) {
         className="addCard"
         width={panelSize}
       >
-        <AiQuerySection />
         <Row gutter={16} justify="center" className="py-5">
           <Col span={12}>
             <div

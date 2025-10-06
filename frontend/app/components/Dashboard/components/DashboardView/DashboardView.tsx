@@ -12,8 +12,7 @@ import withReport from 'App/components/hocs/withReport';
 import { useHistory } from 'react-router';
 import DashboardHeader from '../DashboardHeader';
 import DashboardWidgetGrid from '../DashboardWidgetGrid';
-import AiQuery from './AiQuery';
-import { PANEL_SIZES } from 'App/constants/panelSizes'
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 interface IProps {
   siteId: string;
