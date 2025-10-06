@@ -92,12 +92,7 @@ func (t *TimeSeriesQueryBuilder) validatePayload(p *Payload) error {
 	if p == nil {
 		return fmt.Errorf("payload cannot be nil")
 	}
-	if p.ProjectId == 0 {
-		return fmt.Errorf("project_id is required")
-	}
-	if p.StartTimestamp >= p.EndTimestamp {
-		return fmt.Errorf("start_timestamp must be less than end_timestamp")
-	}
+
 	if len(p.Series) == 0 {
 		return fmt.Errorf("at least one series is required")
 	}

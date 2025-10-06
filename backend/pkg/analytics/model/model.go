@@ -77,8 +77,8 @@ type MetricPayload struct {
 	Series          []Series   `json:"series" validate:"min=0,max=5,dive"`
 	Limit           int        `json:"limit" validate:"required,min=1,max=200"`
 	Page            int        `json:"page" validate:"required,min=1"`
-	StartPoint      []Filter   `json:"startPoint"`
-	Exclude         []Filter   `json:"excludes"`
+	StartPoint      []Filter   `json:"startPoint" validate:"omitempty,dive"`
+	Exclude         []Filter   `json:"excludes" validate:"omitempty,dive"`
 	Rows            uint64     `json:"rows" validate:"omitempty,min=1,max=50"`
 	Columns         uint64     `json:"stepsAfter"`
 	PreviousColumns uint64     `json:"stepsBefore"`
