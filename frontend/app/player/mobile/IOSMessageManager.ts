@@ -77,6 +77,7 @@ export interface State extends ScreenState, ListsState {
   updateWarnings: number;
   currentSnapshot: TarFile | null;
   inBackground: boolean;
+  orientation: 'portrait' | 'landscapeLeft' | 'landscapeRight';
 }
 
 const userEvents = [
@@ -103,21 +104,19 @@ export default class IOSMessageManager implements IMessageManager {
     messagesLoading: false,
     currentSnapshot: null,
     inBackground: false,
+    orientation: 'portrait',
   };
 
   private activityManager: ActivityManager | null = null;
-
   private performanceManager = new IOSPerformanceTrackManager();
+  private touchManager: TouchManager;
+  public snapshotManager: SnapshotManager;
 
   private readonly sessionStart: number;
 
   private lastMessageTime: number = 0;
 
-  private touchManager: TouchManager;
-
   private lists: Lists;
-
-  public snapshotManager: SnapshotManager;
 
   private appFocusTracker = new ListWalker<{
     tp: 102;
@@ -125,6 +124,10 @@ export default class IOSMessageManager implements IMessageManager {
     timestamp: number;
     value: number;
     name: string;
+  }>();
+  private orientationManager = new ListWalker<{
+    value: number;
+    time: number;
   }>();
 
   constructor(
@@ -228,6 +231,14 @@ export default class IOSMessageManager implements IMessageManager {
       });
     }
 
+    const orientation = this.orientationManager.moveGetLast(t);
+    if (orientation) {
+      const newOrientation = getMobileOrientation(orientation.value);
+      Object.assign(stateToUpdate, {
+        orientation: newOrientation,
+      });
+    }
+
     this.touchManager.move(t);
     if (
       this.waitingForFiles &&
@@ -266,6 +277,9 @@ export default class IOSMessageManager implements IMessageManager {
           if (msg.name === 'background') {
             this.appFocusTracker.append(msg);
           }
+        }
+        if (msg.name === 'orientation') {
+          this.orientationManager.append(msg);
         }
         if (performanceWarnings.includes(msg.name)) {
           // @ts-ignore
@@ -330,3 +344,10 @@ export default class IOSMessageManager implements IMessageManager {
     this.state.update(IOSMessageManager.INITIAL_STATE);
   }
 }
+
+const getMobileOrientation = (orientationRaw: number) => {
+  if (orientationRaw === 3) return 'landscapeLeft';
+  if (orientationRaw === 4) return 'landscapeRight';
+
+  return 'portrait';
+};
