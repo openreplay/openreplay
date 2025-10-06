@@ -56,10 +56,6 @@ const (
 	MetricFormatUserCount    = "userCount"
 	MetricFormatEventCount   = "eventCount"
 	nilUUIDString            = "00000000-0000-0000-0000-000000000000"
-
-	// Pagination constants
-	DefaultLimit = 10
-	MaxLimit     = 1000
 )
 
 var eventsProperties []string = []string{string(MetricOfTableLocation)}
@@ -123,18 +119,18 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload, conn driver
 		metricFormat = MetricFormatSessionCount
 	}
 
-	tmpQuery, query, params, err := t.buildTableOfResolutionsQuery(p, metricFormat)
+	queries, params, err := t.buildTableOfResolutionsQuery(p, metricFormat)
 	if err != nil {
 		return nil, fmt.Errorf("error building screenResolution queries: %w", err)
 	}
 	queryParams := convertParams(params)
-	err = conn.Exec(context.Background(), tmpQuery, queryParams...)
+	err = conn.Exec(context.Background(), queries[0], queryParams...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing tmp query for screenResolution: %w", err)
 	}
 	var rawValues []ResolutionTableValue = make([]ResolutionTableValue, 0)
-	if err = conn.Select(context.Background(), &rawValues, query, queryParams...); err != nil {
-		log.Printf("Error executing Table Of Resolutions query: %s\nQuery: %s", err, query)
+	if err = conn.Select(context.Background(), &rawValues, queries[1], queryParams...); err != nil {
+		log.Printf("Error executing Table Of Resolutions query: %s\nQuery: %s", err, queries[1])
 		return nil, err
 	}
 
@@ -328,7 +324,7 @@ LIMIT %d OFFSET %d`,
 	return query, nil
 }
 
-func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload, metricFormat string) (string, string, map[string]any, error) {
+func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload, metricFormat string) ([]string, map[string]any, error) {
 	s := r.Series[0]
 	// Build event filter conditions with error handling
 	durConds, _ := BuildDurationWhere(s.Filter.Filters)
@@ -342,7 +338,7 @@ func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload, metricForma
 	queryConditions := t.buildSessionConditions(r, metricFormat, durConds)
 	joinClause, extraWhere, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
-		return "", "", nil, err
+		return []string{}, nil, err
 	}
 	queryConditions = append(queryConditions, extraWhere...)
 
@@ -364,7 +360,7 @@ func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload, metricForma
 
 	pagination := t.calculatePagination(r.Page, r.Limit)
 	tableKey := fmt.Sprintf("%d", time.Now().UnixMilli())
-	return fmt.Sprintf(`
+	return []string{fmt.Sprintf(`
 CREATE TEMPORARY TABLE base_%[1]v AS (
 			SELECT screen_width,
 				   screen_height,
@@ -383,7 +379,7 @@ CREATE TEMPORARY TABLE base_%[1]v AS (
        			  %[4]v) AS raw
 			GROUP BY ALL);`,
 			tableKey, main_column, strings.Join(queryConditions, " AND "), joinClause, joinEvents),
-		fmt.Sprintf(`
+			fmt.Sprintf(`
 SELECT CAST(full_count AS UInt64) AS full_count,
        CAST(number_of_rows AS UInt64)       AS number_of_rows,
        CAST(center_width AS UInt64)         AS center_width,
@@ -407,7 +403,7 @@ FROM (SELECT any(full_count)               AS full_count,
                     ON base_match.pixels BETWEEN base_center.pixels * 0.95 AND base_center.pixels * 1.05
       GROUP BY center_width, center_height
       LIMIT @limit OFFSET @offset) AS raw
-	  ORDER BY total_in_group DESC;`, tableKey),
+	  ORDER BY total_in_group DESC;`, tableKey)},
 		map[string]any{
 			"startTimestamp": r.StartTimestamp,
 			"endTimestamp":   r.EndTimestamp,
@@ -578,21 +574,9 @@ func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string, projectI
 }
 
 func (t *TableQueryBuilder) calculatePagination(page, limit int) model.PaginationParams {
-	if limit <= 0 {
-		limit = DefaultLimit
-	}
-	if limit > MaxLimit {
-		limit = MaxLimit
-	}
-
-	offset := 0
-	if page > 1 {
-		offset = (page - 1) * limit
-	}
-
 	return model.PaginationParams{
 		Limit:  limit,
-		Offset: offset,
+		Offset: (page - 1) * limit,
 	}
 }
 
