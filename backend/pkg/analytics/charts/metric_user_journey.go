@@ -191,14 +191,14 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		mainColumn = fmt.Sprintf("multiIf(%s,%s)", strings.Join(b, ","), subEvents[len(subEvents)-1].Column)
 	}
 
-	startPointsConditions, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "events"})
+	startPointsConditions, _, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "events"})
 	for j := 0; j < len(p.StartPoint); j++ {
 		for i := 0; i < len(p.StartPoint[j].Filters); i++ {
 			// In the future, make sure UI sends $auto_captured for predefined events properties
 			p.StartPoint[j].Filters[i].Name = "e_value"
 		}
 	}
-	step0Conditions, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: map[string]string{"e_value": "e_value"}, MainTableAlias: "pre_ranked_events"})
+	step0Conditions, _, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: map[string]string{"e_value": "e_value"}, MainTableAlias: "pre_ranked_events"})
 	if len(startPointsConditions) > 0 {
 		startPointsConditions = []string{fmt.Sprintf("(%s)", strings.Join(startPointsConditions, " OR "))}
 		startPointsConditions = append(startPointsConditions, fmt.Sprintf("events.project_id = toUInt16(%d)", p.ProjectId))
@@ -222,7 +222,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 			exclusions[ef.Name] = []string{fmt.Sprintf("`$event_name` %s '%s'", op, ef.Name)}
 		}
 	}
-	_, sessionsConditions := BuildEventConditions(p.Series[0].Filter.Filters, BuildConditionsOptions{DefinedColumns: mainSessionsColumns, MainTableAlias: "sessions"})
+	_, _, sessionsConditions := BuildEventConditions(p.Series[0].Filter.Filters, BuildConditionsOptions{DefinedColumns: mainSessionsColumns, MainTableAlias: "sessions"})
 	chSubQuery := []string{fmt.Sprintf("events.project_id = toUInt16(%d)", p.ProjectId),
 		fmt.Sprintf("events.created_at >= toDateTime(%d / 1000)", p.StartTimestamp),
 		fmt.Sprintf("events.created_at < toDateTime(%d / 1000)", p.EndTimestamp)}

@@ -129,14 +129,14 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		}
 	}
 
-	eventConditions, otherConditions := BuildEventConditions(eventFilters, BuildConditionsOptions{
+	eventConditions, _, otherConditions := BuildEventConditions(eventFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
 	})
 	//TODO: optmize eventsConditions by extracting common conditions alone (needs to re-write BuildEventConditions)
 	var sessionConditions []string = make([]string, 0)
 	if len(sessionFilters) > 0 {
-		_, sessionConditions = BuildEventConditions(sessionFilters, BuildConditionsOptions{
+		_, _, sessionConditions = BuildEventConditions(sessionFilters, BuildConditionsOptions{
 			DefinedColumns: SessionColumns,
 			MainTableAlias: "s",
 		})

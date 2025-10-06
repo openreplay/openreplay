@@ -150,7 +150,7 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 }
 
 func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Series, metric string, eventFilters, sessionFilters []model.Filter) (string, error) {
-	eventConds, otherConds := BuildEventConditions(
+	eventConds, eventNameConds, otherConds := BuildEventConditions(
 		eventFilters,
 		BuildConditionsOptions{
 			DefinedColumns:       mainColumns,
@@ -174,6 +174,9 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 
 	if len(extraWhereParts) > 0 {
 		whereParts = append(whereParts, strings.Join(extraWhereParts, " AND "))
+	}
+	if len(eventNameConds) > 0 {
+		whereParts = append(whereParts, strings.Join(eventNameConds, " OR "))
 	}
 
 	var sb strings.Builder
@@ -234,7 +237,7 @@ WHERE %s`, strings.Join(whereParts, " AND "))
 
 // buildSessionsFilterConditions builds WHERE conditions for sessions table queries
 func (t *TimeSeriesQueryBuilder) buildSessionsFilterConditions(sessionFilters []model.Filter) []string {
-	_, sessionConditions := BuildEventConditions(sessionFilters, BuildConditionsOptions{
+	_, _, sessionConditions := BuildEventConditions(sessionFilters, BuildConditionsOptions{
 		DefinedColumns: SessionColumns,
 		MainTableAlias: "s",
 	})
