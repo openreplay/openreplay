@@ -86,8 +86,7 @@ FROM experimental.sessions AS s
 	%s
 WHERE %s
 ORDER BY %s %s
-LIMIT %d OFFSET %d
-`
+LIMIT %d OFFSET %d;`
 	viewedSessionsJoinTemplate = `ANY LEFT JOIN (
 	SELECT DISTINCT session_id
 	FROM experimental.user_viewed_sessions
@@ -113,12 +112,6 @@ LIMIT %d OFFSET %d
 func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
 	if req == nil {
 		return nil, errors.New("nil request")
-	}
-	if req.Page < 1 {
-		req.Page = 1
-	}
-	if req.Limit <= 0 || req.Limit > 1000 {
-		req.Limit = 100
 	}
 
 	// Handle series requests
@@ -191,7 +184,6 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 	}
 
 	viewedJoin := fmt.Sprintf(viewedSessionsJoinTemplate, userId, projectId, startSec)
-
 	query := fmt.Sprintf(sessionsQuery,
 		eventsInnerJoin,
 		leftAntiJoin,
@@ -284,6 +276,7 @@ func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.
 
 		query := fmt.Sprintf(sessionsQuery,
 			eventsInnerJoin,
+			"", //LEFT ANTI JOIN not supported in series context yet
 			viewedJoin,
 			strings.Join(sessionsWhere, " AND "),
 			sortField,
