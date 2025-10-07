@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"fmt"
 	"slices"
 	"strings"
@@ -22,13 +23,12 @@ type FilterGroup struct {
 }
 
 type Series struct {
-	Name      string      `json:"name"`
-	Filter    FilterGroup `json:"filter"`
-	CreatedAt time.Time   `json:"createdAt" validate:"omitempty"`
-	DeletedAt *time.Time  `json:"deletedAt" validate:"omitempty"`
-	SeriesID  int64       `json:"seriesId,omitempty" validate:"omitempty"` // Optional, used for updates
-	MetricID  int64       `json:"metricId,omitempty" validate:"omitempty"` // Optional, used for updates
-	Index     *int64      `json:"index,omitempty" validate:"omitempty"`    // Optional, used for ordering
+	Name      string        `json:"name"`
+	Filter    FilterGroup   `json:"filter"`
+	CreatedAt time.Time     `json:"createdAt" validate:"omitempty"`
+	SeriesID  sql.NullInt64 `json:"seriesId,omitempty" validate:"omitempty"` // Optional, used for updates
+	MetricID  sql.NullInt64 `json:"metricId,omitempty" validate:"omitempty"` // Optional, used for updates
+	Index     sql.NullInt16 `json:"index,omitempty" validate:"omitempty"`    // Optional, used for ordering
 }
 
 type SeriesFilter struct {
@@ -46,7 +46,7 @@ type Filter struct {
 	Operator      string     `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >="`
 	PropertyOrder string     `json:"propertyOrder" validate:"required,oneof=or and"`
 	Value         []string   `json:"value" validate:"required,dive,required,min=0,max=10"`
-	IsEvent       bool       `json:"isEvent" validate:"required"`
+	IsEvent       bool       `json:"isEvent"` // validate:"required" doesn't work with 'false' value
 	DataType      string     `json:"dataType" validate:"required,oneof=string number boolean integer"`
 	AutoCaptured  bool       `json:"autoCaptured"`      // Indicates if the filter is auto-captured
 	Filters       []Filter   `json:"filters,omitempty"` // Nested filters for complex conditions
