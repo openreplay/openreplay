@@ -17,8 +17,8 @@ type EventType string
 type EventOrder string
 
 type FilterGroup struct {
-	Filters     []Filter   `json:"filters"`
-	EventsOrder EventOrder `json:"eventsOrder"`
+	Filters     []Filter   `json:"filters" validate:"dive"`
+	EventsOrder EventOrder `json:"eventsOrder" validate:"required,oneof=then or and"`
 }
 
 type Series struct {
@@ -26,9 +26,9 @@ type Series struct {
 	Filter    FilterGroup `json:"filter"`
 	CreatedAt time.Time   `json:"createdAt" validate:"omitempty"`
 	DeletedAt *time.Time  `json:"deletedAt" validate:"omitempty"`
-	SeriesID  int64       `json:"seriesId,omitempty"` // Optional, used for updates
-	MetricID  int64       `json:"metricId,omitempty"` // Optional, used for updates
-	Index     *int64      `json:"index,omitempty"`    // Optional, used for ordering
+	SeriesID  int64       `json:"seriesId,omitempty" validate:"omitempty"` // Optional, used for updates
+	MetricID  int64       `json:"metricId,omitempty" validate:"omitempty"` // Optional, used for updates
+	Index     *int64      `json:"index,omitempty" validate:"omitempty"`    // Optional, used for ordering
 }
 
 type SeriesFilter struct {
@@ -74,7 +74,7 @@ type MetricPayload struct {
 	MetricFormat    string     `json:"metricFormat" validate:"oneof=sessionCount userCount screenResolution eventCount"`
 	ViewType        string     `json:"viewType" validate:"oneof=lineChart areaChart barChart progressChart pieChart metric table chart columnChart list sunburst"`
 	Name            string     `json:"name"`
-	Series          []Series   `json:"series" validate:"min=0,max=5,dive"`
+	Series          []Series   `json:"series" validate:"max=5,dive"`
 	Limit           int        `json:"limit" validate:"required,min=1,max=200"`
 	Page            int        `json:"page" validate:"required,min=1"`
 	StartPoint      []Filter   `json:"startPoint" validate:"omitempty,dive"`
@@ -149,15 +149,15 @@ type Session struct {
 }
 
 type SessionsSearchRequest struct {
-	Filters     []Filter `json:"filters"`
-	StartDate   int64    `json:"startTimestamp"`
-	EndDate     int64    `json:"endTimestamp"`
+	Filters     []Filter `json:"filters" validate:"omitempty,dive"`
+	StartDate   int64    `json:"startTimestamp" validate:"required,min=946684800000"`
+	EndDate     int64    `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartDate"`
 	Sort        string   `json:"sort"`
-	Order       string   `json:"order"`
-	EventsOrder string   `json:"eventsOrder"`
-	Limit       int      `json:"limit"`
-	Page        int      `json:"page"`
-	Series      []Series `json:"series"`
+	Order       string   `json:"order" validate:"omitempty,oneof=asc desc"`
+	EventsOrder string   `json:"eventsOrder" validate:"required,oneof=then or and"`
+	Limit       int      `json:"limit" validate:"required,min=1,max=200"`
+	Page        int      `json:"page" validate:"required,min=1"`
+	Series      []Series `json:"series" validate:"omitempty,max=5,dive"`
 }
 
 type GetSessionsResponse struct {
