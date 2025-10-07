@@ -43,21 +43,25 @@ function ReplayWindow({
     orientation: phoneOrientation,
   } = playerContext.store.get();
 
-  let phoneShell: string;
-  let styles: Record<string, any>;
-  if (!isAndroid) {
-    const { svg: iphoneShellSvg, styles: iphoneStyles } =
-      mapIphoneModel(userDevice);
-    phoneShell = iphoneShellSvg;
-    styles = iphoneStyles;
-  } else {
-    const { svg: androidShell, styles: androidStyles } = mapAndroidModel(
-      screenWidth,
-      screenHeight,
-    );
-    phoneShell = androidShell;
-    styles = androidStyles;
-  }
+  const { phoneShell, styles } = React.useMemo(() => {
+    if (!isAndroid) {
+      const { svg: iphoneShellSvg, styles: iphoneStyles } =
+        mapIphoneModel(userDevice);
+      return {
+        phoneShell: iphoneShellSvg,
+        styles: iphoneStyles,
+      };
+    } else {
+      const { svg: androidShell, styles: androidStyles } = mapAndroidModel(
+        screenWidth,
+        screenHeight,
+      );
+      return {
+        phoneShell: androidShell,
+        styles: androidStyles,
+      };
+    }
+  }, [isAndroid, screenWidth, screenHeight, userDevice]);
 
   React.useEffect(() => {
     if (videoRef.current && mode === PlayerMode.VIDEO) {
