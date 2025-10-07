@@ -41,13 +41,13 @@ var OperatorsClickEvent []string = []string{"selectorIs", "selectorIsAny", "sele
 var OperatorsMath []string = []string{"=", "<", ">", "<=", ">="}
 
 type Filter struct {
-	Name          string     `json:"name" validate:"required,min=1,max=100"`
-	Type          FilterType `json:"type" validate:"required"` // This is only used if IsEvent is false
+	Name          string     `json:"name"`
+	Type          FilterType `json:"type"` // This is only used if IsEvent is false
 	Operator      string     `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >="`
 	PropertyOrder string     `json:"propertyOrder" validate:"required,oneof=or and"`
-	Value         []string   `json:"value" validate:"required,dive,required,min=0,max=10"`
+	Value         []string   `json:"value" validate:"dive,min=0,max=10"`
 	IsEvent       bool       `json:"isEvent"` // validate:"required" doesn't work with 'false' value
-	DataType      string     `json:"dataType" validate:"required,oneof=string number boolean integer"`
+	DataType      string     `json:"dataType" validate:"omitempty,oneof=string number boolean integer"`
 	AutoCaptured  bool       `json:"autoCaptured"`      // Indicates if the filter is auto-captured
 	Filters       []Filter   `json:"filters,omitempty"` // Nested filters for complex conditions
 	//	With such structure, a user can send an infinite nested filter, and the API will parse it
