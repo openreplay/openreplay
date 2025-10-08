@@ -215,7 +215,11 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) ([]string, string) {
 		return []string{"(" + strings.Join(parts, " AND ") + ")"}, nameCondition
 	}
 	if strings.HasPrefix(f.Name, "metadata_") {
-		return []string{buildCond(f.Name, f.Value, f.Operator, false)}, ""
+		cond := buildCond(f.Name, f.Value, f.Operator, false)
+		if cond != "" {
+			return []string{cond}, ""
+		}
+		return []string{}, ""
 	}
 
 	cfg, ok := propertyKeyMap[strings.ToUpper(f.Name)]
@@ -248,10 +252,12 @@ var compOps = map[string]string{
 }
 
 func buildCond(expr string, values []string, operator string, isNumeric bool) string {
-	if len(values) == 0 {
+	if len(values) == 0 && operator != "isAny" {
 		return ""
 	}
 	switch operator {
+	case "isAny":
+		return fmt.Sprintf("isNotNull(%s)", expr)
 	case "isNot", "not":
 		if len(values) == 1 {
 			return formatCondition(expr, "%s <> %s", values[0], isNumeric)
