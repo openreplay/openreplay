@@ -58,7 +58,7 @@ const (
 	nilUUIDString            = "00000000-0000-0000-0000-000000000000"
 )
 
-var eventsProperties []string = []string{string(MetricOfTableLocation)}
+var eventsProperties []string = []string{string(MetricOfTableLocation), string(MetricOfTableFetch)}
 
 var propertySelectorMap = map[string]string{
 	string(MetricOfTableLocation):   "`$current_path`",
