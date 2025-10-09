@@ -165,7 +165,7 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 			continue
 		}
 		conds, nameCondition := addFilter(f, opts)
-		if !slices.Contains(eventNames, nameCondition) {
+		if !slices.Contains(eventNames, nameCondition) && nameCondition != "" {
 			eventNames = append(eventNames, nameCondition)
 		}
 		if f.IsEvent {

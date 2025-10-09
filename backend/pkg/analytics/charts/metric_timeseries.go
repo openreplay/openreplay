@@ -131,7 +131,7 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 	)
 
 	for _, filter := range allFilters {
-		if _, exists := SessionColumns[filter.Name]; exists {
+		if _, exists := SessionColumns[filter.Name]; exists || strings.HasPrefix(filter.Name, "metadata_") {
 			sessionFilters = append(sessionFilters, filter)
 		} else {
 			eventFilters = append(eventFilters, filter)
@@ -196,7 +196,6 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 	}
 
 	subQuery := sb.String()
-
 	sessionsQuery := t.buildSessionsFilterQuery(sessionFilters)
 	projection, joinEvents := t.getProjectionAndJoin(metric)
 
