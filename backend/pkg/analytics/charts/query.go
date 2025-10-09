@@ -57,7 +57,7 @@ func NewQueryBuilder(p *Payload) (QueryBuilder, error) {
 type BuildConditionsOptions struct {
 	MainTableAlias       string
 	PropertiesColumnName string
-	DefinedColumns       map[string]string
+	DefinedColumns       map[string][]string
 	EventsOrder          string
 }
 
@@ -81,7 +81,8 @@ type filterConfig struct {
 	InDProperties   bool // in $properties or not
 }
 
-func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts BuildConditionsOptions) string {
+func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts BuildConditionsOptions) (string, string) {
+	//output: column accessor ; column nature (singleColumn/arrayColumn)
 	// helper: wrap names starting with $ in quotes
 	quote := func(name string) string {
 		prefix := opts.MainTableAlias + "."
@@ -99,14 +100,14 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts 
 
 	// explicit column mapping
 	if col, ok := opts.DefinedColumns[logical]; ok {
-		col = quote(col)
+		col[0] = quote(col[0])
 		if opts.MainTableAlias != "" {
-			if strings.Contains(col, ".") {
-				return fmt.Sprintf("%s", col)
+			if strings.Contains(col[0], ".") {
+				return fmt.Sprintf("%s", col[0]), col[1]
 			}
-			return fmt.Sprintf("%s.%s", opts.MainTableAlias, col)
+			return fmt.Sprintf("%s.%s", opts.MainTableAlias, col[0]), col[1]
 		}
-		return col
+		return col[0], col[1]
 	}
 
 	// determine property key
@@ -125,11 +126,11 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts 
 	if propKey.InDProperties {
 		// JSON extraction
 		if isNumeric {
-			return fmt.Sprintf("JSONExtractFloat(toString(%s), '%s')", colName, propKey.LogicalProperty)
+			return fmt.Sprintf("JSONExtractFloat(toString(%s), '%s')", colName, propKey.LogicalProperty), "singleColumn"
 		}
-		return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, propKey.LogicalProperty)
+		return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, propKey.LogicalProperty), "singleColumn"
 	} else {
-		return fmt.Sprintf("%s.\"%s\"", opts.MainTableAlias, propKey.LogicalProperty)
+		return fmt.Sprintf("%s.\"%s\"", opts.MainTableAlias, propKey.LogicalProperty), "singleColumn"
 	}
 }
 
@@ -138,7 +139,7 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 	opts := BuildConditionsOptions{
 		MainTableAlias:       "e",
 		PropertiesColumnName: "`$properties`",
-		DefinedColumns:       make(map[string]string),
+		DefinedColumns:       make(map[string][]string),
 		EventsOrder:          "then",
 	}
 
@@ -215,7 +216,7 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) ([]string, string) {
 		return []string{"(" + strings.Join(parts, " AND ") + ")"}, nameCondition
 	}
 	if strings.HasPrefix(f.Name, "metadata_") {
-		cond := buildCond(f.Name, f.Value, f.Operator, false)
+		cond := buildCond(f.Name, f.Value, f.Operator, false, "singleColumn")
 		if cond != "" {
 			return []string{cond}, ""
 		}
@@ -227,7 +228,7 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) ([]string, string) {
 	if !ok {
 		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: isNumeric, InDProperties: true}
 	}
-	acc := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, cfg.InDProperties, opts)
+	acc, nature := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, cfg.InDProperties, opts)
 	switch f.Operator {
 	case "isAny", "onAny":
 		//This part is unreachable, because you already have if f.IsEvent&return above
@@ -235,7 +236,7 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) ([]string, string) {
 			return []string{fmt.Sprintf("%s\"$event_name\" = '%s'", alias, f.Name)}, ""
 		}
 	default:
-		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric); c != "" {
+		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric, nature); c != "" {
 			return []string{c}, ""
 		}
 	}
@@ -250,15 +251,23 @@ var compOps = map[string]string{
 	"lessThan": "<", "lt": "<",
 	"lessThanOrEqual": "<=", "lte": "<=",
 }
+var compOpsArrays = map[string]string{
+	"equals": "hasAny", "is": "hasAny", "on": "hasAny",
+	"notEquals": "NOT hasAny", "not": "NOT hasAny", "off": "NOT hasAny",
+}
 
-func buildCond(expr string, values []string, operator string, isNumeric bool) string {
+func buildCond(expr string, values []string, operator string, isNumeric bool, nature string) string {
 	if len(values) == 0 && operator != "isAny" {
 		return ""
 	}
 	switch operator {
 	case "isAny":
+		if nature == "arrayColumn" {
+			return fmt.Sprintf("notEmpty(%s)", expr)
+		}
 		return fmt.Sprintf("isNotNull(%s)", expr)
 	case "isNot", "not":
+		//TODO: find how to process array column
 		if len(values) == 1 {
 			return formatCondition(expr, "%s <> %s", values[0], isNumeric)
 		}
@@ -312,9 +321,18 @@ func buildCond(expr string, values []string, operator string, isNumeric bool) st
 	case ">=", ">", "<=", "<":
 		return multiValCond(expr, values, "%s "+operator+" %s", isNumeric)
 	default:
-		if op, ok := compOps[operator]; ok {
-			tmpl := "%s " + op + " %s"
-			return multiValCond(expr, values, tmpl, isNumeric)
+		if nature == "arrayColumn" {
+			if op, ok := compOpsArrays[operator]; ok {
+				for i := range values {
+					values[i] = fmt.Sprintf("'%s'", values[i])
+				}
+				return fmt.Sprintf("%s(%s,[%s])", op, expr, strings.Join(values, ","))
+			}
+		} else {
+			if op, ok := compOps[operator]; ok {
+				tmpl := "%s " + op + " %s"
+				return multiValCond(expr, values, tmpl, isNumeric)
+			}
 		}
 		// fallback equals
 		tmpl := "%s = %s"
@@ -664,10 +682,10 @@ func convertParams(params map[string]any) []interface{} {
 
 }
 
-func GetSessionColumns(join ...bool) map[string]string {
+func GetSessionColumns(join ...bool) map[string][]string {
 	if len(join) > 0 && join[0] {
 		keys := []string{"userId", "userAnonymousId", "userDevice", "platform"}
-		out := make(map[string]string, len(keys))
+		out := make(map[string][]string, len(keys))
 		for _, k := range keys {
 			out[k] = SessionColumns[k]
 		}
@@ -741,17 +759,18 @@ func BuildCountJoinClause(eventConditions []string, operator string, tableAlias 
 	return havingClause, nil
 }
 
-var SessionColumns = map[string]string{
-	"userBrowser":        "user_browser",
-	"userDevice":         "user_device",
-	"platform":           "user_device_type",
-	"userId":             "user_id",
-	"userAnonymousId":    "user_anonymous_id",
-	"referrer":           "referrer",
-	"userDeviceIos":      "user_device",
-	"userIdIos":          "user_id",
-	"userAnonymousIdIos": "user_anonymous_id",
-	"duration":           "duration",
+var SessionColumns = map[string][]string{
+	"userBrowser":        {"user_browser", "singleColumn"},
+	"userDevice":         {"user_device", "singleColumn"},
+	"platform":           {"user_device_type", "singleColumn"},
+	"userId":             {"user_id", "singleColumn"},
+	"userAnonymousId":    {"user_anonymous_id", "singleColumn"},
+	"referrer":           {"referrer", "singleColumn"},
+	"userDeviceIos":      {"user_device", "singleColumn"},
+	"userIdIos":          {"user_id", "singleColumn"},
+	"userAnonymousIdIos": {"user_anonymous_id", "singleColumn"},
+	"duration":           {"duration", "singleColumn"},
+	"issue_type":         {"issue_types", "arrayColumn"},
 	// TODO Add any missing session columns to be considered.
 }
 

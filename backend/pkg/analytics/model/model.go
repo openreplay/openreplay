@@ -45,7 +45,7 @@ type Filter struct {
 	Type          FilterType `json:"type" validate:"required_without=Name"` // This is only used if IsEvent is false
 	Operator      string     `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >="`
 	PropertyOrder string     `json:"propertyOrder" validate:"required_with=Name,oneof=or and"`
-	Value         []string   `json:"value" validate:"dive,min=0,max=10"`
+	Value         []string   `json:"value" validate:"required_with=Type,max=10,dive"`
 	IsEvent       bool       `json:"isEvent"` // validate:"required" doesn't work with 'false' value
 	DataType      string     `json:"dataType" validate:"omitempty,oneof=string number boolean integer"`
 	AutoCaptured  bool       `json:"autoCaptured"`      // Indicates if the filter is auto-captured

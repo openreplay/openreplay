@@ -50,30 +50,30 @@ type DataPoint struct {
 	Count     uint64 `json:"count" ch:"count"`
 }
 
-var mainColumns = map[string]string{
-	"userDevice":         "sessions.user_device",
-	"referrer":           "$referrer",
-	"fetchDuration":      "$duration_s",
-	"ISSUE":              "issue_type",
-	"userCountry":        "$country",
-	"userCity":           "$city",
-	"userState":          "$state",
-	"userOs":             "$os",
-	"userOsVersion":      "$os_version",
-	"userBrowser":        "$browser",
-	"userBrowserVersion": "$browser_version",
+var mainColumns = map[string][]string{
+	"userDevice":         {"sessions.user_device", "singleColumn"},
+	"referrer":           {"$referrer", "singleColumn"},
+	"fetchDuration":      {"$duration_s", "singleColumn"},
+	"ISSUE":              {"issue_types", "singleColumn"},
+	"userCountry":        {"$country", "singleColumn"},
+	"userCity":           {"$city", "singleColumn"},
+	"userState":          {"$state", "singleColumn"},
+	"userOs":             {"$os", "singleColumn"},
+	"userOsVersion":      {"$os_version", "singleColumn"},
+	"userBrowser":        {"$browser", "singleColumn"},
+	"userBrowserVersion": {"$browser_version", "singleColumn"},
 }
 
-var mainSessionsColumns = map[string]string{
-	"userDevice":         "user_device",
-	"referrer":           "referrer",
-	"fetchDuration":      "duration",
-	"ISSUE":              "issue_types",
-	"userCountry":        "user_country",
-	"userCity":           "user_city",
-	"userState":          "user_state",
-	"userOs":             "user_os",
-	"userOsVersion":      "user_os_version",
-	"userBrowser":        "user_browser",
-	"userBrowserVersion": "user_browser_version",
+var mainSessionsColumns = map[string][]string{
+	"userDevice":         {"user_device", "singleColumn"},
+	"referrer":           {"referrer", "singleColumn"},
+	"fetchDuration":      {"duration", "singleColumn"},
+	"ISSUE":              {"issue_types", "singleColumn"},
+	"userCountry":        {"user_country", "singleColumn"},
+	"userCity":           {"user_city", "singleColumn"},
+	"userState":          {"user_state", "singleColumn"},
+	"userOs":             {"user_os", "singleColumn"},
+	"userOsVersion":      {"user_os_version", "singleColumn"},
+	"userBrowser":        {"user_browser", "singleColumn"},
+	"userBrowserVersion": {"user_browser_version", "singleColumn"},
 }

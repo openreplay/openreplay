@@ -50,8 +50,8 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 		fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", p.MetricPayload.StartTimestamp/1000, p.MetricPayload.EndTimestamp/1000),
 		"e.session_id IS NOT NULL",
 		"e.`$event_name` = 'CLICK'",
-		"JSONExtractFloat(toString(e.\"$properties\"), 'normalized_x') IS NOT NULL",
-		"JSONExtractFloat(toString(e.\"$properties\"), 'normalized_y') IS NOT NULL",
+		"isNotNull(e.\"$properties\".normalized_x)",
+		"isNotNull(e.\"$properties\".normalized_y)",
 	}
 
 	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls")
@@ -91,8 +91,8 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 
 	q := fmt.Sprintf(`
 SELECT
-	JSONExtractFloat(toString(e."$properties"), 'normalized_x') AS normalized_x,
-	JSONExtractFloat(toString(e."$properties"), 'normalized_y') AS normalized_y
+	accurateCastOrNull(e."$properties".normalized_x,'Float64') AS normalized_x,
+	accurateCastOrNull(e."$properties".normalized_y,'Float64') AS normalized_y
 FROM product_analytics.events AS e
 WHERE %s
 LIMIT 500;`, where)
