@@ -27,7 +27,7 @@ var mainColumns = map[string]string{
 	"osVersion":      "$os_version",
 	"referrer":       "$referrer",
 	"fetchDuration":  "$duration_s",
-	"ISSUE":          "issue_type",
+	"ISSUE":          "issue_types",
 	"utmSource":      "utm_source",
 	"utmMedium":      "utm_medium",
 	"utmCampaign":    "utm_campaign",
