@@ -198,7 +198,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 			p.StartPoint[j].Filters[i].Name = "e_value"
 		}
 	}
-	step0Conditions, _, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: map[string]string{"e_value": "e_value"}, MainTableAlias: "pre_ranked_events"})
+	step0Conditions, _, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: map[string][]string{"e_value": {"e_value", "singleColumn"}}, MainTableAlias: "pre_ranked_events"})
 	if len(startPointsConditions) > 0 {
 		startPointsConditions = []string{fmt.Sprintf("(%s)", strings.Join(startPointsConditions, " OR "))}
 		startPointsConditions = append(startPointsConditions, fmt.Sprintf("events.project_id = toUInt16(%d)", p.ProjectId))
