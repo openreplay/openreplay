@@ -8,6 +8,7 @@ import (
 	"openreplay/backend/pkg/analytics/cards"
 	"openreplay/backend/pkg/analytics/charts"
 	"openreplay/backend/pkg/analytics/dashboards"
+	"openreplay/backend/pkg/analytics/saved_searches"
 	"openreplay/backend/pkg/analytics/search"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
@@ -16,14 +17,15 @@ import (
 )
 
 type serviceBuilder struct {
-	cardsAPI      api.Handlers
-	dashboardsAPI api.Handlers
-	chartsAPI     api.Handlers
-	searchAPI     api.Handlers
+	cardsAPI         api.Handlers
+	dashboardsAPI    api.Handlers
+	chartsAPI        api.Handlers
+	searchAPI        api.Handlers
+	savedSearchesAPI api.Handlers
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI}
+	return []api.Handlers{b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI}
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, pgconn pool.Pool, chConn driver.Conn) (api.ServiceBuilder, error) {
@@ -63,10 +65,17 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		return nil, err
 	}
 
+	savedSearchesService := saved_searches.New(log, pgconn)
+	savedSearchesHandlers, err := saved_searches.NewHandlers(log, cfg, responser, savedSearchesService, reqValidator)
+	if err != nil {
+		return nil, err
+	}
+
 	return &serviceBuilder{
-		cardsAPI:      cardsHandlers,
-		dashboardsAPI: dashboardsHandlers,
-		chartsAPI:     chartsHandlers,
-		searchAPI:     searchHandlers,
+		cardsAPI:         cardsHandlers,
+		dashboardsAPI:    dashboardsHandlers,
+		chartsAPI:        chartsHandlers,
+		searchAPI:        searchHandlers,
+		savedSearchesAPI: savedSearchesHandlers,
 	}, nil
 }
