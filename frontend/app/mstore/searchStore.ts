@@ -101,7 +101,7 @@ class SearchStore {
   urlParsed: boolean = false;
   searchInProgress = false;
   savedSearchPage = 1;
-  savedSearchPageSize = 20;
+  savedSearchPageSize = 100;
   savedSearchTotal = 0;
 
   constructor() {
@@ -142,7 +142,7 @@ class SearchStore {
     this.currentPage = 1;
   }
 
-  async fetchSavedSearchList(page: number = 1, limit: number = 20) {
+  async fetchSavedSearchList(page: number = 1, limit: number = 100) {
     const offset = (page - 1) * limit;
     const response = await searchService.fetchSavedSearch({ limit, offset });
     runInAction(() => {
