@@ -1,31 +1,16 @@
 import React, { MouseEvent, useState } from 'react';
 import cn from 'classnames';
-import { Icon, Input, confirm, Tooltip } from 'UI';
+import { List, Input, Modal, Tooltip, Typography, Badge, Button } from 'antd';
+import { Search, Edit2, Trash2, Users } from 'lucide-react';
 import { useModal } from 'App/components/Modal';
 import { SavedSearch } from 'Types/ts/search';
 import SaveSearchModal from 'Shared/SaveSearchModal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { ISavedSearch } from 'App/mstore/types/savedSearch';
-import stl from './savedSearchModal.module.css';
 import { useTranslation } from 'react-i18next';
 
-interface ITooltipIcon {
-  title: string;
-  name: string;
-  onClick: (e: MouseEvent<HTMLDivElement>) => void;
-}
-
-function TooltipIcon(props: ITooltipIcon) {
-  return (
-    <div onClick={(e) => props.onClick(e)}>
-      <Tooltip title={props.title}>
-        {/* @ts-ignore */}
-        <Icon size="16" name={props.name} color="main" />
-      </Tooltip>
-    </div>
-  );
-}
+const { Title } = Typography;
 
 function SavedSearchModal() {
   const { hideModal } = useModal();
@@ -39,18 +24,18 @@ function SavedSearchModal() {
     searchStore.applySavedSearch(item);
     hideModal();
   };
-  const onDelete = async (item: SavedSearch, e: MouseEvent<HTMLDivElement>) => {
+  const onDelete = (item: SavedSearch, e: MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    const confirmation = await confirm({
-      header: t('Confirm'),
-      confirmButton: t('Yes, delete'),
-      confirmation: t(
-        'Are you sure you want to permanently delete this search?',
-      ),
+    Modal.confirm({
+      title: t('Confirm'),
+      content: t('Are you sure you want to permanently delete this search?'),
+      okText: t('Yes, delete'),
+      cancelText: t('Cancel'),
+      okButtonProps: { danger: true },
+      onOk: () => {
+        searchStore.removeSavedSearch(`${item.searchId}`);
+      },
     });
-    if (confirmation) {
-      searchStore.removeSavedSearch(`${item.searchId}`);
-    }
   };
   const onEdit = (item: SavedSearch, e: MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
@@ -59,81 +44,91 @@ function SavedSearchModal() {
   };
 
   const shownItems = searchStore.list.filter((item) =>
-    item.name.toLocaleLowerCase().includes(filterQuery.toLocaleLowerCase()),
+    item.name?.toLocaleLowerCase().includes(filterQuery.toLocaleLowerCase()),
   );
 
   return (
-    <div className="bg-white box-shadow h-screen">
-      <div className="p-6">
-        <h1 className="text-2xl">
+    <div className="bg-white shadow-lg h-screen flex flex-col">
+      <div className="p-6 border-b">
+        <Title level={3} className="!mb-0">
           {t('Saved Search')}{' '}
-          <span className="color-gray-medium">{searchStore.list.length}</span>
-        </h1>
+          <Badge count={searchStore.list.length} showZero className="ml-2" />
+        </Title>
       </div>
       {searchStore.list.length > 1 && (
-        <div className="mb-6 w-full px-4">
+        <div className="p-6 pt-4">
           <Input
-            icon="search"
-            onChange={({ target: { value } }: any) => setFilterQuery(value)}
+            prefix={<Search size={16} className="text-gray-400" />}
+            onChange={(e) => setFilterQuery(e.target.value)}
             placeholder={t('Filter by name')}
+            allowClear
           />
         </div>
       )}
-      <div style={{ maxHeight: 'calc(100vh - 106px)', overflowY: 'auto' }}>
-        {shownItems.map((item) => (
-          <div
-            key={item.searchId}
-            className={cn(
-              'p-4 cursor-pointer border-b flex items-center group hover:bg-active-blue',
-            )}
-            onClick={(e) => onClick(item, e)}
-          >
-            <Icon name="search" color="gray-medium" size="16" />
-            <div className="ml-4">
-              <div className="text-lg">{item.name} </div>
-              {item.isPublic && (
-                <div
-                  className={cn(
-                    stl.iconContainer,
-                    'color-gray-medium flex items-center px-2 mt-2',
-                  )}
-                >
-                  <Icon name="user-friends" size="11" />
-                  <div className="ml-1 text-sm">{t('Team')}</div>
-                </div>
+      <List
+        style={{ maxHeight: 'calc(100vh - 106px)', overflowY: 'auto' }}
+        dataSource={shownItems}
+        rowKey={(item) => item.searchId?.toString() || ''}
+        renderItem={(item) => {
+          const isActive = searchStore.savedSearch.searchId === item.searchId;
+          return (
+            <List.Item
+              className={cn(
+                'cursor-pointer group hover:bg-active-blue px-6 py-4 [&_.ant-list-item-action]:invisible [&:hover_.ant-list-item-action]:visible',
+                { 'bg-active-blue': isActive }
               )}
-            </div>
-            <div className="flex items-center ml-auto self-center">
-              <div
-                className={cn(
-                  stl.iconCircle,
-                  'mr-2 invisible group-hover:visible',
-                )}
-              >
-                <TooltipIcon
-                  name="pencil"
-                  onClick={(e) => onEdit(item, e)}
-                  title={t('Rename')}
-                />
-              </div>
-              <div
-                className={cn(stl.iconCircle, 'invisible group-hover:visible')}
-              >
-                <TooltipIcon
-                  name="trash"
-                  onClick={(e) => onDelete(item, e)}
-                  title={t('Delete')}
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+              onClick={(e) => onClick(item, e)}
+              actions={[
+                <Tooltip key="edit" title={t('Rename')}>
+                  <Button
+                    type="text"
+                    icon={<Edit2 size={16} />}
+                    onClick={(e: any) => onEdit(item, e)}
+                    className="!text-blue-600 hover:!bg-blue-50"
+                  />
+                </Tooltip>,
+                <Tooltip key="delete" title={t('Delete')}>
+                  <Button
+                    type="text"
+                    icon={<Trash2 size={16} />}
+                    onClick={(e: any) => onDelete(item, e)}
+                    className="!text-red-600 hover:!bg-red-50"
+                  />
+                </Tooltip>
+              ]}
+            >
+              <List.Item.Meta
+                className="!items-center"
+                avatar={
+                  <div className={cn("flex items-center justify-center w-10 h-10 rounded-full self-center ml-4", 
+                    isActive ? "bg-teal-100" : "bg-gray-100"
+                  )}>
+                    <Search size={16} className={isActive ? "text-teal-600" : "text-gray-500"} />
+                  </div>
+                }
+                title={
+                  <div className={cn("text-base leading-tight flex items-center", { 'font-semibold': isActive })}>
+                    {item.name}
+                  </div>
+                }
+                description={
+                  item.isPublic && (
+                    <div className="inline-flex items-center gap-1 bg-gray-100 rounded-full px-2 py-0.5 mt-1">
+                      <Users size={12} className="text-gray-600" />
+                      <span className="text-xs text-gray-600">{t('Team')}</span>
+                    </div>
+                  )
+                }
+              />
+            </List.Item>
+          );
+        }}
+      />
       {showModal && (
         <SaveSearchModal
           show
           closeHandler={() => setshowModal(false)}
-          rename={false}
+          rename={true}
         />
       )}
     </div>

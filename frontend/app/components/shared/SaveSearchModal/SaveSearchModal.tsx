@@ -1,11 +1,9 @@
 import React from 'react';
-import { confirm, Modal, Form, Icon, Checkbox, Input } from 'UI';
-import { Button } from 'antd';
+import { Modal, Button, Input, Checkbox, message } from 'antd';
+import { Trash2, Users } from 'lucide-react';
 import cn from 'classnames';
-import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import stl from './SaveSearchModal.module.css';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
@@ -29,107 +27,93 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
     searchStore
       .save(savedSearch.exists() ? savedSearch.searchId : null, rename)
       .then(() => {
-        toast.success(
+        message.success(
           `${savedSearch.exists() ? t('Updated') : t('Saved')} ${t('Successfully')}`,
         );
         closeHandler();
       })
       .catch((e) => {
         console.error(e);
-        toast.error(t('Something went wrong, please try again'));
+        message.error(t('Something went wrong, please try again'));
       });
   };
 
-  const onDelete = async () => {
-    if (
-      await confirm({
-        header: t('Confirm'),
-        confirmButton: t('Yes, delete'),
-        confirmation: t(
-          'Are you sure you want to permanently delete this Saved search?',
-        ),
-      })
-    ) {
-      searchStore.removeSavedSearch(savedSearch.searchId!).then(() => {
-        closeHandler();
-      });
-    }
+  const onDelete = () => {
+    Modal.confirm({
+      title: t('Confirm'),
+      content: t('Are you sure you want to permanently delete this Saved search?'),
+      okText: t('Yes, delete'),
+      cancelText: t('Cancel'),
+      okButtonProps: { danger: true },
+      onOk: () => {
+        searchStore.removeSavedSearch(savedSearch.searchId!).then(() => {
+          closeHandler();
+        });
+      },
+    });
   };
-
-  const onChangeOption = ({ target: { checked, name } }: any) =>
-    searchStore.editSavedSearch({ [name]: checked });
 
   return (
-    <Modal size="small" open={show} onClose={closeHandler}>
-      <Modal.Header className={stl.modalHeader}>
-        <div>{t('Save Search')}</div>
-        <Icon
-          role="button"
-          tabIndex="-1"
-          color="gray-dark"
-          size="18"
-          name="close"
-          onClick={closeHandler}
-        />
-      </Modal.Header>
-
-      <Modal.Content>
-        <Form onSubmit={onSave}>
-          <Form.Field>
-            <label>{t('Title:')}</label>
-            <Input
-              autoFocus
-              // className={ stl.name }
-              name="name"
-              value={savedSearch.name}
-              onChange={onNameChange}
-              placeholder={t('Title')}
-            />
-          </Form.Field>
-
-          <Form.Field>
-            <div
-              className={cn('flex items-center', {
-                disabled: savedSearch.exists() && savedSearch.userId !== userId,
-              })}
+    <Modal
+      title={savedSearch.exists() ? t('Update Search') : t('Save Search')}
+      open={show}
+      onCancel={closeHandler}
+      width={480}
+      footer={
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              type="primary"
+              onClick={onSave}
+              loading={loading}
+              disabled={!savedSearch.name || savedSearch.name.trim() === ''}
             >
-              <Checkbox
-                name="isPublic"
-                type="checkbox"
-                checked={savedSearch.isPublic}
-                onClick={onChangeOption}
-              />
-              <div
-                className="flex items-center cursor-pointer select-none ml-2"
-                onClick={() => searchStore.editSavedSearch({ isPublic: !savedSearch.isPublic })}
-              >
-                <Icon name="user-friends" size="16" />
-                <span className="ml-2">{t('Team Visible')}</span>
-              </div>
-            </div>
-          </Form.Field>
-        </Form>
-        {/* {savedSearch.exists() && <div className="mt-4">Changes in filters will be updated.</div>} */}
-      </Modal.Content>
-      <Modal.Footer className="flex items-center px-6">
-        <div className="mr-auto flex items-center">
-          <Button
-            type="primary"
-            onClick={onSave}
-            loading={loading}
-            disabled={!savedSearch.validate()}
-            className="mr-2"
-          >
-            {savedSearch.exists() ? t('Update') : t('Save')}
-          </Button>
-          <Button onClick={closeHandler}>{t('Cancel')}</Button>
+              {savedSearch.exists() ? t('Update') : t('Save')}
+            </Button>
+            <Button onClick={closeHandler}>{t('Cancel')}</Button>
+          </div>
+          {savedSearch.exists() && (
+            <Button
+              type="text"
+              danger
+              icon={<Trash2 size={18} />}
+              onClick={onDelete}
+            />
+          )}
         </div>
-        {savedSearch.exists() && (
-          <Button type="text" onClick={onDelete}>
-            <Icon name="trash" size="18" />
-          </Button>
-        )}
-      </Modal.Footer>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">{t('Title:')}</label>
+          <Input
+            autoFocus
+            name="name"
+            value={savedSearch.name}
+            onChange={onNameChange}
+            placeholder={t('Title')}
+            size="large"
+          />
+        </div>
+
+        <div
+          className={cn('flex items-center gap-2', {
+            'opacity-50 pointer-events-none': savedSearch.exists() && savedSearch.userId !== userId,
+          })}
+        >
+          <Checkbox
+            checked={savedSearch.isPublic}
+            onChange={(e) => searchStore.editSavedSearch({ isPublic: e.target.checked })}
+          />
+          <div
+            className="flex items-center gap-2 cursor-pointer select-none"
+            onClick={() => searchStore.editSavedSearch({ isPublic: !savedSearch.isPublic })}
+          >
+            <Users size={16} className="text-gray-600" />
+            <span>{t('Team Visible')}</span>
+          </div>
+        </div>
+      </div>
     </Modal>
   );
 }

@@ -1,6 +1,6 @@
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import { makeAutoObservable } from 'mobx';
-import { FilterProperty, Operator } from '@/mstore/types/filterConstants';
+import { Operator } from '@/mstore/types/filterConstants';
 
 type JsonData = Record<string, any>;
 
@@ -150,13 +150,18 @@ export default class FilterItem implements IFilter {
   }
 
   toJson(): JsonData {
+    // Ensure dataType always has a value
+    const dataType = this.dataType && this.dataType.trim() !== '' 
+      ? this.dataType 
+      : 'string';
+    
     const json: JsonData = {
       type: this.name,
       value:
         this.value?.map((item: any) => (item ? item.toString() : '')) || [],
-      operator: this.operator,
-      // source: this.name,
-      propertyOrder: this.propertyOrder,
+      operator: this.operator || 'is',
+      dataType: dataType,
+      propertyOrder: this.propertyOrder || (this.isEvent ? 'then' : 'and'),
       filters: Array.isArray(this.filters)
         ? this.filters
             .filter((child) =>
@@ -173,8 +178,7 @@ export default class FilterItem implements IFilter {
       // these props are required to get the source filter later
       isEvent: Boolean(this.isEvent),
       name: this.name,
-      autoCaptured: this.autoCaptured,
-      dataType: this.dataType,
+      autoCaptured: Boolean(this.autoCaptured),
     };
 
     return json;

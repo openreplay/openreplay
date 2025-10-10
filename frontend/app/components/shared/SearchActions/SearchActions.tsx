@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Button, Tooltip } from 'antd';
+import { Button, Tooltip, Divider } from 'antd';
 import { useTranslation } from 'react-i18next';
 import SavedSearch from '../SavedSearch/SavedSearch';
 
@@ -37,8 +37,9 @@ function SearchActions() {
       <div className={'flex flex-col lg:hidden items-start  gap-2 w-full'}>
         <div className='flex items-center justify-between w-full'>
           <h2 className="text-2xl capitalize mr-4 inline">{title}</h2>
-          <div className={'ml-auto flex gap-1'}>
+          <div className={'ml-auto flex items-center gap-1'}>
             <SavedSearch/>
+            <Divider type="vertical" className="h-6" />
             <Tooltip title='Clear Search Filters'>
               <Button
                 type="text"
@@ -58,6 +59,7 @@ function SearchActions() {
         <h2 className="text-2xl capitalize mr-4">{title}</h2>
         <div className="ml-auto" />
         <SavedSearch />
+        <Divider type="vertical" className="h-6" />
         <Tooltip title={t('Clear Search Filters')}>
           <Button
             type="text"
