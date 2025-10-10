@@ -74,7 +74,7 @@ services:
     restart: on-failure
 
   minio-migration:
-    image: bitnamilegacy/minio:2020.10.9-debian-10-r6
+    image: bitnamilegacy/minio:2023.11.20
     container_name: minio-migration
     profiles:
       - "migration"
