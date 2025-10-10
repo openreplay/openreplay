@@ -20,9 +20,10 @@ export const getDefaultFramework = () => {
 };
 
 export const frameworkIcons = {
-  cypress: 'cypress',
-  puppeteer: 'puppeteer',
-  playwright: 'pwright',
+  cypress: <Icon name={'cypress'} size={18} />,
+  puppeteer: <Icon name={'puppeteer'} size={18} />,
+  playwright: <Icon name={'pwright'} size={18} />,
+  k6: <div className="text-disabled-text text-lg">k6</div>,
 };
 
 function UnitStepsModal({ onClose }: Props) {
