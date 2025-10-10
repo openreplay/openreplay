@@ -68,7 +68,7 @@ var mainSessionsColumns = map[string][]string{
 	"userDevice":         {"user_device", "singleColumn"},
 	"referrer":           {"referrer", "singleColumn"},
 	"fetchDuration":      {"duration", "singleColumn"},
-	"ISSUE":              {"issue_types", "singleColumn"},
+	"ISSUE":              {"issue_types", "arrayColumn"},
 	"userCountry":        {"user_country", "singleColumn"},
 	"userCity":           {"user_city", "singleColumn"},
 	"userState":          {"user_state", "singleColumn"},
@@ -76,4 +76,5 @@ var mainSessionsColumns = map[string][]string{
 	"userOsVersion":      {"user_os_version", "singleColumn"},
 	"userBrowser":        {"user_browser", "singleColumn"},
 	"userBrowserVersion": {"user_browser_version", "singleColumn"},
+	"issue_type":         {"issue_types", "arrayColumn"},
 }
