@@ -213,7 +213,7 @@ function UnitStepsModal({ onClose }: Props) {
       </Checkbox>
       <div className={'w-full'}>
         <CodeBlock
-          width={340}
+          width={540}
           height={'calc(100vh - 174px)'}
           extra={`${events.length} Events`}
           copy
