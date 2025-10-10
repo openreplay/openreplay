@@ -1,6 +1,6 @@
 import React, { MouseEvent, useState } from 'react';
 import cn from 'classnames';
-import { List, Input, Modal, Tooltip, Typography, Badge, Button } from 'antd';
+import { List, Input, Modal, Tooltip, Typography, Badge, Button, Pagination } from 'antd';
 import { Search, Edit2, Trash2, Users } from 'lucide-react';
 import { useModal } from 'App/components/Modal';
 import { SavedSearch } from 'Types/ts/search';
@@ -46,6 +46,10 @@ function SavedSearchModal() {
   const shownItems = searchStore.list.filter((item) =>
     item.name?.toLocaleLowerCase().includes(filterQuery.toLocaleLowerCase()),
   );
+
+  const onPageChange = (page: number) => {
+    searchStore.changeSavedSearchPage(page);
+  };
 
   return (
     <div className="bg-white shadow-lg h-screen flex flex-col">
@@ -130,6 +134,18 @@ function SavedSearchModal() {
           closeHandler={() => setshowModal(false)}
           rename={true}
         />
+      )}
+      {searchStore.savedSearchTotal > searchStore.savedSearchPageSize && (
+        <div className="flex items-center justify-center p-4 border-t bg-white">
+          <Pagination
+            current={searchStore.savedSearchPage}
+            total={searchStore.savedSearchTotal}
+            pageSize={searchStore.savedSearchPageSize}
+            onChange={onPageChange}
+            showSizeChanger={false}
+            showTotal={(total, range) => `${range[0]}-${range[1]} ${t('of')} ${total}`}
+          />
+        </div>
       )}
     </div>
   );
