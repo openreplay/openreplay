@@ -5,7 +5,7 @@ version: '3'
 services:
 
   postgresql:
-    image: bitnami/postgresql:${POSTGRES_VERSION}
+    image: bitnamilegacy/postgresql:${POSTGRES_VERSION}
     container_name: postgres
     volumes:
       - pgdata:/bitnami/postgresql
@@ -31,7 +31,7 @@ services:
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
 
   redis:
-    image: bitnami/redis:${REDIS_VERSION}
+    image: bitnamilegacy/redis:${REDIS_VERSION}
     container_name: redis
     volumes:
       - redisdata:/bitnami/redis/data
@@ -43,7 +43,7 @@ services:
       ALLOW_EMPTY_PASSWORD: "yes"
 
   minio:
-    image: bitnami/minio:${MINIO_VERSION}
+    image: bitnamilegacy/minio:${MINIO_VERSION}
     container_name: minio
     volumes:
       - miniodata:/bitnami/minio/data
@@ -74,7 +74,7 @@ services:
     restart: on-failure
 
   minio-migration:
-    image: bitnami/minio:2020.10.9-debian-10-r6
+    image: bitnamilegacy/minio:2020.10.9-debian-10-r6
     container_name: minio-migration
     profiles:
       - "migration"
@@ -103,7 +103,7 @@ services:
           bash /tmp/minio.sh init || exit 100
 
   db-migration:
-    image: bitnami/postgresql:14.5.0
+    image: bitnamilegacy/postgresql:14.5.0
     container_name: db-migration
     profiles:
       - "migration"
