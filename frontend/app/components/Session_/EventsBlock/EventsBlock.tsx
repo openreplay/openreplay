@@ -242,7 +242,7 @@ function EventsBlock(props: IProps) {
               type={'default'}
               shape={'circle'}
             >
-              <Icon name={frameworkIcons[defaultFramework]} size={18} />
+              {frameworkIcons[defaultFramework]}
             </Button>
             <Button
               className={'flex items-center gap-2'}
