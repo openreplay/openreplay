@@ -100,6 +100,9 @@ class SearchStore {
   activeTags: any[] = [];
   urlParsed: boolean = false;
   searchInProgress = false;
+  savedSearchPage = 1;
+  savedSearchPageSize = 20;
+  savedSearchTotal = 0;
 
   constructor() {
     makeAutoObservable(this);
@@ -139,9 +142,20 @@ class SearchStore {
     this.currentPage = 1;
   }
 
-  async fetchSavedSearchList() {
-    const response = await searchService.fetchSavedSearch();
-    this.list = response.map((item: any) => new SavedSearch(item));
+  async fetchSavedSearchList(page: number = 1, limit: number = 20) {
+    const offset = (page - 1) * limit;
+    const response = await searchService.fetchSavedSearch({ limit, offset });
+    runInAction(() => {
+      this.list = response.data.map((item: any) => new SavedSearch(item));
+      this.savedSearchTotal = response.total;
+      this.savedSearchPage = page;
+      this.savedSearchPageSize = limit;
+    });
+  }
+
+  changeSavedSearchPage(page: number) {
+    this.savedSearchPage = page;
+    void this.fetchSavedSearchList(page, this.savedSearchPageSize);
   }
 
   async loadSharedSearch(searchId: string): Promise<void> {
