@@ -205,6 +205,7 @@ type SavedSearch struct {
 	SearchID  string          `json:"searchId"`
 	ProjectID int             `json:"projectId"`
 	UserID    uint64          `json:"userId"`
+	UserName  string          `json:"userName,omitempty"`
 	Name      *string         `json:"name,omitempty"`
 	IsPublic  bool            `json:"isPublic"`
 	IsShare   bool            `json:"isShare"`
