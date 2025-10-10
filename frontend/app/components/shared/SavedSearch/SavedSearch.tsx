@@ -11,18 +11,23 @@ import { useTranslation } from 'react-i18next';
 function SavedSearch() {
   const [showModal, setShowModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const { searchStore } = useStore();
+  const { searchStore, userStore } = useStore();
   const { t } = useTranslation();
 
   const { showModal: showListModal } = useModal();
 
-  const toggleModal = () => {
-    if (searchStore.instance.filters.length === 0) return;
-    setShowModal(true);
-  };
   const isDisabled = searchStore.instance.filters.length === 0;
   const { savedSearch } = searchStore;
   const isUpdating = savedSearch.exists();
+  const currentUserId = userStore.account.id;
+  const isSharedSearch = savedSearch.exists() && String(savedSearch.userId) !== String(currentUserId);
+  const isSaveDisabled = isDisabled || isSharedSearch;
+
+  const toggleModal = () => {
+    if (searchStore.instance.filters.length === 0) return;
+    if (isSharedSearch) return;
+    setShowModal(true);
+  };
 
   const toggleList = () => {
     showListModal(<SavedSearchModal />, { right: true });
@@ -73,16 +78,18 @@ function SavedSearch() {
 
           <Tooltip
             title={
-              isDisabled
-                ? t('Add an event or filter to save search')
-                : isUpdating
-                  ? t('Update')
-                  : t('Save Search')
+              isSharedSearch
+                ? t('Cannot modify shared search')
+                : isDisabled
+                  ? t('Add an event or filter to save search')
+                  : isUpdating
+                    ? t('Update')
+                    : t('Save Search')
             }
           >
             <Button
               onClick={toggleModal}
-              disabled={isDisabled}
+              disabled={isSaveDisabled}
               icon={<Save size={16} />}
               type="text"
               className="!px-2"

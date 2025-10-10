@@ -36,26 +36,16 @@ export interface ISavedSearch {
 
 class SavedSearch implements ISavedSearch {
   searchId?: string;
-
   projectId?: number;
-
   userId?: number;
-
   userName?: string;
-
   name?: string;
-
   isPublic: boolean;
-
   isShare: boolean;
-
   data?: SavedSearchData;
-
   // Legacy support
   filter?: FilterType;
-
   createdAt?: string;
-
   count?: number;
 
   constructor({

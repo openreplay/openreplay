@@ -121,12 +121,15 @@ function SavedSearchModal() {
                   </div>
                 }
                 description={
-                  item.isPublic && (
+                  item.isPublic ? (
                     String(item.userId) === String(currentUserId) ? (
-                      <div className="inline-flex items-center gap-1 bg-gray-100 rounded-full px-2 py-0.5 mt-1">
-                        <Users size={12} className="text-gray-600" />
-                        <span className="text-xs text-gray-600">{t('Team')}</span>
-                      </div>
+                      <Tag
+                        icon={<Users size={12} />}
+                        color="default"
+                        className="!text-xs !px-2 !py-0.5 !m-0 mt-1 whitespace-nowrap !inline-flex !items-center !gap-1"
+                      >
+                        {t('Team')}
+                      </Tag>
                     ) : (
                       <Tag
                         icon={<Lock size={12} />}
@@ -136,7 +139,7 @@ function SavedSearchModal() {
                         {t('Shared')}
                       </Tag>
                     )
-                  )
+                  ) : null
                 }
               />
             </List.Item>
