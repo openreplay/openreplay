@@ -55,13 +55,15 @@ var mainColumns = map[string][]string{
 	"referrer":           {"$referrer", "singleColumn"},
 	"fetchDuration":      {"$duration_s", "singleColumn"},
 	"ISSUE":              {"issue_types", "singleColumn"},
-	"userCountry":        {"$country", "singleColumn"},
+	"userCountry":        {"$country", "arrayColumn"},
 	"userCity":           {"$city", "singleColumn"},
 	"userState":          {"$state", "singleColumn"},
 	"userOs":             {"$os", "singleColumn"},
 	"userOsVersion":      {"$os_version", "singleColumn"},
 	"userBrowser":        {"$browser", "singleColumn"},
 	"userBrowserVersion": {"$browser_version", "singleColumn"},
+	"metadata":           {"metadata", "singleColumn"},
+	"issue_type":         {"issue_types", "arrayColumn"},
 }
 
 var mainSessionsColumns = map[string][]string{
