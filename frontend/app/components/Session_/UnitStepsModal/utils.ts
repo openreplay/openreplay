@@ -70,6 +70,7 @@ export default async function () {
     console.log('Error during execution:', e);
     throw e;
   } finally {
+    console.log('test successful!')
     await page.close();
   }
 }
