@@ -25,28 +25,38 @@ export const checkValues = (key: any, value: any) => {
   return value.filter((i: any) => i !== '' && i !== null);
 };
 
-export const filterMap = ({
-  category,
-  value,
-  key,
-  operator,
-  sourceOperator,
-  source,
-  custom,
-  isEvent,
-  filters,
-  sort,
-  order,
-}: any) => ({
-  value: checkValues(key, value),
-  custom,
-  type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
-  operator,
-  source: category === FilterCategory.METADATA ? key.replace(/^_/, '') : source,
-  sourceOperator,
-  isEvent,
-  filters: filters ? filters.map(filterMap) : [],
-});
+export const filterMap = (filter: any) => {
+  const {
+    category,
+    value,
+    key,
+    name,
+    operator,
+    sourceOperator,
+    source,
+    custom,
+    isEvent,
+    filters,
+    dataType,
+    propertyOrder,
+    autoCaptured,
+  } = filter;
+  
+  return {
+    name: name || key,
+    type: name || (category === FilterCategory.METADATA ? FilterKey.METADATA : key),
+    value: checkValues(key, value),
+    operator: operator || 'is',
+    dataType: dataType || 'string',
+    propertyOrder: propertyOrder || (isEvent ? 'then' : undefined),
+    custom,
+    source: category === FilterCategory.METADATA ? key?.replace(/^_/, '') : source,
+    sourceOperator,
+    isEvent: Boolean(isEvent),
+    autoCaptured: Boolean(autoCaptured),
+    filters: filters ? filters.map(filterMap) : [],
+  };
+};
 
 export const TAB_MAP: any = {
   all: { name: 'All', type: 'all' },
@@ -112,13 +122,19 @@ class SearchStore {
   }
 
   applySavedSearch(savedSearch: ISavedSearch) {
-    this.savedSearch = savedSearch;
+    this.savedSearch = new SavedSearch(savedSearch);
+    
+    const filtersData = savedSearch.data?.filters || savedSearch.filter?.filters || [];
+    const searchData = savedSearch.data;
+    const filters = filterStore.processFiltersFromData(filtersData);
+    
     this.edit({
-      filters: savedSearch.filter
-        ? savedSearch.filter.filters.map((i: FilterItem) =>
-            new FilterItem().fromJson(i),
-          )
-        : [],
+      filters: filters as any,
+      startDate: searchData?.startTimestamp || this.instance.startDate,
+      endDate: searchData?.endTimestamp || this.instance.endDate,
+      sort: searchData?.sort || this.instance.sort,
+      order: searchData?.order || this.instance.order,
+      eventsOrder: searchData?.eventsOrder || this.instance.eventsOrder,
     });
     this.currentPage = 1;
   }
@@ -126,6 +142,32 @@ class SearchStore {
   async fetchSavedSearchList() {
     const response = await searchService.fetchSavedSearch();
     this.list = response.map((item: any) => new SavedSearch(item));
+  }
+
+  async loadSharedSearch(searchId: string): Promise<void> {
+    try {
+      const response = await searchService.getSavedSearch(searchId);
+      if (response) {
+        const filtersData = response.data?.filters || response.filter?.filters || [];
+        const searchData = response.data;
+        const filters = filterStore.processFiltersFromData(filtersData);
+        
+        this.edit({
+          filters: filters as any,
+          startDate: searchData?.startTimestamp || this.instance.startDate,
+          endDate: searchData?.endTimestamp || this.instance.endDate,
+          sort: searchData?.sort || this.instance.sort,
+          order: searchData?.order || this.instance.order,
+          eventsOrder: searchData?.eventsOrder || this.instance.eventsOrder,
+        });
+        
+        this.currentPage = 1;
+        await this.fetchSessions(true);
+      }
+    } catch (error) {
+      console.error('Failed to load shared search:', error);
+      throw error;
+    }
   }
 
   edit(instance: Partial<Search>) {
@@ -214,20 +256,121 @@ class SearchStore {
     await this.fetchSavedSearchList();
   }
 
-  async save(id?: string | null, rename = false): Promise<void> {
-    const filter = this.instance.toData();
-    const isNew = !id;
-    const instance = this.savedSearch.toData();
-    const newInstance = rename ? instance : { ...instance, filter };
-    newInstance.filter.filters = newInstance.filter.filters.map(filterMap);
+  async saveAsShare(): Promise<void> {
+    const searchData = this.instance.toSearch();
+    
+    // Ensure all filters have required fields
+    const ensureFilterFields = (filter: any): any => {
+      return {
+        ...filter,
+        name: filter.name || filter.type,
+        type: filter.type || filter.name,
+        dataType: filter.dataType || 'string',
+        operator: filter.operator || 'is',
+        propertyOrder: filter.propertyOrder || (filter.isEvent ? 'then' : 'and'),
+        filters: Array.isArray(filter.filters) 
+          ? filter.filters.map(ensureFilterFields)
+          : [],
+      };
+    };
+    
+    // Construct payload for sharing
+    const payload: any = {
+      name: null, // Shared searches don't need a name
+      isPublic: false,
+      isShare: true, // Mark as shared
+      data: {
+        filters: searchData.filters.map(ensureFilterFields),
+        startTimestamp: searchData.startTimestamp,
+        endTimestamp: searchData.endTimestamp,
+        sort: searchData.sort || 'startTs',
+        order: searchData.order || 'desc',
+        eventsOrder: searchData.eventsOrder || 'then',
+        limit: searchData.limit || 10,
+        page: searchData.page || 1,
+      },
+    };
 
-    await searchService.saveSavedSearch(newInstance, id);
-    await this.fetchSavedSearchList();
-
-    if (isNew) {
-      const lastSavedSearch = this.list[this.list.length - 1];
-      this.applySavedSearch(lastSavedSearch);
+    const savedSearchResponse = await searchService.saveSavedSearch(payload);
+    
+    // Update the current savedSearch with the response data
+    if (savedSearchResponse) {
+      this.savedSearch = new SavedSearch({
+        searchId: savedSearchResponse.searchId,
+        isPublic: false,
+        isShare: true,
+        data: payload.data,
+      });
     }
+  }
+
+  async save(id?: string | null, rename = false): Promise<void> {
+    const searchData = this.instance.toSearch();
+    const instance = this.savedSearch.toData();
+    
+    // Determine if updating existing or creating new
+    // Use provided id, or fall back to current savedSearch.searchId
+    const searchId = id || this.savedSearch.searchId;
+    const isNew = !searchId;
+    
+    // Serialize filters - they come from toSearch() which already has them in JSON format
+    const filtersToSave = rename 
+      ? (instance.data?.filters || instance.filter?.filters || [])
+      : searchData.filters;
+    
+    // Ensure all filters have required fields
+    const ensureFilterFields = (filter: any): any => {
+      return {
+        ...filter,
+        name: filter.name || filter.type,
+        type: filter.type || filter.name,
+        dataType: filter.dataType || 'string',
+        operator: filter.operator || 'is',
+        propertyOrder: filter.propertyOrder || (filter.isEvent ? 'then' : 'and'),
+        filters: Array.isArray(filter.filters) 
+          ? filter.filters.map(ensureFilterFields)
+          : [],
+      };
+    };
+    
+    // Construct payload matching the new API structure
+    const payload: any = {
+      name: instance.name || null,
+      isPublic: instance.isPublic || false,
+      isShare: instance.isShare || false,
+      data: {
+        filters: filtersToSave.map(ensureFilterFields),
+        startTimestamp: searchData.startTimestamp,
+        endTimestamp: searchData.endTimestamp,
+        sort: searchData.sort || 'startTs',
+        order: searchData.order || 'desc',
+        eventsOrder: searchData.eventsOrder || 'then',
+        limit: searchData.limit || 10,
+        page: searchData.page || 1,
+      },
+    };
+
+    let savedSearchResponse;
+    if (isNew) {
+      savedSearchResponse = await searchService.saveSavedSearch(payload);
+    } else {
+      savedSearchResponse = await searchService.updateSavedSearch(searchId!, payload);
+    }
+    
+    // Update the current savedSearch with the response data
+    if (savedSearchResponse) {
+      this.savedSearch = new SavedSearch({
+        ...instance,
+        searchId: savedSearchResponse.searchId || searchId,
+        name: instance.name,
+        isPublic: instance.isPublic,
+        isShare: instance.isShare,
+        data: payload.data,
+      });
+    }
+    
+    // Refresh the list to show the latest saved searches
+    await this.fetchSavedSearchList();
   }
 
   clearList() {

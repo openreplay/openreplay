@@ -1,6 +1,6 @@
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import React, { Suspense, lazy } from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { Redirect, Route, Switch, useLocation, useHistory } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { useStore } from './mstore';
 import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
@@ -86,6 +86,8 @@ function PrivateRoutes() {
     searchStore,
     filterStore,
   } = useStore();
+  const location = useLocation();
+  const history = useHistory();
   const onboarding = userStore.onboarding;
   const scope = userStore.scopeState ?? 2;
   const { tenantId } = userStore.account;
@@ -99,20 +101,55 @@ function PrivateRoutes() {
     scope > 0;
   const siteIdList: any = sites.map(({ id }) => id);
 
+  const initialFetchDoneRef = React.useRef(false);
+  const [filtersLoaded, setFiltersLoaded] = React.useState(false);
+
   React.useEffect(() => {
     if (siteId && integrationsStore.integrations.siteId !== siteId) {
       integrationsStore.integrations.setSiteId(siteId);
       void integrationsStore.integrations.fetchIntegrations(siteId);
-      void filterStore.fetchFilters(siteId);
-      void searchStore.fetchSessions(true);
+      filterStore.fetchFilters(siteId).then(() => {
+        setFiltersLoaded(true);
+      });
     }
   }, [siteId]);
 
   React.useEffect(() => {
-    if (!searchStore.urlParsed) return;
+    if (!searchStore.urlParsed && filtersLoaded) {
+      const searchParams = new URLSearchParams(location.search);
+      const searchId = searchParams.get('sid');
+      
+      if (searchId) {
+        searchStore.loadSharedSearch(searchId).then(() => {
+          searchParams.delete('sid');
+          const newSearch = searchParams.toString();
+          const newUrl = `${location.pathname}${newSearch ? `?${newSearch}` : ''}`;
+          history.replace(newUrl);
+          searchStore.setUrlParsed();
+          setTimeout(() => {
+            initialFetchDoneRef.current = true;
+          }, 500);
+        }).catch((error) => {
+          console.error('Failed to load shared search:', error);
+          searchStore.setUrlParsed();
+          setTimeout(() => {
+            initialFetchDoneRef.current = true;
+          }, 500);
+        });
+      } else {
+        searchStore.setUrlParsed();
+        void searchStore.fetchSessions(true);
+        setTimeout(() => {
+          initialFetchDoneRef.current = true;
+        }, 500);
+      }
+    }
+  }, [filtersLoaded, searchStore.urlParsed, location.search]);
+
+  React.useEffect(() => {
+    if (!searchStore.urlParsed || !initialFetchDoneRef.current) return;
     debounceCall(() => searchStore.fetchSessions(true), 250)();
   }, [
-    searchStore.urlParsed,
     searchStore.instance.filters,
     searchStore.instance.eventsOrder,
   ]);

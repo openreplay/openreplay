@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Button, Tooltip } from 'antd';
-import { MoreOutlined, SaveOutlined } from '@ant-design/icons';
+import { Button, Tooltip, message, Space } from 'antd';
+import { Save, Share2, List } from 'lucide-react';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 function SavedSearch() {
   const [showModal, setShowModal] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const { searchStore } = useStore();
   const { t } = useTranslation();
 
@@ -20,48 +21,85 @@ function SavedSearch() {
     setShowModal(true);
   };
   const isDisabled = searchStore.instance.filters.length === 0;
+  const { savedSearch } = searchStore;
+  const isUpdating = savedSearch.exists();
 
   const toggleList = () => {
     showListModal(<SavedSearchModal />, { right: true });
   };
 
+  const handleShare = async () => {
+    if (searchStore.instance.filters.length === 0) return;
+    
+    setIsSharing(true);
+    try {
+      // Save with isShare flag
+      await searchStore.saveAsShare();
+      
+      const searchId = searchStore.savedSearch.searchId;
+      if (searchId) {
+        const shareUrl = `${window.location.origin}${window.location.pathname}?sid=${searchId}`;
+        await navigator.clipboard.writeText(shareUrl);
+        message.success(t('Link copied to clipboard'));
+      }
+    } catch (error) {
+      console.error('Failed to share search:', error);
+      message.error(t('Failed to share search'));
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   return (
     <>
-      <div className="flex gap-2">
-        <Tooltip
-          title={
-            searchStore.list.length === 0
-              ? t('You have not saved any searches')
-              : ''
-          }
-        >
-          <Button
-            disabled={searchStore.list.length === 0}
-            onClick={toggleList}
-            className="px-2"
-            type="text"
+      <div className="inline-flex items-center gap-3">
+        <span className="text-sm font-medium text-gray-700">{t('Saved Searches')}</span>
+        <Space.Compact>
+          <Tooltip
+            title={
+              searchStore.list.length === 0
+                ? t('You have not saved any searches')
+                : t('View Saved Searches')
+            }
           >
-            {t('Saved Searches')}
-          </Button>
-        </Tooltip>
+            <Button
+              disabled={searchStore.list.length === 0}
+              onClick={toggleList}
+              icon={<List size={16} />}
+              type="text"
+              className="!px-2"
+            />
+          </Tooltip>
 
-        <Tooltip
-          title={
-            isDisabled
-              ? t('Add an event or filter to save search')
-              : t('Save search filters')
-          }
-        >
-          <Button
-            onClick={toggleModal}
-            disabled={isDisabled}
-            className="px-2"
-            type="text"
+          <Tooltip
+            title={
+              isDisabled
+                ? t('Add an event or filter to save search')
+                : isUpdating
+                  ? t('Update')
+                  : t('Save Search')
+            }
           >
-            {/* {savedSearch.exists() ? 'Update' : 'Save'} Search */}
-            <SaveOutlined />
-          </Button>
-        </Tooltip>
+            <Button
+              onClick={toggleModal}
+              disabled={isDisabled}
+              icon={<Save size={16} />}
+              type="text"
+              className="!px-2"
+            />
+          </Tooltip>
+
+          <Tooltip title={isDisabled ? t('Add an event or filter to share search') : t('Share Search')}>
+            <Button
+              onClick={handleShare}
+              disabled={isDisabled}
+              loading={isSharing}
+              icon={<Share2 size={16} />}
+              type="text"
+              className="!px-2"
+            />
+          </Tooltip>
+        </Space.Compact>
       </div>
       {showModal && (
         <SaveSearchModal

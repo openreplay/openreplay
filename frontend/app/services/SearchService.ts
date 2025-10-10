@@ -8,13 +8,13 @@ export default class SearchService extends BaseService {
   }
 
   async fetchSavedSearchList() {
-    const r = await this.client.get('/PROJECT_ID/saved_search');
+    const r = await this.client.get('/PROJECT_ID/sessions/search/saved');
     const j = await r.json();
     return j.data;
   }
 
-  async deleteSavedSearch(id: string) {
-    const r = await this.client.delete(`/saved_search/${id}`);
+  async deleteSavedSearch(searchId: string) {
+    const r = await this.client.delete(`/PROJECT_ID/sessions/search/saved/${searchId}`);
     const j = await r.json();
     return j.data;
   }
@@ -25,9 +25,15 @@ export default class SearchService extends BaseService {
     return j.data;
   }
 
-  async saveSavedSearch(data: any, id: string) {
-    const r = await this.client.post(
-      id ? `/PROJECT_ID/saved_search/${id}` : '/PROJECT_ID/saved_search',
+  async saveSavedSearch(data: any) {
+    const r = await this.client.post('/PROJECT_ID/sessions/search/save', data);
+    const j = await r.json();
+    return j.data;
+  }
+
+  async updateSavedSearch(searchId: string, data: any) {
+    const r = await this.client.put(
+      `/PROJECT_ID/sessions/search/saved/${searchId}`,
       data,
     );
     const j = await r.json();
@@ -35,7 +41,13 @@ export default class SearchService extends BaseService {
   }
 
   async fetchSavedSearch() {
-    const r = await this.client.get('/PROJECT_ID/saved_search');
+    const r = await this.client.get('/PROJECT_ID/sessions/search/saved');
+    const j = await r.json();
+    return j.data;
+  }
+
+  async getSavedSearch(searchId: string) {
+    const r = await this.client.get(`/PROJECT_ID/sessions/search/saved/${searchId}`);
     const j = await r.json();
     return j.data;
   }
