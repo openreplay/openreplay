@@ -137,13 +137,15 @@ func (s *savedSearchesImpl) List(projectID int, userID uint64, limit, offset int
 
 	const selectQuery = `
 		SELECT 
-			search_id, project_id, user_id, name, is_public, is_share, search_data, created_at, expires_at, deleted_at,
+			ss.search_id, ss.project_id, ss.user_id, u.name AS user_name, ss.name, ss.is_public, ss.is_share, 
+			ss.search_data, ss.created_at, ss.expires_at, ss.deleted_at,
 			COUNT(*) OVER() AS total_count
-		FROM public.saved_searches
-		WHERE project_id=$1 AND deleted_at IS NULL 
-			AND is_share=false
-			AND (user_id=$2 OR is_public=true)
-		ORDER BY created_at DESC
+		FROM public.saved_searches ss
+		LEFT JOIN public.users u ON ss.user_id = u.user_id
+		WHERE ss.project_id=$1 AND ss.deleted_at IS NULL 
+			AND ss.is_share=false
+			AND (ss.user_id=$2 OR ss.is_public=true)
+		ORDER BY ss.created_at DESC
 		LIMIT $3 OFFSET $4
 	`
 
@@ -165,6 +167,7 @@ func (s *savedSearchesImpl) List(projectID int, userID uint64, limit, offset int
 			&savedSearch.SearchID,
 			&savedSearch.ProjectID,
 			&savedSearch.UserID,
+			&savedSearch.UserName,
 			&savedSearch.Name,
 			&savedSearch.IsPublic,
 			&savedSearch.IsShare,
