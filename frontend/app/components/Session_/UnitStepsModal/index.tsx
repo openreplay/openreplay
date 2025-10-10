@@ -6,7 +6,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { X } from 'lucide-react';
-import { puppeteerEvents, cypressEvents, playWrightEvents } from './utils';
+import { puppeteerEvents, cypressEvents, playWrightEvents, k6Events } from './utils';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
@@ -17,12 +17,14 @@ const defaultFrameworkKey = '__$defaultFrameworkKey$__';
 export const getDefaultFramework = () => {
   const stored = localStorage.getItem(defaultFrameworkKey);
   return stored ?? 'cypress';
-}
+};
+
 export const frameworkIcons = {
   cypress: 'cypress',
   puppeteer: 'puppeteer',
   playwright: 'pwright',
-}
+};
+
 function UnitStepsModal({ onClose }: Props) {
   const { t } = useTranslation();
   const { sessionStore, uiPlayerStore } = useStore();
@@ -63,6 +65,7 @@ function UnitStepsModal({ onClose }: Props) {
       puppeteer: puppeteerEvents,
       cypress: cypressEvents,
       playwright: playWrightEvents,
+      k6: k6Events,
     };
 
     // @ts-ignore
@@ -180,6 +183,15 @@ function UnitStepsModal({ onClose }: Props) {
               </div>
             ),
             value: 'playwright',
+          },
+          {
+            label: (
+              <div className={'flex items-center gap-2'}>
+                <div className="text-disabled-text text-lg">k6</div>
+                <div>{t('Grafana K6')}</div>
+              </div>
+            ),
+            value: 'k6',
           },
         ]}
         value={activeFramework}

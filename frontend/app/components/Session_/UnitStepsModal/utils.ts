@@ -38,3 +38,40 @@ export const playWrightEvents = {
   testIntro: (pageTitle: string, firstUrl: string) => `test.describe('${pageTitle}', () => {\n  test('Navigates through ${firstUrl}', async () => {`,
   testOutro: () => `  })\n})`,
 };
+
+export const k6Events = {
+  ...playWrightEvents,
+  testIntro: () => `import { browser } from 'k6/browser';
+import { check } from 'https://jslib.k6.io/k6-utils/1.5.0/index.js';
+
+export const options = {
+  scenarios: {
+    ui: {
+      executor: 'shared-iterations',
+      options: {
+        browser: {
+          type: 'chromium',
+        },
+      },
+    },
+  },
+  thresholds: {
+    checks: ['rate==1.0'],
+  },
+};
+
+export default async function () {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  try {`,
+  testOutro: () => `
+  } catch (e) {
+    console.log('Error during execution:', e);
+    throw e;
+  } finally {
+    await page.close();
+  }
+}
+`,
+};
