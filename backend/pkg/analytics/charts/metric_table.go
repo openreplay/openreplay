@@ -603,15 +603,19 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 
 	// To add session's specific filters (like user_os, user_browser, etc...)
 	for _, f := range r.Series[0].Filter.Filters {
-		if !f.IsEvent && f.AutoCaptured {
+		if !f.IsEvent {
+			var subCondition []string
 			if column, ok := sessionProperties[f.Name]; ok {
-				var subCondition []string
 				for _, value := range f.Value {
 					subCondition = append(subCondition, fmt.Sprintf("%s='%s'", column, value))
 				}
-				if len(subCondition) > 0 {
-					sessionConditions = append(sessionConditions, fmt.Sprintf("(%s)", strings.Join(subCondition, " OR ")))
+			} else if strings.HasPrefix(f.Name, "metadata_") {
+				for _, value := range f.Value {
+					subCondition = append(subCondition, fmt.Sprintf("%s='%s'", f.Name, value))
 				}
+			}
+			if len(subCondition) > 0 {
+				sessionConditions = append(sessionConditions, fmt.Sprintf("(%s)", strings.Join(subCondition, " OR ")))
 			}
 		}
 	}
