@@ -30,7 +30,7 @@ function UnitStepsModal({ onClose }: Props) {
   const { sessionStore, uiPlayerStore } = useStore();
   const { store, player } = React.useContext(PlayerContext);
   const [eventStr, setEventStr] = React.useState('');
-  const [mode, setMode] = React.useState('events');
+  const [mode, setMode] = React.useState('test');
   const [activeFramework, setActiveFramework] = React.useState(getDefaultFramework);
   const events = React.useMemo(() => {
     if (!uiPlayerStore.exportEventsSelection.enabled) {
