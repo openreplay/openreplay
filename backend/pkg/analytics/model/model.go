@@ -70,7 +70,6 @@ type Session struct {
 	Duration        uint32            `json:"duration"`
 	ErrorsCount     int               `json:"errorsCount"`
 	EventsCount     uint16            `json:"eventsCount"`
-	IssueScore      int64             `json:"issueScore"`
 	IssueTypes      []string          `json:"issueTypes"`
 	Metadata        map[string]string `json:"metadata"`
 	PagesCount      int               `json:"pagesCount"`
