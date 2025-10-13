@@ -14,7 +14,8 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": False,
-                "possibleValues": []
+                "possibleValues": [],
+                "isConditional": False
             },
             {
                 "id": "sf_2",
@@ -24,7 +25,8 @@ def get_sessions_filters(project_id: int):
                 "dataType": "int",
                 "autoCaptured": True,
                 "isPredefined": False,
-                "possibleValues": []
+                "possibleValues": [],
+                "isConditional": True
             },
             {
                 "id": "sf_3",
@@ -34,7 +36,8 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": False,
-                "possibleValues": []
+                "possibleValues": [],
+                "isConditional": False
             },
             {
                 "id": "sf_4",
@@ -44,7 +47,8 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": False,
-                "possibleValues": []
+                "possibleValues": [],
+                "isConditional": False
             },
             {
                 "id": "sf_5",
@@ -54,7 +58,8 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": False,
-                "possibleValues": []
+                "possibleValues": [],
+                "isConditional": False
             },
             {
                 "id": "sf_6",
@@ -86,7 +91,8 @@ def get_sessions_filters(project_id: int):
                     "SY", "TW", "TJ", "TZ", "TH", "TL", "TG", "TK", "TO", "TT", "TN", "TR",
                     "TM", "TC", "TV", "UG", "UA", "AE", "GB", "US", "UM", "UY", "UZ", "VU",
                     "VE", "VN", "VG", "VI", "WF", "EH", "YE", "ZM", "ZW"
-                ]
+                ],
+                "isConditional": True
             },
             {
                 "id": "sf_7",
@@ -96,7 +102,8 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": False,
-                "possibleValues": []
+                "possibleValues": [],
+                "isConditional": False
             },
             {
                 "id": "sf_8",
@@ -106,7 +113,8 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": False,
-                "possibleValues": []
+                "possibleValues": [],
+                "isConditional": False
             },
             {
                 "id": "sf_9",
@@ -116,7 +124,8 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": False,
-                "possibleValues": []
+                "possibleValues": [],
+                "isConditional": True
             },
             {
                 "id": "sf_10",
@@ -126,7 +135,8 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": False,
-                "possibleValues": []
+                "possibleValues": [],
+                "isConditional": True
             },
             {
                 "id": "sf_11",
@@ -136,7 +146,8 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": False,
-                "possibleValues": []
+                "possibleValues": [],
+                "isConditional": True
             },
             {
                 "id": "sf_12",
@@ -146,7 +157,8 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": True,
-                "possibleValues": ["web", "ios", "android"]
+                "possibleValues": ["web", "ios", "android"],
+                "isConditional": False
             },
             {
                 "id": "sf_13",
@@ -156,7 +168,8 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": False,
-                "possibleValues": []
+                "possibleValues": [],
+                "isConditional": False
             }
         ]
     }
@@ -173,7 +186,10 @@ def get_users_filters(project_id: int):
                 "displayName": "User ID",
                 "possibleTypes": ["string"],
                 "dataType": "string",
-                "autoCaptured": False
+                "autoCaptured": False,
+                "isPredefined": False,
+                "possibleValues": [],
+                "isConditional": True
             },
             {
                 "id": "uf_2",
@@ -181,7 +197,10 @@ def get_users_filters(project_id: int):
                 "displayName": "User Anonymous ID",
                 "possibleTypes": ["string"],
                 "dataType": "string",
-                "autoCaptured": False
+                "autoCaptured": False,
+                "isPredefined": False,
+                "possibleValues": [],
+                "isConditional": True
             }
         ]}
 
