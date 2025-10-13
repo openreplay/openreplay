@@ -305,14 +305,14 @@ func (e *eventsImpl) GetCustomsBySessionID(projID uint32, sessID uint64) []inter
 				AND ` + "`$event_name`" + `!='INCIDENT'
 			  ORDER BY created_at;`
 	customEvents := make([]customEvent, 0)
+	res := make([]interface{}, 0, len(customEvents))
 	if err := e.chConn.Select(context.Background(), &customEvents, query, sessID); err != nil {
 		e.log.Error(context.Background(), "Error querying custom events: %v", err)
-		return nil
+		return res
 	}
 	if len(customEvents) == 0 {
-		return nil
+		return res
 	}
-	res := make([]interface{}, 0, len(customEvents))
 	for _, cEvent := range customEvents {
 		event := make(map[string]interface{})
 		event["name"] = cEvent.Name
@@ -570,11 +570,11 @@ func (e *eventsImpl) GetMobileCustomsBySessionID(projID uint32, sessID uint64) [
 				AND ` + "`$event_name`" + ` != 'INCIDENT'
 			  ORDER BY created_at;`
 	sessEvents := make([]mobileEvent, 0)
+	res := make([]interface{}, 0, len(sessEvents))
 	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID); err != nil {
 		e.log.Error(context.Background(), "Error querying mobile customs: %v", err)
-		return nil
+		return res
 	}
-	res := make([]interface{}, 0, len(sessEvents))
 	for _, sessEvent := range sessEvents {
 		sessEvent.Timestamp = sessEvent.CreatedAt.UnixMilli()
 		res = append(res, sessEvent)
