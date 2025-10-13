@@ -146,7 +146,7 @@ class SearchStore {
     const offset = (page - 1) * limit;
     const response = await searchService.fetchSavedSearch({ limit, offset });
     runInAction(() => {
-      this.list = response.data.map((item: any) => new SavedSearch(item));
+      this.list = response.data?.map((item: any) => new SavedSearch(item)) || [];
       this.savedSearchTotal = response.total;
       this.savedSearchPage = page;
       this.savedSearchPageSize = limit;
