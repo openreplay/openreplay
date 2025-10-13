@@ -8,7 +8,7 @@
       "name": "@openreplay/tracker",
       "version": "16.4.10-beta.0",
       "dependencies": {
-        "@openreplay/network-proxy": "^1.2.0",
+        "@openreplay/network-proxy": "^1.2.2",
         "error-stack-parser": "^2.1.4",
         "error-stack-parser-es": "^0.1.5",
         "fflate": "^0.8.2",
@@ -217,7 +217,7 @@
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
 
-    "@openreplay/network-proxy": ["@openreplay/network-proxy@1.2.0", "", {}, "sha512-vIOzBWVKn+7/Dk4qFmRxR1fdOEnLt1hXkEYtc3m7eIA2nVwz+BSGW4Hbs/ygFLnNS0HkcBwuRgmXAwRMK5HCrQ=="],
+    "@openreplay/network-proxy": ["@openreplay/network-proxy@1.2.2", "", {}, "sha512-Zr53s6DZvBvHTDyASMKA4G1pGHZtXLDdmWAk6hDKtnzUdRuNW66D+ja2v+x+zbCGBN95iBlOcAxbLlYbwmoMjg=="],
 
     "@openreplay/tracker": ["@openreplay/tracker@workspace:tracker"],
 

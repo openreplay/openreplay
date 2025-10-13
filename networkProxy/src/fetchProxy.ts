@@ -6,7 +6,7 @@
  * in not-so-hacky way
  * */
 import NetworkMessage from "./networkMessage";
-import { RequestState, INetworkMessage, RequestResponseData } from "./types";
+import { INetworkMessage, RequestResponseData } from "./types";
 import {
   formatByteSize,
   genStringBody,
@@ -103,6 +103,30 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     );
     this.beforeFetch(item, input as RequestInfo, init);
 
+    const signal =
+      (argsList[0] instanceof Request ? (argsList[0] as Request).signal : undefined) ||
+      (argsList[1]?.signal as AbortSignal | undefined);
+    // guard to avoid double-send
+    let abortedNotified = false;
+    const notifyAbort = () => {
+      if (abortedNotified) return;
+      abortedNotified = true;
+      item.endTime = performance.now();
+      item.duration = item.endTime - (item.startTime || item.endTime);
+      item.status = 0;
+      item.statusText = "Aborted";
+      item.readyState = 0;
+      const msg = item.getMessage();
+      if (msg) this.sendMessage(msg);
+    };
+    if (signal) {
+      if ((signal as any).aborted) {
+        notifyAbort();
+      } else {
+        signal.addEventListener("abort", notifyAbort, { once: true });
+      }
+    }
+
     this.setSessionTokenHeader((name, value) => {
       if (this.tokenUrlMatcher !== undefined) {
         if (!this.tokenUrlMatcher(item.url)) {
@@ -127,11 +151,21 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
       }
     });
     return (<ReturnType<T>>target.apply(window, argsList))
-      .then(this.afterFetch(item))
+      .then(this.afterFetch(item, () => {
+        abortedNotified = true;
+      }))
       .catch((e) => {
-        // mock finally
         item.endTime = performance.now();
         item.duration = item.endTime - (item.startTime || item.endTime);
+        if (e && e.name === "AbortError") {
+          item.status = 0;
+          item.statusText = "Aborted";
+          item.readyState = 0;
+          if (!abortedNotified) {
+            const msg = item.getMessage();
+            if (msg) this.sendMessage(msg);
+          }
+        }
         throw e;
       });
   }
@@ -194,8 +228,9 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     }
   }
 
-  protected afterFetch(item: NetworkMessage) {
+  protected afterFetch(item: NetworkMessage, onResolved?: () => void) {
     return (resp: Response) => {
+      if (onResolved) onResolved?.();
       item.endTime = performance.now();
       item.duration = item.endTime - (item.startTime || item.endTime);
       item.status = resp.status;
@@ -237,10 +272,14 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
             }
           })
           .catch((e) => {
-            if (e.name !== "AbortError") {
-              throw e;
+            if (e.name === "AbortError") {
+              item.status = 0;
+              item.statusText = "Aborted";
+              item.readyState = 0;
+              const msg = item.getMessage();
+              if (msg) this.sendMessage(msg);
             } else {
-              // ignore AbortError
+              throw e;
             }
           });
       }
