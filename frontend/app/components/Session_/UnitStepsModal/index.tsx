@@ -6,7 +6,12 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { X } from 'lucide-react';
-import { puppeteerEvents, cypressEvents, playWrightEvents, k6Events } from './utils';
+import {
+  puppeteerEvents,
+  cypressEvents,
+  playWrightEvents,
+  k6Events,
+} from './utils';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
@@ -32,8 +37,12 @@ function UnitStepsModal({ onClose }: Props) {
   const { store, player } = React.useContext(PlayerContext);
   const [eventStr, setEventStr] = React.useState('');
   const [mode, setMode] = React.useState('test');
-  const [activeFramework, setActiveFramework] = React.useState(getDefaultFramework);
+  const [activeFramework, setActiveFramework] =
+    React.useState(getDefaultFramework);
   const events = React.useMemo(() => {
+    if (!sessionStore.current.events) {
+      return [];
+    }
     if (!uiPlayerStore.exportEventsSelection.enabled) {
       return sessionStore.current.events;
     } else {
@@ -96,6 +105,9 @@ function UnitStepsModal({ onClose }: Props) {
   }, [events, activeFramework, mode]);
 
   const enableZoom = () => {
+    if (!sessionStore.current.events) {
+      return;
+    }
     const time = store.get().time;
     const endTime = store.get().endTime;
     const closestEvent = sessionStore.current.events.reduce((prev, curr) => {
@@ -142,7 +154,7 @@ function UnitStepsModal({ onClose }: Props) {
   const changeFramework = (framework: string) => {
     localStorage.setItem(defaultFrameworkKey, framework);
     setActiveFramework(framework);
-  }
+  };
 
   return (
     <div

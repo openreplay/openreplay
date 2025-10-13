@@ -10,8 +10,8 @@ interface Props {
   extra?: string;
   language?: string;
   copy?: boolean;
-  width?: string;
-  height?: string;
+  width?: string | number;
+  height?: string | number;
 }
 
 export default function CodeBlock({
