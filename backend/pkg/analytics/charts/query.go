@@ -20,6 +20,11 @@ const (
 	EventOrderOr   = "or"
 )
 
+var (
+	sqlStringReplacer      = strings.NewReplacer(`'`, `''`)
+	sqlLikePatternReplacer = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`, `'`, `''`)
+)
+
 type Payload struct {
 	*model.MetricPayload
 	ProjectId int    `validate:"required,min=1"`
@@ -125,7 +130,7 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts 
 
 	if propKey.InDProperties {
 		// JSON extraction - escape property name to prevent injection
-		escapedProp := escapeSQLString(propKey.LogicalProperty)
+		escapedProp := sqlStringReplacer.Replace(propKey.LogicalProperty)
 		if isNumeric {
 			return fmt.Sprintf("JSONExtractFloat(toString(%s), '%s')", colName, escapedProp), "singleColumn"
 		}
@@ -133,24 +138,6 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts 
 	} else {
 		return fmt.Sprintf("%s.\"%s\"", opts.MainTableAlias, propKey.LogicalProperty), "singleColumn"
 	}
-}
-
-// Escape single quotes by doubling them (SQL standard)
-func escapeSQLString(s string) string {
-	return strings.ReplaceAll(s, "'", "''")
-}
-
-// escapeSQLLikePattern escapes special characters in LIKE patterns
-// In addition to SQL escaping, LIKE patterns need to escape %, _, and \
-func escapeSQLLikePattern(s string) string {
-	// Escape backslash first (must be done before other escapes)
-	s = strings.ReplaceAll(s, "\\", "\\\\")
-	// Escape LIKE pattern wildcards
-	s = strings.ReplaceAll(s, "%", "\\%")
-	s = strings.ReplaceAll(s, "_", "\\_")
-	// Escape single quotes for SQL
-	s = strings.ReplaceAll(s, "'", "''")
-	return s
 }
 
 func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions) ([]string, []string, []string) {
@@ -218,7 +205,7 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) ([]string, string) {
 	}
 	var nameCondition string = ""
 	if f.IsEvent {
-		escapedName := escapeSQLString(f.Name)
+		escapedName := sqlStringReplacer.Replace(f.Name)
 		nameCondition = fmt.Sprintf("%s\"$event_name\" = '%s'", alias, escapedName)
 		var parts []string
 		parts = append(parts, nameCondition)
@@ -254,7 +241,7 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) ([]string, string) {
 	case "isAny", "onAny":
 		//This part is unreachable, because you already have if f.IsEvent&return above
 		if f.IsEvent {
-			escapedName := escapeSQLString(f.Name)
+			escapedName := sqlStringReplacer.Replace(f.Name)
 			return []string{fmt.Sprintf("%s\"$event_name\" = '%s'", alias, escapedName)}, ""
 		}
 	default:
@@ -298,7 +285,7 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 			if isNumeric {
 				wrapped[i] = v
 			} else {
-				wrapped[i] = fmt.Sprintf("'%s'", escapeSQLString(v))
+				wrapped[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(v))
 			}
 		}
 		return fmt.Sprintf("%s NOT IN (%s)", expr, strings.Join(wrapped, ", "))
@@ -306,33 +293,33 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 		// wrap values with % on both sides and escape LIKE pattern
 		wrapped := make([]string, len(values))
 		for i, v := range values {
-			wrapped[i] = fmt.Sprintf("%%%s%%", escapeSQLLikePattern(v))
+			wrapped[i] = fmt.Sprintf("%%%s%%", sqlLikePatternReplacer.Replace(v))
 		}
 		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
 	case "notContains", "doesNotContain":
 		wrapped := make([]string, len(values))
 		for i, v := range values {
-			wrapped[i] = fmt.Sprintf("%%%s%%", escapeSQLLikePattern(v))
+			wrapped[i] = fmt.Sprintf("%%%s%%", sqlLikePatternReplacer.Replace(v))
 		}
 		cond := multiValCond(expr, wrapped, "%s ILIKE %s", false)
 		return "NOT (" + cond + ")"
 	case "startsWith":
 		wrapped := make([]string, len(values))
 		for i, v := range values {
-			wrapped[i] = escapeSQLLikePattern(v) + "%"
+			wrapped[i] = sqlLikePatternReplacer.Replace(v) + "%"
 		}
 		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
 	case "endsWith":
 		wrapped := make([]string, len(values))
 		for i, v := range values {
-			wrapped[i] = "%" + escapeSQLLikePattern(v)
+			wrapped[i] = "%" + sqlLikePatternReplacer.Replace(v)
 		}
 		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
 	case "regex":
 		var parts []string
 		for _, v := range values {
 			// Escape the regex pattern value for SQL string literal
-			parts = append(parts, fmt.Sprintf("match(%s, '%s')", expr, escapeSQLString(v)))
+			parts = append(parts, fmt.Sprintf("match(%s, '%s')", expr, sqlStringReplacer.Replace(v)))
 		}
 		if len(parts) > 1 {
 			return "(" + strings.Join(parts, " OR ") + ")"
@@ -347,7 +334,7 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 		if nature == "arrayColumn" {
 			if op, ok := compOpsArrays[operator]; ok {
 				for i := range values {
-					values[i] = fmt.Sprintf("'%s'", escapeSQLString(values[i]))
+					values[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(values[i]))
 				}
 				return fmt.Sprintf("%s(%s,[%s])", op, expr, strings.Join(values, ","))
 			}
@@ -367,7 +354,7 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 func formatCondition(expr, tmpl, value string, isNumeric bool) string {
 	val := value
 	if !isNumeric {
-		val = fmt.Sprintf("'%s'", escapeSQLString(value))
+		val = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(value))
 	}
 	return fmt.Sprintf(tmpl, expr, val)
 }
@@ -396,7 +383,7 @@ func inClause(expr string, values []string, negate, isNumeric bool) string {
 			if isNumeric {
 				return values[0]
 			}
-			return fmt.Sprintf("'%s'", escapeSQLString(values[0]))
+			return fmt.Sprintf("'%s'", sqlStringReplacer.Replace(values[0]))
 		}())
 	}
 	quoted := make([]string, len(values))
@@ -404,7 +391,7 @@ func inClause(expr string, values []string, negate, isNumeric bool) string {
 		if isNumeric {
 			quoted[i] = v
 		} else {
-			quoted[i] = fmt.Sprintf("'%s'", escapeSQLString(v))
+			quoted[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(v))
 		}
 	}
 	return fmt.Sprintf("%s %s (%s)", expr, op, strings.Join(quoted, ", "))
@@ -413,7 +400,7 @@ func inClause(expr string, values []string, negate, isNumeric bool) string {
 func buildInClause(values []string) string {
 	var quoted []string
 	for _, v := range values {
-		quoted = append(quoted, fmt.Sprintf("'%s'", escapeSQLString(v)))
+		quoted = append(quoted, fmt.Sprintf("'%s'", sqlStringReplacer.Replace(v)))
 	}
 	return strings.Join(quoted, ",")
 }
