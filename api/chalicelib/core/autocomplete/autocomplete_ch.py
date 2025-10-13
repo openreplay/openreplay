@@ -131,6 +131,15 @@ def generic_autocomplete_metas(typename):
     return f
 
 
+def static_autocomplete(project_id, text):
+    PLATFORM = ["web", "ios", "android"]
+    results = []
+    for platform in PLATFORM:
+        if platform.startswith(text.lower()):
+            results.append(platform)
+    return results
+
+
 def __pg_errors_query(source=None, value_length=None):
     MAIN_TABLE = exp_ch_helper.get_main_js_errors_sessions_table()
     if value_length is None or value_length > 2:
@@ -354,6 +363,7 @@ def supported_types():
         schemas.FilterType.UTM_CAMPAIGN: generic_autocomplete_metas(typename=schemas.FilterType.UTM_CAMPAIGN),
         schemas.FilterType.UTM_MEDIUM: generic_autocomplete_metas(typename=schemas.FilterType.UTM_MEDIUM),
         schemas.FilterType.UTM_SOURCE: generic_autocomplete_metas(typename=schemas.FilterType.UTM_SOURCE),
+        schemas.FilterType.PLATFORM: static_autocomplete
     }
 
 
