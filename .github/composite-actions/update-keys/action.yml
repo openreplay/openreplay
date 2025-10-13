@@ -57,7 +57,8 @@ runs:
         )
         for var in "${vars[@]}"; do
             IFS=":" read -r env_var yq_path <<<"$var"
-            yq e -i "${yq_path} = strenv(${env_var})" vars.yaml
+            value="${!env_var}"
+            yq e -i "${yq_path} = \"${value}\"" vars.yaml
         done
       shell: bash
       env:
