@@ -97,7 +97,7 @@ func (h *handlersImpl) createNote(w http.ResponseWriter, r *http.Request) {
 		EndAt:     req.EndAt,
 	}
 
-	savedNote, err := h.notes.Create(currUser.TenantID, uint64(projID), currUser.ID, newNote)
+	savedNote, err := h.notes.Create(uint64(projID), currUser.ID, newNote)
 	if err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -124,7 +124,7 @@ func (h *handlersImpl) getSessionNotes(w http.ResponseWriter, r *http.Request) {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, errors.New("unauthorized"), startTime, r.URL.Path, bodySize)
 		return
 	}
-	sessNotes, err := h.notes.GetBySessionID(currUser.TenantID, uint64(projID), currUser.ID, sessID)
+	sessNotes, err := h.notes.GetBySessionID(uint64(projID), currUser.ID, sessID)
 	if err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -151,7 +151,7 @@ func (h *handlersImpl) getNoteByID(w http.ResponseWriter, r *http.Request) {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, errors.New("unauthorized"), startTime, r.URL.Path, bodySize)
 		return
 	}
-	note, err := h.notes.GetByID(currUser.TenantID, uint64(projID), currUser.ID, noteID)
+	note, err := h.notes.GetByID(uint64(projID), currUser.ID, noteID)
 	if err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -205,7 +205,7 @@ func (h *handlersImpl) editNote(w http.ResponseWriter, r *http.Request) {
 		IsPublic:  req.IsPublic,
 		Timestamp: req.Timestamp,
 	}
-	updatedNote, err := h.notes.Update(currUser.TenantID, uint64(projID), currUser.ID, noteID, updates)
+	updatedNote, err := h.notes.Update(uint64(projID), currUser.ID, noteID, updates)
 	if err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -263,7 +263,7 @@ func (h *handlersImpl) getAllNotes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allNodes, err := h.notes.GetAll(currUser.TenantID, uint64(projID), currUser.ID, req)
+	allNodes, err := h.notes.GetAll(uint64(projID), currUser.ID, req)
 	if err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
