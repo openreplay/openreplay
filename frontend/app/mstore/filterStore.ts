@@ -254,6 +254,10 @@ export default class FilterStore {
           filter.operator || this.getDefaultFilterOperator(filter.dataType),
         defaultProperty: Boolean(filter.defaultProperty) || false,
         autoCaptured: filter.autoCaptured || false,
+        isPredefined: Boolean(filter.isPredefined),
+        possibleValues: Array.isArray(filter.possibleValues)
+          ? filter.possibleValues.map((v: string) => ({ value: v, label: v }))
+          : [],
       };
     });
   };

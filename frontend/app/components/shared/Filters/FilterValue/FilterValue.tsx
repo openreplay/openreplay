@@ -71,6 +71,8 @@ function FilterValue(props: Props) {
       isEvent: filter.isEvent,
       id: filter.id,
       autoCaptured: filter.autoCaptured,
+      possibleValues: filter.possibleValues,
+      isPredefined: filter.isPredefined,
     };
 
     if (filter.isEvent || eventName) {
@@ -100,6 +102,8 @@ function FilterValue(props: Props) {
     filter.id,
     filter.category,
     filter.eventName,
+    filter.isPredefined,
+    filter.possibleValues,
     eventName,
   ]);
 

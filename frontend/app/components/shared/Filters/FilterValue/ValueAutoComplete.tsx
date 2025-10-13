@@ -33,7 +33,8 @@ interface FilterParams {
   type: string;
   name?: string;
   autoCaptured?: boolean;
-
+  isPredefined?: boolean;
+  possibleValues?: Array<any>;
   [key: string]: any;
 }
 
@@ -70,7 +71,9 @@ const ValueAutoComplete = observer(
     const { filterStore, projectsStore } = useStore();
     const [showValueModal, setShowValueModal] = useState(false);
     const [hovered, setHovered] = useState(false);
-    const [options, setOptions] = useState<OptionType[]>([]);
+    const [options, setOptions] = useState<OptionType[]>(
+      params.isPredefined ? (params.possibleValues ?? []) : [],
+    );
     const [loadingTopValues, setLoadingTopValues] = useState(false);
     const [loadingSearch, setLoadingSearch] = useState(false);
     const [query, setQuery] = useState('');
@@ -97,6 +100,9 @@ const ValueAutoComplete = observer(
     }, [initialValues]);
 
     useEffect(() => {
+      if (params.isPredefined) {
+        return;
+      }
       if (!params.isEvent && filterKey && !filterStore.topValues[filterKey]) {
         setLoadingTopValues(true);
         filterStore
@@ -117,7 +123,9 @@ const ValueAutoComplete = observer(
       if (showValueModal) {
         setSelectedValues(initialValues.filter((i) => i && i.length > 0));
         setQuery('');
-        setOptions(mappedTopValues.length > 0 ? mappedTopValues : []);
+        if (!params.isPredefined) {
+          setOptions(mappedTopValues.length > 0 ? mappedTopValues : []);
+        }
         setLoadingSearch(false);
       }
     }, [showValueModal, loadingTopValues]);
@@ -178,6 +186,7 @@ const ValueAutoComplete = observer(
 
     const handleInputChange = (value: string) => {
       setQuery(value);
+      if (params.isPredefined) return;
       debouncedLoadOptions(value);
     };
 
@@ -369,7 +378,7 @@ const ValueAutoComplete = observer(
         trigger="click"
         open={showValueModal && !isDisabled}
         onOpenChange={handleOpenChange}
-        placement={mobileScreen ? "bottom" : "bottomLeft"}
+        placement={mobileScreen ? 'bottom' : 'bottomLeft'}
         arrow={false}
         getPopupContainer={(triggerNode) => triggerNode || document.body}
       >

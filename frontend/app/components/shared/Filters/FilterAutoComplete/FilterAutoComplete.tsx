@@ -20,7 +20,8 @@ interface FilterParams {
   id: string;
   type: string;
   name?: string;
-
+  possibleValues?: Array<any>;
+  isPredefined?: boolean;
   // ... other potential properties
   [key: string]: any; // Keep flexible if needed, but prefer specific types
 }
@@ -61,7 +62,9 @@ const FilterAutoComplete = observer(
     onApply: (values: string[]) => void;
     placeholder?: string;
   }) => {
-    const [options, setOptions] = useState<OptionType[]>([]);
+    const [options, setOptions] = useState<OptionType[]>(
+      params.isPredefined ? (params.possibleValues ?? []) : [],
+    );
     const [loading, setLoading] = useState(false);
     const { filterStore, projectsStore } = useStore();
 
@@ -95,6 +98,7 @@ const FilterAutoComplete = observer(
     }, [filterStore, params.id, projectsStore.siteId]);
 
     useEffect(() => {
+      if (params.isPredefined) return;
       void loadTopValues();
     }, [loadTopValues]);
 
@@ -141,6 +145,7 @@ const FilterAutoComplete = observer(
     ]);
 
     const handleInputChange = (newValue: string) => {
+      if (params.isPredefined) return;
       debouncedLoadOptions(newValue);
     };
 
