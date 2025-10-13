@@ -24,4 +24,5 @@ type ObjectStorage interface {
 	GetPreSignedUploadUrl(key string) (string, error)
 	GetPreSignedDownloadUrl(key string) (string, error)
 	GetPreSignedDownloadUrlFromBucket(bucket, key string) (string, error)
+	Tag(fileKey, tagKey, tagValue string) error
 }

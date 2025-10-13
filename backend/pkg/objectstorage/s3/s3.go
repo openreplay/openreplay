@@ -233,3 +233,19 @@ func (s *storageImpl) GetPreSignedDownloadUrlFromBucket(bucket, key string) (str
 	}
 	return urlStr, nil
 }
+
+func (s *storageImpl) Tag(fileKey, tagKey, tagValue string) error {
+	_, err := s.svc.PutObjectTagging(&s3.PutObjectTaggingInput{
+		Bucket: s.bucket,
+		Key:    aws.String(fileKey),
+		Tagging: &s3.Tagging{
+			TagSet: []*s3.Tag{
+				{
+					Key:   aws.String(tagKey),
+					Value: aws.String(tagValue),
+				},
+			},
+		},
+	})
+	return err
+}

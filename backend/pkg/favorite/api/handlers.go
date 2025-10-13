@@ -46,21 +46,11 @@ func (h *handlersImpl) favorite(w http.ResponseWriter, r *http.Request) {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, errors.New("no user id"), startTime, r.URL.Path, bodySize)
 		return
 	}
-
-	if h.favorites.IsExist(sessID, userID) {
-		// If the session is already favorited, remove it
-		if err := h.favorites.Remove(sessID, userID); err != nil {
-			h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-			return
-		}
-	} else {
-		// If the session is not favorited, add it
-		if err := h.favorites.Add(sessID, userID); err != nil {
-			h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-			return
-		}
+	if h.favorites.DoFavorite(sessID, userID) != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
 	}
+
 	res := map[string]interface{}{"data": map[string]interface{}{"sessionId": strconv.Itoa(int(sessID))}}
 	h.responser.ResponseWithJSON(h.log, r.Context(), w, res, startTime, r.URL.Path, bodySize)
-
 }

@@ -7,6 +7,14 @@ import (
 	"strconv"
 )
 
+func StringDefault(key, defaultValue string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return defaultValue
+	}
+	return v
+}
+
 func String(key string) string {
 	v := os.Getenv(key)
 	if v == "" {
