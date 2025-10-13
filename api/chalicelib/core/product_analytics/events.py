@@ -52,6 +52,7 @@ def get_events(project_id: int):
         row["id"] = f"event_{i}"
         row["dataType"] = "string"
         row["possibleTypes"] = ["string"]
+        row["isConditional"] = True
         row["_foundInPredefinedList"] = True
         row.pop("total")
     keys = [r["name"] for r in rows]
@@ -66,6 +67,7 @@ def get_events(project_id: int):
                 "id": f"event_{total}",
                 "dataType": "string",
                 "possibleTypes": ["string"],
+                "isConditional": True,
                 "_foundInPredefinedList": False
             })
     return {
@@ -172,7 +174,8 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
             """SELECT COUNT(1) OVER () AS total, all_events.event_name AS name,
                       *
                FROM product_analytics.all_events
-               WHERE project_id = %(project_id)s AND event_name != 'CANVAS_NODE'
+               WHERE project_id = %(project_id)s
+                 AND event_name != 'CANVAS_NODE'
                ORDER BY display_name
                    LIMIT %(limit)s
                OFFSET %(offset)s;""",
