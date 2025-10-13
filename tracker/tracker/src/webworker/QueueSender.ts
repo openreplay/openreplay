@@ -107,6 +107,7 @@ export default class QueueSender {
     }
 
     fetch(`${this.ingestURL}?batch=${this.pageNo ?? 'noPageNum'}_${batchNumStr ?? 'noBatchNum'}`, {
+      // @ts-ignore
       body: batch,
       method: 'POST',
       headers,
