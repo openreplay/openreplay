@@ -88,6 +88,11 @@ spec:
               {{- end}}
             - name: POSTGRES_STRING
               value: {{ include "openreplay.pg_connection_string" .}}
+            - name: ASSIST_URL
+              value: {{ include "openreplay.assist_url" . }}
+            - name: ASSIST_KEY
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "assist-key" "ctx" .) | nindent 18 }}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
           ports:
             {{- range $key, $val := .Values.service.ports }}
