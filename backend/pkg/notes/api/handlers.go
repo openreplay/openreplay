@@ -27,7 +27,7 @@ func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, n
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,
-		jsonSizeLimit: cfg.JsonSizeLimit,
+		jsonSizeLimit: cfg.JsonWithDataSizeLimit,
 		notes:         notes,
 	}, nil
 }
