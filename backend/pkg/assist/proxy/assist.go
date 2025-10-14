@@ -120,7 +120,7 @@ func (a *assistImpl) getAgentToken(projectID uint32, projectKey string, sessionI
 	claims := jwt.MapClaims{
 		"projectKey": projectKey,
 		"projectId":  projectID,
-		"sessionId":  sessionID,
+		"sessionId":  fmt.Sprintf("%d", sessionID),
 		"iat":        iat,
 		"exp":        exp,
 		"iss":        a.cfg.AssistJwtIssuer,
