@@ -119,7 +119,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
       notesStore.setSaving(true);
       const playerContainer =
         document.querySelector('iframe')?.contentWindow?.document;
-      let thumbnail;
+      let thumbnail: string | undefined;
       if (playerContainer) {
         thumbnail = await elementToCanvas(playerContainer);
         if (!thumbnail) {
@@ -127,9 +127,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
         }
       }
       if (thumbnail) {
-        console.log(thumbnail, 1);
-        thumbnail = downscaleDataURL(thumbnail);
-        console.log(thumbnail, 2);
+        thumbnail = await downscaleDataURL(thumbnail);
       }
       const note = {
         message,
