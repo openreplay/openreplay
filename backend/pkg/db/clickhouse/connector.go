@@ -883,6 +883,7 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		return fmt.Errorf("can't marshal custom event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
+	customPayload := make(map[string]interface{})
 	if err := c.batches["custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -902,6 +903,7 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		session.UserCity,
 		cropString(msg.Url),
 		jsonString,
+		customPayload, // empty for incidents
 	); err != nil {
 		c.checkError("custom", err)
 		return fmt.Errorf("can't append to custom batch: %s", err)
