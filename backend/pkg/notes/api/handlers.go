@@ -44,7 +44,7 @@ func (h *handlersImpl) GetAll() []*api.Description {
 }
 
 type CreateNoteRequest struct {
-	Message   string  `json:"message"`
+	Message   *string `json:"message"`
 	Tag       *string `json:"tag"`
 	Timestamp int64   `json:"timestamp"`
 	IsPublic  bool    `json:"isPublic"`

@@ -50,8 +50,8 @@ func (n *notesImpl) Create(projectID, userID uint64, note *Note) (*Note, error) 
 		return nil, errors.New("note is required")
 	}
 
-	if len(note.Message) > MaxMessageLength {
-		note.Message = note.Message[0:MaxMessageLength]
+	if len(*note.Message) > MaxMessageLength {
+		*note.Message = (*note.Message)[0:MaxMessageLength]
 	}
 	if note.Tag != nil && len(*note.Tag) > MaxTagLength {
 		*note.Tag = (*note.Tag)[0:MaxTagLength]

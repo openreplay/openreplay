@@ -3,7 +3,7 @@ package notes
 type Note struct {
 	ID        uint64  `json:"noteId"`
 	UserID    int64   `json:"userId"`
-	Message   string  `json:"message"`
+	Message   *string `json:"message"`
 	Tag       *string `json:"tag"`
 	Timestamp int64   `json:"timestamp"`
 	CreatedAt int64   `json:"createdAt"`
