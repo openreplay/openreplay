@@ -408,9 +408,11 @@ def get_trace(project_id, error_id):
         return {"errors": ["null payload"]}
     if error.get("stacktrace") is not None and error.get("stacktrace") != "":
         return {"sourcemapUploaded": True,
-                "trace": error.get("stacktrace"),
+                "trace": json.loads(error.get("stacktrace")),
                 "preparsed": True}
-    trace, all_exists = sourcemaps.get_traces_group(project_id=project_id, payload=error["payload"])
+
+    payload = json.loads(error["payload"]) if isinstance(error["payload"], str) else error["payload"]
+    trace, all_exists = sourcemaps.get_traces_group(project_id=project_id, payload=payload)
     if all_exists:
         __save_stacktrace(project_id=project_id, error_id=error_id, data=trace)
     return {"sourcemapUploaded": all_exists,
