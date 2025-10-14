@@ -23,7 +23,7 @@ type Config struct {
 	SpotsDir              string        `env:"SPOTS_DIR,default=spots"`
 	ProjectExpiration     time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	MinimumStreamDuration int           `env:"MINIMUM_STREAM_DURATION,default=15000"` // 15s
-	AssistUrl             string        `env:"ASSIST_URL"`
+	AssistUrl             string        `env:"ASSIST_URL,required"`
 	AssistKey             string        `env:"ASSIST_KEY,default=assist-secret-key"`
 	AssistLiveSuffix      string        `env:"ASSIST_LIVE_SUFFIX,default=/sockets-live"`
 	AssistListSuffix      string        `env:"ASSIST_LIST_SUFFIX,default=/sockets-list"`
