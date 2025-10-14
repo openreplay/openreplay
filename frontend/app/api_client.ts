@@ -308,7 +308,7 @@ export default class APIClient {
         const diffingRes = diff(oldJson, newJson);
         if (diffingRes.length > 0) {
           console.warn(
-            `>>>>> ${url} \n params ${JSON.stringify(init)} \n DIFF ${JSON.stringify(diffingRes)} \n ${JSON.stringify(oldJson)} old; ${JSON.stringify(newJson)} new`,
+            `>>>>> ${url} \n params ${JSON.stringify(init)} \n DIFF ${JSON.stringify(diffingRes)}`, diffingRes,
           );
           console.warn(
             `>>> timings: \n old: ${timings.diff / 1000}s \n new: ${(t2 - t1) / 1000}s`,
