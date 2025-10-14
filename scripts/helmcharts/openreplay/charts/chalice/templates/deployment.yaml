@@ -58,7 +58,7 @@ spec:
             - name: ch_port_http
               value: "{{ .Values.global.clickhouse.service.dataPort }}"
             - name: sourcemaps_reader
-              value: "http://sourcemapreader-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9000/%s/sourcemaps"
+              value: "http://sourcemapreader-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9000/{}/sourcemaps"
             - name: ASSIST_URL
               value: {{ include "openreplay.assist_url" . }}
             - name: JWT_REFRESH_SECRET
