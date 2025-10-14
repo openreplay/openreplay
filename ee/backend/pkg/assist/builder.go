@@ -1,8 +1,6 @@
 package assist
 
 import (
-	"time"
-
 	"openreplay/backend/internal/config/assist"
 	assistAPI "openreplay/backend/pkg/assist/api"
 	"openreplay/backend/pkg/assist/service"
@@ -13,17 +11,19 @@ import (
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/server/limiter"
 	"openreplay/backend/pkg/sessionmanager"
 )
 
-type ServicesBuilder struct {
-	RateLimiter *limiter.UserRateLimiter
-	AssistAPI   api.Handlers
-	AssistStats service.AssistStats
+type serviceBuilder struct {
+	assistAPI   api.Handlers
+	assistStats service.AssistStats
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *assist.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, redis *redis.Client) (*ServicesBuilder, error) {
+func (b *serviceBuilder) Handlers() []api.Handlers {
+	return []api.Handlers{b.assistAPI}
+}
+
+func NewServiceBuilder(log logger.Logger, cfg *assist.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, redis *redis.Client) (api.ServiceBuilder, error) {
 	projectsManager := projects.New(log, pgconn, redis, dbMetrics)
 	sessManager, err := sessionmanager.New(log, cfg, redis.Redis)
 	if err != nil {
@@ -40,9 +40,8 @@ func NewServiceBuilder(log logger.Logger, cfg *assist.Config, webMetrics web.Web
 	if err != nil {
 		return nil, err
 	}
-	return &ServicesBuilder{
-		RateLimiter: limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
-		AssistAPI:   handlers,
-		AssistStats: assistStats,
+	return &serviceBuilder{
+		assistAPI:   handlers,
+		assistStats: assistStats,
 	}, nil
 }
