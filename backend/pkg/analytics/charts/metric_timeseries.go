@@ -172,21 +172,23 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 		return "", fmt.Errorf("BuildEventsJoinClause: %w", err)
 	}
 
-	if len(extraWhereParts) > 0 {
-		whereParts = append(whereParts, strings.Join(extraWhereParts, " AND "))
-	}
 	if len(eventNameConds) > 0 {
-		whereParts = append(whereParts, strings.Join(eventNameConds, " OR "))
+		whereParts = append(whereParts, fmt.Sprintf("(%s)", strings.Join(eventNameConds, " OR ")))
 	}
+	if len(extraWhereParts) > 0 {
+		whereParts = append(whereParts, fmt.Sprintf("(%s)", strings.Join(extraWhereParts, " AND ")))
+	}
+	var mainEventsTable = getMainEventsTable(p.StartTimestamp)
 
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf(
 		`SELECT main.session_id,
-		       MIN(main.created_at) AS first_event_ts,
-		       MAX(main.created_at) AS last_event_ts
-		  FROM product_analytics.events AS main
-		 WHERE %s
-		 GROUP BY main.session_id`,
+					   MIN(main.created_at) AS first_event_ts,
+					   MAX(main.created_at) AS last_event_ts
+				FROM %s AS main
+				WHERE %s
+				GROUP BY main.session_id`,
+		mainEventsTable,
 		strings.Join(whereParts, " AND "),
 	))
 
@@ -196,7 +198,7 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 	}
 
 	subQuery := sb.String()
-	sessionsQuery := t.buildSessionsFilterQuery(sessionFilters)
+	sessionsQuery := t.buildSessionsFilterQuery(sessionFilters, p.StartTimestamp)
 	projection, joinEvents := t.getProjectionAndJoin(metric)
 
 	return fmt.Sprintf(
@@ -220,9 +222,9 @@ func (t *TimeSeriesQueryBuilder) buildSessionsOnlySubQuery(p *Payload, s model.S
 }
 
 // buildSessionsFilterQuery builds a complete sessions query with filters applied
-func (t *TimeSeriesQueryBuilder) buildSessionsFilterQuery(sessionFilters []model.Filter) string {
+func (t *TimeSeriesQueryBuilder) buildSessionsFilterQuery(sessionFilters []model.Filter, startTimestamp uint64) string {
 	whereParts := t.buildSessionsFilterConditions(sessionFilters)
-
+	var mainSessionsTable = getMainSessionsTable(startTimestamp)
 	return fmt.Sprintf(`
 SELECT
 	session_id,
@@ -230,8 +232,8 @@ SELECT
 	user_id,
 	user_uuid,
 	user_anonymous_id
-FROM experimental.sessions AS s
-WHERE %s`, strings.Join(whereParts, " AND "))
+FROM %s AS s
+WHERE %s`, mainSessionsTable, strings.Join(whereParts, " AND "))
 }
 
 // buildSessionsFilterConditions builds WHERE conditions for sessions table queries
