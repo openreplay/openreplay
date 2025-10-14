@@ -223,12 +223,10 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) ([]string, string) {
 		return []string{"(" + strings.Join(parts, " AND ") + ")"}, nameCondition
 	}
 	if strings.HasPrefix(f.Name, "metadata_") {
-		//Removed this because it is supposed to generate conditions for events only
-		//cond := buildCond(f.Name, f.Value, f.Operator, false, "singleColumn")
-		//if cond != "" {
-		//	return []string{cond}, ""
-		//}
-		return []string{}, ""
+		cond := buildCond(f.Name, f.Value, f.Operator, false, "singleColumn")
+		if cond != "" {
+			return []string{cond}, ""
+		}
 	}
 
 	cfg, ok := propertyKeyMap[strings.ToUpper(f.Name)]
