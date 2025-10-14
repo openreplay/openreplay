@@ -184,26 +184,9 @@ func (e *handlersImpl) getLiveSessions(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-type GetLiveSessionRequest struct {
-	//
-}
-
 func (e *handlersImpl) getLiveSession(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
-
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-	bodySize = len(bodyBytes)
-
-	req := &GetLiveSessionRequest{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
 
 	projID, err := api.GetProject(r)
 	if err != nil {
