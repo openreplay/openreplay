@@ -119,13 +119,11 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	)
 
 	for _, filter := range allFilters {
-		if _, exists := SessionColumns[filter.Name]; exists {
-			sessionFilters = append(sessionFilters, filter)
-		}
-
 		if filter.IsEvent {
 			eventFilters = append(eventFilters, filter)
 			stages = append(stages, filter.Name)
+		} else {
+			sessionFilters = append(sessionFilters, filter)
 		}
 	}
 
@@ -170,7 +168,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	}
 	var mainTables string = fmt.Sprintf("%s AS e", getMainEventsTable(p.StartTimestamp))
 	if len(sessionConditions) > 0 || p.MetricFormat == MetricFormatUserCount {
-		mainTables = fmt.Sprintf("%s AS s INNER JOIN %s AS e USING(session_id)", getMainSessionsTable(p.StartTimestamp), mainTables)
+		mainTables = fmt.Sprintf("%s AS s INNER JOIN %s USING(session_id)", getMainSessionsTable(p.StartTimestamp), mainTables)
 		baseWhere = append(baseWhere, []string{
 			fmt.Sprintf("s.project_id = %d", p.ProjectId),
 			fmt.Sprintf("s.datetime >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
