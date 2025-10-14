@@ -138,7 +138,7 @@ function WebOverviewPanelCont() {
 
   const { endTime, currentTab, tabStates } = store.get();
 
-  const tabValues = Object.values(tabStates);
+  const tabValues = Object.values(tabStates) ?? []
   const { dataSource } = uiPlayerStore;
   const showSingleTab = dataSource === 'current';
 
@@ -172,8 +172,8 @@ function WebOverviewPanelCont() {
     }
     const stackEventList = tabValues.flatMap((tab) => tab.stackList);
     // these two are global
-    const { frustrationsList } = tabValues[0];
-    const { exceptionsList } = tabValues[0];
+    const { frustrationsList = [] } = tabValues[0];
+    const { exceptionsList = [] } = tabValues[0];
     // we can't compute global chart data because some tabs coexist
     const performanceChartData: any = [];
     const resourceListUnmap = tabValues.flatMap((tab) => tab.resourceList);

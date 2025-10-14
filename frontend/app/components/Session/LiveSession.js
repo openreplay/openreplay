@@ -7,14 +7,18 @@ import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import LivePlayer from './LivePlayer';
+import { useHistory } from 'react-router';
+import { liveSession, withSiteId } from 'App/routes';
 
 function LiveSession({
   match: {
     params: { sessionId },
   },
 }) {
-  const { integrationsStore, sessionStore } = useStore();
+  const history = useHistory();
+  const { integrationsStore, sessionStore, projectsStore } = useStore();
   const session = sessionStore.current;
+  const currentSessionId = session.sessionId;
   const { fetchFailed } = sessionStore;
   const { clearCurrentSession } = sessionStore;
   const fetchSlackList = integrationsStore.slack.fetchIntegrations;
@@ -48,6 +52,17 @@ function LiveSession({
       setInitialLoading(false);
     }
   }, [session.sessionId, fetchFailed]);
+
+  useEffect(() => {
+    if (currentSessionId && sessionId) {
+      if (currentSessionId !== sessionId) {
+        const newUrl = withSiteId(
+          liveSession(currentSessionId, projectsStore.activeSiteId),
+        );
+        history.replace(newUrl);
+      }
+    }
+  }, [currentSessionId]);
 
   return (
     <Loader className="flex-1" loading={initialLoading}>
