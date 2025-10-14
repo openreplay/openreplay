@@ -1,1 +1,1 @@
-export const pkgVersion = "11.0.7";
+export const pkgVersion = "11.0.8";

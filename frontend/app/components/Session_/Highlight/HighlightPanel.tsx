@@ -126,6 +126,9 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
           thumbnail = await elementToImage(thumbnail);
         }
       }
+      if (thumbnail) {
+        thumbnail = downscaleDataURL(thumbnail);
+      }
       const note = {
         message,
         tag,
@@ -311,6 +314,34 @@ function elementToCanvas(doc: Document) {
         return undefined;
       });
   });
+}
+
+async function downscaleDataURL(
+  dataUrl: string,
+  maxW = 1280,
+  maxH = 720,
+  outType = 'image/png',
+  quality = 1,
+) {
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = dataUrl;
+  await img.decode();
+
+  const w = img.naturalWidth,
+    h = img.naturalHeight;
+  const s = Math.min(1, maxW / w, maxH / h);
+  const newW = Math.round(w * s);
+  const newH = Math.round(h * s);
+
+  const c = document.createElement('canvas');
+  c.width = newW;
+  c.height = newH;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0, newW, newH);
+
+  const mime = outType || dataUrl.match(/^data:(.*?);/)?.[1] || 'image/png';
+  return c.toDataURL(mime, quality);
 }
 
 const convertAllImagesToBase64 = (proxyURL, cloned) => {
