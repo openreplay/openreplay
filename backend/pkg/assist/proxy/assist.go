@@ -76,12 +76,17 @@ func (a *assistImpl) GetLiveSessionByID(projID uint32, sessID uint64) (interface
 	}
 
 	// Parse the JSON response
-	var responseData map[string]interface{}
-	err = json.Unmarshal(body, &responseData)
+	var response map[string]interface{}
+	err = json.Unmarshal(body, &response)
 	if err != nil {
 		fmt.Println("Error parsing JSON response:", err)
 		return nil, err
 	}
+	if _, ok := response["data"]; !ok {
+		fmt.Println("No data in response")
+		return nil, errors.New("no data in response")
+	}
+	responseData := response["data"].(map[string]interface{})
 	responseData["live"] = true
 	if token, err := a.getAgentToken(projID, proj.ProjectKey, sessID); err != nil {
 		a.log.Error(context.Background(), "[proxy] GetLiveSessionByID: ", err)
