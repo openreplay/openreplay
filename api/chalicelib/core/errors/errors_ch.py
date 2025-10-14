@@ -399,7 +399,7 @@ def __save_stacktrace(project_id, error_id, data):
 
 
 def get_trace(project_id, error_id):
-    error = get(error_id=error_id, family=False)
+    error = get(error_id=error_id)
     if error is None:
         return {"errors": ["error not found"]}
     if error.get("source", "") != "js_exception":
