@@ -393,7 +393,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
 def __save_stacktrace(project_id, error_id, data):
     with ch_client.ClickHouseClient() as cur:
         query = f"""INSERT INTO experimental.parsed_errors(project_id, error_id, stacktrace) 
-                    VALUES (%(project_id)s,%(errorId)s,%(data)s);"""
+                    VALUES (%(project_id)s,%(error_id)s,%(data)s);"""
         params = {"project_id": project_id, "error_id": error_id, "data": json.dumps(data)}
         cur.execute(query=query, parameters=params)
 
@@ -404,9 +404,9 @@ def get_trace(project_id, error_id):
         return {"errors": ["error not found"]}
     if error.get("source", "") != "js_exception":
         return {"errors": ["this source of errors doesn't have a sourcemap"]}
-    if error.get("payload") is None:
+    if error.get("payload") is None or error.get("payload") == "":
         return {"errors": ["null payload"]}
-    if error.get("stacktrace") is not None:
+    if error.get("stacktrace") is not None and error.get("stacktrace") != "":
         return {"sourcemapUploaded": True,
                 "trace": error.get("stacktrace"),
                 "preparsed": True}
