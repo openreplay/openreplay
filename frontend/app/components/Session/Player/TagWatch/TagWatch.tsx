@@ -102,12 +102,12 @@ function TagWatch() {
           FilterKey.TAGGED_ELEMENT,
           tags.map((tag) => ({ label: tag.name, value: tag.tagId.toString() })),
         );
-        searchStore.refreshFilterOptions();
       }
       toast.success('Tag created');
       setSelector('');
       return tag;
-    } catch {
+    } catch (e) {
+      console.error(e)
       toast.error('Failed to create tag');
     }
   };
