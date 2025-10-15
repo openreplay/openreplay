@@ -117,7 +117,10 @@ function WidgetView({
               filter: { filters },
             }),
           ];
-        } else if (selectedCard.cardType === TABLE) {
+        } else if (
+          selectedCard.cardType === TABLE &&
+          !widget.series[0]?.filter.filters.length
+        ) {
           cardData.series = [new FilterSeries()];
           cardData.series[0].filter.eventsOrder = 'and';
         }

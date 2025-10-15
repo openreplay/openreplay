@@ -19,7 +19,7 @@ function Modal({ component, className = 'bg-white', props, hideModal }: Props) {
     history.listen((location) => {
       if (history.action === 'POP') {
         document.querySelector('body').style.overflow = 'visible';
-      } else {
+      } else if (history.action === 'PUSH') {
         hideModal?.();
       }
     }),

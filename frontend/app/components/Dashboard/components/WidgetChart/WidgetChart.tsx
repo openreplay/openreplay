@@ -74,10 +74,6 @@ function WidgetChart(props: Props) {
   const [enabledRows, setEnabledRows] = useState<string[]>(
     _metric.series.map((s) => s.name),
   );
-  const isTableWidget =
-    _metric.metricType === 'table' && _metric.viewType === 'table';
-  const isPieChart =
-    _metric.metricType === 'table' && _metric.viewType === 'pieChart';
 
   useEffect(
     () => () => {
@@ -517,7 +513,6 @@ function WidgetChart(props: Props) {
             metric={_metric}
             data={data}
             height={height}
-            // isTemplate={isTemplate}
             isEdit={!isSaved && !isTemplate}
           />
         );

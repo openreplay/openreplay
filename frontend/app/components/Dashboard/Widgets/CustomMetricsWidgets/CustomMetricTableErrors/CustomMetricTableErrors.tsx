@@ -17,7 +17,7 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
   const { t } = useTranslation();
   const { metric, data } = props;
   const errorId = new URLSearchParams(props.location.search).get('errorId');
-  const { showModal, hideModal } = useModal();
+  const { showModal } = useModal();
 
   const onErrorClick = (e: any, error: any) => {
     e.stopPropagation();
@@ -71,7 +71,6 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
             </div>
           ))}
 
-        {/* {isEdit && ( */}
         <div className="my-6 flex items-center justify-center">
           <Pagination
             page={metric.page}
@@ -81,11 +80,6 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
             debounceRequest={500}
           />
         </div>
-        {/* )} */}
-
-        {/* {!isEdit && ( */}
-        {/*    <ViewMore total={data.total} limit={5} /> */}
-        {/* )} */}
       </div>
     </NoContent>
   );
