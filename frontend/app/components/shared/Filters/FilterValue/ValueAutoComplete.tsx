@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { TopValue } from '@/mstore/filterStore';
 import { mobileScreen } from 'App/utils/isMobile';
 const { Text } = Typography;
+import { countries } from '@/constants';
 
 interface FilterParams {
   id: string;
@@ -67,13 +68,19 @@ const ValueAutoComplete = observer(
     isDisabled = false,
     isLive = false,
   }: Props) => {
+    const isCountry = params.name === 'userCountry';
+    const getName = (val: string) => (isCountry ? countries[val] : val);
+    const predefinedValues = params.isPredefined
+      ? (params.possibleValues ?? []).map((v) => ({
+          value: v.value,
+          label: getName(v.value),
+        }))
+      : [];
     const { t } = useTranslation();
     const { filterStore, projectsStore } = useStore();
     const [showValueModal, setShowValueModal] = useState(false);
     const [hovered, setHovered] = useState(false);
-    const [options, setOptions] = useState<OptionType[]>(
-      params.isPredefined ? (params.possibleValues ?? []) : [],
-    );
+    const [options, setOptions] = useState<OptionType[]>(predefinedValues);
     const [loadingTopValues, setLoadingTopValues] = useState(false);
     const [loadingSearch, setLoadingSearch] = useState(false);
     const [query, setQuery] = useState('');
@@ -88,11 +95,9 @@ const ValueAutoComplete = observer(
     const topValues: TopValue[] = filterStore.topValues[params.id] || [];
 
     const mappedTopValues: OptionType[] = useMemo(() => {
-      return (
-        topValues
-          // .filter((i): i is { value: string } => typeof i.value === 'string')
-          .map((i) => ({ value: i.value, label: i.value }))
-      );
+      return topValues
+        .filter((i): i is { value: string } => typeof i.value === 'string')
+        .map((i) => ({ value: i.value, label: getName(i.value) }));
     }, [topValues]);
 
     useEffect(() => {
@@ -167,7 +172,7 @@ const ValueAutoComplete = observer(
           const _options =
             data.events?.map((i: any) => ({
               value: i.value,
-              label: i.value,
+              label: getName(i.value),
             })) || [];
           setOptions(_options);
         } catch (e) {
@@ -244,6 +249,13 @@ const ValueAutoComplete = observer(
 
       return currentOptionsWithValue;
     }, [options, selectedValues]);
+    const filteredOptions = params.isPredefined
+      ? sortedOptions.filter(
+          (opt) =>
+            opt.label &&
+            opt.label.toLowerCase().includes(query.toLocaleLowerCase()),
+        )
+      : sortedOptions;
 
     const queryBlocks = commaQuery
       ? query
@@ -294,7 +306,7 @@ const ValueAutoComplete = observer(
                     : 'No options available',
               ),
             }}
-            dataSource={sortedOptions}
+            dataSource={filteredOptions}
             renderItem={(item) => (
               <List.Item
                 key={item.value}

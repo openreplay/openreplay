@@ -22,13 +22,13 @@ type FilterIconMap = Record<FilterType, ComponentType<IconProps>>;
 
 const iconProps: IconProps = { size: 14 };
 
-const PropertyIconMap: FilterIconMap = {
+const PropertyIconMap = {
   [FilterType.NUMBER]: Hash,
   [FilterType.INTEGER]: Hash,
   [FilterType.STRING]: ALargeSmall,
-};
+} as unknown as FilterIconMap;
 
-export const getIconForFilter = (filter: Filter): JSX.Element => {
+export const getIconForFilter = (filter: Filter): React.ReactNode => {
   const Icon = filter.isEvent
     ? MousePointerClick
     : PropertyIconMap[filter.dataType] || ALargeSmall;
@@ -258,8 +258,8 @@ function FilterModal({
       if (inputRef.current) {
         (inputRef.current as any).focus();
       }
-    }, 0)
-  }, [])
+    }, 0);
+  }, []);
 
   return (
     <div className="w-[90vw] mx-[2vw] md:mx-0 md:w-[490px] max-h-[380px] grid grid-rows-[auto_1fr] overflow-hidden bg-white">
