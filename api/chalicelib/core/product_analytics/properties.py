@@ -108,7 +108,7 @@ PREDEFINED_PROPERTIES = {
                      "isPredefined": False, "possibleValues": [], "isConditional": False},
 }
 
-EXCLUDED_PROPERTIES = ["message_id", "error_id"]
+EXCLUDED_PROPERTIES = ["message_id", "error_id", "tag_id", "web_vitals"]
 
 EVENT_DEFAULT_PROPERTIES = {
     "CLICK": "label",
