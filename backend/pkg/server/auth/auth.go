@@ -17,11 +17,11 @@ type authImpl struct {
 	log      logger.Logger
 	secret   string
 	users    user.Users
-	projects *projects.Projects
-	tenants  *tenant.Tenants
+	projects projects.Projects
+	tenants  tenant.Tenants
 }
 
-func NewAuth(log logger.Logger, jwtSecret string, users user.Users, tenants *tenant.Tenants, projects *projects.Projects) (api.RouterMiddleware, error) {
+func NewAuth(log logger.Logger, jwtSecret string, users user.Users, tenants tenant.Tenants, projects projects.Projects) (api.RouterMiddleware, error) {
 	return &authImpl{
 		log:      log,
 		secret:   jwtSecret,

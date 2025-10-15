@@ -29,7 +29,7 @@ func (b *baseMiddlewareBuilderImpl) Middlewares() []api.RouterMiddleware {
 	return b.middlewares
 }
 
-func NewMiddlewareBuilder(log logger.Logger, jwtSecret string, http *common.HTTP, rtc *common.RateLimiter, pgPool pool.Pool, dbMetric database.Database, handlers []api.Handlers, tenants *tenant.Tenants, projects *projects.Projects) (api.MiddlewareBuilder, error) {
+func NewMiddlewareBuilder(log logger.Logger, jwtSecret string, http *common.HTTP, rtc *common.RateLimiter, pgPool pool.Pool, dbMetric database.Database, handlers []api.Handlers, tenants tenant.Tenants, projects projects.Projects) (api.MiddlewareBuilder, error) {
 	healthCheck := NewHealthCheck()
 	corsCheck := NewCors(http.UseAccessControlHeaders)
 	authenticator, err := auth.NewAuth(log, jwtSecret, user.New(pgPool), tenants, projects)
