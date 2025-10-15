@@ -17,17 +17,26 @@ import { Button } from 'antd';
 import SessionBar from './SessionBar';
 import { useTranslation } from 'react-i18next';
 
-function MainSection(props) {
+function MainSection(props: any) {
   const { t } = useTranslation();
-  const { errorStore, searchStore } = useStore();
+  const { errorStore, searchStore, filterStore } = useStore();
   const error = errorStore.instance;
   const trace = errorStore.instanceTrace;
   const { sourcemapUploaded } = errorStore;
   const loading = errorStore.isLoading;
-  const { className } = props;
+  const { className, hideModal } = props;
 
   const findSessions = () => {
-    searchStore.addFilterByKeyAndValue(FilterKey.ERROR, error.message);
+    if (!error) {
+      return;
+    }
+    const errorFilter = filterStore.findEvent({ name: FilterKey.ERROR_EVENT });
+    const nameLabel = filterStore.findEvent({ name: 'name' });
+    if (errorFilter && nameLabel) {
+      nameLabel.value = [error.name];
+      errorFilter.filters = [nameLabel];
+      searchStore.addFilter(errorFilter);
+    }
     props.history.push(sessionsRoute());
   };
   return (

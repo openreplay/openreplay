@@ -166,6 +166,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
 
   const activeFilters = filters.map((f) => f.name);
   const shownFilters = isHeatmap ? filters.filter(f => f.name !== "platform") : filters;
+
   return shownFilters.length ? (
     <div className={cn('flex flex-col', className)} style={style}>
       {shownFilters.map((filterItem: Filter, filterIndex: number) => (

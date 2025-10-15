@@ -41,16 +41,18 @@ export const filterMap = (filter: any) => {
     propertyOrder,
     autoCaptured,
   } = filter;
-  
+
   return {
     name: name || key,
-    type: name || (category === FilterCategory.METADATA ? FilterKey.METADATA : key),
+    type:
+      name || (category === FilterCategory.METADATA ? FilterKey.METADATA : key),
     value: checkValues(key, value),
     operator: operator || 'is',
     dataType: dataType || 'string',
     propertyOrder: propertyOrder || (isEvent ? 'then' : undefined),
     custom,
-    source: category === FilterCategory.METADATA ? key?.replace(/^_/, '') : source,
+    source:
+      category === FilterCategory.METADATA ? key?.replace(/^_/, '') : source,
     sourceOperator,
     isEvent: Boolean(isEvent),
     autoCaptured: Boolean(autoCaptured),
@@ -126,11 +128,12 @@ class SearchStore {
 
   applySavedSearch(savedSearch: ISavedSearch) {
     this.savedSearch = new SavedSearch(savedSearch);
-    
-    const filtersData = savedSearch.data?.filters || savedSearch.filter?.filters || [];
+
+    const filtersData =
+      savedSearch.data?.filters || savedSearch.filter?.filters || [];
     const searchData = savedSearch.data;
     const filters = filterStore.processFiltersFromData(filtersData);
-    
+
     this.edit({
       filters: filters as any,
       startDate: searchData?.startTimestamp || this.instance.startDate,
@@ -146,7 +149,8 @@ class SearchStore {
     const offset = (page - 1) * limit;
     const response = await searchService.fetchSavedSearch({ limit, offset });
     runInAction(() => {
-      this.list = response.data?.map((item: any) => new SavedSearch(item)) || [];
+      this.list =
+        response.data?.map((item: any) => new SavedSearch(item)) || [];
       this.savedSearchTotal = response.total;
       this.savedSearchPage = page;
       this.savedSearchPageSize = limit;
@@ -162,10 +166,11 @@ class SearchStore {
     try {
       const response = await searchService.getSavedSearch(searchId);
       if (response) {
-        const filtersData = response.data?.filters || response.filter?.filters || [];
+        const filtersData =
+          response.data?.filters || response.filter?.filters || [];
         const searchData = response.data;
         const filters = filterStore.processFiltersFromData(filtersData);
-        
+
         this.edit({
           filters: filters as any,
           startDate: searchData?.startTimestamp || this.instance.startDate,
@@ -174,7 +179,7 @@ class SearchStore {
           order: searchData?.order || this.instance.order,
           eventsOrder: searchData?.eventsOrder || this.instance.eventsOrder,
         });
-        
+
         this.currentPage = 1;
         await this.fetchSessions(true);
       }
@@ -272,7 +277,7 @@ class SearchStore {
 
   async saveAsShare(): Promise<void> {
     const searchData = this.instance.toSearch();
-    
+
     // Ensure all filters have required fields
     const ensureFilterFields = (filter: any): any => {
       return {
@@ -281,13 +286,14 @@ class SearchStore {
         type: filter.type || filter.name,
         dataType: filter.dataType || 'string',
         operator: filter.operator || 'is',
-        propertyOrder: filter.propertyOrder || (filter.isEvent ? 'then' : 'and'),
-        filters: Array.isArray(filter.filters) 
+        propertyOrder:
+          filter.propertyOrder || (filter.isEvent ? 'then' : 'and'),
+        filters: Array.isArray(filter.filters)
           ? filter.filters.map(ensureFilterFields)
           : [],
       };
     };
-    
+
     // Construct payload for sharing
     const payload: any = {
       name: null, // Shared searches don't need a name
@@ -306,7 +312,7 @@ class SearchStore {
     };
 
     const savedSearchResponse = await searchService.saveSavedSearch(payload);
-    
+
     // Update the current savedSearch with the response data
     if (savedSearchResponse) {
       this.savedSearch = new SavedSearch({
@@ -321,17 +327,17 @@ class SearchStore {
   async save(id?: string | null, rename = false): Promise<void> {
     const searchData = this.instance.toSearch();
     const instance = this.savedSearch.toData();
-    
+
     // Determine if updating existing or creating new
     // Use provided id, or fall back to current savedSearch.searchId
     const searchId = id || this.savedSearch.searchId;
     const isNew = !searchId;
-    
+
     // Serialize filters - they come from toSearch() which already has them in JSON format
-    const filtersToSave = rename 
-      ? (instance.data?.filters || instance.filter?.filters || [])
+    const filtersToSave = rename
+      ? instance.data?.filters || instance.filter?.filters || []
       : searchData.filters;
-    
+
     // Ensure all filters have required fields
     const ensureFilterFields = (filter: any): any => {
       return {
@@ -340,13 +346,14 @@ class SearchStore {
         type: filter.type || filter.name,
         dataType: filter.dataType || 'string',
         operator: filter.operator || 'is',
-        propertyOrder: filter.propertyOrder || (filter.isEvent ? 'then' : 'and'),
-        filters: Array.isArray(filter.filters) 
+        propertyOrder:
+          filter.propertyOrder || (filter.isEvent ? 'then' : 'and'),
+        filters: Array.isArray(filter.filters)
           ? filter.filters.map(ensureFilterFields)
           : [],
       };
     };
-    
+
     // Construct payload matching the new API structure
     const payload: any = {
       name: instance.name || null,
@@ -368,9 +375,12 @@ class SearchStore {
     if (isNew) {
       savedSearchResponse = await searchService.saveSavedSearch(payload);
     } else {
-      savedSearchResponse = await searchService.updateSavedSearch(searchId!, payload);
+      savedSearchResponse = await searchService.updateSavedSearch(
+        searchId!,
+        payload,
+      );
     }
-    
+
     // Update the current savedSearch with the response data
     if (savedSearchResponse) {
       this.savedSearch = new SavedSearch({
@@ -382,7 +392,7 @@ class SearchStore {
         data: payload.data,
       });
     }
-    
+
     // Refresh the list to show the latest saved searches
     await this.fetchSavedSearchList();
   }
@@ -443,7 +453,6 @@ class SearchStore {
 
   addFilter(filter: any) {
     console.debug('SearchStore: Add Filter', filter);
-
     if (filter.isEvent && filter.filters) {
       filterStore.getEventFilters(filter.id).then((props) => {
         filter.filters = props?.filter((prop) => prop.defaultProperty);
@@ -458,11 +467,9 @@ class SearchStore {
           value: checkFilterValue(subFilter.value),
         }))
       : null;
-
-    this.instance.filters.push(filter);
-    this.instance = new Search({
-      ...this.instance.toData(),
-    });
+    const inst = this.instance.toData();
+    inst.filters.push(filter);
+    this.instance = new Search(inst);
 
     this.currentPage = 1;
 

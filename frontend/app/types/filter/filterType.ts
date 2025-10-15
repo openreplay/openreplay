@@ -213,6 +213,7 @@ export enum FilterKey {
   ISSUE = 'ISSUE',
 
   ERROR = 'error',
+  ERROR_EVENT = 'ERROR',
   MISSING_RESOURCE = 'missingResource',
   SLOW_SESSION = 'slowSession',
   CLICK_RAGE = 'clickRage',

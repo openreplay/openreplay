@@ -1,5 +1,5 @@
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, reaction } from 'mobx';
 import { Operator } from '@/mstore/types/filterConstants';
 
 type JsonData = Record<string, any>;
@@ -151,10 +151,10 @@ export default class FilterItem implements IFilter {
 
   toJson(): JsonData {
     // Ensure dataType always has a value
-    const dataType = this.dataType && this.dataType.trim() !== '' 
-      ? this.dataType 
+    const dataType = this.dataType && this.dataType.trim() !== ''
+      ? this.dataType
       : 'string';
-    
+
     const json: JsonData = {
       type: this.name,
       value:

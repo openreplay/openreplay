@@ -9,7 +9,7 @@ interface Props {
   component: any;
   className?: string;
   props: any;
-  hideModal?: boolean;
+  hideModal?: () => void;
   width?: number;
 }
 function Modal({ component, className = 'bg-white', props, hideModal }: Props) {
@@ -19,6 +19,8 @@ function Modal({ component, className = 'bg-white', props, hideModal }: Props) {
     history.listen((location) => {
       if (history.action === 'POP') {
         document.querySelector('body').style.overflow = 'visible';
+      } else {
+        hideModal?.();
       }
     }),
   );
