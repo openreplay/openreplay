@@ -232,7 +232,7 @@ export default class FilterStore {
 
   processFilters = (filters: any[], category?: string): FilterItem[] => {
     return filters.map((filter) => {
-      let dataType = filter.dataType.toLowerCase() || 'string';
+      let dataType = filter.dataType?.toLowerCase() || 'string';
       if (filter.name === 'duration' && filter.autoCaptured) {
         dataType = 'duration';
       }
