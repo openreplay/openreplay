@@ -107,7 +107,7 @@ function TagWatch() {
       setSelector('');
       return tag;
     } catch (e) {
-      console.error(e)
+      console.error(e);
       toast.error('Failed to create tag');
     }
   };

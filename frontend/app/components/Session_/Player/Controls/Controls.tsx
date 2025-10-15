@@ -22,7 +22,6 @@ import { signalService } from 'App/services';
 import {
   CONSOLE,
   GRAPHQL,
-  INSPECTOR,
   NETWORK,
   OVERVIEW,
   PERFORMANCE,
@@ -47,6 +46,7 @@ import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
 import { useTranslation } from 'react-i18next';
 import { mobileScreen } from 'App/utils/isMobile';
+import { hasAi } from '@/utils/split-utils';
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -382,7 +382,7 @@ const DevtoolsButtons = observer(
       labels[block][showIcons ? 'icon' : 'label'];
     return (
       <>
-        <SummaryButton onClick={showSummary} />
+        {hasAi ? <SummaryButton onClick={showSummary} /> : undefined}
         <ControlButton
           popover={
             <div className="flex items-center gap-2">
