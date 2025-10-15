@@ -29,6 +29,7 @@ export interface Filter {
   filters?: Filter[];
   autoOpen?: boolean;
   defaultProperty?: boolean;
+  isConditional?: boolean;
 
   toJSON(): JsonData;
 }

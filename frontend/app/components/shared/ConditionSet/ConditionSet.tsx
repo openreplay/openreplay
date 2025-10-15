@@ -11,10 +11,6 @@ import { Filter } from '@/mstore/types/filterConstants';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
-import {
-  conditionalFilterKeys,
-  mobileConditionalFilterKeys,
-} from '@/types/filter/newFilter';
 
 interface Props {
   set: number;
@@ -26,7 +22,6 @@ interface Props {
   bottomLine1: string;
   bottomLine2: string;
   onPercentChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  excludeFilterKeys?: string[];
   onUpdateFilter: (filterIndex: number, filter: any) => void;
   onRemoveFilter: (filterIndex: number) => void;
   onChangeEventsOrder: (_: any, { name, value }: any) => void;
@@ -61,22 +56,7 @@ function ConditionSetComponent({
   const actualProperties = indexedFilters.filter((f) => !f.isEvent);
 
   const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
-  const excludeFilterKeys = React.useMemo(() => {
-    const res: any = [];
-    allFilterOptions.forEach((f) => {
-      const fKey = f.name.toLowerCase();
-      const isIncluded = isMobile
-        ? mobileConditionalFilterKeys.includes(fKey)
-        : conditionalFilterKeys.includes(fKey);
-      if (!isIncluded) {
-        res.push(f);
-      }
-    });
-    return res;
-  }, [allFilterOptions.length]);
-  const allowedOptions = allFilterOptions.filter(
-    (f) => !excludeFilterKeys.map((i) => i.name).includes(f.name),
-  );
+  const allowedOptions = allFilterOptions.filter((f) => f.isConditional);
   const eventOptions: Filter[] = allowedOptions.filter((i) => i.isEvent);
   const propertyOptions: Filter[] = allowedOptions.filter((i) => !i.isEvent);
   const disableEvents = false;

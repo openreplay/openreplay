@@ -54,6 +54,7 @@ export default class FilterItem implements IFilter {
   filters?: FilterItem[] = [];
   autoOpen?: boolean = false;
   defaultProperty?: boolean = false;
+  isConditional?: boolean = false;
 
   constructor(data: IFilter = {}) {
     makeAutoObservable(this);

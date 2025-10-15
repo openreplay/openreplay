@@ -236,7 +236,7 @@ export default class FilterStore {
       if (filter.name === 'duration' && filter.autoCaptured) {
         dataType = 'duration';
       }
-      const filterCategory = category ?? filter.category ?? 'custom'
+      const filterCategory = category ?? filter.category ?? 'custom';
       return {
         ...filter,
         id: Math.random().toString(36).substring(2, 9),
@@ -255,6 +255,7 @@ export default class FilterStore {
         defaultProperty: Boolean(filter.defaultProperty) || false,
         autoCaptured: filter.autoCaptured || false,
         isPredefined: Boolean(filter.isPredefined),
+        isConditional: filter.isConditional,
         possibleValues: Array.isArray(filter.possibleValues)
           ? filter.possibleValues.map((v: string) => ({ value: v, label: v }))
           : [],
