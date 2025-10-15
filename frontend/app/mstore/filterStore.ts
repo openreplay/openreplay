@@ -232,7 +232,7 @@ export default class FilterStore {
 
   processFilters = (filters: any[], category?: string): FilterItem[] => {
     return filters.map((filter) => {
-      let dataType = filter.dataType || 'string';
+      let dataType = filter.dataType.toLowerCase() || 'string';
       if (filter.name === 'duration' && filter.autoCaptured) {
         dataType = 'duration';
       }
@@ -251,7 +251,7 @@ export default class FilterStore {
         value: filter.value || [],
         propertyOrder: 'and',
         operator:
-          filter.operator || this.getDefaultFilterOperator(filter.dataType),
+          filter.operator || this.getDefaultFilterOperator(dataType),
         defaultProperty: Boolean(filter.defaultProperty) || false,
         autoCaptured: filter.autoCaptured || false,
         isPredefined: Boolean(filter.isPredefined),
