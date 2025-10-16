@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
@@ -18,13 +19,24 @@ type ClickHouse struct {
 	batches *Batches
 }
 
-func NewClickHouse(log logger.Logger, chConn driver.Conn, batches *Batches) (*ClickHouse, error) {
-	c := &ClickHouse{
+func NewClickHouse(log logger.Logger, cfg *connector.Config, chConn driver.Conn, batches *Batches) (*ClickHouse, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("clickhouse config is empty")
+	}
+	if chConn == nil {
+		return nil, fmt.Errorf("clickhouse connection is empty")
+	}
+	pingCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err := chConn.Ping(pingCtx); err != nil {
+		return nil, fmt.Errorf("clickhouse ping failed: %w", err)
+	}
+	return &ClickHouse{
 		log:     log,
+		cfg:     cfg,
 		conn:    chConn,
 		batches: batches,
-	}
-	return c, nil
+	}, nil
 }
 
 func (c *ClickHouse) InsertEvents(batch []map[string]string) error {
