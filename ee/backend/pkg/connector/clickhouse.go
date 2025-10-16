@@ -2,7 +2,10 @@ package connector
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -25,6 +28,37 @@ func NewClickHouse(log logger.Logger, cfg *connector.Config, batches *Batches) (
 	url := cfg.Clickhouse.URL
 	url = strings.TrimPrefix(url, "tcp://")
 	url = strings.TrimSuffix(url, "/default")
+
+	// Configure TLS if enabled
+	var tlsConfig *tls.Config
+	if cfg.Clickhouse.UseTLS {
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: cfg.Clickhouse.TLSSkipVerify,
+		}
+
+		// Load client certificate and key if provided
+		if cfg.Clickhouse.TLSCertificatePath != "" && cfg.Clickhouse.TLSKeyPath != "" {
+			cert, err := tls.LoadX509KeyPair(cfg.Clickhouse.TLSCertificatePath, cfg.Clickhouse.TLSKeyPath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load TLS certificate and key: %v", err)
+			}
+			tlsConfig.Certificates = []tls.Certificate{cert}
+		}
+
+		// Load CA certificate if provided
+		if cfg.Clickhouse.TLSCACertificatePath != "" {
+			caCert, err := os.ReadFile(cfg.Clickhouse.TLSCACertificatePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read CA certificate: %v", err)
+			}
+			caCertPool := x509.NewCertPool()
+			if !caCertPool.AppendCertsFromPEM(caCert) {
+				return nil, fmt.Errorf("failed to append CA certificate")
+			}
+			tlsConfig.RootCAs = caCertPool
+		}
+	}
+
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{url},
 		Auth: clickhouse.Auth{
@@ -32,6 +66,7 @@ func NewClickHouse(log logger.Logger, cfg *connector.Config, batches *Batches) (
 			Username: cfg.Clickhouse.UserName,
 			Password: cfg.Clickhouse.Password,
 		},
+		TLS:             tlsConfig,
 		MaxOpenConns:    20,
 		MaxIdleConns:    15,
 		ConnMaxLifetime: 3 * time.Minute,

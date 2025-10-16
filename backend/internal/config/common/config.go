@@ -63,6 +63,12 @@ type Clickhouse struct {
 	Password       string `env:"CLICKHOUSE_PASSWORD,default="`
 	LegacyUserName string `env:"CH_USERNAME,default=default"`
 	LegacyPassword string `env:"CH_PASSWORD,default="`
+	// TLS configuration
+	UseTLS               bool   `env:"CLICKHOUSE_USE_TLS,default=false"`
+	TLSSkipVerify        bool   `env:"CLICKHOUSE_TLS_SKIP_VERIFY,default=false"`
+	TLSCertificatePath   string `env:"CLICKHOUSE_TLS_CERT_PATH,default="`
+	TLSKeyPath           string `env:"CLICKHOUSE_TLS_KEY_PATH,default="`
+	TLSCACertificatePath string `env:"CLICKHOUSE_TLS_CA_PATH,default="`
 }
 
 func (cfg *Clickhouse) GetTrimmedURL() string {
