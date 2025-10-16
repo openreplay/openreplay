@@ -135,7 +135,7 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts 
 }
 
 func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions) ([]string, []string, []string) {
-	//output: []eventConditions, []eventNameConditions, []otherConditions
+	//output: []eventConditions, []eventNameConditions, []sessionConditions with the same alias as eventConditions
 	opts := BuildConditionsOptions{
 		MainTableAlias:       "e",
 		PropertiesColumnName: "`$properties`",
