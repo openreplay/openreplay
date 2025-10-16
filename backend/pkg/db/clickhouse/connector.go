@@ -212,6 +212,13 @@ func (c *connectorImpl) InsertWebSession(session *sessions.Session) (err error) 
 	if session.ErrorsCount > 0 {
 		session.IssueTypes = append(session.IssueTypes, "js_exception")
 	}
+	// To keep the same format and use less mem in DB
+	if *session.UserID == "" {
+		session.UserID = nil
+	}
+	if *session.UserAnonymousID == "" {
+		session.UserAnonymousID = nil
+	}
 	if err := c.batches["sessions"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
