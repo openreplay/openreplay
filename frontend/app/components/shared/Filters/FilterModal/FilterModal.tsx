@@ -13,7 +13,7 @@ import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { Filter } from '@/mstore/types/filterConstants';
 import { VList } from 'virtua';
-import { FilterType } from 'Types/filter/filterType';
+import { FilterKey, FilterType } from 'Types/filter/filterType';
 import type { ComponentType } from 'react';
 import { useStore } from 'App/mstore';
 
@@ -253,12 +253,9 @@ function FilterModal({
   const handleFilterClick = useCallback(
     (filter: Filter) => {
       if (filter.subCategory?.startsWith('issue')) {
-        const filters = filterStore.getCurrentProjectFilters();
-        const issueTypeFilter = filters.find((f) => f.name === 'issue_type');
-        if (issueTypeFilter) {
-          const newVal = filter.name;
-          filter = { ...issueTypeFilter, value: [newVal] };
-        }
+        filter.value = [filter.name];
+        filter.name = FilterKey.ISSUE;
+        filter.displayName = 'Issue';
       }
       onFilterClick(filter);
     },
