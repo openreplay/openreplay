@@ -28,10 +28,10 @@ var validMetricOfValues = map[MetricOfTable]struct{}{
 type TableQueryBuilder struct{}
 
 type TableValue struct {
-	Name       string `json:"name" ch:"name"`
-	MainCount  uint64 `json:"-" ch:"main_count" default:"0"`
-	TotalCount uint64 `json:"-" ch:"total_count" default:"0"`
-	Total      uint64 `json:"total" ch:"total" default:"0"`
+	MetricName      string `json:"name" ch:"metric_name"`
+	MetricCount     uint64 `json:"total" ch:"metric_count" default:"0"`
+	NumberOfMetrics uint64 `json:"-" ch:"number_of_metrics" default:"0"`
+	AllCount        uint64 `json:"-" ch:"all_count" default:"0"`
 }
 type ResolutionTableValue struct {
 	NumberOfRows uint64 `json:"-" ch:"number_of_rows" default:"0"`
@@ -61,21 +61,15 @@ const (
 var eventsProperties []string = []string{string(MetricOfTableLocation), string(MetricOfTableFetch)}
 
 var propertySelectorMap = map[string]string{
-	string(MetricOfTableLocation):   "`$current_path`",
-	string(MetricOfTableUserId):     "user_id",
-	string(MetricOfTableBrowser):    "main.`$browser`",
-	string(MetricOfTableDevice):     "if(notEmpty(user_device), user_device, 'Undefined')",
-	string(MetricOfTableCountry):    "toString(user_country)",
-	string(MetricOfTableReferrer):   "main.`$referrer`",
-	string(MetricOfTableFetch):      "`$current_path`",
-	string(MetricOfTableResolution): "if(screen_width = 0 AND screen_height = 0, 'Unknown', concat(toString(screen_width), 'x', toString(screen_height)))",
+	string(MetricOfTableLocation): "`$current_path`",
+	string(MetricOfTableFetch):    "`$current_path`",
 }
 var sessionsPorpertySelectorMap = map[string]string{
-	string(MetricOfTableUserId):     "if(notEmpty(user_id), user_id, 'Anonymous')",
+	string(MetricOfTableUserId):     "user_id",
 	string(MetricOfTableBrowser):    "user_browser",
-	string(MetricOfTableDevice):     "if(notEmpty(user_device), user_device, 'Undefined')",
+	string(MetricOfTableDevice):     "user_device",
 	string(MetricOfTableCountry):    "toString(user_country)",
-	string(MetricOfTableReferrer):   "main.`$referrer`",
+	string(MetricOfTableReferrer):   "referrer",
 	string(MetricOfTableResolution): "if(screen_width = 0 AND screen_height = 0, 'Unknown', concat(toString(screen_width), 'x', toString(screen_height)))",
 }
 
@@ -107,8 +101,8 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 	var valuesCount uint64
 	var overallCount uint64
 	if len(rawValues) > 0 {
-		overallCount = rawValues[0].TotalCount
-		valuesCount = rawValues[0].MainCount
+		overallCount = rawValues[0].AllCount
+		valuesCount = rawValues[0].NumberOfMetrics
 	}
 
 	return &TableResponse{Total: valuesCount, Count: overallCount, Values: rawValues}, nil
@@ -160,19 +154,18 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	if r.MetricOf == "screenResolution" {
 		return "", fmt.Errorf("Should call buildTableOfResolutionsQuery instead of buildQuery for screenResolution metric")
 	}
+	var eventsTable = getMainEventsTable(r.StartTimestamp)
+	var sessionsTable = getMainSessionsTable(r.StartTimestamp)
 	var extraCondition, hasExtraCondition = extraConditions[r.MetricOf]
 	var emptyFilters bool = len(s.Filter.Filters) == 0
-	if hasExtraCondition && emptyFilters {
-		s.Filter.Filters = append(s.Filter.Filters, extraCondition)
-	}
-	// Determine if property comes from events table (main) or sessions table (s)
-	//isFromEvents := strings.Contains(propSel, "main.")
+
+	// Determine if property comes from events table (e) or sessions table (s)
 	isFromEvents := slices.Contains(eventsProperties, r.MetricOf)
 
 	// Build event filter conditions with error handling
 	durConds, _ := BuildDurationWhere(s.Filter.Filters)
 
-	eventConditions, nameConditions, otherConds := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
+	eventConditions, nameConditions, _ := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "main",
 		EventsOrder:    string(s.Filter.EventsOrder),
@@ -182,38 +175,27 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	skipEventsTable := slices.Contains([]string{
 		string(MetricOfTableUserId), string(MetricOfTableCountry),
 		string(MetricOfTableDevice), string(MetricOfTableBrowser),
-	}, r.MetricOf) && len(eventConditions) == 0 && len(otherConds) == 0
-	if skipEventsTable {
-		return t.buildSimplifiedQuery(r, metricFormat, durConds)
-	}
-	prewhereParts := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, otherConds)
-	//if isFromEvents {
-	//	prewhereParts = append(prewhereParts, "notEmpty(metric_value)")
-	//}
+	}, r.MetricOf) && len(eventConditions) == 0
+
+	eventsConditions := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, []string{})
 	sessionConditions := t.buildSessionConditions(r, metricFormat, durConds)
-	joinClause, whereClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
+	//havingClause, whereClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
+	_, whereClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
 		return "", err
 	}
-	prewhereParts = append(prewhereParts, whereClause...)
+	eventsConditions = append(eventsConditions, whereClause...)
 	if len(nameConditions) > 0 {
-		prewhereParts = append(prewhereParts, fmt.Sprintf("(%s)", strings.Join(nameConditions, " OR ")))
+		eventsConditions = append(eventsConditions, fmt.Sprintf("(%s)", strings.Join(nameConditions, " OR ")))
 	}
 
-	// Get property selector and determine if it's from events or sessions
-	propSel, ok := propertySelectorMap[r.MetricOf]
+	propSel, ok := sessionsPorpertySelectorMap[r.MetricOf]
 	if !ok {
-		// Sanitize property name to prevent injection
-		safePropName := strings.ReplaceAll(r.MetricOf, "'", "\\'")
-		propSel = fmt.Sprintf("JSONExtractString(toString(main.`$properties`), '%s')", safePropName)
-	}
-
-	var eventsSelect string = "main.session_id"
-
-	// Build final join clause
-	var finalJoinClause string = "GROUP BY ALL\n"
-	if joinClause != "" {
-		finalJoinClause = fmt.Sprintf("%s%s\n", finalJoinClause, joinClause)
+		propSel, ok = propertySelectorMap[r.MetricOf]
+		if !ok {
+			// Fallback for MetricOfTableUserId
+			propSel = "user_id"
+		}
 	}
 
 	// Determine aggregation column
@@ -226,163 +208,113 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 
 	// Build the final query with proper string formatting
 	var query string
-	baseSelectParts := []string{
-		"COUNT(DISTINCT metric_value) OVER () AS main_count",
-		"metric_value AS name",
-		fmt.Sprintf("count(DISTINCT %s) AS total", distinctColumn),
-		"any(total_count) AS total_count",
-	}
 
 	var sessionsSelect []string = []string{"DISTINCT session_id", "user_id"}
 
-	subquerySelectParts := t.subquerySelects(r)
-	subquerySelectParts = append(subquerySelectParts, "metric_value")
-	subquerySelectParts = append(subquerySelectParts, fmt.Sprintf("count(DISTINCT %s) OVER () AS total_count", distinctColumn))
-	var innerSelectParts []string = []string{
-		eventsSelect,
+	var eventsSelect []string = []string{
+		"main.session_id",
 		"MIN(main.created_at) AS first_event_ts",
 		"MAX(main.created_at) AS last_event_ts",
 	}
 
+	var fromExtra string
 	if isFromEvents {
-		// Property from events table
-		if hasExtraCondition && emptyFilters {
-			prewhereParts = append(prewhereParts, "notEmpty(metric_value)")
-			subquerySelectParts = append([]string{"f.metric_value AS metric_value"}, subquerySelectParts...)
-			innerSelectParts = append(innerSelectParts, fmt.Sprintf("%s AS metric_value", propSel))
-		} else {
-			subquerySelectParts = append([]string{fmt.Sprintf("%s AS metric_value", propSel)}, subquerySelectParts...)
+		distinctColumn = "e." + distinctColumn
+		eventsSelect = append(eventsSelect, fmt.Sprintf("%s AS metric_value", propSel))
+		eventsConditions = append(eventsConditions, "notEmpty(metric_value)", "isNotNull(metric_value)")
+		//Property from events table
+		if hasExtraCondition {
+			var extraWhere, _, _ = BuildEventConditions([]model.Filter{extraCondition}, BuildConditionsOptions{
+				MainTableAlias: "main",
+			})
+
+			if emptyFilters {
+				extraWhere = append(extraWhere, t.buildPrewhereConditions(r, s.Filter.EventsOrder, extraWhere, []string{})...)
+				eventsConditions = append(eventsConditions, extraWhere...)
+			} else {
+				//Check if the extra condition is already in the filters
+				found := false
+				for _, f := range s.Filter.Filters {
+					if f.Name == extraCondition.Name && f.IsEvent == extraCondition.IsEvent {
+						found = true
+						break
+					}
+				}
+				if !found {
+					extraWhere = append(extraWhere, t.buildPrewhereConditions(r, s.Filter.EventsOrder, extraWhere, []string{})...)
+					fromExtra = fmt.Sprintf(`
+(SELECT DISTINCT session_id 
+FROM %s AS main 
+WHERE %s) AS extra`,
+						eventsTable,
+						strings.Join(extraWhere, " AND "))
+				}
+			}
 		}
-
-	} else if r.MetricOf == "userId" {
-		sessionsSelect = append(sessionsSelect, "user_id AS metric_value")
-	}
-
-	var mainEventsTable = getMainEventsTable(r.StartTimestamp)
-	var mainSessionsTable = getMainSessionsTable(r.StartTimestamp)
-	if hasExtraCondition && emptyFilters {
-		// Construct the complete query
-		query = fmt.Sprintf(`
-SELECT %s
-FROM (SELECT %s
-      FROM (SELECT %s
-                  FROM %s AS s
-                  WHERE %s
-                  ) AS s
-      INNER JOIN (SELECT %s
-            FROM %s AS main
-            WHERE %s 
-			%s) AS f ON(s.session_id=f.session_id)
-      ) AS filtred_sessions
-GROUP BY metric_value
-ORDER BY total DESC
-LIMIT %d OFFSET %d`,
-			strings.Join(baseSelectParts, ","),     // Main SELECT
-			strings.Join(subquerySelectParts, ","), // Subquery SELECT
-			strings.Join(sessionsSelect, ","),
-			mainSessionsTable,
-			strings.Join(sessionConditions, " AND "), // Sessions WHERE
-			strings.Join(innerSelectParts, ","),      // Inner SELECT
-			mainEventsTable,
-			strings.Join(prewhereParts, " AND "), // WHERE conditions
-			finalJoinClause,
-			pagination.Limit,
-			pagination.Offset,
-		)
 	} else {
-		var extraWhere, _, _ = BuildEventConditions([]model.Filter{extraCondition}, BuildConditionsOptions{
-			MainTableAlias: "main",
-		})
-		extraWhere = append(extraWhere, t.buildPrewhereConditions(r, s.Filter.EventsOrder, extraWhere, []string{})...)
-		query = fmt.Sprintf(`
-SELECT %s
-FROM (SELECT %s
-      FROM (SELECT %s
-                  FROM %s AS s
-                  WHERE %s
-                  ) AS s
-      INNER JOIN (SELECT %s
-            FROM %s AS main
-            WHERE %s 
-			%s) AS f ON(s.session_id=f.session_id)
-	  INNER JOIN %s AS main ON (main.session_id = f.session_id)
-	  WHERE %s
-      ) AS filtred_sessions
-GROUP BY metric_value
-ORDER BY total DESC
-LIMIT %d OFFSET %d`,
-			strings.Join(baseSelectParts, ","),     // Main SELECT
-			strings.Join(subquerySelectParts, ","), // Subquery SELECT
+		distinctColumn = "s." + distinctColumn
+		sessionsSelect = append(sessionsSelect, fmt.Sprintf("%s AS metric_value", propSel))
+		//	No need to think about extra conditions here as they are all relater to events
+	}
+
+	var fromEvents string
+	if !skipEventsTable || hasExtraCondition {
+		fromEvents = fmt.Sprintf(`
+(
+	SELECT %s
+	FROM %s AS main
+	WHERE %s 
+	GROUP BY ALL
+) AS e`,
+			strings.Join(eventsSelect, ","),
+			eventsTable,
+			strings.Join(eventsConditions, " AND "))
+	}
+
+	var fromSessions string
+	if !isFromEvents || len(sessionConditions) > 4 {
+		fromSessions = fmt.Sprintf(`
+(
+	SELECT %s
+	FROM %s AS s
+	WHERE %s
+) AS s`,
 			strings.Join(sessionsSelect, ","),
-			mainSessionsTable,
-			strings.Join(sessionConditions, " AND "), // Sessions WHERE
-			strings.Join(innerSelectParts, ","),      // Inner SELECT
-			mainEventsTable,
-			strings.Join(prewhereParts, " AND "), // WHERE conditions
-			finalJoinClause,
-			mainEventsTable,
-			strings.Join(extraWhere, " AND "), // Sessions WHERE
-			pagination.Limit,
-			pagination.Offset,
-		)
-	}
-	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
-
-	return query, nil
-}
-
-func (t *TableQueryBuilder) buildSimplifiedQuery(r *Payload, metricFormat string, durConds []string) (string, error) {
-	// Get property selector for sessions
-	propSel, ok := sessionsPorpertySelectorMap[r.MetricOf]
-	if !ok {
-		// Fallback for MetricOfTableUserId - should typically be available in propertySelectorMap
-		propSel = "user_id"
+			sessionsTable,
+			strings.Join(sessionConditions, " AND "))
 	}
 
-	// Remove "main." prefix if present since we're querying sessions table directly
-	propSel = strings.ReplaceAll(propSel, "main.", "")
-
-	// Build session conditions without duration conditions for now (you may need to adapt this)
-	sessionConditions := t.buildSessionConditions(r, metricFormat, durConds)
-
-	// Determine aggregation column
-	distinctColumn := "session_id"
-	if metricFormat == MetricFormatUserCount {
-		distinctColumn = "user_id"
+	if fromSessions != "" {
+		if fromEvents != "" {
+			fromEvents = fmt.Sprintf("INNER JOIN %s ON (e.session_id = s.session_id)", fromEvents)
+		}
+		if fromExtra != "" {
+			fromExtra = fmt.Sprintf("INNER JOIN %s ON (extra.session_id = s.session_id)", fromExtra)
+		}
+	} else if fromEvents != "" {
+		if fromExtra != "" {
+			fromExtra = fmt.Sprintf("INNER JOIN %s ON (extra.session_id = e.session_id)", fromExtra)
+		}
 	}
-
-	pagination := t.calculatePagination(r.Page, r.Limit)
-
-	// Build simplified query that only uses sessions table
-	baseSelectParts := []string{
-		"COUNT(DISTINCT metric_name) OVER () AS main_count",
-		"metric_name AS name",
-		"count(DISTINCT metric_name) AS total",
-		"any(total_count) AS total_count",
-	}
-	sessionProjections := []string{
-		fmt.Sprintf("%s AS metric_name", propSel),
-		"COUNT(DISTINCT metric_name) OVER () AS total_count"}
-	mainSessionsTable := getMainSessionsTable(r.StartTimestamp)
-	query := fmt.Sprintf(`
-SELECT %s
-FROM (SELECT DISTINCT ON (%s) %s
-      FROM %s AS s
-      WHERE %s
-      ORDER BY _timestamp DESC) AS sessions
-GROUP BY metric_name
-ORDER BY total DESC
-LIMIT %d OFFSET %d`,
-		strings.Join(baseSelectParts, ",\n       "),
+	// Construct the complete query
+	query = fmt.Sprintf(`
+SELECT metric_value AS metric_name,
+       count(DISTINCT %s) AS metric_count,
+       COUNT(DISTINCT metric_value) OVER () AS number_of_metrics,
+       SUM(metric_count) OVER () AS all_count
+FROM %s %s %s
+GROUP BY metric_value
+ORDER BY metric_count DESC
+LIMIT %d OFFSET %d;`,
 		distinctColumn,
-		strings.Join(sessionProjections, ","),
-		mainSessionsTable,
-		strings.Join(sessionConditions, " AND "),
+		fromSessions,
+		fromEvents,
+		fromExtra,
 		pagination.Limit,
 		pagination.Offset,
 	)
 
-	logQuery(fmt.Sprintf("TableQueryBuilder.buildSimplifiedQuery: %s", query))
+	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
 
 	return query, nil
 }
@@ -477,6 +409,7 @@ FROM (SELECT any(full_count)               AS full_count,
 }
 
 func (t *TableQueryBuilder) buildJoinClause(eventsOrder model.EventOrder, eventConditions []string) (string, []string, error) {
+	// out having,where,error
 	var havingClause string
 	var whereClause []string
 	switch eventsOrder {
@@ -513,6 +446,7 @@ func (t *TableQueryBuilder) buildSequenceJoinClause(eventConditions []string) (s
 }
 
 func (t *TableQueryBuilder) buildCountJoinClause(eventConditions []string, operator string) (string, []string) {
+	// out having,where
 	if len(eventConditions) == 0 {
 		return "", make([]string, 0)
 	}
@@ -645,27 +579,4 @@ func (t *TableQueryBuilder) calculatePagination(page, limit int) model.Paginatio
 		Limit:  limit,
 		Offset: (page - 1) * limit,
 	}
-}
-
-func (*TableQueryBuilder) subquerySelects(r *Payload) []string {
-	subquerySelectParts := []string{
-		"f.session_id AS session_id",
-	}
-
-	if r.MetricOf == string(MetricOfTableUserId) || r.MetricFormat == MetricFormatUserCount {
-		subquerySelectParts = append([]string{"s.user_id AS user_id"}, subquerySelectParts...)
-	}
-
-	if r.MetricOf == string(MetricOfTableResolution) {
-		subquerySelectParts = append([]string{"s.screen_width AS screen_width", "s.screen_height AS screen_height"}, subquerySelectParts...)
-	}
-
-	if r.MetricOf == string(MetricOfTableDevice) {
-		subquerySelectParts = append([]string{"s.user_device AS user_device"}, subquerySelectParts...)
-	}
-
-	if r.MetricOf == string(MetricOfTableCountry) {
-		subquerySelectParts = append([]string{"s.user_country AS user_country"}, subquerySelectParts...)
-	}
-	return subquerySelectParts
 }
