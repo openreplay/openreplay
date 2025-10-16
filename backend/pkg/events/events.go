@@ -15,14 +15,13 @@ import (
 const GroupClickRage bool = true
 
 type errorEvent struct {
-	ErrorID   string          `ch:"error_id" json:"errorId"`
-	ProjectID uint16          `ch:"project_id" json:"projectId"`
-	Source    string          `ch:"source" json:"source"`
-	Name      string          `ch:"name" json:"name"`
-	Message   string          `ch:"message" json:"message"`
-	Payload   json.RawMessage `ch:"payload" json:"stack"`
-	CreatedAt time.Time       `ch:"created_at" json:"createdAt"`
-	Timestamp int64           `json:"timestamp"`
+	ErrorID   string    `ch:"error_id" json:"errorId"`
+	ProjectID uint16    `ch:"project_id" json:"projectId"`
+	Source    string    `ch:"source" json:"source"`
+	Name      string    `ch:"name" json:"name"`
+	Message   string    `ch:"message" json:"message"`
+	CreatedAt time.Time `ch:"created_at" json:"createdAt"`
+	Timestamp int64     `json:"timestamp"`
 }
 
 func (e *errorEvent) IsNotJsException() bool {
@@ -31,13 +30,13 @@ func (e *errorEvent) IsNotJsException() bool {
 
 type Events interface {
 	GetBySessionID(projID uint32, sessID uint64, doGroupClickRage bool) []interface{}
-	GetErrorsBySessionID(projID uint32, sessID uint64) []errorEvent
-	GetCustomsBySessionID(projID uint32, sessID uint64) []interface{}
+	GetErrorsBySessionID(sessID uint64) []errorEvent
+	GetCustomsBySessionID(sessID uint64) []interface{}
 	GetIssuesBySessionID(projID uint32, sessID uint64) []interface{}
-	GetIncidentsBySessionID(projID uint32, sessID uint64) []interface{}
+	GetIncidentsBySessionID(sessID uint64) []interface{}
 	GetMobileBySessionID(projID uint32, sessID uint64) []interface{}
 	GetMobileCrashesBySessionID(sessID uint64) []interface{}
-	GetMobileCustomsBySessionID(projID uint32, sessID uint64) []interface{}
+	GetMobileCustomsBySessionID(sessID uint64) []interface{}
 	GetClickMaps(projID uint32, sessID uint64, url string) ([]interface{}, error)
 }
 
@@ -262,13 +261,12 @@ func (e *eventsImpl) groupClicksToClickRage(projID uint32, sessID uint64, sessEv
 	return res
 }
 
-func (e *eventsImpl) GetErrorsBySessionID(projID uint32, sessID uint64) []errorEvent {
+func (e *eventsImpl) GetErrorsBySessionID(sessID uint64) []errorEvent {
 	query := `SELECT error_id,
 					project_id,
 					` + "`$properties`" + `.source AS source,
 					'ERROR' AS name,
 					` + "`$properties`" + `.message AS message,
-					` + "`$properties`" + `.payload AS payload,
 					created_at
 			  FROM product_analytics.events
 			  WHERE session_id = ?
@@ -293,7 +291,7 @@ type customEvent struct {
 	CreatedAt              time.Time `ch:"created_at" json:"createdAt"`
 }
 
-func (e *eventsImpl) GetCustomsBySessionID(projID uint32, sessID uint64) []interface{} {
+func (e *eventsImpl) GetCustomsBySessionID(sessID uint64) []interface{} {
 	query := `SELECT toString(` + "`$properties`" + `) AS auto_props,
 				toString(properties) AS properties,
 				created_at,
@@ -481,7 +479,7 @@ type incidentEvent struct {
 	Timestamp int64     `ch:"timestamp" json:"timestamp"`
 }
 
-func (e *eventsImpl) GetIncidentsBySessionID(projID uint32, sessID uint64) []interface{} {
+func (e *eventsImpl) GetIncidentsBySessionID(sessID uint64) []interface{} {
 	query := `SELECT created_at,
 			` + "`$properties`.end_time" + ` AS end_time,
 			` + "`$properties`.label" + ` AS label,
@@ -558,7 +556,7 @@ func (e *eventsImpl) GetMobileCrashesBySessionID(sessID uint64) []interface{} {
 	return res
 }
 
-func (e *eventsImpl) GetMobileCustomsBySessionID(projID uint32, sessID uint64) []interface{} {
+func (e *eventsImpl) GetMobileCustomsBySessionID(sessID uint64) []interface{} {
 	query := `SELECT ` + "`$properties`" + `AS auto_captures,
 				properties,
 				created_at,
