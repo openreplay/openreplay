@@ -151,14 +151,14 @@ jobs:
           mv openreplay/charts/{ingress-nginx,quickwit,connector,assist-api} /tmp/helmcharts/
           ## Update images
           for image in $(cat /tmp/images_to_build.txt); do
-            if $image == "assist-api" || mv openreplay/charts/$image /tmp/helmcharts/
-            cat <<EOF>>/tmp/image_override.yaml
-            assist-api:
-              enabled: true
-            ${image}:
-              image:
-                # We've to strip off the -ee, as helm will append it.
-                tag: ${IMAGE_TAG}
+          [[ $image != "assist-api" ]] && mv openreplay/charts/$image /tmp/helmcharts/
+          cat <<EOF>>/tmp/image_override.yaml
+          assist-api:
+            enabled: true
+          ${image}:
+            image:
+              # We've to strip off the -ee, as helm will append it.
+              tag: ${IMAGE_TAG}
           EOF
           done
           # Enabling assist
