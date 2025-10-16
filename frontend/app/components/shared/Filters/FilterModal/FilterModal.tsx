@@ -31,9 +31,24 @@ const PropertyIconMap = {
 export const getIconForFilter = (filter: Filter): React.ReactNode => {
   const Icon = filter.isEvent
     ? MousePointerClick
-    : PropertyIconMap[filter.dataType] || ALargeSmall;
+    : (filter.dataType && filter.dataType in PropertyIconMap
+        ? PropertyIconMap[filter.dataType as FilterType]
+        : null) || ALargeSmall;
   const className = filter.isEvent ? 'text-gray-400' : undefined;
   return <Icon {...iconProps} className={className} />;
+};
+
+const getCategoryDisplayName = (category: string): string => {
+  const categoryMap: Record<string, string> = {
+    auto_captured: 'Auto Captured',
+    user_events: 'User Events',
+  };
+
+  if (categoryMap[category]) {
+    return categoryMap[category];
+  }
+
+  return category.charAt(0).toUpperCase() + category.slice(1);
 };
 
 const groupFiltersByCategory = (
@@ -43,7 +58,7 @@ const groupFiltersByCategory = (
   return filters.reduce(
     (acc, filter) => {
       const key = filter.category || 'Other';
-      const cat = key.charAt(0).toUpperCase() + key.slice(1);
+      const cat = getCategoryDisplayName(key);
       (acc[cat] ||= []).push(filter);
       return acc;
     },
@@ -307,7 +322,6 @@ function FilterModal({
                     }
                     onClick={handleFilterClick}
                     showCategory
-                    isLast={i === displayedFilters.length - 1}
                   />
                 ))}
               </VList>

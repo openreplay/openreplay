@@ -88,7 +88,10 @@ export default class FilterStore {
     this.topValues = {};
   };
 
-  fetchTopValues = async (id: string, isLive?: boolean): Promise<TopValue[]> => {
+  fetchTopValues = async (
+    id: string,
+    isLive?: boolean,
+  ): Promise<TopValue[]> => {
     if (this.topValues[id]?.length) {
       return this.topValues[id];
     }
@@ -110,7 +113,7 @@ export default class FilterStore {
         params.propertyName = filter.name;
       }
       if (isLive) {
-        params['live'] = 'true'
+        params['live'] = 'true';
       }
       params.ac = filter.autoCaptured;
 
@@ -133,6 +136,15 @@ export default class FilterStore {
 
   findEvent = (data: Partial<Filter>) => {
     const siteId = projectStore.activeSiteId?.toString();
+    if (!siteId || !this.filters[siteId]) {
+      console.error('Filter not found - invalid siteId');
+      return new FilterItem({
+        name: data.name,
+        isEvent: data.isEvent,
+        autoCaptured: data.autoCaptured,
+      });
+    }
+
     const filter = this.filters[siteId].find((filter: Filter) =>
       Object.entries(data).every(([key, value]) => {
         const prop = filter[key as keyof Filter];
@@ -230,14 +242,14 @@ export default class FilterStore {
     this.pendingFetches = {};
   };
 
-  processFilters = (filters: any[], category?: string): FilterItem[] => {
+  processFilters = (filters: any[], category?: string): Filter[] => {
     return filters.map((filter) => {
       let dataType = filter.dataType?.toLowerCase() || 'string';
       if (filter.name === 'duration' && filter.autoCaptured) {
         dataType = 'duration';
       }
       const filterCategory = category ?? filter.category ?? 'custom';
-      return {
+      const filterObj = {
         ...filter,
         id: Math.random().toString(36).substring(2, 9),
         possibleTypes:
@@ -247,11 +259,13 @@ export default class FilterStore {
         subCategory: this.determineSubCategory(filterCategory, filter),
         displayName: filter.displayName || filter.name,
         // icon: FilterKey.LOCATION, // TODO - use actual icons
-        isEvent: category === 'events',
+        isEvent:
+          category === 'events' ||
+          category === 'auto_captured' ||
+          category === 'user_events',
         value: filter.value || [],
         propertyOrder: 'and',
-        operator:
-          filter.operator || this.getDefaultFilterOperator(dataType),
+        operator: filter.operator || this.getDefaultFilterOperator(dataType),
         defaultProperty: Boolean(filter.defaultProperty) || false,
         autoCaptured: filter.autoCaptured || false,
         isPredefined: Boolean(filter.isPredefined),
@@ -259,7 +273,12 @@ export default class FilterStore {
         possibleValues: Array.isArray(filter.possibleValues)
           ? filter.possibleValues.map((v: string) => ({ value: v, label: v }))
           : [],
+        toJSON: function () {
+          const { toJSON, ...rest } = this;
+          return rest;
+        },
       };
+      return filterObj as Filter;
     });
   };
 
@@ -313,7 +332,11 @@ export default class FilterStore {
     category: string | undefined,
     filter: Filter,
   ): string | undefined => {
-    if (category === 'events') {
+    if (
+      category === 'events' ||
+      category === 'auto_captured' ||
+      category === 'user_events'
+    ) {
       return filter.autoCaptured ? 'autocapture' : 'event';
     }
     return category;
@@ -356,8 +379,31 @@ export default class FilterStore {
 
     Object.entries(data).forEach(([category, categoryData]) => {
       const { list = [], total = 0 } = categoryData || {};
-      const filters = this.processFilters(list, category);
-      processedFilters.push(...filters);
+
+      if (category === 'events') {
+        const autoCaptured = list.filter(
+          (item: any) => item.autoCaptured === true,
+        );
+        const userEvents = list.filter(
+          (item: any) => item.autoCaptured === false,
+        );
+
+        if (autoCaptured.length > 0) {
+          const autoFilters = this.processFilters(
+            autoCaptured,
+            'auto_captured',
+          );
+          processedFilters.push(...autoFilters);
+        }
+
+        if (userEvents.length > 0) {
+          const userFilters = this.processFilters(userEvents, 'user_events');
+          processedFilters.push(...userFilters);
+        }
+      } else {
+        const filters = this.processFilters(list, category);
+        processedFilters.push(...filters);
+      }
     });
 
     return processedFilters;
@@ -373,7 +419,9 @@ export default class FilterStore {
   };
 
   getCurrentProjectFilters = (): Filter[] => {
-    return this.getAllFilters(String(projectStore.activeSiteId)).map((f) => ({ ...f, filters: [] } as Filter));
+    return this.getAllFilters(String(projectStore.activeSiteId)).map(
+      (f) => ({ ...f, filters: [] }) as Filter,
+    );
   };
 
   setEventFilters = async (
