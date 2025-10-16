@@ -70,7 +70,7 @@ func main() {
 		messages.MsgMouseClickDeprecated, messages.MsgSetPageLocation, messages.MsgSetPageLocationDeprecated,
 		messages.MsgPageLoadTiming, messages.MsgPageRenderTiming,
 		messages.MsgPageEvent, messages.MsgPageEventDeprecated, messages.MsgMouseThrashing, messages.MsgInputChange,
-		messages.MsgUnbindNodes, messages.MsgCanvasNode, messages.MsgTagTrigger, messages.MsgIncident,
+		messages.MsgUnbindNodes, messages.MsgTagTrigger, messages.MsgIncident,
 		// Mobile messages
 		messages.MsgMobileSessionStart, messages.MsgMobileSessionEnd, messages.MsgMobileUserID, messages.MsgMobileUserAnonymousID,
 		messages.MsgMobileMetadata, messages.MsgMobileEvent, messages.MsgMobileNetworkCall,

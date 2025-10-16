@@ -68,8 +68,6 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *messages.MouseThrashing:
 		return s.ch.InsertMouseThrashing(session, m)
-	case *messages.CanvasNode:
-		return s.ch.InsertCanvasNode(session, m)
 	case *messages.TagTrigger:
 		return s.ch.InsertTagTrigger(session, m)
 	case *messages.PerformanceTrackAggr:
