@@ -173,6 +173,7 @@ function WebVitals({
       hasSource: true,
       sourceOperator: '',
       value: [],
+      propertyOrder: "and",
     };
     const filters: any[] = [];
     if (['Min', 'Max'].includes(mode)) {
@@ -190,6 +191,7 @@ function WebVitals({
         const operator = i > 0 ? '<=' : '>=';
         const fValue = [String(key)];
         filters.push({
+          ...filterObj,
           operator: operator,
           sourceOperator: operator,
           value: fValue,
