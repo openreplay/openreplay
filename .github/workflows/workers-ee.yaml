@@ -134,6 +134,13 @@ jobs:
             echo "::set-output name=image::$DOCKER_REPO/$image:$IMAGE_TAG"
           done
 
+      - name: Enabling Chart for ee
+        run: |
+          cat <<EOF>>/tmp/charts-enabled.yaml
+          assist-api:
+            enabled: true
+          EOF
+
       - name: Deploying to kuberntes
         env:
           IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
@@ -153,19 +160,13 @@ jobs:
           for image in $(cat /tmp/images_to_build.txt); do
           [[ $image != "assist-api" ]] && mv openreplay/charts/$image /tmp/helmcharts/
           cat <<EOF>>/tmp/image_override.yaml
-          assist-api:
-            enabled: true
           ${image}:
             image:
               # We've to strip off the -ee, as helm will append it.
               tag: ${IMAGE_TAG}
           EOF
           done
-          # Enabling assist
-          cat <<EOF>>/tmp/image_override.yaml
-          assist-api:
-            enabled: true
-          EOF
+          cat /tmp/image_override.yaml
           ls /tmp/helmcharts
           rm -rf openreplay/charts/*
           ls openreplay/charts
@@ -173,7 +174,7 @@ jobs:
           ls openreplay/charts
 
           # Deploy command
-          helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true | kubectl apply -f -
+          helm template openreplay -n app openreplay -f /tmp/charts-enabled.yaml -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true | kubectl apply -f -
 
       - name: Alert slack
         if: ${{ failure() }}
