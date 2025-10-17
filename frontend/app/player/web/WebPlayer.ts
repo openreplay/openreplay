@@ -241,11 +241,6 @@ export default class WebPlayer extends Player {
     this.screen.cursor.showTag(name);
   };
 
-  // toggle range -> from super
-  toggleRange = (start: number, end: number) => {
-    super.toggleRange(start, end);
-  };
-
   changeTab = (tab: string) => {
     const { playing } = this.wpState.get();
     this.pause();
