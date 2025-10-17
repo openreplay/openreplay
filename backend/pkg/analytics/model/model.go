@@ -123,29 +123,29 @@ func ValidateMetricFields(sl validator.StructLevel) {
 }
 
 type Session struct {
-	Duration        uint32            `json:"duration" ch:"duration"`
-	ErrorsCount     int               `json:"errorsCount"`
-	EventsCount     uint16            `json:"eventsCount" ch:"events_count"`
-	IssueTypes      []string          `json:"issueTypes" ch:"issue_types"`
-	Metadata        map[string]string `json:"metadata" ch:"metadata"`
-	PagesCount      int               `json:"pagesCount" ch:"pages_count"`
-	Platform        string            `json:"platform" ch:"platform"`
-	ProjectId       uint16            `json:"projectId" ch:"project_id"`
-	SessionId       string            `json:"sessionId" ch:"session_id"`
-	StartTs         uint64            `json:"startTs" ch:"start_ts"`
-	Timezone        string            `json:"timezone" ch:"timezone"`
-	UserAnonymousId *string           `json:"userAnonymousId" ch:"user_anonymous_id"`
-	UserBrowser     string            `json:"userBrowser" ch:"user_browser"`
-	UserCity        string            `json:"userCity" ch:"user_city"`
-	UserCountry     string            `json:"userCountry" ch:"user_country"`
-	UserDevice      *string           `json:"userDevice" ch:"user_device"`
-	UserDeviceType  string            `json:"userDeviceType" ch:"user_device_type"`
-	UserId          string            `json:"userId" ch:"user_id"`
-	UserOs          string            `json:"userOs" ch:"user_os"`
-	UserState       string            `json:"userState" ch:"user_state"`
-	UserUuid        string            `json:"userUuid" ch:"user_uuid"`
-	Viewed          bool              `json:"viewed" ch:"viewed"`
-	Total           uint64            `json:"-" ch:"total"`
+	Duration              uint32            `json:"duration" ch:"duration"`
+	ErrorsCount           int               `json:"errorsCount"`
+	EventsCount           uint16            `json:"eventsCount" ch:"events_count"`
+	IssueTypes            []string          `json:"issueTypes" ch:"issue_types"`
+	Metadata              map[string]string `json:"metadata" ch:"metadata"`
+	PagesCount            int               `json:"pagesCount" ch:"pages_count"`
+	Platform              string            `json:"platform" ch:"platform"`
+	ProjectId             uint16            `json:"projectId" ch:"project_id"`
+	SessionId             string            `json:"sessionId" ch:"session_id"`
+	StartTs               uint64            `json:"startTs" ch:"start_ts"`
+	Timezone              string            `json:"timezone" ch:"timezone"`
+	UserAnonymousId       *string           `json:"userAnonymousId" ch:"user_anonymous_id"`
+	UserBrowser           string            `json:"userBrowser" ch:"user_browser"`
+	UserCity              string            `json:"userCity" ch:"user_city"`
+	UserCountry           string            `json:"userCountry" ch:"user_country"`
+	UserDevice            *string           `json:"userDevice" ch:"user_device"`
+	UserDeviceType        string            `json:"userDeviceType" ch:"user_device_type"`
+	UserId                string            `json:"userId" ch:"user_id"`
+	UserOs                string            `json:"userOs" ch:"user_os"`
+	UserState             string            `json:"userState" ch:"user_state"`
+	UserUuid              string            `json:"userUuid" ch:"user_uuid"`
+	Viewed                bool              `json:"viewed" ch:"viewed"`
+	TotalNumberOfSessions uint64            `json:"-" ch:"total_number_of_sessions"`
 }
 
 type SessionsSearchRequest struct {
