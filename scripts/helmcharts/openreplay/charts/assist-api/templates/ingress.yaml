@@ -27,7 +27,7 @@ spec:
       http:
         paths:
           - path: /api-assist/(.*)
-            pathType: Prefix
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: {{ $fullName }}

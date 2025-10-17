@@ -26,7 +26,7 @@ spec:
     - host: {{ .Values.global.domainName }}
       http:
         paths:
-          - pathType: Prefix
+          - pathType: ImplementationSpecific
             backend:
               service:
                 name: {{ $fullName }}

@@ -30,7 +30,7 @@ spec:
     - host: {{ default .Values.global.domainName .Values.ingress.domainName }} 
       http:
         paths:
-          - pathType: Prefix
+          - pathType: ImplementationSpecific
             backend:
               service:
                 name: {{ $fullName }}
@@ -43,7 +43,7 @@ spec:
                 port:
                   number: 8080
             path: /(api|assist|ws-assist)/(private|sockets-list|sockets-live|peers)(.*)
-            pathType: Prefix
+            pathType: ImplementationSpecific
 ---
 kind: Service
 apiVersion: v1
@@ -84,7 +84,7 @@ spec:
       http:
         paths:
           - path: /script/(.*)/openreplay(.*).js
-            pathType: Prefix
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: openreplay-tracker
