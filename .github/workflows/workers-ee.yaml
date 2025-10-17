@@ -141,9 +141,9 @@ jobs:
             enabled: true
           EOF
 
-       - name: Deploying to kuberntes
-         env:
-           IMAGE_TAG: ${{ env.IMAGE_TAG_BASE }}
+      - name: Deploying to kuberntes
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG_BASE }}
         run: |
           #
           # Deploying image to environment.

@@ -99,10 +99,10 @@ jobs:
           for image in ${images[*]};do
             docker push $DOCKER_REPO/$image:$IMAGE_TAG 
           done
-       - name: Creating old image input
-         env:
-           # We're not passing -ee flag, because helm will add that.
-           IMAGE_TAG: ${{ env.IMAGE_TAG_BASE }}
+      - name: Creating old image input
+        env:
+          # We're not passing -ee flag, because helm will add that.
+          IMAGE_TAG: ${{ env.IMAGE_TAG_BASE }}
         run: |
           cd scripts/helmcharts/
           cat <<EOF>/tmp/image_override.yaml
