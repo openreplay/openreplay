@@ -236,7 +236,13 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   const metricValueOptions = useMemo(() => {
     return filterStore.getEventOptions(
       projectStore?.activeSiteId + '',
-      (f) => f.autoCaptured && f.name !== 'PERFORMANCE',
+      (f) =>
+        (f.autoCaptured &&
+          f.name !== 'PERFORMANCE' &&
+          f.name !== 'ERROR' &&
+          f.name !== 'ISSUE' &&
+          f.name !== 'TAG_TRIGGER') ||
+        !f.autoCaptured,
     );
   }, []);
 
@@ -248,9 +254,9 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
       <div className="flex flex-col justify-start gap-2 flex-wrap">
         <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-1 pt-2">
           <div className="flex flex-wrap gap-2 items-center justify-start">
-            {/* <span className="font-medium">{t('Journeys With')}</span> */}
+            <span className="font-medium">{t('Journeys With')}</span>
             <div className="flex gap-2 items-center">
-              {/* <Select
+              <Select
                 className="w-36 rounded-lg"
                 name="startType"
                 options={[
@@ -260,7 +266,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
                 defaultValue={metric.startType || 'start'}
                 onChange={onPointChange}
                 placeholder={t('Select Start Type')}
-              /> */}
+              />
 
               <span className="font-medium">{t('Showing')}</span>
 
