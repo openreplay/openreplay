@@ -188,8 +188,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 
 	eventsConditions := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, []string{})
 	sessionConditions := t.buildSessionConditions(r, metricFormat, durConds)
-	//havingClause, whereClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
-	_, whereClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
+	eventsHaving, whereClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
 		return "", err
 	}
@@ -222,8 +221,6 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 
 	var eventsSelect []string = []string{
 		"main.session_id",
-		"MIN(main.created_at) AS first_event_ts",
-		"MAX(main.created_at) AS last_event_ts",
 	}
 
 	var fromExtra string
@@ -272,12 +269,15 @@ WHERE %s) AS extra`,
 (
 	SELECT %s
 	FROM %s AS main
-	WHERE %s 
+	WHERE %s
 	GROUP BY ALL
+	%s
 ) AS e`,
 			strings.Join(eventsSelect, ","),
 			eventsTable,
-			strings.Join(eventsConditions, " AND "))
+			strings.Join(eventsConditions, " AND "),
+			eventsHaving,
+		)
 	}
 
 	var fromSessions string
@@ -417,7 +417,7 @@ FROM (SELECT any(full_count)               AS full_count,
 		}, nil
 }
 
-// out: having,where,error
+// out: having (for THEN|AND operator),where,error
 func (t *TableQueryBuilder) buildJoinClause(eventsOrder model.EventOrder, eventConditions []string) (string, []string, error) {
 	var havingClause string
 	var whereClause []string
@@ -448,7 +448,7 @@ func (t *TableQueryBuilder) buildSequenceJoinClause(eventConditions []string) (s
 	}
 
 	return fmt.Sprintf(
-		"HAVING sequenceMatch('%s')(\n    toDateTime(main.created_at),\n    %s\n)",
+		"HAVING sequenceMatch('%s')(toDateTime(main.created_at),\n    %s)",
 		patBuilder.String(),
 		strings.Join(eventConditions, ",\n    "),
 	), make([]string, 0)
@@ -553,13 +553,7 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 					subCondition = append(subCondition, fmt.Sprintf("%s='%s'", column, value))
 				}
 			} else if strings.HasPrefix(f.Name, "metadata_") {
-				if f.Operator == "isAny" {
-					subCondition = append(subCondition, fmt.Sprintf("isNotNull(%s)", f.Name))
-				} else {
-					for _, value := range f.Value {
-						subCondition = append(subCondition, fmt.Sprintf("%s='%s'", f.Name, value))
-					}
-				}
+				subCondition = append(subCondition, buildCond(f.Name, f.Value, f.Operator, false, "singleColumn"))
 			}
 			if len(subCondition) > 0 {
 				sessionConditions = append(sessionConditions, fmt.Sprintf("(%s)", strings.Join(subCondition, " OR ")))
