@@ -34,11 +34,11 @@ jobs:
         # Fetching details open/draft PR for current branch
         PR_DATA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/pulls" \
-            | jq -r --arg BRANCH "${{ github.ref_name }}" '.[] | select((.head.ref==$BRANCH) and (.state=="open") and (.draft==true or .draft==false))')
+            | jq -r --arg BRANCH "${{ replace(github.ref_name, '/', '-') }}" '.[] | select((.head.ref==$BRANCH) and (.state=="open") and (.draft==true or .draft==false))')
         # Extracting PR number
         PR_NUMBER=$(echo "$PR_DATA" | jq -r '.number' | head -n 1)
         if [ -z $PR_NUMBER ]; then
-          echo "No PR found for ${{ github.ref_name}}"
+          echo "No PR found for ${{ replace(github.ref_name, '/', '-')}}"
           exit 100
         fi
 
@@ -203,7 +203,7 @@ jobs:
     - name: Build and deploy application
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+        IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}
         env: ${{ github.event.inputs.env_flavour }}
       run: |
         set -x
@@ -296,7 +296,7 @@ jobs:
 
         # Variables
         PR_NUMBER=https://github.com/${{ github.repository }}/pull/${PR_NUMBER_PRE}
-        BRANCH_NAME=${{ github.ref_name }}
+        BRANCH_NAME=${{ replace(github.ref_name, '/', '-') }}
         ORIGIN=$DOMAIN_NAME
         ASSETS_HOST=$DOMAIN_NAME/assets
         API_EDP=$DOMAIN_NAME/api

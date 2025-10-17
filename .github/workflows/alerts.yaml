@@ -69,7 +69,7 @@ jobs:
         id: build-image
         env:
           DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-          IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}
           ENVIRONMENT: staging
         run: |
           skip_security_checks=${{ github.event.inputs.skip_security_checks }}
@@ -136,7 +136,7 @@ jobs:
           helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
         env:
           DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-          IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}
           ENVIRONMENT: staging
 
       - name: Alert slack
