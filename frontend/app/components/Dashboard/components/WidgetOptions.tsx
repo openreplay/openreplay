@@ -6,7 +6,7 @@ import {
   TIMESERIES,
   USER_PATH,
 } from 'App/constants/card';
-import { Space, Select, Dropdown, Button, Input } from 'antd';
+import { Space, Dropdown, Button, Switch } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore';
 import ClickMapRagePicker from 'Components/Dashboard/components/ClickMapRagePicker/ClickMapRagePicker';
@@ -84,57 +84,7 @@ function WidgetOptions() {
     <div className="flex items-center gap-2">
       {metric.metricType === USER_PATH && (
         <>
-            <div className="flex space-x-8 items-center gap-2">
-              <div>Steps Before</div>
-                <Select
-                  value={metric.stepsBefore}
-                  style={{ width: 64 }}
-                  onChange={(before) => {
-                    let after = metric.stepsAfter;
-                    if (before + after > 5) after = 5 - before;
-                    metric.update({ stepsBefore: before, stepsAfter: after });
-                    metric.updateKey('hasChanged', true);
-                  }}
-                >
-                  {[0, 1, 2, 3, 4, 5].map((n) => (
-                    <Select.Option key={n} value={n}>
-                      {n}
-                    </Select.Option>
-                  ))}
-                </Select>
-
-              <div>Steps After</div>
-                <Select
-                  value={metric.stepsAfter}
-                  style={{ width: 64 }}
-                  onChange={(after) => {
-                    let before = metric.stepsBefore;
-                    if (before + after > 5) before = 5 - after;
-                    metric.update({ stepsBefore: before, stepsAfter: after });
-                    metric.updateKey('hasChanged', true);
-                  }}
-                >
-                  {[0, 1, 2, 3, 4, 5].map((n) => (
-                    <Select.Option key={n} value={n}>
-                      {n}
-                    </Select.Option>
-                  ))}
-                </Select>
-
-                <div>Rows</div>
-                <Input
-                  type="number"
-                  defaultValue={metric.rows}
-                  className="w-16"
-                  min={2}
-                  max={60}
-                  onChange={(rows) => {
-                    metric.update({ rows: rows ?? 5 });
-                    metric.updateKey('hasChanged', true);
-                  }}
-                />
-            </div>
-          {/* <a
+          <a
             href="#"
             onClick={(e) => {
               e.preventDefault();
@@ -148,7 +98,7 @@ function WidgetOptions() {
                 {t('Group Minor Paths')}
               </span>
             </Space>
-          </a> */}
+          </a>
         </>
       )}
 
