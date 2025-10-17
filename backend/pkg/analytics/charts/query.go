@@ -801,3 +801,12 @@ func reverseSqlOperator(op string) string {
 		return op
 	}
 }
+
+func hasEventFilter(filters []model.Filter) bool {
+	for _, f := range filters {
+		if f.IsEvent {
+			return true
+		}
+	}
+	return false
+}

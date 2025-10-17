@@ -175,15 +175,6 @@ var extraConditions map[string]model.Filter = map[string]model.Filter{
 	string(MetricOfTableFetch):    model.Filter{Name: "REQUEST", AutoCaptured: true, Operator: "isAny", IsEvent: true},
 }
 
-func hasEventFilter(filters []model.Filter) bool {
-	for _, f := range filters {
-		if f.IsEvent {
-			return true
-		}
-	}
-	return false
-}
-
 func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string, error) {
 	if r == nil {
 		return "", errors.New("payload is nil")
