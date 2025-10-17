@@ -17,6 +17,7 @@ redis: &redis
 ingress-nginx:
   enabled: true
   controller:
+    allowSnippetAnnotations: true
     config:
       http-snippet: |-
         # Extract sessionid from peerId, it'll be used for sticky session.
