@@ -59,7 +59,7 @@ jobs:
         id: build-image
         env:
           DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-          IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}
           ENVIRONMENT: staging
         run: |
           skip_security_checks=${{ github.event.inputs.skip_security_checks }}
@@ -119,7 +119,7 @@ jobs:
         env:
           DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
           # We're not passing -ee flag, because helm will add that.
-          IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}
           ENVIRONMENT: staging
 
     # - name: Debug Job
