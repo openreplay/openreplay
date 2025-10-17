@@ -69,7 +69,7 @@ function FilterItem(props: Props) {
   const allFilters = filterStore.getCurrentProjectFilters();
 
   useMemo(() => {
-    if (isSubItem || filter?.name === 'duration') return;
+    if (isSubItem || filter?.name === 'duration' || !filter.isEvent) return;
     filterStore.getEventFilters(filter?.id + '').then((filters) => {
       setEventFilterOptions(filters);
     });
