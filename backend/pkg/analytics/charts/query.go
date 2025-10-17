@@ -86,8 +86,8 @@ type filterConfig struct {
 	InDProperties   bool // in $properties or not
 }
 
+// out: column accessor ; column nature (singleColumn/arrayColumn)
 func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts BuildConditionsOptions) (string, string) {
-	//output: column accessor ; column nature (singleColumn/arrayColumn)
 	// helper: wrap names starting with $ in quotes
 	quote := func(name string) string {
 		prefix := opts.MainTableAlias + "."
@@ -140,8 +140,8 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts 
 	}
 }
 
+// out: []eventConditions, []eventNameConditions, []sessionConditions with the same alias as eventConditions
 func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions) ([]string, []string, []string) {
-	//output: []eventConditions, []eventNameConditions, []sessionConditions with the same alias as eventConditions
 	opts := BuildConditionsOptions{
 		MainTableAlias:       "e",
 		PropertiesColumnName: "`$properties`",
@@ -197,8 +197,8 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 	return eventConditions, eventNames, otherConditions
 }
 
+// out: []conditions, nameCondition
 func addFilter(f model.Filter, opts BuildConditionsOptions) ([]string, string) {
-	//output: []conditions, nameCondition
 	alias := opts.MainTableAlias
 	if alias != "" && !strings.HasSuffix(alias, ".") {
 		alias += "."

@@ -144,6 +144,15 @@ var extraConditions map[string]model.Filter = map[string]model.Filter{
 	string(MetricOfTableFetch):    model.Filter{Name: "REQUEST", AutoCaptured: true, Operator: "isAny", IsEvent: true},
 }
 
+func hasEventFilter(filters []model.Filter) bool {
+	for _, f := range filters {
+		if f.IsEvent {
+			return true
+		}
+	}
+	return false
+}
+
 func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string, error) {
 	if r == nil {
 		return "", errors.New("payload is nil")
@@ -157,7 +166,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	var eventsTable = getMainEventsTable(r.StartTimestamp)
 	var sessionsTable = getMainSessionsTable(r.StartTimestamp)
 	var extraCondition, hasExtraCondition = extraConditions[r.MetricOf]
-	var emptyFilters bool = len(s.Filter.Filters) == 0
+	var emptyEventFilters bool = len(s.Filter.Filters) == 0 || !hasEventFilter(s.Filter.Filters)
 
 	// Determine if property comes from events table (e) or sessions table (s)
 	isFromEvents := slices.Contains(eventsProperties, r.MetricOf)
@@ -228,7 +237,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 				MainTableAlias: "main",
 			})
 
-			if emptyFilters {
+			if emptyEventFilters {
 				extraWhere = append(extraWhere, t.buildPrewhereConditions(r, s.Filter.EventsOrder, extraWhere, []string{})...)
 				eventsConditions = append(eventsConditions, extraWhere...)
 			} else {
@@ -408,8 +417,8 @@ FROM (SELECT any(full_count)               AS full_count,
 		}, nil
 }
 
+// out: having,where,error
 func (t *TableQueryBuilder) buildJoinClause(eventsOrder model.EventOrder, eventConditions []string) (string, []string, error) {
-	// out having,where,error
 	var havingClause string
 	var whereClause []string
 	switch eventsOrder {
@@ -445,8 +454,8 @@ func (t *TableQueryBuilder) buildSequenceJoinClause(eventConditions []string) (s
 	), make([]string, 0)
 }
 
+// out: having,where
 func (t *TableQueryBuilder) buildCountJoinClause(eventConditions []string, operator string) (string, []string) {
-	// out having,where
 	if len(eventConditions) == 0 {
 		return "", make([]string, 0)
 	}
@@ -544,8 +553,12 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 					subCondition = append(subCondition, fmt.Sprintf("%s='%s'", column, value))
 				}
 			} else if strings.HasPrefix(f.Name, "metadata_") {
-				for _, value := range f.Value {
-					subCondition = append(subCondition, fmt.Sprintf("%s='%s'", f.Name, value))
+				if f.Operator == "isAny" {
+					subCondition = append(subCondition, fmt.Sprintf("isNotNull(%s)", f.Name))
+				} else {
+					for _, value := range f.Value {
+						subCondition = append(subCondition, fmt.Sprintf("%s='%s'", f.Name, value))
+					}
 				}
 			}
 			if len(subCondition) > 0 {
