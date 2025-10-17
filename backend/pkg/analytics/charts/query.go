@@ -142,6 +142,8 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts 
 
 // out: []eventConditions, []eventNameConditions, []sessionConditions with the same alias as eventConditions
 func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions) ([]string, []string, []string) {
+	var finalEventConditions []string = make([]string, 0)
+	var finalOtherConditions []string = make([]string, 0)
 	opts := BuildConditionsOptions{
 		MainTableAlias:       "e",
 		PropertiesColumnName: "`$properties`",
@@ -175,26 +177,29 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 			eventNames = append(eventNames, nameCondition)
 		}
 		if f.IsEvent {
-			//eventConds = append(eventConds, conds...)
-			for _, c := range conds {
-				eventConds[c] = 0
+			if option.EventsOrder == "then" {
+				//for "then" order, we can have duplicate conditions
+				finalEventConditions = append(finalEventConditions, conds...)
+			} else {
+				for _, c := range conds {
+					eventConds[c] = 0
+				}
 			}
 		} else {
-			//otherConds = append(otherConds, conds...)
 			for _, c := range conds {
 				otherConds[c] = 0
 			}
 		}
 	}
-	var eventConditions, otherConditions []string
+
 	for k := range eventConds {
-		eventConditions = append(eventConditions, k)
+		finalEventConditions = append(finalEventConditions, k)
 	}
 
 	for k := range otherConds {
-		otherConditions = append(otherConditions, k)
+		finalOtherConditions = append(finalOtherConditions, k)
 	}
-	return eventConditions, eventNames, otherConditions
+	return finalEventConditions, eventNames, finalOtherConditions
 }
 
 // out: []conditions, nameCondition
@@ -276,7 +281,7 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 	case "isNot", "not":
 		//TODO: find how to process array column
 		if len(values) == 1 {
-			return formatCondition(expr, "%s <> %s", values[0], isNumeric)
+			return formatCondition(expr, "%s != %s", values[0], isNumeric)
 		}
 		wrapped := make([]string, len(values))
 		for i, v := range values {
