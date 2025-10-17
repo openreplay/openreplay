@@ -18,8 +18,8 @@ ingress-nginx:
   enabled: true
   controller:
     allowSnippetAnnotations: true
-    enable-annotation-validations: false
     config:
+      annotations-risk-level: "Critical"
       http-snippet: |-
         # Extract sessionid from peerId, it'll be used for sticky session.
         map $arg_peerId $sessionid {
