@@ -57,11 +57,17 @@ jobs:
           registry_url: ${{ secrets.OSS_REGISTRY_URL }}
         name: Update Keys
 
-      - name: Docker login
-        run: |
-          docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}"
+       - name: Docker login
+         run: |
+           docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}"
 
-      - uses: azure/k8s-set-context@v1
+       - name: Set image tag
+         run: |
+           IMAGE_TAG_BASE=${GITHUB_REF_NAME//\//-}_${GITHUB_SHA}
+           echo "IMAGE_TAG=${IMAGE_TAG_BASE}-ee" >> $GITHUB_ENV
+           echo "IMAGE_TAG_BASE=${IMAGE_TAG_BASE}" >> $GITHUB_ENV
+
+       - uses: azure/k8s-set-context@v1
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
@@ -72,12 +78,12 @@ jobs:
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
 
-      - name: Building and Pushing api image
-        id: build-image
-        env:
-          DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}-ee
-          ENVIRONMENT: staging
+       - name: Building and Pushing api image
+         id: build-image
+         env:
+           DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+           IMAGE_TAG: ${{ env.IMAGE_TAG }}
+           ENVIRONMENT: staging
         run: |
           skip_security_checks=${{ github.event.inputs.skip_security_checks }}
           cd api
@@ -134,11 +140,11 @@ jobs:
           rm -rf  openreplay/charts/*
           mv /tmp/charts/* openreplay/charts/
           helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks --kube-version=$k_version | kubectl apply -f -
-        env:
-          DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-          # We're not passing -ee flag, because helm will add that.
-          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}
-          ENVIRONMENT: staging
+         env:
+           DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+           # We're not passing -ee flag, because helm will add that.
+           IMAGE_TAG: ${{ env.IMAGE_TAG_BASE }}
+           ENVIRONMENT: staging
 
       - name: Alert slack
         if: ${{ failure() }}

@@ -75,7 +75,7 @@ jobs:
         id: build-image
         env:
           DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}-ee
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
           ENVIRONMENT: staging
         run: |
           #
@@ -141,9 +141,9 @@ jobs:
             enabled: true
           EOF
 
-      - name: Deploying to kuberntes
-        env:
-          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}
+       - name: Deploying to kuberntes
+         env:
+           IMAGE_TAG: ${{ env.IMAGE_TAG_BASE }}
         run: |
           #
           # Deploying image to environment.

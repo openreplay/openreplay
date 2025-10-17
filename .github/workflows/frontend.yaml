@@ -45,22 +45,25 @@ jobs:
           registry_url: ${{ secrets.OSS_REGISTRY_URL }}
         name: Update Keys
 
-      - name: Docker login
-        run: |
-          docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}"
+       - name: Docker login
+         run: |
+           docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}"
 
-      - uses: azure/k8s-set-context@v1
+       - name: Set image tag
+         run: echo "IMAGE_TAG=${GITHUB_REF_NAME//\//-}_${GITHUB_SHA}" >> $GITHUB_ENV
+
+       - uses: azure/k8s-set-context@v1
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
         id: setcontext
 
-      - name: Building and Pushing frontend image
-        id: build-image
-        env:
-          DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}
-          ENVIRONMENT: staging
+       - name: Building and Pushing frontend image
+         id: build-image
+         env:
+           DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+           IMAGE_TAG: ${{ env.IMAGE_TAG }}
+           ENVIRONMENT: staging
         run: |
           set -x
           cd frontend
@@ -93,10 +96,10 @@ jobs:
           rm -rf  openreplay/charts/*
           mv /tmp/charts/* openreplay/charts/
           helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
-        env:
-          DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}
-          ENVIRONMENT: staging
+         env:
+           DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+           IMAGE_TAG: ${{ env.IMAGE_TAG }}
+           ENVIRONMENT: staging
 
       ### Enterprise code deployment
 
@@ -142,11 +145,11 @@ jobs:
           rm -rf  openreplay/charts/*
           mv /tmp/charts/* openreplay/charts/
           helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
-        env:
-          DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-          # We're not passing -ee flag, because helm will add that.
-          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}
-          ENVIRONMENT: staging
+         env:
+           DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+           # We're not passing -ee flag, because helm will add that.
+           IMAGE_TAG: ${{ env.IMAGE_TAG }}
+           ENVIRONMENT: staging
 
     # - name: Debug Job
     #   # if: ${{ failure() }}

@@ -53,12 +53,12 @@ jobs:
           kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
         id: setcontext
 
-      - name: Building and Pushing Assist-Server image
-        id: build-image
-        env:
-          DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}-ee
-          ENVIRONMENT: staging
+       - name: Building and Pushing Assist-Server image
+         id: build-image
+         env:
+           DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+           IMAGE_TAG: ${{ env.IMAGE_TAG }}
+           ENVIRONMENT: staging
         run: |
           skip_security_checks=${{ github.event.inputs.skip_security_checks }}
           cd assist-server
@@ -114,9 +114,9 @@ jobs:
           mv openreplay/charts/{ingress-nginx,assist-server,quickwit,connector,assist-api} /tmp/charts/
           rm -rf  openreplay/charts/*
           mv /tmp/charts/* openreplay/charts/
-          helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks --kube-version=$k_version | kubectl apply -f -
-        env:
-          DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-          # We're not passing -ee flag, because helm will add that.
-          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}
-          ENVIRONMENT: staging
+           helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks --kube-version=$k_version | kubectl apply -f -
+         env:
+           DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+           # We're not passing -ee flag, because helm will add that.
+           IMAGE_TAG: ${{ env.IMAGE_TAG_BASE }}
+           ENVIRONMENT: staging

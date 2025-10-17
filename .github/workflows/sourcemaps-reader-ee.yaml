@@ -65,7 +65,7 @@ jobs:
         id: build-image
         env:
           DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}-ee
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
           ENVIRONMENT: staging
         run: |
           skip_security_checks=${{ github.event.inputs.skip_security_checks }}
@@ -122,11 +122,11 @@ jobs:
           mv openreplay/charts/{ingress-nginx,sourcemapreader,quickwit,connector,assist-api} /tmp/charts/
           rm -rf  openreplay/charts/*
           mv /tmp/charts/* openreplay/charts/
-          helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
-        env:
-          DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-          IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}_${{ github.sha }}
-          ENVIRONMENT: staging
+           helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
+         env:
+           DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+           IMAGE_TAG: ${{ env.IMAGE_TAG_BASE }}
+           ENVIRONMENT: staging
 
       - name: Alert slack
         if: ${{ failure() }}
