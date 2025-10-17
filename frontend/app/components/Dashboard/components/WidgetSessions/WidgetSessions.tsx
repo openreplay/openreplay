@@ -20,6 +20,7 @@ import { HEATMAP, USER_PATH, FUNNEL } from 'App/constants/card';
 import { useTranslation } from 'react-i18next';
 import Session from 'App/types/session/session';
 import { toast } from 'react-toastify'
+import { checkIsSingleSeries } from '../WidgetForm/WidgetFormNew';
 
 const getListSessionsBySeries = (
   data: { sessions: Session[]; total: number; seriesId: string }[],
@@ -61,6 +62,7 @@ function WidgetSessions({ className = '' }) {
 
   const filter = dashboardStore.drillDownFilter;
   const widget = metricStore.instance;
+  const isSingleSeries = checkIsSingleSeries(widget);
   const focused = metricStore.focusedSeriesName;
 
   const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat(
@@ -298,7 +300,7 @@ function WidgetSessions({ className = '' }) {
           )}
         </div>
         <div className="flex items-center gap-4">
-          {['table', HEATMAP, FUNNEL].includes(widget.metricType) ? null : (
+          {isSingleSeries ? null : (
             <div className="flex items-center md:ml-6">
               <span className="mr-2 color-gray-medium">
                 {t('Filter by Series')}

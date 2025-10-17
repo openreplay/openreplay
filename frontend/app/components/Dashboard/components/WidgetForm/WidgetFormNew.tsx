@@ -21,6 +21,27 @@ import { FilterCategory } from 'Types/filter/filterType';
 import { useTranslation } from 'react-i18next';
 import ExcludeFilters from '../FilterSeries/ExcludeFilters';
 
+export function checkIsSingleSeries(metric: any) {
+  const isTable = metric.metricType === TABLE;
+  const isHeatMap = metric.metricType === HEATMAP;
+  const isFunnel = metric.metricType === FUNNEL;
+  const isInsights = metric.metricType === INSIGHTS;
+  const isPathAnalysis = metric.metricType === USER_PATH;
+  const isRetention = metric.metricType === RETENTION;
+  const isWebVitals = metric.metricType === WEBVITALS;
+
+  const isSingleSeries =
+    isTable ||
+    isFunnel ||
+    isHeatMap ||
+    isInsights ||
+    isRetention ||
+    isPathAnalysis ||
+    isWebVitals;
+
+  return isSingleSeries;
+}
+
 const getExcludedKeys = (metricType: string) => {
   switch (metricType) {
     case USER_PATH:
@@ -73,18 +94,10 @@ const FilterSection = observer(
     const isFunnel = metric.metricType === FUNNEL;
     const isInsights = metric.metricType === INSIGHTS;
     const isPathAnalysis = metric.metricType === USER_PATH;
-    const isRetention = metric.metricType === RETENTION;
     const isWebVitals = metric.metricType === WEBVITALS;
     const canAddSeries = metric.series.length < 3;
 
-    const isSingleSeries =
-      isTable ||
-      isFunnel ||
-      isHeatMap ||
-      isInsights ||
-      isRetention ||
-      isPathAnalysis ||
-      isWebVitals;
+    const isSingleSeries = checkIsSingleSeries(metric);
     const { t } = useTranslation();
     const allOpen = isSingleSeries || layout.startsWith('flex-row');
     const defaultClosed = React.useRef(!allOpen && metric.exists());
