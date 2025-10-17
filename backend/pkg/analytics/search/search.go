@@ -77,8 +77,8 @@ SELECT
 	s.user_os,
 	s.user_state,
 	s.events_count,
-	toUInt8(viewed_sessions.session_id>0)      AS viewed,
-	count() OVER()                            AS total
+	toUInt8(viewed_sessions.session_id>0) AS viewed,
+	count(1) OVER() AS total_number_of_sessions
 -- TODO: add metadata
 FROM experimental.sessions AS s
 	%s
@@ -208,7 +208,7 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 		return nil, err
 	}
 	if len(resp.Sessions) > 0 {
-		resp.Total = resp.Sessions[0].Total
+		resp.Total = resp.Sessions[0].TotalNumberOfSessions
 	}
 
 	return resp, nil
@@ -297,7 +297,9 @@ func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.
 			log.Printf("Error executing query: %s\nQuery: %s", err, query)
 			return nil, err
 		}
-
+		if len(seriesData.Sessions) > 0 {
+			seriesData.Total = seriesData.Sessions[0].TotalNumberOfSessions
+		}
 		response.Series = append(response.Series, seriesData)
 	}
 
