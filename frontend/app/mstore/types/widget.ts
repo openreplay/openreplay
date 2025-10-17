@@ -537,21 +537,16 @@ export default class Widget {
     this.data = observable({ ...data });
   };
 
-  fetchSessions(metricId: any, filter: any): Promise<any> {
+  fetchSessions = async (_: any, filter: any): Promise<any> => {
     const newFilter = this.applyProperties(filter);
-    return new Promise((resolve) => {
-      metricService.fetchSessions(newFilter).then((response: any) => {
-        resolve(
-          response.series.map((cat: { sessions: any[] }) => {
-            return {
-              ...cat,
-              sessions: cat.sessions.map((s: any) => new Session().fromJson(s)),
-            };
-          }),
-        );
-      });
+    const resp = await metricService.fetchSessions(newFilter);
+    return resp.series.map((cat: { sessions: any[] }) => {
+      return {
+        ...cat,
+        sessions: cat.sessions.map((s: any) => new Session().fromJson(s)),
+      };
     });
-  }
+  };
 
   // TODO this is a temporary solution until the API is fixed.
   applyProperties(data: any) {

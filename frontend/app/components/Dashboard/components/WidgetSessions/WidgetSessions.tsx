@@ -6,7 +6,7 @@ import React, {
   useMemo,
 } from 'react';
 import { NoContent, Loader, Pagination } from 'UI';
-import { Button, Tag, Tooltip, Dropdown, message } from 'antd';
+import { Button, Tag, Tooltip, Dropdown } from 'antd';
 import { UndoOutlined, DownOutlined } from '@ant-design/icons';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
@@ -19,6 +19,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { HEATMAP, USER_PATH, FUNNEL } from 'App/constants/card';
 import { useTranslation } from 'react-i18next';
 import Session from 'App/types/session/session';
+import { toast } from 'react-toastify'
 
 const getListSessionsBySeries = (
   data: { sessions: Session[]; total: number; seriesId: string }[],
@@ -120,12 +121,18 @@ function WidgetSessions({ className = '' }) {
         .then((res) => {
           setData(res);
           if (metricStore.drillDown) {
-            message.info(t('Sessions Refreshed!'));
+            toast.info(t('Sessions refreshed!'));
             listRef.current?.scrollIntoView({ behavior: 'smooth' });
             metricStore.setDrillDown(false);
           }
         })
-        .finally(() => setLoading(false));
+        .catch(e => {
+          console.error(e);
+          toast.error(t('Failed to refresh sessions, try again later.'));
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     },
     [isMounted, widget, metricStore, t],
   );
