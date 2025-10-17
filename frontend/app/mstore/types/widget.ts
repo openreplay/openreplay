@@ -540,6 +540,9 @@ export default class Widget {
   fetchSessions = async (_: any, filter: any): Promise<any> => {
     const newFilter = this.applyProperties(filter);
     const resp = await metricService.fetchSessions(newFilter);
+    if (!resp.series?.length) {
+      return null;
+    }
     return resp.series.map((cat: { sessions: any[] }) => {
       return {
         ...cat,

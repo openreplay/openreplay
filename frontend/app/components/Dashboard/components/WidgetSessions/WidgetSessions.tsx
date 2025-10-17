@@ -121,7 +121,7 @@ function WidgetSessions({ className = '' }) {
       widget
         .fetchSessions(metricId, params)
         .then((res) => {
-          setData(res);
+          setData(res ?? []);
           if (metricStore.drillDown) {
             toast.info(t('Sessions refreshed!'));
             listRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -212,7 +212,6 @@ function WidgetSessions({ className = '' }) {
 
   useEffect(() => {
     metricStore.updateKey('sessionsPage', 1);
-    loadData();
   }, [
     filter.startTimestamp,
     filter.endTimestamp,
