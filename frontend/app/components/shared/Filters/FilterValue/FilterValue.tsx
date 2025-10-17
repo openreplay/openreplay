@@ -164,9 +164,6 @@ function FilterValue(props: Props) {
       );
 
     case FilterType.NUMBER:
-    case FilterType.INTEGER:
-    case FilterType.DOUBLE:
-    case FilterType.FLOAT:
       return (
         <Input
           type="number"

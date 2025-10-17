@@ -516,7 +516,6 @@ class SearchStore {
   };
 
   updateFilter = (index: number, search: Partial<Filter>) => {
-    console.log('SearchStore: updateFilter', index, search);
     const newFilters = [...this.instance.filters];
     newFilters[index] = {
       ...newFilters[index],
@@ -530,7 +529,6 @@ class SearchStore {
   };
 
   removeFilter = (index: number) => {
-    console.log('removeFilter', index);
     const newFilters = [...this.instance.filters];
     newFilters.splice(index, 1);
 

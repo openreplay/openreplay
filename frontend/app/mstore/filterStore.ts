@@ -3,6 +3,7 @@ import { filterService, searchService } from 'App/services';
 import { Filter, COMMON_FILTERS } from './types/filterConstants';
 import { projectStore } from '@/mstore/index';
 import FilterItem from './types/filterItem';
+import { normalizeDataType } from 'App/utils';
 
 export interface TopValue {
   rowCount?: number;
@@ -244,7 +245,9 @@ export default class FilterStore {
 
   processFilters = (filters: any[], category?: string): Filter[] => {
     return filters.map((filter) => {
-      let dataType = filter.dataType?.toLowerCase() || 'string';
+      let dataType = filter.dataType
+        ? normalizeDataType(filter.dataType)
+        : 'string';
       if (filter.name === 'duration' && filter.autoCaptured) {
         dataType = 'duration';
       }
@@ -253,7 +256,8 @@ export default class FilterStore {
         ...filter,
         id: Math.random().toString(36).substring(2, 9),
         possibleTypes:
-          filter.possibleTypes?.map((type: any) => type.toLowerCase()) || [],
+          filter.possibleTypes?.map((type: any) => normalizeDataType(type)) ||
+          [],
         dataType: dataType,
         category: filterCategory,
         subCategory: this.determineSubCategory(filterCategory, filter),

@@ -291,22 +291,15 @@ export const getOperatorsByType = (type?: string): Operator[] => {
       operators = OPERATORS.string;
       break;
     case 'number':
-    case 'integer':
-    case 'int':
-    case 'float':
-    case 'decimal':
       operators = OPERATORS.number;
       break;
     case 'boolean':
       operators = OPERATORS.boolean;
       break;
     case 'date':
-    case 'datetime':
-    case 'timestamp':
       operators = OPERATORS.date;
       break;
     case 'array':
-    case 'list':
       operators = OPERATORS.array;
       break;
     case 'duration':

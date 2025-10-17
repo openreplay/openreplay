@@ -635,3 +635,47 @@ export function roundToNextMinutes(timestamp: number, minutes: number): number {
   }
   return date.getTime();
 }
+
+
+export function normalizeDataType(rawType: string): string {
+  const type = rawType.toLowerCase();
+
+  if (
+    [
+      "number",
+      "integer",
+      "int",
+      "float",
+      "double",
+      "decimal",
+      "int8",
+      "int16",
+      "int32",
+      "int64",
+      "uint8",
+      "uint16",
+      "uint32",
+      "uint64",
+      "float32",
+      "float64",
+    ].includes(type)
+  ) {
+    return "number";
+  }
+
+  if (
+    ["date", "datetime", "timestamp", "date32", "datetime64"].includes(type)
+  ) {
+    return "date";
+  }
+
+  if (type.startsWith("array") || type === "array") {
+    return "array";
+  }
+
+  if (["bool", "boolean"].includes(type)) {
+    return "boolean";
+  }
+
+  return "string";
+}
