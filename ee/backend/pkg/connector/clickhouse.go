@@ -4,10 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
-	"time"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/internal/config/connector"
@@ -21,35 +18,10 @@ type ClickHouse struct {
 	batches *Batches
 }
 
-func NewClickHouse(log logger.Logger, cfg *connector.Config, batches *Batches) (*ClickHouse, error) {
-	url := cfg.Clickhouse.URL
-	url = strings.TrimPrefix(url, "tcp://")
-	url = strings.TrimSuffix(url, "/default")
-	conn, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{url},
-		Auth: clickhouse.Auth{
-			Database: cfg.Clickhouse.Database,
-			Username: cfg.Clickhouse.UserName,
-			Password: cfg.Clickhouse.Password,
-		},
-		MaxOpenConns:    20,
-		MaxIdleConns:    15,
-		ConnMaxLifetime: 3 * time.Minute,
-		Compression: &clickhouse.Compression{
-			Method: clickhouse.CompressionLZ4,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
-	if err := conn.Ping(ctx); err != nil {
-		return nil, err
-	}
+func NewClickHouse(log logger.Logger, chConn driver.Conn, batches *Batches) (*ClickHouse, error) {
 	c := &ClickHouse{
 		log:     log,
-		cfg:     cfg,
-		conn:    conn,
+		conn:    chConn,
 		batches: batches,
 	}
 	return c, nil

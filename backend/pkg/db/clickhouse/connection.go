@@ -2,6 +2,7 @@ package clickhouse
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"openreplay/backend/internal/config/common"
 
@@ -39,12 +40,12 @@ func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
 	}
 	var conn driver.Conn
 	var err error
-	//TODO: replace with openDB
 	if conn, err = clickhouse.Open(opts); err != nil {
 		return nil, err
 	}
 	if err := conn.Ping(context.Background()); err != nil {
-		if exception, ok := err.(*clickhouse.Exception); ok {
+		var exception *clickhouse.Exception
+		if errors.As(err, &exception) {
 			fmt.Printf("Exception [%d] %s \n%s\n", exception.Code, exception.Message, exception.StackTrace)
 		}
 		return nil, err
@@ -54,8 +55,7 @@ func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
 func NewSqlDBConnection(cfg common.Clickhouse) *sqlx.DB {
 	opts := &clickhouse.Options{
 		Protocol: clickhouse.HTTP,
-		//Addr:     []string{cfg.GetTrimmedURL()},
-		Addr: []string{cfg.GetTrimmedURL_HTTP()},
+		Addr:     []string{cfg.GetTrimmedURL_HTTP()},
 		Auth: clickhouse.Auth{
 			Database: cfg.Database,
 			Username: cfg.LegacyUserName,
@@ -69,9 +69,6 @@ func NewSqlDBConnection(cfg common.Clickhouse) *sqlx.DB {
 		},
 		Settings: clickhouse.Settings{
 			"max_execution_time": cfg.MaxExecutionTime,
-			//"session_timeout":    60, // seconds
-
-			//"session_id": uuid.NewString(),
 		},
 	}
 	switch cfg.CompressionAlgo {
@@ -84,7 +81,8 @@ func NewSqlDBConnection(cfg common.Clickhouse) *sqlx.DB {
 	conn := clickhouse.OpenDB(opts)
 
 	if err := conn.Ping(); err != nil {
-		if exception, ok := err.(*clickhouse.Exception); ok {
+		var exception *clickhouse.Exception
+		if errors.As(err, &exception) {
 			fmt.Printf("Exception SQL-DB [%d] %s \n%s\n", exception.Code, exception.Message, exception.StackTrace)
 		}
 		return nil
