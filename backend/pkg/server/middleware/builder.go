@@ -53,6 +53,12 @@ func NewMiddlewareBuilder(log logger.Logger, jwtSecret string, http *common.HTTP
 	}, nil
 }
 
+func NewMinimalMiddlewareBuilder(http *common.HTTP) (api.MiddlewareBuilder, error) {
+	return &baseMiddlewareBuilderImpl{
+		middlewares: []api.RouterMiddleware{NewHealthCheck(), NewCors(http.UseAccessControlHeaders)},
+	}, nil
+}
+
 type healthCheckImpl struct{}
 
 func NewHealthCheck() api.RouterMiddleware {
