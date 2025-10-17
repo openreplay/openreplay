@@ -33,6 +33,9 @@ type FunnelResponse struct {
 type FunnelQueryBuilder struct{}
 
 func (f *FunnelQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
+	if !hasEventFilter(p.MetricPayload.Series[0].Filter.Filters) {
+		return FunnelResponse{Stages: make([]FunnelStageResult, 0)}, nil
+	}
 	q, err := f.buildQuery(p)
 	if err != nil {
 		return nil, err
