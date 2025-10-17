@@ -5,11 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	analyticsConfig "openreplay/backend/internal/config/analytics"
+	orClickhouse "openreplay/backend/pkg/db/clickhouse"
+	"openreplay/backend/pkg/logger"
 	"slices"
 	"strings"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 
 	"openreplay/backend/pkg/analytics/model"
 )
@@ -34,15 +40,15 @@ type TableValue struct {
 	AllCount        uint64 `json:"-" ch:"all_count" default:"0"`
 }
 type ResolutionTableValue struct {
-	NumberOfRows uint64 `json:"-" ch:"number_of_rows" default:"0"`
-	CenterWidth  uint64 `json:"centerWidth" ch:"center_width"`
-	CenterHeight uint64 `json:"centerHeight" ch:"center_height"`
-	MaxWidth     uint64 `json:"maxWidth" ch:"max_width"`
-	MaxHeight    uint64 `json:"maxHeight" ch:"max_height"`
-	MinWidth     uint64 `json:"minWidth" ch:"min_width"`
-	MinHeight    uint64 `json:"minHeight" ch:"min_height"`
-	TotalInGroup uint64 `json:"totalInGroup" ch:"total_in_group" default:"0"`
-	FullCount    uint64 `json:"-" ch:"full_count" default:"0"`
+	NumberOfRows uint64 `json:"-" ch:"number_of_rows" db:"number_of_rows" default:"0"`
+	CenterWidth  uint64 `json:"centerWidth" ch:"center_width" db:"center_width"`
+	CenterHeight uint64 `json:"centerHeight" ch:"center_height" db:"center_height"`
+	MaxWidth     uint64 `json:"maxWidth" ch:"max_width" db:"max_width"`
+	MaxHeight    uint64 `json:"maxHeight" ch:"max_height" db:"max_height"`
+	MinWidth     uint64 `json:"minWidth" ch:"min_width" db:"min_width"`
+	MinHeight    uint64 `json:"minHeight" ch:"min_height" db:"min_height"`
+	TotalInGroup uint64 `json:"totalInGroup" ch:"total_in_group" db:"total_in_group" default:"0"`
+	FullCount    uint64 `json:"-" ch:"full_count" db:"full_count" default:"0"`
 }
 
 type TableResponse struct {
@@ -85,7 +91,7 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 		metricFormat = MetricFormatSessionCount
 	}
 	if p.MetricOf == "screenResolution" {
-		return t.executeForTableOfResolutions(p, conn)
+		return t.executeForTableOfResolutions(p)
 	}
 
 	query, err := t.buildQuery(p, metricFormat)
@@ -107,7 +113,7 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 
 	return &TableResponse{Total: valuesCount, Count: overallCount, Values: rawValues}, nil
 }
-func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload, conn driver.Conn) (interface{}, error) {
+func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload) (interface{}, error) {
 	metricFormat := p.MetricFormat
 	if metricFormat != MetricFormatSessionCount && metricFormat != MetricFormatUserCount {
 		metricFormat = MetricFormatSessionCount
@@ -117,13 +123,38 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload, conn driver
 	if err != nil {
 		return nil, fmt.Errorf("error building screenResolution queries: %w", err)
 	}
+	if len(queries) == 0 {
+		return nil, fmt.Errorf("No queries to execute for table of resolutions")
+	}
+	logr := logger.New()
+	cfg := analyticsConfig.New(logr)
+
+	var conn *sqlx.DB = orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
+
+	// Trying to use clickhouseContext in order to keep same session for tmp tables,
+	// otherwise we need to use clickhouse.openDB instead of clickhouse.open in the connexion code
+	ctx := clickhouse.Context(context.Background(),
+		clickhouse.WithSettings(clickhouse.Settings{
+			"session_id":      uuid.NewString(),
+			"session_timeout": 60, // seconds
+		}))
+
 	queryParams := convertParams(params)
-	err = conn.Exec(context.Background(), queries[0], queryParams...)
+	_, err = conn.ExecContext(ctx, queries[0], queryParams...)
 	if err != nil {
+		log.Println("---------------------------------")
+		log.Println(queries[0])
+		log.Println("---------------------------------")
 		return nil, fmt.Errorf("error executing tmp query for screenResolution: %w", err)
 	}
 	var rawValues []ResolutionTableValue = make([]ResolutionTableValue, 0)
-	if err = conn.Select(context.Background(), &rawValues, queries[1], queryParams...); err != nil {
+	if err = conn.SelectContext(ctx, &rawValues, queries[1], queryParams...); err != nil {
+		log.Println("---------------------------------")
+		log.Println(queries[0])
+		log.Println("---------------------------------")
+		log.Println("---------------------------------")
+		log.Println(queries[1])
+		log.Println("---------------------------------")
 		log.Printf("Error executing Table Of Resolutions query: %s\nQuery: %s", err, queries[1])
 		return nil, err
 	}
