@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"openreplay/backend/pkg/server/middleware"
 
 	assistConfig "openreplay/backend/internal/config/assist"
 	"openreplay/backend/pkg/assist"
@@ -14,6 +13,7 @@ import (
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/middleware"
 )
 
 func main() {
@@ -25,6 +25,7 @@ func main() {
 	dbMetric := databaseMetrics.New("assist")
 	metrics.New(log, append(webMetrics.List(), dbMetric.List()...))
 
+	// Use assistKey as an authorization mechanism (legacy)
 	if cfg.AssistKey == "" {
 		log.Fatal(ctx, "assist key is not set")
 	}
@@ -47,7 +48,8 @@ func main() {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
 
-	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetric, services.Handlers(), nil, nil)
+	// Use the minimal middleware here because we have the normal one on the api side (assist proxy)
+	middlewares, err := middleware.NewMinimalMiddlewareBuilder(&cfg.HTTP)
 	if err != nil {
 		log.Fatal(ctx, "can't init middlewares: %s", err)
 	}
