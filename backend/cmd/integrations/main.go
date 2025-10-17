@@ -12,6 +12,7 @@ import (
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/middleware"
 )
 
 func main() {
@@ -23,18 +24,23 @@ func main() {
 	dbMetric := database.New("integrations")
 	metrics.New(log, append(webMetrics.List(), dbMetric.List()...))
 
-	pgConn, err := pool.New(dbMetric, cfg.Postgres.String())
+	pgPool, err := pool.New(dbMetric, cfg.Postgres.String())
 	if err != nil {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
-	defer pgConn.Close()
+	defer pgPool.Close()
 
-	builder, err := integrations.NewServiceBuilder(log, cfg, webMetrics, dbMetric, pgConn)
+	services, err := integrations.NewServiceBuilder(log, cfg, webMetrics, pgPool)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
 
-	router, err := api.NewRouter(&cfg.HTTP, log, api.NoPrefix, builder)
+	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetric, services.Handlers(), nil, nil)
+	if err != nil {
+		log.Fatal(ctx, "can't init middlewares: %s", err)
+	}
+
+	router, err := api.NewRouter(log, &cfg.HTTP, api.NoPrefix, services.Handlers(), middlewares.Middlewares())
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}

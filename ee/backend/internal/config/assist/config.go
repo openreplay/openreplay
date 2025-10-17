@@ -15,6 +15,7 @@ type Config struct {
 	common.Postgres
 	redis.Redis
 	common.HTTP
+	common.RateLimiter
 	ProjectExpiration time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	AssistKey         string        `env:"ASSIST_KEY"`
 	CacheTTL          time.Duration `env:"REDIS_CACHE_TTL,default=5s"`

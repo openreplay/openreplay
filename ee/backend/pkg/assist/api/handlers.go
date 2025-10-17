@@ -20,12 +20,12 @@ import (
 type handlersImpl struct {
 	cfg           *assistAPI.Config
 	log           logger.Logger
-	responser     *api.Responser
+	responser     api.Responser
 	jsonSizeLimit int64
 	assist        service.Assist
 }
 
-func NewHandlers(log logger.Logger, cfg *assistAPI.Config, responser *api.Responser, assist service.Assist) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *assistAPI.Config, responser api.Responser, assist service.Assist) (api.Handlers, error) {
 	return &handlersImpl{
 		cfg:           cfg,
 		log:           log,
@@ -41,11 +41,12 @@ func (e *handlersImpl) GetAll() []*api.Description {
 		keyPrefix = fmt.Sprintf("/assist/%s", e.cfg.AssistKey)
 	}
 	return []*api.Description{
-		{keyPrefix + "/sockets-list/{projectKey}/autocomplete", e.autocomplete, "GET"},        // event search with live=true
-		{keyPrefix + "/sockets-list/{projectKey}/{sessionId}", e.socketsListByProject, "GET"}, // is_live for getReplay call
-		{keyPrefix + "/sockets-live/{projectKey}", e.socketsLiveByProject, "POST"},            // handler /{projectId}/assist/sessions for co-browser
-		{keyPrefix + "/sockets-live/{projectKey}/{sessionId}", e.socketsLiveBySession, "GET"}, // for get_live_session (with data) and for session_exists
-		{"/v1/ping", e.ping, "GET"},
+		{keyPrefix + "/sockets-list/{projectKey}/autocomplete", "GET", e.autocomplete, api.NoPermissions, api.DoNotTrack},        // event search with live=true
+		{keyPrefix + "/sockets-list/{projectKey}/{sessionId}", "GET", e.socketsListByProject, api.NoPermissions, api.DoNotTrack}, // is_live for getReplay call
+		{keyPrefix + "/sockets-live/{projectKey}", "POST", e.socketsLiveByProject, api.NoPermissions, api.DoNotTrack},            // handler /{projectId}/assist/sessions for co-browser
+		{keyPrefix + "/sockets-live/{projectKey}/{sessionId}", "GET", e.socketsLiveBySession, api.NoPermissions, api.DoNotTrack}, // for get_live_session (with data) and for session_exists
+		{"/v1/{project}/assist/events", "POST", e.collectAssistStats, api.NoPermissions, api.DoNotTrack},
+		{"GET", "/v1/ping", e.ping, api.NoPermissions, api.DoNotTrack},
 	}
 }
 
@@ -204,4 +205,8 @@ func (e *handlersImpl) socketsLiveBySession(w http.ResponseWriter, r *http.Reque
 		"data": resp,
 	}
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, response, startTime, r.URL.Path, bodySize)
+}
+
+func (e *handlersImpl) collectAssistStats(w http.ResponseWriter, r *http.Request) {
+	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotImplemented, errors.New("not implemented"), time.Now(), r.URL.Path, 0)
 }

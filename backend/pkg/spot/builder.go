@@ -5,36 +5,25 @@ import (
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/metrics/database"
 	spotMetrics "openreplay/backend/pkg/metrics/spot"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/server/auth"
-	"openreplay/backend/pkg/server/keys"
-	"openreplay/backend/pkg/server/limiter"
-	"openreplay/backend/pkg/server/tracer"
 	spotAPI "openreplay/backend/pkg/spot/api"
+	"openreplay/backend/pkg/spot/keys"
 	"openreplay/backend/pkg/spot/service"
 	"openreplay/backend/pkg/spot/transcoder"
 )
 
 type serviceBuilder struct {
-	auth        api.RouterMiddleware
-	rateLimiter api.RouterMiddleware
-	auditTrail  api.RouterMiddleware
-	spotsAPI    api.Handlers
-}
-
-func (b *serviceBuilder) Middlewares() []api.RouterMiddleware {
-	return []api.RouterMiddleware{b.rateLimiter, b.auth, b.auditTrail}
+	spotsAPI api.Handlers
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
 	return []api.Handlers{b.spotsAPI}
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, spotMetrics spotMetrics.Spot, dbMetrics database.Database, pgconn pool.Pool, prefix string) (api.ServiceBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, spotMetrics spotMetrics.Spot, pgconn pool.Pool) (api.ServiceBuilder, error) {
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		return nil, err
@@ -43,19 +32,12 @@ func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, 
 	spots := service.NewSpots(log, pgconn, flaker)
 	transcoder := transcoder.NewTranscoder(cfg, log, objStore, pgconn, spots, spotMetrics)
 	keys := keys.NewKeys(log, pgconn)
-	auditrail, err := tracer.NewTracer(log, pgconn, dbMetrics)
-	if err != nil {
-		return nil, err
-	}
 	responser := api.NewResponser(webMetrics)
 	handlers, err := spotAPI.NewHandlers(log, cfg, responser, spots, objStore, transcoder, keys)
 	if err != nil {
 		return nil, err
 	}
 	return &serviceBuilder{
-		auth:        auth.NewAuth(log, cfg.JWTSecret, cfg.JWTSpotSecret, pgconn, keys, prefix),
-		rateLimiter: limiter.NewUserRateLimiter(&cfg.RateLimiter),
-		auditTrail:  auditrail,
-		spotsAPI:    handlers,
+		spotsAPI: handlers,
 	}, nil
 }

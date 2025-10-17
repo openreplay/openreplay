@@ -221,3 +221,31 @@ func (s *storageImpl) GetPreSignedDownloadUrl(key string) (string, error) {
 	}
 	return urlStr, nil
 }
+
+func (s *storageImpl) GetPreSignedDownloadUrlFromBucket(bucket, key string) (string, error) {
+	req, _ := s.svc.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	urlStr, err := req.Presign(15 * time.Minute)
+	if err != nil {
+		return "", err
+	}
+	return urlStr, nil
+}
+
+func (s *storageImpl) Tag(fileKey, tagKey, tagValue string) error {
+	_, err := s.svc.PutObjectTagging(&s3.PutObjectTaggingInput{
+		Bucket: s.bucket,
+		Key:    aws.String(fileKey),
+		Tagging: &s3.Tagging{
+			TagSet: []*s3.Tag{
+				{
+					Key:   aws.String(tagKey),
+					Value: aws.String(tagValue),
+				},
+			},
+		},
+	})
+	return err
+}

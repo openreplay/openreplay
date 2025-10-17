@@ -182,3 +182,44 @@ type SeriesSessionData struct {
 	SeriesName string    `json:"seriesName"`
 	Sessions   []Session `json:"sessions"`
 }
+
+type SavedSearchRequest struct {
+	Name     *string         `json:"name" validate:"omitempty,max=255"`
+	IsPublic *bool           `json:"isPublic"`
+	IsShare  *bool           `json:"isShare"`
+	Data     SavedSearchData `json:"data" validate:"required"`
+}
+
+type SavedSearchData struct {
+	Filters     []Filter `json:"filters" validate:"required,dive"`
+	StartDate   int64    `json:"startTimestamp,omitempty" validate:"omitempty,min=946684800000"`
+	EndDate     int64    `json:"endTimestamp,omitempty" validate:"omitempty,min=946684800000"`
+	Sort        string   `json:"sort,omitempty"`
+	Order       string   `json:"order,omitempty"`
+	EventsOrder string   `json:"eventsOrder,omitempty" validate:"omitempty,oneof=then or and"`
+	Limit       int      `json:"limit,omitempty" validate:"omitempty,min=1,max=1000"`
+	Page        int      `json:"page,omitempty" validate:"omitempty,min=1"`
+}
+
+type SavedSearch struct {
+	SearchID  string          `json:"searchId"`
+	ProjectID int             `json:"projectId"`
+	UserID    uint64          `json:"userId"`
+	UserName  string          `json:"userName,omitempty"`
+	Name      *string         `json:"name,omitempty"`
+	IsPublic  bool            `json:"isPublic"`
+	IsShare   bool            `json:"isShare"`
+	Data      SavedSearchData `json:"data"`
+	CreatedAt time.Time       `json:"createdAt"`
+	ExpiresAt *time.Time      `json:"-"`
+	DeletedAt *time.Time      `json:"-"`
+}
+
+type SavedSearchResponse struct {
+	SearchID  string          `json:"searchId"`
+	Name      *string         `json:"name,omitempty"`
+	IsPublic  bool            `json:"isPublic"`
+	IsShare   bool            `json:"isShare"`
+	Data      SavedSearchData `json:"data"`
+	CreatedAt time.Time       `json:"createdAt"`
+}

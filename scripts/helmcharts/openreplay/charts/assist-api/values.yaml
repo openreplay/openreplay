@@ -63,7 +63,7 @@ serviceMonitor:
 service:
   type: ClusterIP
   ports:
-    http: 8080
+    http: 9001
     metrics: 8888
 
 ingress:
@@ -98,6 +98,7 @@ autoscaling:
 
 env:
   CLEAR_SOCKET_TIME: 720
+  HTTP_PORT: 9001
 
 
 nodeSelector: {}

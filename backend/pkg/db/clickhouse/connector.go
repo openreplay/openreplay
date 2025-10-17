@@ -41,7 +41,6 @@ type Connector interface {
 	InsertWebInputDuration(session *sessions.Session, msg *messages.InputChange) error
 	InsertMouseThrashing(session *sessions.Session, msg *messages.MouseThrashing) error
 	InsertIncident(session *sessions.Session, msg *messages.Incident) error
-	InsertCanvasNode(session *sessions.Session, msg *messages.CanvasNode) error
 	InsertTagTrigger(session *sessions.Session, msg *messages.TagTrigger) error
 	InsertMobileSession(session *sessions.Session) error
 	InsertMobileCustom(session *sessions.Session, msg *messages.MobileEvent) error
@@ -58,7 +57,7 @@ type task struct {
 }
 
 func NewTask() *task {
-	return &task{bulks: make([]Bulk, 0, 21)}
+	return &task{bulks: make([]Bulk, 0, 20)}
 }
 
 type connectorImpl struct {
@@ -77,7 +76,7 @@ func NewConnector(conn driver.Conn, metrics database.Database) Connector {
 	c := &connectorImpl{
 		conn:       conn,
 		metrics:    metrics,
-		batches:    make(map[string]Bulk, 22),
+		batches:    make(map[string]Bulk, 21),
 		workerTask: make(chan *task, 1),
 		done:       make(chan struct{}),
 		finished:   make(chan struct{}),
@@ -108,7 +107,6 @@ var batches = map[string]string{
 	"graphql":         `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 	"issuesEvents":    `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", issue_type, issue_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 	"issues":          "INSERT INTO experimental.issues (project_id, issue_id, type, context_string) VALUES (?, ?, ?, ?)",
-	"canvasNodes":     `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 	"tagTriggers":     `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 	"mobile_sessions": "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, platform, timezone) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?)",
 	"mobile_custom":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -134,7 +132,7 @@ func (c *connectorImpl) Commit() error {
 	for _, b := range c.batches {
 		newTask.bulks = append(newTask.bulks, b)
 	}
-	c.batches = make(map[string]Bulk, 22)
+	c.batches = make(map[string]Bulk, 21)
 	if err := c.Prepare(); err != nil {
 		log.Printf("can't prepare new CH batch set: %s", err)
 	}
@@ -213,6 +211,13 @@ func (c *connectorImpl) InsertWebSession(session *sessions.Session) (err error) 
 	}
 	if session.ErrorsCount > 0 {
 		session.IssueTypes = append(session.IssueTypes, "js_exception")
+	}
+	// To keep the same format and use less mem in DB
+	if *session.UserID == "" {
+		session.UserID = nil
+	}
+	if *session.UserAnonymousID == "" {
+		session.UserAnonymousID = nil
 	}
 	if err := c.batches["sessions"].Append(
 		session.SessionID,
@@ -883,6 +888,7 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		return fmt.Errorf("can't marshal custom event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
+	customPayload := make(map[string]interface{})
 	if err := c.batches["custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -902,43 +908,10 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		session.UserCity,
 		cropString(msg.Url),
 		jsonString,
+		customPayload, // empty for incidents
 	); err != nil {
 		c.checkError("custom", err)
 		return fmt.Errorf("can't append to custom batch: %s", err)
-	}
-	return nil
-}
-
-func (c *connectorImpl) InsertCanvasNode(session *sessions.Session, msg *messages.CanvasNode) error {
-	jsonString, err := json.Marshal(map[string]interface{}{
-		"recording_id": fmt.Sprintf("%d_%s", msg.Timestamp, msg.NodeId),
-	})
-	if err != nil {
-		return fmt.Errorf("can't marshal canvasNode event: %s", err)
-	}
-	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["canvasNodes"].Append(
-		session.SessionID,
-		uint16(session.ProjectID),
-		getUUID(msg),
-		"CANVAS_NODE",
-		eventTime,
-		eventTime.Unix(),
-		session.UserUUID,
-		true,
-		session.Platform,
-		session.UserOSVersion,
-		session.UserOS,
-		session.UserBrowser,
-		session.Referrer,
-		session.UserCountry,
-		session.UserState,
-		session.UserCity,
-		cropString(msg.Url),
-		jsonString,
-	); err != nil {
-		c.checkError("canvasNodes", err)
-		return fmt.Errorf("can't append to canvasNodes batch: %s", err)
 	}
 	return nil
 }
