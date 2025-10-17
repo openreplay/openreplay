@@ -143,16 +143,74 @@ func (s *storageImpl) GetPreSignedUploadUrl(key string) (string, error) {
 	return sasURL, nil
 }
 
+func normalizeKey(key string) string {
+	if strings.HasPrefix(key, "/") {
+		key = key[1:]
+	}
+	return key
+}
+
 func (s *storageImpl) GetPreSignedDownloadUrl(key string) (string, error) {
-	return "", errors.New("not implemented")
+	key = normalizeKey(key)
+
+	// Read-only SAS for downloading
+	qp, err := (sas.BlobSignatureValues{
+		Protocol:      sas.ProtocolHTTPS,
+		StartTime:     time.Now().UTC(),
+		ExpiryTime:    time.Now().UTC().Add(time.Hour),
+		Permissions:   to.Ptr(sas.BlobPermissions{Read: true}).String(),
+		ContainerName: s.container,
+		BlobName:      key,
+	}).SignWithSharedKey(s.cred)
+	if err != nil {
+		return "", err
+	}
+
+	url := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s?%s",
+		s.account, s.container, key, qp.Encode())
+	return url, nil
 }
 
 func (s *storageImpl) GetPreSignedDownloadUrlFromBucket(bucket, key string) (string, error) {
-	return "", errors.New("not implemented")
+	key = normalizeKey(key)
+
+	qp, err := (sas.BlobSignatureValues{
+		Protocol:      sas.ProtocolHTTPS,
+		StartTime:     time.Now().UTC(),
+		ExpiryTime:    time.Now().UTC().Add(time.Hour),
+		Permissions:   to.Ptr(sas.BlobPermissions{Read: true}).String(),
+		ContainerName: bucket,
+		BlobName:      key,
+	}).SignWithSharedKey(s.cred)
+	if err != nil {
+		return "", err
+	}
+
+	url := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s?%s",
+		s.account, bucket, key, qp.Encode())
+	return url, nil
 }
 
 func (s *storageImpl) Tag(fileKey, tagKey, tagValue string) error {
-	return errors.New("not implemented")
+	fileKey = normalizeKey(fileKey)
+
+	// Merge default tags with the provided one (override if same key)
+	tags := map[string]string{tagKey: tagValue}
+	for k, v := range s.tags {
+		if _, exists := tags[k]; !exists {
+			tags[k] = v
+		}
+	}
+
+	// Build blob URL and use blob.Client for SetTags
+	blobURL := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", s.account, s.container, fileKey)
+	bc, err := blob.NewClientWithSharedKeyCredential(blobURL, s.cred, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = bc.SetTags(context.Background(), tags, nil)
+	return err
 }
 
 func loadFileTag() map[string]string {
