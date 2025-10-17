@@ -81,10 +81,6 @@ var PredefinedJourneys = map[string]JourneyStep{
 type UserJourneyQueryBuilder struct{}
 
 func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interface{}, error) {
-	logr := logger.New()
-	cfg := analyticsConfig.New(logr)
-
-	var conn *sqlx.DB = orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
 	queries, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -92,6 +88,10 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("No queries to execute for userJourney")
 	}
+	logr := logger.New()
+	cfg := analyticsConfig.New(logr)
+
+	var conn *sqlx.DB = orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
 
 	// Trying to use clickhouseContext in order to keep same session for tmp tables,
 	// otherwise we need to use clickhouse.openDB instead of clickhouse.open in the connexion code
