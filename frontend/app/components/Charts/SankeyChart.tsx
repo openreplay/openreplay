@@ -418,9 +418,9 @@ const EChartsSankey: React.FC<Props> = (props) => {
       };
       if (params.dataType === 'node') {
         const node = params.data;
-        console.log(node);
         if (node && node.type) {
-          onChartClick?.(constructFilters([node]));
+          const filters = constructFilters([node]);
+          onChartClick?.(filters);
         }
       } else if (params.dataType === 'edge') {
         const linkIndex = params.dataIndex;

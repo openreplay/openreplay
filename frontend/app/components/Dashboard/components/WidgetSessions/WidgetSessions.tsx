@@ -19,7 +19,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { HEATMAP, USER_PATH, FUNNEL } from 'App/constants/card';
 import { useTranslation } from 'react-i18next';
 import Session from 'App/types/session/session';
-import { toast } from 'react-toastify'
+import { toast } from 'react-toastify';
 import { checkIsSingleSeries } from '../WidgetForm/WidgetFormNew';
 
 const getListSessionsBySeries = (
@@ -61,6 +61,7 @@ function WidgetSessions({ className = '' }) {
   const [loading, setLoading] = useState(false);
 
   const filter = dashboardStore.drillDownFilter;
+  console.log(filter);
   const widget = metricStore.instance;
   const isSingleSeries = checkIsSingleSeries(widget);
   const focused = metricStore.focusedSeriesName;
@@ -128,7 +129,7 @@ function WidgetSessions({ className = '' }) {
             metricStore.setDrillDown(false);
           }
         })
-        .catch(e => {
+        .catch((e) => {
           console.error(e);
           toast.error(t('Failed to refresh sessions, try again later.'));
         })
@@ -211,7 +212,11 @@ function WidgetSessions({ className = '' }) {
   };
 
   useEffect(() => {
-    metricStore.updateKey('sessionsPage', 1);
+    if (metricStore.page === 1) {
+      loadData();
+    } else {
+      metricStore.updateKey('sessionsPage', 1);
+    }
   }, [
     filter.startTimestamp,
     filter.endTimestamp,
