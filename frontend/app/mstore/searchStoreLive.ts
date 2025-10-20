@@ -165,7 +165,7 @@ class SearchStoreLive {
 
   addFilter(filter: any) {
     const index = this.instance.filters.findIndex(
-      (i: FilterItem) => i.key === filter.key,
+      (i: FilterItem) => i.name === filter.name,
     );
 
     filter.value = checkFilterValue(filter.value);
@@ -177,7 +177,7 @@ class SearchStoreLive {
       : null;
 
     if (index > -1) {
-      // Update existing filter
+    // Update existing filter
       // @ts-ignore
       this.instance.filters[index] = {
         ...this.instance.filters[index],
@@ -188,14 +188,9 @@ class SearchStoreLive {
       this.instance.filters = [...this.instance.filters, filter];
     }
 
-    // Update the instance to trigger reactions
     this.instance = new Search({
       ...this.instance.toData(),
     });
-
-    // if (filter.value && filter.value[0] && filter.value[0] !== '') {
-    //   void this.fetchSessions();
-    // }
   }
 
   addFilterByKeyAndValue(
