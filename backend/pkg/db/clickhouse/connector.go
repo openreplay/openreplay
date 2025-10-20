@@ -344,7 +344,6 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"issue_id":         issueID,
 		"issue_type":       "mouse_thrashing",
 		"url":              cropString(msg.Url),
 		"url_host":         host,
@@ -408,7 +407,6 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"issue_id":         issueID,
 		"issue_type":       msg.Type,
 		"url":              cropString(msg.Url),
 		"url_host":         host,
