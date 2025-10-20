@@ -35,6 +35,16 @@ func getIDFromRequest(r *http.Request, key string) (int, error) {
 	return id, nil
 }
 
+type SavedCardChartRequest struct {
+	StartTimestamp uint64 `json:"startTimestamp" validate:"required,min=946684800000"`
+	EndTimestamp   uint64 `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartTimestamp"`
+	Density        int    `json:"density" validate:"required,min=1,max=500"`
+	Page           int    `json:"page" validate:"required,min=1"`
+	Limit          int    `json:"limit" validate:"required,min=1,max=200"`
+	SortBy         string `json:"sortBy"`
+	SortOrder      string `json:"sortOrder"`
+}
+
 type handlersImpl struct {
 	log           logger.Logger
 	responser     api.Responser
@@ -46,8 +56,8 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/{projectId}/cards/try", "POST", e.getCardChartData, api.NoPermissions, api.DoNotTrack},             // for cards itself
-		{"/v1/{projectId}/cards/{id}/chart", "POST", e.getSavedCardChartData, api.NoPermissions, api.DoNotTrack}, // for dashboards
+		{"/v1/{projectId}/cards/try", "POST", e.getCardChartData, api.NoPermissions, api.DoNotTrack},
+		{"/v1/{projectId}/cards/{id}/chart", "POST", e.getSavedCardChartData, api.NoPermissions, api.DoNotTrack},
 		{"/v1/{projectId}/cards/{id}/try", "POST", e.getCardChartData, api.NoPermissions, api.DoNotTrack},
 	}
 }
@@ -58,7 +68,7 @@ func NewHandlers(log logger.Logger, cfg *config.Config, responser api.Responser,
 		responser:     responser,
 		jsonSizeLimit: cfg.JsonSizeLimit,
 		charts:        charts,
-		cards:         cards, // Assuming cards is not used in this handler
+		cards:         cards,
 		validator:     validator,
 	}, nil
 }
@@ -86,8 +96,8 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 	}
 	bodySize = len(bodyBytes)
 
-	req := &model.MetricPayload{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
+	params := &SavedCardChartRequest{}
+	if err := json.Unmarshal(bodyBytes, params); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -98,10 +108,24 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	req.MetricOf = card.MetricOf
-	req.MetricType = model.MetricType(card.MetricType)
-	req.MetricFormat = card.MetricFormat
-	req.Series = card.Series
+	req := &model.MetricPayload{
+		MetricOf:       card.MetricOf,
+		MetricType:     model.MetricType(card.MetricType),
+		MetricValue:    card.MetricValue,
+		MetricFormat:   card.MetricFormat,
+		ViewType:       card.ViewType,
+		Name:           card.Name,
+		Series:         card.Series,
+		StartPoint:     card.StartPoint,
+		Exclude:        card.Excludes,
+		StartTimestamp: params.StartTimestamp,
+		EndTimestamp:   params.EndTimestamp,
+		Density:        params.Density,
+		Page:           params.Page,
+		Limit:          params.Limit,
+		SortBy:         params.SortBy,
+		SortOrder:      params.SortOrder,
+	}
 
 	if err = e.validator.Struct(req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
@@ -119,7 +143,6 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 }
 
 func (e *handlersImpl) getCardChartData(w http.ResponseWriter, r *http.Request) {
-	// To show stack trace and handle panics gracefully
 	defer func() {
 		if rec := recover(); rec != nil {
 			log.Printf("Panic:%v\n", rec)
