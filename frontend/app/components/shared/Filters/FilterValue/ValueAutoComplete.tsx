@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useMemo,
   useRef,
+  memo,
 } from 'react';
 import { debounce } from 'App/utils';
 import { useStore } from 'App/mstore';
@@ -17,7 +18,6 @@ import {
   Popover,
   Spin,
   Typography,
-  List,
   Divider,
   Space,
 } from 'antd';
@@ -26,6 +26,7 @@ import cn from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { TopValue } from '@/mstore/filterStore';
 import { mobileScreen } from 'App/utils/isMobile';
+import { VList } from 'virtua';
 const { Text } = Typography;
 
 interface FilterParams {
@@ -54,6 +55,45 @@ interface Props {
   isDisabled?: boolean;
   isLive?: boolean;
 }
+
+const OptionItem = memo(
+  ({
+    item,
+    isSelected,
+    onSelect,
+  }: {
+    item: OptionType;
+    isSelected: boolean;
+    onSelect: (item: OptionType) => void;
+  }) => (
+    <div
+      onClick={() => onSelect(item)}
+      className={cn(
+        'cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2',
+        { 'bg-active-blue-faded': isSelected },
+      )}
+      role="option"
+      aria-selected={isSelected}
+      style={{ padding: '4px 8px', height: '32px' }}
+    >
+      <Space>
+        <Checkbox checked={isSelected} tabIndex={-1} />
+        <Text
+          ellipsis={{
+            tooltip: {
+              title: item.label,
+              placement: 'topLeft',
+              mouseEnterDelay: 0.5,
+            },
+          }}
+          style={{ maxWidth: 'calc(360px - 80px)' }}
+        >
+          {item.label}
+        </Text>
+      </Space>
+    </div>
+  ),
+);
 
 const ValueAutoComplete = observer(
   ({
@@ -210,17 +250,23 @@ const ValueAutoComplete = observer(
       debouncedLoadOptions(value);
     };
 
-    const onSelectOption = (item: OptionType) => {
-      const currentlySelected = selectedValues.includes(item.value);
-      if (!currentlySelected) {
-        setSelectedValues([...selectedValues, item.value]);
-      } else {
-        setSelectedValues(selectedValues.filter((i) => i !== item.value));
-      }
-    };
+    const onSelectOption = useCallback((item: OptionType) => {
+      if (!item.value) return;
+      setSelectedValues((prev) => {
+        const currentlySelected = prev.includes(item.value!);
+        if (!currentlySelected) {
+          return [...prev, item.value!];
+        } else {
+          return prev.filter((i) => i !== item.value);
+        }
+      });
+    }, []);
 
-    const isSelected = (item: OptionType) =>
-      selectedValues.includes(item.value);
+    const isSelected = useCallback(
+      (item: OptionType) =>
+        item.value ? selectedValues.includes(item.value) : false,
+      [selectedValues],
+    );
 
     const applySelectedValues = () => {
       onApplyValues(selectedValues);
@@ -264,13 +310,17 @@ const ValueAutoComplete = observer(
 
       return currentOptionsWithValue;
     }, [options, selectedValues]);
-    const filteredOptions = params.isPredefined
-      ? sortedOptions.filter(
-          (opt) =>
-            opt.label &&
-            opt.label.toLowerCase().includes(query.toLocaleLowerCase()),
-        )
-      : sortedOptions;
+    const filteredOptions = useMemo(
+      () =>
+        params.isPredefined
+          ? sortedOptions.filter(
+              (opt) =>
+                opt.label &&
+                opt.label.toLowerCase().includes(query.toLowerCase()),
+            )
+          : sortedOptions,
+      [params.isPredefined, sortedOptions, query],
+    );
 
     const queryBlocks = commaQuery
       ? query
@@ -310,56 +360,34 @@ const ValueAutoComplete = observer(
           allowClear
         />
         <Spin spinning={loadingTopValues && query.length === 0}>
-          <List
-            size="small"
-            locale={{
-              emptyText: t(
+          {filteredOptions.length === 0 ? (
+            <div className="py-4 text-center text-gray-400">
+              {t(
                 loadingSearch || loadingTopValues
                   ? 'Loading...'
                   : query.length > 0
                     ? 'No results found'
                     : 'No options available',
-              ),
-            }}
-            dataSource={filteredOptions}
-            renderItem={(item) => (
-              <List.Item
-                key={item.value}
-                onClick={() => onSelectOption(item)}
-                className={cn(
-                  'cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2',
-                  { 'bg-active-blue-faded': isSelected(item) },
-                )}
-                role="option"
-                aria-selected={isSelected(item)}
-                style={{ borderBottom: 'none', padding: '4px 8px' }} // Adjust padding
-              >
-                <Space>
-                  <Checkbox checked={isSelected(item)} readOnly tabIndex={-1} />
-                  <Text
-                    ellipsis={{
-                      tooltip: {
-                        title: item.label,
-                        placement: 'topLeft',
-                        mouseEnterDelay: 0.5,
-                      },
-                    }}
-                    style={{ maxWidth: 'calc(360px - 80px)' }}
-                  >
-                    {item.label}
-                  </Text>
-                </Space>
-              </List.Item>
-            )}
-            style={{
-              maxHeight: 200,
-              overflowY: 'auto',
-              marginBottom: query.trim().length > 0 && !loadingSearch ? 8 : 0,
-            }}
-          />
-          {query.trim().length > 0 &&
-          // sortedOptions.length > 0 &&
-          !loadingSearch ? (
+              )}
+            </div>
+          ) : (
+            <VList
+              style={{
+                height: Math.min(filteredOptions.length * 32, 200),
+                marginBottom: query.trim().length > 0 && !loadingSearch ? 8 : 0,
+              }}
+            >
+              {filteredOptions.map((item) => (
+                <OptionItem
+                  key={item.value}
+                  item={item}
+                  isSelected={isSelected(item)}
+                  onSelect={onSelectOption}
+                />
+              ))}
+            </VList>
+          )}
+          {query.trim().length > 0 && !loadingSearch ? (
             <>
               <Divider style={{ margin: '8px 0' }} />
               <Button
