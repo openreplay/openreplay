@@ -25,7 +25,7 @@ import {
 import { ErrorInfo } from '../types/error';
 import { getChartFormatter } from 'Types/dashboard/helper';
 import FilterItem from './filterItem';
-import Filter from './filter'
+import Filter from './filter';
 import Issue from '../types/issue';
 import { durationFormatted } from 'App/date';
 import { SessionsByRow } from './sessionsCardData';
@@ -251,7 +251,7 @@ export default class Widget {
 
         this.excludes =
           Array.isArray(json.excludes) && json.excludes.length > 0
-          ? new Filter().fromJson({ filters: json.excludes }).filters
+            ? new Filter().fromJson({ filters: json.excludes }).filters
             : [];
 
         // TODO change this to excludes after the api change
@@ -336,8 +336,15 @@ export default class Widget {
 
   updateStartPoint(startPoint: any) {
     runInAction(() => {
-      this.startPoint = new FilterItem(startPoint);
-      this.hasChanged = true;
+      const newStartPoint = new FilterItem(startPoint);
+      filterStore.getEventFilters(newStartPoint.id).then((filters) => {
+        const matching = filters?.filter((p) => p.defaultProperty) || [];
+        const newFilter = new FilterItem(startPoint);
+        // @ts-ignore
+        newFilter.filters = matching;
+        this.startPoint = newFilter;
+        this.hasChanged = true;
+      });
     });
   }
 

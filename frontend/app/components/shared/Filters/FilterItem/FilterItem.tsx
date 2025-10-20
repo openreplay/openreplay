@@ -65,15 +65,16 @@ function FilterItem(props: Props) {
   const [eventFilterOptions, setEventFilterOptions] = useState<Filter[]>([]);
   const [eventFiltersLoading, setEventFiltersLoading] = useState(false);
 
+  const fltId = filter?.id?.toString();
   const { filterStore } = useStore();
   const allFilters = filterStore.getCurrentProjectFilters();
 
   useMemo(() => {
-    if (isSubItem || filter?.name === 'duration' || !filter.isEvent) return;
-    filterStore.getEventFilters(filter?.id + '').then((filters) => {
+    if (isSubItem || filter?.name === 'duration' || !filter.isEvent || !fltId) return;
+    filterStore.getEventFilters(fltId).then((filters) => {
       setEventFilterOptions(filters);
     });
-  }, []);
+  }, [fltId]);
 
   const eventSelections = allFilters.filter(
     (i) => i.isEvent === filter.isEvent,

@@ -61,7 +61,6 @@ function WidgetSessions({ className = '' }) {
   const [loading, setLoading] = useState(false);
 
   const filter = dashboardStore.drillDownFilter;
-  console.log(filter);
   const widget = metricStore.instance;
   const isSingleSeries = checkIsSingleSeries(widget);
   const focused = metricStore.focusedSeriesName;
