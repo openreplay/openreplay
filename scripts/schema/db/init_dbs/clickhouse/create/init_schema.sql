@@ -541,52 +541,62 @@ CREATE TABLE IF NOT EXISTS product_analytics.all_events
     query_count_l30days UInt32   DEFAULT 0,
 
     created_at          DateTime64,
+    _edited_by_user     BOOL     DEFAULT FALSE,
     _timestamp          DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       ORDER BY (project_id, auto_captured, event_name);
 
+CREATE OR REPLACE FUNCTION or_event_display_name AS(event_name)->multiIf(
+        event_name == 'CLICK', 'Click',
+        event_name == 'INPUT', 'Text Input',
+        event_name == 'LOCATION', 'Page View',
+        event_name == 'ERROR', 'Error',
+        event_name == 'REQUEST', 'Network Request',
+        event_name == 'PERFORMANCE', 'Performance',
+        event_name == 'ISSUE', 'Issue',
+        event_name == 'INCIDENT', 'Incident',
+        event_name == 'TAG_TRIGGER', 'Tag',
+        '');
+
+CREATE OR REPLACE FUNCTION or_event_description AS(event_name)->multiIf(
+        event_name == 'CLICK',
+        'Represents a user click on a webpage element. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "CLICK".\n\nContains element selector, text content, …, timestamp.',
+        event_name == 'INPUT',
+        'Represents text input by a user in form fields or editable elements. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "INPUT".\n\nContains the element selector, ….. and timestamp (actual text content may be masked for privacy).',
+        event_name == 'LOCATION',
+        'Represents a page navigation or URL change within your application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "LOCATION".\n\nContains the full URL, …. referrer information, UTM parameters and timestamp.',
+        event_name == 'ERROR',
+        'Represents JavaScript errors and console error messages captured from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "error".\n\nContains error message,…., and timestamp.',
+        event_name == 'REQUEST',
+        'Represents HTTP/HTTPS network activity from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "fetch".\n\nContains URL, method, status code, duration, and timestamp',
+        ''
+                                                                );
 -- ----------------- This is experimental, if it doesn't work, we need to do it in db worker -------------
 -- Incremental materialized view to fill all_events using $properties
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.all_events_extractor_mv
     TO product_analytics.all_events AS
-SELECT DISTINCT ON (project_id,auto_captured,event_name) project_id,
-                                                         `$auto_captured` AS auto_captured,
-                                                         `$event_name`    AS event_name,
-                                                         multiIf(isNotNull(old_data.display_name) AND
-                                                                 notEmpty(old_data.display_name), old_data.display_name,
-                                                                 not `$auto_captured`, '',
-                                                                 `$event_name` == 'CLICK', 'Click',
-                                                                 `$event_name` == 'INPUT', 'Text Input',
-                                                                 `$event_name` == 'LOCATION', 'Visited URL',
-                                                                 `$event_name` == 'ERROR', 'Error',
-                                                                 `$event_name` == 'REQUEST', 'Network Request',
-                                                                 `$event_name` == 'PERFORMANCE', 'Performance',
-                                                                 `$event_name` == 'ISSUE', 'Issue',
-                                                                 `$event_name` == 'INCIDENT', 'Incident',
-                                                                 '')      AS display_name,
-                                                         multiIf(isNotNull(old_data.description) AND
-                                                                 notEmpty(old_data.description), old_data.description,
-                                                                 not `$auto_captured`, '',
-                                                                 `$event_name` == 'CLICK',
-                                                                 'Represents a user click on a webpage element. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "CLICK".\n\nContains element selector, text content, …, timestamp.',
-                                                                 `$event_name` == 'INPUT',
-                                                                 'Represents text input by a user in form fields or editable elements. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "INPUT".\n\nContains the element selector, ….. and timestamp (actual text content may be masked for privacy).',
-                                                                 `$event_name` == 'LOCATION',
-                                                                 'Represents a page navigation or URL change within your application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "LOCATION".\n\nContains the full URL, …. referrer information, UTM parameters and timestamp.',
-                                                                 `$event_name` == 'ERROR',
-                                                                 'Represents JavaScript errors and console error messages captured from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "error".\n\nContains error message,…., and timestamp.',
-                                                                 `$event_name` == 'REQUEST',
-                                                                 'Represents HTTP/HTTPS network activity from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "fetch".\n\nContains URL, method, status code, duration, and timestamp',
-                                                                 '')      AS description
+SELECT project_id,
+       `$auto_captured`                                                         AS auto_captured,
+       `$event_name`                                                            AS event_name,
+       multiIf(notEmpty(old_data.display_name), old_data.display_name,
+               not `$auto_captured`, '',
+               or_event_display_name(`$event_name`))                            AS display_name,
+       multiIf(notEmpty(old_data.description), old_data.description,
+               not `$auto_captured`, '',
+               or_event_description(`$event_name`))                             AS description,
+       if(isNotNull(old_data._edited_by_user), old_data._edited_by_user, FALSE) AS _edited_by_user
 FROM product_analytics.events
          LEFT JOIN (SELECT project_id,
                            auto_captured,
                            event_name,
                            display_name,
-                           description
+                           description,
+                           _edited_by_user
                     FROM product_analytics.all_events
-                    WHERE all_events.display_name != ''
-                       OR all_events.description != '') AS old_data
+                    WHERE _edited_by_user
+                      AND (display_name != '' OR description != '')
+                    ORDER BY _timestamp DESC
+                    LIMIT 1 BY project_id,auto_captured,event_name) AS old_data
                    ON (events.project_id = old_data.project_id AND events.`$auto_captured` = old_data.auto_captured AND
                        events.`$event_name` = old_data.event_name);
 -- -------- END ---------
@@ -636,6 +646,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.all_properties
     project_id        UInt16,
     property_name     String,
     is_event_property BOOL,
+    auto_captured     BOOL,
     display_name      String   DEFAULT '',
     description       String   DEFAULT '',
     status            String   DEFAULT 'visible' COMMENT 'visible/hidden/dropped',
@@ -643,146 +654,193 @@ CREATE TABLE IF NOT EXISTS product_analytics.all_properties
     query_count       UInt32   DEFAULT 0,
 
     created_at        DateTime64,
+    _edited_by_user   BOOL     DEFAULT FALSE,
     _timestamp        DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
-      ORDER BY (project_id, property_name, is_event_property);
+      ORDER BY (project_id, property_name, is_event_property, auto_captured);
 
+CREATE OR REPLACE FUNCTION or_property_display_name AS(property_name)->multiIf(
+        property_name == 'label', 'Button Label',
+        property_name == 'hesitation_time', 'Hesitation Time',
+        property_name == 'name', 'Name',
+        property_name == 'payload', 'Payload',
+        property_name == 'level', 'Level',
+        property_name == 'source', 'Source',
+        property_name == 'message', 'Message',
+        property_name == 'duration', 'Duration',
+        property_name == 'context', 'Context',
+        property_name == 'url_host', 'Hostname',
+        property_name == 'url_path', 'Path',
+        property_name == 'url_hostpath', 'URL Host and Path',
+        property_name == 'request_start', 'Request Start',
+        property_name == 'response_start', 'Response Start',
+        property_name == 'response_end', 'Response End',
+        property_name == 'dom_content_loaded_event_start', 'DOM Content Loaded Event Start',
+        property_name == 'dom_content_loaded_event_end', 'DOM Content Loaded Event End',
+        property_name == 'load_event_start', 'Load Event Start',
+        property_name == 'load_event_end', 'Load Event End',
+        property_name == 'first_paint', 'First Paint',
+        property_name == 'first_contentful_paint_time', 'First Contentful-paint Time',
+        property_name == 'speed_index', 'Speed Index',
+        property_name == 'visually_complete', 'Visually Complete',
+        property_name == 'time_to_interactive', 'Time To Interactive',
+        property_name == 'TTFB', 'Time To First Byte',
+        property_name == 'TTLB', 'Time To Last Byte',
+        property_name == 'response_time', 'Response Time',
+        property_name == 'dom_building_time', 'DOM Building Time',
+        property_name == 'dom_content_loaded_event_time', 'DOM Content Loaded Event Time',
+        property_name == 'load_event_time', 'Load Event Time',
+        property_name == 'min_fps', 'Minimum Frame Rate',
+        property_name == 'avg_fps', 'Average Frame Rate',
+        property_name == 'max_fps', 'Maximum Frame Rate',
+        property_name == 'min_cpu', 'Minimum CPU',
+        property_name == 'avg_cpu', 'Average CPU',
+        property_name == 'max_cpu', 'Maximum CPU',
+        property_name == 'min_total_js_heap_size', 'Minimum Total JS Heap Size',
+        property_name == 'avg_total_js_heap_size', 'Average Total JS Heap Size',
+        property_name == 'max_total_js_heap_size', 'Maximum Total JS Heap Size',
+        property_name == 'min_used_js_heap_size', 'Minimum Used JS Heap Size',
+        property_name == 'avg_used_js_heap_size', 'Average Used JS Heap Size',
+        property_name == 'max_used_js_heap_size', 'Maximum Used JS Heap Size',
+        property_name == 'method', 'Method',
+        property_name == 'status', 'Status',
+        property_name == 'success', 'Success',
+        property_name == 'request_body', 'Request Body',
+        property_name == 'response_body', 'Response Body',
+        property_name == 'transfer_size', 'Transfer Size',
+        property_name == 'selector', 'CSS Selector',
+        property_name == 'normalized_x', 'Normalized X',
+        property_name == 'normalized_y', 'Normalized Y',
+        property_name == 'message_id', 'Message ID',
+        property_name == 'CLS', 'Cumulative Layout Shift',
+        property_name == 'LCP', 'Largest Contentful Paint',
+        property_name == 'issue_type', 'Issue Type',
+        property_name == 'request_body', 'Request Body',
+        property_name == 'response_body', 'Response Body',
+        property_name == 'url', 'URL',
+        property_name == 'user_device', 'Device',
+        property_name == 'user_device_type', 'Platform',
+        property_name == 'first_contentful_paint_time', 'First Contentful-paint Time',
+        property_name == 'hesitation_time', 'Hesitation Time',
+        property_name == 'max_cpu', 'Maximum CPU',
+        property_name == 'max_fps', 'Maximum Frame Rate',
+        property_name == 'min_cpu', 'Minimum CPU',
+        property_name == 'min_fps', 'Minimum Frame Rate',
+        property_name == 'min_used_js_heap_size', 'Minimum Used JS Heap Size',
+        property_name == 'max_used_js_heap_size', 'Maximum Used JS Heap Size',
+        property_name == 'message', 'Error Message',
+        property_name == 'method', 'HTTP Method',
+        property_name == 'payload', 'Payload',
+        property_name == 'speed_index', 'Speed Index',
+        property_name == 'speed_index', 'Speed Index',
+        property_name == 'status', 'Status Code',
+        property_name == 'userState', 'State/Province',
+        property_name == 'incident', 'Incident Reported By User',
+        '');
 
+CREATE OR REPLACE FUNCTION or_property_visibility AS(property_name)->multiIf(
+        property_name == 'label', 'hidden',
+        property_name == 'tag_id', 'hidden',
+        property_name == 'INP', 'hidden',
+        property_name == 'web_vitals', 'hidden',
+        property_name = 'duration', 'hidden',
+        property_name = 'avg_cpu', 'hidden',
+        property_name = 'avg_fps', 'hidden',
+        property_name = 'avg_total_js_heap_size', 'hidden',
+        property_name = 'avg_used_js_heap_size', 'hidden',
+        property_name = 'dom_building_time', 'hidden',
+        property_name = 'dom_content_loaded_event_end', 'hidden',
+        property_name = 'dom_content_loaded_event_start', 'hidden',
+        property_name = 'dom_content_loaded_event_time', 'hidden',
+        property_name = 'first_paint', 'hidden',
+        property_name = 'load_event_end', 'hidden',
+        property_name = 'load_event_start', 'hidden',
+        property_name = 'load_event_time', 'hidden',
+        property_name = 'url_hostpath', 'hidden',
+        property_name = 'visually_complete', 'hidden',
+        property_name = 'time_to_interactive', 'hidden',
+        property_name = 'TTLB', 'hidden',
+        property_name = 'transfer_size', 'hidden',
+        property_name = 'source', 'hidden',
+        property_name = 'request_start', 'hidden',
+        property_name = 'response_end', 'hidden',
+        property_name = 'response_start', 'hidden',
+        property_name = 'response_time', 'hidden',
+        property_name = 'normalized_x', 'hidden',
+        property_name = 'normalized_y', 'hidden',
+        property_name = 'max_total_js_heap_size', 'hidden',
+        property_name = 'min_total_js_heap_size', 'hidden',
+        property_name = 'userAnonymousId', 'hidden',
+        'visible');
 -- ----------------- This is experimental, if it doesn't work, we need to do it in db worker -------------
 -- Incremental materialized view to fill all_properties using $properties and properties
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.all_properties_extractor_mv
     TO product_analytics.all_properties AS
--- auto-captured, from '$properties' (has predefined display-name)
-SELECT project_id,
-       property_name,
-       TRUE                               AS is_event_property,
-       multiIf(isNotNull(old_data.display_name) AND notEmpty(old_data.display_name), old_data.display_name,
-               property_name == 'label', 'Label',
-               property_name == 'hesitation_time', 'Hesitation Time',
-               property_name == 'name', 'Name',
-               property_name == 'payload', 'Payload',
-               property_name == 'level', 'Level',
-               property_name == 'source', 'Source',
-               property_name == 'message', 'Message',
-               property_name == 'error_id', 'Error ID',
-               property_name == 'duration', 'Duration',
-               property_name == 'context', 'Context',
-               property_name == 'url_host', 'URL Host',
-               property_name == 'url_path', 'URL Path',
-               property_name == 'url_hostpath', 'URL Host and Path',
-               property_name == 'request_start', 'Request Start',
-               property_name == 'response_start', 'Response Start',
-               property_name == 'response_end', 'Response End',
-               property_name == 'dom_content_loaded_event_start', 'DOM Content Loaded Event Start',
-               property_name == 'dom_content_loaded_event_end', 'DOM Content Loaded Event End',
-               property_name == 'load_event_start', 'Load Event Start',
-               property_name == 'load_event_end', 'Load Event End',
-               property_name == 'first_paint', 'First Paint',
-               property_name == 'first_contentful_paint_time', 'First Contentful-paint Time',
-               property_name == 'speed_index', 'Speed Index',
-               property_name == 'visually_complete', 'Visually Complete',
-               property_name == 'time_to_interactive', 'Time To Interactive',
-               property_name == 'ttfb', 'Time To First Byte',
-               property_name == 'ttlb', 'Time To Last Byte',
-               property_name == 'response_time', 'Response Time',
-               property_name == 'dom_building_time', 'DOM Building Time',
-               property_name == 'dom_content_loaded_event_time', 'DOM Content Loaded Event Time',
-               property_name == 'load_event_time', 'Load Event Time',
-               property_name == 'min_fps', 'Minimum Frame Rate',
-               property_name == 'avg_fps', 'Average Frame Rate',
-               property_name == 'max_fps', 'Maximum Frame Rate',
-               property_name == 'min_cpu', 'Minimum CPU',
-               property_name == 'avg_cpu', 'Average CPU',
-               property_name == 'max_cpu', 'Maximum CPU',
-               property_name == 'min_total_js_heap_size', 'Minimum Total JS Heap Size',
-               property_name == 'avg_total_js_heap_size', 'Average Total JS Heap Size',
-               property_name == 'max_total_js_heap_size', 'Maximum Total JS Heap Size',
-               property_name == 'min_used_js_heap_size', 'Minimum Used JS Heap Size',
-               property_name == 'avg_used_js_heap_size', 'Average Used JS Heap Size',
-               property_name == 'max_used_js_heap_size', 'Maximum Used JS Heap Size',
-               property_name == 'method', 'Method',
-               property_name == 'status', 'Status',
-               property_name == 'success', 'Success',
-               property_name == 'request_body', 'Request Body',
-               property_name == 'response_body', 'Response Body',
-               property_name == 'transfer_size', 'Transfer Size',
-               property_name == 'selector', 'Selector',
-               property_name == 'normalized_x', 'Normalized X',
-               property_name == 'normalized_y', 'Normalized Y',
-               property_name == 'message_id', 'Message ID',
-               '')                        AS display_name,
-       description,
-       if(status = '', 'visible', status) AS status,
-       data_count,
-       query_count
-FROM product_analytics.events
-         ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
-         LEFT JOIN (SELECT project_id,
-                           property_name,
-                           display_name,
-                           description,
-                           status,
-                           data_count,
-                           query_count
-                    FROM product_analytics.all_properties
-                    WHERE (all_properties.display_name != ''
-                        OR all_properties.description != '')
-                      AND is_event_property) AS old_data
-                   ON (events.project_id = old_data.project_id AND property_name = old_data.property_name)
-WHERE `$auto_captured`
+-- auto-captured properties of auto-captured-events and user-events, from '$properties' (has predefined display-name)
+(SELECT project_id,
+        property_name,
+        TRUE                                                            AS is_event_property,
+        TRUE                                                            AS auto_captured,
+        multiIf(notEmpty(old_data.display_name), old_data.display_name,
+                or_property_display_name(property_name))                AS display_name,
+        description,
+        multiIf(notEmpty(old_data.status), old_data.status,
+                or_property_visibility(property_name))                  AS status,
+        data_count,
+        query_count,
+        if(isNotNull(old_data._edited_by_user), _edited_by_user, FALSE) AS _edited_by_user
+ FROM product_analytics.events
+          ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
+          LEFT JOIN (SELECT project_id,
+                            property_name,
+                            display_name,
+                            description,
+                            status,
+                            data_count,
+                            query_count,
+                            _edited_by_user
+                     FROM product_analytics.all_properties
+                     WHERE _edited_by_user
+                       AND (display_name != '' OR description != '')
+                       AND is_event_property
+                       AND auto_captured
+                     ORDER BY _timestamp DESC
+                     LIMIT 1 BY project_id,property_name) AS old_data
+                    ON (events.project_id = old_data.project_id
+                        AND property_name = old_data.property_name))
 -- @formatter:off
 UNION DISTINCT
 -- @formatter:on
--- not auto-captured, from '$properties' (doesn't have predefined display-name)
-SELECT project_id,
-       property_name,
-       TRUE                               AS is_event_property,
-       display_name,
-       description,
-       if(status = '', 'visible', status) AS status,
-       data_count,
-       query_count
-FROM product_analytics.events
-         ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
-         LEFT JOIN (SELECT project_id,
-                           property_name,
-                           display_name,
-                           description,
-                           status,
-                           data_count,
-                           query_count
-                    FROM product_analytics.all_properties
-                    WHERE (all_properties.display_name != ''
-                        OR all_properties.description != '')
-                      AND is_event_property) AS old_data
-                   ON (events.project_id = old_data.project_id AND property_name = old_data.property_name)
-WHERE NOT `$auto_captured`
--- @formatter:off
-UNION DISTINCT
--- @formatter:on
--- custom properties, from 'properties'
-SELECT project_id,
-       property_name,
-       TRUE                               AS is_event_property,
-       display_name,
-       description,
-       if(status = '', 'visible', status) AS status,
-       data_count,
-       query_count
-FROM product_analytics.events
-         ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name
-         LEFT JOIN (SELECT project_id,
-                           property_name,
-                           display_name,
-                           description,
-                           status,
-                           data_count,
-                           query_count
-                    FROM product_analytics.all_properties
-                    WHERE (all_properties.display_name != ''
-                        OR all_properties.description != '')
-                      AND is_event_property) AS old_data
-                   ON (events.project_id = old_data.project_id AND property_name = old_data.property_name);
+-- custom properties of user-events, from 'properties'
+(SELECT project_id,
+        property_name,
+        TRUE                                                            AS is_event_property,
+        FALSE                                                           AS auto_captured,
+        old_data.display_name,
+        old_data.description,
+        if(old_data.status = '', 'visible', old_data.status)            AS status,
+        data_count,
+        query_count,
+        if(isNotNull(old_data._edited_by_user), _edited_by_user, FALSE) AS _edited_by_user
+ FROM product_analytics.events
+          ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name
+          LEFT JOIN (SELECT project_id,
+                            property_name,
+                            display_name,
+                            description,
+                            status,
+                            data_count,
+                            query_count,
+                            _edited_by_user
+                     FROM product_analytics.all_properties
+                     WHERE _edited_by_user
+                       AND (display_name != '' OR description != '')
+                       AND is_event_property
+                       AND NOT auto_captured
+                     ORDER BY _timestamp DESC
+                     LIMIT 1 BY project_id,property_name) AS old_data
+                    ON (events.project_id = old_data.project_id
+                        AND property_name = old_data.property_name));
 -- -------- END ---------
 
 -- Some random examples of property-values, limited by 2 per property
