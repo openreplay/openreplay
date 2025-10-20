@@ -114,8 +114,9 @@ SELECT project_id,
        `$auto_captured`                                                           AS auto_captured
 FROM product_analytics.events
          ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
-UNION
-DISTINCT
+-- @formatter:off
+UNION DISTINCT
+-- @formatter:on
 SELECT project_id,
        `$event_name`                                                             AS event_name,
        property_name,
@@ -144,9 +145,10 @@ CREATE TABLE IF NOT EXISTS product_analytics.all_properties
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.all_properties_extractor_mv
     TO product_analytics.all_properties AS
+-- auto-captured, from '$properties' (has predefined display-name)
 SELECT project_id,
        property_name,
-       TRUE        AS is_event_property,
+       TRUE                               AS is_event_property,
        multiIf(isNotNull(old_data.display_name) AND notEmpty(old_data.display_name), old_data.display_name,
                property_name == 'label', 'Label',
                property_name == 'hesitation_time', 'Hesitation Time',
@@ -201,9 +203,9 @@ SELECT project_id,
                property_name == 'normalized_x', 'Normalized X',
                property_name == 'normalized_y', 'Normalized Y',
                property_name == 'message_id', 'Message ID',
-               '') AS display_name,
+               '')                        AS display_name,
        description,
-       status,
+       if(status = '', 'visible', status) AS status,
        data_count,
        query_count
 FROM product_analytics.events
@@ -221,14 +223,16 @@ FROM product_analytics.events
                       AND is_event_property) AS old_data
                    ON (events.project_id = old_data.project_id AND property_name = old_data.property_name)
 WHERE `$auto_captured`
-UNION
-DISTINCT
+-- @formatter:off
+UNION DISTINCT
+-- @formatter:on
+-- not auto-captured, from '$properties' (doesn't have predefined display-name)
 SELECT project_id,
        property_name,
-       TRUE AS is_event_property,
+       TRUE                               AS is_event_property,
        display_name,
        description,
-       status,
+       if(status = '', 'visible', status) AS status,
        data_count,
        query_count
 FROM product_analytics.events
@@ -246,14 +250,16 @@ FROM product_analytics.events
                       AND is_event_property) AS old_data
                    ON (events.project_id = old_data.project_id AND property_name = old_data.property_name)
 WHERE NOT `$auto_captured`
-UNION
-DISTINCT
+-- @formatter:off
+UNION DISTINCT
+-- @formatter:on
+-- custom properties, from 'properties'
 SELECT project_id,
        property_name,
-       TRUE AS is_event_property,
+       TRUE                               AS is_event_property,
        display_name,
        description,
-       status,
+       if(status = '', 'visible', status) AS status,
        data_count,
        query_count
 FROM product_analytics.events
@@ -296,8 +302,9 @@ FROM product_analytics.events
 WHERE randCanonical() < 0.5 -- This randomly skips inserts
   AND value != ''
 LIMIT 2 BY project_id,property_name
-UNION
-DISTINCT
+-- @formatter:off
+UNION DISTINCT
+-- @formatter:on
 SELECT project_id,
        property_name,
        TRUE                                                     AS is_event_property,
@@ -373,8 +380,9 @@ FROM product_analytics.events
 WHERE length(value) > 0
   AND isNull(toFloat64OrNull(value))
   AND _timestamp > now() - INTERVAL 1 MONTH
-UNION
-DISTINCT
+-- @formatter:off
+UNION DISTINCT
+-- @formatter:on
 SELECT project_id,
        `$event_name`                                            AS event_name,
        property_name,
