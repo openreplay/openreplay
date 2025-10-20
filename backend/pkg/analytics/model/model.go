@@ -1,7 +1,6 @@
 package model
 
 import (
-	"database/sql"
 	"fmt"
 	"slices"
 	"strings"
@@ -23,12 +22,12 @@ type FilterGroup struct {
 }
 
 type Series struct {
-	Name      string        `json:"name"`
-	Filter    FilterGroup   `json:"filter"`
-	CreatedAt time.Time     `json:"createdAt" validate:"omitempty"`
-	SeriesID  sql.NullInt64 `json:"seriesId,omitempty" validate:"omitempty"` // Optional, used for updates
-	MetricID  sql.NullInt64 `json:"metricId,omitempty" validate:"omitempty"` // Optional, used for updates
-	Index     sql.NullInt16 `json:"index,omitempty" validate:"omitempty"`    // Optional, used for ordering
+	Name      string      `json:"name"`
+	Filter    FilterGroup `json:"filter"`
+	CreatedAt time.Time   `json:"createdAt" validate:"omitempty"`
+	SeriesID  *int64      `json:"seriesId,omitempty" validate:"omitempty"` // Optional, used for updates
+	MetricID  *int64      `json:"metricId,omitempty" validate:"omitempty"` // Optional, used for updates
+	Index     *int16      `json:"index,omitempty" validate:"omitempty"`    // Optional, used for ordering
 }
 
 type SeriesFilter struct {

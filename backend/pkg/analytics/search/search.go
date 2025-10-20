@@ -288,7 +288,7 @@ func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.
 		log.Printf("Series %d Sessions Search Query: %s", i, query)
 
 		seriesData := model.SeriesSessionData{
-			SeriesId:   series.SeriesID.Int64,
+			SeriesId:   *series.SeriesID,
 			SeriesName: series.Name,
 			Sessions:   make([]model.Session, 0),
 		}
