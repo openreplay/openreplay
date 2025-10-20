@@ -27,7 +27,6 @@ import { useTranslation } from 'react-i18next';
 import { TopValue } from '@/mstore/filterStore';
 import { mobileScreen } from 'App/utils/isMobile';
 const { Text } = Typography;
-import { countries } from '@/constants';
 
 interface FilterParams {
   id: string;
@@ -68,14 +67,30 @@ const ValueAutoComplete = observer(
     isDisabled = false,
     isLive = false,
   }: Props) => {
-    const isCountry = params.name === 'userCountry';
-    const getName = (val: string) => (isCountry ? countries[val] : val);
     const predefinedValues = params.isPredefined
       ? (params.possibleValues ?? []).map((v) => ({
           value: v.value,
-          label: getName(v.value),
+          label: v.label || v.value,
         }))
       : [];
+
+    const valueToLabelMap = useMemo(() => {
+      const map: Record<string, string> = {};
+      if (params.isPredefined && params.possibleValues) {
+        params.possibleValues.forEach((v: any) => {
+          map[v.value] = v.label || v.value;
+        });
+      }
+      return map;
+    }, [params.isPredefined, params.possibleValues]);
+
+    const getDisplayLabel = (val: string) => {
+      if (params.isPredefined && valueToLabelMap[val]) {
+        return valueToLabelMap[val];
+      }
+      return val;
+    };
+
     const { t } = useTranslation();
     const { filterStore, projectsStore } = useStore();
     const [showValueModal, setShowValueModal] = useState(false);
@@ -97,7 +112,7 @@ const ValueAutoComplete = observer(
     const mappedTopValues: OptionType[] = useMemo(() => {
       return topValues
         .filter((i): i is { value: string } => typeof i.value === 'string')
-        .map((i) => ({ value: i.value, label: getName(i.value) }));
+        .map((i) => ({ value: i.value, label: i.value }));
     }, [topValues]);
 
     useEffect(() => {
@@ -172,7 +187,7 @@ const ValueAutoComplete = observer(
           const _options =
             data.events?.map((i: any) => ({
               value: i.value,
-              label: getName(i.value),
+              label: i.value,
             })) || [];
           setOptions(_options);
         } catch (e) {
@@ -410,14 +425,16 @@ const ValueAutoComplete = observer(
                     tooltip: {
                       title: mapValues
                         ? mapValues(initialValues[0])
-                        : initialValues[0],
+                        : getDisplayLabel(initialValues[0]),
                       placement: 'topLeft',
                       mouseEnterDelay: 0.5,
                     },
                   }}
                   style={{ maxWidth: '8rem' }}
                 >
-                  {mapValues ? mapValues(initialValues[0]) : initialValues[0]}
+                  {mapValues
+                    ? mapValues(initialValues[0])
+                    : getDisplayLabel(initialValues[0])}
                 </Text>
                 {initialValues.length > 1 && (
                   <>
@@ -429,7 +446,7 @@ const ValueAutoComplete = observer(
                         tooltip: {
                           title: mapValues
                             ? mapValues(initialValues[1])
-                            : initialValues[1],
+                            : getDisplayLabel(initialValues[1]),
                           placement: 'topLeft',
                           mouseEnterDelay: 0.5,
                         },
@@ -438,7 +455,7 @@ const ValueAutoComplete = observer(
                     >
                       {mapValues
                         ? mapValues(initialValues[1])
-                        : initialValues[1]}
+                        : getDisplayLabel(initialValues[1])}
                     </Text>
                     {initialValues.length > 2 && (
                       <Text type="secondary" className="flex-shrink-0">
