@@ -243,6 +243,8 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
     [FUNNEL]: {
       columnChart: <ChartColumnBig size={16} strokeWidth={1} />,
       chart: <ChartBarBig size={16} strokeWidth={1} />,
+      metric: <Hash size={16} strokeWidth={1} />,
+      table: <Table size={16} strokeWidth={1} />,
     },
     [USER_PATH]: {
       lineChart: <Split size={16} strokeWidth={1} />,
