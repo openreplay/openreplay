@@ -4,6 +4,9 @@ import { Filter, COMMON_FILTERS } from './types/filterConstants';
 import { projectStore } from '@/mstore/index';
 import FilterItem from './types/filterItem';
 import { normalizeDataType } from 'App/utils';
+import { countries } from '@/constants';
+
+const countryMap = countries as Record<string, string>;
 
 export interface TopValue {
   rowCount?: number;
@@ -275,7 +278,24 @@ export default class FilterStore {
         isPredefined: Boolean(filter.isPredefined),
         isConditional: filter.isConditional,
         possibleValues: Array.isArray(filter.possibleValues)
-          ? filter.possibleValues.map((v: string) => ({ value: v, label: v }))
+          ? filter.possibleValues.map((v: any) => {
+              if (typeof v === 'string') {
+                const label =
+                  filter.name === 'userCountry' && countryMap[v]
+                    ? countryMap[v]
+                    : v;
+                return { value: v, label };
+              }
+              if (typeof v === 'object' && v !== null) {
+                const value = v.id || v.value || v;
+                let label = v.name || v.label || v.id || v.value || v;
+                if (filter.name === 'userCountry' && countryMap[value]) {
+                  label = countryMap[value];
+                }
+                return { value, label };
+              }
+              return { value: v, label: v };
+            })
           : [],
         toJSON: function () {
           const { toJSON, ...rest } = this;
