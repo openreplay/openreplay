@@ -336,15 +336,19 @@ export default class Widget {
 
   updateStartPoint(startPoint: any) {
     runInAction(() => {
-      const newStartPoint = new FilterItem(startPoint);
-      filterStore.getEventFilters(newStartPoint.id).then((filters) => {
-        const matching = filters?.filter((p) => p.defaultProperty) || [];
-        const newFilter = new FilterItem(startPoint);
-        // @ts-ignore
-        newFilter.filters = matching;
-        this.startPoint = newFilter;
+      if (!startPoint.filters.length) {
+        filterStore.getEventFilters(startPoint.id).then((filters) => {
+          const matching = filters?.filter((p) => p.defaultProperty) || [];
+          const newFilter = new FilterItem(startPoint);
+          // @ts-ignore
+          newFilter.filters = matching;
+          this.startPoint = newFilter;
+          this.hasChanged = true;
+        });
+      } else {
+        this.startPoint = new FilterItem(startPoint);
         this.hasChanged = true;
-      });
+      }
     });
   }
 
