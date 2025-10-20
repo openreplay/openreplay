@@ -139,7 +139,7 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
                 FROM product_analytics.event_properties
                 WHERE event_properties.project_id = %(project_id)s
                 GROUP BY ALL
-            ) USING (property_name)
+            ) AS event_properties USING (property_name)
             WHERE project_id = %(project_id)s
                 {"" if include_all else "AND status = 'visible'"}
             GROUP BY ALL
