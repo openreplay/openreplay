@@ -8,6 +8,14 @@ import { countries } from '@/constants';
 
 const countryMap = countries as Record<string, string>;
 
+interface ValueMapper {
+  [key: string]: Record<string, string>;
+}
+
+const VALUE_MAPPERS: ValueMapper = {
+  userCountry: countryMap,
+};
+
 export interface TopValue {
   rowCount?: number;
   rowPercentage?: number;
@@ -246,6 +254,44 @@ export default class FilterStore {
     this.pendingFetches = {};
   };
 
+  private processPossibleValue = (
+    value: any,
+    filterName: string,
+  ): { value: string; label: string } => {
+    if (typeof value === 'string') {
+      const mapper = VALUE_MAPPERS[filterName];
+      const label = mapper?.[value] ?? value;
+      return { value, label };
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      const val = value.id || value.value || value;
+      const mapper = VALUE_MAPPERS[filterName];
+      const label =
+        value.name ||
+        value.label ||
+        mapper?.[val] ||
+        value.id ||
+        value.value ||
+        val;
+      return { value: val, label };
+    }
+
+    return { value: String(value), label: String(value) };
+  };
+
+  private processPossibleValues = (
+    possibleValues: any[] | undefined,
+    filterName: string,
+    isPredefined: boolean,
+  ): Array<{ value: string; label: string }> => {
+    if (!isPredefined || !Array.isArray(possibleValues)) {
+      return [];
+    }
+
+    return possibleValues.map((v) => this.processPossibleValue(v, filterName));
+  };
+
   processFilters = (filters: any[], category?: string): Filter[] => {
     return filters.map((filter) => {
       let dataType = filter.dataType
@@ -277,26 +323,11 @@ export default class FilterStore {
         autoCaptured: filter.autoCaptured || false,
         isPredefined: Boolean(filter.isPredefined),
         isConditional: filter.isConditional,
-        possibleValues: Array.isArray(filter.possibleValues)
-          ? filter.possibleValues.map((v: any) => {
-              if (typeof v === 'string') {
-                const label =
-                  filter.name === 'userCountry' && countryMap[v]
-                    ? countryMap[v]
-                    : v;
-                return { value: v, label };
-              }
-              if (typeof v === 'object' && v !== null) {
-                const value = v.id || v.value || v;
-                let label = v.name || v.label || v.id || v.value || v;
-                if (filter.name === 'userCountry' && countryMap[value]) {
-                  label = countryMap[value];
-                }
-                return { value, label };
-              }
-              return { value: v, label: v };
-            })
-          : [],
+        possibleValues: this.processPossibleValues(
+          filter.possibleValues,
+          filter.name,
+          Boolean(filter.isPredefined),
+        ),
         toJSON: function () {
           const { toJSON, ...rest } = this;
           return rest;
