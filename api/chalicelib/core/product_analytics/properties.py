@@ -122,18 +122,28 @@ EVENT_DEFAULT_PROPERTIES = {
 }
 
 
-def get_all_properties(project_id: int):
+def get_all_properties(project_id: int, include_all: bool = False) -> dict:
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
-            """SELECT COUNT(1)                                           OVER () AS total, property_name AS name,
-                      display_name,
-                      event_properties.auto_captured,
-                      array_agg(DISTINCT event_properties.value_type) AS possible_types
-               FROM product_analytics.all_properties
-                        LEFT JOIN product_analytics.event_properties USING (project_id, property_name)
-               WHERE all_properties.project_id = %(project_id)s
-               GROUP BY ALL
-               ORDER BY display_name, property_name;""",
+            f"""\
+            SELECT COUNT(1) OVER () AS total, 
+                 property_name AS name,
+                 display_name,
+                 event_properties.auto_captured,
+                 possible_types
+            FROM product_analytics.all_properties
+            LEFT ANY JOIN (
+                SELECT property_name,
+                       auto_captured,
+                       array_agg(DISTINCT event_properties.value_type) AS possible_types
+                FROM product_analytics.event_properties
+                WHERE event_properties.project_id = %(project_id)s
+                GROUP BY ALL
+            ) USING (property_name)
+            WHERE project_id = %(project_id)s
+                {"" if include_all else "AND status = 'visible'"}
+            GROUP BY ALL
+            ORDER BY display_name, property_name;""",
             parameters={"project_id": project_id})
         properties = ch_client.execute(r)
         if len(properties) == 0:
@@ -188,6 +198,7 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
                  AND all_properties.project_id = %(project_id)s
                  AND event_properties.event_name = %(event_name)s
                  AND event_properties.auto_captured = %(auto_captured)s
+                 AND all_properties.status = 'visible'
                GROUP BY ALL
                ORDER BY 1;""",
             parameters={"project_id": project_id, "event_name": event_name, "auto_captured": auto_captured})
