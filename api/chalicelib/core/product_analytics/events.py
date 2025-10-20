@@ -10,13 +10,13 @@ logger = logging.getLogger(__name__)
 PREDEFINED_EVENTS = {
     "CLICK": {"displayName": "Click",
               "description": "Represents a user click on a webpage element. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"CLICK\".\n\nContains element selector, text content, …, timestamp."},
-    "INPUT": {"displayName": "Input",
+    "INPUT": {"displayName": "Text Input",
               "description": "Represents text input by a user in form fields or editable elements. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"INPUT\".\n\nContains the element selector, ….. and timestamp (actual text content may be masked for privacy)."},
-    "LOCATION": {"displayName": "Visited URL",
+    "LOCATION": {"displayName": "Page View",
                  "description": "Represents a page navigation or URL change within your application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"LOCATION\".\n\nContains the full URL, …. referrer information, UTM parameters and timestamp."},
     "ERROR": {"displayName": "Error",
               "description": "Represents JavaScript errors and console error messages captured from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"error\".\n\nContains error message,…., and timestamp."},
-    "REQUEST": {"displayName": "Request",
+    "REQUEST": {"displayName": "Network Request",
                 "description": "Represents HTTP/HTTPS network activity from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"fetch\".\n\nContains URL, method, status code, duration, and timestamp"},
 }
 
@@ -31,7 +31,7 @@ def get_events(project_id: int):
                 event_name AS name, display_name, description,
                 auto_captured
             FROM product_analytics.all_events
-            WHERE project_id=%(project_id)s AND event_name != 'CANVAS_NODE'
+            WHERE project_id=%(project_id)s
             ORDER BY auto_captured, display_name, event_name;""",
             parameters={"project_id": project_id})
         rows = ch_client.execute(r)
@@ -175,7 +175,6 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
                       *
                FROM product_analytics.all_events
                WHERE project_id = %(project_id)s
-                 AND event_name != 'CANVAS_NODE'
                ORDER BY display_name
                    LIMIT %(limit)s
                OFFSET %(offset)s;""",
