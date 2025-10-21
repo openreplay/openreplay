@@ -656,16 +656,17 @@ def change_state(project_id, metric_id, user_id, status):
     return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
-def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
+def get_funnel_sessions_by_issue(user_id, project: schemas.ProjectContext, metric_id, issue_id,
                                  data: schemas.CardSessionsSchema):
-    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
+    if not card_exists(metric_id=metric_id, project_id=project.project_id, user_id=user_id):
         return None
     for s in data.series:
         s.filter.startTimestamp = data.startTimestamp
         s.filter.endTimestamp = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
-        issues_list = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter).get("issues", {})
+        issues_list = funnels.get_issues_on_the_fly_widget(project_id=project.project_id, data=s.filter).get("issues",
+                                                                                                             {})
         issues_list = issues_list.get("significant", []) + issues_list.get("insignificant", [])
         issue = None
         for i in issues_list:
@@ -673,7 +674,7 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                 issue = i
                 break
         if issue is None:
-            issue = issues.get(project_id=project_id, issue_id=issue_id)
+            issue = issues.get_issue(project_id=project.project_id, issue_id=issue_id)
             if issue is not None:
                 issue = {**issue,
                          "affectedSessions": 0,
@@ -682,9 +683,9 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                          "lostConversions": 0,
                          "unaffectedSessions": 0}
         return {"seriesId": s.series_id, "seriesName": s.name,
-                "sessions": sessions.search_sessions(user_id=user_id, project_id=project_id,
-                                                     issue=issue, data=s.filter)
-                if issue is not None else {"total": 0, "sessions": []},
+                "sessions": sessions_search.search_sessions(user_id=user_id, project=project, issue=issue,
+                                                            data=s.filter) if issue is not None \
+                    else {"total": 0, "sessions": []},
                 "issue": issue}
 
 

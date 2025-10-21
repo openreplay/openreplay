@@ -1,5 +1,7 @@
 import schemas
 
+from chalicelib.core.issues import issues
+
 
 def get_sessions_filters(project_id: int):
     return {
@@ -169,6 +171,18 @@ def get_sessions_filters(project_id: int):
                 "autoCaptured": True,
                 "isPredefined": False,
                 "possibleValues": [],
+                "isConditional": False
+            },
+            {
+                "id": "sf_14",
+                "name": schemas.FilterType.ISSUE,
+                "displayName": "Issue",
+                "possibleTypes": ["string"],
+                "dataType": "string",
+                "autoCaptured": True,
+                "isPredefined": False,
+                "possibleValues": [{"id": i["type"], "name": i["name"], "autoCaptured": i["autoCaptured"]}
+                                   for i in issues.get_all_types()],
                 "isConditional": False
             }
         ]

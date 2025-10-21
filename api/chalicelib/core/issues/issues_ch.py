@@ -3,7 +3,7 @@ import datetime
 from chalicelib.utils.exp_ch_helper import add_timestamp
 
 
-def get(project_id, issue_id):
+def get_issue(project_id, issue_id):
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(query=""" \
                                  SELECT *
@@ -130,22 +130,3 @@ def get_all_types():
             "autoCaptured": False
         }
     ]
-
-
-def get_issues_categories():
-    issues = get_all_types()
-    response = []
-    for i, issue in enumerate(issues):
-        response.append({
-            "id": f"issue_{i}",
-            "name": issue["type"],
-            "displayName": issue["name"],
-            "possibleTypes": ["string"],
-            "dataType": "string",
-            "autoCaptured": issue["autoCaptured"]
-        })
-    return {
-        "total": len(response),
-        "displayName": "Issues",
-        "list": response
-    }
