@@ -199,6 +199,7 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
             "category": "events",
             "_foundInPredefinedList": False,
             "defaultProperty": True,
+            "isPredefined": True,
             "possibleValues": [
                 {"id": t["tagId"], "name": t["name"], "autoCaptured": False} \
                 for t in tags.list_tags(project_id=project_id, all_details=False)
@@ -226,9 +227,13 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
             p["id"] = f"prop_{i}"
             p["category"] = "events"
             p["_foundInPredefinedList"] = False
+            p["isPredefined"] = False
+            p["possibleValues"] = []
             if p["name"] in PREDEFINED_PROPERTIES:
                 p["dataType"] = exp_ch_helper.simplify_clickhouse_type(PREDEFINED_PROPERTIES[p["name"]]["type"])
                 p["_foundInPredefinedList"] = True
+                p["isPredefined"] = PREDEFINED_PROPERTIES[p["name"]]["isPredefined"]
+                p["possibleValues"] = PREDEFINED_PROPERTIES[p["name"]]["possibleValues"]
             p["possibleTypes"] = list(set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"])))
             p["defaultProperty"] = auto_captured and event_name in EVENT_DEFAULT_PROPERTIES \
                                    and p["name"] == EVENT_DEFAULT_PROPERTIES[event_name]
