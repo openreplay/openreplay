@@ -101,6 +101,7 @@ func main() {
 		messages.NewMessageIterator(log, dataSaver.Handle, msgFilter, true),
 		false,
 		cfg.MessageSizeLimit,
+		nil,
 	)
 
 	// Init memory manager

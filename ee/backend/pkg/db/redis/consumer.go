@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-redis/redis"
 	"github.com/redis/go-redis/v9"
 
 	"openreplay/backend/pkg/messages"
@@ -29,7 +30,6 @@ type consumerImpl struct {
 	idsPending streamPendingIDsMap
 	lastTs     int64
 	autoCommit bool
-	event      chan *types.PartitionsRebalancedEvent
 }
 
 type QueueMessage struct {
@@ -68,7 +68,6 @@ func NewConsumer(client *Client, group string, streams []string) types.Consumer 
 		group:      group,
 		autoCommit: true,
 		idsPending: idsPending,
-		event:      make(chan *types.PartitionsRebalancedEvent, 4),
 	}
 }
 
@@ -168,8 +167,4 @@ func (c *consumerImpl) Commit() error {
 		c.idsPending[stream].ts = nil
 	}
 	return nil
-}
-
-func (c *consumerImpl) Rebalanced() <-chan *types.PartitionsRebalancedEvent {
-	return c.event
 }

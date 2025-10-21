@@ -7,9 +7,9 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
-func NewConsumer(group string, topics []string, iterator messages.MessageIterator, autoCommit bool, messageSizeLimit int) types.Consumer {
+func NewConsumer(group string, topics []string, iterator messages.MessageIterator, autoCommit bool, messageSizeLimit int, rebalanceHandler types.RebalanceHandler) types.Consumer {
 	license.CheckLicense()
-	return kafka.NewConsumer(group, topics, iterator, autoCommit, messageSizeLimit)
+	return kafka.NewConsumer(group, topics, iterator, autoCommit, messageSizeLimit, rebalanceHandler)
 }
 
 func NewProducer(messageSizeLimit int, useBatch bool) types.Producer {

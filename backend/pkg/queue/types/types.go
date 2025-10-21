@@ -1,11 +1,13 @@
 package types
 
-type RebalanceType string
+type RebalanceType int
 
 const (
-	RebalanceTypeAssign RebalanceType = "assign"
-	RebalanceTypeRevoke RebalanceType = "revoke"
+	RebalanceTypeAssign RebalanceType = iota
+	RebalanceTypeRevoke
 )
+
+type RebalanceHandler func(t RebalanceType, partitions []uint64)
 
 type PartitionsRebalancedEvent struct {
 	Type       RebalanceType
@@ -18,7 +20,6 @@ type Consumer interface {
 	CommitBack(gap int64) error
 	Commit() error
 	Close()
-	Rebalanced() <-chan *PartitionsRebalancedEvent
 }
 
 // Producer sends batches of session data to queue (redis or kafka)
