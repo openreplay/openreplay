@@ -7488,13 +7488,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"echarts@npm:^5.6.0":
-  version: 5.6.0
-  resolution: "echarts@npm:5.6.0"
+"echarts@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "echarts@npm:6.0.0"
   dependencies:
     tslib: "npm:2.3.0"
-    zrender: "npm:5.6.1"
-  checksum: 10c1/0695d5951f0cfccfb54a0e223a2c23313bd789aa7529caa1b6d8f8b48cc24f480aa6dcc7fecbd9cef260492b5806470a0a0dafa2305a68d0326c4b6a0be0e3ba
+    zrender: "npm:6.0.0"
+  checksum: 10c1/517485f90aaab5f33d96db034575d81979b402103388cd6e62a5286dded617311c09cc15b62cae4793b430dcac2323d4a4109c735c9053e0f96c4489edfef8fc
   languageName: node
   linkType: hard
 
@@ -13249,7 +13249,7 @@ __metadata:
     cypress: "npm:13.17.0"
     cypress-image-snapshot: "npm:^4.0.1"
     dotenv: "npm:^16.6.1"
-    echarts: "npm:^5.6.0"
+    echarts: "npm:^6.0.0"
     esbuild-loader: "npm:^4.4.0"
     eslint: "npm:^9.37.0"
     eslint-config-airbnb: "npm:^19.0.4"
@@ -18972,12 +18972,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zrender@npm:5.6.1":
-  version: 5.6.1
-  resolution: "zrender@npm:5.6.1"
+"zrender@npm:6.0.0":
+  version: 6.0.0
+  resolution: "zrender@npm:6.0.0"
   dependencies:
     tslib: "npm:2.3.0"
-  checksum: 10c1/593dd84b3ea01f4e7941fd15f103550251b769218f4d524af935595bb628fa6e94e4c091654ec390e1c7176dd60ca8a7c7341d372d310ee3beebfe602792c1c6
+  checksum: 10c1/bba46a366b87aeea6a4a09c39b12ee063a2fffef6cb1664550311d0bd298eaaa62ba1b9c5cedfdaf86742e9412559f91aab6e5535b129e505f5977bceec6beef
   languageName: node
   linkType: hard
 
