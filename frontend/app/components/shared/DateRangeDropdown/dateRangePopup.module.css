@@ -1,26 +1,26 @@
 .wrapper {
-  background-color: #FFF;
-  outline: solid thin #EEE;
+  background-color: var(--color-white);
+  outline: solid thin var(--color-gray-light);
   border-radius: .5rem;
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   & .body {
       display: flex;
-      border-bottom: solid thin $gray-light;
+      border-bottom: solid thin var(--color-gray-light);
+      background-color: var(--color-white);
       padding: 5px;
   }
 }
 
 .preSelections {
     min-width: 112px;
-    background-color: white;
-    border-right: solid thin #EEE;
+    background-color: var(--color-white);
+    border-right: solid thin var(--color-gray-light);
     & > div {
         padding: 8px 10px;
         width: 100%;
         cursor: pointer;
         &:hover {
-            background-color: $active-blue;
+            background-color: var(--color-active-blue);
         }
     }
 }
-

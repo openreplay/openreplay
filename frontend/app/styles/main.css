@@ -239,13 +239,17 @@ svg {
     color: #FFF!important;
 }
 
+.dateRangePopup-module__wrapper {
+    background-color: var(--color-white);
+}
+
 .dateRangeContainer .react-calendar__tile--hasActive:hover{
     background-color: #394dfe;
     cursor: default;
 }
 
 .dateRangeContainer  .react-calendar button{
-    border: 1px solid #fff;
+    border: 1px solid var(--color-white);
     border-radius: .5rem;
 }
 
