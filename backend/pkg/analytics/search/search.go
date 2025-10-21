@@ -136,7 +136,7 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 	var eventsInnerJoin string
 	var leftAntiJoin string
 
-	conds := make([]string, 0, len(req.Filters)+2)
+	conds := make([]string, 0)
 
 	if len(eventsWhere) > 0 || len(filtersWhere) > 0 {
 		conds = append([]string{
