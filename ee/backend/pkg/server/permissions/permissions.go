@@ -3,6 +3,7 @@ package permissions
 import (
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -44,18 +45,9 @@ func (p *permissionsImpl) checkPermissions(r *http.Request) error {
 		return nil
 	}
 
-	var perms []string
-	for _, perm := range reqPermissions {
-		if user.ServiceAccount {
-			if strings.HasPrefix(perm, "SERVICE_") {
-				perms = append(perms, perm)
-			}
-		} else {
-			if !strings.HasPrefix(perm, "SERVICE_") {
-				perms = append(perms, perm)
-			}
-		}
-	}
+	perms := slices.DeleteFunc(reqPermissions, func(p string) bool {
+		return strings.HasPrefix(p, "SERVICE_") != user.ServiceAccount
+	})
 
 	for _, perm := range perms {
 		if _, ok := user.Permissions[perm]; !ok {
