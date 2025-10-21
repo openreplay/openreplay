@@ -15,23 +15,18 @@ import { mobileScreen } from 'App/utils/isMobile';
 
 function TopRight() {
   const { userStore } = useStore();
-  const spotOnly = userStore.scopeState === 1;
   const { account } = userStore;
 
-  const mobile = mobileScreen
+  const mobile = mobileScreen;
   return (
     <Space style={{ lineHeight: '0' }}>
-      {spotOnly ? null : (
-        <>
-          <SaasHeaderMenuItems />
-          <ProjectDropdown />
-          <GettingStartedProgress />
+      <SaasHeaderMenuItems />
+      <ProjectDropdown />
+      <GettingStartedProgress />
 
-          <Notifications />
+      <Notifications />
 
-          {hasHealth && account.name ? <HealthStatus /> : null}
-        </>
-      )}
+      {hasHealth && account.name ? <HealthStatus /> : null}
       {mobile ? null : <ThemeToggle />}
 
       <Popover content={<UserMenu />} placement="topRight">

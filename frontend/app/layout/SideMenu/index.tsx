@@ -4,7 +4,6 @@ import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 
 import MenuContent from './MenuContent';
-import SpotMenuItem from './SpotMenuItem';
 
 import SupportModal from 'App/layout/SupportModal';
 import * as routes from 'App/routes';
@@ -44,60 +43,52 @@ function SideMenu(props: Props) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const { projectsStore, userStore } = useStore();
-  const spotOnly = userStore.scopeState === 1;
   const { account } = userStore;
   const modules = account.settings?.modules ?? [];
   const isAdmin = account.admin || account.superAdmin;
   const { isEnterprise } = userStore;
   const { siteId } = projectsStore;
   // added: call util once per render
-  const isMobile = mobileScreen
+  const isMobile = mobileScreen;
   const { t, i18n } = useTranslation();
 
   const menu: any[] = React.useMemo(() => {
     const sourceMenu = isPreferencesActive ? preferences(t) : main_menu(t);
 
-    return sourceMenu
-      .filter((cat) => (spotOnly ? spotOnlyCats.includes(cat.key) : true))
-      .map((category) => {
-        const updatedItems = category.items
-          .filter((item) => (spotOnly ? spotOnlyCats.includes(item.key) : true))
-          .map((item) => {
-            if (isEnterprise) {
-              if (item.key === MENU.BOOKMARKS) return { ...item, hidden: true };
-              if (item.key === MENU.VAULT) return { ...item, hidden: false };
-            } else {
-              if (item.key === MENU.VAULT) return { ...item, hidden: true };
-              if (item.key === MENU.BOOKMARKS)
-                return { ...item, hidden: false };
-            }
-            if (item.hidden) return item;
+    return sourceMenu.map((category) => {
+      const updatedItems = category.items.map((item) => {
+        if (isEnterprise) {
+          if (item.key === MENU.BOOKMARKS) return { ...item, hidden: true };
+          if (item.key === MENU.VAULT) return { ...item, hidden: false };
+        } else {
+          if (item.key === MENU.VAULT) return { ...item, hidden: true };
+          if (item.key === MENU.BOOKMARKS) return { ...item, hidden: false };
+        }
+        if (item.hidden) return item;
 
-            const isHidden = [
-              item.key === MENU.RECOMMENDATIONS &&
-                modules.includes(MODULES.RECOMMENDATIONS),
-              item.key === MENU.HIGHLIGHTS &&
-                modules.includes(MODULES.HIGHLIGHTS),
-              item.key === MENU.LIVE_SESSIONS &&
-                (modules.includes(MODULES.ASSIST) || isMobile),
-              item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
-              item.isAdmin && !isAdmin,
-              item.isEnterprise && !isEnterprise,
-              item.key === MENU.KAI && !hasAi,
-            ].some(Boolean);
+        const isHidden = [
+          item.key === MENU.RECOMMENDATIONS &&
+            modules.includes(MODULES.RECOMMENDATIONS),
+          item.key === MENU.HIGHLIGHTS && modules.includes(MODULES.HIGHLIGHTS),
+          item.key === MENU.LIVE_SESSIONS &&
+            (modules.includes(MODULES.ASSIST) || isMobile),
+          item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
+          item.isAdmin && !isAdmin,
+          item.isEnterprise && !isEnterprise,
+          item.key === MENU.KAI && !hasAi,
+        ].some(Boolean);
 
-            return { ...item, hidden: isHidden };
-          });
-
-        const allItemsHidden = updatedItems.every((i) => i.hidden);
-        return { ...category, items: updatedItems, hidden: allItemsHidden };
+        return { ...item, hidden: isHidden };
       });
+
+      const allItemsHidden = updatedItems.every((i) => i.hidden);
+      return { ...category, items: updatedItems, hidden: allItemsHidden };
+    });
   }, [
     isAdmin,
     isEnterprise,
     isPreferencesActive,
     modules,
-    spotOnly,
     siteId,
     i18n.language,
     isMobile, // added dep
@@ -158,9 +149,6 @@ function SideMenu(props: Props) {
         isMenuItemActive={isMenuItemActive}
         handleClick={handleClick}
       />
-      {spotOnly && !isPreferencesActive && (
-        <SpotMenuItem isCollapsed={isCollapsed} />
-      )}
     </>
   );
 

@@ -155,7 +155,6 @@ export const alertEdit = (id = ':alertId', hash?: string | number): string =>
 export const spotsList = (): string => '/spots';
 export const spot = (id = ':spotId', hash?: string | number): string =>
   hashed(`/view-spot/${id}`, hash);
-export const scopeSetup = (): string => '/scope-setup';
 
 export const highlights = (): string => '/highlights';
 

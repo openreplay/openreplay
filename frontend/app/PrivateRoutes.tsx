@@ -89,7 +89,6 @@ function PrivateRoutes() {
   const location = useLocation();
   const history = useHistory();
   const onboarding = userStore.onboarding;
-  const scope = userStore.scopeState ?? 2;
   const { tenantId } = userStore.account;
   const sites = projectsStore.list;
   const { siteId } = projectsStore;
@@ -97,8 +96,7 @@ function PrivateRoutes() {
   const redirectToOnboarding =
     !onboarding &&
     (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' ||
-      (sites.length > 0 && !hasRecordings)) &&
-    scope > 0;
+      (sites.length > 0 && !hasRecordings));
   const siteIdList: any = sites.map(({ id }) => id);
 
   const initialFetchDoneRef = React.useRef(false);
@@ -118,7 +116,7 @@ function PrivateRoutes() {
     if (!searchStore.urlParsed && filtersLoaded) {
       const searchParams = new URLSearchParams(location.search);
       const searchId = searchParams.get('sid');
-      
+
       if (searchId) {
         searchStore.loadSharedSearch(searchId).then(() => {
           searchParams.delete('sid');
@@ -174,7 +172,6 @@ function PrivateRoutes() {
           path={SPOT_PATH}
           component={enhancedComponents.Spot}
         />
-        {scope === 1 ? <Redirect to={SPOTS_LIST_PATH} /> : null}
         <Route
           path="/integrations/"
           render={({ location }) => {

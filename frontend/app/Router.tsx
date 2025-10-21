@@ -42,7 +42,6 @@ const Router: React.FC<RouterProps> = (props) => {
   const { jwt } = userStore;
   const { changePassword } = userStore.account;
   const userInfoLoading = userStore.fetchInfoRequest.loading;
-  const scopeSetup = userStore.scopeState === 0;
   const localSpotJwt = userStore.spotJwt;
   const isLoggedIn = Boolean(jwt && !changePassword);
   const { fetchUserInfo } = userStore;
@@ -53,9 +52,7 @@ const Router: React.FC<RouterProps> = (props) => {
   const { siteId } = projectsStore;
   const { sitesLoading } = projectsStore;
   const sites = projectsStore.list;
-  const loading = Boolean(
-    userInfoLoading || (!scopeSetup && !siteId) || sitesLoading,
-  );
+  const loading = Boolean(userInfoLoading ||  sitesLoading);
   const initSite = projectsStore.initProject;
   const fetchSiteList = projectsStore.fetchList;
 
@@ -207,9 +204,7 @@ const Router: React.FC<RouterProps> = (props) => {
     location.pathname.includes('/assist/') ||
     location.pathname.includes('multiview') ||
     location.pathname.includes('/view-spot/') ||
-    location.pathname.includes('/spots/') ||
-    location.pathname.includes('/scope-setup');
-
+    location.pathname.includes('/spots/');
   if (isIframe) {
     return (
       <IFrameRoutes isJwt={isJwt} isLoggedIn={isLoggedIn} loading={loading} />
