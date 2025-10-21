@@ -56,7 +56,7 @@ func main() {
 
 	tenants := tenant.New(pgPool)
 
-	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetric, services.Handlers(), tenants, projects)
+	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetric, services.Handlers(), tenants, projects, nil, nil)
 	if err != nil {
 		log.Fatal(ctx, "can't init middlewares: %s", err)
 	}

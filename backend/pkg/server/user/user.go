@@ -3,9 +3,10 @@ package user
 import (
 	"fmt"
 
-	"openreplay/backend/pkg/db/postgres/pool"
-
 	"github.com/golang-jwt/jwt/v5"
+
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/math"
 )
 
 type JWTClaims struct {
@@ -45,7 +46,7 @@ const (
 )
 
 type Users interface {
-	Get(userID, tenantID int, tokenType TokenType) (*User, error)
+	Get(authHeader, authSecret string, tokenType TokenType) (*User, error)
 }
 
 type usersImpl struct {
@@ -56,6 +57,30 @@ func New(pgconn pool.Pool) Users {
 	return &usersImpl{conn: pgconn}
 }
 
-func (u *usersImpl) Get(userID, tenantID int, tokenType TokenType) (*User, error) {
-	return getUserFromDB(u.conn, userID, tenantID, tokenType)
+func parseJWT(tokenString, secret string) (*JWTClaims, error) {
+	claims := &JWTClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims,
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(secret), nil
+		})
+	if err != nil || !token.Valid {
+		fmt.Printf("token err: %v\n", err)
+		return nil, fmt.Errorf("invalid token")
+	}
+	return claims, nil
+}
+
+func (u *usersImpl) Get(authHeader, secret string, tokenType TokenType) (*User, error) {
+	jwtInfo, err := parseJWT(authHeader, secret)
+	if err != nil {
+		return nil, err
+	}
+	dbUser, err := getUserFromDB(u.conn, jwtInfo.UserId, jwtInfo.TenantID, tokenType)
+	if err != nil {
+		return nil, err
+	}
+	if !dbUser.ServiceAccount && (dbUser.JwtIat == 0 || math.Abs(int(jwtInfo.IssuedAt.Unix())-dbUser.JwtIat) > 1) {
+		return nil, fmt.Errorf("token has been updated")
+	}
+	return dbUser, nil
 }

@@ -100,5 +100,33 @@ func ReadCompressedBody(log logger.Logger, w http.ResponseWriter, r *http.Reques
 }
 
 func IsApiKeyRequest(r *http.Request) bool {
-	return strings.HasPrefix(r.URL.Path, API_KEY_PREFIX) && r.Header.Get("Authorization") != ""
+	return strings.HasPrefix(r.URL.Path, API_KEY_PREFIX)
+}
+
+func IsExtensionRequest(r *http.Request) bool {
+	pathTemplate, err := mux.CurrentRoute(r).GetPathTemplate()
+	if err != nil {
+		fmt.Printf("failed to get path template: %s", err)
+		return false
+	}
+	if strings.HasSuffix(pathTemplate, "/v1/ping") ||
+		(strings.HasSuffix(pathTemplate, "/v1/spots") && r.Method == "POST") ||
+		(strings.HasSuffix(pathTemplate, "/v1/spots/{id}/uploaded") && r.Method == "POST") {
+		return true
+	}
+	return false
+}
+
+func IsSpotKeyRequest(r *http.Request) bool {
+	pathTemplate, err := mux.CurrentRoute(r).GetPathTemplate()
+	if err != nil {
+		fmt.Printf("failed to get path template: %s", err)
+		return false
+	}
+	if (strings.HasSuffix(pathTemplate, "/v1/spots/{id}") && r.Method == "GET") ||
+		(strings.HasSuffix(pathTemplate, "/v1/spots/{id}/comment") && r.Method == "POST") ||
+		(strings.HasSuffix(pathTemplate, "/v1/spots/{id}/status") && r.Method == "GET") {
+		return true
+	}
+	return false
 }

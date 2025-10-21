@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"openreplay/backend/pkg/spot/keys"
 
 	ctxStore "github.com/docker/distribution/context"
 
@@ -29,10 +30,22 @@ func (b *baseMiddlewareBuilderImpl) Middlewares() []api.RouterMiddleware {
 	return b.middlewares
 }
 
-func NewMiddlewareBuilder(log logger.Logger, jwtSecret string, http *common.HTTP, rtc *common.RateLimiter, pgPool pool.Pool, dbMetric database.Database, handlers []api.Handlers, tenants tenant.Tenants, projects projects.Projects) (api.MiddlewareBuilder, error) {
+func NewMiddlewareBuilder(
+	log logger.Logger,
+	jwtSecret string,
+	http *common.HTTP,
+	rtc *common.RateLimiter,
+	pgPool pool.Pool,
+	dbMetric database.Database,
+	handlers []api.Handlers,
+	tenants tenant.Tenants,
+	projects projects.Projects,
+	extensionSecret *string,
+	keys keys.Keys,
+) (api.MiddlewareBuilder, error) {
 	healthCheck := NewHealthCheck()
 	corsCheck := NewCors(http.UseAccessControlHeaders)
-	authenticator, err := auth.NewAuth(log, jwtSecret, user.New(pgPool), tenants, projects)
+	authenticator, err := auth.NewAuth(log, jwtSecret, user.New(pgPool), tenants, projects, extensionSecret, keys)
 	if err != nil {
 		return nil, fmt.Errorf("error creating auth middleware: %s", err)
 	}

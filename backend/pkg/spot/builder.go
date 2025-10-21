@@ -23,7 +23,7 @@ func (b *serviceBuilder) Handlers() []api.Handlers {
 	return []api.Handlers{b.spotsAPI}
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, spotMetrics spotMetrics.Spot, pgconn pool.Pool) (api.ServiceBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, spotMetrics spotMetrics.Spot, pgconn pool.Pool, keys keys.Keys) (api.ServiceBuilder, error) {
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,6 @@ func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, 
 	flaker := flakeid.NewFlaker(cfg.WorkerID)
 	spots := service.NewSpots(log, pgconn, flaker)
 	transcoder := transcoder.NewTranscoder(cfg, log, objStore, pgconn, spots, spotMetrics)
-	keys := keys.NewKeys(log, pgconn)
 	responser := api.NewResponser(webMetrics)
 	handlers, err := spotAPI.NewHandlers(log, cfg, responser, spots, objStore, transcoder, keys)
 	if err != nil {

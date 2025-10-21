@@ -14,6 +14,7 @@ import (
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/middleware"
 	"openreplay/backend/pkg/spot"
+	"openreplay/backend/pkg/spot/keys"
 )
 
 func main() {
@@ -33,12 +34,13 @@ func main() {
 	defer pgPool.Close()
 
 	prefix := api.NoPrefix
-	services, err := spot.NewServiceBuilder(log, cfg, webMetrics, spotMetric, pgPool)
+	keys := keys.NewKeys(log, pgPool)
+	services, err := spot.NewServiceBuilder(log, cfg, webMetrics, spotMetric, pgPool, keys)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
 
-	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetric, services.Handlers(), nil, nil)
+	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetric, services.Handlers(), nil, nil, &cfg.JWTSpotSecret, keys)
 	if err != nil {
 		log.Fatal(ctx, "can't init middlewares: %s", err)
 	}
