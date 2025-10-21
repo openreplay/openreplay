@@ -22,8 +22,7 @@ def get_all_filters(projectId: int, context: schemas.CurrentContext = Depends(OR
             "event": properties.get_all_properties(project_id=projectId),
             "session": filters.get_sessions_filters(project_id=projectId),
             "user": filters.get_users_filters(project_id=projectId),
-            "metadata": metadata.get_for_filters(project_id=projectId),
-            "issues": issues.get_issues_categories()
+            "metadata": metadata.get_for_filters(project_id=projectId)
         }
     }
 

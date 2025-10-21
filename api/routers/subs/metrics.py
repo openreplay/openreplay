@@ -199,7 +199,7 @@ def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issueId: st
                                      data: schemas.CardSessionsSchema = Body(...),
                                      context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_funnel_sessions_by_issue(
-        project_id=projectId,
+        project=context.project,
         user_id=context.user_id,
         metric_id=metric_id,
         issue_id=issueId,
