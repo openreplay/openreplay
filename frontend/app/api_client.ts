@@ -61,7 +61,7 @@ const newApiUrls = [
   '/replay',
   '/conditions',
 ];
-const useNewApi = localStorage.getItem('__new_api') === 'true';
+const useNewApi = localStorage.getItem('__old_api') !== 'true';
 
 export const clean = (
   obj: any,
