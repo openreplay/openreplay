@@ -1,6 +1,7 @@
 import schemas
 from chalicelib.utils import helper, exp_ch_helper
 from chalicelib.utils.ch_client import ClickHouseClient
+from chalicelib.core import tags
 
 PREDEFINED_PROPERTIES = {
     "label": {"type": "String", "displayName": "Button Label",
@@ -186,6 +187,23 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
 
 
 def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
+    if auto_captured and event_name == "TAG_TRIGGER":
+        return [{
+            "name": "tag_name",
+            "displayName": "Name",
+            "autoCaptured": True,
+            "possibleTypes": [
+                "string"
+            ],
+            "id": "prop_0",
+            "category": "events",
+            "_foundInPredefinedList": False,
+            "defaultProperty": True,
+            "possibleValues": [
+                {"id": t["tagId"], "name": t["name"], "autoCaptured": False} \
+                for t in tags.list_tags(project_id=project_id, all_details=False)
+            ]
+        }]
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
             """SELECT all_properties.property_name                    AS name,
