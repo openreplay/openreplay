@@ -71,11 +71,16 @@ jobs:
       #   # Ignore the failure of a step and avoid terminating the job.
       #   continue-on-error: true
 
+      - name: Set image tag
+        run: |
+          IMAGE_TAG_BASE=${GITHUB_REF_NAME//\//-}_${GITHUB_SHA}
+          echo "IMAGE_TAG=${IMAGE_TAG_BASE}-ee" >> $GITHUB_ENV
+          echo "IMAGE_TAG_BASE=${IMAGE_TAG_BASE}" >> $GITHUB_ENV
+
       - name: Build, tag
         id: build-image
         env:
           DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
           ENVIRONMENT: staging
         run: |
           #

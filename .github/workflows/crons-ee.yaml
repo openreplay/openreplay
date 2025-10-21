@@ -61,6 +61,12 @@ jobs:
         run: |
           docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}"
 
+      - name: Set image tag
+        run: |
+          IMAGE_TAG_BASE=${GITHUB_REF_NAME//\//-}_${GITHUB_SHA}
+          echo "IMAGE_TAG=${IMAGE_TAG_BASE}-ee" >> $GITHUB_ENV
+          echo "IMAGE_TAG_BASE=${IMAGE_TAG_BASE}" >> $GITHUB_ENV
+
       - uses: azure/k8s-set-context@v1
         with:
           method: kubeconfig
