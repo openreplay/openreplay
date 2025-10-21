@@ -82,6 +82,7 @@ function ColumnChart(props: ColumnChartProps) {
         nameGap: 35,
       },
       yAxis: {
+        ...defaultOptions.yAxis,
         type: 'category',
         data: yAxisData,
       },

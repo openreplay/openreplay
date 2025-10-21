@@ -55,6 +55,7 @@ function ORBarChart(props: BarChartProps) {
       data: categories,
     };
     const yAxis: any = {
+      ...defaultOptions.yAxis,
       type: 'value',
       data: undefined,
       name: props.label ?? 'Number of Sessions',

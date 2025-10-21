@@ -66,6 +66,14 @@ const defaultOptions = {
     top: 0,
     icon: 'pin',
   },
+  yAxis: {
+    splitLine: {
+      lineStyle: {
+        color: 'var(--color-gray-light)',
+      },
+    },
+  },
+  backgroundColor: 'var(--color-white)',
 };
 
 export function initWindowStorages(

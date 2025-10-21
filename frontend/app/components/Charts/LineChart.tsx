@@ -84,6 +84,7 @@ function ORLineChart(props: Props) {
         data: categories,
       },
       yAxis: {
+        ...defaultOptions.yAxis,
         type: 'value',
         minInterval: 1,
       },
