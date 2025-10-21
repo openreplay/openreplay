@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	
+
 	analyticsConfig "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics"
 	"openreplay/backend/pkg/db/clickhouse"
