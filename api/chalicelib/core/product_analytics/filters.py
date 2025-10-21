@@ -180,7 +180,7 @@ def get_sessions_filters(project_id: int):
                 "possibleTypes": ["string"],
                 "dataType": "string",
                 "autoCaptured": True,
-                "isPredefined": False,
+                "isPredefined": True,
                 "possibleValues": [{"id": i["type"], "name": i["name"], "autoCaptured": i["autoCaptured"]}
                                    for i in issues.get_all_types()],
                 "isConditional": False
