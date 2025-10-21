@@ -189,7 +189,7 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
 def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
     if auto_captured and event_name == "TAG_TRIGGER":
         return [{
-            "name": "tag_name",
+            "name": "tag_id",
             "displayName": "Name",
             "autoCaptured": True,
             "possibleTypes": [
