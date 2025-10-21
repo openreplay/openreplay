@@ -5,7 +5,6 @@ import (
 
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
-	"openreplay/backend/internal/config/objectstorage"
 	"openreplay/backend/internal/config/redis"
 	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/logger"
@@ -18,7 +17,6 @@ type Config struct {
 	redis.Redis
 	common.HTTP
 	common.RateLimiter
-	objectstorage.ObjectsConfig
 	FSDir             string        `env:"FS_DIR,required"`
 	ProjectExpiration time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	WorkerID          uint16
