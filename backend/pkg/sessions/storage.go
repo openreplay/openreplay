@@ -18,6 +18,7 @@ type Storage interface {
 	InsertUserAnonymousID(sessionID uint64, userAnonymousID string) error
 	InsertReferrer(sessionID uint64, referrer, baseReferrer string) error
 	InsertMetadata(sessionID uint64, keyNo uint, value string) error
+	IsExist(projectID int, sessionID uint64) (bool, error)
 }
 
 type storageImpl struct {
@@ -182,4 +183,18 @@ func (s *storageImpl) InsertMetadata(sessionID uint64, keyNo uint, value string)
 		SET metadata_%v = LEFT($1, 8000) 
 		WHERE session_id = $2`
 	return s.db.Exec(fmt.Sprintf(sqlRequest, keyNo), value, sessionID)
+}
+
+func (s *storageImpl) IsExist(projectID int, sessionID uint64) (bool, error) {
+	var exists bool
+	err := s.db.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1 FROM sessions
+			WHERE project_id = $1 AND session_id = $2
+		)`, projectID, sessionID,
+	).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }

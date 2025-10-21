@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"openreplay/backend/pkg/server/auth"
+	"openreplay/backend/pkg/server/user"
+	"time"
 
 	config "openreplay/backend/internal/config/videoreplays"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/objectstorage"
-	"openreplay/backend/pkg/server/auth"
 )
 
 type SessionVideos interface {
@@ -27,11 +29,11 @@ type sessionVideosImpl struct {
 	ctx        context.Context
 	storage    *Storage
 	batchJobs  BatchJobs
-	auth       auth.Auth
+	user       user.Users
 	objStorage objectstorage.ObjectStorage
 }
 
-func New(log logger.Logger, cfg *config.Config, storage *Storage, batchJobs BatchJobs, auth auth.Auth, objStore objectstorage.ObjectStorage) (SessionVideos, error) {
+func New(log logger.Logger, cfg *config.Config, storage *Storage, batchJobs BatchJobs, objStore objectstorage.ObjectStorage, user user.Users) (SessionVideos, error) {
 	switch {
 	case log == nil:
 		return nil, errors.New("logger is required")
@@ -41,8 +43,8 @@ func New(log logger.Logger, cfg *config.Config, storage *Storage, batchJobs Batc
 		return nil, errors.New("storage is required")
 	case batchJobs == nil:
 		return nil, errors.New("batchJobs is required")
-	case auth == nil:
-		return nil, errors.New("auth is required")
+	case user == nil:
+		return nil, errors.New("user is required")
 	case objStore == nil:
 		return nil, errors.New("objStore is required")
 	}
@@ -52,7 +54,7 @@ func New(log logger.Logger, cfg *config.Config, storage *Storage, batchJobs Batc
 		ctx:        context.Background(),
 		storage:    storage,
 		batchJobs:  batchJobs,
-		auth:       auth,
+		user:       user,
 		objStorage: objStore,
 	}, nil
 }
@@ -92,7 +94,13 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, ten
 
 	s.logJobSubmission(s.ctx, existingVideo, req.SessionID, projectId, tenantID)
 
-	jwt, err := s.auth.GetServiceAccountJWT((tenantID))
+	serviceAccount, err := s.user.GetServiceAccount(tenantID)
+	if err != nil {
+		s.log.Error(s.ctx, "Failed to get service account", "error", err, "tenantID", tenantID)
+		return nil, ErrAuthenticationFailed
+	}
+
+	jwt, err := auth.GenerateJWT(serviceAccount.ID, tenantID, 3600*time.Second, s.cfg.JWTSecret)
 	if err != nil {
 		s.log.Error(s.ctx, "Failed to generate service account JWT", "error", err, "tenantID", tenantID)
 		return nil, ErrAuthenticationFailed

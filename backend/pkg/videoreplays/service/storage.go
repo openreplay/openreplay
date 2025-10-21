@@ -201,7 +201,7 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 	}
 	defer rows.Close()
 
-	var videos []SessionVideo
+	var videos = make([]SessionVideo, 0)
 	var total int
 
 	for rows.Next() {

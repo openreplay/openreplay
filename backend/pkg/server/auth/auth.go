@@ -15,10 +15,10 @@ import (
 	"openreplay/backend/pkg/spot/keys"
 )
 
-type Auth interface {
-	IsAuthorized(authHeader string, permissions []string, isExtension bool) (*user.User, error)
-	Middleware(next http.Handler) http.Handler
-	GetServiceAccountJWT(tenantID uint64) (string, error)
+type JWTClaims struct {
+	UserId   int `json:"userId"`
+	TenantID int `json:"tenantId"`
+	jwt.RegisteredClaims
 }
 
 type authImpl struct {
@@ -50,27 +50,9 @@ func defaultString(s *string) string {
 	return *s
 }
 
-func (a *authImpl) GetServiceAccountJWT(tenantID uint64) (string, error) {
-	if tenantID == 0 {
-		return "", fmt.Errorf("tenant ID is required")
-	}
-
-	serviceAccount, err := a.getServiceAccountUser(tenantID)
-	if err != nil {
-		return "", err
-	}
-
-	tokenString, err := a.generateJWT(serviceAccount.ID, serviceAccount.TenantID, 3600*time.Second)
-	if err != nil {
-		return "", fmt.Errorf("authentication token generation failed")
-	}
-
-	return tokenString, nil
-}
-
-func (a *authImpl) generateJWT(userID, tenantID uint64, duration time.Duration) (string, error) {
+func GenerateJWT(userID, tenantID uint64, duration time.Duration, secret string) (string, error) {
 	now := time.Now()
-	claims := &user.JWTClaims{
+	claims := &JWTClaims{
 		UserId:   int(userID),
 		TenantID: int(tenantID),
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -82,28 +64,10 @@ func (a *authImpl) generateJWT(userID, tenantID uint64, duration time.Duration) 
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-	tokenString, err := token.SignedString([]byte(a.secret))
+	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
 		return "", fmt.Errorf("failed to sign JWT token: %w", err)
 	}
 
 	return tokenString, nil
-}
-
-func (a *authImpl) getServiceAccountUser(tenantID uint64) (*user.User, error) {
-	query := `
-		SELECT user_id, name, email
-		FROM public.users
-		WHERE service_account = true
-		AND tenant_id = $1
-		AND deleted_at IS NULL
-		ORDER BY user_id ASC
-		LIMIT 1`
-
-	var account user.User
-	if err := a.pgconn.QueryRow(query, tenantID).Scan(&account.ID, &account.Name, &account.Email); err != nil {
-		return nil, fmt.Errorf("failed to query user: %w", err)
-	}
-	account.TenantID = tenantID
-	return &account, nil
 }

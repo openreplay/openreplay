@@ -154,6 +154,7 @@ prepare() {
   echo "GROUP_CANVAS_VIDEO=canvas-video" >> "$ENV_FILE"
   echo "JWT_SECRET=\"$jwt_secret\"" >> "$ENV_FILE"
   echo "USE_CORS=true" >> "$ENV_FILE"
+  echo "BUCKET_NAME" >> "$ENV_FILE"
 
   while read -r line; do
     name="${line%%=*}"
