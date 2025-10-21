@@ -376,15 +376,16 @@ const ValueAutoComplete = observer(
                 height: Math.min(filteredOptions.length * 32, 200),
                 marginBottom: query.trim().length > 0 && !loadingSearch ? 8 : 0,
               }}
+              data={filteredOptions}
             >
-              {filteredOptions.map((item) => (
+              {(item) => (
                 <OptionItem
                   key={item.value}
                   item={item}
                   isSelected={isSelected(item)}
                   onSelect={onSelectOption}
                 />
-              ))}
+              )}
             </VList>
           )}
           {query.trim().length > 0 && !loadingSearch ? (

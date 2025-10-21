@@ -308,8 +308,8 @@ const EventsPanel = observer(
             size="small"
             show={filteredList.length === 0}
           >
-            <VList ref={_list} count={filteredList.length || 1}>
-              {filteredList.map((item, index) => (
+            <VList ref={_list} data={filteredList}>
+              {(item, index) => (
                 <StackEventRow
                   isActive={activeIndex === index}
                   key={item.key}
@@ -323,7 +323,7 @@ const EventsPanel = observer(
                   }}
                   onClick={() => showDetails(item)}
                 />
-              ))}
+              )}
             </VList>
           </NoContent>
         </BottomBlock.Content>

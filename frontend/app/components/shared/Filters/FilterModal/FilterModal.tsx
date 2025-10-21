@@ -309,8 +309,8 @@ function FilterModal({
               />
             </div>
             <div className="flex-grow min-w-0 h-full">
-              <VList style={{ height: 300 }}>
-                {displayedFilters.map((filter, i) => (
+              <VList style={{ height: 300 }} data={displayedFilters}>
+                {(filter, i) => (
                   <FilterItem
                     key={filter.id || filter.name}
                     filter={filter}
@@ -320,7 +320,7 @@ function FilterModal({
                     onClick={handleFilterClick}
                     showCategory
                   />
-                ))}
+                )}
               </VList>
             </div>
           </div>

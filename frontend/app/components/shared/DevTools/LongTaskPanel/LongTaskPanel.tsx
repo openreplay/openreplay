@@ -150,10 +150,10 @@ function LongTaskPanel() {
           size="small"
           show={filteredList.length === 0}
         >
-          <VList ref={_list} itemSize={25}>
-            {rows.map((task) => (
+          <VList ref={_list} itemSize={25} data={rows}>
+            {(task) => (
               <LongTaskRow key={task.time} task={task} onJump={onRowClick} />
-            ))}
+            )}
           </VList>
         </NoContent>
       </BottomBlock.Content>
@@ -177,7 +177,11 @@ function LongTaskRow({
       }
     >
       <div className="flex flex-col w-full">
-        <TaskTitle expanded={expanded} entry={task} toggleExpand={() => setExpanded(!expanded)} />
+        <TaskTitle
+          expanded={expanded}
+          entry={task}
+          toggleExpand={() => setExpanded(!expanded)}
+        />
         {expanded ? (
           <>
             <TaskTimeline task={task} />
@@ -225,10 +229,11 @@ function TaskTitle({
   );
   const { title, plusMore } = getFirstTwoScripts(scriptTitles);
   return (
-    <div className={'flex items-center gap-1 text-sm cursor-pointer'} onClick={toggleExpand}>
-      <Icon
-        name={expanded ? 'caret-down-fill' : 'caret-right-fill'}
-      />
+    <div
+      className={'flex items-center gap-1 text-sm cursor-pointer'}
+      onClick={toggleExpand}
+    >
+      <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} />
       <span className="font-mono font-bold">{title}</span>
       <Tag color="default" bordered={false}>
         {plusMore}

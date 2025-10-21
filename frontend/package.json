@@ -33,9 +33,9 @@
     "@sentry/browser": "^9.46.0",
     "@svg-maps/world": "^1.0.1",
     "@tanstack/react-query": "^5.90.2",
-    "@wojtekmaj/react-daterange-picker": "^6.0.0",
+    "@wojtekmaj/react-daterange-picker": "^7.0.0",
     "antd": "^5.27.4",
-    "chroma-js": "^2.6.0",
+    "chroma-js": "^3.1.2",
     "classnames": "^2.5.1",
     "copy-to-clipboard": "^3.3.3",
     "country-flag-icons": "^1.5.21",
@@ -69,7 +69,7 @@
     "prismjs": "^1.30.0",
     "rc-time-picker": "^3.7.3",
     "react": "^19.2.0",
-    "react-confirm": "^0.3.1",
+    "react-confirm": "^0.5.0-1",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^19.2.0",
@@ -88,7 +88,7 @@
     "socket.io-client": "^4.8.1",
     "syncod": "^0.0.1",
     "ts-api-utils": "^2.1.0",
-    "virtua": "^0.41.5"
+    "virtua": "^0.46.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.28.3",

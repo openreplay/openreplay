@@ -261,10 +261,11 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
           size="small"
           show={filteredList.length === 0}
         >
-          <VList ref={_list} itemSize={25}>
-            {filteredList.map((log) => (
+          <VList ref={_list} itemSize={25} data={filteredList}>
+            {(log, i) => (
               <ConsoleRow
                 log={log}
+                key={i}
                 jump={jump}
                 iconProps={getIconProps(log.level)}
                 renderWithNL={renderWithNL}
@@ -272,7 +273,7 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
                 showSingleTab={showSingleTab}
                 getTabNum={getTabNum}
               />
-            ))}
+            )}
           </VList>
         </NoContent>
         {/* @ts-ignore */}

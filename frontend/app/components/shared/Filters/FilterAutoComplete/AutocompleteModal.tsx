@@ -173,8 +173,8 @@ export function AutocompleteModal({
               className="flex flex-col gap-2 overflow-y-auto py-2 overflow-x-hidden text-ellipsis"
               style={{ height: Math.min(sortedOptions.length * 32, 240) }}
             >
-              <VList count={sortedOptions.length} itemSize={18}>
-                {sortedOptions.map((item) => (
+              <VList data={sortedOptions} itemSize={18}>
+                {(item) => (
                   <div
                     key={item.value}
                     onClick={() => onSelectOption(item)}
@@ -182,7 +182,7 @@ export function AutocompleteModal({
                   >
                     <Checkbox checked={isSelected(item)} /> {item.label}
                   </div>
-                ))}
+                )}
               </VList>
             </div>
             {query.length ? (

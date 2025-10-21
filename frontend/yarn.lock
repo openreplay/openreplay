@@ -4567,22 +4567,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wojtekmaj/date-utils@npm:^1.1.3":
-  version: 1.5.1
-  resolution: "@wojtekmaj/date-utils@npm:1.5.1"
-  checksum: 10c1/dc3e09819c27e889500b04afd49491c54696f7c2ff0584defc56f64990dc78b22d7c1bf61bd232914e891646ac51a14719f639810957f4e8ff1058d41850b10a
+"@wojtekmaj/date-utils@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "@wojtekmaj/date-utils@npm:2.0.2"
+  checksum: 10c1/9da8a3f40e26f3e282a35f5f6dcac8cdde2a802b722e1e88a50d1be3c904eef7231617b3492dcb7c014f651e86be0d8883ef125b5d1165b72ab59769788011fc
   languageName: node
   linkType: hard
 
-"@wojtekmaj/react-daterange-picker@npm:^6.0.0":
-  version: 6.0.0
-  resolution: "@wojtekmaj/react-daterange-picker@npm:6.0.0"
+"@wojtekmaj/react-daterange-picker@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "@wojtekmaj/react-daterange-picker@npm:7.0.0"
   dependencies:
     clsx: "npm:^2.0.0"
-    make-event-props: "npm:^1.6.0"
-    react-calendar: "npm:^5.0.0"
-    react-date-picker: "npm:^11.0.0"
-    react-fit: "npm:^2.0.0"
+    make-event-props: "npm:^2.0.0"
+    react-calendar: "npm:^6.0.0"
+    react-date-picker: "npm:^12.0.1"
+    react-fit: "npm:^3.0.0"
   peerDependencies:
     "@types/react": ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -4590,7 +4590,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c1/0a6282aeb25c0f83fdb0fbcd68b9ac9c807927d288ffe58501774b7b486641cbcbf6c40c3db581628c20d2fcb29c63d918322903647f9d7f1e5f437837483135
+  checksum: 10c1/85221423fbaaa20e98823d211313df454e5328f51d8e669434370e4b005455ad191a2f4e1b9e6897b568fe5e29412520064b28f214971e56b7b6568316a986dc
   languageName: node
   linkType: hard
 
@@ -6005,10 +6005,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chroma-js@npm:^2.6.0":
-  version: 2.6.0
-  resolution: "chroma-js@npm:2.6.0"
-  checksum: 10c1/61a79a2681288e0bbc6cca5f70252afb7af88244164434bd7c261ebf373bfbcb0de92e10a9b96524a368c64453b9a7f21ee0b0ab7d90f6361fa79e09d5a36d05
+"chroma-js@npm:^3.1.2":
+  version: 3.1.2
+  resolution: "chroma-js@npm:3.1.2"
+  checksum: 10c1/4e63e800d5570606136f3facd0f2050719d5976b29b4664561c1ac218b64da3c78d33de98501473a721106b5e78831cfa50bb6018fce19060b0658f06bbcd4a4
   languageName: node
   linkType: hard
 
@@ -7231,10 +7231,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"detect-element-overflow@npm:^1.4.0":
-  version: 1.4.2
-  resolution: "detect-element-overflow@npm:1.4.2"
-  checksum: 10c1/4b13b50a06d5da41d11f9febfe6db692781c5dcbdfcc2e1a72dbb7e1e1ef39e20b3ce75ce8e4856b931dd94aa29fcd3efefa3c23b3a7f030fac95e4df99fef93
+"detect-element-overflow@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "detect-element-overflow@npm:2.0.0"
+  checksum: 10c1/fe72a07744441b5dd96bd54a189fd10b2bf76536dae83f0180e3a8ea3d6ce74ceb854ddcae9130bf7d2a024beb070976efc124c825e1520a43c9537b9793ec21
   languageName: node
   linkType: hard
 
@@ -9181,12 +9181,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"get-user-locale@npm:^2.2.1":
-  version: 2.3.2
-  resolution: "get-user-locale@npm:2.3.2"
+"get-user-locale@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "get-user-locale@npm:3.0.0"
   dependencies:
-    mem: "npm:^8.0.0"
-  checksum: 10c1/98744ec4133d5ba9ad6ba44f2878f19d8d3b44a7f5ca5e0623bc5e1dad41c3c5865a7fcead1662f6a4b527f4357a132ab070a43d9610812290f8fe8c3531fee9
+    memoize: "npm:^10.0.0"
+  checksum: 10c1/76c18811d652f87c2357389c1bffa4bf1198e5cc627d033e2f44683ec3dc363b92db7c89ece0079ab37f2c3fa650592cc85a186418659343af998f0cd618325a
   languageName: node
   linkType: hard
 
@@ -11734,10 +11734,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"make-event-props@npm:^1.6.0":
-  version: 1.6.2
-  resolution: "make-event-props@npm:1.6.2"
-  checksum: 10c1/7c042455560189fa395193378a6f40b89f6c6e4b59a929f718e807759fc5d7e53ff092864dd75092bdbf1fd1c29fe22aa33fdfd0044afadafd69347b2421f129
+"make-event-props@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "make-event-props@npm:2.0.0"
+  checksum: 10c1/1f65829ae46eab87957441ae2cdca70474e520bb8d733e13b92a8e267cd6c11b3698caf7b36370635def6918b6ecae2246f157cd0e23ced86a99d20911c2c407
   languageName: node
   linkType: hard
 
@@ -11790,15 +11790,6 @@ __metadata:
   dependencies:
     tmpl: "npm:1.0.5"
   checksum: 10c1/672153dc31a72b7486fece481185af95ec1de3c6937e878f46e5a43c416d5c11acf9dd09f249b362ed0c0821944d984b8a0b8bffdc1da8e7e431d818b27a3690
-  languageName: node
-  linkType: hard
-
-"map-age-cleaner@npm:^0.1.3":
-  version: 0.1.3
-  resolution: "map-age-cleaner@npm:0.1.3"
-  dependencies:
-    p-defer: "npm:^1.0.0"
-  checksum: 10c1/4b913254915486b12231de937c00e0d062c91f1f7689ed30153205e01068205512f08ce89cb3e06710fb66180496e5bd8e1a755f48a579d8f72098d8a4f99cbc
   languageName: node
   linkType: hard
 
@@ -12054,16 +12045,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mem@npm:^8.0.0":
-  version: 8.1.1
-  resolution: "mem@npm:8.1.1"
-  dependencies:
-    map-age-cleaner: "npm:^0.1.3"
-    mimic-fn: "npm:^3.1.0"
-  checksum: 10c1/87bbc65dd5ebb3fa881501cb95077929f47af069c4a8629cc596e0c8d2c2b0afd115e83e83b682bf44f7c8b3b49008d7c430ea90f50bd619a95d3219ae4fb021
-  languageName: node
-  linkType: hard
-
 "memfs@npm:^4.6.0":
   version: 4.36.0
   resolution: "memfs@npm:4.36.0"
@@ -12080,6 +12061,15 @@ __metadata:
   version: 6.0.0
   resolution: "memoize-one@npm:6.0.0"
   checksum: 10c1/6f3c941560e9b0bdfd12985533586b156fdc0f6ca3f8b66ccd2469fc96aba120802891079c120ead20f0a66a65d905dadda2959ea1703bd0220db9aa19bdb47d
+  languageName: node
+  linkType: hard
+
+"memoize@npm:^10.0.0":
+  version: 10.1.0
+  resolution: "memoize@npm:10.1.0"
+  dependencies:
+    mimic-function: "npm:^5.0.1"
+  checksum: 10c1/03faa9b9e62b679819d3b600043f13ec420a88d138fde079ca1eba8703f1142d5b08d5b44776182fe5b8c5357592e01c48496be19c7bac86cbd274ffc75178a4
   languageName: node
   linkType: hard
 
@@ -12496,10 +12486,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mimic-fn@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "mimic-fn@npm:3.1.0"
-  checksum: 10c1/6ea09dbf6b4b66b0009b096611df8b04c5d9f105e5813ef920d7680546ee36c0bb7dc241d4d9149871a8b8b0562d0622cdce2d824d6e3a8a6cf3cc91ffc87c33
+"mimic-function@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "mimic-function@npm:5.0.1"
+  checksum: 10c1/c1bd75e15a49a32f40e0fc06eda3f4a1826b283308584a4494c9312bf1a7c8c047ce20a4b83534e5e8f727cc959fc216c3fd53949c787bc70af3c61b80691f1b
   languageName: node
   linkType: hard
 
@@ -13240,14 +13230,14 @@ __metadata:
     "@types/react-router-dom": "npm:^5.3.3"
     "@typescript-eslint/eslint-plugin": "npm:^8.45.0"
     "@typescript-eslint/parser": "npm:^8.45.0"
-    "@wojtekmaj/react-daterange-picker": "npm:^6.0.0"
+    "@wojtekmaj/react-daterange-picker": "npm:^7.0.0"
     antd: "npm:^5.27.4"
     autoprefixer: "npm:^10.4.21"
     babel-loader: "npm:^9.2.1"
     babel-plugin-prismjs: "npm:^2.1.0"
     babel-plugin-react-require: "npm:^4.0.3"
     babel-plugin-recharts: "npm:^2.0.0"
-    chroma-js: "npm:^2.6.0"
+    chroma-js: "npm:^3.1.2"
     classnames: "npm:^2.5.1"
     compression-webpack-plugin: "npm:^10.0.0"
     copy-to-clipboard: "npm:^3.3.3"
@@ -13307,7 +13297,7 @@ __metadata:
     prismjs: "npm:^1.30.0"
     rc-time-picker: "npm:^3.7.3"
     react: "npm:^19.2.0"
-    react-confirm: "npm:^0.3.1"
+    react-confirm: "npm:^0.5.0-1"
     react-dnd: "npm:^16.0.1"
     react-dnd-html5-backend: "npm:^16.0.1"
     react-dom: "npm:^19.2.0"
@@ -13337,7 +13327,7 @@ __metadata:
     ts-node: "npm:^10.9.2"
     typescript: "npm:^4.9.5"
     typescript-eslint: "npm:^8.45.0"
-    virtua: "npm:^0.41.5"
+    virtua: "npm:^0.46.2"
     webpack: "npm:^5.102.0"
     webpack-cli: "npm:^5.1.4"
     webpack-dev-server: "npm:^5.2.2"
@@ -13373,13 +13363,6 @@ __metadata:
     object-keys: "npm:^1.1.1"
     safe-push-apply: "npm:^1.0.0"
   checksum: 10c1/cc03f05529708afae64736e54ef3299c292fff6778ed1ebb2266b1bf7723d590d85da57fef78011c06afa73ea71455f97a5c161d8f282c87fe0b108613584dd7
-  languageName: node
-  linkType: hard
-
-"p-defer@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "p-defer@npm:1.0.0"
-  checksum: 10c1/a6734c3d208873ef55dbf25888a62f6ebc5e084c6097c37bc06cd9845e66c3e33fdf026f0f3470014e5dcdd3da43bb5719e57f3db7fb2140f8a773c567ebc1de
   languageName: node
   linkType: hard
 
@@ -15216,13 +15199,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-calendar@npm:^5.0.0":
-  version: 5.1.0
-  resolution: "react-calendar@npm:5.1.0"
+"react-calendar@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "react-calendar@npm:6.0.0"
   dependencies:
-    "@wojtekmaj/date-utils": "npm:^1.1.3"
+    "@wojtekmaj/date-utils": "npm:^2.0.2"
     clsx: "npm:^2.0.0"
-    get-user-locale: "npm:^2.2.1"
+    get-user-locale: "npm:^3.0.0"
     warning: "npm:^4.0.0"
   peerDependencies:
     "@types/react": ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -15231,30 +15214,30 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c1/e4487d74ede3d32da2dc7a1a4496f07527efee3c8118e1abe81359d0e95bd1fe4124c742af19843ca5196e59a8cb9a0900171751e33541a9c37d5836f40029be
+  checksum: 10c1/5ad5dd02bb4f7f08c6caa40fea2dc09db74c7ffd4945c4b5cc653709d56465b26f286cd25bec95ef7a0e71e470118ea4e642b90c0cf17b23b6c5bdccb093909c
   languageName: node
   linkType: hard
 
-"react-confirm@npm:^0.3.1":
-  version: 0.3.1
-  resolution: "react-confirm@npm:0.3.1"
+"react-confirm@npm:^0.5.0-1":
+  version: 0.5.0-1
+  resolution: "react-confirm@npm:0.5.0-1"
   peerDependencies:
     react: ">=18.x"
     react-dom: ">=18.x"
-  checksum: 10c1/df97643c580a3a69e761c4c7aa965d30954c1505bb0725306184cfd054902bae836fb31bc3d43308c9a49abc3b1324bc931b06d59bf4b061a101102ba880df7c
+  checksum: 10c1/e5dd739ed62d521088f08283c84af9762d2f580ab8eb43894f0f08c73784ef0e9c203a5f7d59461ff2ba1bda48d95510cdd5f67f240bee927f0ab1b50cdacb29
   languageName: node
   linkType: hard
 
-"react-date-picker@npm:^11.0.0":
-  version: 11.0.0
-  resolution: "react-date-picker@npm:11.0.0"
+"react-date-picker@npm:^12.0.1":
+  version: 12.0.1
+  resolution: "react-date-picker@npm:12.0.1"
   dependencies:
-    "@wojtekmaj/date-utils": "npm:^1.1.3"
+    "@wojtekmaj/date-utils": "npm:^2.0.2"
     clsx: "npm:^2.0.0"
-    get-user-locale: "npm:^2.2.1"
-    make-event-props: "npm:^1.6.0"
-    react-calendar: "npm:^5.0.0"
-    react-fit: "npm:^2.0.0"
+    get-user-locale: "npm:^3.0.0"
+    make-event-props: "npm:^2.0.0"
+    react-calendar: "npm:^6.0.0"
+    react-fit: "npm:^3.0.0"
     update-input-width: "npm:^1.4.0"
   peerDependencies:
     "@types/react": ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -15263,7 +15246,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c1/c6983bbed8d66ca87dbd305328a9dc7c5c0a94255375137fc1d193d2bc3ef1fbcb99e87cf0b7ffdac01db70718dd68e7d2f48fd840ed7062797b257ca01c838d
+  checksum: 10c1/6a7aad25e5299cf48862da3a5e36f49d355e4e8edf9c6d1acbccd503a5e9de90c6d1eace62a735eac8eebab2e834bb5ed323b6a5e079d1f357ab194f29584f02
   languageName: node
   linkType: hard
 
@@ -15312,11 +15295,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-fit@npm:^2.0.0":
-  version: 2.0.1
-  resolution: "react-fit@npm:2.0.1"
+"react-fit@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "react-fit@npm:3.0.0"
   dependencies:
-    detect-element-overflow: "npm:^1.4.0"
+    detect-element-overflow: "npm:^2.0.0"
     warning: "npm:^4.0.0"
   peerDependencies:
     "@types/react": ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -15325,9 +15308,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-    "@types/react-dom":
-      optional: true
-  checksum: 10c1/4953259e795a85c6ce5d7ffa1d4cd95d4fa4289034d096da2ef4d6dad0c7a79100e345b6afc240e23c9c35d7f4ad2a3ae9d027201a0b7710550d27d635e53e9d
+  checksum: 10c1/1e7db96805575da97ccfef97ca80d82cbc2049e806593bdb216990a94989e3952773c17a61a2803f362371d6431e803f347936be72e768791cb8a1f31d2517c0
   languageName: node
   linkType: hard
 
@@ -18335,9 +18316,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"virtua@npm:^0.41.5":
-  version: 0.41.5
-  resolution: "virtua@npm:0.41.5"
+"virtua@npm:^0.46.2":
+  version: 0.46.2
+  resolution: "virtua@npm:0.46.2"
   peerDependencies:
     react: ">=16.14.0"
     react-dom: ">=16.14.0"
@@ -18355,7 +18336,7 @@ __metadata:
       optional: true
     vue:
       optional: true
-  checksum: 10c1/b3ae070cf0a541b10ab97b4c45cf0509aeaa6cd91c402fd755c63b9882e2f41b0ef08e63e42d7e3d630ac1d1670846b69cfaf530de6ceababdcb1ce974b9c0ad
+  checksum: 10c1/4e894edd4a410f8ed4afbed89fc17de5d293a88d49c311e3f957b06101b0f743a8671aba0576ceb0ecf82acf4e7e13fd1b0a314422b3a535fd3edefdb1864707
   languageName: node
   linkType: hard
 

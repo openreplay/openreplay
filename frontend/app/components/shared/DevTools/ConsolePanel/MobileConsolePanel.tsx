@@ -178,8 +178,8 @@ function MobileConsolePanel() {
           size="small"
           show={filteredList.length === 0}
         >
-          <VList ref={_list} itemSize={25} count={filteredList.length || 1}>
-            {filteredList.map((log, index) => (
+          <VList ref={_list} itemSize={25} data={filteredList}>
+            {(log, index) => (
               <ConsoleRow
                 key={log.time + index}
                 log={log}
@@ -189,7 +189,7 @@ function MobileConsolePanel() {
                 onClick={() => showDetails(log)}
                 showSingleTab
               />
-            ))}
+            )}
           </VList>
         </NoContent>
       </BottomBlock.Content>

@@ -169,15 +169,15 @@ const LogsTable = observer(({ data }: { data: UnifiedLog[] }) => {
   return (
     <>
       <TableHeader size={data.length} />
-      <VList ref={_list} count={data.length}>
-        {data.map((log, index) => (
+      <VList ref={_list} data={data}>
+        {(log, index) => (
           <LogRow
             key={index}
             isActive={index === activeIndex}
             log={log}
             onJump={onJump}
           />
-        ))}
+        )}
       </VList>
     </>
   );

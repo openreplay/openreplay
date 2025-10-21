@@ -279,8 +279,8 @@ function TimeTable(props: Props) {
             className={stl.list}
             ref={scroller}
             itemSize={ROW_HEIGHT}
-            count={rows.length}
-            overscan={10}
+            data={rows}
+            bufferSize={10 * ROW_HEIGHT}
             onScroll={(offset) => {
               const firstVisibleRowIndex = Math.floor(
                 offset / ROW_HEIGHT + 0.33,
@@ -288,9 +288,9 @@ function TimeTable(props: Props) {
               setFirstVisibleRowIndex(firstVisibleRowIndex);
             }}
           >
-            {(index) => (
+            {(row, index) => (
               <RowRenderer
-                row={rows[index]}
+                row={row}
                 index={index}
                 columns={columns}
                 timestart={timestart}

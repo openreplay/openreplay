@@ -86,7 +86,11 @@ function EventsBlock(props: IProps) {
         }
       });
     }
-    const eventsWithMobxNotes = [...incidents, ...notesWithEvents, ...notes, ].sort(sortEvents);
+    const eventsWithMobxNotes = [
+      ...incidents,
+      ...notesWithEvents,
+      ...notes,
+    ].sort(sortEvents);
 
     return mergeEventLists(
       filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
@@ -296,14 +300,10 @@ function EventsBlock(props: IProps) {
             <span className="ml-2">{t('No Matching Results')}</span>
           </div>
         )}
-        <VList
-          count={usedEvents.length}
-          className={styles.eventsList}
-          ref={scroller}
-        >
-          {usedEvents.map((_, i) => {
+        <VList data={usedEvents} className={styles.eventsList} ref={scroller}>
+          {(_, i) => {
             return renderGroup({ index: i });
-          })}
+          }}
         </VList>
       </div>
     </>
