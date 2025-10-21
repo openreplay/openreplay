@@ -16,14 +16,13 @@ import (
 
 type Message = kafka.Message
 
-type Consumer struct {
+type consumerImpl struct {
 	c                 *kafka.Consumer
 	messageIterator   messages.MessageIterator
 	commitTicker      *time.Ticker
 	pollTimeout       uint
-	events            chan interface{}
-	rebalanced        chan *types.PartitionsRebalancedEvent
 	lastReceivedPrtTs map[int32]int64
+	rebalanceHandler  types.RebalanceHandler
 }
 
 func NewConsumer(
@@ -32,7 +31,8 @@ func NewConsumer(
 	messageIterator messages.MessageIterator,
 	autoCommit bool,
 	messageSizeLimit int,
-) *Consumer {
+	rebalanceHandler types.RebalanceHandler,
+) types.Consumer {
 	kafkaConfig := &kafka.ConfigMap{
 		"bootstrap.servers":               env.String("KAFKA_SERVERS"),
 		"group.id":                        group,
@@ -71,25 +71,16 @@ func NewConsumer(
 		commitTicker = time.NewTicker(2 * time.Minute)
 	}
 
-	consumer := &Consumer{
+	consumer := &consumerImpl{
 		c:                 c,
 		messageIterator:   messageIterator,
 		commitTicker:      commitTicker,
 		pollTimeout:       200,
-		events:            make(chan interface{}, 32),
-		rebalanced:        make(chan *types.PartitionsRebalancedEvent, 32),
 		lastReceivedPrtTs: make(map[int32]int64, 16),
+		rebalanceHandler:  rebalanceHandler,
 	}
 
-	subREx := "^("
-	for i, t := range topics {
-		if i != 0 {
-			subREx += "|"
-		}
-		subREx += t
-	}
-	subREx += ")$"
-	if err := c.Subscribe(subREx, consumer.reBalanceCallback); err != nil {
+	if err := c.SubscribeTopics(topics, consumer.reBalanceCallback); err != nil {
 		log.Fatalln(err)
 	}
 	go func() {
@@ -106,38 +97,35 @@ func NewConsumer(
 	return consumer
 }
 
-func (consumer *Consumer) reBalanceCallback(_ *kafka.Consumer, e kafka.Event) error {
+func (consumer *consumerImpl) reBalanceCallback(c *kafka.Consumer, e kafka.Event) error {
+	if consumer.rebalanceHandler == nil {
+		return nil
+	}
+	getPartitionsNumbers := func(partitions []kafka.TopicPartition) []uint64 {
+		parts := make([]uint64, len(partitions))
+		for i, p := range partitions {
+			parts[i] = uint64(p.Partition)
+		}
+		return parts
+	}
 	switch evt := e.(type) {
 	case kafka.RevokedPartitions:
-		// receive before re-balancing partitions; stop consuming messages and commit current state
-		consumer.events <- evt.String()
-		parts := make([]uint64, len(evt.Partitions))
-		for i, p := range evt.Partitions {
-			parts[i] = uint64(p.Partition)
-		}
-		consumer.rebalanced <- &types.PartitionsRebalancedEvent{Type: types.RebalanceTypeRevoke, Partitions: parts}
+		consumer.rebalanceHandler(types.RebalanceTypeRevoke, getPartitionsNumbers(evt.Partitions))
 	case kafka.AssignedPartitions:
-		// receive after re-balancing partitions; continue consuming messages
-		consumer.events <- evt.String()
-		parts := make([]uint64, len(evt.Partitions))
-		for i, p := range evt.Partitions {
-			parts[i] = uint64(p.Partition)
-		}
-		consumer.rebalanced <- &types.PartitionsRebalancedEvent{Type: types.RebalanceTypeAssign, Partitions: parts}
+		consumer.rebalanceHandler(types.RebalanceTypeAssign, getPartitionsNumbers(evt.Partitions))
+	}
+	if _, err := c.Commit(); err != nil {
+		log.Println("reBalanceCallback error: can't commit the current state, ", err)
 	}
 	return nil
 }
 
-func (consumer *Consumer) Rebalanced() <-chan *types.PartitionsRebalancedEvent {
-	return consumer.rebalanced
-}
-
-func (consumer *Consumer) Commit() error {
+func (consumer *consumerImpl) Commit() error {
 	consumer.c.Commit() // TODO: return error if it is not "No offset stored"
 	return nil
 }
 
-func (consumer *Consumer) commitAtTimestamps(
+func (consumer *consumerImpl) commitAtTimestamps(
 	getPartitionTime func(kafka.TopicPartition) (bool, int64),
 	limitToCommitted bool,
 ) error {
@@ -188,7 +176,7 @@ func (consumer *Consumer) commitAtTimestamps(
 	return errors.Wrap(err, "Kafka Consumer back commit error")
 }
 
-func (consumer *Consumer) CommitBack(gap int64) error {
+func (consumer *consumerImpl) CommitBack(gap int64) error {
 	return consumer.commitAtTimestamps(func(p kafka.TopicPartition) (bool, int64) {
 		lastTs, ok := consumer.lastReceivedPrtTs[p.Partition]
 		if !ok {
@@ -198,13 +186,13 @@ func (consumer *Consumer) CommitBack(gap int64) error {
 	}, true)
 }
 
-func (consumer *Consumer) CommitAtTimestamp(commitTs int64) error {
+func (consumer *consumerImpl) CommitAtTimestamp(commitTs int64) error {
 	return consumer.commitAtTimestamps(func(p kafka.TopicPartition) (bool, int64) {
 		return true, commitTs
 	}, false)
 }
 
-func (consumer *Consumer) ConsumeNext() error {
+func (consumer *consumerImpl) ConsumeNext() error {
 	ev := consumer.c.Poll(int(consumer.pollTimeout))
 	if ev == nil {
 		return nil
@@ -242,7 +230,7 @@ func (consumer *Consumer) ConsumeNext() error {
 	return nil
 }
 
-func (consumer *Consumer) Close() {
+func (consumer *consumerImpl) Close() {
 	if consumer.commitTicker != nil {
 		consumer.Commit()
 	}
