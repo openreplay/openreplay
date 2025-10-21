@@ -177,7 +177,7 @@ type SeriesSessionsResponse struct {
 
 // SeriesSessionData represents sessions data for a single series
 type SeriesSessionData struct {
-	SeriesId   int64     `json:"seriesId"`
+	SeriesId   *int64    `json:"seriesId"`
 	Total      uint64    `json:"total"`
 	SeriesName string    `json:"seriesName"`
 	Sessions   []Session `json:"sessions"`
