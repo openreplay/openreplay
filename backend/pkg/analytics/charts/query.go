@@ -107,7 +107,6 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts 
 		}
 		return name
 	}
-
 	// explicit column mapping
 	if col, ok := opts.DefinedColumns[logical]; ok {
 		col[0] = quote(col[0])
@@ -799,6 +798,7 @@ var SessionColumns = map[string][]string{
 	"userAnonymousIdIos": {"user_anonymous_id", "singleColumn"},
 	"duration":           {"duration", "singleColumn"},
 	"issue_type":         {"issue_types", "arrayColumn"},
+	"userCountry":        {"user_country", "singleColumn"},
 	// TODO Add any missing session columns to be considered.
 }
 
