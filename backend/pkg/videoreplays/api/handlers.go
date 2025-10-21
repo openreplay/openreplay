@@ -15,14 +15,14 @@ import (
 
 type handlersImpl struct {
 	log           logger.Logger
-	responser     *api.Responser
+	responser     api.Responser
 	validator     *validator.Validate
 	sessionVideos service.SessionVideos
 	sessions      sessions.Sessions
 	jsonSizeLimit int64
 }
 
-func NewHandlers(log logger.Logger, cfg *config.Config, responser *api.Responser, sessions sessions.Sessions, sessionVideos service.SessionVideos, validator *validator.Validate) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *config.Config, responser api.Responser, sessions sessions.Sessions, sessionVideos service.SessionVideos, validator *validator.Validate) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,
@@ -55,6 +55,7 @@ func (e *handlersImpl) exportSessionVideo(w http.ResponseWriter, r *http.Request
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
 	}
+
 	if !e.sessions.IsExist(projectID, req.SessionID) {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusNotFound, errors.New("session does not exist"))
 		return

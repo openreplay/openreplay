@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"openreplay/backend/pkg/objectstorage/store"
-
 	analyticsConfig "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics"
 	"openreplay/backend/pkg/db/clickhouse"
@@ -38,12 +36,7 @@ func main() {
 	}
 	defer chConn.Close()
 
-	objStorage, err := store.NewStore(&cfg.ObjectsConfig)
-	if err != nil {
-		log.Fatal(ctx, "failed to create object storage:", err)
-	}
-
-	services, err := analytics.NewServiceBuilder(log, cfg, webMetrics, dbMetrics, pgConn, chConn, objStorage)
+	services, err := analytics.NewServiceBuilder(log, cfg, webMetrics, pgPool, chConn)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}

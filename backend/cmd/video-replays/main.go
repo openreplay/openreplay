@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/server/middleware"
+	"openreplay/backend/pkg/server/tenant"
 	"openreplay/backend/pkg/sessions"
 	"os"
 	"os/signal"
@@ -31,21 +33,22 @@ func main() {
 	dbMetrics := database.New("video-replays")
 	metrics.New(log, append(webMetrics.List(), dbMetrics.List()...))
 
-	pgConn, err := pool.New(dbMetrics, cfg.Postgres.String())
+	pgPool, err := pool.New(dbMetrics, cfg.Postgres.String())
 	if err != nil {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
-	defer pgConn.Close()
+	defer pgPool.Close()
 
-	objStorage, err := store.NewStore(&cfg.ObjectsConfig)
+	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		log.Fatal(ctx, "failed to create object storage:", err)
 	}
 
-	projManager := projects.New(log, pgConn, nil, dbMetrics)
-	sessManager := sessions.New(log, pgConn, projManager, nil, dbMetrics)
+	projManager := projects.New(log, pgPool, nil, dbMetrics)
+	sessManager := sessions.New(log, pgPool, projManager, nil, dbMetrics)
+	tenantsService := tenant.New(pgPool)
 
-	builder, err := videoreplays.NewServiceBuilder(log, cfg, sessManager, webMetrics, dbMetrics, pgConn, objStorage)
+	videoService, err := videoreplays.NewServiceBuilder(log, cfg, sessManager, webMetrics, pgPool, objStore)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
@@ -55,12 +58,17 @@ func main() {
 		[]string{
 			cfg.TopicSessionVideoReplay,
 		},
-		builder.VideoService,
+		videoService.VideoService,
 		false,
 		cfg.MessageSizeLimit,
 	)
 
-	router, err := api.NewRouter(&cfg.HTTP, log, "/replay-exporter", builder)
+	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetrics, videoService.Handlers(), tenantsService, projManager)
+	if err != nil {
+		log.Fatal(ctx, "can't init middlewares: %s", err)
+	}
+
+	router, err := api.NewRouter(log, &cfg.HTTP, "/replay-exporter", videoService.Handlers(), middlewares.Middlewares())
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}

@@ -9,12 +9,6 @@ import (
 	"openreplay/backend/pkg/math"
 )
 
-type JWTClaims struct {
-	UserId   int `json:"userId"`
-	TenantID int `json:"tenantId"`
-	jwt.RegisteredClaims
-}
-
 type User struct {
 	ID             uint64          `json:"id"`
 	Name           string          `json:"name"`
@@ -47,6 +41,7 @@ const (
 
 type Users interface {
 	Get(authHeader, authSecret string, tokenType TokenType) (*User, error)
+	GetServiceAccount(tenantID uint64) (*User, error)
 }
 
 type usersImpl struct {
@@ -83,4 +78,17 @@ func (u *usersImpl) Get(authHeader, secret string, tokenType TokenType) (*User, 
 		return nil, fmt.Errorf("token has been updated")
 	}
 	return dbUser, nil
+}
+
+func (u *usersImpl) GetServiceAccount(tenantID uint64) (*User, error) {
+	if tenantID == 0 {
+		return nil, fmt.Errorf("tenant ID is required")
+	}
+
+	serviceAccount, err := getServiceAccountUser(u.conn, tenantID)
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceAccount, nil
 }
