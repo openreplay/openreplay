@@ -79,6 +79,11 @@ var propertyKeyMap = map[string]filterConfig{
 	"URL_PATH": {LogicalProperty: "$current_path", InDProperties: false},
 }
 
+// The list of event filters that are represented by columns in the events table
+var eventPropertyColumns = map[string]string{
+	"issue_type": "issue_type",
+}
+
 // filterConfig holds configuration for a filter type
 type filterConfig struct {
 	LogicalProperty string
@@ -172,7 +177,7 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 		if f.Type == FilterDuration || f.Type == FilterUserAnonymousId {
 			continue
 		}
-		conds, nameCondition := addFilter(f, opts)
+		conds, nameCondition := addFilter(f, opts, f.IsEvent)
 		if !slices.Contains(eventNames, nameCondition) && nameCondition != "" {
 			eventNames = append(eventNames, nameCondition)
 		}
@@ -203,7 +208,7 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 }
 
 // out: []conditions, nameCondition
-func addFilter(f model.Filter, opts BuildConditionsOptions) ([]string, string) {
+func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool) ([]string, string) {
 	alias := opts.MainTableAlias
 	if alias != "" && !strings.HasSuffix(alias, ".") {
 		alias += "."
@@ -220,12 +225,22 @@ func addFilter(f model.Filter, opts BuildConditionsOptions) ([]string, string) {
 		}
 
 		for _, sub := range f.Filters {
-			subConds, _ := addFilter(sub, opts)
+			subConds, _ := addFilter(sub, opts, true)
 			if len(subConds) > 0 {
 				parts = append(parts, "("+strings.Join(subConds, " AND ")+")")
 			}
 		}
 		return []string{"(" + strings.Join(parts, " AND ") + ")"}, nameCondition
+	}
+	// for event's properties that are represented by columns
+	if isEventProperty {
+		if col, ok := eventPropertyColumns[f.Name]; ok {
+			accessor := fmt.Sprintf("%s%s", alias, col)
+			cond := buildCond(accessor, f.Value, f.Operator, false, "singleColumn")
+			if cond != "" {
+				return []string{cond}, ""
+			}
+		}
 	}
 	if strings.HasPrefix(f.Name, "metadata_") {
 		cond := buildCond(f.Name, f.Value, f.Operator, false, "singleColumn")
