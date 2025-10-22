@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"github.com/golang-jwt/jwt/v5"
-
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/server/api"
@@ -10,12 +8,6 @@ import (
 	"openreplay/backend/pkg/server/user"
 	"openreplay/backend/pkg/spot/keys"
 )
-
-type JWTClaims struct {
-	UserId   int `json:"userId"`
-	TenantID int `json:"tenantId"`
-	jwt.RegisteredClaims
-}
 
 type authImpl struct {
 	log             logger.Logger
