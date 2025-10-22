@@ -198,7 +198,7 @@ func (v *ImageStorage) packCanvas(payload interface{}) {
 
 	err := cmd.Run()
 	if err != nil {
-		v.log.Fatal(task.ctx, "failed to execute command, err: %s, stderr: %v", err, stderr.String())
+		v.log.Info(task.ctx, "failed to execute command, err: %s, stderr: %v", err, stderr.String())
 	}
 	v.metrics.RecordArchivingDuration(time.Since(start).Seconds())
 	v.metrics.IncreaseTotalCreatedArchives()
