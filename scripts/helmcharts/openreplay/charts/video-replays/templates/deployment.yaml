@@ -1,0 +1,147 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "video-replays.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "video-replays.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "video-replays.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "video-replays.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "video-replays.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      shareProcessNamespace: true
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.global.enterpriseEditionLicense }}
+          image: "{{ tpl .Values.image.repository . }}:{{ .Values.image.tag | default .Chart.AppVersion }}-ee"
+          {{- else }}
+          image: "{{ tpl .Values.image.repository . }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.healthCheck}}
+          {{- .Values.healthCheck | toYaml | nindent 10}}
+          {{- end}}
+          env:
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end}}
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
+            - name: LICENSE_KEY
+              value: '{{ .Values.global.enterpriseEditionLicense }}'
+            - name: KAFKA_SERVERS
+              value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
+            - name: KAFKA_USE_SSL
+              value: '{{ .Values.global.kafka.kafkaUseSsl }}'
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "jwt-secret" "ctx" .) | nindent 18 }}
+            - name: ASSIST_JWT_SECRET
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "assist-jwt-secret" "ctx" .) | nindent 18 }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "access-key" "ctx" .) | nindent 18 }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "secret-key" "ctx" .) | nindent 18 }}
+            - name: AWS_ENDPOINT
+              value: '{{- include "openreplay.s3Endpoint" . }}'
+            - name: AWS_REGION
+              value: '{{ .Values.global.s3.region }}'
+            - name: BUCKET_NAME
+              value: {{ .Values.global.s3.recordingsBucket }}
+            - name: CH_USERNAME
+              value: '{{ .Values.global.clickhouse.username }}'
+            - name: CH_PASSWORD
+              value: '{{ .Values.global.clickhouse.password }}'
+            - name: CLICKHOUSE_STRING
+              value: '{{ .Values.global.clickhouse.chHost }}:{{.Values.global.clickhouse.service.webPort}}/{{.Values.env.ch_db}}'
+            - name: pg_password
+              {{- if .Values.global.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.postgresql.existingSecret }}
+                  key: postgresql-postgres-password
+              {{- else }}
+              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
+              {{- end}}
+            - name: POSTGRES_STRING
+              value: {{ include "openreplay.pg_connection_string" .}}
+            - name: ASSIST_URL
+              value: {{ include "openreplay.assist_url" . }}
+            - name: ASSIST_KEY
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "assist-key" "ctx" .) | nindent 18 }}
+            {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
+          ports:
+            {{- range $key, $val := .Values.service.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $val }}
+              protocol: TCP
+            {{- end }}
+          volumeMounts:
+            - name: datadir
+              mountPath: /mnt/efs
+          {{- include "openreplay.volume.redis_ca_certificate.mount" .Values.global.redis | nindent 12 }}
+          {{- with .Values.persistence.mounts  }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if eq (tpl .Values.pvc.name . ) "hostPath" }}
+      volumes:
+      {{- with .Values.persistence.volumes }}
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      - name: datadir
+        hostPath:
+          # Ensure the file directory is created.
+          path: {{ tpl .Values.pvc.hostMountPath . }}
+          type: DirectoryOrCreate
+      {{- else }}
+      volumes:
+      {{- with .Values.persistence.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      - name: datadir
+        persistentVolumeClaim:
+          claimName: "{{ tpl .Values.pvc.name . }}"
+      {{- end }}
+      {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 6 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
