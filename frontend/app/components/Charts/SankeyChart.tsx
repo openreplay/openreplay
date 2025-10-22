@@ -301,7 +301,11 @@ const EChartsSankey: React.FC<Props> = (props) => {
       ],
     };
 
-    chart.setOption(option);
+    try {
+      chart.setOption(option);
+    } catch (e) {
+      console.error(e, option);
+    }
 
     function getUpstreamNodes(nodeIdx: number, visited = new Set<number>()) {
       if (visited.has(nodeIdx)) return;
