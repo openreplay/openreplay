@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/golang-jwt/jwt/v5"
 
 	"openreplay/backend/pkg/db/postgres/pool"
