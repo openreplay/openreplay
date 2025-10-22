@@ -1,10 +1,6 @@
 package auth
 
 import (
-	"fmt"
-	"net/http"
-	"time"
-
 	"github.com/golang-jwt/jwt/v5"
 
 	"openreplay/backend/pkg/logger"
@@ -48,26 +44,4 @@ func defaultString(s *string) string {
 		return ""
 	}
 	return *s
-}
-
-func GenerateJWT(userID, tenantID uint64, duration time.Duration, secret string) (string, error) {
-	now := time.Now()
-	claims := &JWTClaims{
-		UserId:   int(userID),
-		TenantID: int(tenantID),
-		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
-			Issuer:    "openreplay-go",
-			Audience:  []string{"front:OpenReplay"},
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-	tokenString, err := token.SignedString([]byte(secret))
-	if err != nil {
-		return "", fmt.Errorf("failed to sign JWT token: %w", err)
-	}
-
-	return tokenString, nil
 }
