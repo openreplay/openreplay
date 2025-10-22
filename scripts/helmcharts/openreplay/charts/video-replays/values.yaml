@@ -101,7 +101,20 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
-  ch_db: default
+  TOPIC_VIDEO_REPLAY: saas-video-replays
+  GROUP_VIDEO_REPLAY: saas-video-consumer
+  SESSION_VIDEO_WIDTH: 1280
+  SESSION_VIDEO_HEIGHT: 720
+  SESSION_VIDEO_FPS: 30
+  SESSION_VIDEO_SPEED: 1
+  SESSION_VIDEO_MODE: video
+  SESSION_VIDEO_OUTPUT_DIR: /mnt/efs/videos
+  BATCH_JOB_QUEUE: replays
+  BATCH_JOB_DEFINITION: replay_exporter:4
+  BATCH_JOB_BASE_NAME: replay_exporter
+  BATCH_RETRY_ATTEMPTS: 3
+  PROJECT_EXPIRATION: 10m
+  KAFKA_MAX_POLL_INTERVAL_MS: 300000
 
 pvc:
   # This can be either persistentVolumeClaim or hostPath.
