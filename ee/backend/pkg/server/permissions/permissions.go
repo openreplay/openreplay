@@ -45,7 +45,7 @@ func (p *permissionsImpl) checkPermissions(r *http.Request) error {
 		return nil
 	}
 
-	perms := slices.DeleteFunc(reqPermissions, func(p string) bool {
+	perms := slices.DeleteFunc(slices.Clone(reqPermissions), func(p string) bool {
 		return strings.HasPrefix(p, "SERVICE_") != user.ServiceAccount
 	})
 
