@@ -16,8 +16,8 @@ type Config struct {
 	common.HTTP
 	common.RateLimiter
 	objectstorage.ObjectsConfig
-	TopicSessionVideoReplay string        `env:"TOPIC_VIDEO_REPLAY,default=saas-video-replays"`
-	GroupSessionVideoReplay string        `env:"GROUP_VIDEO_REPLAY,default=saas-video-consumer"`
+	TopicSessionVideoReplay string        `env:"TOPIC_VIDEO_REPLAY,default=video-replays"`
+	GroupSessionVideoReplay string        `env:"GROUP_VIDEO_REPLAY,default=video-consumer"`
 	AWSRegion               string        `env:"AWS_REGION,default=eu-central-1"`
 	VideoWidth              int           `env:"SESSION_VIDEO_WIDTH,default=1280"`
 	VideoHeight             int           `env:"SESSION_VIDEO_HEIGHT,default=720"`
