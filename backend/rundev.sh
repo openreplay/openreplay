@@ -155,6 +155,8 @@ prepare() {
   echo "JWT_SECRET=\"$jwt_secret\"" >> "$ENV_FILE"
   echo "USE_CORS=true" >> "$ENV_FILE"
   echo "BUCKET_NAME=spot" >> "$ENV_FILE"
+  echo "KAFKA_MAX_POLL_INTERVAL_MS=300000" >> "$ENV_FILE"
+  echo "KAFKA_USE_KERBEROS=false" >> "$ENV_FILE"
 
   while read -r line; do
     name="${line%%=*}"
