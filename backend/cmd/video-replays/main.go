@@ -63,7 +63,7 @@ func main() {
 		cfg.MessageSizeLimit,
 	)
 
-	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetrics, videoService.Handlers(), tenantsService, projManager)
+	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetrics, videoService.Handlers(), tenantsService, projManager, nil, nil)
 	if err != nil {
 		log.Fatal(ctx, "can't init middlewares: %s", err)
 	}

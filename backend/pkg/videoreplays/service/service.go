@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"openreplay/backend/pkg/server/auth"
 	"openreplay/backend/pkg/server/user"
 	"time"
 
@@ -100,7 +99,7 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, ten
 		return nil, ErrAuthenticationFailed
 	}
 
-	jwt, err := auth.GenerateJWT(serviceAccount.ID, tenantID, 3600*time.Second, s.cfg.JWTSecret)
+	jwt, err := user.GenerateJWT(serviceAccount.ID, tenantID, 3600*time.Second, s.cfg.JWTSecret)
 	if err != nil {
 		s.log.Error(s.ctx, "Failed to generate service account JWT", "error", err, "tenantID", tenantID)
 		return nil, ErrAuthenticationFailed
