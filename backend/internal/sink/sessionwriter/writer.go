@@ -77,6 +77,10 @@ func (w *SessionWriter) sync(sid uint64) error {
 	return sess.Sync()
 }
 
+func (w *SessionWriter) SyncSession(sid uint64) error {
+	return w.sync(sid)
+}
+
 func (w *SessionWriter) Close(sid uint64) error {
 	sessObj, ok := w.sessions.LoadAndDelete(sid)
 	if !ok {

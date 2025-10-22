@@ -57,7 +57,6 @@ func main() {
 	devBuffer.Reset()
 
 	msgHandler := func(msg messages.Message) {
-
 		// Check batchEnd signal (nil message)
 		if msg == nil {
 			// Skip empty buffers
@@ -85,6 +84,12 @@ func main() {
 
 		// Send SessionEnd trigger to storage service
 		if msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgMobileSessionEnd {
+			// Sync session files to disk before publishing SessionEnd
+			// This ensures files are fully written and fsynced before storage service tries to read them
+			if err := writer.SyncSession(msg.SessionID()); err != nil {
+				log.Error(sessCtx, "can't sync session before SessionEnd: %s", err)
+			}
+
 			if err := producer.Produce(cfg.TopicTrigger, msg.SessionID(), msg.Encode()); err != nil {
 				log.Error(sessCtx, "can't send SessionEnd to trigger topic: %s", err)
 			}
