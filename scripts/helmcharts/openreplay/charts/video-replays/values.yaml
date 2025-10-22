@@ -101,8 +101,8 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
-  TOPIC_VIDEO_REPLAY: saas-video-replays
-  GROUP_VIDEO_REPLAY: saas-video-consumer
+  TOPIC_VIDEO_REPLAY: video-replays
+  GROUP_VIDEO_REPLAY: video-consumer
   SESSION_VIDEO_WIDTH: 1280
   SESSION_VIDEO_HEIGHT: 720
   SESSION_VIDEO_FPS: 30
