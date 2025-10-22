@@ -138,6 +138,16 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 }
 
 func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
+	//Remove useless starting point
+	i := 0
+	for i < len(p.StartPoint) {
+		if len(p.StartPoint[i].Value) == 0 && p.StartPoint[i].Operator != "isAny" {
+			p.StartPoint = slices.Delete(p.StartPoint, i, i+1)
+		} else {
+			i++
+		}
+	}
+
 	var subEvents []JourneyStep = make([]JourneyStep, 0)
 	var startPointsConditions []string = make([]string, 0)
 	var step0Conditions []string = make([]string, 0)
