@@ -51,18 +51,21 @@ spec:
             - name: {{ $key }}
               value: '{{ $val }}'
             {{- end }}
+            - name: SERVICE_NAME
+              value: 'video-replays'
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
             - name: KAFKA_SERVERS
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
             - name: KAFKA_USE_SSL
               value: '{{ .Values.global.kafka.kafkaUseSsl }}'
+            - name: KAFKA_MAX_POLL_INTERVAL_MS
+              value: '{{ .Values.env.KAFKA_MAX_POLL_INTERVAL_MS }}'
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "jwt-secret" "ctx" .) | nindent 18 }}
-            - name: ASSIST_JWT_SECRET
-              valueFrom:
-                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "assist-jwt-secret" "ctx" .) | nindent 18 }}
+            - name: HTTP_PORT
+              value: '{{ .Values.service.ports.http }}'
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "access-key" "ctx" .) | nindent 18 }}
@@ -75,28 +78,36 @@ spec:
               value: '{{ .Values.global.s3.region }}'
             - name: BUCKET_NAME
               value: {{ .Values.global.s3.recordingsBucket }}
-            - name: CH_USERNAME
-              value: '{{ .Values.global.clickhouse.username }}'
-            - name: CH_PASSWORD
-              value: '{{ .Values.global.clickhouse.password }}'
-            - name: CLICKHOUSE_STRING
-              value: '{{ .Values.global.clickhouse.chHost }}:{{.Values.global.clickhouse.service.webPort}}/{{.Values.env.ch_db}}'
-            - name: pg_password
-              {{- if .Values.global.postgresql.existingSecret }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.postgresql.existingSecret }}
-                  key: postgresql-postgres-password
-              {{- else }}
-              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
-              {{- end}}
             - name: POSTGRES_STRING
               value: {{ include "openreplay.pg_connection_string" .}}
-            - name: ASSIST_URL
-              value: {{ include "openreplay.assist_url" . }}
-            - name: ASSIST_KEY
-              valueFrom:
-                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "assist-key" "ctx" .) | nindent 18 }}
+            - name: TOPIC_VIDEO_REPLAY
+              value: '{{ .Values.env.TOPIC_VIDEO_REPLAY }}'
+            - name: GROUP_VIDEO_REPLAY
+              value: '{{ .Values.env.GROUP_VIDEO_REPLAY }}'
+            - name: SESSION_VIDEO_WIDTH
+              value: '{{ .Values.env.SESSION_VIDEO_WIDTH }}'
+            - name: SESSION_VIDEO_HEIGHT
+              value: '{{ .Values.env.SESSION_VIDEO_HEIGHT }}'
+            - name: SESSION_VIDEO_FPS
+              value: '{{ .Values.env.SESSION_VIDEO_FPS }}'
+            - name: SESSION_VIDEO_SPEED
+              value: '{{ .Values.env.SESSION_VIDEO_SPEED }}'
+            - name: SESSION_VIDEO_MODE
+              value: '{{ .Values.env.SESSION_VIDEO_MODE }}'
+            - name: SESSION_VIDEO_OUTPUT_DIR
+              value: '{{ .Values.env.SESSION_VIDEO_OUTPUT_DIR }}'
+            - name: SESSION_VIDEO_BASE_URL
+              value: 'https://{{ .Values.global.domainName }}'
+            - name: BATCH_JOB_QUEUE
+              value: '{{ .Values.env.BATCH_JOB_QUEUE }}'
+            - name: BATCH_JOB_DEFINITION
+              value: '{{ .Values.env.BATCH_JOB_DEFINITION }}'
+            - name: BATCH_JOB_BASE_NAME
+              value: '{{ .Values.env.BATCH_JOB_BASE_NAME }}'
+            - name: BATCH_RETRY_ATTEMPTS
+              value: '{{ .Values.env.BATCH_RETRY_ATTEMPTS }}'
+            - name: PROJECT_EXPIRATION
+              value: '{{ .Values.env.PROJECT_EXPIRATION }}'
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
           ports:
             {{- range $key, $val := .Values.service.ports }}
