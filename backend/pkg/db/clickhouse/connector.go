@@ -1,12 +1,15 @@
 package clickhouse
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -66,6 +69,36 @@ type connectorImpl struct {
 }
 
 func NewConnector(cfg common.Clickhouse, metrics database.Database) Connector {
+	// Configure TLS if enabled
+	var tlsConfig *tls.Config
+	if cfg.UseTLS {
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: cfg.TLSSkipVerify,
+		}
+
+		// Load client certificate and key if provided
+		if cfg.TLSCertificatePath != "" && cfg.TLSKeyPath != "" {
+			cert, err := tls.LoadX509KeyPair(cfg.TLSCertificatePath, cfg.TLSKeyPath)
+			if err != nil {
+				log.Fatalf("failed to load TLS certificate and key: %v", err)
+			}
+			tlsConfig.Certificates = []tls.Certificate{cert}
+		}
+
+		// Load CA certificate if provided
+		if cfg.TLSCACertificatePath != "" {
+			caCert, err := os.ReadFile(cfg.TLSCACertificatePath)
+			if err != nil {
+				log.Fatalf("failed to read CA certificate: %v", err)
+			}
+			caCertPool := x509.NewCertPool()
+			if !caCertPool.AppendCertsFromPEM(caCert) {
+				log.Fatal("failed to append CA certificate")
+			}
+			tlsConfig.RootCAs = caCertPool
+		}
+	}
+
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{cfg.GetTrimmedURL()},
 		Auth: clickhouse.Auth{
@@ -73,6 +106,7 @@ func NewConnector(cfg common.Clickhouse, metrics database.Database) Connector {
 			Username: cfg.LegacyUserName,
 			Password: cfg.LegacyPassword,
 		},
+		TLS:             tlsConfig,
 		MaxOpenConns:    20,
 		MaxIdleConns:    15,
 		ConnMaxLifetime: 3 * time.Minute,
