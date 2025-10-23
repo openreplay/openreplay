@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -87,6 +88,5 @@ func (u *usersImpl) Get(authHeader, secret string, tokenType TokenType) (*User, 
 }
 
 func (u *usersImpl) GetServiceAccount(tenantID uint64) (*User, error) {
-	fmt.Println("GetServiceAccount is not implemented in the OSS version")
-	return nil, nil
+	return nil, errors.New("not implemented")
 }
