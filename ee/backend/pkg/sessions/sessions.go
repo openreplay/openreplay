@@ -29,7 +29,7 @@ type Sessions interface {
 	UpdateUTM(sessionID uint64, url string) error
 	UpdateMetadata(sessionID uint64, key, value string) error
 	UpdateEventsStats(sessionID uint64, events, pages int) error
-	IsExist(projectID int, sessionID string) bool
+	IsExist(projectID int, sessionID uint64) bool
 	Commit()
 }
 
@@ -278,12 +278,8 @@ func (s *sessionsImpl) UpdateEventsStats(sessionID uint64, events, pages int) er
 	return nil
 }
 
-func (s *sessionsImpl) IsExist(projectID int, sessionID string) bool {
-	sessionIDUint, err := strconv.ParseUint(sessionID, 10, 64)
-	if err != nil {
-		return false
-	}
-	exists, err := s.storage.IsExist(projectID, sessionIDUint)
+func (s *sessionsImpl) IsExist(projectID int, sessionID uint64) bool {
+	exists, err := s.storage.IsExist(projectID, sessionID)
 	if err != nil {
 		return false
 	}

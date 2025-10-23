@@ -13,7 +13,7 @@ import (
 
 type SessionJobRequest struct {
 	ProjectID int
-	SessionID string
+	SessionID uint64
 	JWT       string
 }
 
@@ -65,18 +65,18 @@ func buildDefaultConfig(cfg *config.Config) map[string]string {
 	return envVars
 }
 
-func (sbs *batchJobs) buildJobName(projectID int, sessionID string) string {
-	return fmt.Sprintf("%s_%d-%s", sbs.cfg.BatchJobBaseName, projectID, sessionID)
+func (sbs *batchJobs) buildJobName(projectID int, sessionID uint64) string {
+	return fmt.Sprintf("%s_%d-%d", sbs.cfg.BatchJobBaseName, projectID, sessionID)
 }
 
-func (sbs *batchJobs) buildCommand(projectID int, sessionID, jwt string) []string {
+func (sbs *batchJobs) buildCommand(projectID int, sessionID uint64, jwt string) []string {
 	return []string{
 		"node",
 		"index.js",
 		"-p",
 		strconv.Itoa(projectID),
 		"-s",
-		sessionID,
+		strconv.FormatUint(sessionID, 10),
 		"-j",
 		jwt,
 	}

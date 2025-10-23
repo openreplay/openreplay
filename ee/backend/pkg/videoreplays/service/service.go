@@ -17,8 +17,8 @@ import (
 type SessionVideos interface {
 	ExportSessionVideo(projectId int, userId uint64, tenantID uint64, req *SessionVideoExportRequest) (*SessionVideoExportResponse, error)
 	GetAll(projectId int, userId uint64, req *SessionVideosGetRequest) (*GetSessionVideosResponse, error)
-	DeleteSessionVideo(projectId int, userId uint64, sessionId string) (interface{}, error)
-	DownloadSessionVideo(projectId int, userId uint64, sessionId string) (string, error)
+	DeleteSessionVideo(projectId int, userId uint64, sessionId uint64) (interface{}, error)
+	DownloadSessionVideo(projectId int, userId uint64, sessionId uint64) (string, error)
 	Iterate(batchData []byte, batchInfo *messages.BatchInfo) // for queue consumer support
 }
 
@@ -58,7 +58,7 @@ func New(log logger.Logger, cfg *config.Config, storage *Storage, batchJobs Batc
 	}, nil
 }
 
-func (s *sessionVideosImpl) logExistingVideoInfo(ctx context.Context, video *SessionVideo, sessionID string, projectId int, tenantID uint64) {
+func (s *sessionVideosImpl) logExistingVideoInfo(ctx context.Context, video *SessionVideo, sessionID uint64, projectId int, tenantID uint64) {
 	if video == nil {
 		s.log.Debug(ctx, "No existing session video found, will create new job",
 			"sessionID", sessionID, "projectID", projectId, "tenantID", tenantID)
@@ -69,7 +69,7 @@ func (s *sessionVideosImpl) logExistingVideoInfo(ctx context.Context, video *Ses
 	}
 }
 
-func (s *sessionVideosImpl) logJobSubmission(ctx context.Context, video *SessionVideo, sessionID string, projectId int, tenantID uint64) {
+func (s *sessionVideosImpl) logJobSubmission(ctx context.Context, video *SessionVideo, sessionID uint64, projectId int, tenantID uint64) {
 	if video != nil && video.Status == StatusFailed {
 		s.log.Info(ctx, "Resubmitting session video job for failed status",
 			"sessionID", sessionID, "projectID", projectId, "tenantID", tenantID,
@@ -130,14 +130,14 @@ func (s *sessionVideosImpl) GetAll(projectId int, userId uint64, req *SessionVid
 	return s.storage.GetAllSessionVideos(s.ctx, projectId, userId, req)
 }
 
-func (s *sessionVideosImpl) DeleteSessionVideo(projectId int, userId uint64, sessionId string) (interface{}, error) {
+func (s *sessionVideosImpl) DeleteSessionVideo(projectId int, userId uint64, sessionId uint64) (interface{}, error) {
 	if err := s.storage.DeleteSessionVideo(s.ctx, projectId, userId, sessionId); err != nil {
 		return nil, err
 	}
 	return map[string]string{"status": "deleted"}, nil
 }
 
-func (s *sessionVideosImpl) validateVideoForDownload(video *SessionVideo, sessionId string, projectId int, userId uint64) error {
+func (s *sessionVideosImpl) validateVideoForDownload(video *SessionVideo, sessionId uint64, projectId int, userId uint64) error {
 	if video == nil {
 		s.log.Warn(s.ctx, "Session video not found", "sessionId", sessionId, "projectId", projectId, "userId", userId)
 		return ErrVideoNotFound
@@ -156,7 +156,7 @@ func (s *sessionVideosImpl) validateVideoForDownload(video *SessionVideo, sessio
 	return nil
 }
 
-func (s *sessionVideosImpl) DownloadSessionVideo(projectId int, userId uint64, sessionId string) (string, error) {
+func (s *sessionVideosImpl) DownloadSessionVideo(projectId int, userId uint64, sessionId uint64) (string, error) {
 	video, err := s.storage.GetSessionVideoBySessionAndProject(s.ctx, sessionId, projectId)
 	if err != nil {
 		s.log.Error(s.ctx, "Failed to get session video from database", "error", err, "sessionId", sessionId, "projectId", projectId, "userId", userId)
@@ -185,7 +185,7 @@ func (s *sessionVideosImpl) Iterate(batchData []byte, batchInfo *messages.BatchI
 	}
 
 	sessionId := jobMessage.SessionId
-	if jobMessage.SessionId == "" {
+	if jobMessage.SessionId == 0 {
 		s.log.Error(s.ctx, "Invalid session ID in job message")
 		return
 	}

@@ -29,7 +29,7 @@ func NewStorage(log logger.Logger, pgconn pool.Pool) (*Storage, error) {
 	}, nil
 }
 
-func (h *Storage) HandleJobCompletion(sessionID string, message *SessionVideoJobMessage) error {
+func (h *Storage) HandleJobCompletion(sessionID uint64, message *SessionVideoJobMessage) error {
 	ctx := context.Background()
 
 	switch message.Status {
@@ -43,7 +43,7 @@ func (h *Storage) HandleJobCompletion(sessionID string, message *SessionVideoJob
 	}
 }
 
-func (h *Storage) handleSuccessfulJob(ctx context.Context, sessionID string, message *SessionVideoJobMessage) error {
+func (h *Storage) handleSuccessfulJob(ctx context.Context, sessionID uint64, message *SessionVideoJobMessage) error {
 	updateQuery := `
 		UPDATE public.sessions_videos
 		SET status = $2,
@@ -61,7 +61,7 @@ func (h *Storage) handleSuccessfulJob(ctx context.Context, sessionID string, mes
 	return nil
 }
 
-func (h *Storage) handleFailedJob(ctx context.Context, sessionID string, message *SessionVideoJobMessage) error {
+func (h *Storage) handleFailedJob(ctx context.Context, sessionID uint64, message *SessionVideoJobMessage) error {
 	updateQuery := `
 		UPDATE public.sessions_videos
 		SET status = $2,
@@ -79,7 +79,7 @@ func (h *Storage) handleFailedJob(ctx context.Context, sessionID string, message
 	return nil
 }
 
-func (h *Storage) CreateSessionVideoRecord(ctx context.Context, sessionID string, projectID int, userID uint64, jobID string) error {
+func (h *Storage) CreateSessionVideoRecord(ctx context.Context, sessionID uint64, projectID int, userID uint64, jobID string) error {
 	insertQuery := `
 		INSERT INTO public.sessions_videos (session_id, project_id, user_id, status, job_id, created_at, modified_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $6)
@@ -99,7 +99,7 @@ func (h *Storage) CreateSessionVideoRecord(ctx context.Context, sessionID string
 	return nil
 }
 
-func (h *Storage) GetSessionVideoBySessionAndProject(ctx context.Context, sessionID string, projectID int) (*SessionVideo, error) {
+func (h *Storage) GetSessionVideoBySessionAndProject(ctx context.Context, sessionID uint64, projectID int) (*SessionVideo, error) {
 	query := `
 		SELECT session_id, project_id, user_id, file_url, status, job_id, error_message, created_at, modified_at
 		FROM public.sessions_videos
@@ -256,13 +256,13 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 	}, nil
 }
 
-func (h *Storage) DeleteSessionVideo(ctx context.Context, projectID int, userID uint64, sessionID string) error {
+func (h *Storage) DeleteSessionVideo(ctx context.Context, projectID int, userID uint64, sessionID uint64) error {
 	deleteQuery := `
 		DELETE FROM public.sessions_videos
 		WHERE session_id = $1 AND project_id = $2 AND user_id = $3
 		RETURNING session_id`
 
-	var deletedSessionID string
+	var deletedSessionID uint64
 	err := h.pgconn.QueryRow(deleteQuery, sessionID, projectID, userID).Scan(&deletedSessionID)
 	if err != nil {
 		if err == sql.ErrNoRows {

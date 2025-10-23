@@ -113,7 +113,7 @@ func (e *handlersImpl) deleteSessionVideo(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	sessionID, err := api.GetPathParam(r, "sessionId", api.ParseUint32)
+	sessionID, err := api.GetPathParam(r, "sessionId", api.ParseUint64)
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
@@ -142,7 +142,7 @@ func (e *handlersImpl) downloadSessionVideo(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	sessionID, err := api.GetPathParam(r, "sessionId", api.ParseUint32)
+	sessionID, err := api.GetPathParam(r, "sessionId", api.ParseUint64)
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return

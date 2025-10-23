@@ -11,7 +11,7 @@ const (
 )
 
 type SessionVideo struct {
-	SessionID    string `json:"sessionId"`
+	SessionID    uint64 `json:"sessionId"`
 	ProjectID    int    `json:"projectId"`
 	UserID       uint64 `json:"userId"`
 	UserName     string `json:"userName"`
@@ -35,7 +35,7 @@ func (video *SessionVideo) Response() *SessionVideoExportResponse {
 }
 
 type SessionVideoExportRequest struct {
-	SessionID string `json:"sessionId" validate:"required"`
+	SessionID uint64 `json:"sessionId" validate:"required"`
 }
 
 type SessionVideoExportResponse struct {
@@ -66,7 +66,7 @@ type SessionVideoJobMessage struct {
 	Status    Status `json:"status"`
 	Name      string `json:"name"` // s3Path
 	Error     string `json:"error,omitempty"`
-	SessionId string `json:"sessionId"`
+	SessionId uint64 `json:"sessionId"`
 }
 
 var (
