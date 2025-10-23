@@ -150,6 +150,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
     const option = {
       ...defaultOptions,
+      yAxis: undefined,
       tooltip: {
         trigger: 'item',
       },

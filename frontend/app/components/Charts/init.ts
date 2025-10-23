@@ -48,7 +48,6 @@ const defaultOptions = {
     right: '5%',
     bottom: '5%',
     top: '13%',
-    containLabel: true,
   },
   toolbox: {
     show: true,
