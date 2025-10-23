@@ -1,7 +1,6 @@
 package user
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -85,8 +84,4 @@ func (u *usersImpl) Get(authHeader, secret string, tokenType TokenType) (*User, 
 		return nil, fmt.Errorf("token has been updated")
 	}
 	return dbUser, nil
-}
-
-func (u *usersImpl) GetServiceAccount(tenantID uint64) (*User, error) {
-	return nil, errors.New("not implemented")
 }
