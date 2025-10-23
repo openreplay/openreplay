@@ -35,6 +35,7 @@ const EChartsSunburst = (props: Props) => {
 
     const options = {
       ...defaultOptions,
+      yAxis: undefined,
       series: {
         type: 'sunburst',
         data: [tree],
