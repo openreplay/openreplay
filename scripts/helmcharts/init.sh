@@ -44,8 +44,8 @@ function exists() {
 ## Prepping the infra
 
 # Mac os doesn't have gnu sed, which will cause compatibility issues.
-# This wrapper will help to check the sed, and use the correct version="v1.22.0"
-# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.22.0"
+# This wrapper will help to check the sed, and use the correct version="v1.23.0"
+# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.23.0"
 function is_gnu_sed() {
     sed --version >/dev/null 2>&1
 }

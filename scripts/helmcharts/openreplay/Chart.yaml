@@ -22,7 +22,7 @@ version: 0.1.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 # Ref: https://github.com/helm/helm/issues/7858#issuecomment-608114589
-AppVersion: "v1.22.0"
+AppVersion: "v1.23.0"
 
 dependencies:
   - name: ingress-nginx
