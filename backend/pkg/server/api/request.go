@@ -188,3 +188,62 @@ func ParseStatusQueryParam(r *http.Request, defaultStatus string) string {
 	}
 	return defaultStatus
 }
+
+func GetPathParam[T any](r *http.Request, key string, parseFunc func(string) (T, error), defaultValue ...T) (T, error) {
+	var zero T
+	valueStr, ok := mux.Vars(r)[key]
+	if !ok || valueStr == "" {
+		if len(defaultValue) > 0 {
+			return defaultValue[0], nil
+		}
+		return zero, fmt.Errorf("missing path param: %s", key)
+	}
+	value, err := parseFunc(valueStr)
+	if err != nil {
+		if len(defaultValue) > 0 {
+			return defaultValue[0], nil
+		}
+		return zero, fmt.Errorf("invalid path param %s: %w", key, err)
+	}
+	return value, nil
+}
+
+func GetQueryParam[T any](r *http.Request, key string, parseFunc func(string) (T, error), defaultValue ...T) T {
+	var zero T
+	valueStr := r.URL.Query().Get(key)
+	if valueStr == "" {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+		return zero
+	}
+	value, err := parseFunc(valueStr)
+	if err != nil {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+		return zero
+	}
+	return value
+}
+
+func ParseString(s string) (string, error) {
+	return s, nil
+}
+
+func ParseBool(s string) (bool, error) {
+	return strconv.ParseBool(s)
+}
+
+func ParseInt(s string) (int, error) {
+	return strconv.Atoi(s)
+}
+
+func ParseUint32(s string) (uint32, error) {
+	v, err := strconv.ParseUint(s, 10, 32)
+	return uint32(v), err
+}
+
+func ParseUint64(s string) (uint64, error) {
+	return strconv.ParseUint(s, 10, 64)
+}
