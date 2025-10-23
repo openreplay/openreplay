@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
 	config "openreplay/backend/internal/config/connector"
 	"openreplay/backend/internal/connector"
 	saver "openreplay/backend/pkg/connector"
+	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
@@ -38,13 +41,18 @@ func main() {
 	}
 
 	var db saver.Database
+	var chConn driver.Conn
 	switch cfg.ConnectorType {
 	case "redshift":
 		if db, err = saver.NewRedshift(log, cfg, batches); err != nil {
 			log.Fatal(ctx, "can't init redshift connection: %s", err)
 		}
 	case "clickhouse":
-		if db, err = saver.NewClickHouse(log, cfg, batches); err != nil {
+		chConn, err = clickhouse.NewConnection(cfg.Clickhouse)
+		if err != nil {
+			log.Fatal(ctx, "can't init clickhouse connection: %s", err)
+		}
+		if db, err = saver.NewClickHouse(log, chConn, batches); err != nil {
 			log.Fatal(ctx, "can't init clickhouse connection: %s", err)
 		}
 	case "elasticsearch":
