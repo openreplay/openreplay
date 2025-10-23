@@ -1,0 +1,228 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "UTC",
+  "schedule": [
+    "before 4am on Monday"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "separateMajorMinor": true,
+  "separateMinorPatch": false,
+  "packageRules": [
+    {
+      "description": "Group Helm chart updates",
+      "groupName": "Helm charts",
+      "matchManagers": [
+        "helmv3"
+      ],
+      "matchPaths": [
+        "scripts/helmcharts/**"
+      ],
+      "schedule": [
+        "before 4am on Monday"
+      ]
+    },
+    {
+      "description": "Database Helm charts - PostgreSQL",
+      "groupName": "PostgreSQL chart and images",
+      "matchManagers": [
+        "helmv3",
+        "helm-values"
+      ],
+      "matchPackageNames": [
+        "postgresql",
+        "bitnami/postgresql",
+        "bitnamilegacy/postgresql"
+      ],
+      "matchPaths": [
+        "scripts/helmcharts/databases/charts/postgresql/**"
+      ]
+    },
+    {
+      "description": "Database Helm charts - Redis",
+      "groupName": "Redis chart and images",
+      "matchManagers": [
+        "helmv3",
+        "helm-values"
+      ],
+      "matchPackageNames": [
+        "redis",
+        "bitnami/redis"
+      ],
+      "matchPaths": [
+        "scripts/helmcharts/databases/charts/redis/**"
+      ]
+    },
+    {
+      "description": "Database Helm charts - Kafka",
+      "groupName": "Kafka chart and images",
+      "matchManagers": [
+        "helmv3",
+        "helm-values"
+      ],
+      "matchPackageNames": [
+        "kafka",
+        "bitnami/kafka",
+        "bitnamilegacy/kafka"
+      ],
+      "matchPaths": [
+        "scripts/helmcharts/databases/charts/kafka/**"
+      ]
+    },
+    {
+      "description": "Database Helm charts - ClickHouse",
+      "groupName": "ClickHouse images",
+      "matchManagers": [
+        "helm-values",
+        "kubernetes"
+      ],
+      "matchPackageNames": [
+        "clickhouse/clickhouse-server",
+        "alexakulov/clickhouse-backup"
+      ],
+      "matchPaths": [
+        "scripts/helmcharts/databases/charts/clickhouse/**"
+      ]
+    },
+    {
+      "description": "Database Helm charts - MinIO",
+      "groupName": "MinIO chart and images",
+      "matchManagers": [
+        "helmv3",
+        "helm-values"
+      ],
+      "matchPackageNames": [
+        "minio",
+        "bitnami/minio",
+        "bitnamilegacy/minio"
+      ],
+      "matchPaths": [
+        "scripts/helmcharts/databases/charts/minio/**"
+      ]
+    },
+    {
+      "description": "Database Helm charts - Vault",
+      "groupName": "Vault chart and images",
+      "matchManagers": [
+        "helmv3",
+        "helm-values"
+      ],
+      "matchPackageNames": [
+        "vault",
+        "hashicorp/vault"
+      ],
+      "matchPaths": [
+        "scripts/helmcharts/databases/charts/vault/**"
+      ]
+    },
+    {
+      "description": "Ingress NGINX chart",
+      "groupName": "Ingress NGINX",
+      "matchManagers": [
+        "helmv3",
+        "helm-values"
+      ],
+      "matchPackageNames": [
+        "ingress-nginx",
+        "ingress-nginx/controller",
+        "ingress-nginx/kube-webhook-certgen"
+      ],
+      "matchPaths": [
+        "scripts/helmcharts/openreplay/charts/ingress-nginx/**"
+      ]
+    },
+    {
+      "description": "OpenReplay templates - container images",
+      "groupName": "OpenReplay templates images",
+      "matchManagers": [
+        "kubernetes"
+      ],
+      "matchPaths": [
+        "scripts/helmcharts/openreplay/templates/**"
+      ],
+      "matchPackagePatterns": [
+        "alpine/git",
+        "bitnamilegacy/postgresql",
+        "clickhouse/clickhouse-server",
+        "bitnamilegacy/minio",
+        "hashicorp/vault",
+        "amazon/aws-cli",
+        "bitnamilegacy/kafka"
+      ]
+    },
+    {
+      "description": "Pin Alpine-based images to minor versions",
+      "matchPackagePatterns": [
+        "alpine",
+        "clickhouse.*alpine"
+      ],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)(\\.(?<patch>\\d+))?(-(?<compatibility>.*))?$"
+    },
+    {
+      "description": "Automerge patch updates for stable dependencies",
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": false,
+      "schedule": [
+        "before 4am on Monday"
+      ]
+    },
+    {
+      "description": "Require approval for major updates",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    }
+  ],
+  "helm-values": {
+    "enabled": true,
+    "fileMatch": [
+      "scripts/helmcharts/.+/values\\.ya?ml$"
+    ]
+  },
+  "helmv3": {
+    "enabled": true,
+    "fileMatch": [
+      "scripts/helmcharts/.+/Chart\\.ya?ml$"
+    ]
+  },
+  "kubernetes": {
+    "enabled": true,
+    "fileMatch": [
+      "scripts/helmcharts/.+\\.ya?ml$"
+    ]
+  },
+  "docker": {
+    "enabled": true
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "security"
+    ]
+  },
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "commitMessagePrefix": "chore(deps):",
+  "commitMessageAction": "update",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newVersion}}",
+  "semanticCommits": "enabled",
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Dependency Dashboard - Helm Charts & Images",
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/tests/**"
+  ]
+}
