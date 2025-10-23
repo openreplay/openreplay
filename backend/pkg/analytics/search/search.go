@@ -5,12 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"maps"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"slices"
 	"strings"
-
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/analytics/charts"
 	"openreplay/backend/pkg/analytics/model"
+
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
 // TODO - check all attributes and map the columns to the correct names
@@ -39,11 +42,13 @@ type Search interface {
 
 type searchImpl struct {
 	chConn driver.Conn
+	pgConn pool.Pool
 }
 
-func New(chConn driver.Conn) (Search, error) {
+func New(chConn driver.Conn, pgConn pool.Pool) (Search, error) {
 	return &searchImpl{
 		chConn: chConn,
+		pgConn: pgConn,
 	}, nil
 }
 
@@ -77,9 +82,9 @@ SELECT
 	s.user_os,
 	s.user_state,
 	s.events_count,
-	toUInt8(viewed_sessions.session_id>0) AS viewed,
+	viewed_sessions.session_id>0 AS viewed,
 	count(1) OVER() AS total_number_of_sessions
--- TODO: add metadata
+	%s
 FROM experimental.sessions AS s
 	%s
 	%s
@@ -184,7 +189,13 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 	}
 
 	viewedJoin := fmt.Sprintf(viewedSessionsJoinTemplate, userId, projectId, startSec)
+	var metasMap map[string]string = s.getMetadataColumns(projectId)
+	var metas string = ""
+	if metasMap == nil {
+		metas = "," + strings.Join(slices.Collect(maps.Keys(metasMap)), ",")
+	}
 	query := fmt.Sprintf(sessionsQuery,
+		metas,
 		eventsInnerJoin,
 		leftAntiJoin,
 		viewedJoin,
@@ -210,7 +221,7 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 	if len(resp.Sessions) > 0 {
 		resp.Total = resp.Sessions[0].TotalNumberOfSessions
 	}
-
+	processSessionsMetadata(resp.Sessions, metasMap)
 	return resp, nil
 }
 
@@ -222,7 +233,7 @@ func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.
 	response := &model.SeriesSessionsResponse{
 		Series: make([]model.SeriesSessionData, 0, len(req.Series)),
 	}
-
+	var metasMap map[string]string
 	for i, series := range req.Series {
 		// Create a copy of the request with series-specific filters
 		seriesReq := &model.SessionsSearchRequest{
@@ -273,8 +284,13 @@ func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.
 		}
 
 		viewedJoin := fmt.Sprintf(viewedSessionsJoinTemplate, userId, projectId, startSec)
-
+		metasMap = s.getMetadataColumns(projectId)
+		var metas string = ""
+		if metasMap == nil {
+			metas = "," + strings.Join(slices.Collect(maps.Keys(metasMap)), ",")
+		}
 		query := fmt.Sprintf(sessionsQuery,
+			metas,
 			eventsInnerJoin,
 			"", //LEFT ANTI JOIN not supported in series context yet
 			viewedJoin,
@@ -302,6 +318,70 @@ func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.
 		}
 		response.Series = append(response.Series, seriesData)
 	}
-
+	processSessionsMetadata(response.Series[0].Sessions, metasMap)
 	return response, nil
+}
+func (s *searchImpl) getMetadataColumns(projectId int) map[string]string {
+	row, err := s.pgConn.Query(`
+SELECT metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
+metadata_6, metadata_7, metadata_8, metadata_9, metadata_10
+FROM projects
+WHERE project_id = $1;`, projectId)
+	if err != nil {
+		return nil
+	}
+	defer row.Close()
+	// Move to first row
+	if !row.Next() {
+		log.Fatal("No rows found")
+	}
+	// Get values
+	values, err := row.Values()
+	if err != nil {
+		log.Panic(err)
+		return nil
+	}
+	// Get column names
+	fields := row.FieldDescriptions()
+	var result map[string]string = make(map[string]string)
+	for i, field := range fields {
+		if values[i] != nil {
+			result[string(field.Name)] = values[i].(string)
+		}
+	}
+	return result
+}
+func processSessionsMetadata(rows []model.Session, metasMap map[string]string) {
+	if metasMap == nil {
+		return
+	}
+	for i := range len(rows) {
+		rows[i].Metadata = make(map[string]*string)
+		for metaKey, columnName := range metasMap {
+			var value *string
+			switch metaKey {
+			case "metadata_1":
+				value = rows[i].Metadata1
+			case "metadata_2":
+				value = rows[i].Metadata2
+			case "metadata_3":
+				value = rows[i].Metadata3
+			case "metadata_4":
+				value = rows[i].Metadata4
+			case "metadata_5":
+				value = rows[i].Metadata5
+			case "metadata_6":
+				value = rows[i].Metadata6
+			case "metadata_7":
+				value = rows[i].Metadata7
+			case "metadata_8":
+				value = rows[i].Metadata8
+			case "metadata_9":
+				value = rows[i].Metadata9
+			case "metadata_10":
+				value = rows[i].Metadata10
+			}
+			rows[i].Metadata[columnName] = value
+		}
+	}
 }
