@@ -528,26 +528,26 @@ func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (J
 	var links []Link = make([]Link, 0)
 	var drops []drop = make([]drop, 0)
 	var maxDepth int = 0
-	for _, r := range rows {
-		r.Value = r.SessionsCount * 100 / total100p
-		source := fmt.Sprintf("%d_%s_%s", r.EventNumberInSession-1, r.EventType, r.EValue.String)
+	for i := range len(rows) {
+		rows[i].Value = rows[i].SessionsCount * 100 / total100p
+		source := fmt.Sprintf("%d_%s_%s", rows[i].EventNumberInSession-1, rows[i].EventType, rows[i].EValue.String)
 		if !slices.Contains(nodes, source) {
 			nodes = append(nodes, source)
 			nodesValues = append(nodesValues, Node{
-				Depth:        int(r.EventNumberInSession - 1),
-				Name:         r.EValue.String,
-				EventType:    r.EventType,
+				Depth:        int(rows[i].EventNumberInSession - 1),
+				Name:         rows[i].EValue.String,
+				EventType:    rows[i].EventType,
 				ID:           len(nodesValues),
-				StartingNode: r.EventNumberInSession == 1,
+				StartingNode: rows[i].EventNumberInSession == 1,
 			})
 		}
-		target := fmt.Sprintf("%d_%s_%s", r.EventNumberInSession, r.NextType, r.NextValue.String)
+		target := fmt.Sprintf("%d_%s_%s", rows[i].EventNumberInSession, rows[i].NextType, rows[i].NextValue.String)
 		if !slices.Contains(nodes, target) {
 			nodes = append(nodes, target)
 			nodesValues = append(nodesValues, Node{
-				Depth:        int(r.EventNumberInSession),
-				Name:         r.NextValue.String,
-				EventType:    r.NextType,
+				Depth:        int(rows[i].EventNumberInSession),
+				Name:         rows[i].NextValue.String,
+				EventType:    rows[i].NextType,
 				ID:           len(nodesValues),
 				StartingNode: false,
 			})
@@ -556,34 +556,33 @@ func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (J
 		var srcIdx int = slices.Index(nodes, source)
 		var tgIdx int = slices.Index(nodes, target)
 		var link Link = Link{
-			EventType:     r.EventType,
-			SessionsCount: int(r.SessionsCount),
-			Value:         float64(r.Value),
+			EventType:     rows[i].EventType,
+			SessionsCount: int(rows[i].SessionsCount),
+			Value:         float64(rows[i].Value),
 			Source:        srcIdx,
 			Target:        tgIdx,
 		}
 		links = append(links, link)
-		maxDepth = int(r.EventNumberInSession)
-		if r.NextType == "DROP" {
-			var d drop
+		maxDepth = int(rows[i].EventNumberInSession)
+		if rows[i].NextType == "DROP" {
 			var broke bool = false
-			for _, d = range drops {
-				if d.depth == int(r.EventNumberInSession) {
-					d.sessionsCount += r.SessionsCount
+			for j := range len(drops) {
+				if drops[j].depth == int(rows[i].EventNumberInSession) {
+					drops[j].sessionsCount += rows[i].SessionsCount
 					broke = true
 					break
 				}
 			}
 			if !broke {
 				drops = append(drops, drop{
-					depth:         int(r.EventNumberInSession),
-					sessionsCount: r.SessionsCount,
+					depth:         int(rows[i].EventNumberInSession),
+					sessionsCount: rows[i].SessionsCount,
 				})
 			}
 		}
 	}
-
-	for i := range drops {
+	var dropSum int = 0
+	for i := range len(drops) {
 		if drops[i].depth < maxDepth {
 			source := fmt.Sprintf("%d_DROP_", drops[i].depth)
 			target := fmt.Sprintf("%d_DROP_", drops[i].depth+1)
@@ -601,11 +600,11 @@ func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (J
 				})
 				tgIdx = len(nodes) - 1
 			}
-
+			dropSum += int(drops[i].sessionsCount)
 			link := Link{
 				EventType:     "DROP",
-				SessionsCount: int(drops[i].sessionsCount),
-				Value:         float64(drops[i].sessionsCount) * 100 / float64(total100p),
+				SessionsCount: dropSum,
+				Value:         float64(dropSum) * 100 / float64(total100p),
 				Source:        srIdx,
 				Target:        tgIdx,
 			}
