@@ -264,10 +264,8 @@ export default class App {
   private rootId: number | null = null
   private pageFrames: HTMLIFrameElement[] = []
   private frameOderNumber = 0
-  private features = {
-    'feature-flags': true,
-    'usability-test': true,
-  }
+  private frameLevel = 0
+  private features = {}
   private emptyBatchCounter = 0
 
   constructor(
@@ -376,6 +374,7 @@ export default class App {
        * listen for messages from parent window, so we can signal that we're alive
        * */
       window.addEventListener('message', this.parentCrossDomainFrameListener)
+      window.addEventListener('message', this.crossDomainIframeListener)
       setInterval(() => {
         if (document.hidden) {
           return
@@ -464,6 +463,7 @@ export default class App {
       this.rootId = data.id
       this.session.setSessionToken(data.token as string, this.projectKey)
       this.frameOderNumber = data.frameOrderNumber
+      this.frameLevel = data.frameLevel
       this.debug.log('starting iframe tracking', data)
       this.allowAppStart()
     }
@@ -515,8 +515,8 @@ export default class App {
             line: proto.iframeId,
             id,
             token,
-            // since indexes go from 0 we +1
             frameOrderNumber: order,
+            frameLevel: this.frameLevel + 1,
           }
           this.debug.log('Got child frame signal; nodeId', id, event.source, iframeData)
           // @ts-ignore
@@ -1553,7 +1553,7 @@ export default class App {
       }
       await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
       this.activityState = ActivityState.Active
-      if (this.options.crossdomain?.enabled && !this.insideIframe) {
+      if (this.options.crossdomain?.enabled) {
         void this.bootChildrenFrames()
       }
 
@@ -1583,7 +1583,7 @@ export default class App {
         /** --------------- COLD START BUFFER ------------------*/
       } else {
         if (this.insideIframe && this.rootId) {
-          this.observer.crossdomainObserve(this.rootId, this.frameOderNumber)
+          this.observer.crossdomainObserve(this.rootId, this.frameOderNumber, this.frameLevel)
         } else {
           this.observer.observe()
         }
@@ -1789,7 +1789,7 @@ export default class App {
   stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
       try {
-        if (!this.insideIframe && this.options.crossdomain?.enabled) {
+        if (this.options.crossdomain?.enabled) {
           this.killChildrenFrames()
         }
         this.attributeSender.clear()
