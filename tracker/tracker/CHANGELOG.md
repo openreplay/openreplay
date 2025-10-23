@@ -14,6 +14,7 @@ import { tracker } from '@openreplay/tracker'
 tracker.incident({ label: 'incident', startTime: Date.now() })
 ```
 - fixes and improvements for connection quality tracking (which was not working previously)
+- big fixes for cross origin iframe tracking
 
 ## 16.4.10
 

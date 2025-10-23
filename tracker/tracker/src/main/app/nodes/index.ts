@@ -1,5 +1,6 @@
 import { createEventListener, deleteEventListener } from '../../utils.js'
 import Maintainer, { MaintainerOptions } from './maintainer.js'
+import { pack } from './idSeq.js'
 
 type NodeCallback = (node: Node, isStart: boolean) => void
 type ElementListener = [string, EventListener, boolean]
@@ -27,16 +28,8 @@ export default class Nodes {
     this.maintainer.start()
   }
 
-  syntheticMode(frameOrder: number) {
-    const maxSafeNumber = Number.MAX_SAFE_INTEGER
-    const placeholderSize = 99999999
-    const nextFrameId = placeholderSize * frameOrder
-    // I highly doubt that this will ever happen,
-    // but it will be easier to debug if it does
-    if (nextFrameId > maxSafeNumber) {
-      throw new Error('Placeholder id overflow')
-    }
-    this.nextNodeId = nextFrameId
+  crossdomainMode(level: number, frameOrder: number) {
+    this.nextNodeId = this.createFrameId(level, frameOrder)
   }
 
   // Attached once per Tracker instance
@@ -65,6 +58,10 @@ export default class Nodes {
       this.elementListeners.set(id, listeners)
     }
     listeners.push([type, listener, useCapture])
+  }
+
+  createFrameId = (level: number, frameOrder: number) => {
+    return pack(level, frameOrder, 0)
   }
 
   registerNode(node: Node): [/*id:*/ number, /*isNew:*/ boolean] {
