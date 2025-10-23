@@ -89,11 +89,19 @@ function build_api() {
         rm -rf ../${destination}
         return
     }
+    build_count=1
     for image in $(ls cmd); do
-        build_service $image
+        build_service "$image" &
         echo "::set-output name=image::${DOCKER_REPO:-'local'}/$image:${image_tag}"
         [[ $PATCH -eq 1 ]] && update_helm_release $image
+        ((build_count++))
+        # Run max 4 jobs in parallel
+        if [[ $build_count -eq 4 ]]; then
+            wait
+            build_count=1
+        fi
     done
+    wait
     cd ../backend
     rm -rf ../${destination}
     echo "backend build completed"
