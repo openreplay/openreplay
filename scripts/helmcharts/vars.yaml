@@ -160,6 +160,9 @@ global:
     emailSslCert: ""
     emailFrom: "OpenReplay<do-not-reply@openreplay.com>"
 
+  # Only for ee
+  ee-components:
+    enabled: false
   enterpriseEditionLicense: ""
   domainName: ""
 
