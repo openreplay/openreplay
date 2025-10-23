@@ -40,4 +40,4 @@ dependencies:
   - name: assist-api
     repository: file://charts/assist-api
     version: 0.1.1
-    condition: ee-components.enabled
+    condition: global.ee-components.enabled
