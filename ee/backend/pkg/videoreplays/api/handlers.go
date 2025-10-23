@@ -55,7 +55,7 @@ func (e *handlersImpl) exportSessionVideo(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	projectID, err := api.GetIDFromRequest(r, "projectId")
+	projectID, err := api.GetPathParam(r, "projectId", api.ParseInt)
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
@@ -79,7 +79,7 @@ func (e *handlersImpl) exportSessionVideo(w http.ResponseWriter, r *http.Request
 func (e *handlersImpl) getSessionVideos(w http.ResponseWriter, r *http.Request) {
 	ctx := InitRequestContext(r)
 
-	projectID, err := api.GetIDFromRequest(r, "projectId")
+	projectID, err := api.GetPathParam(r, "projectId", api.ParseInt)
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
@@ -87,11 +87,11 @@ func (e *handlersImpl) getSessionVideos(w http.ResponseWriter, r *http.Request) 
 
 	req := &service.SessionVideosGetRequest{
 		PageInfo: service.PageInfo{
-			Page:  ParseIntQueryParam(r, "page", DefaultPage),
-			Limit: ParseIntQueryParam(r, "limit", DefaultLimit),
+			Page:  api.GetQueryParam(r, "page", api.ParseInt, DefaultPage),
+			Limit: api.GetQueryParam(r, "limit", api.ParseInt, DefaultLimit),
 		},
-		IsSelf: ParseBoolQueryParam(r, "isSelf", false),
-		Status: service.Status(ParseStatusQueryParam(r, string(service.StatusCompleted))),
+		IsSelf: api.GetQueryParam(r, "isSelf", api.ParseBool, false),
+		Status: service.Status(api.GetQueryParam(r, "status", api.ParseString, string(service.StatusCompleted))),
 	}
 
 	currentUser := GetCurrentUser(r)
@@ -107,13 +107,13 @@ func (e *handlersImpl) getSessionVideos(w http.ResponseWriter, r *http.Request) 
 func (e *handlersImpl) deleteSessionVideo(w http.ResponseWriter, r *http.Request) {
 	ctx := InitRequestContext(r)
 
-	projectID, err := api.GetIDFromRequest(r, "projectId")
+	projectID, err := api.GetPathParam(r, "projectId", api.ParseInt)
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	sessionID, err := api.GetStringFromRequest(r, "sessionId")
+	sessionID, err := api.GetPathParam(r, "sessionId", api.ParseUint32)
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
@@ -136,13 +136,13 @@ func (e *handlersImpl) deleteSessionVideo(w http.ResponseWriter, r *http.Request
 func (e *handlersImpl) downloadSessionVideo(w http.ResponseWriter, r *http.Request) {
 	ctx := InitRequestContext(r)
 
-	projectID, err := api.GetIDFromRequest(r, "projectId")
+	projectID, err := api.GetPathParam(r, "projectId", api.ParseInt)
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	sessionID, err := api.GetStringFromRequest(r, "sessionId")
+	sessionID, err := api.GetPathParam(r, "sessionId", api.ParseUint32)
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
