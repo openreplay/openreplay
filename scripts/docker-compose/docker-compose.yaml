@@ -197,6 +197,23 @@ services:
     restart: unless-stopped
   
   
+  heuristics-openreplay:
+    image: public.ecr.aws/p1t3u8a3/heuristics:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: heuristics
+    networks:
+      openreplay-net:
+        aliases:
+          - heuristics-openreplay
+          - heuristics-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/heuristics.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
+  
   http-openreplay:
     image: public.ecr.aws/p1t3u8a3/http:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -316,6 +333,23 @@ services:
     restart: unless-stopped
   
   
+  api-openreplay:
+    image: public.ecr.aws/p1t3u8a3/api:${COMMON_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: api
+    networks:
+      openreplay-net:
+        aliases:
+          - api-openreplay
+          - api-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/api.env
+    environment: {}  # Fallback empty environment if env_file is missing
+    restart: unless-stopped
+  
+  
   assets-openreplay:
     image: public.ecr.aws/p1t3u8a3/assets:${COMMON_VERSION}
     domainname: app.svc.cluster.local
@@ -431,23 +465,6 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/frontend.env
-    environment: {}  # Fallback empty environment if env_file is missing
-    restart: unless-stopped
-  
-  
-  heuristics-openreplay:
-    image: public.ecr.aws/p1t3u8a3/heuristics:${COMMON_VERSION}
-    domainname: app.svc.cluster.local
-    container_name: heuristics
-    networks:
-      openreplay-net:
-        aliases:
-          - heuristics-openreplay
-          - heuristics-openreplay.app.svc.cluster.local
-    volumes:
-      - shared-volume:/mnt/efs
-    env_file:
-      - docker-envs/heuristics.env
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
