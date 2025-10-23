@@ -13,6 +13,11 @@ import (
 	"openreplay/backend/pkg/videoreplays/service"
 )
 
+const (
+	DefaultPage  = 1
+	DefaultLimit = 10
+)
+
 type handlersImpl struct {
 	log           logger.Logger
 	responser     api.Responser
@@ -50,7 +55,7 @@ func (e *handlersImpl) exportSessionVideo(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	projectID, err := GetIDFromRequest(r, "projectId")
+	projectID, err := api.GetIDFromRequest(r, "projectId")
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
@@ -74,7 +79,7 @@ func (e *handlersImpl) exportSessionVideo(w http.ResponseWriter, r *http.Request
 func (e *handlersImpl) getSessionVideos(w http.ResponseWriter, r *http.Request) {
 	ctx := InitRequestContext(r)
 
-	projectID, err := GetIDFromRequest(r, "projectId")
+	projectID, err := api.GetIDFromRequest(r, "projectId")
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
@@ -102,13 +107,13 @@ func (e *handlersImpl) getSessionVideos(w http.ResponseWriter, r *http.Request) 
 func (e *handlersImpl) deleteSessionVideo(w http.ResponseWriter, r *http.Request) {
 	ctx := InitRequestContext(r)
 
-	projectID, err := GetIDFromRequest(r, "projectId")
+	projectID, err := api.GetIDFromRequest(r, "projectId")
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	sessionID, err := GetStringFromRequest(r, "sessionId")
+	sessionID, err := api.GetStringFromRequest(r, "sessionId")
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
@@ -131,13 +136,13 @@ func (e *handlersImpl) deleteSessionVideo(w http.ResponseWriter, r *http.Request
 func (e *handlersImpl) downloadSessionVideo(w http.ResponseWriter, r *http.Request) {
 	ctx := InitRequestContext(r)
 
-	projectID, err := GetIDFromRequest(r, "projectId")
+	projectID, err := api.GetIDFromRequest(r, "projectId")
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	sessionID, err := GetStringFromRequest(r, "sessionId")
+	sessionID, err := api.GetStringFromRequest(r, "sessionId")
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, err)
 		return
