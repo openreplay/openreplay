@@ -530,6 +530,12 @@ func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (J
 	var maxDepth int = 0
 	for i := range len(rows) {
 		rows[i].Value = rows[i].SessionsCount * 100 / total100p
+		if !rows[i].EValue.Valid {
+			rows[i].EValue.String = ""
+		}
+		if !rows[i].NextValue.Valid {
+			rows[i].NextValue.String = ""
+		}
 		source := fmt.Sprintf("%d_%s_%s", rows[i].EventNumberInSession-1, rows[i].EventType, rows[i].EValue.String)
 		if !slices.Contains(nodes, source) {
 			nodes = append(nodes, source)
