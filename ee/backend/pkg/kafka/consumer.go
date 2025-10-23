@@ -91,7 +91,9 @@ func NewConsumer(
 				log.Printf("Kafka consumer left the group, exiting...")
 				os.Exit(1)
 			}
-			log.Printf("Kafka consumer log: %s", logMsg.String())
+			if logMsg != (kafka.LogEvent{}) {
+				log.Printf("Kafka consumer log: %s", logMsg.String())
+			}
 		}
 	}()
 	return consumer
@@ -110,9 +112,13 @@ func (consumer *consumerImpl) reBalanceCallback(c *kafka.Consumer, e kafka.Event
 	}
 	switch evt := e.(type) {
 	case kafka.RevokedPartitions:
-		consumer.rebalanceHandler(types.RebalanceTypeRevoke, getPartitionsNumbers(evt.Partitions))
+		partitions := getPartitionsNumbers(evt.Partitions)
+		log.Printf("RebalanceTypeRevoke, partitions: %v", partitions)
+		consumer.rebalanceHandler(types.RebalanceTypeRevoke, partitions)
 	case kafka.AssignedPartitions:
-		consumer.rebalanceHandler(types.RebalanceTypeAssign, getPartitionsNumbers(evt.Partitions))
+		partitions := getPartitionsNumbers(evt.Partitions)
+		log.Printf("RebalanceTypeAssign, partitions: %v", partitions)
+		consumer.rebalanceHandler(types.RebalanceTypeAssign, partitions)
 	}
 	if _, err := c.Commit(); err != nil {
 		log.Println("reBalanceCallback error: can't commit the current state, ", err)
