@@ -73,7 +73,7 @@ clickhouse: &clickhouse
   password: ""
   image:
     repository: clickhouse/clickhouse-server
-    tag: 22.12-alpine
+    tag: 25.9-alpine
 
 global:
   clickhouse: *clickhouse
