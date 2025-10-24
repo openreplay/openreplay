@@ -64,16 +64,20 @@ spec:
               value: '{{ .Values.service.ports.http }}'
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
-                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "access-key" "ctx" .) | nindent 18 }}
+                secretKeyRef:
+                  name: replay-exporter-credentials
+                  key: access-key
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
-                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "secret-key" "ctx" .) | nindent 18 }}
+                secretKeyRef:
+                  name: replay-exporter-credentials
+                  key: secret-key
             - name: AWS_ENDPOINT
               value: '{{- include "openreplay.s3Endpoint" . }}'
             - name: AWS_REGION
-              value: '{{ .Values.global.s3.region }}'
+              value: '{{ .Values.aws.region | default .Values.global.s3.region }}'
             - name: BUCKET_NAME
-              value: {{ .Values.global.s3.recordingsBucket }}
+              value: {{ .Values.aws.bucket_name | default .Values.global.s3.recordingsBucket }}
             - name: pg_password
               {{- if .Values.global.postgresql.existingSecret }}
               valueFrom:
