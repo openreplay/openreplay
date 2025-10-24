@@ -77,7 +77,7 @@ spec:
             - name: AWS_REGION
               value: '{{ .Values.aws.region | default .Values.global.s3.region }}'
             - name: BUCKET_NAME
-              value: {{ .Values.aws.bucket_name | default .Values.global.s3.recordingsBucket }}
+              value: {{ .Values.aws.bucket_name }}
             - name: pg_password
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 18 }}

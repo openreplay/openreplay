@@ -103,7 +103,7 @@ autoscaling:
 cloud: aws
 aws:
   region: ""
-  bucket_name: ""
+  bucket_name: "replay-exporter"
 env:
   SERVICE_NAME: video-replays
   TOPIC_VIDEO_REPLAY: video-replays
