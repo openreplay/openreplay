@@ -8,6 +8,14 @@
     "docker.io/bitnamilegacy/kafka-exporter",
     "docker.io/bitnamilegacy/redis-sentinel-exporter"
   ],
+  "enabledManagers": [
+    "helmv3",
+    "docker",
+    "helm-values",
+    "docker-compose",
+    "github-actions",
+    "helm-requirements"
+  ],
   "timezone": "UTC",
   "schedule": [
     "before 4am on Monday"
