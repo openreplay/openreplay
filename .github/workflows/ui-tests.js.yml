@@ -145,7 +145,7 @@ jobs:
         timeout-minutes: 5
       - name: Upload Debug
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: 'Snapshots'
           path: |
