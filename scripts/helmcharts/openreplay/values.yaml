@@ -2,6 +2,16 @@ migrationJob:
   podAnnotations:
     linkerd.io/inject: disabled
 
+postgresql:
+  image:
+    repository: bitnamilegacy/postgresql
+    tag: 17.2.0
+
+kafka:
+  image:
+    repository: bitnamilegacy/kafka
+    tag: 3.3
+
 migration:
   env: {}
 
@@ -55,10 +65,18 @@ assist-api:
 minio:
   # Force initialize minio, even if the instance is not provisioned by OR
   forceInit: false
+  image:
+    repository: bitnamilegacy/minio
+    tag: 2023.11.20
+
+clickhouse: &clickhouse
+  password: ""
+  image:
+    repository: clickhouse/clickhouse-server
+    tag: 22.12-alpine
 
 global:
-  clickhouse:
-    password: ""
+  clickhouse: *clickhouse
   orAppSecrets: {}
   appLabels: {}
   vault: *vault

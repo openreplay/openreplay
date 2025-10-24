@@ -157,7 +157,7 @@ spec:
         - name: datadir
           mountPath: /mnt/efs
       - name: postgres-check
-        image: bitnamilegacy/postgresql:16.3.0
+        image: "{{.Values.postgresql.image.repository}}:{{.Values.postgresql.image.tag}}"
         env:
           - name: PGHOST
             value: "{{ .Values.global.postgresql.postgresqlHost }}"
@@ -195,7 +195,7 @@ spec:
               exit 101
             }
       - name: clickhouse-check
-        image: clickhouse/clickhouse-server:22.12-alpine
+        image: "{{.Values.clickhouse.image.repository}}:{{.Values.clickhouse.image.tag}}"
         env:
           {{- range $key, $val := .Values.global.env }}
           - name: {{ $key }}
@@ -286,7 +286,7 @@ spec:
           - name: {{ $key }}
             value: '{{ $val }}'
           {{- end }}
-        image: bitnamilegacy/postgresql:16.3.0
+        image: "{{.Values.postgresql.image.repository}}:{{.Values.postgresql.image.tag}}"
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
@@ -299,7 +299,7 @@ spec:
           mountPath: /opt/migrations/
       {{- if or .Values.minio.enabled .Values.minio.forceInit }}
       - name: minio
-        image: bitnamilegacy/minio:2023.11.20
+        image: "{{.Values.minio.image.repository}}:{{.Values.minio.image.tag}}"
         env:
           - name: OPENREPLAY_VERSION
             valueFrom:
@@ -431,7 +431,7 @@ spec:
           mountPath: /opt/openreplay
       {{- end }}
       - name: kafka
-        image: bitnamilegacy/kafka:2.6.0-debian-10-r30
+        image: "{{.Values.kafka.image.repository}}:{{.Values.kafka.image.tag}}"
         env:
           - name: OPENREPLAY_VERSION
             valueFrom:
@@ -473,7 +473,7 @@ spec:
           mountPath: /opt/migrations/
         {{- end}}
       - name: clickhouse
-        image: clickhouse/clickhouse-server:22.12-alpine
+        image: "{{.Values.clickhouse.image.repository}}:{{.Values.clickhouse.image.tag}}"
         env:
           - name: OPENREPLAY_VERSION
             valueFrom:
