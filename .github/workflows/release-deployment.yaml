@@ -69,7 +69,7 @@ jobs:
         done
         wait
           
-    - uses: azure/k8s-set-context@v1
+    - uses: azure/k8s-set-context@v4
       name: Using ee release cluster
       with:
         method: kubeconfig
@@ -85,7 +85,7 @@ jobs:
           kubectl set image deployment/$SERVICE-openreplay -n app $SERVICE=${IMAGE_REGISTRY_URL}/$SERVICE:${IMAGE_TAG}-ee
         done
 
-    - uses: azure/k8s-set-context@v1
+    - uses: azure/k8s-set-context@v4
       name: Using foss release cluster
       with:
         method: kubeconfig

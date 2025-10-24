@@ -67,7 +67,7 @@ jobs:
           echo "IMAGE_TAG=${IMAGE_TAG_BASE}-ee" >> $GITHUB_ENV
           echo "IMAGE_TAG_BASE=${IMAGE_TAG_BASE}" >> $GITHUB_ENV
 
-      - uses: azure/k8s-set-context@v1
+      - uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.

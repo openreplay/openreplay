@@ -30,7 +30,7 @@ jobs:
       run: |-
         [[ `git --no-pager diff --name-only HEAD HEAD~1 | grep -E "scripts/helm/db/init_dbs" | grep -vE ^ee/` ]] || echo "::set-output name=skip_migration_oss::true"
 
-    - uses: azure/k8s-set-context@v1
+    - uses: azure/k8s-set-context@v4
       if: ${{ steps.check-migration.outputs.skip_migration_oss != 'true' }}
       with:
         method: kubeconfig
@@ -91,7 +91,7 @@ jobs:
     - name: cleaning old assets
       run: |
         rm -rf /tmp/image_*
-    - uses: azure/k8s-set-context@v1
+    - uses: azure/k8s-set-context@v4
       with:
         method: kubeconfig
         kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
