@@ -71,6 +71,7 @@ func NewSessionFinder(log logger.Logger, cfg *config.Config, stg *storage.Storag
 			}, []int{messages.MsgSessionSearch}, true),
 		true,
 		cfg.MessageSizeLimit,
+		nil,
 	)
 	go finder.worker()
 	return finder, nil

@@ -50,8 +50,6 @@ func (d *dbImpl) run() {
 			d.sessions.Commit()
 		case <-commitTick:
 			d.commit()
-		case msg := <-d.consumer.Rebalanced():
-			d.log.Info(d.ctx, "Rebalanced: %v", msg)
 		case <-d.done:
 			d.commit()
 			if err := d.saver.Close(); err != nil {

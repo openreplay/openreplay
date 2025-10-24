@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/queue/types"
 )
 
 type idsInfo struct {
@@ -29,7 +28,6 @@ type Consumer struct {
 	idsPending      streamPendingIDsMap
 	lastTs          int64
 	autoCommit      bool
-	event           chan *types.PartitionsRebalancedEvent
 }
 
 func NewConsumer(group string, streams []string, messageIterator messages.MessageIterator) *Consumer {
@@ -63,15 +61,10 @@ func NewConsumer(group string, streams []string, messageIterator messages.Messag
 		group:           group,
 		autoCommit:      true,
 		idsPending:      idsPending,
-		event:           make(chan *types.PartitionsRebalancedEvent, 4),
 	}
 }
 
 const READ_COUNT = 10
-
-func (c *Consumer) Rebalanced() <-chan *types.PartitionsRebalancedEvent {
-	return c.event
-}
 
 func (c *Consumer) ConsumeNext() error {
 	// MBTODO: read in go routine, send messages to channel

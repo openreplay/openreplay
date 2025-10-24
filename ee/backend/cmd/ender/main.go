@@ -72,6 +72,14 @@ func main() {
 			false),
 		false,
 		cfg.MessageSizeLimit,
+		func(t types.RebalanceType, partitions []uint64) {
+			if t == types.RebalanceTypeRevoke {
+				sessionEndGenerator.Disable()
+			} else {
+				sessionEndGenerator.ActivePartitions(partitions)
+				sessionEndGenerator.Enable()
+			}
+		},
 	)
 
 	memoryManager, err := memory.NewManager(log, cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
@@ -202,13 +210,6 @@ func main() {
 			producer.Flush(cfg.ProducerTimeout)
 			if err := consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Error(ctx, "can't commit messages with offset: %s", err)
-			}
-		case msg := <-consumer.Rebalanced():
-			if msg.Type == types.RebalanceTypeRevoke {
-				sessionEndGenerator.Disable()
-			} else {
-				sessionEndGenerator.ActivePartitions(msg.Partitions)
-				sessionEndGenerator.Enable()
 			}
 		default:
 			if !memoryManager.HasFreeMemory() {

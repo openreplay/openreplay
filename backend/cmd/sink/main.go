@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
 	"syscall"
@@ -196,6 +197,11 @@ func main() {
 		messages.NewSinkMessageIterator(log, msgHandler, nil, false, sinkMetrics),
 		false,
 		cfg.MessageSizeLimit,
+		func(t types.RebalanceType, partitions []uint64) {
+			s := time.Now()
+			writer.Sync() // sync all opened files
+			log.Info(ctx, "manual sync finished, dur: %d", time.Now().Sub(s).Milliseconds())
+		},
 	)
 	log.Info(ctx, "sink service started")
 
@@ -223,15 +229,6 @@ func main() {
 		case <-tickInfo:
 			log.Info(ctx, "%s", counter.Log())
 			log.Info(ctx, "writer: %s", writer.Info())
-		case <-consumer.Rebalanced():
-			s := time.Now()
-			// Commit now to avoid duplicate reads
-			if err := consumer.Commit(); err != nil {
-				log.Error(ctx, "can't commit messages: %s", err)
-			}
-			// Sync all files
-			writer.Sync()
-			log.Info(ctx, "manual sync finished, dur: %d", time.Now().Sub(s).Milliseconds())
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
