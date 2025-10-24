@@ -59,6 +59,7 @@ export default function build({ production }: { production?: boolean }) {
     splitChunks: {
       chunks: 'all',
     },
+    runtimeChunk: 'single',
     minimizer: [
      new EsbuildPlugin({
        target: 'es2020',
@@ -146,6 +147,7 @@ export default function build({ production }: { production?: boolean }) {
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
     alias: pathAlias,
+    symlinks: false,
     fallback: {
       assert: false,
     },
@@ -177,7 +179,7 @@ export default function build({ production }: { production?: boolean }) {
       ignoreOrder: true
     }),
 ],
-  devtool: isDevelopment ? "inline-source-map" : false,
+  devtool: isDevelopment ? "eval-cheap-module-source-map" : false,
   performance: {
     hints: false,
   },
@@ -189,6 +191,7 @@ export default function build({ production }: { production?: boolean }) {
     open: true,
     port: 3333,
     hot: true,
+    compress: true,
     allowedHosts: "all",
       client: {
         overlay: {
