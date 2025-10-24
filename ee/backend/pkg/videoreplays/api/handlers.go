@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"openreplay/backend/pkg/sessions"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 
@@ -61,7 +62,13 @@ func (e *handlersImpl) exportSessionVideo(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if !e.sessions.IsExist(projectID, req.SessionID) {
+	sessionID, err := strconv.ParseUint(req.SessionID, 10, 64)
+	if err != nil {
+		HandleError(e.log, e.responser, ctx, w, r, http.StatusBadRequest, errors.New("invalid sessionId"))
+		return
+	}
+
+	if !e.sessions.IsExist(projectID, sessionID) {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusNotFound, errors.New("session does not exist"))
 		return
 	}

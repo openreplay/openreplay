@@ -35,7 +35,7 @@ func (video *SessionVideo) Response() *SessionVideoExportResponse {
 }
 
 type SessionVideoExportRequest struct {
-	SessionID uint64 `json:"sessionId" validate:"required"`
+	SessionID string `json:"sessionId" validate:"required"`
 }
 
 type SessionVideoExportResponse struct {
@@ -66,7 +66,7 @@ type SessionVideoJobMessage struct {
 	Status    Status `json:"status"`
 	Name      string `json:"name"` // s3Path
 	Error     string `json:"error,omitempty"`
-	SessionId uint64 `json:"sessionId"`
+	SessionId string `json:"sessionId"`
 }
 
 var (
