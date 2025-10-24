@@ -8,7 +8,7 @@ dependencies:
 - condition: zookeeper.enabled
   name: zookeeper
   repository: https://charts.bitnami.com/bitnami
-  version: 11.x.x
+  version: 13.x
 - name: common
   repository: https://charts.bitnami.com/bitnami
   tags:
