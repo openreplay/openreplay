@@ -30,7 +30,6 @@ import ShareModal from '../shared/SharePopup/SharePopup';
 import { useTranslation } from 'react-i18next';
 import SimilarSessionsButton from './SimilarSessions/SimilarSessionsButton';
 import { mobileScreen } from 'App/utils/isMobile';
-import { hasExport } from 'App/utils/split-utils';
 
 const disableDevtools = 'or_devtools_uxt_toggle';
 
@@ -184,7 +183,7 @@ function SubHeader(props) {
       onClick: showKbHelp,
     },
   ]
-  if (hasExport && account.hasVideoExport) {
+  if (account.hasVideoExport) {
     dropdownItems.push({
       key: '5',
       label: (
