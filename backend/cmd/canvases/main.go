@@ -97,6 +97,7 @@ func main() {
 		}, nil, true),
 		false,
 		cfg.MessageSizeLimit,
+		nil,
 	)
 
 	log.Info(ctx, "canvases service started")
@@ -117,8 +118,6 @@ func main() {
 			if err := canvasConsumer.Commit(); err != nil {
 				log.Error(ctx, "can't commit messages: %s", err)
 			}
-		case msg := <-canvasConsumer.Rebalanced():
-			log.Info(ctx, "consumer group rebalanced: %+v", msg)
 		default:
 			err = canvasConsumer.ConsumeNext()
 			if err != nil {
