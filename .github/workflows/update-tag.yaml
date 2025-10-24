@@ -12,7 +12,7 @@ jobs:
     if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event.inputs.services == 'true' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: Get latest release tag using GitHub API
         id: get-latest-tag
