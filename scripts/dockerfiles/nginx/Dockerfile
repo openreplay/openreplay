@@ -1,4 +1,4 @@
-FROM openresty/openresty:1.21.4.1-alpine
+FROM openresty/openresty:1.27.1.2-alpine
 
 RUN apk add --no-cache curl
 
