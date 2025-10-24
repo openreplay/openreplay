@@ -101,6 +101,7 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
+  SERVICE_NAME: video-replays
   TOPIC_VIDEO_REPLAY: video-replays
   GROUP_VIDEO_REPLAY: video-consumer
   SESSION_VIDEO_WIDTH: 1280
