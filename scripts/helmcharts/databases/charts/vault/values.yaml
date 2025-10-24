@@ -926,7 +926,7 @@ csi:
 
   image:
     repository: "hashicorp/vault-csi-provider"
-    tag: "1.2.0"
+    tag: "1.6.0"
     pullPolicy: IfNotPresent
 
   # volumes is a list of volumes made available to all containers. These are rendered
