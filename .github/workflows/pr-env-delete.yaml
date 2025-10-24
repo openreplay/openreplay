@@ -21,7 +21,7 @@ jobs:
         aws-access-key-id: ${{ secrets.OR_PR_AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.OR_PR_AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.OR_PR_AWS_DEFAULT_REGION}}
-    - uses: azure/k8s-set-context@v1
+    - uses: azure/k8s-set-context@v4
       with:
         method: kubeconfig
         kubeconfig: ${{ secrets.PR_KUBECONFIG }} # Use content of kubeconfig in secret.

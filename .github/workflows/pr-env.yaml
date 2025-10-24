@@ -59,7 +59,7 @@ jobs:
         # Replace with the command to install vCluster CLI
         curl -s -L "https://github.com/loft-sh/vcluster/releases/download/v0.16.4/vcluster-linux-amd64" -o /usr/local/bin/vcluster
         chmod +x /usr/local/bin/vcluster
-    - uses: azure/k8s-set-context@v1
+    - uses: azure/k8s-set-context@v4
       with:
         method: kubeconfig
         kubeconfig: ${{ secrets.PR_KUBECONFIG }} # Use content of kubeconfig in secret.
