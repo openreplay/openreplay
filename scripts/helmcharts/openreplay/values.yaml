@@ -5,7 +5,7 @@ migrationJob:
 postgresql:
   image:
     repository: bitnamilegacy/postgresql
-    tag: 17.2.0
+    tag: 17.6.0
 
 kafka:
   image:
