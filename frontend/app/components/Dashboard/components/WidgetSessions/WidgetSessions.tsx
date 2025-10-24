@@ -211,8 +211,12 @@ function WidgetSessions({ className = '' }) {
   };
 
   useEffect(() => {
+    loadData();
+  }, []);
+
+  useEffect(() => {
     if (metricStore.page === 1) {
-      loadData();
+      return;
     } else {
       metricStore.updateKey('sessionsPage', 1);
     }
