@@ -56,7 +56,7 @@ export const OPERATORS = {
       description: 'Contains the string',
     },
     {
-      value: 'doesNotContain',
+      value: 'notContains',
       label: 'does not contain',
       displayName: 'Does not contain',
       description: 'Does not contain the string',
@@ -245,8 +245,8 @@ export const OPERATORS = {
       description: 'Array contains the value',
     },
     {
-      value: 'doesNotContain',
-      label: 'does not contain', // Fixed: added spaces and lowercased
+      value: 'notContains',
+      label: 'does not contain',
       displayName: 'Does not contain',
       description: 'Array does not contain the value',
     },

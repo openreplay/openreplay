@@ -45,9 +45,9 @@ const options = [
     value: 'contains',
   },
   {
-    key: 'doesNotContain',
+    key: 'notContains',
     text: 'does not contain',
-    value: 'doesNotContain',
+    value: 'notContains',
   },
   {
     key: 'hasAnyValue',
