@@ -10,7 +10,7 @@
   ],
   "enabledManagers": [
     "helmv3",
-    "docker",
+    "dockerfile",
     "helm-values",
     "docker-compose",
     "github-actions",
