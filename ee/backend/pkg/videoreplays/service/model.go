@@ -11,7 +11,7 @@ const (
 )
 
 type SessionVideo struct {
-	SessionID    uint64 `json:"sessionId"`
+	SessionID    string `json:"sessionId"`
 	ProjectID    int    `json:"projectId"`
 	UserID       uint64 `json:"userId"`
 	UserName     string `json:"userName"`

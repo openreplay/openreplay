@@ -101,7 +101,7 @@ func (h *Storage) CreateSessionVideoRecord(ctx context.Context, sessionID uint64
 
 func (h *Storage) GetSessionVideoBySessionAndProject(ctx context.Context, sessionID uint64, projectID int) (*SessionVideo, error) {
 	query := `
-		SELECT session_id, project_id, user_id, file_url, status, job_id, error_message, created_at, modified_at
+		SELECT session_id::text, project_id, user_id, file_url, status, job_id, error_message, created_at, modified_at
 		FROM public.sessions_videos
 		WHERE session_id = $1 AND project_id = $2`
 
@@ -184,7 +184,7 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 	}
 
 	query := fmt.Sprintf(`
-		SELECT sv.session_id, sv.project_id, sv.user_id, u.name as user_name, sv.file_url, sv.status, sv.job_id, sv.error_message, sv.created_at, sv.modified_at,
+		SELECT sv.session_id::text, sv.project_id, sv.user_id, u.name as user_name, sv.file_url, sv.status, sv.job_id, sv.error_message, sv.created_at, sv.modified_at,
 		       COUNT(*) OVER() as total_count
 		FROM public.sessions_videos sv
 		LEFT JOIN public.users u ON sv.user_id = u.user_id
