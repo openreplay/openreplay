@@ -17,6 +17,7 @@ topics=(
     "analytics"
     "storage-failover"
     "quickwit"
+    "video-replays"
 )
 
 touch /tmp/config.txt
