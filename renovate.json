@@ -12,5 +12,13 @@
     "docker-compose",
     "github-actions",
     "helm-requirements"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "automerge": true
+    }
   ]
 }
