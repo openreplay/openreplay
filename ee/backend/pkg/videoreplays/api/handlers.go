@@ -98,7 +98,7 @@ func (e *handlersImpl) getSessionVideos(w http.ResponseWriter, r *http.Request) 
 			Limit: api.GetQueryParam(r, "limit", api.ParseInt, DefaultLimit),
 		},
 		IsSelf: api.GetQueryParam(r, "isSelf", api.ParseBool, false),
-		Status: service.Status(api.GetQueryParam(r, "status", api.ParseString, string(service.StatusCompleted))),
+		Status: service.Status(api.GetQueryParam(r, "status", api.ParseString, "")),
 	}
 
 	currentUser := GetCurrentUser(r)
