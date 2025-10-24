@@ -268,7 +268,7 @@ test:
     repository: busybox
     # -- Image tag
     # Defaults to `latest` if omitted
-    tag: '1.35'
+    tag: '1.37'
     # -- (string) Image pull policy
     # Defaults to image.pullPolicy if omitted
     pullPolicy: ~
