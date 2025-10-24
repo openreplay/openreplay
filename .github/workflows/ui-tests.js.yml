@@ -1,6 +1,4 @@
-# Checking unit and visual tests locally on every merge rq to dev and main
-name: Frontend tests
-
+name: UI E2E tests
 on:
   workflow_dispatch:
   push:

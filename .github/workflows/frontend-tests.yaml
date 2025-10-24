@@ -1,4 +1,4 @@
-name: Frontend tests
+name: UI Unit tests
 
 on:
   pull_request:
@@ -30,4 +30,3 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           directory: frontend/coverage/
-
