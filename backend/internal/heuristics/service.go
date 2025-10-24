@@ -56,8 +56,6 @@ func (h *heuristicsImpl) run() {
 		case <-tick:
 			h.producer.Flush(h.cfg.ProducerTimeout)
 			h.consumer.Commit()
-		case msg := <-h.consumer.Rebalanced():
-			h.log.Info(h.ctx, "rebalanced: %v", msg)
 		case <-h.done:
 			// Stop event builder and flush all events
 			h.log.Info(h.ctx, "stopping heuristics service")

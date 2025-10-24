@@ -56,6 +56,7 @@ func main() {
 		messages.NewMessageIterator(log, msgHandler, []int{messages.MsgAssetCache, messages.MsgJSException}, true),
 		true,
 		cfg.MessageSizeLimit,
+		nil,
 	)
 
 	log.Info(ctx, "Cacher service started")
@@ -75,8 +76,6 @@ func main() {
 			log.Error(ctx, "Error while caching: %s", err)
 		case <-tick:
 			cacher.UpdateTimeouts()
-		case msg := <-msgConsumer.Rebalanced():
-			log.Info(ctx, "Rebalanced: %v", msg)
 		default:
 			if !cacher.CanCache() {
 				continue
