@@ -67,7 +67,7 @@ minio:
   forceInit: false
   image:
     repository: bitnamilegacy/minio
-    tag: 2023.11.20
+    tag: 2025.7.23
 
 clickhouse: &clickhouse
   password: ""
