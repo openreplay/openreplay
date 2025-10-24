@@ -8,6 +8,7 @@ import {
   Bookmark as BookmarkIcn,
   BookmarkCheck,
   Vault,
+  File,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
@@ -40,10 +41,11 @@ function SubHeader(props) {
     userStore,
     issueReportingStore,
     settingsStore,
+    recordingsStore,
   } = useStore();
   const { t } = useTranslation();
   const { favorite } = sessionStore.current;
-  const { isEnterprise } = userStore;
+  const { isEnterprise, account } = userStore;
   const currentSession = sessionStore.current;
   const projectId = projectsStore.siteId;
   const integrations = integrationsStore.issues.list;
@@ -135,6 +137,65 @@ function SubHeader(props) {
     location.reload();
   };
 
+  const onExport = async () => {
+    const status = await recordingsStore.triggerExport(currentSession.sessionId)
+    const statusLabels = {
+      pending: 'Sesison export started',
+      success: 'Session already exported',
+      failure: 'Session export failed, please try again later'
+    }
+    // @ts-ignore
+    toast.info(statusLabels[status ?? pending]);
+  }
+
+  const dropdownItems = [
+    {
+      key: '2',
+      label: (
+        <div className="flex items-center gap-2">
+          {vaultIcon}
+          <span>{isEnterprise ? t('Vault') : t('Bookmark')}</span>
+        </div>
+      ),
+      onClick: toggleFavorite,
+    },
+    {
+      key: '4',
+      label: (
+        <div className="flex items-center gap-2">
+          <Icon
+            name={`integrations/${reportingProvider || 'github'}`}
+          />
+          <span>{t('Issues')}</span>
+        </div>
+      ),
+      disabled: !enabledIntegration,
+      onClick: handleOpenIssueModal,
+    },
+    {
+      key: '1',
+      label: (
+        <div className="flex items-center gap-2">
+          <Keyboard size={16} strokeWidth={1} />
+          <span>{t('Keyboard Shortcuts')}</span>
+        </div>
+      ),
+      onClick: showKbHelp,
+    },
+  ]
+  if (account.hasVideoExport) {
+    dropdownItems.push({
+      key: '5',
+      label: (
+        <div className="flex items-center gap-2">
+          <File size={16} strokeWidth={1} />
+          <span>{t('Export Video')}</span>
+        </div>
+      ),
+      onClick: onExport,
+    })
+  }
+
   return (
     <>
       <WarnBadge
@@ -190,41 +251,7 @@ function SubHeader(props) {
             <HighlightButton onClick={() => props.setActiveTab('HIGHLIGHT')} />
             <Dropdown
               menu={{
-                items: [
-                  {
-                    key: '2',
-                    label: (
-                      <div className="flex items-center gap-2">
-                        {vaultIcon}
-                        <span>{isEnterprise ? t('Vault') : t('Bookmark')}</span>
-                      </div>
-                    ),
-                    onClick: toggleFavorite,
-                  },
-                  {
-                    key: '4',
-                    label: (
-                      <div className="flex items-center gap-2">
-                        <Icon
-                          name={`integrations/${reportingProvider || 'github'}`}
-                        />
-                        <span>{t('Issues')}</span>
-                      </div>
-                    ),
-                    disabled: !enabledIntegration,
-                    onClick: handleOpenIssueModal,
-                  },
-                  {
-                    key: '1',
-                    label: (
-                      <div className="flex items-center gap-2">
-                        <Keyboard size={16} strokeWidth={1} />
-                        <span>{t('Keyboard Shortcuts')}</span>
-                      </div>
-                    ),
-                    onClick: showKbHelp,
-                  },
-                ],
+                items: dropdownItems,
               }}
             >
               <AntButton size="small">

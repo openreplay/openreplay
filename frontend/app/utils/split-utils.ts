@@ -11,4 +11,5 @@ export const menuHidden = {
   bookmarks: false,
   kai: true,
   billing: true,
+  videoExport: false,
 };

@@ -232,7 +232,8 @@ export default class APIClient {
     const noChalice =
       path.includes('/kai') ||
       path.includes('v1/integrations') ||
-      (path.includes('/spot') && !path.includes('/login'));
+      (path.includes('/spot') && !path.includes('/login')) ||
+      path.includes('video-replays');
     let edp = window.env.API_EDP || window.location.origin + '/api';
 
     // using product analytics api for cards and dashboards (excluding sessions)

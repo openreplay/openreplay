@@ -11,4 +11,5 @@ export const CLIENT_TABS = {
   AUDIT: 'audit',
   BILLING: '$_this_url_does_not_exist',
   MODULES: 'modules',
+  VIDEOS: 'exported'
 };

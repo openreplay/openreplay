@@ -2,44 +2,36 @@ import { makeAutoObservable } from 'mobx';
 import { recordingsService } from 'App/services';
 import { IRecord } from 'App/services/RecordingsService';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
+import { ExportsResponse } from 'App/services/RecordingsService';
 
 export default class RecordingsStore {
   recordings: IRecord[] = [];
-
   loading: boolean;
-
   page = 1;
-
   total: number = 0;
-
   pageSize = 5;
-
   order: 'desc' | 'asc' = 'desc';
-
   search = '';
-
-  // later we will add search by user id
-  userId = '0';
-
   startTimestamp = 0;
-
   endTimestamp = 0;
-
   rangeName: string = 'LAST_24_HOURS';
-
   period: any = Period({ rangeName: LAST_7_DAYS });
+
+  exportedVideosList: ExportsResponse['data']['videos'] = [];
+  currentUser = false;
 
   constructor() {
     makeAutoObservable(this);
   }
 
+  setCurrUser = (val: boolean) => {
+    this.currentUser = val;
+    this.page = 1;
+  }
+
   setRecordings(records: IRecord[], total?: number) {
     this.total = total || 0;
     this.recordings = records;
-  }
-
-  setUserId(userId: string) {
-    this.userId = userId;
   }
 
   updateSearch(val: string) {
@@ -63,7 +55,6 @@ export default class RecordingsStore {
       limit: this.pageSize,
       order: this.order,
       query: this.search,
-      userId: this.userId === '0' ? undefined : this.userId,
       startTimestamp: this.period.start,
       endTimestamp: this.period.end,
     };
@@ -115,5 +106,69 @@ export default class RecordingsStore {
     } finally {
       this.loading = false;
     }
+  }
+
+  triggerExport = async (sessionId: string) => {
+    try {
+      const resp = await recordingsService.triggerExport(sessionId);
+      return resp.data.status
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  getRecordings = async () => {
+    this.loading = true;
+    const params = {
+      page: this.page,
+      limit: 10,
+      // order: this.order,
+      // currentUser: this.currentUser,
+      // query: this.search,
+      // startTimestamp: this.period.start,
+      // endTimestamp: this.period.end,
+    };
+
+    try {
+      const resp = await recordingsService.getExports(params);
+      this.exportedVideosList = resp.data.videos ?? [];
+      this.total = resp.data.total;
+    } catch (e) {
+      console.error(e)
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  getRecordingLink = async (sessionId: string) => {
+    try {
+      const resp = await recordingsService.getDownloadLink(sessionId);
+      return resp.data;
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  deleteSessionRecording = async (sessionId: string) => {
+    try {
+      await recordingsService.deleteVideo(sessionId);
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  resetValues = () => {
+    this.recordings = [];
+    this.loading = false;
+    this.page = 1;
+    this.total = 0;
+    this.pageSize = 5;
+    this.order = 'desc';
+    this.search = '';
+    this.startTimestamp = 0;
+    this.endTimestamp = 0;
+    this.rangeName = 'LAST_24_HOURS';
+    this.period = Period({ rangeName: LAST_7_DAYS });
+    this.exportedVideosList = [];
   }
 }

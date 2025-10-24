@@ -35,6 +35,7 @@ export const enum PREFERENCES_MENU {
   TEAM = 'team',
   NOTIFICATIONS = 'notifications',
   BILLING = 'billing',
+  EXPORTED_VIDEOS = 'exported-videos',
 }
 
 export const enum MENU {
@@ -215,6 +216,12 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         icon: 'credit-card-2-back',
         hidden: menuHidden.billing,
       },
+      {
+        label: t('Exported Videos'),
+        key: PREFERENCES_MENU.EXPORTED_VIDEOS,
+        icon: 'file',
+        hidden: menuHidden.videoExport,
+      }
     ],
   },
 ];
