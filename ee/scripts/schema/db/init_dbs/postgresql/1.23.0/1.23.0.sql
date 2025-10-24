@@ -41,6 +41,22 @@ CREATE TABLE IF NOT EXISTS public.saved_searches
 
 CREATE INDEX saved_searches_project_id_idx ON public.saved_searches (project_id);
 
+CREATE TABLE public.sessions_videos
+(
+    session_id      bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
+    project_id      integer NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
+    user_id         integer NOT NULL,
+    status          varchar(50) NOT NULL,
+    job_id          varchar(255),
+    file_url        varchar(1024),
+    error_message   text,
+    created_at      timestamp without time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+    modified_at     timestamp without time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+    PRIMARY KEY(session_id)
+);
+
+CREATE UNIQUE INDEX sessions_videos_session_id_project_id_key ON public.sessions_videos USING btree (session_id, project_id);
+
 COMMIT;
 
 \elif :is_next
