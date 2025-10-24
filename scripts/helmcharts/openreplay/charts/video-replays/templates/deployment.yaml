@@ -75,7 +75,7 @@ spec:
             - name: AWS_ENDPOINT
               value: '{{- include "openreplay.s3Endpoint" . }}'
             - name: AWS_REGION
-              value: '{{ .Values.aws.region | default .Values.global.s3.region }}'
+              value: 'eu-central-1'
             - name: BUCKET_NAME
               value: {{ .Values.aws.bucket_name }}
             - name: pg_password
