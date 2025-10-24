@@ -20,7 +20,7 @@ jobs:
           bun-version: latest
       - uses: actions/checkout@v3
       - name: Cache tracker modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: tracker/node_modules
           key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/bun.lock') }}
