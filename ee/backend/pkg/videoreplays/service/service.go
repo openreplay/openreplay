@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"openreplay/backend/pkg/server/user"
+	"strconv"
 	"time"
 
 	config "openreplay/backend/internal/config/videoreplays"
@@ -81,17 +82,22 @@ func (s *sessionVideosImpl) logJobSubmission(ctx context.Context, video *Session
 }
 
 func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, tenantID uint64, req *SessionVideoExportRequest) (*SessionVideoExportResponse, error) {
-	existingVideo, _ := s.storage.GetSessionVideoBySessionAndProject(s.ctx, req.SessionID, projectId)
-	s.logExistingVideoInfo(s.ctx, existingVideo, req.SessionID, projectId, tenantID)
+	sessionID, err := strconv.ParseUint(req.SessionID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid sessionId: %w", err)
+	}
+
+	existingVideo, _ := s.storage.GetSessionVideoBySessionAndProject(s.ctx, sessionID, projectId)
+	s.logExistingVideoInfo(s.ctx, existingVideo, sessionID, projectId, tenantID)
 
 	// Return existing video if not failed
 	if existingVideo != nil && existingVideo.Status != StatusFailed {
 		s.log.Info(s.ctx, "Session video already exists with non-failed status",
-			"sessionID", req.SessionID, "projectID", projectId, "tenantID", tenantID, "status", existingVideo.Status)
+			"sessionID", sessionID, "projectID", projectId, "tenantID", tenantID, "status", existingVideo.Status)
 		return existingVideo.Response(), nil
 	}
 
-	s.logJobSubmission(s.ctx, existingVideo, req.SessionID, projectId, tenantID)
+	s.logJobSubmission(s.ctx, existingVideo, sessionID, projectId, tenantID)
 
 	serviceAccount, err := s.user.GetServiceAccount(tenantID)
 	if err != nil {
@@ -107,7 +113,7 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, ten
 
 	sessionJobReq := &SessionJobRequest{
 		ProjectID: projectId,
-		SessionID: req.SessionID,
+		SessionID: sessionID,
 		JWT:       jwt,
 	}
 
@@ -116,8 +122,8 @@ func (s *sessionVideosImpl) ExportSessionVideo(projectId int, userId uint64, ten
 		return nil, err
 	}
 
-	if err = s.storage.CreateSessionVideoRecord(s.ctx, req.SessionID, projectId, userId, result.JobID); err != nil {
-		s.log.Error(s.ctx, "Failed to create session video record", "error", err, "sessionID", req.SessionID, "jobID", result.JobID)
+	if err = s.storage.CreateSessionVideoRecord(s.ctx, sessionID, projectId, userId, result.JobID); err != nil {
+		s.log.Error(s.ctx, "Failed to create session video record", "error", err, "sessionID", sessionID, "jobID", result.JobID)
 	}
 
 	return &SessionVideoExportResponse{
@@ -184,9 +190,9 @@ func (s *sessionVideosImpl) Iterate(batchData []byte, batchInfo *messages.BatchI
 		return
 	}
 
-	sessionId := jobMessage.SessionId
-	if jobMessage.SessionId == 0 {
-		s.log.Error(s.ctx, "Invalid session ID in job message")
+	sessionId, err := strconv.ParseUint(jobMessage.SessionId, 10, 64)
+	if err != nil || sessionId == 0 {
+		s.log.Error(s.ctx, "Invalid session ID in job message", "sessionId", jobMessage.SessionId, "error", err)
 		return
 	}
 
