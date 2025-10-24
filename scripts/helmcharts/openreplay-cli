@@ -1,158 +1,170 @@
 #!/usr/bin/env bash
-# vim: set ft=sh:
+set -euo pipefail
 
-OR_DIR="/var/lib/openreplay"
-APP_NS="${APP_NS:-app}"
-DB_NS="${DB_NS:-db}"
-OR_REPO="${OR_REPO:-'https://github.com/openreplay/openreplay'}"
-# For example HELM_OPTIONS="--set dbMigrationUpstreamBranch=dev"
-#HELM_OPTIONS=""
-# If you want to install the dev version. It can be any branch or tag.
-#OR_VERSION="dev"
-# Only upgrade Openreplay
-# UPGRADE_OR_ONLY=1 openreplay -u
-# Pass override file to the installation
-# OVERRIDE_FILE=override.yaml
+readonly OR_DIR="/var/lib/openreplay"
+readonly APP_NS="${APP_NS:-app}"
+readonly DB_NS="${DB_NS:-db}"
+readonly OR_REPO="${OR_REPO:-https://github.com/openreplay/openreplay}"
 
-[[ -d $OR_DIR ]] || {
-    sudo mkdir $OR_DIR
-}
-export PATH=/var/lib/openreplay:$PATH
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[0;33m'
+readonly BWHITE='\033[1;37m'
+readonly NC='\033[0m'
 
-# Check arch
-architecture=$(uname -m)
-pkg_type="amd64"
-if [[ "$architecture" == "x86_64" ]]; then
-    echo "This machine is AMD (x86_64) architecture."
-elif [[ "$architecture" == "aarch64" ]]; then
-    pkg_type="arm64"
-    echo "This machine is ARM architecture."
-else
-    echo "This machine has another architecture: $architecture"
-fi
-
-[[ $(awk '/enterpriseEditionLicense/{print $2}' <"/var/lib/openreplay/vars.yaml") != "" ]] && EE=true
-
-tools=(
+readonly TOOLS=(
     zyedidia/eget
     stern/stern
     hidetatz/kubecolor
     rjshrjndrn/templater
 )
 
-# Ref: https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BWHITE='\033[1;37m'
-NC='\033[0m' # No Color
+initialize_environment() {
+    [[ -d "$OR_DIR" ]] || sudo mkdir -p "$OR_DIR"
+    export PATH="$OR_DIR:$PATH"
 
-## Helper func
-err_check_failed_pod_logs() {
-    echo "${RED}Error occurred in function."
-    for pod in $(kubectl get pods -n ${APP_NS} --field-selector=status.phase=Failed -o jsonpath='{.items[*].metadata.name}'); do
-        for container in $(kubectl get pod $pod -n ${APP_NS} -o jsonpath='{.status.containerStatuses[?(@.state.terminated.reason=="Error")].name} {.status.initContainerStatuses[?(@.state.terminated.reason=="Error")].name}'); do
-            echo "Error logs for Pod: $pod, Container: $container"
-            kubectl logs -n ${APP_NS} $pod -c $container
-        done
-    done
-    echo "${NC}"
-    return
+    local architecture
+    architecture=$(uname -m)
+    case "$architecture" in
+    x86_64)
+        echo "AMD (x86_64) architecture detected"
+        PKG_TYPE="amd64"
+        ;;
+    aarch64)
+        echo "ARM architecture detected"
+        PKG_TYPE="arm64"
+        ;;
+    *)
+        echo "Unsupported architecture: $architecture"
+        exit 1
+        ;;
+    esac
+    readonly PKG_TYPE
+
+    [[ $(awk '/enterpriseEditionLicense/{print $2}' <"$OR_DIR/vars.yaml" 2>/dev/null) != "" ]] && readonly EE=true || readonly EE=false
+
+    setup_kubeconfig
+    readonly TMP_DIR=$(mktemp -d)
 }
 
-# Checking whether the app exists or we do have to upgade.
-function exists() {
-    which "${1}" &>/dev/null
-    return $?
-}
+setup_kubeconfig() {
+    local k3s_path=""
+    [[ -f /etc/rancher/k3s/k3s.yaml ]] && k3s_path="/etc/rancher/k3s/k3s.yaml"
+    [[ -f "${HOME}/.kube/config" ]] && k3s_path="${k3s_path:-${HOME}/.kube/config}"
 
-function err_cd() {
-    if ! cd "$1" &>/dev/null; then
-        log err not able to cd to "$1"
-        exit 100
+    export KUBECONFIG="${KUBECONFIG:-$k3s_path}"
+
+    if [[ -z "${KUBECONFIG:-}" ]]; then
+        log warn "No kubeconfig file found"
+        return 1
     fi
+
+    log info "Using KUBECONFIG: $KUBECONFIG"
 }
 
-function log() {
-    case "$1" in
+log() {
+    local level="$1"
+    shift
+
+    case "$level" in
     info)
-        shift
-        echo -e "${GREEN}[INFO]" "$@" "${NC}"
-        return
+        echo -e "${GREEN}[INFO]${NC}" "$@"
         ;;
     warn)
-        shift
-        echo -e "${YELLOW}[WARN]" "$@" "${NC}"
-        return
+        echo -e "${YELLOW}[WARN]${NC}" "$@"
         ;;
     debug)
-        shift
-        echo -e "${YELLOW}[DEBUG]" "$@" "${NC}"
-        return
+        echo -e "${YELLOW}[DEBUG]${NC}" "$@"
         ;;
     title)
-        shift
-        echo -e "\n${BWHITE}-" "$@" "${NC}"
-        return
+        echo -e "\n${BWHITE}-${NC}" "$@"
         ;;
     err)
-        shift
-        echo -e "${RED}[ERROR]" "$@" "${NC}"
+        echo -e "${RED}[ERROR]${NC}" "$@" >&2
         exit 100
         ;;
     *)
-        echo "Not supported log format"
+        echo "Unsupported log format: $level" >&2
+        exit 100
         ;;
     esac
-    echo "[Error]" "$@"
-    exit 100
 }
 
-# To run kubeconfig run
-# `KUBECONFIG=/path/to/file openreplay -s`
-[[ -f /etc/rancher/k3s/k3s.yaml ]] && k3s_path="/etc/rancher/k3s/k3s.yaml"
-[[ -f "${HOME}/.kube/config" ]] && local_kube_config_path="${HOME}/.kube/config"
-k3s_path=${k3s_path:-$local_kube_config_path}
-export KUBECONFIG=${KUBECONFIG:-$k3s_path}
-[[ -z $KUBECONFIG ]] && log warn "No kubeconfig file found. Exiting"
-log info "Using KUBECONFIG $KUBECONFIG"
-tmp_dir=$(mktemp -d)
-
-function install_packages() {
-    [[ -e "$OR_DIR/eget" ]] || {
-        cd "$tmp_dir" || log err "Not able to cd to tmp dir $tmp_dir"
-        curl --version &>/dev/null || log err "curl not found. Please install"
-        curl -SsL https://zyedidia.github.io/eget.sh | sh - >/dev/null
-        sudo mv eget $OR_DIR
-        err_cd -
-    }
-
-    for package in "${tools[@]}"; do
-        log info Installing "$(awk -F/ '{print $2}' <<<$package)"
-        sudo /var/lib/openreplay/eget -q --upgrade-only --to "${OR_DIR}" "$package"
-    done
-    log info Installing k9s
-    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" derailed/k9s --asset=tar.gz --asset=^sbom
-    log info Installing yq
-    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" mikefarah/yq --asset=^tar.gz
-    log info Installing helm
-    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://get.helm.sh/helm-v3.10.2-linux-${pkg_type}.tar.gz -f helm
-    log info Installing kubectl
-    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://dl.k8s.io/release/v1.25.0/bin/linux/${pkg_type}/kubectl
-    [[ $pkg_type != "arm64" ]] && {
-        log info Installing Busybox
-        sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox
-    }
-    date | sudo tee $OR_DIR/packages.lock &>/dev/null
-    # Adding path to global
-    if ! grep -q "/var/lib/openreplay" /etc/profile; then
-        echo 'export PATH=/var/lib/openreplay:$PATH' | sudo tee -a /etc/profile
+err_cd() {
+    if ! cd "$1" &>/dev/null; then
+        log err "Failed to change directory to: $1"
     fi
 }
 
-function help() {
+check_failed_pod_logs() {
+    echo -e "${RED}Checking failed pod logs...${NC}"
 
-    echo -e ${BWHITE}
+    local pods
+    pods=$(kubectl get pods -n "$APP_NS" --field-selector=status.phase=Failed -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || echo "")
+
+    if [[ -z "$pods" ]]; then
+        echo "No failed pods found"
+        return
+    fi
+
+    for pod in $pods; do
+        local containers
+        containers=$(kubectl get pod "$pod" -n "$APP_NS" -o jsonpath='{.status.containerStatuses[?(@.state.terminated.reason=="Error")].name} {.status.initContainerStatuses[?(@.state.terminated.reason=="Error")].name}' 2>/dev/null || echo "")
+
+        for container in $containers; do
+            echo "Error logs for Pod: $pod, Container: $container"
+            kubectl logs -n "$APP_NS" "$pod" -c "$container" 2>/dev/null || echo "Failed to fetch logs"
+        done
+    done
+    echo -e "${NC}"
+}
+
+install_packages() {
+    log title "Installing/Updating packages"
+
+    if [[ ! -e "$OR_DIR/eget" ]]; then
+        local temp_dir
+        temp_dir=$(mktemp -d)
+        pushd "$temp_dir" >/dev/null || log err "Failed to create temp directory"
+
+        if ! command -v curl &>/dev/null; then
+            log err "curl not found. Please install curl"
+        fi
+
+        curl -SsL https://zyedidia.github.io/eget.sh | sh - >/dev/null
+        sudo mv eget "$OR_DIR"
+        popd >/dev/null
+        rm -rf "$temp_dir"
+    fi
+
+    for package in "${TOOLS[@]}"; do
+        local pkg_name
+        pkg_name=$(basename "$package")
+        log info "Installing $pkg_name"
+        sudo "$OR_DIR/eget" -q --upgrade-only --to "$OR_DIR" "$package"
+    done
+
+    log info "Installing k9s"
+    sudo "$OR_DIR/eget" -q --upgrade-only --to "$OR_DIR" derailed/k9s --asset=tar.gz --asset=^sbom
+
+    log info "Installing yq"
+    sudo "$OR_DIR/eget" -q --upgrade-only --to "$OR_DIR" mikefarah/yq --asset=^tar.gz
+
+    log info "Installing helm"
+    sudo "$OR_DIR/eget" -q --upgrade-only --to "$OR_DIR" "https://get.helm.sh/helm-v3.10.2-linux-${PKG_TYPE}.tar.gz" -f helm
+
+    log info "Installing kubectl"
+    sudo "$OR_DIR/eget" -q --upgrade-only --to "$OR_DIR" "https://dl.k8s.io/release/v1.25.0/bin/linux/${PKG_TYPE}/kubectl"
+
+    date | sudo tee "$OR_DIR/packages.lock" &>/dev/null
+
+    if ! grep -q "/var/lib/openreplay" /etc/profile 2>/dev/null; then
+        echo 'export PATH=/var/lib/openreplay:$PATH' | sudo tee -a /etc/profile >/dev/null
+    fi
+}
+
+show_help() {
+    echo -e "${BWHITE}"
     cat <<"EOF"
   ___                   ____            _
  / _ \ _ __   ___ _ __ |  _ \ ___ _ __ | | __ _ _   _
@@ -161,187 +173,273 @@ function help() {
  \___/| .__/ \___|_| |_|_| \_\___| .__/|_|\__,_|\__, |
       |_|                        |_|            |___/
 EOF
-    echo -e ${NC}
+    echo -e "${NC}"
 
     log info "
   Usage: openreplay [ -h | --help ]
                     [ -s | --status ]
                     [ -i | --install DOMAIN_NAME ]
-                    [ -u | --upgrade (fetch lastest patches for installed release. ${BWHITE}RELEASE_UPGRADE=1 openreplay -u${GREEN} to upgrade release.)]
-                    [ -U | --deprecated-upgrade /path/to/old_vars.yaml]
+                    [ -u | --upgrade ]
                     [ -r | --restart ]
-                    [ -R | --Reload ]
-                    [ -c | --cleanup N(in days) (optional --force to skip the confirmation)]
+                    [ -R | --reload ]
+                    [ -c | --cleanup N (days) [--force] ]
                     [ -e | --edit ]
                     [ -p | --install-packages ]
-                    [ -l | --logs SERVICE ] 
-         Services: alerts assets assist chalice 
-                   db ender frontend heuristics 
-                   http integrations nginx-controller 
-                   peers sink sourcemapreader storage 
+                    [ -l | --logs SERVICE ]
+
+  Options:
+    -h, --help                  Show this help message
+    -s, --status                Check OpenReplay components status
+    -i, --install DOMAIN        Install OpenReplay
+    -u, --upgrade               Upgrade OpenReplay (use RELEASE_UPGRADE=1 for release upgrade)
+    -r, --restart               Restart all OpenReplay components
+    -R, --reload                Reload OpenReplay components
+    -c, --cleanup N             Clean up data older than N days
+    -e, --edit                  Edit configuration file
+    -p, --install-packages      Install/update dependency packages
+    -l, --logs SERVICE          Show logs for a service
+
+  Environment Variables:
+    OR_VERSION                  Specify branch/tag to install (default: main)
+    RELEASE_UPGRADE=1           Perform major release upgrade
+    UPGRADE_OR_ONLY=1           Upgrade only OpenReplay, skip toolings
+    OVERRIDE_FILE               Path to vars.yaml override file
+    CLEANUP_TOOLING=1           Remove toolings chart during upgrade
+
+  Services: alerts, assets, assist, chalice, db, ender, frontend,
+           heuristics, http, integrations, nginx-controller, peers,
+           sink, sourcemapreader, storage
+
+  Note: Repository is maintained at $OR_DIR/openreplay_repo using sparse
+        checkout (scripts/helmcharts only) to minimize disk usage.
     "
-    return
 }
 
-function status() {
-    log info OpenReplay Version
-    yq eval '.config.version // .fromVersion' /var/lib/openreplay/vars.yaml
-    log info Disk
+show_status() {
+    log info "OpenReplay Version"
+    yq eval '.config.version // .fromVersion' "$OR_DIR/vars.yaml" 2>/dev/null || echo "N/A"
+
+    log info "Repository Info"
+    if [[ -d "$OR_DIR/openreplay_repo/.git" ]]; then
+        local repo_branch repo_commit repo_size
+        repo_branch=$(cd "$OR_DIR/openreplay_repo" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+        repo_commit=$(cd "$OR_DIR/openreplay_repo" && git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+        repo_size=$(du -sh "$OR_DIR/openreplay_repo" 2>/dev/null | cut -f1 || echo "unknown")
+        echo "  Branch: $repo_branch"
+        echo "  Commit: $repo_commit"
+        echo "  Size: $repo_size"
+    else
+        echo "  Repository not cloned yet"
+    fi
+
+    log info "Disk Usage"
     df -h /var
-    log info Memory
+
+    log info "Memory"
     free -mh
-    log info CPU
-    uname -a
-    # Print only the fist line.
-    awk '(NR<2)' </etc/os-release
+
+    log info "CPU"
     echo "CPU Count: $(nproc)"
-    log info Kubernetes
-    kubecolor version --short
-    log info Openreplay Component
-    kubecolor get po -n "${APP_NS}"
-    kubecolor get po -n "${DB_NS}"
+    awk '(NR<2)' /etc/os-release 2>/dev/null
+    uname -a
+
+    log info "Kubernetes"
+    kubecolor version --short 2>/dev/null || kubectl version --short
+
+    log info "OpenReplay Components"
+    kubecolor get po -n "$APP_NS" 2>/dev/null || kubectl get po -n "$APP_NS"
+    kubecolor get po -n "$DB_NS" 2>/dev/null || kubectl get po -n "$DB_NS"
+
     echo
-    log info Openreplay Images
+    log info "OpenReplay Images"
     echo
-    kubectl get pods -n "${APP_NS}" -o jsonpath='{range .items[*]}{@.metadata.name}{" "}{@.spec.containers[*].image}{"\n"}{end}' | column -t
-    kubectl get pods -n "${DB_NS}" -o jsonpath='{range .items[*]}{@.metadata.name}{" "}{@.spec.containers[*].image}{"\n"}{end}' | column -t
-    return
+    kubectl get pods -n "$APP_NS" -o jsonpath='{range .items[*]}{@.metadata.name}{" "}{@.spec.containers[*].image}{"\n"}{end}' 2>/dev/null | column -t
+    kubectl get pods -n "$DB_NS" -o jsonpath='{range .items[*]}{@.metadata.name}{" "}{@.spec.containers[*].image}{"\n"}{end}' 2>/dev/null | column -t
 }
 
-# Create OR version patch with gith sha
-function patch_version() {
-    # Patching config version for console
-    version=$(/var/lib/openreplay/yq '.fromVersion' vars.yaml)-$(sudo git rev-parse --short HEAD)
-    # Create a temporary YAML file with the generated version
+patch_version() {
+    local version
+    version=$("$OR_DIR/yq" '.fromVersion' vars.yaml)-$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
     cat <<EOF >/tmp/version_snippet.yaml
 config:
   version: $version
 EOF
-    sudo /var/lib/openreplay/yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' vars.yaml /tmp/version_snippet.yaml -i
-    rm /tmp/version_snippet.yaml
+
+    sudo "$OR_DIR/yq" eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' vars.yaml /tmp/version_snippet.yaml -i
+    rm -f /tmp/version_snippet.yaml
 }
 
-# Function to upgrade helm openreplay app.
-function or_helm_upgrade() {
+helm_upgrade_openreplay() {
     set -o pipefail
-    log_file="${tmp_dir}/helm.log"
-    state=$1
-    chart_names=(
-        toolings
-        openreplay
-    )
-    [[ $UPGRADE_OR_ONLY -eq 1 ]] && chart_names=(openreplay)
-    # Cleaning up toolings
-    [[ $CLEANUP_TOOLING -eq 1 ]] && {
-        helm uninstall toolings -n "$APP_NS"
-    }
-    if [[ $state == "reload" ]]; then
+    local state="${1:-}"
+    local log_file="${TMP_DIR}/helm.log"
+    local chart_names=(toolings openreplay)
+
+    [[ "${UPGRADE_OR_ONLY:-0}" -eq 1 ]] && chart_names=(openreplay)
+    [[ "${CLEANUP_TOOLING:-0}" -eq 1 ]] && helm uninstall toolings -n "$APP_NS" 2>/dev/null || true
+
+    if [[ "$state" == "reload" ]]; then
         chart_names=(openreplay)
-        HELM_OPTIONS="${HELM_OPTIONS} --set skipMigration=true"
+        HELM_OPTIONS="${HELM_OPTIONS:-} --set skipMigration=true"
     fi
+
     for chart in "${chart_names[@]}"; do
-        [[ -z $OR_VERSION ]] || HELM_OPTIONS="${HELM_OPTIONS} --set dbMigrationUpstreamBranch=${OR_VERSION}"
+        [[ -n "${OR_VERSION:-}" ]] && HELM_OPTIONS="${HELM_OPTIONS:-} --set dbMigrationUpstreamBranch=${OR_VERSION}"
+
         log info "Upgrading chart: $chart"
-        if ! helm upgrade --install "$chart" ./"$chart" -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug $HELM_OPTIONS 2>&1 | tee -a "${log_file}"; then
-            pod_log=$(err_check_failed_pod_logs)
-            log err "
-        Installation failed, run ${BWHITE}cat ${log_file}${RED} for more info
 
-        If logs aren't verbose, run ${BWHITE}openreplay --status${RED}
-
-        If pods are in a failed state, run ${BWHITE}openreplay --logs <pod-name>${RED}
-
-        \n$pod_log
-        "
+        if ! helm upgrade --install "$chart" "./$chart" -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug ${HELM_OPTIONS:-} 2>&1 | tee -a "$log_file"; then
+            check_failed_pod_logs
+            log err "Installation failed. Check logs at: ${BWHITE}${log_file}${RED}
+            
+Run ${BWHITE}openreplay --status${RED} for more info
+Run ${BWHITE}openreplay --logs <service-name>${RED} to view specific logs"
         fi
     done
+
     set +o pipefail
-    return
 }
 
-function upgrade_old() {
-    old_vars_path="$1"
-    [[ -f $old_vars_path ]] || log err "No configuration file ${BWHITE}$old_vars_path${RED}.
-          If you're updating from version older than ${BWHITE}v1.10.0${RED}, for example ${BWHITE}v1.9.0${RED}:
-            ${BWHITE}RELEASE_UPGRADE=1 openreplay --deprecated-upgrade ~/openreplay_v1.9.0/scripts/helmcharts/vars.yaml${RED}.
-          If you're having a custom installation,
-            ${BWHITE}RELEASE_UPGRADE=1 openreplay --deprecated-upgrade /path/to/vars.yaml${RED}.
-          "
-    or_version=$(busybox awk '/fromVersion/{print $2}' <"${old_vars_path}")
-    sudo cp "${old_vars_path}" ${OR_DIR}/vars.yaml.backup."${or_version//\"/}"_"$(date +%Y%m%d-%H%M%S)" || log err "Not able to copy old vars.yaml"
-    sudo cp "${old_vars_path}" ${OR_DIR}/vars.yaml || log err "Not able to copy old vars.yaml"
-    upgrade
+clone_repository() {
+    local repo_dir="$OR_DIR/openreplay_repo"
+    local ref="${OR_VERSION:-main}"
+
+    if [[ -d "$repo_dir/.git" ]]; then
+        log info "Repository exists, updating to: $ref"
+        err_cd "$repo_dir"
+
+        git fetch origin --depth 1 "$ref" 2>&1 || log err "Failed to fetch $ref"
+
+        git reset --hard 2>&1 || log warn "Failed to reset working directory"
+        git clean -fd 2>&1 || log warn "Failed to clean untracked files"
+
+        if git show-ref --verify --quiet "refs/remotes/origin/$ref"; then
+            log info "Checking out branch: $ref"
+            git checkout "$ref" 2>&1 || log err "Failed to checkout branch $ref"
+            git reset --hard "origin/$ref" 2>&1 || log err "Failed to reset to origin/$ref"
+        else
+            log info "Checking out tag/commit: $ref"
+            git checkout "$ref" 2>&1 || log err "Failed to checkout $ref"
+        fi
+
+        git sparse-checkout reapply 2>&1 || log warn "Failed to reapply sparse checkout"
+
+        git gc --prune=now --aggressive 2>&1 || log warn "Failed to cleanup git repository"
+    else
+        log info "Performing sparse checkout (scripts/helmcharts only)..."
+        sudo mkdir -p "$repo_dir"
+        sudo chown -R "$(whoami):$(id -gn)" "$repo_dir"
+        err_cd "$repo_dir"
+
+        git clone --filter=blob:none --sparse --depth 1 --branch "$ref" "$OR_REPO" . 2>&1 || log err "Failed to clone repository"
+        git sparse-checkout set scripts/helmcharts 2>&1 || log err "Failed to configure sparse checkout"
+    fi
+
+    if [[ ! -f "$repo_dir/scripts/helmcharts/vars.yaml" ]]; then
+        log err "vars.yaml not found after checkout at: $repo_dir/scripts/helmcharts/
+        
+Directory contents:
+$(ls -la "$repo_dir/scripts/helmcharts/" 2>&1 || echo "Directory not found")
+
+Try removing the repository and running upgrade again:
+  ${BWHITE}sudo rm -rf $OR_DIR/openreplay_repo${RED}"
+    fi
+
+    local repo_size current_ref
+    repo_size=$(du -sh "$repo_dir" 2>/dev/null | cut -f1 || echo "unknown")
+    current_ref=$(git describe --tags --always 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+    log info "Repository size: $repo_size"
+    log info "Current ref: $current_ref"
+    log info "Using charts from: $repo_dir/scripts/helmcharts"
 }
 
-function clone_repo() {
-    err_cd "$tmp_dir"
-    log info "Working directory $tmp_dir"
-    git_options="-b ${OR_VERSION:-main}"
-    log info "git clone ${OR_REPO} --depth 1 $git_options"
-    eval git clone "${OR_REPO}" --depth 1 $git_options
-    return
+sem_to_int() {
+    echo "$1" | awk -F'[v.]' '{print $2 $3 $4 + 0}'
 }
 
-function install() {
-    domain_name=$1
-    # Check existing installation
-    [[ -f ${OR_DIR}/vars.yaml ]] && {
-        or_version=$(busybox awk '/fromVersion/{print $2}' <"${OR_DIR}/vars.yaml")
-        log err "Openreplay installation ${BWHITE}${or_version}${RED} found. If you want to upgrade, run ${BWHITE}openreplay -u${RED}"
-    }
-    # Installing OR
+version_specific_checks() {
+    local version
+    version=$(sem_to_int "$1")
+
+    if [ "$version" -le 1220 ]; then
+        log info "Checking version-specific requirements (v$1)"
+
+        if [ -z "$(kubectl get pods -n "$DB_NS" -l app.kubernetes.io/name=clickhouse --no-headers 2>/dev/null)" ]; then
+            log info "Installing ClickHouse"
+            kubectl apply -f https://github.com/openreplay/openreplay/raw/refs/heads/main/scripts/helmcharts/manifests/clickhouse-db.yaml -n "$DB_NS"
+        fi
+    fi
+}
+
+install_openreplay() {
+    local domain_name="$1"
+
+    if [[ -f "$OR_DIR/vars.yaml" ]]; then
+        local existing_version
+        existing_version=$(awk '/fromVersion/{print $2}' <"$OR_DIR/vars.yaml")
+        log err "OpenReplay ${BWHITE}${existing_version}${RED} already installed. Use ${BWHITE}openreplay -u${RED} to upgrade"
+    fi
+
     install_packages
     log title "Installing OpenReplay"
-    clone_repo
-    err_cd "$tmp_dir/openreplay/scripts/helmcharts"
-    # process override file while installing
-    # OVERRIDE_FILE=/tmp/override.yaml openreplay -i
-    [[ -z $OVERRIDE_FILE ]] || {
-        [[ -f $OVERRIDE_FILE ]] || {
-            echo "OVERRIDE_FILE does not exist, exiting"
-            exit 100
-        }
-        override_tmpdir=$(pwd)
-        err_cd /tmp
+    clone_repository
+    err_cd "$OR_DIR/openreplay_repo/scripts/helmcharts"
+
+    if [[ -n "${OVERRIDE_FILE:-}" ]]; then
+        if [[ ! -f "$OVERRIDE_FILE" ]]; then
+            log err "Override file not found: $OVERRIDE_FILE"
+        fi
+
+        local override_dir
+        override_dir=$(pwd)
+        pushd /tmp >/dev/null
         cp "$OVERRIDE_FILE" new_vars.yaml
-        cp "$override_tmpdir/vars.yaml" old_vars.yaml
+        cp "$override_dir/vars.yaml" old_vars.yaml
         yq '(load("new_vars.yaml") | .. | select(tag != "!!map" and tag != "!!seq")) as $i ireduce(.; setpath($i | path; $i))' old_vars.yaml >vars.yaml
-        mv vars.yaml "$override_tmpdir"
-        err_cd "$override_tmpdir"
-    }
-    [[ -z $OR_VERSION ]] || HELM_OPTIONS="${HELM_OPTIONS} --set dbMigrationUpstreamBranch=${OR_VERSION}"
-    HELM_OPTIONS=${HELM_OPTIONS} SKIP_K8S_TOOLS=1 DOMAIN_NAME=$domain_name bash init.sh
-    return
+        mv vars.yaml "$override_dir"
+        popd >/dev/null
+    fi
+
+    [[ -n "${OR_VERSION:-}" ]] && HELM_OPTIONS="${HELM_OPTIONS:-} --set dbMigrationUpstreamBranch=${OR_VERSION}"
+
+    HELM_OPTIONS="${HELM_OPTIONS:-}" SKIP_K8S_TOOLS=1 DOMAIN_NAME="$domain_name" bash init.sh
 }
 
-function cleanup() {
-    # Confirmation for deletion. Do you want to delete Postgres/Minio(session) data before $date ?
-    delete_from_number_days=$1
-    delete_from_date=$(date +%Y-%m-%d -d "$delete_from_number_days day ago")
+cleanup_data() {
+    local days="$1"
+    local force="${2:-}"
+    local delete_date
+    delete_date=$(date +%Y-%m-%d -d "$days day ago")
 
-    # Check if --force flag is present
-    if [[ $2 == --force ]]; then
-        log info "Deleting data without confirmation..."
-    else
-        log debug "Do you want to delete the data captured on and before ${BWHITE}$delete_from_date${YELLOW}?"
-        read -p "Are you sure[y/n]? " -n 1 -r
-        echo # (optional) move to a new line
+    if [[ "$force" != "--force" ]]; then
+        log debug "Delete data captured on/before ${BWHITE}${delete_date}${YELLOW}?"
+        read -p "Are you sure [y/n]? " -n 1 -r
+        echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            log err "Cancelling data deletion"
-            return 1 # Exit with an error code to indicate cancellation
+            log warn "Data deletion cancelled"
+            return 1
         fi
     fi
 
-    # Run pg cleanup
-    pguser=$(yq 'explode(.) | .global.postgresql.postgresqlUser' ${OR_DIR}/vars.yaml)
-    pgpassword=$(yq 'explode(.) | .global.postgresql.postgresqlPassword' ${OR_DIR}/vars.yaml)
-    pghost=$(yq 'explode(.) | .global.postgresql.postgresqlHost' ${OR_DIR}/vars.yaml)
-    pgport=$(yq 'explode(.) | .global.postgresql.postgresqlPort' ${OR_DIR}/vars.yaml)
-    pgdatabase=$(yq 'explode(.) | .global.postgresql.postgresqlDatabase' ${OR_DIR}/vars.yaml)
-    cleanup_query="DELETE FROM public.sessions WHERE start_ts < extract(epoch from '${delete_from_date}'::date) * 1000;"
-    [[ $EE ]] && cleanup_query="DELETE FROM public.sessions WHERE start_ts < extract(epoch from '${delete_from_date}'::date) * 1000 AND session_id NOT IN (SELECT session_id FROM user_favorite_sessions);"
-    kubectl delete po -n "${APP_NS}" pg-cleanup &>/dev/null || true
-    kubectl run pg-cleanup -n "${APP_NS}" \
+    log info "Starting cleanup process..."
+
+    local pguser pgpassword pghost pgport pgdatabase
+    pguser=$(yq 'explode(.) | .global.postgresql.postgresqlUser' "$OR_DIR/vars.yaml")
+    pgpassword=$(yq 'explode(.) | .global.postgresql.postgresqlPassword' "$OR_DIR/vars.yaml")
+    pghost=$(yq 'explode(.) | .global.postgresql.postgresqlHost' "$OR_DIR/vars.yaml")
+    pgport=$(yq 'explode(.) | .global.postgresql.postgresqlPort' "$OR_DIR/vars.yaml")
+    pgdatabase=$(yq 'explode(.) | .global.postgresql.postgresqlDatabase' "$OR_DIR/vars.yaml")
+
+    local cleanup_query="DELETE FROM public.sessions WHERE start_ts < extract(epoch from '${delete_date}'::date) * 1000;"
+
+    if [[ "$EE" == "true" ]]; then
+        cleanup_query="DELETE FROM public.sessions WHERE start_ts < extract(epoch from '${delete_date}'::date) * 1000 AND session_id NOT IN (SELECT session_id FROM user_favorite_sessions);"
+    fi
+
+    kubectl delete po -n "$APP_NS" pg-cleanup &>/dev/null || true
+    kubectl run pg-cleanup -n "$APP_NS" \
         --restart=Never \
         --env PGHOST="$pghost" \
         --env PGUSER="$pguser" \
@@ -349,235 +447,227 @@ function cleanup() {
         --env PGPASSWORD="$pgpassword" \
         --env PGPORT="$pgport" \
         --image bitnami/postgresql -- psql -c "$cleanup_query"
-    # Run minio cleanup
-    MINIO_ACCESS_KEY=$(yq 'explode(.) | .global.s3.accessKey' ${OR_DIR}/vars.yaml)
-    MINIO_SECRET_KEY=$(yq 'explode(.) | .global.s3.secretKey' ${OR_DIR}/vars.yaml)
-    MINIO_HOST=$(yq 'explode(.) | .global.s3.endpoint' ${OR_DIR}/vars.yaml)
-    kubectl delete po -n "${APP_NS}" minio-cleanup &>/dev/null || true
-    kubectl run minio-cleanup -n "${APP_NS}" \
+
+    local minio_access_key minio_secret_key minio_host
+    minio_access_key=$(yq 'explode(.) | .global.s3.accessKey' "$OR_DIR/vars.yaml")
+    minio_secret_key=$(yq 'explode(.) | .global.s3.secretKey' "$OR_DIR/vars.yaml")
+    minio_host=$(yq 'explode(.) | .global.s3.endpoint' "$OR_DIR/vars.yaml")
+
+    kubectl delete po -n "$APP_NS" minio-cleanup &>/dev/null || true
+    kubectl run minio-cleanup -n "$APP_NS" \
         --restart=Never \
-        --env MINIO_HOST="$MINIO_HOST" \
+        --env MINIO_HOST="$minio_host" \
         --image bitnami/minio:2020.10.9-debian-10-r6 -- /bin/sh -c "
-      mc alias set minio $MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY &&
-      mc rm --recursive --dangerous --force --older-than ${delete_from_number_days}d minio/mobs
-      "
-    log info "Postgres data cleanup process initiated. Postgres will automatically vacuum deleted rows when the database is idle. This may take up a few days to free the disk space."
-    log info "Minio (where recordings are stored) cleanup process initiated."
-    log info "Run ${BWHITE}openreplay -s${GREEN} to check the status of the cleanup process and available disk space."
-    return
+      mc alias set minio $minio_host $minio_access_key $minio_secret_key &&
+      mc rm --recursive --dangerous --force --older-than ${days}d minio/mobs"
+
+    log info "Postgres cleanup initiated. Vacuum will run automatically when database is idle."
+    log info "MinIO cleanup initiated."
+    log info "Run ${BWHITE}openreplay -s${GREEN} to check cleanup status and disk space."
 }
 
-# Convert semantic version to integer
-function sem_to_int() {
-    echo "$1" | awk -F'[v.]' '{print $2 $3 $4 + 0}'
-}
-
-function version_specific_checks() {
-    # TODO: Add support for check till a specific version
-    version=$(sem_to_int "$1")
-    # check version specific instructions
-    if [ "$version" -le 1220 ]; then
-        log info "Version less than ${version}"
-        log info "Checking clickhouse"
-        if [ -z "$(kubectl get pods -n db -l app.kubernetes.io/name=clickhouse --no-headers 2>/dev/null)" ]; then
-            log info "Installing clickhouse"
-            kubectl apply -f https://github.com/openreplay/openreplay/raw/refs/heads/main/scripts/helmcharts/manifests/clickhouse-db.yaml -n db
-        fi
+upgrade_openreplay() {
+    if [[ ! -f "$OR_DIR/vars.yaml" ]]; then
+        log err "Configuration file not found: ${BWHITE}${OR_DIR}/vars.yaml${RED}"
     fi
-    return
-}
 
-function upgrade() {
-    # TODO:
-    # 1. store vars.yaml in central place.
-    # 3. In upgrade you'll have to clone the repo
-    # 3. How to update package. Because openreplay -u will be done from old update script
-    # 4. Update from Version
+    if ! command -v git &>/dev/null; then
+        log err "git not found. Please install git"
+    fi
 
-    [[ -f ${OR_DIR}/vars.yaml ]] || log err "No configuration file ${BWHITE}${OR_DIR}/vars.yaml${RED}.
-        If you're updating from version older than ${BWHITE}v1.10.0${RED}, for example ${BWHITE}v1.9.0${RED}:
-          ${BWHITE}RELEASE_UPGRADE=1 openreplay --deprecated-upgrade ~/openreplay_v1.9.0/scripts/helmcharts/vars.yaml${RED}.
-        If you're having a custom installation,
-          ${BWHITE}RELEASE_UPGRADE=1 openreplay --deprecated-upgrade /path/to/vars.yaml${RED}.
-        "
-    command -v git >/dev/null 2>&1 || log err "Git not found. Please install"
+    local or_version
+    or_version=$(yq eval '.fromVersion' "$OR_DIR/vars.yaml")
 
-    or_version="$(yq eval '.fromVersion' /var/lib/openreplay/vars.yaml)"
+    if [[ "${RELEASE_UPGRADE:-0}" -eq 1 ]]; then
+        version_specific_checks "$or_version"
+    else
+        OR_VERSION="${OR_VERSION:-$or_version}"
+    fi
 
-    # If release upgrade, then check for version specific instructions
-    [[ $RELEASE_UPGRADE -eq 1 ]] && version_specific_checks "$or_version"
-    # Unless it's upgrade release, always checkout same tag.
-    [[ $RELEASE_UPGRADE -eq 1 ]] || OR_VERSION=${OR_VERSION:-$or_version}
-
-    time_now=$(date +%m-%d-%Y-%I%M%S)
-    # Creating backup dir of current installation
-    [[ -d "$OR_DIR/openreplay" ]] && sudo cp -rf "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"/}_${time_now}"
-
-    clone_repo
-    err_cd openreplay/scripts/helmcharts
+    clone_repository
     install_packages
+
+    err_cd "$OR_DIR/openreplay_repo/scripts/helmcharts"
+
     [[ -d /openreplay ]] && sudo chown -R 1001:1001 /openreplay
 
-    # Merge preferences
     cp "$OR_DIR/vars.yaml" old_vars.yaml
-    or_new_version=$(awk '/fromVersion/{print $2}' <"vars.yaml")
+    local or_new_version
+    or_new_version=$(awk '/fromVersion/{print $2}' <vars.yaml)
+
     yq '(load("old_vars.yaml") | .. | select(tag != "!!map" and tag != "!!seq")) as $i ireduce(.; setpath($i | path; $i))' vars.yaml >new_vars.yaml
     mv new_vars.yaml vars.yaml
     templater -i vars.yaml -o vars.yaml
-    or_helm_upgrade
 
-    # Update the version
-    busybox sed -i "s/fromVersion.*/fromVersion: ${or_new_version}/" vars.yaml
+    helm_upgrade_openreplay
+
+    sed -i "s/fromVersion.*/fromVersion: ${or_new_version}/" vars.yaml
     patch_version
+
     sudo mv ./openreplay-cli /bin/openreplay
     sudo chmod +x /bin/openreplay
     sudo mv ./vars.yaml "$OR_DIR"
-    sudo rm -rf "$OR_DIR/openreplay" || true
-    sudo cp -rf "${tmp_dir}/openreplay" "$OR_DIR/"
-    log info "Configuration file is saved in /var/lib/openreplay/vars.yaml"
-    log info "Run ${BWHITE}openreplay -h${GREEN} to see the cli information to manage OpenReplay."
 
-    err_cd -
-    return
+    log info "Configuration saved to: /var/lib/openreplay/vars.yaml"
+    log info "Run ${BWHITE}openreplay -h${GREEN} for CLI help"
 }
 
-function reload() {
-    err_cd $OR_DIR/openreplay/scripts/helmcharts
-    sudo cp -f $OR_DIR/vars.yaml .
-    or_helm_upgrade reload
-    return
+reload_components() {
+    if [[ ! -d "$OR_DIR/openreplay_repo/scripts/helmcharts" ]]; then
+        log err "Repository not found. Please run upgrade first."
+    fi
+
+    err_cd "$OR_DIR/openreplay_repo/scripts/helmcharts"
+    sudo cp -f "$OR_DIR/vars.yaml" .
+    helm_upgrade_openreplay reload
 }
 
-function clean_tmp_dir() {
-    [[ -z $SKIP_DELETE_TMP_DIR ]] && rm -rf "${tmp_dir}"
+edit_configuration() {
+    if [[ ! -f "$OR_DIR/vars.yaml" ]]; then
+        log err "Configuration file not found: ${BWHITE}${OR_DIR}/vars.yaml${RED}
+        
+Edit your vars.yaml and run: ${BWHITE}openreplay -R${RED}"
+    fi
+
+    local checksum_file="${TMP_DIR}/vars.yaml.md5"
+    md5sum "$OR_DIR/vars.yaml" >"$checksum_file"
+
+    sudo vim -n "$OR_DIR/vars.yaml"
+
+    if ! "$OR_DIR/yq" 'true' "$OR_DIR/vars.yaml" &>/dev/null; then
+        log debug "Invalid YAML syntax. Run ${BWHITE}openreplay -e${YELLOW} to fix"
+        return 1
+    fi
+
+    if md5sum -c "$checksum_file" &>/dev/null; then
+        log info "No changes detected in configuration"
+    else
+        reload_components
+    fi
 }
 
-[[ -f $OR_DIR/packages.lock ]] || {
-    log title Installing packages "${NC}"
-    install_packages
+restart_deployments() {
+    log title "Restarting OpenReplay Components"
+    kubecolor rollout restart deployment -n "$APP_NS" 2>/dev/null || kubectl rollout restart deployment -n "$APP_NS"
+    kubecolor rollout status deployment -n "$APP_NS" 2>/dev/null || kubectl rollout status deployment -n "$APP_NS"
 }
 
-PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrevpi:uhsl:U:c: --long reload,edit,restart,verbose,install-packages,install:,upgrade,help,status,logs,deprecated-upgrade:,cleanup:,force -- "$@")
-VALID_ARGUMENTS=$?
-if [[ "$VALID_ARGUMENTS" != "0" ]]; then
-    help
-    exit 100
-fi
+view_logs() {
+    local service="$1"
+    stern -A --container-state=running,terminated $service
+}
 
-eval set -- "$PARSED_ARGUMENTS"
-while :; do
-    case "$1" in
-    -v | --verbose)
-        VERBOSE=1
-        echo $VERBOSE
-        clean_tmp_dir
-        shift
-        ;;
-    -h | --help)
-        help
-        clean_tmp_dir
-        exit 0
-        ;;
-    -i | --install)
-        log title "Installing OpenReplay"
-        install "$2"
-        clean_tmp_dir
-        exit 0
-        ;;
-    -p | --install-packages)
-        log title "Updating/Installing dependency packages"
+cleanup_temp_dir() {
+    [[ -z "${SKIP_DELETE_TMP_DIR:-}" ]] && rm -rf "$TMP_DIR"
+}
+
+main() {
+    initialize_environment
+
+    if [[ ! -f "$OR_DIR/packages.lock" ]]; then
+        log title "Installing packages"
         install_packages
-        clean_tmp_dir
-        exit 0
-        ;;
-    -u | --upgrade)
-        if [[ $RELEASE_UPGRADE -eq 1 ]]; then
-            log title "Upgrading OpenReplay to Latest Release"
-            CLEANUP_TOOLING=1
-        else
-            log title "Applying Latest OpenReplay Patches"
-            UPGRADE_OR_ONLY=${UPGRADE_OR_ONLY:-1}
-        fi
-        upgrade
-        clean_tmp_dir
-        exit 0
-        ;;
-    -U | --deprecated-upgrade)
-        log title "[Deprected] Upgrading OpenReplay"
-        upgrade_old "$2"
-        clean_tmp_dir
-        exit 0
-        ;;
-    -c | --cleanup)
-        log title "Cleaning up data older than $2 days"
-        cleanup "$2" "$3"
-        clean_tmp_dir
-        exit 0
-        ;;
-    -r | --restart)
-        log title "Restarting OpenReplay Components"
-        kubecolor rollout restart deployment -n "${APP_NS}"
-        kubecolor rollout status deployment -n "${APP_NS}"
-        clean_tmp_dir
-        exit 0
-        ;;
-    -R | --reload)
-        log title "Reloading OpenReplay Components"
-        reload
-        clean_tmp_dir
-        exit 0
-        ;;
-    -e | --edit)
-        log title "Editing OpenReplay"
-        [[ -f ${OR_DIR}/vars.yaml ]] || {
-            log err "
-              Couldn't open ${BWHITE}${OR_DIR}/vars.yaml${RED}. Seems like a custom installation.
-              Edit the proper ${BWHITE}vars.yaml${RED} and run ${BWHITE}openreplay -R${RED}
-              Or ${BWHITE}helm upgrade openreplay -n app openreplay/scripts/helmcharts/openreplay -f openreplay/scripts/helmcharts/vars.yaml --debug --atomic"
-            exit 100
-        }
-        busybox md5sum /var/lib/openreplay/vars.yaml >"${tmp_dir}/var.yaml.md5"
-        sudo vim -n ${OR_DIR}/vars.yaml
-        /var/lib/openreplay/yq 'true' /var/lib/openreplay/vars.yaml &>/dev/null || {
-            log debug "seems like the edit is not correct. Rerun ${BWHITE}openreplay -e${YELLOW} and fix the issue in config file."
-            clean_tmp_dir
-            exit 100
-        }
-        if busybox md5sum -c "${tmp_dir}/var.yaml.md5" &>/dev/null; then
-            log info "No change detected in ${BWHITE}${OR_DIR}/vars.yaml${GREEN}. Not reloading"
-        else
-            reload
-        fi
-        clean_tmp_dir
-        exit 0
-        ;;
-    -s | --status)
-        log title "Checking OpenReplay Components Status"
-        status
-        clean_tmp_dir
-        exit 0
-        ;;
-    -l | --logs)
-        # Skipping double quotes because we want globbing. For example
-        # ./openreplay -l "chalice --tail 10"
-        stern -A --container-state=running,terminated $2
-        clean_tmp_dir
-        exit 0
-        ;;
-    # -- means the end of the arguments; drop this, and break out of the while loop
-    --)
-        shift
-        break
-        ;;
-    # If invalid options were passed, then getopt should have reported an error,
-    # which we checked as VALID_ARGUMENTS when getopt was called...
-    *)
-        echo "Unexpected option: $1 - this should not happen."
-        help
-        clean_tmp_dir
-        ;;
-    esac
-done
+    fi
 
-[ $# -eq 0 ] && help
-clean_tmp_dir
+    if [[ $# -eq 0 ]]; then
+        show_help
+        cleanup_temp_dir
+        exit 0
+    fi
+
+    local parsed_args
+    if ! parsed_args=$(getopt -a -n openreplay -o Rrevpi:uhsl:c: --long reload,edit,restart,verbose,install-packages,install:,upgrade,help,status,logs:,cleanup:,force -- "$@"); then
+        show_help
+        exit 1
+    fi
+
+    eval set -- "$parsed_args"
+
+    while true; do
+        case "$1" in
+        -h | --help)
+            show_help
+            cleanup_temp_dir
+            exit 0
+            ;;
+        -i | --install)
+            log title "Installing OpenReplay"
+            install_openreplay "$2"
+            cleanup_temp_dir
+            exit 0
+            ;;
+        -p | --install-packages)
+            log title "Installing/Updating packages"
+            install_packages
+            cleanup_temp_dir
+            exit 0
+            ;;
+        -u | --upgrade)
+            if [[ "${RELEASE_UPGRADE:-0}" -eq 1 ]]; then
+                log title "Upgrading to Latest Release"
+                CLEANUP_TOOLING=1
+            else
+                log title "Applying Latest Patches"
+                UPGRADE_OR_ONLY="${UPGRADE_OR_ONLY:-1}"
+            fi
+            upgrade_openreplay
+            cleanup_temp_dir
+            exit 0
+            ;;
+        -c | --cleanup)
+            log title "Cleaning up data older than $2 days"
+            cleanup_data "$2" "${3:-}"
+            cleanup_temp_dir
+            exit 0
+            ;;
+        -r | --restart)
+            restart_deployments
+            cleanup_temp_dir
+            exit 0
+            ;;
+        -R | --reload)
+            log title "Reloading OpenReplay"
+            reload_components
+            cleanup_temp_dir
+            exit 0
+            ;;
+        -e | --edit)
+            log title "Editing Configuration"
+            edit_configuration
+            cleanup_temp_dir
+            exit 0
+            ;;
+        -s | --status)
+            log title "OpenReplay Status"
+            show_status
+            cleanup_temp_dir
+            exit 0
+            ;;
+        -l | --logs)
+            view_logs "$2"
+            cleanup_temp_dir
+            exit 0
+            ;;
+        -v | --verbose)
+            set -x
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "Unexpected option: $1"
+            show_help
+            cleanup_temp_dir
+            exit 1
+            ;;
+        esac
+    done
+
+    cleanup_temp_dir
+}
+
+trap cleanup_temp_dir EXIT
+
+main "$@"
