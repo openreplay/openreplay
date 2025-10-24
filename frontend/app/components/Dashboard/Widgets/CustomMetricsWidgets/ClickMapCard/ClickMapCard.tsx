@@ -60,7 +60,6 @@ function ClickMapCard() {
         },
       );
     }
-
     void fetchInsights(metric, payload);
   }, [
     sessionId,

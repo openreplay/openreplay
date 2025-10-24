@@ -210,20 +210,15 @@ function WidgetSessions({ className = '' }) {
     }
   };
 
+  const filterStr = JSON.stringify(filter.filters ?? []);
   useEffect(() => {
+    metricStore.updateKey('sessionsPage', 1);
     loadData();
-  }, []);
-
-  useEffect(() => {
-    if (metricStore.page === 1) {
-      return;
-    } else {
-      metricStore.updateKey('sessionsPage', 1);
-    }
   }, [
     filter.startTimestamp,
     filter.endTimestamp,
     filter.filters.length,
+    filterStr,
     widget.series,
     filterDeps,
     metricStore.clickMapSearch,
@@ -232,7 +227,12 @@ function WidgetSessions({ className = '' }) {
     widget.data.nodes,
     metricStore.disabledSeries.length,
   ]);
-  useEffect(() => loadData(), [metricStore.sessionsPage]);
+
+  useEffect(() => {
+    if (metricStore.sessionsPage !== 1) {
+      loadData();
+    }
+  }, [metricStore.sessionsPage]);
   useEffect(() => {
     metricStore.setFocusedSeriesName(
       activeSeries === 'all'
