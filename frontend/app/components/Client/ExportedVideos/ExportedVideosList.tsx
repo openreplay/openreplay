@@ -29,9 +29,8 @@ function ExportedVideosList() {
   };
 
   const onSessionOpen = (sessionId: string) => {
-    console.log(window.env)
     const win = window.open(
-      `https://${window.env.ORIGIN}/${projectsStore.activeSiteId}${session(sessionId)}`,
+      `https://${document.location.host}/${projectsStore.activeSiteId}${session(sessionId)}`,
       '_blank',
     );
     win?.focus();

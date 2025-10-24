@@ -61,20 +61,11 @@ function isIframe(el: Element): el is HTMLIFrameElement {
 
 export default class Screen {
   readonly overlay: HTMLDivElement;
-
   readonly cursor: Cursor;
-
-  private selectionTargets: { start?: HTMLDivElement; end?: HTMLDivElement } = {
-    start: undefined,
-    end: undefined,
-  };
-
+  private selectionTargets: Element[]
   private readonly iframe: HTMLIFrameElement;
-
   private readonly screen: HTMLDivElement;
-
   private parentElement: HTMLElement | null = null;
-
   private onUpdateHook: (w: number, h: number) => void;
 
   constructor(
@@ -300,16 +291,9 @@ export default class Screen {
     this.onUpdateHook = cb;
   }
 
-  public createSelection(start: HTMLDivElement, end: HTMLDivElement) {
-    this.selectionTargets = { start, end };
-
-    this.overlay.appendChild(start);
-    this.overlay.appendChild(end);
-
-    setTimeout(() => {
-      start.className = styles.highlightoff;
-      end.className = styles.highlightoff;
-    }, 750);
+  public createSelection(nodes: Element[]) {
+    this.overlay.append(...nodes);
+    this.selectionTargets = nodes;
   }
 
   public updateOverlayStyle(style: Partial<CSSStyleDeclaration>) {
@@ -317,12 +301,7 @@ export default class Screen {
   }
 
   public clearSelection() {
-    if (this.selectionTargets.start && this.selectionTargets.end) {
-      this.overlay.removeChild(this.selectionTargets.start);
-      this.overlay.removeChild(this.selectionTargets.end);
-      this.selectionTargets.start.remove();
-      this.selectionTargets.end.remove();
-      this.selectionTargets = { start: undefined, end: undefined };
-    }
+    this.selectionTargets?.forEach((el) => el.remove());
+    this.selectionTargets = [];
   }
 }

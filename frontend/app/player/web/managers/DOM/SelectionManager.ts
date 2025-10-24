@@ -15,12 +15,14 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
     { id: number; node: Element } | null,
     { id: number; node: Element } | null,
   ] = [null, null];
+  private highlightRange: Element[] = [];
 
   public clearSelection = () => {
     if (this.selected[0] === null && this.selected[1] === null) return;
 
     this.screen.clearSelection();
     this.selected = [null, null];
+    this.highlightRange = [];
   };
 
   move(t: number) {
@@ -50,35 +52,47 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
     if (this.selected[0] && this.selected[0]?.id !== msg.selectionStart)
       this.clearSelection();
 
-    if (startVNode && endVNode) {
-      const startCoords = startVNode.node.getBoundingClientRect();
-      const endCoords = endVNode.node.getBoundingClientRect();
+    if (startVNode && endVNode && this.screen.document) {
+      const range = this.screen.document.createRange();
+      range.setStartBefore(startVNode.node);
+      range.setEndAfter(endVNode.node);
 
-      const startPointer = document.createElement('div');
-      const endPointer = document.createElement('div');
+      for (const el of this.highlightRange) el.remove();
+      this.highlightRange = [];
+      const rects = range.getClientRects();
+      const rectLength = rects.length;
+      for (let i = 0; i < rectLength; i += 1) {
+        const r = rects[i];
+        const hl = document.createElement('div');
+        let top, left, width, height;
+        top = `${r.top + window.scrollY - 3}px`;
+        left = `${r.left + window.scrollX}px`;
+        width = `${r.width}px`;
+        height = `${r.height + 6}px`;
 
-      Object.assign(endPointer.style, {
-        top: `${endCoords.top}px`,
-        left: `${endCoords.left}px`,
-        width: `${endCoords.width}px`,
-        height: `${endCoords.height}px`,
-        position: 'absolute',
-        boxShadow: '1px 4px 1px -2px blue',
-      });
-      Object.assign(startPointer.style, {
-        top: `${startCoords.top}px`,
-        left: `${startCoords.left}px`,
-        width: `${startCoords.width}px`,
-        height: `${startCoords.height}px`,
-        position: 'absolute',
-        boxShadow: '1px 4px 1px -2px blue',
-      });
 
-      this.screen.createSelection(startPointer, endPointer);
+        Object.assign(hl.style, {
+          position: 'absolute',
+          top,
+          left,
+          width,
+          height,
+          background: 'rgba(173, 216, 230, 0.45)',
+          borderRadius: '6px',
+          pointerEvents: 'none',
+          zIndex: '100',
+          borderTopLeftRadius: i === 0 ? '6px' : '0px',
+          borderBottomLeftRadius: i === 0 ? '6px' : '0px',
+          borderTopRightRadius: i === rectLength - 1 ? '6px' : '0px',
+          borderBottomRightRadius: i === rectLength - 1 ? '6px' : '0px',
+        } as CSSStyleDeclaration);
+        this.highlightRange.push(hl);
+      }
+      this.screen.createSelection(this.highlightRange);
 
       this.selected = [
-        { id: msg.selectionStart, node: startPointer },
-        { id: msg.selectionEnd, node: endPointer },
+        { id: msg.selectionStart, node: startVNode.node },
+        { id: msg.selectionEnd, node: endVNode.node },
       ];
     }
   }
