@@ -10,7 +10,7 @@ postgresql:
 kafka:
   image:
     repository: bitnamilegacy/kafka
-    tag: 3.3
+    tag: 3.9
 
 migration:
   env: {}
