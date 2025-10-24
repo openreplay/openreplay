@@ -73,6 +73,7 @@ func main() {
 		),
 		false,
 		cfg.MessageSizeLimit,
+		nil,
 	)
 
 	log.Info(ctx, "Storage service started")
@@ -95,8 +96,6 @@ func main() {
 			if err := consumer.Commit(); err != nil {
 				log.Error(ctx, "can't commit messages: %s", err)
 			}
-		case msg := <-consumer.Rebalanced():
-			log.Info(ctx, "rebalanced: %v", msg)
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
