@@ -61,6 +61,7 @@ func main() {
 		videoService.VideoService,
 		false,
 		cfg.MessageSizeLimit,
+		nil,
 	)
 
 	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetrics, videoService.Handlers(), tenantsService, projManager, nil, nil)
@@ -90,8 +91,6 @@ func main() {
 			if err := consumer.Commit(); err != nil {
 				log.Error(ctx, "can't commit messages: %s", err)
 			}
-		case msg := <-consumer.Rebalanced():
-			log.Info(ctx, "consumer group rebalanced: %+v", msg)
 		default:
 			err = consumer.ConsumeNext()
 			if err != nil {
