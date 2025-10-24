@@ -83,8 +83,6 @@ export const clean = (
   return retObj;
 };
 
-const isDev = window.env.NODE_ENV === 'development';
-
 export default class APIClient {
   private init: RequestInit;
 

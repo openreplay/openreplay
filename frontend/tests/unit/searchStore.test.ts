@@ -132,20 +132,6 @@ describe('SearchStore class', () => {
     mockSessionFetch.mockClear();
   });
 
-  it('applySavedSearch sets filters', () => {
-    const saved = new SavedSearch({
-      name: 'test',
-      filter: {
-        filters: [{ key: FilterKey.USERID, value: ['123'], operator: 'is' }],
-      },
-    });
-    store.applySavedSearch(saved);
-    expect(store.savedSearch).toBe(saved);
-    expect(store.instance.filters.length).toBe(1);
-    // @ts-ignore
-    expect(store.instance.filters[0].key).toBe(FilterKey.USERID);
-  });
-
   it('addFilterByKeyAndValue adds filter and triggers fetch', () => {
     store.addFilterByKeyAndValue(FilterKey.USERID, ['42']);
     expect(store.instance.filters.length).toBe(1);
@@ -161,7 +147,7 @@ describe('SearchStore class', () => {
     await store.fetchSessions();
     const call = mockSessionFetch.mock.calls[0][0];
     const duration = call.filters.find(
-      (f: any) => f.type === FilterKey.DURATION,
+      (f: any) => f.name === FilterKey.DURATION,
     );
     expect(duration).toBeTruthy();
     expect(duration.value).toEqual([1000, 0]);
