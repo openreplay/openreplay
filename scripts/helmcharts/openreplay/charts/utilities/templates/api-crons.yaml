@@ -65,17 +65,17 @@ spec:
                 value: '{{ .Values.global.postgresql.postgresqlUser }}'
               - name: pg_password
                 valueFrom:
-                  secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 18 }}
+                  secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 20 }}
               - name: SITE_URL
                 value: '{{- include "openreplay.domainURL" . }}'
               - name: S3_HOST
                 value: '{{- include "openreplay.s3Endpoint" . }}'
               - name: S3_KEY
                 valueFrom:
-                  secretKeyRef: {{- include "openreplay.secrets" (dict "key" "access-key" "ctx" .) | nindent 18 }}
+                  secretKeyRef: {{- include "openreplay.secrets" (dict "key" "access-key" "ctx" .) | nindent 20 }}
               - name: S3_SECRET
                 valueFrom:
-                  secretKeyRef: {{- include "openreplay.secrets" (dict "key" "secret-key" "ctx" .) | nindent 18 }}
+                  secretKeyRef: {{- include "openreplay.secrets" (dict "key" "secret-key" "ctx" .) | nindent 20 }}
               - name: AWS_DEFAULT_REGION
                 value: '{{ .Values.global.s3.region }}'
               - name: sessions_region
