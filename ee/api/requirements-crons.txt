@@ -1,18 +1,18 @@
 urllib3==2.5.0
 requests==2.32.5
-boto3==1.40.35
+boto3==1.40.58
 pyjwt==2.10.1
-psycopg2-binary==2.9.10
-psycopg[pool,binary]==3.2.10
-clickhouse-connect==0.9.1
+psycopg2-binary==2.9.11
+psycopg[pool,binary]==3.2.11
+clickhouse-connect==0.9.2
 elasticsearch==9.1.1
 jira==3.10.5
 cachetools==6.2.0
 
-fastapi==0.117.1
+fastapi==0.120.0
 python-decouple==3.8
-pydantic[email]==2.11.9
+pydantic[email]==2.12.3
 apscheduler==3.11.0
 
-redis==6.4.0
-azure-storage-blob==12.26.0
+redis==7.0.0
+azure-storage-blob==12.27.0
