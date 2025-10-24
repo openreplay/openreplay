@@ -1,4 +1,4 @@
-FROM node:23-alpine
+FROM node:25-alpine
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk add --no-cache tini
 
