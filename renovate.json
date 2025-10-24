@@ -3,6 +3,11 @@
   "extends": [
     "config:recommended"
   ],
+  "ignoreDeps": [
+    "docker.io/bitnamilegacy/bitnami-shell",
+    "docker.io/bitnamilegacy/kafka-exporter",
+    "docker.io/bitnamilegacy/redis-sentinel-exporter"
+  ],
   "timezone": "UTC",
   "schedule": [
     "before 4am on Monday"
