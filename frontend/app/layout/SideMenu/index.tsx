@@ -76,7 +76,8 @@ function SideMenu(props: Props) {
           item.isAdmin && !isAdmin,
           item.isEnterprise && !isEnterprise,
           item.key === MENU.KAI && !hasAi,
-          item.key === PREFERENCES_MENU.EXPORTED_VIDEOS && !account.hasVideoExport,
+          item.key === PREFERENCES_MENU.EXPORTED_VIDEOS &&
+          !account.hasVideoExport,
         ].some(Boolean);
 
         return { ...item, hidden: isHidden };

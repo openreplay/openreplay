@@ -93,7 +93,7 @@ export default class RecordingsService {
     sessionId: string,
   ): Promise<{ data: { status: string } }> => {
     return this.client
-      .post(`/replay-exporter/v1/PROJECT_ID/session-videos`, { sessionId })
+      .post(`/video-replays/v1/PROJECT_ID/session-videos`, { sessionId })
       .then((r) => r.json());
   };
 
@@ -101,19 +101,19 @@ export default class RecordingsService {
     params: Record<string, any>,
   ): Promise<ExportsResponse> => {
     return this.client
-      .get(`/replay-exporter/v1/PROJECT_ID/session-videos`, { params })
+      .get(`/video-replays/v1/PROJECT_ID/session-videos`, { params })
       .then((r) => r.json());
   };
 
   getDownloadLink = async (sessionId: string): Promise<{ data: string }> => {
     return this.client
-      .get(`/replay-exporter/v1/PROJECT_ID/session-videos/${sessionId}`)
+      .get(`/video-replays/v1/PROJECT_ID/session-videos/${sessionId}`)
       .then((r) => r.json());
   };
 
   deleteVideo = async (sessionId: string) => {
     return this.client
-      .delete(`/replay-exporter/v1/PROJECT_ID/session-videos/${sessionId}`)
+      .delete(`/video-replays/v1/PROJECT_ID/session-videos/${sessionId}`)
       .then((r) => r.json());
   };
 }
