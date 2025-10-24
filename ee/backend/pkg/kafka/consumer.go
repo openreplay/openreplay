@@ -110,22 +110,12 @@ func (consumer *consumerImpl) reBalanceCallback(c *kafka.Consumer, e kafka.Event
 		}
 		return parts
 	}
-	getTopicName := func(partitions []kafka.TopicPartition) string {
-		topic := "no-info"
-		if len(partitions) > 0 && partitions[0].Topic != nil {
-			topic = *partitions[0].Topic
-		}
-		return topic
-	}
+	log.Println(e.String())
 	switch evt := e.(type) {
 	case kafka.RevokedPartitions:
-		partitions := getPartitionsNumbers(evt.Partitions)
-		log.Printf("RebalanceTypeRevoke, topic: %s, partitions: %v", getTopicName(evt.Partitions), partitions)
-		consumer.rebalanceHandler(types.RebalanceTypeRevoke, partitions)
+		consumer.rebalanceHandler(types.RebalanceTypeRevoke, getPartitionsNumbers(evt.Partitions))
 	case kafka.AssignedPartitions:
-		partitions := getPartitionsNumbers(evt.Partitions)
-		log.Printf("RebalanceTypeAssign, topic: %s, partitions: %v", getTopicName(evt.Partitions), partitions)
-		consumer.rebalanceHandler(types.RebalanceTypeAssign, partitions)
+		consumer.rebalanceHandler(types.RebalanceTypeAssign, getPartitionsNumbers(evt.Partitions))
 	}
 	if _, err := c.Commit(); err != nil {
 		log.Println("reBalanceCallback error: can't commit the current state, ", err)
