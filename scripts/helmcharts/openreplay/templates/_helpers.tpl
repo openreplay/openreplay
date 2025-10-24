@@ -171,11 +171,11 @@ Create the volume mount config for redis TLS certificates
 {{- end}}
 
 {{- /*
-{{- include "openreplay.app_secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 4 }}
-{{- include "openreplay.app_secrets" (dict "key" "clickhouse-password" "ctx" .) | nindent 4 }}
-{{- include "openreplay.app_secrets" (dict "key" "access-key" "ctx" .) | nindent 4 }}
-{{- include "openreplay.app_secrets" (dict "key" "secret-key" "ctx" .) | nindent 4 }}
-{{- include "openreplay.app_secrets" (dict "key" "assist-key" "ctx" .) | nindent 4 }}
+{{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 4 }}
+{{- include "openreplay.secrets" (dict "key" "clickhouse-password" "ctx" .) | nindent 4 }}
+{{- include "openreplay.secrets" (dict "key" "access-key" "ctx" .) | nindent 4 }}
+{{- include "openreplay.secrets" (dict "key" "secret-key" "ctx" .) | nindent 4 }}
+{{- include "openreplay.secrets" (dict "key" "assist-key" "ctx" .) | nindent 4 }}
 */ -}}
 {{- define "openreplay.secrets" -}}
 {{- $secretName := "" -}}

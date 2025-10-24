@@ -79,14 +79,8 @@ spec:
             - name: BUCKET_NAME
               value: {{ .Values.aws.bucket_name | default .Values.global.s3.recordingsBucket }}
             - name: pg_password
-              {{- if .Values.global.postgresql.existingSecret }}
               valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.postgresql.existingSecret }}
-                  key: postgresql-postgres-password
-              {{- else }}
-              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
-              {{- end}}
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 18 }}
             - name: POSTGRES_STRING
               value: {{ include "openreplay.pg_connection_string" .}}
             - name: SESSION_VIDEO_BASE_URL
