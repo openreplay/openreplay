@@ -1,4 +1,4 @@
-from k8s.gcr.io/ingress-nginx/controller:v1.3.0
+from k8s.gcr.io/ingress-nginx/controller:v1.13.3
 # Fix critical vulnerability
 user 0
 user 101
