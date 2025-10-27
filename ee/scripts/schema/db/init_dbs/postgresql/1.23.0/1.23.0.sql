@@ -59,7 +59,9 @@ CREATE TABLE public.sessions_videos
 CREATE UNIQUE INDEX sessions_videos_session_id_project_id_key ON public.sessions_videos USING btree (session_id, project_id);
 
 UPDATE public.users
-SET settings= agg
+SET settings= jsonb_set(COALESCE(old_users.settings, '{
+  "modules": []
+}'::jsonb), '{modules}', agg)
 FROM public.users AS old_users,
      LATERAL (SELECT old_users.user_id, jsonb_agg(DISTINCT jsonb_array_elements_text) AS agg
               FROM jsonb_array_elements_text(COALESCE(old_users.settings, '{
