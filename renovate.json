@@ -19,6 +19,18 @@
         "github-actions"
       ],
       "automerge": true
+    },
+    {
+      "description": "Allow major updates for Docker images",
+      "matchManagers": [
+        "docker",
+        "helm-values",
+        "kubernetes"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
     }
   ]
 }
