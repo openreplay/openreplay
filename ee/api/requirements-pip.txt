@@ -6,3 +6,9 @@ elasticsearch==9.1.1
 jira==3.10.5
 pydantic[email]==2.12.3
 azure-storage-blob==12.27.0
+
+# SCIM packages for user/group provisioning
+scim2-models==0.5.0
+scim2-server==0.1.7
+scim2-filter-parser==0.7.0
+werkzeug==3.1.3
