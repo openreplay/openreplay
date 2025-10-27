@@ -1,28 +1,38 @@
-FROM python:3.13-alpine
-LABEL maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
+FROM nixos/nix:latest AS builder
+
+# Enable flakes and other experimental features
+RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+
+WORKDIR /build
+
+# Copy shell.nix and requirements
+COPY shell.nix .
+COPY requirements.txt .
+
+# Install dependencies using Nix
+RUN nix-shell --run "pip install --prefix=/build/python-env -r requirements.txt"
+
+# Final stage
+FROM nixos/nix:latest
+
+# Enable flakes
+RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+
 WORKDIR /app
 
+# Copy Nix environment
+COPY shell.nix .
+COPY --from=builder /build/python-env /usr/local
+
+# Install runtime dependencies
+RUN nix-shell --run "echo 'Nix environment ready'"
+
+# Copy application code
 COPY . .
 RUN mv env.default .env
-RUN apk add --no-cache tini xmlsec && \
-  export UV_SYSTEM_PYTHON=true && \
-  pip install uv && \
-  apk add --no-cache --virtual .build-deps \
-  build-base \
-  libressl \
-  libffi-dev \
-  libressl-dev \
-  libxslt-dev \
-  libxml2-dev \
-  xmlsec-dev && \
-  uv pip install --no-cache-dir --upgrade -r requirements.txt && \
-  # Solve the libxml2 library version mismatch by reinstalling lxml with matching libxml2
-  uv pip uninstall lxml && \
-  uv pip install --no-cache-dir --no-binary lxml lxml --force-reinstall && \
-  # Create non-root user
-  adduser -u 1001 openreplay -D && \
-  # Cleanup build dependencies
-  apk del .build-deps
+
+# Create non-root user
+RUN adduser -u 1001 openreplay -D
 
 ARG envarg
 ARG GIT_SHA
@@ -31,14 +41,10 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
   LISTEN_PORT=8000 \
   PRIVATE_ENDPOINTS=false \
   ENTERPRISE_BUILD=${envarg} \
-  GIT_SHA=$GIT_SHA
-
-WORKDIR /app
-
-COPY . .
-RUN mv env.default .env
+  GIT_SHA=$GIT_SHA \
+  PYTHONPATH=/usr/local/lib/python3.13/site-packages
 
 USER 1001
 
-ENTRYPOINT ["/sbin/tini", "--"]
+ENTRYPOINT ["nix-shell", "--run"]
 CMD ["./entrypoint.sh"]
