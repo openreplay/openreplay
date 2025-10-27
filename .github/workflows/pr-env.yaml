@@ -24,7 +24,7 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v2
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v5
       with:
         aws-access-key-id: ${{ secrets.OR_PR_AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.OR_PR_AWS_SECRET_ACCESS_KEY }}
