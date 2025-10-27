@@ -440,7 +440,6 @@ CREATE TABLE public.sessions
     events_count            integer      NOT NULL DEFAULT 0,
     errors_count            integer      NOT NULL DEFAULT 0,
     watchdogs_score         bigint       NOT NULL DEFAULT 0,
-    issue_score             bigint       NOT NULL DEFAULT 0,
     issue_types             issue_type[] NOT NULL DEFAULT '{}'::issue_type[],
     utm_source              text         NULL     DEFAULT NULL,
     utm_medium              text         NULL     DEFAULT NULL,

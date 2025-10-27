@@ -27,19 +27,22 @@ ALTER TYPE issue_type ADD VALUE IF NOT EXISTS 'incident';
 
 CREATE TABLE IF NOT EXISTS public.saved_searches
 (
-    search_id    uuid                           PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id   integer                        NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
-    user_id      integer                        NOT NULL REFERENCES public.users (user_id) ON DELETE CASCADE,
-    name         varchar(255)                   DEFAULT NULL,
-    is_public    boolean                        NOT NULL DEFAULT FALSE,
-    is_share     boolean                        NOT NULL DEFAULT FALSE,
-    search_data  jsonb                          NOT NULL,
-    created_at   timestamp without time zone    NOT NULL DEFAULT timezone('utc'::text, now()),
-    expires_at   timestamp without time zone    NULL     DEFAULT NULL,
-    deleted_at   timestamp without time zone    NULL     DEFAULT NULL
+    search_id   uuid PRIMARY KEY                     DEFAULT gen_random_uuid(),
+    project_id  integer                     NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
+    user_id     integer                     NOT NULL REFERENCES public.users (user_id) ON DELETE CASCADE,
+    name        varchar(255)                         DEFAULT NULL,
+    is_public   boolean                     NOT NULL DEFAULT FALSE,
+    is_share    boolean                     NOT NULL DEFAULT FALSE,
+    search_data jsonb                       NOT NULL,
+    created_at  timestamp without time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+    expires_at  timestamp without time zone NULL     DEFAULT NULL,
+    deleted_at  timestamp without time zone NULL     DEFAULT NULL
 );
 
 CREATE INDEX saved_searches_project_id_idx ON public.saved_searches (project_id);
+
+ALTER TABLE IF EXISTS public.sessions
+    DROP COLUMN IF EXISTS issue_score;
 
 COMMIT;
 
