@@ -70,9 +70,27 @@ android {
     disable "GradleCompatible"
   }
 
+  // Try to get Java version from root project
+  // Check various common properties that React Native and Expo might set
+  def javaVersion = JavaVersion.VERSION_1_8
+  if (rootProject.hasProperty("compileSdkVersion")) {
+    // Modern React Native / Expo typically uses Java 17
+    def sdkVersion = rootProject.property("compileSdkVersion")
+    if (sdkVersion >= 34) {
+      javaVersion = JavaVersion.VERSION_17
+    }
+  }
+  if (rootProject.ext.has("javaVersion")) {
+    javaVersion = rootProject.ext.get("javaVersion")
+  }
+  
   compileOptions {
-    sourceCompatibility JavaVersion.VERSION_1_8
-    targetCompatibility JavaVersion.VERSION_1_8
+    sourceCompatibility javaVersion
+    targetCompatibility javaVersion
+  }
+
+  kotlinOptions {
+    jvmTarget = javaVersion.toString()
   }
 }
 
@@ -88,9 +106,9 @@ dependencies {
   // For < 0.71, this will be from the local maven repo
   // For > 0.71, this will be replaced by `com.facebook.react:react-android:$version` by react gradle plugin
   //noinspection GradleDynamicVersion
-  implementation("com.facebook.react:react-native:0.20.1")
+  implementation("com.facebook.react:react-native:+")
   implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
-  implementation("com.github.openreplay:android-tracker:v1.1.7")
+  implementation("com.github.openreplay:android-tracker:v1.1.8")
 }
 
 
