@@ -74,7 +74,9 @@ export default class NotesStore {
 
     this.setLoading(true);
     try {
-      const { notes, count } = await notesService.fetchNotes(filter);
+      const resp = await notesService.fetchNotes(filter);
+      const notes = resp.notes ?? [];
+      const count = resp.count ?? 0;
       this.setNotes(notes);
       this.setTotal(count);
       return { notes, total: count };
