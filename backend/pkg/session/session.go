@@ -54,7 +54,6 @@ type SessionReplay struct {
 	UserCountry        string                 `json:"userCountry"`
 	PagesCount         int                    `json:"pagesCount"`
 	EventsCount        int                    `json:"eventsCount"`
-	IssueScore         int                    `json:"issueScore"`
 	IssueTypes         string                 `json:"issueTypes"`
 	UtmSource          *string                `json:"utmSource"`
 	UtmMedium          *string                `json:"utmMedium"`
@@ -117,7 +116,6 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 	    s.user_state,
 	    s.pages_count,
 	    s.events_count,
-	    s.issue_score,
 	    s.issue_types,
 	    s.utm_source,
 	    s.utm_medium,
@@ -176,7 +174,7 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 		&si.SessionID, &si.ProjectID, &si.TrackerVersion, &si.StartTs, &si.Duration, &si.Platform, &si.UserID, &si.UserUUID,
 		&si.UserOS, &si.UserOSVersion, &si.UserBrowser, &si.UserBrowserVersion, &si.UserDevice, &si.UserDeviceType,
 		&si.UserDeviceMemory, &si.UserDeviceHeap, &si.UserCountry, &si.UserCity, &si.UserState, &si.PagesCount,
-		&si.EventsCount, &si.IssueScore, &si.IssueTypes, &si.UtmSource, &si.UtmMedium, &si.UtmCampaign, &si.Referrer,
+		&si.EventsCount, &si.IssueTypes, &si.UtmSource, &si.UtmMedium, &si.UtmCampaign, &si.Referrer,
 		&si.BaseReferrer, &si.Timezone, &si.ScreenWidth, &si.ScreenHeight, &si.Favorite, &si.Viewed, &si.Metadata); err != nil {
 		return nil, fmt.Errorf(NoSession+", %s", err)
 	}
