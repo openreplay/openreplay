@@ -49,11 +49,13 @@ function ProjectCaptureRate(props: Props) {
   }, [projectId]);
 
   useEffect(() => {
-    setConditions(
-      captureConditions.map(
-        (condition: any) => new Conditions(condition, true, isMobile),
-      ),
-    );
+    if (captureConditions) {
+      setConditions(
+        captureConditions.map(
+          (condition: any) => new Conditions(condition, true, isMobile),
+        ),
+      );
+    }
   }, [captureConditions]);
 
   const onCaptureRateChange = (input: string) => {
