@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: [postgresql, kafka, minio, kubectl, redis, redis-sentinel, redis-sentinel-exporter, redis-exporter, bitnami-shell]
+        image: [postgresql, kafka, minio, redis]
     steps:
       - name: Checkout Bitnami repo
         uses: actions/checkout@v4
