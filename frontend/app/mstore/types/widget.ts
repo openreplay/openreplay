@@ -111,6 +111,7 @@ export default class Widget {
   compareTo: [startDate?: string, endDate?: string] | null = null;
   sortBy?: string = '';
   sortOrder?: string = 'desc';
+  includeClickRage?: boolean = false;
 
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
   hasChanged: boolean = false;
@@ -264,6 +265,7 @@ export default class Widget {
 
       if (this.metricType === HEATMAP) {
         this.series[0].maxEvents = 1;
+        this.includeClickRage = json.includeClickRage;
       }
 
       if (this.metricType === WEBVITALS) {
@@ -330,6 +332,10 @@ export default class Widget {
       data.startPoint = this.startPoint ? [this.startPoint.toJson()] : [];
       data.excludes = this.excludes.map((i: any) => i.toJson());
       data.metricOf = 'sessionCount';
+    }
+
+    if (this.metricType === HEATMAP) {
+      data.includeClickRage = this.includeClickRage;
     }
     return data;
   }

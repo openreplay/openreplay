@@ -1,19 +1,22 @@
 import React from 'react';
-import { Checkbox } from 'UI';
-import { Button, Segmented, Tooltip } from 'antd';
+import { Button, Segmented, Tooltip, Checkbox } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { Smartphone, Tablet, Monitor, RefreshCcw } from 'lucide-react';
 import { FilterKey } from '@/types/filter/filterType';
+import type { CheckboxProps } from 'antd';
 
 function ClickMapRagePicker() {
   const [platform, setPlatform] = React.useState<'desktop' | 'mobile' | 'tablet'>('desktop');
   const { t } = useTranslation();
   const { metricStore, dashboardStore, filterStore } = useStore();
 
-  const onToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    metricStore.setClickMapsRage(e.target.checked);
+  const onChange: CheckboxProps['onChange'] = (e) => {
+    const checked = e.target.checked;
+    metricStore.setClickMapsRage(checked);
+    metricStore.instance.includeClickRage = checked;
+    metricStore.instance.updateKey('hasChanged', true);
   };
 
   const refreshHeatmapSession = async () => {
@@ -56,7 +59,9 @@ function ClickMapRagePicker() {
 
   return (
     <div className="mr-4 flex items-center gap-2 cursor-pointer">
-      <Checkbox onChange={onToggle} label={t('Include rage clicks')} />
+      <Checkbox onChange={onChange} checked={metricStore.includeClickRage}>
+        {t('Include rage clicks')}
+      </Checkbox>
 
       <Segmented
         options={[

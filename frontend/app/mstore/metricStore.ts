@@ -92,7 +92,7 @@ export default class MetricStore {
   sessionsPage: number = 1;
   sessionsPageSize: number = 10;
   listView?: boolean = true;
-  clickMapFilter: boolean = false;
+  includeClickRage: boolean = false;
   clickMapSearch = '';
   clickMapLabel = '';
   cardCategory: string | null = CATEGORIES.product_analytics;
@@ -156,7 +156,7 @@ export default class MetricStore {
   }
 
   setClickMapsRage(val: boolean) {
-    this.clickMapFilter = val;
+    this.includeClickRage = val;
   }
 
   changeClickMapSearch(val: string, label: string) {
@@ -277,7 +277,7 @@ export default class MetricStore {
       //   obj.series[0].filter.removeFilter(0);
       // }
       // if (obj.series[0] && obj.series[0].filter.filters.length < 1) {
-      // const clickMapFilter = {
+      // const includeClickRage = {
       //   name: FilterKey.LOCATION,
       //   autoCaptured: true,
       //   displayName: 'Visited URL',
@@ -296,7 +296,7 @@ export default class MetricStore {
       //     },
       //   ],
       // };
-      // obj.series[0].filter.addFilter(clickMapFilter);
+      // obj.series[0].filter.addFilter(includeClickRage);
       // }
     }
 

@@ -66,7 +66,7 @@ function ClickMapCard() {
     dashboardStore.drillDownPeriod.start,
     dashboardStore.drillDownPeriod.end,
     dashboardStore.drillDownPeriod.rangeValue,
-    metricStore.clickMapFilter,
+    metricStore.includeClickRage,
   ]);
 
   const hasLocationFilter = (payload: any) => {
