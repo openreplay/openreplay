@@ -28,7 +28,6 @@ s.errors_count AS errors_count,
 s.user_anonymous_id AS user_anonymous_id,
 s.platform AS platform,
 s.timezone AS timezone,
-coalesce(issue_score,0) AS issue_score,
 s.issue_types AS issue_types 
 """
 
@@ -52,7 +51,6 @@ SESSION_PROJECTION_COLS_CH_MAP = """\
 'user_anonymous_id', toString(s.user_anonymous_id),
 'platform',          toString(s.platform),
 'timezone',          toString(s.timezone),
-'issue_score',       toString(coalesce(issue_score,0)),
 'viewed',            toString(viewed_sessions.session_id > 0)
 """
 

@@ -25,7 +25,6 @@ s.pages_count,
 s.errors_count,
 s.user_anonymous_id,
 s.platform,
-s.issue_score,
 s.timezone,
 to_jsonb(s.issue_types) AS issue_types """
 
@@ -132,12 +131,12 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
                                                 COALESCE(JSONB_AGG(full_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
-                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY {sort} {data.order}, issue_score DESC) AS rn
+                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY {sort} {data.order}) AS rn
                                             FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
                                                                 {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
-                                            ORDER BY {sort} {data.order}, issue_score DESC) AS full_sessions;""",
+                                            ORDER BY {sort} {data.order}) AS full_sessions;""",
                                      full_args)
         logger.debug("--------------------")
         logger.debug(main_query)
@@ -232,7 +231,7 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
                                                                                 ) AS favorite_sessions USING (session_id)
                                             WHERE s.project_id = %(id)s AND s.duration IS NOT NULL AND s.{col_name} = %(value)s
                                         ) AS full_sessions
-                                    ORDER BY favorite DESC, issue_score DESC
+                                    ORDER BY favorite DESC
                                     LIMIT 10
                                 )""",
                             {"id": i, "value": m_value, "userId": user_id}).decode('UTF-8'))

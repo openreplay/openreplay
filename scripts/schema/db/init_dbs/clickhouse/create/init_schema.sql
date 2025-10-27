@@ -121,7 +121,6 @@ CREATE TABLE IF NOT EXISTS experimental.sessions
     issue_types          Array(LowCardinality(String)),
     referrer             Nullable(String),
     base_referrer        Nullable(String) MATERIALIZED lower(concat(domain(referrer), path(referrer))),
-    issue_score          Nullable(UInt32),
     screen_width         Nullable(Int16),
     screen_height        Nullable(Int16),
     metadata_1           Nullable(String),
