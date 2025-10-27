@@ -23,6 +23,8 @@ azure-storage-blob = "==12.27.0"
 psycopg = {extras = ["pool", "binary"], version = "==3.2.11"}
 uvicorn = {extras = ["standard"], version = "==0.38.0"}
 pydantic = {extras = ["email"], version = "==2.12.3"}
+scim2-server = "*"
+scim2-models = "*"
 
 [dev-packages]
 
