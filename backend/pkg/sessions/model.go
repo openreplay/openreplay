@@ -74,7 +74,7 @@ func (s *Session) SetMetadata(keyNo uint, value string) {
 	}
 }
 
-gtype UnStartedSession struct {
+type UnStartedSession struct {
 	ProjectKey         string
 	TrackerVersion     string
 	DoNotTrack         bool
