@@ -762,7 +762,7 @@ externalAccess:
     image:
       registry: docker.io
       repository: bitnamilegacy/kubectl
-      tag: 1.25.5-debian-11-r11
+      tag: 1.29.1-debian-11-r11
       digest: ""
       ## Specify a imagePullPolicy
       ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
