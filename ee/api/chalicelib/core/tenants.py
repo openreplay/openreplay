@@ -56,20 +56,6 @@ def get_by_api_key(api_key):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def get_by_name(name):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""SELECT tenants.tenant_id,
-                                       tenants.name,
-                                       tenants.created_at                        
-                                FROM public.tenants
-                                WHERE tenants.name = %(name)s 
-                                    AND tenants.deleted_at ISNULL
-                                LIMIT 1;""",
-                            {"name": name})
-        cur.execute(query=query)
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
 def generate_new_api_key(tenant_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.tenants
@@ -107,3 +93,16 @@ async def tenants_exists(use_pool=True):
             row = await cnx.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
             row = await row.fetchone()
             return row["exists"]
+
+
+def has_service_account(tenant_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""SELECT 1
+                                FROM public.users
+                                WHERE tenant_id = %(tenantId)s 
+                                    AND deleted_at ISNULL
+                                    AND service_account
+                                LIMIT 1;""",
+                            {"tenantId": tenant_id})
+        cur.execute(query=query)
+        return cur.fetchone() is not None

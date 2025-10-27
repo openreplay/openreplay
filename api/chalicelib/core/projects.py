@@ -141,7 +141,7 @@ def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authoriza
     if __exists_by_name(name=data.name, exclude_id=None):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
     if not skip_authorization:
-        admin = users.get(user_id=user_id, tenant_id=tenant_id)
+        admin = users.get_user(user_id=user_id, tenant_id=tenant_id)
         if not admin["admin"] and not admin["superAdmin"]:
             return {"errors": ["unauthorized"]}
     return {"data": __create(tenant_id=tenant_id, data=data.model_dump())}
@@ -150,7 +150,7 @@ def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authoriza
 def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
     if __exists_by_name(name=data.name, exclude_id=project_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
-    admin = users.get(user_id=user_id, tenant_id=tenant_id)
+    admin = users.get_user(user_id=user_id, tenant_id=tenant_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     return {"data": __update(tenant_id=tenant_id, project_id=project_id,
@@ -158,14 +158,14 @@ def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
 
 
 def delete(tenant_id, user_id, project_id):
-    admin = users.get(user_id=user_id, tenant_id=tenant_id)
+    admin = users.get_user(user_id=user_id, tenant_id=tenant_id)
 
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""UPDATE public.projects 
+        query = cur.mogrify("""UPDATE public.projects
                                SET deleted_at = timezone('utc'::text, now()),
-                                   active = FALSE
+                                   active     = FALSE
                                WHERE project_id = %(project_id)s;""",
                             {"project_id": project_id})
         cur.execute(query=query)
@@ -176,8 +176,8 @@ def get_gdpr(project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT gdpr
                                FROM public.projects AS s
-                               WHERE s.project_id =%(project_id)s
-                                    AND s.deleted_at IS NULL;""",
+                               WHERE s.project_id = %(project_id)s
+                                 AND s.deleted_at IS NULL;""",
                             {"project_id": project_id})
         cur.execute(query=query)
         row = cur.fetchone()["gdpr"]
@@ -187,11 +187,11 @@ def get_gdpr(project_id):
 
 def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""UPDATE public.projects 
-                               SET gdpr = gdpr|| %(gdpr)s::jsonb
-                               WHERE project_id = %(project_id)s 
-                                    AND deleted_at ISNULL
-                               RETURNING gdpr;""",
+        query = cur.mogrify("""UPDATE public.projects
+                               SET gdpr = gdpr || %(gdpr)s::jsonb
+                               WHERE project_id = %(project_id)s
+                                 AND deleted_at ISNULL
+                                   RETURNING gdpr;""",
                             {"project_id": project_id, "gdpr": json.dumps(gdpr.model_dump())})
         cur.execute(query=query)
         row = cur.fetchone()
@@ -209,8 +209,8 @@ def get_by_project_key(project_key):
                                       platform,
                                       name
                                FROM public.projects
-                               WHERE project_key =%(project_key)s 
-                                    AND deleted_at ISNULL;""",
+                               WHERE project_key = %(project_key)s
+                                 AND deleted_at ISNULL;""",
                             {"project_key": project_key})
         cur.execute(query=query)
         row = cur.fetchone()
@@ -221,8 +221,8 @@ def get_project_key(project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT project_key
                                FROM public.projects
-                               WHERE project_id =%(project_id)s
-                                    AND deleted_at ISNULL;""",
+                               WHERE project_id = %(project_id)s
+                                 AND deleted_at ISNULL;""",
                             {"project_id": project_id})
         cur.execute(query=query)
         project = cur.fetchone()
@@ -231,10 +231,10 @@ def get_project_key(project_id):
 
 def get_capture_status(project_id):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""SELECT sample_rate AS rate, sample_rate=100 AS capture_all
+        query = cur.mogrify("""SELECT sample_rate AS rate, sample_rate = 100 AS capture_all
                                FROM public.projects
-                               WHERE project_id =%(project_id)s 
-                                    AND deleted_at ISNULL;""",
+                               WHERE project_id = %(project_id)s
+                                 AND deleted_at ISNULL;""",
                             {"project_id": project_id})
         cur.execute(query=query)
         return helper.dict_to_camel_case(cur.fetchone())
@@ -247,8 +247,8 @@ def update_capture_status(project_id, changes: schemas.SampleRateSchema):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects
                                SET sample_rate= %(sample_rate)s
-                               WHERE project_id =%(project_id)s
-                                    AND deleted_at ISNULL;""",
+                               WHERE project_id = %(project_id)s
+                                 AND deleted_at ISNULL;""",
                             {"project_id": project_id, "sample_rate": sample_rate})
         cur.execute(query=query)
 
@@ -257,25 +257,26 @@ def update_capture_status(project_id, changes: schemas.SampleRateSchema):
 
 def get_conditions(project_id):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""SELECT p.sample_rate AS rate, p.conditional_capture,
-                                    COALESCE(
-                                        array_agg(
-                                            json_build_object(
-                                                'condition_id', pc.condition_id,
-                                                'capture_rate', pc.capture_rate,
-                                                'name', pc.name,
-                                                'filters', pc.filters
-                                            )
-                                        ) FILTER (WHERE pc.condition_id IS NOT NULL), 
-                                        ARRAY[]::json[]
-                                    ) AS conditions
+        query = cur.mogrify("""SELECT p.sample_rate AS rate,
+                                      p.conditional_capture,
+                                      COALESCE(
+                                              array_agg(
+                                                      json_build_object(
+                                                              'condition_id', pc.condition_id,
+                                                              'capture_rate', pc.capture_rate,
+                                                              'name', pc.name,
+                                                              'filters', pc.filters
+                                                      )
+                                              ) FILTER(WHERE pc.condition_id IS NOT NULL),
+                                              ARRAY[] ::json[]
+                                      )             AS conditions
                                FROM public.projects AS p
-                               LEFT JOIN (
-                                   SELECT * FROM public.projects_conditions
-                                   WHERE project_id = %(project_id)s ORDER BY condition_id
-                               ) AS pc ON p.project_id = pc.project_id
-                               WHERE p.project_id = %(project_id)s 
-                                     AND p.deleted_at IS NULL
+                                        LEFT JOIN (SELECT *
+                                                   FROM public.projects_conditions
+                                                   WHERE project_id = %(project_id)s
+                                                   ORDER BY condition_id) AS pc ON p.project_id = pc.project_id
+                               WHERE p.project_id = %(project_id)s
+                                 AND p.deleted_at IS NULL
                                GROUP BY p.sample_rate, p.conditional_capture;""",
                             {"project_id": project_id})
         cur.execute(query=query)
@@ -314,11 +315,10 @@ def update_conditions(project_id, changes: schemas.ProjectSettings):
 
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects
-                               SET
-                                    sample_rate= %(sample_rate)s,
-                                    conditional_capture = %(conditional_capture)s
-                               WHERE project_id =%(project_id)s
-                                    AND deleted_at IS NULL;""",
+                               SET sample_rate= %(sample_rate)s,
+                                   conditional_capture = %(conditional_capture)s
+                               WHERE project_id = %(project_id)s
+                                 AND deleted_at IS NULL;""",
                             {
                                 "project_id": project_id,
                                 "sample_rate": changes.rate,
@@ -385,10 +385,11 @@ def update_project_condition(project_id, conditions):
 
 def delete_project_condition(project_id, ids):
     sql = """
-        DELETE FROM projects_conditions
-        WHERE condition_id IN %(ids)s
-            AND project_id= %(project_id)s;
-    """
+          DELETE
+          FROM projects_conditions
+          WHERE condition_id IN %(ids)s
+            AND project_id = %(project_id)s; \
+          """
 
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, {"project_id": project_id, "ids": tuple(ids)})
@@ -430,17 +431,17 @@ def get_projects_ids(tenant_id):
 
 
 def delete_metadata_condition(project_id, metadata_key):
-    sql = """\
-        UPDATE public.projects_conditions
-        SET filters=(SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
-                     FROM jsonb_array_elements(filters) AS elem
-                     WHERE NOT (elem ->> 'type' = 'metadata'
-                         AND elem ->> 'source' = %(metadata_key)s))
-        WHERE project_id = %(project_id)s
-          AND jsonb_typeof(filters) = 'array'
-          AND EXISTS (SELECT 1
-                      FROM jsonb_array_elements(filters) AS elem
-                      WHERE elem ->> 'type' = 'metadata'
+    sql = """ \
+          UPDATE public.projects_conditions
+          SET filters=(SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
+                       FROM jsonb_array_elements(filters) AS elem
+                       WHERE NOT (elem ->> 'type' = 'metadata'
+                           AND elem ->> 'source' = %(metadata_key)s))
+          WHERE project_id = %(project_id)s
+            AND jsonb_typeof(filters) = 'array'
+            AND EXISTS (SELECT 1
+                        FROM jsonb_array_elements(filters) AS elem
+                        WHERE elem ->> 'type' = 'metadata'
                         AND elem ->> 'source' = %(metadata_key)s);"""
 
     with pg_client.PostgresClient() as cur:
@@ -449,18 +450,19 @@ def delete_metadata_condition(project_id, metadata_key):
 
 
 def rename_metadata_condition(project_id, old_metadata_key, new_metadata_key):
-    sql = """\
-        UPDATE public.projects_conditions
-        SET filters = (SELECT jsonb_agg(CASE
-                                            WHEN elem ->> 'type' = 'metadata' AND elem ->> 'source' = %(old_metadata_key)s
-                                                THEN elem || ('{"source": "'||%(new_metadata_key)s||'"}')::jsonb
-                                            ELSE elem END)
-                       FROM jsonb_array_elements(filters) AS elem)
-        WHERE project_id = %(project_id)s
-          AND jsonb_typeof(filters) = 'array'
-          AND EXISTS (SELECT 1
-                      FROM jsonb_array_elements(filters) AS elem
-                      WHERE elem ->> 'type' = 'metadata'
+    sql = """ \
+          UPDATE public.projects_conditions
+          SET filters = (SELECT jsonb_agg(CASE
+                                              WHEN elem ->> 'type' = 'metadata' AND elem ->> 'source' =
+                                          %(old_metadata_key)s
+              THEN elem || ('{"source": "'|| %(new_metadata_key)s||'"}')::jsonb
+              ELSE elem END)
+                         FROM jsonb_array_elements(filters) AS elem)
+          WHERE project_id = %(project_id)s
+            AND jsonb_typeof(filters) = 'array'
+            AND EXISTS (SELECT 1
+                        FROM jsonb_array_elements(filters) AS elem
+                        WHERE elem ->> 'type' = 'metadata'
                         AND elem ->> 'source' = %(old_metadata_key)s);"""
 
     with pg_client.PostgresClient() as cur:

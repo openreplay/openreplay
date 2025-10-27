@@ -24,7 +24,7 @@ def __exists_by_name(tenant_id: int, name: str, exclude_id: Optional[int]) -> bo
 
 
 def update(tenant_id, user_id, role_id, data: schemas.RolePayloadSchema):
-    admin = users.get(user_id=user_id, tenant_id=tenant_id)
+    admin = users.get_user(user_id=user_id, tenant_id=tenant_id)
 
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
@@ -41,30 +41,30 @@ def update(tenant_id, user_id, role_id, data: schemas.RolePayloadSchema):
         )
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            """SELECT 1 
-                             FROM public.roles 
-                             WHERE role_id = %(role_id)s
-                                AND tenant_id = %(tenant_id)s
-                                AND protected = TRUE
-                             LIMIT 1;""",
+            """SELECT 1
+               FROM public.roles
+               WHERE role_id = %(role_id)s
+                 AND tenant_id = %(tenant_id)s
+                 AND protected = TRUE LIMIT 1;""",
             {"tenant_id": tenant_id, "role_id": role_id},
         )
         cur.execute(query=query)
         if cur.fetchone() is not None:
             return {"errors": ["this role is protected"]}
         query = cur.mogrify(
-            """UPDATE public.roles 
-                               SET name= %(name)s,
-                                   description= %(description)s,
-                                   permissions= %(permissions)s,
-                                   all_projects= %(all_projects)s
-                               WHERE role_id = %(role_id)s
-                                    AND tenant_id = %(tenant_id)s
-                                    AND deleted_at ISNULL
+            """UPDATE public.roles
+               SET name= %(name)s,
+                   description= %(description)s,
+                   permissions= %(permissions)s,
+                   all_projects= %(all_projects)s
+               WHERE role_id = %(role_id)s
+                 AND tenant_id = %(tenant_id)s
+                 AND deleted_at ISNULL
                                     AND protected = FALSE
                                RETURNING *, COALESCE((SELECT ARRAY_AGG(project_id)
                                                       FROM roles_projects 
-                                                      WHERE roles_projects.role_id=%(role_id)s),'{}') AS projects;""",
+                                                      WHERE roles_projects.role_id=%(role_id)s)
+                   , '{}') AS projects;""",
             {"tenant_id": tenant_id, "role_id": role_id, **data.model_dump()},
         )
         cur.execute(query=query)
@@ -74,9 +74,10 @@ def update(tenant_id, user_id, role_id, data: schemas.RolePayloadSchema):
             d_projects = [i for i in row["projects"] if i not in data.projects]
             if len(d_projects) > 0:
                 query = cur.mogrify(
-                    """DELETE FROM roles_projects 
-                                     WHERE role_id=%(role_id)s 
-                                        AND project_id IN %(project_ids)s""",
+                    """DELETE
+                       FROM roles_projects
+                       WHERE role_id = %(role_id)s
+                         AND project_id IN %(project_ids)s""",
                     {"role_id": role_id, "project_ids": tuple(d_projects)},
                 )
                 cur.execute(query=query)
@@ -97,7 +98,7 @@ def update(tenant_id, user_id, role_id, data: schemas.RolePayloadSchema):
 
 
 def create(tenant_id, user_id, data: schemas.RolePayloadSchema):
-    admin = users.get(user_id=user_id, tenant_id=tenant_id)
+    admin = users.get_user(user_id=user_id, tenant_id=tenant_id)
 
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
@@ -116,8 +117,8 @@ def create(tenant_id, user_id, data: schemas.RolePayloadSchema):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """INSERT INTO roles(tenant_id, name, description, permissions, all_projects)
-                               VALUES (%(tenant_id)s, %(name)s, %(description)s, %(permissions)s::text[], %(all_projects)s)
-                               RETURNING *;""",
+               VALUES (%(tenant_id)s, %(name)s, %(description)s, %(permissions)s::text[],
+                       %(all_projects)s) RETURNING *;""",
             {
                 "tenant_id": tenant_id,
                 "name": data.name,
@@ -150,16 +151,17 @@ def get_roles(tenant_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT roles.*, COALESCE(projects, '{}') AS projects
-                               FROM public.roles
-                                    LEFT JOIN LATERAL (SELECT array_agg(project_id) AS projects
-                                                       FROM roles_projects
-                                                         INNER JOIN projects USING (project_id)
-                                                       WHERE roles_projects.role_id = roles.role_id
-                                                          AND projects.deleted_at ISNULL ) AS role_projects ON (TRUE)
-                               WHERE tenant_id =%(tenant_id)s
-                                    AND deleted_at IS NULL
-                                    AND not service_role
-                               ORDER BY role_id;""",
+               FROM public.roles
+                        LEFT JOIN LATERAL (SELECT array_agg(project_id) AS projects
+                                           FROM roles_projects
+                                                    INNER JOIN projects USING (project_id)
+                                           WHERE roles_projects.role_id = roles.role_id
+                                             AND projects.deleted_at ISNULL ) AS role_projects
+               ON (TRUE)
+               WHERE tenant_id =%(tenant_id)s
+                 AND deleted_at IS NULL
+                 AND not service_role
+               ORDER BY role_id;""",
             {"tenant_id": tenant_id},
         )
         cur.execute(query=query)
@@ -173,10 +175,10 @@ def get_role_by_name(tenant_id, name):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT *
-                               FROM public.roles
-                               WHERE tenant_id =%(tenant_id)s
-                                    AND deleted_at IS NULL
-                                    AND name ILIKE %(name)s;""",
+               FROM public.roles
+               WHERE tenant_id = %(tenant_id)s
+                 AND deleted_at IS NULL
+                 AND name ILIKE %(name)s;""",
             {"tenant_id": tenant_id, "name": name},
         )
         cur.execute(query=query)
@@ -187,18 +189,17 @@ def get_role_by_name(tenant_id, name):
 
 
 def delete(tenant_id, user_id, role_id):
-    admin = users.get(user_id=user_id, tenant_id=tenant_id)
+    admin = users.get_user(user_id=user_id, tenant_id=tenant_id)
 
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT 1
-                               FROM public.roles 
-                               WHERE role_id = %(role_id)s
-                                    AND tenant_id = %(tenant_id)s
-                                    AND protected = TRUE
-                               LIMIT 1;""",
+               FROM public.roles
+               WHERE role_id = %(role_id)s
+                 AND tenant_id = %(tenant_id)s
+                 AND protected = TRUE LIMIT 1;""",
             {"tenant_id": tenant_id, "role_id": role_id},
         )
         cur.execute(query=query)
@@ -206,21 +207,20 @@ def delete(tenant_id, user_id, role_id):
             return {"errors": ["this role is protected"]}
         query = cur.mogrify(
             """SELECT 1
-                               FROM public.users 
-                               WHERE role_id = %(role_id)s
-                                    AND tenant_id = %(tenant_id)s
-                               LIMIT 1;""",
+               FROM public.users
+               WHERE role_id = %(role_id)s
+                 AND tenant_id = %(tenant_id)s LIMIT 1;""",
             {"tenant_id": tenant_id, "role_id": role_id},
         )
         cur.execute(query=query)
         if cur.fetchone() is not None:
             return {"errors": ["this role is already attached to other user(s)"]}
         query = cur.mogrify(
-            """UPDATE public.roles 
-                               SET deleted_at = timezone('utc'::text, now())
-                               WHERE role_id = %(role_id)s
-                                    AND tenant_id = %(tenant_id)s
-                                    AND protected = FALSE;""",
+            """UPDATE public.roles
+               SET deleted_at = timezone('utc'::text, now())
+               WHERE role_id = %(role_id)s
+                 AND tenant_id = %(tenant_id)s
+                 AND protected = FALSE;""",
             {"tenant_id": tenant_id, "role_id": role_id},
         )
         cur.execute(query=query)
@@ -231,12 +231,11 @@ def get_role(tenant_id, role_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT roles.*
-                               FROM public.roles
-                               WHERE tenant_id =%(tenant_id)s
-                                    AND deleted_at IS NULL
-                                    AND not service_role
-                                    AND role_id = %(role_id)s
-                               LIMIT 1;""",
+               FROM public.roles
+               WHERE tenant_id = %(tenant_id)s
+                 AND deleted_at IS NULL
+                 AND not service_role
+                 AND role_id = %(role_id)s LIMIT 1;""",
             {"tenant_id": tenant_id, "role_id": role_id},
         )
         cur.execute(query=query)
