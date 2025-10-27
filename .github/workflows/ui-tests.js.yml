@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Cache tracker modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: tracker/tracker/node_modules
           key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('tracker/tracker/bun.lockb') }}
@@ -57,7 +57,7 @@ jobs:
           echo "REACT_APP_KEY=$FOSS_PROJECT_KEY" >> .env
           echo "REACT_APP_INGEST=$FOSS_INGEST" >> .env
       - name: Cache testing UI node modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: tracker/tracker-testing-playground/node_modules
           key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}
@@ -69,7 +69,7 @@ jobs:
           cd tracker/tracker-testing-playground
           yarn
       - name: Cache node modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: frontend/node_modules
           key: ${{ runner.OS }}-build-${{ hashFiles('frontend/yarn.lock') }}
