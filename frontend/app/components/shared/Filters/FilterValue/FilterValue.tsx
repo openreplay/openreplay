@@ -23,6 +23,7 @@ function FilterValue(props: Props) {
   const isAutoOpen =
     isLast && (!filter.value?.length || filter.value?.[0] === '');
   const { searchStore } = useStore();
+  const isDurationFilter = filter.name === 'duration' && filter.autoCaptured;
 
   const [durationValues, setDurationValues] = useState(() => ({
     minDuration: filter.value?.[0],
@@ -42,7 +43,7 @@ function FilterValue(props: Props) {
   }, []);
 
   const handleBlur = useCallback(() => {
-    if (filter.name === FilterType.DURATION) {
+    if (isDurationFilter) {
       const currentMinInProp = filter.value?.[0];
       const currentMaxInProp =
         filter.value?.length > 1 ? filter.value[1] : filter.value?.[0];
@@ -152,8 +153,8 @@ function FilterValue(props: Props) {
         />
       );
 
-    case FilterType.DURATION:
-      return (
+    case FilterType.NUMBER:
+      return isDurationFilter ? (
         <FilterDuration
           onChange={onDurationChange}
           onBlur={handleBlur}
@@ -161,10 +162,7 @@ function FilterValue(props: Props) {
           maxDuration={durationValues.maxDuration}
           isConditional={isConditional}
         />
-      );
-
-    case FilterType.NUMBER:
-      return (
+      ) : (
         <Input
           type="number"
           defaultValue={filter.value}

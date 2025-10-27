@@ -297,9 +297,6 @@ export default class FilterStore {
       let dataType = filter.dataType
         ? normalizeDataType(filter.dataType)
         : 'string';
-      if (filter.name === 'duration' && filter.autoCaptured) {
-        dataType = 'duration';
-      }
       const filterCategory = category ?? filter.category ?? 'custom';
       const filterObj = {
         ...filter,
