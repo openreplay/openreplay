@@ -122,7 +122,7 @@ def refresh_login(response: JSONResponse, context: schemas.CurrentContext = Depe
 
 @app.get('/account', tags=['accounts'])
 def get_account(context: schemas.CurrentContext = Depends(OR_context)):
-    r = users.get(tenant_id=context.tenant_id, user_id=context.user_id)
+    r = users.get_user(tenant_id=context.tenant_id, user_id=context.user_id)
     if r is None:
         return {"errors": ["current user not found"]}
     t = tenants.get_by_tenant_id(context.tenant_id)

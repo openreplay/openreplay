@@ -91,14 +91,13 @@ def restore_member(user_id, email, invitation_token, admin, name, owner=False):
 def generate_new_invitation(user_id):
     invitation_token = __generate_invitation_token()
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""\
-                        UPDATE public.basic_authentication
-                        SET invitation_token = %(invitation_token)s,
-                            invited_at = timezone('utc'::text, now()),
-                            change_pwd_expire_at = NULL,
-                            change_pwd_token = NULL
-                        WHERE user_id=%(user_id)s
-                        RETURNING invitation_token;""",
+        query = cur.mogrify(""" \
+                            UPDATE public.basic_authentication
+                            SET invitation_token     = %(invitation_token)s,
+                                invited_at           = timezone('utc'::text, now()),
+                                change_pwd_expire_at = NULL,
+                                change_pwd_token     = NULL
+                            WHERE user_id = %(user_id)s RETURNING invitation_token;""",
                             {"user_id": user_id, "invitation_token": invitation_token})
         cur.execute(
             query
@@ -107,10 +106,10 @@ def generate_new_invitation(user_id):
 
 
 def reset_member(tenant_id, editor_id, user_id_to_update):
-    admin = get(tenant_id=tenant_id, user_id=editor_id)
+    admin = get_user(tenant_id=tenant_id, user_id=editor_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
-    user = get(tenant_id=tenant_id, user_id=user_id_to_update)
+    user = get_user(tenant_id=tenant_id, user_id=user_id_to_update)
     if not user:
         return {"errors": ["user not found"]}
     return {"data": {"invitationLink": generate_new_invitation(user_id_to_update)}}
@@ -150,11 +149,11 @@ def update(tenant_id, user_id, changes, output=True):
             cur.execute(query)
     if not output:
         return None
-    return get(user_id=user_id, tenant_id=tenant_id)
+    return get_user(user_id=user_id, tenant_id=tenant_id)
 
 
 def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, background_tasks: BackgroundTasks):
-    admin = get(tenant_id=tenant_id, user_id=user_id)
+    admin = get_user(tenant_id=tenant_id, user_id=user_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     if data.user_id is not None:
@@ -201,7 +200,7 @@ def allow_password_change(user_id, delta_min=10):
     return pass_token
 
 
-def get(user_id, tenant_id):
+def get_user(user_id, tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -259,7 +258,7 @@ def __get_account_info(tenant_id, user_id):
 
 def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
     if changes.opt_out is not None or changes.tenantName is not None and len(changes.tenantName) > 0:
-        user = get(user_id=user_id, tenant_id=tenant_id)
+        user = get_user(user_id=user_id, tenant_id=tenant_id)
         if not user["superAdmin"] and not user["admin"]:
             return {"errors": ["unauthorized"]}
 
@@ -400,11 +399,11 @@ def delete_member(user_id, tenant_id, id_to_delete):
     if user_id == id_to_delete:
         return {"errors": ["unauthorized, cannot delete self"]}
 
-    admin = get(user_id=user_id, tenant_id=tenant_id)
+    admin = get_user(user_id=user_id, tenant_id=tenant_id)
     if admin["member"]:
         return {"errors": ["unauthorized"]}
 
-    to_delete = get(user_id=id_to_delete, tenant_id=tenant_id)
+    to_delete = get_user(user_id=id_to_delete, tenant_id=tenant_id)
     if to_delete is None:
         return {"errors": ["not found"]}
 
@@ -430,7 +429,7 @@ def delete_member(user_id, tenant_id, id_to_delete):
 
 
 def change_password(tenant_id, user_id, email, old_password, new_password):
-    item = get(tenant_id=tenant_id, user_id=user_id)
+    item = get_user(tenant_id=tenant_id, user_id=user_id)
     if item is None:
         return {"errors": ["access denied"]}
     if old_password == new_password:
@@ -676,8 +675,12 @@ def logout(user_id: int):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """UPDATE public.users
-               SET jwt_iat = NULL, jwt_refresh_jti = NULL, jwt_refresh_iat = NULL,
-                   spot_jwt_iat = NULL, spot_jwt_refresh_jti = NULL, spot_jwt_refresh_iat = NULL
+               SET jwt_iat              = NULL,
+                   jwt_refresh_jti      = NULL,
+                   jwt_refresh_iat      = NULL,
+                   spot_jwt_iat         = NULL,
+                   spot_jwt_refresh_jti = NULL,
+                   spot_jwt_refresh_iat = NULL
                WHERE user_id = %(user_id)s;""",
             {"user_id": user_id})
         cur.execute(query)
