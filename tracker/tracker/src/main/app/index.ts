@@ -32,7 +32,7 @@ import Message, {
 } from './messages.gen.js'
 import Nodes from './nodes/index.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
-import Observer from './observer/top_observer.js'
+import Observer, { InlineCssMode } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
 import Sanitizer from './sanitizer.js'
 import type { Options as SessOptions } from './session.js'
@@ -306,7 +306,7 @@ export default class App {
         useAnimationFrame: false,
       },
       forceNgOff: false,
-      inlineCss: 0,
+      inlineCss: InlineCssMode.Unset,
       disableSprites: false,
       disableThrottling: false,
     }

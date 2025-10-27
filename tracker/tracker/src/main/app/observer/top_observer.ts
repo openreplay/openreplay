@@ -10,6 +10,7 @@ import App from '../index.js'
 import { IN_BROWSER, hasOpenreplayAttribute, canAccessIframe } from '../../utils.js'
 
 export enum InlineCssMode {
+  Unset = -1,
   /** default behavior -- will parse and cache the css file on backend */
   Disabled = 0,
   /** will attempt to record the linked css file as AdoptedStyleSheet object */
@@ -19,8 +20,9 @@ export enum InlineCssMode {
   /** will fetch the file, then save it as plain css inside <style> node */
   PlainFetched = 3,
 }
+const localhostStylesDoc = 'https://docs.openreplay.com/en/troubleshooting/localhost/'
 
-function getInlineOptions(mode: InlineCssMode) {
+function getInlineOptions(mode: InlineCssMode, logger: (args: any) => void) {
   switch (mode) {
     case InlineCssMode.Inline:
       return {
@@ -37,7 +39,7 @@ function getInlineOptions(mode: InlineCssMode) {
           forceFetch: true,
           forcePlain: false,
         },
-      };
+      }
     case InlineCssMode.PlainFetched:
       return {
         inlineRemoteCss: true,
@@ -45,7 +47,31 @@ function getInlineOptions(mode: InlineCssMode) {
           forceFetch: true,
           forcePlain: true,
         },
-      };
+      }
+    case InlineCssMode.Unset:
+      const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?/.test(
+        window.location.href,
+      )
+      if (isLocalhost) {
+        logger(
+          `Enabling InlineCssMode by default on localhost to preserve css styles, refer to ${localhostStylesDoc} for details, set InlineCssMode to 0 to skip this behavior`,
+        )
+        return {
+          inlineRemoteCss: true,
+          inlinerOptions: {
+            forceFetch: false,
+            forcePlain: false,
+          },
+        }
+      } else {
+        return {
+          inlineRemoteCss: false,
+          inlinerOptions: {
+            forceFetch: false,
+            forcePlain: false,
+          },
+        }
+      }
     case InlineCssMode.Disabled:
     default:
       return {
@@ -54,7 +80,7 @@ function getInlineOptions(mode: InlineCssMode) {
           forceFetch: false,
           forcePlain: false,
         },
-      };
+      }
   }
 }
 
@@ -68,8 +94,8 @@ export interface Options {
    * especially if the css itself is crossdomain
    * @default InlineCssMode.None = 0
    * */
-  inlineCss: InlineCssMode;
-  disableThrottling?: boolean;
+  inlineCss: InlineCssMode
+  disableThrottling?: boolean
 }
 
 type Context = Window & typeof globalThis
@@ -94,7 +120,7 @@ export default class TopObserver extends Observer {
     const observerOptions = {
       disableSprites: opts.disableSprites,
       disableThrottling: opts.disableThrottling,
-      ...getInlineOptions(opts.inlineCss)
+      ...getInlineOptions(opts.inlineCss, params.app.debug.warn),
     }
     super(params.app, true, observerOptions)
     this.app = params.app
