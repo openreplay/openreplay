@@ -32,6 +32,10 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
     return if (map.hasKey(key)) map.getBoolean(key) else default
   }
 
+  private fun safeGetCurrentActivity(): Activity? {
+    return reactApplicationContext.currentActivity
+  }
+
   @ReactMethod
   fun startSession(
     projectKey: String,
@@ -50,10 +54,15 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
       wifiOnly = getBooleanOrDefault(optionsMap, "wifiOnly", true),
     )
 
-    val context = currentActivity as Activity
+    val activity = safeGetCurrentActivity()
+    if (activity == null) {
+      promise.reject("NO_ACTIVITY", "No current activity available")
+      return
+    }
+
     OpenReplay.serverURL = serverURL
 
-    OpenReplay.start(context, projectKey, options, onStarted = {
+    OpenReplay.start(activity, projectKey, options, onStarted = {
       println("OpenReplay started")
       promise.resolve("OpenReplay Started")
     })
