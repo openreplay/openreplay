@@ -21,7 +21,6 @@ type Session struct {
 	EventsCount          int
 	ErrorsCount          int
 	IssueTypes           []string
-	IssueScore           int
 	UserID               *string
 	UserAnonymousID      *string
 	Metadata1            *string
@@ -75,7 +74,7 @@ func (s *Session) SetMetadata(keyNo uint, value string) {
 	}
 }
 
-type UnStartedSession struct {
+gtype UnStartedSession struct {
 	ProjectKey         string
 	TrackerVersion     string
 	DoNotTrack         bool

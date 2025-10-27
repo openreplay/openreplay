@@ -40,7 +40,7 @@ func (s *storageImpl) Add(sess *Session) error {
 			user_uuid, user_device, user_device_type, user_country,
 			user_os, user_os_version,
 			rev_id,
-			tracker_version, issue_score,
+			tracker_version,
 			platform,
 			user_browser, user_browser_version, user_device_memory_size, user_device_heap_size,
 			user_id, user_state, user_city, timezone, screen_width, screen_height
@@ -49,16 +49,16 @@ func (s *storageImpl) Add(sess *Session) error {
 			$4, $5, $6, $7,
 			$8, NULLIF($9, ''),
 			NULLIF($10, ''),
-			$11, $12,
-			$13,
-			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, 0), NULLIF($17, 0::bigint),
-			NULLIF(LEFT($18, 8000), ''), NULLIF($19, ''), NULLIF($20, ''), $21, $22, $23
+			$11,
+			$12,
+			NULLIF($13, ''), NULLIF($14, ''), NULLIF($15, 0), NULLIF($16, 0::bigint),
+			NULLIF(LEFT($17, 8000), ''), NULLIF($18, ''), NULLIF($19, ''), $20, $21, $22
 		)`,
 		sess.SessionID, sess.ProjectID, sess.Timestamp,
 		sess.UserUUID, sess.UserDevice, sess.UserDeviceType, sess.UserCountry,
 		sess.UserOS, sess.UserOSVersion,
 		sess.RevID,
-		sess.TrackerVersion, sess.Timestamp/1000,
+		sess.TrackerVersion,
 		sess.Platform,
 		sess.UserBrowser, sess.UserBrowserVersion, sess.UserDeviceMemorySize, sess.UserDeviceHeapSize,
 		sess.UserID, sess.UserState, sess.UserCity, sess.Timezone, sess.ScreenWidth, sess.ScreenHeight,
@@ -77,7 +77,7 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 			rev_id, tracker_version,
 			user_id, user_anonymous_id, referrer,
 			pages_count, events_count, errors_count, issue_types,
-			user_browser, user_browser_version, issue_score,
+			user_browser, user_browser_version,
 			metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
 			metadata_6, metadata_7, metadata_8, metadata_9, metadata_10,
 			utm_source, utm_medium, utm_campaign
@@ -92,7 +92,7 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 		&revID, &sess.TrackerVersion,
 		&sess.UserID, &sess.UserAnonymousID, &sess.Referrer,
 		&sess.PagesCount, &sess.EventsCount, &sess.ErrorsCount, &issueTypes,
-		&userBrowser, &userBrowserVersion, &sess.IssueScore,
+		&userBrowser, &userBrowserVersion,
 		&sess.Metadata1, &sess.Metadata2, &sess.Metadata3, &sess.Metadata4, &sess.Metadata5,
 		&sess.Metadata6, &sess.Metadata7, &sess.Metadata8, &sess.Metadata9, &sess.Metadata10,
 		&sess.UtmSource, &sess.UtmMedium, &sess.UtmCampaign); err != nil {

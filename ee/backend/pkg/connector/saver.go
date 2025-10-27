@@ -252,9 +252,6 @@ func (s *Saver) updateSessionInfoFromCache(sessID uint64, sess map[string]string
 	if info.ErrorsCount != 0 {
 		sess["errors_count"] = fmt.Sprintf("%d", info.ErrorsCount)
 	}
-	if info.IssueScore != 0 {
-		sess["issue_score"] = fmt.Sprintf("%d", info.IssueScore)
-	}
 	// Check int fields
 	for _, field := range sessionInts {
 		if sess[field] == "" {
