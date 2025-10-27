@@ -64,25 +64,26 @@ var MetricOfPathAnalysis []string = []string{"sessionCount"}
 var MetricOfWebVital []string = []string{"webVitalUrl"}
 
 type MetricPayload struct {
-	StartTimestamp  uint64     `json:"startTimestamp" validate:"required,min=946684800000"`
-	EndTimestamp    uint64     `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartTimestamp"`
-	Density         int        `json:"density" validate:"required,min=1,max=500"`
-	MetricOf        string     `json:"metricOf" validate:"required,oneof=sessionCount userCount eventCount LOCATION userBrowser userDevice userCountry userId ISSUE sessions jsException referrer REQUEST screenResolution heatMapUrl webVitalUrl"`
-	MetricType      MetricType `json:"metricType"`
-	MetricValue     []string   `json:"metricValue"`
-	MetricFormat    string     `json:"metricFormat" validate:"oneof=sessionCount userCount screenResolution eventCount"`
-	ViewType        string     `json:"viewType" validate:"oneof=lineChart areaChart barChart progressChart pieChart metric table chart columnChart list sunburst"`
-	Name            string     `json:"name"`
-	Series          []Series   `json:"series" validate:"max=5,dive"`
-	Limit           int        `json:"limit" validate:"required,min=1,max=200"`
-	Page            int        `json:"page" validate:"required,min=1"`
-	StartPoint      []Filter   `json:"startPoint" validate:"omitempty,dive"`
-	Exclude         []Filter   `json:"excludes" validate:"omitempty,dive"`
-	Rows            uint64     `json:"rows" validate:"omitempty,min=1,max=50"`
-	Columns         uint64     `json:"stepsAfter"`
-	PreviousColumns uint64     `json:"stepsBefore"`
-	SortBy          string     `json:"sortBy"`
-	SortOrder       string     `json:"sortOrder"`
+	StartTimestamp   uint64     `json:"startTimestamp" validate:"required,min=946684800000"`
+	EndTimestamp     uint64     `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartTimestamp"`
+	Density          int        `json:"density" validate:"required,min=1,max=500"`
+	MetricOf         string     `json:"metricOf" validate:"required,oneof=sessionCount userCount eventCount LOCATION userBrowser userDevice userCountry userId ISSUE sessions jsException referrer REQUEST screenResolution heatMapUrl webVitalUrl"`
+	MetricType       MetricType `json:"metricType"`
+	MetricValue      []string   `json:"metricValue"`
+	MetricFormat     string     `json:"metricFormat" validate:"oneof=sessionCount userCount screenResolution eventCount"`
+	ViewType         string     `json:"viewType" validate:"oneof=lineChart areaChart barChart progressChart pieChart metric table chart columnChart list sunburst"`
+	Name             string     `json:"name"`
+	Series           []Series   `json:"series" validate:"max=5,dive"`
+	Limit            int        `json:"limit" validate:"required,min=1,max=200"`
+	Page             int        `json:"page" validate:"required,min=1"`
+	StartPoint       []Filter   `json:"startPoint" validate:"omitempty,dive"`
+	Exclude          []Filter   `json:"excludes" validate:"omitempty,dive"`
+	Rows             uint64     `json:"rows" validate:"omitempty,min=1,max=50"`
+	Columns          uint64     `json:"stepsAfter"`
+	PreviousColumns  uint64     `json:"stepsBefore"`
+	SortBy           string     `json:"sortBy"`
+	SortOrder        string     `json:"sortOrder"`
+	IncludeClickRage bool       `json:"includeClickRage"`
 }
 
 func ValidateMetricFields(sl validator.StructLevel) {
