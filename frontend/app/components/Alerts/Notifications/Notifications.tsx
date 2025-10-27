@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { Icon } from 'UI';
 import { useModal } from 'App/components/Modal';
 import AlertTriggersModal from 'Shared/AlertTriggersModal';
 import { useStore } from 'App/mstore';
