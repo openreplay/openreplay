@@ -1,4 +1,4 @@
-FROM quickwit/quickwit:0.6.4
+FROM quickwit/quickwit:v0.8.2
 
 WORKDIR /quickwit
 
