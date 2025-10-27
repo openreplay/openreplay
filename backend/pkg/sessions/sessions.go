@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"openreplay/backend/pkg/metrics/database"
-	"strconv"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
