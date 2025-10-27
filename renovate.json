@@ -32,9 +32,6 @@
         "helm-values",
         "kubernetes"
       ],
-      "matchUpdateTypes": [
-        "major"
-      ],
       "automerge": false
     }
   ]
