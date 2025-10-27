@@ -22,7 +22,7 @@ jobs:
       env_flavour: ${{ github.event.inputs.env_flavour }}
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v5
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v5
       with:
