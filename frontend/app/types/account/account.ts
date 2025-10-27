@@ -94,6 +94,5 @@ export default class Account {
     roleId: this.roleId,
     roleName: this.roleName,
     invitationLink: this.invitationLink,
-    hasVideoExport: this.hasVideoExport,
   });
 }
