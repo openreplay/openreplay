@@ -27,7 +27,7 @@ type Files interface {
 
 const (
 	MOBS_BUCKET          = "mobs"
-	CANVASES_BUCKET      = "canvas"
+	CANVASES_BUCKET      = "mobs"
 	FS_DIR               = "/mnt/efs/" // shouldn't be empty
 	UNPROCESSED_MAX_SIZE = 200 * 1000
 )
