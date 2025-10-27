@@ -121,7 +121,7 @@ minio:
   #    accessKey: "{{ minio_access_key }}"
   #    secretKey: "{{ minio_secret_key }}"
   image:
-    tag: 2023.11.20
+    tag: 2025.7.23
   fullnameOverride: minio
   enabled: true
   resources:
