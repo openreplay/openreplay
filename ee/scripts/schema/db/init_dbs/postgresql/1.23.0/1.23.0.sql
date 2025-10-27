@@ -77,6 +77,9 @@ WHERE users.user_id = updated.user_id
                 AND has_sa.service_account
                 AND has_sa.deleted_at IS NULL);
 
+ALTER TABLE IF EXISTS public.sessions
+    DROP COLUMN IF EXISTS issue_score;
+
 COMMIT;
 
 \elif :is_next
