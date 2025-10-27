@@ -1,0 +1,104 @@
+name: Build Bitnami Images
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [postgresql, kafka, minio, kubectl, redis, redis-sentinel, redis-sentinel-exporter, redis-exporter, bitnami-shell]
+    steps:
+      - name: Checkout Bitnami repo
+        uses: actions/checkout@v4
+        with:
+          repository: bitnami/containers
+          path: bitnami
+          fetch-depth: 1
+
+      - name: Check if image exists
+        id: exists
+        run: |
+          if [ -d "bitnami/bitnami/${{ matrix.image }}" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Find latest version
+        if: steps.exists.outputs.exists == 'true'
+        id: version
+        run: |
+          cd bitnami/bitnami/${{ matrix.image }}
+          latest_version=$(ls -d */ | sort -V | tail -1 | sed 's/\///')
+          echo "latest_version=$latest_version" >> $GITHUB_OUTPUT
+
+      - name: Find OS
+        if: steps.exists.outputs.exists == 'true'
+        id: os
+        run: |
+          cd bitnami/bitnami/${{ matrix.image }}/${{ steps.version.outputs.latest_version }}
+          os=$(ls -d */ | head -1 | sed 's/\///')
+          echo "os=$os" >> $GITHUB_OUTPUT
+
+      - name: Get commit hash
+        if: steps.exists.outputs.exists == 'true'
+        id: hash
+        run: |
+          cd bitnami/bitnami/${{ matrix.image }}/${{ steps.version.outputs.latest_version }}/${{ steps.os.outputs.os }}
+          hash=$(git log -1 --format=%H)
+          echo "hash=$hash" >> $GITHUB_OUTPUT
+
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          path: openreplay
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read previous hash
+        if: steps.exists.outputs.exists == 'true'
+        id: prev_hash
+        run: |
+          if [ -f openreplay/.bitnami-hashes.json ]; then
+            prev=$(jq -r '.["${{ matrix.image }}"]' openreplay/.bitnami-hashes.json || echo "")
+            echo "prev_hash=$prev" >> $GITHUB_OUTPUT
+          else
+            echo "prev_hash=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if changed
+        if: steps.exists.outputs.exists == 'true'
+        id: changed
+        run: |
+          if [ "${{ steps.hash.outputs.hash }}" != "${{ steps.prev_hash.outputs.prev_hash }}" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push if changed
+        if: steps.exists.outputs.exists == 'true' && steps.changed.outputs.changed == 'true'
+        run: |
+          cd bitnami/bitnami/${{ matrix.image }}/${{ steps.version.outputs.latest_version }}/${{ steps.os.outputs.os }}
+          docker build -t ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ steps.version.outputs.latest_version }} .
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ steps.version.outputs.latest_version }}
+
+      - name: Update hash file
+        if: steps.exists.outputs.exists == 'true' && steps.changed.outputs.changed == 'true'
+        run: |
+          cd openreplay
+          if [ -f .bitnami-hashes.json ]; then
+            jq --arg image "${{ matrix.image }}" --arg hash "${{ steps.hash.outputs.hash }}" '.[$image] = $hash' .bitnami-hashes.json > tmp.json && mv tmp.json .bitnami-hashes.json
+          else
+            jq -n --arg image "${{ matrix.image }}" --arg hash "${{ steps.hash.outputs.hash }}" '{ ($image): $hash }' > .bitnami-hashes.json
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add .bitnami-hashes.json
+          git commit -m "Update Bitnami hash for ${{ matrix.image }}"
+          git push
