@@ -55,7 +55,7 @@ func NewHandlers(log logger.Logger, cfg *config.Config, responser api.Responser,
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,
-		jsonSizeLimit: cfg.JsonSizeLimit,
+		jsonSizeLimit: cfg.JsonWithDataSizeLimit,
 		cards:         cards,
 		validator:     validator,
 	}, nil
