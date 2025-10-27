@@ -646,15 +646,15 @@ CREATE TABLE IF NOT EXISTS product_analytics.all_properties
     property_name     String,
     is_event_property BOOL,
     auto_captured     BOOL,
-    display_name      String   DEFAULT '',
-    description       String   DEFAULT '',
-    status            String   DEFAULT 'visible' COMMENT 'visible/hidden/dropped',
-    data_count        UInt32   DEFAULT 1,
-    query_count       UInt32   DEFAULT 0,
+    display_name      String                 DEFAULT '',
+    description       String                 DEFAULT '',
+    status            LowCardinality(String) DEFAULT 'visible' COMMENT 'visible/hidden/dropped',
+    data_count        UInt32                 DEFAULT 1,
+    query_count       UInt32                 DEFAULT 0,
 
     created_at        DateTime64,
-    _edited_by_user   BOOL     DEFAULT FALSE,
-    _timestamp        DateTime DEFAULT now()
+    _edited_by_user   BOOL                   DEFAULT FALSE,
+    _timestamp        DateTime               DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       ORDER BY (project_id, property_name, is_event_property, auto_captured);
 
@@ -738,7 +738,7 @@ CREATE OR REPLACE FUNCTION or_property_display_name AS(property_name)->multiIf(
         '');
 
 CREATE OR REPLACE FUNCTION or_property_visibility AS(property_name)->multiIf(
-        property_name == 'label', 'hidden',
+        property_name == 'label', 'visible',
         property_name == 'tag_id', 'hidden',
         property_name == 'INP', 'hidden',
         property_name == 'web_vitals', 'hidden',
