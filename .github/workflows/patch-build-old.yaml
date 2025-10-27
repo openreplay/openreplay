@@ -61,7 +61,7 @@ jobs:
 
     # Configure AWS credentials for the first registry
     - name: Configure AWS credentials for RELEASE_ARM_REGISTRY
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v5
       with:
         aws-access-key-id: ${{ secrets.AWS_DEPOT_ACCESS_KEY }}
         aws-secret-access-key: ${{ secrets.AWS_DEPOT_SECRET_KEY }}
