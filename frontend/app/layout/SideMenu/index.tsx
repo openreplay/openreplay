@@ -23,7 +23,6 @@ import {
   PREFERENCES_MENU,
   categories as main_menu,
   preferences,
-  spotOnlyCats,
 } from '../data';
 import { useTranslation } from 'react-i18next';
 import { extraRoutes } from '../menuRoutes';

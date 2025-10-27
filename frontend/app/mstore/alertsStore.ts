@@ -33,20 +33,28 @@ export default class AlertsStore {
   }
 
   fetchList = async () => {
-    this.loading = true;
+    this.setLoading(true);
     try {
       const list = await alertsService.fetchList();
-      this.alerts = list.map((alert) => new Alert(alert, true));
+      this.setAlerts(list.map((alert) => new Alert(alert, true)));
     } catch (e) {
       console.error(e);
     } finally {
-      this.loading = false;
+      this.setLoading(false);
     }
+  };
+
+  setAlerts = (alerts: Alert[]) => {
+    this.alerts = alerts;
+  }
+
+  setLoading = (val: boolean) => {
+    this.loading = val;
   };
 
   save = (inst: Alert): Promise<void> =>
     new Promise<void>(async (resolve, reject) => {
-      this.loading = true;
+      this.setLoading(true);
       try {
         await alertsService.save(inst || this.instance);
         this.instance.isExists = true;
@@ -55,13 +63,13 @@ export default class AlertsStore {
         console.error(e);
         reject(e);
       } finally {
-        this.loading = false;
+        this.setLoading(false);
       }
     });
 
   remove = (id: string): Promise<void> =>
     new Promise<void>(async (resolve, reject) => {
-      this.loading = true;
+      this.setLoading(true);
       try {
         await alertsService.remove(id);
         resolve();
@@ -69,12 +77,12 @@ export default class AlertsStore {
         console.error(e);
         reject(e);
       } finally {
-        this.loading = false;
+        this.setLoading(false);
       }
     });
 
   fetchTriggerOptions = async () => {
-    this.loading = true;
+    this.setLoading(true);
     try {
       const options = await alertsService.fetchTriggerOptions();
       this.triggerOptions = options.map(({ name, value }) => ({
@@ -84,7 +92,7 @@ export default class AlertsStore {
     } catch (e) {
       console.error(e);
     } finally {
-      this.loading = false;
+      this.setLoading(false);
     }
   };
 
