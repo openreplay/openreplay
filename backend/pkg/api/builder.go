@@ -8,6 +8,7 @@ import (
 	config "openreplay/backend/internal/config/session"
 	"openreplay/backend/pkg/api_key"
 	"openreplay/backend/pkg/assist/proxy"
+	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/conditions"
 	conditionsApi "openreplay/backend/pkg/conditions/projects_api"
 	"openreplay/backend/pkg/db/postgres/pool"
@@ -16,7 +17,6 @@ import (
 	"openreplay/backend/pkg/favorite"
 	favoriteAPI "openreplay/backend/pkg/favorite/api"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/notes"
 	noteAPI "openreplay/backend/pkg/notes/api"
@@ -44,7 +44,7 @@ func (b *serviceBuilder) Handlers() []api.Handlers {
 	return []api.Handlers{b.sessionAPI, b.eventAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI}
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chconn clickhouse.Conn, objStore objectstorage.ObjectStorage, projects projects.Projects) (api.ServiceBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, pgconn pool.Pool, chconn clickhouse.Conn, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
 	responser := api.NewResponser(webMetrics)
 
 	viewService, err := views.New(pgconn, chconn)
@@ -57,7 +57,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, fmt.Errorf("failed to create assist proxy: %s", err)
 	}
 
-	files, err := service.New(log, pgconn, objStore)
+	files, err := service.New(log, cfg, objStore, canvases)
 	if err != nil {
 		return nil, err
 	}

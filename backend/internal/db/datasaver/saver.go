@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"openreplay/backend/internal/config/db"
+	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/types"
@@ -27,9 +28,10 @@ type saverImpl struct {
 	ch       clickhouse.Connector
 	producer queue.Producer
 	tags     tags.Tags
+	canvases canvas.Canvases
 }
 
-func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session sessions.Sessions, tags tags.Tags) Saver {
+func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session sessions.Sessions, tags tags.Tags, canvases canvas.Canvases) Saver {
 	if ch == nil {
 		log.Fatal(context.Background(), "ch pool is empty")
 	}
@@ -39,6 +41,7 @@ func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session ses
 		ch:       ch,
 		sessions: session,
 		tags:     tags,
+		canvases: canvases,
 	}
 	s.init()
 	return s
@@ -98,6 +101,9 @@ func (s *saverImpl) Handle(msg Message) {
 }
 
 func (s *saverImpl) Commit() error {
+	if err := s.canvases.Commit(); err != nil {
+		s.log.Error(context.Background(), "canvas commit error: %v", err)
+	}
 	return s.ch.Commit()
 }
 

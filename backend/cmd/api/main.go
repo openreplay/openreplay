@@ -5,6 +5,7 @@ import (
 
 	sessionConfig "openreplay/backend/internal/config/session"
 	apiService "openreplay/backend/pkg/api"
+	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
@@ -49,7 +50,12 @@ func main() {
 		log.Fatal(ctx, "can't init project service: %s", err)
 	}
 
-	services, err := apiService.NewServiceBuilder(log, cfg, webMetrics, dbMetric, pgPool, chConnection, objStore, projects)
+	canvases, err := canvas.New(log, pgPool, dbMetric)
+	if err != nil {
+		log.Fatal(ctx, "can't init project service: %s", err)
+	}
+
+	services, err := apiService.NewServiceBuilder(log, cfg, webMetrics, pgPool, chConnection, objStore, projects, canvases)
 	if err != nil {
 		log.Fatal(ctx, "can't init services and handlers: %s", err)
 	}

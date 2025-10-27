@@ -74,6 +74,8 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 		return s.ch.InsertWebPerformanceTrackAggr(session, m)
 	case *messages.Incident:
 		return s.ch.InsertIncident(session, m)
+	case *messages.CanvasNode:
+		return s.canvases.Add(session.SessionID, m.NodeId, m.Timestamp)
 	}
 	return nil
 }

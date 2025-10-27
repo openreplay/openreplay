@@ -64,8 +64,8 @@ func (e *handlersImpl) getReplay(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{"data": nil}
 
 	data, err := e.sessions.GetReplay(projID, sessID, currUser.GetIDAsString())
-
 	if err != nil {
+		e.log.Warn(r.Context(), "Error getting replay data: %v", err)
 		if strings.Contains(err.Error(), session.NoSession) {
 			data, err := e.assist.GetLiveSessionByID(projID, sessID)
 			if err != nil {

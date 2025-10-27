@@ -10,6 +10,8 @@ import (
 	"openreplay/backend/pkg/metrics/database"
 )
 
+const BULK_SIZE = 200
+
 const (
 	insertPrefix = `INSERT INTO `
 	insertValues = ` VALUES `

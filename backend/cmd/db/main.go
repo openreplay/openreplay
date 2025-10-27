@@ -6,6 +6,7 @@ import (
 	config "openreplay/backend/internal/config/db"
 	"openreplay/backend/internal/db"
 	"openreplay/backend/internal/db/datasaver"
+	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
@@ -57,8 +58,13 @@ func main() {
 	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric)
 	tagsManager := tags.New(log, pgConn)
 
+	canvases, err := canvas.New(log, pgConn, dbMetric)
+	if err != nil {
+		log.Fatal(ctx, "can't init project service: %s", err)
+	}
+
 	// Init data saver
-	saver := datasaver.New(log, cfg, chConnector, sessManager, tagsManager)
+	saver := datasaver.New(log, cfg, chConnector, sessManager, tagsManager, canvases)
 
 	// Message filter
 	msgFilter := []int{
@@ -70,7 +76,7 @@ func main() {
 		messages.MsgMouseClickDeprecated, messages.MsgSetPageLocation, messages.MsgSetPageLocationDeprecated,
 		messages.MsgPageLoadTiming, messages.MsgPageRenderTiming,
 		messages.MsgPageEvent, messages.MsgPageEventDeprecated, messages.MsgMouseThrashing, messages.MsgInputChange,
-		messages.MsgUnbindNodes, messages.MsgTagTrigger, messages.MsgIncident,
+		messages.MsgUnbindNodes, messages.MsgTagTrigger, messages.MsgIncident, messages.MsgCanvasNode,
 		// Mobile messages
 		messages.MsgMobileSessionStart, messages.MsgMobileSessionEnd, messages.MsgMobileUserID, messages.MsgMobileUserAnonymousID,
 		messages.MsgMobileMetadata, messages.MsgMobileEvent, messages.MsgMobileNetworkCall,

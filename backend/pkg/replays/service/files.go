@@ -8,8 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
+	config "openreplay/backend/internal/config/session"
 	"openreplay/backend/internal/storage"
-	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
 )
@@ -28,32 +29,33 @@ type Files interface {
 const (
 	MOBS_BUCKET          = "mobs"
 	CANVASES_BUCKET      = "mobs"
-	FS_DIR               = "/mnt/efs/" // shouldn't be empty
 	UNPROCESSED_MAX_SIZE = 200 * 1000
 )
 
 type filesImpl struct {
 	log      logger.Logger
-	pgConn   pool.Pool
+	cfg      *config.Config
 	objStore objectstorage.ObjectStorage
+	canvases canvas.Canvases
 }
 
-func New(log logger.Logger, pgConn pool.Pool, objStore objectstorage.ObjectStorage) (Files, error) {
+func New(log logger.Logger, cfg *config.Config, objStore objectstorage.ObjectStorage, canvases canvas.Canvases) (Files, error) {
 	switch {
 	case log == nil:
 		return nil, errors.New("nil logger")
-	case pgConn == nil:
-		return nil, errors.New("nil pg pool")
 	case objStore == nil:
 		return nil, errors.New("nil object storage")
+	case canvases == nil:
+		return nil, errors.New("nil canvases")
 	}
-	if !unprocessedPathAccessible(log, FS_DIR) {
+	if !unprocessedPathAccessible(log, cfg.FSDir) {
 		return nil, errors.New("unprocessed path is not accessible")
 	}
 	return &filesImpl{
 		log:      log,
-		pgConn:   pgConn,
+		cfg:      cfg,
 		objStore: objStore,
+		canvases: canvases,
 	}, nil
 }
 
@@ -113,22 +115,9 @@ func (f *filesImpl) GetMobStartUrl(sessID uint64) ([]string, error) {
 }
 
 func (f *filesImpl) GetCanvasUrls(sessID uint64) ([]string, error) {
-	sql := `SELECT recording_id
-            FROM events.canvas_recordings
-            WHERE session_id = $1
-            ORDER BY timestamp;`
-	rows, err := f.pgConn.Query(sql, sessID)
+	recIDs, err := f.canvases.Get(sessID)
 	if err != nil {
 		return nil, err
-	}
-	defer rows.Close()
-	recIDs := make([]string, 0, 16)
-	for rows.Next() {
-		var recordingID string
-		if err := rows.Scan(&recordingID); err != nil {
-			return nil, err
-		}
-		recIDs = append(recIDs, recordingID)
 	}
 	res := make([]string, 0, len(recIDs))
 	for _, recID := range recIDs {
@@ -151,15 +140,14 @@ func (f *filesImpl) GetMobileReplayUrls(sessID uint64) ([]string, error) {
 }
 
 func (f *filesImpl) GetUnprocessedMob(sessID uint64) (string, error) {
-	return GetRawMobByID(fmt.Sprintf("%d", sessID))
+	return GetRawMobByID(f.cfg.FSDir, fmt.Sprintf("%d", sessID))
 }
 
 func (f *filesImpl) GetUnprocessedDevtools(sessID uint64) (string, error) {
-	return GetRawMobByID(fmt.Sprintf("%ddevtools", sessID))
+	return GetRawMobByID(f.cfg.FSDir, fmt.Sprintf("%ddevtools", sessID))
 }
 
-func GetRawMobByID(file string) (string, error) {
-	efsPath := FS_DIR
+func GetRawMobByID(efsPath, file string) (string, error) {
 	pathToFile := filepath.Join(efsPath, file)
 
 	info, err := os.Stat(pathToFile)
