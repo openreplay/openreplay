@@ -31,10 +31,15 @@ export default class Project {
   conditionsCount: number = 0;
 
   constructor(data: Partial<Project> = {}) {
-    Object.assign(this, data);
-    this.gdpr = data.gdpr ? new GDPR(data.gdpr) : new GDPR();
-    this.id = data.projectId?.toString() || data.id;
-    this.host = data.name || '';
+    const dataEmpty = Object.keys(data).length === 0;
+    if (!dataEmpty) {
+      Object.assign(this, data);
+      this.gdpr = data.gdpr ? new GDPR(data.gdpr) : new GDPR();
+      this.id = data.projectId?.toString() || data.id;
+      this.host = data.name || '';
+    } else {
+      this.gdpr = new GDPR();
+    }
     makeAutoObservable(this);
   }
 

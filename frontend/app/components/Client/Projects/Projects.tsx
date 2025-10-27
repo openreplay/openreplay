@@ -62,7 +62,6 @@ function Projects() {
     onClick: () => onSelect(parseInt(project.id as unknown as string, 10)),
   }));
 
-  console.log('Project:', project, pid);
   return (
     <Card
       style={{ height: 'calc(100vh - 130px)' }}
