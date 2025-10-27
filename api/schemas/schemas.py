@@ -1714,7 +1714,6 @@ class SessionModel(BaseModel):
     duration: int
     errorsCount: int
     eventsCount: int
-    issueScore: int
     issueTypes: List[IssueType] = Field(default=[])
     metadata: dict = Field(default={})
     pagesCount: int

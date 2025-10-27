@@ -497,3 +497,6 @@ CREATE TABLE IF NOT EXISTS experimental.parsed_errors
     is_deleted           UInt8
 ) ENGINE = ReplacingMergeTree(stacktrace_parsed_at, is_deleted)
       ORDER BY (project_id, error_id);
+
+ALTER TABLE experimental.sessions
+    DROP COLUMN IF EXISTS issue_score;
