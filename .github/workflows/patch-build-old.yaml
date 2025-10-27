@@ -27,7 +27,7 @@ jobs:
       DEPOT_PROJECT_ID: ${{ secrets.DEPOT_PROJECT_ID }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v5
       with:
         fetch-depth: 4
         ref: ${{ github.event.inputs.tag }}

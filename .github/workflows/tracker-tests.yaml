@@ -18,7 +18,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Cache tracker modules
         uses: actions/cache@v3
         with:
