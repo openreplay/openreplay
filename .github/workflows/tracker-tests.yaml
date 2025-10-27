@@ -48,7 +48,7 @@ jobs:
           cd tracker/tracker-assist
           bun run build
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: tracker
