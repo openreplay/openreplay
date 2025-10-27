@@ -21,7 +21,7 @@ RUN nix-shell --run "pip install --prefix=/build/python-env -r requirements-pip.
 RUN nix-shell --run 'env' | grep -E "^(PATH|PYTHONPATH|LD_LIBRARY_PATH|NIX_)" > /build/nix-env.sh
 
 # Final stage - use Alpine for smaller base
-FROM alpine:3.20
+FROM alpine:3.22
 
 WORKDIR /app
 
