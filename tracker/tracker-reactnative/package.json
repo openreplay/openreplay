@@ -1,6 +1,6 @@
 {
   "name": "@openreplay/react-native",
-  "version": "0.6.15",
+  "version": "0.6.16",
   "description": "Openreplay React-native connector for iOS applications",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
