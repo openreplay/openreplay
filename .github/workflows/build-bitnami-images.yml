@@ -1,0 +1,92 @@
+name: Build Bitnami Images
+
+on:
+  push:
+    branches:
+      - or-2653-build-bitnami-images
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: [postgresql, kafka, minio, kubectl, redis, redis-sentinel, redis-sentinel-exporter, redis-exporter, bitnami-shell]
+    steps:
+      - name: Checkout Bitnami repo
+        uses: actions/checkout@v4
+        with:
+          repository: bitnami/containers
+          path: bitnami
+          fetch-depth: 1
+
+      - name: Find latest version
+        id: version
+        run: |
+          cd bitnami/bitnami/${{ matrix.image }}
+          latest_version=$(ls -d */ | grep -E '^[0-9]+\.' | sort -V | tail -1 | sed 's/\///')
+          echo "latest_version=$latest_version" >> $GITHUB_OUTPUT
+
+      - name: Find OS
+        id: os
+        run: |
+          cd bitnami/bitnami/${{ matrix.image }}/${{ steps.version.outputs.latest_version }}
+          os=$(ls -d */ | head -1 | sed 's/\///')
+          echo "os=$os" >> $GITHUB_OUTPUT
+
+      - name: Get commit hash
+        id: hash
+        run: |
+          cd bitnami/bitnami/${{ matrix.image }}/${{ steps.version.outputs.latest_version }}/${{ steps.os.outputs.os }}
+          hash=$(git log -1 --format=%H)
+          echo "hash=$hash" >> $GITHUB_OUTPUT
+
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          path: openreplay
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read previous hash
+        id: prev_hash
+        run: |
+          if [ -f openreplay/.bitnami-hashes.json ]; then
+            prev=$(jq -r '.["${{ matrix.image }}"]' openreplay/.bitnami-hashes.json || echo "")
+            echo "prev_hash=$prev" >> $GITHUB_OUTPUT
+          else
+            echo "prev_hash=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if changed
+        id: changed
+        run: |
+          if [ "${{ steps.hash.outputs.hash }}" != "${{ steps.prev_hash.outputs.prev_hash }}" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push if changed
+        if: steps.changed.outputs.changed == 'true'
+        run: |
+          cd bitnami/bitnami/${{ matrix.image }}/${{ steps.version.outputs.latest_version }}/${{ steps.os.outputs.os }}
+          docker build -t ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ steps.version.outputs.latest_version }} .
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ steps.version.outputs.latest_version }}
+
+      - name: Update hash file
+        if: steps.changed.outputs.changed == 'true'
+        run: |
+          cd openreplay
+          if [ -f .bitnami-hashes.json ]; then
+            jq --arg image "${{ matrix.image }}" --arg hash "${{ steps.hash.outputs.hash }}" '.[$image] = $hash' .bitnami-hashes.json > tmp.json && mv tmp.json .bitnami-hashes.json
+          else
+            jq -n --arg image "${{ matrix.image }}" --arg hash "${{ steps.hash.outputs.hash }}" '{ ($image): $hash }' > .bitnami-hashes.json
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add .bitnami-hashes.json
+          git commit -m "Update Bitnami hash for ${{ matrix.image }}"
+          git push
