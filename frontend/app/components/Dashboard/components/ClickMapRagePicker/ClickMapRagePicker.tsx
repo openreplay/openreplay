@@ -65,9 +65,9 @@ function ClickMapRagePicker() {
 
       <Segmented
         options={[
-          { label: <Monitor size={14} />, value: 'desktop' },
-          { label: <Tablet size={14} />, value: 'tablet' },
-          { label: <Smartphone size={14} />, value: 'mobile' },
+          { label: <Monitor size={16} />, value: 'desktop' },
+          { label: <Tablet size={16} />, value: 'tablet' },
+          { label: <Smartphone size={16} />, value: 'mobile' },
         ]}
         value={platform}
         size="small"
