@@ -16,10 +16,15 @@ def app_connection_string(name, port, path):
     return f"http://{name}.{namespace}.{conn_string}:{port}/{path}"
 
 
+assist_service_name = config("ASSIST_HEALTH_SERVICE_NAME", default="assist-openreplay")
+assist_endpoint = "health"
+if not assist_service_name == "assist-openreplay":
+    assist_endpoint = "metrics"
+
 HEALTH_ENDPOINTS = {
     "alerts": app_connection_string("alerts-openreplay", 8888, "health"),
     "assets": app_connection_string("assets-openreplay", 8888, "metrics"),
-    "assist": app_connection_string("assist-openreplay", 8888, "health"),
+    "assist": app_connection_string(assist_service_name, 8888, assist_endpoint),
     "chalice": app_connection_string("chalice-openreplay", 8888, "metrics"),
     "db": app_connection_string("db-openreplay", 8888, "metrics"),
     "ender": app_connection_string("ender-openreplay", 8888, "metrics"),
