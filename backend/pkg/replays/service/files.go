@@ -163,7 +163,3 @@ func GetRawMobByID(efsPath, file string) (string, error) {
 
 	return pathToFile, nil
 }
-
-func (f *filesImpl) GetFileKey(sessID uint64) (*string, error) {
-	return nil, nil
-}
