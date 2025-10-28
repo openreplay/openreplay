@@ -91,6 +91,7 @@ function build_api() {
     }
     build_count=1
     for image in $(ls cmd); do
+        [[ $image == "video-replays" ]] && continue
         build_service "$image" &
         echo "::set-output name=image::${DOCKER_REPO:-'local'}/$image:${image_tag}"
         [[ $PATCH -eq 1 ]] && update_helm_release $image
