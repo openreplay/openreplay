@@ -154,6 +154,7 @@ func (n *notesImpl) GetAll(projectID, userID uint64, opts *GetOpts) (interface{}
 	case opts == nil:
 		return nil, errors.New("opts is required")
 	}
+
 	if opts.Limit > MaxGetLimit {
 		opts.Limit = MaxGetLimit
 	}
@@ -163,56 +164,80 @@ func (n *notesImpl) GetAll(projectID, userID uint64, opts *GetOpts) (interface{}
 	if opts.Page <= 0 {
 		opts.Page = DefaultPage
 	}
-	if opts.Sort != "createdAt" {
-		opts.Sort = "createdAt" // Default sort
-	}
 	if opts.Order != "ASC" && opts.Order != "DESC" {
-		opts.Order = "DESC" // Default order
+		opts.Order = "DESC"
 	}
-	n.log.Info(context.Background(), "%+v", opts)
-	conditionsList := make([]string, 0)
-	conditionsList = append(conditionsList, fmt.Sprintf("sessions_notes.project_id = %d", projectID))
-	conditionsList = append(conditionsList, fmt.Sprintf("sessions_notes.deleted_at IS NULL"))
 
+	var (
+		where  []string
+		args   []interface{}
+		argPos = 1
+	)
+
+	where = append(where, fmt.Sprintf("sessions_notes.project_id = $%d", argPos))
+	args = append(args, projectID)
+	argPos++
+
+	where = append(where, "sessions_notes.deleted_at IS NULL")
+
+	// tags: tag IN ($N, $N+1, ...)
 	if len(opts.Tags) > 0 {
-		tags := make([]string, len(opts.Tags))
-		for i, tag := range opts.Tags {
-			tags[i] = fmt.Sprintf("'%s'", tag)
+		tagPlaceholders := make([]string, 0, len(opts.Tags))
+		for _, tag := range opts.Tags {
+			tagPlaceholders = append(tagPlaceholders, fmt.Sprintf("$%d", argPos))
+			args = append(args, tag)
+			argPos++
 		}
-		conditionsList = append(conditionsList, fmt.Sprintf("sessions_notes.tag IN (%s)", strings.Join(tags, ",")))
+		where = append(where, fmt.Sprintf("sessions_notes.tag IN (%s)", strings.Join(tagPlaceholders, ",")))
 	}
+
 	if opts.SharedOnly {
-		conditionsList = append(conditionsList, "sessions_notes.is_public IS TRUE")
+		where = append(where, "sessions_notes.is_public IS TRUE")
 	}
 	if opts.MineOnly {
-		conditionsList = append(conditionsList, fmt.Sprintf("sessions_notes.user_id = %d", userID))
+		where = append(where, fmt.Sprintf("sessions_notes.user_id = $%d", argPos))
+		args = append(args, userID)
+		argPos++
 	} else {
-		conditionsList = append(conditionsList, fmt.Sprintf("(sessions_notes.user_id = %d OR sessions_notes.is_public)", userID))
-	}
-	if opts.Search != "" {
-		conditionsList = append(conditionsList, fmt.Sprintf("sessions_notes.message ILIKE '%%%s%%'", opts.Search))
+		// (user_id = $N OR is_public)
+		where = append(where, fmt.Sprintf("(sessions_notes.user_id = $%d OR sessions_notes.is_public)", argPos))
+		args = append(args, userID)
+		argPos++
 	}
 
+	if opts.Search != "" {
+		where = append(where, fmt.Sprintf("sessions_notes.message ILIKE $%d", argPos))
+		args = append(args, "%"+opts.Search+"%")
+		argPos++
+	}
+
+	whereSQL := strings.Join(where, " AND ")
 	sql := fmt.Sprintf(`
-		SELECT COUNT(1) OVER () AS full_count, sessions_notes.note_id, sessions_notes.user_id, sessions_notes.message, sessions_notes.created_at,
+		SELECT COUNT(1) OVER () AS full_count,
+		       sessions_notes.note_id, sessions_notes.user_id, sessions_notes.message, sessions_notes.created_at,
 		       sessions_notes.tag, sessions_notes.session_id, sessions_notes.timestamp, sessions_notes.is_public,
 		       sessions_notes.thumbnail, sessions_notes.start_at, sessions_notes.end_at, users.name AS user_name
 		FROM sessions_notes
 		INNER JOIN users USING (user_id)
 		WHERE %s
 		ORDER BY created_at %s
-		LIMIT %d OFFSET %d;`, strings.Join(conditionsList, " AND "), opts.Order, opts.Limit, (opts.Page-1)*opts.Limit)
-	n.log.Info(context.Background(), "Getting sessions notes: %s", sql)
-	rows, err := n.db.Query(sql)
+		LIMIT $%d OFFSET $%d;`,
+		whereSQL, opts.Order, argPos, argPos+1,
+	)
+	args = append(args, opts.Limit, (opts.Page-1)*opts.Limit)
+
+	rows, err := n.db.Query(sql, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch notes: %v", err)
 	}
 	defer rows.Close()
+
 	var (
 		notes     []Note
 		fullCount int
 		createdAt time.Time
 	)
+
 	for rows.Next() {
 		var note Note
 		if err := rows.Scan(&fullCount, &note.ID, &note.UserID, &note.Message, &createdAt, &note.Tag, &note.SessionID,
@@ -223,9 +248,11 @@ func (n *notesImpl) GetAll(projectID, userID uint64, opts *GetOpts) (interface{}
 		note.CreatedAt = createdAt.UnixMilli()
 		notes = append(notes, note)
 	}
-	res := make(map[string]interface{})
-	res["count"] = fullCount
-	res["notes"] = notes
+
+	res := map[string]interface{}{
+		"count": fullCount,
+		"notes": notes,
+	}
 	return res, nil
 }
 
@@ -241,38 +268,67 @@ func (n *notesImpl) Update(projectID, userID, noteID uint64, note *NoteUpdate) (
 		return nil, errors.New("note is required")
 	}
 
-	conditionsList := make([]string, 0)
+	setParts := make([]string, 0, 4)
+	args := make([]interface{}, 0, 6)
+	argPos := 1
+
 	if note.Message != nil && *note.Message != "" {
 		if len(*note.Message) > MaxMessageLength {
 			*note.Message = (*note.Message)[0:MaxMessageLength]
 		}
-		conditionsList = append(conditionsList, fmt.Sprintf("message = '%s'", *note.Message))
+		setParts = append(setParts, fmt.Sprintf("message = $%d", argPos))
+		args = append(args, *note.Message)
+		argPos++
 	}
+
 	if note.Tag != nil && *note.Tag != "" {
 		if len(*note.Tag) > MaxTagLength {
 			*note.Tag = (*note.Tag)[0:MaxTagLength]
 		}
-		conditionsList = append(conditionsList, fmt.Sprintf("tag = '%s'", *note.Tag))
+		setParts = append(setParts, fmt.Sprintf("tag = $%d", argPos))
+		args = append(args, *note.Tag)
+		argPos++
 	}
+
 	if note.IsPublic != nil {
-		if *note.IsPublic {
-			conditionsList = append(conditionsList, "is_public = TRUE")
-		} else {
-			conditionsList = append(conditionsList, "is_public = FALSE")
-		}
+		setParts = append(setParts, fmt.Sprintf("is_public = $%d", argPos))
+		args = append(args, *note.IsPublic)
+		argPos++
 	}
+
 	if note.Timestamp != nil && *note.Timestamp != 0 {
-		conditionsList = append(conditionsList, fmt.Sprintf("timestamp = %d", *note.Timestamp))
+		setParts = append(setParts, fmt.Sprintf("timestamp = $%d", argPos))
+		args = append(args, *note.Timestamp)
+		argPos++
 	}
-	conditionsList = append(conditionsList, "updated_at = timezone('utc'::text, now())")
+
+	// Nothing to update, just return current object
+	if len(setParts) == 0 {
+		return n.GetByID(projectID, userID, noteID)
+	}
+
+	setParts = append(setParts, "updated_at = timezone('utc'::text, now())")
+
+	sql := fmt.Sprintf(`
+		UPDATE sessions_notes
+		SET %s
+		WHERE project_id = $%d AND note_id = $%d AND user_id = $%d
+		RETURNING note_id, message, created_at, tag, session_id, timestamp, is_public, thumbnail, start_at, end_at,
+		          (SELECT name FROM users WHERE users.user_id = sessions_notes.user_id) AS user_name
+	`, strings.Join(setParts, ", "), argPos, argPos+1, argPos+2)
+
+	args = append(args, projectID, noteID, userID)
 
 	var (
 		updatedNote Note
 		createdAt   time.Time
 	)
-	err := updateNote(n.db, projectID, userID, noteID, conditionsList).Scan(&updatedNote.ID, &updatedNote.Message, &createdAt,
-		&updatedNote.Tag, &updatedNote.SessionID, &updatedNote.Timestamp, &updatedNote.IsPublic,
-		&updatedNote.Thumbnail, &updatedNote.StartAt, &updatedNote.EndAt, &updatedNote.UserName)
+
+	err := n.db.QueryRow(sql, args...).Scan(
+		&updatedNote.ID, &updatedNote.Message, &createdAt, &updatedNote.Tag, &updatedNote.SessionID,
+		&updatedNote.Timestamp, &updatedNote.IsPublic, &updatedNote.Thumbnail, &updatedNote.StartAt, &updatedNote.EndAt,
+		&updatedNote.UserName,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update note: %v", err)
 	}
