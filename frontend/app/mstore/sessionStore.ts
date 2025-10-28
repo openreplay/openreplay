@@ -94,7 +94,7 @@ class DevTools {
     this.network = {
       index: 0,
       filter: '',
-      activeTab: 'ALL',
+      activeTab: 'xhr',
       isError: false,
     };
     this.stackEvent = {

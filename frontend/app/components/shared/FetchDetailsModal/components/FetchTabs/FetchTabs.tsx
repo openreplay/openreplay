@@ -121,7 +121,9 @@ function FetchTabs({ resource, isSpot, isXHR }: Props) {
     );
   }, [resource]);
 
-  const noTimings = resource.timings ? Object.values(resource.timings).every((v) => v === 0) : true;
+  const noTimings = resource.timings
+    ? Object.values(resource.timings).every((v) => v === 0)
+    : true;
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -215,33 +217,37 @@ function FetchTabs({ resource, isSpot, isXHR }: Props) {
           />
         );
       case TIMINGS:
-        return <NoContent
-          title={
-            <div className="flex flex-col items-center justify-center">
-              <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
-              <div className="mt-6 text-base font-normal">
-                {t('Request was instant (cached) or no timings were recorded.')}
-                <br />
-                <a
-                  href="https://docs.openreplay.com/en/sdk/network-options"
-                  className="link"
-                  target="_blank"
-                >
-                  {t('Learn how to get more out of Fetch/XHR requests.')}
-                </a>
+        return (
+          <NoContent
+            title={
+              <div className="flex flex-col items-center justify-center">
+                <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
+                <div className="mt-6 text-base font-normal">
+                  {t(
+                    'Request was instant (cached) or no timings were recorded.',
+                  )}
+                  <br />
+                  <a
+                    href="https://docs.openreplay.com/en/sdk/network-options"
+                    className="link"
+                    target="_blank"
+                  >
+                    {t('Learn how to get more out of Fetch/XHR requests.')}
+                  </a>
+                </div>
               </div>
-            </div>
-          }
-          size="small"
-          show={noTimings}
-        >
-          <FetchTimings timings={resource.timings} />
-        </NoContent>
+            }
+            size="small"
+            show={noTimings}
+          >
+            <FetchTimings timings={resource.timings} />
+          </NoContent>
+        );
     }
   };
   const usedTabs = isXHR ? TABS : RESOURCE_TABS;
   return (
-    <div>
+    <div className="mt-4">
       <Tabs tabs={usedTabs} active={activeTab} onClick={onTabClick} border />
       <div style={{ height: 'calc(100vh - 364px)', overflowY: 'auto' }}>
         {renderActiveTab()}
