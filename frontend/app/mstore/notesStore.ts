@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, action } from 'mobx';
 
 import { notesService } from 'App/services';
 import { Note, NotesFilter, WriteNote, iTag } from 'App/services/NotesService';
@@ -191,4 +191,10 @@ export default class NotesStore {
       console.error(e);
     }
   }
+
+  filterOutNote = (nodeId: string) => {
+    this.sessionNotes = this.sessionNotes.filter(
+      (note) => note.noteId !== nodeId,
+    );
+  };
 }

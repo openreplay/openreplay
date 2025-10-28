@@ -133,7 +133,7 @@ export interface ISession {
   isCallActive?: boolean;
   agentToken?: string;
   notes?: Note[];
-  notesWithEvents?: Array<Note | InjectedEvent>;
+  mixedEventsWithIssues?: Array<InjectedEvent>;
   fileKey?: string;
   platform: 'web' | 'ios' | 'android';
   projectId: number | string;
@@ -285,7 +285,7 @@ export default class Session {
 
   notes: ISession['notes'];
 
-  notesWithEvents: ISession['notesWithEvents'];
+  mixedEventsWithIssues: ISession['mixedEventsWithIssues'];
 
   frustrations: Array<IIssue | InjectedEvent>;
 
@@ -439,7 +439,7 @@ export default class Session {
       notes,
       canvasURL,
       videoURL: Array.isArray(videoURL) ? videoURL : [videoURL],
-      notesWithEvents: mixedEventsWithIssues,
+      mixedEventsWithIssues: mixedEventsWithIssues,
       frustrations: frustrationList,
       uxtVideo: uxtVideo[0],
       durationMs: session.duration,
@@ -533,10 +533,7 @@ export default class Session {
 
     this.events = events;
     // @ts-ignore
-    this.notesWithEvents = [
-      ...this.notesWithEvents,
-      ...mixedEventsWithIssues,
-    ].sort(sortEvents);
+    this.mixedEventsWithIssues = mixedEventsWithIssues.sort(sortEvents);
     this.errors = exceptions;
     this.issues = issuesList;
     this.stackEvents = stackEventsList;
@@ -545,19 +542,6 @@ export default class Session {
     this.crashes = crashes || [];
     this.addedEvents = true;
     this.incidents = incidentsList;
-    return this;
-  }
-
-  addNotes(sessionNotes: Note[]) {
-    sessionNotes.forEach((note) => {
-      // @ts-ignore veri dirti
-      note.time = note.timestamp;
-    });
-    // @ts-ignore
-    this.notesWithEvents =
-      [...this.notesWithEvents, ...sessionNotes].sort(sortEvents) || [];
-    this.notes = sessionNotes;
-
     return this;
   }
 

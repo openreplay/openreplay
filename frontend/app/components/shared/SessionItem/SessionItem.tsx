@@ -336,7 +336,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                 </div>
                 {!slim && _metaList.length > 0 && (
                   <SessionMetaList
-                    onMetaClick={onMetaClick}
+                    onMetaClick={disableUser ? () => null : onMetaClick}
                     maxLength={3}
                     metaList={_metaList}
                   />

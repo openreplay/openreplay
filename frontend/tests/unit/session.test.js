@@ -21,7 +21,7 @@ describe('Testing Session class', () => {
     expect(sessionInfo.userNumericHash).toBe(55003039);
     expect(sessionInfo.userId).toBe('fernando.dufour@pravaler.com.br');
     expect(sessionInfo.issues.length).toBe(2);
-    expect(sessionInfo.notesWithEvents.length).toBe(362);
+    expect(sessionInfo.mixedEventsWithIssues.length).toBe(362);
   });
   test('checking issue mapping', () => {
     expect([...sessionInfo.issues]).toMatchObject(issues);

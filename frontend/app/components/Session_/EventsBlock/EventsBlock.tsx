@@ -4,7 +4,7 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { VList, VListHandle } from 'virtua';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
@@ -14,7 +14,6 @@ import EventSearch from './EventSearch/EventSearch';
 import styles from './eventsBlock.module.css';
 import { useTranslation } from 'react-i18next';
 import { CloseOutlined } from '@ant-design/icons';
-import { Tooltip } from 'antd';
 import { getDefaultFramework, frameworkIcons } from '../UnitStepsModal';
 
 interface IProps {
@@ -33,14 +32,12 @@ function EventsBlock(props: IProps) {
   const { t } = useTranslation();
   const { notesStore, uiPlayerStore, sessionStore } = useStore();
   const session = sessionStore.current;
-  const notesWithEvents = session.notesWithEvents;
+  const mixedEventsWithIssues = session.mixedEventsWithIssues;
   const incidents = session.incidents;
-  const uxtVideo = session.uxtVideo;
   const { filteredEvents } = sessionStore;
   const query = sessionStore.eventsQuery;
   const { eventsIndex } = sessionStore;
   const setEventFilter = sessionStore.setEventQuery;
-  const { filterOutNote } = sessionStore;
   const [mouseOver, setMouseOver] = React.useState(false);
   const scroller = React.useRef<VListHandle>(null);
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
@@ -48,6 +45,7 @@ function EventsBlock(props: IProps) {
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
   const { store, player } = React.useContext(PlayerContext);
   const [currentTimeEventIndex, setCurrentTimeEventIndex] = React.useState(0);
+  const notes = notesStore.sessionNotes;
 
   const {
     time,
@@ -57,12 +55,13 @@ function EventsBlock(props: IProps) {
     tabChangeEvents = [],
   } = store.get();
 
+  const filterOutNote = (id: any) => {
+    notesStore.filterOutNote(id);
+  };
+
   const { setActiveTab } = props;
-  const notes = notesStore.sessionNotes;
 
   const filteredLength = filteredEvents?.length || 0;
-  const notesWithEvtsLength = notesWithEvents?.length || 0;
-  const notesLength = notes.length;
   const eventListNow: any[] = [];
   if (tabStates !== undefined) {
     eventListNow.concat(Object.values(tabStates)[0]?.eventListNow || []);
@@ -70,7 +69,7 @@ function EventsBlock(props: IProps) {
     eventListNow.concat(store.get().eventListNow);
   }
 
-  const usedEvents = React.useMemo(() => {
+  const getEvents = () => {
     if (tabStates !== undefined) {
       tabChangeEvents.forEach((ev) => {
         const urlsList = tabStates[ev.tabId]?.urlsList || [];
@@ -88,9 +87,10 @@ function EventsBlock(props: IProps) {
     }
     const eventsWithMobxNotes = [
       ...incidents,
-      ...notesWithEvents,
+      ...(mixedEventsWithIssues ?? []),
       ...notes,
     ].sort(sortEvents);
+    console.log(notes.length, eventsWithMobxNotes.length);
 
     return mergeEventLists(
       filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
@@ -110,16 +110,19 @@ function EventsBlock(props: IProps) {
           ? e.isHighlighted
           : true,
       );
-  }, [
-    filteredLength,
-    query,
-    notesWithEvtsLength,
-    notesLength,
-    zoomEnabled,
-    zoomStartTs,
-    zoomEndTs,
-    uiPlayerStore.showOnlySearchEvents,
-  ]);
+  };
+
+  const usedEvents = React.useMemo(
+    () => getEvents(),
+    [
+      query,
+      filteredLength,
+      mixedEventsWithIssues,
+      notes,
+      incidents,
+      tabChangeEvents,
+    ],
+  );
 
   const findLastFitting = React.useCallback(
     (time: number) => {

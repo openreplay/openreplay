@@ -591,30 +591,6 @@ export default class SessionStore {
     this.createNoteTooltip = noteTooltip;
   };
 
-  filterOutNote = (noteId: string) => {
-    this.current.notesWithEvents = this.current.notesWithEvents.filter(
-      (item) => {
-        if ('noteId' in item) {
-          return item.noteId !== noteId;
-        }
-        return true;
-      },
-    );
-  };
-
-  updateNote = (note: Note) => {
-    const noteIndex = this.current.notesWithEvents.findIndex((item) => {
-      if ('noteId' in item) {
-        return item.noteId === note.noteId;
-      }
-      return false;
-    });
-
-    if (noteIndex !== -1) {
-      this.current.notesWithEvents[noteIndex] = note;
-    }
-  };
-
   setSessionPath = (path = {}) => {
     this.sessionPath = path;
   };
