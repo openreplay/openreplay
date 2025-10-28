@@ -22,7 +22,6 @@ func NewProducer() *Producer {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Default TTL is 4 hours (14400 seconds), can be overridden with REDIS_STREAMS_TTL_SEC env variable
 	ttlSeconds := env.Uint64Default("REDIS_STREAMS_TTL_SEC", 14400)
 	return &Producer{
 		redis:        redClient,
@@ -71,6 +70,7 @@ func (p *Producer) ProduceToPartition(topic string, partition, key uint64, value
 func (p *Producer) Close(_ int) {
 	// noop
 }
+
 func (p *Producer) Flush(_ int) {
 	// noop
 }

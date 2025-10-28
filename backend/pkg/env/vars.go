@@ -86,7 +86,7 @@ func Uint64Default(key string, defaultValue uint64) uint64 {
 	}
 	n, err := strconv.ParseUint(v, 10, 64)
 	if err != nil {
-		log.Fatalln(key+" has a wrong value. ", err)
+		return defaultValue
 	}
 	return n
 }
