@@ -14,6 +14,7 @@ import (
 	"openreplay/backend/pkg/analytics/model"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/lib/pq"
 )
 
 // TODO - check all attributes and map the columns to the correct names
@@ -38,6 +39,7 @@ var mainColumns = map[string]string{
 
 type Search interface {
 	GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
+	GetBookmarkedSessions(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
 }
 
 type searchImpl struct {
@@ -351,6 +353,124 @@ WHERE project_id = $1;`, projectId)
 	}
 	return result
 }
+func (s *searchImpl) GetBookmarkedSessions(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
+	if req == nil {
+		return nil, errors.New("nil request")
+	}
+
+	offset := (req.Page - 1) * req.Limit
+
+	sortOrder := "DESC"
+	if strings.EqualFold(req.Order, "ASC") {
+		sortOrder = "ASC"
+	}
+
+	query := fmt.Sprintf(`
+SELECT
+	s.session_id::text AS session_id,
+	s.project_id,
+	s.start_ts,
+	COALESCE(s.duration, 0) AS duration,
+	s.platform,
+	COALESCE(s.timezone, '') AS timezone,
+	COALESCE(s.user_id, '') AS user_id,
+	s.user_uuid::text,
+	COALESCE(s.user_anonymous_id, '') AS user_anonymous_id,
+	COALESCE(s.user_browser, '') AS user_browser,
+	COALESCE(s.user_city, '') AS user_city,
+	s.user_country,
+	COALESCE(s.user_device, '') AS user_device,
+	s.user_device_type,
+	s.user_os,
+	COALESCE(s.user_state, '') AS user_state,
+	s.events_count,
+	s.pages_count,
+	ARRAY(SELECT unnest(s.issue_types)::text) AS issue_types,
+	true AS viewed,
+	COUNT(*) OVER() AS total_number_of_sessions,
+	s.metadata_1,
+	s.metadata_2,
+	s.metadata_3,
+	s.metadata_4,
+	s.metadata_5,
+	s.metadata_6,
+	s.metadata_7,
+	s.metadata_8,
+	s.metadata_9,
+	s.metadata_10
+FROM public.user_favorite_sessions b
+INNER JOIN public.sessions s ON s.session_id = b.session_id
+WHERE b.user_id = $1
+  AND s.project_id = $2
+ORDER BY s.start_ts %s
+LIMIT $3 OFFSET $4`,
+		sortOrder,
+	)
+
+	log.Printf("Bookmarked Sessions Query: %s", query)
+
+	rows, err := s.pgConn.Query(query, userId, projectId, req.Limit, offset)
+	if err != nil {
+		log.Printf("Error executing bookmarked sessions query: %s\nQuery: %s", err, query)
+		return nil, err
+	}
+	defer rows.Close()
+
+	resp := &model.GetSessionsResponse{Sessions: make([]model.Session, 0)}
+	metasMap := s.getMetadataColumns(projectId)
+
+	for rows.Next() {
+		var session model.Session
+		err := rows.Scan(
+			&session.SessionId,
+			&session.ProjectId,
+			&session.StartTs,
+			&session.Duration,
+			&session.Platform,
+			&session.Timezone,
+			&session.UserId,
+			&session.UserUuid,
+			&session.UserAnonymousId,
+			&session.UserBrowser,
+			&session.UserCity,
+			&session.UserCountry,
+			&session.UserDevice,
+			&session.UserDeviceType,
+			&session.UserOs,
+			&session.UserState,
+			&session.EventsCount,
+			&session.PagesCount,
+			pq.Array(&session.IssueTypes),
+			&session.Viewed,
+			&session.TotalNumberOfSessions,
+			&session.Metadata1,
+			&session.Metadata2,
+			&session.Metadata3,
+			&session.Metadata4,
+			&session.Metadata5,
+			&session.Metadata6,
+			&session.Metadata7,
+			&session.Metadata8,
+			&session.Metadata9,
+			&session.Metadata10,
+		)
+		if err != nil {
+			log.Printf("Error scanning row: %s", err)
+			return nil, err
+		}
+
+		resp.Sessions = append(resp.Sessions, session)
+	}
+
+	if len(resp.Sessions) > 0 {
+		resp.Total = resp.Sessions[0].TotalNumberOfSessions
+	}
+
+	processSessionsMetadata(resp.Sessions, metasMap)
+
+	return resp, nil
+}
+
 func processSessionsMetadata(rows []model.Session, metasMap map[string]string) {
 	if metasMap == nil {
 		return

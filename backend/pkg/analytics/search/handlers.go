@@ -75,9 +75,26 @@ func (e *handlersImpl) getSessions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = e.validator.Struct(req); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
+	if req.Bookmarked {
+		if req.Page == 0 {
+			req.Page = 1
+		}
+		if req.Limit == 0 {
+			req.Limit = 10
+		}
+		if err = e.validator.Var(req.Page, "required,min=1"); err != nil {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+			return
+		}
+		if err = e.validator.Var(req.Limit, "required,min=1,max=200"); err != nil {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+			return
+		}
+	} else {
+		if err = e.validator.Struct(req); err != nil {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+			return
+		}
 	}
 
 	projectID, err := getIDFromRequest(r, "projectId")
@@ -87,7 +104,14 @@ func (e *handlersImpl) getSessions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.search.GetAll(projectID, currentUser.ID, req)
+
+	var resp interface{}
+	if req.Bookmarked {
+		resp, err = e.search.GetBookmarkedSessions(projectID, currentUser.ID, req)
+	} else {
+		resp, err = e.search.GetAll(projectID, currentUser.ID, req)
+	}
+
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return

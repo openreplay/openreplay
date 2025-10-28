@@ -168,6 +168,7 @@ type SessionsSearchRequest struct {
 	Limit       int      `json:"limit" validate:"required,min=1,max=200"`
 	Page        int      `json:"page" validate:"required,min=1"`
 	Series      []Series `json:"series" validate:"omitempty,max=5,dive"`
+	Bookmarked  bool     `json:"bookmarked"`
 }
 
 type GetSessionsResponse struct {
