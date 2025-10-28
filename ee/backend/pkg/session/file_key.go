@@ -5,7 +5,7 @@ func (s *serviceImpl) GetFileKey(sessID uint64) (*string, error) {
             FROM public.sessions
             WHERE session_id = $1;`
 
-	var key string
+	var key *string
 	err := s.conn.QueryRow(sql, sessID).Scan(&key)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
@@ -13,5 +13,5 @@ func (s *serviceImpl) GetFileKey(sessID uint64) (*string, error) {
 		}
 		return nil, err
 	}
-	return &key, nil
+	return key, nil
 }
