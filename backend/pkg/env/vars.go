@@ -78,3 +78,15 @@ func StringMapOptional(key string) map[string]string {
 	}
 	return stringMap
 }
+
+func Uint64Default(key string, defaultValue uint64) uint64 {
+	v := os.Getenv(key)
+	if v == "" {
+		return defaultValue
+	}
+	n, err := strconv.ParseUint(v, 10, 64)
+	if err != nil {
+		log.Fatalln(key+" has a wrong value. ", err)
+	}
+	return n
+}
