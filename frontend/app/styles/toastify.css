@@ -11,23 +11,40 @@
 }
 .Toastify__toast {
   background-color: white !important;
-  color: $gray-medium;
+  color: #888;
   border-left: solid 5px transparent;
 
   &.Toastify__toast--default {
-    border-color: $teal;
+    border-color: #394EFF;
   }
   &.Toastify__toast--info {
-    border-color: $yellow;
+    border-color: #3EAAAF;
   }
   &.Toastify__toast--success {
-    border-color: $teal;
+    border-color: #394EFF;
   }
   &.Toastify__toast--warning {
-    background: $orange;
+    border-color: #E28940;
   }
   &.Toastify__toast--error {
-    background: $red;
-    border-color: $red;
+    border-color: #cc0000;
   }
+}
+
+.Toastify__progress-bar--wrp {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+:root {
+  --toastify-color-info: #3EAAAF;
+  --toastify-color-success: #394EFF;
+  --toastify-color-warning: #E28940;
+  --toastify-color-error: #cc0000;
+  --toastify-color-transparent: rgba(255, 255, 255, 0.7);
+  --toastify-color-progress-light: #394EFF;
+  --toastify-icon-color-info: #3EAAAF;
+  --toastify-icon-color-success: #394EFF;
+  --toastify-icon-color-warning: #E28940;
+  --toastify-icon-color-error: #cc0000;
 }
