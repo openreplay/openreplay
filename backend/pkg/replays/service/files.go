@@ -23,7 +23,6 @@ type Files interface {
 	GetMobileReplayUrls(sessID uint64) ([]string, error)
 	GetUnprocessedMob(sessID uint64) (string, error)
 	GetUnprocessedDevtools(sessID uint64) (string, error)
-	GetFileKey(sessID uint64) (*string, error)
 }
 
 const (
@@ -162,8 +161,4 @@ func GetRawMobByID(efsPath, file string) (string, error) {
 	}
 
 	return pathToFile, nil
-}
-
-func (f *filesImpl) GetFileKey(sessID uint64) (*string, error) {
-	return nil, nil
 }

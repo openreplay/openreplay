@@ -84,7 +84,7 @@ func (e *handlersImpl) getReplay(w http.ResponseWriter, r *http.Request) {
 			e.log.Error(r.Context(), "Error getting live session: %v", err)
 		}
 
-		fileKey, err := e.files.GetFileKey(sessID)
+		fileKey, err := e.sessions.GetFileKey(sessID)
 		if err != nil {
 			e.log.Error(r.Context(), "Error getting file key: %v", err)
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("error retrieving file key"), startTime, r.URL.Path, bodySize)

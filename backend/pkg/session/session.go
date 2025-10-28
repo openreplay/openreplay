@@ -16,6 +16,7 @@ type Service interface {
 	GetReplay(projectID uint32, sessionID uint64, userID string) (*SessionReplay, error)
 	IsExists(projectID uint32, sessionID uint64) (bool, error)
 	GetPlatform(projectID uint32, sessionID uint64) (string, error)
+	GetFileKey(sessID uint64) (*string, error)
 }
 
 type serviceImpl struct {
