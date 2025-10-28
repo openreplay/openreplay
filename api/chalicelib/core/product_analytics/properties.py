@@ -130,12 +130,12 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
             SELECT COUNT(1) OVER () AS total, 
                  property_name AS name,
                  display_name,
-                 event_properties.auto_captured,
+                 event_properties.auto_captured_property AS auto_captured,
                  possible_types
             FROM product_analytics.all_properties
             LEFT ANY JOIN (
                 SELECT property_name,
-                       auto_captured,
+                       auto_captured_property,
                        array_agg(DISTINCT event_properties.value_type) AS possible_types
                 FROM product_analytics.event_properties
                 WHERE event_properties.project_id = %(project_id)s
