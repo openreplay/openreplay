@@ -62,7 +62,16 @@ func (h *handlersImpl) getFirstMob(w http.ResponseWriter, r *http.Request) {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("wrong session id"), startTime, r.URL.Path, bodySize)
 		return
 	}
-	res := map[string]interface{}{"domURL": urls}
+
+	fileKey, err := h.sessions.GetFileKey(sessID)
+	if err != nil {
+		h.log.Error(r.Context(), "Error getting file key: %v", err)
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("error retrieving file key"), startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	res := map[string]interface{}{"domURL": urls, "fileKey": fileKey}
+
 	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": res}, startTime, r.URL.Path, bodySize)
 }
 
