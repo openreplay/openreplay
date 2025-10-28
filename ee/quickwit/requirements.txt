@@ -1,4 +1,0 @@
-confluent-kafka==2.2.0
-python-decouple==3.8
-requests==2.31.0
-zstd==1.5.5.1

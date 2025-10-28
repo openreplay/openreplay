@@ -123,7 +123,7 @@ jobs:
           cat /tmp/image_override.yaml
           # Deploy command
           mkdir -p /tmp/charts
-          mv openreplay/charts/{ingress-nginx,chalice,quickwit,connector,assist-api} /tmp/charts/
+          mv openreplay/charts/{ingress-nginx,chalice,connector,assist-api} /tmp/charts/
           rm -rf  openreplay/charts/*
           mv /tmp/charts/* openreplay/charts/
           helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -

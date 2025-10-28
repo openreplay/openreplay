@@ -190,7 +190,6 @@ def get_health(tenant_id=None):
             "http": __check_be_service("http"),
             "ingress-nginx": __always_healthy,
             "integrations": __check_be_service("integrations"),
-            # "quickwit": __check_be_service("quickwit"),
             "sink": __check_be_service("sink"),
             "sourcemapreader": __check_be_service("sourcemapreader"),
             "storage": __check_be_service("storage"),
