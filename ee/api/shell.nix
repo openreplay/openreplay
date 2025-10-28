@@ -2,27 +2,11 @@
 
 let
   # Create a Python environment with Nix-provided packages
+  # Only system-level packages that need C library compatibility
   pythonEnv = pkgs.python313.withPackages (ps: with ps; [
-    # Critical packages from Nix to ensure version compatibility
+    # System packages requiring C library compatibility
     lxml        # python3.13-lxml (currently 6.0.1 in nixpkgs)
     xmlsec      # python3.13-xmlsec (currently 1.3.16 in nixpkgs)
-    
-    # Other common packages available in nixpkgs
-    urllib3
-    requests
-    boto3
-    pyjwt
-    psycopg2
-    clickhouse-connect
-    cachetools
-    fastapi
-    uvicorn
-    gunicorn
-    python-decouple
-    pydantic
-    apscheduler
-    python-multipart
-    redis
     
     # Tools
     pip

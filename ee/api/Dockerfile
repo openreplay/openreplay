@@ -5,17 +5,17 @@ RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
 
 WORKDIR /build
 
-# Copy shell.nix - this provides Python with lxml and other packages from Nix
+# Copy shell.nix - this provides Python with system libraries (lxml, xmlsec)
 COPY shell.nix .
 
-# Build the Nix environment - this creates the Python environment with all packages
+# Build the Nix environment - this provides lxml and xmlsec with C library compatibility
 RUN nix-shell --run "python --version"
 
-# Copy requirements for additional pip packages
-COPY requirements-pip.txt .
+# Copy requirements file
+COPY requirements.txt .
 
-# Install only the remaining packages via pip (those not in nixpkgs)
-RUN nix-shell --run "pip install --prefix=/build/python-env -r requirements-pip.txt"
+# Install packages from requirements.txt (lxml/xmlsec already provided by Nix)
+RUN nix-shell --run "pip install --prefix=/build/python-env -r requirements.txt"
 
 # Create a script that captures the environment
 RUN nix-shell --run 'env' | grep -E "^(PATH|PYTHONPATH|LD_LIBRARY_PATH|NIX_)" > /build/nix-env.sh
