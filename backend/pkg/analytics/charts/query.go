@@ -452,42 +452,6 @@ func getStepSize(startTimestamp uint64, endTimestamp uint64, density int, factor
 	return uint64(stepSize) / uint64(density)
 }
 
-func FillMissingDataPoints(
-	startTime, endTime uint64,
-	density int,
-	neutral DataPoint,
-	rows []DataPoint,
-	timeCoefficient int64,
-) []DataPoint {
-	if density <= 1 {
-		return rows
-	}
-
-	stepSize := getStepSize(startTime, endTime, density, 1000)
-	bucketSize := stepSize * uint64(timeCoefficient)
-
-	lookup := make(map[uint64]DataPoint)
-	for _, dp := range rows {
-		if dp.Timestamp < uint64(startTime) {
-			continue
-		}
-		bucket := uint64(startTime) + (((dp.Timestamp - uint64(startTime)) / bucketSize) * bucketSize)
-		lookup[bucket] = dp
-	}
-
-	results := make([]DataPoint, 0, density)
-	for i := 0; i < density; i++ {
-		ts := uint64(startTime) + uint64(i)*bucketSize
-		if dp, ok := lookup[ts]; ok {
-			results = append(results, dp)
-		} else {
-			nd := neutral
-			nd.Timestamp = ts
-			results = append(results, nd)
-		}
-	}
-	return results
-}
 func isNegativeOperator(op string) bool {
 	return op == "isNot" || op == "not" || op == "notIn" || op == "notContains"
 }
