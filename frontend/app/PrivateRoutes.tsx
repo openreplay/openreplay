@@ -1,6 +1,12 @@
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import React, { Suspense, lazy } from 'react';
-import { Redirect, Route, Switch, useLocation, useHistory } from 'react-router-dom';
+import {
+  Redirect,
+  Route,
+  Switch,
+  useLocation,
+  useHistory,
+} from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { useStore } from './mstore';
 import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
@@ -106,9 +112,16 @@ function PrivateRoutes() {
     if (siteId && integrationsStore.integrations.siteId !== siteId) {
       integrationsStore.integrations.setSiteId(siteId);
       void integrationsStore.integrations.fetchIntegrations(siteId);
-      filterStore.fetchFilters(siteId).then(() => {
-        setFiltersLoaded(true);
-      });
+      filterStore
+        .fetchFilters(siteId)
+        .then(() => {
+          setFiltersLoaded(true);
+        })
+        .catch((e) => {
+          console.error(e);
+          // if filters failed, there may be some sessions still available in the list
+          void searchStore.fetchSessions(true);
+        });
     }
   }, [siteId]);
 
@@ -118,22 +131,25 @@ function PrivateRoutes() {
       const searchId = searchParams.get('sid');
 
       if (searchId) {
-        searchStore.loadSharedSearch(searchId).then(() => {
-          searchParams.delete('sid');
-          const newSearch = searchParams.toString();
-          const newUrl = `${location.pathname}${newSearch ? `?${newSearch}` : ''}`;
-          history.replace(newUrl);
-          searchStore.setUrlParsed();
-          setTimeout(() => {
-            initialFetchDoneRef.current = true;
-          }, 500);
-        }).catch((error) => {
-          console.error('Failed to load shared search:', error);
-          searchStore.setUrlParsed();
-          setTimeout(() => {
-            initialFetchDoneRef.current = true;
-          }, 500);
-        });
+        searchStore
+          .loadSharedSearch(searchId)
+          .then(() => {
+            searchParams.delete('sid');
+            const newSearch = searchParams.toString();
+            const newUrl = `${location.pathname}${newSearch ? `?${newSearch}` : ''}`;
+            history.replace(newUrl);
+            searchStore.setUrlParsed();
+            setTimeout(() => {
+              initialFetchDoneRef.current = true;
+            }, 500);
+          })
+          .catch((error) => {
+            console.error('Failed to load shared search:', error);
+            searchStore.setUrlParsed();
+            setTimeout(() => {
+              initialFetchDoneRef.current = true;
+            }, 500);
+          });
       } else {
         searchStore.setUrlParsed();
         void searchStore.fetchSessions(true);
@@ -147,10 +163,7 @@ function PrivateRoutes() {
   React.useEffect(() => {
     if (!searchStore.urlParsed || !initialFetchDoneRef.current) return;
     debounceCall(() => searchStore.fetchSessions(true), 250)();
-  }, [
-    searchStore.instance.filters,
-    searchStore.instance.eventsOrder,
-  ]);
+  }, [searchStore.instance.filters, searchStore.instance.eventsOrder]);
 
   return (
     <Suspense fallback={<Loader loading className="flex-1" />}>
