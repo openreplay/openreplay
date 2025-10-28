@@ -107,10 +107,6 @@ peers:
   resources:
     requests:
       cpu: 50m
-quickwit:
-  resources:
-    requests:
-      cpu: 50m
 sink:
   resources:
     requests:

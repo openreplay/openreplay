@@ -29,10 +29,6 @@ dependencies:
     version: "4.x.x"
     repository: "https://kubernetes.github.io/ingress-nginx"
     condition: ingress-nginx.enabled
-  - name: quickwit
-    version: "0.3.1"
-    repository: "file://charts/quickwit"
-    condition: quickwit.enabled
   - name: connector
     repository: file://charts/connector
     version: 0.1.1

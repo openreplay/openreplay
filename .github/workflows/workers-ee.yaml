@@ -160,7 +160,7 @@ jobs:
           set -x
           echo > /tmp/image_override.yaml
           mkdir /tmp/helmcharts
-          mv openreplay/charts/{ingress-nginx,quickwit,connector,assist-api} /tmp/helmcharts/
+          mv openreplay/charts/{ingress-nginx,connector,assist-api} /tmp/helmcharts/
           ## Update images
           for image in $(cat /tmp/images_to_build.txt); do
           [[ $image != "assist-api" ]] && mv openreplay/charts/$image /tmp/helmcharts/

@@ -30,10 +30,6 @@ clickhouse: &clickhouse
     webPort: 9000
     dataPort: 8123
 
-# For enterpriseEdition
-quickwit: &quickwit
-  enabled: false
-
 kafka: &kafka
   # For enterpriseEdition
   # enabled: true
@@ -114,7 +110,6 @@ global:
   postgresql: *postgres
   kafka: *kafka
   redis: *redis
-  quickwit: *quickwit
   clickhouse: *clickhouse
   connector: *connector
   # Registry URL from where the OR images should be pulled.
@@ -141,7 +136,6 @@ global:
     sourcemapsBucket: "sourcemaps"
     spotsBucket: "spots"
     # This is only for enterpriseEdition
-    quickwitBucket: "quickwit"
     assistRecordsBucket: "records"
     vaultBucket: "vault-data"
     # if you're using one node installation, where
