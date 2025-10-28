@@ -7,29 +7,17 @@ export const noNoteMsg = 'No Comment';
 
 export default class NotesStore {
   notes: Note[] = [];
-
   sessionNotes: Note[] = [];
-
   loading: boolean;
-
   page = 1;
-
   pageSize = 9;
-
   activeTags: iTag[] = [];
-
   sort = 'createdAt';
-
   order: 'DESC' | 'ASC' = 'DESC';
-
   ownOnly = false;
-
   total = 0;
-
   isSaving = false;
-
   query = '';
-
   editNote: Note | null = null;
 
   constructor() {
@@ -148,6 +136,7 @@ export default class NotesStore {
   async updateNote(noteId: string, note: WriteNote) {
     this.setLoading(true);
     try {
+      delete note['thumbnail'];
       const updated = await notesService.updateNote(noteId, note);
       return updated;
     } catch (e) {

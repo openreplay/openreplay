@@ -19,7 +19,7 @@ export interface WriteNote {
   timestamp?: number;
   startAt: number;
   endAt: number;
-  thumbnail: string;
+  thumbnail?: string;
 }
 
 export interface Note {

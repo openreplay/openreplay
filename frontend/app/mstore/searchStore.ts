@@ -459,6 +459,15 @@ class SearchStore {
       });
     }
 
+    if (!filter.isEvent) {
+      const isPresent = this.instance.filters.find(
+        (f) => f.name === filter.name && f.isEvent === false,
+      );
+      if (isPresent) {
+        return;
+      }
+    }
+
     filter.value = checkFilterValue(filter.value);
     filter.operator = filter.operator || 'is';
     filter.filters = filter.filters
