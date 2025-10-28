@@ -83,8 +83,13 @@ const PREFETCH_STATE = {
 
 function SessionItem(props: RouteComponentProps & Props) {
   const { location } = useHistory();
-  const { settingsStore, sessionStore, searchStore, searchStoreLive } =
-    useStore();
+  const {
+    settingsStore,
+    sessionStore,
+    searchStore,
+    searchStoreLive,
+    filterStore,
+  } = useStore();
   const { timezone, shownTimezone } = settingsStore.sessionSettings;
   const { t } = useTranslation();
   const [prefetchState, setPrefetched] = useState(PREFETCH_STATE.none);
@@ -229,12 +234,12 @@ function SessionItem(props: RouteComponentProps & Props) {
     return (
       <div className={'flex flex-col gap-1'}>
         <span>
-          Local Time: {formatTimeOrDate(startedAt, timezone, true)}{' '}
+          {` Local Time: ${formatTimeOrDate(startedAt, timezone, true)} `}
           {timezone.label}
         </span>
         {userTimezone ? (
           <span>
-            User's Time:{' '}
+            {`User's Time: `}
             {formatTimeOrDate(
               startedAt,
               {
@@ -251,10 +256,18 @@ function SessionItem(props: RouteComponentProps & Props) {
   }, [startedAt, timezone, userTimezone]);
 
   const onMetaClick = (meta: { name: string; value: string }) => {
+    // @ts-ignore
+    const filter = filterStore.findEvent({ displayName: meta.name.slice(1) });
+    if (!filter) {
+      console.warn('cant find meta filter', meta);
+      return;
+    }
+    console.log(filter, meta)
+    filter.value = [meta.value];
     if (isAssist) {
-      searchStoreLive.addFilterByKeyAndValue(meta.name, meta.value);
+      searchStoreLive.addFilter(filter);
     } else {
-      searchStore.addFilterByKeyAndValue(meta.name, meta.value);
+      searchStore.addFilter(filter);
     }
   };
   return (
