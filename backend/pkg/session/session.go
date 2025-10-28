@@ -76,23 +76,12 @@ type SessionReplay struct {
 	FileKey            *string                `json:"fileKey"`
 }
 
-var metadataColumns = []string{"metadata_1", "metadata_2", "metadata_3", "metadata_4", "metadata_5",
-	"metadata_6", "metadata_7", "metadata_8", "metadata_9", "metadata_10"}
-
 const (
 	NoSession string = "no session in db"
 )
 
 // FYI: full_data, include_fav_viewed and group_metadata are always True, so I didn't move it to Go
 func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID string) (*SessionReplay, error) {
-	// prepare metadata columns (can be done once, because it's the same for all sessions)
-	metadataColumnsSQL := ""
-	for i := 0; i < 10; i++ {
-		metadataColumnsSQL += fmt.Sprintf("'%s', p.%s,", metadataColumns[i], metadataColumns[i])
-	}
-	metadataColumnsSQL = metadataColumnsSQL[:len(metadataColumnsSQL)-1]
-
-	// prepare sql request
 	sqlRequest := `
 	SELECT
 	    s.session_id::text AS session_id,
@@ -125,45 +114,47 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 	    s.timezone,
 	    s.screen_width,
 	    s.screen_height,
-		COALESCE((SELECT TRUE
-              FROM public.user_favorite_sessions AS fs
-              WHERE s.session_id = fs.session_id
-              AND fs.user_id = :user_id), FALSE) AS favorite,
-	    COALESCE((SELECT TRUE
-              FROM public.user_viewed_sessions AS fs
-              WHERE s.session_id = fs.session_id
-              AND fs.user_id = :user_id), FALSE) AS viewed,
-		(
-		  SELECT jsonb_object_agg(key, value)
-		  FROM (
-			SELECT p.metadata_1 AS key, s.metadata_1 AS value WHERE p.metadata_1 IS NOT NULL AND s.metadata_1 IS NOT NULL
-			UNION ALL
-			SELECT p.metadata_2, s.metadata_2 WHERE p.metadata_2 IS NOT NULL AND s.metadata_2 IS NOT NULL
-			UNION ALL
-			SELECT p.metadata_3, s.metadata_3 WHERE p.metadata_3 IS NOT NULL AND s.metadata_3 IS NOT NULL
-			UNION ALL
-			SELECT p.metadata_4, s.metadata_4 WHERE p.metadata_4 IS NOT NULL AND s.metadata_4 IS NOT NULL
-			UNION ALL
-			SELECT p.metadata_5, s.metadata_5 WHERE p.metadata_5 IS NOT NULL AND s.metadata_5 IS NOT NULL
-			UNION ALL
-			SELECT p.metadata_6, s.metadata_6 WHERE p.metadata_6 IS NOT NULL AND s.metadata_6 IS NOT NULL
-			UNION ALL
-			SELECT p.metadata_7, s.metadata_7 WHERE p.metadata_7 IS NOT NULL AND s.metadata_7 IS NOT NULL
-			UNION ALL
-			SELECT p.metadata_8, s.metadata_8 WHERE p.metadata_8 IS NOT NULL AND s.metadata_8 IS NOT NULL
-			UNION ALL
-			SELECT p.metadata_9, s.metadata_9 WHERE p.metadata_9 IS NOT NULL AND s.metadata_9 IS NOT NULL
-			UNION ALL
-			SELECT p.metadata_10, s.metadata_10 WHERE p.metadata_10 IS NOT NULL AND s.metadata_10 IS NOT NULL
-		  ) AS metadata_pairs
+		EXISTS (
+			SELECT 1
+			FROM public.user_favorite_sessions fs
+			WHERE fs.session_id = s.session_id
+			  AND fs.user_id = :user_id
+		) AS favorite,
+	
+		EXISTS (
+			SELECT 1
+			FROM public.user_viewed_sessions fs
+			WHERE fs.session_id = s.session_id
+			  AND fs.user_id = :user_id
+		) AS viewed,
+
+		COALESCE(
+				(
+					SELECT jsonb_object_agg(k, v)
+					FROM (
+							 VALUES
+								 (p.metadata_1,  s.metadata_1),
+								 (p.metadata_2,  s.metadata_2),
+								 (p.metadata_3,  s.metadata_3),
+								 (p.metadata_4,  s.metadata_4),
+								 (p.metadata_5,  s.metadata_5),
+								 (p.metadata_6,  s.metadata_6),
+								 (p.metadata_7,  s.metadata_7),
+								 (p.metadata_8,  s.metadata_8),
+								 (p.metadata_9,  s.metadata_9),
+								 (p.metadata_10, s.metadata_10)
+						 ) AS pairs(k, v)
+					WHERE k IS NOT NULL AND v IS NOT NULL
+				),
+				'{}'::jsonb
 		) AS metadata_mapping
-	    FROM public.sessions AS s
-		INNER JOIN public.projects AS p USING (project_id)
-		WHERE s.project_id = :project_id AND s.session_id = :session_id;
+	
+	FROM public.sessions s
+         JOIN public.projects p USING (project_id)
+	WHERE s.project_id = :project_id AND s.session_id = :session_id;
 	`
 
 	// Replace all placeholders with actual values
-	sqlRequest = strings.ReplaceAll(sqlRequest, ":metadata_columns", metadataColumnsSQL)
 	sqlRequest = strings.ReplaceAll(sqlRequest, ":user_id", userID)
 	sqlRequest = strings.ReplaceAll(sqlRequest, ":project_id", strconv.Itoa(int(projectID)))
 	sqlRequest = strings.ReplaceAll(sqlRequest, ":session_id", strconv.Itoa(int(sessionID)))
