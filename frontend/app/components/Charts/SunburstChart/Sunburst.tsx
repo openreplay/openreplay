@@ -31,7 +31,9 @@ const EChartsSunburst = (props: Props) => {
 
   React.useEffect(() => {
     if (!chartRef.current || !Array.isArray(data) || data.length === 0) return;
-    const { tree, colors, dropsByUrl, legendMap } = convertSankeyToSunburst(data[0]);
+    const { tree, colors, dropsByUrl, legendMap } = convertSankeyToSunburst(
+      data[0],
+    );
 
     const options = {
       ...defaultOptions,
@@ -39,10 +41,12 @@ const EChartsSunburst = (props: Props) => {
       series: {
         type: 'sunburst',
         data: [tree],
-        radius: [30, '90%'],
+        sort: 'desc',
+        radius: [90, '80%'],
         itemStyle: {
           borderRadius: 6,
-          borderWidth: 2,
+          borderWidth: 3,
+          borderColor: 'var(--color-white)',
         },
         center: ['50%', '50%'],
         clockwise: true,
@@ -78,12 +82,6 @@ const EChartsSunburst = (props: Props) => {
       setChartInst(null);
     };
   }, [chartData]);
-
-  const containerStyle = {
-    width: '100%',
-    height,
-    flex: 1,
-  };
 
   const onHover = (dataIndex: any[]) => {
     // traverse tree and change colors to highlight node
@@ -121,13 +119,12 @@ const EChartsSunburst = (props: Props) => {
         display: 'flex',
         gap: '0.5rem',
         margin: '0 auto',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
       }}
     >
-      <div
-        ref={chartRef}
-        style={containerStyle}
-        className="min-w-[600px] relative"
-      />
+      <div ref={chartRef} style={{ height, flex: 1 }} className="w-full relative" />
       <DroppedSessionsList
         dropsByUrl={dropsByUrl}
         onHover={onHover}

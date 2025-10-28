@@ -2,6 +2,7 @@ import React from 'react';
 import cn from 'classnames';
 import { typeToNameMap } from './sunburstUtils';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Tabs } from 'antd';
 
 const MODE = {
   CLOSED: 'CLOSED',
@@ -22,8 +23,6 @@ function DroppedSessionsList({
   onLeave: () => void;
   legend: Record<string, { color: string; ids: any[] }>;
 }) {
-  const [mode, setMode] = React.useState(MODE.DROP);
-
   if (!dropsByUrl) return null;
   const totalDropSessions = Object.values(dropsByUrl).reduce(
     (sum, { drop }) => sum + drop,
@@ -47,23 +46,12 @@ function DroppedSessionsList({
     if (b === typeToNameMap.OTHER) return -1;
   });
 
-  const toggleMode = (section: keyof typeof MODE) => {
-    setMode((prev) => (prev === section ? MODE.CLOSED : section));
-  };
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="bg-white rounded-lg border shadow p-4 h-fit min-w-[210px] w-1/3">
-        <CardTitle
-          title="Drop by Page"
-          isOpen={mode === MODE.DROP}
-          onClick={() => toggleMode(MODE.DROP)}
-        />
-        <div
-          className={cn(
-            'space-y-1.5 max-h-[240px] overflow-y-auto',
-            mode !== MODE.DROP ? 'hidden' : '',
-          )}
-        >
+  const items = [
+    {
+      key: '1',
+      label: 'Drop by Page',
+      children: (
+        <div className={cn('space-y-1.5 max-h-[500px] overflow-y-auto')}>
           {sortedDrops.length > 0 ? (
             sortedDrops.map((item, index) => (
               <div
@@ -82,20 +70,13 @@ function DroppedSessionsList({
             <div>No drops found.</div>
           )}
         </div>
-      </div>
-
-      <div className="bg-white rounded-lg border shadow p-4 h-fit min-w-[210px] w-1/3">
-        <CardTitle
-          title="Legend"
-          isOpen={mode === MODE.LEGEND}
-          onClick={() => toggleMode(MODE.LEGEND)}
-        />
-        <div
-          className={cn(
-            'space-y-1.5 max-h-[240px] overflow-y-auto',
-            mode !== MODE.LEGEND ? 'hidden' : '',
-          )}
-        >
+      ),
+    },
+    {
+      key: '2',
+      label: 'Legend',
+      children: (
+        <div className={cn('space-y-1.5 max-h-[500px] overflow-y-auto')}>
           {legendList.length > 0
             ? legendList.map((item) => (
                 <div
@@ -110,7 +91,12 @@ function DroppedSessionsList({
               ))
             : null}
         </div>
-      </div>
+      ),
+    },
+  ];
+  return (
+    <div className="bg-white rounded-lg border shadow p-4 w-[260px] absolute top-0 bottom-0 my-4 right-4">
+      <Tabs defaultActiveKey="1" items={items} />
     </div>
   );
 }
