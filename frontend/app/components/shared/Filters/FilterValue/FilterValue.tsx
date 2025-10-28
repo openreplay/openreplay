@@ -16,14 +16,22 @@ interface Props {
   eventName?: string;
   isLast?: boolean;
   isLive?: boolean;
+  isDurationFilter?: boolean;
 }
 
 function FilterValue(props: Props) {
-  const { filter, onUpdate, isConditional, eventName = '', isLast } = props;
+  const {
+    filter,
+    onUpdate,
+    isConditional,
+    eventName = '',
+    isLast,
+    isDurationFilter,
+  } = props;
   const isAutoOpen =
     isLast && (!filter.value?.length || filter.value?.[0] === '');
   const { searchStore } = useStore();
-  const isDurationFilter = filter.name === 'duration' && filter.autoCaptured;
+  // const isDurationFilter = filter.name === 'duration' && filter.autoCaptured;
 
   const [durationValues, setDurationValues] = useState(() => ({
     minDuration: filter.value?.[0],

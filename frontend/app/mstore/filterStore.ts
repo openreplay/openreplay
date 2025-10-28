@@ -337,7 +337,6 @@ export default class FilterStore {
   getDefaultFilterOperator = (dataType: string): string => {
     switch (dataType) {
       case 'string':
-      case 'duration':
         return 'is';
       case 'number':
       case 'int':

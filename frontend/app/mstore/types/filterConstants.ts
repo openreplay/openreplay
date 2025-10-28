@@ -277,7 +277,7 @@ export const OPERATORS = {
   ],
 
   duration: [
-    { value: 'is', label: 'is', displayName: 'Is', description: 'Exact match' },
+    { value: '=', label: 'is', displayName: 'Is', description: 'Exact match' },
   ],
 };
 

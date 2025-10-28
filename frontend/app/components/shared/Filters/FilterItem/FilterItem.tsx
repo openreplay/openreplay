@@ -9,7 +9,11 @@ import FilterValue from '../FilterValue';
 import FilterSource from '../FilterSource';
 import { useStore } from '@/mstore';
 import { getIconForFilter } from 'Shared/Filters/FilterModal/FilterModal';
-import { Filter, getOperatorsByType } from '@/mstore/types/filterConstants';
+import {
+  Filter,
+  getOperatorsByType,
+  OPERATORS,
+} from '@/mstore/types/filterConstants';
 import { IFilter } from '@/mstore/types/filterItem';
 
 interface Props {
@@ -70,7 +74,8 @@ function FilterItem(props: Props) {
   const allFilters = filterStore.getCurrentProjectFilters();
 
   useMemo(() => {
-    if (isSubItem || filter?.name === 'duration' || !filter.isEvent || !fltId) return;
+    if (isSubItem || filter?.name === 'duration' || !filter.isEvent || !fltId)
+      return;
     filterStore.getEventFilters(fltId).then((filters) => {
       setEventFilterOptions(filters);
     });
@@ -87,7 +92,10 @@ function FilterItem(props: Props) {
     return eventSelections;
   }, [isSubItem, parentEventFilterOptions, eventSelections]);
 
-  const operatorOptions = getOperatorsByType(filter.dataType);
+  const isDurationFilter = filter.name === 'duration' && filter.autoCaptured;
+  const operatorOptions = isDurationFilter
+    ? OPERATORS.duration
+    : getOperatorsByType(filter.dataType);
 
   const canShowValues = useMemo(
     () =>
@@ -313,10 +321,10 @@ function FilterItem(props: Props) {
                 (readonly ? (
                   <div
                     className="rounded bg-gray-lightest text-gray-dark px-2 py-1 whitespace-nowrap overflow-hidden text-ellipsis border border-gray-light max-w-xs"
-                    title={filter.value.join(', ')}
+                    title={filter.value?.join(', ')}
                   >
                     {filter.value
-                      .map(
+                      ?.map(
                         (val: string) =>
                           filter.options?.find((i: any) => i.value === val)
                             ?.label ?? val,
@@ -326,7 +334,6 @@ function FilterItem(props: Props) {
                 ) : (
                   <div className="inline-flex">
                     {' '}
-                    {/* Wrap FilterValue */}
                     <FilterValue
                       isConditional={isConditional}
                       filter={filter}
@@ -334,6 +341,7 @@ function FilterItem(props: Props) {
                       eventName={eventName}
                       isLast={isLast}
                       isLive={isLive}
+                      isDurationFilter={isDurationFilter}
                     />
                   </div>
                 ))}
