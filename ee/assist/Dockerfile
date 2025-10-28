@@ -1,15 +1,15 @@
 ARG ARCH=amd64
 
-FROM --platform=linux/$ARCH node:25-alpine
+FROM --platform=linux/$ARCH node:24-alpine
 LABEL Maintainer="Zavorotynskiy Alexander <zavorotynskiy@pm.me>"
 RUN apk add --no-cache tini git libc6-compat
 ARG envarg
 ENV ENTERPRISE_BUILD=${envarg} \
-    MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
-    PRIVATE_ENDPOINTS=false \
-    LISTEN_PORT=9001 \
-    ERROR=1 \
-    NODE_ENV=production
+  MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
+  PRIVATE_ENDPOINTS=false \
+  LISTEN_PORT=9001 \
+  ERROR=1 \
+  NODE_ENV=production
 WORKDIR /work
 COPY package.json .
 COPY package-lock.json .

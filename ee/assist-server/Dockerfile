@@ -1,6 +1,6 @@
 ARG ARCH=linux/amd64
 
-FROM --platform=$ARCH node:25-alpine
+FROM --platform=$ARCH node:24-alpine
 LABEL Maintainer="Zavorotynskiy Alexander <zavorotynskiy@pm.me>"
 RUN apk add --no-cache tini git libc6-compat
 ARG envarg
