@@ -16,19 +16,19 @@ const langLabels = {
   es: 'Español',
   ru: 'Русский',
   zh: '中國人',
-}
+};
 
 function LanguageSwitcher() {
   const { i18n } = useTranslation();
   const [selected, setSelected] = React.useState(i18n.language);
 
   const onChange = (val: string) => {
-    setSelected(val)
-  }
+    setSelected(val);
+  };
   const handleChangeLanguage = () => {
-    void i18n.changeLanguage(selected)
-    localStorage.setItem('i18nextLng', selected)
-  }
+    void i18n.changeLanguage(selected);
+    localStorage.setItem('i18nextLng', selected);
+  };
 
   const menuItems: MenuProps['items'] = langs.map((lang) => ({
     key: lang.code,
@@ -41,30 +41,29 @@ function LanguageSwitcher() {
 
   return (
     <div className={'flex flex-col gap-2 align-start p-4 md:p-0'}>
-      <div className={'font-semibold'}>{i18n.t('Language')}</div>
       <div className="flex flex-row gap-2">
-      <Dropdown
-        menu={{
-          items: menuItems,
-          selectable: true,
-          defaultSelectedKeys: [i18n.language],
-          style: {
-            maxHeight: 500,
-            overflowY: 'auto',
-          },
-          onClick: (e) => onChange(e.key),
-        }}
-      >
-        <Button>
-          <div className={'flex justify-between items-center gap-8'}>
-            <span>{langLabels[selected]}</span>
-            <ChevronDown size={14} />
-          </div>
+        <Dropdown
+          menu={{
+            items: menuItems,
+            selectable: true,
+            defaultSelectedKeys: [i18n.language],
+            style: {
+              maxHeight: 500,
+              overflowY: 'auto',
+            },
+            onClick: (e) => onChange(e.key),
+          }}
+        >
+          <Button>
+            <div className={'flex justify-between items-center gap-8'}>
+              <span>{langLabels[selected]}</span>
+              <ChevronDown size={14} />
+            </div>
+          </Button>
+        </Dropdown>
+        <Button className={'w-fit'} onClick={handleChangeLanguage}>
+          {i18n.t('Update')}
         </Button>
-      </Dropdown>
-      <Button className={'w-fit'} onClick={handleChangeLanguage}>
-        {i18n.t('Update')}
-      </Button>
       </div>
     </div>
   );

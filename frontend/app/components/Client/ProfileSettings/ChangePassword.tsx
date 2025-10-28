@@ -163,7 +163,7 @@ function ChangePassword() {
     </Form>
   ) : (
     <div onClick={() => setShow(true)}>
-      <Button type="text">{t('Change Password')}</Button>
+      <Button>{t('Change Password')}</Button>
     </div>
   );
 }

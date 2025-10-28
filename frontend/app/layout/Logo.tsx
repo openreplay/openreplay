@@ -21,7 +21,7 @@ function Logo(props: Props) {
     >
       <Button type="link" className="p-0 flex items-center gap-2">
         <Icon name={icon} size={24} />
-        <div className="hidden sm:block text-black text-xl ">{'Open Replay'}</div>
+        <div className="hidden sm:block text-black text-2xl">{'OpenReplay'}</div>
       </Button>
     </NavLink>
   );
