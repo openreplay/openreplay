@@ -639,7 +639,7 @@ func BuildDurationWhere(filters []model.Filter, tableAlias ...string) ([]string,
 	var conds []string
 	var rest []model.Filter
 	for _, f := range filters {
-		if string(f.Name) == "duration" {
+		if string(f.Name) == "duration" && f.AutoCaptured {
 			v := f.Value
 			if len(v) == 1 {
 				if v[0] != "" {
