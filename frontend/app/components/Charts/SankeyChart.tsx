@@ -492,6 +492,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
         overflow: 'auto',
         maxWidth: 1240,
         minHeight: 240,
+        height: props.inGrid ? 600 : undefined,
       }}
     >
       <div ref={chartRef} style={containerStyle} className="min-w-[600px]" />
