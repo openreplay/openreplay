@@ -14,9 +14,9 @@ function RecordingStatus(props: Props) {
   return (
     <div className="flex items-center gap-8 justify-center m-20">
       <AnimatedSVG name={ICONS.PROCESSING} size={180} />
-      <div className="flex flex-col gap-4 w-3/6">
+      <div className="flex flex-col gap-4">
         <div className="text-lg font-medium">
-          {t('Processing your first session.')}
+          {t('Processing your first session')}
         </div>
         <div className="flex items-start">
           <div className="mr-2">
