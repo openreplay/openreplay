@@ -51,6 +51,9 @@ RUN PYTHON_BIN=$(find /nix/store -path "*/bin/python3.13" -type f 2>/dev/null | 
 COPY . .
 RUN mv env.default .env
 
+# Make entrypoint executable
+RUN chmod +x entrypoint.sh
+
 # Create non-root user with home directory
 RUN adduser -u 1001 -D -h /home/openreplay openreplay && \
     chown -R openreplay:openreplay /app
@@ -64,9 +67,10 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
   ENTERPRISE_BUILD=${envarg} \
   GIT_SHA=$GIT_SHA \
   PYTHONPATH=/usr/local/lib/python3.13/site-packages \
-  LD_LIBRARY_PATH=/nix/store
+  LD_LIBRARY_PATH=/nix/store \
+  PATH=/usr/local/bin:$PATH
 
 USER 1001
 
-ENTRYPOINT ["/sbin/tini", "--"]
+ENTRYPOINT ["/sbin/tini", "-s", "--"]
 CMD ["/bin/bash", "-c", "source /etc/profile.d/nix-env.sh 2>/dev/null || true; exec ./entrypoint.sh"]
