@@ -29,17 +29,11 @@ const defaultDateFilters = {
 
 class UserFilter {
   endDate: number = new Date().getTime();
-
   startDate: number = new Date().getTime() - 24 * 60 * 60 * 1000;
-
   rangeName: string = LAST_7_DAYS;
-
   filters: any = [];
-
   page: number = 1;
-
   limit: number = 10;
-
   period: any = { rangeName: LAST_7_DAYS };
 
   constructor() {
@@ -72,6 +66,7 @@ class UserFilter {
       filters: this.filters.map(filterMap),
       page: this.page,
       limit: this.limit,
+      eventsOrder: 'then',
     };
   }
 }
