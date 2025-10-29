@@ -465,6 +465,9 @@ export default class API {
       if (issue) {
         return this.issue(key, payload)
       } else {
+        if (!payload || typeof payload === 'string') {
+          return this.app.send(CustomEvent(key, payload))
+        }
         try {
           if ('or_timestamp' in payload) {
             const startTs = this.getSessionInfo()?.timestamp ?? 0
@@ -476,9 +479,7 @@ export default class API {
             }
           }
           payload = JSON.stringify(payload)
-        } catch (e) {
-          return
-        }
+        } catch (_) { }
         this.app.send(CustomEvent(key, payload))
       }
     }

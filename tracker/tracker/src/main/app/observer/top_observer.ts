@@ -120,7 +120,7 @@ export default class TopObserver extends Observer {
     const observerOptions = {
       disableSprites: opts.disableSprites,
       disableThrottling: opts.disableThrottling,
-      ...getInlineOptions(opts.inlineCss, params.app.debug.warn),
+      ...getInlineOptions(opts.inlineCss, console.warn),
     }
     super(params.app, true, observerOptions)
     this.app = params.app
