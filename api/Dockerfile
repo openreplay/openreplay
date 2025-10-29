@@ -21,7 +21,7 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
   PRIVATE_ENDPOINTS=false \
   ENTERPRISE_BUILD=${envarg} \
   GIT_SHA=$GIT_SHA
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 WORKDIR /work
 COPY . .
