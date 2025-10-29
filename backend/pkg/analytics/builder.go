@@ -34,6 +34,7 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	responser := api.NewResponser(webMetrics)
 	reqValidator := validator.New()
 	reqValidator.RegisterStructValidation(model.ValidateMetricFields, model.MetricPayload{})
+	reqValidator.RegisterStructValidation(model.ValidateFilterFields, model.Filter{})
 
 	searchService, err := search.New(chConn, pgconn)
 	if err != nil {

@@ -43,7 +43,7 @@ type Filter struct {
 	Name          string     `json:"name" validate:"required_without=Type"` // excluded_with=Type
 	Type          FilterType `json:"type" validate:"required_without=Name"` // This is only used if IsEvent is false
 	Operator      string     `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >="`
-	PropertyOrder string     `json:"propertyOrder" validate:"required_with=Name,oneof=or and"`
+	PropertyOrder string     `json:"propertyOrder" validate:"omitempty,oneof=or and"`
 	Value         []string   `json:"value" validate:"required_with=Type,max=10,dive"`
 	IsEvent       bool       `json:"isEvent"` // validate:"required" doesn't work with 'false' value
 	DataType      string     `json:"dataType" validate:"omitempty,oneof=string number boolean integer"`
@@ -120,6 +120,13 @@ func ValidateMetricFields(sl validator.StructLevel) {
 		sl.ReportError(in.MetricType, "MetricType", "metricType", "unsupported", "")
 	}
 
+}
+
+func ValidateFilterFields(sl validator.StructLevel) {
+	filter := sl.Current().Interface().(Filter)
+	if filter.IsEvent && filter.PropertyOrder == "" {
+		sl.ReportError(filter.PropertyOrder, "PropertyOrder", "propertyOrder", "required", "")
+	}
 }
 
 type Session struct {
