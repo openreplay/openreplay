@@ -154,14 +154,14 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
         r = ch_client.format(
             """SELECT all_properties.property_name                    AS name,
                       all_properties.display_name,
-                      event_properties.auto_captured,
+                      event_properties.auto_captured_property         AS auto_captured,
                       array_agg(DISTINCT event_properties.value_type) AS possible_types
                FROM product_analytics.event_properties
                         INNER JOIN product_analytics.all_properties USING (property_name)
                WHERE event_properties.project_id = %(project_id)s
                  AND all_properties.project_id = %(project_id)s
                  AND event_properties.event_name = %(event_name)s
-                 AND event_properties.auto_captured = %(auto_captured)s
+                 AND event_properties.auto_captured_property = %(auto_captured)s
                  AND all_properties.status = 'visible'
                GROUP BY ALL
                ORDER BY 1;""",
