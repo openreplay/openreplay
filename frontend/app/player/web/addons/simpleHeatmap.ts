@@ -198,6 +198,7 @@ class SimpleHeatmap {
       console.error('Error while colorizing heatmap:', e);
     }
 
+    ctx.globalAlpha = 1;
     this.drawSelectionBoxes();
 
     return this;
@@ -418,7 +419,7 @@ class SimpleHeatmap {
     if (ty + bh > this.height - 2) ty = this.height - bh - 2;
 
     ctx.fillStyle = 'rgba(255,255,255, 1)';
-    ctx.strokeStyle = 'rgba(4,4,4, 0.6)';
+    ctx.strokeStyle = 'rgba(4,4,4, 0.9)';
     ctx.lineWidth = 1;
     ctx.fillRect(tx, ty, bw, bh);
     ctx.strokeRect(tx, ty, bw, bh);
