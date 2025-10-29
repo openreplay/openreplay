@@ -2,13 +2,9 @@ import { makeAutoObservable } from 'mobx';
 
 export default class GDPR {
   id = undefined;
-
   maskEmails = false;
-
   maskNumbers = false;
-
   defaultInputMode = 'plain';
-
   sampleRate = 0;
 
   constructor(data = {}) {

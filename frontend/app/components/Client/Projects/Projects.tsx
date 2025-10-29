@@ -45,7 +45,7 @@ function Projects() {
   }, [pid, tab]);
 
   const createProject = () => {
-    openModal(<ProjectForm onClose={closeModal} project={new Project()} />, {
+    openModal(<ProjectForm onClose={closeModal} />, {
       title: t('Add Project'),
     });
   };
