@@ -528,7 +528,8 @@ export default class App {
      * */
     if (data.line === proto.iframeBatch) {
       const msgBatch = data.messages
-      const mappedMessages: Message[] = msgBatch.map((msg: Message) => {
+      const mappedMessages: Message[] = []
+      msgBatch.forEach((msg: Message) => {
         if (msg[0] === MType.MouseMove) {
           let fixedMessage = msg
           this.pageFrames.forEach((frame) => {
@@ -538,7 +539,7 @@ export default class App {
               fixedMessage = [type, x + left, y + top]
             }
           })
-          return fixedMessage
+          mappedMessages.push(fixedMessage)
         }
         if (msg[0] === MType.MouseClick) {
           let fixedMessage = msg
@@ -566,9 +567,11 @@ export default class App {
               ]
             }
           })
-          return fixedMessage
+          mappedMessages.push(fixedMessage)
         }
-        return msg
+        if (![MType.UserID, MType.UserAnonymousID, MType.Metadata].includes(msg[0])) {
+          mappedMessages.push(msg)
+        }
       })
       this.messages.push(...mappedMessages)
     }
