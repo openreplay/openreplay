@@ -182,7 +182,7 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 		cteWhere := strings.Join(eventsWhere, " AND ")
 
 		subWhere := fmt.Sprintf(
-			"created_at BETWEEN toDateTime(%d) AND toDateTime(%d) AND project_id = %d AND `$event_name` = 'CLICK' AND JSONExtractString(toString(`$properties`), 'url_path') = (SELECT url_path FROM top_url_path)",
+			"created_at BETWEEN toDateTime(%d) AND toDateTime(%d) AND project_id = %d AND `$event_name` = 'CLICK' AND `$current_path` = (SELECT url_path FROM top_url_path)",
 			startSec, endSec, projectId,
 		)
 
