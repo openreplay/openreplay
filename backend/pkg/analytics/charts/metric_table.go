@@ -175,6 +175,18 @@ var extraConditions map[string]model.Filter = map[string]model.Filter{
 	string(MetricOfTableFetch):    model.Filter{Name: "REQUEST", AutoCaptured: true, Operator: "isAny", IsEvent: true},
 }
 
+func uniqueSliceOfStrings(slice []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range slice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
+}
+
 func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string, error) {
 	if r == nil {
 		return "", errors.New("payload is nil")
@@ -233,7 +245,6 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	if metricFormat == MetricFormatUserCount {
 		distinctColumn = "user_id"
 	}
-
 	pagination := t.calculatePagination(r.Page, r.Limit)
 
 	// Build the final query with proper string formatting
@@ -259,6 +270,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 			if emptyEventFilters {
 				extraWhere = append(extraWhere, t.buildPrewhereConditions(r, s.Filter.EventsOrder, extraWhere, []string{})...)
 				eventsConditions = append(eventsConditions, extraWhere...)
+				eventsConditions = uniqueSliceOfStrings(eventsConditions)
 			} else {
 				//Check if the extra condition is already in the filters
 				found := false
@@ -303,7 +315,7 @@ WHERE %s) AS extra`,
 	}
 
 	var fromSessions string
-	if !isFromEvents || len(sessionConditions) > 4 {
+	if !isFromEvents || len(sessionConditions) > 4 || r.MetricFormat == MetricFormatUserCount {
 		fromSessions = fmt.Sprintf(`
 (
 	SELECT %s
@@ -313,6 +325,9 @@ WHERE %s) AS extra`,
 			strings.Join(sessionsSelect, ","),
 			sessionsTable,
 			strings.Join(sessionConditions, " AND "))
+	}
+	if r.MetricFormat == MetricFormatUserCount {
+		distinctColumn = "s.user_id"
 	}
 
 	if fromSessions != "" {
