@@ -159,14 +159,16 @@ export default class FilterStore {
 
     const filter = this.filters[siteId].find((filter: Filter) =>
       Object.entries(data).every(([key, value]) => {
-        const prop = filter[key as keyof Filter];
-        if (typeof prop === 'boolean' && typeof value === 'string') {
-          return prop === (value.toLowerCase() === 'true');
+        if (key in filter) {
+          const prop = filter[key as keyof Filter];
+          if (typeof prop === 'boolean' && typeof value === 'string') {
+            return prop === (value.toLowerCase() === 'true');
+          }
+          if (typeof prop === 'number' && typeof value === 'string') {
+            return prop === Number(value);
+          }
+          return prop === value;
         }
-        if (typeof prop === 'number' && typeof value === 'string') {
-          return prop === Number(value);
-        }
-        return prop === value;
       }),
     );
 

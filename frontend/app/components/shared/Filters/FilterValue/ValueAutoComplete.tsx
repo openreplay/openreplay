@@ -41,6 +41,7 @@ interface FilterParams {
 
 interface OptionType {
   value?: string;
+  percentage?: number;
   label?: string;
 }
 
@@ -69,7 +70,7 @@ const OptionItem = memo(
     <div
       onClick={() => onSelect(item)}
       className={cn(
-        'cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2',
+        'cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2 relative',
         { 'bg-active-blue-faded': isSelected },
       )}
       role="option"
@@ -91,6 +92,10 @@ const OptionItem = memo(
           {item.label}
         </Text>
       </Space>
+      <div
+        className="absolute bg-main bottom-0 left-0 h-1 rounded"
+        style={{ width: Math.round(item.percentage) }}
+      />
     </div>
   ),
 );
@@ -151,8 +156,15 @@ const ValueAutoComplete = observer(
 
     const mappedTopValues: OptionType[] = useMemo(() => {
       return topValues
-        .filter((i): i is { value: string } => typeof i.value === 'string')
-        .map((i) => ({ value: i.value, label: i.value }));
+        .filter(
+          (i): i is { value: string; rowPercentage: number } =>
+            typeof i.value === 'string',
+        )
+        .map((i) => ({
+          value: i.value,
+          label: i.value,
+          percentage: i.rowPercentage,
+        }));
     }, [topValues]);
 
     useEffect(() => {
@@ -228,6 +240,7 @@ const ValueAutoComplete = observer(
             data.events?.map((i: any) => ({
               value: i.value,
               label: i.value,
+              percentage: i.rowPercentage ?? 0,
             })) || [];
           setOptions(_options);
         } catch (e) {
