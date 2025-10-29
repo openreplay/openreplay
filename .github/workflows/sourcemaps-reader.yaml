@@ -58,10 +58,18 @@ jobs:
           kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
         id: setcontext
 
-      # Caching docker images
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
+      # Set up Docker Buildx for caching support
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Cache Docker layers using GitHub's native cache
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-sourcemaps-reader-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-sourcemaps-reader-
 
       - name: Building and Pushing sourcemaps-reader image
         id: build-image
