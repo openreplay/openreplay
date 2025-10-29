@@ -104,7 +104,7 @@ def get_details(project_id, error_id, user_id, **data):
                                       `$browser`                               AS user_browser,
                                       `$browser_version`                       AS user_browser_version,
                                       `$os`                                    AS user_os,
-                                      '$os_version'                            AS user_os_version,
+                                      `$os_version`                            AS user_os_version,
                                       toString(`$properties`.user_device_type) AS user_device_type,
                                       toString(`$properties`.user_device)      AS user_device,
                                       `$country`                               AS user_country
