@@ -873,24 +873,36 @@ func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.G
 }
 
 func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.Incident) error {
+	fakeMsg := &messages.IssueEvent{
+		Type: "incident",
+	}
+	issueID := hashid.IssueID(session.ProjectID, fakeMsg)
+	host, path, hostpath, err := extractUrlParts(msg.Url)
+	if err != nil {
+		return fmt.Errorf("can't extract url parts: %s", err)
+	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"label":            msg.Label,
-		"start_time":       msg.StartTime,
-		"end_time":         msg.EndTime,
+		"issue_type":       fakeMsg.Type,
+		"url":              cropString(msg.Url),
+		"url_host":         host,
+		"url_path":         path,
+		"url_hostpath":     hostpath,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
 		"page_title":       strings.TrimSpace(msg.PageTitle),
+		"label":            msg.Label,
+		"start_time":       msg.StartTime,
+		"end_time":         msg.EndTime,
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal custom event: %s", err)
+		return fmt.Errorf("can't marshal issue event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	customPayload := make(map[string]interface{})
-	if err := c.batches["custom"].Append(
+	if err := c.batches["issuesEvents"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
-		"INCIDENT",
+		"ISSUE",
 		eventTime,
 		eventTime.Unix(),
 		session.UserUUID,
@@ -904,11 +916,21 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		session.UserState,
 		session.UserCity,
 		cropString(msg.Url),
+		fakeMsg.Type,
+		issueID,
 		jsonString,
-		customPayload, // empty for incidents
 	); err != nil {
-		c.checkError("custom", err)
-		return fmt.Errorf("can't append to custom batch: %s", err)
+		c.checkError("issuesEvents", err)
+		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
+	}
+	if err := c.batches["issues"].Append(
+		uint16(session.ProjectID),
+		issueID,
+		fakeMsg.Type,
+		fakeMsg.ContextString,
+	); err != nil {
+		c.checkError("issues", err)
+		return fmt.Errorf("can't append to issues batch: %s", err)
 	}
 	return nil
 }
