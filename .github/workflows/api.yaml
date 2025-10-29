@@ -140,7 +140,7 @@ jobs:
           ENVIRONMENT: staging
 
       - name: Alert slack
-        if: ${{ failure() }}
+        if: failure()
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_CHANNEL: foss
