@@ -20,6 +20,16 @@ RUN nix-shell --run "pip install --prefix=/build/python-env -r requirements.txt"
 # Create a script that captures the environment
 RUN nix-shell --run 'env' | grep -E "^(PATH|PYTHONPATH|LD_LIBRARY_PATH|NIX_)" > /build/nix-env.sh
 
+# Create a minimal Nix store with only runtime dependencies
+RUN mkdir -p /build/nix-minimal/store && \
+  nix-shell --run 'nix-store --query --requisites $(which python) $(nix-build --no-out-link shell.nix)' | \
+  grep -v '\-source$' | \
+  while IFS= read -r storepath; do \
+  if [ -e "$storepath" ]; then \
+  cp -a "$storepath" /build/nix-minimal/store/ 2>/dev/null || true; \
+  fi; \
+  done
+
 # Final stage - use Alpine for smaller base
 FROM alpine:3.20
 
@@ -28,8 +38,8 @@ WORKDIR /app
 # Install minimal runtime dependencies
 RUN apk add --no-cache tini bash
 
-# Copy the entire Nix store from builder
-COPY --from=builder /nix/store /nix/store
+# Copy only the minimal Nix store (runtime dependencies, no source code)
+COPY --from=builder /build/nix-minimal/store /nix/store
 
 # Copy pip-installed packages from builder
 COPY --from=builder /build/python-env /usr/local
@@ -39,13 +49,13 @@ COPY --from=builder /build/nix-env.sh /etc/profile.d/nix-env.sh
 
 # Find and symlink Python from Nix store
 RUN PYTHON_BIN=$(find /nix/store -path "*/bin/python3.13" -type f 2>/dev/null | grep python3-3.13 | head -1) && \
-    if [ -n "$PYTHON_BIN" ]; then \
-      ln -sf $PYTHON_BIN /usr/local/bin/python && \
-      ln -sf $PYTHON_BIN /usr/local/bin/python3 && \
-      echo "Python linked: $PYTHON_BIN"; \
-    else \
-      echo "ERROR: Python not found in /nix/store"; exit 1; \
-    fi
+  if [ -n "$PYTHON_BIN" ]; then \
+  ln -sf $PYTHON_BIN /usr/local/bin/python && \
+  ln -sf $PYTHON_BIN /usr/local/bin/python3 && \
+  echo "Python linked: $PYTHON_BIN"; \
+  else \
+  echo "ERROR: Python not found in /nix/store"; exit 1; \
+  fi
 
 # Copy application code
 COPY . .
@@ -56,7 +66,7 @@ RUN chmod +x entrypoint.sh
 
 # Create non-root user with home directory
 RUN adduser -u 1001 -D -h /home/openreplay openreplay && \
-    chown -R openreplay:openreplay /app
+  chown -R openreplay:openreplay /app
 
 ARG envarg
 ARG GIT_SHA
