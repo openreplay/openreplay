@@ -70,8 +70,9 @@ def get_details(project_id, error_id, user_id, **data):
     MAIN_ERR_SESS_TABLE = exp_ch_helper.get_main_js_errors_sessions_table(0)
     MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(0)
 
-    ch_basic_query = errors_helper.__get_basic_constraints_ch(time_constraint=False)
+    ch_basic_query = errors_helper.__get_basic_constraints_ch(time_constraint=False, table_name="errors")
     ch_basic_query.append("error_id = %(error_id)s")
+    ch_basic_query.append("sessions.project_id = %(project_id)s")
 
     with ch_client.ClickHouseClient() as ch:
         data["startDate24"] = TimeUTC.now(-1)
@@ -100,15 +101,15 @@ def get_details(project_id, error_id, user_id, **data):
                                       toString(`$properties`.message)          AS message,
                                       session_id,
                                       created_at                               AS datetime,
-                                      `$user_id`                               AS user_id,
-                                      `$browser`                               AS user_browser,
-                                      `$browser_version`                       AS user_browser_version,
-                                      `$os`                                    AS user_os,
-                                      `$os_version`                            AS user_os_version,
-                                      toString(`$properties`.user_device_type) AS user_device_type,
-                                      toString(`$properties`.user_device)      AS user_device,
-                                      `$country`                               AS user_country
-                               FROM {MAIN_ERR_SESS_TABLE} AS errors
+                                      user_id,
+                                      user_browser,
+                                      user_browser_version,
+                                      user_os,
+                                      user_os_version,
+                                      user_device_type,
+                                      user_device,
+                                      user_country
+                               FROM {MAIN_ERR_SESS_TABLE} AS errors INNER JOIN {MAIN_SESSIONS_TABLE} AS sessions USING(session_id)
                                WHERE {" AND ".join(ch_basic_query)}
                                )
         SELECT %(error_id)s AS error_id, name, message,users,
