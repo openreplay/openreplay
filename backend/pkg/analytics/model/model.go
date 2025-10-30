@@ -183,6 +183,10 @@ type GetSessionsResponse struct {
 	Sessions []Session `json:"sessions" ch:"sessions"`
 }
 
+type SessionIdData struct {
+	SessionId string `json:"sessionId" ch:"session_id"`
+}
+
 type PaginationParams struct {
 	Limit  int
 	Offset int

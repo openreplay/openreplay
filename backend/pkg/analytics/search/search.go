@@ -17,29 +17,10 @@ import (
 	"github.com/lib/pq"
 )
 
-// TODO - check all attributes and map the columns to the correct names
-var mainColumns = map[string]string{
-	"eventId":        "event_id",
-	"sessionId":      "session_id",
-	"userDevice":     "$device",
-	"userBrowser":    "$browser",
-	"browserVersion": "$browser_version",
-	"userCity":       "$city",
-	"userState":      "$state",
-	"userCountry":    "$country",
-	"userOs":         "$os",
-	"osVersion":      "$os_version",
-	"referrer":       "$referrer",
-	"fetchDuration":  "$duration_s",
-	"ISSUE":          "issue_types",
-	"utmSource":      "utm_source",
-	"utmMedium":      "utm_medium",
-	"utmCampaign":    "utm_campaign",
-}
-
 type Search interface {
 	GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
 	GetBookmarkedSessions(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
+	GetSessionIds(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
 }
 
 type searchImpl struct {
@@ -52,10 +33,6 @@ func New(chConn driver.Conn, pgConn pool.Pool) (Search, error) {
 		chConn: chConn,
 		pgConn: pgConn,
 	}, nil
-}
-
-type rowScanner interface {
-	Scan(dest ...interface{}) error
 }
 
 var sortOptions = map[string]string{
@@ -130,7 +107,18 @@ func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSea
 	return s.getSingleSessions(projectId, userId, req)
 }
 
-func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
+type sessionsQueryComponents struct {
+	eventsInnerJoin string
+	leftAntiJoin    string
+	viewedJoin      string
+	sessionsWhere   []string
+	sortField       string
+	sortOrder       string
+	limit           int
+	offset          int
+}
+
+func (s *searchImpl) buildSessionsQueryComponents(projectId int, userId uint64, req *model.SessionsSearchRequest) *sessionsQueryComponents {
 	startSec := req.StartDate / 1000
 	endSec := req.EndDate / 1000
 	offset := (req.Page - 1) * req.Limit
@@ -191,6 +179,22 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 	}
 
 	viewedJoin := fmt.Sprintf(viewedSessionsJoinTemplate, userId, projectId, startSec)
+
+	return &sessionsQueryComponents{
+		eventsInnerJoin: eventsInnerJoin,
+		leftAntiJoin:    leftAntiJoin,
+		viewedJoin:      viewedJoin,
+		sessionsWhere:   sessionsWhere,
+		sortField:       sortField,
+		sortOrder:       sortOrder,
+		limit:           req.Limit,
+		offset:          offset,
+	}
+}
+
+func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
+	qc := s.buildSessionsQueryComponents(projectId, userId, req)
+
 	var metasMap map[string]string = s.getMetadataColumns(projectId)
 	var metas string = ""
 	if metasMap != nil {
@@ -198,14 +202,14 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 	}
 	query := fmt.Sprintf(sessionsQuery,
 		metas,
-		eventsInnerJoin,
-		leftAntiJoin,
-		viewedJoin,
-		strings.Join(sessionsWhere, " AND "),
-		sortField,
-		sortOrder,
-		req.Limit,
-		offset,
+		qc.eventsInnerJoin,
+		qc.leftAntiJoin,
+		qc.viewedJoin,
+		strings.Join(qc.sessionsWhere, " AND "),
+		qc.sortField,
+		qc.sortOrder,
+		qc.limit,
+		qc.offset,
 	)
 
 	log.Printf("Sessions Search Query: %s", query)
@@ -469,6 +473,44 @@ LIMIT $3 OFFSET $4`,
 	processSessionsMetadata(resp.Sessions, metasMap)
 
 	return resp, nil
+}
+
+func (s *searchImpl) GetSessionIds(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
+	if req == nil {
+		return nil, errors.New("nil request")
+	}
+
+	qc := s.buildSessionsQueryComponents(projectId, userId, req)
+
+	query := fmt.Sprintf(`
+SELECT
+	toString(s.session_id) AS session_id
+FROM experimental.sessions AS s
+	%s
+	%s
+	%s
+WHERE %s
+ORDER BY %s %s
+LIMIT %d OFFSET %d;`,
+		qc.eventsInnerJoin,
+		qc.leftAntiJoin,
+		qc.viewedJoin,
+		strings.Join(qc.sessionsWhere, " AND "),
+		qc.sortField,
+		qc.sortOrder,
+		qc.limit,
+		qc.offset,
+	)
+
+	log.Printf("Session IDs Search Query: %s", query)
+
+	sessionIds := make([]model.SessionIdData, 0)
+	if err := s.chConn.Select(context.Background(), &sessionIds, query); err != nil {
+		log.Printf("Error executing query: %s\nQuery: %s", err, query)
+		return nil, err
+	}
+
+	return sessionIds, nil
 }
 
 func processSessionsMetadata(rows []model.Session, metasMap map[string]string) {

@@ -2,36 +2,17 @@ package search
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 	"time"
-
-	"github.com/go-playground/validator/v10"
-	"github.com/gorilla/mux"
 
 	config "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/user"
+
+	"github.com/go-playground/validator/v10"
 )
-
-func getIDFromRequest(r *http.Request, key string) (int, error) {
-	vars := mux.Vars(r)
-	idStr := vars[key]
-	if idStr == "" {
-		return 0, fmt.Errorf("missing %s in request", key)
-	}
-
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		return 0, fmt.Errorf("invalid %s format", key)
-	}
-
-	return id, nil
-}
 
 type handlersImpl struct {
 	log           logger.Logger
@@ -44,7 +25,7 @@ type handlersImpl struct {
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
 		{"/v1/{projectId}/sessions/search", "POST", e.getSessions, []string{"SESSION_REPLAY"}, api.DoNotTrack},
-		{"/v1/{project}/sessions/search/ids", "POST", e.getSessionIDs, []string{"SESSION_REPLAY"}, api.DoNotTrack},
+		{"/v1/{projectId}/sessions/search/ids", "POST", e.getSessionIDs, []string{"SESSION_REPLAY"}, api.DoNotTrack},
 	}
 }
 
@@ -97,7 +78,7 @@ func (e *handlersImpl) getSessions(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	projectID, err := getIDFromRequest(r, "projectId")
+	projectID, err := api.GetPathParam(r, "projectId", api.ParseInt)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -120,8 +101,40 @@ func (e *handlersImpl) getSessions(w http.ResponseWriter, r *http.Request) {
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
-// TODO: to implement
 func (e *handlersImpl) getSessionIDs(w http.ResponseWriter, r *http.Request) {
-	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotImplemented, errors.New("not implemented"), time.Now(), r.URL.Path, 0)
-	return
+	startTime := time.Now()
+	bodySize := 0
+
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	bodySize = len(bodyBytes)
+
+	req := &model.SessionsSearchRequest{}
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	if err = e.validator.Struct(req); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	projectID, err := api.GetPathParam(r, "projectId", api.ParseInt)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	currentUser := r.Context().Value("userData").(*user.User)
+	resp, err := e.search.GetSessionIds(projectID, currentUser.ID, req)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
