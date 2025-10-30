@@ -299,17 +299,22 @@ WHERE %s) AS extra`,
 
 	var fromEvents string
 	if !skipEventsTable || hasExtraCondition {
+		var eventsGroupping string = "GROUP BY ALL"
+		if r.MetricFormat == MetricFormatEventCount {
+			eventsGroupping = ""
+		}
 		fromEvents = fmt.Sprintf(`
 (
 	SELECT %s
 	FROM %s AS main
 	WHERE %s
-	GROUP BY ALL
+	%s
 	%s
 ) AS e`,
 			strings.Join(eventsSelect, ","),
 			eventsTable,
 			strings.Join(eventsConditions, " AND "),
+			eventsGroupping,
 			eventsHaving,
 		)
 	}
@@ -342,12 +347,19 @@ WHERE %s) AS extra`,
 			fromExtra = fmt.Sprintf("INNER JOIN %s ON (extra.session_id = e.session_id)", fromExtra)
 		}
 	}
+
+	if !(isFromEvents && r.MetricFormat == MetricFormatEventCount) {
+		distinctColumn = "DISTINCT " + distinctColumn
+	} else {
+
+	}
+
 	// Construct the complete query
 	query = fmt.Sprintf(`
 SELECT metric_value AS metric_name,
-       count(DISTINCT %s) AS metric_count,
-       COUNT(DISTINCT metric_value) OVER () AS number_of_metrics,
-       SUM(metric_count) OVER () AS all_count
+       count(%s) AS metric_count,
+       count(DISTINCT metric_value) OVER () AS number_of_metrics,
+       sum(metric_count) OVER () AS all_count
 FROM %s %s %s
 GROUP BY metric_value
 ORDER BY metric_count DESC
