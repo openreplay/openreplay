@@ -29,7 +29,7 @@ function GettingStartedProgress() {
     });
   };
   return gettingStarted.status === 'completed' ? null : (
-    <div className="mr-4 flex items-cetner cursor-pointer hover:bg-active-blue px-4">
+    <div className="mr-4 cursor-pointer hover:bg-active-blue px-4 py-1 rounded-lg">
       <div className="flex items-center cursor-pointer" onClick={clickHandler}>
         <CircleProgress
           label={gettingStarted.label}
