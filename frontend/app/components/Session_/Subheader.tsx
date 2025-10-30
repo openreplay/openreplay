@@ -1,5 +1,5 @@
 import { ShareAltOutlined, MoreOutlined } from '@ant-design/icons';
-import { Button as AntButton, Switch, Tooltip, Dropdown } from 'antd';
+import { Button as AntButton, Tooltip, Dropdown } from 'antd';
 import cn from 'classnames';
 import {
   Link2,
@@ -28,12 +28,10 @@ import QueueControls from './QueueControls';
 import HighlightButton from './Highlight/HighlightButton';
 import ShareModal from '../shared/SharePopup/SharePopup';
 import { useTranslation } from 'react-i18next';
-import SimilarSessionsButton from './SimilarSessions/SimilarSessionsButton';
+// import SimilarSessionsButton from './SimilarSessions/SimilarSessionsButton';
 import { mobileScreen } from 'App/utils/isMobile';
 
-const disableDevtools = 'or_devtools_uxt_toggle';
-
-function SubHeader(props) {
+function SubHeader(props: any) {
   const {
     integrationsStore,
     sessionStore,
@@ -44,9 +42,9 @@ function SubHeader(props) {
     recordingsStore,
   } = useStore();
   const { t } = useTranslation();
-  const { favorite } = sessionStore.current;
   const { isEnterprise, account } = userStore;
   const currentSession = sessionStore.current;
+  const favorite = currentSession.favorite;
   const projectId = projectsStore.siteId;
   const integrations = integrationsStore.issues.list;
   const { player, store } = React.useContext(PlayerContext);
@@ -54,6 +52,7 @@ function SubHeader(props) {
   const hasIframe = localStorage.getItem(IFRAME) === 'true';
   const [hideTools, setHideTools] = React.useState(mobileScreen);
   const [isFavorite, setIsFavorite] = React.useState(favorite);
+
   const { openModal, closeModal } = useModal();
 
   React.useEffect(() => {
@@ -100,10 +99,6 @@ function SubHeader(props) {
     window.innerWidth - 200,
   );
 
-  const toggleDevtools = (enabled) => {
-    localStorage.setItem(disableDevtools, enabled ? '0' : '1');
-  };
-
   const showKbHelp = () => {
     openModal(<ShortcutGrid />, { width: 320, title: t('Keyboard Shortcuts') });
   };
@@ -138,15 +133,17 @@ function SubHeader(props) {
   };
 
   const onExport = async () => {
-    const status = await recordingsStore.triggerExport(currentSession.sessionId)
+    const status = await recordingsStore.triggerExport(
+      currentSession.sessionId,
+    );
     const statusLabels = {
       pending: 'Sesison export started',
       success: 'Session already exported',
-      failure: 'Session export failed, please try again later'
-    }
+      failure: 'Session export failed, please try again later',
+    };
     // @ts-ignore
-    toast.info(statusLabels[status ?? pending]);
-  }
+    toast.info(statusLabels[status ?? 'pending']);
+  };
 
   const dropdownItems = [
     {
@@ -163,9 +160,7 @@ function SubHeader(props) {
       key: '4',
       label: (
         <div className="flex items-center gap-2">
-          <Icon
-            name={`integrations/${reportingProvider || 'github'}`}
-          />
+          <Icon name={`integrations/${reportingProvider || 'github'}`} />
           <span>{t('Issues')}</span>
         </div>
       ),
@@ -182,7 +177,7 @@ function SubHeader(props) {
       ),
       onClick: showKbHelp,
     },
-  ]
+  ];
   if (account.hasVideoExport) {
     dropdownItems.push({
       key: '5',
@@ -193,7 +188,7 @@ function SubHeader(props) {
         </div>
       ),
       onClick: onExport,
-    })
+    });
   }
 
   return (
@@ -216,9 +211,7 @@ function SubHeader(props) {
         virtualElsFailed={showVModeBadge}
         onVMode={onVMode}
       />
-      <div
-        className="w-full px-4 flex items-center border-b relative"
-      >
+      <div className="w-full px-4 flex items-center border-b relative">
         <SessionTabs />
 
         {!hideTools && (
@@ -259,9 +252,9 @@ function SubHeader(props) {
               </AntButton>
             </Dropdown>
 
-              <div>
-                <QueueControls />
-              </div>
+            <div>
+              <QueueControls />
+            </div>
           </div>
         )}
       </div>
