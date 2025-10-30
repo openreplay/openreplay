@@ -173,7 +173,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
         <div
           key={`filter-${filterItem.id + filterIndex}`}
           className={cn(
-            'flex gap-2 py-2 items-start hover:bg-active-blue -mx-5 px-5 pe-3 transition-colors duration-100 relative',
+            'flex gap-2 py-2 items-start hover:bg-active-blue -mx-4 px-5 transition-colors duration-100 relative',
             {
               // Lighter hover, keep relative
               'opacity-50': draggedInd === filterIndex,
