@@ -47,6 +47,13 @@ export class GettingStarted {
   status: 'in-progress' | 'completed';
 
   constructor() {
+    const gettingStartedSteps = localStorage.getItem(GETTING_STARTED);
+    if (gettingStartedSteps) {
+      const steps = JSON.parse(gettingStartedSteps);
+      this.steps = steps.steps;
+      this.status = steps.status;
+    }
+
     makeObservable(this, {
       steps: observable,
       completeStep: action,
@@ -58,22 +65,22 @@ export class GettingStarted {
       label: computed,
       numPendingSteps: computed,
     });
-
-    // steps = {'tenatId': {steps: [], status: 'in-progress'}
-    const gettingStartedSteps = localStorage.getItem(GETTING_STARTED);
-    if (gettingStartedSteps) {
-      const steps = JSON.parse(gettingStartedSteps);
-      this.steps = steps.steps;
-      this.status = steps.status;
-    }
   }
+
+  setSteps = (steps: Step[]) => {
+    this.steps = steps;
+  };
+
+  setStatus = (status: 'in-progress' | 'completed') => {
+    this.status = status;
+  };
 
   fetchData() {
     if (this.status === 'completed') {
       return;
     }
     configService.fetchGettingStarted().then((data) => {
-      this.steps = data.map((item: any) => {
+      const newSteps = data.map((item: any) => {
         const step = stepsMap[item.task];
 
         return {
@@ -81,7 +88,8 @@ export class GettingStarted {
           status: item.done ? 'completed' : 'pending',
         };
       });
-      this.status = this.calculateStatus();
+      this.setSteps(newSteps);
+      this.setStatus(this.calculateStatus());
       this.updateLocalStorage();
     });
   }
@@ -112,7 +120,7 @@ export class GettingStarted {
 
   completeStep(step: Step) {
     step.status = 'completed';
-    this.status = this.calculateStatus();
+    this.setStatus(this.calculateStatus());
     this.updateLocalStorage();
   }
 

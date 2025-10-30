@@ -1,5 +1,5 @@
-import { useObserver } from 'mobx-react-lite';
 import React from 'react';
+import { observer } from 'mobx-react-lite';
 import { Modal, Form, Icon, Checkbox, Input } from 'UI';
 import { Button } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
@@ -16,7 +16,7 @@ function DashboardEditModal(props: Props) {
   const { t } = useTranslation();
   const { show, closeHandler, focusTitle } = props;
   const { dashboardStore } = useStore();
-  const dashboard = useObserver(() => dashboardStore.dashboardInstance);
+  const dashboard = dashboardStore.dashboardInstance;
 
   const onSave = () => {
     dashboardStore.save(dashboard).then(closeHandler);
@@ -33,7 +33,7 @@ function DashboardEditModal(props: Props) {
   const write = ({ target: { value, name } }) =>
     dashboard.update({ [name]: value });
 
-  return useObserver(() => (
+  return (
     <Modal open={show} onClose={closeHandler}>
       <Modal.Header className="flex items-center justify-between">
         <div>{t('Edit Dashboard')}</div>
@@ -112,7 +112,7 @@ function DashboardEditModal(props: Props) {
         </div>
       </Modal.Footer>
     </Modal>
-  ));
+  );
 }
 
-export default DashboardEditModal;
+export default observer(DashboardEditModal);

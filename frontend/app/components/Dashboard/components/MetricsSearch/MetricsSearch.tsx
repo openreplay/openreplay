@@ -1,7 +1,6 @@
-import { useObserver } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
+import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Icon } from 'UI';
 import { Input } from 'antd';
 import { debounce } from 'App/utils';
 import { useTranslation } from 'react-i18next';
@@ -27,7 +26,7 @@ function MetricsSearch() {
     debounceUpdate('metricsSearch', value);
   };
 
-  return useObserver(() => (
+  return (
     <div className="relative">
       <Input.Search
         value={query}
@@ -38,7 +37,7 @@ function MetricsSearch() {
         onChange={write}
       />
     </div>
-  ));
+  );
 }
 
-export default MetricsSearch;
+export default observer(MetricsSearch);

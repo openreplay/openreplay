@@ -647,21 +647,33 @@ export default class SessionStore {
     this.lastPlayedSessionId = sessionId;
   };
 
+  setBookmarksLoading = (loading: boolean) => {
+    this.bookmarks.loading = loading;
+  };
+
+  setBookmarksList = (list: Session[]) => {
+    this.bookmarks.list = list;
+  };
+
+  setBookmarksTotal = (total: number) => {
+    this.bookmarks.total = total;
+  };
+
   async fetchBookmarkedSessions() {
     try {
-      this.bookmarks.loading = true;
+      this.setBookmarksLoading(true);
       const params = {
         page: this.bookmarks.page,
         limit: this.bookmarks.pageSize,
         bookmarked: true,
       };
       const data = await sessionService.getSessions(params);
-      this.bookmarks.list = data.sessions.map((s: any) => new Session(s));
-      this.bookmarks.total = data.total;
+      this.setBookmarksList(data.sessions.map((s: any) => new Session(s)));
+      this.setBookmarksTotal(data.total);
     } catch (e) {
       console.error(e);
     } finally {
-      this.bookmarks.loading = false;
+      this.setBookmarksLoading(false);
     }
   }
 
