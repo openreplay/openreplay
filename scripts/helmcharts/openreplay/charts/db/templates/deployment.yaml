@@ -59,8 +59,6 @@ spec:
             - name: pg_password
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 18 }}
-            - name: QUICKWIT_ENABLED
-              value: '{{ .Values.global.quickwit.enabled }}'
             - name: POSTGRES_STRING
               value: {{ include "openreplay.pg_connection_string" .}}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
