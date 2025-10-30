@@ -53,7 +53,7 @@ function SupportModal(props: Props) {
                 window.open('https://docs.openreplay.com');
               }}
             >
-              <Space>
+              <Space className="text-black">
                 <div>{t('Browse Docs')}</div>
                 <ArrowRightOutlined />
               </Space>
@@ -84,7 +84,7 @@ function SupportModal(props: Props) {
                 window.open('https://slack.openreplay.com', '_blank');
               }}
             >
-              <Space>
+              <Space className="text-black">
                 <div>{t('Ask Community')}</div>
                 <ArrowRightOutlined />
               </Space>
@@ -118,7 +118,7 @@ function SupportModal(props: Props) {
                 );
               }}
             >
-              <Space>
+              <Space className="text-black">
                 <div>{t('Open GitHub')}</div>
                 <ArrowRightOutlined />
               </Space>

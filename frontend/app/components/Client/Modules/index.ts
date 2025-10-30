@@ -56,13 +56,5 @@ export const modules = (t: TFunction) => [
     key: MODULES.ALERTS,
     icon: 'bell',
   },
-  {
-    label: t('Feature Flags'),
-    description: t(
-      'Make gradual releases and A/B test all of your new features without redeploying your app.',
-    ),
-    key: MODULES.FEATURE_FLAGS,
-    icon: 'toggles',
-  },
   ...extraModules(t),
 ];
