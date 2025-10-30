@@ -13,7 +13,6 @@ const PER_PAGE = 10;
 
 interface Props extends RouteComponentProps {
   defaultList: any;
-  currentPage: number;
   latestRequestTime: any;
   sessionIds: any;
 }
@@ -33,7 +32,7 @@ function QueueControls(props: Props) {
     },
   } = props;
 
-  const { currentPage } = searchStore;
+  const { currentPage, nextPage } = searchStore;
 
   useEffect(() => {
     setAutoplayValues();
@@ -41,7 +40,7 @@ function QueueControls(props: Props) {
     const index = sessionIds.indexOf(sessionId);
 
     if (currentPage !== totalPages && index === sessionIds.length - 1) {
-      sessionStore.fetchAutoplayList(currentPage + 1).then(setAutoplayValues);
+      sessionStore.fetchAutoplayList(nextPage()).then(setAutoplayValues);
     }
   }, []);
 

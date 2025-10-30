@@ -245,6 +245,11 @@ class SearchStore {
     void this.fetchSessions(force);
   }
 
+  nextPage = () => {
+    this.currentPage += 1;
+    return this.currentPage;
+  };
+
   updateLatestSessionCount(count: number = 0) {
     this.latestSessionCount = count;
   }
