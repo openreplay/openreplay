@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"log"
+	"reflect"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -288,6 +289,35 @@ func msToSeconds(ms uint64) uint16 {
 	return uint16(ms)
 }
 
+func sanitizePayload(payload map[string]interface{}) map[string]interface{} {
+	for key, value := range payload {
+		if value == nil {
+			delete(payload, key)
+			continue
+		}
+
+		switch v := value.(type) {
+		case string:
+			if v == "" {
+				delete(payload, key)
+			}
+		case int, int8, int16, int32, int64:
+			if reflect.ValueOf(v).Int() == 0 {
+				delete(payload, key)
+			}
+		case uint, uint8, uint16, uint32, uint64:
+			if reflect.ValueOf(v).Uint() == 0 {
+				delete(payload, key)
+			}
+		case float32, float64:
+			if reflect.ValueOf(v).Float() == 0 {
+				delete(payload, key)
+			}
+		}
+	}
+	return payload
+}
+
 func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *messages.InputChange) error {
 	if msg.Label == "" {
 		return nil
@@ -298,13 +328,13 @@ func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *m
 	if msg.InputDuration > 2147483647 {
 		msg.InputDuration = 0
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"label":            msg.Label,
 		"hesitation_time":  nullableUint32(uint32(msg.HesitationTime)),
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
 		"page_title":       strings.TrimSpace(msg.PageTitle),
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal input event: %s", err)
 	}
@@ -342,7 +372,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 	if err != nil {
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"issue_type":       "mouse_thrashing",
 		"url":              cropString(msg.Url),
 		"url_host":         host,
@@ -351,7 +381,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
 		"page_title":       strings.TrimSpace(msg.PageTitle),
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal issue event: %s", err)
 	}
@@ -405,7 +435,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 	if err != nil {
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"issue_type":       msg.Type,
 		"url":              cropString(msg.Url),
 		"url_host":         host,
@@ -415,7 +445,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		"user_device_type": session.UserDeviceType,
 		"page_title":       strings.TrimSpace(msg.PageTitle),
 		"payload":          msg.Payload,
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal issue event: %s", err)
 	}
@@ -522,7 +552,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 			}
 		}
 	}
-	jsonString, err := json.Marshal(payload)
+	jsonString, err := json.Marshal(sanitizePayload(payload))
 	if err != nil {
 		return fmt.Errorf("can't marshal page event: %s", err)
 	}
@@ -579,7 +609,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 	if err != nil {
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"label":            msg.Label,
 		"hesitation_time":  nullableUint32(uint32(msg.HesitationTime)),
 		"selector":         msg.Selector,
@@ -592,7 +622,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
 		"page_title":       strings.TrimSpace(msg.PageTitle),
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal click event: %s", err)
 	}
@@ -631,7 +661,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 		return fmt.Errorf("unknown error source: %s", msg.Source)
 	}
 	msgID, _ := msg.ID(session.ProjectID)
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"source":           msg.Source,
 		"name":             nullableString(msg.Name),
 		"message":          msg.Message,
@@ -639,7 +669,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
 		"page_title":       strings.TrimSpace(msg.PageTitle),
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal error event: %s", err)
 	}
@@ -677,7 +707,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session,
 	if err != nil {
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"url":                    cropString(msg.Url),
 		"url_host":               host,
 		"url_path":               path,
@@ -697,7 +727,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session,
 		"user_device":            session.UserDevice,
 		"user_device_type":       session.UserDeviceType,
 		"page_title":             strings.TrimSpace(msg.PageTitle),
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal performance event: %s", err)
 	}
@@ -742,7 +772,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 	if err != nil {
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"request_body":     request,
 		"response_body":    response,
 		"status":           uint16(msg.Status),
@@ -756,7 +786,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
 		"page_title":       strings.TrimSpace(msg.PageTitle),
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal request event: %s", err)
 	}
@@ -789,11 +819,11 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 }
 
 func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.CustomEvent) error {
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
 		"page_title":       strings.TrimSpace(msg.PageTitle),
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal custom event: %s", err)
 	}
@@ -834,14 +864,14 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 }
 
 func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.GraphQL) error {
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"name":             msg.OperationName,
 		"request_body":     nullableString(msg.Variables),
 		"response_body":    nullableString(msg.Response),
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
 		"page_title":       strings.TrimSpace(msg.PageTitle),
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal graphql event: %s", err)
 	}
@@ -881,7 +911,7 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 	if err != nil {
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"issue_type":       fakeMsg.Type,
 		"url":              cropString(msg.Url),
 		"url_host":         host,
@@ -893,7 +923,7 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		"label":            msg.Label,
 		"start_time":       msg.StartTime,
 		"end_time":         msg.EndTime,
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal issue event: %s", err)
 	}
@@ -936,9 +966,9 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 }
 
 func (c *connectorImpl) InsertTagTrigger(session *sessions.Session, msg *messages.TagTrigger) error {
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"tag_id": msg.TagId,
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal tagTriggers event: %s", err)
 	}
@@ -1017,12 +1047,12 @@ func (c *connectorImpl) InsertMobileSession(session *sessions.Session) error {
 }
 
 func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messages.MobileEvent) error {
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"name":             msg.Name,
 		"payload":          msg.Payload,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile custom event: %s", err)
 	}
@@ -1050,11 +1080,11 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 	if msg.Label == "" {
 		return nil
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"label":            msg.Label,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile clicks event: %s", err)
 	}
@@ -1082,12 +1112,12 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 	if msg.Label == "" {
 		return nil
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"label":            msg.Label,
 		"direction":        nullableString(msg.Direction),
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile swipe event: %s", err)
 	}
@@ -1115,11 +1145,11 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 	if msg.Label == "" {
 		return nil
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"label":            msg.Label,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile input event: %s", err)
 	}
@@ -1153,7 +1183,7 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 		request = &msg.Request
 		response = &msg.Response
 	}
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"url":              cropString(msg.URL),
 		"request_body":     request,
 		"response_body":    response,
@@ -1163,7 +1193,7 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 		"success":          msg.Status < 400,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile request event: %s", err)
 	}
@@ -1188,13 +1218,13 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 }
 
 func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messages.MobileCrash) error {
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"name":             msg.Name,
 		"reason":           msg.Reason,
 		"stacktrace":       msg.Stacktrace,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile crash event: %s", err)
 	}
@@ -1219,13 +1249,13 @@ func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messag
 }
 
 func (c *connectorImpl) InsertMobileIssue(session *sessions.Session, msg *messages.MobileIssueEvent) error {
-	jsonString, err := json.Marshal(map[string]interface{}{
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"context_string":   msg.ContextString,
 		"context":          msg.Context,
 		"payload":          msg.Payload,
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
-	})
+	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal mobile issue event: %s", err)
 	}
