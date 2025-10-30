@@ -128,7 +128,7 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 	if p.ViewType == "sunburst" {
 		result, err = h.transformSunburst(rawData)
 	} else {
-		result, err = h.transformJourney(rawData)
+		result, err = h.transformJourney(rawData, p.StartType == "end")
 	}
 	if err != nil {
 		log.Printf("Error transforming userJourney data: %s", err)
@@ -146,6 +146,11 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		} else {
 			i++
 		}
+	}
+	var reverse bool = p.StartType == "end"
+	var pathDirection string = "ASC"
+	if reverse {
+		pathDirection = "DESC"
 	}
 
 	var subEvents []JourneyStep = make([]JourneyStep, 0)
@@ -173,9 +178,9 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 						// This is used in case start event has different type of the visible event,
 						// because it causes intermediary events to be removed, so you find a jump from step-0 to step-3
 						// because step-2 is not of a visible event
-						q2ExtraCol = `,leadInFrame(toNullable(event_number_in_session))
-											 OVER (PARTITION BY session_id ORDER BY created_at ASC
-											   ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_event_number_in_session`
+						q2ExtraCol = fmt.Sprintf(`,leadInFrame(toNullable(event_number_in_session))
+											 OVER (PARTITION BY session_id ORDER BY created_at %s
+											   ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_event_number_in_session`, pathDirection)
 						q2ExtraCondition = "WHERE event_number_in_session + 1 = next_event_number_in_session OR isNull(next_event_number_in_session);"
 
 					}
@@ -364,7 +369,7 @@ WITH %s
 										created_at,
 										toString(%s) AS e_value,
 										row_number() OVER (PARTITION BY session_id
- 														   ORDER BY created_at ASC, event_id ASC) AS event_number_in_session
+ 														   ORDER BY created_at %s, event_id %s) AS event_number_in_session
 	                                FROM %s %s
 	                                WHERE %s
 	                                ) AS full_ranked_events
@@ -375,6 +380,8 @@ FROM pre_ranked_events;`,
 		initialSessionsCte,
 		initialEventCTE,
 		mainColumn,
+		pathDirection,
+		pathDirection,
 		mainEventsTable,
 		joinSessions,
 		strings.Join(chSubQuery, " AND "),
@@ -388,10 +395,10 @@ WITH pre_ranked_events AS (SELECT *
 								start_points AS (%s),
 								ranked_events AS (SELECT pre_ranked_events.*,
 														 leadInFrame(e_value)
-																	 OVER (PARTITION BY session_id ORDER BY created_at ASC
+																	 OVER (PARTITION BY session_id ORDER BY created_at %s
 																	   ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_value,
 														 leadInFrame(toNullable("$event_name"))
-																	 OVER (PARTITION BY session_id ORDER BY created_at ASC
+																	 OVER (PARTITION BY session_id ORDER BY created_at %s
 																	   ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_type
 														 %s
 												  FROM start_points INNER JOIN pre_ranked_events USING (session_id))
@@ -400,6 +407,8 @@ WITH pre_ranked_events AS (SELECT *
 							%s;`,
 		tableKey,
 		step0SubQuery,
+		pathDirection,
+		pathDirection,
 		q2ExtraCol,
 		q2ExtraCondition,
 	)
@@ -511,7 +520,7 @@ ORDER BY event_number_in_session, sessions_count DESC;
 	return []string{q1, q2, q3}, nil
 }
 
-func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (JourneyData, error) {
+func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData, reverse bool) (JourneyData, error) {
 	var total100p uint64
 	for _, r := range rows {
 		if r.EventNumberInSession > 1 {
@@ -561,6 +570,9 @@ func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (J
 
 		var srcIdx int = slices.Index(nodes, source)
 		var tgIdx int = slices.Index(nodes, target)
+		if reverse {
+			srcIdx, tgIdx = tgIdx, srcIdx
+		}
 		var link Link = Link{
 			EventType:     rows[i].EventType,
 			SessionsCount: int(rows[i].SessionsCount),
@@ -607,6 +619,9 @@ func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (J
 				tgIdx = len(nodes) - 1
 			}
 			dropSum += int(drops[i].sessionsCount)
+			if reverse {
+				srIdx, tgIdx = tgIdx, srIdx
+			}
 			link := Link{
 				EventType:     "DROP",
 				SessionsCount: dropSum,
@@ -615,6 +630,11 @@ func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData) (J
 				Target:        tgIdx,
 			}
 			links = append(links, link)
+		}
+	}
+	if reverse {
+		for i := range len(nodesValues) {
+			nodesValues[i].Depth = maxDepth - nodesValues[i].Depth
 		}
 	}
 	sort.Slice(links, func(i, j int) bool {
