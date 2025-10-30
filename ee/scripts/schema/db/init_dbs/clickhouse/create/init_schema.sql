@@ -369,7 +369,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.users
     _timestamp           DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       ORDER BY (project_id, "$distinct_id")
-      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00';
+      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00'
+      SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
 
 CREATE TABLE IF NOT EXISTS product_analytics.devices
@@ -476,7 +477,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     _timestamp                  DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       ORDER BY (project_id, "$event_name", created_at, session_id)
-      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00';
+      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00'
+      SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
 -- The list of events that should not be ingested,
 -- according to a specific event_name and optional properties
@@ -492,7 +494,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.dropped_events
     _sign      Int8     DEFAULT 1,
     _timestamp DateTime DEFAULT now()
 ) ENGINE = CollapsingMergeTree(_sign)
-      ORDER BY (project_id, event_name);
+      ORDER BY (project_id, event_name)
+      SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
 -- The list of properties that should not be ingested in ALL events,
 -- according to a specific rule
@@ -507,7 +510,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.dropped_properties
     _sign         Int8     DEFAULT 1,
     _timestamp    DateTime DEFAULT now()
 ) ENGINE = CollapsingMergeTree(_sign)
-      ORDER BY (project_id, property_name);
+      ORDER BY (project_id, property_name)
+      SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
 
 -- The list of events that should be hidden in the UI
@@ -563,7 +567,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.actions
     _sign           Int8     DEFAULT 1,
     _timestamp      DateTime DEFAULT now()
 ) ENGINE = CollapsingMergeTree(_sign)
-      ORDER BY (project_id, action_id);
+      ORDER BY (project_id, action_id)
+      SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
 -- A cohort is a group of events-properties during a specific time period,
 -- related with an AND condition to identify users
@@ -584,7 +589,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.cohorts
     _sign       Int8     DEFAULT 1,
     _timestamp  DateTime DEFAULT now()
 ) ENGINE = CollapsingMergeTree(_sign)
-      ORDER BY (project_id, cohort_id);
+      ORDER BY (project_id, cohort_id)
+      SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
 -- Mapping between group_id and group_key
 CREATE TABLE IF NOT EXISTS product_analytics.groups
@@ -626,7 +632,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.group_properties
     created_at DateTime64,
     _timestamp DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
-      ORDER BY (project_id, group_key, group_id);
+      ORDER BY (project_id, group_key, group_id)
+      SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
 
 -- The full list of events
