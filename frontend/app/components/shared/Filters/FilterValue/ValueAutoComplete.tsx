@@ -175,14 +175,25 @@ const ValueAutoComplete = observer(
       if (params.isPredefined) {
         return;
       }
-      if (!params.isEvent && filterKey && !filterStore.topValues[filterKey]) {
+      if (
+        showValueModal &&
+        !params.isEvent &&
+        filterKey &&
+        !filterStore.topValues[filterKey]
+      ) {
         setLoadingTopValues(true);
         filterStore
           .fetchTopValues(params.id, isLive)
           .catch((error) => console.error('Failed to load top values', error))
           .finally(() => setLoadingTopValues(false));
       }
-    }, [filterKey, params.id, projectsStore.siteId, filterStore]);
+    }, [
+      showValueModal,
+      filterKey,
+      params.id,
+      projectsStore.siteId,
+      filterStore,
+    ]);
 
     useEffect(() => {
       if (isAutoOpen && !isDisabled) {

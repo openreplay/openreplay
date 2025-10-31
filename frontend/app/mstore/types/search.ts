@@ -38,9 +38,7 @@ interface ISearch {
   viewed?: boolean;
   consoleLogCount?: number;
   eventsCount?: number;
-  suspicious?: boolean;
   consoleLevel?: string;
-  strict: boolean;
   eventsOrder: string;
 }
 
@@ -67,9 +65,7 @@ export default class Search {
   viewed?: boolean;
   consoleLogCount?: number;
   eventsCount?: number;
-  suspicious?: boolean;
   consoleLevel?: string;
-  strict: boolean;
   eventsOrder: string;
   limit: number;
 
@@ -100,9 +96,7 @@ export default class Search {
       viewed: undefined,
       consoleLogCount: undefined,
       eventsCount: undefined,
-      suspicious: undefined,
       consoleLevel: undefined,
-      strict: false,
       eventsOrder: 'then',
       limit: 10,
       ...initialData,

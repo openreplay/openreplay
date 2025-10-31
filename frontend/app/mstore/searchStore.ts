@@ -83,9 +83,7 @@ class SearchStore {
     order: 'desc',
     viewed: false,
     eventsCount: 0,
-    suspicious: false,
     consoleLevel: '',
-    strict: true,
     eventsOrder: 'then',
   });
   savedSearch: ISavedSearch = new SavedSearch();

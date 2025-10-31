@@ -41,9 +41,7 @@ export default Record(
     consoleLogCount: undefined,
     eventsCount: undefined,
 
-    suspicious: undefined,
     consoleLevel: undefined,
-    strict: false,
     eventsOrder: 'then',
   },
   {
