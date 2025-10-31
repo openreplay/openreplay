@@ -114,12 +114,7 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 	return &TableResponse{Total: valuesCount, Count: overallCount, Values: rawValues}, nil
 }
 func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload) (interface{}, error) {
-	metricFormat := p.MetricFormat
-	if metricFormat != MetricFormatSessionCount && metricFormat != MetricFormatUserCount {
-		metricFormat = MetricFormatSessionCount
-	}
-
-	queries, params, err := t.buildTableOfResolutionsQuery(p, metricFormat)
+	queries, params, err := t.buildTableOfResolutionsQuery(p)
 	if err != nil {
 		return nil, fmt.Errorf("error building screenResolution queries: %w", err)
 	}
@@ -321,7 +316,6 @@ WHERE %s) AS extra`,
 
 	var fromSessions string
 	if !isFromEvents || len(sessionConditions) > 4 || r.MetricFormat == MetricFormatUserCount {
-		log.Println(">>>>>> isFromEvent:", isFromEvents)
 		var limitBy []string = []string{"session_id"}
 		if !isFromEvents {
 			limitBy = append(limitBy, "metric_value")
@@ -389,7 +383,7 @@ LIMIT %d OFFSET %d;`,
 	return query, nil
 }
 
-func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload, metricFormat string) ([]string, map[string]any, error) {
+func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload) ([]string, map[string]any, error) {
 	s := r.Series[0]
 	// Build event filter conditions with error handling
 	durConds, _ := BuildDurationWhere(s.Filter.Filters)
@@ -400,18 +394,23 @@ func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload, metricForma
 		EventsOrder:    string(s.Filter.EventsOrder),
 	})
 	prewhereParts := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, otherConds)
-	queryConditions := t.buildSessionConditions(r, metricFormat, durConds)
+	queryConditions := t.buildSessionConditions(r, r.MetricFormat, durConds)
 	joinClause, extraWhere, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
 		return []string{}, nil, err
 	}
 	queryConditions = append(queryConditions, extraWhere...)
 
-	//Determine aggregation column
+	//Determine aggregation column&function
 	main_column := "session_id"
-	if metricFormat == MetricFormatUserCount {
+	countFunction := "count(DISTINCT %s)"
+	if r.MetricFormat == MetricFormatUserCount {
 		main_column = "user_id"
+	} else if r.MetricFormat == MetricFormatEventCount {
+		main_column = "events_count"
+		countFunction = "sum(%s)"
 	}
+	countFunction = fmt.Sprintf(countFunction, main_column)
 
 	joinEvents := ""
 	if len(joinClause) > 0 || len(extraWhere) > 0 {
@@ -430,20 +429,21 @@ CREATE TEMPORARY TABLE base_%[1]v AS (
 			SELECT screen_width,
 				   screen_height,
 				   pixels,
-				   count(DISTINCT %[2]v) AS freq,
+				   %[6]v AS freq,
 				   any(full_count) AS full_count
 			FROM (SELECT screen_width,
 						 screen_height,
 						 screen_width * screen_height       AS pixels,
 						 %[2]v,
-						 count(DISTINCT %[2]v) OVER () AS full_count
+						 %[6]v OVER () AS full_count
 				  FROM experimental.sessions AS s
        					%[5]v
 				  WHERE %[3]v
-				  GROUP BY screen_width, screen_height, %[2]v
+				  ORDER BY _timestamp DESC
+       			  LIMIT 1 BY session_id
        			  %[4]v) AS raw
 			GROUP BY ALL);`,
-			tableKey, main_column, strings.Join(queryConditions, " AND "), joinClause, joinEvents),
+			tableKey, main_column, strings.Join(queryConditions, " AND "), joinClause, joinEvents, countFunction),
 			fmt.Sprintf(`
 SELECT CAST(full_count AS UInt64) AS full_count,
        CAST(number_of_rows AS UInt64)       AS number_of_rows,
