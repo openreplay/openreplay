@@ -85,7 +85,7 @@ def __generic_query(typename, value_length=None):
                       ORDER BY value"""
 
     if value_length is None or value_length > 2:
-        return f"""SELECT DISTINCT ON(value, type) value, type
+        return f"""SELECT DISTINCT ON(value) value, '{typename.upper()}' AS type
                    FROM ((SELECT DISTINCT value
                     FROM {TABLE}
                     WHERE
