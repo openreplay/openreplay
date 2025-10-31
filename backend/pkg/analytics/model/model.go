@@ -85,7 +85,7 @@ type MetricPayload struct {
 	SortBy           string     `json:"sortBy"`
 	SortOrder        string     `json:"sortOrder"`
 	IncludeClickRage bool       `json:"includeClickRage"`
-	StartType        string     `json:"startType" validate:"oneof=start end"`
+	StartType        string     `json:"startType" validate:"omitempty,oneof=start end"`
 	HideExcess       bool       `json:"hideExcess"`
 }
 
