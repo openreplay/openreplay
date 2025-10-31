@@ -116,21 +116,30 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	allFilters := p.MetricPayload.Series[0].Filter.Filters
 
 	var (
-		eventFilters   []model.Filter
-		sessionFilters []model.Filter
-		stages         []string
+		eventFilters         []model.Filter
+		namelessEventFilters []model.Filter // $properties filters that are sent by UI without an event-name (global properties filters)
+		sessionFilters       []model.Filter
+		stages               []string
 	)
 
 	for _, filter := range allFilters {
-		if filter.IsEvent {
+		if !filter.IsEvent {
+			if _, ok := SessionColumns[filter.Name]; ok {
+				sessionFilters = append(sessionFilters, filter)
+			} else {
+				namelessEventFilters = append(namelessEventFilters, filter)
+			}
+		} else {
 			eventFilters = append(eventFilters, filter)
 			stages = append(stages, filter.Name)
-		} else {
-			sessionFilters = append(sessionFilters, filter)
 		}
 	}
 
 	eventConditions, _, otherConditions := BuildEventConditions(eventFilters, BuildConditionsOptions{
+		DefinedColumns: mainColumns,
+		MainTableAlias: "e",
+	})
+	_, _, namelessEventConditions := BuildEventConditions(namelessEventFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
 	})
@@ -168,6 +177,9 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 
 	if len(otherConditions) > 0 {
 		baseWhere = append(baseWhere, strings.Join(otherConditions, " AND "))
+	}
+	if len(namelessEventConditions) > 0 {
+		baseWhere = append(baseWhere, strings.Join(namelessEventConditions, " AND "))
 	}
 	var mainTables string = fmt.Sprintf("%s AS e", getMainEventsTable(p.StartTimestamp))
 	if len(sessionConditions) > 0 || p.MetricFormat == MetricFormatUserCount {
