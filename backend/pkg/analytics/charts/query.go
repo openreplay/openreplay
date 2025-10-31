@@ -504,9 +504,16 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 
 	var sessionFiltersList, eventFiltersList, negativeEvents []model.Filter
 	for _, f := range filters {
+		// Not all !f.IsEvent are from sessions, because UI can send a $properties filter without specifying an event (global properties filters)
+		var isEvent bool = f.IsEvent
 		if !f.IsEvent {
-			sessionFiltersList = append(sessionFiltersList, f)
-		} else {
+			if _, ok := SessionColumns[f.Name]; ok {
+				sessionFiltersList = append(sessionFiltersList, f)
+			} else {
+				isEvent = true
+			}
+		}
+		if isEvent {
 			if isNegativeEventFilter(f) {
 				negativeEvents = append(negativeEvents, f)
 			} else {

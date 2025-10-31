@@ -77,7 +77,7 @@ LIMIT %d OFFSET %d;`
 	WHERE user_id    = %d
 	  AND project_id = %d
 	  AND _timestamp >= toDateTime(%d)
-) AS viewed_sessions USING (session_id)`
+) AS viewed_sessions ON (viewed_sessions.session_id=s.session_id)`
 )
 
 // GetAll retrieves sessions based on the request parameters.
