@@ -86,15 +86,11 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 	if _, ok := validMetricOfValues[MetricOfTable(p.MetricOf)]; !ok {
 		return nil, fmt.Errorf("invalid MetricOf value: %s", p.MetricOf)
 	}
-	//metricFormat := p.MetricFormat
-	//if metricFormat != MetricFormatSessionCount && metricFormat != MetricFormatUserCount {
-	//	metricFormat = MetricFormatSessionCount
-	//}
+
 	if p.MetricOf == "screenResolution" {
 		return t.executeForTableOfResolutions(p)
 	}
 
-	//query, err := t.buildQuery(p, metricFormat)
 	query, err := t.buildQuery(p)
 	if err != nil {
 		return nil, fmt.Errorf("error building query: %w", err)
