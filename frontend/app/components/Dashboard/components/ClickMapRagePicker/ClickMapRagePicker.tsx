@@ -8,9 +8,17 @@ import { FilterKey } from '@/types/filter/filterType';
 import type { CheckboxProps } from 'antd';
 
 function ClickMapRagePicker() {
-  const [platform, setPlatform] = React.useState<'desktop' | 'mobile' | 'tablet'>('desktop');
-  const { t } = useTranslation();
   const { metricStore, dashboardStore, filterStore } = useStore();
+  const metric = metricStore.instance;
+  // @ts-ignore
+  const metricPlatform = metric.series[0]?.filter.filters.find(
+    (f) => f.name === FilterKey.PLATFORM,
+  )?.value[0] as 'desktop' | 'mobile' | 'tablet' | undefined;
+
+  const [platform, setPlatform] = React.useState<
+    'desktop' | 'mobile' | 'tablet'
+  >(metricPlatform ?? 'desktop');
+  const { t } = useTranslation();
 
   const onChange: CheckboxProps['onChange'] = (e) => {
     const checked = e.target.checked;
@@ -44,18 +52,22 @@ function ClickMapRagePicker() {
   );
 
   React.useEffect(() => {
-    const platformId = metricStore.instance.series[0].filter.filters.findIndex(f => f.name === FilterKey.PLATFORM)
+    const platformId = metricStore.instance.series[0].filter.filters.findIndex(
+      (f) => f.name === FilterKey.PLATFORM,
+    );
     if (platformId >= 0) {
-      metricStore.instance.series[0].filter.filters[platformId].value = [platform];
+      metricStore.instance.series[0].filter.filters[platformId].value = [
+        platform,
+      ];
       metricStore.instance.updateKey('hasChanged', true);
     } else {
-      const newFilter = filterStore.findEvent({ name: FilterKey.PLATFORM })
+      const newFilter = filterStore.findEvent({ name: FilterKey.PLATFORM });
       if (newFilter) {
-        newFilter.value = [platform]
-        metricStore.instance.series[0].filter.addFilter(newFilter)
+        newFilter.value = [platform];
+        metricStore.instance.series[0].filter.addFilter(newFilter);
       }
     }
-  }, [platform])
+  }, [platform]);
 
   return (
     <div className="mr-4 flex items-center gap-2 cursor-pointer">
@@ -71,9 +83,10 @@ function ClickMapRagePicker() {
         ]}
         value={platform}
         size="small"
-        onChange={(value) => setPlatform(value as 'desktop' | 'mobile' | 'tablet')}
+        onChange={(value) =>
+          setPlatform(value as 'desktop' | 'mobile' | 'tablet')
+        }
       />
-
 
       <Tooltip title={t('Get new image')}>
         <Button size="small" onClick={refreshHeatmapSession}>

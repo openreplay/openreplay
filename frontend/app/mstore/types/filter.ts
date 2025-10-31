@@ -219,7 +219,7 @@ export default class FilterStore implements IFilterStore {
   }
 
   replaceFilters(newFilters: FilterItem[]) {
-    this.filters = newFilters.map((f) => f);
+    this.filters = newFilters;
   }
 
   private updateFilterByIndex(index: number, filterData: FilterItem) {

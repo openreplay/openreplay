@@ -69,7 +69,7 @@ function WidgetDatatable(props: Props) {
   const [tableData, setTableData] = useState([]);
 
   const columnNames = [];
-  const series = data ? (!data.chart[0] ? [] : data.namesMap) : [];
+  const series = !data.chart?.[0] ? [] : data.namesMap;
 
   React.useEffect(() => {
     if (!data.chart) return;
@@ -139,6 +139,9 @@ function WidgetDatatable(props: Props) {
   };
 
   const isTableOnlyMode = props.metric.viewType === 'table';
+  if (!data.chart && !data.namesMap) {
+    return null;
+  }
   return (
     <div className={cn('relative -mx-4 px-2', showTable ? '' : '')}>
       {!isTableOnlyMode && (

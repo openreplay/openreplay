@@ -266,6 +266,7 @@ function buildCompareTag(val: number, prevVal: number): string {
  * Build category labels (["Sun", "Mon", ...]) from the "current" data only
  */
 export function buildCategories(data: DataProps['data']): string[] {
+  if (!data.chart) return [];
   return data.chart.map((item) => item.time);
 }
 
@@ -275,6 +276,7 @@ export function buildCategories(data: DataProps['data']): string[] {
  * (which is dates in our case)
  */
 export function createDataset(id: string, data: DataProps['data']) {
+  if (!data.namesMap) return {};
   const dimensions = ['idx', ...data.namesMap];
   const source = data.chart.map((item, idx) => {
     const row: (number | undefined)[] = [idx];
@@ -298,6 +300,7 @@ export function createSeries(
   dashed: boolean,
   hideFromLegend: boolean,
 ) {
+  if (!data.namesMap) return [];
   return data.namesMap.filter(Boolean).map((fullName) => {
     const baseName = fullName.replace(/^Previous\s+/, '');
     return {

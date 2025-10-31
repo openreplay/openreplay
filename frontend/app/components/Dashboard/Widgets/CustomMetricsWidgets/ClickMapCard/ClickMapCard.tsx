@@ -12,6 +12,7 @@ function ClickMapCard() {
   const { metricStore, dashboardStore, sessionStore } = useStore();
   const { fetchInsights } = sessionStore;
   const { insights } = sessionStore;
+
   const onMarkerClick = (s: string, innerText: string) => {
     metricStore.changeClickMapSearch(s, innerText);
   };
