@@ -61,6 +61,7 @@ const newApiUrls = [
   '/replay',
   '/conditions',
 ];
+const except = ['integrations/slack/notify', 'integrations/msteams/notify'];
 const useNewApi = localStorage.getItem('__old_api') !== 'true';
 
 export const clean = (
@@ -260,7 +261,10 @@ export default class APIClient {
 
     let fullUrl = edp + _path;
     if (useNewApi) {
-      if (newApiUrls.some((u) => fullUrl.includes(u))) {
+      if (
+        newApiUrls.some((u) => fullUrl.includes(u))
+        && !except.some((e) => fullUrl.includes(e))
+      ) {
         fullUrl = fullUrl.replace('/api', '/newapi/v1');
       }
     }
