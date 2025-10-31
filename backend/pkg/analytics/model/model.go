@@ -100,9 +100,6 @@ func ValidateMetricFields(sl validator.StructLevel) {
 		if !slices.Contains(MetricOfTable, in.MetricOf) {
 			sl.ReportError(in.MetricOf, "MetricOf", "metricOf", fmt.Sprintf("oneof:%s", strings.Join(MetricOfTable, ",")), "")
 		}
-		if in.MetricOf == "screenResolution" && in.MetricFormat != "sessionCount" {
-			sl.ReportError(in.MetricFormat, "MetricFormat", "metricFormat", "equals sessionCount", "")
-		}
 	case "funnel":
 		if !slices.Contains(MetricOfFunnel, in.MetricOf) {
 			sl.ReportError(in.MetricOf, "MetricOf", "metricOf", fmt.Sprintf("oneof:%s", strings.Join(MetricOfFunnel, ",")), "")
