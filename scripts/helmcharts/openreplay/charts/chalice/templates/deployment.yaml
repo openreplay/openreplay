@@ -142,6 +142,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+          {{- if .Values.global.enterpriseEditionLicense }}
+            - name: ASSIST_HEALTH_SERVICE_NAME
+              value: "assist-api"
+          {{- end}}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}
