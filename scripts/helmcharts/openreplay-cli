@@ -420,6 +420,8 @@ function upgrade() {
 
     # Merge preferences
     cp "$OR_DIR/vars.yaml" old_vars.yaml
+    # Remove global.quickwit and .quickwit keys from old vars.yaml if present
+    yq -i 'del(.global.quickwit) | del(.quickwit)' old_vars.yaml
     or_new_version=$(awk '/fromVersion/{print $2}' <"vars.yaml")
     yq '(load("old_vars.yaml") | .. | select(tag != "!!map" and tag != "!!seq")) as $i ireduce(.; setpath($i | path; $i))' vars.yaml >new_vars.yaml
     mv new_vars.yaml vars.yaml
