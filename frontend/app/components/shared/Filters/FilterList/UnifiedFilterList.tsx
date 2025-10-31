@@ -219,9 +219,6 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
           )}
 
           {!isDraggable && showIndices && <div className="w-4 flex-shrink-0" />}
-          {!isDraggable && !showIndices && (
-            <div className="w-4 flex-shrink-0" />
-          )}
 
           <FilterItem
             filterIndex={showIndices ? filterIndex : undefined}
