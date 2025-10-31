@@ -250,7 +250,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	// Build the final query with proper string formatting
 	var query string
 
-	var sessionsSelect []string = []string{"DISTINCT session_id", "user_id"}
+	var sessionsSelect []string = []string{"session_id", "user_id", "events_count"}
 
 	var eventsSelect []string = []string{
 		"main.session_id",
@@ -322,17 +322,21 @@ WHERE %s) AS extra`,
 	var fromSessions string
 	if !isFromEvents || len(sessionConditions) > 4 || r.MetricFormat == MetricFormatUserCount {
 		fromSessions = fmt.Sprintf(`
-(
-	SELECT %s
-	FROM %s AS s
-	WHERE %s
+(SELECT %s
+ FROM %s AS s
+ WHERE %s
+ ORDER BY _timestamp DESC
+ LIMIT 1 BY session_id,metric_value
 ) AS s`,
 			strings.Join(sessionsSelect, ","),
 			sessionsTable,
-			strings.Join(sessionConditions, " AND "))
+			strings.Join(sessionConditions, " AND "),
+		)
 	}
 	if r.MetricFormat == MetricFormatUserCount {
 		distinctColumn = "s.user_id"
+	} else if r.MetricFormat == MetricFormatEventCount && !isFromEvents {
+		distinctColumn = "s.events_count"
 	}
 
 	if fromSessions != "" {
@@ -348,22 +352,24 @@ WHERE %s) AS extra`,
 		}
 	}
 
-	if !(isFromEvents && r.MetricFormat == MetricFormatEventCount) {
+	var countFunction string = "count"
+	if r.MetricFormat != MetricFormatEventCount {
 		distinctColumn = "DISTINCT " + distinctColumn
-	} else {
-
+	} else if !isFromEvents {
+		countFunction = "sum"
 	}
 
 	// Construct the complete query
 	query = fmt.Sprintf(`
 SELECT metric_value AS metric_name,
-       count(%s) AS metric_count,
+       %s(%s) AS metric_count,
        count(DISTINCT metric_value) OVER () AS number_of_metrics,
        sum(metric_count) OVER () AS all_count
 FROM %s %s %s
 GROUP BY metric_value
 ORDER BY metric_count DESC
 LIMIT %d OFFSET %d;`,
+		countFunction,
 		distinctColumn,
 		fromSessions,
 		fromEvents,
