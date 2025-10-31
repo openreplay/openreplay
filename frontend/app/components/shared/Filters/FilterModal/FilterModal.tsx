@@ -217,7 +217,6 @@ function FilterModal({
   activeFilters?: string[];
 }) {
   const inputRef = React.useRef(null);
-  const { filterStore } = useStore();
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery);
@@ -231,8 +230,9 @@ function FilterModal({
     [debouncedQuery, groupedFilters],
   );
   const displayedFilters = useMemo(() => {
+    let filters = [];
     if (category === 'All') {
-      return matchingCategories
+      filters = matchingCategories
         .filter((cat) => cat !== 'All')
         .flatMap((cat) =>
           (matchingFilters[cat] || []).map((filter) => ({
@@ -240,9 +240,13 @@ function FilterModal({
             category: cat,
           })),
         );
+    } else {
+      filters = matchingFilters[category] || [];
     }
-    return matchingFilters[category] || [];
-  }, [category, matchingFilters, matchingCategories]);
+    return filters.filter((f) => {
+      return !activeFilters?.includes(f.name);
+    });
+  }, [category, matchingFilters, matchingCategories, activeFilters]);
   const isResultEmpty = useMemo(
     () =>
       matchingCategories.length <= 1 &&
