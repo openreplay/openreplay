@@ -383,7 +383,10 @@ export default class SessionStore {
         incidents = [],
       } = eventsData;
 
-      const filterEvents = filter.events as Record<string, any>[];
+      const filterEvents = filter.filters.filter((f) => f.isEvent) as Record<
+        string,
+        any
+      >[];
       const matching: number[] = [];
 
       const visitedEvents: Location[] = [];
