@@ -6,55 +6,68 @@ import (
 	"strings"
 	"time"
 
-	"openreplay/backend/pkg/env"
-	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/queue/types"
-
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/pkg/errors"
+
+	"openreplay/backend/pkg/env"
+	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/queue/types"
 )
 
 type Message = kafka.Message
 
 type consumerImpl struct {
-	c                 *kafka.Consumer
+	log               logger.Logger
+	consumer          *kafka.Consumer
 	messageIterator   messages.MessageIterator
 	commitTicker      *time.Ticker
-	pollTimeout       uint
-	lastReceivedPrtTs map[int32]int64
+	pollTimeout       int
+	lastReceivedPrtTs map[string]map[int32]int64
 	rebalanceHandler  types.RebalanceHandler
+	stopChan          chan struct{}
 }
 
 func NewConsumer(
+	log logger.Logger,
 	group string,
 	topics []string,
 	messageIterator messages.MessageIterator,
 	autoCommit bool,
 	messageSizeLimit int,
 	rebalanceHandler types.RebalanceHandler,
-) types.Consumer {
+) (types.Consumer, error) {
 	kafkaConfig := &kafka.ConfigMap{
 		"bootstrap.servers":               env.String("KAFKA_SERVERS"),
 		"group.id":                        group,
 		"auto.offset.reset":               "earliest",
 		"enable.auto.commit":              "false",
-		"security.protocol":               "plaintext",
 		"go.application.rebalance.enable": true,
 		"max.poll.interval.ms":            env.Int("KAFKA_MAX_POLL_INTERVAL_MS"),
 		"max.partition.fetch.bytes":       messageSizeLimit,
 		"go.logs.channel.enable":          true,
 	}
-	// Apply ssl configuration
-	if env.Bool("KAFKA_USE_SSL") {
+
+	useSSL := env.Bool("KAFKA_USE_SSL")
+	useKerberos := env.Bool("KAFKA_USE_KERBEROS")
+
+	switch {
+	case useKerberos && useSSL:
+		kafkaConfig.SetKey("security.protocol", "sasl_ssl")
+	case useKerberos:
+		kafkaConfig.SetKey("security.protocol", "sasl_plaintext")
+	case useSSL:
 		kafkaConfig.SetKey("security.protocol", "ssl")
+	default:
+		kafkaConfig.SetKey("security.protocol", "plaintext")
+	}
+
+	if useSSL {
 		kafkaConfig.SetKey("ssl.ca.location", os.Getenv("KAFKA_SSL_CA"))
 		kafkaConfig.SetKey("ssl.key.location", os.Getenv("KAFKA_SSL_KEY"))
 		kafkaConfig.SetKey("ssl.certificate.location", os.Getenv("KAFKA_SSL_CERT"))
 	}
-
-	// Apply Kerberos configuration
-	if env.Bool("KAFKA_USE_KERBEROS") {
-		kafkaConfig.SetKey("security.protocol", "sasl_plaintext")
+	if useKerberos {
 		kafkaConfig.SetKey("sasl.mechanisms", "GSSAPI")
 		kafkaConfig.SetKey("sasl.kerberos.service.name", os.Getenv("KERBEROS_SERVICE_NAME"))
 		kafkaConfig.SetKey("sasl.kerberos.principal", os.Getenv("KERBEROS_PRINCIPAL"))
@@ -63,44 +76,51 @@ func NewConsumer(
 
 	c, err := kafka.NewConsumer(kafkaConfig)
 	if err != nil {
-		log.Fatalln(err)
-	}
-
-	var commitTicker *time.Ticker
-	if autoCommit {
-		commitTicker = time.NewTicker(2 * time.Minute)
+		return nil, err
 	}
 
 	consumer := &consumerImpl{
-		c:                 c,
+		log:               log,
+		consumer:          c,
 		messageIterator:   messageIterator,
-		commitTicker:      commitTicker,
 		pollTimeout:       200,
-		lastReceivedPrtTs: make(map[int32]int64, 16),
+		lastReceivedPrtTs: make(map[string]map[int32]int64, 4),
 		rebalanceHandler:  rebalanceHandler,
+		stopChan:          make(chan struct{}),
 	}
-
-	if err := c.SubscribeTopics(topics, consumer.reBalanceCallback); err != nil {
-		log.Fatalln(err)
+	if autoCommit {
+		consumer.commitTicker = time.NewTicker(2 * time.Minute)
 	}
-	go func() {
-		for {
-			logMsg := <-consumer.c.Logs()
-			if logMsg.Tag == "MAXPOLL" && strings.Contains(logMsg.Message, "leaving group") {
-				// By some reason service logic took too much time and was kicked out from the group
-				log.Printf("Kafka consumer left the group, exiting...")
-				os.Exit(1)
-			}
-			if logMsg != (kafka.LogEvent{}) {
-				log.Printf("Kafka consumer log: %s", logMsg.String())
-			}
-		}
-	}()
-	return consumer
+	if err = c.SubscribeTopics(topics, consumer.reBalanceCallback); err != nil {
+		return nil, err
+	}
+	for _, topic := range topics {
+		consumer.lastReceivedPrtTs[topic] = make(map[int32]int64, 16)
+	}
+	go consumer.kafkaLogger()
+	return consumer, nil
 }
 
-func (consumer *consumerImpl) reBalanceCallback(c *kafka.Consumer, e kafka.Event) error {
-	if consumer.rebalanceHandler == nil {
+func (c *consumerImpl) kafkaLogger() {
+	for {
+		select {
+		case <-c.stopChan:
+			return
+		case logMsg, ok := <-c.consumer.Logs():
+			if !ok {
+				return
+			}
+			if logMsg.Tag == "MAXPOLL" && strings.Contains(logMsg.Message, "leaving group") {
+				log.Printf("Kafka consumer left the group, exiting...")
+				os.Exit(1) // TODO: inform the main logic
+			}
+			log.Printf("Kafka consumer log: %s", logMsg.String())
+		}
+	}
+}
+
+func (c *consumerImpl) reBalanceCallback(consumer *kafka.Consumer, e kafka.Event) error {
+	if c.rebalanceHandler == nil {
 		return nil
 	}
 	getPartitionsNumbers := func(partitions []kafka.TopicPartition) []uint64 {
@@ -113,98 +133,85 @@ func (consumer *consumerImpl) reBalanceCallback(c *kafka.Consumer, e kafka.Event
 	log.Println(e.String())
 	switch evt := e.(type) {
 	case kafka.RevokedPartitions:
-		consumer.rebalanceHandler(types.RebalanceTypeRevoke, getPartitionsNumbers(evt.Partitions))
+		c.rebalanceHandler(types.RebalanceTypeRevoke, getPartitionsNumbers(evt.Partitions))
+		if _, err := consumer.Commit(); err != nil {
+			log.Println("reBalanceCallback error: can't commit the current state, ", err)
+		}
 	case kafka.AssignedPartitions:
-		consumer.rebalanceHandler(types.RebalanceTypeAssign, getPartitionsNumbers(evt.Partitions))
-	}
-	if _, err := c.Commit(); err != nil {
-		log.Println("reBalanceCallback error: can't commit the current state, ", err)
+		c.rebalanceHandler(types.RebalanceTypeAssign, getPartitionsNumbers(evt.Partitions))
 	}
 	return nil
 }
 
-func (consumer *consumerImpl) Commit() error {
-	consumer.c.Commit() // TODO: return error if it is not "No offset stored"
-	return nil
+func (c *consumerImpl) getPartitionTime(p kafka.TopicPartition, gap int64) (int64, bool) {
+	if lastTs, ok := c.lastReceivedPrtTs[*p.Topic][p.Partition]; ok {
+		return lastTs - gap, true
+	}
+	return 0, false
 }
 
-func (consumer *consumerImpl) commitAtTimestamps(
-	getPartitionTime func(kafka.TopicPartition) (bool, int64),
-	limitToCommitted bool,
-) error {
-	assigned, err := consumer.c.Assignment()
+func (c *consumerImpl) CommitBack(gap int64) error {
+	assigned, err := c.consumer.Assignment()
 	if err != nil {
 		return err
 	}
 
 	var timestamps []kafka.TopicPartition
-	for _, p := range assigned { // p is a copy here since it is not a pointer
-		shouldCommit, commitTs := getPartitionTime(p)
-		if !shouldCommit {
-			continue
-		} // didn't receive anything yet
-		p.Offset = kafka.Offset(commitTs)
-		timestamps = append(timestamps, p)
+	for _, p := range assigned {
+		if commitTs, shouldCommit := c.getPartitionTime(p, gap); shouldCommit {
+			p.Offset = kafka.Offset(commitTs)
+			timestamps = append(timestamps, p)
+		}
 	}
-	offsets, err := consumer.c.OffsetsForTimes(timestamps, 2000)
+	if len(timestamps) == 0 {
+		return nil
+	}
+
+	offsets, err := c.consumer.OffsetsForTimes(timestamps, 2000)
 	if err != nil {
 		return errors.Wrap(err, "Kafka Consumer back commit error")
 	}
 
-	if limitToCommitted {
-		// Limiting to already committed
-		committed, err := consumer.c.Committed(assigned, 2000) // memorise?
-		if err != nil {
-			return errors.Wrap(err, "Kafka Consumer retrieving committed error")
+	committed, err := c.consumer.Committed(assigned, 2000)
+	if err != nil {
+		return errors.Wrap(err, "Kafka Consumer retrieving committed error")
+	}
+	for _, comm := range committed {
+		if comm.Offset == kafka.OffsetStored || comm.Offset == kafka.OffsetInvalid ||
+			comm.Offset == kafka.OffsetBeginning || comm.Offset == kafka.OffsetEnd {
+			continue
 		}
-		for _, comm := range committed {
-			if comm.Offset == kafka.OffsetStored ||
-				comm.Offset == kafka.OffsetInvalid ||
-				comm.Offset == kafka.OffsetBeginning ||
-				comm.Offset == kafka.OffsetEnd {
-				continue
-			}
-			for _, offs := range offsets {
-				if offs.Partition == comm.Partition &&
-					(comm.Topic != nil && offs.Topic != nil && *comm.Topic == *offs.Topic) &&
-					comm.Offset > offs.Offset {
-					offs.Offset = comm.Offset
-				}
+		for i, offs := range offsets {
+			if offs.Partition == comm.Partition &&
+				comm.Topic != nil && offs.Topic != nil &&
+				*comm.Topic == *offs.Topic &&
+				comm.Offset > offs.Offset {
+				offsets[i].Offset = comm.Offset
 			}
 		}
 	}
 
-	// TODO: check per-partition errors: offsets[i].Error
-	_, err = consumer.c.CommitOffsets(offsets)
+	_, err = c.consumer.CommitOffsets(offsets)
 	return errors.Wrap(err, "Kafka Consumer back commit error")
 }
 
-func (consumer *consumerImpl) CommitBack(gap int64) error {
-	return consumer.commitAtTimestamps(func(p kafka.TopicPartition) (bool, int64) {
-		lastTs, ok := consumer.lastReceivedPrtTs[p.Partition]
-		if !ok {
-			return false, 0
-		}
-		return true, lastTs - gap
-	}, true)
+func (c *consumerImpl) Commit() error {
+	_, err := c.consumer.Commit()
+	return err
 }
 
-func (consumer *consumerImpl) CommitAtTimestamp(commitTs int64) error {
-	return consumer.commitAtTimestamps(func(p kafka.TopicPartition) (bool, int64) {
-		return true, commitTs
-	}, false)
-}
-
-func (consumer *consumerImpl) ConsumeNext() error {
-	ev := consumer.c.Poll(int(consumer.pollTimeout))
+func (c *consumerImpl) ConsumeNext() error {
+	ev := c.consumer.Poll(c.pollTimeout)
 	if ev == nil {
 		return nil
 	}
 
-	if consumer.commitTicker != nil {
+	if c.commitTicker != nil {
 		select {
-		case <-consumer.commitTicker.C:
-			consumer.Commit()
+		case <-c.commitTicker.C:
+			if err := c.Commit(); err != nil {
+				log.Println("Kafka Consumer commit error: ", err)
+			}
 		default:
 		}
 	}
@@ -215,7 +222,7 @@ func (consumer *consumerImpl) ConsumeNext() error {
 			return errors.Wrap(e.TopicPartition.Error, "Consumer Partition Error")
 		}
 		ts := e.Timestamp.UnixMilli()
-		consumer.messageIterator.Iterate(
+		c.messageIterator.Iterate(
 			e.Value,
 			messages.NewBatchInfo(
 				decodeKey(e.Key),
@@ -223,21 +230,27 @@ func (consumer *consumerImpl) ConsumeNext() error {
 				uint64(e.TopicPartition.Offset),
 				uint64(e.TopicPartition.Partition),
 				ts))
-		consumer.lastReceivedPrtTs[e.TopicPartition.Partition] = ts
+		c.lastReceivedPrtTs[*e.TopicPartition.Topic][e.TopicPartition.Partition] = ts
 	case kafka.Error:
 		if e.Code() == kafka.ErrAllBrokersDown || e.Code() == kafka.ErrMaxPollExceeded {
-			os.Exit(1)
+			return errors.Wrap(e, "Kafka Consumer Error")
 		}
 		log.Printf("Consumer error: %v\n", e)
 	}
 	return nil
 }
 
-func (consumer *consumerImpl) Close() {
-	if consumer.commitTicker != nil {
-		consumer.Commit()
+func (c *consumerImpl) Close() {
+	if c.commitTicker != nil {
+		c.commitTicker.Stop()
+		if err := c.Commit(); err != nil {
+			log.Println("Kafka Consumer Commit error:", err)
+		}
 	}
-	if err := consumer.c.Close(); err != nil {
+	if c.stopChan != nil {
+		close(c.stopChan)
+	}
+	if err := c.consumer.Close(); err != nil {
 		log.Printf("Kafka consumer close error: %v", err)
 	}
 }

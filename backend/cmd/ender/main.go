@@ -59,7 +59,8 @@ func main() {
 	mobileMessages := []int{90, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 107, 110, 111}
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
-	consumer := queue.NewConsumer(
+	consumer, err := queue.NewConsumer(
+		log,
 		cfg.GroupEnder,
 		[]string{
 			cfg.TopicRawWeb,
@@ -81,6 +82,9 @@ func main() {
 			}
 		},
 	)
+	if err != nil {
+		log.Fatal(ctx, "can't init message consumer: %s", err)
+	}
 
 	memoryManager, err := memory.NewManager(log, cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
 	if err != nil {

@@ -189,7 +189,8 @@ func main() {
 		sinkMetrics.RecordMessageSize(float64(len(msg.Encode())))
 	}
 
-	consumer := queue.NewConsumer(
+	consumer, err := queue.NewConsumer(
+		log,
 		cfg.GroupSink,
 		[]string{
 			cfg.TopicRawWeb,
@@ -204,6 +205,10 @@ func main() {
 			log.Info(ctx, "manual sync finished, dur: %d", time.Now().Sub(s).Milliseconds())
 		},
 	)
+	if err != nil {
+		log.Fatal(ctx, "can't init message consumer: %s", err)
+	}
+
 	log.Info(ctx, "sink service started")
 
 	sigchan := make(chan os.Signal, 1)
