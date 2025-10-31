@@ -2,7 +2,6 @@ package redisstream
 
 import (
 	"context"
-	"log"
 	"net"
 	"sort"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 	_redis "github.com/redis/go-redis/v9"
 
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/queue/types"
 )
 
 type idsInfo struct {
@@ -21,7 +21,7 @@ type idsInfo struct {
 }
 type streamPendingIDsMap map[string]*idsInfo
 
-type Consumer struct {
+type consumerImpl struct {
 	redis           *_redis.Client
 	streams         []string
 	group           string
@@ -31,15 +31,15 @@ type Consumer struct {
 	autoCommit      bool
 }
 
-func NewConsumer(group string, streams []string, messageIterator messages.MessageIterator) *Consumer {
+func NewConsumer(group string, streams []string, messageIterator messages.MessageIterator) (types.Consumer, error) {
 	redis, err := getRedisClient()
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 	for _, stream := range streams {
 		err := redis.XGroupCreateMkStream(context.Background(), stream, group, "0").Err()
 		if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
-			log.Fatalln(err)
+			return nil, err
 		}
 	}
 
@@ -55,19 +55,19 @@ func NewConsumer(group string, streams []string, messageIterator messages.Messag
 		idsPending[streams[i]] = new(idsInfo)
 	}
 
-	return &Consumer{
+	return &consumerImpl{
 		redis:           redis,
 		messageIterator: messageIterator,
 		streams:         streams,
 		group:           group,
 		autoCommit:      true,
 		idsPending:      idsPending,
-	}
+	}, nil
 }
 
 const READ_COUNT = 10
 
-func (c *Consumer) ConsumeNext() error {
+func (c *consumerImpl) ConsumeNext() error {
 	// MBTODO: read in go routine, send messages to channel
 	res, err := c.redis.XReadGroup(context.Background(), &_redis.XReadGroupArgs{
 		Group:    c.group,
@@ -123,7 +123,7 @@ func (c *Consumer) ConsumeNext() error {
 	return nil
 }
 
-func (c *Consumer) Commit() error {
+func (c *consumerImpl) Commit() error {
 	for stream, idsInfo := range c.idsPending {
 		if len(idsInfo.id) == 0 {
 			continue
@@ -137,7 +137,7 @@ func (c *Consumer) Commit() error {
 	return nil
 }
 
-func (c *Consumer) CommitBack(gap int64) error {
+func (c *consumerImpl) CommitBack(gap int64) error {
 	if c.lastTs == 0 {
 		return nil
 	}
@@ -159,6 +159,6 @@ func (c *Consumer) CommitBack(gap int64) error {
 	return nil
 }
 
-func (c *Consumer) Close() {
+func (c *consumerImpl) Close() {
 	// noop
 }
