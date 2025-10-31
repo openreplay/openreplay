@@ -152,6 +152,10 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	if reverse {
 		pathDirection = "DESC"
 	}
+	if !p.HideExcess {
+		p.HideExcess = true
+		p.Rows = 50
+	}
 
 	var subEvents []JourneyStep = make([]JourneyStep, 0)
 	var startPointsConditions []string = make([]string, 0)
