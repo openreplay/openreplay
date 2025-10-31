@@ -548,7 +548,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		webVitals := map[string]interface{}{}
 		if err := json.Unmarshal([]byte(msg.WebVitals), &webVitals); err == nil {
 			for key, value := range webVitals {
-				payload[key] = value
+				payload[strings.ToLower(key)] = value
 			}
 		}
 	}
