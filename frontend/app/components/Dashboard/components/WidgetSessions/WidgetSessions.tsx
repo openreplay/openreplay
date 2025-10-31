@@ -129,6 +129,7 @@ function WidgetSessions({ className = '' }) {
           }
         })
         .catch((e) => {
+          setData([]);
           console.error(e);
           toast.error(t('Failed to refresh sessions, try again later.'));
         })
