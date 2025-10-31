@@ -58,7 +58,9 @@ func NewSessionFinder(log logger.Logger, cfg *config.Config, stg *storage.Storag
 		done:             make(chan struct{}, 1),
 	}
 	finder.producer = queue.NewProducer(cfg.MessageSizeLimit, false)
-	finder.consumer = queue.NewConsumer(
+	var err error
+	finder.consumer, err = queue.NewConsumer(
+		log,
 		cfg.GroupFailover,
 		[]string{
 			cfg.TopicFailover,
@@ -73,6 +75,10 @@ func NewSessionFinder(log logger.Logger, cfg *config.Config, stg *storage.Storag
 		cfg.MessageSizeLimit,
 		nil,
 	)
+	if err != nil {
+		return nil, err
+	}
+
 	go finder.worker()
 	return finder, nil
 }
