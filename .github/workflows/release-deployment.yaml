@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       services:
-        description: 'Comma-separated list of services to deploy. eg: frontend,api,sink'
+        description: 'service name to deploy(one service only!!!): eg: analytics'
         required: true
       branch:
         description: 'Branch to deploy (defaults to dev)'
