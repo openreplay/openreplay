@@ -74,15 +74,12 @@ class SearchStore {
   latestList = List();
   alertMetricId: number | null = null;
   instance = new Search({
-    // rangeValue: LAST_24_HOURS,
     startDate: Date.now() - 24 * 60 * 60 * 1000,
     endDate: Date.now(),
     filters: [],
-    groupByUser: false,
     sort: 'startTs',
     order: 'desc',
     viewed: false,
-    eventsCount: 0,
     consoleLevel: '',
     eventsOrder: 'then',
   });
@@ -573,7 +570,6 @@ class SearchStore {
           ...filter,
           page: this.currentPage,
           limit: this.pageSize,
-          tab: this.activeTab.type,
           bookmarked: bookmarked ? true : undefined,
         },
         force,

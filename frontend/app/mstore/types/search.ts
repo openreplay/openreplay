@@ -24,15 +24,12 @@ interface ISearch {
   userCountry?: string;
   userDevice?: string;
   fid0?: string;
-  events: Event[];
   filters: Filter[];
   minDuration?: number;
   maxDuration?: number;
-  custom: Record<string, any>;
   rangeValue: string;
   startDate: number;
   endDate: number;
-  groupByUser: boolean;
   sort: string;
   order: string;
   viewed?: boolean;
@@ -51,15 +48,12 @@ export default class Search {
   userCountry?: string;
   userDevice?: string;
   fid0?: string;
-  events: Event[];
   filters: Filter[];
   minDuration?: number;
   maxDuration?: number;
-  custom: Record<string, any>;
   rangeValue: string;
   startDate: number;
   endDate: number;
-  groupByUser: boolean;
   sort: string;
   order: string;
   viewed?: boolean;
@@ -82,20 +76,16 @@ export default class Search {
       userCountry: undefined,
       userDevice: undefined,
       fid0: undefined,
-      events: [],
       filters: [],
       minDuration: undefined,
       maxDuration: undefined,
-      custom: {},
       rangeValue,
       startDate,
       endDate,
-      groupByUser: false,
       sort: 'startTs',
       order: 'desc',
       viewed: undefined,
       consoleLogCount: undefined,
-      eventsCount: undefined,
       consoleLevel: undefined,
       eventsOrder: 'then',
       limit: 10,
@@ -247,7 +237,6 @@ export default class Search {
       startDate,
       endDate,
       filters,
-      // events: events.map((event: any) => new Event(event)),
       // filters: filters.map((i: any) => {
       //   const filter = new Filter(i).toData();
       //   if (Array.isArray(i.filters)) {

@@ -24,7 +24,6 @@ export default Record(
     userCountry: undefined,
     userDevice: undefined,
     fid0: undefined,
-    events: List(),
     filters: List(),
     minDuration: undefined,
     maxDuration: undefined,
@@ -32,14 +31,12 @@ export default Record(
     rangeValue,
     startDate,
     endDate,
-    groupByUser: false,
 
     sort: 'startTs',
     order: 'desc',
 
     viewed: undefined,
     consoleLogCount: undefined,
-    eventsCount: undefined,
 
     consoleLevel: undefined,
     eventsOrder: 'then',
@@ -96,7 +93,6 @@ export default Record(
         eventsOrder,
         startDate,
         endDate,
-        events: List(events).map(Event),
         filters: List(filters).map((i) => {
           const filter = NewFilter(i).toData();
           if (Array.isArray(i.filters)) {
