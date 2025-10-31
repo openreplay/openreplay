@@ -115,6 +115,7 @@ function SessionFilters() {
         onChangeOrder={onChangeEventsOrder}
         filterSelection={
           <FilterSelection
+            type="Events"
             filters={eventOptions}
             activeFilters={activeFilters}
             onFilterClick={onAddFilter}
@@ -147,6 +148,7 @@ function SessionFilters() {
         title="Filters"
         filterSelection={
           <FilterSelection
+            type="Filters"
             filters={propertyOptions}
             activeFilters={activeFilters}
             onFilterClick={onAddFilter}

@@ -67,6 +67,7 @@ function LiveSessionSearch() {
         title="Filters"
         filterSelection={
           <FilterSelection
+            type="Filters"
             filters={propertyOptions}
             activeFilters={activeFilters}
             onFilterClick={onAddFilter}

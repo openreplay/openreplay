@@ -66,6 +66,7 @@ export const FilterList = observer((props: Props) => {
       <div className={'flex items-center pt-2'} style={{ gap: '0.65rem' }}>
         <div className="font-medium">{t('Filters')}</div>
         <FilterSelection
+          type="Filters"
           activeFilters={activeFilters}
           filter={undefined}
           onFilterClick={onAddFilter}
@@ -227,6 +228,7 @@ export const EventsList = observer((props: Props) => {
         <div className="font-medium">{t('Events')}</div>
         {cannotAdd ? null : (
           <FilterSelection
+            type="Events"
             filter={undefined}
             activeFilters={activeFilters}
             onFilterClick={onAddFilter}

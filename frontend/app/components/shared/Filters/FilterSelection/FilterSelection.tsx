@@ -13,8 +13,8 @@ interface FilterSelectionProps {
   onFilterClick: (filter: Filter) => void;
   children?: React.ReactNode;
   disabled?: boolean;
-  isLive?: boolean;
   loading?: boolean;
+  type?: 'Events' | 'Filters' | 'Properties';
 }
 
 const FilterSelection: React.FC<FilterSelectionProps> = observer(
@@ -23,9 +23,9 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
     onFilterClick,
     children,
     disabled = false,
-    isLive,
     loading = false,
     activeFilters,
+    type,
   }) => {
     const [open, setOpen] = useState(false);
 
@@ -68,6 +68,7 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
             activeFilters={activeFilters}
             onFilterClick={handleFilterClick}
             filters={filters}
+            type={type}
           />
         ),
       [loading, filters, handleFilterClick],

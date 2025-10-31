@@ -253,6 +253,9 @@ function FilterItem(props: Props) {
             onFilterClick={replaceFilter}
             disabled={disableDelete || readonly}
             loading={isSubItem ? false : eventFiltersLoading}
+            type={
+              isSubItem ? 'Properties' : filter.isEvent ? 'Events' : 'Filters'
+            }
           >
             <Button
               type="default"
@@ -350,6 +353,7 @@ function FilterItem(props: Props) {
 
           {filter.isEvent && !isSubItem && (
             <FilterSelection
+              type="Properties"
               filters={eventFilterOptions}
               onFilterClick={addSubFilter}
               disabled={disableDelete || readonly || eventFiltersLoading}

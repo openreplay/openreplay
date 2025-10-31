@@ -69,17 +69,19 @@ const groupFiltersByCategory = (
 const getFilteredEntries = (
   query: string,
   grouped: Record<string, Filter[]>,
+  type?: 'Events' | 'Filters' | 'Properties',
 ) => {
   const trimmed = query.trim().toLowerCase();
+  const all = `All${type ? ` ${type}` : ''}`;
   if (!Object.keys(grouped).length)
-    return { matchingCategories: ['All'], matchingFilters: {} };
+    return { matchingCategories: [all], matchingFilters: {} };
   const categories = Object.keys(grouped);
   if (!trimmed)
     return {
-      matchingCategories: ['All', ...categories],
+      matchingCategories: [all, ...categories],
       matchingFilters: grouped,
     };
-  const matched = new Set<string>(['All']);
+  const matched = new Set<string>([all]);
   const filtersMap: Record<string, Filter[]> = {};
 
   categories.forEach((cat) => {
@@ -95,7 +97,7 @@ const getFilteredEntries = (
   });
 
   return {
-    matchingCategories: ['All', ...categories.filter((c) => matched.has(c))],
+    matchingCategories: [all, ...categories.filter((c) => matched.has(c))],
     matchingFilters: filtersMap,
   };
 };
@@ -211,10 +213,12 @@ function FilterModal({
   onFilterClick = () => null,
   filters = [],
   activeFilters = [],
+  type,
 }: {
   onFilterClick: (f: Filter) => void;
   filters: Filter[];
   activeFilters?: string[];
+  type?: 'Events' | 'Filters' | 'Properties';
 }) {
   const inputRef = React.useRef(null);
   const { t } = useTranslation();
@@ -226,14 +230,14 @@ function FilterModal({
     [filters],
   );
   const { matchingCategories, matchingFilters } = useMemo(
-    () => getFilteredEntries(debouncedQuery, groupedFilters),
-    [debouncedQuery, groupedFilters],
+    () => getFilteredEntries(debouncedQuery, groupedFilters, type),
+    [debouncedQuery, groupedFilters, type],
   );
   const displayedFilters = useMemo(() => {
     let filters = [];
-    if (category === 'All') {
+    if (category.startsWith('All')) {
       filters = matchingCategories
-        .filter((cat) => cat !== 'All')
+        .filter((cat) => !cat.startsWith('All'))
         .flatMap((cat) =>
           (matchingFilters[cat] || []).map((filter) => ({
             ...filter,

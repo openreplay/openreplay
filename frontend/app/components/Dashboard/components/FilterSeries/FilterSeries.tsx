@@ -258,6 +258,7 @@ function FilterSeries(props: Props) {
                 onChangeOrder={onChangeEventsOrder}
                 filterSelection={
                   <FilterSelection
+                    type="Events"
                     disabled={disableEvents}
                     activeFilters={activeFilters}
                     filters={eventOptions}
@@ -304,6 +305,7 @@ function FilterSeries(props: Props) {
             showEventsOrder={actualProperties.length > 0}
             filterSelection={
               <FilterSelection
+                type="Filters"
                 filters={propertyOptions}
                 onFilterClick={onAddFilter}
                 activeFilters={activeFilters}
