@@ -53,6 +53,12 @@ function SubHeader(props: any) {
   const [hideTools, setHideTools] = React.useState(mobileScreen);
   const [isFavorite, setIsFavorite] = React.useState(favorite);
 
+  React.useEffect(() => {
+    if (favorite) {
+      setIsFavorite(favorite);
+    }
+  }, [favorite]);
+
   const { openModal, closeModal } = useModal();
 
   React.useEffect(() => {
