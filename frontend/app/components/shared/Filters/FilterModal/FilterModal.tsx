@@ -220,6 +220,7 @@ function FilterModal({
   activeFilters?: string[];
   type?: 'Events' | 'Filters' | 'Properties';
 }) {
+  const eventModal = filters.every((f) => f.isEvent) || type === 'Events';
   const inputRef = React.useRef(null);
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -247,9 +248,13 @@ function FilterModal({
     } else {
       filters = matchingFilters[category] || [];
     }
-    return filters.filter((f) => {
-      return !activeFilters?.includes(f.name);
-    });
+    if (eventModal) {
+      return filters;
+    } else {
+      return filters.filter((f) => {
+        return !activeFilters?.includes(f.name);
+      });
+    }
   }, [category, matchingFilters, matchingCategories, activeFilters]);
   const isResultEmpty = useMemo(
     () =>
