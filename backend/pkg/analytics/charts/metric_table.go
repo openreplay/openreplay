@@ -321,16 +321,22 @@ WHERE %s) AS extra`,
 
 	var fromSessions string
 	if !isFromEvents || len(sessionConditions) > 4 || r.MetricFormat == MetricFormatUserCount {
+		log.Println(">>>>>> isFromEvent:", isFromEvents)
+		var limitBy []string = []string{"session_id"}
+		if !isFromEvents {
+			limitBy = append(limitBy, "metric_value")
+		}
 		fromSessions = fmt.Sprintf(`
 (SELECT %s
  FROM %s AS s
  WHERE %s
  ORDER BY _timestamp DESC
- LIMIT 1 BY session_id,metric_value
+ LIMIT 1 BY %s
 ) AS s`,
 			strings.Join(sessionsSelect, ","),
 			sessionsTable,
 			strings.Join(sessionConditions, " AND "),
+			strings.Join(limitBy, ","),
 		)
 	}
 	if r.MetricFormat == MetricFormatUserCount {
