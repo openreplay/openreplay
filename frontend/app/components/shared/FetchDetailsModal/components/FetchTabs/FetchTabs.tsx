@@ -228,9 +228,10 @@ function FetchTabs({ resource, isSpot, isXHR }: Props) {
                   )}
                   <br />
                   <a
-                    href="https://docs.openreplay.com/en/sdk/network-options"
+                    href="https://docs.openreplay.com/en/troubleshooting/network-resources/"
                     className="link"
                     target="_blank"
+                    rel="noreferrer"
                   >
                     {t('Learn how to get more out of Fetch/XHR requests.')}
                   </a>
