@@ -86,6 +86,7 @@ type MetricPayload struct {
 	SortOrder        string     `json:"sortOrder"`
 	IncludeClickRage bool       `json:"includeClickRage"`
 	StartType        string     `json:"startType" validate:"oneof=start end"`
+	HideExcess       bool       `json:"hideExcess"`
 }
 
 func ValidateMetricFields(sl validator.StructLevel) {
