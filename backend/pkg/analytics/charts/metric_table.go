@@ -86,15 +86,16 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 	if _, ok := validMetricOfValues[MetricOfTable(p.MetricOf)]; !ok {
 		return nil, fmt.Errorf("invalid MetricOf value: %s", p.MetricOf)
 	}
-	metricFormat := p.MetricFormat
-	if metricFormat != MetricFormatSessionCount && metricFormat != MetricFormatUserCount {
-		metricFormat = MetricFormatSessionCount
-	}
+	//metricFormat := p.MetricFormat
+	//if metricFormat != MetricFormatSessionCount && metricFormat != MetricFormatUserCount {
+	//	metricFormat = MetricFormatSessionCount
+	//}
 	if p.MetricOf == "screenResolution" {
 		return t.executeForTableOfResolutions(p)
 	}
 
-	query, err := t.buildQuery(p, metricFormat)
+	//query, err := t.buildQuery(p, metricFormat)
+	query, err := t.buildQuery(p)
 	if err != nil {
 		return nil, fmt.Errorf("error building query: %w", err)
 	}
@@ -182,13 +183,13 @@ func uniqueSliceOfStrings(slice []string) []string {
 	return list
 }
 
-func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string, error) {
+func (t *TableQueryBuilder) buildQuery(r *Payload) (string, error) {
 	if r == nil {
 		return "", errors.New("payload is nil")
 	}
 
 	s := r.Series[0]
-	log.Printf("MetricOf: %s, MetricFormat: %s", r.MetricOf, metricFormat)
+	log.Printf("MetricOf: %s, MetricFormat: %s", r.MetricOf, r.MetricFormat)
 	if r.MetricOf == "screenResolution" {
 		return "", fmt.Errorf("Should call buildTableOfResolutionsQuery instead of buildQuery for screenResolution metric")
 	}
@@ -213,10 +214,11 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 	skipEventsTable := slices.Contains([]string{
 		string(MetricOfTableUserId), string(MetricOfTableCountry),
 		string(MetricOfTableDevice), string(MetricOfTableBrowser),
+		string(MetricOfTableReferrer),
 	}, r.MetricOf) && len(eventConditions) == 0
 
 	eventsConditions := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, []string{})
-	sessionConditions := t.buildSessionConditions(r, metricFormat, durConds)
+	sessionConditions := t.buildSessionConditions(r, r.MetricFormat, durConds)
 	eventsHaving, whereClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
 		return "", err
@@ -237,7 +239,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload, metricFormat string) (string,
 
 	// Determine aggregation column
 	distinctColumn := "session_id"
-	if metricFormat == MetricFormatUserCount {
+	if r.MetricFormat == MetricFormatUserCount {
 		distinctColumn = "user_id"
 	}
 	pagination := t.calculatePagination(r.Page, r.Limit)
