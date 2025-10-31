@@ -90,7 +90,8 @@ export default ErrorListItem;
 function CustomTooltip({ active, payload, label }: any) {
   const { t } = useTranslation();
   if (active) {
-    const p = payload[0].payload;
+    const p = payload[0]?.payload;
+    if (!p) return null;
     const dateStr = p.timestamp
       ? DateTime.fromMillis(p.timestamp).toFormat('l')
       : '';

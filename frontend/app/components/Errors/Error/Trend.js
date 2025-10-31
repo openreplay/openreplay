@@ -15,7 +15,8 @@ import { useTranslation } from 'react-i18next';
 function CustomTooltip({ active, payload, label, timeFormat = 'hh:mm a' }) {
   const { t } = useTranslation();
   if (active) {
-    const p = payload[0].payload;
+    const p = payload[0]?.payload;
+    if (!p) return null;
     const dateStr = DateTime.fromMillis(p.timestamp).toFormat(timeFormat);
     return (
       <div className="rounded border bg-white p-2">
