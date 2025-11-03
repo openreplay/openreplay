@@ -1,7 +1,8 @@
 package kafka
 
 import (
-	"log"
+	"context"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -111,15 +112,15 @@ func (c *consumerImpl) kafkaLogger() {
 				return
 			}
 			if logMsg.Tag == "MAXPOLL" && strings.Contains(logMsg.Message, "leaving group") {
-				log.Printf("Kafka consumer left the group, exiting...")
+				c.log.Warn(context.Background(), "kafka consumer left the group, exiting...")
 				os.Exit(1) // TODO: inform the main logic
 			}
-			log.Printf("Kafka consumer log: %s", logMsg.String())
+			c.log.Info(context.Background(), "kafka consumer log: %s", logMsg.String())
 		}
 	}
 }
 
-func (c *consumerImpl) reBalanceCallback(consumer *kafka.Consumer, e kafka.Event) error {
+func (c *consumerImpl) reBalanceCallback(_ *kafka.Consumer, e kafka.Event) error {
 	if c.rebalanceHandler == nil {
 		return nil
 	}
@@ -130,12 +131,12 @@ func (c *consumerImpl) reBalanceCallback(consumer *kafka.Consumer, e kafka.Event
 		}
 		return parts
 	}
-	log.Println(e.String())
+	c.log.Info(context.Background(), e.String())
 	switch evt := e.(type) {
 	case kafka.RevokedPartitions:
 		c.rebalanceHandler(types.RebalanceTypeRevoke, getPartitionsNumbers(evt.Partitions))
-		if _, err := consumer.Commit(); err != nil {
-			log.Println("reBalanceCallback error: can't commit the current state, ", err)
+		if err := c.Commit(); err != nil {
+			c.log.Info(context.Background(), "reBalanceCallback error: can't commit the current state, %s", err)
 		}
 	case kafka.AssignedPartitions:
 		c.rebalanceHandler(types.RebalanceTypeAssign, getPartitionsNumbers(evt.Partitions))
@@ -169,12 +170,12 @@ func (c *consumerImpl) CommitBack(gap int64) error {
 
 	offsets, err := c.consumer.OffsetsForTimes(timestamps, 2000)
 	if err != nil {
-		return errors.Wrap(err, "Kafka Consumer back commit error")
+		return fmt.Errorf("kafka consumer back commit error: %v", err)
 	}
 
 	committed, err := c.consumer.Committed(assigned, 2000)
 	if err != nil {
-		return errors.Wrap(err, "Kafka Consumer retrieving committed error")
+		return fmt.Errorf("kafka consumer retrieving committed error: %v", err)
 	}
 	for _, comm := range committed {
 		if comm.Offset == kafka.OffsetStored || comm.Offset == kafka.OffsetInvalid ||
@@ -192,12 +193,17 @@ func (c *consumerImpl) CommitBack(gap int64) error {
 	}
 
 	_, err = c.consumer.CommitOffsets(offsets)
-	return errors.Wrap(err, "Kafka Consumer back commit error")
+	return fmt.Errorf("kafka consumer back commit error: %v", err)
 }
 
 func (c *consumerImpl) Commit() error {
-	_, err := c.consumer.Commit()
-	return err
+	if _, err := c.consumer.Commit(); err != nil {
+		var ke kafka.Error
+		if errors.As(err, &ke) && ke.Code() != kafka.ErrNoOffset {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *consumerImpl) ConsumeNext() error {
@@ -210,7 +216,7 @@ func (c *consumerImpl) ConsumeNext() error {
 		select {
 		case <-c.commitTicker.C:
 			if err := c.Commit(); err != nil {
-				log.Println("Kafka Consumer commit error: ", err)
+				c.log.Error(context.Background(), "kafka consumer commit error: %s", err)
 			}
 		default:
 		}
@@ -219,7 +225,7 @@ func (c *consumerImpl) ConsumeNext() error {
 	switch e := ev.(type) {
 	case *kafka.Message:
 		if e.TopicPartition.Error != nil {
-			return errors.Wrap(e.TopicPartition.Error, "Consumer Partition Error")
+			return fmt.Errorf("consumer partition error: %v", e.TopicPartition.Error)
 		}
 		ts := e.Timestamp.UnixMilli()
 		c.messageIterator.Iterate(
@@ -233,9 +239,9 @@ func (c *consumerImpl) ConsumeNext() error {
 		c.lastReceivedPrtTs[*e.TopicPartition.Topic][e.TopicPartition.Partition] = ts
 	case kafka.Error:
 		if e.Code() == kafka.ErrAllBrokersDown || e.Code() == kafka.ErrMaxPollExceeded {
-			return errors.Wrap(e, "Kafka Consumer Error")
+			return fmt.Errorf("kafka consumer error: %s", e)
 		}
-		log.Printf("Consumer error: %v\n", e)
+		c.log.Info(context.Background(), "consumer error: %s", e)
 	}
 	return nil
 }
@@ -244,13 +250,13 @@ func (c *consumerImpl) Close() {
 	if c.commitTicker != nil {
 		c.commitTicker.Stop()
 		if err := c.Commit(); err != nil {
-			log.Println("Kafka Consumer Commit error:", err)
+			c.log.Info(context.Background(), "kafka consumer commit error: %s", err)
 		}
 	}
 	if c.stopChan != nil {
 		close(c.stopChan)
 	}
 	if err := c.consumer.Close(); err != nil {
-		log.Printf("Kafka consumer close error: %v", err)
+		c.log.Info(context.Background(), "kafka consumer close error: %s", err)
 	}
 }
