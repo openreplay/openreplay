@@ -197,7 +197,7 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 
 	var metasMap map[string]string = s.getMetadataColumns(projectId)
 	var metas string = ""
-	if metasMap != nil {
+	if len(metasMap) > 0 {
 		metas = "," + strings.Join(slices.Collect(maps.Keys(metasMap)), ",")
 	}
 	query := fmt.Sprintf(sessionsQuery,
@@ -292,7 +292,7 @@ func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.
 		viewedJoin := fmt.Sprintf(viewedSessionsJoinTemplate, userId, projectId, startSec)
 		metasMap = s.getMetadataColumns(projectId)
 		var metas string = ""
-		if metasMap != nil {
+		if len(metasMap) > 0 {
 			metas = "," + strings.Join(slices.Collect(maps.Keys(metasMap)), ",")
 		}
 		query := fmt.Sprintf(sessionsQuery,
