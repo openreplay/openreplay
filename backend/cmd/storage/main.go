@@ -42,7 +42,8 @@ func main() {
 		log.Fatal(ctx, "can't init sessionFinder module: %s", err)
 	}
 
-	consumer := queue.NewConsumer(
+	consumer, err := queue.NewConsumer(
+		log,
 		cfg.GroupStorage,
 		[]string{
 			cfg.TopicTrigger,
@@ -75,6 +76,9 @@ func main() {
 		cfg.MessageSizeLimit,
 		nil,
 	)
+	if err != nil {
+		log.Fatal(ctx, "can't init message consumer: %s", err)
+	}
 
 	log.Info(ctx, "Storage service started")
 

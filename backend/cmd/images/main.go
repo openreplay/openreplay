@@ -39,7 +39,8 @@ func main() {
 
 	workDir := cfg.FSDir
 
-	consumer := queue.NewConsumer(
+	consumer, err := queue.NewConsumer(
+		log,
 		cfg.GroupImageStorage,
 		[]string{
 			cfg.TopicRawImages,
@@ -76,6 +77,9 @@ func main() {
 		cfg.MessageSizeLimit,
 		nil,
 	)
+	if err != nil {
+		log.Fatal(ctx, "can't init message consumer: %s", err)
+	}
 
 	log.Info(ctx, "Images service started")
 

@@ -85,7 +85,8 @@ func main() {
 	}
 
 	// Init consumer
-	consumer := queue.NewConsumer(
+	consumer, err := queue.NewConsumer(
+		log,
 		cfg.GroupDB,
 		[]string{
 			cfg.TopicRawWeb,
@@ -97,6 +98,9 @@ func main() {
 		cfg.MessageSizeLimit,
 		nil,
 	)
+	if err != nil {
+		log.Fatal(ctx, "can't init message consumer: %s", err)
+	}
 
 	// Init memory manager
 	memoryManager, err := memory.NewManager(log, cfg.MemoryLimitMB, cfg.MaxMemoryUsage)

@@ -39,7 +39,8 @@ func main() {
 		log.Fatal(ctx, "can't init canvases service: %s", err)
 	}
 
-	canvasConsumer := queue.NewConsumer(
+	canvasConsumer, err := queue.NewConsumer(
+		log,
 		cfg.GroupCanvasImage,
 		[]string{
 			cfg.TopicCanvasImages,
@@ -99,6 +100,9 @@ func main() {
 		cfg.MessageSizeLimit,
 		nil,
 	)
+	if err != nil {
+		log.Fatal(ctx, "can't init canvases service: %s", err)
+	}
 
 	log.Info(ctx, "canvases service started")
 

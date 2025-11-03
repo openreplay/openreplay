@@ -52,7 +52,8 @@ func main() {
 		}
 	}
 
-	msgConsumer := queue.NewConsumer(
+	msgConsumer, err := queue.NewConsumer(
+		log,
 		cfg.GroupCache,
 		[]string{cfg.TopicCache},
 		messages.NewMessageIterator(log, msgHandler, []int{messages.MsgAssetCache, messages.MsgJSException}, true),
@@ -60,6 +61,9 @@ func main() {
 		cfg.MessageSizeLimit,
 		nil,
 	)
+	if err != nil {
+		log.Fatal(ctx, "can't init message consumer: %s", err)
+	}
 
 	log.Info(ctx, "Cacher service started")
 
