@@ -4,7 +4,7 @@ import WidgetName from 'Components/Dashboard/components/WidgetName';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { USER_PATH } from 'App/constants/card';
-import { Button, Space, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 import CardViewMenu from 'Components/Dashboard/components/WidgetView/CardViewMenu';
 import { Link2 } from 'lucide-react';
 import copy from 'copy-to-clipboard';

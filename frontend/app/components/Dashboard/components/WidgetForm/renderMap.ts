@@ -5,24 +5,37 @@ export const renderClickmapThumbnail = () =>
     window.html2canvas = html2canvas;
     const element = document.querySelector<HTMLIFrameElement>(
       '#clickmap-render  * iframe',
-    ).contentDocument.body;
+    )?.contentDocument?.body;
     if (element) {
       const dimensions = element.getBoundingClientRect();
       return html2canvas(element, {
         allowTaint: false,
         logging: true,
         scale: 1,
-        // allowTaint: true,
         useCORS: true,
-        foreignObjectRendering: true,
-        height: dimensions.height > 900 ? 900 : dimensions.height,
-        width: dimensions.width > 1200 ? 1200 : dimensions.width,
+        foreignObjectRendering: false,
+        height: dimensions.height > 600 ? 600 : dimensions.height,
+        width: dimensions.width > 900 ? 900 : dimensions.width,
+        imageTimeout: 0,
+        ignoreElements: (e) => {
+          const isImage = e.tagName === 'IMG';
+          const currentOrigin = window.location.origin;
+          if (isImage) {
+            const imgElement = e as HTMLImageElement;
+            try {
+              const imgSrc = new URL(imgElement.src);
+              if (imgSrc.origin !== currentOrigin) {
+                return true;
+              }
+            } catch {
+              return true;
+            }
+          }
+          return e.id.includes('render-ignore');
+        },
         x: 0,
         y: 0,
-        ignoreElements: (e) => e.id.includes('render-ignore'),
-      })
-        .then((canvas) => canvas.toDataURL('img/png'))
-        .catch(console.log);
+      }).then((canvas) => canvas.toDataURL('img/png'));
     }
-    Promise.reject("can't find clickmap container");
+    return Promise.reject("can't find clickmap container");
   });
