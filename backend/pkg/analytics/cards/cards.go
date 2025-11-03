@@ -153,10 +153,10 @@ func (s *cardsImpl) Create(projectID int, userID uint64, req *CardCreateRequest)
 	}()
 	const ins = `INSERT INTO public.metrics (
 		project_id,user_id,name,metric_type,view_type,
-		metric_of,metric_value,metric_format,is_public,card_info
-	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+		metric_of,metric_value,metric_format,is_public,card_info, thumbnail
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
 	RETURNING metric_id,project_id,user_id,name,metric_type,view_type,metric_of,metric_value,metric_format,is_public,created_at,edited_at,card_info`
-	row := tx.TxQueryRow(ins, projectID, userID, req.Name, req.MetricType, req.ViewType, req.MetricOf, req.MetricValue, req.MetricFormat, req.IsPublic, infoData)
+	row := tx.TxQueryRow(ins, projectID, userID, req.Name, req.MetricType, req.ViewType, req.MetricOf, req.MetricValue, req.MetricFormat, req.IsPublic, infoData, req.Thumbnail)
 	card, err := s.scanCard(row)
 	if err != nil {
 		return nil, fmt.Errorf("create card: %w", err)

@@ -92,6 +92,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 					'viewType', m.view_type,
 					'metricOf', m.metric_of,
 					'metricValue', m.metric_value,
+					'thumbnail', m.thumbnail,
 					'series', s.series
 				) ORDER BY COALESCE((dw.config->>'position')::int, 999999) ASC
 			) FILTER (WHERE m.metric_id IS NOT NULL), '[]') AS metrics
