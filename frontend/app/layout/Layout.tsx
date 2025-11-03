@@ -41,7 +41,7 @@ function Layout(props: Props) {
   }, []);
 
   return (
-    <AntLayout style={{ height: '100dvh' }}>
+    <AntLayout style={{ height: mobileDevice ? '100dvh' : undefined }}>
       {!hideHeader && <TopHeader />}
       <AntLayout>
         {!hideHeader && !window.location.pathname.includes('/onboarding/') ? (
