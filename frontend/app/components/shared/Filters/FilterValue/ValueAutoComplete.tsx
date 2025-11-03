@@ -160,6 +160,7 @@ const ValueAutoComplete = observer(
           (i): i is { value: string; rowPercentage: number } =>
             typeof i.value === 'string',
         )
+        .sort((a, b) => (b.rowPercentage ?? 0) - (a.rowPercentage ?? 0))
         .map((i) => ({
           value: i.value,
           label: i.value,
@@ -245,10 +246,11 @@ const ValueAutoComplete = observer(
             autoCompleteParams.eventName = params.eventName;
           }
 
-          const data: { events: any[] }[] =
+          const data: { events?: any[] } | any[] =
             await searchService.fetchAutoCompleteValues(autoCompleteParams);
+          const safeData = Array.isArray(data) ? data : data.events || [];
           const _options =
-            data.events?.map((i: any) => ({
+            safeData.map((i: any) => ({
               value: i.value,
               label: i.value,
               percentage: i.rowPercentage ?? 0,
@@ -316,12 +318,19 @@ const ValueAutoComplete = observer(
     };
 
     const sortedOptions = useMemo(() => {
+      if (!options.length) return [];
       const currentOptionsWithValue = [...options];
       selectedValues.forEach((val) => {
         if (!currentOptionsWithValue.find((i) => i.value === val)) {
           currentOptionsWithValue.unshift({ value: val, label: val });
         }
       });
+
+      if ('percentage' in currentOptionsWithValue[0]) {
+        return currentOptionsWithValue.sort((a, b) => {
+          return (b.percentage || 0) - (a.percentage || 0);
+        });
+      }
 
       currentOptionsWithValue.sort((a, b) => {
         const aIsSelected = selectedValues.includes(a.value);
@@ -334,6 +343,7 @@ const ValueAutoComplete = observer(
 
       return currentOptionsWithValue;
     }, [options, selectedValues]);
+
     const filteredOptions = useMemo(
       () =>
         params.isPredefined
