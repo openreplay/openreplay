@@ -145,6 +145,9 @@ func (c *consumerImpl) reBalanceCallback(_ *kafka.Consumer, e kafka.Event) error
 }
 
 func (c *consumerImpl) getPartitionTime(p kafka.TopicPartition, gap int64) (int64, bool) {
+	if p.Topic == nil {
+		return 0, false
+	}
 	if lastTs, ok := c.lastReceivedPrtTs[*p.Topic][p.Partition]; ok {
 		res := lastTs - gap
 		if res < 0 {
@@ -153,6 +156,12 @@ func (c *consumerImpl) getPartitionTime(p kafka.TopicPartition, gap int64) (int6
 		return res, true
 	}
 	return 0, false
+}
+
+func (c *consumerImpl) setPartitionTime(p kafka.TopicPartition, value int64) {
+	if p.Topic != nil {
+		c.lastReceivedPrtTs[*p.Topic][p.Partition] = value
+	}
 }
 
 func (c *consumerImpl) CommitBack(gap int64) error {
@@ -242,7 +251,7 @@ func (c *consumerImpl) ConsumeNext() error {
 				uint64(e.TopicPartition.Offset),
 				uint64(e.TopicPartition.Partition),
 				ts))
-		c.lastReceivedPrtTs[*e.TopicPartition.Topic][e.TopicPartition.Partition] = ts
+		c.setPartitionTime(e.TopicPartition, ts)
 	case kafka.Error:
 		if e.Code() == kafka.ErrAllBrokersDown || e.Code() == kafka.ErrMaxPollExceeded {
 			return fmt.Errorf("kafka consumer error: %s", e)
