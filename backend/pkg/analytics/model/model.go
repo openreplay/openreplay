@@ -58,7 +58,7 @@ var ViewTypeOther []string = []string{"chart", "columnChart", "metric", "table",
 
 var MetricOfTimeseries []string = []string{"sessionCount", "userCount", "eventCount"}
 var MetricOfTable []string = []string{"userBrowser", "userDevice", "userCountry", "userId", "ISSUE", "LOCATION", "sessions", "jsException", "referrer", "REQUEST", "screenResolution"}
-var MetricOfFunnel []string = []string{"sessionCount"}
+var MetricOfFunnel []string = []string{"sessionCount", "userCount", "eventCount"}
 var MetricOfHeatMap []string = []string{"heatMapUrl"}
 var MetricOfPathAnalysis []string = []string{"sessionCount"}
 var MetricOfWebVital []string = []string{"webVitalUrl"}
