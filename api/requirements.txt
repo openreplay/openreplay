@@ -13,6 +13,6 @@ fastapi==0.120.1
 uvicorn[standard]==0.38.0
 python-decouple==3.8
 pydantic[email]==2.12.3
-apscheduler==3.11.0
+apscheduler==3.11.1
 
 redis==7.0.1
