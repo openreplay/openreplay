@@ -763,7 +763,17 @@ var SessionColumns = map[string][]string{
 	"duration":           {"duration", "singleColumn"},
 	"issue_type":         {"issue_types", "arrayColumn"},
 	"userCountry":        {"user_country", "singleColumn"},
-	// TODO Add any missing session columns to be considered.
+	"userCity":           {"user_city", "singleColumn"},
+	"userState":          {"user_state", "singleColumn"},
+	"userOs":             {"user_os", "singleColumn"},
+	"userOsVersion":      {"user_os_version", "singleColumn"},
+	"userBrowserVersion": {"user_browser_version", "singleColumn"},
+	"metadata":           {"metadata", "singleColumn"},
+	"utmSource":          {"utm_source", "singleColumn"},
+	"utmMedium":          {"utm_medium", "singleColumn"},
+	"utmCampaign":        {"utm_campaign", "singleColumn"},
+	"revId":              {"rev_id", "singleColumn"},
+	"issue":              {"issue_types", "arrayColumn"},
 }
 
 func reverseSqlOperator(op string) string {

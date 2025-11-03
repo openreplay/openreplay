@@ -55,7 +55,7 @@ var mainColumns = map[string][]string{
 	"referrer":           {"$referrer", "singleColumn"},
 	"fetchDuration":      {"$duration_s", "singleColumn"},
 	"ISSUE":              {"issue_types", "singleColumn"},
-	"userCountry":        {"$country", "arrayColumn"},
+	"userCountry":        {"$country", "singleColumn"},
 	"userCity":           {"$city", "singleColumn"},
 	"userState":          {"$state", "singleColumn"},
 	"userOs":             {"$os", "singleColumn"},
