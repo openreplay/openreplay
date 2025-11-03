@@ -92,6 +92,9 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 	cfg := analyticsConfig.New(logr)
 
 	var conn *sqlx.DB = orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
+	if conn == nil {
+		return nil, fmt.Errorf("failed to establish clickhouse connection")
+	}
 
 	// Trying to use clickhouseContext in order to keep same session for tmp tables,
 	// otherwise we need to use clickhouse.openDB instead of clickhouse.open in the connexion code
@@ -196,6 +199,8 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		for _, v := range p.MetricValue {
 			if selected, ok := PredefinedJourneys[v]; ok {
 				subEvents = append(subEvents, JourneyStep{selected.Column, selected.EventName})
+			} else {
+				subEvents = append(subEvents, JourneyStep{"`$event_name`", v})
 			}
 		}
 	}
@@ -279,7 +284,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		                       GROUP BY "$event_name", e_value
 		                       ORDER BY count(1) DESC LIMIT 1) AS top_start_events
 		                          INNER JOIN pre_ranked_events
-		                                     ON (top_start_events."$event_name" = pre_ranked_events."$event_name" 
+		                                     ON (top_start_events."$event_name" = pre_ranked_events."$event_name"
 													AND top_start_events.e_value = pre_ranked_events.e_value)
 		                 WHERE pre_ranked_events.event_number_in_session = 1`
 		initialEventCTE = ""
