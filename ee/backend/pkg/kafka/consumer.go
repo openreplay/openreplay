@@ -146,7 +146,11 @@ func (c *consumerImpl) reBalanceCallback(_ *kafka.Consumer, e kafka.Event) error
 
 func (c *consumerImpl) getPartitionTime(p kafka.TopicPartition, gap int64) (int64, bool) {
 	if lastTs, ok := c.lastReceivedPrtTs[*p.Topic][p.Partition]; ok {
-		return lastTs - gap, true
+		res := lastTs - gap
+		if res < 0 {
+			res = 0
+		}
+		return res, true
 	}
 	return 0, false
 }
@@ -192,8 +196,10 @@ func (c *consumerImpl) CommitBack(gap int64) error {
 		}
 	}
 
-	_, err = c.consumer.CommitOffsets(offsets)
-	return fmt.Errorf("kafka consumer back commit error: %v", err)
+	if _, err := c.consumer.CommitOffsets(offsets); err != nil {
+		return fmt.Errorf("kafka consumer back commit error: %v", err)
+	}
+	return nil
 }
 
 func (c *consumerImpl) Commit() error {
@@ -207,11 +213,6 @@ func (c *consumerImpl) Commit() error {
 }
 
 func (c *consumerImpl) ConsumeNext() error {
-	ev := c.consumer.Poll(c.pollTimeout)
-	if ev == nil {
-		return nil
-	}
-
 	if c.commitTicker != nil {
 		select {
 		case <-c.commitTicker.C:
@@ -220,6 +221,11 @@ func (c *consumerImpl) ConsumeNext() error {
 			}
 		default:
 		}
+	}
+
+	ev := c.consumer.Poll(c.pollTimeout)
+	if ev == nil {
+		return nil
 	}
 
 	switch e := ev.(type) {
@@ -255,6 +261,7 @@ func (c *consumerImpl) Close() {
 	}
 	if c.stopChan != nil {
 		close(c.stopChan)
+		c.stopChan = nil
 	}
 	if err := c.consumer.Close(); err != nil {
 		c.log.Info(context.Background(), "kafka consumer close error: %s", err)
