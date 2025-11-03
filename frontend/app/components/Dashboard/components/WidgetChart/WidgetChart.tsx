@@ -4,7 +4,7 @@ import BarChart from 'Components/Charts/BarChart';
 import PieChart from 'Components/Charts/PieChart';
 import SankeyChart from 'Components/Charts/SankeyChart';
 import ColumnChart from 'Components/Charts/ColumnChart';
-import WebVitalsChart from 'Components/Charts/WebVitals'
+import WebVitalsChart from 'Components/Charts/WebVitals';
 import SunBurstChart from 'Components/Charts/SunburstChart/Sunburst';
 
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
@@ -174,9 +174,13 @@ function WidgetChart(props: Props) {
           setData(res);
         }
         if (_metric.metricType === HEATMAP && res.urlPath) {
-          const locationIndex = _metric.series[0].filter.filters.findIndex(f => f.name === "LOCATION")
+          const locationIndex = _metric.series[0].filter.filters.findIndex(
+            (f) => f.name === 'LOCATION',
+          );
           if (locationIndex > -1) {
-            _metric.series[0].filter.filters[locationIndex].filters[0].value = [res.urlPath];
+            _metric.series[0].filter.filters[locationIndex].filters[0].value = [
+              res.urlPath,
+            ];
           }
         }
         clearTimeout(tm);
@@ -581,8 +585,11 @@ function WidgetChart(props: Props) {
           ? !(_metric.hideExcess ?? true)
           : false;
         const height = props.isPreview ? 550 : 240;
-        const startUrl = metric.startPoint.filter?.filters.find(f => f.name === "url_path")?.value[0] ?? "unref"
-        const getFilter = (name: string) => filterStore.findEvent({ name })
+        const startUrl =
+          metric.startPoint?.filter?.filters.find(
+            (f: any) => f.name === 'url_path',
+          )?.value[0] ?? 'unref';
+        const getFilter = (name: string) => filterStore.findEvent({ name });
         return (
           <SankeyChart
             height={height}

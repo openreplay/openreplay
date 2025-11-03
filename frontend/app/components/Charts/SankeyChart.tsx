@@ -471,7 +471,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
           <div className="flex items-center relative">
             <InfoCircleOutlined className="hidden md:inline-block mr-1" />
             Set a start or end point to visualize the journey. If set, try
-            adjusting filters.
+            adjusting filters or time range.
           </div>
         }
         show={true}

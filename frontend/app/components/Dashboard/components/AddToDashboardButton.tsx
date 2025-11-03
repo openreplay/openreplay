@@ -6,7 +6,9 @@ import { Button, Modal } from 'antd';
 import Select from 'Shared/Select/Select';
 import { Form } from 'UI';
 import { useStore } from 'App/mstore';
-import { useTranslation } from 'react-i18next';
+import i18n from 'App/i18n';
+
+const t = i18n.t;
 
 interface Props {
   metricId: string;
@@ -16,7 +18,6 @@ export const showAddToDashboardModal = (
   metricId: string,
   dashboardStore: any,
 ) => {
-  const { t } = useTranslation();
   const dashboardOptions = dashboardStore.dashboards.map((i: any) => ({
     key: i.id,
     label: i.name,
@@ -56,7 +57,6 @@ export const showAddToDashboardModal = (
 };
 
 function AddToDashboardButton({ metricId }: Props) {
-  const { t } = useTranslation();
   const { dashboardStore } = useStore();
 
   return (
