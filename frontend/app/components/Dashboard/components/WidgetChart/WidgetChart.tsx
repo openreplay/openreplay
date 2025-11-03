@@ -601,6 +601,7 @@ function WidgetChart(props: Props) {
             isUngrouped={isUngrouped}
             startUrl={startUrl}
             getFilter={getFilter}
+            drilldownFilter={dashboardStore.drillDownFilter.filters}
           />
         );
       }
