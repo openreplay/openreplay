@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	sessionCfg "openreplay/backend/internal/config/session"
+	sessionCfg "openreplay/backend/internal/config/api"
 	"openreplay/backend/pkg/assist/proxy"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/replays/service"

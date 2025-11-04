@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	sessionConfig "openreplay/backend/internal/config/session"
+	sessionConfig "openreplay/backend/internal/config/api"
 	apiService "openreplay/backend/pkg/api"
 	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/db/clickhouse"

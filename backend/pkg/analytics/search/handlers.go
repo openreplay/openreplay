@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	config "openreplay/backend/internal/config/analytics"
+	config "openreplay/backend/internal/config/api"
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"

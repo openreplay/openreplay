@@ -10,7 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 
-	config "openreplay/backend/internal/config/analytics"
+	config "openreplay/backend/internal/config/api"
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"

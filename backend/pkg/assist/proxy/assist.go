@@ -13,7 +13,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"openreplay/backend/internal/config/session"
+	"openreplay/backend/internal/config/api"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/projects"
 )
@@ -25,12 +25,12 @@ type Assist interface {
 }
 
 type assistImpl struct {
-	cfg      *session.Config
+	cfg      *api.Config
 	log      logger.Logger
 	projects projects.Projects
 }
 
-func New(log logger.Logger, cfg *session.Config, projects projects.Projects) (Assist, error) {
+func New(log logger.Logger, cfg *api.Config, projects projects.Projects) (Assist, error) {
 	switch {
 	case log == nil:
 		return nil, errors.New("logger is nil")

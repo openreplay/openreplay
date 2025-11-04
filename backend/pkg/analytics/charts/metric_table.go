@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	analyticsConfig "openreplay/backend/internal/config/analytics"
+	analyticsConfig "openreplay/backend/internal/config/api"
 	orClickhouse "openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/logger"
 	"slices"

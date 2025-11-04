@@ -4,8 +4,15 @@ import (
 	"fmt"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/go-playground/validator/v10"
 
-	config "openreplay/backend/internal/config/session"
+	config "openreplay/backend/internal/config/api"
+	"openreplay/backend/pkg/analytics/cards"
+	"openreplay/backend/pkg/analytics/charts"
+	"openreplay/backend/pkg/analytics/dashboards"
+	"openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/analytics/saved_searches"
+	"openreplay/backend/pkg/analytics/search"
 	"openreplay/backend/pkg/api_key"
 	"openreplay/backend/pkg/assist/proxy"
 	"openreplay/backend/pkg/canvas"
@@ -31,21 +38,31 @@ import (
 )
 
 type serviceBuilder struct {
-	sessionAPI    api.Handlers
-	eventAPI      api.Handlers
-	favoriteAPI   api.Handlers
-	noteAPI       api.Handlers
-	replayAPI     api.Handlers
-	apiKeyAPI     api.Handlers
-	conditionsAPI api.Handlers
+	sessionAPI       api.Handlers
+	eventAPI         api.Handlers
+	favoriteAPI      api.Handlers
+	noteAPI          api.Handlers
+	replayAPI        api.Handlers
+	apiKeyAPI        api.Handlers
+	conditionsAPI    api.Handlers
+	cardsAPI         api.Handlers
+	dashboardsAPI    api.Handlers
+	chartsAPI        api.Handlers
+	searchAPI        api.Handlers
+	savedSearchesAPI api.Handlers
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.sessionAPI, b.eventAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI}
+	return []api.Handlers{b.sessionAPI, b.eventAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
+		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI}
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, pgconn pool.Pool, chconn clickhouse.Conn, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
 	responser := api.NewResponser(webMetrics)
+
+	reqValidator := validator.New()
+	reqValidator.RegisterStructValidation(model.ValidateMetricFields, model.MetricPayload{})
+	reqValidator.RegisterStructValidation(model.ValidateFilterFields, model.Filter{})
 
 	viewService, err := views.New(pgconn, chconn)
 	if err != nil {
@@ -108,19 +125,63 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	conditions := conditions.New(pgconn)
-	conditionsHandlers, err := conditionsApi.NewHandlers(log, &cfg.HTTP, responser, conditions)
+	conditionsService := conditions.New(pgconn)
+	conditionsHandlers, err := conditionsApi.NewHandlers(log, &cfg.HTTP, responser, conditionsService)
+	if err != nil {
+		return nil, err
+	}
+
+	searchService, err := search.New(chconn, pgconn)
+	if err != nil {
+		return nil, err
+	}
+	searchHandlers, err := search.NewHandlers(log, cfg, responser, searchService, reqValidator)
+	if err != nil {
+		return nil, err
+	}
+
+	cardsService := cards.New(log, pgconn)
+	cardsHandlers, err := cards.NewHandlers(log, cfg, responser, cardsService, reqValidator)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboardsService, err := dashboards.New(log, pgconn)
+	if err != nil {
+		return nil, err
+	}
+	dashboardsHandlers, err := dashboards.NewHandlers(log, cfg, responser, dashboardsService, reqValidator)
+	if err != nil {
+		return nil, err
+	}
+
+	chartsService, err := charts.New(chconn)
+	if err != nil {
+		return nil, err
+	}
+	chartsHandlers, err := charts.NewHandlers(log, cfg, responser, chartsService, cardsService, reqValidator)
+	if err != nil {
+		return nil, err
+	}
+
+	savedSearchesService := saved_searches.New(log, pgconn)
+	savedSearchesHandlers, err := saved_searches.NewHandlers(log, cfg, responser, savedSearchesService, reqValidator)
 	if err != nil {
 		return nil, err
 	}
 
 	return &serviceBuilder{
-		sessionAPI:    sessionHandlers,
-		eventAPI:      eventHandlers,
-		favoriteAPI:   favHandlers,
-		noteAPI:       noteHandlers,
-		replayAPI:     replayHandlers,
-		apiKeyAPI:     apiKeyHandlers,
-		conditionsAPI: conditionsHandlers,
+		sessionAPI:       sessionHandlers,
+		eventAPI:         eventHandlers,
+		favoriteAPI:      favHandlers,
+		noteAPI:          noteHandlers,
+		replayAPI:        replayHandlers,
+		apiKeyAPI:        apiKeyHandlers,
+		conditionsAPI:    conditionsHandlers,
+		cardsAPI:         cardsHandlers,
+		dashboardsAPI:    dashboardsHandlers,
+		chartsAPI:        chartsHandlers,
+		searchAPI:        searchHandlers,
+		savedSearchesAPI: savedSearchesHandlers,
 	}, nil
 }

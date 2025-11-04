@@ -2,9 +2,10 @@ package charts
 
 import (
 	"fmt"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/go-playground/validator/v10"
+
 	"openreplay/backend/pkg/analytics/model"
 )
 

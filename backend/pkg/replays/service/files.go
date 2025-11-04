@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	config "openreplay/backend/internal/config/session"
+	config "openreplay/backend/internal/config/api"
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/logger"

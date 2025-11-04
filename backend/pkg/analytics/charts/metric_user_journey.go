@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	analyticsConfig "openreplay/backend/internal/config/analytics"
+	analyticsConfig "openreplay/backend/internal/config/api"
 	"openreplay/backend/pkg/logger"
 	"slices"
 	"sort"
