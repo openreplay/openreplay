@@ -22,25 +22,24 @@ type StartSessionRequest struct {
 }
 
 type StartSessionResponse struct {
-	Timestamp            int64           `json:"timestamp"`
-	StartTimestamp       int64           `json:"startTimestamp"`
-	Delay                int64           `json:"delay"`
-	Token                string          `json:"token"`
-	UserUUID             string          `json:"userUUID"`
-	UserOS               string          `json:"userOS"`
-	UserDevice           string          `json:"userDevice"`
-	UserBrowser          string          `json:"userBrowser"`
-	UserCountry          string          `json:"userCountry"`
-	UserState            string          `json:"userState"`
-	UserCity             string          `json:"userCity"`
-	SessionID            string          `json:"sessionID"`
-	ProjectID            string          `json:"projectID"`
-	BeaconSizeLimit      int64           `json:"beaconSizeLimit"`
-	CompressionThreshold int64           `json:"compressionThreshold"`
-	CanvasEnabled        bool            `json:"canvasEnabled"` // false default
-	CanvasImageQuality   string          `json:"canvasQuality"` // low | medium | high
-	CanvasFrameRate      int             `json:"canvasFPS"`     // 2 default
-	Features             map[string]bool `json:"features"`
+	Timestamp            int64  `json:"timestamp"`
+	StartTimestamp       int64  `json:"startTimestamp"`
+	Delay                int64  `json:"delay"`
+	Token                string `json:"token"`
+	UserUUID             string `json:"userUUID"`
+	UserOS               string `json:"userOS"`
+	UserDevice           string `json:"userDevice"`
+	UserBrowser          string `json:"userBrowser"`
+	UserCountry          string `json:"userCountry"`
+	UserState            string `json:"userState"`
+	UserCity             string `json:"userCity"`
+	SessionID            string `json:"sessionID"`
+	ProjectID            string `json:"projectID"`
+	BeaconSizeLimit      int64  `json:"beaconSizeLimit"`
+	CompressionThreshold int64  `json:"compressionThreshold"`
+	CanvasEnabled        bool   `json:"canvasEnabled"` // false default
+	CanvasImageQuality   string `json:"canvasQuality"` // low | medium | high
+	CanvasFrameRate      int    `json:"canvasFPS"`     // 2 default
 }
 
 func recordSession(req *StartSessionRequest) bool {

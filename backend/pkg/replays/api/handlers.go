@@ -22,9 +22,9 @@ type handlersImpl struct {
 
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/{project}/sessions/{session}/first-mob", "GET", h.getFirstMob, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
-		{"/v1/{project}/unprocessed/{session}/dom.mob", "GET", h.getUnprocessedMob, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY", "ASSIST_LIVE", "SERVICE_ASSIST_LIVE"}, api.DoNotTrack},
-		{"/v1/{project}/unprocessed/{session}/devtools.mob", "GET", h.getUnprocessedDevtools, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY", "ASSIST_LIVE", "SERVICE_ASSIST_LIVE", "DEV_TOOLS", "SERVICE_DEV_TOOLS"}, api.DoNotTrack},
+		{"/{project}/sessions/{session}/first-mob", "GET", h.getFirstMob, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/unprocessed/{session}/dom.mob", "GET", h.getUnprocessedMob, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY", "ASSIST_LIVE", "SERVICE_ASSIST_LIVE"}, api.DoNotTrack},
+		{"/{project}/unprocessed/{session}/devtools.mob", "GET", h.getUnprocessedDevtools, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY", "ASSIST_LIVE", "SERVICE_ASSIST_LIVE", "DEV_TOOLS", "SERVICE_DEV_TOOLS"}, api.DoNotTrack},
 	}
 }
 

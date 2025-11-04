@@ -51,11 +51,11 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/{projectId}/sessions/search/save", "POST", e.saveSearch, api.NoPermissions, api.DoNotTrack},
-		{"/v1/{projectId}/sessions/search/saved", "GET", e.listSavedSearches, api.NoPermissions, api.DoNotTrack},
-		{"/v1/{projectId}/sessions/search/saved/{searchId}", "GET", e.getSavedSearch, api.NoPermissions, api.DoNotTrack},
-		{"/v1/{projectId}/sessions/search/saved/{searchId}", "PUT", e.updateSavedSearch, api.NoPermissions, api.DoNotTrack},
-		{"/v1/{projectId}/sessions/search/saved/{searchId}", "DELETE", e.deleteSavedSearch, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/sessions/search/save", "POST", e.saveSearch, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/sessions/search/saved", "GET", e.listSavedSearches, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/sessions/search/saved/{searchId}", "GET", e.getSavedSearch, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/sessions/search/saved/{searchId}", "PUT", e.updateSavedSearch, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/sessions/search/saved/{searchId}", "DELETE", e.deleteSavedSearch, api.NoPermissions, api.DoNotTrack},
 	}
 }
 
@@ -146,13 +146,13 @@ func (e *handlersImpl) listSavedSearches(w http.ResponseWriter, r *http.Request)
 
 	limit := 20
 	offset := 0
-	
+
 	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
 		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
 			limit = l
 		}
 	}
-	
+
 	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
 		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
 			offset = o
@@ -166,9 +166,9 @@ func (e *handlersImpl) listSavedSearches(w http.ResponseWriter, r *http.Request)
 	}
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{
-		"data":  searches,
-		"total": total,
-		"limit": limit,
+		"data":   searches,
+		"total":  total,
+		"limit":  limit,
 		"offset": offset,
 	}, startTime, r.URL.Path, bodySize)
 }

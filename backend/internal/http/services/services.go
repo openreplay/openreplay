@@ -8,8 +8,6 @@ import (
 	conditionsAPI "openreplay/backend/pkg/conditions/api"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
-	"openreplay/backend/pkg/featureflags"
-	featureflagsAPI "openreplay/backend/pkg/featureflags/api"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/database"
@@ -26,15 +24,14 @@ import (
 )
 
 type serviceBuilder struct {
-	webAPI          api.Handlers
-	mobileAPI       api.Handlers
-	conditionsAPI   api.Handlers
-	featureFlagsAPI api.Handlers
-	tagsAPI         api.Handlers
+	webAPI        api.Handlers
+	mobileAPI     api.Handlers
+	conditionsAPI api.Handlers
+	tagsAPI       api.Handlers
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.webAPI, b.mobileAPI, b.conditionsAPI, b.featureFlagsAPI, b.tagsAPI}
+	return []api.Handlers{b.webAPI, b.mobileAPI, b.conditionsAPI, b.tagsAPI}
 }
 
 func New(log logger.Logger, cfg *http.Config, webMetrics web.Web, dbMetrics database.Database, producer types.Producer, pgconn pool.Pool, redis *redis.Client) (api.ServiceBuilder, error) {
@@ -51,7 +48,6 @@ func New(log logger.Logger, cfg *http.Config, webMetrics web.Web, dbMetrics data
 	conditions := conditions.New(pgconn)
 	flaker := flakeid.NewFlaker(cfg.WorkerID)
 	sessions := sessions.New(log, pgconn, projs, redis, dbMetrics)
-	featureFlags := featureflags.New(pgconn)
 	tags := tags.New(log, pgconn)
 	responser := api.NewResponser(webMetrics)
 	builder := &serviceBuilder{}
@@ -62,9 +58,6 @@ func New(log logger.Logger, cfg *http.Config, webMetrics web.Web, dbMetrics data
 		return nil, err
 	}
 	if builder.conditionsAPI, err = conditionsAPI.NewHandlers(log, responser, tokenizer, conditions); err != nil {
-		return nil, err
-	}
-	if builder.featureFlagsAPI, err = featureflagsAPI.NewHandlers(log, responser, cfg.JsonSizeLimit, tokenizer, sessions, featureFlags); err != nil {
 		return nil, err
 	}
 	if builder.tagsAPI, err = tagsAPI.NewHandlers(log, responser, tokenizer, sessions, tags); err != nil {

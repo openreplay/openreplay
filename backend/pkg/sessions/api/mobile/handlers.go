@@ -61,7 +61,6 @@ type handlersImpl struct {
 	tokenizer  *token.Tokenizer
 	conditions conditions.Conditions
 	flaker     *flakeid.Flaker
-	features   map[string]bool
 }
 
 func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser, producer types.Producer, projects projects.Projects,
@@ -79,10 +78,6 @@ func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser
 		tokenizer:  tokenizer,
 		conditions: conditions,
 		flaker:     flaker,
-		features: map[string]bool{
-			"feature-flags":  cfg.IsFeatureFlagEnabled,
-			"usability-test": cfg.IsUsabilityTestEnabled,
-		},
 	}, nil
 }
 
@@ -241,7 +236,6 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 		ImageQuality:    e.cfg.MobileQuality,
 		FrameRate:       e.cfg.MobileFps,
 		ProjectID:       strconv.FormatUint(uint64(p.ProjectID), 10),
-		Features:        e.features,
 	}, startTime, r.URL.Path, 0)
 }
 

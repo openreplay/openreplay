@@ -19,7 +19,7 @@ type handlersImpl struct {
 
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/{project}/sessions/{session}/favorite", "GET", h.favorite, []string{"SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/sessions/{session}/favorite", "GET", h.favorite, []string{"SESSION_REPLAY"}, api.DoNotTrack},
 	}
 }
 

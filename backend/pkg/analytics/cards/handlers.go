@@ -41,13 +41,13 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/{projectId}/cards", "POST", e.createCard, api.NoPermissions, api.DoNotTrack},
-		{"/v1/{projectId}/cards", "GET", e.getCardsPaginated, api.NoPermissions, api.DoNotTrack},
-		{"/v1/{projectId}/cards/{id}", "GET", e.getCard, api.NoPermissions, api.DoNotTrack},
-		{"/v1/{projectId}/cards/{id}", "PUT", e.updateCard, api.NoPermissions, api.DoNotTrack},
-		{"/v1/{projectId}/cards/{id}", "POST", e.updateCard, api.NoPermissions, api.DoNotTrack},
-		{"/v1/{projectId}/cards/{id}", "DELETE", e.deleteCard, api.NoPermissions, api.DoNotTrack},
-		{"/v1/{projectId}/cards/{id}/sessions", "POST", e.getCardSessions, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/cards", "POST", e.createCard, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/cards", "GET", e.getCardsPaginated, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/cards/{id}", "GET", e.getCard, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/cards/{id}", "PUT", e.updateCard, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/cards/{id}", "POST", e.updateCard, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/cards/{id}", "DELETE", e.deleteCard, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/cards/{id}/sessions", "POST", e.getCardSessions, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

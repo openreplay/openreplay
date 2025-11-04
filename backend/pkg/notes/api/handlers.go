@@ -34,12 +34,12 @@ func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, n
 
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/{project}/sessions/{session}/notes", "POST", h.createNote, []string{"SESSION_REPLAY"}, api.DoNotTrack},
-		{"/v1/{project}/sessions/{session}/notes", "GET", h.getSessionNotes, []string{"SESSION_REPLAY", "SERVICE_READ_NOTES"}, api.DoNotTrack},
-		{"/v1/{project}/notes/{note}", "GET", h.getNoteByID, []string{"SESSION_REPLAY"}, api.DoNotTrack},
-		{"/v1/{project}/notes/{note}", "POST", h.editNote, []string{"SESSION_REPLAY"}, api.DoNotTrack},
-		{"/v1/{project}/notes/{note}", "DELETE", h.deleteNote, []string{"SESSION_REPLAY"}, api.DoNotTrack},
-		{"/v1/{project}/notes", "POST", h.getAllNotes, []string{"SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/sessions/{session}/notes", "POST", h.createNote, []string{"SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/sessions/{session}/notes", "GET", h.getSessionNotes, []string{"SESSION_REPLAY", "SERVICE_READ_NOTES"}, api.DoNotTrack},
+		{"/{project}/notes/{note}", "GET", h.getNoteByID, []string{"SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/notes/{note}", "POST", h.editNote, []string{"SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/notes/{note}", "DELETE", h.deleteNote, []string{"SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/notes", "POST", h.getAllNotes, []string{"SESSION_REPLAY"}, api.DoNotTrack},
 	}
 }
 

@@ -31,8 +31,8 @@ func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, c
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/{project}/conditions", "GET", e.getConditions, api.NoPermissions, api.DoNotTrack},
-		{"/v1/{project}/conditions", "POST", e.postConditions, api.NoPermissions, api.DoNotTrack},
+		{"/{project}/conditions", "GET", e.getConditions, api.NoPermissions, api.DoNotTrack},
+		{"/{project}/conditions", "POST", e.postConditions, api.NoPermissions, api.DoNotTrack},
 	}
 }
 

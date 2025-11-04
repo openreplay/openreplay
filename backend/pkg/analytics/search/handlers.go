@@ -24,8 +24,8 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/{projectId}/sessions/search", "POST", e.getSessions, []string{"SESSION_REPLAY"}, api.DoNotTrack},
-		{"/v1/{projectId}/sessions/search/ids", "POST", e.getSessionIDs, []string{"SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{projectId}/sessions/search", "POST", e.getSessions, []string{"SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{projectId}/sessions/search/ids", "POST", e.getSessionIDs, []string{"SESSION_REPLAY"}, api.DoNotTrack},
 	}
 }
 

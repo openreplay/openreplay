@@ -37,9 +37,9 @@ func NewHandlers(log logger.Logger, cfg *sessionCfg.Config, responser api.Respon
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/{project}/assist/sessions", "POST", e.getLiveSessions, api.NoPermissions, api.DoNotTrack}, // have a key access [ee]
-		{"/v1/{project}/assist/sessions/{session}", "GET", e.getLiveSession, []string{"ASSIST_LIVE", "SERVICE_ASSIST_LIVE"}, api.DoNotTrack},
-		{"/v1/{project}/sessions/{session}/replay", "GET", e.getReplay, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/assist/sessions", "POST", e.getLiveSessions, api.NoPermissions, api.DoNotTrack}, // have a key access [ee]
+		{"/{project}/assist/sessions/{session}", "GET", e.getLiveSession, []string{"ASSIST_LIVE", "SERVICE_ASSIST_LIVE"}, api.DoNotTrack},
+		{"/{project}/sessions/{session}/replay", "GET", e.getReplay, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
 	}
 }
 

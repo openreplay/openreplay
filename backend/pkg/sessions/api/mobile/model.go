@@ -20,13 +20,12 @@ type StartMobileSessionRequest struct {
 }
 
 type StartMobileSessionResponse struct {
-	Token           string          `json:"token"`
-	ImagesHashList  []string        `json:"imagesHashList"`
-	UserUUID        string          `json:"userUUID"`
-	BeaconSizeLimit int64           `json:"beaconSizeLimit"`
-	SessionID       string          `json:"sessionID"`
-	ImageQuality    string          `json:"quality"`
-	FrameRate       int             `json:"fps"`
-	ProjectID       string          `json:"projectID"`
-	Features        map[string]bool `json:"features"`
+	Token           string   `json:"token"`
+	ImagesHashList  []string `json:"imagesHashList"`
+	UserUUID        string   `json:"userUUID"`
+	BeaconSizeLimit int64    `json:"beaconSizeLimit"`
+	SessionID       string   `json:"sessionID"`
+	ImageQuality    string   `json:"quality"`
+	FrameRate       int      `json:"fps"`
+	ProjectID       string   `json:"projectID"`
 }

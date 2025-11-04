@@ -14,7 +14,7 @@ import (
 	"openreplay/backend/pkg/server/user"
 )
 
-const API_KEY_PREFIX = "/vx/" // TODO: change back to v1 once the other endpoints are removed
+const API_KEY_PREFIX = "/v1/"
 
 func GetProject(r *http.Request) (uint32, error) {
 	vars := mux.Vars(r)
