@@ -48,27 +48,27 @@ interface GetSpotsRequest {
 export default class SpotService extends BaseService {
   async fetchSpots(filters: GetSpotsRequest): Promise<GetSpotsResponse> {
     return this.client
-      .get('/spot/v1/spots', filters)
+      .get('/spot/spots', filters)
       .then((r) => r.json())
       .catch(console.error);
   }
 
   async fetchSpot(id: string, accessKey?: string): Promise<GetSpotResponse> {
     return this.client
-      .get(`/spot/v1/spots/${id}${accessKey ? `?key=${accessKey}` : ''}`)
+      .get(`/spot/spots/${id}${accessKey ? `?key=${accessKey}` : ''}`)
       .then((r) => r.json());
   }
 
   async updateSpot(id: string, filter: UpdateSpotRequest) {
     return this.client
-      .patch(`/spot/v1/spots/${id}`, filter)
+      .patch(`/spot/spots/${id}`, filter)
       .then((r) => r.json())
       .catch(console.error);
   }
 
   async deleteSpot(spotIDs: string[]) {
     return this.client
-      .delete('/spot/v1/spots', {
+      .delete('/spot/spots', {
         spotIDs,
       })
       .then((r) => r.json())
@@ -78,7 +78,7 @@ export default class SpotService extends BaseService {
   async addComment(id: string, data: AddCommentRequest, accessKey?: string) {
     return this.client
       .post(
-        `/spot/v1/spots/${id}/comment${accessKey ? `?key=${accessKey}` : ''}`,
+        `/spot/spots/${id}/comment${accessKey ? `?key=${accessKey}` : ''}`,
         data,
       )
       .then((r) => r.json());
@@ -86,7 +86,7 @@ export default class SpotService extends BaseService {
 
   async getVideo(id: string) {
     return this.client
-      .get(`/spot/v1/spots/${id}/video`)
+      .get(`/spot/spots/${id}/video`)
       .then((r) => r.json())
       .catch(console.error);
   }
@@ -100,7 +100,7 @@ export default class SpotService extends BaseService {
     expiration: number,
   ): Promise<{ key: { value: string; expiration: number } }> {
     return this.client
-      .patch(`/spot/v1/spots/${id}/public-key`, { expiration })
+      .patch(`/spot/spots/${id}/public-key`, { expiration })
       .then((r) => r.json())
       .catch(console.error);
   }
@@ -109,14 +109,14 @@ export default class SpotService extends BaseService {
     id: string,
   ): Promise<{ key: { value: string; expiration: number } }> {
     return this.client
-      .get(`/spot/v1/spots/${id}/public-key`)
+      .get(`/spot/spots/${id}/public-key`)
       .then((r) => r.json())
       .catch(console.error);
   }
 
   async checkProcessingStatus(id: string, accessKey?: string) {
     return this.client
-      .get(`/spot/v1/spots/${id}/status${accessKey ? `?key=${accessKey}` : ''}`)
+      .get(`/spot/spots/${id}/status${accessKey ? `?key=${accessKey}` : ''}`)
       .then((r) => r.json())
       .catch(console.error);
   }

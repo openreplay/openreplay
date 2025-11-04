@@ -260,7 +260,6 @@ export default class App {
   private pageFrames: HTMLIFrameElement[] = []
   private frameOderNumber = 0
   private frameLevel = 0
-  private features = {}
   private emptyBatchCounter = 0
 
   constructor(
@@ -1186,9 +1185,7 @@ export default class App {
       userOS,
       userState,
       projectID,
-      features,
     } = await r.json()
-    this.features = features ? features : this.features
     this.session.assign({ projectID })
     this.session.setUserInfo({
       userBrowser,
@@ -1465,9 +1462,7 @@ export default class App {
         canvasQuality,
         canvasFPS,
         assistOnly: socketOnly,
-        features,
       } = await r.json()
-      this.features = features ? features : this.features
       if (
         typeof token !== 'string' ||
         typeof userUUID !== 'string' ||

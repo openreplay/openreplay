@@ -241,7 +241,7 @@ export default class APIClient {
       path.includes('/dashboards') ||
       path.includes('/sessions/search')
     ) {
-      edp = edp.replace('/api', '/analytics/v1');
+      edp = edp.replace('/api', '/analytics');
     }
 
     if (noChalice && !edp.includes('api.openreplay.com')) {
@@ -265,7 +265,7 @@ export default class APIClient {
         newApiUrls.some((u) => fullUrl.includes(u))
         && !except.some((e) => fullUrl.includes(e))
       ) {
-        fullUrl = fullUrl.replace('/api', '/newapi/v1');
+        fullUrl = fullUrl.replace('/api', '/newapi');
       }
     }
     const t1 = performance.now();
@@ -301,7 +301,7 @@ export default class APIClient {
       return;
     }
     try {
-      const newUrl = url.replace('/api', '/newapi/v1');
+      const newUrl = url.replace('/api', '/newapi');
       const t1 = performance.now();
       const newResp = await window.fetch(newUrl, init);
       const t2 = performance.now();
