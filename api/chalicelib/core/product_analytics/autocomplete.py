@@ -71,7 +71,7 @@ def search_properties(
                         FROM product_analytics.autocomplete_event_properties_grouped AS aepg
                         WHERE {" AND ".join(constraints)}
                         {grouping}
-                        ORDER BY data_count DESC
+                        ORDER BY row_count DESC
                         LIMIT %(limit)s
                     ),
                     totals AS (
