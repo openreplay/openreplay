@@ -10,7 +10,7 @@ import (
 
 func NewConsumer(log logger.Logger, group string, topics []string, iterator messages.MessageIterator, autoCommit bool, messageSizeLimit int, rebalanceHandler types.RebalanceHandler) (types.Consumer, error) {
 	license.CheckLicense()
-	return kafka.NewConsumer(log, group, topics, iterator, autoCommit, messageSizeLimit, rebalanceHandler)
+	return kafka.NewConsumer(log, group, topics, iterator, autoCommit, messageSizeLimit, rebalanceHandler, 0)
 }
 
 func NewProducer(messageSizeLimit int, useBatch bool) types.Producer {
