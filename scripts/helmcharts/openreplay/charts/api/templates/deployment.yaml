@@ -81,6 +81,8 @@ spec:
               value: '{{ .Values.global.clickhouse.password }}'
             - name: CLICKHOUSE_STRING
               value: '{{ .Values.global.clickhouse.chHost }}:{{.Values.global.clickhouse.service.webPort}}/{{.Values.env.ch_db}}'
+            - name: CLICKHOUSE_HTTP_STRING
+              value: '{{ .Values.global.clickhouse.chHost }}:{{.Values.global.clickhouse.service.dataPort}}/{{.Values.env.ch_db}}'
             - name: pg_password
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 18 }}
