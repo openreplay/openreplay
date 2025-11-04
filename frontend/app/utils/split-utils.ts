@@ -4,6 +4,7 @@
 
 export const hasAi = false;
 export const hasHealth = true;
+export const hasIssuesSummary = false;
 
 export const menuHidden = {
   clips: true,
