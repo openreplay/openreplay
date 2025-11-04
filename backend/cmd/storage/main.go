@@ -17,6 +17,7 @@ import (
 	storageMetrics "openreplay/backend/pkg/metrics/storage"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
+	"openreplay/backend/pkg/queue/types"
 )
 
 func main() {
@@ -75,6 +76,7 @@ func main() {
 		false,
 		cfg.MessageSizeLimit,
 		nil,
+		types.NoReadBackGap,
 	)
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)

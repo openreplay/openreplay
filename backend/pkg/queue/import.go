@@ -7,7 +7,7 @@ import (
 	"openreplay/backend/pkg/redisstream"
 )
 
-func NewConsumer(log logger.Logger, group string, topics []string, iterator messages.MessageIterator, _ bool, _ int, _ types.RebalanceHandler) (types.Consumer, error) {
+func NewConsumer(log logger.Logger, group string, topics []string, iterator messages.MessageIterator, _ bool, _ int, _ types.RebalanceHandler, _ int) (types.Consumer, error) {
 	return redisstream.NewConsumer(group, topics, iterator)
 }
 

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,6 +18,7 @@ import (
 	"openreplay/backend/pkg/metrics"
 	"openreplay/backend/pkg/metrics/sink"
 	"openreplay/backend/pkg/queue"
+	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/url/assets"
 )
 
@@ -204,6 +204,7 @@ func main() {
 			writer.Sync() // sync all opened files
 			log.Info(ctx, "manual sync finished, dur: %d", time.Now().Sub(s).Milliseconds())
 		},
+		types.NoReadBackGap,
 	)
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)

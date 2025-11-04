@@ -16,6 +16,7 @@ import (
 	canvasesMetrics "openreplay/backend/pkg/metrics/canvas"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
+	"openreplay/backend/pkg/queue/types"
 )
 
 func main() {
@@ -99,6 +100,7 @@ func main() {
 		false,
 		cfg.MessageSizeLimit,
 		nil,
+		types.NoReadBackGap,
 	)
 	if err != nil {
 		log.Fatal(ctx, "can't init canvases service: %s", err)

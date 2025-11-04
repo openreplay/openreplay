@@ -17,6 +17,7 @@ import (
 	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue"
+	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/tags"
 	"openreplay/backend/pkg/terminator"
@@ -97,6 +98,7 @@ func main() {
 		false,
 		cfg.MessageSizeLimit,
 		nil,
+		types.NoReadBackGap,
 	)
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)

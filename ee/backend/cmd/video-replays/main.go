@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/server/middleware"
 	"openreplay/backend/pkg/server/tenant"
 	"openreplay/backend/pkg/sessions"
@@ -53,7 +54,8 @@ func main() {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
 
-	consumer := queue.NewConsumer(
+	consumer, err := queue.NewConsumer(
+		log,
 		cfg.GroupSessionVideoReplay,
 		[]string{
 			cfg.TopicSessionVideoReplay,
@@ -62,6 +64,7 @@ func main() {
 		false,
 		cfg.MessageSizeLimit,
 		nil,
+		types.NoReadBackGap,
 	)
 
 	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetrics, videoService.Handlers(), tenantsService, projManager, nil, nil)
