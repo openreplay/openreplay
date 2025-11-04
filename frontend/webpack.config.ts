@@ -7,6 +7,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CompressionPlugin from "compression-webpack-plugin";
 import { EsbuildPlugin } from 'esbuild-loader';
+// @ts-ignore
 import dotenv from 'dotenv'
 
 const stylesHandler = MiniCssExtractPlugin.loader;
