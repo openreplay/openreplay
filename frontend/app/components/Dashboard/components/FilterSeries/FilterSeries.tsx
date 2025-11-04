@@ -158,6 +158,7 @@ function FilterSeries(props: Props) {
     seriesIndex,
     onRemoveSeries,
     seriesNames = [],
+    excludeEventOrder,
   } = props;
 
   const { filterStore } = useStore();
