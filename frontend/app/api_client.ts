@@ -241,7 +241,7 @@ export default class APIClient {
       path.includes('/dashboards') ||
       path.includes('/sessions/search')
     ) {
-      edp = edp.replace('/api', '/analytics');
+      edp = edp.replace('/api', '/v2/api');
     }
 
     if (noChalice && !edp.includes('api.openreplay.com')) {
@@ -262,28 +262,18 @@ export default class APIClient {
     let fullUrl = edp + _path;
     if (useNewApi) {
       if (
-        newApiUrls.some((u) => fullUrl.includes(u))
-        && !except.some((e) => fullUrl.includes(e))
+        newApiUrls.some((u) => fullUrl.includes(u)) &&
+        !except.some((e) => fullUrl.includes(e))
       ) {
-        fullUrl = fullUrl.replace('/api', '/newapi');
+        fullUrl = fullUrl.replace('/api', '/v2/api');
       }
     }
-    const t1 = performance.now();
     const response = await window.fetch(fullUrl, init);
-    const t2 = performance.now();
     if (response.status === 403) {
       console.warn('API returned 403. Clearing JWT token.');
       this.onUpdateJwt({ jwt: undefined });
     }
     if (response.ok) {
-      const timings = {
-        t1,
-        t2,
-        diff: t2 - t1,
-      };
-      if (!useNewApi) {
-        void this.duplicate(fullUrl, init, response, timings);
-      }
       return response;
     }
     let errorMsg = 'Something went wrong.';
@@ -293,41 +283,6 @@ export default class APIClient {
     } catch {}
     throw new Error(errorMsg);
   }
-
-  duplicate = async (url, init, response, timings) => {
-    const respClone = response.clone();
-    // /api/path -> /api-v2/path
-    if (!newApiUrls.some((u) => url.includes(u)) || !url.includes('/api')) {
-      return;
-    }
-    try {
-      const newUrl = url.replace('/api', '/newapi');
-      const t1 = performance.now();
-      const newResp = await window.fetch(newUrl, init);
-      const t2 = performance.now();
-      if (newResp.ok) {
-        const oldJson = await respClone.json();
-        const newJson = await newResp.json();
-        const diffingRes = diff(oldJson, newJson);
-        if (diffingRes.length > 0) {
-          console.warn(
-            `>>>>> ${url} \n params ${JSON.stringify(init)} \n DIFF ${JSON.stringify(diffingRes)}`, diffingRes,
-          );
-          console.warn(
-            `>>> timings: \n old: ${timings.diff / 1000}s \n new: ${(t2 - t1) / 1000}s`,
-          );
-        }
-      } else {
-        console.warn(
-          `>>>>> ${url} \n params ${JSON.stringify(init)} \n ERROR: ${newResp.status} ${newResp.statusText}`,
-        );
-      }
-    } catch (e) {
-      return console.warn(
-        `>>>>> ${url} \n params ${JSON.stringify(init)} \n ERROR: ${e.toString()}`,
-      );
-    }
-  };
 
   async refreshToken(): Promise<string> {
     try {
