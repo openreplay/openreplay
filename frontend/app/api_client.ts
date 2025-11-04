@@ -237,9 +237,10 @@ export default class APIClient {
 
     // using product analytics api for cards and dashboards (excluding sessions)
     if (
-      path.includes('/cards') ||
-      path.includes('/dashboards') ||
-      path.includes('/sessions/search')
+      (path.includes('/cards') ||
+        path.includes('/dashboards') ||
+        path.includes('/sessions/search')) &&
+      !edp.includes('/v2')
     ) {
       edp = edp.replace('/api', '/v2/api');
     }
@@ -263,7 +264,8 @@ export default class APIClient {
     if (useNewApi) {
       if (
         newApiUrls.some((u) => fullUrl.includes(u)) &&
-        !except.some((e) => fullUrl.includes(e))
+        !except.some((e) => fullUrl.includes(e)) &&
+        !edp.includes('/v2')
       ) {
         fullUrl = fullUrl.replace('/api', '/v2/api');
       }
