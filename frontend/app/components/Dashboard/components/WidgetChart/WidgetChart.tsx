@@ -342,6 +342,11 @@ function WidgetChart(props: Props) {
     }
 
     if (metricType === TIMESERIES) {
+      const labels = {
+        sessionCount: t('Number of Sessions'),
+        eventCount: t('Number of Events'),
+        userCount: t('Number of Users'),
+      };
       const chartData = { ...data };
       chartData.namesMap = Array.isArray(chartData.namesMap)
         ? chartData.namesMap.map((n) => (enabledRows.includes(n) ? n : null))
@@ -362,9 +367,7 @@ function WidgetChart(props: Props) {
             onClick={onChartClick}
             height={height}
             label={
-              _metric.metricOf === 'sessionCount'
-                ? t('Number of Sessions')
-                : t('Number of Users')
+              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
             }
           />
         );
@@ -378,11 +381,7 @@ function WidgetChart(props: Props) {
             inGrid={!props.isPreview}
             onClick={onChartClick}
             onSeriesFocus={onFocus}
-            label={
-              _metric.metricOf === 'sessionCount'
-                ? t('Number of Sessions')
-                : t('Number of Users')
-            }
+            label={_metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount}
           />
         );
       }
@@ -397,11 +396,7 @@ function WidgetChart(props: Props) {
             colors={colors}
             onSeriesFocus={onFocus}
             onClick={onChartClick}
-            label={
-              _metric.metricOf === 'sessionCount'
-                ? t('Number of Sessions')
-                : t('Number of Users')
-            }
+            label={_metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount}
           />
         );
       }
@@ -417,11 +412,7 @@ function WidgetChart(props: Props) {
             params={params}
             colors={colors}
             onSeriesFocus={onFocus}
-            label={
-              _metric.metricOf === 'sessionCount'
-                ? t('Number of Sessions')
-                : t('Number of Users')
-            }
+            label={_metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount}
           />
         );
       }
@@ -432,11 +423,7 @@ function WidgetChart(props: Props) {
             inGrid={!props.isPreview}
             data={chartData}
             onSeriesFocus={onFocus}
-            label={
-              _metric.metricOf === 'sessionCount'
-                ? t('Number of Sessions')
-                : t('Number of Users')
-            }
+            label={_metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount}
           />
         );
       }
@@ -448,11 +435,7 @@ function WidgetChart(props: Props) {
             height={height}
             colors={colors}
             params={params}
-            label={
-              _metric.metricOf === 'sessionCount'
-                ? t('Number of Sessions')
-                : t('Number of Users')
-            }
+            label={_metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount}
           />
         );
       }
@@ -489,11 +472,8 @@ function WidgetChart(props: Props) {
             inGrid={!props.isPreview}
             colors={colors}
             onSeriesFocus={onFocus}
-            label={
-              _metric.metricOf === 'sessionCount'
-                ? t('Number of Sessions')
-                : t('Number of Users')
-            }
+            onClick={onChartClick}
+            label={_metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount}
           />
         );
       }

@@ -53,6 +53,7 @@ function PieChart(props: PieChartProps) {
 
     const option = {
       ...defaultOptions,
+      yAxis: undefined,
       tooltip: {
         ...defaultOptions.tooltip,
         trigger: 'item',
