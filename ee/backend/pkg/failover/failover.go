@@ -74,6 +74,7 @@ func NewSessionFinder(log logger.Logger, cfg *config.Config, stg *storage.Storag
 		true,
 		cfg.MessageSizeLimit,
 		nil,
+		types.NoReadBackGap,
 	)
 	if err != nil {
 		return nil, err
