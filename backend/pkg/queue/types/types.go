@@ -14,6 +14,10 @@ type PartitionsRebalancedEvent struct {
 	Partitions []uint64
 }
 
+const (
+	NoReadBackGap = 0
+)
+
 // Consumer reads batches of session data from queue (redis or kafka)
 type Consumer interface {
 	ConsumeNext() error

@@ -16,6 +16,7 @@ import (
 	"openreplay/backend/pkg/metrics"
 	heuristicsMetrics "openreplay/backend/pkg/metrics/heuristics"
 	"openreplay/backend/pkg/queue"
+	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/terminator"
 )
 
@@ -56,6 +57,7 @@ func main() {
 		false,
 		cfg.MessageSizeLimit,
 		nil,
+		types.NoReadBackGap,
 	)
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)

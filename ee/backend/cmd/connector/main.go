@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"openreplay/backend/pkg/queue/types"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
@@ -100,7 +101,8 @@ func main() {
 	}
 
 	// Init consumer
-	consumer := queue.NewConsumer(
+	consumer, err := queue.NewConsumer(
+		log,
 		cfg.GroupConnector,
 		[]string{
 			cfg.TopicRawWeb,
@@ -110,6 +112,7 @@ func main() {
 		false,
 		cfg.MessageSizeLimit,
 		nil,
+		types.NoReadBackGap,
 	)
 
 	// Init memory manager

@@ -81,6 +81,7 @@ func main() {
 				sessionEndGenerator.Enable()
 			}
 		},
+		types.NoReadBackGap,
 	)
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)
