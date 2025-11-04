@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type RebalanceType int
 
 const (
@@ -15,7 +17,7 @@ type PartitionsRebalancedEvent struct {
 }
 
 const (
-	NoReadBackGap = 0
+	NoReadBackGap time.Duration = 0
 )
 
 // Consumer reads batches of session data from queue (redis or kafka)
