@@ -8,15 +8,4 @@ interface Route {
   canChangeId: boolean;
 }
 
-export const smartAlerts = () => '/smart_alerts';
-
-export const saasRoutes: Route[] = [
-  {
-    path: smartAlerts(),
-    component: React.lazy(
-      () => import('./components/IssuesSummary/IssuesSummary'),
-    ),
-    withId: true,
-    canChangeId: true,
-  },
-];
+export const saasRoutes: Route[] = [];
