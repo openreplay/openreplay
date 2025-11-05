@@ -43,13 +43,31 @@ podman-compose -f docker-compose-custom.yml up -d
 
 See [CUSTOM_CONFIG.md](CUSTOM_CONFIG.md) for detailed configuration options.
 
-## Available Compose Files
+## Deployment Options
+
+### Docker Compose
 
 | File | Description | Use Case |
 |------|-------------|----------|
 | `docker-compose.yml` | Basic PLAINTEXT cluster | Development, testing |
 | `docker-compose-tls.yml` | PLAINTEXT + SSL listeners | Production with TLS |
 | `docker-compose-custom.yml` | Custom configuration example | High throughput, large messages |
+
+### Kubernetes
+
+| File | Description | Use Case |
+|------|-------------|----------|
+| `k8s-kafka-kraft.yaml` | KRaft StatefulSet (PLAINTEXT) | K8s development/testing |
+| `k8s-kafka-kraft-tls.yaml` | KRaft StatefulSet (TLS) | K8s production |
+| `k8s-generate-certs.sh` | Generate K8s TLS certificates | TLS setup |
+
+**Quick Start Kubernetes:**
+```bash
+kubectl create namespace db
+kubectl apply -f k8s-kafka-kraft.yaml
+```
+
+See [K8S_QUICK_START.md](K8S_QUICK_START.md) and [K8S_DEPLOYMENT.md](K8S_DEPLOYMENT.md) for details.
 
 ## Ports
 

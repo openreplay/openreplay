@@ -1,0 +1,361 @@
+---
+# ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kafka
+  namespace: "db"
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/component: kafka
+automountServiceAccountToken: true
+
+---
+# TLS Secret (create this with your certificates)
+# kubectl create secret generic kafka-tls-certs \
+#   --from-file=ca-cert.pem=./certs/ca-cert.pem \
+#   --from-file=kafka-0-cert.pem=./certs/kafka-0-cert.pem \
+#   --from-file=kafka-0-key.pem=./certs/kafka-0-key.pem \
+#   --from-file=kafka-1-cert.pem=./certs/kafka-1-cert.pem \
+#   --from-file=kafka-1-key.pem=./certs/kafka-1-key.pem \
+#   -n db
+
+---
+# Headless Service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-headless
+  namespace: "db"
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/component: kafka
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: false
+  ports:
+    - name: tcp-client
+      port: 9092
+      protocol: TCP
+      targetPort: kafka-client
+    - name: tcp-internal
+      port: 9093
+      protocol: TCP
+      targetPort: kafka-internal
+    - name: tcp-ssl
+      port: 9094
+      protocol: TCP
+      targetPort: kafka-ssl
+  selector:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/component: kafka
+
+---
+# Client Service (PLAINTEXT)
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: "db"
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/component: kafka
+spec:
+  type: ClusterIP
+  sessionAffinity: None
+  ports:
+    - name: tcp-client
+      port: 9092
+      protocol: TCP
+      targetPort: kafka-client
+      nodePort: null
+  selector:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/component: kafka
+
+---
+# Client Service (SSL)
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-ssl
+  namespace: "db"
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/component: kafka
+spec:
+  type: ClusterIP
+  sessionAffinity: None
+  ports:
+    - name: tcp-ssl
+      port: 9094
+      protocol: TCP
+      targetPort: kafka-ssl
+      nodePort: null
+  selector:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/component: kafka
+
+---
+# StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: "db"
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/component: kafka
+spec:
+  podManagementPolicy: Parallel
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kafka
+      app.kubernetes.io/instance: db
+      app.kubernetes.io/component: kafka
+  serviceName: kafka-headless
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kafka
+        app.kubernetes.io/instance: db
+        app.kubernetes.io/component: kafka
+    spec:
+      hostNetwork: false
+      hostIPC: false
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: kafka
+                    app.kubernetes.io/instance: db
+                    app.kubernetes.io/component: kafka
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+      securityContext:
+        fsGroup: 1001
+      serviceAccountName: kafka
+      initContainers:
+        # Copy pod-specific certificates from secret
+        - name: setup-certs
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              POD_ID=$(echo $POD_NAME | sed 's/kafka-//')
+              cp /tls-secret/ca-cert.pem /tls/ca-cert.pem
+              cp /tls-secret/kafka-${POD_ID}-cert.pem /tls/server-cert.pem
+              cp /tls-secret/kafka-${POD_ID}-key.pem /tls/server-key.pem
+              chmod 644 /tls/*.pem
+              chmod 600 /tls/server-key.pem
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: tls-secret
+              mountPath: /tls-secret
+              readOnly: true
+            - name: tls
+              mountPath: /tls
+      containers:
+        - name: kafka
+          image: local/kafka:3
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1001
+          env:
+            # Pod metadata
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            
+            # Derive node ID from pod name (kafka-0 -> 1, kafka-1 -> 2)
+            - name: KAFKA_NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            
+            # KRaft configuration
+            - name: KAFKA_CLUSTER_ID
+              value: "Sjg_Rr1iQbO9xpahgDbYpQ"
+            - name: KAFKA_PROCESS_ROLES
+              value: "broker,controller"
+            - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+              value: "1@kafka-0.kafka-headless.db.svc.cluster.local:9093,2@kafka-1.kafka-headless.db.svc.cluster.local:9093"
+            - name: KAFKA_CONTROLLER_LISTENER_NAMES
+              value: "CONTROLLER"
+            
+            # Listeners (PLAINTEXT + SSL)
+            - name: KAFKA_LISTENERS
+              value: "CLIENT://:9092,INTERNAL://:9093,CONTROLLER://:9093,SSL://:9094"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "CLIENT://$(MY_POD_NAME).kafka-headless.db.svc.cluster.local:9092,INTERNAL://$(MY_POD_NAME).kafka-headless.db.svc.cluster.local:9093,SSL://$(MY_POD_NAME).kafka-headless.db.svc.cluster.local:9094"
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "CLIENT:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT,SSL:SSL"
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "INTERNAL"
+            
+            # TLS Configuration
+            - name: KAFKA_SSL_CERT_FILE
+              value: "/tls/server-cert.pem"
+            - name: KAFKA_SSL_KEY_FILE
+              value: "/tls/server-key.pem"
+            - name: KAFKA_SSL_CA_FILE
+              value: "/tls/ca-cert.pem"
+            - name: KAFKA_SSL_CLIENT_AUTH
+              value: "required"
+            - name: KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM
+              value: ""
+            
+            # Storage
+            - name: KAFKA_LOG_DIRS
+              value: "/bitnami/kafka/data"
+            - name: LOG_DIR
+              value: "/bitnami/kafka/logs"
+            
+            # Message size (3MB to match current config)
+            - name: KAFKA_MESSAGE_MAX_BYTES
+              value: "3145728"
+            - name: KAFKA_REPLICA_FETCH_MAX_BYTES
+              value: "3145728"
+            
+            # Retention (7 days / 1GB to match current config)
+            - name: KAFKA_LOG_RETENTION_HOURS
+              value: "168"
+            - name: KAFKA_LOG_RETENTION_BYTES
+              value: "1073741824"
+            - name: KAFKA_LOG_SEGMENT_BYTES
+              value: "1073741824"
+            
+            # Flush settings
+            - name: KAFKA_CFG_LOG_FLUSH_INTERVAL_MESSAGES
+              value: "10000"
+            - name: KAFKA_CFG_LOG_FLUSH_INTERVAL_MS
+              value: "1000"
+            - name: KAFKA_CFG_LOG_RETENTION_CHECK_INTERVAL_MS
+              value: "300000"
+            
+            # Replication (single replica for 2-node cluster)
+            - name: KAFKA_CFG_DEFAULT_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR
+              value: "1"
+            
+            # Performance
+            - name: KAFKA_CFG_NUM_IO_THREADS
+              value: "8"
+            - name: KAFKA_CFG_NUM_NETWORK_THREADS
+              value: "3"
+            - name: KAFKA_CFG_NUM_PARTITIONS
+              value: "1"
+            - name: KAFKA_CFG_NUM_RECOVERY_THREADS_PER_DATA_DIR
+              value: "1"
+            
+            # Network buffers
+            - name: KAFKA_CFG_SOCKET_RECEIVE_BUFFER_BYTES
+              value: "102400"
+            - name: KAFKA_CFG_SOCKET_REQUEST_MAX_BYTES
+              value: "104857600"
+            - name: KAFKA_CFG_SOCKET_SEND_BUFFER_BYTES
+              value: "102400"
+            
+            # Security
+            - name: KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE
+              value: "true"
+            - name: KAFKA_CFG_DELETE_TOPIC_ENABLE
+              value: "false"
+            - name: KAFKA_CFG_ALLOW_EVERYONE_IF_NO_ACL_FOUND
+              value: "true"
+            - name: KAFKA_CFG_SUPER_USERS
+              value: "User:admin"
+          
+          ports:
+            - name: kafka-client
+              containerPort: 9092
+            - name: kafka-internal
+              containerPort: 9093
+            - name: kafka-ssl
+              containerPort: 9094
+          
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            tcpSocket:
+              port: kafka-client
+          
+          readinessProbe:
+            failureThreshold: 6
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            tcpSocket:
+              port: kafka-client
+          
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/kafka
+            - name: logs
+              mountPath: /bitnami/kafka/logs
+            - name: tls
+              mountPath: /tls
+              readOnly: true
+      
+      volumes:
+        - name: logs
+          emptyDir: {}
+        - name: tls-secret
+          secret:
+            secretName: kafka-tls-certs
+            defaultMode: 0644
+        - name: tls
+          emptyDir: {}
+  
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "100Gi"
