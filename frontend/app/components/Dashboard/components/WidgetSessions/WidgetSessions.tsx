@@ -213,8 +213,7 @@ function WidgetSessions({ className = '' }) {
 
   const filterStr = JSON.stringify(filter.filters ?? []);
   useEffect(() => {
-    metricStore.updateKey('sessionsPage', 1);
-    loadData();
+    changePage(1);
   }, [
     filter.startTimestamp,
     filter.endTimestamp,
@@ -229,11 +228,6 @@ function WidgetSessions({ className = '' }) {
     metricStore.disabledSeries.length,
   ]);
 
-  useEffect(() => {
-    if (metricStore.sessionsPage !== 1) {
-      loadData();
-    }
-  }, [metricStore.sessionsPage]);
   useEffect(() => {
     metricStore.setFocusedSeriesName(
       activeSeries === 'all'
@@ -251,10 +245,15 @@ function WidgetSessions({ className = '' }) {
   }, [focused, seriesOptions]);
 
   const clearFilters = () => {
-    metricStore.updateKey('sessionsPage', 1);
     dashboardStore.resetDrillDownFilter();
     metricStore.setFocusedSeriesName(null, false);
     setActiveSeries('all');
+    changePage(1);
+  };
+
+  const changePage = (page: number) => {
+    metricStore.updateKey('sessionsPage', page);
+    loadData();
   };
 
   const seriesDropdownItems = seriesOptions.map((opt) => ({
@@ -381,7 +380,7 @@ function WidgetSessions({ className = '' }) {
               <Pagination
                 page={metricStore.sessionsPage}
                 total={filteredSessions.total}
-                onPageChange={(p) => metricStore.updateKey('sessionsPage', p)}
+                onPageChange={(p) => changePage(p)}
                 limit={metricStore.sessionsPageSize}
                 debounceRequest={500}
               />

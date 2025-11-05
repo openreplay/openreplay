@@ -119,7 +119,7 @@
 
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
-    background-color: var(--color-gray-light);
+    background-color: var(--color-tealx);
 }
 
 .react-calendar__tile--now {
