@@ -129,7 +129,6 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             
-            # Derive node ID from pod name (kafka-0 -> 1, kafka-1 -> 2)
             - name: KAFKA_NODE_ID
               valueFrom:
                 fieldRef:
