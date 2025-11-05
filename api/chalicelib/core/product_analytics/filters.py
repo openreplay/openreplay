@@ -184,7 +184,30 @@ def get_sessions_filters(project_id: int):
                 "possibleValues": [{"id": i["type"], "name": i["name"], "autoCaptured": i["autoCaptured"]}
                                    for i in issues.get_all_types()],
                 "isConditional": False
-            }
+            },
+            {
+                "id": "sf_15",
+                "name": "screen_height",
+                "displayName": "Screen Height",
+                "possibleTypes": ["UInt16"],
+                "dataType": "UInt16",
+                "autoCaptured": True,
+                "isPredefined": False,
+                "possibleValues": [],
+                "isConditional": False
+            },
+            {
+                "id": "sf_16",
+                "name": "screen_width",
+                "displayName": "Screen Width",
+                "possibleTypes": ["UInt16"],
+                "dataType": "UInt16",
+                "autoCaptured": True,
+                "isPredefined": False,
+                "possibleValues": [],
+                "isConditional": False
+            },
+
         ]
     }
 

@@ -778,7 +778,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.all_properties
       ORDER BY (project_id, property_name, is_event_property, auto_captured);
 
 CREATE OR REPLACE FUNCTION or_property_display_name AS(property_name)->multiIf(
-        property_name == 'label', 'Button Label',
+        property_name == 'label', 'Label',
         property_name == 'hesitation_time', 'Hesitation Time',
         property_name == 'name', 'Name',
         property_name == 'payload', 'Payload',
@@ -801,8 +801,8 @@ CREATE OR REPLACE FUNCTION or_property_display_name AS(property_name)->multiIf(
         property_name == 'speed_index', 'Speed Index',
         property_name == 'visually_complete', 'Visually Complete',
         property_name == 'time_to_interactive', 'Time To Interactive',
-        property_name == 'TTFB', 'Time To First Byte',
-        property_name == 'TTLB', 'Time To Last Byte',
+        property_name == 'ttfb', 'Time To First Byte',
+        property_name == 'ttlb', 'Time To Last Byte',
         property_name == 'response_time', 'Response Time',
         property_name == 'dom_building_time', 'DOM Building Time',
         property_name == 'dom_content_loaded_event_time', 'DOM Content Loaded Event Time',
@@ -838,6 +838,7 @@ CREATE OR REPLACE FUNCTION or_property_display_name AS(property_name)->multiIf(
         property_name == 'status', 'Status Code',
         property_name == 'userState', 'State/Province',
         property_name == 'incident', 'Incident Reported By User',
+        property_name == 'page_title', 'Page Title',
         '');
 
 CREATE OR REPLACE FUNCTION or_property_visibility AS(property_name)->multiIf(
@@ -845,7 +846,7 @@ CREATE OR REPLACE FUNCTION or_property_visibility AS(property_name)->multiIf(
         property_name == 'tag_id', 'hidden',
         property_name == 'INP', 'hidden',
         property_name == 'web_vitals', 'hidden',
-        property_name = 'duration', 'hidden',
+        property_name = 'duration', 'visible',
         property_name = 'avg_cpu', 'hidden',
         property_name = 'avg_fps', 'hidden',
         property_name = 'avg_total_js_heap_size', 'hidden',
@@ -861,15 +862,15 @@ CREATE OR REPLACE FUNCTION or_property_visibility AS(property_name)->multiIf(
         property_name = 'url_hostpath', 'hidden',
         property_name = 'visually_complete', 'hidden',
         property_name = 'time_to_interactive', 'hidden',
-        property_name = 'TTLB', 'hidden',
+        property_name = 'ttlb', 'hidden',
         property_name = 'transfer_size', 'hidden',
         property_name = 'source', 'hidden',
         property_name = 'request_start', 'hidden',
         property_name = 'response_end', 'hidden',
         property_name = 'response_start', 'hidden',
         property_name = 'response_time', 'hidden',
-        property_name = 'normalized_x', 'hidden',
-        property_name = 'normalized_y', 'hidden',
+        property_name = 'normalized_x', 'visible',
+        property_name = 'normalized_y', 'visible',
         property_name = 'max_total_js_heap_size', 'hidden',
         property_name = 'min_total_js_heap_size', 'hidden',
         property_name = 'userAnonymousId', 'hidden',

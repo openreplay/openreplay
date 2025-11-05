@@ -6,7 +6,7 @@ from chalicelib.core import tags
 PREDEFINED_PROPERTIES = {
     "label": {
         "type": "String",
-        "displayName": "Button Label",
+        "displayName": "Label",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": True,
@@ -165,6 +165,8 @@ PREDEFINED_PROPERTIES = {
         "possibleValues": [],
         "isConditional": True,
     },
+    "duration": {"type": "UInt16", "displayName": "Duration",
+                 "isPredefined": False, "possibleValues": [], "isConditional": True},
 }
 
 EXCLUDED_PROPERTIES = ["message_id", "error_id", "tag_id", "web_vitals"]
