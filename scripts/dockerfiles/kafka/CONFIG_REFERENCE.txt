@@ -1,0 +1,255 @@
+================================================================
+                KAFKA CONFIGURATION QUICK REFERENCE
+================================================================
+
+THREE WAYS TO CONFIGURE KAFKA
+==============================
+
+1. NAMED VARIABLES (Easiest)
+----------------------------
+KAFKA_MESSAGE_MAX_BYTES=10485760
+KAFKA_REPLICA_FETCH_MAX_BYTES=10485760
+KAFKA_LOG_RETENTION_HOURS=168
+KAFKA_LOG_RETENTION_BYTES=10737418240
+KAFKA_LOG_SEGMENT_BYTES=1073741824
+KAFKA_COMPRESSION_TYPE=lz4
+
+2. KAFKA_CFG_ PREFIX (Most Flexible)
+-------------------------------------
+KAFKA_CFG_NUM_NETWORK_THREADS=8
+KAFKA_CFG_NUM_IO_THREADS=8
+KAFKA_CFG_MIN_INSYNC_REPLICAS=2
+KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
+
+Pattern: property.name -> KAFKA_CFG_PROPERTY_NAME
+
+3. MOUNT CUSTOM CONFIG (Advanced)
+----------------------------------
+volumes:
+  - ./server.properties:/etc/kafka/server.properties:ro
+
+
+COMMON CONFIGURATIONS
+=====================
+
+MESSAGE SIZE (10MB)
+-------------------
+KAFKA_MESSAGE_MAX_BYTES=10485760
+KAFKA_REPLICA_FETCH_MAX_BYTES=10485760
+KAFKA_CFG_SOCKET_REQUEST_MAX_BYTES=104857600
+
+Client config needed:
+  max.request.size=10485760
+  fetch.max.bytes=10485760
+
+
+RETENTION (30 DAYS)
+-------------------
+KAFKA_LOG_RETENTION_HOURS=720
+KAFKA_LOG_SEGMENT_BYTES=1073741824
+
+Or by size:
+KAFKA_LOG_RETENTION_BYTES=10737418240
+
+
+COMPRESSION
+-----------
+KAFKA_COMPRESSION_TYPE=lz4
+
+Options: gzip, snappy, lz4, zstd, uncompressed
+
+
+PERFORMANCE TUNING
+------------------
+KAFKA_CFG_NUM_NETWORK_THREADS=8
+KAFKA_CFG_NUM_IO_THREADS=8
+KAFKA_CFG_SOCKET_SEND_BUFFER_BYTES=102400
+KAFKA_CFG_SOCKET_RECEIVE_BUFFER_BYTES=102400
+KAFKA_CFG_NUM_REPLICA_FETCHERS=4
+
+
+REPLICATION
+-----------
+KAFKA_CFG_MIN_INSYNC_REPLICAS=2
+KAFKA_CFG_DEFAULT_REPLICATION_FACTOR=2
+KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=2
+
+
+SECURITY
+--------
+KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
+KAFKA_SSL_CLIENT_AUTH=required
+
+
+USEFUL KAFKA PROPERTIES
+========================
+
+Message & Network
+-----------------
+message.max.bytes                    # Max message size
+replica.fetch.max.bytes              # Max replica fetch
+socket.send.buffer.bytes             # Send buffer size
+socket.receive.buffer.bytes          # Receive buffer size
+socket.request.max.bytes             # Max request size
+num.network.threads                  # Network thread count
+num.io.threads                       # I/O thread count
+
+Retention
+---------
+log.retention.hours                  # Time retention
+log.retention.bytes                  # Size retention
+log.segment.bytes                    # Segment size
+log.retention.check.interval.ms      # Cleanup frequency
+log.cleanup.policy                   # compact or delete
+
+Replication
+-----------
+min.insync.replicas                  # Min in-sync replicas
+default.replication.factor           # Default replicas
+replica.lag.time.max.ms              # Max replica lag
+num.replica.fetchers                 # Replica fetcher threads
+
+Performance
+-----------
+compression.type                     # Compression algorithm
+log.flush.interval.messages          # Flush frequency
+log.flush.interval.ms                # Flush time
+background.threads                   # Background thread count
+
+Controller
+----------
+controller.socket.timeout.ms         # Controller timeout
+controller.message.queue.size        # Controller queue size
+
+Topics
+------
+auto.create.topics.enable            # Auto-create topics
+num.partitions                       # Default partitions
+
+
+EXAMPLE DOCKER-COMPOSE SNIPPET
+===============================
+
+services:
+  kafka-1:
+    environment:
+      # Cluster config (required)
+      KAFKA_NODE_ID: 1
+      KAFKA_CLUSTER_ID: "your-cluster-id"
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      
+      # Custom: 10MB messages, 30 days retention
+      KAFKA_MESSAGE_MAX_BYTES: "10485760"
+      KAFKA_LOG_RETENTION_HOURS: "720"
+      KAFKA_COMPRESSION_TYPE: "lz4"
+      
+      # Custom: Performance tuning
+      KAFKA_CFG_NUM_NETWORK_THREADS: "8"
+      KAFKA_CFG_NUM_IO_THREADS: "8"
+      KAFKA_CFG_MIN_INSYNC_REPLICAS: "2"
+
+
+VERIFICATION COMMANDS
+=====================
+
+# View generated config
+podman exec kafka-1 cat /tmp/server.properties
+
+# Check specific property
+podman exec kafka-1 grep "message.max.bytes" /tmp/server.properties
+
+# View all environment variables
+podman exec kafka-1 env | grep KAFKA
+
+# Test connection
+podman exec kafka-1 /usr/lib/kafka/bin/kafka-broker-api-versions.sh \
+  --bootstrap-server localhost:9092
+
+# View broker configs
+podman exec kafka-1 /usr/lib/kafka/bin/kafka-configs.sh \
+  --bootstrap-server localhost:9092 \
+  --entity-type brokers \
+  --entity-name 1 \
+  --describe
+
+
+CONVERSION EXAMPLES
+===================
+
+Kafka Property                       Environment Variable
+----------------------------------   ------------------------------------
+message.max.bytes                    KAFKA_MESSAGE_MAX_BYTES (named)
+                                     KAFKA_CFG_MESSAGE_MAX_BYTES (generic)
+
+num.network.threads                  KAFKA_CFG_NUM_NETWORK_THREADS
+
+min.insync.replicas                  KAFKA_CFG_MIN_INSYNC_REPLICAS
+
+auto.create.topics.enable            KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE
+
+log.retention.hours                  KAFKA_LOG_RETENTION_HOURS (named)
+                                     KAFKA_CFG_LOG_RETENTION_HOURS (generic)
+
+
+COMMON SCENARIOS
+================
+
+HIGH THROUGHPUT
+---------------
+KAFKA_MESSAGE_MAX_BYTES=52428800
+KAFKA_CFG_SOCKET_SEND_BUFFER_BYTES=1048576
+KAFKA_CFG_NUM_IO_THREADS=16
+KAFKA_COMPRESSION_TYPE=lz4
+
+LOW LATENCY
+-----------
+KAFKA_CFG_LOG_FLUSH_INTERVAL_MESSAGES=1
+KAFKA_CFG_NUM_NETWORK_THREADS=16
+KAFKA_COMPRESSION_TYPE=uncompressed
+
+LONG-TERM STORAGE
+-----------------
+KAFKA_LOG_RETENTION_HOURS=8760  # 1 year
+KAFKA_CFG_LOG_CLEANUP_POLICY=compact
+
+HIGH AVAILABILITY
+-----------------
+KAFKA_CFG_MIN_INSYNC_REPLICAS=2
+KAFKA_CFG_DEFAULT_REPLICATION_FACTOR=3
+
+
+TROUBLESHOOTING
+===============
+
+Message Too Large
+-----------------
+Error: RecordTooLargeException
+
+Fix: Increase on BOTH broker AND client
+  Broker: KAFKA_MESSAGE_MAX_BYTES=10485760
+  Producer: max.request.size=10485760
+  Consumer: fetch.max.bytes=10485760
+
+Retention Not Working
+---------------------
+Check both time AND size limits
+  KAFKA_LOG_RETENTION_HOURS=168
+  KAFKA_LOG_RETENTION_BYTES=10737418240
+
+Either condition triggers deletion.
+Set to -1 for unlimited.
+
+Configuration Not Applied
+--------------------------
+1. Check logs: podman logs kafka-1 | grep -i error
+2. Verify env: podman exec kafka-1 env | grep KAFKA
+3. Check config: podman exec kafka-1 cat /tmp/server.properties
+
+
+MORE INFO
+=========
+- Full docs: CUSTOM_CONFIG.md
+- TLS setup: TLS_SETUP.md
+- Kafka docs: https://kafka.apache.org/documentation/#brokerconfigs
+
+================================================================
