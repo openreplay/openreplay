@@ -1,0 +1,70 @@
+================================================================
+                    KAFKA TLS CONFIGURATION
+                    Simplified with PEM Files
+================================================================
+
+YES - TLS/SSL is fully supported and super simple to configure!
+
+SIMPLE CONFIGURATION
+--------------------
+Just provide 3 environment variables per broker:
+
+  KAFKA_SSL_CERT_FILE=/path/to/cert.pem
+  KAFKA_SSL_KEY_FILE=/path/to/key.pem
+  KAFKA_SSL_CA_FILE=/path/to/ca-cert.pem
+
+The container automatically converts PEM to JKS format.
+No manual keystore management needed!
+
+QUICK START
+-----------
+1. Generate certificates:
+   ./generate-certs.sh
+
+2. Start TLS-enabled cluster:
+   podman-compose -f docker-compose-tls.yml up -d
+
+3. Test SSL connection:
+   podman exec kafka-1-tls /usr/lib/kafka/bin/kafka-topics.sh \
+     --list --bootstrap-server kafka-1:9094
+
+WHAT YOU GET
+------------
+- Automatic PEM to JKS conversion
+- Both PLAINTEXT (9092/9095) and SSL (9094/9097) listeners
+- 2-node cluster with TLS support
+- Self-signed certificates for testing
+- Production-ready with your own certificates
+
+GENERATED FILES
+---------------
+certs/
+  ca-cert.pem         - Certificate Authority
+  kafka-1-cert.pem    - Broker 1 certificate
+  kafka-1-key.pem     - Broker 1 private key
+  kafka-2-cert.pem    - Broker 2 certificate
+  kafka-2-key.pem     - Broker 2 private key
+
+USING YOUR OWN CERTIFICATES
+----------------------------
+Replace the generated files with your CA-signed certificates:
+
+  cp your-cert.pem certs/kafka-1-cert.pem
+  cp your-key.pem certs/kafka-1-key.pem
+  cp your-ca.pem certs/ca-cert.pem
+
+Then restart the cluster. That's it!
+
+SUPPORTED FEATURES
+------------------
+- TLS 1.2 and 1.3
+- Mutual TLS (mTLS) authentication
+- Custom cipher suites
+- Hostname verification
+- Multiple listeners (mixed PLAINTEXT + SSL)
+
+DOCUMENTATION
+-------------
+See TLS_SETUP.md for detailed configuration guide.
+
+================================================================
