@@ -109,6 +109,41 @@ if [ -n "$KAFKA_NODE_ID" ]; then
     if [ -n "$KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM" ]; then
         echo "ssl.endpoint.identification.algorithm=${KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM}" >> "$CONFIG_FILE"
     fi
+    
+    # Message size configurations
+    if [ -n "$KAFKA_MESSAGE_MAX_BYTES" ]; then
+        echo "message.max.bytes=${KAFKA_MESSAGE_MAX_BYTES}" >> "$CONFIG_FILE"
+    fi
+    
+    if [ -n "$KAFKA_REPLICA_FETCH_MAX_BYTES" ]; then
+        echo "replica.fetch.max.bytes=${KAFKA_REPLICA_FETCH_MAX_BYTES}" >> "$CONFIG_FILE"
+    fi
+    
+    # Retention configurations
+    if [ -n "$KAFKA_LOG_RETENTION_HOURS" ]; then
+        echo "log.retention.hours=${KAFKA_LOG_RETENTION_HOURS}" >> "$CONFIG_FILE"
+    fi
+    
+    if [ -n "$KAFKA_LOG_RETENTION_BYTES" ]; then
+        echo "log.retention.bytes=${KAFKA_LOG_RETENTION_BYTES}" >> "$CONFIG_FILE"
+    fi
+    
+    if [ -n "$KAFKA_LOG_SEGMENT_BYTES" ]; then
+        echo "log.segment.bytes=${KAFKA_LOG_SEGMENT_BYTES}" >> "$CONFIG_FILE"
+    fi
+    
+    # Compression
+    if [ -n "$KAFKA_COMPRESSION_TYPE" ]; then
+        echo "compression.type=${KAFKA_COMPRESSION_TYPE}" >> "$CONFIG_FILE"
+    fi
+    
+    # Generic way to add any Kafka property via KAFKA_CFG_ prefix
+    # Example: KAFKA_CFG_NUM_NETWORK_THREADS=8 -> num.network.threads=8
+    for var in $(env | grep '^KAFKA_CFG_'); do
+        key=$(echo "$var" | sed -e 's/KAFKA_CFG_//' -e 's/=.*//' | tr '[:upper:]_' '[:lower:].')
+        value=$(echo "$var" | sed -e 's/^[^=]*=//')
+        echo "${key}=${value}" >> "$CONFIG_FILE"
+    done
 fi
 
 # Use shared cluster ID for multi-node setup

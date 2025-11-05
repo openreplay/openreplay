@@ -1,0 +1,115 @@
+version: '3.8'
+
+# Example: Kafka with custom configuration for larger messages and better performance
+# Usage: podman-compose -f docker-compose-custom.yml up -d
+
+services:
+  kafka-1:
+    build: .
+    container_name: kafka-1-custom
+    hostname: kafka-1
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      # === Standard Cluster Configuration ===
+      KAFKA_NODE_ID: 1
+      KAFKA_CLUSTER_ID: "Sjg_Rr1iQbO9xpahgDbYpQ"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9093,2@kafka-2:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LOG_DIRS: /bitnami/kafka/data
+      LOG_DIR: /bitnami/kafka/logs
+      
+      # === Custom Configuration Examples ===
+      
+      # Message Size: Allow up to 10MB messages (default is 1MB)
+      KAFKA_MESSAGE_MAX_BYTES: "10485760"
+      KAFKA_REPLICA_FETCH_MAX_BYTES: "10485760"
+      
+      # Retention: Keep messages for 30 days (default is 7 days)
+      KAFKA_LOG_RETENTION_HOURS: "720"
+      
+      # Compression: Enable LZ4 compression for better performance
+      KAFKA_COMPRESSION_TYPE: "lz4"
+      
+      # Performance: Increase network and I/O threads
+      KAFKA_CFG_NUM_NETWORK_THREADS: "8"
+      KAFKA_CFG_NUM_IO_THREADS: "8"
+      
+      # Buffers: Increase socket buffers for high throughput
+      KAFKA_CFG_SOCKET_SEND_BUFFER_BYTES: "102400"
+      KAFKA_CFG_SOCKET_RECEIVE_BUFFER_BYTES: "102400"
+      
+      # Replication: Ensure at least 2 replicas are in-sync
+      KAFKA_CFG_MIN_INSYNC_REPLICAS: "2"
+      
+      # Security: Disable auto-topic creation
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
+      
+    volumes:
+      - kafka-1-data-custom:/bitnami/kafka
+    networks:
+      - kafka-network-custom
+
+  kafka-2:
+    build: .
+    container_name: kafka-2-custom
+    hostname: kafka-2
+    ports:
+      - "9094:9092"
+      - "9095:9093"
+    environment:
+      # === Standard Cluster Configuration ===
+      KAFKA_NODE_ID: 2
+      KAFKA_CLUSTER_ID: "Sjg_Rr1iQbO9xpahgDbYpQ"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9093,2@kafka-2:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LOG_DIRS: /bitnami/kafka/data
+      LOG_DIR: /bitnami/kafka/logs
+      
+      # === Custom Configuration Examples ===
+      
+      # Message Size: Allow up to 10MB messages (default is 1MB)
+      KAFKA_MESSAGE_MAX_BYTES: "10485760"
+      KAFKA_REPLICA_FETCH_MAX_BYTES: "10485760"
+      
+      # Retention: Keep messages for 30 days (default is 7 days)
+      KAFKA_LOG_RETENTION_HOURS: "720"
+      
+      # Compression: Enable LZ4 compression for better performance
+      KAFKA_COMPRESSION_TYPE: "lz4"
+      
+      # Performance: Increase network and I/O threads
+      KAFKA_CFG_NUM_NETWORK_THREADS: "8"
+      KAFKA_CFG_NUM_IO_THREADS: "8"
+      
+      # Buffers: Increase socket buffers for high throughput
+      KAFKA_CFG_SOCKET_SEND_BUFFER_BYTES: "102400"
+      KAFKA_CFG_SOCKET_RECEIVE_BUFFER_BYTES: "102400"
+      
+      # Replication: Ensure at least 2 replicas are in-sync
+      KAFKA_CFG_MIN_INSYNC_REPLICAS: "2"
+      
+      # Security: Disable auto-topic creation
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
+      
+    volumes:
+      - kafka-2-data-custom:/bitnami/kafka
+    networks:
+      - kafka-network-custom
+
+volumes:
+  kafka-1-data-custom:
+  kafka-2-data-custom:
+
+networks:
+  kafka-network-custom:
+    driver: bridge
