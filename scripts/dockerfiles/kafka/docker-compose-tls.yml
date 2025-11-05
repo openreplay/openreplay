@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  kafka-1:
+    build: .
+    container_name: kafka-1-tls
+    hostname: kafka-1
+    ports:
+      - "9092:9092"   # PLAINTEXT
+      - "9093:9093"   # CONTROLLER
+      - "9094:9094"   # SSL
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_CLUSTER_ID: "Sjg_Rr1iQbO9xpahgDbYpQ"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,SSL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092,SSL://kafka-1:9094
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9093,2@kafka-2:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,SSL:SSL
+      KAFKA_LOG_DIRS: /bitnami/kafka/data
+      LOG_DIR: /bitnami/kafka/logs
+      # Simple TLS Configuration - Just provide cert and key (CA is optional)
+      KAFKA_SSL_CERT_FILE: /bitnami/kafka/certs/kafka-1-cert.pem
+      KAFKA_SSL_KEY_FILE: /bitnami/kafka/certs/kafka-1-key.pem
+      KAFKA_SSL_CA_FILE: /bitnami/kafka/certs/ca-cert.pem  # Optional
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ""
+    volumes:
+      - kafka-1-data-tls:/bitnami/kafka
+      - ./certs:/bitnami/kafka/certs:ro
+    networks:
+      - kafka-network-tls
+
+  kafka-2:
+    build: .
+    container_name: kafka-2-tls
+    hostname: kafka-2
+    ports:
+      - "9095:9092"   # PLAINTEXT
+      - "9096:9093"   # CONTROLLER
+      - "9097:9094"   # SSL
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_CLUSTER_ID: "Sjg_Rr1iQbO9xpahgDbYpQ"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,SSL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9092,SSL://kafka-2:9094
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9093,2@kafka-2:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,SSL:SSL
+      KAFKA_LOG_DIRS: /bitnami/kafka/data
+      LOG_DIR: /bitnami/kafka/logs
+      # Simple TLS Configuration - Just provide cert and key (CA is optional)
+      KAFKA_SSL_CERT_FILE: /bitnami/kafka/certs/kafka-2-cert.pem
+      KAFKA_SSL_KEY_FILE: /bitnami/kafka/certs/kafka-2-key.pem
+      KAFKA_SSL_CA_FILE: /bitnami/kafka/certs/ca-cert.pem  # Optional
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ""
+    volumes:
+      - kafka-2-data-tls:/bitnami/kafka
+      - ./certs:/bitnami/kafka/certs:ro
+    networks:
+      - kafka-network-tls
+
+volumes:
+  kafka-1-data-tls:
+  kafka-2-data-tls:
+
+networks:
+  kafka-network-tls:
+    driver: bridge

@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  kafka-1:
+    build: .
+    container_name: kafka-1
+    hostname: kafka-1
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_CLUSTER_ID: "Sjg_Rr1iQbO9xpahgDbYpQ"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9093,2@kafka-2:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LOG_DIRS: /bitnami/kafka/data
+      LOG_DIR: /bitnami/kafka/logs
+    volumes:
+      - kafka-1-data:/bitnami/kafka
+    networks:
+      - kafka-network
+
+  kafka-2:
+    build: .
+    container_name: kafka-2
+    hostname: kafka-2
+    ports:
+      - "9094:9092"
+      - "9095:9093"
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_CLUSTER_ID: "Sjg_Rr1iQbO9xpahgDbYpQ"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9093,2@kafka-2:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LOG_DIRS: /bitnami/kafka/data
+      LOG_DIR: /bitnami/kafka/logs
+    volumes:
+      - kafka-2-data:/bitnami/kafka
+    networks:
+      - kafka-network
+
+volumes:
+  kafka-1-data:
+  kafka-2-data:
+
+networks:
+  kafka-network:
+    driver: bridge
