@@ -14,10 +14,11 @@ echarts.use([SunburstChart]);
 interface Props {
   data: Record<string, any>;
   height?: number;
+  inGrid?: boolean;
 }
 
 const EChartsSunburst = (props: Props) => {
-  const { data, height = 240 } = props;
+  const { data, height = 240, inGrid } = props;
   const chartRef = React.useRef<HTMLDListElement>(null);
   const [chartColors, setColors] = React.useState<Map<string, string>>(
     new Map(),
@@ -42,13 +43,13 @@ const EChartsSunburst = (props: Props) => {
         type: 'sunburst',
         data: [tree],
         sort: 'desc',
-        radius: [90, '80%'],
+        radius: [inGrid ? 10 : 90, '80%'],
         itemStyle: {
           borderRadius: 6,
           borderWidth: 3,
           borderColor: 'var(--color-white)',
         },
-        center: ['50%', '50%'],
+        center: [inGrid ? '25%' : '50%', '50%'],
         clockwise: true,
         label: {
           show: false,
@@ -124,7 +125,11 @@ const EChartsSunburst = (props: Props) => {
         position: 'relative',
       }}
     >
-      <div ref={chartRef} style={{ height, flex: 1 }} className="w-full relative" />
+      <div
+        ref={chartRef}
+        style={{ height, flex: 1 }}
+        className="w-full relative"
+      />
       <DroppedSessionsList
         dropsByUrl={dropsByUrl}
         onHover={onHover}

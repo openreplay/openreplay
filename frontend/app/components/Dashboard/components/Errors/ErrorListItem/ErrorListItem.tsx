@@ -28,7 +28,7 @@ function ErrorListItem(props: Props) {
       id="error-item"
       onClick={props.onClick}
     >
-      <div className={cn('col-span-6 leading-tight')}>
+      <div className={cn('col-span-5 leading-tight')}>
         <div>
           <ErrorName
             icon={error.status === IGNORED ? 'ban' : null}
@@ -47,7 +47,12 @@ function ErrorListItem(props: Props) {
         </div>
       </div>
       <div className="col-span-2">
-        <BarChart width={150} height={40} data={error.chart}>
+        <BarChart
+          width={150}
+          height={40}
+          style={{ maxWidth: '100%' }}
+          data={error.chart}
+        >
           <XAxis hide dataKey="timestamp" />
           <YAxis hide domain={[0, 'dataMax + 8']} />
           <Tooltip
@@ -79,7 +84,7 @@ function ErrorListItem(props: Props) {
         // className={stl.occurrence}
         topValue={`${error.lastOccurrence && diffFromNowString(error.lastOccurrence)} ${t('ago')}`}
         bottomValue={t('Last Seen')}
-        className="col-span-2"
+        className="col-span-3"
       />
     </div>
   );

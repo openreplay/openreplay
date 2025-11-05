@@ -5,6 +5,8 @@ import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { useModal } from 'App/components/Modal';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useTranslation } from 'react-i18next';
+import { Space } from 'antd';
+import { ArrowRight } from 'lucide-react';
 
 interface Props {
   metric: any;
@@ -12,6 +14,7 @@ interface Props {
   isEdit: any;
   history: any;
   location: any;
+  inGrid?: boolean;
 }
 function CustomMetricTableErrors(props: RouteComponentProps & Props) {
   const { t } = useTranslation();
@@ -48,6 +51,9 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
     });
   }, [errorId]);
 
+  const errors = data.errors || [];
+  const displayedData = props.inGrid ? errors.slice(0, 3) : errors;
+  const rest = errors.length - displayedData.length;
   return (
     <NoContent
       title={
@@ -61,8 +67,8 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
       style={{ minHeight: 220 }}
     >
       <div className="pb-4">
-        {data.errors &&
-          data.errors.map((error: any, index: any) => (
+        {displayedData &&
+          displayedData.map((error: any, index: any) => (
             <div key={index} className="border-b last:border-none">
               <ErrorListItem
                 error={error}
@@ -71,15 +77,26 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
             </div>
           ))}
 
-        <div className="my-6 flex items-center justify-center">
-          <Pagination
-            page={metric.page}
-            total={data.total}
-            onPageChange={(page: any) => metric.updateKey('page', page)}
-            limit={5}
-            debounceRequest={500}
-          />
-        </div>
+        {props.inGrid ? (
+          rest > 0 ? (
+            <div className="flex link pt-1">
+              <Space className="flex font-medium gap-1 text-black hover:text-main">
+                {rest}&nbsp;{t('More')}
+                <ArrowRight size={16} />
+              </Space>
+            </div>
+          ) : null
+        ) : (
+          <div className="my-6 flex items-center justify-center">
+            <Pagination
+              page={metric.page}
+              total={data.total}
+              onPageChange={(page: any) => metric.updateKey('page', page)}
+              limit={5}
+              debounceRequest={500}
+            />
+          </div>
+        )}
       </div>
     </NoContent>
   );

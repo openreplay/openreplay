@@ -496,6 +496,7 @@ function WidgetChart(props: Props) {
           <CustomMetricTableErrors
             metric={_metric}
             data={data}
+            inGrid={!props.isPreview}
             height={height}
             isEdit={!isSaved && !isTemplate}
           />
