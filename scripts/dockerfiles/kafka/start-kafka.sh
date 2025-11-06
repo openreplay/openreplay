@@ -70,27 +70,60 @@ fi
 
 # If environment variables are set, create a custom config
 if [ -n "$KAFKA_NODE_ID" ]; then
+    # Derive numeric node ID from KAFKA_NODE_ID if it contains a pod name pattern
+    # For Kubernetes: kafka-0 -> 1, kafka-1 -> 2, kafka-new-0 -> 1, etc.
+    if [[ "$KAFKA_NODE_ID" =~ -([0-9]+)$ ]]; then
+        NODE_ID=$((${BASH_REMATCH[1]} + 1))
+        echo "Derived node.id=${NODE_ID} from pod name ${KAFKA_NODE_ID}"
+    else
+        NODE_ID="$KAFKA_NODE_ID"
+        echo "Using node.id=${NODE_ID} directly"
+    fi
+    
     echo "Generating custom Kafka configuration for cluster mode..."
     CONFIG_FILE="/tmp/server.properties"
 
-    # Copy base config
+    # Copy base config and remove values we'll override
     cp /usr/lib/kafka/config/kraft/server.properties "$CONFIG_FILE"
+    
+    # Remove conflicting default values from base config
+    sed -i '/^node.id=/d' "$CONFIG_FILE"
+    sed -i '/^process.roles=/d' "$CONFIG_FILE"
+    sed -i '/^listeners=/d' "$CONFIG_FILE"
+    sed -i '/^advertised.listeners=/d' "$CONFIG_FILE"
+    sed -i '/^listener.security.protocol.map=/d' "$CONFIG_FILE"
+    sed -i '/^controller.quorum.voters=/d' "$CONFIG_FILE"
+    sed -i '/^controller.listener.names=/d' "$CONFIG_FILE"
+    sed -i '/^inter.broker.listener.name=/d' "$CONFIG_FILE"
+    sed -i '/^log.dirs=/d' "$CONFIG_FILE"
 
-    # Override with environment variables
-    echo "node.id=${KAFKA_NODE_ID}" >>"$CONFIG_FILE"
+    # Add our custom configuration
+    echo "node.id=${NODE_ID}" >>"$CONFIG_FILE"
     echo "process.roles=${KAFKA_PROCESS_ROLES:-broker,controller}" >>"$CONFIG_FILE"
     echo "listeners=${KAFKA_LISTENERS:-PLAINTEXT://:9092,CONTROLLER://:9093}" >>"$CONFIG_FILE"
-    echo "advertised.listeners=${KAFKA_ADVERTISED_LISTENERS}" >>"$CONFIG_FILE"
-    echo "controller.quorum.voters=${KAFKA_CONTROLLER_QUORUM_VOTERS}" >>"$CONFIG_FILE"
+
+    # Add listener security protocol map early (needed for parsing)
+    if [ -n "$KAFKA_LISTENER_SECURITY_PROTOCOL_MAP" ]; then
+        echo "listener.security.protocol.map=${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}" >>"$CONFIG_FILE"
+    fi
+    # DEBUG: Show environment variables
+    echo "DEBUG: MY_POD_NAME=${MY_POD_NAME}"
+    echo "DEBUG: Original KAFKA_ADVERTISED_LISTENERS=${KAFKA_ADVERTISED_LISTENERS}"
+    
+    # Expand variables in advertised.listeners (handle both ${} and $() syntax)
+    EXPANDED_ADVERTISED=$(eval echo "${KAFKA_ADVERTISED_LISTENERS}")
+    echo "DEBUG: Expanded ADVERTISED_LISTENERS=${EXPANDED_ADVERTISED}"
+    echo "advertised.listeners=${EXPANDED_ADVERTISED}" >>"$CONFIG_FILE"
+    
+    # Expand variables in controller.quorum.voters
+    EXPANDED_VOTERS=$(eval echo "${KAFKA_CONTROLLER_QUORUM_VOTERS}")
+    echo "DEBUG: Expanded CONTROLLER_QUORUM_VOTERS=${EXPANDED_VOTERS}"
+    echo "controller.quorum.voters=${EXPANDED_VOTERS}" >>"$CONFIG_FILE"
     echo "controller.listener.names=${KAFKA_CONTROLLER_LISTENER_NAMES:-CONTROLLER}" >>"$CONFIG_FILE"
     echo "inter.broker.listener.name=${KAFKA_INTER_BROKER_LISTENER_NAME:-PLAINTEXT}" >>"$CONFIG_FILE"
     echo "log.dirs=${DATA_DIR}" >>"$CONFIG_FILE"
 
-    # Add SSL/TLS configuration if provided
-    if [ -n "$KAFKA_LISTENER_SECURITY_PROTOCOL_MAP" ]; then
-        echo "listener.security.protocol.map=${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}" >>"$CONFIG_FILE"
-    fi
-
+    # Add SSL/TLS keystore/truststore configuration if provided
     if [ -n "$KAFKA_SSL_KEYSTORE_LOCATION" ]; then
         echo "ssl.keystore.location=${KAFKA_SSL_KEYSTORE_LOCATION}" >>"$CONFIG_FILE"
         echo "ssl.keystore.password=${KAFKA_SSL_KEYSTORE_PASSWORD}" >>"$CONFIG_FILE"
@@ -148,6 +181,11 @@ fi
 
 # Use shared cluster ID for multi-node setup
 CLUSTER_ID_FILE="/bitnami/kafka/cluster.id"
+    
+    echo ""
+    echo "DEBUG: ===== Generated server.properties ====="
+    cat "$CONFIG_FILE"
+    echo "DEBUG: ===== End of server.properties ====="
 if [ ! -f "$DATA_DIR/meta.properties" ]; then
     echo "Formatting Kafka storage for KRaft mode..."
 

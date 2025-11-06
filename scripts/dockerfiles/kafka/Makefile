@@ -9,3 +9,8 @@ build: ## build image
 
 dev: build ## buiild run image
 	podman run -it --rm --network host $(image)
+
+kube: build
+	podman push $(image)
+	kubectl delete statefulset kafka-new -n db
+	kubectl apply -f kube/k8s-kafka-kraft.yaml
