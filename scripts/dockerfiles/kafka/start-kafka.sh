@@ -14,7 +14,7 @@ setup_ssl_from_pem() {
     local CA_FILE="$3"
     local KEYSTORE_FILE="/tmp/kafka.keystore.jks"
     local TRUSTSTORE_FILE="/tmp/kafka.truststore.jks"
-    local PASSWORD="kafka-ssl-pass"
+    local PASSWORD="${KAFKA_SSL_KEYSTORE_PASSWORD:-kafka-ssl-pass}"
 
     if [ -f "$CERT_FILE" ] && [ -f "$KEY_FILE" ]; then
         echo "Converting PEM certificates to JKS format..."
@@ -74,10 +74,10 @@ if [ -n "$KAFKA_NODE_ID" ]; then
     # For Kubernetes: kafka-0 -> 1, kafka-1 -> 2, kafka-new-0 -> 1, etc.
     if [[ "$KAFKA_NODE_ID" =~ -([0-9]+)$ ]]; then
         NODE_ID=$((${BASH_REMATCH[1]} + 1))
-        echo "Derived node.id=${NODE_ID} from pod name ${KAFKA_NODE_ID}"
+        [ "$DEBUG" = "1" ] && echo "Derived node.id=${NODE_ID} from pod name ${KAFKA_NODE_ID}"
     else
         NODE_ID="$KAFKA_NODE_ID"
-        echo "Using node.id=${NODE_ID} directly"
+        [ "$DEBUG" = "1" ] && echo "Using node.id=${NODE_ID} directly"
     fi
     
     echo "Generating custom Kafka configuration for cluster mode..."
@@ -106,18 +106,21 @@ if [ -n "$KAFKA_NODE_ID" ]; then
     if [ -n "$KAFKA_LISTENER_SECURITY_PROTOCOL_MAP" ]; then
         echo "listener.security.protocol.map=${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}" >>"$CONFIG_FILE"
     fi
-    # DEBUG: Show environment variables
-    echo "DEBUG: MY_POD_NAME=${MY_POD_NAME}"
-    echo "DEBUG: Original KAFKA_ADVERTISED_LISTENERS=${KAFKA_ADVERTISED_LISTENERS}"
+    
+    # Show environment variables if DEBUG is enabled
+    if [ "$DEBUG" = "1" ]; then
+        echo "DEBUG: MY_POD_NAME=${MY_POD_NAME}"
+        echo "DEBUG: Original KAFKA_ADVERTISED_LISTENERS=${KAFKA_ADVERTISED_LISTENERS}"
+    fi
     
     # Expand variables in advertised.listeners (handle both ${} and $() syntax)
     EXPANDED_ADVERTISED=$(eval echo "${KAFKA_ADVERTISED_LISTENERS}")
-    echo "DEBUG: Expanded ADVERTISED_LISTENERS=${EXPANDED_ADVERTISED}"
+    [ "$DEBUG" = "1" ] && echo "DEBUG: Expanded ADVERTISED_LISTENERS=${EXPANDED_ADVERTISED}"
     echo "advertised.listeners=${EXPANDED_ADVERTISED}" >>"$CONFIG_FILE"
     
     # Expand variables in controller.quorum.voters
     EXPANDED_VOTERS=$(eval echo "${KAFKA_CONTROLLER_QUORUM_VOTERS}")
-    echo "DEBUG: Expanded CONTROLLER_QUORUM_VOTERS=${EXPANDED_VOTERS}"
+    [ "$DEBUG" = "1" ] && echo "DEBUG: Expanded CONTROLLER_QUORUM_VOTERS=${EXPANDED_VOTERS}"
     echo "controller.quorum.voters=${EXPANDED_VOTERS}" >>"$CONFIG_FILE"
     echo "controller.listener.names=${KAFKA_CONTROLLER_LISTENER_NAMES:-CONTROLLER}" >>"$CONFIG_FILE"
     echo "inter.broker.listener.name=${KAFKA_INTER_BROKER_LISTENER_NAME:-PLAINTEXT}" >>"$CONFIG_FILE"
@@ -181,11 +184,15 @@ fi
 
 # Use shared cluster ID for multi-node setup
 CLUSTER_ID_FILE="/bitnami/kafka/cluster.id"
-    
+
+# Show generated config if DEBUG is enabled
+if [ "$DEBUG" = "1" ]; then
     echo ""
     echo "DEBUG: ===== Generated server.properties ====="
     cat "$CONFIG_FILE"
     echo "DEBUG: ===== End of server.properties ====="
+fi
+
 if [ ! -f "$DATA_DIR/meta.properties" ]; then
     echo "Formatting Kafka storage for KRaft mode..."
 
