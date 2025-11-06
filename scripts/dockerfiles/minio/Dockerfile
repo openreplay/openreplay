@@ -1,7 +1,7 @@
 FROM cgr.dev/chainguard/wolfi-base
 
 # Install MinIO 2025 version (any patch within 2025)
-RUN apk add --no-cache 'minio>=0.20250000' 'minio<0.20260000' openssl bash && \
+RUN apk add --no-cache 'minio>=0.20250000' 'minio<0.20260000' openssl && \
   mkdir -p /bitnami/minio/data && \
   chown -R 1001:1001 /bitnami/minio/data
 
