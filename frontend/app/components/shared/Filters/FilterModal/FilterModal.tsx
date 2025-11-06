@@ -1,213 +1,19 @@
-import cn from 'classnames';
-import {
-  ALargeSmall,
-  ChevronRight,
-  Hash,
-  MousePointerClick,
-  Search,
-} from 'lucide-react';
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { Search, Loader } from 'lucide-react';
+import React, { useState, useMemo, useCallback } from 'react';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { Input, Space, Typography } from 'antd';
+import { Input, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { Filter } from '@/mstore/types/filterConstants';
 import { VList } from 'virtua';
-import { FilterKey, FilterType } from 'Types/filter/filterType';
-import type { ComponentType } from 'react';
-import { useStore } from 'App/mstore';
-
-type IconProps = { size: number; className?: string };
-type FilterIconMap = Record<FilterType, ComponentType<IconProps>>;
-
-const iconProps: IconProps = { size: 14 };
-
-const PropertyIconMap = {
-  [FilterType.NUMBER]: Hash,
-  [FilterType.INTEGER]: Hash,
-  [FilterType.STRING]: ALargeSmall,
-} as unknown as FilterIconMap;
-
-export const getIconForFilter = (filter: Filter): React.ReactNode => {
-  const Icon = filter.isEvent
-    ? MousePointerClick
-    : (filter.dataType && filter.dataType in PropertyIconMap
-        ? PropertyIconMap[filter.dataType as FilterType]
-        : null) || ALargeSmall;
-  const className = filter.isEvent ? 'text-gray-400' : undefined;
-  return <Icon {...iconProps} className={className} />;
-};
-
-const getCategoryDisplayName = (category: string): string => {
-  const categoryMap: Record<string, string> = {
-    auto_captured: 'Autocapture',
-    user_events: 'User Events',
-  };
-
-  if (categoryMap[category]) {
-    return categoryMap[category];
-  }
-
-  return category.charAt(0).toUpperCase() + category.slice(1);
-};
-
-const groupFiltersByCategory = (
-  filters: Filter[],
-): Record<string, Filter[]> => {
-  if (!filters?.length) return {};
-  return filters.reduce(
-    (acc, filter) => {
-      const key = filter.category || 'Other';
-      const cat = getCategoryDisplayName(key);
-      (acc[cat] ||= []).push(filter);
-      return acc;
-    },
-    {} as Record<string, Filter[]>,
-  );
-};
-
-const getFilteredEntries = (
-  query: string,
-  grouped: Record<string, Filter[]>,
-  type?: 'Events' | 'Filters' | 'Properties',
-) => {
-  const trimmed = query.trim().toLowerCase();
-  const all = `All${type ? ` ${type}` : ''}`;
-  if (!Object.keys(grouped).length)
-    return { matchingCategories: [all], matchingFilters: {} };
-  const categories = Object.keys(grouped);
-  if (!trimmed)
-    return {
-      matchingCategories: [all, ...categories],
-      matchingFilters: grouped,
-    };
-  const matched = new Set<string>([all]);
-  const filtersMap: Record<string, Filter[]> = {};
-
-  categories.forEach((cat) => {
-    const catMatch = cat.toLowerCase().includes(trimmed);
-    const items = grouped[cat].filter(
-      (f) =>
-        f.displayName?.toLowerCase().includes(trimmed) ||
-        f.name?.toLowerCase().includes(trimmed),
-    );
-    if (items.length) filtersMap[cat] = items;
-    if (catMatch) filtersMap[cat] ||= grouped[cat];
-    if (catMatch || items.length) matched.add(cat);
-  });
-
-  return {
-    matchingCategories: [all, ...categories.filter((c) => matched.has(c))],
-    matchingFilters: filtersMap,
-  };
-};
-
-const useDebounce = (value: any, delay = 300) => {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const handler = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-  return debounced;
-};
-
-const FilterItem = React.memo(
-  ({
-    filter,
-    onClick,
-    showCategory,
-    disabled = false,
-  }: {
-    filter: Filter;
-    onClick: (f: Filter) => void;
-    showCategory?: boolean;
-    disabled?: boolean;
-  }) => (
-    <div
-      className={cn(
-        'flex items-center p-2 gap-2 rounded-lg text-sm',
-        disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-blueLight',
-      )}
-      onClick={() => (disabled ? null : onClick(filter))}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') onClick(filter);
-      }}
-    >
-      {showCategory && filter.category && (
-        <div
-          // style={{ width: 110 }}
-          className={cn(
-            disabled ? 'text-disabled-text' : 'text-neutral-500',
-            'flex items-center justify-between flex-shrink-0 mr-1 text-xs',
-          )}
-        >
-          <Typography.Text
-            ellipsis={{ tooltip: true }}
-            className={cn(
-              'capitalize flex-1',
-              disabled ? 'text-disabled-text' : 'text-gray-600',
-            )}
-          >
-            {filter.subCategory || filter.category}
-          </Typography.Text>
-          <ChevronRight size={14} className="ml-1 text-gray-400" />
-        </div>
-      )}
-      <Space className="flex-grow min-w-0 items-center">
-        <span
-          className={cn(
-            'text-xs flex items-center',
-            disabled ? 'text-disabled-text' : 'text-neutral-500/90',
-          )}
-        >
-          {getIconForFilter(filter)}
-        </span>
-        <Typography.Text
-          ellipsis={{ tooltip: filter.displayName || filter.name }}
-          className={cn('flex-1', disabled ? 'text-disabled-text' : '')}
-        >
-          {filter.displayName || filter.name}
-        </Typography.Text>
-      </Space>
-    </div>
-  ),
-);
-
-const CategoryList = React.memo(
-  ({
-    categories,
-    activeCategory,
-    onSelect,
-  }: {
-    categories: string[];
-    activeCategory: string;
-    onSelect: (c: string) => void;
-  }) => (
-    <div className="flex flex-col gap-1">
-      {categories.map((key) => (
-        <div
-          key={key}
-          onClick={() => onSelect(key)}
-          className={cn(
-            'rounded px-3 py-1.5 hover:bg-active-blue/10 capitalize cursor-pointer font-medium text-sm truncate',
-            key === activeCategory &&
-              'bg-active-blue/10 text-teal font-semibold',
-          )}
-          title={key}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') onSelect(key);
-          }}
-        >
-          {key}
-        </div>
-      ))}
-    </div>
-  ),
-);
+import { FilterKey } from 'Types/filter/filterType';
+import { FilterItem, CategoryList } from './components';
+import {
+  getIconForFilter,
+  groupFiltersByCategory,
+  getFilteredEntries,
+  useDebounce,
+} from './utils';
 
 function FilterModal({
   onFilterClick = () => null,
@@ -285,6 +91,18 @@ function FilterModal({
       }
     }, 0);
   }, []);
+
+  const noFilters = !filters || filters.length === 0;
+  if (noFilters) {
+    return (
+      <div className="w-[90vw] mx-[2vw] md:mx-0 md:w-[490px] h-[200px] gap-2 flex items-center justify-center bg-white">
+        <Loader size={26} className="text-gray-400 animate-spin" />
+        <Typography.Text type="secondary">
+          {t('Loading filters...')}
+        </Typography.Text>
+      </div>
+    );
+  }
 
   return (
     <div className="w-[90vw] mx-[2vw] md:mx-0 md:w-[490px] max-h-[380px] grid grid-rows-[auto_1fr] overflow-hidden bg-white">

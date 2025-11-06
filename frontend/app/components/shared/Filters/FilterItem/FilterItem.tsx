@@ -8,7 +8,7 @@ import FilterSelection from '../FilterSelection';
 import FilterValue from '../FilterValue';
 import FilterSource from '../FilterSource';
 import { useStore } from '@/mstore';
-import { getIconForFilter } from 'Shared/Filters/FilterModal/FilterModal';
+import { getIconForFilter } from 'Shared/Filters/FilterModal';
 import {
   Filter,
   getOperatorsByType,

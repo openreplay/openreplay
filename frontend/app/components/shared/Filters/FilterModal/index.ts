@@ -1,1 +1,2 @@
-export { default, getMatchingEntries } from './FilterModal';
+export { default } from './FilterModal';
+export { getIconForFilter } from './utils';
