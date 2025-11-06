@@ -179,7 +179,7 @@ EVENT_DEFAULT_PROPERTIES = {
     "REQUEST": "url_path",
     "TAG_TRIGGER": "tag_id",
     "ISSUE": "issue_type",
-    "PERFORMANCE": "avg_cpu",
+    "PERFORMANCE": "max_fps",
 }
 
 
