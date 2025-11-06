@@ -38,10 +38,6 @@ func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfac
 			return nil, fmt.Errorf("series %s: %v", series.Name, err)
 		}
 
-		if len(pts) == 0 {
-			return []interface{}{}, nil
-		}
-
 		for _, dp := range pts {
 			if data[dp.Timestamp] == nil {
 				data[dp.Timestamp] = map[string]uint64{}
