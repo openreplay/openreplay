@@ -105,7 +105,6 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 		}))
 
 	for i := 0; i < len(queries)-1; i++ {
-		//err = conn.Exec(ctx, queries[i])
 		_, err = conn.ExecContext(ctx, queries[i])
 
 		if err != nil {
@@ -116,6 +115,11 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 			}
 			return nil, fmt.Errorf("error executing tmp query for userJourney: %w", err)
 		}
+	}
+	for i := 0; i < len(queries); i++ {
+		log.Println("---------------------------------")
+		log.Println(queries[i])
+		log.Println("---------------------------------")
 	}
 	var rawData []UserJourneyRawData
 	if err = conn.SelectContext(ctx, &rawData, queries[len(queries)-1]); err != nil {
@@ -144,7 +148,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	//Remove useless starting point
 	i := 0
 	for i < len(p.StartPoint) {
-		if len(p.StartPoint[i].Value) == 0 && p.StartPoint[i].Operator != "isAny" {
+		if p.StartPoint[i].Operator != "isAny" && len(p.StartPoint[i].Value) == 0 && len(p.StartPoint[i].Filters) == 0 {
 			p.StartPoint = slices.Delete(p.StartPoint, i, i+1)
 		} else {
 			i++
