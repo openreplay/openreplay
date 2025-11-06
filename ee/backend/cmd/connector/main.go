@@ -53,7 +53,7 @@ func main() {
 		if err != nil {
 			log.Fatal(ctx, "can't init clickhouse connection: %s", err)
 		}
-		if db, err = saver.NewClickHouse(log, chConn, batches); err != nil {
+		if db, err = saver.NewClickHouse(log, cfg, chConn, batches); err != nil {
 			log.Fatal(ctx, "can't init clickhouse connection: %s", err)
 		}
 	case "elasticsearch":
