@@ -35,7 +35,7 @@ metadata:
 spec:
   type: ClusterIP
   clusterIP: None
-  publishNotReadyAddresses: false
+  publishNotReadyAddresses: true
   ports:
     - name: tcp-client
       port: 9092
@@ -204,17 +204,17 @@ spec:
             - name: KAFKA_PROCESS_ROLES
               value: "broker,controller"
             - name: KAFKA_CONTROLLER_QUORUM_VOTERS
-              value: "1@kafka-0.kafka-headless.db.svc.cluster.local:9093,2@kafka-1.kafka-headless.db.svc.cluster.local:9093"
+              value: "1@kafka-new-0.kafka-headless.db.svc.cluster.local:9093,2@kafka-new-1.kafka-headless.db.svc.cluster.local:9093"
             - name: KAFKA_CONTROLLER_LISTENER_NAMES
-              value: "CONTROLLER"
+              value: "INTERNAL"
             
-            # Listeners (PLAINTEXT + SSL)
+            # Listeners (PLAINTEXT + SSL, INTERNAL serves both inter-broker and controller)
             - name: KAFKA_LISTENERS
-              value: "CLIENT://:9092,INTERNAL://:9093,CONTROLLER://:9093,SSL://:9094"
+              value: "CLIENT://:9092,INTERNAL://:9093,SSL://:9094"
             - name: KAFKA_ADVERTISED_LISTENERS
-              value: "CLIENT://$(MY_POD_NAME).kafka-headless.db.svc.cluster.local:9092,INTERNAL://$(MY_POD_NAME).kafka-headless.db.svc.cluster.local:9093,SSL://$(MY_POD_NAME).kafka-headless.db.svc.cluster.local:9094"
+              value: "CLIENT://${MY_POD_NAME}.kafka-headless.db.svc.cluster.local:9092,SSL://${MY_POD_NAME}.kafka-headless.db.svc.cluster.local:9094"
             - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
-              value: "CLIENT:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT,SSL:SSL"
+              value: "CLIENT:PLAINTEXT,INTERNAL:PLAINTEXT,SSL:SSL"
             - name: KAFKA_INTER_BROKER_LISTENER_NAME
               value: "INTERNAL"
             
