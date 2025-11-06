@@ -113,11 +113,7 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 			return nil, fmt.Errorf("error executing tmp query for userJourney: %w", err)
 		}
 	}
-	for i := 0; i < len(queries); i++ {
-		log.Println("---------------------------------")
-		log.Println(queries[i])
-		log.Println("---------------------------------")
-	}
+
 	var rawData []UserJourneyRawData
 	if err = conn.SelectContext(ctx, &rawData, queries[len(queries)-1]); err != nil {
 		for j := 0; j < len(queries); j++ {
