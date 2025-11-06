@@ -12,5 +12,5 @@ dev: build ## buiild run image
 
 kube: build
 	podman push $(image)
-	kubectl delete statefulset kafka-new -n db
+	kubectl delete statefulset kafka -n db || true
 	kubectl apply -f kube/k8s-kafka-kraft.yaml

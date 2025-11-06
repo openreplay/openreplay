@@ -1,15 +1,15 @@
-# ---
-# # ServiceAccount
-# apiVersion: v1
-# kind: ServiceAccount
-# metadata:
-#   name: kafka
-#   namespace: "db"
-#   labels:
-#     app.kubernetes.io/name: kafka
-#     app.kubernetes.io/instance: db
-#     app.kubernetes.io/component: kafka
-# automountServiceAccountToken: true
+---
+# ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kafka
+  namespace: "db"
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/component: kafka
+automountServiceAccountToken: true
 
 ---
 # Headless Service for StatefulSet
@@ -140,7 +140,7 @@ spec:
             - name: KAFKA_PROCESS_ROLES
               value: "broker,controller"
             - name: KAFKA_CONTROLLER_QUORUM_VOTERS
-              value: "1@kafka-new-0.kafka-headless.db.svc.cluster.local:9093,2@kafka-new-1.kafka-headless.db.svc.cluster.local:9093"
+              value: "1@kafka-0.kafka-headless.db.svc.cluster.local:9093,2@kafka-1.kafka-headless.db.svc.cluster.local:9093"
             - name: KAFKA_CONTROLLER_LISTENER_NAMES
               value: "INTERNAL"
             
