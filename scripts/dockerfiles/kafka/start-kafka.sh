@@ -79,13 +79,13 @@ if [ -n "$KAFKA_NODE_ID" ]; then
         NODE_ID="$KAFKA_NODE_ID"
         [ "$DEBUG" = "1" ] && echo "Using node.id=${NODE_ID} directly"
     fi
-    
+
     echo "Generating custom Kafka configuration for cluster mode..."
     CONFIG_FILE="/tmp/server.properties"
 
     # Copy base config and remove values we'll override
     cp /usr/lib/kafka/config/kraft/server.properties "$CONFIG_FILE"
-    
+
     # Remove conflicting default values from base config
     sed -i '/^node.id=/d' "$CONFIG_FILE"
     sed -i '/^process.roles=/d' "$CONFIG_FILE"
@@ -106,21 +106,22 @@ if [ -n "$KAFKA_NODE_ID" ]; then
     if [ -n "$KAFKA_LISTENER_SECURITY_PROTOCOL_MAP" ]; then
         echo "listener.security.protocol.map=${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}" >>"$CONFIG_FILE"
     fi
-    
+
     # Show environment variables if DEBUG is enabled
     if [ "$DEBUG" = "1" ]; then
         echo "DEBUG: MY_POD_NAME=${MY_POD_NAME}"
         echo "DEBUG: Original KAFKA_ADVERTISED_LISTENERS=${KAFKA_ADVERTISED_LISTENERS}"
     fi
-    
-    # Expand variables in advertised.listeners (handle both ${} and $() syntax)
-    EXPANDED_ADVERTISED=$(eval echo "${KAFKA_ADVERTISED_LISTENERS}")
+
+    # Replace ${MY_POD_NAME} with actual value
+    EXPANDED_ADVERTISED="${KAFKA_ADVERTISED_LISTENERS//\$\{MY_POD_NAME\}/${MY_POD_NAME}}"
+    # Also handle $MY_POD_NAME syntax (without braces)
+    EXPANDED_ADVERTISED="${EXPANDED_ADVERTISED//\$MY_POD_NAME/${MY_POD_NAME}}"
     [ "$DEBUG" = "1" ] && echo "DEBUG: Expanded ADVERTISED_LISTENERS=${EXPANDED_ADVERTISED}"
     echo "advertised.listeners=${EXPANDED_ADVERTISED}" >>"$CONFIG_FILE"
-    
-    # Expand variables in controller.quorum.voters
-    EXPANDED_VOTERS=$(eval echo "${KAFKA_CONTROLLER_QUORUM_VOTERS}")
-    [ "$DEBUG" = "1" ] && echo "DEBUG: Expanded CONTROLLER_QUORUM_VOTERS=${EXPANDED_VOTERS}"
+
+    EXPANDED_VOTERS="${KAFKA_CONTROLLER_QUORUM_VOTERS}"
+    [ "$DEBUG" = "1" ] && echo "DEBUG: CONTROLLER_QUORUM_VOTERS=${EXPANDED_VOTERS}"
     echo "controller.quorum.voters=${EXPANDED_VOTERS}" >>"$CONFIG_FILE"
     echo "controller.listener.names=${KAFKA_CONTROLLER_LISTENER_NAMES:-CONTROLLER}" >>"$CONFIG_FILE"
     echo "inter.broker.listener.name=${KAFKA_INTER_BROKER_LISTENER_NAME:-PLAINTEXT}" >>"$CONFIG_FILE"
