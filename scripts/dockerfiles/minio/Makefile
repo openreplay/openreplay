@@ -11,7 +11,7 @@ build: ## build image
 push: build ## push image
 	$(builder) push $(image)
 
-dev: build ## buiild run image
+dev: build ## build run image
 	podman run -it --rm --network host $(image)
 
 kube: build
