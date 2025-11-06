@@ -27,7 +27,7 @@ func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, p
 
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{api.API_KEY_PREFIX + "projects/{project}", "GET", h.getProject, []string{"API_KEY_ENDPOINT"}, api.DoNotTrack},
+		{"/v1/projects/{project}", "GET", h.getProject, []string{api.PublicKeyPermission}, api.DoNotTrack},
 	}
 }
 

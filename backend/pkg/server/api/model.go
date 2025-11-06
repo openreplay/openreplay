@@ -13,6 +13,8 @@ type Description struct {
 var NoPermissions []string = nil
 var DoNotTrack string = ""
 
+const PublicKeyPermission = "API_KEY_ENDPOINT"
+
 type Handlers interface {
 	GetAll() []*Description
 }
