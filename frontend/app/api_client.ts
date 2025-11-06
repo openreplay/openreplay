@@ -1,5 +1,4 @@
 import { queried } from './routes';
-import diff from 'microdiff';
 
 const siteIdRequiredPaths: string[] = [
   '/dashboard',
@@ -34,21 +33,6 @@ const siteIdRequiredPaths: string[] = [
   '/intelligent',
 ];
 
-// /v1/{project}/assist/sessions
-// /v1/{project}/assist/sessions/{session}
-// /v1/{project}/sessions/{session}/replay
-// /v1/{project}/sessions/{session}/events
-// /v1/{project}/sessions/{session}/clickmaps
-// /v1/{project}/sessions/{session}/favorite
-// /v1/{project}/sessions/{session}/notes
-// /v1/{project}/sessions/{session}/notes
-// /v1/{project}/notes/{note}
-// /v1/{project}/notes/{note}
-// /v1/{project}/notes/{note}
-// /v1/{project}/notes
-// /v1/{project}/sessions/{session}/first-mob
-// /v1/{project}/unprocessed/{session}/dom.mob
-// /v1/{project}/unprocessed/{session}/devtools.mob
 const newApiUrls = [
   'assist/sessions',
   '/sessions/',
@@ -234,6 +218,12 @@ export default class APIClient {
       (path.includes('/spot') && !path.includes('/login')) ||
       path.includes('video-replays');
     let edp = window.env.API_EDP || window.location.origin + '/api';
+    const isSaas = edp.includes('api.openreplay.com');
+    const safeV2Replacer = (url: string) => {
+      if (isSaas) {
+        return url.replace('.com', '.com/v2');
+      } else return url.replace('/api', '/v2/api');
+    };
 
     // using product analytics api for cards and dashboards (excluding sessions)
     if (
@@ -242,7 +232,8 @@ export default class APIClient {
         path.includes('/sessions/search')) &&
       !edp.includes('/v2')
     ) {
-      edp = edp.replace('/api', '/v2/api');
+      console.log('hit', edp, safeV2Replacer(edp))
+      edp = safeV2Replacer(edp);
     }
 
     if (noChalice && !edp.includes('api.openreplay.com')) {
@@ -267,7 +258,7 @@ export default class APIClient {
         !except.some((e) => fullUrl.includes(e)) &&
         !edp.includes('/v2')
       ) {
-        fullUrl = fullUrl.replace('/api', '/v2/api');
+        fullUrl = safeV2Replacer(fullUrl);
       }
     }
     const response = await window.fetch(fullUrl, init);
