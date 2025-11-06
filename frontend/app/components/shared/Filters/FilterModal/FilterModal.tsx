@@ -93,6 +93,7 @@ function FilterModal({
   }, []);
 
   const noFilters = !filters || filters.length === 0;
+  const allAdded = displayedFilters.length === 0;
   if (noFilters) {
     return (
       <div className="w-[90vw] mx-[2vw] md:mx-0 md:w-[490px] h-[200px] gap-2 flex items-center justify-center bg-white">
@@ -140,19 +141,28 @@ function FilterModal({
               />
             </div>
             <div className="flex-grow min-w-0 h-full">
-              <VList style={{ height: 300 }} data={displayedFilters}>
-                {(filter, i) => (
-                  <FilterItem
-                    key={filter.id || filter.name}
-                    filter={filter}
-                    disabled={
-                      !filter.isEvent && activeFilters?.includes(filter.name)
-                    }
-                    onClick={handleFilterClick}
-                    showCategory
-                  />
-                )}
-              </VList>
+              {allAdded ? (
+                <div className="h-full flex items-center flex-col justify-center text-center">
+                  <AnimatedSVG name={ICONS.NO_SEARCH_RESULTS} size={30} />
+                  <div className="font-medium mt-4 text-neutral-600">
+                    {t('All possible filters are added.')}
+                  </div>
+                </div>
+              ) : (
+                <VList style={{ height: 300 }} data={displayedFilters}>
+                  {(filter, i) => (
+                    <FilterItem
+                      key={filter.id || filter.name}
+                      filter={filter}
+                      disabled={
+                        !filter.isEvent && activeFilters?.includes(filter.name)
+                      }
+                      onClick={handleFilterClick}
+                      showCategory
+                    />
+                  )}
+                </VList>
+              )}
             </div>
           </div>
         )}
