@@ -6,5 +6,5 @@ You can create a `.env` file to define environment variables.
 
 To run dev mode with hot-code-reload:
 
-```air -c .dev/.air-analytics.toml```
+```air -c .dev/.air-api.toml```
 

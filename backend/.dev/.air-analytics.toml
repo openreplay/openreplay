@@ -1,8 +1,0 @@
-root = "."
-tmp_dir = "tmp"
-
-[build]
-cmd = "go build -tags=dev -o ./tmp/analytics ./cmd/analytics"
-bin = "tmp/analytics"
-include_ext = ["go"]
-exclude_dir = ["tmp", "vendor"]
