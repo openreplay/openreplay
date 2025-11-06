@@ -14,8 +14,6 @@ import (
 	"openreplay/backend/pkg/server/user"
 )
 
-const API_KEY_PREFIX = "/v1/"
-
 func GetProject(r *http.Request) (uint32, error) {
 	vars := mux.Vars(r)
 	projID := vars["project"]
@@ -99,10 +97,6 @@ func ReadCompressedBody(log logger.Logger, w http.ResponseWriter, r *http.Reques
 	return bodyBytes, nil
 }
 
-func IsApiKeyRequest(r *http.Request) bool {
-	return strings.HasPrefix(r.URL.Path, API_KEY_PREFIX)
-}
-
 func IsExtensionRequest(r *http.Request) bool {
 	pathTemplate, err := mux.CurrentRoute(r).GetPathTemplate()
 	if err != nil {
@@ -123,9 +117,9 @@ func IsSpotKeyRequest(r *http.Request) bool {
 		fmt.Printf("failed to get path template: %s", err)
 		return false
 	}
-	if (strings.HasSuffix(pathTemplate, "/v1/spots/{id}") && r.Method == "GET") ||
-		(strings.HasSuffix(pathTemplate, "/v1/spots/{id}/comment") && r.Method == "POST") ||
-		(strings.HasSuffix(pathTemplate, "/v1/spots/{id}/status") && r.Method == "GET") {
+	if (strings.HasSuffix(pathTemplate, "/spots/{id}") && r.Method == "GET") ||
+		(strings.HasSuffix(pathTemplate, "/spots/{id}/comment") && r.Method == "POST") ||
+		(strings.HasSuffix(pathTemplate, "/spots/{id}/status") && r.Method == "GET") {
 		return true
 	}
 	return false

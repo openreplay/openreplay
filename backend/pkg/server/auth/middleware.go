@@ -20,7 +20,7 @@ func (a *authImpl) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if api.IsApiKeyRequest(r) {
+		if a.isApiKeyRequest(r) {
 			projectKey, err := api.GetParam(r, "project")
 			if err != nil {
 				a.log.Warn(r.Context(), "Unauthorized request, missing project key: %s", err)
