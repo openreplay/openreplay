@@ -3,16 +3,13 @@
 set -e
 
 MINIO_HOST="localhost:9000"
-ACCESS_KEY="minioadmin"
-SECRET_KEY="minioadmin123"
-BUCKET_NAME="test-bucket"
 
 echo "Testing MinIO container..."
 echo
 
 # Check if MinIO is responding
 echo "1. Checking MinIO health..."
-if curl -s -f http://${MINIO_HOST}/minio/health/live > /dev/null 2>&1; then
+if curl -s -f http://${MINIO_HOST}/minio/health/live >/dev/null 2>&1; then
     echo "✓ MinIO is running and healthy"
 else
     echo "✗ MinIO health check failed"
