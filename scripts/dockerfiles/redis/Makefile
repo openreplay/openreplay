@@ -30,5 +30,25 @@ test: build ## test redis image
 	podman stop redis-test
 	podman rm redis-test
 
+test-env: build ## test redis with custom environment variables
+	@echo "Testing with custom port (6380)..."
+	podman run -d --name redis-test-port -p 6380:6380 \
+		-e REDIS_PORT=6380 \
+		-e REDIS_REPLICATION_MODE=master \
+		-e ALLOW_EMPTY_PASSWORD=yes \
+		$(image)
+	@sleep 2
+	podman exec redis-test-port redis-cli -p 6380 ping
+	podman stop redis-test-port && podman rm redis-test-port
+	@echo "\nTesting with password authentication..."
+	podman run -d --name redis-test-auth -p 6379:6379 \
+		-e ALLOW_EMPTY_PASSWORD=no \
+		-e REDIS_PASSWORD=testpass123 \
+		$(image)
+	@sleep 2
+	podman exec redis-test-auth redis-cli -a testpass123 ping
+	podman stop redis-test-auth && podman rm redis-test-auth
+	@echo "\nAll environment variable tests passed!"
+
 kube: build
 	podman push $(image)
