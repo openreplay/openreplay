@@ -8,21 +8,31 @@ POSTGRES_TMP_DIR="/opt/bitnami/postgresql/tmp"
 
 # Configure PostgreSQL based on environment variables
 configure_postgresql() {
+    # Ensure data directory exists and has correct permissions
+    if [ ! -d "${PGDATA}" ]; then
+        echo "Creating data directory..."
+        mkdir -p "${PGDATA}"
+    fi
+
+    # Fix permissions - PostgreSQL requires 0700 or 0750
+    echo "Setting data directory permissions..."
+    chmod 0700 "${PGDATA}"
+
     # Initialize database if not already initialized
     if [ ! -s "${PGDATA}/PG_VERSION" ]; then
         echo "Initializing PostgreSQL database..."
-        
-        # Initialize the database as user 1001
+
+        # Initialize the database - will use system default locale
         ${POSTGRES_BIN_DIR}/initdb -D "${PGDATA}" -U "${POSTGRES_USER}" --auth=trust
-        
+
         echo "PostgreSQL database initialized successfully"
     fi
 
     # Always create/update config files in Bitnami conf directory
     echo "Creating PostgreSQL configuration files..."
-    
+
     # Create postgresql.conf in /opt/bitnami/postgresql/conf
-    cat > "${POSTGRES_CONF_DIR}/postgresql.conf" <<EOF
+    cat >"${POSTGRES_CONF_DIR}/postgresql.conf" <<EOF
 # PostgreSQL configuration file
 # Data directory
 data_directory = '${PGDATA}'
@@ -53,7 +63,7 @@ effective_cache_size = 512MB
 EOF
 
     # Create pg_hba.conf in /opt/bitnami/postgresql/conf
-    cat > "${POSTGRES_CONF_DIR}/pg_hba.conf" <<EOF
+    cat >"${POSTGRES_CONF_DIR}/pg_hba.conf" <<EOF
 # PostgreSQL Client Authentication Configuration File
 local   all             all                                     trust
 host    all             all             127.0.0.1/32            md5
@@ -64,7 +74,7 @@ EOF
     # Set password and create database if this is first run
     if [ ! -f "${PGDATA}/.initialized" ]; then
         echo "Running first-time setup..."
-        
+
         # Start PostgreSQL temporarily with Bitnami-style config
         ${POSTGRES_BIN_DIR}/pg_ctl -D "${PGDATA}" \
             -o "--config-file=${POSTGRES_CONF_DIR}/postgresql.conf --hba_file=${POSTGRES_CONF_DIR}/pg_hba.conf" \
@@ -86,10 +96,10 @@ EOSQL
 
         # Stop PostgreSQL
         ${POSTGRES_BIN_DIR}/pg_ctl -D "${PGDATA}" -m fast -w stop
-        
+
         # Mark as initialized
         touch "${PGDATA}/.initialized"
-        
+
         echo "First-time setup completed"
     fi
 }
@@ -97,7 +107,7 @@ EOSQL
 # Main execution
 if [ "${1}" = 'postgres' ]; then
     configure_postgresql
-    
+
     # Start PostgreSQL with Bitnami-style paths
     exec ${POSTGRES_BIN_DIR}/postgres \
         -D "${PGDATA}" \
