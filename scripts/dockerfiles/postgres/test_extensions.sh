@@ -46,7 +46,7 @@ exec_sql "SELECT extname, extversion FROM pg_extension ORDER BY extname;"
 echo
 echo "✅ SUCCESS: All extension tests passed!"
 echo
-echo "Available extensions:"
-echo "  - pg_trgm (v1.6) - Fuzzy text search"
-echo "  - pgcrypto (v1.3) - Cryptographic functions"
-echo "  - pg_stat_statements (v1.11) - Query tracking"
+echo "Available extensions tested:"
+echo "  - pg_trgm - Fuzzy text search"
+echo "  - pgcrypto - Cryptographic functions"
+echo "  - pg_stat_statements - Query tracking"

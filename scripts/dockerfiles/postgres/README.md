@@ -17,7 +17,12 @@ PostgreSQL 17.6 container image compatible with Bitnami-style deployment pattern
 ## Build
 
 ```bash
+# Build with default settings (local/postgresql:17)
 make build
+
+# Build with custom repo/name/version
+make build repo=myrepo name=postgres version=18
+# Produces: myrepo/postgres:18
 ```
 
 ## Run
@@ -63,33 +68,73 @@ containers:
 
 ## Testing
 
-Run the test suite:
+Run the complete test suite:
 
 ```bash
-# Start container in background
-podman run -d --name postgres-test \
-  -p 5432:5432 \
-  -e POSTGRES_PASSWORD=postgres123 \
-  local/postgresql:17
+# Test with default settings
+make test
 
-# Run tests
-./test_postgres.sh
+# Test with custom version
+make test version=18
+```
 
-# Test database operations
-./create_test_object.sh
+This will:
+1. Build the image
+2. Start a test container
+3. Run all test scripts:
+   - Container health and connectivity tests
+   - Database operations (CRUD) tests
+   - Extension functionality tests
+4. Clean up the test container
 
-# Cleanup
-podman stop postgres-test
-podman rm postgres-test
+**Note**: Always run tests through `make test` to ensure correct image version and configuration.
+
+## Available Make Targets
+
+```bash
+make help    # Show all available targets
+make build   # Build PostgreSQL image
+make test    # Build and run full test suite
+make push    # Build and push to registry
+make dev     # Build and run interactively
+make clean   # Remove test containers and images
+make kube    # Build and push for Kubernetes
 ```
 
 ## Directory Structure
 
 ```
+# Bitnami-compatible structure (container filesystem)
+/opt/bitnami/postgresql/
+├── bin/               # PostgreSQL binaries (symlinks)
+│   ├── postgres
+│   ├── pg_ctl
+│   ├── initdb
+│   └── psql
+├── conf/              # Configuration files (not in volume)
+│   ├── postgresql.conf
+│   └── pg_hba.conf
+└── tmp/               # Runtime files
+    └── postgresql.pid
+
+# Volume mount (persisted data only)
 /bitnami/postgresql/
-├── data/           # PostgreSQL data directory (PGDATA)
-└── conf/           # Configuration files
+└── data/              # PostgreSQL data directory (PGDATA)
 ```
+
+**PostgreSQL Startup Command:**
+```bash
+/opt/bitnami/postgresql/bin/postgres \
+  -D /bitnami/postgresql/data \
+  --config-file=/opt/bitnami/postgresql/conf/postgresql.conf \
+  --external_pid_file=/opt/bitnami/postgresql/tmp/postgresql.pid \
+  --hba_file=/opt/bitnami/postgresql/conf/pg_hba.conf
+```
+
+**Important**: All configuration files are in `/opt/bitnami/postgresql/conf/` (container), **not in the volume**. This allows:
+- Data to persist across container restarts
+- Configuration updates via image rebuilds without affecting data
+- Full Bitnami compatibility
 
 ## Available Extensions
 

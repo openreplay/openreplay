@@ -50,6 +50,6 @@ echo "✓ Table dropped"
 echo
 echo "✅ SUCCESS: All database operations completed successfully!"
 echo
-echo "PostgreSQL 17 is working correctly with:"
+echo "PostgreSQL is working correctly with:"
 echo "  - pg_stat_statements extension"
 echo "  - Standard CRUD operations"

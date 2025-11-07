@@ -6,9 +6,18 @@ RUN apk add --no-cache \
     postgresql-17-contrib \
     postgresql-17-client \
     bash && \
-    # Create bitnami-style directories
+    # Create Bitnami-style directory structure
+    mkdir -p /opt/bitnami/postgresql/bin && \
+    mkdir -p /opt/bitnami/postgresql/conf && \
+    mkdir -p /opt/bitnami/postgresql/tmp && \
     mkdir -p /bitnami/postgresql/data && \
-    mkdir -p /bitnami/postgresql/conf && \
+    # Create symlinks to postgres binaries in Bitnami location
+    ln -s /usr/bin/postgres /opt/bitnami/postgresql/bin/postgres && \
+    ln -s /usr/bin/pg_ctl /opt/bitnami/postgresql/bin/pg_ctl && \
+    ln -s /usr/bin/initdb /opt/bitnami/postgresql/bin/initdb && \
+    ln -s /usr/bin/psql /opt/bitnami/postgresql/bin/psql && \
+    # Set permissions
+    chown -R 1001:1001 /opt/bitnami/postgresql && \
     chown -R 1001:1001 /bitnami/postgresql
 
 # Environment variables
