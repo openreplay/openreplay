@@ -110,7 +110,7 @@ function ORLineChart(props: Props) {
               type: 'text',
               fill: 'var(--color-black)',
               style: {
-                text: 'Number of Sessions',
+                text: props.label ?? 'Number of Sessions',
                 fill: 'var(--color-black)',
               },
             },

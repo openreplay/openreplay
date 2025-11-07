@@ -425,7 +425,6 @@ function FilterItem(props: Props) {
                 disableDelete={disableDelete}
                 readonly={readonly}
                 hideIndex={true}
-                hideDelete={hideDelete}
                 isConditional={isConditional}
                 isSubItem={true}
                 propertyOrder={filter.propertyOrder || 'and'}
