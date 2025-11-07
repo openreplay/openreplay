@@ -81,10 +81,6 @@ spec:
           {{- if .Values.containerSecurityContext.enabled }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
-          command:
-            - /bin/bash
-            - -c
-            - /opt/bitnami/scripts/start-scripts/start-master.sh
           env:
             - name: REDIS_REPLICATION_MODE
               value: master
