@@ -2,10 +2,9 @@ package main
 
 import (
 	"context"
+	"openreplay/backend/pkg/heuristics"
 
 	config "openreplay/backend/internal/config/heuristics"
-	"openreplay/backend/internal/heuristics"
-	"openreplay/backend/pkg/builders"
 	"openreplay/backend/pkg/handlers"
 	"openreplay/backend/pkg/handlers/custom"
 	"openreplay/backend/pkg/handlers/mobile"
@@ -44,7 +43,7 @@ func main() {
 		}
 	}
 
-	eventBuilder := builders.NewBuilderMap(log, handlersFabric)
+	events := heuristics.NewEvents(log, handlersFabric)
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	consumer, err := queue.NewConsumer(
 		log,
@@ -53,7 +52,7 @@ func main() {
 			cfg.TopicRawWeb,
 			cfg.TopicRawMobile,
 		},
-		messages.NewMessageIterator(log, eventBuilder.HandleMessage, nil, true),
+		messages.NewMessageIterator(log, events.HandleMessage, nil, true),
 		false,
 		cfg.MessageSizeLimit,
 		nil,
@@ -71,7 +70,7 @@ func main() {
 	}
 
 	// Run service and wait for TERM signal
-	service := heuristics.New(log, cfg, producer, consumer, eventBuilder, memoryManager, heuristicsMetric)
+	service := heuristics.New(log, cfg, producer, consumer, events, memoryManager, heuristicsMetric)
 	log.Info(ctx, "Heuristics service started")
 	terminator.Wait(log, service)
 }

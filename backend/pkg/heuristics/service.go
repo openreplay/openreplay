@@ -7,7 +7,6 @@ import (
 
 	"openreplay/backend/internal/config/heuristics"
 	"openreplay/backend/internal/service"
-	"openreplay/backend/pkg/builders"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
@@ -21,14 +20,14 @@ type heuristicsImpl struct {
 	cfg      *heuristics.Config
 	producer types.Producer
 	consumer types.Consumer
-	events   builders.EventBuilder
+	events   Events
 	mm       memory.Manager
 	metrics  heuristicMetrics.Heuristics
 	done     chan struct{}
 	finished chan struct{}
 }
 
-func New(log logger.Logger, cfg *heuristics.Config, p types.Producer, c types.Consumer, e builders.EventBuilder, mm memory.Manager, metrics heuristicMetrics.Heuristics) service.Interface {
+func New(log logger.Logger, cfg *heuristics.Config, p types.Producer, c types.Consumer, e Events, mm memory.Manager, metrics heuristicMetrics.Heuristics) service.Interface {
 	s := &heuristicsImpl{
 		log:      log,
 		ctx:      context.Background(),
