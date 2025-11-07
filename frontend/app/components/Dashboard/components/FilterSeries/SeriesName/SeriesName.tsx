@@ -12,6 +12,7 @@ interface Props {
 function SeriesName(props: Props) {
   const { t } = useTranslation();
   const { seriesIndex = 1 } = props;
+  const emptyName = `Series ${seriesIndex}`;
   const defaultName = props.name;
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(defaultName);
@@ -24,7 +25,8 @@ function SeriesName(props: Props) {
 
   const onBlur = () => {
     setEditing(false);
-    const updated = props.onUpdate(name);
+    const usedName = name.trim() === '' ? emptyName : name;
+    const updated = props.onUpdate(usedName);
     if (!updated) {
       setName(defaultName);
     }
@@ -33,7 +35,8 @@ function SeriesName(props: Props) {
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       setEditing(false);
-      const updated = props.onUpdate(name);
+      const usedName = name.trim() === '' ? emptyName : name;
+      const updated = props.onUpdate(usedName);
       if (!updated) {
         setName(defaultName);
       }
