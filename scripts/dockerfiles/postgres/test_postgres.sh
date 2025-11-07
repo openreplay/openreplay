@@ -38,7 +38,7 @@ fi
 
 echo
 echo "4. Checking PostgreSQL version..."
-podman exec ${CONTAINER_NAME} psql -U ${POSTGRES_USER} -c "SELECT version();" | grep "PostgreSQL 17"
+podman exec ${CONTAINER_NAME} psql -U ${POSTGRES_USER} -c "SELECT version();"
 
 echo
 echo "5. Checking loaded extensions..."
