@@ -40,7 +40,6 @@ export const enum PREFERENCES_MENU {
 
 export const enum MENU {
   SESSIONS = 'sessions',
-  CLIPS = 'clips',
   RECOMMENDATIONS = 'recommendations',
   VAULT = 'vault',
   BOOKMARKS = 'bookmarks',
@@ -70,12 +69,6 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         key: MENU.RECOMMENDATIONS,
         icon: 'magic',
         hidden: true,
-      },
-      {
-        label: t('Clips'),
-        key: MENU.CLIPS,
-        icon: 'tv-minimal-play',
-        hidden: menuHidden.clips,
       },
       {
         label: t('Vault'),
