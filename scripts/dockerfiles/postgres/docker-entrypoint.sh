@@ -104,9 +104,30 @@ EOSQL
     fi
 }
 
+# Refresh collation version in background after PostgreSQL starts
+# This is caused because of the locale
+refresh_collation_background() {
+    (
+        # Wait for PostgreSQL to be ready
+        until ${POSTGRES_BIN_DIR}/pg_isready -U "${POSTGRES_USER}" -h 127.0.0.1 -p "${POSTGRESQL_PORT_NUMBER}" >/dev/null 2>&1; do
+            sleep 1
+        done
+
+        # Refresh collation version for all databases
+        ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=0 --username "${POSTGRES_USER}" -d postgres -t -A -c "SELECT datname FROM pg_database WHERE datname NOT IN ('template0');" | while read -r dbname; do
+            if [ -n "$dbname" ]; then
+                ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=0 --username "${POSTGRES_USER}" -d "$dbname" -c "ALTER DATABASE \"$dbname\" REFRESH COLLATION VERSION;" >/dev/null 2>&1 || true
+            fi
+        done
+    ) &
+}
+
 # Main execution
 if [ "${1}" = 'postgres' ]; then
     configure_postgresql
+
+    # Start background job to refresh collation version after PostgreSQL is ready
+    refresh_collation_background
 
     # Start PostgreSQL with Bitnami-style paths
     exec ${POSTGRES_BIN_DIR}/postgres \
