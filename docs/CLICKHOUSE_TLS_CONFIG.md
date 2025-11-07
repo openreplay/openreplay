@@ -207,4 +207,4 @@ clickhouse-client \
 
 - [ClickHouse TLS Documentation](https://clickhouse.com/docs/en/guides/sre/configuring-ssl/)
 - [Go TLS Package](https://pkg.go.dev/crypto/tls)
-- [OpenReplay Backend Configuration](./development.md)
+- [OpenReplay Backend Configuration](development.md)
