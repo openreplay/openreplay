@@ -31,6 +31,9 @@ configure_postgresql() {
     # Always create/update config files in Bitnami conf directory
     echo "Creating PostgreSQL configuration files..."
 
+    # Filter out pg_audit from shared_preload_libraries if present
+    FILTERED_PRELOAD_LIBRARIES=$(echo "${POSTGRESQL_SHARED_PRELOAD_LIBRARIES}" | sed 's/pg_audit,\?//g' | sed 's/,pg_audit//g' | sed 's/,,/,/g' | sed 's/^,//;s/,$//')
+
     # Create postgresql.conf in /opt/bitnami/postgresql/conf
     cat >"${POSTGRES_CONF_DIR}/postgresql.conf" <<EOF
 # PostgreSQL configuration file
@@ -55,7 +58,7 @@ log_disconnections = ${POSTGRESQL_LOG_DISCONNECTIONS}
 client_min_messages = ${POSTGRESQL_CLIENT_MIN_MESSAGES}
 
 # Extensions
-shared_preload_libraries = '${POSTGRESQL_SHARED_PRELOAD_LIBRARIES}'
+shared_preload_libraries = '${FILTERED_PRELOAD_LIBRARIES}'
 
 # Memory settings
 shared_buffers = 128MB
