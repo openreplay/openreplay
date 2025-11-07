@@ -1,4 +1,4 @@
-package sessionender
+package ender
 
 type timeController struct {
 	parts               uint64
