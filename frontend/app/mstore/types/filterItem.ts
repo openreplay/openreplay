@@ -57,13 +57,14 @@ export default class FilterItem implements IFilter {
   isConditional?: boolean = false;
 
   constructor(data: IFilter = {}) {
-    makeAutoObservable(this);
     this.initializeFromData(data);
+    makeAutoObservable(this);
   }
 
   private initializeFromData(data: IFilter): void {
     const processedData = {
       ...data,
+      subCategory: data.autoCaptured ? 'autocapture' : data.subCategory,
       operator: data.operator || 'is',
       // id: Math.random().toString(36).substring(2, 9),
     };
