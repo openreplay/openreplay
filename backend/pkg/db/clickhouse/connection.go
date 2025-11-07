@@ -16,10 +16,6 @@ import (
 )
 
 func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
-	tlsConfig, err := buildTLSConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
 	username := cfg.LegacyUserName
 	if cfg.UserName != "" {
 		username = cfg.UserName
@@ -27,6 +23,10 @@ func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
 	password := cfg.LegacyPassword
 	if cfg.Password != "" {
 		password = cfg.Password
+	}
+	tlsConfig, err := buildTLSConfig(cfg)
+	if err != nil {
+		return nil, err
 	}
 	opts := &clickhouse.Options{
 		Addr: []string{cfg.GetTrimmedURL()},
@@ -71,7 +71,7 @@ func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
 func NewSqlDBConnection(cfg common.Clickhouse) *sqlx.DB {
 	opts := &clickhouse.Options{
 		Protocol: clickhouse.HTTP,
-		Addr:     []string{cfg.GetTrimmedURL_HTTP()},
+		Addr:     []string{cfg.GetTrimmedUrlHTTP()},
 		Auth: clickhouse.Auth{
 			Database: cfg.Database,
 			Username: cfg.LegacyUserName,

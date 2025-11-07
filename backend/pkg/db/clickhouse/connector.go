@@ -2,8 +2,6 @@ package clickhouse
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -11,7 +9,6 @@ import (
 	"hash/fnv"
 	"log"
 	"reflect"
-	"os"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -73,59 +70,11 @@ type connectorImpl struct {
 	finished   chan struct{}
 }
 
-func NewConnector(cfg common.Clickhouse, metrics database.Database) Connector {
+func NewConnector(conn driver.Conn, metrics database.Database) Connector {
 	if conn == nil {
 		log.Fatal("clickhouse connection is empty")
 	}
-	
-	// Configure TLS if enabled
-	var tlsConfig *tls.Config
-	if cfg.UseTLS {
-		tlsConfig = &tls.Config{
-			InsecureSkipVerify: cfg.TLSSkipVerify,
-		}
 
-		// Load client certificate and key if provided
-		if cfg.TLSCertificatePath != "" && cfg.TLSKeyPath != "" {
-			cert, err := tls.LoadX509KeyPair(cfg.TLSCertificatePath, cfg.TLSKeyPath)
-			if err != nil {
-				log.Fatalf("failed to load TLS certificate and key: %v", err)
-			}
-			tlsConfig.Certificates = []tls.Certificate{cert}
-		}
-
-		// Load CA certificate if provided
-		if cfg.TLSCACertificatePath != "" {
-			caCert, err := os.ReadFile(cfg.TLSCACertificatePath)
-			if err != nil {
-				log.Fatalf("failed to read CA certificate: %v", err)
-			}
-			caCertPool := x509.NewCertPool()
-			if !caCertPool.AppendCertsFromPEM(caCert) {
-				log.Fatal("failed to append CA certificate")
-			}
-			tlsConfig.RootCAs = caCertPool
-		}
-	}
-
-	conn, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{cfg.GetTrimmedURL()},
-		Auth: clickhouse.Auth{
-			Database: cfg.Database,
-			Username: cfg.LegacyUserName,
-			Password: cfg.LegacyPassword,
-		},
-		TLS:             tlsConfig,
-		MaxOpenConns:    20,
-		MaxIdleConns:    15,
-		ConnMaxLifetime: 3 * time.Minute,
-		Compression: &clickhouse.Compression{
-			Method: clickhouse.CompressionLZ4,
-		},
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
 	c := &connectorImpl{
 		conn:       conn,
 		metrics:    metrics,
