@@ -67,10 +67,16 @@ def autocomplete_events(projectId: int, q: Optional[str] = None,
     return {"data": autocomplete.search_events(project_id=projectId, q=None if not q or len(q) == 0 else q)}
 
 
+from chalicelib.utils import helper
+
+
 @app.get('/{projectId}/properties/autocomplete', tags=["autocomplete"])
 def autocomplete_properties(projectId: int, propertyName: str, eventName: Optional[str] = None,
                             q: Optional[str] = None, ac: bool = Query(description="auto captured"),
                             context: schemas.CurrentContext = Depends(OR_context)):
+    # Auto-captured properties should be transformed from camelCase to snake_case
+    if ac:
+        propertyName = helper.key_to_snake_case(propertyName)
     # Specify propertyName to get top values of that property
     # Specify eventName&propertyName to get top values of that property for the selected event
     if ac and (schemas.FilterType.has_value(propertyName) or propertyName.startswith("metadata_")):
