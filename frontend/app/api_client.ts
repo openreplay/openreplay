@@ -232,7 +232,6 @@ export default class APIClient {
         path.includes('/sessions/search')) &&
       !edp.includes('/v2')
     ) {
-      console.log('hit', edp, safeV2Replacer(edp))
       edp = safeV2Replacer(edp);
     }
 

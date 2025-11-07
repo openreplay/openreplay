@@ -13,7 +13,6 @@ import {
   CATEGORIES,
   WEBVITALS,
 } from 'App/constants/card';
-import { getRE } from 'App/utils';
 import { FilterKey } from 'Types/filter/filterType';
 import { ErrorInfo } from './types/error';
 import Widget from './types/widget';
