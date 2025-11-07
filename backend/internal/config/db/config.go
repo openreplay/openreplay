@@ -1,11 +1,12 @@
 package db
 
 import (
+	"time"
+
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
 	"openreplay/backend/internal/config/redis"
 	"openreplay/backend/pkg/logger"
-	"time"
 )
 
 type Config struct {
@@ -22,8 +23,6 @@ type Config struct {
 	CommitBatchTimeout time.Duration `env:"COMMIT_BATCH_TIMEOUT,default=15s"`
 	BatchQueueLimit    int           `env:"DB_BATCH_QUEUE_LIMIT,required"`
 	BatchSizeLimit     int           `env:"DB_BATCH_SIZE_LIMIT,required"`
-	UseQuickwit        bool          `env:"QUICKWIT_ENABLED,default=false"`
-	QuickwitTopic      string        `env:"QUICKWIT_TOPIC,default=saas-quickwit"`
 	UseProfiler        bool          `env:"PROFILER_ENABLED,default=false"`
 }
 

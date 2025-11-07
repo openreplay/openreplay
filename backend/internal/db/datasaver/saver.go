@@ -3,6 +3,7 @@ package datasaver
 import (
 	"context"
 	"encoding/json"
+
 	"openreplay/backend/internal/config/db"
 	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/db/clickhouse"
@@ -35,7 +36,7 @@ func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session ses
 	if ch == nil {
 		log.Fatal(context.Background(), "ch pool is empty")
 	}
-	s := &saverImpl{
+	return &saverImpl{
 		log:      log,
 		cfg:      cfg,
 		ch:       ch,
@@ -43,8 +44,6 @@ func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session ses
 		tags:     tags,
 		canvases: canvases,
 	}
-	s.init()
-	return s
 }
 
 func (s *saverImpl) Handle(msg Message) {
@@ -95,8 +94,6 @@ func (s *saverImpl) Handle(msg Message) {
 			return
 		}
 	}
-
-	s.sendToFTS(msg, session.ProjectID)
 	return
 }
 
