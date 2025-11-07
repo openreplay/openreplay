@@ -44,7 +44,7 @@ func New(metrics database.Database, url string) (Pool, error) {
 		metrics: metrics,
 	}
 	go func(conn *pgxpool.Pool) {
-		t := time.NewTicker(15 * time.Second)
+		t := time.NewTicker(10 * time.Second)
 		defer t.Stop()
 		for range t.C {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
