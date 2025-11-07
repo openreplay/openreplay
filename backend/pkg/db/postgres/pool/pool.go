@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+
 	"openreplay/backend/pkg/metrics/database"
 )
 
@@ -41,6 +43,18 @@ func New(metrics database.Database, url string) (Pool, error) {
 		conn:    conn,
 		metrics: metrics,
 	}
+	go func(conn *pgxpool.Pool) {
+		t := time.NewTicker(15 * time.Second)
+		defer t.Stop()
+		for range t.C {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			err := conn.Ping(ctx)
+			cancel()
+			if err != nil {
+				log.Fatalf("pgConn.Ping() error: %v", err)
+			}
+		}
+	}(conn)
 	return res, nil
 }
 
