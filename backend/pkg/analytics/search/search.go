@@ -64,7 +64,7 @@ var sortOptions = map[string]string{
 
 const (
 	sessionsQuery = `
-SELECT
+SELECT DISTINCT ON (session_id)
 	toString(s.session_id)                    AS session_id,
 	s.project_id,
 	toUInt64(toUnixTimestamp(s.datetime)*1000) AS start_ts,
