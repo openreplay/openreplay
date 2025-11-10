@@ -106,6 +106,7 @@ FROM product_analytics.events
 GROUP BY ALL;
 -- -------- END ---------
 
+DROP TABLE IF EXISTS product_analytics.event_properties;
 CREATE TABLE IF NOT EXISTS product_analytics.event_properties
 (
     project_id             UInt16,
@@ -291,6 +292,7 @@ FROM product_analytics.event_properties
                        AND event_properties.property_name = old_data.property_name));
 -- -------- END ---------
 
+DROP TABLE IF EXISTS product_analytics.property_values_samples;
 CREATE TABLE IF NOT EXISTS product_analytics.property_values_samples
 (
     project_id        UInt16,
