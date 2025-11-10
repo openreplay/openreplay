@@ -64,6 +64,8 @@ var mainColumns = map[string][]string{
 	"userBrowserVersion": {"$browser_version", "singleColumn"},
 	"metadata":           {"metadata", "singleColumn"},
 	"issue_type":         {"issue_types", "arrayColumn"},
+	"url":                {"$current_url", "singleColumn"},
+	"urlPath":            {"$current_path", "singleColumn"},
 }
 
 var mainSessionsColumns = map[string][]string{
