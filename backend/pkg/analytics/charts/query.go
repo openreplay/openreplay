@@ -21,6 +21,11 @@ const (
 	EventOrderOr   = "or"
 )
 
+var (
+	sqlStringReplacer      = strings.NewReplacer(`'`, `''`)
+	sqlLikePatternReplacer = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`, `'`, `''`)
+)
+
 type Payload struct {
 	*model.MetricPayload
 	ProjectId int    `validate:"required,min=1"`
@@ -129,11 +134,12 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts 
 	colName = quote(colName)
 
 	if propKey.InDProperties {
-		// JSON extraction
+		// JSON extraction - escape property name to prevent injection
+		escapedProp := sqlStringReplacer.Replace(propKey.LogicalProperty)
 		if isNumeric {
-			return fmt.Sprintf("JSONExtractFloat(toString(%s), '%s')", colName, propKey.LogicalProperty), "singleColumn"
+			return fmt.Sprintf("JSONExtractFloat(toString(%s), '%s')", colName, escapedProp), "singleColumn"
 		}
-		return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, propKey.LogicalProperty), "singleColumn"
+		return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, escapedProp), "singleColumn"
 	} else {
 		return fmt.Sprintf("%s.\"%s\"", opts.MainTableAlias, propKey.LogicalProperty), "singleColumn"
 	}
@@ -209,7 +215,8 @@ func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool
 	}
 	var nameCondition string = ""
 	if f.IsEvent {
-		nameCondition = fmt.Sprintf("%s\"$event_name\" = '%s'", alias, f.Name)
+		escapedName := sqlStringReplacer.Replace(f.Name)
+		nameCondition = fmt.Sprintf("%s\"$event_name\" = '%s'", alias, escapedName)
 		var parts []string
 		parts = append(parts, nameCondition)
 
@@ -255,7 +262,8 @@ func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool
 	case "isAny", "onAny":
 		//This part is unreachable, because you already have if f.IsEvent&return above
 		if f.IsEvent {
-			return []string{fmt.Sprintf("%s\"$event_name\" = '%s'", alias, f.Name)}, ""
+			escapedName := sqlStringReplacer.Replace(f.Name)
+			return []string{fmt.Sprintf("%s\"$event_name\" = '%s'", alias, escapedName)}, ""
 		}
 	default:
 		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric, nature); c != "" {
@@ -298,40 +306,41 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 			if isNumeric {
 				wrapped[i] = v
 			} else {
-				wrapped[i] = fmt.Sprintf("'%s'", v)
+				wrapped[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(v))
 			}
 		}
 		return fmt.Sprintf("%s NOT IN (%s)", expr, strings.Join(wrapped, ", "))
 	case "contains":
-		// wrap values with % on both sides
+		// wrap values with % on both sides and escape LIKE pattern
 		wrapped := make([]string, len(values))
 		for i, v := range values {
-			wrapped[i] = fmt.Sprintf("%%%s%%", v)
+			wrapped[i] = fmt.Sprintf("%%%s%%", sqlLikePatternReplacer.Replace(v))
 		}
 		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
 	case "notContains", "doesNotContain":
 		wrapped := make([]string, len(values))
 		for i, v := range values {
-			wrapped[i] = fmt.Sprintf("%%%s%%", v)
+			wrapped[i] = fmt.Sprintf("%%%s%%", sqlLikePatternReplacer.Replace(v))
 		}
 		cond := multiValCond(expr, wrapped, "%s ILIKE %s", false)
 		return "NOT (" + cond + ")"
 	case "startsWith":
 		wrapped := make([]string, len(values))
 		for i, v := range values {
-			wrapped[i] = v + "%"
+			wrapped[i] = sqlLikePatternReplacer.Replace(v) + "%"
 		}
 		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
 	case "endsWith":
 		wrapped := make([]string, len(values))
 		for i, v := range values {
-			wrapped[i] = "%" + v
+			wrapped[i] = "%" + sqlLikePatternReplacer.Replace(v)
 		}
 		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
 	case "regex":
 		var parts []string
 		for _, v := range values {
-			parts = append(parts, fmt.Sprintf("match(%s, '%s')", expr, v))
+			// Escape the regex pattern value for SQL string literal
+			parts = append(parts, fmt.Sprintf("match(%s, '%s')", expr, sqlStringReplacer.Replace(v)))
 		}
 		if len(parts) > 1 {
 			return "(" + strings.Join(parts, " OR ") + ")"
@@ -346,7 +355,7 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 		if nature == "arrayColumn" {
 			if op, ok := compOpsArrays[operator]; ok {
 				for i := range values {
-					values[i] = fmt.Sprintf("'%s'", values[i])
+					values[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(values[i]))
 				}
 				return fmt.Sprintf("%s(%s,[%s])", op, expr, strings.Join(values, ","))
 			}
@@ -362,11 +371,11 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 	}
 }
 
-// formatCondition applies a template to a single value, handling quoting
+// formatCondition applies a template to a single value, handling quoting and escaping
 func formatCondition(expr, tmpl, value string, isNumeric bool) string {
 	val := value
 	if !isNumeric {
-		val = fmt.Sprintf("'%s'", value)
+		val = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(value))
 	}
 	return fmt.Sprintf(tmpl, expr, val)
 }
@@ -395,7 +404,7 @@ func inClause(expr string, values []string, negate, isNumeric bool) string {
 			if isNumeric {
 				return values[0]
 			}
-			return fmt.Sprintf("'%s'", values[0])
+			return fmt.Sprintf("'%s'", sqlStringReplacer.Replace(values[0]))
 		}())
 	}
 	quoted := make([]string, len(values))
@@ -403,7 +412,7 @@ func inClause(expr string, values []string, negate, isNumeric bool) string {
 		if isNumeric {
 			quoted[i] = v
 		} else {
-			quoted[i] = fmt.Sprintf("'%s'", v)
+			quoted[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(v))
 		}
 	}
 	return fmt.Sprintf("%s %s (%s)", expr, op, strings.Join(quoted, ", "))
@@ -412,7 +421,7 @@ func inClause(expr string, values []string, negate, isNumeric bool) string {
 func buildInClause(values []string) string {
 	var quoted []string
 	for _, v := range values {
-		quoted = append(quoted, fmt.Sprintf("'%s'", v))
+		quoted = append(quoted, fmt.Sprintf("'%s'", sqlStringReplacer.Replace(v)))
 	}
 	return strings.Join(quoted, ",")
 }
@@ -447,42 +456,6 @@ func getStepSize(startTimestamp uint64, endTimestamp uint64, density int, factor
 	return uint64(stepSize) / uint64(density)
 }
 
-func FillMissingDataPoints(
-	startTime, endTime uint64,
-	density int,
-	neutral DataPoint,
-	rows []DataPoint,
-	timeCoefficient int64,
-) []DataPoint {
-	if density <= 1 {
-		return rows
-	}
-
-	stepSize := getStepSize(startTime, endTime, density, 1000)
-	bucketSize := stepSize * uint64(timeCoefficient)
-
-	lookup := make(map[uint64]DataPoint)
-	for _, dp := range rows {
-		if dp.Timestamp < uint64(startTime) {
-			continue
-		}
-		bucket := uint64(startTime) + (((dp.Timestamp - uint64(startTime)) / bucketSize) * bucketSize)
-		lookup[bucket] = dp
-	}
-
-	results := make([]DataPoint, 0, density)
-	for i := 0; i < density; i++ {
-		ts := uint64(startTime) + uint64(i)*bucketSize
-		if dp, ok := lookup[ts]; ok {
-			results = append(results, dp)
-		} else {
-			nd := neutral
-			nd.Timestamp = ts
-			results = append(results, nd)
-		}
-	}
-	return results
-}
 func isNegativeOperator(op string) bool {
 	return op == "isNot" || op == "not" || op == "notIn" || op == "notContains"
 }
@@ -641,7 +614,7 @@ func BuildDurationWhere(filters []model.Filter, tableAlias ...string) ([]string,
 	var conds []string
 	var rest []model.Filter
 	for _, f := range filters {
-		if string(f.Name) == "duration" {
+		if string(f.Name) == "duration" && f.AutoCaptured {
 			v := f.Value
 			if len(v) == 1 {
 				if v[0] != "" {
@@ -789,19 +762,29 @@ func BuildCountJoinClause(eventConditions []string, operator string, tableAlias 
 }
 
 var SessionColumns = map[string][]string{
-	"userBrowser":        {"user_browser", "singleColumn"},
-	"userDevice":         {"user_device", "singleColumn"},
-	"platform":           {"user_device_type", "singleColumn"},
-	"userId":             {"user_id", "singleColumn"},
-	"userAnonymousId":    {"user_anonymous_id", "singleColumn"},
-	"referrer":           {"referrer", "singleColumn"},
-	"userDeviceIos":      {"user_device", "singleColumn"},
-	"userIdIos":          {"user_id", "singleColumn"},
-	"userAnonymousIdIos": {"user_anonymous_id", "singleColumn"},
-	"duration":           {"duration", "singleColumn"},
-	"issue_type":         {"issue_types", "arrayColumn"},
-	"userCountry":        {"user_country", "singleColumn"},
-	// TODO Add any missing session columns to be considered.
+	"user_browser":          {"user_browser", "singleColumn"},
+	"user_device":           {"user_device", "singleColumn"},
+	"platform":              {"user_device_type", "singleColumn"},
+	"user_id":               {"user_id", "singleColumn"},
+	"user_anonymous_id":     {"user_anonymous_id", "singleColumn"},
+	"referrer":              {"referrer", "singleColumn"},
+	"userDeviceIos":         {"user_device", "singleColumn"},
+	"user_id_ios":           {"user_id", "singleColumn"},
+	"user_anonymous_id_ios": {"user_anonymous_id", "singleColumn"},
+	"duration":              {"duration", "singleColumn"},
+	"issue_type":            {"issue_types", "arrayColumn"},
+	"user_country":          {"user_country", "singleColumn"},
+	"user_city":             {"user_city", "singleColumn"},
+	"user_state":            {"user_state", "singleColumn"},
+	"user_os":               {"user_os", "singleColumn"},
+	"user_os_version":       {"user_os_version", "singleColumn"},
+	"user_browser_version":  {"user_browser_version", "singleColumn"},
+	"metadata":              {"metadata", "singleColumn"},
+	"utm_source":            {"utm_source", "singleColumn"},
+	"utm_medium":            {"utm_medium", "singleColumn"},
+	"utm_campaign":          {"utm_campaign", "singleColumn"},
+	"rev_id":                {"rev_id", "singleColumn"},
+	"issue":                 {"issue_types", "arrayColumn"},
 }
 
 func reverseSqlOperator(op string) string {
