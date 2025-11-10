@@ -22,8 +22,8 @@ configure_postgresql() {
     if [ ! -s "${PGDATA}/PG_VERSION" ]; then
         echo "Initializing PostgreSQL database..."
 
-        # Initialize the database - will use system default locale
-        ${POSTGRES_BIN_DIR}/initdb -D "${PGDATA}" -U "${POSTGRES_USER}" --auth=trust
+        # Initialize the database with secure auth methods: peer for local, scram-sha-256 for network
+        ${POSTGRES_BIN_DIR}/initdb -D "${PGDATA}" -U "${POSTGRES_USER}" --auth-local=peer --auth-host=scram-sha-256
 
         echo "PostgreSQL database initialized successfully"
     fi
@@ -68,10 +68,10 @@ EOF
     # Create pg_hba.conf in /opt/bitnami/postgresql/conf
     cat >"${POSTGRES_CONF_DIR}/pg_hba.conf" <<EOF
 # PostgreSQL Client Authentication Configuration File
-local   all             all                                     trust
-host    all             all             127.0.0.1/32            md5
-host    all             all             ::1/128                 md5
-host    all             all             0.0.0.0/0               md5
+local   all             all                                     peer
+host    all             all             127.0.0.1/32            scram-sha-256
+host    all             all             ::1/128                 scram-sha-256
+host    all             all             0.0.0.0/0               scram-sha-256
 EOF
 
     # Set password and create database if this is first run
@@ -85,8 +85,8 @@ EOF
 
         # Set password if provided
         if [ -n "${POSTGRES_PASSWORD}" ]; then
-            ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=1 --username "${POSTGRES_USER}" <<-EOSQL
-                ALTER USER ${POSTGRES_USER} WITH PASSWORD '${POSTGRES_PASSWORD}';
+            ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=1 --username "${POSTGRES_USER}" -v password="${POSTGRES_PASSWORD}" <<-EOSQL
+                ALTER USER ${POSTGRES_USER} WITH PASSWORD :'password';
 EOSQL
         fi
 
@@ -108,7 +108,6 @@ EOSQL
 }
 
 # Refresh collation version in background after PostgreSQL starts
-# This is caused because of the locale
 refresh_collation_background() {
     (
         # Wait for PostgreSQL to be ready
@@ -117,8 +116,9 @@ refresh_collation_background() {
         done
 
         # Refresh collation version for all databases
+        ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=0 --username "${POSTGRES_USER}" -d postgres -t -A -c "SELECT datname FROM pg_database WHERE datname NOT IN ('template0');" | while read -r dbname; do
             if [ -n "$dbname" ]; then
-                ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=0 --username "${POSTGRES_USER}" -d "$dbname" -c "ALTER DATABASE $(printf '%s' "$dbname" | sed 's/"/\\"/g') REFRESH COLLATION VERSION;" >/dev/null 2>&1 || true
+                ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=0 --username "${POSTGRES_USER}" -d "$dbname" -c "ALTER DATABASE \"$dbname\" REFRESH COLLATION VERSION;" >/dev/null 2>&1 || true
             fi
         done
     ) &
