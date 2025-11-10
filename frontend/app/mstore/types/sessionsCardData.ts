@@ -76,20 +76,28 @@ class UserNameFormatter extends BaseFormatter {
 
 export class SessionsByRow {
   name: string;
-
   displayName: string;
-
   sessionCount: number;
-
   progress: number;
-
   icon: React.ReactNode;
+  centerWidth?: number;
+  centerHeight?: number;
+  minWidth?: number;
+  maxWidth?: number;
+  minHeight?: number;
+  maxHeight?: number;
 
   fromJson(json: any, totalSessions: number, metricType: string) {
     const { nameFormatter, iconProvider } = this.getFormatters(metricType);
     if (metricType === FilterKey.RESOLUTIONS) {
       json.name = `${json.centerWidth}x${json.centerHeight}`;
       json.total = json.totalInGroup || json.total || 0;
+      this.centerWidth = json.centerWidth;
+      this.centerHeight = json.centerHeight;
+      this.minWidth = json.minWidth;
+      this.maxWidth = json.maxWidth;
+      this.minHeight = json.minHeight;
+      this.maxHeight = json.maxHeight;
     }
     this.name = json.name;
     this.displayName = nameFormatter.format(json.name) || 'Unidentified';

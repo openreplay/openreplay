@@ -8,6 +8,7 @@ import Widget from '@/mstore/types/widget';
 import { useTranslation } from 'react-i18next';
 import { FilterKey } from 'Types/filter/filterType';
 import { observer } from 'mobx-react-lite';
+import { useStore } from '@/mstore';
 
 interface Props {
   metric?: any;
@@ -19,6 +20,7 @@ interface Props {
 function SessionsBy(props: Props) {
   const { metric = {}, data = { values: [] }, onClick = () => null } = props;
   const { t } = useTranslation();
+  const { filterStore } = useStore();
   const [selected, setSelected] = React.useState<any>(null);
   const { total } = data;
   const { openModal, closeModal } = useModal();
@@ -27,42 +29,109 @@ function SessionsBy(props: Props) {
     [metric],
   );
 
-  const onClickHandler = (_: any, data: any) => {
-    onClick([]);
-    setTimeout(() => {
-      const baseFilter = {
-        ...filtersMap[metric.metricOf],
-        value: [data.name],
-        name: filtersMap[metric.metricOf].key,
-        propertyOrder: 'and',
-        filters: [],
-      };
+  const onClickHandler = (_: any, row: any) => {
+    if (metric.metricOf === FilterKey.RESOLUTIONS) {
+      const allFilters = filterStore.getCurrentProjectFilters();
+      const screenWidthFilter = allFilters.find(
+        (f) => f.name === 'screenWidth',
+      );
+      const screenHeightFilter = allFilters.find(
+        (f) => f.name === 'screenHeight',
+      );
 
-      if (metric.metricOf === FilterKey.FETCH) {
-        baseFilter.filters = [
-          {
-            key: FilterKey.FETCH_URL,
-            operator: 'is',
-            value: [data.name],
-            propertyOrder: 'and',
-            name: FilterKey.FETCH_URL,
-          },
-        ];
+      if (!screenWidthFilter || !screenHeightFilter) {
+        console.error('Screen width/height filters not found in filterStore');
+        return;
       }
 
-      const {
-        key,
-        operatorOptions,
-        category,
-        icon,
-        label,
-        options,
-        ...finalFilter
-      } = baseFilter;
+      const minWidth = row.minWidth || 0;
+      const maxWidth = row.maxWidth || 0;
+      const minHeight = row.minHeight || 0;
+      const maxHeight = row.maxHeight || 0;
 
-      setSelected(data.name);
-      onClick([finalFilter]);
-    }, 0);
+      const widthMinFilter = {
+        value: [minWidth.toString()],
+        name: screenWidthFilter.name,
+        dataType: screenWidthFilter.dataType || 'number',
+        operator: '>=',
+        propertyOrder: 'and',
+        isEvent: false,
+        autoCaptured: screenWidthFilter.autoCaptured,
+        displayValue: row.name,
+      };
+
+      const widthMaxFilter = {
+        value: [maxWidth.toString()],
+        name: screenWidthFilter.name,
+        dataType: screenWidthFilter.dataType || 'number',
+        operator: '<=',
+        propertyOrder: 'and',
+        isEvent: false,
+        autoCaptured: screenWidthFilter.autoCaptured,
+      };
+
+      const heightMinFilter = {
+        value: [minHeight.toString()],
+        name: screenHeightFilter.name,
+        dataType: screenHeightFilter.dataType || 'number',
+        operator: '>=',
+        propertyOrder: 'and',
+        isEvent: false,
+        autoCaptured: screenHeightFilter.autoCaptured,
+      };
+
+      const heightMaxFilter = {
+        value: [maxHeight.toString()],
+        name: screenHeightFilter.name,
+        dataType: screenHeightFilter.dataType || 'number',
+        operator: '<=',
+        propertyOrder: 'and',
+        isEvent: false,
+        autoCaptured: screenHeightFilter.autoCaptured,
+      };
+
+      setSelected(row.name);
+      onClick([
+        widthMinFilter,
+        widthMaxFilter,
+        heightMinFilter,
+        heightMaxFilter,
+      ]);
+      return;
+    }
+
+    const baseFilter = {
+      ...filtersMap[metric.metricOf],
+      value: [row.name],
+      name: filtersMap[metric.metricOf].key,
+      propertyOrder: 'and',
+      filters: [],
+    };
+
+    if (metric.metricOf === FilterKey.FETCH) {
+      baseFilter.filters = [
+        {
+          key: FilterKey.FETCH_URL,
+          operator: 'is',
+          value: [row.name],
+          propertyOrder: 'and',
+          name: FilterKey.FETCH_URL,
+        },
+      ];
+    }
+
+    const {
+      key,
+      operatorOptions,
+      category,
+      icon,
+      label,
+      options,
+      ...finalFilter
+    } = baseFilter;
+
+    setSelected(row.name);
+    onClick([finalFilter]);
   };
 
   const showMore = (e: any) => {

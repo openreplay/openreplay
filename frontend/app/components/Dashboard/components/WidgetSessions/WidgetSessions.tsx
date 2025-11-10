@@ -76,7 +76,27 @@ function WidgetSessions({ className = '' }) {
     filter.filters.length > 0 ||
     filter.startTimestamp !== dashboardStore.drillDownPeriod.start ||
     filter.endTimestamp !== dashboardStore.drillDownPeriod.end;
-  const filterText = filter.filters[0]?.value || '';
+
+  const filterText = useMemo(() => {
+    if (!filter.filters.length) return '';
+
+    // Check if this is a screen resolution filter
+    const hasScreenResolutionFilters = filter.filters.some(
+      (f) => f.name === 'screenWidth' || f.name === 'screenHeight',
+    );
+
+    if (hasScreenResolutionFilters) {
+      // Use displayValue from the first filter (contains resolution name like "1470x956")
+      const filterWithDisplay = filter.filters.find(
+        (f) => (f as any).displayValue,
+      );
+      if (filterWithDisplay) {
+        return (filterWithDisplay as any).displayValue;
+      }
+    }
+
+    return filter.filters[0]?.value || '';
+  }, [filter.filters]);
   const metaList = customFieldStore.list.map((i) => i.key);
 
   useEffect(() => {
