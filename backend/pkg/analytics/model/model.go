@@ -1,7 +1,6 @@
 package model
 
 import (
-	"database/sql"
 	"fmt"
 	"slices"
 	"strings"
@@ -23,12 +22,12 @@ type FilterGroup struct {
 }
 
 type Series struct {
-	Name      string        `json:"name"`
-	Filter    FilterGroup   `json:"filter"`
-	CreatedAt time.Time     `json:"createdAt" validate:"omitempty"`
-	SeriesID  sql.NullInt64 `json:"seriesId,omitempty" validate:"omitempty"` // Optional, used for updates
-	MetricID  sql.NullInt64 `json:"metricId,omitempty" validate:"omitempty"` // Optional, used for updates
-	Index     sql.NullInt16 `json:"index,omitempty" validate:"omitempty"`    // Optional, used for ordering
+	Name      string      `json:"name"`
+	Filter    FilterGroup `json:"filter"`
+	CreatedAt time.Time   `json:"createdAt" validate:"omitempty"`
+	SeriesID  *int64      `json:"seriesId,omitempty" validate:"omitempty"` // Optional, used for updates
+	MetricID  *int64      `json:"metricId,omitempty" validate:"omitempty"` // Optional, used for updates
+	Index     *int16      `json:"index,omitempty" validate:"omitempty"`    // Optional, used for ordering
 }
 
 type SeriesFilter struct {
@@ -41,15 +40,14 @@ var OperatorsClickEvent []string = []string{"selectorIs", "selectorIsAny", "sele
 var OperatorsMath []string = []string{"=", "<", ">", "<=", ">="}
 
 type Filter struct {
-	Name          string     `json:"name" validate:"required_without=Type"` // excluded_with=Type
-	Type          FilterType `json:"type" validate:"required_without=Name"` // This is only used if IsEvent is false
-	Operator      string     `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >="`
-	PropertyOrder string     `json:"propertyOrder" validate:"required_with=Name,oneof=or and"`
-	Value         []string   `json:"value" validate:"required_with=Type,max=10,dive"`
-	IsEvent       bool       `json:"isEvent"` // validate:"required" doesn't work with 'false' value
-	DataType      string     `json:"dataType" validate:"omitempty,oneof=string number boolean integer"`
-	AutoCaptured  bool       `json:"autoCaptured"`      // Indicates if the filter is auto-captured
-	Filters       []Filter   `json:"filters,omitempty"` // Nested filters for complex conditions
+	Name          string   `json:"name" validate:"required_without=Type"` // excluded_with=Type
+	Operator      string   `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >="`
+	PropertyOrder string   `json:"propertyOrder" validate:"omitempty,oneof=or and"`
+	Value         []string `json:"value" validate:"required_with=Type,max=10,dive"`
+	IsEvent       bool     `json:"isEvent"` // validate:"required" doesn't work with 'false' value
+	DataType      string   `json:"dataType" validate:"omitempty,oneof=string number boolean integer"`
+	AutoCaptured  bool     `json:"autoCaptured"`      // Indicates if the filter is auto-captured
+	Filters       []Filter `json:"filters,omitempty"` // Nested filters for complex conditions
 	//	With such structure, a user can send an infinite nested filter, and the API will parse it
 }
 
@@ -59,7 +57,7 @@ var ViewTypeOther []string = []string{"chart", "columnChart", "metric", "table",
 
 var MetricOfTimeseries []string = []string{"sessionCount", "userCount", "eventCount"}
 var MetricOfTable []string = []string{"userBrowser", "userDevice", "userCountry", "userId", "ISSUE", "LOCATION", "sessions", "jsException", "referrer", "REQUEST", "screenResolution"}
-var MetricOfFunnel []string = []string{"sessionCount"}
+var MetricOfFunnel []string = []string{"sessionCount", "userCount", "eventCount"}
 var MetricOfHeatMap []string = []string{"heatMapUrl"}
 var MetricOfPathAnalysis []string = []string{"sessionCount"}
 var MetricOfWebVital []string = []string{"webVitalUrl"}
@@ -122,6 +120,13 @@ func ValidateMetricFields(sl validator.StructLevel) {
 
 }
 
+func ValidateFilterFields(sl validator.StructLevel) {
+	filter := sl.Current().Interface().(Filter)
+	if filter.IsEvent && filter.PropertyOrder == "" {
+		sl.ReportError(filter.PropertyOrder, "PropertyOrder", "propertyOrder", "required", "")
+	}
+}
+
 type Session struct {
 	Duration              uint32             `json:"duration" ch:"duration"`
 	ErrorsCount           int                `json:"errorsCount"`
@@ -168,11 +173,16 @@ type SessionsSearchRequest struct {
 	Limit       int      `json:"limit" validate:"required,min=1,max=200"`
 	Page        int      `json:"page" validate:"required,min=1"`
 	Series      []Series `json:"series" validate:"omitempty,max=5,dive"`
+	Bookmarked  bool     `json:"bookmarked"`
 }
 
 type GetSessionsResponse struct {
 	Total    uint64    `json:"total" ch:"count"`
 	Sessions []Session `json:"sessions" ch:"sessions"`
+}
+
+type SessionIdData struct {
+	SessionId string `json:"sessionId" ch:"session_id"`
 }
 
 type PaginationParams struct {
@@ -191,4 +201,45 @@ type SeriesSessionData struct {
 	Total      uint64    `json:"total"`
 	SeriesName string    `json:"seriesName"`
 	Sessions   []Session `json:"sessions"`
+}
+
+type SavedSearchRequest struct {
+	Name     *string         `json:"name" validate:"omitempty,max=255"`
+	IsPublic *bool           `json:"isPublic"`
+	IsShare  *bool           `json:"isShare"`
+	Data     SavedSearchData `json:"data" validate:"required"`
+}
+
+type SavedSearchData struct {
+	Filters     []Filter `json:"filters" validate:"required,dive"`
+	StartDate   int64    `json:"startTimestamp,omitempty" validate:"omitempty,min=946684800000"`
+	EndDate     int64    `json:"endTimestamp,omitempty" validate:"omitempty,min=946684800000"`
+	Sort        string   `json:"sort,omitempty"`
+	Order       string   `json:"order,omitempty"`
+	EventsOrder string   `json:"eventsOrder,omitempty" validate:"omitempty,oneof=then or and"`
+	Limit       int      `json:"limit,omitempty" validate:"omitempty,min=1,max=1000"`
+	Page        int      `json:"page,omitempty" validate:"omitempty,min=1"`
+}
+
+type SavedSearch struct {
+	SearchID  string          `json:"searchId"`
+	ProjectID int             `json:"projectId"`
+	UserID    uint64          `json:"userId"`
+	UserName  string          `json:"userName,omitempty"`
+	Name      *string         `json:"name,omitempty"`
+	IsPublic  bool            `json:"isPublic"`
+	IsShare   bool            `json:"isShare"`
+	Data      SavedSearchData `json:"data"`
+	CreatedAt time.Time       `json:"createdAt"`
+	ExpiresAt *time.Time      `json:"-"`
+	DeletedAt *time.Time      `json:"-"`
+}
+
+type SavedSearchResponse struct {
+	SearchID  string          `json:"searchId"`
+	Name      *string         `json:"name,omitempty"`
+	IsPublic  bool            `json:"isPublic"`
+	IsShare   bool            `json:"isShare"`
+	Data      SavedSearchData `json:"data"`
+	CreatedAt time.Time       `json:"createdAt"`
 }

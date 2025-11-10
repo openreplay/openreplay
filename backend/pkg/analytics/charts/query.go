@@ -174,7 +174,7 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 	var eventConds map[string]any = make(map[string]any)
 	var otherConds map[string]any = make(map[string]any)
 	for _, f := range filters {
-		if f.Type == FilterDuration || f.Type == FilterUserAnonymousId {
+		if f.Name == string(FilterDuration) || f.Name == string(FilterUserAnonymousId) {
 			continue
 		}
 		conds, nameCondition := addFilter(f, opts, f.IsEvent)
@@ -641,13 +641,13 @@ func BuildDurationWhere(filters []model.Filter, tableAlias ...string) ([]string,
 	return conds, rest
 }
 
-func FilterOutTypes(filters []model.Filter, typesToRemove []model.FilterType) (kept []model.Filter, removed []model.Filter) {
-	removeMap := make(map[model.FilterType]struct{}, len(typesToRemove))
+func FilterOutTypes(filters []model.Filter, typesToRemove []string) (kept []model.Filter, removed []model.Filter) {
+	removeMap := make(map[string]struct{}, len(typesToRemove))
 	for _, t := range typesToRemove {
 		removeMap[t] = struct{}{}
 	}
 	for _, f := range filters {
-		if _, ok := removeMap[f.Type]; ok {
+		if _, ok := removeMap[f.Name]; ok {
 			removed = append(removed, f)
 		} else {
 			kept = append(kept, f)
