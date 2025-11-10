@@ -385,7 +385,7 @@ func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload) ([]string, 
 	s := r.Series[0]
 	// Build event filter conditions with error handling
 	durConds, _ := BuildDurationWhere(s.Filter.Filters)
-	sessFilters, _ := FilterOutTypes(s.Filter.Filters, []model.FilterType{FilterDuration, FilterUserAnonymousId})
+	sessFilters, _ := FilterOutTypes(s.Filter.Filters, []string{string(FilterDuration), string(FilterUserAnonymousId)})
 	eventConditions, _, otherConds := BuildEventConditions(sessFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "main",

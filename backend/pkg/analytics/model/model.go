@@ -40,15 +40,14 @@ var OperatorsClickEvent []string = []string{"selectorIs", "selectorIsAny", "sele
 var OperatorsMath []string = []string{"=", "<", ">", "<=", ">="}
 
 type Filter struct {
-	Name          string     `json:"name" validate:"required_without=Type"` // excluded_with=Type
-	Type          FilterType `json:"type" validate:"required_without=Name"` // This is only used if IsEvent is false
-	Operator      string     `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >="`
-	PropertyOrder string     `json:"propertyOrder" validate:"omitempty,oneof=or and"`
-	Value         []string   `json:"value" validate:"required_with=Type,max=10,dive"`
-	IsEvent       bool       `json:"isEvent"` // validate:"required" doesn't work with 'false' value
-	DataType      string     `json:"dataType" validate:"omitempty,oneof=string number boolean integer"`
-	AutoCaptured  bool       `json:"autoCaptured"`      // Indicates if the filter is auto-captured
-	Filters       []Filter   `json:"filters,omitempty"` // Nested filters for complex conditions
+	Name          string   `json:"name" validate:"required_without=Type"` // excluded_with=Type
+	Operator      string   `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >="`
+	PropertyOrder string   `json:"propertyOrder" validate:"omitempty,oneof=or and"`
+	Value         []string `json:"value" validate:"required_with=Type,max=10,dive"`
+	IsEvent       bool     `json:"isEvent"` // validate:"required" doesn't work with 'false' value
+	DataType      string   `json:"dataType" validate:"omitempty,oneof=string number boolean integer"`
+	AutoCaptured  bool     `json:"autoCaptured"`      // Indicates if the filter is auto-captured
+	Filters       []Filter `json:"filters,omitempty"` // Nested filters for complex conditions
 	//	With such structure, a user can send an infinite nested filter, and the API will parse it
 }
 
