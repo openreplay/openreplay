@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS public.saved_searches
     deleted_at  timestamp without time zone NULL     DEFAULT NULL
 );
 
-CREATE INDEX saved_searches_project_id_idx ON public.saved_searches (project_id);
+CREATE INDEX IF NOT EXISTS saved_searches_project_id_idx ON public.saved_searches (project_id);
 
 ALTER TABLE IF EXISTS public.sessions
     DROP COLUMN IF EXISTS issue_score;
