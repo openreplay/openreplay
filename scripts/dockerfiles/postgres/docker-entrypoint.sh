@@ -117,9 +117,8 @@ refresh_collation_background() {
         done
 
         # Refresh collation version for all databases
-        ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=0 --username "${POSTGRES_USER}" -d postgres -t -A -c "SELECT datname FROM pg_database WHERE datname NOT IN ('template0');" | while read -r dbname; do
             if [ -n "$dbname" ]; then
-                ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=0 --username "${POSTGRES_USER}" -d "$dbname" -c "ALTER DATABASE \"$dbname\" REFRESH COLLATION VERSION;" >/dev/null 2>&1 || true
+                ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=0 --username "${POSTGRES_USER}" -d "$dbname" -c "ALTER DATABASE $(printf '%s' "$dbname" | sed 's/"/\\"/g') REFRESH COLLATION VERSION;" >/dev/null 2>&1 || true
             fi
         done
     ) &
