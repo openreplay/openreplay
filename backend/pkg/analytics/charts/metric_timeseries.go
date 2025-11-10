@@ -56,7 +56,7 @@ func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfac
 		return timestamps[i] < timestamps[j]
 	})
 
-	var result []map[string]interface{}
+	var result []map[string]interface{} = make([]map[string]interface{}, 0)
 	for _, ts := range timestamps {
 		row := map[string]interface{}{"timestamp": ts}
 		for _, series := range p.Series {
