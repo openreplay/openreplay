@@ -9,7 +9,7 @@ elasticsearch==9.2.0
 jira==3.10.5
 cachetools==6.2.1
 
-fastapi==0.120.1
+fastapi==0.121.1
 uvicorn[standard]==0.38.0
 python-decouple==3.8
 pydantic[email]==2.12.3
