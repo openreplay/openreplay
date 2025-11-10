@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button, Space, Empty } from 'antd';
-import { filtersMap } from 'Types/filter/newFilter';
 import { Info, ArrowRight } from 'lucide-react';
 import CardSessionsByList from 'Components/Dashboard/Widgets/CardSessionsByList';
 import { useModal } from 'Components/ModalContext';
@@ -29,14 +28,14 @@ function SessionsBy(props: Props) {
     [metric],
   );
 
-  const onClickHandler = (_: any, row: any) => {
+  const onClickHandler = async (_: any, row: any) => {
     if (metric.metricOf === FilterKey.RESOLUTIONS) {
       const allFilters = filterStore.getCurrentProjectFilters();
       const screenWidthFilter = allFilters.find(
-        (f) => f.name === 'screenWidth',
+        (f) => f.name === FilterKey.SCREEN_WIDTH,
       );
       const screenHeightFilter = allFilters.find(
-        (f) => f.name === 'screenHeight',
+        (f) => f.name === FilterKey.SCREEN_HEIGHT,
       );
 
       if (!screenWidthFilter || !screenHeightFilter) {
@@ -100,38 +99,56 @@ function SessionsBy(props: Props) {
       return;
     }
 
-    const baseFilter = {
-      ...filtersMap[metric.metricOf],
-      value: [row.name],
-      name: filtersMap[metric.metricOf].key,
+    const allFilters = filterStore.getCurrentProjectFilters();
+    const metricFilter = allFilters.find((f) => f.name === metric.metricOf);
+
+    if (!metricFilter) {
+      console.error(`Filter not found for metric: ${metric.metricOf}`);
+      return;
+    }
+
+    const baseFilter: any = {
+      value: metricFilter.isEvent ? [] : [row.name],
+      name: metricFilter.name,
+      dataType: metricFilter.dataType,
+      operator: 'is',
       propertyOrder: 'and',
+      isEvent: metricFilter.isEvent || false,
+      autoCaptured: metricFilter.autoCaptured,
       filters: [],
     };
 
-    if (metric.metricOf === FilterKey.FETCH) {
-      baseFilter.filters = [
-        {
-          key: FilterKey.FETCH_URL,
-          operator: 'is',
-          value: [row.name],
-          propertyOrder: 'and',
-          name: FilterKey.FETCH_URL,
-        },
-      ];
+    if (metricFilter.isEvent) {
+      const props = await filterStore.getEventFilters(metricFilter.id);
+      const defaultProps = props?.filter((p) => p.defaultProperty) || [];
+      baseFilter.filters = defaultProps.map((prop) => ({
+        ...prop,
+        value: [row.name],
+        operator: 'is',
+      }));
     }
 
-    const {
-      key,
-      operatorOptions,
-      category,
-      icon,
-      label,
-      options,
-      ...finalFilter
-    } = baseFilter;
+    if (metric.metricOf === FilterKey.FETCH) {
+      const fetchUrlFilter = allFilters.find(
+        (f) => f.name === FilterKey.FETCH_URL,
+      );
+      if (fetchUrlFilter) {
+        baseFilter.filters = [
+          {
+            name: fetchUrlFilter.name,
+            operator: 'is',
+            value: [row.name],
+            propertyOrder: 'and',
+            dataType: fetchUrlFilter.dataType,
+            isEvent: fetchUrlFilter.isEvent || false,
+            autoCaptured: fetchUrlFilter.autoCaptured,
+          },
+        ];
+      }
+    }
 
     setSelected(row.name);
-    onClick([finalFilter]);
+    onClick([baseFilter]);
   };
 
   const showMore = (e: any) => {

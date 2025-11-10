@@ -245,6 +245,8 @@ export enum FilterKey {
   UTM_MEDIUM = 'utmMedium',
   UTM_CAMPAIGN = 'utmCampaign',
   RESOLUTIONS = 'screenResolution',
+  SCREEN_WIDTH = 'screenWidth',
+  SCREEN_HEIGHT = 'screenHeight',
 
   DOM_COMPLETE = 'domComplete',
   LARGEST_CONTENTFUL_PAINT_TIME = 'largestContentfulPaintTime',

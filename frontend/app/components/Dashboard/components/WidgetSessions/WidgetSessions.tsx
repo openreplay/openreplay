@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import Session from 'App/types/session/session';
 import { toast } from 'react-toastify';
 import { checkIsSingleSeries } from '../WidgetForm/WidgetFormNew';
+import { FilterKey } from 'Types/filter/filterType';
 
 const getListSessionsBySeries = (
   data: { sessions: Session[]; total: number; seriesId: string }[],
@@ -80,13 +81,15 @@ function WidgetSessions({ className = '' }) {
   const filterText = useMemo(() => {
     if (!filter.filters.length) return '';
 
-    // Check if this is a screen resolution filter
+    const firstFilter = filter.filters[0];
+
+    // 1. Screen resolution - use displayValue
     const hasScreenResolutionFilters = filter.filters.some(
-      (f) => f.name === 'screenWidth' || f.name === 'screenHeight',
+      (f) =>
+        f.name === FilterKey.SCREEN_WIDTH || f.name === FilterKey.SCREEN_HEIGHT,
     );
 
     if (hasScreenResolutionFilters) {
-      // Use displayValue from the first filter (contains resolution name like "1470x956")
       const filterWithDisplay = filter.filters.find(
         (f) => (f as any).displayValue,
       );
@@ -95,7 +98,21 @@ function WidgetSessions({ className = '' }) {
       }
     }
 
-    return filter.filters[0]?.value || '';
+    // 2. Event filter - get value from sub-filters
+    if (
+      (firstFilter as any).isEvent &&
+      (firstFilter as any).filters?.length > 0
+    ) {
+      const subFilterWithValue = (firstFilter as any).filters.find(
+        (f: any) => f.value && f.value.length > 0,
+      );
+      if (subFilterWithValue) {
+        return subFilterWithValue.value[0] || '';
+      }
+    }
+
+    // 3. Regular filter - use value directly
+    return firstFilter?.value?.[0] || '';
   }, [filter.filters]);
   const metaList = customFieldStore.list.map((i) => i.key);
 
