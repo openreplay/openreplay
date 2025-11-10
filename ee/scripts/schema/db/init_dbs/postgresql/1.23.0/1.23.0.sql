@@ -41,7 +41,6 @@ CREATE TABLE IF NOT EXISTS public.saved_searches
 
 CREATE INDEX saved_searches_project_id_idx ON public.saved_searches (project_id);
 
-<<<<<<< HEAD
 CREATE TABLE public.sessions_videos
 (
     session_id      bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
