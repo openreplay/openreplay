@@ -153,12 +153,10 @@ export default class FilterItem implements IFilter {
 
   toJson(): JsonData {
     // Ensure dataType always has a value
-    const dataType = this.dataType && this.dataType.trim() !== ''
-      ? this.dataType
-      : 'string';
+    const dataType =
+      this.dataType && this.dataType.trim() !== '' ? this.dataType : 'string';
 
     const json: JsonData = {
-      type: this.name,
       value:
         this.value?.map((item: any) => (item ? item.toString() : '')) || [],
       operator: this.operator || 'is',
