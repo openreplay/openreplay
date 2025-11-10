@@ -130,7 +130,10 @@ func main() {
 					sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessionID))
 
 					timestamp := sessions[sessionID]
-					currDuration := *sess.Duration
+					var currDuration uint64 = 0
+					if sess.Duration != nil {
+						currDuration = *sess.Duration
+					}
 					newDur := timestamp - sess.Timestamp
 
 					// Skip if session was ended before with same duration
