@@ -273,11 +273,12 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
         operator: 'is',
         filters: [
           {
-            name: 'url',
-            dataType: 'int',
+            name: 'status',
+            dataType: 'number',
+            autoCaptured: true,
             isEvent: false,
+            operator: '>=',
             value: ['400'],
-            operator: 'greaterThanOrEquals',
             filters: [],
           },
         ],
@@ -306,10 +307,11 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
         filters: [
           {
             name: 'duration',
-            dataType: 'int',
+            dataType: 'number',
+            autoCaptured: true,
             isEvent: false,
             value: ['5000'],
-            operator: 'greaterThanOrEquals',
+            operator: '>=',
             filters: [],
           },
         ],
