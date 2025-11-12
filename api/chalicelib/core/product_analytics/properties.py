@@ -181,6 +181,26 @@ EVENT_DEFAULT_PROPERTIES = {
     "ISSUE": "issue_type",
     "PERFORMANCE": "max_fps",
 }
+# properties to add to auto-captured event's properies if they are not available
+EVENTS_EXTRA_PROPERTIES = {
+    "REQUEST": {
+        "duration": {
+            "name": "duration",
+            "displayName": "Duration",
+            "autoCaptured": True,
+            "possibleTypes": [
+                "in"
+            ],
+            "id": "prop_",
+            "category": "events",
+            "_foundInPredefinedList": True,
+            "isPredefined": False,
+            "possibleValues": [],
+            "dataType": "int",
+            "defaultProperty": False
+        },
+    }
+}
 
 
 def get_all_properties(project_id: int, include_all: bool = False) -> dict:
@@ -321,10 +341,19 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
                 set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"]))
             )
             p["defaultProperty"] = (
-                auto_captured
-                and event_name in EVENT_DEFAULT_PROPERTIES
-                and snake_case_name == EVENT_DEFAULT_PROPERTIES[event_name]
+                    auto_captured
+                    and event_name in EVENT_DEFAULT_PROPERTIES
+                    and snake_case_name == EVENT_DEFAULT_PROPERTIES[event_name]
             )
+
+        if event_name in EVENTS_EXTRA_PROPERTIES:
+            for p in EVENTS_EXTRA_PROPERTIES[event_name]:
+                for prop in properties:
+                    if prop["name"] == p:
+                        break
+                else:
+                    EVENTS_EXTRA_PROPERTIES[event_name][p]["id"] += str(len(properties))
+                    properties.append(EVENTS_EXTRA_PROPERTIES[event_name][p])
 
         return properties
 
