@@ -83,7 +83,7 @@ const WarnBadge = React.memo(
     const localhostWarnActive = Boolean(
       currentLocation &&
         defaultLocalhostWarn &&
-        /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation),
+        /(localhost)|(127\.0\.0\.1)|(0\.0\.0\.0)/.test(currentLocation),
     );
     const trackerVersion = window.env.TRACKER_VERSION ?? undefined;
     const trackerVerDiff = compareVersions(version, trackerVersion);
