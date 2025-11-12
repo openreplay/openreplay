@@ -20,6 +20,7 @@ RUN apk add --no-cache \
   ln -s /usr/bin/pg_ctl /opt/bitnami/postgresql/bin/pg_ctl && \
   ln -s /usr/bin/initdb /opt/bitnami/postgresql/bin/initdb && \
   ln -s /usr/bin/psql /opt/bitnami/postgresql/bin/psql && \
+  ln -s /usr/bin/pg_isready /opt/bitnami/postgresql/bin/pg_isready && \
   # Set permissions
   chown -R 1001:1001 /opt/bitnami/postgresql && \
   chown -R 1001:1001 /bitnami/postgresql
