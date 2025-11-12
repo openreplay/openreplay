@@ -14,6 +14,7 @@ import (
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/middleware"
 )
 
 func main() {
@@ -45,7 +46,12 @@ func main() {
 		log.Fatal(ctx, "failed while creating services: %s", err)
 	}
 
-	router, err := api.NewRouter(log, &cfg.HTTP, api.NoPrefix, services.Handlers(), nil)
+	middlewares, err := middleware.NewMinimalMiddlewareBuilder(&cfg.HTTP)
+	if err != nil {
+		log.Fatal(ctx, "failed while creating minimal http middleware: %s", err)
+	}
+
+	router, err := api.NewRouter(log, &cfg.HTTP, api.NoPrefix, services.Handlers(), middlewares.Middlewares())
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}

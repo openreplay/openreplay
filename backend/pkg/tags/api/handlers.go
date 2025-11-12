@@ -34,6 +34,7 @@ func NewHandlers(log logger.Logger, responser api.Responser, tokenizer *token.To
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
 		{"/v1/web/tags", "GET", e.getTags, api.NoPermissions, api.DoNotTrack},
+		{"/v1/web/feature-flags", "POST", e.backCompatibilityMockup, api.NoPermissions, api.DoNotTrack},
 	}
 }
 
@@ -70,4 +71,8 @@ func (e *handlersImpl) getTags(w http.ResponseWriter, r *http.Request) {
 		Tags interface{} `json:"tags"`
 	}
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, &UrlResponse{Tags: tags}, startTime, r.URL.Path, bodySize)
+}
+
+func (e *handlersImpl) backCompatibilityMockup(w http.ResponseWriter, r *http.Request) {
+	e.responser.ResponseOK(e.log, r.Context(), w, time.Now(), r.URL.Path, 0)
 }
