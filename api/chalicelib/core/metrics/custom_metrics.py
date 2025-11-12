@@ -244,8 +244,8 @@ def create_card(project: schemas.ProjectContext, user_id, data: schemas.CardSche
                             view_type, metric_type, metric_of, metric_value,
                             metric_format, default_config, thumbnail, data,
                             card_info)
-                   VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
-                              %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, 
+                   VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s,
+                              %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s,
                               %(metric_format)s, %(default_config)s, %(thumbnail)s, %(session_data)s,
                               %(card_info)s)
                    RETURNING metric_id"""
@@ -335,8 +335,8 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
         query = cur.mogrify(f"""\
             {"WITH " if len(sub_queries) > 0 else ""}{",".join(sub_queries)}
             UPDATE metrics
-            SET name = %(name)s, is_public= %(is_public)s, 
-                view_type= %(view_type)s, metric_type= %(metric_type)s, 
+            SET name = %(name)s, is_public= %(is_public)s,
+                view_type= %(view_type)s, metric_type= %(metric_type)s,
                 metric_of= %(metric_of)s, metric_value= %(metric_value)s,
                 metric_format= %(metric_format)s,
                 edited_at = timezone('utc'::text, now()),
@@ -345,8 +345,8 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
                 card_info = %(card_info)s,
                 data = %(session_data)s
             WHERE metric_id = %(metric_id)s
-            AND project_id = %(project_id)s 
-            AND (user_id = %(user_id)s OR is_public) 
+            AND project_id = %(project_id)s
+            AND (user_id = %(user_id)s OR is_public)
             RETURNING metric_id;""", params)
         cur.execute(query)
     return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
@@ -384,7 +384,7 @@ def search_metrics(project_id, user_id, data: schemas.MetricSearchSchema, includ
                             SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                             FROM metric_series
                             WHERE metric_series.metric_id = metrics.metric_id
-                              AND metric_series.deleted_at ISNULL 
+                              AND metric_series.deleted_at ISNULL
                          ) AS metric_series ON (TRUE)"""
 
         sort_column = data.sort.field if data.sort.field is not None and len(data.sort.field) > 0 \
@@ -398,7 +398,7 @@ def search_metrics(project_id, user_id, data: schemas.MetricSearchSchema, includ
 
         query = cur.mogrify(
             f"""SELECT count(1) OVER () AS total,metric_id, project_id, user_id, name, is_public, created_at, edited_at,
-                        metric_type, metric_of, metric_format, metric_value, view_type, is_pinned, 
+                        metric_type, metric_of, metric_format, metric_value, view_type, is_pinned,
                         dashboards, owner_email, owner_name, default_config AS config, thumbnail
                 FROM metrics
                 {sub_join}
@@ -469,11 +469,11 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
             sub_join = """LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
                                                 WHERE metric_series.metric_id = metrics.metric_id
-                                                  AND metric_series.deleted_at ISNULL 
+                                                  AND metric_series.deleted_at ISNULL
                                                 ) AS metric_series ON (TRUE)"""
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, edited_at,
-                        metric_type, metric_of, metric_format, metric_value, view_type, is_pinned, 
+                        metric_type, metric_of, metric_format, metric_value, view_type, is_pinned,
                         dashboards, owner_email, owner_name, default_config AS config, thumbnail
                 FROM metrics
                          {sub_join}
@@ -526,14 +526,21 @@ def delete_card(project_id, metric_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-            UPDATE public.metrics 
-            SET deleted_at = timezone('utc'::text, now()), edited_at = timezone('utc'::text, now()) 
+            UPDATE public.metrics
+            SET deleted_at = timezone('utc'::text, now()), edited_at = timezone('utc'::text, now())
             WHERE project_id = %(project_id)s
               AND metric_id = %(metric_id)s
               AND (user_id = %(user_id)s OR is_public)
             RETURNING data;""",
                         {"metric_id": metric_id, "project_id": project_id, "user_id": user_id})
         )
+
+        row = cur.fetchone()
+        if row is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Card not found or unauthorized",
+            )
 
     return {"state": "success"}
 
@@ -558,15 +565,15 @@ def __get_path_analysis_attributes(row):
 def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data: bool = False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
-                        view_type, metric_of, metric_value, metric_format, is_pinned, default_config, 
+            f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type,
+                        view_type, metric_of, metric_value, metric_format, is_pinned, default_config,
                         default_config AS config,series, dashboards, owner_email, card_info
                         {',data' if include_data else ''}
                 FROM metrics
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                             FROM metric_series
                                             WHERE metric_series.metric_id = metrics.metric_id
-                                              AND metric_series.deleted_at ISNULL 
+                                              AND metric_series.deleted_at ISNULL
                                             ) AS metric_series ON (TRUE)
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
                                             FROM (SELECT dashboard_id, name, is_public
@@ -633,8 +640,8 @@ def change_state(project_id, metric_id, user_id, status):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-            UPDATE public.metrics 
-            SET active = %(status)s 
+            UPDATE public.metrics
+            SET active = %(status)s
             WHERE metric_id = %(metric_id)s
               AND (user_id = %(user_id)s OR is_public);""",
                         {"metric_id": metric_id, "status": status, "user_id": user_id})
