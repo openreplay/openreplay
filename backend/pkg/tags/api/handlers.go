@@ -74,5 +74,5 @@ func (e *handlersImpl) getTags(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *handlersImpl) backCompatibilityMockup(w http.ResponseWriter, r *http.Request) {
-	e.responser.ResponseOK(e.log, r.Context(), w, time.Now(), r.URL.Path, 0)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"flags": []interface{}{}}, time.Now(), r.URL.Path, 0)
 }
