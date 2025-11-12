@@ -187,7 +187,7 @@ def get_sessions_filters(project_id: int):
             },
             {
                 "id": "sf_15",
-                "name": "screen_height",
+                "name": "screenHeight",
                 "displayName": "Screen Height",
                 "possibleTypes": ["UInt16"],
                 "dataType": "UInt16",
@@ -198,7 +198,7 @@ def get_sessions_filters(project_id: int):
             },
             {
                 "id": "sf_16",
-                "name": "screen_width",
+                "name": "screenWidth",
                 "displayName": "Screen Width",
                 "possibleTypes": ["UInt16"],
                 "dataType": "UInt16",
