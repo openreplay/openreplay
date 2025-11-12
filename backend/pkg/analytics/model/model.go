@@ -148,6 +148,8 @@ type Session struct {
 	UserOs                string             `json:"userOs" ch:"user_os"`
 	UserState             string             `json:"userState" ch:"user_state"`
 	UserUuid              string             `json:"userUuid" ch:"user_uuid"`
+	ScreenWidth           int16              `json:"screenWidth" ch:"screen_width"`
+	ScreenHeight          int16              `json:"screenHeight" ch:"screen_height"`
 	Viewed                bool               `json:"viewed" ch:"viewed"`
 	TotalNumberOfSessions uint64             `json:"-" ch:"total_number_of_sessions"`
 	Metadata              map[string]*string `json:"metadata" ch:"metadata"`

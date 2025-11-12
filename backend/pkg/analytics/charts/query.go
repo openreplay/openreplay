@@ -511,7 +511,11 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 		// Not all !f.IsEvent are from sessions, because UI can send a $properties filter without specifying an event (global properties filters)
 		var isEvent bool = f.IsEvent
 		if !f.IsEvent {
-			if _, ok := SessionColumns[f.Name]; ok {
+			filterName := f.Name
+			if f.AutoCaptured {
+				filterName = CamelToSnake(f.Name)
+			}
+			if _, ok := SessionColumns[filterName]; ok {
 				sessionFiltersList = append(sessionFiltersList, f)
 			} else {
 				isEvent = true
@@ -785,6 +789,8 @@ var SessionColumns = map[string][]string{
 	"utm_campaign":          {"utm_campaign", "singleColumn"},
 	"rev_id":                {"rev_id", "singleColumn"},
 	"issue":                 {"issue_types", "arrayColumn"},
+	"screen_width":          {"screen_width", "singleColumn"},
+	"screen_height":         {"screen_height", "singleColumn"},
 }
 
 func reverseSqlOperator(op string) string {

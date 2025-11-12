@@ -60,6 +60,8 @@ SELECT DISTINCT ON (session_id)
 	s.user_device_type,
 	s.user_os,
 	s.user_state,
+	s.screen_width,
+	s.screen_height,
 	s.events_count,
 	viewed_sessions.session_id>0 AS viewed,
 	count(1) OVER() AS total_number_of_sessions
