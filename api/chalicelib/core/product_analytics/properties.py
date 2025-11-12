@@ -167,6 +167,10 @@ PREDEFINED_PROPERTIES = {
     },
     "duration": {"type": "UInt16", "displayName": "Duration",
                  "isPredefined": False, "possibleValues": [], "isConditional": True},
+    "normalized_x": {"type": "UInt16", "displayName": "Normalized X",
+                     "isPredefined": False, "possibleValues": [], "isConditional": True},
+    "normalized_y": {"type": "UInt16", "displayName": "Normalized Y",
+                     "isPredefined": False, "possibleValues": [], "isConditional": True},
 }
 
 EXCLUDED_PROPERTIES = ["message_id", "error_id", "tag_id", "web_vitals"]
