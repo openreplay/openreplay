@@ -24,7 +24,6 @@ logging.basicConfig(level=loglevel)
 
 
 class ORPYAsyncConnection(AsyncConnection):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, row_factory=dict_row, **kwargs)
 
@@ -33,7 +32,7 @@ class ORPYAsyncConnection(AsyncConnection):
 async def lifespan(app: FastAPI):
     # Startup
     logging.info(">>>>> starting up <<<<<")
-    ap_logger = logging.getLogger('apscheduler')
+    ap_logger = logging.getLogger("apscheduler")
     ap_logger.setLevel(loglevel)
 
     app.schedule = AsyncIOScheduler()
@@ -46,7 +45,13 @@ async def lifespan(app: FastAPI):
 
     ap_logger.info(">Scheduled jobs:")
     for job in app.schedule.get_jobs():
-        ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
+        ap_logger.info(
+            {
+                "Name": str(job.id),
+                "Run Frequency": str(job.trigger),
+                "Next Run": str(job.next_run_time),
+            }
+        )
 
     database = {
         "host": config("pg_host", default="localhost"),
@@ -57,9 +62,13 @@ async def lifespan(app: FastAPI):
         "application_name": "AIO" + config("APP_NAME", default="PY"),
     }
 
-    database = psycopg_pool.AsyncConnectionPool(kwargs=database, connection_class=ORPYAsyncConnection,
-                                                min_size=config("PG_AIO_MINCONN", cast=int, default=1),
-                                                max_size=config("PG_AIO_MAXCONN", cast=int, default=5), )
+    database = psycopg_pool.AsyncConnectionPool(
+        kwargs=database,
+        connection_class=ORPYAsyncConnection,
+        min_size=config("PG_AIO_MINCONN", cast=int, default=1),
+        max_size=config("PG_AIO_MAXCONN", cast=int, default=5),
+    )
+    await database.open()
     app.state.postgresql = database
 
     # App listening
