@@ -456,10 +456,10 @@ FROM (SELECT any(full_count)               AS full_count,
              COUNT(1) OVER ()               AS number_of_rows,
              base_center.screen_width       AS center_width,
              base_center.screen_height      AS center_height,
-             max(base_match.screen_width)   AS max_width,
-             max(base_match.screen_height)  AS max_height,
-             min(base_match.screen_width)   AS min_width,
-             min(base_match.screen_height)  AS min_height,
+             CAST(base_center.screen_width * 1.05 AS UInt64)   AS max_width,
+             CAST(base_center.screen_height * 1.05 AS UInt64)  AS max_height,
+             CAST(base_center.screen_width * 0.95 AS UInt64)   AS min_width,
+             CAST(base_center.screen_height * 0.95 AS UInt64)  AS min_height,
              sum(base_match.freq)           AS total_in_group
       FROM base_%[1]v AS base_center
                JOIN base_%[1]v AS base_match
