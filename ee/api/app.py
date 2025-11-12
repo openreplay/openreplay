@@ -62,10 +62,10 @@ async def lifespan(app: FastAPI):
     app.schedule.start()
 
     for job in (
-        core_crons.cron_jobs
-        + core_dynamic_crons.cron_jobs
-        + traces.cron_jobs
-        + ee_crons.ee_cron_jobs
+            core_crons.cron_jobs
+            + core_dynamic_crons.cron_jobs
+            + traces.cron_jobs
+            + ee_crons.ee_cron_jobs
     ):
         app.schedule.add_job(id=job["func"].__name__, **job)
 
@@ -94,6 +94,7 @@ async def lifespan(app: FastAPI):
         min_size=config("PG_AIO_MINCONN", cast=int, default=1),
         max_size=config("PG_AIO_MAXCONN", cast=int, default=5),
     )
+    await database.open()
     app.state.postgresql = database
 
     # App listening
