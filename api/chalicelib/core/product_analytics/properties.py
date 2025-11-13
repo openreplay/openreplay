@@ -239,12 +239,13 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
             [p for p in properties if p["name"] not in EXCLUDED_PROPERTIES]
         )
         for i, p in enumerate(properties):
-            p["name"] = helper.key_to_camel_case(p["name"])
+            snake_case_name = helper.key_to_snake_case(p["name"])
+            if snake_case_name in PREDEFINED_PROPERTIES:
+                p["name"] = helper.key_to_camel_case(p["name"])
             p["id"] = f"prop_{i}"
             p["possibleTypes"] = list(
                 set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"]))
             )
-            snake_case_name = helper.key_to_snake_case(p["name"])
             if snake_case_name in PREDEFINED_PROPERTIES:
                 p["_foundInPredefinedList"] = True
                 p["isConditional"] = PREDEFINED_PROPERTIES[snake_case_name][
@@ -323,13 +324,14 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
         properties = ch_client.execute(r)
         properties = helper.list_to_camel_case(properties)
         for i, p in enumerate(properties):
-            p["name"] = helper.key_to_camel_case(p["name"])
+            snake_case_name = helper.key_to_snake_case(p["name"])
+            if snake_case_name in PREDEFINED_PROPERTIES:
+                p["name"] = helper.key_to_camel_case(p["name"])
             p["id"] = f"prop_{i}"
             p["category"] = "events"
             p["_foundInPredefinedList"] = False
             p["isPredefined"] = False
             p["possibleValues"] = []
-            snake_case_name = helper.key_to_snake_case(p["name"])
             if snake_case_name in PREDEFINED_PROPERTIES:
                 p["dataType"] = exp_ch_helper.simplify_clickhouse_type(
                     PREDEFINED_PROPERTIES[snake_case_name]["type"]
@@ -397,7 +399,9 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
         total = properties[0]["total"]
         properties = helper.list_to_camel_case(properties)
         for i, p in enumerate(properties):
-            p["name"] = helper.key_to_camel_case(p["name"])
+            snake_case_name = helper.key_to_snake_case(p["name"])
+            if snake_case_name in PREDEFINED_PROPERTIES:
+                p["name"] = helper.key_to_camel_case(p["name"])
             p["id"] = f"prop_{i}"
             p.pop("total")
         return {"total": total, "list": properties}
