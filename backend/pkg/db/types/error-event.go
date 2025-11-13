@@ -42,20 +42,6 @@ func WrapJSException(m *JSException) *ErrorEvent {
 	}
 }
 
-func WrapIntegrationEvent(m *IntegrationEvent) *ErrorEvent {
-	return &ErrorEvent{
-		MessageID:  m.Meta().Index, // This will be always 0 here since it's coming from backend TODO: find another way to index
-		Timestamp:  m.Timestamp,
-		Source:     m.Source,
-		Name:       m.Name,
-		Message:    m.Message,
-		Payload:    m.Payload,
-		OriginType: m.TypeID(),
-		Url:        m.Url,
-		PageTitle:  m.PageTitle,
-	}
-}
-
 type stackFrame struct {
 	FileName string `json:"fileName"`
 	LineNo   int    `json:"lineNumber"`

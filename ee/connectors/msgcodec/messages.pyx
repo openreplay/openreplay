@@ -353,23 +353,6 @@ cdef class JSExceptionDeprecated(PyMessage):
         self.payload = payload
 
 
-cdef class IntegrationEvent(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long timestamp
-    cdef public str source
-    cdef public str name
-    cdef public str message
-    cdef public str payload
-
-    def __init__(self, unsigned long timestamp, str source, str name, str message, str payload):
-        self.__id__ = 26
-        self.timestamp = timestamp
-        self.source = source
-        self.name = name
-        self.message = message
-        self.payload = payload
-
-
 cdef class CustomEvent(PyMessage):
     cdef public int __id__
     cdef public str name

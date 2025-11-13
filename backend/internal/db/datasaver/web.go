@@ -59,8 +59,6 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 		return s.ch.InsertGraphQL(session, m)
 	case *messages.JSException:
 		return s.ch.InsertWebErrorEvent(session, types.WrapJSException(m))
-	case *messages.IntegrationEvent:
-		return s.ch.InsertWebErrorEvent(session, types.WrapIntegrationEvent(m))
 	case *messages.InputChange:
 		if err := s.ch.InsertWebInputDuration(session, m); err != nil {
 			return err

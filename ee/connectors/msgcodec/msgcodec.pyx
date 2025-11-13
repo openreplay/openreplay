@@ -375,15 +375,6 @@ cdef class MessageCodec:
                 payload=self.read_string(reader)
             )
 
-        if message_id == 26:
-            return IntegrationEvent(
-                timestamp=self.read_uint(reader),
-                source=self.read_string(reader),
-                name=self.read_string(reader),
-                message=self.read_string(reader),
-                payload=self.read_string(reader)
-            )
-
         if message_id == 27:
             return CustomEvent(
                 name=self.read_string(reader),

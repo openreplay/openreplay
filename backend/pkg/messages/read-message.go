@@ -405,27 +405,6 @@ func DecodeJSExceptionDeprecated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIntegrationEvent(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &IntegrationEvent{}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Source, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Name, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Message, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Payload, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeCustomEvent(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &CustomEvent{}
@@ -2281,8 +2260,6 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodePageRenderTiming(reader)
 	case 25:
 		return DecodeJSExceptionDeprecated(reader)
-	case 26:
-		return DecodeIntegrationEvent(reader)
 	case 27:
 		return DecodeCustomEvent(reader)
 	case 28:
