@@ -481,12 +481,11 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_simple
       ORDER BY (project_id, auto_captured, source, name, value, _timestamp)
       TTL _timestamp + INTERVAL 1 MONTH;
 
-
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_browser_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        TRUE           AS auto_captured,
-       'session'      AS origin,
+       'session'      AS source,
        'user_browser' AS name,
        user_browser   AS value,
        _timestamp
@@ -497,7 +496,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_use
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        TRUE                   AS auto_captured,
-       'session'              AS origin,
+       'session'              AS source,
        'user_country'         AS name,
        toString(user_country) AS value,
        _timestamp
@@ -508,7 +507,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_use
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        TRUE         AS auto_captured,
-       'session'    AS origin,
+       'session'    AS source,
        'user_state' AS name,
        user_state   AS value,
        _timestamp
@@ -519,7 +518,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_use
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        TRUE        AS auto_captured,
-       'session'   AS origin,
+       'session'   AS source,
        'user_city' AS name,
        user_city   AS value,
        _timestamp
@@ -530,7 +529,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_use
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        TRUE          AS auto_captured,
-       'session'     AS origin,
+       'session'     AS source,
        'user_device' AS name,
        user_device   AS value,
        _timestamp
@@ -541,7 +540,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_rev
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        TRUE      AS auto_captured,
-       'session' AS origin,
+       'session' AS source,
        'rev_id'  AS name,
        rev_id    AS value,
        _timestamp
@@ -552,7 +551,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_ref
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        TRUE       AS auto_captured,
-       'session'  AS origin,
+       'session'  AS source,
        'referrer' AS name,
        referrer   AS value,
        _timestamp
@@ -563,7 +562,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_utm
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        TRUE         AS auto_captured,
-       'session'    AS origin,
+       'session'    AS source,
        'utm_source' AS name,
        referrer     AS value,
        _timestamp
@@ -574,7 +573,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_utm
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        TRUE         AS auto_captured,
-       'session'    AS origin,
+       'session'    AS source,
        'utm_medium' AS name,
        referrer     AS value,
        _timestamp
@@ -585,7 +584,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_utm
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        TRUE           AS auto_captured,
-       'session'      AS origin,
+       'session'      AS source,
        'utm_campaign' AS name,
        referrer       AS value,
        _timestamp
@@ -596,7 +595,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_use
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE     AS auto_captured,
-       'session' AS origin,
+       'session' AS source,
        'user_id' AS name,
        user_id   AS value,
        _timestamp
@@ -607,7 +606,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_use
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE               AS auto_captured,
-       'session'           AS origin,
+       'session'           AS source,
        'user_anonymous_id' AS name,
        user_anonymous_id   AS value,
        _timestamp
@@ -618,7 +617,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_met
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE        AS auto_captured,
-       'session'    AS origin,
+       'session'    AS source,
        'metadata_1' AS name,
        metadata_1   AS value,
        _timestamp
@@ -629,7 +628,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_met
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE        AS auto_captured,
-       'session'    AS origin,
+       'session'    AS source,
        'metadata_2' AS name,
        metadata_2   AS value,
        _timestamp
@@ -640,7 +639,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_met
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE        AS auto_captured,
-       'session'    AS origin,
+       'session'    AS source,
        'metadata_3' AS name,
        metadata_3   AS value,
        _timestamp
@@ -651,7 +650,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_met
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE        AS auto_captured,
-       'session'    AS origin,
+       'session'    AS source,
        'metadata_4' AS name,
        metadata_4   AS value,
        _timestamp
@@ -662,7 +661,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_met
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE        AS auto_captured,
-       'session'    AS origin,
+       'session'    AS source,
        'metadata_5' AS name,
        metadata_5   AS value,
        _timestamp
@@ -673,7 +672,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_met
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE        AS auto_captured,
-       'session'    AS origin,
+       'session'    AS source,
        'metadata_6' AS name,
        metadata_6   AS value,
        _timestamp
@@ -684,7 +683,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_met
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE        AS auto_captured,
-       'session'    AS origin,
+       'session'    AS source,
        'metadata_7' AS name,
        metadata_7   AS value,
        _timestamp
@@ -695,7 +694,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_met
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE        AS auto_captured,
-       'session'    AS origin,
+       'session'    AS source,
        'metadata_8' AS name,
        metadata_8   AS value,
        _timestamp
@@ -706,7 +705,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_met
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE        AS auto_captured,
-       'session'    AS origin,
+       'session'    AS source,
        'metadata_9' AS name,
        metadata_9   AS value,
        _timestamp
@@ -717,7 +716,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_met
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE         AS auto_captured,
-       'session'     AS origin,
+       'session'     AS source,
        'metadata_10' AS name,
        metadata_10   AS value,
        _timestamp

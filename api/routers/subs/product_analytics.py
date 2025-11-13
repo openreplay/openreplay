@@ -84,8 +84,8 @@ def autocomplete_properties(projectId: int, propertyName: str, eventName: Option
     #     else:
     #         return {"data": sessions_autocomplete.search_autocomplete(text=q, event_type=propertyName,
     #                                                                   project_id=projectId)}
-    if autocomplete_simple.is_simple_property(origin='session', name=propertyName):
-        return {"data": autocomplete_simple.search_simple_property(project_id=projectId, name=propertyName, q=q)}
+    if autocomplete_simple.is_simple_property(source='session', name=propertyName):
+        return {"data": autocomplete_simple.search_simple_property(project_id=projectId, name=propertyName,source='session', q=q)}
     return {"data": autocomplete.search_properties(project_id=projectId,
                                                    event_name=None if not eventName \
                                                                       or len(eventName) == 0 else eventName,
