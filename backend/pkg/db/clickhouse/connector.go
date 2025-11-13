@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"log"
+	"openreplay/backend/pkg/db/types"
 	"reflect"
 	"strings"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/google/uuid"
 
 	"openreplay/backend/internal/http/geoip"
-	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/issues"
 	"openreplay/backend/pkg/messages"
@@ -29,7 +29,7 @@ type Connector interface {
 	InsertWebSession(session *sessions.Session) error
 	InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error
 	InsertWebClickEvent(session *sessions.Session, msg *messages.MouseClick) error
-	InsertWebErrorEvent(session *sessions.Session, msg *types.ErrorEvent) error
+	InsertWebJSException(session *sessions.Session, msg *messages.JSException) error
 	InsertWebPerformanceTrackAggr(session *sessions.Session, msg *messages.PerformanceTrackAggr) error
 	InsertAutocomplete(session *sessions.Session, msgType, msgValue string) error
 	InsertRequest(session *sessions.Session, msg *messages.NetworkRequest, savePayload bool) error
@@ -653,16 +653,11 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 	return c.InsertAutocomplete(session, "CLICK", msg.Label)
 }
 
-func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *types.ErrorEvent) error {
-	// Check error source before insert to avoid panic from clickhouse lib
-	switch msg.Source {
-	case "js_exception", "bugsnag", "cloudwatch", "datadog", "elasticsearch", "newrelic", "rollbar", "sentry", "stackdriver", "sumologic":
-	default:
-		return fmt.Errorf("unknown error source: %s", msg.Source)
-	}
-	msgID, _ := msg.ID(session.ProjectID)
+func (c *connectorImpl) InsertWebJSException(session *sessions.Session, msg *messages.JSException) error {
+	msgSource := "js_exception"
+	msgID, _ := types.GenerateID(msg, session.ProjectID)
 	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
-		"source":           msg.Source,
+		"source":           msgSource,
 		"name":             nullableString(msg.Name),
 		"message":          msg.Message,
 		"payload":          msg.Payload,
@@ -677,7 +672,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 	if err := c.batches["errors"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.GetUUID(session.SessionID),
+		types.GenerateUUID(msg, session.SessionID),
 		"ERROR",
 		eventTime,
 		eventTime.Unix(),
@@ -698,7 +693,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 		c.checkError("errors", err)
 		return fmt.Errorf("can't append to errors batch: %s", err)
 	}
-	return nil
+	return c.issues.Add(session.SessionID, msgSource)
 }
 
 func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session, msg *messages.PerformanceTrackAggr) error {

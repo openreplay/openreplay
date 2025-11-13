@@ -1,7 +1,6 @@
 package datasaver
 
 import (
-	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/sessions"
 )
@@ -58,7 +57,7 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 	case *messages.GraphQL:
 		return s.ch.InsertGraphQL(session, m)
 	case *messages.JSException:
-		return s.ch.InsertWebErrorEvent(session, types.WrapJSException(m))
+		return s.ch.InsertWebJSException(session, m)
 	case *messages.InputChange:
 		if err := s.ch.InsertWebInputDuration(session, m); err != nil {
 			return err
