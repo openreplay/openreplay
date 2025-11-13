@@ -18,6 +18,7 @@ type Storage interface {
 	InsertUserAnonymousID(sessionID uint64, userAnonymousID string) error
 	InsertReferrer(sessionID uint64, referrer, baseReferrer string) error
 	InsertMetadata(sessionID uint64, keyNo uint, value string) error
+	InsertIssueTypes(sessionID uint64, issueTypes []string) error
 	IsExist(projectID int, sessionID uint64) (bool, error)
 }
 
@@ -183,6 +184,18 @@ func (s *storageImpl) InsertMetadata(sessionID uint64, keyNo uint, value string)
 		SET metadata_%v = LEFT($1, 8000)
 		WHERE session_id = $2`
 	return s.db.Exec(fmt.Sprintf(sqlRequest, keyNo), value, sessionID)
+}
+
+func (s *storageImpl) InsertIssueTypes(sessionID uint64, issueTypes []string) error {
+	if len(issueTypes) == 0 {
+		return nil
+	}
+	sqlRequest := `
+			UPDATE sessions
+			SET issue_types = $2::issue_type[]
+			WHERE session_id = $1
+		`
+	return s.db.Exec(sqlRequest, sessionID, issueTypes)
 }
 
 func (s *storageImpl) IsExist(projectID int, sessionID uint64) (bool, error) {

@@ -1,6 +1,7 @@
 package datasaver
 
 import (
+	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/sessions"
 )
@@ -17,7 +18,10 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 		if (m.Type == "dead_click" || m.Type == "click_rage") && s.tags.ShouldIgnoreTag(session.ProjectID, m.Context) {
 			return nil
 		}
-		return s.ch.InsertIssue(session, m)
+		if err := s.ch.InsertIssue(session, m); err != nil {
+			return err
+		}
+		return s.issues.Add(session.SessionID, m.Type)
 	case *messages.CustomIssue:
 		ie := &messages.IssueEvent{
 			Type:          "custom",
@@ -27,7 +31,10 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 			Payload:       m.Payload,
 		}
 		ie.SetMeta(m.Meta())
-		return s.ch.InsertIssue(session, ie)
+		if err := s.ch.InsertIssue(session, ie); err != nil {
+			return err
+		}
+		return s.issues.Add(session.SessionID, ie.Type)
 	case *messages.UserID:
 		if err := s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
 			return err
@@ -57,20 +64,29 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 	case *messages.GraphQL:
 		return s.ch.InsertGraphQL(session, m)
 	case *messages.JSException:
-		return s.ch.InsertWebJSException(session, m)
+		if err := s.ch.InsertWebJSException(session, m); err != nil {
+			return err
+		}
+		return s.issues.Add(session.SessionID, types.JsExceptionType)
 	case *messages.InputChange:
 		if err := s.ch.InsertWebInputDuration(session, m); err != nil {
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *messages.MouseThrashing:
-		return s.ch.InsertMouseThrashing(session, m)
+		if err := s.ch.InsertMouseThrashing(session, m); err != nil {
+			return err
+		}
+		return s.issues.Add(session.SessionID, "mouse_thrashing")
 	case *messages.TagTrigger:
 		return s.ch.InsertTagTrigger(session, m)
 	case *messages.PerformanceTrackAggr:
 		return s.ch.InsertWebPerformanceTrackAggr(session, m)
 	case *messages.Incident:
-		return s.ch.InsertIncident(session, m)
+		if err := s.ch.InsertIncident(session, m); err != nil {
+			return err
+		}
+		return s.issues.Add(session.SessionID, types.IncidentType)
 	case *messages.CanvasNode:
 		return s.canvases.Add(session.SessionID, m.NodeId, m.Timestamp)
 	}

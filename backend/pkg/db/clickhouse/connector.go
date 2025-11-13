@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"log"
-	"openreplay/backend/pkg/db/types"
 	"reflect"
 	"strings"
 
@@ -16,8 +15,8 @@ import (
 	"github.com/google/uuid"
 
 	"openreplay/backend/internal/http/geoip"
+	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
-	"openreplay/backend/pkg/issues"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/sessions"
@@ -62,7 +61,6 @@ func NewTask() *task {
 
 type connectorImpl struct {
 	conn       driver.Conn
-	issues     issues.Issues
 	metrics    database.Database
 	batches    map[string]Bulk //driver.Batch
 	workerTask chan *task
@@ -70,12 +68,10 @@ type connectorImpl struct {
 	finished   chan struct{}
 }
 
-func NewConnector(conn driver.Conn, issues issues.Issues, metrics database.Database) (Connector, error) {
+func NewConnector(conn driver.Conn, metrics database.Database) (Connector, error) {
 	switch {
 	case conn == nil:
 		return nil, errors.New("CH connection is required")
-	case issues == nil:
-		return nil, errors.New("issues is required")
 	case metrics == nil:
 		return nil, errors.New("metrics is required")
 	}
@@ -83,7 +79,6 @@ func NewConnector(conn driver.Conn, issues issues.Issues, metrics database.Datab
 	c := &connectorImpl{
 		conn:       conn,
 		metrics:    metrics,
-		issues:     issues,
 		batches:    make(map[string]Bulk, 21),
 		workerTask: make(chan *task, 1),
 		done:       make(chan struct{}),
@@ -204,11 +199,6 @@ func (c *connectorImpl) InsertWebSession(session *sessions.Session) (err error) 
 	if session.Duration == nil {
 		return errors.New("trying to insert session with nil duration")
 	}
-	session.IssueTypes, err = c.issues.Get(session.SessionID)
-	if err != nil {
-		log.Printf("can't get issue types: %s", err)
-	}
-	// To keep the same format and use less mem in DB
 	if session.UserID != nil && *session.UserID == "" {
 		session.UserID = nil
 	}
@@ -415,7 +405,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		c.checkError("issues", err)
 		return fmt.Errorf("can't append to issues batch: %s", err)
 	}
-	return c.issues.Add(session.SessionID, "mouse_thrashing")
+	return nil
 }
 
 func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.IssueEvent) error {
@@ -479,7 +469,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		c.checkError("issues", err)
 		return fmt.Errorf("can't append to issues batch: %s", err)
 	}
-	return c.issues.Add(session.SessionID, msg.Type)
+	return nil
 }
 
 func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error {
@@ -649,10 +639,9 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 }
 
 func (c *connectorImpl) InsertWebJSException(session *sessions.Session, msg *messages.JSException) error {
-	msgSource := "js_exception"
 	msgID, _ := types.GenerateID(msg, session.ProjectID)
 	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
-		"source":           msgSource,
+		"source":           types.JsExceptionType,
 		"name":             nullableString(msg.Name),
 		"message":          msg.Message,
 		"payload":          msg.Payload,
@@ -688,7 +677,7 @@ func (c *connectorImpl) InsertWebJSException(session *sessions.Session, msg *mes
 		c.checkError("errors", err)
 		return fmt.Errorf("can't append to errors batch: %s", err)
 	}
-	return c.issues.Add(session.SessionID, msgSource)
+	return nil
 }
 
 func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session, msg *messages.PerformanceTrackAggr) error {
@@ -894,7 +883,7 @@ func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.G
 
 func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.Incident) error {
 	fakeMsg := &messages.IssueEvent{
-		Type: "incident",
+		Type: types.IncidentType,
 	}
 	issueID := hashid.IssueID(session.ProjectID, fakeMsg)
 	host, path, hostpath, err := extractUrlParts(msg.Url)
@@ -952,7 +941,7 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		c.checkError("issues", err)
 		return fmt.Errorf("can't append to issues batch: %s", err)
 	}
-	return c.issues.Add(session.SessionID, fakeMsg.Type)
+	return nil
 }
 
 func (c *connectorImpl) InsertTagTrigger(session *sessions.Session, msg *messages.TagTrigger) error {

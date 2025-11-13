@@ -9,6 +9,7 @@ import (
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/types"
+	"openreplay/backend/pkg/issues"
 	"openreplay/backend/pkg/logger"
 	. "openreplay/backend/pkg/messages"
 	queue "openreplay/backend/pkg/queue/types"
@@ -26,13 +27,14 @@ type saverImpl struct {
 	log      logger.Logger
 	cfg      *db.Config
 	sessions sessions.Sessions
+	issues   issues.Issues
 	ch       clickhouse.Connector
 	producer queue.Producer
 	tags     tags.Tags
 	canvases canvas.Canvases
 }
 
-func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session sessions.Sessions, tags tags.Tags, canvases canvas.Canvases) Saver {
+func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session sessions.Sessions, issues issues.Issues, tags tags.Tags, canvases canvas.Canvases) Saver {
 	if ch == nil {
 		log.Fatal(context.Background(), "ch pool is empty")
 	}
@@ -41,6 +43,7 @@ func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session ses
 		cfg:      cfg,
 		ch:       ch,
 		sessions: session,
+		issues:   issues,
 		tags:     tags,
 		canvases: canvases,
 	}
@@ -53,7 +56,11 @@ func (s *saverImpl) Handle(msg Message) {
 		err     error
 	)
 	if msg.TypeID() == MsgSessionEnd || msg.TypeID() == MsgMobileSessionEnd {
-		session, err = s.sessions.GetUpdated(msg.SessionID(), true)
+		issueTypes, err := s.issues.Get(msg.SessionID())
+		if err != nil {
+			s.log.Warn(sessCtx, "issue types get error", err)
+		}
+		session, err = s.sessions.GetWithUpdatedIssueTypes(msg.SessionID(), issueTypes)
 	} else {
 		session, err = s.sessions.Get(msg.SessionID())
 	}

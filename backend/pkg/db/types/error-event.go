@@ -13,6 +13,11 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
+const (
+	JsExceptionType = "js_exception"
+	IncidentType    = "incident"
+)
+
 type stackFrame struct {
 	FileName string `json:"fileName"`
 	LineNo   int    `json:"lineNumber"`
