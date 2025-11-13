@@ -26,23 +26,14 @@ export interface IError {
 
 export default class Error {
   sessionId: IError['sessionId'];
-
   messageId: IError['messageId'];
-
   timestamp: IError['timestamp'];
-
   errorId: IError['errorId'];
-
   projectId: IError['projectId'];
-
   source: IError['source'];
-
   name: IError['name'];
-
   message: IError['message'];
-
   time: IError['time'];
-
   function: IError['function'];
 
   constructor({ stack, ...rest }: IError) {

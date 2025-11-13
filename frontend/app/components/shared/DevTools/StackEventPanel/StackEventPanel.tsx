@@ -54,7 +54,7 @@ const WebStackEventPanelComp = observer(() => {
   const getTabNum = (tab: string) => tabsArr.findIndex((t) => t === tab) + 1;
 
   const { stackList: list = [], stackListNow: listNow = [] } =
-    tabStates[currentTab];
+    tabStates[currentTab] ?? {};
 
   const eventsList: EventsList = React.useMemo(() => {
     const evList: EventsList = [];

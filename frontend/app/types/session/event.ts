@@ -287,7 +287,6 @@ export class Location extends Event {
 
 export class Incident extends Event {
   readonly name = 'Incident';
-
   readonly type = CUSTOM;
 
   constructor(evt: IncidentEvent) {

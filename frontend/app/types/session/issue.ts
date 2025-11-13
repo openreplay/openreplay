@@ -82,7 +82,7 @@ export const issues_types = [
     name: 'Incidents',
     icon: 'funnel/message-circle-warning',
     // isEvent: false,
-  }
+  },
   // { 'type': 'memory', 'visible': true, 'order': 4, 'name': 'High Memory', 'icon': 'funnel/sd-card' },
   // { 'type': 'vault', 'visible': true, 'order': 5, 'name': 'Vault', 'icon': 'safe' },
   // { 'type': 'bookmark', 'visible': true, 'order': 5, 'name': 'Bookmarks', 'icon': 'safe' },

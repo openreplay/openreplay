@@ -461,8 +461,23 @@ export default class Session {
   ) {
     const exceptions =
       (errors as IError[])?.map((e) => new SessionError(e)) || [];
+    // rendered in xray in separate list
+    // const exceptionIssues = exceptions.map((e) => ({
+    //   contextString: e.name,
+    //   createdAt: new Date(e.timestamp).toISOString(),
+    //   issueId: Date.now() + Math.random(),
+    //   issueType: 'js_exception',
+    //   timestamp: e.timestamp,
+    // }));
+    const incidentIssues = incidents.map((i: any) => ({
+      contextString: i.label,
+      issueType: 'incident',
+      createdAt: new Date(i.startTime).toISOString(),
+      issueId: Date.now() + Math.random(),
+      timestamp: i.timestamp,
+    }));
     const issuesList =
-      (issues as IIssue[]).map(
+      ([...incidentIssues, ...issues] as IIssue[]).map(
         (i, k) =>
           new Issue({ ...i, time: i.timestamp - this.startedAt, key: k }),
       ) || [];
@@ -535,7 +550,6 @@ export default class Session {
     // @ts-ignore
     this.mixedEventsWithIssues = mixedEventsWithIssues.sort(sortEvents);
     this.errors = exceptions;
-    this.issues = issuesList;
     this.stackEvents = stackEventsList;
     // @ts-ignore
     this.frustrations = frustrationList;

@@ -20,9 +20,7 @@ function Timeline({ range }: any) {
   const tooltipVisible = sessionStore.timeLineTooltip.isVisible;
   const setTimelineHoverTime = sessionStore.setTimelineTooltip;
   const { timezone } = sessionStore.current;
-  const issues = sessionStore.current.issues ?? [];
-  const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } =
-    store.get();
+  const { playing, ready, endTime, devtoolsLoading, domLoading } = store.get();
 
   const progressRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -32,11 +30,6 @@ function Timeline({ range }: any) {
   const scale = 100 / trimmedEndTime;
 
   useEffect(() => {
-    const firstIssue = issues[0];
-
-    if (firstIssue && skipToIssue) {
-      player.jump(firstIssue.time);
-    }
     if (progressRef.current) {
       setMaxWidth(progressRef.current.clientWidth);
     }

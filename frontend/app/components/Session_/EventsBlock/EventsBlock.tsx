@@ -85,12 +85,12 @@ function EventsBlock(props: IProps) {
         }
       });
     }
+
     const eventsWithMobxNotes = [
       ...incidents,
       ...(mixedEventsWithIssues ?? []),
       ...notes,
     ].sort(sortEvents);
-    console.log(notes.length, eventsWithMobxNotes.length);
 
     return mergeEventLists(
       filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,

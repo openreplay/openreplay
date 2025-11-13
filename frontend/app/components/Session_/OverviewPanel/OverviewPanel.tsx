@@ -12,7 +12,7 @@ import { useStore } from 'App/mstore';
 import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
 import SummaryButton from 'Components/Session_/Player/Controls/SummaryButton';
 import TimelineZoomButton from 'Components/Session_/Player/Controls/components/TimelineZoomButton';
-import { Icon, NoContent } from 'UI';
+import { NoContent } from 'UI';
 import TabSelector from '../../shared/DevTools/TabSelector';
 
 import BottomBlock from '../BottomBlock';
@@ -31,7 +31,6 @@ import { useTranslation } from 'react-i18next';
 function MobileOverviewPanelCont() {
   const { aiSummaryStore, uiPlayerStore, sessionStore } = useStore();
   const { sessionId } = sessionStore.current;
-  const issuesList = sessionStore.current.issues;
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
@@ -81,19 +80,12 @@ function MobileOverviewPanelCont() {
     if (
       exceptionsList.length > 0 ||
       eventsList.length > 0 ||
-      issuesList.length > 0 ||
       performanceChartData.length > 0 ||
       frustrationsList.length > 0
     ) {
       setDataLoaded(true);
     }
-  }, [
-    issuesList,
-    exceptionsList,
-    eventsList,
-    performanceChartData,
-    frustrationsList,
-  ]);
+  }, [exceptionsList, eventsList, performanceChartData, frustrationsList]);
 
   React.useEffect(() => {
     player.scale();
@@ -138,7 +130,7 @@ function WebOverviewPanelCont() {
 
   const { endTime, currentTab, tabStates } = store.get();
 
-  const tabValues = Object.values(tabStates) ?? []
+  const tabValues = Object.values(tabStates) ?? [];
   const { dataSource } = uiPlayerStore;
   const showSingleTab = dataSource === 'current';
 

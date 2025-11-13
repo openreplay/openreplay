@@ -11,9 +11,9 @@ import TimelineTracker from 'Components/Session_/Player/Controls/TimelineTracker
 import {
   ZoomDragLayer,
   HighlightDragLayer,
-  ExportEventsSelection
-} from "Components/Session_/Player/Controls/components/ZoomDragLayer";
-import stl from './timeline.module.css'
+  ExportEventsSelection,
+} from 'Components/Session_/Player/Controls/components/ZoomDragLayer';
+import stl from './timeline.module.css';
 import TooltipContainer from './components/TooltipContainer';
 import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
 import { signalService } from 'App/services';
@@ -27,12 +27,10 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
   const tooltipVisible = sessionStore.timeLineTooltip.isVisible;
   const setTimelineHoverTime = sessionStore.setTimelineTooltip;
   const { timezone } = sessionStore.current;
-  const issues = sessionStore.current.issues ?? [];
   const timelineZoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const exportEventsEnabled = uiPlayerStore.exportEventsSelection.enabled;
   const highlightEnabled = uiPlayerStore.highlightSelection.enabled;
-  const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } =
-    store.get();
+  const { playing, ready, endTime, devtoolsLoading, domLoading } = store.get();
   const sessionId = sessionStore.current.sessionId;
 
   const progressRef = useRef<HTMLDivElement>(null);
@@ -41,11 +39,6 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
   const scale = 100 / endTime;
 
   useEffect(() => {
-    const firstIssue = issues[0];
-
-    if (firstIssue && skipToIssue) {
-      player.jump(firstIssue.time);
-    }
     if (progressRef.current) {
       setMaxWidth(progressRef.current.clientWidth);
     }
@@ -69,10 +62,13 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
     const time = Math.max(Math.round(p * endTime), 0);
     debouncedJump(time);
     hideTimeTooltip();
-    signalService.send({
-      source: 'jump',
-      value: time,
-    }, sessionId)
+    signalService.send(
+      {
+        source: 'jump',
+        value: time,
+      },
+      sessionId,
+    );
     if (playing) {
       setWasPlaying(true);
       player.pause();
