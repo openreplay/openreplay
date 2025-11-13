@@ -50,6 +50,7 @@ func (i *issuesImpl) Add(sessionID uint64, issueType string) error {
 	if issueType == "" {
 		return errors.New("issueType is empty")
 	}
+	i.log.Info(context.Background(), "issues: adding issue to store, sessID: %d, issueType: %s", sessionID, issueType)
 	return i.store.Add(sessionID, issueType)
 }
 
