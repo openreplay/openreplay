@@ -208,11 +208,6 @@ func (c *connectorImpl) InsertWebSession(session *sessions.Session) (err error) 
 	if err != nil {
 		log.Printf("can't get issue types: %s", err)
 	}
-	if session.ErrorsCount > 0 {
-		session.IssueTypes = append(session.IssueTypes, "js_exception")
-	}
-	// TODO: remove debug log
-	log.Printf("sessID: %d, issue types: %s", session.SessionID, strings.Join(session.IssueTypes, ","))
 	// To keep the same format and use less mem in DB
 	if session.UserID != nil && *session.UserID == "" {
 		session.UserID = nil
