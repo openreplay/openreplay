@@ -223,7 +223,7 @@ def get_users_filters(project_id: int):
                 "displayName": "User ID",
                 "possibleTypes": ["string"],
                 "dataType": "string",
-                "autoCaptured": False,
+                "autoCaptured": True,
                 "isPredefined": False,
                 "possibleValues": [],
                 "isConditional": True
@@ -234,7 +234,7 @@ def get_users_filters(project_id: int):
                 "displayName": "User Anonymous ID",
                 "possibleTypes": ["string"],
                 "dataType": "string",
-                "autoCaptured": False,
+                "autoCaptured": True,
                 "isPredefined": False,
                 "possibleValues": [],
                 "isConditional": True
