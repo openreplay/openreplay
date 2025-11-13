@@ -14,7 +14,6 @@ import (
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
-	"openreplay/backend/pkg/intervals"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
