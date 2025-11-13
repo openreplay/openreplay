@@ -16,7 +16,6 @@ const GroupClickRage bool = true
 
 type errorEvent struct {
 	ErrorID   string    `ch:"error_id" json:"errorId"`
-	ProjectID uint16    `ch:"project_id" json:"projectId"`
 	Source    string    `ch:"source" json:"source"`
 	Name      string    `ch:"name" json:"name"`
 	Message   string    `ch:"message" json:"message"`
@@ -263,8 +262,7 @@ func (e *eventsImpl) groupClicksToClickRage(projID uint32, sessID uint64, sessEv
 
 func (e *eventsImpl) GetErrorsBySessionID(sessID uint64) []errorEvent {
 	query := `SELECT error_id,
-					project_id,
-					` + "`$properties`" + `.source AS source,
+					'js_exception' AS source,
 					'ERROR' AS name,
 					` + "`$properties`" + `.message AS message,
 					created_at
@@ -300,7 +298,6 @@ func (e *eventsImpl) GetCustomsBySessionID(sessID uint64) []interface{} {
 			  FROM product_analytics.events
 			  WHERE session_id = ?
 				AND NOT ` + "`$auto_captured`" + `
-				AND ` + "`$event_name`" + `!='INCIDENT'
 			  ORDER BY created_at;`
 	customEvents := make([]customEvent, 0)
 	res := make([]interface{}, 0, len(customEvents))
@@ -381,7 +378,7 @@ func (e *eventsImpl) GetIssuesBySessionID(projID uint32, sessID uint64) []interf
 				WHERE session_id = ?
 					AND events.project_id = ?
 					AND issues.project_id = ?
-					AND ` + "`$event_name`" + ` = 'ISSUE'
+					AND ` + "`$event_name`" + ` = 'ISSUE' AND issue_type != 'incident'
 				ORDER BY created_at;`
 	issues := make([]issueEvent, 0)
 	if err := e.chConn.Select(context.Background(), &issues, query, sessID, projID, projID); err != nil {
@@ -483,11 +480,9 @@ func (e *eventsImpl) GetIncidentsBySessionID(sessID uint64) []interface{} {
 	query := `SELECT created_at,
 			` + "`$properties`.end_time" + ` AS end_time,
 			` + "`$properties`.label" + ` AS label,
-			` + "`$properties`.start_time" + ` AS start_time,
-			` + "`$event_name`" + ` AS type
+			` + "`$properties`.start_time" + ` AS start_time
 			FROM product_analytics.events
-			WHERE session_id = ?
-				AND ` + "`$event_name`" + ` = 'INCIDENT'
+			WHERE session_id = ? AND issue_type = 'incident'
 				AND ` + "`$auto_captured`" + `
 			ORDER BY created_at;`
 	incidents := make([]incidentEvent, 0)
@@ -565,7 +560,6 @@ func (e *eventsImpl) GetMobileCustomsBySessionID(sessID uint64) []interface{} {
 			  FROM product_analytics.events
 			  WHERE session_id = ?
 				AND NOT ` + "`$auto_captured`" + `
-				AND ` + "`$event_name`" + ` != 'INCIDENT'
 			  ORDER BY created_at;`
 	sessEvents := make([]mobileEvent, 0)
 	res := make([]interface{}, 0, len(sessEvents))

@@ -13,48 +13,10 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-const SOURCE_JS = "js_exception"
-
-type ErrorEvent struct {
-	MessageID  uint64
-	Timestamp  uint64
-	Source     string
-	Name       string
-	Message    string
-	Payload    string
-	Tags       map[string]*string
-	OriginType int
-	Url        string
-	PageTitle  string
-}
-
-func WrapJSException(m *JSException) *ErrorEvent {
-	return &ErrorEvent{
-		MessageID:  m.Meta().Index,
-		Timestamp:  m.Meta().Timestamp,
-		Source:     SOURCE_JS,
-		Name:       m.Name,
-		Message:    m.Message,
-		Payload:    m.Payload,
-		OriginType: m.TypeID(),
-		Url:        m.Url,
-		PageTitle:  m.PageTitle,
-	}
-}
-
-func WrapIntegrationEvent(m *IntegrationEvent) *ErrorEvent {
-	return &ErrorEvent{
-		MessageID:  m.Meta().Index, // This will be always 0 here since it's coming from backend TODO: find another way to index
-		Timestamp:  m.Timestamp,
-		Source:     m.Source,
-		Name:       m.Name,
-		Message:    m.Message,
-		Payload:    m.Payload,
-		OriginType: m.TypeID(),
-		Url:        m.Url,
-		PageTitle:  m.PageTitle,
-	}
-}
+const (
+	JsExceptionType = "js_exception"
+	IncidentType    = "incident"
+)
 
 type stackFrame struct {
 	FileName string `json:"fileName"`
@@ -73,24 +35,35 @@ func parseFirstFrame(payload string) (*stackFrame, error) {
 	return frames[0], nil
 }
 
-func (e *ErrorEvent) ID(projectID uint32) (string, error) {
+func GenerateID(e *JSException, projectID uint32) (string, error) {
 	var idErr error
 	hash := fnv.New128a()
-	hash.Write([]byte(e.Source))
+	hash.Write([]byte("js_exception"))
 	hash.Write([]byte(e.Name))
 	hash.Write([]byte(e.Message))
-	if e.Source == SOURCE_JS {
-		frame, err := parseFirstFrame(e.Payload)
-		if err != nil {
-			idErr = fmt.Errorf("can't parse stackframe ((( %v ))): %v", e.Payload, err)
-		}
-		if frame != nil {
-			hash.Write([]byte(frame.FileName))
-			hash.Write([]byte(strconv.Itoa(frame.LineNo)))
-			hash.Write([]byte(strconv.Itoa(frame.ColNo)))
-		}
+	frame, err := parseFirstFrame(e.Payload)
+	if err != nil {
+		idErr = fmt.Errorf("can't parse stackframe ((( %v ))): %v", e.Payload, err)
+	}
+	if frame != nil {
+		hash.Write([]byte(frame.FileName))
+		hash.Write([]byte(strconv.Itoa(frame.LineNo)))
+		hash.Write([]byte(strconv.Itoa(frame.ColNo)))
 	}
 	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil)), idErr
+}
+
+func GenerateUUID(e *JSException, sessID uint64) string {
+	hash := fnv.New128a()
+	hash.Write(Uint64ToBytes(sessID))
+	hash.Write(Uint64ToBytes(e.Meta().Index))
+	hash.Write(Uint64ToBytes(uint64(e.TypeID())))
+	uuidObj, err := uuid.FromBytes(hash.Sum(nil))
+	if err != nil {
+		fmt.Printf("can't create uuid from bytes: %s", err)
+		uuidObj = uuid.New()
+	}
+	return uuidObj.String()
 }
 
 func WrapCustomEvent(m *CustomEvent) *IssueEvent {
@@ -103,19 +76,6 @@ func WrapCustomEvent(m *CustomEvent) *IssueEvent {
 	}
 	msg.Meta().SetMeta(m.Meta())
 	return msg
-}
-
-func (e *ErrorEvent) GetUUID(sessID uint64) string {
-	hash := fnv.New128a()
-	hash.Write(Uint64ToBytes(sessID))
-	hash.Write(Uint64ToBytes(e.MessageID))
-	hash.Write(Uint64ToBytes(uint64(e.OriginType)))
-	uuidObj, err := uuid.FromBytes(hash.Sum(nil))
-	if err != nil {
-		fmt.Printf("can't create uuid from bytes: %s", err)
-		uuidObj = uuid.New()
-	}
-	return uuidObj.String()
 }
 
 func Uint64ToBytes(num uint64) []byte {

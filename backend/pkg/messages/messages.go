@@ -27,7 +27,6 @@ const (
 	MsgPageLoadTiming                     = 23
 	MsgPageRenderTiming                   = 24
 	MsgJSExceptionDeprecated              = 25
-	MsgIntegrationEvent                   = 26
 	MsgCustomEvent                        = 27
 	MsgUserID                             = 28
 	MsgUserAnonymousID                    = 29
@@ -767,35 +766,6 @@ func (msg *JSExceptionDeprecated) Decode() Message {
 
 func (msg *JSExceptionDeprecated) TypeID() int {
 	return 25
-}
-
-type IntegrationEvent struct {
-	message
-	Timestamp uint64
-	Source    string
-	Name      string
-	Message   string
-	Payload   string
-}
-
-func (msg *IntegrationEvent) Encode() []byte {
-	buf := make([]byte, 51+len(msg.Source)+len(msg.Name)+len(msg.Message)+len(msg.Payload))
-	buf[0] = 26
-	p := 1
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteString(msg.Source, buf, p)
-	p = WriteString(msg.Name, buf, p)
-	p = WriteString(msg.Message, buf, p)
-	p = WriteString(msg.Payload, buf, p)
-	return buf[:p]
-}
-
-func (msg *IntegrationEvent) Decode() Message {
-	return msg
-}
-
-func (msg *IntegrationEvent) TypeID() int {
-	return 26
 }
 
 type CustomEvent struct {

@@ -140,13 +140,6 @@ message 25, 'JSExceptionDeprecated', :replayer => false, :tracker => false do
   string 'Message'
   string 'Payload'
 end
-message 26, 'IntegrationEvent', :tracker => false, :replayer => false do
-  uint 'Timestamp'
-  string 'Source'
-  string 'Name'
-  string 'Message'
-  string 'Payload'
-end
 message 27, 'CustomEvent', :replayer => false do
   string 'Name'
   string 'Payload'

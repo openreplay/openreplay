@@ -129,7 +129,6 @@ type sessionUpdate struct {
 	pages        int
 	events       int
 	errors       int
-	issues       int
 	utmSource    *string
 	utmMedium    *string
 	utmCampaign  *string
@@ -141,7 +140,6 @@ func NewSessionUpdate(sessionID uint64) *sessionUpdate {
 		pages:     0,
 		events:    0,
 		errors:    0,
-		issues:    0,
 		metadata:  make(map[uint]string),
 	}
 }
@@ -180,9 +178,8 @@ func (su *sessionUpdate) addEvents(events, pages int) {
 	su.pages += pages
 }
 
-func (su *sessionUpdate) addIssues(errors, issues int) {
+func (su *sessionUpdate) addErrors(errors int) {
 	su.errors += errors
-	su.issues += issues
 }
 
 func (su *sessionUpdate) request() (string, []interface{}) {

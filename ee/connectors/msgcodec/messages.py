@@ -240,17 +240,6 @@ class JSExceptionDeprecated(Message):
         self.payload = payload
 
 
-class IntegrationEvent(Message):
-    __id__ = 26
-
-    def __init__(self, timestamp, source, name, message, payload):
-        self.timestamp = timestamp
-        self.source = source
-        self.name = name
-        self.message = message
-        self.payload = payload
-
-
 class CustomEvent(Message):
     __id__ = 27
 

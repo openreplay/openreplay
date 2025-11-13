@@ -54,7 +54,8 @@ func (i *issuesImpl) Add(sessionID uint64, issueType string) error {
 }
 
 func (i *issuesImpl) Get(sessionID uint64) ([]string, error) {
-	return i.store.Get(sessionID)
+	res, err := i.store.Get(sessionID)
+	return res, err
 }
 
 type redisStore struct {

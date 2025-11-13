@@ -3,11 +3,11 @@ package sessions
 import (
 	"context"
 	"fmt"
-	"openreplay/backend/pkg/metrics/database"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/url"
 )
@@ -16,9 +16,10 @@ type Sessions interface {
 	Add(session *Session) error
 	AddCached(sessionID uint64, data map[string]string) error
 	Get(sessionID uint64) (*Session, error)
-	GetUpdated(sessionID uint64, keepInCache bool) (*Session, error)
+	GetWithUpdatedIssueTypes(sessionID uint64, issueTypes []string) (*Session, error)
 	GetCached(sessionID uint64) (map[string]string, error)
 	GetDuration(sessionID uint64) (uint64, error)
+	GetManySessions(sessionIDs []uint64) (map[uint64]*Session, error)
 	UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error)
 	UpdateEncryptionKey(sessionID uint64, key []byte) error
 	UpdateUserID(sessionID uint64, userID string) error
@@ -103,14 +104,14 @@ func (s *sessionsImpl) Get(sessionID uint64) (*Session, error) {
 	return session, nil
 }
 
-// Special method for clickhouse connector
-func (s *sessionsImpl) GetUpdated(sessionID uint64, keepInCache bool) (*Session, error) {
+// GetWithUpdatedIssueTypes is a special method for a sessionEnd event handler
+func (s *sessionsImpl) GetWithUpdatedIssueTypes(sessionID uint64, issueTypes []string) (*Session, error) {
+	if err := s.storage.InsertIssueTypes(sessionID, issueTypes); err != nil {
+		s.log.Warn(context.Background(), "failed to insert issue types: %s", err)
+	}
 	session, err := s.getFromDB(sessionID)
 	if err != nil {
 		return nil, err
-	}
-	if !keepInCache {
-		return session, nil
 	}
 	if err := s.cache.Set(session); err != nil {
 		ctx := context.WithValue(context.Background(), "sessionID", sessionID)
