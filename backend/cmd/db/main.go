@@ -54,7 +54,7 @@ func main() {
 		log.Fatal(ctx, "can't init issues keeper: %s", err)
 	}
 
-	chConnector, err := clickhouse.NewConnector(chConn, issuesManager, dbMetric)
+	chConnector, err := clickhouse.NewConnector(chConn, dbMetric)
 	if err != nil {
 		log.Fatal(ctx, "can't prepare clickhouse connector: %s", err)
 	}
@@ -69,7 +69,7 @@ func main() {
 		log.Fatal(ctx, "can't init project service: %s", err)
 	}
 
-	saver := datasaver.New(log, cfg, chConnector, sessManager, tagsManager, canvases)
+	saver := datasaver.New(log, cfg, chConnector, sessManager, issuesManager, tagsManager, canvases)
 
 	msgFilter := []int{
 		// Web messages
