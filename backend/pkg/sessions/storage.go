@@ -11,6 +11,7 @@ import (
 type Storage interface {
 	Add(sess *Session) error
 	Get(sessionID uint64) (*Session, error)
+	GetMany(sessionIDs []uint64) ([]*Session, error)
 	GetDuration(sessionID uint64) (uint64, error)
 	UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error)
 	InsertEncryptionKey(sessionID uint64, key []byte) error

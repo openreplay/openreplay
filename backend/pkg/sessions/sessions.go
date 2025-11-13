@@ -19,6 +19,7 @@ type Sessions interface {
 	GetWithUpdatedIssueTypes(sessionID uint64, issueTypes []string) (*Session, error)
 	GetCached(sessionID uint64) (map[string]string, error)
 	GetDuration(sessionID uint64) (uint64, error)
+	GetManySessions(sessionIDs []uint64) (map[uint64]*Session, error)
 	UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error)
 	UpdateEncryptionKey(sessionID uint64, key []byte) error
 	UpdateUserID(sessionID uint64, userID string) error
