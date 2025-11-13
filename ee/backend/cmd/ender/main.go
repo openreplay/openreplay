@@ -9,7 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"openreplay/backend/internal/config/ender"
+	config "openreplay/backend/internal/config/ender"
+	"openreplay/backend/internal/ender"
 	"openreplay/backend/internal/sessionender"
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/db/postgres/pool"
@@ -29,7 +30,7 @@ import (
 func main() {
 	ctx := context.Background()
 	log := logger.New()
-	cfg := ender.New(log)
+	cfg := config.New(log)
 	// Observability
 	dbMetric := database.New("ender")
 	enderMetric := enderMetrics.New("ender")
@@ -50,7 +51,7 @@ func main() {
 	projManager := projects.New(log, pgConn, redisClient, dbMetric)
 	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric)
 
-	sessionEndGenerator, err := sessionender.New(enderMetric, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
+	sessionEndGenerator, err := sessionender.New(enderMetric, ender.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Fatal(ctx, "can't init ender service: %s", err)
 	}
@@ -96,13 +97,13 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	tick := time.Tick(intervals.EVENTS_COMMIT_INTERVAL * time.Millisecond)
+	tick := time.Tick(ender.EVENTS_COMMIT_INTERVAL * time.Millisecond)
 	for {
 		select {
 		case sig := <-sigchan:
 			log.Info(ctx, "Caught signal %v: terminating", sig)
 			producer.Close(cfg.ProducerTimeout)
-			if err := consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP); err != nil {
+			if err := consumer.CommitBack(ender.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Error(ctx, "can't commit messages with offset: %s", err)
 			}
 			consumer.Close()
@@ -215,7 +216,7 @@ func main() {
 			})
 			details.Log(log, ctx)
 			producer.Flush(cfg.ProducerTimeout)
-			if err := consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP); err != nil {
+			if err := consumer.CommitBack(ender.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Error(ctx, "can't commit messages with offset: %s", err)
 			}
 		default:
