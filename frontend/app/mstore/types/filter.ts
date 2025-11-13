@@ -1,4 +1,4 @@
-import { action, makeAutoObservable, observable, runInAction } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 import { filtersMap } from 'Types/filter/newFilter';
 import { FilterKey } from 'Types/filter/filterType';
 import FilterItem from './filterItem';
@@ -110,40 +110,7 @@ export default class FilterStore implements IFilterStore {
       this.createFilterItemFromData(filterData),
     );
 
-    makeAutoObservable(
-      this,
-      {
-        filters: observable.shallow,
-        excludes: observable.shallow,
-        eventsOrder: observable,
-        startTimestamp: observable,
-        endTimestamp: observable,
-        name: observable,
-        page: observable,
-        limit: observable,
-        autoOpen: observable,
-        filterId: observable,
-        eventsHeader: observable,
-        merge: action,
-        addFilter: action,
-        replaceFilters: action,
-        updateFilter: action,
-        removeFilter: action,
-        fromJson: action,
-        fromData: action,
-        addExcludeFilter: action,
-        updateExcludeFilter: action,
-        removeExcludeFilter: action,
-        addFunnelDefaultFilters: action,
-        addOrUpdateFilter: action,
-        addFilterByKeyAndValue: action,
-        isConditional: false,
-        isMobile: false,
-        eventsOrderSupport: false,
-        ID_KEY: false,
-      },
-      { autoBind: true },
-    );
+    makeAutoObservable(this);
   }
 
   merge(filterData: Partial<FilterStore>) {

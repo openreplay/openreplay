@@ -20,6 +20,7 @@ function SessionFilters() {
   const eventFiltersWithIndices = searchInstance.filters
     .map((filter, originalIndex) => ({ filter, originalIndex }))
     .filter(({ filter }) => filter.isEvent);
+
   const attributeFiltersWithIndices = searchInstance.filters
     .map((filter, originalIndex) => ({ filter, originalIndex }))
     .filter(({ filter }) => !filter.isEvent);

@@ -1,5 +1,4 @@
-import { FilterCategory, FilterKey } from 'Types/filter/filterType';
-import { makeAutoObservable, reaction } from 'mobx';
+import { makeAutoObservable, observe } from 'mobx';
 import { Operator } from '@/mstore/types/filterConstants';
 
 type JsonData = Record<string, any>;

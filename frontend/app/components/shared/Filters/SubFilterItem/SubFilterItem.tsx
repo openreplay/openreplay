@@ -1,6 +1,7 @@
 import React from 'react';
 import FilterOperator from '../FilterOperator';
 import FilterValue from '../FilterValue';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
   filterIndex: number;
@@ -11,8 +12,8 @@ interface Props {
   isLive?: boolean;
 }
 
-export default function SubFilterItem(props: Props) {
-  const { isFilter = false, filterIndex, filter } = props;
+function SubFilterItem(props: Props) {
+  const filter = props.filter;
   const canShowValues = !(
     filter.operator === 'isAny' ||
     filter.operator === 'onAny' ||
@@ -34,8 +35,14 @@ export default function SubFilterItem(props: Props) {
       />
 
       {canShowValues && (
-        <FilterValue isLive={props.isLive} filter={filter} onUpdate={props.onUpdate} />
+        <FilterValue
+          isLive={props.isLive}
+          filter={filter}
+          onUpdate={props.onUpdate}
+        />
       )}
     </div>
   );
 }
+
+export default observer(SubFilterItem);

@@ -452,8 +452,7 @@ class SearchStore {
   }
 
   addFilter(filter: any) {
-    console.debug('SearchStore: Add Filter', filter);
-    if (filter.isEvent && filter.filters) {
+    if (filter.isEvent && (!filter.filters || filter.filters.length === 0)) {
       filterStore.getEventFilters(filter.id).then((props) => {
         filter.filters = props?.filter((prop) => prop.defaultProperty);
       });
@@ -479,7 +478,6 @@ class SearchStore {
     const inst = this.instance.toData();
     inst.filters.push(filter);
     this.instance = new Search(inst);
-
     this.currentPage = 1;
 
     if (filter.value && filter.value[0] && filter.value[0] !== '') {

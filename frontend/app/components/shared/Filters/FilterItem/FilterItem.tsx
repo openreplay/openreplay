@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { Button, Space, Typography, Tooltip } from 'antd';
 import { FilterKey } from 'App/types/filter/filterType';
 import { CircleMinus, FunnelPlus } from 'lucide-react';
@@ -15,6 +15,7 @@ import {
   OPERATORS,
 } from '@/mstore/types/filterConstants';
 import { IFilter } from '@/mstore/types/filterItem';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
   filterIndex?: number;
@@ -60,14 +61,12 @@ function FilterItem(props: Props) {
     parentEventFilterOptions,
     isDragging,
     eventName,
-    isFirst = false, // Default to false
     activeFilters = [],
     isLast = false, // Default to false
     isLive = false,
   } = props;
 
   const [eventFilterOptions, setEventFilterOptions] = useState<Filter[]>([]);
-  const [eventFiltersLoading, setEventFiltersLoading] = useState(false);
 
   const fltId = filter?.id?.toString();
   const { filterStore } = useStore();
@@ -252,7 +251,6 @@ function FilterItem(props: Props) {
             activeFilters={activeFilters}
             onFilterClick={replaceFilter}
             disabled={disableDelete || readonly}
-            loading={isSubItem ? false : eventFiltersLoading}
             type={
               isSubItem ? 'Properties' : filter.isEvent ? 'Events' : 'Filters'
             }
@@ -356,8 +354,7 @@ function FilterItem(props: Props) {
               type="Properties"
               filters={eventFilterOptions}
               onFilterClick={addSubFilter}
-              disabled={disableDelete || readonly || eventFiltersLoading}
-              loading={eventFiltersLoading}
+              disabled={disableDelete || readonly}
               activeFilters={activeSubFilters}
             >
               <Tooltip title="Add filter condition" mouseEnterDelay={1}>
@@ -443,4 +440,4 @@ function FilterItem(props: Props) {
   );
 }
 
-export default React.memo(FilterItem);
+export default observer(FilterItem);
