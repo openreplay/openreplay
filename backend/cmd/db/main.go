@@ -10,6 +10,7 @@ import (
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/issues"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
@@ -42,21 +43,25 @@ func main() {
 		log.Fatal(ctx, "can't init clickhouse connection: %s", err)
 	}
 
-	chConnector := clickhouse.NewConnector(chConn, dbMetric)
-	if err := chConnector.Prepare(); err != nil {
-		log.Fatal(ctx, "can't prepare clickhouse: %s", err)
-	}
-	defer chConnector.Stop()
-
-	// Init redis connection
-	redisClient, err := redis.New(&cfg.Redis)
+	redisConn, err := redis.New(&cfg.Redis)
 	if err != nil {
 		log.Warn(ctx, "can't init redis connection: %s", err)
 	}
-	defer redisClient.Close()
+	defer redisConn.Close()
 
-	projManager := projects.New(log, pgConn, redisClient, dbMetric)
-	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric)
+	issuesManager, err := issues.New(log, redisConn)
+	if err != nil {
+		log.Fatal(ctx, "can't init issues keeper: %s", err)
+	}
+
+	chConnector, err := clickhouse.NewConnector(chConn, issuesManager, dbMetric)
+	if err != nil {
+		log.Fatal(ctx, "can't prepare clickhouse connector: %s", err)
+	}
+	defer chConnector.Stop()
+
+	projManager := projects.New(log, pgConn, redisConn, dbMetric)
+	sessManager := sessions.New(log, pgConn, projManager, redisConn, dbMetric)
 	tagsManager := tags.New(log, pgConn)
 
 	canvases, err := canvas.New(log, pgConn, dbMetric)
@@ -64,10 +69,8 @@ func main() {
 		log.Fatal(ctx, "can't init project service: %s", err)
 	}
 
-	// Init data saver
 	saver := datasaver.New(log, cfg, chConnector, sessManager, tagsManager, canvases)
 
-	// Message filter
 	msgFilter := []int{
 		// Web messages
 		messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,

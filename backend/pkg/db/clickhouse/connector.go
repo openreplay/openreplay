@@ -1,7 +1,6 @@
 package clickhouse
 
 import (
-	"context"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -18,6 +17,7 @@ import (
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
+	"openreplay/backend/pkg/issues"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/sessions"
@@ -25,9 +25,6 @@ import (
 )
 
 type Connector interface {
-	Prepare() error
-	Commit() error
-	Stop() error
 	InsertDefaultAutocompleteValues(session *sessions.Session, msg *messages.SessionStart) error
 	InsertWebSession(session *sessions.Session) error
 	InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error
@@ -51,6 +48,8 @@ type Connector interface {
 	InsertMobileRequest(session *sessions.Session, msg *messages.MobileNetworkCall, savePayload bool) error
 	InsertMobileCrash(session *sessions.Session, msg *messages.MobileCrash) error
 	InsertMobileIssue(session *sessions.Session, msg *messages.MobileIssueEvent) error
+	Commit() error
+	Stop() error
 }
 
 type task struct {
@@ -63,6 +62,7 @@ func NewTask() *task {
 
 type connectorImpl struct {
 	conn       driver.Conn
+	issues     issues.Issues
 	metrics    database.Database
 	batches    map[string]Bulk //driver.Batch
 	workerTask chan *task
@@ -70,30 +70,30 @@ type connectorImpl struct {
 	finished   chan struct{}
 }
 
-func NewConnector(conn driver.Conn, metrics database.Database) Connector {
-	if conn == nil {
-		log.Fatal("clickhouse connection is empty")
+func NewConnector(conn driver.Conn, issues issues.Issues, metrics database.Database) (Connector, error) {
+	switch {
+	case conn == nil:
+		return nil, errors.New("CH connection is required")
+	case issues == nil:
+		return nil, errors.New("issues is required")
+	case metrics == nil:
+		return nil, errors.New("metrics is required")
 	}
 
 	c := &connectorImpl{
 		conn:       conn,
 		metrics:    metrics,
+		issues:     issues,
 		batches:    make(map[string]Bulk, 21),
 		workerTask: make(chan *task, 1),
 		done:       make(chan struct{}),
 		finished:   make(chan struct{}),
 	}
-	go c.worker()
-	return c
-}
-
-func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBulk(c.conn, c.metrics, name, query)
-	if err != nil {
-		return fmt.Errorf("can't create new batch: %s", err)
+	if err := c.prepare(); err != nil {
+		return nil, err
 	}
-	c.batches[name] = batch
-	return nil
+	go c.worker()
+	return c, nil
 }
 
 var batches = map[string]string{
@@ -120,7 +120,16 @@ var batches = map[string]string{
 	"mobile_issues":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 }
 
-func (c *connectorImpl) Prepare() error {
+func (c *connectorImpl) newBatch(name, query string) error {
+	batch, err := NewBulk(c.conn, c.metrics, name, query)
+	if err != nil {
+		return fmt.Errorf("can't create new batch: %s", err)
+	}
+	c.batches[name] = batch
+	return nil
+}
+
+func (c *connectorImpl) prepare() error {
 	for table, query := range batches {
 		if err := c.newBatch(table, query); err != nil {
 			return fmt.Errorf("can't create %s batch: %s", table, err)
@@ -135,7 +144,7 @@ func (c *connectorImpl) Commit() error {
 		newTask.bulks = append(newTask.bulks, b)
 	}
 	c.batches = make(map[string]Bulk, 21)
-	if err := c.Prepare(); err != nil {
+	if err := c.prepare(); err != nil {
 		log.Printf("can't prepare new CH batch set: %s", err)
 	}
 	c.workerTask <- newTask
@@ -191,23 +200,11 @@ func (c *connectorImpl) InsertDefaultAutocompleteValues(session *sessions.Sessio
 	return nil
 }
 
-func (c *connectorImpl) getIssueTypes(sessionID uint64) ([]string, error) {
-	sql := `
-		select arrayDistinct(array_agg(issue_type))
-		from product_analytics.events
-		where session_id = ? and "$event_name" = 'ISSUE'`
-	issueTypes := make([]string, 0)
-	if err := c.conn.QueryRow(context.Background(), sql, sessionID).Scan(&issueTypes); err != nil {
-		return nil, err
-	}
-	return issueTypes, nil
-}
-
 func (c *connectorImpl) InsertWebSession(session *sessions.Session) (err error) {
 	if session.Duration == nil {
 		return errors.New("trying to insert session with nil duration")
 	}
-	session.IssueTypes, err = c.getIssueTypes(session.SessionID)
+	session.IssueTypes, err = c.issues.Get(session.SessionID)
 	if err != nil {
 		log.Printf("can't get issue types: %s", err)
 	}
@@ -421,7 +418,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		c.checkError("issues", err)
 		return fmt.Errorf("can't append to issues batch: %s", err)
 	}
-	return nil
+	return c.issues.Add(session.SessionID, "mouse_thrashing")
 }
 
 func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.IssueEvent) error {
@@ -485,7 +482,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		c.checkError("issues", err)
 		return fmt.Errorf("can't append to issues batch: %s", err)
 	}
-	return nil
+	return c.issues.Add(session.SessionID, msg.Type)
 }
 
 func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error {
@@ -963,7 +960,7 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		c.checkError("issues", err)
 		return fmt.Errorf("can't append to issues batch: %s", err)
 	}
-	return nil
+	return c.issues.Add(session.SessionID, fakeMsg.Type)
 }
 
 func (c *connectorImpl) InsertTagTrigger(session *sessions.Session, msg *messages.TagTrigger) error {
