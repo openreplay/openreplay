@@ -298,7 +298,6 @@ func (e *eventsImpl) GetCustomsBySessionID(sessID uint64) []interface{} {
 			  FROM product_analytics.events
 			  WHERE session_id = ?
 				AND NOT ` + "`$auto_captured`" + `
-				AND ` + "`$event_name`" + `!='INCIDENT' // TODO: delete
 			  ORDER BY created_at;`
 	customEvents := make([]customEvent, 0)
 	res := make([]interface{}, 0, len(customEvents))
