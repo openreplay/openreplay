@@ -3,7 +3,6 @@ package issues
 import (
 	"context"
 	"errors"
-	"strings"
 	"sync"
 	"time"
 
@@ -51,13 +50,11 @@ func (i *issuesImpl) Add(sessionID uint64, issueType string) error {
 	if issueType == "" {
 		return errors.New("issueType is empty")
 	}
-	i.log.Info(context.Background(), "issues: adding issue to store, sessID: %d, issueType: %s", sessionID, issueType)
 	return i.store.Add(sessionID, issueType)
 }
 
 func (i *issuesImpl) Get(sessionID uint64) ([]string, error) {
 	res, err := i.store.Get(sessionID)
-	i.log.Info(context.Background(), "issues: sessID: %d, issue types: %s", sessionID, strings.Join(res, ","))
 	return res, err
 }
 
