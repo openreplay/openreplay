@@ -149,10 +149,11 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 	eventConds, eventNameConds, otherConds := BuildEventConditions(
 		eventFilters,
 		BuildConditionsOptions{
-			DefinedColumns:       mainColumns,
-			MainTableAlias:       "main",
-			PropertiesColumnName: "$properties",
-			EventsOrder:          string(s.Filter.EventsOrder),
+			DefinedColumns:             mainColumns,
+			MainTableAlias:             "main",
+			PropertiesColumnName:       "$properties",
+			CustomPropertiesColumnName: "properties",
+			EventsOrder:                string(s.Filter.EventsOrder),
 		},
 	)
 

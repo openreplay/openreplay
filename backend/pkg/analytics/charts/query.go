@@ -61,23 +61,24 @@ func NewQueryBuilder(p *Payload) (QueryBuilder, error) {
 }
 
 type BuildConditionsOptions struct {
-	MainTableAlias       string
-	PropertiesColumnName string
-	DefinedColumns       map[string][]string
-	EventsOrder          string
+	MainTableAlias             string
+	PropertiesColumnName       string
+	CustomPropertiesColumnName string
+	DefinedColumns             map[string][]string
+	EventsOrder                string
 }
 
 var propertyKeyMap = map[string]filterConfig{
-	"LOCATION":        {LogicalProperty: "$current_path", InDProperties: false},
-	"FETCH":           {LogicalProperty: "$current_path", InDProperties: false},
-	"REQUEST":         {LogicalProperty: "$current_path", InDProperties: false},
-	"CLICK":           {LogicalProperty: "label", InDProperties: true},
-	"INPUT":           {LogicalProperty: "label", InDProperties: true},
-	"FETCHURL":        {LogicalProperty: "$current_path", InDProperties: false},
-	"USERDEVICE":      {LogicalProperty: "user_device", InDProperties: true},
-	"FETCHSTATUSCODE": {LogicalProperty: "status", IsNumeric: true, InDProperties: true},
+	"LOCATION":        {LogicalProperty: "$current_path", InDProperties: false, InProperties: false},
+	"FETCH":           {LogicalProperty: "$current_path", InDProperties: false, InProperties: false},
+	"REQUEST":         {LogicalProperty: "$current_path", InDProperties: false, InProperties: false},
+	"CLICK":           {LogicalProperty: "label", InDProperties: true, InProperties: false},
+	"INPUT":           {LogicalProperty: "label", InDProperties: true, InProperties: false},
+	"FETCHURL":        {LogicalProperty: "$current_path", InDProperties: false, InProperties: false},
+	"USERDEVICE":      {LogicalProperty: "user_device", InDProperties: true, InProperties: false},
+	"FETCHSTATUSCODE": {LogicalProperty: "status", IsNumeric: true, InDProperties: true, InProperties: false},
 	//	For some reason, the code is looking for property-name 'url_path' like event name
-	"URL_PATH": {LogicalProperty: "$current_path", InDProperties: false},
+	"URL_PATH": {LogicalProperty: "$current_path", InDProperties: false, InProperties: false},
 }
 
 // The list of event filters that are represented by columns in the events table
@@ -90,10 +91,11 @@ type filterConfig struct {
 	LogicalProperty string
 	IsNumeric       bool
 	InDProperties   bool // in $properties or not
+	InProperties    bool // in properties or not
 }
 
 // out: column accessor ; column nature (singleColumn/arrayColumn)
-func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts BuildConditionsOptions) (string, string) {
+func getColumnAccessor(logical string, isNumeric bool, inDProperties, inProperties bool, opts BuildConditionsOptions) (string, string) {
 	// helper: wrap names starting with $ in quotes
 	quote := func(name string) string {
 		prefix := opts.MainTableAlias + "."
@@ -121,19 +123,25 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties bool, opts 
 	}
 
 	// determine property key
-	var propKey filterConfig = filterConfig{logical, isNumeric, inDProperties}
+	var propKey filterConfig = filterConfig{logical, isNumeric, inDProperties, inProperties}
 	if cfg, ok := propertyKeyMap[strings.ToUpper(logical)]; ok {
 		propKey = cfg
 	}
 
 	// build properties column reference
-	colName := opts.PropertiesColumnName
+	var colName string
+	if inDProperties {
+		colName = opts.PropertiesColumnName
+	} else if inProperties {
+		colName = opts.CustomPropertiesColumnName
+	}
+
 	if opts.MainTableAlias != "" {
 		colName = fmt.Sprintf("%s.%s", opts.MainTableAlias, colName)
 	}
 	colName = quote(colName)
 
-	if propKey.InDProperties {
+	if propKey.InDProperties || propKey.InProperties {
 		// JSON extraction - escape property name to prevent injection
 		escapedProp := sqlStringReplacer.Replace(propKey.LogicalProperty)
 		if isNumeric {
@@ -150,10 +158,11 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 	var finalEventConditions []string = make([]string, 0)
 	var finalOtherConditions []string = make([]string, 0)
 	opts := BuildConditionsOptions{
-		MainTableAlias:       "e",
-		PropertiesColumnName: "`$properties`",
-		DefinedColumns:       make(map[string][]string),
-		EventsOrder:          "then",
+		MainTableAlias:             "e",
+		PropertiesColumnName:       "`$properties`",
+		CustomPropertiesColumnName: "properties",
+		DefinedColumns:             make(map[string][]string),
+		EventsOrder:                "then",
 	}
 
 	if option.MainTableAlias != "" {
@@ -161,6 +170,9 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 	}
 	if option.PropertiesColumnName != "" {
 		opts.PropertiesColumnName = option.PropertiesColumnName
+	}
+	if option.CustomPropertiesColumnName != "" {
+		opts.CustomPropertiesColumnName = option.CustomPropertiesColumnName
 	}
 	if option.DefinedColumns != nil {
 		opts.DefinedColumns = option.DefinedColumns
@@ -255,9 +267,9 @@ func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool
 	cfg, ok := propertyKeyMap[strings.ToUpper(f.Name)]
 	isNumeric := cfg.IsNumeric || f.DataType == "float" || f.DataType == "number" || f.DataType == "int"
 	if !ok {
-		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: isNumeric, InDProperties: true}
+		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: isNumeric, InDProperties: f.AutoCaptured, InProperties: !f.AutoCaptured}
 	}
-	acc, nature := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, cfg.InDProperties, opts)
+	acc, nature := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, cfg.InDProperties, cfg.InProperties, opts)
 	switch f.Operator {
 	case "isAny", "onAny":
 		//This part is unreachable, because you already have if f.IsEvent&return above
