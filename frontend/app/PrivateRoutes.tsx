@@ -160,9 +160,13 @@ function PrivateRoutes() {
     }
   }, [filtersLoaded, searchStore.urlParsed, location.search]);
 
+  const debouncedSearchCall = React.useMemo(
+    () => debounceCall(() => searchStore.fetchSessions(true), 250),
+    [searchStore],
+  );
   React.useEffect(() => {
     if (!searchStore.urlParsed || !initialFetchDoneRef.current) return;
-    debounceCall(() => searchStore.fetchSessions(true), 250)();
+    debouncedSearchCall();
   }, [searchStore.instance.filters, searchStore.instance.eventsOrder]);
 
   return (
