@@ -40,8 +40,14 @@ function AssistSearchActions() {
       </Tooltip>
       <TrainingVideosBtn />
       {isEnterprise && userStore.account?.admin && (
-        <Button size={'small'} onClick={showStats}
-                disabled={modules.includes(MODULES.ASSIST_STATS) || modules.includes(MODULES.ASSIST)}>
+        <Button
+          size={'small'}
+          onClick={showStats}
+          disabled={
+            modules.includes(MODULES.ASSIST_STATS) ||
+            modules.includes(MODULES.ASSIST)
+          }
+        >
           {t('Co-Browsing Reports')}
         </Button>
       )}

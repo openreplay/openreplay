@@ -29,7 +29,7 @@ function LiveSessionSearch() {
   const appliedFilter = searchStoreLive.instance;
   const allFilterOptions = filterStore.getCurrentProjectFilters();
   const propertyOptions = allFilterOptions
-    .filter((i) => !i.isEvent)
+    .filter((i) => !i.isEvent && i.category !== 'event')
     .filter(
       (i) =>
         liveFilterKeys.includes(i.name.toLowerCase()) ||
