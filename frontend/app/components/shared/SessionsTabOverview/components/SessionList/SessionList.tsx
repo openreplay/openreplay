@@ -42,12 +42,14 @@ function SessionList() {
   const { lastPlayedSessionId, list, total } = sessionStore;
   const loading = sessionStore.loadingSessions;
   const onToggleFavorite = sessionStore.toggleFavorite;
-  const { updateProjectRecordingStatus, siteId, previousSiteid } = projectsStore;
+  const { updateProjectRecordingStatus, siteId, previousSiteid } =
+    projectsStore;
   const { currentPage, activeTab, pageSize } = searchStore;
   const { filters } = searchStore.instance;
   const _filterKeys = filters.map((i: any) => i.key);
   const hasUserFilter =
-    _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
+    _filterKeys.includes(FilterKey.USERID) ||
+    _filterKeys.includes(FilterKey.USERANONYMOUSID);
   const isVault = isBookmark && isEnterprise;
   const activeSite = projectsStore.active;
   const hasNoRecordings = !activeSite || !activeSite.recorded;
@@ -155,8 +157,10 @@ function SessionList() {
   }, []);
 
   const onUserClick = (userId: any) => {
-    const filters = filterStore.getCurrentProjectFilters();
-    const userIdFilter = filters.find(f => f.name === FilterKey.USERID);
+    const userIdFilter = filterStore.findEvent({
+      name: FilterKey.USERID,
+      category: 'user',
+    });
     if (!userIdFilter) {
       return;
     }

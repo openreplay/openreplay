@@ -431,7 +431,7 @@ export default class FilterStore {
     const processedFilters: Filter[] = [];
 
     Object.entries(data).forEach(([category, categoryData]) => {
-      const { list = [], total = 0 } = categoryData || {};
+      const { list = [] } = categoryData || {};
 
       if (category === 'events') {
         const autoCaptured = list.filter(
