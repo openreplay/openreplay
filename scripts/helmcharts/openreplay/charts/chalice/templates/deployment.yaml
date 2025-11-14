@@ -136,6 +136,16 @@ spec:
               value: '{{ .Values.global.email.emailSslCert }}'
             - name: EMAIL_FROM
               value: '{{ .Values.global.email.emailFrom }}'
+            - name: SCIM_ACCESS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  {{- include "openreplay.secrets" (dict "key" "scim-access-secret-key" "ctx" .) | nindent 18 }}
+                  optional: true
+            - name: SCIM_REFRESH_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  {{- include "openreplay.secrets" (dict "key" "scim-refresh-secret-key" "ctx" .) | nindent 18 }}
+                  optional: true
             {{- $skippedKeys := list "JWT_REFRESH_SECRET" "JWT_SPOT_REFRESH_SECRET" -}}
             {{- include "openreplay.env" (dict "ctx" . "skippedKeys" $skippedKeys) | nindent 12}}
             - name: POD_NAMESPACE
