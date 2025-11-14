@@ -47,6 +47,7 @@ export default function build({ production }: { production?: boolean }) {
     TEST_FOSS_LOGIN: !isDevelopment ? undefined : process.env.TEST_FOSS_LOGIN,
     TEST_FOSS_PASSWORD: !isDevelopment ? undefined : process.env.TEST_FOSS_PASSWORD,
     STRIPE_KEY: process.env.STRIPE_KEY,
+    CRISP_KEY: process.env.CRISP_KEY,
   });
   const finalEnv = isDevelopment ? 'development' : 'production'
   console.log('running in', finalEnv);
