@@ -5,7 +5,6 @@ from fastapi import Body, Depends, Query
 
 import schemas
 from chalicelib.core import metadata
-from chalicelib.core.autocomplete import autocomplete as sessions_autocomplete
 from chalicelib.core.product_analytics import events, properties, autocomplete, filters, autocomplete_simple
 from or_dependencies import OR_context
 from routers.base import get_routers
