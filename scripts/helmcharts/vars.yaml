@@ -122,6 +122,10 @@ global:
   tokenSecret: "{{randAlphaNum 20}}"
   jwtRefreshSecret: "{{randAlphaNum 20}}"
   jwtSpotRefreshSecret: "{{randAlphaNum 20}}"
+  # SCIM authentication secrets for chalice service (optional)
+  # Uncomment and set these values if SCIM authentication is required
+  # scimAccessSecretKey: "{{randAlphaNum 20}}"
+  # scimRefreshSecretKey: "{{randAlphaNum 20}}"
   # In case of multiple nodes in the kubernetes cluster,
   # we'll have to create an RWX PVC for shared components.
   # If it's a single node, we'll use hostVolume, which is the default for the community/oss edition.
