@@ -42,8 +42,8 @@ FROM (SELECT value, count(1) AS row_count
       FROM product_analytics.autocomplete_simple
       WHERE {" AND ".join(constraints)} 
       GROUP BY 1) AS raw
-LIMIT 20
-ORDER BY row_count DESC;""",
+ORDER BY row_count DESC
+LIMIT %(limit)s;""",
             parameters=full_args,
         )
         rows = ch_client.execute(query)
