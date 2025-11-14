@@ -291,30 +291,11 @@ function clone_repo() {
     err_cd "$tmp_dir"
     log info "Working directory $tmp_dir"
 
-    # Show the equivalent full clone command for reference
     branch="${OR_VERSION:-main}"
-    log info "Equivalent command: git clone ${OR_REPO} --depth 1 -b ${branch}"
     log info "Using sparse checkout for optimized download (scripts/schema, scripts/helmcharts, ee/scripts)"
-
-    # Create directory for sparse checkout
-    mkdir -p openreplay
-    cd openreplay || log err "Failed to cd to openreplay directory"
-
-    # Initialize git repository with sparse checkout
-    git init || log err "Failed to initialize git repository"
-    git remote add origin "${OR_REPO}" || log err "Failed to add git remote"
-    git config core.sparseCheckout true
-
-    # Configure sparse checkout paths
-    echo "scripts/schema/" >>.git/info/sparse-checkout
-    echo "scripts/helmcharts/" >>.git/info/sparse-checkout
-    echo "ee/scripts/" >>.git/info/sparse-checkout
-
-    # Fetch and checkout the specific branch/tag
-    log info "Fetching ${branch}..."
-    git fetch --depth=1 origin "${branch}" || log err "Failed to fetch branch ${branch}. Check if the branch/tag exists."
-    git checkout "${branch}" || log err "Failed to checkout ${branch}"
-
+    git clone --depth 1 --filter=blob:none --sparse "$OR_REPO" -b "${branch}" || log err "Failed to clone openreplay"
+    cd openreplay || log err "Failed to cd to openreplay"
+    git sparse-checkout set scripts/schema scripts/helmcharts ee/scripts
     cd ..
     return
 }
