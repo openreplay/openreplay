@@ -178,6 +178,7 @@ export default class FilterItem implements IFilter {
       isEvent: Boolean(this.isEvent),
       name: this.name,
       autoCaptured: Boolean(this.autoCaptured),
+      source: this.category === 'metadata' ? this.displayName : undefined,
     };
 
     return json;
