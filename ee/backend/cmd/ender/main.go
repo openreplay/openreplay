@@ -11,7 +11,6 @@ import (
 
 	config "openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/ender"
-	"openreplay/backend/internal/sessionender"
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
@@ -51,7 +50,7 @@ func main() {
 	projManager := projects.New(log, pgConn, redisClient, dbMetric)
 	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric)
 
-	sessionEndGenerator, err := sessionender.New(enderMetric, ender.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
+	sessionEndGenerator, err := ender.New(enderMetric, ender.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Fatal(ctx, "can't init ender service: %s", err)
 	}
