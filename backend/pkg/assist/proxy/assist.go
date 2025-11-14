@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -227,32 +228,15 @@ func (r *GetLiveSessionsRequest) Parse() *GetAssistSessionsPayload {
 	for _, filter := range r.Filters {
 		switch f := filter.(type) {
 		case map[string]interface{}:
-			filterType := f["type"].(string)
-			if filterType == "metadata" {
-				filterType = f["source"].(string)
+			filterType := f["name"].(string) // it was 'type'
+			if strings.HasPrefix(filterType, "metadata_") {
+				filterType = f["source"].(string) // temp hack with a frontend support
 			}
 			res.Filter[filterType] = map[string]interface{}{"values": f["value"], "operator": f["operator"]}
 		}
 	}
 	return res
 }
-
-/*
-The list of fields we have to return:
-active
-metadata
-sessionID
-timestamp
-userBrowser
-userCity
-userCountry
-userDevice
-userDeviceType
-userID
-userOs
-userState
-userUUID
-*/
 
 func (a *assistImpl) requestAssistData(assistURL string, payload []byte) (interface{}, error) {
 	assistReq, err := http.NewRequest("POST", assistURL, bytes.NewBuffer(payload))
