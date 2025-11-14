@@ -813,6 +813,10 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 			"payload": msg.Payload,
 		}
 	}
+	customPayloadString, err := json.Marshal(customPayload)
+	if err != nil {
+		log.Printf("can't marshal custom event payload into object: %s", err)
+	}
 
 	eventTime := datetime(msg.Timestamp)
 	if err := c.batches["custom"].Append(
@@ -833,8 +837,8 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 		session.UserState,
 		session.UserCity,
 		cropString(msg.Url),
-		jsonString,    // $properties
-		customPayload, // properties
+		jsonString,          // $properties
+		customPayloadString, // properties
 	); err != nil {
 		c.checkError("custom", err)
 		return fmt.Errorf("can't append to custom batch: %s", err)
