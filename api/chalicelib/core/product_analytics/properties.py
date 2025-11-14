@@ -361,6 +361,11 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
                     EVENTS_EXTRA_PROPERTIES[event_name][p]["id"] += str(len(properties))
                     properties.append(EVENTS_EXTRA_PROPERTIES[event_name][p])
 
+        if not auto_captured and properties:
+            has_default = any(p.get("defaultProperty") for p in properties)
+            if not has_default:
+                properties[0]["defaultProperty"] = True
+
         return properties
 
 
