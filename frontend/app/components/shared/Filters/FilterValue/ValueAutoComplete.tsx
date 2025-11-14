@@ -6,7 +6,7 @@ import React, {
   useRef,
   memo,
 } from 'react';
-import { debounce } from 'App/utils';
+import { debounceCall } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { searchService } from 'App/services';
@@ -266,9 +266,10 @@ const ValueAutoComplete = observer(
       [mappedTopValues, params.name, searchService],
     );
 
-    const debouncedLoadOptions = useCallback(debounce(loadOptions, 500), [
-      loadOptions,
-    ]);
+    const debouncedLoadOptions = useMemo(
+      () => debounceCall(loadOptions, 500),
+      [loadOptions],
+    );
 
     const handleInputChange = (value: string) => {
       setQuery(value);
