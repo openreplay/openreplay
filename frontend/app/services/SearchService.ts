@@ -14,7 +14,9 @@ export default class SearchService extends BaseService {
   }
 
   async deleteSavedSearch(searchId: string) {
-    const r = await this.client.delete(`/PROJECT_ID/sessions/search/saved/${searchId}`);
+    const r = await this.client.delete(
+      `/PROJECT_ID/sessions/search/saved/${searchId}`,
+    );
     const j = await r.json();
     return j.data;
   }
@@ -41,13 +43,18 @@ export default class SearchService extends BaseService {
   }
 
   async fetchSavedSearch(params?: { limit?: number; offset?: number }) {
-    const r = await this.client.get('/PROJECT_ID/sessions/search/saved', params);
+    const r = await this.client.get(
+      '/PROJECT_ID/sessions/search/saved',
+      params,
+    );
     const j = await r.json();
     return j;
   }
 
   async getSavedSearch(searchId: string) {
-    const r = await this.client.get(`/PROJECT_ID/sessions/search/saved/${searchId}`);
+    const r = await this.client.get(
+      `/PROJECT_ID/sessions/search/saved/${searchId}`,
+    );
     const j = await r.json();
     return j.data;
   }
@@ -58,20 +65,22 @@ export default class SearchService extends BaseService {
     return j.data;
   }
 
-  async fetchTopValues(params: {}): Promise<any> {
-    const r = await this.client.get(
-      '/pa/PROJECT_ID/properties/autocomplete',
-      params,
-    );
+  async fetchTopValues(params: Record<string, any>): Promise<any> {
+    const isLive = params.live;
+    const url = isLive
+      ? `/events/search`
+      : `/pa/PROJECT_ID/properties/autocomplete`;
+    const r = await this.client.get(url, params);
     const j = await r.json();
     return j.data;
   }
 
-  async fetchAutoCompleteValues(params: {}): Promise<any> {
-    const r = await this.client.get(
-      '/pa/PROJECT_ID/properties/autocomplete',
-      params,
-    );
+  async fetchAutoCompleteValues(params: Record<string, any>): Promise<any> {
+    const isLive = params.live;
+    const url = isLive
+      ? `/events/search`
+      : `/pa/PROJECT_ID/properties/autocomplete`;
+    const r = await this.client.get(url, params);
     const j = await r.json();
     return j.data;
   }

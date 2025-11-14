@@ -45,7 +45,11 @@ const newApiUrls = [
   '/replay',
   '/conditions',
 ];
-const except = ['integrations/slack/notify', 'integrations/msteams/notify'];
+const except = [
+  'integrations/slack/notify',
+  'integrations/msteams/notify',
+  '/events/search',
+];
 const useNewApi = localStorage.getItem('__old_api') !== 'true';
 
 export const clean = (
