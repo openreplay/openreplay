@@ -38,7 +38,7 @@ func getIDFromRequest(r *http.Request, key string) (int, error) {
 type SavedCardChartRequest struct {
 	StartTimestamp uint64 `json:"startTimestamp" validate:"required,min=946684800000"`
 	EndTimestamp   uint64 `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartTimestamp"`
-	Density        int    `json:"density" validate:"required,min=1,max=500"`
+	Density        int    `json:"density" validate:"required,min=1,max=720"`
 	Page           int    `json:"page" validate:"required,min=1"`
 	Limit          int    `json:"limit" validate:"required,min=1,max=200"`
 	SortBy         string `json:"sortBy"`

@@ -65,7 +65,7 @@ var MetricOfWebVital []string = []string{"webVitalUrl"}
 type MetricPayload struct {
 	StartTimestamp   uint64     `json:"startTimestamp" validate:"required,min=946684800000"`
 	EndTimestamp     uint64     `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartTimestamp"`
-	Density          int        `json:"density" validate:"required,min=1,max=500"`
+	Density          int        `json:"density" validate:"required,min=1,max=720"`
 	MetricOf         string     `json:"metricOf" validate:"required,oneof=sessionCount userCount eventCount LOCATION userBrowser userDevice userCountry userId ISSUE sessions jsException referrer REQUEST screenResolution heatMapUrl webVitalUrl"`
 	MetricType       MetricType `json:"metricType"`
 	MetricValue      []string   `json:"metricValue"`
