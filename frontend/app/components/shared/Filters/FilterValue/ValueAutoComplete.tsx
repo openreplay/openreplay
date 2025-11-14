@@ -93,8 +93,8 @@ const OptionItem = memo(
         </Text>
       </Space>
       <div
-        className="absolute bg-main bottom-0 left-0 h-1 rounded"
-        style={{ width: Math.round(item.percentage) }}
+        className="absolute bg-main bottom-0 left-0 rounded"
+        style={{ width: `${Math.round(item.percentage ?? 0)}%`, height: 2 }}
       />
     </div>
   ),
