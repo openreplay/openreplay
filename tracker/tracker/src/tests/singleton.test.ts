@@ -18,7 +18,6 @@ const methods = [
   'getSessionInfo',
   'getSessionID',
   'getTabId',
-  'getUxId',
   'getSessionURL',
   'setUserID',
   'setUserAnonymousID',

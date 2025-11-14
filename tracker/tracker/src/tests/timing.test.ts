@@ -145,6 +145,13 @@ describe('Performance plugin', () => {
       expect.any(String),
       expect.any(Number),
       expect.any(Boolean),
+      expect.any(Number),
+      expect.any(Number),
+      expect.any(Number),
+      expect.any(Number),
+      expect.any(Number),
+      expect.any(Number),
+      expect.any(Number),
     )
   })
 
