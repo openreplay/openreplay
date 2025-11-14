@@ -39,7 +39,7 @@ function CodeSnippet(props: Props) {
 <script>
   var initOpts = {
     projectKey: "${projectKey}",
-    ${isSaas ? '' : `ingestPoint: ${ingestPoint}`},
+    ${isSaas ? '// 0 - plain, 1 - obscured, 2 - ignored' : `ingestPoint: ${ingestPoint},`}
     defaultInputMode: ${inputModeOptionsMap[defaultInputMode]},
     obscureTextNumbers: ${obscureTextNumbers},
     obscureTextEmails: ${obscureTextEmails},
