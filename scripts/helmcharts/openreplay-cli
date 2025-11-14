@@ -5,6 +5,8 @@ OR_DIR="/var/lib/openreplay"
 APP_NS="${APP_NS:-app}"
 DB_NS="${DB_NS:-db}"
 OR_REPO="${OR_REPO:-'https://github.com/openreplay/openreplay'}"
+# Detect where the CLI is installed
+CLI_PATH="$(command -v openreplay 2>/dev/null || echo "/bin/openreplay")"
 # For example HELM_OPTIONS="--set dbMigrationUpstreamBranch=dev"
 #HELM_OPTIONS=""
 # If you want to install the dev version. It can be any branch or tag.
@@ -431,11 +433,11 @@ function upgrade() {
         fi
 
         # Compare if download was successful
-        if [[ -f "$tmp_cli" ]] && ! cmp -s "$tmp_cli" /bin/openreplay; then
+        if [[ -f "$tmp_cli" ]] && ! cmp -s "$tmp_cli" "$CLI_PATH"; then
             log warn "A new version of the OpenReplay CLI is available."
             log warn "Updating CLI to the latest version..."
-            sudo mv "$tmp_cli" /bin/openreplay
-            sudo chmod +x /bin/openreplay
+            sudo mv "$tmp_cli" "$CLI_PATH"
+            sudo chmod +x "$CLI_PATH"
             log info "CLI has been updated successfully."
             log info "Please run the upgrade command again to complete the upgrade:"
             log info "${BWHITE}RELEASE_UPGRADE=1 openreplay -u${NC}"
@@ -463,8 +465,8 @@ function upgrade() {
     # Update the version
     busybox sed -i "s/fromVersion.*/fromVersion: ${or_new_version}/" vars.yaml
     patch_version
-    sudo mv ./openreplay-cli /bin/openreplay
-    sudo chmod +x /bin/openreplay
+    sudo mv ./openreplay-cli "$CLI_PATH"
+    sudo chmod +x "$CLI_PATH"
     sudo mv ./vars.yaml "$OR_DIR"
     sudo rm -rf "$OR_DIR/openreplay" || true
     sudo cp -rf "${tmp_dir}/openreplay" "$OR_DIR/"
