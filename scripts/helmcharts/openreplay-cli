@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 # vim: set ft=sh:
 
-# Save original command for re-execution message
-ORIGINAL_COMMAND="$0 $*"
-
 OR_DIR="/var/lib/openreplay"
 APP_NS="${APP_NS:-app}"
 DB_NS="${DB_NS:-db}"
 OR_REPO="${OR_REPO:-https://github.com/openreplay/openreplay}"
+
+# Build original command with environment variables for re-execution message
+ORIGINAL_COMMAND=""
+[[ -n "$RELEASE_UPGRADE" ]] && ORIGINAL_COMMAND="${ORIGINAL_COMMAND}RELEASE_UPGRADE=$RELEASE_UPGRADE "
+[[ -n "$OR_VERSION" ]] && ORIGINAL_COMMAND="${ORIGINAL_COMMAND}OR_VERSION=$OR_VERSION "
+[[ -n "$UPGRADE_OR_ONLY" ]] && ORIGINAL_COMMAND="${ORIGINAL_COMMAND}UPGRADE_OR_ONLY=$UPGRADE_OR_ONLY "
+[[ -n "$HELM_OPTIONS" ]] && ORIGINAL_COMMAND="${ORIGINAL_COMMAND}HELM_OPTIONS=\"$HELM_OPTIONS\" "
+[[ -n "$OVERRIDE_FILE" ]] && ORIGINAL_COMMAND="${ORIGINAL_COMMAND}OVERRIDE_FILE=$OVERRIDE_FILE "
+[[ -n "$CLEANUP_TOOLING" ]] && ORIGINAL_COMMAND="${ORIGINAL_COMMAND}CLEANUP_TOOLING=$CLEANUP_TOOLING "
+ORIGINAL_COMMAND="${ORIGINAL_COMMAND}openreplay $*"
 # Detect where the CLI is installed
 CLI_PATH="$(command -v openreplay 2>/dev/null || echo "/bin/openreplay")"
 # For example HELM_OPTIONS="--set dbMigrationUpstreamBranch=dev"
