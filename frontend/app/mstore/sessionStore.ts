@@ -355,7 +355,19 @@ export default class SessionStore {
       const data = await sessionService.getSessionInfo(sessionId, isLive);
       const eventsData: Record<string, any[]> = {};
       try {
-        const evData = await sessionService.getSessionEvents(sessionId);
+        const evData = isLive
+          ? {
+              errors: [],
+              events: [],
+              issues: [],
+              crashes: [],
+              resources: [],
+              stackEvents: [],
+              userEvents: [],
+              userTesting: [],
+              incidents: [],
+            }
+          : await sessionService.getSessionEvents(sessionId);
 
         Object.assign(eventsData, {
           ...evData,
