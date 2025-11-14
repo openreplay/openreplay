@@ -22,8 +22,8 @@ const (
 )
 
 var (
-	sqlStringReplacer      = strings.NewReplacer(`'`, `''`)
-	sqlLikePatternReplacer = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`, `'`, `''`)
+	sqlStringReplacer      = strings.NewReplacer(`'`, `''`, `@`, `' || char(64) || '`)
+	sqlLikePatternReplacer = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`, `'`, `''`, `@`, `' || char(64) || '`)
 )
 
 type Payload struct {
