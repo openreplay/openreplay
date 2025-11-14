@@ -105,9 +105,21 @@ spec:
 
             check_github
 
-            git clone {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }} .
-            ls /opt/openreplay/openreplay
+            # Initialize git repository with sparse checkout
+            git init
+            git remote add origin {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }}
+            git config core.sparseCheckout true
+            
+            # Configure sparse checkout paths
+            echo "scripts/schema/" >> .git/info/sparse-checkout
+            echo "scripts/helmcharts/" >> .git/info/sparse-checkout
+            echo "ee/scripts/" >> .git/info/sparse-checkout
+            
+            # Fetch and checkout the specific branch/tag
+            git fetch --depth=1 origin {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} || exit 10
             git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} || exit 10
+            
+            ls /opt/openreplay/openreplay
             git log -1
             {{ .Values.global.dbMigrationPreCommand | default "" }}
 
