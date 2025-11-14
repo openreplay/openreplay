@@ -76,16 +76,11 @@ def autocomplete_properties(projectId: int, propertyName: str, eventName: Option
     # Auto-captured properties should be transformed from camelCase to snake_case
     if ac:
         propertyName = helper.key_to_snake_case(propertyName)
-    # Specify propertyName to get top values of that property
-    # Specify eventName&propertyName to get top values of that property for the selected event
-    # if ac and (schemas.FilterType.has_value(propertyName) or propertyName.startswith("metadata_")):
-    #     if not q or len(q) == 0:
-    #         return {"data": sessions_autocomplete.get_top_values(project_id=projectId, event_type=propertyName)}
-    #     else:
-    #         return {"data": sessions_autocomplete.search_autocomplete(text=q, event_type=propertyName,
-    #                                                                   project_id=projectId)}
-    if autocomplete_simple.is_simple_property(source='session', name=propertyName):
-        return {"data": autocomplete_simple.search_simple_property(project_id=projectId, name=propertyName,source='session', q=q)}
+    # restrict autocomplete-simple to auto-captured properties only
+    # (for the moment as we don't have other way to tell if it belongs to events or something else)
+    if ac and autocomplete_simple.is_simple_property(source='session', name=propertyName):
+        return {"data": autocomplete_simple.search_simple_property(project_id=projectId, name=propertyName,
+                                                                   source='session', q=q)}
     return {"data": autocomplete.search_properties(project_id=projectId,
                                                    event_name=None if not eventName \
                                                                       or len(eventName) == 0 else eventName,
