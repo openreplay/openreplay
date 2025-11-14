@@ -341,13 +341,14 @@ WHERE project_id = $1;`, projectId)
 	defer row.Close()
 	// Move to first row
 	if !row.Next() {
-		log.Fatal("No rows found")
+		log.Println("No rows found")
+		return make(map[string]string)
 	}
 	// Get values
 	values, err := row.Values()
 	if err != nil {
-		log.Panic(err)
-		return nil
+		log.Println(err)
+		return make(map[string]string)
 	}
 	// Get column names
 	fields := row.FieldDescriptions()

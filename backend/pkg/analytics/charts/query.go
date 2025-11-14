@@ -527,7 +527,8 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 			if f.AutoCaptured {
 				filterName = CamelToSnake(f.Name)
 			}
-			if _, ok := SessionColumns[filterName]; ok {
+
+			if _, ok := SessionColumns[filterName]; ok || f.AutoCaptured && strings.HasPrefix(filterName, "metadata_") {
 				sessionFiltersList = append(sessionFiltersList, f)
 			} else {
 				isEvent = true
