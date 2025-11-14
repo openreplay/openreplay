@@ -30,6 +30,9 @@ clickhouse: &clickhouse
     webPort: 9000
     dataPort: 8123
 
+# Kept for backward compatibility. Will remove in future release
+quickwit: &quickwit
+
 kafka: &kafka
   # For enterpriseEdition
   # enabled: true
@@ -106,6 +109,7 @@ ingress-nginx: &ingress-nginx
 
 # Application specific variables
 global:
+  quickwit: *quickwit
   ingress: *ingress-nginx
   postgresql: *postgres
   kafka: *kafka
