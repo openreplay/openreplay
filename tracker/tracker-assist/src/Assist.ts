@@ -100,6 +100,7 @@ export default class Assist {
   constructor(
     private readonly app: App,
     options?: Partial<Options>,
+    private readonly noSecureMode: boolean = false,
   ) {
     // @ts-ignore
     window.__OR_ASSIST_VERSION = this.version;
