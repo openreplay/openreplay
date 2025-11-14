@@ -415,6 +415,36 @@ function upgrade() {
     # Creating backup dir of current installation
     [[ -d "$OR_DIR/openreplay" ]] && sudo cp -rf "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"/}_${time_now}"
 
+    # Check if CLI has changed for release upgrades (before cloning)
+    if [[ $RELEASE_UPGRADE -eq 1 ]]; then
+        log info "Checking for CLI updates..."
+        ref="${OR_VERSION:-main}"
+        cli_url="https://raw.githubusercontent.com/openreplay/openreplay/${ref}/scripts/helmcharts/openreplay-cli"
+        tmp_cli="${tmp_dir}/openreplay-cli-new"
+
+        # Try branch/commit format first, fallback to tag format
+        if ! curl -fsSL "$cli_url" -o "$tmp_cli" 2>/dev/null; then
+            cli_url="https://raw.githubusercontent.com/openreplay/openreplay/refs/tags/${ref}/scripts/helmcharts/openreplay-cli"
+            if ! curl -fsSL "$cli_url" -o "$tmp_cli" 2>/dev/null; then
+                log warn "Could not fetch latest CLI for comparison, continuing with upgrade..."
+            fi
+        fi
+
+        # Compare if download was successful
+        if [[ -f "$tmp_cli" ]] && ! cmp -s "$tmp_cli" /bin/openreplay; then
+            log warn "A new version of the OpenReplay CLI is available."
+            log warn "Updating CLI to the latest version..."
+            sudo mv "$tmp_cli" /bin/openreplay
+            sudo chmod +x /bin/openreplay
+            log info "CLI has been updated successfully."
+            log info "Please run the upgrade command again to complete the upgrade:"
+            log info "${BWHITE}RELEASE_UPGRADE=1 openreplay -u${NC}"
+            clean_tmp_dir
+            exit 0
+        fi
+        rm -f "$tmp_cli"
+    fi
+
     clone_repo
     err_cd openreplay/scripts/helmcharts
     install_packages
