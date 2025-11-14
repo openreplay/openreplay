@@ -293,7 +293,7 @@ function clone_repo() {
 
     branch="${OR_VERSION:-main}"
     log info "Using sparse checkout for optimized download (scripts/schema, scripts/helmcharts, ee/scripts)"
-    git clone --depth 1 --filter=blob:none --sparse "$OR_REPO" -b "${branch}" || log err "Failed to clone openreplay"
+    git clone --depth 1 --filter=blob:none --sparse "$OR_REPO" -b "${branch}" || log err "Failed to clone openreplay from branch ${branch}"
     cd openreplay || log err "Failed to cd to openreplay"
     git sparse-checkout set scripts/schema scripts/helmcharts ee/scripts
     cd ..
