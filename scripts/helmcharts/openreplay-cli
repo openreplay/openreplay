@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # vim: set ft=sh:
 
+# Save original command for re-execution message
+ORIGINAL_COMMAND="$0 $*"
+
 OR_DIR="/var/lib/openreplay"
 APP_NS="${APP_NS:-app}"
 DB_NS="${DB_NS:-db}"
@@ -459,7 +462,7 @@ function upgrade() {
             sudo chmod +x "$CLI_PATH"
             log info "CLI has been updated successfully."
             log info "Please run the upgrade command again to complete the upgrade:"
-            log info "${BWHITE}RELEASE_UPGRADE=1 openreplay -u${NC}"
+            log info "${BWHITE}${ORIGINAL_COMMAND}${NC}"
             clean_tmp_dir
             exit 0
         fi
