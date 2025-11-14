@@ -16,14 +16,6 @@ import (
 )
 
 func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
-	username := cfg.LegacyUserName
-	if cfg.UserName != "" {
-		username = cfg.UserName
-	}
-	password := cfg.LegacyPassword
-	if cfg.Password != "" {
-		password = cfg.Password
-	}
 	tlsConfig, err := buildTLSConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -32,8 +24,8 @@ func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
 		Addr: []string{cfg.GetTrimmedURL()},
 		Auth: clickhouse.Auth{
 			Database: cfg.Database,
-			Username: username,
-			Password: password,
+			Username: cfg.LegacyUserName,
+			Password: cfg.LegacyPassword,
 		},
 		MaxOpenConns:    cfg.MaxOpenConns,
 		MaxIdleConns:    cfg.MaxIdleConns,
