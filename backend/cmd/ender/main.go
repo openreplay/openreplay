@@ -80,7 +80,7 @@ func main() {
 				sessionEndGenerator.Enable()
 			}
 		},
-		types.NoReadBackGap,
+		ender.EVENTS_BACK_COMMIT_GAP,
 	)
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)

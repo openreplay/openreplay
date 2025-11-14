@@ -29,6 +29,7 @@ type consumerImpl struct {
 	rebalanceHandler  types.RebalanceHandler
 	pollTimeout       int
 	readBackGapMs     int64
+	commitBackGapMS   int64
 	commitTicker      *time.Ticker
 	gateTicker        *time.Ticker
 	lastReceivedPrtTs map[string]map[int32]int64
@@ -104,6 +105,9 @@ func NewConsumer(
 	if readGap > 0 {
 		consumer.readBackGapMs = readGap.Milliseconds()
 		consumer.gateTicker = time.NewTicker(TickerTimeout)
+	} else if readGap < 0 {
+		log.Info(context.Background(), "will use commitBack() for reBalance callback")
+		consumer.commitBackGapMS = (-readGap).Milliseconds()
 	}
 	if periodicCommit {
 		consumer.commitTicker = time.NewTicker(TickerTimeout)
@@ -153,8 +157,14 @@ func (c *consumerImpl) reBalanceCallback(_ *kafka.Consumer, e kafka.Event) error
 		if c.rebalanceHandler != nil {
 			c.rebalanceHandler(types.RebalanceTypeRevoke, getPartitionsNumbers(evt.Partitions))
 		}
-		if err := c.Commit(); err != nil {
-			c.log.Error(context.Background(), "reBalanceCallback commit error, %v", err)
+		if c.commitBackGapMS > 0 {
+			if err := c.CommitBack(c.commitBackGapMS); err != nil {
+				c.log.Error(context.Background(), "reBalanceCallback commitBack error, %v", err)
+			}
+		} else {
+			if err := c.Commit(); err != nil {
+				c.log.Error(context.Background(), "reBalanceCallback commit error, %v", err)
+			}
 		}
 	case kafka.AssignedPartitions:
 		if c.rebalanceHandler != nil {
