@@ -115,7 +115,7 @@ function Controls(props: any) {
             </div>
           ) : null}
 
-          <div className="flex items-center h-full flex-2">
+          <div className="flex items-center h-full gap-2">
             <ControlButton
               onClick={() => toggleBottomTools(CONSOLE)}
               active={bottomBlock === CONSOLE}
