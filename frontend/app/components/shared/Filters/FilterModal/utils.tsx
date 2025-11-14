@@ -28,7 +28,7 @@ export const getIconForFilter = (filter: Filter): React.ReactNode => {
 export const getCategoryDisplayName = (category: string): string => {
   const categoryMap: Record<string, string> = {
     auto_captured: 'Autocapture',
-    user_events: 'User Events',
+    user_events: 'Events',
   };
 
   if (categoryMap[category]) {
