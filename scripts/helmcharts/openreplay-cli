@@ -7,7 +7,7 @@ ORIGINAL_COMMAND="$0 $*"
 OR_DIR="/var/lib/openreplay"
 APP_NS="${APP_NS:-app}"
 DB_NS="${DB_NS:-db}"
-OR_REPO="${OR_REPO:-'https://github.com/openreplay/openreplay'}"
+OR_REPO="${OR_REPO:-https://github.com/openreplay/openreplay}"
 # Detect where the CLI is installed
 CLI_PATH="$(command -v openreplay 2>/dev/null || echo "/bin/openreplay")"
 # For example HELM_OPTIONS="--set dbMigrationUpstreamBranch=dev"
