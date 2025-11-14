@@ -6,10 +6,19 @@ Have to trigger migration if forceMigration is set
 versionChange is true when:
     Release.IsUpgrade is false.
     Or .Values.deployment.argo is set.
-    Or Release.IsUpgrade is true and .Values.fromVersion is not equal to .Chart.AppVersion.
+    Or Release.IsUpgrade is true and the previous version is not equal to .Chart.AppVersion.
+    
+Previous version preference:
+    1. OPENREPLAY_VERSION from openreplay-version ConfigMap (if exists)
+    2. .Values.fromVersion (fallback)
 */}}
 
-{{- $versionChange := (or (not .Release.IsUpgrade) .Values.deployment.argo (and .Release.IsUpgrade (not (eq .Values.fromVersion .Chart.AppVersion)))) }}
+{{- $existingConfigMap := lookup "v1" "ConfigMap" .Release.Namespace "openreplay-version" }}
+{{- $previousVersion := .Values.fromVersion }}
+{{- if $existingConfigMap }}
+  {{- $previousVersion = index $existingConfigMap.data "version" | default .Values.fromVersion }}
+{{- end }}
+{{- $versionChange := (or (not .Release.IsUpgrade) .Values.deployment.argo (and .Release.IsUpgrade (not (eq $previousVersion .Chart.AppVersion)))) }}
 {{- if or .Values.forceMigration (and (not .Values.skipMigration) $versionChange) }}
 ---
 apiVersion: v1
