@@ -1,6 +1,5 @@
 import { action, makeAutoObservable, observable, runInAction } from 'mobx';
 import { sessionService } from 'App/services';
-import { Note } from 'App/services/NotesService';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
 import { InjectedEvent, Location } from 'Types/session/event';

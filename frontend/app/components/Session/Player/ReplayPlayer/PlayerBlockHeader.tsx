@@ -25,12 +25,15 @@ function PlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { uiPlayerStore } = useStore();
   const { player, store } = React.useContext(PlayerContext);
-  const { customFieldStore, projectsStore, sessionStore } =
-    useStore();
+  const { customFieldStore, projectsStore, sessionStore } = useStore();
   const session = sessionStore.current;
   const { sessionPath } = sessionStore;
   const siteId = projectsStore.siteId!;
-  const { width = 0, height = 0, showEvents = false } = store?.get?.() || {
+  const {
+    width = 0,
+    height = 0,
+    showEvents = false,
+  } = store?.get?.() || {
     width: 0,
     height: 0,
     showEvents: false,

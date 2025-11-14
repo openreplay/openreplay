@@ -44,7 +44,8 @@ function UserSessionsModal(props: Props) {
 
   useEffect(() => {
     const userFilter = {
-      key: FilterKey.USERID,
+      name: FilterKey.USERID,
+      isAutocaptured: false,
       value: [userId],
       operator: 'is',
       isEvent: false,
