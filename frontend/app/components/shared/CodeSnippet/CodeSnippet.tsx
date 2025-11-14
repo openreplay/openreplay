@@ -34,11 +34,12 @@ function CodeSnippet(props: Props) {
     isAssistEnabled,
   } = props;
 
+  const isSaas = ingestPoint.includes('app.openreplay.com');
   const codeSnippet = `<!-- OpenReplay Tracking Code for ${host} -->
 <script>
   var initOpts = {
     projectKey: "${projectKey}",
-    ingestPoint: ${ingestPoint},
+    ${isSaas ? '' : `ingestPoint: ${ingestPoint}`},
     defaultInputMode: ${inputModeOptionsMap[defaultInputMode]},
     obscureTextNumbers: ${obscureTextNumbers},
     obscureTextEmails: ${obscureTextEmails},
