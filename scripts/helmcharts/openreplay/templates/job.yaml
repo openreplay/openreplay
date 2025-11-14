@@ -105,19 +105,12 @@ spec:
 
             check_github
 
-            # Initialize git repository with sparse checkout
-            git init
-            git remote add origin {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }}
-            git config core.sparseCheckout true
-            
-            # Configure sparse checkout paths
-            echo "scripts/schema/" >> .git/info/sparse-checkout
-            echo "scripts/helmcharts/" >> .git/info/sparse-checkout
-            echo "ee/scripts/" >> .git/info/sparse-checkout
-            
-            # Fetch and checkout the specific branch/tag
-            git fetch --depth=1 origin {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} || exit 10
-            git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} || exit 10
+            # Modern sparse checkout using Git 2.25+ features with cone mode
+            # Only fetch required directories: scripts/schema, scripts/helmcharts, ee/scripts
+            git clone --depth 1 --filter=blob:none --sparse \
+              {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }} \
+              -b {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} . || exit 10
+            git sparse-checkout set scripts/schema scripts/helmcharts ee/scripts || exit 10
             
             ls /opt/openreplay/openreplay
             git log -1
