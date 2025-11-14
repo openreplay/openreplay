@@ -105,6 +105,19 @@ class SearchStore {
     makeAutoObservable(this);
   }
 
+  resetFilters = () => {
+    this.instance = new Search({
+      startDate: Date.now() - 24 * 60 * 60 * 1000,
+      endDate: Date.now(),
+      filters: [],
+      sort: 'startTs',
+      order: 'desc',
+      viewed: false,
+      consoleLevel: '',
+      eventsOrder: 'then',
+    });
+  };
+
   setUrlParsed() {
     this.urlParsed = true;
   }

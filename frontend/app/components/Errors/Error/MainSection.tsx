@@ -33,6 +33,7 @@ function MainSection(props: any) {
     const errorFilter = filterStore.findEvent({ name: FilterKey.ERROR_EVENT });
     const nameLabel = filterStore.findEvent({ name: 'name' });
     if (errorFilter && nameLabel) {
+      searchStore.resetFilters();
       nameLabel.value = [error.name];
       errorFilter.filters = [nameLabel];
       searchStore.addFilter(errorFilter);
