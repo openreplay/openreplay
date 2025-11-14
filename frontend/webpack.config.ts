@@ -46,6 +46,7 @@ export default function build({ production }: { production?: boolean }) {
     TRACKER_HOST: process.env.TRACKER_HOST,
     TEST_FOSS_LOGIN: !isDevelopment ? undefined : process.env.TEST_FOSS_LOGIN,
     TEST_FOSS_PASSWORD: !isDevelopment ? undefined : process.env.TEST_FOSS_PASSWORD,
+    STRIPE_KEY: process.env.STRIPE_KEY,
   });
   const finalEnv = isDevelopment ? 'development' : 'production'
   console.log('running in', finalEnv);
