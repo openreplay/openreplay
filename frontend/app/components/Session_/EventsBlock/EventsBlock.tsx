@@ -87,9 +87,9 @@ function EventsBlock(props: IProps) {
     }
 
     const eventsWithMobxNotes = [
-      ...incidents,
+      ...(incidents ?? []),
       ...(mixedEventsWithIssues ?? []),
-      ...notes,
+      ...(notes ?? []),
     ].sort(sortEvents);
 
     return mergeEventLists(
