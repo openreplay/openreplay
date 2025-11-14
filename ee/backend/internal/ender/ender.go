@@ -1,4 +1,4 @@
-package sessionender
+package ender
 
 import (
 	"time"
