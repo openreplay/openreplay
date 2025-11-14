@@ -84,7 +84,6 @@ function SessionFilters() {
     const originalIndex = getOriginalAttributeIndex(filteredIndex);
     if (originalIndex !== -1) {
       searchStore.updateFilter(originalIndex, updatedFilter);
-      void searchStore.fetchSessions();
     }
   };
 

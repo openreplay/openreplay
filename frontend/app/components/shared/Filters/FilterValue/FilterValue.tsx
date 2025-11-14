@@ -41,7 +41,6 @@ function FilterValue(props: Props) {
   const onApplyValues = useCallback(
     (values: string[]) => {
       onUpdate({ ...filter, value: values });
-      void searchStore.fetchSessions();
     },
     [filter, onUpdate, searchStore],
   );
