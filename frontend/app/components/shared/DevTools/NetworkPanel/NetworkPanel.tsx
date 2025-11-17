@@ -1,6 +1,6 @@
 /* eslint-disable i18next/no-literal-string */
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
 import {
   MobilePlayerContext,
@@ -89,7 +89,7 @@ function NetworkPanelCont({
   const { player, store } = React.useContext(PlayerContext);
   const { sessionStore, uiPlayerStore } = useStore();
 
-  const { startedAt } = sessionStore.current;
+  const { startedAt, sessionId } = sessionStore.current;
   const {
     domContentLoadedTime,
     loadTime,
@@ -152,6 +152,7 @@ function NetworkPanelCont({
       getTabName={getTabName}
       showSingleTab={showSingleTab}
       isLive={isLive}
+      sessionId={sessionId}
     />
   );
 }
@@ -159,7 +160,7 @@ function NetworkPanelCont({
 function MobileNetworkPanelCont({ panelHeight }: { panelHeight: number }) {
   const { player, store } = React.useContext(MobilePlayerContext);
   const { uiPlayerStore, sessionStore } = useStore();
-  const { startedAt } = sessionStore.current;
+  const { startedAt, sessionId } = sessionStore.current;
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
@@ -193,6 +194,7 @@ function MobileNetworkPanelCont({ panelHeight }: { panelHeight: number }) {
       zoomEnabled={zoomEnabled}
       zoomStartTs={zoomStartTs}
       zoomEndTs={zoomEndTs}
+      sessionId={sessionId}
     />
   );
 }

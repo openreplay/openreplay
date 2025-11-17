@@ -188,17 +188,20 @@ export function renderDuration(r: any) {
   );
 }
 
-export function TabTag({ tabName, tabNum }: { tabName?: string, tabNum?: number }) {
+export function TabTag({
+  tabName,
+  tabNum,
+}: {
+  tabName?: string;
+  tabNum?: number;
+}) {
   return (
-    <Tooltip
-      title={`${tabName ?? `Tab ${tabNum ?? 0}`}`}
-      placement="left"
-    >
+    <Tooltip title={`${tabName ?? `Tab ${tabNum ?? 0}`}`} placement="left">
       <div className="bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs cursor-default">
         {tabNum ?? 0}
       </div>
     </Tooltip>
-  )
+  );
 }
 
 function renderStatus({
@@ -211,17 +214,19 @@ function renderStatus({
   error?: string;
 }) {
   const { t } = useTranslation();
-  const noInfoReq = status === 'no-info'
+  const noInfoReq = status === 'no-info';
   const hasTooltip = cached || noInfoReq;
   let tooltipTitle = undefined;
   let icon = null;
   if (hasTooltip) {
     if (noInfoReq) {
-      tooltipTitle = t('No timing information reported about this request by the browser.');
-      icon = <Icon name="info-circle" size={16} />
+      tooltipTitle = t(
+        'No timing information reported about this request by the browser.',
+      );
+      icon = <Icon name="info-circle" size={16} />;
     } else if (cached) {
-      tooltipTitle = t('Served from cache')
-      icon = <Icon name="wifi" size={16} />
+      tooltipTitle = t('Served from cache');
+      icon = <Icon name="wifi" size={16} />;
     }
   }
   if (error) {
@@ -271,6 +276,7 @@ interface Props {
   getTabName?: (tabId: string) => string;
   showSingleTab?: boolean;
   isLive?: boolean;
+  sessionId?: string;
 }
 
 export const NetworkPanelComp = observer(
@@ -296,6 +302,7 @@ export const NetworkPanelComp = observer(
     getTabNum,
     showSingleTab,
     getTabName,
+    sessionId,
     isLive,
   }: Props) => {
     const usedFetchList = isLive ? fetchListNow : fetchList;
@@ -417,29 +424,38 @@ export const NetworkPanelComp = observer(
 
         filteredItems = await processInChunks(filteredItems, (chunk) =>
           chunk.filter((it) => {
-              if (showOnlyErrors) {
-                const validStatus = parseInt(it.status) >= 400 || !it.success || it.error
-                if (!validStatus) return false;
-              }
+            if (showOnlyErrors) {
+              const validStatus =
+                parseInt(it.status) >= 400 || !it.success || it.error;
+              if (!validStatus) return false;
+            }
 
-              if (filter) {
-                let validQuery = true;
-                try {
-                  const regex = new RegExp(filter, 'i');
-                  validQuery = regex.test(it.status) || regex.test(it.name) || regex.test(it.type) || regex.test(it.method);
-                } catch (e) {
-                  validQuery = String(it.status).includes(filter) || it.name.includes(filter) || it.type.includes(filter) || (it.method && it.method.includes(filter));
-                }
-                if (!validQuery) return false;
+            if (filter) {
+              let validQuery = true;
+              try {
+                const regex = new RegExp(filter, 'i');
+                validQuery =
+                  regex.test(it.status) ||
+                  regex.test(it.name) ||
+                  regex.test(it.type) ||
+                  regex.test(it.method);
+              } catch (e) {
+                validQuery =
+                  String(it.status).includes(filter) ||
+                  it.name.includes(filter) ||
+                  it.type.includes(filter) ||
+                  (it.method && it.method.includes(filter));
               }
+              if (!validQuery) return false;
+            }
 
-              if (activeTab !== ALL) {
-                const validTab = TYPE_TO_TAB[it.type] === activeTab;
-                if (!validTab) return false;
-              }
+            if (activeTab !== ALL) {
+              const validTab = TYPE_TO_TAB[it.type] === activeTab;
+              if (!validTab) return false;
+            }
 
-              return true;
-            }),
+            return true;
+          }),
         );
 
         // Update displayed items
@@ -589,9 +605,7 @@ export const NetworkPanelComp = observer(
           render: (r: Record<string, any>) => {
             const tabName = getTabName?.(r.tabId);
             const tabNum = getTabNum?.(r.tabId);
-            return (
-              <TabTag r={r} tabName={tabName} tabNum={tabNum} />
-            )
+            return <TabTag r={r} tabName={tabName} tabNum={tabNum} />;
           },
         });
       }
