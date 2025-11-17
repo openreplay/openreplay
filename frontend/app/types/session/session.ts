@@ -449,10 +449,10 @@ export default class Session {
   }
 
   addEvents(
-    sessionEvents: EventData[],
-    crashes: IosCrash[],
-    errors: any[],
-    issues: any[],
+    sessionEvents: EventData[] = [],
+    crashes: IosCrash[] = [],
+    errors: any[] = [],
+    issues: any[] = [],
     resources: any[],
     userEvents: any[] = [],
     stackEvents: any[] = [],
@@ -477,7 +477,7 @@ export default class Session {
       timestamp: i.timestamp,
     }));
     const issuesList =
-      ([...incidentIssues, ...issues] as IIssue[]).map(
+      ([...incidentIssues, ...(issues ?? [])] as IIssue[]).map(
         (i, k) =>
           new Issue({ ...i, time: i.timestamp - this.startedAt, key: k }),
       ) || [];
