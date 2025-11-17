@@ -1,6 +1,6 @@
 import { Timed } from 'Player';
 import { PerformanceChartPoint } from 'Player/mobile/managers/IOSPerformanceTrackManager';
-import React, { useTransition } from 'react';
+import React from 'react';
 import {
   MobilePlayerContext,
   PlayerContext,

@@ -194,7 +194,7 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
     toggleBottomBlock(blockName);
     signalService.send(
       {
-        source: getBlockLabel(blockName)!,
+        source: getBlockLabel(blockName)?.toLocaleLowerCase(),
       },
       sessionId,
     );
