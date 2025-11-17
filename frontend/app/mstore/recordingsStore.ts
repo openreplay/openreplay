@@ -27,7 +27,7 @@ export default class RecordingsStore {
   setCurrUser = (val: boolean) => {
     this.currentUser = val;
     this.page = 1;
-  }
+  };
 
   setRecordings(records: IRecord[], total?: number) {
     this.total = total || 0;
@@ -111,11 +111,11 @@ export default class RecordingsStore {
   triggerExport = async (sessionId: string) => {
     try {
       const resp = await recordingsService.triggerExport(sessionId);
-      return resp.data.status
+      return resp.data.status;
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
-  }
+  };
 
   getRecordings = async () => {
     this.loading = true;
@@ -134,28 +134,28 @@ export default class RecordingsStore {
       this.exportedVideosList = resp.data.videos ?? [];
       this.total = resp.data.total;
     } catch (e) {
-      console.error(e)
+      console.error(e);
     } finally {
       this.loading = false;
     }
-  }
+  };
 
   getRecordingLink = async (sessionId: string) => {
     try {
       const resp = await recordingsService.getDownloadLink(sessionId);
       return resp.data;
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
-  }
+  };
 
   deleteSessionRecording = async (sessionId: string) => {
     try {
       await recordingsService.deleteVideo(sessionId);
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
-  }
+  };
 
   resetValues = () => {
     this.recordings = [];
@@ -170,5 +170,5 @@ export default class RecordingsStore {
     this.rangeName = 'LAST_24_HOURS';
     this.period = Period({ rangeName: LAST_7_DAYS });
     this.exportedVideosList = [];
-  }
+  };
 }

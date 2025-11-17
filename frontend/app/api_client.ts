@@ -221,11 +221,12 @@ export default class APIClient {
       path.includes('/kai') ||
       path.includes('v1/integrations') ||
       (path.includes('/spot') && !path.includes('/login')) ||
-      path.includes('video-replays');
+      path.includes('replay-exporter');
     let edp = window.env.API_EDP || window.location.origin + '/api';
     const isSaas = edp.includes('api.openreplay.com');
     const safeV2Replacer = (url: string) => {
       if (isSaas) {
+        if (url.includes('replay-exporter')) return url;
         return url.replace('.com', '.com/v2');
       } else return url.replace('/api', '/v2/api');
     };
