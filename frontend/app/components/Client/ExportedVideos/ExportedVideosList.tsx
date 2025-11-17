@@ -17,7 +17,7 @@ function ExportedVideosList() {
 
   useEffect(() => {
     recordingsStore.getRecordings();
-  }, [siteId]);
+  }, [siteId, recordingsStore.page]);
 
   const onSiteChange = ({ value }) => {
     projectsStore.setSiteId(value.value);
