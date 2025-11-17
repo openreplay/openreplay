@@ -194,7 +194,7 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
     toggleBottomBlock(blockName);
     signalService.send(
       {
-        source: getBlockLabel(blockName)?.toLocaleLowerCase(),
+        source: getTraceName(blockName),
       },
       sessionId,
     );
@@ -591,6 +591,31 @@ function getBlockLabel(blockName: number): string {
       return 'Backend Logs';
     default:
       return 'Unknown';
+  }
+}
+
+function getTraceName(blockName: number): string {
+  switch (blockName) {
+    case OVERVIEW:
+      return 'xray';
+    case CONSOLE:
+      return 'console';
+    case NETWORK:
+      return 'network';
+    case PERFORMANCE:
+      return 'performance';
+    case GRAPHQL:
+      return 'graphql';
+    case STORAGE:
+      return 'storage';
+    case STACKEVENTS:
+      return 'stack_events';
+    case PROFILER:
+      return 'profiler';
+    case BACKENDLOGS:
+      return 'backend_logs';
+    default:
+      return 'unknown';
   }
 }
 
