@@ -91,7 +91,7 @@ jobs:
         set -exo pipefail
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git checkout -b $BRANCH_NAME
+        git checkout $BRANCH_NAME
         working_dir=$(pwd)
         function image_version(){
           local service=$1
