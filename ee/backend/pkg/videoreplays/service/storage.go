@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"openreplay/backend/pkg/db/postgres/pool"
@@ -52,7 +53,7 @@ func (h *Storage) handleSuccessfulJob(ctx context.Context, sessionID uint64, mes
 			error_message = NULL
 		WHERE session_id = $1`
 
-	err := h.pgconn.Exec(updateQuery, sessionID, StatusCompleted, message.Name, time.Now().Unix())
+	err := h.pgconn.Exec(updateQuery, sessionID, StatusCompleted, message.Name, time.Now())
 	if err != nil {
 		h.log.Error(ctx, "Failed to update session video record", "error", err, "sessionID", sessionID)
 		return fmt.Errorf("unable to update session video status")
@@ -70,7 +71,7 @@ func (h *Storage) handleFailedJob(ctx context.Context, sessionID uint64, message
 			file_url = NULL
 		WHERE session_id = $1`
 
-	err := h.pgconn.Exec(updateQuery, sessionID, StatusFailed, message.Error, time.Now().Unix())
+	err := h.pgconn.Exec(updateQuery, sessionID, StatusFailed, message.Error, time.Now())
 	if err != nil {
 		h.log.Error(ctx, "Failed to update session video record with failure", "error", err, "sessionID", sessionID)
 		return fmt.Errorf("unable to update session video status")
@@ -84,11 +85,11 @@ func (h *Storage) CreateSessionVideoRecord(ctx context.Context, sessionID uint64
 		INSERT INTO public.sessions_videos (session_id, project_id, user_id, status, job_id, created_at, modified_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $6)
 		ON CONFLICT (session_id) DO UPDATE SET
-			status = $4,
-			job_id = $5,
-			modified_at = $6`
+			status = EXCLUDED.status,
+			job_id = EXCLUDED.job_id,
+			modified_at = EXCLUDED.modified_at`
 
-	now := time.Now().Unix()
+	now := time.Now()
 	err := h.pgconn.Exec(insertQuery, sessionID, projectID, userID, StatusPending, jobID, now)
 	if err != nil {
 		h.log.Error(ctx, "Failed to create session video record", "error", err,
@@ -101,25 +102,28 @@ func (h *Storage) CreateSessionVideoRecord(ctx context.Context, sessionID uint64
 
 func (h *Storage) GetSessionVideoBySessionAndProject(ctx context.Context, sessionID uint64, projectID int) (*SessionVideo, error) {
 	query := `
-		SELECT session_id::text, project_id, user_id, file_url, status, job_id, error_message, created_at, modified_at
+		SELECT session_id, project_id, user_id, file_url, status, job_id, error_message, created_at, modified_at
 		FROM public.sessions_videos
 		WHERE session_id = $1 AND project_id = $2`
 
 	var video SessionVideo
+	var sessionIDNum uint64
 	var fileURL sql.NullString
 	var jobID sql.NullString
 	var errorMessage sql.NullString
+	var createdAt time.Time
+	var modifiedAt time.Time
 
 	err := h.pgconn.QueryRow(query, sessionID, projectID).Scan(
-		&video.SessionID,
+		&sessionIDNum,
 		&video.ProjectID,
 		&video.UserID,
 		&fileURL,
 		&video.Status,
 		&jobID,
 		&errorMessage,
-		&video.CreatedAt,
-		&video.ModifiedAt,
+		&createdAt,
+		&modifiedAt,
 	)
 
 	if err != nil {
@@ -127,13 +131,16 @@ func (h *Storage) GetSessionVideoBySessionAndProject(ctx context.Context, sessio
 			err.Error() == "no rows in result set" ||
 			err.Error() == "sql: no rows in result set" {
 			h.log.Debug(ctx, "No existing session video found, proceeding with new job", "sessionID", sessionID, "projectID", projectID)
-			return nil, nil // !!! antipattern
+			return nil, nil
 		}
 
 		h.log.Warn(ctx, "Database query issue while checking session video, proceeding with new job", "error", err, "sessionID", sessionID, "projectID", projectID)
-		return nil, nil // !!! antipattern
+		return nil, nil
 	}
 
+	video.SessionID = strconv.FormatUint(sessionIDNum, 10)
+	video.CreatedAt = createdAt.Unix()
+	video.ModifiedAt = modifiedAt.Unix()
 	if fileURL.Valid {
 		video.FileURL = fileURL.String
 	}
@@ -184,7 +191,7 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 	}
 
 	query := fmt.Sprintf(`
-		SELECT sv.session_id::text, sv.project_id, sv.user_id, u.name as user_name, sv.file_url, sv.status, sv.job_id, sv.error_message, sv.created_at, sv.modified_at,
+		SELECT sv.session_id, sv.project_id, sv.user_id, u.name as user_name, sv.file_url, sv.status, sv.job_id, sv.error_message, sv.created_at, sv.modified_at,
 		       COUNT(*) OVER() as total_count
 		FROM public.sessions_videos sv
 		LEFT JOIN public.users u ON sv.user_id = u.user_id
@@ -206,13 +213,16 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 
 	for rows.Next() {
 		var video SessionVideo
+		var sessionIDNum uint64
 		var fileURL sql.NullString
 		var jobID sql.NullString
 		var errorMessage sql.NullString
 		var userName sql.NullString
+		var createdAt time.Time
+		var modifiedAt time.Time
 
 		err := rows.Scan(
-			&video.SessionID,
+			&sessionIDNum,
 			&video.ProjectID,
 			&video.UserID,
 			&userName,
@@ -220,8 +230,8 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 			&video.Status,
 			&jobID,
 			&errorMessage,
-			&video.CreatedAt,
-			&video.ModifiedAt,
+			&createdAt,
+			&modifiedAt,
 			&total,
 		)
 		if err != nil {
@@ -229,6 +239,9 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 			return nil, fmt.Errorf("unable to process session videos")
 		}
 
+		video.SessionID = strconv.FormatUint(sessionIDNum, 10)
+		video.CreatedAt = createdAt.Unix()
+		video.ModifiedAt = modifiedAt.Unix()
 		if userName.Valid {
 			video.UserName = userName.String
 		}
