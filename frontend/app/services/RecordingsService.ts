@@ -101,7 +101,7 @@ export default class RecordingsService {
     params: Record<string, any>,
   ): Promise<ExportsResponse> => {
     return this.client
-      .get(`/replay-exporter/PROJECT_ID/session-videos`, { params })
+      .get(`/replay-exporter/PROJECT_ID/session-videos`, params)
       .then((r) => r.json());
   };
 
