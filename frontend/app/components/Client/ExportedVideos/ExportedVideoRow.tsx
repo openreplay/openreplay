@@ -28,17 +28,21 @@ function ExportedVideo(props: {
         </div>
       </div>
       <div className="col-span-3">
-        {formatDateTimeDefault(props.item.createdAt*1000)}
+        {formatDateTimeDefault(props.item.createdAt * 1000)}
       </div>
       <div className="col-span-2">{props.item.userName || 'Unknown user'}</div>
-      <div className="col-span-2"><Tag>{props.item.status}</Tag></div>
+      <div className="col-span-2">
+        <Tag>{props.item.status}</Tag>
+      </div>
       <div className="col-span-2 items-center justify-end gap-2 hidden group-hover:flex w-full">
-        <Button
-          onClick={() => props.onRecOpen(props.item.sessionId)}
-          size={'small'}
-        >
-          <FileDown size={16} />
-        </Button>
+        {props.item.status === 'success' ? (
+          <Button
+            onClick={() => props.onRecOpen(props.item.sessionId)}
+            size={'small'}
+          >
+            <FileDown size={16} />
+          </Button>
+        ) : null}
         <Button
           onClick={() => props.onDelete(props.item.sessionId)}
           size={'small'}

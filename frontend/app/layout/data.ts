@@ -212,9 +212,9 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
       {
         label: t('Exported Videos'),
         key: PREFERENCES_MENU.EXPORTED_VIDEOS,
-        icon: 'file',
+        icon: 'ic-network',
         hidden: menuHidden.videoExport,
-      }
+      },
     ],
   },
 ];
