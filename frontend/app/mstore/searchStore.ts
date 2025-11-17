@@ -427,7 +427,6 @@ class SearchStore {
 
     this.savedSearch = new SavedSearch({});
     sessionStore.clearList();
-    void this.fetchSessions(true);
   }
 
   async checkForLatestSessionCount(): Promise<void> {
