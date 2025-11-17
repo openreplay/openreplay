@@ -22,7 +22,7 @@ const FilterListHeader = ({
   return (
     <div className="flex items-center gap-2">
       <Space>
-        <div className="font-medium">{title}</div>
+        <div className="font-medium w-11">{title}</div>
         <Typography.Text>{filterSelection}</Typography.Text>
       </Space>
       <div className="ml-auto flex items-center gap-2">

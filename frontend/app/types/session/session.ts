@@ -469,7 +469,7 @@ export default class Session {
     //   issueType: 'js_exception',
     //   timestamp: e.timestamp,
     // }));
-    const incidentIssues = incidents.map((i: any) => ({
+    const incidentIssues = (incidents ?? []).map((i: any) => ({
       contextString: i.label,
       issueType: 'incident',
       createdAt: new Date(i.startTime).toISOString(),
