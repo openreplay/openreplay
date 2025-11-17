@@ -7,7 +7,6 @@ import {
   Signal,
   CircleAlert,
 } from 'lucide-react';
-import { Tooltip } from 'antd';
 
 enum SignalQuality {
   Lowest,
@@ -42,9 +41,9 @@ function ConnectionQuality({ connection }: { connection: number }) {
   return (
     <div className="mx-2 flex items-center">
       <div className="font-semibold">Connection quality:</div>
-      <div className="mb-1 ml-1">
-      {SignalIcons[connection as SignalQuality] ??
-        SignalIcons[SignalQuality.Full]}
+      <div className="mb-1 ml-2 mr-1">
+        {SignalIcons[connection as SignalQuality] ??
+          SignalIcons[SignalQuality.Full]}
       </div>
       <div>
         {signalTexts[connection as SignalQuality] ||
