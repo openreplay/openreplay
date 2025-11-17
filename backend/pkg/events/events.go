@@ -29,10 +29,10 @@ func (e *errorEvent) IsNotJsException() bool {
 
 type Events interface {
 	GetBySessionID(projID uint32, sessID uint64, doGroupClickRage bool) []interface{}
-	GetErrorsBySessionID(sessID uint64) []errorEvent
-	GetCustomsBySessionID(sessID uint64) []interface{}
+	GetErrorsBySessionID(projectID uint32, sessID uint64) []errorEvent
+	GetCustomsBySessionID(projectID uint32, sessID uint64) []interface{}
 	GetIssuesBySessionID(projID uint32, sessID uint64) []interface{}
-	GetIncidentsBySessionID(sessID uint64) []interface{}
+	GetIncidentsBySessionID(projectID uint32, sessID uint64) []interface{}
 	GetMobileBySessionID(projID uint32, sessID uint64) []interface{}
 	GetMobileCrashesBySessionID(sessID uint64) []interface{}
 	GetMobileCustomsBySessionID(sessID uint64) []interface{}
@@ -196,18 +196,18 @@ func getHostFromUrl(fullUrl string) *string {
 
 func (e *eventsImpl) GetBySessionID(projID uint32, sessID uint64, doGroupClickRage bool) []interface{} {
 	query := `SELECT created_at,
-			` + "`$properties`" + ` AS props,
-			` + "`$event_name`" + ` AS type,
-			` + "`$duration_s`" + ` AS duration,
-			` + "`$current_url`" + ` AS url,
-			` + "`$referrer`" + ` AS referrer
-			FROM product_analytics.events
-			WHERE session_id = ?
-				AND ` + "`$event_name`" + ` IN ('CLICK', 'INPUT', 'LOCATION')
-				AND ` + "`$auto_captured`" + `
-			ORDER BY created_at;`
+					"$properties" AS props,
+					"$event_name" AS type,
+					"$duration_s" AS duration,
+					"$current_url" AS url,
+					"$referrer" AS referrer
+			  FROM product_analytics.events
+			  WHERE session_id = ? AND project_id = ?
+				AND "$event_name" IN ('CLICK', 'INPUT', 'LOCATION')
+				AND "$auto_captured"
+			  ORDER BY created_at;`
 	sessEvents := make([]event, 0)
-	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID); err != nil {
+	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID, projID); err != nil {
 		e.log.Error(context.Background(), "Error querying events: %v", err)
 		return nil
 	}
@@ -260,18 +260,19 @@ func (e *eventsImpl) groupClicksToClickRage(projID uint32, sessID uint64, sessEv
 	return res
 }
 
-func (e *eventsImpl) GetErrorsBySessionID(sessID uint64) []errorEvent {
-	query := `SELECT error_id,
+func (e *eventsImpl) GetErrorsBySessionID(projectID uint32, sessID uint64) []errorEvent {
+	query := `SELECT DISTINCT ON (event_id) error_id,
 					'js_exception' AS source,
 					'ERROR' AS name,
-					` + "`$properties`" + `.message AS message,
+					"$properties".message AS message,
 					created_at
 			  FROM product_analytics.events
-			  WHERE session_id = ?
-				AND ` + "`$event_name`" + ` = 'ERROR'
+			  WHERE session_id = ? AND project_id = ?
+				AND "$event_name"= 'ERROR'
+			  	AND "$auto_captured"
 			  ORDER BY created_at;`
 	errorEvents := make([]errorEvent, 0)
-	if err := e.chConn.Select(context.Background(), &errorEvents, query, sessID); err != nil {
+	if err := e.chConn.Select(context.Background(), &errorEvents, query, sessID, projectID); err != nil {
 		e.log.Error(context.Background(), "Error querying error events: %v", err)
 		return nil
 	}
@@ -289,19 +290,20 @@ type customEvent struct {
 	CreatedAt              time.Time `ch:"created_at" json:"createdAt"`
 }
 
-func (e *eventsImpl) GetCustomsBySessionID(sessID uint64) []interface{} {
-	query := `SELECT toString(` + "`$properties`" + `) AS auto_props,
+func (e *eventsImpl) GetCustomsBySessionID(projectID uint32, sessID uint64) []interface{} {
+	query := `SELECT toString("$properties") AS auto_props,
 				toString(properties) AS properties,
 				created_at,
 				'CUSTOM' AS type,
-				` + "`$event_name`" + ` AS name
+				"$event_name" AS name
 			  FROM product_analytics.events
 			  WHERE session_id = ?
-				AND NOT ` + "`$auto_captured`" + `
+			    AND project_id = ?
+				AND NOT "$auto_captured"
 			  ORDER BY created_at;`
 	customEvents := make([]customEvent, 0)
 	res := make([]interface{}, 0, len(customEvents))
-	if err := e.chConn.Select(context.Background(), &customEvents, query, sessID); err != nil {
+	if err := e.chConn.Select(context.Background(), &customEvents, query, sessID, projectID); err != nil {
 		e.log.Error(context.Background(), "Error querying custom events: %v", err)
 		return res
 	}
@@ -373,12 +375,12 @@ func (e *eventsImpl) GetIssuesBySessionID(projID uint32, sessID uint64) []interf
 					issue_id,
 					issue_type,
 				 	context_string
-                FROM product_analytics.events
-				INNER JOIN experimental.issues ON (events.issue_id = issues.issue_id)
+                FROM experimental.issues
+				INNER JOIN product_analytics.events ON (events.issue_id = issues.issue_id)
 				WHERE session_id = ?
 					AND events.project_id = ?
 					AND issues.project_id = ?
-					AND ` + "`$event_name`" + ` = 'ISSUE' AND issue_type != 'incident'
+					AND "$event_name" = 'ISSUE' AND issue_type != 'incident'
 				ORDER BY created_at;`
 	issues := make([]issueEvent, 0)
 	if err := e.chConn.Select(context.Background(), &issues, query, sessID, projID, projID); err != nil {
@@ -444,23 +446,20 @@ func (i *issue) CountFromPayload() int {
 func (e *eventsImpl) getIssues(projID uint32, sessID uint64, issueType string) []issue {
 	cond := ""
 	if issueType != "" {
-		cond = "AND events.issue_type = '" + issueType + "' AND issues.type = '" + issueType + "'"
+		cond = "AND events.issue_type = '" + issueType + "'"
 	}
-	query := `SELECT DISTINCT ON (events.created_at, issue_id) events.created_at,
+	query := `SELECT DISTINCT ON (event_id) events.created_at,
 				issue_id,
                 issue_type,
-                context_string,
-                ` + "`$properties`.payload" + ` AS payload_string
+                "$properties".payload AS payload_string
             FROM product_analytics.events
-            INNER JOIN experimental.issues ON (events.issue_id = issues.issue_id)
             WHERE session_id = ?
                 AND events.project_id = ?
-                AND issues.project_id = ?
-                AND ` + "`$event_name`" + ` = 'ISSUE'
+                AND "$event_name"= 'ISSUE'
                 ` + cond + `
 			ORDER BY created_at;`
 	sessIssues := make([]issue, 0)
-	if err := e.chConn.Select(context.Background(), &sessIssues, query, sessID, projID, projID); err != nil {
+	if err := e.chConn.Select(context.Background(), &sessIssues, query, sessID, projID); err != nil {
 		e.log.Error(context.Background(), "Error querying issues: %v", err)
 		return nil
 	}
@@ -476,17 +475,19 @@ type incidentEvent struct {
 	Timestamp int64     `ch:"timestamp" json:"timestamp"`
 }
 
-func (e *eventsImpl) GetIncidentsBySessionID(sessID uint64) []interface{} {
+func (e *eventsImpl) GetIncidentsBySessionID(projectID uint32, sessID uint64) []interface{} {
 	query := `SELECT created_at,
-			` + "`$properties`.end_time" + ` AS end_time,
-			` + "`$properties`.label" + ` AS label,
-			` + "`$properties`.start_time" + ` AS start_time
+			 		"$properties".end_time  AS end_time,
+					"$properties.label AS label,
+					"$properties.start_time AS start_time
 			FROM product_analytics.events
-			WHERE session_id = ? AND issue_type = 'incident'
-				AND ` + "`$auto_captured`" + `
+			WHERE session_id = ? AND project_id = ?
+			  	AND issue_type = 'incident' 
+			  	AND "$event_name" = 'ISSUE'
+				AND "$auto_captured"
 			ORDER BY created_at;`
 	incidents := make([]incidentEvent, 0)
-	if err := e.chConn.Select(context.Background(), &incidents, query, sessID); err != nil {
+	if err := e.chConn.Select(context.Background(), &incidents, query, sessID, projectID); err != nil {
 		e.log.Error(context.Background(), "Error querying incidents: %v", err)
 		return nil
 	}
