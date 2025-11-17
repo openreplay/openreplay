@@ -427,15 +427,15 @@ export default class SessionStore {
       runInAction(() => {
         const session = new Session(data);
         session.addEvents(
-          events,
-          crashes,
-          errors,
-          issues,
-          resources,
-          userEvents,
-          stackEvents,
-          userTesting,
-          incidents,
+          events ?? [],
+          crashes ?? [],
+          errors ?? [],
+          issues ?? [],
+          resources ?? [],
+          userEvents ?? [],
+          stackEvents ?? [],
+          userTesting ?? [],
+          incidents ?? [],
         );
         this.current = session;
         this.eventsIndex = matching;

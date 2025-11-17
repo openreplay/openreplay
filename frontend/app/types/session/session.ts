@@ -533,7 +533,7 @@ export default class Session {
     const frustrationList =
       [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
-    const incidentsList = incidents
+    const incidentsList = (incidents ?? [])
       .sort((a, b) => a.startTime - b.startTime)
       .map((i) => ({
         ...i,
