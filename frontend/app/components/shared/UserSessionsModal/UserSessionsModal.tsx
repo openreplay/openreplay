@@ -19,7 +19,7 @@ interface Props {
 function UserSessionsModal(props: Props) {
   const { t } = useTranslation();
   const { userId, hash, name } = props;
-  const { sessionStore } = useStore();
+  const { sessionStore, filterStore } = useStore();
   const { hideModal } = useModal();
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<any>({ sessions: [], total: 0 });
@@ -43,13 +43,11 @@ function UserSessionsModal(props: Props) {
   };
 
   useEffect(() => {
-    const userFilter = {
+    const userFilter = filterStore.findEvent({
       name: FilterKey.USERID,
-      isAutocaptured: false,
-      value: [userId],
-      operator: 'is',
-      isEvent: false,
-    };
+      category: 'user',
+    });
+    userFilter.value = [userId];
     filter.update('filters', [userFilter]);
   }, []);
   useEffect(fetchData, [filter.page, filter.startDate, filter.endDate]);
