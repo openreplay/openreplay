@@ -33,7 +33,6 @@ func main() {
 	}
 	defer pgPool.Close()
 
-	prefix := api.NoPrefix
 	keys := keys.NewKeys(log, pgPool)
 	services, err := spot.NewServiceBuilder(log, cfg, webMetrics, spotMetric, pgPool, keys)
 	if err != nil {
@@ -45,7 +44,7 @@ func main() {
 		log.Fatal(ctx, "can't init middlewares: %s", err)
 	}
 
-	router, err := api.NewRouter(log, &cfg.HTTP, prefix, services.Handlers(), middlewares.Middlewares())
+	router, err := api.NewRouter(log, &cfg.HTTP, api.NoPrefix, services.Handlers(), middlewares.Middlewares())
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
