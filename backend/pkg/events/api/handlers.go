@@ -67,15 +67,15 @@ func (h *handlersImpl) getEvents(w http.ResponseWriter, r *http.Request) {
 
 	if platform == "web" {
 		response["events"] = h.events.GetBySessionID(projID, sessID, GroupClickRage)
-		response["errors"] = h.events.GetErrorsBySessionID(sessID) // js_exception events only
-		response["userEvents"] = h.events.GetCustomsBySessionID(sessID)
+		response["errors"] = h.events.GetErrorsBySessionID(projID, sessID) // js_exception events only
+		response["userEvents"] = h.events.GetCustomsBySessionID(projID, sessID)
 	} else {
 		response["events"] = h.events.GetMobileBySessionID(projID, sessID)
 		response["crashes"] = h.events.GetMobileCrashesBySessionID(sessID)
 		response["userEvents"] = h.events.GetMobileCustomsBySessionID(sessID)
 	}
 	response["issues"] = h.events.GetIssuesBySessionID(projID, sessID)
-	response["incidents"] = h.events.GetIncidentsBySessionID(sessID)
+	response["incidents"] = h.events.GetIncidentsBySessionID(projID, sessID)
 	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
 	return
 }
