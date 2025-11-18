@@ -90,7 +90,6 @@ function CreateCard(props: Props) {
         </Button>
       </div>
       {props.extra}
-      {/* <CardBuilder siteId={siteId}/> */}
       <WidgetFormNew />
       <WidgetPreview className="" name={metric.name} isEditing />
     </div>

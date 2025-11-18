@@ -50,7 +50,6 @@ export const enum MENU {
   FUNNELS = 'funnels',
   ERROR_TRACKING = 'error-tracking',
   ALERTS = 'alerts',
-  FEATURE_FLAGS = 'feature-flags',
   PREFERENCES = 'preferences',
   SUPPORT = 'support',
   EXIT = 'exit',
