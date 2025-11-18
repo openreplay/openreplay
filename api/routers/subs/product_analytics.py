@@ -4,8 +4,10 @@ from typing import Optional
 from fastapi import Body, Depends, Query
 
 import schemas
+from chalicelib.core import assist
 from chalicelib.core import metadata
 from chalicelib.core.product_analytics import events, properties, autocomplete, filters, autocomplete_simple
+from chalicelib.utils import helper
 from or_dependencies import OR_context
 from routers.base import get_routers
 
@@ -65,13 +67,12 @@ def autocomplete_events(projectId: int, q: Optional[str] = None,
     return {"data": autocomplete.search_events(project_id=projectId, q=None if not q or len(q) == 0 else q)}
 
 
-from chalicelib.utils import helper
-
-
 @app.get('/{projectId}/properties/autocomplete', tags=["autocomplete"])
 def autocomplete_properties(projectId: int, propertyName: str, eventName: Optional[str] = None,
                             q: Optional[str] = None, ac: bool = Query(description="auto captured"),
-                            context: schemas.CurrentContext = Depends(OR_context)):
+                            live: bool = False, context: schemas.CurrentContext = Depends(OR_context)):
+    if live:
+        return assist.autocomplete(project_id=projectId, q=q, key=eventName)
     # Auto-captured properties should be transformed from camelCase to snake_case
     if ac:
         propertyName = helper.key_to_snake_case(propertyName)
