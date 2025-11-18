@@ -169,6 +169,11 @@ function PrivateRoutes() {
     debouncedSearchCall();
   }, [searchStore.instance.filters, searchStore.instance.eventsOrder]);
 
+  React.useEffect(() => {
+    searchStore.resetTags();
+    console.log('hi')
+  }, [projectsStore.activeSiteId]);
+
   return (
     <Suspense fallback={<Loader loading className="flex-1" />}>
       <Switch key="content">
