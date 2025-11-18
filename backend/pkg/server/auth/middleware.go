@@ -53,7 +53,7 @@ func (a *authImpl) Middleware(next http.Handler) http.Handler {
 		if err != nil {
 			if a.keys == nil || !api.IsSpotKeyRequest(r) {
 				a.log.Warn(r.Context(), "Unauthorized request, wrong jwt token: %s", err)
-				w.WriteHeader(http.StatusUnauthorized)
+				w.WriteHeader(http.StatusForbidden)
 				return
 			}
 			user, err = a.keys.IsValid(r.URL.Query().Get("key"))
