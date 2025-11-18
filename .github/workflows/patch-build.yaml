@@ -85,11 +85,24 @@ jobs:
         readonly BACKEND_SERVICES_FILE="/tmp/backend.txt"
         readonly EE_BACKEND_SERVICES_FILE="/tmp/ee_backend.txt"
 
-        # Initialize git configuration
+        # Initialize git configuration and create unique branch
         setup_git() {
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
-            git checkout -b "$BRANCH_NAME"
+            
+            # Check if branch exists on remote
+            local final_branch="$BRANCH_NAME"
+            if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
+                echo "Branch $BRANCH_NAME already exists, creating unique branch name"
+                local random_suffix=$(date +%s)-$RANDOM
+                final_branch="${BRANCH_NAME}-${random_suffix}"
+                echo "New branch name: $final_branch"
+                # Export to environment for later use
+                echo "BRANCH_NAME=$final_branch" >> $GITHUB_ENV
+                export BRANCH_NAME="$final_branch"
+            fi
+            
+            git checkout -b "$final_branch"
         }
 
         # Get and increment image version
