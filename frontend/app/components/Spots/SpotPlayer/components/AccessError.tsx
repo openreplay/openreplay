@@ -3,6 +3,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { Icon } from 'UI';
+import { Link } from 'react-router-dom';
+import { login } from '@/routes';
 
 function AccessError() {
   const { t } = useTranslation();
@@ -26,11 +28,16 @@ function AccessError() {
       </div>
       <Card className="w-1/2 mx-auto rounded-b-full shadow-sm text-center flex flex-col justify-center items-center z-50 min-h-60">
         <div className="font-semibold text-xl">
-          {t('The Spot link has expired.')}
+          {t('The Spot link or your login session has expired.')}
         </div>
         <p className="text-lg">
-          {t('Contact the person who shared it to re-spot.')}
+          {t(
+            'Try to log in again or contact the person who shared it to share it again.',
+          )}
         </p>
+        <Link to={login()} className="link text-center block mt-8 text-lg">
+          <Button>{t('Back to Login')}</Button>
+        </Link>
       </Card>
       <div className="rotate-180 -z-10 w-fit mx-auto -mt-5 hover:mt-2 transition-all ease-in-out hover:rotate-0 hover:transition-all hover:ease-in-out duration-500 hover:duration-150">
         <AnimatedSVG name={ICONS.NO_RECORDINGS} size={60} />

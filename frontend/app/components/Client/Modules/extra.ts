@@ -7,7 +7,6 @@ export const enum MODULES {
   OFFLINE_RECORDINGS = 'offline-recordings',
   ALERTS = 'alerts',
   ASSIST_STATS = 'assist-stats',
-  FEATURE_FLAGS = 'feature-flags',
   RECOMMENDATIONS = 'recommendations',
 }
 

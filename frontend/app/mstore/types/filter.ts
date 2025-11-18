@@ -203,7 +203,7 @@ export default class FilterStore implements IFilterStore {
   updateFilter = (index: number, filterData: FilterItem) => {
     if (index >= 0 && index < this.filters.length) {
       const updatedFilter = this.createFilterItemFromData(filterData);
-      updatedFilter.id = this.filters[index].id;
+      updatedFilter.id = filterData.id ?? this.filters[index].id;
       this.filters[index] = updatedFilter;
     } else {
       console.warn(

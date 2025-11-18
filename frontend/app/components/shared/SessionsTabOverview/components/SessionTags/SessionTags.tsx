@@ -30,10 +30,6 @@ const SegmentedSessionTags = observer(() => {
   const platform = projectsStore.active?.platform || '';
   const activeTab = searchStore.activeTags;
 
-  React.useEffect(() => {
-    searchStore.resetTags();
-  }, [projectsStore.activeSiteId]);
-
   return (
     <div className="flex items-center">
       <Segmented

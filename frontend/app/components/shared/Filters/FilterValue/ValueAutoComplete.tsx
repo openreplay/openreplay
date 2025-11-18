@@ -192,6 +192,7 @@ const ValueAutoComplete = observer(
       showValueModal,
       filterKey,
       params.id,
+      params.name,
       projectsStore.siteId,
       filterStore,
     ]);

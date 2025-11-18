@@ -73,13 +73,12 @@ const FilterAutoComplete = observer(
 
     // Memoize the mapped top values
     const mappedTopValues = useMemo(() => {
-      console.log('Recalculating mappedTopValues'); // For debugging memoization
       return topValues.map((i) => ({ value: i.value, label: i.value }));
     }, [topValues]);
 
     useEffect(() => {
       setOptions([]);
-    }, [projectsStore.siteId]);
+    }, [projectsStore.siteId, params.id, params.name]);
 
     const loadTopValues = useCallback(async () => {
       if (projectsStore.siteId && params.id) {

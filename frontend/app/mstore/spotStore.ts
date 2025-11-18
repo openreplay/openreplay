@@ -117,7 +117,7 @@ export default class SpotStore {
 
       return spotInst;
     } catch (e) {
-      if (e.response.status === 401 || e.response.status === 403) {
+      if (e.cause.status === 401 || e.cause.status === 403) {
         this.setAccessError(true);
       }
       throw e;

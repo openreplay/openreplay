@@ -302,7 +302,7 @@ export default class FilterStore {
       const filterCategory = category ?? filter.category ?? 'custom';
       const filterObj = {
         ...filter,
-        id: Math.random().toString(36).substring(2, 9),
+        id: filter.id ?? Math.random().toString(36).substring(2, 10),
         possibleTypes:
           filter.possibleTypes?.map((type: any) => normalizeDataType(type)) ||
           [],

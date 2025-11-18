@@ -1,8 +1,5 @@
 import { FilterKey } from 'Types/filter/filterType';
-import { filtersMap } from 'Types/filter/newFilter';
 import { makeAutoObservable } from 'mobx';
-import Search from 'App/mstore/types/search';
-import { aiService } from 'App/services';
 
 export default class AiFiltersStore {
   filters: Record<string, any> = { filters: [] };
@@ -39,16 +36,6 @@ export default class AiFiltersStore {
     this.filtersSetKey += 1;
   };
 
-  getCardData = async (query: string, chartData: Record<string, any>) => {
-    const r = await aiService.getCardData(query, chartData);
-    console.log(r);
-  };
-
-  omniSearch = async (query: string, filters: Record<any, any>) => {
-    const r = await aiService.omniSearch(query, filters);
-    console.log(r);
-  };
-
   clearFilters = (): void => {
     this.filters = { filters: [] };
     this.filtersSetKey = 0;
@@ -56,97 +43,6 @@ export default class AiFiltersStore {
 
   setLoading = (loading: boolean): void => {
     this.isLoading = loading;
-  };
-
-  getCardFilters = async (query: string, chartType?: string): Promise<any> => {
-    this.setLoading(true);
-    try {
-      const r = await aiService.getCardFilters(query, chartType);
-      const filterObj = Filter({
-        filters: r.filters.map((f: Record<string, any>) => {
-          if (f.key === 'fetch') {
-            return mapFetch(f);
-          }
-          if (f.key === 'graphql') {
-            return mapGraphql(f);
-          }
-
-          const matchingFilter = Object.keys(filtersMap).find((k) =>
-            f.key === 'metadata' ? `_${f.source}` === k : f.key === k,
-          );
-
-          if (f.key === 'duration') {
-            const filter = matchingFilter
-              ? { ...filtersMap[matchingFilter], ...f }
-              : { ...f, value: f.value ?? [] };
-            return {
-              type: filter.key,
-              ...filter,
-              value: filter.value
-                ? filter.value.map((i: string) => parseInt(i, 10) * 60 * 1000)
-                : null,
-            };
-          }
-
-          return matchingFilter
-            ? { ...filtersMap[matchingFilter], ...f }
-            : { ...f, value: f.value ?? [] };
-        }),
-        eventsOrder: r.eventsOrder.toLowerCase(),
-      });
-
-      this.setCardFilters(filterObj);
-      return filterObj.toJS();
-    } catch (e) {
-      console.trace(e);
-    } finally {
-      this.setLoading(false);
-    }
-  };
-
-  getSearchFilters = async (query: string): Promise<any> => {
-    this.isLoading = true;
-    try {
-      const r = await aiService.getSearchFilters(query);
-      const filterObj = new Search({
-        filters: r.filters.map((f: Record<string, any>) => {
-          if (f.key === 'fetch') {
-            return mapFetch(f);
-          }
-          if (f.key === 'graphql') {
-            return mapGraphql(f);
-          }
-
-          const matchingFilter = Object.keys(filtersMap).find((k) =>
-            f.key === 'metadata' ? `_${f.source}` === k : f.key === k,
-          );
-
-          if (f.key === 'duration') {
-            const filter = matchingFilter
-              ? { ...filtersMap[matchingFilter], ...f }
-              : { ...f, value: f.value ?? [] };
-            return {
-              ...filter,
-              value: filter.value
-                ? filter.value.map((i: string) => parseInt(i, 10) * 60 * 1000)
-                : null,
-            };
-          }
-
-          return matchingFilter
-            ? { ...filtersMap[matchingFilter], ...f }
-            : { ...f, value: f.value ?? [] };
-        }),
-        eventsOrder: r.eventsOrder.toLowerCase(),
-      });
-
-      this.setFilters(filterObj);
-      return r;
-    } catch (e) {
-      console.trace(e);
-    } finally {
-      this.isLoading = false;
-    }
   };
 }
 
