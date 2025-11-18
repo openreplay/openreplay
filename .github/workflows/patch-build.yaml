@@ -83,6 +83,7 @@ jobs:
         readonly WORKING_DIR=$(pwd)
         readonly BUILD_SCRIPT_NAME="build.sh"
         readonly BACKEND_SERVICES_FILE="/tmp/backend.txt"
+        readonly EE_BACKEND_SERVICES_FILE="/tmp/ee_backend.txt"
 
         # Initialize git configuration
         setup_git() {
@@ -174,6 +175,12 @@ jobs:
 
             # Get backend services list
             ls backend/cmd >"$BACKEND_SERVICES_FILE"
+            # Get EE-only backend services list
+            if [[ -d ee/backend/cmd ]]; then
+                ls ee/backend/cmd >"$EE_BACKEND_SERVICES_FILE"
+            else
+                touch "$EE_BACKEND_SERVICES_FILE"
+            fi
 
             # Parse services input (fix for GitHub Actions syntax)
             echo "Services: ${SERVICES_INPUT:-$1}"
@@ -188,7 +195,12 @@ jobs:
 
                 # Determine build configuration based on service type
                 if grep -q "$service" "$BACKEND_SERVICES_FILE"; then
-                    # Backend service
+                    # Backend service (FOSS)
+                    cd backend
+                    foss_build_args="nil $service"
+                    ee_build_args="ee $service"
+                elif grep -q "$service" "$EE_BACKEND_SERVICES_FILE"; then
+                    # EE-only backend service
                     cd backend
                     foss_build_args="nil $service"
                     ee_build_args="ee $service"
@@ -233,6 +245,7 @@ jobs:
 
             # Cleanup
             rm -f "$BACKEND_SERVICES_FILE"
+            rm -f "$EE_BACKEND_SERVICES_FILE"
         }
 
         echo "Working directory: $WORKING_DIR"
