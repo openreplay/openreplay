@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
@@ -81,7 +82,7 @@ func (a *assistImpl) GetAll(projectKey string, request *Request) (interface{}, e
 		return nil, fmt.Errorf("failed to get project by key: %s", err)
 	}
 	order := sessionmanager.Asc
-	if request.Sort.Order == "DESC" {
+	if strings.ToLower(request.Sort.Order) == "desc" {
 		order = sessionmanager.Desc
 	}
 	filters := make([]*sessionmanager.Filter, 0, len(request.Filters))
