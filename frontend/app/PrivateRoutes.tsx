@@ -171,7 +171,6 @@ function PrivateRoutes() {
 
   React.useEffect(() => {
     searchStore.resetTags();
-    console.log('hi')
   }, [projectsStore.activeSiteId]);
 
   return (
