@@ -55,9 +55,9 @@ if config("SAML2_MD_URL", default=None) is not None and len(config("SAML2_MD_URL
 
 if SAML2["idp"] is None:
     if (
-        len(config("idp_entityId", default="")) > 0
-        and len(config("idp_sso_url", default="")) > 0
-        and len(config("idp_x509cert", default="")) > 0
+            len(config("idp_entityId", default="")) > 0
+            and len(config("idp_sso_url", default="")) > 0
+            and len(config("idp_x509cert", default="")) > 0
     ):
         idp = {
             "entityId": config("idp_entityId"),
@@ -163,7 +163,7 @@ def get_landing_URL(query_params: dict = None, redirect_to_link2=False):
         else:
             return config("sso_landing_override") + query_params
 
-    base_url = config("SITE_URLx") if config("LOCAL_DEV") else config("SITE_URL")
+    base_url = config("SITE_URL_LOCAL") if config("LOCAL_DEV", cast=bool, default=False) else config("SITE_URL")
     return base_url + config("sso_landing", default="/login") + query_params
 
 
