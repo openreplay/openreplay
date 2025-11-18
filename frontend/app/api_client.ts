@@ -278,7 +278,7 @@ export default class APIClient {
       const errorData = await response.json();
       errorMsg = errorData.errors?.[0] || errorMsg;
     } catch {}
-    throw new Error(errorMsg);
+    throw new Error(errorMsg, { cause: response });
   }
 
   async refreshToken(): Promise<string> {
