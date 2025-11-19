@@ -21,6 +21,7 @@ if len(ACCESS_SECRET_KEY) == 0:
 
 def create_tokens(tenant_id):
     if len(ACCESS_SECRET_KEY) == 0:
+        logger.warning("!!! SCIM not configured")
         raise HTTPException(status_code=401, detail="SCIM not configured")
 
     curr_time = time.time()
@@ -29,9 +30,8 @@ def create_tokens(tenant_id):
         "sub": "scim_server",
         "aud": users.AUDIENCE,
         "iss": config("JWT_ISSUER"),
-        "exp": "",
+        "exp": curr_time + ACCESS_TOKEN_EXPIRE_SECONDS,
     }
-    access_payload.update({"exp": curr_time + ACCESS_TOKEN_EXPIRE_SECONDS})
     access_token = jwt.encode(access_payload, ACCESS_SECRET_KEY, algorithm=ALGORITHM)
 
     refresh_payload = access_payload.copy()
