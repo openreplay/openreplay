@@ -5,25 +5,30 @@ import jwt
 from decouple import config
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
+from chalicelib.core import users
 
 logger = logging.getLogger(__name__)
 
-ACCESS_SECRET_KEY = config("SCIM_ACCESS_SECRET_KEY")
-REFRESH_SECRET_KEY = config("SCIM_REFRESH_SECRET_KEY")
-ALGORITHM = config("SCIM_JWT_ALGORITHM")
-ACCESS_TOKEN_EXPIRE_SECONDS = int(config("SCIM_ACCESS_TOKEN_EXPIRE_SECONDS"))
-REFRESH_TOKEN_EXPIRE_SECONDS = int(config("SCIM_REFRESH_TOKEN_EXPIRE_SECONDS"))
-AUDIENCE = config("SCIM_AUDIENCE")
-ISSUER = (config("JWT_ISSUER"),)
+ACCESS_SECRET_KEY = config("SCIM_ACCESS_SECRET_KEY", default="")
+REFRESH_SECRET_KEY = config("SCIM_REFRESH_SECRET_KEY", default="")
+ALGORITHM = config("SCIM_JWT_ALGORITHM", default="HS512")
+ACCESS_TOKEN_EXPIRE_SECONDS = config("SCIM_ACCESS_TOKEN_EXPIRE_SECONDS", default=900, cast=int)
+REFRESH_TOKEN_EXPIRE_SECONDS = config("SCIM_REFRESH_TOKEN_EXPIRE_SECONDS", default=86400, cast=int)
+
+if len(ACCESS_SECRET_KEY) == 0:
+    logger.info("SCIM not configured")
 
 
 def create_tokens(tenant_id):
+    if len(ACCESS_SECRET_KEY) == 0:
+        raise HTTPException(status_code=401, detail="SCIM not configured")
+
     curr_time = time.time()
     access_payload = {
         "tenant_id": tenant_id,
         "sub": "scim_server",
-        "aud": AUDIENCE,
-        "iss": ISSUER,
+        "aud": users.AUDIENCE,
+        "iss": config("JWT_ISSUER"),
         "exp": "",
     }
     access_payload.update({"exp": curr_time + ACCESS_TOKEN_EXPIRE_SECONDS})
@@ -39,7 +44,7 @@ def create_tokens(tenant_id):
 def verify_access_token(token: str):
     try:
         payload = jwt.decode(
-            token, ACCESS_SECRET_KEY, algorithms=[ALGORITHM], audience=AUDIENCE
+            token, ACCESS_SECRET_KEY, algorithms=[ALGORITHM], audience=users.AUDIENCE
         )
         return payload
     except jwt.ExpiredSignatureError:
@@ -51,7 +56,7 @@ def verify_access_token(token: str):
 def verify_refresh_token(token: str):
     try:
         payload = jwt.decode(
-            token, REFRESH_SECRET_KEY, algorithms=[ALGORITHM], audience=AUDIENCE
+            token, REFRESH_SECRET_KEY, algorithms=[ALGORITHM], audience=users.AUDIENCE
         )
         return payload
     except jwt.ExpiredSignatureError:

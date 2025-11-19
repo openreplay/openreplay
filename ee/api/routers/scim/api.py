@@ -1,22 +1,19 @@
-from scim2_server import utils
-
-
-from routers.base import get_routers
-from routers.scim.providers import MultiTenantProvider
-from routers.scim.backends import PostgresBackend
-from routers.scim.postgres_resource import PostgresResource
-from routers.scim import users, groups, helpers
 from urllib.parse import urlencode
-
-from chalicelib.utils import pg_client
 
 from fastapi import HTTPException, Request
 from fastapi.responses import RedirectResponse
+from scim2_server import utils
+
+from chalicelib.utils import pg_client
 from chalicelib.utils.scim_auth import (
     create_tokens,
     verify_refresh_token,
 )
-
+from routers.base import get_routers
+from routers.scim import users, groups, helpers
+from routers.scim.backends import PostgresBackend
+from routers.scim.postgres_resource import PostgresResource
+from routers.scim.providers import MultiTenantProvider
 
 b = PostgresBackend()
 b.register_postgres_resource(
@@ -53,7 +50,6 @@ for schema in helpers.load_custom_schemas().values():
 for resource_type in helpers.load_custom_resource_types().values():
     scim_app.register_resource_type(resource_type)
 
-
 public_app, app, app_apikey = get_routers(prefix="/sso/scim/v2")
 
 
@@ -70,7 +66,8 @@ async def post_token(r: Request):
                     """
                     SELECT tenant_id
                     FROM public.tenants
-                    WHERE tenant_id=%(tenant_id)s AND tenant_key=%(tenant_key)s
+                    WHERE tenant_id = %(tenant_id)s
+                      AND tenant_key = %(tenant_key)s
                     """,
                     {"tenant_id": int(client_id), "tenant_key": client_secret},
                 )
@@ -94,7 +91,9 @@ async def post_token(r: Request):
                     """
                     SELECT *
                     FROM public.scim_auth_codes
-                    WHERE auth_code=%(auth_code)s AND tenant_id=%(tenant_id)s AND used IS FALSE
+                    WHERE auth_code = %(auth_code)s
+                      AND tenant_id = %(tenant_id)s
+                      AND used IS FALSE
                     """,
                     {"auth_code": code, "tenant_id": int(client_id)},
                 )
@@ -107,8 +106,10 @@ async def post_token(r: Request):
                 cur.mogrify(
                     """
                     UPDATE public.scim_auth_codes
-                    SET used=TRUE
-                    WHERE auth_code=%(auth_code)s AND tenant_id=%(tenant_id)s AND used IS FALSE
+                    SET used= TRUE
+                    WHERE auth_code = %(auth_code)s
+                      AND tenant_id = %(tenant_id)s
+                      AND used IS FALSE
                     """,
                     {"auth_code": code, "tenant_id": int(client_id)},
                 )
@@ -129,19 +130,19 @@ async def post_token(r: Request):
 # note(jon): this might be specific to okta. if so, we should probably put specify that in the endpoint
 @public_app.get("/authorize")
 async def get_authorize(
-    r: Request,
-    response_type: str,
-    client_id: str,
-    redirect_uri: str,
-    state: str | None = None,
+        r: Request,
+        response_type: str,
+        client_id: str,
+        redirect_uri: str,
+        state: str | None = None,
 ):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 """
                 UPDATE public.scim_auth_codes
-                SET used=TRUE
-                WHERE tenant_id=%(tenant_id)s
+                SET used= TRUE
+                WHERE tenant_id = %(tenant_id)s
                 """,
                 {"tenant_id": int(client_id)},
             )
@@ -150,8 +151,7 @@ async def get_authorize(
             cur.mogrify(
                 """
                 INSERT INTO public.scim_auth_codes (tenant_id)
-                VALUES (%(tenant_id)s)
-                RETURNING auth_code
+                VALUES (%(tenant_id)s) RETURNING auth_code
                 """,
                 {"tenant_id": int(client_id)},
             )
