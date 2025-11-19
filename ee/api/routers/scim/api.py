@@ -53,30 +53,27 @@ for resource_type in helpers.load_custom_resource_types().values():
 public_app, app, app_apikey = get_routers(prefix="/sso/scim/v2")
 
 
+@public_app.post("/token/")
 @public_app.post("/token")
 async def post_token(r: Request):
     form = await r.form()
-
     client_id = form.get("client_id")
     client_secret = form.get("client_secret")
+    tenant_id = int(client_id)
     with pg_client.PostgresClient() as cur:
-        try:
-            cur.execute(
-                cur.mogrify(
-                    """
-                    SELECT tenant_id
-                    FROM public.tenants
-                    WHERE tenant_id = %(tenant_id)s
-                      AND tenant_key = %(tenant_key)s
-                    """,
-                    {"tenant_id": int(client_id), "tenant_key": client_secret},
-                )
+        cur.execute(
+            cur.mogrify(
+                """
+                SELECT tenant_id
+                FROM public.tenants
+                WHERE tenant_id = %(tenant_id)s
+                  AND tenant_key = %(tenant_key)s
+                """,
+                {"tenant_id": tenant_id, "tenant_key": client_secret},
             )
-        except ValueError:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-
+        )
         tenant = cur.fetchone()
-        if not tenant:
+        if tenant is None:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
     grant_type = form.get("grant_type")
@@ -88,17 +85,18 @@ async def post_token(r: Request):
         with pg_client.PostgresClient() as cur:
             cur.execute(
                 cur.mogrify(
-                    """
+                    """ \
                     SELECT *
                     FROM public.scim_auth_codes
                     WHERE auth_code = %(auth_code)s
                       AND tenant_id = %(tenant_id)s
-                      AND used IS FALSE
+                      AND NOT used LIMIT 1;
                     """,
                     {"auth_code": code, "tenant_id": int(client_id)},
                 )
             )
-            if cur.fetchone() is None:
+            row = cur.fetchone()
+            if row is None:
                 raise HTTPException(
                     status_code=401, detail="Invalid code/client_id pair"
                 )
@@ -111,23 +109,24 @@ async def post_token(r: Request):
                       AND tenant_id = %(tenant_id)s
                       AND used IS FALSE
                     """,
-                    {"auth_code": code, "tenant_id": int(client_id)},
+                    {"auth_code": code, "tenant_id": tenant_id},
                 )
             )
 
     access_token, refresh_token, expires_in = create_tokens(
         tenant_id=tenant["tenant_id"]
     )
-
-    return {
+    response = {
         "access_token": access_token,
         "token_type": "Bearer",
         "expires_in": expires_in,
         "refresh_token": refresh_token,
     }
+    return response
 
 
 # note(jon): this might be specific to okta. if so, we should probably put specify that in the endpoint
+@public_app.get("/authorize/")
 @public_app.get("/authorize")
 async def get_authorize(
         r: Request,
@@ -156,8 +155,10 @@ async def get_authorize(
                 {"tenant_id": int(client_id)},
             )
         )
-        code = cur.fetchone()["auth_code"]
-    params = {"code": code}
+        code = cur.fetchone()
+        if code is None:
+            raise HTTPException(status_code=401, detail="Invalid SCIM-clientId")
+    params = {"code": code["auth_code"]}
     if state:
         params["state"] = state
     url = f"{redirect_uri}?{urlencode(params)}"
