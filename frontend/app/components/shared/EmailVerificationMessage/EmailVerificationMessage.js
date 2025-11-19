@@ -21,15 +21,9 @@ function EmailVerificationMessage(props) {
       title={`${t("We've sent a verification email to")} "${email}" ${t('please follow the instructions in it to use OpenReplay uninterruptedly.')}`}
     >
       <div
-        className="mt-3 px-3 rounded-2xl font-medium"
-        style={{
-          paddingTop: '3px',
-          height: '28px',
-          backgroundColor: 'rgba(255, 239, 239, 1)',
-          border: 'solid thin rgba(221, 181, 181, 1)',
-        }}
+        className="px-3 rounded-2xl font-medium bg-white border py-1 flex items-center gap-2"
       >
-        <span>{t('Please, verify your email. ')}</span>{' '}
+        <span>{t('Please, verify your email. ')}</span>
         <a href="#" className="link" onClick={send}>
           {t('Resend')}
         </a>
