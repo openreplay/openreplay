@@ -292,20 +292,20 @@ function clone_repo() {
     log info "Working directory $tmp_dir"
 
     branch="${OR_VERSION:-main}"
-    log info "Using sparse checkout for optimized download (scripts/schema, scripts/helmcharts, ee/scripts)"
-    
+    log info "Fetching latest changes"
+
     # Initialize empty repo
     mkdir -p openreplay
     cd openreplay || log err "Failed to cd to openreplay"
     git init -q
     git remote add origin "$OR_REPO"
-    
+
     # Configure sparse checkout before fetching
     git config core.sparseCheckout true
-    echo "scripts/schema" >> .git/info/sparse-checkout
-    echo "scripts/helmcharts" >> .git/info/sparse-checkout
-    echo "ee/scripts" >> .git/info/sparse-checkout
-    
+    echo "scripts/schema" >>.git/info/sparse-checkout
+    echo "scripts/helmcharts" >>.git/info/sparse-checkout
+    echo "ee/scripts" >>.git/info/sparse-checkout
+
     # Fetch only the specific ref (tag or branch) with shallow depth
     # Try tag first since versioned releases are typically tags
     if git fetch --depth 1 origin "refs/tags/${branch}:refs/tags/${branch}" 2>/dev/null; then
@@ -317,7 +317,7 @@ function clone_repo() {
     else
         log err "Failed to fetch openreplay from tag/branch ${branch}"
     fi
-    
+
     cd ..
     return
 }
