@@ -88,6 +88,8 @@ CREATE TABLE IF NOT EXISTS public.scim_auth_codes
     used         bool                        NOT NULL        DEFAULT FALSE
 );
 
+ALTER TABLE IF EXISTS public.users
+    ADD COLUMN IF NOT EXISTS updated_at timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc');
 
 COMMIT;
 
