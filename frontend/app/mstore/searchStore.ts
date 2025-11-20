@@ -594,38 +594,22 @@ class SearchStore {
       return filter;
     }
 
-    // const tagFilter = filterStore.findEvent({
-    //   name: FilterKey.ISSUE,
-    //   autoCaptured: true,
-    // });
-
-    // if (!tagFilter) {
-    //   console.error('Tag filter not found');
-    //   return filter;
-    // }
-
-    const issueFilter = {
-      isEvent: true,
-      name: FilterKey.ISSUE,
+    const tagFilter = filterStore.findEvent({
+      name: 'issue',
+      isEvent: false,
       autoCaptured: true,
-      value: [],
-      operator: 'is',
-      propertyOrder: 'and',
-      filters: [
-        {
-          isEvent: false,
-          name: 'issue_type',
-          autoCaptured: true,
-          dataType: 'string',
-          operator: 'is',
-          value: [activeTags[0]],
-        },
-      ],
-    };
+    });
+
+    if (!tagFilter) {
+      console.error('Tag filter not found for issue');
+      return filter;
+    }
+
+    tagFilter.value = [activeTags[0]];
 
     return {
       ...filter,
-      filters: [...filter.filters, issueFilter],
+      filters: [...filter.filters, tagFilter.toJson()],
     };
   }
 

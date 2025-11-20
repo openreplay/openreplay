@@ -160,7 +160,7 @@ export default class FilterItem implements IFilter {
         this.value?.map((item: any) => (item ? item.toString() : '')) || [],
       operator: this.operator || 'is',
       dataType: dataType,
-      propertyOrder: this.propertyOrder || (this.isEvent ? 'then' : 'and'),
+      propertyOrder: this.propertyOrder || 'and',
       filters: Array.isArray(this.filters)
         ? this.filters
             .filter((child) =>
