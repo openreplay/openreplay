@@ -570,7 +570,6 @@ class SearchStore {
     let filter = this.instance.toSearch();
     filter = this.applyTagFilter(filter, this.activeTags);
     filter = this.applyDurationFilter(filter);
-
     this.latestRequestTime = filter.startDate;
     this.latestList = List();
     this.searchInProgress = true;
@@ -614,7 +613,7 @@ class SearchStore {
   }
 
   private applyDurationFilter(filter: any): any {
-    if (filter.filters.some((f: any) => f.type === FilterKey.DURATION)) {
+    if (filter.filters.some((f: any) => f.name === FilterKey.DURATION)) {
       return filter;
     }
 
@@ -626,14 +625,17 @@ class SearchStore {
 
     const multiplier = durationFilter.countType === 'sec' ? 1000 : 60000;
     const amount = durationFilter.count * multiplier;
-    const value = durationFilter.operator === '<' ? [amount, 0] : [0, amount];
+    const value =
+      durationFilter.operator === '<'
+        ? [amount.toString()]
+        : [null, amount.toString()];
 
     const durationFilterConfig = {
-      autoCaptured: false,
-      dataType: 'int',
+      autoCaptured: true,
+      dataType: 'number',
       name: FilterKey.DURATION,
       value,
-      operator: 'is',
+      operator: '=',
     };
 
     return {
