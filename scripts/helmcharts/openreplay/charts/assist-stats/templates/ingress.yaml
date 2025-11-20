@@ -9,10 +9,10 @@ metadata:
   labels:
     {{- include "assist-stats.labels" . | nindent 4 }}
   annotations:
-    nginx.ingress.kubernetes.io/configuration-snippet: |
+    nginx.org/location-snippets: |
       add_header Cache-Control "no-store,no-cache";
       add_header Pragma "no-cache";
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.org/rewrites: "serviceName={{ include "assist-stats.fullname" . }} rewrite=/$1"
   {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
