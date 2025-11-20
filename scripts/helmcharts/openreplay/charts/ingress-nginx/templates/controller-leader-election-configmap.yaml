@@ -1,0 +1,13 @@
+{{- if .Values.controller.reportIngressStatus.enableLeaderElection }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nginx-ingress.leaderElectionName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "nginx-ingress.labels" . | nindent 4 }}
+{{- if .Values.controller.reportIngressStatus.annotations }}
+  annotations:
+{{ toYaml .Values.controller.reportIngressStatus.annotations | indent 4 }}
+{{- end }}
+{{- end }}

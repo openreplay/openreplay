@@ -1,0 +1,83 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
+  name: aplogconfs.appprotect.f5.com
+spec:
+  group: appprotect.f5.com
+  names:
+    kind: APLogConf
+    listKind: APLogConfList
+    plural: aplogconfs
+    singular: aplogconf
+  preserveUnknownFields: false
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: APLogConf is the Schema for the APLogConfs API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: APLogConfSpec defines the desired state of APLogConf
+            properties:
+              content:
+                properties:
+                  escaping_characters:
+                    items:
+                      properties:
+                        from:
+                          type: string
+                        to:
+                          type: string
+                      type: object
+                    type: array
+                  format:
+                    enum:
+                    - splunk
+                    - arcsight
+                    - default
+                    - user-defined
+                    - grpc
+                    type: string
+                  format_string:
+                    type: string
+                  list_delimiter:
+                    type: string
+                  list_prefix:
+                    type: string
+                  list_suffix:
+                    type: string
+                  max_message_size:
+                    pattern: ^([1-9]|[1-5][0-9]|6[0-4])k$
+                    type: string
+                  max_request_size:
+                    pattern: ^([1-9]|[1-9][0-9]|[1-9][0-9]{2}|[1-9][0-9]{3}|10[0-2][0-9][0-9]|[1-9]k|10k|any)$
+                    type: string
+                type: object
+              filter:
+                properties:
+                  request_type:
+                    enum:
+                    - all
+                    - illegal
+                    - blocked
+                    type: string
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true

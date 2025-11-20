@@ -1,0 +1,1405 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: virtualservers.k8s.nginx.org
+spec:
+  group: k8s.nginx.org
+  names:
+    kind: VirtualServer
+    listKind: VirtualServerList
+    plural: virtualservers
+    shortNames:
+    - vs
+    singular: virtualserver
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: Current state of the VirtualServer. If the resource has a valid
+        status, it means it has been validated and accepted by the Ingress Controller.
+      jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .spec.host
+      name: Host
+      type: string
+    - jsonPath: .status.externalEndpoints[*].ip
+      name: IP
+      type: string
+    - jsonPath: .status.externalEndpoints[*].hostname
+      name: ExternalHostname
+      priority: 1
+      type: string
+    - jsonPath: .status.externalEndpoints[*].ports
+      name: Ports
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: VirtualServer defines the VirtualServer resource.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: VirtualServerSpec is the spec of the VirtualServer resource.
+            properties:
+              dos:
+                description: A reference to a DosProtectedResource, setting this enables
+                  DOS protection of the VirtualServer route.
+                type: string
+              externalDNS:
+                description: The externalDNS configuration for a VirtualServer.
+                properties:
+                  enable:
+                    description: Enables ExternalDNS integration for a VirtualServer
+                      resource. The default is false.
+                    type: boolean
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: Configure labels to be applied to the Endpoint resources
+                      that will be consumed by ExternalDNS.
+                    type: object
+                  providerSpecific:
+                    description: Configure provider specific properties which holds
+                      the name and value of a configuration which is specific to individual
+                      DNS providers.
+                    items:
+                      description: |-
+                        ProviderSpecificProperty defines specific property
+                        for using with ExternalDNS sub-resource.
+                      properties:
+                        name:
+                          description: Name of the property
+                          type: string
+                        value:
+                          description: Value of the property
+                          type: string
+                      type: object
+                    type: array
+                  recordTTL:
+                    description: TTL for the DNS record. This defaults to 0 if not
+                      defined.
+                    format: int64
+                    type: integer
+                  recordType:
+                    description: The record Type that should be created, e.g. “A”,
+                      “AAAA”, “CNAME”. This is automatically computed based on the
+                      external endpoints if not defined.
+                    type: string
+                type: object
+              gunzip:
+                description: Enables or disables decompression of gzipped responses
+                  for clients. Allowed values “on”/“off”, “true”/“false” or “yes”/“no”.
+                  If the gunzip value is not set, it defaults to off.
+                type: boolean
+              host:
+                description: The host (domain name) of the server. Must be a valid
+                  subdomain as defined in RFC 1123, such as my-app or hello.example.com.
+                  When using a wildcard domain like *.example.com the domain must
+                  be contained in double quotes. The host value needs to be unique
+                  among all Ingress and VirtualServer resources.
+                type: string
+              http-snippets:
+                description: Sets a custom snippet in the http context.
+                type: string
+              ingressClassName:
+                description: Specifies which Ingress Controller must handle the VirtualServerRoute
+                  resource. Must be the same as the ingressClassName of the VirtualServer
+                  that references this resource.
+                type: string
+              internalRoute:
+                description: InternalRoute allows for the configuration of internal
+                  routing.
+                type: boolean
+              listener:
+                description: Sets a custom HTTP and/or HTTPS listener. Valid fields
+                  are listener.http and listener.https. Each field must reference
+                  the name of a valid listener defined in a GlobalConfiguration resource
+                properties:
+                  http:
+                    description: The name of an HTTP listener defined in a GlobalConfiguration
+                      resource.
+                    type: string
+                  https:
+                    description: The name of an HTTPS listener defined in a GlobalConfiguration
+                      resource.
+                    type: string
+                type: object
+              policies:
+                description: A list of policies.
+                items:
+                  description: PolicyReference references a policy by name and an
+                    optional namespace.
+                  properties:
+                    name:
+                      description: The name of a policy. If the policy doesn’t exist
+                        or invalid, NGINX will respond with an error response with
+                        the 500 status code.
+                      type: string
+                    namespace:
+                      description: The namespace of a policy. If not specified, the
+                        namespace of the VirtualServer resource is used.
+                      type: string
+                  type: object
+                type: array
+              routes:
+                description: A list of routes.
+                items:
+                  description: Route defines a route.
+                  properties:
+                    action:
+                      description: The default action to perform for a request.
+                      properties:
+                        pass:
+                          description: Passes requests to an upstream. The upstream
+                            with that name must be defined in the resource.
+                          type: string
+                        proxy:
+                          description: Passes requests to an upstream with the ability
+                            to modify the request/response (for example, rewrite the
+                            URI or modify the headers).
+                          properties:
+                            requestHeaders:
+                              description: The request headers modifications.
+                              properties:
+                                pass:
+                                  description: Passes the original request headers
+                                    to the proxied upstream server.  Default is true.
+                                  type: boolean
+                                set:
+                                  description: Allows redefining or appending fields
+                                    to present request headers passed to the proxied
+                                    upstream servers.
+                                  items:
+                                    description: Header defines an HTTP Header.
+                                    properties:
+                                      name:
+                                        description: The name of the header.
+                                        type: string
+                                      value:
+                                        description: The value of the header.
+                                        type: string
+                                    type: object
+                                  type: array
+                              type: object
+                            responseHeaders:
+                              description: The response headers modifications.
+                              properties:
+                                add:
+                                  description: Adds headers to the response to the
+                                    client.
+                                  items:
+                                    description: AddHeader defines an HTTP Header
+                                      with an optional Always field to use with the
+                                      add_header NGINX directive.
+                                    properties:
+                                      always:
+                                        description: If set to true, add the header
+                                          regardless of the response status code**.
+                                          Default is false.
+                                        type: boolean
+                                      name:
+                                        description: The name of the header.
+                                        type: string
+                                      value:
+                                        description: The value of the header.
+                                        type: string
+                                    type: object
+                                  type: array
+                                hide:
+                                  description: The headers that will not be passed*
+                                    in the response to the client from a proxied upstream
+                                    server.
+                                  items:
+                                    type: string
+                                  type: array
+                                ignore:
+                                  description: Disables processing of certain headers**
+                                    to the client from a proxied upstream server.
+                                  items:
+                                    type: string
+                                  type: array
+                                pass:
+                                  description: Allows passing the hidden header fields*
+                                    to the client from a proxied upstream server.
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
+                            rewritePath:
+                              description: The rewritten URI. If the route path is
+                                a regular expression – starts with ~ – the rewritePath
+                                can include capture groups with $1-9. For example
+                                $1 for the first group, and so on. For more information,
+                                check the rewrite example.
+                              type: string
+                            upstream:
+                              description: The name of the upstream which the requests
+                                will be proxied to. The upstream with that name must
+                                be defined in the resource.
+                              type: string
+                          type: object
+                        redirect:
+                          description: Redirects requests to a provided URL.
+                          properties:
+                            code:
+                              description: 'The status code of a redirect. The allowed
+                                values are: 301, 302, 307 or 308. The default is 301.'
+                              type: integer
+                            url:
+                              description: 'The URL to redirect the request to. Supported
+                                NGINX variables: $scheme, $http_x_forwarded_proto,
+                                $request_uri or $host. Variables must be enclosed
+                                in curly braces. For example: ${host}${request_uri}.'
+                              type: string
+                          type: object
+                        return:
+                          description: Returns a preconfigured response.
+                          properties:
+                            body:
+                              description: 'The body of the response. Supports NGINX
+                                variables*. Variables must be enclosed in curly brackets.
+                                For example: Request is ${request_uri}\n.'
+                              type: string
+                            code:
+                              description: 'The status code of the response. The allowed
+                                values are: 2XX, 4XX or 5XX. The default is 200.'
+                              type: integer
+                            headers:
+                              description: The custom headers of the response.
+                              items:
+                                description: Header defines an HTTP Header.
+                                properties:
+                                  name:
+                                    description: The name of the header.
+                                    type: string
+                                  value:
+                                    description: The value of the header.
+                                    type: string
+                                type: object
+                              type: array
+                            type:
+                              description: The MIME type of the response. The default
+                                is text/plain.
+                              type: string
+                          type: object
+                      type: object
+                    dos:
+                      description: A reference to a DosProtectedResource, setting
+                        this enables DOS protection of the VirtualServer route.
+                      type: string
+                    errorPages:
+                      description: The custom responses for error codes. NGINX will
+                        use those responses instead of returning the error responses
+                        from the upstream servers or the default responses generated
+                        by NGINX. A custom response can be a redirect or a canned
+                        response. For example, a redirect to another URL if an upstream
+                        server responded with a 404 status code.
+                      items:
+                        description: ErrorPage defines an ErrorPage in a Route.
+                        properties:
+                          codes:
+                            description: A list of error status codes.
+                            items:
+                              type: integer
+                            type: array
+                          redirect:
+                            description: The canned response action for the given
+                              status codes.
+                            properties:
+                              code:
+                                description: 'The status code of a redirect. The allowed
+                                  values are: 301, 302, 307 or 308. The default is
+                                  301.'
+                                type: integer
+                              url:
+                                description: 'The URL to redirect the request to.
+                                  Supported NGINX variables: $scheme, $http_x_forwarded_proto,
+                                  $request_uri or $host. Variables must be enclosed
+                                  in curly braces. For example: ${host}${request_uri}.'
+                                type: string
+                            type: object
+                          return:
+                            description: The redirect action for the given status
+                              codes.
+                            properties:
+                              body:
+                                description: 'The body of the response. Supports NGINX
+                                  variables*. Variables must be enclosed in curly
+                                  brackets. For example: Request is ${request_uri}\n.'
+                                type: string
+                              code:
+                                description: 'The status code of the response. The
+                                  allowed values are: 2XX, 4XX or 5XX. The default
+                                  is 200.'
+                                type: integer
+                              headers:
+                                description: The custom headers of the response.
+                                items:
+                                  description: Header defines an HTTP Header.
+                                  properties:
+                                    name:
+                                      description: The name of the header.
+                                      type: string
+                                    value:
+                                      description: The value of the header.
+                                      type: string
+                                  type: object
+                                type: array
+                              type:
+                                description: The MIME type of the response. The default
+                                  is text/plain.
+                                type: string
+                            type: object
+                        type: object
+                      type: array
+                    location-snippets:
+                      description: Sets a custom snippet in the location context.
+                        Overrides the location-snippets ConfigMap key.
+                      type: string
+                    matches:
+                      description: The matching rules for advanced content-based routing.
+                        Requires the default Action or Splits. Unmatched requests
+                        will be handled by the default Action or Splits.
+                      items:
+                        description: Match defines a match.
+                        properties:
+                          action:
+                            description: The action to perform for a request.
+                            properties:
+                              pass:
+                                description: Passes requests to an upstream. The upstream
+                                  with that name must be defined in the resource.
+                                type: string
+                              proxy:
+                                description: Passes requests to an upstream with the
+                                  ability to modify the request/response (for example,
+                                  rewrite the URI or modify the headers).
+                                properties:
+                                  requestHeaders:
+                                    description: The request headers modifications.
+                                    properties:
+                                      pass:
+                                        description: Passes the original request headers
+                                          to the proxied upstream server.  Default
+                                          is true.
+                                        type: boolean
+                                      set:
+                                        description: Allows redefining or appending
+                                          fields to present request headers passed
+                                          to the proxied upstream servers.
+                                        items:
+                                          description: Header defines an HTTP Header.
+                                          properties:
+                                            name:
+                                              description: The name of the header.
+                                              type: string
+                                            value:
+                                              description: The value of the header.
+                                              type: string
+                                          type: object
+                                        type: array
+                                    type: object
+                                  responseHeaders:
+                                    description: The response headers modifications.
+                                    properties:
+                                      add:
+                                        description: Adds headers to the response
+                                          to the client.
+                                        items:
+                                          description: AddHeader defines an HTTP Header
+                                            with an optional Always field to use with
+                                            the add_header NGINX directive.
+                                          properties:
+                                            always:
+                                              description: If set to true, add the
+                                                header regardless of the response
+                                                status code**. Default is false.
+                                              type: boolean
+                                            name:
+                                              description: The name of the header.
+                                              type: string
+                                            value:
+                                              description: The value of the header.
+                                              type: string
+                                          type: object
+                                        type: array
+                                      hide:
+                                        description: The headers that will not be
+                                          passed* in the response to the client from
+                                          a proxied upstream server.
+                                        items:
+                                          type: string
+                                        type: array
+                                      ignore:
+                                        description: Disables processing of certain
+                                          headers** to the client from a proxied upstream
+                                          server.
+                                        items:
+                                          type: string
+                                        type: array
+                                      pass:
+                                        description: Allows passing the hidden header
+                                          fields* to the client from a proxied upstream
+                                          server.
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  rewritePath:
+                                    description: The rewritten URI. If the route path
+                                      is a regular expression – starts with ~ – the
+                                      rewritePath can include capture groups with
+                                      $1-9. For example $1 for the first group, and
+                                      so on. For more information, check the rewrite
+                                      example.
+                                    type: string
+                                  upstream:
+                                    description: The name of the upstream which the
+                                      requests will be proxied to. The upstream with
+                                      that name must be defined in the resource.
+                                    type: string
+                                type: object
+                              redirect:
+                                description: Redirects requests to a provided URL.
+                                properties:
+                                  code:
+                                    description: 'The status code of a redirect. The
+                                      allowed values are: 301, 302, 307 or 308. The
+                                      default is 301.'
+                                    type: integer
+                                  url:
+                                    description: 'The URL to redirect the request
+                                      to. Supported NGINX variables: $scheme, $http_x_forwarded_proto,
+                                      $request_uri or $host. Variables must be enclosed
+                                      in curly braces. For example: ${host}${request_uri}.'
+                                    type: string
+                                type: object
+                              return:
+                                description: Returns a preconfigured response.
+                                properties:
+                                  body:
+                                    description: 'The body of the response. Supports
+                                      NGINX variables*. Variables must be enclosed
+                                      in curly brackets. For example: Request is ${request_uri}\n.'
+                                    type: string
+                                  code:
+                                    description: 'The status code of the response.
+                                      The allowed values are: 2XX, 4XX or 5XX. The
+                                      default is 200.'
+                                    type: integer
+                                  headers:
+                                    description: The custom headers of the response.
+                                    items:
+                                      description: Header defines an HTTP Header.
+                                      properties:
+                                        name:
+                                          description: The name of the header.
+                                          type: string
+                                        value:
+                                          description: The value of the header.
+                                          type: string
+                                      type: object
+                                    type: array
+                                  type:
+                                    description: The MIME type of the response. The
+                                      default is text/plain.
+                                    type: string
+                                type: object
+                            type: object
+                          conditions:
+                            description: A list of conditions. Must include at least
+                              1 condition.
+                            items:
+                              description: Condition defines a condition in a MatchRule.
+                              properties:
+                                argument:
+                                  description: The name of an argument. Must consist
+                                    of alphanumeric characters or _.
+                                  type: string
+                                cookie:
+                                  description: The name of a cookie. Must consist
+                                    of alphanumeric characters or _.
+                                  type: string
+                                header:
+                                  description: The name of a header. Must consist
+                                    of alphanumeric characters or -.
+                                  type: string
+                                value:
+                                  description: The value to match the condition against.
+                                  type: string
+                                variable:
+                                  description: The name of an NGINX variable. Must
+                                    start with $.
+                                  type: string
+                              type: object
+                            type: array
+                          splits:
+                            description: The splits configuration for traffic splitting.
+                              Must include at least 2 splits.
+                            items:
+                              description: Split defines a split.
+                              properties:
+                                action:
+                                  description: The action to perform for a request.
+                                  properties:
+                                    pass:
+                                      description: Passes requests to an upstream.
+                                        The upstream with that name must be defined
+                                        in the resource.
+                                      type: string
+                                    proxy:
+                                      description: Passes requests to an upstream
+                                        with the ability to modify the request/response
+                                        (for example, rewrite the URI or modify the
+                                        headers).
+                                      properties:
+                                        requestHeaders:
+                                          description: The request headers modifications.
+                                          properties:
+                                            pass:
+                                              description: Passes the original request
+                                                headers to the proxied upstream server.  Default
+                                                is true.
+                                              type: boolean
+                                            set:
+                                              description: Allows redefining or appending
+                                                fields to present request headers
+                                                passed to the proxied upstream servers.
+                                              items:
+                                                description: Header defines an HTTP
+                                                  Header.
+                                                properties:
+                                                  name:
+                                                    description: The name of the header.
+                                                    type: string
+                                                  value:
+                                                    description: The value of the
+                                                      header.
+                                                    type: string
+                                                type: object
+                                              type: array
+                                          type: object
+                                        responseHeaders:
+                                          description: The response headers modifications.
+                                          properties:
+                                            add:
+                                              description: Adds headers to the response
+                                                to the client.
+                                              items:
+                                                description: AddHeader defines an
+                                                  HTTP Header with an optional Always
+                                                  field to use with the add_header
+                                                  NGINX directive.
+                                                properties:
+                                                  always:
+                                                    description: If set to true, add
+                                                      the header regardless of the
+                                                      response status code**. Default
+                                                      is false.
+                                                    type: boolean
+                                                  name:
+                                                    description: The name of the header.
+                                                    type: string
+                                                  value:
+                                                    description: The value of the
+                                                      header.
+                                                    type: string
+                                                type: object
+                                              type: array
+                                            hide:
+                                              description: The headers that will not
+                                                be passed* in the response to the
+                                                client from a proxied upstream server.
+                                              items:
+                                                type: string
+                                              type: array
+                                            ignore:
+                                              description: Disables processing of
+                                                certain headers** to the client from
+                                                a proxied upstream server.
+                                              items:
+                                                type: string
+                                              type: array
+                                            pass:
+                                              description: Allows passing the hidden
+                                                header fields* to the client from
+                                                a proxied upstream server.
+                                              items:
+                                                type: string
+                                              type: array
+                                          type: object
+                                        rewritePath:
+                                          description: The rewritten URI. If the route
+                                            path is a regular expression – starts
+                                            with ~ – the rewritePath can include capture
+                                            groups with $1-9. For example $1 for the
+                                            first group, and so on. For more information,
+                                            check the rewrite example.
+                                          type: string
+                                        upstream:
+                                          description: The name of the upstream which
+                                            the requests will be proxied to. The upstream
+                                            with that name must be defined in the
+                                            resource.
+                                          type: string
+                                      type: object
+                                    redirect:
+                                      description: Redirects requests to a provided
+                                        URL.
+                                      properties:
+                                        code:
+                                          description: 'The status code of a redirect.
+                                            The allowed values are: 301, 302, 307
+                                            or 308. The default is 301.'
+                                          type: integer
+                                        url:
+                                          description: 'The URL to redirect the request
+                                            to. Supported NGINX variables: $scheme,
+                                            $http_x_forwarded_proto, $request_uri
+                                            or $host. Variables must be enclosed in
+                                            curly braces. For example: ${host}${request_uri}.'
+                                          type: string
+                                      type: object
+                                    return:
+                                      description: Returns a preconfigured response.
+                                      properties:
+                                        body:
+                                          description: 'The body of the response.
+                                            Supports NGINX variables*. Variables must
+                                            be enclosed in curly brackets. For example:
+                                            Request is ${request_uri}\n.'
+                                          type: string
+                                        code:
+                                          description: 'The status code of the response.
+                                            The allowed values are: 2XX, 4XX or 5XX.
+                                            The default is 200.'
+                                          type: integer
+                                        headers:
+                                          description: The custom headers of the response.
+                                          items:
+                                            description: Header defines an HTTP Header.
+                                            properties:
+                                              name:
+                                                description: The name of the header.
+                                                type: string
+                                              value:
+                                                description: The value of the header.
+                                                type: string
+                                            type: object
+                                          type: array
+                                        type:
+                                          description: The MIME type of the response.
+                                            The default is text/plain.
+                                          type: string
+                                      type: object
+                                  type: object
+                                weight:
+                                  description: The weight of an action. Must fall
+                                    into the range 0..100. The sum of the weights
+                                    of all splits must be equal to 100.
+                                  type: integer
+                              type: object
+                            type: array
+                        type: object
+                      type: array
+                    path:
+                      description: 'The path of the route. NGINX will match it against
+                        the URI of a request. Possible values are: a prefix ( / ,
+                        /path ), an exact match ( =/exact/match ), a case insensitive
+                        regular expression ( ~*^/Bar.*\.jpg ) or a case sensitive
+                        regular expression ( ~^/foo.*\.jpg ). In the case of a prefix
+                        (must start with / ) or an exact match (must start with =
+                        ), the path must not include any whitespace characters, {
+                        , } or ;. In the case of the regex matches, all double quotes
+                        " must be escaped and the match can’t end in an unescaped
+                        backslash \. The path must be unique among the paths of all
+                        routes of the VirtualServer. Check the location directive
+                        for more information.'
+                      type: string
+                    policies:
+                      description: A list of policies. The policies override the policies
+                        of the same type defined in the spec of the VirtualServer.
+                      items:
+                        description: PolicyReference references a policy by name and
+                          an optional namespace.
+                        properties:
+                          name:
+                            description: The name of a policy. If the policy doesn’t
+                              exist or invalid, NGINX will respond with an error response
+                              with the 500 status code.
+                            type: string
+                          namespace:
+                            description: The namespace of a policy. If not specified,
+                              the namespace of the VirtualServer resource is used.
+                            type: string
+                        type: object
+                      type: array
+                    route:
+                      description: The name of a VirtualServerRoute resource that
+                        defines this route. If the VirtualServerRoute belongs to a
+                        different namespace than the VirtualServer, you need to include
+                        the namespace. For example, tea-namespace/tea.
+                      type: string
+                    splits:
+                      description: The default splits configuration for traffic splitting.
+                        Must include at least 2 splits.
+                      items:
+                        description: Split defines a split.
+                        properties:
+                          action:
+                            description: The action to perform for a request.
+                            properties:
+                              pass:
+                                description: Passes requests to an upstream. The upstream
+                                  with that name must be defined in the resource.
+                                type: string
+                              proxy:
+                                description: Passes requests to an upstream with the
+                                  ability to modify the request/response (for example,
+                                  rewrite the URI or modify the headers).
+                                properties:
+                                  requestHeaders:
+                                    description: The request headers modifications.
+                                    properties:
+                                      pass:
+                                        description: Passes the original request headers
+                                          to the proxied upstream server.  Default
+                                          is true.
+                                        type: boolean
+                                      set:
+                                        description: Allows redefining or appending
+                                          fields to present request headers passed
+                                          to the proxied upstream servers.
+                                        items:
+                                          description: Header defines an HTTP Header.
+                                          properties:
+                                            name:
+                                              description: The name of the header.
+                                              type: string
+                                            value:
+                                              description: The value of the header.
+                                              type: string
+                                          type: object
+                                        type: array
+                                    type: object
+                                  responseHeaders:
+                                    description: The response headers modifications.
+                                    properties:
+                                      add:
+                                        description: Adds headers to the response
+                                          to the client.
+                                        items:
+                                          description: AddHeader defines an HTTP Header
+                                            with an optional Always field to use with
+                                            the add_header NGINX directive.
+                                          properties:
+                                            always:
+                                              description: If set to true, add the
+                                                header regardless of the response
+                                                status code**. Default is false.
+                                              type: boolean
+                                            name:
+                                              description: The name of the header.
+                                              type: string
+                                            value:
+                                              description: The value of the header.
+                                              type: string
+                                          type: object
+                                        type: array
+                                      hide:
+                                        description: The headers that will not be
+                                          passed* in the response to the client from
+                                          a proxied upstream server.
+                                        items:
+                                          type: string
+                                        type: array
+                                      ignore:
+                                        description: Disables processing of certain
+                                          headers** to the client from a proxied upstream
+                                          server.
+                                        items:
+                                          type: string
+                                        type: array
+                                      pass:
+                                        description: Allows passing the hidden header
+                                          fields* to the client from a proxied upstream
+                                          server.
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  rewritePath:
+                                    description: The rewritten URI. If the route path
+                                      is a regular expression – starts with ~ – the
+                                      rewritePath can include capture groups with
+                                      $1-9. For example $1 for the first group, and
+                                      so on. For more information, check the rewrite
+                                      example.
+                                    type: string
+                                  upstream:
+                                    description: The name of the upstream which the
+                                      requests will be proxied to. The upstream with
+                                      that name must be defined in the resource.
+                                    type: string
+                                type: object
+                              redirect:
+                                description: Redirects requests to a provided URL.
+                                properties:
+                                  code:
+                                    description: 'The status code of a redirect. The
+                                      allowed values are: 301, 302, 307 or 308. The
+                                      default is 301.'
+                                    type: integer
+                                  url:
+                                    description: 'The URL to redirect the request
+                                      to. Supported NGINX variables: $scheme, $http_x_forwarded_proto,
+                                      $request_uri or $host. Variables must be enclosed
+                                      in curly braces. For example: ${host}${request_uri}.'
+                                    type: string
+                                type: object
+                              return:
+                                description: Returns a preconfigured response.
+                                properties:
+                                  body:
+                                    description: 'The body of the response. Supports
+                                      NGINX variables*. Variables must be enclosed
+                                      in curly brackets. For example: Request is ${request_uri}\n.'
+                                    type: string
+                                  code:
+                                    description: 'The status code of the response.
+                                      The allowed values are: 2XX, 4XX or 5XX. The
+                                      default is 200.'
+                                    type: integer
+                                  headers:
+                                    description: The custom headers of the response.
+                                    items:
+                                      description: Header defines an HTTP Header.
+                                      properties:
+                                        name:
+                                          description: The name of the header.
+                                          type: string
+                                        value:
+                                          description: The value of the header.
+                                          type: string
+                                      type: object
+                                    type: array
+                                  type:
+                                    description: The MIME type of the response. The
+                                      default is text/plain.
+                                    type: string
+                                type: object
+                            type: object
+                          weight:
+                            description: The weight of an action. Must fall into the
+                              range 0..100. The sum of the weights of all splits must
+                              be equal to 100.
+                            type: integer
+                        type: object
+                      type: array
+                  type: object
+                type: array
+              server-snippets:
+                description: Sets a custom snippet in server context. Overrides the
+                  server-snippets ConfigMap key.
+                type: string
+              tls:
+                description: The TLS termination configuration.
+                properties:
+                  cert-manager:
+                    description: The cert-manager configuration of the TLS for a VirtualServer.
+                    properties:
+                      cluster-issuer:
+                        description: the name of a ClusterIssuer. A ClusterIssuer
+                          is a cert-manager resource which describes the certificate
+                          authority capable of signing certificates. It does not matter
+                          which namespace your VirtualServer resides, as ClusterIssuers
+                          are non-namespaced resources. Please note that one of issuer
+                          and cluster-issuer are required, but they are mutually exclusive
+                          - one and only one must be defined.
+                        type: string
+                      common-name:
+                        description: This field allows you to configure spec.commonName
+                          for the Certificate to be generated. This configuration
+                          adds a CN to the x509 certificate.
+                        type: string
+                      duration:
+                        description: This field allows you to configure spec.duration
+                          field for the Certificate to be generated. Must be specified
+                          using a Go time.Duration string format, which does not allow
+                          the d (days) suffix. You must specify these values using
+                          s, m, and h suffixes instead.
+                        type: string
+                      issue-temp-cert:
+                        description: When true, ask cert-manager for a temporary self-signed
+                          certificate pending the issuance of the Certificate. This
+                          allows HTTPS-only servers to use ACME HTTP01 challenges
+                          when the TLS secret does not exist yet.
+                        type: boolean
+                      issuer:
+                        description: the name of an Issuer. An Issuer is a cert-manager
+                          resource which describes the certificate authority capable
+                          of signing certificates. The Issuer must be in the same
+                          namespace as the VirtualServer resource. Please note that
+                          one of issuer and cluster-issuer are required, but they
+                          are mutually exclusive - one and only one must be defined.
+                        type: string
+                      issuer-group:
+                        description: The API group of the external issuer controller,
+                          for example awspca.cert-manager.io. This is only necessary
+                          for out-of-tree issuers. This cannot be defined if cluster-issuer
+                          is also defined.
+                        type: string
+                      issuer-kind:
+                        description: The kind of the external issuer resource, for
+                          example AWSPCAIssuer. This is only necessary for out-of-tree
+                          issuers. This cannot be defined if cluster-issuer is also
+                          defined.
+                        type: string
+                      renew-before:
+                        description: this annotation allows you to configure spec.renewBefore
+                          field for the Certificate to be generated. Must be specified
+                          using a Go time.Duration string format, which does not allow
+                          the d (days) suffix. You must specify these values using
+                          s, m, and h suffixes instead.
+                        type: string
+                      usages:
+                        description: This field allows you to configure spec.usages
+                          field for the Certificate to be generated. Pass a string
+                          with comma-separated values i.e. key agreement,digital signature,
+                          server auth. An exhaustive list of supported key usages
+                          can be found in the the cert-manager api documentation.
+                        type: string
+                    type: object
+                  redirect:
+                    description: The redirect configuration of the TLS for a VirtualServer.
+                    properties:
+                      basedOn:
+                        description: The attribute of a request that NGINX will evaluate
+                          to send a redirect. The allowed values are scheme (the scheme
+                          of the request) or x-forwarded-proto (the X-Forwarded-Proto
+                          header of the request). The default is scheme.
+                        type: string
+                      code:
+                        description: 'The status code of a redirect. The allowed values
+                          are: 301, 302, 307 or 308. The default is 301.'
+                        type: integer
+                      enable:
+                        description: Enables a TLS redirect for a VirtualServer. The
+                          default is False.
+                        type: boolean
+                    type: object
+                  secret:
+                    description: The name of a secret with a TLS certificate and key.
+                      The secret must belong to the same namespace as the VirtualServer.
+                      The secret must be of the type kubernetes.io/tls and contain
+                      keys named tls.crt and tls.key that contain the certificate
+                      and private key as described here. If the secret doesn’t exist
+                      or is invalid, NGINX will break any attempt to establish a TLS
+                      connection to the host of the VirtualServer. If the secret is
+                      not specified but wildcard TLS secret is configured, NGINX will
+                      use the wildcard secret for TLS termination.
+                    type: string
+                type: object
+              upstreams:
+                description: A list of upstreams.
+                items:
+                  description: Upstream defines an upstream.
+                  properties:
+                    backup:
+                      description: 'The name of the backup service of type ExternalName.
+                        This will be used when the primary servers are unavailable.
+                        Note: The parameter cannot be used along with the random,
+                        hash or ip_hash load balancing methods.'
+                      type: string
+                    backupPort:
+                      description: The port of the backup service. The backup port
+                        is required if the backup service name is provided. The port
+                        must fall into the range 1..65535.
+                      type: integer
+                    buffer-size:
+                      description: Sets the size of the buffer used for reading the
+                        first part of a response received from the upstream server.
+                        The default is set in the proxy-buffer-size ConfigMap key.
+                      type: string
+                    buffering:
+                      description: Enables buffering of responses from the upstream
+                        server.  The default is set in the proxy-buffering ConfigMap
+                        key.
+                      type: boolean
+                    buffers:
+                      description: Configures the buffers used for reading a response
+                        from the upstream server for a single connection.
+                      properties:
+                        number:
+                          description: Configures the number of buffers. The default
+                            is set in the proxy-buffers ConfigMap key.
+                          type: integer
+                        size:
+                          description: Configures the size of a buffer. The default
+                            is set in the proxy-buffers ConfigMap key.
+                          type: string
+                      type: object
+                    busy-buffers-size:
+                      description: Sets the size of the buffers used for reading a
+                        response from the upstream server when the proxy_buffering
+                        is enabled. The default is set in the proxy-busy-buffers-size
+                        ConfigMap key.'
+                      type: string
+                    client-max-body-size:
+                      description: Sets the maximum allowed size of the client request
+                        body. The default is set in the client-max-body-size ConfigMap
+                        key.
+                      type: string
+                    connect-timeout:
+                      description: The timeout for establishing a connection with
+                        an upstream server. The default is specified in the proxy-connect-timeout
+                        ConfigMap key.
+                      type: string
+                    fail-timeout:
+                      description: The time during which the specified number of unsuccessful
+                        attempts to communicate with an upstream server should happen
+                        to consider the server unavailable. The default is set in
+                        the fail-timeout ConfigMap key.
+                      type: string
+                    healthCheck:
+                      description: 'The health check configuration for the Upstream.
+                        Note: this feature is supported only in NGINX Plus.'
+                      properties:
+                        connect-timeout:
+                          description: The timeout for establishing a connection with
+                            an upstream server. By default, the connect-timeout of
+                            the upstream is used.
+                          type: string
+                        enable:
+                          description: Enables a health check for an upstream server.
+                            The default is false.
+                          type: boolean
+                        fails:
+                          description: The number of consecutive failed health checks
+                            of a particular upstream server after which this server
+                            will be considered unhealthy. The default is 1.
+                          type: integer
+                        grpcService:
+                          description: The gRPC service to be monitored on the upstream
+                            server. Only valid on gRPC type upstreams.
+                          type: string
+                        grpcStatus:
+                          description: The expected gRPC status code of the upstream
+                            server response to the Check method. Configure this field
+                            only if your gRPC services do not implement the gRPC health
+                            checking protocol. For example, configure 12 if the upstream
+                            server responds with 12 (UNIMPLEMENTED) status code. Only
+                            valid on gRPC type upstreams.
+                          type: integer
+                        headers:
+                          description: The request headers used for health check requests.
+                            NGINX Plus always sets the Host, User-Agent and Connection
+                            headers for health check requests.
+                          items:
+                            description: Header defines an HTTP Header.
+                            properties:
+                              name:
+                                description: The name of the header.
+                                type: string
+                              value:
+                                description: The value of the header.
+                                type: string
+                            type: object
+                          type: array
+                        interval:
+                          description: The interval between two consecutive health
+                            checks. The default is 5s.
+                          type: string
+                        jitter:
+                          description: The time within which each health check will
+                            be randomly delayed. By default, there is no delay.
+                          type: string
+                        keepalive-time:
+                          description: Enables keepalive connections for health checks
+                            and specifies the time during which requests can be processed
+                            through one keepalive connection. The default is 60s.
+                          type: string
+                        mandatory:
+                          description: Require every newly added server to pass all
+                            configured health checks before NGINX Plus sends traffic
+                            to it. If this is not specified, or is set to false, the
+                            server will be initially considered healthy. When combined
+                            with slow-start, it gives a new server more time to connect
+                            to databases and “warm up” before being asked to handle
+                            their full share of traffic.
+                          type: boolean
+                        passes:
+                          description: The number of consecutive passed health checks
+                            of a particular upstream server after which the server
+                            will be considered healthy. The default is 1.
+                          type: integer
+                        path:
+                          description: The path used for health check requests. The
+                            default is /. This is not configurable for gRPC type upstreams.
+                          type: string
+                        persistent:
+                          description: Set the initial “up” state for a server after
+                            reload if the server was considered healthy before reload.
+                            Enabling persistent requires that the mandatory parameter
+                            is also set to true.
+                          type: boolean
+                        port:
+                          description: 'The port used for health check requests. By
+                            default, the server port is used. Note: in contrast with
+                            the port of the upstream, this port is not a service port,
+                            but a port of a pod.'
+                          type: integer
+                        read-timeout:
+                          description: The timeout for reading a response from an
+                            upstream server. By default, the read-timeout of the upstream
+                            is used.
+                          type: string
+                        send-timeout:
+                          description: The timeout for transmitting a request to an
+                            upstream server. By default, the send-timeout of the upstream
+                            is used.
+                          type: string
+                        statusMatch:
+                          description: 'The expected response status codes of a health
+                            check. By default, the response should have status code
+                            2xx or 3xx. Examples: "200", "! 500", "301-303 307". This
+                            not supported for gRPC type upstreams.'
+                          type: string
+                        tls:
+                          description: The TLS configuration used for health check
+                            requests. By default, the tls field of the upstream is
+                            used.
+                          properties:
+                            enable:
+                              description: 'Enables HTTPS for requests to upstream
+                                servers. The default is False , meaning that HTTP
+                                will be used. Note: by default, NGINX will not verify
+                                the upstream server certificate. To enable the verification,
+                                configure an EgressMTLS Policy.'
+                              type: boolean
+                          type: object
+                      type: object
+                    keepalive:
+                      description: Configures the cache for connections to upstream
+                        servers. The value 0 disables the cache. The default is set
+                        in the keepalive ConfigMap key.
+                      type: integer
+                    lb-method:
+                      description: The load balancing method. To use the round-robin
+                        method, specify round_robin. The default is specified in the
+                        lb-method ConfigMap key.
+                      type: string
+                    max-conns:
+                      description: 'The maximum number of simultaneous active connections
+                        to an upstream server. By default there is no limit. Note:
+                        if keepalive connections are enabled, the total number of
+                        active and idle keepalive connections to an upstream server
+                        may exceed the max_conns value.'
+                      type: integer
+                    max-fails:
+                      description: The number of unsuccessful attempts to communicate
+                        with an upstream server that should happen in the duration
+                        set by the fail-timeout to consider the server unavailable.
+                        The default is set in the max-fails ConfigMap key.
+                      type: integer
+                    name:
+                      description: The name of the upstream. Must be a valid DNS label
+                        as defined in RFC 1035. For example, hello and upstream-123
+                        are valid. The name must be unique among all upstreams of
+                        the resource.
+                      type: string
+                    next-upstream:
+                      description: Specifies in which cases a request should be passed
+                        to the next upstream server. The default is error timeout.
+                      type: string
+                    next-upstream-timeout:
+                      description: The time during which a request can be passed to
+                        the next upstream server. The 0 value turns off the time limit.
+                        The default is 0.
+                      type: string
+                    next-upstream-tries:
+                      description: The number of possible tries for passing a request
+                        to the next upstream server. The 0 value turns off this limit.
+                        The default is 0.
+                      type: integer
+                    ntlm:
+                      description: 'Allows proxying requests with NTLM Authentication.
+                        In order for NTLM authentication to work, it is necessary
+                        to enable keepalive connections to upstream servers using
+                        the keepalive field. Note: this feature is supported only
+                        in NGINX Plus.'
+                      type: boolean
+                    port:
+                      description: The port of the service. If the service doesn’t
+                        define that port, NGINX will assume the service has zero endpoints
+                        and return a 502 response for requests for this upstream.
+                        The port must fall into the range 1..65535.
+                      type: integer
+                    queue:
+                      description: 'Configures a queue for an upstream. A client request
+                        will be placed into the queue if an upstream server cannot
+                        be selected immediately while processing the request. By default,
+                        no queue is configured. Note: this feature is supported only
+                        in NGINX Plus.'
+                      properties:
+                        size:
+                          description: The size of the queue.
+                          type: integer
+                        timeout:
+                          description: The timeout of the queue. A request cannot
+                            be queued for a period longer than the timeout. The default
+                            is 60s.
+                          type: string
+                      type: object
+                    read-timeout:
+                      description: The timeout for reading a response from an upstream
+                        server. The default is specified in the proxy-read-timeout
+                        ConfigMap key.
+                      type: string
+                    send-timeout:
+                      description: The timeout for transmitting a request to an upstream
+                        server. The default is specified in the proxy-send-timeout
+                        ConfigMap key.
+                      type: string
+                    service:
+                      description: The name of a service. The service must belong
+                        to the same namespace as the resource. If the service doesn’t
+                        exist, NGINX will assume the service has zero endpoints and
+                        return a 502 response for requests for this upstream. For
+                        NGINX Plus only, services of type ExternalName are also supported
+                        .
+                      type: string
+                    sessionCookie:
+                      description: The SessionCookie field configures session persistence
+                        which allows requests from the same client to be passed to
+                        the same upstream server. The information about the designated
+                        upstream server is passed in a session cookie generated by
+                        NGINX Plus.
+                      properties:
+                        domain:
+                          description: The domain for which the cookie is set.
+                          type: string
+                        enable:
+                          description: Enables session persistence with a session
+                            cookie for an upstream server. The default is false.
+                          type: boolean
+                        expires:
+                          description: The time for which a browser should keep the
+                            cookie. Can be set to the special value max, which will
+                            cause the cookie to expire on 31 Dec 2037 23:55:55 GMT.
+                          type: string
+                        httpOnly:
+                          description: Adds the HttpOnly attribute to the cookie.
+                          type: boolean
+                        name:
+                          description: The name of the cookie.
+                          type: string
+                        path:
+                          description: The path for which the cookie is set.
+                          type: string
+                        samesite:
+                          description: 'Adds the SameSite attribute to the cookie.
+                            The allowed values are: strict, lax, none'
+                          type: string
+                        secure:
+                          description: Adds the Secure attribute to the cookie.
+                          type: boolean
+                      type: object
+                    slow-start:
+                      description: 'The slow start allows an upstream server to gradually
+                        recover its weight from 0 to its nominal value after it has
+                        been recovered or became available or when the server becomes
+                        available after a period of time it was considered unavailable.
+                        By default, the slow start is disabled. Note: The parameter
+                        cannot be used along with the random, hash or ip_hash load
+                        balancing methods and will be ignored.'
+                      type: string
+                    subselector:
+                      additionalProperties:
+                        type: string
+                      description: 'Selects the pods within the service using label
+                        keys and values. By default, all pods of the service are selected.
+                        Note: the specified labels are expected to be present in the
+                        pods when they are created. If the pod labels are updated,
+                        NGINX Ingress Controller will not see that change until the
+                        number of the pods is changed.'
+                      type: object
+                    tls:
+                      description: The TLS configuration for the Upstream.
+                      properties:
+                        enable:
+                          description: 'Enables HTTPS for requests to upstream servers.
+                            The default is False , meaning that HTTP will be used.
+                            Note: by default, NGINX will not verify the upstream server
+                            certificate. To enable the verification, configure an
+                            EgressMTLS Policy.'
+                          type: boolean
+                      type: object
+                    type:
+                      description: The type of the upstream. Supported values are
+                        http and grpc. The default is http. For gRPC, it is necessary
+                        to enable HTTP/2 in the ConfigMap and configure TLS termination
+                        in the VirtualServer.
+                      type: string
+                    use-cluster-ip:
+                      description: Enables using the Cluster IP and port of the service
+                        instead of the default behavior of using the IP and port of
+                        the pods. When this field is enabled, the fields that configure
+                        NGINX behavior related to multiple upstream servers (like
+                        lb-method and next-upstream) will have no effect, as NGINX
+                        Ingress Controller will configure NGINX with only one upstream
+                        server that will match the service Cluster IP.
+                      type: boolean
+                  type: object
+                type: array
+            type: object
+          status:
+            description: Status contains the current status of the VirtualServer.
+            properties:
+              externalEndpoints:
+                items:
+                  description: ExternalEndpoint defines the IP/ Hostname and ports
+                    used to connect to this resource.
+                  properties:
+                    hostname:
+                      type: string
+                    ip:
+                      type: string
+                    ports:
+                      type: string
+                  type: object
+                type: array
+              message:
+                type: string
+              reason:
+                type: string
+              state:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

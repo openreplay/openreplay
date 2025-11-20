@@ -1,0 +1,75 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: globalconfigurations.k8s.nginx.org
+spec:
+  group: k8s.nginx.org
+  names:
+    kind: GlobalConfiguration
+    listKind: GlobalConfigurationList
+    plural: globalconfigurations
+    shortNames:
+    - gc
+    singular: globalconfiguration
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: GlobalConfiguration defines the GlobalConfiguration resource.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: GlobalConfigurationSpec resource defines the global configuration
+              parameters of the Ingress Controller.
+            properties:
+              listeners:
+                description: Listeners field of the GlobalConfigurationSpec resource
+                items:
+                  description: Listener defines a listener.
+                  properties:
+                    ipv4:
+                      description: Specifies the IPv4 address to listen on.
+                      type: string
+                    ipv6:
+                      description: ipv6 addresse that NGINX will listen on.
+                      type: string
+                    name:
+                      description: The name of the listener. The name must be unique
+                        across all listeners.
+                      type: string
+                    port:
+                      description: The port on which the listener will accept connections.
+                      type: integer
+                    protocol:
+                      description: The protocol of the listener. For example, HTTP.
+                      type: string
+                    ssl:
+                      description: Whether the listener will be listening for SSL
+                        connections
+                      type: boolean
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true

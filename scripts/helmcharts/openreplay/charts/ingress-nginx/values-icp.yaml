@@ -1,0 +1,17 @@
+controller:
+  name: controller
+  kind: daemonset
+  nginxplus: true
+  image:
+    repository: mycluster.icp:8500/kube-system/nginx-plus-ingress
+    tag: "5.2.1"
+  nodeSelector:
+    beta.kubernetes.io/arch: "amd64"
+    proxy: true
+  terminationGracePeriodSeconds: 60
+  tolerations:
+    - key: "dedicated"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "CriticalAddonsOnly"
+      operator: "Exists"

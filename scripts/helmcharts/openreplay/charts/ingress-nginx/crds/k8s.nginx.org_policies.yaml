@@ -1,0 +1,569 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: policies.k8s.nginx.org
+spec:
+  group: k8s.nginx.org
+  names:
+    kind: Policy
+    listKind: PolicyList
+    plural: policies
+    shortNames:
+    - pol
+    singular: policy
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: Current state of the Policy. If the resource has a valid status,
+        it means it has been validated and accepted by the Ingress Controller.
+      jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Policy defines a Policy for VirtualServer and VirtualServerRoute
+          resources.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              PolicySpec is the spec of the Policy resource.
+              The spec includes multiple fields, where each field represents a different policy.
+              Only one policy (field) is allowed.
+            properties:
+              accessControl:
+                description: The access control policy based on the client IP address.
+                properties:
+                  allow:
+                    items:
+                      type: string
+                    type: array
+                  deny:
+                    items:
+                      type: string
+                    type: array
+                type: object
+              apiKey:
+                description: The API Key policy configures NGINX to authorize requests
+                  which provide a valid API Key in a specified header or query param.
+                properties:
+                  clientSecret:
+                    description: The key to which the API key is applied. Can contain
+                      text, variables, or a combination of them. Accepted variables
+                      are $http_, $arg_, $cookie_.
+                    type: string
+                  suppliedIn:
+                    description: The location of the API Key. For example, $http_auth,
+                      $arg_apikey, $cookie_auth. Accepted variables are $http_, $arg_,
+                      $cookie_.
+                    properties:
+                      header:
+                        description: The location of the API Key as a request header.
+                          For example, $http_auth. Accepted variables are $http_.
+                        items:
+                          type: string
+                        type: array
+                      query:
+                        description: The location of the API Key as a query param.
+                          For example, $arg_apikey. Accepted variables are $arg_.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                type: object
+              basicAuth:
+                description: The basic auth policy configures NGINX to authenticate
+                  client requests using HTTP Basic authentication credentials.
+                properties:
+                  realm:
+                    description: The realm for the basic authentication.
+                    type: string
+                  secret:
+                    description: The name of the Kubernetes secret that stores the
+                      Htpasswd configuration. It must be in the same namespace as
+                      the Policy resource. The secret must be of the type nginx.org/htpasswd,
+                      and the config must be stored in the secret under the key htpasswd,
+                      otherwise the secret will be rejected as invalid.
+                    type: string
+                type: object
+              cache:
+                description: The Cache Key defines a cache policy for proxy caching
+                properties:
+                  allowedCodes:
+                    description: |-
+                      AllowedCodes defines which HTTP response codes should be cached.
+                      Accepts either:
+                      - The string "any" to cache all response codes (must be the only element)
+                      - A list of HTTP status codes as integers (100-599)
+                      Examples: ["any"], [200, 301, 404], [200].
+                      Invalid: ["any", 200] (cannot mix "any" with specific codes).
+                    items:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      x-kubernetes-int-or-string: true
+                    type: array
+                  allowedMethods:
+                    description: |-
+                      AllowedMethods defines which HTTP methods should be cached.
+                      Only "GET", "HEAD", and "POST" are supported by NGINX proxy_cache_methods directive.
+                      GET and HEAD are always cached by default even if not specified.
+                      Maximum of 3 items allowed. Examples: ["GET"], ["GET", "HEAD", "POST"].
+                      Invalid methods: PUT, DELETE, PATCH, etc.
+                    items:
+                      type: string
+                    maxItems: 3
+                    type: array
+                    x-kubernetes-validations:
+                    - message: 'allowed methods must be one of: GET, HEAD, POST'
+                      rule: self.all(method, method in ['GET', 'HEAD', 'POST'])
+                  cachePurgeAllow:
+                    description: |-
+                      CachePurgeAllow defines IP addresses or CIDR blocks allowed to purge cache.
+                      This feature is only available in NGINX Plus.
+                      Examples: ["192.168.1.100", "10.0.0.0/8", "::1"].
+                      Invalid in NGINX OSS (will be ignored).
+                    items:
+                      type: string
+                    type: array
+                  cacheZoneName:
+                    description: |-
+                      CacheZoneName defines the name of the cache zone. Must start with a lowercase letter,
+                      followed by alphanumeric characters or underscores, and end with an alphanumeric character.
+                      Single lowercase letters are also allowed. Examples: "cache", "my_cache", "cache1".
+                    pattern: ^[a-z][a-zA-Z0-9_]*[a-zA-Z0-9]$|^[a-z]$
+                    type: string
+                  cacheZoneSize:
+                    description: |-
+                      CacheZoneSize defines the size of the cache zone. Must be a number followed by a size unit:
+                      'k' for kilobytes, 'm' for megabytes, or 'g' for gigabytes.
+                      Examples: "10m", "1g", "512k".
+                    pattern: ^[0-9]+[kmg]$
+                    type: string
+                  levels:
+                    description: |-
+                      Levels defines the cache directory hierarchy levels for storing cached files.
+                      Must be in format "X:Y" or "X:Y:Z" where X, Y, Z are either 1 or 2.
+                      This controls the number of subdirectory levels and their name lengths.
+                      Examples: "1:2", "2:2", "1:2:2".
+                      Invalid: "3:1", "1:3", "1:2:3".
+                    pattern: ^[12](?::[12]){0,2}$
+                    type: string
+                  overrideUpstreamCache:
+                    default: false
+                    description: |-
+                      OverrideUpstreamCache controls whether to override upstream cache headers
+                      (using proxy_ignore_headers directive). When true, NGINX will ignore
+                      cache-related headers from upstream servers like Cache-Control, Expires, etc.
+                      Default: false.
+                    type: boolean
+                  time:
+                    description: |-
+                      Time defines the default cache time. Required when allowedCodes is specified.
+                      Must be a number followed by a time unit:
+                      's' for seconds, 'm' for minutes, 'h' for hours, 'd' for days.
+                      Examples: "30s", "5m", "1h", "2d".
+                    pattern: ^[0-9]+[smhd]$
+                    type: string
+                required:
+                - cacheZoneName
+                - cacheZoneSize
+                type: object
+                x-kubernetes-validations:
+                - message: time is required when allowedCodes is specified
+                  rule: '!has(self.allowedCodes) || (has(self.allowedCodes) && has(self.time))'
+              egressMTLS:
+                description: The EgressMTLS policy configures upstreams authentication
+                  and certificate verification.
+                properties:
+                  ciphers:
+                    description: Specifies the enabled ciphers for requests to an
+                      upstream HTTPS server. The default is DEFAULT.
+                    type: string
+                  protocols:
+                    description: Specifies the protocols for requests to an upstream
+                      HTTPS server. The default is TLSv1 TLSv1.1 TLSv1.2.
+                    type: string
+                  serverName:
+                    description: Enables passing of the server name through Server
+                      Name Indication extension.
+                    type: boolean
+                  sessionReuse:
+                    description: Enables reuse of SSL sessions to the upstreams. The
+                      default is true.
+                    type: boolean
+                  sslName:
+                    description: Allows overriding the server name used to verify
+                      the certificate of the upstream HTTPS server.
+                    type: string
+                  tlsSecret:
+                    description: The name of the Kubernetes secret that stores the
+                      TLS certificate and key. It must be in the same namespace as
+                      the Policy resource. The secret must be of the type kubernetes.io/tls,
+                      the certificate must be stored in the secret under the key tls.crt,
+                      and the key must be stored under the key tls.key, otherwise
+                      the secret will be rejected as invalid.
+                    type: string
+                  trustedCertSecret:
+                    description: The name of the Kubernetes secret that stores the
+                      CA certificate. It must be in the same namespace as the Policy
+                      resource. The secret must be of the type nginx.org/ca, and the
+                      certificate must be stored in the secret under the key ca.crt,
+                      otherwise the secret will be rejected as invalid.
+                    type: string
+                  verifyDepth:
+                    description: Sets the verification depth in the proxied HTTPS
+                      server certificates chain. The default is 1.
+                    type: integer
+                  verifyServer:
+                    description: Enables verification of the upstream HTTPS server
+                      certificate.
+                    type: boolean
+                type: object
+              ingressClassName:
+                description: Specifies which instance of NGINX Ingress Controller
+                  must handle the Policy resource.
+                type: string
+              ingressMTLS:
+                description: The IngressMTLS policy configures client certificate
+                  verification.
+                properties:
+                  clientCertSecret:
+                    description: The name of the Kubernetes secret that stores the
+                      CA certificate. It must be in the same namespace as the Policy
+                      resource. The secret must be of the type nginx.org/ca, and the
+                      certificate must be stored in the secret under the key ca.crt,
+                      otherwise the secret will be rejected as invalid.
+                    type: string
+                  crlFileName:
+                    description: The file name of the Certificate Revocation List.
+                      NGINX Ingress Controller will look for this file in /etc/nginx/secrets
+                    type: string
+                  verifyClient:
+                    description: Verification for the client. Possible values are
+                      "on", "off", "optional", "optional_no_ca". The default is "on".
+                    type: string
+                  verifyDepth:
+                    description: Sets the verification depth in the client certificates
+                      chain. The default is 1.
+                    type: integer
+                type: object
+              jwt:
+                description: The JWT policy configures NGINX Plus to authenticate
+                  client requests using JSON Web Tokens.
+                properties:
+                  jwksURI:
+                    description: The remote URI where the request will be sent to
+                      retrieve JSON Web Key set
+                    type: string
+                  keyCache:
+                    description: Enables in-memory caching of JWKS (JSON Web Key Sets)
+                      that are obtained from the jwksURI and sets a valid time for
+                      expiration.
+                    type: string
+                  realm:
+                    description: The realm of the JWT.
+                    type: string
+                  secret:
+                    description: The name of the Kubernetes secret that stores the
+                      Htpasswd configuration. It must be in the same namespace as
+                      the Policy resource. The secret must be of the type nginx.org/htpasswd,
+                      and the config must be stored in the secret under the key htpasswd,
+                      otherwise the secret will be rejected as invalid.
+                    type: string
+                  sniEnabled:
+                    description: Enables SNI (Server Name Indication) for the JWT
+                      policy. This is useful when the remote server requires SNI to
+                      serve the correct certificate.
+                    type: boolean
+                  sniName:
+                    description: The SNI name to use when connecting to the remote
+                      server. If not set, the hostname from the ``jwksURI`` will be
+                      used.
+                    type: string
+                  token:
+                    description: 'The token specifies a variable that contains the
+                      JSON Web Token. By default the JWT is passed in the Authorization
+                      header as a Bearer Token. JWT may be also passed as a cookie
+                      or a part of a query string, for example: $cookie_auth_token.
+                      Accepted variables are $http_, $arg_, $cookie_.'
+                    type: string
+                type: object
+              oidc:
+                description: The OpenID Connect policy configures NGINX to authenticate
+                  client requests by validating a JWT token against an OAuth2/OIDC
+                  token provider, such as Auth0 or Keycloak.
+                properties:
+                  accessTokenEnable:
+                    description: Option of whether Bearer token is used to authorize
+                      NGINX to access protected backend.
+                    type: boolean
+                  authEndpoint:
+                    description: URL for the authorization endpoint provided by your
+                      OpenID Connect provider.
+                    type: string
+                  authExtraArgs:
+                    description: A list of extra URL arguments to pass to the authorization
+                      endpoint provided by your OpenID Connect provider. Arguments
+                      must be URL encoded, multiple arguments may be included in the
+                      list, for example [ arg1=value1, arg2=value2 ]
+                    items:
+                      type: string
+                    type: array
+                  clientID:
+                    description: The client ID provided by your OpenID Connect provider.
+                    type: string
+                  clientSecret:
+                    description: The name of the Kubernetes secret that stores the
+                      client secret provided by your OpenID Connect provider. It must
+                      be in the same namespace as the Policy resource. The secret
+                      must be of the type nginx.org/oidc, and the secret under the
+                      key client-secret, otherwise the secret will be rejected as
+                      invalid. If PKCE is enabled, this should be not configured.
+                    type: string
+                  endSessionEndpoint:
+                    description: URL provided by your OpenID Connect provider to request
+                      the end user be logged out.
+                    type: string
+                  jwksURI:
+                    description: URL for the JSON Web Key Set (JWK) document provided
+                      by your OpenID Connect provider.
+                    type: string
+                  pkceEnable:
+                    description: Switches Proof Key for Code Exchange on. The OpenID
+                      client needs to be in public mode. clientSecret is not used
+                      in this mode.
+                    type: boolean
+                  postLogoutRedirectURI:
+                    description: URI to redirect to after the logout has been performed.
+                      Requires endSessionEndpoint. The default is /_logout.
+                    type: string
+                  redirectURI:
+                    description: Allows overriding the default redirect URI. The default
+                      is /_codexch.
+                    type: string
+                  scope:
+                    description: List of OpenID Connect scopes. The scope openid always
+                      needs to be present and others can be added concatenating them
+                      with a + sign, for example openid+profile+email, openid+email+userDefinedScope.
+                      The default is openid.
+                    type: string
+                  tokenEndpoint:
+                    description: URL for the token endpoint provided by your OpenID
+                      Connect provider.
+                    type: string
+                  zoneSyncLeeway:
+                    description: Specifies the maximum timeout in milliseconds for
+                      synchronizing ID/access tokens and shared values between Ingress
+                      Controller pods. The default is 200.
+                    type: integer
+                type: object
+              rateLimit:
+                description: The rate limit policy controls the rate of processing
+                  requests per a defined key.
+                properties:
+                  burst:
+                    description: Excessive requests are delayed until their number
+                      exceeds the burst size, in which case the request is terminated
+                      with an error.
+                    type: integer
+                  condition:
+                    description: Add a condition to a rate-limit policy.
+                    properties:
+                      default:
+                        description: sets the rate limit in this policy to be the
+                          default if no conditions are met. In a group of policies
+                          with the same condition, only one policy can be the default.
+                        type: boolean
+                      jwt:
+                        description: defines a JWT condition to rate limit against.
+                        properties:
+                          claim:
+                            description: the JWT claim to be rate limit by. Nested
+                              claims should be separated by "."
+                            pattern: ^([^$\s"'])*$
+                            type: string
+                          match:
+                            description: the value of the claim to match against.
+                            pattern: ^([^$\s."'])*$
+                            type: string
+                        required:
+                        - claim
+                        - match
+                        type: object
+                      variables:
+                        description: defines a Variables condition to rate limit against.
+                        items:
+                          description: VariableCondition defines a condition to rate
+                            limit by a variable.
+                          properties:
+                            match:
+                              description: the value of the variable to match against.
+                              pattern: ^([^\s"'])*$
+                              type: string
+                            name:
+                              description: the name of the variable to match against.
+                              pattern: ^([^\s"'])*$
+                              type: string
+                          required:
+                          - match
+                          - name
+                          type: object
+                        maxItems: 1
+                        type: array
+                    type: object
+                  delay:
+                    description: The delay parameter specifies a limit at which excessive
+                      requests become delayed. If not set all excessive requests are
+                      delayed.
+                    type: integer
+                  dryRun:
+                    description: Enables the dry run mode. In this mode, the rate
+                      limit is not actually applied, but the number of excessive requests
+                      is accounted as usual in the shared memory zone.
+                    type: boolean
+                  key:
+                    description: |-
+                      The key to which the rate limit is applied. Can contain text, variables, or a combination of them.
+                      Variables must be surrounded by ${}. For example: ${binary_remote_addr}. Accepted variables are
+                      $binary_remote_addr, $request_uri, $request_method, $url, $http_, $args, $arg_, $cookie_,$jwt_claim_ .
+                    type: string
+                  logLevel:
+                    description: Sets the desired logging level for cases when the
+                      server refuses to process requests due to rate exceeding, or
+                      delays request processing. Allowed values are info, notice,
+                      warn or error. Default is error.
+                    type: string
+                  noDelay:
+                    description: Disables the delaying of excessive requests while
+                      requests are being limited. Overrides delay if both are set.
+                    type: boolean
+                  rate:
+                    description: The rate of requests permitted. The rate is specified
+                      in requests per second (r/s) or requests per minute (r/m).
+                    type: string
+                  rejectCode:
+                    description: Sets the status code to return in response to rejected
+                      requests. Must fall into the range 400..599. Default is 503.
+                    type: integer
+                  scale:
+                    description: Enables a constant rate-limit by dividing the configured
+                      rate by the number of nginx-ingress pods currently serving traffic.
+                      This adjustment ensures that the rate-limit remains consistent,
+                      even as the number of nginx-pods fluctuates due to autoscaling.
+                      This will not work properly if requests from a client are not
+                      evenly distributed across all ingress pods (Such as with sticky
+                      sessions, long lived TCP Connections with many requests, and
+                      so forth). In such cases using zone-sync instead would give
+                      better results. Enabling zone-sync will suppress this setting.
+                    type: boolean
+                  zoneSize:
+                    description: Size of the shared memory zone. Only positive values
+                      are allowed. Allowed suffixes are k or m, if none are present
+                      k is assumed.
+                    type: string
+                type: object
+              waf:
+                description: The WAF policy configures WAF and log configuration policies
+                  for NGINX AppProtect
+                properties:
+                  apBundle:
+                    description: The App Protect WAF policy bundle. Mutually exclusive
+                      with apPolicy.
+                    type: string
+                  apPolicy:
+                    description: The App Protect WAF policy of the WAF. Accepts an
+                      optional namespace. Mutually exclusive with apBundle.
+                    type: string
+                  enable:
+                    description: Enables NGINX App Protect WAF.
+                    type: boolean
+                  securityLog:
+                    description: SecurityLog defines the security log of a WAF policy.
+                    properties:
+                      apLogBundle:
+                        description: The App Protect WAF log bundle resource. Only
+                          works with apBundle.
+                        type: string
+                      apLogConf:
+                        description: The App Protect WAF log conf resource. Accepts
+                          an optional namespace. Only works with apPolicy.
+                        type: string
+                      enable:
+                        description: Enables security log.
+                        type: boolean
+                      logDest:
+                        description: The log destination for the security log. Only
+                          accepted variables are syslog:server=<ip-address>; localhost;
+                          fqdn>:<port>, stderr, <absolute path to file>.
+                        type: string
+                    type: object
+                  securityLogs:
+                    items:
+                      description: SecurityLog defines the security log of a WAF policy.
+                      properties:
+                        apLogBundle:
+                          description: The App Protect WAF log bundle resource. Only
+                            works with apBundle.
+                          type: string
+                        apLogConf:
+                          description: The App Protect WAF log conf resource. Accepts
+                            an optional namespace. Only works with apPolicy.
+                          type: string
+                        enable:
+                          description: Enables security log.
+                          type: boolean
+                        logDest:
+                          description: The log destination for the security log. Only
+                            accepted variables are syslog:server=<ip-address>; localhost;
+                            fqdn>:<port>, stderr, <absolute path to file>.
+                          type: string
+                      type: object
+                    type: array
+                type: object
+            type: object
+          status:
+            description: the status of the Policy resource
+            properties:
+              message:
+                description: The message of the current state of the resource. It
+                  can contain more detailed information about the reason.
+                type: string
+              reason:
+                description: The reason of the current state of the resource.
+                type: string
+              state:
+                description: 'Represents the current state of the resource. There
+                  are three possible values: Valid, Invalid and Warning. Valid indicates
+                  that the resource has been validated and accepted by the Ingress
+                  Controller. Invalid means the resource failed validation or'
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
