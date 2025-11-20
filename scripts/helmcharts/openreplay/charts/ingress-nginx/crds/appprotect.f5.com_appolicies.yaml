@@ -1,0 +1,2701 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
+  name: appolicies.appprotect.f5.com
+spec:
+  group: appprotect.f5.com
+  names:
+    kind: APPolicy
+    listKind: APPolicyList
+    plural: appolicies
+    singular: appolicy
+  preserveUnknownFields: false
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: APPolicyConfig is the Schema for the APPolicyconfigs API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: APPolicySpec defines the desired state of APPolicy
+            properties:
+              modifications:
+                items:
+                  properties:
+                    action:
+                      type: string
+                    description:
+                      type: string
+                    entity:
+                      properties:
+                        name:
+                          type: string
+                      type: object
+                    entityChanges:
+                      properties:
+                        type:
+                          type: string
+                      type: object
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                type: array
+              modificationsReference:
+                properties:
+                  link:
+                    pattern: ^http
+                    type: string
+                type: object
+              policy:
+                description: Defines the App Protect policy
+                properties:
+                  applicationLanguage:
+                    enum:
+                    - iso-8859-10
+                    - iso-8859-6
+                    - windows-1255
+                    - auto-detect
+                    - koi8-r
+                    - gb18030
+                    - iso-8859-8
+                    - windows-1250
+                    - iso-8859-9
+                    - windows-1252
+                    - iso-8859-16
+                    - gb2312
+                    - iso-8859-2
+                    - iso-8859-5
+                    - windows-1257
+                    - windows-1256
+                    - iso-8859-13
+                    - windows-874
+                    - windows-1253
+                    - iso-8859-3
+                    - euc-jp
+                    - utf-8
+                    - gbk
+                    - windows-1251
+                    - big5
+                    - iso-8859-1
+                    - shift_jis
+                    - euc-kr
+                    - iso-8859-4
+                    - iso-8859-7
+                    - iso-8859-15
+                    type: string
+                  blocking-settings:
+                    properties:
+                      evasions:
+                        items:
+                          properties:
+                            description:
+                              enum:
+                              - '%u decoding'
+                              - Apache whitespace
+                              - Bad unescape
+                              - Bare byte decoding
+                              - Directory traversals
+                              - IIS backslashes
+                              - IIS Unicode codepoints
+                              - Multiple decoding
+                              - Multiple slashes
+                              - Semicolon path parameters
+                              - Trailing dot
+                              - Trailing slash
+                              type: string
+                            enabled:
+                              type: boolean
+                            maxDecodingPasses:
+                              type: integer
+                          type: object
+                        type: array
+                      http-protocols:
+                        items:
+                          properties:
+                            description:
+                              enum:
+                              - Unescaped space in URL
+                              - Unparsable request content
+                              - Several Content-Length headers
+                              - 'POST request with Content-Length: 0'
+                              - Null in request
+                              - No Host header in HTTP/1.1 request
+                              - Multiple host headers
+                              - Host header contains IP address
+                              - High ASCII characters in headers
+                              - Header name with no header value
+                              - CRLF characters before request start
+                              - Content length should be a positive number
+                              - Chunked request with Content-Length header
+                              - Check maximum number of cookies
+                              - Check maximum number of parameters
+                              - Check maximum number of headers
+                              - Body in GET or HEAD requests
+                              - Bad multipart/form-data request parsing
+                              - Bad multipart parameters parsing
+                              - Bad HTTP version
+                              - Bad host header value
+                              type: string
+                            enabled:
+                              type: boolean
+                            maxCookies:
+                              maximum: 100
+                              minimum: 1
+                              type: integer
+                            maxHeaders:
+                              maximum: 150
+                              minimum: 1
+                              type: integer
+                            maxParams:
+                              maximum: 5000
+                              minimum: 1
+                              type: integer
+                          type: object
+                        type: array
+                      violations:
+                        items:
+                          properties:
+                            alarm:
+                              type: boolean
+                            block:
+                              type: boolean
+                            description:
+                              type: string
+                            name:
+                              enum:
+                              - VIOL_ACCESS_INVALID
+                              - VIOL_ACCESS_MALFORMED
+                              - VIOL_ACCESS_MISSING
+                              - VIOL_ACCESS_UNAUTHORIZED
+                              - VIOL_ASM_COOKIE_HIJACKING
+                              - VIOL_ASM_COOKIE_MODIFIED
+                              - VIOL_BLACKLISTED_IP
+                              - VIOL_BOT_CLIENT
+                              - VIOL_BRUTE_FORCE
+                              - VIOL_COOKIE_EXPIRED
+                              - VIOL_COOKIE_LENGTH
+                              - VIOL_COOKIE_MALFORMED
+                              - VIOL_COOKIE_MODIFIED
+                              - VIOL_CSRF
+                              - VIOL_DATA_GUARD
+                              - VIOL_ENCODING
+                              - VIOL_EVASION
+                              - VIOL_FILE_UPLOAD
+                              - VIOL_FILE_UPLOAD_IN_BODY
+                              - VIOL_FILETYPE
+                              - VIOL_GEOLOCATION
+                              - VIOL_GRAPHQL_ERROR_RESPONSE
+                              - VIOL_GRAPHQL_FORMAT
+                              - VIOL_GRAPHQL_INTROSPECTION_QUERY
+                              - VIOL_GRAPHQL_MALFORMED
+                              - VIOL_GRPC_FORMAT
+                              - VIOL_GRPC_MALFORMED
+                              - VIOL_GRPC_METHOD
+                              - VIOL_HEADER_LENGTH
+                              - VIOL_HEADER_METACHAR
+                              - VIOL_HEADER_REPEATED
+                              - VIOL_HTTP_PROTOCOL
+                              - VIOL_HTTP_RESPONSE_STATUS
+                              - VIOL_JSON_FORMAT
+                              - VIOL_JSON_MALFORMED
+                              - VIOL_JSON_SCHEMA
+                              - VIOL_LOGIN
+                              - VIOL_LOGIN_URL_BYPASSED
+                              - VIOL_LOGIN_URL_EXPIRED
+                              - VIOL_MANDATORY_HEADER
+                              - VIOL_MANDATORY_PARAMETER
+                              - VIOL_MANDATORY_REQUEST_BODY
+                              - VIOL_METHOD
+                              - VIOL_PARAMETER
+                              - VIOL_PARAMETER_ARRAY_VALUE
+                              - VIOL_PARAMETER_DATA_TYPE
+                              - VIOL_PARAMETER_EMPTY_VALUE
+                              - VIOL_PARAMETER_LOCATION
+                              - VIOL_PARAMETER_MULTIPART_NULL_VALUE
+                              - VIOL_PARAMETER_NAME_METACHAR
+                              - VIOL_PARAMETER_NUMERIC_VALUE
+                              - VIOL_PARAMETER_REPEATED
+                              - VIOL_PARAMETER_STATIC_VALUE
+                              - VIOL_PARAMETER_VALUE_BASE64
+                              - VIOL_PARAMETER_VALUE_LENGTH
+                              - VIOL_PARAMETER_VALUE_METACHAR
+                              - VIOL_PARAMETER_VALUE_REGEXP
+                              - VIOL_POST_DATA_LENGTH
+                              - VIOL_QUERY_STRING_LENGTH
+                              - VIOL_RATING_NEED_EXAMINATION
+                              - VIOL_RATING_THREAT
+                              - VIOL_REQUEST_LENGTH
+                              - VIOL_REQUEST_MAX_LENGTH
+                              - VIOL_THREAT_CAMPAIGN
+                              - VIOL_URL
+                              - VIOL_URL_CONTENT_TYPE
+                              - VIOL_URL_LENGTH
+                              - VIOL_URL_METACHAR
+                              - VIOL_WEBSOCKET_BAD_REQUEST
+                              - VIOL_XML_FORMAT
+                              - VIOL_XML_MALFORMED
+                              type: string
+                          type: object
+                        type: array
+                    type: object
+                  blockingSettingReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  bot-defense:
+                    properties:
+                      mitigations:
+                        properties:
+                          anomalies:
+                            items:
+                              properties:
+                                $action:
+                                  enum:
+                                  - delete
+                                  type: string
+                                action:
+                                  enum:
+                                  - alarm
+                                  - block
+                                  - default
+                                  - detect
+                                  - ignore
+                                  type: string
+                                name:
+                                  type: string
+                                scoreThreshold:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  x-kubernetes-int-or-string: true
+                              type: object
+                            type: array
+                          browsers:
+                            items:
+                              properties:
+                                $action:
+                                  enum:
+                                  - delete
+                                  type: string
+                                action:
+                                  enum:
+                                  - alarm
+                                  - block
+                                  - detect
+                                  type: string
+                                maxVersion:
+                                  maximum: 2147483647
+                                  minimum: 0
+                                  type: integer
+                                minVersion:
+                                  maximum: 2147483647
+                                  minimum: 0
+                                  type: integer
+                                name:
+                                  type: string
+                              type: object
+                            type: array
+                          classes:
+                            items:
+                              properties:
+                                action:
+                                  enum:
+                                  - alarm
+                                  - block
+                                  - detect
+                                  - ignore
+                                  type: string
+                                name:
+                                  enum:
+                                  - browser
+                                  - malicious-bot
+                                  - suspicious-browser
+                                  - trusted-bot
+                                  - unknown
+                                  - untrusted-bot
+                                  type: string
+                              type: object
+                            type: array
+                          signatures:
+                            items:
+                              properties:
+                                $action:
+                                  enum:
+                                  - delete
+                                  type: string
+                                action:
+                                  enum:
+                                  - alarm
+                                  - block
+                                  - detect
+                                  - ignore
+                                  type: string
+                                name:
+                                  type: string
+                              type: object
+                            type: array
+                        type: object
+                      settings:
+                        properties:
+                          caseSensitiveHttpHeaders:
+                            type: boolean
+                          isEnabled:
+                            type: boolean
+                        type: object
+                    type: object
+                  browser-definitions:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        isUserDefined:
+                          type: boolean
+                        matchRegex:
+                          type: string
+                        matchString:
+                          type: string
+                        name:
+                          type: string
+                      type: object
+                    type: array
+                  caseInsensitive:
+                    type: boolean
+                  character-sets:
+                    items:
+                      properties:
+                        characterSet:
+                          items:
+                            properties:
+                              isAllowed:
+                                type: boolean
+                              metachar:
+                                type: string
+                            type: object
+                          type: array
+                        characterSetType:
+                          enum:
+                          - gwt-content
+                          - header
+                          - json-content
+                          - parameter-name
+                          - parameter-value
+                          - plain-text-content
+                          - url
+                          - xml-content
+                          type: string
+                      type: object
+                    type: array
+                  characterSetReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  cookie-settings:
+                    properties:
+                      maximumCookieHeaderLength:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        x-kubernetes-int-or-string: true
+                    type: object
+                  cookieReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  cookieSettingsReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  cookies:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        accessibleOnlyThroughTheHttpProtocol:
+                          type: boolean
+                        attackSignaturesCheck:
+                          type: boolean
+                        decodeValueAsBase64:
+                          enum:
+                          - enabled
+                          - disabled
+                          - required
+                          type: string
+                        enforcementType:
+                          type: string
+                        insertSameSiteAttribute:
+                          enum:
+                          - lax
+                          - none
+                          - none-value
+                          - strict
+                          type: string
+                        maskValueInLogs:
+                          type: boolean
+                        name:
+                          type: string
+                        securedOverHttpsConnection:
+                          type: boolean
+                        signatureOverrides:
+                          items:
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              signatureId:
+                                type: integer
+                              tag:
+                                type: string
+                            type: object
+                          type: array
+                        type:
+                          enum:
+                          - explicit
+                          - wildcard
+                          type: string
+                        wildcardOrder:
+                          type: integer
+                      type: object
+                    type: array
+                  csrf-protection:
+                    properties:
+                      enabled:
+                        type: boolean
+                      expirationTimeInSeconds:
+                        pattern: disabled|\d+
+                        type: string
+                      sslOnly:
+                        type: boolean
+                    type: object
+                  csrf-urls:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        enforcementAction:
+                          enum:
+                          - verify-origin
+                          - none
+                          type: string
+                        method:
+                          enum:
+                          - GET
+                          - POST
+                          - any
+                          type: string
+                        url:
+                          type: string
+                        wildcardOrder:
+                          type: integer
+                      type: object
+                    type: array
+                  data-guard:
+                    properties:
+                      creditCardNumbers:
+                        type: boolean
+                      customPatterns:
+                        type: boolean
+                      customPatternsList:
+                        items:
+                          type: string
+                        type: array
+                      enabled:
+                        type: boolean
+                      enforcementMode:
+                        enum:
+                        - ignore-urls-in-list
+                        - enforce-urls-in-list
+                        type: string
+                      enforcementUrls:
+                        items:
+                          type: string
+                        type: array
+                      firstCustomCharactersToExpose:
+                        type: integer
+                      lastCcnDigitsToExpose:
+                        type: integer
+                      lastCustomCharactersToExpose:
+                        type: integer
+                      lastSsnDigitsToExpose:
+                        type: integer
+                      maskData:
+                        type: boolean
+                      usSocialSecurityNumbers:
+                        type: boolean
+                    type: object
+                  dataGuardReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  description:
+                    type: string
+                  disallowed-geolocations:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        countryCode:
+                          enum:
+                          - AF
+                          - AX
+                          - AL
+                          - DZ
+                          - AS
+                          - AD
+                          - AO
+                          - AI
+                          - A1
+                          - AQ
+                          - AG
+                          - AR
+                          - AM
+                          - AW
+                          - AU
+                          - AT
+                          - AZ
+                          - BS
+                          - BH
+                          - BD
+                          - BB
+                          - BY
+                          - BE
+                          - BZ
+                          - BJ
+                          - BM
+                          - BT
+                          - BO
+                          - BA
+                          - BW
+                          - BV
+                          - BR
+                          - IO
+                          - BN
+                          - BG
+                          - BF
+                          - BI
+                          - KH
+                          - CM
+                          - CA
+                          - CV
+                          - KY
+                          - CF
+                          - TD
+                          - CL
+                          - CN
+                          - CX
+                          - CC
+                          - CO
+                          - KM
+                          - CG
+                          - CD
+                          - CK
+                          - CR
+                          - CI
+                          - HR
+                          - CU
+                          - CY
+                          - CZ
+                          - DK
+                          - DJ
+                          - DM
+                          - DO
+                          - EC
+                          - EG
+                          - SV
+                          - GQ
+                          - ER
+                          - EE
+                          - ET
+                          - FK
+                          - FO
+                          - FJ
+                          - FI
+                          - FR
+                          - FX
+                          - GF
+                          - PF
+                          - TF
+                          - GA
+                          - GM
+                          - GE
+                          - DE
+                          - GH
+                          - GI
+                          - GR
+                          - GL
+                          - GD
+                          - GP
+                          - GU
+                          - GT
+                          - GG
+                          - GN
+                          - GW
+                          - GY
+                          - HT
+                          - HM
+                          - VA
+                          - HN
+                          - HK
+                          - HU
+                          - IS
+                          - IN
+                          - ID
+                          - IR
+                          - IQ
+                          - IE
+                          - IM
+                          - IL
+                          - IT
+                          - JM
+                          - JP
+                          - JE
+                          - JO
+                          - KZ
+                          - KE
+                          - KI
+                          - KP
+                          - KR
+                          - KW
+                          - KG
+                          - LA
+                          - LV
+                          - LB
+                          - LS
+                          - LR
+                          - LY
+                          - LI
+                          - LT
+                          - LU
+                          - MO
+                          - MK
+                          - MG
+                          - MW
+                          - MY
+                          - MV
+                          - ML
+                          - MT
+                          - MH
+                          - MQ
+                          - MR
+                          - MU
+                          - YT
+                          - MX
+                          - FM
+                          - MD
+                          - MC
+                          - MN
+                          - ME
+                          - MS
+                          - MA
+                          - MZ
+                          - MM
+                          - ZZ
+                          - NA
+                          - NR
+                          - NP
+                          - NL
+                          - AN
+                          - NC
+                          - NZ
+                          - NI
+                          - NE
+                          - NG
+                          - NU
+                          - NF
+                          - MP
+                          - "NO"
+                          - OM
+                          - PK
+                          - PW
+                          - PS
+                          - PA
+                          - PG
+                          - PY
+                          - PE
+                          - PH
+                          - PN
+                          - PL
+                          - PT
+                          - PR
+                          - QA
+                          - RE
+                          - RO
+                          - RU
+                          - RW
+                          - BL
+                          - SH
+                          - KN
+                          - LC
+                          - MF
+                          - PM
+                          - VC
+                          - WS
+                          - SM
+                          - ST
+                          - A2
+                          - SA
+                          - SN
+                          - RS
+                          - SC
+                          - SL
+                          - SG
+                          - SK
+                          - SI
+                          - SB
+                          - SO
+                          - ZA
+                          - GS
+                          - ES
+                          - LK
+                          - SD
+                          - SR
+                          - SJ
+                          - SZ
+                          - SE
+                          - CH
+                          - SY
+                          - TW
+                          - TJ
+                          - TZ
+                          - TH
+                          - TL
+                          - TG
+                          - TK
+                          - TO
+                          - TT
+                          - TN
+                          - TR
+                          - TM
+                          - TC
+                          - TV
+                          - UG
+                          - UA
+                          - AE
+                          - GB
+                          - US
+                          - UM
+                          - UY
+                          - UZ
+                          - VU
+                          - VE
+                          - VN
+                          - VG
+                          - VI
+                          - WF
+                          - EH
+                          - YE
+                          - ZM
+                          - ZW
+                          type: string
+                        countryName:
+                          enum:
+                          - Afghanistan
+                          - Aland Islands
+                          - Albania
+                          - Algeria
+                          - American Samoa
+                          - Andorra
+                          - Angola
+                          - Anguilla
+                          - Anonymous Proxy
+                          - Antarctica
+                          - Antigua and Barbuda
+                          - Argentina
+                          - Armenia
+                          - Aruba
+                          - Australia
+                          - Austria
+                          - Azerbaijan
+                          - Bahamas
+                          - Bahrain
+                          - Bangladesh
+                          - Barbados
+                          - Belarus
+                          - Belgium
+                          - Belize
+                          - Benin
+                          - Bermuda
+                          - Bhutan
+                          - Bolivia
+                          - Bosnia and Herzegovina
+                          - Botswana
+                          - Bouvet Island
+                          - Brazil
+                          - British Indian Ocean Territory
+                          - Brunei Darussalam
+                          - Bulgaria
+                          - Burkina Faso
+                          - Burundi
+                          - Cambodia
+                          - Cameroon
+                          - Canada
+                          - Cape Verde
+                          - Cayman Islands
+                          - Central African Republic
+                          - Chad
+                          - Chile
+                          - China
+                          - Christmas Island
+                          - Cocos (Keeling) Islands
+                          - Colombia
+                          - Comoros
+                          - Congo
+                          - Congo, The Democratic Republic of the
+                          - Cook Islands
+                          - Costa Rica
+                          - Cote D'Ivoire
+                          - Croatia
+                          - Cuba
+                          - Cyprus
+                          - Czech Republic
+                          - Denmark
+                          - Djibouti
+                          - Dominica
+                          - Dominican Republic
+                          - Ecuador
+                          - Egypt
+                          - El Salvador
+                          - Equatorial Guinea
+                          - Eritrea
+                          - Estonia
+                          - Ethiopia
+                          - Falkland Islands (Malvinas)
+                          - Faroe Islands
+                          - Fiji
+                          - Finland
+                          - France
+                          - France, Metropolitan
+                          - French Guiana
+                          - French Polynesia
+                          - French Southern Territories
+                          - Gabon
+                          - Gambia
+                          - Georgia
+                          - Germany
+                          - Ghana
+                          - Gibraltar
+                          - Greece
+                          - Greenland
+                          - Grenada
+                          - Guadeloupe
+                          - Guam
+                          - Guatemala
+                          - Guernsey
+                          - Guinea
+                          - Guinea-Bissau
+                          - Guyana
+                          - Haiti
+                          - Heard Island and McDonald Islands
+                          - Holy See (Vatican City State)
+                          - Honduras
+                          - Hong Kong
+                          - Hungary
+                          - Iceland
+                          - India
+                          - Indonesia
+                          - Iran, Islamic Republic of
+                          - Iraq
+                          - Ireland
+                          - Isle of Man
+                          - Israel
+                          - Italy
+                          - Jamaica
+                          - Japan
+                          - Jersey
+                          - Jordan
+                          - Kazakhstan
+                          - Kenya
+                          - Kiribati
+                          - Korea, Democratic People's Republic of
+                          - Korea, Republic of
+                          - Kuwait
+                          - Kyrgyzstan
+                          - Lao People's Democratic Republic
+                          - Latvia
+                          - Lebanon
+                          - Lesotho
+                          - Liberia
+                          - Libyan Arab Jamahiriya
+                          - Liechtenstein
+                          - Lithuania
+                          - Luxembourg
+                          - Macau
+                          - Macedonia
+                          - Madagascar
+                          - Malawi
+                          - Malaysia
+                          - Maldives
+                          - Mali
+                          - Malta
+                          - Marshall Islands
+                          - Martinique
+                          - Mauritania
+                          - Mauritius
+                          - Mayotte
+                          - Mexico
+                          - Micronesia, Federated States of
+                          - Moldova, Republic of
+                          - Monaco
+                          - Mongolia
+                          - Montenegro
+                          - Montserrat
+                          - Morocco
+                          - Mozambique
+                          - Myanmar
+                          - N/A
+                          - Namibia
+                          - Nauru
+                          - Nepal
+                          - Netherlands
+                          - Netherlands Antilles
+                          - New Caledonia
+                          - New Zealand
+                          - Nicaragua
+                          - Niger
+                          - Nigeria
+                          - Niue
+                          - Norfolk Island
+                          - Northern Mariana Islands
+                          - Norway
+                          - Oman
+                          - Other
+                          - Pakistan
+                          - Palau
+                          - Palestinian Territory
+                          - Panama
+                          - Papua New Guinea
+                          - Paraguay
+                          - Peru
+                          - Philippines
+                          - Pitcairn Islands
+                          - Poland
+                          - Portugal
+                          - Puerto Rico
+                          - Qatar
+                          - Reunion
+                          - Romania
+                          - Russian Federation
+                          - Rwanda
+                          - Saint Barthelemy
+                          - Saint Helena
+                          - Saint Kitts and Nevis
+                          - Saint Lucia
+                          - Saint Martin
+                          - Saint Pierre and Miquelon
+                          - Saint Vincent and the Grenadines
+                          - Samoa
+                          - San Marino
+                          - Sao Tome and Principe
+                          - Satellite Provider
+                          - Saudi Arabia
+                          - Senegal
+                          - Serbia
+                          - Seychelles
+                          - Sierra Leone
+                          - Singapore
+                          - Slovakia
+                          - Slovenia
+                          - Solomon Islands
+                          - Somalia
+                          - South Africa
+                          - South Georgia and the South Sandwich Islands
+                          - Spain
+                          - Sri Lanka
+                          - Sudan
+                          - Suriname
+                          - Svalbard and Jan Mayen
+                          - Swaziland
+                          - Sweden
+                          - Switzerland
+                          - Syrian Arab Republic
+                          - Taiwan
+                          - Tajikistan
+                          - Tanzania, United Republic of
+                          - Thailand
+                          - Timor-Leste
+                          - Togo
+                          - Tokelau
+                          - Tonga
+                          - Trinidad and Tobago
+                          - Tunisia
+                          - Turkey
+                          - Turkmenistan
+                          - Turks and Caicos Islands
+                          - Tuvalu
+                          - Uganda
+                          - Ukraine
+                          - United Arab Emirates
+                          - United Kingdom
+                          - United States
+                          - United States Minor Outlying Islands
+                          - Uruguay
+                          - Uzbekistan
+                          - Vanuatu
+                          - Venezuela
+                          - Vietnam
+                          - Virgin Islands, British
+                          - Virgin Islands, U.S.
+                          - Wallis and Futuna
+                          - Western Sahara
+                          - Yemen
+                          - Zambia
+                          - Zimbabwe
+                          type: string
+                      type: object
+                    type: array
+                  disallowedGeolocationReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  enablePassiveMode:
+                    type: boolean
+                  enforcementMode:
+                    enum:
+                    - transparent
+                    - blocking
+                    type: string
+                  enforcer-settings:
+                    properties:
+                      enforcerStateCookies:
+                        properties:
+                          httpOnlyAttribute:
+                            type: boolean
+                          sameSiteAttribute:
+                            enum:
+                            - lax
+                            - none
+                            - none-value
+                            - strict
+                            type: string
+                          secureAttribute:
+                            enum:
+                            - always
+                            - never
+                            type: string
+                        type: object
+                    type: object
+                  filetypeReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  filetypes:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        allowed:
+                          type: boolean
+                        checkPostDataLength:
+                          type: boolean
+                        checkQueryStringLength:
+                          type: boolean
+                        checkRequestLength:
+                          type: boolean
+                        checkUrlLength:
+                          type: boolean
+                        name:
+                          type: string
+                        postDataLength:
+                          type: integer
+                        queryStringLength:
+                          type: integer
+                        requestLength:
+                          type: integer
+                        responseCheck:
+                          type: boolean
+                        type:
+                          enum:
+                          - explicit
+                          - wildcard
+                          type: string
+                        urlLength:
+                          type: integer
+                        wildcardOrder:
+                          type: integer
+                      type: object
+                    type: array
+                  fullPath:
+                    type: string
+                  general:
+                    properties:
+                      allowedResponseCodes:
+                        items:
+                          format: int32
+                          maximum: 999
+                          minimum: 100
+                          type: integer
+                        type: array
+                      customXffHeaders:
+                        items:
+                          type: string
+                        type: array
+                      maskCreditCardNumbersInRequest:
+                        type: boolean
+                      trustXff:
+                        type: boolean
+                    type: object
+                  generalReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  graphql-profiles:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        attackSignaturesCheck:
+                          type: boolean
+                        defenseAttributes:
+                          properties:
+                            allowIntrospectionQueries:
+                              type: boolean
+                            maximumBatchedQueries:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumQueryCost:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumStructureDepth:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumTotalLength:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumValueLength:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            tolerateParsingWarnings:
+                              type: boolean
+                          type: object
+                        description:
+                          type: string
+                        metacharElementCheck:
+                          type: boolean
+                        metacharOverrides:
+                          items:
+                            properties:
+                              isAllowed:
+                                type: boolean
+                              metachar:
+                                type: string
+                            type: object
+                          type: array
+                        name:
+                          type: string
+                        responseEnforcement:
+                          properties:
+                            blockDisallowedPatterns:
+                              type: boolean
+                            disallowedPatterns:
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        sensitiveData:
+                          items:
+                            properties:
+                              parameterName:
+                                type: string
+                            type: object
+                          type: array
+                        signatureOverrides:
+                          items:
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              signatureId:
+                                type: integer
+                              tag:
+                                type: string
+                            type: object
+                          type: array
+                      type: object
+                    type: array
+                  grpc-profiles:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        associateUrls:
+                          type: boolean
+                        attackSignaturesCheck:
+                          type: boolean
+                        decodeStringValuesAsBase64:
+                          enum:
+                          - disabled
+                          - enabled
+                          type: string
+                        defenseAttributes:
+                          properties:
+                            allowUnknownFields:
+                              type: boolean
+                            maximumDataLength:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                          type: object
+                        description:
+                          type: string
+                        hasIdlFiles:
+                          type: boolean
+                        idlFiles:
+                          items:
+                            properties:
+                              idlFile:
+                                properties:
+                                  contents:
+                                    type: string
+                                  fileName:
+                                    type: string
+                                  isBase64:
+                                    type: boolean
+                                type: object
+                              importUrl:
+                                type: string
+                              isPrimary:
+                                type: boolean
+                              primaryIdlFileName:
+                                type: string
+                            type: object
+                          type: array
+                        metacharCheck:
+                          type: boolean
+                        metacharElementCheck:
+                          type: boolean
+                        name:
+                          type: string
+                        signatureOverrides:
+                          items:
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              signatureId:
+                                type: integer
+                              tag:
+                                type: string
+                            type: object
+                          type: array
+                      type: object
+                    type: array
+                  header-settings:
+                    properties:
+                      maximumHttpHeaderLength:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        x-kubernetes-int-or-string: true
+                    type: object
+                  headerReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  headerSettingsReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  headers:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        allowRepeatedOccurrences:
+                          type: boolean
+                        base64Decoding:
+                          type: boolean
+                        checkSignatures:
+                          type: boolean
+                        decodeValueAsBase64:
+                          enum:
+                          - enabled
+                          - disabled
+                          - required
+                          type: string
+                        htmlNormalization:
+                          type: boolean
+                        mandatory:
+                          type: boolean
+                        maskValueInLogs:
+                          type: boolean
+                        name:
+                          type: string
+                        normalizationViolations:
+                          type: boolean
+                        percentDecoding:
+                          type: boolean
+                        signatureOverrides:
+                          items:
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              signatureId:
+                                type: integer
+                              tag:
+                                type: string
+                            type: object
+                          type: array
+                        type:
+                          enum:
+                          - explicit
+                          - wildcard
+                          type: string
+                        urlNormalization:
+                          type: boolean
+                        wildcardOrder:
+                          type: integer
+                      type: object
+                    type: array
+                  host-names:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        includeSubdomains:
+                          type: boolean
+                        name:
+                          type: string
+                      type: object
+                    type: array
+                  idl-files:
+                    items:
+                      properties:
+                        contents:
+                          type: string
+                        fileName:
+                          type: string
+                        isBase64:
+                          type: boolean
+                      type: object
+                    type: array
+                  json-profiles:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        attackSignaturesCheck:
+                          type: boolean
+                        defenseAttributes:
+                          properties:
+                            maximumArrayLength:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumStructureDepth:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumTotalLengthOfJSONData:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumValueLength:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            tolerateJSONParsingWarnings:
+                              type: boolean
+                          type: object
+                        description:
+                          type: string
+                        handleJsonValuesAsParameters:
+                          type: boolean
+                        hasValidationFiles:
+                          type: boolean
+                        metacharOverrides:
+                          items:
+                            properties:
+                              isAllowed:
+                                type: boolean
+                              metachar:
+                                type: string
+                            type: object
+                          type: array
+                        name:
+                          type: string
+                        signatureOverrides:
+                          items:
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              signatureId:
+                                type: integer
+                              tag:
+                                type: string
+                            type: object
+                          type: array
+                        validationFiles:
+                          items:
+                            properties:
+                              importUrl:
+                                type: string
+                              isPrimary:
+                                type: boolean
+                              jsonValidationFile:
+                                properties:
+                                  $action:
+                                    enum:
+                                    - delete
+                                    type: string
+                                  contents:
+                                    type: string
+                                  fileName:
+                                    type: string
+                                  isBase64:
+                                    type: boolean
+                                type: object
+                            type: object
+                          type: array
+                      type: object
+                    type: array
+                  json-validation-files:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        contents:
+                          type: string
+                        fileName:
+                          type: string
+                        isBase64:
+                          type: boolean
+                      type: object
+                    type: array
+                  jsonProfileReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  jsonValidationFileReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  methodReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  methods:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        name:
+                          type: string
+                      type: object
+                    type: array
+                  name:
+                    type: string
+                  open-api-files:
+                    items:
+                      properties:
+                        link:
+                          pattern: ^http
+                          type: string
+                      type: object
+                    type: array
+                  parameterReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  parameters:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        allowEmptyValue:
+                          type: boolean
+                        allowRepeatedParameterName:
+                          type: boolean
+                        arraySerializationFormat:
+                          enum:
+                          - csv
+                          - form
+                          - label
+                          - matrix
+                          - multi
+                          - multipart
+                          - pipe
+                          - ssv
+                          - tsv
+                          type: string
+                        attackSignaturesCheck:
+                          type: boolean
+                        checkMaxValue:
+                          type: boolean
+                        checkMaxValueLength:
+                          type: boolean
+                        checkMetachars:
+                          type: boolean
+                        checkMinValue:
+                          type: boolean
+                        checkMinValueLength:
+                          type: boolean
+                        checkMultipleOfValue:
+                          type: boolean
+                        contentProfile:
+                          properties:
+                            name:
+                              type: string
+                          type: object
+                        dataType:
+                          enum:
+                          - alpha-numeric
+                          - binary
+                          - boolean
+                          - decimal
+                          - email
+                          - integer
+                          - none
+                          - phone
+                          type: string
+                        decodeValueAsBase64:
+                          enum:
+                          - enabled
+                          - disabled
+                          - required
+                          type: string
+                        disallowFileUploadOfExecutables:
+                          type: boolean
+                        enableRegularExpression:
+                          type: boolean
+                        exclusiveMax:
+                          type: boolean
+                        exclusiveMin:
+                          type: boolean
+                        isBase64:
+                          type: boolean
+                        isCookie:
+                          type: boolean
+                        isHeader:
+                          type: boolean
+                        level:
+                          enum:
+                          - global
+                          - url
+                          type: string
+                        mandatory:
+                          type: boolean
+                        maximumLength:
+                          type: integer
+                        maximumValue:
+                          type: integer
+                        metacharsOnParameterValueCheck:
+                          type: boolean
+                        minimumLength:
+                          type: integer
+                        minimumValue:
+                          type: integer
+                        multipleOf:
+                          type: integer
+                        name:
+                          type: string
+                        nameMetacharOverrides:
+                          items:
+                            properties:
+                              isAllowed:
+                                type: boolean
+                              metachar:
+                                type: string
+                            type: object
+                          type: array
+                        objectSerializationStyle:
+                          type: string
+                        parameterEnumValues:
+                          items:
+                            type: string
+                          type: array
+                        parameterLocation:
+                          enum:
+                          - any
+                          - cookie
+                          - form-data
+                          - header
+                          - path
+                          - query
+                          type: string
+                        regularExpression:
+                          type: string
+                        sensitiveParameter:
+                          type: boolean
+                        signatureOverrides:
+                          items:
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              signatureId:
+                                type: integer
+                              tag:
+                                type: string
+                            type: object
+                          type: array
+                        staticValues:
+                          type: string
+                        type:
+                          enum:
+                          - explicit
+                          - wildcard
+                          type: string
+                        url:
+                          properties:
+                            method:
+                              enum:
+                              - ACL
+                              - BCOPY
+                              - BDELETE
+                              - BMOVE
+                              - BPROPFIND
+                              - BPROPPATCH
+                              - CHECKIN
+                              - CHECKOUT
+                              - CONNECT
+                              - COPY
+                              - DELETE
+                              - GET
+                              - HEAD
+                              - LINK
+                              - LOCK
+                              - MERGE
+                              - MKCOL
+                              - MKWORKSPACE
+                              - MOVE
+                              - NOTIFY
+                              - OPTIONS
+                              - PATCH
+                              - POLL
+                              - POST
+                              - PROPFIND
+                              - PROPPATCH
+                              - PUT
+                              - REPORT
+                              - RPC_IN_DATA
+                              - RPC_OUT_DATA
+                              - SEARCH
+                              - SUBSCRIBE
+                              - TRACE
+                              - TRACK
+                              - UNLINK
+                              - UNLOCK
+                              - UNSUBSCRIBE
+                              - VERSION_CONTROL
+                              - X-MS-ENUMATTS
+                              - '*'
+                              type: string
+                            name:
+                              type: string
+                            protocol:
+                              enum:
+                              - http
+                              - https
+                              type: string
+                            type:
+                              enum:
+                              - explicit
+                              - wildcard
+                              type: string
+                          type: object
+                        valueMetacharOverrides:
+                          items:
+                            properties:
+                              isAllowed:
+                                type: boolean
+                              metachar:
+                                type: string
+                            type: object
+                          type: array
+                        valueType:
+                          enum:
+                          - array
+                          - auto-detect
+                          - dynamic-content
+                          - dynamic-parameter-name
+                          - ignore
+                          - json
+                          - object
+                          - openapi-array
+                          - static-content
+                          - user-input
+                          - xml
+                          type: string
+                        wildcardOrder:
+                          type: integer
+                      type: object
+                    type: array
+                  response-pages:
+                    items:
+                      properties:
+                        ajaxActionType:
+                          enum:
+                          - alert-popup
+                          - custom
+                          - redirect
+                          type: string
+                        ajaxCustomContent:
+                          type: string
+                        ajaxEnabled:
+                          type: boolean
+                        ajaxPopupMessage:
+                          type: string
+                        ajaxRedirectUrl:
+                          type: string
+                        grpcStatusCode:
+                          pattern: ABORTED|ALREADY_EXISTS|CANCELLED|DATA_LOSS|DEADLINE_EXCEEDED|FAILED_PRECONDITION|INTERNAL|INVALID_ARGUMENT|NOT_FOUND|OK|OUT_OF_RANGE|PERMISSION_DENIED|RESOURCE_EXHAUSTED|UNAUTHENTICATED|UNAVAILABLE|UNIMPLEMENTED|UNKNOWN|d+
+                          type: string
+                        grpcStatusMessage:
+                          type: string
+                        responseActionType:
+                          enum:
+                          - custom
+                          - default
+                          - erase-cookies
+                          - redirect
+                          - soap-fault
+                          type: string
+                        responseContent:
+                          type: string
+                        responseHeader:
+                          type: string
+                        responsePageType:
+                          enum:
+                          - ajax
+                          - ajax-login
+                          - captcha
+                          - captcha-fail
+                          - default
+                          - failed-login-honeypot
+                          - failed-login-honeypot-ajax
+                          - hijack
+                          - leaked-credentials
+                          - leaked-credentials-ajax
+                          - mobile
+                          - persistent-flow
+                          - xml
+                          - grpc
+                          type: string
+                        responseRedirectUrl:
+                          type: string
+                      type: object
+                    type: array
+                  responsePageReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  sensitive-parameters:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        name:
+                          type: string
+                      type: object
+                    type: array
+                  sensitiveParameterReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  server-technologies:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        serverTechnologyName:
+                          enum:
+                          - Jenkins
+                          - SharePoint
+                          - Oracle Application Server
+                          - Python
+                          - Oracle Identity Manager
+                          - Spring Boot
+                          - CouchDB
+                          - SQLite
+                          - Handlebars
+                          - Mustache
+                          - Prototype
+                          - Zend
+                          - Redis
+                          - Underscore.js
+                          - Ember.js
+                          - ZURB Foundation
+                          - ef.js
+                          - Vue.js
+                          - UIKit
+                          - TYPO3 CMS
+                          - RequireJS
+                          - React
+                          - MooTools
+                          - Laravel
+                          - GraphQL
+                          - Google Web Toolkit
+                          - Express.js
+                          - CodeIgniter
+                          - Backbone.js
+                          - AngularJS
+                          - JavaScript
+                          - Nginx
+                          - Jetty
+                          - Joomla
+                          - JavaServer Faces (JSF)
+                          - Ruby
+                          - MongoDB
+                          - Django
+                          - Node.js
+                          - Citrix
+                          - JBoss
+                          - Elasticsearch
+                          - Apache Struts
+                          - XML
+                          - PostgreSQL
+                          - IBM DB2
+                          - Sybase/ASE
+                          - CGI
+                          - Proxy Servers
+                          - SSI (Server Side Includes)
+                          - Cisco
+                          - Novell
+                          - Macromedia JRun
+                          - BEA Systems WebLogic Server
+                          - Lotus Domino
+                          - MySQL
+                          - Oracle
+                          - Microsoft SQL Server
+                          - PHP
+                          - Outlook Web Access
+                          - Apache/NCSA HTTP Server
+                          - Apache Tomcat
+                          - WordPress
+                          - Macromedia ColdFusion
+                          - Unix/Linux
+                          - Microsoft Windows
+                          - ASP.NET
+                          - Front Page Server Extensions (FPSE)
+                          - IIS
+                          - WebDAV
+                          - ASP
+                          - Java Servlets/JSP
+                          - jQuery
+                          type: string
+                      type: object
+                    type: array
+                  serverTechnologyReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  signature-requirements:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        tag:
+                          type: string
+                      type: object
+                    type: array
+                  signature-sets:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        alarm:
+                          type: boolean
+                        block:
+                          type: boolean
+                        name:
+                          type: string
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    type: array
+                  signature-settings:
+                    properties:
+                      attackSignatureFalsePositiveMode:
+                        enum:
+                        - detect
+                        - detect-and-allow
+                        - disabled
+                        type: string
+                      minimumAccuracyForAutoAddedSignatures:
+                        enum:
+                        - high
+                        - low
+                        - medium
+                        type: string
+                    type: object
+                  signatureReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  signatureSetReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  signatureSettingReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  signatures:
+                    items:
+                      properties:
+                        enabled:
+                          type: boolean
+                        name:
+                          type: string
+                        signatureId:
+                          type: integer
+                        tag:
+                          type: string
+                      type: object
+                    type: array
+                  softwareVersion:
+                    type: string
+                  template:
+                    properties:
+                      name:
+                        type: string
+                    type: object
+                  threat-campaigns:
+                    items:
+                      properties:
+                        isEnabled:
+                          type: boolean
+                        name:
+                          type: string
+                      type: object
+                    type: array
+                  threatCampaignReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  urlReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  urls:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        allowRenderingInFrames:
+                          enum:
+                          - never
+                          - only-same
+                          type: string
+                        allowRenderingInFramesOnlyFrom:
+                          type: string
+                        attackSignaturesCheck:
+                          type: boolean
+                        clickjackingProtection:
+                          type: boolean
+                        description:
+                          type: string
+                        disallowFileUploadOfExecutables:
+                          type: boolean
+                        html5CrossOriginRequestsEnforcement:
+                          properties:
+                            allowOriginsEnforcementMode:
+                              enum:
+                              - replace-with
+                              - unmodified
+                              type: string
+                            checkAllowedMethods:
+                              type: boolean
+                            crossDomainAllowedOrigin:
+                              items:
+                                properties:
+                                  includeSubDomains:
+                                    type: boolean
+                                  originName:
+                                    type: string
+                                  originPort:
+                                    anyOf:
+                                    - type: integer
+                                    - type: string
+                                    x-kubernetes-int-or-string: true
+                                  originProtocol:
+                                    enum:
+                                    - http
+                                    - http/https
+                                    - https
+                                    type: string
+                                type: object
+                              type: array
+                            enforcementMode:
+                              enum:
+                              - disabled
+                              - enforce
+                              type: string
+                          type: object
+                        isAllowed:
+                          type: boolean
+                        mandatoryBody:
+                          type: boolean
+                        metacharOverrides:
+                          items:
+                            properties:
+                              isAllowed:
+                                type: boolean
+                              metachar:
+                                type: string
+                            type: object
+                          type: array
+                        metacharsOnUrlCheck:
+                          type: boolean
+                        method:
+                          enum:
+                          - ACL
+                          - BCOPY
+                          - BDELETE
+                          - BMOVE
+                          - BPROPFIND
+                          - BPROPPATCH
+                          - CHECKIN
+                          - CHECKOUT
+                          - CONNECT
+                          - COPY
+                          - DELETE
+                          - GET
+                          - HEAD
+                          - LINK
+                          - LOCK
+                          - MERGE
+                          - MKCOL
+                          - MKWORKSPACE
+                          - MOVE
+                          - NOTIFY
+                          - OPTIONS
+                          - PATCH
+                          - POLL
+                          - POST
+                          - PROPFIND
+                          - PROPPATCH
+                          - PUT
+                          - REPORT
+                          - RPC_IN_DATA
+                          - RPC_OUT_DATA
+                          - SEARCH
+                          - SUBSCRIBE
+                          - TRACE
+                          - TRACK
+                          - UNLINK
+                          - UNLOCK
+                          - UNSUBSCRIBE
+                          - VERSION_CONTROL
+                          - X-MS-ENUMATTS
+                          - '*'
+                          type: string
+                        methodOverrides:
+                          items:
+                            properties:
+                              allowed:
+                                type: boolean
+                              method:
+                                enum:
+                                - ACL
+                                - BCOPY
+                                - BDELETE
+                                - BMOVE
+                                - BPROPFIND
+                                - BPROPPATCH
+                                - CHECKIN
+                                - CHECKOUT
+                                - CONNECT
+                                - COPY
+                                - DELETE
+                                - GET
+                                - HEAD
+                                - LINK
+                                - LOCK
+                                - MERGE
+                                - MKCOL
+                                - MKWORKSPACE
+                                - MOVE
+                                - NOTIFY
+                                - OPTIONS
+                                - PATCH
+                                - POLL
+                                - POST
+                                - PROPFIND
+                                - PROPPATCH
+                                - PUT
+                                - REPORT
+                                - RPC_IN_DATA
+                                - RPC_OUT_DATA
+                                - SEARCH
+                                - SUBSCRIBE
+                                - TRACE
+                                - TRACK
+                                - UNLINK
+                                - UNLOCK
+                                - UNSUBSCRIBE
+                                - VERSION_CONTROL
+                                - X-MS-ENUMATTS
+                                type: string
+                            type: object
+                          type: array
+                        methodsOverrideOnUrlCheck:
+                          type: boolean
+                        name:
+                          type: string
+                        operationId:
+                          type: string
+                        positionalParameters:
+                          items:
+                            properties:
+                              parameter:
+                                properties:
+                                  $action:
+                                    enum:
+                                    - delete
+                                    type: string
+                                  allowEmptyValue:
+                                    type: boolean
+                                  allowRepeatedParameterName:
+                                    type: boolean
+                                  arraySerializationFormat:
+                                    enum:
+                                    - csv
+                                    - form
+                                    - label
+                                    - matrix
+                                    - multi
+                                    - multipart
+                                    - pipe
+                                    - ssv
+                                    - tsv
+                                    type: string
+                                  attackSignaturesCheck:
+                                    type: boolean
+                                  checkMaxValue:
+                                    type: boolean
+                                  checkMaxValueLength:
+                                    type: boolean
+                                  checkMetachars:
+                                    type: boolean
+                                  checkMinValue:
+                                    type: boolean
+                                  checkMinValueLength:
+                                    type: boolean
+                                  checkMultipleOfValue:
+                                    type: boolean
+                                  contentProfile:
+                                    properties:
+                                      name:
+                                        type: string
+                                    type: object
+                                  dataType:
+                                    enum:
+                                    - alpha-numeric
+                                    - binary
+                                    - boolean
+                                    - decimal
+                                    - email
+                                    - integer
+                                    - none
+                                    - phone
+                                    type: string
+                                  decodeValueAsBase64:
+                                    enum:
+                                    - enabled
+                                    - disabled
+                                    - required
+                                    type: string
+                                  disallowFileUploadOfExecutables:
+                                    type: boolean
+                                  enableRegularExpression:
+                                    type: boolean
+                                  exclusiveMax:
+                                    type: boolean
+                                  exclusiveMin:
+                                    type: boolean
+                                  isBase64:
+                                    type: boolean
+                                  isCookie:
+                                    type: boolean
+                                  isHeader:
+                                    type: boolean
+                                  level:
+                                    enum:
+                                    - global
+                                    - url
+                                    type: string
+                                  mandatory:
+                                    type: boolean
+                                  maximumLength:
+                                    type: integer
+                                  maximumValue:
+                                    type: integer
+                                  metacharsOnParameterValueCheck:
+                                    type: boolean
+                                  minimumLength:
+                                    type: integer
+                                  minimumValue:
+                                    type: integer
+                                  multipleOf:
+                                    type: integer
+                                  name:
+                                    type: string
+                                  nameMetacharOverrides:
+                                    items:
+                                      properties:
+                                        isAllowed:
+                                          type: boolean
+                                        metachar:
+                                          type: string
+                                      type: object
+                                    type: array
+                                  objectSerializationStyle:
+                                    type: string
+                                  parameterEnumValues:
+                                    items:
+                                      type: string
+                                    type: array
+                                  parameterLocation:
+                                    enum:
+                                    - any
+                                    - cookie
+                                    - form-data
+                                    - header
+                                    - path
+                                    - query
+                                    type: string
+                                  regularExpression:
+                                    type: string
+                                  sensitiveParameter:
+                                    type: boolean
+                                  signatureOverrides:
+                                    items:
+                                      properties:
+                                        enabled:
+                                          type: boolean
+                                        name:
+                                          type: string
+                                        signatureId:
+                                          type: integer
+                                        tag:
+                                          type: string
+                                      type: object
+                                    type: array
+                                  staticValues:
+                                    type: string
+                                  type:
+                                    enum:
+                                    - explicit
+                                    - wildcard
+                                    type: string
+                                  url:
+                                    properties:
+                                      method:
+                                        enum:
+                                        - ACL
+                                        - BCOPY
+                                        - BDELETE
+                                        - BMOVE
+                                        - BPROPFIND
+                                        - BPROPPATCH
+                                        - CHECKIN
+                                        - CHECKOUT
+                                        - CONNECT
+                                        - COPY
+                                        - DELETE
+                                        - GET
+                                        - HEAD
+                                        - LINK
+                                        - LOCK
+                                        - MERGE
+                                        - MKCOL
+                                        - MKWORKSPACE
+                                        - MOVE
+                                        - NOTIFY
+                                        - OPTIONS
+                                        - PATCH
+                                        - POLL
+                                        - POST
+                                        - PROPFIND
+                                        - PROPPATCH
+                                        - PUT
+                                        - REPORT
+                                        - RPC_IN_DATA
+                                        - RPC_OUT_DATA
+                                        - SEARCH
+                                        - SUBSCRIBE
+                                        - TRACE
+                                        - TRACK
+                                        - UNLINK
+                                        - UNLOCK
+                                        - UNSUBSCRIBE
+                                        - VERSION_CONTROL
+                                        - X-MS-ENUMATTS
+                                        - '*'
+                                        type: string
+                                      name:
+                                        type: string
+                                      protocol:
+                                        enum:
+                                        - http
+                                        - https
+                                        type: string
+                                      type:
+                                        enum:
+                                        - explicit
+                                        - wildcard
+                                        type: string
+                                    type: object
+                                  valueMetacharOverrides:
+                                    items:
+                                      properties:
+                                        isAllowed:
+                                          type: boolean
+                                        metachar:
+                                          type: string
+                                      type: object
+                                    type: array
+                                  valueType:
+                                    enum:
+                                    - array
+                                    - auto-detect
+                                    - dynamic-content
+                                    - dynamic-parameter-name
+                                    - ignore
+                                    - json
+                                    - object
+                                    - openapi-array
+                                    - static-content
+                                    - user-input
+                                    - xml
+                                    type: string
+                                  wildcardOrder:
+                                    type: integer
+                                type: object
+                              urlSegmentIndex:
+                                type: integer
+                            type: object
+                          type: array
+                        protocol:
+                          enum:
+                          - http
+                          - https
+                          type: string
+                        signatureOverrides:
+                          items:
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              signatureId:
+                                type: integer
+                              tag:
+                                type: string
+                            type: object
+                          type: array
+                        type:
+                          enum:
+                          - explicit
+                          - wildcard
+                          type: string
+                        urlContentProfiles:
+                          items:
+                            properties:
+                              contentProfile:
+                                properties:
+                                  name:
+                                    type: string
+                                type: object
+                              headerName:
+                                type: string
+                              headerOrder:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                x-kubernetes-int-or-string: true
+                              headerValue:
+                                type: string
+                              name:
+                                type: string
+                              type:
+                                enum:
+                                - apply-content-signatures
+                                - apply-value-and-content-signatures
+                                - disallow
+                                - do-nothing
+                                - form-data
+                                - gwt
+                                - json
+                                - xml
+                                - grpc
+                                type: string
+                            type: object
+                          type: array
+                        wildcardOrder:
+                          type: integer
+                      type: object
+                    type: array
+                  whitelist-ips:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        blockRequests:
+                          enum:
+                          - always
+                          - never
+                          - policy-default
+                          type: string
+                        ipAddress:
+                          pattern: '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
+                          type: string
+                        ipMask:
+                          pattern: '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
+                          type: string
+                        neverLogRequests:
+                          type: boolean
+                      type: object
+                    type: array
+                  whitelistIpReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  xml-profiles:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        attackSignaturesCheck:
+                          type: boolean
+                        defenseAttributes:
+                          properties:
+                            allowCDATA:
+                              type: boolean
+                            allowDTDs:
+                              type: boolean
+                            allowExternalReferences:
+                              type: boolean
+                            allowProcessingInstructions:
+                              type: boolean
+                            maximumAttributeValueLength:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumAttributesPerElement:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumChildrenPerElement:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumDocumentDepth:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumDocumentSize:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumElements:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumNSDeclarations:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumNameLength:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumNamespaceLength:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            tolerateCloseTagShorthand:
+                              type: boolean
+                            tolerateLeadingWhiteSpace:
+                              type: boolean
+                            tolerateNumericNames:
+                              type: boolean
+                          type: object
+                        description:
+                          type: string
+                        enableWss:
+                          type: boolean
+                        followSchemaLinks:
+                          type: boolean
+                        name:
+                          type: string
+                        signatureOverrides:
+                          items:
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              signatureId:
+                                type: integer
+                              tag:
+                                type: string
+                            type: object
+                          type: array
+                        useXmlResponsePage:
+                          type: boolean
+                      type: object
+                    type: array
+                  xml-validation-files:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        contents:
+                          type: string
+                        fileName:
+                          type: string
+                        isBase64:
+                          type: boolean
+                      type: object
+                    type: array
+                  xmlProfileReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  xmlValidationFileReference:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true

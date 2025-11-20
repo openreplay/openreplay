@@ -1,6 +1,6 @@
-{{- if eq .Values.controller.kind "daemonset" }}
+{{- if eq .Values.controller.kind "statefulset" }}
 apiVersion: apps/v1
-kind: DaemonSet
+kind: StatefulSet
 metadata:
   name: {{ include "nginx-ingress.controller.fullname" . }}
   namespace: {{ .Release.Namespace }}
@@ -10,6 +10,10 @@ metadata:
   annotations: {{ toYaml .Values.controller.annotations | nindent 4 }}
 {{- end }}
 spec:
+  {{- if not .Values.controller.autoscaling.enabled }}
+  replicas: {{ .Values.controller.replicaCount }}
+  {{- end }}
+  serviceName: {{ include "nginx-ingress.controller.service.name" . }}
   selector:
     matchLabels:
       {{- include "nginx-ingress.selectorLabels" . | nindent 6 }}
@@ -29,11 +33,6 @@ spec:
 {{- end }}
 {{- end }}
     spec:
-      serviceAccountName: {{ include "nginx-ingress.serviceAccountName" . }}
-      automountServiceAccountToken: true
-      securityContext:
-{{ toYaml .Values.controller.podSecurityContext | indent 8 }}
-      terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
 {{- if .Values.controller.nodeSelector }}
       nodeSelector:
 {{ toYaml .Values.controller.nodeSelector | indent 8 }}
@@ -46,18 +45,27 @@ spec:
       affinity:
 {{ toYaml .Values.controller.affinity | indent 8 }}
 {{- end }}
-{{- include "nginx-ingress.volumes" . | indent 6 }}
+{{- if .Values.controller.topologySpreadConstraints }}
+      topologySpreadConstraints:
+{{ toYaml .Values.controller.topologySpreadConstraints | indent 8 }}
+{{- end }}
+{{- include "nginx-ingress.volumes" .  | indent 6 }}
 {{- if .Values.controller.priorityClassName }}
       priorityClassName: {{ .Values.controller.priorityClassName }}
 {{- end }}
+      serviceAccountName: {{ include "nginx-ingress.serviceAccountName" . }}
+      automountServiceAccountToken: true
+      securityContext:
+{{ toYaml .Values.controller.podSecurityContext | indent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       dnsPolicy: {{ .Values.controller.dnsPolicy }}
       {{- if .Values.controller.shareProcessNamespace }}
       shareProcessNamespace: true
       {{- end }}
       containers:
-      - name: {{ include "nginx-ingress.name" . }}
-        image: {{ include "nginx-ingress.image" . }}
+      - image: {{ include "nginx-ingress.image" . }}
+        name: {{ include "nginx-ingress.name" . }}
         imagePullPolicy: "{{ .Values.controller.image.pullPolicy }}"
 {{- if .Values.controller.lifecycle }}
         lifecycle:
@@ -72,9 +80,9 @@ spec:
           hostPort: {{ index $.Values.controller.hostPort $key }}
           {{- end }}
 {{- end }}
-{{ if .Values.controller.customPorts }}
+{{- if .Values.controller.customPorts }}
 {{ toYaml .Values.controller.customPorts | indent 8 }}
-{{ end }}
+{{- end }}
 {{- if .Values.prometheus.create }}
         - name: prometheus
           containerPort: {{ .Values.prometheus.port }}
@@ -110,6 +118,8 @@ spec:
           successThreshold: {{ .Values.controller.startupStatus.successThreshold }}
           failureThreshold: {{ .Values.controller.startupStatus.failureThreshold }}
 {{- end }}
+        resources:
+{{ toYaml .Values.controller.resources | indent 10 }}
 {{- if .Values.controller.securityContext }}
         securityContext:
 {{ toYaml .Values.controller.securityContext | indent 10 }}
@@ -161,8 +171,6 @@ spec:
               key: password
 {{- end }}
 {{- end }}
-        resources:
-{{ toYaml .Values.controller.resources | indent 10 }}
         args:
 {{- include "nginx-ingress.args" . | nindent 10 }}
 {{- if .Values.controller.extraContainers }}
@@ -171,7 +179,7 @@ spec:
 
 {{- include "nginx-ingress.appprotect.v5" . | nindent 6 }}
 
-{{- if or (eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" ) .Values.controller.initContainers }}
+{{- if or ( eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" ) .Values.controller.initContainers }}
       initContainers:
 {{- end }}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
@@ -210,4 +218,23 @@ spec:
 {{- if .Values.controller.minReadySeconds }}
   minReadySeconds: {{ .Values.controller.minReadySeconds }}
 {{- end }}
+{{- if .Values.controller.statefulset.podManagementPolicy }}
+  podManagementPolicy: {{ .Values.controller.statefulset.podManagementPolicy }}
+{{- end }}
+{{- if .Values.controller.statefulset.persistentVolumeClaimRetentionPolicy }}
+  persistentVolumeClaimRetentionPolicy:
+{{ toYaml .Values.controller.statefulset.persistentVolumeClaimRetentionPolicy | indent 4 }}
+{{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: nginx-cache
+    spec:
+      accessModes:
+{{ toYaml .Values.controller.statefulset.nginxCachePVC.accessModes | indent 8 }}
+{{- if .Values.controller.statefulset.nginxCachePVC.storageClass }}
+      storageClassName: {{ .Values.controller.statefulset.nginxCachePVC.storageClass | quote }}
+{{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.controller.statefulset.nginxCachePVC.size | quote }}
 {{- end }}

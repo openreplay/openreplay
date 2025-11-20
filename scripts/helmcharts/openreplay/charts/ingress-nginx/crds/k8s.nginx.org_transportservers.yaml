@@ -1,0 +1,279 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: transportservers.k8s.nginx.org
+spec:
+  group: k8s.nginx.org
+  names:
+    kind: TransportServer
+    listKind: TransportServerList
+    plural: transportservers
+    shortNames:
+    - ts
+    singular: transportserver
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: Current state of the TransportServer. If the resource has a valid
+        status, it means it has been validated and accepted by the Ingress Controller.
+      jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .status.reason
+      name: Reason
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: TransportServer defines the TransportServer resource.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: TransportServerSpec is the spec of the TransportServer resource.
+            properties:
+              action:
+                description: The action to perform for a request.
+                properties:
+                  pass:
+                    description: Passes connections/datagrams to an upstream. The
+                      upstream with that name must be defined in the resource.
+                    type: string
+                type: object
+              host:
+                description: The host (domain name) of the server. Must be a valid
+                  subdomain as defined in RFC 1123, such as my-app or hello.example.com.
+                  When using a wildcard domain like *.example.com the domain must
+                  be contained in double quotes. The host value needs to be unique
+                  among all Ingress and VirtualServer resources.
+                type: string
+              ingressClassName:
+                description: Specifies which Ingress Controller must handle the VirtualServer
+                  resource.
+                type: string
+              listener:
+                description: Sets a custom HTTP and/or HTTPS listener. Valid fields
+                  are listener.http and listener.https. Each field must reference
+                  the name of a valid listener defined in a GlobalConfiguration resource
+                properties:
+                  name:
+                    description: The name of a listener defined in a GlobalConfiguration
+                      resource.
+                    type: string
+                  protocol:
+                    description: The protocol of the listener.
+                    type: string
+                type: object
+              serverSnippets:
+                description: Sets a custom snippet in server context. Overrides the
+                  server-snippets ConfigMap key.
+                type: string
+              sessionParameters:
+                description: The parameters of the session to be used for the Server
+                  context
+                properties:
+                  timeout:
+                    description: The timeout between two successive read or write
+                      operations on client or proxied server connections. The default
+                      is 10m.
+                    type: string
+                type: object
+              streamSnippets:
+                description: Sets a custom snippet in the stream context. Overrides
+                  the stream-snippets ConfigMap key.
+                type: string
+              tls:
+                description: The TLS termination configuration.
+                properties:
+                  secret:
+                    type: string
+                type: object
+              upstreamParameters:
+                description: UpstreamParameters defines parameters for an upstream.
+                properties:
+                  connectTimeout:
+                    description: The timeout for establishing a connection with a
+                      proxied server.  The default is 60s.
+                    type: string
+                  nextUpstream:
+                    description: If a connection to the proxied server cannot be established,
+                      determines whether a client connection will be passed to the
+                      next server. The default is true.
+                    type: boolean
+                  nextUpstreamTimeout:
+                    description: The time allowed to pass a connection to the next
+                      server. The default is 0.
+                    type: string
+                  nextUpstreamTries:
+                    description: The number of tries for passing a connection to the
+                      next server. The default is 0.
+                    type: integer
+                  udpRequests:
+                    description: The number of datagrams, after receiving which, the
+                      next datagram from the same client starts a new session. The
+                      default is 0.
+                    type: integer
+                  udpResponses:
+                    description: The number of datagrams expected from the proxied
+                      server in response to a client datagram.  By default, the number
+                      of datagrams is not limited.
+                    type: integer
+                type: object
+              upstreams:
+                description: A list of upstreams.
+                items:
+                  description: TransportServerUpstream defines an upstream.
+                  properties:
+                    backup:
+                      description: 'The name of the backup service of type ExternalName.
+                        This will be used when the primary servers are unavailable.
+                        Note: The parameter cannot be used along with the random,
+                        hash or ip_hash load balancing methods.'
+                      type: string
+                    backupPort:
+                      description: The port of the backup service. The backup port
+                        is required if the backup service name is provided. The port
+                        must fall into the range 1..65535.
+                      type: integer
+                    failTimeout:
+                      description: Sets the number of unsuccessful attempts to communicate
+                        with the server that should happen in the duration set by
+                        the failTimeout parameter to consider the server unavailable.
+                        The default is 1.
+                      type: string
+                    healthCheck:
+                      description: 'The health check configuration for the Upstream.
+                        Note: this feature is supported only in NGINX Plus.'
+                      properties:
+                        enable:
+                          description: Enables a health check for an upstream server.
+                            The default is false.
+                          type: boolean
+                        fails:
+                          description: The number of consecutive failed health checks
+                            of a particular upstream server after which this server
+                            will be considered unhealthy. The default is 1.
+                          type: integer
+                        interval:
+                          description: The interval between two consecutive health
+                            checks. The default is 5s.
+                          type: string
+                        jitter:
+                          description: The time within which each health check will
+                            be randomly delayed. By default, there is no delay.
+                          type: string
+                        match:
+                          description: Controls the data to send and the response
+                            to expect for the healthcheck.
+                          properties:
+                            expect:
+                              description: A literal string or a regular expression
+                                that the data obtained from the server should match.
+                                The regular expression is specified with the preceding
+                                ~* modifier (for case-insensitive matching), or the
+                                ~ modifier (for case-sensitive matching). NGINX Ingress
+                                Controller validates a regular expression using the
+                                RE2 syntax.
+                              type: string
+                            send:
+                              description: A string to send to an upstream server.
+                              type: string
+                          type: object
+                        passes:
+                          description: The number of consecutive passed health checks
+                            of a particular upstream server after which the server
+                            will be considered healthy. The default is 1.
+                          type: integer
+                        port:
+                          description: 'The port used for health check requests. By
+                            default, the server port is used. Note: in contrast with
+                            the port of the upstream, this port is not a service port,
+                            but a port of a pod.'
+                          type: integer
+                        timeout:
+                          description: This overrides the timeout set by proxy_timeout
+                            which is set in SessionParameters for health checks. The
+                            default value is 5s.
+                          type: string
+                      type: object
+                    loadBalancingMethod:
+                      description: The method used to load balance the upstream servers.
+                        By default, connections are distributed between the servers
+                        using a weighted round-robin balancing method.
+                      type: string
+                    maxConns:
+                      description: Sets the time during which the specified number
+                        of unsuccessful attempts to communicate with the server should
+                        happen to consider the server unavailable and the period of
+                        time the server will be considered unavailable. The default
+                        is 10s.
+                      type: integer
+                    maxFails:
+                      description: Sets the number of maximum connections to the proxied
+                        server. Default value is zero, meaning there is no limit.
+                        The default is 0.
+                      type: integer
+                    name:
+                      description: The name of the upstream. Must be a valid DNS label
+                        as defined in RFC 1035. For example, hello and upstream-123
+                        are valid. The name must be unique among all upstreams of
+                        the resource.
+                      type: string
+                    port:
+                      description: The port of the service. If the service doesn’t
+                        define that port, NGINX will assume the service has zero endpoints
+                        and close client connections/ignore datagrams. The port must
+                        fall into the range 1..65535.
+                      type: integer
+                    service:
+                      description: The name of a service. The service must belong
+                        to the same namespace as the resource. If the service doesn’t
+                        exist, NGINX will assume the service has zero endpoints and
+                        close client connections/ignore datagrams.
+                      type: string
+                  type: object
+                type: array
+            type: object
+          status:
+            description: The status of the TransportServer resource
+            properties:
+              message:
+                description: The message of the current state of the resource. It
+                  can contain more detailed information about the reason.
+                type: string
+              reason:
+                description: The reason of the current state of the resource.
+                type: string
+              state:
+                description: 'Represents the current state of the resource. Possible
+                  values: Valid (resource validated and accepted), Invalid (validation
+                  failed or config reload failed), or Warning (validated but may work
+                  in degraded state).'
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

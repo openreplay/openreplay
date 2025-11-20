@@ -1,0 +1,16 @@
+{{ if .Values.controller.globalConfiguration.create }}
+apiVersion: k8s.nginx.org/v1
+kind: GlobalConfiguration
+metadata:
+{{- if not .Values.controller.globalConfiguration.customName }}
+  name: {{ include "nginx-ingress.controller.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+{{- else }}
+  name: {{ include "nginx-ingress.globalConfiguration.customName" . }}
+  namespace: {{ include "nginx-ingress.globalConfiguration.customNamespace" . }}
+{{- end }}
+  labels:
+    {{- include "nginx-ingress.labels" . | nindent 4 }}
+spec:
+{{ toYaml .Values.controller.globalConfiguration.spec | indent 2 }}
+{{- end }}
