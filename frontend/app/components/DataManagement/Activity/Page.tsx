@@ -1,6 +1,8 @@
 import React from 'react';
-import { EventsList, FilterList } from 'Shared/Filters/FilterList';
-import { Dropdown, Button } from 'antd';
+import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
+import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
+import FilterSelection from 'Shared/Filters/FilterSelection';
+import { Dropdown, Button, Divider } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
@@ -16,7 +18,7 @@ import { useStore } from 'App/mstore';
 import FullPagination from 'Shared/FullPagination';
 import AnimatedSVG from 'Shared/AnimatedSVG';
 import DndTable from 'Shared/DNDTable';
-import { Code } from 'lucide-react';
+import { Code, Plus } from 'lucide-react';
 
 const limit = 100;
 
@@ -55,7 +57,7 @@ const testAutoEv = new Event({
 export const list = [testEv.toData(), testAutoEv.toData()];
 
 const fetcher = async (
-  page: number
+  page: number,
 ): Promise<{ list: any[]; total: number }> => {
   const total = 3000;
   return new Promise((resolve) => {
@@ -66,9 +68,11 @@ const fetcher = async (
 const columnOrderKey = '$__activity_columns_order__$';
 
 function ActivityPage() {
-  const { projectsStore } = useStore();
+  const { projectsStore, filterStore } = useStore();
   const siteId = projectsStore.activeSiteId;
-
+  const allFilterOptions = filterStore.getCurrentProjectFilters();
+  const eventOptions = allFilterOptions.filter((i) => i.isEvent);
+  const propertyOptions = allFilterOptions.filter((i) => !i.isEvent);
   const dropdownItems = [
     {
       label: 'Show/Hide Columns',
@@ -158,6 +162,7 @@ function ActivityPage() {
   });
   const { list, total } = data;
   const appliedFilter = { filters: [] };
+  const appliedEvents = appliedFilter.filters.filter(f => f.isEvent)
   const onAddFilter = () => {};
   const onUpdateFilter = () => {};
   const onRemoveFilter = () => {};
@@ -173,7 +178,7 @@ function ActivityPage() {
         cols.map((col) => ({
           ...col,
           hidden: hiddenCols.includes(col.key),
-        }))
+        })),
       );
     }
   }, [hiddenCols]);
@@ -211,7 +216,7 @@ function ActivityPage() {
     setHiddenCols((_) => {
       return columns
         .map((col) =>
-          cols.includes(col.key) || col.key === '$__opts__$' ? null : col.key
+          cols.includes(col.key) || col.key === '$__opts__$' ? null : col.key,
         )
         .filter(Boolean);
     });
@@ -222,36 +227,70 @@ function ActivityPage() {
       className={'flex flex-col gap-2'}
       style={{ maxWidth: '1360px', margin: 'auto' }}
     >
-      <div className={'shadow rounded-xl'}>
-        <EventsList
-          filter={appliedFilter}
-          onAddFilter={onAddFilter}
-          onUpdateFilter={onUpdateFilter}
-          onRemoveFilter={onRemoveFilter}
-          onChangeEventsOrder={onChangeEventsOrder}
-          saveRequestPayloads={saveRequestPayloads}
-          onFilterMove={onFilterMove}
-          mergeDown
-          heading={
-            <div
-              className={
-                '-mx-4 px-4 border-b w-full py-2 font-semibold text-lg'
-              }
-              style={{ width: 'calc(100% + 2rem)' }}
+      <h2 className="text-2xl capitalize mr-4">Activity</h2>
+      <div className={'shadow rounded-lg bg-white p-4 border'}>
+        <FilterListHeader
+          title="Events"
+          showEventsOrder={appliedEvents.length > 0}
+          orderProps={appliedFilter}
+          onChangeOrder={onChangeEventsOrder}
+          filterSelection={
+            <FilterSelection
+              filters={eventOptions}
+              activeFilters={appliedFilter.filters}
+              onFilterClick={onAddFilter}
             >
-              Activity
-            </div>
+              <Button type="default" size="small">
+                <div className="flex items-center gap-1">
+                  <Plus size={16} strokeWidth={1} />
+                  <span>Add</span>
+                </div>
+              </Button>
+            </FilterSelection>
           }
         />
-        <FilterList
-          mergeUp
-          filter={appliedFilter}
-          onAddFilter={onAddFilter}
-          onUpdateFilter={onUpdateFilter}
-          onRemoveFilter={onRemoveFilter}
-          onChangeEventsOrder={onChangeEventsOrder}
-          saveRequestPayloads={saveRequestPayloads}
-          onFilterMove={onFilterMove}
+
+        <UnifiedFilterList
+          title="Events"
+          filters={appliedEvents}
+          isDraggable={true}
+          showIndices={true}
+          className="mt-2"
+          handleRemove={onRemoveFilter}
+          handleUpdate={onUpdateFilter}
+          handleAdd={onAddFilter}
+          handleMove={onFilterMove}
+        />
+
+        <Divider className="my-3" />
+
+        <FilterListHeader
+          title="Filters"
+          filterSelection={
+            <FilterSelection
+              filters={propertyOptions}
+              activeFilters={appliedFilter.filters}
+              onFilterClick={onAddFilter}
+            >
+              <Button type="default" size="small">
+                <div className="flex items-center gap-1">
+                  <Plus size={16} strokeWidth={1} />
+                  <span>Add</span>
+                </div>
+              </Button>
+            </FilterSelection>
+          }
+        />
+
+        <UnifiedFilterList
+          title="Filters"
+          filters={appliedFilter.filters.filter((f) => !f.isEvent)}
+          className="mt-2"
+          isDraggable={false}
+          showIndices={false}
+          handleRemove={onRemoveFilter}
+          handleUpdate={onUpdateFilter}
+          handleAdd={onAddFilter}
         />
       </div>
       <div className={'relative'}>
@@ -267,7 +306,7 @@ function ActivityPage() {
 
         <div
           className={
-            'bg-white rounded-xl shadow border flex flex-col overflow-hidden'
+            'bg-white rounded-lg shadow border flex flex-col overflow-hidden'
           }
         >
           <div className={'px-4 py-2 flex items-center gap-2'}>

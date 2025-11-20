@@ -46,7 +46,8 @@ function TopHeader() {
   const closeLangBanner = () => {
     setLangBannerClosed(true);
     localStorage.setItem(langBannerClosedKey, '1');
-  }
+  };
+
   return (
     <>
       {langBannerClosed ? null : <LangBanner onClose={closeLangBanner} />}
