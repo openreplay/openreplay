@@ -402,6 +402,33 @@ function version_specific_checks() {
             kubectl apply -f https://github.com/openreplay/openreplay/raw/refs/heads/main/scripts/helmcharts/manifests/clickhouse-db.yaml -n db
         fi
     fi
+    if [ "$version" -lt 1230 ]; then
+        log info "Checking Redis for v1.23.0 upgrade requirements"
+        if kubectl get statefulset -n db redis-master &>/dev/null; then
+            current_redis_image=$(kubectl get statefulset -n db redis-master -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null)
+            if [[ "$current_redis_image" == *":7"* ]] || [[ "$current_redis_image" == *"redis:7"* ]]; then
+                log info "Redis is already running version 7, skipping migration"
+            else
+                log info "Updating Redis to version 7"
+                # Check if command field exists
+                has_command=$(kubectl get statefulset -n db redis-master -o jsonpath='{.spec.template.spec.containers[0].command}' 2>/dev/null)
+                if [[ -n "$has_command" ]]; then
+                    # Command exists, remove it and update image
+                    kubectl patch statefulset -n db redis-master --type json -p='[
+                      {"op": "remove", "path": "/spec/template/spec/containers/0/command"},
+                      {"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "public.ecr.aws/p1t3u8a3/redis:7"}
+                    ]' || log warn "Failed to patch redis-master StatefulSet"
+                else
+                    # Command doesn't exist, only update image
+                    kubectl patch statefulset -n db redis-master --type json -p='[
+                      {"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "public.ecr.aws/p1t3u8a3/redis:7"}
+                    ]' || log warn "Failed to update redis-master image"
+                fi
+                log info "Restarting redis-master pod to apply changes"
+                kubectl delete po -n db redis-master-0 || log warn "Failed to delete redis-master-0 pod"
+            fi
+        fi
+    fi
     return
 }
 
