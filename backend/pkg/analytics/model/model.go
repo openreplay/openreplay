@@ -18,7 +18,7 @@ type EventOrder string
 
 type FilterGroup struct {
 	Filters     []Filter   `json:"filters" validate:"dive"`
-	EventsOrder EventOrder `json:"eventsOrder" validate:"required,oneof=then or and"`
+	EventsOrder EventOrder `json:"eventsOrder,omitempty" validate:"omitempty,oneof=then or and" default:"then"`
 }
 
 type Series struct {
@@ -31,7 +31,7 @@ type Series struct {
 }
 
 type SeriesFilter struct {
-	EventsOrder string   `json:"eventsOrder" validate:"required,oneof=then or and"`
+	EventsOrder string   `json:"eventsOrder,omitempty" validate:"omitempty,oneof=then or and" default:"then"`
 	Filters     []Filter `json:"filters"`
 }
 
@@ -171,7 +171,7 @@ type SessionsSearchRequest struct {
 	EndDate     int64    `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartDate"`
 	Sort        string   `json:"sort"`
 	Order       string   `json:"order" validate:"omitempty,oneof=asc desc"`
-	EventsOrder string   `json:"eventsOrder" validate:"required,oneof=then or and"`
+	EventsOrder string   `json:"eventsOrder,omitempty" validate:"omitempty,oneof=then or and" default:"then"`
 	Limit       int      `json:"limit" validate:"required,min=1,max=200"`
 	Page        int      `json:"page" validate:"required,min=1"`
 	Series      []Series `json:"series" validate:"omitempty,max=5,dive"`
