@@ -80,13 +80,19 @@ export default function MenuContent({
                               isMenuItemActive(child.key),
                           })}
                         >
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <Icon
+                              name={child.icon}
+                              size={16}
+                              color={isMenuItemActive(child.key) ? 'teal' : ''}
+                              className="hover-fill-teal"
+                            />
                             <span>{child.label}</span>
                             {child.tag && (
                               <Tag
                                 color={child.tag.color}
                                 bordered={child.tag.border}
-                                className="text-xs ml-2"
+                                className="text-xs ml-auto"
                               >
                                 {child.tag.label}
                               </Tag>

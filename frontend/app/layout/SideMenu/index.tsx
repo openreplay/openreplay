@@ -122,6 +122,10 @@ function SideMenu(props: Props) {
     [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
     [MENU.KAI]: () => withSiteId(routes.kai(), siteId),
     [PREFERENCES_MENU.EXPORTED_VIDEOS]: () => client(CLIENT_TABS.VIDEOS),
+    [MENU.ACTIVITY]: () => withSiteId(routes.dataManagement.activity(), siteId),
+    [MENU.USERS]: () => withSiteId(routes.dataManagement.users(), siteId),
+    [MENU.EVENTS]: () => withSiteId(routes.dataManagement.events(), siteId),
+    [MENU.PROPS]: () => withSiteId(routes.dataManagement.properties(), siteId),
     ...extraRoutes(siteId),
   };
 
