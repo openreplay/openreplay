@@ -9,8 +9,8 @@ metadata:
   labels:
     {{- include "assist.labels" . | nindent 4 }}
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
-    nginx.ingress.kubernetes.io/upstream-hash-by: $sessionid
+    nginx.org/rewrites: "serviceName={{ include "assist.fullname" . }} rewrite=/$1"
+    nginx.org/lb-method: "hash $sessionid consistent"
 
   {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}

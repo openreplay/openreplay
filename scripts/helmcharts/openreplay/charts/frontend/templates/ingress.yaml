@@ -12,7 +12,7 @@ metadata:
   {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-    nginx.ingress.kubernetes.io/configuration-snippet: |
+    nginx.org/location-snippets: |
       index /index.html;
       rewrite ^((?!.(js|css|png|svg|jpg|woff|woff2)).)*$ /index.html break;
       proxy_intercept_errors on; # see frontend://nginx.org/en/docs/frontend/ngx_frontend_proxy_module.html#proxy_intercept_errors
@@ -63,14 +63,14 @@ metadata:
   {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-    nginx.ingress.kubernetes.io/backend-protocol: https
-    nginx.ingress.kubernetes.io/upstream-vhost: static.openreplay.com
-    nginx.ingress.kubernetes.io/rewrite-target: '/$1/openreplay$2.js'
-    nginx.ingress.kubernetes.io/proxy-body-size: 8m
-    nginx.ingress.kubernetes.io/proxy-buffering: "on"
-    nginx.ingress.kubernetes.io/server-snippet: |
+    nginx.org/ssl-services: "openreplay-tracker"
+    nginx.org/rewrites: "serviceName=openreplay-tracker rewrite=/$1/openreplay$2.js"
+    nginx.org/client-max-body-size: "8m"
+    nginx.org/proxy-buffering: "on"
+    nginx.org/server-snippets: |
       proxy_ssl_name static.openreplay.com;
       proxy_ssl_server_name on;
+      proxy_set_header Host static.openreplay.com;
 spec:
   ingressClassName: "{{ tpl .Values.ingress.className . }}" 
   tls:
