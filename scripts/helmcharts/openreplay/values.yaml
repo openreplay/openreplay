@@ -24,23 +24,6 @@ redis: &redis
   tls:
     enabled: false
 
-ingress-nginx:
-  enabled: true
-  controller:
-    allowSnippetAnnotations: true
-    config:
-      annotations-risk-level: "Critical"
-      http-snippet: |-
-        # Extract sessionid from peerId, it'll be used for sticky session.
-        map $arg_peerId $sessionid {
-          default "";
-          "~.*-(\d+)(?:-.*|$)" $1;
-        }
-    admissionWebhooks:
-      patch:
-        podAnnotations:
-          linkerd.io/inject: disabled
-
 # For enterpriseEdition Only
 vault: &vault
   vaultHost: databases-vault.db.svc.cluster.local:8200
@@ -49,7 +32,6 @@ vault: &vault
     vault.hashicorp.com/agent-inject: "true"
     vault.hashicorp.com/agent-inject-token: "true"
     vault.hashicorp.com/template-static-secret-render-interval: 2m
-    # vault.hashicorp.com/log-level: debug
     vault.hashicorp.com/agent-run-as-same-user: "true"
     vault.hashicorp.com/agent-inject-command-processor.properties: |
       pkill -TERM openreplay
@@ -59,6 +41,25 @@ vault: &vault
       {{- with secret "database/creds/db-app" -}}
       POSTGRES_STRING=postgres://{{.Data.username}}:{{.Data.password}}@postgresql.db.svc.cluster.local:5432/postgres
       {{- end -}}
+
+ingress-nginx:
+  enabled: true
+  controller:
+    enableSnippets: true
+    ingressClass:
+      name: openreplay
+      create: true
+      setAsDefaultIngress: false
+    config:
+      entries:
+        http-snippets: |-
+          # Extract sessionid from peerId, it'll be used for sticky session.
+          map $arg_peerId $sessionid {
+            default "";
+            "~.*-(\d+)(?:-.*|$)" $1;
+          }
+        server-tokens: "false"
+
 assist-api:
   enabled: false
 
