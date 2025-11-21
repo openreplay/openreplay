@@ -20,6 +20,7 @@ async def create_tenant(data: schemas.UserSignupSchema):
     email = data.email
     logger.debug(f"email: {email}")
     password = data.password.get_secret_value()
+    fullname = data.fullname
 
     if email is None or len(email) < 5:
         errors.append("Invalid email address.")
