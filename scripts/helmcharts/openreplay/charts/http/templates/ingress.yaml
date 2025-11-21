@@ -25,3 +25,91 @@ spec:
                   number: {{ $svcPort }}
             path: /ingest
 {{- end }}
+
+{{- if contains "minio" .Values.global.s3.endpoint }}
+## Minio static assets ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio
+  namespace: "{{(split "." .Values.global.s3.endpoint)._1}}"
+  annotations:
+    nginx.org/mergeable-ingress-type: "minion"
+spec:
+  ingressClassName: openreplay
+  rules:
+    - host: {{ .Values.global.domainName }} 
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /minio
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /mobs
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /sessions-assets
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /frontend
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /static
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /sourcemaps
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /ios-images
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /records
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /uxtesting-records
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /spots
+{{- end }}
