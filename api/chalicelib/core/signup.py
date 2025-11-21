@@ -35,9 +35,7 @@ async def create_tenant(data: schemas.UserSignupSchema):
     if len(password) < 6:
         errors.append("Password is too short, it must be at least 6 characters long.")
 
-    fullname = data.fullname
-    if fullname is None or len(fullname) < 1 or not helper.is_alphabet_space_dash(fullname):
-        errors.append("Invalid full name.")
+
 
     organization_name = data.organizationName
     if organization_name is None or len(organization_name) < 1:

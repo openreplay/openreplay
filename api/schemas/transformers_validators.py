@@ -1,5 +1,5 @@
 import re
-from typing import Union, Any, Type
+from typing import Any, Type, Union
 
 from pydantic import ValidationInfo
 
@@ -22,8 +22,7 @@ def remove_whitespace(value: str) -> str:
 
 def remove_duplicate_values(value: list) -> list:
     if value is not None and isinstance(value, list):
-        if len(value) > 0 \
-                and (isinstance(value[0], int) or isinstance(value[0], dict)):
+        if len(value) > 0 and (isinstance(value[0], int) or isinstance(value[0], dict)):
             return value
         value = list(set(value))
     return value
@@ -55,8 +54,18 @@ def force_is_event(events_enum: list[Type[Enum]]):
 
 def check_alphanumeric(v: str, info: ValidationInfo) -> str:
     if isinstance(v, str):
-        is_alphanumeric = v.replace(' ', '').isalnum()
-        assert is_alphanumeric, f'{info.field_name} must be alphanumeric'
+        is_alphanumeric = v.replace(" ", "").isalnum()
+        assert is_alphanumeric, f"{info.field_name} must be alphanumeric"
+    return v
+
+
+def check_account_name(v: str, info: ValidationInfo) -> str:
+    if isinstance(v, str) and len(v) > 0:
+        pattern = r"^[\w\s\-'\.áéíóúàèìòùâêîôûäëïöüãõñçÁÉÍÓÚÀÈÌÒÙÂÊÎÔÛÄËÏÖÜÃÕÑÇ]+$"
+        is_valid = re.match(pattern, v, re.UNICODE)
+        assert is_valid, (
+            f"{info.field_name} contains invalid characters. Only letters, numbers, spaces, hyphens, apostrophes, and periods are allowed"
+        )
     return v
 
 
