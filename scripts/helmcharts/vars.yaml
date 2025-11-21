@@ -168,7 +168,7 @@ global:
   ee-components:
     enabled: false
   enterpriseEditionLicense: ""
-  domainName: ""
+  domainName: "hello.rjsh.me"
 
 # chalice:
   # env:
