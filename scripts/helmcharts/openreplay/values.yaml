@@ -52,6 +52,7 @@ ingress-nginx:
       setAsDefaultIngress: false
     config:
       entries:
+        worker-connections: "1024"
         http-snippets: |-
           # Extract sessionid from peerId, it'll be used for sticky session.
           map $arg_peerId $sessionid {
