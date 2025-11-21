@@ -60,6 +60,11 @@ ingress-nginx:
             "~.*-(\d+)(?:-.*|$)" $1;
           }
         server-tokens: "false"
+        server-snippets: |-
+          # Security headers
+          add_header X-XSS-Protection "1; mode=block" always;
+          add_header X-Content-Type-Options "nosniff" always;
+          add_header Referrer-Policy "same-origin" always;
 
 assist-api:
   enabled: false
