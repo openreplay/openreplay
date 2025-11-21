@@ -50,6 +50,9 @@ ingress-nginx:
       name: openreplay
       create: true
       setAsDefaultIngress: false
+    pod:
+      extraLabels:
+        app.kubernetes.io/component: controller
     config:
       entries:
         worker-connections: "1024"
