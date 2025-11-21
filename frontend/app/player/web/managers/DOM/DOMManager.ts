@@ -534,8 +534,10 @@ export default class DOMManager extends ListWalker<Message> {
         }
         olStyleSheet.whenReady((styleSheet) => {
           vRoot.onNode((node) => {
+            const anyNode = node as any;
+            const existingSheets = anyNode.adoptedStyleSheets || [];
             // @ts-ignore
-            node.adoptedStyleSheets = [...node.adoptedStyleSheets, styleSheet];
+            anyNode.adoptedStyleSheets = [...existingSheets, styleSheet];
           });
         });
         return;
@@ -605,7 +607,9 @@ export default class DOMManager extends ListWalker<Message> {
           }
 
           if (vChild instanceof VElement) {
-            const slotName = (slotElem.node as HTMLSlotElement).name;
+            const slotName =
+              slotElem.getAttribute('name') ||
+              (slotElem.node as HTMLSlotElement).name;
             if (slotName && slotName !== 'default') {
               vChild.setAttribute('slot', slotName);
             } else {
