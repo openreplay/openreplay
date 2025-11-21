@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
 	"time"
 
 	"openreplay/backend/internal/config/common"
@@ -63,19 +64,49 @@ func (h *handlersImpl) getEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := make(map[string]interface{})
+	async := func(wg *sync.WaitGroup, fn func()) {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fn()
+		}()
+	}
+	var (
+		wg            sync.WaitGroup
+		eventsRes     interface{}
+		errorsRes     interface{}
+		userEventsRes interface{}
+		crashesRes    interface{}
+		issuesRes     interface{}
+		incidentsRes  interface{}
+	)
 
 	if platform == "web" {
-		response["events"] = h.events.GetBySessionID(projID, sessID, GroupClickRage)
-		response["errors"] = h.events.GetErrorsBySessionID(projID, sessID) // js_exception events only
-		response["userEvents"] = h.events.GetCustomsBySessionID(projID, sessID)
+		async(&wg, func() { eventsRes = h.events.GetBySessionID(projID, sessID, GroupClickRage) })
+		async(&wg, func() { errorsRes = h.events.GetErrorsBySessionID(projID, sessID) })
+		async(&wg, func() { userEventsRes = h.events.GetCustomsBySessionID(projID, sessID) })
 	} else {
-		response["events"] = h.events.GetMobileBySessionID(projID, sessID)
-		response["crashes"] = h.events.GetMobileCrashesBySessionID(sessID)
-		response["userEvents"] = h.events.GetMobileCustomsBySessionID(sessID)
+		async(&wg, func() { eventsRes = h.events.GetMobileBySessionID(projID, sessID) })
+		async(&wg, func() { crashesRes = h.events.GetMobileCrashesBySessionID(sessID) })
+		async(&wg, func() { userEventsRes = h.events.GetMobileCustomsBySessionID(sessID) })
 	}
-	response["issues"] = h.events.GetIssuesBySessionID(projID, sessID)
-	response["incidents"] = h.events.GetIncidentsBySessionID(projID, sessID)
+	async(&wg, func() { issuesRes = h.events.GetIssuesBySessionID(projID, sessID) })
+	async(&wg, func() { incidentsRes = h.events.GetIncidentsBySessionID(projID, sessID) })
+
+	wg.Wait()
+
+	response := map[string]interface{}{
+		"events":     eventsRes,
+		"userEvents": userEventsRes,
+		"issues":     issuesRes,
+		"incidents":  incidentsRes,
+	}
+	if platform == "web" {
+		response["errors"] = errorsRes
+	} else {
+		response["crashes"] = crashesRes
+	}
+
 	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
 	return
 }
