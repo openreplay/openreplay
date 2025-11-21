@@ -9,28 +9,19 @@ metadata:
   labels:
     {{- include "integrations.labels" . | nindent 4 }}
   annotations:
-  {{- with .Values.ingress.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-    nginx.org/rewrites: "serviceName={{ include "integrations.fullname" . }} rewrite=/$1"
+    nginx.org/mergeable-ingress-type: "minion"
     nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
 spec:
-  ingressClassName: "{{ tpl .Values.ingress.className . }}"
-  tls:
-    - hosts:
-        - {{ .Values.global.domainName }}
-      {{- if .Values.ingress.tls.secretName}}
-      secretName: {{ .Values.ingress.tls.secretName }}
-      {{- end}}
+  ingressClassName: openreplay
   rules:
-    - host: {{ .Values.global.domainName }}
+    - host: {{ .Values.global.domainName }} 
       http:
         paths:
-          - pathType: ImplementationSpecific
+          - pathType: Prefix
             backend:
               service:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
-            path: /integrations/(.*)
+            path: /integrations
 {{- end }}

@@ -1,6 +1,6 @@
 {{- if .Values.ingress.enabled }}
 {{- $fullName := include "assist.fullname" . -}}
-{{- $socketioSvcPort := .Values.service.ports.socketio -}}
+{{- $svcPort := .Values.service.ports.socketio -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -9,29 +9,20 @@ metadata:
   labels:
     {{- include "assist.labels" . | nindent 4 }}
   annotations:
-    nginx.org/rewrites: "serviceName={{ include "assist.fullname" . }} rewrite=/$1"
-    nginx.org/lb-method: "hash $sessionid consistent"
-
-  {{- with .Values.ingress.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    nginx.org/mergeable-ingress-type: "minion"
+    nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
+    nginx.org/websocket-services: "{{ $fullName }}"
 spec:
-  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
-  tls:
-    - hosts:
-        - {{ .Values.global.domainName }}
-      {{- if .Values.ingress.tls.secretName}}
-      secretName: {{ .Values.ingress.tls.secretName }}
-      {{- end}}
+  ingressClassName: openreplay
   rules:
     - host: {{ .Values.global.domainName }} 
       http:
         paths:
-          - pathType: ImplementationSpecific
+          - pathType: Prefix
             backend:
               service:
                 name: {{ $fullName }}
                 port:
-                  number: {{ $socketioSvcPort }}
-            path: /ws-assist/(.*)
+                  number: {{ $svcPort }}
+            path: /ws-assist
 {{- end }}

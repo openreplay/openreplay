@@ -9,56 +9,19 @@ metadata:
   labels:
     {{- include "http.labels" . | nindent 4 }}
   annotations:
-  {{- with .Values.ingress.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-    nginx.org/rewrites: "serviceName={{ include "http.fullname" . }} rewrite=/$1"
+    nginx.org/mergeable-ingress-type: "minion"
     nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
 spec:
-  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
-  tls:
-    - hosts:
-        - {{ .Values.global.domainName }}
-      {{- if .Values.ingress.tls.secretName}}
-      secretName: {{ .Values.ingress.tls.secretName }}
-      {{- end}}
+  ingressClassName: openreplay
   rules:
     - host: {{ .Values.global.domainName }} 
       http:
         paths:
-          - pathType: ImplementationSpecific
+          - pathType: Prefix
             backend:
               service:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
-            path: /ingest/(.*)
-{{- end }}
-
-{{- if contains "minio" .Values.global.s3.endpoint }}
-## TODO:
-## Frontend service from minio will be migrated to nginx atomic container.
-## This ingress is just a workaround.
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: minio
-  namespace: "{{(split "." .Values.global.s3.endpoint)._1}}"
-spec:
-  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
-  rules:
-    - host: {{ .Values.global.domainName }} 
-      http:
-        paths:
-          - pathType: ImplementationSpecific
-            backend:
-              service:
-                name: minio
-                port:
-                  number: 9000
-            path: /(minio|mobs|sessions-assets|frontend|static|sourcemaps|ios-images|records|uxtesting-records|spots)/
-  tls:
-    - hosts:
-      - {{ .Values.global.domainName }}
+            path: /ingest
 {{- end }}

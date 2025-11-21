@@ -9,32 +9,19 @@ metadata:
   labels:
     {{- include "sourcemapreader.labels" . | nindent 4 }}
   annotations:
-  {{- with .Values.ingress.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-    nginx.org/location-snippets: |
-      index /index.html;
-      rewrite ^((?!.(js|css|png|svg|jpg|woff|woff2)).)*$ /index.html break;
-      proxy_intercept_errors on; # see sourcemapreader://nginx.org/en/docs/sourcemapreader/ngx_sourcemapreader_proxy_module.html#proxy_intercept_errors
-      error_page 404 =200 /index.html;
-      {{- .Values.ingress.cspSnippet | nindent 6}}
+    nginx.org/mergeable-ingress-type: "minion"
+    nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
 spec:
-  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
-  tls:
-    - hosts:
-        - {{ .Values.global.domainName }}
-      {{- if .Values.ingress.tls.secretName}}
-      secretName: {{ .Values.ingress.tls.secretName }}
-      {{- end}}
+  ingressClassName: openreplay
   rules:
     - host: {{ .Values.global.domainName }} 
       http:
         paths:
-          - pathType: ImplementationSpecific
+          - pathType: Prefix
             backend:
               service:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
-            path: /(.*)
+            path: /sourcemaps
 {{- end }}
